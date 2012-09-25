@@ -18,56 +18,26 @@
  */
 package org.infinispan.loaders.jdbc.configuration;
 
-import org.infinispan.configuration.cache.AbstractLockSupportCacheStoreConfiguration;
+import org.infinispan.configuration.cache.AbstractLockSupportStoreConfiguration;
 import org.infinispan.configuration.cache.AsyncStoreConfiguration;
 import org.infinispan.configuration.cache.SingletonStoreConfiguration;
 import org.infinispan.util.TypedProperties;
 
-public abstract class AbstractJdbcCacheStoreConfiguration extends AbstractLockSupportCacheStoreConfiguration {
+public abstract class AbstractJdbcCacheStoreConfiguration extends AbstractLockSupportStoreConfiguration {
 
-   private final String driverClass;
-   private final String connectionUrl;
-   private final String userName;
-   private final String password;
-   private final String connectionFactoryClass;
-   private final String datasource;
+   private final ConnectionFactoryConfiguration connectionFactory;
 
-   AbstractJdbcCacheStoreConfiguration(String driverClass, String connectionUrl, String userName, String password,
-         String connectionFactoryClass, String datasource, long lockAcquistionTimeout,
+   AbstractJdbcCacheStoreConfiguration(ConnectionFactoryConfiguration connectionFactory, long lockAcquistionTimeout,
          int lockConcurrencyLevel, boolean purgeOnStartup, boolean purgeSynchronously, int purgerThreads,
          boolean fetchPersistentState, boolean ignoreModifications, TypedProperties properties,
          AsyncStoreConfiguration async, SingletonStoreConfiguration singletonStore) {
       super(lockAcquistionTimeout, lockConcurrencyLevel, purgeOnStartup, purgeSynchronously, purgerThreads,
             fetchPersistentState, ignoreModifications, properties, async, singletonStore);
-      this.driverClass = driverClass;
-      this.connectionUrl = connectionUrl;
-      this.userName = userName;
-      this.password = password;
-      this.connectionFactoryClass = connectionFactoryClass;
-      this.datasource = datasource;
+      this.connectionFactory = connectionFactory;
    }
 
-   public String driverClass() {
-      return driverClass;
+   public ConnectionFactoryConfiguration connectionFactory() {
+      return connectionFactory;
    }
 
-   public String connectionUrl() {
-      return connectionUrl;
-   }
-
-   public String userName() {
-      return userName;
-   }
-
-   public String password() {
-      return password;
-   }
-
-   public String connectionFactoryClass() {
-      return connectionFactoryClass;
-   }
-
-   public String datasource() {
-      return datasource;
-   }
 }

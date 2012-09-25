@@ -19,6 +19,7 @@
 package org.infinispan.configuration.cache;
 
 import org.infinispan.config.ConfigurationException;
+import org.infinispan.configuration.Builder;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
@@ -29,7 +30,7 @@ import java.util.concurrent.TimeUnit;
  * this element is ignored.
  */
 
-public class L1ConfigurationBuilder extends AbstractClusteringConfigurationChildBuilder<L1Configuration> {
+public class L1ConfigurationBuilder extends AbstractClusteringConfigurationChildBuilder implements Builder<L1Configuration> {
 
    private static final Log log = LogFactory.getLog(L1ConfigurationBuilder.class);
 

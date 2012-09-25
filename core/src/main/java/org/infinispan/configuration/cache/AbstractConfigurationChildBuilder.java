@@ -18,9 +18,7 @@
  */
 package org.infinispan.configuration.cache;
 
-import org.infinispan.configuration.Builder;
-
-abstract class AbstractConfigurationChildBuilder<T> implements ConfigurationChildBuilder, Builder<T> {
+abstract class AbstractConfigurationChildBuilder implements ConfigurationChildBuilder {
 
    private final ConfigurationBuilder builder;
 

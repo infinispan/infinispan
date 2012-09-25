@@ -22,7 +22,7 @@ import org.infinispan.client.hotrod.impl.transport.TransportFactory;
 import org.infinispan.configuration.cache.StoreConfigurationChildBuilder;
 import org.infinispan.marshall.Marshaller;
 
-public interface RemoteCacheStoreConfigurationChildBuilder extends StoreConfigurationChildBuilder {
+public interface RemoteCacheStoreConfigurationChildBuilder<S> extends StoreConfigurationChildBuilder<S> {
 
    /**
     * Adds a new remote server

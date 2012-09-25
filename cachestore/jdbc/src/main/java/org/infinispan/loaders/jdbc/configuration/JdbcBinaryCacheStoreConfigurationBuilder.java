@@ -23,11 +23,11 @@ import org.infinispan.util.TypedProperties;
 
 public class JdbcBinaryCacheStoreConfigurationBuilder extends
       AbstractJdbcCacheStoreConfigurationBuilder<JdbcBinaryCacheStoreConfiguration, JdbcBinaryCacheStoreConfigurationBuilder> {
-   protected final TableManipulationConfigurationBuilder table;
+   protected final BinaryTableManipulationConfigurationBuilder table;
 
    public JdbcBinaryCacheStoreConfigurationBuilder(LoadersConfigurationBuilder builder) {
       super(builder);
-      this.table = new TableManipulationConfigurationBuilder(this);
+      this.table = new BinaryTableManipulationConfigurationBuilder(this);
    }
 
    @Override
@@ -38,7 +38,7 @@ public class JdbcBinaryCacheStoreConfigurationBuilder extends
    /**
     * Allows configuration of table-specific parameters such as column names and types
     */
-   public TableManipulationConfigurationBuilder table() {
+   public BinaryTableManipulationConfigurationBuilder table() {
       return table;
    }
 
@@ -49,10 +49,8 @@ public class JdbcBinaryCacheStoreConfigurationBuilder extends
 
    @Override
    public JdbcBinaryCacheStoreConfiguration create() {
-      return new JdbcBinaryCacheStoreConfiguration(table.create(), driverClass, connectionUrl, username, password,
-            connectionFactoryClass, datasource, lockAcquistionTimeout, lockConcurrencyLevel,
-            purgeOnStartup, purgeSynchronously, purgerThreads, fetchPersistentState, ignoreModifications,
-            TypedProperties.toTypedProperties(properties), async.create(), singletonStore.create());
+      return new JdbcBinaryCacheStoreConfiguration(table.create(), connectionFactory.create(), lockAcquistionTimeout, lockConcurrencyLevel, purgeOnStartup, purgeSynchronously,
+            purgerThreads, fetchPersistentState, ignoreModifications, TypedProperties.toTypedProperties(properties), async.create(), singletonStore.create());
    }
 
    @Override
@@ -61,5 +59,28 @@ public class JdbcBinaryCacheStoreConfigurationBuilder extends
       this.table.read(template.table());
 
       return this;
+   }
+
+   public class BinaryTableManipulationConfigurationBuilder extends
+         TableManipulationConfigurationBuilder<JdbcBinaryCacheStoreConfigurationBuilder, BinaryTableManipulationConfigurationBuilder> {
+
+      BinaryTableManipulationConfigurationBuilder(AbstractJdbcCacheStoreConfigurationBuilder<?, JdbcBinaryCacheStoreConfigurationBuilder> builder) {
+         super(builder);
+      }
+
+      @Override
+      public PooledConnectionFactoryConfigurationBuilder<JdbcBinaryCacheStoreConfigurationBuilder> connectionPool() {
+         return JdbcBinaryCacheStoreConfigurationBuilder.this.connectionPool();
+      }
+
+      @Override
+      public ManagedConnectionFactoryConfigurationBuilder<JdbcBinaryCacheStoreConfigurationBuilder> dataSource() {
+         return JdbcBinaryCacheStoreConfigurationBuilder.this.dataSource();
+      }
+
+      @Override
+      public BinaryTableManipulationConfigurationBuilder self() {
+         return this;
+      }
    }
 }

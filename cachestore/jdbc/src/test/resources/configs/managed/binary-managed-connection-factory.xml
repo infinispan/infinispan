@@ -67,9 +67,8 @@
             concurrencyLevel="500" useLockStriping="false"/>
       <loaders>
          <binaryKeyedJdbcStore fetchPersistentState="false"
-                 ignoreModifications="false" purgeOnStartup="false"
-                 connectionFactoryClass="org.infinispan.loaders.jdbc.connectionfactory.ManagedConnectionFactory"
-                 datasource="java:/BinaryStoreWithManagedConnectionTest/DS">
+                 ignoreModifications="false" purgeOnStartup="false">
+            <dataSource jndiUrl="java:/BinaryStoreWithManagedConnectionTest/DS" />
             <binaryKeyedTable prefix="ISPN_BUCKET_TABLE" createOnStart="true" dropOnExit="true">
                <idColumn name="ID_COLUMN" type="VARCHAR(255)" />
                <dataColumn name="DATA_COLUMN" type="BINARY" />

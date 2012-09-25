@@ -28,7 +28,7 @@ import org.infinispan.marshall.Marshaller;
  * @author Tristan Tarrant
  * @since 5.2
  */
-public abstract class AbstractRemoteCacheStoreConfigurationChildBuilder<T> extends AbstractStoreConfigurationChildBuilder<T> implements RemoteCacheStoreConfigurationChildBuilder {
+public abstract class AbstractRemoteCacheStoreConfigurationChildBuilder<S> extends AbstractStoreConfigurationChildBuilder<S> implements RemoteCacheStoreConfigurationChildBuilder<S> {
    private final RemoteCacheStoreConfigurationBuilder builder;
 
    protected AbstractRemoteCacheStoreConfigurationChildBuilder(RemoteCacheStoreConfigurationBuilder builder) {

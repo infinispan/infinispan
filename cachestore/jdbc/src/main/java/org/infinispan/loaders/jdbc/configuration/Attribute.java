@@ -32,10 +32,9 @@ public enum Attribute {
    UNKNOWN(null),
 
    BATCH_SIZE("batchSize"),
-   CONNECTION_FACTORY_CLASS("connectionFactoryClass"),
    CONNECTION_URL("connectionUrl"),
    CREATE_ON_START("createOnStart"),
-   DATASOURCE("datasource"),
+   JNDI_URL("jndiUrl"),
    DRIVER_CLASS("driverClass"),
    DROP_ON_EXIT("dropOnExit"),
    FETCH_SIZE("fetchSize"),

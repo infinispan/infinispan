@@ -27,7 +27,7 @@ import org.infinispan.configuration.Builder;
  * @author Mircea Markus
  * @since 5.2
  */
-public class BackupForBuilder extends AbstractConfigurationChildBuilder<BackupForConfiguration> {
+public class BackupForBuilder extends AbstractConfigurationChildBuilder implements Builder<BackupForConfiguration> {
    private String remoteCache;
    private String remoteSite;
 

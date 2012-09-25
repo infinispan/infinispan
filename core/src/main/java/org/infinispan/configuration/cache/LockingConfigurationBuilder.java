@@ -19,6 +19,7 @@
 package org.infinispan.configuration.cache;
 
 import org.infinispan.config.ConfigurationException;
+import org.infinispan.configuration.Builder;
 import org.infinispan.transaction.LockingMode;
 import org.infinispan.util.concurrent.IsolationLevel;
 
@@ -30,7 +31,7 @@ import java.util.concurrent.TimeUnit;
  * @author pmuir
  *
  */
-public class LockingConfigurationBuilder extends AbstractConfigurationChildBuilder<LockingConfiguration> {
+public class LockingConfigurationBuilder extends AbstractConfigurationChildBuilder implements Builder<LockingConfiguration> {
 
    private int concurrencyLevel = 32;
    IsolationLevel isolationLevel = IsolationLevel.READ_COMMITTED;

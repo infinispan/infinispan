@@ -22,13 +22,15 @@ import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.List;
 
+import org.infinispan.configuration.Builder;
+
 /**
  * Configures custom interceptors to be added to the cache.
  *
  * @author pmuir
  *
  */
-public class CustomInterceptorsConfigurationBuilder extends AbstractConfigurationChildBuilder<CustomInterceptorsConfiguration> {
+public class CustomInterceptorsConfigurationBuilder extends AbstractConfigurationChildBuilder implements Builder<CustomInterceptorsConfiguration> {
 
    private List<InterceptorConfigurationBuilder> interceptorBuilders = new LinkedList<InterceptorConfigurationBuilder>();
 

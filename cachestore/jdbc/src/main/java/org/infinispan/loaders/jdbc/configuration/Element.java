@@ -39,6 +39,10 @@ public enum Element {
     BINARY_KEYED_JDBC_STORE("binaryKeyedJdbcStore"),
     MIXED_KEYED_JDBC_STORE("mixedKeyedJdbcStore"),
 
+    CONNECTION_POOL("connectionPool"),
+    DATA_SOURCE("dataSource"),
+    SIMPLE_CONNECTION("simpleConnection"),
+
     BINARY_KEYED_TABLE("binaryKeyedTable"),
     STRING_KEYED_TABLE("stringKeyedTable"),
 

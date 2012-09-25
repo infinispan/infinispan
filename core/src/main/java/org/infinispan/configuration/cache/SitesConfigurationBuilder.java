@@ -31,7 +31,7 @@ import java.util.Set;
  * @author Mircea.Markus@jboss.com
  * @since 5.2
  */
-public class SitesConfigurationBuilder extends AbstractConfigurationChildBuilder<SitesConfiguration> {
+public class SitesConfigurationBuilder extends AbstractConfigurationChildBuilder  implements Builder<SitesConfiguration> {
 
    private static final int DEFAULT_BACKUP_COUNT = 2;
 

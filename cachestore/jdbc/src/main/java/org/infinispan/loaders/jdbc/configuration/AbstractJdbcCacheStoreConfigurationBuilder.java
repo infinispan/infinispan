@@ -18,109 +18,59 @@
  */
 package org.infinispan.loaders.jdbc.configuration;
 
-import java.sql.Driver;
-
+import java.lang.reflect.Constructor;
 import org.infinispan.config.ConfigurationException;
-import org.infinispan.configuration.cache.AbstractLockSupportCacheStoreConfigurationBuilder;
+import org.infinispan.configuration.ConfigurationUtils;
+import org.infinispan.configuration.cache.AbstractLockSupportStoreConfigurationBuilder;
 import org.infinispan.configuration.cache.LoadersConfigurationBuilder;
 import org.infinispan.loaders.jdbc.connectionfactory.ConnectionFactory;
-import org.infinispan.loaders.jdbc.connectionfactory.ManagedConnectionFactory;
-import org.infinispan.loaders.jdbc.connectionfactory.PooledConnectionFactory;
 
-public abstract class AbstractJdbcCacheStoreConfigurationBuilder<T extends AbstractJdbcCacheStoreConfiguration, S extends AbstractJdbcCacheStoreConfigurationBuilder<T, S>>
-      extends AbstractLockSupportCacheStoreConfigurationBuilder<T, S> {
-   protected String driverClass;
-   protected String connectionUrl;
-   protected String username;
-   protected String password;
-   protected String datasource;
-   protected String connectionFactoryClass;
+public abstract class AbstractJdbcCacheStoreConfigurationBuilder<T extends AbstractJdbcCacheStoreConfiguration, S extends AbstractJdbcCacheStoreConfigurationBuilder<T, S>> extends
+      AbstractLockSupportStoreConfigurationBuilder<T, S> implements JdbcCacheStoreConfigurationChildBuilder<S> {
+
+   protected ConnectionFactoryConfigurationBuilder<ConnectionFactoryConfiguration> connectionFactory;
 
    public AbstractJdbcCacheStoreConfigurationBuilder(LoadersConfigurationBuilder builder) {
       super(builder);
    }
 
-   /**
-    * The class name of a JDBC driver to use with the built-in connection pooling
-    */
-   public S driverClass(String driverClass) {
-      this.driverClass = driverClass;
-      return self();
+   @Override
+   public PooledConnectionFactoryConfigurationBuilder<S> connectionPool() {
+      return connectionFactory(PooledConnectionFactoryConfigurationBuilder.class);
+   }
+
+   @Override
+   public ManagedConnectionFactoryConfigurationBuilder<S> dataSource() {
+      return connectionFactory(ManagedConnectionFactoryConfigurationBuilder.class);
+   }
+
+   @Override
+   public SimpleConnectionFactoryConfigurationBuilder<S> simpleConnection() {
+      return connectionFactory(SimpleConnectionFactoryConfigurationBuilder.class);
    }
 
    /**
-    * The class of JDBC driver to use with the built-in connection pooling
+    * Use the specified {@link ConnectionFactory} to handle connection to the database
     */
-   public S driverClass(Class<? extends Driver> klass) {
-      this.driverClass = klass.getName();
-      return self();
-   }
-
-   /**
-    * The JDBC URL to use with the built-in connection pooling
-    */
-   public S connectionUrl(String connectionUrl) {
-      this.connectionUrl = connectionUrl;
-      return self();
-   }
-
-   /**
-    * The username used to connect with the built-in connection pooling
-    */
-   public S username(String userName) {
-      this.username = userName;
-      return self();
-   }
-
-   /**
-    * The password used to connect with the built-in connection pooling
-    */
-   public S password(String password) {
-      this.password = password;
-      return self();
-   }
-
-   /**
-    * The JNDI name of a container-managed datasource
-    */
-   public S datasource(String datasource) {
-      this.datasource = datasource;
-      return self();
-   }
-
-   /**
-    * The class name of a {@link ConnectionFactory} to use to handle connections to a database. If
-    * unspecified, a suitable one will be chosen based on the other parametes (i.e.
-    * {@link ManagedConnectionFactory} if a datasource is specified or
-    * {@link PooledConnectionFactory} if a connectionUrl is specified)
-    */
-   public S connectionFactoryClass(String connectionFactoryClass) {
-      this.connectionFactoryClass = connectionFactoryClass;
-      return self();
-   }
-
-   /**
-    * The class of a {@link ConnectionFactory} to use to handle connections to a database. If
-    * unspecified, a suitable one will be chosen based on the other parametes (i.e.
-    * {@link ManagedConnectionFactory} if a datasource is specified or
-    * {@link PooledConnectionFactory} if a connectionUrl is specified)
-    */
-   public S connectionFactoryClass(Class<? extends ConnectionFactory> klass) {
-      this.connectionFactoryClass = klass.getName();
-      return self();
+   public <C extends ConnectionFactoryConfigurationBuilder<?>> C connectionFactory(Class<C> klass) {
+      if (connectionFactory != null) {
+         throw new IllegalStateException("A ConnectionFactory has already been configured for this store");
+      }
+      try {
+         Constructor<C> constructor = klass.getDeclaredConstructor(AbstractJdbcCacheStoreConfigurationBuilder.class);
+         C builder = constructor.newInstance(this);
+         this.connectionFactory = (ConnectionFactoryConfigurationBuilder<ConnectionFactoryConfiguration>) builder;
+         return builder;
+      } catch (Exception e) {
+         throw new ConfigurationException("Could not instantiate loader configuration builder '" + klass.getName() + "'", e);
+      }
    }
 
    @Override
    public void validate() {
       super.validate();
-      if (datasource != null && connectionUrl != null) {
-         throw new ConfigurationException("Cannot specify both a datasource and a connection URL");
-      }
-      if (connectionFactoryClass == null) {
-         if (datasource != null)
-            connectionFactoryClass = ManagedConnectionFactory.class.getName();
-         else
-            connectionFactoryClass = PooledConnectionFactory.class.getName();
+      if (connectionFactory == null) {
+         throw new ConfigurationException("A ConnectionFactory has not been specified for the Store");
       }
    }
 
@@ -130,12 +80,9 @@ public abstract class AbstractJdbcCacheStoreConfigurationBuilder<T extends Abstr
     * open a bug and add the ID here
     */
    protected S readInternal(AbstractJdbcCacheStoreConfiguration template) {
-      this.connectionFactoryClass(template.connectionFactoryClass());
-      this.connectionUrl(template.connectionUrl());
-      this.datasource(template.datasource());
-      this.driverClass(template.driverClass());
-      this.password(template.password());
-      this.username(template.userName());
+      Class<? extends ConnectionFactoryConfigurationBuilder<?>> cfb = (Class<? extends ConnectionFactoryConfigurationBuilder<?>>) ConfigurationUtils.builderFor(template.connectionFactory());
+      connectionFactory(cfb);
+      connectionFactory.read(template.connectionFactory());
 
       // LockSupportStore-specific configuration
       lockAcquistionTimeout = template.lockAcquistionTimeout();

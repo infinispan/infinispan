@@ -26,7 +26,7 @@ import org.infinispan.configuration.Builder;
  * @author Mircea.Markus@jboss.com
  * @since 5.2
  */
-public class BackupConfigurationBuilder extends AbstractConfigurationChildBuilder<BackupConfiguration> {
+public class BackupConfigurationBuilder extends AbstractConfigurationChildBuilder implements Builder<BackupConfiguration> {
 
    private String site;
 

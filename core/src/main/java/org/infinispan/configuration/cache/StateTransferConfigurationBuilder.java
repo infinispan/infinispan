@@ -20,6 +20,7 @@
 package org.infinispan.configuration.cache;
 
 import org.infinispan.config.ConfigurationException;
+import org.infinispan.configuration.Builder;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
@@ -32,7 +33,7 @@ import java.util.concurrent.TimeUnit;
  * @since 5.1
  */
 public class StateTransferConfigurationBuilder extends
-      AbstractClusteringConfigurationChildBuilder<StateTransferConfiguration> {
+      AbstractClusteringConfigurationChildBuilder implements Builder<StateTransferConfiguration> {
 
    private static final Log log = LogFactory.getLog(StateTransferConfigurationBuilder.class);
 

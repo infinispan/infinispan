@@ -20,6 +20,7 @@ package org.infinispan.configuration.cache;
 
 import java.util.Properties;
 
+import org.infinispan.configuration.Builder;
 import org.infinispan.container.DataContainer;
 import org.infinispan.util.TypedProperties;
 
@@ -29,7 +30,7 @@ import org.infinispan.util.TypedProperties;
  * @author pmuir
  *
  */
-public class DataContainerConfigurationBuilder extends AbstractConfigurationChildBuilder<DataContainerConfiguration> {
+public class DataContainerConfigurationBuilder extends AbstractConfigurationChildBuilder implements Builder<DataContainerConfiguration> {
 
    // No default here. DataContainerFactory figures out default.
    private DataContainer dataContainer;

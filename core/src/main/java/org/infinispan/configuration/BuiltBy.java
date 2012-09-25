@@ -31,5 +31,6 @@ import java.lang.annotation.RetentionPolicy;
  */
 @Retention(RetentionPolicy.RUNTIME)
 public @interface BuiltBy {
-   Class<? extends Builder<?>> value();
+   @SuppressWarnings("rawtypes")
+   Class<? extends Builder> value();
 }

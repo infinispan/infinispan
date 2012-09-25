@@ -18,13 +18,15 @@
  */
 package org.infinispan.configuration.cache;
 
+import org.infinispan.configuration.Builder;
+
 /**
  * Determines whether statistics are gather and reported.
  *
  * @author pmuir
  *
  */
-public class JMXStatisticsConfigurationBuilder extends AbstractConfigurationChildBuilder<JMXStatisticsConfiguration> {
+public class JMXStatisticsConfigurationBuilder extends AbstractConfigurationChildBuilder implements Builder<JMXStatisticsConfiguration> {
 
    private boolean enabled = false;
 

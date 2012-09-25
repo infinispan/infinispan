@@ -39,7 +39,7 @@ import org.infinispan.util.TypedProperties;
  */
 public class RemoteCacheStoreConfigurationBuilder extends
       AbstractStoreConfigurationBuilder<RemoteCacheStoreConfiguration, RemoteCacheStoreConfigurationBuilder> implements
-      RemoteCacheStoreConfigurationChildBuilder {
+      RemoteCacheStoreConfigurationChildBuilder<RemoteCacheStoreConfigurationBuilder> {
    private final ExecutorFactoryConfigurationBuilder asyncExecutorFactory;
    private String balancingStrategy = RoundRobinBalancingStrategy.class.getName();
    private final ConnectionPoolConfigurationBuilder connectionPool;

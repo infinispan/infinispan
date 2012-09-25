@@ -16,23 +16,10 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston,
  * MA  02110-1301, USA.
  */
-package org.infinispan.configuration.cache;
+package org.infinispan.loaders.jdbc.configuration;
 
-import java.util.concurrent.TimeUnit;
+import org.infinispan.configuration.Builder;
 
-/**
- * LockSupportCacheStoreConfigurationBuilder is an interface which should be implemented by all cache store builders which support locking
- *
- * @author Tristan Tarrant
- * @since 5.2
- */
-public interface LockSupportCacheStoreConfigurationBuilder<T extends StoreConfiguration, S extends LockSupportCacheStoreConfigurationBuilder<T, S>> extends StoreConfigurationBuilder<T, S> {
-
-   S lockAcquistionTimeout(long lockAcquistionTimeout);
-
-   S lockAcquistionTimeout(
-         long lockAcquistionTimeout, TimeUnit unit);
-
-   S lockConcurrencyLevel(int lockConcurrencyLevel);
+public interface ConnectionFactoryConfigurationBuilder<T extends ConnectionFactoryConfiguration> extends Builder<T> {
 
 }

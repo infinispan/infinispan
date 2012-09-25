@@ -50,6 +50,7 @@ public class XmlFileParsingTest extends AbstractInfinispanTest {
             "   <default>\n" +
             "     <loaders>\n" +
             "       <stringKeyedJdbcStore xmlns=\"urn:infinispan:config:jdbc:5.2\" >\n" +
+            "         <connectionPool connectionUrl=\"jdbc:h2:mem:infinispan;DB_CLOSE_DELAY=-1\" username=\"dbuser\" password=\"dbpass\" />\n" +
             "         <stringKeyedTable prefix=\"entry\" fetchSize=\"34\" batchSize=\"99\">\n" +
             "           <idColumn name=\"id\" type=\"VARCHAR\" />\n" +
             "           <dataColumn name=\"datum\" type=\"BINARY\" />\n" +
@@ -74,6 +75,7 @@ public class XmlFileParsingTest extends AbstractInfinispanTest {
             "   <default>\n" +
             "     <loaders>\n" +
             "       <binaryKeyedJdbcStore xmlns=\"urn:infinispan:config:jdbc:5.2\" ignoreModifications=\"true\">\n" +
+            "         <simpleConnection connectionUrl=\"jdbc:h2:mem:infinispan;DB_CLOSE_DELAY=-1\" username=\"dbuser\" password=\"dbpass\" />\n" +
             "         <binaryKeyedTable prefix=\"bucket\" fetchSize=\"34\" batchSize=\"99\">\n" +
             "           <idColumn name=\"id\" type=\"BINARY\" />\n" +
             "           <dataColumn name=\"datum\" type=\"BINARY\" />\n" +
@@ -101,6 +103,7 @@ public class XmlFileParsingTest extends AbstractInfinispanTest {
             "   <default>\n" +
             "     <loaders>\n" +
             "       <mixedKeyedJdbcStore xmlns=\"urn:infinispan:config:jdbc:5.2\" >\n" +
+            "         <dataSource jndiUrl=\"java:MyDataSource\" />\n" +
             "         <stringKeyedTable prefix=\"entry\" fetchSize=\"34\" batchSize=\"99\">\n" +
             "           <idColumn name=\"id\" type=\"VARCHAR\" />\n" +
             "           <dataColumn name=\"datum\" type=\"BINARY\" />\n" +

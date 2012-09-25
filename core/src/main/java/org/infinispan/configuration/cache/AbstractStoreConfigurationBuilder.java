@@ -31,8 +31,8 @@ public abstract class AbstractStoreConfigurationBuilder<T extends StoreConfigura
 
    private static final Log log = LogFactory.getLog(LegacyStoreConfigurationBuilder.class);
 
-   protected final AsyncStoreConfigurationBuilder async;
-   protected final SingletonStoreConfigurationBuilder singletonStore;
+   protected final AsyncStoreConfigurationBuilder<S> async;
+   protected final SingletonStoreConfigurationBuilder<S> singletonStore;
    protected boolean fetchPersistentState = false;
    protected boolean ignoreModifications = false;
    protected boolean purgeOnStartup = false;
@@ -41,8 +41,8 @@ public abstract class AbstractStoreConfigurationBuilder<T extends StoreConfigura
 
    public AbstractStoreConfigurationBuilder(LoadersConfigurationBuilder builder) {
       super(builder);
-      this.async = new AsyncStoreConfigurationBuilder(builder);
-      this.singletonStore = new SingletonStoreConfigurationBuilder(builder);
+      this.async = new AsyncStoreConfigurationBuilder(this);
+      this.singletonStore = new SingletonStoreConfigurationBuilder(this);
    }
 
    /**
@@ -50,7 +50,7 @@ public abstract class AbstractStoreConfigurationBuilder<T extends StoreConfigura
     * writes to the cache store, giving you 'write-behind' caching.
     */
    @Override
-   public AsyncStoreConfigurationBuilder async() {
+   public AsyncStoreConfigurationBuilder<S> async() {
       return async;
    }
 
@@ -61,7 +61,7 @@ public abstract class AbstractStoreConfigurationBuilder<T extends StoreConfigura
     * CacheStore implementation. It always delegates reads to the real CacheStore.
     */
    @Override
-   public SingletonStoreConfigurationBuilder singletonStore() {
+   public SingletonStoreConfigurationBuilder<S> singletonStore() {
       return singletonStore;
    }
 

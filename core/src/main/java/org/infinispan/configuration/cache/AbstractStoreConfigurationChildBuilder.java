@@ -18,23 +18,55 @@
  */
 package org.infinispan.configuration.cache;
 
-public abstract class AbstractStoreConfigurationChildBuilder<T> extends AbstractLoaderConfigurationChildBuilder<T> implements StoreConfigurationChildBuilder {
+/**
+*
+* AbstractStoreConfigurationChildBuilder delegates {@link StoreConfigurationChildBuilder} methods to a specified {@link StoreConfigurationBuilder}
+*
+* @author Tristan Tarrant
+* @since 5.2
+*/
+public abstract class AbstractStoreConfigurationChildBuilder<S> extends AbstractLoaderConfigurationChildBuilder<S> implements StoreConfigurationChildBuilder<S> {
 
-   private final StoreConfigurationBuilder<? extends AbstractStoreConfiguration, ? extends StoreConfigurationBuilder<?,?>> storeConfigurationBuilder;
+   private final StoreConfigurationBuilder<? extends AbstractStoreConfiguration, ? extends StoreConfigurationBuilder<?, ?>> builder;
 
    protected AbstractStoreConfigurationChildBuilder(AbstractStoreConfigurationBuilder<? extends AbstractStoreConfiguration, ?> builder) {
-      super(builder.loaders());
-      this.storeConfigurationBuilder = builder;
+      super(builder);
+      this.builder = builder;
    }
 
    @Override
-   public AsyncStoreConfigurationBuilder async() {
-      return storeConfigurationBuilder.async();
+   public AsyncStoreConfigurationBuilder<S> async() {
+      return (AsyncStoreConfigurationBuilder<S>) builder.async();
    }
 
    @Override
-   public SingletonStoreConfigurationBuilder singletonStore() {
-      return storeConfigurationBuilder.singletonStore();
+   public SingletonStoreConfigurationBuilder<S> singletonStore() {
+      return (SingletonStoreConfigurationBuilder<S>) builder.singletonStore();
+   }
+
+   @Override
+   public S fetchPersistentState(boolean b) {
+      return (S) builder.fetchPersistentState(b);
+   }
+
+   @Override
+   public S ignoreModifications(boolean b) {
+      return (S) builder.ignoreModifications(b);
+   }
+
+   @Override
+   public S purgeOnStartup(boolean b) {
+      return (S) builder.purgeOnStartup(b);
+   }
+
+   @Override
+   public S purgerThreads(int i) {
+      return (S) builder.purgerThreads(i);
+   }
+
+   @Override
+   public S purgeSynchronously(boolean b) {
+      return (S) builder.purgeSynchronously(b);
    }
 
 }

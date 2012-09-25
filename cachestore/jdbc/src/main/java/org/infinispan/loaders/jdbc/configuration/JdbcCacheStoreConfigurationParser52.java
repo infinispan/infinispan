@@ -95,7 +95,7 @@ public class JdbcCacheStoreConfigurationParser52 implements ConfigurationParser<
             break;
          }
          default: {
-            Parser52.parseCommonStoreChildren(reader, builder);
+            parseCommonJdbcStoreElements(reader, element, builder);
             break;
          }
          }
@@ -116,7 +116,7 @@ public class JdbcCacheStoreConfigurationParser52 implements ConfigurationParser<
             break;
          }
          default: {
-            Parser52.parseCommonStoreChildren(reader, builder);
+            parseCommonJdbcStoreElements(reader, element, builder);
             break;
          }
          }
@@ -124,19 +124,49 @@ public class JdbcCacheStoreConfigurationParser52 implements ConfigurationParser<
       loadersBuilder.addStore(builder);
    }
 
-   private void parseCommonJdbcStoreAttributes(XMLExtendedStreamReader reader,
-         AbstractJdbcCacheStoreConfigurationBuilder<?, ?> builder) throws XMLStreamException {
+   private void parseCommonJdbcStoreElements(XMLExtendedStreamReader reader, Element element, AbstractJdbcCacheStoreConfigurationBuilder<?, ?> builder) throws XMLStreamException {
+      switch (element) {
+      case CONNECTION_POOL: {
+         parseConnectionPoolAttributes(reader, builder.connectionPool());
+         break;
+      }
+      case DATA_SOURCE: {
+         parseDataSourceAttributes(reader, builder.dataSource());
+         break;
+      }
+      case SIMPLE_CONNECTION: {
+         parseSimpleConnectionAttributes(reader, builder.simpleConnection());
+         break;
+      }
+      default: {
+         Parser52.parseCommonStoreChildren(reader, builder);
+         break;
+      }
+      }
+   }
+
+   private void parseCommonJdbcStoreAttributes(XMLExtendedStreamReader reader, AbstractJdbcCacheStoreConfigurationBuilder<?, ?> builder) throws XMLStreamException {
+      for (int i = 0; i < reader.getAttributeCount(); i++) {
+         Parser52.parseCommonStoreAttributes(reader, i, builder);
+      }
+   }
+
+   private void parseDataSourceAttributes(XMLExtendedStreamReader reader,
+         ManagedConnectionFactoryConfigurationBuilder<?> builder) throws XMLStreamException {
+      String jndiUrl = ParseUtils.requireSingleAttribute(reader, Attribute.JNDI_URL.getLocalName());
+      builder.jndiUrl(jndiUrl);
+      ParseUtils.requireNoContent(reader);
+   }
+
+   private void parseConnectionPoolAttributes(XMLExtendedStreamReader reader,
+         PooledConnectionFactoryConfigurationBuilder<?> builder) throws XMLStreamException {
       for (int i = 0; i < reader.getAttributeCount(); i++) {
          ParseUtils.requireNoNamespaceAttribute(reader, i);
          String value = replaceProperties(reader.getAttributeValue(i));
          Attribute attribute = Attribute.forName(reader.getAttributeLocalName(i));
          switch (attribute) {
-         case CONNECTION_FACTORY_CLASS: {
-            builder.connectionFactoryClass(value);
-            break;
-         }
-         case DATASOURCE: {
-            builder.datasource(value);
+         case CONNECTION_URL: {
+            builder.driverClass(value);
             break;
          }
          case DRIVER_CLASS: {
@@ -152,11 +182,42 @@ public class JdbcCacheStoreConfigurationParser52 implements ConfigurationParser<
             break;
          }
          default: {
-            Parser52.parseCommonStoreAttributes(reader, i, builder);
-            break;
+            throw ParseUtils.unexpectedAttribute(reader, i);
          }
          }
       }
+      ParseUtils.requireNoContent(reader);
+   }
+
+   private void parseSimpleConnectionAttributes(XMLExtendedStreamReader reader,
+         SimpleConnectionFactoryConfigurationBuilder<?> builder) throws XMLStreamException {
+      for (int i = 0; i < reader.getAttributeCount(); i++) {
+         ParseUtils.requireNoNamespaceAttribute(reader, i);
+         String value = replaceProperties(reader.getAttributeValue(i));
+         Attribute attribute = Attribute.forName(reader.getAttributeLocalName(i));
+         switch (attribute) {
+         case CONNECTION_URL: {
+            builder.driverClass(value);
+            break;
+         }
+         case DRIVER_CLASS: {
+            builder.driverClass(value);
+            break;
+         }
+         case PASSWORD: {
+            builder.password(value);
+            break;
+         }
+         case USERNAME: {
+            builder.username(value);
+            break;
+         }
+         default: {
+            throw ParseUtils.unexpectedAttribute(reader, i);
+         }
+         }
+      }
+      ParseUtils.requireNoContent(reader);
    }
 
    private void parseMixedKeyedJdbcStore(XMLExtendedStreamReader reader, LoadersConfigurationBuilder loadersBuilder)
@@ -175,7 +236,7 @@ public class JdbcCacheStoreConfigurationParser52 implements ConfigurationParser<
             break;
          }
          default: {
-            Parser52.parseCommonStoreChildren(reader, builder);
+            parseCommonJdbcStoreElements(reader, element, builder);
             break;
          }
          }

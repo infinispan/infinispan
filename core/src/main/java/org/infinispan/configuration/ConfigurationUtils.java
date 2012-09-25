@@ -16,28 +16,26 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston,
  * MA  02110-1301, USA.
  */
-package org.infinispan.configuration.cache;
+package org.infinispan.configuration;
+
+import org.infinispan.config.ConfigurationException;
 
 /**
- * LockSupportStoreConfiguration.
+ * ConfigurationUtils. Contains utility methods used in configuration
  *
  * @author Tristan Tarrant
  * @since 5.2
  */
-public interface LockSupportCacheStoreConfiguration extends StoreConfiguration {
+public final class ConfigurationUtils {
 
-   /**
-    * The timeout in milliseconds before giving up on acquiring a lock
-    *
-    * @return
-    */
-   long lockAcquistionTimeout();
+   private ConfigurationUtils() {}
 
-   /**
-    * This value determines the number of threads that can concurrently access the lock container
-    *
-    * @return
-    */
-   int lockConcurrencyLevel();
-
+   @SuppressWarnings("unchecked")
+   public static <B> Class<? extends Builder<B>> builderFor(B built) {
+      BuiltBy builtBy = built.getClass().getAnnotation(BuiltBy.class);
+      if (builtBy == null) {
+         throw new ConfigurationException("Missing BuiltBy annotation for configuration bean " + built.getClass().getName());
+      }
+      return (Class<? extends Builder<B>>) builtBy.value();
+   }
 }

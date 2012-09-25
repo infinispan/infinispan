@@ -18,6 +18,7 @@
  */
 package org.infinispan.configuration.cache;
 
+import org.infinispan.configuration.Builder;
 import org.infinispan.distribution.group.Group;
 import org.infinispan.distribution.group.Grouper;
 
@@ -30,7 +31,7 @@ import java.util.List;
  * @author pmuir
  *
  */
-public class GroupsConfigurationBuilder extends AbstractClusteringConfigurationChildBuilder<GroupsConfiguration> {
+public class GroupsConfigurationBuilder extends AbstractClusteringConfigurationChildBuilder implements Builder<GroupsConfiguration> {
 
    private boolean enabled = false;
    private List<Grouper<?>> groupers = new LinkedList<Grouper<?>>();

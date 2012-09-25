@@ -18,13 +18,15 @@
  */
 package org.infinispan.configuration.cache;
 
+import org.infinispan.configuration.Builder;
+
 /**
  * Defines recovery configuration for the cache.
  *
  * @author pmuir
  *
  */
-public class RecoveryConfigurationBuilder extends AbstractTransportConfigurationChildBuilder<RecoveryConfiguration> {
+public class RecoveryConfigurationBuilder extends AbstractTransportConfigurationChildBuilder implements Builder<RecoveryConfiguration> {
 
    private boolean enabled = true;
    private String recoveryInfoCacheName = "__recoveryInfoCacheName__";
