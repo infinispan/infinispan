@@ -22,6 +22,8 @@
  */
 package org.infinispan.query.backend;
 
+import java.util.UUID;
+
 import org.infinispan.query.test.CustomKey;
 import org.infinispan.query.test.CustomKey2;
 import org.infinispan.query.test.CustomKey3;
@@ -43,7 +45,8 @@ public class KeyTransformationHandlerTest {
    Object key = null;
    
    private KeyTransformationHandler keyTransformationHandler;
-   
+   private static final UUID randomUUID = UUID.randomUUID();
+
    @BeforeMethod
    public void beforeMethod() {
       keyTransformationHandler = new KeyTransformationHandler();
@@ -76,6 +79,9 @@ public class KeyTransformationHandlerTest {
 
       s = keyTransformationHandler.keyToString(1.0);
       assert s.equals("D:1.0");
+
+      s = keyTransformationHandler.keyToString(randomUUID);
+      assert s.equals("U:"+randomUUID);
    }
 
    public void testStringToKeyWithStringAndPrimitives() {
@@ -115,6 +121,9 @@ public class KeyTransformationHandlerTest {
       assert key.getClass().equals(Character.class);
       assert key.equals('9');
 
+      key = keyTransformationHandler.stringToKey("U:"+randomUUID.toString(), Thread.currentThread().getContextClassLoader());
+      assert key.getClass().equals(UUID.class);
+      assert key.equals(randomUUID);
    }
 
    public void testStringToKeyWithCustomTransformable() {
