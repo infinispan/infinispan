@@ -297,28 +297,36 @@ public class TransactionFactory {
       if (batchingEnabled) {
          txFactoryEnum = TxFactoryEnum.NODLD_NORECOVERY_NOXA;
       } else {
-         if (dldEnabled && recoveryEnabled && xa) {
-            txFactoryEnum = TxFactoryEnum.DLD_RECOVERY_XA;
-         } else if (dldEnabled && !recoveryEnabled && xa) {
-            txFactoryEnum = TxFactoryEnum.DLD_NORECOVERY_XA;
-         } else if (dldEnabled && !recoveryEnabled && !xa) {
-            txFactoryEnum = TxFactoryEnum.DLD_NORECOVERY_NOXA;
-         } else  if (!dldEnabled && recoveryEnabled && xa) {
-            txFactoryEnum = TxFactoryEnum.NODLD_RECOVERY_XA;
-         } else if (!dldEnabled && !recoveryEnabled && xa) {
-            txFactoryEnum = TxFactoryEnum.NODLD_NORECOVERY_XA;
-         } else if (!dldEnabled && !recoveryEnabled && !xa) {
-            txFactoryEnum = TxFactoryEnum.NODLD_NORECOVERY_NOXA;
+         if (dldEnabled) {
+            if (recoveryEnabled) {
+               if (xa) {
+                  txFactoryEnum = TxFactoryEnum.DLD_RECOVERY_XA;
+               } else { //using synchronisation enlistment
+                  txFactoryEnum = TxFactoryEnum.DLD_NORECOVERY_NOXA;
+               }
+            } else {
+               if (xa) {
+                  txFactoryEnum = TxFactoryEnum.DLD_NORECOVERY_XA;
+               } else {
+                  txFactoryEnum = TxFactoryEnum.DLD_NORECOVERY_NOXA;
+               }
+            }
+         } else {
+            if (recoveryEnabled) {
+               if (xa) {
+                  txFactoryEnum = TxFactoryEnum.NODLD_RECOVERY_XA;
+               } else { //using synchronisation enlistment
+                  txFactoryEnum = TxFactoryEnum.NODLD_NORECOVERY_NOXA;
+               }
+            } else {
+               if (xa) {
+                  txFactoryEnum = TxFactoryEnum.NODLD_NORECOVERY_XA;
+               } else {
+                  txFactoryEnum = TxFactoryEnum.NODLD_NORECOVERY_NOXA;
+               }
+            }
          }
       }
-
       log.tracef("Setting factory enum to %s", txFactoryEnum);
-
-      if (txFactoryEnum == null) {
-         log.unsupportedTransactionConfiguration(dldEnabled, recoveryEnabled, xa);
-         throw new IllegalStateException(String.format(
-               "Unsupported combination (dldEnabled, recoveryEnabled, xa) = (%s, %s, %s)",
-               dldEnabled, recoveryEnabled, xa));
-      }
    }
 }
