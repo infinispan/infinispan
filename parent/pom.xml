@@ -182,6 +182,7 @@
       <version.maven.bundle>2.3.7</version.maven.bundle>
       <version.maven.source>2.1.2</version.maven.source>
       <version.jacoco>0.5.10.201208310627</version.jacoco>
+      <version.asm>3.3.1</version.asm>
    </properties>
    <dependencyManagement>
       <dependencies>
@@ -1582,6 +1583,49 @@
          <build>
             <plugins>
                <plugin>
+                  <groupId>org.apache.maven.plugins</groupId>
+                  <artifactId>maven-dependency-plugin</artifactId>
+                  <executions>
+                     <!-- Copy the ant tasks jar. Needed for ts.jacoco.report-ant . -->
+                     <execution>
+                        <id>jacoco-dependency-ant</id>
+                        <goals>
+                           <goal>copy</goal>
+                        </goals>
+                        <phase>process-test-resources</phase>
+                        <inherited>false</inherited>
+                        <configuration>
+                           <artifactItems>
+                              <artifactItem>
+                                 <groupId>org.jacoco</groupId>
+                                 <artifactId>org.jacoco.ant</artifactId>
+                                 <version>${version.jacoco}</version>
+                              </artifactItem>
+                              <artifactItem>
+                                 <groupId>org.jacoco</groupId>
+                                 <artifactId>org.jacoco.core</artifactId>
+                                 <version>${version.jacoco}</version>
+                              </artifactItem>
+                              <artifactItem>
+                                 <groupId>org.jacoco</groupId>
+                                 <artifactId>org.jacoco.report</artifactId>
+                                 <version>${version.jacoco}</version>
+                              </artifactItem>
+                              <artifactItem>
+                                 <groupId>asm</groupId>
+                                 <artifactId>asm-all</artifactId>
+                                 <version>${version.asm}</version>
+                              </artifactItem>
+                           </artifactItems>
+                           <stripVersion>true</stripVersion>
+                           <outputDirectory>${basedir}/target/jacoco-jars</outputDirectory>
+                        </configuration>
+                     </execution>
+                  </executions>
+               </plugin>
+
+                <!-- Starting jacoco agent for recording code coverage. -->
+               <plugin>
                   <groupId>org.jacoco</groupId>
                   <artifactId>jacoco-maven-plugin</artifactId>
                   <executions>
@@ -1596,57 +1640,6 @@
                   <groupId>org.apache.maven.plugins</groupId>
                   <artifactId>maven-surefire-plugin</artifactId>
                   <inherited>false</inherited>
-               </plugin>
-               <plugin>
-                  <groupId>org.apache.maven.plugins</groupId>
-                  <artifactId>maven-antrun-plugin</artifactId>
-                  <version>1.7</version>
-                  <executions>
-                     <execution>
-                        <id>jacoco-report</id>
-                           <!-- this must happen after Tomcat has been shut down -->
-                           <phase>verify</phase>
-                           <configuration>
-                               <!-- we use the jacoco ant task because the maven plugin does not
-                            support enough configuration options for report generation -->
-                              <target xmlns:jacoco="antlib:org.jacoco.ant">
-                                 <taskdef uri="antlib:org.jacoco.ant" resource="org/jacoco/ant/antlib.xml"
-                                            classpathref="maven.plugin.classpath" />
-                                 <jacoco:report>
-                                    <executiondata>
-                                       <fileset dir="..">
-                                          <include name="**/jacoco.exec" />
-                                          </fileset>
-                                    </executiondata>
-                                    <structure name="infinispan">
-                                       <classfiles>
-                                          <fileset dir="..">
-                                             <include name="**/target/classes/**/*.class" />
-                                          </fileset>
-                                       </classfiles>
-                                       <sourcefiles encoding="UTF-8">
-                                          <dirset dir="..">
-                                             <include name="**/src/main/java" />
-                                          </dirset>
-                                       </sourcefiles>
-                                    </structure>
-                                    <!-- to produce reports in different formats. -->
-                                    <html destdir="target/jacoco-html" />
-                                 </jacoco:report>
-                              </target>
-                           </configuration>
-                           <goals>
-                              <goal>run</goal>
-                           </goals>
-                     </execution>
-                  </executions>
-                  <dependencies>
-                     <dependency>
-                        <groupId>org.jacoco</groupId>
-                        <artifactId>org.jacoco.ant</artifactId>
-                        <version>${version.jacoco}</version>
-                     </dependency>
-                  </dependencies>
                </plugin>
             </plugins>
          </build>
