@@ -198,26 +198,29 @@ public class StateTransferInterceptor extends CommandInterceptor {   //todo [ani
     * @throws Throwable
     */
    private Object handleTxCommand(InvocationContext ctx, TransactionBoundaryCommand command) throws Throwable {
-      return handleTopologyAffectedCommand(ctx, command, false);
+      return handleTopologyAffectedCommand(ctx, command);
    }
 
    private Object handleWriteCommand(InvocationContext ctx, WriteCommand command) throws Throwable {
-      return handleTopologyAffectedCommand(ctx, command, command.hasFlag(Flag.CACHE_MODE_LOCAL));
+      return handleTopologyAffectedCommand(ctx, command);
    }
 
    @Override
    protected Object handleDefault(InvocationContext ctx, VisitableCommand command) throws Throwable {
-      if (command instanceof FlagAffectedCommand) {
-         FlagAffectedCommand flaggedCommand = (FlagAffectedCommand) command;
-         return handleTopologyAffectedCommand(ctx, flaggedCommand, flaggedCommand.hasFlag(Flag.CACHE_MODE_LOCAL));
+      if (command instanceof TopologyAffectedCommand) {
+         return handleTopologyAffectedCommand(ctx, (TopologyAffectedCommand) command);
       } else {
          return invokeNextInterceptor(ctx, command);
       }
    }
 
-   private Object handleTopologyAffectedCommand(InvocationContext ctx, TopologyAffectedCommand command, boolean cacheModeLocal) throws Throwable {
+   private Object handleTopologyAffectedCommand(InvocationContext ctx, TopologyAffectedCommand command) throws Throwable {
+      final boolean isTxCommand = command instanceof TransactionBoundaryCommand;
+      boolean cacheModeLocal = false;
+      if (command instanceof FlagAffectedCommand) {
+         cacheModeLocal = ((FlagAffectedCommand)command).hasFlag(Flag.CACHE_MODE_LOCAL);
+      }
       if (cacheModeLocal) {
-         final boolean isTxCommand = command instanceof TransactionBoundaryCommand;
          try {
             if (isTxCommand) {
                stateTransferLock.transactionsSharedLock();
@@ -230,19 +233,18 @@ public class StateTransferInterceptor extends CommandInterceptor {   //todo [ani
          }
       }
 
-      Set<Address> newTargets = null;
       stateTransferLock.commandsSharedLock();
-      CacheTopology cacheTopology = stateTransferManager.getCacheTopology();
+      final CacheTopology cacheTopology = stateTransferManager.getCacheTopology();
       final int topologyId = cacheTopology.getTopologyId();
       final ConsistentHash readCh = cacheTopology.getReadConsistentHash();
       final ConsistentHash writeCh = cacheTopology.getWriteConsistentHash();
+      Set<Address> newTargets = null;
 
       // set the topology id if it was not set before (ie. this is not a remote or forwarded command)
       if (command.getTopologyId() == -1) {
          command.setTopologyId(cacheTopology.getTopologyId());
       }
       try {
-         final boolean isTxCommand = command instanceof TransactionBoundaryCommand;
          if (isTxCommand) {
             stateTransferLock.transactionsSharedLock();
          }
