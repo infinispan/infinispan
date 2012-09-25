@@ -31,8 +31,7 @@ import org.infinispan.util.TypedProperties;
  *
  * @since 5.2
  */
-public class LegacyStoreConfigurationBuilder extends AbstractStoreConfigurationBuilder<LegacyStoreConfiguration, LegacyStoreConfigurationBuilder> implements
-      StoreConfigurationChildBuilder {
+public class LegacyStoreConfigurationBuilder extends AbstractStoreConfigurationBuilder<LegacyStoreConfiguration, LegacyStoreConfigurationBuilder> {
 
    private CacheLoader cacheStore; // TODO: in 6.0, as we deprecate the cacheLoader() method, narrow this type to CacheStore
 

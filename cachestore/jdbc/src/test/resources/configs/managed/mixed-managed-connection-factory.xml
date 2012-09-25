@@ -66,9 +66,8 @@
             writeSkewCheck="false"
             concurrencyLevel="500" useLockStriping="false"/>
       <loaders>
-         <mixedKeyedJdbcStore fetchPersistentState="false" ignoreModifications="false" purgeOnStartup="false"
-            connectionFactoryClass="org.infinispan.loaders.jdbc.connectionfactory.ManagedConnectionFactory"
-            datasource="java:/MixedStoreWithManagedConnectionTest/DS" >
+         <mixedKeyedJdbcStore fetchPersistentState="false" ignoreModifications="false" purgeOnStartup="false">
+            <dataSource jndiUrl="java:/MixedStoreWithManagedConnectionTest/DS" />
             <stringKeyedTable prefix="ISPN_MIXED_STR_TABLE" createOnStart="true" dropOnExit="true">
                <idColumn name="ID_COLUMN" type="VARCHAR(255)" />
                <dataColumn name="DATA_COLUMN" type="BINARY" />

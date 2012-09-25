@@ -138,7 +138,7 @@ public class JdbcCacheStoreConfigurationParserAS7 implements ConfigurationParser
          Attribute attribute = Attribute.forName(reader.getAttributeLocalName(i));
          switch (attribute) {
          case DATASOURCE: {
-            builder.datasource(value);
+            builder.dataSource().jndiUrl(value);
             break;
          }
          default: {

@@ -18,7 +18,7 @@
  */
 package org.infinispan.configuration.cache;
 
-abstract class AbstractClusteringConfigurationChildBuilder<T> extends AbstractConfigurationChildBuilder<T> implements ClusteringConfigurationChildBuilder {
+abstract class AbstractClusteringConfigurationChildBuilder extends AbstractConfigurationChildBuilder implements ClusteringConfigurationChildBuilder {
 
    private final ClusteringConfigurationBuilder clusteringBuilder;
 
@@ -31,17 +31,17 @@ abstract class AbstractClusteringConfigurationChildBuilder<T> extends AbstractCo
    public AsyncConfigurationBuilder async() {
       return clusteringBuilder.async();
    }
-   
+
    @Override
    public HashConfigurationBuilder hash() {
       return clusteringBuilder.hash();
    }
-   
+
    @Override
    public L1ConfigurationBuilder l1() {
       return clusteringBuilder.l1();
    }
-   
+
    @Override
    public StateTransferConfigurationBuilder stateTransfer() {
       return clusteringBuilder.stateTransfer();
@@ -51,9 +51,9 @@ abstract class AbstractClusteringConfigurationChildBuilder<T> extends AbstractCo
    public SyncConfigurationBuilder sync() {
       return clusteringBuilder.sync();
    }
-   
+
    protected ClusteringConfigurationBuilder getClusteringBuilder() {
       return clusteringBuilder;
    }
-   
+
 }

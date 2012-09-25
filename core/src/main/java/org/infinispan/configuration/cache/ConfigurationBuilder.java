@@ -27,7 +27,7 @@ import java.util.List;
 
 import org.infinispan.config.ConfigurationException;
 import org.infinispan.configuration.Builder;
-import org.infinispan.configuration.BuiltBy;
+import org.infinispan.configuration.ConfigurationUtils;
 
 public class ConfigurationBuilder implements ConfigurationChildBuilder {
 
@@ -173,13 +173,14 @@ public class ConfigurationBuilder implements ConfigurationChildBuilder {
       }
    }
 
+   @Override
    public SitesConfigurationBuilder sites() {
       return sites;
    }
 
    @SuppressWarnings("unchecked")
    public void validate() {
-      for (AbstractConfigurationChildBuilder<?> validatable:
+      for (Builder<?> validatable:
             asList(clustering, dataContainer, deadlockDetection, eviction, expiration, indexing,
                    invocationBatching, jmxStatistics, loaders, locking, storeAsBinary, transaction,
                    versioning, unsafe, sites)) {
@@ -231,11 +232,7 @@ public class ConfigurationBuilder implements ConfigurationChildBuilder {
       this.versioning.read(template.versioning());
 
       for (Object c : template.modules().values()) {
-         BuiltBy builtBy = c.getClass().getAnnotation(BuiltBy.class);
-         if (builtBy==null) {
-            throw new ConfigurationException("Missing BuiltBy annotation for configuration bean "+c.getClass().getName());
-         }
-         Builder<Object> builder = (Builder<Object>) this.addModule(builtBy.value());
+         Builder<Object> builder = this.addModule(ConfigurationUtils.builderFor(c));
          builder.read(c);
       }
 

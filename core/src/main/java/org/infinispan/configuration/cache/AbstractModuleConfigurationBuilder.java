@@ -24,7 +24,7 @@ package org.infinispan.configuration.cache;
  * @author Tristan Tarrant
  * @since 5.2
  */
-public abstract class AbstractModuleConfigurationBuilder<T> extends AbstractConfigurationChildBuilder<T> {
+public abstract class AbstractModuleConfigurationBuilder extends AbstractConfigurationChildBuilder {
 
    protected AbstractModuleConfigurationBuilder(ConfigurationBuilder builder) {
       super(builder);

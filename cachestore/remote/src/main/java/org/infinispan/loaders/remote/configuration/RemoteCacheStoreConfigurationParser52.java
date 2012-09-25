@@ -122,7 +122,7 @@ public class RemoteCacheStoreConfigurationParser52 implements ConfigurationParse
          Element element = Element.forName(reader.getLocalName());
          switch (element) {
          case PROPERTIES: {
-            builder.withProperties(Parser52.parseProperties(reader));
+            builder.withExecutorProperties(Parser52.parseProperties(reader));
             break;
          }
          default: {

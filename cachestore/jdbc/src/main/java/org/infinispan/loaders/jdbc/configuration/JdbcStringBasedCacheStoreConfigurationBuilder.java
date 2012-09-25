@@ -31,15 +31,14 @@ import org.infinispan.util.TypedProperties;
  * @author Tristan Tarrant
  * @since 5.2
  */
-public class JdbcStringBasedCacheStoreConfigurationBuilder
-      extends
+public class JdbcStringBasedCacheStoreConfigurationBuilder extends
       AbstractJdbcCacheStoreConfigurationBuilder<JdbcStringBasedCacheStoreConfiguration, JdbcStringBasedCacheStoreConfigurationBuilder> {
    private String key2StringMapper = DefaultTwoWayKey2StringMapper.class.getName();
-   private TableManipulationConfigurationBuilder table;
+   private StringTableManipulationConfigurationBuilder table;
 
    public JdbcStringBasedCacheStoreConfigurationBuilder(LoadersConfigurationBuilder builder) {
       super(builder);
-      table = new TableManipulationConfigurationBuilder(this);
+      table = new StringTableManipulationConfigurationBuilder(this);
    }
 
    @Override
@@ -48,8 +47,8 @@ public class JdbcStringBasedCacheStoreConfigurationBuilder
    }
 
    /**
-    * The class name of a {@link Key2StringMapper} to use for mapping keys to strings suitable for storage in a database table.
-    * Defaults to {@link DefaultTwoWayKey2StringMapper}
+    * The class name of a {@link Key2StringMapper} to use for mapping keys to strings suitable for
+    * storage in a database table. Defaults to {@link DefaultTwoWayKey2StringMapper}
     */
    public JdbcStringBasedCacheStoreConfigurationBuilder key2StringMapper(String key2StringMapper) {
       this.key2StringMapper = key2StringMapper;
@@ -57,8 +56,8 @@ public class JdbcStringBasedCacheStoreConfigurationBuilder
    }
 
    /**
-    * The class of a {@link Key2StringMapper} to use for mapping keys to strings suitable for storage in a database table.
-    * Defaults to {@link DefaultTwoWayKey2StringMapper}
+    * The class of a {@link Key2StringMapper} to use for mapping keys to strings suitable for
+    * storage in a database table. Defaults to {@link DefaultTwoWayKey2StringMapper}
     */
    public JdbcStringBasedCacheStoreConfigurationBuilder key2StringMapper(Class<? extends Key2StringMapper> klass) {
       this.key2StringMapper = klass.getName();
@@ -68,7 +67,7 @@ public class JdbcStringBasedCacheStoreConfigurationBuilder
    /**
     * Allows configuration of table-specific parameters such as column names and types
     */
-   public TableManipulationConfigurationBuilder table() {
+   public StringTableManipulationConfigurationBuilder table() {
       return table;
    }
 
@@ -78,10 +77,8 @@ public class JdbcStringBasedCacheStoreConfigurationBuilder
 
    @Override
    public JdbcStringBasedCacheStoreConfiguration create() {
-      return new JdbcStringBasedCacheStoreConfiguration(key2StringMapper, table.create(), driverClass, connectionUrl,
-            username, password, connectionFactoryClass, datasource, lockAcquistionTimeout, lockConcurrencyLevel,
-            purgeOnStartup, purgeSynchronously, purgerThreads, fetchPersistentState, ignoreModifications,
-            TypedProperties.toTypedProperties(properties), async.create(), singletonStore.create());
+      return new JdbcStringBasedCacheStoreConfiguration(key2StringMapper, table.create(), connectionFactory.create(), lockAcquistionTimeout, lockConcurrencyLevel, purgeOnStartup,
+            purgeSynchronously, purgerThreads, fetchPersistentState, ignoreModifications, TypedProperties.toTypedProperties(properties), async.create(), singletonStore.create());
    }
 
    @Override
@@ -90,6 +87,28 @@ public class JdbcStringBasedCacheStoreConfigurationBuilder
       this.key2StringMapper = template.key2StringMapper();
       this.table.read(template.table());
       return this;
+   }
+
+   public class StringTableManipulationConfigurationBuilder extends TableManipulationConfigurationBuilder<JdbcStringBasedCacheStoreConfigurationBuilder, StringTableManipulationConfigurationBuilder> {
+
+      StringTableManipulationConfigurationBuilder(AbstractJdbcCacheStoreConfigurationBuilder<?, JdbcStringBasedCacheStoreConfigurationBuilder> builder) {
+         super(builder);
+      }
+
+      @Override
+      public StringTableManipulationConfigurationBuilder self() {
+         return this;
+      }
+
+      @Override
+      public PooledConnectionFactoryConfigurationBuilder<JdbcStringBasedCacheStoreConfigurationBuilder> connectionPool() {
+         return JdbcStringBasedCacheStoreConfigurationBuilder.this.connectionPool();
+      }
+
+      @Override
+      public ManagedConnectionFactoryConfigurationBuilder<JdbcStringBasedCacheStoreConfigurationBuilder> dataSource() {
+         return JdbcStringBasedCacheStoreConfigurationBuilder.this.dataSource();
+      }
    }
 
 }

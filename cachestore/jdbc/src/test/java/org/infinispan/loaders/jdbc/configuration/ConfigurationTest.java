@@ -18,11 +18,10 @@
  */
 package org.infinispan.loaders.jdbc.configuration;
 
+import org.h2.Driver;
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.loaders.jdbc.binary.JdbcBinaryCacheStoreConfig;
-import org.infinispan.loaders.jdbc.connectionfactory.ManagedConnectionFactory;
-import org.infinispan.loaders.jdbc.connectionfactory.PooledConnectionFactory;
 import org.infinispan.loaders.jdbc.mixed.JdbcMixedCacheStoreConfig;
 import org.infinispan.loaders.jdbc.stringbased.JdbcStringBasedCacheStoreConfig;
 import org.testng.annotations.Test;
@@ -35,26 +34,29 @@ public class ConfigurationTest {
    public void testImplicitPooledConnectionFactory() {
       ConfigurationBuilder b = new ConfigurationBuilder();
       b.loaders().addStore(JdbcBinaryCacheStoreConfigurationBuilder.class)
-         .connectionUrl(JDBC_URL);
+         .connectionPool().connectionUrl(JDBC_URL);
       Configuration configuration = b.build();
       JdbcBinaryCacheStoreConfiguration store = (JdbcBinaryCacheStoreConfiguration) configuration.loaders().cacheLoaders().get(0);
-      assert store.connectionFactoryClass().equals(PooledConnectionFactory.class.getName());
+      assert store.connectionFactory() instanceof PooledConnectionFactoryConfiguration;
    }
 
    public void testImplicitManagedConnectionFactory() {
       ConfigurationBuilder b = new ConfigurationBuilder();
       b.loaders().addStore(JdbcBinaryCacheStoreConfigurationBuilder.class)
-         .datasource("java:jboss/datasources/ExampleDS");
+         .dataSource().jndiUrl("java:jboss/datasources/ExampleDS");
       Configuration configuration = b.build();
       JdbcBinaryCacheStoreConfiguration store = (JdbcBinaryCacheStoreConfiguration) configuration.loaders().cacheLoaders().get(0);
-      assert store.connectionFactoryClass().equals(ManagedConnectionFactory.class.getName());
+      assert store.connectionFactory() instanceof ManagedConnectionFactoryConfiguration;
    }
 
    public void testJdbcBinaryCacheStoreConfigurationAdaptor() {
       ConfigurationBuilder b = new ConfigurationBuilder();
       b.loaders().addStore(JdbcBinaryCacheStoreConfigurationBuilder.class)
-         .connectionUrl(JDBC_URL)
-         .connectionFactoryClass(PooledConnectionFactory.class)
+         .connectionPool()
+            .connectionUrl(JDBC_URL)
+            .username("dbuser")
+            .password("dbpass")
+            .driverClass(Driver.class)
          .fetchPersistentState(true)
          .lockConcurrencyLevel(32)
          .table()
@@ -65,7 +67,8 @@ public class ConfigurationTest {
          .async().enable();
       Configuration configuration = b.build();
       JdbcBinaryCacheStoreConfiguration store = (JdbcBinaryCacheStoreConfiguration) configuration.loaders().cacheLoaders().get(0);
-      assert store.connectionUrl().equals(JDBC_URL);
+      assert store.connectionFactory() instanceof PooledConnectionFactoryConfiguration;
+      assert ((PooledConnectionFactoryConfiguration)store.connectionFactory()).connectionUrl().equals(JDBC_URL);
       assert store.table().tableNamePrefix().equals("BINARY_");
       assert store.table().idColumnName().equals("id");
       assert store.table().idColumnType().equals("VARCHAR");
@@ -81,7 +84,8 @@ public class ConfigurationTest {
       b.loaders().addStore(JdbcBinaryCacheStoreConfigurationBuilder.class).read(store);
       Configuration configuration2 = b.build();
       JdbcBinaryCacheStoreConfiguration store2 = (JdbcBinaryCacheStoreConfiguration) configuration2.loaders().cacheLoaders().get(0);
-      assert store2.connectionUrl().equals(JDBC_URL);
+      assert store2.connectionFactory() instanceof PooledConnectionFactoryConfiguration;
+      assert ((PooledConnectionFactoryConfiguration)store2.connectionFactory()).connectionUrl().equals(JDBC_URL);
       assert store2.table().tableNamePrefix().equals("BINARY_");
       assert store2.table().idColumnName().equals("id");
       assert store2.table().idColumnType().equals("VARCHAR");
@@ -110,8 +114,7 @@ public class ConfigurationTest {
    public void testJdbcMixedCacheStoreConfigurationAdaptor() {
       ConfigurationBuilder b = new ConfigurationBuilder();
       JdbcMixedCacheStoreConfigurationBuilder mixedBuilder = b.loaders().addStore(JdbcMixedCacheStoreConfigurationBuilder.class)
-         .connectionUrl(JDBC_URL)
-         .connectionFactoryClass(PooledConnectionFactory.class)
+         .connectionPool().connectionUrl(JDBC_URL)
          .fetchPersistentState(true)
          .lockConcurrencyLevel(32);
       mixedBuilder.async().enable();
@@ -130,7 +133,8 @@ public class ConfigurationTest {
 
       Configuration configuration = b.build();
       JdbcMixedCacheStoreConfiguration store = (JdbcMixedCacheStoreConfiguration) configuration.loaders().cacheLoaders().get(0);
-      assert store.connectionUrl().equals(JDBC_URL);
+      assert store.connectionFactory() instanceof PooledConnectionFactoryConfiguration;
+      assert ((PooledConnectionFactoryConfiguration)store.connectionFactory()).connectionUrl().equals(JDBC_URL);
       assert store.binaryTable().tableNamePrefix().equals("BINARY_");
       assert store.binaryTable().idColumnName().equals("id");
       assert store.binaryTable().idColumnType().equals("VARCHAR");
@@ -153,7 +157,8 @@ public class ConfigurationTest {
       b.loaders().addStore(JdbcMixedCacheStoreConfigurationBuilder.class).read(store);
       Configuration configuration2 = b.build();
       JdbcMixedCacheStoreConfiguration store2 = (JdbcMixedCacheStoreConfiguration) configuration2.loaders().cacheLoaders().get(0);
-      assert store2.connectionUrl().equals(JDBC_URL);
+      assert store2.connectionFactory() instanceof PooledConnectionFactoryConfiguration;
+      assert ((PooledConnectionFactoryConfiguration)store2.connectionFactory()).connectionUrl().equals(JDBC_URL);
       assert store2.binaryTable().idColumnName().equals("id");
       assert store2.binaryTable().idColumnType().equals("VARCHAR");
       assert store2.binaryTable().dataColumnName().equals("datum");
@@ -181,8 +186,8 @@ public class ConfigurationTest {
    public void testJdbcStringCacheStoreConfigurationAdaptor() {
       ConfigurationBuilder b = new ConfigurationBuilder();
       b.loaders().addStore(JdbcStringBasedCacheStoreConfigurationBuilder.class)
-         .connectionUrl(JDBC_URL)
-         .connectionFactoryClass(PooledConnectionFactory.class)
+         .connectionPool()
+            .connectionUrl(JDBC_URL)
          .fetchPersistentState(true)
          .lockConcurrencyLevel(32)
          .table()
@@ -193,7 +198,8 @@ public class ConfigurationTest {
          .async().enable();
       Configuration configuration = b.build();
       JdbcStringBasedCacheStoreConfiguration store = (JdbcStringBasedCacheStoreConfiguration) configuration.loaders().cacheLoaders().get(0);
-      assert store.connectionUrl().equals(JDBC_URL);
+      assert store.connectionFactory() instanceof PooledConnectionFactoryConfiguration;
+      assert ((PooledConnectionFactoryConfiguration)store.connectionFactory()).connectionUrl().equals(JDBC_URL);
       assert store.table().tableNamePrefix().equals("STRINGS_");
       assert store.table().idColumnName().equals("id");
       assert store.table().idColumnType().equals("VARCHAR");
@@ -209,7 +215,8 @@ public class ConfigurationTest {
       b.loaders().addStore(JdbcStringBasedCacheStoreConfigurationBuilder.class).read(store);
       Configuration configuration2 = b.build();
       JdbcStringBasedCacheStoreConfiguration store2 = (JdbcStringBasedCacheStoreConfiguration) configuration2.loaders().cacheLoaders().get(0);
-      assert store2.connectionUrl().equals(JDBC_URL);
+      assert store2.connectionFactory() instanceof PooledConnectionFactoryConfiguration;
+      assert ((PooledConnectionFactoryConfiguration)store2.connectionFactory()).connectionUrl().equals(JDBC_URL);
       assert store2.table().tableNamePrefix().equals("STRINGS_");
       assert store2.table().idColumnName().equals("id");
       assert store2.table().idColumnType().equals("VARCHAR");

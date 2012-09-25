@@ -27,19 +27,16 @@ import org.infinispan.loaders.jdbc.stringbased.JdbcStringBasedCacheStoreConfig;
 import org.infinispan.util.TypedProperties;
 
 @BuiltBy(JdbcStringBasedCacheStoreConfigurationBuilder.class)
-public class JdbcStringBasedCacheStoreConfiguration extends AbstractJdbcCacheStoreConfiguration implements LegacyLoaderAdapter<JdbcStringBasedCacheStoreConfig>{
+public class JdbcStringBasedCacheStoreConfiguration extends AbstractJdbcCacheStoreConfiguration implements LegacyLoaderAdapter<JdbcStringBasedCacheStoreConfig> {
 
    private final String key2StringMapper;
    private final TableManipulationConfiguration table;
 
-   protected JdbcStringBasedCacheStoreConfiguration(String key2StringMapper, TableManipulationConfiguration table,
-         String driverClass, String connectionUrl, String userName, String password, String connectionFactoryClass,
-         String datasourceJndiLocation, long lockAcquistionTimeout, int lockConcurrencyLevel, boolean purgeOnStartup,
-         boolean purgeSynchronously, int purgerThreads, boolean fetchPersistentState, boolean ignoreModifications,
-         TypedProperties properties, AsyncStoreConfiguration async, SingletonStoreConfiguration singletonStore) {
-      super(driverClass, connectionUrl, userName, password, connectionFactoryClass, datasourceJndiLocation,
-            lockAcquistionTimeout, lockConcurrencyLevel, purgeOnStartup, purgeSynchronously, purgerThreads,
-            fetchPersistentState, ignoreModifications, properties, async, singletonStore);
+   protected JdbcStringBasedCacheStoreConfiguration(String key2StringMapper, TableManipulationConfiguration table, ConnectionFactoryConfiguration connectionFactory,
+         long lockAcquistionTimeout, int lockConcurrencyLevel, boolean purgeOnStartup, boolean purgeSynchronously, int purgerThreads, boolean fetchPersistentState,
+         boolean ignoreModifications, TypedProperties properties, AsyncStoreConfiguration async, SingletonStoreConfiguration singletonStore) {
+      super(connectionFactory, lockAcquistionTimeout, lockConcurrencyLevel, purgeOnStartup, purgeSynchronously, purgerThreads, fetchPersistentState, ignoreModifications,
+            properties, async, singletonStore);
       this.key2StringMapper = key2StringMapper;
       this.table = table;
    }
@@ -59,13 +56,8 @@ public class JdbcStringBasedCacheStoreConfiguration extends AbstractJdbcCacheSto
       // StoreConfiguration
       LegacyConfigurationAdaptor.adapt(this, config);
 
-      // AbstractJdbcCacheStoreConfiguration
-      config.setConnectionFactoryClass(connectionFactoryClass());
-      config.setConnectionUrl(connectionUrl());
-      config.setDatasourceJndiLocation(datasource());
-      config.setDriverClass(driverClass());
-      config.setUserName(userName());
-      config.setPassword(password());
+      // ConnectionFactory
+      ((LegacyConnectionFactoryAdaptor) connectionFactory()).adapt(config);
 
       // JdbcStringBasedCacheStoreConfiguration
       config.setKey2StringMapperClass(key2StringMapper);
@@ -84,20 +76,15 @@ public class JdbcStringBasedCacheStoreConfiguration extends AbstractJdbcCacheSto
       config.setTimestampColumnType(table.timestampColumnType());
       config.setTableNamePrefix(table.tableNamePrefix());
 
-      return config ;
+      return config;
    }
 
    @Override
    public String toString() {
-      return "JdbcStringBasedCacheStoreConfiguration [key2StringMapper=" + key2StringMapper + ", table=" + table
-            + ", driverClass()=" + driverClass() + ", connectionUrl()=" + connectionUrl() + ", userName()="
-            + userName() + ", password()=" + password() + ", connectionFactoryClass()=" + connectionFactoryClass()
-            + ", datasourceJndiLocation()=" + datasource() + ", lockAcquistionTimeout()="
-            + lockAcquistionTimeout() + ", lockConcurrencyLevel()=" + lockConcurrencyLevel() + ", async()=" + async()
-            + ", singletonStore()=" + singletonStore() + ", purgeOnStartup()=" + purgeOnStartup()
-            + ", purgeSynchronously()=" + purgeSynchronously() + ", purgerThreads()=" + purgerThreads()
-            + ", fetchPersistentState()=" + fetchPersistentState() + ", ignoreModifications()=" + ignoreModifications()
-            + ", properties()=" + properties() + "]";
+      return "JdbcStringBasedCacheStoreConfiguration [key2StringMapper=" + key2StringMapper + ", table=" + table + ", connectionFactory()=" + connectionFactory()
+            + ", lockAcquistionTimeout()=" + lockAcquistionTimeout() + ", lockConcurrencyLevel()=" + lockConcurrencyLevel() + ", async()=" + async() + ", singletonStore()="
+            + singletonStore() + ", purgeOnStartup()=" + purgeOnStartup() + ", purgeSynchronously()=" + purgeSynchronously() + ", purgerThreads()=" + purgerThreads()
+            + ", fetchPersistentState()=" + fetchPersistentState() + ", ignoreModifications()=" + ignoreModifications() + ", properties()=" + properties() + "]";
    }
 
 }

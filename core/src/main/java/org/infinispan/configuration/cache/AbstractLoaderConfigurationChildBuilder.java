@@ -18,18 +18,32 @@
  */
 package org.infinispan.configuration.cache;
 
+import java.util.Properties;
+
 /**
  *
- * AbstractLoaderConfigurationChildBuilder.
+ * AbstractLoaderConfigurationChildBuilder delegates {@link LoaderConfigurationChildBuilder} methods to a specified {@link LoaderConfigurationBuilder}
  *
  * @author Pete Muir
  * @author Tristan Tarrant
  * @since 5.1
  */
-public abstract class AbstractLoaderConfigurationChildBuilder<T> extends AbstractLoadersConfigurationChildBuilder<T> {
+public abstract class AbstractLoaderConfigurationChildBuilder<S> extends AbstractLoadersConfigurationChildBuilder implements LoaderConfigurationChildBuilder<S> {
 
-   AbstractLoaderConfigurationChildBuilder(LoadersConfigurationBuilder builder) {
-      super(builder);
+   private final LoaderConfigurationBuilder<? extends AbstractLoaderConfiguration, ? extends LoaderConfigurationBuilder<?,?>> builder;
+
+   protected AbstractLoaderConfigurationChildBuilder(LoaderConfigurationBuilder<? extends AbstractLoaderConfiguration, ? extends LoaderConfigurationBuilder<?,?>> builder) {
+      super(builder.loaders());
+      this.builder = builder;
    }
 
+   @Override
+   public S addProperty(String key, String value) {
+      return (S)builder.addProperty(key, value);
+   }
+
+   @Override
+   public S withProperties(Properties p) {
+      return (S)builder.withProperties(p);
+   }
 }

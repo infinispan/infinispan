@@ -20,6 +20,7 @@ package org.infinispan.loaders.remote.configuration;
 
 import java.util.Properties;
 
+import org.infinispan.configuration.Builder;
 import org.infinispan.executors.DefaultExecutorFactory;
 import org.infinispan.executors.ExecutorFactory;
 import org.infinispan.util.TypedProperties;
@@ -27,7 +28,7 @@ import org.infinispan.util.TypedProperties;
 /**
  * Configures executor factory.
  */
-public class ExecutorFactoryConfigurationBuilder extends AbstractRemoteCacheStoreConfigurationChildBuilder<ExecutorFactoryConfiguration> {
+public class ExecutorFactoryConfigurationBuilder extends AbstractRemoteCacheStoreConfigurationChildBuilder<RemoteCacheStoreConfigurationBuilder> implements Builder<ExecutorFactoryConfiguration> {
 
    private ExecutorFactory factory = new DefaultExecutorFactory();
    private Properties properties;
@@ -62,7 +63,7 @@ public class ExecutorFactoryConfigurationBuilder extends AbstractRemoteCacheStor
     *           property value
     * @return previous value if exists, null otherwise
     */
-   public ExecutorFactoryConfigurationBuilder addProperty(String key, String value) {
+   public ExecutorFactoryConfigurationBuilder addExecutorProperty(String key, String value) {
       this.properties.put(key, value);
       return this;
    }
@@ -74,7 +75,7 @@ public class ExecutorFactoryConfigurationBuilder extends AbstractRemoteCacheStor
     *           Properties
     * @return this ExecutorFactoryConfig
     */
-   public ExecutorFactoryConfigurationBuilder withProperties(Properties props) {
+   public ExecutorFactoryConfigurationBuilder withExecutorProperties(Properties props) {
       this.properties = props;
       return this;
    }

@@ -19,7 +19,9 @@
 
 package org.infinispan.configuration.cache;
 
-public class VersioningConfigurationBuilder extends AbstractConfigurationChildBuilder<VersioningConfiguration> {
+import org.infinispan.configuration.Builder;
+
+public class VersioningConfigurationBuilder extends AbstractConfigurationChildBuilder implements Builder<VersioningConfiguration> {
 
    boolean enabled = false;
    VersioningScheme scheme = VersioningScheme.NONE;

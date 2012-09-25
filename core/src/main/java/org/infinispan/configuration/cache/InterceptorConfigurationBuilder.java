@@ -19,13 +19,14 @@
 package org.infinispan.configuration.cache;
 
 import org.infinispan.config.ConfigurationException;
+import org.infinispan.configuration.Builder;
 import org.infinispan.configuration.cache.InterceptorConfiguration.Position;
 import org.infinispan.interceptors.base.CommandInterceptor;
 
 /**
  * This builder defines details of a specific custom interceptor.
  */
-public class InterceptorConfigurationBuilder extends AbstractCustomInterceptorsConfigurationChildBuilder<InterceptorConfiguration> {
+public class InterceptorConfigurationBuilder extends AbstractCustomInterceptorsConfigurationChildBuilder implements Builder<InterceptorConfiguration> {
 
    private Class<? extends CommandInterceptor> after;
    private Class<? extends CommandInterceptor> before;

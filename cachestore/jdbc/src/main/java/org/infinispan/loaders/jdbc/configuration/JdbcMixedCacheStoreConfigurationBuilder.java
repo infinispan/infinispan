@@ -20,6 +20,7 @@ package org.infinispan.loaders.jdbc.configuration;
 
 import org.infinispan.configuration.cache.LoadersConfigurationBuilder;
 import org.infinispan.loaders.keymappers.DefaultTwoWayKey2StringMapper;
+import org.infinispan.loaders.keymappers.Key2StringMapper;
 import org.infinispan.util.TypedProperties;
 
 /**
@@ -29,17 +30,16 @@ import org.infinispan.util.TypedProperties;
  * @author Tristan Tarrant
  * @since 5.2
  */
-public class JdbcMixedCacheStoreConfigurationBuilder
-      extends
-      AbstractJdbcCacheStoreConfigurationBuilder<JdbcMixedCacheStoreConfiguration, JdbcMixedCacheStoreConfigurationBuilder> {
-   private final TableManipulationConfigurationBuilder binaryTable;
-   private final TableManipulationConfigurationBuilder stringTable;
+public class JdbcMixedCacheStoreConfigurationBuilder extends AbstractJdbcCacheStoreConfigurationBuilder<JdbcMixedCacheStoreConfiguration, JdbcMixedCacheStoreConfigurationBuilder>
+      implements JdbcMixedCacheStoreConfigurationChildBuilder<JdbcMixedCacheStoreConfigurationBuilder> {
+   private final MixedTableManipulationConfigurationBuilder binaryTable;
+   private final MixedTableManipulationConfigurationBuilder stringTable;
    private String key2StringMapper = DefaultTwoWayKey2StringMapper.class.getName();
 
    public JdbcMixedCacheStoreConfigurationBuilder(LoadersConfigurationBuilder builder) {
       super(builder);
-      this.binaryTable = new TableManipulationConfigurationBuilder(this);
-      this.stringTable = new TableManipulationConfigurationBuilder(this);
+      this.binaryTable = new MixedTableManipulationConfigurationBuilder(this);
+      this.stringTable = new MixedTableManipulationConfigurationBuilder(this);
    }
 
    @Override
@@ -48,19 +48,41 @@ public class JdbcMixedCacheStoreConfigurationBuilder
    }
 
    /**
-    * Allows configuration of table-specific parameters such as column names and types
-    * for the table used to store entries with binary keys
+    * Allows configuration of table-specific parameters such as column names and types for the table
+    * used to store entries with binary keys
     */
-   public TableManipulationConfigurationBuilder binaryTable() {
+   @Override
+   public MixedTableManipulationConfigurationBuilder binaryTable() {
       return binaryTable;
    }
 
    /**
-    * Allows configuration of table-specific parameters such as column names and types
-    * for the table used to store entries with string keys
+    * Allows configuration of table-specific parameters such as column names and types for the table
+    * used to store entries with string keys
     */
-   public TableManipulationConfigurationBuilder stringTable() {
+   @Override
+   public MixedTableManipulationConfigurationBuilder stringTable() {
       return stringTable;
+   }
+
+   /**
+    * The class name of a {@link Key2StringMapper} to use for mapping keys to strings suitable for
+    * storage in a database table. Defaults to {@link DefaultTwoWayKey2StringMapper}
+    */
+   @Override
+   public JdbcMixedCacheStoreConfigurationChildBuilder<JdbcMixedCacheStoreConfigurationBuilder> key2StringMapper(String key2StringMapper) {
+      this.key2StringMapper = key2StringMapper;
+      return this;
+   }
+
+   /**
+    * The class of a {@link Key2StringMapper} to use for mapping keys to strings suitable for
+    * storage in a database table. Defaults to {@link DefaultTwoWayKey2StringMapper}
+    */
+   @Override
+   public JdbcMixedCacheStoreConfigurationChildBuilder<JdbcMixedCacheStoreConfigurationBuilder> key2StringMapper(Class<? extends Key2StringMapper> klass) {
+      this.key2StringMapper = klass.getName();
+      return this;
    }
 
    @Override
@@ -69,11 +91,9 @@ public class JdbcMixedCacheStoreConfigurationBuilder
 
    @Override
    public JdbcMixedCacheStoreConfiguration create() {
-      return new JdbcMixedCacheStoreConfiguration(key2StringMapper, binaryTable.create(), stringTable.create(),
-            driverClass, connectionUrl, username, password, connectionFactoryClass, datasource,
-            lockAcquistionTimeout, lockConcurrencyLevel, purgeOnStartup, purgeSynchronously, purgerThreads,
-            fetchPersistentState, ignoreModifications, TypedProperties.toTypedProperties(properties), async.create(),
-            singletonStore.create());
+      return new JdbcMixedCacheStoreConfiguration(key2StringMapper, binaryTable.create(), stringTable.create(), connectionFactory.create(), lockAcquistionTimeout,
+            lockConcurrencyLevel, purgeOnStartup, purgeSynchronously, purgerThreads, fetchPersistentState, ignoreModifications, TypedProperties.toTypedProperties(properties),
+            async.create(), singletonStore.create());
    }
 
    @Override
@@ -83,5 +103,49 @@ public class JdbcMixedCacheStoreConfigurationBuilder
       this.stringTable.read(template.stringTable());
       this.key2StringMapper = template.key2StringMapper();
       return this;
+   }
+
+   public class MixedTableManipulationConfigurationBuilder extends
+         TableManipulationConfigurationBuilder<JdbcMixedCacheStoreConfigurationBuilder, MixedTableManipulationConfigurationBuilder> implements
+         JdbcMixedCacheStoreConfigurationChildBuilder<JdbcMixedCacheStoreConfigurationBuilder> {
+
+      MixedTableManipulationConfigurationBuilder(AbstractJdbcCacheStoreConfigurationBuilder<?, JdbcMixedCacheStoreConfigurationBuilder> builder) {
+         super(builder);
+      }
+
+      @Override
+      public MixedTableManipulationConfigurationBuilder self() {
+         return this;
+      }
+
+      @Override
+      public MixedTableManipulationConfigurationBuilder binaryTable() {
+         return binaryTable;
+      }
+
+      @Override
+      public MixedTableManipulationConfigurationBuilder stringTable() {
+         return stringTable;
+      }
+
+      @Override
+      public PooledConnectionFactoryConfigurationBuilder<JdbcMixedCacheStoreConfigurationBuilder> connectionPool() {
+         return JdbcMixedCacheStoreConfigurationBuilder.this.connectionPool();
+      }
+
+      @Override
+      public ManagedConnectionFactoryConfigurationBuilder<JdbcMixedCacheStoreConfigurationBuilder> dataSource() {
+         return JdbcMixedCacheStoreConfigurationBuilder.this.dataSource();
+      }
+
+      @Override
+      public JdbcMixedCacheStoreConfigurationChildBuilder<JdbcMixedCacheStoreConfigurationBuilder> key2StringMapper(String key2StringMapper) {
+         return JdbcMixedCacheStoreConfigurationBuilder.this.key2StringMapper(key2StringMapper);
+      }
+
+      @Override
+      public JdbcMixedCacheStoreConfigurationChildBuilder<JdbcMixedCacheStoreConfigurationBuilder> key2StringMapper(Class<? extends Key2StringMapper> klass) {
+         return JdbcMixedCacheStoreConfigurationBuilder.this.key2StringMapper(klass);
+      }
    }
 }

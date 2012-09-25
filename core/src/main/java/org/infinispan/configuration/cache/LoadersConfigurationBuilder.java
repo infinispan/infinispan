@@ -25,13 +25,13 @@ import java.util.List;
 
 import org.infinispan.config.ConfigurationException;
 import org.infinispan.configuration.Builder;
-import org.infinispan.configuration.BuiltBy;
+import org.infinispan.configuration.ConfigurationUtils;
 
 /**
  * Configuration for cache loaders and stores.
  *
  */
-public class LoadersConfigurationBuilder extends AbstractConfigurationChildBuilder<LoadersConfiguration> {
+public class LoadersConfigurationBuilder extends AbstractConfigurationChildBuilder implements Builder<LoadersConfiguration> {
 
    private boolean passivation = false;
    private boolean preload = false;
@@ -238,11 +238,7 @@ public class LoadersConfigurationBuilder extends AbstractConfigurationChildBuild
    @Override
    public LoadersConfigurationBuilder read(LoadersConfiguration template) {
       for (LoaderConfiguration c : template.cacheLoaders()) {
-         BuiltBy builtBy = c.getClass().getAnnotation(BuiltBy.class);
-         if (builtBy==null) {
-            throw new ConfigurationException("Missing BuiltBy annotation for configuration bean "+c.getClass().getName());
-         }
-         Class<? extends LoaderConfigurationBuilder<?, ?>> builderClass = (Class<? extends LoaderConfigurationBuilder<?, ?>>) builtBy.value();
+         Class<? extends LoaderConfigurationBuilder<?, ?>> builderClass = (Class<? extends LoaderConfigurationBuilder<?, ?>>) ConfigurationUtils.builderFor(c);
          Builder<Object> builder = (Builder<Object>) this.addLoader(builderClass);
          builder.read(c);
       }

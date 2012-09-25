@@ -18,14 +18,16 @@
  */
 package org.infinispan.configuration.cache;
 
+import org.infinispan.configuration.Builder;
+
 /**
  * Defines clustered characteristics of the cache.
  *
  * @author pmuir
  *
  */
-public class ClusteringConfigurationBuilder extends AbstractConfigurationChildBuilder<ClusteringConfiguration> implements
-      ClusteringConfigurationChildBuilder {
+public class ClusteringConfigurationBuilder extends AbstractConfigurationChildBuilder implements
+      ClusteringConfigurationChildBuilder, Builder<ClusteringConfiguration> {
 
    private CacheMode cacheMode = CacheMode.LOCAL;
    private final AsyncConfigurationBuilder asyncConfigurationBuilder;

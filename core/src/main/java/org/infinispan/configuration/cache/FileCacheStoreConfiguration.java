@@ -32,7 +32,7 @@ import org.infinispan.util.TypedProperties;
  * @since 5.1
  */
 @BuiltBy(FileCacheStoreConfigurationBuilder.class)
-public class FileCacheStoreConfiguration extends AbstractLockSupportCacheStoreConfiguration implements LegacyLoaderAdapter<FileCacheStoreConfig>{
+public class FileCacheStoreConfiguration extends AbstractLockSupportStoreConfiguration implements LegacyLoaderAdapter<FileCacheStoreConfig>{
 
    private final String location;
    private final long fsyncInterval;

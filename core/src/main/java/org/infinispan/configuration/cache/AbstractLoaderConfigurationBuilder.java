@@ -26,7 +26,7 @@ import java.util.Properties;
  * rather than delegate to existing ones.
  */
 public abstract class AbstractLoaderConfigurationBuilder<T extends LoaderConfiguration, S extends AbstractLoaderConfigurationBuilder<T, S>> extends
-      AbstractLoadersConfigurationChildBuilder<T> implements LoaderConfigurationBuilder<T, S> {
+      AbstractLoadersConfigurationChildBuilder implements LoaderConfigurationBuilder<T, S> {
    protected Properties properties = new Properties();
 
    public AbstractLoaderConfigurationBuilder(LoadersConfigurationBuilder builder) {
@@ -58,5 +58,4 @@ public abstract class AbstractLoaderConfigurationBuilder<T extends LoaderConfigu
       this.properties = props;
       return self();
    }
-
 }

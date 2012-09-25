@@ -18,6 +18,8 @@
  */
 package org.infinispan.loaders.remote.configuration;
 
+import org.infinispan.configuration.Builder;
+
 /**
  *
  * ConnectionPoolConfigurationBuilder. Specified connection pooling properties for the HotRod client
@@ -25,7 +27,8 @@ package org.infinispan.loaders.remote.configuration;
  * @author Tristan Tarrant
  * @since 5.2
  */
-public class ConnectionPoolConfigurationBuilder extends AbstractRemoteCacheStoreConfigurationChildBuilder<ConnectionPoolConfiguration> {
+public class ConnectionPoolConfigurationBuilder extends AbstractRemoteCacheStoreConfigurationChildBuilder<RemoteCacheStoreConfigurationBuilder> implements
+      Builder<ConnectionPoolConfiguration> {
    private ExhaustedAction exhaustedAction = ExhaustedAction.WAIT;
    private int maxActive = -1;
    private int maxTotal = -1;
@@ -40,7 +43,8 @@ public class ConnectionPoolConfigurationBuilder extends AbstractRemoteCacheStore
    }
 
    /**
-    * Specifies what happens when asking for a connection from a server's pool, and that pool is exhausted.
+    * Specifies what happens when asking for a connection from a server's pool, and that pool is
+    * exhausted.
     */
    public ConnectionPoolConfigurationBuilder exhaustedAction(ExhaustedAction exhaustedAction) {
       this.exhaustedAction = exhaustedAction;
@@ -131,8 +135,7 @@ public class ConnectionPoolConfigurationBuilder extends AbstractRemoteCacheStore
 
    @Override
    public ConnectionPoolConfiguration create() {
-      return new ConnectionPoolConfiguration(exhaustedAction, maxActive, maxTotal, maxIdle, minIdle,
-            timeBetweenEvictionRuns, minEvictableIdleTime, testWhileIdle);
+      return new ConnectionPoolConfiguration(exhaustedAction, maxActive, maxTotal, maxIdle, minIdle, timeBetweenEvictionRuns, minEvictableIdleTime, testWhileIdle);
    }
 
    @Override

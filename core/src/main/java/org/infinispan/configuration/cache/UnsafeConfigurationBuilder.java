@@ -18,6 +18,8 @@
  */
 package org.infinispan.configuration.cache;
 
+import org.infinispan.configuration.Builder;
+
 /**
  * Controls certain tuning parameters that may break some of Infinispan's public API contracts in exchange for better
  * performance in some cases.
@@ -25,7 +27,7 @@ package org.infinispan.configuration.cache;
  * Use with care, only after thoroughly reading and understanding the documentation about a specific feature.
  * <p />
  */
-public class UnsafeConfigurationBuilder extends AbstractConfigurationChildBuilder<UnsafeConfiguration> {
+public class UnsafeConfigurationBuilder extends AbstractConfigurationChildBuilder implements Builder<UnsafeConfiguration> {
 
    private boolean unreliableReturnValues = false;
 

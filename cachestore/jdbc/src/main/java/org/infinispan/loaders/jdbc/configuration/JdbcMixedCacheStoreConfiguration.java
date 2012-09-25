@@ -34,22 +34,18 @@ import org.infinispan.util.TypedProperties;
  * @since 5.2
  */
 @BuiltBy(JdbcMixedCacheStoreConfigurationBuilder.class)
-public class JdbcMixedCacheStoreConfiguration extends AbstractJdbcCacheStoreConfiguration implements
-      LegacyLoaderAdapter<JdbcMixedCacheStoreConfig> {
+public class JdbcMixedCacheStoreConfiguration extends AbstractJdbcCacheStoreConfiguration implements LegacyLoaderAdapter<JdbcMixedCacheStoreConfig> {
 
    private final TableManipulationConfiguration binaryTable;
    private final TableManipulationConfiguration stringTable;
    private final String key2StringMapper;
 
-   protected JdbcMixedCacheStoreConfiguration(String key2StringMapper, TableManipulationConfiguration binaryTable,
-         TableManipulationConfiguration stringTable, String driverClass, String connectionUrl, String userName,
-         String password, String connectionFactoryClass, String datasourceJndiLocation, long lockAcquistionTimeout,
-         int lockConcurrencyLevel, boolean purgeOnStartup, boolean purgeSynchronously, int purgerThreads,
-         boolean fetchPersistentState, boolean ignoreModifications, TypedProperties properties,
-         AsyncStoreConfiguration async, SingletonStoreConfiguration singletonStore) {
-      super(driverClass, connectionUrl, userName, password, connectionFactoryClass, datasourceJndiLocation,
-            lockAcquistionTimeout, lockConcurrencyLevel, purgeOnStartup, purgeSynchronously, purgerThreads,
-            fetchPersistentState, ignoreModifications, properties, async, singletonStore);
+   protected JdbcMixedCacheStoreConfiguration(String key2StringMapper, TableManipulationConfiguration binaryTable, TableManipulationConfiguration stringTable,
+         ConnectionFactoryConfiguration connectionFactory, long lockAcquistionTimeout, int lockConcurrencyLevel, boolean purgeOnStartup, boolean purgeSynchronously,
+         int purgerThreads, boolean fetchPersistentState, boolean ignoreModifications, TypedProperties properties, AsyncStoreConfiguration async,
+         SingletonStoreConfiguration singletonStore) {
+      super(connectionFactory, lockAcquistionTimeout, lockConcurrencyLevel, purgeOnStartup, purgeSynchronously, purgerThreads, fetchPersistentState, ignoreModifications,
+            properties, async, singletonStore);
       this.key2StringMapper = key2StringMapper;
       this.binaryTable = binaryTable;
       this.stringTable = stringTable;
@@ -74,13 +70,8 @@ public class JdbcMixedCacheStoreConfiguration extends AbstractJdbcCacheStoreConf
       // StoreConfiguration
       LegacyConfigurationAdaptor.adapt(this, config);
 
-      // AbstractJdbcCacheStoreConfiguration
-      config.setConnectionFactoryClass(connectionFactoryClass());
-      config.setConnectionUrl(connectionUrl());
-      config.setDatasourceJndiLocation(datasource());
-      config.setDriverClass(driverClass());
-      config.setUserName(userName());
-      config.setPassword(password());
+      // ConnectionFactory
+      ((LegacyConnectionFactoryAdaptor) connectionFactory()).adapt(config);
 
       // JdbcStringBasedCacheStoreConfiguration
       config.setKey2StringMapperClass(key2StringMapper);
@@ -111,16 +102,10 @@ public class JdbcMixedCacheStoreConfiguration extends AbstractJdbcCacheStoreConf
 
    @Override
    public String toString() {
-      return "JdbcMixedCacheStoreConfiguration [binaryTable=" + binaryTable + ", stringTable=" + stringTable
-            + ", key2StringMapper=" + key2StringMapper + ", getDriverClass()=" + driverClass()
-            + ", getConnectionUrl()=" + connectionUrl() + ", getUserName()=" + userName() + ", getPassword()="
-            + password() + ", getConnectionFactoryClass()=" + connectionFactoryClass()
-            + ", getDatasourceJndiLocation()=" + datasource() + ", lockAcquistionTimeout()="
-            + lockAcquistionTimeout() + ", lockConcurrencyLevel()=" + lockConcurrencyLevel() + ", async()=" + async()
-            + ", singletonStore()=" + singletonStore() + ", purgeOnStartup()=" + purgeOnStartup()
-            + ", purgeSynchronously()=" + purgeSynchronously() + ", purgerThreads()=" + purgerThreads()
-            + ", fetchPersistentState()=" + fetchPersistentState() + ", ignoreModifications()=" + ignoreModifications()
-            + ", properties()=" + properties() + "]";
+      return "JdbcMixedCacheStoreConfiguration [binaryTable=" + binaryTable + ", stringTable=" + stringTable + ", key2StringMapper=" + key2StringMapper + ", connectionFactory()="
+            + connectionFactory() + ", lockAcquistionTimeout()=" + lockAcquistionTimeout() + ", lockConcurrencyLevel()=" + lockConcurrencyLevel() + ", async()=" + async()
+            + ", singletonStore()=" + singletonStore() + ", purgeOnStartup()=" + purgeOnStartup() + ", purgeSynchronously()=" + purgeSynchronously() + ", purgerThreads()="
+            + purgerThreads() + ", fetchPersistentState()=" + fetchPersistentState() + ", ignoreModifications()=" + ignoreModifications() + ", properties()=" + properties() + "]";
    }
 
 }

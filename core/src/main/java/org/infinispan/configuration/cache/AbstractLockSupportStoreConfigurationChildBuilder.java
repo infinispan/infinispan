@@ -22,35 +22,36 @@ package org.infinispan.configuration.cache;
 import java.util.concurrent.TimeUnit;
 
 /**
- * AbstractLockSupportCacheStoreConfigurationBuilder.
+ *
+ * AbstractLockSupportStoreConfigurationChildBuilder delegates {@link LockSupportStoreConfigurationChildBuilder} methods
+ * to a specified {@link LockSupportStoreConfigurationBuilder}
  *
  * @author Tristan Tarrant
  * @since 5.2
  */
-public abstract class AbstractLockSupportCacheStoreConfigurationBuilder<T extends StoreConfiguration, S extends AbstractLockSupportCacheStoreConfigurationBuilder<T, S>> extends
-      AbstractStoreConfigurationBuilder<T, S> implements LockSupportCacheStoreConfigurationBuilder<T, S> {
+public abstract class AbstractLockSupportStoreConfigurationChildBuilder<S>
+      extends AbstractStoreConfigurationChildBuilder<S> implements LockSupportStoreConfigurationChildBuilder<S> {
 
-   protected long lockAcquistionTimeout;
-   protected int lockConcurrencyLevel;
+   private final LockSupportStoreConfigurationBuilder<? extends AbstractLockSupportStoreConfiguration, ? extends LockSupportStoreConfigurationBuilder<?, ?>> builder;
 
-   public AbstractLockSupportCacheStoreConfigurationBuilder(LoadersConfigurationBuilder builder) {
+   public AbstractLockSupportStoreConfigurationChildBuilder(
+         AbstractLockSupportStoreConfigurationBuilder<? extends AbstractLockSupportStoreConfiguration, ? extends LockSupportStoreConfigurationBuilder<?, ?>> builder) {
       super(builder);
+      this.builder = builder;
    }
 
    @Override
    public S lockAcquistionTimeout(long lockAcquistionTimeout) {
-      this.lockAcquistionTimeout = lockAcquistionTimeout;
-      return self();
+      return (S) builder.lockAcquistionTimeout(lockAcquistionTimeout);
    }
 
    @Override
    public S lockAcquistionTimeout(long lockAcquistionTimeout, TimeUnit unit) {
-      return lockAcquistionTimeout(unit.toMillis(lockAcquistionTimeout));
+      return (S) builder.lockAcquistionTimeout(lockAcquistionTimeout, unit);
    }
 
    @Override
    public S lockConcurrencyLevel(int lockConcurrencyLevel) {
-      this.lockConcurrencyLevel = lockConcurrencyLevel;
-      return self();
+      return (S) builder.lockConcurrencyLevel(lockConcurrencyLevel);
    }
 }

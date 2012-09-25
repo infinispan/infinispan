@@ -20,10 +20,12 @@ package org.infinispan.configuration.cache;
 
 import java.util.concurrent.TimeUnit;
 
+import org.infinispan.configuration.Builder;
+
 /**
  * Controls the default expiration settings for entries in the cache.
  */
-public class ExpirationConfigurationBuilder extends AbstractConfigurationChildBuilder<ExpirationConfiguration> {
+public class ExpirationConfigurationBuilder extends AbstractConfigurationChildBuilder implements Builder<ExpirationConfiguration> {
 
    private long lifespan = -1L;
    private long maxIdle = -1L;

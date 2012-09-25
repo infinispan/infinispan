@@ -32,7 +32,7 @@ import org.infinispan.util.TypedProperties;
  * @author Galder Zamarreño
  * @since 5.1
  */
-public class FileCacheStoreConfigurationBuilder extends AbstractLockSupportCacheStoreConfigurationBuilder<FileCacheStoreConfiguration, FileCacheStoreConfigurationBuilder> {
+public class FileCacheStoreConfigurationBuilder extends AbstractLockSupportStoreConfigurationBuilder<FileCacheStoreConfiguration, FileCacheStoreConfigurationBuilder> {
 
    private String location = "Infinispan-FileCacheStore";
    private long fsyncInterval = TimeUnit.SECONDS.toMillis(1);

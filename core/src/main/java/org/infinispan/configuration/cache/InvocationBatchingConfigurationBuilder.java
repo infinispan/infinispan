@@ -20,7 +20,9 @@ package org.infinispan.configuration.cache;
 
 import static org.infinispan.transaction.TransactionMode.NON_TRANSACTIONAL;
 
-public class InvocationBatchingConfigurationBuilder extends AbstractConfigurationChildBuilder<InvocationBatchingConfiguration> {
+import org.infinispan.configuration.Builder;
+
+public class InvocationBatchingConfigurationBuilder extends AbstractConfigurationChildBuilder implements Builder<InvocationBatchingConfiguration> {
 
    boolean enabled = false;
 

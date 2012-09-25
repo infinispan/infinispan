@@ -19,9 +19,7 @@
 package org.infinispan.loaders.jdbc.configuration;
 
 import org.infinispan.configuration.Builder;
-import org.infinispan.configuration.cache.AbstractStoreConfiguration;
-import org.infinispan.configuration.cache.AbstractStoreConfigurationBuilder;
-import org.infinispan.configuration.cache.AbstractStoreConfigurationChildBuilder;
+import org.infinispan.configuration.Self;
 import org.infinispan.loaders.jdbc.TableManipulation;
 
 /**
@@ -30,9 +28,8 @@ import org.infinispan.loaders.jdbc.TableManipulation;
  * @author Tristan Tarrant
  * @since 5.2
  */
-public class TableManipulationConfigurationBuilder extends
-      AbstractStoreConfigurationChildBuilder<TableManipulationConfiguration> {
-
+public abstract class TableManipulationConfigurationBuilder<B extends AbstractJdbcCacheStoreConfigurationBuilder<?, B>, S extends TableManipulationConfigurationBuilder<B, S>> extends
+      AbstractJdbcCacheStoreConfigurationChildBuilder<B> implements Builder<TableManipulationConfiguration>, Self<S> {
    private int batchSize = TableManipulation.DEFAULT_BATCH_SIZE;
    private int fetchSize = TableManipulation.DEFAULT_FETCH_SIZE;
    private boolean createOnStart = true;
@@ -46,102 +43,102 @@ public class TableManipulationConfigurationBuilder extends
    private String timestampColumnName;
    private String timestampColumnType;
 
-   TableManipulationConfigurationBuilder(
-         AbstractStoreConfigurationBuilder<? extends AbstractStoreConfiguration, ?> builder) {
+   TableManipulationConfigurationBuilder(AbstractJdbcCacheStoreConfigurationBuilder<?, B> builder) {
       super(builder);
    }
 
    /**
-    * When doing repetitive DB inserts (e.g. on {@link org.infinispan.loaders.CacheStore#fromStream(java.io.ObjectInput)}
-    * this will be batched according to this parameter. This is an optional parameter, and if it is not specified it
-    * will be defaulted to {@link #DEFAULT_BATCH_SIZE}.
+    * When doing repetitive DB inserts (e.g. on
+    * {@link org.infinispan.loaders.CacheStore#fromStream(java.io.ObjectInput)} this will be batched
+    * according to this parameter. This is an optional parameter, and if it is not specified it will
+    * be defaulted to {@link #DEFAULT_BATCH_SIZE}.
     */
-   public TableManipulationConfigurationBuilder batchSize(int batchSize) {
+   public S batchSize(int batchSize) {
       this.batchSize = batchSize;
-      return this;
+      return self();
    }
 
    /**
-    * For DB queries (e.g. {@link org.infinispan.loaders.CacheStore#toStream(java.io.ObjectOutput)} ) the fetch size
-    * will be set on {@link java.sql.ResultSet#setFetchSize(int)}. This is optional parameter, if not specified will be
-    * defaulted to {@link #DEFAULT_FETCH_SIZE}.
+    * For DB queries (e.g. {@link org.infinispan.loaders.CacheStore#toStream(java.io.ObjectOutput)}
+    * ) the fetch size will be set on {@link java.sql.ResultSet#setFetchSize(int)}. This is optional
+    * parameter, if not specified will be defaulted to {@link #DEFAULT_FETCH_SIZE}.
     */
-   public TableManipulationConfigurationBuilder fetchSize(int fetchSize) {
+   public S fetchSize(int fetchSize) {
       this.fetchSize = fetchSize;
-      return this;
+      return self();
    }
 
    /**
-    * Sets the prefix for the name of the table where the data will be stored. "_<cache name>" will be appended
-    * to this prefix in order to enforce unique table names for each cache.
+    * Sets the prefix for the name of the table where the data will be stored. "_<cache name>" will
+    * be appended to this prefix in order to enforce unique table names for each cache.
     */
-   public TableManipulationConfigurationBuilder tableNamePrefix(String tableNamePrefix) {
+   public S tableNamePrefix(String tableNamePrefix) {
       this.tableNamePrefix = tableNamePrefix;
-      return this;
+      return self();
    }
 
    /**
     * Determines whether database tables should be created by the store on startup
     */
-   public TableManipulationConfigurationBuilder createOnStart(boolean createOnStart) {
+   public S createOnStart(boolean createOnStart) {
       this.createOnStart = createOnStart;
-      return this;
+      return self();
    }
 
    /**
     * Determines whether database tables should be dropped by the store on shutdown
     */
-   public TableManipulationConfigurationBuilder dropOnExit(boolean dropOnExit) {
+   public S dropOnExit(boolean dropOnExit) {
       this.dropOnExit = dropOnExit;
-      return this;
+      return self();
    }
 
    /**
     * The name of the database column used to store the keys
     */
-   public TableManipulationConfigurationBuilder idColumnName(String idColumnName) {
+   public S idColumnName(String idColumnName) {
       this.idColumnName = idColumnName;
-      return this;
+      return self();
    }
 
    /**
     * The type of the database column used to store the keys
     */
-   public TableManipulationConfigurationBuilder idColumnType(String idColumnType) {
+   public S idColumnType(String idColumnType) {
       this.idColumnType = idColumnType;
-      return this;
+      return self();
    }
 
    /**
     * The name of the database column used to store the entries
     */
-   public TableManipulationConfigurationBuilder dataColumnName(String dataColumnName) {
+   public S dataColumnName(String dataColumnName) {
       this.dataColumnName = dataColumnName;
-      return this;
+      return self();
    }
 
    /**
     * The type of the database column used to store the entries
     */
-   public TableManipulationConfigurationBuilder dataColumnType(String dataColumnType) {
+   public S dataColumnType(String dataColumnType) {
       this.dataColumnType = dataColumnType;
-      return this;
+      return self();
    }
 
    /**
     * The name of the database column used to store the timestamps
     */
-   public TableManipulationConfigurationBuilder timestampColumnName(String timestampColumnName) {
+   public S timestampColumnName(String timestampColumnName) {
       this.timestampColumnName = timestampColumnName;
-      return this;
+      return self();
    }
 
    /**
     * The type of the database column used to store the timestamps
     */
-   public TableManipulationConfigurationBuilder timestampColumnType(String timestampColumnType) {
+   public S timestampColumnType(String timestampColumnType) {
       this.timestampColumnType = timestampColumnType;
-      return this;
+      return self();
    }
 
    @Override
@@ -150,8 +147,8 @@ public class TableManipulationConfigurationBuilder extends
 
    @Override
    public TableManipulationConfiguration create() {
-      return new TableManipulationConfiguration(idColumnName, idColumnType, tableNamePrefix, cacheName, dataColumnName,
-            dataColumnType, timestampColumnName, timestampColumnType, fetchSize, batchSize, createOnStart, dropOnExit);
+      return new TableManipulationConfiguration(idColumnName, idColumnType, tableNamePrefix, cacheName, dataColumnName, dataColumnType, timestampColumnName, timestampColumnType,
+            fetchSize, batchSize, createOnStart, dropOnExit);
    }
 
    @Override
@@ -171,7 +168,4 @@ public class TableManipulationConfigurationBuilder extends
 
       return this;
    }
-
-
-
 }

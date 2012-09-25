@@ -21,6 +21,7 @@ package org.infinispan.configuration.cache;
 import java.util.concurrent.TimeUnit;
 
 import org.infinispan.config.ConfigurationException;
+import org.infinispan.configuration.Builder;
 import org.infinispan.remoting.ReplicationQueue;
 import org.infinispan.remoting.ReplicationQueueImpl;
 
@@ -30,7 +31,7 @@ import org.infinispan.remoting.ReplicationQueueImpl;
  * exclusive with synchronous configuration.
  *
  */
-public class AsyncConfigurationBuilder extends AbstractClusteringConfigurationChildBuilder<AsyncConfiguration> {
+public class AsyncConfigurationBuilder extends AbstractClusteringConfigurationChildBuilder implements Builder<AsyncConfiguration> {
 
    private boolean asyncMarshalling = false;
    private ReplicationQueue replicationQueue = new ReplicationQueueImpl();

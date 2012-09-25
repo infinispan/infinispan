@@ -21,6 +21,7 @@ package org.infinispan.configuration.cache;
 import java.util.Map;
 import java.util.Properties;
 
+import org.infinispan.configuration.Builder;
 import org.infinispan.util.TypedProperties;
 import org.infinispan.util.Util;
 import org.infinispan.util.logging.Log;
@@ -29,7 +30,7 @@ import org.infinispan.util.logging.LogFactory;
 /**
  * Configures indexing of entries in the cache for searching.
  */
-public class IndexingConfigurationBuilder extends AbstractConfigurationChildBuilder<IndexingConfiguration>{
+public class IndexingConfigurationBuilder extends AbstractConfigurationChildBuilder implements Builder<IndexingConfiguration>{
 
    private static final Log log = LogFactory.getLog(IndexingConfigurationBuilder.class);
 

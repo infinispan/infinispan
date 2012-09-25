@@ -551,8 +551,8 @@ public class LegacyConfigurationAdaptor {
       legacy.getSingletonStoreConfig().pushStateTimeout(config.singletonStore().pushStateTimeout());
       legacy.getSingletonStoreConfig().pushStateWhenCoordinator(config.singletonStore().pushStateWhenCoordinator());
 
-      if (config instanceof LockSupportCacheStoreConfiguration) {
-         LockSupportCacheStoreConfiguration lockConfig = (LockSupportCacheStoreConfiguration) config;
+      if (config instanceof LockSupportStoreConfiguration) {
+         LockSupportStoreConfiguration lockConfig = (LockSupportStoreConfiguration) config;
          LockSupportCacheStoreConfig lockLegacy = (LockSupportCacheStoreConfig) legacy;
          lockLegacy.setLockAcquistionTimeout(lockConfig.lockAcquistionTimeout());
          lockLegacy.setLockConcurrencyLevel(lockConfig.lockConcurrencyLevel());

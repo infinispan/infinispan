@@ -18,6 +18,7 @@
  */
 package org.infinispan.configuration.module;
 
+import org.infinispan.configuration.Builder;
 import org.infinispan.configuration.cache.AbstractModuleConfigurationBuilder;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 
@@ -28,7 +29,7 @@ import org.infinispan.configuration.cache.ConfigurationBuilder;
  * @author Tristan Tarrant
  * @since 5.2
  */
-public class MyModuleConfigurationBuilder extends AbstractModuleConfigurationBuilder<MyModuleConfiguration> {
+public class MyModuleConfigurationBuilder extends AbstractModuleConfigurationBuilder implements Builder<MyModuleConfiguration> {
    private String attribute;
 
    public MyModuleConfigurationBuilder(ConfigurationBuilder builder) {

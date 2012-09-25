@@ -20,10 +20,12 @@ package org.infinispan.configuration.cache;
 
 import java.util.concurrent.TimeUnit;
 
+import org.infinispan.configuration.Builder;
+
 /**
  * Configures deadlock detection.
  */
-public class DeadlockDetectionConfigurationBuilder extends AbstractConfigurationChildBuilder<DeadlockDetectionConfiguration> {
+public class DeadlockDetectionConfigurationBuilder extends AbstractConfigurationChildBuilder implements Builder<DeadlockDetectionConfiguration> {
 
    private boolean enabled = false;
    private long spinDuration = TimeUnit.MILLISECONDS.toMillis(100);

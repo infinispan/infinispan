@@ -20,12 +20,14 @@ package org.infinispan.configuration.cache;
 
 import java.util.concurrent.TimeUnit;
 
+import org.infinispan.configuration.Builder;
+
 /**
  * If configured all communications are synchronous, in that whenever a thread sends a message sent
  * over the wire, it blocks until it receives an acknowledgment from the recipient. SyncConfig is
  * mutually exclusive with the AsyncConfig.
  */
-public class SyncConfigurationBuilder extends AbstractClusteringConfigurationChildBuilder<SyncConfiguration> {
+public class SyncConfigurationBuilder extends AbstractClusteringConfigurationChildBuilder implements Builder<SyncConfiguration> {
 
    private long replTimeout = TimeUnit.SECONDS.toMillis(15);
 

@@ -111,24 +111,23 @@
   <xs:complexType name="jdbcStore" abstract="true">
     <xs:complexContent>
       <xs:extension base="config:lockSupportStore">
-        <xs:attribute name="connectionFactoryClass" type="xs:string">
-          <xs:annotation>
-            <xs:documentation>
-              The class name of a connection factory to use
-            </xs:documentation>
-          </xs:annotation>
-        </xs:attribute>
-        <xs:attribute name="connectionUrl" type="xs:string">
+        <xs:sequence>
+          <xs:choice minOccurs="1" maxOccurs="1">
+            <xs:element ref="connectionPool" />
+            <xs:element ref="dataSource" />
+            <xs:element ref="singleConnection" />
+          </xs:choice>
+        </xs:sequence>
+      </xs:extension>
+    </xs:complexContent>
+  </xs:complexType>
+  
+  <xs:complexType name="connectionPool">
+    <xs:complexContent>
+      <xs:attribute name="connectionUrl" type="xs:string">
           <xs:annotation>
             <xs:documentation>
               A JDBC driver-specific connection URL
-            </xs:documentation>
-          </xs:annotation>
-        </xs:attribute>
-        <xs:attribute name="datasource" type="xs:string">
-          <xs:annotation>
-            <xs:documentation>
-              The address of a datasource to use when connecting
             </xs:documentation>
           </xs:annotation>
         </xs:attribute>
@@ -153,7 +152,51 @@
             </xs:documentation>
           </xs:annotation>
         </xs:attribute>
-      </xs:extension>
+    </xs:complexContent>
+  </xs:complexType>
+  
+  <xs:complexType name="dataSource">
+    <xs:complexContent>
+      <xs:attribute name="jndiUrl" type="xs:string">
+          <xs:annotation>
+            <xs:documentation>
+              The address of a datasource to use when connecting
+            </xs:documentation>
+          </xs:annotation>
+        </xs:attribute>
+    </xs:complexContent>
+  </xs:complexType>
+  
+  <xs:complexType name="singleConnection">
+    <xs:complexContent>
+      <xs:attribute name="connectionUrl" type="xs:string">
+          <xs:annotation>
+            <xs:documentation>
+              A JDBC driver-specific connection URL
+            </xs:documentation>
+          </xs:annotation>
+        </xs:attribute>
+        <xs:attribute name="driverClass" type="xs:string">
+          <xs:annotation>
+            <xs:documentation>
+              The class name of the driver used for connecting to the database.
+            </xs:documentation>
+          </xs:annotation>
+        </xs:attribute>
+        <xs:attribute name="password" type="xs:string">
+          <xs:annotation>
+            <xs:documentation>
+              The password to use when connecting via connectionUrl
+            </xs:documentation>
+          </xs:annotation>
+        </xs:attribute>
+        <xs:attribute name="username" type="xs:string">
+          <xs:annotation>
+            <xs:documentation>
+              The username to use when connecting via connectionUrl
+            </xs:documentation>
+          </xs:annotation>
+        </xs:attribute>
     </xs:complexContent>
   </xs:complexType>
 

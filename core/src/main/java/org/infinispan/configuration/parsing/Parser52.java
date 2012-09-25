@@ -643,7 +643,7 @@ public class Parser52 implements ConfigurationParser<ConfigurationBuilderHolder>
     * This method is public static so that it can be reused by custom cache store/loader configuration parsers
     */
    public static void parseLockSupportStoreAttributes(XMLExtendedStreamReader reader, int i,
-         LockSupportCacheStoreConfigurationBuilder<?, ?> builder) throws XMLStreamException {
+         LockSupportStoreConfigurationBuilder<?, ?> builder) throws XMLStreamException {
       ParseUtils.requireNoNamespaceAttribute(reader, i);
       String value = replaceProperties(reader.getAttributeValue(i));
       Attribute attribute = Attribute.forName(reader.getAttributeLocalName(i));

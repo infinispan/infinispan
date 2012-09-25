@@ -27,18 +27,15 @@ import org.infinispan.loaders.jdbc.binary.JdbcBinaryCacheStoreConfig;
 import org.infinispan.util.TypedProperties;
 
 @BuiltBy(JdbcBinaryCacheStoreConfigurationBuilder.class)
-public class JdbcBinaryCacheStoreConfiguration extends AbstractJdbcCacheStoreConfiguration implements LegacyLoaderAdapter<JdbcBinaryCacheStoreConfig>{
+public class JdbcBinaryCacheStoreConfiguration extends AbstractJdbcCacheStoreConfiguration implements LegacyLoaderAdapter<JdbcBinaryCacheStoreConfig> {
 
    private final TableManipulationConfiguration table;
 
-   JdbcBinaryCacheStoreConfiguration(TableManipulationConfiguration table, String driverClass,
-         String connectionUrl, String userName, String password, String connectionFactoryClass,
-         String datasourceJndiLocation, long lockAcquistionTimeout, int lockConcurrencyLevel, boolean purgeOnStartup,
-         boolean purgeSynchronously, int purgerThreads, boolean fetchPersistentState, boolean ignoreModifications,
-         TypedProperties properties, AsyncStoreConfiguration async, SingletonStoreConfiguration singletonStore) {
-      super(driverClass, connectionUrl, userName, password, connectionFactoryClass, datasourceJndiLocation,
-            lockAcquistionTimeout, lockConcurrencyLevel, purgeOnStartup, purgeSynchronously, purgerThreads,
-            fetchPersistentState, ignoreModifications, properties, async, singletonStore);
+   JdbcBinaryCacheStoreConfiguration(TableManipulationConfiguration table, ConnectionFactoryConfiguration connectionFactory, long lockAcquistionTimeout, int lockConcurrencyLevel,
+         boolean purgeOnStartup, boolean purgeSynchronously, int purgerThreads, boolean fetchPersistentState, boolean ignoreModifications, TypedProperties properties,
+         AsyncStoreConfiguration async, SingletonStoreConfiguration singletonStore) {
+      super(connectionFactory, lockAcquistionTimeout, lockConcurrencyLevel, purgeOnStartup, purgeSynchronously, purgerThreads, fetchPersistentState, ignoreModifications,
+            properties, async, singletonStore);
       this.table = table;
    }
 
@@ -52,13 +49,8 @@ public class JdbcBinaryCacheStoreConfiguration extends AbstractJdbcCacheStoreCon
       // StoreConfiguration
       LegacyConfigurationAdaptor.adapt(this, config);
 
-      // AbstractJdbcCacheStoreConfiguration
-      config.setConnectionFactoryClass(connectionFactoryClass());
-      config.setConnectionUrl(connectionUrl());
-      config.setDatasourceJndiLocation(datasource());
-      config.setDriverClass(driverClass());
-      config.setUserName(userName());
-      config.setPassword(password());
+      // ConnectionFactory
+      ((LegacyConnectionFactoryAdaptor) connectionFactory()).adapt(config);
 
       // TableManipulation
       config.setCreateTableOnStart(table.createOnStart());
@@ -79,14 +71,9 @@ public class JdbcBinaryCacheStoreConfiguration extends AbstractJdbcCacheStoreCon
 
    @Override
    public String toString() {
-      return "JdbcBinaryBasedCacheStoreConfiguration [table=" + table + ", driverClass()=" + driverClass()
-            + ", connectionUrl()=" + connectionUrl() + ", userName()=" + userName() + ", password()=" + password()
-            + ", connectionFactoryClass()=" + connectionFactoryClass() + ", datasourceJndiLocation()="
-            + datasource() + ", lockAcquistionTimeout()=" + lockAcquistionTimeout()
-            + ", lockConcurrencyLevel()=" + lockConcurrencyLevel() + ", async()=" + async() + ", singletonStore()="
-            + singletonStore() + ", purgeOnStartup()=" + purgeOnStartup() + ", purgeSynchronously()="
-            + purgeSynchronously() + ", purgerThreads()=" + purgerThreads() + ", fetchPersistentState()="
-            + fetchPersistentState() + ", ignoreModifications()=" + ignoreModifications() + ", properties()="
-            + properties() + "]";
+      return "JdbcBinaryCacheStoreConfiguration [table=" + table + ", connectionFactory()=" + connectionFactory() + ", lockAcquistionTimeout()=" + lockAcquistionTimeout()
+            + ", lockConcurrencyLevel()=" + lockConcurrencyLevel() + ", async()=" + async() + ", singletonStore()=" + singletonStore() + ", purgeOnStartup()=" + purgeOnStartup()
+            + ", purgeSynchronously()=" + purgeSynchronously() + ", purgerThreads()=" + purgerThreads() + ", fetchPersistentState()=" + fetchPersistentState()
+            + ", ignoreModifications()=" + ignoreModifications() + ", properties()=" + properties() + "]";
    }
 }

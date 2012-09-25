@@ -19,6 +19,7 @@
 package org.infinispan.configuration.cache;
 
 import org.infinispan.config.ConfigurationException;
+import org.infinispan.configuration.Builder;
 import org.infinispan.eviction.EvictionStrategy;
 import org.infinispan.eviction.EvictionThreadPolicy;
 import org.infinispan.util.logging.Log;
@@ -27,7 +28,7 @@ import org.infinispan.util.logging.LogFactory;
 /**
  * Controls the eviction settings for the cache.
  */
-public class EvictionConfigurationBuilder extends AbstractConfigurationChildBuilder<EvictionConfiguration> {
+public class EvictionConfigurationBuilder extends AbstractConfigurationChildBuilder implements Builder<EvictionConfiguration> {
 
    private static final Log log = LogFactory.getLog(EvictionConfigurationBuilder.class);
 

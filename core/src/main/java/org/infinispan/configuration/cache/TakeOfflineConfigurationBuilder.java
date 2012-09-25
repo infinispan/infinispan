@@ -25,7 +25,7 @@ import org.infinispan.configuration.Builder;
  * @author Mircea Markus
  * @since 5.2
  */
-public class TakeOfflineConfigurationBuilder extends AbstractConfigurationChildBuilder<TakeOfflineConfiguration> {
+public class TakeOfflineConfigurationBuilder extends AbstractConfigurationChildBuilder implements Builder<TakeOfflineConfiguration>{
 
    private int afterFailures = 0;
    private long minTimeToWait = 0;

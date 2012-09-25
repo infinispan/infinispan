@@ -18,6 +18,7 @@
  */
 package org.infinispan.configuration.cache;
 
+import org.infinispan.configuration.Builder;
 import org.infinispan.transaction.LockingMode;
 import org.infinispan.transaction.TransactionMode;
 import org.infinispan.transaction.lookup.GenericTransactionManagerLookup;
@@ -33,7 +34,7 @@ import java.util.concurrent.TimeUnit;
  *
  * @author pmuir
  */
-public class TransactionConfigurationBuilder extends AbstractConfigurationChildBuilder<TransactionConfiguration> {
+public class TransactionConfigurationBuilder extends AbstractConfigurationChildBuilder implements Builder<TransactionConfiguration> {
 
    private boolean autoCommit = true;
    private long cacheStopTimeout = TimeUnit.SECONDS.toMillis(30);

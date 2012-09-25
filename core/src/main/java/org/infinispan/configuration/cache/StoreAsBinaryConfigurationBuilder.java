@@ -18,6 +18,8 @@
  */
 package org.infinispan.configuration.cache;
 
+import org.infinispan.configuration.Builder;
+
 /**
  * Controls whether when stored in memory, keys and values are stored as references to their original objects, or in
  * a serialized, binary format.  There are benefits to both approaches, but often if used in a clustered mode,
@@ -29,7 +31,7 @@ package org.infinispan.configuration.cache;
  * <p />
  * @see StoreAsBinaryConfiguration
  */
-public class StoreAsBinaryConfigurationBuilder extends AbstractConfigurationChildBuilder<StoreAsBinaryConfiguration> {
+public class StoreAsBinaryConfigurationBuilder extends AbstractConfigurationChildBuilder implements Builder<StoreAsBinaryConfiguration> {
 
    private boolean enabled = false;
    private boolean storeKeysAsBinary = true;

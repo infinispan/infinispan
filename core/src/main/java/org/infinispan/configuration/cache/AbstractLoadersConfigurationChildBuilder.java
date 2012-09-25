@@ -18,7 +18,14 @@
  */
 package org.infinispan.configuration.cache;
 
-public abstract class AbstractLoadersConfigurationChildBuilder<T> extends AbstractConfigurationChildBuilder<T> implements LoadersConfigurationChildBuilder {
+/**
+ *
+ * AbstractLoadersConfigurationChildBuilder.
+ *
+ * @author Tristan Tarrant
+ * @since 5.2
+ */
+public abstract class AbstractLoadersConfigurationChildBuilder extends AbstractConfigurationChildBuilder implements LoadersConfigurationChildBuilder {
    protected AbstractLoadersConfigurationChildBuilder(LoadersConfigurationBuilder builder) {
       super(builder.getBuilder());
    }
