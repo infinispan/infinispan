@@ -73,7 +73,7 @@ public class EntrySetCommand extends AbstractLocalCommand implements VisitableCo
    @Override
    public String toString() {
       return "EntrySetCommand{" +
-            "set=" + container.entrySet() +
+            "set=" + container.size() + " elements" +
             '}';
    }
 

@@ -68,7 +68,7 @@ public class KeySetCommand extends AbstractLocalCommand implements VisitableComm
    @Override
    public String toString() {
       return "KeySetCommand{" +
-            "set=" + container.keySet() +
+            "set=" + container.size() + " elements" +
             '}';
    }
 
