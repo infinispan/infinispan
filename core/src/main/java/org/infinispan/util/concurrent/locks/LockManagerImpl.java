@@ -133,11 +133,19 @@ public class LockManagerImpl implements LockManager {
 
          if (l instanceof OwnableReentrantLock) {
             return ((OwnableReentrantLock) l).getOwner();
-         } else {
-            // cannot determine owner, JDK Reentrant locks only provide best-effort guesses.
-            return ANOTHER_THREAD;
+         } else if (l instanceof VisibleOwnerReentrantLock) {
+            Thread owner = ((VisibleOwnerReentrantLock) l).getOwner();
+            // Don't assume the key is unlocked if getOwner() returned null.
+            // JDK ReentrantLocks can return null e.g. if another thread is in the process of acquiring the lock
+            if (owner != null)
+               return owner;
          }
-      } else return null;
+
+         return ANOTHER_THREAD;
+      } else {
+         // not locked
+         return null;
+      }
    }
 
    @Override
