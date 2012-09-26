@@ -33,6 +33,7 @@ import java.util.concurrent.Future;
 import org.infinispan.Cache;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
+import org.infinispan.remoting.transport.Address;
 import org.infinispan.test.MultipleCacheManagersTest;
 import org.testng.annotations.Test;
 
@@ -194,6 +195,13 @@ public class DistributedExecutorTest extends MultipleCacheManagersTest {
       Future<Boolean> future = des.submit(new SimpleDistributedCallable(false));
       Boolean r = future.get();
       assert r;
+      
+      //the same using DistributedTask API
+      DistributedTaskBuilder<Boolean> taskBuilder = des.getDistributedTaskBuilder();
+      DistributedTask<Boolean> distributedTask = taskBuilder.callable(new SimpleDistributedCallable(false)).build();
+      future = des.submit(distributedTask);
+      r = future.get();
+      assert r;
    }
    
    public void testBasicTargetDistributedCallable() throws Exception {
@@ -202,8 +210,16 @@ public class DistributedExecutorTest extends MultipleCacheManagersTest {
       
       //initiate task from cache1 and select cache2 as target
       DistributedExecutorService des = new DefaultExecutorService(cache1);
-      Future<Boolean> future = des.submit(cache2.getAdvancedCache().getRpcManager().getAddress(), new SimpleDistributedCallable(false));
+      Address target = cache2.getAdvancedCache().getRpcManager().getAddress();
+      Future<Boolean> future = des.submit(target, new SimpleDistributedCallable(false));
       Boolean r = future.get();
+      assert r;
+      
+      //the same using DistributedTask API
+      DistributedTaskBuilder<Boolean> taskBuilder = des.getDistributedTaskBuilder();
+      DistributedTask<Boolean> distributedTask = taskBuilder.callable(new SimpleDistributedCallable(false)).build();
+      future = des.submit(target, distributedTask);
+      r = future.get();
       assert r;
    }
 
@@ -219,6 +235,13 @@ public class DistributedExecutorTest extends MultipleCacheManagersTest {
       Future<Boolean> future = des.submit(new SimpleDistributedCallable(true), new String[] {
                "key1", "key2" });
       Boolean r = future.get();
+      assert r;
+      
+      //the same using DistributedTask API
+      DistributedTaskBuilder<Boolean> taskBuilder = des.getDistributedTaskBuilder();
+      DistributedTask<Boolean> distributedTask = taskBuilder.callable(new SimpleDistributedCallable(true)).build();
+      future = des.submit(distributedTask,new String[] {"key1", "key2" });
+      r = future.get();
       assert r;
    }
 
@@ -237,6 +260,15 @@ public class DistributedExecutorTest extends MultipleCacheManagersTest {
       for (Future<Boolean> f : list) {
          assert f.get();
       }
+      
+      //the same using DistributedTask API
+      DistributedTaskBuilder<Boolean> taskBuilder = des.getDistributedTaskBuilder();
+      DistributedTask<Boolean> distributedTask = taskBuilder.callable(new SimpleDistributedCallable(true)).build();
+      list = des.submitEverywhere(distributedTask,new String[] {"key1", "key2" });
+      assert list != null && !list.isEmpty();
+      for (Future<Boolean> f : list) {
+         assert f.get();
+      }
    }
 
    public void testDistributedCallableEverywhere() throws Exception {
@@ -244,6 +276,15 @@ public class DistributedExecutorTest extends MultipleCacheManagersTest {
       DefaultExecutorService des = new DefaultExecutorService(getCache());
 
       List<Future<Boolean>> list = des.submitEverywhere(new SimpleDistributedCallable(false));
+      assert list != null && !list.isEmpty();
+      for (Future<Boolean> f : list) {
+         assert f.get();
+      }
+      
+      //the same using DistributedTask API
+      DistributedTaskBuilder<Boolean> taskBuilder = des.getDistributedTaskBuilder();
+      DistributedTask<Boolean> distributedTask = taskBuilder.callable(new SimpleDistributedCallable(false)).build();
+      list = des.submitEverywhere(distributedTask);
       assert list != null && !list.isEmpty();
       for (Future<Boolean> f : list) {
          assert f.get();
