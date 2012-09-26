@@ -20,6 +20,9 @@
 package org.infinispan.xsite.backupfailure;
 
 import org.infinispan.CacheException;
+import org.infinispan.configuration.cache.CacheMode;
+import org.infinispan.configuration.cache.ConfigurationBuilder;
+import org.testng.annotations.Test;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -30,10 +33,22 @@ import static org.testng.AssertJUnit.*;
  * @author Mircea Markus
  * @since 5.2
  */
-public abstract class NonTxBackupFailureTest extends BaseBackupFailureTest {
+@Test (groups = "xsite", testName = "xsite.backupfailure.NonTxBackupFailureTest")
+public class NonTxBackupFailureTest extends BaseBackupFailureTest {
 
    //todo - if I don't explicitly override the test methods then testNG won't execute them from superclass.
    //fix this once we move to JUnit
+
+
+   @Override
+   protected ConfigurationBuilder getLonActiveConfig() {
+      return getDefaultClusteredCacheConfig(CacheMode.DIST_SYNC, false);
+   }
+
+   @Override
+   protected ConfigurationBuilder getNycActiveConfig() {
+      return getDefaultClusteredCacheConfig(CacheMode.DIST_SYNC, false);
+   }
 
    public void testPutFailure() {
       try {

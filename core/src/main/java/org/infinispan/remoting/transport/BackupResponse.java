@@ -30,5 +30,5 @@ import java.util.Map;
 public interface BackupResponse {
    void waitForBackupToFinish() throws Exception;
 
-   Map<String,Exception> getFailedBackups();
+   Map<String,Throwable> getFailedBackups();
 }
