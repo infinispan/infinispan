@@ -159,16 +159,8 @@ public class AsyncStore extends AbstractDelegatingStore {
 
    @Override
    public boolean remove(Object key) {
-      try {
-         InternalCacheEntry load = load(key);
-         if (load != null) {
-            enqueue(new Remove(key));
-            return true;
-         }
-         return false;
-      } catch (CacheLoaderException e) {
-         throw new CacheException("Could not load key/value entries from cacheloader", e);
-      }
+      enqueue(new Remove(key));
+      return true;
    }
 
    @Override
