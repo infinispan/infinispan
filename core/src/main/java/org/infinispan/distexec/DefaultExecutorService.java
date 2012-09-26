@@ -71,6 +71,7 @@ import org.infinispan.remoting.responses.Response;
 import org.infinispan.remoting.responses.SuccessfulResponse;
 import org.infinispan.remoting.rpc.RpcManager;
 import org.infinispan.remoting.transport.Address;
+import org.infinispan.remoting.transport.TopologyAwareAddress;
 import org.infinispan.util.Util;
 import org.infinispan.util.concurrent.FutureListener;
 import org.infinispan.util.concurrent.NotifyingFuture;
@@ -98,6 +99,34 @@ import org.infinispan.util.logging.LogFactory;
  */
 public class DefaultExecutorService extends AbstractExecutorService implements DistributedExecutorService {
 
+   private static final NodeFilter SAME_MACHINE_FILTER = new NodeFilter(){
+      @Override
+      public boolean include(TopologyAwareAddress thisAddress, TopologyAwareAddress otherAddress) {
+         return thisAddress.isSameMachine(otherAddress);
+      };
+   };
+
+   private static final NodeFilter SAME_RACK_FILTER = new NodeFilter(){
+      @Override
+      public boolean include(TopologyAwareAddress thisAddress, TopologyAwareAddress otherAddress) {
+         return thisAddress.isSameRack(otherAddress);
+      };
+   };
+
+   private static final NodeFilter SAME_SITE_FILTER = new NodeFilter(){
+      @Override
+      public boolean include(TopologyAwareAddress thisAddress, TopologyAwareAddress otherAddress) {
+         return thisAddress.isSameSite(otherAddress);
+      };
+   };
+
+   private static final NodeFilter ALL_FILTER = new NodeFilter(){
+      @Override
+      public boolean include(TopologyAwareAddress thisAddress, TopologyAwareAddress otherAddress) {
+         return true;
+      };
+   };
+
    private static final Log log = LogFactory.getLog(DefaultExecutorService.class);
    protected final AtomicBoolean isShutdown = new AtomicBoolean(false);
    protected final AdvancedCache cache;
@@ -110,7 +139,7 @@ public class DefaultExecutorService extends AbstractExecutorService implements D
    /**
     * Creates a new DefaultExecutorService given a master cache node for local task execution. All
     * distributed task executions will be initiated from this Infinispan cache node
-    * 
+    *
     * @param masterCacheNode
     *           Cache node initiating distributed task
     */
@@ -122,7 +151,7 @@ public class DefaultExecutorService extends AbstractExecutorService implements D
     * Creates a new DefaultExecutorService given a master cache node and an ExecutorService for
     * parallel execution of task ran on this node. All distributed task executions will be initiated
     * from this Infinispan cache node.
-    * 
+    *
     * @param masterCacheNode
     *           Cache node initiating distributed task
     * @param localExecutorService
@@ -150,6 +179,14 @@ public class DefaultExecutorService extends AbstractExecutorService implements D
    }
 
    @Override
+   public <T> DistributedTaskBuilder<T> createDistributedTaskBuilder(Callable<T> callable) {
+      long to = cache.getCacheConfiguration().clustering().sync().replTimeout();
+      DistributedTaskBuilder<T> dtb = new DefaultDistributedTaskBuilder<T>(to);
+      dtb.callable(callable);
+      return dtb;
+   }
+
+   @Override
    public <T> NotifyingFuture<T> submit(Runnable task, T result) {
       return (NotifyingFuture<T>) super.submit(task, result);
    }
@@ -162,6 +199,18 @@ public class DefaultExecutorService extends AbstractExecutorService implements D
    @Override
    public void shutdown() {
       realShutdown(false);
+   }
+
+   protected List<Address> executionCandidates() {
+      return rpc.getTransport().getMembers();
+   }
+
+   protected <T> List<Address> executionCandidates(DistributedTask<T> task) {
+      return filterMembers(task.getTaskExecutionPolicy(), executionCandidates());
+   }
+
+   private Address getAddress(){
+      return rpc.getAddress();
    }
 
    private List<Runnable> realShutdown(boolean interrupt) {
@@ -295,15 +344,15 @@ public class DefaultExecutorService extends AbstractExecutorService implements D
    @Override
    public void execute(Runnable command) {
       if (!isShutdown.get()) {
-         DistributedRunnableFuture<Object> cmd;
-         if (command instanceof DistributedRunnableFuture<?>) {
-            cmd = (DistributedRunnableFuture<Object>) command;
+         DistributedTaskPart<Object> cmd;
+         if (command instanceof DistributedTaskPart<?>) {
+            cmd = (DistributedTaskPart<Object>) command;
          } else if (command instanceof Serializable) {
-            cmd = (DistributedRunnableFuture<Object>) newTaskFor(command, null);
+            cmd = (DistributedTaskPart<Object>) newTaskFor(command, null);
          } else {
             throw new IllegalArgumentException("Runnable command is not Serializable  " + command);
          }
-         executeFuture(selectExecutionNode(), cmd);
+         cmd.execute();
       } else {
          throw new RejectedExecutionException();
       }
@@ -312,98 +361,129 @@ public class DefaultExecutorService extends AbstractExecutorService implements D
    @Override
    protected <T> RunnableFuture<T> newTaskFor(Runnable runnable, T value) {
       if (runnable == null) throw new NullPointerException();
-
-      DistributedExecuteCommand<T> executeCommand = factory.buildDistributedExecuteCommand(
-               new RunnableAdapter<T>(runnable, value), rpc.getAddress(), null);
-      return new DistributedRunnableFuture<T>(executeCommand);
+      RunnableAdapter<T> adapter = new RunnableAdapter<T>(runnable, value);
+      return newTaskFor(adapter);
    }
 
    @Override
    protected <T> RunnableFuture<T> newTaskFor(Callable<T> callable) {
       if (callable == null) throw new NullPointerException();
-
+      DistributedTaskBuilder<T> distributedTaskBuilder = createDistributedTaskBuilder(callable);
+      DistributedTask<T> task = distributedTaskBuilder.build();
       DistributedExecuteCommand<T> executeCommand = factory.buildDistributedExecuteCommand(
-               callable, rpc.getAddress(), null);
-      return new DistributedRunnableFuture<T>(executeCommand);
+               callable, getAddress(), null);
+      return createDistributedTaskPart(task, executeCommand, selectExecutionNode(task));
    }
-   
+
    @Override
    public <T> Future<T> submit(Address target, Callable<T> task) {
+      DistributedTaskBuilder<T> distributedTaskBuilder = createDistributedTaskBuilder(task);
+      DistributedTask<T> distributedTask = distributedTaskBuilder.build();
+      return submit(target, distributedTask);
+   }
+
+   @Override
+   public <T> Future<T> submit(Address target, DistributedTask<T> task) {
       if (task == null)
          throw new NullPointerException();
       if (target == null)
          throw new NullPointerException();
-      List<Address> members = rpc.getTransport().getMembers();
+      List<Address> members = executionCandidates();
       if (!members.contains(target)) {
-         throw new IllegalArgumentException("Target node " + target + " is not a cluster member, members are " + members);
+         throw new IllegalArgumentException("Target node " + target
+                  + " is not a cluster member, members are " + members);
       }
-      Address me = rpc.getAddress();
+      Address me = getAddress();
       DistributedExecuteCommand<T> c = null;
       if (target.equals(me)) {
-         c = factory.buildDistributedExecuteCommand(clone(task), me, null);
+         c = factory.buildDistributedExecuteCommand(clone(task.getCallable()), me, null);
       } else {
-         c = factory.buildDistributedExecuteCommand(task, me, null);
+         c = factory.buildDistributedExecuteCommand(task.getCallable(), me, null);
       }
-      DistributedRunnableFuture<T> f = new DistributedRunnableFuture<T>(c);
-      executeFuture(target, f);
+      DistributedTaskPart<T> f = createDistributedTaskPart(task, c, target);
+      f.execute();
       return f;
    }
 
    @Override
    public <T, K> Future<T> submit(Callable<T> task, K... input) {
+      DistributedTaskBuilder<T> distributedTaskBuilder = createDistributedTaskBuilder(task);
+      DistributedTask<T> distributedTask = distributedTaskBuilder.build();
+      return submit(distributedTask, input);
+   }
+
+   @Override
+   public <T, K> Future<T> submit(DistributedTask<T> task, K... input) {
       if (task == null) throw new NullPointerException();
 
       if(inputKeysSpecified(input)){
-         Map<Address, List<K>> nodesKeysMap = mapKeysToNodes(input);
-         Address me = rpc.getAddress();
-         DistributedExecuteCommand<T> c = factory.buildDistributedExecuteCommand(task, me, Arrays.asList(input));
-         DistributedRunnableFuture<T> f = new DistributedRunnableFuture<T>(c);
+         Map<Address, List<K>> nodesKeysMap = keysToExecutionNodes(task.getTaskExecutionPolicy(), input);
+         checkExecutionPolicy(task, nodesKeysMap, input);
+         Address me = getAddress();
+         DistributedExecuteCommand<T> c = factory.buildDistributedExecuteCommand(task.getCallable(), me, Arrays.asList(input));
          ArrayList<Address> nodes = new ArrayList<Address>(nodesKeysMap.keySet());
-         executeFuture(selectExecutionNode(nodes), f);
+         DistributedTaskPart<T> f = createDistributedTaskPart(task, c, selectExecutionNode(nodes));
+         execute(f);
          return f;
       } else {
-         return submit(task);
+         return submit(task.getCallable());
       }
    }
 
    @Override
    public <T> List<Future<T>> submitEverywhere(Callable<T> task) {
+      DistributedTaskBuilder<T> distributedTaskBuilder = createDistributedTaskBuilder(task);
+      DistributedTask<T> distributedTask = distributedTaskBuilder.build();
+      return submitEverywhere(distributedTask);
+   }
+
+   @Override
+   public <T> List<Future<T>> submitEverywhere(DistributedTask<T> task) {
       if (task == null) throw new NullPointerException();
-      List<Address> members = rpc.getTransport().getMembers();
-      List<Future<T>> futures = new ArrayList<Future<T>>(members.size() - 1);      
-      Address me = rpc.getAddress();
+
+      List<Address> members = executionCandidates(task);
+      List<Future<T>> futures = new ArrayList<Future<T>>(members.size() - 1);
+      Address me = getAddress();
       for (Address target : members) {
          DistributedExecuteCommand<T> c = null;
          if (target.equals(me)) {
-            c = factory.buildDistributedExecuteCommand(clone(task), me, null);
+            c = factory.buildDistributedExecuteCommand(clone(task.getCallable()), me, null);
          } else {
-            c = factory.buildDistributedExecuteCommand(task, me, null);
+            c = factory.buildDistributedExecuteCommand(task.getCallable(), me, null);
          }
-         DistributedRunnableFuture<T> f = new DistributedRunnableFuture<T>(c);
+         DistributedTaskPart<T> f = createDistributedTaskPart(task, c, target);
          futures.add(f);
-         executeFuture(target, f);
+         execute(f);
       }
       return futures;
    }
 
    @Override
    public <T, K> List<Future<T>> submitEverywhere(Callable<T> task, K... input) {
+      DistributedTaskBuilder<T> distributedTaskBuilder = createDistributedTaskBuilder(task);
+      DistributedTask<T> distributedTask = distributedTaskBuilder.build();
+      return submitEverywhere(distributedTask, input);
+   }
+
+   @Override
+   public <T, K> List<Future<T>> submitEverywhere(DistributedTask<T> task, K... input) {
       if (task == null) throw new NullPointerException();
       if(inputKeysSpecified(input)) {
          List<Future<T>> futures = new ArrayList<Future<T>>(input.length * 2);
-         Address me = rpc.getAddress();
-         Map<Address, List<K>> nodesKeysMap = mapKeysToNodes(input);
+         Address me = getAddress();
+         Map<Address, List<K>> nodesKeysMap = keysToExecutionNodes(task.getTaskExecutionPolicy(), input);
+         checkExecutionPolicy(task, nodesKeysMap, input);
          for (Entry<Address, List<K>> e : nodesKeysMap.entrySet()) {
             Address target = e.getKey();
             DistributedExecuteCommand<T> c = null;
             if (target.equals(me)) {
-               c = factory.buildDistributedExecuteCommand(clone(task), me, e.getValue());
+               c = factory.buildDistributedExecuteCommand(clone(task.getCallable()), me, e.getValue());
             } else {
-               c = factory.buildDistributedExecuteCommand(task, me, e.getValue());
+               c = factory.buildDistributedExecuteCommand(task.getCallable(), me, e.getValue());
             }
-            DistributedRunnableFuture<T> f = new DistributedRunnableFuture<T>(c);
+            DistributedTaskPart<T> f = createDistributedTaskPart(task, c, target);
             futures.add(f);
-            executeFuture(target, f);
+            execute(f);
          }
          return futures;
       } else {
@@ -415,17 +495,18 @@ public class DefaultExecutorService extends AbstractExecutorService implements D
      return Util.cloneWithMarshaller(marshaller, task);
    }
 
-   protected <T> void executeFuture(Address address, DistributedRunnableFuture<T> f) {
-      if (rpc.getAddress().equals(address)) {
-         invokeLocally(f);
-      } else {
-         log.tracef("Sending %s to remote execution at node %s", f, address);
-         try {
-            rpc.invokeRemotelyInFuture(Collections.singletonList(address), f.getCommand(),
-                     (DistributedRunnableFuture<Object>) f);
-         } catch (Throwable e) {
-            log.remoteExecutionFailed(address, e);
-         }
+   protected <T> DistributedTaskPart<T> createDistributedTaskPart(DistributedTask<T> task,
+            DistributedExecuteCommand<T> c, Address target) {
+      return new DistributedTaskPart<T>(task, c, target);
+   }
+
+   private <T, K> void checkExecutionPolicy(DistributedTask<T> task,
+            Map<Address, List<K>> nodesKeysMap, K... input) {
+      if (nodesKeysMap == null || nodesKeysMap.isEmpty()) {
+         throw new IllegalStateException("DistributedTaskExecutionPolicy "
+                  + task.getTaskExecutionPolicy() + " for task " + task
+                  + " returned invalid keysToExecutionNodes " + nodesKeysMap
+                  + " execution policy plan for a given input " + input);
       }
    }
 
@@ -433,74 +514,13 @@ public class DefaultExecutorService extends AbstractExecutorService implements D
       return input != null && input.length > 0;
    }
 
-   protected <T> void invokeLocally(final DistributedRunnableFuture<T> future) {
-      log.debugf("Sending %s to self", future);
-      try {
-         Callable<Object> call = new Callable<Object>() {
-
-            @Override
-            public Object call() throws Exception {
-               Object result = null;
-               future.getCommand().init(cache);
-               DistributedTaskLifecycleService taskLifecycleService = DistributedTaskLifecycleService.getInstance();
-               try {
-                  //hook into lifecycle
-                  taskLifecycleService.onPreExecute(future.getCommand().getCallable(),cache);
-                  result = future.getCommand().perform(null);
-                  return Collections.singletonMap(rpc.getAddress(), SuccessfulResponse.create(result));
-               } catch (Throwable e) {
-                  return e;
-               } finally {
-                  //hook into lifecycle
-                  taskLifecycleService.onPostExecute(future.getCommand().getCallable());
-                  future.notifyDone();
-               }
-            }
-         };
-         final FutureTask<Object> task = new FutureTask<Object>(call);
-         future.setNetworkFuture((Future<T>) task);
-         localExecutorService.submit(task);
-      } catch (Throwable e1) {
-         log.localExecutionFailed(e1);
-      }
-   }
-
-   protected <K> Map<Address, List<K>> mapKeysToNodes(K... input) {
-      DistributionManager dm = cache.getDistributionManager();
-      Map<Address, List<K>> addressToKey = new HashMap<Address, List<K>>(input.length * 2);
-      boolean usingREPLMode = dm == null;      
-      List<Address> members = null;
-      if(usingREPLMode){
-         members = new ArrayList<Address>(cache.getRpcManager().getTransport().getMembers());
-      }
-      for (K key : input) {
-         Address ownerOfKey = null;
-         if(usingREPLMode){
-            //using REPL mode https://issues.jboss.org/browse/ISPN-1886
-            // since keys and values are on all nodes, lets just pick randomly
-            Collections.shuffle(members);
-            ownerOfKey = members.get(0);
-         } else {            
-            //DIST mode
-            ownerOfKey = dm.getPrimaryLocation(key);
-         }
-         List<K> keysAtNode = addressToKey.get(ownerOfKey);
-         if (keysAtNode == null) {
-            keysAtNode = new LinkedList<K>();
-            addressToKey.put(ownerOfKey, keysAtNode);
-         }
-         keysAtNode.add(key);
-      }
-      return addressToKey;
-   }
-
    protected Address selectExecutionNode(List<Address> candidates) {
       List<Address> list = randomClusterMembers(candidates,1);
       return list.get(0);
    }
 
-   protected Address selectExecutionNode() {
-     return selectExecutionNode(rpc.getTransport().getMembers());
+   protected <T> Address selectExecutionNode(DistributedTask <T> task) {
+     return selectExecutionNode(executionCandidates(task));
    }
 
    protected List<Address> randomClusterMembers(final List<Address> members, int numNeeded) {
@@ -522,6 +542,76 @@ public class DefaultExecutorService extends AbstractExecutorService implements D
       return chosen;
    }
 
+   protected <K> Map<Address, List<K>> keysToExecutionNodes(DistributedTaskExecutionPolicy policy, K... input) {
+      DistributionManager dm = cache.getDistributionManager();
+      Map<Address, List<K>> addressToKey = new HashMap<Address, List<K>>(input.length * 2);
+      boolean usingREPLMode = dm == null;
+      List<Address> members = null;
+      if (usingREPLMode) {
+         members = new ArrayList<Address>(cache.getRpcManager().getTransport().getMembers());
+         members =  filterMembers(policy, members);
+      }
+      for (K key : input) {
+         Address ownerOfKey = null;
+         if (usingREPLMode) {
+            // using REPL mode https://issues.jboss.org/browse/ISPN-1886
+            // since keys and values are on all nodes, lets just pick randomly
+            Collections.shuffle(members);
+            ownerOfKey = members.get(0);
+         } else {
+            // DIST mode
+
+            List<Address> owners = dm.locate(key);
+            List<Address> filtered = filterMembers(policy, owners);
+            if(!filtered.isEmpty()){
+               ownerOfKey = filtered.get(0);
+            } else {
+               ownerOfKey = owners.get(0);
+            }
+         }
+         List<K> keysAtNode = addressToKey.get(ownerOfKey);
+         if (keysAtNode == null) {
+            keysAtNode = new LinkedList<K>();
+            addressToKey.put(ownerOfKey, keysAtNode);
+         }
+         keysAtNode.add(key);
+      }
+      return addressToKey;
+   }
+
+   private List<Address> filterMembers(DistributedTaskExecutionPolicy policy, List<Address> members) {
+      NodeFilter filter = null;
+      switch (policy) {
+         case SAME_MACHINE:
+            filter = SAME_MACHINE_FILTER;
+            break;
+         case SAME_SITE:
+            filter = SAME_SITE_FILTER;
+            break;
+         case SAME_RACK:
+            filter = SAME_RACK_FILTER;
+            break;
+         case ALL:
+            filter = ALL_FILTER;
+            break;
+         default:
+            filter = ALL_FILTER;
+            break;
+      }
+      List<Address> result = new ArrayList<Address>();
+      for (Address address : members) {
+         if(address instanceof TopologyAwareAddress){
+            TopologyAwareAddress taa = (TopologyAwareAddress)address;
+            if(filter.include(taa, (TopologyAwareAddress)getAddress())){
+               result.add(address);
+            }
+         } else {
+            result.add(address);
+         }
+      }
+      return result;
+   }
+
    private void ensureProperCacheState(AdvancedCache<?, ?> cache) throws NullPointerException,
             IllegalStateException {
 
@@ -533,13 +623,78 @@ public class DefaultExecutorService extends AbstractExecutorService implements D
    }
 
    /**
-    * DistributedRunnableFuture is essentially a Future wrap around DistributedExecuteCommand.
+    * NodeFilter allows selection of nodes according to {@link DistributedTaskExecutionPolicy}
+    */
+   interface NodeFilter {
+      boolean include(TopologyAwareAddress thisAddress, TopologyAwareAddress otherAddress);
+   }
+
+   private class DefaultDistributedTaskBuilder<T> implements DistributedTaskBuilder<T>, DistributedTask<T>{
+
+      private Callable<T> callable;
+      private long timeout;
+      private DistributedTaskExecutionPolicy executionPolicy = DistributedTaskExecutionPolicy.ALL;
+
+      public DefaultDistributedTaskBuilder(long taskTimeout) {
+         this.timeout = taskTimeout;
+      }
+
+      @Override
+      public DistributedTaskBuilder<T> callable(Callable<T> callable) {
+         if (callable == null)
+            throw new IllegalArgumentException("Callable cannot be null");
+         this.callable = callable;
+         return this;
+      }
+
+      @Override
+      public DistributedTaskBuilder<T> timeout(long t, TimeUnit tu) {
+         timeout = TimeUnit.MILLISECONDS.convert(timeout, tu);
+         return this;
+      }
+
+      @Override
+      public DistributedTaskBuilder<T> executionPolicy(DistributedTaskExecutionPolicy policy) {
+         if (policy == null)
+            throw new IllegalArgumentException("DistributedTaskExecutionPolicy cannot be null");
+
+         this.executionPolicy = policy;
+         return this;
+      }
+
+      @Override
+      public DistributedTask<T> build() {
+         DefaultDistributedTaskBuilder<T> task = new DefaultDistributedTaskBuilder<T>(timeout);
+         task.callable(callable);
+         task.executionPolicy(executionPolicy);
+         return task;
+      }
+
+      @Override
+      public long timeout() {
+         return timeout;
+      }
+
+      @Override
+      public DistributedTaskExecutionPolicy getTaskExecutionPolicy() {
+         return executionPolicy;
+      }
+
+      @Override
+      public Callable<T> getCallable() {
+         return callable;
+      }
+   }
+
+
+   /**
+    * DistributedTaskPart represents a unit of work sent to remote VM and executed there
     *
     *
     * @author Mircea Markus
     * @author Vladimir Blagojevic
     */
-   protected static class DistributedRunnableFuture<V> implements RunnableFuture<V>, NotifyingNotifiableFuture<V> {
+   private class DistributedTaskPart<V> implements  NotifyingNotifiableFuture<V>, RunnableFuture<V> {
 
       private final DistributedExecuteCommand<V> distCommand;
       private volatile Future<V> f;
@@ -547,6 +702,8 @@ public class DefaultExecutorService extends AbstractExecutorService implements D
       private volatile boolean callCompleted = false;
       private final Set<FutureListener<V>> listeners = new CopyOnWriteArraySet<FutureListener<V>>();
       private final ReadWriteLock listenerLock = new ReentrantReadWriteLock();
+      private final Address executionTarget;
+      private final DistributedTask<V> owningTask;
 
       /**
        * Creates a <tt>DistributedRunnableFuture</tt> that will upon running, execute the given
@@ -560,12 +717,22 @@ public class DefaultExecutorService extends AbstractExecutorService implements D
        *           the result to return on successful completion.
        *
        */
-      public DistributedRunnableFuture(DistributedExecuteCommand<V> command) {
+      public DistributedTaskPart(DistributedTask<V> task, DistributedExecuteCommand<V> command, Address executionTarget) {
+         this.owningTask = task;
          this.distCommand = command;
+         this.executionTarget = executionTarget;
       }
 
       public DistributedExecuteCommand<V> getCommand() {
          return distCommand;
+      }
+
+      public DistributedTask<V> getOwningTask() {
+         return owningTask;
+      }
+
+      public Address getExecutionTarget() {
+         return executionTarget;
       }
 
       @Override
@@ -588,7 +755,7 @@ public class DefaultExecutorService extends AbstractExecutorService implements D
        */
       @Override
       public V get() throws InterruptedException, ExecutionException {
-         Object response = f.get();
+         V response = f.get();
          return retrieveResult(response);
       }
 
@@ -598,12 +765,8 @@ public class DefaultExecutorService extends AbstractExecutorService implements D
       @Override
       public V get(long timeout, TimeUnit unit) throws InterruptedException, ExecutionException,
                TimeoutException {
-         Object response = f.get(timeout, unit);
+         V response = f.get(timeout,unit);
          return retrieveResult(response);
-      }
-
-      @Override
-      public void run() {
       }
 
       @Override
@@ -634,12 +797,17 @@ public class DefaultExecutorService extends AbstractExecutorService implements D
          this.f = future;
       }
 
-      private V retrieveResult(Object response) throws ExecutionException {
+      V retrieveResult(Object response) throws ExecutionException {
+         if (response == null) {
+            throw new ExecutionException("Execution returned null value",
+                     new NullPointerException());
+         }
          if (response instanceof Exception) {
             throw new ExecutionException((Exception) response);
          }
 
          Map<Address, Response> mapResult = (Map<Address, Response>) response;
+         assert mapResult.size() == 1;
          for (Entry<Address, Response> e : mapResult.entrySet()) {
             if (e.getValue() instanceof SuccessfulResponse) {
                return (V) ((SuccessfulResponse) e.getValue()).getResponseValue();
@@ -648,25 +816,103 @@ public class DefaultExecutorService extends AbstractExecutorService implements D
          throw new ExecutionException(new IllegalStateException("Invalid response " + response));
       }
 
-      @Override
-      public boolean equals(Object o) {
-         if (this == o) {
-            return true;
+      public void execute() {
+         if (getAddress().equals(getExecutionTarget())) {
+            this.invokeLocally();
+         } else {
+            log.tracef("Sending %s to remote execution at node %s", f, getExecutionTarget());
+            try {
+               rpc.invokeRemotelyInFuture(Collections.singletonList(getExecutionTarget()), getCommand(), false,
+                        (DistributedTaskPart<Object>) this, getOwningTask().timeout());
+            } catch (Throwable e) {
+               log.remoteExecutionFailed(getExecutionTarget(), e);
+            }
          }
-         if (!(o instanceof DistributedRunnableFuture)) {
-            return false;
-         }
+      }
 
-         DistributedRunnableFuture<?> that = (DistributedRunnableFuture<?>) o;
-         return that.getCommand().equals(getCommand());
+      protected void invokeLocally() {
+         log.debugf("Sending %s to self", this);
+         try {
+            Callable<Object> call = new Callable<Object>() {
+
+               @Override
+               public Object call() throws Exception {
+                  Object result = null;
+                  getCommand().init(cache);
+                  DistributedTaskLifecycleService taskLifecycleService = DistributedTaskLifecycleService.getInstance();
+                  try {
+                     //hook into lifecycle
+                     taskLifecycleService.onPreExecute(getCommand().getCallable(),cache);
+                     result = getCommand().perform(null);
+                     return Collections.singletonMap(getAddress(), SuccessfulResponse.create(result));
+                  } catch (Throwable e) {
+                     return e;
+                  } finally {
+                     //hook into lifecycle
+                     taskLifecycleService.onPostExecute(getCommand().getCallable());
+                     notifyDone();
+                  }
+               }
+            };
+            final FutureTask<Object> task = new FutureTask<Object>(call);
+            setNetworkFuture((Future<V>) task);
+            localExecutorService.submit(task);
+         } catch (Throwable e1) {
+            log.localExecutionFailed(e1);
+         }
+      }
+
+      public List<Address> getExecutionTargets(){
+         return executionCandidates(getOwningTask());
       }
 
       @Override
       public int hashCode() {
-         return getCommand().hashCode();
+         final int prime = 31;
+         int result = 1;
+         result = prime * result + getOuterType().hashCode();
+         result = prime * result + (callCompleted ? 1231 : 1237);
+         result = prime * result + ((distCommand == null) ? 0 : distCommand.hashCode());
+         return result;
+      }
+
+      @Override
+      public boolean equals(Object obj) {
+         if (this == obj) {
+            return true;
+         }
+         if (obj == null) {
+            return false;
+         }
+         if (!(obj instanceof DistributedTaskPart)) {
+            return false;
+         }
+         DistributedTaskPart other = (DistributedTaskPart) obj;
+         if (!getOuterType().equals(other.getOuterType())) {
+            return false;
+         }
+         if (callCompleted != other.callCompleted) {
+            return false;
+         }
+         if (distCommand == null) {
+            if (other.distCommand != null) {
+               return false;
+            }
+         } else if (!distCommand.equals(other.distCommand)) {
+            return false;
+         }
+         return true;
+      }
+
+      @Override
+      public void run() {
+         //intentionally empty
+      }
+
+      private DefaultExecutorService getOuterType() {
+         return DefaultExecutorService.this;
       }
    }
-
    private static final class RunnableAdapter<T> implements Callable<T>, Serializable {
 
       /** The serialVersionUID */
