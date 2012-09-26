@@ -68,7 +68,7 @@ public class ValuesCommand extends AbstractLocalCommand implements VisitableComm
    @Override
    public String toString() {
       return "ValuesCommand{" +
-            "values=" + container.values() +
+            "values=" + container.size() + " elements" +
             '}';
    }
 
