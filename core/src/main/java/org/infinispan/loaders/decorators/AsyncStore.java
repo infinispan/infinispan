@@ -429,8 +429,17 @@ public class AsyncStore extends AbstractDelegatingStore {
     * This lock implementation is <em>not</em> reentrant!
     */
    private static class BufferLock {
-      private static class Available extends AbstractQueuedSynchronizer {
-         private static final long serialVersionUID = 904118966407238892L;
+      /**
+       * AQS state is the number of 'items' in the buffer. AcquireShared blocks if the buffer is
+       * full (>= size).
+       */
+      private static class Counter extends AbstractQueuedSynchronizer {
+         private static final long serialVersionUID = 1688655561670368887L;
+         private final int size;
+
+         Counter(int size) {
+            this.size = size;
+         }
 
          int add(int count) {
             for (;;) {
@@ -440,34 +449,47 @@ public class AsyncStore extends AbstractDelegatingStore {
             }
          }
 
-         void reset(int available) {
-            setState(available);
+         protected int tryAcquireShared(int count) {
+            for (;;) {
+               int state = getState();
+               if (state >= size)
+                  return -1;
+               if (compareAndSetState(state, state + count))
+                  return state + count >= size ? 0 : 1;
+            }
          }
 
-         int get() {
-            return getState();
-         }
-
-         protected boolean tryAcquire(int unused) {
-            return getState() > 0;
-         }
-
-         protected boolean tryRelease(int unused) {
-            return true;
+         protected boolean tryReleaseShared(int state) {
+            setState(state);
+            return state < size;
          }
       }
 
-      private static class Sync extends AbstractQueuedSynchronizer {
-         private static final long serialVersionUID = 4906907928102229584L;
-         final Available available = new Available();
-         private final int size;
+      /**
+       * AQS state is 0 if no data is available, 1 otherwise. AcquireShared blocks if no data is
+       * available.
+       */
+      private static class Available extends AbstractQueuedSynchronizer {
+         private static final long serialVersionUID = 6464514100313353749L;
 
-         Sync(int size) {
-            this.size = size;
+         protected int tryAcquireShared(int unused) {
+            return getState() > 0 ? 1 : -1;
          }
 
+         protected boolean tryReleaseShared(int state) {
+            setState(state > 0 ? 1 : 0);
+            return state > 0;
+         }
+      }
+
+      /**
+       * Minimal non-reentrant read-write-lock. AQS state is number of concurrent shared locks, or 0
+       * if unlocked, or -1 if locked exclusively.
+       */
+      private static class Sync extends AbstractQueuedSynchronizer {
+         private static final long serialVersionUID = 2983687000985096017L;
+
          protected boolean tryAcquire(int unused) {
-            available.acquire(1);
             if (!compareAndSetState(0, -1))
                return false;
             setExclusiveOwnerThread(Thread.currentThread());
@@ -480,28 +502,28 @@ public class AsyncStore extends AbstractDelegatingStore {
             return true;
          }
 
-         protected int tryAcquireShared(int count) {
+         protected int tryAcquireShared(int unused) {
             for (;;) {
                int state = getState();
-               if (state < 0 || available.get() >= size)
+               if (state < 0)
                   return -1;
                if (compareAndSetState(state, state + 1))
-                  return available.add(count) >= size ? 0 : 1;
+                  return 1;
             }
          }
 
          protected boolean tryReleaseShared(int unused) {
             for (;;) {
                int state = getState();
-               if (compareAndSetState(state, state - 1)) {
-                  available.release(1);
+               if (compareAndSetState(state, state - 1))
                   return true;
-               }
             }
          }
       }
 
       private final Sync sync;
+      private final Counter counter;
+      private final Available available;
 
       /**
        * Create a new BufferLock with the specified buffer size.
@@ -510,7 +532,9 @@ public class AsyncStore extends AbstractDelegatingStore {
        *           the buffer size
        */
       BufferLock(int size) {
-         this.sync = new Sync(size);
+         sync = new Sync();
+         counter = new Counter(size);
+         available = new Available();
       }
 
       /**
@@ -521,7 +545,8 @@ public class AsyncStore extends AbstractDelegatingStore {
        *           number of items the caller intends to write
        */
       void writeLock(int count) {
-         sync.acquireShared(count);
+         counter.acquireShared(count);
+         sync.acquireShared(1);
       }
 
       /**
@@ -529,6 +554,7 @@ public class AsyncStore extends AbstractDelegatingStore {
        */
       void writeUnlock() {
          sync.releaseShared(1);
+         available.releaseShared(1);
       }
 
       /**
@@ -536,6 +562,7 @@ public class AsyncStore extends AbstractDelegatingStore {
        * for writing.
        */
       void readLock() {
+         available.acquireShared(1);
          sync.acquire(1);
       }
 
@@ -549,11 +576,12 @@ public class AsyncStore extends AbstractDelegatingStore {
       /**
        * Resets the buffer counter to the specified number.
        *
-       * @param available
+       * @param count
        *           number of available items in the buffer
        */
-      void reset(int available) {
-         sync.available.reset(available);
+      void reset(int count) {
+         counter.releaseShared(count);
+         available.releaseShared(count);
       }
 
       /**
@@ -563,7 +591,8 @@ public class AsyncStore extends AbstractDelegatingStore {
        *           number of items to add to the buffer counter
        */
       void add(int count) {
-         sync.available.add(count);
+         int newCount = counter.add(count);
+         available.releaseShared(newCount);
       }
    }
 
