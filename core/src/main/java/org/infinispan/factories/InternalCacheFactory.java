@@ -30,6 +30,7 @@ import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.jmx.CacheJmxRegistration;
 import org.infinispan.manager.DefaultCacheManager;
 import org.infinispan.transaction.xa.recovery.RecoveryAdminOperations;
+import org.infinispan.xsite.CrossSiteReplicationOperations;
 
 /**
  * An internal factory for constructing Caches.  Used by the {@link DefaultCacheManager}, this is not intended as public
@@ -100,6 +101,9 @@ public class InternalCacheFactory<K, V> extends AbstractNamedCacheComponentFacto
       componentRegistry.registerComponent(new CacheJmxRegistration(), CacheJmxRegistration.class.getName(), true);
       if (configuration.transaction().transactionMode().isTransactional() && configuration.transaction().recovery().enabled()) {
          componentRegistry.registerComponent(new RecoveryAdminOperations(), RecoveryAdminOperations.class.getName(), true);
+      }
+      if (!configuration.sites().inUseBackups().isEmpty()) {
+         componentRegistry.registerComponent(new CrossSiteReplicationOperations(), CrossSiteReplicationOperations.class.getName(), true);
       }
       componentRegistry.prepareWiringCache();
    }

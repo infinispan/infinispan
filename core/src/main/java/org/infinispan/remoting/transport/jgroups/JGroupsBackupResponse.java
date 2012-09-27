@@ -26,13 +26,15 @@ import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 import org.infinispan.xsite.XSiteBackup;
 
+import java.util.Collections;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 
-import static java.util.concurrent.TimeUnit.MILLISECONDS;
-import static java.util.concurrent.TimeUnit.NANOSECONDS;
+import static java.util.concurrent.TimeUnit.*;
 import static org.infinispan.util.Util.formatString;
 import static org.infinispan.util.Util.prettyPrintTime;
 
@@ -46,6 +48,7 @@ public class JGroupsBackupResponse implements BackupResponse {
 
    private final Map<XSiteBackup, Future<Object>> syncBackupCalls;
    private Map<String, Throwable> errors;
+   private Set<String> communicationErrors;
 
    //there might be an significant difference in time between when the message is sent and when the actual wait
    // happens. Track that and adjust the timeouts accordingly.
@@ -56,6 +59,7 @@ public class JGroupsBackupResponse implements BackupResponse {
       sendTimeNanos = System.nanoTime();
    }
 
+   @Override
    public void waitForBackupToFinish() throws Exception {
       long deductFromTimeout = NANOSECONDS.toMillis(System.nanoTime() - sendTimeNanos);
       errors = new HashMap<String, Throwable>(syncBackupCalls.size());
@@ -74,11 +78,13 @@ public class JGroupsBackupResponse implements BackupResponse {
          Object value = null;
          try {
             value = entry.getValue().get(timeout, MILLISECONDS);
-         } catch (TimeoutException te) {
+         } catch (java.util.concurrent.TimeoutException te) {
             errors.put(siteName, newTimeoutException(entry, entry.getKey().getTimeout()));
+            addCommunicationError(siteName);
          } catch (ExecutionException ue) {
             log.tracef(ue.getCause(), "Communication error with site %s", siteName);
             errors.put(siteName, ue.getCause());
+            addCommunicationError(siteName);
          } finally {
             elapsedTime += NANOSECONDS.toMillis(System.nanoTime() - startNanos);
          }
@@ -91,6 +97,22 @@ public class JGroupsBackupResponse implements BackupResponse {
             log.tracef("Received response from site %s: %s", siteName, value);
          }
       }
+   }
+
+   private void addCommunicationError(String siteName) {
+      if (communicationErrors == null) //only create lazily as we don't expect communication errors to be the norm
+         communicationErrors = new HashSet<String>(1);
+      communicationErrors.add(siteName);
+   }
+
+   @Override
+   public Set<String> getCommunicationErrors() {
+      return communicationErrors == null ? Collections.<String>emptySet() : communicationErrors;
+   }
+
+   @Override
+   public long getSendTimeMillis() {
+      return NANOSECONDS.toMillis(sendTimeNanos);
    }
 
    @Override
