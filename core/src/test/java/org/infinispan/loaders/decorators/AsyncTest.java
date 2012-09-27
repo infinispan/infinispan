@@ -37,6 +37,7 @@ import org.infinispan.loaders.modifications.Modification;
 import org.infinispan.loaders.modifications.Remove;
 import org.infinispan.loaders.modifications.Store;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
+import org.infinispan.eviction.EvictionStrategy;
 import org.infinispan.test.AbstractInfinispanTest;
 import org.infinispan.test.CacheManagerCallable;
 import org.infinispan.test.TestingUtil;
@@ -46,6 +47,7 @@ import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeMethod;
+import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
 
 import java.lang.reflect.Method;
@@ -457,6 +459,14 @@ public class AsyncTest extends AbstractInfinispanTest {
 
    }
 
+   private static ConfigurationBuilder config(boolean passivation) {
+      ConfigurationBuilder config = new ConfigurationBuilder();
+      config.expiration().wakeUpInterval(100);
+      config.eviction().maxEntries(1).strategy(EvictionStrategy.LRU);
+      config.loaders().passivation(passivation).addStore().cacheStore(new LockableCacheStore()).async().enable();
+      return config;
+   }
+
    private final static ThreadLocal<LockableCacheStore> STORE = new ThreadLocal<LockableCacheStore>();
 
    public static class LockableCacheStoreConfig extends DummyInMemoryCacheStore.Cfg {
@@ -502,6 +512,18 @@ public class AsyncTest extends AbstractInfinispanTest {
       }
    }
 
+   private static abstract class CacheCallable extends CacheManagerCallable {
+      protected final Cache<String, String> cache;
+      protected final LockableCacheStore store;
+
+      CacheCallable(ConfigurationBuilder builder) {
+         super(TestCacheManagerFactory.createCacheManager(builder));
+         cache = cm.getCache();
+         store = STORE.get();
+      }
+   }
+
+   @Test
    public void testModificationQueueSize(final Method m) throws Exception {
       LockableCacheStore underlying = new LockableCacheStore();
       asyncConfig.modificationQueueSize(10);
@@ -531,48 +553,30 @@ public class AsyncTest extends AbstractInfinispanTest {
       }
    }
 
-   private static abstract class OneEntryCacheManagerCallable extends CacheManagerCallable {
-      protected final Cache<String, String> cache;
-      protected final LockableCacheStore store;
-
-      private static ConfigurationBuilder config(boolean passivation) {
-         ConfigurationBuilder config = new ConfigurationBuilder();
-         config.eviction().maxEntries(1).loaders().passivation(passivation).addStore()
-               .cacheStore(new LockableCacheStore()).async().enable();
-         return config;
-      }
-
-      OneEntryCacheManagerCallable(boolean passivation) {
-         super(TestCacheManagerFactory.createCacheManager(config(passivation)));
-         cache = cm.getCache();
-         store = STORE.get();
-      }
+   @DataProvider(name = "trueFalse")
+   public Object[][] getTrueFalse() {
+      return new Object[][] { { Boolean.TRUE }, { Boolean.FALSE } };
    }
 
-   public void testEndToEndPutPutPassivation() throws Exception {
-      testEndToEndPutPut(true);
-   }
-   public void testEndToEndPutPut() throws Exception {
-      testEndToEndPutPut(false);
-   }
-   private void testEndToEndPutPut(boolean passivation) throws Exception {
-      TestingUtil.withCacheManager(new OneEntryCacheManagerCallable(passivation) {
+   @Test(dataProvider = "trueFalse")
+   public void testUpdateGet(boolean passivation) throws Exception {
+      TestingUtil.withCacheManager(new CacheCallable(config(passivation)) {
          @Override
          public void call() {
-            cache.put("X", "1");
-            cache.put("Y", "1"); // force eviction of "X"
+            cache.put("k1", "v0");
+            cache.put("k2", "v2"); // force eviction of "k1"
 
-            // wait for X == 1 to appear in store
-            while (store.load("X") == null)
+            // wait for "k1" to appear in store
+            while (store.load("k1") == null)
                TestingUtil.sleepThread(10);
 
             // simulate slow back end store
             store.lock.lock();
             try {
-               cache.put("X", "2");
-               cache.put("Y", "2"); // force eviction of "X"
+               cache.put("k1", "v1");
+               cache.put("k2", "v2"); // force eviction of "k1"
 
-               assert "2".equals(cache.get("X")) : "cache must return X == 2";
+               assert "v1".equals(cache.get("k1")) : "cache must return k1 == v1";
             } finally {
                store.lock.unlock();
             }
@@ -580,29 +584,24 @@ public class AsyncTest extends AbstractInfinispanTest {
       });
    }
 
-   public void testEndToEndPutRemovePassivation() throws Exception {
-      testEndToEndPutRemove(true);
-   }
-   public void testEndToEndPutRemove() throws Exception {
-      testEndToEndPutRemove(false);
-   }
-   private void testEndToEndPutRemove(boolean passivation) throws Exception {
-      TestingUtil.withCacheManager(new OneEntryCacheManagerCallable(passivation) {
+   @Test(dataProvider = "trueFalse")
+   public void testRemoveGet(boolean passivation) throws Exception {
+      TestingUtil.withCacheManager(new CacheCallable(config(passivation)) {
          @Override
          public void call() {
-            cache.put("X", "1");
-            cache.put("Y", "1"); // force eviction of "X"
+            cache.put("k1", "v1");
+            cache.put("k2", "v2"); // force eviction of "k1"
 
-            // wait for "X" to appear in store
-            while (store.load("X") == null)
+            // wait for "k1" to appear in store
+            while (store.load("k1") == null)
                TestingUtil.sleepThread(10);
 
             // simulate slow back end store
             store.lock.lock();
             try {
-               cache.remove("X");
+               cache.remove("k1");
 
-               assert null == cache.get("X") : "cache must return X == null";
+               assert null == cache.get("k1") : "cache must return k1 == null";
             } finally {
                store.lock.unlock();
             }
