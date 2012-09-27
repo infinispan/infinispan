@@ -372,7 +372,7 @@ public class DefaultExecutorService extends AbstractExecutorService implements D
       DistributedTask<T> task = distributedTaskBuilder.build();
       DistributedExecuteCommand<T> executeCommand = factory.buildDistributedExecuteCommand(
                callable, getAddress(), null);
-      return createDistributedTaskPart(task, executeCommand, selectExecutionNode(task));
+      return createDistributedTaskPart(task, executeCommand, selectExecutionNode(task), 0);
    }
 
    @Override
@@ -400,9 +400,9 @@ public class DefaultExecutorService extends AbstractExecutorService implements D
       } else {
          c = factory.buildDistributedExecuteCommand(task.getCallable(), me, null);
       }
-      DistributedTaskPart<T> f = createDistributedTaskPart(task, c, target);
-      f.execute();
-      return f;
+      DistributedTaskPart<T> part = createDistributedTaskPart(task, c, target, 0);
+      part.execute();
+      return part;
    }
 
    @Override
@@ -422,9 +422,9 @@ public class DefaultExecutorService extends AbstractExecutorService implements D
          Address me = getAddress();
          DistributedExecuteCommand<T> c = factory.buildDistributedExecuteCommand(task.getCallable(), me, Arrays.asList(input));
          ArrayList<Address> nodes = new ArrayList<Address>(nodesKeysMap.keySet());
-         DistributedTaskPart<T> f = createDistributedTaskPart(task, c, selectExecutionNode(nodes));
-         execute(f);
-         return f;
+         DistributedTaskPart<T> part = createDistributedTaskPart(task, c, selectExecutionNode(nodes), 0);
+         part.execute();
+         return part;
       } else {
          return submit(task.getCallable());
       }
@@ -451,9 +451,9 @@ public class DefaultExecutorService extends AbstractExecutorService implements D
          } else {
             c = factory.buildDistributedExecuteCommand(task.getCallable(), me, null);
          }
-         DistributedTaskPart<T> f = createDistributedTaskPart(task, c, target);
-         futures.add(f);
-         execute(f);
+         DistributedTaskPart<T> part = createDistributedTaskPart(task, c, target, 0);
+         futures.add(part);
+         part.execute();
       }
       return futures;
    }
@@ -481,9 +481,9 @@ public class DefaultExecutorService extends AbstractExecutorService implements D
             } else {
                c = factory.buildDistributedExecuteCommand(task.getCallable(), me, e.getValue());
             }
-            DistributedTaskPart<T> f = createDistributedTaskPart(task, c, target);
-            futures.add(f);
-            execute(f);
+            DistributedTaskPart<T> part = createDistributedTaskPart(task, c, target, 0);
+            futures.add(part);
+            part.execute();
          }
          return futures;
       } else {
@@ -496,9 +496,10 @@ public class DefaultExecutorService extends AbstractExecutorService implements D
    }
 
    protected <T> DistributedTaskPart<T> createDistributedTaskPart(DistributedTask<T> task,
-            DistributedExecuteCommand<T> c, Address target) {
-      return new DistributedTaskPart<T>(task, c, target);
+            DistributedExecuteCommand<T> c, Address target, int failoverCount) {
+      return new DistributedTaskPart<T>(task, c, target, failoverCount);
    }
+
 
    private <T, K> void checkExecutionPolicy(DistributedTask<T> task,
             Map<Address, List<K>> nodesKeysMap, K... input) {
@@ -546,21 +547,17 @@ public class DefaultExecutorService extends AbstractExecutorService implements D
       DistributionManager dm = cache.getDistributionManager();
       Map<Address, List<K>> addressToKey = new HashMap<Address, List<K>>(input.length * 2);
       boolean usingREPLMode = dm == null;
-      List<Address> members = null;
-      if (usingREPLMode) {
-         members = new ArrayList<Address>(cache.getRpcManager().getTransport().getMembers());
-         members =  filterMembers(policy, members);
-      }
       for (K key : input) {
          Address ownerOfKey = null;
          if (usingREPLMode) {
+            List<Address> members = new ArrayList<Address>(cache.getRpcManager().getTransport().getMembers());
+            members =  filterMembers(policy, members);
             // using REPL mode https://issues.jboss.org/browse/ISPN-1886
             // since keys and values are on all nodes, lets just pick randomly
             Collections.shuffle(members);
             ownerOfKey = members.get(0);
          } else {
             // DIST mode
-
             List<Address> owners = dm.locate(key);
             List<Address> filtered = filterMembers(policy, owners);
             if(!filtered.isEmpty()){
@@ -622,6 +619,30 @@ public class DefaultExecutorService extends AbstractExecutorService implements D
          throw new IllegalStateException("Invalid cache state " + cache.getStatus());
    }
 
+   private class RandomNodeTaskFailoverPolicy implements DistributedTaskFailoverPolicy {
+
+      public RandomNodeTaskFailoverPolicy() {
+         super();
+      }
+
+      @Override
+      public Address failover(Address failedLocation, List<Address> candidates, Exception cause) {
+         return randomNode(candidates, failedLocation);
+      }
+
+      protected Address randomNode(List<Address> candidates, Address failedExecutionLocation){
+         Random r = new Random();
+         candidates.remove(failedExecutionLocation);
+         int tIndex = r.nextInt(candidates.size());
+         return candidates.get(tIndex);
+      }
+
+      @Override
+      public int maxFailoverAttempts() {
+         return 1;
+      }
+   }
+
    /**
     * NodeFilter allows selection of nodes according to {@link DistributedTaskExecutionPolicy}
     */
@@ -634,6 +655,8 @@ public class DefaultExecutorService extends AbstractExecutorService implements D
       private Callable<T> callable;
       private long timeout;
       private DistributedTaskExecutionPolicy executionPolicy = DistributedTaskExecutionPolicy.ALL;
+      private DistributedTaskFailoverPolicy failoverPolicy = new RandomNodeTaskFailoverPolicy();
+
 
       public DefaultDistributedTaskBuilder(long taskTimeout) {
          this.timeout = taskTimeout;
@@ -663,10 +686,20 @@ public class DefaultExecutorService extends AbstractExecutorService implements D
       }
 
       @Override
+      public DistributedTaskBuilder<T> failoverPolicy(DistributedTaskFailoverPolicy policy) {
+         if (policy == null)
+            throw new IllegalArgumentException("DistributedTaskFailoverPolicy cannot be null");
+
+         this.failoverPolicy = policy;
+         return this;
+      }
+
+      @Override
       public DistributedTask<T> build() {
          DefaultDistributedTaskBuilder<T> task = new DefaultDistributedTaskBuilder<T>(timeout);
          task.callable(callable);
          task.executionPolicy(executionPolicy);
+         task.failoverPolicy(failoverPolicy);
          return task;
       }
 
@@ -681,11 +714,15 @@ public class DefaultExecutorService extends AbstractExecutorService implements D
       }
 
       @Override
+      public DistributedTaskFailoverPolicy getTaskFailoverPolicy() {
+         return failoverPolicy;
+      }
+
+      @Override
       public Callable<T> getCallable() {
          return callable;
       }
    }
-
 
    /**
     * DistributedTaskPart represents a unit of work sent to remote VM and executed there
@@ -694,7 +731,7 @@ public class DefaultExecutorService extends AbstractExecutorService implements D
     * @author Mircea Markus
     * @author Vladimir Blagojevic
     */
-   private class DistributedTaskPart<V> implements  NotifyingNotifiableFuture<V>, RunnableFuture<V> {
+   private class DistributedTaskPart<V> implements NotifyingNotifiableFuture<V>, RunnableFuture<V>{
 
       private final DistributedExecuteCommand<V> distCommand;
       private volatile Future<V> f;
@@ -704,23 +741,23 @@ public class DefaultExecutorService extends AbstractExecutorService implements D
       private final ReadWriteLock listenerLock = new ReentrantReadWriteLock();
       private final Address executionTarget;
       private final DistributedTask<V> owningTask;
+      private int failedOverCount;
+
 
       /**
-       * Creates a <tt>DistributedRunnableFuture</tt> that will upon running, execute the given
-       * <tt>Runnable</tt>, and arrange that <tt>get</tt> will return the given result on successful
-       * completion.
+       * Create a new DistributedTaskPart.
        *
-       *
-       * @param runnable
-       *           the runnable task
-       * @param result
-       *           the result to return on successful completion.
-       *
+       * @param task
+       * @param command
+       * @param executionTarget
+       * @param failoverCount
        */
-      public DistributedTaskPart(DistributedTask<V> task, DistributedExecuteCommand<V> command, Address executionTarget) {
+      public DistributedTaskPart(DistributedTask<V> task,
+               DistributedExecuteCommand<V> command, Address executionTarget, int failoverCount) {
          this.owningTask = task;
          this.distCommand = command;
          this.executionTarget = executionTarget;
+         this.failedOverCount = failoverCount;
       }
 
       public DistributedExecuteCommand<V> getCommand() {
@@ -730,6 +767,7 @@ public class DefaultExecutorService extends AbstractExecutorService implements D
       public DistributedTask<V> getOwningTask() {
          return owningTask;
       }
+
 
       public Address getExecutionTarget() {
          return executionTarget;
@@ -755,8 +793,15 @@ public class DefaultExecutorService extends AbstractExecutorService implements D
        */
       @Override
       public V get() throws InterruptedException, ExecutionException {
-         V response = f.get();
-         return retrieveResult(response);
+         V response = null;
+         try {
+            response = retrieveResult(f.get());
+         } catch (Exception e) {
+            if (failedOverCount++ <= getOwningTask().getTaskFailoverPolicy().maxFailoverAttempts()) {
+               response = retrieveResult(failoverExecution(e));
+            }
+         }
+         return response;
       }
 
       /**
@@ -765,8 +810,36 @@ public class DefaultExecutorService extends AbstractExecutorService implements D
       @Override
       public V get(long timeout, TimeUnit unit) throws InterruptedException, ExecutionException,
                TimeoutException {
-         V response = f.get(timeout,unit);
-         return retrieveResult(response);
+         V response = null;
+         try {
+            response = retrieveResult(f.get(timeout, unit));
+         } catch (Exception e) {
+            if (failedOverCount++ <= getOwningTask().getTaskFailoverPolicy().maxFailoverAttempts()) {
+               response = retrieveResult(failoverExecution(e));
+            }
+         }
+         return response;
+      }
+
+
+      private V failoverExecution(Exception cause) throws ExecutionException {
+         V response = null;
+
+         try {
+            Address target = getOwningTask().getTaskFailoverPolicy().failover(getExecutionTarget(),
+                     executionCandidates(getOwningTask()), cause);
+            DistributedTaskPart<V> part = createDistributedTaskPart(owningTask, distCommand,
+                     target, failedOverCount);
+            part.execute();
+            response = part.get();
+            if (response == null)
+               throw new ExecutionException("Failover execution failed", new Exception(
+                        "Failover execution failed", cause));
+         } catch (Exception e2) {
+            throw new ExecutionException("Failover execution failed", new Exception(
+                     "Failover execution failed", e2));
+         }
+         return response;
       }
 
       @Override
@@ -818,7 +891,7 @@ public class DefaultExecutorService extends AbstractExecutorService implements D
 
       public void execute() {
          if (getAddress().equals(getExecutionTarget())) {
-            this.invokeLocally();
+            invokeLocally();
          } else {
             log.tracef("Sending %s to remote execution at node %s", f, getExecutionTarget());
             try {
@@ -860,10 +933,6 @@ public class DefaultExecutorService extends AbstractExecutorService implements D
          } catch (Throwable e1) {
             log.localExecutionFailed(e1);
          }
-      }
-
-      public List<Address> getExecutionTargets(){
-         return executionCandidates(getOwningTask());
       }
 
       @Override
@@ -913,6 +982,7 @@ public class DefaultExecutorService extends AbstractExecutorService implements D
          return DefaultExecutorService.this;
       }
    }
+
    private static final class RunnableAdapter<T> implements Callable<T>, Serializable {
 
       /** The serialVersionUID */
