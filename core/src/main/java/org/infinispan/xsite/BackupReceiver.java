@@ -198,6 +198,8 @@ public class BackupReceiver {
          try {
              
             tm.begin();             
+            
+            // Replay the modifications.  Any exception will cause a rollback of the transaction.
             replayModifications(command);
          
             Transaction tx = tm.getTransaction();
