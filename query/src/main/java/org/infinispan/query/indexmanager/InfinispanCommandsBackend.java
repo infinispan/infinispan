@@ -34,7 +34,6 @@ import org.hibernate.search.infinispan.CacheManagerServiceProvider;
 import org.hibernate.search.spi.WorkerBuildContext;
 import org.infinispan.commands.ReplicableCommand;
 import org.infinispan.distribution.DistributionManager;
-import org.infinispan.distribution.ch.ConsistentHash;
 import org.infinispan.factories.ComponentRegistry;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.query.backend.ComponentRegistryServiceProvider;
@@ -64,7 +63,7 @@ public class InfinispanCommandsBackend implements BackendQueueProcessor {
    private EmbeddedCacheManager cacheManager;
    private WorkerBuildContext context;
    private String indexName;
-   private ConsistentHash hashService;
+   private DistributionManager distributionManager;
    private RpcManager rpcManager;
    private String cacheName;
    private DirectoryBasedIndexManager indexManager;
@@ -79,10 +78,7 @@ public class InfinispanCommandsBackend implements BackendQueueProcessor {
       this.indexName = indexManager.getIndexName();
       this.rpcManager = componentsRegistry.getComponent(RpcManager.class);
       this.cacheName = componentsRegistry.getCacheName();
-      DistributionManager distributionManager = componentsRegistry.getComponent(DistributionManager.class);
-      if (distributionManager != null) {
-         hashService = distributionManager.getConsistentHash();
-      }
+      this.distributionManager = componentsRegistry.getComponent(DistributionManager.class);
       log.commandsBackendInitialized(indexName);
    }
 
@@ -158,14 +154,14 @@ public class InfinispanCommandsBackend implements BackendQueueProcessor {
       if (transport == null) {
          return null;
       }
-      if (hashService == null) { //If cache is configured as REPL
+      if (distributionManager == null) { //If cache is configured as REPL
          //TODO Make this decision making pluggable?
          List<Address> members = transport.getMembers();
          int elementIndex = (Math.abs(indexName.hashCode()) % members.size());
          return members.get(elementIndex);
       }
       else { //If cache is configured as DIST
-         return hashService.locatePrimaryOwner(indexName);
+         return distributionManager.getPrimaryLocation(indexName);
       }
    }
 

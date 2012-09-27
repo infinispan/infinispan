@@ -48,7 +48,7 @@ import org.testng.annotations.Test;
  * 
  * @author Sanne Grinovero
  */
-@Test(groups = "functional", testName = "query.distributed.MultiNodeDistributedTest", enabled = false, description = "Temporary disabled : https://issues.jboss.org/browse/ISPN-2249")
+@Test(groups = "functional", testName = "query.distributed.MultiNodeDistributedTest")
 public class MultiNodeDistributedTest extends AbstractInfinispanTest {
 
    private List<EmbeddedCacheManager> cacheManagers = new ArrayList<EmbeddedCacheManager>(4);
@@ -68,8 +68,7 @@ public class MultiNodeDistributedTest extends AbstractInfinispanTest {
    }
 
    private void storeOn(Cache<String, Person> cache, String key, Person person) throws Exception {
-      TransactionManager transactionManager = null;
-      transactionManager = cache.getAdvancedCache().getTransactionManager();
+      TransactionManager transactionManager = cache.getAdvancedCache().getTransactionManager();
       if (transactionsEnabled()) transactionManager.begin();
       cache.put(key, person);
       if (transactionsEnabled()) transactionManager.commit();
