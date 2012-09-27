@@ -23,7 +23,6 @@
 package org.infinispan.config;
 
 import org.infinispan.AdvancedCache;
-import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.container.DataContainer;
 import org.infinispan.container.DefaultDataContainer;
 import org.infinispan.container.InternalEntryFactoryImpl;
@@ -79,8 +78,7 @@ public class DataContainerTest {
          AdvancedCache<Object, Object> cache = cm.getCache().getAdvancedCache();
 
          DataContainer ddc = DefaultDataContainer.unBoundedDataContainer(cache.getConfiguration().getConcurrencyLevel());
-         ((DefaultDataContainer) ddc).initialize(null, null,new InternalEntryFactoryImpl(),
-               new ConfigurationBuilder().build(), null);
+         ((DefaultDataContainer) ddc).initialize(null, null,new InternalEntryFactoryImpl());
          QueryableDataContainer.setDelegate(ddc);
 
          // Verify that the default is correctly established
@@ -113,8 +111,7 @@ public class DataContainerTest {
          AdvancedCache<Object, Object> cache = cm.getCache().getAdvancedCache();
 
          DataContainer ddc = DefaultDataContainer.unBoundedDataContainer(cache.getConfiguration().getConcurrencyLevel());
-         ((DefaultDataContainer) ddc).initialize(
-               null, null,new InternalEntryFactoryImpl(), new ConfigurationBuilder().build(), null);
+         ((DefaultDataContainer) ddc).initialize(null, null,new InternalEntryFactoryImpl());
          QueryableDataContainer.setDelegate(ddc);
 
          // Verify that the config is correct

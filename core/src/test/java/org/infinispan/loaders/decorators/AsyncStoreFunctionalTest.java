@@ -35,6 +35,7 @@ import org.infinispan.loaders.CacheStoreConfig;
 import org.infinispan.loaders.dummy.DummyInMemoryCacheStore;
 import org.infinispan.loaders.dummy.DummyInMemoryCacheStoreConfigurationBuilder;
 import org.infinispan.loaders.modifications.Modification;
+import org.infinispan.loaders.modifications.Remove;
 import org.infinispan.loaders.modifications.Store;
 import org.infinispan.test.CacheManagerCallable;
 import org.infinispan.test.TestingUtil;
@@ -44,9 +45,9 @@ import org.infinispan.util.logging.LogFactory;
 import org.testng.annotations.Test;
 
 import java.util.Collection;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 
@@ -249,11 +250,11 @@ public class AsyncStoreFunctionalTest {
       }
 
       @Override
-      protected void applyModificationsSync(ConcurrentMap<Object, Modification> mods)
+      protected void applyModificationsSync(List<Modification> mods)
             throws CacheLoaderException {
          try {
             // Wait for signal to do the modification
-            if (mods.containsKey(1) && !isSkip(mods.get(1))) {
+            if (containsModificationForKey(1, mods) && !isSkip(findModificationForKey(1, mods))) {
                log.tracef("Wait to apply modifications: %s", mods);
                lockedWaitLatch.countDown();
                modApplyLatch.await(60, TimeUnit.SECONDS);
@@ -263,6 +264,30 @@ public class AsyncStoreFunctionalTest {
          } catch (InterruptedException e) {
             Thread.currentThread().interrupt();
          }
+      }
+
+      private boolean containsModificationForKey(Object key, List<Modification> mods) {
+         return findModificationForKey(key, mods) != null;
+      }
+
+      private Modification findModificationForKey(Object key, List<Modification> mods) {
+         for (Modification modification : mods) {
+            switch (modification.getType()) {
+               case STORE:
+                  Store store = (Store) modification;
+                  if (store.getStoredEntry().getKey().equals(key))
+                     return store;
+                  break;
+               case REMOVE:
+                  Remove remove = (Remove) modification;
+                  if (remove.getKey().equals(key))
+                     return remove;
+                  break;
+               default:
+                  return null;
+            }
+         }
+         return null;
       }
 
       private boolean isSkip(Modification mod) {

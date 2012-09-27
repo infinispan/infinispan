@@ -28,6 +28,7 @@ import org.infinispan.loaders.*;
 import org.infinispan.marshall.StreamingMarshaller;
 import org.infinispan.marshall.TestObjectStreamMarshaller;
 import org.infinispan.test.TestingUtil;
+import org.infinispan.util.InfinispanCollections;
 import org.infinispan.util.Util;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
@@ -38,18 +39,20 @@ import java.lang.reflect.Method;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
+import java.util.concurrent.atomic.AtomicInteger;
 
 @CacheLoaderMetadata(configurationClass = DummyInMemoryCacheStore.Cfg.class)
 public class DummyInMemoryCacheStore extends AbstractCacheStore {
    private static final Log log = LogFactory.getLog(DummyInMemoryCacheStore.class);
    private static final boolean trace = log.isTraceEnabled();
+   private static final boolean debug = log.isDebugEnabled();
    static final ConcurrentMap<String, Map<Object, InternalCacheEntry>> stores = new ConcurrentHashMap<String, Map<Object, InternalCacheEntry>>();
-   static final ConcurrentMap<String, ConcurrentMap<String, Integer>> storeStats =
-         new ConcurrentHashMap<String, ConcurrentMap<String, Integer>>();
+   static final ConcurrentMap<String, ConcurrentMap<String, AtomicInteger>> storeStats =
+         new ConcurrentHashMap<String, ConcurrentMap<String, AtomicInteger>>();
    String storeName;
    Map<Object, InternalCacheEntry> store;
    // When a store is 'shared', multiple nodes could be trying to update it concurrently.
-   ConcurrentMap<String, Integer> stats;
+   ConcurrentMap<String, AtomicInteger> stats;
    Cfg config;
 
    public DummyInMemoryCacheStore(String storeName) {
@@ -60,26 +63,14 @@ public class DummyInMemoryCacheStore extends AbstractCacheStore {
    }
 
    private void record(String method) {
-      boolean replaced;
-      long end = System.currentTimeMillis() + 5000;
-      do {
-         int i = stats.get(method);
-         replaced = stats.replace(method, i, i + 1);
-         if (!replaced) {
-            try {
-               Thread.sleep(200);
-            } catch (InterruptedException e) {
-               Thread.currentThread().interrupt();
-            }
-         }
-      } while (!replaced && end < System.currentTimeMillis());
+      stats.get(method).incrementAndGet();
    }
 
    @Override
    public void store(InternalCacheEntry ed) {
       record("store");
       if (ed != null) {
-         if (trace) log.tracef("Store %s in dummy map store@%s", ed, Util.hexIdHashCode(store));
+         if (debug) log.debugf("Store %s in dummy map store@%s", ed, Util.hexIdHashCode(store));
          config.failIfNeeded(ed.getKey());
          store.put(ed.getKey(), ed);
       }
@@ -123,11 +114,11 @@ public class DummyInMemoryCacheStore extends AbstractCacheStore {
    public boolean remove(Object key) {
       record("remove");
       if (store.remove(key) != null) {
-         if (trace) log.tracef("Removed %s from dummy store", key);
+         if (debug) log.debugf("Removed %s from dummy store", key);
          return true;
       }
 
-      if (trace) log.tracef("Key %s not present in store, so don't remove", key);
+      if (debug) log.debugf("Key %s not present in store, so don't remove", key);
       return false;
    }
 
@@ -238,7 +229,7 @@ public class DummyInMemoryCacheStore extends AbstractCacheStore {
             log.debugf("Creating new in-memory cache store %s", storeName);
          }
 
-         ConcurrentMap<String, Integer> existingStats = storeStats.putIfAbsent(storeName, stats);
+         ConcurrentMap<String, AtomicInteger> existingStats = storeStats.putIfAbsent(storeName, stats);
          if (existing != null) {
             stats = existingStats;
          }
@@ -248,10 +239,10 @@ public class DummyInMemoryCacheStore extends AbstractCacheStore {
       record("start");
    }
 
-   private ConcurrentMap<String, Integer> newStatsMap() {
-      ConcurrentMap<String, Integer> m = new ConcurrentHashMap<String, Integer>();
+   private ConcurrentMap<String, AtomicInteger> newStatsMap() {
+      ConcurrentMap<String, AtomicInteger> m = new ConcurrentHashMap<String, AtomicInteger>();
       for (Method method: CacheStore.class.getMethods()) {
-         m.put(method.getName(), 0);
+         m.put(method.getName(), new AtomicInteger(0));
       }
       return m;
    }
@@ -274,11 +265,13 @@ public class DummyInMemoryCacheStore extends AbstractCacheStore {
    }
 
    public Map<String, Integer> stats() {
-      return Collections.unmodifiableMap(stats);
+      Map<String, Integer> copy = new HashMap<String, Integer>(stats.size());
+      for (String k: stats.keySet()) copy.put(k, stats.get(k).get());
+      return copy;
    }
 
    public void clearStats() {
-      for (String k: stats.keySet()) stats.put(k, 0);
+      for (String k: stats.keySet()) stats.get(k).set(0);
    }
 
    public void blockUntilCacheStoreContains(Object key, Object expectedValue, long timeout) {
@@ -291,6 +284,57 @@ public class DummyInMemoryCacheStore extends AbstractCacheStore {
       throw new RuntimeException(String.format(
             "Timed out waiting (%d ms) for cache store to contain key=%s with value=%s",
             timeout, key, expectedValue));
+   }
+
+   public void blockUntilCacheStoreContains(Set<Map.Entry<Object, InternalCacheEntry>> expectedState, long timeout) {
+      long killTime = System.currentTimeMillis() + timeout;
+      // Set<? extends Map.Entry<?, InternalCacheEntry>> expectedEntries = expectedState.entrySet();
+      Set<Map.Entry<Object, InternalCacheEntry>> notStored = null;
+      Set<Map.Entry<Object, InternalCacheEntry>> notRemoved = null;
+      while (System.currentTimeMillis() < killTime) {
+         Set<Map.Entry<Object, InternalCacheEntry>> storeEntries = store.entrySet();
+         // Find out which entries might not have been removed from the store
+         notRemoved = InfinispanCollections.difference(storeEntries, expectedState);
+         // Find out which entries might not have been stored
+         notStored = InfinispanCollections.difference(expectedState, storeEntries);
+         if (!notStored.isEmpty() || !notRemoved.isEmpty()) {
+            TestingUtil.sleepThread(5000);
+         } else if (notStored.isEmpty() && notRemoved.isEmpty()) {
+            break;
+         }
+      }
+
+      if ((notStored != null && !notStored.isEmpty()) || (notRemoved != null && !notRemoved.isEmpty())) {
+         if (log.isTraceEnabled()) {
+            log.tracef("Entries still not stored: %s", notStored);
+            log.tracef("Entries still not removed: %s", notRemoved);
+         }
+         throw new RuntimeException(String.format(
+               "Timed out waiting (%d ms) for cache store to be flushed. entries-not-stored=[%s], entries-not-removed=[%s]",
+               timeout, notStored, notRemoved));
+      }
+
+
+//      if (missingEntries != null && !missingEntries.isEmpty())
+//         throw new RuntimeException(String.format(
+//            "Timed out waiting (%d ms) for cache store to contain entry %s",
+//            timeout, missingEntries));
+//
+//      long killTime = System.currentTimeMillis() + timeout;
+//      Map.Entry<?, ?> missingEntry = null;
+//      while (System.currentTimeMillis() < killTime) {
+//         for (Map.Entry<?, ?> stateEntry : expectedState.entrySet()) {
+//            InternalCacheEntry entry = store.get(stateEntry.getKey());
+//            if (entry == null || !entry.getValue().equals(stateEntry.getValue())) {
+//               missingEntry = entry;
+//               TestingUtil.sleepThread(50);
+//            }
+//         }
+//      }
+//      if (missingEntry != null)
+//         throw new RuntimeException(String.format(
+//            "Timed out waiting (%d ms) for cache store to contain entry %s",
+//            timeout, missingEntry));
    }
 
    public static class Cfg extends AbstractCacheStoreConfig {
