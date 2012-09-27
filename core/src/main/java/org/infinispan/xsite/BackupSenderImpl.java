@@ -47,6 +47,7 @@ import org.infinispan.remoting.transport.Transport;
 import org.infinispan.transaction.LocalTransaction;
 import org.infinispan.transaction.TransactionTable;
 import org.infinispan.util.Util;
+import org.infinispan.util.concurrent.ConcurrentMapFactory;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
@@ -55,6 +56,8 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
+import java.util.concurrent.ConcurrentMap;
 
 /**
  * @author Mircea Markus
@@ -69,6 +72,7 @@ public class BackupSenderImpl implements BackupSender {
    private Configuration config;
    private TransactionTable txTable;
    private final Map<String, CustomFailurePolicy> siteFailurePolicy = new HashMap<String, CustomFailurePolicy>();
+   private final ConcurrentMap<String, OfflineStatus> offlineStatus = ConcurrentMapFactory.makeConcurrentMap();
 
 
    private final String localSiteName;
@@ -100,9 +104,12 @@ public class BackupSenderImpl implements BackupSender {
             CustomFailurePolicy instance = Util.getInstance(backupPolicy, globalConfig.classLoader());
             siteFailurePolicy.put(bc.site(), instance);
          }
+         if (bc.takeOffline().enabled()) {
+            OfflineStatus offline = new OfflineStatus(bc.takeOffline());
+            offlineStatus.put(bc.site(), offline);
+         }
       }
    }
-
 
    enum BackupFilter {KEEP_SYNC_ONLY, KEEP_ASYNC_ONLY, KEEP_ALL}
 
@@ -124,18 +131,20 @@ public class BackupSenderImpl implements BackupSender {
    @Override
    public void processResponses(BackupResponse backupResponse, VisitableCommand command, Transaction transaction) throws Throwable {
       backupResponse.waitForBackupToFinish();
-      SitesConfiguration sitesConfiguration = config.sites();
-      Map<String, Throwable> failures = backupResponse.getFailedBackups();
-      for (Map.Entry<String, Throwable> failure : failures.entrySet()) {
-         BackupFailurePolicy policy = sitesConfiguration.getFailurePolicy(failure.getKey());
-         if (policy == BackupFailurePolicy.CUSTOM) {
-           CustomFailurePolicy customFailurePolicy = siteFailurePolicy.get(failure.getKey());
-           command.acceptVisitor(null, new CustomBackupPolicyInvoker(failure.getKey(), customFailurePolicy, transaction));
-         }
-         if (policy == BackupFailurePolicy.WARN) {
-            log.warnXsiteBackupFailed(cacheName, failure.getKey(), failure.getValue());
-         } else if (policy == BackupFailurePolicy.FAIL) {
-            throw new BackupFailureException(failure.getValue(),failure.getKey(), cacheName);
+      updateOfflineSites(backupResponse);
+      processFailedResponses(backupResponse, command, transaction);
+   }
+
+   private void updateOfflineSites(BackupResponse backupResponse) {
+      if (offlineStatus.isEmpty()) return;
+      Set<String> communicationErrors = backupResponse.getCommunicationErrors();
+      for (Map.Entry<String, OfflineStatus> statusEntry : offlineStatus.entrySet()) {
+         OfflineStatus status = statusEntry.getValue();
+         if (communicationErrors.contains(statusEntry.getKey())) {
+            status.updateOnCommunicationFailure(backupResponse.getSendTimeMillis());
+            log.tracef("OfflineStatus updated %s", status);
+         } else if(!status.isOffline()) {
+            status.updateOnCommunicationSuccess();
          }
       }
    }
@@ -160,6 +169,24 @@ public class BackupSenderImpl implements BackupSender {
       return backupCommand(command, xSiteBackups);
    }
 
+
+   @Override
+   public BringSiteOnlineResponse bringSiteOnline(String siteName) {
+      if (!config.sites().hasInUseBackup(siteName)) {
+         log.tryingToBringOnlineUnexistentSite(siteName);
+         return BringSiteOnlineResponse.NO_SUCH_SITE;
+      } else {
+         OfflineStatus offline = offlineStatus.get(siteName);
+         if (offline == null) {
+            log.tracef("The site %s doesn't have enabled the 'takeOffline' functionality", siteName);
+            return BringSiteOnlineResponse.OFFLINE_NOT_ENABLED;
+         } else {
+            boolean broughtOnline = offline.bringOnline();
+            return broughtOnline ? BringSiteOnlineResponse.BROUGHT_ONLINE : BringSiteOnlineResponse.ALREADY_ONLINE;
+         }
+      }
+   }
+
    private BackupResponse backupCommand(ReplicableCommand command, List<XSiteBackup> xSiteBackups) throws Exception {
       return transport.backupRemotely(xSiteBackups, new SingleRpcCommand(cacheName, command));
    }
@@ -170,6 +197,23 @@ public class BackupSenderImpl implements BackupSender {
       PrepareCommand prepare = new PrepareCommand(cacheName, localTx.getGlobalTransaction(),
                                                   localTx.getModifications(), true);
       backupCommand(prepare, backups);
+   }
+
+   private void processFailedResponses(BackupResponse backupResponse, VisitableCommand command, Transaction transaction) throws Throwable {
+      SitesConfiguration sitesConfiguration = config.sites();
+      Map<String, Throwable> failures = backupResponse.getFailedBackups();
+      for (Map.Entry<String, Throwable> failure : failures.entrySet()) {
+         BackupFailurePolicy policy = sitesConfiguration.getFailurePolicy(failure.getKey());
+         if (policy == BackupFailurePolicy.CUSTOM) {
+            CustomFailurePolicy customFailurePolicy = siteFailurePolicy.get(failure.getKey());
+            command.acceptVisitor(null, new CustomBackupPolicyInvoker(failure.getKey(), customFailurePolicy, transaction));
+         }
+         if (policy == BackupFailurePolicy.WARN) {
+            log.warnXsiteBackupFailed(cacheName, failure.getKey(), failure.getValue());
+         } else if (policy == BackupFailurePolicy.FAIL) {
+            throw new BackupFailureException(failure.getValue(), failure.getKey(), cacheName);
+         }
+      }
    }
 
    private List<XSiteBackup> calculateBackupInfo(BackupFilter backupFilter) {
@@ -185,12 +229,21 @@ public class BackupSenderImpl implements BackupSender {
             if (isSync) continue;
          }
          if (backupFilter == BackupFilter.KEEP_SYNC_ONLY) {
-            if (!isSync)  continue;
+            if (!isSync) continue;
+         }
+         if (isOffline(bc.site())) {
+            log.trace("The site '%s' is offline, not backing up information to it");
+            continue;
          }
          XSiteBackup bi = new XSiteBackup(bc.site(), isSync, bc.replicationTimeout());
          backupInfo.add(bi);
       }
       return backupInfo;
+   }
+
+   private boolean isOffline(String site) {
+      OfflineStatus offline = offlineStatus.get(site);
+      return offline != null && offline.isOffline();
    }
 
    public static final class CustomBackupPolicyInvoker extends AbstractVisitor {
@@ -258,5 +311,9 @@ public class BackupSenderImpl implements BackupSender {
          super.handleDefault(ctx, command);
          throw new IllegalStateException("Unknown command: " + command);
       }
+   }
+
+   public OfflineStatus getOfflineStatus(String site) {
+      return offlineStatus.get(site);
    }
 }

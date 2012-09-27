@@ -17,31 +17,30 @@
  * MA  02110-1301, USA.
  */
 
-package org.infinispan.remoting.transport;
+package org.infinispan.xsite;
 
-import java.util.Map;
-import java.util.Set;
+import org.infinispan.factories.annotations.Inject;
+import org.infinispan.jmx.annotations.MBean;
+import org.infinispan.jmx.annotations.ManagedOperation;
+import org.rhq.helpers.pluginAnnotations.agent.Operation;
 
 /**
- * Represents a response from a backup replication call.
- *
  * @author Mircea Markus
  * @since 5.2
  */
-public interface BackupResponse {
+@MBean(objectName = "XSiteAdmin", description = "Exposes tooling for handling backing up data to remote sites.")
+public class CrossSiteReplicationOperations {
 
-   void waitForBackupToFinish() throws Exception;
+   private volatile BackupSender backupSender;
 
-   Map<String,Throwable> getFailedBackups();
+   @Inject
+   public void init(BackupSender backupSender) {
+      this.backupSender = backupSender;
+   }
 
-   /**
-    * Returns the list of sites where the backups failed due to a bridge communication error (as opposed to an
-    * error caused by Infinispan, e.g. due to a lock acquisition timeout).
-    */
-   Set<String> getCommunicationErrors();
-
-   /**
-    * Return the time in millis when this operation was initiated.
-    */
-   long getSendTimeMillis();
+   @Operation(displayName = "Brings the given site back online on this node.")
+   @ManagedOperation(description = "Brings the given site back online on this node.")
+   public String bringSiteOnline(String siteName) {
+      return backupSender.bringSiteOnline(siteName).toString();
+   }
 }

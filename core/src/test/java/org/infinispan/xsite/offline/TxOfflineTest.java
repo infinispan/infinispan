@@ -17,31 +17,31 @@
  * MA  02110-1301, USA.
  */
 
-package org.infinispan.remoting.transport;
+package org.infinispan.xsite.offline;
 
-import java.util.Map;
-import java.util.Set;
+import org.infinispan.configuration.cache.CacheMode;
+import org.infinispan.configuration.cache.ConfigurationBuilder;
 
 /**
- * Represents a response from a backup replication call.
- *
  * @author Mircea Markus
  * @since 5.2
  */
-public interface BackupResponse {
+public class TxOfflineTest extends NonTxOfflineTest {
 
-   void waitForBackupToFinish() throws Exception;
+   public TxOfflineTest() {
+      this.nrRpcPerPut = 2; //there are a prepare and a rollback that fail
+   }
 
-   Map<String,Throwable> getFailedBackups();
+   @Override
+   protected ConfigurationBuilder getLonActiveConfig() {
+      return getDefaultClusteredCacheConfig(CacheMode.DIST_SYNC, true);
+   }
 
-   /**
-    * Returns the list of sites where the backups failed due to a bridge communication error (as opposed to an
-    * error caused by Infinispan, e.g. due to a lock acquisition timeout).
-    */
-   Set<String> getCommunicationErrors();
+   //todo - if I don't explicitly override the test methods then testNG won't execute them from superclass.
+   //fix this once we move to JUnit
 
-   /**
-    * Return the time in millis when this operation was initiated.
-    */
-   long getSendTimeMillis();
+   @Override
+   public void testPutWithFailures() {
+      super.testPutWithFailures();
+   }
 }

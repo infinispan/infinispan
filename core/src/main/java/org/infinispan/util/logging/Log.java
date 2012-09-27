@@ -909,9 +909,12 @@ public interface Log extends BasicLogger {
    @LogMessage(level = WARN)
    @Message(value = "The rollback request for tx %s cannot be processed by the cache %s as this cache is not transactional!", id=203)
    void cannotRespondToRollback(GlobalTransaction globalTransaction, String cacheName);
-   
+
    @LogMessage(level = WARN)
    @Message(value = "The commit request for tx %s cannot be processed by the cache %s as this cache is not transactional!", id=204)
    void cannotRespondToCommit(GlobalTransaction globalTransaction, String cacheName);
 
+   @LogMessage(level = WARN)
+   @Message(value = "Trying to bring back an unexistent site (%s)!", id=205)
+   void tryingToBringOnlineUnexistentSite(String siteName);
 }

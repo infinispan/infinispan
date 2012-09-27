@@ -99,6 +99,15 @@ public class SitesConfiguration {
       throw new IllegalStateException("There must be a site configured for " + siteName);
    }
 
+   public boolean hasInUseBackup(String siteName) {
+      for (BackupConfiguration bc : inUseBackups) {
+         if (bc.site().equals(siteName)) {
+            return true;
+         }
+      }
+      return false;
+   }
+
    @Override
    public boolean equals(Object o) {
       if (this == o) return true;

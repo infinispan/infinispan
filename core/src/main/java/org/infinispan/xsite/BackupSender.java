@@ -56,4 +56,16 @@ public interface BackupSender {
    BackupResponse backupRollback(RollbackCommand command) throws Exception;
 
    void processResponses(BackupResponse backupResponse, VisitableCommand command, Transaction transaction) throws Throwable;
+
+   public enum BringSiteOnlineResponse {
+      NO_SUCH_SITE,
+      OFFLINE_NOT_ENABLED,
+      ALREADY_ONLINE,
+      BROUGHT_ONLINE
+   }
+
+   /**
+    * Brings a site with the given name back online.
+    */
+   BringSiteOnlineResponse bringSiteOnline(String siteName);
 }
