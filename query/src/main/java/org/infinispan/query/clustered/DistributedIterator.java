@@ -26,7 +26,7 @@ import org.apache.lucene.search.Sort;
 import org.apache.lucene.search.SortField;
 import org.apache.lucene.util.PriorityQueue;
 import org.infinispan.AdvancedCache;
-import org.infinispan.query.impl.AbstractIterator;
+import org.infinispan.query.QueryIterator;
 import org.infinispan.util.ReflectionUtil;
 
 import java.util.ArrayList;
@@ -42,7 +42,7 @@ import java.util.UUID;
  * @author Israel Lacerra <israeldl@gmail.com>
  * @since 5.1
  */
-public class DistributedIterator extends AbstractIterator {
+public class DistributedIterator implements QueryIterator {
 
    protected final AdvancedCache<?, ?> cache;
 
@@ -52,6 +52,8 @@ public class DistributedIterator extends AbstractIterator {
    private final ArrayList<Object> orderedValues = new ArrayList<Object>();
 
    private final Sort sort;
+
+   private final int fetchSize;
 
    private HashMap<UUID, ClusteredTopDocs> topDocsResponses;
 
@@ -124,7 +126,7 @@ public class DistributedIterator extends AbstractIterator {
    }
 
    @Override
-   public void jumpToResult(int index) throws IndexOutOfBoundsException {
+   public void jumpToIndex(int index) throws IndexOutOfBoundsException {
       currentIndex = index;
    }
 
@@ -144,8 +146,6 @@ public class DistributedIterator extends AbstractIterator {
 
    @Override
    public int nextIndex() {
-      if (!hasNext())
-         throw new NoSuchElementException("Out of boundaries");
       return currentIndex + 1;
    }
 
@@ -214,6 +214,21 @@ public class DistributedIterator extends AbstractIterator {
    @Override
    public int previousIndex() {
       return currentIndex - 1;
+   }
+
+   @Override
+   public void beforeFirst() {
+      currentIndex = 0;
+   }
+
+   @Override
+   public void afterLast() {
+      currentIndex = resultSize;
+   }
+
+   @Override
+   public boolean hasPrevious() {
+      return currentIndex > 0;
    }
 
    @Override

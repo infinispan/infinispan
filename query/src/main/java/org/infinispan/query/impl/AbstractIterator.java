@@ -22,70 +22,61 @@
  */
 package org.infinispan.query.impl;
 
+import org.hibernate.search.query.engine.spi.EntityInfo;
 import org.infinispan.query.QueryIterator;
+
+import java.util.NoSuchElementException;
 
 /**
  * This is the abstract superclass of the 2 iterators. Since some of the methods have the same implementations they have
  * been put onto a separate class.
  *
  * @author Navin Surtani
+ * @author Marko Luksa
  * @see org.infinispan.query.impl.EagerIterator
  * @see org.infinispan.query.impl.LazyIterator
  * @since 4.0
  */
 public abstract class AbstractIterator implements QueryIterator {
 
-   protected Object[] buffer;
+   protected final Object[] buffer;
 
+   /**
+    * Index of the element that will be returned by next()
+    */
    protected int index = 0;
+
+   /**
+    * The index at which the buffer starts (the global index of the element at buffer[0])
+    */
    protected int bufferIndex = -1;
+
    protected int max;
-   protected int first;
-   protected int fetchSize;
+   protected final int fetchSize;
+   private final QueryResultLoader resultLoader;
 
-   @Override
-   public void first() {
-      index = first;
+   protected AbstractIterator(QueryResultLoader resultLoader, int fetchSize) {
+      if (fetchSize < 1) {
+         throw new IllegalArgumentException("Incorrect value for fetchSize passed. Your fetchSize is less than 1");
+      }
+      this.resultLoader = resultLoader;
+      this.fetchSize = fetchSize;
+      this.buffer = new Object[fetchSize];
    }
 
    @Override
-   public void last() {
-      index = max;
+   public void beforeFirst() {
+      index = 0;
    }
 
    @Override
-   public void afterFirst() {
-      index = first + 1;
-   }
-
-   @Override
-   public void beforeLast() {
-      index = max - 1;
-   }
-
-   @Override
-   public boolean isFirst() {
-      return index == first;
-   }
-
-   @Override
-   public boolean isLast() {
-      return index == max;
-   }
-
-   @Override
-   public boolean isAfterFirst() {
-      return index == first + 1;
-   }
-
-   @Override
-   public boolean isBeforeLast() {
-      return index == max - 1;
+   public void afterLast() {
+      index = max + 1;
    }
 
    @Override
    public boolean hasPrevious() {
-      return index >= first;
+      return index > 0;
    }
 
    @Override
@@ -93,4 +84,115 @@ public abstract class AbstractIterator implements QueryIterator {
       return index <= max;
    }
 
+   /**
+    * Returns the index of the element that would be returned by a subsequent call to next.
+    *
+    * @return Index of next element.
+    */
+   @Override
+   public int nextIndex() {
+      return index;
+   }
+
+   /**
+    * Returns the index of the element that would be returned by a subsequent call to previous.
+    *
+    * @return Index of previous element.
+    */
+   @Override
+   public int previousIndex() {
+      return index - 1;
+   }
+
+   /**
+    * This method is not supported and should not be used. Use cache.remove() instead.
+    */
+   @Override
+   public void remove() {
+      throw new UnsupportedOperationException("Not supported as you are trying to change something in the cache.  Please use searchableCache.put()");
+   }
+
+   /**
+    * This method is not supported in and should not be called. Use cache.put() instead.
+    *
+    * @param o
+    * @throws UnsupportedOperationException
+    */
+   @Override
+   public void set(Object o) throws UnsupportedOperationException {
+      throw new UnsupportedOperationException("Not supported as you are trying to change something in the cache.  Please use searchableCache.put()");
+   }
+
+   /**
+    * This method is not supported in and should not be called. Use cache.put() instead.
+    *
+    * @param o
+    * @throws UnsupportedOperationException
+    */
+   @Override
+   public void add(Object o) {
+      throw new UnsupportedOperationException("Not supported as you are trying to change something in the cache. Please use searchableCache.put()");
+   }
+
+   /**
+    * Jumps to a given index in the list of results.
+    *
+    * @param index to jump to
+    * @throws IndexOutOfBoundsException
+    */
+   @Override
+   public void jumpToIndex(int index) throws IndexOutOfBoundsException {
+      if (index > max || index < 0) {
+         throw new IndexOutOfBoundsException("The index you entered is either greater than the size of the list or negative");
+      }
+      this.index = index;
+   }
+
+   @Override
+   public Object next() {
+      if (!hasNext()) throw new NoSuchElementException("Out of boundaries. There is no next");
+
+      if (mustInitializeBuffer()) {
+         fillBuffer(index);
+      }
+
+      int indexToReturn = index - bufferIndex;
+      index++;
+      return buffer[indexToReturn];
+   }
+
+   @Override
+   public Object previous() {
+      if (!hasPrevious()) throw new NoSuchElementException("Index is out of bounds. There is no previous");
+
+      index--;
+
+      if (mustInitializeBuffer()) {
+         int startIndex = Math.max(0, index - (buffer.length - 1));
+         fillBuffer(startIndex);
+      }
+
+      return buffer[index - bufferIndex];
+   }
+
+   private boolean mustInitializeBuffer() {
+      return bufferIndex == -1                          // buffer init check
+            || index < bufferIndex                      // lower boundary
+            || index >= (bufferIndex + buffer.length);  // upper boundary
+   }
+
+   private void fillBuffer(int startIndex) {
+      bufferIndex = startIndex;
+      int resultsToLoad = Math.min( buffer.length, max + 1 - bufferIndex);
+      for (int i = 0; i < resultsToLoad; i++) {
+         buffer[i] = loadResult(bufferIndex + i);
+      }
+   }
+
+   private Object loadResult(int index) {
+      EntityInfo entityInfo = loadEntityInfo(index);
+      return resultLoader.load(entityInfo);
+   }
+
+   protected abstract EntityInfo loadEntityInfo(int index);
 }

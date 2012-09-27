@@ -39,6 +39,7 @@ import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.factories.ComponentRegistry;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.query.CacheQuery;
+import org.infinispan.query.FetchOptions;
 import org.infinispan.query.Search;
 import org.infinispan.query.QueryIterator;
 import org.infinispan.query.test.AnotherGrassEater;
@@ -92,10 +93,11 @@ public class LocalCacheTest extends SingleCacheManagerTest {
       loadTestingData();
       CacheQuery cacheQuery = createCacheQuery(cache, "blurb", "playing" );
 
-      QueryIterator found = cacheQuery.iterator();
+      QueryIterator found = cacheQuery.iterator(new FetchOptions(FetchOptions.FetchMode.EAGER));
 
-      assert found.isFirst();
-      assert found.isLast();
+      assert found.hasNext();
+      found.next();
+      assert !found.hasNext();
    }
 
    public void testMultipleResults() throws ParseException {
@@ -261,10 +263,11 @@ public class LocalCacheTest extends SingleCacheManagerTest {
       Query luceneQuery = queryParser.parse("playing");
       CacheQuery cacheQuery = Search.getSearchManager(cache).getQuery(luceneQuery);
 
-      QueryIterator found = cacheQuery.lazyIterator();
+      QueryIterator found = cacheQuery.iterator(new FetchOptions(FetchOptions.FetchMode.LAZY));
 
-      assert found.isFirst();
-      assert found.isLast();
+      assert found.hasNext();
+      found.next();
+      assert !found.hasNext();
    }
 
    public void testGetResultSize() throws ParseException {

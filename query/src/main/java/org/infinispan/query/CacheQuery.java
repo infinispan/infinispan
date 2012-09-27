@@ -52,37 +52,21 @@ public interface CacheQuery extends Iterable<Object> {
    List<Object> list();
 
    /**
-    * Returns the results of a search as a {@link QueryIterator} with a given integer parameter - the fetchSize.
+    * Returns the results of a search as a {@link QueryIterator}.
     *
-    * @param fetchSize integer to be given to the implementation constructor.
+    * @param fetchOptions how to fetch results (see @link FetchOptions)
     * @return a QueryResultIterator which can be used to iterate through the results that were found.
     */
-   QueryIterator iterator(int fetchSize);
+   QueryIterator iterator(FetchOptions fetchOptions);
 
    /**
-    * Returns the results of a search as a {@link QueryIterator}. This calls {@link CacheQuery#iterator(int fetchSize)}
-    * but uses a default fetchSize of 1.
+    * Returns the results of a search as a {@link QueryIterator}. This calls {@link CacheQuery#iterator(FetchOptions fetchOptions)}
+    * with new FetchOptions(FetchOptions.FetchMode.LAZY, 1)
     *
-    * @return a QueryResultIterator which can be used to iterate through the results that were found.
+    * @return a QueryIterator which can be used to iterate through the results that were found.
     */
    @Override
    QueryIterator iterator();
-
-   /**
-    * Lazily loads the results from the Query as a {@link QueryIterator} with a given integer parameter - the
-    * fetchSize.
-    *
-    * @param fetchSize integer to be passed into the lazy implementation of {@link QueryIterator}
-    * @return a QueryResultIterator which can be used to <B>lazily</B> iterate through results.
-    */
-   QueryIterator lazyIterator(int fetchSize);
-
-   /**
-    * Calls the {@link CacheQuery#lazyIterator(int fetchSize)} method but passes in a default 1 as a parameter.
-    *
-    * @return a QueryResultIterator which can be used to <B>lazily</B> iterate through results.
-    */
-   QueryIterator lazyIterator();
 
    /**
     * Sets a result with a given index to the first result.

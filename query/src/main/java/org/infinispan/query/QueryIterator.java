@@ -30,59 +30,31 @@ import java.util.ListIterator;
  *
  * @author Manik Surtani
  * @author Navin Surtani
+ * @author Marko Luksa
  */
 public interface QueryIterator extends ListIterator<Object> {
    /**
-    * Jumps to a specific index in the iterator.
+    * Jumps to a specific position in the iterator. The specified index indicates the first element that would be
+    * returned by an initial call to next. An initial call to previous would return the element with the specified
+    * index minus one.
     *
     * @param index index to jump to.
-    * @throws IndexOutOfBoundsException if the index is out of bounds
+    * @throws IndexOutOfBoundsException if the index is out of bounds (index < 0 || index > size())
     */
-   void jumpToResult(int index) throws IndexOutOfBoundsException;
+   void jumpToIndex(int index) throws IndexOutOfBoundsException;
 
    /**
     * Jumps to the first result
     */
-   void first();
+   void beforeFirst();
 
    /**
     * Jumps to the last result
     */
-   void last();
-
-   /**
-    * Jumps to the one-after-the-first result
-    */
-   void afterFirst();
-
-   /**
-    * Jumps to the one-before-the-last result
-    */
-   void beforeLast();
-
-   /**
-    * @return true if the current result is the first
-    */
-   boolean isFirst();
-
-   /**
-    * @return true if the current result is the last
-    */
-   boolean isLast();
-
-   /**
-    * @return true if the current result is one after the first
-    */
-   boolean isAfterFirst();
-
-   /**
-    * @return true if the current result is one before the last
-    */
-   boolean isBeforeLast();
+   void afterLast();
 
    /**
     * This method must be called on your iterator once you have finished so that Lucene resources can be freed up.
     */
-
    void close();
 }

@@ -38,6 +38,7 @@ import org.infinispan.query.QueryIterator;
 import org.infinispan.query.backend.KeyTransformationHandler;
 import org.mockito.invocation.InvocationOnMock;
 import org.mockito.stubbing.Answer;
+import org.testng.Assert;
 import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
@@ -54,16 +55,13 @@ public class EagerIteratorTest {
    List<EntityInfo> entityInfos;
    Map<String, String> dummyResults;
    QueryIterator iterator;
-   int fetchSize = 1;
    AdvancedCache<String, String> cache;
    private KeyTransformationHandler keyTransformationHandler;
 
    @BeforeMethod
    public void setUp() throws Exception {
 
-      // create a set of dummy keys
       keys = new ArrayList<String>();
-      // create some dummy data
       dummyResults = new HashMap<String, String>();
 
       entityInfos = new ArrayList<EntityInfo>();
@@ -88,7 +86,11 @@ public class EagerIteratorTest {
 
       });
 
-      iterator = new EagerIterator(entityInfos, new EntityLoader(cache, keyTransformationHandler), fetchSize);
+      iterator = new EagerIterator(entityInfos, new EntityLoader(cache, keyTransformationHandler), getFetchSize());
+   }
+
+   protected int getFetchSize() {
+      return 1;
    }
 
    @AfterMethod (alwaysRun = true)
@@ -98,125 +100,58 @@ public class EagerIteratorTest {
       iterator = null;
    }
 
-   public void testJumpToResult() throws IndexOutOfBoundsException {
-      iterator.jumpToResult(0);
-      assert iterator.isFirst();
+   public void testBeforeResult() throws IndexOutOfBoundsException {
+      iterator.jumpToIndex(0);
+      assert !iterator.hasPrevious();
 
-      iterator.jumpToResult(1);
-      assert iterator.isAfterFirst();
+      iterator.jumpToIndex(1);
+      assert iterator.hasPrevious();
+      iterator.previous();
+      assert !iterator.hasPrevious();
 
-      iterator.jumpToResult((keys.size() - 1));
-      assert iterator.isLast();
-
-      iterator.jumpToResult(keys.size() - 2);
-      assert iterator.isBeforeLast();
-   }
-
-   public void testFirst() {
-      assert iterator.isFirst() : "We should be pointing at the first element";
-      Object next = iterator.next();
-
-      assert next == dummyResults.get(keys.get(0));
-
-      assert !iterator.isFirst();
-
-      iterator.first();
-
-      assert iterator.isFirst() : "We should be pointing at the first element";
-      next = iterator.next();
-      assert next == dummyResults.get(keys.get(0));
-      assert !iterator.isFirst();
-
-   }
-
-   public void testLast() {
-      //Jumps to the last element
-      iterator.last();
-
-      //Makes sure that the iterator is pointing at the last element.
-      assert iterator.isLast();
-
-      Object next = iterator.next();
-
-      //Returns the size of the list of keys.
-      int size = keys.size();
-
-      //Makes sure that previous is the last element.
-      assert next == dummyResults.get(keys.get(size - 1));
-
-      //Check that the iterator is NOT pointing at the last element.
-      assert !iterator.isLast();
-   }
-
-   public void testAfterFirst() {
-      //Jump to the second element.
-      iterator.afterFirst();
-
-      //Check this
-      assert iterator.isAfterFirst();
-
-      //Previous element in the list
-      Object previous = iterator.previous();
-
-      //Check that previous is the first element.
-      assert previous == dummyResults.get(keys.get(1));
-
-      //Make sure that the iterator isn't pointing at the second element.
-      assert !iterator.isAfterFirst();
-
-   }
-
-   public void testBeforeLast() {
-      //Jump to the penultimate element.
-      iterator.beforeLast();
-
-      //Check this
-      assert iterator.isBeforeLast();
-
-      //Next element - which should be the last.
-      Object next = iterator.next();
-
-      //Check that next is the penultimate element.
-      int size = keys.size();
-      assert next == dummyResults.get(keys.get(size - 2));
-
-      //Make sure that the iterator is not pointing at the penultimate element.
-      assert !iterator.isBeforeLast();
-   }
-
-   public void testIsFirst() {
-      iterator.first();
-      assert iterator.isFirst();
-
+      iterator.jumpToIndex(keys.size() - 1);
+      assert iterator.hasNext();
       iterator.next();
-      assert !iterator.isFirst();
+      assert !iterator.hasNext();
+
+      try {
+         iterator.jumpToIndex(keys.size());
+         Assert.fail("expected IndexOutOfBoundsException");
+      } catch (IndexOutOfBoundsException e) {
+         // ok
+      }
    }
 
-   public void testIsLast() {
-      iterator.last();
-      assert iterator.isLast();
-
-      iterator.previous();
-      assert !iterator.isLast();
+   public void testBeforeFirst() {
+      iterator.beforeFirst();
+      assert !iterator.hasPrevious() : "We should be pointing at the first element";
+      assert iterator.next() == resultAt(0);
+      assert iterator.hasPrevious();
    }
 
-   public void testIsAfterFirst() {
-      iterator.afterFirst();
-      assert iterator.isAfterFirst();
-
-      iterator.previous();
-      assert !iterator.isAfterFirst();
+   protected String resultAt(int index) {
+      return dummyResults.get(keys.get( index ));
    }
 
-   public void testIsBeforeLast() {
-      iterator.beforeLast();
-      assert iterator.isBeforeLast();
+   public void testAfterLast() {
+      iterator.afterLast();
+
+      //Makes sure that the iterator is past the last element.
+      assert !iterator.hasNext();
+      assert iterator.hasPrevious();
+
+      Object previous = iterator.previous();
+      //Makes sure that previous is the last element.
+      assert previous == resultAt(keys.size() - 1);
+
+      //Check that the iterator is pointing in front of the last element.
+      assert iterator.hasNext();
    }
 
    public void testNextAndHasNext() {
-      iterator.first();
+      iterator.beforeFirst();
       for (int i = 0; i < keys.size(); i++) {
-         Object expectedValue = dummyResults.get(keys.get(i));
+         Object expectedValue = resultAt(i);
          assert iterator.hasNext(); // should have next as long as we are less than the number of elements.
          assert expectedValue == iterator.next(); // tests next()
       }
@@ -224,31 +159,43 @@ public class EagerIteratorTest {
    }
 
    public void testPreviousAndHasPrevious() {
-      iterator.last();
+      iterator.afterLast();
       for (int i = keys.size() - 1; i >= 0; i--) {
-         Object expectedValue = dummyResults.get(keys.get(i));
+         Object expectedValue = resultAt(i);
          assert iterator.hasPrevious(); // should have previous as long as we are more than the number of elements.
-         assert expectedValue == iterator.previous(); // tests previous()
+         assert expectedValue == iterator.previous();
       }
       assert !iterator.hasPrevious(); // this should now NOT be true.
 
    }
 
    public void testNextIndex() {
-      iterator.first();
-      assert iterator.nextIndex() == 1;
+      assert iterator.nextIndex() == 0;
 
-      iterator.last();
+      iterator.beforeFirst();
+      assert iterator.nextIndex() == 0;
+
+      iterator.afterLast();
       assert iterator.nextIndex() == keys.size();
-
    }
 
    public void testPreviousIndex() {
-      iterator.first();
       assert iterator.previousIndex() == -1;
 
-      iterator.last();
-      assert iterator.previousIndex() == (keys.size() - 2);
+      iterator.beforeFirst();
+      assert iterator.previousIndex() == -1;
+
+      iterator.afterLast();
+      assert iterator.previousIndex() == keys.size() - 1;
+   }
+
+   public void testMixedNextPrevious() {
+      assert iterator.next() == resultAt(0);
+      assert iterator.next() == resultAt(1);
+      assert iterator.previous() == resultAt(1);
+      assert iterator.previous() == resultAt(0);
+      assert iterator.next() == resultAt(0);
+      assert iterator.next() == resultAt(1);
    }
 
    private static class MockEntityInfo implements EntityInfo {
