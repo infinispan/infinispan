@@ -26,15 +26,9 @@ import org.hibernate.search.spi.SearchFactoryIntegrator;
 import org.infinispan.commands.AbstractFlagAffectedCommand;
 import org.infinispan.context.Flag;
 import org.infinispan.context.InvocationContext;
-import org.infinispan.factories.KnownComponentNames;
-import org.infinispan.factories.annotations.ComponentName;
-import org.infinispan.factories.annotations.Inject;
 import org.infinispan.query.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
-import javax.transaction.TransactionManager;
-import javax.transaction.TransactionSynchronizationRegistry;
-import java.util.concurrent.ExecutorService;
 
 /**
  * <p/>
@@ -57,19 +51,6 @@ public class LocalQueryInterceptor extends QueryInterceptor {
    @Override
    protected Log getLog() {
       return log;
-   }
-
-   // The Async Executor is injected here as well due to a limitation in the way core injects dependencies in
-   // components that do not reside in core.  Essentially superclasses of components will *not* get scanned for
-   // annotations if the superclass is itself not in core.
-   @Inject
-   public void injectDependencies(TransactionManager transactionManager,
-                                  TransactionSynchronizationRegistry transactionSynchronizationRegistry,
-                                  @ComponentName(KnownComponentNames.ASYNC_TRANSPORT_EXECUTOR) ExecutorService e) {
-      // Fields on superclass.
-      this.transactionManager = transactionManager;
-      this.transactionSynchronizationRegistry = transactionSynchronizationRegistry;
-      this.asyncExecutor = e;
    }
 
    @Override

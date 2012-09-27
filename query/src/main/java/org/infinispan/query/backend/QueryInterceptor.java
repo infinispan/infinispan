@@ -90,8 +90,13 @@ public class QueryInterceptor extends CommandInterceptor {
    }
 
    @Inject
-   public void injectDependencies(
-         @ComponentName(KnownComponentNames.ASYNC_TRANSPORT_EXECUTOR) ExecutorService e) {
+   @SuppressWarnings("unused")
+   public void injectDependencies(TransactionManager transactionManager,
+                                  TransactionSynchronizationRegistry transactionSynchronizationRegistry,
+                                  @ComponentName(KnownComponentNames.ASYNC_TRANSPORT_EXECUTOR) ExecutorService e) {
+      // Fields on superclass.
+      this.transactionManager = transactionManager;
+      this.transactionSynchronizationRegistry = transactionSynchronizationRegistry;
       this.asyncExecutor = e;
    }
 
