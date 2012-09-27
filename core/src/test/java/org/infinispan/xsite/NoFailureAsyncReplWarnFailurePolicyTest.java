@@ -23,7 +23,6 @@ import org.infinispan.configuration.cache.BackupConfiguration;
 import org.infinispan.configuration.cache.BackupFailurePolicy;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
-import org.infinispan.xsite.BaseSiteUnreachableTest;
 import org.testng.annotations.Test;
 
 import java.util.Collections;
@@ -35,10 +34,10 @@ import static org.testng.AssertJUnit.assertEquals;
  * @author Mircea Markus
  * @since 5.2
  */
-@Test (groups = "xsite", testName = "xsite.bridgemissing.NoFailureAsyncReplTest")
-public class NoFailureAsyncReplTest extends BaseSiteUnreachableTest {
+@Test (groups = "xsite", testName = "xsite.bridgemissing.NoFailureAsyncReplWarnFailurePolicyTest")
+public class NoFailureAsyncReplWarnFailurePolicyTest extends BaseSiteUnreachableTest {
 
-   public NoFailureAsyncReplTest() {
+   public NoFailureAsyncReplWarnFailurePolicyTest() {
       lonBackupStrategy = BackupConfiguration.BackupStrategy.SYNC;
       lonBackupFailurePolicy = BackupFailurePolicy.WARN;
    }
