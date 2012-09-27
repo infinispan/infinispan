@@ -58,6 +58,15 @@ public interface DistributedTaskBuilder<T> {
     * @return this DistributedTaskBuilder
     */
    DistributedTaskBuilder<T> executionPolicy(DistributedTaskExecutionPolicy policy);
+   
+   /**
+    * Provide {@link DistributedTaskFailoverPolicy} for the task being built
+    * 
+    * @param policy
+    *           DistributedTaskFailoverPolicy for the task
+    * @return this DistributedTaskBuilder
+    */
+   DistributedTaskBuilder<T> failoverPolicy(DistributedTaskFailoverPolicy policy);
 
    /**
     * Completes creation of DistributedTask with the currently provided attributes of this
