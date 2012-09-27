@@ -26,8 +26,7 @@ import org.testng.annotations.Test;
  * 
  * @author Sanne Grinovero <sanne@hibernate.org> (C) 2012 Red Hat Inc.
  */
-@Test(groups = "functional", testName = "query.distributed.MultiNodeReplicatedTest", enabled = false,
-      description = "Disabled because of intermittent failures: https://issues.jboss.org/browse/ISPN-2248")
+@Test(groups = "functional", testName = "query.distributed.MultiNodeReplicatedTest")
 public class MultiNodeReplicatedTest extends MultiNodeDistributedTest {
 
    @Override
