@@ -40,7 +40,8 @@ import org.hibernate.search.query.engine.spi.TimeoutExceptionFactory;
 import org.hibernate.search.spi.SearchFactoryIntegrator;
 import org.infinispan.AdvancedCache;
 import org.infinispan.query.CacheQuery;
-import org.infinispan.query.QueryIterator;
+import org.infinispan.query.FetchOptions;
+import org.infinispan.query.ResultIterator;
 import org.infinispan.query.backend.KeyTransformationHandler;
 
 /**
@@ -52,6 +53,8 @@ import org.infinispan.query.backend.KeyTransformationHandler;
  * @author Marko Luksa
  */
 public class CacheQueryImpl implements CacheQuery {
+
+   private static final FetchOptions DEFAULT_FETCH_OPTIONS = new FetchOptions();
 
    protected final AdvancedCache<?, ?> cache;
    protected final KeyTransformationHandler keyTransformationHandler;
@@ -144,25 +147,21 @@ public class CacheQueryImpl implements CacheQuery {
    }
 
    @Override
-   public QueryIterator iterator() throws SearchException {
-      return iterator(1);
+   public ResultIterator iterator() throws SearchException {
+      return iterator(DEFAULT_FETCH_OPTIONS);
    }
 
    @Override
-   public QueryIterator iterator(int fetchSize) throws SearchException {
-      hSearchQuery.getTimeoutManager().start();
-      List<EntityInfo> entityInfos = hSearchQuery.queryEntityInfos();
-      return new EagerIterator(entityInfos, getResultLoader(), fetchSize);
-   }
-
-   @Override
-   public QueryIterator lazyIterator() {
-      return lazyIterator(1);
-   }
-
-   @Override
-   public QueryIterator lazyIterator(int fetchSize) {
-      return new LazyIterator(hSearchQuery, getResultLoader(), fetchSize);
+   public ResultIterator iterator(FetchOptions fetchOptions) throws SearchException {
+      if (fetchOptions.getFetchMode() == FetchOptions.FetchMode.EAGER) {
+         hSearchQuery.getTimeoutManager().start();
+         List<EntityInfo> entityInfos = hSearchQuery.queryEntityInfos();
+         return new EagerIterator(entityInfos, getResultLoader(), fetchOptions.getFetchSize() );
+      } else if (fetchOptions.getFetchMode() == FetchOptions.FetchMode.LAZY) {
+         return new LazyIterator(hSearchQuery, getResultLoader(), fetchOptions.getFetchSize());
+      } else {
+         throw new IllegalArgumentException("Unknown FetchMode " + fetchOptions.getFetchMode());
+      }
    }
 
    @Override

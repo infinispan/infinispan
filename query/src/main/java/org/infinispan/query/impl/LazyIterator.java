@@ -24,8 +24,6 @@
 package org.infinispan.query.impl;
 
 import java.io.IOException;
-import java.util.Arrays;
-import java.util.NoSuchElementException;
 
 import net.jcip.annotations.NotThreadSafe;
 
@@ -35,9 +33,8 @@ import org.hibernate.search.query.engine.spi.HSQuery;
 import org.infinispan.CacheException;
 
 /**
- * Implementation for {@link org.infinispan.query.QueryIterator}. This is what is returned when the {@link
- * org.infinispan.query.CacheQuery#lazyIterator()} method is called. This loads the results only when required and hence
- * differs from {@link EagerIterator} which is the other implementation of QueryResultIterator.
+ * Implementation for {@link org.infinispan.query.ResultIterator}. This loads the results only when required
+ * and hence differs from {@link EagerIterator} which is the other implementation of ResultIterator.
  *
  * @author Navin Surtani
  * @author Marko Luksa
@@ -46,27 +43,11 @@ import org.infinispan.CacheException;
 public class LazyIterator extends AbstractIterator {
 
    private final DocumentExtractor extractor;
-   private final QueryResultLoader resultLoader;
 
    public LazyIterator(HSQuery hSearchQuery, QueryResultLoader resultLoader, int fetchSize) {
-      if (fetchSize < 1) {
-         throw new IllegalArgumentException("Incorrect value for fetchsize passed. Your fetchSize is less than 1");
-      }
+      super(resultLoader, fetchSize);
       this.extractor = hSearchQuery.queryDocumentExtractor(); //triggers actual Lucene search
-      this.resultLoader = resultLoader;
-      this.index = 0;
       this.max = hSearchQuery.queryResultSize() - 1;
-      this.fetchSize = fetchSize;
-      //Create an buffer with size fetchSize (which is the size of the required buffer).
-      buffer = new Object[this.fetchSize];
-   }
-
-   @Override
-   public void jumpToResult(int index) throws IndexOutOfBoundsException {
-      if (index < first || index > max) {
-         throw new IndexOutOfBoundsException("The given index is incorrect. Please check and try again.");
-      }
-      this.index = first + index;
    }
 
    @Override
@@ -74,127 +55,11 @@ public class LazyIterator extends AbstractIterator {
       extractor.close();
    }
 
-   @Override
-   public Object next() {
-      if (!hasNext()) throw new NoSuchElementException("Index is out of bounds. There is no next");
-
-      Object toReturn = null;
-      int bufferSize = buffer.length;
-
-      // make sure the index we are after is in the buffer.  If it is, then index >= bufferIndex and index <= (bufferIndex + bufferSize).
-      if (bufferIndex >= 0                                       // buffer init check
-            && index >= bufferIndex                           // lower boundary
-            && index < (bufferIndex + bufferSize))          // upper boundary
-      {
-         // now we can get this from the buffer.  Sweet!
-         int indexToReturn = index - bufferIndex;
-         toReturn = buffer[indexToReturn];
-      } else {
-         // else we need to populate the buffer and get what we need.
-
-         toReturn = loadResult( index );
-
-         //Wiping bufferObjects and the bufferIndex so that there is no stale data.
-         Arrays.fill(buffer, null);
-         buffer[0] = toReturn;
-
-         // we now need to buffer item at index "index", as well as the next "fetchsize - 1" elements.  I.e., a total of fetchsize elements will be buffered.
-         // ignore loop below, in needs fixing
-         //now loop through bufferSize times to add the rest of the objects into the list.
-
-         for (int i = 1; i < bufferSize; i++) {
-            buffer[i] = loadResult( index + i );
-         }
-         bufferIndex = index;
-      }
-
-      index++;
-      return toReturn;
-   }
-
-   @Override
-   public Object previous() {
-      if (!hasPrevious()) throw new NoSuchElementException("Index is out of bounds. There is no previous");
-
-      Object toReturn;
-      int bufferSize = buffer.length;
-
-      // make sure the index we are after is in the buffer.  If it is, then index >= bufferIndex and index <= (bufferIndex + bufferSize).
-
-      if (bufferIndex >= 0 // buffer init check
-            && index <= bufferIndex // lower boundary
-            && index >= (bufferIndex + bufferSize)) // upper boundary
-      {
-         // now we can get this from the buffer.  Sweet!
-         int indexToReturn = bufferIndex - index;        // Unlike next() we have to make sure that we are subtracting index from bufferIndex
-         toReturn = buffer[indexToReturn];
-      }
-
-      //Wiping the buffer
-      Arrays.fill(buffer, null);
-
-      toReturn = loadResult(index);
-
-      buffer[0] = toReturn;
-
-      //now loop through bufferSize times to add the rest of the objects into the list.
-      for (int i = 1; i < bufferSize; i++) {
-         buffer[i] = loadResult(index - i); // In this case it has to be index - i because previous() is called.
-      }
-
-      bufferIndex = index;
-
-      index--;
-      return toReturn;
-   }
-
-   private Object loadResult(int index) throws CacheException {
+   protected EntityInfo loadEntityInfo(int index) {
       try {
-         EntityInfo entityInfo = extractor.extract(index);
-         return resultLoader.load(entityInfo);
+         return extractor.extract(index);
       } catch (IOException e) {
          throw new CacheException("Cannot load result at index " + index, e);
       }
    }
-
-   @Override
-   public int nextIndex() {
-      return index + 1;
-   }
-
-   @Override
-   public int previousIndex() {
-      return index - 1;
-   }
-
-   /**
-    * This method is not supported and should not be used. Use cache.remove() instead.
-    */
-   @Override
-   public void remove() {
-      throw new UnsupportedOperationException("Not supported as you are trying to change something in the cache");
-   }
-
-   /**
-    * This method is not supported in and should not be called. Use cache.put() instead.
-    *
-    * @param o
-    * @throws UnsupportedOperationException
-    */
-   @Override
-   public void set(Object o) throws UnsupportedOperationException {
-      throw new UnsupportedOperationException("Not supported as you are trying to change something in the cache");
-   }
-
-   /**
-    * This method is not supported in and should not be called. Use cache.put() instead.
-    *
-    * @param o
-    * @throws UnsupportedOperationException
-    */
-   @Override
-   public void add(Object o) {
-      throw new UnsupportedOperationException("Not supported as you are trying to change something in the cache");
-   }
-
 }
