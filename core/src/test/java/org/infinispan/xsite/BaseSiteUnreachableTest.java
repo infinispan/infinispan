@@ -24,13 +24,11 @@ import org.infinispan.configuration.cache.BackupFailurePolicy;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.global.GlobalConfigurationBuilder;
-import org.testng.annotations.Test;
 
 /**
  * @author Mircea Markus
  * @since 5.2
  */
-@Test(groups = "xsite", testName = "xsite.BaseSiteUnreachableTest")
 public class BaseSiteUnreachableTest extends AbstractXSiteTest {
 
    protected BackupFailurePolicy lonBackupFailurePolicy = BackupFailurePolicy.WARN;

@@ -140,7 +140,9 @@ public enum Attribute {
     BACKUP_FAILURE_POLICY("backupFailurePolicy"),
     REMOTE_SITE("remoteSite"),
     REMOTE_CACHE("remoteCache"),
-    FAILURE_POLICY_CLASS("failurePolicyClass")
+    FAILURE_POLICY_CLASS("failurePolicyClass"),
+    AFTER_FAILURES("afterFailures"),
+    MIN_TIME_TO_WAIT("minTimeToWait")
    ;
 
     private final String name;

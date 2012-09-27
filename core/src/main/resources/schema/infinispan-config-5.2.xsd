@@ -428,65 +428,14 @@
                   </xs:annotation>
                   <xs:complexType>
                       <xs:sequence minOccurs="0" maxOccurs="1">
-                          <xs:element name="backup" minOccurs="0" maxOccurs="unbounded">
+                          <xs:element name="backup" minOccurs="0" maxOccurs="unbounded" type="tns:backup">
                               <xs:annotation>
                                   <xs:documentation>
-                                      Configures a specific site where this cache backups data. The name of the backup must match
+                                      Configures a specific site where this cache backups data. The name of the backup
+                                      must match
                                       a site defined in the "global" section.
                                   </xs:documentation>
                               </xs:annotation>
-                              <xs:complexType>
-                                  <xs:attribute name="site" type="xs:string" use="required">
-                                      <xs:annotation>
-                                          <xs:documentation>
-                                              Name of the remote site where this cache backups data.
-                                          </xs:documentation>
-                                      </xs:annotation>
-                                  </xs:attribute>
-                                  <xs:attribute name="strategy" use="optional">
-                                      <xs:annotation>
-                                          <xs:documentation>
-                                              The strategy used for backing up data: "SYNC" or "ASYNC". Defaults to "ASYNC"
-                                          </xs:documentation>
-                                      </xs:annotation>
-                                      <xs:simpleType>
-                                          <xs:restriction base="xs:string">
-                                              <xs:enumeration value="SYNC"/>
-                                              <xs:enumeration value="ASYNC"/>
-                                          </xs:restriction>
-                                      </xs:simpleType>
-                                  </xs:attribute>
-                                  <xs:attribute name="backupFailurePolicy" use="optional">
-                                      <xs:annotation>
-                                          <xs:documentation>
-                                              Decides what the system would do in case of failure during backup. Defaults to "FAIL"
-                                          </xs:documentation>
-                                      </xs:annotation>
-                                      <xs:simpleType>
-                                          <xs:restriction base="xs:string">
-                                              <xs:enumeration value="IGNORE"/>
-                                              <xs:enumeration value="WARN"/>
-                                              <xs:enumeration value="FAIL"/>
-                                              <xs:enumeration value="CUSTOM"/>
-                                          </xs:restriction>
-                                      </xs:simpleType>
-                                  </xs:attribute>
-                                  <xs:attribute name="timeout" use="optional" type="xs:long">
-                                      <xs:annotation>
-                                          <xs:documentation>
-                                              The timeout(millis) to be used when backing up data remotely. Defaults to 10 secs.
-                                          </xs:documentation>
-                                      </xs:annotation>
-                                  </xs:attribute>
-                                  <xs:attribute name="failurePolicyClass" use="optional" type="xs:string">
-                                      <xs:annotation>
-                                          <xs:documentation>
-                                              If the 'backupFailurePolicy' is set to 'CUSTOM' then this attribute is required and should
-                                              contain the fully qualified name of a class implementing org.infinispan.xsite.CustomFailurePolicy.
-                                          </xs:documentation>
-                                      </xs:annotation>
-                                  </xs:attribute>
-                              </xs:complexType>
                           </xs:element>
                       </xs:sequence>
                   </xs:complexType>
@@ -1166,6 +1115,94 @@
          </xs:documentation>
       </xs:annotation>
      </xs:attribute>
+  </xs:complexType>
+
+  <xs:complexType name="backup">
+      <xs:sequence minOccurs="0" maxOccurs="1">
+          <xs:element name="takeOffline" minOccurs="0">
+              <xs:annotation>
+                  <xs:documentation>
+                      Determines whether this backup is taken offline (ignored) after a certain
+                      number of tries.
+                  </xs:documentation>
+              </xs:annotation>
+              <xs:complexType>
+                  <xs:attribute name="afterFailures" type="xs:int">
+                      <xs:annotation>
+                          <xs:documentation>
+                              The number of failed request operations after which this site
+                              should be taken offline. Defaults to 0 (never).
+                              A negative value would mean that the site will be taken offline
+                              after 'minTimeToWait'.
+                          </xs:documentation>
+                      </xs:annotation>
+                  </xs:attribute>
+                  <xs:attribute name="minTimeToWait" type="xs:long">
+                      <xs:annotation>
+                          <xs:documentation>
+                              The minimal number of millis to wait before taking this site
+                              offline, even in the case 'afterFailures' is reached.
+                              If smaller or equal to 0, then only 'afterFailures' is considered.
+                          </xs:documentation>
+                      </xs:annotation>
+                  </xs:attribute>
+              </xs:complexType>
+          </xs:element>
+      </xs:sequence>
+      <xs:attribute name="site" type="xs:string" use="required">
+          <xs:annotation>
+              <xs:documentation>
+                  Name of the remote site where this cache backups data.
+              </xs:documentation>
+          </xs:annotation>
+      </xs:attribute>
+      <xs:attribute name="strategy" use="optional">
+          <xs:annotation>
+              <xs:documentation>
+                  The strategy used for backing up data: "SYNC" or "ASYNC". Defaults to "ASYNC"
+              </xs:documentation>
+          </xs:annotation>
+          <xs:simpleType>
+              <xs:restriction base="xs:string">
+                  <xs:enumeration value="SYNC"/>
+                  <xs:enumeration value="ASYNC"/>
+              </xs:restriction>
+          </xs:simpleType>
+      </xs:attribute>
+      <xs:attribute name="backupFailurePolicy" use="optional">
+          <xs:annotation>
+              <xs:documentation>
+                  Decides what the system would do in case of failure during backup. Defaults to
+                  "FAIL"
+              </xs:documentation>
+          </xs:annotation>
+          <xs:simpleType>
+              <xs:restriction base="xs:string">
+                  <xs:enumeration value="IGNORE"/>
+                  <xs:enumeration value="WARN"/>
+                  <xs:enumeration value="FAIL"/>
+                  <xs:enumeration value="CUSTOM"/>
+              </xs:restriction>
+          </xs:simpleType>
+      </xs:attribute>
+      <xs:attribute name="timeout" use="optional" type="xs:long">
+          <xs:annotation>
+              <xs:documentation>
+                  The timeout(millis) to be used when backing up data remotely. Defaults to 10
+                  secs.
+              </xs:documentation>
+          </xs:annotation>
+      </xs:attribute>
+      <xs:attribute name="failurePolicyClass" use="optional" type="xs:string">
+          <xs:annotation>
+              <xs:documentation>
+                  If the 'backupFailurePolicy' is set to 'CUSTOM' then this attribute is
+                  required and should
+                  contain the fully qualified name of a class implementing
+                  org.infinispan.xsite.CustomFailurePolicy.
+              </xs:documentation>
+          </xs:annotation>
+      </xs:attribute>
   </xs:complexType>
 
   <xs:complexType name="sites">
