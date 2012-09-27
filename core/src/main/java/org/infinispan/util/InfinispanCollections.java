@@ -26,9 +26,11 @@ import java.util.AbstractSet;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.NoSuchElementException;
+import java.util.Set;
 
 import static java.util.Collections.singletonMap;
 import static java.util.Collections.unmodifiableMap;
@@ -165,4 +167,20 @@ public class InfinispanCollections {
          return unmodifiableMap(map);
       }
    }
+
+   /**
+    * Returns the elements that are present in s1 but which are not present
+    * in s2, without changing the contents of neither s1, nor s2.
+    *
+    * @param s1 first set
+    * @param s2 second set
+    * @param <E> type of objects in Set
+    * @return the elements in s1 that are not in s2
+    */
+   public static <E> Set<E> difference(Set<E> s1, Set<E> s2) {
+      Set<E> copy1 = new HashSet<E>(s1);
+      copy1.removeAll(new HashSet<E>(s2));
+      return copy1;
+   }
+
 }

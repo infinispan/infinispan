@@ -443,18 +443,20 @@ public class MapStressTest {
       public double getOpsPerSec(String opName) {
          OpStats s = statsMap.get(opName);
          if (s == null) return 0;
-         return s.opCount * 1000. / s.runningTime;
+         return s.opCount * 1000. / s.runningTime * s.threadCount;
       }
 
       public double getTotalOpsPerSec() {
          long totalOpCount = 0;
          long totalRunningTime = 0;
+         long totalThreadCount = 0;
          for (Map.Entry<String, OpStats> e : statsMap.entrySet()) {
             OpStats s = e.getValue();
             totalOpCount += s.opCount;
-            totalRunningTime = s.runningTime;
+            totalRunningTime += s.runningTime;
+            totalThreadCount += s.threadCount;
          }
-         return totalOpCount * 1000. / totalRunningTime;
+         return totalOpCount * 1000. / totalRunningTime * totalThreadCount;
       }
 
       public double getHitRatio(String opName) {

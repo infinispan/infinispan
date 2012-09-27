@@ -32,7 +32,6 @@ import org.infinispan.configuration.cache.StoreConfiguration;
 import org.infinispan.container.EntryFactory;
 import org.infinispan.container.entries.CacheEntry;
 import org.infinispan.container.entries.InternalCacheEntry;
-import org.infinispan.container.entries.InternalNullEntry;
 import org.infinispan.container.entries.MVCCEntry;
 import org.infinispan.context.Flag;
 import org.infinispan.context.InvocationContext;
@@ -174,9 +173,6 @@ public class CacheLoaderInterceptor extends JmxStatsCommandInterceptor {
          } else {
             return false;
          }
-      } else if (e instanceof InternalNullEntry) {
-         ctx.putLookedUpEntry(key, null);
-         return false;
       } else {
          return true;
       }
