@@ -191,15 +191,14 @@ public class BackupReceiver {
       }
 
       private void replayModificationsInTransaction(PrepareCommand command, boolean onePhaseCommit) throws Throwable {
-         
+                   
          TransactionManager tm = txManager();
          LocalTransaction localTx = null;
                   
          try {
              
-            tm.begin();             
+            tm.begin();
             
-            // Replay the modifications.  Any exception will cause a rollback of the transaction.
             replayModifications(command);
          
             Transaction tx = tm.getTransaction();
@@ -208,41 +207,27 @@ public class BackupReceiver {
                throw new IllegalStateException( "Local tx not found but present in the tx table!  Tx: " + tx );
                
             localTx.setFromRemoteSite(true);
-         }
-         
-         catch( Exception e ) {
+            if (onePhaseCommit) {
+               log.tracef("Committing remotely originated tx %s as it is 1PC", command.getGlobalTransaction());
+               tm.commit();               
+            }
+         } catch( Exception e ) {
             
-            tm.setRollbackOnly();
-            throw e;
-             
-         } finally {
-          
-            int status = -1;
-            try {
-               status = tm.getStatus();
-            } catch (Exception e) {            
-               log.tracef("Error getting status on tx %s", command.getGlobalTransaction() );
-            }
-                                           
-            if (status == Status.STATUS_ACTIVE) {
-                       
-               if (onePhaseCommit) {             
-                  log.tracef("Committing remotely originated tx %s as it is 1PC", command.getGlobalTransaction());
-                  tm.commit();
-               }
-               else {
-                  remote2localTx.put(command.getGlobalTransaction(), localTx.getGlobalTransaction());
-               }
-              
-               tm.suspend();  
-               
-            } else {              
+            if (onePhaseCommit) {               
                log.tracef("Rolling back remotely originated tx %s", command.getGlobalTransaction());          
-               tm.rollback();                               
+               tm.rollback();                                              
             }
+            
+            throw e;             
+         } finally {
+
+            if( !onePhaseCommit ) {
+               remote2localTx.put(command.getGlobalTransaction(), localTx.getGlobalTransaction());
+            }
+              
+            tm.suspend();                
          }
       }
-
 
       private TransactionManager txManager() {
          return backupCache.getAdvancedCache().getTransactionManager();
