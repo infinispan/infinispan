@@ -177,7 +177,7 @@ public class BackupSenderImpl implements BackupSender {
       SitesConfiguration sites = config.sites();
       for (BackupConfiguration bc : sites.backups()) {
          if (bc.site().equals(localSiteName)) {
-            log.cacheBackupsDataToSameSite(localSiteName);
+            //log.cacheBackupsDataToSameSite(localSiteName);
             continue;
          }
          boolean isSync = bc.strategy() == BackupConfiguration.BackupStrategy.SYNC;
