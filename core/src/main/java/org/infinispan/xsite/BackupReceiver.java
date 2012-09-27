@@ -44,6 +44,7 @@ import org.infinispan.transaction.xa.GlobalTransaction;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
+import javax.transaction.Status;
 import javax.transaction.TransactionManager;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
@@ -156,7 +157,7 @@ public class BackupReceiver {
          if (!isTransactional()) {
             log.cannotRespondToRollback(command.getGlobalTransaction(), backupCache.getName());
          } else {
-            log.tracef("Rolling back remote transaction %s", command.getGlobalTransaction());
+            log.tracef("Committing remote transaction %s", command.getGlobalTransaction());
             completeTransaction(command.getGlobalTransaction(), true);
          }
          return null;
@@ -164,6 +165,7 @@ public class BackupReceiver {
 
       @Override
       public Object visitRollbackCommand(TxInvocationContext ctx, RollbackCommand command) throws Throwable {
+         log.tracef("Rolling back remote transaction %s", command.getGlobalTransaction());
          completeTransaction(command.getGlobalTransaction(), false);
          return null;
       }
@@ -188,18 +190,39 @@ public class BackupReceiver {
       }
 
       private void replayModificationsInTransaction(PrepareCommand command, boolean onePhaseCommit) throws Throwable {
+                   
          TransactionManager tm = txManager();
+                      
          tm.begin();
-         replayModifications(command);
-         LocalTransaction localTx = txTable().getLocalTransaction(tm.getTransaction());
-         localTx.setFromRemoteSite(true);
-         if (onePhaseCommit) {
-            log.tracef("Committing remotely originated tx %s as it is 1PC", command.getGlobalTransaction());
-            tm.commit();
-         } else {
-            remote2localTx.put(command.getGlobalTransaction(), localTx.getGlobalTransaction());
+         
+         try {
+             replayModifications(command);
          }
-         tm.suspend();
+         finally {
+         
+             int status = -1;
+             
+             try {
+                 status = tm.getStatus();
+             } catch (Exception e) {}         
+             
+             LocalTransaction localTx = txTable().getLocalTransaction(tm.getTransaction());
+             localTx.setFromRemoteSite(true);
+             if (onePhaseCommit) {
+                 if( status == Status.STATUS_ACTIVE ) {
+                     log.tracef("Committing remotely originated tx %s as it is 1PC", command.getGlobalTransaction());
+                     tm.commit();
+                 }
+                 else {
+                     log.tracef("Rolling back remotely originated tx %s as it is 1PC", command.getGlobalTransaction());
+                     tm.rollback();                     
+                 }
+             } else {
+                 remote2localTx.put(command.getGlobalTransaction(), localTx.getGlobalTransaction());
+             }
+                  
+             tm.suspend();
+         }
       }
 
       private TransactionManager txManager() {
