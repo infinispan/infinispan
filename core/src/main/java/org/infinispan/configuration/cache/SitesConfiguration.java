@@ -19,7 +19,11 @@
 
 package org.infinispan.configuration.cache;
 
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 /**
  * @author Mircea.Markus@jboss.com
@@ -27,16 +31,28 @@ import java.util.List;
  */
 public class SitesConfiguration {
 
-   private final List<BackupConfiguration> backups;
+   private final List<BackupConfiguration> allBackups;
+   private final List<BackupConfiguration> inUseBackups;
 
    private final BackupForConfiguration backupFor;
 
    private final boolean disableBackups;
 
-   public SitesConfiguration(List<BackupConfiguration> backups, BackupForConfiguration backupFor, boolean disableBackups) {
-      this.backups = backups;
+   private final Set<String> inUseBackupSites;
+
+   public SitesConfiguration(List<BackupConfiguration> backups, BackupForConfiguration backupFor, boolean disableBackups,
+                             Set<String> backupSites) {
+      this.allBackups = Collections.unmodifiableList(new ArrayList<BackupConfiguration>(backups));
       this.backupFor = backupFor;
       this.disableBackups = disableBackups;
+      this.inUseBackupSites = Collections.unmodifiableSet(new HashSet<String>(backupSites));
+      ArrayList<BackupConfiguration> filtered = new ArrayList<BackupConfiguration>(backupSites.size());
+      for (BackupConfiguration backupConfiguration : backups) {
+         if (backupSites.contains(backupConfiguration.site())){
+            filtered.add(backupConfiguration);
+         }
+      }
+      this.inUseBackups = Collections.unmodifiableList(filtered);
    }
 
    /**
@@ -48,10 +64,23 @@ public class SitesConfiguration {
    }
 
    /**
-    * Returns the list of sites where this cache backups its data.
+    * Returns the list of all sites where this cache might back up its data. The list of actual sites is defined by
+    * {@link #inUseBackupSites}.
     */
-   public List<BackupConfiguration> backups() {
-      return backups;
+   public List<BackupConfiguration> allBackups() {
+      return allBackups;
+   }
+
+
+   /**
+    * Returns the list of {@link BackupConfiguration} corresponding to the {@link #inUseBackupSites}.
+    */
+   public List<BackupConfiguration> inUseBackups() {
+      return inUseBackups;
+   }
+
+   public Set<String> inUseBackupSites() {
+      return inUseBackupSites;
    }
 
    /**
@@ -62,7 +91,7 @@ public class SitesConfiguration {
    }
 
    public BackupFailurePolicy getFailurePolicy(String siteName) {
-      for (BackupConfiguration bc : backups) {
+      for (BackupConfiguration bc : allBackups) {
          if (bc.site().equals(siteName)) {
             return bc.backupFailurePolicy();
          }
@@ -79,25 +108,28 @@ public class SitesConfiguration {
 
       if (disableBackups != that.disableBackups) return false;
       if (backupFor != null ? !backupFor.equals(that.backupFor) : that.backupFor != null) return false;
-      if (backups != null ? !backups.equals(that.backups) : that.backups != null) return false;
+      if (inUseBackupSites != null ? !inUseBackupSites.equals(that.inUseBackupSites) : that.inUseBackupSites != null) return false;
+      if (allBackups != null ? !allBackups.equals(that.allBackups) : that.allBackups != null) return false;
 
       return true;
    }
 
    @Override
    public int hashCode() {
-      int result = backups != null ? backups.hashCode() : 0;
+      int result = allBackups != null ? allBackups.hashCode() : 0;
       result = 31 * result + (backupFor != null ? backupFor.hashCode() : 0);
       result = 31 * result + (disableBackups ? 1 : 0);
+      result = 31 * result + (inUseBackupSites != null ? inUseBackupSites.hashCode() : 0);
       return result;
    }
 
    @Override
    public String toString() {
       return "SitesConfiguration{" +
-            "backups=" + backups +
+            "allBackups=" + allBackups +
             ", backupFor=" + backupFor +
             ", disableBackups=" + disableBackups +
+            ", inUseBackupSites=" + inUseBackupSites +
             '}';
    }
 }

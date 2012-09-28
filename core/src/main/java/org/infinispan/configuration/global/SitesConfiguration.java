@@ -19,19 +19,15 @@
 
 package org.infinispan.configuration.global;
 
-import java.util.List;
-
 /**
  * @author Mircea.Markus@jboss.com
  * @since 5.2
  */
 public class SitesConfiguration {
    private final String localSite;
-   private final List<SiteConfiguration> siteConfigurations;
 
-   SitesConfiguration(String localSite, List<SiteConfiguration> siteConfigurations) {
+   SitesConfiguration(String localSite) {
       this.localSite = localSite;
-      this.siteConfigurations = siteConfigurations;
    }
 
    /**
@@ -39,13 +35,6 @@ public class SitesConfiguration {
     */
    public final String localSite() {
       return localSite;
-   }
-
-   /**
-    * Returns a list of all the sites where caches can backup data.
-    */
-   public final List<SiteConfiguration> siteConfigurations() {
-      return siteConfigurations;
    }
 
    @Override
@@ -56,24 +45,19 @@ public class SitesConfiguration {
       SitesConfiguration that = (SitesConfiguration) o;
 
       if (localSite != null ? !localSite.equals(that.localSite) : that.localSite != null) return false;
-      if (siteConfigurations != null ? !siteConfigurations.equals(that.siteConfigurations) : that.siteConfigurations != null)
-         return false;
 
       return true;
    }
 
    @Override
    public int hashCode() {
-      int result = localSite != null ? localSite.hashCode() : 0;
-      result = 31 * result + (siteConfigurations != null ? siteConfigurations.hashCode() : 0);
-      return result;
+      return localSite != null ? localSite.hashCode() : 0;
    }
 
    @Override
    public String toString() {
       return "SitesConfiguration{" +
             "localSite='" + localSite + '\'' +
-            ", siteConfigurations=" + siteConfigurations +
             '}';
    }
 }

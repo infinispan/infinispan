@@ -46,27 +46,25 @@ public abstract class AbstractTwoSitesTest extends AbstractXSiteTest {
 
       GlobalConfigurationBuilder lonGc = GlobalConfigurationBuilder.defaultClusteredBuilder();
       lonGc
-            .sites().addSite().name("LON")
-            .sites().addSite().name("NYC")
             .sites().localSite("LON");
       ConfigurationBuilder lon = getLonActiveConfig();
       lon.sites().addBackup()
             .site("NYC")
             .backupFailurePolicy(lonBackupFailurePolicy)
             .strategy(lonBackupStrategy)
-            .failurePolicyClass(lonCustomFailurePolicyClass);
+            .failurePolicyClass(lonCustomFailurePolicyClass)
+            .sites().addInUseBackupSite("NYC");
       ConfigurationBuilder nycBackup = getDefaultClusteredCacheConfig(CacheMode.DIST_SYNC, false);
       nycBackup.sites().backupFor().remoteSite("NYC").defaultRemoteCache();
 
       GlobalConfigurationBuilder nycGc = GlobalConfigurationBuilder.defaultClusteredBuilder();
       nycGc
-            .sites().addSite().name("LON")
-            .sites().addSite().name("NYC")
             .sites().localSite("NYC");
       ConfigurationBuilder nyc = getNycActiveConfig();
       nyc.sites().addBackup()
             .site("LON")
-            .strategy(BackupConfiguration.BackupStrategy.SYNC);
+            .strategy(BackupConfiguration.BackupStrategy.SYNC)
+            .sites().addInUseBackupSite("LON");
       ConfigurationBuilder lonBackup = getDefaultClusteredCacheConfig(CacheMode.DIST_SYNC, isLonBackupTransactional);
       lonBackup.sites().backupFor().remoteSite("LON").defaultRemoteCache();
 

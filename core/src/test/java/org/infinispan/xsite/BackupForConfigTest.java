@@ -44,10 +44,7 @@ public class BackupForConfigTest extends SingleCacheManagerTest {
    @Override
    protected EmbeddedCacheManager createCacheManager() throws Exception {
       GlobalConfigurationBuilder lonGc = GlobalConfigurationBuilder.defaultClusteredBuilder();
-      lonGc
-            .sites().addSite().name("LON")
-            .sites().addSite().name("NYC")
-            .sites().localSite("LON");
+      lonGc.sites().localSite("LON");
       ConfigurationBuilder lon = getDefaultClusteredCacheConfig(CacheMode.LOCAL, false);
       lon.sites().addBackup()
             .site("NYC")

@@ -48,7 +48,8 @@ public class XSiteFileParsing2Test extends SingleCacheManagerTest {
 
    public void testDefaultCache() {
       Configuration dcc = cacheManager.getDefaultCacheConfiguration();
-      assertEquals(dcc.sites().backups().size(), 2);
+      assertEquals(dcc.sites().allBackups().size(), 3);
+      assertEquals(dcc.sites().inUseBackups().size(), 2);
       testDefault(dcc);
    }
 
@@ -59,25 +60,34 @@ public class XSiteFileParsing2Test extends SingleCacheManagerTest {
 
    public void testNoBackupFor() {
       Configuration dcc = cacheManager.getCacheConfiguration("noBackupFor");
-      assertEquals(1, dcc.sites().backups().size());
+      assertEquals(1, dcc.sites().allBackups().size());
 
-      assertTrue(dcc.sites().backups().contains(new BackupConfiguration("NYC", BackupConfiguration.BackupStrategy.SYNC,
+      assertTrue(dcc.sites().allBackups().contains(new BackupConfiguration("NYC", BackupConfiguration.BackupStrategy.SYNC,
                                                                         12003, BackupFailurePolicy.WARN, null)));
       assertNull(dcc.sites().backupFor().remoteSite());
       assertNull(dcc.sites().backupFor().remoteCache());
    }
+
    public void testNoBackupFor2() {
       Configuration dcc = cacheManager.getCacheConfiguration("noBackupFor2");
-      assertEquals(0, dcc.sites().backups().size());
+      assertEquals(0, dcc.sites().allBackups().size());
       assertNull(dcc.sites().backupFor().remoteSite());
       assertNull(dcc.sites().backupFor().remoteCache());
    }
 
    private void testDefault(Configuration dcc) {
-      assertTrue(dcc.sites().backups().contains(new BackupConfiguration("NYC", BackupConfiguration.BackupStrategy.SYNC,
-                                                                        12003l, BackupFailurePolicy.IGNORE, null)));
-      assertTrue(dcc.sites().backups().contains(new BackupConfiguration("SFO", BackupConfiguration.BackupStrategy.ASYNC,
-                                                                        10000l, BackupFailurePolicy.WARN, null)));
+      BackupConfiguration nyc = new BackupConfiguration("NYC", BackupConfiguration.BackupStrategy.SYNC,
+                                                        12003l, BackupFailurePolicy.IGNORE, null);
+      BackupConfiguration sfo = new BackupConfiguration("SFO", BackupConfiguration.BackupStrategy.ASYNC,
+                                                        10000l, BackupFailurePolicy.WARN, null);
+      BackupConfiguration lon = new BackupConfiguration("LON", BackupConfiguration.BackupStrategy.SYNC,
+                                                        10000l, BackupFailurePolicy.WARN, null);
+      assertTrue(dcc.sites().allBackups().contains(nyc));
+      assertTrue(dcc.sites().allBackups().contains(sfo));
+      assertTrue(dcc.sites().allBackups().contains(lon));
+      assertTrue(dcc.sites().inUseBackups().contains(nyc));
+      assertTrue(dcc.sites().inUseBackups().contains(sfo));
+      assertTrue(!dcc.sites().inUseBackups().contains(lon));
       assertEquals("someCache", dcc.sites().backupFor().remoteCache());
       assertEquals("SFO", dcc.sites().backupFor().remoteSite());
    }
