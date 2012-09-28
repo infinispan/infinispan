@@ -489,6 +489,14 @@
                               </xs:complexType>
                           </xs:element>
                       </xs:sequence>
+                      <xs:attribute name="backupSites" type="xs:string">
+                          <xs:annotation>
+                              <xs:documentation>
+                                  Defines the list of comma-separated site names, from the list of sites names defined within 'backups' element,
+                                  to which this cache backups its data.
+                              </xs:documentation>
+                          </xs:annotation>
+                      </xs:attribute>
                   </xs:complexType>
               </xs:element>
               <xs:element name="backupFor" minOccurs="0" maxOccurs="1">
@@ -1170,28 +1178,6 @@
 
   <xs:complexType name="sites">
     <xs:sequence minOccurs="0" maxOccurs="unbounded">
-      <xs:element name="site" minOccurs="0">
-        <xs:annotation>
-          <xs:documentation>
-            Add the list of sites where data to be used as backup by caches. Must match the site names as defined at
-            jgroups level.
-          </xs:documentation>
-        </xs:annotation>
-        <xs:complexType>
-          <xs:annotation>
-            <xs:documentation>
-              Defines a site which can be used for backing up the data.
-            </xs:documentation>
-          </xs:annotation>
-          <xs:attribute type="xs:string" name="name" use="required">
-            <xs:annotation>
-              <xs:documentation>
-                The actual name used for uniquely identify a site. Must match the site name as defined within jgroups.
-              </xs:documentation>
-            </xs:annotation>
-          </xs:attribute>
-        </xs:complexType>
-      </xs:element>
     </xs:sequence>
     <xs:attribute name="local" type="xs:string" use="required">
       <xs:annotation>

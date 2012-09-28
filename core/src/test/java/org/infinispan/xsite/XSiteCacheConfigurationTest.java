@@ -59,12 +59,12 @@ public class XSiteCacheConfigurationTest {
       assertEquals(backup2.strategy(), BackupConfiguration.BackupStrategy.ASYNC);
 
       Configuration b = cb.build();
-      assertEquals(b.sites().backups().size(), 3);
-      BackupConfiguration b0 = b.sites().backups().get(0);
+      assertEquals(b.sites().allBackups().size(), 3);
+      BackupConfiguration b0 = b.sites().allBackups().get(0);
       assertEquals(b0.site(), "LON");
       assertEquals(b0.strategy(), BackupConfiguration.BackupStrategy.SYNC);
 
-      BackupConfiguration b1 = b.sites().backups().get(1);
+      BackupConfiguration b1 = b.sites().allBackups().get(1);
       assertEquals(b1.site(), "SFO");
       assertEquals(b1.strategy(), BackupConfiguration.BackupStrategy.ASYNC);
 

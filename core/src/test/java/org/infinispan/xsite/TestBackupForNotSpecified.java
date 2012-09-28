@@ -40,26 +40,22 @@ public class TestBackupForNotSpecified extends AbstractXSiteTest {
    protected void createSites() {
 
       GlobalConfigurationBuilder lonGc = GlobalConfigurationBuilder.defaultClusteredBuilder();
-      lonGc
-            .sites().addSite().name("LON")
-            .sites().addSite().name("NYC")
-            .sites().localSite("LON");
+      lonGc.sites().localSite("LON");
       ConfigurationBuilder lonDefault = getDefaultClusteredCacheConfig(CacheMode.DIST_SYNC, true);
       lonDefault.sites().addBackup()
             .site("NYC")
             .backupFailurePolicy(BackupFailurePolicy.FAIL)
-            .strategy(BackupConfiguration.BackupStrategy.SYNC);
+            .strategy(BackupConfiguration.BackupStrategy.SYNC)
+            .sites().addInUseBackupSite("NYC");
       ConfigurationBuilder someCache = getDefaultClusteredCacheConfig(CacheMode.DIST_SYNC, true);
 
       GlobalConfigurationBuilder nycGc = GlobalConfigurationBuilder.defaultClusteredBuilder();
-      nycGc
-            .sites().addSite().name("LON")
-            .sites().addSite().name("NYC")
-            .sites().localSite("NYC");
+      nycGc.sites().localSite("NYC");
       ConfigurationBuilder nycDefault = getDefaultClusteredCacheConfig(CacheMode.DIST_SYNC, true);
       nycDefault.sites().addBackup()
             .site("LON")
-            .strategy(BackupConfiguration.BackupStrategy.SYNC);
+            .strategy(BackupConfiguration.BackupStrategy.SYNC)
+            .sites().addInUseBackupSite("LON");
       ConfigurationBuilder someCacheBackup = getDefaultClusteredCacheConfig(CacheMode.DIST_SYNC, true);
       someCacheBackup.sites().backupFor().remoteCache("someCache").remoteSite("LON");
       someCacheBackup.sites().disableBackups(true);

@@ -31,7 +31,6 @@ import java.util.List;
 public class SitesConfigurationBuilder extends AbstractGlobalConfigurationBuilder<SitesConfiguration> {
 
    private String localSite;
-   private final List<SiteConfigurationBuilder> siteBuilders = new ArrayList<SiteConfigurationBuilder>(2);
 
    SitesConfigurationBuilder(GlobalConfigurationBuilder globalConfig) {
       super(globalConfig);
@@ -45,47 +44,17 @@ public class SitesConfigurationBuilder extends AbstractGlobalConfigurationBuilde
       return this;
    }
 
-   public SiteConfigurationBuilder addSite() {
-      SiteConfigurationBuilder siteBuilder = new SiteConfigurationBuilder(getGlobalConfig());
-      siteBuilders.add(siteBuilder);
-      return siteBuilder;
-   }
-
    @Override
    void validate() {
-      if (siteBuilders.isEmpty())
-         return;
-
-      if (localSite == null)
-         throw new ConfigurationException("'localSite' is required!");
-
-      boolean localSiteIsDefined = false;
-      for (SiteConfigurationBuilder scb : siteBuilders) {
-         scb.validate();
-         if (scb.isSameName(localSite)) {
-            localSiteIsDefined = true;
-         }
-      }
-      if (!localSiteIsDefined) {
-         throw new ConfigurationException("The name of the local site is not present " +
-                                                "between the defined sites!");
-      }
    }
 
    @Override
    SitesConfiguration create() {
-      List<SiteConfiguration> siteConfigurations = new ArrayList<SiteConfiguration>(siteBuilders.size());
-      for (SiteConfigurationBuilder scb : siteBuilders) {
-         siteConfigurations.add(scb.create());
-      }
-      return new SitesConfiguration(localSite, siteConfigurations);
+      return new SitesConfiguration(localSite);
    }
 
    @Override
    protected GlobalConfigurationChildBuilder read(SitesConfiguration template) {
-      for (SiteConfiguration siteConfiguration : template.siteConfigurations()) {
-         this.addSite().read(siteConfiguration);
-      }
       this.localSite = template.localSite();
       return this;
    }
@@ -94,7 +63,6 @@ public class SitesConfigurationBuilder extends AbstractGlobalConfigurationBuilde
    public String toString() {
       return "SitesConfigurationBuilder{" +
             "localSite='" + localSite + '\'' +
-            ", siteBuilders=" + siteBuilders +
             '}';
    }
 
@@ -106,7 +74,6 @@ public class SitesConfigurationBuilder extends AbstractGlobalConfigurationBuilde
       SitesConfigurationBuilder that = (SitesConfigurationBuilder) o;
 
       if (localSite != null ? !localSite.equals(that.localSite) : that.localSite != null) return false;
-      if (!siteBuilders.equals(that.siteBuilders)) return false;
 
       return true;
    }
@@ -114,7 +81,6 @@ public class SitesConfigurationBuilder extends AbstractGlobalConfigurationBuilde
    @Override
    public int hashCode() {
       int result = localSite != null ? localSite.hashCode() : 0;
-      result = 31 * result + siteBuilders.hashCode();
       return result;
    }
 }

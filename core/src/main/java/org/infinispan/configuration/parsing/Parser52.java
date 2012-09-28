@@ -27,6 +27,7 @@ import static org.infinispan.configuration.cache.CacheMode.REPL_ASYNC;
 import static org.infinispan.configuration.cache.CacheMode.REPL_SYNC;
 
 import java.util.Properties;
+import java.util.StringTokenizer;
 
 import javax.xml.stream.XMLStreamConstants;
 import javax.xml.stream.XMLStreamException;
@@ -241,20 +242,7 @@ public class Parser52 implements ConfigurationParser<ConfigurationBuilderHolder>
       ParseUtils.requireSingleAttribute(reader, "local");
       String value = replaceProperties(reader.getAttributeValue(0));
       gcb.sites().localSite(value);
-
-      while (reader.hasNext() && (reader.nextTag() != XMLStreamConstants.END_ELEMENT)) {
-         Element element = Element.forName(reader.getLocalName());
-         switch (element) {
-            case SITE:
-               ParseUtils.requireSingleAttribute(reader, Attribute.NAME.getLocalName());
-               value = replaceProperties(reader.getAttributeValue(0));
-               gcb.sites().addSite().name(value);
-               break;
-            default:
-               throw ParseUtils.unexpectedElement(reader);
-         }
-         ParseUtils.requireNoContent(reader);
-      }
+      ParseUtils.requireNoContent(reader);
    }
 
    private void parseLocalSites(final XMLExtendedStreamReader reader, final ConfigurationBuilderHolder holder) throws XMLStreamException {
@@ -267,10 +255,24 @@ public class Parser52 implements ConfigurationParser<ConfigurationBuilderHolder>
          Element element = Element.forName(reader.getLocalName());
          switch (element) {
             case BACKUPS:
-               ParseUtils.requireNoAttributes(reader);
                //if backups is present then remove any existing backups as they were added
                // by the default config.
                ccb.sites().backups().clear();
+               ccb.sites().inUseBackupSites().clear();
+               for (int i = 0; i < reader.getAttributeCount(); i++) {
+                  ParseUtils.requireNoNamespaceAttribute(reader, i);
+                  String value = replaceProperties(reader.getAttributeValue(i));
+                  Attribute attribute = Attribute.forName(reader.getAttributeLocalName(i));
+                  switch (attribute) {
+                     case BACKUP_SITES:
+                        for (String s : value.split(",")) {
+                           ccb.sites().addInUseBackupSite(s);
+                        }
+                        break;
+                     default:
+                        throw ParseUtils.unexpectedElement(reader);
+                  }
+               }
                parseBackups(reader, ccb);
                break;
             case BACKUP_FOR:
@@ -299,6 +301,7 @@ public class Parser52 implements ConfigurationParser<ConfigurationBuilderHolder>
       }
       if (!isEmptyTag) {
          ccb.sites().backups().clear();
+         ccb.sites().inUseBackupSites().clear();
          ccb.sites().backupFor().reset();
       }
 
