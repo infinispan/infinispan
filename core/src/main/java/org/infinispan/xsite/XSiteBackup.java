@@ -46,4 +46,8 @@ public class XSiteBackup {
    public long getTimeout() {
       return timeout;
    }
+
+   public String toString() {
+      return siteName + " (" + (sync? "sync" : "async") + ", timeout=" + timeout + ")";
+   }
 }

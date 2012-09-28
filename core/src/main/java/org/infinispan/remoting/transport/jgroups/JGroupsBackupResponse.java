@@ -77,7 +77,7 @@ public class JGroupsBackupResponse implements BackupResponse {
          } catch (TimeoutException te) {
             errors.put(siteName, newTimeoutException(entry, entry.getKey().getTimeout()));
          } catch (ExecutionException ue) {
-            log.tracef(ue.getCause(), "Communication error with site %s", siteName);
+            log.tracef("Communication error with site %s: %s", siteName, ue.getCause());
             errors.put(siteName, ue.getCause());
          } finally {
             elapsedTime += NANOSECONDS.toMillis(System.nanoTime() - startNanos);
