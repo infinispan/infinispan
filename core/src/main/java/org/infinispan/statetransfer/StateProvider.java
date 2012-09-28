@@ -70,7 +70,7 @@ public interface StateProvider {
     * @param topologyId
     * @param segments
     */
-   void startOutboundTransfer(Address destination, int topologyId, Set<Integer> segments);
+   void startOutboundTransfer(Address destination, int topologyId, Set<Integer> segments) throws InterruptedException;
 
    /**
     * Cancel sending of cache entries that belong to the given set of segments. This is invoked in response to a

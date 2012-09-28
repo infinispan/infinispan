@@ -27,33 +27,44 @@ import org.infinispan.factories.scopes.Scope;
 import org.infinispan.factories.scopes.Scopes;
 
 /**
- * // TODO: Document this
+ * We use the state transfer lock for three different things:
+ * <ol>
+ *    <li>We don't want to execute a command until we have the transaction table for that topology id.
+ *    For this purpose it works like a latch, commands wait on the latch and state transfer opens the latch
+ *    when it has received all the transaction data for that topology id.</li>
+ *    <li>Do not write anything to the data container in a segment that we have already removed.
+ *    For this purpose, ownership checks and data container writes acquire a shared lock, and
+ *    the segment removal acquires an exclusive lock.</li>
+ *    <li>We want to handle state requests only after we have installed the same topology id, because
+ *    this guarantees that we also have installed the corresponding view id and we have all the joiners
+ *    in our JGroups view. Here it works like a latch as well, state requests wait on the latch and state
+ *    transfer opens the latch when it has received all the transaction data for that topology id.</li>
+ * </ol>
  *
  * @author anistor@redhat.com
+ * @author Dan Berindei
  * @since 5.2
  */
 @Scope(Scopes.NAMED_CACHE)
 public interface StateTransferLock {
 
-   void transactionsSharedLock();
+   // topology change lock
+   void acquireExclusiveTopologyLock();
 
-   void transactionsSharedUnlock();
+   void releaseExclusiveTopologyLock();
 
-   void transactionsExclusiveLock();
+   void acquireSharedTopologyLock();
 
-   void transactionsExclusiveUnlock();
+   void releaseSharedTopologyLock();
 
-   void commandsExclusiveLock();
+   // transaction data latch
+   void transactionDataReceived(int topologyId);
 
-   void commandsExclusiveUnlock();
+   void waitForTransactionData(int expectedTopologyId) throws InterruptedException;
 
-   void commandsSharedLock();
-
-   void commandsSharedUnlock();
-
-   int getTopologyId();
-
-   void setTopologyId(int topologyId);
+   // topology installation latch
+   // TODO move this to Cluster/LocalTopologyManagerImpl and don't start requesting state until every node has the jgroups view with the local node
+   void topologyInstalled(int topologyId);
 
    void waitForTopology(int expectedTopologyId) throws InterruptedException;
 }

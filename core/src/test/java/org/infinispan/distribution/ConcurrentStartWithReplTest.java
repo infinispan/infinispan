@@ -82,8 +82,9 @@ public class ConcurrentStartWithReplTest extends AbstractInfinispanTest {
 
    }
 
-   // ****** This will probably always be an unsupported sequence of startup, in a single thread
-//   public void testSequence2() throws ExecutionException, InterruptedException {
+   @Test(timeOut = 60000)
+   public void testSequence2() throws ExecutionException, InterruptedException {
+      TestCacheManagerFactory.backgroundTestStarted(this);
       /*
 
       Sequence 2:
@@ -97,8 +98,8 @@ public class ConcurrentStartWithReplTest extends AbstractInfinispanTest {
 
        */
 
-//      doTest(false, false);
-//   }
+      doTest(false, false);
+   }
 
    @Test(timeOut = 60000)
    public void testSequence3() throws ExecutionException, InterruptedException {

@@ -48,13 +48,12 @@ import org.testng.annotations.Test;
 @CleanupAfterMethod
 public class StaleLocksWithCommitDuringStateTransferTest extends MultipleCacheManagersTest {
 
-   public static final int BLOCKING_CACHE_VIEW_ID = 1000;
    Cache<MagicKey, String> c1, c2;
 
    @Override
    protected void createCacheManagers() throws Throwable {
       Configuration cfg = TestCacheManagerFactory.getDefaultConfiguration(true, Configuration.CacheMode.DIST_SYNC);
-      cfg.setLockAcquisitionTimeout(100);
+      cfg.setSyncReplTimeout(100);
       cfg.setCacheStopTimeout(100);
       EmbeddedCacheManager cm1 = TestCacheManagerFactory.createClusteredCacheManager(cfg);
       EmbeddedCacheManager cm2 = TestCacheManagerFactory.createClusteredCacheManager(cfg);
@@ -107,15 +106,19 @@ public class StaleLocksWithCommitDuringStateTransferTest extends MultipleCacheMa
                // Before calling commit we block transactions on one of the nodes to simulate a state transfer
                final StateTransferLock blockFirst = TestingUtil.extractComponent(failOnOriginator ? c1 : c2, StateTransferLock.class);
                final StateTransferLock blockSecond = TestingUtil.extractComponent(failOnOriginator ? c2 : c1, StateTransferLock.class);
-               blockFirst.transactionsExclusiveLock();
 
-               commitLatch.countDown();
+               try {
+                  blockFirst.acquireExclusiveTopologyLock();
+                  blockSecond.acquireExclusiveTopologyLock();
 
-               // should be much larger than the lock acquisition timeout
-               Thread.sleep(1000);
-               blockSecond.transactionsExclusiveLock();
-               blockFirst.transactionsExclusiveUnlock();
-               blockSecond.transactionsExclusiveUnlock();
+                  commitLatch.countDown();
+
+                  // should be much larger than the lock acquisition timeout
+                  Thread.sleep(1000);
+               } finally {
+                  blockSecond.releaseExclusiveTopologyLock();
+                  blockFirst.releaseExclusiveTopologyLock();
+               }
             } catch (Throwable t) {
                log.errorf(t, "Error blocking/unblocking transactions");
             }
