@@ -19,20 +19,10 @@
 
 package org.infinispan.topology;
 
-import java.util.List;
-import java.util.concurrent.ConcurrentMap;
-import java.util.concurrent.ExecutorService;
-
 import org.infinispan.distribution.ch.ConsistentHash;
-import org.infinispan.factories.annotations.ComponentName;
 import org.infinispan.factories.annotations.Inject;
-import org.infinispan.remoting.transport.Address;
-import org.infinispan.remoting.transport.Transport;
-import org.infinispan.util.concurrent.ConcurrentMapFactory;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
-
-import static org.infinispan.factories.KnownComponentNames.ASYNC_TRANSPORT_EXECUTOR;
 
 /**
  * Default implementation of {@link RebalancePolicy}

@@ -45,7 +45,8 @@ class RebalanceConfirmationCollector {
       this.cacheName = cacheName;
       this.topologyId = topologyId;
       this.confirmationsNeeded = new HashSet<Address>(members);
-      log.tracef("Initialized rebalance confirmation collector %d, initial list is %s", topologyId, confirmationsNeeded);
+      log.tracef("Initialized rebalance confirmation collector %d@%s, initial list is %s",
+            topologyId, cacheName, confirmationsNeeded);
    }
 
    /**
@@ -60,13 +61,13 @@ class RebalanceConfirmationCollector {
 
          boolean removed = confirmationsNeeded.remove(node);
          if (!removed) {
-            log.tracef("Rebalance confirmation collector %d ignored confirmation for %s, which is not a member",
-                  topologyId, node);
+            log.tracef("Rebalance confirmation collector %d@%s ignored confirmation for %s, which is not a member",
+                  topologyId, cacheName, node);
             return false;
          }
 
-         log.tracef("Rebalance confirmation collector %d received confirmation for %s, remaining list is %s",
-               topologyId, node, confirmationsNeeded);
+         log.tracef("Rebalance confirmation collector %d@%s received confirmation for %s, remaining list is %s",
+               topologyId, cacheName, node, confirmationsNeeded);
          return confirmationsNeeded.isEmpty();
       }
    }
@@ -84,7 +85,8 @@ class RebalanceConfirmationCollector {
 
    @Override
    public String toString() {
-      return "RebalanceInfo{" +
+      return "RebalanceConfirmationCollector{" +
+            "cacheName=" + cacheName +
             "topologyId=" + topologyId +
             ", confirmationsNeeded=" + confirmationsNeeded +
             '}';

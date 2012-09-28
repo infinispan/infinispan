@@ -19,11 +19,8 @@
 
 package org.infinispan.topology;
 
-import java.util.List;
-
 import org.infinispan.factories.scopes.Scope;
 import org.infinispan.factories.scopes.Scopes;
-import org.infinispan.remoting.transport.Address;
 
 /**
  * Processes cache membership changes or any other events and decides when to
