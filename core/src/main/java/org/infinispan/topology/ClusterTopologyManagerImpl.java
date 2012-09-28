@@ -296,15 +296,30 @@ public class ClusterTopologyManagerImpl implements ClusterTopologyManager {
          }
       }
 
+      // Make sure the topology id is higher than any topology id we had before in the cluster
+      unionTopologyId += 2;
+      CacheTopology cacheTopology = new CacheTopology(unionTopologyId, currentCHUnion, pendingCHUnion);
+      boolean wasRebalanceInProgress = pendingCHUnion != null;
+
       synchronized (cacheStatus) {
-         CacheTopology cacheTopology = new CacheTopology(unionTopologyId, currentCHUnion, pendingCHUnion);
          // TODO Deal with members had joined in a partition, but which did not start receiving data yet
          // (i.e. they weren't in the current or in the pending CH)
          cacheStatus.setMembers(cacheTopology.getMembers());
-         cacheStatus.updateCacheTopology(cacheTopology);
+         if (wasRebalanceInProgress) {
+            cacheStatus.startRebalance(cacheTopology);
+         } else {
+            cacheStatus.updateCacheTopology(cacheTopology);
+         }
       }
 
       broadcastConsistentHashUpdate(cacheName, cacheStatus);
+
+      if (wasRebalanceInProgress) {
+         broadcastRebalanceStart(cacheName, cacheStatus);
+      } else {
+         // Trigger another rebalance in case the CH is not balanced (even though there was no rebalance in progress)
+         triggerRebalance(cacheName);
+      }
    }
 
    private void broadcastConsistentHashUpdate(String cacheName, ClusterCacheStatus cacheStatus) throws Exception {
@@ -342,10 +357,17 @@ public class ClusterTopologyManagerImpl implements ClusterTopologyManager {
          if (currentCH == null) {
             // There was one node in the cache before, and it left after the rebalance was triggered
             // but before the rebalance actually started.
+            log.tracef("Ignoring request to rebalance cache %s, it doesn't have a consistent hash", cacheName);
+            return;
+         }
+         if (!newMembers.containsAll(currentCH.getMembers())) {
+            newMembers.removeAll(currentCH.getMembers());
+            log.tracef("Ignoring request to rebalance cache %s, we have new leavers: %s", cacheName, newMembers);
             return;
          }
 
          ConsistentHashFactory chFactory = cacheStatus.getJoinInfo().getConsistentHashFactory();
+         // This update will only add the joiners to the CH, we have already checked that we don't have leavers
          ConsistentHash updatedMembersCH = chFactory.updateMembers(currentCH, newMembers);
          ConsistentHash balancedCH = chFactory.rebalance(updatedMembersCH);
          if (balancedCH.equals(currentCH)) {
@@ -389,17 +411,21 @@ public class ClusterTopologyManagerImpl implements ClusterTopologyManager {
       Map<Address, Object> statusResponses = executeOnClusterSync(command, getGlobalTimeout());
 
       HashMap<String, List<CacheTopology>> clusterCacheMap = new HashMap<String, List<CacheTopology>>();
-      for (Object o : statusResponses.values()) {
-         Map<String, Object[]> nodeStatus = (Map<String, Object[]>) o;
-         for (Map.Entry<String, Object[]> e : nodeStatus.entrySet()) {
-            String cacheName = e.getKey();
-            CacheJoinInfo joinInfo = (CacheJoinInfo) e.getValue()[0];
-            CacheTopology cacheTopology = (CacheTopology) e.getValue()[1];
+      for (Map.Entry<Address, Object> responseEntry : statusResponses.entrySet()) {
+         Address sender = responseEntry.getKey();
+         Map<String, Object[]> nodeStatus = (Map<String, Object[]>) responseEntry.getValue();
+         for (Map.Entry<String, Object[]> statusEntry : nodeStatus.entrySet()) {
+            String cacheName = statusEntry.getKey();
+            CacheJoinInfo joinInfo = (CacheJoinInfo) statusEntry.getValue()[0];
+            CacheTopology cacheTopology = (CacheTopology) statusEntry.getValue()[1];
 
             List<CacheTopology> topologyList = clusterCacheMap.get(cacheName);
             if (topologyList == null) {
-               // this is the first CacheJoinInfo we got for this cache, initialize its ClusterCacheStatus
+               // This is the first CacheJoinInfo we got for this cache, initialize its ClusterCacheStatus
                initCacheStatusIfAbsent(cacheName, joinInfo);
+               // This node may have joined, and still not be in the current or pending CH
+               // because the old coordinator didn't manage to start the rebalance before shutting down
+               cacheStatusMap.get(cacheName).addMember(sender);
 
                topologyList = new ArrayList<CacheTopology>();
                clusterCacheMap.put(cacheName, topologyList);
@@ -562,5 +588,4 @@ public class ClusterTopologyManagerImpl implements ClusterTopologyManager {
          handleNewView(e.getNewMembers(), e.isMergeView(), e.getViewId());
       }
    }
-
 }
