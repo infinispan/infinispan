@@ -76,7 +76,7 @@ public class StateProviderImpl implements StateProvider {
    private long timeout;
    private int chunkSize;
 
-   private volatile int topolopyId;
+   private volatile int topologyId;
    private volatile ConsistentHash readCh;
 
    /**
@@ -134,7 +134,7 @@ public class StateProviderImpl implements StateProvider {
 
    public void onTopologyUpdate(CacheTopology cacheTopology, boolean isRebalance) {
       this.readCh = cacheTopology.getReadConsistentHash();
-      this.topolopyId = cacheTopology.getTopologyId();
+      this.topologyId = cacheTopology.getTopologyId();
 
       // cancel outbound state transfers for destinations that are no longer members in new topology
       Set<Address> members = new HashSet<Address>(cacheTopology.getWriteConsistentHash().getMembers());
@@ -182,19 +182,23 @@ public class StateProviderImpl implements StateProvider {
       }
    }
 
-   public List<TransactionInfo> getTransactionsForSegments(Address destination, int topologyId, Set<Integer> segments) throws InterruptedException {
+   public List<TransactionInfo> getTransactionsForSegments(Address destination, int requestTopologyId, Set<Integer> segments) throws InterruptedException {
       if (trace) {
-         log.tracef("Received request for transactions from node %s for segments %s with topology id %d", destination, segments, topologyId);
+         log.tracef("Received request for transactions from node %s for segments %s with topology id %d", destination, segments, requestTopologyId);
       }
 
       if (readCh == null) {
          throw new IllegalStateException("No cache topology received yet");  // no commands are processed until the join is complete, so this cannot normally happen
       }
 
-      //todo [anistor] here we should block until topologyId is installed so we are sure forwarding happens correctly
-      if (topologyId != this.topolopyId) {
-         log.warnf("Transactions were requested by a node with topology (%d) that does not match local topology (%d).", topologyId, this.topolopyId);
-         stateTransferLock.waitForTopology(topologyId);
+      if (requestTopologyId < topologyId) {
+         log.warnf("Transactions were requested by node %s with topology %d, smaller than the local " +
+               "topology (%d)", destination, requestTopologyId, topologyId);
+      } else if (requestTopologyId > topologyId) {
+         log.tracef("Transactions were requested by node %s with topology %d, greater than the local " +
+               "topology (%d). Waiting for topology %d to be installed locally.", destination,
+               requestTopologyId, topologyId, requestTopologyId);
+         stateTransferLock.waitForTopology(requestTopologyId);
       }
       Set<Integer> ownedSegments = readCh.getSegmentsForOwner(rpcManager.getAddress());
       if (!ownedSegments.containsAll(segments)) {
@@ -205,17 +209,10 @@ public class StateProviderImpl implements StateProvider {
       List<TransactionInfo> transactions = new ArrayList<TransactionInfo>();
       //we migrate locks only if the cache is transactional and distributed
       if (configuration.transaction().transactionMode().isTransactional()) {
-         // all transactions should be briefly blocked now
-         stateTransferLock.transactionsExclusiveLock();
-         try {
-            collectTransactionsToTransfer(transactions, transactionTable.getRemoteTransactions(), segments);
-            collectTransactionsToTransfer(transactions, transactionTable.getLocalTransactions(), segments);
-            if (trace) {
-               log.tracef("Found %d transaction(s) to transfer", transactions.size());
-            }
-         } finally {
-            // all transactions should be unblocked now
-            stateTransferLock.transactionsExclusiveUnlock();
+         collectTransactionsToTransfer(transactions, transactionTable.getRemoteTransactions(), segments);
+         collectTransactionsToTransfer(transactions, transactionTable.getLocalTransactions(), segments);
+         if (trace) {
+            log.tracef("Found %d transaction(s) to transfer", transactions.size());
          }
       }
       return transactions;
@@ -249,15 +246,23 @@ public class StateProviderImpl implements StateProvider {
    }
 
    @Override
-   public void startOutboundTransfer(Address destination, int topologyId, Set<Integer> segments) {
-      if (trace) {
-         log.tracef("Starting outbound transfer of segments %s to node %s with topology id %d", segments, destination, topologyId);
+   public void startOutboundTransfer(Address destination, int requestTopologyId, Set<Integer> segments)
+         throws InterruptedException {
+      log.tracef("Starting outbound transfer of segments %s to node %s with topology id %d", segments,
+            destination, requestTopologyId);
+
+      if (requestTopologyId < topologyId) {
+         log.warnf("Segments were requested by node %s with topology %d, smaller than the local " +
+               "topology (%d)", destination, requestTopologyId, topologyId);
+      } else if (requestTopologyId > topologyId) {
+         log.tracef("Segments were requested by node %s with topology %d, greater than the local " +
+               "topology (%d). Waiting for topology %d to be installed locally.", destination,
+               requestTopologyId, topologyId, requestTopologyId);
+         stateTransferLock.waitForTopology(requestTopologyId);
       }
-      if (topologyId != this.topolopyId) {
-         log.warnf("Segments were requested by a node with topology (%d) that does not match local topology (%d).", topologyId, this.topolopyId);
-      }
+
       // the destination node must already have an InboundTransferTask waiting for these segments
-      OutboundTransferTask outboundTransfer = new OutboundTransferTask(destination, segments, chunkSize, topologyId,
+      OutboundTransferTask outboundTransfer = new OutboundTransferTask(destination, segments, chunkSize, requestTopologyId,
             readCh, this, dataContainer, cacheLoaderManager, rpcManager, configuration, commandsFactory, timeout);
       addTransfer(outboundTransfer);
       outboundTransfer.execute(executorService);

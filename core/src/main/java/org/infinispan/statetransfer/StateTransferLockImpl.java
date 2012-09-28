@@ -30,69 +30,69 @@ import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
 /**
- * // TODO: Document this
+ * {@code StateTransferLock} implementation.
  *
  * @author anistor@redhat.com
+ * @author Dan Berindei
  * @since 5.2
  */
 public class StateTransferLockImpl implements StateTransferLock {
    private static final Log log = LogFactory.getLog(StateTransferLockImpl.class);
 
-   private final ReadWriteLock transactionTableLock = new ReentrantReadWriteLock();
-
-   private final ReadWriteLock commandLock = new ReentrantReadWriteLock();
+   private final ReadWriteLock ownershipLock = new ReentrantReadWriteLock();
 
    private volatile int topologyId;
-
    private final Object topologyLock = new Object();
 
+   private volatile int transactionDataTopologyId;
+   private final Object transactionDataLock = new Object();
+
    @Override
-   public void transactionsSharedLock() {
-      transactionTableLock.readLock().lock();
+   public void acquireExclusiveTopologyLock() {
+      ownershipLock.writeLock().lock();
    }
 
    @Override
-   public void transactionsSharedUnlock() {
-      transactionTableLock.readLock().unlock();
+   public void releaseExclusiveTopologyLock() {
+      ownershipLock.writeLock().unlock();
    }
 
    @Override
-   public void transactionsExclusiveLock() {
-      transactionTableLock.writeLock().lock();
+   public void acquireSharedTopologyLock() {
+      ownershipLock.readLock().lock();
    }
 
    @Override
-   public void transactionsExclusiveUnlock() {
-      transactionTableLock.writeLock().unlock();
+   public void releaseSharedTopologyLock() {
+      ownershipLock.readLock().unlock();
    }
 
    @Override
-   public void commandsExclusiveLock() {
-      commandLock.writeLock().lock();
+   public void transactionDataReceived(int topologyId) {
+      this.transactionDataTopologyId = topologyId;
+      synchronized (transactionDataLock) {
+         transactionDataLock.notifyAll();
+      }
    }
 
    @Override
-   public void commandsExclusiveUnlock() {
-      commandLock.writeLock().unlock();
+   public void waitForTransactionData(int expectedTopologyId) throws InterruptedException {
+      if (transactionDataTopologyId >= expectedTopologyId)
+         return;
+
+      log.tracef("Waiting for transaction data for topology %d, current topology is %d", expectedTopologyId,
+            transactionDataTopologyId);
+      synchronized (transactionDataLock) {
+         // Do the comparison inside the synchronized lock
+         // otherwise the setter might be able to call notifyAll before we wait()
+         while (transactionDataTopologyId < expectedTopologyId) {
+            transactionDataLock.wait();
+         }
+      }
    }
 
    @Override
-   public void commandsSharedLock() {
-      commandLock.readLock().lock();
-   }
-
-   @Override
-   public void commandsSharedUnlock() {
-      commandLock.readLock().unlock();
-   }
-
-   @Override
-   public int getTopologyId() {
-      return topologyId;
-   }
-
-   @Override
-   public void setTopologyId(int topologyId) {
+   public void topologyInstalled(int topologyId) {
       this.topologyId = topologyId;
       synchronized (topologyLock) {
          topologyLock.notifyAll();
@@ -104,7 +104,8 @@ public class StateTransferLockImpl implements StateTransferLock {
       if (topologyId >= expectedTopologyId)
          return;
 
-      log.tracef("Waiting for topology %d to be installed, current topology is %d", expectedTopologyId, topologyId);
+      log.tracef("Waiting for topology %d to be installed, current topology is %d", expectedTopologyId,
+            topologyId);
       synchronized (topologyLock) {
          // Do the comparison inside the synchronized lock
          // otherwise the setter might be able to call notifyAll before we wait()

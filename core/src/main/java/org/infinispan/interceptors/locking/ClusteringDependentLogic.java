@@ -37,6 +37,7 @@ import org.infinispan.factories.scopes.Scope;
 import org.infinispan.factories.scopes.Scopes;
 import org.infinispan.remoting.rpc.RpcManager;
 import org.infinispan.remoting.transport.Address;
+import org.infinispan.statetransfer.StateTransferLock;
 import org.infinispan.transaction.WriteSkewHelper;
 import org.infinispan.transaction.xa.CacheTransaction;
 import org.infinispan.util.logging.Log;
@@ -148,6 +149,7 @@ public interface ClusteringDependentLogic {
       private DataContainer dataContainer;
       private Configuration configuration;
       private RpcManager rpcManager;
+      private StateTransferLock stateTransferLock;
       private final WriteSkewHelper.KeySpecificLogic keySpecificLogic = new WriteSkewHelper.KeySpecificLogic() {
          @Override
          public boolean performCheckOnKey(Object key) {
@@ -156,11 +158,13 @@ public interface ClusteringDependentLogic {
       };
 
       @Inject
-      public void init(DistributionManager dm, DataContainer dataContainer, Configuration configuration, RpcManager rpcManager) {
+      public void init(DistributionManager dm, DataContainer dataContainer, Configuration configuration,
+                       RpcManager rpcManager, StateTransferLock stateTransferLock) {
          this.dm = dm;
          this.dataContainer = dataContainer;
          this.configuration = configuration;
          this.rpcManager = rpcManager;
+         this.stateTransferLock = stateTransferLock;
       }
 
       @Override
@@ -183,19 +187,26 @@ public interface ClusteringDependentLogic {
 
       @Override
       public void commitEntry(CacheEntry entry, EntryVersion newVersion, boolean skipOwnershipCheck) {
-         boolean doCommit = true;
-         // ignore locality for removals, even if skipOwnershipCheck is not true
-         if (!skipOwnershipCheck && !entry.isRemoved() && !localNodeIsOwner(entry.getKey())) {
-            if (configuration.clustering().l1().enabled()) {
-               dm.transformForL1(entry);
-            } else {
-               doCommit = false;
+         // Don't allow the CH to change (and state transfer to invalidate entries)
+         // between the ownership check and the commit
+         stateTransferLock.acquireSharedTopologyLock();
+         try {
+            boolean doCommit = true;
+            // ignore locality for removals, even if skipOwnershipCheck is not true
+            if (!skipOwnershipCheck && !entry.isRemoved() && !localNodeIsOwner(entry.getKey())) {
+               if (configuration.clustering().l1().enabled()) {
+                  dm.transformForL1(entry);
+               } else {
+                  doCommit = false;
+               }
             }
+            if (doCommit)
+               entry.commit(dataContainer, newVersion);
+            else
+               entry.rollback();
+         } finally {
+            stateTransferLock.releaseSharedTopologyLock();
          }
-         if (doCommit)
-            entry.commit(dataContainer, newVersion);
-         else
-            entry.rollback();
       }
 
       @Override

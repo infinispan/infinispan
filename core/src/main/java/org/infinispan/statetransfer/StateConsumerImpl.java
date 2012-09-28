@@ -177,9 +177,12 @@ public class StateConsumerImpl implements StateConsumer {
          rebalanceInProgress.set(true);
       }
       ConsistentHash previousCh = this.cacheTopology != null ? this.cacheTopology.getWriteConsistentHash() : null;
+      // Ensures writes to the data container use the right consistent hash
+      // No need for a try/finally block, since it's just an assignment
+      stateTransferLock.acquireExclusiveTopologyLock();
       this.cacheTopology = cacheTopology;
-
-      stateTransferLock.setTopologyId(cacheTopology.getTopologyId());
+      stateTransferLock.releaseExclusiveTopologyLock();
+      stateTransferLock.topologyInstalled(cacheTopology.getTopologyId());
 
       try {
          Set<Integer> addedSegments;
@@ -224,14 +227,11 @@ public class StateConsumerImpl implements StateConsumer {
          }
 
          if (addedSegments != null && !addedSegments.isEmpty()) {
-            stateTransferLock.commandsExclusiveLock();
-            try {
-               addTransfers(addedSegments);  // add transfers for new or restarted segments
-            } finally {
-               stateTransferLock.commandsExclusiveUnlock();
-            }
+            addTransfers(addedSegments);  // add transfers for new or restarted segments
          }
       } finally {
+         stateTransferLock.transactionDataReceived(cacheTopology.getTopologyId());
+
          if (activeTopologyUpdates.decrementAndGet() == 0 && !isStateTransferInProgress()) {
             notifyEndOfTopologyUpdate(cacheTopology.getTopologyId());
          }
