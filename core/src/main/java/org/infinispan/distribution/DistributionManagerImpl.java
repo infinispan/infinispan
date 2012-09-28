@@ -168,6 +168,9 @@ public class DistributionManagerImpl implements DistributionManager {
          }
       }
 
+      // TODO If everyone returned null, and the read CH has changed, retry the remote get.
+      // Otherwise our get command might be processed by the old owners after they have invalidated their data
+      // and we'd return a null even though the key exists on
       return null;
    }
 

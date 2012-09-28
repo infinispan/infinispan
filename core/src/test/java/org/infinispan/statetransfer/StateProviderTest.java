@@ -181,9 +181,7 @@ public class StateProviderTest {
          // expected
       }
 
-      InOrder stateTransferLockVerifier = inOrder(stateTransferLock);
-      stateTransferLockVerifier.verify(stateTransferLock).transactionsExclusiveLock();
-      stateTransferLockVerifier.verify(stateTransferLock).transactionsExclusiveUnlock();
+      verifyNoMoreInteractions(stateTransferLock);
 
       stateProvider.startOutboundTransfer(new TestAddress(5), 1, Collections.singleton(0));
 
@@ -284,9 +282,7 @@ public class StateProviderTest {
          // expected
       }
 
-      InOrder stateTransferLockVerifier = inOrder(stateTransferLock);
-      stateTransferLockVerifier.verify(stateTransferLock).transactionsExclusiveLock();
-      stateTransferLockVerifier.verify(stateTransferLock).transactionsExclusiveUnlock();
+      verifyNoMoreInteractions(stateTransferLock);
 
       stateProvider.startOutboundTransfer(new TestAddress(5), 1, Collections.singleton(0));
 
