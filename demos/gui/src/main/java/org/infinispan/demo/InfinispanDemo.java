@@ -28,13 +28,10 @@ import org.infinispan.lifecycle.ComponentStatus;
 import org.infinispan.manager.DefaultCacheManager;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.notifications.Listener;
-import org.infinispan.notifications.cachelistener.annotation.CacheEntriesEvicted;
-import org.infinispan.notifications.cachelistener.annotation.CacheEntryModified;
-import org.infinispan.notifications.cachelistener.annotation.CacheEntryRemoved;
+import org.infinispan.notifications.cachelistener.annotation.*;
 import org.infinispan.notifications.cachelistener.event.Event;
-import org.infinispan.notifications.cachemanagerlistener.annotation.Merged;
-import org.infinispan.notifications.cachemanagerlistener.annotation.ViewChanged;
-import org.infinispan.notifications.cachemanagerlistener.event.ViewChangedEvent;
+import org.infinispan.notifications.cachemanagerlistener.annotation.*;
+import org.infinispan.notifications.cachemanagerlistener.event.*;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.util.LegacyKeySupportSystemProperties;
 import org.infinispan.util.Util;
@@ -170,22 +167,15 @@ public class InfinispanDemo {
                @Override
                public void run() {
                   // based on the value of the radio button:
-                  try {
-                     if (putEntryRadioButton.isSelected()) {
-                        cache.put(keyTextField.getText(), valueTextField.getText(), lifespan(), TimeUnit.MILLISECONDS, maxIdle(), TimeUnit.MILLISECONDS);
-                     } else if (removeEntryRadioButton.isSelected()) {
-                        cache.remove(keyTextField.getText());
-                     } else if (getEntryRadioButton.isSelected()) {
-                        cache.get(keyTextField.getText());
-                     }
+                  if (putEntryRadioButton.isSelected()) {
+                     cache.put(keyTextField.getText(), valueTextField.getText(), lifespan(), TimeUnit.MILLISECONDS, maxIdle(), TimeUnit.MILLISECONDS);
+                  } else if (removeEntryRadioButton.isSelected()) {
+                     cache.remove(keyTextField.getText());
+                  } else if (getEntryRadioButton.isSelected()) {
+                     cache.get(keyTextField.getText());
                   }
-                  catch(Throwable t) {
-                     // log.error("failed to update cache", t);
-                  }
-                  finally {
-                     dataViewTab.repaint();
-                     processAction(goButton, false);
-                  }
+                  dataViewTab.repaint();
+                  processAction(goButton, false);
 
                   // reset these values
                   lifespanSpinner.setValue(cache.getCacheConfiguration().expiration().lifespan());
@@ -389,7 +379,7 @@ public class InfinispanDemo {
                      Util.close(stream);
                   }
                } 
-               cache = cacheManager.getCache();
+               cache = cacheManager.getCache();    
                cache.start();
 
                // repaint the cfg file display

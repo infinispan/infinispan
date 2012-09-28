@@ -38,11 +38,8 @@ public class BackupConfigurationBuilder extends AbstractConfigurationChildBuilde
 
    private String failurePolicyClass;
 
-   private TakeOfflineConfigurationBuilder takeOfflineBuilder;
-
    public BackupConfigurationBuilder(ConfigurationBuilder builder) {
       super(builder);
-      takeOfflineBuilder = new TakeOfflineConfigurationBuilder(builder);
    }
 
    /**
@@ -108,10 +105,6 @@ public class BackupConfigurationBuilder extends AbstractConfigurationChildBuilde
       return strategy;
    }
 
-   public TakeOfflineConfigurationBuilder takeOffline() {
-      return takeOfflineBuilder;
-   }
-
    /**
     * Configures how the system behaves when the backup call fails. Only applies to sync backus.
     * The default values is  {@link BackupFailurePolicy.WARN}
@@ -132,7 +125,6 @@ public class BackupConfigurationBuilder extends AbstractConfigurationChildBuilde
 
    @Override
    public void validate() {
-      takeOfflineBuilder.validate();
       if (site == null)
          throw new ConfigurationException("The 'site' must be specified!");
       if (backupFailurePolicy == BackupFailurePolicy.CUSTOM && (failurePolicyClass == null)) {
@@ -143,13 +135,11 @@ public class BackupConfigurationBuilder extends AbstractConfigurationChildBuilde
 
    @Override
    public BackupConfiguration create() {
-      return new BackupConfiguration(site, strategy, replicationTimeout, backupFailurePolicy, failurePolicyClass,
-                                     takeOfflineBuilder.create());
+      return new BackupConfiguration(site, strategy, replicationTimeout, backupFailurePolicy, failurePolicyClass);
    }
 
    @Override
    public Builder read(BackupConfiguration template) {
-      this.takeOfflineBuilder.read(template.takeOffline());
       this.site = template.site();
       this.strategy = template.strategy();
       this.backupFailurePolicy = template.backupFailurePolicy();
@@ -167,12 +157,9 @@ public class BackupConfigurationBuilder extends AbstractConfigurationChildBuilde
 
       if (replicationTimeout != that.replicationTimeout) return false;
       if (backupFailurePolicy != that.backupFailurePolicy) return false;
-      if (failurePolicyClass != null ? !failurePolicyClass.equals(that.failurePolicyClass) : that.failurePolicyClass != null)
-         return false;
       if (site != null ? !site.equals(that.site) : that.site != null) return false;
+      if (failurePolicyClass != null ? !failurePolicyClass.equals(that.failurePolicyClass) : that.failurePolicyClass != null) return false;
       if (strategy != that.strategy) return false;
-      if (takeOfflineBuilder != null ? !takeOfflineBuilder.equals(that.takeOfflineBuilder) : that.takeOfflineBuilder != null)
-         return false;
 
       return true;
    }
@@ -184,7 +171,6 @@ public class BackupConfigurationBuilder extends AbstractConfigurationChildBuilde
       result = 31 * result + (int) (replicationTimeout ^ (replicationTimeout >>> 32));
       result = 31 * result + (backupFailurePolicy != null ? backupFailurePolicy.hashCode() : 0);
       result = 31 * result + (failurePolicyClass != null ? failurePolicyClass.hashCode() : 0);
-      result = 31 * result + (takeOfflineBuilder != null ? takeOfflineBuilder.hashCode() : 0);
       return result;
    }
 
@@ -195,8 +181,7 @@ public class BackupConfigurationBuilder extends AbstractConfigurationChildBuilde
             ", strategy=" + strategy +
             ", replicationTimeout=" + replicationTimeout +
             ", backupFailurePolicy=" + backupFailurePolicy +
-            ", failurePolicyClass='" + failurePolicyClass + '\'' +
-            ", takeOfflineBuilder=" + takeOfflineBuilder +
+            ", failurePolicyClass=" + failurePolicyClass +
             '}';
    }
 }

@@ -125,8 +125,8 @@ public class BackupSenderImpl implements BackupSender {
    public void processResponses(BackupResponse backupResponse, VisitableCommand command, Transaction transaction) throws Throwable {
       backupResponse.waitForBackupToFinish();
       SitesConfiguration sitesConfiguration = config.sites();
-      Map<String, Throwable> failures = backupResponse.getFailedBackups();
-      for (Map.Entry<String, Throwable> failure : failures.entrySet()) {
+      Map<String, Exception> failures = backupResponse.getFailedBackups();
+      for (Map.Entry<String, Exception> failure : failures.entrySet()) {
          BackupFailurePolicy policy = sitesConfiguration.getFailurePolicy(failure.getKey());
          if (policy == BackupFailurePolicy.CUSTOM) {
            CustomFailurePolicy customFailurePolicy = siteFailurePolicy.get(failure.getKey());

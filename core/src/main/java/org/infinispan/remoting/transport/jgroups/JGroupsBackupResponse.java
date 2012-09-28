@@ -28,7 +28,6 @@ import org.infinispan.xsite.XSiteBackup;
 
 import java.util.HashMap;
 import java.util.Map;
-import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
@@ -45,7 +44,7 @@ public class JGroupsBackupResponse implements BackupResponse {
    private static Log log = LogFactory.getLog(JGroupsBackupResponse.class);
 
    private final Map<XSiteBackup, Future<Object>> syncBackupCalls;
-   private Map<String, Throwable> errors;
+   private Map<String, Exception> errors;
 
    //there might be an significant difference in time between when the message is sent and when the actual wait
    // happens. Track that and adjust the timeouts accordingly.
@@ -58,7 +57,7 @@ public class JGroupsBackupResponse implements BackupResponse {
 
    public void waitForBackupToFinish() throws Exception {
       long deductFromTimeout = NANOSECONDS.toMillis(System.nanoTime() - sendTimeNanos);
-      errors = new HashMap<String, Throwable>(syncBackupCalls.size());
+      errors = new HashMap<String, Exception>(syncBackupCalls.size());
       long elapsedTime = 0;
       for (Map.Entry<XSiteBackup, Future<Object>> entry : syncBackupCalls.entrySet()) {
          long timeout = entry.getKey().getTimeout();
@@ -76,9 +75,6 @@ public class JGroupsBackupResponse implements BackupResponse {
             value = entry.getValue().get(timeout, MILLISECONDS);
          } catch (TimeoutException te) {
             errors.put(siteName, newTimeoutException(entry, entry.getKey().getTimeout()));
-         } catch (ExecutionException ue) {
-            log.tracef("Communication error with site %s: %s", siteName, ue.getCause());
-            errors.put(siteName, ue.getCause());
          } finally {
             elapsedTime += NANOSECONDS.toMillis(System.nanoTime() - startNanos);
          }
@@ -94,7 +90,7 @@ public class JGroupsBackupResponse implements BackupResponse {
    }
 
    @Override
-   public Map<String, Throwable> getFailedBackups() {
+   public Map<String, Exception> getFailedBackups() {
       return errors;
    }
 

@@ -22,7 +22,6 @@ package org.infinispan.xsite;
 import org.infinispan.configuration.cache.BackupConfiguration;
 import org.infinispan.configuration.cache.BackupFailurePolicy;
 import org.infinispan.configuration.cache.Configuration;
-import org.infinispan.configuration.cache.TakeOfflineConfiguration;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.test.SingleCacheManagerTest;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
@@ -63,7 +62,7 @@ public class XSiteFileParsing2Test extends SingleCacheManagerTest {
       assertEquals(1, dcc.sites().backups().size());
 
       assertTrue(dcc.sites().backups().contains(new BackupConfiguration("NYC", BackupConfiguration.BackupStrategy.SYNC,
-                                                                        12003, BackupFailurePolicy.WARN, null, new TakeOfflineConfiguration(0,0))));
+                                                                        12003, BackupFailurePolicy.WARN, null)));
       assertNull(dcc.sites().backupFor().remoteSite());
       assertNull(dcc.sites().backupFor().remoteCache());
    }
@@ -76,9 +75,9 @@ public class XSiteFileParsing2Test extends SingleCacheManagerTest {
 
    private void testDefault(Configuration dcc) {
       assertTrue(dcc.sites().backups().contains(new BackupConfiguration("NYC", BackupConfiguration.BackupStrategy.SYNC,
-                                                                        12003l, BackupFailurePolicy.IGNORE, null, new TakeOfflineConfiguration(0,0))));
+                                                                        12003l, BackupFailurePolicy.IGNORE, null)));
       assertTrue(dcc.sites().backups().contains(new BackupConfiguration("SFO", BackupConfiguration.BackupStrategy.ASYNC,
-                                                                        10000l, BackupFailurePolicy.WARN, null,new TakeOfflineConfiguration(0,0))));
+                                                                        10000l, BackupFailurePolicy.WARN, null)));
       assertEquals("someCache", dcc.sites().backupFor().remoteCache());
       assertEquals("SFO", dcc.sites().backupFor().remoteSite());
    }

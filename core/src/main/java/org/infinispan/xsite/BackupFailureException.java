@@ -33,7 +33,7 @@ public class BackupFailureException extends RpcException {
    private String localCacheName;
 
    public BackupFailureException(Throwable cause, String remoteSiteName, String localCacheName) {
-      super("The local cache " + localCacheName + " failed to backup data to the remote site " + remoteSiteName, cause);
+      super("The local cache" + localCacheName + " failed to backup data to the remote site " + remoteSiteName, cause);
       this.remoteSiteName = remoteSiteName;
       this.localCacheName = localCacheName;
    }

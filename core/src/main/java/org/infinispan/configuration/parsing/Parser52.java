@@ -308,7 +308,7 @@ public class Parser52 implements ConfigurationParser<ConfigurationBuilderHolder>
       while (reader.hasNext() && (reader.nextTag() != XMLStreamConstants.END_ELEMENT)) {
          Element element = Element.forName(reader.getLocalName());
          switch (element) {
-            case BACKUP: {
+            case BACKUP:
                BackupConfigurationBuilder backup = ccb.sites().addBackup();
                for (int i = 0; i < reader.getAttributeCount(); i++) {
                   ParseUtils.requireNoNamespaceAttribute(reader, i);
@@ -334,39 +334,11 @@ public class Parser52 implements ConfigurationParser<ConfigurationBuilderHolder>
                         throw ParseUtils.unexpectedElement(reader);
                   }
                }
-               if (parseTakeOffline(reader, backup)) {
-                  ParseUtils.requireNoContent(reader);
-               }
-            }
             default: {
                ParseUtils.unexpectedElement(reader);
             }
+            ParseUtils.requireNoContent(reader);
          }
-      }
-   }
-
-   private boolean parseTakeOffline(XMLExtendedStreamReader reader, BackupConfigurationBuilder backup) throws XMLStreamException {
-      if (reader.nextTag() != XMLStreamConstants.END_ELEMENT) {
-         Element takeOffline = Element.forName(reader.getLocalName());
-         for (int i = 0; i < reader.getAttributeCount(); i++) {
-            ParseUtils.requireNoNamespaceAttribute(reader, i);
-            String value = replaceProperties(reader.getAttributeValue(i));
-            Attribute attribute = Attribute.forName(reader.getAttributeLocalName(i));
-            switch (attribute) {
-               case AFTER_FAILURES:
-                  backup.takeOffline().afterFailures(Integer.parseInt(value));
-                  break;
-               case MIN_TIME_TO_WAIT:
-                  backup.takeOffline().minTimeToWait(Long.parseLong(value));
-                  break;
-               default:
-                  throw ParseUtils.unexpectedElement(reader);
-            }
-         }
-         ParseUtils.requireNoContent(reader);
-         return true;
-      } else {
-         return false;
       }
    }
 
