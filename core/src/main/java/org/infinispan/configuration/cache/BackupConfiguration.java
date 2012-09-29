@@ -30,13 +30,16 @@ public class BackupConfiguration {
    private long timeout;
    private final BackupFailurePolicy backupFailurePolicy;
    private final String failurePolicyClass;
+   private final TakeOfflineConfiguration takeOfflineConfiguration;
 
-   public BackupConfiguration(String site, BackupStrategy strategy, long timeout, BackupFailurePolicy backupFailurePolicy, String failurePolicyClass) {
+   public BackupConfiguration(String site, BackupStrategy strategy, long timeout, BackupFailurePolicy backupFailurePolicy,
+                              String failurePolicyClass, TakeOfflineConfiguration takeOfflineConfiguration) {
       this.site = site;
       this.strategy = strategy;
       this.timeout = timeout;
       this.backupFailurePolicy = backupFailurePolicy;
       this.failurePolicyClass = failurePolicyClass;
+      this.takeOfflineConfiguration = takeOfflineConfiguration;
    }
 
    /**
@@ -51,6 +54,10 @@ public class BackupConfiguration {
     */
    public BackupStrategy strategy() {
       return strategy;
+   }
+
+   public TakeOfflineConfiguration takeOffline() {
+      return takeOfflineConfiguration;
    }
 
    /**

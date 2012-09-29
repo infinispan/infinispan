@@ -19,17 +19,19 @@
 
 package org.infinispan.topology;
 
-import java.util.List;
-
 import org.infinispan.factories.scopes.Scope;
 import org.infinispan.factories.scopes.Scopes;
-import org.infinispan.remoting.transport.Address;
 
 /**
  * Processes cache membership changes or any other events and decides when to
  * rebalance state between members.
  *
  * It is used both in distributed and replicated mode.
+ *
+ * Implementations can trigger a rebalance using {@link ClusterTopologyManager#triggerRebalance(String)}.
+ * They don't control the resulting consistent hash directly, but they can use the {@link ClusterCacheStatus}
+ * to access the cache's custom {@link org.infinispan.distribution.ch.ConsistentHashFactory} implementation
+ * and influence the generated consistent hash indirectly.
  *
  * @author Dan Berindei
  * @since 5.2
@@ -40,38 +42,10 @@ public interface RebalancePolicy {
     * Initialize the policy for a cache, without a list of members.
     * It won't have any effect if the cache is already initialized.
     */
-   void initCache(String cacheName, CacheJoinInfo joinInfo) throws Exception;
+   void initCache(String cacheName, ClusterCacheStatus cacheStatus) throws Exception;
 
    /**
-    * Initialize the policy for an existing cache, after this node became the coordinator.
-    * It will overwrite the current status of the cache, but it will not reset any pending join or leave
-    * operations.
+    * Called when the status of a cache changes. It could be a node joining or leaving, or a merge, or a
     */
-   void initCache(String cacheName, List<CacheTopology> partitionTopologies) throws Exception;
-
-   /**
-    * Called when the membership of the cluster changes. It updates the members list of each cache atomically.
-    */
-   void updateMembersList(List<Address> membersList) throws Exception;
-
-   /**
-    * Called when one or more members join a cache.
-    * @return The previous cache topology.
-    */
-   CacheTopology addJoiners(String cacheName, List<Address> joiners) throws Exception;
-
-   /**
-    * Called when one or more members leave an individual cache (as opposed to leaving the cluster).
-    */
-   void removeLeavers(String cacheName, List<Address> leavers) throws Exception;
-
-   /**
-    * Called when every member has completed receiving data.
-    */
-   void onRebalanceCompleted(String cacheName, int topologyId) throws Exception;
-
-   /**
-    * @return The current topology (current CH + pending CH) of a cache.
-    */
-   CacheTopology getTopology(String cacheName);
+   void updateCacheStatus(String cacheName, ClusterCacheStatus cacheStatus) throws Exception;
 }

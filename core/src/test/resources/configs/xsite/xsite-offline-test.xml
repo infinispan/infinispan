@@ -44,10 +44,10 @@
     <default>
         <locking concurrencyLevel="100" lockAcquisitionTimeout="1000"/>
         <sites>
-            <backups backupSites="NYC,SFO">
-                <backup site="NYC" strategy="SYNC" backupFailurePolicy="IGNORE" timeout="12003"/>
-                <backup site="SFO" strategy="ASYNC"/>
-                <backup site="LON" strategy="SYNC"/>
+            <backups>
+                <backup site="NYC" strategy="SYNC" backupFailurePolicy="IGNORE" timeout="12003">
+                    <takeOffline afterFailures="123" minTimeToWait="5673"/>
+                </backup>
             </backups>
             <backupFor remoteCache="someCache" remoteSite="SFO"/>
         </sites>
@@ -56,17 +56,23 @@
 
     <namedCache name="inheritor"/>
 
-    <namedCache name="noBackupFor">
+    <namedCache name="noTakeOffline">
         <sites>
-            <backups backupSites="NYC">
+            <backups>
                 <backup site="NYC" strategy="SYNC" backupFailurePolicy="WARN" timeout="12003"/>
             </backups>
             <backupFor/>
         </sites>
     </namedCache>
 
-    <namedCache name="noBackupFor2">
-        <sites/>
+    <namedCache name="takeOfflineDifferentConfig">
+        <sites>
+            <backups>
+                <backup site="NYC" strategy="SYNC" backupFailurePolicy="IGNORE" timeout="12003">
+                    <takeOffline afterFailures="321" minTimeToWait="3765"/>
+                </backup>
+            </backups>
+        </sites>
     </namedCache>
 
 </infinispan>

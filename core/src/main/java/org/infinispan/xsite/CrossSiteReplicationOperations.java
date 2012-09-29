@@ -17,48 +17,30 @@
  * MA  02110-1301, USA.
  */
 
-package org.infinispan.configuration.global;
+package org.infinispan.xsite;
+
+import org.infinispan.factories.annotations.Inject;
+import org.infinispan.jmx.annotations.MBean;
+import org.infinispan.jmx.annotations.ManagedOperation;
+import org.rhq.helpers.pluginAnnotations.agent.Operation;
 
 /**
- * @author Mircea.Markus@jboss.com
+ * @author Mircea Markus
  * @since 5.2
  */
-public class SiteConfiguration {
+@MBean(objectName = "XSiteAdmin", description = "Exposes tooling for handling backing up data to remote sites.")
+public class CrossSiteReplicationOperations {
 
-   /**
-    * For now this it the only attribute but more might be added in future.
-    */
-   private final String name;
+   private volatile BackupSender backupSender;
 
-   public SiteConfiguration(String name) {
-      this.name = name;
+   @Inject
+   public void init(BackupSender backupSender) {
+      this.backupSender = backupSender;
    }
 
-   public String name() {
-      return name;
-   }
-
-   @Override
-   public boolean equals(Object o) {
-      if (this == o) return true;
-      if (!(o instanceof SiteConfiguration)) return false;
-
-      SiteConfiguration that = (SiteConfiguration) o;
-
-      if (name != null ? !name.equals(that.name) : that.name != null) return false;
-
-      return true;
-   }
-
-   @Override
-   public int hashCode() {
-      return name != null ? name.hashCode() : 0;
-   }
-
-   @Override
-   public String toString() {
-      return "SiteConfiguration{" +
-            "name='" + name + '\'' +
-            '}';
+   @Operation(displayName = "Brings the given site back online on this node.")
+   @ManagedOperation(description = "Brings the given site back online on this node.")
+   public String bringSiteOnline(String siteName) {
+      return backupSender.bringSiteOnline(siteName).toString();
    }
 }

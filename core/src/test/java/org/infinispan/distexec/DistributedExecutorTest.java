@@ -33,26 +33,27 @@ import java.util.concurrent.Future;
 import org.infinispan.Cache;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
+import org.infinispan.remoting.transport.Address;
 import org.infinispan.test.MultipleCacheManagersTest;
 import org.testng.annotations.Test;
 
 /**
  * Tests org.infinispan.distexec.DistributedExecutorService
- * 
+ *
  * @author Vladimir Blagojevic
  */
 @Test(groups = "functional", testName = "distexec.DistributedExecutorTest")
 public class DistributedExecutorTest extends MultipleCacheManagersTest {
 
    public static String CACHE_NAME = "DistributedExecutorTest-DIST_SYNC";
-   
+
    public DistributedExecutorTest() {
       cleanup = CleanupPhase.AFTER_TEST;
    }
-   
+
    @Override
    protected void createCacheManagers() throws Throwable {
-      ConfigurationBuilder builder = getDefaultClusteredCacheConfig(getCacheMode(), true);      
+      ConfigurationBuilder builder = getDefaultClusteredCacheConfig(getCacheMode(), true);
       createClusteredCaches(2, cacheName(), builder);
    }
 
@@ -63,18 +64,18 @@ public class DistributedExecutorTest extends MultipleCacheManagersTest {
    protected CacheMode getCacheMode() {
       return CacheMode.DIST_SYNC;
    }
-   
+
    protected Cache<Object, Object> getCache(){
       return cache(0, cacheName());
    }
-   
+
 
    public void testBasicInvocation() throws Exception {
       basicInvocation(new SimpleCallable());
-   } 
-   
+   }
+
    /**
-    * Helper public method (used by CDI module), disabled as some IDEs invoke it as a test method 
+    * Helper public method (used by CDI module), disabled as some IDEs invoke it as a test method
     * @param call
     * @throws Exception
     */
@@ -85,7 +86,7 @@ public class DistributedExecutorTest extends MultipleCacheManagersTest {
       Integer r = future.get();
       assert r == 1;
    }
-   
+
    public void testExceptionInvocation() throws Exception {
 
       DistributedExecutorService des = new DefaultExecutorService(getCache());
@@ -113,8 +114,8 @@ public class DistributedExecutorTest extends MultipleCacheManagersTest {
       assert exceptionCount == list.size();
    }
 
-   
-   
+
+
    public void testRunnableInvocation() throws Exception {
 
       DistributedExecutorService des = new DefaultExecutorService(getCache());
@@ -123,7 +124,7 @@ public class DistributedExecutorTest extends MultipleCacheManagersTest {
       Object object = future.get();
       assert object == null;
    }
-   
+
    public void testInvokeAny() throws Exception {
 
       DistributedExecutorService des = new DefaultExecutorService(getCache());
@@ -132,14 +133,14 @@ public class DistributedExecutorTest extends MultipleCacheManagersTest {
       tasks.add(new SimpleCallable());
       Integer result = des.invokeAny(tasks);
       assert result == 1;
-      
+
       tasks = new ArrayList<SimpleCallable>();
       tasks.add(new SimpleCallable());
       tasks.add(new SimpleCallable());
       result = des.invokeAny(tasks);
       assert result == 1;
    }
-   
+
    public void testInvokeAll() throws Exception {
 
       DistributedExecutorService des = new DefaultExecutorService(getCache());
@@ -150,23 +151,23 @@ public class DistributedExecutorTest extends MultipleCacheManagersTest {
       assert list.size() == 1;
       Future<Integer> future = list.get(0);
       assert future.get() == 1;
-      
+
       tasks = new ArrayList<SimpleCallable>();
       tasks.add(new SimpleCallable());
       tasks.add(new SimpleCallable());
       tasks.add(new SimpleCallable());
-      
+
       list = des.invokeAll(tasks);
       assert list.size() == 3;
       for (Future<Integer> f : list) {
          assert f.get() == 1;
-      }            
+      }
    }
-   
+
    /**
     * Tests Callable isolation as it gets invoked across the cluster
     * https://issues.jboss.org/browse/ISPN-1041
-    * 
+    *
     * @throws Exception
     */
    public void testCallableIsolation() throws Exception {
@@ -184,8 +185,8 @@ public class DistributedExecutorTest extends MultipleCacheManagersTest {
       Future<Integer> future = des.submit(new SimpleCallable());
       if (future.cancel(true)){
          assert future.isCancelled();
-      } 
-      assert future.isDone();      
+      }
+      assert future.isDone();
    }
 
    public void testBasicDistributedCallable() throws Exception {
@@ -194,16 +195,31 @@ public class DistributedExecutorTest extends MultipleCacheManagersTest {
       Future<Boolean> future = des.submit(new SimpleDistributedCallable(false));
       Boolean r = future.get();
       assert r;
+
+      //the same using DistributedTask API
+      DistributedTaskBuilder<Boolean> taskBuilder = des.createDistributedTaskBuilder(new SimpleDistributedCallable(false));
+      DistributedTask<Boolean> distributedTask = taskBuilder.build();
+      future = des.submit(distributedTask);
+      r = future.get();
+      assert r;
    }
-   
+
    public void testBasicTargetDistributedCallable() throws Exception {
       Cache<Object, Object> cache1 = cache(0, cacheName());
       Cache<Object, Object> cache2 = cache(1, cacheName());
-      
+
       //initiate task from cache1 and select cache2 as target
       DistributedExecutorService des = new DefaultExecutorService(cache1);
-      Future<Boolean> future = des.submit(cache2.getAdvancedCache().getRpcManager().getAddress(), new SimpleDistributedCallable(false));
+      Address target = cache2.getAdvancedCache().getRpcManager().getAddress();
+      Future<Boolean> future = des.submit(target, new SimpleDistributedCallable(false));
       Boolean r = future.get();
+      assert r;
+
+      //the same using DistributedTask API
+      DistributedTaskBuilder<Boolean> taskBuilder = des.createDistributedTaskBuilder(new SimpleDistributedCallable(false));
+      DistributedTask<Boolean> distributedTask = taskBuilder.build();
+      future = des.submit(target, distributedTask);
+      r = future.get();
       assert r;
    }
 
@@ -219,6 +235,13 @@ public class DistributedExecutorTest extends MultipleCacheManagersTest {
       Future<Boolean> future = des.submit(new SimpleDistributedCallable(true), new String[] {
                "key1", "key2" });
       Boolean r = future.get();
+      assert r;
+
+      //the same using DistributedTask API
+      DistributedTaskBuilder<Boolean> taskBuilder = des.createDistributedTaskBuilder(new SimpleDistributedCallable(true));
+      DistributedTask<Boolean> distributedTask = taskBuilder.build();
+      future = des.submit(distributedTask,new String[] {"key1", "key2" });
+      r = future.get();
       assert r;
    }
 
@@ -237,6 +260,15 @@ public class DistributedExecutorTest extends MultipleCacheManagersTest {
       for (Future<Boolean> f : list) {
          assert f.get();
       }
+
+      //the same using DistributedTask API
+      DistributedTaskBuilder<Boolean> taskBuilder = des.createDistributedTaskBuilder(new SimpleDistributedCallable(true));
+      DistributedTask<Boolean> distributedTask = taskBuilder.build();
+      list = des.submitEverywhere(distributedTask,new String[] {"key1", "key2" });
+      assert list != null && !list.isEmpty();
+      for (Future<Boolean> f : list) {
+         assert f.get();
+      }
    }
 
    public void testDistributedCallableEverywhere() throws Exception {
@@ -244,6 +276,15 @@ public class DistributedExecutorTest extends MultipleCacheManagersTest {
       DefaultExecutorService des = new DefaultExecutorService(getCache());
 
       List<Future<Boolean>> list = des.submitEverywhere(new SimpleDistributedCallable(false));
+      assert list != null && !list.isEmpty();
+      for (Future<Boolean> f : list) {
+         assert f.get();
+      }
+
+      //the same using DistributedTask API
+      DistributedTaskBuilder<Boolean> taskBuilder = des.createDistributedTaskBuilder(new SimpleDistributedCallable(false));
+      DistributedTask<Boolean> distributedTask = taskBuilder.build();
+      list = des.submitEverywhere(distributedTask);
       assert list != null && !list.isEmpty();
       for (Future<Boolean> f : list) {
          assert f.get();
@@ -289,12 +330,12 @@ public class DistributedExecutorTest extends MultipleCacheManagersTest {
          return 1;
       }
    }
-   
+
    static class SimpleCallableWithField implements Callable<Integer>, Serializable {
-      
+
       /** The serialVersionUID */
       private static final long serialVersionUID = -6262148927734766558L;
-      private int count; 
+      private int count;
 
       @Override
       public Integer call() throws Exception {

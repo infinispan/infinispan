@@ -17,47 +17,65 @@
  * MA  02110-1301, USA.
  */
 
-package org.infinispan.configuration.global;
+package org.infinispan.configuration.cache;
 
 /**
- * @author Mircea.Markus@jboss.com
+ * @author Mircea Markus
  * @since 5.2
  */
-public class SitesConfiguration {
-   private final String localSite;
+public class TakeOfflineConfiguration {
 
-   SitesConfiguration(String localSite) {
-      this.localSite = localSite;
+   private int afterFailures;
+   private long minTimeToWait;
+
+   public TakeOfflineConfiguration(int afterFailures, long minTimeToWait) {
+      this.afterFailures = afterFailures;
+      this.minTimeToWait = minTimeToWait;
    }
 
    /**
-    * Returns the name of the local site. Must be a valid name defined in {@link #siteConfigurations()}
+    * @see TakeOfflineConfigurationBuilder#afterFailures(int)
     */
-   public final String localSite() {
-      return localSite;
+   public int afterFailures() {
+      return afterFailures;
+   }
+
+   /**
+    * @see TakeOfflineConfigurationBuilder#minTimeToWait(long)
+    */
+   public long minTimeToWait() {
+      return minTimeToWait;
    }
 
    @Override
    public boolean equals(Object o) {
       if (this == o) return true;
-      if (!(o instanceof SitesConfiguration)) return false;
+      if (!(o instanceof TakeOfflineConfiguration)) return false;
 
-      SitesConfiguration that = (SitesConfiguration) o;
+      TakeOfflineConfiguration that = (TakeOfflineConfiguration) o;
 
-      if (localSite != null ? !localSite.equals(that.localSite) : that.localSite != null) return false;
+      if (afterFailures != that.afterFailures) return false;
+      if (minTimeToWait != that.minTimeToWait) return false;
 
       return true;
    }
 
    @Override
    public int hashCode() {
-      return localSite != null ? localSite.hashCode() : 0;
+      int result = afterFailures;
+      result = 31 * result + (int) (minTimeToWait ^ (minTimeToWait >>> 32));
+      return result;
+   }
+
+   public boolean enabled() {
+      return minTimeToWait > 0 || afterFailures > 0;
    }
 
    @Override
    public String toString() {
-      return "SitesConfiguration{" +
-            "localSite='" + localSite + '\'' +
+      return "TakeOfflineConfiguration{" +
+            "afterFailures=" + afterFailures +
+            ", minTimeToWait=" + minTimeToWait +
             '}';
    }
 }

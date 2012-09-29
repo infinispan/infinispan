@@ -177,6 +177,6 @@ public abstract class BaseBackupFailureTest extends AbstractTwoSitesTest {
    }
 
    protected boolean failOnBackupFailure(String site, int cacheIndex) {
-      return cache(site, cacheIndex).getCacheConfiguration().sites().backups().get(0).backupFailurePolicy() == BackupFailurePolicy.FAIL;
+      return cache(site, cacheIndex).getCacheConfiguration().sites().allBackups().get(0).backupFailurePolicy() == BackupFailurePolicy.FAIL;
    }
 }
