@@ -126,6 +126,7 @@ public class BackupSenderImpl implements BackupSender {
       backupResponse.waitForBackupToFinish();
       SitesConfiguration sitesConfiguration = config.sites();
       Map<String, Exception> failures = backupResponse.getFailedBackups();
+      BackupFailureException backupException = null;
       for (Map.Entry<String, Exception> failure : failures.entrySet()) {
          BackupFailurePolicy policy = sitesConfiguration.getFailurePolicy(failure.getKey());
          if (policy == BackupFailurePolicy.CUSTOM) {
@@ -135,9 +136,13 @@ public class BackupSenderImpl implements BackupSender {
          if (policy == BackupFailurePolicy.WARN) {
             log.warnXsiteBackupFailed(cacheName, failure.getKey(), failure.getValue());
          } else if (policy == BackupFailurePolicy.FAIL) {
-            throw new BackupFailureException(failure.getValue(),failure.getKey(), cacheName);
+            if(backupException == null)
+               backupException = new BackupFailureException(cacheName);
+            backupException.addFailure(failure.getKey(), failure.getValue());
          }
       }
+      if(backupException != null)
+         throw backupException;
    }
 
    @Override

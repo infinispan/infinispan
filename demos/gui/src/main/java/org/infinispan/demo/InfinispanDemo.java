@@ -167,15 +167,22 @@ public class InfinispanDemo {
                @Override
                public void run() {
                   // based on the value of the radio button:
-                  if (putEntryRadioButton.isSelected()) {
-                     cache.put(keyTextField.getText(), valueTextField.getText(), lifespan(), TimeUnit.MILLISECONDS, maxIdle(), TimeUnit.MILLISECONDS);
-                  } else if (removeEntryRadioButton.isSelected()) {
-                     cache.remove(keyTextField.getText());
-                  } else if (getEntryRadioButton.isSelected()) {
-                     cache.get(keyTextField.getText());
+                  try {
+                     if (putEntryRadioButton.isSelected()) {
+                        cache.put(keyTextField.getText(), valueTextField.getText(), lifespan(), TimeUnit.MILLISECONDS, maxIdle(), TimeUnit.MILLISECONDS);
+                     } else if (removeEntryRadioButton.isSelected()) {
+                        cache.remove(keyTextField.getText());
+                     } else if (getEntryRadioButton.isSelected()) {
+                        cache.get(keyTextField.getText());
+                     }
                   }
-                  dataViewTab.repaint();
-                  processAction(goButton, false);
+                  catch(Throwable t) {
+                     // log.error("failed to update cache", t);
+                  }
+                  finally {
+                     dataViewTab.repaint();
+                     processAction(goButton, false);
+                  }
 
                   // reset these values
                   lifespanSpinner.setValue(cache.getCacheConfiguration().expiration().lifespan());
@@ -379,7 +386,7 @@ public class InfinispanDemo {
                      Util.close(stream);
                   }
                } 
-               cache = cacheManager.getCache();    
+               cache = cacheManager.getCache();
                cache.start();
 
                // repaint the cfg file display
