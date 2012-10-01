@@ -232,7 +232,7 @@ public class BackupSenderImpl implements BackupSender {
             if (!isSync) continue;
          }
          if (isOffline(bc.site())) {
-            log.trace("The site '%s' is offline, not backing up information to it");
+            log.tracef("The site '%s' is offline, not backing up information to it", bc.site());
             continue;
          }
          XSiteBackup bi = new XSiteBackup(bc.site(), isSync, bc.replicationTimeout());
