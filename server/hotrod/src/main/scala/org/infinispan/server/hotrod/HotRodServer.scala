@@ -40,6 +40,7 @@ import org.infinispan.context.{InvocationContext, Flag}
 import org.infinispan.commands.write.PutKeyValueCommand
 import org.infinispan.interceptors.base.BaseCustomInterceptor
 import org.infinispan.interceptors.EntryWrappingInterceptor
+import org.infinispan.upgrade.RollingUpgradeManager
 
 /**
  * Hot Rod server, in charge of defining its encoder/decoder and, if clustered, update the topology information
@@ -188,9 +189,17 @@ class HotRodServer extends AbstractProtocolServer("HotRod") with Log {
             cache = cacheManager.getCache(cacheName)
 
          knownCaches.put(cacheName, cache)
+         // make sure we register a Migrator for this cache!
+         tryRegisterMigrationManager(cacheName, cache)
       }
 
       cache
+   }
+
+   def tryRegisterMigrationManager(cacheName: String, cache: Cache[ByteArrayKey, CacheValue]) {
+      val cr = cache.getAdvancedCache.getComponentRegistry
+      val migrationManager = cr.getComponent(classOf[RollingUpgradeManager])
+      if (migrationManager != null) migrationManager.addMigrator(new HotRodMigrator(cache))
    }
 
    private[hotrod] def getAddressCache = addressCache
