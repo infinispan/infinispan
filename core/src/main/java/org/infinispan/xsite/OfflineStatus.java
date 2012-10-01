@@ -85,7 +85,7 @@ public class OfflineStatus {
          throw new IllegalStateException("Cannot invoke this method if minTimeToWait is not enabled");
       long millis = millisSinceFirstFailure();
       if (millis >= takeOffline.minTimeToWait()) {
-         log.tracef("The minTimeToWait hasn't passed: minTime=%s, timeSinceFirstFailure=%s",
+         log.tracef("The minTimeToWait has passed: minTime=%s, timeSinceFirstFailure=%s",
                     takeOffline.minTimeToWait(), millis);
          return true;
       }
