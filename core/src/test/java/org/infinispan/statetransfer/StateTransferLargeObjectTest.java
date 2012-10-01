@@ -48,7 +48,7 @@ import static org.testng.Assert.assertEquals;
 public class StateTransferLargeObjectTest extends MultipleCacheManagersTest {
 
    private static final Log log = LogFactory.getLog(StateTransferLargeObjectTest.class);
-
+   
    private Cache c0;
    private Cache c1;
    private Cache c2;
