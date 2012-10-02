@@ -22,7 +22,6 @@
  */
 package org.infinispan.server.memcached.test
 
-import java.lang.reflect.Method
 import net.spy.memcached.{DefaultConnectionFactory, MemcachedClient}
 import java.net.InetSocketAddress
 import java.util.concurrent.atomic.AtomicInteger
@@ -37,22 +36,15 @@ import org.infinispan.server.core.Main._
  * @author Galder Zamarreño
  * @since 4.1
  */
-trait MemcachedTestingUtil {
+object MemcachedTestingUtil {
+
    def host = "127.0.0.1"
 
-   def k(m: Method, prefix: String): String = prefix + m.getName
-
-   def v(m: Method, prefix: String): String = prefix + m.getName
-
-   def k(m: Method): String = k(m, "k-")
-
-   def v(m: Method): String = v(m, "v-")
-
    def createMemcachedClient(timeout: Long, port: Int): MemcachedClient = {
-      var d: DefaultConnectionFactory = new DefaultConnectionFactory {
+      val d: DefaultConnectionFactory = new DefaultConnectionFactory {
          override def getOperationTimeout: Long = timeout
       }
-      return new MemcachedClient(d, Arrays.asList(new InetSocketAddress(host, port)))
+      new MemcachedClient(d, Arrays.asList(new InetSocketAddress(host, port)))
    }
 
    def startMemcachedTextServer(cacheManager: EmbeddedCacheManager): MemcachedServer =
@@ -79,7 +71,7 @@ trait MemcachedTestingUtil {
       val server = new MemcachedServer {
 
          override def getDecoder: MemcachedDecoder = {
-            var memcachedDecoder: MemcachedDecoder = new MemcachedDecoder(getCacheManager.getCache[String, MemcachedValue](cacheName), scheduler, transport)
+            val memcachedDecoder = new MemcachedDecoder(getCacheManager.getCache[String, MemcachedValue](cacheName), scheduler, transport)
             memcachedDecoder.versionGenerator = this.versionGenerator
             memcachedDecoder
          }
@@ -89,7 +81,19 @@ trait MemcachedTestingUtil {
       server.start(getProperties(host, port), cacheManager)
       server
    }
-   
+
+   def killClient(client: MemcachedClient) {
+      try {
+         if (client != null) client.shutdown()
+      }
+      catch {
+         case t: Throwable => {
+            error("Error stopping client", t)
+            null
+         }
+      }
+   }
+
 }
 
 object UniquePortThreadLocal extends ThreadLocal[Int] {
