@@ -41,6 +41,8 @@ import org.infinispan.transaction.TransactionTable;
 import org.infinispan.transaction.xa.CacheTransaction;
 import org.infinispan.util.concurrent.TimeoutException;
 
+import java.util.Collection;
+
 /**
  * Base class for transaction based locking interceptors.
  *
@@ -54,6 +56,7 @@ public abstract class AbstractTxLockingInterceptor extends AbstractLockingInterc
    private boolean clustered;
 
    @Inject
+   @SuppressWarnings("unused")
    public void setDependencies(TransactionTable txTable, RpcManager rpcManager) {
       this.txTable = txTable;
       this.rpcManager = rpcManager;
@@ -155,7 +158,6 @@ public abstract class AbstractTxLockingInterceptor extends AbstractLockingInterc
     * when the cluster is stable.
     */
    protected final void lockKeyAndCheckOwnership(InvocationContext ctx, Object key, long lockTimeout, boolean skipLocking) throws InterruptedException {
-      boolean checkForPendingLocks = false;
       //this is possible when the put is originated as a result of a state transfer
       if (!ctx.isInTxScope()) {
          lockManager.acquireLock(ctx, key, lockTimeout, skipLocking);
@@ -164,6 +166,7 @@ public abstract class AbstractTxLockingInterceptor extends AbstractLockingInterc
       TxInvocationContext txContext = (TxInvocationContext) ctx;
       int transactionViewId = -1;
       boolean useStrictComparison = true;
+      boolean checkForPendingLocks = false;
       if (clustered) {
          transactionViewId = txContext.getCacheTransaction().getViewId();
          if (transactionViewId != TransactionTable.CACHE_STOPPED_VIEW_ID) {
@@ -175,23 +178,13 @@ public abstract class AbstractTxLockingInterceptor extends AbstractLockingInterc
       if (checkForPendingLocks) {
          getLog().tracef("Checking for pending locks and then locking key %s", key);
 
-         long expectedEndTime = nowMillis() + cacheConfiguration.locking().lockAcquisitionTimeout();
+         final long expectedEndTime = nowMillis() + cacheConfiguration.locking().lockAcquisitionTimeout();
 
          // Check local transactions first
-         for (CacheTransaction ct: txTable.getLocalTransactions()) {
-            if (isFromOlderTopology(ct.getViewId(), transactionViewId, useStrictComparison)) {
-               long remaining = expectedEndTime - nowMillis();
-               if (remaining < 0 || !ct.waitForLockRelease(key, remaining)) throw newTimeoutException(key, txContext);
-            }
-         }
+         waitForTransactionsToComplete(txContext, txTable.getLocalTransactions(), key, transactionViewId, useStrictComparison, expectedEndTime);
 
          // ... then remote ones
-         for (CacheTransaction ct: txTable.getRemoteTransactions()) {
-            if (isFromOlderTopology(ct.getViewId(), transactionViewId, useStrictComparison)) {
-               long remaining = expectedEndTime - nowMillis();
-               if (remaining < 0 || !ct.waitForLockRelease(key, remaining)) throw newTimeoutException(key, txContext);
-            }
-         }
+         waitForTransactionsToComplete(txContext, txTable.getRemoteTransactions(), key, transactionViewId, useStrictComparison, expectedEndTime);
 
          // Then try to acquire a lock
          final long remaining = expectedEndTime - nowMillis();
@@ -204,6 +197,28 @@ public abstract class AbstractTxLockingInterceptor extends AbstractLockingInterc
       } else {
          getLog().tracef("Locking key %s, no need to check for pending locks.", key);
          lockManager.acquireLock(ctx, key, lockTimeout, skipLocking);
+      }
+   }
+
+   private void waitForTransactionsToComplete(TxInvocationContext txContext, Collection<? extends CacheTransaction> transactions,
+                                              Object key, int transactionViewId, boolean useStrictComparison,
+                                              long expectedEndTime) throws InterruptedException {
+      for (CacheTransaction tx : transactions) {
+         if (isFromOlderTopology(tx.getViewId(), transactionViewId, useStrictComparison)) {
+            boolean txCompleted = false;
+
+            long remaining;
+            while ((remaining = expectedEndTime - nowMillis()) > 0) {
+               if (tx.waitForLockRelease(key, remaining)) {
+                  txCompleted = true;
+                  break;
+               }
+            }
+
+            if (!txCompleted) {
+               throw newTimeoutException(key, txContext);
+            }
+         }
       }
    }
 

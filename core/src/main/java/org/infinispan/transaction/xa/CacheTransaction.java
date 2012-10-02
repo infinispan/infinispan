@@ -79,6 +79,14 @@ public interface CacheTransaction {
    void notifyOnTransactionFinished();
 
    /**
+    * Checks if this transaction holds a lock on the given key and then waits until the transaction completes or until
+    * the timeout expires and returns <code>true</code> if the transaction is complete or <code>false</code> otherwise.
+    * If the key is not locked or if the transaction is already completed it returns <code>true</code> immediately.
+    * <p/>
+    * This method is subject to spurious returns in a way similar to {@link java.lang.Object#wait()}. It can sometimes return
+    * before the specified time has elapsed and without guaranteeing that this transaction is complete. The caller is
+    * responsible to call the method again if transaction completion was not reached and the time budget was not spent.
+    *
     * @see org.infinispan.interceptors.locking.AbstractTxLockingInterceptor#lockKeyAndCheckOwnership(org.infinispan.context.InvocationContext, Object)
     */
    boolean waitForLockRelease(Object key, long lockAcquisitionTimeout) throws InterruptedException;
