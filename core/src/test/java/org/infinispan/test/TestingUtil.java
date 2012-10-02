@@ -71,13 +71,12 @@ import org.infinispan.marshall.AbstractDelegatingMarshaller;
 import org.infinispan.marshall.StreamingMarshaller;
 import org.infinispan.marshall.jboss.ExternalizerTable;
 import org.infinispan.remoting.ReplicationQueue;
-import org.infinispan.remoting.rpc.RpcManager;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.remoting.transport.Transport;
 import org.infinispan.remoting.transport.jgroups.JGroupsTransport;
+import org.infinispan.statetransfer.StateTransferManager;
 import org.infinispan.topology.CacheTopology;
 import org.infinispan.topology.DefaultRebalancePolicy;
-import org.infinispan.topology.LocalTopologyManager;
 import org.infinispan.topology.RebalancePolicy;
 import org.infinispan.transaction.TransactionTable;
 import org.infinispan.util.concurrent.locks.LockManager;
@@ -167,14 +166,14 @@ public class TestingUtil {
       // give it 1 second to start rehashing
       // TODO Should look at the last committed view instead and check if it contains all the caches
       LockSupport.parkNanos(TimeUnit.SECONDS.toNanos(1));
-      int gracetime = 90000; // 60 seconds
+      int gracetime = 90000; // 90 seconds
       long giveup = System.currentTimeMillis() + gracetime;
       for (Cache c : caches) {
-         LocalTopologyManager localTopologyManager = TestingUtil.extractGlobalComponent(c.getCacheManager(), LocalTopologyManager.class);
+         StateTransferManager stateTransferManager = TestingUtil.extractComponent(c, StateTransferManager.class);
          DefaultRebalancePolicy rebalancePolicy = (DefaultRebalancePolicy) TestingUtil.extractGlobalComponent(c.getCacheManager(), RebalancePolicy.class);
-         RpcManager rpcManager = TestingUtil.extractComponent(c, RpcManager.class);
+         Address cacheAddress = c.getAdvancedCache().getRpcManager().getAddress();
          while (true) {
-            CacheTopology cacheTopology = localTopologyManager.getCacheTopology(c.getName());
+            CacheTopology cacheTopology = stateTransferManager.getCacheTopology();
             boolean chContainsAllMembers = cacheTopology.getCurrentCH().getMembers().size() == caches.length;
             boolean chIsBalanced = rebalancePolicy.isBalanced(cacheTopology.getCurrentCH());
             boolean stateTransferInProgress = cacheTopology.getPendingCH() != null;
@@ -190,7 +189,7 @@ public class TestingUtil {
                   }
                   message = String.format("Timed out waiting for rebalancing to complete on node %s, " +
                         "expected member list is %s, current member list is %s!",
-                        rpcManager.getAddress(), Arrays.toString(addresses), cacheTopology.getCurrentCH().getMembers());
+                        cacheAddress, Arrays.toString(addresses), cacheTopology.getCurrentCH().getMembers());
                } else {
                   message = String.format("Timed out waiting for rebalancing to complete on node %s, " +
                         "current topology is %s", c.getCacheManager().getAddress(), cacheTopology);
@@ -201,7 +200,7 @@ public class TestingUtil {
 
             LockSupport.parkNanos(TimeUnit.MILLISECONDS.toNanos(100));
          }
-         log.trace("Node " + rpcManager.getAddress() + " finished state transfer.");
+         log.trace("Node " + cacheAddress + " finished state transfer.");
       }
    }
 
