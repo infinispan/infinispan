@@ -202,6 +202,7 @@ public class BackupSenderImpl implements BackupSender {
    private void processFailedResponses(BackupResponse backupResponse, VisitableCommand command, Transaction transaction) throws Throwable {
       SitesConfiguration sitesConfiguration = config.sites();
       Map<String, Throwable> failures = backupResponse.getFailedBackups();
+      BackupFailureException backupException = null;
       for (Map.Entry<String, Throwable> failure : failures.entrySet()) {
          BackupFailurePolicy policy = sitesConfiguration.getFailurePolicy(failure.getKey());
          if (policy == BackupFailurePolicy.CUSTOM) {
@@ -211,9 +212,13 @@ public class BackupSenderImpl implements BackupSender {
          if (policy == BackupFailurePolicy.WARN) {
             log.warnXsiteBackupFailed(cacheName, failure.getKey(), failure.getValue());
          } else if (policy == BackupFailurePolicy.FAIL) {
-            throw new BackupFailureException(failure.getValue(), failure.getKey(), cacheName);
+            if (backupException == null)
+               backupException = new BackupFailureException(cacheName);
+            backupException.addFailure(failure.getKey(), failure.getValue());
          }
       }
+      if (backupException != null)
+         throw backupException;
    }
 
    private List<XSiteBackup> calculateBackupInfo(BackupFilter backupFilter) {
