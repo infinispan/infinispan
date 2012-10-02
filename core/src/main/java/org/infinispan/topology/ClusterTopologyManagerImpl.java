@@ -224,7 +224,7 @@ public class ClusterTopologyManagerImpl implements ClusterTopologyManager {
       boolean becameCoordinator = !isCoordinator && transport.isCoordinator();
       isCoordinator = transport.isCoordinator();
 
-      if (mergeView || becameCoordinator) {
+      if ((isCoordinator && mergeView) || becameCoordinator) {
          try {
             Map<String, List<CacheTopology>> clusterCacheMap = recoverClusterStatus();
 
@@ -268,8 +268,10 @@ public class ClusterTopologyManagerImpl implements ClusterTopologyManager {
       return cacheStatus;
    }
 
-   public void updateCacheStatusAfterMerge(String cacheName, List<CacheTopology> partitionTopologies) throws Exception {
-      log.tracef("Initializing rebalance policy for cache %s, pre-existing partitions are %s", cacheName, partitionTopologies);
+   public void updateCacheStatusAfterMerge(String cacheName, List<CacheTopology> partitionTopologies)
+         throws Exception {
+      log.tracef("Initializing rebalance policy for cache %s, pre-existing partitions are %s",
+            cacheName, partitionTopologies);
       ClusterCacheStatus cacheStatus = cacheStatusMap.get(cacheName);
       if (partitionTopologies.isEmpty())
          return;
@@ -294,6 +296,15 @@ public class ClusterTopologyManagerImpl implements ClusterTopologyManager {
             if (topology.getPendingCH() != null)
                pendingCHUnion = chFactory.union(pendingCHUnion, topology.getPendingCH());
          }
+      }
+
+      // We have added each node to the cache status when we received its status response
+      List<Address> members = cacheStatus.getMembers();
+      if (currentCHUnion != null) {
+         currentCHUnion = chFactory.updateMembers(currentCHUnion, members);
+      }
+      if (pendingCHUnion != null) {
+         pendingCHUnion = chFactory.updateMembers(pendingCHUnion, members);
       }
 
       // Make sure the topology id is higher than any topology id we had before in the cluster
@@ -423,14 +434,15 @@ public class ClusterTopologyManagerImpl implements ClusterTopologyManager {
             if (topologyList == null) {
                // This is the first CacheJoinInfo we got for this cache, initialize its ClusterCacheStatus
                initCacheStatusIfAbsent(cacheName, joinInfo);
-               // This node may have joined, and still not be in the current or pending CH
-               // because the old coordinator didn't manage to start the rebalance before shutting down
-               cacheStatusMap.get(cacheName).addMember(sender);
 
                topologyList = new ArrayList<CacheTopology>();
                clusterCacheMap.put(cacheName, topologyList);
             }
             topologyList.add(cacheTopology);
+
+            // This node may have joined, and still not be in the current or pending CH
+            // because the old coordinator didn't manage to start the rebalance before shutting down
+            cacheStatusMap.get(cacheName).addMember(sender);
          }
       }
       return clusterCacheMap;

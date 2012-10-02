@@ -102,6 +102,8 @@ public abstract class AbstractTransport implements Transport {
             throw new SuspectException("Suspected member: " + sender, sender);
          } else {
             log.tracef("Target node %s left during remote call, ignoring", sender);
+            // Don't throw a TimeoutException in invokeRemotely if the only target left the cluster
+            invalidResponse = false;
          }
       } else {
          // if we have a response filter then we may not have waited for some nodes!
