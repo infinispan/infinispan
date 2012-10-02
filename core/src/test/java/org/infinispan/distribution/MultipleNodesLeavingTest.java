@@ -30,7 +30,6 @@ import org.infinispan.test.TestingUtil;
 import org.testng.annotations.Test;
 
 import java.util.List;
-import java.util.Set;
 
 /**
  * @author Mircea Markus
@@ -73,17 +72,17 @@ public class MultipleNodesLeavingTest extends MultipleCacheManagersTest {
          @Override
          public boolean isSatisfied() throws Exception {
             List<Address> members = advancedCache(0).getRpcManager().getTransport().getMembers();
-            System.out.println("members = " + members);
+            log.trace("members = " + members);
             return members.size() == 1;
          }
       });
 
-      System.out.println("MultipleNodesLeavingTest.testMultipleLeaves");
+      log.trace("MultipleNodesLeavingTest.testMultipleLeaves");
 
       TestingUtil.blockUntilViewsReceived(60000, false, cache(0));
       TestingUtil.waitForRehashToComplete(cache(0));
       List<Address> caches = advancedCache(0).getDistributionManager().getConsistentHash().getMembers();
-      System.out.println("caches = " + caches);
+      log.tracef("caches = %s", caches);
       int size = caches.size();
       assert size == 1;
    }
