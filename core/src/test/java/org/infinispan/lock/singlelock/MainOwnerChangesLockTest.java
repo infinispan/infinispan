@@ -16,7 +16,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 import static org.testng.AssertJUnit.assertEquals;
-import static org.testng.AssertJUnit.assertFalse;
+import static org.testng.AssertJUnit.fail;
 
 /**
  * @since 5.1
@@ -81,7 +81,7 @@ public class MainOwnerChangesLockTest extends MultipleCacheManagersTest {
          cache(2).put(migratedKey, "someValue");
          try {
             dummyTm(2).commit();
-            assertFalse("Exception should have been thrown here.", true);
+            fail("RollbackException should have been thrown here.");
          } catch (RollbackException e) {
             //expected
          }
