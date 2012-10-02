@@ -35,6 +35,7 @@ import java.util.concurrent.{CountDownLatch, TimeUnit}
 import org.infinispan.test.fwk.TestCacheManagerFactory
 import org.infinispan.config.Configuration
 import org.infinispan.Version
+import test.MemcachedTestingUtil._
 
 /**
  * Tests Memcached protocol functionality against Infinispan Memcached server.

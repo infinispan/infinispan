@@ -26,6 +26,7 @@ import java.util.concurrent.TimeUnit
 import java.lang.reflect.Method
 import org.testng.annotations.Test
 import org.testng.Assert._
+import org.infinispan.test.TestingUtil._
 
 /**
  * Tests that Infinispan Memcached server can shutdown even if client does not close connection.
@@ -37,7 +38,7 @@ import org.testng.Assert._
 class MemcachedShutdownTest extends MemcachedSingleNodeTest {
 
    @Test(enabled = false) // Disable explicitly to avoid TestNG thinking this is a test!!
-   override protected def shutdownClient {}
+   override protected def shutdownClient() {}
 
    def testAny(m: Method) {
       val f = client.set(k(m), 0, v(m))

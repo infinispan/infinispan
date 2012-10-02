@@ -22,7 +22,7 @@
  */
 package org.infinispan.server.memcached
 
-import test.MemcachedTestingUtil
+import test.MemcachedTestingUtil._
 import org.infinispan.test.SingleCacheManagerTest
 import org.infinispan.test.fwk.TestCacheManagerFactory
 import net.spy.memcached.MemcachedClient
@@ -40,7 +40,7 @@ import java.lang.StringBuilder
  * @author Galder Zamarreño
  * @since 4.1
  */
-abstract class MemcachedSingleNodeTest extends SingleCacheManagerTest with MemcachedTestingUtil {
+abstract class MemcachedSingleNodeTest extends SingleCacheManagerTest {
    private var memcachedClient: MemcachedClient = _
    private var memcachedServer: MemcachedServer = _
    private val operationTimeout: Int = 60
@@ -49,17 +49,17 @@ abstract class MemcachedSingleNodeTest extends SingleCacheManagerTest with Memca
       cacheManager = createTestCacheManager
       memcachedServer = startMemcachedTextServer(cacheManager)
       memcachedClient = createMemcachedClient(60000, server.getPort)
-      cache = cacheManager.getCache(MemcachedServer.cacheName)
-      return cacheManager
+      cache = cacheManager.getCache[AnyRef, AnyRef](MemcachedServer.cacheName)
+      cacheManager
    }
 
    protected def createTestCacheManager: EmbeddedCacheManager = TestCacheManagerFactory.createLocalCacheManager(false)
 
    @AfterClass(alwaysRun = true)
-   override def destroyAfterClass {
-      super.destroyAfterClass
+   override def destroyAfterClass() {
+      super.destroyAfterClass()
       log.debug("Test finished, close memcached server")
-      shutdownClient
+      shutdownClient()
       memcachedServer.stop
    }
 
@@ -70,11 +70,13 @@ abstract class MemcachedSingleNodeTest extends SingleCacheManagerTest with Memca
    protected def server: MemcachedServer = memcachedServer
 
    @Test(enabled = false) // Disable explicitly to avoid TestNG thinking this is a test!!
-   protected def shutdownClient = memcachedClient.shutdown
+   protected def shutdownClient() {
+      memcachedClient.shutdown()
+   }
 
-   protected def send(req: String): String = sendMulti(req, 1, true).head
+   protected def send(req: String): String = sendMulti(req, 1, wait = true).head
 
-   protected def sendNoWait(req: String) = sendMulti(req, 1, false)
+   protected def sendNoWait(req: String) = sendMulti(req, 1, wait = false)
 
    protected def sendMulti(req: String, expectedResponses: Int, wait: Boolean): List[String] = {
       val socket = new Socket(server.getHost, server.getPort)
@@ -90,7 +92,7 @@ abstract class MemcachedSingleNodeTest extends SingleCacheManagerTest with Memca
          }
       }
       finally {
-         socket.close
+         socket.close()
       }
    }
 
@@ -113,13 +115,19 @@ abstract class MemcachedSingleNodeTest extends SingleCacheManagerTest with Memca
    }
 
    @Test(enabled = false) // Disable explicitly to avoid TestNG thinking this is a test!!
-   protected def assertClientError(resp: String) = assertExpectedResponse(resp, "CLIENT_ERROR", false)
+   protected def assertClientError(resp: String) {
+      assertExpectedResponse(resp, "CLIENT_ERROR", strictComparison = false)
+   }
 
    @Test(enabled = false) // Disable explicitly to avoid TestNG thinking this is a test!!
-   protected def assertError(resp: String) = assertExpectedResponse(resp, "ERROR", true)
+   protected def assertError(resp: String) {
+      assertExpectedResponse(resp, "ERROR", strictComparison = true)
+   }
 
    @Test(enabled = false) // Disable explicitly to avoid TestNG thinking this is a test!!
-   protected def assertStored(resp: String) = assertExpectedResponse(resp, "STORED", true)
+   protected def assertStored(resp: String) {
+      assertExpectedResponse(resp, "STORED", strictComparison = true)
+   }
 
    @Test(enabled = false) // Disable explicitly to avoid TestNG thinking this is a test!!
    protected def assertExpectedResponse(resp: String, expectedResp: String, strictComparison: Boolean) {
