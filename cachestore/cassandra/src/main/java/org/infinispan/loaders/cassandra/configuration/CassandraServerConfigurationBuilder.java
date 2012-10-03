@@ -19,6 +19,7 @@
 package org.infinispan.loaders.cassandra.configuration;
 
 import org.infinispan.config.ConfigurationException;
+import org.infinispan.configuration.Builder;
 
 /**
  *
@@ -27,7 +28,7 @@ import org.infinispan.config.ConfigurationException;
  * @author Tristan Tarrant
  * @since 5.2
  */
-public class CassandraServerConfigurationBuilder extends AbstractCassandraCacheStoreConfigurationChildBuilder<CassandraServerConfiguration> {
+public class CassandraServerConfigurationBuilder extends AbstractCassandraCacheStoreConfigurationChildBuilder<CassandraCacheStoreConfigurationBuilder> implements Builder<CassandraServerConfiguration> {
 
    protected CassandraServerConfigurationBuilder(CassandraCacheStoreConfigurationBuilder builder) {
       super(builder);

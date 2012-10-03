@@ -28,7 +28,7 @@ import org.infinispan.loaders.keymappers.Key2StringMapper;
  * @author Tristan Tarrant
  * @since 5.2
  */
-public interface CassandraCacheStoreConfigurationChildBuilder extends StoreConfigurationChildBuilder {
+public interface CassandraCacheStoreConfigurationChildBuilder<S> extends StoreConfigurationChildBuilder<S> {
    CassandraCacheStoreConfigurationBuilder autoCreateKeyspace(boolean autoCreateKeyspace);
 
    CassandraCacheStoreConfigurationBuilder configurationPropertiesFile(String configurationPropertiesFile);

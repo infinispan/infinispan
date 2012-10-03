@@ -29,7 +29,7 @@ import org.infinispan.loaders.keymappers.Key2StringMapper;
  * @since 5.2
  */
 public abstract class AbstractCassandraCacheStoreConfigurationChildBuilder<T> extends
-      AbstractStoreConfigurationChildBuilder<T> implements CassandraCacheStoreConfigurationChildBuilder {
+      AbstractStoreConfigurationChildBuilder<T> implements CassandraCacheStoreConfigurationChildBuilder<T> {
 
    private CassandraCacheStoreConfigurationBuilder builder;
 
