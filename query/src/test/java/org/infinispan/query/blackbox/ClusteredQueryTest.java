@@ -34,7 +34,8 @@ import org.infinispan.Cache;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.query.CacheQuery;
-import org.infinispan.query.QueryIterator;
+import org.infinispan.query.FetchOptions;
+import org.infinispan.query.ResultIterator;
 import org.infinispan.query.Search;
 import org.infinispan.query.test.Person;
 import org.infinispan.test.MultipleCacheManagersTest;
@@ -123,7 +124,7 @@ public class ClusteredQueryTest extends MultipleCacheManagersTest {
       Sort sort = new Sort(sortField);
       cacheQuery.sort(sort);
 
-      QueryIterator iterator = cacheQuery.lazyIterator();
+      ResultIterator iterator = cacheQuery.iterator(new FetchOptions().fetchMode(FetchOptions.FetchMode.LAZY));
       assert cacheQuery.getResultSize() == 4 : cacheQuery.getResultSize();
 
       int previousAge = 0;
@@ -139,7 +140,7 @@ public class ClusteredQueryTest extends MultipleCacheManagersTest {
    public void testLazyNonOrdered() throws ParseException {
       populateCache();
 
-      QueryIterator iterator = cacheQuery.lazyIterator();
+      ResultIterator iterator = cacheQuery.iterator(new FetchOptions().fetchMode(FetchOptions.FetchMode.LAZY));
       assert cacheQuery.getResultSize() == 4 : cacheQuery.getResultSize();
       iterator.close();
    }
@@ -152,7 +153,7 @@ public class ClusteredQueryTest extends MultipleCacheManagersTest {
       Sort sort = new Sort(sortField);
       cacheQuery.sort(sort);
 
-      QueryIterator iterator = cacheQuery.iterator();
+      ResultIterator iterator = cacheQuery.iterator(new FetchOptions().fetchMode(FetchOptions.FetchMode.EAGER));
       assert cacheQuery.getResultSize() == 4 : cacheQuery.getResultSize();
 
       int previousAge = 0;

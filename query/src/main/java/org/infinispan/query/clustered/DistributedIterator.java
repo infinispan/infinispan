@@ -26,7 +26,7 @@ import org.apache.lucene.search.Sort;
 import org.apache.lucene.search.SortField;
 import org.apache.lucene.util.PriorityQueue;
 import org.infinispan.AdvancedCache;
-import org.infinispan.query.impl.AbstractIterator;
+import org.infinispan.query.ResultIterator;
 import org.infinispan.util.ReflectionUtil;
 
 import java.util.ArrayList;
@@ -40,9 +40,10 @@ import java.util.UUID;
  * Iterates on a distributed query.
  * 
  * @author Israel Lacerra <israeldl@gmail.com>
+ * @author <a href="mailto:mluksa@redhat.com">Marko Luksa</a>
  * @since 5.1
  */
-public class DistributedIterator extends AbstractIterator {
+public class DistributedIterator implements ResultIterator {
 
    protected final AdvancedCache<?, ?> cache;
 
@@ -52,6 +53,8 @@ public class DistributedIterator extends AbstractIterator {
    private final ArrayList<Object> orderedValues = new ArrayList<Object>();
 
    private final Sort sort;
+
+   private final int fetchSize;
 
    private HashMap<UUID, ClusteredTopDocs> topDocsResponses;
 
@@ -124,34 +127,10 @@ public class DistributedIterator extends AbstractIterator {
    }
 
    @Override
-   public void jumpToResult(int index) throws IndexOutOfBoundsException {
-      currentIndex = index;
-   }
-
-   @Override
-   public void add(Object arg0) {
-      throw new UnsupportedOperationException(
-            "Not supported as you are trying to change something in the cache.  Please use searchableCache.put()");
-   }
-
-   @Override
    public Object next() {
       if (!hasNext())
          throw new NoSuchElementException("Out of boundaries");
       currentIndex++;
-      return current();
-   }
-
-   @Override
-   public int nextIndex() {
-      if (!hasNext())
-         throw new NoSuchElementException("Out of boundaries");
-      return currentIndex + 1;
-   }
-
-   @Override
-   public Object previous() {
-      currentIndex--;
       return current();
    }
 
@@ -212,18 +191,7 @@ public class DistributedIterator extends AbstractIterator {
    }
 
    @Override
-   public int previousIndex() {
-      return currentIndex - 1;
-   }
-
-   @Override
    public void remove() {
-      throw new UnsupportedOperationException(
-            "Not supported as you are trying to change something in the cache.  Please use searchableCache.put()");
-   }
-
-   @Override
-   public void set(Object arg0) {
       throw new UnsupportedOperationException(
             "Not supported as you are trying to change something in the cache.  Please use searchableCache.put()");
    }

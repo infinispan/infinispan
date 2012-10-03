@@ -31,8 +31,9 @@ import org.infinispan.Cache;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.query.CacheQuery;
+import org.infinispan.query.FetchOptions;
 import org.infinispan.query.ProjectionConstants;
-import org.infinispan.query.QueryIterator;
+import org.infinispan.query.ResultIterator;
 import org.infinispan.query.Search;
 import org.infinispan.query.SearchManager;
 import org.infinispan.test.SingleCacheManagerTest;
@@ -114,8 +115,8 @@ public class ProjectionTest extends SingleCacheManagerTest {
 
    private void assertQueryReturns(CacheQuery cacheQuery, Object[] expected) {
       assertQueryListContains(cacheQuery.list(), expected);
-      assertQueryIteratorContains(cacheQuery.iterator(), expected);
-      assertQueryIteratorContains(cacheQuery.lazyIterator(), expected);
+      assertQueryIteratorContains(cacheQuery.iterator(new FetchOptions().fetchMode(FetchOptions.FetchMode.EAGER)), expected);
+      assertQueryIteratorContains(cacheQuery.iterator(new FetchOptions().fetchMode(FetchOptions.FetchMode.LAZY)), expected);
    }
 
    private void assertQueryListContains(List list, Object[] expected) {
@@ -124,7 +125,7 @@ public class ProjectionTest extends SingleCacheManagerTest {
       Assert.assertArrayEquals(expected, array);
    }
 
-   private void assertQueryIteratorContains(QueryIterator iterator, Object[] expected) {
+   private void assertQueryIteratorContains(ResultIterator iterator, Object[] expected) {
       assert iterator.hasNext();
       Object[] array = (Object[]) iterator.next();
       assert Arrays.equals(array, expected);

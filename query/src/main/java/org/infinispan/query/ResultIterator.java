@@ -22,7 +22,7 @@
  */
 package org.infinispan.query;
 
-import java.util.ListIterator;
+import java.util.Iterator;
 
 /**
  * Iterates over query results
@@ -30,59 +30,12 @@ import java.util.ListIterator;
  *
  * @author Manik Surtani
  * @author Navin Surtani
+ * @author Marko Luksa
  */
-public interface QueryIterator extends ListIterator<Object> {
-   /**
-    * Jumps to a specific index in the iterator.
-    *
-    * @param index index to jump to.
-    * @throws IndexOutOfBoundsException if the index is out of bounds
-    */
-   void jumpToResult(int index) throws IndexOutOfBoundsException;
-
-   /**
-    * Jumps to the first result
-    */
-   void first();
-
-   /**
-    * Jumps to the last result
-    */
-   void last();
-
-   /**
-    * Jumps to the one-after-the-first result
-    */
-   void afterFirst();
-
-   /**
-    * Jumps to the one-before-the-last result
-    */
-   void beforeLast();
-
-   /**
-    * @return true if the current result is the first
-    */
-   boolean isFirst();
-
-   /**
-    * @return true if the current result is the last
-    */
-   boolean isLast();
-
-   /**
-    * @return true if the current result is one after the first
-    */
-   boolean isAfterFirst();
-
-   /**
-    * @return true if the current result is one before the last
-    */
-   boolean isBeforeLast();
+public interface ResultIterator extends Iterator<Object> {
 
    /**
     * This method must be called on your iterator once you have finished so that Lucene resources can be freed up.
     */
-
    void close();
 }
