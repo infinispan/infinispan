@@ -81,9 +81,4 @@ public class OptimisticBackupInterceptor extends BaseBackupInterceptor {
       backupSender.processResponses(backupResponse, command, ctx.getTransaction());
       return result;
    }
-
-   private boolean isTxFromRemoteSite(GlobalTransaction gtx) {
-      LocalTransaction remoteTx = txTable.getLocalTransaction(gtx);
-      return remoteTx.isFromRemoteSite();
-   }
 }

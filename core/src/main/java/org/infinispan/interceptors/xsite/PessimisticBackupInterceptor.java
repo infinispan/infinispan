@@ -39,8 +39,8 @@ public class PessimisticBackupInterceptor extends BaseBackupInterceptor {
       if (!shouldInvokeRemoteTxCommand(ctx))
          return super.visitPrepareCommand(ctx, command);
 
-      LocalTransaction remoteTx = txTable.getLocalTransaction(command.getGlobalTransaction());
-      if (remoteTx.isFromRemoteSite()) {
+      boolean isTxFromRemoteSite = isTxFromRemoteSite( command.getGlobalTransaction() );
+      if (isTxFromRemoteSite) {
          return invokeNextInterceptor(ctx, command);
       }
 

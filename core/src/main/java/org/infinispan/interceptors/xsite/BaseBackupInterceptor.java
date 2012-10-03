@@ -19,9 +19,13 @@
 
 package org.infinispan.interceptors.xsite;
 
+import org.infinispan.context.impl.LocalTxInvocationContext;
+import org.infinispan.context.impl.TxInvocationContext;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.interceptors.base.BaseRpcInterceptor;
+import org.infinispan.transaction.LocalTransaction;
 import org.infinispan.transaction.TransactionTable;
+import org.infinispan.transaction.xa.GlobalTransaction;
 import org.infinispan.xsite.BackupSender;
 
 /**
@@ -37,5 +41,15 @@ public class BaseBackupInterceptor extends BaseRpcInterceptor {
    void init(BackupSender sender, TransactionTable txTable) {
       this.backupSender = sender;
       this.txTable = txTable;
+   }
+   
+   protected boolean isTxFromRemoteSite(GlobalTransaction gtx) {
+      LocalTransaction remoteTx = txTable.getLocalTransaction(gtx);
+      return remoteTx.isFromRemoteSite();
+   }
+   
+   protected static boolean shouldInvokeRemoteTxCommand(TxInvocationContext ctx) {
+      // ISPN-2362: For backups, we should only replicate to the remote site if there are modifications to replay.
+      return ctx.isOriginLocal() && (ctx.hasModifications() );
    }
 }
