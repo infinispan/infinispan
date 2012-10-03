@@ -24,8 +24,6 @@
 package org.infinispan.query.impl;
 
 import java.io.IOException;
-import java.util.Arrays;
-import java.util.NoSuchElementException;
 
 import net.jcip.annotations.NotThreadSafe;
 
@@ -35,8 +33,8 @@ import org.hibernate.search.query.engine.spi.HSQuery;
 import org.infinispan.CacheException;
 
 /**
- * Implementation for {@link org.infinispan.query.QueryIterator}. This loads the results only when required
- * and hence differs from {@link EagerIterator} which is the other implementation of QueryIterator.
+ * Implementation for {@link org.infinispan.query.ResultIterator}. This loads the results only when required
+ * and hence differs from {@link EagerIterator} which is the other implementation of ResultIterator.
  *
  * @author Navin Surtani
  * @author Marko Luksa

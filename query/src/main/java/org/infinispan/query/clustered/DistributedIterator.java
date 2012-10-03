@@ -26,7 +26,7 @@ import org.apache.lucene.search.Sort;
 import org.apache.lucene.search.SortField;
 import org.apache.lucene.util.PriorityQueue;
 import org.infinispan.AdvancedCache;
-import org.infinispan.query.QueryIterator;
+import org.infinispan.query.ResultIterator;
 import org.infinispan.util.ReflectionUtil;
 
 import java.util.ArrayList;
@@ -40,9 +40,10 @@ import java.util.UUID;
  * Iterates on a distributed query.
  * 
  * @author Israel Lacerra <israeldl@gmail.com>
+ * @author <a href="mailto:mluksa@redhat.com">Marko Luksa</a>
  * @since 5.1
  */
-public class DistributedIterator implements QueryIterator {
+public class DistributedIterator implements ResultIterator {
 
    protected final AdvancedCache<?, ?> cache;
 
@@ -126,32 +127,10 @@ public class DistributedIterator implements QueryIterator {
    }
 
    @Override
-   public void jumpToIndex(int index) throws IndexOutOfBoundsException {
-      currentIndex = index;
-   }
-
-   @Override
-   public void add(Object arg0) {
-      throw new UnsupportedOperationException(
-            "Not supported as you are trying to change something in the cache.  Please use searchableCache.put()");
-   }
-
-   @Override
    public Object next() {
       if (!hasNext())
          throw new NoSuchElementException("Out of boundaries");
       currentIndex++;
-      return current();
-   }
-
-   @Override
-   public int nextIndex() {
-      return currentIndex + 1;
-   }
-
-   @Override
-   public Object previous() {
-      currentIndex--;
       return current();
    }
 
@@ -212,33 +191,7 @@ public class DistributedIterator implements QueryIterator {
    }
 
    @Override
-   public int previousIndex() {
-      return currentIndex - 1;
-   }
-
-   @Override
-   public void beforeFirst() {
-      currentIndex = 0;
-   }
-
-   @Override
-   public void afterLast() {
-      currentIndex = resultSize;
-   }
-
-   @Override
-   public boolean hasPrevious() {
-      return currentIndex > 0;
-   }
-
-   @Override
    public void remove() {
-      throw new UnsupportedOperationException(
-            "Not supported as you are trying to change something in the cache.  Please use searchableCache.put()");
-   }
-
-   @Override
-   public void set(Object arg0) {
       throw new UnsupportedOperationException(
             "Not supported as you are trying to change something in the cache.  Please use searchableCache.put()");
    }

@@ -34,7 +34,7 @@ import java.util.Map;
 
 import org.hibernate.search.query.engine.spi.EntityInfo;
 import org.infinispan.AdvancedCache;
-import org.infinispan.query.QueryIterator;
+import org.infinispan.query.ResultIterator;
 import org.infinispan.query.backend.KeyTransformationHandler;
 import org.mockito.invocation.InvocationOnMock;
 import org.mockito.stubbing.Answer;
@@ -54,7 +54,7 @@ public class EagerIteratorTest {
    List<String> keys;
    List<EntityInfo> entityInfos;
    Map<String, String> dummyResults;
-   QueryIterator iterator;
+   ResultIterator iterator;
    AdvancedCache<String, String> cache;
    private KeyTransformationHandler keyTransformationHandler;
 
@@ -100,102 +100,17 @@ public class EagerIteratorTest {
       iterator = null;
    }
 
-   public void testBeforeResult() throws IndexOutOfBoundsException {
-      iterator.jumpToIndex(0);
-      assert !iterator.hasPrevious();
-
-      iterator.jumpToIndex(1);
-      assert iterator.hasPrevious();
-      iterator.previous();
-      assert !iterator.hasPrevious();
-
-      iterator.jumpToIndex(keys.size() - 1);
-      assert iterator.hasNext();
-      iterator.next();
-      assert !iterator.hasNext();
-
-      try {
-         iterator.jumpToIndex(keys.size());
-         Assert.fail("expected IndexOutOfBoundsException");
-      } catch (IndexOutOfBoundsException e) {
-         // ok
-      }
-   }
-
-   public void testBeforeFirst() {
-      iterator.beforeFirst();
-      assert !iterator.hasPrevious() : "We should be pointing at the first element";
-      assert iterator.next() == resultAt(0);
-      assert iterator.hasPrevious();
-   }
-
    protected String resultAt(int index) {
       return dummyResults.get(keys.get( index ));
    }
 
-   public void testAfterLast() {
-      iterator.afterLast();
-
-      //Makes sure that the iterator is past the last element.
-      assert !iterator.hasNext();
-      assert iterator.hasPrevious();
-
-      Object previous = iterator.previous();
-      //Makes sure that previous is the last element.
-      assert previous == resultAt(keys.size() - 1);
-
-      //Check that the iterator is pointing in front of the last element.
-      assert iterator.hasNext();
-   }
-
    public void testNextAndHasNext() {
-      iterator.beforeFirst();
       for (int i = 0; i < keys.size(); i++) {
          Object expectedValue = resultAt(i);
          assert iterator.hasNext(); // should have next as long as we are less than the number of elements.
          assert expectedValue == iterator.next(); // tests next()
       }
       assert !iterator.hasNext(); // this should now NOT be true.
-   }
-
-   public void testPreviousAndHasPrevious() {
-      iterator.afterLast();
-      for (int i = keys.size() - 1; i >= 0; i--) {
-         Object expectedValue = resultAt(i);
-         assert iterator.hasPrevious(); // should have previous as long as we are more than the number of elements.
-         assert expectedValue == iterator.previous();
-      }
-      assert !iterator.hasPrevious(); // this should now NOT be true.
-
-   }
-
-   public void testNextIndex() {
-      assert iterator.nextIndex() == 0;
-
-      iterator.beforeFirst();
-      assert iterator.nextIndex() == 0;
-
-      iterator.afterLast();
-      assert iterator.nextIndex() == keys.size();
-   }
-
-   public void testPreviousIndex() {
-      assert iterator.previousIndex() == -1;
-
-      iterator.beforeFirst();
-      assert iterator.previousIndex() == -1;
-
-      iterator.afterLast();
-      assert iterator.previousIndex() == keys.size() - 1;
-   }
-
-   public void testMixedNextPrevious() {
-      assert iterator.next() == resultAt(0);
-      assert iterator.next() == resultAt(1);
-      assert iterator.previous() == resultAt(1);
-      assert iterator.previous() == resultAt(0);
-      assert iterator.next() == resultAt(0);
-      assert iterator.next() == resultAt(1);
    }
 
    private static class MockEntityInfo implements EntityInfo {

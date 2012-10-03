@@ -41,7 +41,7 @@ import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.query.CacheQuery;
 import org.infinispan.query.FetchOptions;
 import org.infinispan.query.Search;
-import org.infinispan.query.QueryIterator;
+import org.infinispan.query.ResultIterator;
 import org.infinispan.query.test.AnotherGrassEater;
 import org.infinispan.query.test.Person;
 import org.infinispan.test.SingleCacheManagerTest;
@@ -93,7 +93,7 @@ public class LocalCacheTest extends SingleCacheManagerTest {
       loadTestingData();
       CacheQuery cacheQuery = createCacheQuery(cache, "blurb", "playing" );
 
-      QueryIterator found = cacheQuery.iterator(new FetchOptions(FetchOptions.FetchMode.EAGER));
+      ResultIterator found = cacheQuery.iterator(new FetchOptions().fetchMode(FetchOptions.FetchMode.EAGER));
 
       assert found.hasNext();
       found.next();
@@ -263,7 +263,7 @@ public class LocalCacheTest extends SingleCacheManagerTest {
       Query luceneQuery = queryParser.parse("playing");
       CacheQuery cacheQuery = Search.getSearchManager(cache).getQuery(luceneQuery);
 
-      QueryIterator found = cacheQuery.iterator(new FetchOptions(FetchOptions.FetchMode.LAZY));
+      ResultIterator found = cacheQuery.iterator(new FetchOptions().fetchMode(FetchOptions.FetchMode.LAZY));
 
       assert found.hasNext();
       found.next();

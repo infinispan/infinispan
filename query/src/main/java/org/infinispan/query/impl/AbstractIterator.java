@@ -23,7 +23,7 @@
 package org.infinispan.query.impl;
 
 import org.hibernate.search.query.engine.spi.EntityInfo;
-import org.infinispan.query.QueryIterator;
+import org.infinispan.query.ResultIterator;
 
 import java.util.NoSuchElementException;
 
@@ -37,7 +37,7 @@ import java.util.NoSuchElementException;
  * @see org.infinispan.query.impl.LazyIterator
  * @since 4.0
  */
-public abstract class AbstractIterator implements QueryIterator {
+public abstract class AbstractIterator implements ResultIterator {
 
    protected final Object[] buffer;
 
@@ -65,43 +65,8 @@ public abstract class AbstractIterator implements QueryIterator {
    }
 
    @Override
-   public void beforeFirst() {
-      index = 0;
-   }
-
-   @Override
-   public void afterLast() {
-      index = max + 1;
-   }
-
-   @Override
-   public boolean hasPrevious() {
-      return index > 0;
-   }
-
-   @Override
    public boolean hasNext() {
       return index <= max;
-   }
-
-   /**
-    * Returns the index of the element that would be returned by a subsequent call to next.
-    *
-    * @return Index of next element.
-    */
-   @Override
-   public int nextIndex() {
-      return index;
-   }
-
-   /**
-    * Returns the index of the element that would be returned by a subsequent call to previous.
-    *
-    * @return Index of previous element.
-    */
-   @Override
-   public int previousIndex() {
-      return index - 1;
    }
 
    /**
@@ -110,42 +75,6 @@ public abstract class AbstractIterator implements QueryIterator {
    @Override
    public void remove() {
       throw new UnsupportedOperationException("Not supported as you are trying to change something in the cache.  Please use searchableCache.put()");
-   }
-
-   /**
-    * This method is not supported in and should not be called. Use cache.put() instead.
-    *
-    * @param o
-    * @throws UnsupportedOperationException
-    */
-   @Override
-   public void set(Object o) throws UnsupportedOperationException {
-      throw new UnsupportedOperationException("Not supported as you are trying to change something in the cache.  Please use searchableCache.put()");
-   }
-
-   /**
-    * This method is not supported in and should not be called. Use cache.put() instead.
-    *
-    * @param o
-    * @throws UnsupportedOperationException
-    */
-   @Override
-   public void add(Object o) {
-      throw new UnsupportedOperationException("Not supported as you are trying to change something in the cache. Please use searchableCache.put()");
-   }
-
-   /**
-    * Jumps to a given index in the list of results.
-    *
-    * @param index to jump to
-    * @throws IndexOutOfBoundsException
-    */
-   @Override
-   public void jumpToIndex(int index) throws IndexOutOfBoundsException {
-      if (index > max || index < 0) {
-         throw new IndexOutOfBoundsException("The index you entered is either greater than the size of the list or negative");
-      }
-      this.index = index;
    }
 
    @Override
@@ -159,20 +88,6 @@ public abstract class AbstractIterator implements QueryIterator {
       int indexToReturn = index - bufferIndex;
       index++;
       return buffer[indexToReturn];
-   }
-
-   @Override
-   public Object previous() {
-      if (!hasPrevious()) throw new NoSuchElementException("Index is out of bounds. There is no previous");
-
-      index--;
-
-      if (mustInitializeBuffer()) {
-         int startIndex = Math.max(0, index - (buffer.length - 1));
-         fillBuffer(startIndex);
-      }
-
-      return buffer[index - bufferIndex];
    }
 
    private boolean mustInitializeBuffer() {

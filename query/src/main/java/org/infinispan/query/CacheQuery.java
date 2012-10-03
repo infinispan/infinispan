@@ -52,21 +52,21 @@ public interface CacheQuery extends Iterable<Object> {
    List<Object> list();
 
    /**
-    * Returns the results of a search as a {@link QueryIterator}.
+    * Returns the results of a search as a {@link ResultIterator}.
     *
     * @param fetchOptions how to fetch results (see @link FetchOptions)
     * @return a QueryResultIterator which can be used to iterate through the results that were found.
     */
-   QueryIterator iterator(FetchOptions fetchOptions);
+   ResultIterator iterator(FetchOptions fetchOptions);
 
    /**
-    * Returns the results of a search as a {@link QueryIterator}. This calls {@link CacheQuery#iterator(FetchOptions fetchOptions)}
-    * with new FetchOptions(FetchOptions.FetchMode.LAZY, 1)
+    * Returns the results of a search as a {@link ResultIterator}. This calls {@link CacheQuery#iterator(FetchOptions fetchOptions)}
+    * with default FetchOptions
     *
-    * @return a QueryIterator which can be used to iterate through the results that were found.
+    * @return a ResultIterator which can be used to iterate through the results that were found.
     */
    @Override
-   QueryIterator iterator();
+   ResultIterator iterator();
 
    /**
     * Sets a result with a given index to the first result.

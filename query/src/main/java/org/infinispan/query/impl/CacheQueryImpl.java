@@ -41,7 +41,7 @@ import org.hibernate.search.spi.SearchFactoryIntegrator;
 import org.infinispan.AdvancedCache;
 import org.infinispan.query.CacheQuery;
 import org.infinispan.query.FetchOptions;
-import org.infinispan.query.QueryIterator;
+import org.infinispan.query.ResultIterator;
 import org.infinispan.query.backend.KeyTransformationHandler;
 
 /**
@@ -54,7 +54,7 @@ import org.infinispan.query.backend.KeyTransformationHandler;
  */
 public class CacheQueryImpl implements CacheQuery {
 
-   private static final FetchOptions DEFAULT_FETCH_OPTIONS = new FetchOptions(FetchOptions.FetchMode.LAZY, 1);
+   private static final FetchOptions DEFAULT_FETCH_OPTIONS = new FetchOptions();
 
    protected final AdvancedCache<?, ?> cache;
    protected final KeyTransformationHandler keyTransformationHandler;
@@ -147,17 +147,17 @@ public class CacheQueryImpl implements CacheQuery {
    }
 
    @Override
-   public QueryIterator iterator() throws SearchException {
+   public ResultIterator iterator() throws SearchException {
       return iterator(DEFAULT_FETCH_OPTIONS);
    }
 
    @Override
-   public QueryIterator iterator(FetchOptions fetchOptions) throws SearchException {
-      if (fetchOptions.getFetchMode().equals(FetchOptions.FetchMode.EAGER)) {
+   public ResultIterator iterator(FetchOptions fetchOptions) throws SearchException {
+      if (fetchOptions.getFetchMode() == FetchOptions.FetchMode.EAGER) {
          hSearchQuery.getTimeoutManager().start();
          List<EntityInfo> entityInfos = hSearchQuery.queryEntityInfos();
          return new EagerIterator(entityInfos, getResultLoader(), fetchOptions.getFetchSize() );
-      } else if (fetchOptions.getFetchMode().equals(FetchOptions.FetchMode.LAZY)) {
+      } else if (fetchOptions.getFetchMode() == FetchOptions.FetchMode.LAZY) {
          return new LazyIterator(hSearchQuery, getResultLoader(), fetchOptions.getFetchSize());
       } else {
          throw new IllegalArgumentException("Unknown FetchMode " + fetchOptions.getFetchMode());

@@ -36,13 +36,13 @@ import org.hibernate.search.spi.SearchFactoryIntegrator;
 import org.infinispan.AdvancedCache;
 import org.infinispan.query.CacheQuery;
 import org.infinispan.query.FetchOptions;
-import org.infinispan.query.QueryIterator;
+import org.infinispan.query.ResultIterator;
 import org.infinispan.query.backend.KeyTransformationHandler;
 import org.infinispan.query.impl.CacheQueryImpl;
 
 /**
  * A extension of CacheQueryImpl used for distributed queries.
- * 
+ *
  * @author Israel Lacerra <israeldl@gmail.com>
  * @since 5.1
  */
@@ -100,32 +100,33 @@ public class ClusteredCacheQueryImpl extends CacheQueryImpl {
             accumulator += response.getResultSize();
          }
          resultSize = Integer.valueOf(accumulator);
-      }
-      else {
+      } else {
          accumulator = resultSize.intValue();
       }
       return accumulator;
    }
 
    @Override
-   public QueryIterator iterator(FetchOptions fetchOptions) throws SearchException {
+   public ResultIterator iterator(FetchOptions fetchOptions) throws SearchException {
       hSearchQuery.maxResults(getNodeMaxResults());
-      if (fetchOptions.getFetchMode().equals(FetchOptions.FetchMode.EAGER)) {
-         ClusteredQueryCommand command = ClusteredQueryCommand.createEagerIterator(hSearchQuery, cache);
-         HashMap<UUID, ClusteredTopDocs> topDocsResponses = broadcastQuery(command);
+      switch (fetchOptions.getFetchMode()) {
+         case EAGER: {
+            ClusteredQueryCommand command = ClusteredQueryCommand.createEagerIterator(hSearchQuery, cache);
+            HashMap<UUID, ClusteredTopDocs> topDocsResponses = broadcastQuery(command);
 
-         return new DistributedIterator(sort, fetchOptions.getFetchSize(), this.resultSize, maxResults, firstResult,
-               topDocsResponses, cache);
+            return new DistributedIterator(sort, fetchOptions.getFetchSize(), this.resultSize, maxResults, firstResult,
+                  topDocsResponses, cache);
+         }
+         case LAZY: {
+            UUID lazyItId = UUID.randomUUID();
+            ClusteredQueryCommand command = ClusteredQueryCommand.createLazyIterator(hSearchQuery, cache, lazyItId);
+            HashMap<UUID, ClusteredTopDocs> topDocsResponses = broadcastQuery(command);
 
-      } else if (fetchOptions.getFetchMode().equals(FetchOptions.FetchMode.LAZY)) {
-         UUID lazyItId = UUID.randomUUID();
-         ClusteredQueryCommand command = ClusteredQueryCommand.createLazyIterator(hSearchQuery, cache, lazyItId);
-         HashMap<UUID, ClusteredTopDocs> topDocsResponses = broadcastQuery(command);
-
-         return new DistributedLazyIterator(sort, fetchOptions.getFetchSize(), this.resultSize, maxResults, firstResult,
-               lazyItId, topDocsResponses, asyncExecutor, cache);
-      } else {
-         throw new IllegalArgumentException("Unknown FetchMode " + fetchOptions.getFetchMode());
+            return new DistributedLazyIterator(sort, fetchOptions.getFetchSize(), this.resultSize, maxResults,
+                  firstResult, lazyItId, topDocsResponses, asyncExecutor, cache);
+         }
+         default:
+            throw new IllegalArgumentException("Unknown FetchMode " + fetchOptions.getFetchMode());
       }
    }
 
@@ -157,7 +158,7 @@ public class ClusteredCacheQueryImpl extends CacheQueryImpl {
 
    @Override
    public List<Object> list() throws SearchException {
-      QueryIterator iterator = iterator(new FetchOptions(FetchOptions.FetchMode.EAGER));
+      ResultIterator iterator = iterator(new FetchOptions().fetchMode(FetchOptions.FetchMode.EAGER));
       List<Object> values = new ArrayList<Object>();
       while (iterator.hasNext()) {
          values.add(iterator.next());
