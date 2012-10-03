@@ -159,7 +159,7 @@ public class LocalTopologyManagerImpl implements LocalTopologyManager {
    @Override
    public void handleConsistentHashUpdate(String cacheName, CacheTopology cacheTopology, int viewId) throws InterruptedException {
       if (!running) {
-         log.debugf("Ignoring consistent hash update %s for cache %s, the local cache manager is shutting down",
+         log.debugf("Ignoring consistent hash update %s for cache %s, the local cache manager is not running",
                cacheTopology.getTopologyId(), cacheName);
          return;
       }
@@ -198,7 +198,7 @@ public class LocalTopologyManagerImpl implements LocalTopologyManager {
    @Override
    public void handleRebalance(String cacheName, CacheTopology cacheTopology, int viewId) throws InterruptedException {
       if (!running) {
-         log.debugf("Ignoring rebalance request %s for cache %s, the local cache manager is shutting down",
+         log.debugf("Ignoring rebalance request %s for cache %s, the local cache manager is not running",
                cacheTopology.getTopologyId(), cacheName);
          return;
       }

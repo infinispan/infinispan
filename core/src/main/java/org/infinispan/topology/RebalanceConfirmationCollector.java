@@ -61,7 +61,7 @@ class RebalanceConfirmationCollector {
 
          boolean removed = confirmationsNeeded.remove(node);
          if (!removed) {
-            log.tracef("Rebalance confirmation collector %d@%s ignored confirmation for %s, which is not a member",
+            log.tracef("Rebalance confirmation collector %d@%s ignored confirmation for %s, which is already confirmed",
                   topologyId, cacheName, node);
             return false;
          }
@@ -79,6 +79,8 @@ class RebalanceConfirmationCollector {
       synchronized (this) {
          // only return true the first time
          boolean modified = confirmationsNeeded.retainAll(newMembers);
+         log.tracef("Rebalance confirmation collector %d@s members list updated, remaining list is %s",
+               topologyId, cacheName, confirmationsNeeded);
          return modified && confirmationsNeeded.isEmpty();
       }
    }
