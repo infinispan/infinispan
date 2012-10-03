@@ -1,31 +1,9 @@
-<?xml version="1.0" encoding="UTF-8"?>
-<!--
-  ~ JBoss, Home of Professional Open Source
-  ~ Copyright 2012 Red Hat Inc. and/or its affiliates and other
-  ~ contributors as indicated by the @author tags. All rights reserved.
-  ~ See the copyright.txt in the distribution for a full listing of
-  ~ individual contributors.
-  ~
-  ~ This is free software; you can redistribute it and/or modify it
-  ~ under the terms of the GNU Lesser General Public License as
-  ~ published by the Free Software Foundation; either version 2.1 of
-  ~ the License, or (at your option) any later version.
-  ~
-  ~ This software is distributed in the hope that it will be useful,
-  ~ but WITHOUT ANY WARRANTY; without even the implied warranty of
-  ~ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
-  ~ Lesser General Public License for more details.
-  ~
-  ~ You should have received a copy of the GNU Lesser General Public
-  ~ License along with this software; if not, write to the Free
-  ~ Software Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
-  ~ 02110-1301 USA, or see the FSF site: http://www.fsf.org.
-  -->
+<?xml version='1.0' encoding='UTF-8'?>
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
    <modelVersion>4.0.0</modelVersion>
    <groupId>org.infinispan</groupId>
    <artifactId>infinispan-parent</artifactId>
-   <version>5.2.0-SNAPSHOT</version>
+   <version>5.2.0.Beta1</version>
    <packaging>pom</packaging>
    <name>Infinispan Common Parent</name>
    <description>Infinispan common parent POM module</description>
@@ -105,7 +83,7 @@
       <packaging>jar</packaging>
       <module.skipComponentMetaDataProcessing>true</module.skipComponentMetaDataProcessing>
       <module.metadata.isCoreModule>false</module.metadata.isCoreModule>
-      <!-- Versions for dependencies -->
+      
       <version.antlr>3.4</version.antlr>
       <version.apacheds.jdbm>1.5.7</version.apacheds.jdbm>
       <version.arquillian>1.0.0.CR5</version.arquillian>
@@ -677,7 +655,7 @@
       </dependencies>
    </dependencyManagement>
    <dependencies>
-      <!-- used to serialize non-serializable objects for a dummy marshaller -->
+      
       <dependency>
          <groupId>com.thoughtworks.xstream</groupId>
          <artifactId>xstream</artifactId>
@@ -859,12 +837,7 @@
          <version>${version.jboss.logging.processor}</version>
          <scope>provided</scope>
       </dependency>
-      <!-- As of v3.0.4, the RHQ annotations have a retention policy of COMPILE,
-           which means they are no longer required at runtime. However, 
-           because of a Sun compiler bug http://bugs.sun.com/view_bug.do?bug_id=6550655
-           it still needs to be present when using the Infinispan artifacts. This
-           doesn't happen when using Java 7. Please add exclusions accordingly
-           if you don't want to pull this in -->
+      
       <dependency>
          <groupId>org.rhq.helpers</groupId>
          <artifactId>rhq-pluginAnnotations</artifactId>
@@ -959,7 +932,7 @@
             <plugin>
                <groupId>org.apache.maven.plugins</groupId>
                <artifactId>maven-pmd-plugin</artifactId>
-               <!-- See also reporting plugins -->
+               
                <version>2.7.1</version>
                <configuration>
                   <minimumTokens>100</minimumTokens>
@@ -995,7 +968,7 @@
                <artifactId>ideauidesigner-maven-plugin</artifactId>
                <version>1.0-beta-1</version>
             </plugin>
-            <!--This plugin's configuration is used to store Eclipse m2e settings only. It has no influence on the Maven build itself.-->
+            
             <plugin>
                <groupId>org.eclipse.m2e</groupId>
                <artifactId>lifecycle-mapping</artifactId>
@@ -1013,7 +986,7 @@
                               </goals>
                            </pluginExecutionFilter>
                            <action>
-                              <ignore></ignore>
+                              <ignore />
                            </action>
                         </pluginExecution>
                         <pluginExecution>
@@ -1026,7 +999,7 @@
                               </goals>
                            </pluginExecutionFilter>
                            <action>
-                              <ignore></ignore>
+                              <ignore />
                            </action>
                         </pluginExecution>
                         <pluginExecution>
@@ -1039,7 +1012,7 @@
                               </goals>
                            </pluginExecutionFilter>
                            <action>
-                              <ignore></ignore>
+                              <ignore />
                            </action>
                         </pluginExecution>
                         <pluginExecution>
@@ -1052,7 +1025,7 @@
                               </goals>
                            </pluginExecutionFilter>
                            <action>
-                              <ignore></ignore>
+                              <ignore />
                            </action>
                         </pluginExecution>
                         <pluginExecution>
@@ -1066,7 +1039,7 @@
                               </goals>
                            </pluginExecutionFilter>
                            <action>
-                              <ignore></ignore>
+                              <ignore />
                            </action>
                         </pluginExecution>
                         <pluginExecution>
@@ -1079,7 +1052,7 @@
                               </goals>
                            </pluginExecutionFilter>
                            <action>
-                              <ignore></ignore>
+                              <ignore />
                            </action>
                         </pluginExecution>
                      </pluginExecutions>
@@ -1168,7 +1141,7 @@
                </instructions>
             </configuration>
          </plugin>
-         <!-- Copy the resulting persisted metadata into the build directory for packaging into the jar -->
+         
          <plugin>
             <groupId>org.apache.maven.plugins</groupId>
             <artifactId>maven-antrun-plugin</artifactId>
@@ -1183,13 +1156,13 @@
                   <configuration>
                      <skip>${module.skipComponentMetaDataProcessing}</skip>
                      <target>
-                        <copy file="${basedir}/src/main/resources/${project.artifactId}-component-metadata.dat" todir="${project.build.outputDirectory}"></copy>
+                        <copy file="${basedir}/src/main/resources/${project.artifactId}-component-metadata.dat" todir="${project.build.outputDirectory}" />
                      </target>
                   </configuration>
                </execution>
             </executions>
          </plugin>
-         <!-- by default, compile to JDK 1.6 compatibility (individual modules and/or user can override) -->
+         
          <plugin>
             <groupId>org.apache.maven.plugins</groupId>
             <artifactId>maven-compiler-plugin</artifactId>
@@ -1201,7 +1174,7 @@
                <compilerArgument>-AtranslationFilesPath=${project.basedir}/target/generated-translation-files</compilerArgument>
             </configuration>
          </plugin>
-         <!-- eclipse project file generation -->
+         
          <plugin>
             <groupId>org.apache.maven.plugins</groupId>
             <artifactId>maven-eclipse-plugin</artifactId>
@@ -1211,7 +1184,7 @@
                <buildOutputDirectory>${basedir}/eclipse-output</buildOutputDirectory>
             </configuration>
          </plugin>
-         <!-- IntelliJ project file generation -->
+         
          <plugin>
             <groupId>org.apache.maven.plugins</groupId>
             <artifactId>maven-idea-plugin</artifactId>
@@ -1272,7 +1245,7 @@
                <encoding>UTF-8</encoding>
             </configuration>
          </plugin>
-         <!-- ensure parallel test execution -->
+         
          <plugin>
             <groupId>org.apache.maven.plugins</groupId>
             <artifactId>maven-surefire-plugin</artifactId>
@@ -1309,7 +1282,7 @@
                <argLine>-Xmx1024m -XX:MaxPermSize=1024m</argLine>
             </configuration>
          </plugin>
-         <!-- Scan module for components and persist these into a data file, for use at runtime -->
+         
          <plugin>
             <groupId>org.codehaus.mojo</groupId>
             <artifactId>exec-maven-plugin</artifactId>
@@ -1341,11 +1314,11 @@
    </build>
    <reporting>
       <plugins>
-         <!-- PMD report -->
+         
          <plugin>
             <groupId>org.apache.maven.plugins</groupId>
             <artifactId>maven-pmd-plugin</artifactId>
-            <!-- Needs to be re-defined and configured in pluginManagement section -->
+            
             <version>2.7.1</version>
          </plugin>
          <plugin>
@@ -1353,7 +1326,7 @@
             <artifactId>maven-surefire-report-plugin</artifactId>
             <version>2.12.2</version>
          </plugin>
-         <!-- Findbugs report -->
+         
          <plugin>
             <groupId>org.codehaus.mojo</groupId>
             <artifactId>findbugs-maven-plugin</artifactId>
@@ -1375,7 +1348,7 @@
 
          <build>
             <plugins>
-               <!-- generate target/runtime-classpath.txt, to be included in bundle -->
+               
                <plugin>
                   <groupId>org.apache.maven.plugins</groupId>
                   <artifactId>maven-dependency-plugin</artifactId>
@@ -1389,7 +1362,7 @@
                         <configuration>
                            <includeScope>runtime</includeScope>
                            <excludeScope>test</excludeScope>
-                           <!-- all jar paths are relative to bin dir inside the distribution bundle -->
+                           
                            <prefix>$ISPN_HOME/lib</prefix>
                            <outputFile>${project.build.directory}/runtime-classpath.txt</outputFile>
                         </configuration>
@@ -1407,7 +1380,7 @@
          </activation>
          <build>
             <plugins>
-               <!-- enforce java 1.6 and maven 2.1.0 -->
+               
                <plugin>
                   <groupId>org.apache.maven.plugins</groupId>
                   <artifactId>maven-enforcer-plugin</artifactId>
@@ -1431,7 +1404,7 @@
                      </execution>
                   </executions>
                </plugin>
-               <!-- Make sure we generate src jars too -->
+               
                <plugin>
                   <groupId>org.apache.maven.plugins</groupId>
                   <artifactId>maven-source-plugin</artifactId>
@@ -1449,7 +1422,7 @@
             </plugins>
          </build>
          <properties>
-            <!-- By default create OSGI bundles -->
+            
             <packaging>bundle</packaging>
          </properties>
       </profile>
@@ -1503,7 +1476,7 @@
          </properties>
       </profile>
       <profile>
-         <!-- we are still likely compatible with the 2.9.x Lucene version: test for that -->
+         
          <id>useOlderLuceneVersion</id>
          <activation>
             <activeByDefault>false</activeByDefault>
@@ -1529,8 +1502,7 @@
          </activation>
          <build>
             <plugins>
-               <!-- Redefine surefire plugin to avoid external log4j settings
-               not being discovered when passed as command line arguments -->
+               
                <plugin>
                   <groupId>org.apache.maven.plugins</groupId>
                   <artifactId>maven-surefire-plugin</artifactId>
@@ -1586,7 +1558,7 @@
                   <groupId>org.apache.maven.plugins</groupId>
                   <artifactId>maven-dependency-plugin</artifactId>
                   <executions>
-                     <!-- Copy the ant tasks jar. Needed for ts.jacoco.report-ant . -->
+                     
                      <execution>
                         <id>jacoco-dependency-ant</id>
                         <goals>
@@ -1624,7 +1596,7 @@
                   </executions>
                </plugin>
 
-                <!-- Starting jacoco agent for recording code coverage. -->
+                
                <plugin>
                   <groupId>org.jacoco</groupId>
                   <artifactId>jacoco-maven-plugin</artifactId>
