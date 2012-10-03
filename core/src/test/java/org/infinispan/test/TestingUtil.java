@@ -1149,14 +1149,6 @@ public class TestingUtil {
       return v(method, 0);
    }
 
-   public static String k(Method m, String prefix) {
-      return prefix + m.getName();
-   }
-
-   public static String v(Method m, String prefix) {
-      return prefix + m.getName();
-   }
-
    public static TransactionTable getTransactionTable(Cache<Object, Object> cache) {
       return cache.getAdvancedCache().getComponentRegistry().getComponent(TransactionTable.class);
    }

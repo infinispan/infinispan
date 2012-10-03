@@ -25,6 +25,7 @@ package org.infinispan.server.core.transport
 import org.jboss.netty.channel.group.DefaultChannelGroup
 import org.jboss.netty.channel.socket.nio.NioServerSocketChannelFactory
 import org.jboss.netty.bootstrap.ServerBootstrap
+import java.util.concurrent.Executors
 import scala.collection.JavaConversions._
 import org.infinispan.server.core.ProtocolServer
 import org.infinispan.util.Util
@@ -34,14 +35,7 @@ import org.infinispan.server.core.logging.Log
 import java.util.concurrent.atomic.AtomicLong
 import org.jboss.netty.channel.{WriteCompletionEvent, MessageEvent, ChannelDownstreamHandler}
 import org.jboss.netty.buffer.ChannelBuffer
-import java.net.InetSocketAddress
-import org.infinispan.manager.EmbeddedCacheManager
-import org.infinispan.distexec.{DistributedCallable, DefaultExecutorService}
-import org.infinispan.Cache
-import java.util
-import org.infinispan.jmx.JmxUtil
-import javax.management.ObjectName
-import util.concurrent.{TimeUnit, Executors}
+import java.net.{InetSocketAddress}
 
 /**
  * A Netty based transport.
@@ -52,7 +46,7 @@ import util.concurrent.{TimeUnit, Executors}
 class NettyTransport(server: ProtocolServer, encoder: ChannelDownstreamHandler,
                      address: InetSocketAddress, workerThreads: Int,
                      idleTimeout: Int, threadNamePrefix: String, tcpNoDelay: Boolean,
-                     sendBufSize: Int, recvBufSize: Int, cacheManager: EmbeddedCacheManager)
+                     sendBufSize: Int, recvBufSize: Int, isGlobalStatsEnabled: Boolean)
         extends Transport with Log {
 
    private val serverChannels = new DefaultChannelGroup(threadNamePrefix + "-Channels")
@@ -68,14 +62,13 @@ class NettyTransport(server: ProtocolServer, encoder: ChannelDownstreamHandler,
    private val factory = new NioServerSocketChannelFactory(masterExecutor, workerExecutor, workerThreads)
 
    private val totalBytesWritten, totalBytesRead = new AtomicLong
+   private val userBytesWritten, userBytesRead = new AtomicLong
    private val isTrace = isTraceEnabled
-   private val isGlobalStatsEnabled =
-      cacheManager.getCacheManagerConfiguration.globalJmxStatistics().enabled()
 
-   override def start() {
+   override def start {
       ThreadRenamingRunnable.setThreadNameDeterminer(new ThreadNameDeterminer {
          override def determineThreadName(currentThreadName: String, proposedThreadName: String): String = {
-            val index = proposedThreadName.indexWhere(_ == '#')
+            val index = proposedThreadName.findIndexOf(_ == '#')
             val typeInFix =
                if (proposedThreadName contains "server worker") "ServerWorker-"
                else if (proposedThreadName contains "server boss") "ServerMaster-"
@@ -85,12 +78,12 @@ class NettyTransport(server: ProtocolServer, encoder: ChannelDownstreamHandler,
             val name = threadNamePrefix + typeInFix + proposedThreadName.substring(index + 1, proposedThreadName.length)
             if (isTrace)
                trace("Thread name will be %s, with current thread name being %s and proposed name being '%s'",
-                  name, Thread.currentThread, proposedThreadName)
+                  name, currentThread, proposedThreadName)
             name
          }
       })
       // Make netty use log4j, otherwise it goes to JDK logging.
-      if (isLog4jAvailable)
+      if (isLog4jAvailable())
          InternalLoggerFactory.setDefaultFactory(new Log4JLoggerFactory)
 
       val bootstrap = new ServerBootstrap(factory)
@@ -105,24 +98,25 @@ class NettyTransport(server: ProtocolServer, encoder: ChannelDownstreamHandler,
       serverChannels.add(ch)
    }
    
-   private def isLog4jAvailable: Boolean = {
+   private def isLog4jAvailable(): Boolean = {
       try {
-         Util.loadClassStrict("org.apache.log4j.Logger",
-            Thread.currentThread().getContextClassLoader)
-         true
-      } catch {
-        case cnfe: ClassNotFoundException => false
+         Util.loadClassStrict("org.apache.log4j.Logger", Thread.currentThread().getContextClassLoader)
+         return true;
       }
+      catch {
+        case cnfe: ClassNotFoundException => return false
+      }
+      return false
    }
 
-   override def stop() {
+   override def stop {
       // We *pause* the acceptor so no new connections are made
-      var future = serverChannels.unbind().awaitUninterruptibly()
-      if (!future.isCompleteSuccess) {
+      var future = serverChannels.unbind().awaitUninterruptibly();
+      if (!future.isCompleteSuccess()) {
          logServerDidNotUnbind
-         for (ch <- asScalaIterator(future.getGroup.iterator)) {
-            if (ch.isBound) {
-               logChannelStillBound(ch, ch.getRemoteAddress)
+         for (ch <- asScalaIterator(future.getGroup().iterator)) {
+            if (ch.isBound()) {
+               logChannelStillBound(ch, ch.getRemoteAddress())
             }
          }
       }
@@ -130,25 +124,24 @@ class NettyTransport(server: ProtocolServer, encoder: ChannelDownstreamHandler,
       workerExecutor.shutdown()
       serverChannels.close().awaitUninterruptibly()
       future = acceptedChannels.close().awaitUninterruptibly()
-      if (!future.isCompleteSuccess) {
+      if (!future.isCompleteSuccess()) {
          logServerDidNotClose
-         for (ch <- asScalaIterator(future.getGroup.iterator)) {
-            if (ch.isBound) {
-               logChannelStillConnected(ch, ch.getRemoteAddress)
+         for (ch <- asScalaIterator(future.getGroup().iterator)) {
+            if (ch.isBound()) {
+               logChannelStillConnected(ch, ch.getRemoteAddress())
             }
          }
       }
       pipeline.stop
-      if (isDebugEnabled)
-         debug("Channel group completely closed, release external resources")
-      factory.releaseExternalResources()
+      if (isDebugEnabled) debug("Channel group completely closed, release external resources");
+      factory.releaseExternalResources();
    }
 
    override def getTotalBytesWritten: String = totalBytesWritten.toString
 
    override def getTotalBytesRead: String = totalBytesRead.toString
 
-   override def getHostName = address.getHostName
+   override def getHostName = address.getHostName.toString
 
    override def getPort = address.getPort.toString
 
@@ -162,78 +155,18 @@ class NettyTransport(server: ProtocolServer, encoder: ChannelDownstreamHandler,
 
    override def getReceiveBufferSize = recvBufSize.toString
 
-   override def getNumberOfLocalConnections: java.lang.Integer =
-      Integer.valueOf(acceptedChannels.size())
+   private[core] def updateTotalBytesWritten(e: WriteCompletionEvent) =
+      incrementTotalBytesWritten(totalBytesWritten, e)
 
-   override def getNumberOfGlobalConnections: java.lang.Integer = {
-      if (needDistributedCalculation())
-         calculateGlobalConnections
-      else
-         getNumberOfLocalConnections
-   }
-
-   private[core] def updateTotalBytesWritten(e: WriteCompletionEvent) {
-      if (isGlobalStatsEnabled)
-         incrementTotalBytesWritten(totalBytesWritten, e)
-   }
-
-   private def incrementTotalBytesWritten(base: AtomicLong, e: WriteCompletionEvent) {
+   private def incrementTotalBytesWritten(base: AtomicLong, e: WriteCompletionEvent) =
       if (isGlobalStatsEnabled)
          base.addAndGet(e.getWrittenAmount)
-   }
 
-   private[core] def updateTotalBytesRead(e: MessageEvent) {
-      if (isGlobalStatsEnabled)
-         incrementTotalBytesRead(totalBytesRead, e)
-   }
+   private[core] def updateTotalBytesRead(e: MessageEvent) =
+      incrementTotalBytesRead(totalBytesRead, e)
 
-   private def incrementTotalBytesRead(base: AtomicLong, e: MessageEvent) {
+   private def incrementTotalBytesRead(base: AtomicLong, e: MessageEvent) =
       if (isGlobalStatsEnabled)
          base.addAndGet(e.getMessage.asInstanceOf[ChannelBuffer].readableBytes)
-   }
-
-   private def needDistributedCalculation(): Boolean = {
-      val transport = cacheManager.getTransport
-      transport != null && transport.getMembers.size() > 1
-   }
-
-   private def calculateGlobalConnections: java.lang.Integer = {
-      // TODO: Assumes default clustered cache but could be that no caches are clustered
-      // TODO: A way to make distributed calls with only a cache manager would be ideal
-      val cache = cacheManager.getCache[AnyRef, AnyRef]()
-      val exec = new DefaultExecutorService(cache)
-      try {
-         // Submit calculation task
-         val results = exec.submitEverywhere(
-            new ConnectionAdderTask(threadNamePrefix)).iterator()
-         // Take all results and add them up with a bit of functional programming magic :)
-         asScalaIterator(results).map(_.get(30, TimeUnit.SECONDS)).reduceLeft(_ + _)
-      } finally {
-         exec.shutdown()
-      }
-   }
-
-}
-
-// TODO: Could be generalised to calculate any jmx params cluster wide
-class ConnectionAdderTask(serverName: String)
-        extends DistributedCallable[AnyRef, AnyRef, java.lang.Integer] with Serializable {
-
-   @transient var cache: Cache[AnyRef, AnyRef] = _
-
-   def call(): java.lang.Integer = {
-      val globalCfg = cache.getCacheManager.getCacheManagerConfiguration
-      val jmxDomain = globalCfg.globalJmxStatistics().domain()
-      val mbeanServer = JmxUtil.lookupMBeanServer(globalCfg)
-      val transportMBeanName = new ObjectName(
-         jmxDomain + ":type=Server,component=Transport,name=" + serverName)
-
-      mbeanServer.getAttribute(transportMBeanName, "NumberOfLocalConnections")
-              .asInstanceOf[java.lang.Integer]
-   }
-
-   def setEnvironment(cache: Cache[AnyRef, AnyRef], inputKeys: util.Set[AnyRef]) {
-      this.cache = cache
-   }
 
 }

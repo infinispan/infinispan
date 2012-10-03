@@ -23,14 +23,14 @@
 package org.infinispan.server.memcached
 
 import org.testng.Assert._
-import org.infinispan.test.TestingUtil._
-import org.testng.annotations.Test
+import org.infinispan.test.MultipleCacheManagersTest
+import test.MemcachedTestingUtil
+import org.infinispan.config.Configuration
+import org.testng.annotations.{AfterClass, Test}
 import java.util.concurrent.TimeUnit
 import java.lang.reflect.Method
-import net.spy.memcached.CASResponse
-import org.infinispan.manager.EmbeddedCacheManager
-import org.infinispan.test.fwk.TestCacheManagerFactory
-import org.infinispan.configuration.cache.{CacheMode, ConfigurationBuilder}
+import net.spy.memcached.{CASResponse, MemcachedClient}
+import org.infinispan.test.AbstractCacheTest._
 
 /**
  * Tests replicated Infinispan Memcached servers.
@@ -39,12 +39,31 @@ import org.infinispan.configuration.cache.{CacheMode, ConfigurationBuilder}
  * @since 4.1
  */
 @Test(groups = Array("functional"), testName = "server.memcached.MemcachedReplicationTest")
-class MemcachedReplicationTest extends MemcachedMultiNodeTest {
+class MemcachedReplicationTest extends MultipleCacheManagersTest with MemcachedTestingUtil {
+   private val cacheName = "MemcachedReplSync"
+   private[this] var servers: List[MemcachedServer] = List()
+   private[this] var clients: List[MemcachedClient] = List()
+   private val timeout: Int = 60
 
-   protected def createCacheManager(index: Int): EmbeddedCacheManager = {
-      val builder = new ConfigurationBuilder
-      builder.clustering().cacheMode(CacheMode.REPL_SYNC)
-      TestCacheManagerFactory.createClusteredCacheManager(builder)
+   @Test(enabled = false) // Disable explicitly to avoid TestNG thinking this is a test!!
+   override def createCacheManagers {
+      val config = getDefaultClusteredConfig(Configuration.CacheMode.REPL_SYNC)
+      config.setFetchInMemoryState(true)
+      for (i <- 0 until 2) {
+         val cm = addClusterEnabledCacheManager()
+         cm.defineConfiguration(cacheName, config)
+      }
+      servers = startMemcachedTextServer(cacheManagers.get(0), cacheName) :: servers
+      servers = startMemcachedTextServer(cacheManagers.get(1), servers.head.getPort + 50, cacheName) :: servers
+      servers.foreach(s => clients = createMemcachedClient(60000, s.getPort) :: clients)
+   }
+
+   @AfterClass(alwaysRun = true)
+   override def destroy {
+      super.destroy
+      log.debug("Test finished, close Hot Rod server")
+      clients.foreach(_.shutdown)
+      servers.foreach(_.stop)
    }
 
    def testReplicatedSet(m: Method) {
@@ -88,7 +107,7 @@ class MemcachedReplicationTest extends MemcachedMultiNodeTest {
       assertEquals(clients.tail.head.get(k(m)), v(m))
       f = clients.tail.head.append(0, k(m), v(m, "v1-"))
       assertTrue(f.get(timeout, TimeUnit.SECONDS).booleanValue)
-      val expected = v(m) + v(m, "v1-")
+      val expected = v(m).toString + v(m, "v1-").toString
       assertEquals(clients.head.get(k(m)), expected)
    }
 
@@ -98,30 +117,30 @@ class MemcachedReplicationTest extends MemcachedMultiNodeTest {
       assertEquals(clients.tail.head.get(k(m)), v(m))
       f = clients.tail.head.prepend(0, k(m), v(m, "v1-"))
       assertTrue(f.get(timeout, TimeUnit.SECONDS).booleanValue)
-      val expected = v(m, "v1-") + v(m)
+      val expected = v(m, "v1-").toString + v(m).toString
       assertEquals(clients.head.get(k(m)), expected)
   }
 
    def testReplicatedGets(m: Method) {
-      val f = clients.head.set(k(m), 0, v(m))
+      var f = clients.head.set(k(m), 0, v(m))
       assertTrue(f.get(timeout, TimeUnit.SECONDS).booleanValue)
-      val value = clients.tail.head.gets(k(m))
-      assertEquals(value.getValue, v(m))
-      assertTrue(value.getCas != 0)
+      var value = clients.tail.head.gets(k(m))
+      assertEquals(value.getValue(), v(m))
+      assertTrue(value.getCas() != 0)
    }
 
    def testReplicatedCasExists(m: Method) {
-      val f = clients.head.set(k(m), 0, v(m))
+      var f = clients.head.set(k(m), 0, v(m))
       assertTrue(f.get(timeout, TimeUnit.SECONDS).booleanValue)
       var value = clients.tail.head.gets(k(m))
-      assertEquals(value.getValue, v(m))
-      assertTrue(value.getCas != 0)
+      assertEquals(value.getValue(), v(m))
+      assertTrue(value.getCas() != 0)
       val old = value.getCas
       var resp = clients.tail.head.cas(k(m), value.getCas, v(m, "v1-"))
       value = clients.head.gets(k(m))
-      assertEquals(value.getValue, v(m, "v1-"))
-      assertTrue(value.getCas != 0)
-      assertTrue(value.getCas != old)
+      assertEquals(value.getValue(), v(m, "v1-"))
+      assertTrue(value.getCas() != 0)
+      assertTrue(value.getCas() != old)
       resp = clients.head.cas(k(m), old, v(m, "v2-"))
       assertEquals(resp, CASResponse.EXISTS)
       resp = clients.tail.head.cas(k(m), value.getCas, v(m, "v2-"))
@@ -136,12 +155,12 @@ class MemcachedReplicationTest extends MemcachedMultiNodeTest {
    }
 
    def testReplicatedIncrement(m: Method) {
-      val f = clients.head.set(k(m), 0, "1")
+      var f = clients.head.set(k(m), 0, "1")
       assertTrue(f.get(timeout, TimeUnit.SECONDS).booleanValue)
       assertEquals(clients.tail.head.incr(k(m), 1), 2)
    }
 
-   def testReplicatedDecrement(m: Method) {
+   def testReplicatedDecrement(m: Method): Unit = {
       val f = clients.head.set(k(m), 0, "1")
       assertTrue(f.get(timeout, TimeUnit.SECONDS).booleanValue)
       assertEquals(clients.tail.head.decr(k(m), 1), 0)

@@ -28,12 +28,10 @@ import java.lang.reflect.Method
 import org.testng.Assert._
 import java.util.concurrent.TimeUnit
 import org.infinispan.Version
-import org.infinispan.test.TestingUtil._
-import test.MemcachedTestingUtil._
+import org.infinispan.test.TestingUtil
 import org.infinispan.manager.EmbeddedCacheManager
-import net.spy.memcached.MemcachedClient
-import annotation.tailrec
-import org.infinispan.server.core.ConnectionStatsTests._
+import org.infinispan.jmx.PerThreadMBeanServerLookup
+import javax.management.ObjectName
 
 /**
  * Tests stats command for Infinispan Memcached server.
@@ -43,8 +41,7 @@ import org.infinispan.server.core.ConnectionStatsTests._
  */
 @Test(groups = Array("functional"), testName = "server.memcached.MemcachedStatsTest")
 class MemcachedStatsTest extends MemcachedSingleNodeTest {
-
-   private val jmxDomain = classOf[MemcachedStatsTest].getSimpleName
+   private var jmxDomain = classOf[MemcachedStatsTest].getSimpleName
 
    override def createTestCacheManager: EmbeddedCacheManager =
       TestCacheManagerFactory.createCacheManagerEnforceJmxDomain(jmxDomain)
@@ -65,7 +62,7 @@ class MemcachedStatsTest extends MemcachedSingleNodeTest {
    }
 
    def testUncomparableStats(m: Method) {
-      sleepThread(TimeUnit.SECONDS.toMillis(1))
+      TestingUtil.sleepThread(TimeUnit.SECONDS.toMillis(1))
       val stats = getStats(-1, -1)
       assertNotSame(stats._1.get("uptime"), "0")
       assertNotSame(stats._1.get("time"), "0")
@@ -77,7 +74,7 @@ class MemcachedStatsTest extends MemcachedSingleNodeTest {
        assertEquals(stats._1.get("version"), Version.VERSION)
     }
 
-   def testTodoStats() {
+   def testTodoStats {
       val stats = getStats(-1, -1)
       assertEquals(stats._1.get("curr_connections"), "0")
       assertEquals(stats._1.get("total_connections"), "0")
@@ -140,7 +137,7 @@ class MemcachedStatsTest extends MemcachedSingleNodeTest {
       val future = TimeUnit.MILLISECONDS.toSeconds(System.currentTimeMillis + 1000).asInstanceOf[Int]
       f = client.set(k(m, "k3-"), future, v(m, "v3-"))
       assertTrue(f.get(timeout, TimeUnit.SECONDS).booleanValue)
-      sleepThread(1100)
+      TestingUtil.sleepThread(1100)
       assertNull(client.get(k(m, "k3-")))
       stats = getStats(stats._2, stats._3)
       assertEquals(stats._1.get("curr_items"), "1")
@@ -196,45 +193,21 @@ class MemcachedStatsTest extends MemcachedSingleNodeTest {
       assertEquals(stats._1.get("cas_badval"), "1")
    }
 
-   private def createMultipleClients(number: Int) : List[MemcachedClient] = {
-      var clients = List[MemcachedClient]()
-      for (i <- 1 to number) {
-         val newClient = createMemcachedClient(60000, server.getPort)
-         val value = newClient.get("a")
-         // 'Use' the value
-         if (value != null && value.hashCode() % 1000 == 0)
-            print(value.hashCode())
-
-         clients ::= newClient
-      }
-      clients
-   }
-
-   def testStatsSpecificToMemcachedViaJmx() {
+   def testStatsSpecificToMemcachedViaJmx {
       // Send any command
       getStats(-1, -1)
-
-      testSingleLocalConnection(jmxDomain, "Memcached")
-      var clients = List[MemcachedClient]()
-      try {
-         clients = createMultipleClients(10)
-         testMultipleLocalConnections(jmxDomain, "Memcached", clients.size + 1)
-      } finally {
-         clients.foreach { client =>
-            try {
-               client.shutdown(20, TimeUnit.SECONDS)
-            } catch {
-               case t: Throwable => // Ignore it...
-            }
-         }
-      }
+      val server = PerThreadMBeanServerLookup.getThreadMBeanServer()
+      val on = new ObjectName("%s:type=Server,name=Memcached,component=Transport".format(jmxDomain))
+      // Now verify that via JMX as well, these stats are also as expected
+      assertTrue(server.getAttribute(on, "TotalBytesRead").toString.toInt > 0)
+      assertTrue(server.getAttribute(on, "TotalBytesWritten").toString.toInt > 0)
    }
 
-   def testStatsWithArgs() {
+   def testStatsWithArgs {
       var resp = send("stats\r\n")
-      assertExpectedResponse(resp, "STAT", strictComparison = false)
+      assertExpectedResponse(resp, "STAT", false)
       resp = send("stats \r\n")
-      assertExpectedResponse(resp, "STAT", strictComparison = false)
+      assertExpectedResponse(resp, "STAT", false)
       resp = send("stats boo\r\n")
       assertClientError(resp)
       resp = send("stats boo boo2 boo3\r\n")
@@ -242,7 +215,7 @@ class MemcachedStatsTest extends MemcachedSingleNodeTest {
    }
    
    private def getStats(currentBytesRead: Int, currentBytesWritten: Int) = {
-      val globalStats = client.getStats
+      val globalStats = client.getStats()
       assertEquals(globalStats.size(), 1)
       val stats = globalStats.values.iterator.next
       val bytesRead = assertHigherBytes(currentBytesRead, stats.get("bytes_read"))

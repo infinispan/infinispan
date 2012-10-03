@@ -31,6 +31,7 @@ import logging.Log
 import org.infinispan.jmx.{JmxUtil, ResourceDMBean}
 import javax.management.{ObjectName, MBeanServer}
 import java.util.Properties
+import org.infinispan.factories.components.ComponentMetadataRepo
 
 /**
  * A common protocol server dealing with common property parameter validation and assignment and transport lifecycle.
@@ -60,14 +61,14 @@ abstract class AbstractProtocolServer(threadNamePrefix: String) extends Protocol
          this.port = typedProps.getIntProperty(PROP_KEY_PORT, defaultPort, true)
          val masterThreads = typedProps.getIntProperty(PROP_KEY_MASTER_THREADS, -1, true)
          if (masterThreads != -1)
-            logSettingMasterThreadsNotSupported
+            logSettingMasterThreadsNotSupported;
 
          this.workerThreads = typedProps.getIntProperty(PROP_KEY_WORKER_THREADS, WORKER_THREADS_DEFAULT, true)
          if (workerThreads < 0)
             throw new IllegalArgumentException("Worker threads can't be lower than 0: " + workerThreads)
 
          this.cacheManager = cacheManager
-         this.isGlobalStatsEnabled = cacheManager.getCacheManagerConfiguration.globalJmxStatistics().enabled()
+         this.isGlobalStatsEnabled = cacheManager.getGlobalConfiguration.isExposeGlobalJmxStatistics
          val idleTimeout = typedProps.getIntProperty(PROP_KEY_IDLE_TIMEOUT, IDLE_TIMEOUT_DEFAULT, true)
          if (idleTimeout < -1)
             throw new IllegalArgumentException("Idle timeout can't be lower than -1: " + idleTimeout)
@@ -105,35 +106,32 @@ abstract class AbstractProtocolServer(threadNamePrefix: String) extends Protocol
       val address = new InetSocketAddress(host, port)
       transport = new NettyTransport(this, getEncoder, address, workerThreads,
          idleTimeout, threadNamePrefix, tcpNoDelay, sendBufSize, recvBufSize,
-         cacheManager)
+         isGlobalStatsEnabled)
 
-      // Register transport MBean regardless
-      registerTransportMBean()
+      if (isGlobalStatsEnabled) {
+         val globalCfg = cacheManager.getCacheManagerConfiguration
+         mbeanServer = JmxUtil.lookupMBeanServer(globalCfg)
+         val groupName = "type=Server,name=%s".format(threadNamePrefix)
+         val jmxDomain = JmxUtil.buildJmxDomain(globalCfg, mbeanServer, groupName)
 
-      transport.start()
-   }
+         // Pick up metadata from the component metadata repository
+         val meta = LifecycleCallbacks.componentMetadataRepo
+                 .findComponentMetadata(transport.getClass).toManageableComponentMetadata
+         // And use this metadata when registering the transport as a dynamic MBean
+         val dynamicMBean = new ResourceDMBean(transport, meta)
 
-   private def registerTransportMBean() {
-      val globalCfg = cacheManager.getCacheManagerConfiguration
-      mbeanServer = JmxUtil.lookupMBeanServer(globalCfg)
-      val groupName = "type=Server,name=%s".format(threadNamePrefix)
-      val jmxDomain = JmxUtil.buildJmxDomain(globalCfg, mbeanServer, groupName)
+         transportObjName = new ObjectName(
+            "%s:%s,component=Transport".format(jmxDomain, groupName))
+         JmxUtil.registerMBean(dynamicMBean, transportObjName, mbeanServer)
+      }
 
-      // Pick up metadata from the component metadata repository
-      val meta = LifecycleCallbacks.componentMetadataRepo
-              .findComponentMetadata(transport.getClass).toManageableComponentMetadata
-      // And use this metadata when registering the transport as a dynamic MBean
-      val dynamicMBean = new ResourceDMBean(transport, meta)
-
-      transportObjName = new ObjectName(
-         "%s:%s,component=Transport".format(jmxDomain, groupName))
-      JmxUtil.registerMBean(dynamicMBean, transportObjName, mbeanServer)
+      transport.start
    }
 
    def start(propertiesFileName: String, cacheManager: EmbeddedCacheManager) {
       val propsObject = new TypedProperties()
       if (propertiesFileName != null) {
-         val stream = FileLookupFactory.newInstance().lookupFile(propertiesFileName, Thread.currentThread().getContextClassLoader)
+         val stream = FileLookupFactory.newInstance().lookupFile(propertiesFileName, Thread.currentThread().getContextClassLoader())
          propsObject.load(stream)
       }
       start(propsObject, cacheManager)
@@ -145,7 +143,7 @@ abstract class AbstractProtocolServer(threadNamePrefix: String) extends Protocol
          debug("Stopping server listening in %s:%d", host, port)
 
       if (transport != null)
-         transport.stop()
+         transport.stop
 
       if (isGlobalStatsEnabled) {
          // Unregister mbean(s)
@@ -162,5 +160,5 @@ abstract class AbstractProtocolServer(threadNamePrefix: String) extends Protocol
 
    def getPort = port
 
-   def startDefaultCache = cacheManager.getCache[AnyRef, AnyRef]()
+   def startDefaultCache = cacheManager.getCache()
 }

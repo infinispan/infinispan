@@ -50,7 +50,6 @@ import org.infinispan.configuration.parsing.ConfigurationBuilderHolder;
 import org.infinispan.configuration.parsing.ConfigurationParser;
 import org.infinispan.configuration.parsing.Namespace;
 import org.infinispan.configuration.parsing.ParserRegistry;
-import org.infinispan.jmx.MBeanServerLookup;
 import org.infinispan.jmx.PerThreadMBeanServerLookup;
 import org.infinispan.manager.DefaultCacheManager;
 import org.infinispan.manager.EmbeddedCacheManager;
@@ -385,26 +384,17 @@ public class TestCacheManagerFactory {
       return createCacheManagerEnforceJmxDomain(jmxDomain, true, true);
    }
 
-   public static EmbeddedCacheManager createClusteredCacheManagerEnforceJmxDomain(
-         String jmxDomain, ConfigurationBuilder builder) {
+   public static EmbeddedCacheManager createClusteredCacheManagerEnforceJmxDomain(String jmxDomain, ConfigurationBuilder builder) {
       return createClusteredCacheManagerEnforceJmxDomain(jmxDomain, true, builder);
    }
 
-   public static EmbeddedCacheManager createClusteredCacheManagerEnforceJmxDomain(
-         String jmxDomain, boolean exposeGlobalJmx, ConfigurationBuilder builder) {
-      return createClusteredCacheManagerEnforceJmxDomain(jmxDomain,
-            exposeGlobalJmx, builder, new PerThreadMBeanServerLookup());
-   }
-
-   public static EmbeddedCacheManager createClusteredCacheManagerEnforceJmxDomain(
-         String jmxDomain, boolean exposeGlobalJmx, ConfigurationBuilder builder,
-         MBeanServerLookup mBeanServerLookup) {
+   public static EmbeddedCacheManager createClusteredCacheManagerEnforceJmxDomain(String jmxDomain, boolean exposeGlobalJmx, ConfigurationBuilder builder) {
       GlobalConfigurationBuilder globalBuilder = GlobalConfigurationBuilder.defaultClusteredBuilder();
       amendGlobalConfiguration(globalBuilder, new TransportFlags());
       globalBuilder.globalJmxStatistics()
-            .jmxDomain(jmxDomain)
-            .mBeanServerLookup(mBeanServerLookup)
-            .enabled(exposeGlobalJmx);
+               .jmxDomain(jmxDomain)
+               .mBeanServerLookup(new PerThreadMBeanServerLookup())
+               .enabled(exposeGlobalJmx);
       return createCacheManager(globalBuilder, builder, true);
    }
 

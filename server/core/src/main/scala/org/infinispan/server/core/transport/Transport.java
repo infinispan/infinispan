@@ -60,7 +60,6 @@ public interface Transport {
    @ManagedAttribute(description = "Returns the host to which the transport binds.")
    @Metric(displayName = "Host name", dataType = DataType.TRAIT,
            displayType = DisplayType.SUMMARY)
-   @SuppressWarnings("unused")
    String getHostName();
 
    @ManagedAttribute(description = "Returns the port to which the transport binds.")
@@ -71,45 +70,26 @@ public interface Transport {
    @ManagedAttribute(description = "Returns the number of worker threads.")
    @Metric(displayName = "Number of worker threads", dataType = DataType.TRAIT,
            displayType = DisplayType.SUMMARY)
-   @SuppressWarnings("unused")
    String getNumberWorkerThreads();
 
    @ManagedAttribute(description = "Returns the idle timeout.")
    @Metric(displayName = "Idle timeout", dataType = DataType.TRAIT,
            displayType = DisplayType.SUMMARY)
-   @SuppressWarnings("unused")
    String getIdleTimeout();
 
    @ManagedAttribute(description = "Returns whether TCP no delay was configured or not.")
    @Metric(displayName = "TCP no delay", dataType = DataType.TRAIT,
            displayType = DisplayType.SUMMARY)
-   @SuppressWarnings("unused")
    String getTpcNoDelay();
 
    @ManagedAttribute(description = "Returns the send buffer size.")
    @Metric(displayName = "Send buffer size", dataType = DataType.TRAIT,
            displayType = DisplayType.SUMMARY)
-   @SuppressWarnings("unused")
    String getSendBufferSize();
 
    @ManagedAttribute(description = "Returns the receive buffer size.")
    @Metric(displayName = "Receive buffer size", dataType = DataType.TRAIT,
            displayType = DisplayType.SUMMARY)
-   @SuppressWarnings("unused")
    String getReceiveBufferSize();
-
-   @ManagedAttribute(description = "Returns a count of active connections this server.")
-   @Metric(displayName = "Local active connections",
-         dataType = DataType.MEASUREMENT, displayType = DisplayType.SUMMARY)
-   @SuppressWarnings("unused")
-   Integer getNumberOfLocalConnections();
-
-   @ManagedAttribute(description = "Returns a count of active connections in the cluster. " +
-         "This operation will make remote calls to aggregate results, " +
-         "so latency might have an impact on the speed of calculation of this attribute.")
-   @Metric(displayName = "Cluster-wide number of active connections",
-         dataType = DataType.MEASUREMENT, displayType = DisplayType.SUMMARY)
-   @SuppressWarnings("unused")
-   Integer getNumberOfGlobalConnections();
 
 }
