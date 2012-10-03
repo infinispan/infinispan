@@ -28,14 +28,13 @@ import java.util.Iterator;
  * Iterates over query results
  * <p/>
  *
- * @author Manik Surtani
- * @author Navin Surtani
  * @author Marko Luksa
  */
 public interface ResultIterator extends Iterator<Object> {
 
    /**
-    * This method must be called on your iterator once you have finished so that Lucene resources can be freed up.
+    * This method must be called on your iterator once you have finished so that any local
+    * or remote resources can be freed up.
     */
    void close();
 }

@@ -32,6 +32,11 @@ public class FetchOptions {
       fetchSize(1);
    }
 
+   /**
+    * Set the fetch mode to be used to fetch matching results
+    * @param fetchMode
+    * @return {@code this} to allow method chaining
+    */
    public FetchOptions fetchMode(FetchMode fetchMode) {
       if (fetchMode == null) {
          throw new IllegalArgumentException("fetchMode should not be null");
@@ -40,6 +45,11 @@ public class FetchOptions {
       return this;
    }
 
+   /**
+    * Set the fetch size for batch loading of matches
+    * @param fetchSize
+    * @return {@code this} to allow method chaining
+    */
    public FetchOptions fetchSize(int fetchSize) {
       if (fetchSize < 1) {
          throw new IllegalArgumentException("fetchSize should be greater than 0");
@@ -48,15 +58,41 @@ public class FetchOptions {
       return this;
    }
 
+   /**
+    * @return the selected fetch mode
+    */
    public FetchMode getFetchMode() {
       return fetchMode;
    }
 
+   /**
+    * @return the used fetch size
+    */
    public int getFetchSize() {
       return fetchSize;
    }
 
-   public static enum FetchMode {
-      EAGER, LAZY
-   }
+   /**
+    * Specifies the fetching strategy
+    * for query results.
+    */
+    public static enum FetchMode {
+
+        /**
+         * With eager mode all results are loaded as
+         * soon as the query is performed; this results
+         * in a larger initial transfer of entries but no
+         * remote operations during iteration of the resultset.
+         */
+        EAGER,
+
+        /**
+         * With lazy loading the entries are not loaded
+         * until each one is specifically requested.
+         * If iterating on very larger result sets this
+         * is recommended to avoid loading too many entries
+         * in the VM performing the iteration.
+         */
+        LAZY
+    }
 }

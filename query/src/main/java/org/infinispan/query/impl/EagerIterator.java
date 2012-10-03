@@ -30,9 +30,9 @@ import net.jcip.annotations.NotThreadSafe;
 import org.hibernate.search.query.engine.spi.EntityInfo;
 
 /**
- * This is the implementation class for the interface QueryResultIterator which extends ListIterator. It is what is
- * returned when the {@link org.infinispan.query.CacheQuery#iterator()}.
- * <p/>
+ * This is the implementation class for the interface ResultIterator. It is what is
+ * returned when the {@link org.infinispan.query.CacheQuery#iterator()} using
+ * a {@link org.infinispan.query.FetchOptions.FetchMode#EAGER}.
  * <p/>
  *
  * @author Navin Surtani
