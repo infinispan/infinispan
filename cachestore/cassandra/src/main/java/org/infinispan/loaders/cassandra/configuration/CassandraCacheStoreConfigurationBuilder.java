@@ -37,7 +37,7 @@ import org.infinispan.util.TypedProperties;
  */
 public class CassandraCacheStoreConfigurationBuilder extends
       AbstractStoreConfigurationBuilder<CassandraCacheStoreConfiguration, CassandraCacheStoreConfigurationBuilder>
-      implements CassandraCacheStoreConfigurationChildBuilder {
+      implements CassandraCacheStoreConfigurationChildBuilder<CassandraCacheStoreConfigurationBuilder> {
 
    private boolean autoCreateKeyspace = true;
    private String configurationPropertiesFile;
