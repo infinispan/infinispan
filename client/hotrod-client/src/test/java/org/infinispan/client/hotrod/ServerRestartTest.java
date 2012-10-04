@@ -33,6 +33,9 @@ import org.testng.annotations.Test;
 
 import java.util.Properties;
 
+import static org.infinispan.client.hotrod.test.HotRodClientTestingUtil.killRemoteCacheManager;
+import static org.infinispan.client.hotrod.test.HotRodClientTestingUtil.killServers;
+
 /**
  * @author Mircea.Markus@jboss.com
  * @since 4.1
@@ -42,34 +45,33 @@ public class ServerRestartTest extends SingleCacheManagerTest {
 
    private static final Log log = LogFactory.getLog(HotRodIntegrationTest.class);
 
-   RemoteCache defaultRemote;
+   private RemoteCache defaultRemote;
    private RemoteCacheManager remoteCacheManager;
 
    protected HotRodServer hotrodServer;
 
-
    @Override
    protected EmbeddedCacheManager createCacheManager() throws Exception {
-      cacheManager = TestCacheManagerFactory.createLocalCacheManager(false);
-      cacheManager.getCache();
+      return TestCacheManagerFactory.createLocalCacheManager(false);
+   }
 
-
+   @Override
+   protected void setup() throws Exception {
+      super.setup();
       hotrodServer = TestHelper.startHotRodServer(cacheManager);
       log.info("Started server on port: " + hotrodServer.getPort());
 
       Properties config = new Properties();
       config.put("infinispan.client.hotrod.server_list", "127.0.0.1:" + hotrodServer.getPort());
-      config.put("timeBetweenEvictionRunsMillis", "2000");      
+      config.put("timeBetweenEvictionRunsMillis", "2000");
       remoteCacheManager = new RemoteCacheManager(config);
       defaultRemote = remoteCacheManager.getCache();
-      return cacheManager;
    }
-
 
    @AfterClass(alwaysRun = true)
    public void testDestroyRemoteCacheFactory() {
-      remoteCacheManager.stop();
-      hotrodServer.stop();
+      killRemoteCacheManager(remoteCacheManager);
+      killServers(hotrodServer);
    }
 
    public void testServerShutdown() throws Exception {

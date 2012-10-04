@@ -50,7 +50,7 @@ public class PingOnStartupTest extends MultiHotRodServersTest {
       createHotRodServers(2, builder.build());
    }
 
-   public void testTopologyFetched() throws Exception {
+   public void testTopologyFetched() {
       Properties props = new Properties();
       HotRodServer hotRodServer2 = server(1);
       props.put("infinispan.client.hotrod.server_list",
@@ -61,12 +61,12 @@ public class PingOnStartupTest extends MultiHotRodServersTest {
       withRemoteCacheManager(new RemoteCacheManagerCallable(
             new RemoteCacheManager(props)) {
          @Override
-         public void call() throws Exception {
+         public void call() {
             TcpTransportFactory tcpConnectionFactory = (TcpTransportFactory)
                   TestingUtil.extractField(rcm, "transportFactory");
             for (int i = 0; i < 10; i++) {
                if (tcpConnectionFactory.getServers().size() == 1) {
-                  Thread.sleep(1000);
+                  TestingUtil.sleepThread(1000);
                } else {
                   break;
                }
@@ -76,7 +76,7 @@ public class PingOnStartupTest extends MultiHotRodServersTest {
       });
    }
 
-   public void testTopologyNotFetched() throws Exception {
+   public void testTopologyNotFetched() {
       Properties props = new Properties();
       HotRodServer hotRodServer2 = server(1);
       props.put("infinispan.client.hotrod.server_list",
@@ -86,7 +86,7 @@ public class PingOnStartupTest extends MultiHotRodServersTest {
       withRemoteCacheManager(new RemoteCacheManagerCallable(
             new RemoteCacheManager(props)) {
          @Override
-         public void call() throws Exception {
+         public void call() {
             TcpTransportFactory tcpConnectionFactory = (TcpTransportFactory)
                   TestingUtil.extractField(rcm, "transportFactory");
             assertEquals(1, tcpConnectionFactory.getServers().size());
@@ -94,7 +94,7 @@ public class PingOnStartupTest extends MultiHotRodServersTest {
       });
    }
 
-   public void testGetCacheWithPingOnStartupDisabledSingleNode() throws Exception {
+   public void testGetCacheWithPingOnStartupDisabledSingleNode() {
       Properties props = new Properties();
       props.put("infinispan.client.hotrod.server_list", "boomoo:12345");
       props.put("infinispan.client.hotrod.ping_on_startup", "false");
@@ -102,13 +102,13 @@ public class PingOnStartupTest extends MultiHotRodServersTest {
       withRemoteCacheManager(new RemoteCacheManagerCallable(
             new RemoteCacheManager(props)) {
          @Override
-         public void call() throws Exception {
+         public void call() {
             rcm.getCache();
          }
       });
    }
 
-   public void testGetCacheWithPingOnStartupDisabledMultipleNodes() throws Exception {
+   public void testGetCacheWithPingOnStartupDisabledMultipleNodes() {
       Properties props = new Properties();
       HotRodServer hotRodServer2 = server(1);
       props.put("infinispan.client.hotrod.server_list",
@@ -118,14 +118,14 @@ public class PingOnStartupTest extends MultiHotRodServersTest {
       withRemoteCacheManager(new RemoteCacheManagerCallable(
             new RemoteCacheManager(props)) {
          @Override
-         public void call() throws Exception {
+         public void call() {
             RemoteCache<Object, Object> cache = rcm.getCache();
             assertFalse(cache.containsKey("k"));
          }
       });
    }
 
-   public void testGetCacheWorksIfNodeDown() throws Exception {
+   public void testGetCacheWorksIfNodeDown() {
       Properties props = new Properties();
       HotRodServer hotRodServer2 = server(1);
       props.put("infinispan.client.hotrod.server_list",
@@ -136,13 +136,13 @@ public class PingOnStartupTest extends MultiHotRodServersTest {
       withRemoteCacheManager(new RemoteCacheManagerCallable(
             new RemoteCacheManager(props)) {
          @Override
-         public void call() throws Exception {
+         public void call() {
             rcm.getCache();
          }
       });
    }
 
-   public void testGetCacheWorksIfNodeNotDown() throws Exception {
+   public void testGetCacheWorksIfNodeNotDown() {
       Properties props = new Properties();
       HotRodServer hotRodServer2 = server(1);
       props.put("infinispan.client.hotrod.server_list",
@@ -152,7 +152,7 @@ public class PingOnStartupTest extends MultiHotRodServersTest {
       withRemoteCacheManager(new RemoteCacheManagerCallable(
             new RemoteCacheManager(props)) {
          @Override
-         public void call() throws Exception {
+         public void call() {
             rcm.getCache();
          }
       });

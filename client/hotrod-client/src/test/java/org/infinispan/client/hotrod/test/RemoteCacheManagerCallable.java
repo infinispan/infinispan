@@ -35,7 +35,7 @@ public class RemoteCacheManagerCallable {
       this.rcm = rcm;
    }
 
-   public void call() throws Exception {
+   public void call() {
       // No-op
    }
 

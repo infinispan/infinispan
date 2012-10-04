@@ -33,12 +33,15 @@ import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.AfterMethod;
+import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
 
 import java.net.InetSocketAddress;
 import java.net.SocketAddress;
 import java.util.Collection;
 
+import static org.infinispan.client.hotrod.test.HotRodClientTestingUtil.killRemoteCacheManager;
+import static org.infinispan.client.hotrod.test.HotRodClientTestingUtil.killServers;
 import static org.testng.AssertJUnit.assertEquals;
 
 /**
@@ -66,20 +69,12 @@ public class ReplTopologyChangeTest extends MultipleCacheManagersTest {
    protected void clearContent() throws Throwable {
    }
 
-   @AfterClass (alwaysRun = true)
+   @AfterClass(alwaysRun = true)
    @Override
    protected void destroy() {
-      try {
-      hotRodServer1.stop();
-      } catch (Exception e) {
-         e.printStackTrace();
-      }
-      try {
-      hotRodServer2.stop();
-      } catch (Exception e) {
-         e.printStackTrace();
-      }
       super.destroy();
+      killServers(hotRodServer1, hotRodServer2);
+      killRemoteCacheManager(remoteCacheManager);
    }
 
    @Override
@@ -89,11 +84,15 @@ public class ReplTopologyChangeTest extends MultipleCacheManagersTest {
       CacheContainer cm2 = TestCacheManagerFactory.createClusteredCacheManager(config);
       registerCacheManager(cm1);
       registerCacheManager(cm2);
+      waitForClusterToForm();
+   }
 
+   @BeforeClass(alwaysRun = true)
+   @Override
+   public void createBeforeClass() throws Throwable {
+      super.createBeforeClass(); // Create cache managers
       hotRodServer1 = TestHelper.startHotRodServer(manager(0));
       hotRodServer2 = TestHelper.startHotRodServer(manager(1));
-
-      waitForClusterToForm();
 
       manager(0).getCache().put("k_test", "v");
       manager(0).getCache().get("k_test").equals("v");
@@ -111,7 +110,6 @@ public class ReplTopologyChangeTest extends MultipleCacheManagersTest {
    protected CacheMode getCacheMode() {
       return CacheMode.REPL_SYNC;
    }
-
 
    public void testTwoMembers() {
       InetSocketAddress server1Address = new InetSocketAddress("localhost", hotRodServer1.getPort());

@@ -22,12 +22,16 @@
  */
 package org.infinispan.client.hotrod;
 
-import org.infinispan.manager.EmbeddedCacheManager;
+import org.infinispan.client.hotrod.test.RemoteCacheManagerCallable;
 import org.infinispan.server.hotrod.HotRodServer;
+import org.infinispan.test.CacheManagerCallable;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.testng.annotations.Test;
 
 import static junit.framework.Assert.assertEquals;
+import static org.infinispan.client.hotrod.test.HotRodClientTestingUtil.killServers;
+import static org.infinispan.client.hotrod.test.HotRodClientTestingUtil.withRemoteCacheManager;
+import static org.infinispan.test.TestingUtil.withCacheManager;
 
 /**
  * @author Mircea.Markus@jboss.com
@@ -37,30 +41,49 @@ import static junit.framework.Assert.assertEquals;
 public class ServerShutdownTest {
 
    public void testServerShutdownWithConnectedClient() {
-      EmbeddedCacheManager cacheManager = TestCacheManagerFactory.createLocalCacheManager(false);
-      HotRodServer hotrodServer = TestHelper.startHotRodServer(cacheManager);
-      RemoteCacheManager remoteCacheManager = new RemoteCacheManager("localhost", hotrodServer.getPort());
-      RemoteCache remoteCache = remoteCacheManager.getCache();
-
-      remoteCache.put("k","v");
-      assertEquals("v", remoteCache.get("k"));
-
-      hotrodServer.stop();
-      cacheManager.stop();
-      remoteCacheManager.stop();
+      withCacheManager(new CacheManagerCallable(
+            TestCacheManagerFactory.createLocalCacheManager(false)) {
+         @Override
+         public void call() {
+            HotRodServer hotrodServer = TestHelper.startHotRodServer(cm);
+            try {
+               withRemoteCacheManager(new RemoteCacheManagerCallable(
+                     new RemoteCacheManager("localhost", hotrodServer.getPort())) {
+                  @Override
+                  public void call() {
+                     RemoteCache remoteCache = rcm.getCache();
+                     remoteCache.put("k","v");
+                     assertEquals("v", remoteCache.get("k"));
+                  }
+               });
+            } finally {
+               killServers(hotrodServer);
+            }
+         }
+      });
    }
 
    public void testServerShutdownWithoutConnectedClient() {
-      EmbeddedCacheManager cacheManager = TestCacheManagerFactory.createLocalCacheManager(false);
-      HotRodServer hotrodServer = TestHelper.startHotRodServer(cacheManager);
-      RemoteCacheManager remoteCacheManager = new RemoteCacheManager("localhost", hotrodServer.getPort());
-      RemoteCache remoteCache = remoteCacheManager.getCache();
-
-      remoteCache.put("k","v");
-      assertEquals("v", remoteCache.get("k"));
-
-      remoteCacheManager.stop();
-      hotrodServer.stop();
-      cacheManager.stop();
+      withCacheManager(new CacheManagerCallable(
+            TestCacheManagerFactory.createLocalCacheManager(false)) {
+         @Override
+         public void call() {
+            HotRodServer hotrodServer = TestHelper.startHotRodServer(cm);
+            try {
+               withRemoteCacheManager(new RemoteCacheManagerCallable(
+                     new RemoteCacheManager("localhost", hotrodServer.getPort())) {
+                  @Override
+                  public void call() {
+                     RemoteCache remoteCache = rcm.getCache();
+                     remoteCache.put("k","v");
+                     assertEquals("v", remoteCache.get("k"));
+                  }
+               });
+            } finally {
+               killServers(hotrodServer);
+            }
+         }
+      });
    }
+
 }

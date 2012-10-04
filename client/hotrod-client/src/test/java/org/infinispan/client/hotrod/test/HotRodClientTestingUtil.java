@@ -72,8 +72,7 @@ public class HotRodClientTestingUtil {
     * @param c task to execute
     * @throws Exception if the task fails somehow
     */
-   public static void withRemoteCacheManager(RemoteCacheManagerCallable c)
-         throws Exception {
+   public static void withRemoteCacheManager(RemoteCacheManagerCallable c) {
       try {
          c.call();
       } finally {

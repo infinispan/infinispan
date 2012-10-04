@@ -147,7 +147,7 @@ abstract class AbstractProtocolServer(threadNamePrefix: String) extends Protocol
       if (transport != null)
          transport.stop()
 
-      if (isGlobalStatsEnabled) {
+      if (mbeanServer != null && transportObjName != null) {
          // Unregister mbean(s)
          JmxUtil.unregisterMBean(transportObjName, mbeanServer)
       }

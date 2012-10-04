@@ -54,26 +54,23 @@ public class CacheManagerNotStartedTest extends SingleCacheManagerTest {
    protected EmbeddedCacheManager createCacheManager() throws Exception {
       cacheManager = TestCacheManagerFactory.createLocalCacheManager(false);
       cacheManager.defineConfiguration(CACHE_NAME, new ConfigurationBuilder().build());
-      hotrodServer = TestHelper.startHotRodServer(cacheManager);
-      remoteCacheManager = new RemoteCacheManager("localhost:" + hotrodServer.getHost(), false);
       return cacheManager;
    }
 
-   @AfterTest(alwaysRun = true)
-   public void release() {
-      killCacheManagers(cacheManager);
-      killServers(hotrodServer);
+   @Override
+   protected void setup() throws Exception {
+      super.setup();
+      hotrodServer = TestHelper.startHotRodServer(cacheManager);
+      remoteCacheManager = new RemoteCacheManager(
+            "localhost:" + hotrodServer.getHost(), false);
    }
 
    @AfterClass(alwaysRun = true)
    @Override
    protected void destroyAfterClass() {
       super.destroyAfterClass();
-      try {
-         remoteCacheManager.stop();
-      } catch (Exception e) {
-         e.printStackTrace();
-      }
+      killRemoteCacheManager(remoteCacheManager);
+      killServers(hotrodServer);
    }
 
    public void testGetCacheOperations() {
