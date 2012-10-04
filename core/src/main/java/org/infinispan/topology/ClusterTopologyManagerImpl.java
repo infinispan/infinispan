@@ -350,12 +350,10 @@ public class ClusterTopologyManagerImpl implements ClusterTopologyManager {
 
    private void startRebalance(String cacheName) throws Exception {
       ClusterCacheStatus cacheStatus = cacheStatusMap.get(cacheName);
-      CacheTopology cacheTopology = cacheStatus.getCacheTopology();
-      CacheTopology newTopology;
 
       synchronized (cacheStatus) {
-         boolean isRebalanceInProgress = cacheTopology.getPendingCH() != null;
-         if (isRebalanceInProgress) {
+         CacheTopology cacheTopology = cacheStatus.getCacheTopology();
+         if (cacheStatus.isRebalanceInProgress()) {
             log.tracef("Ignoring request to rebalance cache %s, there's already a rebalance in progress: %s",
                   cacheName, cacheTopology);
             return;
@@ -390,7 +388,7 @@ public class ClusterTopologyManagerImpl implements ClusterTopologyManager {
             log.tracef("The balanced CH is the same as the current CH, not rebalancing");
             return;
          }
-         newTopology = new CacheTopology(newTopologyId, currentCH, balancedCH);
+         CacheTopology newTopology = new CacheTopology(newTopologyId, currentCH, balancedCH);
          log.tracef("Updating cache %s topology for rebalance: %s", cacheName, newTopology);
          cacheStatus.startRebalance(newTopology);
       }
