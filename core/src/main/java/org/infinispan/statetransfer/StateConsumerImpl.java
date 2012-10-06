@@ -325,6 +325,9 @@ public class StateConsumerImpl implements StateConsumer {
             for (Object key : transactionInfo.getLockedKeys()) {
                tx.addBackupLockForKey(key);
             }
+            for(Object key : transactionInfo.getPendingLockedKeys() ) {
+               tx.addPendingLockForKey(key);
+            }
          }
       }
    }

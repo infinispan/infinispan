@@ -125,4 +125,9 @@ public class NonTxInvocationContext extends AbstractInvocationContext {
    public void clearLockedKeys() {
       lockedKeys = null;
    }
+
+   @Override
+   public void addPendingLockedKey(Object key) {
+      // No-op      
+   }
 }

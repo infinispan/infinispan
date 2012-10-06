@@ -142,4 +142,9 @@ public final class ImmutableContext implements InvocationContext {
    public void clearLockedKeys() {
       throw new CacheException("This context is immutable");
    }
+
+   @Override
+   public void addPendingLockedKey(Object key) {
+      throw new CacheException("This context is immutable");      
+   }
 }

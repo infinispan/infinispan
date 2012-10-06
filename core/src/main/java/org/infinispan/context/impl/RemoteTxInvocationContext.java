@@ -148,4 +148,9 @@ public class RemoteTxInvocationContext extends AbstractTxInvocationContext {
    public void addLockedKey(Object key) {
       remoteTransaction.registerLockedKey(key);
    }
+
+   @Override
+   public void addPendingLockedKey(Object key) {
+      remoteTransaction.addPendingLockForKey(key);      
+   }
 }
