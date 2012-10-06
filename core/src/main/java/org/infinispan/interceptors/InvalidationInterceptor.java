@@ -26,6 +26,7 @@ import org.infinispan.commands.AbstractVisitor;
 import org.infinispan.commands.CommandsFactory;
 import org.infinispan.commands.FlagAffectedCommand;
 import org.infinispan.commands.VisitableCommand;
+import org.infinispan.commands.control.LockControlCommand;
 import org.infinispan.commands.tx.PrepareCommand;
 import org.infinispan.commands.write.ClearCommand;
 import org.infinispan.commands.write.InvalidateCommand;
@@ -36,6 +37,7 @@ import org.infinispan.commands.write.ReplaceCommand;
 import org.infinispan.commands.write.WriteCommand;
 import org.infinispan.context.Flag;
 import org.infinispan.context.InvocationContext;
+import org.infinispan.context.impl.LocalTxInvocationContext;
 import org.infinispan.context.impl.TxInvocationContext;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.factories.annotations.Start;
@@ -152,6 +154,18 @@ public class InvalidationInterceptor extends BaseRpcInterceptor {
       return retval;
    }
 
+   @Override
+   public Object visitLockControlCommand(TxInvocationContext ctx, LockControlCommand command) throws Throwable {
+      Object retVal = invokeNextInterceptor(ctx, command);
+      if (ctx.isOriginLocal()) {
+         //unlock will happen async as it is a best effort
+         boolean sync = !command.isUnlock();
+         ((LocalTxInvocationContext) ctx).remoteLocksAcquired(rpcManager.getTransport().getMembers());
+         rpcManager.broadcastRpcCommand(command, sync, false);
+      }
+      return retVal;
+   }
+   
    private Object handleInvalidate(InvocationContext ctx, WriteCommand command, Object... keys) throws Throwable {
       Object retval = invokeNextInterceptor(ctx, command);
       if (command.isSuccessful() && !ctx.isInTxScope()) {

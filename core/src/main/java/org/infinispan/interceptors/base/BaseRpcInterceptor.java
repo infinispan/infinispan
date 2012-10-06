@@ -60,18 +60,6 @@ public abstract class BaseRpcInterceptor extends CommandInterceptor {
       cacheName = componentRegistry.getCacheName();
    }
 
-   @Override
-   public Object visitLockControlCommand(TxInvocationContext ctx, LockControlCommand command) throws Throwable {
-      Object retVal = invokeNextInterceptor(ctx, command);
-      if (ctx.isOriginLocal()) {
-         //unlock will happen async as it is a best effort
-         boolean sync = !command.isUnlock();
-         ((LocalTxInvocationContext) ctx).remoteLocksAcquired(rpcManager.getTransport().getMembers());
-         rpcManager.broadcastRpcCommand(command, sync, false);
-      }
-      return retVal;
-   }
-
    protected final boolean isSynchronous(FlagAffectedCommand command) {
       if (command.hasFlag(Flag.FORCE_SYNCHRONOUS))
          return true;

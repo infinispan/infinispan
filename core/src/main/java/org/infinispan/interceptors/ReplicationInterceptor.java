@@ -23,6 +23,7 @@
 package org.infinispan.interceptors;
 
 import org.infinispan.commands.CommandsFactory;
+import org.infinispan.commands.control.LockControlCommand;
 import org.infinispan.commands.read.AbstractDataCommand;
 import org.infinispan.commands.read.GetKeyValueCommand;
 import org.infinispan.commands.remote.ClusteredGetCommand;
@@ -158,6 +159,18 @@ public class ReplicationInterceptor extends BaseRpcInterceptor {
          // retry
          return visitGetKeyValueCommand(ctx, command);
       }
+   }
+   
+   @Override
+   public Object visitLockControlCommand(TxInvocationContext ctx, LockControlCommand command) throws Throwable {
+      Object retVal = invokeNextInterceptor(ctx, command);
+      if (ctx.isOriginLocal()) {
+         //unlock will happen async as it is a best effort
+         boolean sync = !command.isUnlock();
+         ((LocalTxInvocationContext) ctx).remoteLocksAcquired(rpcManager.getTransport().getMembers());
+         rpcManager.broadcastRpcCommand(command, sync, false);
+      }
+      return retVal;
    }
 
    private boolean needsRemoteGet(InvocationContext ctx, AbstractDataCommand command) {
