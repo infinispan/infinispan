@@ -110,6 +110,11 @@ public interface InvocationContext extends EntryLookup, Cloneable {
    void addLockedKey(Object key);
 
    /**
+    * Tracks the given key as locked by this invocation context.
+    */
+   void addPendingLockedKey(Object key);
+   
+   /**
     * Returns true if the lock being tested is already held in the current scope, false otherwise.
     *
     * @param key lock to test

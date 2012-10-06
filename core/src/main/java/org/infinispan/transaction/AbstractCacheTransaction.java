@@ -69,6 +69,9 @@ public abstract class AbstractCacheTransaction implements CacheTransaction {
    /** Holds all the locks for which the local node is a secondary data owner. */
    protected volatile Set<Object> backupKeyLocks = null;
 
+   /** Holds all the locks for which the local node is pending locking */
+   protected volatile Set<Object> pendingKeyLocks = null;
+   
    private boolean txComplete = false;
    private volatile boolean needToNotifyWaiters = false;
    protected final int viewId;
@@ -169,11 +172,24 @@ public abstract class AbstractCacheTransaction implements CacheTransaction {
       backupKeyLocks.add(key);
    }
 
+   @Override
+   public void addPendingLockForKey( Object key ) {      
+      //we need to synchronize this collection to be able to get a valid snapshot from another thread during state transfer
+      if (pendingKeyLocks == null) pendingKeyLocks = Collections.synchronizedSet(new HashSet<Object>(INITIAL_LOCK_CAPACITY));
+      pendingKeyLocks.add(key);
+   }
+   
    public void registerLockedKey(Object key) {
       // we need to synchronize this collection to be able to get a valid snapshot from another thread during state transfer
       if (lockedKeys == null) lockedKeys = Collections.synchronizedSet(new HashSet<Object>(INITIAL_LOCK_CAPACITY));
       if (trace) log.tracef("Registering locked key: %s", key);
-      lockedKeys.add(key);
+      synchronized( this ) {
+         if( pendingKeyLocks != null ) {
+            pendingKeyLocks.remove(key);
+         }
+         
+         lockedKeys.add(key);
+      }
    }
 
    @Override
@@ -186,6 +202,11 @@ public abstract class AbstractCacheTransaction implements CacheTransaction {
       return backupKeyLocks == null ? Collections.emptySet() : backupKeyLocks;
    }
 
+   @Override
+   public Set<Object> getPendingLockedKeys() {
+      return pendingKeyLocks == null ? Collections.emptySet() : pendingKeyLocks;
+   }
+   
    @Override
    public void clearLockedKeys() {
       if (trace) log.tracef("Clearing locked keys: %s", lockedKeys);

@@ -49,14 +49,17 @@ public class TransactionInfo {
    private final WriteCommand[] modifications;
 
    private final Set<Object> lockedKeys;
+   
+   private final Set<Object> pendingLockedKeys;
 
    private final int topologyId;
 
-   public TransactionInfo(GlobalTransaction globalTransaction, int topologyId, WriteCommand[] modifications, Set<Object> lockedKeys) {
+   public TransactionInfo(GlobalTransaction globalTransaction, int topologyId, WriteCommand[] modifications, Set<Object> lockedKeys, Set<Object> pendingLockedKeys) {
       this.globalTransaction = globalTransaction;
       this.topologyId = topologyId;
       this.modifications = modifications;
       this.lockedKeys = lockedKeys;
+      this.pendingLockedKeys = pendingLockedKeys;      
    }
 
    public GlobalTransaction getGlobalTransaction() {
@@ -70,6 +73,10 @@ public class TransactionInfo {
    public Set<Object> getLockedKeys() {
       return lockedKeys;
    }
+   
+   public Set<Object> getPendingLockedKeys() {
+      return pendingLockedKeys;
+   }
 
    public int getTopologyId() {
       return topologyId;
@@ -82,6 +89,7 @@ public class TransactionInfo {
             ", topologyId=" + topologyId +
             ", modifications=" + Arrays.asList(modifications) +
             ", lockedKeys=" + lockedKeys +
+            ", pendingLockedKeys=" + pendingLockedKeys +
             '}';
    }
 
@@ -103,6 +111,7 @@ public class TransactionInfo {
          output.writeInt(object.topologyId);
          output.writeObject(object.modifications);
          output.writeObject(object.lockedKeys);
+         output.writeObject(object.pendingLockedKeys);
       }
 
       @Override
@@ -112,7 +121,8 @@ public class TransactionInfo {
          int topologyId = input.readInt();
          WriteCommand[] modifications = (WriteCommand[]) input.readObject();
          Set<Object> lockedKeys = (Set<Object>) input.readObject();
-         return new TransactionInfo(globalTransaction, topologyId, modifications, lockedKeys);
+         Set<Object> pendingLockedKeys = (Set<Object>) input.readObject();
+         return new TransactionInfo(globalTransaction, topologyId, modifications, lockedKeys, pendingLockedKeys);
       }
    }
 }

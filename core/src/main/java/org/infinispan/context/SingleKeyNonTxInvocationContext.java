@@ -83,6 +83,11 @@ public class SingleKeyNonTxInvocationContext extends AbstractInvocationContext {
          throw illegalStateException();
       isLocked = true;
    }
+   
+   @Override
+   public void addPendingLockedKey( Object key ) {
+      // NO OP.
+   }
 
    private IllegalStateException illegalStateException() {
       return new IllegalStateException("This is a single key invocation context, using multiple keys shouldn't be possible");

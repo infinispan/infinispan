@@ -153,4 +153,9 @@ public class LocalTxInvocationContext extends AbstractTxInvocationContext {
       Transaction tx = super.getTransaction();
       return tx == null ? localTransaction.getTransaction() : tx;
    }
+
+   @Override
+   public void addPendingLockedKey(Object key) {
+      localTransaction.addPendingLockForKey(key);      
+   }
 }

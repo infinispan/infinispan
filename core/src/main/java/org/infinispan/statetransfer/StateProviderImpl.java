@@ -224,6 +224,7 @@ public class StateProviderImpl implements StateProvider {
       for (CacheTransaction tx : transactions) {
          // transfer only locked keys that belong to requested segments, located on local node
          Set<Object> lockedKeys = new HashSet<Object>();
+         Set<Object> pendingLockedKeys = new HashSet<Object>();
          for (Object key : tx.getLockedKeys()) {
             if (segments.contains(readCh.getSegment(key))) {
                lockedKeys.add(key);
@@ -234,13 +235,20 @@ public class StateProviderImpl implements StateProvider {
                lockedKeys.add(key);
             }
          }
+         
+         for (Object key : tx.getPendingLockedKeys()) {
+            if (segments.contains(readCh.getSegment(key))) {
+               pendingLockedKeys.add(key);
+            }
+         }
+         
          if (!lockedKeys.isEmpty()) {
             List<WriteCommand> txModifications = tx.getModifications();
             WriteCommand[] modifications = null;
             if (txModifications != null) {
                modifications = txModifications.toArray(new WriteCommand[txModifications.size()]);
             }
-            transactionsToTransfer.add(new TransactionInfo(tx.getGlobalTransaction(), tx.getViewId(), modifications, lockedKeys));
+            transactionsToTransfer.add(new TransactionInfo(tx.getGlobalTransaction(), tx.getViewId(), modifications, lockedKeys, pendingLockedKeys));
          }
       }
    }

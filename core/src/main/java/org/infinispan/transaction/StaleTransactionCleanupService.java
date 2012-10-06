@@ -109,12 +109,17 @@ public class StaleTransactionCleanupService {
       // only for remote transactions, since we acquire locks on the origin node regardless if it's the owner or not
       log.tracef("Unlocking keys for which we are no longer an owner");
       for (RemoteTransaction remoteTx : transactionTable.getRemoteTransactions()) {
+                           
          GlobalTransaction gtx = remoteTx.getGlobalTransaction();
          List<Object> keys = new ArrayList<Object>();
          boolean txHasLocalKeys = false;
          for (Object key : remoteTx.getLockedKeys()) {
+                                    
             boolean wasLocal = chOld.isKeyLocalToNode(self, key);
             boolean isLocal = chNew.isKeyLocalToNode(self, key);
+            
+            log.tracef("Checking key %s: wasLocal=%s, isLocal=%s", key, remoteTx, wasLocal, isLocal);
+            
             if (wasLocal && !isLocal) {
                keys.add(key);
             }
@@ -123,6 +128,12 @@ public class StaleTransactionCleanupService {
          for (Object key : remoteTx.getBackupLockedKeys()) {
             boolean isLocal = chNew.isKeyLocalToNode(self, key);
             txHasLocalKeys |= isLocal;
+         }
+         
+         // If there are any pending locks we can't kill a tx, as the lock may be acquired on another node.
+         for( Object key : remoteTx.getPendingLockedKeys() ) {
+            boolean isLocal = chNew.isKeyLocalToNode(self, key);
+            txHasLocalKeys |= isLocal;            
          }
 
          if (keys.size() > 0) {

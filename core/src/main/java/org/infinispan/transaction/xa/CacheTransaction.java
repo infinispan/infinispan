@@ -98,4 +98,8 @@ public interface CacheTransaction {
    boolean keyRead(Object key);
 
    void addReadKey(Object key);
+
+   void addPendingLockForKey(Object key);
+
+   Set<Object> getPendingLockedKeys();
 }

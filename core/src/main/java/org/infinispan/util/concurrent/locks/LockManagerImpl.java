@@ -205,6 +205,8 @@ public class LockManagerImpl implements LockManager {
    }
 
    private boolean lock(InvocationContext ctx, Object key, long timeoutMillis) throws InterruptedException {
+      
+      ctx.addPendingLockedKey(key);
       if (lockAndRecord(key, ctx, timeoutMillis)) {
          ctx.addLockedKey(key);
          return true;
