@@ -45,6 +45,9 @@ public class BaseBackupInterceptor extends BaseRpcInterceptor {
    
    protected boolean isTxFromRemoteSite(GlobalTransaction gtx) {
       LocalTransaction remoteTx = txTable.getLocalTransaction(gtx);
+      if( remoteTx == null )
+         return false;
+      
       return remoteTx.isFromRemoteSite();
    }
    
