@@ -29,7 +29,6 @@ import org.infinispan.commands.CommandsFactory;
 import org.infinispan.commands.CreateCacheCommand;
 import org.infinispan.commands.read.MapCombineCommand;
 import org.infinispan.commands.read.ReduceCommand;
-import org.infinispan.commands.remote.CacheRpcCommand;
 import org.infinispan.distexec.mapreduce.spi.MapReduceTaskLifecycleService;
 import org.infinispan.distribution.DistributionManager;
 import org.infinispan.factories.ComponentRegistry;
@@ -37,7 +36,6 @@ import org.infinispan.lifecycle.ComponentStatus;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.marshall.Marshaller;
 import org.infinispan.marshall.StreamingMarshaller;
-import org.infinispan.remoting.responses.ExceptionResponse;
 import org.infinispan.remoting.responses.Response;
 import org.infinispan.remoting.responses.SuccessfulResponse;
 import org.infinispan.remoting.rpc.RpcManager;
@@ -47,6 +45,7 @@ import org.infinispan.util.concurrent.AbstractInProcessFuture;
 import org.infinispan.util.concurrent.FutureListener;
 import org.infinispan.util.concurrent.NotifyingFuture;
 import org.infinispan.util.concurrent.NotifyingNotifiableFuture;
+import org.infinispan.util.concurrent.WithinThreadExecutor;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
@@ -63,7 +62,9 @@ import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutionException;
+import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Future;
+import java.util.concurrent.FutureTask;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
@@ -168,7 +169,7 @@ public class MapReduceTask<KIn, VIn, KOut, VOut> {
    protected final AdvancedCache<KIn, VIn> cache;
    protected final Marshaller marshaller;
    protected final MapReduceManager mapReduceManager;
-   
+   protected final ExecutorService localExecutorService = new WithinThreadExecutor();
    protected final UUID taskId;
 
    /**
@@ -316,6 +317,9 @@ public class MapReduceTask<KIn, VIn, KOut, VOut> {
 
             // reduce
             return executeReducePhase(allMapPhasesResponses, useCompositeKeys);
+         }
+         catch (Exception cause){
+            throw new CacheException(cause);
          } finally {
             // cleanup tmp caches across cluster
             if(useIntermediatePerTaskCache()){
@@ -325,7 +329,11 @@ public class MapReduceTask<KIn, VIn, KOut, VOut> {
             }
          }
       } else {
-         return executeMapPhaseWithLocalReduction();         
+         try {
+            return executeMapPhaseWithLocalReduction();
+         } catch (Exception cause){
+            throw new CacheException(cause);
+         }
       }     
    }
    
@@ -362,84 +370,93 @@ public class MapReduceTask<KIn, VIn, KOut, VOut> {
       }
    }
 
-   protected Set<KOut> executeMapPhase(boolean useCompositeKeys) {
-      RpcManager rpc = cache.getRpcManager();      
-      MapCombineCommand<KIn,VIn,KOut,VOut> cmd = null;
-      Map<Address, Response> mapPhaseResponses = new HashMap<Address, Response>();
+   protected Set<KOut> executeMapPhase(boolean useCompositeKeys) throws InterruptedException,
+            ExecutionException {
+      RpcManager rpc = cache.getRpcManager();
+      MapCombineCommand<KIn, VIn, KOut, VOut> cmd = null;
       Set<KOut> mapPhasesResult = new HashSet<KOut>();
-      List<MapReduceFuture> futures = new ArrayList<MapReduceFuture>();
+      List<MapTaskPart<Set<KOut>>> futures = new ArrayList<MapTaskPart<Set<KOut>>>();
       if (inputTaskKeysEmpty()) {
-         cmd = buildMapCombineCommand(taskId.toString(), mapper, combiner, null, true, useCompositeKeys);         
-         //everywhere except local
-         Map<Address, Response> map = invokeEverywhere(cmd);
-         mapPhaseResponses.putAll(map);
-         //local
-         Set<KOut> localResult = invokeMapCombineLocally(cmd);
-         mapPhasesResult.addAll(localResult);
+         for (Address target : rpc.getTransport().getMembers()) {
+            if (target.equals(rpc.getAddress())) {
+               cmd = buildMapCombineCommand(taskId.toString(), clone(mapper), clone(combiner),
+                        null, true, useCompositeKeys);
+            } else {
+               cmd = buildMapCombineCommand(taskId.toString(), mapper, combiner, null, true,
+                        useCompositeKeys);
+            }
+            MapTaskPart<Set<KOut>> part = createTaskMapPart(cmd, target, true);
+            part.execute();
+            futures.add(part);
+         }
       } else {
          Map<Address, List<KIn>> keysToNodes = mapKeysToNodes(keys);
          for (Entry<Address, List<KIn>> e : keysToNodes.entrySet()) {
             Address address = e.getKey();
             List<KIn> keys = e.getValue();
             if (address.equals(rpc.getAddress())) {
-               cmd = buildMapCombineCommand(taskId.toString(), clone(mapper), clone(combiner), keys, true, useCompositeKeys);
-               Set<KOut> localResult = invokeMapCombineLocally(cmd);
-               mapPhasesResult.addAll(localResult);
+               cmd = buildMapCombineCommand(taskId.toString(), clone(mapper), clone(combiner),
+                        keys, true, useCompositeKeys);
             } else {
-               cmd = buildMapCombineCommand(taskId.toString(), mapper, combiner, keys, true, useCompositeKeys);
-               MapReduceFuture future = invokeRemotely(cmd, address);
-               futures.add(future);
+               cmd = buildMapCombineCommand(taskId.toString(), mapper, combiner, keys, true,
+                        useCompositeKeys);
             }
+            MapTaskPart<Set<KOut>> part = createTaskMapPart(cmd, address, true);
+            part.execute();
+            futures.add(part);
          }
-         Map<Address, Response> resultsFromFutures = extractResultsFromFutures(futures);
-         mapPhaseResponses.putAll(resultsFromFutures);         
       }
-                        
-      Set<KOut> responses = extractSetFromResponses(mapPhaseResponses);
-      mapPhasesResult.addAll(responses);      
+
+      for (MapTaskPart<Set<KOut>> mapTaskPart : futures) {
+         mapPhasesResult.addAll(mapTaskPart.get());
+      }
       return mapPhasesResult;
    }
-   
-   protected Map<KOut,VOut> executeMapPhaseWithLocalReduction() {
-      RpcManager rpc = cache.getRpcManager();      
-      MapCombineCommand<KIn,VIn,KOut,VOut> cmd = null;
-      Map<Address, Response> mapPhaseResponses = new HashMap<Address, Response>();
-      Map<KOut, List<VOut>> mapPhasesResult = new HashMap<KOut,List<VOut>>();
-      List<MapReduceFuture> futures = new ArrayList<MapReduceFuture>();
+
+   protected Map<KOut, VOut> executeMapPhaseWithLocalReduction() throws InterruptedException,
+            ExecutionException {
+      RpcManager rpc = cache.getRpcManager();
+      MapCombineCommand<KIn, VIn, KOut, VOut> cmd = null;
+      Map<KOut, List<VOut>> mapPhasesResult = new HashMap<KOut, List<VOut>>();
+      List<MapTaskPart<Map<KOut, List<VOut>>>> futures = new ArrayList<MapTaskPart<Map<KOut, List<VOut>>>>();
       if (inputTaskKeysEmpty()) {
-         cmd = buildMapCombineCommand(taskId.toString(), mapper, combiner, null, false, false);         
-         //everywhere except local
-         Map<Address, Response> map = invokeEverywhere(cmd);
-         mapPhaseResponses.putAll(map);
-         //local
-         Map<KOut,List<VOut>> localResult = invokeMapCombineLocallyForLocalReduction(cmd);
-         mapPhasesResult.putAll(localResult);
+         for (Address target : rpc.getTransport().getMembers()) {
+            if (target.equals(rpc.getAddress())) {
+               cmd = buildMapCombineCommand(taskId.toString(), clone(mapper), clone(combiner),
+                        null, false, false);
+            } else {
+               cmd = buildMapCombineCommand(taskId.toString(), mapper, combiner, null, false, false);
+            }
+            MapTaskPart<Map<KOut, List<VOut>>> part = createTaskMapPart(cmd, target, false);
+            part.execute();
+            futures.add(part);
+         }
       } else {
          Map<Address, List<KIn>> keysToNodes = mapKeysToNodes(keys);
          for (Entry<Address, List<KIn>> e : keysToNodes.entrySet()) {
             Address address = e.getKey();
             List<KIn> keys = e.getValue();
             if (address.equals(rpc.getAddress())) {
-               cmd = buildMapCombineCommand(taskId.toString(), clone(mapper), clone(combiner), keys, false, false);
-               Map<KOut,List<VOut>> localResult = invokeMapCombineLocallyForLocalReduction(cmd);
-               mapPhasesResult.putAll(localResult);
+               cmd = buildMapCombineCommand(taskId.toString(), clone(mapper), clone(combiner),
+                        keys, false, false);
             } else {
                cmd = buildMapCombineCommand(taskId.toString(), mapper, combiner, keys, false, false);
-               MapReduceFuture future = invokeRemotely(cmd, address);
-               futures.add(future);
             }
+            MapTaskPart<Map<KOut, List<VOut>>> part = createTaskMapPart(cmd, address, false);
+            part.execute();
+            futures.add(part);
          }
-         Map<Address, Response> resultsFromFutures = extractResultsFromFutures(futures);
-         mapPhaseResponses.putAll(resultsFromFutures);         
       }
-       
-      Map<KOut,VOut> reducedResult = new HashMap<KOut, VOut>();
-      for (Entry<Address, Response> response : mapPhaseResponses.entrySet()) {
-         //TODO in parallel with futures
-         mergeResponse(mapPhasesResult, response);
+
+      Map<KOut, VOut> reducedResult = new HashMap<KOut, VOut>();
+      for (MapTaskPart<Map<KOut, List<VOut>>> mapTaskPart : futures) {
+         // TODO in parallel with futures
+         mergeResponse(mapPhasesResult, mapTaskPart.get());
       }
-      //hook into lifecycle
-      MapReduceTaskLifecycleService taskLifecycleService = MapReduceTaskLifecycleService.getInstance();
+
+      // hook into lifecycle
+      MapReduceTaskLifecycleService taskLifecycleService = MapReduceTaskLifecycleService
+               .getInstance();
       log.tracef("For m/r task %s invoking %s locally", taskId, reducer);
       try {
          taskLifecycleService.onPreExecute(reducer, cache);
@@ -452,149 +469,68 @@ public class MapReduceTask<KIn, VIn, KOut, VOut> {
       }
       return reducedResult;
    }
-   
-   protected Map<KOut, VOut> executeReducePhase(Set<KOut> allMapPhasesResponses, boolean emitCompositeIntermediateKeys) {
+
+   protected <V> MapTaskPart<V> createTaskMapPart(MapCombineCommand<KIn, VIn, KOut, VOut> cmd,
+            Address target, boolean distributedReduce) {
+      return new MapTaskPart<V>(target, cmd, distributedReduce);
+   }
+
+   protected Map<KOut, VOut> executeReducePhase(Set<KOut> allMapPhasesResponses,
+            boolean useCompositeKeys) throws InterruptedException, ExecutionException {
       RpcManager rpc = cache.getRpcManager();
-      String destinationCache = null;
-      if (emitCompositeIntermediateKeys) {
-         destinationCache = DEFAULT_TMP_CACHE_CONFIGURATION_NAME;         
+      String destCache = null;
+      if (useCompositeKeys) {
+         destCache = DEFAULT_TMP_CACHE_CONFIGURATION_NAME;
       } else {
-         destinationCache = taskId.toString();
-      }      
-      Cache<Object, Object> dstCache = cache.getCacheManager().getCache(destinationCache);
-      Map<Address, List<KOut>> keysToNodes = mapKeysToNodes(dstCache.getAdvancedCache().getDistributionManager(), 
-               allMapPhasesResponses, emitCompositeIntermediateKeys);
-      Map<KOut, VOut> reduceResult = new HashMap<KOut, VOut>();    
-      List<MapReduceFuture> reduceFutures = new ArrayList<MapReduceFuture>();
+         destCache = taskId.toString();
+      }
+      Cache<Object, Object> dstCache = cache.getCacheManager().getCache(destCache);
+      Map<Address, List<KOut>> keysToNodes = mapKeysToNodes(dstCache.getAdvancedCache()
+               .getDistributionManager(), allMapPhasesResponses, useCompositeKeys);
+      Map<KOut, VOut> reduceResult = new HashMap<KOut, VOut>();
+      List<ReduceTaskPart<Map<KOut, VOut>>> reduceTasks = new ArrayList<ReduceTaskPart<Map<KOut, VOut>>>();
       ReduceCommand<KOut, VOut> reduceCommand = null;
       for (Entry<Address, List<KOut>> e : keysToNodes.entrySet()) {
          Address address = e.getKey();
-         List<KOut> keys = e.getValue();          
+         List<KOut> keys = e.getValue();
          if (address.equals(rpc.getAddress())) {
-            reduceCommand = buildReduceCommand(taskId.toString(), destinationCache, clone(reducer), keys, emitCompositeIntermediateKeys);
-            Map<KOut, VOut> reduceLocally = invokeReduceLocally(reduceCommand, dstCache);
-            reduceResult.putAll(reduceLocally);
+            reduceCommand = buildReduceCommand(taskId.toString(), destCache, clone(reducer), keys,
+                     useCompositeKeys);
          } else {
-            reduceCommand = buildReduceCommand(taskId.toString(), destinationCache, reducer, keys, emitCompositeIntermediateKeys);
-            MapReduceFuture future = invokeRemotely(reduceCommand, address);
-            reduceFutures.add(future);
+            reduceCommand = buildReduceCommand(taskId.toString(), destCache, reducer, keys,
+                     useCompositeKeys);
          }
+         ReduceTaskPart<Map<KOut, VOut>> part = createReducePart(reduceCommand, address, destCache);
+         part.execute();
+         reduceTasks.add(part);
       }
-            
-      Map<Address, Response> reducePhaseResults = extractResultsFromFutures(reduceFutures);
-      Map<KOut, VOut> responses = extractMapFromResponses(reducePhaseResults);
-      reduceResult.putAll(responses);
+
+      for (ReduceTaskPart<Map<KOut, VOut>> reduceTaskPart : reduceTasks) {
+         reduceResult.putAll(reduceTaskPart.get());
+      }
       return reduceResult;
    }
 
-   @SuppressWarnings("unchecked")
-   private <T> Set<T> extractSetFromResponses(Map<Address, Response> responses) {
-      Set<T> result = new HashSet<T>(); 
-      for (Entry<Address, Response> e : responses.entrySet()) {
-         Response rsp = e.getValue();
-         if (rsp.isSuccessful() && rsp.isValid()) {            
-            Set<T> mapResponse = (Set<T>) ((SuccessfulResponse) rsp).getResponseValue();
-            result.addAll(mapResponse);
-         } else if (rsp instanceof ExceptionResponse) {
-            throw new CacheException("Map phase of MapReduce task on remote node " + e.getKey()
-                     + " threw Exception", ((ExceptionResponse) rsp).getException());
-         } else {
-            throw new CacheException("Map phase of MapReduce task on remote node " + e.getKey() + " failed ");
-         }
-      }
-      return result;
+   protected <V> ReduceTaskPart<V> createReducePart(ReduceCommand<KOut, VOut> cmd, Address target,
+            String destCacheName) {
+      return new ReduceTaskPart<V>(target, cmd, destCacheName);
    }
-   
-   @SuppressWarnings("unchecked")
-   private <K,V> Map<K,V> extractMapFromResponses(Map<Address, Response> responses) {
-      Map<K,V> result = new HashMap<K,V>(); 
-      for (Entry<Address, Response> e : responses.entrySet()) {
-         Response rsp = e.getValue();
-         if (rsp.isSuccessful() && rsp.isValid()) {            
-            Map<K,V> r = (Map<K,V>) ((SuccessfulResponse) rsp).getResponseValue();
-            result.putAll(r);
-         } else if (rsp instanceof ExceptionResponse) {
-            throw new CacheException("Reduce phase of MapReduce task on remote node " + e.getKey()
-                     + " threw Exception", ((ExceptionResponse) rsp).getException());
-         } else {
-            throw new CacheException("Reduce phase of MapReduce task on remote node " + e.getKey() + " failed ");
-         }
-      }
-      return result;
-   }
-   
-   @SuppressWarnings("unchecked")
-   private <K, V> void mergeResponse(Map<K, List<V>> result,
-            Entry<Address, Response> response) {
-      Response rsp = response.getValue();
-      if (rsp.isSuccessful() && rsp.isValid()) {
-         Map<K, List<V>> r = (Map<K, List<V>>) ((SuccessfulResponse) rsp).getResponseValue();
-         for (Entry<K, List<V>> entry : r.entrySet()) {
-            synchronized (result) {                           
-               List<V> list = result.get(entry.getKey());
-               if (list != null) {
-                  list.addAll(entry.getValue());                  
-               } else {
-                  list = new ArrayList<V>();
-                  list.addAll(entry.getValue());                  
-               }
-               result.put(entry.getKey(), list);
+
+   private <K, V> void mergeResponse(Map<K, List<V>> result, Map<K, List<V>> m) {
+      for (Entry<K, List<V>> entry : m.entrySet()) {
+         synchronized (result) {
+            List<V> list = result.get(entry.getKey());
+            if (list != null) {
+               list.addAll(entry.getValue());
+            } else {
+               list = new ArrayList<V>();
+               list.addAll(entry.getValue());
             }
+            result.put(entry.getKey(), list);
          }
-      } else if (rsp instanceof ExceptionResponse) {
-         throw new CacheException("Reduce phase of MapReduce task on remote node "
-                  + response.getKey() + " threw Exception",
-                  ((ExceptionResponse) rsp).getException());
-      } else {
-         throw new CacheException("Reduce phase of MapReduce task on remote node "
-                  + response.getKey() + " failed ");
       }
    }
 
-   private Map<Address, Response> invokeEverywhere(MapCombineCommand<KIn, VIn, KOut, VOut> cmd) {
-      RpcManager rpc = cache.getRpcManager(); 
-      Map<Address, Response> map = null;
-      try {
-         log.debugf("Invoking %s across entire cluster ", cmd);
-         map = rpc.invokeRemotely(null, cmd, true, false);
-         log.debugf("Invoked %s across entire cluster, results are %s", cmd, map);         
-      } catch (Throwable e) {
-         throw new CacheException("Could not invoke map phase of MapReduce task on remote nodes ", e);
-      }
-      return map;
-   }
-
-   @SuppressWarnings("unchecked")
-   private Map<Address, Response> extractResultsFromFutures(List<MapReduceFuture> futures) {
-      Map<Address, Response> results = new HashMap<Address, Response>();
-      for (MapReduceFuture future : futures) {
-         Map<Address, Response> resultReduced;
-         try {
-            resultReduced = (Map<Address, Response>) future.get();               
-            results.putAll(resultReduced);
-            log.debugf("Received result from future %s", resultReduced);
-         } catch (Exception e1) {
-            throw new CacheException("Could not retrieve MapReduceTask result from remote node ", e1);
-         }            
-      }
-      return results;
-   }
-
-
-   private MapReduceFuture invokeRemotely(CacheRpcCommand cmd, Address address) {
-      RpcManager rpc = cache.getRpcManager();
-      MapReduceFuture future = null;
-      try {
-         log.debugf("Invoking %s on %s", cmd, address);
-         future = new MapReduceFuture();
-         rpc.invokeRemotelyInFuture(Collections.singleton(address), cmd, future);                  
-         log.debugf("Invoked %s on %s ", cmd, address);
-      } catch (Exception ex) {
-         throw new CacheException("Could not invoke map phase of MapReduceTask on remote node " + address, ex);
-      }
-      return future;
-   }
-   
    private MapCombineCommand<KIn, VIn, KOut, VOut> buildMapCombineCommand(
             String taskId, Mapper<KIn, VIn, KOut, VOut> m, Reducer<KOut, VOut> r,
             Collection<KIn> keys, boolean reducePhaseDistributed, boolean emitCompositeIntermediateKeys){
@@ -605,7 +541,7 @@ public class MapReduceTask<KIn, VIn, KOut, VOut> {
       c.setEmitCompositeIntermediateKeys(emitCompositeIntermediateKeys);
       return c;
    }
-   
+
    private ReduceCommand<KOut, VOut> buildReduceCommand(String taskId,
             String destinationCache, Reducer<KOut, VOut> r, Collection<KOut> keys, boolean emitCompositeIntermediateKeys){
       ComponentRegistry registry = cache.getComponentRegistry();
@@ -614,44 +550,6 @@ public class MapReduceTask<KIn, VIn, KOut, VOut> {
       reduceCommand.setEmitCompositeIntermediateKeys(emitCompositeIntermediateKeys);
       return reduceCommand;
    }
-   
-   private Map<KOut, List<VOut>> invokeMapCombineLocallyForLocalReduction(MapCombineCommand<KIn, VIn, KOut, VOut> mcc) {
-      MapReduceManager mapReduceManager = cache.getComponentRegistry().getComponent(MapReduceManager.class);
-      log.debugf("Invoking %s locally", mcc);
-      try {         
-         mcc.init(mapReduceManager);
-         return mapReduceManager.mapAndCombineForLocalReduction(mcc);
-      } finally {
-         log.debugf("Invoked %s locally", mcc);
-      }
-   }
-   
-   private Set<KOut> invokeMapCombineLocally(MapCombineCommand<KIn, VIn, KOut, VOut> mcc) {
-      MapReduceManager mapReduceManager = cache.getComponentRegistry().getComponent(MapReduceManager.class);
-      log.debugf("Invoking %s locally", mcc);
-      try {         
-         mcc.init(mapReduceManager);
-         return mapReduceManager.mapAndCombineForDistributedReduction(mcc);
-      } finally {
-         log.debugf("Invoked %s locally", mcc);
-      }
-   }
-   
-   private Map<KOut, VOut> invokeReduceLocally(ReduceCommand<KOut, VOut> reduceCommand, Cache<Object, Object> dstCache) {
-      MapReduceManager mrManager = dstCache.getAdvancedCache().getComponentRegistry().getComponent(MapReduceManager.class);
-      reduceCommand.init(mrManager);
-      Map<KOut,VOut> localReduceResult = null;
-      try {
-         log.debugf("Invoking %s locally ", reduceCommand);
-         localReduceResult = mrManager.reduce(reduceCommand);
-         log.debugf("Invoked %s locally", reduceCommand);
-      } catch (Throwable e1) {
-         throw new CacheException("Could not invoke MapReduce task locally ", e1);
-      }
-      return localReduceResult;
-   }
-
- 
    /**
     * Executes this task across Infinispan cluster nodes asynchronously.
     * 
@@ -810,15 +708,21 @@ public class MapReduceTask<KIn, VIn, KOut, VOut> {
       return "MapReduceTask [mapper=" + mapper + ", reducer=" + reducer + ", combiner=" + combiner
                + ", keys=" + keys + ", taskId=" + taskId + "]";
    }
+   private abstract class TaskPart<V> implements NotifyingNotifiableFuture<V> {
 
-   
-   private static class MapReduceFuture implements NotifyingNotifiableFuture<Object>{
+      private Future<V> f;
+      private final Address executionTarget;
 
-      private Future<Object> futureResult;
+      public TaskPart(Address executionTarget) {
+         this.executionTarget = executionTarget;
+      }
+
+      public Address getExecutionTarget() {
+         return executionTarget;
+      }
 
       @Override
-      public NotifyingFuture<Object> attachListener(
-               FutureListener<Object> listener) {
+      public NotifyingFuture<V> attachListener(FutureListener<V> listener) {
          return this;
       }
 
@@ -838,24 +742,188 @@ public class MapReduceTask<KIn, VIn, KOut, VOut> {
       }
 
       @Override
-      public Object get() throws InterruptedException,
-               ExecutionException {
-         return futureResult.get();
+      public V get() throws InterruptedException, ExecutionException {
+         return retrieveResult(f.get());
+      }
+
+      protected Address getAddress() {
+         return cache.getRpcManager().getAddress();
+      }
+
+      protected boolean locallyExecuted(){
+         return getAddress().equals(getExecutionTarget());
+      }
+
+      public abstract void execute();
+
+      @SuppressWarnings("unchecked")
+      private V retrieveResult(Object response) throws ExecutionException {
+         if (response == null) {
+            throw new ExecutionException("Execution returned null value",
+                     new NullPointerException());
+         }
+         if (response instanceof Exception) {
+            throw new ExecutionException((Exception) response);
+         }
+
+         Map<Address, Response> mapResult = (Map<Address, Response>) response;
+         assert mapResult.size() == 1;
+         for (Entry<Address, Response> e : mapResult.entrySet()) {
+            if (e.getValue() instanceof SuccessfulResponse) {
+               return (V) ((SuccessfulResponse) e.getValue()).getResponseValue();
+            }
+         }
+         throw new ExecutionException(new IllegalStateException("Invalid response " + response));
       }
 
       @Override
-      public Object get(long timeout, TimeUnit unit)
-               throws InterruptedException, ExecutionException, TimeoutException {
-         return futureResult.get(timeout, unit);
+      public V get(long timeout, TimeUnit unit) throws InterruptedException, ExecutionException,
+               TimeoutException {
+         return retrieveResult(f.get(timeout, unit));
       }
 
       @Override
-      public void notifyDone() {         
+      public void notifyDone() {
       }
 
       @Override
-      public void setNetworkFuture(Future<Object> future) {
-         this.futureResult = future;
+      public void setNetworkFuture(Future<V> future) {
+         this.f = future;
+      }
+   }
+
+   private class MapTaskPart<V> extends TaskPart<V> {
+
+      private MapCombineCommand<KIn, VIn, KOut, VOut> mcc;
+      private boolean distributedReduce;
+
+      public MapTaskPart(Address executionTarget, MapCombineCommand<KIn, VIn, KOut, VOut> command,
+               boolean distributedReduce) {
+         super(executionTarget);
+         this.mcc = command;
+         this.distributedReduce = distributedReduce;
+      }
+
+      @Override
+      @SuppressWarnings("unchecked")
+      public void execute() {
+         if (locallyExecuted()) {
+            Callable<Map<Address, ? extends Response>> callable;
+            if (distributedReduce) {
+               callable = new Callable<Map<Address, ? extends Response>>() {
+
+                  @Override
+                  public Map<Address, ? extends Response> call() throws Exception {
+                     Set<KOut> result = invokeMapCombineLocally();
+                     return Collections.singletonMap(getAddress(),
+                              SuccessfulResponse.create(result));
+                  }
+               };
+            } else {
+               callable = new Callable<Map<Address, ? extends Response>>() {
+
+                  @Override
+                  public Map<Address, ? extends Response> call() throws Exception {
+                     Map<KOut, List<VOut>> result = invokeMapCombineLocallyForLocalReduction();
+                     return Collections.singletonMap(getAddress(),
+                              SuccessfulResponse.create(result));
+                  }
+               };
+            }
+            FutureTask<V> futureTask = new FutureTask<V>((Callable<V>) callable);
+            setNetworkFuture(futureTask);
+            localExecutorService.submit(futureTask);
+         } else {
+            RpcManager rpc = cache.getRpcManager();
+            try {
+               log.debugf("Invoking %s on %s", mcc, getExecutionTarget());
+               rpc.invokeRemotelyInFuture(Collections.singleton(getExecutionTarget()), mcc,
+                        (NotifyingNotifiableFuture<Object>) this);
+               log.debugf("Invoked %s on %s ", mcc, getExecutionTarget());
+            } catch (Exception ex) {
+               throw new CacheException(
+                        "Could not invoke map phase of MapReduceTask on remote node "
+                                 + getExecutionTarget(), ex);
+            }
+         }
+      }
+
+      private Map<KOut, List<VOut>> invokeMapCombineLocallyForLocalReduction() {
+         log.debugf("Invoking %s locally", mcc);
+         try {
+            mcc.init(mapReduceManager);
+            return mapReduceManager.mapAndCombineForLocalReduction(mcc);
+         } finally {
+            log.debugf("Invoked %s locally", mcc);
+         }
+      }
+
+      private Set<KOut> invokeMapCombineLocally() {
+         log.debugf("Invoking %s locally", mcc);
+         try {
+            mcc.init(mapReduceManager);
+            return mapReduceManager.mapAndCombineForDistributedReduction(mcc);
+         } finally {
+            log.debugf("Invoked %s locally", mcc);
+         }
+      }
+   }
+
+   private class ReduceTaskPart<V> extends TaskPart<V> {
+
+      private ReduceCommand<KOut, VOut> rc;
+      private String cacheName;
+
+      public ReduceTaskPart(Address executionTarget, ReduceCommand<KOut, VOut> command,
+               String destinationCacheName) {
+         super(executionTarget);
+         this.rc = command;
+         this.cacheName = destinationCacheName;
+      }
+
+      @Override
+      @SuppressWarnings("unchecked")
+      public void execute() {
+         if (locallyExecuted()) {
+            Callable<Map<Address, ? extends Response>> callable = new Callable<Map<Address, ? extends Response>>() {
+
+               @Override
+               public Map<Address, ? extends Response> call() throws Exception {
+                  Cache<Object, Object> dstCache = cache.getCacheManager().getCache(cacheName);
+                  Map<KOut, VOut> result = invokeReduceLocally(dstCache);
+                  return Collections.singletonMap(getAddress(), SuccessfulResponse.create(result));
+               }
+            };
+            FutureTask<V> futureTask = new FutureTask<V>((Callable<V>) callable);
+            setNetworkFuture(futureTask);
+            localExecutorService.submit(futureTask);
+         } else {
+            RpcManager rpc = cache.getRpcManager();
+            try {
+               log.debugf("Invoking %s on %s", rc, getExecutionTarget());
+               rpc.invokeRemotelyInFuture(Collections.singleton(getExecutionTarget()), rc,
+                        (NotifyingNotifiableFuture<Object>) this);
+               log.debugf("Invoked %s on %s ", rc, getExecutionTarget());
+            } catch (Exception ex) {
+               throw new CacheException(
+                        "Could not invoke map phase of MapReduceTask on remote node "
+                                 + getExecutionTarget(), ex);
+            }
+         }
+      }
+
+      private Map<KOut, VOut> invokeReduceLocally(Cache<Object, Object> dstCache) {
+         rc.init(mapReduceManager);
+         Map<KOut, VOut> localReduceResult = null;
+         try {
+            log.debugf("Invoking %s locally ", rc);
+            localReduceResult = mapReduceManager.reduce(rc);
+            log.debugf("Invoked %s locally", rc);
+         } catch (Throwable e1) {
+            throw new CacheException("Could not invoke MapReduce task locally ", e1);
+         }
+         return localReduceResult;
       }
    }
 }
+
