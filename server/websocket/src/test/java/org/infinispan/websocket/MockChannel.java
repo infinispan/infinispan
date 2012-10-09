@@ -38,12 +38,12 @@ import org.json.JSONException;
 import org.json.JSONObject;
 
 /**
- * 
- * 
+ *
+ *
  * @author <a href="mailto:tom.fennelly@gmail.com">tom.fennelly@gmail.com</a>
  */
 public class MockChannel implements Channel {
-	
+
 	private StringWriter writer = new StringWriter();
 
 	/* (non-Javadoc)
@@ -86,7 +86,18 @@ public class MockChannel implements Channel {
 		return false;
 	}
 
-	/* (non-Javadoc)
+
+
+	@Override
+   public Object getAttachment() {
+      return null;
+   }
+
+   @Override
+   public void setAttachment(Object attachment) {
+   }
+
+   /* (non-Javadoc)
 	 * @see org.jboss.netty.channel.AbstractChannel#write(java.lang.Object)
 	 */
 	@Override
@@ -98,14 +109,14 @@ public class MockChannel implements Channel {
 		}
 		return null;
 	}
-	
+
 	public JSONObject getJSONPayload() {
 		if(writer.getBuffer().length() == 0) {
 			return null;
 		}
 		return getJSONPayload(0);
 	}
-	
+
 	public JSONObject getJSONPayload(long waitTimeout) {
 		long start = System.currentTimeMillis();
 		while(writer.getBuffer().length() == 0) {
@@ -113,7 +124,7 @@ public class MockChannel implements Channel {
 				throw new RuntimeException("Timed out waiting for data to be pushed onto the channel.");
 			}
 		}
-		
+
 		try {
 			return new JSONObject(writer.toString());
 		} catch (JSONException e) {
@@ -122,7 +133,7 @@ public class MockChannel implements Channel {
 			clear();
 		}
 	}
-	
+
 	public void clear() {
 		writer.getBuffer().setLength(0);
 	}
@@ -167,7 +178,8 @@ public class MockChannel implements Channel {
 		return (ChannelFuture) Proxy.newProxyInstance(getClass().getClassLoader(),
                 new Class[] { ChannelFuture.class },
                 new InvocationHandler() {
-					public Object invoke(Object proxy, Method method,Object[] args) throws Throwable {
+					@Override
+               public Object invoke(Object proxy, Method method,Object[] args) throws Throwable {
 						return null;
 					}
 		});
