@@ -42,7 +42,7 @@
    <properties>
       <!-- version of slf4j needed by Weld -->
       <version.slf4j>1.5.10</version.slf4j>
-      <version.testng.arquillian>5.14.6</version.testng.arquillian>
+      <version.testng.arquillian>5.14.10</version.testng.arquillian>
    </properties>
 
    <developers>
