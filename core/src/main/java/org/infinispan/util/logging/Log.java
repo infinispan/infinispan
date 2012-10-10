@@ -789,11 +789,11 @@ public interface Log extends BasicLogger {
    void warnStrictPeerToPeerWithInjectedChannel();
 
    @LogMessage(level = ERROR)
-   @Message(value = "Failed to prepare view %s for cache  %s, rolling back to view %s", id = 172)
+   @Message(value = "Failed to prepare view %s for cache %s, rolling back to view %s", id = 172)
    void cacheViewPrepareFailure(@Cause Throwable e, CacheView newView, String cacheName, CacheView committedView);
 
    @LogMessage(level = ERROR)
-   @Message(value = "Custom interceptor %s has used @Inject, @Start or @Stop. These methods will not be processed.  Please extend org.infinispan.interceptors.base.BaseCustomInterceptor instead, and your custom interceptor will have access to a cache and cacheManager.  Override stop() and start() for lifecycle methods.", id = 173)
+   @Message(value = "Custom interceptor %s has used @Inject, @Start or @Stop. These methods will not be processed. Please extend org.infinispan.interceptors.base.BaseCustomInterceptor instead, and your custom interceptor will have access to a cache and cacheManager. Override stop() and start() for lifecycle methods.", id = 173)
    void customInterceptorExpectsInjection(String customInterceptorFQCN);
 
    @LogMessage(level = WARN)
