@@ -37,6 +37,7 @@ import java.io.Serializable;
 import java.util.*;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.ConcurrentMap;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.locks.ReentrantLock;
 
 
@@ -434,15 +435,16 @@ public class BoundedConcurrentHashMap<K, V> extends AbstractMap<K, V>
       private final Segment<K,V> segment;
       private final int maxBatchQueueSize;
       private final int trimDownSize;
-      private final float batchThresholdFactor;
+      private final float batchThresholdFactorAndQueueSize;
       private final Set<HashEntry<K, V>> evicted;
+      private final AtomicInteger accessQueueSize = new AtomicInteger(0);
 
       public LRU(Segment<K,V> s, int capacity, float lf, int maxBatchSize, float batchThresholdFactor) {
          super(capacity, lf, true);
          this.segment = s;
          this.trimDownSize = capacity;
          this.maxBatchQueueSize = maxBatchSize > MAX_BATCH_SIZE ? MAX_BATCH_SIZE : maxBatchSize;
-         this.batchThresholdFactor = batchThresholdFactor;
+         this.batchThresholdFactorAndQueueSize = batchThresholdFactor * this.maxBatchQueueSize;
          this.accessQueue = new ConcurrentLinkedQueue<HashEntry<K, V>>();
          this.evicted = new HashSet<HashEntry<K, V>>();
       }
@@ -455,6 +457,7 @@ public class BoundedConcurrentHashMap<K, V> extends AbstractMap<K, V>
          }
          evictedCopy.addAll(evicted);
          accessQueue.clear();
+         accessQueueSize.set(0);
          evicted.clear();
          return evictedCopy;
       }
@@ -478,7 +481,8 @@ public class BoundedConcurrentHashMap<K, V> extends AbstractMap<K, V>
       @Override
       public boolean onEntryHit(HashEntry<K, V> e) {
          accessQueue.add(e);
-         return accessQueue.size() >= maxBatchQueueSize * batchThresholdFactor;
+         int sz = accessQueueSize.incrementAndGet();
+         return sz >= batchThresholdFactorAndQueueSize;
       }
 
       /*
@@ -486,7 +490,7 @@ public class BoundedConcurrentHashMap<K, V> extends AbstractMap<K, V>
        */
       @Override
       public boolean thresholdExpired() {
-         return accessQueue.size() >= maxBatchQueueSize;
+         return accessQueueSize.get() >= maxBatchQueueSize;
       }
 
       @Override
@@ -494,6 +498,7 @@ public class BoundedConcurrentHashMap<K, V> extends AbstractMap<K, V>
          remove(e);
          // we could have multiple instances of e in accessQueue; remove them all
          while (accessQueue.remove(e)) {
+            accessQueueSize.decrementAndGet();
             continue;
          }
       }
@@ -502,6 +507,7 @@ public class BoundedConcurrentHashMap<K, V> extends AbstractMap<K, V>
       public void clear() {
          super.clear();
          accessQueue.clear();
+         accessQueueSize.set(0);
       }
 
       @Override
@@ -544,16 +550,17 @@ public class BoundedConcurrentHashMap<K, V> extends AbstractMap<K, V>
       private final Segment<K,V> segment;
       private final int maxBatchQueueSize;
       private final int trimDownSize;
-      private final float batchThresholdFactor;
+      private final float batchThresholdFactorAndQueueSize;
       private final Set<HashEntry<K, V>> evicted;
       private LRUHashEntry<K, V> head;
+      private final AtomicInteger accessQueueSize = new AtomicInteger(0);
 
       public IBMLRU(Segment<K,V> s, int capacity, float lf, int maxBatchSize, float batchThresholdFactor) {
          super(capacity, lf);
          this.segment = s;
          this.trimDownSize = capacity;
          this.maxBatchQueueSize = maxBatchSize > MAX_BATCH_SIZE ? MAX_BATCH_SIZE : maxBatchSize;
-         this.batchThresholdFactor = batchThresholdFactor;
+         this.batchThresholdFactorAndQueueSize = batchThresholdFactor * this.maxBatchQueueSize;
          this.accessQueue = new ConcurrentLinkedQueue<LRUHashEntry<K, V>>();
          this.evicted = new HashSet<HashEntry<K, V>>();
          this.head = (LRUHashEntry<K, V>) createNewEntry(null,-1, null, null);
@@ -569,6 +576,7 @@ public class BoundedConcurrentHashMap<K, V> extends AbstractMap<K, V>
          }
          evictedCopy.addAll(evicted);
          accessQueue.clear();
+         accessQueueSize.set(0);
          evicted.clear();
          return evictedCopy;
       }
@@ -606,14 +614,16 @@ public class BoundedConcurrentHashMap<K, V> extends AbstractMap<K, V>
       @Override
       public boolean onEntryHit(HashEntry<K, V> e) {
          accessQueue.add((LRUHashEntry<K, V>) e);
-         return accessQueue.size() >= maxBatchQueueSize * batchThresholdFactor;
+         int sz = accessQueueSize.incrementAndGet();
+         return sz >= batchThresholdFactorAndQueueSize;
       }
 
       /*
        * Invoked without holding a lock on Segment
        */
+      @Override
       public boolean thresholdExpired() {
-         return accessQueue.size() >= maxBatchQueueSize;
+         return accessQueueSize.get() >= maxBatchQueueSize;
       }
 
       @Override
@@ -623,6 +633,7 @@ public class BoundedConcurrentHashMap<K, V> extends AbstractMap<K, V>
          ((LRUHashEntry<K, V>)e).remove();
          // we could have multiple instances of e in accessQueue; remove them all
          while (accessQueue.remove(e)) {
+            accessQueueSize.decrementAndGet();
             continue;
          }
       }
@@ -632,6 +643,7 @@ public class BoundedConcurrentHashMap<K, V> extends AbstractMap<K, V>
          super.clear();
          head.previousEntry = head.nextEntry = head;
          accessQueue.clear();
+         accessQueueSize.set(0);
       }
 
       @Override
@@ -1101,6 +1113,7 @@ public class BoundedConcurrentHashMap<K, V> extends AbstractMap<K, V>
        * 
        * */
       private final ConcurrentLinkedQueue<LIRSHashEntry<K, V>> accessQueue;
+      private final AtomicInteger accessQueueSize = new AtomicInteger(0);
       
       /**
        * The maxBatchQueueSize
@@ -1113,7 +1126,7 @@ public class BoundedConcurrentHashMap<K, V> extends AbstractMap<K, V>
       /** The number of LIRS entries in a segment */
       private int size;
       
-      private final float batchThresholdFactor;
+      private final float batchThresholdFactorAndQueueSize;
       
       
       /**
@@ -1152,7 +1165,7 @@ public class BoundedConcurrentHashMap<K, V> extends AbstractMap<K, V>
          this.maximumSize = capacity;
          this.maximumHotSize = calculateLIRSize(capacity);
          this.maxBatchQueueSize = maxBatchSize > MAX_BATCH_SIZE ? MAX_BATCH_SIZE : maxBatchSize;
-         this.batchThresholdFactor = batchThresholdFactor;
+         this.batchThresholdFactorAndQueueSize = batchThresholdFactor * this.maxBatchQueueSize;
          this.accessQueue = new ConcurrentLinkedQueue<LIRSHashEntry<K, V>>();                         
       }
       
@@ -1173,6 +1186,7 @@ public class BoundedConcurrentHashMap<K, V> extends AbstractMap<K, V>
             removeFromSegment(evicted);
          } finally {
             accessQueue.clear();
+            accessQueueSize.set(0);
          }
          return evicted;
       }          
@@ -1228,7 +1242,8 @@ public class BoundedConcurrentHashMap<K, V> extends AbstractMap<K, V>
       @Override
       public boolean onEntryHit(HashEntry<K, V> e) {
          accessQueue.add((LIRSHashEntry<K, V>) e);
-         return accessQueue.size() >= maxBatchQueueSize * batchThresholdFactor;
+         int sz = accessQueueSize.incrementAndGet();
+         return sz >= batchThresholdFactorAndQueueSize;
       }
 
       /*
@@ -1236,7 +1251,7 @@ public class BoundedConcurrentHashMap<K, V> extends AbstractMap<K, V>
        */
       @Override
       public boolean thresholdExpired() {
-         return accessQueue.size() >= maxBatchQueueSize;
+         return accessQueueSize.get() >= maxBatchQueueSize;
       }
 
       @Override
@@ -1245,12 +1260,14 @@ public class BoundedConcurrentHashMap<K, V> extends AbstractMap<K, V>
          ((LIRSHashEntry<K,V>)e).remove();
          // we could have multiple instances of e in accessQueue; remove them all
          while (accessQueue.remove(e)) {
+            accessQueueSize.decrementAndGet();
          }
       }
 
       @Override
       public void clear() {
          accessQueue.clear();
+         accessQueueSize.set(0);
       }
 
       @Override
@@ -1722,13 +1739,20 @@ public class BoundedConcurrentHashMap<K, V> extends AbstractMap<K, V>
       }
 
       private Set<HashEntry<K, V>> attemptEviction(boolean lockedAlready) {
-         Set<HashEntry<K, V>> evicted = null;
-         boolean obtainedLock = lockedAlready || tryLock();
-         if (!obtainedLock && eviction.thresholdExpired()) {
-            lock();
-            obtainedLock = true;
-         }
-         if (obtainedLock) {
+         boolean shouldAttemptEvict = lockedAlready || tryLock();
+
+         // The following code existed in the original BCHM implementation.  Commented out since there is no need
+         // for *all* threads to wait on this lock to perform an eviction - only one thread should "win" the
+         // privilege to perform the eviction, the other threads should just go their merry way.  The tryLock above
+         // should be enough to ensure one thread "wins" and the others "lose". - Manik
+
+//         if (!obtainedLock && eviction.thresholdExpired()) {
+//            lock();
+//            obtainedLock = true;
+//         }
+
+         if (shouldAttemptEvict) {
+            Set<HashEntry<K, V>> evicted = null;
             try {
                if (eviction.thresholdExpired()) {
                   evicted = eviction.execute();
@@ -1738,8 +1762,10 @@ public class BoundedConcurrentHashMap<K, V> extends AbstractMap<K, V>
                   unlock();
                }
             }
+            return evicted;
+         } else {
+            return null;
          }
-         return evicted;
       }
 
       private void notifyEvictionListener(Set<HashEntry<K, V>> evicted) {
