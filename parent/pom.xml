@@ -1580,6 +1580,12 @@
          <activation>
             <activeByDefault>false</activeByDefault>
          </activation>
+
+         <properties>
+            <infinispan.test.parallel.threads>1</infinispan.test.parallel.threads>
+            <infinispan.test.jgroups.protocol>tcp</infinispan.test.jgroups.protocol>
+         </properties>
+
          <build>
             <plugins>
                <plugin>
@@ -1624,7 +1630,7 @@
                   </executions>
                </plugin>
 
-                <!-- Starting jacoco agent for recording code coverage. -->
+               <!-- Starting jacoco agent for recording code coverage. -->
                <plugin>
                   <groupId>org.jacoco</groupId>
                   <artifactId>jacoco-maven-plugin</artifactId>
@@ -1635,11 +1641,46 @@
                         </goals>
                      </execution>
                   </executions>
+                  <configuration>
+                     <propertyName>jacocoAgent</propertyName>
+                  </configuration>
                </plugin>
+
+               <!-- Overriding surefire configuration, for attaching jacoco agent to command line. -->
                <plugin>
                   <groupId>org.apache.maven.plugins</groupId>
                   <artifactId>maven-surefire-plugin</artifactId>
-                  <inherited>false</inherited>
+                  <configuration combine.self="override">
+                     <argLine>-Xmx1024m -XX:MaxPermSize=1024m ${jacocoAgent}</argLine>
+                     <parallel>tests</parallel>
+                     <threadCount>${infinispan.test.parallel.threads}</threadCount>
+                     <groups>${defaultTestGroup}</groups>
+                     <systemProperties>
+                        <property>
+                           <name>infinispan.test.jgroups.protocol</name>
+                           <value>${infinispan.test.jgroups.protocol}</value>
+                        </property>
+                        <property>
+                           <name>jgroups.bind_addr</name>
+                           <value>127.0.0.1</value>
+                        </property>
+                        <property>
+                           <name>java.net.preferIPv4Stack</name>
+                           <value>true</value>
+                        </property>
+                        <property>
+                           <name>infinispan.unsafe.allow_jdk8_chm</name>
+                           <value>true</value>
+                        </property>
+                     </systemProperties>
+                     <trimStackTrace>false</trimStackTrace>
+                     <properties>
+                        <property>
+                           <name>listener</name>
+                           <value>${testNGListener}</value>
+                        </property>
+                     </properties>
+                  </configuration>
                </plugin>
             </plugins>
          </build>
