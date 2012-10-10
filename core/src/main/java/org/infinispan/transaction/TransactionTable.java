@@ -245,6 +245,11 @@ public class TransactionTable {
          } catch (Throwable e) {
             log.unableToRollbackGlobalTx(gtx, e);
          }
+         finally {
+            
+            // Remove the remote transaction.
+            remoteTransactions.remove( gtx );
+         }
       }
 
       log.trace("Completed cleaning transactions originating on leavers");
@@ -273,13 +278,14 @@ public class TransactionTable {
       return createRemoteTransaction(globalTx, modifications, currentViewId);
    }
 
+      
    /**
     * Creates and register a {@link RemoteTransaction}. Returns the created transaction.
     *
     * @throws IllegalStateException if an attempt to create a {@link RemoteTransaction} for an already registered id is
     *                               made.
     */
-   public RemoteTransaction createRemoteTransaction(GlobalTransaction globalTx, WriteCommand[] modifications, int topologyId) {
+   public RemoteTransaction createRemoteTransaction(GlobalTransaction globalTx, WriteCommand[] modifications, int topologyId ) {
       RemoteTransaction remoteTransaction = modifications == null ? txFactory.newRemoteTransaction(globalTx, topologyId)
             : txFactory.newRemoteTransaction(modifications, globalTx, topologyId);
       registerRemoteTransaction(globalTx, remoteTransaction);

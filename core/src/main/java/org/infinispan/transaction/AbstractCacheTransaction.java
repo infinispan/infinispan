@@ -73,6 +73,9 @@ public abstract class AbstractCacheTransaction implements CacheTransaction {
    private volatile boolean needToNotifyWaiters = false;
    protected final int viewId;
 
+   /** mark as volatile as this might be set from the tx thread code on view change*/
+   protected volatile boolean isMarkedForRollback = false;
+      
    private EntryVersionsMap updatedEntryVersions;
 
    public AbstractCacheTransaction(GlobalTransaction tx, int viewId) {
@@ -165,13 +168,13 @@ public abstract class AbstractCacheTransaction implements CacheTransaction {
    @Override
    public void addBackupLockForKey(Object key) {
       // we need to synchronize this collection to be able to get a valid snapshot from another thread during state transfer
-      if (backupKeyLocks == null) backupKeyLocks = Collections.synchronizedSet(new HashSet<Object>(INITIAL_LOCK_CAPACITY));
+      if (backupKeyLocks == null) backupKeyLocks = createSynchronizedSet();
       backupKeyLocks.add(key);
    }
 
    public void registerLockedKey(Object key) {
       // we need to synchronize this collection to be able to get a valid snapshot from another thread during state transfer
-      if (lockedKeys == null) lockedKeys = Collections.synchronizedSet(new HashSet<Object>(INITIAL_LOCK_CAPACITY));
+      if (lockedKeys == null) lockedKeys = createSynchronizedSet();
       if (trace) log.tracef("Registering locked key: %s", key);
       lockedKeys.add(key);
    }
@@ -209,11 +212,11 @@ public abstract class AbstractCacheTransaction implements CacheTransaction {
       initAffectedKeys();
       affectedKeys.addAll(keys);
    }
-
+   
    private void initAffectedKeys() {
       if (affectedKeys == null) affectedKeys = new HashSet<Object>(INITIAL_LOCK_CAPACITY);
    }
-
+   
    @Override
    public EntryVersionsMap getUpdatedEntryVersions() {
       return updatedEntryVersions;
@@ -232,5 +235,19 @@ public abstract class AbstractCacheTransaction implements CacheTransaction {
    @Override
    public boolean keyRead(Object key) {
       return false;
+   }
+   
+   @Override
+   public void markForRollback(boolean markForRollback) {
+      isMarkedForRollback = markForRollback;
+   }
+
+   @Override
+   public final boolean isMarkedForRollback() {
+      return isMarkedForRollback;
+   }
+      
+   private static Set<Object> createSynchronizedSet() {
+      return Collections.synchronizedSet(new HashSet<Object>(INITIAL_LOCK_CAPACITY));
    }
 }

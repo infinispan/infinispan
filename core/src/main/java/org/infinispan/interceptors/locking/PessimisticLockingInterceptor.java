@@ -302,10 +302,14 @@ public class PessimisticLockingInterceptor extends AbstractTxLockingInterceptor 
 
    protected final void lockAndRegisterBackupLock(TxInvocationContext ctx,
          Object key, boolean isLockOwner, long lockTimeout, boolean skipLocking) throws InterruptedException {
-      if (isLockOwner) {
-         lockKeyAndCheckOwnership(ctx, key, lockTimeout, skipLocking);
-      } else if (cdl.localNodeIsOwner(key)) {
-         ctx.getCacheTransaction().addBackupLockForKey(key);
-      }
+      try {
+         if (isLockOwner) {
+            lockKeyAndCheckOwnership(ctx, key, lockTimeout, skipLocking);
+         } else if (cdl.localNodeIsOwner(key)) {
+            ctx.getCacheTransaction().addBackupLockForKey(key);
+         }
+      } finally {
+         checkLockOnOriginatorLeave( ctx );
+      }     
    }
 }

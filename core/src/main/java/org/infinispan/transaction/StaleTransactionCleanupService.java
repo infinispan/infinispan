@@ -109,6 +109,7 @@ public class StaleTransactionCleanupService {
       // only for remote transactions, since we acquire locks on the origin node regardless if it's the owner or not
       log.tracef("Unlocking keys for which we are no longer an owner");
       for (RemoteTransaction remoteTx : transactionTable.getRemoteTransactions()) {
+                           
          GlobalTransaction gtx = remoteTx.getGlobalTransaction();
          List<Object> keys = new ArrayList<Object>();
          boolean txHasLocalKeys = false;
@@ -139,19 +140,12 @@ public class StaleTransactionCleanupService {
             }
          }
 
-         // if the transaction doesn't touch local keys any more, we can roll it back
+         // If the transaction doesn't touch local keys any more, we must set the rollback flag.
+         // Any pending locks waiting for this remote tx need to complete so they can be cleaned up after acquisition
+         // to 
          if (!txHasLocalKeys) {
-            log.tracef("Killing remote transaction without any local keys %s", gtx);
-            RollbackCommand rc = new RollbackCommand(cacheName, gtx);
-            rc.init(invoker, transactionTable.icc, transactionTable);
-            try {
-               rc.perform(null);
-               log.tracef("Rollback of transaction %s complete.", gtx);
-            } catch (Throwable e) {
-               log.unableToRollbackGlobalTx(gtx, e);
-            } finally {
-               transactionTable.removeRemoteTransaction(gtx);
-            }
+            log.tracef("Setting rollback flag on remote transaction without any local keys %s", gtx);
+            remoteTx.markForRollback(true);
          }
       }
 
