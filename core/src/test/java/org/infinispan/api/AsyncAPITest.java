@@ -26,317 +26,358 @@ import org.infinispan.Cache;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.test.SingleCacheManagerTest;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
+import org.infinispan.util.Util;
 import org.testng.annotations.Test;
 
 import java.util.Collections;
-import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 
+import static org.junit.Assert.*;
+
 @Test(groups = "functional", testName = "api.AsyncAPITest")
 public class AsyncAPITest extends SingleCacheManagerTest {
-   Cache<String, String> c;
+
+   private Cache<String, String> c;
+   
+   private long startTime;
 
    protected EmbeddedCacheManager createCacheManager() throws Exception {
       EmbeddedCacheManager cm = TestCacheManagerFactory.createLocalCacheManager(false);
       c = cm.getCache();
       return cm;
    }
-  
-   public void testAsyncMethods() throws ExecutionException, InterruptedException {
+
+   public void testAsyncMethods() throws Exception {
       // get
       Future<String> f = c.getAsync("k");
       assert f != null;
-      assert f.isDone();
       assert !f.isCancelled();
       assert f.get() == null;
+      assert f.isDone();
       assert c.get("k") == null;
 
       // put
       f = c.putAsync("k", "v");
       assert f != null;
-      assert f.isDone();
       assert !f.isCancelled();
       assert f.get() == null;
+      assert f.isDone();
       assert c.get("k").equals("v");
 
       f = c.putAsync("k", "v2");
       assert f != null;
-      assert f.isDone();
       assert !f.isCancelled();
       assert f.get().equals("v");
+      assert f.isDone();
       assert c.get("k").equals("v2");
 
       // putAll
       Future<Void> f2 = c.putAllAsync(Collections.singletonMap("k", "v3"));
       assert f2 != null;
-      assert f2.isDone();
       assert !f2.isCancelled();
       assert f2.get() == null;
+      assert f2.isDone();
       assert c.get("k").equals("v3");
 
       // putIfAbsent
       f = c.putIfAbsentAsync("k", "v4");
       assert f != null;
-      assert f.isDone();
       assert !f.isCancelled();
       assert f.get().equals("v3");
+      assert f.isDone();
       assert c.get("k").equals("v3");
 
       // remove
       f = c.removeAsync("k");
       assert f != null;
-      assert f.isDone();
       assert !f.isCancelled();
       assert f.get().equals("v3");
+      assert f.isDone();
       assert c.get("k") == null;
 
       // putIfAbsent again
       f = c.putIfAbsentAsync("k", "v4");
       assert f != null;
-      assert f.isDone();
       assert !f.isCancelled();
       assert f.get() == null;
+      assert f.isDone();
       assert c.get("k").equals("v4");
 
       // get
       f = c.getAsync("k");
       assert f != null;
-      assert f.isDone();
       assert !f.isCancelled();
       assert f.get().equals("v4");
+      assert f.isDone();
       assert c.get("k").equals("v4");
 
       // removecond
       Future<Boolean> f3 = c.removeAsync("k", "v_nonexistent");
       assert f3 != null;
-      assert f3.isDone();
       assert !f3.isCancelled();
       assert f3.get().equals(false);
+      assert f3.isDone();
       assert c.get("k").equals("v4");
 
       f3 = c.removeAsync("k", "v4");
       assert f3 != null;
-      assert f3.isDone();
       assert !f3.isCancelled();
       assert f3.get().equals(true);
+      assert f3.isDone();
       assert c.get("k") == null;
 
       // replace
       f = c.replaceAsync("k", "v5");
       assert f != null;
-      assert f.isDone();
       assert !f.isCancelled();
       assert f.get() == null;
+      assert f.isDone();
       assert c.get("k") == null;
 
       c.put("k", "v");
       f = c.replaceAsync("k", "v5");
       assert f != null;
-      assert f.isDone();
       assert !f.isCancelled();
       assert f.get().equals("v");
+      assert f.isDone();
       assert c.get("k").equals("v5");
 
       //replace2
       f3 = c.replaceAsync("k", "v_nonexistent", "v6");
       assert f3 != null;
-      assert f3.isDone();
       assert !f3.isCancelled();
       assert f3.get().equals(false);
+      assert f3.isDone();
       assert c.get("k").equals("v5");
 
       f3 = c.replaceAsync("k", "v5", "v6");
       assert f3 != null;
-      assert f3.isDone();
       assert !f3.isCancelled();
       assert f3.get().equals(true);
+      assert f3.isDone();
       assert c.get("k").equals("v6");
    }
 
-   @Test(enabled = false, description = "See ISPN-2203")
-   public void testAsyncMethodWithLifespanAndMaxIdle() throws ExecutionException, InterruptedException {
+   public void testAsyncMethodWithLifespanAndMaxIdle() throws Exception {
 
       // lifespan only
-      Future<String> f = c.putAsync("k", "v", 200, TimeUnit.MILLISECONDS);
+      Future<String> f = c.putAsync("k", "v", 1000, TimeUnit.MILLISECONDS);
+      markStartTime();
       assert f != null;
-      assert f.isDone();
       assert !f.isCancelled();
-      verifyLifespanOnly("k", "v");
+      assert f.get() == null;
+      assert f.isDone();
+      verifyEviction("k", "v", 1000, true);
 
       // lifespan and max idle (test max idle)
-      f = c.putAsync("k", "v", 500, TimeUnit.MILLISECONDS, 200, TimeUnit.MILLISECONDS);
+      f = c.putAsync("k", "v", 3000, TimeUnit.MILLISECONDS, 1000, TimeUnit.MILLISECONDS);
+      markStartTime();
       assert f != null;
-      assert f.isDone();
       assert !f.isCancelled();
-      verifyMaxIdle("k", "v");
+      assert f.get() == null;
+      assert f.isDone();
+      verifyEviction("k", "v", 1000, false);
 
       // lifespan and max idle (test lifespan)
-      f = c.putAsync("k", "v", 300, TimeUnit.MILLISECONDS, 200, TimeUnit.MILLISECONDS);
+      f = c.putAsync("k", "v", 3000, TimeUnit.MILLISECONDS, 1000, TimeUnit.MILLISECONDS);
+      markStartTime();
       assert f != null;
-      assert f.isDone();
       assert !f.isCancelled();
-      verifyLifespan("k", "v");
+      assert f.get() == null;
+      assert f.isDone();
+      verifyEviction("k", "v", 3000, true);
 
       // putAll lifespan only
-      Future<Void> f2 = c.putAllAsync(Collections.singletonMap("k", "v3"), 200, TimeUnit.MILLISECONDS);
+      Future<Void> f2 = c.putAllAsync(Collections.singletonMap("k", "v3"), 1000, TimeUnit.MILLISECONDS);
+      markStartTime();
       assert f2 != null;
-      assert f2.isDone();
       assert !f2.isCancelled();
       assert f2.get() == null;
-      verifyLifespanOnly("k", "v3");
+      assert f2.isDone();
+      verifyEviction("k", "v3", 1000, true);
 
       // putAll lifespan and max idle (test max idle)
-      f2 = c.putAllAsync(Collections.singletonMap("k", "v4"), 500, TimeUnit.MILLISECONDS, 200, TimeUnit.MILLISECONDS);
+      f2 = c.putAllAsync(Collections.singletonMap("k", "v4"), 3000, TimeUnit.MILLISECONDS, 1000, TimeUnit.MILLISECONDS);
+      markStartTime();
       assert f2 != null;
-      assert f2.isDone();
       assert !f2.isCancelled();
       assert f2.get() == null;
-      verifyMaxIdle("k", "v4");
+      assert f2.isDone();
+      verifyEviction("k", "v4", 1000, false);
 
       // putAll lifespan and max idle (test lifespan)
-      f2 = c.putAllAsync(Collections.singletonMap("k", "v5"), 300, TimeUnit.MILLISECONDS, 200, TimeUnit.MILLISECONDS);
+      f2 = c.putAllAsync(Collections.singletonMap("k", "v5"), 3000, TimeUnit.MILLISECONDS, 1000, TimeUnit.MILLISECONDS);
+      markStartTime();
       assert f2 != null;
-      assert f2.isDone();
       assert !f2.isCancelled();
       assert f2.get() == null;
-      verifyLifespan("k", "v5");
+      assert f2.isDone();
+      verifyEviction("k", "v5", 3000, true);
 
       // putIfAbsent lifespan only
       c.putAsync("k", "v3");
-      f = c.putIfAbsentAsync("k", "v4", 200, TimeUnit.MILLISECONDS);
+      f = c.putIfAbsentAsync("k", "v4", 1000, TimeUnit.MILLISECONDS);
+      markStartTime();
       assert f != null;
-      assert f.isDone();
       assert !f.isCancelled();
       assert f.get().equals("v3");
+      assert f.isDone();
       assert c.get("k").equals("v3");
       assert !c.get("k").equals("v4");
       Thread.sleep(300);
       assert c.get("k").equals("v3");
-      c.removeAsync("k");
+      f = c.removeAsync("k");
+      assert f.get().equals("v3");
       assert c.get("k") == null;
 
       // now really put (k removed) lifespan only
-      f = c.putIfAbsentAsync("k", "v", 200, TimeUnit.MILLISECONDS);
+      f = c.putIfAbsentAsync("k", "v", 1000, TimeUnit.MILLISECONDS);
+      markStartTime();
       assert f != null;
-      assert f.isDone();
       assert !f.isCancelled();
       assert f.get() == null;
-      verifyLifespanOnly("k", "v");
+      assert f.isDone();
+      verifyEviction("k", "v", 1000, true);
 
       // putIfAbsent lifespan and max idle (test max idle)
-      f = c.putIfAbsentAsync("k", "v", 500, TimeUnit.MILLISECONDS, 200, TimeUnit.MILLISECONDS);
+      f = c.putIfAbsentAsync("k", "v", 3000, TimeUnit.MILLISECONDS, 1000, TimeUnit.MILLISECONDS);
+      markStartTime();
       assert f != null;
-      assert f.isDone();
       assert !f.isCancelled();
       assert f.get() == null;
-      verifyMaxIdle("k", "v");
+      assert f.isDone();
+      verifyEviction("k", "v", 1000, false);
 
       // putIfAbsent lifespan and max idle (test lifespan)
-      f = c.putIfAbsentAsync("k", "v", 300, TimeUnit.MILLISECONDS, 200, TimeUnit.MILLISECONDS);
+      f = c.putIfAbsentAsync("k", "v", 3000, TimeUnit.MILLISECONDS, 1000, TimeUnit.MILLISECONDS);
+      markStartTime();
       assert f != null;
-      assert f.isDone();
       assert !f.isCancelled();
       assert f.get() == null;
-      verifyLifespan("k", "v");
+      assert f.isDone();
+      verifyEviction("k", "v", 3000, true);
 
       // replace
-      f = c.replaceAsync("k", "v5", 200, TimeUnit.MILLISECONDS);
+      f = c.replaceAsync("k", "v5", 1000, TimeUnit.MILLISECONDS);
+      markStartTime();
       assert f != null;
-      assert f.isDone();
       assert !f.isCancelled();
       assert f.get() == null;
+      assert f.isDone();
       assert c.get("k") == null;
 
       // replace lifespan only
       c.put("k", "v");
-      f = c.replaceAsync("k", "v5", 200, TimeUnit.MILLISECONDS);
+      f = c.replaceAsync("k", "v5", 1000, TimeUnit.MILLISECONDS);
+      markStartTime();
       assert f != null;
-      assert f.isDone();
       assert !f.isCancelled();
       assert f.get().equals("v");
-      verifyLifespanOnly("k", "v5");
+      assert f.isDone();
+      verifyEviction("k", "v5", 1000, true);
 
       // replace lifespan and max idle (test max idle)
       c.put("k", "v");
-      f = c.replaceAsync("k", "v5", 500, TimeUnit.MILLISECONDS, 200, TimeUnit.MILLISECONDS);
+      f = c.replaceAsync("k", "v5", 5000, TimeUnit.MILLISECONDS, 1000, TimeUnit.MILLISECONDS);
+      markStartTime();
       assert f != null;
-      assert f.isDone();
       assert !f.isCancelled();
       assert f.get().equals("v");
-      verifyMaxIdle("k", "v5");
+      assert f.isDone();
+      verifyEviction("k", "v5", 1000, false);
 
       // replace lifespan and max idle (test lifespan)
       c.put("k", "v");
-      f = c.replaceAsync("k", "v5", 300, TimeUnit.MILLISECONDS, 200, TimeUnit.MILLISECONDS);
+      f = c.replaceAsync("k", "v5", 3000, TimeUnit.MILLISECONDS, 1000, TimeUnit.MILLISECONDS);
+      markStartTime();
       assert f != null;
-      assert f.isDone();
       assert !f.isCancelled();
       assert f.get().equals("v");
-      verifyLifespan("k", "v5");
+      assert f.isDone();
+      verifyEviction("k", "v5", 3000, true);
 
       //replace2
       c.put("k", "v5");
-      Future<Boolean> f3 = c.replaceAsync("k", "v_nonexistent", "v6", 200, TimeUnit.MILLISECONDS);
+      Future<Boolean> f3 = c.replaceAsync("k", "v_nonexistent", "v6", 1000, TimeUnit.MILLISECONDS);
+      markStartTime();
       assert f3 != null;
-      assert f3.isDone();
       assert !f3.isCancelled();
       assert f3.get().equals(false);
+      assert f3.isDone();
       Thread.sleep(300);
       assert c.get("k").equals("v5");
 
       // replace2 lifespan only
-      f3 = c.replaceAsync("k", "v5", "v6", 200, TimeUnit.MILLISECONDS);
+      f3 = c.replaceAsync("k", "v5", "v6", 1000, TimeUnit.MILLISECONDS);
+      markStartTime();
       assert f3 != null;
-      assert f3.isDone();
       assert !f3.isCancelled();
       assert f3.get().equals(true);
-      verifyLifespanOnly("k", "v6");
+      assert f3.isDone();
+      verifyEviction("k", "v6", 1000, true);
 
       // replace2 lifespan and max idle (test max idle)
       c.put("k", "v5");
-      f3 = c.replaceAsync("k", "v5", "v6", 500, TimeUnit.MILLISECONDS, 200, TimeUnit.MILLISECONDS);
+      f3 = c.replaceAsync("k", "v5", "v6", 5000, TimeUnit.MILLISECONDS, 1000, TimeUnit.MILLISECONDS);
+      markStartTime();
       assert f3 != null;
-      assert f3.isDone();
       assert !f3.isCancelled();
       assert f3.get().equals(true);
-      verifyMaxIdle("k", "v6");
+      assert f3.isDone();
+      verifyEviction("k", "v6", 1000, false);
 
       // replace2 lifespan and max idle (test lifespan)
       c.put("k", "v5");
-      f3 = c.replaceAsync("k", "v5", "v6", 300, TimeUnit.MILLISECONDS, 200, TimeUnit.MILLISECONDS);
+      f3 = c.replaceAsync("k", "v5", "v6", 3000, TimeUnit.MILLISECONDS, 1000, TimeUnit.MILLISECONDS);
+      markStartTime();
       assert f3 != null;
-      assert f3.isDone();
       assert !f3.isCancelled();
       assert f3.get().equals(true);
-      verifyLifespan("k", "v6");
+      assert f3.isDone();
+      verifyEviction("k", "v6", 3000, true);
    }
 
-   // for verification operations using lifespan ONLY
-   private void verifyLifespanOnly(String k, String expectedValue) throws InterruptedException {
-      assert c.get(k).equals(expectedValue);
-      assert c.get(k).equals(expectedValue);
-      Thread.sleep(300);
-      assert c.get("k") == null;
+   private void markStartTime() {
+      startTime = Util.currentMillisFromNanotime();
    }
 
-   // for verification operations using lifespan AND max idle parameters
-   private void verifyLifespan(String k, String expectedValue) throws InterruptedException {
-      assert c.get(k).equals(expectedValue);
-      Thread.sleep(100);
-      assert c.get(k).equals(expectedValue);
-      Thread.sleep(100);
-      assert c.get(k).equals(expectedValue);
-      Thread.sleep(150);
-      assert c.get(k) == null;
-   }
+   /**
+    * Verifies if a key is evicted after a certain time.
+    *
+    * @param key the key to check
+    * @param expectedValue expected key value at the beginning
+    * @param expectedLifetime expected life of the key
+    * @param touchKey indicates if the poll for key existence should read the key and cause idle time to be reset
+    */
+   private void verifyEviction(final String key, final String expectedValue, final long expectedLifetime, final boolean touchKey) {
+      if (startTime == -1) {
+         throw new IllegalStateException("markStartTime() must be called before verifyEviction(..)");
+      }
 
-   // for verification operations using lifespan AND max idle parameters
-   private void verifyMaxIdle(String k, String expectedValue) throws InterruptedException {
-      assert c.get(k).equals(expectedValue);
-      Thread.sleep(100);
-      assert c.get(k).equals(expectedValue);
-      Thread.sleep(300);
-      assert c.get(k) == null;
+      final long pollInterval = 50;
+      try {
+         assertEquals(expectedValue, c.get(key));
+         eventually(new Condition() {
+            @Override
+            public boolean isSatisfied() {
+               if (touchKey) {
+                  return !c.containsKey(key);        //this check DOES read the key so it resets the idle time
+               } else {
+                  return !c.keySet().contains(key);  //this check DOES NOT read the key so it does not interfere with idle time
+               }
+            }
+         }, 3 * expectedLifetime, (int) (3 * expectedLifetime / pollInterval) + 1);
+         long waitTime = Util.currentMillisFromNanotime() - startTime;
+         assertNull(c.get(key));
+
+         // these are very generous limits and should be satisfied even if the clock is not very accurate or system load is very high
+         long lowerBound = expectedLifetime - expectedLifetime / 4;
+         long upperBound = expectedLifetime * 3;
+         assertTrue("Wait time (" + waitTime + ") not within expected bounds [" + lowerBound + ", " + upperBound + "]",
+               lowerBound <= waitTime && waitTime <= upperBound);
+      } finally {
+         startTime = -1;
+      }
    }
 }

@@ -32,7 +32,7 @@ import java.util.concurrent.Callable;
 import java.util.concurrent.Future;
 import java.util.concurrent.FutureTask;
 
-import static org.testng.Assert.assertEquals;
+import static org.testng.Assert.assertTrue;
 
 /**
  * AbstractInfinispanTest is a superclass of all Infinispan tests.
@@ -56,15 +56,24 @@ public class AbstractInfinispanTest {
    }
 
    protected void eventually(Condition ec, long timeout) {
-      int loops = 10;
+      eventually(ec, timeout, 10);
+   }
+
+   protected void eventually(Condition ec, long timeout, int loops) {
+      if (loops <= 0) {
+         throw new IllegalArgumentException("Number of loops must be positive");
+      }
       long sleepDuration = timeout / loops;
+      if (sleepDuration == 0) {
+         sleepDuration = 1;
+      }
       try {
          for (int i = 0; i < loops; i++) {
 
             if (ec.isSatisfied()) break;
             Thread.sleep(sleepDuration);
          }
-         assertEquals(true, ec.isSatisfied());
+         assertTrue(ec.isSatisfied());
       } catch (Exception e) {
          throw new RuntimeException("Unexpected!", e);
       }
