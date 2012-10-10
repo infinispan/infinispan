@@ -44,7 +44,7 @@ import org.testng.annotations.Test;
  * 
  * @author Vladimir Blagojevic
  */
-@Test
+@Test(groups = "functional", testName = "distexec.BaseWordCountMapReduceTest")
 public abstract class BaseWordCountMapReduceTest extends MultipleCacheManagersTest {
    
    protected static HashMap<String,Integer> counts = new HashMap<String, Integer>();
