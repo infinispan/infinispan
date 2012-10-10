@@ -40,6 +40,7 @@ import org.infinispan.interceptors.base.CommandInterceptor;
 import org.infinispan.remoting.rpc.RpcManager;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.topology.CacheTopology;
+import org.infinispan.transaction.LocalTransaction;
 import org.infinispan.transaction.LockingMode;
 import org.infinispan.transaction.RemoteTransaction;
 import org.infinispan.transaction.WriteSkewHelper;
@@ -123,6 +124,7 @@ public class StateTransferInterceptor extends CommandInterceptor {   //todo [ani
             }
             commandFactory.initializeReplicableCommand(prepareCommand, true);
             prepareCommand.setOrigin(ctx.getOrigin());
+            log.tracef("Replaying the transactions received as a result of state transfer %s", prepareCommand);
             prepareCommand.perform(null);
          }
       }
@@ -191,14 +193,9 @@ public class StateTransferInterceptor extends CommandInterceptor {   //todo [ani
    /**
     * Special processing required for transaction commands.
     *
-    * @param ctx
-    * @param command
-    * @return
-    * @throws Throwable
     */
-   private Object handleTxCommand(TxInvocationContext ctx, TransactionBoundaryCommand command)
-         throws Throwable {
-      return handleTopologyAffectedCommand(ctx, command, ctx.getCacheTransaction() instanceof RemoteTransaction);
+   private Object handleTxCommand(TxInvocationContext ctx, TransactionBoundaryCommand command) throws Throwable {
+      return handleTopologyAffectedCommand(ctx, command, ctx.isOriginLocal());
    }
 
    private Object handleWriteCommand(InvocationContext ctx, WriteCommand command) throws Throwable {
@@ -220,9 +217,12 @@ public class StateTransferInterceptor extends CommandInterceptor {   //todo [ani
       if (command instanceof FlagAffectedCommand) {
          cacheModeLocal = ((FlagAffectedCommand)command).hasFlag(Flag.CACHE_MODE_LOCAL);
       }
+      log.tracef("handleTopologyAffectedCommand for command %s, originLocal=%s, cacheModeLocal=%s", command, originLocal
+            , cacheModeLocal);
       if (originLocal || cacheModeLocal) {
          return invokeNextInterceptor(ctx, command);
       }
+
 
       // set the topology id if it was not set before (ie. this is local command)
       // TODO Make tx commands extend FlagAffectedCommand so we can use CACHE_MODE_LOCAL in StaleTransactionCleanupService
@@ -242,26 +242,20 @@ public class StateTransferInterceptor extends CommandInterceptor {   //todo [ani
       CacheTopology cacheTopology = stateTransferManager.getCacheTopology();
       int localTopologyId = cacheTopology.getTopologyId();
       // if it's a tx/lock/write command, forward it to the new owners
+      log.tracef("CommandTopologyId=%s, localTopologyId=%s", cmdTopologyId, localTopologyId);
+
       if (cmdTopologyId < localTopologyId) {
-         if (command instanceof TransactionBoundaryCommand || command instanceof LockControlCommand
-               || (command instanceof WriteCommand && !ctx.isInTxScope())) {
-            // We don't know the full topology history to send the command only to the new owners,
-            // but we do know two things:
-            // 1. The originator - which shouldn't receive the same command again
-            // 2. If the local topology = command topology + 1 and pendingCH = null, there are no new owners
-            ConsistentHash pendingCh = cacheTopology.getPendingCH();
-            if (pendingCh != null && cmdTopologyId < localTopologyId + 1) {
-               ConsistentHash writeCh = cacheTopology.getWriteConsistentHash();
-               Set<Object> affectedKeys = getAffectedKeys(ctx, command);
-               Set<Address> newTargets = writeCh.locateAllOwners(affectedKeys);
-               newTargets.remove(rpcManager.getAddress());
-               if (!newTargets.isEmpty()) {
-                  // Update the topology id to prevent cycles
-                  command.setTopologyId(localTopologyId);
-                  log.tracef("Forwarding command %s to new targets %s", command, newTargets);
-                  // TODO find a way to forward the command async if it was received async
-                  rpcManager.invokeRemotely(newTargets, command, true, false);
-               }
+         if (command instanceof TransactionBoundaryCommand  || (command instanceof WriteCommand && !ctx.isInTxScope())) {
+            ConsistentHash writeCh = cacheTopology.getWriteConsistentHash();
+            Set<Object> affectedKeys = getAffectedKeys(ctx, command);
+            Set<Address> newTargets = writeCh.locateAllOwners(affectedKeys);
+            newTargets.remove(rpcManager.getAddress());
+            if (!newTargets.isEmpty()) {
+               // Update the topology id to prevent cycles
+               command.setTopologyId(localTopologyId);
+               log.tracef("Forwarding command %s to new targets %s", command, newTargets);
+               // TODO find a way to forward the command async if it was received async
+               rpcManager.invokeRemotely(newTargets, command, true, false);
             }
          }
       }
