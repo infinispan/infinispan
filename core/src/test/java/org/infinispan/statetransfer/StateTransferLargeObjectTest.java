@@ -23,9 +23,11 @@
 package org.infinispan.statetransfer;
 
 import org.infinispan.Cache;
-import org.infinispan.config.Configuration;
+import org.infinispan.configuration.cache.CacheMode;
+import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.test.MultipleCacheManagersTest;
 import org.infinispan.test.TestingUtil;
+import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.infinispan.util.concurrent.TimeoutException;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
@@ -37,6 +39,8 @@ import java.util.Map;
 import java.util.Random;
 
 import static org.testng.Assert.assertEquals;
+import static org.testng.Assert.assertTrue;
+import static org.testng.Assert.assertNotNull;
 
 /**
  * Tester for https://jira.jboss.org/browse/ISPN-654.
@@ -44,24 +48,29 @@ import static org.testng.Assert.assertEquals;
  * @author Mircea.Markus@jboss.com
  * @since 4.2
  */
-@Test(groups = "functional" , testName="statetransfer.StateTransferLargeObjectTest", enabled = false, description = "Temporary disabled : https://issues.jboss.org/browse/ISPN-2249")
+@Test(groups = "functional" , testName="statetransfer.StateTransferLargeObjectTest")
 public class StateTransferLargeObjectTest extends MultipleCacheManagersTest {
 
    private static final Log log = LogFactory.getLog(StateTransferLargeObjectTest.class);
-   
-   private Cache c0;
-   private Cache c1;
-   private Cache c2;
-   private Cache c3;
+
+   private Cache<Integer, BigObject> c0;
+   private Cache<Integer, BigObject> c1;
+   private Cache<Integer, BigObject> c2;
+   private Cache<Integer, BigObject> c3;
    private Map<Integer, BigObject> cache;
+
+   private final Random rnd = new Random();
 
    @Override
    protected void createCacheManagers() throws Throwable {
-      Configuration config = getDefaultClusteredConfig(Configuration.CacheMode.DIST_SYNC);
-      config.setL1CacheEnabled(false);
-      config.setNumOwners(3);
-      config.setUseLockStriping(false);
-      createCluster(config, 4);
+      ConfigurationBuilder builder = TestCacheManagerFactory.getDefaultCacheConfiguration(true);
+      builder.clustering().cacheMode(CacheMode.DIST_SYNC)
+            .l1().disable()
+            .clustering().stateTransfer().fetchInMemoryState(true)
+            .locking().useLockStriping(false)
+            .clustering().hash().numOwners(3).numSegments(60);
+      createCluster(builder, 4);
+
       c0 = cache(0);
       c1 = cache(1);
       c2 = cache(2);
@@ -72,22 +81,22 @@ public class StateTransferLargeObjectTest extends MultipleCacheManagersTest {
    }
 
    public void testForFailure() {
-      int num = 1000;
+      final int num = 1000;
       for (int i = 0; i < num; i++) {
          BigObject bigObject = createBigObject(i, "prefix");
          cache.put(i, bigObject);
-         c0.put(i ,bigObject);
+         c0.put(i, bigObject);
       }
 
       for (int i = 0; i < num; i++) {
-         assert c0.get(i) instanceof BigObject;
-         assert c1.get(i) instanceof BigObject;
-         assert c2.get(i) instanceof BigObject;
-         assert c3.get(i) instanceof BigObject;
+         assertTrue(c0.get(i) instanceof BigObject);
+         assertTrue(c1.get(i) instanceof BigObject);
+         assertTrue(c2.get(i) instanceof BigObject);
+         assertTrue(c3.get(i) instanceof BigObject);
       }
-      log.info("Before stopping a cache!");
 
-      Thread thread = new Thread() {
+      log.info("Before stopping a cache!");
+      fork(new Runnable() {
          @Override
          public void run() {
             log.info("About to stop " + c3.getAdvancedCache().getRpcManager().getAddress());
@@ -95,11 +104,9 @@ public class StateTransferLargeObjectTest extends MultipleCacheManagersTest {
             c3.getCacheManager().stop();
             log.info("Cache stopped async!");
          }
-      };
-      thread.start();
+      }, false);
 
       int failureCount = 0;
-
 
       for (int i = 0; i < num; i++) {
          log.info("----Running a get on " + i);
@@ -111,16 +118,18 @@ public class StateTransferLargeObjectTest extends MultipleCacheManagersTest {
             failureCount++;
          }
          try {
-            assertValue(i, c1.get(i));
+            Object o = c1.get(i);
+            assertValue(i, o);
          } catch (TimeoutException e) {
             failureCount++;
          }
          try {
-            assertValue(i, c2.get(i));
+            Object o = c2.get(i);
+            assertValue(i, o);
          } catch (TimeoutException e) {
             failureCount++;
          }
-         if (i % 100 ==0) System.out.println("i = " + i);
+         if (i % 100 == 0) log.debug("i = " + i);
       }
       log.info("failureCount = " + failureCount);
       log.info("Before stopping cache managers!");
@@ -130,18 +139,16 @@ public class StateTransferLargeObjectTest extends MultipleCacheManagersTest {
       log.info("1 killed");
       TestingUtil.killCacheManagers(manager(0));
       log.info("0 killed");
-
    }
 
    private void assertValue(int i, Object o) {
-      String msg = " expected some value for " + i + " but got " + o;
-      if (!(o instanceof BigObject)) log. error(msg);
+      assertNotNull(o);
+      assertTrue(o instanceof BigObject);
       assertEquals(o, cache.get(i));
    }
 
    private BigObject createBigObject(int num, String prefix) {
-      BigObject obj;
-      obj = new BigObject();
+      BigObject obj = new BigObject();
       obj.setName("[" + num + "|" + prefix + "|" +  (num*3) + "|" + (num*7) + "]");
       obj.setValue(generateLargeString());
       obj.setValue2(generateLargeString());
@@ -163,15 +170,14 @@ public class StateTransferLargeObjectTest extends MultipleCacheManagersTest {
       obj.setValue18(generateLargeString());
       obj.setValue19(generateLargeString());
       obj.setValue20(generateLargeString());
-      return obj;   }
+      return obj;
+   }
 
    private String generateLargeString() {
-      Random rnd = new Random();
       byte[] bytes = new byte[100];
       rnd.nextBytes(bytes);
       return new String(bytes);
    }
-
 
    @AfterMethod(alwaysRun = true)
    @Override
