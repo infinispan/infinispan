@@ -19,14 +19,6 @@
 
 package org.infinispan.container.versioning;
 
-import java.util.concurrent.Callable;
-import java.util.concurrent.ConcurrentSkipListSet;
-import java.util.concurrent.Future;
-import java.util.concurrent.TimeUnit;
-
-import javax.transaction.Status;
-import javax.transaction.TransactionManager;
-
 import org.infinispan.Cache;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.cache.VersioningScheme;
@@ -36,14 +28,16 @@ import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.infinispan.transaction.LockingMode;
 import org.infinispan.transaction.TransactionMode;
 import org.infinispan.transaction.lookup.DummyTransactionManagerLookup;
-import org.infinispan.transaction.lookup.JBossStandaloneJTAManagerLookup;
 import org.infinispan.util.concurrent.IsolationLevel;
-import org.infinispan.util.logging.Log;
-import org.infinispan.util.logging.LogFactory;
-import org.testng.Assert;
 import org.testng.annotations.Test;
 
-import static org.testng.AssertJUnit.assertTrue;
+import javax.transaction.Status;
+import javax.transaction.TransactionManager;
+import java.util.concurrent.ConcurrentSkipListSet;
+import java.util.concurrent.Future;
+
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
 
 @Test(groups = "functional", testName = "container.versioning.TransactionalLocalWriteSkewTest")
 public class TransactionalLocalWriteSkewTest extends SingleCacheManagerTest {
@@ -56,7 +50,7 @@ public class TransactionalLocalWriteSkewTest extends SingleCacheManagerTest {
             .transactionManagerLookup(new DummyTransactionManagerLookup())
             .transactionMode(TransactionMode.TRANSACTIONAL)
             .lockingMode(LockingMode.OPTIMISTIC).syncCommitPhase(true)
-            .locking()
+            .locking().lockAcquisitionTimeout(50)
             .isolationLevel(IsolationLevel.REPEATABLE_READ)
             .writeSkewCheck(true)
             .versioning().enable().scheme(VersioningScheme.SIMPLE);
@@ -65,14 +59,14 @@ public class TransactionalLocalWriteSkewTest extends SingleCacheManagerTest {
    }
 
    public void testSharedCounter() throws Exception {
-      int counterMaxValue = 1000;
+      final int counterMaxValue = 1000;
       Cache<String, Integer> c1 = cacheManager.getCache("cache");
 
       // initialize the counter
       c1.put("counter", 0);
 
       // check if the counter is initialized in all caches
-      assertTrue(c1.get("counter") == 0);
+      assertEquals(Integer.valueOf(0), c1.get("counter"));
 
       // this will keep the values put by both threads. any duplicate value
       // will be detected because of the
@@ -80,17 +74,13 @@ public class TransactionalLocalWriteSkewTest extends SingleCacheManagerTest {
       ConcurrentSkipListSet<Integer> uniqueValuesIncremented = new ConcurrentSkipListSet<Integer>();
 
       // create both threads (simulate a node)
-      Future ict1 = fork(new IncrementCounterTask(c1, uniqueValuesIncremented, counterMaxValue));
-      Future ict2 = fork(new IncrementCounterTask(c1, uniqueValuesIncremented, counterMaxValue));
+      Future<Void> ict1 = fork(new IncrementCounterTask(c1, uniqueValuesIncremented, counterMaxValue), null);
+      Future<Void> ict2 = fork(new IncrementCounterTask(c1, uniqueValuesIncremented, counterMaxValue), null);
 
       try {
          // wait to finish
-         Boolean unique1 = (Boolean) ict1.get(30, TimeUnit.SECONDS);
-         Boolean unique2 = (Boolean) ict1.get(30, TimeUnit.SECONDS);
-
-         // check is any duplicate value is detected
-         assertTrue(unique1);
-         assertTrue(unique2);
+         ict1.get();
+         ict2.get();
 
          // check if all caches obtains the counter_max_values
          assertTrue(c1.get("counter") >= counterMaxValue);
@@ -100,12 +90,11 @@ public class TransactionalLocalWriteSkewTest extends SingleCacheManagerTest {
       }
    }
 
-   private class IncrementCounterTask implements Callable<Boolean> {
+   private class IncrementCounterTask implements Runnable {
       private Cache<String, Integer> cache;
       private ConcurrentSkipListSet<Integer> uniqueValuesSet;
       private TransactionManager transactionManager;
       private int lastValue;
-      private boolean unique = true;
       private int counterMaxValue;
 
       public IncrementCounterTask(Cache<String, Integer> cache, ConcurrentSkipListSet<Integer> uniqueValuesSet, int counterMaxValue) {
@@ -117,7 +106,7 @@ public class TransactionalLocalWriteSkewTest extends SingleCacheManagerTest {
       }
 
       @Override
-      public Boolean call() throws InterruptedException {
+      public void run() {
          int failuresCounter = 0;
          while (lastValue < counterMaxValue && !Thread.interrupted()) {
             boolean success = false;
@@ -133,13 +122,14 @@ public class TransactionalLocalWriteSkewTest extends SingleCacheManagerTest {
                cache.put("counter", value);
 
                transactionManager.commit();
-
-               unique = uniqueValuesSet.add(value);
                success = true;
+
+               boolean unique = uniqueValuesSet.add(value);
+               assertTrue("Duplicate value found (value=" + lastValue + ")", unique);
             } catch (Exception e) {
                // expected exception
                failuresCounter++;
-               Assert.assertTrue(failuresCounter < 10 * counterMaxValue, "Too many failures incrementing the counter");
+               assertTrue("Too many failures incrementing the counter", failuresCounter < 10 * counterMaxValue);
             } finally {
                if (!success) {
                   try {
@@ -151,10 +141,8 @@ public class TransactionalLocalWriteSkewTest extends SingleCacheManagerTest {
                      log.trace("Exception during rollback", t);
                   }
                }
-               Assert.assertTrue(unique, "Duplicate value found (value=" + lastValue + ")");
             }
          }
-         return unique;
       }
    }
 }
