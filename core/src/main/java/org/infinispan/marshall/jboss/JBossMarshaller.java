@@ -22,11 +22,15 @@
  */
 package org.infinispan.marshall.jboss;
 
+import java.io.IOException;
+
 import org.infinispan.configuration.global.GlobalConfiguration;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.context.InvocationContextContainer;
 import org.infinispan.marshall.StreamingMarshaller;
 import org.jboss.marshalling.ClassResolver;
+import org.jboss.marshalling.ObjectTable;
+import org.jboss.marshalling.Unmarshaller;
 
 /**
  * A JBoss Marshalling based marshaller that is oriented at internal, embedded,
@@ -48,12 +52,15 @@ import org.jboss.marshalling.ClassResolver;
 public class JBossMarshaller extends AbstractJBossMarshaller implements StreamingMarshaller {
 
    ExternalizerTable externalizerTable;
+   ExternalizerTableProxy proxy;
 
    public void inject(ExternalizerTable externalizerTable, ClassLoader cl, InvocationContextContainer icc, GlobalConfiguration globalCfg) {
       log.debug("Using JBoss Marshalling");
       this.externalizerTable = externalizerTable;
-      baseCfg.setObjectTable(externalizerTable);
-      
+
+      proxy = new ExternalizerTableProxy(externalizerTable);
+      baseCfg.setObjectTable(proxy);
+
       ClassResolver classResolver = globalCfg.serialization().classResolver();
       if (classResolver == null) {
          // Override the class resolver with one that can detect injected
@@ -69,6 +76,9 @@ public class JBossMarshaller extends AbstractJBossMarshaller implements Streamin
       super.stop();
       // Just in case, to avoid leaking class resolver which references classloader
       baseCfg.setClassResolver(null);
+      // Remove the ExternalizerTable reference from all the threads.
+      // Don't need to re-populate the proxy on start, as the component is volatile.
+      proxy.clear();
    }
 
    @Override
@@ -103,4 +113,34 @@ public class JBossMarshaller extends AbstractJBossMarshaller implements Streamin
       }
    }
 
+   /**
+    * Proxy for {@code ExternalizerTable}, used to remove the references to the real {@code ExternalizerTable}
+    * from all the threads that have a {@code PerThreadInstanceHolder}.
+    *
+    * This is useful because {@code ExternalizerTable} can keep lots of other objects alive through its
+    * {@code GlobalComponentRegistry} and {@code RemoteCommandsFactory} fields.
+    */
+   private static final class ExternalizerTableProxy implements ObjectTable {
+      private ExternalizerTable externalizerTable;
+
+      public ExternalizerTableProxy(ExternalizerTable externalizerTable) {
+         this.externalizerTable = externalizerTable;
+         log.tracef("Initialized proxy %s with table %s", this, externalizerTable);
+      }
+
+      public void clear() {
+         externalizerTable = null;
+         log.tracef("Cleared proxy %s", this);
+      }
+
+      @Override
+      public Writer getObjectWriter(Object o) throws IOException {
+         return externalizerTable.getObjectWriter(o);
+      }
+
+      @Override
+      public Object readObject(Unmarshaller input) throws IOException, ClassNotFoundException {
+         return externalizerTable.readObject(input);
+      }
+   }
 }
