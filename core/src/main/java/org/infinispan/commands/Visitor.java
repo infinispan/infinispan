@@ -95,7 +95,7 @@ public interface Visitor {
    Object visitLockControlCommand(TxInvocationContext ctx, LockControlCommand command) throws Throwable;
 
    Object visitUnknownCommand(InvocationContext ctx, VisitableCommand command) throws Throwable;
-   
-   Object visitDistributedExecuteCommand(InvocationContext ctx, DistributedExecuteCommand<?> command) throws Throwable;
-     
+
+   <V> Object visitDistributedExecuteCommand(InvocationContext ctx, DistributedExecuteCommand<V> command) throws Throwable;
+
 }

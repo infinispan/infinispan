@@ -138,9 +138,6 @@ public class RemoteCommandsFactory {
             case InvalidateL1Command.COMMAND_ID:
                command = new InvalidateL1Command();
                break;
-            case DistributedExecuteCommand.COMMAND_ID:
-               command = new DistributedExecuteCommand<Object>();
-               break;
             case ApplyDeltaCommand.COMMAND_ID:
                command = new ApplyDeltaCommand();
                break;
@@ -222,7 +219,10 @@ public class RemoteCommandsFactory {
                break;
             case ReduceCommand.COMMAND_ID:
                command = new ReduceCommand(cacheName);
-               break;   
+               break;
+            case DistributedExecuteCommand.COMMAND_ID:
+               command = new DistributedExecuteCommand(cacheName);
+               break;
             case GetInDoubtTxInfoCommand.COMMAND_ID:
                command = new GetInDoubtTxInfoCommand(cacheName);
                break;
@@ -230,7 +230,7 @@ public class RemoteCommandsFactory {
                command = new CompleteTransactionCommand(cacheName);
                break;
             case CreateCacheCommand.COMMAND_ID:
-               command = new CreateCacheCommand(cacheName);   
+               command = new CreateCacheCommand(cacheName);
                break;
             case XSiteAdminCommand.COMMAND_ID:
                command = new XSiteAdminCommand(cacheName);
