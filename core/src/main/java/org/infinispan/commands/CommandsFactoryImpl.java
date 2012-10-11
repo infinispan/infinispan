@@ -425,7 +425,7 @@ public class CommandsFactoryImpl implements CommandsFactory {
          case ReduceCommand.COMMAND_ID:
             ReduceCommand reduceCommand = (ReduceCommand)c;
             reduceCommand.init(mapReduceManager);
-            break;   
+            break;
          case DistributedExecuteCommand.COMMAND_ID:
             DistributedExecuteCommand dec = (DistributedExecuteCommand)c;
             dec.init(cache);
@@ -505,7 +505,7 @@ public class CommandsFactoryImpl implements CommandsFactory {
 
    @Override
    public <T> DistributedExecuteCommand<T> buildDistributedExecuteCommand(Callable<T> callable, Address sender, Collection keys) {
-      return new DistributedExecuteCommand<T>(keys, callable);
+      return new DistributedExecuteCommand<T>(cacheName, keys, callable);
    }
 
    @Override

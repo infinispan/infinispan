@@ -22,32 +22,33 @@
  */
 package org.infinispan.commands.read;
 
-import org.infinispan.Cache;
-import org.infinispan.commands.VisitableCommand;
-import org.infinispan.commands.Visitor;
-import org.infinispan.context.InvocationContext;
-import org.infinispan.distexec.DistributedCallable;
-import org.infinispan.distexec.spi.DistributedTaskLifecycleService;
-import org.infinispan.lifecycle.ComponentStatus;
-import org.infinispan.util.InfinispanCollections;
-
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.Set;
 import java.util.concurrent.Callable;
 
+import org.infinispan.Cache;
+import org.infinispan.commands.VisitableCommand;
+import org.infinispan.commands.Visitor;
+import org.infinispan.commands.remote.BaseRpcCommand;
+import org.infinispan.context.InvocationContext;
+import org.infinispan.distexec.DistributedCallable;
+import org.infinispan.distexec.spi.DistributedTaskLifecycleService;
+import org.infinispan.lifecycle.ComponentStatus;
+import org.infinispan.util.InfinispanCollections;
+
 /**
  * DistributedExecuteCommand is used to migrate Callable and execute it in remote JVM.
- * 
+ *
  * @author Vladimir Blagojevic
  * @author Mircea Markus
  * @since 5.0
  */
-public class DistributedExecuteCommand<V> implements VisitableCommand {
+public class DistributedExecuteCommand<V> extends BaseRpcCommand implements VisitableCommand {
 
    public static final int COMMAND_ID = 19;
-   
+
    private static final long serialVersionUID = -7828117401763700385L;
 
    private Cache<Object, Object> cache;
@@ -57,7 +58,12 @@ public class DistributedExecuteCommand<V> implements VisitableCommand {
    private Callable<V> callable;
 
 
-   public DistributedExecuteCommand(Collection<Object> inputKeys, Callable<V> callable) {
+   public DistributedExecuteCommand(String cacheName) {
+      super(cacheName);
+   }
+
+   public DistributedExecuteCommand(String cacheName, Collection<Object> inputKeys, Callable<V> callable) {
+      super(cacheName);
       if (inputKeys == null || inputKeys.isEmpty())
          this.keys = InfinispanCollections.emptySet();
       else
@@ -66,7 +72,7 @@ public class DistributedExecuteCommand<V> implements VisitableCommand {
    }
 
    public DistributedExecuteCommand() {
-      this(null, null);
+      this(null, null, null);
    }
 
    public void init(Cache<Object, Object> cache) {
@@ -79,13 +85,18 @@ public class DistributedExecuteCommand<V> implements VisitableCommand {
    }
 
    @Override
+   public boolean ignoreCommandOnStatus(ComponentStatus status) {
+      return false;
+   }
+
+   @Override
    public boolean shouldInvoke(InvocationContext ctx) {
       return true;
    }
 
    /**
     * Performs invocation of Callable and returns result
-    * 
+    *
     * @param ctx
     *           invocation context
     * @return result of Callable invocations
@@ -112,11 +123,11 @@ public class DistributedExecuteCommand<V> implements VisitableCommand {
    public Callable<V> getCallable() {
       return callable;
    }
-   
+
    public Set<Object> getKeys(){
       return keys;
    }
-   
+
    public boolean hasKeys(){
       return keys.isEmpty();
    }
@@ -139,8 +150,6 @@ public class DistributedExecuteCommand<V> implements VisitableCommand {
       this.keys = (Set<Object>) args[i++];
       this.callable = (Callable<V>) args[i++];
    }
-   
-  
 
    @Override
    public int hashCode() {
@@ -179,11 +188,6 @@ public class DistributedExecuteCommand<V> implements VisitableCommand {
             ", keys=" + keys +
             ", callable=" + callable +
             '}';
-   }
-
-   @Override
-   public boolean ignoreCommandOnStatus(ComponentStatus status) {
-      return false;
    }
 
    @Override

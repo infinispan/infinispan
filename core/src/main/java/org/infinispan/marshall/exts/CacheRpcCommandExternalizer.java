@@ -23,6 +23,7 @@ import org.infinispan.commands.CreateCacheCommand;
 import org.infinispan.commands.RemoveCacheCommand;
 import org.infinispan.commands.TopologyAffectedCommand;
 import org.infinispan.commands.control.LockControlCommand;
+import org.infinispan.commands.read.DistributedExecuteCommand;
 import org.infinispan.commands.read.MapCombineCommand;
 import org.infinispan.commands.read.ReduceCommand;
 import org.infinispan.commands.remote.CacheRpcCommand;
@@ -81,15 +82,15 @@ public final class CacheRpcCommandExternalizer extends AbstractExternalizer<Cach
 
    @Override
    public Set<Class<? extends CacheRpcCommand>> getTypeClasses() {
-      Set<Class<? extends CacheRpcCommand>> coreCommands = Util.asSet(
-            MapCombineCommand.class, ReduceCommand.class, LockControlCommand.class,
-            StateRequestCommand.class, StateResponseCommand.class, ClusteredGetCommand.class,
-            MultipleRpcCommand.class, SingleRpcCommand.class, CommitCommand.class,
-            PrepareCommand.class, RollbackCommand.class, RemoveCacheCommand.class,
-            TxCompletionNotificationCommand.class, GetInDoubtTransactionsCommand.class,
-            GetInDoubtTxInfoCommand.class, CompleteTransactionCommand.class,
-            VersionedPrepareCommand.class, CreateCacheCommand.class,
-            VersionedCommitCommand.class, XSiteAdminCommand.class);
+      Set<Class<? extends CacheRpcCommand>> coreCommands = Util.asSet(MapCombineCommand.class,
+               ReduceCommand.class, DistributedExecuteCommand.class, LockControlCommand.class,
+               StateRequestCommand.class, StateResponseCommand.class, ClusteredGetCommand.class,
+               MultipleRpcCommand.class, SingleRpcCommand.class, CommitCommand.class,
+               PrepareCommand.class, RollbackCommand.class, RemoveCacheCommand.class,
+               TxCompletionNotificationCommand.class, GetInDoubtTransactionsCommand.class,
+               GetInDoubtTxInfoCommand.class, CompleteTransactionCommand.class,
+               VersionedPrepareCommand.class, CreateCacheCommand.class,
+               VersionedCommitCommand.class);
       // Only interested in cache specific replicable commands
       coreCommands.addAll(gcr.getModuleProperties().moduleCacheRpcCommands());
       return coreCommands;
