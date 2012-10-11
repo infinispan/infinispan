@@ -30,17 +30,12 @@ import org.testng.annotations.Test;
 
 /**
  * Example for simple Map Reduce use case.
+ * The test is marked as abstract for applying different configurations on it.
  *
  * @author Sanne Grinovero <sanne@infinispan.org> (C) 2011 Red Hat Inc.
  */
 @Test(groups = "functional", testName = "distexec.BookSearchTest")
-public class BookSearchTest extends MultipleCacheManagersTest {
-
-   @Override
-   protected void createCacheManagers() {
-      ConfigurationBuilder builder = getDefaultClusteredCacheConfig(CacheMode.DIST_SYNC, true);
-      createClusteredCaches(4, "bookSearch" ,builder);
-   }
+public abstract class BookSearchTest extends MultipleCacheManagersTest {
 
    @SuppressWarnings({ "rawtypes", "unchecked" })
    public void testBookSearch() {
