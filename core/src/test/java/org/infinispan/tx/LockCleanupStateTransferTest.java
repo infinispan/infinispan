@@ -52,7 +52,6 @@ import org.infinispan.commands.tx.VersionedPrepareCommand;
 import org.infinispan.commands.write.*;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
-import org.infinispan.container.entries.InternalCacheEntry;
 import org.infinispan.container.versioning.EntryVersion;
 import org.infinispan.context.Flag;
 import org.infinispan.distexec.mapreduce.Mapper;
@@ -67,16 +66,12 @@ import org.infinispan.test.MultipleCacheManagersTest;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.transaction.TransactionTable;
 import org.infinispan.transaction.lookup.DummyTransactionManagerLookup;
-import org.infinispan.transaction.tm.DummyTransaction;
-import org.infinispan.transaction.tm.DummyTransactionManager;
 import org.infinispan.transaction.xa.GlobalTransaction;
 import org.infinispan.util.concurrent.ReclosableLatch;
 import org.testng.annotations.Test;
 
-import javax.transaction.HeuristicMixedException;
 import javax.transaction.xa.Xid;
 import java.util.Collection;
-import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -104,11 +99,18 @@ public class LockCleanupStateTransferTest extends MultipleCacheManagersTest {
       waitForClusterToForm();
    }
 
-   public void testLockReleasedCorrectly() throws Throwable {
+   public void testBelatedCommit() throws Throwable {
+      testLockReleasedCorrectly(CommitCommand.class);
+   }
 
+   public void testBelatedTxCompletionNotificationCommand() throws Throwable {
+      testLockReleasedCorrectly(TxCompletionNotificationCommand.class);
+   }
+
+   private void testLockReleasedCorrectly(Class<? extends  ReplicableCommand> toBlock ) throws Throwable {
 
       ComponentRegistry componentRegistry = advancedCache(1).getComponentRegistry();
-      final ControlledCommandFactory ccf = new ControlledCommandFactory(componentRegistry.getCommandsFactory());
+      final ControlledCommandFactory ccf = new ControlledCommandFactory(componentRegistry.getCommandsFactory(), toBlock);
       TestingUtil.replaceField(ccf, "commandsFactory", componentRegistry, ComponentRegistry.class);
 
       //hack: re-add the component registry to the GlobalComponentRegistry's "namedComponents" (CHM) in order to correctly publish it for
@@ -137,7 +139,7 @@ public class LockCleanupStateTransferTest extends MultipleCacheManagersTest {
       eventually(new Condition() {
          @Override
          public boolean isSatisfied() throws Exception {
-            return ccf.receivedCommits.get() == 1;
+            return ccf.receivedCommands.get() == 1;
          }
       });
 
@@ -153,17 +155,12 @@ public class LockCleanupStateTransferTest extends MultipleCacheManagersTest {
       }
 
       log.tracef("Number of migrated keys is %s", migratedKeys.size());
-      System.out.println("Number of migrated tx is " + migratedKeys.size());
       if (migratedKeys.size() == 0) return;
 
       eventually(new Condition() {
          @Override
          public boolean isSatisfied() throws Exception {
-            int remoteTxCount = TestingUtil.getTransactionTable(cache(2)).getRemoteTxCount();
-            int localTxCount = TestingUtil.getTransactionTable(cache(2)).getLocalTxCount();
-            log.trace("remoteTxCount = " + remoteTxCount);
-            log.trace("localTxCount = " + localTxCount);
-            return remoteTxCount == 1;
+            return TestingUtil.getTransactionTable(cache(2)).getRemoteTxCount() == 1;
          }
       });
 
@@ -173,7 +170,8 @@ public class LockCleanupStateTransferTest extends MultipleCacheManagersTest {
       eventually(new Condition() {
          @Override
          public boolean isSatisfied() throws Exception {
-            return TestingUtil.getTransactionTable(cache(2)).getRemoteTxCount() == 0;
+            int remoteTxCount = TestingUtil.getTransactionTable(cache(2)).getRemoteTxCount();
+            return remoteTxCount == 0;
          }
       });
 
@@ -189,6 +187,12 @@ public class LockCleanupStateTransferTest extends MultipleCacheManagersTest {
          assertNotLocked(key);
          assertEquals(key, cache(0).get(key));
       }
+
+      for (Object k : migratedKeys) {
+         assertFalse(advancedCache(0).getDataContainer().containsKey(k));
+         assertFalse(advancedCache(1).getDataContainer().containsKey(k));
+         assertTrue(advancedCache(2).getDataContainer().containsKey(k));
+      }
    }
 
    private boolean keyMapsToNode(Object key, int nodeIndex) {
@@ -203,10 +207,12 @@ public class LockCleanupStateTransferTest extends MultipleCacheManagersTest {
    public class ControlledCommandFactory implements CommandsFactory {
       final CommandsFactory actual;
       final ReclosableLatch gate = new ReclosableLatch(true);
-      final AtomicInteger receivedCommits = new AtomicInteger(0);
+      final AtomicInteger receivedCommands = new AtomicInteger(0);
+      final Class<? extends  ReplicableCommand> toBlock;
 
-      public ControlledCommandFactory(CommandsFactory actual) {
+      public ControlledCommandFactory(CommandsFactory actual, Class<? extends  ReplicableCommand> toBlock) {
          this.actual = actual;
+         this.toBlock = toBlock;
       }
 
       @Override
@@ -316,11 +322,11 @@ public class LockCleanupStateTransferTest extends MultipleCacheManagersTest {
 
       @Override
       public void initializeReplicableCommand(ReplicableCommand command, boolean isRemote) {
-         if (isRemote && command instanceof CommitCommand) {
-            receivedCommits.incrementAndGet();
+         if (isRemote && command.getClass().isAssignableFrom(toBlock)) {
+            receivedCommands.incrementAndGet();
             try {
                gate.await();
-               log.tracef("gate is opened, processing the commit:  %s", command);
+               log.tracef("gate is opened, processing the lock cleanup:  %s", command);
             } catch (InterruptedException e) {
                throw new RuntimeException(e);
             }

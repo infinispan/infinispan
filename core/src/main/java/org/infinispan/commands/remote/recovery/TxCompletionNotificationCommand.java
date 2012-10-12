@@ -22,7 +22,9 @@
  */
 package org.infinispan.commands.remote.recovery;
 
+import org.infinispan.commands.TopologyAffectedCommand;
 import org.infinispan.context.InvocationContext;
+import org.infinispan.statetransfer.StateTransferManager;
 import org.infinispan.transaction.RemoteTransaction;
 import org.infinispan.transaction.TransactionTable;
 import org.infinispan.transaction.xa.GlobalTransaction;
@@ -32,6 +34,7 @@ import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
 import javax.transaction.xa.Xid;
+import java.util.Set;
 
 /**
  * Command for removing recovery related information from the cluster.
@@ -39,7 +42,7 @@ import javax.transaction.xa.Xid;
  * @author Mircea.Markus@jboss.com
  * @since 5.0
  */
-public class TxCompletionNotificationCommand extends RecoveryCommand {
+public class TxCompletionNotificationCommand  extends RecoveryCommand implements TopologyAffectedCommand {
 
    private static Log log = LogFactory.getLog(TxCompletionNotificationCommand.class);
 
@@ -50,6 +53,8 @@ public class TxCompletionNotificationCommand extends RecoveryCommand {
    private GlobalTransaction gtx;
    private TransactionTable txTable;
    private LockManager lockManager;
+   private StateTransferManager stateTransferManager;
+   private int topologyId;
 
    private TxCompletionNotificationCommand() {
       super(null); // For command id uniqueness test
@@ -61,10 +66,11 @@ public class TxCompletionNotificationCommand extends RecoveryCommand {
       this.gtx = gtx;
    }
 
-   public void init(TransactionTable tt, LockManager lockManager, RecoveryManager rm) {
+   public void init(TransactionTable tt, LockManager lockManager, RecoveryManager rm, StateTransferManager stm) {
       super.init(rm);
       this.txTable = tt;
       this.lockManager = lockManager;
+      this.stateTransferManager = stm;
    }
 
 
@@ -75,6 +81,21 @@ public class TxCompletionNotificationCommand extends RecoveryCommand {
 
    public TxCompletionNotificationCommand(String cacheName) {
       super(cacheName);
+   }
+
+   @Override
+   public int getTopologyId() {
+      return topologyId;
+   }
+
+   @Override
+   public void setTopologyId(int topologyId) {
+      this.topologyId = topologyId;
+   }
+
+   @Override
+   public boolean isReturnValueExpected() {
+      return false;
    }
 
    @Override
@@ -92,8 +113,19 @@ public class TxCompletionNotificationCommand extends RecoveryCommand {
          remoteTx = txTable.removeRemoteTransaction(gtx);
       }
       if (remoteTx == null) return null;
+      forwardCommandRemotely(remoteTx);
+
       lockManager.unlock(remoteTx.getLockedKeys(), remoteTx.getGlobalTransaction());
       return null;
+   }
+
+   /**
+    * This only happens during state transfer.
+    */
+   private void forwardCommandRemotely(RemoteTransaction remoteTx) {
+      Set<Object> affectedKeys = remoteTx.getAffectedKeys();
+      log.tracef("Invoking forward of TxCompletionNotification for transaction %s. Affected keys: %w", gtx, affectedKeys);
+      stateTransferManager.forwardCommandIfNeeded(this, affectedKeys, false);
    }
 
    @Override
@@ -124,6 +156,7 @@ public class TxCompletionNotificationCommand extends RecoveryCommand {
       return getClass().getSimpleName() +
             "{ xid=" + xid +
             ", internalId=" + internalId +
+            ", topologyId=" + topologyId +
             ", gtx=" + gtx +
             ", cacheName=" + cacheName + "} ";
    }

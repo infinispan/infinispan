@@ -79,6 +79,7 @@ import org.infinispan.statetransfer.StateResponseCommand;
 import org.infinispan.statetransfer.StateChunk;
 import org.infinispan.notifications.cachelistener.CacheNotifier;
 import org.infinispan.remoting.transport.Address;
+import org.infinispan.statetransfer.StateTransferManager;
 import org.infinispan.transaction.RemoteTransaction;
 import org.infinispan.transaction.TransactionTable;
 import org.infinispan.transaction.xa.DldGlobalTransaction;
@@ -128,6 +129,7 @@ public class CommandsFactoryImpl implements CommandsFactory {
    private LockManager lockManager;
    private InternalEntryFactory entryFactory;
    private MapReduceManager mapReduceManager;
+   private StateTransferManager stateTransferManager;
 
    private Map<Byte, ModuleCommandInitializer> moduleCommandInitializers;
 
@@ -137,7 +139,7 @@ public class CommandsFactoryImpl implements CommandsFactory {
                                  InvocationContextContainer icc, TransactionTable txTable, Configuration configuration,
                                  @ComponentName(KnownComponentNames.MODULE_COMMAND_INITIALIZERS) Map<Byte, ModuleCommandInitializer> moduleCommandInitializers,
                                  RecoveryManager recoveryManager, StateProvider stateProvider, StateConsumer stateConsumer,
-                                 LockManager lockManager, InternalEntryFactory entryFactory, MapReduceManager mapReduceManager) {
+                                 LockManager lockManager, InternalEntryFactory entryFactory, MapReduceManager mapReduceManager, StateTransferManager stm) {
       this.dataContainer = container;
       this.notifier = notifier;
       this.cache = cache;
@@ -153,6 +155,7 @@ public class CommandsFactoryImpl implements CommandsFactory {
       this.lockManager = lockManager;
       this.entryFactory = entryFactory;
       this.mapReduceManager = mapReduceManager;
+      this.stateTransferManager = stm;
    }
 
    @Start(priority = 1)
@@ -402,7 +405,7 @@ public class CommandsFactoryImpl implements CommandsFactory {
             break;
          case TxCompletionNotificationCommand.COMMAND_ID:
             TxCompletionNotificationCommand ftx = (TxCompletionNotificationCommand) c;
-            ftx.init(txTable, lockManager, recoveryManager);
+            ftx.init(txTable, lockManager, recoveryManager, stateTransferManager);
             break;
          case MapCombineCommand.COMMAND_ID:
             MapCombineCommand mrc = (MapCombineCommand)c;
