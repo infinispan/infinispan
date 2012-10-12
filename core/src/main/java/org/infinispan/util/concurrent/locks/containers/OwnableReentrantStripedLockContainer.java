@@ -24,6 +24,8 @@ package org.infinispan.util.concurrent.locks.containers;
 
 import net.jcip.annotations.ThreadSafe;
 import org.infinispan.util.concurrent.locks.OwnableReentrantLock;
+import org.infinispan.util.logging.Log;
+import org.infinispan.util.logging.LogFactory;
 
 import java.util.Arrays;
 import java.util.concurrent.TimeUnit;
@@ -38,7 +40,14 @@ import java.util.concurrent.TimeUnit;
  */
 @ThreadSafe
 public class OwnableReentrantStripedLockContainer extends AbstractStripedLockContainer<OwnableReentrantLock> {
-   OwnableReentrantLock[] sharedLocks;
+
+   private OwnableReentrantLock[] sharedLocks;
+   private static final Log log = LogFactory.getLog(OwnableReentrantStripedLockContainer.class);
+
+   @Override
+   protected Log getLog() {
+      return log;
+   }
 
    /**
     * Creates a new LockContainer which uses a certain number of shared locks across all elements that need to be

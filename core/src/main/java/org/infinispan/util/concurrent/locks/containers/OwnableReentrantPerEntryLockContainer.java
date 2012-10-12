@@ -23,6 +23,8 @@
 package org.infinispan.util.concurrent.locks.containers;
 
 import org.infinispan.util.concurrent.locks.OwnableReentrantLock;
+import org.infinispan.util.logging.Log;
+import org.infinispan.util.logging.LogFactory;
 
 import java.util.concurrent.TimeUnit;
 
@@ -33,6 +35,13 @@ import java.util.concurrent.TimeUnit;
  * @since 4.0
  */
 public class OwnableReentrantPerEntryLockContainer extends AbstractPerEntryLockContainer<OwnableReentrantLock> {
+
+   private static final Log log = LogFactory.getLog(OwnableReentrantPerEntryLockContainer.class);
+
+   @Override
+   protected Log getLog() {
+      return log;
+   }
 
    public OwnableReentrantPerEntryLockContainer(int concurrencyLevel) {
       super(concurrencyLevel);

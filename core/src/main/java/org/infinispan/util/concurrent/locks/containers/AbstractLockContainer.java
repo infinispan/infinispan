@@ -19,6 +19,8 @@
 
 package org.infinispan.util.concurrent.locks.containers;
 
+import org.infinispan.util.logging.Log;
+
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.Lock;
 
@@ -43,4 +45,6 @@ public abstract class AbstractLockContainer<L extends Lock> implements LockConta
    protected abstract void unlock(L toRelease, Object ctx);
 
    protected abstract boolean tryLock(L lock, long timeout, TimeUnit unit, Object lockOwner) throws InterruptedException;
+
+   protected abstract Log getLog();
 }

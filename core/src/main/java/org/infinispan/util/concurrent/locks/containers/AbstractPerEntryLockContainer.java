@@ -100,7 +100,15 @@ public abstract class AbstractPerEntryLockContainer<L extends Lock> extends Abst
    @Override
    public void releaseLock(Object lockOwner, Object key) {
       L l = locks.remove(key);
-      if (l != null) unlock(l, lockOwner);
+      if (l != null) {
+         try {
+            unlock(l, lockOwner);
+         } catch (IllegalMonitorStateException e) {
+            // Unable to unlock! Replace lock in lock map!
+            locks.put(key, l);
+            getLog().warnf("Unable to release lock on key %s for lock owner %s", key, lockOwner, e);
+         }
+      }
    }
 
    @Override

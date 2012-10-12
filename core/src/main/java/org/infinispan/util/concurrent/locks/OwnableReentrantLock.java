@@ -119,8 +119,6 @@ public class OwnableReentrantLock extends AbstractQueuedSynchronizer implements 
       setCurrentRequestor(requestor);
       try {
          release(1);
-      } catch (IllegalMonitorStateException imse) {
-         // ignore?
       } finally {
          unsetCurrentRequestor();
       }
@@ -151,9 +149,7 @@ public class OwnableReentrantLock extends AbstractQueuedSynchronizer implements 
    protected final boolean tryRelease(int releases) {
       int c = getState() - releases;
       if (!currentRequestor().equals(owner)) {
-         //throw new IllegalMonitorStateException(this.toString());
-         // lets be quiet about this
-         return false;
+         throw new IllegalMonitorStateException(this.toString());
       }
       boolean free = false;
       if (c == 0) {
