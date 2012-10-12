@@ -57,4 +57,10 @@ final class TestAddress implements Address {
    public int hashCode() {
       return addressNum;
    }
+
+   @Override
+   public int compareTo(Address o) {
+      TestAddress oa = (TestAddress) o;
+      return addressNum - oa.addressNum;
+   }
 }

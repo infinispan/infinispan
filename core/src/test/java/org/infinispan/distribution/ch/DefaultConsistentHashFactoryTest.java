@@ -23,7 +23,10 @@
 package org.infinispan.distribution.ch;
 
 import java.util.ArrayList;
+import java.util.Collection;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 import org.infinispan.commons.hash.Hash;
 import org.infinispan.commons.hash.MurmurHash3;
@@ -34,17 +37,28 @@ import org.testng.annotations.Test;
 
 import static org.testng.Assert.*;
 
-@Test(groups = "unit", testName = "distribution.DefaultConsistentHashFactoryTest")
+/**
+ * Test the even distribution and number of moved segments after rebalance for {@link DefaultConsistentHashFactory}
+ *
+ * @author Dan Berindei
+ * @since 5.2
+ */
+@Test(groups = "unit", testName = "ch.DefaultConsistentHashFactoryTest")
 public class DefaultConsistentHashFactoryTest extends AbstractInfinispanTest {
 
    private static int iterationCount = 0;
+   private double maxMovedSegmentsRatio = 0.0;
+
+   protected ConsistentHashFactory createConsistentHashFactory() {
+      return new DefaultConsistentHashFactory();
+   }
 
    public void testConsistentHashDistribution() {
       int[] numSegments = {1, 2, 4, 8, 16, 32, 64, 128, 256, 512};
       int[] numNodes = {1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 100, 1000};
       int[] numOwners = {1, 2, 3, 5};
 
-      DefaultConsistentHashFactory chf = new DefaultConsistentHashFactory();
+      ConsistentHashFactory<DefaultConsistentHash> chf = createConsistentHashFactory();
       Hash hashFunction = new MurmurHash3();
 
       for (int nn : numNodes) {
@@ -66,51 +80,10 @@ public class DefaultConsistentHashFactoryTest extends AbstractInfinispanTest {
       }
    }
 
-   private void checkDistribution(ConsistentHash ch, boolean allowExtraOwners) {
-      int numSegments = ch.getNumSegments();
-      List<Address> nodes = ch.getMembers();
-      int numNodes = nodes.size();
-      int actualNumOwners = Math.min(ch.getNumOwners(), numNodes);
-
-      OwnershipStatistics stats = new OwnershipStatistics(nodes);
-      for (int i = 0; i < numSegments; i++) {
-         List<Address> owners = ch.locateOwnersForSegment(i);
-         if (!allowExtraOwners) {
-            assertEquals(owners.size(), actualNumOwners);
-         } else {
-            assertTrue(owners.size() >= actualNumOwners);
-         }
-         stats.incPrimaryOwned(owners.get(0));
-         for (int j = 0; j < owners.size(); j++) {
-            Address owner = owners.get(j);
-            stats.incOwned(owner);
-            assertEquals(owners.indexOf(owner), j, "Found the same owner twice in the owners list");
-         }
-      }
-
-      int minPrimaryOwned = numSegments / numNodes;
-      int maxPrimaryOwned = (int) Math.ceil((double)numSegments / numNodes);
-      int minOwned = numSegments * actualNumOwners / numNodes;
-      int maxOwned = (int) Math.ceil((double)numSegments * actualNumOwners / numNodes);
-      for (Address node : nodes) {
-         if (!allowExtraOwners) {
-            int primaryOwned = stats.getPrimaryOwned(node);
-            assertTrue(minPrimaryOwned <= primaryOwned);
-            assertTrue(primaryOwned <= maxPrimaryOwned);
-         }
-
-         int owned = stats.getOwned(node);
-         assertTrue(minOwned <= owned);
-         if (!allowExtraOwners) {
-            assertTrue(owned <= maxOwned);
-         }
-      }
-   }
-
-   private void testConsistentHashModifications(DefaultConsistentHashFactory chf, DefaultConsistentHash baseCH) {
+   private void testConsistentHashModifications(ConsistentHashFactory<DefaultConsistentHash> chf, DefaultConsistentHash baseCH) {
       // each element in the array is a pair of numbers: the first is the number of nodes to add
       // the second is the number of nodes to remove (the index of the removed nodes are pseudo-random)
-      int[][] nodeChanges = {{1, 0}, {2, 0}, {0, 1}, {0, 2}, {1, 1}, {2, 2}, {10, 0}, {0, 10}, {10, 10}};
+      int[][] nodeChanges = {{1, 0}, {2, 0}, {0, 1}, {0, 2}, {1, 1}, {1, 2}, {2, 1}, {10, 0}, {0, 10}};
 
       // check that the base CH is already balanced
       assertSame(baseCH, chf.updateMembers(baseCH, baseCH.getMembers()));
@@ -145,27 +118,137 @@ public class DefaultConsistentHashFactoryTest extends AbstractInfinispanTest {
          }
 
          // second phase: rebalance with the new members list
-         DefaultConsistentHash inclRebalancedCH = chf.rebalance(updatedMembersCH);
-         checkDistribution(inclRebalancedCH, false);
+         DefaultConsistentHash rebalancedCH = chf.rebalance(updatedMembersCH);
+         checkDistribution(rebalancedCH, false);
 
-         int actualNumOwners = Math.min(inclRebalancedCH.getMembers().size(), inclRebalancedCH.getNumOwners());
-         for (int l = 0; l < inclRebalancedCH.getNumSegments(); l++) {
-            assertTrue(inclRebalancedCH.locateOwnersForSegment(l).size() >= actualNumOwners);
+         int actualNumOwners = Math.min(rebalancedCH.getMembers().size(), rebalancedCH.getNumOwners());
+         for (int l = 0; l < rebalancedCH.getNumSegments(); l++) {
+            assertTrue(rebalancedCH.locateOwnersForSegment(l).size() >= actualNumOwners);
          }
 
-         // third phase: prune extra owners
-         DefaultConsistentHash exclRebalancedCH = chf.rebalance(updatedMembersCH);
-         DefaultConsistentHash exclRebalancedCH2 = chf.rebalance(inclRebalancedCH);
-         // TODO sometimes the order of the backup owners is not the same because the node may be removed and then re-added at the end of the list
-         assertEquals(exclRebalancedCH2, exclRebalancedCH);
-         checkDistribution(exclRebalancedCH, false);
+         checkMovedSegments(baseCH, rebalancedCH, nodesToAdd);
+
+         // union doesn't have to keep the CH balanced, but it does have to include owners from both CHs
+         DefaultConsistentHash unionCH = chf.union(updatedMembersCH, rebalancedCH);
+         for (int l = 0; l < updatedMembersCH.getNumSegments(); l++) {
+            assertTrue(unionCH.locateOwnersForSegment(l).containsAll(updatedMembersCH.locateOwnersForSegment(l)));
+            assertTrue(unionCH.locateOwnersForSegment(l).containsAll(rebalancedCH.locateOwnersForSegment(l)));
+         }
 
          // switch to the new CH in the next iteration
-         assertEquals(exclRebalancedCH.getNumSegments(), baseCH.getNumSegments());
-         assertEquals(exclRebalancedCH.getNumOwners(), baseCH.getNumOwners());
-         assertEquals(exclRebalancedCH.getMembers(), newMembers);
-         baseCH = exclRebalancedCH;
+         assertEquals(rebalancedCH.getNumSegments(), baseCH.getNumSegments());
+         assertEquals(rebalancedCH.getNumOwners(), baseCH.getNumOwners());
+         assertEquals(rebalancedCH.getMembers(), newMembers);
+         baseCH = rebalancedCH;
          iterationCount++;
       }
    }
+
+   private void checkDistribution(ConsistentHash ch, boolean allowExtraOwners) {
+      int numSegments = ch.getNumSegments();
+      List<Address> nodes = ch.getMembers();
+      int numNodes = nodes.size();
+      int actualNumOwners = Math.min(ch.getNumOwners(), numNodes);
+
+      OwnershipStatistics stats = new OwnershipStatistics(nodes);
+      for (int i = 0; i < numSegments; i++) {
+         List<Address> owners = ch.locateOwnersForSegment(i);
+         if (!allowExtraOwners) {
+            assertEquals(owners.size(), actualNumOwners);
+         } else {
+            assertTrue(owners.size() >= actualNumOwners);
+         }
+         stats.incPrimaryOwned(owners.get(0));
+         for (int j = 0; j < owners.size(); j++) {
+            Address owner = owners.get(j);
+            stats.incOwned(owner);
+            assertEquals(owners.indexOf(owner), j, "Found the same owner twice in the owners list");
+         }
+      }
+
+      int minPrimaryOwned = minPrimaryOwned(numSegments, numNodes);
+      int maxPrimaryOwned = maxPrimaryOwned(numSegments, numNodes);
+      int minOwned = minOwned(numSegments, numNodes, actualNumOwners);
+      int maxOwned = maxOwned(numSegments, numNodes, actualNumOwners);
+      for (Address node : nodes) {
+         if (!allowExtraOwners) {
+            int primaryOwned = stats.getPrimaryOwned(node);
+            assertTrue(minPrimaryOwned <= primaryOwned);
+            assertTrue(primaryOwned <= maxPrimaryOwned);
+         }
+
+         int owned = stats.getOwned(node);
+         assertTrue(minOwned <= owned);
+         if (!allowExtraOwners) {
+            assertTrue(owned <= maxOwned);
+         }
+      }
+   }
+
+   protected int minPrimaryOwned(int numSegments, int numNodes) {
+      return numSegments / numNodes;
+   }
+
+   protected int maxPrimaryOwned(int numSegments, int numNodes) {
+      return (int) Math.ceil((double)numSegments / numNodes);
+   }
+
+   protected int minOwned(int numSegments, int numNodes, int actualNumOwners) {
+      return numSegments * actualNumOwners / numNodes;
+   }
+
+   protected int maxOwned(int numSegments, int numNodes, int actualNumOwners) {
+      return (int) Math.ceil((double)numSegments * actualNumOwners / numNodes);
+   }
+
+   protected int allowedMoves(int numSegments, int numOwners, Collection<Address> oldMembers,
+                                 Collection<Address> newMembers) {
+      int minMembers = Math.min(oldMembers.size(), newMembers.size());
+      int maxMembers = Math.max(oldMembers.size(), newMembers.size());
+      if (maxMembers > numSegments)
+         return numSegments * numOwners; // don't do any checks in this case
+
+      Set<Address> addedMembers = new HashSet<Address>(newMembers);
+      addedMembers.removeAll(oldMembers);
+      Set<Address> removedMembers = new HashSet<Address>(oldMembers);
+      removedMembers.removeAll(newMembers);
+
+      // TODO removedMembers should not matter
+      int minMoves = (addedMembers.size() + removedMembers.size()) * numSegments * numOwners / minMembers;
+      // need to account for changes in the number of assigned segments based on a node's position in the members list
+      int extraMoves = maxMembers % numSegments;
+      // 1.5 is a "inefficiency factor"
+      return (int) (1.5 * (minMoves + extraMoves));
+   }
+
+   private void checkMovedSegments(DefaultConsistentHash oldCH, DefaultConsistentHash newCH, int addedNodes) {
+      int numSegments = oldCH.getNumSegments();
+      int numOwners = oldCH.getNumOwners();
+      List<Address> oldMembers = oldCH.getMembers();
+      List<Address> newMembers = newCH.getMembers();
+
+      // compute the number of segments that changed owners even though their old owners were still members
+      int movedSegments = 0;
+      for (int i = 0; i < numSegments; i++) {
+         ArrayList<Address> lostOwners = new ArrayList<Address>(oldCH.locateOwnersForSegment(i));
+         lostOwners.removeAll(newCH.locateOwnersForSegment(i));
+         lostOwners.retainAll(newMembers);
+         movedSegments += lostOwners.size();
+      }
+
+      int expectedMoves = allowedMoves(numSegments, numOwners, oldMembers, newMembers);
+      assert movedSegments <= expectedMoves
+            : String.format("Two many moved segments between %s and %s: expected %d, got %d",
+                            oldCH, newCH, expectedMoves, movedSegments);
+   }
+
+   protected <T> Set<T> symmetricalDiff(Collection<T> set1, Collection<T> set2) {
+      HashSet<T> commonMembers = new HashSet<T>(set1);
+      commonMembers.retainAll(set2);
+      HashSet<T> symDiffMembers = new HashSet<T>(set1);
+      symDiffMembers.addAll(set2);
+      symDiffMembers.removeAll(commonMembers);
+      return symDiffMembers;
+   }
+
 }

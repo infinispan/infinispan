@@ -110,39 +110,7 @@ public class DefaultConsistentHashFactory implements ConsistentHashFactory<Defau
     */
    @Override
    public DefaultConsistentHash union(DefaultConsistentHash dch1, DefaultConsistentHash dch2) {
-      if (!dch1.getHashFunction().equals(dch2.getHashFunction())) {
-         throw new IllegalArgumentException("The consistent hash objects must have the same hash function");
-      }
-      if (dch1.getNumSegments() != dch2.getNumSegments()) {
-         throw new IllegalArgumentException("The consistent hash objects must have the same number of segments");
-      }
-      if (dch1.getNumOwners() != dch2.getNumOwners()) {
-         throw new IllegalArgumentException("The consistent hash objects must have the same number of owners");
-      }
-
-      List<Address> members = new ArrayList<Address>(dch1.getMembers());
-      List<Address>[] segmentOwners = extractSegmentOwners(dch1);
-
-      mergeLists(members, dch2.getMembers());
-      for (int i = 0; i < segmentOwners.length; i++) {
-         mergeLists(segmentOwners[i], dch2.locateOwnersForSegment(i));
-      }
-
-      return new DefaultConsistentHash(dch1.getHashFunction(), dch1.getNumSegments(), dch1.getNumOwners(), members, segmentOwners);
-   }
-
-   /**
-    * Adds all elements from <code>src</code> list that do not already exist in <code>dest</code> list to the latter.
-    *
-    * @param dest List where elements are added
-    * @param src List of elements to add - this is never modified
-    */
-   private void mergeLists(List<Address> dest, List<Address> src) {
-      for (Address a2 : src) {
-         if (!dest.contains(a2)) {
-            dest.add(a2);
-         }
-      }
+      return dch1.union(dch2);
    }
 
    private void addPrimaryOwners(List<Address> nodes, int numSegments, OwnershipStatistics stats, List<Address>[] ownerLists, List<Address>[] intOwnerLists) {

@@ -220,6 +220,66 @@ public class DefaultConsistentHash implements ConsistentHash {
       return sb.toString();
    }
 
+   public String prettyPrint() {
+      StringBuilder sb = new StringBuilder("DefaultConsistentHash{");
+      sb.append("numSegments=").append(numSegments);
+      sb.append(", numOwners=").append(numOwners);
+      sb.append(",\nmembers=").append(members);
+      sb.append(",\nsegmentOwners={");
+      for (int i = 0; i < numSegments; i++) {
+         if (i > 0) {
+            sb.append(",\n");
+         }
+         sb.append(i).append(":");
+         for (int j = 0; j < segmentOwners[i].length; j++) {
+            sb.append(' ').append(segmentOwners[i][j]);
+         }
+      }
+      sb.append('}');
+      return sb.toString();
+   }
+
+   /**
+    * Merges two consistent hash objects that have the same number of segments, numOwners and hash function.
+    * For each segment, the primary owner of the first CH has priority, the other primary owners become backups.
+    */
+   public DefaultConsistentHash union(DefaultConsistentHash dch2) {
+      if (!hashFunction.equals(dch2.getHashFunction())) {
+         throw new IllegalArgumentException("The consistent hash objects must have the same hash function");
+      }
+      if (numSegments != dch2.getNumSegments()) {
+         throw new IllegalArgumentException("The consistent hash objects must have the same number of segments");
+      }
+      if (numOwners != dch2.getNumOwners()) {
+         throw new IllegalArgumentException("The consistent hash objects must have the same number of owners");
+      }
+
+      List<Address> unionMembers = new ArrayList<Address>(this.members);
+      mergeLists(unionMembers, dch2.getMembers());
+
+      List<Address>[] unionSegmentOwners = new List[numSegments];
+      for (int i = 0; i < numSegments; i++) {
+         unionSegmentOwners[i] = new ArrayList<Address>(locateOwnersForSegment(i));
+         mergeLists(unionSegmentOwners[i], dch2.locateOwnersForSegment(i));
+      }
+
+      return new DefaultConsistentHash(hashFunction, numSegments, numOwners, unionMembers, unionSegmentOwners);
+   }
+
+   /**
+    * Adds all elements from <code>src</code> list that do not already exist in <code>dest</code> list to the latter.
+    *
+    * @param dest List where elements are added
+    * @param src List of elements to add - this is never modified
+    */
+   private void mergeLists(List<Address> dest, List<Address> src) {
+      for (Address a2 : src) {
+         if (!dest.contains(a2)) {
+            dest.add(a2);
+         }
+      }
+   }
+
    public static class Externalizer extends AbstractExternalizer<DefaultConsistentHash> {
 
       @Override
