@@ -156,8 +156,7 @@ public class AsyncStoreStressTest {
 
          // Wait until the cache store contains the expected state
          System.out.printf("[store=%s] Verify contents\n", name);
-         TestingUtil.sleepThread(10000); // Wait a bit before starting to verify contents
-         delegate.blockUntilCacheStoreContains(expectedState.entrySet(), 60000);
+         delegate.blockUntilCacheStoreContains(expectedState.keySet(), 60000);
 
          System.out.printf("Container %-12s  ", name);
          System.out.printf("Ops/s %10.2f  ", perf.getTotalOpsPerSec());

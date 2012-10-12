@@ -30,8 +30,7 @@ import org.infinispan.test.AbstractInfinispanTest;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.testng.annotations.AfterMethod;
-import org.testng.annotations.AfterTest;
-import org.testng.annotations.BeforeTest;
+import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
 import javax.transaction.TransactionManager;
@@ -45,7 +44,7 @@ public class PassivatePersistentTest extends AbstractInfinispanTest {
    Configuration cfg;
    CacheContainer cm;
 
-   @BeforeTest
+   @BeforeMethod(alwaysRun = true)
    public void setUp() {
       cfg = new Configuration().fluent()
          .loaders()
@@ -60,15 +59,10 @@ public class PassivatePersistentTest extends AbstractInfinispanTest {
       tm = TestingUtil.getTransactionManager(cache);
    }
 
-   @AfterTest(alwaysRun = true)
-   public void tearDown() {
-      TestingUtil.killCacheManagers(cm);
-   }
-
    @AfterMethod(alwaysRun = true)
-   public void afterMethod() throws CacheLoaderException {
-      if (cache != null) cache.clear();
-      if (store != null) store.clear();
+   public void tearDown() throws CacheLoaderException {
+      store.clear();
+      TestingUtil.killCacheManagers(cm);
    }
 
    public void testPersistence() throws CacheLoaderException {
@@ -82,6 +76,8 @@ public class PassivatePersistentTest extends AbstractInfinispanTest {
 
       cache.stop();
       cache.start();
+      // The old store's marshaller is not working any more
+      store = TestingUtil.extractComponent(cache, CacheLoaderManager.class).getCacheStore();
 
       assert store.containsKey("k");
       assert "v".equals(cache.get("k"));
