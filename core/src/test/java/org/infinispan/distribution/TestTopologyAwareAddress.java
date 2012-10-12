@@ -23,7 +23,7 @@ import org.infinispan.remoting.transport.TopologyAwareAddress;
 
 /**
  * Mock TopologyAwareAddress to be used in tests.
- * We only care about the addressNum for equality, so we don't override equals() and hashCode().
+ * We only care about the addressNum for equality, so we don't override compareTo(), equals() and hashCode().
  *
  * @author Dan Berindei <dberinde@redhat.com>
  * @since 5.0
@@ -49,10 +49,6 @@ public class TestTopologyAwareAddress extends TestAddress implements TopologyAwa
             ", rackId='" + rackId + '\'' +
             ", machineId='" + machineId + '\'' +
             "} " + super.toString();
-   }
-
-   public int compareTo(Object o) {
-      return this.addressNum - ((TestTopologyAwareAddress) o).addressNum;
    }
 
    @Override

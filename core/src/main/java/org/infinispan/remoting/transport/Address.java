@@ -28,5 +28,5 @@ package org.infinispan.remoting.transport;
  * @author Manik Surtani
  * @since 4.0
  */
-public interface Address {
+public interface Address extends Comparable<Address> {
 }

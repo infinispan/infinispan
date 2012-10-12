@@ -76,4 +76,10 @@ class TestAddress implements Address {
       result = 31 * result + addressNum;
       return result;
    }
+
+   @Override
+   public int compareTo(Address o) {
+      TestAddress oa = (TestAddress) o;
+      return addressNum - oa.addressNum;
+   }
 }

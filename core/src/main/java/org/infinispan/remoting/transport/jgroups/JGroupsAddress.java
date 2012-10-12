@@ -74,6 +74,12 @@ public class JGroupsAddress implements Address {
       return address;
    }
 
+   @Override
+   public int compareTo(Address o) {
+      JGroupsAddress oa = (JGroupsAddress) o;
+      return address.compareTo(oa.address);
+   }
+
    public static final class Externalizer extends AbstractExternalizer<JGroupsAddress> {
       @Override
       public void writeObject(ObjectOutput output, JGroupsAddress address) throws IOException {

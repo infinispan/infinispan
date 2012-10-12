@@ -29,7 +29,7 @@ import org.infinispan.remoting.transport.Address;
  * @since 4.2
  */
 public class TestAddress implements Address {
-   int addressNum;
+   final int addressNum;
 
    String name;
 
@@ -68,7 +68,8 @@ public class TestAddress implements Address {
       return "TestAddress#"+addressNum + (name != null? ("-" + name) : "");
    }
 
-   public int compareTo(Object o) {
+   @Override
+   public int compareTo(Address o) {
       return this.addressNum - ((TestAddress) o).addressNum;
    }
 }
