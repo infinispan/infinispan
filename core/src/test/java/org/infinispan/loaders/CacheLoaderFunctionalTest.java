@@ -39,8 +39,7 @@ import org.infinispan.transaction.TransactionMode;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 import org.testng.annotations.AfterMethod;
-import org.testng.annotations.AfterTest;
-import org.testng.annotations.BeforeTest;
+import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
 import javax.transaction.Transaction;
@@ -70,7 +69,7 @@ public class CacheLoaderFunctionalTest extends AbstractInfinispanTest {
    EmbeddedCacheManager cm;
    long lifespan = 60000000; // very large lifespan so nothing actually expires
 
-   @BeforeTest
+   @BeforeMethod
    public void setUp() {
       cfg = new Configuration().fluent()
          .loaders()
@@ -84,20 +83,16 @@ public class CacheLoaderFunctionalTest extends AbstractInfinispanTest {
       tm = TestingUtil.getTransactionManager(cache);
    }
 
-   @AfterTest(alwaysRun = true)
-   public void tearDown() {
+   @AfterMethod(alwaysRun = true)
+   public void tearDown() throws CacheLoaderException {
+      store.clear();
+
       TestingUtil.killCacheManagers(cm);
       cache = null;
       cm = null;
       cfg = null;
       tm = null;
       store = null;
-   }
-
-   @AfterMethod(alwaysRun = true)
-   public void afterMethod() throws CacheLoaderException {
-      if (cache != null) cache.clear();
-      if (store != null) store.clear();
    }
 
    private void assertInCacheAndStore(Object key, Object value) throws CacheLoaderException {
@@ -322,6 +317,8 @@ public class CacheLoaderFunctionalTest extends AbstractInfinispanTest {
       assert c.size() == 0;
 
       preloadingCache.start();
+      // The old store's marshaller is not working any more
+      preloadingStore = TestingUtil.extractComponent(preloadingCache, CacheLoaderManager.class).getCacheStore();
       assert preloadingCache.getConfiguration().getCacheLoaderManagerConfig().isPreload();
       c = preloadingCache.getAdvancedCache().getDataContainer();
       assert c.size() == 4;

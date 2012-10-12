@@ -23,11 +23,7 @@
 package org.infinispan.loaders;
 
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
-import static org.infinispan.context.Flag.CACHE_MODE_LOCAL;
-import static org.infinispan.context.Flag.SKIP_CACHE_STORE;
-import static org.infinispan.context.Flag.SKIP_INDEXING;
-import static org.infinispan.context.Flag.SKIP_OWNERSHIP_CHECK;
-import static org.infinispan.context.Flag.IGNORE_RETURN_VALUES;
+import static org.infinispan.context.Flag.*;
 import static org.infinispan.factories.KnownComponentNames.CACHE_MARSHALLER;
 
 import java.util.ArrayList;
@@ -240,7 +236,7 @@ public class CacheLoaderManagerImpl implements CacheLoaderManager {
             }
 
             List<Flag> flags = new ArrayList(Arrays.asList(
-                  CACHE_MODE_LOCAL, SKIP_OWNERSHIP_CHECK, IGNORE_RETURN_VALUES));
+                  CACHE_MODE_LOCAL, SKIP_OWNERSHIP_CHECK, IGNORE_RETURN_VALUES, SKIP_CACHE_STORE));
 
             if (clmConfig.shared() || !(loader instanceof ChainingCacheStore)) {
                flags.add(SKIP_CACHE_STORE);

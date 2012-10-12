@@ -23,8 +23,14 @@
 package org.infinispan.loaders.dummy;
 
 import org.infinispan.Cache;
+import org.infinispan.CacheException;
 import org.infinispan.container.entries.InternalCacheEntry;
-import org.infinispan.loaders.*;
+import org.infinispan.loaders.AbstractCacheStore;
+import org.infinispan.loaders.AbstractCacheStoreConfig;
+import org.infinispan.loaders.CacheLoaderConfig;
+import org.infinispan.loaders.CacheLoaderException;
+import org.infinispan.loaders.CacheLoaderMetadata;
+import org.infinispan.loaders.CacheStore;
 import org.infinispan.marshall.StreamingMarshaller;
 import org.infinispan.marshall.TestObjectStreamMarshaller;
 import org.infinispan.test.TestingUtil;
@@ -33,10 +39,16 @@ import org.infinispan.util.Util;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
+import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
 import java.lang.reflect.Method;
-import java.util.*;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Iterator;
+import java.util.Map;
+import java.util.Properties;
+import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -46,11 +58,11 @@ public class DummyInMemoryCacheStore extends AbstractCacheStore {
    private static final Log log = LogFactory.getLog(DummyInMemoryCacheStore.class);
    private static final boolean trace = log.isTraceEnabled();
    private static final boolean debug = log.isDebugEnabled();
-   static final ConcurrentMap<String, Map<Object, InternalCacheEntry>> stores = new ConcurrentHashMap<String, Map<Object, InternalCacheEntry>>();
+   static final ConcurrentMap<String, Map<Object, byte[]>> stores = new ConcurrentHashMap<String, Map<Object, byte[]>>();
    static final ConcurrentMap<String, ConcurrentMap<String, AtomicInteger>> storeStats =
          new ConcurrentHashMap<String, ConcurrentMap<String, AtomicInteger>>();
    String storeName;
-   Map<Object, InternalCacheEntry> store;
+   Map<Object, byte[]> store;
    // When a store is 'shared', multiple nodes could be trying to update it concurrently.
    ConcurrentMap<String, AtomicInteger> stats;
    Cfg config;
@@ -72,7 +84,31 @@ public class DummyInMemoryCacheStore extends AbstractCacheStore {
       if (ed != null) {
          if (debug) log.debugf("Store %s in dummy map store@%s", ed, Util.hexIdHashCode(store));
          config.failIfNeeded(ed.getKey());
-         store.put(ed.getKey(), ed);
+         store.put(ed.getKey(), serializeEntry(ed));
+      }
+   }
+
+   private byte[] serializeEntry(InternalCacheEntry ed) {
+      try {
+         return marshaller.objectToByteBuffer(ed);
+      } catch (IOException e) {
+         throw new CacheException(e);
+      } catch (InterruptedException e) {
+         Thread.currentThread().interrupt();
+         throw new CacheException(e);
+      }
+   }
+
+   private InternalCacheEntry deserializeEntry(byte[] b) {
+      try {
+         if (b == null)
+            return null;
+
+         return (InternalCacheEntry) marshaller.objectFromByteBuffer(b);
+      } catch (IOException e) {
+         throw new CacheException(e);
+      } catch (ClassNotFoundException e) {
+         throw new CacheException(e);
       }
    }
 
@@ -83,9 +119,9 @@ public class DummyInMemoryCacheStore extends AbstractCacheStore {
       try {
          int numEntries = (Integer) marshaller.objectFromObjectStream(ois);
          for (int i = 0; i < numEntries; i++) {
-            InternalCacheEntry e = (InternalCacheEntry) marshaller.objectFromObjectStream(ois);
-            if (trace) log.tracef("Store %s from stream in dummy store@%s", e, Util.hexIdHashCode(store));
-            store.put(e.getKey(), e);
+            byte[] se = (byte[]) marshaller.objectFromObjectStream(ois);
+            if (trace) log.tracef("Store %s from stream in dummy store@%s", se, Util.hexIdHashCode(store));
+            store.put(deserializeEntry(se).getKey(), se);
          }
       } catch (Exception e) {
          throw new CacheLoaderException(e);
@@ -97,7 +133,7 @@ public class DummyInMemoryCacheStore extends AbstractCacheStore {
       record("toStream");
       try {
          marshaller.objectToObjectStream(store.size(), oos);
-         for (InternalCacheEntry se : store.values()) marshaller.objectToObjectStream(se, oos);
+         for (byte[] se : store.values()) marshaller.objectToObjectStream(se, oos);
       } catch (Exception e) {
          throw new CacheLoaderException(e);
       }
@@ -125,8 +161,8 @@ public class DummyInMemoryCacheStore extends AbstractCacheStore {
    @Override
    protected void purgeInternal() throws CacheLoaderException {
       long currentTimeMillis = System.currentTimeMillis();
-      for (Iterator<InternalCacheEntry> i = store.values().iterator(); i.hasNext();) {
-         InternalCacheEntry se = i.next();
+      for (Iterator<byte[]> i = store.values().iterator(); i.hasNext();) {
+         InternalCacheEntry se = deserializeEntry(i.next());
          if (se.isExpired(currentTimeMillis)) i.remove();
       }
    }
@@ -143,7 +179,7 @@ public class DummyInMemoryCacheStore extends AbstractCacheStore {
    public InternalCacheEntry load(Object key) {
       record("load");
       if (key == null) return null;
-      InternalCacheEntry se = store.get(key);
+      InternalCacheEntry se = deserializeEntry(store.get(key));
       if (se == null) return null;
       if (se.isExpired(System.currentTimeMillis())) {
          log.debugf("Key %s exists, but has expired.  Entry is %s", key, se);
@@ -159,8 +195,8 @@ public class DummyInMemoryCacheStore extends AbstractCacheStore {
       record("loadAll");
       Set<InternalCacheEntry> s = new HashSet<InternalCacheEntry>();
       final long currentTimeMillis = System.currentTimeMillis();
-      for (Iterator<InternalCacheEntry> i = store.values().iterator(); i.hasNext();) {
-         InternalCacheEntry se = i.next();
+      for (Iterator<byte[]> i = store.values().iterator(); i.hasNext();) {
+         InternalCacheEntry se = deserializeEntry(i.next());
          if (se.isExpired(currentTimeMillis)) {
             log.debugf("Key %s exists, but has expired.  Entry is %s", se.getKey(), se);
             i.remove();
@@ -176,8 +212,8 @@ public class DummyInMemoryCacheStore extends AbstractCacheStore {
       if (numEntries < 0) return loadAll();
       Set<InternalCacheEntry> s = new HashSet<InternalCacheEntry>(numEntries);
       final long currentTimeMillis = System.currentTimeMillis();
-      for (Iterator<InternalCacheEntry> i = store.values().iterator(); i.hasNext() && s.size() < numEntries;) {
-         InternalCacheEntry se = i.next();
+      for (Iterator<byte[]> i = store.values().iterator(); i.hasNext() && s.size() < numEntries;) {
+         InternalCacheEntry se = deserializeEntry(i.next());
          if (se.isExpired(currentTimeMillis)) {
             log.debugf("Key %s exists, but has expired.  Entry is %s", se.getKey(), se);
             i.remove();
@@ -215,13 +251,13 @@ public class DummyInMemoryCacheStore extends AbstractCacheStore {
       if (store != null)
          return;
 
-      store = new ConcurrentHashMap<Object, InternalCacheEntry>();
+      store = new ConcurrentHashMap<Object, byte[]>();
       stats = newStatsMap();
 
       if (storeName != null) {
          if (cache != null) storeName += "_" + cache.getName();
 
-         Map<Object, InternalCacheEntry> existing = stores.putIfAbsent(storeName, store);
+         Map<Object, byte[]> existing = stores.putIfAbsent(storeName, store);
          if (existing != null) {
             store = existing;
             log.debugf("Reusing in-memory cache store %s", storeName);
@@ -277,7 +313,7 @@ public class DummyInMemoryCacheStore extends AbstractCacheStore {
    public void blockUntilCacheStoreContains(Object key, Object expectedValue, long timeout) {
       long killTime = System.currentTimeMillis() + timeout;
       while (System.currentTimeMillis() < killTime) {
-         InternalCacheEntry entry = store.get(key);
+         InternalCacheEntry entry = deserializeEntry(store.get(key));
          if (entry != null && entry.getValue().equals(expectedValue)) return;
          TestingUtil.sleepThread(50);
       }
@@ -286,22 +322,20 @@ public class DummyInMemoryCacheStore extends AbstractCacheStore {
             timeout, key, expectedValue));
    }
 
-   public void blockUntilCacheStoreContains(Set<Map.Entry<Object, InternalCacheEntry>> expectedState, long timeout) {
+   public void blockUntilCacheStoreContains(Set<Object> expectedState, long timeout) {
       long killTime = System.currentTimeMillis() + timeout;
       // Set<? extends Map.Entry<?, InternalCacheEntry>> expectedEntries = expectedState.entrySet();
-      Set<Map.Entry<Object, InternalCacheEntry>> notStored = null;
-      Set<Map.Entry<Object, InternalCacheEntry>> notRemoved = null;
+      Set<Object> notStored = null;
+      Set<Object> notRemoved = null;
       while (System.currentTimeMillis() < killTime) {
-         Set<Map.Entry<Object, InternalCacheEntry>> storeEntries = store.entrySet();
          // Find out which entries might not have been removed from the store
-         notRemoved = InfinispanCollections.difference(storeEntries, expectedState);
+         notRemoved = InfinispanCollections.difference(store.keySet(), expectedState);
          // Find out which entries might not have been stored
-         notStored = InfinispanCollections.difference(expectedState, storeEntries);
-         if (!notStored.isEmpty() || !notRemoved.isEmpty()) {
-            TestingUtil.sleepThread(5000);
-         } else if (notStored.isEmpty() && notRemoved.isEmpty()) {
+         notStored = InfinispanCollections.difference(expectedState, store.keySet());
+         if (notStored.isEmpty() && notRemoved.isEmpty())
             break;
-         }
+
+         TestingUtil.sleepThread(100);
       }
 
       if ((notStored != null && !notStored.isEmpty()) || (notRemoved != null && !notRemoved.isEmpty())) {
@@ -313,28 +347,6 @@ public class DummyInMemoryCacheStore extends AbstractCacheStore {
                "Timed out waiting (%d ms) for cache store to be flushed. entries-not-stored=[%s], entries-not-removed=[%s]",
                timeout, notStored, notRemoved));
       }
-
-
-//      if (missingEntries != null && !missingEntries.isEmpty())
-//         throw new RuntimeException(String.format(
-//            "Timed out waiting (%d ms) for cache store to contain entry %s",
-//            timeout, missingEntries));
-//
-//      long killTime = System.currentTimeMillis() + timeout;
-//      Map.Entry<?, ?> missingEntry = null;
-//      while (System.currentTimeMillis() < killTime) {
-//         for (Map.Entry<?, ?> stateEntry : expectedState.entrySet()) {
-//            InternalCacheEntry entry = store.get(stateEntry.getKey());
-//            if (entry == null || !entry.getValue().equals(stateEntry.getValue())) {
-//               missingEntry = entry;
-//               TestingUtil.sleepThread(50);
-//            }
-//         }
-//      }
-//      if (missingEntry != null)
-//         throw new RuntimeException(String.format(
-//            "Timed out waiting (%d ms) for cache store to contain entry %s",
-//            timeout, missingEntry));
    }
 
    public static class Cfg extends AbstractCacheStoreConfig {

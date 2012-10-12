@@ -108,7 +108,6 @@ public class InternalCacheFactory<K, V> extends AbstractNamedCacheComponentFacto
       }
       // The RollingUpgradeManager should always be added so it is registered in JMX.
       componentRegistry.registerComponent(new RollingUpgradeManager(), RollingUpgradeManager.class.getName(), true);
-      componentRegistry.prepareWiringCache();
    }
 
    /**

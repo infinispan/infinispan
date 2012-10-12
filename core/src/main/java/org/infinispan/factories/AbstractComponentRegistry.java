@@ -508,7 +508,7 @@ public abstract class AbstractComponentRegistry implements Lifecycle, Cloneable 
       for (Component c : new HashSet<Component>(componentLookup.values())) {
          // the component is volatile!!
          if (!c.metadata.isSurvivesRestarts()) {
-            getLog().tracef("Removing volatile component %s", c.metadata.getName());
+            getLog().tracef("Removing volatile component %s", c.name);
             componentLookup.remove(c.name);
          }
       }
