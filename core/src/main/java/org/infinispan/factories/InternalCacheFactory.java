@@ -102,7 +102,6 @@ public class InternalCacheFactory<K, V> extends AbstractNamedCacheComponentFacto
       componentRegistry.registerComponent(cache, Cache.class.getName(), true);
       componentRegistry.registerComponent(new CacheJmxRegistration(), CacheJmxRegistration.class.getName(), true);
       componentRegistry.registerComponent(new RecoveryAdminOperations(), RecoveryAdminOperations.class.getName(), true);
-      componentRegistry.prepareWiringCache();
    }
 
    /**
