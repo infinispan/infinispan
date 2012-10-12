@@ -99,7 +99,7 @@ class NettyTransport(server: ProtocolServer, encoder: ChannelDownstreamHandler,
       if (sendBufSize > 0)
          bootstrap.setOption("child.sendBufferSize", sendBufSize) // Sets server side send buffer
       if (recvBufSize > 0)
-         bootstrap.setOption("receiveBufferSize", recvBufSize) // Sets server side receive buffer
+         bootstrap.setOption("child.receiveBufferSize", recvBufSize) // Sets server side receive buffer
 
       val ch = bootstrap.bind(address)
       serverChannels.add(ch)
