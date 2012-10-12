@@ -16,21 +16,24 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston,
  * MA  02110-1301, USA.
  */
-package org.infinispan.cli;
+package org.infinispan.cli.connection.jmx.remoting;
 
-import org.infinispan.cli.connection.jmx.JMXConnection.JMXUrl;
-import org.testng.annotations.Test;
+import org.infinispan.cli.connection.Connection;
+import org.infinispan.cli.connection.Connector;
+import org.infinispan.cli.connection.jmx.JMXConnection;
 
-@Test(groups="functional", testName="cli.shell.JMXUrlTest")
-public class JMXUrlTest {
+public class JMXRemotingConnector implements Connector {
 
-   public void testValidJMXUrl() {
-      JMXUrl jmxUrl = new JMXUrl("jmx://localhost:12345");
-      assert jmxUrl.getUrl().equals("service:jmx:rmi:///jndi/rmi://localhost:12345/jmxrmi");
+   public JMXRemotingConnector() {
    }
 
-   @Test(expectedExceptions=IllegalArgumentException.class)
-   public void testInvalidJMXUrl() {
-      new JMXUrl("hotrod://localhost:12345");
+   @Override
+   public Connection getConnection(final String connectionString) {
+      try {
+         return new JMXConnection(new JMXRemotingUrl(connectionString));
+      } catch (Exception e) {
+         return null;
+      }
    }
+
 }
