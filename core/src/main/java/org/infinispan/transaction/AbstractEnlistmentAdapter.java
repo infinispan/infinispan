@@ -90,7 +90,8 @@ public abstract class AbstractEnlistmentAdapter {
 
    private boolean mayHaveRemoteLocks(LocalTransaction lt) {
       return (lt.getRemoteLocksAcquired() != null && !lt.getRemoteLocksAcquired().isEmpty()) ||
-            (lt.getModifications() != null && !lt.getModifications().isEmpty());
+             (lt.getModifications() != null && !lt.getModifications().isEmpty()) || 
+             (lt.isTransfered() );
    }
 
    /**
