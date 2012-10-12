@@ -72,6 +72,18 @@ class ServerAddress(val host: String, val port: Int) extends Address {
 
    override def toString = "%s:%d".format(host, port)
 
+   def compareTo(o: Address) : Int = {
+      o match {
+         case oa : ServerAddress => {
+            var cmp = host.compareTo(oa.host)
+            if (cmp == 0) {
+               cmp = port - oa.port
+            }
+            cmp
+         }
+         case _ => 0
+      }
+   }
 }
 
 object ServerAddress {
