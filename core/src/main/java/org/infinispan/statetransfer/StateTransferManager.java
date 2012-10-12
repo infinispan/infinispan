@@ -23,6 +23,7 @@
 
 package org.infinispan.statetransfer;
 
+import org.infinispan.commands.TopologyAffectedCommand;
 import org.infinispan.factories.scopes.Scope;
 import org.infinispan.factories.scopes.Scopes;
 import org.infinispan.jmx.annotations.ManagedAttribute;
@@ -30,7 +31,8 @@ import org.infinispan.topology.CacheTopology;
 import org.rhq.helpers.pluginAnnotations.agent.DataType;
 import org.rhq.helpers.pluginAnnotations.agent.Metric;
 
-//todo [anistor] remove this class and move the remaining functionality to StateConsumer
+import java.util.Set;
+
 /**
  * A component that manages the state transfer when the topology of the cluster changes.
  *
@@ -72,4 +74,11 @@ public interface StateTransferManager {
     * @return {@code true} if the local node was the first to start this cache in the cluster.
     */
    boolean isLocalNodeFirst();
+
+   /**
+    * If there is an state transfer happening at the moment, this method forwards the supplied
+    * command to the nodes that are new owners of the data, in order to assure consistency.
+    */
+   void forwardCommandIfNeeded(TopologyAffectedCommand command, Set<Object> affectedKeys, boolean sync);
+
 }
