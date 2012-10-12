@@ -1,1 +1,2 @@
-org.infinispan.cli.connection.jmx.JMXConnector
+org.infinispan.cli.connection.jmx.rmi.JMXRMIConnector
+org.infinispan.cli.connection.jmx.remoting.JMXRemotingConnector
