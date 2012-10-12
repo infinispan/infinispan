@@ -24,6 +24,7 @@
 package org.infinispan.server.core.transport
 
 import org.jboss.netty.buffer.{ChannelBuffers, ChannelBuffer}
+import org.jboss.netty.util.CharsetUtil
 
 object ExtendedChannelBuffer {
 
@@ -52,7 +53,7 @@ object ExtendedChannelBuffer {
     */
    def readString(bf: ChannelBuffer): String = {
       val bytes = readRangedBytes(bf)
-      if (!bytes.isEmpty) new String(bytes, "UTF8") else ""
+      if (!bytes.isEmpty) new String(bytes, CharsetUtil.UTF_8) else ""
    }
 
    def writeUnsignedShort(i: Int, bf: ChannelBuffer) = bf.writeShort(i)
@@ -64,6 +65,6 @@ object ExtendedChannelBuffer {
       bf.writeBytes(src)
    }
 
-   def writeString(msg: String, bf: ChannelBuffer) = writeRangedBytes(msg.getBytes(), bf)
+   def writeString(msg: String, bf: ChannelBuffer) = writeRangedBytes(msg.getBytes(CharsetUtil.UTF_8), bf)
 
 }
