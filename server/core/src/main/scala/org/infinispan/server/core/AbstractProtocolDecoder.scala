@@ -35,6 +35,8 @@ import org.infinispan.util.ClusterIdGenerator
 import logging.Log
 import java.lang.StringBuilder
 import org.jboss.netty.handler.codec.replay.ReplayingDecoder
+import org.jboss.netty.buffer.ChannelBuffers
+import org.jboss.netty.util.CharsetUtil
 
 /**
  * Common abstract decoder for Memcached and Hot Rod protocols.
@@ -173,8 +175,7 @@ abstract class AbstractProtocolDecoder[K, V <: CacheValue](transport: NettyTrans
                // We only expect Lists of ChannelBuffer instances, so don't worry about type erasure
                case l: List[ChannelBuffer] => l.foreach(ch.write(_))
                case a: Array[Byte] => ch.write(wrappedBuffer(a))
-               case sb: StringBuilder => ch.write(wrappedBuffer(sb.toString.getBytes))
-               case s: String => ch.write(wrappedBuffer(s.getBytes))
+               case cs: CharSequence => ch.write(ChannelBuffers.copiedBuffer(cs, CharsetUtil.UTF_8))
                case _ => ch.write(response)
             }
          }
@@ -272,7 +273,7 @@ abstract class AbstractProtocolDecoder[K, V <: CacheValue](transport: NettyTrans
       if (errorResponse != null) {
          errorResponse match {
             case a: Array[Byte] => ch.write(wrappedBuffer(a))
-            case sb: StringBuilder => ch.write(wrappedBuffer(sb.toString.getBytes))
+            case cs: CharSequence => ch.write(ChannelBuffers.copiedBuffer(cs, CharsetUtil.UTF_8))
             case null => // ignore
             case _ => ch.write(errorResponse)
          }
