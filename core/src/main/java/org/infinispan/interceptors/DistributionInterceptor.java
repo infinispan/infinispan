@@ -78,13 +78,13 @@ import java.util.concurrent.TimeoutException;
  * @since 4.0
  */
 public class DistributionInterceptor extends BaseRpcInterceptor {
-   DistributionManager dm;
-   CommandsFactory cf;
-   DataContainer dataContainer;
-   boolean isL1CacheEnabled, needReliableReturnValues;
-   EntryFactory entryFactory;
-   L1Manager l1Manager;
-   LockManager lockManager;
+   private DistributionManager dm;
+   private CommandsFactory cf;
+   private DataContainer dataContainer;
+   private boolean isL1CacheEnabled, needReliableReturnValues;
+   private EntryFactory entryFactory;
+   private L1Manager l1Manager;
+   private LockManager lockManager;
 
    static final RecipientGenerator CLEAR_COMMAND_GENERATOR = new RecipientGenerator() {
       @Override
@@ -176,7 +176,8 @@ public class DistributionInterceptor extends BaseRpcInterceptor {
     * @throws Throwable if there are problems
     */
    private Object remoteGetAndStoreInL1(InvocationContext ctx, Object key, boolean isWrite, FlagAffectedCommand command) throws Throwable {
-      DataLocality locality = dm.getLocality(key);  //todo [anistor] checking this here is a bit late as the state transfer was probably started or even completed since this command entered the chain
+      //DataLocality locality = dm.getLocality(key);
+      DataLocality locality = dm.getReadConsistentHash().isKeyLocalToNode(rpcManager.getAddress(), key) ? DataLocality.LOCAL : DataLocality.NOT_LOCAL;
 
       if (ctx.isOriginLocal() && !locality.isLocal() && isNotInL1(key)) {
          return realRemoteGet(ctx, key, true, isWrite, command);
@@ -395,8 +396,6 @@ public class DistributionInterceptor extends BaseRpcInterceptor {
       //   a) unsafeUnreliableReturnValues is false
       //   b) unsafeUnreliableReturnValues is true, we are in a TX and the command is conditional
       if (isNeedReliableReturnValues(command) || (command.isConditional() && ctx.isInTxScope())) {
-         boolean skipLocking = hasSkipLocking(command);
-         long lockTimeout = getLockAcquisitionTimeout(command, skipLocking);
          for (Object k : keygen.getKeys())
             remoteGetAndStoreInL1(ctx, k, true, command);
       }
