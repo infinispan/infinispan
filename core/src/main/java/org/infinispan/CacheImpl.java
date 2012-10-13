@@ -1009,7 +1009,6 @@ public class CacheImpl<K, V> extends CacheSupport<K, V> implements AdvancedCache
             transactionManager.commit();
          } catch (Throwable e) {
             log.couldNotCompleteInjectedTransaction(e);
-            tryRollback();
             throw new CacheException("Could not commit implicit transaction", e);
          }
       }
