@@ -840,27 +840,6 @@ public abstract class AbstractComponentRegistry implements Lifecycle, Cloneable 
       }
    }
 
-
-   static class InvokableInjectionMethod {
-      ComponentMetadata.InjectMetadata metadata;
-      ConcreteParameter[] parameters;
-
-      InvokableInjectionMethod(ComponentMetadata.InjectMetadata metadata, ConcreteParameter[] parameters) {
-         this.metadata = metadata;
-         this.parameters = parameters;
-      }
-   }
-
-   static class ConcreteParameter {
-      String name;
-      Class<?> type;
-
-      ConcreteParameter(String name, Class<?> type) {
-         this.name = name;
-         this.type = type;
-      }
-   }
-
    /**
     * Wrapper to encapsulate a method along with a priority
     */

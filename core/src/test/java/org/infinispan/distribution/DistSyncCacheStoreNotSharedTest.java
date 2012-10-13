@@ -34,6 +34,8 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.Future;
 
+import static org.junit.Assert.*;
+
 /**
  * DistSyncSharedTest.
  *
@@ -256,15 +258,15 @@ public class DistSyncCacheStoreNotSharedTest extends BaseDistCacheStoreTest {
       String key = "k1", value = "value", value2 = "v2";
       initAndTest();
       boolean replaced = getFirstNonOwner(key).replace(key, value2, value);
-      assert !replaced;
+      assertFalse(replaced);
       replaced = getFirstNonOwner(key).replace(key, value, value2);
-      assert replaced;
+      assertTrue(replaced);
       for (Cache<Object, String> c : caches) {
-         c.get(key).equals(value2);
+         assertEquals(value2, c.get(key));
          if (isOwner(c, key)) {
             CacheStore store = TestingUtil.extractComponent(c, CacheLoaderManager.class).getCacheStore();
-            assert store.containsKey(key);
-            assert store.load(key).getValue().equals(value2);
+            assertTrue(store.containsKey(key));
+            assertEquals(value2, store.load(key).getValue());
          }
       }
    }
@@ -273,33 +275,32 @@ public class DistSyncCacheStoreNotSharedTest extends BaseDistCacheStoreTest {
       String key = "k1", value = "value", value2 = "v2";
       initAndTest();
       boolean replaced = getFirstNonOwner(key).replace(key, value2, value);
-      assert !replaced;
+      assertFalse(replaced);
       replaced = getFirstNonOwner(key).getAdvancedCache().withFlags(Flag.SKIP_CACHE_STORE).replace(key, value, value2);
-      assert replaced;
+      assertTrue(replaced);
       for (Cache<Object, String> c : caches) {
-         c.get(key).equals(value2);
+         assertEquals(value2, c.get(key));
          if (isOwner(c, key)) {
             CacheStore store = TestingUtil.extractComponent(c, CacheLoaderManager.class).getCacheStore();
-            assert store.containsKey(key);
-            assert store.load(key).getValue().equals(value);
+            assertTrue(store.containsKey(key));
+            assertEquals(value, store.load(key).getValue());
          }
       }
    }
 
-   @Test (enabled = false, description = "Temporary disabled : https://issues.jboss.org/browse/ISPN-2249")
    public void testAtomicPutIfAbsentFromNonOwner() throws Exception {
       String key = "k1", value = "value", value2 = "v2";
       for (Cache<Object, String> c : caches) assert c.isEmpty();
       String replaced = getFirstNonOwner(key).putIfAbsent("k1", value);
-      assert replaced == null;
+      assertNull(replaced);
       replaced = getFirstNonOwner(key).putIfAbsent("k1", value2);
-      assert value.equals(replaced);
+      assertEquals(replaced, value);
       for (Cache<Object, String> c : caches) {
-         c.get(key).equals(replaced);
+         assertEquals(replaced, c.get(key));
          if (isOwner(c, key)) {
             CacheStore store = TestingUtil.extractComponent(c, CacheLoaderManager.class).getCacheStore();
-            assert store.containsKey(key);
-            assert store.load(key).getValue().equals(value);
+            assertTrue(store.containsKey(key));
+            assertEquals(value, store.load(key).getValue());
          }
       }
    }
@@ -308,14 +309,14 @@ public class DistSyncCacheStoreNotSharedTest extends BaseDistCacheStoreTest {
       String key = "k1", value = "value";
       for (Cache<Object, String> c : caches) assert c.isEmpty();
       String replaced = getFirstNonOwner(key).getAdvancedCache().withFlags(Flag.SKIP_CACHE_STORE).putIfAbsent("k1", value);
-      assert replaced == null;
+      assertNull(replaced);
       //interesting case: fails to put as value exists, put actually missing in Store
       replaced = getFirstNonOwner(key).putIfAbsent("k1", value);
-      assert value.equals(replaced);
+      assertEquals(replaced, value);
       for (Cache<Object, String> c : caches) {
-         c.get(key).equals(replaced);
+         assertEquals(replaced, c.get(key));
          CacheStore store = TestingUtil.extractComponent(c, CacheLoaderManager.class).getCacheStore();
-         assert !store.containsKey(key);
+         assertFalse(store.containsKey(key));
       }
    }
 
@@ -331,7 +332,6 @@ public class DistSyncCacheStoreNotSharedTest extends BaseDistCacheStoreTest {
          }
       }
    }
-   
 
    public void testClearWithFlag() throws Exception {
       prepareClearTest();

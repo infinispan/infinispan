@@ -19,16 +19,12 @@
 
 package org.infinispan.distribution.rehash;
 
-import java.util.HashMap;
-import java.util.Map;
-
 import org.infinispan.Cache;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.cache.FileCacheStoreConfigurationBuilder;
 import org.infinispan.manager.EmbeddedCacheManager;
-import org.infinispan.remoting.transport.Address;
 import org.infinispan.test.MultipleCacheManagersTest;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
@@ -43,7 +39,7 @@ import org.testng.annotations.Test;
  *
  * @author Carsten Lohmann
  */
-@Test(testName = "distribution.rehash.RehashAfterJoinWithPreloadTest", groups = "functional", enabled = false, description = "Temporary disabled : https://issues.jboss.org/browse/ISPN-2249")
+@Test(testName = "distribution.rehash.RehashAfterJoinWithPreloadTest", groups = "functional")
 public class RehashAfterJoinWithPreloadTest extends MultipleCacheManagersTest {
 
    private static final Log log = LogFactory.getLog(RehashAfterJoinWithPreloadTest.class);

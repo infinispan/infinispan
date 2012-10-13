@@ -35,7 +35,7 @@ import org.infinispan.test.fwk.CleanupAfterMethod;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.testng.annotations.Test;
 
-@Test(testName = "lock.StaleLocksOnPrepareFailureTest", groups = "functional", enabled = false) //todo [anistor] fix this test and enable it
+@Test(testName = "lock.StaleLocksOnPrepareFailureTest", groups = "functional")
 @CleanupAfterMethod
 public class StaleLocksOnPrepareFailureTest extends MultipleCacheManagersTest {
 

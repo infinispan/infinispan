@@ -92,15 +92,24 @@ public abstract class BaseKeyAffinityServiceTest extends BaseDistFunctionalTest 
 
    protected void assertEventualFullCapacity(List<Address> addresses) throws InterruptedException {
       Map<Address, BlockingQueue<Object>> blockingQueueMap = keyAffinityService.getAddress2KeysMapping();
-      long maxWaitTime = 60 * 1000; // No more than 1 minute per address since any more is ridiculous!
       for (Address addr : addresses) {
-         BlockingQueue<Object> queue = blockingQueueMap.get(addr);
-         long giveupTime = System.currentTimeMillis() + maxWaitTime;
+         final BlockingQueue<Object> queue = blockingQueueMap.get(addr);
          //the queue will eventually get filled
-         while (queue.size() != 100 && System.currentTimeMillis() < giveupTime) Thread.sleep(100);
-         assertEquals(100, queue.size());
+         eventually(new Condition() {
+            @Override
+            public boolean isSatisfied() {
+               return queue.size() == 100;
+            }
+         }, 60 * 1000);  // No more than 1 minute per address since any more is ridiculous!
       }
-      assertEquals(keyAffinityService.getMaxNumberOfKeys(), keyAffinityService.existingKeyCount.get());
+
+      eventually(new Condition() {
+         @Override
+         public boolean isSatisfied() {
+            return keyAffinityService.getMaxNumberOfKeys() == keyAffinityService.existingKeyCount.get();
+         }
+      });
+
       assertEquals(addresses.size() * 100, keyAffinityService.existingKeyCount.get());
 
       // give the worker thread some time to shut down
