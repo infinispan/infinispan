@@ -201,8 +201,7 @@ public class StateTransferInterceptor extends CommandInterceptor {   //todo [ani
    }
 
    private Object handleTopologyAffectedCommand(InvocationContext ctx, VisitableCommand command, boolean originLocal) throws Throwable {
-
-      log.tracef("handleTopologyAffectedCommand for command %s, originLocal=%s, cacheModeLocal=%s", command, originLocal);
+      log.tracef("handleTopologyAffectedCommand for command %s, originLocal=%b", command, originLocal);
 
       if (isLocal(command, originLocal)) {
          return invokeNextInterceptor(ctx, command);
