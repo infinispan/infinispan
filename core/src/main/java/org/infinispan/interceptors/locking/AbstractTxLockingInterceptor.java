@@ -37,6 +37,7 @@ import org.infinispan.context.impl.TxInvocationContext;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.remoting.rpc.RpcManager;
 import org.infinispan.remoting.transport.Address;
+import org.infinispan.transaction.RemoteTransaction;
 import org.infinispan.transaction.TransactionTable;
 import org.infinispan.transaction.xa.CacheTransaction;
 import org.infinispan.util.concurrent.TimeoutException;
@@ -163,6 +164,7 @@ public abstract class AbstractTxLockingInterceptor extends AbstractLockingInterc
          lockManager.acquireLock(ctx, key, lockTimeout, skipLocking);
          return;
       }
+       
       TxInvocationContext txContext = (TxInvocationContext) ctx;
       int transactionViewId = -1;
       boolean useStrictComparison = true;
@@ -222,6 +224,24 @@ public abstract class AbstractTxLockingInterceptor extends AbstractLockingInterc
       }
    }
 
+   /**
+    * If the originator left before the operation completed
+    * @param ctx
+    */
+   protected void checkLockOnOriginatorLeave( TxInvocationContext ctx ) {
+      
+      // We only care about rollbacks on remote transactions.
+      if( !ctx.isOriginLocal() ) {
+      
+         if( ctx.getCacheTransaction() != null && 
+             ctx.getCacheTransaction().isMarkedForRollback() ) {
+         
+            getLog().tracef("Remote tx %s marked for rollback. Unlocking all keys", ctx.getCacheTransaction() );
+            lockManager.unlockAll(ctx);            
+         }
+      }               
+   }
+   
    /**
     * Checks if first topology id is smaller than the second. The comparison can be strict or non-strict,
     * depending on the isStrictComparison flag.

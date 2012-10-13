@@ -55,9 +55,6 @@ public abstract class LocalTransaction extends AbstractCacheTransaction {
    private Set<Address> remoteLockedNodes;
    private Set<Object> readKeys = null;
 
-   /** mark as volatile as this might be set from the tx thread code on view change*/
-   private volatile boolean isMarkedForRollback;
-
    private final Transaction transaction;
 
    private final boolean implicitTransaction;
@@ -94,14 +91,6 @@ public abstract class LocalTransaction extends AbstractCacheTransaction {
 
    public void clearRemoteLocksAcquired() {
       if (remoteLockedNodes != null) remoteLockedNodes.clear();
-   }
-
-   public void markForRollback(boolean markForRollback) {
-      isMarkedForRollback = markForRollback;
-   }
-
-   public final boolean isMarkedForRollback() {
-      return isMarkedForRollback;
    }
 
    public Transaction getTransaction() {
