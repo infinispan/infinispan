@@ -124,7 +124,7 @@ public class ClusteredGetCommand extends BaseRpcCommand implements FlagAffectedC
       if (distributionManager != null && distributionManager.isAffectedByRehash(key)) return null;
       // make sure the get command doesn't perform a remote call
       // as our caller is already calling the ClusteredGetCommand on all the relevant nodes
-      Set<Flag> commandFlags = EnumSet.of(Flag.SKIP_REMOTE_LOOKUP);
+      Set<Flag> commandFlags = EnumSet.of(Flag.SKIP_REMOTE_LOOKUP, Flag.CACHE_MODE_LOCAL);
       if (this.flags != null) commandFlags.addAll(this.flags);
       GetKeyValueCommand command = commandsFactory.buildGetKeyValueCommand(key, commandFlags);
       command.setReturnCacheEntry(true);
