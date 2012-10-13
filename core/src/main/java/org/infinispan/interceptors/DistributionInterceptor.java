@@ -52,6 +52,7 @@ import org.infinispan.factories.annotations.Start;
 import org.infinispan.interceptors.base.BaseRpcInterceptor;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.remoting.transport.jgroups.SuspectException;
+import org.infinispan.transaction.LocalTransaction;
 import org.infinispan.transaction.LockingMode;
 import org.infinispan.util.Immutables;
 import org.infinispan.util.concurrent.NotifyingFutureImpl;
@@ -348,10 +349,8 @@ public class DistributionInterceptor extends BaseRpcInterceptor {
       }
    }
 
-   private void sendCommitCommand(TxInvocationContext ctx, CommitCommand command)
-         throws TimeoutException, InterruptedException {
-      // we only send the commit command to the nodes that
-      Collection<Address> recipients = dm.getAffectedNodes(ctx.getAffectedKeys());
+   private void sendCommitCommand(TxInvocationContext ctx, CommitCommand command) throws TimeoutException, InterruptedException {
+      Collection<Address> recipients = getCommitNodes(ctx);
       boolean syncCommitPhase = cacheConfiguration.transaction().syncCommitPhase();
       rpcManager.invokeRemotely(recipients, command, syncCommitPhase, true);
    }
@@ -385,7 +384,7 @@ public class DistributionInterceptor extends BaseRpcInterceptor {
    @Override
    public Object visitRollbackCommand(TxInvocationContext ctx, RollbackCommand command) throws Throwable {
       if (shouldInvokeRemoteTxCommand(ctx)) {
-         rpcManager.invokeRemotely(dm.getAffectedNodes(ctx.getAffectedKeys()), command, cacheConfiguration.transaction().syncRollbackPhase(), true);
+         rpcManager.invokeRemotely(getCommitNodes(ctx), command, cacheConfiguration.transaction().syncRollbackPhase(), true);
       }
 
       return invokeNextInterceptor(ctx, command);
@@ -501,6 +500,13 @@ public class DistributionInterceptor extends BaseRpcInterceptor {
             && (recipients = recipientGenerator.generateRecipients()) != null
             && recipients.size() == 1
             && recipients.get(0).equals(rpcManager.getTransport().getAddress());
+   }
+
+   private Collection<Address> getCommitNodes(TxInvocationContext ctx) {
+      LocalTransaction localTx = (LocalTransaction) ctx.getCacheTransaction();
+      Collection<Address> affectedNodes = dm.getAffectedNodes(ctx.getAffectedKeys());
+      List<Address> members = dm.getConsistentHash().getMembers();
+      return localTx.getCommitNodes(affectedNodes, rpcManager.getTopologyId(), members);
    }
 
    interface KeyGenerator {

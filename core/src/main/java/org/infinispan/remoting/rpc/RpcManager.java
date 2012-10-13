@@ -205,4 +205,11 @@ public interface RpcManager {
     * Returns the address associated with this RpcManager or null if not part of the cluster.
     */
    Address getAddress();
+
+   /**
+    * Returns the current topology id. As opposed to the viewId which is updated whenever the cluster changes,
+    * the topologyId is updated when a new cache instance is started or removed - this doesn't necessarily coincide
+    * with a node being added/removed to the cluster.
+    */
+   int getTopologyId();
 }

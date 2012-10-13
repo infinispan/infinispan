@@ -249,6 +249,11 @@ public class SingleRpcOnPessimisticLockingTest extends MultipleCacheManagersTest
       public Address getAddress() {
          return realOne.getAddress();
       }
+
+      @Override
+      public int getTopologyId() {
+         return realOne.getTopologyId();
+      }
    }
 
    private interface Operation {

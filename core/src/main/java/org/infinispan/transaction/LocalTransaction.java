@@ -36,6 +36,7 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
@@ -64,8 +65,8 @@ public abstract class LocalTransaction extends AbstractCacheTransaction {
 
    private volatile boolean isFromRemoteSite;
 
-   public LocalTransaction(Transaction transaction, GlobalTransaction tx, boolean implicitTransaction, int viewId) {
-      super(tx, viewId);
+   public LocalTransaction(Transaction transaction, GlobalTransaction tx, boolean implicitTransaction, int topologyId) {
+      super(tx, topologyId);
       this.transaction = transaction;
       this.implicitTransaction = implicitTransaction;
    }
@@ -168,7 +169,7 @@ public abstract class LocalTransaction extends AbstractCacheTransaction {
             ", isMarkedForRollback=" + isMarkedForRollback +
             ", lockedKeys=" + lockedKeys +
             ", backupKeyLocks=" + backupKeyLocks +
-            ", viewId=" + viewId +
+            ", topologyId=" + topologyId +
             "} " + super.toString();
    }
 
@@ -200,5 +201,26 @@ public abstract class LocalTransaction extends AbstractCacheTransaction {
     */
    public void setFromRemoteSite(boolean fromRemoteSite) {
       isFromRemoteSite = fromRemoteSite;
+   }
+
+   /**
+    * Calculates the list of nodes to which a commit/rollback needs to be sent based on the nodes to which prepare
+    * was sent. If the commit/rollback is to be sent in the same topologyId, then the 'recipients' param is returned back.
+    * If the current topologyId is different than the topologyId of this transaction ({@link #getTopologyId()} then
+    * this method returns the reunion between 'recipients' and {@link #getRemoteLocksAcquired()} from which it discards
+    * the members that left.
+    */
+   public Collection<Address> getCommitNodes(Collection<Address> recipients, int currentTopologyId, List<Address> members) {
+      if (trace) log.tracef("getCommitNodes recipients=%s, currentTopologyId=%s, members=%s, txTopologyId=%s",
+                 recipients, currentTopologyId, members, getTopologyId());
+      if (getTopologyId() != currentTopologyId) {
+         Set<Address> allRecipients = new HashSet<Address>(getRemoteLocksAcquired());
+         allRecipients.addAll(recipients);
+         allRecipients.retainAll(members);
+         if (trace) log.tracef("The merged list of nodes to send commit/rollback is %s", allRecipients);
+         return allRecipients;
+      } else {
+         return recipients;
+      }
    }
 }

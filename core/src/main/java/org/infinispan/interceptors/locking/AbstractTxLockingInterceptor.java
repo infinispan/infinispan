@@ -144,15 +144,15 @@ public abstract class AbstractTxLockingInterceptor extends AbstractLockingInterc
     * 3. tx2 has to determine that "k" is already locked by another tx (i.e. tx1) and it has to wait for that tx to finish before acquiring the lock.
     *
     * The algorithm used at step 3 is:
-    * - the transaction table(TT) associates the current view id with every remote and local transaction it creates
-    * - TT also keeps track of the minimal value of all the view ids of all the transactions still present in the cache (minViewId)
+    * - the transaction table(TT) associates the current topology id with every remote and local transaction it creates
+    * - TT also keeps track of the minimal value of all the topology ids of all the transactions still present in the cache (minTopologyId)
     * - when a tx wants to acquire lock "k":
-    *    - if tx.viewId > TT.minViewId then "k" might be a key whose owner crashed. If so:
-    *       - obtain the list LT of transactions that started in a previous view (txTable.getTransactionsPreparedBefore)
+    *    - if tx.topologyId > TT.minTopologyId then "k" might be a key whose owner crashed. If so:
+    *       - obtain the list LT of transactions that started in a previous topology (txTable.getTransactionsPreparedBefore)
     *       - for each t in LT:
     *          - if t wants to write "k" then block until t finishes (CacheTransaction.waitForTransactionsToFinishIfItWritesToKey)
     *       - only then try to acquire lock on "k"
-    *    - if tx.viewId == TT.minViewId try to acquire lock straight away.
+    *    - if tx.topologyId == TT.minTopologyId try to acquire lock straight away.
     *
     * Note: The algorithm described below only when nodes leave the cluster, so it doesn't add a performance burden
     * when the cluster is stable.
@@ -164,14 +164,14 @@ public abstract class AbstractTxLockingInterceptor extends AbstractLockingInterc
          return;
       }
       TxInvocationContext txContext = (TxInvocationContext) ctx;
-      int transactionViewId = -1;
+      int transactionTopologyId = -1;
       boolean useStrictComparison = true;
       boolean checkForPendingLocks = false;
       if (clustered) {
-         transactionViewId = txContext.getCacheTransaction().getViewId();
-         if (transactionViewId != TransactionTable.CACHE_STOPPED_VIEW_ID) {
+         transactionTopologyId = txContext.getCacheTransaction().getTopologyId();
+         if (transactionTopologyId != TransactionTable.CACHE_STOPPED_TOPOLOGY_ID) {
             useStrictComparison = txTable.useStrictTopologyIdComparison();
-            checkForPendingLocks = isFromOlderTopology(txTable.getMinViewId(), transactionViewId, useStrictComparison);
+            checkForPendingLocks = isFromOlderTopology(txTable.getMinTopologyId(), transactionTopologyId, useStrictComparison);
          }
       }
 
@@ -181,10 +181,10 @@ public abstract class AbstractTxLockingInterceptor extends AbstractLockingInterc
          final long expectedEndTime = nowMillis() + cacheConfiguration.locking().lockAcquisitionTimeout();
 
          // Check local transactions first
-         waitForTransactionsToComplete(txContext, txTable.getLocalTransactions(), key, transactionViewId, useStrictComparison, expectedEndTime);
+         waitForTransactionsToComplete(txContext, txTable.getLocalTransactions(), key, transactionTopologyId, useStrictComparison, expectedEndTime);
 
          // ... then remote ones
-         waitForTransactionsToComplete(txContext, txTable.getRemoteTransactions(), key, transactionViewId, useStrictComparison, expectedEndTime);
+         waitForTransactionsToComplete(txContext, txTable.getRemoteTransactions(), key, transactionTopologyId, useStrictComparison, expectedEndTime);
 
          // Then try to acquire a lock
          final long remaining = expectedEndTime - nowMillis();
@@ -201,10 +201,10 @@ public abstract class AbstractTxLockingInterceptor extends AbstractLockingInterc
    }
 
    private void waitForTransactionsToComplete(TxInvocationContext txContext, Collection<? extends CacheTransaction> transactions,
-                                              Object key, int transactionViewId, boolean useStrictComparison,
+                                              Object key, int transactionTopologyId, boolean useStrictComparison,
                                               long expectedEndTime) throws InterruptedException {
       for (CacheTransaction tx : transactions) {
-         if (isFromOlderTopology(tx.getViewId(), transactionViewId, useStrictComparison)) {
+         if (isFromOlderTopology(tx.getTopologyId(), transactionTopologyId, useStrictComparison)) {
             boolean txCompleted = false;
 
             long remaining;

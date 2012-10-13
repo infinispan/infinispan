@@ -24,7 +24,6 @@
 package org.infinispan.transaction;
 
 import org.infinispan.commands.control.LockControlCommand;
-import org.infinispan.commands.tx.RollbackCommand;
 import org.infinispan.context.Flag;
 import org.infinispan.distribution.ch.ConsistentHash;
 import org.infinispan.interceptors.InterceptorChain;
@@ -75,8 +74,7 @@ public class StaleTransactionCleanupService {
 
    /**
     * Roll back remote transactions that have acquired lock that are no longer valid,
-    * either because the main data owner left the cluster or because a node joined
-    * the cluster and is the new data owner.
+    * because the main data owner left. Also unlocks keys for which the lock owner has changed as a result of a topology change.
     * This method will only ever be called in distributed mode.
     */
    @TopologyChanged
@@ -136,21 +134,6 @@ public class StaleTransactionCleanupService {
                log.tracef("Unlocking moved keys for %s complete.", gtx);
             } catch (Throwable t) {
                log.unableToUnlockRebalancedKeys(gtx, keys, self, t);
-            }
-         }
-
-         // if the transaction doesn't touch local keys any more, we can roll it back
-         if (!txHasLocalKeys) {
-            log.tracef("Killing remote transaction without any local keys %s", gtx);
-            RollbackCommand rc = new RollbackCommand(cacheName, gtx);
-            rc.init(invoker, transactionTable.icc, transactionTable);
-            try {
-               rc.perform(null);
-               log.tracef("Rollback of transaction %s complete.", gtx);
-            } catch (Throwable e) {
-               log.unableToRollbackGlobalTx(gtx, e);
-            } finally {
-               transactionTable.removeRemoteTransaction(gtx);
             }
          }
       }

@@ -39,7 +39,6 @@ import org.infinispan.jmx.annotations.ManagedOperation;
 import org.infinispan.statetransfer.StateTransferManager;
 import org.infinispan.remoting.ReplicationQueue;
 import org.infinispan.remoting.RpcException;
-import org.infinispan.remoting.responses.IgnoreExtraResponsesValidityFilter;
 import org.infinispan.remoting.responses.Response;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.remoting.transport.Transport;
@@ -406,5 +405,9 @@ public class RpcManagerImpl implements RpcManager {
    @Override
    public Address getAddress() {
       return t != null ? t.getAddress() : null;  // todo [anistor] transport should never be null!
+   }
+
+   public int getTopologyId() {
+      return stateTransferManager.getCacheTopology().getTopologyId();
    }
 }

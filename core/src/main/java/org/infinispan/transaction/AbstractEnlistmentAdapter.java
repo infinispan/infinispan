@@ -83,8 +83,9 @@ public abstract class AbstractEnlistmentAdapter {
       if (mayHaveRemoteLocks(localTransaction) && isClustered() && !isSecondPhaseAsync) {
          final TxCompletionNotificationCommand command = commandsFactory.buildTxCompletionNotificationCommand(null, gtx);
          final Collection<Address> owners = clusteringLogic.getOwners(localTransaction.getAffectedKeys());
-         log.tracef("About to invoke tx completion notification on nodes %s", owners);
-         rpcManager.invokeRemotely(owners, command, false, true);
+         Collection<Address> commitNodes = localTransaction.getCommitNodes(owners, rpcManager.getTopologyId(), rpcManager.getTransport().getMembers());
+         log.tracef("About to invoke tx completion notification on commitNodes: %s", commitNodes);
+         rpcManager.invokeRemotely(commitNodes, command, false, true);
       }
    }
 

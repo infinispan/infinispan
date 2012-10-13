@@ -71,13 +71,13 @@ public abstract class AbstractCacheTransaction implements CacheTransaction {
 
    private boolean txComplete = false;
    private volatile boolean needToNotifyWaiters = false;
-   protected final int viewId;
+   protected final int topologyId;
 
    private EntryVersionsMap updatedEntryVersions;
 
-   public AbstractCacheTransaction(GlobalTransaction tx, int viewId) {
+   public AbstractCacheTransaction(GlobalTransaction tx, int topologyId) {
       this.tx = tx;
-      this.viewId = viewId;
+      this.topologyId = topologyId;
    }
 
    @Override
@@ -158,8 +158,8 @@ public abstract class AbstractCacheTransaction implements CacheTransaction {
    }
 
    @Override
-   public int getViewId() {
-      return viewId;
+   public int getTopologyId() {
+      return topologyId;
    }
 
    @Override
