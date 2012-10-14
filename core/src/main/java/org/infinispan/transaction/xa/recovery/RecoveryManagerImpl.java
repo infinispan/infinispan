@@ -294,7 +294,7 @@ public class RecoveryManagerImpl implements RecoveryManager {
          GlobalTransaction globalTransaction = tx.getGlobalTransaction();
          globalTransaction.setAddress(rpcManager.getAddress());
          globalTransaction.setRemote(false);
-         RecoveryAwareLocalTransaction localTx = (RecoveryAwareLocalTransaction) txFactory.newLocalTransaction(null, globalTransaction, false, tx.getViewId());
+         RecoveryAwareLocalTransaction localTx = (RecoveryAwareLocalTransaction) txFactory.newLocalTransaction(null, globalTransaction, false, tx.getTopologyId());
          localTx.setModifications(tx.getModifications());
          localTx.setXid(xid);
          localTx.addAllAffectedKeys(tx.getAffectedKeys());

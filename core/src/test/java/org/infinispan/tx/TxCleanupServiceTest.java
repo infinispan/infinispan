@@ -24,12 +24,9 @@
 package org.infinispan.tx;
 
 
-import org.infinispan.commands.ReplicableCommand;
-import org.infinispan.commands.remote.recovery.TxCompletionNotificationCommand;
 import org.infinispan.commands.tx.CommitCommand;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
-import org.infinispan.container.DataContainer;
 import org.infinispan.factories.ComponentRegistry;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.remoting.transport.Address;
@@ -38,54 +35,44 @@ import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.CleanupAfterMethod;
 import org.infinispan.transaction.TransactionTable;
 import org.infinispan.transaction.lookup.DummyTransactionManagerLookup;
+import org.infinispan.transaction.tm.DummyTransaction;
+import org.infinispan.transaction.tm.DummyTransactionManager;
 import org.infinispan.util.mocks.ControlledCommandFactory;
 import org.testng.annotations.Test;
 
-import java.util.HashSet;
-import java.util.Set;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.concurrent.Callable;
 
 import static org.junit.Assert.*;
 
 /**
- * test:
- *  - N1 starts a tx with 10 keys that map to the second node and prepares it
- *  - N3 is started and (hopefully) some of the keys touched by the transaction should be migrated over to N3
- *  - the transaction is finalized. The test makes sure that:
- *        -  no data is lost during ST
- *        - the transaction is cleaned up correctly from all nodes
+ * Test for https://issues.jboss.org/browse/ISPN-2383.
  *
- * @author Mircea Markus
- * @since 5.2
+ * A single execution of this test (or multiple for that reason)
+ * might not verify the tested condition( that is  a transaction is not lost when the main owner of the single key it
+ * touched has changed as a result of a node joining). That is because the key is generated before the new node to join
+ * so we have no guarantees that the key will map to the new joiner (this is what we want to test). Running the test
+ * several times significantly increases the chances for this happen.
  */
-@Test (groups = "functional", testName = "tx.LockCleanupStateTransferTest")
 @CleanupAfterMethod
-public class LockCleanupStateTransferTest extends MultipleCacheManagersTest {
-   private static final int KEY_SET_SIZE = 10;
+@Test(groups = "functional", testName = "tx.TxCleanupServiceTest", invocationCount = 10)
+public class TxCleanupServiceTest extends MultipleCacheManagersTest {
+   private static final int TX_COUNT = 1;
    private ConfigurationBuilder dcc;
 
    @Override
    protected void createCacheManagers() throws Throwable {
       dcc = getDefaultClusteredCacheConfig(CacheMode.DIST_SYNC, true);
       dcc.transaction().transactionManagerLookup(new DummyTransactionManagerLookup());
-      dcc.clustering().hash().numOwners(1);
-      dcc.clustering().stateTransfer().fetchInMemoryState(true);
+      dcc.clustering().hash().numOwners(1).stateTransfer().fetchInMemoryState(true);
       createCluster(dcc, 2);
       waitForClusterToForm();
    }
 
-   public void testBelatedCommit() throws Throwable {
-      testLockReleasedCorrectly(CommitCommand.class);
-   }
-
-   public void testBelatedTxCompletionNotificationCommand() throws Throwable {
-      testLockReleasedCorrectly(TxCompletionNotificationCommand.class);
-   }
-
-   private void testLockReleasedCorrectly(Class<? extends  ReplicableCommand> toBlock ) throws Throwable {
-
+   public void testTransactionStateNotLost() throws Throwable {
       ComponentRegistry componentRegistry = advancedCache(1).getComponentRegistry();
-      final ControlledCommandFactory ccf = new ControlledCommandFactory(componentRegistry.getCommandsFactory(), toBlock);
+      final ControlledCommandFactory ccf = new ControlledCommandFactory(componentRegistry.getCommandsFactory(), CommitCommand.class);
       TestingUtil.replaceField(ccf, "commandsFactory", componentRegistry, ComponentRegistry.class);
 
       //hack: re-add the component registry to the GlobalComponentRegistry's "namedComponents" (CHM) in order to correctly publish it for
@@ -93,19 +80,24 @@ public class LockCleanupStateTransferTest extends MultipleCacheManagersTest {
       advancedCache(1).getComponentRegistry().getGlobalComponentRegistry().registerNamedComponentRegistry(componentRegistry, EmbeddedCacheManager.DEFAULT_CACHE_NAME);
       ccf.gate.close();
 
-      final Set<Object> keys = new HashSet<Object>(KEY_SET_SIZE);
+      final Map<Object, DummyTransaction> keys2Tx = new HashMap<Object, DummyTransaction>(TX_COUNT);
 
-      //fork it into another test as this is going to block in commit
+      int viewId = advancedCache(0).getRpcManager().getTransport().getViewId();
+
+      log.tracef("Viewid before %s", viewId);
+
+      //fork it into another thread as this is going to block in commit
       fork(new Callable<Object>() {
          @Override
          public Object call() throws Exception {
-            tm(0).begin();
-            for (int i = 0; i < KEY_SET_SIZE; i++) {
+            for (int i = 0; i < TX_COUNT; i++) {
                Object k = getKeyForCache(1);
-               keys.add(k);
+               tm(0).begin();
                cache(0).put(k, k);
+               DummyTransaction transaction = ((DummyTransactionManager) tm(0)).getTransaction();
+               keys2Tx.put(k, transaction);
+               tm(0).commit();
             }
-            tm(0).commit();
             return null;
          }
       });
@@ -114,43 +106,38 @@ public class LockCleanupStateTransferTest extends MultipleCacheManagersTest {
       eventually(new Condition() {
          @Override
          public boolean isSatisfied() throws Exception {
-            log.tracef("receivedCommands == %s", ccf.receivedCommands.get());
-            return ccf.receivedCommands.get() == 1;
+            return ccf.receivedCommands.get() == TX_COUNT;
          }
       });
 
-      if (toBlock == TxCompletionNotificationCommand.class) {
-         //at this stage everything should be committed locally
-         DataContainer dc = advancedCache(1).getDataContainer();
-         for (Object k : keys) {
-            assertEquals(k, dc.get(k).getValue());
-         }
-      }
+      log.tracef("Viewid middle %s", viewId);
 
-
-      log.trace("Before state transfer");
 
       //now add a one new member
       addClusterEnabledCacheManager(dcc);
       waitForClusterToForm();
-      log.trace("After state transfer");
 
-      final Set<Object> migratedKeys = new HashSet<Object>(KEY_SET_SIZE);
-      for (Object key : keys) {
+
+      viewId = advancedCache(0).getRpcManager().getTransport().getViewId();
+
+      log.tracef("Viewid after before %s", viewId);
+
+
+      final Map<Object, DummyTransaction> migratedTx = new HashMap<Object, DummyTransaction>(TX_COUNT);
+      for (Object key : keys2Tx.keySet()) {
          if (keyMapsToNode(key, 2)) {
-            migratedKeys.add(key);
+            migratedTx.put(key, keys2Tx.get(key));
          }
       }
 
-      log.tracef("Number of migrated keys is %s", migratedKeys.size());
-      if (migratedKeys.size() == 0) return;
+      log.tracef("Number of migrated tx is %s", migratedTx.size());
+//      System.out.println("Number of migrated tx is " + migratedTx.size());
+      if (migratedTx.size() == 0) return;
 
       eventually(new Condition() {
          @Override
          public boolean isSatisfied() throws Exception {
-            int remoteTxCount = TestingUtil.getTransactionTable(cache(2)).getRemoteTxCount();
-            log.tracef("remoteTxCount=%s", remoteTxCount);
-            return remoteTxCount == 1;
+            return TestingUtil.getTransactionTable(cache(2)).getRemoteTxCount() == migratedTx.size();
          }
       });
 
@@ -160,28 +147,33 @@ public class LockCleanupStateTransferTest extends MultipleCacheManagersTest {
       eventually(new Condition() {
          @Override
          public boolean isSatisfied() throws Exception {
-            int remoteTxCount = TestingUtil.getTransactionTable(cache(2)).getRemoteTxCount();
-            return remoteTxCount == 0;
+            return TestingUtil.getTransactionTable(cache(2)).getRemoteTxCount() == 0;
          }
       });
 
 
-      for (int i = 0; i < 3; i++) {
-         TransactionTable tt = TestingUtil.getTransactionTable(cache(i));
-         assertEquals("For cache " + i, 0, tt.getLocalTxCount());
-         assertEquals("For cache " + i, 0, tt.getRemoteTxCount());
-      }
+      eventually(new Condition() {
+         @Override
+         public boolean isSatisfied() throws Exception {
+            boolean allZero = true;
+            for (int i = 0; i < 3; i++) {
+               TransactionTable tt = TestingUtil.getTransactionTable(cache(i));
+//               assertEquals("For cache " + i, 0, tt.getLocalTxCount());
+//               assertEquals("For cache " + i, 0, tt.getRemoteTxCount());
+               int local = tt.getLocalTxCount();
+               int remote = tt.getRemoteTxCount();
+               log.tracef("For cache %i , localTxCount=%s, remoteTxCount=%s", i, local, remote);
+               System.out.println(String.format("For cache %s , localTxCount=%s, remoteTxCount=%s", i, local, remote));
+               allZero = allZero && (local == 0);
+               allZero = allZero && (remote == 0);
+            }
+            return allZero;
+         }
+      });
 
-
-      for (Object key : keys) {
+      for (Object key : keys2Tx.keySet()) {
          assertNotLocked(key);
          assertEquals(key, cache(0).get(key));
-      }
-
-      for (Object k : migratedKeys) {
-         assertFalse(advancedCache(0).getDataContainer().containsKey(k));
-         assertFalse(advancedCache(1).getDataContainer().containsKey(k));
-         assertTrue(advancedCache(2).getDataContainer().containsKey(k));
       }
    }
 
@@ -191,7 +183,7 @@ public class LockCleanupStateTransferTest extends MultipleCacheManagersTest {
    }
 
    private Address owner(Object key) {
-      return advancedCache(0).getDistributionManager().getConsistentHash().locateOwners(key).get(0);
+      return advancedCache(0).getDistributionManager().getConsistentHash().locatePrimaryOwner(key);
    }
 
 }

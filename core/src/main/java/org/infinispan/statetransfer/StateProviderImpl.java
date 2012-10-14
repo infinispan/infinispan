@@ -240,7 +240,7 @@ public class StateProviderImpl implements StateProvider {
             if (txModifications != null) {
                modifications = txModifications.toArray(new WriteCommand[txModifications.size()]);
             }
-            transactionsToTransfer.add(new TransactionInfo(tx.getGlobalTransaction(), tx.getViewId(), modifications, lockedKeys));
+            transactionsToTransfer.add(new TransactionInfo(tx.getGlobalTransaction(), tx.getTopologyId(), modifications, lockedKeys));
          }
       }
    }

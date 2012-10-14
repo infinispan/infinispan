@@ -182,7 +182,7 @@ public class RecoveryAwareTransactionTable extends XaTransactionTable {
             RecoverableTransactionIdentifier gtx = (RecoverableTransactionIdentifier) next.getGlobalTransaction();
             if (xid.equals(gtx.getXid())) {
                it.remove();
-               recalculateMinViewIdIfNeeded(next);
+               recalculateMinTopologyIdIfNeeded(next);
                next.notifyOnTransactionFinished();
                return next;
             }

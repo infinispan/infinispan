@@ -192,4 +192,9 @@ public class ControlledRpcManager implements RpcManager {
    public void failIfNeeded() {
       if (fail) throw new IllegalStateException("Induced failure!");
    }
+
+   @Override
+   public int getTopologyId() {
+      return realOne.getTopologyId();
+   }
 }

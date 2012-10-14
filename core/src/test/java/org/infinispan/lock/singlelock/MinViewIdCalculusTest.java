@@ -67,8 +67,8 @@ public class MinViewIdCalculusTest extends MultipleCacheManagersTest {
       StateTransferManager stateTransferManager0 = TestingUtil.extractComponent(cache(0), StateTransferManager.class);
       final int viewId = stateTransferManager0.getCacheTopology().getTopologyId();
 
-      assertEquals(tt0.getMinViewId(), viewId);
-      assertEquals(tt1.getMinViewId(), viewId);
+      assertEquals(tt0.getMinTopologyId(), viewId);
+      assertEquals(tt1.getMinTopologyId(), viewId);
 
       //add a new cache and check that min view is updated
       addClusterEnabledCacheManager(c);
@@ -77,11 +77,11 @@ public class MinViewIdCalculusTest extends MultipleCacheManagersTest {
       final int viewId2 = stateTransferManager0.getCacheTopology().getTopologyId();
       assertTrue(viewId2 > viewId);
 
-      assertEquals(tt0.getMinViewId(), viewId2);
-      assertEquals(tt1.getMinViewId(), viewId2);
+      assertEquals(tt0.getMinTopologyId(), viewId2);
+      assertEquals(tt1.getMinTopologyId(), viewId2);
 
       final TransactionTable tt2 = TestingUtil.getTransactionTable(cache(1));
-      assertEquals(tt2.getMinViewId(), viewId2);
+      assertEquals(tt2.getMinTopologyId(), viewId2);
    }
 
    public void testMinViewId2() throws Exception {
@@ -113,8 +113,8 @@ public class MinViewIdCalculusTest extends MultipleCacheManagersTest {
       final int viewId2 = stateTransferManager0.getCacheTopology().getTopologyId();
       assertTrue(viewId2 > viewId);
 
-      assertEquals(tt0.getMinViewId(), viewId);
-      assertEquals(tt1.getMinViewId(), viewId);
+      assertEquals(tt0.getMinTopologyId(), viewId);
+      assertEquals(tt1.getMinTopologyId(), viewId);
 
       tm(1).resume(t);
       t.runCommitTx();
@@ -123,7 +123,7 @@ public class MinViewIdCalculusTest extends MultipleCacheManagersTest {
       eventually(new Condition() {
          @Override
          public boolean isSatisfied() throws Exception {
-            return tt0.getMinViewId() == viewId2 && tt1.getMinViewId() == viewId2;
+            return tt0.getMinTopologyId() == viewId2 && tt1.getMinTopologyId() == viewId2;
          }
       });
    }

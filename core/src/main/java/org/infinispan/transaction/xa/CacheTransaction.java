@@ -67,7 +67,7 @@ public interface CacheTransaction {
 
    Set<Object> getLockedKeys();
 
-   int getViewId();
+   int getTopologyId();
 
    Set<Object> getBackupLockedKeys();
 
