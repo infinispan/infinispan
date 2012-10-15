@@ -29,7 +29,6 @@ import org.infinispan.commands.read.GetKeyValueCommand;
 import org.infinispan.commands.read.KeySetCommand;
 import org.infinispan.commands.read.SizeCommand;
 import org.infinispan.commands.read.ValuesCommand;
-import org.infinispan.commands.remote.ClusteredGetCommand;
 import org.infinispan.commands.tx.CommitCommand;
 import org.infinispan.commands.tx.PrepareCommand;
 import org.infinispan.commands.tx.RollbackCommand;
@@ -79,8 +78,6 @@ public interface Visitor {
    Object visitValuesCommand(InvocationContext ctx, ValuesCommand command) throws Throwable;
 
    Object visitEntrySetCommand(InvocationContext ctx, EntrySetCommand command) throws Throwable;
-
-   Object visitClusteredGetCommand(InvocationContext ctx, ClusteredGetCommand command) throws Throwable;
 
    // tx commands
 
