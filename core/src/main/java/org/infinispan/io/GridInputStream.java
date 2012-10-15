@@ -37,6 +37,7 @@ public class GridInputStream extends InputStream {
    private int localIndex = 0;
    private byte[] currentBuffer = null;
    private boolean endReached = false;
+   private boolean closed = false;
    private FileChunkMapper fileChunkMapper;
 
    GridInputStream(GridFile file, Cache<String, byte[]> cache) {
@@ -45,6 +46,7 @@ public class GridInputStream extends InputStream {
 
    @Override
    public int read() throws IOException {
+      checkClosed();
       int remaining = getBytesRemainingInChunk();
       if (remaining == 0) {
          if (endReached)
@@ -67,6 +69,7 @@ public class GridInputStream extends InputStream {
 
    @Override
    public int read(byte[] b, int off, int len) throws IOException {
+      checkClosed();
       int totalBytesRead = 0;
       while (len > 0) {
          int bytesRead = readFromChunk(b, off, len);
@@ -105,6 +108,7 @@ public class GridInputStream extends InputStream {
 
    @Override
    public long skip(long len) throws IOException {
+       checkClosed();
        //naive and inefficient, but working
        long count = 0;
        while(len!=count && read()!=-1){
@@ -115,6 +119,7 @@ public class GridInputStream extends InputStream {
 
    @Override
    public int available() throws IOException {
+      checkClosed();
       return getBytesRemainingInChunk();
    }
 
@@ -122,6 +127,13 @@ public class GridInputStream extends InputStream {
    public void close() throws IOException {
       localIndex = index = 0;
       endReached = false;
+      closed = true;
+   }
+
+   private void checkClosed() throws IOException{
+       if(closed){
+           throw new IOException("Stream is closed");
+       }
    }
 
    private int getBytesRemainingInChunk() {
