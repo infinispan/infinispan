@@ -33,7 +33,7 @@ import org.jboss.netty.channel.ChannelConfig;
 import org.jboss.netty.channel.ChannelFactory;
 import org.jboss.netty.channel.ChannelFuture;
 import org.jboss.netty.channel.ChannelPipeline;
-import org.jboss.netty.handler.codec.http.websocket.DefaultWebSocketFrame;
+import org.jboss.netty.handler.codec.http.websocketx.TextWebSocketFrame;
 import org.json.JSONException;
 import org.json.JSONObject;
 
@@ -91,10 +91,10 @@ public class MockChannel implements Channel {
 	 */
 	@Override
 	public ChannelFuture write(Object message) {
-		if(message instanceof DefaultWebSocketFrame) {
-			writer.write(((DefaultWebSocketFrame)message).getTextData());
+		if(message instanceof TextWebSocketFrame) {
+			writer.write(((TextWebSocketFrame)message).getText());
 		} else {
-			throw new IllegalStateException("Expected a DefaultWebSocketFrame.");
+			throw new IllegalStateException("Expected a TextWebSocketFrame but got " + message);
 		}
 		return null;
 	}
