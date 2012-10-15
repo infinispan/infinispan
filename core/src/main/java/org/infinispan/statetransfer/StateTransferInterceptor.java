@@ -211,7 +211,13 @@ public class StateTransferInterceptor extends CommandInterceptor {   //todo [ani
       // TODO we may need to skip local invocation for read/write/tx commands if the command is too old and none of its keys are local
       Object localResult = invokeNextInterceptor(ctx, command);
 
-      if (command instanceof TransactionBoundaryCommand || (command instanceof WriteCommand && !ctx.isInTxScope())) {
+      boolean isNonTransactionalWrite = !ctx.isInTxScope() && command instanceof WriteCommand;
+      boolean isTransactionalAndNotRolledBack = false;
+      if (ctx.isInTxScope()) {
+         isTransactionalAndNotRolledBack = !((TxInvocationContext)ctx).getCacheTransaction().isMarkedForRollback();
+      }
+
+      if (isNonTransactionalWrite || isTransactionalAndNotRolledBack) {
          stateTransferManager.forwardCommandIfNeeded(((TopologyAffectedCommand)command), getAffectedKeys(ctx, command), true);
       }
 

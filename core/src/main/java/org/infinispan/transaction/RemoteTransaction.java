@@ -46,8 +46,6 @@ public class RemoteTransaction extends AbstractCacheTransaction implements Clone
 
    private static final Log log = LogFactory.getLog(RemoteTransaction.class);
 
-   private volatile boolean valid = true;
-
    /**
     * This flag can only be true for transactions received via state transfer. During state transfer we do not migrate
     * lookedUpEntries to save bandwidth. If missingLookedUpEntries is true at the time a CommitCommand is received this
@@ -68,15 +66,9 @@ public class RemoteTransaction extends AbstractCacheTransaction implements Clone
       lookedUpEntries = new HashMap<Object, CacheEntry>(2);
    }
 
-   public void invalidate() {
-      valid = false;
-   }
-
    @Override
    public void putLookedUpEntry(Object key, CacheEntry e) {
-      if (!valid) {
-         throw new InvalidTransactionException("This remote transaction " + getGlobalTransaction() + " is invalid");
-      }
+      checkIfRolledBack();
       if (log.isTraceEnabled()) {
          log.tracef("Adding key %s to tx %s", key, getGlobalTransaction());
       }
@@ -85,9 +77,7 @@ public class RemoteTransaction extends AbstractCacheTransaction implements Clone
 
    @Override
    public void putLookedUpEntries(Map<Object, CacheEntry> entries) {
-      if (!valid) {
-         throw new InvalidTransactionException("This remote transaction " + getGlobalTransaction() + " is invalid");
-      }
+      checkIfRolledBack();
       if (log.isTraceEnabled()) {
          log.tracef("Adding keys %s to tx %s", entries.keySet(), getGlobalTransaction());
       }
@@ -125,9 +115,10 @@ public class RemoteTransaction extends AbstractCacheTransaction implements Clone
       return "RemoteTransaction{" +
             "modifications=" + modifications +
             ", lookedUpEntries=" + lookedUpEntries +
-            ", lockedKeys= " + lockedKeys +
-            ", backupKeyLocks " + backupKeyLocks +
-            ", missingLookedUpEntries " + missingLookedUpEntries +
+            ", lockedKeys=" + lockedKeys +
+            ", backupKeyLocks=" + backupKeyLocks +
+            ", missingLookedUpEntries=" + missingLookedUpEntries +
+            ", isMarkedForRollback=" + isMarkedForRollback()+
             ", tx=" + tx +
             '}';
    }
@@ -138,5 +129,11 @@ public class RemoteTransaction extends AbstractCacheTransaction implements Clone
 
    public boolean isMissingLookedUpEntries() {
       return missingLookedUpEntries;
+   }
+
+   private void checkIfRolledBack() {
+      if (isMarkedForRollback()) {
+         throw new InvalidTransactionException("This remote transaction " + getGlobalTransaction() + " is already rolled back");
+      }
    }
 }

@@ -48,7 +48,9 @@ import org.infinispan.interceptors.base.CommandInterceptor;
 import org.infinispan.jmx.annotations.MBean;
 import org.infinispan.jmx.annotations.ManagedAttribute;
 import org.infinispan.jmx.annotations.ManagedOperation;
+import org.infinispan.remoting.rpc.RpcManager;
 import org.infinispan.transaction.LocalTransaction;
+import org.infinispan.transaction.RemoteTransaction;
 import org.infinispan.transaction.TransactionCoordinator;
 import org.infinispan.transaction.TransactionTable;
 import org.infinispan.util.logging.Log;
@@ -85,6 +87,7 @@ public class TxInterceptor extends CommandInterceptor {
    @ManagedAttribute(description = "Enables or disables the gathering of statistics by this component", writable = true)
    private boolean statisticsEnabled;
    protected TransactionCoordinator txCoordinator;
+   protected RpcManager rpcManager;
 
    private static final Log log = LogFactory.getLog(TxInterceptor.class);
 
@@ -94,10 +97,11 @@ public class TxInterceptor extends CommandInterceptor {
    }
 
    @Inject
-   public void init(TransactionTable txTable, Configuration c, TransactionCoordinator txCoordinator) {
+   public void init(TransactionTable txTable, Configuration c, TransactionCoordinator txCoordinator, RpcManager rpcManager) {
       this.cacheConfiguration = c;
       this.txTable = txTable;
       this.txCoordinator = txCoordinator;
+      this.rpcManager = rpcManager;
       setStatisticsEnabled(cacheConfiguration.jmxStatistics().enabled());
    }
 
@@ -105,7 +109,7 @@ public class TxInterceptor extends CommandInterceptor {
    public Object visitPrepareCommand(TxInvocationContext ctx, PrepareCommand command) throws Throwable {
       //if it is remote and 2PC then first log the tx only after replying mods
       if (this.statisticsEnabled) prepares.incrementAndGet();
-      Object result = invokeNextInterceptorAndCheckIfCompleted(ctx, command);
+      Object result = invokeNextInterceptorAndVerifyTransaction(ctx, command);
       if (!ctx.isOriginLocal()) {
          if (command.isOnePhaseCommit()) {
             txTable.remoteTransactionCommitted(command.getGlobalTransaction());
@@ -116,16 +120,25 @@ public class TxInterceptor extends CommandInterceptor {
       return result;
    }
 
-   private Object invokeNextInterceptorAndCheckIfCompleted(TxInvocationContext ctx, AbstractTransactionBoundaryCommand command) throws Throwable {
+   private Object invokeNextInterceptorAndVerifyTransaction(TxInvocationContext ctx, AbstractTransactionBoundaryCommand command) throws Throwable {
       try {
          return invokeNextInterceptor(ctx, command);
       } finally {
-         if (!ctx.isOriginLocal() && txTable.isTransactionCompleted(command.getGlobalTransaction())) {
-            log.tracef("Remote transaction %s already completed, rolling back.",
-                       command.getGlobalTransaction());
+         //It is possible to receive a prepare or lock control command from a node that crashed. If that's the case rollback
+         //the transaction forcefully in order to cleanup resources.
+         boolean originatorMissing = !ctx.isOriginLocal() && !rpcManager.getTransport().getMembers().contains(command.getOrigin());
+         boolean alreadyCompleted = !ctx.isOriginLocal() && txTable.isTransactionCompleted(command.getGlobalTransaction());
+         if (alreadyCompleted || originatorMissing) {
+            log.tracef("Rolling back remote transaction %s because either already completed(%s) or originator no longer in the cluster(%s).",
+                       command.getGlobalTransaction(), alreadyCompleted, originatorMissing);
             RollbackCommand rollback = new RollbackCommand(command.getCacheName(), command.getGlobalTransaction());
-            invokeNextInterceptor(ctx, rollback);
-            txTable.removeRemoteTransaction(command.getGlobalTransaction());
+            try {
+               invokeNextInterceptor(ctx, rollback);
+            } finally {
+               RemoteTransaction remoteTx = (RemoteTransaction) ctx.getCacheTransaction();
+               remoteTx.markForRollback(true);
+               txTable.removeRemoteTransaction(command.getGlobalTransaction());
+            }
          }
       }
    }
@@ -157,7 +170,7 @@ public class TxInterceptor extends CommandInterceptor {
          command.setGlobalTransaction(ctx.getGlobalTransaction());
       }
 
-      return invokeNextInterceptorAndCheckIfCompleted(ctx, command);
+      return invokeNextInterceptorAndVerifyTransaction(ctx, command);
    }
 
    @Override
