@@ -2,6 +2,7 @@ package org.infinispan.marshall;
 
 import org.infinispan.config.GlobalConfiguration;
 import org.infinispan.factories.annotations.Inject;
+import org.infinispan.factories.annotations.Start;
 import org.infinispan.factories.annotations.Stop;
 import org.infinispan.factories.scopes.Scope;
 import org.infinispan.factories.scopes.Scopes;
@@ -23,10 +24,16 @@ public class GlobalMarshaller extends AbstractDelegatingMarshaller {
    }
 
    @Inject
-   public void inject(ClassLoader loader, ExternalizerTable extTable,
+   public void inject(ExternalizerTable extTable,
             GlobalConfiguration globalCfg) {
       ((VersionAwareMarshaller) this.marshaller).inject(
-            null, loader, null, extTable, globalCfg);
+            null, null, extTable, globalCfg);
+   }
+
+   @Override
+   @Start(priority = 8) // Should start after the externalizer table and before transport
+   public void start() {
+      this.marshaller.start();
    }
 
    @Override
