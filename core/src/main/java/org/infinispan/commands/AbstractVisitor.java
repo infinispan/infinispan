@@ -29,7 +29,6 @@ import org.infinispan.commands.read.GetKeyValueCommand;
 import org.infinispan.commands.read.KeySetCommand;
 import org.infinispan.commands.read.SizeCommand;
 import org.infinispan.commands.read.ValuesCommand;
-import org.infinispan.commands.remote.ClusteredGetCommand;
 import org.infinispan.commands.tx.CommitCommand;
 import org.infinispan.commands.tx.PrepareCommand;
 import org.infinispan.commands.tx.RollbackCommand;
@@ -185,11 +184,6 @@ public abstract class AbstractVisitor implements Visitor {
    
    @Override
    public Object visitDistributedExecuteCommand(InvocationContext ctx, DistributedExecuteCommand<?> command) throws Throwable {
-      return handleDefault(ctx, command);
-   }
-
-   @Override
-   public Object visitClusteredGetCommand(InvocationContext ctx, ClusteredGetCommand command) throws Throwable {
       return handleDefault(ctx, command);
    }
 }
