@@ -63,19 +63,20 @@ public class VersionAwareMarshaller extends AbstractMarshaller implements Stream
       defaultMarshaller = new JBossMarshaller();
    }
 
-   public void inject(Cache cache, Configuration cfg, ClassLoader loader,
-            InvocationContextContainer icc, ExternalizerTable extTable,
-            GlobalConfiguration globalCfg) {
-      ClassLoader myClassLoader;
+   public void inject(Cache cache, Configuration cfg, InvocationContextContainer icc,
+         ExternalizerTable extTable, GlobalConfiguration globalCfg) {
       if (cfg == null) {
-         myClassLoader = loader;
          this.cacheName = null;
       } else {
-         myClassLoader = cfg.classLoader();
          this.cacheName = cache.getName();
       }
 
-      this.defaultMarshaller.inject(extTable, myClassLoader, icc, globalCfg);
+      this.defaultMarshaller.inject(extTable, cfg, icc, globalCfg);
+   }
+
+   @Override
+   public void start() {
+      defaultMarshaller.start();
    }
 
    @Override

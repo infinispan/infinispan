@@ -150,4 +150,6 @@ public interface StreamingMarshaller extends Marshaller {
     */
    void stop();
 
+   void start();
+
 }
