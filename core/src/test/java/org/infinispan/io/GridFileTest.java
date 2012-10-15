@@ -279,8 +279,65 @@ public class GridFileTest extends SingleCacheManagerTest {
         }
     }
 
+    public void testWriteAfterClose() throws Exception {
+        String filePath = "test_write_to_closed.dat";
+        OutputStream out = fs.getOutput(filePath);
 
-   public void testSkipAndAvailable() throws Exception {
+        try{
+            out.write(1);
+        }finally{
+            out.close();
+        }
+        IOException e = null;
+        try{
+            out.write(2);
+        }catch (IOException ex){
+            e = ex;
+        }
+        assertNotNull(e);
+        File f = fs.getFile(filePath);
+        assertEquals(f.length(), 1);
+    }
+
+    public void testMultiClose() throws Exception {
+        String filePath = "test_close.dat";
+        OutputStream out = fs.getOutput(filePath);
+        try{
+            out.write(1);
+        }finally{
+            out.close();
+            out.close();
+        }
+        File f = fs.getFile(filePath);
+        assertEquals(f.length(), 1);
+    }
+
+    public void testCanReadClosed() throws Exception {
+        String filePath = "file_read_closed.txt";
+        OutputStream out = fs.getOutput(filePath);
+        try{
+            out.write(1);
+            out.write(2);
+            out.write(3);
+        }finally{
+            out.close();
+        }
+        InputStream in = fs.getInput(filePath);
+        in.read();
+        in.close();
+        IOException e = null;
+        try{
+            in.read();
+        }catch(IOException ex){
+            e = ex;
+        }
+        assertNotNull(e);
+    }
+
+
+
+
+    public void testSkipAndAvailable() throws Exception {
         String filePath = "skip.dat";
         OutputStream out = fs.getOutput(filePath);
         try{

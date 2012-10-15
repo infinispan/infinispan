@@ -40,6 +40,7 @@ public class GridOutputStream extends OutputStream {
 
    private FileChunkMapper fileChunkMapper;
    private GridFile file;
+   private boolean closed;
 
    GridOutputStream(GridFile file, boolean append, Cache<String, byte[]> cache) {
       fileChunkMapper = new FileChunkMapper(file, cache);
@@ -80,6 +81,7 @@ public class GridOutputStream extends OutputStream {
 
    @Override
    public void write(int b) throws IOException {
+      checkClosed();
       int remaining = getBytesRemainingInChunk();
       if (remaining == 0) {
          flush();
@@ -90,14 +92,24 @@ public class GridOutputStream extends OutputStream {
       index++;
    }
 
+   private void checkClosed() throws IOException {
+      if(closed){
+          throw new IOException("Stream is closed");
+      }
+    }
+
    @Override
    public void write(byte[] b) throws IOException {
+      checkClosed();
+
       if (b != null)
          write(b, 0, b.length);
    }
 
    @Override
    public void write(byte[] b, int off, int len) throws IOException {
+      checkClosed();
+
       while (len > 0) {
          int bytesWritten = writeToChunk(b, off, len);
          off += bytesWritten;
@@ -121,9 +133,13 @@ public class GridOutputStream extends OutputStream {
 
    @Override
    public void close() throws IOException {
+      if(closed){
+          return;
+      }
       flush();
       removeExcessChunks();
       reset();
+      closed = true;
    }
 
    private void removeExcessChunks() {
