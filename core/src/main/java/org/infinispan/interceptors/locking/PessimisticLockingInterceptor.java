@@ -229,11 +229,11 @@ public class PessimisticLockingInterceptor extends AbstractTxLockingInterceptor 
             LocalTransaction localTx = (LocalTransaction) ctx.getCacheTransaction();
             if (!localTx.getAffectedKeys().containsAll(command.getKeys())) {
                invokeNextInterceptor(ctx, command);
-               ctx.addAllAffectedKeys(command.getKeys());
             } else {
                log.tracef("Already own locks on keys: %s, skipping remote call", command.getKeys());
             }
          }
+         ctx.addAllAffectedKeys(command.getKeys());
       }
 
       try {

@@ -42,6 +42,7 @@ import org.infinispan.remoting.RpcException;
 import org.infinispan.remoting.responses.Response;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.remoting.transport.Transport;
+import org.infinispan.topology.CacheTopology;
 import org.infinispan.topology.LocalTopologyManager;
 import org.infinispan.util.InfinispanCollections;
 import org.infinispan.util.concurrent.NotifyingNotifiableFuture;
@@ -407,11 +408,12 @@ public class RpcManagerImpl implements RpcManager {
 
    @Override
    public Address getAddress() {
-      return t != null ? t.getAddress() : null;  // todo [anistor] transport should never be null!
+      return t != null ? t.getAddress() : null;
    }
 
    public int getTopologyId() {
-      return stateTransferManager.getCacheTopology().getTopologyId();
+      CacheTopology cacheTopology = stateTransferManager.getCacheTopology();
+      return cacheTopology != null ? cacheTopology.getTopologyId() : -1;
    }
 
    @Override
