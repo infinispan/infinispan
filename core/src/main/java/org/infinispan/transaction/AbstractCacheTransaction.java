@@ -75,6 +75,17 @@ public abstract class AbstractCacheTransaction implements CacheTransaction {
 
    private EntryVersionsMap updatedEntryVersions;
 
+   /** mark as volatile as this might be set from the tx thread code on view change*/
+   private volatile boolean isMarkedForRollback;
+
+   public final boolean isMarkedForRollback() {
+      return isMarkedForRollback;
+   }
+
+   public void markForRollback(boolean markForRollback) {
+      isMarkedForRollback = markForRollback;
+   }
+
    public AbstractCacheTransaction(GlobalTransaction tx, int topologyId) {
       this.tx = tx;
       this.topologyId = topologyId;

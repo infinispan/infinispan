@@ -71,20 +71,14 @@ public class TxCleanupServiceTest extends MultipleCacheManagersTest {
    }
 
    public void testTransactionStateNotLost() throws Throwable {
-      ComponentRegistry componentRegistry = advancedCache(1).getComponentRegistry();
-      final ControlledCommandFactory ccf = new ControlledCommandFactory(componentRegistry.getCommandsFactory(), CommitCommand.class);
-      TestingUtil.replaceField(ccf, "commandsFactory", componentRegistry, ComponentRegistry.class);
-
-      //hack: re-add the component registry to the GlobalComponentRegistry's "namedComponents" (CHM) in order to correctly publish it for
-      // when it will be read by the InboundInvocationHandlder. IIH reads the value from the GlobalComponentRegistry.namedComponents before using it
-      advancedCache(1).getComponentRegistry().getGlobalComponentRegistry().registerNamedComponentRegistry(componentRegistry, EmbeddedCacheManager.DEFAULT_CACHE_NAME);
+      final ControlledCommandFactory ccf = ControlledCommandFactory.registerControlledCommandFactory(cache(1), CommitCommand.class);
       ccf.gate.close();
 
       final Map<Object, DummyTransaction> keys2Tx = new HashMap<Object, DummyTransaction>(TX_COUNT);
 
       int viewId = advancedCache(0).getRpcManager().getTransport().getViewId();
 
-      log.tracef("Viewid before %s", viewId);
+      log.tracef("ViewId before %s", viewId);
 
       //fork it into another thread as this is going to block in commit
       fork(new Callable<Object>() {

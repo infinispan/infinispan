@@ -105,15 +105,6 @@ public abstract class AbstractTxLockingInterceptor extends AbstractLockingInterc
       }
    }
 
-   protected final void abortIfRemoteTransactionInvalid(TxInvocationContext ctx, AbstractTransactionBoundaryCommand c) {
-      // this check fixes ISPN-777
-      if (!ctx.isOriginLocal()) {
-         Address origin = c.getGlobalTransaction().getAddress();
-         if (!rpcManager.getTransport().getMembers().contains(origin))
-            throw new CacheException("Member " + origin + " no longer in cluster. Forcing tx rollback for " + c.getGlobalTransaction());
-      }
-   }
-
    protected final Object invokeNextAndCommitIf1Pc(TxInvocationContext ctx, PrepareCommand command) throws Throwable {
       Object result = invokeNextInterceptor(ctx, command);
       if (command.isOnePhaseCommit() && releaseLockOnTxCompletion(ctx)) {

@@ -63,7 +63,7 @@ public class RollbackCommand extends AbstractTransactionBoundaryCommand {
 
    @Override
    public void visitRemoteTransaction(RemoteTransaction tx) {
-      tx.invalidate();
+      tx.markForRollback(true);
    }
 
    @Override

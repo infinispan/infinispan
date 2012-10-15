@@ -100,7 +100,6 @@ public class PessimisticLockingInterceptor extends AbstractTxLockingInterceptor 
 
    @Override
    public Object visitPrepareCommand(TxInvocationContext ctx, PrepareCommand command) throws Throwable {
-      abortIfRemoteTransactionInvalid(ctx, command);
       return invokeNextAndCommitIf1Pc(ctx, command);
       // don't remove the locks here, the rollback command will clear them
    }
@@ -236,7 +235,6 @@ public class PessimisticLockingInterceptor extends AbstractTxLockingInterceptor 
       }
 
       try {
-         abortIfRemoteTransactionInvalid(ctx, command);
          if (command.isUnlock()) {
             if (ctx.isOriginLocal())
                throw new AssertionError("There's no advancedCache.unlock so this must have originated remotely.");
