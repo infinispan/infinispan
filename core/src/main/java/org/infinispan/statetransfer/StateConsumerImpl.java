@@ -295,7 +295,8 @@ public class StateConsumerImpl implements StateConsumer {
       }
 
       // CACHE_MODE_LOCAL avoids handling by StateTransferInterceptor and any potential locks in StateTransferLock
-      EnumSet<Flag> flags = EnumSet.of(CACHE_MODE_LOCAL, IGNORE_RETURN_VALUES, SKIP_SHARED_CACHE_STORE, SKIP_OWNERSHIP_CHECK, SKIP_XSITE_BACKUP);
+      //TODO This must be addressed again. SKIP_LOCKING is just a workaround for issue https://issues.jboss.org/browse/ISPN-2408
+      EnumSet<Flag> flags = EnumSet.of(CACHE_MODE_LOCAL, SKIP_LOCKING, IGNORE_RETURN_VALUES, SKIP_SHARED_CACHE_STORE, SKIP_OWNERSHIP_CHECK, SKIP_XSITE_BACKUP);
       for (InternalCacheEntry e : cacheEntries) {
          InvocationContext ctx = icc.createRemoteInvocationContext(sender);
          try {
