@@ -102,7 +102,7 @@ public class WebSocketServer extends AbstractProtocolServer {
       // Bind and start to accept incoming connections.
       bootstrap.setOption("child.tcpNoDelay", tcpNoDelay);
       if (sendBufSize > 0) bootstrap.setOption("child.sendBufferSize", sendBufSize);
-      if (recvBufSize > 0) bootstrap.setOption("receiveBufferSize", recvBufSize);
+      if (recvBufSize > 0) bootstrap.setOption("child.receiveBufferSize", recvBufSize);
 
       bootstrap.bind(address);
    }
