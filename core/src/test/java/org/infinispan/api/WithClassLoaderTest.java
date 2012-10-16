@@ -76,7 +76,7 @@ public class WithClassLoaderTest extends MultipleCacheManagersTest {
 
    public static class Car implements Serializable {
       String plateNumber;
-      Car plateNumber(String s) { plateNumber = s; return this; }
+      public Car plateNumber(String s) { plateNumber = s; return this; }
 
       @Override
       public boolean equals(Object o) {
