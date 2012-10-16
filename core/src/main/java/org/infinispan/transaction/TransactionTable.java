@@ -58,6 +58,8 @@ import javax.transaction.Transaction;
 import javax.transaction.TransactionSynchronizationRegistry;
 import java.util.*;
 import java.util.concurrent.ConcurrentMap;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
@@ -96,6 +98,8 @@ public class TransactionTable {
    protected ClusteringDependentLogic clusteringLogic;
    protected boolean clustered = false;
    private Lock minTopologyRecalculationLock;
+   private final ConcurrentMap<GlobalTransaction, Long> completedTransactions = ConcurrentMapFactory.makeConcurrentMap();
+
 
    /**
     * minTxTopologyId is the minimum topology ID across all ongoing local and remote transactions.
@@ -133,7 +137,7 @@ public class TransactionTable {
          minTopologyRecalculationLock = new ReentrantLock();
          // Only initialize this if we are clustered.
          remoteTransactions = ConcurrentMapFactory.makeConcurrentMap(concurrencyLevel, 0.75f, concurrencyLevel);
-         cleanupService.start(cacheName, rpcManager, invoker, configuration.clustering().cacheMode().isDistributed());
+         cleanupService.start(cacheName, rpcManager, configuration);
          notifier.addListener(cleanupService);
          notifier.addListener(this);
          clustered = true;
@@ -357,6 +361,7 @@ public class TransactionTable {
    public final RemoteTransaction removeRemoteTransaction(GlobalTransaction txId) {
       RemoteTransaction removed;
       removed = remoteTransactions.remove(txId);
+      log.tracef("Removed remote transaction %s ? %s", txId, removed);
       releaseResources(removed);
       return removed;
    }
@@ -503,4 +508,42 @@ public class TransactionTable {
       }
    }
 
+   /**
+    * With the current state transfer implementation it is possible for a transaction to be prepared several times
+    * on a remote node. This might cause leaks, e.g. if the transaction is prepared, committed and prepared again.
+    * Once marked as completed (because of commit or rollback) any further prepare received on that transaction are discarded.
+    */
+   public void markTransactionCompleted(GlobalTransaction globalTx) {
+      completedTransactions.put(globalTx, System.nanoTime());
+   }
+
+   /**
+    * @see #markTransactionCompleted(org.infinispan.transaction.xa.GlobalTransaction)
+    */
+   public boolean isTransactionCompleted(GlobalTransaction gtx) {
+      return completedTransactions.containsKey(gtx);
+   }
+
+   public void cleanupCompletedTransactions() {
+      log.debugf("About to cleanup completed transaction. Initial size is %s", completedTransactions.size());
+      //this iterator is weekly consistent and will never throw ConcurrentModificationException
+      Iterator<Map.Entry<GlobalTransaction, Long>> iterator = completedTransactions.entrySet().iterator();
+      long timeout = configuration.transaction().completedTxTimeout();
+
+      int removedEntries = 0;
+      long beginning = System.nanoTime();
+      while (iterator.hasNext()) {
+         Map.Entry<GlobalTransaction, Long> e = iterator.next();
+         long ageNanos = System.nanoTime() - e.getValue();
+         if (TimeUnit.NANOSECONDS.toMillis(ageNanos) >= timeout) {
+            iterator.remove();
+            removedEntries++;
+         }
+      }
+      long duration = System.nanoTime() - beginning;
+
+      log.debugf("Finished cleaning up completed transactions. %s transactions were removed, total duration was %s millis, " +
+                      "current number of completed transactions is %", removedEntries, TimeUnit.NANOSECONDS.toMillis(duration),
+                 completedTransactions.size());
+   }
 }

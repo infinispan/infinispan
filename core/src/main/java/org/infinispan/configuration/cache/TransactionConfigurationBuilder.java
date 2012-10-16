@@ -18,6 +18,7 @@
  */
 package org.infinispan.configuration.cache;
 
+import org.infinispan.CacheConfigurationException;
 import org.infinispan.configuration.Builder;
 import org.infinispan.transaction.LockingMode;
 import org.infinispan.transaction.TransactionMode;
@@ -49,6 +50,9 @@ public class TransactionConfigurationBuilder extends AbstractConfigurationChildB
    private boolean useSynchronization = true;
    private final RecoveryConfigurationBuilder recovery;
    private boolean use1PcForAutoCommitTransactions = false;
+   private long reaperWakeUpInterval = 1000;
+   private long completedTxTimeout = 3000;
+
 
    TransactionConfigurationBuilder(ConfigurationBuilder builder) {
       super(builder);
@@ -142,9 +146,6 @@ public class TransactionConfigurationBuilder extends AbstractConfigurationChildB
     * <p />
     *
     * This configuration property may be adjusted at runtime.
-    *
-    * @param b
-    * @return
     */
    public TransactionConfigurationBuilder syncRollbackPhase(boolean b) {
       this.syncRollbackPhase = b;
@@ -185,9 +186,6 @@ public class TransactionConfigurationBuilder extends AbstractConfigurationChildB
     * <p />
     * Note: Starting with infinispan 5.1 eager locking is replaced with pessimistic locking and can
     * be enforced by setting transaction's locking mode to PESSIMISTIC.
-    *
-    * @param b
-    * @return
     */
    @Deprecated
    public TransactionConfigurationBuilder useEagerLocking(boolean b) {
@@ -234,8 +232,28 @@ public class TransactionConfigurationBuilder extends AbstractConfigurationChildB
       return this;
    }
 
+   /**
+    *The time interval (millis) at which the thread that cleans up transaction completion information kicks in. Defaults to 1000.
+    */
+   public TransactionConfigurationBuilder reaperWakeUpInterval(long interval) {
+      this.reaperWakeUpInterval = interval;
+      return this;
+   }
+
+   /**
+    * The duration (millis) in which to keep information about the completion of a transaction. Defaults to 3000.
+    */
+   public TransactionConfigurationBuilder completedTxTimeout(long timeout) {
+      this.completedTxTimeout = timeout;
+      return this;
+   }
+
    @Override
    public void validate() {
+      if (reaperWakeUpInterval < 0)
+         throw new CacheConfigurationException("reaperWakeUpInterval must be > 0, we got " + reaperWakeUpInterval);
+      if (completedTxTimeout < 0)
+         throw new CacheConfigurationException("completedTxTimeout must be > 0, we got " + reaperWakeUpInterval);
    }
 
    @Override
@@ -249,7 +267,7 @@ public class TransactionConfigurationBuilder extends AbstractConfigurationChildB
          transactionMode = TransactionMode.NON_TRANSACTIONAL;
       return new TransactionConfiguration(autoCommit, cacheStopTimeout, eagerLockingSingleNode, lockingMode, syncCommitPhase,
             syncRollbackPhase, transactionManagerLookup, transactionSynchronizationRegistryLookup, transactionMode,
-            useEagerLocking, useSynchronization, use1PcForAutoCommitTransactions, recovery.create());
+            useEagerLocking, useSynchronization, use1PcForAutoCommitTransactions, reaperWakeUpInterval, completedTxTimeout, recovery.create());
    }
 
    @Override
@@ -267,6 +285,8 @@ public class TransactionConfigurationBuilder extends AbstractConfigurationChildB
       this.useSynchronization = template.useSynchronization();
       this.use1PcForAutoCommitTransactions = template.use1PcForAutoCommitTransactions();
       this.recovery.read(template.recovery());
+      this.reaperWakeUpInterval = template.reaperWakeUpInterval();
+      this.completedTxTimeout = template.completedTxTimeout();
 
       return this;
    }
@@ -287,6 +307,8 @@ public class TransactionConfigurationBuilder extends AbstractConfigurationChildB
             ", useSynchronization=" + useSynchronization +
             ", recovery=" + recovery +
             ", use1PcForAutoCommitTransactions=" + use1PcForAutoCommitTransactions +
+            ", completedTxTimeout=" + completedTxTimeout +
+            ", reaperWakeUpInterval=" + reaperWakeUpInterval +
             '}';
    }
 

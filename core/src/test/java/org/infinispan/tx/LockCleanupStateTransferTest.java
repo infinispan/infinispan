@@ -30,8 +30,6 @@ import org.infinispan.commands.tx.CommitCommand;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.container.DataContainer;
-import org.infinispan.factories.ComponentRegistry;
-import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.test.MultipleCacheManagersTest;
 import org.infinispan.test.TestingUtil;
@@ -84,13 +82,7 @@ public class LockCleanupStateTransferTest extends MultipleCacheManagersTest {
 
    private void testLockReleasedCorrectly(Class<? extends  ReplicableCommand> toBlock ) throws Throwable {
 
-      ComponentRegistry componentRegistry = advancedCache(1).getComponentRegistry();
-      final ControlledCommandFactory ccf = new ControlledCommandFactory(componentRegistry.getCommandsFactory(), toBlock);
-      TestingUtil.replaceField(ccf, "commandsFactory", componentRegistry, ComponentRegistry.class);
-
-      //hack: re-add the component registry to the GlobalComponentRegistry's "namedComponents" (CHM) in order to correctly publish it for
-      // when it will be read by the InboundInvocationHandlder. IIH reads the value from the GlobalComponentRegistry.namedComponents before using it
-      advancedCache(1).getComponentRegistry().getGlobalComponentRegistry().registerNamedComponentRegistry(componentRegistry, EmbeddedCacheManager.DEFAULT_CACHE_NAME);
+      final ControlledCommandFactory ccf = ControlledCommandFactory.registerControlledCommandFactory(advancedCache(1), toBlock);
       ccf.gate.close();
 
       final Set<Object> keys = new HashSet<Object>(KEY_SET_SIZE);
@@ -114,8 +106,8 @@ public class LockCleanupStateTransferTest extends MultipleCacheManagersTest {
       eventually(new Condition() {
          @Override
          public boolean isSatisfied() throws Exception {
-            log.tracef("receivedCommands == %s", ccf.receivedCommands.get());
-            return ccf.receivedCommands.get() == 1;
+            log.tracef("receivedCommands == %s", ccf.blockTypeCommandsReceived.get());
+            return ccf.blockTypeCommandsReceived.get() == 1;
          }
       });
 
@@ -161,6 +153,7 @@ public class LockCleanupStateTransferTest extends MultipleCacheManagersTest {
          @Override
          public boolean isSatisfied() throws Exception {
             int remoteTxCount = TestingUtil.getTransactionTable(cache(2)).getRemoteTxCount();
+            log.trace("remoteTxCount==" + remoteTxCount);
             return remoteTxCount == 0;
          }
       });

@@ -23,31 +23,23 @@
 
 package org.infinispan.transaction;
 
-import org.infinispan.commands.control.LockControlCommand;
-import org.infinispan.context.Flag;
+import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.distribution.ch.ConsistentHash;
-import org.infinispan.interceptors.InterceptorChain;
 import org.infinispan.notifications.Listener;
 import org.infinispan.notifications.cachelistener.annotation.TopologyChanged;
 import org.infinispan.notifications.cachelistener.event.TopologyChangedEvent;
 import org.infinispan.remoting.MembershipArithmetic;
 import org.infinispan.remoting.rpc.RpcManager;
 import org.infinispan.remoting.transport.Address;
-import org.infinispan.transaction.xa.GlobalTransaction;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
-import java.util.ArrayList;
 import java.util.Collection;
-import java.util.EnumSet;
 import java.util.List;
-import java.util.Set;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.LinkedBlockingDeque;
+import java.util.concurrent.Executors;
 import java.util.concurrent.RejectedExecutionException;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ThreadFactory;
-import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 
 /**
@@ -68,7 +60,7 @@ public class StaleTransactionCleanupService {
       this.transactionTable = transactionTable;
    }
 
-   private ExecutorService lockBreakingService; // a thread pool with max. 1 thread
+   private ScheduledExecutorService executorService;
 
    /**
     * Roll back remote transactions that have acquired lock that are no longer valid,
@@ -93,7 +85,7 @@ public class StaleTransactionCleanupService {
 
    private void cleanTxForWhichTheOwnerLeft(final Collection<Address> leavers) {
       try {
-         lockBreakingService.submit(new Runnable() {
+         executorService.submit(new Runnable() {
             @Override
             public void run() {
                try {
@@ -108,7 +100,7 @@ public class StaleTransactionCleanupService {
       }
    }
 
-   public void start(final String cacheName, final RpcManager rpcManager, InterceptorChain interceptorChain, boolean isDistributed) {
+   public void start(final String cacheName, final RpcManager rpcManager, Configuration configuration) {
       ThreadFactory tf = new ThreadFactory() {
          @Override
          public Thread newThread(Runnable r) {
@@ -118,12 +110,20 @@ public class StaleTransactionCleanupService {
             return th;
          }
       };
-      lockBreakingService = new ThreadPoolExecutor(1, 1, 0L, TimeUnit.MILLISECONDS, new LinkedBlockingDeque<Runnable>(), tf,
-                                                   new ThreadPoolExecutor.DiscardOldestPolicy());
+
+      executorService = Executors.newSingleThreadScheduledExecutor(tf);
+
+      executorService.schedule(new Runnable() {
+         @Override
+         public void run() {
+            transactionTable.cleanupCompletedTransactions();
+         }
+      }, configuration.transaction().reaperWakeUpInterval(), TimeUnit.MILLISECONDS);
+
    }
 
    public void stop() {
-      if (lockBreakingService != null)
-         lockBreakingService.shutdownNow();
+      if (executorService != null)
+         executorService.shutdownNow();
    }
 }

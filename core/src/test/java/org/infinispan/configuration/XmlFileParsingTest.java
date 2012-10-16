@@ -293,6 +293,10 @@ public class XmlFileParsingTest extends AbstractInfinispanTest {
       assert defaultCfg.locking().lockAcquisitionTimeout() == 1000;
       assert defaultCfg.locking().concurrencyLevel() == 100;
       assert defaultCfg.locking().isolationLevel() == IsolationLevel.READ_COMMITTED;
+      if (!deprecated) {
+         assertReaperAndTimeoutInfo(defaultCfg);
+      }
+
 
       Configuration c = cm.getCacheConfiguration("transactional");
       assert !c.clustering().cacheMode().isClustered();
@@ -300,6 +304,9 @@ public class XmlFileParsingTest extends AbstractInfinispanTest {
       assert c.transaction().useEagerLocking();
       assert c.transaction().eagerLockingSingleNode();
       assert !c.transaction().syncRollbackPhase();
+      if (!deprecated) {
+         assertReaperAndTimeoutInfo(defaultCfg);
+      }
 
       c = cm.getCacheConfiguration("transactional2");
       assert c.transaction().transactionManagerLookup() instanceof TestLookup;
@@ -435,6 +442,11 @@ public class XmlFileParsingTest extends AbstractInfinispanTest {
       assert c.storeAsBinary().enabled();
       assert c.storeAsBinary().storeKeysAsBinary();
       assert !c.storeAsBinary().storeValuesAsBinary();
+   }
+
+   private void assertReaperAndTimeoutInfo(Configuration defaultCfg) {
+      assertEquals(123, defaultCfg.transaction().reaperWakeUpInterval());
+      assertEquals(3123, defaultCfg.transaction().completedTxTimeout());
    }
 
 }
