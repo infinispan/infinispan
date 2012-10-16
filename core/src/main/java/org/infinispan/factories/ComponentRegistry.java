@@ -265,7 +265,7 @@ public final class ComponentRegistry extends AbstractComponentRegistry {
     * Invoked last after all services are wired
     */
    public void cacheComponents() {
-      cacheMarshaler = getComponent(StreamingMarshaller.class, KnownComponentNames.CACHE_MARSHALLER);
+      cacheMarshaler = getOrCreateComponent(StreamingMarshaller.class, KnownComponentNames.CACHE_MARSHALLER);
       stateTransferManager = getOrCreateComponent(StateTransferManager.class);
       responseGenerator = getOrCreateComponent(ResponseGenerator.class);
       commandsFactory = getLocalComponent(CommandsFactory.class);
