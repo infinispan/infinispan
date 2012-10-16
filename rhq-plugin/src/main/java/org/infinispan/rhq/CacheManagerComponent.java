@@ -41,6 +41,7 @@ import org.rhq.core.domain.measurement.MeasurementDataTrait;
 import org.rhq.core.domain.measurement.MeasurementReport;
 import org.rhq.core.domain.measurement.MeasurementScheduleRequest;
 import org.rhq.core.pluginapi.inventory.ResourceContext;
+import org.rhq.plugins.jmx.JMXServerComponent;
 import org.rhq.plugins.jmx.MBeanResourceComponent;
 import org.rhq.plugins.jmx.ObjectNameQueryUtility;
 
@@ -50,9 +51,9 @@ import org.rhq.plugins.jmx.ObjectNameQueryUtility;
  * @author Heiko W. Rupp
  * @author Galder Zamarreño
  */
-public class CacheManagerComponent extends MBeanResourceComponent<MBeanResourceComponent<?>> {
+public class CacheManagerComponent extends MBeanResourceComponent<JMXServerComponent<?>> {
    private static final Log log = LogFactory.getLog(CacheManagerComponent.class);
-   protected ResourceContext<MBeanResourceComponent<?>> context;
+   protected ResourceContext<JMXServerComponent<?>> context;
    private String cacheManagerPattern;
 
    /**
@@ -85,7 +86,7 @@ public class CacheManagerComponent extends MBeanResourceComponent<MBeanResourceC
     * Start the resource connection
     */
    @Override
-   public void start(ResourceContext<MBeanResourceComponent<?>> context) {
+   public void start(ResourceContext<JMXServerComponent<?>> context) {
       // TODO: Call super.start() ?
       this.context = context;
       this.cacheManagerPattern = "*:" + CacheManagerDiscovery.CACHE_MANAGER_JMX_GROUP + ",name=" + ObjectName.quote(context.getResourceKey()) + ",*";
