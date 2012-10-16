@@ -28,11 +28,14 @@ import javax.management.remote.JMXConnector;
 import org.infinispan.cli.connection.jmx.JMXUrl;
 
 public class JMXRemotingUrl implements JMXUrl {
-   private static final Pattern JMX_URL = Pattern.compile("^(?:(?![^:@]+:[^:@/]*@)(remoting):)?(?://)?((?:(([^:@]*):?([^:@]*))?@)?([^:/?#]*)(?::(\\d*))?)");
+   private static final Pattern JMX_URL = Pattern.compile("^(?:(?![^:@]+:[^:@/]*@)(remoting):)?(?://)?((?:(([^:@]*):?([^:@]*))?@)?([^:/?#]*)(?::(\\d*))?)(?:/([^/]*)(?:/(.*))?)?");
+   private static final int DEFAULT_REMOTING_PORT = 9999;
    protected final String hostname;
    protected final int port;
    protected final String username;
    protected final String password;
+   protected final String container;
+   protected final String cache;
 
    public JMXRemotingUrl(String connectionString) {
       Matcher matcher = JMX_URL.matcher(connectionString);
@@ -42,12 +45,28 @@ public class JMXRemotingUrl implements JMXUrl {
       username = matcher.group(4);
       password = matcher.group(5);
       hostname = matcher.group(6);
-      port = Integer.parseInt(matcher.group(7));
+      if (matcher.group(7) != null) {
+         port = Integer.parseInt(matcher.group(7));
+      } else {
+         port = DEFAULT_REMOTING_PORT;
+      }
+      container = matcher.group(8);
+      cache = matcher.group(9);
    }
 
    @Override
    public String getJMXServiceURL() {
       return "service:jmx:remoting-jmx://" + hostname + ":" + port;
+   }
+
+   @Override
+   public String getContainer() {
+      return container;
+   }
+
+   @Override
+   public String getCache() {
+      return cache;
    }
 
    @Override

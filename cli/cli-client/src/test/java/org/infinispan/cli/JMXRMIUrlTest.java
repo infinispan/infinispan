@@ -27,7 +27,20 @@ public class JMXRMIUrlTest {
 
    public void testValidJMXUrl() {
       JMXUrl jmxUrl = new JMXRMIUrl("jmx://localhost:12345");
-      assert jmxUrl.getJMXServiceURL().equals("service:jmx:rmi:///jndi/rmi://localhost:12345/jmxrmi");
+      assert "service:jmx:rmi:///jndi/rmi://localhost:12345/jmxrmi".equals(jmxUrl.getJMXServiceURL());
+   }
+
+   public void testValidJMXUrlWithContainer() {
+      JMXUrl jmxUrl = new JMXRMIUrl("jmx://localhost:12345/container");
+      assert "service:jmx:rmi:///jndi/rmi://localhost:12345/jmxrmi".equals(jmxUrl.getJMXServiceURL());
+      assert "container".equals(jmxUrl.getContainer());
+   }
+
+   public void testValidJMXUrlWithContainerAndCache() {
+      JMXUrl jmxUrl = new JMXRMIUrl("jmx://localhost:12345/container/cache");
+      assert "service:jmx:rmi:///jndi/rmi://localhost:12345/jmxrmi".equals(jmxUrl.getJMXServiceURL());
+      assert "container".equals(jmxUrl.getContainer());
+      assert "cache".equals(jmxUrl.getCache());
    }
 
    @Test(expectedExceptions=IllegalArgumentException.class)

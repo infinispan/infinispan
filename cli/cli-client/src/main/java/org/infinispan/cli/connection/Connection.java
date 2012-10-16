@@ -27,15 +27,17 @@ public interface Connection extends Closeable {
 
    void connect(Context context) throws Exception;
 
-   boolean isConnected();
+   void execute(Context context);
 
-   Collection<String> getAvailableContainers();
+   String getActiveCache();
 
    String getActiveContainer();
 
-   void setActiveContainer(String name);
-
-   void execute(Context context);
-
    Collection<String> getAvailableCaches();
+
+   Collection<String> getAvailableContainers();
+
+   boolean isConnected();
+
+   void setActiveContainer(String name);
 }

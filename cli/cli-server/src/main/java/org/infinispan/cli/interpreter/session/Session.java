@@ -29,12 +29,14 @@ public interface Session {
    EmbeddedCacheManager getCacheManager();
 
    /**
-    *
     * Obtains the currently selected cache. If none has been selected, the default cache is returned
-    *
-    * @return cache
     */
    <K, V> Cache<K, V> getCurrentCache();
+
+   /**
+    * Returns the name of the currently selected cache. If none has been selected, the default cache is returned
+    */
+   String getCurrentCacheName();
 
    /**
     * Returns a named cache. If the cacheName parameter is null, the current cache is returned

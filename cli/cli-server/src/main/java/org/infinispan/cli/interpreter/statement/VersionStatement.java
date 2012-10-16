@@ -16,18 +16,28 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston,
  * MA  02110-1301, USA.
  */
-package org.infinispan.cli.connection.jmx;
+package org.infinispan.cli.interpreter.statement;
 
-import java.util.Map;
+import org.infinispan.Version;
+import org.infinispan.cli.interpreter.result.Result;
+import org.infinispan.cli.interpreter.result.StringResult;
+import org.infinispan.cli.interpreter.session.Session;
 
-public interface JMXUrl {
+/**
+ *
+ * Implementation of the "version" statement
+ *
+ * @author Tristan Tarrant
+ * @since 5.2
+ */
+public class VersionStatement implements Statement {
 
-   String getJMXServiceURL();
+   public VersionStatement() {
+   }
 
-   String getContainer();
-
-   String getCache();
-
-   Map<String, Object> getConnectionEnvironment();
+   @Override
+   public Result execute(Session session) {
+      return new StringResult("Server Version "+ Version.class.getPackage().getImplementationVersion());
+   }
 
 }
