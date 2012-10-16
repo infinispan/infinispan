@@ -27,6 +27,7 @@ import org.infinispan.commands.write.WriteCommand;
 import org.infinispan.remoting.transport.BackupResponse;
 
 import javax.transaction.Transaction;
+import java.util.Map;
 
 /**
  * Component responsible with sending backup data to remote sites. The send operation is executed async, it's up to the
@@ -57,9 +58,16 @@ public interface BackupSender {
 
    void processResponses(BackupResponse backupResponse, VisitableCommand command, Transaction transaction) throws Throwable;
 
+   OfflineStatus getOfflineStatus(String siteName);
+
+   /**
+    * Returns a Map having as entries the site names and as value Boolean.TRUE if the site is online and Boolean.FALSE
+    * if it is offline.
+    */
+   Map<String, Boolean> status();
+
    public enum BringSiteOnlineResponse {
       NO_SUCH_SITE,
-      OFFLINE_NOT_ENABLED,
       ALREADY_ONLINE,
       BROUGHT_ONLINE
    }
@@ -68,4 +76,12 @@ public interface BackupSender {
     * Brings a site with the given name back online.
     */
    BringSiteOnlineResponse bringSiteOnline(String siteName);
+
+   public enum TakeSiteOfflineResponse {
+      NO_SUCH_SITE,
+      ALREADY_OFFLINE,
+      TAKEN_OFFLINE
+   }
+
+   TakeSiteOfflineResponse takeSiteOffline(String siteName);
 }

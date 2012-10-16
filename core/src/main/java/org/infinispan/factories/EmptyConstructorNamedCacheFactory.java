@@ -120,9 +120,6 @@ public class EmptyConstructorNamedCacheFactory extends AbstractNamedCacheCompone
          } else if (componentType.equals(TransactionFactory.class)) {
             return (T) new TransactionFactory();
          } else if (componentType.equals(BackupSender.class)) {
-            if (globalConfiguration.sites() == null || globalConfiguration.sites().localSite() == null) {
-               throw new ConfigurationException("Local site must be defined in the global configuration when using cross site replication.");
-            }
             return (T) new BackupSenderImpl(globalConfiguration.sites().localSite());
          }
       }

@@ -104,10 +104,8 @@ public class BackupSenderImpl implements BackupSender {
             CustomFailurePolicy instance = Util.getInstance(backupPolicy, globalConfig.classLoader());
             siteFailurePolicy.put(bc.site(), instance);
          }
-         if (bc.takeOffline().enabled()) {
-            OfflineStatus offline = new OfflineStatus(bc.takeOffline());
-            offlineStatus.put(bc.site(), offline);
-         }
+         OfflineStatus offline = new OfflineStatus(bc.takeOffline());
+         offlineStatus.put(bc.site(), offline);
       }
    }
 
@@ -140,11 +138,14 @@ public class BackupSenderImpl implements BackupSender {
       Set<String> communicationErrors = backupResponse.getCommunicationErrors();
       for (Map.Entry<String, OfflineStatus> statusEntry : offlineStatus.entrySet()) {
          OfflineStatus status = statusEntry.getValue();
+         if (!status.isEnabled()) {
+            continue;
+         }
          if (communicationErrors.contains(statusEntry.getKey())) {
             status.updateOnCommunicationFailure(backupResponse.getSendTimeMillis());
             log.tracef("OfflineStatus updated %s", status);
          } else if(!status.isOffline()) {
-            status.updateOnCommunicationSuccess();
+             status.reset();
          }
       }
    }
@@ -177,13 +178,18 @@ public class BackupSenderImpl implements BackupSender {
          return BringSiteOnlineResponse.NO_SUCH_SITE;
       } else {
          OfflineStatus offline = offlineStatus.get(siteName);
-         if (offline == null) {
-            log.tracef("The site %s doesn't have enabled the 'takeOffline' functionality", siteName);
-            return BringSiteOnlineResponse.OFFLINE_NOT_ENABLED;
-         } else {
-            boolean broughtOnline = offline.bringOnline();
-            return broughtOnline ? BringSiteOnlineResponse.BROUGHT_ONLINE : BringSiteOnlineResponse.ALREADY_ONLINE;
-         }
+         boolean broughtOnline = offline.bringOnline();
+         return broughtOnline ? BringSiteOnlineResponse.BROUGHT_ONLINE : BringSiteOnlineResponse.ALREADY_ONLINE;
+      }
+   }
+
+   @Override
+   public TakeSiteOfflineResponse takeSiteOffline(String siteName) {
+      if (!config.sites().hasInUseBackup(siteName)) {
+         return TakeSiteOfflineResponse.NO_SUCH_SITE;
+      } else {
+         OfflineStatus offline = offlineStatus.get(siteName);
+         return offline.forceOffline() ? TakeSiteOfflineResponse.TAKEN_OFFLINE : TakeSiteOfflineResponse.ALREADY_OFFLINE;
       }
    }
 
@@ -320,5 +326,14 @@ public class BackupSenderImpl implements BackupSender {
 
    public OfflineStatus getOfflineStatus(String site) {
       return offlineStatus.get(site);
+   }
+
+   @Override
+   public Map<String, Boolean> status() {
+      Map<String, Boolean> result = new HashMap<String, Boolean>(offlineStatus.size());
+      for (Map.Entry<String, OfflineStatus> os : offlineStatus.entrySet()) {
+         result.put(os.getKey(), !os.getValue().isOffline());
+      }
+      return result;
    }
 }

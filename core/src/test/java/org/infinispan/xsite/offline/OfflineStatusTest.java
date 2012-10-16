@@ -68,7 +68,7 @@ public class OfflineStatusTest extends AbstractInfinispanTest {
    public void testFailureBasedOnly() throws Throwable {
       final OfflineStatus offlineStatus = new OfflineStatus(new TakeOfflineConfiguration(10, 0));
       test(offlineStatus);
-      offlineStatus.updateOnCommunicationSuccess();
+      offlineStatus.reset();
       test(offlineStatus);
    }
 
