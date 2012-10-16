@@ -18,6 +18,9 @@
  */
 package org.infinispan.cli.interpreter;
 
+import java.io.PrintWriter;
+import java.io.StringWriter;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.Map;
@@ -83,8 +86,7 @@ public class Interpreter {
 
    @Start
    public void start() {
-      sessionReaperTask = executor.scheduleWithFixedDelay(new ScheduledTask(), sessionReaperWakeupInterval,
-            sessionReaperWakeupInterval, TimeUnit.MILLISECONDS);
+      sessionReaperTask = executor.scheduleWithFixedDelay(new ScheduledTask(), sessionReaperWakeupInterval, sessionReaperWakeupInterval, TimeUnit.MILLISECONDS);
    }
 
    @Stop
@@ -95,9 +97,13 @@ public class Interpreter {
    }
 
    @ManagedOperation(description = "Creates a new interpreter session")
-   public String createSessionId() {
+   public String createSessionId(String cacheName) {
       String sessionId = UUID.randomUUID().toString();
-      sessions.put(sessionId, new SessionImpl(cacheManager, sessionId));
+      SessionImpl session = new SessionImpl(cacheManager, sessionId);
+      sessions.put(sessionId, session);
+      if (cacheName != null) {
+         session.setCurrentCache(cacheName);
+      }
       return sessionId;
    }
 
@@ -131,18 +137,18 @@ public class Interpreter {
    }
 
    @ManagedOperation(description = "Parses and executes IspnQL statements")
-   public String execute(final String sessionId, final String s) throws Exception {
-      if (sessionId == null || !sessions.containsKey(sessionId)) {
-         throw new IllegalArgumentException("Invalid session ID");
-      }
-      CharStream stream = new ANTLRStringStream(s);
-      IspnQLLexer lexer = new IspnQLLexer(stream);
-      CommonTokenStream tokens = new CommonTokenStream(lexer);
-      IspnQLParser parser = new IspnQLParser(tokens);
-      ClassLoader oldCL = SysPropertyActions.setThreadContextClassLoader(cacheManager.getCacheManagerConfiguration()
-            .classLoader());
+   public Map<String, String> execute(final String sessionId, final String s) throws Exception {
       Session session = null;
+      ClassLoader oldCL = SysPropertyActions.setThreadContextClassLoader(cacheManager.getCacheManagerConfiguration().classLoader());
+      Map<String, String> response = new HashMap<String, String>();
       try {
+         session = validateSession(sessionId);
+
+         CharStream stream = new ANTLRStringStream(s);
+         IspnQLLexer lexer = new IspnQLLexer(stream);
+         CommonTokenStream tokens = new CommonTokenStream(lexer);
+         IspnQLParser parser = new IspnQLParser(tokens);
+
          parser.statements();
          session = sessions.get(sessionId);
          StringBuilder output = new StringBuilder();
@@ -152,19 +158,32 @@ public class Interpreter {
                output.append(result.getResult());
             }
          }
-         return output.length() == 0 ? null : output.toString();
+         if (output.length() > 0) {
+            response.put("OUTPUT", output.toString());
+         }
       } catch (Exception e) {
          log.interpreterError(e);
-         // Rewrap the exception into a plain exception to avoid the need for custom classes to travel via RMI
-         Exception exception = new Exception(e.getMessage());
-         exception.setStackTrace(e.getStackTrace());
-         throw exception;
+         response.put("ERROR", e.getMessage());
+         StringWriter sw = new StringWriter();
+         PrintWriter pw = new PrintWriter(sw);
+         e.printStackTrace(pw);
+         response.put("STACKTRACE", sw.toString());
       } finally {
          if (session != null) {
             session.reset();
+            response.put("CACHE", session.getCurrentCacheName());
          }
          SysPropertyActions.setThreadContextClassLoader(oldCL);
+
       }
+      return response;
+   }
+
+   private Session validateSession(final String sessionId) {
+      if (sessionId == null || !sessions.containsKey(sessionId)) {
+         throw new IllegalArgumentException("Invalid session ID");
+      }
+      return sessions.get(sessionId);
    }
 
    @ManagedAttribute(description = "Retrieves a list of caches for the cache manager")

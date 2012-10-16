@@ -19,8 +19,8 @@
 package org.infinispan.cli.impl;
 
 import java.io.IOException;
-import java.util.Properties;
-
+import java.util.HashMap;
+import java.util.Map;
 import org.infinispan.cli.CommandBuffer;
 import org.infinispan.cli.CommandRegistry;
 import org.infinispan.cli.Context;
@@ -41,7 +41,7 @@ public class ContextImpl implements Context {
 
    private Connection connection;
    private boolean quitting;
-   private Properties env = new Properties();
+   private Map<String, String> env = new HashMap<String, String>();
 
    public ContextImpl(IOAdapter outputAdapter, CommandBuffer commandBuffer) {
       this.commandBuffer = commandBuffer;
@@ -77,12 +77,12 @@ public class ContextImpl implements Context {
 
    @Override
    public void setProperty(String key, String value) {
-      env.setProperty(key, value);
+      env.put(key, value);
    }
 
    @Override
    public String getProperty(String key) {
-      return env.getProperty(key);
+      return env.get(key);
    }
 
    @Override
@@ -153,6 +153,7 @@ public class ContextImpl implements Context {
    public void refreshProperties() {
       setProperty("CONNECTION", connection != null ? connection.toString() : "disconnected");
       setProperty("CONTAINER", connection != null ? connection.getActiveContainer() : "");
+      setProperty("CACHE", connection != null ? connection.getActiveCache() : "");
    }
 
 }

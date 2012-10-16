@@ -3,7 +3,6 @@ org.infinispan.cli.commands.client.Container
 org.infinispan.cli.commands.client.Disconnect
 org.infinispan.cli.commands.client.Help
 org.infinispan.cli.commands.client.Quit
-org.infinispan.cli.commands.client.Version
 org.infinispan.cli.commands.server.Abort
 org.infinispan.cli.commands.server.Begin
 org.infinispan.cli.commands.server.Cache
@@ -23,3 +22,4 @@ org.infinispan.cli.commands.server.Rollback
 org.infinispan.cli.commands.server.Start
 org.infinispan.cli.commands.server.Stats
 org.infinispan.cli.commands.server.Upgrade
+org.infinispan.cli.commands.server.Version

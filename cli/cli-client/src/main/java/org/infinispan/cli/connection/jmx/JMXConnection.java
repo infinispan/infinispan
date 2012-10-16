@@ -19,6 +19,7 @@
 package org.infinispan.cli.connection.jmx;
 
 import java.io.IOException;
+import java.lang.reflect.InvocationTargetException;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
@@ -48,6 +49,7 @@ public class JMXConnection implements Connection {
    private Map<String, ObjectInstance> cacheManagers;
    private Map<String, String> sessions;
    private String activeCacheManager;
+   private String activeCache;
    private final JMXUrl serviceUrl;
    private MBeanServerConnection mbsc;
 
@@ -66,9 +68,40 @@ public class JMXConnection implements Connection {
             cacheManagers.put(unquote(mbean.getObjectName().getKeyProperty("name")), mbean);
          }
       }
-      cacheManagers = Collections.unmodifiableMap(cacheManagers);
-      activeCacheManager = cacheManagers.keySet().iterator().next();
+      if (cacheManagers.size() == 0) {
+         throw new IllegalArgumentException("The remote server does not expose any CacheManagers");
+      }
       sessions = new HashMap<String, String>();
+      cacheManagers = Collections.unmodifiableMap(cacheManagers);
+      activeCacheManager = serviceUrl.getContainer();
+      if (activeCacheManager == null) {
+         activeCacheManager = cacheManagers.keySet().iterator().next();
+      } else if (!cacheManagers.containsKey(activeCacheManager)) {
+         throw new Exception("No such container: "+activeCacheManager);
+      }
+      activeCache = serviceUrl.getCache();
+      if (activeCache != null) {
+         try {
+            getSession(cacheManagers.get(activeCacheManager));
+         } catch (MBeanException e) {
+            Throwable ue = unwrapException(e);
+            throw new Exception(ue.getMessage(), ue);
+         }
+      }
+
+   }
+
+   private Throwable unwrapException(MBeanException e) {
+      Exception te = e.getTargetException();
+      if (te != null) {
+         if (te instanceof InvocationTargetException) {
+            return ((InvocationTargetException)te).getCause();
+         } else {
+            return te;
+         }
+      } else {
+         return e;
+      }
    }
 
    @Override
@@ -93,6 +126,11 @@ public class JMXConnection implements Connection {
    @Override
    public String toString() {
       return serviceUrl.toString();
+   }
+
+   @Override
+   public String getActiveCache() {
+      return activeCache;
    }
 
    @Override
@@ -130,16 +168,18 @@ public class JMXConnection implements Connection {
    @Override
    public void execute(Context context) {
       ObjectInstance manager = cacheManagers.get(activeCacheManager);
-      String sessionId = sessions.get(activeCacheManager);
       try {
-         if(sessionId==null) {
-            sessionId = (String) mbsc.invoke(manager.getObjectName(), "createSessionId", new Object[0], new String[0]);
-            sessions.put(activeCacheManager, sessionId);
+         String sessionId = getSession(manager);
+         Map<String, String> response = (Map<String, String>) mbsc.invoke(manager.getObjectName(), "execute", new String[] { sessionId, context.getCommandBuffer().toString() },
+               new String[] { String.class.getName(), String.class.getName() });
+         if (response.containsKey("OUTPUT")) {
+            context.println(response.get("OUTPUT"));
          }
-         String result = (String) mbsc.invoke(manager.getObjectName(), "execute", new String[] { sessionId, context
-               .getCommandBuffer().toString() }, new String[] { String.class.getName(), String.class.getName() });
-         if (result != null) {
-            context.println(result);
+         if (response.containsKey("ERROR")) {
+            context.error(response.get("ERROR"));
+         }
+         if (response.containsKey("CACHE")) {
+            activeCache = response.get("CACHE");
          }
       } catch (InstanceNotFoundException e) {
          context.error(e);
@@ -153,6 +193,15 @@ public class JMXConnection implements Connection {
       } finally {
          context.getCommandBuffer().reset();
       }
+   }
+
+   private String getSession(ObjectInstance manager) throws InstanceNotFoundException, MBeanException, ReflectionException, IOException {
+      String sessionId = sessions.get(activeCacheManager);
+      if (sessionId == null) {
+         sessionId = (String) mbsc.invoke(manager.getObjectName(), "createSessionId", new Object[] { activeCache }, new String[] { String.class.getName() });
+         sessions.put(activeCacheManager, sessionId);
+      }
+      return sessionId;
    }
 
    private static ObjectName createObjectName(String name) {

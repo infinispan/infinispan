@@ -34,7 +34,8 @@ import org.infinispan.remoting.rpc.RpcManager;
 public class SessionImpl implements Session {
    private final EmbeddedCacheManager cacheManager;
    private final String id;
-   private Cache<?, ?> cache;
+   private Cache<?, ?> cache = null;
+   private String cacheName = null;
    private long timestamp;
 
    public SessionImpl(final EmbeddedCacheManager cacheManager, final String id) {
@@ -55,10 +56,12 @@ public class SessionImpl implements Session {
 
    @Override
    public <K, V> Cache<K, V> getCurrentCache() {
-      if (cache == null) {
-         cache = cacheManager.getCache();
-      }
       return (Cache<K, V>) cache;
+   }
+
+   @Override
+   public String getCurrentCacheName() {
+      return cacheName;
    }
 
    @Override
@@ -78,6 +81,7 @@ public class SessionImpl implements Session {
    @Override
    public void setCurrentCache(final String cacheName) {
       cache = getCache(cacheName);
+      this.cacheName = cacheName;
    }
 
    @Override
@@ -102,12 +106,11 @@ public class SessionImpl implements Session {
 
          CreateCacheCommand ccc = factory.buildCreateCacheCommand(cacheName, baseCacheName);
 
-         try{
+         try {
             rpc.invokeRemotely(null, ccc, true, false);
             ccc.init(cacheManager);
             ccc.perform(null);
-         }
-         catch (Throwable e) {
+         } catch (Throwable e) {
             throw new CacheException("Could not create cache on all clustered nodes", e);
          }
       } else {

@@ -27,7 +27,20 @@ public class JMXRemotingUrlTest {
 
    public void testValidJMXUrl() {
       JMXUrl jmxUrl = new JMXRemotingUrl("remoting://localhost:12345");
-      assert jmxUrl.getJMXServiceURL().equals("service:jmx:remoting-jmx://localhost:12345");
+      assert "service:jmx:remoting-jmx://localhost:12345".equals(jmxUrl.getJMXServiceURL());
+   }
+
+   public void testValidJMXUrlWithContainer() {
+      JMXUrl jmxUrl = new JMXRemotingUrl("remoting://localhost:12345/container");
+      assert "service:jmx:remoting-jmx://localhost:12345".equals(jmxUrl.getJMXServiceURL());
+      assert "container".equals(jmxUrl.getContainer());
+   }
+
+   public void testValidJMXUrlWithContainerAndCache() {
+      JMXUrl jmxUrl = new JMXRemotingUrl("remoting://localhost:12345/container/cache");
+      assert "service:jmx:remoting-jmx://localhost:12345".equals(jmxUrl.getJMXServiceURL());
+      assert "container".equals(jmxUrl.getContainer());
+      assert "cache".equals(jmxUrl.getCache());
    }
 
    @Test(expectedExceptions=IllegalArgumentException.class)

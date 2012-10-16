@@ -127,6 +127,7 @@ statement returns [Statement stmt]
    | startBatchStatement { $stmt = $startBatchStatement.stmt; }
    | statsStatement { $stmt = $statsStatement.stmt; }
    | upgradeStatement { $stmt = $upgradeStatement.stmt; }
+   | versionStatement { $stmt = $versionStatement.stmt; }
    ;
 
 
@@ -204,6 +205,10 @@ statsStatement returns [StatsStatement stmt]
 
 upgradeStatement returns [UpgradeStatement stmt]
    : UPGRADE opts = statementOptions (cacheName = STRINGLITERAL)? (EOL | ';')! { $stmt = new UpgradeStatement($opts.options, unquote($cacheName.text)); }
+   ;
+
+versionStatement returns [VersionStatement stmt]
+   : VERSION (EOL | ';')! { $stmt = new VersionStatement(); }
    ;
 
 expirationClause returns [ExpirationData exp]
@@ -301,6 +306,7 @@ START:   'start';
 STATS:   'stats';
 TRUE:    'true';
 UPGRADE: 'upgrade';
+VERSION: 'version';
 
 INTLITERAL
    : IntegerNumber

@@ -51,7 +51,7 @@ public class ClusteredCLITests extends MultipleCacheManagersTest {
    public void testCreateCluster() throws Exception {
       GlobalComponentRegistry gcr = TestingUtil.extractGlobalComponentRegistry(manager(0));
       Interpreter interpreter = gcr.getComponent(Interpreter.class);
-      String sessionId = interpreter.createSessionId();
+      String sessionId = interpreter.createSessionId(null);
       interpreter.execute(sessionId, String.format("create anothercache like %s;", cacheName()));
       assert manager(0).cacheExists("anothercache");
       assert manager(1).cacheExists("anothercache");

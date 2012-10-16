@@ -41,7 +41,7 @@ public class ConfigImpl implements Config {
    private final String configHome;
    private boolean colorsEnabled = true;
    private boolean historyEnabled = true;
-   private String prompt = "[\\c{green}$CONNECTION\\c]\\c{yellow}$CONTAINER\\c> ";
+   private String prompt = "[\\c{green}$CONNECTION\\c{yellow}/$CONTAINER\\c{yellow}/$CACHE\\c]> ";
 
    public ConfigImpl(String configHome) {
       this.configHome = configHome;

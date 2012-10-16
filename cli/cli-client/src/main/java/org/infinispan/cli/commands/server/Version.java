@@ -16,17 +16,21 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston,
  * MA  02110-1301, USA.
  */
-package org.infinispan.cli.commands.client;
+package org.infinispan.cli.commands.server;
 
 import org.infinispan.cli.Context;
-import org.infinispan.cli.commands.AbstractCommand;
 import org.infinispan.cli.commands.ProcessedCommand;
 
-public class Version extends AbstractCommand {
+public class Version extends AbstractServerCommand {
 
    @Override
    public String getName() {
       return "version";
+   }
+
+   @Override
+   public int nesting() {
+      return 0;
    }
 
    @Override
@@ -36,6 +40,9 @@ public class Version extends AbstractCommand {
 
    @Override
    public void execute(Context context, ProcessedCommand commandLine) {
-      context.println("Version " + Version.class.getPackage().getImplementationVersion());
+      context.println("Client Version " + Version.class.getPackage().getImplementationVersion());
+      if (context.isConnected()) {
+         super.execute(context, commandLine);
+      }
    }
 }
