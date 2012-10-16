@@ -272,6 +272,10 @@ public abstract class AbstractComponentRegistry implements Lifecycle, Cloneable 
       return getOrCreateComponent(componentClass, componentClass.getName(), true);
    }
 
+   protected <T> T getOrCreateComponent(Class<T> componentClass, String name) {
+      return getOrCreateComponent(componentClass, name, false);
+   }
+
    @SuppressWarnings("unchecked")
    protected <T> T getOrCreateComponent(Class<T> componentClass, String name, boolean nameIsFQCN) {
       if (DEBUG_DEPENDENCIES) debugStack.push(name);
