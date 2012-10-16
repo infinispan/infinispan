@@ -43,10 +43,11 @@ public class OfflineStatus {
 
    private static Log log = LogFactory.getLog(OfflineStatus.class);
 
-   private final TakeOfflineConfiguration takeOffline;
+   private volatile TakeOfflineConfiguration takeOffline;
    private boolean recordingOfflineStatus = false;
    private long firstFailureTime;
    private int failureCount;
+   private volatile boolean forceOffline = false;
 
    public OfflineStatus(TakeOfflineConfiguration takeOfflineConfiguration) {
       this.takeOffline = takeOfflineConfiguration;
@@ -61,6 +62,9 @@ public class OfflineStatus {
    }
 
    public synchronized boolean isOffline() {
+      if (forceOffline)
+         return true;
+
       if (!recordingOfflineStatus)
          return false;
 
@@ -98,17 +102,41 @@ public class OfflineStatus {
 
    public synchronized boolean bringOnline() {
       if (!isOffline()) return false;
-      updateOnCommunicationSuccess();
+      reset();
       return true;
-   }
-
-   public synchronized void updateOnCommunicationSuccess() {
-      recordingOfflineStatus = false;
-      failureCount = 0;
    }
 
    public synchronized int getFailureCount() {
       return failureCount;
+   }
+
+   public synchronized boolean isEnabled() {
+      return takeOffline.enabled();
+   }
+
+   /**
+    * Configures the site to use the supplied configuration for determining when to take a site offline.
+    * Also triggers a state reset.
+    */
+   public void amend(TakeOfflineConfiguration takeOffline) {
+      this.takeOffline = takeOffline;
+      reset();
+   }
+
+   public void reset() {
+      recordingOfflineStatus = false;
+      failureCount = 0;
+      forceOffline = false;
+   }
+
+   public TakeOfflineConfiguration getTakeOffline() {
+      return takeOffline;
+   }
+
+   public boolean forceOffline() {
+      if (isOffline()) return false;
+      forceOffline = true;
+      return true;
    }
 
    @Override
@@ -117,7 +145,16 @@ public class OfflineStatus {
             "takeOffline=" + takeOffline +
             ", recordingOfflineStatus=" + recordingOfflineStatus +
             ", firstFailureTime=" + firstFailureTime +
+            ", forceOffline=" + forceOffline +
             ", failureCount=" + failureCount +
             '}';
+   }
+
+   public void amend(Integer afterFailures, Long minTimeToWait) {
+      TakeOfflineConfiguration existing = getTakeOffline();
+      int newAfterFailures = afterFailures == null ? existing.afterFailures() : afterFailures;
+      long newMinTieToWait = minTimeToWait == null ? existing.minTimeToWait() : minTimeToWait;
+      TakeOfflineConfiguration newConfig = new TakeOfflineConfiguration(newAfterFailures, newMinTieToWait);
+      amend(newConfig);
    }
 }

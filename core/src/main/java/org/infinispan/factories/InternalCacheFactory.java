@@ -31,7 +31,7 @@ import org.infinispan.jmx.CacheJmxRegistration;
 import org.infinispan.manager.DefaultCacheManager;
 import org.infinispan.upgrade.RollingUpgradeManager;
 import org.infinispan.transaction.xa.recovery.RecoveryAdminOperations;
-import org.infinispan.xsite.CrossSiteReplicationOperations;
+import org.infinispan.xsite.XSiteAdminOperations;
 
 /**
  * An internal factory for constructing Caches.  Used by the {@link DefaultCacheManager}, this is not intended as public
@@ -104,7 +104,7 @@ public class InternalCacheFactory<K, V> extends AbstractNamedCacheComponentFacto
          componentRegistry.registerComponent(new RecoveryAdminOperations(), RecoveryAdminOperations.class.getName(), true);
       }
       if (!configuration.sites().inUseBackups().isEmpty()) {
-         componentRegistry.registerComponent(new CrossSiteReplicationOperations(), CrossSiteReplicationOperations.class.getName(), true);
+         componentRegistry.registerComponent(new XSiteAdminOperations(), XSiteAdminOperations.class.getName(), true);
       }
       // The RollingUpgradeManager should always be added so it is registered in JMX.
       componentRegistry.registerComponent(new RollingUpgradeManager(), RollingUpgradeManager.class.getName(), true);

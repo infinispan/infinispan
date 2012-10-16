@@ -88,6 +88,8 @@ import org.infinispan.transaction.xa.recovery.RecoveryManager;
 import org.infinispan.util.concurrent.locks.LockManager;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
+import org.infinispan.xsite.BackupSender;
+import org.infinispan.xsite.XSiteAdminCommand;
 
 import javax.transaction.xa.Xid;
 import java.util.Collection;
@@ -130,6 +132,7 @@ public class CommandsFactoryImpl implements CommandsFactory {
    private InternalEntryFactory entryFactory;
    private MapReduceManager mapReduceManager;
    private StateTransferManager stateTransferManager;
+   private BackupSender backupSender;
 
    private Map<Byte, ModuleCommandInitializer> moduleCommandInitializers;
 
@@ -139,7 +142,8 @@ public class CommandsFactoryImpl implements CommandsFactory {
                                  InvocationContextContainer icc, TransactionTable txTable, Configuration configuration,
                                  @ComponentName(KnownComponentNames.MODULE_COMMAND_INITIALIZERS) Map<Byte, ModuleCommandInitializer> moduleCommandInitializers,
                                  RecoveryManager recoveryManager, StateProvider stateProvider, StateConsumer stateConsumer,
-                                 LockManager lockManager, InternalEntryFactory entryFactory, MapReduceManager mapReduceManager, StateTransferManager stm) {
+                                 LockManager lockManager, InternalEntryFactory entryFactory, MapReduceManager mapReduceManager,
+                                 StateTransferManager stm, BackupSender backupSender) {
       this.dataContainer = container;
       this.notifier = notifier;
       this.cache = cache;
@@ -156,6 +160,7 @@ public class CommandsFactoryImpl implements CommandsFactory {
       this.entryFactory = entryFactory;
       this.mapReduceManager = mapReduceManager;
       this.stateTransferManager = stm;
+      this.backupSender = backupSender;
    }
 
    @Start(priority = 1)
@@ -432,6 +437,9 @@ public class CommandsFactoryImpl implements CommandsFactory {
          case CreateCacheCommand.COMMAND_ID:
             CreateCacheCommand createCacheCommand = (CreateCacheCommand)c;
             createCacheCommand.init(cache.getCacheManager());
+         case XSiteAdminCommand.COMMAND_ID:
+            XSiteAdminCommand xSiteAdminCommand = (XSiteAdminCommand)c;
+            xSiteAdminCommand.init(backupSender);
          default:
             ModuleCommandInitializer mci = moduleCommandInitializers.get(c.getCommandId());
             if (mci != null) {
