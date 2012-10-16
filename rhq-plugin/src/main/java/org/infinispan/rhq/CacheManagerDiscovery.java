@@ -47,7 +47,7 @@ import org.rhq.plugins.jmx.ObjectNameQueryUtility;
  */
 public class CacheManagerDiscovery extends MBeanResourceDiscoveryComponent<JMXComponent<?>> implements ManualAddFacet<JMXComponent<?>>{
    private static final Log log = LogFactory.getLog(CacheManagerDiscovery.class);
-   public static final String CACHE_MANAGER_JMX_GROUP = "type=CacheManager";
+   public static final String CACHE_MANAGER_JMX_GROUP = "type=CacheManager,component=CacheManager";
 
    protected static final String CACHE_MANAGER_OBJECTS = "*:" + CACHE_MANAGER_JMX_GROUP + ",*";
 

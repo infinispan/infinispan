@@ -108,20 +108,29 @@ public class RhqPluginXmlGenerator {
       Props root = new Props();
       root.setPluginName("Infinispan");
       root.setPluginDescription("Supports management and monitoring of Infinispan");
+      root.setManualAddOfResourceType(true);
       root.setName("Infinispan Cache Manager");
       root.setPkg("org.infinispan.rhq");
       root.setDependsOnJmxPlugin(true);
       root.setDiscoveryClass("CacheManagerDiscovery");
       root.setComponentClass("CacheManagerComponent");
       root.setSingleton(false);
+
       root.setCategory(ResourceCategory.SERVICE);
       Set<TypeKey> servers = new HashSet<TypeKey>();
       servers.add(new TypeKey("JMX Server", "JMX"));
       servers.add(new TypeKey("JBossAS Server", "JBossAS"));
       servers.add(new TypeKey("JBossAS Server", "JBossAS5"));
-      servers.add(new TypeKey("JBossAS7 Standalone Server", "jboss-as-7"));
-      servers.add(new TypeKey("Profile", "jboss-as-7"));
       root.setRunsInsides(servers);
+
+
+      SimpleProperty pc = new SimpleProperty("name");
+      pc.setType("string");
+      pc.setDescription("Name");
+      pc.setDefaultValue("Infinispan Cache Manager");
+      pc.setReadOnly(true);
+      root.getSimpleProps().add(pc);
+
       populateMetricsAndOperations(globalClasses, root, false);
 
       Props cache = new Props();
@@ -141,7 +150,7 @@ public class RhqPluginXmlGenerator {
       String targetMetaInfDir = "../../../target/classes/META-INF";
       new File(targetMetaInfDir).mkdirs();
 
-      pg.createFile(root, "descriptor", "rhq-plugin.xml", metaInfDir);
+      pg.createFile(root, "ispnDescriptor", "rhq-plugin.xml", metaInfDir);
       copyFile(new File(metaInfDir + "/rhq-plugin.xml"), new File(targetMetaInfDir + "/rhq-plugin.xml"));
 
       return true;
