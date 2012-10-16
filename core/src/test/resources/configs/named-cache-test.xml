@@ -79,7 +79,7 @@
 
    <default>
       <locking concurrencyLevel="100" lockAcquisitionTimeout="1000"/>
-      <transaction transactionMode="NON_TRANSACTIONAL"/>
+      <transaction transactionMode="NON_TRANSACTIONAL" reaperWakeUpInterval="123" completedTxTimeout="3123"/>
       <jmxStatistics enabled="false"/>
    </default>
 

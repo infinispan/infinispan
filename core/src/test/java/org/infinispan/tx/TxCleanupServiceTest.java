@@ -106,7 +106,7 @@ public class TxCleanupServiceTest extends MultipleCacheManagersTest {
       eventually(new Condition() {
          @Override
          public boolean isSatisfied() throws Exception {
-            return ccf.receivedCommands.get() == TX_COUNT;
+            return ccf.blockTypeCommandsReceived.get() == TX_COUNT;
          }
       });
 

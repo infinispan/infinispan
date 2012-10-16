@@ -143,8 +143,9 @@ public enum Attribute {
     FAILURE_POLICY_CLASS("failurePolicyClass"),
     BACKUP_SITES("backupSites"),
     AFTER_FAILURES("afterFailures"),
-    MIN_TIME_TO_WAIT("minTimeToWait")
-   ;
+    MIN_TIME_TO_WAIT("minTimeToWait"),
+    REAPER_WAKE_UP_INTERVAL("reaperWakeUpInterval"),
+    COMPLETED_TX_TIMEOUT("completedTxTimeout");
 
     private final String name;
 

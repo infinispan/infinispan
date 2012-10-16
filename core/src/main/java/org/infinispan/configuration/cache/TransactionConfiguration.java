@@ -44,12 +44,15 @@ public class TransactionConfiguration {
    private final boolean useSynchronization;
    private final RecoveryConfiguration recovery;
    private final boolean use1PcForAutoCommitTransactions;
+   private final long reaperWakeUpInterval;
+   private final long completedTxTimeout;
+
 
    TransactionConfiguration(boolean autoCommit, long cacheStopTimeout, boolean eagerLockingSingleNode, LockingMode lockingMode,
-         boolean syncCommitPhase, boolean syncRollbackPhase, TransactionManagerLookup transactionManagerLookup,
-         TransactionSynchronizationRegistryLookup transactionSynchronizationRegistryLookup, TransactionMode transactionMode,
-         boolean useEagerLocking, boolean useSynchronization, boolean use1PcForAutoCommitTransactions,
-         RecoveryConfiguration recovery) {
+                            boolean syncCommitPhase, boolean syncRollbackPhase, TransactionManagerLookup transactionManagerLookup,
+                            TransactionSynchronizationRegistryLookup transactionSynchronizationRegistryLookup, TransactionMode transactionMode,
+                            boolean useEagerLocking, boolean useSynchronization, boolean use1PcForAutoCommitTransactions,
+                            long reaperWakeUpInterval, long completedTxTimeout, RecoveryConfiguration recovery) {
       this.autoCommit = autoCommit;
       this.cacheStopTimeout = cacheStopTimeout;
       this.eagerLockingSingleNode = eagerLockingSingleNode;
@@ -63,6 +66,8 @@ public class TransactionConfiguration {
       this.useSynchronization = useSynchronization;
       this.recovery = recovery;
       this.use1PcForAutoCommitTransactions = use1PcForAutoCommitTransactions;
+      this.reaperWakeUpInterval = reaperWakeUpInterval;
+      this.completedTxTimeout = completedTxTimeout;
    }
 
    /**
@@ -244,6 +249,20 @@ public class TransactionConfiguration {
    }
 
    /**
+    * @see TransactionConfigurationBuilder#reaperWakeUpInterval(long)
+    */
+   public long reaperWakeUpInterval() {
+      return reaperWakeUpInterval;
+   }
+
+   /**
+    * @see TransactionConfigurationBuilder#completedTxTimeout(long)
+    */
+   public long completedTxTimeout()  {
+      return completedTxTimeout;
+   }
+
+   /**
     * Before Infinispan 5.1 you could access the cache both transactionally and
     * non-transactionally. Naturally the non-transactional access is faster and
     * offers less consistency guarantees. From Infinispan 5.1 onwards, mixed
@@ -275,6 +294,8 @@ public class TransactionConfiguration {
             ", useEagerLocking=" + useEagerLocking +
             ", useSynchronization=" + useSynchronization +
             ", recovery=" + recovery +
+            ", reaperWakeUpInterval=" + reaperWakeUpInterval +
+            ", completedTxTimeout=" + completedTxTimeout +
             ", use1PcForAutoCommitTransactions=" + use1PcForAutoCommitTransactions +
             '}';
    }

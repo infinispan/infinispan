@@ -19,6 +19,8 @@
 
 package org.infinispan.util.mocks;
 
+import org.infinispan.AdvancedCache;
+import org.infinispan.Cache;
 import org.infinispan.atomic.Delta;
 import org.infinispan.commands.CommandsFactory;
 import org.infinispan.commands.CreateCacheCommand;
@@ -49,10 +51,13 @@ import org.infinispan.container.versioning.EntryVersion;
 import org.infinispan.context.Flag;
 import org.infinispan.distexec.mapreduce.Mapper;
 import org.infinispan.distexec.mapreduce.Reducer;
+import org.infinispan.factories.ComponentRegistry;
+import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.statetransfer.StateChunk;
 import org.infinispan.statetransfer.StateRequestCommand;
 import org.infinispan.statetransfer.StateResponseCommand;
+import org.infinispan.test.TestingUtil;
 import org.infinispan.transaction.xa.GlobalTransaction;
 import org.infinispan.util.concurrent.ReclosableLatch;
 import org.infinispan.util.logging.Log;
@@ -67,22 +72,51 @@ import java.util.concurrent.Callable;
 import java.util.concurrent.atomic.AtomicInteger;
 
 /**
-* @author Mircea Markus
-* @since 5.2
-*/
+ * @author Mircea Markus
+ * @since 5.2
+ */
 public class ControlledCommandFactory implements CommandsFactory {
 
    private static Log log = LogFactory.getLog(ControlledCommandFactory.class);
 
+   public final CommandsFactory actual;
    public final ReclosableLatch gate = new ReclosableLatch(true);
-   public final AtomicInteger receivedCommands = new AtomicInteger(0);
-
-   final CommandsFactory actual;
-   final Class<? extends ReplicableCommand> toBlock;
+   public final AtomicInteger remoteCommandsReceived = new AtomicInteger(0);
+   public final AtomicInteger blockTypeCommandsReceived = new AtomicInteger(0);
+   public final Class<? extends  ReplicableCommand> toBlock;
 
    public ControlledCommandFactory(CommandsFactory actual, Class<? extends ReplicableCommand> toBlock) {
       this.actual = actual;
       this.toBlock = toBlock;
+   }
+
+   @Override
+   public void initializeReplicableCommand(ReplicableCommand command, boolean isRemote) {
+      if (isRemote) {
+         remoteCommandsReceived.incrementAndGet();
+         if (toBlock != null && command.getClass().isAssignableFrom(toBlock)) {
+            blockTypeCommandsReceived.incrementAndGet();
+            try {
+               gate.await();
+               log.tracef("gate is opened, processing the lock cleanup:  %s", command);
+            } catch (InterruptedException e) {
+               throw new RuntimeException(e);
+            }
+         }
+      }
+      actual.initializeReplicableCommand(command, isRemote);
+   }
+
+   public static ControlledCommandFactory registerControlledCommandFactory(Cache cache, Class<? extends ReplicableCommand> toBlock) {
+      AdvancedCache advancedCache = cache.getAdvancedCache();
+      ComponentRegistry componentRegistry = advancedCache.getComponentRegistry();
+      final ControlledCommandFactory ccf = new ControlledCommandFactory(componentRegistry.getCommandsFactory(), toBlock);
+      TestingUtil.replaceField(ccf, "commandsFactory", componentRegistry, ComponentRegistry.class);
+
+      //hack: re-add the component registry to the GlobalComponentRegistry's "namedComponents" (CHM) in order to correctly publish it for
+      // when it will be read by the InboundInvocationHandlder. InboundInvocationHandlder reads the value from the GlobalComponentRegistry.namedComponents before using it
+      advancedCache.getComponentRegistry().getGlobalComponentRegistry().registerNamedComponentRegistry(componentRegistry, EmbeddedCacheManager.DEFAULT_CACHE_NAME);
+      return ccf;
    }
 
    @Override
@@ -188,21 +222,6 @@ public class ControlledCommandFactory implements CommandsFactory {
    @Override
    public RollbackCommand buildRollbackCommand(GlobalTransaction gtx) {
       return actual.buildRollbackCommand(gtx);
-   }
-
-   @Override
-   public void initializeReplicableCommand(ReplicableCommand command, boolean isRemote) {
-      if (isRemote && command.getClass().isAssignableFrom(toBlock)) {
-         log.tracef("Received command %s. gate.isOpened() %s?", command, gate.isOpened());
-         receivedCommands.incrementAndGet();
-         try {
-            gate.await();
-            log.tracef("gate is opened, processing the lock cleanup:  %s", command);
-         } catch (InterruptedException e) {
-            throw new RuntimeException(e);
-         }
-      }
-      actual.initializeReplicableCommand(command, isRemote);
    }
 
    @Override

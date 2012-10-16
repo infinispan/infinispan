@@ -26,6 +26,7 @@ import org.infinispan.commands.FlagAffectedCommand;
 import org.infinispan.commands.VisitableCommand;
 import org.infinispan.commands.control.LockControlCommand;
 import org.infinispan.commands.read.GetKeyValueCommand;
+import org.infinispan.commands.tx.AbstractTransactionBoundaryCommand;
 import org.infinispan.commands.tx.CommitCommand;
 import org.infinispan.commands.tx.PrepareCommand;
 import org.infinispan.commands.tx.RollbackCommand;
@@ -104,7 +105,7 @@ public class TxInterceptor extends CommandInterceptor {
    public Object visitPrepareCommand(TxInvocationContext ctx, PrepareCommand command) throws Throwable {
       //if it is remote and 2PC then first log the tx only after replying mods
       if (this.statisticsEnabled) prepares.incrementAndGet();
-      Object result = invokeNextInterceptor(ctx, command);
+      Object result = invokeNextInterceptorAndCheckIfCompleted(ctx, command);
       if (!ctx.isOriginLocal()) {
          if (command.isOnePhaseCommit()) {
             txTable.remoteTransactionCommitted(command.getGlobalTransaction());
@@ -113,6 +114,20 @@ public class TxInterceptor extends CommandInterceptor {
          }
       }
       return result;
+   }
+
+   private Object invokeNextInterceptorAndCheckIfCompleted(TxInvocationContext ctx, AbstractTransactionBoundaryCommand command) throws Throwable {
+      try {
+         return invokeNextInterceptor(ctx, command);
+      } finally {
+         if (!ctx.isOriginLocal() && txTable.isTransactionCompleted(command.getGlobalTransaction())) {
+            log.tracef("Remote transaction %s already completed, rolling back.",
+                       command.getGlobalTransaction());
+            RollbackCommand rollback = new RollbackCommand(command.getCacheName(), command.getGlobalTransaction());
+            invokeNextInterceptor(ctx, rollback);
+            txTable.removeRemoteTransaction(command.getGlobalTransaction());
+         }
+      }
    }
 
    @Override
@@ -142,7 +157,7 @@ public class TxInterceptor extends CommandInterceptor {
          command.setGlobalTransaction(ctx.getGlobalTransaction());
       }
 
-      return invokeNextInterceptor(ctx, command);
+      return invokeNextInterceptorAndCheckIfCompleted(ctx, command);
    }
 
    @Override

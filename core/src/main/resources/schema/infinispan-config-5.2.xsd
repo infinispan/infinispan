@@ -513,6 +513,20 @@
               </xs:documentation>
             </xs:annotation>
           </xs:attribute>
+          <xs:attribute name="completedTxTimeout" type="xs:long">
+            <xs:annotation>
+              <xs:documentation>
+                The duration (millis) in which to keep information about the completion of a transaction. Defaults to 3000.
+              </xs:documentation>
+            </xs:annotation>
+          </xs:attribute>
+          <xs:attribute name="reaperWakeUpInterval" type="xs:long">
+            <xs:annotation>
+              <xs:documentation>
+                The time interval (millis) at which the thread that cleans up transaction completion information kicks in. Defaults to 1000.
+              </xs:documentation>
+            </xs:annotation>
+          </xs:attribute>
           <xs:attribute name="eagerLockSingleNode" type="xs:boolean">
             <xs:annotation>
               <xs:documentation>
