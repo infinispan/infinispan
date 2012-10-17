@@ -113,4 +113,9 @@ public interface Ids {
 
    int STATE_CHUNK = 86;
    int CACHE_JOIN_INFO = 87;
+
+   int EMPTY_SET = 88;
+   int EMPTY_MAP = 89;
+   int EMPTY_LIST = 90;
+
 }

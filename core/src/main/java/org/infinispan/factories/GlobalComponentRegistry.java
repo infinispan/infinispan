@@ -43,6 +43,7 @@ import org.infinispan.notifications.cachemanagerlistener.CacheManagerNotifierImp
 import org.infinispan.remoting.transport.Transport;
 import org.infinispan.topology.ClusterTopologyManager;
 import org.infinispan.topology.LocalTopologyManager;
+import org.infinispan.util.InfinispanCollections;
 import org.infinispan.util.ModuleProperties;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
@@ -130,7 +131,8 @@ public class GlobalComponentRegistry extends AbstractComponentRegistry {
          if (factories != null && !factories.isEmpty())
             registerNonVolatileComponent(factories, KnownComponentNames.MODULE_COMMAND_FACTORIES);
          else
-            registerNonVolatileComponent(Collections.<Object, Object>emptyMap(), KnownComponentNames.MODULE_COMMAND_FACTORIES);
+            registerNonVolatileComponent(
+                  InfinispanCollections.<Object, Object>emptyMap(), KnownComponentNames.MODULE_COMMAND_FACTORIES);
          this.createdCaches = createdCaches;
 
          // This is necessary to make sure the transport has been started and is available to other components that

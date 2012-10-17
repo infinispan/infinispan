@@ -49,6 +49,7 @@ import org.infinispan.transaction.synchronization.SynchronizationAdapter;
 import org.infinispan.transaction.xa.CacheTransaction;
 import org.infinispan.transaction.xa.GlobalTransaction;
 import org.infinispan.transaction.xa.TransactionFactory;
+import org.infinispan.util.InfinispanCollections;
 import org.infinispan.util.Util;
 import org.infinispan.util.concurrent.ConcurrentMapFactory;
 import org.infinispan.util.logging.Log;
@@ -58,13 +59,10 @@ import javax.transaction.Transaction;
 import javax.transaction.TransactionSynchronizationRegistry;
 import java.util.*;
 import java.util.concurrent.ConcurrentMap;
-import java.util.concurrent.Executors;
-import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 
-import static java.util.Collections.emptySet;
 import static org.infinispan.util.Util.currentMillisFromNanotime;
 
 /**
@@ -158,7 +156,7 @@ public class TransactionTable {
 
    public Set<Object> getLockedKeysForRemoteTransaction(GlobalTransaction gtx) {
       RemoteTransaction transaction = remoteTransactions.get(gtx);
-      if (transaction == null) return emptySet();
+      if (transaction == null) return InfinispanCollections.emptySet();
       return transaction.getLockedKeys();
    }
 

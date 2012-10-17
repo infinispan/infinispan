@@ -25,10 +25,12 @@ package org.infinispan.util;
 
 import org.testng.annotations.Test;
 
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.Set;
 
 import static org.testng.AssertJUnit.assertEquals;
+import static org.testng.AssertJUnit.assertFalse;
 import static org.testng.AssertJUnit.assertTrue;
 
 /**
@@ -118,6 +120,21 @@ public class InfinispanCollectionsTest {
 
       Set<String> notRemoved = InfinispanCollections.difference(store, expected);
       assertEquals(0, notRemoved.size());
+   }
+
+   public void testEmptyCollectionsIteratorsSame() {
+      assertTrue(InfinispanCollections.emptySet().iterator()
+            == InfinispanCollections.emptySet().iterator());
+
+      assertTrue(InfinispanCollections.emptyMap().keySet().iterator()
+            == InfinispanCollections.emptyMap().keySet().iterator());
+      assertTrue(InfinispanCollections.emptyMap().values().iterator()
+            == InfinispanCollections.emptyMap().values().iterator());
+      assertTrue(InfinispanCollections.emptyMap().entrySet().iterator()
+            == InfinispanCollections.emptyMap().entrySet().iterator());
+
+      assertTrue(InfinispanCollections.emptyList().iterator()
+            == InfinispanCollections.emptyList().iterator());
    }
 
 }

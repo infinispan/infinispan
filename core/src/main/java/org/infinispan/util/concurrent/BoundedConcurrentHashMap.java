@@ -31,6 +31,7 @@
  */
 
 package org.infinispan.util.concurrent;
+import org.infinispan.util.InfinispanCollections;
 import org.infinispan.util.Util;
 import java.io.IOException;
 import java.io.Serializable;
@@ -392,7 +393,7 @@ public class BoundedConcurrentHashMap<K, V> extends AbstractMap<K, V>
 
       @Override
       public Set<HashEntry<K, V>> execute() {
-         return Collections.emptySet();
+         return InfinispanCollections.emptySet();
       }
 
       @Override
@@ -402,7 +403,7 @@ public class BoundedConcurrentHashMap<K, V> extends AbstractMap<K, V>
 
       @Override
       public Set<HashEntry<K, V>> onEntryMiss(HashEntry<K, V> e) {
-         return Collections.emptySet();
+         return InfinispanCollections.emptySet();
       }
 
       @Override
@@ -471,7 +472,7 @@ public class BoundedConcurrentHashMap<K, V> extends AbstractMap<K, V>
             evicted.clear();
             return evictedCopy;
          } else {
-            return Collections.emptySet();
+            return InfinispanCollections.emptySet();
          }
       }
 
@@ -590,7 +591,7 @@ public class BoundedConcurrentHashMap<K, V> extends AbstractMap<K, V>
             evicted.clear();
             return evictedCopy;
          } else {
-            return Collections.emptySet();
+            return InfinispanCollections.emptySet();
          }
       }
 
@@ -839,7 +840,7 @@ public class BoundedConcurrentHashMap<K, V> extends AbstractMap<K, V>
        * non-resident entry is re-computed.
        */
       private Set<HashEntry<K, V>> miss() {
-         Set<HashEntry<K, V>> evicted = Collections.emptySet();
+         Set<HashEntry<K, V>> evicted = InfinispanCollections.emptySet();
         if (owner.hotSize < owner.maximumHotSize) {
           warmupMiss();
         } else {

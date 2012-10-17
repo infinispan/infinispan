@@ -35,6 +35,7 @@ import org.infinispan.factories.annotations.Stop;
 import org.infinispan.remoting.rpc.ResponseMode;
 import org.infinispan.remoting.rpc.RpcManager;
 import org.infinispan.remoting.transport.Address;
+import org.infinispan.util.InfinispanCollections;
 import org.infinispan.util.concurrent.AggregatingNotifyingFutureImpl;
 import org.infinispan.util.concurrent.ConcurrentMapFactory;
 import org.infinispan.util.concurrent.NoOpFuture;
@@ -176,7 +177,8 @@ public class L1ManagerImpl implements L1Manager {
 
          if (multicast) {
             if (trace) log.tracef("Invalidating keys %s via multicast", keys);
-            final InvalidateCommand ic = commandsFactory.buildInvalidateFromL1Command(origin, false, Collections.<Flag>emptySet(), keys);
+            final InvalidateCommand ic = commandsFactory.buildInvalidateFromL1Command(
+                  origin, false, InfinispanCollections.<Flag>emptySet(), keys);
             if (useNotifyingFuture) {
                NotifyingNotifiableFuture<Object> future = new AggregatingNotifyingFutureImpl(retval, 2);
                rpcManager.broadcastRpcCommandInFuture(ic, future);
@@ -192,7 +194,8 @@ public class L1ManagerImpl implements L1Manager {
             }
          } else {
             final CacheRpcCommand rpc = commandsFactory.buildSingleRpcCommand(
-                  commandsFactory.buildInvalidateFromL1Command(origin, false, Collections.<Flag>emptySet(), keys));
+                  commandsFactory.buildInvalidateFromL1Command(origin, false,
+                        InfinispanCollections.<Flag>emptySet(), keys));
             // Ask the caches who have requested from us to remove
             if (trace) log.tracef("Keys %s needs invalidation on %s", keys, invalidationAddresses);
             if (useNotifyingFuture) {

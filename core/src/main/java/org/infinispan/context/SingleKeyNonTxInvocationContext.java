@@ -25,6 +25,7 @@ package org.infinispan.context;
 
 import org.infinispan.container.entries.CacheEntry;
 import org.infinispan.context.impl.AbstractInvocationContext;
+import org.infinispan.util.InfinispanCollections;
 
 import java.util.Collections;
 import java.util.Map;
@@ -68,7 +69,8 @@ public class SingleKeyNonTxInvocationContext extends AbstractInvocationContext {
 
    @Override
    public Set<Object> getLockedKeys() {
-      return isLocked && key != null ? Collections.singleton(key) : Collections.emptySet();
+      return isLocked && key != null ?
+            Collections.singleton(key) : InfinispanCollections.emptySet();
    }
 
    @Override
@@ -96,7 +98,7 @@ public class SingleKeyNonTxInvocationContext extends AbstractInvocationContext {
 
    @Override
    public Map<Object, CacheEntry> getLookedUpEntries() {
-      return key == null ? Collections.<Object, CacheEntry>emptyMap() : Collections.singletonMap(key, cacheEntry);
+      return key == null ? InfinispanCollections.<Object, CacheEntry>emptyMap() : Collections.singletonMap(key, cacheEntry);
    }
 
    @Override

@@ -46,6 +46,8 @@ public class ObjectDuplicator {
          return (Map<K, V>) ((HashMap<K, V>) original).clone();
       if (original instanceof TreeMap)
          return (Map<K, V>) ((TreeMap<K, V>) original).clone();
+      if (original.getClass().equals(InfinispanCollections.emptyMap().getClass()))
+         return InfinispanCollections.emptyMap();
       if (original.getClass().equals(Collections.emptyMap().getClass()))
          return Collections.emptyMap();
       if (original.getClass().equals(Collections.singletonMap("", "").getClass())) {
@@ -63,6 +65,8 @@ public class ObjectDuplicator {
          return (Set<E>) ((TreeSet<E>) original).clone();
       if (original instanceof FastCopyHashMap.EntrySet || original instanceof FastCopyHashMap.KeySet)
          return new HashSet<E>(original);
+      if (original.getClass().equals(InfinispanCollections.emptySet().getClass()))
+         return InfinispanCollections.emptySet();
       if (original.getClass().equals(Collections.emptySet().getClass()))
          return Collections.emptySet();
       if (original.getClass().equals(Collections.singleton("").getClass()))

@@ -50,6 +50,7 @@ import org.infinispan.loaders.CacheLoaderException;
 import org.infinispan.loaders.CacheLoaderManager;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.remoting.transport.Address;
+import org.infinispan.util.InfinispanCollections;
 import org.infinispan.util.concurrent.ConcurrentMapFactory;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
@@ -326,7 +327,7 @@ public class MapReduceManagerImpl implements MapReduceManager {
       
    @SuppressWarnings("unchecked")
    protected <KIn> Set<KIn> loadAllKeysFromCacheLoaderUsingFilter(Set<KIn> filterOutSet) {      
-      Set<KIn> keysInCL = Collections.<KIn> emptySet();
+      Set<KIn> keysInCL = InfinispanCollections.<KIn>emptySet();
       CacheLoader cl = resolveCacheLoader();
       if (cl != null) {
          try {
