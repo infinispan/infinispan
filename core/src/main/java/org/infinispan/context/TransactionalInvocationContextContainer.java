@@ -20,10 +20,14 @@
 package org.infinispan.context;
 
 import org.infinispan.CacheException;
+import org.infinispan.configuration.cache.ClusterCacheLoaderConfiguration;
+import org.infinispan.configuration.cache.Configuration;
+import org.infinispan.configuration.cache.LoaderConfiguration;
 import org.infinispan.context.impl.LocalTxInvocationContext;
 import org.infinispan.context.impl.NonTxInvocationContext;
 import org.infinispan.context.impl.RemoteTxInvocationContext;
 import org.infinispan.factories.annotations.Inject;
+import org.infinispan.factories.annotations.Start;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.transaction.LocalTransaction;
 import org.infinispan.transaction.RemoteTransaction;
@@ -32,6 +36,7 @@ import org.infinispan.transaction.TransactionTable;
 import javax.transaction.SystemException;
 import javax.transaction.Transaction;
 import javax.transaction.TransactionManager;
+import java.util.List;
 
 /**
  * Invocation context to be used for transactional caches.
@@ -43,11 +48,35 @@ public class TransactionalInvocationContextContainer extends AbstractInvocationC
 
    private TransactionManager tm;
    private TransactionTable transactionTable;
+   private Configuration config;
+   private boolean isThreadLocalRequired;
 
    @Inject
-   public void init(TransactionManager tm, TransactionTable transactionTable) {
+   public void init(TransactionManager tm,
+         TransactionTable transactionTable, Configuration config) {
       this.tm = tm;
       this.transactionTable = transactionTable;
+      this.config = config;
+   }
+
+   @Start
+   public void start() {
+      isThreadLocalRequired =
+            config.clustering().cacheMode().isClustered()
+                  || config.storeAsBinary().enabled()
+                  || hasClusterCacheLoader();
+   }
+
+   private boolean hasClusterCacheLoader() {
+      boolean hasCacheLoaders = config.loaders().usingCacheLoaders();
+      if (hasCacheLoaders) {
+         List<LoaderConfiguration> loaderConfigs = config.loaders().cacheLoaders();
+         for (LoaderConfiguration loaderConfig : loaderConfigs) {
+            if (loaderConfig instanceof ClusterCacheLoaderConfiguration)
+               return true;
+         }
+      }
+      return false;
    }
 
    @Override
@@ -58,9 +87,12 @@ public class TransactionalInvocationContextContainer extends AbstractInvocationC
    @Override
    public InvocationContext createSingleKeyNonTxInvocationContext() {
       InvocationContext ctx = new SingleKeyNonTxInvocationContext(true);
-      ctxHolder.set(ctx);
-      return ctx;
 
+      // Required only for marshaller is required, or cluster cache loader needed
+      if (isThreadLocalRequired)
+         ctxHolder.set(ctx);
+
+      return ctx;
    }
 
    @Override
