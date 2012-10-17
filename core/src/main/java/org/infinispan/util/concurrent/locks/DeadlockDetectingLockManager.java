@@ -79,9 +79,7 @@ public class DeadlockDetectingLockManager extends LockManagerImpl {
    public boolean lockAndRecord(Object key, InvocationContext ctx, long lockTimeout) throws InterruptedException {
       if (trace) log.tracef("Attempting to lock %s with acquisition timeout of %s millis", key, lockTimeout);
 
-
       if (ctx.isInTxScope()) {
-         if (trace) log.trace("Using early dead lock detection");
          final long startNanos = System.nanoTime();
          final long timeoutNanoTime = TimeUnit.NANOSECONDS.convert(lockTimeout, MILLISECONDS) + startNanos;
          DldGlobalTransaction thisTx = (DldGlobalTransaction) ctx.getLockOwner();
@@ -91,12 +89,12 @@ public class DeadlockDetectingLockManager extends LockManagerImpl {
          while (System.nanoTime() < timeoutNanoTime) {
             if (lockContainer.acquireLock(ctx.getLockOwner(), key, spinDuration, MILLISECONDS) != null) {
                thisTx.setLockIntention(null); //clear lock intention
-               if (trace) log.tracef("successfully acquired lock on %s on behalf of %s, returning ...", key, ctx.getLockOwner());
+               if (trace) log.tracef("Successfully acquired lock on %s on behalf of %s.", key, ctx.getLockOwner());
                return true;
             } else {
                Object owner = getOwner(key);
                if (!(owner instanceof DldGlobalTransaction)) {
-                  if (trace) log.tracef("Not running DLD as lock owner(%s) is not a transaction", owner);
+                  if (trace) log.tracef("Not running deadlock detection as lock owner (%s) is not transactional", owner);
                   cannotRunDld.incrementAndGet();
                   continue;
                }
@@ -104,17 +102,15 @@ public class DeadlockDetectingLockManager extends LockManagerImpl {
                if (trace) log.tracef("Could not acquire lock as %s is locked by %s (%s)", key, owner, System.identityHashCode(owner));
                if (isDeadlockAndIAmLoosing(lockOwnerTx, thisTx, key)) {
                   updateStats(thisTx);
-                  String message = String.format("Deadlock found and we %s shall not continue. Other tx is %s",
+                  String message = String.format("Deadlock found and we (%s) shall not continue. Other tx is %s",
                                                  thisTx, lockOwnerTx);
-                  if (trace) log.trace(message);
+                  log.trace(message);
                   throw new DeadlockDetectedException(message);
                }
             }
          }
       } else {
-         if (lockContainer.acquireLock(ctx.getLockOwner(), key, lockTimeout, MILLISECONDS) != null) {
-            return true;
-         }
+         return super.lockAndRecord(key, ctx, lockTimeout);
       }
       // couldn't acquire lock!
       return false;
