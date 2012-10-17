@@ -24,13 +24,11 @@ package org.infinispan.server.websocket;
 
 import static org.jboss.netty.handler.codec.http.HttpHeaders.*;
 import static org.jboss.netty.handler.codec.http.HttpHeaders.Names.*;
-import static org.jboss.netty.handler.codec.http.HttpHeaders.Values.*;
 import static org.jboss.netty.handler.codec.http.HttpMethod.*;
 import static org.jboss.netty.handler.codec.http.HttpResponseStatus.*;
 import static org.jboss.netty.handler.codec.http.HttpVersion.*;
 
 import java.io.StringWriter;
-import java.security.MessageDigest;
 import java.util.Map;
 
 import org.infinispan.Cache;
@@ -41,6 +39,7 @@ import org.jboss.netty.channel.ChannelFuture;
 import org.jboss.netty.channel.ChannelFutureListener;
 import org.jboss.netty.channel.ChannelHandlerContext;
 import org.jboss.netty.channel.ChannelPipeline;
+import org.jboss.netty.channel.Channels;
 import org.jboss.netty.channel.ExceptionEvent;
 import org.jboss.netty.channel.MessageEvent;
 import org.jboss.netty.channel.SimpleChannelUpstreamHandler;
@@ -48,12 +47,12 @@ import org.jboss.netty.handler.codec.http.DefaultHttpResponse;
 import org.jboss.netty.handler.codec.http.HttpHeaders;
 import org.jboss.netty.handler.codec.http.HttpRequest;
 import org.jboss.netty.handler.codec.http.HttpResponse;
-import org.jboss.netty.handler.codec.http.HttpResponseStatus;
-import org.jboss.netty.handler.codec.http.HttpHeaders.Names;
-import org.jboss.netty.handler.codec.http.HttpHeaders.Values;
-import org.jboss.netty.handler.codec.http.websocket.WebSocketFrame;
-import org.jboss.netty.handler.codec.http.websocket.WebSocketFrameDecoder;
-import org.jboss.netty.handler.codec.http.websocket.WebSocketFrameEncoder;
+import org.jboss.netty.handler.codec.http.websocketx.CloseWebSocketFrame;
+import org.jboss.netty.handler.codec.http.websocketx.PingWebSocketFrame;
+import org.jboss.netty.handler.codec.http.websocketx.PongWebSocketFrame;
+import org.jboss.netty.handler.codec.http.websocketx.WebSocketFrame;
+import org.jboss.netty.handler.codec.http.websocketx.WebSocketServerHandshaker;
+import org.jboss.netty.handler.codec.http.websocketx.WebSocketServerHandshakerFactory;
 import org.jboss.netty.util.CharsetUtil;
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -70,7 +69,8 @@ public class WebSocketServerHandler extends SimpleChannelUpstreamHandler {
    private Map<String, OpHandler> operationHandlers;
    private boolean connectionUpgraded;
    private Map<String, Cache> startedCaches;
-
+   private WebSocketServerHandshaker handshaker;
+   
    public WebSocketServerHandler(CacheContainer cacheContainer, Map<String, OpHandler> operationHandlers, Map<String, Cache> startedCaches) {
       this.cacheContainer = cacheContainer;
       this.operationHandlers = operationHandlers;
@@ -99,76 +99,62 @@ public class WebSocketServerHandler extends SimpleChannelUpstreamHandler {
          loadScriptToResponse(req, res);
          sendHttpResponse(ctx, req, res);
          return;
-      } else if (Values.UPGRADE.equalsIgnoreCase(req.getHeader(CONNECTION)) &&
-            WEBSOCKET.equalsIgnoreCase(req.getHeader(Names.UPGRADE))) {
-         // Serve the WebSocket handshake request.
-         // Create the WebSocket handshake response.
-         HttpResponse res = new DefaultHttpResponse(HTTP_1_1, new HttpResponseStatus(101, "Web Socket Protocol Handshake"));
-         res.addHeader(Names.UPGRADE, Values.WEBSOCKET);
-         res.addHeader(Names.CONNECTION, Values.UPGRADE);
-
-         // Fill in the headers and contents depending on handshake method.
-         if (req.containsHeader(Names.SEC_WEBSOCKET_KEY1) &&
-            req.containsHeader(Names.SEC_WEBSOCKET_KEY2)) {
-            // New handshake method with a challenge:
-            res.addHeader(Names.SEC_WEBSOCKET_ORIGIN, req.getHeader(Names.ORIGIN));
-            res.addHeader(Names.SEC_WEBSOCKET_LOCATION, getWebSocketLocation(req));
-            String protocol = req.getHeader(Names.SEC_WEBSOCKET_PROTOCOL);
-            if (protocol != null) {
-               res.addHeader(Names.SEC_WEBSOCKET_PROTOCOL, protocol);
-            }
-
-            // Calculate the answer of the challenge.
-            String key1 = req.getHeader(Names.SEC_WEBSOCKET_KEY1);
-            String key2 = req.getHeader(Names.SEC_WEBSOCKET_KEY2);
-            int a = (int) (Long.parseLong(key1.replaceAll("[^0-9]", "")) / key1.replaceAll("[^ ]", "").length());
-            int b = (int) (Long.parseLong(key2.replaceAll("[^0-9]", "")) / key2.replaceAll("[^ ]", "").length());
-            long c = req.getContent().readLong();
-            ChannelBuffer input = ChannelBuffers.buffer(16);
-            input.writeInt(a);
-            input.writeInt(b);
-            input.writeLong(c);
-            ChannelBuffer output = ChannelBuffers.wrappedBuffer(
-                    MessageDigest.getInstance("MD5").digest(input.array()));
-            res.setContent(output);
-         } else {
-            // Old handshake method with no challenge:
-            res.addHeader(Names.WEBSOCKET_ORIGIN, req.getHeader(Names.ORIGIN));
-            res.addHeader(Names.WEBSOCKET_LOCATION, getWebSocketLocation(req));
-            String protocol = req.getHeader(Names.WEBSOCKET_PROTOCOL);
-            if (protocol != null) {
-               res.addHeader(Names.WEBSOCKET_PROTOCOL, protocol);
-            }
-         }
-
+      } else {
+          // Handshake
+          WebSocketServerHandshakerFactory wsFactory = new WebSocketServerHandshakerFactory(
+                  getWebSocketLocation(req), null, false);
+          handshaker = wsFactory.newHandshaker(req);
+          // Check if we can find the right handshaker for the requested version
+          if (handshaker == null) {
+              wsFactory.sendUnsupportedWebSocketVersionResponse(ctx.getChannel());
+          } else {
+              // fuehre den Handshake
+              handshaker.handshake(ctx.getChannel(), req).addListener(new ChannelFutureListener() {
+                  @Override
+                  public void operationComplete(ChannelFuture future) throws Exception {
+                      if(!future.isSuccess()) {
+                          // Handshake failed with an Exception, forward it to the other handlers in the chain
+                          Channels.fireExceptionCaught(future.getChannel(), future.getCause());
+                      } else {
+                         connectionUpgraded = true;
+                      }
+                  }
+              });
+          }
          // Upgrade the connection and send the handshake response.
          ChannelPipeline p = ctx.getChannel().getPipeline();
          p.remove("aggregator");
-         p.replace("decoder", "wsdecoder", new WebSocketFrameDecoder());
-
-         ctx.getChannel().write(res);
-
-         p.replace("encoder", "wsencoder", new WebSocketFrameEncoder());
          return;
       }
-
-      // Send an error page otherwise.
-      sendHttpResponse(ctx, req, new DefaultHttpResponse(HTTP_1_1, FORBIDDEN));
    }
 
    private void handleWebSocketFrame(ChannelHandlerContext ctx, WebSocketFrame frame) {
-      try {
-         JSONObject payload = new JSONObject(frame.getTextData());
-         String opCode = (String) payload.get(OpHandler.OP_CODE);
-         String cacheName = (String) payload.opt(OpHandler.CACHE_NAME);
-         Cache<Object, Object> cache = getCache(cacheName);
-
-         OpHandler handler = operationHandlers.get(opCode);
-         if (handler != null) {
-            handler.handleOp(payload, cache, ctx);
-         }
-      } catch (JSONException e) {
+      if (frame instanceof PingWebSocketFrame) {
+         // received a ping, so write back a pong
+         ctx.getChannel().write(new PongWebSocketFrame(frame.getBinaryData()));
+      } else if (frame instanceof CloseWebSocketFrame) {
+         // request to close the connection
+         handshaker.close(ctx.getChannel(), (CloseWebSocketFrame) frame);
+      } else {
+         try {
+            ChannelBuffer binaryData = frame.getBinaryData();
+            if (binaryData == null) {
+               return;
+            }
+            JSONObject payload = new JSONObject(binaryData.toString(CharsetUtil.UTF_8));
+            String opCode = (String) payload.get(OpHandler.OP_CODE);
+            String cacheName = (String) payload.opt(OpHandler.CACHE_NAME);
+            Cache<Object, Object> cache = getCache(cacheName);
+            
+            OpHandler handler = operationHandlers.get(opCode);
+            if (handler != null) {
+               handler.handleOp(payload, cache, ctx);
+            }
+          } catch (JSONException e) {
+             // ignore
+          }
       }
+      
    }
 
    private Cache<Object, Object> getCache(final String cacheName) {

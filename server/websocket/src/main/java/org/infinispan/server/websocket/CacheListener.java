@@ -39,7 +39,7 @@ import org.infinispan.notifications.cachelistener.event.Event;
 import org.jboss.netty.channel.Channel;
 import org.jboss.netty.channel.ChannelFuture;
 import org.jboss.netty.channel.ChannelFutureListener;
-import org.jboss.netty.handler.codec.http.websocket.DefaultWebSocketFrame;
+import org.jboss.netty.handler.codec.http.websocketx.TextWebSocketFrame;
 import org.json.JSONException;
 import org.json.JSONObject;
 
@@ -109,10 +109,10 @@ public class CacheListener {
 			if(channel.channel.isOpen() && channel.onEvents.contains(eventType)) {
 				if(channel.key != null) {
 					if(event.getKey().equals(channel.key) || channel.key.equals("*")) {
-						channel.channel.write(new DefaultWebSocketFrame(jsonString));
+						channel.channel.write(new TextWebSocketFrame(jsonString));
 					}
 				} else {					
-					channel.channel.write(new DefaultWebSocketFrame(jsonString));
+					channel.channel.write(new TextWebSocketFrame(jsonString));
 				}
 			}
 		}
