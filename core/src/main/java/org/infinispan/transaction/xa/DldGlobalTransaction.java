@@ -24,6 +24,7 @@ package org.infinispan.transaction.xa;
 
 import org.infinispan.marshall.Ids;
 import org.infinispan.remoting.transport.Address;
+import org.infinispan.util.InfinispanCollections;
 import org.infinispan.util.Util;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
@@ -33,8 +34,6 @@ import java.io.ObjectInput;
 import java.io.ObjectOutput;
 import java.util.Collection;
 import java.util.Set;
-
-import static java.util.Collections.emptySet;
 
 /**
  * This class is used when deadlock detection is enabled.
@@ -51,9 +50,11 @@ public class DldGlobalTransaction extends GlobalTransaction {
 
    protected transient volatile Object localLockIntention;
 
-   protected volatile Collection<Object> remoteLockIntention = emptySet();
+   protected volatile Collection<Object> remoteLockIntention =
+         InfinispanCollections.emptySet();
 
-   protected volatile Set<Object> locksAtOrigin = emptySet();
+   protected volatile Set<Object> locksAtOrigin =
+         InfinispanCollections.emptySet();
 
    public DldGlobalTransaction() {
    }
@@ -176,7 +177,7 @@ public class DldGlobalTransaction extends GlobalTransaction {
          ddGt.setCoinToss(input.readLong());
          Object locksAtOriginObj = input.readObject();
          if (locksAtOriginObj == null) {
-            ddGt.setLocksHeldAtOrigin(emptySet());
+            ddGt.setLocksHeldAtOrigin(InfinispanCollections.emptySet());
          } else {
             ddGt.setLocksHeldAtOrigin((Set<Object>) locksAtOriginObj);
          }

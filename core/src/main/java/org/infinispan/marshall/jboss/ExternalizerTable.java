@@ -94,6 +94,7 @@ import org.infinispan.transaction.xa.recovery.SerializableXid;
 import org.infinispan.util.ByteArrayKey;
 import org.infinispan.util.Immutables;
 import org.infinispan.util.Util;
+import org.infinispan.util.InfinispanCollections;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 import org.jboss.marshalling.Marshaller;
@@ -299,6 +300,10 @@ public class ExternalizerTable implements ObjectTable {
       addInternalExternalizer(new LockInfo.Externalizer());
 
       addInternalExternalizer(new Flag.Externalizer());
+
+      addInternalExternalizer(new InfinispanCollections.EmptySet.EmptySetExternalizer());
+      addInternalExternalizer(new InfinispanCollections.EmptyMap.EmptyMapExternalizer());
+      addInternalExternalizer(new InfinispanCollections.EmptyList.EmptyListExternalizer());
    }
 
    void addInternalExternalizer(AdvancedExternalizer<?> ext) {

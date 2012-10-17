@@ -35,6 +35,7 @@ import org.infinispan.notifications.cachelistener.CacheNotifier;
 import org.infinispan.transaction.RemoteTransaction;
 import org.infinispan.transaction.xa.GlobalTransaction;
 import org.infinispan.transaction.xa.recovery.RecoveryManager;
+import org.infinispan.util.InfinispanCollections;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
@@ -210,7 +211,9 @@ public class PrepareCommand extends AbstractTransactionBoundaryCommand {
    }
 
    public Set<Object> getAffectedKeys() {
-      if (modifications == null || modifications.length == 0) return Collections.emptySet();
+      if (modifications == null || modifications.length == 0)
+         return InfinispanCollections.emptySet();
+
       if (modifications.length == 1) return modifications[0].getAffectedKeys();
       Set<Object> keys = new HashSet<Object>(modifications.length);
       for (WriteCommand wc: modifications) keys.addAll(wc.getAffectedKeys());

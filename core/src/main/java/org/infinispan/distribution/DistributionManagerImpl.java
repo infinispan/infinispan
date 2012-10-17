@@ -47,6 +47,7 @@ import org.infinispan.remoting.transport.Address;
 import org.infinispan.statetransfer.StateTransferManager;
 import org.infinispan.transaction.xa.GlobalTransaction;
 import org.infinispan.util.Immutables;
+import org.infinispan.util.InfinispanCollections;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 import org.rhq.helpers.pluginAnnotations.agent.Operation;
@@ -231,7 +232,7 @@ public class DistributionManagerImpl implements DistributionManager {
    public Collection<Address> getAffectedNodes(Collection<Object> affectedKeys) {
       if (affectedKeys == null || affectedKeys.isEmpty()) {
          if (trace) log.trace("affected keys are empty");
-         return Collections.emptyList();
+         return InfinispanCollections.emptyList();
       }
 
       Set<Address> an = new HashSet<Address>();

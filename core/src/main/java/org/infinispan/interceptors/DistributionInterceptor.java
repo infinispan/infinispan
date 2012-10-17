@@ -55,6 +55,7 @@ import org.infinispan.remoting.transport.jgroups.SuspectException;
 import org.infinispan.statetransfer.StateTransferLock;
 import org.infinispan.transaction.LockingMode;
 import org.infinispan.util.Immutables;
+import org.infinispan.util.InfinispanCollections;
 import org.infinispan.util.concurrent.NotifyingFutureImpl;
 import org.infinispan.util.concurrent.NotifyingNotifiableFuture;
 import org.infinispan.util.concurrent.locks.LockManager;
@@ -99,7 +100,7 @@ public class DistributionInterceptor extends BaseRpcInterceptor {
 
       @Override
       public Collection<Object> getKeys() {
-         return Collections.emptySet();
+         return InfinispanCollections.emptySet();
       }
    };
    private boolean isPessimisticCache;

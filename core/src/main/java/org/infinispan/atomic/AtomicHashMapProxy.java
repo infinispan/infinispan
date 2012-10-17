@@ -30,6 +30,7 @@ import org.infinispan.context.FlagContainer;
 import org.infinispan.marshall.MarshalledValue;
 import org.infinispan.transaction.LocalTransaction;
 import org.infinispan.transaction.TransactionTable;
+import org.infinispan.util.InfinispanCollections;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
@@ -174,19 +175,20 @@ public class AtomicHashMapProxy<K, V> extends AutoBatchSupport implements Atomic
    @Override
    public Set<K> keySet() {
       AtomicHashMap<K, V> map = getDeltaMapForRead();
-      return map == null ? Collections.<K>emptySet() : map.keySet();
+      return map == null ? InfinispanCollections.<K>emptySet() : map.keySet();
    }
 
    @Override
    public Collection<V> values() {
       AtomicHashMap<K, V> map = getDeltaMapForRead();
-      return map == null ? Collections.<V>emptySet() : map.values();
+      return map == null ? InfinispanCollections.<V>emptySet() : map.values();
    }
 
    @Override
    public Set<Entry<K, V>> entrySet() {
       AtomicHashMap<K, V> map = getDeltaMapForRead();
-      return map == null ? Collections.<Entry<K,V>>emptySet() : map.entrySet();
+      return map == null ? InfinispanCollections.<Entry<K,V>>emptySet() :
+            map.entrySet();
    }
 
    @Override

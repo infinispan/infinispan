@@ -46,13 +46,13 @@ import java.util.TreeSet;
  */
 @Immutable
 public class SetExternalizer extends AbstractExternalizer<Set> {
-   private static final int HASHSET = 0;
-   private static final int TREESET = 1;
+   private static final int HASH_SET = 0;
+   private static final int TREE_SET = 1;
    private final IdentityIntMap<Class<?>> numbers = new IdentityIntMap<Class<?>>(2);
    
    public SetExternalizer() {
-      numbers.put(HashSet.class, HASHSET);
-      numbers.put(TreeSet.class, TREESET);
+      numbers.put(HashSet.class, HASH_SET);
+      numbers.put(TreeSet.class, TREE_SET);
    }
 
    @Override
@@ -67,10 +67,10 @@ public class SetExternalizer extends AbstractExternalizer<Set> {
       int magicNumber = input.readUnsignedByte();
       Set<Object> subject = null;
       switch (magicNumber) {
-         case HASHSET:
+         case HASH_SET:
             subject = new HashSet();
             break;
-         case TREESET:
+         case TREE_SET:
             subject = new TreeSet();
             break;
       }
@@ -88,4 +88,5 @@ public class SetExternalizer extends AbstractExternalizer<Set> {
    public Set<Class<? extends Set>> getTypeClasses() {
       return Util.<Class<? extends Set>>asSet(HashSet.class, TreeSet.class);
    }
+
 }

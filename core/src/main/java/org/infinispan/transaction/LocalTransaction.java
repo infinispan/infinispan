@@ -28,6 +28,7 @@ import org.infinispan.commands.write.WriteCommand;
 import org.infinispan.container.entries.CacheEntry;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.transaction.xa.GlobalTransaction;
+import org.infinispan.util.InfinispanCollections;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
@@ -85,7 +86,7 @@ public abstract class LocalTransaction extends AbstractCacheTransaction {
    }
 
    public Collection<Address> getRemoteLocksAcquired(){
-	   if (remoteLockedNodes == null) return Collections.emptySet();
+	   if (remoteLockedNodes == null) return InfinispanCollections.emptySet();
 	   return remoteLockedNodes;
    }
 
@@ -108,7 +109,7 @@ public abstract class LocalTransaction extends AbstractCacheTransaction {
    @Override
    public Map<Object, CacheEntry> getLookedUpEntries() {
       return (Map<Object, CacheEntry>)
-            (lookedUpEntries == null ? Collections.emptyMap() : lookedUpEntries);
+            (lookedUpEntries == null ? InfinispanCollections.emptyMap() : lookedUpEntries);
    }
 
    public boolean isImplicitTransaction() {

@@ -32,6 +32,7 @@ import org.infinispan.context.impl.RemoteTxInvocationContext;
 import org.infinispan.context.impl.TxInvocationContext;
 import org.infinispan.transaction.RemoteTransaction;
 import org.infinispan.transaction.xa.GlobalTransaction;
+import org.infinispan.util.InfinispanCollections;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
@@ -76,7 +77,7 @@ public class LockControlCommand extends AbstractTransactionBoundaryCommand imple
          //building defensive copies is here in order to support replaceKey operation
          this.keys = new ArrayList<Object>(keys);
       } else {
-         this.keys = Collections.emptyList();
+         this.keys = InfinispanCollections.emptyList();
       }
       this.flags = flags;
       this.globalTx = gtx;

@@ -47,6 +47,7 @@ import org.infinispan.transaction.TransactionMode;
 import org.infinispan.transaction.lookup.GenericTransactionManagerLookup;
 import org.infinispan.transaction.lookup.TransactionManagerLookup;
 import org.infinispan.transaction.lookup.TransactionSynchronizationRegistryLookup;
+import org.infinispan.util.InfinispanCollections;
 import org.infinispan.util.TypedProperties;
 import org.infinispan.util.Util;
 import org.infinispan.util.concurrent.IsolationLevel;
@@ -1682,7 +1683,9 @@ public class Configuration extends AbstractNamedCacheConfigurationBean {
     */
    @SuppressWarnings("unchecked")
    public List<CustomInterceptorConfig> getCustomInterceptors() {
-      return customInterceptors.customInterceptors == null ? Collections.<CustomInterceptorConfig>emptyList() : customInterceptors.customInterceptors;
+      return customInterceptors.customInterceptors == null
+            ? InfinispanCollections.<CustomInterceptorConfig>emptyList()
+            : customInterceptors.customInterceptors;
    }
 
    public boolean isStoreKeysAsBinary() {
