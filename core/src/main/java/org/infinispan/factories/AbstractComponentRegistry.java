@@ -272,6 +272,10 @@ public abstract class AbstractComponentRegistry implements Lifecycle, Cloneable 
       return getOrCreateComponent(componentClass, componentClass.getName(), true);
    }
 
+   protected <T> T getOrCreateComponent(Class<T> componentClass, String name) {
+      return getOrCreateComponent(componentClass, name, false);
+   }
+
    @SuppressWarnings("unchecked")
    protected <T> T getOrCreateComponent(Class<T> componentClass, String name, boolean nameIsFQCN) {
       if (DEBUG_DEPENDENCIES) debugStack.push(name);
@@ -498,6 +502,7 @@ public abstract class AbstractComponentRegistry implements Lifecycle, Cloneable 
       for (Component c : new HashSet<Component>(componentLookup.values())) {
          // the component is volatile!!
          if (!c.metadata.isSurvivesRestarts()) {
+            getLog().tracef("Removing volatile component %s", c.name);
             componentLookup.remove(c.name);
          }
       }

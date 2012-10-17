@@ -121,7 +121,13 @@ public class TestObjectStreamMarshaller extends AbstractMarshaller implements St
    }
 
    @Override
-   public void stop() {      
-      
+   public void stop() {
+      //No-op
    }
+
+   @Override
+   public void start() {
+      //No-op
+   }
+
 }

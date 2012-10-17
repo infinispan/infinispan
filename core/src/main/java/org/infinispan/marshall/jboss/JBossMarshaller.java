@@ -22,6 +22,7 @@
  */
 package org.infinispan.marshall.jboss;
 
+import org.infinispan.config.Configuration;
 import org.infinispan.config.GlobalConfiguration;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.context.InvocationContextContainer;
@@ -48,17 +49,30 @@ import org.jboss.marshalling.ClassResolver;
 public final class JBossMarshaller extends AbstractJBossMarshaller implements StreamingMarshaller {
 
    ExternalizerTable externalizerTable;
+   GlobalConfiguration globalCfg;
+   Configuration cfg;
+   InvocationContextContainer icc;
 
-   public void inject(ExternalizerTable externalizerTable, ClassLoader cl,
+   public void inject(ExternalizerTable externalizerTable, Configuration cfg,
          InvocationContextContainer icc, GlobalConfiguration globalCfg) {
       log.debug("Using JBoss Marshalling");
       this.externalizerTable = externalizerTable;
+      this.globalCfg = globalCfg;
+      this.cfg = cfg;
+      this.icc = icc;
+   }
+
+   @Override
+   public void start() {
+      super.start();
+
       baseCfg.setObjectTable(externalizerTable);
 
       ClassResolver classResolver = globalCfg.getClassResolver();
       if (classResolver == null) {
          // Override the class resolver with one that can detect injected
          // classloaders via AdvancedCache.with(ClassLoader) calls.
+         ClassLoader cl = cfg == null ? globalCfg.getClassLoader() : cfg.getClassLoader();
          classResolver = new EmbeddedContextClassResolver(cl, icc);
       }
 

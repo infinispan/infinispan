@@ -167,6 +167,7 @@ public final class ComponentRegistry extends AbstractComponentRegistry {
 
       // set this up *before* starting the components since some components - specifically state transfer - needs to be
       // able to locate this registry via the InboundInvocationHandler
+      cacheComponents();
       this.globalComponents.registerNamedComponentRegistry(this, cacheName);
 
       // Cache starting notification happens earlier in the call stack trace
@@ -240,10 +241,10 @@ public final class ComponentRegistry extends AbstractComponentRegistry {
    /**
     * Invoked last after all services are wired
     */
-   public void prepareWiringCache() {
-      cacheMarshaler = getComponent(StreamingMarshaller.class, KnownComponentNames.CACHE_MARSHALLER);
-      stateTransferManager = getComponent(StateTransferManager.class);
-      responseGenerator = getComponent(ResponseGenerator.class);
+   public void cacheComponents() {
+      cacheMarshaler = getOrCreateComponent(StreamingMarshaller.class, KnownComponentNames.CACHE_MARSHALLER);
+      stateTransferManager = getOrCreateComponent(StateTransferManager.class);
+      responseGenerator = getOrCreateComponent(ResponseGenerator.class);
       commandsFactory = getLocalComponent(CommandsFactory.class);
    }
 
