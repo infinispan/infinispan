@@ -26,6 +26,7 @@ import java.util.List;
 import org.infinispan.distribution.ch.ConsistentHash;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.util.Immutables;
+import org.infinispan.util.InfinispanCollections;
 
 /**
 * Keeps track of a cache's status: members, current/pending consistent hashes, and rebalance status
@@ -50,8 +51,8 @@ class ClusterCacheStatus {
       this.joinInfo = joinInfo;
 
       this.cacheTopology = new CacheTopology(-1, null, null);
-      this.members = Collections.emptyList();
-      this.joiners = Collections.emptyList();
+      this.members = InfinispanCollections.emptyList();
+      this.joiners = InfinispanCollections.emptyList();
    }
 
    public CacheJoinInfo getJoinInfo() {

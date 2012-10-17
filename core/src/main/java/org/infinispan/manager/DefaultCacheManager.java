@@ -55,6 +55,7 @@ import org.infinispan.remoting.transport.Address;
 import org.infinispan.remoting.transport.Transport;
 import org.infinispan.util.FileLookupFactory;
 import org.infinispan.util.Immutables;
+import org.infinispan.util.InfinispanCollections;
 import org.infinispan.util.concurrent.ConcurrentMapFactory;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
@@ -813,7 +814,7 @@ public class DefaultCacheManager implements EmbeddedCacheManager, CacheManager {
       names.addAll(Immutables.immutableSetConvert(caches.keySet()));
       names.remove(DEFAULT_CACHE_NAME);
       if (names.isEmpty())
-         return Collections.emptySet();
+         return InfinispanCollections.emptySet();
       else
          return Immutables.immutableSetWrap(names);
    }

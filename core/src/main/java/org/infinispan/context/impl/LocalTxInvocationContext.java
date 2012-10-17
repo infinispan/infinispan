@@ -28,6 +28,7 @@ import org.infinispan.remoting.transport.Address;
 import org.infinispan.transaction.AbstractCacheTransaction;
 import org.infinispan.transaction.LocalTransaction;
 import org.infinispan.transaction.xa.GlobalTransaction;
+import org.infinispan.util.InfinispanCollections;
 
 import javax.transaction.Status;
 import javax.transaction.SystemException;
@@ -140,7 +141,8 @@ public class LocalTxInvocationContext extends AbstractTxInvocationContext {
 
    @Override
    public Set<Object> getLockedKeys() {
-      return localTransaction == null ? Collections.emptySet() : localTransaction.getLockedKeys();
+      return localTransaction == null ?
+            InfinispanCollections.emptySet() : localTransaction.getLockedKeys();
    }
 
    @Override

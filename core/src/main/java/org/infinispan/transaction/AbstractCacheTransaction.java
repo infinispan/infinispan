@@ -38,6 +38,7 @@ import org.infinispan.container.entries.CacheEntry;
 import org.infinispan.container.versioning.EntryVersionsMap;
 import org.infinispan.transaction.xa.CacheTransaction;
 import org.infinispan.transaction.xa.GlobalTransaction;
+import org.infinispan.util.InfinispanCollections;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
@@ -178,12 +179,13 @@ public abstract class AbstractCacheTransaction implements CacheTransaction {
 
    @Override
    public Set<Object> getLockedKeys() {
-      return lockedKeys == null ? Collections.emptySet() : lockedKeys;
+      return lockedKeys == null ? InfinispanCollections.emptySet() : lockedKeys;
    }
 
    @Override
    public Set<Object> getBackupLockedKeys() {
-      return backupKeyLocks == null ? Collections.emptySet() : backupKeyLocks;
+      return backupKeyLocks == null ?
+            InfinispanCollections.emptySet() : backupKeyLocks;
    }
 
    @Override
@@ -197,7 +199,7 @@ public abstract class AbstractCacheTransaction implements CacheTransaction {
    }
 
    public Set<Object> getAffectedKeys() {
-      return affectedKeys == null ? Collections.emptySet() : affectedKeys;
+      return affectedKeys == null ? InfinispanCollections.emptySet() : affectedKeys;
    }
 
    public void addAffectedKey(Object key) {

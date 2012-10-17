@@ -33,6 +33,7 @@ import org.infinispan.factories.components.ComponentMetadataRepo;
 import org.infinispan.factories.scopes.Scope;
 import org.infinispan.factories.scopes.Scopes;
 import org.infinispan.interceptors.base.CommandInterceptor;
+import org.infinispan.util.InfinispanCollections;
 import org.infinispan.util.ReflectionUtil;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
@@ -187,7 +188,7 @@ public class InterceptorChain {
     * returned.
     */
    public List<CommandInterceptor> asList() {
-      if (firstInChain == null) return Collections.emptyList();
+      if (firstInChain == null) return InfinispanCollections.emptyList();
 
       List<CommandInterceptor> retval = new LinkedList<CommandInterceptor>();
       CommandInterceptor tmp = firstInChain;

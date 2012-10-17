@@ -23,6 +23,7 @@ import org.infinispan.CacheException;
 import org.infinispan.container.entries.CacheEntry;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.remoting.transport.Address;
+import org.infinispan.util.InfinispanCollections;
 
 import java.util.Collections;
 import java.util.Map;
@@ -49,7 +50,7 @@ public final class ImmutableContext implements InvocationContext {
 
    @Override
    public Map<Object, CacheEntry> getLookedUpEntries() {
-      return Collections.emptyMap();
+      return InfinispanCollections.emptyMap();
    }
 
    @Override
@@ -108,7 +109,7 @@ public final class ImmutableContext implements InvocationContext {
 
    @Override
    public Set<Object> getLockedKeys() {
-      return Collections.emptySet();
+      return InfinispanCollections.emptySet();
    }
 
    @Override

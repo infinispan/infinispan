@@ -26,6 +26,7 @@ package org.infinispan.transaction.xa.recovery;
 import org.infinispan.marshall.AbstractExternalizer;
 import org.infinispan.marshall.Ids;
 import org.infinispan.remoting.transport.Address;
+import org.infinispan.util.InfinispanCollections;
 import org.infinispan.util.Util;
 
 import javax.transaction.xa.Xid;
@@ -60,7 +61,7 @@ public class InDoubtTxInfoImpl implements RecoveryManager.InDoubtTxInfo {
    }
 
    public InDoubtTxInfoImpl(Xid xid, long internalId) {
-      this(xid, internalId, Collections.<Integer>emptySet());
+      this(xid, internalId, InfinispanCollections.<Integer>emptySet());
    }
 
    @Override

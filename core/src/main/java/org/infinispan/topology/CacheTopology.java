@@ -11,6 +11,7 @@ import org.infinispan.distribution.ch.ConsistentHash;
 import org.infinispan.marshall.AbstractExternalizer;
 import org.infinispan.marshall.Ids;
 import org.infinispan.remoting.transport.Address;
+import org.infinispan.util.InfinispanCollections;
 
 /**
  * The status of a cache from a distribution/state transfer point of view.
@@ -59,7 +60,7 @@ public class CacheTopology {
       else if (currentCH != null)
          return currentCH.getMembers();
       else
-         return Collections.emptyList();
+         return InfinispanCollections.emptyList();
    }
 
    /**

@@ -43,6 +43,7 @@ import org.infinispan.interceptors.base.CommandInterceptor;
 import org.infinispan.marshall.MarshalledValue;
 import org.infinispan.marshall.StreamingMarshaller;
 import org.infinispan.util.Immutables;
+import org.infinispan.util.InfinispanCollections;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
@@ -333,7 +334,7 @@ public class MarshalledValueInterceptor extends CommandInterceptor {
    protected Map<Object, Object> wrapMap(Map<Object, Object> m, Set<MarshalledValue> marshalledValues, InvocationContext ctx) {
       if (m == null) {
          if (trace) log.trace("Map is nul; returning an empty map.");
-         return Collections.emptyMap();
+         return InfinispanCollections.emptyMap();
       }
       if (trace) log.tracef("Wrapping map contents of argument %s", m);
       Map<Object, Object> copy = new HashMap(m.size());

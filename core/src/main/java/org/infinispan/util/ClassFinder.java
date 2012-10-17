@@ -105,7 +105,7 @@ public class ClassFinder {
       }
       log.debugf("Looking for infinispan classes in %s", files);
       if (files.isEmpty()) {
-         return Collections.emptyList();
+         return InfinispanCollections.emptyList();
       } else {
          Set<Class<?>> classFiles = new HashSet<Class<?>>();
          for (File file : files) {

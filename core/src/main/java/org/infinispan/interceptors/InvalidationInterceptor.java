@@ -46,6 +46,7 @@ import org.infinispan.jmx.annotations.MBean;
 import org.infinispan.jmx.annotations.ManagedAttribute;
 import org.infinispan.jmx.annotations.ManagedOperation;
 import org.infinispan.transaction.xa.GlobalTransaction;
+import org.infinispan.util.InfinispanCollections;
 import org.infinispan.util.concurrent.NotifyingFutureImpl;
 import org.infinispan.util.concurrent.NotifyingNotifiableFuture;
 import org.infinispan.util.logging.Log;
@@ -244,7 +245,8 @@ public class InvalidationInterceptor extends BaseRpcInterceptor {
          boolean useFuture, Object retvalForFuture) throws Throwable {
       // increment invalidations counter if statistics maintained
       incrementInvalidations();
-      final InvalidateCommand command = commandsFactory.buildInvalidateCommand(Collections.<Flag>emptySet(), keys);
+      final InvalidateCommand command = commandsFactory.buildInvalidateCommand(
+            InfinispanCollections.<Flag>emptySet(), keys);
       if (log.isDebugEnabled())
          log.debug("Cache [" + rpcManager.getTransport().getAddress() + "] replicating " + command);
       // voila, invalidated!
