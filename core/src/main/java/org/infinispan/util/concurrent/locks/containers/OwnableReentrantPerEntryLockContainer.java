@@ -23,6 +23,9 @@
 package org.infinispan.util.concurrent.locks.containers;
 
 import org.infinispan.util.concurrent.locks.OwnableReentrantLock;
+import org.infinispan.util.concurrent.locks.OwnableRefCountingReentrantLock;
+import org.infinispan.util.logging.Log;
+import org.infinispan.util.logging.LogFactory;
 
 import java.util.concurrent.TimeUnit;
 
@@ -32,15 +35,22 @@ import java.util.concurrent.TimeUnit;
  * @author Manik Surtani
  * @since 4.0
  */
-public class OwnableReentrantPerEntryLockContainer extends AbstractPerEntryLockContainer<OwnableReentrantLock> {
+public class OwnableReentrantPerEntryLockContainer extends AbstractPerEntryLockContainer<OwnableRefCountingReentrantLock> {
+
+   private static final Log log = LogFactory.getLog(OwnableReentrantPerEntryLockContainer.class);
+
+   @Override
+   protected Log getLog() {
+      return log;
+   }
 
    public OwnableReentrantPerEntryLockContainer(int concurrencyLevel) {
       super(concurrencyLevel);
    }
 
    @Override
-   protected OwnableReentrantLock newLock() {
-      return new OwnableReentrantLock();
+   protected OwnableRefCountingReentrantLock newLock() {
+      return new OwnableRefCountingReentrantLock();
    }
 
    @Override
@@ -60,12 +70,17 @@ public class OwnableReentrantPerEntryLockContainer extends AbstractPerEntryLockC
    }
 
    @Override
-   protected boolean tryLock(OwnableReentrantLock lock, long timeout, TimeUnit unit, Object lockOwner) throws InterruptedException {
+   protected boolean tryLock(OwnableRefCountingReentrantLock lock, long timeout, TimeUnit unit, Object lockOwner) throws InterruptedException {
       return lock.tryLock(lockOwner, timeout, unit);
    }
 
    @Override
-   protected void unlock(OwnableReentrantLock l, Object owner) {
+   protected void lock(OwnableRefCountingReentrantLock lock, Object lockOwner) {
+      lock.lock(lockOwner);
+   }
+
+   @Override
+   protected void unlock(OwnableRefCountingReentrantLock l, Object owner) {
       l.unlock(owner);
    }
 }

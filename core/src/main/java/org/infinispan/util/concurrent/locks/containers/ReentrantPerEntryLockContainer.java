@@ -22,10 +22,14 @@
  */
 package org.infinispan.util.concurrent.locks.containers;
 
+import org.infinispan.util.concurrent.locks.OwnableReentrantLock;
+import org.infinispan.util.concurrent.locks.VisibleOwnerReentrantLock;
+import org.infinispan.util.concurrent.locks.VisibleOwnerRefCountingReentrantLock;
+import org.infinispan.util.logging.Log;
+import org.infinispan.util.logging.LogFactory;
+
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.ReentrantLock;
-
-import org.infinispan.util.concurrent.locks.VisibleOwnerReentrantLock;
 
 /**
  * A per-entry lock container for ReentrantLocks
@@ -33,15 +37,22 @@ import org.infinispan.util.concurrent.locks.VisibleOwnerReentrantLock;
  * @author Manik Surtani
  * @since 4.0
  */
-public class ReentrantPerEntryLockContainer extends AbstractPerEntryLockContainer<ReentrantLock> {
+public class ReentrantPerEntryLockContainer extends AbstractPerEntryLockContainer<VisibleOwnerRefCountingReentrantLock> {
+
+   private static final Log log = LogFactory.getLog(ReentrantPerEntryLockContainer.class);
+
+   @Override
+   protected Log getLog() {
+      return log;
+   }
 
    public ReentrantPerEntryLockContainer(int concurrencyLevel) {
       super(concurrencyLevel);
    }
 
    @Override
-   protected ReentrantLock newLock() {
-      return new VisibleOwnerReentrantLock();
+   protected VisibleOwnerRefCountingReentrantLock newLock() {
+      return new VisibleOwnerRefCountingReentrantLock();
    }
 
    @Override
@@ -61,13 +72,17 @@ public class ReentrantPerEntryLockContainer extends AbstractPerEntryLockContaine
    }
 
    @Override
-   protected void unlock(ReentrantLock l, Object unused) {
+   protected void unlock(VisibleOwnerRefCountingReentrantLock l, Object unused) {
       l.unlock();
    }
 
    @Override
-   protected boolean tryLock(ReentrantLock lock, long timeout, TimeUnit unit, Object unused) throws InterruptedException {
+   protected boolean tryLock(VisibleOwnerRefCountingReentrantLock lock, long timeout, TimeUnit unit, Object unused) throws InterruptedException {
       return lock.tryLock(timeout, unit);
    }
 
+   @Override
+   protected void lock(VisibleOwnerRefCountingReentrantLock lock, Object lockOwner) {
+      lock.lock();
+   }
 }
