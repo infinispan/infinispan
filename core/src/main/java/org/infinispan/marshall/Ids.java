@@ -109,4 +109,9 @@ public interface Ids {
    int LOCK_INFO = 84;
 
    int FLAG = 85;
+
+   int EMPTY_SET = 88;
+   int EMPTY_MAP = 89;
+   int EMPTY_LIST = 90;
+
 }

@@ -1,6 +1,8 @@
 package org.infinispan.distribution.group;
 
 import static org.infinispan.util.ReflectionUtil.invokeAccessibly;
+
+import org.infinispan.util.InfinispanCollections;
 import org.infinispan.util.concurrent.ConcurrentMapFactory;
 
 import java.lang.reflect.Method;
@@ -65,7 +67,7 @@ public class GroupManagerImpl implements GroupManager {
         if (groupers != null)
             this.groupers = groupers;
         else
-            this.groupers = Collections.emptyList();
+            this.groupers = InfinispanCollections.emptyList();
     }
     
     @Override

@@ -77,6 +77,8 @@ import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 
 import static org.infinispan.factories.KnownComponentNames.CACHE_MARSHALLER;
+import org.infinispan.util.InfinispanCollections;
+
 
 /**
  * Infinispan's implementation of an {@link ExecutorService} and {@link DistributedExecutorService}.
@@ -167,7 +169,7 @@ public class DefaultExecutorService extends AbstractExecutorService implements D
       isShutdown.set(true);
       // TODO cancel all tasks
       localExecutorService.shutdownNow();
-      return Collections.emptyList();
+      return InfinispanCollections.emptyList();
    }
 
    @Override

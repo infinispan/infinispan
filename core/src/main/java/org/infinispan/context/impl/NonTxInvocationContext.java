@@ -23,6 +23,7 @@
 package org.infinispan.context.impl;
 
 import org.infinispan.container.entries.CacheEntry;
+import org.infinispan.util.InfinispanCollections;
 
 import java.util.Collections;
 import java.util.HashMap;
@@ -81,7 +82,8 @@ public class NonTxInvocationContext extends AbstractInvocationContext {
    @SuppressWarnings("unchecked")
    public Map<Object, CacheEntry> getLookedUpEntries() {
       return (Map<Object, CacheEntry>)
-            (lookedUpEntries == null ? Collections.emptyMap() : lookedUpEntries);
+            (lookedUpEntries == null ?
+                   InfinispanCollections.emptyMap() : lookedUpEntries);
    }
 
    @Override
@@ -125,7 +127,7 @@ public class NonTxInvocationContext extends AbstractInvocationContext {
 
    @Override
    public Set<Object> getLockedKeys() {
-      return lockedKeys == null ? Collections.emptySet() : lockedKeys;
+      return lockedKeys == null ? InfinispanCollections.emptySet() : lockedKeys;
    }
 
    @Override

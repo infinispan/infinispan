@@ -33,10 +33,9 @@ import org.infinispan.context.impl.TxInvocationContext;
 import org.infinispan.factories.annotations.Start;
 import org.infinispan.interceptors.base.CommandInterceptor;
 import org.infinispan.transaction.xa.DldGlobalTransaction;
+import org.infinispan.util.InfinispanCollections;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
-
-import static java.util.Collections.emptySet;
 
 /**
  * This interceptor populates the {@link org.infinispan.transaction.xa.DldGlobalTransaction} with
@@ -107,7 +106,7 @@ public class DeadlockDetectingInterceptor extends CommandInterceptor {
       }
       Object result = invokeNextInterceptor(ctx, command);
       if (ctx.isOriginLocal()) {
-         globalTransaction.setRemoteLockIntention(emptySet());
+         globalTransaction.setRemoteLockIntention(InfinispanCollections.emptySet());
       }
       return result;
    }

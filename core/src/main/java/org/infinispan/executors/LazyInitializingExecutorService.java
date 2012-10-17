@@ -19,6 +19,8 @@
 
 package org.infinispan.executors;
 
+import org.infinispan.util.InfinispanCollections;
+
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
@@ -66,7 +68,7 @@ public final class LazyInitializingExecutorService implements ExecutorService {
    @Override
    public List<Runnable> shutdownNow() {
       if (delegate == null)
-         return Collections.emptyList();
+         return InfinispanCollections.emptyList();
       else
          return delegate.shutdownNow();
    }

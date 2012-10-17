@@ -22,6 +22,7 @@ package org.infinispan.factories.components;
 import org.infinispan.jmx.annotations.MBean;
 import org.infinispan.jmx.annotations.ManagedAttribute;
 import org.infinispan.jmx.annotations.ManagedOperation;
+import org.infinispan.util.InfinispanCollections;
 
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
@@ -76,12 +77,12 @@ public class ManageableComponentMetadata extends ComponentMetadata {
    }
 
    public Set<JmxAttributeMetadata> getAttributeMetadata() {
-      if (attributeMetadata == null) return Collections.emptySet();
+      if (attributeMetadata == null) return InfinispanCollections.emptySet();
       return attributeMetadata;
    }
 
    public Set<JmxOperationMetadata> getOperationMetadata() {
-      if (operationMetadata == null) return Collections.emptySet();
+      if (operationMetadata == null) return InfinispanCollections.emptySet();
       return operationMetadata;
    }
 

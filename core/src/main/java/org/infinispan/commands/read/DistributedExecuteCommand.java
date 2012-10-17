@@ -28,6 +28,7 @@ import org.infinispan.commands.Visitor;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.distexec.DistributedCallable;
 import org.infinispan.lifecycle.ComponentStatus;
+import org.infinispan.util.InfinispanCollections;
 
 import java.util.Collection;
 import java.util.Collections;
@@ -57,7 +58,7 @@ public class DistributedExecuteCommand<V> implements VisitableCommand {
 
    public DistributedExecuteCommand(Collection<Object> inputKeys, Callable<V> callable) {
       if (inputKeys == null || inputKeys.isEmpty())
-         this.keys = Collections.emptySet();
+         this.keys = InfinispanCollections.emptySet();
       else
          this.keys = new HashSet<Object>(inputKeys);
       this.callable = callable;

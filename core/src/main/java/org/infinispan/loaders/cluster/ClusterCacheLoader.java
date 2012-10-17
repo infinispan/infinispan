@@ -41,14 +41,13 @@ import org.infinispan.remoting.rpc.ResponseFilter;
 import org.infinispan.remoting.rpc.ResponseMode;
 import org.infinispan.remoting.rpc.RpcManager;
 import org.infinispan.remoting.transport.Address;
+import org.infinispan.util.InfinispanCollections;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.Set;
-
-import static java.util.Collections.emptySet;
 
 /**
  * Cache loader that consults other members in the cluster for values. A <code>remoteCallTimeout</code> property is
@@ -103,17 +102,17 @@ public class ClusterCacheLoader extends AbstractCacheLoader {
    @Override
    @SuppressWarnings(value = "unchecked")
    public Set<InternalCacheEntry> loadAll() throws CacheLoaderException {
-      return emptySet();
+      return InfinispanCollections.emptySet();
    }
 
    @Override
    public Set<InternalCacheEntry> load(int maxElems) throws CacheLoaderException {
-      return emptySet();
+      return InfinispanCollections.emptySet();
    }
 
    @Override
    public Set<Object> loadAllKeys(Set<Object> keysToExclude) throws CacheLoaderException {
-      return emptySet();
+      return InfinispanCollections.emptySet();
    }
 
    @Override

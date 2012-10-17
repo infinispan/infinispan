@@ -39,6 +39,7 @@ import org.infinispan.remoting.transport.AbstractTransport;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.util.FileLookup;
 import org.infinispan.util.FileLookupFactory;
+import org.infinispan.util.InfinispanCollections;
 import org.infinispan.util.TypedProperties;
 import org.infinispan.util.Util;
 import org.infinispan.util.concurrent.ConcurrentMapFactory;
@@ -245,7 +246,7 @@ public class JGroupsTransport extends AbstractTransport implements MembershipLis
          dispatcher.stop();
       }
 
-      members = Collections.emptyList();
+      members = InfinispanCollections.emptyList();
       coordinator = null;
       isCoordinator = false;
       dispatcher = null;
@@ -402,7 +403,7 @@ public class JGroupsTransport extends AbstractTransport implements MembershipLis
 
    @Override
    public List<Address> getMembers() {
-      return members != null ? members : Collections.<Address> emptyList();
+      return members != null ? members : InfinispanCollections.<Address>emptyList();
    }
 
    @Override
@@ -423,7 +424,7 @@ public class JGroupsTransport extends AbstractTransport implements MembershipLis
       if (physicalAddress == null && channel != null) {
          org.jgroups.Address addr = (org.jgroups.Address) channel.down(new Event(Event.GET_PHYSICAL_ADDRESS, channel.getAddress()));
          if (addr == null) {
-            return Collections.emptyList();
+            return InfinispanCollections.emptyList();
          }
          physicalAddress = new JGroupsAddress(addr);
       }
@@ -441,7 +442,7 @@ public class JGroupsTransport extends AbstractTransport implements MembershipLis
       if (recipients != null && recipients.isEmpty()) {
          // don't send if dest list is empty
          log.trace("Destination list is empty: no need to send message");
-         return Collections.emptyMap();
+         return InfinispanCollections.emptyMap();
       }
 
       if (trace)
@@ -498,12 +499,12 @@ public class JGroupsTransport extends AbstractTransport implements MembershipLis
       }
 
       if (mode.isAsynchronous())
-         return Collections.emptyMap();// async case
+         return InfinispanCollections.emptyMap();// async case
 
       Map<Address, Response> responses;
       if (rsps == null) {
          if (singleJGAddress == null || (singleResponse == null && rpcCommand instanceof ClusteredGetCommand)) {
-            responses = Collections.emptyMap();
+            responses = InfinispanCollections.emptyMap();
          } else {
             responses = Collections.singletonMap(fromJGroupsAddress(singleJGAddress), singleResponse);
          }
@@ -646,7 +647,7 @@ public class JGroupsTransport extends AbstractTransport implements MembershipLis
       if (list == null)
          return null;
       if (list.isEmpty())
-         return Collections.emptyList();
+         return InfinispanCollections.emptyList();
 
       List<org.jgroups.Address> retval = new ArrayList<org.jgroups.Address>(list.size());
       boolean ignoreSelf = true;
@@ -664,7 +665,7 @@ public class JGroupsTransport extends AbstractTransport implements MembershipLis
 
    private static List<Address> fromJGroupsAddressList(List<org.jgroups.Address> list) {
       if (list == null || list.isEmpty())
-         return Collections.emptyList();
+         return InfinispanCollections.emptyList();
 
       List<Address> retval = new ArrayList<Address>(list.size());
       for (org.jgroups.Address a : list)

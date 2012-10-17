@@ -43,6 +43,7 @@ import org.infinispan.jmx.annotations.ManagedOperation;
 import org.infinispan.loaders.CacheLoader;
 import org.infinispan.loaders.CacheLoaderManager;
 import org.infinispan.notifications.cachelistener.CacheNotifier;
+import org.infinispan.util.InfinispanCollections;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 import org.rhq.helpers.pluginAnnotations.agent.MeasurementType;
@@ -230,4 +231,5 @@ public class CacheLoaderInterceptor extends JmxStatsCommandInterceptor {
       cacheLoads.set(0);
       cacheMisses.set(0);
    }
+
 }

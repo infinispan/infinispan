@@ -40,6 +40,7 @@ import org.infinispan.remoting.responses.IgnoreExtraResponsesValidityFilter;
 import org.infinispan.remoting.responses.Response;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.remoting.transport.Transport;
+import org.infinispan.util.InfinispanCollections;
 import org.infinispan.util.concurrent.NotifyingNotifiableFuture;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
@@ -137,7 +138,7 @@ public class RpcManagerImpl implements RpcManager {
       List<Address> clusterMembers = t.getMembers();
       if (clusterMembers.size() < 2) {
          log.tracef("We're the only member in the cluster; Don't invoke remotely.");
-         return Collections.emptyMap();
+         return InfinispanCollections.emptyMap();
       } else {
          long startTimeNanos = 0;
          if (statisticsEnabled) startTimeNanos = System.nanoTime();

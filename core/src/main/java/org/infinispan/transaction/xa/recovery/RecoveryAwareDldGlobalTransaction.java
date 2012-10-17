@@ -27,6 +27,7 @@ import org.infinispan.remoting.transport.Address;
 import org.infinispan.transaction.xa.DldGlobalTransaction;
 import org.infinispan.transaction.xa.GlobalTransaction;
 import org.infinispan.transaction.xa.TransactionFactory;
+import org.infinispan.util.InfinispanCollections;
 import org.infinispan.util.Util;
 
 import javax.transaction.xa.Xid;
@@ -34,8 +35,6 @@ import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
 import java.util.Set;
-
-import static java.util.Collections.emptySet;
 
 /**
  * DldGlobalTransaction that also holds xid information, required for recovery.
@@ -105,7 +104,7 @@ public class RecoveryAwareDldGlobalTransaction extends DldGlobalTransaction impl
          globalTransaction.setCoinToss(input.readLong());
          Object locksAtOriginObj = input.readObject();
          if (locksAtOriginObj == null) {
-            globalTransaction.setLocksHeldAtOrigin(emptySet());
+            globalTransaction.setLocksHeldAtOrigin(InfinispanCollections.emptySet());
          } else {
             globalTransaction.setLocksHeldAtOrigin((Set<Object>) locksAtOriginObj);
          }

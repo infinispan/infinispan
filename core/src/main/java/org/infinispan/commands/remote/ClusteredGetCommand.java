@@ -38,6 +38,7 @@ import org.infinispan.distribution.DistributionManager;
 import org.infinispan.interceptors.InterceptorChain;
 import org.infinispan.transaction.TransactionTable;
 import org.infinispan.transaction.xa.GlobalTransaction;
+import org.infinispan.util.InfinispanCollections;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
@@ -92,7 +93,7 @@ public class ClusteredGetCommand extends BaseRpcCommand implements FlagAffectedC
    }
 
    public ClusteredGetCommand(Object key, String cacheName) {
-      this(key, cacheName, Collections.<Flag>emptySet(), false, null);
+      this(key, cacheName, InfinispanCollections.<Flag>emptySet(), false, null);
    }
 
    public ClusteredGetCommand(String key, String cacheName, Set<Flag> flags) {

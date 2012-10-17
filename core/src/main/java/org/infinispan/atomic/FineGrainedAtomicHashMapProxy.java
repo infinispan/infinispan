@@ -26,6 +26,7 @@ import org.infinispan.AdvancedCache;
 import org.infinispan.container.entries.CacheEntry;
 import org.infinispan.container.entries.DeltaAwareCacheEntry;
 import org.infinispan.context.Flag;
+import org.infinispan.util.InfinispanCollections;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
@@ -110,7 +111,9 @@ public class FineGrainedAtomicHashMapProxy<K, V> extends AtomicHashMapProxy<K, V
    @SuppressWarnings("unchecked")
    private Set<K> keySetUncommitted() {
       DeltaAwareCacheEntry entry = lookupEntry();
-      return entry != null ? (Set<K>) entry.getUncommittedChages().keySet() : Collections.<K>emptySet();
+      return entry != null ?
+            (Set<K>) entry.getUncommittedChages().keySet() :
+            InfinispanCollections.<K>emptySet();
    }
 
    @Override
@@ -126,7 +129,9 @@ public class FineGrainedAtomicHashMapProxy<K, V> extends AtomicHashMapProxy<K, V
    @SuppressWarnings("unchecked")
    private Collection<V> valuesUncommitted() {
       DeltaAwareCacheEntry entry = lookupEntry();
-      return entry != null ? (Collection<V>) entry.getUncommittedChages().values() : Collections.<V>emptySet();
+      return entry != null ?
+            (Collection<V>) entry.getUncommittedChages().values() :
+            InfinispanCollections.<V>emptySet();
    }
 
    @Override
@@ -142,7 +147,9 @@ public class FineGrainedAtomicHashMapProxy<K, V> extends AtomicHashMapProxy<K, V
    @SuppressWarnings("unchecked")
    private Set<Entry<K, V>> entrySetUncommitted() {
       DeltaAwareCacheEntry entry = lookupEntry();
-      return (Set<Entry<K, V>>) (entry != null ? entry.getUncommittedChages().entrySet(): Collections.<V>emptySet());
+      return (Set<Entry<K, V>>)
+            (entry != null ? entry.getUncommittedChages().entrySet()
+                   : InfinispanCollections.<V>emptySet());
    }
 
    @Override
@@ -271,7 +278,7 @@ public class FineGrainedAtomicHashMapProxy<K, V> extends AtomicHashMapProxy<K, V
    }
 
    private void invokeApplyDelta(AtomicHashMapDelta delta) {
-      Collection<?> keys = Collections.emptyList();
+      Collection<?> keys = InfinispanCollections.emptyList();
       if (delta.hasClearOperation()) {
          // if it has clear op we need to lock all keys
          AtomicHashMap<?, ?> map = (AtomicHashMap<?, ?>) cache.get(deltaMapKey);

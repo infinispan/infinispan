@@ -1,5 +1,7 @@
 package org.infinispan.configuration.cache;
 
+import org.infinispan.util.InfinispanCollections;
+
 import java.util.Collections;
 import java.util.List;
 
@@ -17,7 +19,7 @@ public class CustomInterceptorsConfiguration {
    }
 
    public CustomInterceptorsConfiguration() {
-      this.interceptors = Collections.emptyList();
+      this.interceptors = InfinispanCollections.emptyList();
    }
 
    /**

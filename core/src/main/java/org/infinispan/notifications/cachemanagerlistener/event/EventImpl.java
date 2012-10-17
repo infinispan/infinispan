@@ -24,6 +24,7 @@ package org.infinispan.notifications.cachemanagerlistener.event;
 
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.remoting.transport.Address;
+import org.infinispan.util.InfinispanCollections;
 import org.infinispan.util.Util;
 
 import java.util.List;

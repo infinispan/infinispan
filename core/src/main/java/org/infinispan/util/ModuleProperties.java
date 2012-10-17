@@ -74,7 +74,7 @@ public class ModuleProperties extends Properties {
          return lifecycles;
       } else {
          log.debugf("No module lifecycle SPI classes available");
-         return Collections.emptyList();
+         return InfinispanCollections.emptyList();
       }
    }
 
@@ -115,8 +115,8 @@ public class ModuleProperties extends Properties {
          }
       } else {
          log.debugf("No module command extensions to load");
-         commandInitializers = Collections.emptyMap();
-         commandFactories = Collections.emptyMap();
+         commandInitializers = InfinispanCollections.emptyMap();
+         commandFactories = InfinispanCollections.emptyMap();
       }
    }
 
@@ -136,7 +136,7 @@ public class ModuleProperties extends Properties {
    public Collection<Class<? extends CacheRpcCommand>> moduleCacheRpcCommands() {
       Collection<Class<? extends ReplicableCommand>> cmds = moduleCommands();
       if (cmds == null || cmds.isEmpty())
-         return Collections.emptySet();
+         return InfinispanCollections.emptySet();
 
       Collection<Class<? extends CacheRpcCommand>> cacheRpcCmds = new HashSet<Class<? extends CacheRpcCommand>>(2);
       for (Class<? extends ReplicableCommand> moduleCmdClass : cmds) {
@@ -150,7 +150,7 @@ public class ModuleProperties extends Properties {
    public Collection<Class<? extends ReplicableCommand>> moduleOnlyReplicableCommands() {
       Collection<Class<? extends ReplicableCommand>> cmds = moduleCommands();
       if (cmds == null || cmds.isEmpty())
-         return Collections.emptySet();
+         return InfinispanCollections.emptySet();
 
       Collection<Class<? extends ReplicableCommand>> replicableOnlyCmds =
             new HashSet<Class<? extends ReplicableCommand>>(2);

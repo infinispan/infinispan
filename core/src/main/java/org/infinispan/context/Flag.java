@@ -36,6 +36,7 @@ import org.infinispan.lifecycle.ComponentStatus;
 import org.infinispan.loaders.CacheStore;
 import org.infinispan.marshall.AbstractExternalizer;
 import org.infinispan.marshall.Ids;
+import org.infinispan.util.InfinispanCollections;
 import org.infinispan.util.Util;
 
 /**
@@ -201,7 +202,7 @@ public enum Flag {
          EnumSet<Flag> copy = EnumSet.copyOf(flags);
          copy.remove(Flag.FAIL_SILENTLY);
          if (copy.isEmpty()) {
-            return Collections.emptySet();
+            return InfinispanCollections.emptySet();
          }
          else {
             return copy;
