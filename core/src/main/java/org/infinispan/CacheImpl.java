@@ -143,6 +143,7 @@ public class CacheImpl<K, V> extends CacheSupport<K, V> implements AdvancedCache
    private RecoveryManager recoveryManager;
    private TransactionCoordinator txCoordinator;
    private GlobalConfiguration globalCfg;
+   private boolean isClassLoaderInContext;
 
    public CacheImpl(String name) {
       this.name = name;
@@ -383,7 +384,7 @@ public class CacheImpl<K, V> extends CacheSupport<K, V> implements AdvancedCache
 
    private InvocationContext createSingleKeyNonTxInvocationContext(ClassLoader explicitClassLoader) {
       InvocationContext ctx = icc.createSingleKeyNonTxInvocationContext();
-      return setInvocationContextFlagsAndClassLoader(ctx, explicitClassLoader);
+      return setInvocationContextClassLoader(ctx, explicitClassLoader);
    }
 
    @Override
@@ -415,7 +416,7 @@ public class CacheImpl<K, V> extends CacheSupport<K, V> implements AdvancedCache
    private InvocationContext getInvocationContextForWrite(ClassLoader explicitClassLoader, int keyCount, boolean isPutForExternalRead) {
       InvocationContext ctx = isPutForExternalRead ?
             icc.createSingleKeyNonTxInvocationContext() : icc.createInvocationContext(true, keyCount);
-      return setInvocationContextFlagsAndClassLoader(ctx, explicitClassLoader);
+      return setInvocationContextClassLoader(ctx, explicitClassLoader);
    }
 
    private InvocationContext getInvocationContextForRead(Transaction tx, ClassLoader explicitClassLoader, int keyCount) {
@@ -428,7 +429,7 @@ public class CacheImpl<K, V> extends CacheSupport<K, V> implements AdvancedCache
             return getInvocationContext(transaction, explicitClassLoader);
       }
       InvocationContext result = icc.createInvocationContext(false, keyCount);
-      setInvocationContextFlagsAndClassLoader(result, explicitClassLoader);
+      setInvocationContextClassLoader(result, explicitClassLoader);
       return result;
    }
 
@@ -468,12 +469,14 @@ public class CacheImpl<K, V> extends CacheSupport<K, V> implements AdvancedCache
 
    private InvocationContext getInvocationContext(Transaction tx, ClassLoader explicitClassLoader) {
       InvocationContext ctx = icc.createInvocationContext(tx);
-      return setInvocationContextFlagsAndClassLoader(ctx, explicitClassLoader);
+      return setInvocationContextClassLoader(ctx, explicitClassLoader);
    }
 
-   private InvocationContext setInvocationContextFlagsAndClassLoader(InvocationContext ctx, ClassLoader explicitClassLoader) {
-      ctx.setClassLoader(explicitClassLoader != null ?
-                         explicitClassLoader : getClassLoader());
+   private InvocationContext setInvocationContextClassLoader(InvocationContext ctx, ClassLoader explicitClassLoader) {
+      if (isClassLoaderInContext) {
+         ctx.setClassLoader(explicitClassLoader != null ?
+               explicitClassLoader : getClassLoader());
+      }
       return ctx;
    }
 
@@ -517,6 +520,11 @@ public class CacheImpl<K, V> extends CacheSupport<K, V> implements AdvancedCache
       componentRegistry.start();
       defaultLifespan = config.expiration().lifespan();
       defaultMaxIdleTime = config.expiration().maxIdle();
+      // Context only needs to ship ClassLoader if marshalling will be required
+      isClassLoaderInContext = config.clustering().cacheMode().isClustered()
+            || config.loaders().usingCacheLoaders()
+            || config.storeAsBinary().enabled();
+
       if (log.isDebugEnabled()) log.debugf("Started cache %s on %s", getName(), getCacheManager().getAddress());
    }
 
