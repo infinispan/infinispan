@@ -31,7 +31,7 @@ import org.testng.annotations.Test;
  * @author Navin Surtani
  * @since 4.0
  */
-@Test (groups = "functional")
+@Test(groups = "functional", testName = "query.blackbox.MarshalledValueClusteredQueryTest")
 public class MarshalledValueClusteredQueryTest extends ClusteredCacheTest {
 
    @Override

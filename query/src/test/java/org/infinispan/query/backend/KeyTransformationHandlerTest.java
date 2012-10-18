@@ -38,7 +38,7 @@ import org.testng.annotations.Test;
  * @author Marko Luksa
  */
 
-@Test(groups = "functional")
+@Test(groups = "functional", testName = "query.backend.KeyTransformationHandlerTest")
 public class KeyTransformationHandlerTest {
 
    String s = null;

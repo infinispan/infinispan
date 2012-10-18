@@ -42,7 +42,7 @@ import org.testng.annotations.Test;
 /**
  * @author Navin Surtani
  */
-@Test(groups = "functional")
+@Test(groups = "functional", testName = "query.impl.LazyIteratorTest")
 public class LazyIteratorTest extends EagerIteratorTest {
    private DocumentExtractor extractor;
 
