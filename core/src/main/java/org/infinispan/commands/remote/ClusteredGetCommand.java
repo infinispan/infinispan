@@ -44,7 +44,6 @@ import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
 import java.util.Arrays;
-import java.util.Collections;
 import java.util.EnumSet;
 import java.util.Set;
 
@@ -126,8 +125,7 @@ public class ClusteredGetCommand extends BaseRpcCommand implements FlagAffectedC
       // as our caller is already calling the ClusteredGetCommand on all the relevant nodes
       Set<Flag> commandFlags = EnumSet.of(Flag.SKIP_REMOTE_LOOKUP, Flag.CACHE_MODE_LOCAL);
       if (this.flags != null) commandFlags.addAll(this.flags);
-      GetKeyValueCommand command = commandsFactory.buildGetKeyValueCommand(key, commandFlags);
-      command.setReturnCacheEntry(true);
+      GetKeyValueCommand command = commandsFactory.buildGetCacheEntryCommand(key, commandFlags);
       InvocationContext invocationContext = icc.createRemoteInvocationContextForCommand(command, getOrigin());
       CacheEntry cacheEntry = (CacheEntry) invoker.invoke(invocationContext, command);
       if (cacheEntry == null) {
