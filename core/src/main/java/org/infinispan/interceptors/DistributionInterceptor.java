@@ -360,13 +360,11 @@ public class DistributionInterceptor extends BaseRpcInterceptor {
    public Object visitPrepareCommand(TxInvocationContext ctx, PrepareCommand command) throws Throwable {
       Object retVal = invokeNextInterceptor(ctx, command);
 
-      boolean sync = cacheConfiguration.clustering().cacheMode().isSynchronous();
-
       if (shouldInvokeRemoteTxCommand(ctx)) {
          if (command.isOnePhaseCommit()) flushL1Caches(ctx); // if we are one-phase, don't block on this future.
 
          Collection<Address> recipients = dm.getAffectedNodes(ctx.getAffectedKeys());
-         prepareOnAffectedNodes(ctx, command, recipients, sync);
+         prepareOnAffectedNodes(ctx, command, recipients, defaultSynchronous);
 
          ((LocalTxInvocationContext) ctx).remoteLocksAcquired(recipients);
       } else if (isL1CacheEnabled && command.isOnePhaseCommit() && !ctx.isOriginLocal() && !ctx.getLockedKeys().isEmpty()) {

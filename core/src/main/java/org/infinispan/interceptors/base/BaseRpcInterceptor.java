@@ -23,11 +23,9 @@
 package org.infinispan.interceptors.base;
 
 import org.infinispan.commands.FlagAffectedCommand;
-import org.infinispan.commands.control.LockControlCommand;
 import org.infinispan.context.Flag;
 import org.infinispan.context.impl.LocalTxInvocationContext;
 import org.infinispan.context.impl.TxInvocationContext;
-import org.infinispan.factories.ComponentRegistry;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.factories.annotations.Start;
 import org.infinispan.remoting.rpc.RpcManager;
@@ -42,22 +40,17 @@ import org.infinispan.remoting.rpc.RpcManager;
 public abstract class BaseRpcInterceptor extends CommandInterceptor {
 
    protected RpcManager rpcManager;
-   protected ComponentRegistry componentRegistry;
-
-   protected String cacheName;
-
-   @Inject
-   public void init(RpcManager rpcManager, ComponentRegistry componentRegistry ) {
-      this.rpcManager = rpcManager;
-      this.componentRegistry = componentRegistry;
-   }
 
    protected boolean defaultSynchronous;
+
+   @Inject
+   public void inject(RpcManager rpcManager) {
+      this.rpcManager = rpcManager;
+   }
 
    @Start
    public void init() {
       defaultSynchronous = cacheConfiguration.clustering().cacheMode().isSynchronous();
-      cacheName = componentRegistry.getCacheName();
    }
 
    protected final boolean isSynchronous(FlagAffectedCommand command) {
@@ -77,7 +70,7 @@ public abstract class BaseRpcInterceptor extends CommandInterceptor {
       return false;
    }
 
-   protected static boolean shouldInvokeRemoteTxCommand(TxInvocationContext ctx) {
+   protected boolean shouldInvokeRemoteTxCommand(TxInvocationContext ctx) {
       // just testing for empty modifications isn't enough - the Lock API may acquire locks on keys but won't
       // register a Modification.  See ISPN-711.
       return ctx.isOriginLocal() && (ctx.hasModifications()  ||
