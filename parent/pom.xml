@@ -131,7 +131,7 @@
       <version.hbase>0.94.1</version.hbase>
       <version.hibernate.annotations>3.4.0.GA</version.hibernate.annotations>
       <version.hibernate.core>3.3.1.GA</version.hibernate.core>
-      <version.hibernate.search>4.2.0.Beta1</version.hibernate.search>
+      <version.hibernate.search>4.2.0.Beta2</version.hibernate.search>
       <version.jackson>1.9.2</version.jackson>
       <version.javax.cache>0.4</version.javax.cache>
       <version.javax.persistence>1.0</version.javax.persistence>
@@ -155,7 +155,7 @@
       <version.jta>1.0.0.Final</version.jta>
       <version.junit>4.10</version.junit>
       <version.log4j>1.2.16</version.log4j>
-      <version.lucene>3.6.0</version.lucene>
+      <version.lucene>3.6.1</version.lucene>
       <version.mc4j>1.2.6</version.mc4j>
       <version.milyn.smooks>1.2.2</version.milyn.smooks>
       <version.mockito>1.8.5</version.mockito>
