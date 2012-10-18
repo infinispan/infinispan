@@ -58,13 +58,13 @@ public interface StateTransferLock {
    void releaseSharedTopologyLock();
 
    // transaction data latch
-   void transactionDataReceived(int topologyId);
+   void notifyTransactionDataReceived(int topologyId);
 
    void waitForTransactionData(int expectedTopologyId) throws InterruptedException;
 
    // topology installation latch
    // TODO move this to Cluster/LocalTopologyManagerImpl and don't start requesting state until every node has the jgroups view with the local node
-   void topologyInstalled(int topologyId);
+   void notifyTopologyInstalled(int topologyId);
 
    void waitForTopology(int expectedTopologyId) throws InterruptedException;
 }

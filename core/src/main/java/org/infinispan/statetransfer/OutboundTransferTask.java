@@ -24,20 +24,19 @@
 package org.infinispan.statetransfer;
 
 import org.infinispan.commands.CommandsFactory;
-import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.container.DataContainer;
 import org.infinispan.container.entries.InternalCacheEntry;
 import org.infinispan.distribution.ch.ConsistentHash;
 import org.infinispan.loaders.CacheLoaderException;
 import org.infinispan.loaders.CacheLoaderManager;
 import org.infinispan.loaders.CacheStore;
+import org.infinispan.remoting.rpc.ResponseMode;
 import org.infinispan.remoting.rpc.RpcManager;
 import org.infinispan.remoting.transport.Address;
+import org.infinispan.remoting.transport.jgroups.SuspectException;
 import org.infinispan.util.InfinispanCollections;
 import org.infinispan.util.ReadOnlyDataContainerBackedKeySet;
-import org.infinispan.util.concurrent.AggregatingNotifyingFutureBuilder;
 import org.infinispan.util.concurrent.ConcurrentMapFactory;
-import org.infinispan.util.concurrent.NotifyingNotifiableFuture;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
@@ -70,8 +69,6 @@ public class OutboundTransferTask implements Runnable {
 
    private final int stateTransferChunkSize;
 
-   private final Configuration configuration;
-
    private final ConsistentHash readCh;
 
    private final DataContainer dataContainer;
@@ -84,6 +81,8 @@ public class OutboundTransferTask implements Runnable {
 
    private final long timeout;
 
+   private final String cacheName;
+
    private final Map<Integer, List<InternalCacheEntry>> entriesBySegment = ConcurrentMapFactory.makeConcurrentMap();
 
    /**
@@ -92,19 +91,14 @@ public class OutboundTransferTask implements Runnable {
    private int accumulatedEntries;
 
    /**
-    * This is used with RpcManager.invokeRemotelyInFuture() to be able to cancel message sending if the task needs to be canceled.
-    */
-   private final NotifyingNotifiableFuture<Object> sendFuture = new AggregatingNotifyingFutureBuilder(null);
-
-   /**
     * The Future obtained from submitting this task to an executor service. This is used for cancellation.
     */
    private FutureTask runnableFuture;
 
    public OutboundTransferTask(Address destination, Set<Integer> segments, int stateTransferChunkSize,
                                int topologyId, ConsistentHash readCh, StateProviderImpl stateProvider, DataContainer dataContainer,
-                               CacheLoaderManager cacheLoaderManager, RpcManager rpcManager, Configuration configuration,
-                               CommandsFactory commandsFactory, long timeout) {
+                               CacheLoaderManager cacheLoaderManager, RpcManager rpcManager,
+                               CommandsFactory commandsFactory, long timeout, String cacheName) {
       if (segments == null || segments.isEmpty()) {
          throw new IllegalArgumentException("Segments must not be null or empty");
       }
@@ -123,9 +117,9 @@ public class OutboundTransferTask implements Runnable {
       this.dataContainer = dataContainer;
       this.cacheLoaderManager = cacheLoaderManager;
       this.rpcManager = rpcManager;
-      this.configuration = configuration;
       this.commandsFactory = commandsFactory;
       this.timeout = timeout;
+      this.cacheName = cacheName;
    }
 
    public void execute(ExecutorService executorService) {
@@ -154,7 +148,7 @@ public class OutboundTransferTask implements Runnable {
       try {
          // send data container entries
          for (InternalCacheEntry ice : dataContainer) {
-            Object key = ice.getKey();
+            Object key = ice.getKey();  //todo [anistor] should we check for expired entries?
             int segmentId = readCh.getSegment(key);
             if (segments.contains(segmentId)) {
                sendEntry(ice, segmentId);
@@ -198,7 +192,7 @@ public class OutboundTransferTask implements Runnable {
          }
       }
       if (trace) {
-         log.tracef("Outbound transfer of segments %s to %s is complete", segments, destination);
+         log.tracef("Outbound transfer of segments %s of cache %s to node %s is complete", segments, cacheName, destination);
       }
    }
 
@@ -217,7 +211,6 @@ public class OutboundTransferTask implements Runnable {
       // send if we have a full chunk
       if (accumulatedEntries >= stateTransferChunkSize) {
          sendEntries(false);
-         entriesBySegment.clear();
          accumulatedEntries = 0;
       }
 
@@ -232,32 +225,42 @@ public class OutboundTransferTask implements Runnable {
 
    private void sendEntries(boolean isLast) {
       List<StateChunk> chunks = new ArrayList<StateChunk>();
+      for (Map.Entry<Integer, List<InternalCacheEntry>> e : entriesBySegment.entrySet()) {
+         List<InternalCacheEntry> entries = e.getValue();
+         if (!entries.isEmpty()) {
+            chunks.add(new StateChunk(e.getKey(), new ArrayList<InternalCacheEntry>(entries), isLast));
+            entries.clear();
+         }
+      }
+
       if (isLast) {
          for (int segmentId : segments) {
             List<InternalCacheEntry> entries = entriesBySegment.get(segmentId);
             if (entries == null) {
-               entries = InfinispanCollections.emptyList();
-            }
-            chunks.add(new StateChunk(segmentId, entries, isLast));
-         }
-      } else {
-         for (Map.Entry<Integer, List<InternalCacheEntry>> e : entriesBySegment.entrySet()) {
-            List<InternalCacheEntry> entries = e.getValue();
-            if (!entries.isEmpty()) {
-               chunks.add(new StateChunk(e.getKey(), entries, isLast));
+               chunks.add(new StateChunk(segmentId, InfinispanCollections.<InternalCacheEntry>emptyList(), true));
             }
          }
       }
 
-      if (!chunks.isEmpty() || isLast) {
+      if (!chunks.isEmpty()) {
          if (trace) {
-            log.tracef("Sending %d cache entries from segments %s to node %s", accumulatedEntries, entriesBySegment.keySet(), destination);
+            if (isLast) {
+               log.tracef("Sending last chunk containing %d cache entries from segments %s of cache %s to node %s", accumulatedEntries, segments, cacheName, destination);
+            } else {
+               log.tracef("Sending %d cache entries from segments %s of cache %s to node %s", accumulatedEntries, entriesBySegment.keySet(), cacheName, destination);
+            }
          }
 
-         //todo [anistor] send back the received topologyId or my local one?
          StateResponseCommand cmd = commandsFactory.buildStateResponseCommand(rpcManager.getAddress(), topologyId, chunks);
-         // send synchronously, in FIFO mode. it is important that the last chunk is received last in order to correctly detect completion of the stream of chunks
-         rpcManager.invokeRemotelyInFuture(Collections.singleton(destination), cmd, false, sendFuture, timeout);
+         // send synchronously, in order. it is important that the last chunk is received last in order to correctly detect completion of the stream of chunks
+         try {
+            rpcManager.invokeRemotely(Collections.singleton(destination), cmd, ResponseMode.SYNCHRONOUS, timeout, false, null);
+         } catch (SuspectException e) {
+            log.errorf(e, "Node %s left cache %s: %s", destination, cacheName, e.getMessage());
+            cancel();
+         } catch (Exception e) {
+            log.errorf(e, "Failed to send entries to node %s : %s", destination, e.getMessage());
+         }
       }
    }
 
@@ -268,7 +271,7 @@ public class OutboundTransferTask implements Runnable {
     */
    public void cancelSegments(Set<Integer> cancelledSegments) {
       if (trace) {
-         log.tracef("Cancelling outbound transfer of segments %s to %s", cancelledSegments, destination);
+         log.tracef("Cancelling outbound transfer of segments %s of cache %s to node %s", cancelledSegments, cacheName, destination);
       }
       if (segments.removeAll(cancelledSegments)) {
          entriesBySegment.keySet().removeAll(cancelledSegments);  // here we do not update accumulatedEntries but this inaccuracy does not cause any harm
@@ -284,11 +287,22 @@ public class OutboundTransferTask implements Runnable {
    public void cancel() {
       if (runnableFuture != null && !runnableFuture.isCancelled()) {
          runnableFuture.cancel(true);
-         sendFuture.cancel(true);
       }
    }
 
    public boolean isCancelled() {
       return runnableFuture != null && runnableFuture.isCancelled();
+   }
+
+   @Override
+   public String toString() {
+      return "OutboundTransferTask{" +
+            "topologyId=" + topologyId +
+            ", destination=" + destination +
+            ", segments=" + segments +
+            ", stateTransferChunkSize=" + stateTransferChunkSize +
+            ", timeout=" + timeout +
+            ", cacheName='" + cacheName + '\'' +
+            '}';
    }
 }

@@ -52,7 +52,7 @@ import java.util.concurrent.ExecutorService;
 import static org.infinispan.factories.KnownComponentNames.ASYNC_TRANSPORT_EXECUTOR;
 
 /**
- * // TODO [anistor] Document this
+ * {@link StateProvider} implementation.
  *
  * @author anistor@redhat.com
  * @since 5.2
@@ -90,7 +90,7 @@ public class StateProviderImpl implements StateProvider {
 
    @Inject
    public void init(Cache cache,
-                    @ComponentName(ASYNC_TRANSPORT_EXECUTOR) ExecutorService executorService, //todo [anistor] use a separate ExecutorService
+                    @ComponentName(ASYNC_TRANSPORT_EXECUTOR) ExecutorService executorService, //TODO Use a dedicated ExecutorService
                     Configuration configuration,
                     RpcManager rpcManager,
                     CommandsFactory commandsFactory,
@@ -184,7 +184,7 @@ public class StateProviderImpl implements StateProvider {
 
    public List<TransactionInfo> getTransactionsForSegments(Address destination, int requestTopologyId, Set<Integer> segments) throws InterruptedException {
       if (trace) {
-         log.tracef("Received request for transactions from node %s for segments %s with topology id %d", destination, segments, requestTopologyId);
+         log.tracef("Received request for transactions from node %s for segments %s of cache %s with topology id %d", destination, segments, cacheName, requestTopologyId);
       }
 
       if (readCh == null) {
@@ -262,8 +262,8 @@ public class StateProviderImpl implements StateProvider {
       }
 
       // the destination node must already have an InboundTransferTask waiting for these segments
-      OutboundTransferTask outboundTransfer = new OutboundTransferTask(destination, segments, chunkSize, requestTopologyId,
-            readCh, this, dataContainer, cacheLoaderManager, rpcManager, configuration, commandsFactory, timeout);
+      OutboundTransferTask outboundTransfer = new OutboundTransferTask(destination, segments, chunkSize, topologyId,
+            readCh, this, dataContainer, cacheLoaderManager, rpcManager, commandsFactory, timeout, cacheName);
       addTransfer(outboundTransfer);
       outboundTransfer.execute(executorService);
    }
@@ -294,7 +294,7 @@ public class StateProviderImpl implements StateProvider {
             // get an array copy of the collection to avoid ConcurrentModificationException if the entire task gets cancelled and removeTransfer(transferTask) is called
             OutboundTransferTask[] tasks = transferTasks.toArray(new OutboundTransferTask[transferTasks.size()]);
             for (OutboundTransferTask transferTask : tasks) {
-               transferTask.cancelSegments(segments); //this can potentially result in a removeTransfer(transferTask)
+               transferTask.cancelSegments(segments); //this can potentially result in a call to removeTransfer(transferTask)
             }
          }
       }

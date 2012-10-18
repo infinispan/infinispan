@@ -50,7 +50,6 @@ import org.infinispan.remoting.rpc.RpcManager;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.remoting.transport.Transport;
 import org.infinispan.topology.CacheTopology;
-import org.infinispan.topology.LocalTopologyManager;
 import org.infinispan.transaction.LocalTransaction;
 import org.infinispan.transaction.RemoteTransaction;
 import org.infinispan.transaction.TransactionTable;
@@ -126,7 +125,7 @@ public class StateConsumerTest {
       when(cache.getName()).thenReturn("testCache");
 
       StateProvider stateProvider = mock(StateProvider.class);
-      LocalTopologyManager localTopologyManager = mock(LocalTopologyManager.class);
+      StateTransferManager stateTransferManager = mock(StateTransferManager.class);
       CacheNotifier cacheNotifier = mock(CacheNotifier.class);
       ExecutorService mockExecutorService = mock(ExecutorService.class);
       RpcManager rpcManager = mock(RpcManager.class);
@@ -183,7 +182,7 @@ public class StateConsumerTest {
 
       // create state provider
       StateConsumerImpl stateConsumer = new StateConsumerImpl();
-      stateConsumer.init(cache, localTopologyManager, interceptorChain, icc, configuration, rpcManager,
+      stateConsumer.init(cache, stateTransferManager, interceptorChain, icc, configuration, rpcManager,
             commandsFactory, cacheLoaderManager, dataContainer, transactionTable, stateTransferLock);
       stateConsumer.start();
 

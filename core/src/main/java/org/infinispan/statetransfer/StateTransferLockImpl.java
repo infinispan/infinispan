@@ -23,11 +23,11 @@
 
 package org.infinispan.statetransfer;
 
-import java.util.concurrent.locks.ReadWriteLock;
-import java.util.concurrent.locks.ReentrantReadWriteLock;
-
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
+
+import java.util.concurrent.locks.ReadWriteLock;
+import java.util.concurrent.locks.ReentrantReadWriteLock;
 
 /**
  * {@code StateTransferLock} implementation.
@@ -38,6 +38,7 @@ import org.infinispan.util.logging.LogFactory;
  */
 public class StateTransferLockImpl implements StateTransferLock {
    private static final Log log = LogFactory.getLog(StateTransferLockImpl.class);
+   private static final boolean trace = log.isTraceEnabled();
 
    private final ReadWriteLock ownershipLock = new ReentrantReadWriteLock();
 
@@ -68,8 +69,15 @@ public class StateTransferLockImpl implements StateTransferLock {
    }
 
    @Override
-   public void transactionDataReceived(int topologyId) {
-      this.transactionDataTopologyId = topologyId;
+   public void notifyTransactionDataReceived(int topologyId) {
+      if (topologyId < transactionDataTopologyId) {
+         throw new IllegalStateException("Cannot set a topology id (" + topologyId +
+               ") that is lower that the current one (" + transactionDataTopologyId + ")");
+      }
+      if (trace) {
+         log.tracef("Signalling transaction data received for topology %d", topologyId);
+      }
+      transactionDataTopologyId = topologyId;
       synchronized (transactionDataLock) {
          transactionDataLock.notifyAll();
       }
@@ -80,8 +88,10 @@ public class StateTransferLockImpl implements StateTransferLock {
       if (transactionDataTopologyId >= expectedTopologyId)
          return;
 
-      log.tracef("Waiting for transaction data for topology %d, current topology is %d", expectedTopologyId,
-            transactionDataTopologyId);
+      if (trace) {
+         log.tracef("Waiting for transaction data for topology %d, current topology is %d", expectedTopologyId,
+               transactionDataTopologyId);
+      }
       synchronized (transactionDataLock) {
          // Do the comparison inside the synchronized lock
          // otherwise the setter might be able to call notifyAll before we wait()
@@ -89,10 +99,21 @@ public class StateTransferLockImpl implements StateTransferLock {
             transactionDataLock.wait();
          }
       }
+      if (trace) {
+         log.tracef("Received transaction data for topology %d, expected topology was %d", transactionDataTopologyId,
+               expectedTopologyId);
+      }
    }
 
    @Override
-   public void topologyInstalled(int topologyId) {
+   public void notifyTopologyInstalled(int topologyId) {
+      if (topologyId < this.topologyId) {
+         throw new IllegalStateException("Cannot set a topology id (" + topologyId +
+               ") that is lower that the current one (" + this.topologyId + ")");
+      }
+      if (trace) {
+         log.tracef("Signalling topology %d is installed", topologyId);
+      }
       this.topologyId = topologyId;
       synchronized (topologyLock) {
          topologyLock.notifyAll();
@@ -104,14 +125,18 @@ public class StateTransferLockImpl implements StateTransferLock {
       if (topologyId >= expectedTopologyId)
          return;
 
-      log.tracef("Waiting for topology %d to be installed, current topology is %d", expectedTopologyId,
-            topologyId);
+      if (trace) {
+         log.tracef("Waiting for topology %d to be installed, current topology is %d", expectedTopologyId, topologyId);
+      }
       synchronized (topologyLock) {
          // Do the comparison inside the synchronized lock
          // otherwise the setter might be able to call notifyAll before we wait()
          while (topologyId < expectedTopologyId) {
             topologyLock.wait();
          }
+      }
+      if (trace) {
+         log.tracef("Topology %d is now installed, expected topology was %d", topologyId, expectedTopologyId);
       }
    }
 }
