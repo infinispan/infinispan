@@ -23,6 +23,7 @@
 
 package org.infinispan.query.indexedembedded;
 
+import java.io.Serializable;
 import java.util.HashSet;
 import java.util.Set;
 
@@ -34,7 +35,7 @@ import org.hibernate.search.annotations.IndexedEmbedded;
  * @author Sanne Grinovero <sanne@hibernate.org> (C) 2011 Red Hat Inc.
  */
 @Indexed
-public class Country {
+public class Country implements Serializable {
    
    Long id;
    
