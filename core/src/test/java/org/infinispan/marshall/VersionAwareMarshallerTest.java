@@ -226,7 +226,7 @@ public class VersionAwareMarshallerTest extends AbstractInfinispanTest {
 
       // SizeCommand does not have an empty constructor, so doesn't look to be one that is marshallable.
 
-      GetKeyValueCommand c4 = new GetKeyValueCommand("key", null, Collections.<Flag>emptySet());
+      GetKeyValueCommand c4 = new GetKeyValueCommand("key", Collections.<Flag>emptySet());
       byte[] bytes = marshaller.objectToByteBuffer(c4);
       GetKeyValueCommand rc4 = (GetKeyValueCommand) marshaller.objectFromByteBuffer(bytes);
       assert rc4.getCommandId() == c4.getCommandId() : "Writen[" + c4.getCommandId() + "] and read[" + rc4.getCommandId() + "] objects should be the same";
