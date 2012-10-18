@@ -43,7 +43,7 @@ import java.util.List;
  *
  * @author Navin Surtani
  */
-@Test(groups = "functional")
+@Test(groups = "functional", testName = "query.blackbox.KeyTypeTest")
 public class KeyTypeTest extends SingleCacheManagerTest {
 
    Person person1;

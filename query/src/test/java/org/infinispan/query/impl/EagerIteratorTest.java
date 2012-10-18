@@ -48,7 +48,7 @@ import org.testng.annotations.Test;
  *         Test class for the {@link EagerIterator}
  */
 
-@Test(groups = "functional")
+@Test(groups = "functional", testName = "query.impl.EagerIteratorTest")
 public class EagerIteratorTest {
    List<String> keys;
    List<EntityInfo> entityInfos;
