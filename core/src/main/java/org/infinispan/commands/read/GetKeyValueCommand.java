@@ -26,7 +26,6 @@ import org.infinispan.commands.Visitor;
 import org.infinispan.container.entries.CacheEntry;
 import org.infinispan.context.Flag;
 import org.infinispan.context.InvocationContext;
-import org.infinispan.notifications.cachelistener.CacheNotifier;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
@@ -43,12 +42,9 @@ public class GetKeyValueCommand extends AbstractDataCommand {
    public static final byte COMMAND_ID = 4;
    private static final Log log = LogFactory.getLog(GetKeyValueCommand.class);
    private static final boolean trace = log.isTraceEnabled();
-   private CacheNotifier notifier;
-   private boolean returnCacheEntry;
 
-   public GetKeyValueCommand(Object key, CacheNotifier notifier, Set<Flag> flags) {
+   public GetKeyValueCommand(Object key, Set<Flag> flags) {
       this.key = key;
-      this.notifier = notifier;
       this.flags = flags;
    }
 
@@ -58,13 +54,6 @@ public class GetKeyValueCommand extends AbstractDataCommand {
    @Override
    public Object acceptVisitor(InvocationContext ctx, Visitor visitor) throws Throwable {
       return visitor.visitGetKeyValueCommand(ctx, this);
-   }
-
-   /**
-    * Will make this method to return an {@link CacheEntry} instead of the corresponding value associated with the key.
-    */
-   public void setReturnCacheEntry(boolean returnCacheEntry) {
-      this.returnCacheEntry = returnCacheEntry;
    }
 
    @Override
@@ -83,14 +72,10 @@ public class GetKeyValueCommand extends AbstractDataCommand {
          return null;
       }
       final Object value = entry.getValue();
-      // FIXME: There's no point in notifying twice.
-      notifier.notifyCacheEntryVisited(key, value, true, ctx);
-      final Object result = returnCacheEntry ? entry : value;
       if (trace) {
-         log.tracef("Found value %s", result);
+         log.tracef("Found value %s", value);
       }
-      notifier.notifyCacheEntryVisited(key, value, false, ctx);
-      return result;
+      return value;
    }
 
    @Override
