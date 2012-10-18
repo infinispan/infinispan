@@ -113,12 +113,13 @@ public class StaleTransactionCleanupService {
 
       executorService = Executors.newSingleThreadScheduledExecutor(tf);
 
-      executorService.schedule(new Runnable() {
+      long interval = configuration.transaction().reaperWakeUpInterval();
+      executorService.scheduleAtFixedRate(new Runnable() {
          @Override
          public void run() {
             transactionTable.cleanupCompletedTransactions();
          }
-      }, configuration.transaction().reaperWakeUpInterval(), TimeUnit.MILLISECONDS);
+      }, interval, interval, TimeUnit.MILLISECONDS);
 
    }
 
