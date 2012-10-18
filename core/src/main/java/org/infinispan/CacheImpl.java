@@ -41,6 +41,7 @@ import org.infinispan.commands.write.RemoveCommand;
 import org.infinispan.commands.write.ReplaceCommand;
 import org.infinispan.config.Configuration;
 import org.infinispan.config.Configuration.CacheMode;
+import org.infinispan.config.GlobalConfiguration;
 import org.infinispan.configuration.cache.LegacyConfigurationAdaptor;
 import org.infinispan.config.ConfigurationException;
 import org.infinispan.container.DataContainer;
@@ -145,6 +146,8 @@ public class CacheImpl<K, V> extends CacheSupport<K, V> implements AdvancedCache
    private TransactionTable txTable;
    private RecoveryManager recoveryManager;
    private TransactionCoordinator txCoordinator;
+   private GlobalConfiguration globalCfg;
+   private boolean isClassLoaderInContext;
 
    public CacheImpl(String name) {
       this.name = name;
@@ -476,8 +479,10 @@ public class CacheImpl<K, V> extends CacheSupport<K, V> implements AdvancedCache
 
    private InvocationContext setInvocationContextFlagsAndClassLoader(InvocationContext ctx, EnumSet<Flag> explicitFlags, ClassLoader explicitClassLoader) {
       if (explicitFlags != null) ctx.setFlags(explicitFlags);
-      ctx.setClassLoader(explicitClassLoader != null ?
-                         explicitClassLoader : getClassLoader());
+      if (isClassLoaderInContext) {
+         ctx.setClassLoader(explicitClassLoader != null ?
+               explicitClassLoader : getClassLoader());
+      }
       return ctx;
    }
 
@@ -521,6 +526,11 @@ public class CacheImpl<K, V> extends CacheSupport<K, V> implements AdvancedCache
       componentRegistry.start();
       defaultLifespan = config.getExpirationLifespan();
       defaultMaxIdleTime = config.getExpirationMaxIdle();
+      // Context only needs to ship ClassLoader if marshalling will be required
+      isClassLoaderInContext = config.getCacheMode().isClustered()
+            || !config.getCacheLoaders().isEmpty()
+            || config.isStoreAsBinary();
+
       if (log.isDebugEnabled()) log.debugf("Started cache %s on %s", getName(), getCacheManager().getAddress());
    }
 
