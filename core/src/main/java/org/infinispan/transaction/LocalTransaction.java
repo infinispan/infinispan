@@ -201,15 +201,11 @@ public abstract class LocalTransaction extends AbstractCacheTransaction {
     */
    public Collection<Address> getCommitNodes(Collection<Address> recipients, int currentTopologyId, List<Address> members) {
       if (trace) log.tracef("getCommitNodes recipients=%s, currentTopologyId=%s, members=%s, txTopologyId=%s",
-                 recipients, currentTopologyId, members, getTopologyId());
-      if (getTopologyId() != currentTopologyId) {
-         Set<Address> allRecipients = new HashSet<Address>(getRemoteLocksAcquired());
-         allRecipients.addAll(recipients);
-         allRecipients.retainAll(members);
-         if (trace) log.tracef("The merged list of nodes to send commit/rollback is %s", allRecipients);
-         return allRecipients;
-      } else {
-         return recipients;
-      }
+                            recipients, currentTopologyId, members, getTopologyId());
+      Set<Address> allRecipients = new HashSet<Address>(getRemoteLocksAcquired());
+      allRecipients.addAll(recipients);
+      allRecipients.retainAll(members);
+      if (trace) log.tracef("The merged list of nodes to send commit/rollback is %s", allRecipients);
+      return allRecipients;
    }
 }
