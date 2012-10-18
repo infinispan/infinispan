@@ -126,12 +126,16 @@ public class ClusterTopologyManagerImpl implements ClusterTopologyManager {
       asyncTransportExecutor.submit(new Callable<Object>() {
          @Override
          public Object call() throws Exception {
-            startRebalance(cacheName);
-            return null;
+            try {
+               startRebalance(cacheName);
+               return null;
+            } catch (Throwable t) {
+               log.errorf(t, "Failed to start rebalance: %s", t.getMessage());
+               throw new Exception(t);
+            }
          }
       });
    }
-
 
    @Override
    public CacheTopology handleJoin(String cacheName, Address joiner, CacheJoinInfo joinInfo, int viewId) throws Exception {
@@ -594,6 +598,7 @@ public class ClusterTopologyManagerImpl implements ClusterTopologyManager {
             try {
                return command.perform(null);
             } catch (Throwable t) {
+               log.errorf(t, "Failed to execute ReplicableCommand %s on cluster async: %s", command, t.getMessage());
                throw new Exception(t);
             }
          }

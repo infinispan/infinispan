@@ -36,8 +36,6 @@ import org.infinispan.context.InvocationContext;
 import org.infinispan.context.impl.TxInvocationContext;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.interceptors.base.CommandInterceptor;
-import org.infinispan.remoting.rpc.RpcManager;
-import org.infinispan.transaction.LocalTransaction;
 import org.infinispan.transaction.LockingMode;
 import org.infinispan.transaction.RemoteTransaction;
 import org.infinispan.transaction.WriteSkewHelper;
@@ -45,7 +43,6 @@ import org.infinispan.util.InfinispanCollections;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
-import java.util.Collections;
 import java.util.Set;
 
 //todo [anistor] command forwarding breaks the rule that we have only one originator for a command. this opens now the possibility to have two threads processing incoming remote commands for the same TX
@@ -75,7 +72,7 @@ public class StateTransferInterceptor extends CommandInterceptor {   //todo [ani
    }
 
    @Inject
-   public void init(StateTransferLock stateTransferLock, Configuration configuration, RpcManager rpcManager,
+   public void init(StateTransferLock stateTransferLock, Configuration configuration,
                     CommandsFactory commandFactory, StateTransferManager stateTransferManager) {
       this.stateTransferLock = stateTransferLock;
       this.commandFactory = commandFactory;

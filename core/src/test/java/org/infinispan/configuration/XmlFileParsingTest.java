@@ -263,7 +263,7 @@ public class XmlFileParsingTest extends AbstractInfinispanTest {
 
       assert gc.asyncTransportExecutor().factory() instanceof DefaultExecutorFactory;
       // Should be 25, but it's overriden by the test cache manager factory
-      assertEquals("4", gc.asyncTransportExecutor().properties().getProperty("maxThreads"));
+      assertEquals("6", gc.asyncTransportExecutor().properties().getProperty("maxThreads"));
       assert gc.asyncTransportExecutor().properties().getProperty("threadNamePrefix").equals("AsyncSerializationThread");
 
       assert gc.evictionScheduledExecutor().factory() instanceof DefaultScheduledExecutorFactory;

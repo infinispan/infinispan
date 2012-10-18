@@ -53,14 +53,13 @@ public class StaleTransactionCleanupService {
 
    private static Log log = LogFactory.getLog(StaleTransactionCleanupService.class);
 
+   private ScheduledExecutorService executorService;
 
    private TransactionTable transactionTable;
 
    public StaleTransactionCleanupService(TransactionTable transactionTable) {
       this.transactionTable = transactionTable;
    }
-
-   private ScheduledExecutorService executorService;
 
    /**
     * Roll back remote transactions that have acquired lock that are no longer valid,
@@ -71,15 +70,19 @@ public class StaleTransactionCleanupService {
    @SuppressWarnings("unused")
    public void onTopologyChange(TopologyChangedEvent<?, ?> tce) {
       // Roll back remote transactions originating on nodes that have left the cluster.
-      if (tce.isPre()) {
-         ConsistentHash consistentHashAtStart = tce.getConsistentHashAtStart();
-         if (consistentHashAtStart != null) {
-            List<Address> leavers = MembershipArithmetic.getMembersLeft(consistentHashAtStart.getMembers(), tce.getConsistentHashAtEnd().getMembers());
-            if (!leavers.isEmpty()) {
-               log.tracef("Saw %d leavers - kicking off a lock breaking task", leavers.size());
-               cleanTxForWhichTheOwnerLeft(leavers);
+      try {
+         if (tce.isPre()) {
+            ConsistentHash consistentHashAtStart = tce.getConsistentHashAtStart();
+            if (consistentHashAtStart != null) {
+               List<Address> leavers = MembershipArithmetic.getMembersLeft(consistentHashAtStart.getMembers(), tce.getConsistentHashAtEnd().getMembers());
+               if (!leavers.isEmpty()) {
+                  log.tracef("Saw %d leavers - kicking off a lock breaking task", leavers.size());
+                  cleanTxForWhichTheOwnerLeft(leavers);
+               }
             }
          }
+      } catch (Exception e) {
+         log.error("Failed to process topology update", e);
       }
    }
 
@@ -120,7 +123,6 @@ public class StaleTransactionCleanupService {
             transactionTable.cleanupCompletedTransactions();
          }
       }, interval, interval, TimeUnit.MILLISECONDS);
-
    }
 
    public void stop() {

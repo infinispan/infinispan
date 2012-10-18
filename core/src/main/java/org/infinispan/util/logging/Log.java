@@ -24,9 +24,7 @@ package org.infinispan.util.logging;
 
 import org.infinispan.CacheException;
 import org.infinispan.commands.ReplicableCommand;
-import org.infinispan.commands.remote.CacheRpcCommand;
 import org.infinispan.commands.tx.PrepareCommand;
-import org.infinispan.commands.write.WriteCommand;
 import org.infinispan.loaders.CacheLoaderException;
 import org.infinispan.loaders.bucket.Bucket;
 import org.infinispan.loaders.decorators.SingletonStore;
@@ -60,7 +58,6 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
-import java.util.concurrent.ExecutionException;
 
 import static org.jboss.logging.Logger.Level.*;
 
@@ -132,26 +129,6 @@ public interface Log extends BasicLogger {
    void cannotSelectRandomMembers(int numNeeded, List<Address> members);
 
    @LogMessage(level = INFO)
-   @Message(value = "Detected a view change. Member list changed from %s to %s", id = 9)
-   void viewChangeDetected(List<Address> oldMembers, List<Address> newMembers);
-
-   @LogMessage(level = INFO)
-   @Message(value = "This is a JOIN event! Wait for notification from new joiner %s", id = 10)
-   void joinEvent(Address joiner);
-
-   @LogMessage(level = INFO)
-   @Message(value = "This is a LEAVE event! Node %s has just left", id = 11)
-   void leaveEvent(Address leaver);
-
-   @LogMessage(level = FATAL)
-   @Message(value = "Unable to process leaver!!", id = 12)
-   void unableToProcessLeaver(@Cause Exception e);
-
-   @LogMessage(level = INFO)
-   @Message(value = "I %s am participating in rehash, state providers %s, state receivers %s", id = 13)
-   void participatingInRehash(Address address, List<Address> stateProviders, List<Address> receiversOfLeaverState);
-
-   @LogMessage(level = INFO)
    @Message(value = "DistributionManager not yet joined the cluster. Cannot do anything about other concurrent joiners.", id = 14)
    void distributionManagerNotJoined();
 
@@ -164,10 +141,6 @@ public interface Log extends BasicLogger {
    void problemApplyingStateForKey(String msg, Object key);
 
    @LogMessage(level = WARN)
-   @Message(value = "View change interrupted; not rehashing!", id = 17)
-   void viewChangeInterrupted();
-
-   @LogMessage(level = WARN)
    @Message(value = "Unable to apply prepare %s", id = 18)
    void unableToApplyPrepare(PrepareCommand pc, @Cause Throwable t);
 
@@ -176,24 +149,8 @@ public interface Log extends BasicLogger {
    void couldNotAcquireSharedLock();
 
    @LogMessage(level = WARN)
-   @Message(value = "Caught exception replaying %s", id = 20)
-   void exceptionWhenReplaying(WriteCommand cmd, @Cause Exception e);
-
-   @LogMessage(level = WARN)
    @Message(value = "Expected just one response; got %s", id = 21)
    void expectedJustOneResponse(Map<Address, Response> lr);
-
-   @LogMessage(level = INFO)
-   @Message(value = "Completed leave rehash on node %s in %s - leavers now are %s", id = 22)
-   void completedLeaveRehash(Address self, String duration, List<Address> leavers);
-
-   @LogMessage(level = ERROR)
-   @Message(value = "Error pushing tx log", id = 23)
-   void errorPushingTxLog(@Cause ExecutionException e);
-
-   @LogMessage(level = WARN)
-   @Message(value = "Unable to stop transaction logging!", id = 24)
-   void unableToStopTransactionLogging(@Cause IllegalMonitorStateException imse);
 
    @LogMessage(level = INFO)
    @Message(value = "wakeUpInterval is <= 0, not starting expired purge thread", id = 25)
@@ -210,7 +167,6 @@ public interface Log extends BasicLogger {
    @LogMessage(level = WARN)
    @Message(value = "Unable to passivate entry under %s", id = 28)
    void unableToPassivateEntry(Object key, @Cause Exception e);
-
 
    @LogMessage(level = INFO)
    @Message(value = "Passivating all entries to disk", id = 29)
@@ -297,14 +253,6 @@ public interface Log extends BasicLogger {
    void interruptedWaitingAsyncStorePush(@Cause InterruptedException e);
 
    @LogMessage(level = ERROR)
-   @Message(value = "Error performing clear in async store", id = 49)
-   void errorClearinAsyncStore(@Cause CacheLoaderException e);
-
-   @LogMessage(level = ERROR)
-   @Message(value = "Error performing purging expired from async store", id = 50)
-   void errorPurgingAsyncStore(@Cause CacheLoaderException e);
-
-   @LogMessage(level = ERROR)
    @Message(value = "Unexpected error", id = 51)
    void unexpectedErrorInAsyncProcessor(@Cause Throwable t);
 
@@ -376,14 +324,6 @@ public interface Log extends BasicLogger {
    @Message(value = "Cache named %s does not exist on this cache manager!", id = 68)
    void namedCacheDoesNotExist(String cacheName);
 
-   @LogMessage(level = INFO)
-   @Message(value = "Cache named [%s] exists but isn't in a state to handle remote invocations", id = 69)
-   void cacheCanNotHandleInvocations(String cacheName);
-
-   @LogMessage(level = INFO)
-   @Message(value = "Quietly ignoring clustered get call %s since unable to acquire processing lock, even after %s", id = 70)
-   void ignoreClusterGetCall(CacheRpcCommand cmd, String time);
-
    @LogMessage(level = WARN)
    @Message(value = "Caught exception when handling command %s", id = 71)
    void exceptionHandlingCommand(ReplicableCommand cmd, @Cause Throwable t);
@@ -395,18 +335,6 @@ public interface Log extends BasicLogger {
    @LogMessage(level = ERROR)
    @Message(value = "Unexpected error while replicating", id = 73)
    void unexpectedErrorReplicating(@Cause Throwable t);
-
-   @LogMessage(level = INFO)
-   @Message(value = "Trying to fetch state from %s", id = 74)
-   void tryingToFetchState(Address member);
-
-   @LogMessage(level = WARN)
-   @Message(value = "Could not find available peer for state, backing off and retrying", id = 75)
-   void couldNotFindPeerForState();
-
-   @LogMessage(level = INFO)
-   @Message(value = "Successfully retrieved and applied state from %s", id = 76)
-   void successfullyAppliedState(Address member);
 
    @LogMessage(level = ERROR)
    @Message(value = "Message or message buffer is null or empty.", id = 77)
@@ -461,15 +389,6 @@ public interface Log extends BasicLogger {
    @Message(value = "getCoordinator(): Interrupted while waiting for members to be set", id = 89)
    void interruptedWaitingForCoordinator(@Cause InterruptedException e);
 
-   @LogMessage(level = ERROR)
-   @Message(value = "Unable to retrieve state from member %s", id = 90)
-   void unableToRetrieveState(Address member, @Cause Exception e);
-
-   @LogMessage(level = ERROR)
-   @Message(value = "Channel does not contain STREAMING_STATE_TRANSFER. " +
-         "Cannot support state transfers!", id = 91)
-   void streamingStateTransferNotPresent();
-
    @LogMessage(level = WARN)
    @Message(value = "Channel not set up properly!", id = 92)
    void channelNotSetUp();
@@ -481,10 +400,6 @@ public interface Log extends BasicLogger {
    @LogMessage(level = INFO)
    @Message(value = "Received new cluster view: %s", id = 94)
    void receivedClusterView(View newView);
-
-   @LogMessage(level = ERROR)
-   @Message(value = "Caught while requesting or applying state", id = 96)
-   void errorRequestingOrApplyingState(@Cause Exception e);
 
    @LogMessage(level = ERROR)
    @Message(value = "Error while processing a prepare in a single-phase transaction", id = 97)
@@ -689,14 +604,6 @@ public interface Log extends BasicLogger {
    void failedLoadingValueFromCacheStore(Object key, @Cause Exception e);
 
    @LogMessage(level = ERROR)
-   @Message(value = "Error during rehash", id = 145)
-   void errorDuringRehash(@Cause Throwable th);
-
-   @LogMessage(level = ERROR)
-   @Message(value = "Error transferring state to node after rehash", id = 146)
-   void errorTransferringState(@Cause Exception e);
-
-   @LogMessage(level = ERROR)
    @Message(value = "Error invalidating keys from L1 after rehash", id = 147)
    void failedToInvalidateKeys(@Cause Exception e);
 
@@ -730,14 +637,6 @@ public interface Log extends BasicLogger {
    void unableToUnlockRebalancedKeys(GlobalTransaction gtx, List<Object> keys, Address self, @Cause Throwable t);
 
    @LogMessage(level = WARN)
-   @Message(value = "Timed out waiting for all cluster members to confirm pushing data for view %d, received confirmations %s. Cancelling state transfer", id = 157)
-   void stateTransferTimeoutWaitingForPushConfirmations(int viewId, Map<Address, Integer> pushConfirmations);
-
-   @LogMessage(level = WARN)
-   @Message(value = "Timed out waiting for all cluster members to confirm joining for view %d, joined %s. Cancelling state transfer", id = 158)
-   void stateTransferTimeoutWaitingForJoinConfirmations(int viewId, Map<Address, Integer> joinConfirmations);
-
-   @LogMessage(level = WARN)
    @Message(value = "Unblocking transactions failed", id = 159)
    void errorUnblockingTransactions(@Cause Exception e);
 
@@ -760,26 +659,6 @@ public interface Log extends BasicLogger {
    @LogMessage(level = ERROR)
    @Message(value = "Rolling back to cache view %d, but last committed view is %d", id = 164)
    void cacheViewRollbackIdMismatch(int committedViewId, int committedView);
-
-   @LogMessage(level = ERROR)
-   @Message(value = "Error triggering a view installation for cache %s", id = 165)
-   void errorTriggeringViewInstallation(@Cause RuntimeException e, String cacheName);
-
-   @LogMessage(level = ERROR)
-   @Message(value = "View installation failed for cache %s", id = 166)
-   void viewInstallationFailure(@Cause Throwable e, String cacheName);
-
-   @LogMessage(level = WARN)
-   @Message(value = "Rejecting state pushed by node %s for view %d, there is no state transfer in progress (we are at view %d)", id = 167)
-   void remoteStateRejected(Address sender, int viewId, int installedViewId);
-
-   @LogMessage(level = WARN)
-   @Message(value = "Error rolling back to cache view %1$d for cache %2$s", id = 168)
-   void cacheViewRollbackFailure(@Cause Throwable t, int committedViewId, String cacheName);
-
-   @LogMessage(level = WARN)
-   @Message(value = "Error committing cache view %1$d for cache %2$s", id = 169)
-   void cacheViewCommitFailure(@Cause Throwable t, int committedViewId, String cacheName);
 
    @LogMessage(level = INFO)
    @Message(value = "Strict peer-to-peer is enabled but the JGroups channel was started externally - this is very likely to result in RPC timeout errors on startup", id = 171)
@@ -926,5 +805,16 @@ public interface Log extends BasicLogger {
    @LogMessage(level = WARN)
    @Message(value = "Could not interrupt as no thread found for command uuid %s", id=207)
    void couldNotInterruptThread(UUID id);
-   
+
+   @LogMessage(level = ERROR)
+   @Message(value = "No live owners found for segment %d of cache %s. Current owners are:  %s. Faulty owners: %s", id=208)
+   void noLiveOwnersFoundForSegment(int segmentId, String cacheName, Collection<Address> owners, Collection<Address> faultySources);
+
+   @LogMessage(level = WARN)
+   @Message(value = "Failed to retrieve transactions for segments %s of cache %s from node %s (node will not be retried)", id=209)
+   void failedToRetrieveTransactionsForSegments(Collection<Integer> segments, String cacheName, Address source);
+
+   @LogMessage(level = WARN)
+   @Message(value = "Failed to request segments %s of cache %s from node %s (node will not be retried)", id=210)
+   void failedToRequestSegments(Collection<Integer> segments, String cacheName, Address source);
 }

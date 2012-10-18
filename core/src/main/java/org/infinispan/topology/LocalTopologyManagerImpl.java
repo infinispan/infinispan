@@ -280,6 +280,7 @@ public class LocalTopologyManagerImpl implements LocalTopologyManager {
                try {
                   return command.perform(null);
                } catch (Throwable t) {
+                  log.errorf(t, "Failed to execute ReplicableCommand %s on coordinator async: %s", command, t.getMessage());
                   throw new Exception(t);
                }
             }
@@ -297,8 +298,6 @@ class LocalCacheStatus {
    private final CacheJoinInfo joinInfo;
    private final CacheTopologyHandler handler;
    private volatile CacheTopology topology;
-
-   private boolean joined;
 
    public LocalCacheStatus(CacheJoinInfo joinInfo, CacheTopologyHandler handler) {
       this.joinInfo = joinInfo;
@@ -319,13 +318,5 @@ class LocalCacheStatus {
 
    public void setTopology(CacheTopology topology) {
       this.topology = topology;
-   }
-
-   public boolean isJoined() {
-      return joined;
-   }
-
-   public void setJoined(boolean joined) {
-      this.joined = joined;
    }
 }

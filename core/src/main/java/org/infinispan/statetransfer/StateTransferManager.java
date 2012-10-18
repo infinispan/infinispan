@@ -81,4 +81,5 @@ public interface StateTransferManager {
     */
    void forwardCommandIfNeeded(TopologyAffectedCommand command, Set<Object> affectedKeys, boolean sync);
 
+   void notifyEndOfTopologyUpdate(int topologyId);
 }

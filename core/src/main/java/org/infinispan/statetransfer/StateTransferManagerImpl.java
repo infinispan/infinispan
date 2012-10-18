@@ -70,7 +70,7 @@ public class StateTransferManagerImpl implements StateTransferManager {
    private GroupManager groupManager;   // optional
    private LocalTopologyManager localTopologyManager;
 
-   private CountDownLatch initialStateTransferComplete = new CountDownLatch(1);
+   private final CountDownLatch initialStateTransferComplete = new CountDownLatch(1);
 
    public StateTransferManagerImpl() {
    }
@@ -170,13 +170,18 @@ public class StateTransferManagerImpl implements StateTransferManager {
 
    private void doTopologyUpdate(CacheTopology newCacheTopology, boolean isRebalance) {
       if (trace) {
-         log.tracef("Installing new cache topology %s", newCacheTopology);
+         log.tracef("Installing new cache topology %s on cache %s", newCacheTopology, cacheName);
       }
 
       // handle grouping
       newCacheTopology = addGrouping(newCacheTopology);
 
       CacheTopology oldCacheTopology = stateConsumer.getCacheTopology();
+
+      if (oldCacheTopology != null && oldCacheTopology.getTopologyId() > newCacheTopology.getTopologyId()) {
+         throw new IllegalStateException("Old topology is higher: old=" + oldCacheTopology + ", new=" + newCacheTopology);
+      }
+
       ConsistentHash oldCH = oldCacheTopology != null ? oldCacheTopology.getWriteConsistentHash() : null;
       ConsistentHash newCH = newCacheTopology.getWriteConsistentHash();
 
@@ -188,15 +193,17 @@ public class StateTransferManagerImpl implements StateTransferManager {
 
       cacheNotifier.notifyTopologyChanged(oldCH, newCH, newCacheTopology.getTopologyId(), false);
 
-      if (newCacheTopology.getCurrentCH().getMembers().contains(rpcManager.getAddress())) {
+      boolean isJoined = stateConsumer.getCacheTopology().getReadConsistentHash().getMembers().contains(rpcManager.getAddress());
+      if (initialStateTransferComplete.getCount() > 0 && isJoined) {
          initialStateTransferComplete.countDown();
+         log.tracef("Initial state transfer complete for cache %s on node %s", cacheName, rpcManager.getAddress());
       }
    }
 
    @Start(priority = 1000)
    @SuppressWarnings("unused")
    public void waitForInitialStateTransferToComplete() throws InterruptedException {
-      if (trace) log.tracef("Waiting for initial state transfer to finish");
+      if (trace) log.tracef("Waiting for initial state transfer to finish for cache %s on %s", cacheName, rpcManager.getAddress());
       boolean success = initialStateTransferComplete.await(configuration.clustering().stateTransfer().timeout(), TimeUnit.MILLISECONDS);
       if (!success) {
          throw new CacheException(String.format("Initial state transfer timed out for cache %s on %s",
@@ -210,6 +217,7 @@ public class StateTransferManagerImpl implements StateTransferManager {
       if (trace) {
          log.tracef("Shutting down StateTransferManager of cache %s on node %s", cacheName, rpcManager.getAddress());
       }
+      initialStateTransferComplete.countDown();
       localTopologyManager.leave(cacheName);
    }
 
@@ -267,5 +275,15 @@ public class StateTransferManagerImpl implements StateTransferManager {
             rpcManager.invokeRemotely(newTargets, command, sync, false);
          }
       }
+   }
+
+   @Override
+   public void notifyEndOfTopologyUpdate(int topologyId) {
+      if (initialStateTransferComplete.getCount() > 0
+            && stateConsumer.getCacheTopology().getWriteConsistentHash().getMembers().contains(rpcManager.getAddress())) {
+         initialStateTransferComplete.countDown();
+         log.tracef("Initial state transfer complete for cache %s on node %s", cacheName, rpcManager.getAddress());
+      }
+      localTopologyManager.confirmRebalance(cacheName, topologyId, null);
    }
 }

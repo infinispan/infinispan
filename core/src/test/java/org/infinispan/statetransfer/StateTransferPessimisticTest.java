@@ -40,6 +40,7 @@ import static org.junit.Assert.assertEquals;
 
 /**
  * Test if state transfer happens properly on a cache with pessimistic transactions.
+ * See https://issues.jboss.org/browse/ISPN-2408.
  *
  * @since 5.2
  */

@@ -66,7 +66,9 @@ public class InboundTransferTask {
 
    private final long timeout;
 
-   public InboundTransferTask(Set<Integer> segments, Address source, int topologyId, StateConsumerImpl stateConsumer, RpcManager rpcManager, CommandsFactory commandsFactory, long timeout) {
+   private final String cacheName;
+
+   public InboundTransferTask(Set<Integer> segments, Address source, int topologyId, StateConsumerImpl stateConsumer, RpcManager rpcManager, CommandsFactory commandsFactory, long timeout, String cacheName) {
       if (segments == null || segments.isEmpty()) {
          throw new IllegalArgumentException("segments must not be null or empty");
       }
@@ -81,6 +83,7 @@ public class InboundTransferTask {
       this.rpcManager = rpcManager;
       this.commandsFactory = commandsFactory;
       this.timeout = timeout;
+      this.cacheName = cacheName;
    }
 
    public Set<Integer> getSegments() {
@@ -93,7 +96,7 @@ public class InboundTransferTask {
 
    public boolean requestTransactions() {
       if (trace) {
-         log.tracef("Requesting transactions for segments %s", segments);
+         log.tracef("Requesting transactions for segments %s of cache %s from node %s", segments, cacheName, source);
       }
       // get transactions and locks
       StateRequestCommand cmd = commandsFactory.buildStateRequestCommand(StateRequestCommand.Type.GET_TRANSACTIONS, rpcManager.getAddress(), topologyId, segments);
@@ -109,6 +112,10 @@ public class InboundTransferTask {
    }
 
    public boolean requestSegments() {
+      if (trace) {
+         log.tracef("Requesting segments %s of cache %s from node %s", segments, cacheName, source);
+      }
+
       // start transfer of cache entries
       StateRequestCommand cmd = commandsFactory.buildStateRequestCommand(StateRequestCommand.Type.START_STATE_TRANSFER, rpcManager.getAddress(), topologyId, segments);
       Map<Address, Response> responses = rpcManager.invokeRemotely(Collections.singleton(source), cmd, ResponseMode.SYNCHRONOUS_IGNORE_LEAVERS, timeout);
@@ -139,11 +146,7 @@ public class InboundTransferTask {
       if (!isCancelled) {
          isCancelled = true;
 
-         Set<Integer> cancelledSegments = new HashSet<Integer>(segments);
-         segments.clear();
-         finishedSegments.clear();
-
-         StateRequestCommand cmd = commandsFactory.buildStateRequestCommand(StateRequestCommand.Type.CANCEL_STATE_TRANSFER, rpcManager.getAddress(), topologyId, cancelledSegments);
+         StateRequestCommand cmd = commandsFactory.buildStateRequestCommand(StateRequestCommand.Type.CANCEL_STATE_TRANSFER, rpcManager.getAddress(), topologyId, segments);
          rpcManager.invokeRemotely(Collections.singleton(source), cmd, ResponseMode.SYNCHRONOUS_IGNORE_LEAVERS, timeout);
 
          stateConsumer.onTaskCompletion(this);
@@ -151,12 +154,13 @@ public class InboundTransferTask {
    }
 
    public void onStateReceived(int segmentId, boolean isLastChunk) {
-      if (!isCancelled && segments.contains(segmentId)) {
-         if (isLastChunk) {
-            finishedSegments.add(segmentId);
-            if (finishedSegments.containsAll(segments)) {
-               stateConsumer.onTaskCompletion(this);
+      if (!isCancelled && isLastChunk && segments.contains(segmentId)) {
+         finishedSegments.add(segmentId);
+         if (finishedSegments.containsAll(segments)) {
+            if (trace) {
+               log.tracef("Finished receiving state for segments %s of cache %s", segments, cacheName);
             }
+            stateConsumer.onTaskCompletion(this);
          }
       }
    }
@@ -166,11 +170,14 @@ public class InboundTransferTask {
       HashSet<Integer> unfinishedSegments = new HashSet<Integer>(segments);
       unfinishedSegments.removeAll(finishedSegments);
       return "InboundTransferTask{" +
-            "unfinishedSegments=" + unfinishedSegments +
+            "segments=" + segments +
+            ", finishedSegments=" + finishedSegments +
+            ", unfinishedSegments=" + unfinishedSegments +
             ", source=" + source +
             ", isCancelled=" + isCancelled +
             ", topologyId=" + topologyId +
             ", timeout=" + timeout +
+            ", cacheName=" + cacheName +
             '}';
    }
 }

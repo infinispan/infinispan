@@ -523,25 +523,29 @@ public class TransactionTable {
    }
 
    public void cleanupCompletedTransactions() {
-      log.debugf("About to cleanup completed transaction. Initial size is %s", completedTransactions.size());
-      //this iterator is weekly consistent and will never throw ConcurrentModificationException
-      Iterator<Map.Entry<GlobalTransaction, Long>> iterator = completedTransactions.entrySet().iterator();
-      long timeout = configuration.transaction().completedTxTimeout();
+      try {
+         log.debugf("About to cleanup completed transaction. Initial size is %d", completedTransactions.size());
+         //this iterator is weekly consistent and will never throw ConcurrentModificationException
+         Iterator<Map.Entry<GlobalTransaction, Long>> iterator = completedTransactions.entrySet().iterator();
+         long timeout = configuration.transaction().completedTxTimeout();
 
-      int removedEntries = 0;
-      long beginning = System.nanoTime();
-      while (iterator.hasNext()) {
-         Map.Entry<GlobalTransaction, Long> e = iterator.next();
-         long ageNanos = System.nanoTime() - e.getValue();
-         if (TimeUnit.NANOSECONDS.toMillis(ageNanos) >= timeout) {
-            iterator.remove();
-            removedEntries++;
+         int removedEntries = 0;
+         long beginning = System.nanoTime();
+         while (iterator.hasNext()) {
+            Map.Entry<GlobalTransaction, Long> e = iterator.next();
+            long ageNanos = System.nanoTime() - e.getValue();
+            if (TimeUnit.NANOSECONDS.toMillis(ageNanos) >= timeout) {
+               iterator.remove();
+               removedEntries++;
+            }
          }
-      }
-      long duration = System.nanoTime() - beginning;
+         long duration = System.nanoTime() - beginning;
 
-      log.debugf("Finished cleaning up completed transactions. %s transactions were removed, total duration was %s millis, " +
-                      "current number of completed transactions is %", removedEntries, TimeUnit.NANOSECONDS.toMillis(duration),
-                 completedTransactions.size());
+         log.debugf("Finished cleaning up completed transactions. %d transactions were removed, total duration was %d millis, " +
+                         "current number of completed transactions is %d", removedEntries, TimeUnit.NANOSECONDS.toMillis(duration),
+                    completedTransactions.size());
+      } catch (Exception e) {
+         log.errorf(e, "Failed to cleanup completed transactions: %s", e.getMessage());
+      }
    }
 }
