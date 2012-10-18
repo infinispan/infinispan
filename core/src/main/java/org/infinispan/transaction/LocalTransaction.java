@@ -37,7 +37,6 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
-import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
@@ -101,8 +100,7 @@ public abstract class LocalTransaction extends AbstractCacheTransaction {
 
    @Override
    public Map<Object, CacheEntry> getLookedUpEntries() {
-      return (Map<Object, CacheEntry>)
-            (lookedUpEntries == null ? InfinispanCollections.emptyMap() : lookedUpEntries);
+      return lookedUpEntries == null ? InfinispanCollections.<Object, CacheEntry>emptyMap() : lookedUpEntries;
    }
 
    public boolean isImplicitTransaction() {

@@ -80,6 +80,7 @@ public class TransactionTable {
    private static final Log log = LogFactory.getLog(TransactionTable.class);
 
    private ConcurrentMap<Transaction, LocalTransaction> localTransactions;
+   private ConcurrentMap<GlobalTransaction, LocalTransaction> globalToLocalTransactions;
    private ConcurrentMap<GlobalTransaction, RemoteTransaction> remoteTransactions;
 
    private final StaleTransactionCleanupService cleanupService = new StaleTransactionCleanupService(this);
@@ -131,6 +132,7 @@ public class TransactionTable {
    private void start() {
       final int concurrencyLevel = configuration.locking().concurrencyLevel();
       localTransactions = ConcurrentMapFactory.makeConcurrentMap(concurrencyLevel, 0.75f, concurrencyLevel);
+      globalToLocalTransactions = ConcurrentMapFactory.makeConcurrentMap(concurrencyLevel, 0.75f, concurrencyLevel);
       if (configuration.clustering().cacheMode().isClustered()) {
          minTopologyRecalculationLock = new ReentrantLock();
          // Only initialize this if we are clustered.
@@ -317,6 +319,7 @@ public class TransactionTable {
          current = txFactory.newLocalTransaction(transaction, tx, ctx.isImplicitTransaction(), currentTopologyId);
          log.tracef("Created a new local transaction: %s", current);
          localTransactions.put(transaction, current);
+         globalToLocalTransactions.put(current.getGlobalTransaction(), current);
          notifier.notifyTransactionRegistered(tx, ctx);
       }
       return current;
@@ -331,10 +334,13 @@ public class TransactionTable {
    }
 
    protected final LocalTransaction removeLocalTransactionInternal(Transaction tx) {
-      LocalTransaction removed;
-      removed = localTransactions.remove(tx);
-      releaseResources(removed);
-      return removed;
+      LocalTransaction localTx = localTransactions.get(tx);
+      if (localTx != null) {
+         globalToLocalTransactions.remove(localTx.getGlobalTransaction());
+         localTransactions.remove(tx);
+         releaseResources(localTx);
+      }
+      return localTx;
    }
 
    private void releaseResources(CacheTransaction cacheTransaction) {
@@ -357,8 +363,7 @@ public class TransactionTable {
    }
 
    public final RemoteTransaction removeRemoteTransaction(GlobalTransaction txId) {
-      RemoteTransaction removed;
-      removed = remoteTransactions.remove(txId);
+      RemoteTransaction removed = remoteTransactions.remove(txId);
       log.tracef("Removed remote transaction %s ? %s", txId, removed);
       releaseResources(removed);
       return removed;
@@ -378,12 +383,7 @@ public class TransactionTable {
     * @return the LocalTransaction or null if not found
     */
    public LocalTransaction getLocalTransaction(GlobalTransaction txId) {
-      for (LocalTransaction localTx : localTransactions.values()) { //todo [anistor] optimize lookup!
-         if (txId.equals(localTx.getGlobalTransaction())) {
-            return localTx;
-         }
-      }
-      return null;
+      return globalToLocalTransactions.get(txId);
    }
 
    public LocalTransaction getLocalTransaction(Transaction tx) {
