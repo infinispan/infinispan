@@ -25,8 +25,10 @@ package org.infinispan.query.backend;
 
 import org.hibernate.annotations.common.reflection.ReflectionManager;
 import org.hibernate.search.cfg.SearchMapping;
+import org.hibernate.search.cfg.spi.IndexManagerFactory;
 import org.hibernate.search.cfg.spi.SearchConfiguration;
 import org.hibernate.search.cfg.spi.SearchConfigurationBase;
+import org.hibernate.search.impl.DefaultIndexManagerFactory;
 import org.hibernate.search.impl.SearchMappingBuilder;
 import org.hibernate.search.infinispan.CacheManagerServiceProvider;
 import org.hibernate.search.spi.ServiceProvider;
@@ -53,6 +55,7 @@ public class SearchableCacheConfiguration extends SearchConfigurationBase implem
    private final Properties properties;
    private final SearchMapping searchMapping;
    private final Map<Class<? extends ServiceProvider<?>>, Object> providedServices;
+   private final IndexManagerFactory indexManagerFactory = new DefaultIndexManagerFactory();
 
    public SearchableCacheConfiguration(Class<?>[] classArray, Properties properties, EmbeddedCacheManager uninitializedCacheManager, ComponentRegistry cr) {
       this.providedServices = initializeProvidedServices(uninitializedCacheManager, cr);
@@ -134,6 +137,11 @@ public class SearchableCacheConfiguration extends SearchConfigurationBase implem
    @Override
    public boolean isIdProvidedImplicit() {
       return true;
+   }
+
+   @Override
+   public IndexManagerFactory getIndexManagerFactory() {
+      return indexManagerFactory;
    }
 
 }
