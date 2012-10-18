@@ -27,11 +27,13 @@ import java.io.Serializable;
 
 import org.hibernate.search.annotations.Field;
 
+import java.io.Serializable;
+
 /**
  * @author Sanne Grinovero <sanne@hibernate.org> (C) 2011 Red Hat Inc.
  */
 public class City implements Serializable {
 
-   @Field String name;
+   public @Field String name;
 
 }

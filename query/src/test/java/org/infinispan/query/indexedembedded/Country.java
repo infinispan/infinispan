@@ -37,7 +37,7 @@ import org.hibernate.search.annotations.IndexedEmbedded;
 @Indexed
 public class Country implements Serializable {
    
-   Long id;
+   public Long id;
    
    public @Field String countryName;
    
