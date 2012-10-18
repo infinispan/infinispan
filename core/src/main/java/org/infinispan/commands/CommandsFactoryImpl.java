@@ -29,6 +29,7 @@ import org.infinispan.commands.control.StateTransferControlCommand;
 import org.infinispan.commands.module.ModuleCommandInitializer;
 import org.infinispan.commands.read.DistributedExecuteCommand;
 import org.infinispan.commands.read.EntrySetCommand;
+import org.infinispan.commands.read.GetCacheEntryCommand;
 import org.infinispan.commands.read.GetKeyValueCommand;
 import org.infinispan.commands.read.KeySetCommand;
 import org.infinispan.commands.read.MapReduceCommand;
@@ -228,7 +229,12 @@ public class CommandsFactoryImpl implements CommandsFactory {
 
    @Override
    public GetKeyValueCommand buildGetKeyValueCommand(Object key, Set<Flag> flags) {
-      return new GetKeyValueCommand(key, notifier, flags);
+      return new GetKeyValueCommand(key, flags);
+   }
+
+   @Override
+   public GetCacheEntryCommand buildGetCacheEntryCommand(Object key, Set<Flag> flags) {
+      return new GetCacheEntryCommand(key, flags);
    }
 
    @Override
