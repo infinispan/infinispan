@@ -24,8 +24,6 @@ import org.infinispan.commands.tx.PrepareCommand;
 import org.infinispan.commands.tx.RollbackCommand;
 import org.infinispan.context.impl.TxInvocationContext;
 import org.infinispan.remoting.transport.BackupResponse;
-import org.infinispan.transaction.LocalTransaction;
-import org.infinispan.transaction.xa.GlobalTransaction;
 
 /**
  * Handles x-site data backups for optimistic transactional caches.

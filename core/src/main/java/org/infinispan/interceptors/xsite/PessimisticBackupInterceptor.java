@@ -23,7 +23,6 @@ import org.infinispan.commands.tx.CommitCommand;
 import org.infinispan.commands.tx.PrepareCommand;
 import org.infinispan.context.impl.TxInvocationContext;
 import org.infinispan.remoting.transport.BackupResponse;
-import org.infinispan.transaction.LocalTransaction;
 
 /**
  * Handles x-site data backups for pessimistic transactional caches.

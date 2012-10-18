@@ -25,7 +25,6 @@ package org.infinispan.interceptors;
 import org.infinispan.commands.AbstractVisitor;
 import org.infinispan.commands.CommandsFactory;
 import org.infinispan.commands.FlagAffectedCommand;
-import org.infinispan.commands.VisitableCommand;
 import org.infinispan.commands.control.LockControlCommand;
 import org.infinispan.commands.tx.PrepareCommand;
 import org.infinispan.commands.write.ClearCommand;
@@ -45,7 +44,6 @@ import org.infinispan.interceptors.base.BaseRpcInterceptor;
 import org.infinispan.jmx.annotations.MBean;
 import org.infinispan.jmx.annotations.ManagedAttribute;
 import org.infinispan.jmx.annotations.ManagedOperation;
-import org.infinispan.transaction.xa.GlobalTransaction;
 import org.infinispan.util.InfinispanCollections;
 import org.infinispan.util.concurrent.NotifyingFutureImpl;
 import org.infinispan.util.concurrent.NotifyingNotifiableFuture;
@@ -59,10 +57,8 @@ import org.rhq.helpers.pluginAnnotations.agent.Parameter;
 
 import javax.transaction.Transaction;
 import java.util.Arrays;
-import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicLong;
 
@@ -83,7 +79,6 @@ import java.util.concurrent.atomic.AtomicLong;
 @MBean(objectName = "Invalidation", description = "Component responsible for invalidating entries on remote caches when entries are written to locally.")
 public class InvalidationInterceptor extends BaseRpcInterceptor {
    private final AtomicLong invalidations = new AtomicLong(0);
-   protected Map<GlobalTransaction, List<VisitableCommand>> txMods;
    private CommandsFactory commandsFactory;
    @ManagedAttribute(description = "Enables or disables the gathering of statistics by this component", writable = true)
    private boolean statisticsEnabled;
