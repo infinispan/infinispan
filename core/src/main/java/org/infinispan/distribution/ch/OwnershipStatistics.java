@@ -19,6 +19,7 @@
 
 package org.infinispan.distribution.ch;
 
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -45,6 +46,30 @@ class OwnershipStatistics {
       this.primaryOwned = new int[nodes.size()];
       this.owned = new int[nodes.size()];
    }
+
+   public OwnershipStatistics(DefaultConsistentHash ch, List<Address> nodes) {
+      this(nodes);
+
+      for (int i = 0; i < ch.getNumSegments(); i++) {
+         List<Address> owners = ch.locateOwnersForSegment(i);
+         for (int j = 0; j < owners.size(); j++) {
+            Address address = owners.get(j);
+            if (nodes.contains(address)) {
+               if (j == 0) {
+                  incPrimaryOwned(address);
+               }
+               incOwned(address);
+            }
+         }
+      }
+   }
+
+   public OwnershipStatistics(OwnershipStatistics other) {
+      this.nodes = new HashMap<Address, Integer>(other.nodes);
+      this.primaryOwned = Arrays.copyOf(other.primaryOwned, other.primaryOwned.length);
+      this.owned = Arrays.copyOf(other.owned, other.owned.length);
+   }
+
 
    public int getPrimaryOwned(Address a) {
       Integer i = nodes.get(a);

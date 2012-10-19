@@ -54,7 +54,7 @@ public class SyncConsistentHashFactory implements ConsistentHashFactory<DefaultC
          populateOwnersFewSegments(builder, primarySegments);
       }
 
-      return new DefaultConsistentHash(hashFunction, numSegments, numOwners, members, builder.getAllOwners());
+      return new DefaultConsistentHash(hashFunction, numOwners, numSegments, members, builder.getAllOwners());
    }
 
    protected void populateOwnersFewSegments(Builder builder, SortedMap<Integer, Address> primarySegments) {
@@ -188,8 +188,8 @@ public class SyncConsistentHashFactory implements ConsistentHashFactory<DefaultC
          }
       }
 
-      return new DefaultConsistentHash(baseCH.getHashFunction(), numSegments, numOwners,
-            newMembers, newSegmentOwners);
+      return new DefaultConsistentHash(baseCH.getHashFunction(), numOwners, numSegments, newMembers,
+            newSegmentOwners);
    }
 
    @Override
