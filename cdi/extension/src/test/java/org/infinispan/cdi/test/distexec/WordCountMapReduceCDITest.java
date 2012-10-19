@@ -47,7 +47,7 @@ import org.testng.annotations.Test;
 
 /**
  * BaseTest for MapReduceTask
- * 
+ *
  * @author Vladimir Blagojevic
  */
 @Test(enabled = true, groups = "functional", testName = "distexec.WordCountMapReduceCDITest")
@@ -58,7 +58,7 @@ public class WordCountMapReduceCDITest extends MultipleCacheManagersArquillianTe
    public WordCountMapReduceCDITest() {
       delegate = new SimpleTwoNodesMapReduceTest();
    }
-   
+
    @Override
    MultipleCacheManagersTest getDelegate() {
       return delegate;
@@ -72,17 +72,27 @@ public class WordCountMapReduceCDITest extends MultipleCacheManagersArquillianTe
 
    public void testinvokeMapReduceOnSubsetOfKeys() throws Exception {
       MapReduceTask<String, String, String, Integer> task = delegate.invokeMapReduce(new String[] {
-               "1", "2", "3" }, new WordCountMapper(), new WordCountReducer());
+            "1", "2", "3" }, new WordCountMapper(), new WordCountReducer());
       Map<String, Integer> mapReduce = task.execute();
       Integer count = mapReduce.get("Infinispan");
       assert count == 1;
       count = mapReduce.get("Boston");
       assert count == 1;
    }
-   
+
    public void testinvokeMapReduceWithInputCacheOnSubsetOfKeys() throws Exception {
       MapReduceTask<String, String, String, Integer> task = delegate.invokeMapReduce(new String[] {
-               "1", "2", "3" }, new WordCountImpliedInputCacheMapper(), new WordCountReducer());
+            "1", "2", "3" }, new WordCountImpliedInputCacheMapper(), new WordCountReducer());
+      Map<String, Integer> mapReduce = task.execute();
+      Integer count = mapReduce.get("Infinispan");
+      assert count == 1;
+      count = mapReduce.get("Boston");
+      assert count == 1;
+   }
+
+   public void testinvokeMapReduceWithInputCacheReducerOnSubsetOfKeys() throws Exception {
+      MapReduceTask<String, String, String, Integer> task = delegate.invokeMapReduce(new String[] {
+            "1", "2", "3" }, new WordCountImpliedInputCacheMapper(), new WordCountImpliedInputCacheReducer());
       Map<String, Integer> mapReduce = task.execute();
       Integer count = mapReduce.get("Infinispan");
       assert count == 1;
@@ -100,6 +110,8 @@ public class WordCountMapReduceCDITest extends MultipleCacheManagersArquillianTe
       @Override
       public void map(String key, String value, Collector<String, Integer> collector) {
          Assert.assertNotNull(cache, "Cache not injected into " + this);
+         Assert.assertFalse(cache.getName().equals("mapreducecache"), "The injected cache should be default cache.");
+
          StringTokenizer tokens = new StringTokenizer(value);
          while (tokens.hasMoreElements()) {
             String s = (String) tokens.nextElement();
@@ -107,12 +119,12 @@ public class WordCountMapReduceCDITest extends MultipleCacheManagersArquillianTe
          }
       }
    }
-   
+
    private static class WordCountImpliedInputCacheMapper implements Mapper<String, String, String, Integer> {
-    
+
       /** The serialVersionUID */
       private static final long serialVersionUID = 7525403183805551028L;
-      
+
       @Inject
       @Input
       private Cache<String, String> cache;
@@ -120,8 +132,8 @@ public class WordCountMapReduceCDITest extends MultipleCacheManagersArquillianTe
       @Override
       public void map(String key, String value, Collector<String, Integer> collector) {
          Assert.assertNotNull(cache, "Cache not injected into " + this);
-         //the right cache injected         
-         Assert.assertTrue(cache.getName().equals("mapreducecache")); 
+         //the right cache injected
+         Assert.assertTrue(cache.getName().equals("mapreducecache"));
          StringTokenizer tokens = new StringTokenizer(value);
          while (tokens.hasMoreElements()) {
             String s = (String) tokens.nextElement();
@@ -140,6 +152,30 @@ public class WordCountMapReduceCDITest extends MultipleCacheManagersArquillianTe
       @Override
       public Integer reduce(String key, Iterator<Integer> iter) {
          Assert.assertNotNull(cache, "Cache not injected into " + this);
+         Assert.assertFalse(cache.getName().equals("mapreducecache"), "The injected cache should be default cache.");
+
+         int sum = 0;
+         while (iter.hasNext()) {
+            Integer i = iter.next();
+            sum += i;
+         }
+         return sum;
+      }
+   }
+
+   private static class WordCountImpliedInputCacheReducer implements Reducer<String, Integer> {
+      /** The serialVersionUID */
+      private static final long serialVersionUID = 1901016598354633256L;
+
+      @Inject
+      @Input
+      private Cache<String, String> cache;
+
+      @Override
+      public Integer reduce(String key, Iterator<Integer> iter) {
+         Assert.assertNotNull(cache, "Cache not injected into " + this);
+         Assert.assertTrue(cache.getName().equals("mapreducecache"), "The injected cache should be the input cache.");
+
          int sum = 0;
          while (iter.hasNext()) {
             Integer i = iter.next();
