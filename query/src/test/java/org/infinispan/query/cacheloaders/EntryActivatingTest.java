@@ -74,6 +74,10 @@ public class EntryActivatingTest extends AbstractInfinispanTest {
 
       Country italy = new Country();
       italy.countryName = "Italy";
+      City rome = new City();
+      rome.name = "Rome";
+      italy.cities.add(rome);
+
       cache.put("IT", italy);
       assert ! store.containsKey("IT");
 
