@@ -37,6 +37,9 @@ public class SyncConsistentHashFactoryTest extends DefaultConsistentHashFactoryT
       return new SyncConsistentHashFactory();
    }
 
+   // Disclaimer: These numbers just happen to work with our test addresses, they are by no means guaranteed
+   // by the SyncConsistentHashFactory algorithm. In theory it could trade stability of segments on join/leave
+   // in order to guarantee a better distribution, but I haven't done anything in that area yet.
    @Override
    protected int minPrimaryOwned(int numSegments, int numNodes) {
       return (int) (0.25 * super.minPrimaryOwned(numSegments, numNodes));
