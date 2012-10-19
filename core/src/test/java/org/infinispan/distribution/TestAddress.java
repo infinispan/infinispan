@@ -65,7 +65,10 @@ public class TestAddress implements Address {
 
    @Override
    public String toString() {
-      return "TestAddress#"+addressNum + (name != null? ("-" + name) : "");
+      if (name != null) {
+         return name + "#" + addressNum;
+      } else
+      return "TestAddress#" + addressNum;
    }
 
    @Override
