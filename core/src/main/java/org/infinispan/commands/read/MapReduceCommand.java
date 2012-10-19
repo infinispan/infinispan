@@ -138,8 +138,8 @@ public class MapReduceCommand extends BaseRpcCommand {
       log.tracef("For %s at %s invoking mapper on keys %s", this, localAddress, keys);
       DefaultCollector<Object,Object> collector = new DefaultCollector<Object, Object>();
       for (Object key : keys) {
-         GetKeyValueCommand command = commandsFactory.buildGetKeyValueCommand(key, ctx.getFlags());
-         command.setReturnCacheEntry(false);
+         GetKeyValueCommand command = commandsFactory
+               .buildGetCacheEntryCommand(key, ctx.getFlags());
          Object value = invoker.invoke(ctx, command);
          mapper.map(key, value,collector);
       }
