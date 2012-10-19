@@ -20,14 +20,14 @@
 package org.infinispan.context;
 
 import org.infinispan.CacheException;
-import org.infinispan.configuration.cache.ClusterCacheLoaderConfiguration;
-import org.infinispan.configuration.cache.Configuration;
-import org.infinispan.configuration.cache.LoaderConfiguration;
+import org.infinispan.config.Configuration;
 import org.infinispan.context.impl.LocalTxInvocationContext;
 import org.infinispan.context.impl.NonTxInvocationContext;
 import org.infinispan.context.impl.RemoteTxInvocationContext;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.factories.annotations.Start;
+import org.infinispan.loaders.CacheLoaderConfig;
+import org.infinispan.loaders.cluster.ClusterCacheLoaderConfig;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.transaction.LocalTransaction;
 import org.infinispan.transaction.RemoteTransaction;
@@ -62,19 +62,16 @@ public class TransactionalInvocationContextContainer extends AbstractInvocationC
    @Start
    public void start() {
       isThreadLocalRequired =
-            config.clustering().cacheMode().isClustered()
-                  || config.storeAsBinary().enabled()
+            config.getCacheMode().isClustered()
+                  || config.isStoreAsBinary()
                   || hasClusterCacheLoader();
    }
 
    private boolean hasClusterCacheLoader() {
-      boolean hasCacheLoaders = config.loaders().usingCacheLoaders();
-      if (hasCacheLoaders) {
-         List<LoaderConfiguration> loaderConfigs = config.loaders().cacheLoaders();
-         for (LoaderConfiguration loaderConfig : loaderConfigs) {
-            if (loaderConfig instanceof ClusterCacheLoaderConfiguration)
-               return true;
-         }
+      List<CacheLoaderConfig> cacheLoaders = config.getCacheLoaders();
+      for (CacheLoaderConfig loaderConfig : cacheLoaders) {
+         if (loaderConfig instanceof ClusterCacheLoaderConfig)
+            return true;
       }
       return false;
    }
