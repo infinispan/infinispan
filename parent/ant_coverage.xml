@@ -1,0 +1,50 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project name="Infinispan JaCoCo Report" default="rebuild" xmlns:jacoco="antlib:org.jacoco.ant">
+
+   <property name="reportTitle" value="Infinispan JaCoCo Report"/>
+   <property name="dir.ispn" location="../" />
+   <property name="dir.report" location="../jacoco-html" />
+
+   <taskdef uri="antlib:org.jacoco.ant" resource="org/jacoco/ant/antlib.xml">
+      <classpath path="target/jacoco-jars/org.jacoco.ant.jar" />
+      <classpath path="target/jacoco-jars/org.jacoco.core.jar" />
+      <classpath path="target/jacoco-jars/org.jacoco.report.jar" />
+      <classpath path="target/jacoco-jars/asm-all.jar" />
+   </taskdef>
+
+   <target name="clean">
+      <delete dir="${dir.report}" />
+   </target>
+
+   <!-- Generates report baced on Jacoco execution data files. -->
+   <target name="report">
+      <jacoco:report>
+
+         <!-- Specifying the execution data files locations. -->
+         <executiondata>
+            <fileset dir="${dir.ispn}" includes="**/target/jacoco.exec" />
+         </executiondata>
+
+         <!-- Defining the report structure with class and source files. -->
+         <structure name="${reportTitle}">
+            <classfiles>
+               <fileset dir="${dir.ispn}">
+                  <include name="**/target/classes/" />
+               </fileset>
+            </classfiles>
+            <sourcefiles encoding="UTF-8">
+               <mappedresources>
+                  <fileset dir="${dir.ispn}" includes="**/src/main/java/**/*.java" />
+                  <mapper type="regexp" from="^(.*/java/)(.*)$" to="\2"/>
+               </mappedresources>
+            </sourcefiles>
+
+         </structure>
+
+         <!-- Only HTML report is generated with specified path. -->
+         <html destdir="${dir.report}" />
+      </jacoco:report>
+   </target>
+
+   <target name="buildReport" depends="clean,report" />
+</project>
