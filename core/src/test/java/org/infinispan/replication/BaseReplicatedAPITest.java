@@ -22,30 +22,32 @@
  */
 package org.infinispan.replication;
 
+import static org.infinispan.context.Flag.CACHE_MODE_LOCAL;
+
+import java.util.HashMap;
+import java.util.Map;
+
 import org.infinispan.AdvancedCache;
 import org.infinispan.commands.write.ClearCommand;
 import org.infinispan.commands.write.PutKeyValueCommand;
 import org.infinispan.commands.write.PutMapCommand;
 import org.infinispan.commands.write.RemoveCommand;
 import org.infinispan.commands.write.ReplaceCommand;
-import org.infinispan.config.Configuration;
-import static org.infinispan.context.Flag.CACHE_MODE_LOCAL;
+import org.infinispan.configuration.cache.CacheMode;
+import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.test.MultipleCacheManagersTest;
 import org.testng.annotations.Test;
-
-import java.util.HashMap;
-import java.util.Map;
 
 @Test(groups = "functional", testName = "replication.BaseReplicatedAPITest")
 public abstract class BaseReplicatedAPITest extends MultipleCacheManagersTest {
 
    protected boolean isSync;
 
-   protected void createCacheManagers() throws Throwable {
-      Configuration c = getDefaultClusteredConfig(isSync ? Configuration.CacheMode.REPL_SYNC : Configuration.CacheMode.REPL_ASYNC, true);
-      c.setStateRetrievalTimeout(10000);
-      createClusteredCaches(2, "replication", c);      
-   }
+    protected void createCacheManagers() throws Throwable {
+        ConfigurationBuilder build = getDefaultClusteredCacheConfig(isSync ? CacheMode.REPL_SYNC : CacheMode.REPL_ASYNC, true);
+        build.clustering().stateTransfer().timeout(10000);
+        createClusteredCaches(2, "replication", build);
+    }
 
    public void put() {
       AdvancedCache cache1 = cache(0,"replication").getAdvancedCache();
