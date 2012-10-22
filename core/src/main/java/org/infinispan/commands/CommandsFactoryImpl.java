@@ -437,9 +437,11 @@ public class CommandsFactoryImpl implements CommandsFactory {
          case CreateCacheCommand.COMMAND_ID:
             CreateCacheCommand createCacheCommand = (CreateCacheCommand)c;
             createCacheCommand.init(cache.getCacheManager());
+            break;
          case XSiteAdminCommand.COMMAND_ID:
             XSiteAdminCommand xSiteAdminCommand = (XSiteAdminCommand)c;
             xSiteAdminCommand.init(backupSender);
+            break;
          default:
             ModuleCommandInitializer mci = moduleCommandInitializers.get(c.getCommandId());
             if (mci != null) {

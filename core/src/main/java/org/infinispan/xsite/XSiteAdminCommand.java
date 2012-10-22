@@ -55,6 +55,10 @@ public class XSiteAdminCommand extends BaseRpcCommand {
 
    private BackupSender backupSender;
 
+   public XSiteAdminCommand() {
+      super(null);// For command id uniqueness test
+   }
+
    public XSiteAdminCommand(String cacheName) {
       super(cacheName);// For command id uniqueness test
    }
