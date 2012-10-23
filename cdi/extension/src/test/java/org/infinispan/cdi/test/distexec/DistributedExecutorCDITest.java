@@ -102,6 +102,25 @@ public class DistributedExecutorCDITest extends MultipleCacheManagersArquillianT
       }
    }
 
+   @Test(expectedExceptions = ExecutionException.class)
+   public void testInvocationExceptionWithoutCacheInjection() throws Exception {
+      try {
+         delegate.basicInvocation(new DistributedCallableWithoutInjection());
+      } catch(ExecutionException ex) {
+         ex.printStackTrace();
+
+         Throwable rootCause = ex.getCause();
+         String message = null;
+         while(rootCause != null) {
+            message = rootCause.getMessage();
+            rootCause = rootCause.getCause();
+         }
+
+         Assert.assertEquals(message, "/ by zero", "The exception should be arithmetic exception.");
+         throw ex;
+      }
+   }
+
    static class SimpleCallable implements Callable<Integer>, Serializable {
 
       /** The serialVersionUID */
@@ -179,6 +198,22 @@ public class DistributedExecutorCDITest extends MultipleCacheManagersArquillianT
       @Override
       public void setEnvironment(Cache<String, String> cache, Set<String> inputKeys) {
          Assert.assertSame(this.cache, cache);
+         Assert.assertTrue(cache.getName().equals("DistributedExecutorTest-DIST_SYNC"));
+      }
+   }
+
+   static class DistributedCallableWithoutInjection implements DistributedCallable<String, String, Integer>, Serializable {
+
+      @Override
+      public Integer call() throws Exception {
+         //simulating exception
+
+         int num = 5 / 0;
+         return 1;
+      }
+
+      @Override
+      public void setEnvironment(Cache<String, String> cache, Set<String> inputKeys) {
          Assert.assertTrue(cache.getName().equals("DistributedExecutorTest-DIST_SYNC"));
       }
    }

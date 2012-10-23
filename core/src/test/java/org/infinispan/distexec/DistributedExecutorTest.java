@@ -33,8 +33,10 @@ import java.util.concurrent.Future;
 import org.infinispan.Cache;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
+import org.infinispan.factories.annotations.Inject;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.test.MultipleCacheManagersTest;
+import org.testng.Assert;
 import org.testng.annotations.Test;
 
 /**
@@ -291,6 +293,25 @@ public class DistributedExecutorTest extends MultipleCacheManagersTest {
       }
    }
 
+   @Test(expectedExceptions = ExecutionException.class)
+   public void testExceptionalDistributedCallable() throws Exception {
+      try {
+         basicInvocation(new ExceptionalDistributedCallable());
+      } catch(ExecutionException ex) {
+         ex.printStackTrace();
+
+         Throwable rootCause = ex.getCause();
+         String message = null;
+         while(rootCause != null) {
+            message = rootCause.getMessage();
+            rootCause = rootCause.getCause();
+         }
+
+         Assert.assertEquals(message, "/ by zero", "The exception should be arithmetic exception.");
+         throw ex;
+      }
+   }
+
    static class SimpleDistributedCallable implements DistributedCallable<String, String, Boolean>,
             Serializable {
 
@@ -317,6 +338,26 @@ public class DistributedExecutorTest extends MultipleCacheManagersTest {
 
       public boolean validlyInvoked() {
          return invokedProperly;
+      }
+   }
+
+   static class ExceptionalDistributedCallable implements DistributedCallable<String, String, Integer>,
+                                                     Serializable {
+      @Inject
+      private void test() {
+         System.out.println("Test method");
+      }
+
+      @Override
+      public void setEnvironment(Cache<String, String> cache, Set<String> inputKeys) {
+      }
+
+      @Override
+      public Integer call() throws Exception {
+         //simulating arithmetic exception
+         int num = 4 / 0;
+
+         return 1;
       }
    }
 
