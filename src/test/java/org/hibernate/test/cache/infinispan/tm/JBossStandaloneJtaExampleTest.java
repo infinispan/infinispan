@@ -34,6 +34,7 @@ import javax.naming.StringRefAddr;
 import javax.transaction.Status;
 import javax.transaction.UserTransaction;
 
+import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.transaction.lookup.JBossStandaloneJTAManagerLookup;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
@@ -119,7 +120,7 @@ public class JBossStandaloneJtaExampleTest {
       jndiServer = startJndiServer();
       ctx = createJndiContext();
       // Inject configuration to initialise transaction manager from config classloader
-      lookup.init( new org.infinispan.config.Configuration() );
+      lookup.init(new ConfigurationBuilder().build());
       bindTransactionManager();
       bindUserTransaction();
    }
@@ -127,6 +128,8 @@ public class JBossStandaloneJtaExampleTest {
    @After
    public void tearDown() throws Exception {
       try {
+         unbind("UserTransaction", ctx);
+         unbind("java:/TransactionManager", ctx);
          ctx.close();
          jndiServer.stop();
 	  }
