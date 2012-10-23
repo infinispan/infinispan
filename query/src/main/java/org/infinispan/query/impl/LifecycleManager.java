@@ -32,11 +32,12 @@ import org.hibernate.search.spi.SearchFactoryIntegrator;
 import org.infinispan.Cache;
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
+import org.infinispan.configuration.cache.CustomInterceptorsConfigurationBuilder;
+import org.infinispan.configuration.cache.InterceptorConfiguration;
 import org.infinispan.configuration.cache.InterceptorConfigurationBuilder;
 import org.infinispan.factories.ComponentRegistry;
 import org.infinispan.factories.GlobalComponentRegistry;
 import org.infinispan.interceptors.InterceptorChain;
-import org.infinispan.interceptors.base.CommandInterceptor;
 import org.infinispan.interceptors.locking.NonTransactionalLockingInterceptor;
 import org.infinispan.interceptors.locking.OptimisticLockingInterceptor;
 import org.infinispan.interceptors.locking.PessimisticLockingInterceptor;
@@ -86,9 +87,8 @@ public class LifecycleManager extends AbstractModuleLifecycle {
          // already does it for all custom interceptors - UNLESS the InterceptorChain already exists in the component registry!
          InterceptorChain ic = cr.getComponent(InterceptorChain.class);
 
-         ConfigurationBuilder builder = new ConfigurationBuilder();
-         InterceptorConfigurationBuilder interceptorBuilder =
-               builder.customInterceptors().addInterceptor();
+         ConfigurationBuilder builder = new ConfigurationBuilder().read(cfg);
+         InterceptorConfigurationBuilder interceptorBuilder = builder.customInterceptors().addInterceptor();
          interceptorBuilder.interceptor(queryInterceptor);
 
          if (!cfg.transaction().transactionMode().isTransactional()) {
@@ -182,6 +182,23 @@ public class LifecycleManager extends AbstractModuleLifecycle {
       if (searchFactoryIntegrator != null) {
          searchFactoryIntegrator.close();
       }
+
+      Configuration cfg = cr.getComponent(Configuration.class);
+      removeQueryInterceptorFromConfiguration(cfg);
+   }
+
+   private void removeQueryInterceptorFromConfiguration(Configuration cfg) {
+
+      ConfigurationBuilder builder = new ConfigurationBuilder();
+      CustomInterceptorsConfigurationBuilder customInterceptorsBuilder = builder.customInterceptors();
+
+      for (InterceptorConfiguration interceptorConfig : cfg.customInterceptors().interceptors()) {
+         if (!(interceptorConfig.interceptor() instanceof QueryInterceptor)) {
+            customInterceptorsBuilder.addInterceptor().read(interceptorConfig);
+         }
+      }
+
+      cfg.customInterceptors().interceptors(builder.build().customInterceptors().interceptors());
    }
 
 }
