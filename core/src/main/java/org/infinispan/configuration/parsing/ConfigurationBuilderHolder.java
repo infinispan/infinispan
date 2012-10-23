@@ -33,6 +33,10 @@ public class ConfigurationBuilderHolder {
    private final Map<Class<? extends ConfigurationParser<?>>, ParserContext> parserContexts;
    private final ClassLoader classLoader;
 
+   public ConfigurationBuilderHolder() {
+      this(Thread.currentThread().getContextClassLoader());
+   }
+
    public ConfigurationBuilderHolder(ClassLoader classLoader) {
       this.globalConfigurationBuilder = new GlobalConfigurationBuilder();
       this.defaultConfigurationBuilder = new ConfigurationBuilder();
