@@ -212,14 +212,20 @@ public class StateConsumerImpl implements StateConsumer {
             // check if any of the existing transfers should be restarted from a different source because the initial source is no longer a member
             Set<Address> members = new HashSet<Address>(cacheTopology.getReadConsistentHash().getMembers());
             synchronized (this) {
-               for (Address source : transfersBySource.keySet()) {
+               for (Iterator<Address> it = transfersBySource.keySet().iterator(); it.hasNext(); ) {
+                  Address source = it.next();
                   if (!members.contains(source)) {
-                     List<InboundTransferTask> inboundTransfers = transfersBySource.remove(source);
-                     if (inboundTransfers != null) {
-                        for (InboundTransferTask inboundTransfer : inboundTransfers) {
-                           // these segments will be restarted if they are still in new write CH
-                           transfersBySegment.keySet().removeAll(inboundTransfer.getSegments());
+                     if (trace) {
+                        log.tracef("Removing inbound transfers from source %s for cache %s", source, cacheName);
+                     }
+                     List<InboundTransferTask> inboundTransfers = transfersBySource.get(source);
+                     it.remove();
+                     for (InboundTransferTask inboundTransfer : inboundTransfers) {
+                        // these segments will be restarted if they are still in new write CH
+                        if (trace) {
+                           log.tracef("Removing inbound transfers for segments %s from source %s for cache %s", inboundTransfer.getSegments(), source, cacheName);
                         }
+                        transfersBySegment.keySet().removeAll(inboundTransfer.getSegments());
                      }
                   }
                }
