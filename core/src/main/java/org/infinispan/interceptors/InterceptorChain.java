@@ -94,12 +94,8 @@ public class InterceptorChain {
     * @param clazz type of interceptor to check for
     */
    private void assertNotAdded(Class<? extends CommandInterceptor> clazz) {
-      CommandInterceptor next = firstInChain;
-      while (next != null) {
-         if (next.getClass().equals(clazz))
-            throw new ConfigurationException("Detected interceptor of type [" + clazz.getName() + "] being added to the interceptor chain more than once!");
-         next = next.getNext();
-      }
+      if (containsInterceptorType(clazz))
+         throw new ConfigurationException("Detected interceptor of type [" + clazz.getName() + "] being added to the interceptor chain " + System.identityHashCode(this) + " more than once!");
    }
 
    /**
@@ -426,10 +422,18 @@ public class InterceptorChain {
    }
 
    public boolean containsInterceptorType(Class<? extends CommandInterceptor> interceptorType) {
+      return containsInterceptorType(interceptorType, false);
+   }
+
+   public boolean containsInterceptorType(Class<? extends CommandInterceptor> interceptorType, boolean alsoMatchSubClasses) {
       // Called when building interceptor chain and so concurrent start calls are protected already
       CommandInterceptor it = firstInChain;
       while (it != null) {
-         if (it.getClass().equals(interceptorType)) return true;
+         if (alsoMatchSubClasses) {
+            if (interceptorType.isAssignableFrom(it.getClass())) return true;
+         } else {
+            if (it.getClass().equals(interceptorType)) return true;
+         }
          it = it.getNext();
       }
       return false;
