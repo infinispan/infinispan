@@ -1381,6 +1381,7 @@ public class Parser52 implements ConfigurationParser<ConfigurationBuilderHolder>
          switch (attribute) {
             case FACTORY:
                builder.clustering().hash().consistentHashFactory(Util.<ConsistentHashFactory>getInstance(value, holder.getClassLoader()));
+               break;
             case HASH_FUNCTION_CLASS:
                builder.clustering().hash().hash(Util.<Hash>getInstance(value, holder.getClassLoader()));
                break;
