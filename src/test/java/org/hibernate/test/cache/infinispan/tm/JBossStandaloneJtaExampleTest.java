@@ -23,8 +23,6 @@
  */
 package org.hibernate.test.cache.infinispan.tm;
 
-import java.sql.Connection;
-import java.sql.SQLException;
 import java.util.Iterator;
 import java.util.Properties;
 import javax.naming.Context;
@@ -34,10 +32,8 @@ import javax.naming.NameNotFoundException;
 import javax.naming.Reference;
 import javax.naming.StringRefAddr;
 import javax.transaction.Status;
-import javax.transaction.TransactionManager;
 import javax.transaction.UserTransaction;
 
-import org.enhydra.jdbc.standard.StandardXADataSource;
 import org.infinispan.transaction.lookup.JBossStandaloneJTAManagerLookup;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
@@ -90,9 +86,12 @@ import org.junit.Test;
 =======
 =======
 import org.hibernate.testing.jta.JtaAwareConnectionProviderImpl;
+<<<<<<< HEAD
 import org.hibernate.testing.jta.TestingJtaBootstrap;
 import org.hibernate.testing.jta.TestingJtaPlatformImpl;
 >>>>>>> HHH-6823 - Short-name config values
+=======
+>>>>>>> HHH-7553 Upgrade to Infinispan 5.2.0.Beta2 and fix testsuite
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNull;
@@ -285,7 +284,8 @@ public class JBossStandaloneJtaExampleTest {
       cfg.setProperty(Environment.RELEASE_CONNECTIONS, "auto");
       cfg.setProperty(Environment.USE_SECOND_LEVEL_CACHE, "true");
       cfg.setProperty(Environment.USE_QUERY_CACHE, "true");
-      cfg.setProperty(Environment.CACHE_REGION_FACTORY, "org.hibernate.cache.infinispan.InfinispanRegionFactory");
+      cfg.setProperty(Environment.CACHE_REGION_FACTORY,
+            "org.hibernate.test.cache.infinispan.functional.SingleNodeTestCase$TestInfinispanRegionFactory");
 
       Properties envProps = Environment.getProperties();
       envProps.put(AvailableSettings.JTA_PLATFORM, new JBossStandAloneJtaPlatform());
