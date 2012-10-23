@@ -27,6 +27,8 @@ import org.apache.lucene.search.Query;
 import org.hibernate.search.query.dsl.QueryBuilder;
 import org.infinispan.Cache;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
+import org.infinispan.configuration.cache.InterceptorConfiguration;
+import org.infinispan.interceptors.base.CommandInterceptor;
 import org.infinispan.query.CacheQuery;
 import org.infinispan.query.Search;
 import org.infinispan.query.SearchManager;
@@ -43,6 +45,7 @@ import static org.infinispan.test.TestingUtil.withCacheManager;
  *
  * @author Galder Zamarreño
  * @author Sanne Grinovero
+ * @author Marko Luksa
  * @since 5.2
  */
 @Test(testName = "query.blackbox.QueryCacheRestartTest", groups = "functional")
@@ -61,18 +64,26 @@ public class QueryCacheRestartTest extends AbstractInfinispanTest {
       builder.indexing().enable().indexLocalOnly(localOnly)
             .addProperty("hibernate.search.default.directory_provider", "ram")
             .addProperty("hibernate.search.lucene_version", "LUCENE_CURRENT");
+      final NoOpInterceptor noOpInterceptor = new NoOpInterceptor();
+      builder.customInterceptors().addInterceptor().interceptor(noOpInterceptor);
+
       withCacheManager(new CacheManagerCallable(TestCacheManagerFactory.createCacheManager(builder)) {
          @Override
          public void call() {
-            Cache<Object,Object> cache = cm.getCache();
+            Cache<Object, Object> cache = cm.getCache();
             addABook(cache);
             assertFindBook(cache);
             cache.stop();
+
+            assertCacheHasCustomInterceptor(cache, noOpInterceptor);
+
             cache.start();
             //stopped cache lost all data, and in memory index is lost: re-store both
             //(not needed with permanent indexes and caches using a cachestore)
             addABook(cache);
             assertFindBook(cache);
+
+            assertCacheHasCustomInterceptor(cache, noOpInterceptor);
          }
 
          protected void addABook(Cache<Object, Object> cache) {
@@ -85,6 +96,16 @@ public class QueryCacheRestartTest extends AbstractInfinispanTest {
       });
    }
 
+   private void assertCacheHasCustomInterceptor(Cache<Object, Object> cache, CommandInterceptor interceptor) {
+      for (InterceptorConfiguration interceptorConfig : cache.getCacheConfiguration().customInterceptors().interceptors()) {
+         if (interceptor.equals(interceptorConfig.interceptor())) {
+            return;
+         }
+      }
+
+      Assert.fail("Expected to find interceptor " + interceptor + " among custom interceptors of cache, but it was not there.");
+   }
+
    private static void assertFindBook(Cache<Object, Object> cache) {
       SearchManager searchManager = Search.getSearchManager(cache);
       QueryBuilder queryBuilder = searchManager.buildQueryBuilderForClass(Book.class).get();
@@ -94,4 +115,7 @@ public class QueryCacheRestartTest extends AbstractInfinispanTest {
       Assert.assertEquals(1, list.size());
    }
 
+   private static class NoOpInterceptor extends CommandInterceptor {
+
+   }
 }
