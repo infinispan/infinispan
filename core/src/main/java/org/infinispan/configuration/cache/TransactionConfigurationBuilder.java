@@ -51,7 +51,7 @@ public class TransactionConfigurationBuilder extends AbstractConfigurationChildB
    private final RecoveryConfigurationBuilder recovery;
    private boolean use1PcForAutoCommitTransactions = false;
    private long reaperWakeUpInterval = 1000;
-   private long completedTxTimeout = 3000;
+   private long completedTxTimeout = 15000;
 
 
    TransactionConfigurationBuilder(ConfigurationBuilder builder) {
