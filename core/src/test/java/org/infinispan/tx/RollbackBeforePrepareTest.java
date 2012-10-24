@@ -59,7 +59,8 @@ public class RollbackBeforePrepareTest extends MultipleCacheManagersTest {
             .locking().lockAcquisitionTimeout(LOCK_TIMEOUT)
             .clustering().sync().replTimeout(REPL_TIMEOUT)
             .clustering().hash().numOwners(numOwners)
-            .transaction().transactionManagerLookup(new DummyTransactionManagerLookup());
+            .transaction().transactionManagerLookup(new DummyTransactionManagerLookup())
+            .transaction().completedTxTimeout(3600000);
 
       createCluster(config, 3);
       waitForClusterToForm();
@@ -86,11 +87,19 @@ public class RollbackBeforePrepareTest extends MultipleCacheManagersTest {
 
       ccf.gate.open();
 
-      allowRollbackToRun();
+      //give some time for the prepare to execute
+      Thread.sleep(3000);
 
-      assertEquals(0, TestingUtil.getTransactionTable(cache(0)).getRemoteTxCount());
-      assertEquals(0, TestingUtil.getTransactionTable(cache(1)).getRemoteTxCount());
-      assertEquals(0, TestingUtil.getTransactionTable(cache(2)).getRemoteTxCount());
+      eventually(new Condition() {
+         @Override
+         public boolean isSatisfied() throws Exception {
+            int remoteTxCount0 = TestingUtil.getTransactionTable(cache(0)).getRemoteTxCount();
+            int remoteTxCount1 = TestingUtil.getTransactionTable(cache(1)).getRemoteTxCount();
+            int remoteTxCount2 = TestingUtil.getTransactionTable(cache(2)).getRemoteTxCount();
+            log.tracef("remote0=%s, remote1=%s, remote2=%s", remoteTxCount0, remoteTxCount1, remoteTxCount2);
+            return remoteTxCount0 == 0 && remoteTxCount1 == 0 && remoteTxCount2 == 0;
+         }
+      });
 
       assertNull(cache(0).get("k"));
       assertNull(cache(1).get("k"));
@@ -105,7 +114,7 @@ public class RollbackBeforePrepareTest extends MultipleCacheManagersTest {
     * to highlight a bug.
     */
    private static void allowRollbackToRun() throws InterruptedException {
-      Thread.sleep(REPL_TIMEOUT * 5);
+      Thread.sleep(REPL_TIMEOUT * 15);
    }
 
    public static class FailPrepareInterceptor extends CommandInterceptor {
