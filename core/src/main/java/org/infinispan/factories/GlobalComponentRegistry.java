@@ -41,6 +41,8 @@ import org.infinispan.manager.EmbeddedCacheManagerStartupException;
 import org.infinispan.notifications.cachemanagerlistener.CacheManagerNotifier;
 import org.infinispan.notifications.cachemanagerlistener.CacheManagerNotifierImpl;
 import org.infinispan.remoting.transport.Transport;
+import org.infinispan.topology.ClusterTopologyManager;
+import org.infinispan.topology.LocalTopologyManager;
 import org.infinispan.util.ModuleProperties;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
@@ -134,6 +136,9 @@ public class GlobalComponentRegistry extends AbstractComponentRegistry {
          // This is necessary to make sure the transport has been started and is available to other components that
          // may need it.  This is a messy approach though - a proper fix will be in ISPN-1698
          getOrCreateComponent(Transport.class);
+         // These two should not be necessary, but they are here as a workaround for ISPN-2371
+         getOrCreateComponent(LocalTopologyManager.class);
+         getOrCreateComponent(ClusterTopologyManager.class);
 
       } catch (Exception e) {
          throw new CacheException("Unable to construct a GlobalComponentRegistry!", e);

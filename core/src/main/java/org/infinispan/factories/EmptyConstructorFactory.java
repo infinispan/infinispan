@@ -47,7 +47,7 @@ import org.infinispan.xsite.BackupReceiverRepositoryImpl;
  * @since 4.0
  */
 @DefaultFactoryFor(classes = {InboundInvocationHandler.class, RemoteCommandsFactory.class, ExternalizerTable.class,
-                              LocalTopologyManager.class, ClusterTopologyManager.class, RebalancePolicy.class, BackupReceiverRepository.class})
+                              RebalancePolicy.class, BackupReceiverRepository.class})
 @Scope(Scopes.GLOBAL)
 public class EmptyConstructorFactory extends AbstractComponentFactory implements AutoInstantiableFactory {
 
