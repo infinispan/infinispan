@@ -66,8 +66,7 @@ public class InterceptorChain {
    /**
     * Constructs an interceptor chain having the supplied interceptor as first.
     */
-   public InterceptorChain(CommandInterceptor first, ComponentMetadataRepo componentMetadataRepo) {
-      this.firstInChain = first;
+   public InterceptorChain(ComponentMetadataRepo componentMetadataRepo) {
       this.componentMetadataRepo = componentMetadataRepo;
    }
 

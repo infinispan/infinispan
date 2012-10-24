@@ -46,7 +46,8 @@ public class InterceptorChainTest {
    private static final Log log = LogFactory.getLog(InterceptorChainTest.class);
 
    public void testConcurrentAddRemove() throws Exception {
-      InterceptorChain ic = new InterceptorChain(new CallInterceptor(), new ComponentMetadataRepo());
+      InterceptorChain ic = new InterceptorChain(new ComponentMetadataRepo());
+      ic.setFirstInChain(new CallInterceptor());
       ic.addInterceptor(new ActivationInterceptor(), 1);
       CyclicBarrier barrier = new CyclicBarrier(4);
       List<Future<Void>> futures = new ArrayList<Future<Void>>(2);
