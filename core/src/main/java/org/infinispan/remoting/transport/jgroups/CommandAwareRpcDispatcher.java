@@ -49,6 +49,7 @@ import org.jgroups.blocks.RequestOptions;
 import org.jgroups.blocks.ResponseMode;
 import org.jgroups.blocks.RpcDispatcher;
 import org.jgroups.blocks.RspFilter;
+import org.jgroups.blocks.UnicastRequest;
 import org.jgroups.blocks.mux.Muxer;
 import org.jgroups.protocols.relay.SiteAddress;
 import org.jgroups.util.Buffer;
@@ -128,13 +129,13 @@ public class CommandAwareRpcDispatcher extends RpcDispatcher {
     */
    public RspList<Object> invokeRemoteCommands(final List<Address> recipients, final ReplicableCommand command, final ResponseMode mode, final long timeout,
                                                final boolean anycasting, final boolean oob, final RspFilter filter,
-                                               boolean asyncMarshalling) throws InterruptedException {
+                                               boolean asyncMarshalling, final boolean ignoreLeavers) throws InterruptedException {
       if (asyncMarshalling) {
          asyncExecutor.submit(new Callable<RspList<Object>>() {
             @Override
             public RspList<Object> call() throws Exception {
                return processCalls(command, recipients == null, timeout, filter, recipients, mode,
-                                   req_marshaller, CommandAwareRpcDispatcher.this, oob, anycasting);
+                                   req_marshaller, CommandAwareRpcDispatcher.this, oob, anycasting, ignoreLeavers);
             }
          });
          return null; // don't wait for a response!
@@ -142,7 +143,7 @@ public class CommandAwareRpcDispatcher extends RpcDispatcher {
          RspList<Object> response;
          try {
             response = processCalls(command, recipients == null, timeout, filter, recipients, mode,
-                                    req_marshaller, this, oob, anycasting);
+                                    req_marshaller, this, oob, anycasting, ignoreLeavers);
          } catch (InterruptedException e) {
             throw e;
          } catch (SuspectedException e) {
@@ -190,8 +191,9 @@ public class CommandAwareRpcDispatcher extends RpcDispatcher {
 
    public RspList<Object> broadcastRemoteCommands(ReplicableCommand command, ResponseMode mode, long timeout,
                                                   boolean anycasting, boolean oob, RspFilter filter,
-                                                  boolean asyncMarshalling) throws InterruptedException {
-      return invokeRemoteCommands(null, command, mode, timeout, anycasting, oob, filter, asyncMarshalling);
+                                                  boolean asyncMarshalling, boolean ignoreLeavers)
+         throws InterruptedException {
+      return invokeRemoteCommands(null, command, mode, timeout, anycasting, oob, filter, asyncMarshalling, ignoreLeavers);
    }
 
    private boolean containsOnlyNulls(RspList<Object> l) {
@@ -314,7 +316,8 @@ public class CommandAwareRpcDispatcher extends RpcDispatcher {
 
    private static RspList<Object> processCalls(ReplicableCommand command, boolean broadcast, long timeout,
                                                RspFilter filter, List<Address> dests, ResponseMode mode,
-                                               Marshaller marshaller, CommandAwareRpcDispatcher card, boolean oob, boolean anycasting) throws Exception {
+                                               Marshaller marshaller, CommandAwareRpcDispatcher card,
+                                               boolean oob, boolean anycasting, boolean ignoreLeavers) throws Exception {
       if (trace) log.tracef("Replication task sending %s to addresses %s with response mode %s", command, dests, mode);
 
       /// HACK ALERT!  Used for ISPN-1789.  Enable RSVP if the command is a cache topology control command.
@@ -354,11 +357,18 @@ public class CommandAwareRpcDispatcher extends RpcDispatcher {
 
             // a get() on each future will block till that call completes.
             for (Map.Entry<Address, Future<Object>> entry : futures.entrySet()) {
+               Address target = entry.getKey();
                try {
-                  retval.addRsp(entry.getKey(), entry.getValue().get(timeout, MILLISECONDS));
+                  retval.addRsp(target, entry.getValue().get(timeout, MILLISECONDS));
                } catch (java.util.concurrent.TimeoutException te) {
                   throw new TimeoutException(formatString("Timed out after %s waiting for a response from %s",
-                                                          prettyPrintTime(timeout), entry.getKey()));
+                                                          prettyPrintTime(timeout), target));
+               } catch (ExecutionException e) {
+                  if (ignoreLeavers && e.getCause() instanceof SuspectedException) {
+                     log.tracef(formatString("Ignoring node %s that left during the remote call", target));
+                  } else {
+                     throw e;
+                  }
                }
             }
          } else if (mode == ResponseMode.GET_NONE) {

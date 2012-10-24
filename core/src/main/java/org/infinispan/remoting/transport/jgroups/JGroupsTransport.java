@@ -496,7 +496,7 @@ public class JGroupsTransport extends AbstractTransport implements MembershipLis
       if (broadcast) {
          rsps = dispatcher.broadcastRemoteCommands(rpcCommand, toJGroupsMode(mode), timeout, recipients != null,
                                                    usePriorityQueue, toJGroupsFilter(responseFilter),
-               asyncMarshalling);
+                                                   asyncMarshalling, ignoreLeavers);
       } else {         
          if (jgAddressList == null || !jgAddressList.isEmpty()) {
             boolean singleRecipient = !ignoreLeavers && jgAddressList != null && jgAddressList.size() == 1;
@@ -516,7 +516,7 @@ public class JGroupsTransport extends AbstractTransport implements MembershipLis
                } else {
                   rsps = dispatcher.invokeRemoteCommands(jgAddressList, rpcCommand, toJGroupsMode(mode), timeout,
                                                          recipients != null, usePriorityQueue, toJGroupsFilter(responseFilter),
-                        asyncMarshalling);
+                                                         asyncMarshalling, ignoreLeavers);
                }
             }
          }
