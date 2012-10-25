@@ -470,6 +470,32 @@
             <version>${version.lucene}</version>
          </dependency>
          <dependency>
+            <groupId>org.apache.solr</groupId>
+            <artifactId>solr-core</artifactId>
+            <version>${version.lucene}</version>
+            <exclusions>
+                <exclusion><groupId>org.apache.lucene</groupId><artifactId>lucene-highlighter</artifactId></exclusion>
+                <exclusion><groupId>org.apache.lucene</groupId><artifactId>lucene-memory</artifactId></exclusion>
+                <exclusion><groupId>org.apache.lucene</groupId><artifactId>lucene-phonetic</artifactId></exclusion>
+                <exclusion><groupId>org.apache.lucene</groupId><artifactId>lucene-kuromoji</artifactId></exclusion>
+                <exclusion><groupId>org.apache.lucene</groupId><artifactId>lucene-misc</artifactId></exclusion>
+                <exclusion><groupId>org.apache.lucene</groupId><artifactId>lucene-queries</artifactId></exclusion>
+                <exclusion><groupId>org.apache.lucene</groupId><artifactId>lucene-spatial</artifactId></exclusion>
+                <exclusion><groupId>org.apache.lucene</groupId><artifactId>lucene-spellchecker</artifactId></exclusion>
+                <exclusion><groupId>org.apache.lucene</groupId><artifactId>lucene-grouping</artifactId></exclusion>
+                <exclusion><groupId>commons-codec</groupId><artifactId>commons-codec</artifactId></exclusion>
+                <exclusion><groupId>commons-io</groupId><artifactId>commons-io</artifactId></exclusion>
+                <exclusion><groupId>commons-lang</groupId><artifactId>commons-lang</artifactId></exclusion>
+                <exclusion><groupId>commons-httpclient</groupId><artifactId>commons-httpclient</artifactId></exclusion>
+                <exclusion><groupId>org.codehaus.woodstox</groupId><artifactId>wstx-asl</artifactId></exclusion>
+                <exclusion><groupId>commons-fileupload</groupId><artifactId>commons-fileupload</artifactId></exclusion>
+                <exclusion><groupId>org.slf4j</groupId><artifactId>jcl-over-slf4j</artifactId></exclusion>
+                <exclusion><groupId>org.slf4j</groupId><artifactId>slf4j-api</artifactId></exclusion>
+                <exclusion><groupId>com.google.guava</groupId><artifactId>guava</artifactId></exclusion>
+                <exclusion><groupId>javax.servlet</groupId><artifactId>servlet-api</artifactId></exclusion>
+            </exclusions>
+          </dependency>
+         <dependency>
             <groupId>org.codehaus.jackson</groupId>
             <artifactId>jackson-core-asl</artifactId>
             <version>${version.jackson}</version>
