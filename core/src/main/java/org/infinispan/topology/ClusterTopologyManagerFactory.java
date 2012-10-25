@@ -27,7 +27,6 @@ import org.infinispan.factories.AutoInstantiableFactory;
 import org.infinispan.factories.annotations.DefaultFactoryFor;
 import org.infinispan.factories.scopes.Scope;
 import org.infinispan.factories.scopes.Scopes;
-import org.infinispan.remoting.transport.Transport;
 
 /**
  * Factory for ClusterTopologyManager implementations
