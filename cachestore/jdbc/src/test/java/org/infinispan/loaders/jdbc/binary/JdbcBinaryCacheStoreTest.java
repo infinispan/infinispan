@@ -28,7 +28,6 @@ import java.io.Serializable;
 
 import org.infinispan.CacheImpl;
 import org.infinispan.loaders.BaseCacheStoreTest;
-import org.infinispan.loaders.CacheLoaderException;
 import org.infinispan.loaders.CacheStore;
 import org.infinispan.loaders.jdbc.TableManipulation;
 import org.infinispan.loaders.jdbc.connectionfactory.ConnectionFactory;
@@ -82,21 +81,30 @@ public class JdbcBinaryCacheStoreTest extends BaseCacheStoreTest {
       jdbcBucketCacheStore.stop();
    }
 
-   public void testPurgeExpiredAllCodepaths() throws CacheLoaderException {
+
+
+   @Override
+   public void testPurgeExpired() throws Exception {
+      super.testPurgeExpired();
+      UnitTestDatabaseManager.verifyConnectionLeaks(((JdbcBinaryCacheStore)cs).getConnectionFactory());
+   }
+
+   public void testPurgeExpiredAllCodepaths() throws Exception {
       FixedHashKey k1 = new FixedHashKey(1, "a");
       FixedHashKey k2 = new FixedHashKey(1, "b");
       cs.store(TestInternalCacheEntryFactory.create(k1, "value"));
-      cs.store(TestInternalCacheEntryFactory.create(k2, "value", 60000)); // will expire
+      cs.store(TestInternalCacheEntryFactory.create(k2, "value", 5000)); // will expire
       for (int i = 0; i < 120; i++) {
          cs.store(TestInternalCacheEntryFactory.create(new FixedHashKey(i + 10, "non-exp k" + i), "value"));
-         cs.store(TestInternalCacheEntryFactory.create(new FixedHashKey(i + 10, "exp k" + i), "value", 60000)); // will expire
+         cs.store(TestInternalCacheEntryFactory.create(new FixedHashKey(i + 10, "exp k" + i), "value", 5000)); // will expire
       }
       assert cs.containsKey(k1);
       assert cs.containsKey(k2);
-      TestingUtil.sleepThread(62000);
+      TestingUtil.sleepThread(6000);
       cs.purgeExpired();
       assert cs.containsKey(k1);
       assert !cs.containsKey(k2);
+      UnitTestDatabaseManager.verifyConnectionLeaks(((JdbcBinaryCacheStore)cs).getConnectionFactory());
    }
 
    private static final class FixedHashKey implements Serializable {
