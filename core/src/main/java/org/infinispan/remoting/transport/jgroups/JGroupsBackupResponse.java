@@ -21,6 +21,7 @@ package org.infinispan.remoting.transport.jgroups;
 
 import org.infinispan.remoting.responses.ExceptionResponse;
 import org.infinispan.remoting.transport.BackupResponse;
+import org.infinispan.util.InfinispanCollections;
 import org.infinispan.util.concurrent.TimeoutException;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
@@ -107,7 +108,8 @@ public class JGroupsBackupResponse implements BackupResponse {
 
    @Override
    public Set<String> getCommunicationErrors() {
-      return communicationErrors == null ? Collections.<String>emptySet() : communicationErrors;
+      return communicationErrors == null ?
+            InfinispanCollections.<String>emptySet() : communicationErrors;
    }
 
    @Override

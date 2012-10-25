@@ -61,6 +61,7 @@ import org.infinispan.loaders.decorators.SingletonStore;
 import org.infinispan.loaders.decorators.SingletonStoreConfig;
 import org.infinispan.marshall.StreamingMarshaller;
 import org.infinispan.statetransfer.StateTransferManager;
+import org.infinispan.util.InfinispanCollections;
 import org.infinispan.util.Util;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
@@ -274,7 +275,7 @@ public class CacheLoaderManagerImpl implements CacheLoaderManager {
             state = loader.loadAll();
             break;
          case 0:
-            state = Collections.emptySet();
+            state = InfinispanCollections.emptySet();
             break;
          default:
             state = loader.load(ne);

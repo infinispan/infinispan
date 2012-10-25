@@ -72,6 +72,7 @@ import org.infinispan.remoting.responses.SuccessfulResponse;
 import org.infinispan.remoting.rpc.RpcManager;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.remoting.transport.TopologyAwareAddress;
+import org.infinispan.util.InfinispanCollections;
 import org.infinispan.util.Util;
 import org.infinispan.util.concurrent.FutureListener;
 import org.infinispan.util.concurrent.NotifyingFuture;
@@ -217,7 +218,7 @@ public class DefaultExecutorService extends AbstractExecutorService implements D
       isShutdown.set(true);
       // TODO cancel all tasks
       localExecutorService.shutdownNow();
-      return Collections.emptyList();
+      return InfinispanCollections.emptyList();
    }
 
    @Override

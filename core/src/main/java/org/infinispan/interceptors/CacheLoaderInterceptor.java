@@ -46,6 +46,7 @@ import org.infinispan.loaders.CacheLoaderManager;
 import org.infinispan.loaders.CacheStore;
 import org.infinispan.loaders.decorators.ChainingCacheStore;
 import org.infinispan.notifications.cachelistener.CacheNotifier;
+import org.infinispan.util.InfinispanCollections;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 import org.rhq.helpers.pluginAnnotations.agent.DisplayType;
@@ -268,7 +269,7 @@ public class CacheLoaderInterceptor extends JmxStatsCommandInterceptor {
             return Collections.singleton(loader.getClass().getName());
          }
       } else {
-         return Collections.emptySet();
+         return InfinispanCollections.emptySet();
       }
    }
    @ManagedOperation(description = "Disable all cache loaders of a given type, where type is a fully qualified class name of the cache loader to disable")

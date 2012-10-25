@@ -25,12 +25,17 @@ package org.infinispan.interceptors;
 
 import org.infinispan.commands.VisitableCommand;
 import org.infinispan.commands.control.LockControlCommand;
+import org.infinispan.commands.read.GetCacheEntryCommand;
+import org.infinispan.commands.read.GetKeyValueCommand;
 import org.infinispan.commands.tx.CommitCommand;
 import org.infinispan.commands.tx.PrepareCommand;
 import org.infinispan.commands.tx.RollbackCommand;
+import org.infinispan.container.entries.CacheEntry;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.context.impl.TxInvocationContext;
+import org.infinispan.factories.annotations.Inject;
 import org.infinispan.interceptors.base.CommandInterceptor;
+import org.infinispan.notifications.cachelistener.CacheNotifier;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
@@ -47,6 +52,12 @@ public class CallInterceptor extends CommandInterceptor {
 
    private static final Log log = LogFactory.getLog(CallInterceptor.class);
    private static final boolean trace = log.isTraceEnabled();
+   private CacheNotifier notifier;
+
+   @Inject
+   public void inject(CacheNotifier notifier) {
+      this.notifier = notifier;
+   }
 
    @Override
    protected Log getLog() {
@@ -75,6 +86,22 @@ public class CallInterceptor extends CommandInterceptor {
    public Object visitLockControlCommand(TxInvocationContext ctx, LockControlCommand c) throws Throwable {
       if (trace) log.trace("Suppressing invocation of method handleLockControlCommand.");
       return null;
+   }
+
+   @Override
+   public Object visitGetKeyValueCommand(InvocationContext ctx, GetKeyValueCommand command) throws Throwable {
+      if (trace) log.trace("Executing command: " + command + ".");
+      Object ret = command.perform(ctx);
+      if (ret != null) {
+         Object key = command.getKey();
+         // TODO: Create a visitGetCacheEntryCommand method ?
+         Object value = command instanceof GetCacheEntryCommand ?
+               ((CacheEntry) ret).getValue() : ret;
+         notifier.notifyCacheEntryVisited(key, value, true, ctx);
+         notifier.notifyCacheEntryVisited(key, value, false, ctx);
+      }
+
+      return ret;
    }
 
    @Override

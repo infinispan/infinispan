@@ -41,6 +41,7 @@ import org.infinispan.transaction.LocalTransaction;
 import org.infinispan.transaction.LockingMode;
 import org.infinispan.transaction.RemoteTransaction;
 import org.infinispan.transaction.WriteSkewHelper;
+import org.infinispan.util.InfinispanCollections;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
@@ -255,7 +256,7 @@ public class StateTransferInterceptor extends CommandInterceptor {   //todo [ani
          // impossible to reach this
       }
       if (affectedKeys == null) {
-         affectedKeys = Collections.emptySet();
+         affectedKeys = InfinispanCollections.emptySet();
       }
       return affectedKeys;
    }

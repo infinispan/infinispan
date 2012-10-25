@@ -22,6 +22,8 @@
  */
 package org.infinispan.util.concurrent;
 
+import org.infinispan.util.InfinispanCollections;
+
 import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.AbstractExecutorService;
@@ -50,7 +52,7 @@ public final class WithinThreadExecutor extends AbstractExecutorService {
    @Override
    public List<Runnable> shutdownNow() {
       shutDown = true;
-      return Collections.emptyList();
+      return InfinispanCollections.emptyList();
    }
 
    @Override

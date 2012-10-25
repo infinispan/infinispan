@@ -26,6 +26,7 @@ import org.infinispan.AdvancedCache;
 import org.infinispan.Cache;
 import org.infinispan.context.Flag;
 import org.infinispan.context.FlagContainer;
+import org.infinispan.util.InfinispanCollections;
 
 import java.util.Collections;
 import java.util.Map;
@@ -168,7 +169,7 @@ public class AtomicMapLookup {
    public static <MK, K, V> Map<K, V> getReadOnlyAtomicMap(Cache<MK, ?> cache, MK key) {
       AtomicMap<K, V> am = getAtomicMap(cache, key, false);
       if (am == null)
-         return Collections.emptyMap();
+         return InfinispanCollections.emptyMap();
       else
          return immutableMapWrap(am);
    }

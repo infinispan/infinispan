@@ -27,6 +27,7 @@ import org.infinispan.notifications.Listener;
 import org.infinispan.notifications.cachemanagerlistener.annotation.ViewChanged;
 import org.infinispan.notifications.cachemanagerlistener.event.ViewChangedEvent;
 import org.infinispan.remoting.transport.Address;
+import org.infinispan.util.InfinispanCollections;
 
 import javax.enterprise.event.Event;
 import java.util.Collections;
@@ -52,12 +53,12 @@ public class ViewChangedAdapter extends AbstractAdapter<ViewChangedEvent> {
 
       @Override
       public List<Address> getNewMembers() {
-         return Collections.emptyList();
+         return InfinispanCollections.emptyList();
       }
 
       @Override
       public List<Address> getOldMembers() {
-         return Collections.emptyList();
+         return InfinispanCollections.emptyList();
       }
 
       @Override

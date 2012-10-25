@@ -33,6 +33,7 @@ import org.infinispan.loaders.CacheLoaderManager;
 import org.infinispan.loaders.CacheStore;
 import org.infinispan.remoting.rpc.RpcManager;
 import org.infinispan.remoting.transport.Address;
+import org.infinispan.util.InfinispanCollections;
 import org.infinispan.util.ReadOnlyDataContainerBackedKeySet;
 import org.infinispan.util.concurrent.AggregatingNotifyingFutureBuilder;
 import org.infinispan.util.concurrent.ConcurrentMapFactory;
@@ -235,7 +236,7 @@ public class OutboundTransferTask implements Runnable {
          for (int segmentId : segments) {
             List<InternalCacheEntry> entries = entriesBySegment.get(segmentId);
             if (entries == null) {
-               entries = Collections.emptyList();
+               entries = InfinispanCollections.emptyList();
             }
             chunks.add(new StateChunk(segmentId, entries, isLast));
          }
