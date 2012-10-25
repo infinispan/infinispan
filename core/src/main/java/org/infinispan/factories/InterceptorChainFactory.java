@@ -53,6 +53,7 @@ import java.util.List;
  *
  * @author <a href="mailto:manik@jboss.org">Manik Surtani (manik@jboss.org)</a>
  * @author Mircea.Markus@jboss.com
+ * @author Marko Luksa
  * @since 4.0
  */
 @DefaultFactoryFor(classes = InterceptorChain.class)
@@ -90,24 +91,16 @@ public class InterceptorChainFactory extends AbstractNamedCacheComponentFactory 
       boolean needsVersionAwareComponents = configuration.transaction().transactionMode().isTransactional() && configuration.locking().writeSkewCheck() &&
             configuration.transaction().lockingMode() == LockingMode.OPTIMISTIC && configuration.versioning().enabled();
 
+      InterceptorChain interceptorChain = new InterceptorChain(componentRegistry.getComponentMetadataRepo());
+      // add the interceptor chain to the registry first, since some interceptors may ask for it.
+      componentRegistry.registerComponent(interceptorChain, InterceptorChain.class);
+
       boolean invocationBatching = configuration.invocationBatching().enabled();
       // load the icInterceptor first
-
-      CommandInterceptor first;
       if (invocationBatching) {
-         first = createInterceptor(new BatchingInterceptor(), BatchingInterceptor.class);
+         interceptorChain.setFirstInChain(createInterceptor(new BatchingInterceptor(), BatchingInterceptor.class));
       } else {
-         first = createInterceptor(new InvocationContextInterceptor(), InvocationContextInterceptor.class);
-      }
-
-      // the calls to createInterceptor() above may have created and registered a new InterceptorChain in the registry,
-      // therefore we need to use the registered IC instead of creating a new one
-      InterceptorChain interceptorChain = componentRegistry.getComponent(InterceptorChain.class);
-      if (interceptorChain == null) {
-         interceptorChain = new InterceptorChain(first, componentRegistry.getComponentMetadataRepo());
-
-         // add the interceptor chain to the registry first, since some interceptors may ask for it.
-         componentRegistry.registerComponent(interceptorChain, InterceptorChain.class);
+         interceptorChain.setFirstInChain(createInterceptor(new InvocationContextInterceptor(), InvocationContextInterceptor.class));
       }
 
       // add marshallable check interceptor for situations where we want to figure out before marshalling
