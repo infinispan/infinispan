@@ -33,7 +33,7 @@ import java.sql.SQLException;
 
 /**
  * Connection factory implementation that will create database connection on a per invocation basis. Not recommended in
- * production, {@link org.infinispan.loaders.jdbc.connectionfactory.PooledConnectionFactory} should rather be used.
+ * production, {@link org.infinispan.loaders.jdbc.connectionfactory.PooledConnectionFactory} or {@link ManagedConnectionFactory} should rather be used.
  *
  * @author Mircea.Markus@jboss.com
  */
@@ -44,6 +44,7 @@ public class SimpleConnectionFactory extends ConnectionFactory {
    private String connectionUrl;
    private String userName;
    private String password;
+   private volatile int connectionCount = 0;
 
    @Override
    public void start(ConnectionFactoryConfig config, ClassLoader classLoader) throws CacheLoaderException {
@@ -67,6 +68,7 @@ public class SimpleConnectionFactory extends ConnectionFactory {
          Connection connection = DriverManager.getConnection(connectionUrl, userName, password);
          if (connection == null)
             throw new CacheLoaderException("Received null connection from the DriverManager!");
+         connectionCount++;
          return connection;
       } catch (SQLException e) {
          throw new CacheLoaderException("Could not obtain a new connection", e);
@@ -76,7 +78,10 @@ public class SimpleConnectionFactory extends ConnectionFactory {
    @Override
    public void releaseConnection(Connection conn) {
       try {
-         conn.close();
+         if (conn!=null) {
+            conn.close();
+            connectionCount--;
+         }
       } catch (SQLException e) {
          log.failureClosingConnection(e);
       }
@@ -97,6 +102,10 @@ public class SimpleConnectionFactory extends ConnectionFactory {
 
    public String getPassword() {
       return password;
+   }
+
+   public int getConnectionCount() {
+      return connectionCount;
    }
 
    @Override

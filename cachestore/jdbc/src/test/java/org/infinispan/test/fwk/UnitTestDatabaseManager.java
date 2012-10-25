@@ -22,6 +22,8 @@
  */
 package org.infinispan.test.fwk;
 
+import static org.testng.Assert.assertEquals;
+
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -83,17 +85,17 @@ public class UnitTestDatabaseManager {
    private static void configure(DatabaseType dt, String driver, ConnectionFactoryConfig cfg) {
       cfg.setDriverClass(driver);
       switch (dt) {
-         case H2:
-            cfg.setConnectionUrl("jdbc:h2:mem:infinispan;DB_CLOSE_DELAY=-1");
-            cfg.setConnectionFactoryClass(PooledConnectionFactory.class.getName());
-            cfg.setUserName("sa");
-            break;
-         case MYSQL:
-            cfg.setConnectionUrl("jdbc:mysql://localhost/infinispan?user=ispn&password=ispn");
-            cfg.setConnectionFactoryClass(SimpleConnectionFactory.class.getName());
-            cfg.setUserName("ispn");
-            cfg.setPassword("ispn");
-            break;
+      case H2:
+         cfg.setConnectionUrl("jdbc:h2:mem:infinispan;DB_CLOSE_DELAY=-1");
+         cfg.setConnectionFactoryClass(PooledConnectionFactory.class.getName());
+         cfg.setUserName("sa");
+         break;
+      case MYSQL:
+         cfg.setConnectionUrl("jdbc:mysql://localhost/infinispan?user=ispn&password=ispn");
+         cfg.setConnectionFactoryClass(SimpleConnectionFactory.class.getName());
+         cfg.setUserName("ispn");
+         cfg.setPassword("ispn");
+         break;
       }
    }
 
@@ -117,7 +119,6 @@ public class UnitTestDatabaseManager {
       return tokenizer.nextToken();
    }
 
-
    private static String getShutdownUrl(ConnectionFactoryConfig props) {
       String url = props.getConnectionUrl();
       assert url != null;
@@ -125,7 +126,6 @@ public class UnitTestDatabaseManager {
       String result = tokenizer.nextToken() + ";" + "shutdown=true";
       return result;
    }
-
 
    private static ConnectionFactoryConfig returnBasedOnDifferentInstance() {
       ConnectionFactoryConfig result = realConfig.clone();
@@ -141,26 +141,25 @@ public class UnitTestDatabaseManager {
 
    private static String extractTestName() {
       StackTraceElement[] stack = Thread.currentThread().getStackTrace();
-      if (stack.length == 0) return null;
+      if (stack.length == 0)
+         return null;
       for (int i = stack.length - 1; i > 0; i--) {
          StackTraceElement e = stack[i];
          String className = e.getClassName();
-         if (className.indexOf("org.infinispan") != -1) return className.replace('.', '_') + "_" + e.getMethodName();
+         if (className.indexOf("org.infinispan") != -1)
+            return className.replace('.', '_') + "_" + e.getMethodName();
       }
       return null;
    }
 
-
    public static TableManipulation buildStringTableManipulation() {
-      TableManipulation tableManipulation = new TableManipulation("ID_COLUMN", "VARCHAR(255)", "ISPN_JDBC", "DATA_COLUMN",
-              "BLOB", "TIMESTAMP_COLUMN", "BIGINT");
+      TableManipulation tableManipulation = new TableManipulation("ID_COLUMN", "VARCHAR(255)", "ISPN_JDBC", "DATA_COLUMN", "BLOB", "TIMESTAMP_COLUMN", "BIGINT");
       tableManipulation.databaseType = dt;
       return tableManipulation;
    }
 
    public static TableManipulation buildBinaryTableManipulation() {
-      TableManipulation tableManipulation = new TableManipulation("ID_COLUMN", "INT", "ISPN_JDBC", "DATA_COLUMN",
-              "BLOB", "TIMESTAMP_COLUMN", "BIGINT");
+      TableManipulation tableManipulation = new TableManipulation("ID_COLUMN", "INT", "ISPN_JDBC", "DATA_COLUMN", "BLOB", "TIMESTAMP_COLUMN", "BIGINT");
       tableManipulation.databaseType = dt;
       return tableManipulation;
    }
@@ -168,7 +167,6 @@ public class UnitTestDatabaseManager {
    /**
     * Counts the number of rows in the given table.
     */
-
 
    public static int rowCount(ConnectionFactory connectionFactory, String tableName) {
 
@@ -184,11 +182,25 @@ public class UnitTestDatabaseManager {
          return resultSet.getInt(1);
       } catch (Exception ex) {
          throw new RuntimeException(ex);
-      }
-      finally {
+      } finally {
          JdbcUtil.safeClose(resultSet);
          JdbcUtil.safeClose(statement);
          connectionFactory.releaseConnection(conn);
+      }
+   }
+
+   public static void verifyConnectionLeaks(ConnectionFactory connectionFactory) {
+      if (connectionFactory instanceof PooledConnectionFactory) {
+         PooledConnectionFactory pcf = (PooledConnectionFactory) connectionFactory;
+         try {
+            Thread.sleep(500); // C3P0 needs a little delay before reporting the correct number of connections. Bah!
+            assertEquals(pcf.getPooledDataSource().getNumBusyConnectionsAllUsers(), 0);
+         } catch (Exception e) {
+            throw new RuntimeException(e);
+         }
+      } else if (connectionFactory instanceof SimpleConnectionFactory) {
+         SimpleConnectionFactory scf = (SimpleConnectionFactory) connectionFactory;
+         assertEquals(scf.getConnectionCount(), 0);
       }
    }
 

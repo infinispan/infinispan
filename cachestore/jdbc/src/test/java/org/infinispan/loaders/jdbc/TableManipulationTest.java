@@ -24,8 +24,6 @@ package org.infinispan.loaders.jdbc;
 
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
-import static org.testng.Assert.assertEquals;
-
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.PreparedStatement;
@@ -79,7 +77,7 @@ public class TableManipulationTest {
 
       tableManipulation.getUpdateRowSql();
 
-      assertEquals(factory.getPooledDataSource().getNumBusyConnections(), 0);
+      UnitTestDatabaseManager.verifyConnectionLeaks(factory);
 
       tableManipulation.stop();
       factory.stop();
