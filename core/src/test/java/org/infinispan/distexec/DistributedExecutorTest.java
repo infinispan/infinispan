@@ -29,6 +29,8 @@ import java.util.Set;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 
 import org.infinispan.Cache;
 import org.infinispan.configuration.cache.CacheMode;
@@ -204,6 +206,43 @@ public class DistributedExecutorTest extends MultipleCacheManagersTest {
       assert r;
    }
 
+   public void testSleepingCallableWithTimeoutOption() throws Exception {
+      DistributedExecutorService des = new DefaultExecutorService(getCache());
+      Future<Integer> future = des.submit(new SleepingSimpleCallable());
+      Integer r = future.get(20, TimeUnit.SECONDS);
+      assert r == 1;
+
+      //the same using DistributedTask API
+      DistributedTaskBuilder<Integer> taskBuilder = des.createDistributedTaskBuilder(new SleepingSimpleCallable());
+      DistributedTask<Integer> distributedTask = taskBuilder.build();
+      future = des.submit(distributedTask);
+      r = future.get(20, TimeUnit.SECONDS);
+      assert r == 1;
+   }
+
+   @Test(expectedExceptions = TimeoutException.class)
+   public void testSleepingCallableWithTimeoutExc() throws Exception {
+      Thread.currentThread().setPriority(Thread.MAX_PRIORITY);
+
+      DistributedExecutorService des = new DefaultExecutorService(getCache());
+      Future<Integer> future = des.submit(new SleepingSimpleCallable());
+
+      future.get(2000, TimeUnit.MILLISECONDS);
+   }
+
+   @Test(expectedExceptions = TimeoutException.class)
+   public void testSleepingCallableWithTimeoutExcDistApi() throws Exception {
+      Thread.currentThread().setPriority(Thread.MAX_PRIORITY);
+
+      DistributedExecutorService des = new DefaultExecutorService(getCache());
+
+      DistributedTaskBuilder<Integer> taskBuilder = des.createDistributedTaskBuilder(new SleepingSimpleCallable());
+      DistributedTask<Integer> distributedTask = taskBuilder.build();
+      Future<Integer> future = des.submit(distributedTask);
+
+      future.get(2000, TimeUnit.MILLISECONDS);
+   }
+
    public void testBasicTargetDistributedCallable() throws Exception {
       Cache<Object, Object> cache1 = cache(0, cacheName());
       Cache<Object, Object> cache2 = cache(1, cacheName());
@@ -327,6 +366,19 @@ public class DistributedExecutorTest extends MultipleCacheManagersTest {
 
       @Override
       public Integer call() throws Exception {
+         return 1;
+      }
+   }
+
+   static class SleepingSimpleCallable implements Callable<Integer>, Serializable {
+
+      /** The serialVersionUID */
+      private static final long serialVersionUID = -8589149500259272402L;
+
+      @Override
+      public Integer call() throws Exception {
+         Thread.sleep(10000);
+
          return 1;
       }
    }
