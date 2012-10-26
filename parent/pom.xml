@@ -183,6 +183,9 @@
       <version.maven.source>2.1.2</version.maven.source>
       <version.jacoco>0.5.10.201208310627</version.jacoco>
       <version.asm>3.3.1</version.asm>
+      <reportTitle>Infinispan JaCoCo Report</reportTitle>
+      <dir.ispn>../</dir.ispn>
+      <dir.report>../jacoco-html</dir.report>
    </properties>
    <dependencyManagement>
       <dependencies>
@@ -1681,6 +1684,79 @@
                         </property>
                      </properties>
                   </configuration>
+               </plugin>
+            </plugins>
+         </build>
+      </profile>
+
+      <profile>
+         <id>jacocoReport</id>
+
+         <build>
+            <plugins>
+               <plugin>
+                  <groupId>org.apache.maven.plugins</groupId>
+                  <artifactId>maven-antrun-plugin</artifactId>
+                  <version>1.7</version>
+                  <executions>
+                     <execution>
+                        <phase>install</phase>
+                        <goals>
+                           <goal>run</goal>
+                        </goals>
+                        <configuration combine.self="override">
+                           <target>
+                              <!-- Execute an ant task within maven -->
+                              <taskdef name="report" classname="org.jacoco.ant.ReportTask">
+                                 <classpath path="${basedir}/target/jacoco-jars/org.jacoco.ant.jar" />
+                                 <classpath path="target/jacoco-jars/org.jacoco.core.jar" />
+                                 <classpath path="target/jacoco-jars/org.jacoco.report.jar" />
+                                 <classpath path="target/jacoco-jars/asm-all.jar" />
+                              </taskdef>
+
+                              <echo message="Deleting previous report" />
+                              <delete dir="${dir.report}" />
+
+                              <echo message="Creating report directory" />
+                              <mkdir dir="${dir.report}" />
+
+                              <echo message="Generating JaCoCo Reports" />
+                              <report>
+                                 <!-- Specifying the execution data files locations. -->
+                                 <executiondata>
+                                    <fileset dir="${dir.ispn}" includes="**/target/jacoco.exec" />
+                                 </executiondata>
+
+                                 <!-- Defining the report structure with class and source files. -->
+                                 <structure name="${reportTitle}">
+                                    <classfiles>
+                                       <fileset dir="${dir.ispn}">
+                                          <include name="**/target/classes/" />
+                                       </fileset>
+                                    </classfiles>
+                                    <sourcefiles encoding="UTF-8">
+                                       <mappedresources>
+                                          <fileset dir="${dir.ispn}" includes="**/src/main/java/**/*.java" />
+                                          <mapper type="regexp" from="^(.*/java/)(.*)$" to="\2"/>
+                                       </mappedresources>
+                                    </sourcefiles>
+
+                                 </structure>
+
+                                 <!-- Only HTML report is generated with specified path. -->
+                                 <html destdir="${dir.report}" />
+                              </report>
+                           </target>
+                        </configuration>
+                     </execution>
+                  </executions>
+                  <dependencies>
+                     <dependency>
+                        <groupId>org.jacoco</groupId>
+                        <artifactId>org.jacoco.ant</artifactId>
+                        <version>${version.jacoco}</version>
+                     </dependency>
+                  </dependencies>
                </plugin>
             </plugins>
          </build>
