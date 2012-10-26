@@ -254,7 +254,7 @@ public class StateTransferManagerImpl implements StateTransferManager {
    }
 
    @Override
-   public void forwardCommandIfNeeded(TopologyAffectedCommand command, Set<Object> affectedKeys, boolean sync) {
+   public void forwardCommandIfNeeded(TopologyAffectedCommand command, Set<Object> affectedKeys, Address origin, boolean sync) {
       int cmdTopologyId = command.getTopologyId();
       // forward commands with older topology ids to their new targets
       // but we need to make sure we have the latest topology
@@ -264,9 +264,16 @@ public class StateTransferManagerImpl implements StateTransferManager {
       log.tracef("CommandTopologyId=%s, localTopologyId=%s", cmdTopologyId, localTopologyId);
 
       if (cmdTopologyId < localTopologyId) {
+         ConsistentHash readCh = cacheTopology.getReadConsistentHash();
          ConsistentHash writeCh = cacheTopology.getWriteConsistentHash();
          Set<Address> newTargets = writeCh.locateAllOwners(affectedKeys);
          newTargets.remove(rpcManager.getAddress());
+         // Forwarding to the originator would create a cycle
+         // TODO This may not be the "real" originator, but one of the original recipients
+         // or even one of the nodes that one of the original recipients forwarded the command to.
+         // In non-transactional caches, the "real" originator keeps a lock for the duration
+         // of the RPC, so this means we could get a deadlock while forwarding to it.
+         newTargets.remove(origin);
          if (!newTargets.isEmpty()) {
             // Update the topology id to prevent cycles
             command.setTopologyId(localTopologyId);
