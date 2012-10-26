@@ -20,10 +20,16 @@
 package org.infinispan.distribution.ch;
 
 import org.infinispan.commons.hash.Hash;
+import org.infinispan.marshall.AbstractExternalizer;
+import org.infinispan.marshall.Ids;
 import org.infinispan.remoting.transport.Address;
 
+import java.io.IOException;
+import java.io.ObjectInput;
+import java.io.ObjectOutput;
 import java.io.Serializable;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -59,5 +65,28 @@ public class ReplicatedConsistentHashFactory implements ConsistentHashFactory<Re
       membersUnion.addAll(ch1.getMembers());
       membersUnion.addAll(ch2.getMembers());
       return new ReplicatedConsistentHash(new ArrayList<Address>(membersUnion));
+   }
+
+   public static class Externalizer extends AbstractExternalizer<ReplicatedConsistentHashFactory> {
+
+      @Override
+      public void writeObject(ObjectOutput output, ReplicatedConsistentHashFactory chf) throws IOException {
+      }
+
+      @Override
+      @SuppressWarnings("unchecked")
+      public ReplicatedConsistentHashFactory readObject(ObjectInput unmarshaller) throws IOException, ClassNotFoundException {
+         return new ReplicatedConsistentHashFactory();
+      }
+
+      @Override
+      public Integer getId() {
+         return Ids.REPLICATED_CONSISTENT_HASH_FACTORY;
+      }
+
+      @Override
+      public Set<Class<? extends ReplicatedConsistentHashFactory>> getTypeClasses() {
+         return Collections.<Class<? extends ReplicatedConsistentHashFactory>>singleton(ReplicatedConsistentHashFactory.class);
+      }
    }
 }

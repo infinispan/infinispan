@@ -19,10 +19,15 @@
 
 package org.infinispan.distribution.ch;
 
+import java.io.IOException;
+import java.io.ObjectInput;
+import java.io.ObjectOutput;
 import java.io.Serializable;
 import java.util.*;
 
 import org.infinispan.commons.hash.Hash;
+import org.infinispan.marshall.AbstractExternalizer;
+import org.infinispan.marshall.Ids;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
@@ -471,6 +476,29 @@ public class DefaultConsistentHashFactory implements ConsistentHashFactory<Defau
 
       public int getOwned(Address node) {
          return stats.getOwned(node);
+      }
+   }
+
+   public static class Externalizer extends AbstractExternalizer<DefaultConsistentHashFactory> {
+
+      @Override
+      public void writeObject(ObjectOutput output, DefaultConsistentHashFactory chf) throws IOException {
+      }
+
+      @Override
+      @SuppressWarnings("unchecked")
+      public DefaultConsistentHashFactory readObject(ObjectInput unmarshaller) throws IOException, ClassNotFoundException {
+         return new DefaultConsistentHashFactory();
+      }
+
+      @Override
+      public Integer getId() {
+         return Ids.DEFAULT_CONSISTENT_HASH_FACTORY;
+      }
+
+      @Override
+      public Set<Class<? extends DefaultConsistentHashFactory>> getTypeClasses() {
+         return Collections.<Class<? extends DefaultConsistentHashFactory>>singleton(DefaultConsistentHashFactory.class);
       }
    }
 }

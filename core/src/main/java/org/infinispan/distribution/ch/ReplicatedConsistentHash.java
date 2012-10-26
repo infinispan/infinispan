@@ -40,7 +40,7 @@ public class ReplicatedConsistentHash implements ConsistentHash {
 
    private final List<Address> members;
 
-   private final Set<Integer> theSegment = Collections.singleton(0);
+   private static final Set<Integer> theSegment = Collections.singleton(0);
 
    public ReplicatedConsistentHash(List<Address> members) {
       this.members = new ArrayList<Address>(members);
