@@ -44,11 +44,7 @@ public class TestTopologyAwareAddress extends TestAddress implements TopologyAwa
 
    @Override
    public String toString() {
-      return "TestTopologyAwareAddress{" +
-            "siteId='" + siteId + '\'' +
-            ", rackId='" + rackId + '\'' +
-            ", machineId='" + machineId + '\'' +
-            "} " + super.toString();
+      return super.toString() + "|" + machineId + "|" + rackId + "|" + siteId;
    }
 
    @Override

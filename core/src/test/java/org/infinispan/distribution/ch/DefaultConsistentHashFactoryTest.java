@@ -23,6 +23,7 @@
 package org.infinispan.distribution.ch;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.List;
@@ -46,8 +47,7 @@ import static org.testng.Assert.*;
 @Test(groups = "unit", testName = "ch.DefaultConsistentHashFactoryTest")
 public class DefaultConsistentHashFactoryTest extends AbstractInfinispanTest {
 
-   private static int iterationCount = 0;
-   private double maxMovedSegmentsRatio = 0.0;
+   private int iterationCount = 0;
 
    protected ConsistentHashFactory createConsistentHashFactory() {
       return new DefaultConsistentHashFactory();
@@ -105,43 +105,53 @@ public class DefaultConsistentHashFactoryTest extends AbstractInfinispanTest {
             newMembers.add(new TestAddress(nodeIndex++));
          }
 
-         log.debugf("Testing consistent hash modifications iteration %d. Initial CH is %s. New members are %s",
+         log.tracef("Testing consistent hash modifications iteration %d. Initial CH is %s. New members are %s",
                iterationCount, baseCH, newMembers);
+         baseCH = checkModificationsIteration(chf, baseCH, nodesToAdd, nodesToRemove, newMembers);
 
-         // first phase: just update the members list, removing the leavers
-         // and adding new owners, but not necessarily assigning segments to them
-         DefaultConsistentHash updatedMembersCH = chf.updateMembers(baseCH, newMembers);
-         if (nodesToRemove > 0) {
-            for (int l = 0; l < updatedMembersCH.getNumSegments(); l++) {
-               assertTrue(updatedMembersCH.locateOwnersForSegment(l).size() > 0);
-            }
-         }
 
-         // second phase: rebalance with the new members list
-         DefaultConsistentHash rebalancedCH = chf.rebalance(updatedMembersCH);
-         checkDistribution(rebalancedCH, false);
-
-         int actualNumOwners = Math.min(rebalancedCH.getMembers().size(), rebalancedCH.getNumOwners());
-         for (int l = 0; l < rebalancedCH.getNumSegments(); l++) {
-            assertTrue(rebalancedCH.locateOwnersForSegment(l).size() >= actualNumOwners);
-         }
-
-         checkMovedSegments(baseCH, rebalancedCH, nodesToAdd);
-
-         // union doesn't have to keep the CH balanced, but it does have to include owners from both CHs
-         DefaultConsistentHash unionCH = chf.union(updatedMembersCH, rebalancedCH);
-         for (int l = 0; l < updatedMembersCH.getNumSegments(); l++) {
-            assertTrue(unionCH.locateOwnersForSegment(l).containsAll(updatedMembersCH.locateOwnersForSegment(l)));
-            assertTrue(unionCH.locateOwnersForSegment(l).containsAll(rebalancedCH.locateOwnersForSegment(l)));
-         }
-
-         // switch to the new CH in the next iteration
-         assertEquals(rebalancedCH.getNumSegments(), baseCH.getNumSegments());
-         assertEquals(rebalancedCH.getNumOwners(), baseCH.getNumOwners());
-         assertEquals(rebalancedCH.getMembers(), newMembers);
-         baseCH = rebalancedCH;
          iterationCount++;
       }
+   }
+
+   private DefaultConsistentHash checkModificationsIteration(ConsistentHashFactory<DefaultConsistentHash> chf,
+                                                             DefaultConsistentHash baseCH, int nodesToAdd,
+                                                             int nodesToRemove, List<Address> newMembers) {
+      int actualNumOwners = Math.min(newMembers.size(), baseCH.getNumOwners());
+
+      // first phase: just update the members list, removing the leavers
+      // and adding new owners, but not necessarily assigning segments to them
+      DefaultConsistentHash updatedMembersCH = chf.updateMembers(baseCH, newMembers);
+      if (nodesToRemove > 0) {
+         for (int l = 0; l < updatedMembersCH.getNumSegments(); l++) {
+            assertTrue(updatedMembersCH.locateOwnersForSegment(l).size() > 0);
+            assertTrue(updatedMembersCH.locateOwnersForSegment(l).size() <= actualNumOwners);
+         }
+      }
+
+      // second phase: rebalance with the new members list
+      DefaultConsistentHash rebalancedCH = chf.rebalance(updatedMembersCH);
+      checkDistribution(rebalancedCH, false);
+
+      for (int l = 0; l < rebalancedCH.getNumSegments(); l++) {
+         assertTrue(rebalancedCH.locateOwnersForSegment(l).size() >= actualNumOwners);
+      }
+
+      checkMovedSegments(baseCH, rebalancedCH, nodesToAdd);
+
+      // union doesn't have to keep the CH balanced, but it does have to include owners from both CHs
+      DefaultConsistentHash unionCH = chf.union(updatedMembersCH, rebalancedCH);
+      for (int l = 0; l < updatedMembersCH.getNumSegments(); l++) {
+         assertTrue(unionCH.locateOwnersForSegment(l).containsAll(updatedMembersCH.locateOwnersForSegment(l)));
+         assertTrue(unionCH.locateOwnersForSegment(l).containsAll(rebalancedCH.locateOwnersForSegment(l)));
+      }
+
+      // switch to the new CH in the next iteration
+      assertEquals(rebalancedCH.getNumSegments(), baseCH.getNumSegments());
+      assertEquals(rebalancedCH.getNumOwners(), baseCH.getNumOwners());
+      assertEquals(rebalancedCH.getMembers(), newMembers);
+      baseCH = rebalancedCH;
+      return baseCH;
    }
 
    private void checkDistribution(ConsistentHash ch, boolean allowExtraOwners) {
@@ -251,4 +261,26 @@ public class DefaultConsistentHashFactoryTest extends AbstractInfinispanTest {
       return symDiffMembers;
    }
 
+   public void test1() {
+      DefaultConsistentHashFactory chf = new DefaultConsistentHashFactory();
+      TestAddress A = new TestAddress(0, "A");
+      TestAddress B = new TestAddress(1, "B");
+      TestAddress C = new TestAddress(2, "C");
+      TestAddress D = new TestAddress(3, "D");
+
+      DefaultConsistentHash ch1 = chf.create(new MurmurHash3(), 2, 60, Arrays.<Address>asList(A));
+      System.out.println(ch1);
+
+      DefaultConsistentHash ch2 = chf.updateMembers(ch1, Arrays.<Address>asList(A, B));
+      ch2 = chf.rebalance(ch2);
+      System.out.println(ch2);
+
+      DefaultConsistentHash ch3 = chf.updateMembers(ch2, Arrays.<Address>asList(A, B, C));
+      ch3 = chf.rebalance(ch3);
+      System.out.println(ch3);
+
+      DefaultConsistentHash ch4 = chf.updateMembers(ch3, Arrays.<Address>asList(A, B, C, D));
+      ch4 = chf.rebalance(ch4);
+      System.out.println(ch4);
+   }
 }

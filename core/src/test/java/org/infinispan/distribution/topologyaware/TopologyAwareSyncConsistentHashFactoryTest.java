@@ -20,59 +20,30 @@
  * Software Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
  * 02110-1301 USA, or see the FSF site: http://www.fsf.org.
  */
-package org.infinispan.distribution;
+package org.infinispan.distribution.topologyaware;
 
-import org.infinispan.remoting.transport.Address;
+import org.infinispan.commons.hash.MurmurHash3;
+import org.infinispan.distribution.ch.ConsistentHashFactory;
+import org.infinispan.distribution.ch.DefaultConsistentHash;
+import org.infinispan.distribution.ch.TopologyAwareSyncConsistentHashFactory;
+import org.testng.annotations.Test;
 
 /**
  * @author Mircea.Markus@jboss.com
- * @since 4.2
+ * @author Dan Berindei
+ * @since 5.2
  */
-public class TestAddress implements Address {
-   final int addressNum;
+@Test(groups = "unit", testName = "topologyaware.TopologyAwareConsistentHashFactoryTest")
+public class TopologyAwareSyncConsistentHashFactoryTest extends TopologyAwareConsistentHashFactoryTest {
 
-   String name;
-
-   public void setName(String name) {
-      this.name = name;
-   }
-
-   public TestAddress(int addressNum) {
-      this.addressNum = addressNum;
-   }
-
-   public TestAddress(int addressNum, String name) {
-      this.addressNum = addressNum;
-      this.name = name;
+   public TopologyAwareSyncConsistentHashFactoryTest() {
+      // Increase the number of segments to eliminate collisions (which would cause extra segment movements,
+      // causing testConsistencyAfterLeave to fail.)
+      numSegments = 5000;
    }
 
    @Override
-   public boolean equals(Object o) {
-      if (this == o) return true;
-      if (o == null || getClass() != o.getClass()) return false;
-
-      TestAddress that = (TestAddress) o;
-
-      if (addressNum != that.addressNum) return false;
-
-      return true;
-   }
-
-   @Override
-   public int hashCode() {
-      return addressNum;
-   }
-
-   @Override
-   public String toString() {
-      if (name != null) {
-         return name + "#" + addressNum;
-      } else
-      return "TestAddress#" + addressNum;
-   }
-
-   @Override
-   public int compareTo(Address o) {
-      return this.addressNum - ((TestAddress) o).addressNum;
+   protected ConsistentHashFactory<DefaultConsistentHash> createConsistentHashFactory() {
+      return new TopologyAwareSyncConsistentHashFactory();
    }
 }

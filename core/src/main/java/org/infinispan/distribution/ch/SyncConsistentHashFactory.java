@@ -21,6 +21,8 @@ package org.infinispan.distribution.ch;
 
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.SortedMap;
@@ -40,101 +42,121 @@ import org.infinispan.remoting.transport.Address;
  * @since 5.2
  */
 public class SyncConsistentHashFactory implements ConsistentHashFactory<DefaultConsistentHash> {
+
    @Override
    public DefaultConsistentHash create(Hash hashFunction, int numOwners, int numSegments, List<Address> members) {
-      int numMembers = members.size();
-      int actualNumOwners = Math.min(numOwners, numMembers);
-      List<Address> sortedMembers = sort(members);
-      int segmentSize = (int)Math.ceil((double)Integer.MAX_VALUE / numSegments);
 
-      // First find a unique "primary segment" for each virtual member
-      SortedMap<Integer, Address> primarySegments = new TreeMap<Integer, Address>();
+      Builder builder = new Builder(hashFunction, numOwners, numSegments, members);
+      SortedMap<Integer, Address> primarySegments = populatePrimarySegments(builder);
+      if (numSegments >= members.size()) {
+         populateOwnersManySegments(builder, primarySegments);
+      } else {
+         populateOwnersFewSegments(builder, primarySegments);
+      }
+
+      return new DefaultConsistentHash(hashFunction, numOwners, numSegments, members, builder.getAllOwners());
+   }
+
+   protected void populateOwnersFewSegments(Builder builder, SortedMap<Integer, Address> primarySegments) {
+      // Too few segments for each member to have one "primary segment",
+      // but we may still have enough segments for each member to be a backup owner.
+
+      // Populate the primary owners first - because numSegments < numMembers we're guaranteed to
+      // set the primary owner of each segment
+      for (Map.Entry<Integer, Address> e : primarySegments.entrySet()) {
+         Integer segment = e.getKey();
+         Address primaryOwner = e.getValue();
+         builder.getOwners(segment).add(primaryOwner);
+      }
+
+      // Continue with the backup owners. Assign each member as owner to one segment,
+      // then repeat until each segment has numOwners owners.
+      boolean modified = true;
+      while (modified) {
+         modified = false;
+         for (Address member : builder.getSortedMembers()) {
+            // Compute an initial segment and iterate backwards to make it more like the other case
+            int initSegment = normalizedHash(builder.getHashFunction(), member.hashCode()) / builder.getSegmentSize();
+            for (int i = 0; i < builder.getNumSegments(); i++) {
+               int segment = (builder.getNumSegments() + initSegment - i) % builder.getNumSegments();
+               List<Address> owners = builder.getOwners(segment);
+               if (owners.size() < builder.getActualNumOwners() && !owners.contains(member)) {
+                  owners.add(member);
+                  modified = true;
+                  break;
+               }
+            }
+         }
+      }
+   }
+
+   protected int normalizedHash(Hash hashFunction, int hashcode) {
+      return hashFunction.hash(hashcode) & Integer.MAX_VALUE;
+   }
+
+   protected void populateOwnersManySegments(Builder builder, SortedMap<Integer, Address> primarySegments) {
+      // Each member is present at least once in the primary segments map, so we can use that
+      // to populate the owner lists. For each segment assign the owners of the next numOwners
+      // "primary segments" as owners.
+      for (int segment = 0; segment < builder.getNumSegments(); segment++) {
+         List<Address> owners = builder.getOwners(segment);
+         for (Address a : primarySegments.tailMap(segment).values()) {
+            if (owners.size() >= builder.getActualNumOwners())
+               break;
+            if (!owners.contains(a)) {
+               owners.add(a);
+            }
+         }
+         if (owners.size() < builder.getActualNumOwners()) {
+            for (Address a : primarySegments.headMap(segment).values()) {
+               if (owners.size() >= builder.getActualNumOwners())
+                  break;
+               if (!owners.contains(a)) {
+                  owners.add(a);
+               }
+            }
+         }
+      }
+   }
+
+   /**
+    * Finds a unique "primary segment" for each virtual member
+    */
+   private SortedMap<Integer, Address> populatePrimarySegments(Builder builder) {
+      // Only used for debugging
+      int collisions = 0;
 
       // Since the number of segments is potentially much larger than the number of members,
       // we need a concept of "virtual nodes" to help split the segments more evenly.
       // However, we don't have a "numVirtualNodes" setting any more, so we try to guess it
       // based on numSegments. This is not perfect because we may end up with too many virtual nodes,
       // but the only downside in that is a little more shuffling when a node joins/leaves.
-      int numVirtualNodes = (int)Math.sqrt(numSegments);
+      int numSegments = builder.getNumSegments();
+      int numVirtualNodes = (int) (Math.log(numSegments + 1) / Math.log(2));
+      int numNodes = builder.getSortedMembers().size();
+      Map<Integer, Address> primarySegments = new HashMap<Integer, Address>(numNodes * numVirtualNodes);
+
       for (int virtualNode = 0; virtualNode < numVirtualNodes; virtualNode++) {
-         for (Address member : sortedMembers) {
-            // Use multiplication to compensate for addresses having consecutive hashes (like test addresses do)
-            int virtualNodeHash = 31 * member.hashCode() + virtualNode;
-            int normalizedHash = hashFunction.hash(virtualNodeHash) & Integer.MAX_VALUE;
-            int initSegment = normalizedHash / segmentSize;
+         for (Address member : builder.getSortedMembers()) {
+            // Add the virtual node count after applying MurmurHash on the node's hashCode
+            // to make up for badly spread test addresses.
+            int virtualNodeHash = normalizedHash(builder.getHashFunction(), member.hashCode());
+            if (virtualNode != 0) {
+               virtualNodeHash = normalizedHash(builder.getHashFunction(), virtualNodeHash + virtualNode);
+            }
+            int initSegment = virtualNodeHash / builder.getSegmentSize();
             for (int i = 0; i < numSegments; i++) {
                int segment = (initSegment + i) % numSegments;
                if (!primarySegments.containsKey(segment)) {
                   primarySegments.put(segment, member);
+                  if (segment != initSegment) collisions++;
                   break;
                }
             }
          }
       }
 
-      List<Address>[] segmentOwners = new List[numSegments];
-      if (numSegments >= numMembers) {
-         // Each member is present at least once in the primary segments map, so we can use that
-         // to populate the owner lists. For each segment assign the owners of the next numOwners
-         // "primary segments" as owners.
-         for (int i = 0; i < numSegments; i++) {
-            ArrayList<Address> owners = new ArrayList<Address>(actualNumOwners);
-            for (Address a : primarySegments.tailMap(i).values()) {
-               if (owners.size() >= actualNumOwners)
-                  break;
-               if (!owners.contains(a)) {
-                  owners.add(a);
-               }
-            }
-            for (Address a : primarySegments.headMap(i).values()) {
-               if (owners.size() >= actualNumOwners)
-                  break;
-               if (!owners.contains(a)) {
-                  owners.add(a);
-               }
-            }
-            segmentOwners[i] = owners;
-         }
-      } else {
-         // Too few segments for each member to have one "primary segment",
-         // but we may still have enough segments for each member to be a backup owner.
-
-         // Populate the primary owners first - because numSegments < numMembers we're guaranteed to
-         // set the primary owner of each segment
-         for (Map.Entry<Integer, Address> e : primarySegments.entrySet()) {
-            Integer segment = e.getKey();
-            Address primaryOwner = e.getValue();
-            segmentOwners[segment] = new ArrayList<Address>(actualNumOwners);
-            segmentOwners[segment].add(primaryOwner);
-         }
-
-         // Continue with the backup owners. Assign each member as owner to one segment,
-         // then repeat until each segment has numOwners owners.
-         boolean haveEnoughOwners = false;
-         while (!haveEnoughOwners) {
-            for (Address member : sortedMembers) {
-               // Compute an initial segment and iterate backwards to make it more like the other case
-               int normalizedHash = hashFunction.hash(member.hashCode()) & Integer.MAX_VALUE;
-               int initSegment = normalizedHash / segmentSize;
-               for (int i = 0; i < numSegments; i++) {
-                  int segment = (numSegments + initSegment - i) % numSegments;
-                  List<Address> owners = segmentOwners[segment];
-                  if (owners.size() < actualNumOwners && !owners.contains(member)) {
-                     owners.add(member);
-                     break;
-                  }
-               }
-            }
-            haveEnoughOwners = true;
-            for (int i = 0; i < numSegments; i++) {
-               if (segmentOwners[i].size() < actualNumOwners) {
-                  haveEnoughOwners = false;
-                  break;
-               }
-            }
-         }
-      }
-      return new DefaultConsistentHash(hashFunction, numSegments, numOwners, members, segmentOwners);
+      return new TreeMap<Integer, Address>(primarySegments);
    }
 
    @Override
@@ -147,7 +169,7 @@ public class SyncConsistentHashFactory implements ConsistentHashFactory<DefaultC
       int numOwners = baseCH.getNumOwners();
 
       // we assume leavers are far fewer than members, so it makes sense to check for leavers
-      List<Address> leavers = new ArrayList<Address>(baseCH.getMembers());
+      HashSet<Address> leavers = new HashSet<Address>(baseCH.getMembers());
       leavers.removeAll(newMembers);
 
       // create a new "balanced" CH in case we need to allocate new owners for segments with 0 owners
@@ -166,8 +188,8 @@ public class SyncConsistentHashFactory implements ConsistentHashFactory<DefaultC
          }
       }
 
-      return new DefaultConsistentHash(baseCH.getHashFunction(), numSegments, numOwners,
-            newMembers, newSegmentOwners);
+      return new DefaultConsistentHash(baseCH.getHashFunction(), numOwners, numSegments, newMembers,
+            newSegmentOwners);
    }
 
    @Override
@@ -186,10 +208,58 @@ public class SyncConsistentHashFactory implements ConsistentHashFactory<DefaultC
       return ch1.union(ch2);
    }
 
+   protected static class Builder {
+      private final Hash hashFunction;
+      private final int actualNumOwners;
+      private final int numSegments;
+      private final List<Address> sortedMembers;
+      private final int segmentSize;
+      private final List<Address>[] segmentOwners;
 
-   private List<Address> sort(List<Address> members) {
-      ArrayList<Address> result = new ArrayList<Address>(members);
-      Collections.sort(result);
-      return result;
+      private Builder(Hash hashFunction, int numOwners, int numSegments, List<Address> members) {
+         this.hashFunction = hashFunction;
+         this.numSegments = numSegments;
+         this.actualNumOwners = Math.min(numOwners, members.size());
+         this.sortedMembers = sort(members);
+         this.segmentSize = (int)Math.ceil((double)Integer.MAX_VALUE / numSegments);
+         this.segmentOwners = new List[numSegments];
+         for (int i = 0; i < numSegments; i++) {
+            segmentOwners[i] = new ArrayList<Address>(actualNumOwners);
+         }
+      }
+
+      public Hash getHashFunction() {
+         return hashFunction;
+      }
+
+      public int getActualNumOwners() {
+         return actualNumOwners;
+      }
+
+      public int getNumSegments() {
+         return numSegments;
+      }
+
+      public List<Address> getSortedMembers() {
+         return sortedMembers;
+      }
+
+      public int getSegmentSize() {
+         return segmentSize;
+      }
+
+      public List<Address>[] getAllOwners() {
+         return segmentOwners;
+      }
+
+      public List<Address> getOwners(int i) {
+         return segmentOwners[i];
+      }
+
+      private List<Address> sort(List<Address> list) {
+         ArrayList<Address> result = new ArrayList<Address>(list);
+         Collections.sort(result);
+         return result;
+      }
    }
 }

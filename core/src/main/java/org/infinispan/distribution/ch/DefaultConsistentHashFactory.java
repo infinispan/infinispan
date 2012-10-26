@@ -19,16 +19,24 @@
 
 package org.infinispan.distribution.ch;
 
+import java.io.IOException;
+import java.io.ObjectInput;
+import java.io.ObjectOutput;
 import java.io.Serializable;
 import java.util.*;
 
 import org.infinispan.commons.hash.Hash;
+import org.infinispan.marshall.AbstractExternalizer;
+import org.infinispan.marshall.Ids;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
 /**
- * Creates new instances of {@link DefaultConsistentHash}.
+ * Default implementation of {@link ConsistentHashFactory}.
+ *
+ * All methods except {@link #union(DefaultConsistentHash, DefaultConsistentHash)} return a consistent hash
+ * with floor(numOwners*numSegments/numNodes) <= segments per owner <= ceil(numOwners*numSegments/numNodes).
  *
  * @author Dan Berindei
  * @author anistor@redhat.com
@@ -43,19 +51,13 @@ public class DefaultConsistentHashFactory implements ConsistentHashFactory<Defau
       if (numOwners <= 0)
          throw new IllegalArgumentException("The number of owners should be greater than 0");
 
-      int actualNumOwners = Math.min(numOwners, members.size());
+      // Use the CH rebalance algorithm to get an even spread
+      // Round robin doesn't work properly because a segment's owner must be unique,
+      Builder builder = new Builder(numOwners, numSegments, members);
+      rebalanceBuilder(builder);
+      DefaultConsistentHash ch = builder.build(hashFunction);
 
-      // initialize the owner lists with the primary owners
-      List<Address>[] segmentOwners = new List[numSegments];
-      for (int i = 0; i < numSegments; i++) {
-         segmentOwners[i] = new ArrayList<Address>(actualNumOwners);
-         segmentOwners[i].add(members.get(i % members.size()));
-      }
-      DefaultConsistentHash baseCH = new DefaultConsistentHash(hashFunction, numSegments, numOwners, members, segmentOwners);
-
-      // use the CH update algorithm to get an even spread
-      // (round robin didn't work properly with numSegments = 8, numOwners = 2, and numNodes = 5)
-      return actualNumOwners > 1 ? rebalance(baseCH) : baseCH;
+      return ch;
    }
 
    /**
@@ -63,45 +65,50 @@ public class DefaultConsistentHashFactory implements ConsistentHashFactory<Defau
     * segments but otherwise they are not taken into account (that should happen during a rebalance).
     *
     * @param baseCH An existing consistent hash instance, should not be {@code null}
-    * @param newMembers A list of addresses representing the new cache members.
+    * @param actualMembers A list of addresses representing the new cache members.
     * @return
     */
    @Override
-   public DefaultConsistentHash updateMembers(DefaultConsistentHash baseCH, List<Address> newMembers) {
-      if (newMembers.equals(baseCH.getMembers()))
+   public DefaultConsistentHash updateMembers(DefaultConsistentHash baseCH, List<Address> actualMembers) {
+      if (actualMembers.equals(baseCH.getMembers()))
          return baseCH;
 
-      return removeLeavers(baseCH, newMembers);
+      // The builder constructor automatically removes leavers
+      Builder builder = new Builder(baseCH, actualMembers);
+
+      // If there are segments with 0 owners, fix them
+      // Try to assign the same owners for those segments as a future rebalance call would.
+      Builder balancedBuilder = null;
+      for (int segment = 0; segment < baseCH.getNumSegments(); segment++) {
+         if (builder.getOwners(segment).isEmpty()) {
+            if (balancedBuilder == null) {
+               balancedBuilder = new Builder(builder);
+               rebalanceBuilder(balancedBuilder);
+            }
+            builder.addOwners(segment, balancedBuilder.getOwners(segment));
+         }
+      }
+      return builder.build(baseCH.getHashFunction());
    }
 
    @Override
    public DefaultConsistentHash rebalance(DefaultConsistentHash baseCH) {
 
-      // The goal of this phase is to assign new owners to the segments so that
+      // This method assign new owners to the segments so that
       // * num_owners(s) == numOwners, for each segment s
       // * floor(numSegments/numNodes) <= num_segments_primary_owned(n) for each node n
-      // * floor(numSegments*numOwners/numNodes) <= num_segments_owned(n) for each node n
-      // It will not change primary owners or remove old owners, but it will prepare things for the next phase
-      // to remove owners so that
       // * num_segments_primary_owned(n) <= ceil(numSegments/numNodes) for each node n
+      // * floor(numSegments*numOwners/numNodes) <= num_segments_owned(n) for each node n
       // * num_segments_owned(n) <= ceil(numSegments*numOwners/numNodes) for each node n
       Hash hashFunction = baseCH.getHashFunction();
-      List<Address> nodes = baseCH.getMembers();
 
-      OwnershipStatistics stats = computeStatistics(baseCH, nodes);
+      Builder builder = new Builder(baseCH);
+      rebalanceBuilder(builder);
 
-      // Copy the owners list out of the old CH
-      List<Address>[] ownerLists = extractSegmentOwners(baseCH);
-      List<Address>[] intOwnerLists = extractSegmentOwners(baseCH);
-
-      addPrimaryOwners(nodes, baseCH.getNumSegments(), stats, ownerLists, intOwnerLists);
-      addBackupOwners(baseCH.getNumOwners(), nodes, baseCH.getNumSegments(), stats, ownerLists, intOwnerLists);
-
-      DefaultConsistentHash ch = new DefaultConsistentHash(hashFunction, baseCH.getNumSegments(), baseCH.getNumOwners(),
-            nodes, ownerLists);
+      DefaultConsistentHash balancedCH = builder.build(hashFunction);
 
       // we should return the base CH if we didn't change anything
-      return ch.equals(baseCH) ? baseCH : ch;
+      return balancedCH.equals(baseCH) ? baseCH : balancedCH;
    }
 
    /**
@@ -113,346 +120,385 @@ public class DefaultConsistentHashFactory implements ConsistentHashFactory<Defau
       return dch1.union(dch2);
    }
 
-   private void addPrimaryOwners(List<Address> nodes, int numSegments, OwnershipStatistics stats, List<Address>[] ownerLists, List<Address>[] intOwnerLists) {
-      // Compute how many segments each node has to primary-own.
-      // If numSegments is not divisible by numNodes, older nodes will own 1 extra segment.
-      Map<Address, Integer> expectedPrimaryOwned = computeExpectedPrimaryOwned(nodes, numSegments);
-      List<Address> newPrimaryOwners = computeNewPrimaryOwners(nodes, stats, expectedPrimaryOwned);
-
-      // Iterate over the segments, change ownership if the primary owner has > expectedPrimaryOwned
-      // Iterate backwards to make the algorithm more stable
-      for (int i = numSegments - 1; i >= 0; i--) {
-         Address primaryOwner = ownerLists[i].get(0);
-         int primaryOwned = stats.getPrimaryOwned(primaryOwner);
-         if (primaryOwned > expectedPrimaryOwned.get(primaryOwner)) {
-            // Need to pass primary ownership of this segment to another node.
-            // First try to make one of the backup owners primary owner instead.
-            Address newPrimaryOwner = removeOneOf(newPrimaryOwners, intOwnerLists[i]);
-            if (newPrimaryOwner != null) {
-               // Flip the old primary and the new primary nodes in the owners list
-               ownerLists[i].remove(newPrimaryOwner);
-               ownerLists[i].add(0, newPrimaryOwner);
-
-               stats.decPrimaryOwned(primaryOwner);
-               stats.incPrimaryOwned(newPrimaryOwner);
-            } else {
-               // The existing backup owners primary-own enough segments, add a new backup owner
-               newPrimaryOwner = newPrimaryOwners.remove(0);
-
-               // The primary owner stays the same in the intermediary CH
-               intOwnerLists[i].add(newPrimaryOwner);
-               ownerLists[i].add(0, newPrimaryOwner);
-
-               stats.incOwned(newPrimaryOwner);
-               stats.decPrimaryOwned(primaryOwner);
-               stats.incPrimaryOwned(newPrimaryOwner);
-            }
-         }
-      }
+   protected void rebalanceBuilder(Builder builder) {
+      addPrimaryOwners(builder);
+      addBackupOwners(builder);
+      // balancePrimaryOwners(builder);
    }
 
-   private List<Address>[] extractSegmentOwners(DefaultConsistentHash ch) {
-      int numSegments = ch.getNumSegments();
-      List<Address>[] segmentOwners = new List[numSegments];
-      for (int i = 0; i < numSegments; i++) {
-         segmentOwners[i] = new ArrayList<Address>(ch.locateOwnersForSegment(i));
-      }
-      return segmentOwners;
+   protected void addPrimaryOwners(Builder builder) {
+      int minPrimarySegments = builder.getNumSegments() / builder.getNumNodes();
+
+      // 1. Try to replace primary owners with too many segments with the backups in those segments.
+      swapPrimaryOwnersWithBackups(builder, minPrimarySegments + 1);
+      swapPrimaryOwnersWithBackups(builder, minPrimarySegments);
+      swapPrimaryOwnersWithBackups(builder, minPrimarySegments + 1);
+
+      // 2. If existing backup owners weren't enough, try to add new backup owners and then to the swap.
+      // 2.1. In the first phase, try to keep the number of owners below actualNumOwners
+      int actualNumOwners = builder.getActualNumOwners();
+      doAddPrimaryOwners(builder, minPrimarySegments + 1, actualNumOwners);
+      doAddPrimaryOwners(builder, minPrimarySegments, actualNumOwners);
+      doAddPrimaryOwners(builder, minPrimarySegments + 1, actualNumOwners);
+
+      // 2.2. In the second phase, allow numOwners + 1 owners for each segment.
+      // Since a segment only has 1 primary owner, this will be enough to give us a "proper" primary owner
+      // for each segment.
+      doAddPrimaryOwners(builder, minPrimarySegments + 1, actualNumOwners + 1);
+      doAddPrimaryOwners(builder, minPrimarySegments, actualNumOwners + 1);
+      doAddPrimaryOwners(builder, minPrimarySegments + 1, actualNumOwners + 1);
    }
 
-   private void addBackupOwners(int numOwners, List<Address> nodes, int numSegments, OwnershipStatistics stats,
-                                List<Address>[] ownerLists, List<Address>[] intOwnerLists) {
-      int actualNumOwners = Math.min(numOwners, nodes.size());
-      Map<Address, Integer> expectedOwned = computeExpectedOwned(nodes, actualNumOwners, numSegments);
-
-      // Iterate backwards over the segments
-      // If we find a segment with more owners than actualNumOwners and an owner has > expectedOwned segments, remove it
-      for (int i = numSegments - 1; i >= 0; i--) {
-         for (int j = ownerLists[i].size() - 1; j >= 1; j--) {
-            if (ownerLists[i].size() <= actualNumOwners)
-               break;
-
-            Address owner = ownerLists[i].get(j);
-            int owned = stats.getOwned(owner);
-            if (owned > expectedOwned.get(owner)) {
-               // We don't actually remove anything in the intermediary CH
-               ownerLists[i].remove(j);
-               stats.decOwned(owner);
-            }
-         }
-      }
-
-      // Iterate again, in the same order, but this time we can remove owners EITHER
-      // because they have too many segments OR because the current segment has too many owners
-      // We do this in two iterations in order to minimize the movement of segments.
-      for (int i = numSegments - 1; i >= 0; i--) {
-         for (int j = ownerLists[i].size() - 1; j >= 1; j--) {
-            Address owner = ownerLists[i].get(j);
-            int owned = stats.getOwned(owner);
-            if (owned > expectedOwned.get(owner) || ownerLists[i].size() > actualNumOwners) {
-               // We don't actually remove anything in the intermediary CH
-               ownerLists[i].remove(j);
-               stats.decOwned(owner);
-            }
-         }
-      }
-
-      // Now we know there are no segments with > numOwners owners, we can start adding back owners
-      List<Address> newOwners = computeNewOwners(nodes, stats, expectedOwned);
-      for (int i = 0; i < numSegments; i++) {
-         for (int j = ownerLists[i].size(); j < actualNumOwners; j++) {
-            Address newOwner = removeNotOneOf(newOwners, ownerLists[i]);
-
-            if (newOwner != null) {
-               // found a proper owner in the pending owners list
-               ownerLists[i].add(newOwner);
-               if (!intOwnerLists[i].contains(newOwner)) {
-                  intOwnerLists[i].add(newOwner);
-               }
-               stats.incOwned(newOwner);
-            } else {
-               // couldn't find a proper new owner, so we're going to have to steal it from another segment
-               Address rejectedNewOwner = newOwners.remove(0);
-               stealOwner(numSegments, rejectedNewOwner, i, ownerLists, intOwnerLists, stats);
-            }
-         }
-      }
-
-      assert newOwners.isEmpty() : "Can't still have nodes to assign if all the segments have enough owners";
-   }
-
-   private void stealOwner(int numSegments, Address replacementOwner, int destSegment,
-                           List<Address>[] ownerLists, List<Address>[] intOwnerLists, OwnershipStatistics stats) {
-      // try to find a replacement for the new owner in any segment, starting from the back
-      for (int i = numSegments - 1; i >= 0; i--) {
-         if (ownerLists[i].contains(replacementOwner))
+   protected void doAddPrimaryOwners(Builder builder, int maxSegments, int maxOwners) {
+      // If a segment has primaryOwned(primaryOwner(segment)) > maxSegments,
+      // and owners(segment) < maxOwners, add a new primary owner from the members list.
+      // The new primary owner must primary-own < minSegments segments.
+      for (int segment = builder.getNumSegments() - 1; segment >= 0; segment--) {
+         if (builder.getOwners(segment).size() >= maxOwners)
             continue;
 
-         for (int j = ownerLists[i].size() - 1; j >= 1; j--) {
-            Address ownerToSteal = ownerLists[i].get(j);
-            if (ownerLists[destSegment].contains(ownerToSteal))
-               continue;
+         // Must be able to deal with segments that don't have any owners
+         // Either when creating a new CH or when all the owners of a segment left
+         boolean zeroOwners = builder.getOwners(segment).isEmpty();
+         if (!zeroOwners && builder.getPrimaryOwned(builder.getPrimaryOwner(segment)) <= maxSegments)
+            continue;
 
-            // remove from the old segment
-            ownerLists[i].remove(j);
-
-            // add to the new segment
-            ownerLists[destSegment].add(ownerToSteal);
-            if (!intOwnerLists[destSegment].contains(ownerToSteal)) {
-               intOwnerLists[destSegment].add(ownerToSteal);
-            }
-
-            ownerLists[i].add(replacementOwner);
-            if (!intOwnerLists[i].contains(replacementOwner)) {
-               intOwnerLists[i].add(replacementOwner);
-            }
-
-            stats.incOwned(replacementOwner);
-            return;
+         Address newPrimary = findNewPrimaryOwner(builder, builder.getMembers(), maxSegments);
+         if (newPrimary != null) {
+            builder.replacePrimaryOwner(segment, newPrimary);
          }
       }
-
-      assert false : "It should always be possible to find a replacement owner";
    }
 
-   private List<Address> computeNewPrimaryOwners(List<Address> nodes, OwnershipStatistics stats,
-                                                 Map<Address, Integer> expectedPrimaryOwned) {
-      // Find the nodes that need to own more segments
-      // A node can appear multiple times in this list, once for each new segment
-      // But in order to make the job of the picker easier, we add nodes to the list in a round-robin fashion
-      List<Address> newPrimaryOwners = new LinkedList<Address>();
-      int[] toAdd = new int[nodes.size()];
-      for (int i = 0; i < nodes.size(); i++) {
-         Address node = nodes.get(i);
-         toAdd[i] = expectedPrimaryOwned.get(node) - stats.getPrimaryOwned(node);
-      }
-      boolean changed = true;
-      while (changed) {
-         changed = false;
-         for (int i = 0; i < nodes.size(); i++) {
-            if (toAdd[i] > 0) {
-               newPrimaryOwners.add(nodes.get(i));
-               toAdd[i]--;
-               changed = true;
+   protected void swapPrimaryOwnersWithBackups(Builder builder, int maxSegments) {
+      // If a segment has primaryOwned(primaryOwner(segment)) > maxPrimarySegments,
+      // try to swap the primary owner with one of the backup owners.
+      // The new primary owner must primary-own < minPrimarySegments segments.
+      // Iterate in reverse order so the CH looks more stable in the logs as we add nodes
+      for (int segment = builder.getNumSegments() - 1; segment >= 0; segment--) {
+         if (builder.getOwners(segment).isEmpty())
+            continue;
+
+         if (builder.getPrimaryOwned(builder.getPrimaryOwner(segment)) > maxSegments) {
+            Address newPrimary = findNewPrimaryOwner(builder, builder.getBackupOwners(segment), maxSegments);
+            if (newPrimary != null) {
+               // actually replaces the primary owner
+               builder.replacePrimaryOwner(segment, newPrimary);
             }
          }
       }
-      return newPrimaryOwners;
    }
 
-   private List<Address> computeNewOwners(List<Address> nodes, OwnershipStatistics stats, Map<Address, Integer> expectedOwned) {
-      // Find the nodes that need to own more segments
-      // A node can appear multiple times in this list, once for each new segment
-      // But in order to make the job of the picker easier, we add nodes to the list in a round-robin fashion
-      LinkedList<Address> newOwners = new LinkedList<Address>();
-      int[] toAdd = new int[nodes.size()];
-      for (int i = 0; i < nodes.size(); i++) {
-         Address node = nodes.get(i);
-         toAdd[i] = expectedOwned.get(node) - stats.getOwned(node);
+   protected void addBackupOwners(Builder builder) {
+      int minSegments = builder.getActualNumOwners() * builder.getNumSegments() / builder.getNumNodes();
+
+      // 1. Remove extra owners (could be leftovers from addPrimaryOwners).
+      removeExtraBackupOwners(builder, minSegments);
+
+      // 2. If owners(segment) < numOwners, add new owners.
+      // In the first phase, the new owners must own < minSegments segments.
+      // It may not be possible to fill all the segments with numOwners owners this way,
+      // so we repeat this in a loop, each iteration with a higher limit of owned segments
+      boolean insufficientOwners = true;
+      int maxSegments = minSegments;
+      while(insufficientOwners) {
+         insufficientOwners = doAddBackupOwners(builder, maxSegments);
+         maxSegments++;
       }
-      boolean changed = true;
-      while (changed) {
-         changed = false;
-         for (int i = 0; i < nodes.size(); i++) {
-            if (toAdd[i] > 0) {
-               newOwners.addFirst(nodes.get(i));
-               toAdd[i]--;
-               changed = true;
+
+      // 3. Now owners(segment) == numOwners for every segment because of steps 1 and 2.
+      // 3.1. If there is an owner with owned(owner) > minSegments, find another node
+      // with owned(node) < minSegments and replace that owner with it.
+      // Do it iteratively in order to spread the new owners as much as possible.
+      for (maxSegments = builder.getNumSegments() - 1; maxSegments >= minSegments; maxSegments--) {
+         replaceBackupOwners(builder, maxSegments);
+      }
+
+      // 3.2. Same as step 3.1, but allow replacing nodes that have owned(node) > minSegments + 1segments
+      // with nodes that already have owned(node) = minSegments.
+      // Necessary when numOwners*numSegments doesn't divide evenly with numNodes,
+      // because all nodes could own minSegments segments and yet one node could own
+      // minSegments + (numOwners*numSegments % numNodes) segments.
+      replaceBackupOwners(builder, minSegments + 1);
+
+      // At this point each node should have minSegments <= owned(node) <= minSegments + 1
+   }
+
+   protected void removeExtraBackupOwners(Builder builder, int minSegments) {
+      boolean tooManyOwners = true;
+      int maxSegments = minSegments + 1;
+      while(tooManyOwners) {
+         tooManyOwners = doRemoveExtraBackupOwners(builder, maxSegments);
+         maxSegments--;
+      }
+   }
+
+   protected boolean doRemoveExtraBackupOwners(Builder builder, int maxSegments) {
+      boolean tooManyOwners = false;
+      for (int segment = 0; segment < builder.getNumSegments(); segment++) {
+         List<Address> owners = builder.getOwners(segment);
+         for (int ownerIdx = owners.size() - 1; ownerIdx >= 1; ownerIdx--) {
+            if (owners.size() <= builder.getActualNumOwners())
+               break;
+
+            Address owner = owners.get(ownerIdx);
+            if (builder.getOwned(owner) > maxSegments) {
+               // Owner has too many segments. Remove it.
+               builder.removeOwner(segment, owner);
+            }
+         }
+         tooManyOwners |= builder.getOwners(segment).size() > builder.getActualNumOwners();
+      }
+      return tooManyOwners;
+   }
+
+   protected boolean doAddBackupOwners(Builder builder, int maxSegments) {
+      boolean insufficientOwners = false;
+      for (int segment = 0; segment < builder.getNumSegments(); segment++) {
+         List<Address> owners = builder.getOwners(segment);
+
+         while (owners.size() < builder.getActualNumOwners()) {
+            Address newOwner = findNewBackupOwner(builder, owners, maxSegments);
+            // If we haven't found an owner, we'll only find it with an increased maxSegments
+            if (newOwner == null) {
+               insufficientOwners = true;
+               break;
+            }
+
+            builder.addOwner(segment, newOwner);
+         }
+      }
+      return insufficientOwners;
+   }
+
+   protected void replaceBackupOwners(Builder builder, int maxSegments) {
+      // Iterate over the owners in the outer loop so that we minimize the number of owner changes
+      // for the same segment.
+      for (int ownerIdx = builder.getActualNumOwners() - 1; ownerIdx >= 0; ownerIdx--) {
+         // Iterate in reverse order so the CH looks more stable in the logs as we add nodes
+         for (int segment = builder.getNumSegments() - 1; segment >= 0; segment--) {
+            List<Address> owners = builder.getOwners(segment);
+            Address owner = owners.get(ownerIdx);
+            if (builder.getOwned(owner) > maxSegments) {
+               // This owner has too many segments. Find another node to replace it with.
+               Address replacement = findNewBackupOwner(builder, owners, maxSegments);
+               if (replacement != null) {
+                  builder.removeOwner(segment, owner);
+                  builder.addOwner(segment, replacement);
+               }
             }
          }
       }
-      return newOwners;
-   }
-
-   private Map<Address, Integer> computeExpectedPrimaryOwned(List<Address> nodes, int numSegments) {
-      int numNodes = nodes.size();
-
-      // Compute how many segments each node has to primary-own.
-      // If numSegments is not divisible by numNodes, older nodes will own 1 extra segment.
-      Map<Address, Integer> expectedPrimaryOwned = new HashMap<Address, Integer>(numNodes);
-      for (int i = 0; i < numNodes; i++) {
-         if (i < numSegments % numNodes) {
-            expectedPrimaryOwned.put(nodes.get(i), numSegments / numNodes + 1);
-         } else {
-            expectedPrimaryOwned.put(nodes.get(i), numSegments / numNodes);
-         }
-      }
-      return expectedPrimaryOwned;
-   }
-
-   private Map<Address, Integer> computeExpectedOwned(List<Address> nodes, int numOwners, int numSegments) {
-      int numNodes = nodes.size();
-
-      // Compute how many segments each node has to own.
-      // If numSegments*numOwners is not divisible by numNodes, older nodes will own 1 extra segment.
-      Map<Address, Integer> expectedOwned = new HashMap<Address, Integer>(numNodes);
-      for (int i = 0; i < numNodes; i++) {
-         if (i < (numSegments * numOwners) % numNodes) {
-            expectedOwned.put(nodes.get(i), numSegments * numOwners / numNodes + 1);
-         } else {
-            expectedOwned.put(nodes.get(i), numSegments * numOwners / numNodes);
-         }
-      }
-      return expectedOwned;
-   }
-
-   private Address removeOneOf(List<Address> list, List<Address> searchFor) {
-      for (Iterator<Address> it = list.iterator(); it.hasNext(); ) {
-         Address element = it.next();
-         if (searchFor.contains(element)) {
-            it.remove();
-            return element;
-         }
-      }
-      return null;
-   }
-
-   private Address removeNotOneOf(List<Address> list, List<Address> searchFor) {
-      for (Iterator<Address> it = list.iterator(); it.hasNext(); ) {
-         Address element = it.next();
-         if (!searchFor.contains(element)) {
-            it.remove();
-            return element;
-         }
-      }
-      return null;
    }
 
    /**
-    * Remove all leavers and if some segments no longer have any owners assign them some owners.
-    *
-    * @param baseCH
-    * @param newMembers
-    * @return
+    * @return The member with the least owned segments that is also not in the excludes list.
     */
-   private DefaultConsistentHash removeLeavers(DefaultConsistentHash baseCH, List<Address> newMembers) {
-      int numSegments = baseCH.getNumSegments();
+   protected Address findNewBackupOwner(Builder builder, Collection<Address> excludes, int maxSegments) {
+      // find the member with the least owned segments
+      Address best = null;
+      int foundOwned = maxSegments;
+      for (Address candidate : builder.getMembers()) {
+         if (builder.getOwned(candidate) >= foundOwned)
+            continue;
 
-      // we assume leavers are far fewer than members, so it makes sense to check for leavers
-      List<Address> leavers = new ArrayList<Address>(baseCH.getMembers());
-      leavers.removeAll(newMembers);
-
-      // remove leavers
-      boolean segmentsWithZeroOwners = false;
-      List<Address>[] newSegmentOwners = new List[numSegments];
-      for (int i = 0; i < numSegments; i++) {
-         List<Address> owners = new ArrayList<Address>(baseCH.locateOwnersForSegment(i));
-         owners.removeAll(leavers);
-         segmentsWithZeroOwners |= owners.isEmpty();
-         newSegmentOwners[i] = owners;
-      }
-
-      // if there are segments with 0 owners, fix them
-      if (segmentsWithZeroOwners) {
-         assignSegmentsWithZeroOwners(baseCH, newMembers, newSegmentOwners);
-      }
-      return new DefaultConsistentHash(baseCH.getHashFunction(), numSegments, baseCH.getNumOwners(),
-            newMembers, newSegmentOwners);
-   }
-
-   private void assignSegmentsWithZeroOwners(DefaultConsistentHash baseDCH, List<Address> newMembers,
-                                             List<Address>[] segmentOwners) {
-      OwnershipStatistics stats = computeStatistics(baseDCH, newMembers);
-      int actualNumOwners = Math.min(baseDCH.getNumOwners(), newMembers.size());
-      int numSegments = baseDCH.getNumSegments();
-      Map<Address, Integer> expectedPrimaryOwnedSegments = computeExpectedPrimaryOwned(newMembers, numSegments);
-      Map<Address, Integer> expectedOwnedSegments = computeExpectedOwned(newMembers, actualNumOwners, numSegments);
-      for (int i = 0; i < numSegments; i++) {
-         if (segmentOwners[i].isEmpty()) {
-            // this segment doesn't have any owners, choose new ones
-            List<Address> newOwners = new ArrayList<Address>(actualNumOwners);
-
-            // pick the primary owner first
-            // We pick the first node that doesn't "primary own" maxPrimaryOwnedSegments.
-            // This algorithm will always pick a primary owner for a segment, because maxPrimaryOwnedSegments
-            // is always recomputed so that numNodes * maxPrimaryOwnedSegments >= numSegments
-            // It might leave some nodes with < minPrimaryOwnedSegments, but that's ok at this stage
-            Address primaryOwner = null;
-            for (Address a : newMembers) {
-               primaryOwner = a;
-               if (stats.getPrimaryOwned(a) < expectedPrimaryOwnedSegments.get(a)) {
-                  break;
-               }
-            }
-            newOwners.add(primaryOwner);
-            stats.incPrimaryOwned(primaryOwner);
-            stats.incOwned(primaryOwner);
-
-            // then the backup owners
-            // start again from the beginning so that we don't have to wrap around
-            if (actualNumOwners > 1) {
-               for (Address a : newMembers) {
-                  if (stats.getOwned(a) < expectedOwnedSegments.get(a) && !newOwners.contains(a)) {
-                     newOwners.add(a);
-                     stats.incOwned(a);
-                     if (newOwners.size() == actualNumOwners)
-                        break;
-                  }
-               }
-            }
-            // we might have < numOwners owners at this point, if the base CH wasn't properly balanced
-            // (i.e. some nodes owned > maxOwnedSegment)
-            // but as long as we have at least one owner we're going to be fine
-            segmentOwners[i] = newOwners;
+         if (excludes == null || !excludes.contains(candidate)) {
+            best = candidate;
+            foundOwned = builder.getOwned(candidate);
          }
       }
+      return best;
    }
 
-   private OwnershipStatistics computeStatistics(DefaultConsistentHash ch, List<Address> nodes) {
-      OwnershipStatistics stats = new OwnershipStatistics(nodes);
-      for (int i = 0; i < ch.getNumSegments(); i++) {
-         List<Address> owners = ch.locateOwnersForSegment(i);
-         for (int j = 0; j < owners.size(); j++) {
-            Address address = owners.get(j);
-            if (nodes.contains(address)) {
-               if (j == 0) {
-                  stats.incPrimaryOwned(address);
-               }
-               stats.incOwned(address);
-            }
+   /**
+    * @return The candidate with the least primary-owned segments that is also not in the excludes list.
+    */
+   protected Address findNewPrimaryOwner(Builder builder, Collection<Address> candidates, int maxSegments) {
+      // find the member with the least owned segments
+      Address best = null;
+      int foundOwned = maxSegments;
+      for (Address candidate : candidates) {
+         if (builder.getPrimaryOwned(candidate) < foundOwned) {
+            best = candidate;
+            foundOwned = builder.getPrimaryOwned(candidate);
          }
       }
-      return stats;
+      return best;
    }
 
+
+   public static class Builder {
+      private final int initialNumOwners;
+      private final int actualNumOwners;
+      private final List<Address>[] segmentOwners;
+      private final OwnershipStatistics stats;
+      private final List<Address> members;
+
+      public Builder(int numOwners, int numSegments, List<Address> members) {
+         this.initialNumOwners = numOwners;
+         this.actualNumOwners = Math.min(numOwners, members.size());
+         this.members = members;
+         this.segmentOwners = new List[numSegments];
+         for (int segment = 0; segment < numSegments; segment++) {
+            segmentOwners[segment] = new ArrayList<Address>(actualNumOwners);
+         }
+         this.stats = new OwnershipStatistics(members);
+      }
+
+      public Builder(DefaultConsistentHash baseCH, List<Address> actualMembers) {
+         int numSegments = baseCH.getNumSegments();
+         Set<Address> actualMembersSet = new HashSet<Address>(actualMembers);
+         List[] owners = new List[numSegments];
+         for (int segment = 0; segment < numSegments; segment++) {
+            owners[segment] = new ArrayList<Address>(baseCH.locateOwnersForSegment(segment));
+            owners[segment].retainAll(actualMembersSet);
+         }
+         this.initialNumOwners = baseCH.getNumOwners();
+         this.actualNumOwners = Math.min(initialNumOwners, actualMembers.size());
+         this.members = actualMembers;
+         this.segmentOwners = owners;
+         this.stats = new OwnershipStatistics(baseCH, actualMembers);
+      }
+
+      public Builder(DefaultConsistentHash baseCH) {
+         this(baseCH, baseCH.getMembers());
+      }
+
+      public Builder(Builder other) {
+         int numSegments = other.getNumSegments();
+         List[] owners = new List[numSegments];
+         for (int segment = 0; segment < numSegments; segment++) {
+            owners[segment] = new ArrayList<Address>(other.segmentOwners[segment]);
+         }
+         this.initialNumOwners = other.initialNumOwners;
+         this.actualNumOwners = other.actualNumOwners;
+         this.members = other.members;
+         this.segmentOwners = owners;
+         this.stats = new OwnershipStatistics(other.stats);
+      }
+
+      public int getActualNumOwners() {
+         return actualNumOwners;
+      }
+
+      public int getNumSegments() {
+         return segmentOwners.length;
+      }
+
+      public List<Address> getMembers() {
+         return members;
+      }
+
+      public int getNumNodes() {
+         return getMembers().size();
+      }
+
+      public List<Address> getOwners(int segment) {
+         return segmentOwners[segment];
+      }
+
+      public Address getPrimaryOwner(int segment) {
+         return segmentOwners[segment].get(0);
+      }
+
+      public List<Address> getBackupOwners(int segment) {
+         return segmentOwners[segment].subList(1, segmentOwners[segment].size());
+      }
+
+      public boolean addOwner(int segment, Address owner) {
+         List<Address> thisSegmentOwners = segmentOwners[segment];
+         if (thisSegmentOwners.contains(owner))
+            return false;
+
+         thisSegmentOwners.add(owner);
+         stats.incOwned(owner);
+         if (thisSegmentOwners.size() == 1) {
+            // the first owner
+            stats.incPrimaryOwned(owner);
+         }
+         return true;
+      }
+
+      public boolean addOwners(int segment, Collection<Address> newOwners) {
+         boolean modified = false;
+         for (Address owner : newOwners) {
+            modified |= addOwner(segment, owner);
+         }
+         return modified;
+      }
+
+      public boolean removeOwner(int segment, Address owner) {
+         List<Address> segmentOwners = this.segmentOwners[segment];
+         if (segmentOwners.get(0).equals(owner)) {
+            stats.decPrimaryOwned(owner);
+         }
+         boolean modified = segmentOwners.remove(owner);
+         if (modified) {
+            stats.decOwned(owner);
+         }
+         return modified;
+      }
+
+      public void replacePrimaryOwner(int segment, Address newPrimaryOwner) {
+         List<Address> segmentOwners = this.segmentOwners[segment];
+         int ownerIndex = segmentOwners.indexOf(newPrimaryOwner);
+         if (ownerIndex == 0) {
+            throw new IllegalStateException("Can't replace a primary owner with itself");
+         }
+
+         if (segmentOwners.isEmpty()) {
+            segmentOwners.add(newPrimaryOwner);
+            stats.incOwned(newPrimaryOwner);
+            stats.incPrimaryOwned(newPrimaryOwner);
+            return;
+         }
+
+         Address oldPrimaryOwner = segmentOwners.get(0);
+         if (ownerIndex == -1) {
+            stats.incOwned(newPrimaryOwner);
+         } else {
+            // The new primary owner was already a backup owner, first remove it from the list
+            segmentOwners.remove(ownerIndex);
+         }
+
+         segmentOwners.add(0, newPrimaryOwner);
+         stats.decPrimaryOwned(oldPrimaryOwner);
+         stats.incPrimaryOwned(newPrimaryOwner);
+      }
+
+      public DefaultConsistentHash build(Hash hashFunction) {
+         return new DefaultConsistentHash(hashFunction, initialNumOwners, segmentOwners.length, members, segmentOwners);
+      }
+
+      private int getPrimaryOwned(Address node) {
+         return stats.getPrimaryOwned(node);
+      }
+
+      public int getOwned(Address node) {
+         return stats.getOwned(node);
+      }
+   }
+
+   public static class Externalizer extends AbstractExternalizer<DefaultConsistentHashFactory> {
+
+      @Override
+      public void writeObject(ObjectOutput output, DefaultConsistentHashFactory chf) throws IOException {
+      }
+
+      @Override
+      @SuppressWarnings("unchecked")
+      public DefaultConsistentHashFactory readObject(ObjectInput unmarshaller) throws IOException, ClassNotFoundException {
+         return new DefaultConsistentHashFactory();
+      }
+
+      @Override
+      public Integer getId() {
+         return Ids.DEFAULT_CONSISTENT_HASH_FACTORY;
+      }
+
+      @Override
+      public Set<Class<? extends DefaultConsistentHashFactory>> getTypeClasses() {
+         return Collections.<Class<? extends DefaultConsistentHashFactory>>singleton(DefaultConsistentHashFactory.class);
+      }
+   }
 }

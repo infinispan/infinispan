@@ -34,6 +34,7 @@ import org.infinispan.configuration.cache.VersioningScheme;
 import org.infinispan.container.DataContainer;
 import org.infinispan.container.entries.ImmortalCacheEntry;
 import org.infinispan.container.entries.InternalCacheEntry;
+import org.infinispan.distribution.TestAddress;
 import org.infinispan.distribution.ch.DefaultConsistentHash;
 import org.infinispan.distribution.ch.DefaultConsistentHashFactory;
 import org.infinispan.loaders.CacheLoaderManager;
@@ -50,7 +51,6 @@ import org.infinispan.util.concurrent.IsolationLevel;
 import org.infinispan.util.concurrent.NotifyingNotifiableFuture;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
-import org.mockito.InOrder;
 import org.mockito.invocation.InvocationOnMock;
 import org.mockito.stubbing.Answer;
 import org.testng.annotations.BeforeTest;
@@ -64,7 +64,7 @@ import static org.mockito.Matchers.any;
 import static org.mockito.Mockito.*;
 
 /**
- * // TODO: Document this
+ * Test for StateProviderImpl.
  *
  * @author anistor@redhat.com
  * @since 5.2
@@ -73,6 +73,14 @@ import static org.mockito.Mockito.*;
 public class StateProviderTest {
 
    private static final Log log = LogFactory.getLog(StateProviderTest.class);
+   private static final TestAddress A = new TestAddress(0, "A");
+   private static final TestAddress B = new TestAddress(1, "B");
+   private static final TestAddress C = new TestAddress(2, "C");
+   private static final TestAddress D = new TestAddress(3, "D");
+   private static final TestAddress E = new TestAddress(4, "E");
+   private static final TestAddress F = new TestAddress(5, "F");
+   private static final TestAddress G = new TestAddress(6, "G");
+
 
    private Configuration configuration;
 
@@ -123,20 +131,19 @@ public class StateProviderTest {
    }
 
    public void test1() throws InterruptedException {
+      int numSegments = 4;
+
       // create list of 6 members
-      List<Address> members1 = new ArrayList<Address>();
-      for (int i = 0; i < 6; i++) {
-         members1.add(new TestAddress(i));
-      }
+      List<Address> members1 = Arrays.<Address>asList(A, B, C, D, E, F);
       List<Address> members2 = new ArrayList<Address>(members1);
-      members2.remove(new TestAddress(0));
-      members2.remove(new TestAddress(5));
-      members2.add(new TestAddress(6));
+      members2.remove(A);
+      members2.remove(F);
+      members2.add(G);
 
       // create CHes
       DefaultConsistentHashFactory chf = new DefaultConsistentHashFactory();
-      DefaultConsistentHash ch1 = chf.create(new MurmurHash3(), 2, 4, members1);
-      DefaultConsistentHash ch2 = chf.updateMembers(ch1, members2);   //todo [anistor] it seems that address 6 is not used for un-owned segments
+      DefaultConsistentHash ch1 = chf.create(new MurmurHash3(), 2, numSegments, members1);
+      DefaultConsistentHash ch2 = chf.updateMembers(ch1, members2);
 
       // create dependencies
       when(mockExecutorService.submit(any(Runnable.class))).thenAnswer(new Answer<Future<?>>() {
@@ -146,7 +153,7 @@ public class StateProviderTest {
          }
       });
 
-      when(rpcManager.getAddress()).thenReturn(new TestAddress(0));
+      when(rpcManager.getAddress()).thenReturn(A);
 
       // create state provider
       StateProviderImpl stateProvider = new StateProviderImpl();
@@ -171,11 +178,12 @@ public class StateProviderTest {
       stateProvider.onTopologyUpdate(new CacheTopology(1, ch1, ch1), false);
 
       log.debug("ch1: " + ch1);
-      List<TransactionInfo> transactions = stateProvider.getTransactionsForSegments(members1.get(0), 1, new HashSet<Integer>(Arrays.asList(0, 3)));
+      Set<Integer> segmentsToRequest = ch1.getSegmentsForOwner(members1.get(0));
+      List<TransactionInfo> transactions = stateProvider.getTransactionsForSegments(members1.get(0), 1, segmentsToRequest);
       assertEquals(0, transactions.size());
 
       try {
-         stateProvider.getTransactionsForSegments(members1.get(0), 1, new HashSet<Integer>(Arrays.asList(2, 4)));
+         stateProvider.getTransactionsForSegments(members1.get(0), 1, new HashSet<Integer>(Arrays.asList(2, numSegments)));
          fail("IllegalArgumentException expected");
       } catch (IllegalArgumentException e) {
          // expected
@@ -183,7 +191,7 @@ public class StateProviderTest {
 
       verifyNoMoreInteractions(stateTransferLock);
 
-      stateProvider.startOutboundTransfer(new TestAddress(5), 1, Collections.singleton(0));
+      stateProvider.startOutboundTransfer(F, 1, Collections.singleton(0));
 
       assertTrue(stateProvider.isStateTransferInProgress());
 
@@ -192,7 +200,7 @@ public class StateProviderTest {
 
       assertFalse(stateProvider.isStateTransferInProgress());
 
-      stateProvider.startOutboundTransfer(new TestAddress(4), 1, Collections.singleton(0));
+      stateProvider.startOutboundTransfer(D, 1, Collections.singleton(0));
 
       assertTrue(stateProvider.isStateTransferInProgress());
 
@@ -202,19 +210,18 @@ public class StateProviderTest {
    }
 
    public void test2() throws InterruptedException {
+      int numSegments = 4;
+
       // create list of 6 members
-      List<Address> members1 = new ArrayList<Address>();
-      for (int i = 0; i < 6; i++) {
-         members1.add(new TestAddress(i));
-      }
+      List<Address> members1 = Arrays.<Address>asList(A, B, C, D, E, F);
       List<Address> members2 = new ArrayList<Address>(members1);
-      members2.remove(new TestAddress(0));
-      members2.remove(new TestAddress(5));
-      members2.add(new TestAddress(6));
+      members2.remove(A);
+      members2.remove(F);
+      members2.add(G);
 
       // create CHes
       DefaultConsistentHashFactory chf = new DefaultConsistentHashFactory();
-      DefaultConsistentHash ch1 = chf.create(new MurmurHash3(), 2, 4, members1);
+      DefaultConsistentHash ch1 = chf.create(new MurmurHash3(), 2, numSegments, members1);
       DefaultConsistentHash ch2 = chf.updateMembers(ch1, members2);   //todo [anistor] it seems that address 6 is not used for un-owned segments
 
       when(commandsFactory.buildStateResponseCommand(any(Address.class), anyInt(), any(Collection.class))).thenAnswer(new Answer<StateResponseCommand>() {
@@ -227,7 +234,7 @@ public class StateProviderTest {
       });
 
       // create dependencies
-      when(rpcManager.getAddress()).thenReturn(new TestAddress(0));
+      when(rpcManager.getAddress()).thenReturn(A);
 
       //rpcManager.invokeRemotelyInFuture(Collections.singleton(destination), cmd, false, sendFuture, timeout);
       doAnswer(new Answer<Map<Address, Response>>() {
@@ -272,11 +279,12 @@ public class StateProviderTest {
       stateProvider.onTopologyUpdate(new CacheTopology(1, ch1, ch1), false);
 
       log.debug("ch1: " + ch1);
-      List<TransactionInfo> transactions = stateProvider.getTransactionsForSegments(members1.get(0), 1, new HashSet<Integer>(Arrays.asList(0, 3)));
+      Set<Integer> segmentsToRequest = ch1.getSegmentsForOwner(members1.get(0));
+      List<TransactionInfo> transactions = stateProvider.getTransactionsForSegments(members1.get(0), 1, segmentsToRequest);
       assertEquals(0, transactions.size());
 
       try {
-         stateProvider.getTransactionsForSegments(members1.get(0), 1, new HashSet<Integer>(Arrays.asList(2, 4)));
+         stateProvider.getTransactionsForSegments(members1.get(0), 1, new HashSet<Integer>(Arrays.asList(2, numSegments)));
          fail("IllegalArgumentException expected");
       } catch (IllegalArgumentException e) {
          // expected
@@ -284,7 +292,7 @@ public class StateProviderTest {
 
       verifyNoMoreInteractions(stateTransferLock);
 
-      stateProvider.startOutboundTransfer(new TestAddress(5), 1, Collections.singleton(0));
+      stateProvider.startOutboundTransfer(F, 1, Collections.singleton(0));
 
       assertTrue(stateProvider.isStateTransferInProgress());
 
@@ -294,7 +302,7 @@ public class StateProviderTest {
 
       assertFalse(stateProvider.isStateTransferInProgress());
 
-      stateProvider.startOutboundTransfer(new TestAddress(4), 1, Collections.singleton(0));
+      stateProvider.startOutboundTransfer(E, 1, Collections.singleton(0));
 
       assertTrue(stateProvider.isStateTransferInProgress());
 

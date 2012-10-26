@@ -113,4 +113,6 @@ public interface Ids {
 
    int STATE_CHUNK = 86;
    int CACHE_JOIN_INFO = 87;
+   int DEFAULT_CONSISTENT_HASH_FACTORY = 88;
+   int REPLICATED_CONSISTENT_HASH_FACTORY = 89;
 }
