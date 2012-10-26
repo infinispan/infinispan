@@ -78,9 +78,8 @@ public class ClusterTopologyManagerImpl implements ClusterTopologyManager {
    private final Object viewUpdateLock = new Object();
 
 
-   //private ConcurrentMap<String, CacheJoinInfo> clusterCaches = ConcurrentMapFactory.makeConcurrentMap();
    private final ConcurrentMap<String, ClusterCacheStatus> cacheStatusMap = ConcurrentMapFactory.makeConcurrentMap();
-   private ClusterTopologyManagerImpl.ClusterViewListener listener;
+   private ClusterTopologyManagerImpl.ClusterViewListener viewListener;
 
    @Inject
    public void inject(Transport transport, RebalancePolicy rebalancePolicy,
@@ -100,8 +99,8 @@ public class ClusterTopologyManagerImpl implements ClusterTopologyManager {
       isShuttingDown = false;
       isCoordinator = transport.isCoordinator();
 
-      listener = new ClusterViewListener();
-      cacheManagerNotifier.addListener(listener);
+      viewListener = new ClusterViewListener();
+      cacheManagerNotifier.addListener(viewListener);
       // The listener already missed the initial view
       handleNewView(transport.getMembers(), false, transport.getViewId());
    }
@@ -109,7 +108,7 @@ public class ClusterTopologyManagerImpl implements ClusterTopologyManager {
    @Stop(priority = 100)
    public void stop() {
       isShuttingDown = true;
-      cacheManagerNotifier.removeListener(listener);
+      cacheManagerNotifier.removeListener(viewListener);
 
       // Stop blocking cache topology commands.
       // The synchronization also ensures that the listener has finished executing
@@ -118,7 +117,6 @@ public class ClusterTopologyManagerImpl implements ClusterTopologyManager {
          viewId = Integer.MAX_VALUE;
          viewUpdateLock.notifyAll();
       }
-
    }
 
    @Override
@@ -549,18 +547,17 @@ public class ClusterTopologyManagerImpl implements ClusterTopologyManager {
          }
       });
 
-      // now invoke the command on the local node
-      Future<Object> localFuture = asyncTransportExecutor.submit(new Callable<Object>() {
-         @Override
-         public Object call() throws Exception {
-            gcr.wireDependencies(command);
-            try {
-               return command.perform(null);
-            } catch (Throwable t) {
-               throw new Exception(t);
-            }
-         }
-      });
+      // invoke the command on the local node
+      gcr.wireDependencies(command);
+      Response localResponse;
+      try {
+         localResponse = (Response) command.perform(null);
+      } catch (Throwable throwable) {
+         throw new Exception(throwable);
+      }
+      if (!localResponse.isSuccessful()) {
+         throw new CacheException("Unsuccessful local response");
+      }
 
       // wait for the remote commands to finish
       Map<Address, Response> responseMap = remoteFuture.get(timeout, TimeUnit.MILLISECONDS);
@@ -577,32 +574,9 @@ public class ClusterTopologyManagerImpl implements ClusterTopologyManager {
          responseValues.put(address, ((SuccessfulResponse) response).getResponseValue());
       }
 
-      // now wait for the local command
-      Response localResponse = (Response) localFuture.get(timeout, TimeUnit.MILLISECONDS);
-      if (!localResponse.isSuccessful()) {
-         throw new CacheException("Unsuccessful local response");
-      }
       responseValues.put(transport.getAddress(), ((SuccessfulResponse) localResponse).getResponseValue());
 
       return responseValues;
-   }
-
-   private void executeOnClusterAsync(final ReplicableCommand command)
-         throws Exception {
-      transport.invokeRemotely(null, command, ResponseMode.ASYNCHRONOUS_WITH_SYNC_MARSHALLING, -1, true, null);
-
-      asyncTransportExecutor.submit(new Callable<Object>() {
-         @Override
-         public Object call() throws Exception {
-            gcr.wireDependencies(command);
-            try {
-               return command.perform(null);
-            } catch (Throwable t) {
-               log.errorf(t, "Failed to execute ReplicableCommand %s on cluster async: %s", command, t.getMessage());
-               throw new Exception(t);
-            }
-         }
-      });
    }
 
    private int getGlobalTimeout() {
