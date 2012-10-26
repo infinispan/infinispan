@@ -26,7 +26,6 @@ package org.infinispan.query.impl;
 import java.io.IOException;
 
 import net.jcip.annotations.NotThreadSafe;
-
 import org.hibernate.search.query.engine.spi.DocumentExtractor;
 import org.hibernate.search.query.engine.spi.EntityInfo;
 import org.hibernate.search.query.engine.spi.HSQuery;
@@ -38,6 +37,7 @@ import org.infinispan.CacheException;
  *
  * @author Navin Surtani
  * @author Marko Luksa
+ * @author Ales Justin
  */
 @NotThreadSafe
 public class LazyIterator extends AbstractIterator {
@@ -47,6 +47,7 @@ public class LazyIterator extends AbstractIterator {
    public LazyIterator(HSQuery hSearchQuery, QueryResultLoader resultLoader, int fetchSize) {
       super(resultLoader, fetchSize);
       this.extractor = hSearchQuery.queryDocumentExtractor(); //triggers actual Lucene search
+      this.index = extractor.getFirstIndex();
       this.max = hSearchQuery.queryResultSize() - 1;
    }
 
