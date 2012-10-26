@@ -22,6 +22,12 @@
  */
 package org.infinispan.query.blackbox;
 
+import java.util.Arrays;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+
+import junit.framework.Assert;
 import org.apache.lucene.index.Term;
 import org.apache.lucene.queryParser.ParseException;
 import org.apache.lucene.queryParser.QueryParser;
@@ -40,23 +46,17 @@ import org.infinispan.factories.ComponentRegistry;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.query.CacheQuery;
 import org.infinispan.query.FetchOptions;
-import org.infinispan.query.Search;
 import org.infinispan.query.ResultIterator;
+import org.infinispan.query.Search;
 import org.infinispan.query.test.AnotherGrassEater;
 import org.infinispan.query.test.Person;
 import org.infinispan.test.SingleCacheManagerTest;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
-
-import java.util.Arrays;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-
-import junit.framework.Assert;
 import org.testng.annotations.Test;
 
 import static java.util.Arrays.asList;
-import static org.infinispan.query.helper.TestQueryHelperFactory.*;
+import static org.infinispan.query.helper.TestQueryHelperFactory.createCacheQuery;
+import static org.infinispan.query.helper.TestQueryHelperFactory.createQueryParser;
 
 @Test(groups = "functional", testName = "query.blackbox.LocalCacheTest")
 public class LocalCacheTest extends SingleCacheManagerTest {
@@ -268,6 +268,24 @@ public class LocalCacheTest extends SingleCacheManagerTest {
       assert found.hasNext();
       found.next();
       assert !found.hasNext();
+   }
+
+   public void testLazyIteratorWithOffset() throws ParseException {
+      loadTestingData();
+      queryParser = createQueryParser("blurb");
+      Query luceneQuery = queryParser.parse("Eats");
+      CacheQuery cacheQuery = Search.getSearchManager(cache).getQuery(luceneQuery).firstResult(1);
+
+      ResultIterator found = cacheQuery.iterator(new FetchOptions().fetchMode(FetchOptions.FetchMode.LAZY));
+
+      int count = 0;
+      //noinspection UnusedDeclaration
+      while(found.hasNext()) {
+          count++;
+          found.next();
+      }
+
+      assert (count == 2);
    }
 
    public void testGetResultSize() throws ParseException {
