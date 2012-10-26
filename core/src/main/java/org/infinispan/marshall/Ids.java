@@ -118,4 +118,6 @@ public interface Ids {
    int EMPTY_MAP = 89;
    int EMPTY_LIST = 90;
 
+   int DEFAULT_CONSISTENT_HASH_FACTORY = 91;
+   int REPLICATED_CONSISTENT_HASH_FACTORY = 92;
 }
