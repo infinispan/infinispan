@@ -22,16 +22,12 @@
  */
 package org.infinispan.util.concurrent.locks.containers;
 
+import org.infinispan.util.ByRef;
 import org.infinispan.util.Util;
-import org.infinispan.util.concurrent.ConcurrentMapFactory;
 import org.infinispan.util.concurrent.jdk8backported.ConcurrentHashMapV8;
 import org.infinispan.util.concurrent.locks.RefCountingLock;
 
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.concurrent.locks.Lock;
 
 /**
  * An abstract lock container that creates and maintains a new lock per entry
@@ -65,113 +61,54 @@ public abstract class AbstractPerEntryLockContainer<L extends RefCountingLock> e
       return locks.size();
    }
 
-   private boolean tryIncrementReferences(RefCountingLock lock) {
-      int newCount;
-      int oldCount;
-      do {
-         oldCount = lock.getReferenceCounter().get();
-         if (oldCount == 0) return false;
-         newCount = oldCount + 1;
-      } while (!lock.getReferenceCounter().compareAndSet(oldCount, newCount));
-      return true;
-   }
-
    @Override
    public L acquireLock(final Object lockOwner, final Object key, final long timeout, final TimeUnit unit) throws InterruptedException {
-      L lock = null;
-      final AtomicBoolean newLockCreatedAndAcquired = new AtomicBoolean(false);
-      while (lock == null) {
-         lock = locks.computeIfAbsent(key, new ConcurrentHashMapV8.Fun<Object, L>() {
-            @Override
-            public L apply(Object key) {
+      final ByRef<Boolean> lockAcquired = ByRef.create(Boolean.FALSE);
+      L lock = locks.compute(key, new ConcurrentHashMapV8.BiFun<Object, L, L>() {
+         @Override
+         public L apply(Object key, L lock) {
+            // This happens atomically in the CHM
+            if (lock == null) {
                getLog().tracef("Creating and acquiring new lock instance for key %s", key);
-               // Create a new lock here.  This happens atomically if the mapping doesn't exist.
-               L lock = newLock();
+               lock = newLock();
                // Since this is a new lock, it is certainly uncontended.
                lock(lock, lockOwner);
-               newLockCreatedAndAcquired.set(true);
+               lockAcquired.set(Boolean.TRUE);
                return lock;
             }
-         });
-      }
 
-      boolean locked = false;
-      boolean refCounterIncremented = false;
-      try {
-         boolean attemptLock = true;
-         while (attemptLock) {
-            if (!newLockCreatedAndAcquired.get()) {
-               while (!tryIncrementReferences(lock)) {
-                  // If we get here, the lock has been removed from the map.
-                  // Set the ref count to 1 first
-                  if (lock.getReferenceCounter().compareAndSet(0, 1)) {
-                     // Now reuse the lock, replace it in the lock map.
-                     L existing = locks.putIfAbsent(key, lock);
-                     if (existing != null && existing != lock)
-                        lock = existing;
-                     else
-                        break;
-                  }
-               }
-               locked = tryLock(lock, timeout, unit, lockOwner);
-            } else {
-               locked = true;
+            // No need to worry about concurrent updates - there can't be a release in progress at the same time
+            int refCount = lock.getReferenceCounter().incrementAndGet();
+            if (refCount <= 1) {
+               throw new IllegalStateException("Lock " + key + " acquired although it should have been removed: " + lock);
             }
-            refCounterIncremented = true;
-            if (locked) {
-
-               // now that we have the lock, we can decrement the ref counter
-               lock.getReferenceCounter().decrementAndGet();
-               refCounterIncremented = false;
-
-               // ensure that we replace the lock in the lock map, just in case it is removed.
-               // This should be an atomic operation to make sure it isn't interleaved with a concurrent removal of a
-               // lock in the map.  If we have acquired a lock, it means no one else can remove it at this point; the
-               // only risk is a concurrent remove that started *before* we acquired the lock, that may have released
-               // the lock but not finished removing the lock from the map.  Here we rely on the CHM's atomic operation
-               // to make sure that the remove operation completes before this check starts.
-
-               final L acquiredLock = lock;
-               L existing = locks.compute(key, new ConcurrentHashMapV8.BiFun<Object, L, L>() {
-                  @Override
-                  public L apply(Object key, L lockInMap) {
-                     // Similar to a putIfAbsent, except that the absent check is also atomic wrt. the reinstating of the mapping
-                     if (lockInMap == null) {
-                        // we have a concurrent remove.  Return the lock we have acquired, to reinstate the mapping!
-                        return acquiredLock;
-                     } else {
-                        return lockInMap;
-                     }
-                  }
-               });
-               if (existing != null && existing != lock) {
-                  // we have the wrong lock!
-                  safeRelease(lock, lockOwner);
-                  locked = false;
-                  lock = existing;
-               } else {
-                  attemptLock = false;
-               }
-            } else {
-               attemptLock = false;
-               if (refCounterIncremented) lock.getReferenceCounter().decrementAndGet();
-            }
+            return lock;
          }
-      } catch (InterruptedException ie) {
-         getLog().tracef("Interrupted when trying to lock %s", key);
-         safeRelease(lock, lockOwner);
-         if (refCounterIncremented) lock.getReferenceCounter().decrementAndGet();
-         throw ie;
-      } catch (Throwable th) {
-         getLog().tracef("Caught a Throwable when trying to lock %s", key, th);
-         if (refCounterIncremented) lock.getReferenceCounter().decrementAndGet();
-         locked = false;
+      });
+
+      if (!lockAcquired.get()) {
+         // We retrieved a lock that was already present,
+         lockAcquired.set(tryLock(lock, timeout, unit, lockOwner));
       }
 
-      if (locked)
+      if (lockAcquired.get())
          return lock;
       else {
          getLog().tracef("Timed out attempting to acquire lock for key %s after %s", key, Util.prettyPrintTime(timeout, unit));
+
+         // We didn't acquire the lock, but we still incremented the reference count.
+         // We may need to delete the entry if the owner thread released it just after we timed out.
+         // We use an atomic operation here as another thread might be trying to increment the ref count
+         // at the same time (otherwise it would make the acquire function at the beginning more complicated).
+         locks.computeIfPresent(key, new ConcurrentHashMapV8.BiFun<Object, L, L>() {
+            @Override
+            public L apply(Object key, L lock) {
+               // This will happen atomically in the CHM
+               // We have a reference, so value can't be null
+               boolean remove = lock.getReferenceCounter().decrementAndGet() == 0;
+               return remove ? null : lock;
+            }
+         });
          return null;
       }
    }
@@ -180,18 +117,19 @@ public abstract class AbstractPerEntryLockContainer<L extends RefCountingLock> e
    public void releaseLock(final Object lockOwner, Object key) {
       locks.computeIfPresent(key, new ConcurrentHashMapV8.BiFun<Object, L, L>() {
          @Override
-         public L apply(Object key, L value) {
+         public L apply(Object key, L lock) {
             // This will happen atomically in the CHM
-            boolean remove = false;
-            if (value != null) {
-               remove = value.getReferenceCounter().get() == 0;
-               unlock(value, lockOwner);
-               // At this point, waiting threads *may* acquire the lock.  See acquireLock() for the check to reinstate
-               // the lock in the CHM if the removal happens *after* the lock is acquired by a competing thread.
-               getLog().tracef("Unlocking lock instance for key %s", key);
+            // We have a reference, so value can't be null
+            int refCount = lock.getReferenceCounter().decrementAndGet();
+            if (refCount < 0) {
+               throw new IllegalStateException("Negative reference count for lock " + key + ": " + lock);
             }
+            boolean remove = refCount == 0;
+            getLog().tracef("Unlocking lock instance for key %s", key);
+            unlock(lock, lockOwner);
+
             // Ok, unlock was successful.  If the unlock was not successful, an exception will propagate and the entry will not be changed.
-            return remove ? null : value;
+            return remove ? null : lock;
          }
       });
    }
