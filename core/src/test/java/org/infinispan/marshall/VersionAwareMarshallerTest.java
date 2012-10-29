@@ -88,18 +88,7 @@ import java.io.ObjectInput;
 import java.io.ObjectOutput;
 import java.io.Serializable;
 import java.lang.reflect.Method;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-import java.util.TreeMap;
-import java.util.TreeSet;
+import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 
 import static org.infinispan.test.TestingUtil.extractCacheMarshaller;
@@ -190,6 +179,14 @@ public class VersionAwareMarshallerTest extends AbstractInfinispanTest {
       }
       marshallAndAssertEquality(s1);
       marshallAndAssertEquality(s2);
+   }
+
+   public void testTreeSetWithComparator() throws Exception {
+      Set treeSet = new TreeSet(new HumanComparator());
+      for (int i = 0; i < 10; i++) {
+         treeSet.add(new Human().age(i));
+      }
+      marshallAndAssertEquality(treeSet);
    }
 
    public void testMarshalledValueMarshalling() throws Exception {
@@ -628,6 +625,28 @@ public class VersionAwareMarshallerTest extends AbstractInfinispanTest {
            super(parentStr, child1Obj);
            this.someInt = someInt;
        }
+   }
+
+   static class Human implements Serializable {
+
+      int age;
+
+      Human age(int age) {
+         this.age = age;
+         return this;
+      }
+
+   }
+
+   static class HumanComparator implements Comparator<Human>, Serializable {
+
+      @Override
+      public int compare(Human o1, Human o2) {
+         if (o1.age < o2.age) return -1;
+         if (o1.age == o2.age) return 0;
+         return 1;
+      }
+
    }
 
 }
