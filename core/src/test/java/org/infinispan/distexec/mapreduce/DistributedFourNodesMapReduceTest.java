@@ -33,7 +33,7 @@ import org.testng.annotations.Test;
  * @author Vladimir Blagojevic
  * @since 5.2
  */
-@Test(groups = "functional", testName = "distexec.DistributedFourNodesMapReduceTest")
+@Test(groups = "functional", testName = "distexec.DistributedFourNodesMapReduceTest", enabled = false, description = "Re:enable with https://issues.jboss.org/browse/ISPN-2439")
 public class DistributedFourNodesMapReduceTest extends BaseWordCountMapReduceTest {
 
    @Override
