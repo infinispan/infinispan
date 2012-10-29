@@ -34,6 +34,7 @@ import org.jboss.marshalling.util.IdentityIntMap;
 import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
+import java.util.Comparator;
 import java.util.HashSet;
 import java.util.Set;
 import java.util.TreeSet;
@@ -59,6 +60,9 @@ public class SetExternalizer extends AbstractExternalizer<Set> {
    public void writeObject(ObjectOutput output, Set set) throws IOException {
       int number = numbers.get(set.getClass(), -1);
       output.writeByte(number);
+      if (number == TREE_SET)
+         output.writeObject(((TreeSet) set).comparator());
+
       MarshallUtil.marshallCollection(set, output);
    }
 
@@ -71,7 +75,8 @@ public class SetExternalizer extends AbstractExternalizer<Set> {
             subject = new HashSet();
             break;
          case TREE_SET:
-            subject = new TreeSet();
+            Comparator comparator = (Comparator) input.readObject();
+            subject = new TreeSet(comparator);
             break;
       }
       int size = UnsignedNumeric.readUnsignedInt(input);
