@@ -23,6 +23,10 @@
 package org.infinispan.util.concurrent.locks.containers;
 
 import net.jcip.annotations.ThreadSafe;
+import org.infinispan.util.concurrent.locks.VisibleOwnerReentrantLock;
+import org.infinispan.util.concurrent.locks.VisibleOwnerRefCountingReentrantLock;
+import org.infinispan.util.logging.Log;
+import org.infinispan.util.logging.LogFactory;
 
 import java.util.Arrays;
 import java.util.concurrent.TimeUnit;
@@ -36,8 +40,15 @@ import java.util.concurrent.locks.ReentrantLock;
  * @since 4.0
  */
 @ThreadSafe
-public class ReentrantStripedLockContainer extends AbstractStripedLockContainer<ReentrantLock> {
-   ReentrantLock[] sharedLocks;
+public class ReentrantStripedLockContainer extends AbstractStripedLockContainer<VisibleOwnerReentrantLock> {
+
+   private VisibleOwnerReentrantLock[] sharedLocks;
+   private static final Log log = LogFactory.getLog(ReentrantStripedLockContainer.class);
+
+   @Override
+   protected Log getLog() {
+      return log;
+   }
 
    /**
     * Creates a new LockContainer which uses a certain number of shared locks across all elements that need to be
@@ -52,12 +63,12 @@ public class ReentrantStripedLockContainer extends AbstractStripedLockContainer<
 
    @Override
    protected void initLocks(int numLocks) {
-      sharedLocks = new ReentrantLock[numLocks];
-      for (int i = 0; i < numLocks; i++) sharedLocks[i] = new ReentrantLock();
+      sharedLocks = new VisibleOwnerReentrantLock[numLocks];
+      for (int i = 0; i < numLocks; i++) sharedLocks[i] = new VisibleOwnerReentrantLock();
    }
 
    @Override
-   public final ReentrantLock getLock(Object object) {
+   public final VisibleOwnerReentrantLock getLock(Object object) {
       return sharedLocks[hashToIndex(object)];
    }
 
@@ -95,12 +106,17 @@ public class ReentrantStripedLockContainer extends AbstractStripedLockContainer<
    }
 
    @Override
-   protected void unlock(ReentrantLock l, Object unused) {
+   protected void unlock(VisibleOwnerReentrantLock l, Object unused) {
       l.unlock();
    }
 
    @Override
-   protected boolean tryLock(ReentrantLock lock, long timeout, TimeUnit unit, Object unused) throws InterruptedException {
+   protected boolean tryLock(VisibleOwnerReentrantLock lock, long timeout, TimeUnit unit, Object unused) throws InterruptedException {
       return lock.tryLock(timeout, unit);
+   }
+
+   @Override
+   protected void lock(VisibleOwnerReentrantLock lock, Object lockOwner) {
+      lock.lock();
    }
 }

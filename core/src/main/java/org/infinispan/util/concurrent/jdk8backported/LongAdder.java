@@ -1,35 +1,15 @@
 /*
- * Copyright 2012 Red Hat, Inc. and/or its affiliates.
- *
- * This is free software; you can redistribute it and/or modify it
- * under the terms of the GNU Lesser General Public License as
- * published by the Free Software Foundation; either version 2.1 of
- * the License, or (at your option) any later version.
- *
- * This software is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
- * Lesser General Public License for more details.
- *
- * You should have received a copy of the GNU Lesser General Public
- * License along with this library; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
- * 02110-1301 USA
- */
-
-package org.infinispan.util.concurrent.jdk8backported;
-
-/*
  * Written by Doug Lea with assistance from members of JCP JSR-166
  * Expert Group and released to the public domain, as explained at
  * http://creativecommons.org/publicdomain/zero/1.0/
  */
 
-import java.io.IOException;
-
+package org.infinispan.util.concurrent.jdk8backported;
 import java.util.concurrent.atomic.AtomicLong;
+import java.io.IOException;
 import java.io.Serializable;
 import java.io.ObjectInputStream;
+import java.io.ObjectOutputStream;
 
 /**
  * One or more variables that together maintain an initially zero
@@ -64,7 +44,6 @@ public class LongAdder extends Striped64 implements Serializable {
    /**
     * Version of plus for use in retryUpdate
     */
-   @Override
    final long fn(long v, long x) { return v + x; }
 
    /**
@@ -178,7 +157,6 @@ public class LongAdder extends Striped64 implements Serializable {
     *
     * @return the sum
     */
-   @Override
    public long longValue() {
       return sum();
    }
@@ -187,7 +165,6 @@ public class LongAdder extends Striped64 implements Serializable {
     * Returns the {@link #sum} as an {@code int} after a narrowing
     * primitive conversion.
     */
-   @Override
    public int intValue() {
       return (int)sum();
    }
@@ -196,7 +173,6 @@ public class LongAdder extends Striped64 implements Serializable {
     * Returns the {@link #sum} as a {@code float}
     * after a widening primitive conversion.
     */
-   @Override
    public float floatValue() {
       return (float)sum();
    }
@@ -205,7 +181,6 @@ public class LongAdder extends Striped64 implements Serializable {
     * Returns the {@link #sum} as a {@code double} after a widening
     * primitive conversion.
     */
-   @Override
    public double doubleValue() {
       return (double)sum();
    }

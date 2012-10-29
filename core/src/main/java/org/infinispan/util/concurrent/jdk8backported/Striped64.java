@@ -1,30 +1,10 @@
 /*
- * Copyright 2012 Red Hat, Inc. and/or its affiliates.
- *
- * This is free software; you can redistribute it and/or modify it
- * under the terms of the GNU Lesser General Public License as
- * published by the Free Software Foundation; either version 2.1 of
- * the License, or (at your option) any later version.
- *
- * This software is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
- * Lesser General Public License for more details.
- *
- * You should have received a copy of the GNU Lesser General Public
- * License along with this library; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
- * 02110-1301 USA
- */
-
-package org.infinispan.util.concurrent.jdk8backported;
-
-/*
  * Written by Doug Lea with assistance from members of JCP JSR-166
  * Expert Group and released to the public domain, as explained at
  * http://creativecommons.org/publicdomain/zero/1.0/
  */
 
+package org.infinispan.util.concurrent.jdk8backported;
 import java.util.Random;
 
 /**
@@ -147,7 +127,6 @@ abstract class Striped64 extends Number {
     * The corresponding ThreadLocal class
     */
    static final class ThreadHashCode extends ThreadLocal<HashCode> {
-      @Override
       public HashCode initialValue() { return new HashCode(); }
    }
 
@@ -345,7 +324,6 @@ abstract class Striped64 extends Number {
             return java.security.AccessController.doPrivileged
                   (new java.security
                         .PrivilegedExceptionAction<sun.misc.Unsafe>() {
-                     @Override
                      public sun.misc.Unsafe run() throws Exception {
                         java.lang.reflect.Field f = sun.misc
                               .Unsafe.class.getDeclaredField("theUnsafe");

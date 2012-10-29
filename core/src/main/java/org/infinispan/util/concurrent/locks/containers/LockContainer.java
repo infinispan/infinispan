@@ -50,7 +50,7 @@ public interface LockContainer<L extends Lock> {
 
    /**
     * @param key object
-    * @return the lock for a specific object
+    * @return the lock for a specific object.  May be null if the object is not locked, but may also be an unlocked lock.
     */
    L getLock(Object key);
 
@@ -88,9 +88,8 @@ public interface LockContainer<L extends Lock> {
     * if Lock Striping is used and locks may guard more than one key.  This mechanism can be used to check whether
     * keys may end up sharing the same lock.
     * <p />
-    * If lock-striping is not used, the identity hash code of the lock created for this specific key is returned.  While
-    * this may not be of much value, it is done to maintain API compatibility of this method regardless of underlying
-    * locking scheme.
+    * If lock-striping is not used, the identity hash code of the lock created for this specific key is returned, if the
+    * key is locked, or -1 if the key is not locked and a lock does not exist for the key.
     *
     * @param key key to test for
     * @return the ID of the lock.
