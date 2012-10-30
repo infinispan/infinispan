@@ -55,7 +55,7 @@ public class SimpleDataContainerTest extends AbstractInfinispanTest {
 
    protected DataContainer createContainer() {
       DefaultDataContainer dc = new DefaultDataContainer(16);
-      dc.initialize(null, null, new InternalEntryFactoryImpl());
+      dc.initialize(null, null, new InternalEntryFactoryImpl(), null, null);
       return dc;
    }
 

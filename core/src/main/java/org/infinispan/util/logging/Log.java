@@ -829,4 +829,9 @@ public interface Log extends BasicLogger {
    @LogMessage(level = ERROR)
    @Message(value = "Unable to load %s from any of the following classloaders: %s", id=213)
    void unableToLoadClass(String classname, String classloaders, @Cause Throwable cause);
+
+   @LogMessage(level = WARN)
+   @Message(value = "Unable to remove entry under %s from cache store after activation", id = 214)
+   void unableToRemoveEntryAfterActivation(Object key, @Cause Exception e);
+
 }

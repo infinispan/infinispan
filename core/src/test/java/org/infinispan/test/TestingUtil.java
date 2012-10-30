@@ -42,6 +42,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.LockSupport;
 
 import javax.management.MBeanServer;
+import javax.management.MalformedObjectNameException;
 import javax.management.ObjectName;
 import javax.transaction.Status;
 import javax.transaction.TransactionManager;
@@ -1162,29 +1163,37 @@ public class TestingUtil {
       return jmxDomain + '.' + m.getName();
    }
 
-   public static ObjectName getCacheManagerObjectName(String jmxDomain) throws Exception {
+   public static ObjectName getCacheManagerObjectName(String jmxDomain) {
       return getCacheManagerObjectName(jmxDomain, "DefaultCacheManager");
    }
 
-   public static ObjectName getCacheManagerObjectName(String jmxDomain, String cacheManagerName) throws Exception {
-      return new ObjectName(jmxDomain + ":type=CacheManager,name=" + ObjectName.quote(cacheManagerName) + ",component=CacheManager");
+   public static ObjectName getCacheManagerObjectName(String jmxDomain, String cacheManagerName) {
+      try {
+         return new ObjectName(jmxDomain + ":type=CacheManager,name=" + ObjectName.quote(cacheManagerName) + ",component=CacheManager");
+      } catch (Exception e) {
+         throw new RuntimeException(e);
+      }
    }
 
-   public static ObjectName getCacheObjectName(String jmxDomain) throws Exception {
+   public static ObjectName getCacheObjectName(String jmxDomain) {
       return getCacheObjectName(jmxDomain, CacheContainer.DEFAULT_CACHE_NAME + "(local)");
    }
 
-   public static ObjectName getCacheObjectName(String jmxDomain, String cacheName) throws Exception {
+   public static ObjectName getCacheObjectName(String jmxDomain, String cacheName) {
       return getCacheObjectName(jmxDomain, cacheName, "Cache");
    }
 
-   public static ObjectName getCacheObjectName(String jmxDomain, String cacheName, String component) throws Exception {
+   public static ObjectName getCacheObjectName(String jmxDomain, String cacheName, String component) {
       return getCacheObjectName(jmxDomain, cacheName, component, "DefaultCacheManager");
    }
 
-   public static ObjectName getCacheObjectName(String jmxDomain, String cacheName, String component, String cacheManagerName) throws Exception {
-      return new ObjectName(jmxDomain + ":type=Cache,manager=" + ObjectName.quote(cacheManagerName)
-            + ",name=" + ObjectName.quote(cacheName) + ",component=" + component);
+   public static ObjectName getCacheObjectName(String jmxDomain, String cacheName, String component, String cacheManagerName) {
+      try {
+         return new ObjectName(jmxDomain + ":type=Cache,manager=" + ObjectName.quote(cacheManagerName)
+               + ",name=" + ObjectName.quote(cacheName) + ",component=" + component);
+      } catch (Exception e) {
+         throw new RuntimeException(e);
+      }
    }
 
    public static ObjectName getJGroupsChannelObjectName(String jmxDomain, String clusterName) throws Exception {
