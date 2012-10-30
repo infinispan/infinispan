@@ -209,7 +209,6 @@
             <groupId>${project.groupId}</groupId>
             <artifactId>infinispan-cdi</artifactId>
             <version>${project.version}</version>
-            <scope>test</scope>
          </dependency>
          <dependency>
             <groupId>${project.groupId}</groupId>
