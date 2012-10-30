@@ -32,8 +32,8 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Properties;
 import java.util.ServiceLoader;
+import java.util.UUID;
 import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.atomic.AtomicInteger;
 
 import javax.xml.namespace.QName;
 import javax.xml.stream.FactoryConfigurationError;
@@ -65,7 +65,6 @@ import org.infinispan.util.Util;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 import org.jboss.staxmapper.XMLMapper;
-import org.jgroups.util.UUID;
 
 /**
  * CacheManagers in unit tests should be created with this factory, in order to avoid resource clashes. See
@@ -75,8 +74,6 @@ import org.jgroups.util.UUID;
  * @author Galder Zamarreño
  */
 public class TestCacheManagerFactory {
-
-   private static AtomicInteger jmxDomainPostfix = new AtomicInteger();
 
    public static final String MARSHALLER = LegacyKeySupportSystemProperties.getProperty("infinispan.test.marshaller.class", "infinispan.marshaller.class");
    private static final Log log = LogFactory.getLog(TestCacheManagerFactory.class);
@@ -93,14 +90,14 @@ public class TestCacheManagerFactory {
 
    private static DefaultCacheManager newDefaultCacheManager(boolean start, GlobalConfiguration gc, Configuration c, boolean keepJmxDomain) {
       if (!keepJmxDomain) {
-         gc.setJmxDomain("infinispan" + jmxDomainPostfix.incrementAndGet());
+         gc.setJmxDomain("infinispan" + UUID.randomUUID());
       }
       return newDefaultCacheManager(start, gc, c);
    }
 
    private static DefaultCacheManager newDefaultCacheManager(boolean start, GlobalConfigurationBuilder gc, ConfigurationBuilder c, boolean keepJmxDomain) {
       if (!keepJmxDomain) {
-         gc.globalJmxStatistics().jmxDomain("infinispan" + jmxDomainPostfix.incrementAndGet());
+         gc.globalJmxStatistics().jmxDomain("infinispan-" + UUID.randomUUID());
       }
       return newDefaultCacheManager(start, gc, c);
    }
@@ -108,7 +105,7 @@ public class TestCacheManagerFactory {
    private static DefaultCacheManager newDefaultCacheManager(boolean start, ConfigurationBuilderHolder holder, boolean keepJmxDomain) {
       if (!keepJmxDomain) {
          holder.getGlobalConfigurationBuilder().globalJmxStatistics().jmxDomain(
-               "infinispan" + jmxDomainPostfix.incrementAndGet());
+               "infinispan-" + UUID.randomUUID());
       }
       return newDefaultCacheManager(start, holder);
    }
@@ -588,7 +585,7 @@ public class TestCacheManagerFactory {
       String methodName = extractMethodName();
       // In case JGroups' address cache expires, this will help us map the uuids in the log
       if (cm.getAddress() != null) {
-         String uuid = ((UUID) ((JGroupsAddress) cm.getAddress()).getJGroupsAddress()).toStringLong();
+         String uuid = ((org.jgroups.util.UUID) ((JGroupsAddress) cm.getAddress()).getJGroupsAddress()).toStringLong();
          log.debugf("Started cache manager %s, UUID is %s", cm.getAddress(), uuid);
       }
       log.trace("Adding DCM (" + cm.getCacheManagerConfiguration().transport().nodeName() + ") for method: '" + methodName + "'");
