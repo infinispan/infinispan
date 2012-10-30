@@ -22,6 +22,7 @@ package org.infinispan.util.mocks;
 import org.infinispan.AdvancedCache;
 import org.infinispan.Cache;
 import org.infinispan.atomic.Delta;
+import org.infinispan.commands.CancelCommand;
 import org.infinispan.commands.CommandsFactory;
 import org.infinispan.commands.CreateCacheCommand;
 import org.infinispan.commands.ReplicableCommand;
@@ -69,6 +70,7 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.UUID;
 import java.util.concurrent.Callable;
 import java.util.concurrent.atomic.AtomicInteger;
 
@@ -323,5 +325,10 @@ public class ControlledCommandFactory implements CommandsFactory {
    @Override
    public CreateCacheCommand buildCreateCacheCommand(String cacheName, String cacheConfigurationName) {
       return actual.buildCreateCacheCommand(cacheName, cacheConfigurationName);
+   }
+
+   @Override
+   public CancelCommand buildCancelCommandCommand(UUID commandUUID) {
+      return actual.buildCancelCommandCommand(commandUUID);
    }
 }

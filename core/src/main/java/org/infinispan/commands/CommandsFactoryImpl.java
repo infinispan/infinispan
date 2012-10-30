@@ -97,6 +97,7 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.UUID;
 import java.util.concurrent.Callable;
 
 /**
@@ -134,6 +135,7 @@ public class CommandsFactoryImpl implements CommandsFactory {
    private MapReduceManager mapReduceManager;
    private StateTransferManager stateTransferManager;
    private BackupSender backupSender;
+   private CancellationService cancellationService;
 
    private Map<Byte, ModuleCommandInitializer> moduleCommandInitializers;
 
@@ -143,8 +145,8 @@ public class CommandsFactoryImpl implements CommandsFactory {
                                  InvocationContextContainer icc, TransactionTable txTable, Configuration configuration,
                                  @ComponentName(KnownComponentNames.MODULE_COMMAND_INITIALIZERS) Map<Byte, ModuleCommandInitializer> moduleCommandInitializers,
                                  RecoveryManager recoveryManager, StateProvider stateProvider, StateConsumer stateConsumer,
-                                 LockManager lockManager, InternalEntryFactory entryFactory, MapReduceManager mapReduceManager,
-                                 StateTransferManager stm, BackupSender backupSender) {
+                                 LockManager lockManager, InternalEntryFactory entryFactory, MapReduceManager mapReduceManager, 
+                                 StateTransferManager stm, BackupSender backupSender, CancellationService cancellationService) {
       this.dataContainer = container;
       this.notifier = notifier;
       this.cache = cache;
@@ -162,6 +164,7 @@ public class CommandsFactoryImpl implements CommandsFactory {
       this.mapReduceManager = mapReduceManager;
       this.stateTransferManager = stm;
       this.backupSender = backupSender;
+      this.cancellationService = cancellationService;
    }
 
    @Start(priority = 1)
@@ -448,6 +451,10 @@ public class CommandsFactoryImpl implements CommandsFactory {
             XSiteAdminCommand xSiteAdminCommand = (XSiteAdminCommand)c;
             xSiteAdminCommand.init(backupSender);
             break;
+         case CancelCommand.COMMAND_ID:
+            CancelCommand cancelCommand = (CancelCommand)c;
+            cancelCommand.init(cancellationService);
+            break;
          default:
             ModuleCommandInitializer mci = moduleCommandInitializers.get(c.getCommandId());
             if (mci != null) {
@@ -539,5 +546,10 @@ public class CommandsFactoryImpl implements CommandsFactory {
    public <KOut, VOut> ReduceCommand<KOut, VOut> buildReduceCommand(String taskId,
             String destintationCache, Reducer<KOut, VOut> r, Collection<KOut> keys) {
       return new ReduceCommand<KOut, VOut>(taskId, r, destintationCache, keys);
+   }
+
+   @Override
+   public CancelCommand buildCancelCommandCommand(UUID commandUUID) {
+      return new CancelCommand(cacheName, commandUUID);
    }
 }

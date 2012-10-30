@@ -22,6 +22,8 @@
  */
 package org.infinispan.remoting;
 
+import org.infinispan.commands.CancellableCommand;
+import org.infinispan.commands.CancellationService;
 import org.infinispan.commands.CommandsFactory;
 import org.infinispan.commands.remote.CacheRpcCommand;
 import org.infinispan.configuration.global.GlobalConfiguration;
@@ -53,13 +55,15 @@ public class InboundInvocationHandlerImpl implements InboundInvocationHandler {
    private static final boolean trace = log.isTraceEnabled();
    private GlobalConfiguration globalConfiguration;
    private Transport transport;
+   private CancellationService cancelService;
 
    @Inject
    public void inject(GlobalComponentRegistry gcr, Transport transport,
-                      GlobalConfiguration globalConfiguration) {
+                      GlobalConfiguration globalConfiguration, CancellationService cancelService) {
       this.gcr = gcr;
       this.transport = transport;
       this.globalConfiguration = globalConfiguration;
+      this.cancelService = cancelService;
    }
 
    @Override
@@ -87,16 +91,22 @@ public class InboundInvocationHandlerImpl implements InboundInvocationHandler {
       CommandsFactory commandsFactory = cr.getCommandsFactory();
 
       // initialize this command with components specific to the intended cache instance
-      commandsFactory.initializeReplicableCommand(cmd, true);
-
+      commandsFactory.initializeReplicableCommand(cmd, true);      
       try {
          if (trace) log.tracef("Calling perform() on %s", cmd);
          ResponseGenerator respGen = cr.getResponseGenerator();
+         if(cmd instanceof CancellableCommand){
+            cancelService.register(Thread.currentThread(), ((CancellableCommand)cmd).getUUID());
+         }
          Object retval = cmd.perform(null);
          return respGen.getResponse(cmd, retval);
       } catch (Exception e) {
          log.trace("Exception executing command", e);
          return new ExceptionResponse(e);
+      } finally {
+         if(cmd instanceof CancellableCommand){
+            cancelService.unregister(((CancellableCommand)cmd).getUUID());
+         }
       }
    }
 

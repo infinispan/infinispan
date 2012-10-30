@@ -22,6 +22,7 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.ExecutorService;
 
 
 import org.infinispan.commands.read.MapCombineCommand;
@@ -49,7 +50,7 @@ public interface MapReduceManager {
     * @return a set of intermediate keys to be reduced distributively 
     */
    <KIn, VIn, KOut, VOut> Set<KOut> mapAndCombineForDistributedReduction(
-            MapCombineCommand<KIn, VIn, KOut, VOut> mcc);
+            MapCombineCommand<KIn, VIn, KOut, VOut> mcc) throws InterruptedException;
 
    /**
     * Invoked when MapCombineCommand arrives to a target Infinispan node and returns map of resulting 
@@ -65,7 +66,7 @@ public interface MapReduceManager {
     * at master Infinispan node
     */
    <KIn, VIn, KOut, VOut> Map<KOut, List<VOut>> mapAndCombineForLocalReduction(
-            MapCombineCommand<KIn, VIn, KOut, VOut> mcc);
+            MapCombineCommand<KIn, VIn, KOut, VOut> mcc) throws InterruptedException;
 
    /**
     * Invoked when ReduceCommand arrives to a target Infinispan node. Implementations should return
@@ -74,7 +75,7 @@ public interface MapReduceManager {
     * @param reducer ReduceCommand sent from MapReduceTask
     * @return map of reduced output keys and values returned to MapReduceTask
     */
-   <KOut, VOut> Map<KOut, VOut> reduce(ReduceCommand<KOut, VOut> reducer);
+   <KOut, VOut> Map<KOut, VOut> reduce(ReduceCommand<KOut, VOut> reducer) throws InterruptedException;
    
    /**
     * Maps Map/Reduce task intermediate or input keys to nodes on Infinispan cluster
@@ -93,5 +94,12 @@ public interface MapReduceManager {
     */
    <T> Map<Address, List<T>> mapKeysToNodes(DistributionManager dm, String taskId,
             Collection<T> keysToMap, boolean useIntermediateCompositeKey);
+   
+   /**
+    * ExecutorService provided for local task execution
+    * 
+    * @return {@link ExecutorService} for local tasks
+    */
+   ExecutorService getExecutorService();
 
 }

@@ -22,6 +22,8 @@
  */
 package org.infinispan.factories;
 
+import org.infinispan.commands.CancellationService;
+import org.infinispan.commands.CancellationServiceImpl;
 import org.infinispan.commands.RemoteCommandsFactory;
 import org.infinispan.config.ConfigurationException;
 import org.infinispan.factories.annotations.DefaultFactoryFor;
@@ -46,8 +48,9 @@ import org.infinispan.xsite.BackupReceiverRepositoryImpl;
  * @author <a href="mailto:galder.zamarreno@jboss.com">Galder Zamarreno</a>
  * @since 4.0
  */
+
 @DefaultFactoryFor(classes = {InboundInvocationHandler.class, RemoteCommandsFactory.class, ExternalizerTable.class,
-                              RebalancePolicy.class, BackupReceiverRepository.class})
+                              RebalancePolicy.class, BackupReceiverRepository.class, CancellationService.class })
 @Scope(Scopes.GLOBAL)
 public class EmptyConstructorFactory extends AbstractComponentFactory implements AutoInstantiableFactory {
 
@@ -68,6 +71,8 @@ public class EmptyConstructorFactory extends AbstractComponentFactory implements
          return (T) new DefaultRebalancePolicy();
       else if (componentType.equals(BackupReceiverRepository.class))
          return (T) new BackupReceiverRepositoryImpl();
+      else if (componentType.equals(CancellationService.class))
+         return (T) new CancellationServiceImpl();
 
       throw new ConfigurationException("Don't know how to create a " + componentType.getName());
    }

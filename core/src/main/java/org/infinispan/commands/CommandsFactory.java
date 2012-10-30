@@ -63,6 +63,7 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.UUID;
 import java.util.concurrent.Callable;
 
 /**
@@ -393,4 +394,13 @@ public interface CommandsFactory {
     * @return created CreateCacheCommand 
     */
    CreateCacheCommand buildCreateCacheCommand(String cacheName, String cacheConfigurationName);
+   
+ 
+   /**
+    * Builds CancelCommandCommand used to cancel other commands executing on Infinispan cluster
+    * 
+    * @param commandUUID UUID for command to cancel
+    * @return created CancelCommandCommand
+    */
+   CancelCommand buildCancelCommandCommand(UUID commandUUID);
 }

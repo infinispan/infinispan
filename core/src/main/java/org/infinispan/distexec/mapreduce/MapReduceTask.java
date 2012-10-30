@@ -25,6 +25,8 @@ package org.infinispan.distexec.mapreduce;
 import org.infinispan.AdvancedCache;
 import org.infinispan.Cache;
 import org.infinispan.CacheException;
+import org.infinispan.commands.CancelCommand;
+import org.infinispan.commands.CancellationService;
 import org.infinispan.commands.CommandsFactory;
 import org.infinispan.commands.CreateCacheCommand;
 import org.infinispan.commands.read.MapCombineCommand;
@@ -45,7 +47,6 @@ import org.infinispan.util.concurrent.AbstractInProcessFuture;
 import org.infinispan.util.concurrent.FutureListener;
 import org.infinispan.util.concurrent.NotifyingFuture;
 import org.infinispan.util.concurrent.NotifyingNotifiableFuture;
-import org.infinispan.util.concurrent.WithinThreadExecutor;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
@@ -62,7 +63,6 @@ import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutionException;
-import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Future;
 import java.util.concurrent.FutureTask;
 import java.util.concurrent.TimeUnit;
@@ -169,7 +169,8 @@ public class MapReduceTask<KIn, VIn, KOut, VOut> {
    protected final AdvancedCache<KIn, VIn> cache;
    protected final Marshaller marshaller;
    protected final MapReduceManager mapReduceManager;
-   protected final ExecutorService localExecutorService = new WithinThreadExecutor();
+   protected final CancellationService cancellationService;
+   protected final List<CancellableTaskPart> cancellableTasks;
    protected final UUID taskId;
 
    /**
@@ -213,9 +214,11 @@ public class MapReduceTask<KIn, VIn, KOut, VOut> {
       this.keys = new LinkedList<KIn>();
       this.marshaller = cache.getComponentRegistry().getComponent(StreamingMarshaller.class, CACHE_MARSHALLER);
       this.mapReduceManager = cache.getComponentRegistry().getComponent(MapReduceManager.class);
+      this.cancellationService = cache.getComponentRegistry().getComponent(CancellationService.class);
       this.taskId = UUID.randomUUID();
       this.distributeReducePhase = distributeReducePhase;  
       this.useIntermediateSharedCache = useIntermediateSharedCache;
+      this.cancellableTasks = Collections.synchronizedList(new ArrayList<CancellableTaskPart>());
    }
 
    /**
@@ -406,9 +409,12 @@ public class MapReduceTask<KIn, VIn, KOut, VOut> {
             futures.add(part);
          }
       }
-
-      for (MapTaskPart<Set<KOut>> mapTaskPart : futures) {
-         mapPhasesResult.addAll(mapTaskPart.get());
+      try {
+         for (MapTaskPart<Set<KOut>> mapTaskPart : futures) {
+            mapPhasesResult.addAll(mapTaskPart.get());
+         }
+      } finally {
+         cancellableTasks.clear();
       }
       return mapPhasesResult;
    }
@@ -446,12 +452,15 @@ public class MapReduceTask<KIn, VIn, KOut, VOut> {
             part.execute();
             futures.add(part);
          }
-      }
-
+      }      
       Map<KOut, VOut> reducedResult = new HashMap<KOut, VOut>();
-      for (MapTaskPart<Map<KOut, List<VOut>>> mapTaskPart : futures) {
-         // TODO in parallel with futures
-         mergeResponse(mapPhasesResult, mapTaskPart.get());
+      try {
+         for (MapTaskPart<Map<KOut, List<VOut>>> mapTaskPart : futures) {
+            // TODO in parallel with futures
+            mergeResponse(mapPhasesResult, mapTaskPart.get());
+         }
+      } finally {
+         cancellableTasks.clear();
       }
 
       // hook into lifecycle
@@ -472,7 +481,9 @@ public class MapReduceTask<KIn, VIn, KOut, VOut> {
 
    protected <V> MapTaskPart<V> createTaskMapPart(MapCombineCommand<KIn, VIn, KOut, VOut> cmd,
             Address target, boolean distributedReduce) {
-      return new MapTaskPart<V>(target, cmd, distributedReduce);
+      MapTaskPart<V> mapTaskPart = new MapTaskPart<V>(target, cmd, distributedReduce);
+      cancellableTasks.add(mapTaskPart);
+      return mapTaskPart;
    }
 
    protected Map<KOut, VOut> executeReducePhase(Set<KOut> allMapPhasesResponses,
@@ -504,16 +515,21 @@ public class MapReduceTask<KIn, VIn, KOut, VOut> {
          part.execute();
          reduceTasks.add(part);
       }
-
-      for (ReduceTaskPart<Map<KOut, VOut>> reduceTaskPart : reduceTasks) {
-         reduceResult.putAll(reduceTaskPart.get());
+      try {
+         for (ReduceTaskPart<Map<KOut, VOut>> reduceTaskPart : reduceTasks) {
+            reduceResult.putAll(reduceTaskPart.get());
+         }
+      } finally {
+         cancellableTasks.clear();
       }
       return reduceResult;
    }
 
    protected <V> ReduceTaskPart<V> createReducePart(ReduceCommand<KOut, VOut> cmd, Address target,
             String destCacheName) {
-      return new ReduceTaskPart<V>(target, cmd, destCacheName);
+      ReduceTaskPart<V> part = new ReduceTaskPart<V>(target, cmd, destCacheName);
+      cancellableTasks.add(part);
+      return part;
    }
 
    private <K, V> void mergeResponse(Map<K, List<V>> result, Map<K, List<V>> m) {
@@ -550,6 +566,13 @@ public class MapReduceTask<KIn, VIn, KOut, VOut> {
       reduceCommand.setEmitCompositeIntermediateKeys(emitCompositeIntermediateKeys);
       return reduceCommand;
    }
+
+   private CancelCommand buildCancelCommand(CancellableTaskPart taskPart){
+      ComponentRegistry registry = cache.getComponentRegistry();
+      CommandsFactory factory = registry.getComponent(CommandsFactory.class);
+      return factory.buildCancelCommandCommand(taskPart.getUUID());
+   }
+
    /**
     * Executes this task across Infinispan cluster nodes asynchronously.
     * 
@@ -557,24 +580,13 @@ public class MapReduceTask<KIn, VIn, KOut, VOut> {
     *         that output key
     */
    public Future<Map<KOut, VOut>> executeAsynchronously() {
-      final Callable<Map<KOut, VOut>> call = new Callable<Map<KOut, VOut>>() {
-         
+      return new MapReduceTaskFuture<Map<KOut, VOut>>(new Callable<Map<KOut, VOut>>() {
+
          @Override
          public Map<KOut, VOut> call() throws Exception {
             return execute();
          }
-      };
-      return new AbstractInProcessFuture<Map<KOut, VOut>>() {
-
-         @Override
-         public Map<KOut, VOut> get() throws InterruptedException, ExecutionException {
-            try {
-               return call.call();
-            } catch (Exception e) {
-               throw new ExecutionException(e);
-            }
-         }
-      };
+      });
    }
 
    /**
@@ -601,24 +613,13 @@ public class MapReduceTask<KIn, VIn, KOut, VOut> {
     * @return collated result
     */
    public <R> Future<R> executeAsynchronously(final Collator<KOut, VOut, R> collator) {
-      final Callable<R> call = new Callable<R>() {
+      return new MapReduceTaskFuture<R>(new Callable<R>() {
 
          @Override
          public R call() throws Exception {
             return execute(collator);
          }
-      };
-      return new AbstractInProcessFuture<R>() {
-
-         @Override
-         public R get() throws InterruptedException, ExecutionException {
-            try {
-               return call.call();
-            } catch (Exception e) {
-               throw new ExecutionException(e);
-            }
-         }
-      };
+      });
    }
 
    protected void aggregateReducedResult(Map<KOut, List<VOut>> finalReduced, Map<KOut, VOut> mapReceived) {
@@ -708,7 +709,65 @@ public class MapReduceTask<KIn, VIn, KOut, VOut> {
       return "MapReduceTask [mapper=" + mapper + ", reducer=" + reducer + ", combiner=" + combiner
                + ", keys=" + keys + ", taskId=" + taskId + "]";
    }
-   private abstract class TaskPart<V> implements NotifyingNotifiableFuture<V> {
+
+   private class MapReduceTaskFuture<R> extends AbstractInProcessFuture<R> {
+
+      private final Callable<R> call;
+      private volatile boolean cancelled = false;
+      private volatile boolean done = false;
+
+      public MapReduceTaskFuture(Callable<R> call) {
+         super();
+         this.call = call;
+      }
+
+      @Override
+      public R get() throws InterruptedException, ExecutionException {
+         try {
+            return call.call();
+         } catch (Exception e) {
+            throw new ExecutionException(e);
+         } finally {
+            done = true;
+         }
+      }
+
+      @Override
+      public boolean cancel(boolean mayInterruptIfRunning) {
+         RpcManager rpc = cache.getRpcManager();
+         synchronized (cancellableTasks) {
+            for (CancellableTaskPart task : cancellableTasks) {
+               boolean sendingToSelf = task.getExecutionTarget().equals(
+                        rpc.getTransport().getAddress());
+               CancelCommand cc = buildCancelCommand(task);
+               if (sendingToSelf) {
+                  cc.init(cancellationService);
+                  try {
+                     cc.perform(null);
+                  } catch (Throwable e) {
+                     log.couldNotExecuteCancellationLocally(e.getLocalizedMessage());
+                  }
+               } else {
+                  rpc.invokeRemotely(Collections.singletonList(task.getExecutionTarget()), cc, true);
+               }
+               cancelled = true;
+            }
+         }
+         return cancelled;
+      }
+
+      @Override
+      public boolean isCancelled() {
+         return cancelled;
+      }
+
+      @Override
+      public boolean isDone() {
+         return done;
+      }
+   }
+
+   private abstract class TaskPart<V> implements NotifyingNotifiableFuture<V>, CancellableTaskPart {
 
       private Future<V> f;
       private final Address executionTarget;
@@ -717,6 +776,7 @@ public class MapReduceTask<KIn, VIn, KOut, VOut> {
          this.executionTarget = executionTarget;
       }
 
+      @Override
       public Address getExecutionTarget() {
          return executionTarget;
       }
@@ -832,7 +892,7 @@ public class MapReduceTask<KIn, VIn, KOut, VOut> {
             }
             FutureTask<V> futureTask = new FutureTask<V>((Callable<V>) callable);
             setNetworkFuture(futureTask);
-            localExecutorService.submit(futureTask);
+            mapReduceManager.getExecutorService().submit(futureTask);
          } else {
             RpcManager rpc = cache.getRpcManager();
             try {
@@ -848,24 +908,33 @@ public class MapReduceTask<KIn, VIn, KOut, VOut> {
          }
       }
 
-      private Map<KOut, List<VOut>> invokeMapCombineLocallyForLocalReduction() {
+      private Map<KOut, List<VOut>> invokeMapCombineLocallyForLocalReduction() throws InterruptedException {
          log.debugf("Invoking %s locally", mcc);
          try {
+            cancellationService.register(Thread.currentThread(), mcc.getUUID());
             mcc.init(mapReduceManager);
             return mapReduceManager.mapAndCombineForLocalReduction(mcc);
          } finally {
+            cancellationService.unregister(mcc.getUUID());
             log.debugf("Invoked %s locally", mcc);
          }
       }
 
-      private Set<KOut> invokeMapCombineLocally() {
+      private Set<KOut> invokeMapCombineLocally() throws InterruptedException {
          log.debugf("Invoking %s locally", mcc);
          try {
+            cancellationService.register(Thread.currentThread(), mcc.getUUID());
             mcc.init(mapReduceManager);
             return mapReduceManager.mapAndCombineForDistributedReduction(mcc);
          } finally {
+            cancellationService.unregister(mcc.getUUID());
             log.debugf("Invoked %s locally", mcc);
          }
+      }
+
+      @Override
+      public UUID getUUID() {
+         return mcc.getUUID();
       }
    }
 
@@ -896,7 +965,7 @@ public class MapReduceTask<KIn, VIn, KOut, VOut> {
             };
             FutureTask<V> futureTask = new FutureTask<V>((Callable<V>) callable);
             setNetworkFuture(futureTask);
-            localExecutorService.submit(futureTask);
+            mapReduceManager.getExecutorService().submit(futureTask);
          } else {
             RpcManager rpc = cache.getRpcManager();
             try {
@@ -924,6 +993,15 @@ public class MapReduceTask<KIn, VIn, KOut, VOut> {
          }
          return localReduceResult;
       }
+
+      @Override
+      public UUID getUUID() {
+         return rc.getUUID();
+      }
+   }
+
+   private interface CancellableTaskPart {
+      UUID getUUID();
+      Address getExecutionTarget();
    }
 }
-

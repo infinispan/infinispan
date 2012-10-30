@@ -25,7 +25,9 @@ package org.infinispan.commands.read;
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.Set;
+import java.util.UUID;
 
+import org.infinispan.commands.CancellableCommand;
 import org.infinispan.commands.remote.BaseRpcCommand;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.distexec.mapreduce.MapReduceManager;
@@ -42,7 +44,7 @@ import org.infinispan.util.logging.LogFactory;
  * @author Vladimir Blagojevic
  * @since 5.0
  */
-public class MapCombineCommand<KIn, VIn, KOut, VOut> extends BaseRpcCommand {
+public class MapCombineCommand<KIn, VIn, KOut, VOut> extends BaseRpcCommand implements CancellableCommand {
    public static final int COMMAND_ID = 30;
    private static final Log log = LogFactory.getLog(MapCombineCommand.class);
    private Set<KIn> keys = new HashSet<KIn>();
@@ -52,6 +54,7 @@ public class MapCombineCommand<KIn, VIn, KOut, VOut> extends BaseRpcCommand {
    private boolean reducePhaseDistributed;
    private boolean emitCompositeIntermediateKeys;
    private MapReduceManager mrManager;
+   private UUID uuid;
 
    public MapCombineCommand() {
       super(null); // For command id uniqueness test
@@ -70,6 +73,7 @@ public class MapCombineCommand<KIn, VIn, KOut, VOut> extends BaseRpcCommand {
       }
       this.mapper = mapper;
       this.combiner = combiner;
+      this.uuid = UUID.randomUUID();
    }
 
    public void init(MapReduceManager mrManager) {
@@ -129,8 +133,14 @@ public class MapCombineCommand<KIn, VIn, KOut, VOut> extends BaseRpcCommand {
    }
 
    @Override
+   public UUID getUUID() {      
+      return uuid;
+   }
+
+   @Override
    public Object[] getParameters() {
-      return new Object[] { taskId, keys, mapper, combiner, reducePhaseDistributed, emitCompositeIntermediateKeys };
+      return new Object[] { taskId, keys, mapper, combiner, reducePhaseDistributed,
+               emitCompositeIntermediateKeys, uuid };
    }
 
    @SuppressWarnings("unchecked")
@@ -145,6 +155,7 @@ public class MapCombineCommand<KIn, VIn, KOut, VOut> extends BaseRpcCommand {
       combiner = (Reducer<KOut,VOut>) args[i++];
       reducePhaseDistributed = (Boolean) args[i++];
       emitCompositeIntermediateKeys = (Boolean) args[i++];
+      uuid = (UUID) args[i++];
    }
 
    @Override
