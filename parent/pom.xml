@@ -165,7 +165,7 @@
       <version.solder>3.1.0.Final</version.solder>
       <version.spring>3.1.0.RELEASE</version.spring>
       <version.spymemcached>2.5</version.spymemcached>
-      <version.testng>5.14.10</version.testng>
+      <version.testng>6.7</version.testng>
       <version.webdav.servlet>2.0.1</version.webdav.servlet>
       <version.weld>1.1.4.Final</version.weld>
       <version.xsom>20081112</version.xsom>

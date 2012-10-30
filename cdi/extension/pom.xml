@@ -42,7 +42,6 @@
    <properties>
       <!-- version of slf4j needed by Weld -->
       <version.slf4j>1.5.10</version.slf4j>
-      <version.testng.arquillian>5.14.6</version.testng.arquillian>
    </properties>
 
    <developers>
@@ -98,7 +97,7 @@
       <dependency>
          <groupId>org.testng</groupId>
          <artifactId>testng</artifactId>
-         <version>${version.testng.arquillian}</version>
+         <version>${version.testng}</version>
          <scope>test</scope>
       </dependency>
       <dependency>
