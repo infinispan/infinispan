@@ -58,6 +58,8 @@ import java.util.concurrent.locks.ReentrantReadWriteLock;
 
 import org.infinispan.AdvancedCache;
 import org.infinispan.Cache;
+import org.infinispan.commands.CancelCommand;
+import org.infinispan.commands.CancellationService;
 import org.infinispan.commands.CommandsFactory;
 import org.infinispan.commands.read.DistributedExecuteCommand;
 import org.infinispan.distexec.spi.DistributedTaskLifecycleService;
@@ -127,6 +129,9 @@ public class DefaultExecutorService extends AbstractExecutorService implements D
          return true;
       };
    };
+   
+   public static final DistributedTaskFailoverPolicy NO_FAILOVER = new NoTaskFailoverPolicy();
+   public static final DistributedTaskFailoverPolicy RANDOM_NODE_FAILOVER = new RandomNodeTaskFailoverPolicy();
 
    private static final Log log = LogFactory.getLog(DefaultExecutorService.class);
    protected final AtomicBoolean isShutdown = new AtomicBoolean(false);
@@ -136,6 +141,7 @@ public class DefaultExecutorService extends AbstractExecutorService implements D
    protected final CommandsFactory factory;
    protected final Marshaller marshaller;
    protected final ExecutorService localExecutorService;
+   protected final CancellationService cancellationService;
 
    /**
     * Creates a new DefaultExecutorService given a master cache node for local task execution. All
@@ -176,6 +182,7 @@ public class DefaultExecutorService extends AbstractExecutorService implements D
       this.invoker = registry.getComponent(InterceptorChain.class);
       this.factory = registry.getComponent(CommandsFactory.class);
       this.marshaller = registry.getComponent(StreamingMarshaller.class, CACHE_MARSHALLER);
+      this.cancellationService = registry.getComponent(CancellationService.class);
       this.localExecutorService = localExecutorService;
    }
 
@@ -620,7 +627,7 @@ public class DefaultExecutorService extends AbstractExecutorService implements D
          throw new IllegalStateException("Invalid cache state " + cache.getStatus());
    }
 
-   private class RandomNodeTaskFailoverPolicy implements DistributedTaskFailoverPolicy {
+   private static class RandomNodeTaskFailoverPolicy implements DistributedTaskFailoverPolicy {
 
       public RandomNodeTaskFailoverPolicy() {
          super();
@@ -643,6 +650,23 @@ public class DefaultExecutorService extends AbstractExecutorService implements D
          return 1;
       }
    }
+   
+   private static class NoTaskFailoverPolicy implements DistributedTaskFailoverPolicy {
+
+      public NoTaskFailoverPolicy() {
+         super();
+      }
+
+      @Override
+      public Address failover(Address failedLocation, List<Address> candidates, Exception cause) {
+         return failedLocation;
+      }
+
+      @Override
+      public int maxFailoverAttempts() {
+         return 0;
+      }
+   }
 
    /**
     * NodeFilter allows selection of nodes according to {@link DistributedTaskExecutionPolicy}
@@ -656,7 +680,7 @@ public class DefaultExecutorService extends AbstractExecutorService implements D
       private Callable<T> callable;
       private long timeout;
       private DistributedTaskExecutionPolicy executionPolicy = DistributedTaskExecutionPolicy.ALL;
-      private DistributedTaskFailoverPolicy failoverPolicy = new RandomNodeTaskFailoverPolicy();
+      private DistributedTaskFailoverPolicy failoverPolicy = RANDOM_NODE_FAILOVER;
 
 
       public DefaultDistributedTaskBuilder(long taskTimeout) {
@@ -688,10 +712,11 @@ public class DefaultExecutorService extends AbstractExecutorService implements D
 
       @Override
       public DistributedTaskBuilder<T> failoverPolicy(DistributedTaskFailoverPolicy policy) {
-         if (policy == null)
-            throw new IllegalArgumentException("DistributedTaskFailoverPolicy cannot be null");
-
-         this.failoverPolicy = policy;
+         if (policy == null) {
+            this.failoverPolicy = NO_FAILOVER;
+         } else {
+            this.failoverPolicy = policy;
+         }
          return this;
       }
 
@@ -743,6 +768,8 @@ public class DefaultExecutorService extends AbstractExecutorService implements D
       private final Address executionTarget;
       private final DistributedTask<V> owningTask;
       private int failedOverCount;
+      private volatile boolean done;
+      private volatile boolean cancelled;
 
 
       /**
@@ -776,17 +803,31 @@ public class DefaultExecutorService extends AbstractExecutorService implements D
 
       @Override
       public boolean isCancelled() {
-         return f.isCancelled();
+         return cancelled;
       }
 
       @Override
       public boolean isDone() {
-         return f.isDone();
+         return done;
       }
 
       @Override
       public boolean cancel(boolean mayInterruptIfRunning) {
-         return f.cancel(mayInterruptIfRunning);
+         boolean sendToSelf = getExecutionTarget().equals(getAddress());
+         CancelCommand ccc = factory.buildCancelCommandCommand(distCommand.getUUID());
+         if (sendToSelf) {
+            ccc.init(cancellationService);
+            try {
+               ccc.perform(null);
+            } catch (Throwable e) {
+               log.couldNotExecuteCancellationLocally(e.getLocalizedMessage());
+            }
+         } else {
+            rpc.invokeRemotely(Collections.singletonList(getExecutionTarget()), ccc, true);
+         }
+         cancelled = true;
+         done = true;
+         return cancelled;
       }
 
       /**
@@ -794,15 +835,11 @@ public class DefaultExecutorService extends AbstractExecutorService implements D
        */
       @Override
       public V get() throws InterruptedException, ExecutionException {
-         V response = null;
          try {
-            response = retrieveResult(f.get());
-         } catch (Exception e) {
-            if (failedOverCount++ <= getOwningTask().getTaskFailoverPolicy().maxFailoverAttempts()) {
-               response = retrieveResult(failoverExecution(e));
-            }
+            return innerGet(0, TimeUnit.MILLISECONDS);
+         } finally {
+            done = true;
          }
-         return response;
       }
 
       /**
@@ -811,12 +848,31 @@ public class DefaultExecutorService extends AbstractExecutorService implements D
       @Override
       public V get(long timeout, TimeUnit unit) throws InterruptedException, ExecutionException,
                TimeoutException {
+         try {
+            return innerGet(timeout, unit);
+         } finally {
+            done = true;
+         }
+      }
+      
+      private V innerGet(long timeout, TimeUnit unit) throws ExecutionException {
          V response = null;
          try {
-            response = retrieveResult(f.get(timeout, unit));
+            if (timeout > 0) {
+               response = retrieveResult(f.get(timeout, unit));
+            } else {
+               response = retrieveResult(f.get());
+            }
          } catch (Exception e) {
-            if (failedOverCount++ <= getOwningTask().getTaskFailoverPolicy().maxFailoverAttempts()) {
-               response = retrieveResult(failoverExecution(e));
+            boolean canFailover = failedOverCount++ < getOwningTask().getTaskFailoverPolicy().maxFailoverAttempts();
+            if (canFailover) {
+               try {
+                  response = retrieveResult(failoverExecution(e));
+               } catch (Exception failedOver) {
+                  throw new ExecutionException(failedOver);
+               }
+            } else {
+               throw new ExecutionException(e);
             }
          }
          return response;
@@ -871,13 +927,13 @@ public class DefaultExecutorService extends AbstractExecutorService implements D
          this.f = future;
       }
 
-      V retrieveResult(Object response) throws ExecutionException {
+      V retrieveResult(Object response) throws Exception {
          if (response == null) {
             throw new ExecutionException("Execution returned null value",
                      new NullPointerException());
          }
          if (response instanceof Exception) {
-            throw new ExecutionException((Exception) response);
+            throw ((Exception) response);
          }
 
          Map<Address, Response> mapResult = (Map<Address, Response>) response;
@@ -911,12 +967,17 @@ public class DefaultExecutorService extends AbstractExecutorService implements D
 
                @Override
                public Object call() throws Exception {
+                  return doLocalInvoke();
+               }
+
+               private Object doLocalInvoke() {
                   Object result = null;
                   getCommand().init(cache);
                   DistributedTaskLifecycleService taskLifecycleService = DistributedTaskLifecycleService.getInstance();
                   try {
                      //hook into lifecycle
                      taskLifecycleService.onPreExecute(getCommand().getCallable(),cache);
+                     cancellationService.register(Thread.currentThread(), getCommand().getUUID());
                      result = getCommand().perform(null);
                      return Collections.singletonMap(getAddress(), SuccessfulResponse.create(result));
                   } catch (Throwable e) {
@@ -924,6 +985,7 @@ public class DefaultExecutorService extends AbstractExecutorService implements D
                   } finally {
                      //hook into lifecycle
                      taskLifecycleService.onPostExecute(getCommand().getCallable());
+                     cancellationService.unregister(getCommand().getUUID());
                      notifyDone();
                   }
                }

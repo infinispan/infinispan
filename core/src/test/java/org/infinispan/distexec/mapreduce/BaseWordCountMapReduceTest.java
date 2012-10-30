@@ -95,17 +95,30 @@ public abstract class BaseWordCountMapReduceTest extends MultipleCacheManagersTe
       return "mapreducecache";
    }
    
+   /**
+    * Test helper - has to be public because it used in CDI module
+    * 
+    */
    @SuppressWarnings({ "rawtypes", "unchecked" })
    protected MapReduceTask<String, String, String, Integer> createMapReduceTask(Cache c){
       return new MapReduceTask<String, String, String, Integer>(c);
    }
    
+   
+   /**
+    * Test helper - has to be public because it used in CDI module
+    * 
+    */
    public MapReduceTask<String, String, String, Integer> invokeMapReduce(String keys[],
             Mapper<String, String, String, Integer> mapper, Reducer<String, Integer> reducer)
             throws Exception {
       return invokeMapReduce(keys, mapper, reducer, true);
    }
    
+   /**
+    * Test helper - has to be public because it used in CDI module
+    * 
+    */
    @SuppressWarnings({ "rawtypes", "unchecked" })
    public MapReduceTask<String, String, String, Integer> invokeMapReduce(String keys[],
             Mapper<String, String, String, Integer> mapper, Reducer<String, Integer> reducer, boolean useCombiner)
@@ -141,10 +154,18 @@ public abstract class BaseWordCountMapReduceTest extends MultipleCacheManagersTe
       return task; 
    }
    
+   /**
+    * Test helper - has to be public because it used in CDI module
+    * 
+    */
    public MapReduceTask<String, String, String, Integer> invokeMapReduce(String keys[]) throws Exception{
       return invokeMapReduce(keys, true);
    }
    
+   /**
+    * Test helper - has to be public because it used in CDI module
+    * 
+    */
    public MapReduceTask<String, String, String, Integer> invokeMapReduce(String keys[], boolean useCombiner) throws Exception{
       return invokeMapReduce(keys,new WordCountMapper(), new WordCountReducer(), useCombiner);
    }
@@ -227,6 +248,10 @@ public abstract class BaseWordCountMapReduceTest extends MultipleCacheManagersTe
          assert count.equals(e.getValue()): "key " + e.getKey() + " does not have count " + count + " but " + e.getValue();                    
       }      
    }
+   
+   protected int nodeCount(){
+      return getCacheManagers().size();
+   }
       
    public void testinvokeMapReduceOnAllKeysWithCollator() throws Exception {
        MapReduceTask<String,String,String,Integer> task = invokeMapReduce(null);
@@ -243,7 +268,7 @@ public abstract class BaseWordCountMapReduceTest extends MultipleCacheManagersTe
       });
        assertWordCount(totalWords, 56);  
    }
-
+   
    public void testinvokeMapReduceOnSubsetOfKeysWithCollator() throws Exception {
       MapReduceTask<String,String,String,Integer> task = invokeMapReduce(new String[] { "1", "2", "3" });
       Integer totalWords = task.execute(new Collator<String, Integer, Integer>() {
@@ -325,7 +350,7 @@ public abstract class BaseWordCountMapReduceTest extends MultipleCacheManagersTe
       }
    }
 
-   private static class WordCountReducer implements Reducer<String, Integer> {
+   static class WordCountReducer implements Reducer<String, Integer> {
       /** The serialVersionUID */
       private static final long serialVersionUID = 1901016598354633256L;
 

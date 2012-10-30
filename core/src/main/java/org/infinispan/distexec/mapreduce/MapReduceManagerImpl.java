@@ -19,6 +19,7 @@
 package org.infinispan.distexec.mapreduce;
 
 import static org.infinispan.distexec.mapreduce.MapReduceTask.DEFAULT_TMP_CACHE_CONFIGURATION_NAME;
+import static org.infinispan.factories.KnownComponentNames.ASYNC_TRANSPORT_EXECUTOR;
 
 import java.io.Serializable;
 import java.util.ArrayList;
@@ -32,6 +33,7 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ExecutorService;
 
 import javax.transaction.TransactionManager;
 
@@ -44,6 +46,7 @@ import org.infinispan.commands.read.ReduceCommand;
 import org.infinispan.container.entries.InternalCacheEntry;
 import org.infinispan.distexec.mapreduce.spi.MapReduceTaskLifecycleService;
 import org.infinispan.distribution.DistributionManager;
+import org.infinispan.factories.annotations.ComponentName;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.loaders.CacheLoader;
 import org.infinispan.loaders.CacheLoaderException;
@@ -67,40 +70,50 @@ import org.infinispan.util.logging.LogFactory;
 public class MapReduceManagerImpl implements MapReduceManager {
 
    private static final Log log = LogFactory.getLog(MapReduceManagerImpl.class);
-
+   private static final int CANCELLATION_CHECK_FREQUENCY = 20;
    private Address localAddress;
    private EmbeddedCacheManager cacheManager;
    private CacheLoaderManager cacheLoaderManager;
+   private ExecutorService executorService;
    
    MapReduceManagerImpl() {
    }
    
    @Inject
-   public void init(EmbeddedCacheManager cacheManager, CacheLoaderManager cacheLoaderManager) {
+   public void init(EmbeddedCacheManager cacheManager, CacheLoaderManager cacheLoaderManager,
+            @ComponentName(ASYNC_TRANSPORT_EXECUTOR) ExecutorService asyncTransportExecutor) {
       this.cacheManager = cacheManager;
       this.cacheLoaderManager = cacheLoaderManager;
       this.localAddress = cacheManager.getAddress();
+      this.executorService = asyncTransportExecutor;
    }
    
    @Override
-   public <KIn, VIn, KOut, VOut> Map<KOut, List<VOut>> mapAndCombineForLocalReduction(
-            MapCombineCommand<KIn, VIn, KOut, VOut> mcc) {
-      CollectableCollector<KOut, VOut> collector = map(mcc);
-      return combineForLocalReduction(mcc, collector);      
+   public ExecutorService getExecutorService() {
+      return executorService;
    }
 
    @Override
-   public <KIn, VIn, KOut, VOut> Set<KOut> mapAndCombineForDistributedReduction(MapCombineCommand<KIn, VIn, KOut, VOut> mcc) {
+   public <KIn, VIn, KOut, VOut> Map<KOut, List<VOut>> mapAndCombineForLocalReduction(
+            MapCombineCommand<KIn, VIn, KOut, VOut> mcc) throws InterruptedException {
+      CollectableCollector<KOut, VOut> collector = map(mcc);
+      return combineForLocalReduction(mcc, collector);
+   }
+
+   @Override
+   public <KIn, VIn, KOut, VOut> Set<KOut> mapAndCombineForDistributedReduction(
+            MapCombineCommand<KIn, VIn, KOut, VOut> mcc) throws InterruptedException {
       CollectableCollector<KOut, VOut> collector = map(mcc);
       try {
          return combine(mcc, collector);
       } catch (Exception e) {
-        throw new CacheException(e);
+         throw new CacheException(e);
       }
    }
 
    @Override
-   public <KOut, VOut> Map<KOut, VOut> reduce(ReduceCommand<KOut,VOut> reduceCommand) {
+   public <KOut, VOut> Map<KOut, VOut> reduce(ReduceCommand<KOut, VOut> reduceCommand)
+            throws InterruptedException {
       Cache<?, ?> cache = cacheManager.getCache(reduceCommand.getCacheName());
       Set<KOut> keys = reduceCommand.getKeys();
       String taskId = reduceCommand.getTaskId();
@@ -117,9 +130,13 @@ public class MapReduceManagerImpl implements MapReduceManager {
          //first hook into lifecycle
          MapReduceTaskLifecycleService taskLifecycleService = MapReduceTaskLifecycleService.getInstance();
          log.tracef("For m/r task %s invoking %s at %s",  taskId, reduceCommand, localAddress);
+         int interruptCount = 0;
          try {
             taskLifecycleService.onPreExecute(reducer, cache);
             for (KOut key : keys) {
+               interruptCount++;
+               if (checkInterrupt(interruptCount++) && Thread.currentThread().isInterrupted())
+                  throw new InterruptedException();
                //load result value from map phase
                List<VOut> value = null;
                if(useIntermediateKeys){
@@ -139,7 +156,8 @@ public class MapReduceManagerImpl implements MapReduceManager {
       return result;
    }
    
-   protected <KIn, VIn, KOut, VOut> CollectableCollector<KOut, VOut> map(MapCombineCommand<KIn, VIn, KOut, VOut> mcc) {
+   protected <KIn, VIn, KOut, VOut> CollectableCollector<KOut, VOut> map(
+            MapCombineCommand<KIn, VIn, KOut, VOut> mcc) throws InterruptedException {
       Cache<KIn, VIn> cache = cacheManager.getCache(mcc.getCacheName());
       Set<KIn> keys = mcc.getKeys();
       Set<KIn> inputKeysCopy = null;
@@ -156,9 +174,13 @@ public class MapReduceManagerImpl implements MapReduceManager {
       MapReduceTaskLifecycleService taskLifecycleService = MapReduceTaskLifecycleService.getInstance();     
       DefaultCollector<KOut, VOut> collector = new DefaultCollector<KOut, VOut>();
       log.tracef("For m/r task %s invoking %s with input keys %s",  mcc.getTaskId(), mcc, inputKeys);
+      int interruptCount = 0;
       try {
          taskLifecycleService.onPreExecute(mapper, cache);
-         for (KIn key : inputKeys) {           
+         for (KIn key : inputKeys) {            
+            if (checkInterrupt(interruptCount++) && Thread.currentThread().isInterrupted())
+               throw new InterruptedException();
+            
             VIn value = cache.get(key);
             mapper.map(key, value, collector);
             if (inputKeysSpecified) {
@@ -174,7 +196,11 @@ public class MapReduceManagerImpl implements MapReduceManager {
             keysFromCacheLoader = filterLocalPrimaryOwner(loadAllKeysFromCacheLoaderUsingFilter(inputKeys), dm);
          }   
          log.tracef("For m/r task %s cache loader input keys %s", mcc.getTaskId(), keysFromCacheLoader);
-         for (KIn key : keysFromCacheLoader) {            
+         interruptCount = 0;
+         for (KIn key : keysFromCacheLoader) {                      
+            if (checkInterrupt(interruptCount++) && Thread.currentThread().isInterrupted())
+               throw new InterruptedException();
+            
             VIn value = loadValueFromCacheLoader(key);            
             if(value != null){
                mapper.map(key, value, collector);
@@ -323,6 +349,10 @@ public class MapReduceManagerImpl implements MapReduceManager {
          result = collector.collectedValues();                  
       }
       return result;
+   }
+   
+   private boolean checkInterrupt(int counter) {
+      return counter % CANCELLATION_CHECK_FREQUENCY == 0;
    }
       
    @SuppressWarnings("unchecked")

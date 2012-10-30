@@ -26,11 +26,13 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.Set;
+import java.util.UUID;
 import java.util.concurrent.Callable;
 
 import org.infinispan.Cache;
 import org.infinispan.commands.VisitableCommand;
 import org.infinispan.commands.Visitor;
+import org.infinispan.commands.CancellableCommand;
 import org.infinispan.commands.remote.BaseRpcCommand;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.distexec.DistributedCallable;
@@ -45,7 +47,8 @@ import org.infinispan.util.InfinispanCollections;
  * @author Mircea Markus
  * @since 5.0
  */
-public class DistributedExecuteCommand<V> extends BaseRpcCommand implements VisitableCommand {
+
+public class DistributedExecuteCommand<V> extends BaseRpcCommand implements VisitableCommand, CancellableCommand{
 
    public static final int COMMAND_ID = 19;
 
@@ -57,9 +60,10 @@ public class DistributedExecuteCommand<V> extends BaseRpcCommand implements Visi
 
    private Callable<V> callable;
 
+   private UUID uuid;
 
    public DistributedExecuteCommand(String cacheName) {
-      super(cacheName);
+      this(cacheName, null, null);
    }
 
    public DistributedExecuteCommand(String cacheName, Collection<Object> inputKeys, Callable<V> callable) {
@@ -69,6 +73,7 @@ public class DistributedExecuteCommand<V> extends BaseRpcCommand implements Visi
       else
          this.keys = new HashSet<Object>(inputKeys);
       this.callable = callable;
+      this.uuid = UUID.randomUUID();
    }
 
    public DistributedExecuteCommand() {
@@ -138,8 +143,13 @@ public class DistributedExecuteCommand<V> extends BaseRpcCommand implements Visi
    }
 
    @Override
+   public UUID getUUID() {
+      return uuid;
+   }
+
+   @Override
    public Object[] getParameters() {
-      return new Object[] { keys, callable};
+      return new Object[] { keys, callable, uuid};
    }
 
    @Override
@@ -149,6 +159,7 @@ public class DistributedExecuteCommand<V> extends BaseRpcCommand implements Visi
       int i = 0;
       this.keys = (Set<Object>) args[i++];
       this.callable = (Callable<V>) args[i++];
+      this.uuid = (UUID) args[i++];
    }
 
    @Override
@@ -183,15 +194,13 @@ public class DistributedExecuteCommand<V> extends BaseRpcCommand implements Visi
 
    @Override
    public String toString() {
-      return "DistributedExecuteCommand{" +
-            "cache=" + cache +
-            ", keys=" + keys +
-            ", callable=" + callable +
-            '}';
+      return "DistributedExecuteCommand [cache=" + cache + ", keys=" + keys + ", callable="
+               + callable + "]";
    }
 
    @Override
    public boolean isReturnValueExpected() {
       return true;
    }
+
 }

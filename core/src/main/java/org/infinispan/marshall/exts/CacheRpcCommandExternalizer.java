@@ -19,6 +19,7 @@
 
 package org.infinispan.marshall.exts;
 
+import org.infinispan.commands.CancelCommand;
 import org.infinispan.commands.CreateCacheCommand;
 import org.infinispan.commands.RemoveCacheCommand;
 import org.infinispan.commands.TopologyAffectedCommand;
@@ -89,7 +90,7 @@ public final class CacheRpcCommandExternalizer extends AbstractExternalizer<Cach
                PrepareCommand.class, RollbackCommand.class, RemoveCacheCommand.class,
                TxCompletionNotificationCommand.class, GetInDoubtTransactionsCommand.class,
                GetInDoubtTxInfoCommand.class, CompleteTransactionCommand.class,
-               VersionedPrepareCommand.class, CreateCacheCommand.class,
+               VersionedPrepareCommand.class, CreateCacheCommand.class, CancelCommand.class,
                VersionedCommitCommand.class);
       // Only interested in cache specific replicable commands
       coreCommands.addAll(gcr.getModuleProperties().moduleCacheRpcCommands());

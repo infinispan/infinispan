@@ -59,6 +59,7 @@ import java.nio.channels.FileChannel;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
+import java.util.UUID;
 import java.util.concurrent.ExecutionException;
 
 import static org.jboss.logging.Logger.Level.*;
@@ -917,4 +918,13 @@ public interface Log extends BasicLogger {
    @LogMessage(level = WARN)
    @Message(value = "Trying to bring back an unexistent site (%s)!", id=205)
    void tryingToBringOnlineUnexistentSite(String siteName);
+   
+   @LogMessage(level = WARN)
+   @Message(value = "Could not execute cancelation command locally %s", id=206)
+   void couldNotExecuteCancellationLocally(String message);
+   
+   @LogMessage(level = WARN)
+   @Message(value = "Could not interrupt as no thread found for command uuid %s", id=207)
+   void couldNotInterruptThread(UUID id);
+   
 }

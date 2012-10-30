@@ -235,6 +235,9 @@ public class RemoteCommandsFactory {
             case XSiteAdminCommand.COMMAND_ID:
                command = new XSiteAdminCommand(cacheName);
                break;
+            case CancelCommand.COMMAND_ID:
+               command = new CancelCommand(cacheName);
+               break;
             default:
                throw new CacheException("Unknown command id " + id + "!");
          }

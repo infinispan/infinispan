@@ -25,7 +25,9 @@ package org.infinispan.commands.read;
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.Set;
+import java.util.UUID;
 
+import org.infinispan.commands.CancellableCommand;
 import org.infinispan.commands.remote.BaseRpcCommand;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.distexec.mapreduce.MapReduceManager;
@@ -40,7 +42,7 @@ import org.infinispan.util.logging.LogFactory;
  * @author Vladimir Blagojevic
  * @since 5.2
  */
-public class ReduceCommand<KOut, VOut> extends BaseRpcCommand {
+public class ReduceCommand<KOut, VOut> extends BaseRpcCommand implements CancellableCommand {
 
    public static final int COMMAND_ID = 31;
    private static final Log log = LogFactory.getLog(ReduceCommand.class);
@@ -49,6 +51,7 @@ public class ReduceCommand<KOut, VOut> extends BaseRpcCommand {
    private String taskId;
    private boolean emitCompositeIntermediateKeys;
    private MapReduceManager mrManager;
+   private UUID uuid;
 
    private ReduceCommand() {
       super(null); // For command id uniqueness test
@@ -66,6 +69,7 @@ public class ReduceCommand<KOut, VOut> extends BaseRpcCommand {
          keys.addAll(inputKeys);
       }
       this.reducer = reducer;
+      this.uuid = UUID.randomUUID();
    }
 
    public void init(MapReduceManager mrManager) {
@@ -110,8 +114,13 @@ public class ReduceCommand<KOut, VOut> extends BaseRpcCommand {
    }
 
    @Override
+   public UUID getUUID() {
+      return uuid;
+   }
+
+   @Override
    public Object[] getParameters() {
-      return new Object[] { taskId, keys, reducer, emitCompositeIntermediateKeys};
+      return new Object[] { taskId, keys, reducer, emitCompositeIntermediateKeys, uuid };
    }
 
    @SuppressWarnings({ "unchecked", "rawtypes" })
@@ -124,6 +133,7 @@ public class ReduceCommand<KOut, VOut> extends BaseRpcCommand {
       keys = (Set<KOut>) args[i++];
       reducer = (Reducer) args[i++];
       emitCompositeIntermediateKeys = (Boolean) args[i++];
+      uuid = (UUID) args[i++];
    }
 
    @Override
