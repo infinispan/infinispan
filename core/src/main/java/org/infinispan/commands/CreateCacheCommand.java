@@ -78,9 +78,7 @@ public class CreateCacheCommand extends BaseRpcCommand {
                   .fetchInMemoryState(false).unsafe().unreliableReturnValues(true).expiration()
                   .lifespan(2, TimeUnit.MINUTES).maxIdle(2, TimeUnit.MINUTES)
                   .wakeUpInterval(30, TimeUnit.SECONDS).enableReaper().clustering()
-                  .cacheMode(CacheMode.DIST_SYNC).hash().numOwners(2).sync().transaction()
-                  .transactionMode(TransactionMode.TRANSACTIONAL).syncCommitPhase(true)
-                  .syncRollbackPhase(true).lockingMode(LockingMode.PESSIMISTIC).build();
+                  .cacheMode(CacheMode.DIST_SYNC).hash().numOwners(2).sync().build();
          cacheManager.defineConfiguration(cacheNameToCreate, cacheConfig);
          log.debug("Using default tmp cache configuration, defined as " + cacheNameToCreate);
       }

@@ -35,7 +35,7 @@ import java.util.Map;
  * @author Vladimir Blagojevic
  * @since 5.2
  */
-@Test(groups = "functional", testName = "distexec.DistributedSharedCacheTwoNodesMapReduceTest", enabled = false, description = "Re:enable with https://issues.jboss.org/browse/ISPN-2439")
+@Test(groups = "functional", testName = "distexec.DistributedSharedCacheTwoNodesMapReduceTest")
 public class DistributedSharedCacheTwoNodesMapReduceTest extends BaseWordCountMapReduceTest {
 
    @Override
@@ -48,82 +48,5 @@ public class DistributedSharedCacheTwoNodesMapReduceTest extends BaseWordCountMa
    protected MapReduceTask<String, String, String, Integer> createMapReduceTask(Cache c){
       //run distributed reduce with intermediate shared cache
       return new MapReduceTask<String, String, String, Integer>(c, true);
-   }
-
-
-   //todo - everything below this line should be removed once ISPN-2439 is integrated. These have been added simply
-   // because testNG is a PITA and disabling this test simply doesn't make testNG not run it (phew!).
-
-   @Test(enabled = false, description = "Re:enable with https://issues.jboss.org/browse/ISPN-2439")
-   public void testImproperCacheStateForMapReduceTask(){}
-
-   @Override
-   public void testinvokeMapReduceOnAllKeys() throws Exception {
-      super.testinvokeMapReduceOnAllKeys();
-   }
-
-   @Override
-   public void testinvokeMapReduceOnEmptyKeys() throws Exception {
-      super.testinvokeMapReduceOnEmptyKeys();
-   }
-
-   @Override
-   public void testCombinerForDistributedReductionWithException() throws Exception {
-      super.testCombinerForDistributedReductionWithException();
-   }
-
-   @Override
-   public void testinvokeMapReduceOnAllKeysWithCombiner() throws Exception {
-      super.testinvokeMapReduceOnAllKeysWithCombiner();
-   }
-
-   @Override
-   public void testCombinerDoesNotChangeResult() throws Exception {
-      super.testCombinerDoesNotChangeResult();
-   }
-
-   @Override
-   public void testMapperReducerIsolation() throws Exception {
-      super.testMapperReducerIsolation();
-   }
-
-   @Override
-   public void testinvokeMapReduceOnAllKeysAsync() throws Exception {
-      super.testinvokeMapReduceOnAllKeysAsync();
-   }
-
-   @Override
-   public void testinvokeMapReduceOnSubsetOfKeys() throws Exception {
-      super.testinvokeMapReduceOnSubsetOfKeys();
-   }
-
-   @Override
-   public void testinvokeMapReduceOnSubsetOfKeysAsync() throws Exception {
-      super.testinvokeMapReduceOnSubsetOfKeysAsync();
-   }
-
-   @Override
-   protected void verifyResults(Map<String, Integer> result, Map<String, Integer> verifyAgainst) {
-      super.verifyResults(result, verifyAgainst);
-   }
-
-   @Override
-   public void testinvokeMapReduceOnAllKeysWithCollator() throws Exception {
-      super.testinvokeMapReduceOnAllKeysWithCollator();
-   }
-
-   @Override
-   public void testinvokeMapReduceOnSubsetOfKeysWithCollator() throws Exception {
-      super.testinvokeMapReduceOnSubsetOfKeysWithCollator();
-   }
-
-   @Override
-   public void testinvokeMapReduceOnAllKeysWithCollatorAsync() throws Exception {
-      super.testinvokeMapReduceOnAllKeysWithCollatorAsync();
-   }
-
-   @Override
-   public void testinvokeMapReduceOnSubsetOfKeysWithCollatorAsync() throws Exception {
-      super.testinvokeMapReduceOnSubsetOfKeysWithCollatorAsync();
    }
 }
