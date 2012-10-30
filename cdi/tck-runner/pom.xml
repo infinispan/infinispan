@@ -58,7 +58,6 @@
       <dependency>
          <groupId>org.infinispan</groupId>
          <artifactId>infinispan-cdi</artifactId>
-         <version>${project.version}</version>
          <scope>test</scope>
       </dependency>
 
@@ -66,21 +65,18 @@
       <dependency>
          <groupId>javax.cache</groupId>
          <artifactId>cache-tests</artifactId>
-         <version>${version.javax.cache}</version>
          <classifier>tests</classifier>
          <scope>test</scope>
       </dependency>
       <dependency>
          <groupId>org.jboss.weld.se</groupId>
          <artifactId>weld-se</artifactId>
-         <version>${version.weld}</version>
          <scope>test</scope>
       </dependency>
 
       <dependency>
          <groupId>junit</groupId>
          <artifactId>junit</artifactId>
-         <version>${version.junit}</version>
          <scope>test</scope>
       </dependency>
    </dependencies>

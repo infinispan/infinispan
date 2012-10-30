@@ -207,6 +207,12 @@
          </dependency>
          <dependency>
             <groupId>${project.groupId}</groupId>
+            <artifactId>infinispan-cdi</artifactId>
+            <version>${project.version}</version>
+            <scope>test</scope>
+         </dependency>
+         <dependency>
+            <groupId>${project.groupId}</groupId>
             <artifactId>infinispan-client-hotrod</artifactId>
             <version>${project.version}</version>
          </dependency>
@@ -216,6 +222,7 @@
             <version>${project.version}</version>
             <type>test-jar</type>
          </dependency>
+         
          <dependency>
             <groupId>${project.groupId}</groupId>
             <artifactId>infinispan-core</artifactId>
@@ -301,6 +308,11 @@
             <version>${version.bdbje}</version>
          </dependency>
          <dependency>
+            <groupId>com.sun.xsom</groupId>
+            <artifactId>xsom</artifactId>
+            <version>${version.xsom}</version>
+         </dependency>
+         <dependency>
             <groupId>com.thoughtworks.xstream</groupId>
             <artifactId>xstream</artifactId>
             <version>${version.xstream}</version>
@@ -340,6 +352,23 @@
             <groupId>org.javassist</groupId>
             <artifactId>javassist</artifactId>
             <version>${version.javassist}</version>
+         </dependency>
+         <dependency>
+            <groupId>javax.cache</groupId>
+            <artifactId>cache-api</artifactId>
+            <version>${version.javax.cache}</version>
+         </dependency>
+         <dependency>
+            <groupId>javax.cache</groupId>
+            <artifactId>cache-tests</artifactId>
+            <version>${version.javax.cache}</version>
+            <classifier>tests</classifier>
+            <scope>test</scope>
+         </dependency>
+         <dependency>
+            <groupId>javax.enterprise</groupId>
+            <artifactId>cdi-api</artifactId>
+            <version>${version.cdi}</version>
          </dependency>
          <dependency>
             <groupId>javax.persistence</groupId>
@@ -475,6 +504,18 @@
          </dependency>
          <dependency>
             <groupId>org.hibernate</groupId>
+            <artifactId>hibernate-core</artifactId>
+            <version>${version.hibernate.core}</version>
+            <scope>provided</scope>
+         </dependency>
+         <dependency>
+            <groupId>org.hibernate</groupId>
+            <artifactId>hibernate-annotations</artifactId>
+            <version>${version.hibernate.annotations}</version>
+            <scope>provided</scope>
+         </dependency>
+         <dependency>
+            <groupId>org.hibernate</groupId>
             <artifactId>hibernate-search-engine</artifactId>
             <version>${version.hibernate.search}</version>
             <exclusions>
@@ -505,9 +546,22 @@
             <scope>import</scope>
          </dependency>
          <dependency>
+            <groupId>org.jboss.arquillian.container</groupId>
+            <artifactId>arquillian-weld-ee-embedded-1.1</artifactId>
+            <version>${version.arquillian.container.weld}</version>
+            <scope>test</scope>
+         </dependency>
+         <dependency>
             <groupId>org.jboss.spec.javax.transaction</groupId>
             <artifactId>jboss-transaction-api_1.1_spec</artifactId>
             <version>${version.jta}</version>
+         </dependency>
+         <dependency>
+            <groupId>org.jboss.spec</groupId>
+            <artifactId>jboss-javaee-6.0</artifactId>
+            <version>${version.jboss.spec}</version>
+            <type>pom</type>
+            <scope>test</scope>
          </dependency>
          <dependency>
             <groupId>org.jboss.logging</groupId>
@@ -552,9 +606,32 @@
             <version>${version.netty}</version>
          </dependency>
          <dependency>
+            <groupId>org.jboss.logmanager</groupId>
+            <artifactId>jboss-logmanager</artifactId>
+            <version>${version.jboss.logmanager}</version>
+            <scope>test</scope>
+         </dependency>
+         <dependency>
             <groupId>org.jboss.resteasy</groupId>
             <artifactId>resteasy-jaxrs</artifactId>
             <version>${version.resteasy}</version>
+         </dependency>
+         <dependency>
+            <groupId>org.jboss.solder</groupId>
+            <artifactId>solder-impl</artifactId>
+            <version>${version.solder}</version>
+         </dependency>
+         <dependency>
+            <groupId>org.jboss.weld</groupId>
+            <artifactId>weld-core</artifactId>
+            <version>${version.weld}</version>
+            <scope>test</scope>
+         </dependency>
+         <dependency>
+            <groupId>org.jboss.weld.se</groupId>
+            <artifactId>weld-se</artifactId>
+            <version>${version.weld}</version>
+            <scope>test</scope>
          </dependency>
          <dependency>
             <groupId>org.jboss</groupId>
@@ -656,6 +733,12 @@
             <groupId>org.slf4j</groupId>
             <artifactId>slf4j-simple</artifactId>
             <version>${version.slf4j}</version>
+         </dependency>
+         <dependency>
+            <groupId>org.slf4j</groupId>
+            <artifactId>slf4j-jdk14</artifactId>
+            <version>${version.slf4j}</version>
+            <scope>test</scope>
          </dependency>
          <dependency>
             <groupId>org.springframework</groupId>

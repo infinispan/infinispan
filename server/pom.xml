@@ -46,7 +46,6 @@
       <dependency>
          <groupId>org.scala-lang</groupId>
          <artifactId>scala-library</artifactId>
-         <version>${version.scala}</version>
       </dependency>
 
       <dependency>
