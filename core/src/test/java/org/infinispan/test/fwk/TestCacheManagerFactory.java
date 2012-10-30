@@ -148,6 +148,7 @@ public class TestCacheManagerFactory {
 
    public static EmbeddedCacheManager createLocalCacheManager(boolean transactional, long lockAcquisitionTimeout) {
       GlobalConfiguration globalConfiguration = GlobalConfiguration.getNonClusteredDefault();
+      globalConfiguration.setAllowDuplicateDomains(true);
       amendMarshaller(globalConfiguration);
       minimizeThreads(globalConfiguration);
       Configuration c = new Configuration();
@@ -347,6 +348,7 @@ public class TestCacheManagerFactory {
       else {
          globalConfiguration = GlobalConfiguration.getNonClusteredDefault();
       }
+      globalConfiguration.setAllowDuplicateDomains(true);
       amendMarshaller(globalConfiguration);
       minimizeThreads(globalConfiguration);
       updateTransactionSupport(defaultCacheConfig);
