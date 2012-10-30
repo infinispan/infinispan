@@ -22,18 +22,18 @@
  */
 package org.infinispan.loaders.jdbc;
 
+import org.infinispan.config.ConfigurationException;
+import org.infinispan.loaders.CacheLoaderException;
+import org.infinispan.loaders.jdbc.connectionfactory.ConnectionFactory;
+import org.infinispan.loaders.jdbc.logging.Log;
+import org.infinispan.util.logging.LogFactory;
+
 import java.sql.Connection;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.Arrays;
 import java.util.Locale;
-
-import org.infinispan.config.ConfigurationException;
-import org.infinispan.loaders.CacheLoaderException;
-import org.infinispan.loaders.jdbc.connectionfactory.ConnectionFactory;
-import org.infinispan.loaders.jdbc.logging.Log;
-import org.infinispan.util.logging.LogFactory;
 
 /**
  * Contains all the logic of manipulating the table, including creating it if needed and access operations like
@@ -105,9 +105,37 @@ public class TableManipulation implements Cloneable {
      ResultSet rs = null;
      try {
         stmt = connection.createStatement();
+        String query;
+        switch(getDatabaseType()) {
+           case ORACLE:
+              query = "SELECT count(*) from (SELECT 1 FROM " + tableName + " WHERE ROWNUM = 1) T";
+              break;
+           case DB2:
+           case DB2_390:
+           case DERBY:
+              query = "SELECT count(*) from (SELECT 1 FROM " + tableName + " FETCH FIRST 1 ROWS ONLY) T";
+              break;
+           case INFORMIX:
+           case INTERBASE:
+           case FIREBIRD:
+              query = "SELECT count(*) from (SELECT FIRST 1 1 FROM " + tableName + ") T";
+              break;
+           case SQL_SERVER:
+              query = "SELECT count(*) from (SELECT TOP (1) 1 FROM " + tableName + ") T";
+              break;
+           case ACCESS:
+           case HSQL:
+           case SYBASE:
+              query = "SELECT count(*) from (SELECT TOP 1 1 FROM " + tableName + ") T";
+              break;
+           default:
+              // the MySQL-style LIMIT clause
+              query = "SELECT count(*) from (SELECT 1 FROM " + tableName + " LIMIT 1) T";
+              break;
+        }
         // Use implicit DB schema mapped to a particular user
         // It makes environments where DBs are shared easier to support
-        rs = stmt.executeQuery("SELECT count(*) FROM " + tableName);
+        rs = stmt.executeQuery(query);
         return rs.next();
      } catch (SQLException e) {
         if (log.isTraceEnabled())
