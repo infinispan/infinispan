@@ -543,6 +543,11 @@ public class CommandsFactoryImpl implements CommandsFactory {
    }
 
    @Override
+   public CreateCacheCommand buildCreateCacheCommand(String cacheNameToCreate, String cacheConfigurationName, boolean start, int size) {
+      return new CreateCacheCommand(cacheName, cacheNameToCreate, cacheConfigurationName, start, size);
+   }
+
+   @Override
    public <KOut, VOut> ReduceCommand<KOut, VOut> buildReduceCommand(String taskId,
             String destintationCache, Reducer<KOut, VOut> r, Collection<KOut> keys) {
       return new ReduceCommand<KOut, VOut>(taskId, r, destintationCache, keys);

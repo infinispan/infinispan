@@ -365,26 +365,29 @@ public class MapReduceTask<KIn, VIn, KOut, VOut> {
    protected boolean useIntermediatePerTaskCache() {
       return !useIntermediateSharedCache();
    }
-   
-   
-   protected void executeTaskInit(String tmpCacheName){
+
+
+   protected void executeTaskInit(String tmpCacheName) {
       RpcManager rpc = cache.getRpcManager();
       CommandsFactory factory = cache.getComponentRegistry().getComponent(CommandsFactory.class);
-      
+
       //first create tmp caches on all nodes
-      CreateCacheCommand ccc = factory.buildCreateCacheCommand(tmpCacheName, DEFAULT_TMP_CACHE_CONFIGURATION_NAME);
-      
-      try{
-         log.debugf("Invoking %s across entire cluster ", ccc);
-         Map<Address, Response> map = rpc.invokeRemotely(null, ccc, true, false);
-         //locally
-         ccc.init(cache.getCacheManager());
-         ccc.perform(null);
-         log.debugf("Invoked %s across entire cluster, results are %s", ccc, map);
-      }
-      catch (Throwable e) {
-         throw new CacheException("Could not initialize temporary caches for MapReduce task on remote nodes ", e);
-      }
+      final CreateCacheCommand ccc = factory.buildCreateCacheCommand(tmpCacheName, DEFAULT_TMP_CACHE_CONFIGURATION_NAME, true, rpc.getMembers().size());
+
+      log.debugf("Invoking %s across members %s ", ccc, cache.getRpcManager().getMembers());
+      mapReduceManager.getExecutorService().submit(new Callable<Object>() {
+         @Override
+         public Object call() throws Exception {
+            //locally
+            ccc.init(cache.getCacheManager());
+            try {
+               return ccc.perform(null);
+            } catch (Throwable e) {
+               throw new CacheException("Could not initialize temporary caches for MapReduce task on remote nodes ", e);
+            }
+         }
+      });
+      rpc.invokeRemotely(cache.getRpcManager().getMembers(), ccc, true, false);
    }
 
    protected Set<KOut> executeMapPhase(boolean useCompositeKeys) throws InterruptedException,
