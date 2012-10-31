@@ -39,6 +39,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import static org.infinispan.test.TestingUtil.assertNoLocks;
+
 /**
  * @author Mircea Markus
  * @since 5.1
@@ -347,4 +349,13 @@ public class APINonTxTest extends SingleCacheManagerTest {
       cache.put("hello", null);
    }
 
+   public void testPutIfAbsentLockCleanup() {
+      assertNoLocks(cache);
+      cache.put("key", "value");
+      assertNoLocks(cache);
+      // This call should fail.
+      cache.putForExternalRead("key", "value2");
+      assertNoLocks(cache);
+      assert cache.get("key").equals("value");
+   }
 }
