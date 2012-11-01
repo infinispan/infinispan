@@ -53,6 +53,9 @@ import org.infinispan.transaction.LocalTransaction;
 import org.infinispan.transaction.RemoteTransaction;
 import org.infinispan.transaction.TransactionCoordinator;
 import org.infinispan.transaction.TransactionTable;
+import org.infinispan.transaction.xa.GlobalTransaction;
+import org.infinispan.transaction.xa.recovery.RecoverableTransactionIdentifier;
+import org.infinispan.transaction.xa.recovery.RecoveryManager;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 import org.rhq.helpers.pluginAnnotations.agent.DataType;
@@ -90,6 +93,7 @@ public class TxInterceptor extends CommandInterceptor {
    protected RpcManager rpcManager;
 
    private static final Log log = LogFactory.getLog(TxInterceptor.class);
+   private RecoveryManager recoveryManager;
 
    @Override
    protected Log getLog() {
@@ -97,11 +101,13 @@ public class TxInterceptor extends CommandInterceptor {
    }
 
    @Inject
-   public void init(TransactionTable txTable, Configuration c, TransactionCoordinator txCoordinator, RpcManager rpcManager) {
+   public void init(TransactionTable txTable, Configuration c, TransactionCoordinator txCoordinator, RpcManager rpcManager,
+                    RecoveryManager recoveryManager) {
       this.cacheConfiguration = c;
       this.txTable = txTable;
       this.txCoordinator = txCoordinator;
       this.rpcManager = rpcManager;
+      this.recoveryManager = recoveryManager;
       setStatisticsEnabled(cacheConfiguration.jmxStatistics().enabled());
    }
 
@@ -160,7 +166,16 @@ public class TxInterceptor extends CommandInterceptor {
       if (!ctx.isOriginLocal()) {
          txTable.remoteTransactionRollback(command.getGlobalTransaction());
       }
-      return invokeNextInterceptor(ctx, command);
+      try {
+         return invokeNextInterceptor(ctx, command);
+      } finally {
+         //for tx that rollback we do not send a TxCompletionNotification, so we should cleanup
+         // the recovery info here
+         if (recoveryManager!=null) {
+            GlobalTransaction gtx = command.getGlobalTransaction();
+            recoveryManager.removeRecoveryInformation(((RecoverableTransactionIdentifier)gtx).getXid());
+         }
+      }
    }
 
    @Override

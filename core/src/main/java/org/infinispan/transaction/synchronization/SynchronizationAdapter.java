@@ -82,6 +82,7 @@ public class SynchronizationAdapter extends AbstractEnlistmentAdapter implements
          } catch (XAException e) {
             throw new CacheException("Could not commit.", e);
          }
+         releaseLocksForCompletedTransaction(localTransaction);
       } else if (status == Status.STATUS_ROLLEDBACK) {
          try {
             txCoordinator.rollback(localTransaction);
@@ -91,7 +92,6 @@ public class SynchronizationAdapter extends AbstractEnlistmentAdapter implements
       } else {
          throw new IllegalArgumentException("Unknown status: " + status);
       }
-      releaseLocksForCompletedTransaction(localTransaction);
    }
 
    @Override
