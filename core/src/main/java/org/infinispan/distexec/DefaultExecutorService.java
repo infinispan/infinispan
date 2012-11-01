@@ -50,6 +50,7 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.concurrent.RejectedExecutionException;
 import java.util.concurrent.RunnableFuture;
+import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -141,6 +142,7 @@ public class DefaultExecutorService extends AbstractExecutorService implements D
    protected final Marshaller marshaller;
    protected final ExecutorService localExecutorService;
    protected final CancellationService cancellationService;
+   protected final boolean takeExecutorOwnership;
 
    /**
     * Creates a new DefaultExecutorService given a master cache node for local task execution. All
@@ -155,15 +157,42 @@ public class DefaultExecutorService extends AbstractExecutorService implements D
 
    /**
     * Creates a new DefaultExecutorService given a master cache node and an ExecutorService for
-    * parallel execution of task ran on this node. All distributed task executions will be initiated
-    * from this Infinispan cache node.
-    *
+    * parallel execution of tasks ran on this node. All distributed task executions will be
+    * initiated from this Infinispan cache node.
+    * <p>
+    * Note that DefaultExecutorService will shutdown client supplied localExecutorService once this
+    * DefaultExecutorService is shutdown
+    * 
+    * Also note that client supplied ExecutorService should not execute tasks in the caller's thread
+    * ( i.e rejectionHandler of {@link ThreadPoolExecutor} configured with {link
+    * {@link ThreadPoolExecutor.CallerRunsPolicy})
+    * 
     * @param masterCacheNode
     *           Cache node initiating distributed task
     * @param localExecutorService
     *           ExecutorService to run local tasks
     */
-   public DefaultExecutorService(Cache<?, ?> masterCacheNode, ExecutorService localExecutorService){
+   public DefaultExecutorService(Cache<?, ?> masterCacheNode, ExecutorService localExecutorService) {
+      this(masterCacheNode, localExecutorService, true);
+   }
+   
+   /**
+    * Creates a new DefaultExecutorService given a master cache node and an ExecutorService for
+    * parallel execution of task ran on this node. All distributed task executions will be initiated
+    * from this Infinispan cache node.
+    * 
+    * @param masterCacheNode
+    *           Cache node initiating distributed task
+    * @param localExecutorService
+    *           ExecutorService to run local tasks
+    * @param takeExecutorOwnership
+    *           if true {@link DistributedExecutorService#shutdown()} and
+    *           {@link DistributedExecutorService#shutdownNow()} method will shutdown
+    *           localExecutorService as well
+    * 
+    */
+   public DefaultExecutorService(Cache<?, ?> masterCacheNode, ExecutorService localExecutorService,
+            boolean takeExecutorOwnership) {
       super();
       if (masterCacheNode == null)
          throw new IllegalArgumentException("Can not use null cache for DefaultExecutorService");
@@ -183,6 +212,7 @@ public class DefaultExecutorService extends AbstractExecutorService implements D
       this.marshaller = registry.getComponent(StreamingMarshaller.class, CACHE_MARSHALLER);
       this.cancellationService = registry.getComponent(CancellationService.class);
       this.localExecutorService = localExecutorService;
+      this.takeExecutorOwnership = takeExecutorOwnership;
    }
 
    @Override
@@ -223,7 +253,12 @@ public class DefaultExecutorService extends AbstractExecutorService implements D
    private List<Runnable> realShutdown(boolean interrupt) {
       isShutdown.set(true);
       // TODO cancel all tasks
-      localExecutorService.shutdownNow();
+      if (takeExecutorOwnership) {
+         if (interrupt)
+            localExecutorService.shutdownNow();
+         else
+            localExecutorService.shutdown();
+      }
       return InfinispanCollections.emptyList();
    }
 
