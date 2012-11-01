@@ -79,6 +79,8 @@ public class BackupSenderImpl implements BackupSender {
    private String cacheName;
    private GlobalConfiguration globalConfig;
 
+   private enum BackupFilter {KEEP_1PC_ONLY, KEEP_2PC_ONLY, KEEP_ALL}
+   
    public BackupSenderImpl(String localSiteName) {
       this.localSiteName = localSiteName;
    }
@@ -108,17 +110,13 @@ public class BackupSenderImpl implements BackupSender {
          offlineStatus.put(bc.site(), offline);
       }
    }
-
-   enum BackupFilter {KEEP_SYNC_ONLY, KEEP_ASYNC_ONLY, KEEP_ALL}
-
+   
    @Override
    public BackupResponse backupPrepare(PrepareCommand command) throws Exception {
-      //if we run a 2PC then filter out ASYNC prepare backup calls as they will happen during the local commit phase
-      // as we know the tx is doomed to succeed.
-      BackupFilter filter = !command.isOnePhaseCommit() ? BackupFilter.KEEP_SYNC_ONLY : BackupFilter.KEEP_ALL;
+      //if we run a 2PC then filter out 1PC prepare backup calls as they will happen during the local commit phase.
+      BackupFilter filter = !command.isOnePhaseCommit() ? BackupFilter.KEEP_2PC_ONLY : BackupFilter.KEEP_ALL;
       List<XSiteBackup> backups = calculateBackupInfo(filter);
       return backupCommand(command, backups);
-
    }
 
    @Override
@@ -158,15 +156,15 @@ public class BackupSenderImpl implements BackupSender {
 
    @Override
    public BackupResponse backupCommit(CommitCommand command) throws Exception {
-      //we have a 2PC: we didn't backup the async stuff during prepare, we need to do it now.
-      send1PcToAsyncBackups(command);
-      List<XSiteBackup> xSiteBackups = calculateBackupInfo(BackupFilter.KEEP_SYNC_ONLY);
+      //we have a 2PC: we didn't backup the 1PC stuff during prepare, we need to do it now.
+      sendTo1PCBackups(command);
+      List<XSiteBackup> xSiteBackups = calculateBackupInfo(BackupFilter.KEEP_2PC_ONLY);
       return backupCommand(command, xSiteBackups);
    }
 
    @Override
    public BackupResponse backupRollback(RollbackCommand command) throws Exception {
-      List<XSiteBackup> xSiteBackups = calculateBackupInfo(BackupFilter.KEEP_SYNC_ONLY);
+      List<XSiteBackup> xSiteBackups = calculateBackupInfo(BackupFilter.KEEP_2PC_ONLY);
       return backupCommand(command, xSiteBackups);
    }
 
@@ -174,7 +172,7 @@ public class BackupSenderImpl implements BackupSender {
    @Override
    public BringSiteOnlineResponse bringSiteOnline(String siteName) {
       if (!config.sites().hasInUseBackup(siteName)) {
-         log.tryingToBringOnlineUnexistentSite(siteName);
+         log.tryingToBringOnlineNonexistentSite(siteName);
          return BringSiteOnlineResponse.NO_SUCH_SITE;
       } else {
          OfflineStatus offline = offlineStatus.get(siteName);
@@ -197,8 +195,8 @@ public class BackupSenderImpl implements BackupSender {
       return transport.backupRemotely(xSiteBackups, new SingleRpcCommand(cacheName, command));
    }
 
-   private void send1PcToAsyncBackups(CommitCommand command) throws Exception {
-      List<XSiteBackup> backups = calculateBackupInfo(BackupFilter.KEEP_ASYNC_ONLY);
+   private void sendTo1PCBackups(CommitCommand command) throws Exception {
+      List<XSiteBackup> backups = calculateBackupInfo(BackupFilter.KEEP_1PC_ONLY);
       LocalTransaction localTx = txTable.getLocalTransaction(command.getGlobalTransaction());
       PrepareCommand prepare = new PrepareCommand(cacheName, localTx.getGlobalTransaction(),
                                                   localTx.getModifications(), true);
@@ -236,12 +234,16 @@ public class BackupSenderImpl implements BackupSender {
             continue;
          }
          boolean isSync = bc.strategy() == BackupConfiguration.BackupStrategy.SYNC;
-         if (backupFilter == BackupFilter.KEEP_ASYNC_ONLY) {
-            if (isSync) continue;
+         if (backupFilter == BackupFilter.KEEP_1PC_ONLY) {
+            if (isSync && bc.isTwoPhaseCommit() ) 
+               continue;
          }
-         if (backupFilter == BackupFilter.KEEP_SYNC_ONLY) {
-            if (!isSync) continue;
+         
+         if (backupFilter == BackupFilter.KEEP_2PC_ONLY) {
+            if (!isSync || ( isSync && !bc.isTwoPhaseCommit() ) ) 
+               continue;
          }
+         
          if (isOffline(bc.site())) {
             log.tracef("The site '%s' is offline, not backing up information to it", bc.site());
             continue;

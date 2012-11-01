@@ -1215,6 +1215,14 @@
               </xs:documentation>
           </xs:annotation>
       </xs:attribute>
+      <xs:attribute name="useTwoPhaseCommit" use="optional" type="xs:boolean">
+          <xs:annotation>
+              <xs:documentation>
+                  Whether a backup will use a 2PC cycle for SYNC backups.  Defaults to "false".
+                  NOTE: Not used for ASYNC backup strategies.
+              </xs:documentation>
+          </xs:annotation>
+      </xs:attribute>      
       <xs:attribute name="failurePolicyClass" use="optional" type="xs:string">
           <xs:annotation>
               <xs:documentation>
