@@ -64,7 +64,7 @@ public class XSiteFileParsing2Test extends SingleCacheManagerTest {
       assertEquals(1, dcc.sites().allBackups().size());
 
       assertTrue(dcc.sites().allBackups().contains(new BackupConfiguration("NYC", BackupConfiguration.BackupStrategy.SYNC,
-                                                                        12003, BackupFailurePolicy.WARN, null, new TakeOfflineConfiguration(0,0))));
+                                                                        12003, BackupFailurePolicy.WARN, null, false, new TakeOfflineConfiguration(0,0))));
       assertNull(dcc.sites().backupFor().remoteSite());
       assertNull(dcc.sites().backupFor().remoteCache());
    }
@@ -78,11 +78,11 @@ public class XSiteFileParsing2Test extends SingleCacheManagerTest {
 
    private void testDefault(Configuration dcc) {
       BackupConfiguration nyc = new BackupConfiguration("NYC", BackupConfiguration.BackupStrategy.SYNC,
-                                                        12003l, BackupFailurePolicy.IGNORE, null, new TakeOfflineConfiguration(0,0));
+                                                        12003l, BackupFailurePolicy.IGNORE, null, false, new TakeOfflineConfiguration(0,0));
       BackupConfiguration sfo = new BackupConfiguration("SFO", BackupConfiguration.BackupStrategy.ASYNC,
-                                                        10000l, BackupFailurePolicy.WARN, null, new TakeOfflineConfiguration(0,0));
+                                                        10000l, BackupFailurePolicy.WARN, null, false, new TakeOfflineConfiguration(0,0));
       BackupConfiguration lon = new BackupConfiguration("LON", BackupConfiguration.BackupStrategy.SYNC,
-                                                        10000l, BackupFailurePolicy.WARN, null, new TakeOfflineConfiguration(0,0));
+                                                        10000l, BackupFailurePolicy.WARN, null, false, new TakeOfflineConfiguration(0,0));
       assertTrue(dcc.sites().allBackups().contains(nyc));
       assertTrue(dcc.sites().allBackups().contains(sfo));
       assertTrue(dcc.sites().allBackups().contains(lon));
