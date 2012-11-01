@@ -46,8 +46,8 @@ import java.util.concurrent.CopyOnWriteArraySet;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorCompletionService;
 import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
-import java.util.concurrent.FutureTask;
 import java.util.concurrent.RejectedExecutionException;
 import java.util.concurrent.RunnableFuture;
 import java.util.concurrent.TimeUnit;
@@ -79,7 +79,6 @@ import org.infinispan.util.Util;
 import org.infinispan.util.concurrent.FutureListener;
 import org.infinispan.util.concurrent.NotifyingFuture;
 import org.infinispan.util.concurrent.NotifyingNotifiableFuture;
-import org.infinispan.util.concurrent.WithinThreadExecutor;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
@@ -151,7 +150,7 @@ public class DefaultExecutorService extends AbstractExecutorService implements D
     *           Cache node initiating distributed task
     */
    public DefaultExecutorService(Cache masterCacheNode) {
-      this(masterCacheNode, new WithinThreadExecutor());
+      this(masterCacheNode, Executors.newSingleThreadExecutor());
    }
 
    /**
@@ -680,7 +679,7 @@ public class DefaultExecutorService extends AbstractExecutorService implements D
       private Callable<T> callable;
       private long timeout;
       private DistributedTaskExecutionPolicy executionPolicy = DistributedTaskExecutionPolicy.ALL;
-      private DistributedTaskFailoverPolicy failoverPolicy = RANDOM_NODE_FAILOVER;
+      private DistributedTaskFailoverPolicy failoverPolicy = NO_FAILOVER;
 
 
       public DefaultDistributedTaskBuilder(long taskTimeout) {
@@ -835,11 +834,17 @@ public class DefaultExecutorService extends AbstractExecutorService implements D
        */
       @Override
       public V get() throws InterruptedException, ExecutionException {
+         V result = null;
          try {
-            return innerGet(0, TimeUnit.MILLISECONDS);
+            result = innerGet(0, TimeUnit.MILLISECONDS);
+         } catch (TimeoutException e) {
+            // this one will never happen as we will wait indefinitely
+            // but have to accommodate innerGet contract
+            throw new IllegalStateException("Timeout should not have been raised", e);
          } finally {
             done = true;
          }
+         return result;
       }
 
       /**
@@ -855,7 +860,7 @@ public class DefaultExecutorService extends AbstractExecutorService implements D
          }
       }
       
-      private V innerGet(long timeout, TimeUnit unit) throws ExecutionException {
+      private V innerGet(long timeout, TimeUnit unit) throws ExecutionException, TimeoutException {
          V response = null;
          try {
             if (timeout > 0) {
@@ -863,6 +868,8 @@ public class DefaultExecutorService extends AbstractExecutorService implements D
             } else {
                response = retrieveResult(f.get());
             }
+         } catch (TimeoutException te) {
+            throw te;
          } catch (Exception e) {
             boolean canFailover = failedOverCount++ < getOwningTask().getTaskFailoverPolicy().maxFailoverAttempts();
             if (canFailover) {
@@ -973,26 +980,25 @@ public class DefaultExecutorService extends AbstractExecutorService implements D
                private Object doLocalInvoke() {
                   Object result = null;
                   getCommand().init(cache);
-                  DistributedTaskLifecycleService taskLifecycleService = DistributedTaskLifecycleService.getInstance();
+                  DistributedTaskLifecycleService lifecycle = DistributedTaskLifecycleService.getInstance();
                   try {
-                     //hook into lifecycle
-                     taskLifecycleService.onPreExecute(getCommand().getCallable(),cache);
+                     // hook into lifecycle
+                     lifecycle.onPreExecute(getCommand().getCallable(), cache);
                      cancellationService.register(Thread.currentThread(), getCommand().getUUID());
                      result = getCommand().perform(null);
-                     return Collections.singletonMap(getAddress(), SuccessfulResponse.create(result));
+                     return Collections.singletonMap(getAddress(),
+                              SuccessfulResponse.create(result));
                   } catch (Throwable e) {
                      return e;
                   } finally {
-                     //hook into lifecycle
-                     taskLifecycleService.onPostExecute(getCommand().getCallable());
+                     // hook into lifecycle
+                     lifecycle.onPostExecute(getCommand().getCallable());
                      cancellationService.unregister(getCommand().getUUID());
                      notifyDone();
                   }
                }
             };
-            final FutureTask<Object> task = new FutureTask<Object>(call);
-            setNetworkFuture((Future<V>) task);
-            localExecutorService.submit(task);
+            setNetworkFuture((Future<V>) localExecutorService.submit(call));
          } catch (Throwable e1) {
             log.localExecutionFailed(e1);
          }
