@@ -66,6 +66,7 @@ import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
 import javax.transaction.xa.Xid;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
@@ -86,6 +87,7 @@ public class ControlledCommandFactory implements CommandsFactory {
    public final ReclosableLatch gate = new ReclosableLatch(true);
    public final AtomicInteger remoteCommandsReceived = new AtomicInteger(0);
    public final AtomicInteger blockTypeCommandsReceived = new AtomicInteger(0);
+   public final List<ReplicableCommand> receivedCommands = new ArrayList<ReplicableCommand>();
    public final Class<? extends  ReplicableCommand> toBlock;
 
    public ControlledCommandFactory(CommandsFactory actual, Class<? extends ReplicableCommand> toBlock) {
@@ -93,8 +95,20 @@ public class ControlledCommandFactory implements CommandsFactory {
       this.toBlock = toBlock;
    }
 
+   public int received(Class<? extends ReplicableCommand> command) {
+      int result = 0;
+      for (ReplicableCommand r : receivedCommands) {
+         if (r.getClass() == command) {
+            result++;
+         }
+      }
+      return result;
+   }
+
    @Override
    public void initializeReplicableCommand(ReplicableCommand command, boolean isRemote) {
+      log.tracef("Received command %s", command);
+      receivedCommands.add(command);
       if (isRemote) {
          remoteCommandsReceived.incrementAndGet();
          if (toBlock != null && command.getClass().isAssignableFrom(toBlock)) {
