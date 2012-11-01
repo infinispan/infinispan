@@ -159,6 +159,14 @@ public class DistributedExecutorTest extends MultipleCacheManagersTest {
       result = des.invokeAny(tasks);
       assert result == 1;
    }
+   
+   @Test(expectedExceptions = TimeoutException.class)
+   public void testInvokeAnyTimedSleepingTasks() throws Exception {
+      DistributedExecutorService des = createDES(getCache());
+      List<SleepingSimpleCallable> tasks = new ArrayList<SleepingSimpleCallable>();
+      tasks.add(new SleepingSimpleCallable());
+      des.invokeAny(tasks, 1000, TimeUnit.MILLISECONDS);
+   }
 
    public void testInvokeAll() throws Exception {
       DistributedExecutorService des = createDES(getCache());
