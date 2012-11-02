@@ -76,8 +76,7 @@ public class StateProviderImpl implements StateProvider {
    private long timeout;
    private int chunkSize;
 
-   private volatile int topologyId;
-   private volatile ConsistentHash readCh;
+   private StateConsumer stateConsumer;
 
    /**
     * A map that keeps track of current outbound state transfers by destination address. There could be multiple transfers
@@ -98,7 +97,8 @@ public class StateProviderImpl implements StateProvider {
                     CacheLoaderManager cacheLoaderManager,
                     DataContainer dataContainer,
                     TransactionTable transactionTable,
-                    StateTransferLock stateTransferLock) {
+                    StateTransferLock stateTransferLock,
+                    StateConsumer stateConsumer) {
       this.cacheName = cache.getName();
       this.executorService = executorService;
       this.configuration = configuration;
@@ -109,6 +109,7 @@ public class StateProviderImpl implements StateProvider {
       this.dataContainer = dataContainer;
       this.transactionTable = transactionTable;
       this.stateTransferLock = stateTransferLock;
+      this.stateConsumer = stateConsumer;
 
       timeout = configuration.clustering().stateTransfer().timeout();
 
@@ -133,9 +134,6 @@ public class StateProviderImpl implements StateProvider {
    }
 
    public void onTopologyUpdate(CacheTopology cacheTopology, boolean isRebalance) {
-      this.readCh = cacheTopology.getReadConsistentHash();
-      this.topologyId = cacheTopology.getTopologyId();
-
       // cancel outbound state transfers for destinations that are no longer members in new topology
       Set<Address> members = new HashSet<Address>(cacheTopology.getWriteConsistentHash().getMembers());
       synchronized (transfersByDestination) {
@@ -187,19 +185,26 @@ public class StateProviderImpl implements StateProvider {
          log.tracef("Received request for transactions from node %s for segments %s of cache %s with topology id %d", destination, segments, cacheName, requestTopologyId);
       }
 
-      if (readCh == null) {
-         throw new IllegalStateException("No cache topology received yet");  // no commands are processed until the join is complete, so this cannot normally happen
+      final CacheTopology cacheTopology = stateConsumer.getCacheTopology();
+      if (cacheTopology == null) {
+         // no commands are processed until the join is complete so this cannot normally happen
+         throw new IllegalStateException("No cache topology received yet");
       }
+      final ConsistentHash readCh = cacheTopology.getReadConsistentHash();
+      final int topologyId = cacheTopology.getTopologyId();
 
       if (requestTopologyId < topologyId) {
          log.warnf("Transactions were requested by node %s with topology %d, smaller than the local " +
                "topology (%d)", destination, requestTopologyId, topologyId);
       } else if (requestTopologyId > topologyId) {
-         log.tracef("Transactions were requested by node %s with topology %d, greater than the local " +
-               "topology (%d). Waiting for topology %d to be installed locally.", destination,
-               requestTopologyId, topologyId, requestTopologyId);
+         if (trace) {
+            log.tracef("Transactions were requested by node %s with topology %d, greater than the local " +
+                  "topology (%d). Waiting for topology %d to be installed locally.", destination,
+                  requestTopologyId, topologyId, requestTopologyId);
+         }
          stateTransferLock.waitForTopology(requestTopologyId);
       }
+
       Set<Integer> ownedSegments = readCh.getSegmentsForOwner(rpcManager.getAddress());
       if (!ownedSegments.containsAll(segments)) {
          segments.removeAll(ownedSegments);
@@ -209,8 +214,8 @@ public class StateProviderImpl implements StateProvider {
       List<TransactionInfo> transactions = new ArrayList<TransactionInfo>();
       //we migrate locks only if the cache is transactional and distributed
       if (configuration.transaction().transactionMode().isTransactional()) {
-         collectTransactionsToTransfer(transactions, transactionTable.getRemoteTransactions(), segments);
-         collectTransactionsToTransfer(transactions, transactionTable.getLocalTransactions(), segments);
+         collectTransactionsToTransfer(transactions, transactionTable.getRemoteTransactions(), segments, readCh);
+         collectTransactionsToTransfer(transactions, transactionTable.getLocalTransactions(), segments, readCh);
          if (trace) {
             log.tracef("Found %d transaction(s) to transfer", transactions.size());
          }
@@ -220,7 +225,7 @@ public class StateProviderImpl implements StateProvider {
 
    private void collectTransactionsToTransfer(List<TransactionInfo> transactionsToTransfer,
                                               Collection<? extends CacheTransaction> transactions,
-                                              Set<Integer> segments) {
+                                              Set<Integer> segments, ConsistentHash readCh) {
       for (CacheTransaction tx : transactions) {
          // transfer only locked keys that belong to requested segments, located on local node
          Set<Object> lockedKeys = new HashSet<Object>();
@@ -248,16 +253,27 @@ public class StateProviderImpl implements StateProvider {
    @Override
    public void startOutboundTransfer(Address destination, int requestTopologyId, Set<Integer> segments)
          throws InterruptedException {
-      log.tracef("Starting outbound transfer of segments %s to node %s with topology id %d", segments,
-            destination, requestTopologyId);
+      if (trace) {
+         log.tracef("Starting outbound transfer of segments %s to node %s with topology id %d", segments,
+               destination, requestTopologyId);
+      }
+
+      final CacheTopology cacheTopology = stateConsumer.getCacheTopology();
+      if (cacheTopology == null) {
+         throw new IllegalStateException("No cache topology received yet");  // no commands are processed until the join is complete, so this cannot normally happen
+      }
+      final ConsistentHash readCh = cacheTopology.getReadConsistentHash();
+      final int topologyId = cacheTopology.getTopologyId();
 
       if (requestTopologyId < topologyId) {
          log.warnf("Segments were requested by node %s with topology %d, smaller than the local " +
                "topology (%d)", destination, requestTopologyId, topologyId);
       } else if (requestTopologyId > topologyId) {
-         log.tracef("Segments were requested by node %s with topology %d, greater than the local " +
-               "topology (%d). Waiting for topology %d to be installed locally.", destination,
-               requestTopologyId, topologyId, requestTopologyId);
+         if (trace) {
+            log.tracef("Segments were requested by node %s with topology %d, greater than the local " +
+                  "topology (%d). Waiting for topology %d to be installed locally.", destination,
+                  requestTopologyId, topologyId, requestTopologyId);
+         }
          stateTransferLock.waitForTopology(requestTopologyId);
       }
 

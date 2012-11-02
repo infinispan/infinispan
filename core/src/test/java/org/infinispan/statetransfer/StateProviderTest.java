@@ -95,6 +95,8 @@ public class StateProviderTest {
    private DataContainer dataContainer;
    private TransactionTable transactionTable;
    private StateTransferLock stateTransferLock;
+   private StateConsumer stateConsumer;
+   private CacheTopology cacheTopology;
 
    @BeforeTest
    public void setUp() {
@@ -128,6 +130,13 @@ public class StateProviderTest {
       dataContainer = mock(DataContainer.class);
       transactionTable = mock(TransactionTable.class);
       stateTransferLock = mock(StateTransferLock.class);
+      stateConsumer = mock(StateConsumer.class);
+      when(stateConsumer.getCacheTopology()).thenAnswer(new Answer<CacheTopology>() {
+         @Override
+         public CacheTopology answer(InvocationOnMock invocation) {
+            return cacheTopology;
+         }
+      });
    }
 
    public void test1() throws InterruptedException {
@@ -159,7 +168,7 @@ public class StateProviderTest {
       StateProviderImpl stateProvider = new StateProviderImpl();
       stateProvider.init(cache, mockExecutorService,
             configuration, rpcManager, commandsFactory, cacheNotifier, cacheLoaderManager,
-            dataContainer, transactionTable, stateTransferLock);
+            dataContainer, transactionTable, stateTransferLock, stateConsumer);
 
       final List<InternalCacheEntry> cacheEntries = new ArrayList<InternalCacheEntry>();
       Object key1 = new TestKey("key1", 0, ch1);
@@ -175,7 +184,8 @@ public class StateProviderTest {
       when(transactionTable.getLocalTransactions()).thenReturn(Collections.<LocalTransaction>emptyList());
       when(transactionTable.getRemoteTransactions()).thenReturn(Collections.<RemoteTransaction>emptyList());
 
-      stateProvider.onTopologyUpdate(new CacheTopology(1, ch1, ch1), false);
+      cacheTopology = new CacheTopology(1, ch1, ch1);
+      stateProvider.onTopologyUpdate(cacheTopology, false);
 
       log.debug("ch1: " + ch1);
       Set<Integer> segmentsToRequest = ch1.getSegmentsForOwner(members1.get(0));
@@ -196,7 +206,8 @@ public class StateProviderTest {
       assertTrue(stateProvider.isStateTransferInProgress());
 
       log.debug("ch2: " + ch2);
-      stateProvider.onTopologyUpdate(new CacheTopology(2, ch1, ch2), true);
+      cacheTopology = new CacheTopology(2, ch1, ch2);
+      stateProvider.onTopologyUpdate(cacheTopology, true);
 
       assertFalse(stateProvider.isStateTransferInProgress());
 
@@ -256,7 +267,7 @@ public class StateProviderTest {
       StateProviderImpl stateProvider = new StateProviderImpl();
       stateProvider.init(cache, pooledExecutorService,
             configuration, rpcManager, commandsFactory, cacheNotifier, cacheLoaderManager,
-            dataContainer, transactionTable, stateTransferLock);
+            dataContainer, transactionTable, stateTransferLock, stateConsumer);
 
       final List<InternalCacheEntry> cacheEntries = new ArrayList<InternalCacheEntry>();
       Object key1 = new TestKey("key1", 0, ch1);
@@ -276,7 +287,8 @@ public class StateProviderTest {
       when(transactionTable.getLocalTransactions()).thenReturn(Collections.<LocalTransaction>emptyList());
       when(transactionTable.getRemoteTransactions()).thenReturn(Collections.<RemoteTransaction>emptyList());
 
-      stateProvider.onTopologyUpdate(new CacheTopology(1, ch1, ch1), false);
+      cacheTopology = new CacheTopology(1, ch1, ch1);
+      stateProvider.onTopologyUpdate(cacheTopology, false);
 
       log.debug("ch1: " + ch1);
       Set<Integer> segmentsToRequest = ch1.getSegmentsForOwner(members1.get(0));
@@ -298,7 +310,8 @@ public class StateProviderTest {
 
       // TestingUtil.sleepThread(15000);
       log.debug("ch2: " + ch2);
-      stateProvider.onTopologyUpdate(new CacheTopology(2, ch1, ch2), false);
+      cacheTopology = new CacheTopology(2, ch1, ch2);
+      stateProvider.onTopologyUpdate(cacheTopology, false);
 
       assertFalse(stateProvider.isStateTransferInProgress());
 
