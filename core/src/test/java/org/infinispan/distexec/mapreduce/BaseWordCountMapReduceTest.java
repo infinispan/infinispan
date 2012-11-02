@@ -32,6 +32,7 @@ import java.util.StringTokenizer;
 import java.util.concurrent.Future;
 
 import org.infinispan.Cache;
+import org.infinispan.CacheException;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.test.CacheManagerCallable;
@@ -194,6 +195,12 @@ public abstract class BaseWordCountMapReduceTest extends MultipleCacheManagersTe
       verifyResults(mapReduce);
    }
    
+   public void testinvokeMapReduceOnEmptyKeys() throws Exception {
+      MapReduceTask<String,String,String,Integer> task = invokeMapReduce(new String[] {});
+      Map<String, Integer> mapReduce = task.execute();
+      verifyResults(mapReduce);
+   }
+
    public void testinvokeMapReduceOnAllKeysWithCombiner() throws Exception {
       MapReduceTask<String,String,String,Integer> task = invokeMapReduce(null, true);
       Map<String, Integer> mapReduce = task.execute();
@@ -229,13 +236,13 @@ public abstract class BaseWordCountMapReduceTest extends MultipleCacheManagersTe
    }
 
    public void testinvokeMapReduceOnSubsetOfKeys() throws Exception {
-      MapReduceTask<String,String,String,Integer> task = invokeMapReduce(new String[] { "1", "2", "3" });
+      MapReduceTask<String,String,String,Integer> task = invokeMapReduce(new String[]{"1", "2", "3"});
       Map<String, Integer> mapReduce = task.execute();
       assertWordCount(countWords(mapReduce), 13);
    }
    
    public void testinvokeMapReduceOnSubsetOfKeysAsync() throws Exception {
-      MapReduceTask<String,String,String,Integer> task = invokeMapReduce(new String[] { "1", "2", "3" });
+      MapReduceTask<String,String,String,Integer> task = invokeMapReduce(new String[]{"1", "2", "3"});
       Future<Map<String, Integer>> future = task.executeAsynchronously();
       Map<String, Integer> mapReduce = future.get();
       assertWordCount(countWords(mapReduce), 13); 
@@ -288,16 +295,16 @@ public abstract class BaseWordCountMapReduceTest extends MultipleCacheManagersTe
    public void testinvokeMapReduceOnAllKeysWithCollatorAsync() throws Exception {
       MapReduceTask<String,String,String,Integer> task = invokeMapReduce(null);
       Future<Integer> future = task.executeAsynchronously(new Collator<String, Integer, Integer>() {
-        
-        @Override
-        public Integer collate(final Map<String, Integer> reducedResults) {
-           int sum = 0;
-           for (Entry<String, Integer> e : reducedResults.entrySet()) {
-              sum += e.getValue();
-           }
-           return sum;
-        }
-     });
+
+         @Override
+         public Integer collate(final Map<String, Integer> reducedResults) {
+            int sum = 0;
+            for (Entry<String, Integer> e : reducedResults.entrySet()) {
+               sum += e.getValue();
+            }
+            return sum;
+         }
+      });
      Integer totalWords = future.get(); 
      assertWordCount(totalWords, 56); 
   }
@@ -317,6 +324,22 @@ public abstract class BaseWordCountMapReduceTest extends MultipleCacheManagersTe
      });
      Integer totalWords = future.get();
      assertWordCount(totalWords, 13); 
+   }
+
+   @Test(expectedExceptions = CacheException.class)
+   public void testCombinerForDistributedReductionWithException() throws Exception {
+      MapReduceTask<String, String, String, Integer> task = invokeMapReduce(null);
+      task.combinedWith(new Reducer<String, Integer>() {
+         @Override
+         public Integer reduce(String reducedKey, Iterator<Integer> iter) {
+            //simulating exception
+            int a = 4 / 0;
+
+            return null;
+         }
+      });
+
+      task.execute();
   }
   
   protected void assertWordCount(int actualWordCount, int expectedWordCount){

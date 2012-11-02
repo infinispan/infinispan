@@ -22,15 +22,28 @@
  */
 package org.infinispan.distexec.mapreduce;
 
+import java.util.HashMap;
+import java.util.Iterator;
 import java.util.Map;
 import java.util.concurrent.Callable;
 import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
+import org.infinispan.Cache;
+import org.infinispan.CacheException;
+import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
+import org.infinispan.manager.EmbeddedCacheManager;
+import org.infinispan.test.CacheManagerCallable;
+import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.testng.annotations.Test;
+
+import static org.infinispan.test.TestingUtil.withCacheManager;
 
 /**
  * SimpleTwoNodesMapReduceTest tests Map/Reduce functionality using two Infinispan nodes and local
@@ -114,6 +127,200 @@ public class SimpleTwoNodesMapReduceTest extends BaseWordCountMapReduceTest {
          //as we can not throw InterruptedException 
          //throw a RuntimeException and check for it in the test...         
          if (interrupted) throw new RuntimeException();
+      }
+   }
+
+   @Test(expectedExceptions = IllegalArgumentException.class)
+   public void testInvokeMapReduceNullMapper() throws Exception {
+      invokeMapReduce(null, null, null);
+   }
+
+   @Test(expectedExceptions = IllegalArgumentException.class)
+   public void testInvokeMapReduceNullReducer() throws Exception {
+      invokeMapReduce(null, new ExceptionMapper(false), null);
+   }
+
+   @Test(expectedExceptions = IllegalArgumentException.class)
+   public void testInvokeMapReduceNullCombiner() throws Exception {
+      Cache cacheObj = cache(0, cacheName());
+      MapReduceTask<String, String, String, Integer> task = new MapReduceTask<String, String, String, Integer>(cacheObj);
+      MapReduceTask<String, String, String, Integer> task1 = new MapReduceTask<String, String, String, Integer>(cacheObj);
+
+      task.mappedWith(new ExceptionMapper(false)).reducedWith(new ExceptionReducer(false));
+      task.combinedWith(null);
+   }
+
+   @Test(expectedExceptions = IllegalArgumentException.class)
+   public void testInvokeMapReduceWithNullMasterCache() {
+      createMapReduceTask(null);
+   }
+
+   @Test(expectedExceptions = CacheException.class)
+   public void testInvokeMapReduceWithException() throws Exception {
+      MapReduceTask<String, String, String, Integer> task = invokeMapReduce(null, new ExceptionMapper(true), new ExceptionReducer(false));
+      task.execute();
+   }
+
+   public void testMapReduceTasksComparison() throws Exception {
+      MapReduceTask<String, String, String, Integer> task = invokeMapReduce(null, new ExceptionMapper(false), new ExceptionReducer(false));
+      MapReduceTask<String, String, String, Integer> task1 = invokeMapReduce(null, new ExceptionMapper(false), new ExceptionReducer(false));
+      MapReduceTask<String, String, String, Integer> task2 = invokeMapReduce(null, new ExceptionMapper(false), new ExceptionReducer(false));
+      MapReduceTask<String, String, String, Integer> task3 = null;
+      MapReduceTask<String, String, String, Integer> task4 = task1;
+
+      Object objectForCompare = new Object();
+
+      Map taskMap = new HashMap();
+      taskMap.put(task, 1);
+      taskMap.put(task1, 2);
+
+
+      assert taskMap.get(task) != null;
+      assert taskMap.get(task1) != null;
+      assert taskMap.get(task2) == null;
+
+      assert !task1.equals(task2);
+      assert !task1.equals(task3);
+      assert !task1.equals(objectForCompare);
+      assert task1.equals(task4);
+
+      Pattern p = Pattern.compile("MapReduceTask \\[mapper=\\S+, reducer=\\S+, combiner=\\S*, keys=\\S*, taskId=\\S+\\]");
+      Matcher m = p.matcher(task1.toString());
+      System.out.println(task1.toString());
+      assert m.find();
+   }
+
+   @Test(expectedExceptions = ExecutionException.class)
+   public void testInvokeAsynchronouslyWithException() throws Exception {
+      MapReduceTask<String, String, String, Integer> task = invokeMapReduce(null, new ExceptionMapper(true), new ExceptionReducer(true));
+
+      Future<Map<String, Integer>> futureMap = task.executeAsynchronously();
+      Map<String, Integer> resultMap = futureMap.get();
+   }
+
+   @Test(expectedExceptions = ExecutionException.class)
+   public void testInvokeAsynchronouslyWithCollatorAndException() throws Exception {
+      MapReduceTask<String, String, String, Integer> task = invokeMapReduce(null, new ExceptionMapper(true), new ExceptionReducer(true));
+
+      Future<Integer> futureMap = task.executeAsynchronously(new Collator<String, Integer, Integer>() {
+
+         @Override
+         public Integer collate(Map<String, Integer> reducedResults) {
+            return 0;
+         }
+      });
+
+      futureMap.get();
+   }
+
+   @Test(expectedExceptions = IllegalStateException.class)
+   public void testEnsureProperCacheState() throws Exception {
+      ConfigurationBuilder builder = getDefaultClusteredCacheConfig(CacheMode.DIST_SYNC, true);
+      EmbeddedCacheManager cacheManager = addClusterEnabledCacheManager(builder);
+      Cache cache = cacheManager.getCache();
+      cache.stop();
+
+      try {
+         MapReduceTask<String, String, String, Integer> task = createMapReduceTask(cache);
+      } catch(IllegalStateException ex) {
+         assert ex.getMessage() != null && ex.getMessage().contains("Invalid cache state");
+         throw ex;
+      }
+   }
+
+   @Test(expectedExceptions = IllegalStateException.class)
+   public void testEnsureProperCacheStateMode() {
+      ConfigurationBuilder builder = getDefaultClusteredCacheConfig(CacheMode.INVALIDATION_SYNC, true);
+
+      withCacheManager(new CacheManagerCallable(TestCacheManagerFactory.createClusteredCacheManager(builder)) {
+
+         @SuppressWarnings("unused")
+         @Override
+         public void call() {
+            Cache<Object, Object> cache = cm.getCache();
+            MapReduceTask<Object, Object, String, Integer> task = new MapReduceTask<Object, Object, String, Integer>(
+                  cache);
+         }
+      });
+   }
+
+   @Test(expectedExceptions = CacheException.class)
+   public void testCombinerWithException() throws Exception {
+      MapReduceTask<String, String, String, Integer> task = invokeMapReduce(null);
+      task.combinedWith(new ExceptionReducer(true));
+
+      task.execute();
+   }
+
+   public void testIntermediateCompositeKeys() {
+      MapReduceManagerImpl.IntermediateCompositeKey key = new MapReduceManagerImpl.IntermediateCompositeKey("task1", 1);
+      MapReduceManagerImpl.IntermediateCompositeKey key1 = new MapReduceManagerImpl.IntermediateCompositeKey("task2", 2);
+      MapReduceManagerImpl.IntermediateCompositeKey key2 = new MapReduceManagerImpl.IntermediateCompositeKey("task1", 1);
+
+      //Composite keys with null taskID
+      MapReduceManagerImpl.IntermediateCompositeKey key3 = new MapReduceManagerImpl.IntermediateCompositeKey(null, 1);
+      MapReduceManagerImpl.IntermediateCompositeKey key4 = new MapReduceManagerImpl.IntermediateCompositeKey(null, 2);
+
+      //Composite keys with null keys
+      MapReduceManagerImpl.IntermediateCompositeKey key5 = new MapReduceManagerImpl.IntermediateCompositeKey("task3", null);
+      MapReduceManagerImpl.IntermediateCompositeKey key6 = new MapReduceManagerImpl.IntermediateCompositeKey("task4", null);
+
+      //Composite keys with null keys & taskIDs
+      MapReduceManagerImpl.IntermediateCompositeKey key7 = new MapReduceManagerImpl.IntermediateCompositeKey(null, null);
+      MapReduceManagerImpl.IntermediateCompositeKey key8 = new MapReduceManagerImpl.IntermediateCompositeKey(null, null);
+
+      assert !key.equals(key1);
+      assert key.equals(key2);
+      assert !key.equals(null);
+      assert !key.equals(new String());
+
+      assert !key3.equals(key4);
+      assert !key5.equals(key6);
+
+      assert key7.equals(key8);
+
+      assert !key3.equals(key);
+      assert !key5.equals(key);
+
+   }
+
+   private static class ExceptionMapper implements Mapper<String, String, String,Integer> {
+      /** The serialVersionUID */
+      private static final long serialVersionUID = -5943370243108735560L;
+      private boolean throwException = false;
+
+      public ExceptionMapper(boolean throwException) {
+         this.throwException = throwException;
+      }
+
+      @Override
+      public void map(String key, String value, Collector<String, Integer> collector) {
+         if(value == null) throw new IllegalArgumentException("Key " + key + " has value " + value);
+
+         if(throwException) {
+            //simulating exception here
+            int a = 4 / 0;
+         }
+      }
+   }
+
+   private static class ExceptionReducer implements Reducer<String, Integer> {
+      /** The serialVersionUID */
+      private static final long serialVersionUID = 1901016598354633256L;
+      private boolean throwException;
+
+      public ExceptionReducer(boolean throwException) {
+         this.throwException = throwException;
+      }
+
+      @Override
+      public Integer reduce(String key, Iterator<Integer> iter) {
+         if(throwException) {
+            //simulating exception
+            int a = 4 / 0;
+         }
+
+         return 0;
       }
    }
 }
