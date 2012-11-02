@@ -183,7 +183,7 @@ public class LegacyConfigurationAdaptor {
          .preload(config.loaders().preload())
          .shared(config.loaders().shared());
 
-      for (LoaderConfiguration loader : config.loaders().cacheLoaders()) {
+      for (CacheLoaderConfiguration loader : config.loaders().cacheLoaders()) {
          CacheLoaderConfig clc = adapt(loader);
          legacy.loaders().addCacheLoader(clc);
       }
@@ -232,18 +232,18 @@ public class LegacyConfigurationAdaptor {
       return legacy.build();
    }
 
-   public static CacheLoaderConfig adapt(LoaderConfiguration loader) {
+   public static CacheLoaderConfig adapt(CacheLoaderConfiguration loader) {
       CacheLoaderConfig clc = null;
       if (loader instanceof LegacyLoaderAdapter<?>) {
          return ((LegacyLoaderAdapter<?>)loader).adapt();
-      } else if (loader instanceof StoreConfiguration) {
+      } else if (loader instanceof CacheStoreConfiguration) {
          if (loader instanceof LegacyStoreConfiguration) {
             LegacyStoreConfiguration store = (LegacyStoreConfiguration) loader;
             CacheLoader cacheStore = store.cacheStore(); // TODO: in 6.0, as we deprecate the LegacyConfigurationLoader#cacheLoader() method, narrow this type to CacheStore
             clc = getLoaderConfig(loader, cacheStore);
          }
          CacheStoreConfig csc = (CacheStoreConfig) clc;
-         StoreConfiguration store = (StoreConfiguration) loader;
+         CacheStoreConfiguration store = (CacheStoreConfiguration) loader;
          adapt(store, csc);
       } else if (loader instanceof LegacyLoaderConfiguration) {
          CacheLoader cacheLoader = ((LegacyLoaderConfiguration) loader).cacheLoader();
@@ -263,7 +263,7 @@ public class LegacyConfigurationAdaptor {
       return clc;
    }
 
-   private static CacheLoaderConfig getLoaderConfig(LoaderConfiguration loader, CacheLoader cacheLoader) {
+   private static CacheLoaderConfig getLoaderConfig(CacheLoaderConfiguration loader, CacheLoader cacheLoader) {
       if (cacheLoader.getClass().isAnnotationPresent(CacheLoaderMetadata.class)) {
          return Util.getInstance(cacheLoader.getClass().getAnnotation(CacheLoaderMetadata.class).configurationClass());
       } else {
@@ -482,7 +482,7 @@ public class LegacyConfigurationAdaptor {
 
    // Temporary method... once cache store configs have been converted, this should go
    public static void adapt(ClassLoader cl, ConfigurationBuilder builder, CacheLoaderConfig clc) {
-      LoaderConfigurationBuilder<?, ?> loaderBuilder = null;
+      CacheLoaderConfigurationBuilder<?, ?> loaderBuilder = null;
       if (clc instanceof ClusterCacheLoaderConfig) {
          ClusterCacheLoaderConfig cclc = (ClusterCacheLoaderConfig) clc;
          ClusterCacheLoaderConfigurationBuilder cclBuilder = builder.loaders().addClusterCacheLoader();
@@ -523,7 +523,7 @@ public class LegacyConfigurationAdaptor {
       }
       if (clc instanceof CacheStoreConfig) {
          CacheStoreConfig csc = (CacheStoreConfig) clc;
-         StoreConfigurationBuilder<?, ?> storeBuilder = (StoreConfigurationBuilder<?, ?>) loaderBuilder;
+         CacheStoreConfigurationBuilder<?, ?> storeBuilder = (CacheStoreConfigurationBuilder<?, ?>) loaderBuilder;
          storeBuilder.async().enabled(csc.getAsyncStoreConfig().isEnabled());
          storeBuilder.async().flushLockTimeout(csc.getAsyncStoreConfig().getFlushLockTimeout());
          storeBuilder.async().modificationQueueSize(csc.getAsyncStoreConfig().getModificationQueueSize());
@@ -535,7 +535,7 @@ public class LegacyConfigurationAdaptor {
       }
    }
 
-   public static void adapt(StoreConfiguration config, CacheStoreConfig legacy) {
+   public static void adapt(CacheStoreConfiguration config, CacheStoreConfig legacy) {
       legacy.fetchPersistentState(config.fetchPersistentState());
       legacy.ignoreModifications(config.ignoreModifications());
       legacy.purgeOnStartup(config.purgeOnStartup());

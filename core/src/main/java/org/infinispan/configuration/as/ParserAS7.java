@@ -32,7 +32,7 @@ import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.cache.FileCacheStoreConfigurationBuilder;
 import org.infinispan.configuration.cache.LegacyStoreConfigurationBuilder;
-import org.infinispan.configuration.cache.StoreConfigurationBuilder;
+import org.infinispan.configuration.cache.CacheStoreConfigurationBuilder;
 import org.infinispan.configuration.parsing.ConfigurationBuilderHolder;
 import org.infinispan.configuration.parsing.ConfigurationParser;
 import org.infinispan.configuration.parsing.Namespace;
@@ -626,7 +626,7 @@ public class ParserAS7 implements ConfigurationParser<ConfigurationBuilderHolder
       this.parseStoreElements(reader, storeBuilder);
    }
 
-   public static void parseStoreAttribute(XMLExtendedStreamReader reader, int index, StoreConfigurationBuilder<?, ?> storeBuilder) throws XMLStreamException {
+   public static void parseStoreAttribute(XMLExtendedStreamReader reader, int index, CacheStoreConfigurationBuilder<?, ?> storeBuilder) throws XMLStreamException {
       String value = reader.getAttributeValue(index);
       Attribute attribute = Attribute.forName(reader.getAttributeLocalName(index));
       storeBuilder.purgeSynchronously(true);
@@ -661,13 +661,13 @@ public class ParserAS7 implements ConfigurationParser<ConfigurationBuilderHolder
       }
    }
 
-   private void parseStoreElements(XMLExtendedStreamReader reader, StoreConfigurationBuilder<?, ?> storeBuilder) throws XMLStreamException {
+   private void parseStoreElements(XMLExtendedStreamReader reader, CacheStoreConfigurationBuilder<?, ?> storeBuilder) throws XMLStreamException {
       while (reader.hasNext() && (reader.nextTag() != XMLStreamConstants.END_ELEMENT)) {
          parseStoreElement(reader, storeBuilder);
       }
    }
 
-   public static void parseStoreElement(XMLExtendedStreamReader reader, StoreConfigurationBuilder<?, ?> storeBuilder) throws XMLStreamException {
+   public static void parseStoreElement(XMLExtendedStreamReader reader, CacheStoreConfigurationBuilder<?, ?> storeBuilder) throws XMLStreamException {
       Element element = Element.forName(reader.getLocalName());
       switch (element) {
       case WRITE_BEHIND: {
@@ -711,7 +711,7 @@ public class ParserAS7 implements ConfigurationParser<ConfigurationBuilderHolder
       ParseUtils.requireNoContent(reader);
    }
 
-   public static void parseStoreProperty(XMLExtendedStreamReader reader, StoreConfigurationBuilder<?, ?> storeBuilder) throws XMLStreamException {
+   public static void parseStoreProperty(XMLExtendedStreamReader reader, CacheStoreConfigurationBuilder<?, ?> storeBuilder) throws XMLStreamException {
       String property = ParseUtils.requireSingleAttribute(reader, Attribute.NAME.getLocalName());
       String value = reader.getElementText();
       storeBuilder.addProperty(property, value);

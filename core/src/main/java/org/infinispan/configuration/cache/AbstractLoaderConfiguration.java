@@ -30,7 +30,7 @@ import org.infinispan.util.TypedProperties;
  *
  * @since 5.1
  */
-public abstract class AbstractLoaderConfiguration extends AbstractTypedPropertiesConfiguration implements LoaderConfiguration {
+public abstract class AbstractLoaderConfiguration extends AbstractTypedPropertiesConfiguration implements CacheLoaderConfiguration {
 
    protected AbstractLoaderConfiguration(TypedProperties properties) {
       super(properties);

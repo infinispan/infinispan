@@ -28,7 +28,7 @@ import org.infinispan.commands.write.InvalidateCommand;
 import org.infinispan.commands.write.PutKeyValueCommand;
 import org.infinispan.commands.write.RemoveCommand;
 import org.infinispan.commands.write.ReplaceCommand;
-import org.infinispan.configuration.cache.StoreConfiguration;
+import org.infinispan.configuration.cache.CacheStoreConfiguration;
 import org.infinispan.container.EntryFactory;
 import org.infinispan.container.entries.CacheEntry;
 import org.infinispan.container.entries.InternalCacheEntry;
@@ -261,7 +261,7 @@ public class CacheLoaderInterceptor extends JmxStatsCommandInterceptor {
       if (enabled && clm.isEnabled()) {
          if (loader instanceof ChainingCacheStore) {
             ChainingCacheStore chainingStore = (ChainingCacheStore) loader;
-            LinkedHashMap<CacheStore, StoreConfiguration> stores = chainingStore.getStores();
+            LinkedHashMap<CacheStore, CacheStoreConfiguration> stores = chainingStore.getStores();
             Set<String> storeTypes = new HashSet<String>(stores.size());
             for (CacheStore cs : stores.keySet()) storeTypes.add(cs.getClass().getName());
             return storeTypes;

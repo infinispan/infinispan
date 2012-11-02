@@ -41,8 +41,8 @@ import org.infinispan.configuration.cache.ClusterCacheLoaderConfigurationBuilder
 import org.infinispan.configuration.cache.InterceptorConfigurationBuilder;
 import org.infinispan.configuration.cache.LegacyLoaderConfigurationBuilder;
 import org.infinispan.configuration.cache.LegacyStoreConfigurationBuilder;
-import org.infinispan.configuration.cache.LoaderConfigurationBuilder;
-import org.infinispan.configuration.cache.StoreConfigurationBuilder;
+import org.infinispan.configuration.cache.CacheLoaderConfigurationBuilder;
+import org.infinispan.configuration.cache.CacheStoreConfigurationBuilder;
 import org.infinispan.configuration.cache.VersioningScheme;
 import org.infinispan.configuration.global.GlobalConfigurationBuilder;
 import org.infinispan.configuration.global.ShutdownHookBehavior;
@@ -497,7 +497,7 @@ public class Parser51 implements ConfigurationParser<ConfigurationBuilderHolder>
 
    }
 
-   private void parseLoaderChildren(XMLStreamReader reader, LoaderConfigurationBuilder<?, ?> loaderBuilder) throws XMLStreamException {
+   private void parseLoaderChildren(XMLStreamReader reader, CacheLoaderConfigurationBuilder<?, ?> loaderBuilder) throws XMLStreamException {
       while (reader.hasNext() && (reader.nextTag() != XMLStreamConstants.END_ELEMENT)) {
          Element element = Element.forName(reader.getLocalName());
          switch (element) {
@@ -510,7 +510,7 @@ public class Parser51 implements ConfigurationParser<ConfigurationBuilderHolder>
       }
    }
 
-   private void parseStoreChildren(XMLStreamReader reader, StoreConfigurationBuilder<?, ?> storeBuilder) throws XMLStreamException {
+   private void parseStoreChildren(XMLStreamReader reader, CacheStoreConfigurationBuilder<?, ?> storeBuilder) throws XMLStreamException {
       while (reader.hasNext() && (reader.nextTag() != XMLStreamConstants.END_ELEMENT)) {
          Element element = Element.forName(reader.getLocalName());
          switch (element) {
@@ -529,7 +529,7 @@ public class Parser51 implements ConfigurationParser<ConfigurationBuilderHolder>
       }
    }
 
-   private void parseSingletonStore(XMLStreamReader reader, StoreConfigurationBuilder<?, ?> storeBuilder) throws XMLStreamException {
+   private void parseSingletonStore(XMLStreamReader reader, CacheStoreConfigurationBuilder<?, ?> storeBuilder) throws XMLStreamException {
       for (int i = 0; i < reader.getAttributeCount(); i++) {
          ParseUtils.requireNoNamespaceAttribute(reader, i);
          String value = replaceProperties(reader.getAttributeValue(i));
@@ -555,7 +555,7 @@ public class Parser51 implements ConfigurationParser<ConfigurationBuilderHolder>
       ParseUtils.requireNoContent(reader);
    }
 
-   private void parseAsyncStore(XMLStreamReader reader, StoreConfigurationBuilder<?, ?> storeBuilder) throws XMLStreamException {
+   private void parseAsyncStore(XMLStreamReader reader, CacheStoreConfigurationBuilder<?, ?> storeBuilder) throws XMLStreamException {
       for (int i = 0; i < reader.getAttributeCount(); i++) {
          ParseUtils.requireNoNamespaceAttribute(reader, i);
          String value = replaceProperties(reader.getAttributeValue(i));

@@ -24,7 +24,7 @@ package org.infinispan.loaders.jdbc.mixed;
 
 import org.infinispan.Cache;
 import org.infinispan.CacheImpl;
-import org.infinispan.configuration.cache.LoaderConfiguration;
+import org.infinispan.configuration.cache.CacheLoaderConfiguration;
 import org.infinispan.loaders.CacheLoaderManager;
 import org.infinispan.loaders.CacheStore;
 import org.infinispan.loaders.jdbc.ManagedConnectionFactoryTest;
@@ -70,9 +70,9 @@ public class MixedStoreWithManagedConnectionTest extends ManagedConnectionFactor
          Cache<String, String> first = cm.getCache("first");
          Cache<String, String> second = cm.getCache("second");
 
-         LoaderConfiguration firstCacheLoaderConfig = first.getCacheConfiguration().loaders().cacheLoaders().get(0);
+         CacheLoaderConfiguration firstCacheLoaderConfig = first.getCacheConfiguration().loaders().cacheLoaders().get(0);
          assert firstCacheLoaderConfig != null;
-         LoaderConfiguration secondCacheLoaderConfig = second.getCacheConfiguration().loaders().cacheLoaders().get(0);
+         CacheLoaderConfiguration secondCacheLoaderConfig = second.getCacheConfiguration().loaders().cacheLoaders().get(0);
          assert secondCacheLoaderConfig != null;
          assert firstCacheLoaderConfig instanceof JdbcMixedCacheStoreConfiguration;
          assert secondCacheLoaderConfig instanceof JdbcMixedCacheStoreConfiguration;

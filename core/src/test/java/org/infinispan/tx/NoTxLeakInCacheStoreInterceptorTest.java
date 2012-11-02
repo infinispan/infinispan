@@ -27,7 +27,7 @@ import java.util.Set;
 
 import org.infinispan.Cache;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
-import org.infinispan.configuration.cache.LoaderConfigurationBuilder;
+import org.infinispan.configuration.cache.CacheLoaderConfigurationBuilder;
 import org.infinispan.configuration.cache.VersioningScheme;
 import org.infinispan.interceptors.CacheStoreInterceptor;
 import org.infinispan.interceptors.InterceptorChain;
@@ -60,7 +60,7 @@ public class NoTxLeakInCacheStoreInterceptorTest extends MultipleCacheManagersTe
                .scheme(VersioningScheme.SIMPLE).transaction().lockingMode(LockingMode.PESSIMISTIC);
       cb.loaders().passivation(false).preload(true).shared(true);
       // Make it really shared by adding the test's name as store name
-      LoaderConfigurationBuilder lb = cb.loaders().addCacheLoader()
+      CacheLoaderConfigurationBuilder lb = cb.loaders().addCacheLoader()
                .cacheLoader(new DummyInMemoryCacheStore());
       lb.addProperty("storeName", getClass().getSimpleName());
 

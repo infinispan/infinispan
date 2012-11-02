@@ -1,33 +1,82 @@
 /*
- * JBoss, Home of Professional Open Source
- * Copyright 2012 Red Hat Inc. and/or its affiliates and other contributors
- * as indicated by the @author tags. All rights reserved.
- * See the copyright.txt in the distribution for a
- * full listing of individual contributors.
+ * Copyright 2011 Red Hat, Inc. and/or its affiliates.
  *
- * This copyrighted material is made available to anyone wishing to use,
- * modify, copy, or redistribute it subject to the terms and conditions
- * of the GNU Lesser General Public License, v. 2.1.
- * This program is distributed in the hope that it will be useful, but WITHOUT A
- * WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A
- * PARTICULAR PURPOSE.  See the GNU Lesser General Public License for more details.
- * You should have received a copy of the GNU Lesser General Public License,
- * v.2.1 along with this distribution; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston,
- * MA  02110-1301, USA.
+ * This is free software; you can redistribute it and/or modify it
+ * under the terms of the GNU Lesser General Public License as
+ * published by the Free Software Foundation; either version 2.1 of
+ * the License, or (at your option) any later version.
+ *
+ * This software is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ * Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with this library; if not, write to the Free Software
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
+ * 02110-1301 USA
  */
 package org.infinispan.configuration.cache;
 
-import java.util.Properties;
+import org.infinispan.configuration.BuiltBy;
+import org.infinispan.loaders.CacheLoader;
+import org.infinispan.util.TypedProperties;
 
 /**
- * LoaderConfiguration
+ * Configuration a legacy cache store, i.e. one which doesn't provide its own configuration builder
  *
+ * @author Pete Muir
  * @author Tristan Tarrant
  * @since 5.2
+ *
  */
-public interface LoaderConfiguration {
+@BuiltBy(LoaderConfigurationBuilder.class)
+public class LoaderConfiguration extends AbstractStoreConfiguration {
 
-   Properties properties();
+   private final CacheLoader cacheStore; // TODO: in 6.0, as we deprecate the cacheLoader() method in LegacyStoreConfigurationBuilder, narrow this type to CacheStore
+
+   LoaderConfiguration(TypedProperties properties, CacheLoader cacheStore, boolean fetchPersistentState,
+         boolean ignoreModifications, boolean purgeOnStartup, int purgerThreads, boolean purgeSynchronously,
+         AsyncStoreConfiguration async, SingletonStoreConfiguration singletonStore) {
+      super(purgeOnStartup, purgeSynchronously, purgerThreads, fetchPersistentState, ignoreModifications, properties,
+            async, singletonStore);
+      this.cacheStore = cacheStore;
+   }
+
+   public CacheLoader cacheStore() {
+      return cacheStore;
+   }
+
+   @Override
+   public String toString() {
+      return "StoreConfiguration{" + "cacheStore=" + cacheStore + ", purgeOnStartup=" + purgeOnStartup()
+            + ", purgeSynchronously=" + purgeSynchronously() + ", purgerThreads=" + purgerThreads()
+            + ", fetchPersistentState=" + fetchPersistentState() + ", ignoreModifications=" + ignoreModifications()
+            + ", properties=" + properties() + ", async=" + async() + ", singletonStore=" + singletonStore() + '}';
+   }
+
+   @Override
+   public boolean equals(Object o) {
+      if (this == o)
+         return true;
+      if (o == null || getClass() != o.getClass())
+         return false;
+      if (!super.equals(o))
+         return false;
+
+      LoaderConfiguration that = (LoaderConfiguration) o;
+
+      if (cacheStore != null ? !cacheStore.equals(that.cacheStore) : that.cacheStore != null)
+         return false;
+
+      return true;
+   }
+
+   @Override
+   public int hashCode() {
+      int result = super.hashCode();
+      result = 31 * result + (cacheStore != null ? cacheStore.hashCode() : 0);
+      return result;
+   }
 
 }

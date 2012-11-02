@@ -22,7 +22,7 @@ import java.util.Properties;
 
 /**
  *
- * AbstractLoaderConfigurationChildBuilder delegates {@link LoaderConfigurationChildBuilder} methods to a specified {@link LoaderConfigurationBuilder}
+ * AbstractLoaderConfigurationChildBuilder delegates {@link LoaderConfigurationChildBuilder} methods to a specified {@link CacheLoaderConfigurationBuilder}
  *
  * @author Pete Muir
  * @author Tristan Tarrant
@@ -30,9 +30,9 @@ import java.util.Properties;
  */
 public abstract class AbstractLoaderConfigurationChildBuilder<S> extends AbstractLoadersConfigurationChildBuilder implements LoaderConfigurationChildBuilder<S> {
 
-   private final LoaderConfigurationBuilder<? extends AbstractLoaderConfiguration, ? extends LoaderConfigurationBuilder<?,?>> builder;
+   private final CacheLoaderConfigurationBuilder<? extends AbstractLoaderConfiguration, ? extends CacheLoaderConfigurationBuilder<?,?>> builder;
 
-   protected AbstractLoaderConfigurationChildBuilder(LoaderConfigurationBuilder<? extends AbstractLoaderConfiguration, ? extends LoaderConfigurationBuilder<?,?>> builder) {
+   protected AbstractLoaderConfigurationChildBuilder(CacheLoaderConfigurationBuilder<? extends AbstractLoaderConfiguration, ? extends CacheLoaderConfigurationBuilder<?,?>> builder) {
       super(builder.loaders());
       this.builder = builder;
    }

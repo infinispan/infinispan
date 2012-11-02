@@ -26,8 +26,8 @@ import org.infinispan.util.logging.LogFactory;
  * This is slightly different AbstractLoaderConfigurationChildBuilder, as it instantiates a new set of children (async and singletonStore)
  * rather than delegate to existing ones.
  */
-public abstract class AbstractStoreConfigurationBuilder<T extends StoreConfiguration, S extends AbstractStoreConfigurationBuilder<T, S>> extends
-      AbstractLoaderConfigurationBuilder<T, S> implements StoreConfigurationBuilder<T, S> {
+public abstract class AbstractStoreConfigurationBuilder<T extends CacheStoreConfiguration, S extends AbstractStoreConfigurationBuilder<T, S>> extends
+      AbstractLoaderConfigurationBuilder<T, S> implements CacheStoreConfigurationBuilder<T, S> {
 
    private static final Log log = LogFactory.getLog(LegacyStoreConfigurationBuilder.class);
 

@@ -24,7 +24,7 @@ package org.infinispan.configuration.cache;
  * @author Tristan Tarrant
  * @since 5.2
  */
-public interface LockSupportStoreConfiguration extends StoreConfiguration {
+public interface LockSupportStoreConfiguration extends CacheStoreConfiguration {
 
    /**
     * The timeout in milliseconds before giving up on acquiring a lock

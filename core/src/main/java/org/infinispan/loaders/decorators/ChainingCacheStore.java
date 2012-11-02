@@ -25,8 +25,8 @@ package org.infinispan.loaders.decorators;
 import net.jcip.annotations.GuardedBy;
 import org.infinispan.Cache;
 import org.infinispan.configuration.cache.LegacyConfigurationAdaptor;
-import org.infinispan.configuration.cache.LoaderConfiguration;
-import org.infinispan.configuration.cache.StoreConfiguration;
+import org.infinispan.configuration.cache.CacheLoaderConfiguration;
+import org.infinispan.configuration.cache.CacheStoreConfiguration;
 import org.infinispan.container.entries.InternalCacheEntry;
 import org.infinispan.loaders.CacheLoader;
 import org.infinispan.loaders.CacheLoaderConfig;
@@ -66,9 +66,9 @@ public class ChainingCacheStore implements CacheStore {
    private static final Log log = LogFactory.getLog(ChainingCacheStore.class);
    private final ReadWriteLock loadersAndStoresMutex = new ReentrantReadWriteLock();
    @GuardedBy("loadersAndStoresMutex")
-   private final Map<CacheLoader, LoaderConfiguration> loaders = new LinkedHashMap<CacheLoader, LoaderConfiguration>();
+   private final Map<CacheLoader, CacheLoaderConfiguration> loaders = new LinkedHashMap<CacheLoader, CacheLoaderConfiguration>();
    @GuardedBy("loadersAndStoresMutex")
-   private final Map<CacheStore, StoreConfiguration> stores = new LinkedHashMap<CacheStore, StoreConfiguration>();
+   private final Map<CacheStore, CacheStoreConfiguration> stores = new LinkedHashMap<CacheStore, CacheStoreConfiguration>();
 
    @Override
    public void store(InternalCacheEntry ed) throws CacheLoaderException {
@@ -85,7 +85,7 @@ public class ChainingCacheStore implements CacheStore {
       loadersAndStoresMutex.readLock().lock();
       try {
          // loading and storing state via streams is *only* supported on the *first* store that has fetchPersistentState set.
-         for (Map.Entry<CacheStore, StoreConfiguration> e : stores.entrySet()) {
+         for (Map.Entry<CacheStore, CacheStoreConfiguration> e : stores.entrySet()) {
             if (e.getValue().fetchPersistentState()) {
                e.getKey().fromStream(inputStream);
                // do NOT continue this for other stores, since the stream will not be in an appropriate state anymore
@@ -103,7 +103,7 @@ public class ChainingCacheStore implements CacheStore {
       loadersAndStoresMutex.readLock().lock();
       try {
          // loading and storing state via streams is *only* supported on the *first* store that has fetchPersistentState set.
-         for (Map.Entry<CacheStore, StoreConfiguration> e : stores.entrySet()) {
+         for (Map.Entry<CacheStore, CacheStoreConfiguration> e : stores.entrySet()) {
             if (e.getValue().fetchPersistentState()) {
                e.getKey().toStream(outputStream);
                // do NOT continue this for other stores, since the stream will not be in an appropriate state anymore
@@ -191,7 +191,7 @@ public class ChainingCacheStore implements CacheStore {
    public void init(CacheLoaderConfig config, Cache<?, ?> cache, StreamingMarshaller m) throws CacheLoaderException {
       loadersAndStoresMutex.readLock().lock();
       try {
-         for (Map.Entry<CacheLoader, LoaderConfiguration> e : loaders.entrySet()) {
+         for (Map.Entry<CacheLoader, CacheLoaderConfiguration> e : loaders.entrySet()) {
             e.getKey().init(LegacyConfigurationAdaptor.adapt(e.getValue()), cache, m);
          }
       } finally {
@@ -294,11 +294,11 @@ public class ChainingCacheStore implements CacheStore {
       }
    }
 
-   public void addCacheLoader(CacheLoader loader, LoaderConfiguration config) {
+   public void addCacheLoader(CacheLoader loader, CacheLoaderConfiguration config) {
       loadersAndStoresMutex.writeLock().lock();
       try {
          loaders.put(loader, config);
-         if (loader instanceof CacheStore) stores.put((CacheStore) loader, (StoreConfiguration) config);
+         if (loader instanceof CacheStore) stores.put((CacheStore) loader, (CacheStoreConfiguration) config);
       } finally {
          loadersAndStoresMutex.writeLock().unlock();
       }
@@ -307,8 +307,8 @@ public class ChainingCacheStore implements CacheStore {
    public void purgeIfNecessary() throws CacheLoaderException {
       loadersAndStoresMutex.readLock().lock();
       try {
-         for (Map.Entry<CacheStore, StoreConfiguration> e : stores.entrySet()) {
-            StoreConfiguration value = e.getValue();
+         for (Map.Entry<CacheStore, CacheStoreConfiguration> e : stores.entrySet()) {
+            CacheStoreConfiguration value = e.getValue();
             if (value.purgeOnStartup())
                e.getKey().clear();
          }
@@ -317,10 +317,10 @@ public class ChainingCacheStore implements CacheStore {
       }
    }
 
-   public LinkedHashMap<CacheStore, StoreConfiguration> getStores() {
+   public LinkedHashMap<CacheStore, CacheStoreConfiguration> getStores() {
       loadersAndStoresMutex.readLock().lock();
       try {
-         return new LinkedHashMap<CacheStore, StoreConfiguration>(stores);
+         return new LinkedHashMap<CacheStore, CacheStoreConfiguration>(stores);
       } finally {
          loadersAndStoresMutex.readLock().unlock();
       }

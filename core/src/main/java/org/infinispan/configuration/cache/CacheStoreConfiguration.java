@@ -18,7 +18,7 @@
  */
 package org.infinispan.configuration.cache;
 
-public interface StoreConfiguration extends LoaderConfiguration {
+public interface CacheStoreConfiguration extends CacheLoaderConfiguration {
 
    /**
     * Configuration for the async cache loader. If enabled, this provides you with asynchronous

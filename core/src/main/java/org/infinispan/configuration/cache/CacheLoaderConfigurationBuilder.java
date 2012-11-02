@@ -18,13 +18,15 @@
  */
 package org.infinispan.configuration.cache;
 
+import org.infinispan.configuration.Builder;
+import org.infinispan.configuration.Self;
+
 /**
- * StoreConfigurationBuilder is the interface which should be implemented by all cache store builders
+ * LoaderConfigurationBuilder is an interface which should be implemented by all cache loader builders
  *
  * @author Tristan Tarrant
  * @since 5.2
  */
-public interface StoreConfigurationBuilder<T extends StoreConfiguration, S extends StoreConfigurationBuilder<T, S>> extends LoaderConfigurationBuilder<T, S>, StoreConfigurationChildBuilder<S> {
-
+public interface CacheLoaderConfigurationBuilder<T extends CacheLoaderConfiguration, S extends CacheLoaderConfigurationBuilder<T,S>> extends Builder<T>, LoaderConfigurationChildBuilder<S>, Self<S> {
 
 }

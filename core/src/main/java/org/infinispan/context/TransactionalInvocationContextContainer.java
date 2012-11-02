@@ -22,7 +22,7 @@ package org.infinispan.context;
 import org.infinispan.CacheException;
 import org.infinispan.configuration.cache.ClusterCacheLoaderConfiguration;
 import org.infinispan.configuration.cache.Configuration;
-import org.infinispan.configuration.cache.LoaderConfiguration;
+import org.infinispan.configuration.cache.CacheLoaderConfiguration;
 import org.infinispan.context.impl.LocalTxInvocationContext;
 import org.infinispan.context.impl.NonTxInvocationContext;
 import org.infinispan.context.impl.RemoteTxInvocationContext;
@@ -70,8 +70,8 @@ public class TransactionalInvocationContextContainer extends AbstractInvocationC
    private boolean hasClusterCacheLoader() {
       boolean hasCacheLoaders = config.loaders().usingCacheLoaders();
       if (hasCacheLoaders) {
-         List<LoaderConfiguration> loaderConfigs = config.loaders().cacheLoaders();
-         for (LoaderConfiguration loaderConfig : loaderConfigs) {
+         List<CacheLoaderConfiguration> loaderConfigs = config.loaders().cacheLoaders();
+         for (CacheLoaderConfiguration loaderConfig : loaderConfigs) {
             if (loaderConfig instanceof ClusterCacheLoaderConfiguration)
                return true;
          }
