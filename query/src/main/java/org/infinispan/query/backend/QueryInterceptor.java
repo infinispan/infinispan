@@ -22,19 +22,36 @@
  */
 package org.infinispan.query.backend;
 
+import java.io.Serializable;
+import java.util.ArrayList;
+import java.util.Map;
+import java.util.Set;
+import java.util.concurrent.ConcurrentMap;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.locks.Lock;
+import java.util.concurrent.locks.ReentrantLock;
+
+import javax.transaction.TransactionManager;
+import javax.transaction.TransactionSynchronizationRegistry;
+
 import org.hibernate.search.backend.TransactionContext;
 import org.hibernate.search.backend.spi.Work;
 import org.hibernate.search.backend.spi.WorkType;
 import org.hibernate.search.engine.spi.EntityIndexBinder;
 import org.hibernate.search.spi.SearchFactoryIntegrator;
-import org.infinispan.commands.AbstractFlagAffectedCommand;
+import org.infinispan.commands.FlagAffectedCommand;
+import org.infinispan.commands.tx.PrepareCommand;
 import org.infinispan.commands.write.ClearCommand;
 import org.infinispan.commands.write.PutKeyValueCommand;
 import org.infinispan.commands.write.PutMapCommand;
 import org.infinispan.commands.write.RemoveCommand;
 import org.infinispan.commands.write.ReplaceCommand;
+import org.infinispan.commands.write.WriteCommand;
+import org.infinispan.container.DataContainer;
+import org.infinispan.container.entries.InternalCacheEntry;
 import org.infinispan.context.Flag;
 import org.infinispan.context.InvocationContext;
+import org.infinispan.context.impl.TxInvocationContext;
 import org.infinispan.factories.KnownComponentNames;
 import org.infinispan.factories.annotations.ComponentName;
 import org.infinispan.factories.annotations.Inject;
@@ -44,17 +61,6 @@ import org.infinispan.query.Transformer;
 import org.infinispan.query.logging.Log;
 import org.infinispan.util.concurrent.ConcurrentMapFactory;
 import org.infinispan.util.logging.LogFactory;
-
-import javax.transaction.TransactionManager;
-import javax.transaction.TransactionSynchronizationRegistry;
-import java.io.Serializable;
-import java.util.ArrayList;
-import java.util.Map;
-import java.util.Set;
-import java.util.concurrent.ConcurrentMap;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.locks.Lock;
-import java.util.concurrent.locks.ReentrantLock;
 
 /**
  * This interceptor will be created when the System Property "infinispan.query.indexLocalOnly" is "false"
@@ -74,6 +80,8 @@ public class QueryInterceptor extends CommandInterceptor {
    private final ConcurrentMap<Class<?>,Boolean> knownClasses = ConcurrentMapFactory.makeConcurrentMap();
    private final Lock mutating = new ReentrantLock();
    private final KeyTransformationHandler keyTransformationHandler = new KeyTransformationHandler();
+
+   private DataContainer dataContainer;
    protected TransactionManager transactionManager;
    protected TransactionSynchronizationRegistry transactionSynchronizationRegistry;
    protected ExecutorService asyncExecutor;
@@ -93,14 +101,16 @@ public class QueryInterceptor extends CommandInterceptor {
    @SuppressWarnings("unused")
    public void injectDependencies(TransactionManager transactionManager,
                                   TransactionSynchronizationRegistry transactionSynchronizationRegistry,
+                                  DataContainer dataContainer,
                                   @ComponentName(KnownComponentNames.ASYNC_TRANSPORT_EXECUTOR) ExecutorService e) {
       // Fields on superclass.
       this.transactionManager = transactionManager;
       this.transactionSynchronizationRegistry = transactionSynchronizationRegistry;
       this.asyncExecutor = e;
+      this.dataContainer = dataContainer;
    }
 
-   protected boolean shouldModifyIndexes(AbstractFlagAffectedCommand command, InvocationContext ctx) {
+   protected boolean shouldModifyIndexes(FlagAffectedCommand command, InvocationContext ctx) {
       return !command.hasFlag(Flag.SKIP_INDEXING);
    }
 
@@ -114,29 +124,8 @@ public class QueryInterceptor extends CommandInterceptor {
 
    @Override
    public Object visitPutKeyValueCommand(InvocationContext ctx, PutKeyValueCommand command) throws Throwable {
-
-      // This method will get the put() calls on the cache and then send them into Lucene once it's successful.
-      // do the actual put first.
       Object toReturn = invokeNextInterceptor(ctx, command);
-
-      // First making a check to see if the key is already in the cache or not. If it isn't we can add the key no problem,
-      // otherwise we need to be updating the indexes as opposed to simply adding to the indexes.
-      Object value = extractValue(command.getValue());
-
-      if (updateKnownTypesIfNeeded(value)) {
-         if (shouldModifyIndexes(command, ctx)) {
-            getLog().debug("Infinispan Query indexing is triggered");
-            // This means that the entry is just modified so we need to update the indexes and not add to them.
-            updateIndexes(value, extractValue(command.getKey()));
-         }
-      }
-      else {
-         if (updateKnownTypesIfNeeded(toReturn)) {
-            if (shouldModifyIndexes(command, ctx)) {
-               removeFromIndexes(toReturn, extractValue(command.getKey()));
-            }
-         }
-      }
+      processPutKeyValueCommand(command, ctx, toReturn, null);
       return toReturn;
    }
 
@@ -144,68 +133,29 @@ public class QueryInterceptor extends CommandInterceptor {
    public Object visitRemoveCommand(InvocationContext ctx, RemoveCommand command) throws Throwable {
       // remove the object out of the cache first.
       Object valueRemoved = invokeNextInterceptor(ctx, command);
-
-      if (command.isSuccessful() && !command.isNonExistent() && shouldModifyIndexes(command, ctx)) {
-         Object value = extractValue(valueRemoved);
-         if (updateKnownTypesIfNeeded( value )) {
-            removeFromIndexes(value, extractValue(command.getKey()));
-         }
-      }
+      processRemoveCommand(command, ctx, valueRemoved, null);
       return valueRemoved;
    }
 
    @Override
    public Object visitReplaceCommand(InvocationContext ctx, ReplaceCommand command) throws Throwable {
       Object valueReplaced = invokeNextInterceptor(ctx, command);
-      if (valueReplaced != null && command.isSuccessful() && shouldModifyIndexes(command, ctx)) {
-
-         Object[] parameters = command.getParameters();
-         Object p1 = extractValue(parameters[1]);
-         Object p2 = extractValue(parameters[2]);
-         boolean originalIsIndexed = updateKnownTypesIfNeeded( p1 );
-         boolean newValueIsIndexed = updateKnownTypesIfNeeded( p2 );
-         Object key = extractValue(command.getKey());
-         
-         if (p1 != null && originalIsIndexed) {
-            removeFromIndexes(p1, key);
-         }
-         if (newValueIsIndexed) {
-            updateIndexes(p2, key);
-         }
-      }
-
+      processReplaceCommand(command, ctx, valueReplaced, null);
       return valueReplaced;
    }
 
    @Override
    public Object visitPutMapCommand(InvocationContext ctx, PutMapCommand command) throws Throwable {
       Object mapPut = invokeNextInterceptor(ctx, command);
-
-      if (shouldModifyIndexes(command, ctx)) {
-         Map<Object, Object> dataMap = command.getMap();
-
-         // Loop through all the keys and put those key, value pairings into lucene.
-
-         for (Map.Entry<Object, Object> entry : dataMap.entrySet()) {
-            Object value = extractValue(entry.getValue());
-            if (updateKnownTypesIfNeeded(value)) {
-               updateIndexes(value, extractValue(entry.getKey()));
-            }
-         }
-      }
+      processPutMapCommand(command, ctx, null);
       return mapPut;
    }
 
    @Override
-   public Object visitClearCommand(InvocationContext ctx, ClearCommand command) throws Throwable {
-
+   public Object visitClearCommand(final InvocationContext ctx, final ClearCommand command) throws Throwable {
       // This method is called when somebody calls a cache.clear() and we will need to wipe everything in the indexes.
       Object returnValue = invokeNextInterceptor(ctx, command);
-
-      if (shouldModifyIndexes(command, ctx)) {
-         if (getLog().isTraceEnabled()) getLog().trace("shouldModifyIndexes() is true and we can clear the indexes");
-         purgeAllIndexes();
-      }
+      processClearCommand(command, ctx, null);
       return returnValue;
    }
 
@@ -213,32 +163,34 @@ public class QueryInterceptor extends CommandInterceptor {
     * Remove all entries from all known indexes
     */
    public void purgeAllIndexes() {
+      purgeAllIndexes(null);
+   }
+
+   private void purgeAllIndexes(TransactionContext transactionContext) {
+      transactionContext = transactionContext == null ? makeTransactionalEventContext() : transactionContext;
       for (Class c : this.knownClasses.keySet()) {
          EntityIndexBinder binder = this.searchFactory.getIndexBindingForEntity(c);
          if ( binder != null ) { //check as not all known classes are indexed
-            searchFactory.getWorker().performWork(new Work<Object>(c, (Serializable)null,
-                  WorkType.PURGE_ALL), new TransactionalEventTransactionContext(transactionManager, transactionSynchronizationRegistry));
+            searchFactory.getWorker().performWork(new Work<Object>(c, (Serializable)null, WorkType.PURGE_ALL), transactionContext);
          }
       }
    }
 
    // Method that will be called when data needs to be removed from Lucene.
-   protected void removeFromIndexes(Object value, Object key) {
+   protected void removeFromIndexes(final Object value, final Object key, final TransactionContext transactionContext) {
 
       // The key here is the String representation of the key that is stored in the cache.
       // The key is going to be the documentID for Lucene.
       // The object parameter is the actual value that needs to be removed from lucene.
       if (value == null) throw new NullPointerException("Cannot handle a null value!");
-      TransactionContext transactionContext = new TransactionalEventTransactionContext(transactionManager, transactionSynchronizationRegistry);
       searchFactory.getWorker().performWork(new Work<Object>(value, keyToString(key), WorkType.DELETE), transactionContext);
    }
 
-   protected void updateIndexes(Object value, Object key){
+   protected void updateIndexes(Object value, Object key, TransactionContext transactionContext) {
       // The key here is the String representation of the key that is stored in the cache.
       // The key is going to be the documentID for Lucene.
       // The object parameter is the actual value that needs to be removed from lucene.
       if (value == null) throw new NullPointerException("Cannot handle a null value!");
-      TransactionContext transactionContext = new TransactionalEventTransactionContext(transactionManager, transactionSynchronizationRegistry);
       searchFactory.getWorker().performWork(new Work<Object>(value, keyToString(key), WorkType.UPDATE), transactionContext);
    }
 
@@ -328,4 +280,172 @@ public class QueryInterceptor extends CommandInterceptor {
    public SearchFactoryIntegrator getSearchFactory() {
       return searchFactory;
    }
+
+   /**
+    * In case of a remotely originating transactions we don't have a chance to visit the single
+    * commands but receive this "batch". We then need the before-apply snapshot of some types
+    * to route the cleanup commands to the correct indexes.
+    * Note we don't need to visit the CommitCommand as the indexing context is registered
+    * as a transaction sync.
+    */
+   @Override
+   public Object visitPrepareCommand(TxInvocationContext ctx, PrepareCommand command) throws Throwable {
+      final WriteCommand[] writeCommands = command.getModifications();
+      final Object[] stateBeforePrepare = new Object[writeCommands.length];
+
+      for (int i=0; i<writeCommands.length; i++) {
+         final WriteCommand writeCommand = writeCommands[i];
+         if (writeCommand instanceof PutKeyValueCommand) {
+            InternalCacheEntry internalCacheEntry = dataContainer.get(((PutKeyValueCommand) writeCommand).getKey());
+            stateBeforePrepare[i] = internalCacheEntry != null ? internalCacheEntry.getValue() : null;
+         }
+         else if (writeCommand instanceof PutMapCommand) {
+            //think about this: ISPN-2478
+         }
+         else if (writeCommand instanceof RemoveCommand) {
+            InternalCacheEntry internalCacheEntry = dataContainer.get(((RemoveCommand) writeCommand).getKey());
+            stateBeforePrepare[i] = internalCacheEntry != null ? internalCacheEntry.getValue() : null;
+         }
+         else if (writeCommand instanceof ReplaceCommand) {
+            InternalCacheEntry internalCacheEntry = dataContainer.get(((ReplaceCommand) writeCommand).getKey());
+            stateBeforePrepare[i] = internalCacheEntry != null ? internalCacheEntry.getValue() : null;
+         }
+      }
+
+      final Object toReturn = super.visitPrepareCommand(ctx, command);
+
+      if (ctx.isTransactionValid()) {
+         final TransactionContext transactionContext = makeTransactionalEventContext();
+         for (int i=0; i<writeCommands.length; i++) {
+            final WriteCommand writeCommand = writeCommands[i];
+            if (writeCommand instanceof PutKeyValueCommand) {
+               processPutKeyValueCommand((PutKeyValueCommand) writeCommand, ctx, stateBeforePrepare[i], transactionContext);
+            }
+            else if (writeCommand instanceof PutMapCommand) {
+               //FIXME ISPN-2478
+               processPutMapCommand((PutMapCommand) writeCommand, ctx, transactionContext);
+            }
+            else if (writeCommand instanceof RemoveCommand) {
+               processRemoveCommand((RemoveCommand) writeCommand, ctx, stateBeforePrepare[i], transactionContext);
+            }
+            else if (writeCommand instanceof ReplaceCommand) {
+               processReplaceCommand((ReplaceCommand) writeCommand, ctx, stateBeforePrepare[i], transactionContext);
+            }
+            else if (writeCommand instanceof ClearCommand) {
+               processClearCommand((ClearCommand)writeCommand, ctx, transactionContext);
+            }
+         }
+      }
+      return toReturn;
+   }
+
+   /**
+    * Indexing management of a ReplaceCommand
+    *
+    * @param command the ReplaceCommand
+    * @param ctx the InvocationContext
+    * @param valueReplaced the previous value on this key
+    * @param transactionContext Optional for lazy initialization, or reuse an existing context.
+    */
+   private void processReplaceCommand(final ReplaceCommand command, final InvocationContext ctx, final Object valueReplaced, TransactionContext transactionContext) {
+      if (valueReplaced != null && command.isSuccessful() && shouldModifyIndexes(command, ctx)) {
+         Object[] parameters = command.getParameters();
+         Object p1 = extractValue(parameters[1]);
+         Object p2 = extractValue(parameters[2]);
+         boolean originalIsIndexed = updateKnownTypesIfNeeded( p1 );
+         boolean newValueIsIndexed = updateKnownTypesIfNeeded( p2 );
+         Object key = extractValue(command.getKey());
+
+         if (p1 != null && originalIsIndexed) {
+            transactionContext = transactionContext == null ? makeTransactionalEventContext() : transactionContext;
+            removeFromIndexes(p1, key, transactionContext);
+         }
+         if (newValueIsIndexed) {
+            transactionContext = transactionContext == null ? makeTransactionalEventContext() : transactionContext;
+            updateIndexes(p2, key, transactionContext);
+         }
+      }
+   }
+
+   /**
+    * Indexing management of a RemoveCommand
+    *
+    * @param command the visited RemoveCommand
+    * @param ctx the InvocationContext of the RemoveCommand
+    * @param valueRemoved the value before the removal
+    * @param transactionContext Optional for lazy initialization, or reuse an existing context.
+    */
+   private void processRemoveCommand(final RemoveCommand command, final InvocationContext ctx, final Object valueRemoved, TransactionContext transactionContext) {
+      if (command.isSuccessful() && !command.isNonExistent() && shouldModifyIndexes(command, ctx)) {
+         final Object value = extractValue(valueRemoved);
+         if (updateKnownTypesIfNeeded(value)) {
+            transactionContext = transactionContext == null ? makeTransactionalEventContext() : transactionContext;
+            removeFromIndexes(value, extractValue(command.getKey()), transactionContext);
+         }
+      }
+   }
+
+   /**
+    * Indexing management of a PutMapCommand
+    *
+    * @param command the visited PutMapCommand
+    * @param ctx the InvocationContext of the PutMapCommand
+    * @param transactionContext
+    */
+   private void processPutMapCommand(final PutMapCommand command, final InvocationContext ctx, TransactionContext transactionContext) {
+      if (shouldModifyIndexes(command, ctx)) {
+         Map<Object, Object> dataMap = command.getMap();
+         // Loop through all the keys and put those key-value pairings into lucene.
+         for (Map.Entry<Object, Object> entry : dataMap.entrySet()) {
+            final Object value = extractValue(entry.getValue());
+            if (updateKnownTypesIfNeeded(value)) {
+               transactionContext = transactionContext == null ? makeTransactionalEventContext() : transactionContext;
+               updateIndexes(value, extractValue(entry.getKey()), transactionContext);
+            }
+         }
+      }
+   }
+
+   /**
+    * Indexing management of a PutKeyValueCommand
+    *
+    * @param command the visited PutKeyValueCommand
+    * @param ctx the InvocationContext of the PutKeyValueCommand
+    * @param previousValue the value being replaced by the put operation
+    * @param transactionContext Optional for lazy initialization, or reuse an existing context.
+    */
+   private void processPutKeyValueCommand(final PutKeyValueCommand command, final InvocationContext ctx, final Object previousValue, TransactionContext transactionContext) {
+      Object value = extractValue(command.getValue());
+      if (updateKnownTypesIfNeeded(value)) {
+         if (shouldModifyIndexes(command, ctx)) {
+            // This means that the entry is just modified so we need to update the indexes and not add to them.
+            transactionContext = transactionContext == null ? makeTransactionalEventContext() : transactionContext;
+            updateIndexes(value, extractValue(command.getKey()), transactionContext);
+         }
+      }
+      else if (updateKnownTypesIfNeeded(previousValue)) {
+         if (shouldModifyIndexes(command, ctx)) {
+            transactionContext = transactionContext == null ? makeTransactionalEventContext() : transactionContext;
+            removeFromIndexes(previousValue, extractValue(command.getKey()), transactionContext);
+         }
+      }
+   }
+
+   /**
+    * Indexing management of the Clear command
+    *
+    * @param command the ClearCommand
+    * @param ctx the InvocationContext of the PutKeyValueCommand
+    * @param transactionContext Optional for lazy initialization, or to reuse an existing transactional context.
+    */
+   private void processClearCommand(final ClearCommand command, final InvocationContext ctx, TransactionContext transactionContext) {
+      if (shouldModifyIndexes(command, ctx)) {
+         purgeAllIndexes(transactionContext);
+      }
+   }
+
+   private final TransactionContext makeTransactionalEventContext() {
+      return new TransactionalEventTransactionContext(transactionManager, transactionSynchronizationRegistry);
+   }
+
 }
