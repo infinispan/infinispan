@@ -30,6 +30,8 @@ import org.testng.annotations.Test;
 import java.util.HashMap;
 import java.util.Map;
 
+import static org.junit.Assert.assertEquals;
+
 @Test(groups = "functional", testName = "commands.PutMapCommandTest")
 public class PutMapCommandTest extends MultipleCacheManagersTest {
    protected int numberOfKeys = 10;
@@ -69,7 +71,7 @@ public class PutMapCommandTest extends MultipleCacheManagersTest {
       cache(0).putAll(map);
 
       for (int i = 0; i < numberOfKeys; ++i) {
-         assert cache(0).get("key" + i).equals("value" + i);
+         assertEquals("value" + i, cache(0).get("key" + i));
          final int finalI = i;
          eventually(new Condition() {
             @Override
