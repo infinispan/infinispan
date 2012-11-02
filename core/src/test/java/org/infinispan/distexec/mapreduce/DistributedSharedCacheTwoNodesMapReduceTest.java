@@ -63,6 +63,16 @@ public class DistributedSharedCacheTwoNodesMapReduceTest extends BaseWordCountMa
    }
 
    @Override
+   public void testinvokeMapReduceOnEmptyKeys() throws Exception {
+      super.testinvokeMapReduceOnEmptyKeys();
+   }
+
+   @Override
+   public void testCombinerForDistributedReductionWithException() throws Exception {
+      super.testCombinerForDistributedReductionWithException();
+   }
+
+   @Override
    public void testinvokeMapReduceOnAllKeysWithCombiner() throws Exception {
       super.testinvokeMapReduceOnAllKeysWithCombiner();
    }

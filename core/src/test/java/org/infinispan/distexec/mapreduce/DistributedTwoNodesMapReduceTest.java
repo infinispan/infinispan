@@ -23,9 +23,11 @@
 package org.infinispan.distexec.mapreduce;
 
 import org.infinispan.Cache;
+import org.infinispan.CacheException;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.testng.annotations.Test;
 
+import java.util.Iterator;
 import java.util.Map;
 
 /**
@@ -61,6 +63,16 @@ public class DistributedTwoNodesMapReduceTest extends BaseWordCountMapReduceTest
    @Override
    public void testinvokeMapReduceOnAllKeys() throws Exception {
       super.testinvokeMapReduceOnAllKeys();
+   }
+
+   @Override
+   public void testinvokeMapReduceOnEmptyKeys() throws Exception {
+      super.testinvokeMapReduceOnEmptyKeys();
+   }
+
+   @Override
+   public void testCombinerForDistributedReductionWithException() throws Exception {
+      super.testCombinerForDistributedReductionWithException();
    }
 
    @Override

@@ -30,6 +30,7 @@ import java.util.concurrent.Callable;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
+import java.util.concurrent.RejectedExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 
@@ -145,6 +146,56 @@ public class DistributedExecutorTest extends MultipleCacheManagersTest {
       assert object == null;
    }
 
+   public void testRunnableInvocationWith2Params() throws Exception {
+
+      DistributedExecutorService des = createDES(getCache());
+
+      Integer result = 5;
+      Future<Integer> future = des.submit(new BoringRunnable(), result);
+      Integer object = future.get();
+      assert object == result;
+   }
+
+   public void testRunnableExecution() throws InterruptedException {
+      DistributedExecutorService des = createDES(getCache());
+      BoringRunnable runnable = new BoringRunnable();
+
+      des.execute(runnable);
+
+      Thread.sleep(100);
+
+      assert runnable.isExecuted();
+   }
+
+   @Test(expectedExceptions = IllegalArgumentException.class)
+   public void testNonSerializableRunnableExecution() {
+      DistributedExecutorService des = createDES(getCache());
+      des.execute(new Runnable() {
+         @Override
+         public void run() {
+            System.out.println("Non Serializable Runnable");
+         }
+      });
+   }
+
+   @Test(expectedExceptions = RejectedExecutionException.class)
+   public void testRunnableExecutionOnTerminatedExecutor() {
+      DistributedExecutorService des = createDES(getCache());
+      des.shutdown();
+
+      BoringRunnable runnable = new BoringRunnable();
+
+      des.execute(runnable);
+   }
+
+   @Test(expectedExceptions = IllegalArgumentException.class)
+   public void testNullRunnableExecution() {
+      DistributedExecutorService des = createDES(getCache());
+
+      BoringRunnable runnable = null;
+      des.execute(runnable);
+   }
+
    public void testInvokeAny() throws Exception {
 
       DistributedExecutorService des = createDES(getCache());
@@ -158,6 +209,58 @@ public class DistributedExecutorTest extends MultipleCacheManagersTest {
       tasks.add(new SimpleCallable());
       result = des.invokeAny(tasks);
       assert result == 1;
+   }
+
+   public void testInvokeAnyWithTimeout() throws Exception {
+
+      DistributedExecutorService des = createDES(getCache());
+
+      List<SimpleCallable> tasks = new ArrayList<SimpleCallable>();
+      tasks.add(new SimpleCallable());
+      Integer result = des.invokeAny(tasks, 1000, TimeUnit.MILLISECONDS);
+
+      assert result == 1;
+
+      tasks = new ArrayList<SimpleCallable>();
+      tasks.add(new SimpleCallable());
+      tasks.add(new SimpleCallable());
+
+      result = des.invokeAny(tasks, 1000, TimeUnit.MILLISECONDS);
+      assert result == 1;
+   }
+
+   @Test(expectedExceptions = NullPointerException.class)
+   public void testInvokeAnyNoTask() throws Exception {
+      DistributedExecutorService des = createDES(getCache());
+      des.invokeAny(null);
+   }
+
+   @Test(expectedExceptions = IllegalArgumentException.class)
+   public void testInvokeAnyEmptyTasks() throws Exception {
+      DistributedExecutorService des = createDES(getCache());
+      des.invokeAny(new ArrayList<SimpleCallable>());
+   }
+
+   @Test(expectedExceptions = ExecutionException.class)
+   public void testInvokeAnyExceptionTasks() throws Exception {
+
+      DistributedExecutorService des = createDES(getCache());
+
+      List tasks = new ArrayList();
+      tasks.add(new ExceptionThrowingCallable());
+      tasks.add(new ExceptionThrowingCallable());
+      des.invokeAny(tasks);
+   }
+
+   public void testInvokeAnySleepingTasks() throws Exception {
+
+      DistributedExecutorService des = createDES(getCache());
+
+      List tasks = new ArrayList();
+      tasks.add(new ExceptionThrowingCallable());
+      tasks.add(new SleepingSimpleCallable());
+      Object result = des.invokeAny(tasks);
+      assert ((Integer) result) == 1;
    }
    
    @Test(expectedExceptions = TimeoutException.class)
@@ -284,6 +387,43 @@ public class DistributedExecutorTest extends MultipleCacheManagersTest {
       future.get(2000, TimeUnit.MILLISECONDS);
    }
 
+   @Test(expectedExceptions = TimeoutException.class)
+   public void testExceptionCallableWithTimedCall() throws Exception {
+      DistributedExecutorService des = createDES(getCache());
+      Future<Integer> future = des.submit(new ExceptionThrowingCallable(true));
+
+      future.get(10, TimeUnit.MILLISECONDS);
+   }
+
+   @Test(expectedExceptions = TimeoutException.class)
+   public void testExceptionCallableWithTimedCallDistApi() throws Exception {
+      DistributedExecutorService des = createDES(getCache());
+
+      DistributedTaskBuilder<Integer> taskBuilder = des.createDistributedTaskBuilder(new ExceptionThrowingCallable(true));
+      DistributedTask<Integer> distributedTask = taskBuilder.build();
+      Future<Integer> future = des.submit(distributedTask);
+
+      future.get(10, TimeUnit.MILLISECONDS);
+   }
+
+   public void testBasicTargetDistributedCallableTargetSameNode() throws Exception {
+      Cache<Object, Object> cache1 = cache(0, cacheName());
+
+      //initiate task from cache1 and select cache1 as target
+      DistributedExecutorService des = createDES(cache1);
+      Address target = cache1.getAdvancedCache().getRpcManager().getAddress();
+      Future<Boolean> future = des.submit(target, new SimpleDistributedCallable(false));
+      Boolean r = future.get();
+      assert r;
+
+      //the same using DistributedTask API
+      DistributedTaskBuilder<Boolean> taskBuilder = des.createDistributedTaskBuilder(new SimpleDistributedCallable(false));
+      DistributedTask<Boolean> distributedTask = taskBuilder.build();
+      future = des.submit(target, distributedTask);
+      r = future.get();
+      assert r;
+   }
+
    public void testBasicTargetDistributedCallable() throws Exception {
       Cache<Object, Object> cache1 = cache(0, cacheName());
       Cache<Object, Object> cache2 = cache(1, cacheName());
@@ -302,6 +442,63 @@ public class DistributedExecutorTest extends MultipleCacheManagersTest {
       future = des.submit(target, distributedTask);
       r = future.get();
       assert r;
+   }
+
+   @Test(expectedExceptions = IllegalArgumentException.class)
+   public void testBasicTargetDistributedCallableWithNullExecutionPolicy() throws Exception {
+      Cache<Object, Object> cache1 = cache(0, cacheName());
+
+      //initiate task from cache1 and select cache2 as target
+      DistributedExecutorService des = createDES(cache1);
+
+      //the same using DistributedTask API
+      DistributedTaskBuilder<Boolean> taskBuilder = des.createDistributedTaskBuilder(new SimpleDistributedCallable(false));
+      taskBuilder.executionPolicy(null);
+
+      DistributedTask<Boolean> distributedTask = taskBuilder.build();
+      Future<Boolean> future = des.submit(distributedTask);
+   }
+
+   @Test(expectedExceptions = IllegalArgumentException.class)
+   public void testBasicTargetCallableWithNullTask() {
+      Cache<Object, Object> cache1 = cache(0, cacheName());
+      Cache<Object, Object> cache2 = cache(1, cacheName());
+
+      DistributedExecutorService des = createDES(cache1);
+      Address target = cache2.getAdvancedCache().getRpcManager().getAddress();
+      des.submit(target, (Callable) null);
+   }
+
+   @Test(expectedExceptions = NullPointerException.class)
+   public void testBasicTargetDistributedTaskWithNullTask() {
+      Cache<Object, Object> cache1 = cache(0, cacheName());
+      Cache<Object, Object> cache2 = cache(1, cacheName());
+
+      DistributedExecutorService des = createDES(cache1);
+      Address target = cache2.getAdvancedCache().getRpcManager().getAddress();
+      des.submit(target, (DistributedTask) null);
+   }
+
+   @Test(expectedExceptions = NullPointerException.class)
+   public void testBasicTargetCallableWithNullTarget() {
+      Cache<Object, Object> cache1 = cache(0, cacheName());
+
+      DistributedExecutorService des = createDES(cache1);
+      des.submit((Address) null, new SimpleCallable());
+   }
+
+   @Test(expectedExceptions = IllegalArgumentException.class)
+   public void testBasicTargetCallableWithIllegalTarget() {
+      Cache<Object, Object> cache1 = cache(0, cacheName());
+
+      DistributedExecutorService des = createDES(cache1);
+      Address fakeAddress = new Address() {
+         @Override
+         public int compareTo(Address o) {
+            return -1;
+         }
+      };
+      des.submit(fakeAddress, new SimpleCallable());
    }
 
    public void testBasicDistributedCallableWitkKeys() throws Exception {
@@ -325,6 +522,26 @@ public class DistributedExecutorTest extends MultipleCacheManagersTest {
       future = des.submit(distributedTask, new String[] { "key1", "key2" });
       r = future.get();
       assert r;
+   }
+
+   @Test(expectedExceptions = NullPointerException.class)
+   public void testBasicDistributedCallableWithNullTask() throws Exception {
+      Cache<Object, Object> c1 = getCache();
+      DistributedExecutorService des = createDES(getCache());
+
+      des.submit((DistributedTask) null, new String[] {"key1", "key2" });
+   }
+
+   public void testBasicDistributedCallableWithNullKeys() throws Exception {
+      Cache<Object, Object> c1 = getCache();
+      c1.put("key1", "value1");
+      c1.put("key2", "value2");
+      c1.put("key3", "value3");
+      c1.put("key4", "value4");
+
+      DistributedExecutorService des = createDES(getCache());
+
+      des.submit(new SimpleDistributedCallable(false), null);
    }
 
    public void testDistributedCallableEverywhereWithKeys() throws Exception {
@@ -352,6 +569,76 @@ public class DistributedExecutorTest extends MultipleCacheManagersTest {
       for (Future<Boolean> f : list) {
          assert f.get();
       }
+   }
+
+   public void testDistributedCallableEverywhereWithKeysOnBothNodes() throws Exception {
+      Cache<Object, Object> c1 = getCache();
+      c1.put("key1", "Manik");
+      c1.put("key2", "Mircea");
+      c1.put("key3", "Galder");
+      c1.put("key4", "Sanne");
+
+      Cache<Object, Object> c2 = cache(1, cacheName());
+      c2.put("key5", "test");
+      c2.put("key6", "test1");
+
+      DistributedExecutorService des = createDES(getCache());
+
+      List<Future<Boolean>> list = des.submitEverywhere(new SimpleDistributedCallable(true),
+                                                        new String[] { "key1", "key2", "key5", "key6" });
+      assert list != null && !list.isEmpty();
+      for (Future<Boolean> f : list) {
+         assert f.get();
+      }
+
+      //the same using DistributedTask API
+      DistributedTaskBuilder<Boolean> taskBuilder = des.createDistributedTaskBuilder(new SimpleDistributedCallable(true));
+      DistributedTask<Boolean> distributedTask = taskBuilder.build();
+      list = des.submitEverywhere(distributedTask,new String[] {"key1", "key2" });
+      assert list != null && !list.isEmpty();
+      for (Future<Boolean> f : list) {
+         assert f.get();
+      }
+   }
+
+   public void testDistributedCallableEverywhereWithEmptyKeys() throws Exception {
+      Cache<Object, Object> c1 = getCache();
+      c1.put("key1", "Manik");
+      c1.put("key2", "Mircea");
+      c1.put("key3", "Galder");
+      c1.put("key4", "Sanne");
+
+      DistributedExecutorService des = createDES(getCache());
+
+      List<Future<Boolean>> list = des.submitEverywhere(new SimpleDistributedCallable(false),
+                                                        new String[]{});
+      assert list != null && !list.isEmpty();
+      for (Future<Boolean> f : list) {
+         assert f.get();
+      }
+
+      //the same using DistributedTask API
+      DistributedTaskBuilder<Boolean> taskBuilder = des.createDistributedTaskBuilder(new SimpleDistributedCallable(false));
+      DistributedTask<Boolean> distributedTask = taskBuilder.build();
+      list = des.submitEverywhere(distributedTask, new String[]{});
+      assert list != null && !list.isEmpty();
+      for (Future<Boolean> f : list) {
+         assert f.get();
+      }
+   }
+
+   @Test(expectedExceptions = NullPointerException.class)
+   public void testBasicDistributedCallableEverywhereWithKeysAndNullTask() throws Exception {
+      DistributedExecutorService des = createDES(getCache());
+
+      des.submitEverywhere((DistributedTask) null, new String[]{"key1", "key2"});
+   }
+
+   @Test(expectedExceptions = NullPointerException.class)
+   public void testBasicDistributedCallableEverywhereWithNullTask() throws Exception {
+      DistributedExecutorService des = createDES(getCache());
+
+      des.submitEverywhere((DistributedTask) null);
    }
 
    public void testDistributedCallableEverywhere() throws Exception {
@@ -458,9 +745,22 @@ public class DistributedExecutorTest extends MultipleCacheManagersTest {
 
       /** The serialVersionUID */
       private static final long serialVersionUID = -8682463816319507893L;
+      private boolean needToSleep;
+
+      public ExceptionThrowingCallable() {
+         this.needToSleep = false;
+      }
+
+      public ExceptionThrowingCallable(boolean needToSleep) {
+         this.needToSleep = needToSleep;
+      }
 
       @Override
       public Integer call() throws Exception {
+         if(needToSleep) {
+            Thread.sleep(10000);
+         }
+
          throw new Exception("Intentional Exception from ExceptionThrowingCallable");
       }
    }
@@ -469,10 +769,21 @@ public class DistributedExecutorTest extends MultipleCacheManagersTest {
 
       /** The serialVersionUID */
       private static final long serialVersionUID = 6898519516955822402L;
+      private static boolean isExecuted = false;
+
+      //assuring that isExecuted is set to false.
+      public BoringRunnable() {
+         this.isExecuted = false;
+      }
 
       @Override
       public void run() {
-         //intentionally empty
+         System.out.println("I am a boring runnable!" );
+         isExecuted = true;
+      }
+
+      public static boolean isExecuted() {
+         return isExecuted;
       }
    }
 }

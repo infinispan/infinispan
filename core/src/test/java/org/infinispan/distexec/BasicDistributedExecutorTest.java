@@ -25,14 +25,17 @@ package org.infinispan.distexec;
 import org.infinispan.Cache;
 import org.infinispan.config.Configuration;
 import org.infinispan.manager.EmbeddedCacheManager;
+import org.infinispan.remoting.transport.Address;
 import org.infinispan.test.AbstractCacheTest;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
+import org.infinispan.util.concurrent.WithinThreadExecutor;
 import org.testng.annotations.Test;
 
 import java.io.Serializable;
 import java.util.List;
 import java.util.Set;
 import java.util.concurrent.Callable;
+import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Future;
 
 /**
@@ -57,6 +60,86 @@ public class BasicDistributedExecutorTest extends AbstractCacheTest {
       }
    }
    
+   @Test(expectedExceptions = { IllegalArgumentException.class })
+   public void testImproperMasterCacheForDistributedExecutor() {
+      DistributedExecutorService des = new DefaultExecutorService(null);
+   }
+
+   @Test(expectedExceptions = { IllegalArgumentException.class })
+   public void testImproperLocalExecutorServiceForDistributedExecutor() {
+      EmbeddedCacheManager cacheManager = TestCacheManagerFactory.createLocalCacheManager(false);
+      try {
+         Cache<Object, Object> cache = cacheManager.getCache();
+         DistributedExecutorService des = new DefaultExecutorService(cache, null);
+      } finally {
+         cacheManager.stop();
+      }
+   }
+
+   @Test(expectedExceptions = { IllegalArgumentException.class })
+   public void testStoppedLocalExecutorServiceForDistributedExecutor() {
+      EmbeddedCacheManager cacheManager = TestCacheManagerFactory.createLocalCacheManager(false);
+      try {
+         Cache<Object, Object> cache = cacheManager.getCache();
+
+         ExecutorService service = new WithinThreadExecutor();
+         service.shutdown();
+
+         DistributedExecutorService des = new DefaultExecutorService(cache, service);
+      } finally {
+         cacheManager.stop();
+      }
+   }
+
+   @Test(expectedExceptions = { IllegalStateException.class })
+   public void testStoppedCacheForDistributedExecutor() {
+      Configuration config = TestCacheManagerFactory.getDefaultConfiguration(true, Configuration.CacheMode.REPL_SYNC);
+      EmbeddedCacheManager cacheManager = TestCacheManagerFactory.createClusteredCacheManager(config);
+      try {
+         Cache<Object, Object> cache = cacheManager.getCache();
+         cache.stop();
+
+         DistributedExecutorService des = new DefaultExecutorService(cache);
+      } finally {
+         cacheManager.stop();
+      }
+   }
+
+   public void testDistributedExecutorShutDown() {
+      Configuration config = TestCacheManagerFactory.getDefaultConfiguration(true, Configuration.CacheMode.REPL_SYNC);
+      EmbeddedCacheManager cacheManager = TestCacheManagerFactory.createClusteredCacheManager(config);
+      try {
+         Cache<Object, Object> cache = cacheManager.getCache();
+         DistributedExecutorService des = new DefaultExecutorService(cache);
+
+         des.shutdown();
+
+         assert des.isShutdown();
+         assert des.isTerminated();
+      } finally {
+         cacheManager.stop();
+      }
+   }
+
+   public void testDistributedExecutorShutDownNow() {
+      Configuration config = TestCacheManagerFactory.getDefaultConfiguration(true, Configuration.CacheMode.REPL_SYNC);
+      EmbeddedCacheManager cacheManager = TestCacheManagerFactory.createClusteredCacheManager(config);
+      try {
+         Cache<Object, Object> cache = cacheManager.getCache();
+         DistributedExecutorService des = new DefaultExecutorService(cache);
+
+         assert !des.isShutdown();
+         assert !des.isTerminated();
+
+         des.shutdownNow();
+
+         assert des.isShutdown();
+         assert des.isTerminated();
+      } finally {
+         cacheManager.stop();
+      }
+   }
+
    /**
     * Tests that we can invoke DistributedExecutorService on an Infinispan cluster having a single node
     * 
@@ -146,6 +229,21 @@ public class BasicDistributedExecutorTest extends AbstractCacheTest {
       @Override
       public Integer call() throws Exception {
          return 1;
+      }
+   }
+
+   static class SimpleSleepingDistributedCallable implements DistributedCallable<String, String, Boolean>, Serializable{
+
+      @Override
+      public void setEnvironment(Cache<String, String> cache, Set<String> inputKeys) {
+         //do nothing
+      }
+
+      @Override
+      public Boolean call() throws Exception {
+         Thread.sleep(1000);
+
+         return true;
       }
    }
 }
