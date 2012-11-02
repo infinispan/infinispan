@@ -29,7 +29,7 @@ import org.testng.annotations.Test;
 /**
  * @author Mircea.Markus@jboss.com
  */
-@Test(groups = "functional", testName = "tx.recovery.DldEagerLockingAndRecoveryDistributedTest")
+@Test(groups = "functional", testName = "tx.recovery.DldPessimisticLockingAndRecoveryDistributedTest")
 public class DldPessimisticLockingAndRecoveryDistributedTest extends DldPessimisticLockingDistributedTest {
    @Override
    protected Configuration createConfiguration() {
