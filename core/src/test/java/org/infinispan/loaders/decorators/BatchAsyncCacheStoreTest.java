@@ -29,7 +29,6 @@ import org.infinispan.AdvancedCache;
 import org.infinispan.config.CacheLoaderManagerConfig;
 import org.infinispan.config.Configuration;
 import org.infinispan.loaders.CacheStoreConfig;
-import org.infinispan.loaders.decorators.AsyncStoreConfig;
 import org.infinispan.loaders.file.FileCacheStoreConfig;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.test.SingleCacheManagerTest;
@@ -38,8 +37,6 @@ import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.testng.Assert;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
-import org.testng.annotations.Optional;
-import org.testng.annotations.Parameters;
 import org.testng.annotations.Test;
 
 /**
@@ -52,7 +49,7 @@ import org.testng.annotations.Test;
 @Test(groups = "functional", testName = "loaders.BatchAsyncCacheStoreTest")
 public class BatchAsyncCacheStoreTest extends SingleCacheManagerTest {
 
-   private final HashMap cacheCopy = new HashMap();
+   private final HashMap<Object, Object> cacheCopy = new HashMap<Object, Object>();
 
    public BatchAsyncCacheStoreTest() {
       cleanup = CleanupPhase.AFTER_METHOD;
@@ -104,7 +101,7 @@ public class BatchAsyncCacheStoreTest extends SingleCacheManagerTest {
    @Test(dependsOnMethods = "sequantialOvewritingInBatches")
    public void indexWasStored() {
       cache = cacheManager.getCache();
-      assert cache.isEmpty();
+      Assert.assertTrue(cache.isEmpty());
       boolean failed = false;
       for (Object key : cacheCopy.keySet()) {
          Object expected = cacheCopy.get(key);
@@ -131,7 +128,7 @@ public class BatchAsyncCacheStoreTest extends SingleCacheManagerTest {
       TestingUtil.recursiveFileRemove(tmpDirectory);
    }
 
-   protected CacheStoreConfig createCacheStoreConfig() throws Exception {
+   protected CacheStoreConfig createCacheStoreConfig() {
       FileCacheStoreConfig cfg = new FileCacheStoreConfig();
       cfg.setLocation(tmpDirectory);
       return cfg;
