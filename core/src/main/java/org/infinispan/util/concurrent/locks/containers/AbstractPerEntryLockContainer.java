@@ -120,13 +120,14 @@ public abstract class AbstractPerEntryLockContainer<L extends RefCountingLock> e
          public L apply(Object key, L lock) {
             // This will happen atomically in the CHM
             // We have a reference, so value can't be null
+            getLog().tracef("Unlocking lock instance for key %s", key);
+            unlock(lock, lockOwner);
+
             int refCount = lock.getReferenceCounter().decrementAndGet();
+            boolean remove = refCount == 0;
             if (refCount < 0) {
                throw new IllegalStateException("Negative reference count for lock " + key + ": " + lock);
             }
-            boolean remove = refCount == 0;
-            getLog().tracef("Unlocking lock instance for key %s", key);
-            unlock(lock, lockOwner);
 
             // Ok, unlock was successful.  If the unlock was not successful, an exception will propagate and the entry will not be changed.
             return remove ? null : lock;
