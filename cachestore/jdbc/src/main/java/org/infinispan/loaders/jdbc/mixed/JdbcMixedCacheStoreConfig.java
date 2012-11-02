@@ -273,6 +273,19 @@ public class JdbcMixedCacheStoreConfig extends AbstractJdbcCacheStoreConfig {
       }
    }
 
+   /**
+    * Sets the database dialect.  Valid types are reflected in the DatabaseType enum.  If unspecified, will attempt to
+    * "guess" appropriate dialect from the JDBC driver specified.
+    *
+    * @param dbType
+    */
+   public void setDatabaseType(DatabaseType databaseType) {
+      if (databaseType != null) {
+         binaryTableManipulation.databaseType = databaseType;
+         stringsTableManipulation.databaseType = databaseType;
+      }
+   }
+
    @Override
    public JdbcMixedCacheStoreConfig clone() {
       JdbcMixedCacheStoreConfig dolly = (JdbcMixedCacheStoreConfig) super.clone();
@@ -280,4 +293,5 @@ public class JdbcMixedCacheStoreConfig extends AbstractJdbcCacheStoreConfig {
       dolly.stringsTableManipulation = stringsTableManipulation.clone();
       return dolly;
    }
+
 }

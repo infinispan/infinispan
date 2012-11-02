@@ -201,6 +201,17 @@ public abstract class AbstractNonDelegatingJdbcCacheStoreConfig extends Abstract
          this.tableManipulation.databaseType = DatabaseType.valueOf(dbType.toUpperCase().trim());
    }
 
+   /**
+    * Sets the database dialect.  Valid types are reflected in the DatabaseType enum.  If unspecified, will attempt to
+    * "guess" appropriate dialect from the JDBC driver specified.
+    *
+    * @param dbType
+    */
+   public void setDatabaseType(DatabaseType dbType) {
+      if (dbType != null)
+         this.tableManipulation.databaseType = dbType;
+   }
+
 
    @Override
    public AbstractNonDelegatingJdbcCacheStoreConfig clone() {

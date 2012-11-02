@@ -21,6 +21,7 @@ package org.infinispan.loaders.jdbc.configuration;
 import org.h2.Driver;
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
+import org.infinispan.loaders.jdbc.DatabaseType;
 import org.infinispan.loaders.jdbc.binary.JdbcBinaryCacheStoreConfig;
 import org.infinispan.loaders.jdbc.mixed.JdbcMixedCacheStoreConfig;
 import org.infinispan.loaders.jdbc.stringbased.JdbcStringBasedCacheStoreConfig;
@@ -116,7 +117,10 @@ public class ConfigurationTest {
       JdbcMixedCacheStoreConfigurationBuilder mixedBuilder = b.loaders().addStore(JdbcMixedCacheStoreConfigurationBuilder.class)
          .connectionPool().connectionUrl(JDBC_URL)
          .fetchPersistentState(true)
-         .lockConcurrencyLevel(32);
+         .lockConcurrencyLevel(32)
+         .fetchSize(50)
+         .batchSize(50)
+         .databaseType(DatabaseType.H2);
       mixedBuilder.async().enable();
 
       mixedBuilder.binaryTable()
@@ -149,6 +153,9 @@ public class ConfigurationTest {
       assert store.stringTable().dataColumnType().equals("BINARY");
       assert store.stringTable().timestampColumnName().equals("version");
       assert store.stringTable().timestampColumnType().equals("BIGINT");
+      assert store.batchSize() == 50;
+      assert store.fetchSize() == 50;
+      assert store.databaseType() == DatabaseType.H2;
       assert store.fetchPersistentState();
       assert store.lockConcurrencyLevel() == 32;
       assert store.async().enabled();

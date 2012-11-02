@@ -19,6 +19,8 @@
 package org.infinispan.loaders.jdbc.configuration;
 
 import org.infinispan.configuration.cache.LoadersConfigurationBuilder;
+import org.infinispan.loaders.jdbc.DatabaseType;
+import org.infinispan.loaders.jdbc.TableManipulation;
 import org.infinispan.loaders.keymappers.DefaultTwoWayKey2StringMapper;
 import org.infinispan.loaders.keymappers.Key2StringMapper;
 import org.infinispan.util.TypedProperties;
@@ -35,6 +37,9 @@ public class JdbcMixedCacheStoreConfigurationBuilder extends AbstractJdbcCacheSt
    private final MixedTableManipulationConfigurationBuilder binaryTable;
    private final MixedTableManipulationConfigurationBuilder stringTable;
    private String key2StringMapper = DefaultTwoWayKey2StringMapper.class.getName();
+   private DatabaseType databaseType;
+   private int batchSize = TableManipulation.DEFAULT_BATCH_SIZE;
+   private int fetchSize = TableManipulation.DEFAULT_FETCH_SIZE;
 
    public JdbcMixedCacheStoreConfigurationBuilder(LoadersConfigurationBuilder builder) {
       super(builder);
@@ -44,6 +49,36 @@ public class JdbcMixedCacheStoreConfigurationBuilder extends AbstractJdbcCacheSt
 
    @Override
    public JdbcMixedCacheStoreConfigurationBuilder self() {
+      return this;
+   }
+
+   /**
+    * When doing repetitive DB inserts (e.g. on
+    * {@link org.infinispan.loaders.CacheStore#fromStream(java.io.ObjectInput)} this will be batched
+    * according to this parameter. This is an optional parameter, and if it is not specified it will
+    * be defaulted to {@link #DEFAULT_BATCH_SIZE}.
+    */
+   public JdbcMixedCacheStoreConfigurationBuilder batchSize(int batchSize) {
+      this.batchSize = batchSize;
+      return this;
+   }
+
+   /**
+    * For DB queries (e.g. {@link org.infinispan.loaders.CacheStore#toStream(java.io.ObjectOutput)}
+    * ) the fetch size will be set on {@link java.sql.ResultSet#setFetchSize(int)}. This is optional
+    * parameter, if not specified will be defaulted to {@link #DEFAULT_FETCH_SIZE}.
+    */
+   public JdbcMixedCacheStoreConfigurationBuilder fetchSize(int fetchSize) {
+      this.fetchSize = fetchSize;
+      return this;
+   }
+
+   /**
+    * Specifies the type of the underlying database. If unspecified the database type will be
+    * determined automatically
+    */
+   public JdbcMixedCacheStoreConfigurationBuilder databaseType(DatabaseType databaseType) {
+      this.databaseType = databaseType;
       return this;
    }
 
@@ -91,7 +126,7 @@ public class JdbcMixedCacheStoreConfigurationBuilder extends AbstractJdbcCacheSt
 
    @Override
    public JdbcMixedCacheStoreConfiguration create() {
-      return new JdbcMixedCacheStoreConfiguration(key2StringMapper, binaryTable.create(), stringTable.create(), connectionFactory.create(), lockAcquistionTimeout,
+      return new JdbcMixedCacheStoreConfiguration(batchSize, fetchSize, databaseType, key2StringMapper, binaryTable.create(), stringTable.create(), connectionFactory.create(), lockAcquistionTimeout,
             lockConcurrencyLevel, purgeOnStartup, purgeSynchronously, purgerThreads, fetchPersistentState, ignoreModifications, TypedProperties.toTypedProperties(properties),
             async.create(), singletonStore.create());
    }
@@ -102,6 +137,9 @@ public class JdbcMixedCacheStoreConfigurationBuilder extends AbstractJdbcCacheSt
       this.binaryTable.read(template.binaryTable());
       this.stringTable.read(template.stringTable());
       this.key2StringMapper = template.key2StringMapper();
+      this.batchSize = template.batchSize();
+      this.fetchSize = template.fetchSize();
+      this.databaseType = template.databaseType();
       return this;
    }
 

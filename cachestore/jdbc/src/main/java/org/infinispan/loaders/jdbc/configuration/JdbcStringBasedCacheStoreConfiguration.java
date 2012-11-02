@@ -67,6 +67,7 @@ public class JdbcStringBasedCacheStoreConfiguration extends AbstractJdbcCacheSto
       config.setDropTableOnExit(table.dropOnExit());
       config.setBatchSize(table.batchSize());
       config.setFetchSize(table.fetchSize());
+      config.setDatabaseType(table.databaseType());
       config.setCacheName(table.cacheName());
       config.setDataColumnName(table.dataColumnName());
       config.setDataColumnType(table.dataColumnType());

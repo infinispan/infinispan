@@ -20,6 +20,7 @@ package org.infinispan.loaders.jdbc.configuration;
 
 import org.infinispan.configuration.Builder;
 import org.infinispan.configuration.Self;
+import org.infinispan.loaders.jdbc.DatabaseType;
 import org.infinispan.loaders.jdbc.TableManipulation;
 
 /**
@@ -36,6 +37,7 @@ public abstract class TableManipulationConfigurationBuilder<B extends AbstractJd
    private boolean dropOnExit = false;
    private String tableNamePrefix;
    private String cacheName;
+   private DatabaseType databaseType;
    private String idColumnName;
    private String idColumnType;
    private String dataColumnName;
@@ -74,6 +76,15 @@ public abstract class TableManipulationConfigurationBuilder<B extends AbstractJd
     */
    public S tableNamePrefix(String tableNamePrefix) {
       this.tableNamePrefix = tableNamePrefix;
+      return self();
+   }
+
+   /**
+    * Specifies the type of the underlying database. If unspecified the database type will be
+    * determined automatically
+    */
+   public S databaseType(DatabaseType databaseType) {
+      this.databaseType = databaseType;
       return self();
    }
 
@@ -148,7 +159,7 @@ public abstract class TableManipulationConfigurationBuilder<B extends AbstractJd
    @Override
    public TableManipulationConfiguration create() {
       return new TableManipulationConfiguration(idColumnName, idColumnType, tableNamePrefix, cacheName, dataColumnName, dataColumnType, timestampColumnName, timestampColumnType,
-            fetchSize, batchSize, createOnStart, dropOnExit);
+            databaseType, fetchSize, batchSize, createOnStart, dropOnExit);
    }
 
    @Override
@@ -157,6 +168,7 @@ public abstract class TableManipulationConfigurationBuilder<B extends AbstractJd
       this.fetchSize = template.fetchSize();
       this.createOnStart = template.createOnStart();
       this.dropOnExit = template.dropOnExit();
+      this.databaseType = template.databaseType();
       this.idColumnName = template.idColumnName();
       this.idColumnType = template.idColumnType();
       this.dataColumnName = template.dataColumnName();
