@@ -24,6 +24,8 @@ import org.infinispan.test.AbstractInfinispanTest;
 import org.infinispan.xsite.OfflineStatus;
 import org.testng.annotations.Test;
 
+import java.util.concurrent.TimeUnit;
+
 import static junit.framework.Assert.assertEquals;
 
 /**
@@ -38,7 +40,7 @@ public class OfflineStatusTest extends AbstractInfinispanTest {
 
       assert !offlineStatus.isOffline();
       for (int i = 0; i < 9; i++) {
-         offlineStatus.updateOnCommunicationFailure(System.currentTimeMillis());
+         offlineStatus.updateOnCommunicationFailure(now());
       }
 
       assertEquals(9, offlineStatus.getFailureCount());
@@ -58,12 +60,11 @@ public class OfflineStatusTest extends AbstractInfinispanTest {
       assert offlineStatus.minTimeHasElapsed();
 
 
-      offlineStatus.updateOnCommunicationFailure(System.currentTimeMillis());
+      offlineStatus.updateOnCommunicationFailure(now());
       assertEquals(10, offlineStatus.getFailureCount());
       assert offlineStatus.isOffline();
       assert offlineStatus.minTimeHasElapsed();
    }
-
 
    public void testFailureBasedOnly() throws Throwable {
       final OfflineStatus offlineStatus = new OfflineStatus(new TakeOfflineConfiguration(10, 0));
@@ -74,14 +75,18 @@ public class OfflineStatusTest extends AbstractInfinispanTest {
 
    private void test(OfflineStatus offlineStatus) throws InterruptedException {
       for (int i = 0; i < 9; i++) {
-         offlineStatus.updateOnCommunicationFailure(System.currentTimeMillis());
+         offlineStatus.updateOnCommunicationFailure(now());
       }
       assert !offlineStatus.isOffline();
       Thread.sleep(2000);
       assert !offlineStatus.isOffline();
 
-      offlineStatus.updateOnCommunicationFailure(System.currentTimeMillis());
+      offlineStatus.updateOnCommunicationFailure(now());
       assertEquals(10, offlineStatus.getFailureCount());
       assert offlineStatus.isOffline();
+   }
+
+   private long now() {
+      return TimeUnit.NANOSECONDS.toMillis(System.nanoTime());
    }
 }
