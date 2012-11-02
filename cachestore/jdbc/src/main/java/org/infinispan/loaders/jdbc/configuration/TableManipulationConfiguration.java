@@ -18,6 +18,8 @@
  */
 package org.infinispan.loaders.jdbc.configuration;
 
+import org.infinispan.loaders.jdbc.DatabaseType;
+
 public class TableManipulationConfiguration {
    private final String idColumnName;
    private final String idColumnType;
@@ -31,10 +33,11 @@ public class TableManipulationConfiguration {
    private final int batchSize;
    private final boolean createOnStart;
    private final boolean dropOnExit;
+   private final DatabaseType databaseType;
 
    TableManipulationConfiguration(String idColumnName, String idColumnType, String tableNamePrefix, String cacheName,
          String dataColumnName, String dataColumnType, String timestampColumnName, String timestampColumnType,
-         int fetchSize, int batchSize, boolean createOnStart, boolean dropOnExit) {
+         DatabaseType databaseType, int fetchSize, int batchSize, boolean createOnStart, boolean dropOnExit) {
       this.idColumnName = idColumnName;
       this.idColumnType = idColumnType;
       this.tableNamePrefix = tableNamePrefix;
@@ -43,6 +46,7 @@ public class TableManipulationConfiguration {
       this.dataColumnType = dataColumnType;
       this.timestampColumnName = timestampColumnName;
       this.timestampColumnType = timestampColumnType;
+      this.databaseType = databaseType;
       this.batchSize = batchSize;
       this.fetchSize = fetchSize;
       this.createOnStart = createOnStart;
@@ -55,6 +59,10 @@ public class TableManipulationConfiguration {
 
    public boolean dropOnExit() {
       return dropOnExit;
+   }
+
+   public DatabaseType databaseType() {
+      return databaseType;
    }
 
    public String idColumnName() {
@@ -105,4 +113,6 @@ public class TableManipulationConfiguration {
             + ", timestampColumnType=" + timestampColumnType + ", fetchSize=" + fetchSize + ", batchSize=" + batchSize
             + "]";
    }
+
+
 }
