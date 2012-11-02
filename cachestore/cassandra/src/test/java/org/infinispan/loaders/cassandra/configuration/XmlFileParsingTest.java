@@ -28,7 +28,7 @@ import java.io.IOException;
 import java.io.InputStream;
 
 import org.apache.cassandra.thrift.ConsistencyLevel;
-import org.infinispan.configuration.cache.LoaderConfiguration;
+import org.infinispan.configuration.cache.CacheLoaderConfiguration;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.test.AbstractInfinispanTest;
 import org.infinispan.test.TestingUtil;
@@ -71,7 +71,7 @@ public class XmlFileParsingTest extends AbstractInfinispanTest {
       assert store.async().enabled();
    }
 
-   private LoaderConfiguration buildCacheManagerWithCacheStore(final String config) throws IOException {
+   private CacheLoaderConfiguration buildCacheManagerWithCacheStore(final String config) throws IOException {
       InputStream is = new ByteArrayInputStream(config.getBytes());
       cacheManager = TestCacheManagerFactory.fromStream(is);
       assert cacheManager.getDefaultCacheConfiguration().loaders().cacheLoaders().size() == 1;

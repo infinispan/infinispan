@@ -41,9 +41,9 @@ import org.infinispan.CacheException;
 import org.infinispan.config.ConfigurationException;
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.configuration.cache.LegacyConfigurationAdaptor;
-import org.infinispan.configuration.cache.LoaderConfiguration;
+import org.infinispan.configuration.cache.CacheLoaderConfiguration;
 import org.infinispan.configuration.cache.LoadersConfiguration;
-import org.infinispan.configuration.cache.StoreConfiguration;
+import org.infinispan.configuration.cache.CacheStoreConfiguration;
 import org.infinispan.container.entries.InternalCacheEntry;
 import org.infinispan.context.Flag;
 import org.infinispan.context.InvocationContextContainer;
@@ -121,8 +121,8 @@ public class CacheLoaderManagerImpl implements CacheLoaderManager {
          if ((cs instanceof ChainingCacheStore) && !force) {
             ((ChainingCacheStore) loader).purgeIfNecessary();
          } else {
-            LoaderConfiguration first = clmConfig.cacheLoaders().get(0);
-            if (force || (first != null && first instanceof StoreConfiguration && ((StoreConfiguration)first).purgeOnStartup())) {
+            CacheLoaderConfiguration first = clmConfig.cacheLoaders().get(0);
+            if (force || (first != null && first instanceof CacheStoreConfiguration && ((CacheStoreConfiguration)first).purgeOnStartup())) {
                cs.clear();
             }
          }
@@ -310,9 +310,9 @@ public class CacheLoaderManagerImpl implements CacheLoaderManager {
 
          // only one cache loader may have fetchPersistentState to true.
          int numLoadersWithFetchPersistentState = 0;
-         for (LoaderConfiguration cfg : clmConfig.cacheLoaders()) {
-            if (cfg instanceof StoreConfiguration) {
-               StoreConfiguration scfg = (StoreConfiguration) cfg;
+         for (CacheLoaderConfiguration cfg : clmConfig.cacheLoaders()) {
+            if (cfg instanceof CacheStoreConfiguration) {
+               CacheStoreConfiguration scfg = (CacheStoreConfiguration) cfg;
                assertNotSingletonAndShared(scfg);
                if(scfg.fetchPersistentState()) numLoadersWithFetchPersistentState++;
             }
@@ -324,9 +324,9 @@ public class CacheLoaderManagerImpl implements CacheLoaderManager {
          }
       } else {
          if (!clmConfig.cacheLoaders().isEmpty()) {
-            LoaderConfiguration cfg = clmConfig.cacheLoaders().get(0);
-            if (cfg instanceof StoreConfiguration)
-               assertNotSingletonAndShared((StoreConfiguration) cfg);
+            CacheLoaderConfiguration cfg = clmConfig.cacheLoaders().get(0);
+            if (cfg instanceof CacheStoreConfiguration)
+               assertNotSingletonAndShared((CacheStoreConfiguration) cfg);
             tmpLoader = createCacheLoader(LegacyConfigurationAdaptor.adapt(cfg), cache);
          } else {
             return null;
@@ -373,7 +373,7 @@ public class CacheLoaderManagerImpl implements CacheLoaderManager {
       return new AsyncStore(tmpStore, cfg2.getAsyncStoreConfig());
    }
 
-   void assertNotSingletonAndShared(StoreConfiguration cfg) {
+   void assertNotSingletonAndShared(CacheStoreConfiguration cfg) {
       if (cfg.singletonStore().enabled() && clmConfig.shared())
          throw new ConfigurationException("Invalid cache loader configuration!!  If a cache loader is configured as a singleton, the cache loader cannot be shared in a cluster!");
    }

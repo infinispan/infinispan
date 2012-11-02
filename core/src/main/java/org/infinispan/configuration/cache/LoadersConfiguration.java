@@ -29,9 +29,9 @@ public class LoadersConfiguration {
    private final boolean passivation;
    private final boolean preload;
    private final boolean shared;
-   private final List<LoaderConfiguration> cacheLoaders;
+   private final List<CacheLoaderConfiguration> cacheLoaders;
 
-   LoadersConfiguration(boolean passivation, boolean preload, boolean shared, List<LoaderConfiguration> cacheLoaders) {
+   LoadersConfiguration(boolean passivation, boolean preload, boolean shared, List<CacheLoaderConfiguration> cacheLoaders) {
       this.passivation = passivation;
       this.preload = preload;
       this.shared = shared;
@@ -77,7 +77,7 @@ public class LoadersConfiguration {
       return shared;
    }
 
-   public List<LoaderConfiguration> cacheLoaders() {
+   public List<CacheLoaderConfiguration> cacheLoaders() {
       return cacheLoaders;
    }
 
@@ -86,8 +86,8 @@ public class LoadersConfiguration {
     * any of them
     */
    public Boolean fetchPersistentState() {
-      for (LoaderConfiguration c : cacheLoaders) {
-         if (c instanceof StoreConfiguration && ((StoreConfiguration)c).fetchPersistentState())
+      for (CacheLoaderConfiguration c : cacheLoaders) {
+         if (c instanceof CacheStoreConfiguration && ((CacheStoreConfiguration)c).fetchPersistentState())
             return true;
       }
       return false;
@@ -98,8 +98,8 @@ public class LoadersConfiguration {
    }
 
    public boolean usingAsyncStore() {
-      for (LoaderConfiguration c : cacheLoaders) {
-         if (c instanceof StoreConfiguration && ((StoreConfiguration)c).async().enabled())
+      for (CacheLoaderConfiguration c : cacheLoaders) {
+         if (c instanceof CacheStoreConfiguration && ((CacheStoreConfiguration)c).async().enabled())
             return true;
       }
       return false;

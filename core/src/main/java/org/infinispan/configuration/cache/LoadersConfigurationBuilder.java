@@ -36,7 +36,7 @@ public class LoadersConfigurationBuilder extends AbstractConfigurationChildBuild
    private boolean passivation = false;
    private boolean preload = false;
    private boolean shared = false;
-   private List<LoaderConfigurationBuilder<?,?>> cacheLoaders = new ArrayList<LoaderConfigurationBuilder<?,?>>(2);
+   private List<CacheLoaderConfigurationBuilder<?,?>> cacheLoaders = new ArrayList<CacheLoaderConfigurationBuilder<?,?>>(2);
 
    protected LoadersConfigurationBuilder(ConfigurationBuilder builder) {
       super(builder);
@@ -97,14 +97,14 @@ public class LoadersConfigurationBuilder extends AbstractConfigurationChildBuild
    }
 
    @Deprecated
-   public LegacyStoreConfigurationBuilder addCacheLoader() {
-      LegacyStoreConfigurationBuilder builder = new LegacyStoreConfigurationBuilder(this);
+   public LoaderConfigurationBuilder addCacheLoader() {
+      LoaderConfigurationBuilder builder = new LoaderConfigurationBuilder(this);
       this.cacheLoaders.add(builder);
       return builder;
    }
 
    /**
-    * Adds a cache loader to the configuration. If possible use the alternate {@link #addLoader(LoaderConfigurationBuilder)} and
+    * Adds a cache loader to the configuration. If possible use the alternate {@link #addLoader(CacheLoaderConfigurationBuilder)} and
     * {@link #addLoader(Class)} which will return appropriately typed builders
     *
     * @return
@@ -121,7 +121,7 @@ public class LoadersConfigurationBuilder extends AbstractConfigurationChildBuild
     * @param klass
     * @return
     */
-   public <T extends LoaderConfigurationBuilder<?, ?>> T addLoader(Class<T> klass) {
+   public <T extends CacheLoaderConfigurationBuilder<?, ?>> T addLoader(Class<T> klass) {
       try {
          Constructor<T> constructor = klass.getDeclaredConstructor(LoadersConfigurationBuilder.class);
          T builder = constructor.newInstance(this);
@@ -136,16 +136,16 @@ public class LoadersConfigurationBuilder extends AbstractConfigurationChildBuild
    /**
     * Adds a cache loader which uses the specified builder instance to build its configuration
     *
-    * @param builder an instance of {@link LoaderConfigurationBuilder}
+    * @param builder an instance of {@link CacheLoaderConfigurationBuilder}
     * @return
     */
-   public LoaderConfigurationBuilder<?, ?> addLoader(LoaderConfigurationBuilder<?, ?> builder) {
+   public CacheLoaderConfigurationBuilder<?, ?> addLoader(CacheLoaderConfigurationBuilder<?, ?> builder) {
       this.cacheLoaders.add(builder);
       return builder;
    }
 
    /**
-    * Adds a cache store to the configuration. If possible use the alternate {@link #addStore(StoreConfigurationBuilder)} and
+    * Adds a cache store to the configuration. If possible use the alternate {@link #addStore(CacheStoreConfigurationBuilder)} and
     * {@link #addStore(Class)} which will return appropriately typed builders
     *
     * @return
@@ -162,7 +162,7 @@ public class LoadersConfigurationBuilder extends AbstractConfigurationChildBuild
     * @param klass
     * @return
     */
-   public <T extends StoreConfigurationBuilder<?, ?>> T addStore(Class<T> klass) {
+   public <T extends CacheStoreConfigurationBuilder<?, ?>> T addStore(Class<T> klass) {
       try {
          Constructor<T> constructor = klass.getDeclaredConstructor(LoadersConfigurationBuilder.class);
          T builder = constructor.newInstance(this);
@@ -177,9 +177,9 @@ public class LoadersConfigurationBuilder extends AbstractConfigurationChildBuild
    /**
     * Adds a cache store which uses the specified builder instance to build its configuration
     *
-    * @param builder an instance of {@link StoreConfigurationBuilder}
+    * @param builder an instance of {@link CacheStoreConfigurationBuilder}
     */
-   public LoaderConfigurationBuilder<?, ?> addStore(StoreConfigurationBuilder<?, ?> builder) {
+   public CacheLoaderConfigurationBuilder<?, ?> addStore(CacheStoreConfigurationBuilder<?, ?> builder) {
       this.cacheLoaders.add(builder);
       return builder;
    }
@@ -215,21 +215,21 @@ public class LoadersConfigurationBuilder extends AbstractConfigurationChildBuild
     *
     * @return
     */
-   List<LoaderConfigurationBuilder<?, ?>> cacheLoaders() {
+   List<CacheLoaderConfigurationBuilder<?, ?>> cacheLoaders() {
       return cacheLoaders;
    }
 
    @Override
    public void validate() {
-      for (LoaderConfigurationBuilder<?, ?> b : cacheLoaders) {
+      for (CacheLoaderConfigurationBuilder<?, ?> b : cacheLoaders) {
          b.validate();
       }
    }
 
    @Override
    public LoadersConfiguration create() {
-      List<LoaderConfiguration> loaders = new LinkedList<LoaderConfiguration>();
-      for (LoaderConfigurationBuilder<?, ?> loader : cacheLoaders)
+      List<CacheLoaderConfiguration> loaders = new LinkedList<CacheLoaderConfiguration>();
+      for (CacheLoaderConfigurationBuilder<?, ?> loader : cacheLoaders)
          loaders.add(loader.create());
       return new LoadersConfiguration(passivation, preload, shared, loaders);
    }
@@ -237,8 +237,8 @@ public class LoadersConfigurationBuilder extends AbstractConfigurationChildBuild
    @SuppressWarnings("unchecked")
    @Override
    public LoadersConfigurationBuilder read(LoadersConfiguration template) {
-      for (LoaderConfiguration c : template.cacheLoaders()) {
-         Class<? extends LoaderConfigurationBuilder<?, ?>> builderClass = (Class<? extends LoaderConfigurationBuilder<?, ?>>) ConfigurationUtils.builderFor(c);
+      for (CacheLoaderConfiguration c : template.cacheLoaders()) {
+         Class<? extends CacheLoaderConfigurationBuilder<?, ?>> builderClass = (Class<? extends CacheLoaderConfigurationBuilder<?, ?>>) ConfigurationUtils.builderFor(c);
          Builder<Object> builder = (Builder<Object>) this.addLoader(builderClass);
          builder.read(c);
       }

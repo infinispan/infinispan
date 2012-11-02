@@ -21,7 +21,7 @@ package org.infinispan.configuration.cache;
 
 import org.infinispan.util.TypedProperties;
 
-public abstract class AbstractStoreConfiguration extends AbstractLoaderConfiguration implements StoreConfiguration {
+public abstract class AbstractStoreConfiguration extends AbstractLoaderConfiguration implements CacheStoreConfiguration {
 
    private final boolean purgeOnStartup;
    private final boolean purgeSynchronously;

@@ -16,19 +16,15 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston,
  * MA  02110-1301, USA.
  */
-package org.infinispan.configuration;
-
-import org.infinispan.configuration.cache.CacheLoaderConfigurationBuilder;
+package org.infinispan.configuration.cache;
 
 /**
- * This interface simplifies the task of writing fluent builders which need to inherit from
- * other builders (abstract or concrete). It overcomes Java's limitation of not being able to
- * return an instance of a class narrowed to the class itself. It should be used by all {@link Builder}
- * classes which require inheritance (such as the {@link CacheLoaderConfigurationBuilder})
+ * StoreConfigurationBuilder is the interface which should be implemented by all cache store builders
  *
  * @author Tristan Tarrant
  * @since 5.2
  */
-public interface Self<S extends Self<S>> {
-   S self();
+public interface CacheStoreConfigurationBuilder<T extends CacheStoreConfiguration, S extends CacheStoreConfigurationBuilder<T, S>> extends CacheLoaderConfigurationBuilder<T, S>, StoreConfigurationChildBuilder<S> {
+
+
 }

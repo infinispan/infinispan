@@ -20,14 +20,14 @@ package org.infinispan.configuration.cache;
 
 /**
 *
-* AbstractStoreConfigurationChildBuilder delegates {@link StoreConfigurationChildBuilder} methods to a specified {@link StoreConfigurationBuilder}
+* AbstractStoreConfigurationChildBuilder delegates {@link StoreConfigurationChildBuilder} methods to a specified {@link CacheStoreConfigurationBuilder}
 *
 * @author Tristan Tarrant
 * @since 5.2
 */
 public abstract class AbstractStoreConfigurationChildBuilder<S> extends AbstractLoaderConfigurationChildBuilder<S> implements StoreConfigurationChildBuilder<S> {
 
-   private final StoreConfigurationBuilder<? extends AbstractStoreConfiguration, ? extends StoreConfigurationBuilder<?, ?>> builder;
+   private final CacheStoreConfigurationBuilder<? extends AbstractStoreConfiguration, ? extends CacheStoreConfigurationBuilder<?, ?>> builder;
 
    protected AbstractStoreConfigurationChildBuilder(AbstractStoreConfigurationBuilder<? extends AbstractStoreConfiguration, ?> builder) {
       super(builder);

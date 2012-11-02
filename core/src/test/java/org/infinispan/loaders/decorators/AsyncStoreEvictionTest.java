@@ -26,7 +26,7 @@ import java.util.concurrent.locks.ReentrantLock;
 
 import org.infinispan.Cache;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
-import org.infinispan.configuration.cache.StoreConfigurationBuilder;
+import org.infinispan.configuration.cache.CacheStoreConfigurationBuilder;
 import org.infinispan.container.entries.InternalCacheEntry;
 import org.infinispan.eviction.EvictionStrategy;
 import org.infinispan.loaders.CacheLoaderConfig;
@@ -48,7 +48,7 @@ public class AsyncStoreEvictionTest {
       ConfigurationBuilder config = new ConfigurationBuilder();
       config.expiration().wakeUpInterval(100);
       config.eviction().maxEntries(1).strategy(EvictionStrategy.LRU);
-      StoreConfigurationBuilder store = config.loaders().passivation(passivation).addStore().cacheStore(new LockableCacheStore());
+      CacheStoreConfigurationBuilder store = config.loaders().passivation(passivation).addStore().cacheStore(new LockableCacheStore());
       if (USE_ASYNC_STORE)
          store.async().enable().threadPoolSize(threads);
       return config;

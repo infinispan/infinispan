@@ -25,8 +25,8 @@ import java.util.Properties;
  * This is slightly different AbstractLoaderConfigurationChildBuilder, as it instantiates a new set of children (async and singletonStore)
  * rather than delegate to existing ones.
  */
-public abstract class AbstractLoaderConfigurationBuilder<T extends LoaderConfiguration, S extends AbstractLoaderConfigurationBuilder<T, S>> extends
-      AbstractLoadersConfigurationChildBuilder implements LoaderConfigurationBuilder<T, S> {
+public abstract class AbstractLoaderConfigurationBuilder<T extends CacheLoaderConfiguration, S extends AbstractLoaderConfigurationBuilder<T, S>> extends
+      AbstractLoadersConfigurationChildBuilder implements CacheLoaderConfigurationBuilder<T, S> {
    protected Properties properties = new Properties();
 
    public AbstractLoaderConfigurationBuilder(LoadersConfigurationBuilder builder) {

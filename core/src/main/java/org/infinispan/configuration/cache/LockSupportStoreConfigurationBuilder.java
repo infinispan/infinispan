@@ -24,6 +24,6 @@ package org.infinispan.configuration.cache;
  * @author Tristan Tarrant
  * @since 5.2
  */
-public interface LockSupportStoreConfigurationBuilder<T extends LockSupportStoreConfiguration, S extends LockSupportStoreConfigurationBuilder<T, S>> extends StoreConfigurationBuilder<T, S>, LockSupportStoreConfigurationChildBuilder<S> {
+public interface LockSupportStoreConfigurationBuilder<T extends LockSupportStoreConfiguration, S extends LockSupportStoreConfigurationBuilder<T, S>> extends CacheStoreConfigurationBuilder<T, S>, LockSupportStoreConfigurationChildBuilder<S> {
 
 }

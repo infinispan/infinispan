@@ -672,7 +672,7 @@ public class Parser52 implements ConfigurationParser<ConfigurationBuilderHolder>
     * This method is public static so that it can be reused by custom cache store/loader configuration parsers
     */
    public static void parseCommonLoaderAttributes(XMLExtendedStreamReader reader, int i,
-         LoaderConfigurationBuilder<?, ?> builder) throws XMLStreamException {
+         CacheLoaderConfigurationBuilder<?, ?> builder) throws XMLStreamException {
       throw ParseUtils.unexpectedAttribute(reader, i);
    }
 
@@ -680,7 +680,7 @@ public class Parser52 implements ConfigurationParser<ConfigurationBuilderHolder>
     * This method is public static so that it can be reused by custom cache store/loader configuration parsers
     */
    public static void parseCommonStoreAttributes(XMLExtendedStreamReader reader, int i,
-         StoreConfigurationBuilder<?, ?> builder) throws XMLStreamException {
+         CacheStoreConfigurationBuilder<?, ?> builder) throws XMLStreamException {
       ParseUtils.requireNoNamespaceAttribute(reader, i);
       String value = replaceProperties(reader.getAttributeValue(i));
       Attribute attribute = Attribute.forName(reader.getAttributeLocalName(i));
@@ -849,14 +849,14 @@ public class Parser52 implements ConfigurationParser<ConfigurationBuilderHolder>
       }
    }
 
-   private void parseLoaderChildren(final XMLExtendedStreamReader reader, final LoaderConfigurationBuilder<?, ?> loaderBuilder) throws XMLStreamException {
+   private void parseLoaderChildren(final XMLExtendedStreamReader reader, final CacheLoaderConfigurationBuilder<?, ?> loaderBuilder) throws XMLStreamException {
       while (reader.hasNext() && (reader.nextTag() != XMLStreamConstants.END_ELEMENT)) {
          parseCommonLoaderChildren(reader, loaderBuilder);
       }
    }
 
    public static void parseCommonLoaderChildren(final XMLExtendedStreamReader reader,
-         final LoaderConfigurationBuilder<?, ?> loaderBuilder) throws XMLStreamException {
+         final CacheLoaderConfigurationBuilder<?, ?> loaderBuilder) throws XMLStreamException {
       Element element = Element.forName(reader.getLocalName());
       switch (element) {
          case PROPERTIES:
@@ -867,14 +867,14 @@ public class Parser52 implements ConfigurationParser<ConfigurationBuilderHolder>
       }
    }
 
-   private void parseStoreChildren(final XMLExtendedStreamReader reader, final StoreConfigurationBuilder<?, ?> storeBuilder) throws XMLStreamException {
+   private void parseStoreChildren(final XMLExtendedStreamReader reader, final CacheStoreConfigurationBuilder<?, ?> storeBuilder) throws XMLStreamException {
       while (reader.hasNext() && (reader.nextTag() != XMLStreamConstants.END_ELEMENT)) {
          parseCommonStoreChildren(reader, storeBuilder);
       }
    }
 
    public static void parseCommonStoreChildren(final XMLExtendedStreamReader reader,
-         final StoreConfigurationBuilder<?, ?> storeBuilder) throws XMLStreamException {
+         final CacheStoreConfigurationBuilder<?, ?> storeBuilder) throws XMLStreamException {
       Element element = Element.forName(reader.getLocalName());
       switch (element) {
          case ASYNC:
@@ -891,7 +891,7 @@ public class Parser52 implements ConfigurationParser<ConfigurationBuilderHolder>
       }
    }
 
-   public static void parseSingletonStore(final XMLExtendedStreamReader reader, final StoreConfigurationBuilder<?, ?> storeBuilder) throws XMLStreamException {
+   public static void parseSingletonStore(final XMLExtendedStreamReader reader, final CacheStoreConfigurationBuilder<?, ?> storeBuilder) throws XMLStreamException {
       for (int i = 0; i < reader.getAttributeCount(); i++) {
          ParseUtils.requireNoNamespaceAttribute(reader, i);
          String value = replaceProperties(reader.getAttributeValue(i));
@@ -918,7 +918,7 @@ public class Parser52 implements ConfigurationParser<ConfigurationBuilderHolder>
       ParseUtils.requireNoContent(reader);
    }
 
-   public static void parseAsyncStore(final XMLExtendedStreamReader reader, final StoreConfigurationBuilder<?, ?> storeBuilder) throws XMLStreamException {
+   public static void parseAsyncStore(final XMLExtendedStreamReader reader, final CacheStoreConfigurationBuilder<?, ?> storeBuilder) throws XMLStreamException {
       for (int i = 0; i < reader.getAttributeCount(); i++) {
          ParseUtils.requireNoNamespaceAttribute(reader, i);
          String value = replaceProperties(reader.getAttributeValue(i));
