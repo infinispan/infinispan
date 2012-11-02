@@ -415,18 +415,19 @@ public class QueryInterceptor extends CommandInterceptor {
     * @param transactionContext Optional for lazy initialization, or reuse an existing context.
     */
    private void processPutKeyValueCommand(final PutKeyValueCommand command, final InvocationContext ctx, final Object previousValue, TransactionContext transactionContext) {
+      //whatever the new type, we might still need to cleanup for the previous value (and schedule removal first!)
+      if (updateKnownTypesIfNeeded(previousValue)) {
+         if (shouldModifyIndexes(command, ctx)) {
+            transactionContext = transactionContext == null ? makeTransactionalEventContext() : transactionContext;
+            removeFromIndexes(previousValue, extractValue(command.getKey()), transactionContext);
+         }
+      }
       Object value = extractValue(command.getValue());
       if (updateKnownTypesIfNeeded(value)) {
          if (shouldModifyIndexes(command, ctx)) {
             // This means that the entry is just modified so we need to update the indexes and not add to them.
             transactionContext = transactionContext == null ? makeTransactionalEventContext() : transactionContext;
             updateIndexes(value, extractValue(command.getKey()), transactionContext);
-         }
-      }
-      else if (updateKnownTypesIfNeeded(previousValue)) {
-         if (shouldModifyIndexes(command, ctx)) {
-            transactionContext = transactionContext == null ? makeTransactionalEventContext() : transactionContext;
-            removeFromIndexes(previousValue, extractValue(command.getKey()), transactionContext);
          }
       }
    }
