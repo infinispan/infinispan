@@ -666,7 +666,7 @@ public class AsyncStore extends AbstractDelegatingStore {
                   }
 
                   // if this is the last state to process, wait for background threads, then quit
-                  if (s.stopped) {
+                  if (s.stopped && s.modifications.isEmpty()) {
                      s.workerThreads.await();
                      return;
                   }
