@@ -127,4 +127,7 @@ public interface Log extends org.infinispan.util.logging.Log {
 
    @Message(value = "An error occurred while disconnecting the source server for cache '%s' using migrator '%s'", id = 19027)
    StatementException sourceDisconnectionError(@Cause Exception e, String migratorName, String name);
+
+   @Message(value = "A site name needs to be specified", id = 19028)
+   StatementException siteNameNotSpecified();
 }

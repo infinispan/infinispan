@@ -19,6 +19,7 @@ org.infinispan.cli.commands.server.Put
 org.infinispan.cli.commands.server.Remove
 org.infinispan.cli.commands.server.Replace
 org.infinispan.cli.commands.server.Rollback
+org.infinispan.cli.commands.server.Site
 org.infinispan.cli.commands.server.Start
 org.infinispan.cli.commands.server.Stats
 org.infinispan.cli.commands.server.Upgrade
