@@ -125,6 +125,7 @@ statement returns [Statement stmt]
    | removeStatement { $stmt = $removeStatement.stmt; }
    | replaceStatement { $stmt = $replaceStatement.stmt; }
    | rollbackTransactionStatement { $stmt = $rollbackTransactionStatement.stmt; }
+   | siteStatement { $stmt = $siteStatement.stmt; }
    | startBatchStatement { $stmt = $startBatchStatement.stmt; }
    | statsStatement { $stmt = $statsStatement.stmt; }
    | upgradeStatement { $stmt = $upgradeStatement.stmt; }
@@ -199,6 +200,10 @@ replaceStatement returns [ReplaceStatement stmt]
 rollbackTransactionStatement returns [RollbackTransactionStatement stmt]
    : ROLLBACK (cacheName = STRINGLITERAL)? (EOL | ';')! { $stmt = new RollbackTransactionStatement(unquote($cacheName.text)); }
    ;
+   
+siteStatement returns [SiteStatement stmt]
+   : SITE opts = statementOptions (site = siteIdentifier)? (EOL | ';')! { $stmt = new SiteStatement($opts.options, $site.site); }
+   ;
 
 startBatchStatement returns [StartBatchStatement stmt]
    : START (cacheName = STRINGLITERAL)? (EOL | ';')! { $stmt = new StartBatchStatement(unquote($cacheName.text)); }
@@ -223,6 +228,11 @@ expirationClause returns [ExpirationData exp]
 keyIdentifier returns [KeyData key]
    : STRINGLITERAL '.' literal { $key = new KeyData(unquote($STRINGLITERAL.text), $literal.o); }
    | literal { $key = new KeyData($literal.o); }
+   ;
+
+siteIdentifier returns [SiteData site]
+   : cacheName = STRINGLITERAL '.' siteName = STRINGLITERAL { $site = new SiteData(unquote($cacheName.text), $siteName.text); }
+   | siteName = STRINGLITERAL { $site = new SiteData($siteName.text); }
    ;
 
 statementOptions returns [List<Option> options]
@@ -308,6 +318,7 @@ PUT:     'put';
 REMOVE:  'remove';
 REPLACE: 'replace';
 ROLLBACK:'rollback';
+SITE:    'site';
 START:   'start';
 STATS:   'stats';
 TRUE:    'true';
