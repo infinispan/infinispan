@@ -52,6 +52,7 @@ import org.infinispan.loaders.CacheLoader;
 import org.infinispan.loaders.CacheLoaderException;
 import org.infinispan.loaders.CacheLoaderManager;
 import org.infinispan.manager.EmbeddedCacheManager;
+import org.infinispan.marshall.MarshalledValue;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.util.InfinispanCollections;
 import org.infinispan.util.concurrent.ConcurrentMapFactory;
@@ -376,8 +377,13 @@ public class MapReduceManagerImpl implements MapReduceManager {
       if (cl != null) {
          try {
             InternalCacheEntry entry = cl.load(key);
-            if (entry != null) {
-               value = (KOut) entry.getValue();
+            if (entry != null) {               
+               Object loadedValue = entry.getValue();
+               if (loadedValue instanceof MarshalledValue) {
+                  value = (KOut) ((MarshalledValue) loadedValue).get();
+               } else {
+                  value = (KOut) loadedValue;
+               }
             }
          } catch (CacheLoaderException e) {
             throw new CacheException("Could not load key/value entries from cacheloader", e);
