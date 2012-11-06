@@ -970,22 +970,30 @@ public class DefaultExecutorService extends AbstractExecutorService implements D
       }
 
       V retrieveResult(Object response) throws Exception {
-         if (response == null) {
-            throw new ExecutionException("Execution returned null value",
-                     new NullPointerException());
-         }
+         V result = null;
+         //this is application level Exception that was raised in execution
+         //simply rethrow it (might be good candidate for failover)
          if (response instanceof Exception) {
             throw ((Exception) response);
          }
-
+         //these two should never happen, mark them with IllegalStateException         
+         if (response == null || !(response instanceof Map<?, ?>)) {
+            throw new IllegalStateException("Invalid response received " + response);
+         }         
          Map<Address, Response> mapResult = (Map<Address, Response>) response;
-         assert mapResult.size() == 1;
-         for (Entry<Address, Response> e : mapResult.entrySet()) {
-            if (e.getValue() instanceof SuccessfulResponse) {
-               return (V) ((SuccessfulResponse) e.getValue()).getResponseValue();
+         if (mapResult.size() == 1) {
+            for (Entry<Address, Response> e : mapResult.entrySet()) {
+               Response value = e.getValue();
+               if (value instanceof SuccessfulResponse) {
+                  result = (V) ((SuccessfulResponse) value).getResponseValue();
+               }
             }
+         } else {
+            //should never happen as we send DistributedTaskPart to one node for 
+            //execution only, therefore we should get only one response
+            throw new IllegalStateException("Invalid response " + response);
          }
-         throw new ExecutionException(new IllegalStateException("Invalid response " + response));
+         return result;
       }
 
       public void execute() {
