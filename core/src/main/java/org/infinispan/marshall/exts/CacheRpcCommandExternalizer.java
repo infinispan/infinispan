@@ -91,7 +91,7 @@ public final class CacheRpcCommandExternalizer extends AbstractExternalizer<Cach
                TxCompletionNotificationCommand.class, GetInDoubtTransactionsCommand.class,
                GetInDoubtTxInfoCommand.class, CompleteTransactionCommand.class,
                VersionedPrepareCommand.class, CreateCacheCommand.class, CancelCommand.class,
-               VersionedCommitCommand.class);
+               VersionedCommitCommand.class, XSiteAdminCommand.class);
       // Only interested in cache specific replicable commands
       coreCommands.addAll(gcr.getModuleProperties().moduleCacheRpcCommands());
       return coreCommands;
