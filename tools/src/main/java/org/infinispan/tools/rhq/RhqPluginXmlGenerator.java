@@ -183,6 +183,7 @@ public class RhqPluginXmlGenerator {
             Props props, boolean withNamePrefix) throws Exception {
       props.setHasOperations(true);
       props.setHasMetrics(true);
+      Set<String> uniqueOperations = new HashSet<String>();
       for (Class<?> clazz : classes) {
          MBean mbean = clazz.getAnnotation(MBean.class);
          String prefix = withNamePrefix ? mbean.objectName() + '.' : "";
@@ -207,6 +208,7 @@ public class RhqPluginXmlGenerator {
                }
                MetricProps metric = new MetricProps(property);
                String displayName = withNamePrefix ? "[" + mbean.objectName() + "] " + rhqMetric.displayName() : rhqMetric.displayName();
+               validateDisplayName(displayName);
                metric.setDisplayName(displayName);
                metric.setDisplayType(rhqMetric.displayType());
                metric.setDataType(rhqMetric.dataType());
@@ -233,8 +235,13 @@ public class RhqPluginXmlGenerator {
                } else {
                   name = prefix + ctMethod.getName();
                }
+               if (uniqueOperations.contains(name)) {
+                  throw new RuntimeException("Duplicate operation name: "+name);
+               }
+               uniqueOperations.add(name);
                OperationProps operation = new OperationProps(name);
                String displayName = withNamePrefix ? "[" + mbean.objectName() + "] " + rhqOperation.displayName() : rhqOperation.displayName();
+               validateDisplayName(displayName);
                operation.setDisplayName(displayName);
                if (managedAttr != null) {
                   debug("Operation has ManagedAttribute annotation " + managedAttr);
@@ -291,6 +298,7 @@ public class RhqPluginXmlGenerator {
                }
                MetricProps metric = new MetricProps(property);
                String displayName = withNamePrefix ? "[" + mbean.objectName() + "] " + rhqMetric.displayName() : rhqMetric.displayName();
+               validateDisplayName(displayName);
                metric.setDisplayName(displayName);
                metric.setDisplayType(rhqMetric.displayType());
                metric.setDataType(rhqMetric.dataType());
@@ -308,6 +316,12 @@ public class RhqPluginXmlGenerator {
             }
          }
 
+      }
+   }
+
+   private static void validateDisplayName(String displayName) {
+      if (displayName.length() > 100) {
+         throw new RuntimeException("Display name too long (max 100 chars): "+displayName);
       }
    }
 
