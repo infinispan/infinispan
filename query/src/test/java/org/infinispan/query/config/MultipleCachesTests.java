@@ -57,8 +57,8 @@ public class MultipleCachesTests extends SingleCacheManagerTest {
             "   <namedCache name=\"indexingenabled\">\n" +
             "      <indexing enabled=\"true\" >\n" +
             "         <properties>\n" +
-            "            <property name=\"hibernate.search.default.directory_provider\" value=\"ram\" />\n" +
-            "            <property name=\"hibernate.search.lucene_version\" value=\"LUCENE_CURRENT\" />\n" +
+            "            <property name=\"default.directory_provider\" value=\"ram\" />\n" +
+            "            <property name=\"lucene_version\" value=\"LUCENE_CURRENT\" />\n" +
             "         </properties>\n" +
             "      </indexing>\n" +
             "   </namedCache>\n" + TestingUtil.INFINISPAN_END_TAG;

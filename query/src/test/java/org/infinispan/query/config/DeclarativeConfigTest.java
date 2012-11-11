@@ -54,8 +54,8 @@ public class DeclarativeConfigTest extends SingleCacheManagerTest {
             "   <default>\n" +
             "      <indexing enabled=\"true\" indexLocalOnly=\"true\">\n" +
             "         <properties>\n" +
-            "            <property name=\"hibernate.search.default.directory_provider\" value=\"ram\" />\n" +
-            "            <property name=\"hibernate.search.lucene_version\" value=\"LUCENE_CURRENT\" />\n" +
+            "            <property name=\"default.directory_provider\" value=\"ram\" />\n" +
+            "            <property name=\"lucene_version\" value=\"LUCENE_CURRENT\" />\n" +
             "         </properties>\n" +
             "      </indexing>\n" +
             "   </default>\n" + TestingUtil.INFINISPAN_END_TAG;

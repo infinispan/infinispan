@@ -63,7 +63,7 @@ public class SearchMappingTest {
             .property("isin", ElementType.METHOD).field();
 
       final Properties properties = new Properties();
-      properties.put("hibernate.search.default.directory_provider", "ram");
+      properties.put("default.directory_provider", "ram");
       properties.put(Environment.MODEL_MAPPING, mapping);
 
       ConfigurationBuilder builder = new ConfigurationBuilder();
@@ -132,7 +132,7 @@ public class SearchMappingTest {
    @Test
    public void testWithoutSearchMapping() {
       final Properties properties = new Properties();
-      properties.put("hibernate.search.default.directory_provider", "ram");
+      properties.put("default.directory_provider", "ram");
 
       ConfigurationBuilder builder = new ConfigurationBuilder();
       builder.indexing().enable().indexLocalOnly(true).withProperties(properties);

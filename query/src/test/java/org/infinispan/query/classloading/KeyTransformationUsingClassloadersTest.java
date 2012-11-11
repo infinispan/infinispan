@@ -47,8 +47,8 @@ public class KeyTransformationUsingClassloadersTest extends SingleCacheManagerTe
          .indexing()
             .enable()
             .indexLocalOnly(false)
-            .addProperty("hibernate.search.default.directory_provider", "ram")
-            .addProperty("hibernate.search.lucene_version", "LUCENE_CURRENT");
+            .addProperty("default.directory_provider", "ram")
+            .addProperty("lucene_version", "LUCENE_CURRENT");
       return TestCacheManagerFactory.createCacheManager(cfg);
    }
 
