@@ -39,6 +39,7 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Properties;
 import java.util.Set;
 
@@ -50,6 +51,8 @@ import java.util.Set;
  * @author Sanne Grinovero
  */
 public class SearchableCacheConfiguration extends SearchConfigurationBase implements SearchConfiguration {
+
+   private static final String HSEARCH_PREFIX = "hibernate.search.";
 
    private final Map<String, Class<?>> classes;
    private final Properties properties;
@@ -63,7 +66,7 @@ public class SearchableCacheConfiguration extends SearchConfigurationBase implem
          this.properties = new Properties();
       }
       else {
-         this.properties = properties;
+         this.properties = rescopeProperties(properties);
       }
 
       classes = new HashMap<String, Class<?>>();
@@ -142,6 +145,18 @@ public class SearchableCacheConfiguration extends SearchConfigurationBase implem
    @Override
    public IndexManagerFactory getIndexManagerFactory() {
       return indexManagerFactory;
+   }
+
+   private static Properties rescopeProperties(Properties origin) {
+      Properties target = new Properties();
+      for (Entry<Object, Object> entry : origin.entrySet()) {
+         Object key = entry.getKey();
+         if (key instanceof String && !key.toString().startsWith(HSEARCH_PREFIX)) {
+            key = HSEARCH_PREFIX + key.toString();
+         }
+         target.put(key, entry.getValue());
+      }
+      return target;
    }
 
 }
