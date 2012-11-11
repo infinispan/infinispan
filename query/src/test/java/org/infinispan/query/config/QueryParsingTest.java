@@ -52,7 +52,7 @@ public class QueryParsingTest extends AbstractInfinispanTest {
       final Configuration memoryCfg = namedConfigurations.get("memory-searchable").build();
       assert memoryCfg.indexing().enabled();
       assert memoryCfg.indexing().properties().size() == 2;
-      assert memoryCfg.indexing().properties().getProperty("hibernate.search.default.directory_provider").equals("ram");
+      assert memoryCfg.indexing().properties().getProperty("default.directory_provider").equals("ram");
 
       final Configuration diskCfg = namedConfigurations.get("disk-searchable").build();
       assert diskCfg.indexing().enabled();

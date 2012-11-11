@@ -34,9 +34,9 @@ public class StateTransferQueryDistributedIndexTest extends StateTransferQueryIn
       super.configureCache(builder);
 
       builder.indexing().enable().indexLocalOnly(true)
-            .addProperty("hibernate.search.default.directory_provider", "infinispan")
-            .addProperty("hibernate.search.default.indexmanager", "org.infinispan.query.indexmanager.InfinispanIndexManager")
-            .addProperty("hibernate.search.lucene_version", "LUCENE_36")
-            .addProperty("hibernate.search.default.exclusive_index_use", "false");
+            .addProperty("default.directory_provider", "infinispan")
+            .addProperty("default.indexmanager", "org.infinispan.query.indexmanager.InfinispanIndexManager")
+            .addProperty("lucene_version", "LUCENE_36")
+            .addProperty("default.exclusive_index_use", "false");
    }
 }

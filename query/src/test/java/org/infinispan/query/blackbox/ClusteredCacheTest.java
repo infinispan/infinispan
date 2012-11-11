@@ -80,8 +80,8 @@ public class ClusteredCacheTest extends MultipleCacheManagersTest {
       cacheCfg.indexing()
          .enable()
          .indexLocalOnly(false)
-         .addProperty("hibernate.search.default.directory_provider", "ram")
-         .addProperty("hibernate.search.lucene_version", "LUCENE_CURRENT");
+         .addProperty("default.directory_provider", "ram")
+         .addProperty("lucene_version", "LUCENE_CURRENT");
       enhanceConfig(cacheCfg);
       List<Cache<String, Person>> caches = createClusteredCaches(2, cacheCfg);
       cache1 = caches.get(0);

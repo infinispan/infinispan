@@ -52,8 +52,8 @@ public class SearchFactoryShutdownTest extends AbstractInfinispanTest {
             .indexing()
                .enable()
                .indexLocalOnly(false)
-               .addProperty("hibernate.search.default.directory_provider", "ram")
-               .addProperty("hibernate.search.lucene_version", "LUCENE_CURRENT");
+               .addProperty("default.directory_provider", "ram")
+               .addProperty("lucene_version", "LUCENE_CURRENT");
          cc = TestCacheManagerFactory.createCacheManager(cfg);
          Cache<?, ?> cache = cc.getCache();
          SearchFactoryIntegrator sfi = TestingUtil.extractComponent(cache, SearchFactoryIntegrator.class);

@@ -110,8 +110,8 @@ public class InconsistentIndexesAfterRestartTest extends AbstractInfinispanTest 
           .indexing()
              .enable()
              .indexLocalOnly(true)
-             .addProperty("hibernate.search.default.directory_provider", "filesystem")
-             .addProperty("hibernate.search.default.indexBase", TMP_DIR + File.separator + "idx");
+             .addProperty("default.directory_provider", "filesystem")
+             .addProperty("default.indexBase", TMP_DIR + File.separator + "idx");
 
        if (batchingEnabled) {
           builder.invocationBatching().enable();

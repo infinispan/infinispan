@@ -16,8 +16,8 @@
     <namedCache name="memory-searchable">
         <indexing enabled="true" indexLocalOnly="false">
             <properties>
-                <property name="hibernate.search.default.directory_provider" value="ram" />
-                <property name="hibernate.search.lucene_version" value="LUCENE_36" />
+                <property name="default.directory_provider" value="ram" />
+                <property name="lucene_version" value="LUCENE_36" />
             </properties>
         </indexing>
     </namedCache>

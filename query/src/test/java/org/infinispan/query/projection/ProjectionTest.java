@@ -53,8 +53,8 @@ public class ProjectionTest extends SingleCacheManagerTest {
    protected EmbeddedCacheManager createCacheManager() throws Exception {
       ConfigurationBuilder cfg = getDefaultStandaloneCacheConfig(true);
       cfg.indexing().enable()
-            .addProperty("hibernate.search.default.directory_provider", "ram")
-            .addProperty("hibernate.search.lucene_version", "LUCENE_CURRENT");
+            .addProperty("default.directory_provider", "ram")
+            .addProperty("lucene_version", "LUCENE_CURRENT");
       EmbeddedCacheManager cacheManager = TestCacheManagerFactory.createCacheManager(cfg);
       Cache<Object, Object> cache = cacheManager.getCache();
       searchManager = Search.getSearchManager(cache);

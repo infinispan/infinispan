@@ -62,8 +62,8 @@ public class QueryCacheRestartTest extends AbstractInfinispanTest {
    private void queryCacheRestart(boolean localOnly) {
       ConfigurationBuilder builder = new ConfigurationBuilder();
       builder.indexing().enable().indexLocalOnly(localOnly)
-            .addProperty("hibernate.search.default.directory_provider", "ram")
-            .addProperty("hibernate.search.lucene_version", "LUCENE_CURRENT");
+            .addProperty("default.directory_provider", "ram")
+            .addProperty("lucene_version", "LUCENE_CURRENT");
       final NoOpInterceptor noOpInterceptor = new NoOpInterceptor();
       builder.customInterceptors().addInterceptor().interceptor(noOpInterceptor);
 
