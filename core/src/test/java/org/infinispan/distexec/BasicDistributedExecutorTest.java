@@ -27,8 +27,10 @@ import org.infinispan.config.Configuration;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.test.AbstractCacheTest;
+import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.infinispan.util.concurrent.WithinThreadExecutor;
+import org.testng.AssertJUnit;
 import org.testng.annotations.Test;
 
 import java.io.Serializable;
@@ -56,13 +58,14 @@ public class BasicDistributedExecutorTest extends AbstractCacheTest {
          Cache<Object, Object> cache = cacheManager.getCache();
          DistributedExecutorService des = new DefaultExecutorService(cache);
       } finally {
-         cacheManager.stop();
+         TestingUtil.killCacheManagers(cacheManager);
       }
    }
    
    @Test(expectedExceptions = { IllegalArgumentException.class })
    public void testImproperMasterCacheForDistributedExecutor() {
       DistributedExecutorService des = new DefaultExecutorService(null);
+      
    }
 
    @Test(expectedExceptions = { IllegalArgumentException.class })
@@ -72,22 +75,23 @@ public class BasicDistributedExecutorTest extends AbstractCacheTest {
          Cache<Object, Object> cache = cacheManager.getCache();
          DistributedExecutorService des = new DefaultExecutorService(cache, null);
       } finally {
-         cacheManager.stop();
+         TestingUtil.killCacheManagers(cacheManager);
       }
    }
 
    @Test(expectedExceptions = { IllegalArgumentException.class })
    public void testStoppedLocalExecutorServiceForDistributedExecutor() {
       EmbeddedCacheManager cacheManager = TestCacheManagerFactory.createLocalCacheManager(false);
+      DistributedExecutorService des = null;
       try {
          Cache<Object, Object> cache = cacheManager.getCache();
 
          ExecutorService service = new WithinThreadExecutor();
          service.shutdown();
 
-         DistributedExecutorService des = new DefaultExecutorService(cache, service);
+         des = new DefaultExecutorService(cache, service);
       } finally {
-         cacheManager.stop();
+         TestingUtil.killCacheManagers(cacheManager);
       }
    }
 
@@ -98,26 +102,24 @@ public class BasicDistributedExecutorTest extends AbstractCacheTest {
       try {
          Cache<Object, Object> cache = cacheManager.getCache();
          cache.stop();
-
          DistributedExecutorService des = new DefaultExecutorService(cache);
       } finally {
-         cacheManager.stop();
+         TestingUtil.killCacheManagers(cacheManager);
       }
    }
 
    public void testDistributedExecutorShutDown() {
       Configuration config = TestCacheManagerFactory.getDefaultConfiguration(true, Configuration.CacheMode.REPL_SYNC);
       EmbeddedCacheManager cacheManager = TestCacheManagerFactory.createClusteredCacheManager(config);
+      DistributedExecutorService des = null;
       try {
          Cache<Object, Object> cache = cacheManager.getCache();
-         DistributedExecutorService des = new DefaultExecutorService(cache);
-
+         des = new DefaultExecutorService(cache);
          des.shutdown();
-
          assert des.isShutdown();
          assert des.isTerminated();
       } finally {
-         cacheManager.stop();
+         TestingUtil.killCacheManagers(cacheManager);
       }
    }
 
@@ -136,7 +138,7 @@ public class BasicDistributedExecutorTest extends AbstractCacheTest {
          assert des.isShutdown();
          assert des.isTerminated();
       } finally {
-         cacheManager.stop();
+         TestingUtil.killCacheManagers(cacheManager);
       }
    }
 
@@ -148,20 +150,22 @@ public class BasicDistributedExecutorTest extends AbstractCacheTest {
    public void testSingleCacheExecution() throws Exception {
       Configuration config = TestCacheManagerFactory.getDefaultConfiguration(true, Configuration.CacheMode.REPL_SYNC);
       EmbeddedCacheManager cacheManager = TestCacheManagerFactory.createClusteredCacheManager(config);
+      DistributedExecutorService des = null;
       try {
          Cache<Object, Object> cache = cacheManager.getCache();
-         DistributedExecutorService des = new DefaultExecutorService(cache);
+         des = new DefaultExecutorService(cache);
          Future<Integer> future = des.submit(new SimpleCallable());
          Integer r = future.get();
          assert r == 1;
 
          List<Future<Integer>> list = des.submitEverywhere(new SimpleCallable());
-         assert list.size() == 1;
+         AssertJUnit.assertEquals(1, list.size());
          for (Future<Integer> f : list) {
-            assert f.get() == 1;
+            AssertJUnit.assertEquals(new Integer(1), f.get());
          }
       } finally {
-         cacheManager.stop();
+         des.shutdownNow();
+         TestingUtil.killCacheManagers(cacheManager);
       }
    }
    
@@ -174,6 +178,7 @@ public class BasicDistributedExecutorTest extends AbstractCacheTest {
    public void testSingleCacheWithKeysExecution() throws Exception {
       Configuration config = TestCacheManagerFactory.getDefaultConfiguration(true, Configuration.CacheMode.REPL_SYNC);
       EmbeddedCacheManager cacheManager = TestCacheManagerFactory.createClusteredCacheManager(config);
+      DistributedExecutorService des = null;
       try {
          Cache<Object, Object> c1 = cacheManager.getCache();
          c1.put("key1", "Manik");
@@ -181,14 +186,52 @@ public class BasicDistributedExecutorTest extends AbstractCacheTest {
          c1.put("key3", "Galder");
          c1.put("key4", "Sanne");
 
-         DistributedExecutorService des = new DefaultExecutorService(c1);
+         des = new DefaultExecutorService(c1);
 
          Future<Boolean> future = des.submit(new SimpleDistributedCallable(true), new String[] {
                   "key1", "key2" });
          Boolean r = future.get();
          assert r;
       } finally {
-         cacheManager.stop();
+         des.shutdownNow();
+         TestingUtil.killCacheManagers(cacheManager);
+      }
+   }
+   
+   public void testDistributedCallableCustomFailoverPolicySuccessfullRetry() throws Exception {
+      Configuration config = TestCacheManagerFactory.getDefaultConfiguration(true, Configuration.CacheMode.REPL_SYNC);
+      EmbeddedCacheManager cacheManager = TestCacheManagerFactory.createClusteredCacheManager(config);
+      DistributedExecutorService des = null;
+      try {
+         Cache<Object, Object> cache1 = cacheManager.getCache();
+         cache1.put("key1", "value1");
+         cache1.put("key2", "value2");
+
+         //initiate task from cache1 and select cache1 as target
+         des = new DefaultExecutorService(cache1);
+
+         //the same using DistributedTask API
+         DistributedTaskBuilder<Integer> taskBuilder = des.createDistributedTaskBuilder(new FailOnlyOnceCallable());
+         taskBuilder.failoverPolicy(new DistributedTaskFailoverPolicy() {
+
+            @Override
+            public Address failover(Address failedExecution, List<Address> executionCandidates, Exception cause) {
+               return failedExecution;
+            }
+
+            @Override
+            public int maxFailoverAttempts() {
+               return 1;
+            }
+         });
+
+         DistributedTask<Integer> task = taskBuilder.build();
+         AssertJUnit.assertEquals(1, task.getTaskFailoverPolicy().maxFailoverAttempts());
+         Future<Integer> val = des.submit(task, new String[] { "key1" });
+         AssertJUnit.assertEquals(new Integer(1), val.get());
+      } finally {
+         des.shutdownNow();
+         TestingUtil.killCacheManagers(cacheManager);
       }
    }
 
@@ -221,29 +264,40 @@ public class BasicDistributedExecutorTest extends AbstractCacheTest {
          return invokedProperly;
       }
    }
+
    static class SimpleCallable implements Callable<Integer>, Serializable {
 
       /** The serialVersionUID */
       private static final long serialVersionUID = -8589149500259272402L;
+
+      public SimpleCallable() {
+      }
 
       @Override
       public Integer call() throws Exception {
          return 1;
       }
    }
+   
+   static class FailOnlyOnceCallable implements Callable<Integer>, Serializable {
 
-   static class SimpleSleepingDistributedCallable implements DistributedCallable<String, String, Boolean>, Serializable{
+      /** The serialVersionUID */
+      private static final long serialVersionUID = 3961940091247573385L;
+      boolean throwException = true;
 
-      @Override
-      public void setEnvironment(Cache<String, String> cache, Set<String> inputKeys) {
-         //do nothing
+      public FailOnlyOnceCallable() {
+         super();         
       }
 
       @Override
-      public Boolean call() throws Exception {
-         Thread.sleep(1000);
-
-         return true;
+      public Integer call() throws Exception {
+         if (throwException) {
+            // do to not throw the exception 2nd time during retry.
+            throwException = false;
+            // now throw exception for the first run 
+            int a = 5 / 0;
+         }
+         return 1;
       }
    }
 }

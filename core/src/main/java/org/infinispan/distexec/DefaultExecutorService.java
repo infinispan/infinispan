@@ -731,7 +731,7 @@ public class DefaultExecutorService extends AbstractExecutorService implements D
 
       @Override
       public DistributedTaskBuilder<T> timeout(long t, TimeUnit tu) {
-         timeout = TimeUnit.MILLISECONDS.convert(timeout, tu);
+         timeout = TimeUnit.MILLISECONDS.convert(t, tu);
          return this;
       }
 
@@ -909,7 +909,7 @@ public class DefaultExecutorService extends AbstractExecutorService implements D
             boolean canFailover = failedOverCount++ < getOwningTask().getTaskFailoverPolicy().maxFailoverAttempts();
             if (canFailover) {
                try {
-                  response = retrieveResult(failoverExecution(e));
+                  response = failoverExecution(e, timeout, unit);
                } catch (Exception failedOver) {
                   throw new ExecutionException(failedOver);
                }
@@ -921,7 +921,8 @@ public class DefaultExecutorService extends AbstractExecutorService implements D
       }
 
 
-      private V failoverExecution(Exception cause) throws ExecutionException {
+      private V failoverExecution(Exception cause, long timeout, TimeUnit unit)
+               throws ExecutionException {
          V response = null;
 
          try {
@@ -930,7 +931,7 @@ public class DefaultExecutorService extends AbstractExecutorService implements D
             DistributedTaskPart<V> part = createDistributedTaskPart(owningTask, distCommand,
                      target, failedOverCount);
             part.execute();
-            response = part.get();
+            response = part.get(timeout, unit);
             if (response == null)
                throw new ExecutionException("Failover execution failed", new Exception(
                         "Failover execution failed", cause));
