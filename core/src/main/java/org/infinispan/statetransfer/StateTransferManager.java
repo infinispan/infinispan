@@ -27,6 +27,7 @@ import org.infinispan.commands.TopologyAffectedCommand;
 import org.infinispan.factories.scopes.Scope;
 import org.infinispan.factories.scopes.Scopes;
 import org.infinispan.jmx.annotations.ManagedAttribute;
+import org.infinispan.remoting.transport.Address;
 import org.infinispan.topology.CacheTopology;
 import org.rhq.helpers.pluginAnnotations.agent.DataType;
 import org.rhq.helpers.pluginAnnotations.agent.Metric;
@@ -79,7 +80,7 @@ public interface StateTransferManager {
     * If there is an state transfer happening at the moment, this method forwards the supplied
     * command to the nodes that are new owners of the data, in order to assure consistency.
     */
-   void forwardCommandIfNeeded(TopologyAffectedCommand command, Set<Object> affectedKeys, boolean sync);
+   void forwardCommandIfNeeded(TopologyAffectedCommand command, Set<Object> affectedKeys, Address origin, boolean sync);
 
    void notifyEndOfTopologyUpdate(int topologyId);
 }

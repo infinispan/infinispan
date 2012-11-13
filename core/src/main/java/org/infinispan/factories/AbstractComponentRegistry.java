@@ -213,7 +213,7 @@ public abstract class AbstractComponentRegistry implements Lifecycle, Cloneable 
       try {
          c.buildInjectionMethodsList();
       } catch (ClassNotFoundException cnfe) {
-         throw new CacheException(cnfe);
+         throw new CacheException("Error injecting dependencies for component " + name, cnfe);
       }
       // inject dependencies for this component
       // we inject dependencies only after the component is already in the map to support cyclical dependencies

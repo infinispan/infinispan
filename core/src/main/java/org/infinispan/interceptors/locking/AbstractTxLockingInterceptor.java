@@ -39,6 +39,7 @@ import org.infinispan.remoting.rpc.RpcManager;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.transaction.TransactionTable;
 import org.infinispan.transaction.xa.CacheTransaction;
+import org.infinispan.transaction.xa.GlobalTransaction;
 import org.infinispan.util.concurrent.TimeoutException;
 
 import java.util.Collection;
@@ -194,8 +195,13 @@ public abstract class AbstractTxLockingInterceptor extends AbstractLockingInterc
    private void waitForTransactionsToComplete(TxInvocationContext txContext, Collection<? extends CacheTransaction> transactions,
                                               Object key, int transactionTopologyId, boolean useStrictComparison,
                                               long expectedEndTime) throws InterruptedException {
+      GlobalTransaction thisTransaction = txContext.getGlobalTransaction();
       for (CacheTransaction tx : transactions) {
          if (isFromOlderTopology(tx.getTopologyId(), transactionTopologyId, useStrictComparison)) {
+            // don't wait for the current transaction
+            if (tx.getGlobalTransaction().equals(thisTransaction))
+               continue;
+
             boolean txCompleted = false;
 
             long remaining;
