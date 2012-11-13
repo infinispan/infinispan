@@ -738,6 +738,29 @@
            </xs:attribute>
         </xs:complexType>
       </xs:element>
+      <xs:element name="versioning" minOccurs="0">
+        <xs:annotation>
+          <xs:documentation>
+            Controls whether entries are versioned.  Versioning is necessary, for example, when using optimistic transactions in a clustered environment, to be able to perform write-skew checks.
+          </xs:documentation>
+        </xs:annotation>
+        <xs:complexType>
+          <xs:attribute name="enabled" type="xs:boolean" default="false">
+            <xs:annotation>
+              <xs:documentation>
+                Determines whether versioning is enabled or disabled for this cache. Defaults to disabled
+              </xs:documentation>
+            </xs:annotation>
+           </xs:attribute>
+           <xs:attribute name="versioningScheme" type="tns:versioningScheme">
+            <xs:annotation>
+              <xs:documentation>
+                The scheme to use when versioning entries. Can be either SIMPLE or NONE. Defaults to NONE
+              </xs:documentation>
+            </xs:annotation>
+           </xs:attribute>
+        </xs:complexType>
+      </xs:element>
       <xs:element name="clustering" minOccurs="0">
         <xs:annotation>
           <xs:documentation>
@@ -1556,6 +1579,25 @@
         <xs:annotation>
           <xs:documentation>
             Enables sync operations to happen as per a defined interval, or when the bucket is about to be read.
+          </xs:documentation>
+        </xs:annotation>
+      </xs:enumeration>
+    </xs:restriction>
+  </xs:simpleType>
+  
+  <xs:simpleType name="versioningScheme">
+    <xs:restriction base="xs:string">
+      <xs:enumeration value="DEFAULT">
+        <xs:annotation>
+          <xs:documentation>
+           A simple versioning scheme that is cluster-aware
+          </xs:documentation>
+        </xs:annotation>
+      </xs:enumeration>
+      <xs:enumeration value="NONE">
+        <xs:annotation>
+          <xs:documentation>
+            Don't version entries
           </xs:documentation>
         </xs:annotation>
       </xs:enumeration>
