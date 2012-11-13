@@ -48,22 +48,22 @@ public class XSiteAdminOperationsTest extends AbstractTwoSitesTest {
    }
 
    public void testSiteStatus() {
-      assertEquals(admin("LON", 0).status("NYC"), XSiteAdminOperations.ONLINE);
-      assertEquals(admin("LON", 1).status("NYC"), XSiteAdminOperations.ONLINE);
+      assertEquals(admin("LON", 0).siteStatus("NYC"), XSiteAdminOperations.ONLINE);
+      assertEquals(admin("LON", 1).siteStatus("NYC"), XSiteAdminOperations.ONLINE);
 
       assertEquals(XSiteAdminOperations.SUCCESS, admin("LON", 1).takeSiteOffline("NYC"));
 
-      assertEquals(admin("LON", 0).status("NYC"), XSiteAdminOperations.OFFLINE);
-      assertEquals(admin("LON", 1).status("NYC"), XSiteAdminOperations.OFFLINE);
+      assertEquals(admin("LON", 0).siteStatus("NYC"), XSiteAdminOperations.OFFLINE);
+      assertEquals(admin("LON", 1).siteStatus("NYC"), XSiteAdminOperations.OFFLINE);
 
       assertEquals(XSiteAdminOperations.SUCCESS, admin("LON", 1).bringSiteOnline("NYC"));
-      assertEquals(admin("LON", 0).status("NYC"), XSiteAdminOperations.ONLINE);
-      assertEquals(admin("LON", 1).status("NYC"), XSiteAdminOperations.ONLINE);
+      assertEquals(admin("LON", 0).siteStatus("NYC"), XSiteAdminOperations.ONLINE);
+      assertEquals(admin("LON", 1).siteStatus("NYC"), XSiteAdminOperations.ONLINE);
    }
 
    public void amendTakeOffline() {
-      assertEquals(admin("LON", 0).status("NYC"), XSiteAdminOperations.ONLINE);
-      assertEquals(admin("LON", 1).status("NYC"), XSiteAdminOperations.ONLINE);
+      assertEquals(admin("LON", 0).siteStatus("NYC"), XSiteAdminOperations.ONLINE);
+      assertEquals(admin("LON", 1).siteStatus("NYC"), XSiteAdminOperations.ONLINE);
 
       BackupSenderImpl bs = backupSender("LON", 0);
       OfflineStatus offlineStatus = bs.getOfflineStatus("NYC");

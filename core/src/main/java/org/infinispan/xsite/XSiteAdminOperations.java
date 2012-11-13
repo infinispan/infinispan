@@ -66,7 +66,7 @@ public class XSiteAdminOperations {
 
    @Operation(displayName = "Check whether the given backup site is offline or not.")
    @ManagedOperation(description = "Check whether the given backup site is offline or not.")
-   public String status(String site) {
+   public String siteStatus(String site) {
       //also consider local node
       OfflineStatus offlineStatus = backupSender.getOfflineStatus(site);
       if (offlineStatus == null)
@@ -185,13 +185,13 @@ public class XSiteAdminOperations {
       return returnFailureOrSuccess(failed, prefix);
    }
 
-   @Operation(displayName = "Amends the values for 'afterFailures' for the 'TakeOffline' functionality on all the nodes in the cluster.")
+   @Operation(displayName = "Amends the values for 'TakeOffline.afterFailures' on all the nodes in the cluster.")
    @ManagedOperation(description = "Amends the values for 'afterFailures' for the 'TakeOffline' functionality on all the nodes in the cluster.")
    public String setTakeOfflineAfterFailures(String site, int afterFailures) {
       return takeOffline(site, afterFailures, null);
    }
 
-   @Operation(displayName = "Amends the values for 'minTimeToWait' for the 'TakeOffline' functionality on all the nodes in the cluster.")
+   @Operation(displayName = "Amends the values for 'TakeOffline.minTimeToWait' on all the nodes in the cluster.")
    @ManagedOperation(description = "Amends the values for 'minTimeToWait' for the 'TakeOffline' functionality on all the nodes in the cluster.")
    public String setTakeOfflineMinTimeToWait(String site, long minTimeToWait) {
       return takeOffline(site, null, minTimeToWait);

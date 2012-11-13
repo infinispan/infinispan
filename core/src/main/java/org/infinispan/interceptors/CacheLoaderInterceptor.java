@@ -273,7 +273,7 @@ public class CacheLoaderInterceptor extends JmxStatsCommandInterceptor {
       }
    }
    @ManagedOperation(description = "Disable all cache loaders of a given type, where type is a fully qualified class name of the cache loader to disable")
-   @Operation(displayName = "Disable all cache loaders of a given type, where type is a fully qualified class name of the cache loader to disable")
+   @Operation(displayName = "Disable all cache loaders of a given type")
    /**
     * Disables a cache loader of a given type, where type is the fully qualified class name of a {@link CacheLoader} implementation.
     *

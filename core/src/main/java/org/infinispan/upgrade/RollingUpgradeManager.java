@@ -41,7 +41,7 @@ import java.util.concurrent.ConcurrentMap;
 public class RollingUpgradeManager {
    private final ConcurrentMap<String, Migrator> migrators = new ConcurrentHashMap<String, Migrator>(2);
    @ManagedOperation(description = "Dumps the global known keyset to a well-known key for retrieval by the upgrade process")
-   @Operation(displayName = "Dumps the global known keyset to a well-known key for retrieval by the upgrade process")
+   @Operation(displayName = "Dumps the global known keyset")
    public void recordKnownGlobalKeyset() {
       for (Migrator m: migrators.values()) m.recordKnownGlobalKeyset();
    }
