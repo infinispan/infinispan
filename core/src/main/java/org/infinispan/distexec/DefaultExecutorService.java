@@ -152,7 +152,7 @@ public class DefaultExecutorService extends AbstractExecutorService implements D
     *           Cache node initiating distributed task
     */
    public DefaultExecutorService(Cache masterCacheNode) {
-      this(masterCacheNode, Executors.newSingleThreadExecutor());
+      this(masterCacheNode, Executors.newSingleThreadExecutor(), true);
    }
 
    /**
@@ -160,8 +160,9 @@ public class DefaultExecutorService extends AbstractExecutorService implements D
     * parallel execution of tasks ran on this node. All distributed task executions will be
     * initiated from this Infinispan cache node.
     * <p>
-    * Note that DefaultExecutorService will shutdown client supplied localExecutorService once this
-    * DefaultExecutorService is shutdown
+    * Note that DefaultExecutorService will *not* shutdown client supplied localExecutorService once
+    * this DefaultExecutorService is shutdown. Lifecycle management of supplied ExecutorService
+    * is left to client providing it
     * 
     * Also note that client supplied ExecutorService should not execute tasks in the caller's thread
     * ( i.e rejectionHandler of {@link ThreadPoolExecutor} configured with {link
@@ -173,7 +174,7 @@ public class DefaultExecutorService extends AbstractExecutorService implements D
     *           ExecutorService to run local tasks
     */
    public DefaultExecutorService(Cache<?, ?> masterCacheNode, ExecutorService localExecutorService) {
-      this(masterCacheNode, localExecutorService, true);
+      this(masterCacheNode, localExecutorService, false);
    }
    
    /**
