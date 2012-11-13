@@ -22,31 +22,30 @@
  */
 package org.infinispan.statetransfer;
 
-import java.io.File;
+import java.io.*;
 import java.lang.reflect.Method;
 import java.util.concurrent.Callable;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
-import java.util.concurrent.ThreadFactory;
 
 import org.infinispan.Cache;
-import org.infinispan.config.CacheLoaderManagerConfig;
-import org.infinispan.config.Configuration;
-import org.infinispan.loaders.file.FileCacheStoreConfig;
+import org.infinispan.configuration.cache.CacheMode;
+import org.infinispan.configuration.cache.ConfigurationBuilder;
+import org.infinispan.configuration.cache.FileCacheStoreConfigurationBuilder;
+import org.infinispan.loaders.CacheLoader;
 import org.infinispan.manager.CacheContainer;
 import org.infinispan.manager.EmbeddedCacheManager;
+import org.infinispan.marshall.AdvancedExternalizer;
 import org.infinispan.test.MultipleCacheManagersTest;
 import org.infinispan.test.TestingUtil;
+import org.infinispan.transaction.LockingMode;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeTest;
-import org.testng.annotations.Optional;
-import org.testng.annotations.Parameters;
 import org.testng.annotations.Test;
 
 import static org.infinispan.statetransfer.StateTransferTestingUtil.*;
+import static org.testng.Assert.assertEquals;
 
 /**
  * StateTransferFileCacheStoreFunctionalTest.
@@ -69,7 +68,7 @@ public class StateTransferFileCacheLoaderFunctionalTest extends MultipleCacheMan
    String tmpDirectory3;
    String tmpDirectory4;
 
-   Configuration config;
+   ConfigurationBuilder configurationBuilder;
 
    @BeforeTest
    protected void setUpTempDir() {
@@ -95,26 +94,26 @@ public class StateTransferFileCacheLoaderFunctionalTest extends MultipleCacheMan
    @Override
    protected void createCacheManagers() throws Throwable {
       // This impl only really sets up a configuration for use later.
-      config = getDefaultClusteredConfig(Configuration.CacheMode.REPL_SYNC, true);
-      config.setSyncReplTimeout(30000);
-      config.setFetchInMemoryState(true);
-      config.setUseLockStriping(false); // reduces the odd chance of a key collision and deadlock
+      configurationBuilder = getDefaultClusteredCacheConfig(CacheMode.REPL_SYNC, true);
+      configurationBuilder.transaction().lockingMode(LockingMode.PESSIMISTIC);
+      configurationBuilder.clustering().sync().replTimeout(30000);
+      configurationBuilder.clustering().stateTransfer().fetchInMemoryState(true);
+      configurationBuilder.locking().useLockStriping(false); // reduces the odd chance of a key collision and deadlock
    }
 
-   protected CacheContainer createCacheManager(String tmpDirectory) {
-      // increment the DIMCS store id
-      FileCacheStoreConfig cfg = new FileCacheStoreConfig();
-      cfg.setLocation(tmpDirectory);
-      cfg.setPurgeSynchronously(true); // for more accurate unit testing
-      cfg.setFetchPersistentState(true);
+   protected EmbeddedCacheManager createCacheManager(String tmpDirectory) {
+      configurationBuilder.loaders().clearCacheLoaders();
+      configurationBuilder.loaders().shared(sharedCacheLoader.get());
 
-      CacheLoaderManagerConfig clmc = new CacheLoaderManagerConfig();
-      clmc.addCacheLoaderConfig(cfg);
-      clmc.setShared(sharedCacheLoader.get());
-      config.setCacheLoaderManagerConfig(clmc);
+      FileCacheStoreConfigurationBuilder fcsBuilder = configurationBuilder.loaders().addFileCacheStore();
+      fcsBuilder
+            .purgeSynchronously(true) // for more accurate unit testing
+            .fetchPersistentState(true)
+            .purgeOnStartup(false)
+            .location(tmpDirectory);
 
       EmbeddedCacheManager cm = addClusterEnabledCacheManager();
-      cm.defineConfiguration(cacheName, config.clone());
+      cm.defineConfiguration(cacheName, configurationBuilder.build());
       return cm;
    }
 
@@ -270,6 +269,4 @@ public class StateTransferFileCacheLoaderFunctionalTest extends MultipleCacheMan
          if (cm40 != null) cm40.stop();
       }
    }
-
-
 }

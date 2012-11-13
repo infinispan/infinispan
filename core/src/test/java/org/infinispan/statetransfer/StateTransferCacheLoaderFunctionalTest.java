@@ -23,14 +23,23 @@
 package org.infinispan.statetransfer;
 
 import org.infinispan.Cache;
-import org.infinispan.config.CacheLoaderManagerConfig;
+import org.infinispan.configuration.cache.CacheMode;
+import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.loaders.CacheLoader;
 import org.infinispan.loaders.CacheLoaderManager;
-import org.infinispan.loaders.CacheStoreConfig;
-import org.infinispan.loaders.dummy.DummyInMemoryCacheStore;
+import org.infinispan.loaders.dummy.DummyInMemoryCacheStoreConfigurationBuilder;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.test.TestingUtil;
 import org.testng.annotations.Test;
+
+import java.io.IOException;
+import java.io.ObjectInputStream;
+import java.io.ObjectOutputStream;
+import java.io.Serializable;
+
+import static org.infinispan.statetransfer.StateTransferTestingUtil.verifyNoData;
+import static org.infinispan.statetransfer.StateTransferTestingUtil.verifyNoDataOnLoader;
+import static org.testng.Assert.assertEquals;
 
 @Test(groups = "functional", testName = "statetransfer.StateTransferCacheLoaderFunctionalTest", enabled = true)
 public class StateTransferCacheLoaderFunctionalTest extends StateTransferFunctionalTest {
@@ -47,13 +56,14 @@ public class StateTransferCacheLoaderFunctionalTest extends StateTransferFunctio
 
    @Override
    protected EmbeddedCacheManager createCacheManager() {
+      configurationBuilder.loaders().clearCacheLoaders();
       // increment the DIMCS store id
-      CacheLoaderManagerConfig clmc = new CacheLoaderManagerConfig();
-      CacheStoreConfig clc = new DummyInMemoryCacheStore.Cfg("store number " + id++);
-      clmc.addCacheLoaderConfig(clc);
-      clc.setFetchPersistentState(true);
-      clmc.setShared(sharedCacheLoader.get());
-      config.setCacheLoaderManagerConfig(clmc);
+      DummyInMemoryCacheStoreConfigurationBuilder dimcs = new DummyInMemoryCacheStoreConfigurationBuilder(configurationBuilder.loaders());
+      dimcs.storeName("store number " + id++);
+      dimcs.fetchPersistentState(true);
+      configurationBuilder.loaders().addLoader(dimcs);
+      configurationBuilder.loaders().shared(sharedCacheLoader.get()).preload(true);
+
       return super.createCacheManager();
    }
 
@@ -114,4 +124,76 @@ public class StateTransferCacheLoaderFunctionalTest extends StateTransferFunctio
          sharedCacheLoader.set(false);
       }
    }
+
+   public void testInitialSlowPreload() throws Exception {
+      // Test for ISPN-2494
+      // Preload on cache on node 1 is slow and unfinished at the point, where cache on node 2 starts.
+      // Node 2 requests state, got answer that no entries available. Since node 2 is not coordinator,
+      // preload is ignored. At the end, node 1 contains REPL cache with all entries, node 2 has same cache without entries.
+      try {
+         sharedCacheLoader.set(true);
+         EmbeddedCacheManager cm1 = createCacheManager();
+         Cache<Object, Object> cache1 = cm1.getCache(cacheName);
+         verifyNoDataOnLoader(cache1);
+         verifyNoData(cache1);
+
+         // write initial data
+         cache1.put("A", new DelayedUnmarshal());
+         cache1.put("B", new DelayedUnmarshal());
+         cache1.put("C", new DelayedUnmarshal());
+         assertEquals(cache1.size(), 3);
+         cm1.stop();
+
+         // this cache is only used to start networking
+         final ConfigurationBuilder defaultConfigurationBuilder = getDefaultClusteredCacheConfig(CacheMode.REPL_SYNC, true);
+
+         // now lets start cm and shortly after another cache manager
+         final EmbeddedCacheManager cm2 = super.createCacheManager();
+         cm2.defineConfiguration("initialCache", defaultConfigurationBuilder.build());
+         cm2.startCaches("initialCache");
+
+         EmbeddedCacheManager cm3 = super.createCacheManager();
+         cm3.defineConfiguration("initialCache", defaultConfigurationBuilder.build());
+         cm3.startCaches("initialCache");
+
+         // networking is started and cluster has 2 members
+         TestingUtil.blockUntilViewsReceived(60000, cm2.getCache("initialCache"), cm3.getCache("initialCache"));
+
+         // now fork start of "slow" cache
+         Thread worker = new Thread(){
+            @Override
+            public void run() {
+               cm2.startCaches(cacheName);
+            }
+         };
+         worker.start();
+         // lets wait a bit, cache is started pon cm2, but preload is not finished
+         TestingUtil.sleepThread(1000);
+
+         // uncomment this to see failing test
+         worker.join();
+
+         // at this point node is not alone, so preload is not used
+         // the start of the cache must be blocked until state transfer is finished
+         cm3.startCaches(cacheName);
+         assertEquals(cm3.getCache(cacheName).size(), 3);
+      } finally {
+         sharedCacheLoader.set(false);
+      }
+   }
+
+   public static class DelayedUnmarshal implements Serializable {
+
+      private static final long serialVersionUID = 1L;
+
+      private void readObject(ObjectInputStream in) throws IOException, ClassNotFoundException {
+         TestingUtil.sleepThread(2000);
+         in.defaultReadObject();
+      }
+
+      private void writeObject(ObjectOutputStream out) throws IOException {
+         out.defaultWriteObject();
+      }
+   }
+
 }
