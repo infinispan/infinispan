@@ -48,6 +48,7 @@ public class CacheManagerJmxRegistration extends AbstractJmxRegistration {
    public static final String CACHE_MANAGER_JMX_GROUP = "type=CacheManager";
    private GlobalComponentRegistry globalReg;
    private boolean needToUnregister = false;
+   private boolean stopped;
 
    @Inject
    public void init(GlobalComponentRegistry registry, GlobalConfiguration configuration) {
@@ -64,6 +65,7 @@ public class CacheManagerJmxRegistration extends AbstractJmxRegistration {
       } else {
          log.unableToRegisterCacheManagerMBeans();
       }
+      stopped = false;
    }
 
    /**
@@ -71,8 +73,7 @@ public class CacheManagerJmxRegistration extends AbstractJmxRegistration {
     */
    public void stop() {
       // This method might get called several times.
-      // After the first call the cache will become null, so we guard this
-      if (globalReg == null) return;
+      if (stopped) return;
       if (needToUnregister) {
          try {
             unregisterMBeans(globalReg.getRegisteredComponents());
@@ -81,7 +82,7 @@ public class CacheManagerJmxRegistration extends AbstractJmxRegistration {
             log.problemsUnregisteringMBeans(e);
          }
       }
-      globalReg = null;
+      stopped = true;
    }
 
    @Override
