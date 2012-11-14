@@ -48,6 +48,7 @@ import org.testng.annotations.Test;
  * Tests org.infinispan.distexec.DistributedExecutorService
  * 
  * @author Vladimir Blagojevic
+ * @author Anna Manukyan
  */
 @Test(groups = "functional", testName = "distexec.DistributedExecutorTest")
 public class DistributedExecutorTest extends MultipleCacheManagersTest {

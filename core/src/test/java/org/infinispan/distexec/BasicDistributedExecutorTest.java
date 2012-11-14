@@ -45,6 +45,7 @@ import java.util.concurrent.Future;
  * Tests basic org.infinispan.distexec.DistributedExecutorService functionality
  * 
  * @author Vladimir Blagojevic
+ * @author Anna Manukyan
  */
 @Test(groups = "functional", testName = "distexec.BasicDistributedExecutorTest")
 public class BasicDistributedExecutorTest extends AbstractCacheTest {
@@ -216,8 +217,8 @@ public class BasicDistributedExecutorTest extends AbstractCacheTest {
          taskBuilder.failoverPolicy(new DistributedTaskFailoverPolicy() {
 
             @Override
-            public Address failover(Address failedExecution, List<Address> executionCandidates, Exception cause) {
-               return failedExecution;
+            public Address failover(FailoverContext context) {
+               return context.executionFailureLocation();
             }
 
             @Override
@@ -347,8 +348,8 @@ public class BasicDistributedExecutorTest extends AbstractCacheTest {
          taskBuilder.failoverPolicy(new DistributedTaskFailoverPolicy() {
 
             @Override
-            public Address failover(Address failedExecution, List<Address> executionCandidates, Exception cause) {
-               return failedExecution;
+            public Address failover(FailoverContext context) {
+               return context.executionFailureLocation();
             }
 
             @Override

@@ -464,7 +464,7 @@ public class DefaultExecutorService extends AbstractExecutorService implements D
          Address me = getAddress();
          DistributedExecuteCommand<T> c = factory.buildDistributedExecuteCommand(task.getCallable(), me, Arrays.asList(input));
          ArrayList<Address> nodes = new ArrayList<Address>(nodesKeysMap.keySet());
-         DistributedTaskPart<T> part = createDistributedTaskPart(task, c, selectExecutionNode(nodes), 0);
+         DistributedTaskPart<T> part = createDistributedTaskPart(task, c, Arrays.asList(input), selectExecutionNode(nodes), 0);
          part.execute();
          return part;
       } else {
@@ -522,8 +522,8 @@ public class DefaultExecutorService extends AbstractExecutorService implements D
                c = factory.buildDistributedExecuteCommand(clone(task.getCallable()), me, e.getValue());
             } else {
                c = factory.buildDistributedExecuteCommand(task.getCallable(), me, e.getValue());
-            }
-            DistributedTaskPart<T> part = createDistributedTaskPart(task, c, target, 0);
+            }            
+            DistributedTaskPart<T> part = createDistributedTaskPart(task, c, e.getValue(), target, 0);
             futures.add(part);
             part.execute();
          }
@@ -537,9 +537,15 @@ public class DefaultExecutorService extends AbstractExecutorService implements D
      return Util.cloneWithMarshaller(marshaller, task);
    }
 
-   protected <T> DistributedTaskPart<T> createDistributedTaskPart(DistributedTask<T> task,
+   protected <T, K> DistributedTaskPart<T> createDistributedTaskPart(DistributedTask<T> task,
+            DistributedExecuteCommand<T> c, List<K> inputKeys, Address target,
+            int failoverCount) {
+      return new DistributedTaskPart<T>(task, c, (List<Object>) inputKeys, target, failoverCount);
+   }
+   
+   protected <T, K> DistributedTaskPart<T> createDistributedTaskPart(DistributedTask<T> task,
             DistributedExecuteCommand<T> c, Address target, int failoverCount) {
-      return new DistributedTaskPart<T>(task, c, target, failoverCount);
+      return createDistributedTaskPart(task, c, Collections.emptyList(), target, failoverCount);
    }
 
 
@@ -668,8 +674,8 @@ public class DefaultExecutorService extends AbstractExecutorService implements D
       }
 
       @Override
-      public Address failover(Address failedLocation, List<Address> candidates, Exception cause) {
-         return randomNode(candidates, failedLocation);
+      public Address failover(FailoverContext fc) {
+         return randomNode(fc.executionCandidates(),fc.executionFailureLocation());
       }
 
       protected Address randomNode(List<Address> candidates, Address failedExecutionLocation){
@@ -692,8 +698,8 @@ public class DefaultExecutorService extends AbstractExecutorService implements D
       }
 
       @Override
-      public Address failover(Address failedLocation, List<Address> candidates, Exception cause) {
-         return failedLocation;
+      public Address failover(FailoverContext fc) {
+         return fc.executionFailureLocation();
       }
 
       @Override
@@ -800,6 +806,7 @@ public class DefaultExecutorService extends AbstractExecutorService implements D
       private final Set<FutureListener<V>> listeners = new CopyOnWriteArraySet<FutureListener<V>>();
       private final ReadWriteLock listenerLock = new ReentrantReadWriteLock();
       private final Address executionTarget;
+      private final List<Object> inputKeys; 
       private final DistributedTask<V> owningTask;
       private int failedOverCount;
       private volatile boolean done;
@@ -808,18 +815,23 @@ public class DefaultExecutorService extends AbstractExecutorService implements D
 
       /**
        * Create a new DistributedTaskPart.
-       *
+       * 
        * @param task
        * @param command
        * @param executionTarget
        * @param failoverCount
        */
-      public DistributedTaskPart(DistributedTask<V> task,
-               DistributedExecuteCommand<V> command, Address executionTarget, int failoverCount) {
+      public DistributedTaskPart(DistributedTask<V> task, DistributedExecuteCommand<V> command,
+               List<Object> inputKeys, Address executionTarget, int failoverCount) {
          this.owningTask = task;
          this.distCommand = command;
+         this.inputKeys = inputKeys;
          this.executionTarget = executionTarget;
          this.failedOverCount = failoverCount;
+      }
+
+      public List<Object> getInputKeys() {
+         return inputKeys;
       }
 
       public DistributedExecuteCommand<V> getCommand() {
@@ -921,15 +933,36 @@ public class DefaultExecutorService extends AbstractExecutorService implements D
       }
 
 
-      private V failoverExecution(Exception cause, long timeout, TimeUnit unit)
+      private V failoverExecution(final Exception cause, long timeout, TimeUnit unit)
                throws ExecutionException {
          V response = null;
+         final List<Address> executionCandidates = executionCandidates(getOwningTask());
+         FailoverContext fc = new FailoverContext() {
+            @Override
+            public <K> List<K> inputKeys() {
+               return (List<K>) getInputKeys();
+            }
+
+            @Override
+            public Address executionFailureLocation() {
+               return getExecutionTarget();
+            }
+
+            @Override
+            public List<Address> executionCandidates() {
+               return executionCandidates;
+            }
+
+            @Override
+            public Exception cause() {
+               return cause;
+            }
+         };
 
          try {
-            Address target = getOwningTask().getTaskFailoverPolicy().failover(getExecutionTarget(),
-                     executionCandidates(getOwningTask()), cause);
+            Address target = getOwningTask().getTaskFailoverPolicy().failover(fc);
             DistributedTaskPart<V> part = createDistributedTaskPart(owningTask, distCommand,
-                     target, failedOverCount);
+                     getInputKeys(), target, failedOverCount);
             part.execute();
             response = part.get(timeout, unit);
             if (response == null)
