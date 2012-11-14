@@ -123,6 +123,7 @@ public class DistSyncFuncTest extends BaseDistFunctionalTest {
 
    public void testPutIfAbsentFromNonOwner() {
       initAndTest();
+      log.trace("Here it begins");
       Object retval = getFirstNonOwner("k1").putIfAbsent("k1", "value2");
 
       if (testRetVals) assert "value".equals(retval);
@@ -133,10 +134,20 @@ public class DistSyncFuncTest extends BaseDistFunctionalTest {
       asyncWait(null, ClearCommand.class);
 
       retval = getFirstNonOwner("k1").putIfAbsent("k1", "value2");
-      asyncWait("k1", PutKeyValueCommand.class, getSecondNonOwner("k1"));
-      if (testRetVals) assert null == retval;
 
-      assertOnAllCachesAndOwnership("k1", "value2");
+      eventually(new Condition() {
+         @Override
+         public boolean isSatisfied() throws Exception {
+            try {
+               assertOnAllCachesAndOwnership("k1", "value2");
+            } catch (AssertionError e) {
+               return false;
+            }
+            return true;
+         }
+      });
+
+      if (testRetVals) assert null == retval;
    }
 
    public void testRemoveFromNonOwner() {
@@ -150,6 +161,7 @@ public class DistSyncFuncTest extends BaseDistFunctionalTest {
 
    public void testConditionalRemoveFromNonOwner() {
       initAndTest();
+      log.trace("Here we start");
       boolean retval = getFirstNonOwner("k1").remove("k1", "value2");
       if (testRetVals) assert !retval : "Should not have removed entry";
 
@@ -201,13 +213,14 @@ public class DistSyncFuncTest extends BaseDistFunctionalTest {
       assertOnAllCachesAndOwnership("k1", "value2");
    }
 
-   public void testClear() {
+   public void testClear() throws InterruptedException {
       for (Cache<Object, String> c : caches) assert c.isEmpty();
 
       for (int i = 0; i < 10; i++) {
          getOwners("k" + i)[0].put("k" + i, "value" + i);
          // There will be no caches to invalidate as this is the first command of the test
          asyncWait("k" + i, PutKeyValueCommand.class);
+         assertOnAllCachesAndOwnership("k" + i, "value" + i);
       }
 
       // this will fill up L1 as well

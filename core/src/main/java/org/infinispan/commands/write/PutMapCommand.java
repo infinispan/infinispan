@@ -46,6 +46,7 @@ public class PutMapCommand extends AbstractFlagAffectedCommand implements WriteC
    CacheNotifier notifier;
    long lifespanMillis = -1;
    long maxIdleTimeMillis = -1;
+   boolean isForwarded = false;
 
    public PutMapCommand() {
    }
@@ -76,11 +77,13 @@ public class PutMapCommand extends AbstractFlagAffectedCommand implements WriteC
       for (Entry<Object, Object> e : map.entrySet()) {
          Object key = e.getKey();
          MVCCEntry me = lookupMvccEntry(ctx, key);
-         notifier.notifyCacheEntryModified(key, me.getValue(), true, ctx);
-         me.setValue(e.getValue());
-         me.setLifespan(lifespanMillis);
-         me.setMaxIdle(maxIdleTimeMillis);
-         notifier.notifyCacheEntryModified(key, me.getValue(), false, ctx);
+         if (me != null) {
+            notifier.notifyCacheEntryModified(key, me.getValue(), true, ctx);
+            me.setValue(e.getValue());
+            me.setLifespan(lifespanMillis);
+            me.setMaxIdle(maxIdleTimeMillis);
+            notifier.notifyCacheEntryModified(key, me.getValue(), false, ctx);
+         }
       }
       return null;
    }
@@ -100,7 +103,7 @@ public class PutMapCommand extends AbstractFlagAffectedCommand implements WriteC
 
    @Override
    public Object[] getParameters() {
-      return new Object[]{map, lifespanMillis, maxIdleTimeMillis, Flag.copyWithoutRemotableFlags(flags)};
+      return new Object[]{map, lifespanMillis, maxIdleTimeMillis, isForwarded, Flag.copyWithoutRemotableFlags(flags)};
    }
 
    @Override
@@ -108,8 +111,9 @@ public class PutMapCommand extends AbstractFlagAffectedCommand implements WriteC
       map = (Map<Object, Object>) parameters[0];
       lifespanMillis = (Long) parameters[1];
       maxIdleTimeMillis = (Long) parameters[2];
-      if (parameters.length>3) {
-         this.flags = (Set<Flag>) parameters[3];
+      isForwarded = (Boolean) parameters[3];
+      if (parameters.length > 4) {
+         this.flags = (Set<Flag>) parameters[4];
       }
    }
 
@@ -159,6 +163,7 @@ public class PutMapCommand extends AbstractFlagAffectedCommand implements WriteC
       sb.append("}, flags=").append(flags)
          .append(", lifespanMillis=").append(lifespanMillis)
          .append(", maxIdleTimeMillis=").append(maxIdleTimeMillis)
+         .append(", isForwarded=").append(isForwarded)
          .append("}");
       return sb.toString();
    }
@@ -201,4 +206,24 @@ public class PutMapCommand extends AbstractFlagAffectedCommand implements WriteC
       return false;
    }
 
+
+   /**
+    * For non transactional caches that support concurrent writes (default), the commands are forwarded between nodes,
+    * e.g.:
+    * - commands is executed on node A, but some of the keys should be locked on node B
+    * - the command is send to the main owner (B)
+    * - B tries to acquire lock on the keys it owns, then forwards the commands to the other owners as well
+    * - at this last stage, the command has the "isForwarded" flag set to true.
+    * @return
+    */
+   public boolean isForwarded() {
+      return isForwarded;
+   }
+
+   /**
+    * @see #isForwarded()
+    */
+   public void setForwarded(boolean forwarded) {
+      isForwarded = forwarded;
+   }
 }

@@ -155,7 +155,7 @@ public class TxCleanupServiceTest extends MultipleCacheManagersTest {
                int local = tt.getLocalTxCount();
                int remote = tt.getRemoteTxCount();
                log.tracef("For cache %i , localTxCount=%s, remoteTxCount=%s", i, local, remote);
-               System.out.println(String.format("For cache %s , localTxCount=%s, remoteTxCount=%s", i, local, remote));
+               log.tracef(String.format("For cache %s , localTxCount=%s, remoteTxCount=%s", i, local, remote));
                allZero = allZero && (local == 0);
                allZero = allZero && (remote == 0);
             }

@@ -17,7 +17,7 @@
  * 02110-1301 USA
  */
 
-package org.infinispan.interceptors;
+package org.infinispan.interceptors.distribution;
 
 import org.infinispan.commands.tx.PrepareCommand;
 import org.infinispan.commands.tx.VersionedPrepareCommand;
@@ -35,12 +35,12 @@ import static org.infinispan.transaction.WriteSkewHelper.readVersionsFromRespons
 import static org.infinispan.transaction.WriteSkewHelper.setVersionsSeenOnPrepareCommand;
 
 /**
- * A version of the {@link DistributionInterceptor} that adds logic to handling prepares when entries are versioned.
+ * A version of the {@link BaseDistributionInterceptor} that adds logic to handling prepares when entries are versioned.
  *
  * @author Manik Surtani
  * @since 5.1
  */
-public class VersionedDistributionInterceptor extends DistributionInterceptor {
+public class VersionedDistributionInterceptor extends TxDistributionInterceptor {
 
    private static final Log log = LogFactory.getLog(VersionedDistributionInterceptor.class);
 

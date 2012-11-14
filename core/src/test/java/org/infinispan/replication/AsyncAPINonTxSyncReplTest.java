@@ -66,6 +66,7 @@ public class AsyncAPINonTxSyncReplTest extends MultipleCacheManagersTest {
       final Key key = new Key("k", true);
 
       // put
+      log.trace("Before put");
       Future<String> f = c1.putAsync(key, v);
       assert f != null;
       assert !f.isDone();
@@ -79,6 +80,7 @@ public class AsyncAPINonTxSyncReplTest extends MultipleCacheManagersTest {
       assert f.isDone();
       assertOnAllCaches(key, v, c1, c2);
 
+      log.trace("Before put2");
       f = c1.putAsync(key, v2);
       assert f != null;
       assert !f.isDone();
@@ -89,7 +91,7 @@ public class AsyncAPINonTxSyncReplTest extends MultipleCacheManagersTest {
       assert f.isDone();
       assertOnAllCaches(key, v2, c1, c2);
 
-      // putAll
+      log.trace("Before putAll");
       Future<Void> f2 = c1.putAllAsync(Collections.singletonMap(key, v3));
       assert f2 != null;
       assert !f2.isDone();
@@ -100,7 +102,7 @@ public class AsyncAPINonTxSyncReplTest extends MultipleCacheManagersTest {
       assert f2.isDone();
       assertOnAllCaches(key, v3, c1, c2);
 
-      // putIfAbsent
+      log.trace("Before putIfAbsent");
       f = c1.putIfAbsentAsync(key, v4);
       assert f != null;
       assert c2.get(key).equals(v3);
@@ -109,7 +111,7 @@ public class AsyncAPINonTxSyncReplTest extends MultipleCacheManagersTest {
       assert f.isDone();
       assertOnAllCaches(key, v3, c1, c2);
 
-      // remove
+      log.trace("Before remove");
       f = c1.removeAsync(key);
       assert f != null;
       assert !f.isDone();
@@ -120,18 +122,20 @@ public class AsyncAPINonTxSyncReplTest extends MultipleCacheManagersTest {
       assert f.isDone();
       assertOnAllCaches(key, null, c1, c2);
 
-      // putIfAbsent again
+
+
+
+      log.trace("Before putIfAbsentAsync");
       f = c1.putIfAbsentAsync(key, v4);
       assert f != null;
       assert !f.isDone();
-      assert c2.get(key) == null;
       key.allowSerialization();
       assert !f.isCancelled();
       assert f.get() == null;
       assert f.isDone();
       assertOnAllCaches(key, v4, c1, c2);
 
-      // removecond
+      log.trace("Before removeAsync");
       Future<Boolean> f3 = c1.removeAsync(key, v_null);
       assert f3 != null;
       assert !f3.isCancelled();
@@ -139,6 +143,7 @@ public class AsyncAPINonTxSyncReplTest extends MultipleCacheManagersTest {
       assert f3.isDone();
       assertOnAllCaches(key, v4, c1, c2);
 
+      log.trace("Before removeAsync2");
       f3 = c1.removeAsync(key, v4);
       assert f3 != null;
       assert !f3.isDone();
@@ -149,7 +154,7 @@ public class AsyncAPINonTxSyncReplTest extends MultipleCacheManagersTest {
       assert f3.isDone();
       assertOnAllCaches(key, null, c1, c2);
 
-      // replace
+      log.trace("Before replaceAsync");
       f = c1.replaceAsync(key, v5);
       assert f != null;
       assert !f.isCancelled();
@@ -170,6 +175,7 @@ public class AsyncAPINonTxSyncReplTest extends MultipleCacheManagersTest {
 
       log.trace("After put(k,v) " + key + ", " + v);
 
+      log.trace("Before replaceAsync2");
       f = c1.replaceAsync(key, v5);
       assert f != null;
       assert !f.isDone();
@@ -180,7 +186,7 @@ public class AsyncAPINonTxSyncReplTest extends MultipleCacheManagersTest {
       assert f.isDone();
       assertOnAllCaches(key, v5, c1, c2);
 
-      //replace2
+      log.trace("Before replaceAsync3");
       f3 = c1.replaceAsync(key, v_null, v6);
       assert f3 != null;
       assert !f3.isCancelled();
@@ -188,6 +194,7 @@ public class AsyncAPINonTxSyncReplTest extends MultipleCacheManagersTest {
       assert f3.isDone();
       assertOnAllCaches(key, v5, c1, c2);
 
+      log.trace("Before replaceAsync4");
       f3 = c1.replaceAsync(key, v5, v6);
       assert f3 != null;
       assert !f3.isDone();
@@ -200,10 +207,19 @@ public class AsyncAPINonTxSyncReplTest extends MultipleCacheManagersTest {
    }
 
 
-   protected void assertOnAllCaches(Key k, String v, Cache c1, Cache c2) {
-      Object real;
-      assert Util.safeEquals((real = c1.get(k)), v) : "Error on cache 1.  Expected " + v + " and got " + real;
-      assert Util.safeEquals((real = c2.get(k)), v) : "Error on cache 2.  Expected " + v + " and got " + real;
+   protected void assertOnAllCaches(final Key k, final String v, final Cache c1, final Cache c2) {
+      if (sync()) {
+         Object real;
+         assert Util.safeEquals((real = c1.get(k)), v) : "Error on cache 1.  Expected " + v + " and got " + real;
+         assert Util.safeEquals((real = c2.get(k)), v) : "Error on cache 2.  Expected " + v + " and got " + real;
+      } else {
+         eventually(new Condition() {
+            @Override
+            public boolean isSatisfied() throws Exception {
+               return Util.safeEquals(c1.get(k), v) && Util.safeEquals(c2.get(k), v);
+            }
+         });
+      }
    }
 
    protected void resetListeners() {

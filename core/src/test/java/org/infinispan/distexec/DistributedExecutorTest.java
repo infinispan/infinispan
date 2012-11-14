@@ -52,7 +52,8 @@ import org.testng.annotations.Test;
 public class DistributedExecutorTest extends LocalDistributedExecutorTest {
 
    public static AtomicInteger counter = new AtomicInteger();
-   
+   protected boolean supportsConcurrentUpdates = true;
+
 
    public DistributedExecutorTest() {
       cleanup = CleanupPhase.AFTER_METHOD;
@@ -61,6 +62,7 @@ public class DistributedExecutorTest extends LocalDistributedExecutorTest {
    @Override
    protected void createCacheManagers() throws Throwable {
       ConfigurationBuilder builder = getDefaultClusteredCacheConfig(getCacheMode(), false);
+      builder.locking().supportsConcurrentUpdates(supportsConcurrentUpdates);
       createClusteredCaches(2, cacheName(), builder);
    }
 

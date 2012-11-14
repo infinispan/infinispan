@@ -65,6 +65,8 @@ public interface ClusteringDependentLogic {
 
    boolean localNodeIsPrimaryOwner(Object key);
 
+   Address getPrimaryOwner(Object key);
+
    void commitEntry(CacheEntry entry, EntryVersion newVersion, boolean skipOwnershipCheck);
 
    Collection<Address> getOwners(Collection<Object> keys);
@@ -105,6 +107,13 @@ public interface ClusteringDependentLogic {
       @Override
       public boolean localNodeIsPrimaryOwner(Object key) {
          return rpcManager == null || rpcManager.getTransport().isCoordinator();
+      }
+
+      @Override
+      public Address getPrimaryOwner(Object key) {
+         if (rpcManager == null)
+            throw new IllegalStateException("Cannot invoke this method for local caches");
+         return rpcManager.getTransport().getCoordinator();
       }
 
       @Override
@@ -183,6 +192,11 @@ public interface ClusteringDependentLogic {
          final boolean result = dm.getPrimaryLocation(key).equals(address);
          log.tracef("My address is %s. Am I main owner? - %b", address, result);
          return result;
+      }
+
+      @Override
+      public Address getPrimaryOwner(Object key) {
+         return dm.getPrimaryLocation(key);
       }
 
       @Override

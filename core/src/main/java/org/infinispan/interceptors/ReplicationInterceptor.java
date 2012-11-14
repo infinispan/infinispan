@@ -58,8 +58,6 @@ import org.infinispan.remoting.transport.jgroups.SuspectException;
 import org.infinispan.statetransfer.StateTransferManager;
 import org.infinispan.transaction.LockingMode;
 import org.infinispan.transaction.xa.GlobalTransaction;
-import org.infinispan.util.concurrent.NotifyingFutureImpl;
-import org.infinispan.util.concurrent.NotifyingNotifiableFuture;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
@@ -272,13 +270,7 @@ public class ReplicationInterceptor extends BaseRpcInterceptor {
       // FIRST pass this call up the chain.  Only if it succeeds (no exceptions) locally do we attempt to replicate.
       final Object returnValue = invokeNextInterceptor(ctx, command);
       if (!isLocalModeForced(command) && command.isSuccessful() && ctx.isOriginLocal() && !ctx.isInTxScope()) {
-         if (ctx.isUseFutureReturnType()) {
-            NotifyingNotifiableFuture<Object> future = new NotifyingFutureImpl(returnValue);
-            rpcManager.broadcastRpcCommandInFuture(command, future);
-            return future;
-         } else {
-            rpcManager.broadcastRpcCommand(command, isSynchronous(command));
-         }
+         rpcManager.broadcastRpcCommand(command, isSynchronous(command));
       }
       return returnValue;
    }

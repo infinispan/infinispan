@@ -128,6 +128,7 @@ public enum Attribute {
     UNRELIABLE_RETURN_VALUES("unreliableReturnValues"),
     USE_EAGER_LOCKING("useEagerLocking"),
     USE_LOCK_STRIPING("useLockStriping"),
+    SUPPORTS_CONCURRENT_UPDATES("supportsConcurrentUpdates"),
     USE_REPL_QUEUE("useReplQueue"),
     USE_SYNCHRONIZAION("useSynchronization"),
     VALUE("value"),

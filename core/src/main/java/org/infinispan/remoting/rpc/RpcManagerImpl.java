@@ -57,7 +57,6 @@ import org.rhq.helpers.pluginAnnotations.agent.Units;
 
 import java.text.NumberFormat;
 import java.util.Collection;
-import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.Callable;
@@ -232,8 +231,8 @@ public class RpcManagerImpl implements RpcManager {
    }
 
    @Override
-   public final void invokeRemotely(Collection<Address> recipients, ReplicableCommand rpc, boolean sync) throws RpcException {
-      invokeRemotely(recipients, rpc, sync, false);
+   public final Map<Address, Response> invokeRemotely(Collection<Address> recipients, ReplicableCommand rpc, boolean sync) throws RpcException {
+      return invokeRemotely(recipients, rpc, sync, false);
    }
 
    @Override

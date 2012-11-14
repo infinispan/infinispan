@@ -33,14 +33,16 @@ public class LockingConfiguration {
    private long lockAcquisitionTimeout;
    private final boolean useLockStriping;
    private final boolean writeSkewCheck;
+   private boolean supportsConcurrentUpdates;
 
    LockingConfiguration(int concurrencyLevel, IsolationLevel isolationLevel, long lockAcquisitionTimeout,
-         boolean useLockStriping, boolean writeSkewCheck) {
+         boolean useLockStriping, boolean writeSkewCheck, boolean supportsConcurrentUpdates) {
       this.concurrencyLevel = concurrencyLevel;
       this.isolationLevel = isolationLevel;
       this.lockAcquisitionTimeout = lockAcquisitionTimeout;
       this.useLockStriping = useLockStriping;
       this.writeSkewCheck = writeSkewCheck;
+      this.supportsConcurrentUpdates = supportsConcurrentUpdates;
    }
 
    /**
@@ -50,6 +52,15 @@ public class LockingConfiguration {
     */
    public int concurrencyLevel() {
       return concurrencyLevel;
+   }
+
+   /**
+    * This option applies to non-transactional caches only (both clustered and local): if set to true(default value) the cache
+    * keeps data consistent in the case of concurrent updates. For clustered caches this comes at the cost of an additional RPC, so if you don't expect your
+    * application to write data concurrently, disabling this flag increases performance.
+    */
+   public boolean supportsConcurrentUpdates() {
+      return supportsConcurrentUpdates;
    }
 
    /**

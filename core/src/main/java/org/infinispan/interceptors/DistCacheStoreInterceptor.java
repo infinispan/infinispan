@@ -36,6 +36,7 @@ import org.infinispan.context.impl.TxInvocationContext;
 import org.infinispan.distribution.DistributionManager;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.factories.annotations.Start;
+import org.infinispan.interceptors.locking.ClusteringDependentLogic;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.remoting.transport.Transport;
 import org.infinispan.util.logging.Log;
@@ -66,6 +67,9 @@ public class DistCacheStoreInterceptor extends CacheStoreInterceptor {
    Address address;
 
    private static final Log log = LogFactory.getLog(DistCacheStoreInterceptor.class);
+   private boolean isUsingLockDelegation;
+   ClusteringDependentLogic cdl;
+
 
    @Override
    protected Log getLog() {
@@ -73,15 +77,19 @@ public class DistCacheStoreInterceptor extends CacheStoreInterceptor {
    }
 
    @Inject
-   public void inject(DistributionManager dm, Transport transport) {
+   public void inject(DistributionManager dm, Transport transport, ClusteringDependentLogic cdl) {
       this.dm = dm;
       this.transport = transport;
+      this.cdl = cdl;
    }
 
    @Start(priority = 25) // after the distribution manager!
    @SuppressWarnings("unused")
    private void setAddress() {
       this.address = transport.getAddress();
+      this.isUsingLockDelegation = cacheConfiguration.locking().supportsConcurrentUpdates() &&
+            !cacheConfiguration.transaction().transactionMode().isTransactional();
+
    }
 
    // ---- WRITE commands
@@ -104,11 +112,13 @@ public class DistCacheStoreInterceptor extends CacheStoreInterceptor {
       if (skip(ctx, command) || ctx.isInTxScope()) return returnValue;
 
       Map<Object, Object> map = command.getMap();
-      for (Object key : map.keySet()) {
-         if (!skipKey(key)) {
-            InternalCacheEntry se = getStoredEntry(key, ctx);
-            store.store(se);
-            log.tracef("Stored entry %s under key %s", se, key);
+      if (!(command.isForwarded() && loaderConfig.shared())) {
+         for (Object key : map.keySet()) {
+            if (!skipKey(key)) {
+               InternalCacheEntry se = getStoredEntry(key, ctx);
+               store.store(se);
+               log.tracef("Stored entry %s under key %s", se, key);
+            }
          }
       }
       if (getStatisticsEnabled()) cacheStores.getAndAdd(map.size());
@@ -164,7 +174,7 @@ public class DistCacheStoreInterceptor extends CacheStoreInterceptor {
     * store is a shared one and node storing the key is not the 1st owner of the key or, - This is an L1 put operation.
     */
    private boolean skip(InvocationContext ctx, Object key, FlagAffectedCommand command) {
-      return skip(ctx, command) || skipKey(key);
+      return skip(ctx, command) || skipKey(key) || (isUsingLockDelegation && !cdl.localNodeIsPrimaryOwner(key) && (!cdl.localNodeIsOwner(key) || ctx.isOriginLocal()));
    }
 
    /**

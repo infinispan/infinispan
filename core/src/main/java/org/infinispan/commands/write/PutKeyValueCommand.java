@@ -85,6 +85,8 @@ public class PutKeyValueCommand extends AbstractDataWriteCommand {
          successful = false;
          return null;
       }
+      //possible as in certain situations (e.g. when locking delegation is used) we don't wrap
+      if (e == null) return null;
 
       Object entryValue = e.getValue();
       if (entryValue != null && putIfAbsent && !e.isRemoved()) {
@@ -124,7 +126,7 @@ public class PutKeyValueCommand extends AbstractDataWriteCommand {
 
    @Override
    public Object[] getParameters() {
-      return new Object[]{key, value, lifespanMillis, maxIdleTimeMillis, Flag.copyWithoutRemotableFlags(flags)};
+      return new Object[]{key, value, lifespanMillis, maxIdleTimeMillis, putIfAbsent, Flag.copyWithoutRemotableFlags(flags)};
    }
 
    @Override
@@ -135,7 +137,8 @@ public class PutKeyValueCommand extends AbstractDataWriteCommand {
       value = parameters[1];
       lifespanMillis = (Long) parameters[2];
       maxIdleTimeMillis = (Long) parameters[3];
-      flags = (Set<Flag>) parameters[4];
+      putIfAbsent = (Boolean) parameters[4];
+      flags = (Set<Flag>) parameters[5];
    }
 
    public boolean isPutIfAbsent() {
@@ -190,6 +193,7 @@ public class PutKeyValueCommand extends AbstractDataWriteCommand {
             .append(", putIfAbsent=").append(putIfAbsent)
             .append(", lifespanMillis=").append(lifespanMillis)
             .append(", maxIdleTimeMillis=").append(maxIdleTimeMillis)
+            .append(", successful=").append(successful)
             .append("}")
             .toString();
    }

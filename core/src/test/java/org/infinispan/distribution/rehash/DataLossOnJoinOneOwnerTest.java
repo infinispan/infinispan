@@ -19,8 +19,9 @@
 package org.infinispan.distribution.rehash;
 
 import org.infinispan.Cache;
-import org.infinispan.config.Configuration;
-import org.infinispan.config.GlobalConfiguration;
+import org.infinispan.configuration.cache.CacheMode;
+import org.infinispan.configuration.cache.Configuration;
+import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.test.AbstractInfinispanTest;
 import org.infinispan.test.TestingUtil;
@@ -28,7 +29,7 @@ import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.testng.annotations.Test;
 
 /**
- * Tests data loss suring state transfer when a single data owner is configured.
+ * Tests data loss during state transfer when a single data owner is configured.
  * @author Sanne Grinovero <sanne@infinispan.org> (C) 2011 Red Hat Inc.
  * @author Alex Heneveld
  * @author Manik Surtani
@@ -41,6 +42,7 @@ public class DataLossOnJoinOneOwnerTest extends AbstractInfinispanTest {
 
    EmbeddedCacheManager cm1;
    EmbeddedCacheManager cm2;
+   protected boolean supportsConcurrentUpdates = true;
 
    /**
     * It seems that sometimes when a new node joins, existing data is lost.
@@ -69,13 +71,10 @@ public class DataLossOnJoinOneOwnerTest extends AbstractInfinispanTest {
    }
 
    public EmbeddedCacheManager newCM() {
-      GlobalConfiguration gc = GlobalConfiguration.getClusteredDefault();
-      Configuration c = new Configuration().fluent()
-            .mode(Configuration.CacheMode.DIST_SYNC)
+      ConfigurationBuilder c = new ConfigurationBuilder();
+      c.clustering().cacheMode(CacheMode.DIST_SYNC)
                .hash().numOwners(1)
-            .clustering().l1().disable()
-            .build();
-      return TestCacheManagerFactory.createCacheManager(gc, c);
+            .clustering().l1().disable().locking().supportsConcurrentUpdates(supportsConcurrentUpdates);
+      return TestCacheManagerFactory.createClusteredCacheManager(c);
    }
-
 }

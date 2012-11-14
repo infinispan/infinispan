@@ -159,6 +159,10 @@ public class DistSyncCacheStoreNotSharedTest extends BaseDistCacheStoreTest {
       }
    }
 
+   public void testExpectedConfig() {
+      assert c1.getCacheConfiguration().locking().supportsConcurrentUpdates();
+   }
+
    public void testPutAllWithFlags() throws Exception {
       Map<String, String> data = makePutAllTestData();
       c1.getAdvancedCache().withFlags(Flag.SKIP_CACHE_STORE).putAll(data);

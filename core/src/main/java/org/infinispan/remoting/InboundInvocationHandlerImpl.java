@@ -91,7 +91,7 @@ public class InboundInvocationHandlerImpl implements InboundInvocationHandler {
       CommandsFactory commandsFactory = cr.getCommandsFactory();
 
       // initialize this command with components specific to the intended cache instance
-      commandsFactory.initializeReplicableCommand(cmd, true);      
+      commandsFactory.initializeReplicableCommand(cmd, true);
       try {
          if (trace) log.tracef("Calling perform() on %s", cmd);
          ResponseGenerator respGen = cr.getResponseGenerator();
@@ -99,7 +99,9 @@ public class InboundInvocationHandlerImpl implements InboundInvocationHandler {
             cancelService.register(Thread.currentThread(), ((CancellableCommand)cmd).getUUID());
          }
          Object retval = cmd.perform(null);
-         return respGen.getResponse(cmd, retval);
+         Response response = respGen.getResponse(cmd, retval);
+         log.tracef("About to send back response %s for command %s", response, cmd);
+         return response;
       } catch (Exception e) {
          log.trace("Exception executing command", e);
          return new ExceptionResponse(e);

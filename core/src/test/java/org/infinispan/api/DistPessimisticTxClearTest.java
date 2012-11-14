@@ -33,6 +33,6 @@ import org.testng.annotations.Test;
 public class DistPessimisticTxClearTest extends BaseDistClearTest {
 
    public DistPessimisticTxClearTest() {
-      super(true, false);
+      super(true, false, true);
    }
 }

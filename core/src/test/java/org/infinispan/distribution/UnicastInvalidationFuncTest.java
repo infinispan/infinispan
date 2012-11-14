@@ -31,6 +31,9 @@ import org.infinispan.test.ReplListener;
 import org.testng.Assert;
 import org.testng.annotations.Test;
 
+import static junit.framework.Assert.assertEquals;
+import static org.testng.AssertJUnit.assertNull;
+
 @Test(groups = "functional", testName = "distribution.UnicastInvalidationFuncTest")
 public class UnicastInvalidationFuncTest extends BaseDistFunctionalTest {
 	
@@ -53,11 +56,12 @@ public class UnicastInvalidationFuncTest extends BaseDistFunctionalTest {
       // Put an object in from a non-owner, this will cause an L1 record to be created there
       
       nonOwner.put(KEY1, "foo");
-      Assert.assertEquals(nonOwner.getAdvancedCache().getDataContainer().get(KEY1).getValue(), "foo");
-      Assert.assertEquals(owner.getAdvancedCache().getDataContainer().get(KEY1).getValue(), "foo");
+      assertNull(nonOwner.getAdvancedCache().getDataContainer().get(KEY1));
+      assertEquals(owner.getAdvancedCache().getDataContainer().get(KEY1).getValue(), "foo");
       
       // Request from another non-owner so that we can get an invalidation command there
-      secondNonOwner.get(KEY1);
+      assertEquals(secondNonOwner.get(KEY1), "foo");
+      assertEquals(secondNonOwner.getAdvancedCache().getDataContainer().get(KEY1).getValue(), "foo");
       
       // Check that the non owners are notified
 		ReplListener rl = new ReplListener(nonOwner);

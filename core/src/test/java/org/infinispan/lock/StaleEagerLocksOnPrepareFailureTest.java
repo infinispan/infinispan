@@ -26,8 +26,8 @@ import org.infinispan.Cache;
 import org.infinispan.commands.tx.PrepareCommand;
 import org.infinispan.config.Configuration;
 import org.infinispan.distribution.MagicKey;
-import org.infinispan.interceptors.DistributionInterceptor;
 import org.infinispan.interceptors.InterceptorChain;
+import org.infinispan.interceptors.distribution.TxDistributionInterceptor;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.test.MultipleCacheManagersTest;
 import org.infinispan.test.TestingUtil;
@@ -71,7 +71,7 @@ public class StaleEagerLocksOnPrepareFailureTest extends MultipleCacheManagersTe
       FailInterceptor interceptor = new FailInterceptor();
       interceptor.failFor(PrepareCommand.class);
       InterceptorChain ic = TestingUtil.extractComponent(c2, InterceptorChain.class);
-      ic.addInterceptorBefore(interceptor, DistributionInterceptor.class);
+      ic.addInterceptorBefore(interceptor, TxDistributionInterceptor.class);
 
       MagicKey k1 = new MagicKey("k1", c1);
       MagicKey k2 = new MagicKey("k2", c2);

@@ -26,6 +26,8 @@ package org.infinispan.distribution;
 import org.infinispan.Cache;
 import org.testng.annotations.Test;
 
+import static org.testng.AssertJUnit.assertFalse;
+
 /**
  * Test distribution when L1 is disabled and return values are needed.
  *
@@ -112,6 +114,9 @@ public class DisabledL1WithRetValsTest extends BaseDistFunctionalTest {
       assertOnAllCachesAndOwnership("k1", "value");
 
       c1.clear();
+
+      assertFalse(c1.getAdvancedCache().getLockManager().isLocked("k1"));
+      assertFalse(c2.getAdvancedCache().getLockManager().isLocked("k1"));
 
       retval = getFirstNonOwner("k1").putIfAbsent("k1", "value2");
       assert null == retval;

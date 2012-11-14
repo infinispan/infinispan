@@ -56,11 +56,11 @@ public abstract class BaseDistClearTest extends MultipleCacheManagersTest {
 
    private final ConfigurationBuilder builder;
 
-   protected BaseDistClearTest(boolean transactional, boolean optimistic) {
+   protected BaseDistClearTest(boolean transactional, boolean optimistic, boolean supportsConcurrentUpdates) {
       builder = getDefaultClusteredCacheConfig(CacheMode.DIST_SYNC, transactional, transactional);
       builder.clustering().hash().numSegments(3).numOwners(2)
             .stateTransfer().fetchInMemoryState(true)
-            .locking().lockAcquisitionTimeout(1000l);
+            .locking().lockAcquisitionTimeout(1000l).supportsConcurrentUpdates(supportsConcurrentUpdates);
 
       if (transactional) {
          builder.transaction().transactionMode(TransactionMode.TRANSACTIONAL)
