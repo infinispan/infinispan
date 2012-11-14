@@ -61,11 +61,11 @@ public class VersionedEntryWrappingInterceptor extends EntryWrappingInterceptor 
          for (WriteCommand c : command.getModifications()) c.acceptVisitor(ctx, entryWrappingVisitor);
       }
       EntryVersionsMap newVersionData= null;
-      if (ctx.isOriginLocal()) newVersionData = cll.createNewVersionsAndCheckForWriteSkews(versionGenerator, ctx, (VersionedPrepareCommand) command);
+      if (ctx.isOriginLocal()) newVersionData = cdl.createNewVersionsAndCheckForWriteSkews(versionGenerator, ctx, (VersionedPrepareCommand) command);
 
       Object retval = invokeNextInterceptor(ctx, command);
 
-      if (!ctx.isOriginLocal()) newVersionData = cll.createNewVersionsAndCheckForWriteSkews(versionGenerator, ctx, (VersionedPrepareCommand) command);
+      if (!ctx.isOriginLocal()) newVersionData = cdl.createNewVersionsAndCheckForWriteSkews(versionGenerator, ctx, (VersionedPrepareCommand) command);
       if (command.isOnePhaseCommit()) ctx.getCacheTransaction().setUpdatedEntryVersions(((VersionedPrepareCommand) command).getVersionsSeen());
 
       if (newVersionData != null) retval = newVersionData;
@@ -92,10 +92,10 @@ public class VersionedEntryWrappingInterceptor extends EntryWrappingInterceptor 
    protected void commitContextEntry(CacheEntry entry, InvocationContext ctx, boolean skipOwnershipCheck) {
       if (ctx.isInTxScope()) {
          EntryVersion version = ((TxInvocationContext) ctx).getCacheTransaction().getUpdatedEntryVersions().get(entry.getKey());
-         cll.commitEntry(entry, version, skipOwnershipCheck);
+         cdl.commitEntry(entry, version, skipOwnershipCheck);
       } else {
          // This could be a state transfer call!
-         cll.commitEntry(entry, entry.getVersion(), skipOwnershipCheck);
+         cdl.commitEntry(entry, entry.getVersion(), skipOwnershipCheck);
       }
    }
 }

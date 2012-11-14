@@ -102,10 +102,11 @@ public class CountingRpcManager implements RpcManager {
       return realOne.invokeRemotely(recipients, rpcCommand, mode, timeout);
    }
 
-   public void invokeRemotely(Collection<Address> recipients, ReplicableCommand rpc, boolean sync) throws RpcException {
+   public Map<Address, Response> invokeRemotely(Collection<Address> recipients, ReplicableCommand rpc, boolean sync) throws RpcException {
       log.trace("invokeRemotely4");
       aboutToInvokeRpc(rpc);
       realOne.invokeRemotely(recipients, rpc, sync);
+      return null;
    }
 
    public Map<Address, Response> invokeRemotely(Collection<Address> recipients, ReplicableCommand rpc, boolean sync, boolean usePriorityQueue) throws RpcException {

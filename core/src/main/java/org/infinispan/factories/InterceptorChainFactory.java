@@ -33,6 +33,11 @@ import org.infinispan.configuration.cache.CacheStoreConfiguration;
 import org.infinispan.factories.annotations.DefaultFactoryFor;
 import org.infinispan.interceptors.*;
 import org.infinispan.interceptors.base.CommandInterceptor;
+import org.infinispan.interceptors.distribution.L1NonTxInterceptor;
+import org.infinispan.interceptors.distribution.NonTxConcurrentDistributionInterceptor;
+import org.infinispan.interceptors.distribution.NonTxDistributionInterceptor;
+import org.infinispan.interceptors.distribution.TxDistributionInterceptor;
+import org.infinispan.interceptors.distribution.VersionedDistributionInterceptor;
 import org.infinispan.interceptors.locking.NonTransactionalLockingInterceptor;
 import org.infinispan.interceptors.locking.OptimisticLockingInterceptor;
 import org.infinispan.interceptors.locking.PessimisticLockingInterceptor;
@@ -143,7 +148,7 @@ public class InterceptorChainFactory extends AbstractNamedCacheComponentFactory 
             interceptorChain.appendInterceptor(createInterceptor(new OptimisticLockingInterceptor(), OptimisticLockingInterceptor.class), false);
          }
       } else {
-         if (configuration.locking().isolationLevel() != IsolationLevel.NONE)
+         if (configuration.locking().supportsConcurrentUpdates())
             interceptorChain.appendInterceptor(createInterceptor(new NonTransactionalLockingInterceptor(), NonTransactionalLockingInterceptor.class), false);
       }
 
@@ -192,6 +197,10 @@ public class InterceptorChainFactory extends AbstractNamedCacheComponentFactory 
          interceptorChain.appendInterceptor(createInterceptor(new DeadlockDetectingInterceptor(), DeadlockDetectingInterceptor.class), false);
       }
 
+      if (configuration.clustering().l1().enabled() && !configuration.transaction().transactionMode().isTransactional()) {
+         interceptorChain.appendInterceptor(createInterceptor(new L1NonTxInterceptor(), L1NonTxInterceptor.class), false);
+      }
+
       switch (configuration.clustering().cacheMode()) {
          case REPL_SYNC:
             if (needsVersionAwareComponents) {
@@ -211,7 +220,15 @@ public class InterceptorChainFactory extends AbstractNamedCacheComponentFactory 
                break;
             }
          case DIST_ASYNC:
-            interceptorChain.appendInterceptor(createInterceptor(new DistributionInterceptor(), DistributionInterceptor.class), false);
+            if (configuration.transaction().transactionMode().isTransactional()) {
+               interceptorChain.appendInterceptor(createInterceptor(new TxDistributionInterceptor(), TxDistributionInterceptor.class), false);
+            } else {
+               if (configuration.locking().supportsConcurrentUpdates()) {
+                  interceptorChain.appendInterceptor(createInterceptor(new NonTxConcurrentDistributionInterceptor(), NonTxConcurrentDistributionInterceptor.class), false);
+               } else {
+                  interceptorChain.appendInterceptor(createInterceptor(new NonTxDistributionInterceptor(), NonTxDistributionInterceptor.class), false);
+               }
+            }
             break;
          case LOCAL:
             //Nothing...

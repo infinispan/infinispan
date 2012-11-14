@@ -35,49 +35,49 @@ import java.util.concurrent.atomic.AtomicInteger;
  * @author Manik Surtani
  * @since 4.0
  */
-public class AggregatingNotifyingFutureImpl extends NotifyingFutureImpl {
-   final List<Future<Object>> futures;
+public class AggregatingNotifyingFutureImpl<T> extends NotifyingFutureImpl<T> {
+   final List<Future<T>> futures;
    final AtomicInteger awaitingCompletions = new AtomicInteger();
 
-   public AggregatingNotifyingFutureImpl(Object actualReturnValue, int maxFutures) {
+   public AggregatingNotifyingFutureImpl(T actualReturnValue, int maxFutures) {
       super(actualReturnValue);
-      futures = new ArrayList<Future<Object>>(maxFutures);
+      futures = new ArrayList<Future<T>>(maxFutures);
       awaitingCompletions.set(maxFutures);
    }
 
    @Override
-   public void setNetworkFuture(Future<Object> future) {
+   public void setNetworkFuture(Future<T> future) {
       futures.add(future);
    }
 
    @Override
    public boolean cancel(boolean mayInterruptIfRunning) {
       boolean aggregateValue = false;
-      for (Future<Object> f : futures) aggregateValue = f.cancel(mayInterruptIfRunning) && aggregateValue;
+      for (Future<T> f : futures) aggregateValue = f.cancel(mayInterruptIfRunning) && aggregateValue;
       return aggregateValue;
    }
 
    @Override
    public boolean isCancelled() {
-      for (Future<Object> f : futures) if (f.isCancelled()) return true;
+      for (Future<T> f : futures) if (f.isCancelled()) return true;
       return false;
    }
 
    @Override
    public boolean isDone() {
-      for (Future<Object> f : futures) if (!f.isDone()) return false;
+      for (Future<T> f : futures) if (!f.isDone()) return false;
       return true;
    }
 
    @Override
-   public Object get() throws InterruptedException, ExecutionException {
-      for (Future<Object> f : futures) f.get();
+   public T get() throws InterruptedException, ExecutionException {
+      for (Future<T> f : futures) f.get();
       return actualReturnValue;
    }
 
    @Override
-   public Object get(long timeout, TimeUnit unit) throws InterruptedException, ExecutionException, java.util.concurrent.TimeoutException {
-      for (Future<Object> f : futures) f.get(timeout, unit);
+   public T get(long timeout, TimeUnit unit) throws InterruptedException, ExecutionException, java.util.concurrent.TimeoutException {
+      for (Future<T> f : futures) f.get(timeout, unit);
       return actualReturnValue;
    }
 

@@ -41,9 +41,10 @@ public class ResponseGeneratorFactory extends AbstractNamedCacheComponentFactory
    @SuppressWarnings("unchecked")
    public <T> T construct(Class<T> componentType) {
       if (configuration.clustering().cacheMode().isDistributed()) {
-         if (configuration.unsafe().unreliableReturnValues())
+         if (configuration.unsafe().unreliableReturnValues() && configuration.transaction().transactionMode().isTransactional())
             return (T) new NoReturnValuesDistributionResponseGenerator();
          else
+            //distributed non-transactional caches require the response value
             return (T) new DistributionResponseGenerator();
       } else
          return (T) new DefaultResponseGenerator();

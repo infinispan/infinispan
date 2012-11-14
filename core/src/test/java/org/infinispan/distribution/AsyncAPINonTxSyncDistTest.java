@@ -41,9 +41,19 @@ public class AsyncAPINonTxSyncDistTest extends AsyncAPINonTxSyncReplTest {
 
 
    @Override
-   protected void assertOnAllCaches(Key k, String v, Cache c1, Cache c2) {
-      Object real;
-      assert Util.safeEquals((real = c1.getAdvancedCache().withFlags(SKIP_REMOTE_LOOKUP).get(k)), v) : "Error on cache 1.  Expected " + v + " and got " + real;
-      assert Util.safeEquals((real = c2.getAdvancedCache().withFlags(SKIP_REMOTE_LOOKUP).get(k)), v) : "Error on cache 2.  Expected " + v + " and got " + real;
+   protected void assertOnAllCaches(final Key k, final String v, final Cache c1, final Cache c2) {
+      if (!sync()) {
+         eventually(new Condition() {
+            @Override
+            public boolean isSatisfied() throws Exception {
+               return Util.safeEquals(c1.getAdvancedCache().withFlags(SKIP_REMOTE_LOOKUP).get(k), v) &&
+                     Util.safeEquals(c2.getAdvancedCache().withFlags(SKIP_REMOTE_LOOKUP).get(k), v);
+            }
+         });
+      } else {
+         Object real;
+         assert Util.safeEquals((real = c1.getAdvancedCache().withFlags(SKIP_REMOTE_LOOKUP).get(k)), v) : "Error on cache 1.  Expected " + v + " and got " + real;
+         assert Util.safeEquals((real = c2.getAdvancedCache().withFlags(SKIP_REMOTE_LOOKUP).get(k)), v) : "Error on cache 2.  Expected " + v + " and got " + real;
+      }
    }
 }

@@ -550,6 +550,9 @@ public class Parser52 implements ConfigurationParser<ConfigurationBuilderHolder>
             case WRITE_SKEW_CHECK:
                builder.locking().writeSkewCheck(Boolean.parseBoolean(value));
                break;
+            case SUPPORTS_CONCURRENT_UPDATES:
+               builder.locking().supportsConcurrentUpdates(Boolean.parseBoolean(value));
+               break;
             default:
                throw ParseUtils.unexpectedAttribute(reader, i);
          }

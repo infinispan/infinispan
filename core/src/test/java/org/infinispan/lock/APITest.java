@@ -227,9 +227,9 @@ public class APITest extends MultipleCacheManagersTest {
       });
    }
 
-   public void testNoLockingInterceptorWithNoneIsolationLevel() {
+   public void testNoLockingInterceptorWithoutConcurrentAccess() {
       ConfigurationBuilder builder = new ConfigurationBuilder();
-      builder.locking().isolationLevel(IsolationLevel.NONE);
+      builder.locking().supportsConcurrentUpdates(false);
       withCacheManager(new CacheManagerCallable(
             TestCacheManagerFactory.createCacheManager(builder)) {
          @Override

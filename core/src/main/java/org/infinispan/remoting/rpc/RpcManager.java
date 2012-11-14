@@ -131,7 +131,7 @@ public interface RpcManager {
     * @param sync       if true, the transport will operate in sync mode.  Otherwise, it will operate in async mode.
     * @throws org.infinispan.remoting.RpcException in the event of problems
     */
-   void invokeRemotely(Collection<Address> recipients, ReplicableCommand rpc, boolean sync) throws RpcException;
+   Map<Address, Response> invokeRemotely(Collection<Address> recipients, ReplicableCommand rpc, boolean sync) throws RpcException;
 
    /**
     * Broadcasts an RPC command to a specified set of recipients

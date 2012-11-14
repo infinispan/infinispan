@@ -38,6 +38,7 @@ public class LockingConfigurationBuilder extends AbstractConfigurationChildBuild
    private long lockAcquisitionTimeout = TimeUnit.SECONDS.toMillis(10);
    private boolean useLockStriping = false;
    boolean writeSkewCheck = false;
+   boolean supportsConcurrentUpdates = true;
 
    protected LockingConfigurationBuilder(ConfigurationBuilder builder) {
       super(builder);
@@ -61,6 +62,14 @@ public class LockingConfigurationBuilder extends AbstractConfigurationChildBuild
     */
    public LockingConfigurationBuilder isolationLevel(IsolationLevel isolationLevel) {
       this.isolationLevel = isolationLevel;
+      return this;
+   }
+
+   /**
+    * @see org.infinispan.configuration.cache.LockingConfiguration#supportsConcurrentUpdates()
+    */
+   public LockingConfigurationBuilder supportsConcurrentUpdates(boolean itDoes) {
+      this.supportsConcurrentUpdates = itDoes;
       return this;
    }
 
@@ -128,7 +137,7 @@ public class LockingConfigurationBuilder extends AbstractConfigurationChildBuild
 
    @Override
    public LockingConfiguration create() {
-      return new LockingConfiguration(concurrencyLevel, isolationLevel, lockAcquisitionTimeout, useLockStriping, writeSkewCheck);
+      return new LockingConfiguration(concurrencyLevel, isolationLevel, lockAcquisitionTimeout, useLockStriping, writeSkewCheck, supportsConcurrentUpdates);
    }
 
    @Override
@@ -138,6 +147,7 @@ public class LockingConfigurationBuilder extends AbstractConfigurationChildBuild
       lockAcquisitionTimeout = template.lockAcquisitionTimeout();
       useLockStriping = template.useLockStriping();
       writeSkewCheck = template.writeSkewCheck();
+      supportsConcurrentUpdates = template.supportsConcurrentUpdates();
 
       return this;
    }
@@ -150,6 +160,7 @@ public class LockingConfigurationBuilder extends AbstractConfigurationChildBuild
             ", lockAcquisitionTimeout=" + lockAcquisitionTimeout +
             ", useLockStriping=" + useLockStriping +
             ", writeSkewCheck=" + writeSkewCheck +
+            ", supportsConcurrentUpdates=" + supportsConcurrentUpdates +
             '}';
    }
 

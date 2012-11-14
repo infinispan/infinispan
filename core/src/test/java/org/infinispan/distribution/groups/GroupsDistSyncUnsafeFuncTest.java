@@ -34,7 +34,6 @@ import org.testng.annotations.Test;
  */
 @Test(testName="distribution.GroupsDistSyncUnsafeFuncTest", groups = "functional")
 public class GroupsDistSyncUnsafeFuncTest extends DistSyncUnsafeFuncTest {
-
    
    public GroupsDistSyncUnsafeFuncTest() {
       groupsEnabled = true;

@@ -62,6 +62,10 @@ public class DistSyncCacheStoreSharedTest extends BaseDistCacheStoreTest {
       }
    }
 
+   public void testExpectedConfig() {
+      assert c1.getCacheConfiguration().locking().supportsConcurrentUpdates();
+   }
+
    public void testPutFromNonOwner() throws Exception {
       String key = "k4", value = "value4";
       for (Cache<Object, String> c : caches) assert c.isEmpty();
@@ -128,6 +132,7 @@ public class DistSyncCacheStoreSharedTest extends BaseDistCacheStoreTest {
 
 
    public void testPutAll() throws Exception {
+      log.trace("Here it begins");
       String k1 = "1", v1 = "one", k2 = "2", v2 = "two", k3 = "3", v3 = "three", k4 = "4", v4 = "four";
       String[] keys = new String[]{k1, k2, k3, k4};
       Map<String, String> data = new HashMap<String, String>();

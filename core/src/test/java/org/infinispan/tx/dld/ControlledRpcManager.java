@@ -152,12 +152,14 @@ public class ControlledRpcManager implements RpcManager {
       return responseMap;
    }
 
-   public void invokeRemotely(Collection<Address> recipients, ReplicableCommand rpcCommand, boolean sync) throws RpcException {
+
+   public Map<Address, Response> invokeRemotely(Collection<Address> recipients, ReplicableCommand rpcCommand, boolean sync) throws RpcException {
       log.trace("invokeRemotely4");
       failIfNeeded(rpcCommand);
       waitBefore(rpcCommand);
       realOne.invokeRemotely(recipients, rpcCommand, sync);
       waitAfter(rpcCommand);
+      return null;
    }
 
    public Map<Address, Response> invokeRemotely(Collection<Address> recipients, ReplicableCommand rpcCommand, boolean sync, boolean usePriorityQueue) throws RpcException {

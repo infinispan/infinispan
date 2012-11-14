@@ -90,6 +90,7 @@ public class RemoveCommand extends AbstractDataWriteCommand {
 
       if (value != null && e.getValue() != null && !e.getValue().equals(value)) {
          successful = false;
+         e.rollback();
          return false;
       }
 
@@ -180,12 +181,13 @@ public class RemoveCommand extends AbstractDataWriteCommand {
    public void setParameters(int commandId, Object[] parameters) {
       if (commandId != COMMAND_ID) throw new IllegalStateException("Invalid method id");
       key = parameters[0];
-      flags = (Set<Flag>) parameters[1];
+      value = parameters[1];
+      flags = (Set<Flag>) parameters[2];
    }
 
    @Override
    public Object[] getParameters() {
-      return new Object[]{key, Flag.copyWithoutRemotableFlags(flags)};
+      return new Object[]{key, value, Flag.copyWithoutRemotableFlags(flags)};
    }
 
    @Override

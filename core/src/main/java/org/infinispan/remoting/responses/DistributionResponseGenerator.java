@@ -32,6 +32,8 @@ import org.infinispan.commands.remote.SingleRpcCommand;
 import org.infinispan.commands.write.WriteCommand;
 import org.infinispan.distribution.DistributionManager;
 import org.infinispan.factories.annotations.Inject;
+import org.infinispan.util.logging.Log;
+import org.infinispan.util.logging.LogFactory;
 
 /**
  * A response generator for the DIST cache mode
@@ -78,11 +80,8 @@ public class DistributionResponseGenerator implements ResponseGenerator {
       }
       return null; // no unnecessary response values!
    }
-   
+
    protected Response handleWriteCommand(WriteCommand wc, Object returnValue) {
-      if (wc.isSuccessful()) {
-         return wc.isReturnValueExpected() ? SuccessfulResponse.create(returnValue) : null;
-      } else
-         return UnsuccessfulResponse.INSTANCE;
+      return wc.isReturnValueExpected() ? SuccessfulResponse.create(returnValue) : null;
    }
 }

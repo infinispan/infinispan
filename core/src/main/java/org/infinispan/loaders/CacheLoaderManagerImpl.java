@@ -226,7 +226,7 @@ public class CacheLoaderManagerImpl implements CacheLoaderManager {
             }
 
             List<Flag> flags = new ArrayList(Arrays.asList(
-                  CACHE_MODE_LOCAL, SKIP_OWNERSHIP_CHECK, IGNORE_RETURN_VALUES, SKIP_CACHE_STORE));
+                  CACHE_MODE_LOCAL, SKIP_OWNERSHIP_CHECK, IGNORE_RETURN_VALUES, SKIP_CACHE_STORE, SKIP_LOCKING));
 
             if (clmConfig.shared() || !(loader instanceof ChainingCacheStore)) {
                flags.add(SKIP_CACHE_STORE);

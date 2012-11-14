@@ -26,7 +26,6 @@ import org.infinispan.Cache;
 import org.infinispan.commands.VisitableCommand;
 import org.infinispan.commands.write.PutKeyValueCommand;
 import org.infinispan.commons.hash.MurmurHash3;
-import org.infinispan.config.Configuration;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.container.DataContainer;
@@ -47,6 +46,7 @@ import org.infinispan.util.concurrent.IsolationLevel;
 
 import javax.transaction.TransactionManager;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 
@@ -71,6 +71,7 @@ public abstract class BaseDistFunctionalTest extends MultipleCacheManagersTest {
    protected boolean groupsEnabled = false;
    protected List<Grouper<?>> groupers;
    protected LockingMode lockingMode;
+   protected boolean supportConcurrentWrites = true;
 
    protected void createCacheManagers() throws Throwable {
       cacheName = "dist";
@@ -115,6 +116,7 @@ public abstract class BaseDistFunctionalTest extends MultipleCacheManagersTest {
           configuration.clustering().hash().groups().withGroupers(groupers);
       }
       if (l1CacheEnabled) configuration.clustering().l1().onRehash(l1OnRehash).invalidationThreshold(l1Threshold);
+      configuration.locking().supportsConcurrentUpdates(supportConcurrentWrites);
       return configuration;
    }
 
@@ -188,7 +190,7 @@ public abstract class BaseDistFunctionalTest extends MultipleCacheManagersTest {
          Object realVal = c.get(key);
          if (value == null) {
             assert realVal == null : "Expecting [" + key + "] to equal [" + value + "] on cache ["
-                  + addressOf(c) + "] but was [" + realVal + "]";
+                  + addressOf(c) + "] but was [" + realVal + "]. Owners are " + Arrays.toString(getOwners(key));
          } else {
             assert value.equals(realVal) : "Expecting [" + key + "] to equal [" + value + "] on cache ["
                   + addressOf(c) + "] but was [" + realVal + "]";

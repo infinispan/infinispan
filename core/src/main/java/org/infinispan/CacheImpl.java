@@ -78,9 +78,8 @@ import org.infinispan.transaction.xa.TransactionXaAdapter;
 import org.infinispan.transaction.xa.recovery.RecoveryManager;
 import org.infinispan.util.Util;
 import org.infinispan.util.concurrent.AbstractInProcessNotifyingFuture;
-import org.infinispan.util.concurrent.DeferredReturnFuture;
 import org.infinispan.util.concurrent.NotifyingFuture;
-import org.infinispan.util.concurrent.NotifyingNotifiableFuture;
+import org.infinispan.util.concurrent.NotifyingFutureAdaptor;
 import org.infinispan.util.concurrent.locks.LockManager;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
@@ -89,6 +88,7 @@ import org.rhq.helpers.pluginAnnotations.agent.DisplayType;
 import org.rhq.helpers.pluginAnnotations.agent.Metric;
 import org.rhq.helpers.pluginAnnotations.agent.Operation;
 
+import javax.transaction.InvalidTransactionException;
 import javax.transaction.SystemException;
 import javax.transaction.Transaction;
 import javax.transaction.TransactionManager;
@@ -102,6 +102,7 @@ import java.util.Set;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
@@ -223,8 +224,12 @@ public class CacheImpl<K, V> extends CacheSupport<K, V> implements AdvancedCache
    }
 
    final boolean remove(Object key, Object value, EnumSet<Flag> explicitFlags, ClassLoader explicitClassLoader) {
-      assertKeyValueNotNull(key, value);
       InvocationContext ctx = getInvocationContextWithImplicitTransaction(false, explicitClassLoader, 1);
+      return removeInternal(key, value, explicitFlags, ctx);
+   }
+
+   private boolean removeInternal(Object key, Object value, EnumSet<Flag> explicitFlags, InvocationContext ctx) {
+      assertKeyValueNotNull(key, value);
       RemoveCommand command = commandsFactory.buildRemoveCommand(key, value, explicitFlags);
       return (Boolean) executeCommandAndCommitIfNeeded(ctx, command);
    }
@@ -294,8 +299,12 @@ public class CacheImpl<K, V> extends CacheSupport<K, V> implements AdvancedCache
 
    @SuppressWarnings("unchecked")
    final V remove(Object key, EnumSet<Flag> explicitFlags, ClassLoader explicitClassLoader) {
-      assertKeyNotNull(key);
       InvocationContext ctx = getInvocationContextWithImplicitTransaction(false, explicitClassLoader, 1);
+      return removeInternal(key, explicitFlags, ctx);
+   }
+
+   private V removeInternal(Object key, EnumSet<Flag> explicitFlags, InvocationContext ctx) {
+      assertKeyNotNull(key);
       RemoveCommand command = commandsFactory.buildRemoveCommand(key, null, explicitFlags);
       return (V) executeCommandAndCommitIfNeeded(ctx, command);
    }
@@ -307,6 +316,10 @@ public class CacheImpl<K, V> extends CacheSupport<K, V> implements AdvancedCache
 
    final void clear(EnumSet<Flag> explicitFlags, ClassLoader explicitClassLoader) {
       InvocationContext ctx = getInvocationContextWithImplicitTransaction(false, explicitClassLoader, UNBOUNDED);
+      clearInternal(explicitFlags, ctx);
+   }
+
+   private void clearInternal(EnumSet<Flag> explicitFlags, InvocationContext ctx) {
       ClearCommand command = commandsFactory.buildClearCommand(explicitFlags);
       executeCommandAndCommitIfNeeded(ctx, command);
    }
@@ -440,6 +453,18 @@ public class CacheImpl<K, V> extends CacheSupport<K, V> implements AdvancedCache
       InvocationContext result = icc.createInvocationContext(false, keyCount);
       setInvocationContextClassLoader(result, explicitClassLoader);
       return result;
+   }
+
+   private InvocationContext getInvocationContextWithImplicitTransactionForAsyncOps(boolean isPutForExternalRead, ClassLoader explicitClassLoader, int keyCount) {
+      InvocationContext ctx = getInvocationContextWithImplicitTransaction(isPutForExternalRead, explicitClassLoader, keyCount);
+      //If the transaction was injected then we should not have it associated to caller's thread, but with the async thread
+      try {
+         if (isTxInjected(ctx))
+            transactionManager.suspend();
+      } catch (SystemException e) {
+         throw new CacheException(e);
+      }
+      return ctx;
    }
 
    /**
@@ -706,8 +731,12 @@ public class CacheImpl<K, V> extends CacheSupport<K, V> implements AdvancedCache
 
    @SuppressWarnings("unchecked")
    final V put(K key, V value, long lifespan, TimeUnit lifespanUnit, long maxIdleTime, TimeUnit idleTimeUnit, EnumSet<Flag> explicitFlags, ClassLoader explicitClassLoader) {
-      assertKeyValueNotNull(key, value);
       InvocationContext ctx = getInvocationContextWithImplicitTransaction(false, explicitClassLoader, 1);
+      return putInternal(key, value, lifespan, lifespanUnit, maxIdleTime, idleTimeUnit, explicitFlags, ctx);
+   }
+
+   private V putInternal(K key, V value, long lifespan, TimeUnit lifespanUnit, long maxIdleTime, TimeUnit idleTimeUnit, EnumSet<Flag> explicitFlags, InvocationContext ctx) {
+      assertKeyValueNotNull(key, value);
       PutKeyValueCommand command = commandsFactory.buildPutKeyValueCommand(key, value, lifespanUnit.toMillis(lifespan), idleTimeUnit.toMillis(maxIdleTime), explicitFlags);
       return (V) executeCommandAndCommitIfNeeded(ctx, command);
    }
@@ -719,9 +748,13 @@ public class CacheImpl<K, V> extends CacheSupport<K, V> implements AdvancedCache
 
    @SuppressWarnings("unchecked")
    final V putIfAbsent(K key, V value, long lifespan, TimeUnit lifespanUnit, long maxIdleTime, TimeUnit idleTimeUnit, EnumSet<Flag> explicitFlags, ClassLoader explicitClassLoader) {
+      InvocationContext ctx = getInvocationContextWithImplicitTransaction(isPutForExternalRead(explicitFlags), explicitClassLoader, 1);
+      return putIfAbsentInternal(key, value, lifespan, lifespanUnit, maxIdleTime, idleTimeUnit, explicitFlags, ctx);
+   }
+
+   private V putIfAbsentInternal(K key, V value, long lifespan, TimeUnit lifespanUnit, long maxIdleTime, TimeUnit idleTimeUnit, EnumSet<Flag> explicitFlags, InvocationContext ctx) {
       assertKeyValueNotNull(key, value);
       // putForExternalRead calls only here, so only check here
-      InvocationContext ctx = getInvocationContextWithImplicitTransaction(isPutForExternalRead(explicitFlags), explicitClassLoader, 1);
       PutKeyValueCommand command = commandsFactory.buildPutKeyValueCommand(key, value, lifespanUnit.toMillis(lifespan), idleTimeUnit.toMillis(maxIdleTime), explicitFlags);
       command.setPutIfAbsent(true);
       return (V) executeCommandAndCommitIfNeeded(ctx, command);
@@ -733,8 +766,12 @@ public class CacheImpl<K, V> extends CacheSupport<K, V> implements AdvancedCache
    }
 
    final void putAll(Map<? extends K, ? extends V> map, long lifespan, TimeUnit lifespanUnit, long maxIdleTime, TimeUnit idleTimeUnit, EnumSet<Flag> explicitFlags, ClassLoader explicitClassLoader) {
-      assertKeysNotNull(map);
       InvocationContext ctx = getInvocationContextWithImplicitTransaction(false, explicitClassLoader, map.size());
+      putAllInternal(map, lifespan, lifespanUnit, maxIdleTime, idleTimeUnit, explicitFlags, ctx);
+   }
+
+   private void putAllInternal(Map<? extends K, ? extends V> map, long lifespan, TimeUnit lifespanUnit, long maxIdleTime, TimeUnit idleTimeUnit, EnumSet<Flag> explicitFlags, InvocationContext ctx) {
+      assertKeysNotNull(map);
       PutMapCommand command = commandsFactory.buildPutMapCommand(map, lifespanUnit.toMillis(lifespan), idleTimeUnit.toMillis(maxIdleTime), explicitFlags);
       executeCommandAndCommitIfNeeded(ctx, command);
    }
@@ -746,11 +783,14 @@ public class CacheImpl<K, V> extends CacheSupport<K, V> implements AdvancedCache
 
    @SuppressWarnings("unchecked")
    final V replace(K key, V value, long lifespan, TimeUnit lifespanUnit, long maxIdleTime, TimeUnit idleTimeUnit, EnumSet<Flag> explicitFlags, ClassLoader explicitClassLoader) {
-      assertKeyValueNotNull(key, value);
       InvocationContext ctx = getInvocationContextWithImplicitTransaction(false, explicitClassLoader, 1);
+      return replaceInternal(key, value, lifespan, lifespanUnit, maxIdleTime, idleTimeUnit, explicitFlags, ctx);
+   }
+
+   private V replaceInternal(K key, V value, long lifespan, TimeUnit lifespanUnit, long maxIdleTime, TimeUnit idleTimeUnit, EnumSet<Flag> explicitFlags, InvocationContext ctx) {
+      assertKeyValueNotNull(key, value);
       ReplaceCommand command = commandsFactory.buildReplaceCommand(key, null, value, lifespanUnit.toMillis(lifespan), idleTimeUnit.toMillis(maxIdleTime), explicitFlags);
       return (V) executeCommandAndCommitIfNeeded(ctx, command);
-
    }
 
    @Override
@@ -759,8 +799,12 @@ public class CacheImpl<K, V> extends CacheSupport<K, V> implements AdvancedCache
    }
 
    final boolean replace(K key, V oldValue, V value, long lifespan, TimeUnit lifespanUnit, long maxIdleTime, TimeUnit idleTimeUnit, EnumSet<Flag> explicitFlags, ClassLoader explicitClassLoader) {
-      assertKeyValueNotNull(key, value);
       InvocationContext ctx = getInvocationContextWithImplicitTransaction(false, explicitClassLoader, 1);
+      return replaceInternal(key, oldValue, value, lifespan, lifespanUnit, maxIdleTime, idleTimeUnit, explicitFlags, ctx);
+   }
+
+   private boolean replaceInternal(K key, V oldValue, V value, long lifespan, TimeUnit lifespanUnit, long maxIdleTime, TimeUnit idleTimeUnit, EnumSet<Flag> explicitFlags, InvocationContext ctx) {
+      assertKeyValueNotNull(key, value);
       ReplaceCommand command = commandsFactory.buildReplaceCommand(key, oldValue, value, lifespanUnit.toMillis(lifespan), idleTimeUnit.toMillis(maxIdleTime), explicitFlags);
       return (Boolean) executeCommandAndCommitIfNeeded(ctx, command);
    }
@@ -797,12 +841,27 @@ public class CacheImpl<K, V> extends CacheSupport<K, V> implements AdvancedCache
       return putAsync(key, value, lifespan, lifespanUnit, maxIdle, maxIdleUnit, null, null);
    }
 
-   final NotifyingFuture<V> putAsync(K key, V value, long lifespan, TimeUnit lifespanUnit, long maxIdle, TimeUnit maxIdleUnit, EnumSet<Flag> explicitFlags, ClassLoader explicitClassLoader) {
-      assertKeyValueNotNull(key, value);
-      InvocationContext ctx = getInvocationContextWithImplicitTransaction(false, explicitClassLoader, 1);
-      ctx.setUseFutureReturnType(true);
-      PutKeyValueCommand command = commandsFactory.buildPutKeyValueCommand(key, value, lifespanUnit.toMillis(lifespan), maxIdleUnit.toMillis(maxIdle), explicitFlags);
-      return wrapInFuture(executeCommandAndCommitIfNeeded(ctx, command));
+   final NotifyingFuture<V> putAsync(final K key, final V value, final long lifespan, final TimeUnit lifespanUnit, final long maxIdle, final TimeUnit maxIdleUnit, final EnumSet<Flag> explicitFlags, final ClassLoader explicitClassLoader) {
+      final NotifyingFutureAdaptor<V> result = new NotifyingFutureAdaptor<V>();
+      final InvocationContext ctx = getInvocationContextWithImplicitTransactionForAsyncOps(false, explicitClassLoader, 1);
+      Future<V> returnValue = asyncExecutor.submit(new Callable<V>() {
+         @Override
+         public V call() throws Exception {
+            try {
+               associateImplicitTransactionWithCurrentThread(ctx);
+               return putInternal(key, value, lifespan, lifespanUnit, maxIdle, maxIdleUnit, explicitFlags, ctx);
+            } finally {
+               try {
+                  result.notifyDone();
+                  log.trace("Finished notifying");
+               } catch (Throwable e) {
+                  log.trace("Exception while notifying the future", e);
+               }
+            }
+         }
+      });
+      result.setActual(returnValue);
+      return result;
    }
 
    @Override
@@ -810,12 +869,23 @@ public class CacheImpl<K, V> extends CacheSupport<K, V> implements AdvancedCache
       return putAllAsync(data, lifespan, lifespanUnit, maxIdle, maxIdleUnit, null, null);
    }
 
-   final NotifyingFuture<Void> putAllAsync(Map<? extends K, ? extends V> data, long lifespan, TimeUnit lifespanUnit, long maxIdle, TimeUnit maxIdleUnit, EnumSet<Flag> explicitFlags, ClassLoader explicitClassLoader) {
-      assertKeysNotNull(data);
-      InvocationContext ctx = getInvocationContextWithImplicitTransaction(false, explicitClassLoader, data.size());
-      ctx.setUseFutureReturnType(true);
-      PutMapCommand command = commandsFactory.buildPutMapCommand(data, lifespanUnit.toMillis(lifespan), maxIdleUnit.toMillis(maxIdle), explicitFlags);
-      return wrapInFuture(executeCommandAndCommitIfNeeded(ctx, command));
+   final NotifyingFuture<Void> putAllAsync(final Map<? extends K, ? extends V> data, final long lifespan, final TimeUnit lifespanUnit, final long maxIdle, final TimeUnit maxIdleUnit, final EnumSet<Flag> explicitFlags, final ClassLoader explicitClassLoader) {
+      final NotifyingFutureAdaptor<Void> result = new NotifyingFutureAdaptor<Void>();
+      final InvocationContext ctx = getInvocationContextWithImplicitTransactionForAsyncOps(false, explicitClassLoader, data.size());
+      Future<Void> returnValue = asyncExecutor.submit(new Callable<Void>() {
+         @Override
+         public Void call() throws Exception {
+            try {
+               associateImplicitTransactionWithCurrentThread(ctx);
+               putAllInternal(data, lifespan, lifespanUnit, maxIdle, maxIdleUnit, explicitFlags, ctx);
+               return null;
+            } finally {
+               result.notifyDone();
+            }
+         }
+      });
+      result.setActual(returnValue);
+      return result;
    }
 
    @Override
@@ -823,11 +893,23 @@ public class CacheImpl<K, V> extends CacheSupport<K, V> implements AdvancedCache
       return clearAsync(null, null);
    }
 
-   final NotifyingFuture<Void> clearAsync(EnumSet<Flag> explicitFlags, ClassLoader explicitClassLoader) {
-      InvocationContext ctx = getInvocationContextWithImplicitTransaction(false, explicitClassLoader, UNBOUNDED);
-      ctx.setUseFutureReturnType(true);
-      ClearCommand command = commandsFactory.buildClearCommand(explicitFlags);
-      return wrapInFuture(executeCommandAndCommitIfNeeded(ctx, command));
+   final NotifyingFuture<Void> clearAsync(final EnumSet<Flag> explicitFlags, final ClassLoader explicitClassLoader) {
+      final NotifyingFutureAdaptor<Void> result = new NotifyingFutureAdaptor<Void>();
+      final InvocationContext ctx = getInvocationContextWithImplicitTransactionForAsyncOps(false, explicitClassLoader, UNBOUNDED);
+      Future<Void> returnValue = asyncExecutor.submit(new Callable<Void>() {
+         @Override
+         public Void call() throws Exception {
+            try {
+               associateImplicitTransactionWithCurrentThread(ctx);
+               clearInternal(explicitFlags, ctx);
+               return null;
+            } finally {
+               result.notifyDone();
+            }
+         }
+      });
+      result.setActual(returnValue);
+      return result;
    }
 
    @Override
@@ -835,13 +917,22 @@ public class CacheImpl<K, V> extends CacheSupport<K, V> implements AdvancedCache
       return putIfAbsentAsync(key, value, lifespan, lifespanUnit, maxIdle, maxIdleUnit, null, null);
    }
 
-   final NotifyingFuture<V> putIfAbsentAsync(K key, V value, long lifespan, TimeUnit lifespanUnit, long maxIdle, TimeUnit maxIdleUnit, EnumSet<Flag> explicitFlags, ClassLoader explicitClassLoader) {
-      assertKeyValueNotNull(key, value);
-      InvocationContext ctx = getInvocationContextWithImplicitTransaction(false, explicitClassLoader, 1);
-      ctx.setUseFutureReturnType(true);
-      PutKeyValueCommand command = commandsFactory.buildPutKeyValueCommand(key, value, lifespanUnit.toMillis(lifespan), maxIdleUnit.toMillis(maxIdle), explicitFlags);
-      command.setPutIfAbsent(true);
-      return wrapInFuture(executeCommandAndCommitIfNeeded(ctx, command));
+   final NotifyingFuture<V> putIfAbsentAsync(final K key, final V value, final long lifespan, final TimeUnit lifespanUnit, final long maxIdle, final TimeUnit maxIdleUnit, final EnumSet<Flag> explicitFlags,final ClassLoader explicitClassLoader) {
+      final NotifyingFutureAdaptor<V> result = new NotifyingFutureAdaptor<V>();
+      final InvocationContext ctx = getInvocationContextWithImplicitTransactionForAsyncOps(false, explicitClassLoader, 1);
+      Future<V> returnValue = asyncExecutor.submit(new Callable<V>() {
+         @Override
+         public V call() throws Exception {
+            try {
+               associateImplicitTransactionWithCurrentThread(ctx);
+               return putIfAbsentInternal(key, value, lifespan, lifespanUnit, maxIdle, maxIdleUnit, explicitFlags, ctx);
+            } finally {
+               result.notifyDone();
+            }
+         }
+      });
+      result.setActual(returnValue);
+      return result;
    }
 
    @Override
@@ -849,12 +940,22 @@ public class CacheImpl<K, V> extends CacheSupport<K, V> implements AdvancedCache
       return removeAsync(key, null, null);
    }
 
-   final NotifyingFuture<V> removeAsync(Object key, EnumSet<Flag> explicitFlags, ClassLoader explicitClassLoader) {
-      assertKeyNotNull(key);
-      InvocationContext ctx = getInvocationContextWithImplicitTransaction(false, explicitClassLoader, 1);
-      ctx.setUseFutureReturnType(true);
-      RemoveCommand command = commandsFactory.buildRemoveCommand(key, null, explicitFlags);
-      return wrapInFuture(executeCommandAndCommitIfNeeded(ctx, command));
+   final NotifyingFuture<V> removeAsync(final Object key, final EnumSet<Flag> explicitFlags, final ClassLoader explicitClassLoader) {
+      final NotifyingFutureAdaptor<V> result = new NotifyingFutureAdaptor<V>();
+      final InvocationContext ctx = getInvocationContextWithImplicitTransactionForAsyncOps(false, explicitClassLoader, 1);
+      Future<V> returnValue = asyncExecutor.submit(new Callable<V>() {
+         @Override
+         public V call() throws Exception {
+            try {
+               associateImplicitTransactionWithCurrentThread(ctx);
+               return removeInternal(key, explicitFlags, ctx);
+            } finally {
+               result.notifyDone();
+            }
+         }
+      });
+      result.setActual(returnValue);
+      return result;
    }
 
    @Override
@@ -862,12 +963,22 @@ public class CacheImpl<K, V> extends CacheSupport<K, V> implements AdvancedCache
       return removeAsync(key, value, null, null);
    }
 
-   final NotifyingFuture<Boolean> removeAsync(Object key, Object value, EnumSet<Flag> explicitFlags, ClassLoader explicitClassLoader) {
-      assertKeyValueNotNull(key, value);
-      InvocationContext ctx = getInvocationContextWithImplicitTransaction(false, explicitClassLoader, 1);
-      ctx.setUseFutureReturnType(true);
-      RemoveCommand command = commandsFactory.buildRemoveCommand(key, value, explicitFlags);
-      return wrapInFuture(executeCommandAndCommitIfNeeded(ctx, command));
+   final NotifyingFuture<Boolean> removeAsync(final Object key, final Object value, final EnumSet<Flag> explicitFlags, final ClassLoader explicitClassLoader) {
+      final NotifyingFutureAdaptor<Boolean> result = new NotifyingFutureAdaptor<Boolean>();
+      final InvocationContext ctx = getInvocationContextWithImplicitTransactionForAsyncOps(false, explicitClassLoader, 1);
+      Future<Boolean> returnValue = asyncExecutor.submit(new Callable<Boolean>() {
+         @Override
+         public Boolean call() throws Exception {
+            try {
+               associateImplicitTransactionWithCurrentThread(ctx);
+               return removeInternal(key, value, explicitFlags, ctx);
+            } finally {
+               result.notifyDone();
+            }
+         }
+      });
+      result.setActual(returnValue);
+      return result;
    }
 
    @Override
@@ -875,12 +986,22 @@ public class CacheImpl<K, V> extends CacheSupport<K, V> implements AdvancedCache
       return replaceAsync(key, value, lifespan, lifespanUnit, maxIdle, maxIdleUnit, null, null);
    }
 
-   final NotifyingFuture<V> replaceAsync(K key, V value, long lifespan, TimeUnit lifespanUnit, long maxIdle, TimeUnit maxIdleUnit, EnumSet<Flag> explicitFlags, ClassLoader explicitClassLoader) {
-      assertKeyValueNotNull(key, value);
-      InvocationContext ctx = getInvocationContextWithImplicitTransaction(false, explicitClassLoader, 1);
-      ctx.setUseFutureReturnType(true);
-      ReplaceCommand command = commandsFactory.buildReplaceCommand(key, null, value, lifespanUnit.toMillis(lifespan), maxIdleUnit.toMillis(maxIdle), explicitFlags);
-      return wrapInFuture(executeCommandAndCommitIfNeeded(ctx, command));
+   final NotifyingFuture<V> replaceAsync(final K key, final V value, final long lifespan, final TimeUnit lifespanUnit, final long maxIdle, final TimeUnit maxIdleUnit, final EnumSet<Flag> explicitFlags, final ClassLoader explicitClassLoader) {
+      final NotifyingFutureAdaptor<V> result = new NotifyingFutureAdaptor<V>();
+      final InvocationContext ctx = getInvocationContextWithImplicitTransactionForAsyncOps(false, explicitClassLoader, 1);
+      Future<V> returnValue = asyncExecutor.submit(new Callable<V>() {
+         @Override
+         public V call() throws Exception {
+            try {
+               associateImplicitTransactionWithCurrentThread(ctx);
+               return replaceInternal(key, value, lifespan, lifespanUnit, maxIdle, maxIdleUnit, explicitFlags, ctx);
+            } finally {
+               result.notifyDone();
+            }
+         }
+      });
+      result.setActual(returnValue);
+      return result;
    }
 
    @Override
@@ -888,12 +1009,22 @@ public class CacheImpl<K, V> extends CacheSupport<K, V> implements AdvancedCache
       return replaceAsync(key, oldValue, newValue, lifespan, lifespanUnit, maxIdle, maxIdleUnit, null, null);
    }
 
-   final NotifyingFuture<Boolean> replaceAsync(K key, V oldValue, V newValue, long lifespan, TimeUnit lifespanUnit, long maxIdle, TimeUnit maxIdleUnit, EnumSet<Flag> explicitFlags, ClassLoader explicitClassLoader) {
-      assertKeyValueNotNull(key, newValue);
-      InvocationContext ctx = getInvocationContextWithImplicitTransaction(false, explicitClassLoader, 1);
-      ctx.setUseFutureReturnType(true);
-      ReplaceCommand command = commandsFactory.buildReplaceCommand(key, oldValue, newValue, lifespanUnit.toMillis(lifespan), maxIdleUnit.toMillis(maxIdle), explicitFlags);
-      return wrapInFuture(executeCommandAndCommitIfNeeded(ctx, command));
+   final NotifyingFuture<Boolean> replaceAsync(final K key, final V oldValue, final V newValue, final long lifespan, final TimeUnit lifespanUnit, final long maxIdle, final TimeUnit maxIdleUnit, final EnumSet<Flag> explicitFlags, final ClassLoader explicitClassLoader) {
+      final NotifyingFutureAdaptor<Boolean> result = new NotifyingFutureAdaptor<Boolean>();
+      final InvocationContext ctx = getInvocationContextWithImplicitTransactionForAsyncOps(false, explicitClassLoader, 1);
+      Future<Boolean> returnValue = asyncExecutor.submit(new Callable<Boolean>() {
+         @Override
+         public Boolean call() throws Exception {
+            try {
+               associateImplicitTransactionWithCurrentThread(ctx);
+               return replaceInternal(key, oldValue, newValue, lifespan, lifespanUnit, maxIdle, maxIdleUnit, explicitFlags, ctx);
+            } finally {
+               result.notifyDone();
+            }
+         }
+      });
+      result.setActual(returnValue);
+      return result;
    }
 
    @Override
@@ -903,9 +1034,6 @@ public class CacheImpl<K, V> extends CacheSupport<K, V> implements AdvancedCache
 
    @SuppressWarnings("unchecked")
    NotifyingFuture<V> getAsync(final K key, final EnumSet<Flag> explicitFlags, final ClassLoader explicitClassLoader) {
-      final Transaction tx = getOngoingTransaction();
-      final NotifyingNotifiableFuture<V> f = new DeferredReturnFuture<V>();
-
       // Optimization to not start a new thread only when the operation is cheap:
       if (asyncSkipsThread(explicitFlags, key)) {
          return wrapInFuture(get(key, explicitFlags, explicitClassLoader));
@@ -918,18 +1046,19 @@ public class CacheImpl<K, V> extends CacheSupport<K, V> implements AdvancedCache
             appliedFlags = explicitFlags.clone();
             explicitFlags.clear();
          }
+         final NotifyingFutureAdaptor<V> f = new NotifyingFutureAdaptor<V>();
+
          Callable<V> c = new Callable<V>() {
             @Override
             public V call() throws Exception {
-               assertKeyNotNull(key);
-               InvocationContext ctx = getInvocationContextForRead(tx, explicitClassLoader, 1);
-               GetKeyValueCommand command = commandsFactory.buildGetKeyValueCommand(key, appliedFlags);
-               Object ret = invoker.invoke(ctx, command);
-               f.notifyDone();
-               return (V) ret;
+               try {
+                  return get(key, appliedFlags, explicitClassLoader);
+               } finally {
+                  f.notifyDone();
+               }
             }
          };
-         f.setNetworkFuture(asyncExecutor.submit(c));
+         f.setActual(asyncExecutor.submit(c));
          return f;
       }
    }
@@ -937,8 +1066,6 @@ public class CacheImpl<K, V> extends CacheSupport<K, V> implements AdvancedCache
    /**
     * Encodes the cases for an asyncGet operation in which it makes sense to actually perform the operation in sync.
     *
-    * @param flags
-    * @param key
     * @return true if we skip the thread (performing it in sync)
     */
    private boolean asyncSkipsThread(EnumSet<Flag> flags, K key) {
@@ -1010,7 +1137,7 @@ public class CacheImpl<K, V> extends CacheSupport<K, V> implements AdvancedCache
    }
 
    private Object executeCommandAndCommitIfNeeded(InvocationContext ctx, VisitableCommand command) {
-      final boolean txInjected = ctx.isInTxScope() && ((TxInvocationContext) ctx).isImplicitTransaction();
+      final boolean txInjected = isTxInjected(ctx);
       Object result;
       try {
          result = invoker.invoke(ctx, command);
@@ -1031,6 +1158,10 @@ public class CacheImpl<K, V> extends CacheSupport<K, V> implements AdvancedCache
       }
 
       return result;
+   }
+
+   private boolean isTxInjected(InvocationContext ctx) {
+      return ctx.isInTxScope() && ((TxInvocationContext) ctx).isImplicitTransaction();
    }
 
    private void tryRollback() {
@@ -1064,5 +1195,14 @@ public class CacheImpl<K, V> extends CacheSupport<K, V> implements AdvancedCache
    protected void set(K key, V value) {
       withFlags(Flag.IGNORE_RETURN_VALUES)
             .put(key, value, defaultLifespan, MILLISECONDS, defaultMaxIdleTime, MILLISECONDS);
+   }
+
+   private void associateImplicitTransactionWithCurrentThread(InvocationContext ctx) throws InvalidTransactionException, SystemException {
+      if (isTxInjected(ctx)) {
+         Transaction transaction = ((TxInvocationContext) ctx).getTransaction();
+         if (transaction == null)
+            throw new IllegalStateException("Null transaction not possible!");
+         transactionManager.resume(transaction);
+      }
    }
 }
