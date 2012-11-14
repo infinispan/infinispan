@@ -444,6 +444,22 @@ public class DistributedExecutorTest extends MultipleCacheManagersTest {
       assert r;
    }
 
+   @Test(expectedExceptions = ExecutionException.class)
+   public void testBasicTargetDistributedCallableWithTimeout() throws Exception {
+      Cache<Object, Object> cache1 = cache(0, cacheName());
+      Cache<Object, Object> cache2 = cache(1, cacheName());
+
+      // initiate task from cache1 and select cache2 as target
+      DistributedExecutorService des = createDES(cache1);
+      Address target = cache2.getAdvancedCache().getRpcManager().getAddress();
+
+      DistributedTaskBuilder builder = des.createDistributedTaskBuilder(new SleepingSimpleCallable());
+      builder.timeout(10, TimeUnit.MILLISECONDS);
+
+      Future<Integer> future = des.submit(target, builder.build());
+      future.get();
+   }
+
    @Test(expectedExceptions = IllegalArgumentException.class)
    public void testBasicTargetDistributedCallableWithNullExecutionPolicy() throws Exception {
       Cache<Object, Object> cache1 = cache(0, cacheName());

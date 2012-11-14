@@ -22,17 +22,20 @@
  */
 package org.infinispan.distexec;
 
-import java.io.Serializable;
-import java.util.List;
-import java.util.Set;
-import java.util.concurrent.Callable;
-import java.util.concurrent.Future;
-
 import org.infinispan.Cache;
 import org.infinispan.distribution.BaseDistFunctionalTest;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.util.concurrent.NotifyingFuture;
+import org.testng.AssertJUnit;
 import org.testng.annotations.Test;
+
+import java.io.Serializable;
+import java.util.Set;
+import java.util.concurrent.ArrayBlockingQueue;
+import java.util.concurrent.BlockingQueue;
+import java.util.concurrent.Callable;
+import java.util.concurrent.Future;
+import java.util.concurrent.TimeUnit;
 
 /**
  * Tests org.infinispan.distexec.DistributedExecutorService
@@ -111,6 +114,96 @@ public class DistributedExecutionCompletionTest extends BaseDistFunctionalTest {
       assert counter > 0;
    }
 
+   @Test(expectedExceptions = NullPointerException.class)
+   public void testBasicInvocationWithNullExecutor() throws Exception {
+      DistributedExecutorService des = null;
+      DistributedExecutionCompletionService<Integer> decs = new DistributedExecutionCompletionService<Integer>(des);
+   }
+
+   @Test(expectedExceptions = NullPointerException.class)
+   public void testBasicInvocationWithNullTask() throws Exception {
+      DistributedExecutorService des = new DefaultExecutorService(c1);
+
+      DistributedExecutionCompletionService<Integer> decs = new DistributedExecutionCompletionService<Integer>(des);
+      decs.submit(null);
+   }
+
+   public void testBasicInvocationWithBlockingQueue() throws Exception {
+      DistributedExecutorService des = new DefaultExecutorService(c1);
+      BlockingQueue<NotifyingFuture<Integer>> queue = new ArrayBlockingQueue<NotifyingFuture<Integer>>(10);
+      DistributedExecutionCompletionService<Integer> decs = new DistributedExecutionCompletionService<Integer>(des, queue);
+      decs.submit(new SimpleCallable());
+      NotifyingFuture<Integer> future = decs.take();
+      Integer r = future.get();
+      AssertJUnit.assertEquals((Integer) 1, r);
+   }
+
+   public void testBasicInvocationWithRunnable() throws Exception {
+      DistributedExecutorService des = new DefaultExecutorService(c1);
+
+      DistributedExecutionCompletionService<Integer> decs = new DistributedExecutionCompletionService<Integer>(des);
+      Integer result = 5;
+      decs.submit(new SimpleRunnable(), result);
+
+      NotifyingFuture<Integer> future = decs.take();
+      Integer r = future.get();
+      AssertJUnit.assertEquals(result, r);
+   }
+
+   @Test(expectedExceptions = NullPointerException.class)
+   public void testBasicInvocationWithNullRunnable() throws Exception {
+      DistributedExecutorService des = new DefaultExecutorService(c1);
+
+      DistributedExecutionCompletionService<Integer> decs = new DistributedExecutionCompletionService<Integer>(des);
+      Integer result = 5;
+      decs.submit(null, result);
+   }
+
+   public void testBasicPollInvocationWithSleepingCallable() throws Exception {
+      DistributedExecutorService des = new DefaultExecutorService(c1);
+      DistributedExecutionCompletionService<Integer> decs = new DistributedExecutionCompletionService<Integer>(des);
+
+      decs.submit(new SimpleCallable(true));
+      NotifyingFuture<Integer> callable = decs.poll();
+
+      AssertJUnit.assertNull(callable);
+   }
+
+   public void testBasicTakeInvocationWithSleepingCallable() throws Exception {
+      DistributedExecutorService des = new DefaultExecutorService(c1);
+      DistributedExecutionCompletionService<Integer> decs = new DistributedExecutionCompletionService<Integer>(des);
+
+      decs.submit(new SimpleCallable(true));
+
+      long start = System.currentTimeMillis();
+      NotifyingFuture<Integer> callable = decs.take();
+      long end = System.currentTimeMillis();
+
+      assert (end - start) >= 10000;
+      AssertJUnit.assertEquals((Integer) 1, callable.get());
+   }
+
+   public void testBasicPollInvocation() throws Exception {
+      DistributedExecutorService des = new DefaultExecutorService(c1);
+      DistributedExecutionCompletionService<Integer> decs = new DistributedExecutionCompletionService<Integer>(des);
+
+      decs.submit(new SimpleCallable());
+
+      NotifyingFuture<Integer> callable = decs.poll(10, TimeUnit.MILLISECONDS);
+
+      AssertJUnit.assertEquals((Integer) 1, callable.get());
+   }
+
+   public void testBasicPollInvocationWithTimeout() throws Exception {
+      DistributedExecutorService des = new DefaultExecutorService(c1);
+      DistributedExecutionCompletionService<Integer> decs = new DistributedExecutionCompletionService<Integer>(des);
+
+      decs.submit(new SimpleCallable(true));
+      NotifyingFuture<Integer> callable = decs.poll(10, TimeUnit.MILLISECONDS);
+
+      AssertJUnit.assertNull(callable);
+   }
+
    static class SimpleDistributedCallable implements DistributedCallable<String, String, Boolean>,
             Serializable {
 
@@ -144,10 +237,31 @@ public class DistributedExecutionCompletionTest extends BaseDistFunctionalTest {
 
       /** The serialVersionUID */
       private static final long serialVersionUID = -8589149500259272402L;
+      private boolean shouldSleep = false;
+
+      public SimpleCallable() {
+
+      }
+
+      public SimpleCallable(boolean shouldSleep) {
+         this.shouldSleep = shouldSleep;
+      }
 
       @Override
       public Integer call() throws Exception {
+         if(shouldSleep) {
+            Thread.sleep(10000);
+         }
+
          return 1;
+      }
+   }
+
+   static class SimpleRunnable implements Runnable, Serializable {
+
+      @Override
+      public void run() {
+         System.out.println("This is a runnable!");
       }
    }
 }
