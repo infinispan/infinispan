@@ -18,8 +18,6 @@
  */
 package org.infinispan.distexec;
 
-import java.util.List;
-
 import org.infinispan.remoting.transport.Address;
 
 /**
@@ -32,22 +30,15 @@ import org.infinispan.remoting.transport.Address;
 public interface DistributedTaskFailoverPolicy {
 
    /**
-    * 
     * As parts of distributively executed task can fail due to the task itself throwing an exception
     * or it can be an Infinispan system caused failure (e.g node failed or left cluster during task
-    * execution). Either way, the given exception along with the given list of available execution
-    * candidates should be used for a possible fail-over and execution of a failed task to another
-    * Infinispan node.
+    * execution etc).
     * 
-    * @param failedExecution
-    *           the Address of the node where execution of task failed
-    * @param executionCandidates
-    *           the list of nodes available for re-attempted execution of distributed task
-    * @param cause
-    *           the Exception capturing details of a failed task execution
+    * @param failoverContext
+    *           the FailoverContext of the failed execution
     * @return result the Address of the Infinispan node selected for fail over execution
     */
-   Address failover(Address failedExecution, List<Address> executionCandidates, Exception cause);
+   Address failover(FailoverContext context);
 
    /**
     * Maximum number of fail over attempts permitted by this DistributedTaskFailoverPolicy
