@@ -100,7 +100,7 @@ public class AbstractInfinispanTest {
       final String name = "ForkThread-" + getClass().getSimpleName() + "-" + r.hashCode();
       log.tracef("About to start thread '%s' as child of thread '%s'", name, Thread.currentThread().getName());
       FutureTask<T> future = new FutureTask<T>(r, result);
-      final Thread t = new Thread(future);
+      final Thread t = new Thread(future, name);
       spawnedThreads.add(t);
       t.start();
       return future;
@@ -110,7 +110,7 @@ public class AbstractInfinispanTest {
       final String name = "ForkThread-" + getClass().getSimpleName() + "-" + c.hashCode();
       log.tracef("About to start thread '%s' as child of thread '%s'", name, Thread.currentThread().getName());
       FutureTask<T> future = new FutureTask<T>(c);
-      final Thread t = new Thread(future);
+      final Thread t = new Thread(future, name);
       spawnedThreads.add(t);
       t.start();
       return future;
