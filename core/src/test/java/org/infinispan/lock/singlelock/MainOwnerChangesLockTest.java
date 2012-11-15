@@ -25,7 +25,7 @@ import static org.testng.AssertJUnit.fail;
 @CleanupAfterMethod
 public class MainOwnerChangesLockTest extends MultipleCacheManagersTest {
 
-   public static final int NUM_KEYS = 1000;
+   public static final int NUM_KEYS = 100;
    private ConfigurationBuilder dccc;
 
    @Override
