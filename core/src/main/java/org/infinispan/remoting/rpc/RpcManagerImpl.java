@@ -172,7 +172,10 @@ public class RpcManagerImpl implements RpcManager {
 //               }
 //            }
             if (rpcCommand instanceof TopologyAffectedCommand) {
-               ((TopologyAffectedCommand)rpcCommand).setTopologyId(stateTransferManager.getCacheTopology().getTopologyId());
+               TopologyAffectedCommand topologyAffectedCommand = (TopologyAffectedCommand) rpcCommand;
+               if (topologyAffectedCommand.getTopologyId() == -1) {
+                  topologyAffectedCommand.setTopologyId(stateTransferManager.getCacheTopology().getTopologyId());
+               }
             }
             Map<Address, Response> result = t.invokeRemotely(recipients, rpcCommand, mode, timeout, usePriorityQueue, responseFilter);
             if (statisticsEnabled) replicationCount.incrementAndGet();

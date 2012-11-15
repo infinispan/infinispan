@@ -19,10 +19,7 @@
 
 package org.infinispan.lock.singlelock;
 
-import java.util.Collection;
-import java.util.Map;
 import java.util.concurrent.Callable;
-import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import javax.transaction.HeuristicMixedException;
@@ -32,21 +29,13 @@ import javax.transaction.RollbackException;
 import javax.transaction.SystemException;
 
 import org.infinispan.Cache;
-import org.infinispan.commands.ReplicableCommand;
 import org.infinispan.commands.tx.CommitCommand;
 import org.infinispan.commands.tx.PrepareCommand;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.container.entries.InternalCacheEntry;
 import org.infinispan.distribution.MagicKey;
-import org.infinispan.remoting.RpcException;
-import org.infinispan.remoting.responses.Response;
-import org.infinispan.remoting.rpc.ResponseFilter;
-import org.infinispan.remoting.rpc.ResponseMode;
 import org.infinispan.remoting.rpc.RpcManager;
-import org.infinispan.remoting.transport.Address;
-import org.infinispan.remoting.transport.Transport;
-import org.infinispan.remoting.transport.jgroups.JGroupsTransport;
 import org.infinispan.test.MultipleCacheManagersTest;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.CleanupAfterMethod;
@@ -55,8 +44,6 @@ import org.infinispan.transaction.lookup.DummyTransactionManagerLookup;
 import org.infinispan.transaction.tm.DummyTransaction;
 import org.infinispan.transaction.tm.DummyTransactionManager;
 import org.infinispan.tx.dld.ControlledRpcManager;
-import org.infinispan.util.concurrent.NotifyingNotifiableFuture;
-import org.infinispan.util.mocks.ControlledCommandFactory;
 import org.testng.annotations.Test;
 
 import static org.testng.Assert.assertEquals;
@@ -79,9 +66,12 @@ public class OriginatorBecomesOwnerLockTest extends MultipleCacheManagersTest {
    private Cache<Object, String> originatorCache;
    private Cache<Object, String> killedCache;
    private Cache<Object, String> otherCache;
-   // TODO Test fails with waitForStateTransfer == false because the killed node returns a successful response
-   // for the PrepareCommand, even though the cache is not running there any more.
+
+   // Pseudo-configuration
+   // TODO Test fails (expected RollbackException isn't raised) if waitForStateTransfer == false because of https://issues.jboss.org/browse/ISPN-2510
    private boolean waitForStateTransfer = true;
+   // TODO Tests fails with SuspectException if stopCacheOnly == false because of https://issues.jboss.org/browse/ISPN-2402
+   private boolean stopCacheOnly = true;
 
    @Override
    protected void createCacheManagers() throws Throwable {
@@ -258,7 +248,11 @@ public class OriginatorBecomesOwnerLockTest extends MultipleCacheManagersTest {
    }
 
    private void killCache() {
-      killedCache.stop();
+      if (stopCacheOnly) {
+         killedCache.stop();
+      } else {
+         manager(KILLED_INDEX).stop();
+      }
       if (waitForStateTransfer) {
          TestingUtil.waitForRehashToComplete(originatorCache, otherCache);
       }
