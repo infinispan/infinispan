@@ -48,6 +48,8 @@ import java.util.ArrayList;
 import java.util.IdentityHashMap;
 import java.util.List;
 
+import static org.testng.Assert.assertTrue;
+
 /**
  * Base class for tests that operates on clusters of caches. The way tests extending this class operates is:
  * <pre>
@@ -290,7 +292,7 @@ public abstract class MultipleCacheManagersTest extends AbstractCacheTest {
       List<Cache<Object, Object>> caches = getCaches(cacheName);
       Cache<Object, Object> cache = caches.get(0);
       TestingUtil.blockUntilViewsReceived(10000, caches);
-      if (cache.getConfiguration().getCacheMode().isDistributed()) {
+      if (cache.getCacheConfiguration().clustering().cacheMode().isClustered()) {
          TestingUtil.waitForRehashToComplete(caches);
       }
    }
