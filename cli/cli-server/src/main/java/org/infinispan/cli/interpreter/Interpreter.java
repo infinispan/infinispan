@@ -37,6 +37,7 @@ import org.antlr.runtime.ANTLRStringStream;
 import org.antlr.runtime.CharStream;
 import org.antlr.runtime.CommonTokenStream;
 import org.infinispan.api.BasicCacheContainer;
+import org.infinispan.cli.interpreter.codec.CodecRegistry;
 import org.infinispan.cli.interpreter.logging.Log;
 import org.infinispan.cli.interpreter.result.EmptyResult;
 import org.infinispan.cli.interpreter.result.Result;
@@ -67,6 +68,7 @@ public class Interpreter {
    private ScheduledExecutorService executor;
    private long sessionReaperWakeupInterval = DEFAULT_SESSION_REAPER_WAKEUP_INTERVAL;
    private long sessionTimeout = DEFAULT_SESSION_TIMEOUT;
+   private CodecRegistry codecRegistry;
 
    private final Map<String, Session> sessions = new ConcurrentHashMap<String, Session>();
    private ScheduledFuture<?> sessionReaperTask;
@@ -77,16 +79,17 @@ public class Interpreter {
    @Inject
    public void initialize(final EmbeddedCacheManager cacheManager) {
       this.cacheManager = cacheManager;
+      this.codecRegistry = new CodecRegistry(cacheManager.getCacheManagerConfiguration().classLoader());
+   }
+
+   @Start
+   public void start() {
       this.executor = Executors.newSingleThreadScheduledExecutor(new ThreadFactory() {
          @Override
          public Thread newThread(final Runnable r) {
             return new Thread(r, "Interpreter");
          }
       });
-   }
-
-   @Start
-   public void start() {
       sessionReaperTask = executor.scheduleWithFixedDelay(new ScheduledTask(), sessionReaperWakeupInterval, sessionReaperWakeupInterval, TimeUnit.MILLISECONDS);
    }
 
@@ -95,12 +98,13 @@ public class Interpreter {
       if (sessionReaperTask != null) {
          sessionReaperTask.cancel(true);
       }
+      executor.shutdownNow();
    }
 
    @ManagedOperation(description = "Creates a new interpreter session")
    public String createSessionId(String cacheName) {
       String sessionId = UUID.randomUUID().toString();
-      SessionImpl session = new SessionImpl(cacheManager, sessionId);
+      SessionImpl session = new SessionImpl(codecRegistry, cacheManager, sessionId);
       sessions.put(sessionId, session);
       if (cacheName != null) {
          session.setCurrentCache(cacheName);
@@ -162,12 +166,12 @@ public class Interpreter {
          if (output.length() > 0) {
             response.put(ResultKeys.OUTPUT.toString(), output.toString());
          }
-      } catch (Exception e) {
-         log.interpreterError(e);
-         response.put(ResultKeys.ERROR.toString(), e.getMessage());
+      } catch (Throwable t) {
+         log.interpreterError(t);
+         response.put(ResultKeys.ERROR.toString(), t.getMessage());
          StringWriter sw = new StringWriter();
          PrintWriter pw = new PrintWriter(sw);
-         e.printStackTrace(pw);
+         t.printStackTrace(pw);
          response.put(ResultKeys.STACKTRACE.toString(), sw.toString());
       } finally {
          if (session != null) {
@@ -182,7 +186,7 @@ public class Interpreter {
 
    private Session validateSession(final String sessionId) {
       if (sessionId == null || !sessions.containsKey(sessionId)) {
-         throw new IllegalArgumentException("Invalid session ID");
+         throw log.invalidSession(sessionId);
       }
       return sessions.get(sessionId);
    }

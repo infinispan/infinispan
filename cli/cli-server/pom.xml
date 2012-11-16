@@ -46,6 +46,16 @@
          <artifactId>infinispan-core</artifactId>
       </dependency>
       <dependency>
+         <groupId>${project.groupId}</groupId>
+         <artifactId>infinispan-server-hotrod</artifactId>
+         <optional>true</optional>
+      </dependency>
+      <dependency>
+         <groupId>${project.groupId}</groupId>
+         <artifactId>infinispan-server-memcached</artifactId>
+         <optional>true</optional>
+      </dependency>
+      <dependency>
          <groupId>org.antlr</groupId>
          <artifactId>antlr-runtime</artifactId>
       </dependency>

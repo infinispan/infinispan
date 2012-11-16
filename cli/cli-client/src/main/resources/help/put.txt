@@ -1,5 +1,9 @@
 .SH SYNOPSIS
 .B put [
+.I --codec=codec
+.B ] [
+.I --ifabsent
+. B ] [
 .I cache.
 .B ]
 .I key value 
@@ -23,6 +27,11 @@ the value to store in the
 .I cache 
 associated with the 
 .I key
+If the 
+.I --codec=codec
+option has been specified then the key and value will be encoded using the specified codec, otherwise the default session codec will be used. See the
+.B encoding
+command for more information
 .IP expiration
 an optional expiration timeout (using the time value notation described below)
 .IP idletime

@@ -24,13 +24,15 @@ import java.util.List;
 
 import org.infinispan.Cache;
 import org.infinispan.cli.interpreter.logging.Log;
-import org.infinispan.cli.interpreter.result.EmptyResult;
 import org.infinispan.cli.interpreter.result.Result;
 import org.infinispan.cli.interpreter.result.StatementException;
+import org.infinispan.cli.interpreter.result.StringResult;
 import org.infinispan.cli.interpreter.session.Session;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.upgrade.RollingUpgradeManager;
 import org.infinispan.util.logging.LogFactory;
+
+import static org.infinispan.cli.interpreter.logging.Messages.MSG;
 
 /**
  * Performs operation related to rolling upgrades
@@ -39,7 +41,11 @@ import org.infinispan.util.logging.LogFactory;
  * @since 5.2
  */
 public class UpgradeStatement implements Statement {
-   public static final Log log = LogFactory.getLog(UpgradeStatement.class, Log.class);
+   private static final Log log = LogFactory.getLog(UpgradeStatement.class, Log.class);
+
+   private enum Options {
+      ALL, DUMPKEYS, SYNCHRONIZE, DISCONNECTSOURCE
+   };
 
    final String cacheName;
    final private List<Option> options;
@@ -56,31 +62,40 @@ public class UpgradeStatement implements Statement {
       String migratorName = null;
 
       for (Option opt : options) {
-         if ("all".equals(opt.getName())) {
+         switch (opt.toEnum(Options.class)) {
+         case ALL: {
             all = true;
-         } else if ("dumpkeys".equals(opt.getName())) {
+            break;
+         }
+         case DUMPKEYS: {
             mode = UpgradeMode.DUMPKEYS;
-         } else if ("synchronize".equals(opt.getName())) {
+            break;
+         }
+         case SYNCHRONIZE: {
             mode = UpgradeMode.SYNCHRONIZE;
             migratorName = opt.getParameter();
             if (migratorName == null) {
                throw log.missingMigrator();
             }
-         } else if ("disconnectsource".equals(opt.getName())) {
+            break;
+         }
+         case DISCONNECTSOURCE: {
             mode = UpgradeMode.DISCONNECTSOURCE;
             migratorName = opt.getParameter();
             if (migratorName == null) {
                throw log.missingMigrator();
             }
-         } else {
-            throw new StatementException("Unknown option " + opt.getName());
+         }
          }
       }
+      StringBuilder sb = new StringBuilder();
       switch (mode) {
       case DUMPKEYS: {
          for (Cache<?, ?> cache : all ? getAllCaches(session) : Collections.singletonList(session.getCache(cacheName))) {
             RollingUpgradeManager upgradeManager = cache.getAdvancedCache().getComponentRegistry().getComponent(RollingUpgradeManager.class);
             upgradeManager.recordKnownGlobalKeyset();
+            sb.append(MSG.dumpedKeys(cache.getName()));
+            sb.append("\n");
          }
          break;
       }
@@ -88,9 +103,11 @@ public class UpgradeStatement implements Statement {
          for (Cache<?, ?> cache : all ? getAllCaches(session) : Collections.singletonList(session.getCache(cacheName))) {
             RollingUpgradeManager upgradeManager = cache.getAdvancedCache().getComponentRegistry().getComponent(RollingUpgradeManager.class);
             try {
-               upgradeManager.synchronizeData(migratorName);
+               long count = upgradeManager.synchronizeData(migratorName);
+               sb.append(MSG.synchronizedEntries(count, migratorName, cache.getName()));
+               sb.append("\n");
             } catch (Exception e) {
-               throw new StatementException(e.getMessage());
+               throw log.dataSynchronizationError(e, migratorName, cache.getName());
             }
          }
          break;
@@ -100,18 +117,19 @@ public class UpgradeStatement implements Statement {
             RollingUpgradeManager upgradeManager = cache.getAdvancedCache().getComponentRegistry().getComponent(RollingUpgradeManager.class);
             try {
                upgradeManager.disconnectSource(migratorName);
+               sb.append(MSG.disonnectedSource(migratorName, cache.getName()));
+               sb.append("\n");
             } catch (Exception e) {
-               throw new StatementException(e.getMessage());
+               throw log.sourceDisconnectionError(e, migratorName, cache.getName());
             }
          }
          break;
       }
-      case NONE: {
+      default: {
          throw log.missingUpgradeAction();
       }
       }
-
-      return EmptyResult.RESULT;
+      return new StringResult(sb.toString());
    }
 
    private List<Cache<?, ?>> getAllCaches(Session session) {

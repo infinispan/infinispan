@@ -16,27 +16,28 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston,
  * MA  02110-1301, USA.
  */
-package org.infinispan.cli.commands.server;
+package org.infinispan.cli.interpreter.logging;
 
-import java.util.Arrays;
-import java.util.List;
+import org.jboss.logging.Message;
+import org.jboss.logging.MessageBundle;
 
-public class Replace extends AbstractServerCommand {
-   private final static List<String> OPTIONS = Arrays.asList("--encoding=");
+/**
+ * Informational CLI messages. These start from 19500 so as not to overlap with the logging messages defined in {@link Log}
+ * Messages.
+ *
+ * @author Tristan Tarrant
+ * @since 5.2
+ */
+@MessageBundle(projectCode = "ISPN")
+public interface Messages {
+   Messages MSG = org.jboss.logging.Messages.getBundle(Messages.class);
 
-   @Override
-   public String getName() {
-      return "replace";
-   }
+   @Message(value="Synchronized %d entries using migrator '%s' on cache '%s'", id=19500)
+   String synchronizedEntries(long count, String cacheName, String migrator);
 
-   @Override
-   public List<String> getOptions() {
-      return OPTIONS;
-   }
+   @Message(value="Disconnected '%s' migrator source on cache '%s'", id=19501)
+   String disonnectedSource(String migratorName, String cacheNname);
 
-   @Override
-   public int nesting() {
-      return 0;
-   }
-
+   @Message(value="Dumped keys for cache %s", id=19502)
+   String dumpedKeys(String cacheName);
 }

@@ -16,27 +16,27 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston,
  * MA  02110-1301, USA.
  */
-package org.infinispan.cli.commands.server;
+package org.infinispan.cli.interpreter.codec;
 
-import java.util.Arrays;
-import java.util.List;
+import org.infinispan.cli.interpreter.result.StatementException;
 
-public class Replace extends AbstractServerCommand {
-   private final static List<String> OPTIONS = Arrays.asList("--encoding=");
+/**
+ * CodecException.
+ *
+ * @author Tristan Tarrant
+ * @since 5.2
+ */
+public class CodecException extends StatementException {
 
-   @Override
-   public String getName() {
-      return "replace";
+   public CodecException(Throwable cause) {
+      super(cause);
    }
 
-   @Override
-   public List<String> getOptions() {
-      return OPTIONS;
+   public CodecException(String message) {
+      super(message);
    }
 
-   @Override
-   public int nesting() {
-      return 0;
+   public CodecException(String message, Throwable cause) {
+      super(message, cause);
    }
-
 }

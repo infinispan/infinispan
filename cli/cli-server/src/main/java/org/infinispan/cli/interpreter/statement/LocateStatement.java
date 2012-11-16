@@ -21,12 +21,14 @@ package org.infinispan.cli.interpreter.statement;
 import java.util.List;
 
 import org.infinispan.Cache;
+import org.infinispan.cli.interpreter.logging.Log;
 import org.infinispan.cli.interpreter.result.Result;
 import org.infinispan.cli.interpreter.result.StatementException;
 import org.infinispan.cli.interpreter.result.StringResult;
 import org.infinispan.cli.interpreter.session.Session;
 import org.infinispan.distribution.DistributionManager;
 import org.infinispan.remoting.transport.Address;
+import org.infinispan.util.logging.LogFactory;
 
 /**
  * LocateStatement locates an entry in the cluster
@@ -35,6 +37,8 @@ import org.infinispan.remoting.transport.Address;
  * @since 5.2
  */
 public class LocateStatement implements Statement {
+   private static final Log log = LogFactory.getLog(LocateStatement.class, Log.class);
+
    final KeyData keyData;
 
    public LocateStatement(final KeyData key) {
@@ -49,7 +53,7 @@ public class LocateStatement implements Statement {
          List<Address> addresses = distributionManager.locate(keyData.getKey());
          return new StringResult(addresses.toString());
       } else {
-         throw new StatementException("Cache is not distributed");
+         throw log.cacheNotDistributed();
       }
    }
 

@@ -21,12 +21,13 @@ package org.infinispan.cli.commands.server;
 import java.util.Arrays;
 import java.util.List;
 
-public class Replace extends AbstractServerCommand {
-   private final static List<String> OPTIONS = Arrays.asList("--encoding=");
+public class Encoding extends AbstractServerCommand {
+
+   private final static List<String> OPTIONS = Arrays.asList("--list");
 
    @Override
    public String getName() {
-      return "replace";
+      return "encoding";
    }
 
    @Override
@@ -38,5 +39,4 @@ public class Replace extends AbstractServerCommand {
    public int nesting() {
       return 0;
    }
-
 }

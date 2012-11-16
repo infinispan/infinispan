@@ -1,5 +1,5 @@
 .SH SYNOPSIS
-.B get [
+.B get [--encoding=codec] [
 .I cache.
 .B ]
 .I key
@@ -7,9 +7,12 @@
 Retrieves the value associated with the specified key from a cache.
 .SH ARGUMENTS
 .IP cache
-(optional) the name of the cache to use. If not specified, the currently selected cache will be used. See the 
+(optional) the name of the cache to use. If not specified, the currently selected cache will be used (see the 
 .B cache 
-command
+command).
 .IP key
-the key for which to retrieve the associated value
-.SH OUTPUT
+the key for which to retrieve the associated value. If the 
+.I --codec=codec
+option has been specified then the key will be encoded using the specified codec, otherwise the default session codec will be used. See the
+.B encoding
+command for more information

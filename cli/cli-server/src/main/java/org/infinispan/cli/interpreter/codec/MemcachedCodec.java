@@ -16,27 +16,48 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston,
  * MA  02110-1301, USA.
  */
-package org.infinispan.cli.commands.server;
+package org.infinispan.cli.interpreter.codec;
 
-import java.util.Arrays;
-import java.util.List;
+import org.infinispan.server.memcached.MemcachedValue;
 
-public class Replace extends AbstractServerCommand {
-   private final static List<String> OPTIONS = Arrays.asList("--encoding=");
+/**
+ *
+ * MemcachedCodec.
+ *
+ * @author Tristan Tarrant
+ * @since 5.2
+ */
+public class MemcachedCodec implements Codec {
 
    @Override
    public String getName() {
-      return "replace";
+      return "memcached";
    }
 
    @Override
-   public List<String> getOptions() {
-      return OPTIONS;
+   public Object encodeKey(Object key) {
+      return key;
    }
 
    @Override
-   public int nesting() {
-      return 0;
+   public Object encodeValue(Object value) {
+      return value;
+   }
+
+   @Override
+   public Object decodeKey(Object key) {
+      return key;
+   }
+
+   @Override
+   public Object decodeValue(Object value) {
+      if (value != null) {
+         MemcachedValue mv = (MemcachedValue)value;
+         return mv.data();
+      } else {
+         return null;
+      }
+
    }
 
 }
