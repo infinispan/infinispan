@@ -85,6 +85,7 @@ public class XSiteFileParsingTest extends SingleCacheManagerTest {
             assertTrue(dcc.sites().allBackups().contains(new BackupConfiguration("NYC2", BackupConfiguration.BackupStrategy.SYNC,
                                                                               160000, BackupFailurePolicy.CUSTOM,
                                                                               CountingCustomFailurePolicy.class.getName(),
+                                                                              false,
                                                                               new TakeOfflineConfiguration(0, 0))));
       assertEquals(dcc.sites().backupFor().remoteCache(), null);
    }
@@ -92,8 +93,8 @@ public class XSiteFileParsingTest extends SingleCacheManagerTest {
    private void testDefault(Configuration dcc) {
       assertEquals(dcc.sites().allBackups().size(), 2);
       assertTrue(dcc.sites().allBackups().contains(new BackupConfiguration("NYC", BackupConfiguration.BackupStrategy.SYNC,
-                                                                        12003l, BackupFailurePolicy.IGNORE, null, new TakeOfflineConfiguration(0, 0))));
+                                                                        12003l, BackupFailurePolicy.IGNORE, null, false, new TakeOfflineConfiguration(0, 0))));
       assertTrue(dcc.sites().allBackups().contains(new BackupConfiguration("SFO", BackupConfiguration.BackupStrategy.ASYNC,
-                                                                        10000l, BackupFailurePolicy.WARN, null, new TakeOfflineConfiguration(0, 0))));
+                                                                        10000l, BackupFailurePolicy.WARN, null, false, new TakeOfflineConfiguration(0, 0))));
    }
 }

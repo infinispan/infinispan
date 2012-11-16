@@ -38,6 +38,8 @@ public class BackupConfigurationBuilder extends AbstractConfigurationChildBuilde
 
    private String failurePolicyClass;
 
+   private boolean useTwoPhaseCommit = false;
+   
    private TakeOfflineConfigurationBuilder takeOfflineBuilder;
 
    public BackupConfigurationBuilder(ConfigurationBuilder builder) {
@@ -113,7 +115,7 @@ public class BackupConfigurationBuilder extends AbstractConfigurationChildBuilde
    }
 
    /**
-    * Configures how the system behaves when the backup call fails. Only applies to sync backus.
+    * Configures how the system behaves when the backup call fails. Only applies to sync backups.
     * The default values is  {@link BackupFailurePolicy.WARN}
     */
    public BackupConfigurationBuilder backupFailurePolicy(BackupFailurePolicy backupFailurePolicy) {
@@ -128,7 +130,14 @@ public class BackupConfigurationBuilder extends AbstractConfigurationChildBuilde
       return this.backupFailurePolicy;
    }
 
-
+   /**
+    * Configures whether the replication happens in a 1PC or 2PC for sync backups.
+    * The default value is "false"
+    */
+   public BackupConfigurationBuilder useTwoPhaseCommit(boolean useTwoPhaseCommit) {
+      this.useTwoPhaseCommit = useTwoPhaseCommit;
+      return this;
+   }
 
    @Override
    public void validate() {
@@ -144,7 +153,7 @@ public class BackupConfigurationBuilder extends AbstractConfigurationChildBuilde
    @Override
    public BackupConfiguration create() {
       return new BackupConfiguration(site, strategy, replicationTimeout, backupFailurePolicy, failurePolicyClass,
-                                     takeOfflineBuilder.create());
+                                     useTwoPhaseCommit, takeOfflineBuilder.create());
    }
 
    @Override
@@ -155,6 +164,7 @@ public class BackupConfigurationBuilder extends AbstractConfigurationChildBuilde
       this.backupFailurePolicy = template.backupFailurePolicy();
       this.replicationTimeout = template.replicationTimeout();
       this.failurePolicyClass = template.failurePolicyClass();
+      this.useTwoPhaseCommit = template.isTwoPhaseCommit();
       return this;
    }
 
@@ -173,6 +183,7 @@ public class BackupConfigurationBuilder extends AbstractConfigurationChildBuilde
       if (strategy != that.strategy) return false;
       if (takeOfflineBuilder != null ? !takeOfflineBuilder.equals(that.takeOfflineBuilder) : that.takeOfflineBuilder != null)
          return false;
+      if( useTwoPhaseCommit != that.useTwoPhaseCommit ) return false;
 
       return true;
    }
@@ -185,6 +196,7 @@ public class BackupConfigurationBuilder extends AbstractConfigurationChildBuilde
       result = 31 * result + (backupFailurePolicy != null ? backupFailurePolicy.hashCode() : 0);
       result = 31 * result + (failurePolicyClass != null ? failurePolicyClass.hashCode() : 0);
       result = 31 * result + (takeOfflineBuilder != null ? takeOfflineBuilder.hashCode() : 0);
+      result = 31 * result + (useTwoPhaseCommit ? 1 : 0);
       return result;
    }
 
@@ -194,6 +206,7 @@ public class BackupConfigurationBuilder extends AbstractConfigurationChildBuilde
             "site='" + site + '\'' +
             ", strategy=" + strategy +
             ", replicationTimeout=" + replicationTimeout +
+            ", useTwoPhaseCommit=" + useTwoPhaseCommit +
             ", backupFailurePolicy=" + backupFailurePolicy +
             ", failurePolicyClass='" + failurePolicyClass + '\'' +
             ", takeOfflineBuilder=" + takeOfflineBuilder +

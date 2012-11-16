@@ -30,15 +30,17 @@ public class BackupConfiguration {
    private long timeout;
    private final BackupFailurePolicy backupFailurePolicy;
    private final String failurePolicyClass;
+   private final boolean useTwoPhaseCommit;
    private final TakeOfflineConfiguration takeOfflineConfiguration;
 
    public BackupConfiguration(String site, BackupStrategy strategy, long timeout, BackupFailurePolicy backupFailurePolicy,
-                              String failurePolicyClass, TakeOfflineConfiguration takeOfflineConfiguration) {
+                              String failurePolicyClass, boolean useTwoPhaseCommit, TakeOfflineConfiguration takeOfflineConfiguration) {
       this.site = site;
       this.strategy = strategy;
       this.timeout = timeout;
       this.backupFailurePolicy = backupFailurePolicy;
       this.failurePolicyClass = failurePolicyClass;
+      this.useTwoPhaseCommit = useTwoPhaseCommit;
       this.takeOfflineConfiguration = takeOfflineConfiguration;
    }
 
@@ -84,6 +86,10 @@ public class BackupConfiguration {
       SYNC, ASYNC
    }
 
+   public boolean isTwoPhaseCommit() {
+      return useTwoPhaseCommit;
+   }
+   
    @Override
    public boolean equals(Object o) {
       if (this == o) return true;
@@ -96,6 +102,7 @@ public class BackupConfiguration {
       if (failurePolicyClass != null ? !failurePolicyClass.equals(that.failurePolicyClass) : that.failurePolicyClass != null)
          return false;
       if (site != null ? !site.equals(that.site) : that.site != null) return false;
+      if( useTwoPhaseCommit != that.useTwoPhaseCommit ) return false;
       if (strategy != that.strategy) return false;
 
       return true;
@@ -108,6 +115,7 @@ public class BackupConfiguration {
       result = 31 * result + (int) (timeout ^ (timeout >>> 32));
       result = 31 * result + (backupFailurePolicy != null ? backupFailurePolicy.hashCode() : 0);
       result = 31 * result + (failurePolicyClass != null ? failurePolicyClass.hashCode() : 0);
+      result = 31 * result + (useTwoPhaseCommit ? 1 : 0);
       return result;
    }
 
@@ -117,6 +125,7 @@ public class BackupConfiguration {
             "site='" + site + '\'' +
             ", strategy=" + strategy +
             ", timeout=" + timeout +
+            ", useTwoPhaseCommit=" + useTwoPhaseCommit +
             ", backupFailurePolicy=" + backupFailurePolicy +
             ", failurePolicyClass='" + failurePolicyClass + '\'' +
             '}';

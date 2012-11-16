@@ -144,6 +144,7 @@ public enum Attribute {
     BACKUP_SITES("backupSites"),
     AFTER_FAILURES("afterFailures"),
     MIN_TIME_TO_WAIT("minTimeToWait"),
+    USE_TWO_PHASE_COMMIT("useTwoPhaseCommit"),
     REAPER_WAKE_UP_INTERVAL("reaperWakeUpInterval"),
     COMPLETED_TX_TIMEOUT("completedTxTimeout");
 

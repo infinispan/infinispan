@@ -344,6 +344,9 @@ public class Parser52 implements ConfigurationParser<ConfigurationBuilderHolder>
             case BACKUP_FAILURE_POLICY:
                backup.backupFailurePolicy(BackupFailurePolicy.valueOf(value));
                break;
+            case USE_TWO_PHASE_COMMIT:
+               backup.useTwoPhaseCommit(Boolean.parseBoolean(value));
+               break;
             case FAILURE_POLICY_CLASS:
                backup.failurePolicyClass(value);
                break;
