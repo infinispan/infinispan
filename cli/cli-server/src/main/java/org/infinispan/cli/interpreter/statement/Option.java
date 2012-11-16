@@ -18,6 +18,10 @@
  */
 package org.infinispan.cli.interpreter.statement;
 
+import org.infinispan.cli.interpreter.logging.Log;
+import org.infinispan.cli.interpreter.result.StatementException;
+import org.infinispan.util.logging.LogFactory;
+
 /**
  * CLI Command option
  *
@@ -25,6 +29,7 @@ package org.infinispan.cli.interpreter.statement;
  * @since 5.2
  */
 public class Option {
+   private static final Log log = LogFactory.getLog(Option.class, Log.class);
    final String name;
    final String parameter;
 
@@ -48,6 +53,14 @@ public class Option {
    @Override
    public String toString() {
       return name;
+   }
+
+   public <T extends Enum<T>> T toEnum(Class<T> enumType) throws StatementException {
+      try {
+         return Enum.valueOf(enumType, name.toUpperCase());
+      } catch (IllegalArgumentException e) {
+         throw log.unknownOption(name);
+      }
    }
 
    @Override

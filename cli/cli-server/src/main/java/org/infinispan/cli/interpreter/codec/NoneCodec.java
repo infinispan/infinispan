@@ -16,27 +16,41 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston,
  * MA  02110-1301, USA.
  */
-package org.infinispan.cli.commands.server;
+package org.infinispan.cli.interpreter.codec;
 
-import java.util.Arrays;
-import java.util.List;
-
-public class Replace extends AbstractServerCommand {
-   private final static List<String> OPTIONS = Arrays.asList("--encoding=");
+/**
+ *
+ * NoneCodec. This codec leaves keys/values as is without applying any transformation
+ * It is the default codec.
+ *
+ * @author Tristan Tarrant
+ * @since 5.2
+ */
+public class NoneCodec implements Codec {
 
    @Override
    public String getName() {
-      return "replace";
+      return "none";
    }
 
    @Override
-   public List<String> getOptions() {
-      return OPTIONS;
+   public Object encodeKey(Object key) {
+      return key;
    }
 
    @Override
-   public int nesting() {
-      return 0;
+   public Object encodeValue(Object value) {
+      return value;
+   }
+
+   @Override
+   public Object decodeKey(Object key) {
+      return key;
+   }
+
+   @Override
+   public Object decodeValue(Object value) {
+      return value;
    }
 
 }

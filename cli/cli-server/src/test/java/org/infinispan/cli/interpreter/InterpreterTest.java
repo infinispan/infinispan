@@ -20,9 +20,12 @@ package org.infinispan.cli.interpreter;
 
 import java.util.Map;
 
+import static org.testng.AssertJUnit.*;
+
 import org.infinispan.Cache;
 import org.infinispan.api.BasicCacheContainer;
 import org.infinispan.cli.interpreter.Interpreter;
+import org.infinispan.cli.interpreter.result.ResultKeys;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.factories.GlobalComponentRegistry;
 import org.infinispan.manager.EmbeddedCacheManager;
@@ -41,9 +44,14 @@ public class InterpreterTest extends SingleCacheManagerTest {
       return TestCacheManagerFactory.createCacheManager(c);
    }
 
-   public void testSimple() throws Exception {
+   private Interpreter getInterpreter() {
       GlobalComponentRegistry gcr = TestingUtil.extractGlobalComponentRegistry(this.cacheManager);
       Interpreter interpreter = gcr.getComponent(Interpreter.class);
+      return interpreter;
+   }
+
+   public void testSimple() throws Exception {
+      Interpreter interpreter = getInterpreter();
       String sessionId = interpreter.createSessionId(BasicCacheContainer.DEFAULT_CACHE_NAME);
       interpreter.execute(sessionId, "put 'a' 'b'; get 'a';");
       interpreter
@@ -58,9 +66,15 @@ public class InterpreterTest extends SingleCacheManagerTest {
       assert f == 0.5;
    }
 
+   public void testPutIfAbsent() throws Exception {
+      Interpreter interpreter = getInterpreter();
+      String sessionId = interpreter.createSessionId(BasicCacheContainer.DEFAULT_CACHE_NAME);
+      interpreter.execute(sessionId, "put 'a' 'a'; put --ifabsent 'a' 'b';");
+      assertEquals("a", (String)cache.get("a"));
+   }
+
    public void testCacheQualifier() throws Exception {
-      GlobalComponentRegistry gcr = TestingUtil.extractGlobalComponentRegistry(this.cacheManager);
-      Interpreter interpreter = gcr.getComponent(Interpreter.class);
+      Interpreter interpreter = getInterpreter();
       String sessionId = interpreter.createSessionId(BasicCacheContainer.DEFAULT_CACHE_NAME);
       Cache<Object, Object> otherCache = cacheManager.getCache("otherCache");
       interpreter.execute(sessionId, "put 'a' 'a'; put 'otherCache'.'b' 'b'; cache 'otherCache'; put 'c' 'c';");
@@ -73,8 +87,7 @@ public class InterpreterTest extends SingleCacheManagerTest {
    }
 
    public void testBatching() throws Exception {
-      GlobalComponentRegistry gcr = TestingUtil.extractGlobalComponentRegistry(this.cacheManager);
-      Interpreter interpreter = gcr.getComponent(Interpreter.class);
+      Interpreter interpreter = getInterpreter();
       String sessionId = interpreter.createSessionId(BasicCacheContainer.DEFAULT_CACHE_NAME);
       interpreter.execute(sessionId, "start; put 'a' 'a'; put 'b' 'b'; end;");
       Object a = cache.get("a");
@@ -84,8 +97,7 @@ public class InterpreterTest extends SingleCacheManagerTest {
    }
 
    public void testTx() throws Exception {
-      GlobalComponentRegistry gcr = TestingUtil.extractGlobalComponentRegistry(this.cacheManager);
-      Interpreter interpreter = gcr.getComponent(Interpreter.class);
+      Interpreter interpreter = getInterpreter();
       String sessionId = interpreter.createSessionId(BasicCacheContainer.DEFAULT_CACHE_NAME);
       interpreter.execute(sessionId, "begin; put 'a' 'a'; commit;");
       Object a = cache.get("a");
@@ -95,8 +107,7 @@ public class InterpreterTest extends SingleCacheManagerTest {
    }
 
    public void testDangling() throws Exception {
-      GlobalComponentRegistry gcr = TestingUtil.extractGlobalComponentRegistry(this.cacheManager);
-      Interpreter interpreter = gcr.getComponent(Interpreter.class);
+      Interpreter interpreter = getInterpreter();
       String sessionId = interpreter.createSessionId(BasicCacheContainer.DEFAULT_CACHE_NAME);
       interpreter.execute(sessionId, "begin; put 'a' 'a';");
       assert cache.getAdvancedCache().getTransactionManager().getTransaction() == null;
@@ -107,8 +118,7 @@ public class InterpreterTest extends SingleCacheManagerTest {
    }
 
    public void testRemove() throws Exception {
-      GlobalComponentRegistry gcr = TestingUtil.extractGlobalComponentRegistry(this.cacheManager);
-      Interpreter interpreter = gcr.getComponent(Interpreter.class);
+      Interpreter interpreter = getInterpreter();
       String sessionId = interpreter.createSessionId(BasicCacheContainer.DEFAULT_CACHE_NAME);
       interpreter.execute(sessionId, "put 'a' 'a';");
       Object a = cache.get("a");
@@ -123,8 +133,7 @@ public class InterpreterTest extends SingleCacheManagerTest {
    }
 
    public void testReplace() throws Exception {
-      GlobalComponentRegistry gcr = TestingUtil.extractGlobalComponentRegistry(this.cacheManager);
-      Interpreter interpreter = gcr.getComponent(Interpreter.class);
+      Interpreter interpreter = getInterpreter();
       String sessionId = interpreter.createSessionId(BasicCacheContainer.DEFAULT_CACHE_NAME);
       interpreter.execute(sessionId, "put 'a' 'a';");
       Object a = cache.get("a");
@@ -141,8 +150,7 @@ public class InterpreterTest extends SingleCacheManagerTest {
    }
 
    public void testCreateLocal() throws Exception {
-      GlobalComponentRegistry gcr = TestingUtil.extractGlobalComponentRegistry(this.cacheManager);
-      Interpreter interpreter = gcr.getComponent(Interpreter.class);
+      Interpreter interpreter = getInterpreter();
       String sessionId = interpreter.createSessionId(BasicCacheContainer.DEFAULT_CACHE_NAME);
       interpreter.execute(sessionId, "create newcache;");
       assert cacheManager.cacheExists("newcache");
@@ -151,17 +159,15 @@ public class InterpreterTest extends SingleCacheManagerTest {
    }
 
    public void testUpgrade() throws Exception {
-      GlobalComponentRegistry gcr = TestingUtil.extractGlobalComponentRegistry(this.cacheManager);
-      Interpreter interpreter = gcr.getComponent(Interpreter.class);
+      Interpreter interpreter = getInterpreter();
       String sessionId = interpreter.createSessionId(BasicCacheContainer.DEFAULT_CACHE_NAME);
       interpreter.execute(sessionId, "upgrade --dumpkeys;");
    }
 
    public void testInvalidSession() throws Exception {
-      GlobalComponentRegistry gcr = TestingUtil.extractGlobalComponentRegistry(this.cacheManager);
-      Interpreter interpreter = gcr.getComponent(Interpreter.class);
+      Interpreter interpreter = getInterpreter();
       String sessionId = "123";
       Map<String, String> response = interpreter.execute(sessionId, "put 'a' 'a';");
-      assert response.containsKey("ERROR");
+      assert response.containsKey(ResultKeys.ERROR.toString());
    }
 }

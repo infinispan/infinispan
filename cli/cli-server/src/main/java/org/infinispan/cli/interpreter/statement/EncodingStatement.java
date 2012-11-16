@@ -18,41 +18,57 @@
  */
 package org.infinispan.cli.interpreter.statement;
 
-import javax.transaction.TransactionManager;
+import java.util.Collection;
+import java.util.List;
 
-import org.infinispan.cli.interpreter.logging.Log;
+import org.infinispan.cli.interpreter.codec.Codec;
 import org.infinispan.cli.interpreter.result.EmptyResult;
 import org.infinispan.cli.interpreter.result.Result;
 import org.infinispan.cli.interpreter.result.StatementException;
+import org.infinispan.cli.interpreter.result.StringResult;
 import org.infinispan.cli.interpreter.session.Session;
-import org.infinispan.util.logging.LogFactory;
 
 /**
  *
- * CommitTransactionStatement commits a running transaction
+ * EncodingStatement selects a codec to use for encoding/decoding keys/values from the cli to the
+ * cache and viceversa
  *
  * @author Tristan Tarrant
  * @since 5.2
  */
-public class CommitTransactionStatement extends AbstractTransactionStatement {
-   private static final Log log = LogFactory.getLog(CommitTransactionStatement.class, Log.class);
+public class EncodingStatement implements Statement {
+   private enum Options {
+      LIST
+   };
 
-   public CommitTransactionStatement(final String cacheName) {
-      super(cacheName);
+   final String encoding;
+   final private List<Option> options;
+
+   public EncodingStatement(List<Option> options, String encoding) {
+      this.encoding = encoding;
+      this.options = options;
    }
 
    @Override
    public Result execute(Session session) throws StatementException {
-      TransactionManager tm = getTransactionManager(session);
-      if (tm == null) {
-         throw log.noTransactionManager();
+      for (Option option : options) {
+         switch (option.toEnum(Options.class)) {
+         case LIST: {
+            StringBuilder sb = new StringBuilder();
+            Collection<Codec> codecs = session.getCodecs();
+            for (Codec codec : codecs) {
+               sb.append(codec.getName());
+               sb.append("\n");
+            }
+            return new StringResult(sb.toString());
+         }
+         }
       }
-      try {
-         tm.commit();
+      if (encoding != null) {
+         session.setCodec(encoding);
          return EmptyResult.RESULT;
-      } catch (Exception e) {
-         throw log.cannotCommitTransaction(e);
+      } else {
+         return new StringResult(session.getCodec().getName());
       }
    }
-
 }

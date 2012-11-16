@@ -24,6 +24,7 @@ import java.lang.reflect.Method;
 import java.util.List;
 
 import org.infinispan.Cache;
+import org.infinispan.cli.interpreter.logging.Log;
 import org.infinispan.cli.interpreter.result.Result;
 import org.infinispan.cli.interpreter.result.StatementException;
 import org.infinispan.cli.interpreter.result.StringResult;
@@ -34,6 +35,7 @@ import org.infinispan.factories.components.JmxAttributeMetadata;
 import org.infinispan.factories.components.ManageableComponentMetadata;
 import org.infinispan.interceptors.base.CommandInterceptor;
 import org.infinispan.manager.DefaultCacheManager;
+import org.infinispan.util.logging.LogFactory;
 
 /**
  * Displays statistics about a container or a cache
@@ -42,6 +44,12 @@ import org.infinispan.manager.DefaultCacheManager;
  * @since 5.2
  */
 public class StatsStatement implements Statement {
+   private static final Log log = LogFactory.getLog(StatsStatement.class, Log.class);
+
+   private enum Options {
+      CONTAINER
+   };
+
    final String cacheName;
    final private List<Option> options;
 
@@ -57,11 +65,12 @@ public class StatsStatement implements Statement {
 
       if (options.size() > 0) {
          for (Option option : options) {
-            if ("container".equals(option.getName())) {
+            switch (option.toEnum(Options.class)) {
+            case CONTAINER: {
                printContainerStats(pw, (DefaultCacheManager) session.getCacheManager());
                pw.flush();
-            } else {
-               throw new StatementException("Unkown option: " + option);
+               break;
+            }
             }
          }
       } else {
@@ -88,7 +97,7 @@ public class StatsStatement implements Statement {
 
    private void printCacheStats(PrintWriter pw, Cache<?, ?> cache) throws StatementException {
       if (!cache.getCacheConfiguration().jmxStatistics().enabled()) {
-         throw new StatementException("Statistics are not enabled for the specified cache");
+         throw log.statisticsNotEnabled(cache.getName());
       }
 
       for (CommandInterceptor interceptor : cache.getAdvancedCache().getInterceptorChain()) {

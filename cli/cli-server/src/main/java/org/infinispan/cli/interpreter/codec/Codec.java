@@ -16,18 +16,17 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston,
  * MA  02110-1301, USA.
  */
-package org.infinispan.cli.commands.server;
+package org.infinispan.cli.interpreter.codec;
 
-public class PutIfAbsent extends AbstractServerCommand {
+public interface Codec {
 
-   @Override
-   public String getName() {
-      return "putifabsent";
-   }
+   String getName();
 
-   @Override
-   public int nesting() {
-      return 0;
-   }
+   Object encodeKey(Object key) throws CodecException;
 
+   Object encodeValue(Object value) throws CodecException;
+
+   Object decodeKey(Object key) throws CodecException;
+
+   Object decodeValue(Object value) throws CodecException;
 }

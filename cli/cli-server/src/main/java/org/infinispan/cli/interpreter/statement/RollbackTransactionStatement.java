@@ -20,10 +20,12 @@ package org.infinispan.cli.interpreter.statement;
 
 import javax.transaction.TransactionManager;
 
+import org.infinispan.cli.interpreter.logging.Log;
 import org.infinispan.cli.interpreter.result.EmptyResult;
 import org.infinispan.cli.interpreter.result.Result;
 import org.infinispan.cli.interpreter.result.StatementException;
 import org.infinispan.cli.interpreter.session.Session;
+import org.infinispan.util.logging.LogFactory;
 
 /**
  * Rolls back a running transaction
@@ -32,6 +34,7 @@ import org.infinispan.cli.interpreter.session.Session;
  * @since 5.2
  */
 public class RollbackTransactionStatement extends AbstractTransactionStatement {
+   private static final Log log = LogFactory.getLog(RollbackTransactionStatement.class, Log.class);
 
    public RollbackTransactionStatement(final String cacheName) {
       super(cacheName);
@@ -41,13 +44,13 @@ public class RollbackTransactionStatement extends AbstractTransactionStatement {
    public Result execute(Session session) throws StatementException {
       TransactionManager tm = getTransactionManager(session);
       if (tm == null) {
-         throw new StatementException("Cannot retrieve a transaction manager for the cache");
+         throw log.noTransactionManager();
       }
       try {
          tm.rollback();
          return EmptyResult.RESULT;
       } catch (Exception e) {
-         throw new StatementException("Cannot rollback transaction: " + e.getMessage());
+         throw log.cannotRollbackTransaction(e);
       }
    }
 

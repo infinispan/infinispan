@@ -22,10 +22,12 @@ import javax.transaction.NotSupportedException;
 import javax.transaction.SystemException;
 import javax.transaction.TransactionManager;
 
+import org.infinispan.cli.interpreter.logging.Log;
 import org.infinispan.cli.interpreter.result.EmptyResult;
 import org.infinispan.cli.interpreter.result.Result;
 import org.infinispan.cli.interpreter.result.StatementException;
 import org.infinispan.cli.interpreter.session.Session;
+import org.infinispan.util.logging.LogFactory;
 
 /**
  *
@@ -35,6 +37,8 @@ import org.infinispan.cli.interpreter.session.Session;
  * @since 5.2
  */
 public class BeginTransactionStatement extends AbstractTransactionStatement {
+   private static final Log log = LogFactory.getLog(BeginTransactionStatement.class, Log.class);
+
    public BeginTransactionStatement(final String cacheName) {
       super(cacheName);
    }
@@ -43,15 +47,15 @@ public class BeginTransactionStatement extends AbstractTransactionStatement {
    public Result execute(Session session) throws StatementException {
       TransactionManager tm = getTransactionManager(session);
       if (tm==null) {
-         throw new StatementException("Cannot retrieve a transaction manager for the cache");
+         throw log.noTransactionManager();
       }
       try {
          tm.begin();
          return EmptyResult.RESULT;
       } catch (NotSupportedException e) {
-         throw new StatementException("The TransactionManager does not support nested transactions");
+         throw log.noNestedTransactions();
       } catch (SystemException e) {
-         throw new StatementException("Unexpected error while starting transaction: "+e.getMessage());
+         throw log.unexpectedTransactionError(e);
       }
    }
 }

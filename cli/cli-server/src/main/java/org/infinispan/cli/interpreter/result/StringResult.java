@@ -19,8 +19,7 @@
 package org.infinispan.cli.interpreter.result;
 
 /**
- *
- * @author tst
+ * @author Tristan Tarrant
  * @since 5.2
  */
 public class StringResult implements Result {
@@ -28,6 +27,10 @@ public class StringResult implements Result {
 
    public StringResult(String s) {
       this.s = s;
+   }
+
+   public StringResult(String format, Object... args) {
+      this.s = String.format(format, args);
    }
 
    @Override
