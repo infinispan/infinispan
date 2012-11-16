@@ -310,7 +310,7 @@ public class BdbjeCacheStore extends AbstractCacheStore {
          Transaction txn = currentTransaction.getTransaction();
          if (trace) log.tracef("transaction %s == sleepycat transaction %s", tx, txn);
          txnMap.put(tx, txn);
-         ReflectionUtil.setValue(currentTransaction, "localTrans", new ThreadLocal());
+         ((ThreadLocal)ReflectionUtil.getValue(currentTransaction, "localTrans")).remove();
       } catch (Exception e) {
          throw convertToCacheLoaderException("Problem preparing transaction", e);
       }
