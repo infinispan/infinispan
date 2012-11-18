@@ -206,25 +206,27 @@ public class BackupReceiver {
              
             tm.begin();            
             replayModifications(command);
-            replaySuccessful = true;                                                                            
+            replaySuccessful = true;
          }
          finally {
             LocalTransaction localTx = txTable().getLocalTransaction( tm.getTransaction() );
-            localTx.setFromRemoteSite(true);
-            
-            if (onePhaseCommit) {
-               if( replaySuccessful ) {
-                  log.tracef("Committing remotely originated tx %s as it is 1PC", command.getGlobalTransaction());
-                  tm.commit();               
-               } else {
-                  log.tracef("Rolling back remotely originated tx %s", command.getGlobalTransaction());          
-                  tm.rollback();                                                                
-               }                
-            } else { // Wait for a remote commit/rollback.
-               remote2localTx.put(command.getGlobalTransaction(), localTx.getGlobalTransaction());
-               tm.suspend();
+            if (localTx != null) { //possible for the tx to be null if we got an exception during applying modifications
+               localTx.setFromRemoteSite(true);
+
+               if (onePhaseCommit) {
+                  if( replaySuccessful ) {
+                     log.tracef("Committing remotely originated tx %s as it is 1PC", command.getGlobalTransaction());
+                     tm.commit();
+                  } else {
+                     log.tracef("Rolling back remotely originated tx %s", command.getGlobalTransaction());
+                     tm.rollback();
+                  }
+               } else { // Wait for a remote commit/rollback.
+                  remote2localTx.put(command.getGlobalTransaction(), localTx.getGlobalTransaction());
+                  tm.suspend();
+               }
             }
-         }                                         
+         }
       }
 
       private TransactionManager txManager() {
