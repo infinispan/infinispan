@@ -34,9 +34,15 @@ import static org.testng.AssertJUnit.assertEquals;
 @Test (groups = "xsite")
 public class AtomicMapBackupTest extends AbstractTwoSitesTest {
 
+   public AtomicMapBackupTest() {
+      isLonBackupTransactional = true;
+      use2Pc = true;
+   }
+
    public void testAtomicMapBackup() {
       AtomicMap<String, String> map = AtomicMapLookup.getAtomicMap(cache("LON", 0), "amKey");
       assert map.isEmpty();
+      log.trace("Update is here");
       map.put("a", "fancyValue");
       assertEquals("fancyValue", map.get("a"));
 

@@ -38,6 +38,7 @@ public abstract class BaseBackupTxFailureTest extends AbstractTwoSitesTest {
    protected BaseBackupTxFailureTest() {
       isLonBackupTransactional = true;
       lonBackupFailurePolicy = BackupFailurePolicy.FAIL;
+      use2Pc = true;
    }
 
    @Override
