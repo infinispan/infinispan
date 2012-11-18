@@ -42,6 +42,7 @@ import org.infinispan.context.InvocationContext;
 import org.infinispan.context.impl.TxInvocationContext;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.factories.annotations.Start;
+import org.infinispan.remoting.transport.AggregateBackupResponse;
 import org.infinispan.remoting.transport.BackupResponse;
 import org.infinispan.remoting.transport.Transport;
 import org.infinispan.transaction.LocalTransaction;
@@ -126,6 +127,7 @@ public class BackupSenderImpl implements BackupSender {
 
    @Override
    public void processResponses(BackupResponse backupResponse, VisitableCommand command, Transaction transaction) throws Throwable {
+      log.tracef("Processing backup response %s for command %s", backupResponse, command);
       backupResponse.waitForBackupToFinish();
       updateOfflineSites(backupResponse);
       processFailedResponses(backupResponse, command, transaction);
@@ -157,9 +159,10 @@ public class BackupSenderImpl implements BackupSender {
    @Override
    public BackupResponse backupCommit(CommitCommand command) throws Exception {
       //we have a 2PC: we didn't backup the 1PC stuff during prepare, we need to do it now.
-      sendTo1PCBackups(command);
+      BackupResponse onePcResponse = sendTo1PCBackups(command);
       List<XSiteBackup> xSiteBackups = calculateBackupInfo(BackupFilter.KEEP_2PC_ONLY);
-      return backupCommand(command, xSiteBackups);
+      BackupResponse twoPcResponse = backupCommand(command, xSiteBackups);
+      return new AggregateBackupResponse(onePcResponse, twoPcResponse);
    }
 
    @Override
@@ -195,12 +198,12 @@ public class BackupSenderImpl implements BackupSender {
       return transport.backupRemotely(xSiteBackups, new SingleRpcCommand(cacheName, command));
    }
 
-   private void sendTo1PCBackups(CommitCommand command) throws Exception {
+   private BackupResponse sendTo1PCBackups(CommitCommand command) throws Exception {
       List<XSiteBackup> backups = calculateBackupInfo(BackupFilter.KEEP_1PC_ONLY);
       LocalTransaction localTx = txTable.getLocalTransaction(command.getGlobalTransaction());
       PrepareCommand prepare = new PrepareCommand(cacheName, localTx.getGlobalTransaction(),
                                                   localTx.getModifications(), true);
-      backupCommand(prepare, backups);
+      return backupCommand(prepare, backups);
    }
 
    private void processFailedResponses(BackupResponse backupResponse, VisitableCommand command, Transaction transaction) throws Throwable {

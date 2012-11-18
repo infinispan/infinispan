@@ -40,6 +40,7 @@ public abstract class AbstractTwoSitesTest extends AbstractXSiteTest {
    protected boolean isLonBackupTransactional = false;
    protected BackupConfiguration.BackupStrategy lonBackupStrategy = BackupConfiguration.BackupStrategy.SYNC;
    protected String lonCustomFailurePolicyClass = null;
+   protected boolean use2Pc = false;
 
    @Override
    protected void createSites() {
@@ -53,6 +54,7 @@ public abstract class AbstractTwoSitesTest extends AbstractXSiteTest {
             .backupFailurePolicy(lonBackupFailurePolicy)
             .strategy(lonBackupStrategy)
             .failurePolicyClass(lonCustomFailurePolicyClass)
+            .useTwoPhaseCommit(use2Pc)
             .sites().addInUseBackupSite("NYC");
       ConfigurationBuilder nycBackup = getDefaultClusteredCacheConfig(CacheMode.DIST_SYNC, false);
       nycBackup.sites().backupFor().remoteSite("NYC").defaultRemoteCache();

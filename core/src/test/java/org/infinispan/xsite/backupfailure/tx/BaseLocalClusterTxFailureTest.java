@@ -49,11 +49,6 @@ public abstract class BaseLocalClusterTxFailureTest extends AbstractTwoSitesTest
       }
       assertNull(cache("LON",0).get("k"));
       assertNull(cache("LON",1).get("k"));
-      if (isLonBackupTransactional) {
-         assertNull(backup("LON").get("k"));
-      } else {
-         //if the backup is not transactional then the info is applied during prepare.
-         assertEquals("v",backup("LON").get("k"));
-      }
+      assertNull(backup("LON").get("k"));
    }
 }

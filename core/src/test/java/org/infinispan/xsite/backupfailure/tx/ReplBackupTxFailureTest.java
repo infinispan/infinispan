@@ -30,6 +30,10 @@ import org.testng.annotations.Test;
 @Test (groups = "xsite")
 public class ReplBackupTxFailureTest extends BaseBackupTxFailureTest {
 
+   public ReplBackupTxFailureTest() {
+      use2Pc = true;
+   }
+
    @Override
    protected ConfigurationBuilder getNycActiveConfig() {
       return getDefaultClusteredCacheConfig(CacheMode.REPL_SYNC, true);

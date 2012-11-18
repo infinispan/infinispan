@@ -551,7 +551,7 @@ public class JGroupsTransport extends AbstractTransport implements MembershipLis
 
    @Override
    public BackupResponse backupRemotely(Collection<XSiteBackup> backups, ReplicableCommand rpcCommand) throws Exception {
-      log.tracef("About to send to backups %s, command %s",backups, rpcCommand);
+      log.tracef("About to send to backups %s, command %s", backups, rpcCommand);
       Buffer buf = dispatcher.marshallCall(dispatcher.getMarshaller(), rpcCommand);
       Map<XSiteBackup, Future<Object>> syncBackupCalls = new HashMap<XSiteBackup, Future<Object>>(backups.size());
       for (XSiteBackup xsb : backups) {
