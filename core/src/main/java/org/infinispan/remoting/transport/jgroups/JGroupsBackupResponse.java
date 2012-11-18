@@ -126,4 +126,14 @@ public class JGroupsBackupResponse implements BackupResponse {
       return new TimeoutException(formatString("Timed out after %s waiting for a response from %s",
                                                prettyPrintTime(timeout), entry.getKey()));
    }
+
+   @Override
+   public String toString() {
+      return "JGroupsBackupResponse{" +
+            "syncBackupCalls=" + syncBackupCalls +
+            ", errors=" + errors +
+            ", communicationErrors=" + communicationErrors +
+            ", sendTimeNanos=" + sendTimeNanos +
+            '}';
+   }
 }
