@@ -49,6 +49,7 @@ public class RemoteCacheStoreConfigurationBuilder extends
    private String marshaller;
    private boolean pingOnStartup = true;
    private String protocolVersion;
+   private boolean rawValues;
    private String remoteCacheName = BasicCacheContainer.DEFAULT_CACHE_NAME;
    private List<RemoteServerConfigurationBuilder> servers = new ArrayList<RemoteServerConfigurationBuilder>();
    private long socketTimeout = ConfigurationProperties.DEFAULT_SO_TIMEOUT;
@@ -126,6 +127,12 @@ public class RemoteCacheStoreConfigurationBuilder extends
    }
 
    @Override
+   public RemoteCacheStoreConfigurationBuilder rawValues(boolean rawValues) {
+      this.rawValues = rawValues;
+      return this;
+   }
+
+   @Override
    public RemoteCacheStoreConfigurationBuilder remoteCacheName(String remoteCacheName) {
       this.remoteCacheName = remoteCacheName;
       return this;
@@ -176,7 +183,7 @@ public class RemoteCacheStoreConfigurationBuilder extends
       }
       return new RemoteCacheStoreConfiguration(asyncExecutorFactory.create(), balancingStrategy,
             connectionPool.create(), connectionTimeout, forceReturnValues, keySizeEstimate, marshaller, pingOnStartup,
-            protocolVersion, remoteCacheName, remoteServers, socketTimeout, tcpNoDelay, transportFactory,
+            protocolVersion, rawValues, remoteCacheName, remoteServers, socketTimeout, tcpNoDelay, transportFactory,
             valueSizeEstimate, purgeOnStartup, purgeSynchronously, purgerThreads, fetchPersistentState,
             ignoreModifications, TypedProperties.toTypedProperties(properties), async.create(), singletonStore.create());
    }
@@ -192,6 +199,7 @@ public class RemoteCacheStoreConfigurationBuilder extends
       this.marshaller = template.marshaller();
       this.pingOnStartup = template.pingOnStartup();
       this.protocolVersion = template.protocolVersion();
+      this.rawValues = template.rawValues();
       this.remoteCacheName = template.remoteCacheName();
       this.socketTimeout = template.socketTimeout();
       this.tcpNoDelay = template.tcpNoDelay();

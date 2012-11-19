@@ -18,8 +18,11 @@
  */
 package org.infinispan.loaders.remote.configuration;
 
+import org.infinispan.client.hotrod.RemoteCacheManager;
 import org.infinispan.client.hotrod.impl.transport.TransportFactory;
 import org.infinispan.configuration.cache.StoreConfigurationChildBuilder;
+import org.infinispan.container.entries.InternalCacheEntry;
+import org.infinispan.loaders.remote.RemoteCacheStore;
 import org.infinispan.marshall.Marshaller;
 
 public interface RemoteCacheStoreConfigurationChildBuilder<S> extends StoreConfigurationChildBuilder<S> {
@@ -84,6 +87,13 @@ public interface RemoteCacheStoreConfigurationChildBuilder<S> extends StoreConfi
     * valid values include 1.0.
     */
    RemoteCacheStoreConfigurationBuilder protocolVersion(String protocolVersion);
+
+   /**
+    * Normally the {@link RemoteCacheStore} stores values wrapped in {@link InternalCacheEntry}. Setting
+    * this property to true causes the raw values to be stored instead for interoperability with direct
+    * access by {@link RemoteCacheManager}s
+    */
+   RemoteCacheStoreConfigurationBuilder rawValues(boolean rawValues);
 
    /**
     * The name of the remote cache in the remote infinispan cluster, to which to connect to. If

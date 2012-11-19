@@ -37,6 +37,7 @@ import org.infinispan.client.hotrod.Flag;
 import org.infinispan.client.hotrod.RemoteCache;
 import org.infinispan.client.hotrod.RemoteCacheManager;
 import org.infinispan.client.hotrod.ServerStatistics;
+import org.infinispan.client.hotrod.MetadataValue;
 import org.infinispan.client.hotrod.Version;
 import org.infinispan.client.hotrod.VersionedValue;
 import org.infinispan.client.hotrod.exceptions.RemoteCacheManagerNotStartedException;
@@ -46,6 +47,7 @@ import org.infinispan.client.hotrod.impl.operations.BulkGetOperation;
 import org.infinispan.client.hotrod.impl.operations.ClearOperation;
 import org.infinispan.client.hotrod.impl.operations.ContainsKeyOperation;
 import org.infinispan.client.hotrod.impl.operations.GetOperation;
+import org.infinispan.client.hotrod.impl.operations.GetWithMetadataOperation;
 import org.infinispan.client.hotrod.impl.operations.GetWithVersionOperation;
 import org.infinispan.client.hotrod.impl.operations.OperationsFactory;
 import org.infinispan.client.hotrod.impl.operations.PingOperation;
@@ -103,7 +105,7 @@ public class RemoteCacheImpl<K, V> extends RemoteCacheSupport<K, V> {
    public boolean removeWithVersion(K key, long version) {
       assertRemoteCacheManagerIsStarted();
       RemoveIfUnmodifiedOperation op = operationsFactory.newRemoveIfUnmodifiedOperation(obj2bytes(key, true), version);
-      VersionedOperationResponse response = (VersionedOperationResponse) op.execute();
+      VersionedOperationResponse response = op.execute();
       return response.getCode().isUpdated();
    }
 
@@ -127,7 +129,7 @@ public class RemoteCacheImpl<K, V> extends RemoteCacheSupport<K, V> {
    public boolean replaceWithVersion(K key, V newValue, long version, int lifespanSeconds, int maxIdleTimeSeconds) {
       assertRemoteCacheManagerIsStarted();
       ReplaceIfUnmodifiedOperation op = operationsFactory.newReplaceIfUnmodifiedOperation(obj2bytes(key, true), obj2bytes(newValue, false), lifespanSeconds, maxIdleTimeSeconds, version);
-      VersionedOperationResponse response = (VersionedOperationResponse) op.execute();
+      VersionedOperationResponse response = op.execute();
       return response.getCode().isUpdated();
    }
 
@@ -151,8 +153,16 @@ public class RemoteCacheImpl<K, V> extends RemoteCacheSupport<K, V> {
    public VersionedValue<V> getVersioned(K key) {
       assertRemoteCacheManagerIsStarted();
       GetWithVersionOperation op = operationsFactory.newGetWithVersionOperation(obj2bytes(key, true));
-      BinaryVersionedValue value = (BinaryVersionedValue) op.execute();
+      BinaryVersionedValue value = op.execute();
       return binary2VersionedValue(value);
+   }
+
+   @Override
+   public MetadataValue<V> getWithMetadata(K key) {
+      assertRemoteCacheManagerIsStarted();
+      GetWithMetadataOperation op = operationsFactory.newGetWithMetadataOperation(obj2bytes(key, true));
+      BinaryMetadataValue value = op.execute();
+      return binary2MetadataValue(value);
    }
 
    @Override
@@ -185,7 +195,7 @@ public class RemoteCacheImpl<K, V> extends RemoteCacheSupport<K, V> {
    public int size() {
       assertRemoteCacheManagerIsStarted();
       StatsOperation op = operationsFactory.newStatsOperation();
-      return Integer.parseInt(((Map<String, String>) op.execute()).get(ServerStatistics.CURRENT_NR_OF_ENTRIES));
+      return Integer.parseInt(op.execute().get(ServerStatistics.CURRENT_NR_OF_ENTRIES));
    }
 
    @Override
@@ -198,7 +208,7 @@ public class RemoteCacheImpl<K, V> extends RemoteCacheSupport<K, V> {
    public ServerStatistics stats() {
       assertRemoteCacheManagerIsStarted();
       StatsOperation op = operationsFactory.newStatsOperation();
-      Map<String, String> statsMap = (Map<String, String>) op.execute();
+      Map<String, String> statsMap = op.execute();
       ServerStatisticsImpl stats = new ServerStatisticsImpl();
       for (Map.Entry<String, String> entry : statsMap.entrySet()) {
          stats.addStats(entry.getKey(), entry.getValue());
@@ -216,7 +226,7 @@ public class RemoteCacheImpl<K, V> extends RemoteCacheSupport<K, V> {
          log.tracef("About to add (K,V): (%s, %s) lifespanSecs:%d, maxIdleSecs:%d", key, value, lifespanSecs, maxIdleSecs);
       }
       PutOperation op = operationsFactory.newPutKeyValueOperation(obj2bytes(key, true), obj2bytes(value, false), lifespanSecs, maxIdleSecs);
-      byte[] result = (byte[]) op.execute();
+      byte[] result = op.execute();
       return (V) bytes2obj(result);
    }
 
@@ -228,7 +238,7 @@ public class RemoteCacheImpl<K, V> extends RemoteCacheSupport<K, V> {
       int lifespanSecs = toSeconds(lifespan, lifespanUnit);
       int maxIdleSecs = toSeconds(maxIdleTime, maxIdleTimeUnit);
       PutIfAbsentOperation op = operationsFactory.newPutIfAbsentOperation(obj2bytes(key, true), obj2bytes(value, false), lifespanSecs, maxIdleSecs);
-      byte[] bytes = (byte[]) op.execute();
+      byte[] bytes = op.execute();
       return (V) bytes2obj(bytes);
    }
 
@@ -239,7 +249,7 @@ public class RemoteCacheImpl<K, V> extends RemoteCacheSupport<K, V> {
       int lifespanSecs = toSeconds(lifespan, lifespanUnit);
       int maxIdleSecs = toSeconds(maxIdleTime, maxIdleTimeUnit);
       ReplaceOperation op = operationsFactory.newReplaceOperation(obj2bytes(key, true), obj2bytes(value, false), lifespanSecs, maxIdleSecs);
-      byte[] bytes = (byte[]) op.execute();
+      byte[] bytes = op.execute();
       return (V) bytes2obj(bytes);
    }
 
@@ -327,7 +337,7 @@ public class RemoteCacheImpl<K, V> extends RemoteCacheSupport<K, V> {
    public boolean containsKey(Object key) {
       assertRemoteCacheManagerIsStarted();
       ContainsKeyOperation op = operationsFactory.newContainsKeyOperation(obj2bytes(key, true));
-      return (Boolean)op.execute();
+      return op.execute();
    }
 
    @Override
@@ -336,7 +346,7 @@ public class RemoteCacheImpl<K, V> extends RemoteCacheSupport<K, V> {
       assertRemoteCacheManagerIsStarted();
       byte[] keyBytes = obj2bytes(key, true);
       GetOperation gco = operationsFactory.newGetKeyOperation(keyBytes);
-      byte[] bytes = (byte[]) gco.execute();
+      byte[] bytes = gco.execute();
       V result = (V) bytes2obj(bytes);
       if (log.isTraceEnabled()) {
          log.tracef("For key(%s) returning %s", key, result);
@@ -369,7 +379,7 @@ public class RemoteCacheImpl<K, V> extends RemoteCacheSupport<K, V> {
    public V remove(Object key) {
       assertRemoteCacheManagerIsStarted();
       RemoveOperation removeOperation = operationsFactory.newRemoveOperation(obj2bytes(key, true));
-      byte[] existingValue = (byte[]) removeOperation.execute();
+      byte[] existingValue = removeOperation.execute();
       // TODO: It sucks that you need the prev value to see if it works...
       // We need to find a better API for RemoteCache...
       return (V) bytes2obj(existingValue);
@@ -458,6 +468,14 @@ public class RemoteCacheImpl<K, V> extends RemoteCacheSupport<K, V> {
          return null;
       V valueObj = (V) bytes2obj(value.getValue());
       return new VersionedValueImpl<V>(value.getVersion(), valueObj);
+   }
+
+   @SuppressWarnings("unchecked")
+   private MetadataValue<V> binary2MetadataValue(BinaryMetadataValue value) {
+      if (value == null)
+         return null;
+      V valueObj = (V) bytes2obj(value.getValue());
+      return new MetadataValueImpl<V>(value.getCreated(), value.getLifespan(), value.getLastUsed(), value.getMaxIdle(), value.getVersion(), valueObj);
    }
 
    private int toSeconds(long duration, TimeUnit timeUnit) {

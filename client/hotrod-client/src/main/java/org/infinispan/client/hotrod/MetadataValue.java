@@ -20,22 +20,22 @@
  * Software Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
  * 02110-1301 USA, or see the FSF site: http://www.fsf.org.
  */
-package org.infinispan.server.hotrod
+package org.infinispan.client.hotrod;
 
 /**
- * Hot Rod specific operations. Enumeration starts at a number other that 0 not to clash with common operations.
+ * Besides the key and value, also contains a version and expiration information.
  *
- * @author Galder Zamarreño
- * @since 4.1
+ * @author Tristan Tarrant
+ * @since 5.2
  */
-object HotRodOperation extends Enumeration(20) {
-   type HotRodOperation = Value
+public interface MetadataValue<V> extends VersionedValue<V> {
 
-   val RemoveIfUnmodifiedRequest = Value
-   val ContainsKeyRequest = Value
-   val ClearRequest = Value
-   val QuitRequest = Value
-   val PingRequest = Value
-   val BulkGetRequest = Value
-   val GetWithMetadataRequest = Value
+   long getCreated();
+
+   int getLifespan();
+
+   long getLastUsed();
+
+   int getMaxIdle();
+
 }

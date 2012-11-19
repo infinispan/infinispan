@@ -19,29 +19,28 @@
 
 package org.infinispan.client.hotrod.impl.protocol;
 
-import org.infinispan.client.hotrod.impl.ConfigurationProperties;
+import org.infinispan.client.hotrod.impl.transport.Transport;
+import org.infinispan.client.hotrod.logging.Log;
+import org.infinispan.client.hotrod.logging.LogFactory;
 
 /**
- * Code factory.
+ * A Hot Rod encoder/decoder for version 1.2 of the protocol.
  *
  * @author Galder Zamarreño
- * @since 5.1
+ * @author Tristan Tarrant
+ * @since 5.2
  */
-public class CodecFactory {
+public class Codec12 extends Codec11 {
 
-   private static final Codec CODEC_10 = new Codec10();
-   private static final Codec CODEC_11 = new Codec11();
-   private static final Codec CODEC_12 = new Codec12();
+   private static final Log log = LogFactory.getLog(Codec12.class, Log.class);
 
-   public static Codec getCodec(String version) {
-      if (version.equals(ConfigurationProperties.PROTOCOL_VERSION_10))
-         return CODEC_10;
-      else if (version.equals(ConfigurationProperties.PROTOCOL_VERSION_11))
-         return CODEC_11;
-      else if (version.equals(ConfigurationProperties.PROTOCOL_VERSION_12))
-         return CODEC_12;
-      else
-         throw new IllegalArgumentException("Invalid Hot Rod protocol version");
+   @Override
+   public HeaderParams writeHeader(Transport transport, HeaderParams params) {
+      return writeHeader(transport, params, HotRodConstants.VERSION_12);
    }
 
+   @Override
+   public Log getLog() {
+      return log;
+   }
 }

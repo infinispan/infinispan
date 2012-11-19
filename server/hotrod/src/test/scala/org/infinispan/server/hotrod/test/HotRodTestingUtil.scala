@@ -174,6 +174,12 @@ object HotRodTestingUtil extends Log {
       assertSuccess(resp, expected)
    }
 
+   def assertSuccess(resp: TestGetWithMetadataResponse, expected: Array[Byte], expectedLifespan: Int, expectedMaxIdle: Int): Boolean = {
+      assertEquals(resp.lifespan, expectedLifespan)
+      assertEquals(resp.maxIdle, expectedMaxIdle)
+      assertSuccess(resp, expected)
+   }
+
    def assertSuccess(resp: TestResponseWithPrevious, expected: Array[Byte]): Boolean = {
       assertStatus(resp, Success)
       val isSuccess = Arrays.equals(expected, resp.previous.get)
@@ -341,7 +347,7 @@ object HotRodTestingUtil extends Log {
 
    }
 
-} 
+}
 
 object UniquePortThreadLocal extends ThreadLocal[Int] {
 

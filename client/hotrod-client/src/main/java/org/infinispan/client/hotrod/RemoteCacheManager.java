@@ -43,7 +43,6 @@ import org.infinispan.client.hotrod.impl.operations.OperationsFactory;
 import org.infinispan.client.hotrod.impl.operations.PingOperation.PingResult;
 import org.infinispan.client.hotrod.impl.protocol.Codec;
 import org.infinispan.client.hotrod.impl.protocol.CodecFactory;
-import org.infinispan.client.hotrod.impl.transport.Transport;
 import org.infinispan.client.hotrod.impl.transport.TransportFactory;
 import org.infinispan.client.hotrod.logging.Log;
 import org.infinispan.client.hotrod.logging.LogFactory;
@@ -178,7 +177,7 @@ public class RemoteCacheManager implements BasicCacheContainer {
    public RemoteCacheManager(Marshaller marshaller, Properties props, boolean start) {
       this(marshaller, props, start, Thread.currentThread().getContextClassLoader(), null);
    }
-   
+
    /**
     * Builds a remote cache manager that relies on the provided {@link Marshaller} for marshalling
     * keys and values to be send over to the remote Infinispan cluster.
@@ -222,7 +221,7 @@ public class RemoteCacheManager implements BasicCacheContainer {
    public RemoteCacheManager(Properties props, boolean start) {
 	   this(props, start, Thread.currentThread().getContextClassLoader(), null);
    }
-   
+
    /**
     * Build a cache manager based on supplied properties.
     */
@@ -240,7 +239,7 @@ public class RemoteCacheManager implements BasicCacheContainer {
    public RemoteCacheManager(Properties props) {
       this(props, Thread.currentThread().getContextClassLoader());
    }
-   
+
    /**
     * Same as {@link #RemoteCacheManager(java.util.Properties, boolean)}, and it also starts the cache (start==true).
     */
@@ -306,7 +305,7 @@ public class RemoteCacheManager implements BasicCacheContainer {
    public RemoteCacheManager(String host, int port, boolean start) {
 	   this(host, port, start, Thread.currentThread().getContextClassLoader());
    }
-   
+
    /**
     * Creates a remote cache manager aware of the Hot Rod server listening at host:port.
     *
@@ -317,7 +316,7 @@ public class RemoteCacheManager implements BasicCacheContainer {
       this.classLoader = classLoader;
       if (start) start();
    }
-   
+
    /**
     * Same as {@link #RemoteCacheManager(String, int, boolean)} with start=true.
     */
@@ -339,7 +338,7 @@ public class RemoteCacheManager implements BasicCacheContainer {
    public RemoteCacheManager(String servers, boolean start) {
 	   this(servers, start, Thread.currentThread().getContextClassLoader());
    }
-   
+
    /**
     * The given string should have the following structure: "host1:port2;host:port2...". Every host:port defines a
     * server.
@@ -356,7 +355,7 @@ public class RemoteCacheManager implements BasicCacheContainer {
    public RemoteCacheManager(String servers) {
 	   this(servers, Thread.currentThread().getContextClassLoader());
    }
-   
+
    /**
     * Same as {@link #RemoteCacheManager(String, boolean)}, with start=true.
     */
@@ -374,7 +373,7 @@ public class RemoteCacheManager implements BasicCacheContainer {
    public RemoteCacheManager(URL config, boolean start) {
 	   this(config, start, Thread.currentThread().getContextClassLoader());
    }
-   
+
    /**
     * Same as {@link #RemoteCacheManager(java.util.Properties)}, but it will try to lookup the config properties in
     * supplied URL.
@@ -410,7 +409,7 @@ public class RemoteCacheManager implements BasicCacheContainer {
    public RemoteCacheManager(URL config) {
 	   this(config, Thread.currentThread().getContextClassLoader());
    }
-   
+
    /**
     * Same as {@link #RemoteCacheManager(java.net.URL)} and it also starts the cache (start==true).
     *

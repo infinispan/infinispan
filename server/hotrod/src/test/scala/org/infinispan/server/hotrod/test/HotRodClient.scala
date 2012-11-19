@@ -59,7 +59,7 @@ import java.lang.StringBuilder
  * @since 4.1
  */
 class HotRodClient(host: String, port: Int, defaultCacheName: String, rspTimeoutSeconds: Int, protocolVersion: Byte) extends Log {
-   val idToOp = new ConcurrentHashMap[Long, Op]    
+   val idToOp = new ConcurrentHashMap[Long, Op]
 
    private lazy val ch: Channel = {
       val factory = new NioClientSocketChannelFactory(Executors.newCachedThreadPool, Executors.newCachedThreadPool)
@@ -74,7 +74,7 @@ class HotRodClient(host: String, port: Int, defaultCacheName: String, rspTimeout
       assertTrue(connectFuture.isSuccess)
       ch
    }
-   
+
    def stop = ch.disconnect
 
    def put(k: Array[Byte], lifespan: Int, maxIdle: Int, v: Array[Byte]): TestResponse =
@@ -111,12 +111,12 @@ class HotRodClient(host: String, port: Int, defaultCacheName: String, rspTimeout
 
    def putIfAbsent(k: Array[Byte], lifespan: Int, maxIdle: Int, v: Array[Byte], flags: Int): TestResponse =
       execute(0xA0, 0x05, defaultCacheName, k, lifespan, maxIdle, v, 0, flags)
-   
+
    def replace(k: Array[Byte], lifespan: Int, maxIdle: Int, v: Array[Byte]): TestResponse =
       execute(0xA0, 0x07, defaultCacheName, k, lifespan, maxIdle, v, 0, 1 ,0)
 
    def replace(k: Array[Byte], lifespan: Int, maxIdle: Int, v: Array[Byte], flags: Int): TestResponse =
-      execute(0xA0, 0x07, defaultCacheName, k, lifespan, maxIdle, v, 0, flags)   
+      execute(0xA0, 0x07, defaultCacheName, k, lifespan, maxIdle, v, 0, flags)
 
    def replaceIfUnmodified(k: Array[Byte], lifespan: Int, maxIdle: Int, v: Array[Byte],
                            dataVersion: Long): TestResponse =
@@ -193,12 +193,15 @@ class HotRodClient(host: String, port: Int, defaultCacheName: String, rspTimeout
    def getWithVersion(k: Array[Byte], flags: Int): TestGetWithVersionResponse =
       get(0x11, k, 0).asInstanceOf[TestGetWithVersionResponse]
 
+   def getWithMetadata(k: Array[Byte], flags: Int): TestGetWithMetadataResponse =
+      get(0x1B, k, 0).asInstanceOf[TestGetWithMetadataResponse]
+
    private def get(code: Byte, k: Array[Byte], flags: Int): TestResponse = {
       val op = new Op(0xA0, protocolVersion, code, defaultCacheName, k, 0, 0, null, flags, 0, 1, 0)
       val writeFuture = writeOp(op)
       // Get the handler instance to retrieve the answer.
       val handler = ch.getPipeline.getLast.asInstanceOf[ClientHandler]
-      if (code == 0x03 || code == 0x11 || code == 0x0F) {
+      if (code == 0x03 || code == 0x11 || code == 0x0F || code == 0x1B) {
          handler.getResponse(op.id)
       } else {
          null
@@ -418,6 +421,32 @@ private class Decoder(client: HotRodClient) extends ReplayingDecoder[VoidEnum] w
                new TestGetWithVersionResponse(op.version, id, op.cacheName,
                      op.clientIntel, opCode, status, op.topologyId, None, 0,
                      topologyChangeResponse)
+            }
+         }
+         case GetWithMetadataResponse => {
+            if (status == Success) {
+               val expiration = buf.readByte()
+               var created = -1l
+               var lifespan = -1
+               var lastUsed = -1l
+               var maxIdle = -1
+               if ((expiration & 0x01) == 0x01) {
+                  created = buf.readLong
+                  lifespan = readUnsignedInt(buf)
+               }
+               if ((expiration & 0x02) == 0x02) {
+                  lastUsed = buf.readLong
+                  maxIdle = readUnsignedInt(buf)
+               }
+               val version = buf.readLong
+               val data = Some(readRangedBytes(buf))
+               new TestGetWithMetadataResponse(op.version, id, op.cacheName,
+                     op.clientIntel, opCode, status, op.topologyId, data, version,
+                     created, lifespan, lastUsed, maxIdle, topologyChangeResponse)
+            } else{
+               new TestGetWithMetadataResponse(op.version, id, op.cacheName,
+                     op.clientIntel, opCode, status, op.topologyId, None, 0,
+                     -1, -1, -1, -1, topologyChangeResponse)
             }
          }
          case GetResponse => {
@@ -658,6 +687,17 @@ class TestGetWithVersionResponse(override val version: Byte, override val messag
                              override val data: Option[Array[Byte]], val dataVersion: Long,
                              override val topologyResponse: Option[AbstractTopologyResponse])
       extends TestGetResponse(version, messageId, cacheName, clientIntel, operation, status, topologyId, data, topologyResponse)
+
+class TestGetWithMetadataResponse(override val version: Byte, override val messageId: Long,
+                             override val cacheName: String, override val clientIntel: Short,
+                             override val operation: OperationResponse,
+                             override val status: OperationStatus,
+                             override val topologyId: Int,
+                             override val data: Option[Array[Byte]], val dataVersion: Long,
+                             val created: Long, val lifespan: Int, val lastUsed: Long, val maxIdle: Int,
+                             override val topologyResponse: Option[AbstractTopologyResponse])
+      extends TestGetResponse(version, messageId, cacheName, clientIntel, operation, status, topologyId, data, topologyResponse)
+
 
 class TestErrorResponse(override val version: Byte, override val messageId: Long,
                     override val cacheName: String, override val clientIntel: Short,
