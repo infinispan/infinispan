@@ -103,7 +103,7 @@ public class RemoteCacheImpl<K, V> extends RemoteCacheSupport<K, V> {
    public boolean removeWithVersion(K key, long version) {
       assertRemoteCacheManagerIsStarted();
       RemoveIfUnmodifiedOperation op = operationsFactory.newRemoveIfUnmodifiedOperation(obj2bytes(key, true), version);
-      VersionedOperationResponse response = (VersionedOperationResponse) op.execute();
+      VersionedOperationResponse response = op.execute();
       return response.getCode().isUpdated();
    }
 
@@ -127,7 +127,7 @@ public class RemoteCacheImpl<K, V> extends RemoteCacheSupport<K, V> {
    public boolean replaceWithVersion(K key, V newValue, long version, int lifespanSeconds, int maxIdleTimeSeconds) {
       assertRemoteCacheManagerIsStarted();
       ReplaceIfUnmodifiedOperation op = operationsFactory.newReplaceIfUnmodifiedOperation(obj2bytes(key, true), obj2bytes(newValue, false), lifespanSeconds, maxIdleTimeSeconds, version);
-      VersionedOperationResponse response = (VersionedOperationResponse) op.execute();
+      VersionedOperationResponse response = op.execute();
       return response.getCode().isUpdated();
    }
 
@@ -151,7 +151,7 @@ public class RemoteCacheImpl<K, V> extends RemoteCacheSupport<K, V> {
    public VersionedValue<V> getVersioned(K key) {
       assertRemoteCacheManagerIsStarted();
       GetWithVersionOperation op = operationsFactory.newGetWithVersionOperation(obj2bytes(key, true));
-      BinaryVersionedValue value = (BinaryVersionedValue) op.execute();
+      BinaryVersionedValue value = op.execute();
       return binary2VersionedValue(value);
    }
 
@@ -185,7 +185,7 @@ public class RemoteCacheImpl<K, V> extends RemoteCacheSupport<K, V> {
    public int size() {
       assertRemoteCacheManagerIsStarted();
       StatsOperation op = operationsFactory.newStatsOperation();
-      return Integer.parseInt(((Map<String, String>) op.execute()).get(ServerStatistics.CURRENT_NR_OF_ENTRIES));
+      return Integer.parseInt(op.execute().get(ServerStatistics.CURRENT_NR_OF_ENTRIES));
    }
 
    @Override
@@ -198,7 +198,7 @@ public class RemoteCacheImpl<K, V> extends RemoteCacheSupport<K, V> {
    public ServerStatistics stats() {
       assertRemoteCacheManagerIsStarted();
       StatsOperation op = operationsFactory.newStatsOperation();
-      Map<String, String> statsMap = (Map<String, String>) op.execute();
+      Map<String, String> statsMap = op.execute();
       ServerStatisticsImpl stats = new ServerStatisticsImpl();
       for (Map.Entry<String, String> entry : statsMap.entrySet()) {
          stats.addStats(entry.getKey(), entry.getValue());
@@ -212,11 +212,12 @@ public class RemoteCacheImpl<K, V> extends RemoteCacheSupport<K, V> {
       assertRemoteCacheManagerIsStarted();
       int lifespanSecs = toSeconds(lifespan, lifespanUnit);
       int maxIdleSecs = toSeconds(maxIdleTime, maxIdleTimeUnit);
+      applyDefaultExpirationFlags(lifespan, maxIdleTime);
       if (log.isTraceEnabled()) {
          log.tracef("About to add (K,V): (%s, %s) lifespanSecs:%d, maxIdleSecs:%d", key, value, lifespanSecs, maxIdleSecs);
       }
       PutOperation op = operationsFactory.newPutKeyValueOperation(obj2bytes(key, true), obj2bytes(value, false), lifespanSecs, maxIdleSecs);
-      byte[] result = (byte[]) op.execute();
+      byte[] result = op.execute();
       return (V) bytes2obj(result);
    }
 
@@ -227,8 +228,9 @@ public class RemoteCacheImpl<K, V> extends RemoteCacheSupport<K, V> {
       assertRemoteCacheManagerIsStarted();
       int lifespanSecs = toSeconds(lifespan, lifespanUnit);
       int maxIdleSecs = toSeconds(maxIdleTime, maxIdleTimeUnit);
+      applyDefaultExpirationFlags(lifespan, maxIdleTime);
       PutIfAbsentOperation op = operationsFactory.newPutIfAbsentOperation(obj2bytes(key, true), obj2bytes(value, false), lifespanSecs, maxIdleSecs);
-      byte[] bytes = (byte[]) op.execute();
+      byte[] bytes = op.execute();
       return (V) bytes2obj(bytes);
    }
 
@@ -238,8 +240,9 @@ public class RemoteCacheImpl<K, V> extends RemoteCacheSupport<K, V> {
       assertRemoteCacheManagerIsStarted();
       int lifespanSecs = toSeconds(lifespan, lifespanUnit);
       int maxIdleSecs = toSeconds(maxIdleTime, maxIdleTimeUnit);
+      applyDefaultExpirationFlags(lifespan, maxIdleTime);
       ReplaceOperation op = operationsFactory.newReplaceOperation(obj2bytes(key, true), obj2bytes(value, false), lifespanSecs, maxIdleSecs);
-      byte[] bytes = (byte[]) op.execute();
+      byte[] bytes = op.execute();
       return (V) bytes2obj(bytes);
    }
 
@@ -327,7 +330,7 @@ public class RemoteCacheImpl<K, V> extends RemoteCacheSupport<K, V> {
    public boolean containsKey(Object key) {
       assertRemoteCacheManagerIsStarted();
       ContainsKeyOperation op = operationsFactory.newContainsKeyOperation(obj2bytes(key, true));
-      return (Boolean)op.execute();
+      return op.execute();
    }
 
    @Override
@@ -336,7 +339,7 @@ public class RemoteCacheImpl<K, V> extends RemoteCacheSupport<K, V> {
       assertRemoteCacheManagerIsStarted();
       byte[] keyBytes = obj2bytes(key, true);
       GetOperation gco = operationsFactory.newGetKeyOperation(keyBytes);
-      byte[] bytes = (byte[]) gco.execute();
+      byte[] bytes = gco.execute();
       V result = (V) bytes2obj(bytes);
       if (log.isTraceEnabled()) {
          log.tracef("For key(%s) returning %s", key, result);
@@ -369,7 +372,7 @@ public class RemoteCacheImpl<K, V> extends RemoteCacheSupport<K, V> {
    public V remove(Object key) {
       assertRemoteCacheManagerIsStarted();
       RemoveOperation removeOperation = operationsFactory.newRemoveOperation(obj2bytes(key, true));
-      byte[] existingValue = (byte[]) removeOperation.execute();
+      byte[] existingValue = removeOperation.execute();
       // TODO: It sucks that you need the prev value to see if it works...
       // We need to find a better API for RemoteCache...
       return (V) bytes2obj(existingValue);
@@ -480,5 +483,14 @@ public class RemoteCacheImpl<K, V> extends RemoteCacheSupport<K, V> {
       // see org.infinispan.client.hotrod.Flag.FORCE_RETURN_VALUE
       // Warning: never invoke put(K,V) in this scope or we'll get a stackoverflow.
       put(key, value, defaultLifespan, MILLISECONDS, defaultMaxIdleTime, MILLISECONDS);
+   }
+
+   private void applyDefaultExpirationFlags(long lifespan, long maxIdle) {
+      if (lifespan == 0) {
+         operationsFactory.addFlags(Flag.DEFAULT_LIFESPAN);
+      }
+      if (maxIdle == 0) {
+         operationsFactory.addFlags(Flag.DEFAULT_MAXIDLE);
+      }
    }
 }

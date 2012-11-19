@@ -66,7 +66,8 @@ public class Codec10 implements Codec {
       int flagInt = 0;
       if (params.flags != null) {
          for (Flag flag : params.flags) {
-            flagInt = flag.getFlagInt() | flagInt;
+            if (flag.equals(Flag.FORCE_RETURN_VALUE)) // 1.0 / 1.1 servers only understand this flag
+               flagInt = flag.getFlagInt();
          }
       }
       transport.writeVInt(flagInt);
@@ -131,7 +132,7 @@ public class Codec10 implements Codec {
       boolean isTrace = localLog.isTraceEnabled();
       if (isTrace) localLog.tracef("Received operation status: %#x", status);
 
-      switch ((int) status) {
+      switch (status) {
          case HotRodConstants.INVALID_MAGIC_OR_MESSAGE_ID_STATUS:
          case HotRodConstants.REQUEST_PARSING_ERROR_STATUS:
          case HotRodConstants.UNKNOWN_COMMAND_STATUS:

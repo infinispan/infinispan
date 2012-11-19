@@ -59,7 +59,7 @@ import java.lang.StringBuilder
  * @since 4.1
  */
 class HotRodClient(host: String, port: Int, defaultCacheName: String, rspTimeoutSeconds: Int, protocolVersion: Byte) extends Log {
-   val idToOp = new ConcurrentHashMap[Long, Op]    
+   val idToOp = new ConcurrentHashMap[Long, Op]
 
    private lazy val ch: Channel = {
       val factory = new NioClientSocketChannelFactory(Executors.newCachedThreadPool, Executors.newCachedThreadPool)
@@ -74,7 +74,7 @@ class HotRodClient(host: String, port: Int, defaultCacheName: String, rspTimeout
       assertTrue(connectFuture.isSuccess)
       ch
    }
-   
+
    def stop = ch.disconnect
 
    def put(k: Array[Byte], lifespan: Int, maxIdle: Int, v: Array[Byte]): TestResponse =
@@ -111,12 +111,12 @@ class HotRodClient(host: String, port: Int, defaultCacheName: String, rspTimeout
 
    def putIfAbsent(k: Array[Byte], lifespan: Int, maxIdle: Int, v: Array[Byte], flags: Int): TestResponse =
       execute(0xA0, 0x05, defaultCacheName, k, lifespan, maxIdle, v, 0, flags)
-   
+
    def replace(k: Array[Byte], lifespan: Int, maxIdle: Int, v: Array[Byte]): TestResponse =
       execute(0xA0, 0x07, defaultCacheName, k, lifespan, maxIdle, v, 0, 1 ,0)
 
    def replace(k: Array[Byte], lifespan: Int, maxIdle: Int, v: Array[Byte], flags: Int): TestResponse =
-      execute(0xA0, 0x07, defaultCacheName, k, lifespan, maxIdle, v, 0, flags)   
+      execute(0xA0, 0x07, defaultCacheName, k, lifespan, maxIdle, v, 0, flags)
 
    def replaceIfUnmodified(k: Array[Byte], lifespan: Int, maxIdle: Int, v: Array[Byte],
                            dataVersion: Long): TestResponse =
@@ -609,13 +609,13 @@ class BulkGetOp(override val magic: Int,
      extends Op(magic, version, code, cacheName, null, 0, 0, null, 0, 0,
                 clientIntel, topologyId)
 
-class TestResponse(override val version: Byte, override val messageId: Long,
-                   override val cacheName: String, override val clientIntel: Short,
-                   override val operation: OperationResponse,
-                   override val status: OperationStatus,
-                   override val topologyId: Int,
-                   val topologyResponse: Option[AbstractTopologyResponse])
-      extends Response(version, messageId, cacheName, clientIntel, operation, status, topologyId) {
+class TestResponseWithFlags(override val version: Byte, override val messageId: Long,
+                           override val cacheName: String, override val clientIntel: Short,
+                           override val operation: OperationResponse,
+                           override val status: OperationStatus,
+                           override val topologyId: Int, override val flags: Int,
+                           val topologyResponse: Option[AbstractTopologyResponse])
+      extends Response(version, messageId, cacheName, clientIntel, operation, status, topologyId, flags) {
    override def toString = {
       new StringBuilder().append("Response").append("{")
          .append("version=").append(version)
@@ -634,6 +634,14 @@ class TestResponse(override val version: Byte, override val messageId: Long,
       }
    }
 }
+
+class TestResponse(override val version: Byte, override val messageId: Long,
+                   override val cacheName: String, override val clientIntel: Short,
+                   override val operation: OperationResponse,
+                   override val status: OperationStatus,
+                   override val topologyId: Int,
+                   override val topologyResponse: Option[AbstractTopologyResponse])
+      extends TestResponseWithFlags(version, messageId, cacheName, clientIntel, operation, status, topologyId, 0, topologyResponse)
 
 class TestResponseWithPrevious(override val version: Byte, override val messageId: Long,
                            override val cacheName: String, override val clientIntel: Short,
