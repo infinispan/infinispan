@@ -185,27 +185,27 @@ public class StateTransferInterceptor extends CommandInterceptor {   //todo [ani
    private Object handleTxCommand(TxInvocationContext ctx, TransactionBoundaryCommand command) throws Throwable {
       // For local commands we may not have a GlobalTransaction yet
       Address address = ctx.isOriginLocal() ? ctx.getOrigin() : ctx.getGlobalTransaction().getAddress();
-      return handleTopologyAffectedCommand(ctx, command, address, ctx.isOriginLocal());
+      return handleTopologyAffectedCommand(ctx, command, address);
    }
 
    private Object handleWriteCommand(InvocationContext ctx, WriteCommand command) throws Throwable {
-      return handleTopologyAffectedCommand(ctx, command, ctx.getOrigin(), ctx.isOriginLocal());
+      return handleTopologyAffectedCommand(ctx, command, ctx.getOrigin());
    }
 
    @Override
    protected Object handleDefault(InvocationContext ctx, VisitableCommand command) throws Throwable {
       if (command instanceof TopologyAffectedCommand) {
-         return handleTopologyAffectedCommand(ctx, command, ctx.getOrigin(), ctx.isOriginLocal());
+         return handleTopologyAffectedCommand(ctx, command, ctx.getOrigin());
       } else {
          return invokeNextInterceptor(ctx, command);
       }
    }
 
    private Object handleTopologyAffectedCommand(InvocationContext ctx, VisitableCommand command,
-                                                Address origin, boolean originLocal) throws Throwable {
-      log.tracef("handleTopologyAffectedCommand for command %s, originLocal=%b", command, originLocal);
+                                                Address origin) throws Throwable {
+      log.tracef("handleTopologyAffectedCommand for command %s", command);
 
-      if (isLocal(command, originLocal)) {
+      if (isLocalOnly(ctx, command)) {
          return invokeNextInterceptor(ctx, command);
       }
       updateTopologyIdAndWaitForTransactionData((TopologyAffectedCommand) command);
@@ -238,14 +238,13 @@ public class StateTransferInterceptor extends CommandInterceptor {   //todo [ani
       stateTransferLock.waitForTransactionData(cmdTopologyId);
    }
 
-   private boolean isLocal(VisitableCommand command, boolean originLocal) {
-      if (originLocal) return true;
-
+   private boolean isLocalOnly(InvocationContext ctx, VisitableCommand command) {
+      boolean transactionalWrite = ctx.isInTxScope() && command instanceof WriteCommand;
       boolean cacheModeLocal = false;
       if (command instanceof FlagAffectedCommand) {
          cacheModeLocal = ((FlagAffectedCommand)command).hasFlag(Flag.CACHE_MODE_LOCAL);
       }
-      return cacheModeLocal;
+      return cacheModeLocal || transactionalWrite;
    }
 
    @SuppressWarnings("unchecked")

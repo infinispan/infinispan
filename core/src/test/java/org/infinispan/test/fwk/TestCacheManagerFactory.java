@@ -261,9 +261,16 @@ public class TestCacheManagerFactory {
    }
 
    public static EmbeddedCacheManager createClusteredCacheManager(GlobalConfigurationBuilder gcb, ConfigurationBuilder defaultCacheConfig, TransportFlags flags) {
+      return createClusteredCacheManager(gcb, defaultCacheConfig, flags, false);
+   }
+
+   public static EmbeddedCacheManager createClusteredCacheManager(GlobalConfigurationBuilder gcb,
+                                                                  ConfigurationBuilder defaultCacheConfig,
+                                                                  TransportFlags flags,
+                                                                  boolean keepJmxDomainName) {
       amendGlobalConfiguration(gcb, flags);
       amendJTA(defaultCacheConfig);
-      return newDefaultCacheManager(true, gcb, defaultCacheConfig, false);
+      return newDefaultCacheManager(true, gcb, defaultCacheConfig, keepJmxDomainName);
    }
 
    public static void amendGlobalConfiguration(GlobalConfigurationBuilder gcb, TransportFlags flags) {

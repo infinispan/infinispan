@@ -114,10 +114,6 @@ public class MagicKey implements Serializable {
 
    @Override
    public String toString() {
-      return "MagicKey{" +
-              (name == null ? "" : "name=" + name + ", ") +
-              "hashcode=" + hashcode +
-              ", address='" + address + '\'' +
-              '}';
+      return "MagicKey#" + name + '{' + Integer.toHexString(hashcode) + '@' + address + '}';
    }
 }

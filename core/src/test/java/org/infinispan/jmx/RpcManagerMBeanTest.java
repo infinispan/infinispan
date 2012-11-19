@@ -22,14 +22,6 @@
  */
 package org.infinispan.jmx;
 
-import static org.infinispan.test.TestingUtil.getCacheObjectName;
-import static org.mockito.Matchers.any;
-import static org.mockito.Matchers.anyBoolean;
-import static org.mockito.Matchers.anyLong;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.when;
-import static org.testng.Assert.assertEquals;
-
 import java.io.Externalizable;
 import java.io.IOException;
 import java.io.ObjectInput;
@@ -38,15 +30,15 @@ import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
-
 import javax.management.Attribute;
 import javax.management.MBeanServer;
 import javax.management.ObjectName;
 
 import org.infinispan.Cache;
 import org.infinispan.commands.ReplicableCommand;
-import org.infinispan.config.Configuration;
-import org.infinispan.config.GlobalConfiguration;
+import org.infinispan.configuration.cache.CacheMode;
+import org.infinispan.configuration.cache.ConfigurationBuilder;
+import org.infinispan.configuration.global.GlobalConfigurationBuilder;
 import org.infinispan.manager.CacheContainer;
 import org.infinispan.remoting.rpc.ResponseFilter;
 import org.infinispan.remoting.rpc.ResponseMode;
@@ -57,7 +49,17 @@ import org.infinispan.remoting.transport.Transport;
 import org.infinispan.test.MultipleCacheManagersTest;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
+import org.infinispan.test.fwk.TransportFlags;
 import org.testng.annotations.Test;
+
+import static org.infinispan.test.TestingUtil.getCacheObjectName;
+import static org.mockito.Matchers.any;
+import static org.mockito.Matchers.anyBoolean;
+import static org.mockito.Matchers.anyLong;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
+import static org.testng.Assert.assertEquals;
+import static org.testng.Assert.assertNotEquals;
 
 /**
  * @author Mircea.Markus@jboss.com
@@ -71,27 +73,33 @@ public class RpcManagerMBeanTest extends MultipleCacheManagersTest {
 
    @Override
    protected void createCacheManagers() throws Throwable {
-      GlobalConfiguration globalConfiguration = GlobalConfiguration.getClusteredDefault();
-      globalConfiguration.setExposeGlobalJmxStatistics(true);
-      globalConfiguration.setAllowDuplicateDomains(true);
-      globalConfiguration.setJmxDomain(JMX_DOMAIN);
-      globalConfiguration.setMBeanServerLookup(PerThreadMBeanServerLookup.class.getName());
-      CacheContainer cacheManager1 = TestCacheManagerFactory.createCacheManagerEnforceJmxDomain(globalConfiguration);
+      ConfigurationBuilder defaultConfig = new ConfigurationBuilder();
+      GlobalConfigurationBuilder gcb1 = GlobalConfigurationBuilder.defaultClusteredBuilder();
+      gcb1.globalJmxStatistics()
+            .enable()
+            .allowDuplicateDomains(true)
+            .jmxDomain(JMX_DOMAIN)
+            .mBeanServerLookup(new PerThreadMBeanServerLookup());
+      CacheContainer cacheManager1 = TestCacheManagerFactory.createClusteredCacheManager(gcb1, defaultConfig,
+            new TransportFlags(), true);
       cacheManager1.start();
 
-      GlobalConfiguration globalConfiguration2 = GlobalConfiguration.getClusteredDefault();
-      globalConfiguration2.setExposeGlobalJmxStatistics(true);
-      globalConfiguration2.setMBeanServerLookup(PerThreadMBeanServerLookup.class.getName());
-      globalConfiguration2.setJmxDomain(JMX_DOMAIN);
-      globalConfiguration2.setAllowDuplicateDomains(true);
-      CacheContainer cacheManager2 = TestCacheManagerFactory.createCacheManagerEnforceJmxDomain(globalConfiguration2);
+      GlobalConfigurationBuilder gcb2 = GlobalConfigurationBuilder.defaultClusteredBuilder();
+      gcb2.globalJmxStatistics()
+            .enable()
+            .allowDuplicateDomains(true)
+            .jmxDomain(JMX_DOMAIN)
+            .mBeanServerLookup(new PerThreadMBeanServerLookup());
+      CacheContainer cacheManager2 = TestCacheManagerFactory.createClusteredCacheManager(gcb2, defaultConfig,
+            new TransportFlags(), true);
       cacheManager2.start();
 
       registerCacheManager(cacheManager1, cacheManager2);
 
-      Configuration config = getDefaultClusteredConfig(Configuration.CacheMode.REPL_SYNC);
-      config.setExposeJmxStatistics(true);
-      defineConfigurationOnAllManagers(cachename, config);
+      ConfigurationBuilder cb = new ConfigurationBuilder();
+      cb.clustering().cacheMode(CacheMode.REPL_SYNC).jmxStatistics().enable();
+      defineConfigurationOnAllManagers(cachename, cb);
+      waitForClusterToForm(cachename);
    }
 
    public void testEnableJmxStats() throws Exception {
@@ -105,31 +113,30 @@ public class RpcManagerMBeanTest extends MultipleCacheManagersTest {
 
       Object statsEnabled = mBeanServer.getAttribute(rpcManager1, "StatisticsEnabled");
       assert statsEnabled != null;
-      assert statsEnabled.equals(Boolean.TRUE);
+      assertEquals(statsEnabled, Boolean.TRUE);
 
-      assert mBeanServer.getAttribute(rpcManager1, "StatisticsEnabled").equals(Boolean.TRUE);
-      assert mBeanServer.getAttribute(rpcManager2, "StatisticsEnabled").equals(Boolean.TRUE);
+      assertEquals(mBeanServer.getAttribute(rpcManager1, "StatisticsEnabled"), Boolean.TRUE);
+      assertEquals(mBeanServer.getAttribute(rpcManager2, "StatisticsEnabled"), Boolean.TRUE);
 
       // The initial state transfer uses cache commands, so it also increases the ReplicationCount value
       long initialReplicationCount1 = (Long) mBeanServer.getAttribute(rpcManager1, "ReplicationCount");
 
       cache1.put("key", "value2");
-      assert cache2.get("key").equals("value2");
-      assert mBeanServer.getAttribute(rpcManager1, "ReplicationCount").equals(initialReplicationCount1 + 1)
-            : "Expected " + (initialReplicationCount1 + 1) + ", was " + mBeanServer.getAttribute(rpcManager1, "ReplicationCount");
-      assert mBeanServer.getAttribute(rpcManager1, "ReplicationFailures").equals((long) 0);
+      assertEquals(cache2.get("key"), "value2");
+      assertEquals(mBeanServer.getAttribute(rpcManager1, "ReplicationCount"), initialReplicationCount1 + 1);
+      assertEquals(mBeanServer.getAttribute(rpcManager1, "ReplicationFailures"), (long) 0);
 
       // now reset statistics
       mBeanServer.invoke(rpcManager1, "resetStatistics", new Object[0], new String[0]);
-      assert mBeanServer.getAttribute(rpcManager1, "ReplicationCount").equals((long) 0);
-      assert mBeanServer.getAttribute(rpcManager1, "ReplicationFailures").equals((long) 0);
+      assertEquals(mBeanServer.getAttribute(rpcManager1, "ReplicationCount"), (long) 0);
+      assertEquals(mBeanServer.getAttribute(rpcManager1, "ReplicationFailures"), (long) 0);
 
       mBeanServer.setAttribute(rpcManager1, new Attribute("StatisticsEnabled", Boolean.FALSE));
 
       cache1.put("key", "value");
-      assert cache2.get("key").equals("value");
-      assert mBeanServer.getAttribute(rpcManager1, "ReplicationCount").equals((long) -1);
-      assert mBeanServer.getAttribute(rpcManager1, "ReplicationCount").equals((long) -1);
+      assertEquals(cache2.get("key"), "value");
+      assertEquals(mBeanServer.getAttribute(rpcManager1, "ReplicationCount"), (long) -1);
+      assertEquals(mBeanServer.getAttribute(rpcManager1, "ReplicationCount"), (long) -1);
 
       // reset stats enabled parameter
       mBeanServer.setAttribute(rpcManager1, new Attribute("StatisticsEnabled", Boolean.TRUE));
@@ -143,18 +150,18 @@ public class RpcManagerMBeanTest extends MultipleCacheManagersTest {
       ObjectName rpcManager1 = getCacheObjectName(JMX_DOMAIN, cachename + "(repl_sync)", "RpcManager");
 
       // the previous test has reset the statistics
-      assert mBeanServer.getAttribute(rpcManager1, "ReplicationCount").equals((long) 0);
-      assert mBeanServer.getAttribute(rpcManager1, "ReplicationFailures").equals((long) 0);
-      assert mBeanServer.getAttribute(rpcManager1, "SuccessRatio").equals("N/A");
+      assertEquals(mBeanServer.getAttribute(rpcManager1, "ReplicationCount"), (long) 0);
+      assertEquals(mBeanServer.getAttribute(rpcManager1, "ReplicationFailures"), (long) 0);
+      assertEquals(mBeanServer.getAttribute(rpcManager1, "SuccessRatio"), "N/A");
 
       cache1.put("a1", new SlowToSerialize("b1", 50));
       cache1.put("a2", new SlowToSerialize("b2", 50));
       cache1.put("a3", new SlowToSerialize("b3", 50));
       cache1.put("a4", new SlowToSerialize("b4", 50));
-      assert mBeanServer.getAttribute(rpcManager1, "ReplicationCount").equals((long) 4);
-      assert mBeanServer.getAttribute(rpcManager1, "SuccessRatio").equals("100%");
+      assertEquals(mBeanServer.getAttribute(rpcManager1, "ReplicationCount"), (long) 4);
+      assertEquals(mBeanServer.getAttribute(rpcManager1, "SuccessRatio"), "100%");
       Object avgReplTime = mBeanServer.getAttribute(rpcManager1, "AverageReplicationTime");
-      assert !avgReplTime.equals((long) 0) : "Expected !0, was " + avgReplTime;
+      assertNotEquals(avgReplTime, (long) 0);
 
       RpcManagerImpl rpcManager = (RpcManagerImpl) TestingUtil.extractComponent(cache1, RpcManager.class);
       Transport originalTransport = rpcManager.getTransport();

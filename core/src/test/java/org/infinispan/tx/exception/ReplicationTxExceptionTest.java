@@ -23,6 +23,7 @@
 package org.infinispan.tx.exception;
 
 import org.infinispan.Cache;
+import org.infinispan.commands.tx.PrepareCommand;
 import org.infinispan.config.Configuration;
 import org.infinispan.remoting.rpc.RpcManager;
 import org.infinispan.test.MultipleCacheManagersTest;
@@ -52,10 +53,10 @@ public class ReplicationTxExceptionTest extends MultipleCacheManagersTest {
       RpcManager rpcManager = TestingUtil.extractComponent(cache, RpcManager.class);
       controlledRpcManager = new ControlledRpcManager(rpcManager);
       TestingUtil.replaceComponent(cache, RpcManager.class, controlledRpcManager, true);
-      controlledRpcManager.setFail(true);
    }
 
    public void testReplicationFailure() throws Exception {
+      controlledRpcManager.failFor(PrepareCommand.class);
       try {
          TransactionManager tm = cache(0).getAdvancedCache().getTransactionManager();
          tm.begin();
@@ -67,7 +68,7 @@ public class ReplicationTxExceptionTest extends MultipleCacheManagersTest {
             //expected
          }
       } finally {
-         controlledRpcManager.setFail(false);
+         controlledRpcManager.stopFailing();
       }
    }
 }
