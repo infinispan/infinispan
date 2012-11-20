@@ -97,7 +97,7 @@
    <properties>
       <buildDirectory>target</buildDirectory>
       <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-      <defaultTestGroup>functional,unit</defaultTestGroup>
+      <defaultTestGroup>functional,unit,arquillian</defaultTestGroup>
       <testNGListener>org.infinispan.test.fwk.UnitTestTestNGListener</testNGListener>
       <infinispan.test.parallel.threads>20</infinispan.test.parallel.threads>
       <jboss.releases.repo.url>https://repository.jboss.org/nexus/service/local/staging/deploy/maven2/</jboss.releases.repo.url>
@@ -108,8 +108,8 @@
       <!-- Versions for dependencies -->
       <version.antlr>3.4</version.antlr>
       <version.apacheds.jdbm>1.5.7</version.apacheds.jdbm>
-      <version.arquillian>1.0.0.CR5</version.arquillian>
-      <version.arquillian.container.weld>1.0.0.CR2</version.arquillian.container.weld>
+      <version.arquillian>1.0.0.Final</version.arquillian>
+      <version.arquillian.container.weld>1.0.0.CR3</version.arquillian.container.weld>
       <version.avro>1.3.3</version.avro>
       <version.bdbje>5.0.34</version.bdbje>
       <version.c3p0>0.9.1.2</version.c3p0>
@@ -172,7 +172,7 @@
       <version.spymemcached>2.5</version.spymemcached>
       <version.testng>6.7</version.testng>
       <version.webdav.servlet>2.0.1</version.webdav.servlet>
-      <version.weld>1.1.4.Final</version.weld>
+      <version.weld>1.1.8.Final</version.weld>
       <version.xsom>20081112</version.xsom>
       <version.xstream>1.4.1</version.xstream>
       <version.javassist>3.15.0-GA</version.javassist>
@@ -781,6 +781,18 @@
             <version>${version.spring}</version>
          </dependency>
          <dependency>
+            <groupId>org.testng</groupId>
+            <artifactId>testng</artifactId>
+            <version>${version.testng}</version>
+            <scope>test</scope>
+            <exclusions>
+              <exclusion>
+                <groupId>org.yaml</groupId>
+                <artifactId>snakeyaml</artifactId>
+              </exclusion>
+            </exclusions>
+         </dependency>
+         <dependency>
             <groupId>spy</groupId>
             <artifactId>memcached</artifactId>
             <version>${version.spymemcached}</version>
@@ -989,7 +1001,6 @@
       <dependency>
          <groupId>org.testng</groupId>
          <artifactId>testng</artifactId>
-         <version>${version.testng}</version>
          <scope>test</scope>
       </dependency>
    </dependencies>
@@ -1571,7 +1582,7 @@
             <activeByDefault>true</activeByDefault>
          </activation>
          <properties>
-            <defaultTestGroup>functional,unit</defaultTestGroup>
+            <defaultTestGroup>functional,unit,arquillian</defaultTestGroup>
             <infinispan.test.jgroups.protocol>tcp</infinispan.test.jgroups.protocol>
          </properties>
       </profile>
