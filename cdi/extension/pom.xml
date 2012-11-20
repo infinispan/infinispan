@@ -39,12 +39,6 @@
    <name>Infinispan CDI support</name>
    <description>Infinispan CDI support module</description>
 
-   <properties>
-      <!-- version of slf4j needed by Weld -->
-      <version.slf4j.weld>1.5.10</version.slf4j.weld>
-      <version.testng.arquillian>5.14.10</version.testng.arquillian>
-   </properties>
-
    <developers>
       <developer>
          <name>Pete Muir</name>
@@ -92,7 +86,6 @@
       <dependency>
          <groupId>org.testng</groupId>
          <artifactId>testng</artifactId>
-         <version>${version.testng.arquillian}</version>
          <scope>test</scope>
       </dependency>
       <dependency>
@@ -141,6 +134,7 @@
             <groupId>org.apache.maven.plugins</groupId>
             <artifactId>maven-surefire-plugin</artifactId>
             <configuration>
+               <groups>functional,unit,arquillian</groups>
                <parallel>none</parallel>
             </configuration>
          </plugin>
@@ -225,7 +219,6 @@
             <dependency>
                <groupId>org.slf4j</groupId>
                <artifactId>slf4j-jdk14</artifactId>
-               <version>${version.slf4j.weld}</version>
                <scope>test</scope>
             </dependency>
          </dependencies>
