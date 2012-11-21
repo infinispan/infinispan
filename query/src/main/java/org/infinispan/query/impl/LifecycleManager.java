@@ -31,6 +31,7 @@ import org.hibernate.search.jmx.StatisticsInfo;
 import org.hibernate.search.spi.SearchFactoryBuilder;
 import org.hibernate.search.spi.SearchFactoryIntegrator;
 import org.hibernate.search.stat.Statistics;
+import org.infinispan.AdvancedCache;
 import org.infinispan.Cache;
 import org.infinispan.CacheException;
 import org.infinispan.configuration.cache.Configuration;
@@ -41,18 +42,23 @@ import org.infinispan.configuration.cache.InterceptorConfigurationBuilder;
 import org.infinispan.configuration.global.GlobalConfiguration;
 import org.infinispan.factories.ComponentRegistry;
 import org.infinispan.factories.GlobalComponentRegistry;
+import org.infinispan.factories.components.ComponentMetadataRepo;
+import org.infinispan.factories.components.ManageableComponentMetadata;
 import org.infinispan.interceptors.InterceptorChain;
 import org.infinispan.interceptors.locking.NonTransactionalLockingInterceptor;
 import org.infinispan.interceptors.locking.OptimisticLockingInterceptor;
 import org.infinispan.interceptors.locking.PessimisticLockingInterceptor;
 import org.infinispan.jmx.JmxUtil;
+import org.infinispan.jmx.ResourceDMBean;
 import org.infinispan.lifecycle.AbstractModuleLifecycle;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.query.CommandInitializer;
+import org.infinispan.query.MassIndexer;
 import org.infinispan.query.backend.LocalQueryInterceptor;
 import org.infinispan.query.backend.QueryInterceptor;
 import org.infinispan.query.backend.SearchableCacheConfiguration;
 import org.infinispan.query.clustered.QueryBox;
+import org.infinispan.query.impl.massindex.MapReduceMassIndexer;
 import org.infinispan.query.logging.Log;
 import org.infinispan.transaction.LockingMode;
 import org.infinispan.util.logging.LogFactory;
@@ -70,13 +76,19 @@ public class LifecycleManager extends AbstractModuleLifecycle {
    
    private static final Log log = LogFactory.getLog(LifecycleManager.class, Log.class);
    
-   private final Map<String,SearchFactoryIntegrator> searchFactoriesToShutdown = new TreeMap<String,SearchFactoryIntegrator>();
+   private final Map<String, SearchFactoryIntegrator> searchFactoriesToShutdown = new TreeMap<String,SearchFactoryIntegrator>();
 
    private static final Object REMOVED_REGISTRY_COMPONENT = new Object();
 
-   private ObjectName statsObjName;
-
    private MBeanServer mbeanServer;
+
+   private ComponentMetadataRepo metadataRepo;
+
+   @Override
+   public void cacheManagerStarting(
+         GlobalComponentRegistry gcr, GlobalConfiguration globalCfg) {
+      metadataRepo = gcr.getComponentMetadataRepo();
+   }
 
    /**
     * Registers the Search interceptor in the cache before it gets started
@@ -87,9 +99,6 @@ public class LifecycleManager extends AbstractModuleLifecycle {
          log.registeringQueryInterceptor();
          SearchFactoryIntegrator searchFactory = getSearchFactory(cfg.indexing().properties(), cr);
          createQueryInterceptorIfNeeded(cr, cfg, searchFactory);
-
-         // Register Hibernate Search MBeans
-         registerHibernateSearchMBeans(searchFactory, cr, cfg, cacheName);
       }
    }
 
@@ -133,30 +142,6 @@ public class LifecycleManager extends AbstractModuleLifecycle {
       }
    }
 
-   private void registerHibernateSearchMBeans(SearchFactoryIntegrator sf,
-         ComponentRegistry cr, Configuration cfg, String cacheName) {
-      // Resolve MBean server instance
-      GlobalConfiguration globalCfg =
-            cr.getGlobalComponentRegistry().getGlobalConfiguration();
-      mbeanServer = JmxUtil.lookupMBeanServer(globalCfg);
-
-      // Register statistics MBean, but only enable if Infinispan config says so
-      String queryStatsGroupName = "type=Query,name=" +
-            ObjectName.quote(cacheName) + ",component=Statistics";
-      String jmxDomain = JmxUtil.buildJmxDomain(
-            globalCfg, mbeanServer, queryStatsGroupName);
-      Statistics stats = sf.getStatistics();
-      stats.setStatisticsEnabled(cfg.jmxStatistics().enabled());
-
-      try {
-         statsObjName = new ObjectName(jmxDomain + ":" + queryStatsGroupName);
-         JmxUtil.registerMBean(new StatisticsInfo(stats), statsObjName, mbeanServer);
-      } catch (Exception e) {
-         throw new CacheException(
-               "Unable to register query module statistics mbean", e);
-      }
-   }
-
    @Override
    public void cacheStarted(ComponentRegistry cr, String cacheName) {
       Configuration configuration = cr.getComponent(Configuration.class);
@@ -179,6 +164,52 @@ public class LifecycleManager extends AbstractModuleLifecycle {
       QueryBox queryBox = new QueryBox();
       queryBox.setCache(cache.getAdvancedCache());
       cr.registerComponent(queryBox, QueryBox.class);
+
+      // Register query mbeans
+      registerQueryMBeans(cache.getAdvancedCache(), cr, cacheName);
+   }
+
+   private void registerQueryMBeans(AdvancedCache cache,
+         ComponentRegistry cr, String cacheName) {
+      Configuration cfg = cache.getCacheConfiguration();
+      SearchFactoryIntegrator sf = getSearchFactory(
+            cfg.indexing().properties(), cr);
+
+      // Resolve MBean server instance
+      GlobalConfiguration globalCfg =
+            cr.getGlobalComponentRegistry().getGlobalConfiguration();
+      mbeanServer = JmxUtil.lookupMBeanServer(globalCfg);
+
+      // Resolve jmx domain to use for query mbeans
+      String queryGroupName = "type=Query,name=" + ObjectName.quote(cacheName);
+      String jmxDomain = JmxUtil.buildJmxDomain(globalCfg, mbeanServer, queryGroupName);
+
+      // Register statistics MBean, but only enable if Infinispan config says so
+      Statistics stats = sf.getStatistics();
+      stats.setStatisticsEnabled(cfg.jmxStatistics().enabled());
+      try {
+         ObjectName statsObjName = new ObjectName(
+               jmxDomain + ":" + queryGroupName + ",component=Statistics");
+         JmxUtil.registerMBean(new StatisticsInfo(stats), statsObjName, mbeanServer);
+      } catch (Exception e) {
+         throw new CacheException(
+               "Unable to register query module statistics mbean", e);
+      }
+
+      // Register mass indexer MBean, picking metadata from repo
+      ManageableComponentMetadata metadata = metadataRepo
+            .findComponentMetadata(MassIndexer.class)
+            .toManageableComponentMetadata();
+      try {
+         // TODO: MassIndexer should be some kind of query cache component?
+         MapReduceMassIndexer maxIndexer = new MapReduceMassIndexer(cache, sf);
+         ResourceDMBean mbean = new ResourceDMBean(maxIndexer, metadata);
+         ObjectName massIndexerObjName = new ObjectName(jmxDomain + ":"
+               + queryGroupName+ ",component=" + metadata.getJmxObjectName());
+         JmxUtil.registerMBean(mbean, massIndexerObjName, mbeanServer);
+      } catch (Exception e) {
+         throw new CacheException("Unable to create ", e);
+      }
    }
 
    private boolean verifyChainContainsQueryInterceptor(ComponentRegistry cr) {
@@ -215,15 +246,11 @@ public class LifecycleManager extends AbstractModuleLifecycle {
       }
 
       // Unregister MBeans
-      if (mbeanServer != null && statsObjName != null) {
-         try {
-            JmxUtil.unregisterMBean(statsObjName, mbeanServer);
-         } catch (Exception e) {
-            throw new CacheException(
-                  "Failure unregistering query module mbeans", e);
-         }
+      if (mbeanServer != null) {
+         String queryMBeanFilter = "*:type=Query,name="
+               + ObjectName.quote(cacheName) + ",*";
+         JmxUtil.unregisterMBeans(queryMBeanFilter, mbeanServer);
       }
-
    }
    
    @Override

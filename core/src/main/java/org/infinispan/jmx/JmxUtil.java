@@ -31,7 +31,9 @@ import org.infinispan.util.logging.LogFactory;
 import javax.management.InstanceAlreadyExistsException;
 import javax.management.MBeanServer;
 import javax.management.MalformedObjectNameException;
+import javax.management.ObjectInstance;
 import javax.management.ObjectName;
+import java.util.Set;
 
 /**
  * Class containing JMX related utility methods.
@@ -109,6 +111,31 @@ public class JmxUtil {
       if (mBeanServer.isRegistered(objectName)) {
          mBeanServer.unregisterMBean(objectName);
          log.tracef("Unregistered %s", objectName);
+      }
+   }
+
+   /**
+    * Unregister all mbeans whose object names match a given filter.
+    *
+    * @param filter ObjectName-style formatted filter
+    * @param mBeanServer mbean server from which to unregister mbeans
+    * @return number of mbeans unregistered
+    */
+   public static int unregisterMBeans(String filter, MBeanServer mBeanServer) {
+      try {
+         ObjectName filterObjName = new ObjectName(filter);
+         Set<ObjectInstance> mbeans = mBeanServer.queryMBeans(filterObjName, null);
+         for (ObjectInstance mbean : mbeans) {
+            ObjectName name = mbean.getObjectName();
+            if (log.isTraceEnabled())
+               log.trace("Unregistering mbean with name: " + name);
+            mBeanServer.unregisterMBean(name);
+         }
+
+         return mbeans.size();
+      } catch (Exception e) {
+         throw new CacheException(
+               "Unable to register mbeans with filter=" + filter, e);
       }
    }
 
