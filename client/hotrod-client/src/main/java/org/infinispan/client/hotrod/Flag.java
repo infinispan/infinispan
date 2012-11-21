@@ -34,6 +34,12 @@ import java.util.Map;
  *                                      the previous value associated with the key.  By applying this flag, this default
  *                                      behavior is overridden for the scope of a single invocation, and the previous
  *                                      existing value is returned.</li>
+ *    <li>{@link #DEFAULT_LIFESPAN}     This flag can either be used as a request flag during a put operation to mean
+ *                                      that the default server lifespan should be applied or as a response flag meaning that
+ *                                      the return entry has a default lifespan value</li>
+ *    <li>{@link #DEFAULT_MAXIDLE}      This flag can either be used as a request flag during a put operation to mean
+ *                                      that the default server maxIdle should be applied or as a response flag meaning that
+ *                                      the return entry has a default maxIdle value</li>
  * </ul>
  *
  * @author Mircea.Markus@jboss.com
@@ -48,7 +54,20 @@ public enum Flag {
     * By applying this flag, this default behavior is overridden for the scope of a single invocation, and the previous
     * existing value is returned.
     */
-   FORCE_RETURN_VALUE(0x0001);
+   FORCE_RETURN_VALUE(0x0001),
+   /**
+    * This flag can either be used as a request flag during a put operation to mean that the default
+    * server lifespan should be applied or as a response flag meaning that the return entry has a
+    * default lifespan value
+    */
+   DEFAULT_LIFESPAN(0x0002),
+   /**
+    * This flag can either be used as a request flag during a put operation to mean that the default
+    * server maxIdle should be applied or as a response flag meaning that the return entry has a
+    * default maxIdle value
+    */
+   DEFAULT_MAXIDLE(0x0004)
+   ;
 
    private int flagInt;
 

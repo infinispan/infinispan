@@ -67,8 +67,7 @@ class ResponseWithPrevious(override val version: Byte, override val messageId: L
 
 class GetResponse(override val version: Byte, override val messageId: Long, override val cacheName: String, override val clientIntel: Short,
                   override val operation: OperationResponse, override val status: OperationStatus,
-                  override val topologyId: Int,
-                  val data: Option[Array[Byte]])
+                  override val topologyId: Int, val data: Option[Array[Byte]])
       extends Response(version, messageId, cacheName, clientIntel, operation, status, topologyId) {
    override def toString = {
       new StringBuilder().append("GetResponse").append("{")

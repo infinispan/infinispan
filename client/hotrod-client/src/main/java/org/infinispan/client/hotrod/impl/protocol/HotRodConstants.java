@@ -37,6 +37,7 @@ public interface HotRodConstants {
 
    static final byte VERSION_10 = 10;
    static final byte VERSION_11 = 11;
+   static final byte VERSION_12 = 12;
 
    //requests
    static final byte PUT_REQUEST = 0x01;
@@ -86,6 +87,6 @@ public interface HotRodConstants {
    static final byte CLIENT_INTELLIGENCE_TOPOLOGY_AWARE = 0x02;
    static final byte CLIENT_INTELLIGENCE_HASH_DISTRIBUTION_AWARE = 0x03;
    Charset HOTROD_STRING_CHARSET = Charset.forName("UTF-8");
-   
+
    static final byte[] DEFAULT_CACHE_NAME_BYTES = new byte[]{};
 }
