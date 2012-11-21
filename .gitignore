@@ -26,6 +26,7 @@ classes
 PutObjectStoreDirHere
 /query/person
 ObjectStore
+.cache
 # generated rhq plugin xml
 rhq-plugin.xml
 # Compiled python files

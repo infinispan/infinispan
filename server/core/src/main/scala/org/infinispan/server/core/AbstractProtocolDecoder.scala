@@ -45,7 +45,7 @@ import org.jboss.netty.util.CharsetUtil
  * @since 4.1
  */
 abstract class AbstractProtocolDecoder[K, V <: CacheValue](transport: NettyTransport)
-      extends ReplayingDecoder[DecoderState](DECODE_HEADER, true) with Log {
+      extends ReplayingDecoder[DecoderState](DECODE_HEADER, true) with ServerConstants with Log {
    import AbstractProtocolDecoder._
 
    type SuitableParameters <: RequestParameters
@@ -197,9 +197,14 @@ abstract class AbstractProtocolDecoder[K, V <: CacheValue](transport: NettyTrans
    private def put: AnyRef = {
       val v = createValue(generateVersion(cache))
       // Get an optimised cache in case we can make the operation more efficient
-      val prev = getOptimizedCache(cache).put(key, v,
-         toMillis(params.lifespan), DefaultTimeUnit,
-         toMillis(params.maxIdle), DefaultTimeUnit)
+      val prev = (params.lifespan, params.maxIdle) match {
+         case (EXPIRATION_DEFAULT, EXPIRATION_DEFAULT) => getOptimizedCache(cache).put(key, v)
+         case (_, EXPIRATION_DEFAULT) => getOptimizedCache(cache).put(key, v, toMillis(params.lifespan), DefaultTimeUnit)
+         case (_, _) => getOptimizedCache(cache).put(key, v,
+               toMillis(params.lifespan), DefaultTimeUnit,
+               toMillis(params.maxIdle), DefaultTimeUnit)
+      }
+
       createSuccessResponse(prev)
    }
 
@@ -209,9 +214,13 @@ abstract class AbstractProtocolDecoder[K, V <: CacheValue](transport: NettyTrans
       var prev = cache.get(key)
       if (prev == null) { // Generate new version only if key not present
          val v = createValue(generateVersion(cache))
-         prev = cache.putIfAbsent(key, v,
-            toMillis(params.lifespan), DefaultTimeUnit,
-            toMillis(params.maxIdle), DefaultTimeUnit)
+         prev = (params.lifespan, params.maxIdle) match {
+            case (EXPIRATION_DEFAULT, EXPIRATION_DEFAULT) => getOptimizedCache(cache).putIfAbsent(key, v)
+            case (_, EXPIRATION_DEFAULT) => getOptimizedCache(cache).putIfAbsent(key, v, toMillis(params.lifespan), DefaultTimeUnit)
+            case (_, _) => getOptimizedCache(cache).putIfAbsent(key, v,
+                  toMillis(params.lifespan), DefaultTimeUnit,
+                  toMillis(params.maxIdle), DefaultTimeUnit)
+         }
       }
       if (prev == null)
          createSuccessResponse(prev)
@@ -223,9 +232,13 @@ abstract class AbstractProtocolDecoder[K, V <: CacheValue](transport: NettyTrans
       var prev = cache.get(key)
       if (prev != null) { // Generate new version only if key present
          val v = createValue(generateVersion(cache))
-         prev = cache.replace(key, v,
-            toMillis(params.lifespan), DefaultTimeUnit,
-            toMillis(params.maxIdle), DefaultTimeUnit)
+         prev = (params.lifespan, params.maxIdle) match {
+            case (EXPIRATION_DEFAULT, EXPIRATION_DEFAULT) => cache.replace(key, v)
+            case (_, EXPIRATION_DEFAULT) => cache.replace(key, v, toMillis(params.lifespan), DefaultTimeUnit)
+            case (_, _) => cache.replace(key, v,
+                  toMillis(params.lifespan), DefaultTimeUnit,
+                  toMillis(params.maxIdle), DefaultTimeUnit)
+         }
       }
       if (prev != null)
          createSuccessResponse(prev)
@@ -239,9 +252,13 @@ abstract class AbstractProtocolDecoder[K, V <: CacheValue](transport: NettyTrans
          if (prev.version == params.streamVersion) {
             // Generate new version only if key present and version has not changed, otherwise it's wasteful
             val v = createValue(generateVersion(cache))
-            val replaced = cache.replace(key, prev, v,
-                  toMillis(params.lifespan), DefaultTimeUnit,
-                  toMillis(params.maxIdle), DefaultTimeUnit)
+            val replaced = (params.lifespan, params.maxIdle) match {
+               case (EXPIRATION_DEFAULT, EXPIRATION_DEFAULT) => cache.replace(key, prev, v)
+               case (_, EXPIRATION_DEFAULT) => cache.replace(key, prev, v, toMillis(params.lifespan), DefaultTimeUnit)
+               case (_, _) => cache.replace(key, prev, v,
+                     toMillis(params.lifespan), DefaultTimeUnit,
+                     toMillis(params.maxIdle), DefaultTimeUnit)
+            }
             if (replaced)
                createSuccessResponse(prev)
             else

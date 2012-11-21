@@ -45,7 +45,7 @@ import util.concurrent.{TimeUnit, Executors}
 
 /**
  * A Netty based transport.
- * 
+ *
  * @author Galder Zamarreño
  * @since 4.1
  */
@@ -54,7 +54,22 @@ class NettyTransport(server: ProtocolServer, encoder: ChannelDownstreamHandler,
                      idleTimeout: Int, threadNamePrefix: String, tcpNoDelay: Boolean,
                      sendBufSize: Int, recvBufSize: Int, cacheManager: EmbeddedCacheManager)
         extends Transport with Log {
-
+   ThreadRenamingRunnable.setThreadNameDeterminer(new ThreadNameDeterminer {
+         override def determineThreadName(currentThreadName: String, proposedThreadName: String): String = {
+         val index = proposedThreadName.indexWhere(_ == '#')
+         val typeInFix =
+            if (proposedThreadName contains "server worker") "ServerWorker-"
+            else if (proposedThreadName contains "server boss") "ServerMaster-"
+            else if (proposedThreadName contains "client worker") "ClientWorker-"
+            else "ClientMaster-"
+         // Set thread name to be: <prefix><ServerWorker-|ServerMaster-|ClientWorker-|ClientMaster-><number>
+         val name = threadNamePrefix + typeInFix + proposedThreadName.substring(index + 1, proposedThreadName.length)
+         if (isTrace)
+            trace("Thread name will be %s, with current thread name being %s and proposed name being '%s'",
+               name, Thread.currentThread, proposedThreadName)
+         name
+      }
+   })
    private val serverChannels = new DefaultChannelGroup(threadNamePrefix + "-Channels")
    val acceptedChannels = new DefaultChannelGroup(threadNamePrefix + "-Accepted")
    private val pipeline =
@@ -73,22 +88,6 @@ class NettyTransport(server: ProtocolServer, encoder: ChannelDownstreamHandler,
       cacheManager.getCacheManagerConfiguration.globalJmxStatistics().enabled()
 
    override def start() {
-      ThreadRenamingRunnable.setThreadNameDeterminer(new ThreadNameDeterminer {
-         override def determineThreadName(currentThreadName: String, proposedThreadName: String): String = {
-            val index = proposedThreadName.indexWhere(_ == '#')
-            val typeInFix =
-               if (proposedThreadName contains "server worker") "ServerWorker-"
-               else if (proposedThreadName contains "server boss") "ServerMaster-"
-               else if (proposedThreadName contains "client worker") "ClientWorker-"
-               else "ClientMaster-"
-            // Set thread name to be: <prefix><ServerWorker-|ServerMaster-|ClientWorker-|ClientMaster-><number>
-            val name = threadNamePrefix + typeInFix + proposedThreadName.substring(index + 1, proposedThreadName.length)
-            if (isTrace)
-               trace("Thread name will be %s, with current thread name being %s and proposed name being '%s'",
-                  name, Thread.currentThread, proposedThreadName)
-            name
-         }
-      })
       // Make netty use log4j, otherwise it goes to JDK logging.
       if (isLog4jAvailable)
          InternalLoggerFactory.setDefaultFactory(new Log4JLoggerFactory)
@@ -104,7 +103,7 @@ class NettyTransport(server: ProtocolServer, encoder: ChannelDownstreamHandler,
       val ch = bootstrap.bind(address)
       serverChannels.add(ch)
    }
-   
+
    private def isLog4jAvailable: Boolean = {
       try {
          Util.loadClassStrict("org.apache.log4j.Logger",
