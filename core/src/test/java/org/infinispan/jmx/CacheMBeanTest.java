@@ -23,13 +23,11 @@
 package org.infinispan.jmx;
 
 import java.lang.reflect.Method;
-import java.util.Arrays;
 
 import javax.management.InstanceNotFoundException;
 import javax.management.MBeanServer;
 import javax.management.ObjectName;
 
-import org.infinispan.Cache;
 import org.infinispan.CacheException;
 import org.infinispan.lifecycle.ComponentStatus;
 import org.infinispan.manager.CacheContainer;
