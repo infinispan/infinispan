@@ -22,6 +22,7 @@
  */
 package org.infinispan.distexec;
 
+import java.util.Comparator;
 import java.util.List;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.Callable;
@@ -29,24 +30,24 @@ import java.util.concurrent.CompletionService;
 import java.util.concurrent.ExecutorCompletionService;
 import java.util.concurrent.Future;
 import java.util.concurrent.LinkedBlockingQueue;
+import java.util.concurrent.PriorityBlockingQueue;
 import java.util.concurrent.TimeUnit;
 
 import org.infinispan.util.concurrent.FutureListener;
 import org.infinispan.util.concurrent.NotifyingFuture;
 
 /**
- * A {@link CompletionService} that uses a supplied {@link DistributedExecutorService}
- * to execute tasks.  This class arranges that submitted tasks are,
- * upon completion, placed on a queue accessible using <tt>take</tt>.
- * The class is lightweight enough to be suitable for transient use
+ * A {@link CompletionService} that uses a supplied {@link DistributedExecutorService} to execute
+ * tasks. This class arranges that submitted tasks are, upon completion, placed on a queue
+ * accessible using <tt>take</tt>. The class is lightweight enough to be suitable for transient use
  * when processing groups of tasks.
  * <p>
- * This class must be used instead of a {@link ExecutorCompletionService}
- * provided from java.util.concurrent package.  The 
- * {@link ExecutorCompletionService} may not be used since it requires the use
- * of a non serializable RunnableFuture object.  Since a ExecutionService
- * may only be used with serializable request objects, this class must be used
- * instead.
+ * This class must be used instead of a {@link ExecutorCompletionService} provided from
+ * java.util.concurrent package. The {@link ExecutorCompletionService} may not be used since it
+ * requires the use of a non serializable RunnableFuture object.
+ * 
+ * @author William Burns
+ * @author Vladimir Blagojevic
  */
 public class DistributedExecutionCompletionService<V> implements CompletionService<V> {
     protected final DistributedExecutorService executor;
@@ -63,48 +64,38 @@ public class DistributedExecutionCompletionService<V> implements CompletionServi
         
     }
 
-    /**
-     * Creates an ExecutorCompletionService using the supplied
-     * executor for base task execution and a
-     * {@link LinkedBlockingQueue} as a completion queue.
-     *
-     * @param executor the executor to use
-     * @throws NullPointerException if executor is <tt>null</tt>
-     */
+   /**
+    * Creates an ExecutorCompletionService using the supplied executor for base task execution and a
+    * {@link LinkedBlockingQueue} as a completion queue.
+    * 
+    * @param executor
+    *           the executor to use
+    * @throws NullPointerException
+    *            if executor is <tt>null</tt>
+    */
     public DistributedExecutionCompletionService(DistributedExecutorService executor) {
-        this(executor, null, null);
-    }
-
-    /**
-     * Creates an ExecutorCompletionService using the supplied
-     * executor for base task execution and the supplied queue as its
-     * completion queue.
-     *
-     * @param executor the executor to use
-     * @param completionQueue the queue to use as the completion queue
-     * normally one dedicated for use by this service
-     * @throws NullPointerException if executor is <tt>null</tt>
-     */
-    public DistributedExecutionCompletionService(DistributedExecutorService executor,
-                                     BlockingQueue<NotifyingFuture<V>> completionQueue) {
-        this(executor, completionQueue, null);
+        this(executor, null);
     }
     
-    /**
-     * This constructor is here if someone wants to override this class and 
-     * provide their own QueueingListener to possibly listen in on futures
-     * being finished
-     * @param executor the executor to use
-     * @param completionQueue the queue to use as the completion queue
-     * normally one dedicated for use by this service
-     * @param listener the listener to notify.  To work properly this listner
-     *        should at minimum call the super.futureDone or else this
-     *        completion service may not work correctly.
-     * @throws NullPointerException if executor is <tt>null</tt>
-     */
-    protected DistributedExecutionCompletionService(DistributedExecutorService executor,
-                                     BlockingQueue<NotifyingFuture<V>> completionQueue,
-                                     QueueingListener listener) {
+   /**
+    * Creates an ExecutorCompletionService using the supplied executor for base task execution and
+    * the supplied queue as its completion queue.
+    * 
+    * Note: {@link PriorityBlockingQueue} for completionQueue can only be used with accompanying
+    * {@link Comparator} as our internal implementation of {@link Future} for each subtask does not
+    * implement Comparable interface. Note that we do not provide any guarantees about which
+    * particular internal class implements Future interface and these APIs will remain internal.
+    * 
+    * @param executor
+    *           the executor to use
+    * @param completionQueue
+    *           the queue to use as the completion queue normally one dedicated for use by this
+    *           service
+    * @throws NullPointerException
+    *            if executor is <tt>null</tt>
+    */
+    public DistributedExecutionCompletionService(DistributedExecutorService executor,
+                                     BlockingQueue<NotifyingFuture<V>> completionQueue) {
         if (executor == null)
             throw new NullPointerException();
         this.executor = executor;
@@ -115,13 +106,7 @@ public class DistributedExecutionCompletionService<V> implements CompletionServi
         else {
             this.completionQueue = completionQueue;
         }
-        
-        if (listener == null) {
-            this.listener = new QueueingListener();
-        }
-        else {
-            this.listener = listener;
-        }
+        this.listener = new QueueingListener();
     }
 
     /**
