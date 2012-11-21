@@ -79,16 +79,16 @@ public class JmxUtil {
    /**
     * Register the given dynamic JMX MBean.
     *
-    * @param dynamicMBean Dynamic MBean to register
+    * @param mbean Dynamic MBean to register
     * @param objectName {@link javax.management.ObjectName} under which to register the MBean.
     * @param mBeanServer {@link javax.management.MBeanServer} where to store the MBean.
     * @throws Exception If registration could not be completed.
     */
-   public static void registerMBean(ResourceDMBean dynamicMBean, ObjectName objectName, MBeanServer mBeanServer) throws Exception {
+   public static void registerMBean(Object mbean, ObjectName objectName, MBeanServer mBeanServer) throws Exception {
       if (!mBeanServer.isRegistered(objectName)) {
          try {
-            mBeanServer.registerMBean(dynamicMBean, objectName);
-            log.tracef("Registered %s under %s", dynamicMBean, objectName);
+            mBeanServer.registerMBean(mbean, objectName);
+            log.tracef("Registered %s under %s", mbean, objectName);
          } catch (InstanceAlreadyExistsException e) {
             //this might happen if multiple instances are trying to concurrently register same objectName
             log.couldNotRegisterObjectName(objectName, e);
