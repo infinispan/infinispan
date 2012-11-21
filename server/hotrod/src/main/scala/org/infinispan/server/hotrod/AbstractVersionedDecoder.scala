@@ -34,7 +34,7 @@ import org.infinispan.server.core.transport.NettyTransport
  *
  * @author Galder Zamarreño
  * @since 4.1
- */   
+ */
 abstract class AbstractVersionedDecoder {
 
    /**
