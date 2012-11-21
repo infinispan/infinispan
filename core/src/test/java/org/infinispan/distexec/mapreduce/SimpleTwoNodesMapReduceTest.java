@@ -26,6 +26,7 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.concurrent.Callable;
+import java.util.concurrent.CancellationException;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
@@ -69,6 +70,7 @@ public class SimpleTwoNodesMapReduceTest extends BaseWordCountMapReduceTest {
     * executing subclasses of BaseWordCountMapReduceTest in our testsuite
     * 
     */
+   @Test(expectedExceptions={CancellationException.class})
    public void testInvokeMapperCancellation() throws Exception {
       MapReduceTask<String, String, String, Integer> task = invokeMapReduce(null,
                new LatchMapper(), new WordCountReducer());
@@ -102,6 +104,9 @@ public class SimpleTwoNodesMapReduceTest extends BaseWordCountMapReduceTest {
       }
       assert mapperCancelled : "Mapper not cancelled, root cause " + root;
       assert cancelled.get();
+      
+      //now call get() again and it should throw CancellationException
+      future.get();
    }
    
    static class LatchMapper implements Mapper<String, String, String, Integer> {

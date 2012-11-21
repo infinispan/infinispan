@@ -62,6 +62,7 @@ import java.util.Map.Entry;
 import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.Callable;
+import java.util.concurrent.CancellationException;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 import java.util.concurrent.FutureTask;
@@ -175,7 +176,12 @@ public class MapReduceTask<KIn, VIn, KOut, VOut> {
 
    /**
     * Create a new MapReduceTask given a master cache node. All distributed task executions will be
-    * initiated from this cache node.
+    * initiated from this cache node. This task will by default only use distributed map phase while
+    * reduction will be executed on task originating Infinispan node.
+    * <p>
+    * 
+    * Large and data intensive tasks whose reduction phase would exceed working memory of one
+    * Infinispan node should use distributed reduce phase
     * 
     * @param masterCacheNode
     *           cache node initiating map reduce task
@@ -190,7 +196,9 @@ public class MapReduceTask<KIn, VIn, KOut, VOut> {
     * 
     * @param masterCacheNode
     *           cache node initiating map reduce task
-    *      
+    * @param distributeReducePhase
+    *           if true this task will use distributed reduce phase execution
+    * 
     */
    public MapReduceTask(Cache<KIn, VIn> masterCacheNode, boolean distributeReducePhase) {
       this(masterCacheNode, distributeReducePhase, true);
@@ -203,7 +211,13 @@ public class MapReduceTask<KIn, VIn, KOut, VOut> {
     * 
     * @param masterCacheNode
     *           cache node initiating map reduce task
-    *        
+    * @param distributeReducePhase
+    *           if true this task will use distributed reduce phase execution
+    * @param useIntermediateSharedCache
+    *           if true this tasks will share intermediate value cache with other executing
+    *           MapReduceTasks on the grid. Otherwise, if false, this task will use its own
+    *           dedicated cache for intermediate values
+    * 
     */
    public MapReduceTask(Cache<KIn, VIn> masterCacheNode, boolean distributeReducePhase, boolean useIntermediateSharedCache) {
       if (masterCacheNode == null)
@@ -723,6 +737,8 @@ public class MapReduceTask<KIn, VIn, KOut, VOut> {
 
       @Override
       public R get() throws InterruptedException, ExecutionException {
+         if (isCancelled())
+            throw new CancellationException("MapReduceTask already cancelled");
          try {
             return call.call();
          } catch (Exception e) {
@@ -734,26 +750,33 @@ public class MapReduceTask<KIn, VIn, KOut, VOut> {
 
       @Override
       public boolean cancel(boolean mayInterruptIfRunning) {
-         RpcManager rpc = cache.getRpcManager();
-         synchronized (cancellableTasks) {
-            for (CancellableTaskPart task : cancellableTasks) {
-               boolean sendingToSelf = task.getExecutionTarget().equals(
-                        rpc.getTransport().getAddress());
-               CancelCommand cc = buildCancelCommand(task);
-               if (sendingToSelf) {
-                  cc.init(cancellationService);
-                  try {
-                     cc.perform(null);
-                  } catch (Throwable e) {
-                     log.couldNotExecuteCancellationLocally(e.getLocalizedMessage());
+         if (!isCancelled()) {
+            RpcManager rpc = cache.getRpcManager();
+            synchronized (cancellableTasks) {
+               for (CancellableTaskPart task : cancellableTasks) {
+                  boolean sendingToSelf = task.getExecutionTarget().equals(
+                           rpc.getTransport().getAddress());
+                  CancelCommand cc = buildCancelCommand(task);
+                  if (sendingToSelf) {
+                     cc.init(cancellationService);
+                     try {
+                        cc.perform(null);
+                     } catch (Throwable e) {
+                        log.couldNotExecuteCancellationLocally(e.getLocalizedMessage());
+                     }
+                  } else {
+                     rpc.invokeRemotely(Collections.singletonList(task.getExecutionTarget()), cc,
+                              true);
                   }
-               } else {
-                  rpc.invokeRemotely(Collections.singletonList(task.getExecutionTarget()), cc, true);
+                  cancelled = true;
+                  done = true;
                }
-               cancelled = true;
             }
+            return cancelled;
+         } else {
+            //already cancelled 
+            return false;
          }
-         return cancelled;
       }
 
       @Override

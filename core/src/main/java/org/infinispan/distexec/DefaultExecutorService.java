@@ -41,6 +41,7 @@ import java.util.Random;
 import java.util.Set;
 import java.util.concurrent.AbstractExecutorService;
 import java.util.concurrent.Callable;
+import java.util.concurrent.CancellationException;
 import java.util.concurrent.CompletionService;
 import java.util.concurrent.CopyOnWriteArraySet;
 import java.util.concurrent.ExecutionException;
@@ -555,7 +556,7 @@ public class DefaultExecutorService extends AbstractExecutorService implements D
          throw new IllegalStateException("DistributedTaskExecutionPolicy "
                   + task.getTaskExecutionPolicy() + " for task " + task
                   + " returned invalid keysToExecutionNodes " + nodesKeysMap
-                  + " execution policy plan for a given input " + input);
+                  + " execution policy plan for a given input " + Arrays.toString(input));
       }
    }
 
@@ -681,6 +682,8 @@ public class DefaultExecutorService extends AbstractExecutorService implements D
       protected Address randomNode(List<Address> candidates, Address failedExecutionLocation){
          Random r = new Random();
          candidates.remove(failedExecutionLocation);
+         if (candidates.isEmpty())
+            throw new IllegalStateException("There are no candidates for failover: " + candidates);
          int tIndex = r.nextInt(candidates.size());
          return candidates.get(tIndex);
       }
@@ -859,21 +862,26 @@ public class DefaultExecutorService extends AbstractExecutorService implements D
 
       @Override
       public boolean cancel(boolean mayInterruptIfRunning) {
-         boolean sendToSelf = getExecutionTarget().equals(getAddress());
-         CancelCommand ccc = factory.buildCancelCommandCommand(distCommand.getUUID());
-         if (sendToSelf) {
-            ccc.init(cancellationService);
-            try {
-               ccc.perform(null);
-            } catch (Throwable e) {
-               log.couldNotExecuteCancellationLocally(e.getLocalizedMessage());
+         if (!isCancelled()) {
+            boolean sendToSelf = getExecutionTarget().equals(getAddress());
+            CancelCommand ccc = factory.buildCancelCommandCommand(distCommand.getUUID());
+            if (sendToSelf) {
+               ccc.init(cancellationService);
+               try {
+                  ccc.perform(null);
+               } catch (Throwable e) {
+                  log.couldNotExecuteCancellationLocally(e.getLocalizedMessage());
+               }
+            } else {
+               rpc.invokeRemotely(Collections.singletonList(getExecutionTarget()), ccc, true);
             }
+            cancelled = true;
+            done = true;
+            return cancelled;
          } else {
-            rpc.invokeRemotely(Collections.singletonList(getExecutionTarget()), ccc, true);
+            //already cancelled
+            return false;
          }
-         cancelled = true;
-         done = true;
-         return cancelled;
       }
 
       /**
@@ -908,6 +916,9 @@ public class DefaultExecutorService extends AbstractExecutorService implements D
       }
       
       private V innerGet(long timeout, TimeUnit unit) throws ExecutionException, TimeoutException {
+         if (isCancelled())
+            throw new CancellationException("Task already cancelled");
+         
          V response = null;
          try {
             if (timeout > 0) {

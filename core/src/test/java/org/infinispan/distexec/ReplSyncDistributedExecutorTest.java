@@ -26,6 +26,7 @@ import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.Callable;
+import java.util.concurrent.CancellationException;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
@@ -79,18 +80,13 @@ public class ReplSyncDistributedExecutorTest extends DistributedExecutorTest {
       });
       future.cancel(true);
       boolean taskCancelled = false;
-      Throwable root = null;
       try {
          future.get();
-      } catch (Exception e) {
-         root = e;
-         while (root.getCause() != null) {
-            root = root.getCause();
-         }
-         // task canceled with root exception being InterruptedException
-         taskCancelled = root.getClass().equals(InterruptedException.class);
+      } catch (Exception e) {         
+         taskCancelled = e instanceof CancellationException;
       }
-      assert taskCancelled : "Dist task not cancelled " + root;
+      assert taskCancelled : "Dist task not cancelled";
+      assert ReplSyncDistributedExecutorTestCancelCounter.get() >=2; //incremented means indeed canceled
       assert future.isCancelled();
       assert future.isDone();
    }
@@ -103,7 +99,11 @@ public class ReplSyncDistributedExecutorTest extends DistributedExecutorTest {
       public Integer call() throws Exception {
          CountDownLatch latch = new CountDownLatch(1);
          ReplSyncDistributedExecutorTestCancelCounter.incrementAndGet();
-         latch.await(5000, TimeUnit.MILLISECONDS);
+         try {
+            latch.await(5000, TimeUnit.MILLISECONDS);
+         } catch (InterruptedException e) {
+            ReplSyncDistributedExecutorTestCancelCounter.incrementAndGet();
+         }
          return 1;
       }
    }
