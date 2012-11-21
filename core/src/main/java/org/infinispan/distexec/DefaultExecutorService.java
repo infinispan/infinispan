@@ -41,6 +41,7 @@ import java.util.Random;
 import java.util.Set;
 import java.util.concurrent.AbstractExecutorService;
 import java.util.concurrent.Callable;
+import java.util.concurrent.CancellationException;
 import java.util.concurrent.CompletionService;
 import java.util.concurrent.CopyOnWriteArraySet;
 import java.util.concurrent.ExecutionException;
@@ -152,7 +153,7 @@ public class DefaultExecutorService extends AbstractExecutorService implements D
     *           Cache node initiating distributed task
     */
    public DefaultExecutorService(Cache masterCacheNode) {
-      this(masterCacheNode, Executors.newSingleThreadExecutor());
+      this(masterCacheNode, Executors.newSingleThreadExecutor(), true);
    }
 
    /**
@@ -160,8 +161,9 @@ public class DefaultExecutorService extends AbstractExecutorService implements D
     * parallel execution of tasks ran on this node. All distributed task executions will be
     * initiated from this Infinispan cache node.
     * <p>
-    * Note that DefaultExecutorService will shutdown client supplied localExecutorService once this
-    * DefaultExecutorService is shutdown
+    * Note that DefaultExecutorService will *not* shutdown client supplied localExecutorService once
+    * this DefaultExecutorService is shutdown. Lifecycle management of supplied ExecutorService
+    * is left to client providing it
     * 
     * Also note that client supplied ExecutorService should not execute tasks in the caller's thread
     * ( i.e rejectionHandler of {@link ThreadPoolExecutor} configured with {link
@@ -173,7 +175,7 @@ public class DefaultExecutorService extends AbstractExecutorService implements D
     *           ExecutorService to run local tasks
     */
    public DefaultExecutorService(Cache<?, ?> masterCacheNode, ExecutorService localExecutorService) {
-      this(masterCacheNode, localExecutorService, true);
+      this(masterCacheNode, localExecutorService, false);
    }
    
    /**
@@ -555,7 +557,7 @@ public class DefaultExecutorService extends AbstractExecutorService implements D
          throw new IllegalStateException("DistributedTaskExecutionPolicy "
                   + task.getTaskExecutionPolicy() + " for task " + task
                   + " returned invalid keysToExecutionNodes " + nodesKeysMap
-                  + " execution policy plan for a given input " + input);
+                  + " execution policy plan for a given input " + Arrays.toString(input));
       }
    }
 
@@ -681,6 +683,8 @@ public class DefaultExecutorService extends AbstractExecutorService implements D
       protected Address randomNode(List<Address> candidates, Address failedExecutionLocation){
          Random r = new Random();
          candidates.remove(failedExecutionLocation);
+         if (candidates.isEmpty())
+            throw new IllegalStateException("There are no candidates for failover: " + candidates);
          int tIndex = r.nextInt(candidates.size());
          return candidates.get(tIndex);
       }
@@ -859,21 +863,26 @@ public class DefaultExecutorService extends AbstractExecutorService implements D
 
       @Override
       public boolean cancel(boolean mayInterruptIfRunning) {
-         boolean sendToSelf = getExecutionTarget().equals(getAddress());
-         CancelCommand ccc = factory.buildCancelCommandCommand(distCommand.getUUID());
-         if (sendToSelf) {
-            ccc.init(cancellationService);
-            try {
-               ccc.perform(null);
-            } catch (Throwable e) {
-               log.couldNotExecuteCancellationLocally(e.getLocalizedMessage());
+         if (!isCancelled()) {
+            boolean sendToSelf = getExecutionTarget().equals(getAddress());
+            CancelCommand ccc = factory.buildCancelCommandCommand(distCommand.getUUID());
+            if (sendToSelf) {
+               ccc.init(cancellationService);
+               try {
+                  ccc.perform(null);
+               } catch (Throwable e) {
+                  log.couldNotExecuteCancellationLocally(e.getLocalizedMessage());
+               }
+            } else {
+               rpc.invokeRemotely(Collections.singletonList(getExecutionTarget()), ccc, true);
             }
+            cancelled = true;
+            done = true;
+            return cancelled;
          } else {
-            rpc.invokeRemotely(Collections.singletonList(getExecutionTarget()), ccc, true);
+            //already cancelled
+            return false;
          }
-         cancelled = true;
-         done = true;
-         return cancelled;
       }
 
       /**
@@ -908,6 +917,9 @@ public class DefaultExecutorService extends AbstractExecutorService implements D
       }
       
       private V innerGet(long timeout, TimeUnit unit) throws ExecutionException, TimeoutException {
+         if (isCancelled())
+            throw new CancellationException("Task already cancelled");
+         
          V response = null;
          try {
             if (timeout > 0) {
