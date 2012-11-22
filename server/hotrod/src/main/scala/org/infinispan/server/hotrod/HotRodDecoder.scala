@@ -77,7 +77,7 @@ class HotRodDecoder(cacheManager: EmbeddedCacheManager, transport: NettyTranspor
 
       try {
          val decoder = version match {
-            case VERSION_10 | VERSION_11 => Decoder10
+            case VERSION_10 | VERSION_11 | VERSION_12 => Decoder10
             case _ => throw new UnknownVersionException(
                "Unknown version:" + version, version, messageId)
          }
@@ -171,7 +171,7 @@ class HotRodDecoder(cacheManager: EmbeddedCacheManager, transport: NettyTranspor
          case c: ClosedChannelException => null
          case t: Throwable => {
             logErrorBeforeReadingRequest(t)
-            new ErrorResponse(0, 0, "", 1, ServerError, 0, t.toString)
+            new ErrorResponse(0, 0, "", 1, ServerError, 0, 0, t.toString)
          }
       }
    }
@@ -184,17 +184,17 @@ class HotRodDecoder(cacheManager: EmbeddedCacheManager, transport: NettyTranspor
          case i: InvalidMagicIdException => {
             logExceptionReported(i)
             (new HotRodException(new ErrorResponse(
-                  0, 0, "", 1, InvalidMagicOrMsgId, 0, i.toString), e), true)
+                  0, 0, "", 1, InvalidMagicOrMsgId, 0, 0, i.toString), e), true)
          }
          case e: HotRodUnknownOperationException => {
             logExceptionReported(e)
             (new HotRodException(new ErrorResponse(
-                  e.version, e.messageId, "", 1, UnknownOperation, 0, e.toString), e), true)
+                  e.version, e.messageId, "", 1, UnknownOperation, 0, 0, e.toString), e), true)
          }
          case u: UnknownVersionException => {
             logExceptionReported(u)
             (new HotRodException(new ErrorResponse(
-                  u.version, u.messageId, "", 1, UnknownVersion, 0, u.toString), e), true)
+                  u.version, u.messageId, "", 1, UnknownVersion, 0, 0, u.toString), e), true)
          }
          case r: RequestParsingException => {
             logExceptionReported(r)
@@ -204,7 +204,7 @@ class HotRodDecoder(cacheManager: EmbeddedCacheManager, transport: NettyTranspor
                else
                   "%s: %s".format(r.getMessage, r.getCause.toString)
             (new HotRodException(new ErrorResponse(
-                  r.version, r.messageId, "", 1, ParseError, 0, msg), e), true)
+                  r.version, r.messageId, "", 1, ParseError, 0, 0, msg), e), true)
          }
          case i: IllegalStateException => {
             // Some internal server code could throw this, so make sure it's logged
@@ -234,7 +234,7 @@ class HotRodHeader extends RequestHeader {
    var version: Byte = _
    var messageId: Long = _
    var cacheName: String = _
-   var flag: ProtocolFlag = _
+   var flag: Int = _
    var clientIntel: Short = _
    var topologyId: Int = _
    var decoder: AbstractVersionedDecoder = _

@@ -392,7 +392,7 @@ public class CacheImpl<K, V> extends CacheSupport<K, V> implements AdvancedCache
    public org.infinispan.config.Configuration getConfiguration() {
       return LegacyConfigurationAdaptor.adapt(config);
    }
-   
+
    @Override
    public Configuration getCacheConfiguration() {
       return config;
@@ -502,7 +502,7 @@ public class CacheImpl<K, V> extends CacheSupport<K, V> implements AdvancedCache
       LockControlCommand command = commandsFactory.buildLockControlCommand((Collection<Object>) keys, explicitFlags);
       return (Boolean) invoker.invoke(ctx, command);
    }
-   
+
    @Override
    public void applyDelta(K deltaAwareValueKey, Delta delta, Object... locksToAcquire) {
       if (locksToAcquire == null || locksToAcquire.length == 0) {
