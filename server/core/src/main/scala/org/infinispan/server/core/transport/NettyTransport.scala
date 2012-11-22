@@ -45,7 +45,7 @@ import util.concurrent.{TimeUnit, Executors}
 
 /**
  * A Netty based transport.
- * 
+ *
  * @author Galder Zamarreño
  * @since 4.1
  */
@@ -57,23 +57,7 @@ class NettyTransport(server: ProtocolServer, encoder: ChannelDownstreamHandler,
 
    private val serverChannels = new DefaultChannelGroup(threadNamePrefix + "-Channels")
    val acceptedChannels = new DefaultChannelGroup(threadNamePrefix + "-Accepted")
-   private val pipeline =
-      if (idleTimeout > 0)
-         new TimeoutEnabledChannelPipelineFactory(server, encoder, this, idleTimeout)
-      else // Idle timeout logic is disabled with -1 or 0 values
-         new NettyChannelPipelineFactory(server, encoder, this)
-
-   private val masterExecutor = Executors.newCachedThreadPool
-   private val workerExecutor = Executors.newCachedThreadPool
-   private val factory = new NioServerSocketChannelFactory(masterExecutor, workerExecutor, workerThreads)
-
-   private val totalBytesWritten, totalBytesRead = new AtomicLong
-   private val isTrace = isTraceEnabled
-   private val isGlobalStatsEnabled =
-      cacheManager.getCacheManagerConfiguration.globalJmxStatistics().enabled()
-
-   override def start() {
-      ThreadRenamingRunnable.setThreadNameDeterminer(new ThreadNameDeterminer {
+   ThreadRenamingRunnable.setThreadNameDeterminer(new ThreadNameDeterminer {
          override def determineThreadName(currentThreadName: String, proposedThreadName: String): String = {
             val index = proposedThreadName.indexWhere(_ == '#')
             val typeInFix =
@@ -89,6 +73,24 @@ class NettyTransport(server: ProtocolServer, encoder: ChannelDownstreamHandler,
             name
          }
       })
+   private val pipeline =
+      if (idleTimeout > 0)
+         new TimeoutEnabledChannelPipelineFactory(server, encoder, this, idleTimeout)
+      else // Idle timeout logic is disabled with -1 or 0 values
+         new NettyChannelPipelineFactory(server, encoder, this)
+
+   private val masterExecutor = Executors.newCachedThreadPool
+   private val workerExecutor = Executors.newCachedThreadPool
+   private val factory = new NioServerSocketChannelFactory(masterExecutor, workerExecutor, workerThreads)
+
+   private val totalBytesWritten, totalBytesRead = new AtomicLong
+   private val isTrace = isTraceEnabled
+   private val isGlobalStatsEnabled =
+      cacheManager.getCacheManagerConfiguration.globalJmxStatistics().enabled()
+
+
+   override def start() {
+
       // Make netty use log4j, otherwise it goes to JDK logging.
       if (isLog4jAvailable)
          InternalLoggerFactory.setDefaultFactory(new Log4JLoggerFactory)
@@ -104,7 +106,7 @@ class NettyTransport(server: ProtocolServer, encoder: ChannelDownstreamHandler,
       val ch = bootstrap.bind(address)
       serverChannels.add(ch)
    }
-   
+
    private def isLog4jAvailable: Boolean = {
       try {
          Util.loadClassStrict("org.apache.log4j.Logger",
