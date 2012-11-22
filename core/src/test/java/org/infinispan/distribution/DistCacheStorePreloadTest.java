@@ -74,7 +74,7 @@ public class DistCacheStorePreloadTest extends BaseDistCacheStoreTest {
 
       addClusterEnabledCacheManager();
       EmbeddedCacheManager cm2 = cacheManagers.get(1);
-      cm2.defineConfiguration(cacheName, buildConfiguration());
+      cm2.defineConfiguration(cacheName, buildConfiguration().build());
       c2 = cache(1, cacheName);
       waitForClusterToForm(cacheName);
       caches.add(c2);

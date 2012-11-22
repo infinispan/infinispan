@@ -217,6 +217,17 @@ public class DistributionInterceptor extends BaseRpcInterceptor {
       if (ice != null) {
          if (storeInL1) {
             if (isL1CacheEnabled) {
+               // We've requested the key only from the owners current (read) CH.
+               // If the intersection of owners in the current and pending CHs is empty,
+               // the requestor information might be lost, so we shouldn't store the entry in L1.
+               // TODO We don't have access to the pending CH here, so we just check if the owners list changed.
+               List<Address> readOwners = dm.getReadConsistentHash().locateOwners(key);
+               List<Address> writeOwners = dm.getWriteConsistentHash().locateOwners(key);
+               if (!readOwners.equals(writeOwners)) {
+                  if (trace) log.tracef("State transfer in progress for key %s, not storing to L1");
+                  return ice.getValue();
+               }
+
                if (trace) log.tracef("Caching remotely retrieved entry for key %s in L1", key);
                // This should be fail-safe
                try {

@@ -68,7 +68,7 @@ public class WorkDuringJoinTest extends BaseDistFunctionalTest {
 
    Address startNewMember() {
       joinerManager = addClusterEnabledCacheManager();
-      joinerManager.defineConfiguration(cacheName, configuration);
+      joinerManager.defineConfiguration(cacheName, configuration.build());
       joiner = joinerManager.getCache(cacheName);
       return manager(joiner).getAddress();
    }

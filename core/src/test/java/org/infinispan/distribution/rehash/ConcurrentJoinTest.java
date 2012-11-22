@@ -48,7 +48,7 @@ public class ConcurrentJoinTest extends RehashTestBase {
 
       for (int i = 0; i < NUM_JOINERS; i++) {
          EmbeddedCacheManager joinerManager = addClusterEnabledCacheManager(new TransportFlags().withFD(false));
-         joinerManager.defineConfiguration(cacheName, configuration);
+         joinerManager.defineConfiguration(cacheName, configuration.build());
          joinerManagers.add(joinerManager);
          joiners.set(i, null);
       }

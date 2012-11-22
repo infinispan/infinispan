@@ -27,6 +27,7 @@ import org.infinispan.commands.VisitableCommand;
 import org.infinispan.commands.write.PutKeyValueCommand;
 import org.infinispan.commons.hash.MurmurHash3;
 import org.infinispan.config.Configuration;
+import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.container.DataContainer;
 import org.infinispan.container.entries.ImmortalCacheEntry;
@@ -54,7 +55,7 @@ public abstract class BaseDistFunctionalTest extends MultipleCacheManagersTest {
    protected String cacheName;
    protected int INIT_CLUSTER_SIZE = 4;
    protected Cache<Object, String> c1 = null, c2 = null, c3 = null, c4 = null;
-   protected Configuration configuration;
+   protected ConfigurationBuilder configuration;
    protected List<Cache<Object, String>> caches;
    protected List<Address> cacheAddresses;
    protected boolean sync = true;
@@ -67,7 +68,6 @@ public abstract class BaseDistFunctionalTest extends MultipleCacheManagersTest {
    protected boolean batchingEnabled = false;
    protected int numOwners = 2;
    protected int lockTimeout = 45;
-   protected int numVirtualNodes = 1;
    protected boolean groupsEnabled = false;
    protected List<Grouper<?>> groupers;
    protected LockingMode lockingMode;
@@ -91,30 +91,30 @@ public abstract class BaseDistFunctionalTest extends MultipleCacheManagersTest {
       }
    }
 
-   protected Configuration buildConfiguration() {
-      Configuration configuration = getDefaultClusteredConfig(sync ? Configuration.CacheMode.DIST_SYNC : Configuration.CacheMode.DIST_ASYNC, tx);
-      configuration.setRehashEnabled(performRehashing);
+   protected ConfigurationBuilder buildConfiguration() {
+      ConfigurationBuilder configuration = getDefaultClusteredCacheConfig(sync ? CacheMode.DIST_SYNC : CacheMode.DIST_ASYNC, tx);
+      configuration.clustering().stateTransfer().fetchInMemoryState(performRehashing);
       if (lockingMode != null) {
-         configuration.fluent().transaction().lockingMode(lockingMode);
+         configuration.transaction().lockingMode(lockingMode);
       }
-      configuration.setNumOwners(numOwners);
+      configuration.clustering().hash().numOwners(numOwners);
       if (!testRetVals) {
-         configuration.setUnsafeUnreliableReturnValues(true);
+         configuration.unsafe().unreliableReturnValues(true);
          // we also need to use repeatable read for tests to work when we dont have reliable return values, since the
          // tests repeatedly queries changes
-         configuration.setIsolationLevel(IsolationLevel.REPEATABLE_READ);
+         configuration.locking().isolationLevel(IsolationLevel.REPEATABLE_READ);
       }
-      configuration.setInvocationBatchingEnabled(batchingEnabled);
-      configuration.setSyncReplTimeout(60, TimeUnit.SECONDS);
-      configuration.setLockAcquisitionTimeout(lockTimeout, TimeUnit.SECONDS);
-      configuration.setL1CacheEnabled(l1CacheEnabled);
-      configuration.fluent().clustering().hash().numVirtualNodes(numVirtualNodes);
+      if (tx) {
+         configuration.invocationBatching().enable();
+      }
+      if (sync) configuration.clustering().sync().replTimeout(60, TimeUnit.SECONDS);
+      configuration.locking().lockAcquisitionTimeout(lockTimeout, TimeUnit.SECONDS);
+      configuration.clustering().l1().enabled(l1CacheEnabled);
       if (groupsEnabled) {
-          configuration.fluent().hash().groups().enabled(true);
-          configuration.fluent().hash().groups().groupers(groupers);
+          configuration.clustering().hash().groups().enabled(true);
+          configuration.clustering().hash().groups().withGroupers(groupers);
       }
-      if (l1CacheEnabled) configuration.setL1OnRehash(l1OnRehash);
-      if (l1CacheEnabled) configuration.setL1InvalidationThreshold(l1Threshold);
+      if (l1CacheEnabled) configuration.clustering().l1().onRehash(l1OnRehash).invalidationThreshold(l1Threshold);
       return configuration;
    }
 

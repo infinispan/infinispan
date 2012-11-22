@@ -87,7 +87,7 @@ public class KeyAffinityServiceTest extends BaseKeyAffinityServiceTest {
    @Test (dependsOnMethods = "testConcurrentConsumptionOfKeys")
    public void testServerAdded() throws InterruptedException {
       EmbeddedCacheManager cm = addClusterEnabledCacheManager();
-      cm.defineConfiguration(cacheName, configuration);
+      cm.defineConfiguration(cacheName, configuration.build());
       Cache<Object, String> cache = cm.getCache(cacheName);
       caches.add(cache);
       waitForClusterToResize();
