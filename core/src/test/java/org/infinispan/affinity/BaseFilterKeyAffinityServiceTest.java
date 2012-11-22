@@ -66,7 +66,7 @@ public abstract class BaseFilterKeyAffinityServiceTest extends BaseKeyAffinitySe
 
    protected void testAddNewServer() throws Exception {
       EmbeddedCacheManager cm = addClusterEnabledCacheManager();
-      cm.defineConfiguration(cacheName, configuration);
+      cm.defineConfiguration(cacheName, configuration.build());
       Cache<Object, String> cache = cm.getCache(cacheName);
       caches.add(cache);
       waitForClusterToResize();

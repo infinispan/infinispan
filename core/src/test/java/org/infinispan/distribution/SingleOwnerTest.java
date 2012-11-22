@@ -26,6 +26,7 @@ package org.infinispan.distribution;
 import org.infinispan.Cache;
 import org.infinispan.CacheException;
 import org.infinispan.config.Configuration;
+import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.util.concurrent.IsolationLevel;
@@ -50,16 +51,16 @@ public class SingleOwnerTest extends BaseDistFunctionalTest {
    @Override
    protected void createCacheManagers() throws Throwable {
       cacheName = "dist";
-      configuration = getDefaultClusteredConfig(sync ? Configuration.CacheMode.DIST_SYNC : Configuration.CacheMode.DIST_ASYNC, tx);
+      configuration = getDefaultClusteredCacheConfig(sync ? CacheMode.DIST_SYNC : CacheMode.DIST_ASYNC, tx);
       if (!testRetVals) {
-         configuration.setUnsafeUnreliableReturnValues(true);
+         configuration.unsafe().unreliableReturnValues(true);
          // we also need to use repeatable read for tests to work when we dont have reliable return values, since the
          // tests repeatedly queries changes
-         configuration.setIsolationLevel(IsolationLevel.REPEATABLE_READ);
+         configuration.locking().isolationLevel(IsolationLevel.REPEATABLE_READ);
       }
-      configuration.setSyncReplTimeout(3, TimeUnit.SECONDS);
-      configuration.setNumOwners(1);
-      configuration.setLockAcquisitionTimeout(45, TimeUnit.SECONDS);
+      configuration.clustering().sync().replTimeout(3, TimeUnit.SECONDS);
+      configuration.clustering().hash().numOwners(1);
+      configuration.locking().lockAcquisitionTimeout(45, TimeUnit.SECONDS);
       caches = createClusteredCaches(2, cacheName, configuration);
 
       c1 = caches.get(0);

@@ -52,7 +52,7 @@ public class RehashCompletedOnJoinTest extends BaseDistFunctionalTest {
       log.infof("Initialized with keys %s", keys);
       
       EmbeddedCacheManager joinerManager = addClusterEnabledCacheManager();
-      joinerManager.defineConfiguration(cacheName, configuration);
+      joinerManager.defineConfiguration(cacheName, configuration.build());
       Cache joiner = joinerManager.getCache(cacheName);
       DistributionManager dmi = joiner.getAdvancedCache().getDistributionManager();
       assert dmi.isJoinComplete();
