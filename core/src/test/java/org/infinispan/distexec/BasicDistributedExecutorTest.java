@@ -237,6 +237,61 @@ public class BasicDistributedExecutorTest extends AbstractCacheTest {
       }
    }
 
+   public void testDistributedCallableWithFailingKeysSuccessfullRetry() throws Exception {
+      Configuration config = getDefaultClusteredConfig(Configuration.CacheMode.DIST_SYNC, true);
+      config.setNumOwners(1);
+      EmbeddedCacheManager cacheManager1 = TestCacheManagerFactory.createClusteredCacheManager(config);
+      EmbeddedCacheManager cacheManager2 = TestCacheManagerFactory.createClusteredCacheManager(config);
+      DistributedExecutorService des = null;
+      try {
+         Cache<Object, Object> cache1 = cacheManager1.getCache("cache1");
+         cache1.put("key1", "value1");
+         cache1.put("key2", "value2");
+         cache1.put("key3", "value3");
+
+         Cache<Object, Object> cache2 = cacheManager2.getCache("cache1");
+         cache2.put("key4", "value4");
+         cache2.put("key5", "value5");
+         cache2.put("key6", "value6");
+         cache2.put("key7", "value7");
+         cache2.put("key8", "value8");
+
+         //initiate task from cache1 and select cache1 as target
+         des = new DefaultExecutorService(cache1);
+
+         //the same using DistributedTask API
+         DistributedTaskBuilder<Boolean> taskBuilder = des.createDistributedTaskBuilder(new FailOnlyOnceDistributedCallable());
+         taskBuilder.failoverPolicy(new DistributedTaskFailoverPolicy() {
+
+            @Override
+            public Address failover(FailoverContext context) {
+               List<Address> candidates = context.executionCandidates();
+               Address returnAddress = null;
+               for (Address candidate : candidates) {
+                  if (!candidate.equals(context.executionFailureLocation())) {
+                     returnAddress = candidate;
+                     break;
+                  }
+               }
+               return returnAddress;
+            }
+
+            @Override
+            public int maxFailoverAttempts() {
+               return 1;
+            }
+         });
+         DistributedTask<Boolean> task = taskBuilder.build();
+         AssertJUnit.assertEquals(1, task.getTaskFailoverPolicy().maxFailoverAttempts());
+         Future<Boolean> val = des.submit(task, new String[] { "key1", "key5" });
+         AssertJUnit.assertEquals(new Boolean(true), val.get());
+      } finally {
+         des.shutdownNow();
+         TestingUtil.killCacheManagers(cacheManager1);
+         TestingUtil.killCacheManagers(cacheManager2);
+      }
+   }
+
    @Test(expectedExceptions = ExecutionException.class)
    public void testDistributedCallableEmptyFailoverPolicy() throws Exception {
       Configuration config = TestCacheManagerFactory.getDefaultConfiguration(true, Configuration.CacheMode.REPL_SYNC);
@@ -435,7 +490,10 @@ public class BasicDistributedExecutorTest extends AbstractCacheTest {
       }
    }
 
-   static class SimpleSleepingDistributedCallable implements DistributedCallable<String, String, Boolean>, Serializable{
+   static class FailOnlyOnceDistributedCallable implements DistributedCallable<String, String, Boolean>, Serializable {
+      /** The serialVersionUID **/
+      private static final long serialVersionUID = 5375461422884389555L;
+      private static boolean throwException = true;
 
       @Override
       public void setEnvironment(Cache<String, String> cache, Set<String> inputKeys) {
@@ -444,7 +502,11 @@ public class BasicDistributedExecutorTest extends AbstractCacheTest {
 
       @Override
       public Boolean call() throws Exception {
-         Thread.sleep(1000);
+         if(throwException) {
+            throwException = false;
+
+            int a = 5 / 0;
+         }
 
          return true;
       }
