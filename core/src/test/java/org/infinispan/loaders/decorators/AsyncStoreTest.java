@@ -64,7 +64,7 @@ import java.util.concurrent.locks.ReentrantLock;
 import static org.infinispan.test.TestingUtil.k;
 import static org.infinispan.test.TestingUtil.v;
 
-@Test(groups = "unit", testName = "loaders.decorators.AsyncTest", sequential=true)
+@Test(groups = "unit", testName = "loaders.decorators.AsyncStoreTest", sequential=true)
 public class AsyncStoreTest extends AbstractInfinispanTest {
    private static final Log log = LogFactory.getLog(AsyncStoreTest.class);
    AsyncStore store;
