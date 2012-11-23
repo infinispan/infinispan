@@ -227,7 +227,7 @@ public class OutboundTransferTask implements Runnable {
       List<StateChunk> chunks = new ArrayList<StateChunk>();
       for (Map.Entry<Integer, List<InternalCacheEntry>> e : entriesBySegment.entrySet()) {
          List<InternalCacheEntry> entries = e.getValue();
-         if (!entries.isEmpty()) {
+         if (!entries.isEmpty() || isLast) {
             chunks.add(new StateChunk(e.getKey(), new ArrayList<InternalCacheEntry>(entries), isLast));
             entries.clear();
          }
