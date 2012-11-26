@@ -29,6 +29,8 @@ import org.infinispan.test.MultipleCacheManagersTest;
 import org.testng.annotations.AfterMethod;
 import org.testng.annotations.Test;
 
+import static org.infinispan.client.hotrod.test.HotRodClientTestingUtil.killRemoteCacheManager;
+import static org.infinispan.client.hotrod.test.HotRodClientTestingUtil.killServers;
 import static org.testng.AssertJUnit.assertEquals;
 
 /**
@@ -68,6 +70,7 @@ public class HotRodServerStartStopTest extends MultipleCacheManagersTest {
       RemoteCache<Object, Object> remoteCache = remoteCacheManager.getCache();
       remoteCache.put("k", "v");
       assertEquals("v", remoteCache.get("k"));
+      killRemoteCacheManager(remoteCacheManager);
    }
 
    @Test (dependsOnMethods = "testTouchServer")

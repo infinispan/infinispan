@@ -22,10 +22,12 @@
  */
 package org.infinispan.client.hotrod;
 
+import org.infinispan.client.hotrod.test.HotRodClientTestingUtil;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.server.hotrod.HotRodServer;
 import org.infinispan.test.SingleCacheManagerTest;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
+import org.testng.annotations.AfterTest;
 import org.testng.annotations.Test;
 
 import java.util.HashMap;
@@ -33,6 +35,8 @@ import java.util.Map;
 import java.util.Properties;
 import java.util.concurrent.TimeUnit;
 
+import static org.infinispan.client.hotrod.test.HotRodClientTestingUtil.*;
+import static org.infinispan.test.TestingUtil.killCacheManagers;
 import static org.testng.AssertJUnit.assertEquals;
 
 /**
@@ -60,6 +64,12 @@ public class BulkGetSimpleTest extends SingleCacheManagerTest {
       remoteCacheManager = new RemoteCacheManager(hotrodClientConf);
       remoteCache = remoteCacheManager.getCache();
       return cacheManager;
+   }
+
+   @AfterTest(alwaysRun = true)
+   public void release() {
+      killRemoteCacheManager(remoteCacheManager);
+      killServers(hotRodServer);
    }
 
    private void populateCacheManager() {

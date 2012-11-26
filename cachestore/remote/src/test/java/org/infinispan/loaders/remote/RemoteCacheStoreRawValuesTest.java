@@ -56,18 +56,18 @@ public class RemoteCacheStoreRawValuesTest extends BaseCacheStoreTest {
 
    @Override
    protected CacheStore createCacheStore() throws Exception {
-      RemoteCacheStoreConfig remoteCacheStoreConfig = new RemoteCacheStoreConfig();
-      remoteCacheStoreConfig.setPurgeSynchronously(true);
-      remoteCacheStoreConfig.setUseDefaultRemoteCache(true);
-      remoteCacheStoreConfig.setRawValues(true);
-      assert remoteCacheStoreConfig.isUseDefaultRemoteCache();
-
       ConfigurationBuilder cb = TestCacheManagerFactory.getDefaultCacheConfiguration(true);
       cb.eviction().maxEntries(100).strategy(EvictionStrategy.UNORDERED)
             .expiration().wakeUpInterval(10L);
 
       localCacheManager = TestCacheManagerFactory.createCacheManager(cb);
       hrServer = TestHelper.startHotRodServer(localCacheManager);
+
+      RemoteCacheStoreConfig remoteCacheStoreConfig = new RemoteCacheStoreConfig();
+      remoteCacheStoreConfig.setPurgeSynchronously(true);
+      remoteCacheStoreConfig.setUseDefaultRemoteCache(true);
+      remoteCacheStoreConfig.setRawValues(true);
+      assert remoteCacheStoreConfig.isUseDefaultRemoteCache();
 
       Properties properties = new Properties();
       properties.put("infinispan.client.hotrod.server_list", "localhost:" + hrServer.getPort());

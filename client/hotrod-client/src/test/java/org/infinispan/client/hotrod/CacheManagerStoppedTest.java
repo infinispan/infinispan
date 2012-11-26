@@ -60,6 +60,7 @@ public class CacheManagerStoppedTest extends SingleCacheManagerTest {
 
    @AfterTest(alwaysRun = true)
    public void release() {
+      killRemoteCacheManager(remoteCacheManager);
       killCacheManagers(cacheManager);
       killServers(hotrodServer);
    }
@@ -68,7 +69,7 @@ public class CacheManagerStoppedTest extends SingleCacheManagerTest {
       assert remoteCacheManager.getCache() != null;
       assert remoteCacheManager.getCache(CACHE_NAME) != null;
       remoteCache().put("k", "v");
-      assert remoteCache().get("k").equals("v");      
+      assert remoteCache().get("k").equals("v");
    }
 
    @Test (dependsOnMethods = "testGetCacheOperations")

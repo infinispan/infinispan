@@ -62,6 +62,7 @@ public class RemoteCacheStoreTest extends BaseCacheStoreTest {
 
       localCacheManager = TestCacheManagerFactory.createCacheManager(cb);
       hrServer = TestHelper.startHotRodServer(localCacheManager);
+
       Properties properties = new Properties();
       properties.put("infinispan.client.hotrod.server_list", "localhost:" + hrServer.getPort());
       remoteCacheStoreConfig.setHotRodClientProperties(properties);

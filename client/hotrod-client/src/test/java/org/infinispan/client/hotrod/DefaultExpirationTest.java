@@ -20,8 +20,6 @@ package org.infinispan.client.hotrod;
 
 import org.testng.annotations.Test;
 import org.testng.AssertJUnit;
-import java.io.IOException;
-import java.util.Arrays;
 import java.util.Properties;
 import java.util.concurrent.TimeUnit;
 
@@ -29,7 +27,6 @@ import org.infinispan.Cache;
 import org.infinispan.client.hotrod.test.HotRodClientTestingUtil;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.container.entries.InternalCacheEntry;
-import org.infinispan.container.entries.MortalCacheEntry;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.marshall.Marshaller;
 import org.infinispan.marshall.jboss.JBossMarshaller;

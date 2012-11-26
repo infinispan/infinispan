@@ -33,6 +33,7 @@ import org.testng.annotations.Test;
 
 import java.util.Map;
 
+import static org.infinispan.client.hotrod.test.HotRodClientTestingUtil.*;
 import static org.testng.AssertJUnit.assertEquals;
 import static org.testng.AssertJUnit.assertTrue;
 
@@ -62,8 +63,8 @@ public class HotRodStatisticsTest {
    @AfterMethod(alwaysRun = true)
    void tearDown() {
       TestingUtil.killCacheManagers(cacheContainer);
-      rcm.stop();
-      hotrodServer.stop();
+      killRemoteCacheManager(rcm);
+      killServers(hotrodServer);
    }
 
    public void testAllStatsArePresent() {

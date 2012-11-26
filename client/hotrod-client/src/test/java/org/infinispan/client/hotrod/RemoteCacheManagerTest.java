@@ -80,7 +80,7 @@ public class RemoteCacheManagerTest extends SingleCacheManagerTest {
       remoteCacheManager.start();
       remoteCacheManager.stop();
    }
-   
+
    public void testUrlAndBooleanConstructor() throws Exception {
       URL resource = Thread.currentThread().getContextClassLoader().getResource("empty-config.properties");
       assert resource != null;
@@ -126,6 +126,7 @@ public class RemoteCacheManagerTest extends SingleCacheManagerTest {
       assert !remoteCacheManager.isStarted();
       remoteCacheManager.start();
       assert null == remoteCacheManager.getCache("Undefined1234");
+      remoteCacheManager.stop();
    }
 
    private void assertWorks(RemoteCacheManager remoteCacheManager) {
