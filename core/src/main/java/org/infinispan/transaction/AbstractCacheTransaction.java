@@ -107,6 +107,17 @@ public abstract class AbstractCacheTransaction implements CacheTransaction {
       this.modifications = Collections.synchronizedList(new ArrayList<WriteCommand>(Arrays.asList(modifications)));
    }
 
+   public boolean hasModification(Class modificationClass) {
+      if (modifications != null) {
+         for (WriteCommand mod : modifications) {
+            if (modificationClass.isAssignableFrom(mod.getClass())) {
+               return true;
+            }
+         }
+      }
+      return false;
+   }
+
    @Override
    public Map<Object, CacheEntry> getLookedUpEntries() {
       return lookedUpEntries;
