@@ -319,7 +319,7 @@ public class CloudCacheStore extends BucketBasedCacheStore {
    @Override
    protected void purgeInternal() throws CacheLoaderException {
       if (!cfg.isLazyPurgingOnly()) {
-         acquireGlobalLock(false);
+         boolean success = acquireGlobalLock(false);
          try {
             if (multiThreadedPurge) {
                purgerService.execute(new Runnable() {
@@ -336,7 +336,9 @@ public class CloudCacheStore extends BucketBasedCacheStore {
                purge();
             }
          } finally {
-            releaseGlobalLock(false);
+            if(success){
+               releaseGlobalLock(false);
+            }
          }
       }
    }
