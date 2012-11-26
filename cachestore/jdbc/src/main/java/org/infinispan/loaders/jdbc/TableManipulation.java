@@ -29,6 +29,7 @@ import org.infinispan.loaders.jdbc.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
 import java.sql.Connection;
+import java.sql.DatabaseMetaData;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
@@ -100,42 +101,11 @@ public class TableManipulation implements Cloneable {
    }
 
    public boolean tableExists(Connection connection, String tableName) throws CacheLoaderException {
-     assertNotNull(getTableName(), "table name is mandatory");
-     Statement stmt = null;
+     assertNotNull(tableName, "table name is mandatory");
      ResultSet rs = null;
      try {
-        stmt = connection.createStatement();
-        String query;
-        switch(getDatabaseType()) {
-           case ORACLE:
-              query = "SELECT count(*) from (SELECT 1 FROM " + tableName + " WHERE ROWNUM = 1) T";
-              break;
-           case DB2:
-           case DB2_390:
-           case DERBY:
-              query = "SELECT count(*) from (SELECT 1 FROM " + tableName + " FETCH FIRST 1 ROWS ONLY) T";
-              break;
-           case INFORMIX:
-           case INTERBASE:
-           case FIREBIRD:
-              query = "SELECT count(*) from (SELECT FIRST 1 1 FROM " + tableName + ") T";
-              break;
-           case SQL_SERVER:
-              query = "SELECT count(*) from (SELECT TOP (1) 1 FROM " + tableName + ") T";
-              break;
-           case ACCESS:
-           case HSQL:
-           case SYBASE:
-              query = "SELECT count(*) from (SELECT TOP 1 1 FROM " + tableName + ") T";
-              break;
-           default:
-              // the MySQL-style LIMIT clause
-              query = "SELECT count(*) from (SELECT 1 FROM " + tableName + " LIMIT 1) T";
-              break;
-        }
-        // Use implicit DB schema mapped to a particular user
-        // It makes environments where DBs are shared easier to support
-        rs = stmt.executeQuery(query);
+        DatabaseMetaData metaData = connection.getMetaData();
+        rs = metaData.getTables(null, null, tableName, new String[] {"TABLE"});
         return rs.next();
      } catch (SQLException e) {
         if (log.isTraceEnabled())
@@ -143,7 +113,6 @@ public class TableManipulation implements Cloneable {
         return false;
      } finally {
         JdbcUtil.safeClose(rs);
-        JdbcUtil.safeClose(stmt);
      }
    }
 
@@ -258,7 +227,7 @@ public class TableManipulation implements Cloneable {
          Connection conn = null;
          try {
             conn = this.connectionFactory.getConnection();
-            if (!tableExists(conn, getTableName())) {
+            if (!tableExists(conn, getUnquotedTableName())) {
                createTable(conn);
             }
          } finally {
@@ -401,12 +370,16 @@ public class TableManipulation implements Cloneable {
 
    public String getTableName() {
       if (tableName == null) {
-         if (tableNamePrefix == null || cacheName == null) {
-            throw new IllegalStateException("Both tableNamePrefix and cacheName must be non null at this point!");
-         }
-         tableName = getIdentifierQuoteString() + tableNamePrefix + "_" + cacheName.replace(".", "_") + getIdentifierQuoteString();
+         tableName = getIdentifierQuoteString() + getUnquotedTableName() + getIdentifierQuoteString();
       }
       return tableName;
+   }
+
+   public String getUnquotedTableName() {
+      if (tableNamePrefix == null || cacheName == null) {
+         throw new IllegalStateException("Both tableNamePrefix and cacheName must be non null at this point!");
+      }
+      return tableNamePrefix + "_" + cacheName.replace(".", "_");
    }
 
    public String getIdentifierQuoteString() {
@@ -428,7 +401,7 @@ public class TableManipulation implements Cloneable {
    }
 
    public boolean tableExists(Connection connection) throws CacheLoaderException {
-      return tableExists(connection, tableName);
+      return tableExists(connection, getUnquotedTableName());
    }
 
    public String getIdColumnName() {
