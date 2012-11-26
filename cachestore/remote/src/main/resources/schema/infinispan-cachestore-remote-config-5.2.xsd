@@ -97,6 +97,14 @@
             </xs:documentation>
           </xs:annotation>
         </xs:attribute>
+        <xs:attribute name="rawValues" type="xs:boolean" default="false">
+          <xs:annotation>
+            <xs:documentation>
+              Normally the RemoteCacheStore stores values wrapped in InternalCacheEntry. Setting this property to true causes the raw values to be stored instead for interoperability with direct
+              access by RemoteCacheManager. Defaults to false (disabled)
+            </xs:documentation>
+          </xs:annotation>
+        </xs:attribute>
         <xs:attribute name="remoteCacheName" type="xs:string">
           <xs:annotation>
             <xs:documentation>

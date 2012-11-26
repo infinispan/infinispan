@@ -38,6 +38,14 @@ import org.infinispan.util.ByteArrayKey
 import org.jboss.netty.buffer.ChannelBuffer
 import org.infinispan.server.core.transport.ExtendedChannelBuffer._
 import transport.NettyTransport
+import org.infinispan.container.entries.InternalCacheValue
+import org.infinispan.remoting.rpc.RpcManager
+import org.infinispan.remoting.responses.ClusteredGetResponseValidityFilter
+import java.util.HashSet
+import org.infinispan.remoting.transport.Address
+import org.infinispan.remoting.rpc.ResponseMode
+import org.infinispan.CacheImpl
+import org.infinispan.container.entries.InternalCacheEntry
 
 /**
  * HotRod protocol decoder specific for specification version 1.0.
@@ -67,6 +75,7 @@ object Decoder10 extends AbstractVersionedDecoder with ServerConstants with Log 
          case 0x15 => (StatsRequest, true)
          case 0x17 => (PingRequest, true)
          case 0x19 => (BulkGetRequest, false)
+         case 0x1B => (GetWithMetadataRequest, false)
          case _ => throw new HotRodUnknownOperationException(
                "Unknown operation: " + streamOp, version, messageId)
       }
@@ -221,6 +230,27 @@ object Decoder10 extends AbstractVersionedDecoder with ServerConstants with Log 
             new BulkGetResponse(h.version, h.messageId, h.cacheName, h.clientIntel,
                                 BulkGetResponse, Success, h.topologyId, count)
          }
+         case GetWithMetadataRequest => {
+            val k = readKey(buffer)
+            getKeyMetadata(h, k, cache)
+         }
+      }
+   }
+
+   def getKeyMetadata(h: HotRodHeader, k: ByteArrayKey, cache: Cache[ByteArrayKey, CacheValue]): GetWithMetadataResponse = {
+      val ce = cache.getAdvancedCache.asInstanceOf[CacheImpl[ByteArrayKey, CacheValue]].getCacheEntry(k, null, null)
+      if (ce != null) {
+         val ice = ce.asInstanceOf[InternalCacheEntry]
+         val v = ce.getValue.asInstanceOf[CacheValue]
+         val lifespan = if (ice.getLifespan < 0) -1 else (ice.getLifespan / 1000).toInt
+         val maxIdle = if (ice.getMaxIdle < 0) -1 else (ice.getMaxIdle / 1000).toInt
+         new GetWithMetadataResponse(h.version, h.messageId, h.cacheName,
+                  h.clientIntel, GetWithMetadataResponse, Success, h.topologyId,
+                  Some(v.data), v.version, ice.getCreated, lifespan, ice.getLastUsed, maxIdle)
+      } else {
+         new GetWithMetadataResponse(h.version, h.messageId, h.cacheName,
+                  h.clientIntel, GetWithMetadataResponse, KeyDoesNotExist, h.topologyId,
+                  None, 0, -1, -1, -1, -1)
       }
    }
 
@@ -280,6 +310,7 @@ object Decoder10 extends AbstractVersionedDecoder with ServerConstants with Log 
          case StatsRequest => StatsResponse
          case PingRequest => PingResponse
          case BulkGetRequest => BulkGetResponse
+         case GetWithMetadataRequest => GetWithMetadataResponse
       }
    }
 
@@ -300,6 +331,7 @@ object OperationResponse extends Enumeration {
    val StatsResponse = Value(0x16)
    val PingResponse = Value(0x18)
    val BulkGetResponse = Value(0x1A)
+   val GetWithMetadataResponse = Value(0x1C)
    val ErrorResponse = Value(0x50)
 }
 

@@ -34,4 +34,6 @@ trait Constants {
    val VERSION_12: Byte = 12
    val DEFAULT_HASH_FUNCTION_VERSION: Byte = 2
 
+   val INFINITE_LIFESPAN = 0x01
+   val INFINITE_MAXIDLE = 0x02
 }
