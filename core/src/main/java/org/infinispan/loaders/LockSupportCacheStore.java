@@ -147,11 +147,13 @@ public abstract class LockSupportCacheStore<L> extends AbstractCacheStore {
 
    @Override
    public final Set<InternalCacheEntry> loadAll() throws CacheLoaderException {
-      acquireGlobalLock(false);
+      boolean success = acquireGlobalLock(false);
       try {
          return loadAllLockSafe();
       } finally {
-         releaseGlobalLock(false);
+         if(success){
+            releaseGlobalLock(false);
+         }
       }
    }
 
@@ -160,21 +162,25 @@ public abstract class LockSupportCacheStore<L> extends AbstractCacheStore {
       if (maxEntries < 0) {
          return loadAll();
       }
-      acquireGlobalLock(false);
+      boolean success = acquireGlobalLock(false);
       try {
          return loadLockSafe(maxEntries);
       } finally {
-         releaseGlobalLock(false);
+         if(success){
+            releaseGlobalLock(false);
+         }
       }
    }
 
    @Override
    public Set<Object> loadAllKeys(Set<Object> keysToExclude) throws CacheLoaderException {
-      acquireGlobalLock(false);
+      boolean success = acquireGlobalLock(false);
       try {
          return loadAllKeysLockSafe(keysToExclude);
       } finally {
-         releaseGlobalLock(false);
+         if(success){
+            releaseGlobalLock(false);
+         }
       }
    }
 
@@ -232,21 +238,25 @@ public abstract class LockSupportCacheStore<L> extends AbstractCacheStore {
 
    @Override
    public final void fromStream(ObjectInput objectInput) throws CacheLoaderException {
+      boolean success = acquireGlobalLock(false);
       try {
-         acquireGlobalLock(true);
          fromStreamLockSafe(objectInput);
       } finally {
-         releaseGlobalLock(true);
+         if(success){
+            releaseGlobalLock(false);
+         }
       }
    }
 
    @Override
    public void toStream(ObjectOutput objectOutput) throws CacheLoaderException {
+      boolean success = acquireGlobalLock(false);
       try {
-         acquireGlobalLock(false);
          toStreamLockSafe(objectOutput);
       } finally {
-         releaseGlobalLock(false);
+         if(success){
+            releaseGlobalLock(false);
+         }
       }
    }
 
@@ -255,11 +265,13 @@ public abstract class LockSupportCacheStore<L> extends AbstractCacheStore {
       if (trace) {
          log.trace("Clearing store");
       }
+      boolean success = acquireGlobalLock(false);
       try {
-         acquireGlobalLock(true);
          clearLockSafe();
       } finally {
-         releaseGlobalLock(true);
+         if(success){
+            releaseGlobalLock(false);
+         }
       }
    }
 
