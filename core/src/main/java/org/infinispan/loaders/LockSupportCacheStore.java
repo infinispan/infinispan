@@ -238,12 +238,12 @@ public abstract class LockSupportCacheStore<L> extends AbstractCacheStore {
 
    @Override
    public final void fromStream(ObjectInput objectInput) throws CacheLoaderException {
-      boolean success = acquireGlobalLock(false);
+      boolean success = acquireGlobalLock(true);
       try {
          fromStreamLockSafe(objectInput);
       } finally {
          if(success){
-            releaseGlobalLock(false);
+            releaseGlobalLock(true);
          }
       }
    }
@@ -265,12 +265,12 @@ public abstract class LockSupportCacheStore<L> extends AbstractCacheStore {
       if (trace) {
          log.trace("Clearing store");
       }
-      boolean success = acquireGlobalLock(false);
+      boolean success = acquireGlobalLock(true);
       try {
          clearLockSafe();
       } finally {
          if(success){
-            releaseGlobalLock(false);
+            releaseGlobalLock(true);
          }
       }
    }
