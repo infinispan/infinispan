@@ -42,9 +42,9 @@ import org.testng.annotations.Test;
 @Test(groups = "functional", testName = "query.distributed.DistributedMassIndexing")
 public class DistributedMassIndexingTest extends MultipleCacheManagersTest {
 
-   private static final int NUM_NODES = 4;
-   private List<Cache> caches = new ArrayList<Cache>(NUM_NODES);
-   private static final String[] neededCacheNames = new String[] {
+   protected static final int NUM_NODES = 4;
+   protected List<Cache> caches = new ArrayList<Cache>(NUM_NODES);
+   protected static final String[] neededCacheNames = new String[] {
       org.infinispan.api.BasicCacheContainer.DEFAULT_CACHE_NAME,
       "LuceneIndexesMetadata",
       "LuceneIndexesData",
@@ -63,7 +63,7 @@ public class DistributedMassIndexingTest extends MultipleCacheManagersTest {
       waitForClusterToForm(neededCacheNames);
    }
 
-   public void testReindexing() {
+   public void testReindexing() throws Exception {
       caches.get(0).put(key("F1NUM"), new Car("megane", "white", 300));
       verifyFindsCar(1, "megane");
       caches.get(1).put(key("F2NUM"), new Car("megane", "blue", 300));
@@ -87,7 +87,7 @@ public class DistributedMassIndexingTest extends MultipleCacheManagersTest {
       return new NonSerializableKeyType(keyId);
    }
 
-   private void rebuildIndexes() {
+   protected void rebuildIndexes() throws Exception {
       Cache cache = caches.get(0);
       SearchManager searchManager = Search.getSearchManager(cache);
       searchManager.getMassIndexer().start();

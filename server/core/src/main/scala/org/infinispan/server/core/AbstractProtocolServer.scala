@@ -126,7 +126,7 @@ abstract class AbstractProtocolServer(threadNamePrefix: String) extends Protocol
       val dynamicMBean = new ResourceDMBean(transport, meta)
 
       transportObjName = new ObjectName(
-         "%s:%s,component=Transport".format(jmxDomain, groupName))
+         "%s:%s,component=%s".format(jmxDomain, groupName, meta.getJmxObjectName))
       JmxUtil.registerMBean(dynamicMBean, transportObjName, mbeanServer)
    }
 

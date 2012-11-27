@@ -114,6 +114,7 @@ class SearchManagerImpl implements SearchManager {
 
    @Override
    public MassIndexer getMassIndexer() {
+      // TODO: Should a new instance be created every time?
       return new MapReduceMassIndexer(cache, searchFactory);
    }
 

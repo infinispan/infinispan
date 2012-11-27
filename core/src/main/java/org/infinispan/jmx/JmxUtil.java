@@ -31,7 +31,9 @@ import org.infinispan.util.logging.LogFactory;
 import javax.management.InstanceAlreadyExistsException;
 import javax.management.MBeanServer;
 import javax.management.MalformedObjectNameException;
+import javax.management.ObjectInstance;
 import javax.management.ObjectName;
+import java.util.Set;
 
 /**
  * Class containing JMX related utility methods.
@@ -79,16 +81,16 @@ public class JmxUtil {
    /**
     * Register the given dynamic JMX MBean.
     *
-    * @param dynamicMBean Dynamic MBean to register
+    * @param mbean Dynamic MBean to register
     * @param objectName {@link javax.management.ObjectName} under which to register the MBean.
     * @param mBeanServer {@link javax.management.MBeanServer} where to store the MBean.
     * @throws Exception If registration could not be completed.
     */
-   public static void registerMBean(ResourceDMBean dynamicMBean, ObjectName objectName, MBeanServer mBeanServer) throws Exception {
+   public static void registerMBean(Object mbean, ObjectName objectName, MBeanServer mBeanServer) throws Exception {
       if (!mBeanServer.isRegistered(objectName)) {
          try {
-            mBeanServer.registerMBean(dynamicMBean, objectName);
-            log.tracef("Registered %s under %s", dynamicMBean, objectName);
+            mBeanServer.registerMBean(mbean, objectName);
+            log.tracef("Registered %s under %s", mbean, objectName);
          } catch (InstanceAlreadyExistsException e) {
             //this might happen if multiple instances are trying to concurrently register same objectName
             log.couldNotRegisterObjectName(objectName, e);
@@ -109,6 +111,31 @@ public class JmxUtil {
       if (mBeanServer.isRegistered(objectName)) {
          mBeanServer.unregisterMBean(objectName);
          log.tracef("Unregistered %s", objectName);
+      }
+   }
+
+   /**
+    * Unregister all mbeans whose object names match a given filter.
+    *
+    * @param filter ObjectName-style formatted filter
+    * @param mBeanServer mbean server from which to unregister mbeans
+    * @return number of mbeans unregistered
+    */
+   public static int unregisterMBeans(String filter, MBeanServer mBeanServer) {
+      try {
+         ObjectName filterObjName = new ObjectName(filter);
+         Set<ObjectInstance> mbeans = mBeanServer.queryMBeans(filterObjName, null);
+         for (ObjectInstance mbean : mbeans) {
+            ObjectName name = mbean.getObjectName();
+            if (log.isTraceEnabled())
+               log.trace("Unregistering mbean with name: " + name);
+            mBeanServer.unregisterMBean(name);
+         }
+
+         return mbeans.size();
+      } catch (Exception e) {
+         throw new CacheException(
+               "Unable to register mbeans with filter=" + filter, e);
       }
    }
 
