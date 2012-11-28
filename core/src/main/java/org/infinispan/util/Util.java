@@ -26,6 +26,8 @@ import org.infinispan.CacheConfigurationException;
 import org.infinispan.CacheException;
 import org.infinispan.commons.hash.Hash;
 import org.infinispan.marshall.Marshaller;
+import org.infinispan.util.logging.Log;
+import org.infinispan.util.logging.LogFactory;
 
 import javax.naming.Context;
 import java.io.Closeable;
@@ -61,6 +63,8 @@ public final class Util {
    private static final boolean isArraysDebug = Boolean.getBoolean("infinispan.arrays.debug");
    public static final Object[] EMPTY_OBJECT_ARRAY = new Object[0];
    public static final byte[] EMPTY_BYTE_ARRAY = new byte[0];
+
+   private static final Log log = LogFactory.getLog(Util.class);
 
    /**
     * Current Java vendor. This variable is later used to differentiate LRU implementations
@@ -140,8 +144,11 @@ public final class Util {
 
          if (e != null)
             throw e;
-         else if (ne != null)
+         else if (ne != null) {
+            // Before we wrap this, make sure we appropriately log this.
+            log.unableToLoadClass(classname, Arrays.toString(cls), ne);
             throw new ClassNotFoundException(classname, ne);
+         }
          else
             throw new IllegalStateException();
    }

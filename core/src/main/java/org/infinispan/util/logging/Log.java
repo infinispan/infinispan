@@ -825,4 +825,8 @@ public interface Log extends BasicLogger {
    @LogMessage(level = WARN)
    @Message(value = "Segments were requested by node %s with topology %d, older than the local topology (%d)", id=212)
    void segmentsRequestedByNodeWithOlderTopology(Address node, int requestTopologyId, int localTopologyId);
+
+   @LogMessage(level = ERROR)
+   @Message(value = "Unable to load %s from any of the following classloaders: %s", id=213)
+   void unableToLoadClass(String classname, String classloaders, @Cause Throwable cause);
 }
