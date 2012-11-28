@@ -45,7 +45,7 @@ import org.infinispan.cli.impl.ContextImpl;
 import org.infinispan.cli.io.ConsoleIOAdapter;
 import org.infinispan.cli.io.StreamIOAdapter;
 import org.infinispan.cli.util.SystemUtils;
-import org.jboss.jreadline.console.Console;
+import org.jboss.aesh.console.Console;
 
 /**
  *
