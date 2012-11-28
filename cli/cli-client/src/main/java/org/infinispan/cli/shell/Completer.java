@@ -26,8 +26,8 @@ import org.infinispan.cli.Context;
 import org.infinispan.cli.commands.Argument;
 import org.infinispan.cli.commands.Command;
 import org.infinispan.cli.commands.ProcessedCommand;
-import org.jboss.jreadline.complete.CompleteOperation;
-import org.jboss.jreadline.complete.Completion;
+import org.jboss.aesh.complete.CompleteOperation;
+import org.jboss.aesh.complete.Completion;
 
 public class Completer implements Completion {
    private final Context context;

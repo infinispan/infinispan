@@ -21,7 +21,7 @@ package org.infinispan.cli.io;
 import java.io.IOException;
 
 import org.fusesource.jansi.Ansi;
-import org.jboss.jreadline.console.Console;
+import org.jboss.aesh.console.Console;
 
 public class ConsoleIOAdapter implements IOAdapter {
    private final Console console;

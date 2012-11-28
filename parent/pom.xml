@@ -106,6 +106,7 @@
       <module.skipComponentMetaDataProcessing>true</module.skipComponentMetaDataProcessing>
       <module.metadata.isCoreModule>false</module.metadata.isCoreModule>
       <!-- Versions for dependencies -->
+      <version.aesh>0.24</version.aesh>
       <version.antlr>3.4</version.antlr>
       <version.apacheds.jdbm>1.5.7</version.apacheds.jdbm>
       <version.arquillian>1.0.0.Final</version.arquillian>
@@ -148,7 +149,6 @@
       <version.jetty>6.1.25</version.jetty>
       <version.jgoodies.forms>1.0.5</version.jgoodies.forms>
       <version.jgroups>3.2.4.Final</version.jgroups>
-      <version.jreadline>0.20</version.jreadline>
       <version.jsap>2.1</version.jsap>
       <version.json>20090211</version.json>
       <version.jstl>1.2</version.jstl>
@@ -689,9 +689,9 @@
             <version>${version.jgroups}</version>
          </dependency>
          <dependency>
-             <groupId>org.jboss.jreadline</groupId>
-             <artifactId>jreadline</artifactId>
-             <version>${version.jreadline}</version>
+             <groupId>org.jboss.aesh</groupId>
+             <artifactId>aesh</artifactId>
+             <version>${version.aesh}</version>
          </dependency>
          <dependency>
             <groupId>org.json</groupId>
