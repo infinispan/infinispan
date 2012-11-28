@@ -44,10 +44,9 @@ import org.infinispan.util.logging.LogFactory;
  * <p/>
  * Parameters:
  * <ul>
- * <li>HotRodClientPropertiesFile-the file that contains the configuration of Hot Rod client. See <a href="http://community.jboss.org/wiki/JavaHotRodclient">Hotrod Java Client</a>
- *     for more details on the Hot Rod client.
- * <li>remoteCacheName-the name of the remote cache in the remote infinispan cluster, to which to connect to</li>
- * <li>UseDefaultRemoteCache-if set to true, the default remote cache will be used, as obtained by {@link org.infinispan.manager.CacheContainer#getCache()}.
+ * <li><tt>HotRodClientPropertiesFile</tt> - the file that contains the configuration of Hot Rod client. See <a href="http://community.jboss.org/wiki/JavaHotRodclient">Hotrod Java Client</a> for more details on the Hot Rod client.
+ * <li><tt>RemoteCacheName</tt> - the name of the remote cache in the remote infinispan cluster, to which to connect to</li>
+ * <li><tt>UseDefaultRemoteCache</tt> - if set to true, the default remote cache will be used, as obtained by {@link org.infinispan.manager.CacheContainer#getCache()}.
  * </ul>
  *
  * @author Mircea.Markus@jboss.com
