@@ -244,9 +244,9 @@ public class LifecycleManager extends AbstractModuleLifecycle {
    @Override
    public void cacheStopping(ComponentRegistry cr, String cacheName) {
       //TODO move this to cacheStopped event (won't work right now as the ComponentRegistry is half empty at that point: ISPN-1006)
-      SearchFactoryIntegrator searchFactoryImplementor = cr.getComponent(SearchFactoryIntegrator.class);
-      if (searchFactoryImplementor != null && searchFactoryImplementor != REMOVED_REGISTRY_COMPONENT) {
-         searchFactoriesToShutdown.put(cacheName, searchFactoryImplementor);
+      Object searchFactoryIntegrator = cr.getComponent(SearchFactoryIntegrator.class);
+      if (searchFactoryIntegrator != null && searchFactoryIntegrator != REMOVED_REGISTRY_COMPONENT) {
+         searchFactoriesToShutdown.put(cacheName, (SearchFactoryIntegrator) searchFactoryIntegrator);
          //free some memory by de-registering the SearchFactory
          cr.registerComponent(REMOVED_REGISTRY_COMPONENT, SearchFactoryIntegrator.class);
       }
