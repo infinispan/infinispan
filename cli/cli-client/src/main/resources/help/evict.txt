@@ -1,0 +1,15 @@
+.SH SYNOPSIS
+.B evict [
+.I cache.
+.B ]
+.I key
+.SH DESCRIPTION
+Evicts the entry associated with the specified key from a cache.
+.SH ARGUMENTS
+.IP cache
+(optional) the name of the cache to use. If not specified, the currently selected cache will be used. See the 
+.B cache 
+command
+.IP key
+the key of the entry to evict
+.SH OUTPUT

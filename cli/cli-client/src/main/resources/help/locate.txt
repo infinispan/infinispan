@@ -1,0 +1,16 @@
+.SH SYNOPSIS
+.B locate [
+.I cache.
+.B ]
+.I key
+.SH DESCRIPTION
+Shows the addresses of the owners in the cluster of the entry associated with the specified key. This command only
+works for distributed caches
+.SH ARGUMENTS
+.IP cache
+(optional) the name of the cache to use. If not specified, the currently selected cache will be used. See the 
+.B cache 
+command
+.IP key
+the key of the entry for which to show the address
+.SH OUTPUT
