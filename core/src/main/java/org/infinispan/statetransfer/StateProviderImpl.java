@@ -185,25 +185,8 @@ public class StateProviderImpl implements StateProvider {
          log.tracef("Received request for transactions from node %s for segments %s of cache %s with topology id %d", destination, segments, cacheName, requestTopologyId);
       }
 
-      final CacheTopology cacheTopology = stateConsumer.getCacheTopology();
-      if (cacheTopology == null) {
-         // no commands are processed until the join is complete so this cannot normally happen
-         throw new IllegalStateException("No cache topology received yet");
-      }
+      final CacheTopology cacheTopology = getCacheTopology(requestTopologyId, destination, true);
       final ConsistentHash readCh = cacheTopology.getReadConsistentHash();
-      final int topologyId = cacheTopology.getTopologyId();
-
-      if (requestTopologyId < topologyId) {
-         log.warnf("Transactions were requested by node %s with topology %d, smaller than the local " +
-               "topology (%d)", destination, requestTopologyId, topologyId);
-      } else if (requestTopologyId > topologyId) {
-         if (trace) {
-            log.tracef("Transactions were requested by node %s with topology %d, greater than the local " +
-                  "topology (%d). Waiting for topology %d to be installed locally.", destination,
-                  requestTopologyId, topologyId, requestTopologyId);
-         }
-         stateTransferLock.waitForTopology(requestTopologyId);
-      }
 
       Set<Integer> ownedSegments = readCh.getSegmentsForOwner(rpcManager.getAddress());
       if (!ownedSegments.containsAll(segments)) {
@@ -221,6 +204,30 @@ public class StateProviderImpl implements StateProvider {
          }
       }
       return transactions;
+   }
+
+   private CacheTopology getCacheTopology(int requestTopologyId, Address destination, boolean isReqForTransactions) throws InterruptedException {
+      CacheTopology cacheTopology = stateConsumer.getCacheTopology();
+      if (cacheTopology == null) {
+         // no commands are processed until the join is complete, so this cannot normally happen
+         throw new IllegalStateException("No cache topology received yet");
+      }
+
+      if (requestTopologyId < cacheTopology.getTopologyId()) {
+         if (isReqForTransactions)
+            log.transactionsRequestedByNodeWithOlderTopology(destination, requestTopologyId, cacheTopology.getTopologyId());
+         else
+            log.segmentsRequestedByNodeWithOlderTopology(destination, requestTopologyId, cacheTopology.getTopologyId());
+      } else if (requestTopologyId > cacheTopology.getTopologyId()) {
+         if (trace) {
+            log.tracef("%s were requested by node %s with topology %d, greater than the local " +
+                  "topology (%d). Waiting for topology %d to be installed locally.", isReqForTransactions ? "Transactions" : "Segments", destination,
+                  requestTopologyId, cacheTopology.getTopologyId(), requestTopologyId);
+         }
+         stateTransferLock.waitForTopology(requestTopologyId);
+         cacheTopology = stateConsumer.getCacheTopology();
+      }
+      return cacheTopology;
    }
 
    private void collectTransactionsToTransfer(List<TransactionInfo> transactionsToTransfer,
@@ -258,28 +265,11 @@ public class StateProviderImpl implements StateProvider {
                destination, requestTopologyId);
       }
 
-      final CacheTopology cacheTopology = stateConsumer.getCacheTopology();
-      if (cacheTopology == null) {
-         throw new IllegalStateException("No cache topology received yet");  // no commands are processed until the join is complete, so this cannot normally happen
-      }
-      final ConsistentHash readCh = cacheTopology.getReadConsistentHash();
-      final int topologyId = cacheTopology.getTopologyId();
-
-      if (requestTopologyId < topologyId) {
-         log.warnf("Segments were requested by node %s with topology %d, smaller than the local " +
-               "topology (%d)", destination, requestTopologyId, topologyId);
-      } else if (requestTopologyId > topologyId) {
-         if (trace) {
-            log.tracef("Segments were requested by node %s with topology %d, greater than the local " +
-                  "topology (%d). Waiting for topology %d to be installed locally.", destination,
-                  requestTopologyId, topologyId, requestTopologyId);
-         }
-         stateTransferLock.waitForTopology(requestTopologyId);
-      }
+      final CacheTopology cacheTopology = getCacheTopology(requestTopologyId, destination, false);
 
       // the destination node must already have an InboundTransferTask waiting for these segments
-      OutboundTransferTask outboundTransfer = new OutboundTransferTask(destination, segments, chunkSize, topologyId,
-            readCh, this, dataContainer, cacheLoaderManager, rpcManager, commandsFactory, timeout, cacheName);
+      OutboundTransferTask outboundTransfer = new OutboundTransferTask(destination, segments, chunkSize, cacheTopology.getTopologyId(),
+            cacheTopology.getReadConsistentHash(), this, dataContainer, cacheLoaderManager, rpcManager, commandsFactory, timeout, cacheName);
       addTransfer(outboundTransfer);
       outboundTransfer.execute(executorService);
    }
