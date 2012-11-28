@@ -119,6 +119,7 @@ statement returns [Statement stmt]
    | getStatement { $stmt = $getStatement.stmt; }
    | infoStatement { $stmt = $infoStatement.stmt; }
    | locateStatement { $stmt = $locateStatement.stmt; }
+   | pingStatement { $stmt = $pingStatement.stmt; }
    | putIfAbsentStatement { $stmt = $putIfAbsentStatement.stmt; }
    | putStatement { $stmt = $putStatement.stmt; }
    | removeStatement { $stmt = $removeStatement.stmt; }
@@ -144,7 +145,7 @@ cacheStatement returns [CacheStatement stmt]
    ;
 
 clearStatement returns [ClearStatement stmt]
-   : CLEAR (cacheName = STRINGLITERAL)?(EOL | ';')! { $stmt = new ClearStatement(unquote($cacheName.text)); }
+   : CLEAR (cacheName = STRINGLITERAL)? (EOL | ';')! { $stmt = new ClearStatement(unquote($cacheName.text)); }
    ;
 
 commitTransactionStatement returns [CommitTransactionStatement stmt]
@@ -173,6 +174,10 @@ infoStatement returns [InfoStatement stmt]
 
 locateStatement returns [LocateStatement stmt]
    : LOCATE key = keyIdentifier (EOL | ';')! { $stmt = new LocateStatement($key.key); }
+   ;
+
+pingStatement returns [PingStatement stmt]
+   : PING (EOL | ';')! { $stmt = new PingStatement(); }
    ;
 
 putIfAbsentStatement returns [PutIfAbsentStatement stmt]
@@ -297,6 +302,7 @@ LIKE:    'like';
 LOCATE:  'locate';
 MAXIDLE: 'maxidle';
 NULL:    'null';
+PING:    'ping';
 PUT:     'put';
 PUTIFABSENT:    'putifabsent';
 REMOVE:  'remove';
