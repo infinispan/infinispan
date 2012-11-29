@@ -1315,7 +1315,7 @@
          <plugin>
             <groupId>org.apache.maven.plugins</groupId>
             <artifactId>maven-compiler-plugin</artifactId>
-            <version>2.3.2</version>
+            <version>2.5.1-jboss-2</version>
             <configuration>
                <source>1.6</source>
                <target>1.6</target>
@@ -1345,7 +1345,7 @@
          <plugin>
             <groupId>org.apache.maven.plugins</groupId>
             <artifactId>maven-jar-plugin</artifactId>
-            <version>2.3</version>
+            <version>2.4</version>
             <executions>
                <execution>
                   <id>build-test-jar</id>
@@ -1389,7 +1389,7 @@
          <plugin>
             <groupId>org.apache.maven.plugins</groupId>
             <artifactId>maven-resources-plugin</artifactId>
-            <version>2.4.3</version>
+            <version>2.6</version>
             <configuration>
                <encoding>UTF-8</encoding>
             </configuration>
@@ -1479,7 +1479,7 @@
          <plugin>
             <groupId>org.codehaus.mojo</groupId>
             <artifactId>findbugs-maven-plugin</artifactId>
-            <version>2.5</version>
+            <version>2.5.2</version>
             <configuration>
                <onlyAnalyze>org.infinispan.*</onlyAnalyze>
                <xmlOutput>true</xmlOutput>
@@ -1533,7 +1533,7 @@
                <plugin>
                   <groupId>org.apache.maven.plugins</groupId>
                   <artifactId>maven-enforcer-plugin</artifactId>
-                  <version>1.0-beta-1</version>
+                  <version>1.0</version>
                   <executions>
                      <execution>
                         <id>enforce-java</id>
