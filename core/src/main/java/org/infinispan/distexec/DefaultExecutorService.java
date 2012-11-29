@@ -239,12 +239,12 @@ public class DefaultExecutorService extends AbstractExecutorService implements D
       realShutdown(false);
    }
 
-   protected List<Address> executionCandidates() {
+   protected List<Address> getMembers() {
       return rpc.getTransport().getMembers();
    }
 
    protected <T> List<Address> executionCandidates(DistributedTask<T> task) {
-      return filterMembers(task.getTaskExecutionPolicy(), executionCandidates());
+      return filterMembers(task.getTaskExecutionPolicy(), getMembers());
    }
 
    private Address getAddress(){
@@ -431,7 +431,7 @@ public class DefaultExecutorService extends AbstractExecutorService implements D
          throw new NullPointerException();
       if (target == null)
          throw new NullPointerException();
-      List<Address> members = executionCandidates();
+      List<Address> members = getMembers();
       if (!members.contains(target)) {
          throw new IllegalArgumentException("Target node " + target
                   + " is not a cluster member, members are " + members);
@@ -485,7 +485,7 @@ public class DefaultExecutorService extends AbstractExecutorService implements D
       if (task == null) throw new NullPointerException();
 
       List<Address> members = executionCandidates(task);
-      List<Future<T>> futures = new ArrayList<Future<T>>(members.size() - 1);
+      List<Future<T>> futures = new ArrayList<Future<T>>(members.size());
       Address me = getAddress();
       for (Address target : members) {
          DistributedExecuteCommand<T> c = null;
@@ -599,7 +599,7 @@ public class DefaultExecutorService extends AbstractExecutorService implements D
       for (K key : input) {
          Address ownerOfKey = null;
          if (usingREPLMode) {
-            List<Address> members = new ArrayList<Address>(cache.getRpcManager().getTransport().getMembers());
+            List<Address> members = new ArrayList<Address>(getMembers());
             members =  filterMembers(policy, members);
             // using REPL mode https://issues.jboss.org/browse/ISPN-1886
             // since keys and values are on all nodes, lets just pick randomly
@@ -859,13 +859,16 @@ public class DefaultExecutorService extends AbstractExecutorService implements D
       public boolean isDone() {
          return done;
       }
+      
+      public boolean isLocalNodeExecutionTarget(){
+         return getAddress().equals(getExecutionTarget());
+      }
 
       @Override
       public boolean cancel(boolean mayInterruptIfRunning) {
-         if (!isCancelled()) {
-            boolean sendToSelf = getExecutionTarget().equals(getAddress());
+         if (!isCancelled()) {          
             CancelCommand ccc = factory.buildCancelCommandCommand(distCommand.getUUID());
-            if (sendToSelf) {
+            if (isLocalNodeExecutionTarget()) {
                ccc.init(cancellationService);
                try {
                   ccc.perform(null);
@@ -893,9 +896,7 @@ public class DefaultExecutorService extends AbstractExecutorService implements D
          try {
             result = innerGet(0, TimeUnit.MILLISECONDS);
          } catch (TimeoutException e) {
-            // this one will never happen as we will wait indefinitely
-            // but have to accommodate innerGet contract
-            throw new IllegalStateException("Timeout should not have been raised", e);
+            throw new ExecutionException(e);
          } finally {
             done = true;
          }
@@ -921,9 +922,17 @@ public class DefaultExecutorService extends AbstractExecutorService implements D
          
          V response = null;
          try {
-            if (timeout > 0) {
-               response = retrieveResult(f.get(timeout, unit));
+            long taskTimeout = getOwningTask().timeout();
+            long futureTimeout = TimeUnit.MILLISECONDS.convert(timeout, unit);
+            long actualTimeout = 0;           
+            if (taskTimeout > 0 && futureTimeout > 0) {
+               actualTimeout = Math.min(taskTimeout, futureTimeout);
             } else {
+               actualTimeout = Math.max(taskTimeout, futureTimeout);
+            }            
+            if (actualTimeout > 0) {
+               response = retrieveResult(f.get(actualTimeout, TimeUnit.MILLISECONDS));
+            } else {               
                response = retrieveResult(f.get());
             }
          } catch (TimeoutException te) {
@@ -1042,7 +1051,7 @@ public class DefaultExecutorService extends AbstractExecutorService implements D
       }
 
       public void execute() {
-         if (getAddress().equals(getExecutionTarget())) {
+         if (isLocalNodeExecutionTarget()) {
             invokeLocally();
          } else {
             log.tracef("Sending %s to remote execution at node %s", f, getExecutionTarget());

@@ -75,7 +75,7 @@ public class DistributedExecutorTest extends MultipleCacheManagersTest {
 
    @Override
    protected void createCacheManagers() throws Throwable {
-      ConfigurationBuilder builder = getDefaultClusteredCacheConfig(getCacheMode(), true);
+      ConfigurationBuilder builder = getDefaultClusteredCacheConfig(getCacheMode(), false);
       createClusteredCaches(2, cacheName(), builder);
    }
 
@@ -264,6 +264,22 @@ public class DistributedExecutorTest extends MultipleCacheManagersTest {
       tasks.add(new SleepingSimpleCallable());
       Object result = des.invokeAny(tasks);
       assert ((Integer) result) == 1;
+   }
+   
+   @Test(expectedExceptions = ExecutionException.class)
+   public void testBasicTargetLocalDistributedCallableWithTimeout() throws Exception {
+      Cache<Object, Object> cache1 = cache(0, cacheName());
+
+      // initiate task from cache1 and execute on same node
+      DistributedExecutorService des = createDES(cache1);
+      Address target = cache1.getAdvancedCache().getRpcManager().getAddress();
+
+      DistributedTaskBuilder builder = des
+               .createDistributedTaskBuilder(new SleepingSimpleCallable());
+      builder.timeout(1000, TimeUnit.MILLISECONDS);
+
+      Future<Integer> future = des.submit(target, builder.build());
+      future.get();
    }
    
    @Test(expectedExceptions = TimeoutException.class)
