@@ -312,9 +312,6 @@ public class TransactionTable {
       LocalTransaction current = localTransactions.get(transaction);
       if (current == null) {
          Address localAddress = rpcManager != null ? rpcManager.getTransport().getAddress() : null;
-         if (rpcManager != null && currentTopologyId < 0) {
-            throw new IllegalStateException("Cannot create transactions if topology id is not known yet!");
-         }
          GlobalTransaction tx = txFactory.newGlobalTransaction(localAddress, false);
          current = txFactory.newLocalTransaction(transaction, tx, ctx.isImplicitTransaction(), currentTopologyId);
          log.tracef("Created a new local transaction: %s", current);
