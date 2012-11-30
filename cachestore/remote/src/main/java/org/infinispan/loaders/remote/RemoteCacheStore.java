@@ -26,15 +26,20 @@ import net.jcip.annotations.ThreadSafe;
 import org.infinispan.Cache;
 import org.infinispan.api.BasicCacheContainer;
 import org.infinispan.client.hotrod.Flag;
+import org.infinispan.client.hotrod.MetadataValue;
 import org.infinispan.client.hotrod.RemoteCache;
 import org.infinispan.client.hotrod.RemoteCacheManager;
+import org.infinispan.client.hotrod.impl.ConfigurationProperties;
+import org.infinispan.container.InternalEntryFactory;
 import org.infinispan.container.entries.InternalCacheEntry;
 import org.infinispan.loaders.AbstractCacheStore;
 import org.infinispan.loaders.CacheLoaderConfig;
 import org.infinispan.loaders.CacheLoaderException;
 import org.infinispan.loaders.CacheLoaderMetadata;
 import org.infinispan.loaders.remote.logging.Log;
+import org.infinispan.marshall.Marshaller;
 import org.infinispan.marshall.StreamingMarshaller;
+import org.infinispan.marshall.jboss.GenericJBossMarshaller;
 import org.infinispan.util.logging.LogFactory;
 
 import java.io.IOException;
@@ -69,12 +74,22 @@ public class RemoteCacheStore extends AbstractCacheStore {
    private volatile RemoteCacheStoreConfig config;
    private volatile RemoteCacheManager remoteCacheManager;
    private volatile RemoteCache<Object, Object> remoteCache;
+
+   private InternalEntryFactory iceFactory;
    private static final String LIFESPAN = "lifespan";
    private static final String MAXIDLE = "maxidle";
 
    @Override
    public InternalCacheEntry load(Object key) throws CacheLoaderException {
-      return (InternalCacheEntry) remoteCache.get(key);
+      if (config.isRawValues()) {
+         MetadataValue<?> value = remoteCache.getWithMetadata(key);
+         if (value != null)
+            return iceFactory.create(key, value.getValue(), null, value.getCreated(), TimeUnit.SECONDS.toMillis(value.getLifespan()), value.getLastUsed(), TimeUnit.SECONDS.toMillis(value.getMaxIdle()));
+         else
+            return null;
+      } else {
+         return (InternalCacheEntry) remoteCache.get(key);
+      }
    }
 
    @Override
@@ -94,7 +109,7 @@ public class RemoteCacheStore extends AbstractCacheStore {
       if (log.isTraceEnabled()) {
          log.tracef("Adding entry: %s", entry);
       }
-      remoteCache.put(entry.getKey(), entry, toSeconds(entry.getLifespan(), entry, LIFESPAN), TimeUnit.SECONDS, toSeconds(entry.getMaxIdle(), entry, MAXIDLE), TimeUnit.SECONDS);
+      remoteCache.put(entry.getKey(), config.isRawValues() ? entry.getValue() : entry, toSeconds(entry.getLifespan(), entry, LIFESPAN), TimeUnit.SECONDS, toSeconds(entry.getMaxIdle(), entry, MAXIDLE), TimeUnit.SECONDS);
    }
 
    @Override
@@ -158,14 +173,20 @@ public class RemoteCacheStore extends AbstractCacheStore {
    @Override
    public void start() throws CacheLoaderException {
       super.start();
-      StreamingMarshaller marshaller = getMarshaller();
-
-      if (marshaller == null) {throw new IllegalStateException("Null marshaller not allowed!");}
-      remoteCacheManager = new RemoteCacheManager(marshaller, config.getHotRodClientProperties(), true, config.getClassLoader(), config.getAsyncExecutorFactory());
+      if (config.getHotRodClientProperties().containsKey(ConfigurationProperties.MARSHALLER)) {
+         remoteCacheManager = new RemoteCacheManager(config.getHotRodClientProperties(), true, config.getClassLoader(), config.getAsyncExecutorFactory());
+      } else {
+         Marshaller marshaller = config.isRawValues() ? new GenericJBossMarshaller() : getMarshaller();
+         if (marshaller == null) {throw new IllegalStateException("Null marshaller not allowed!");}
+         remoteCacheManager = new RemoteCacheManager(marshaller, config.getHotRodClientProperties(), true, config.getClassLoader(), config.getAsyncExecutorFactory());
+      }
       if (config.getRemoteCacheName().equals(BasicCacheContainer.DEFAULT_CACHE_NAME))
          remoteCache = remoteCacheManager.getCache();
       else
          remoteCache = remoteCacheManager.getCache(config.getRemoteCacheName());
+      if (config.isRawValues() && iceFactory == null) {
+         iceFactory = cache.getAdvancedCache().getComponentRegistry().getComponent(InternalEntryFactory.class);
+      }
    }
 
    @Override
@@ -190,12 +211,23 @@ public class RemoteCacheStore extends AbstractCacheStore {
       return TimeUnit.MILLISECONDS.toSeconds(millis);
    }
 
-   private Set<InternalCacheEntry> convertToInternalCacheEntries(Map<Object, Object> map) {
+   private Set<InternalCacheEntry> convertToInternalCacheEntries(Map<Object, Object> map) throws CacheLoaderException {
       Set<InternalCacheEntry> result = new HashSet<InternalCacheEntry>(map.size());
       Set<Map.Entry<Object, Object>> set = map.entrySet();
       for (Map.Entry<Object, Object> e : set) {
-         result.add((InternalCacheEntry) e.getValue());
+         if (config.isRawValues()) {
+            result.add(load(e.getKey())); // Inefficient: should probably have a getBulkWithMetadata
+         } else {
+            result.add((InternalCacheEntry) e.getValue());
+         }
       }
       return result;
+   }
+
+   public void setInternalCacheEntryFactory(InternalEntryFactory iceFactory) {
+      if (this.iceFactory != null) {
+         throw new IllegalStateException();
+      }
+      this.iceFactory = iceFactory;
    }
 }

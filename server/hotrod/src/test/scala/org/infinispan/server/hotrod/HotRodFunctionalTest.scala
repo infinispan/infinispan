@@ -201,6 +201,15 @@ class HotRodFunctionalTest extends HotRodSingleNodeTest {
       assertTrue(resp.dataVersion == 0)
    }
 
+   def testGetWithMetadata(m: Method) {
+      client.assertPut(m)
+      assertSuccess(client.assertGet(m), v(m))
+      assertSuccess(client.getWithMetadata(k(m), 0), v(m), -1, -1)
+      client.remove(k(m))
+      client.assertPut(m, 10, 5)
+      assertSuccess(client.getWithMetadata(k(m), 0), v(m), 10, 5)
+   }
+
    def testReplaceIfUnmodifiedBasic(m: Method) {
       client.assertPut(m)
       val resp = client.getWithVersion(k(m), 0)
@@ -429,7 +438,7 @@ class HotRodFunctionalTest extends HotRodSingleNodeTest {
       for (i <- 0 until size) {
          val key = new ByteArrayKey(k(m, i + "k-"))
          if (bulkData.contains(key)) {
-            assertTrue(Arrays.equals(bulkData.get(key).get, v(m, i + "v-")))            
+            assertTrue(Arrays.equals(bulkData.get(key).get, v(m, i + "v-")))
          }
       }
    }

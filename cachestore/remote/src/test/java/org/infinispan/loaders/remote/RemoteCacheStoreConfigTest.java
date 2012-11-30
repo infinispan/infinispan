@@ -24,6 +24,7 @@ package org.infinispan.loaders.remote;
 
 import org.infinispan.Cache;
 import org.infinispan.client.hotrod.TestHelper;
+import org.infinispan.client.hotrod.test.HotRodClientTestingUtil;
 import org.infinispan.loaders.CacheLoader;
 import org.infinispan.manager.CacheContainer;
 import org.infinispan.manager.DefaultCacheManager;
@@ -91,10 +92,7 @@ public class RemoteCacheStoreConfigTest {
 
    @AfterTest(alwaysRun = true)
    public void tearDown() {
-      try {
-         if (hotRodServer != null) hotRodServer.stop();
-      } finally {
-         if (cacheManager != null) cacheManager.stop();
-      }
+      HotRodClientTestingUtil.killServers(hotRodServer);
+      TestingUtil.killCacheManagers(cacheManager);
    }
 }

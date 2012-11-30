@@ -22,7 +22,6 @@
  */
 package org.infinispan.client.hotrod.impl.transport;
 
-import java.net.InetAddress;
 import java.net.SocketAddress;
 
 /**

@@ -92,6 +92,11 @@ public abstract class AbstractRemoteCacheStoreConfigurationChildBuilder<S> exten
    }
 
    @Override
+   public RemoteCacheStoreConfigurationBuilder rawValues(boolean rawValues) {
+      return builder.rawValues(rawValues);
+   }
+
+   @Override
    public RemoteCacheStoreConfigurationBuilder remoteCacheName(String remoteCacheName) {
       return builder.remoteCacheName(remoteCacheName);
    }

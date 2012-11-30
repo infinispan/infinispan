@@ -23,6 +23,8 @@
 
 package org.infinispan.client.hotrod;
 
+import static org.infinispan.client.hotrod.test.HotRodClientTestingUtil.killRemoteCacheManager;
+import static org.infinispan.client.hotrod.test.HotRodClientTestingUtil.killServers;
 import static org.infinispan.test.TestingUtil.*;
 
 import java.lang.reflect.Method;
@@ -77,6 +79,13 @@ public class SocketTimeoutErrorTest extends SingleCacheManagerTest {
       hotrodServer = TestHelper.startHotRodServer(cacheManager);
       remoteCacheManager = new RemoteCacheManager(getClientProperties());
       remoteCache = remoteCacheManager.getCache();
+   }
+
+   @Override
+   protected void teardown() {
+      killRemoteCacheManager(remoteCacheManager);
+      killServers(hotrodServer);
+      super.teardown();
    }
 
    protected Properties getClientProperties() {

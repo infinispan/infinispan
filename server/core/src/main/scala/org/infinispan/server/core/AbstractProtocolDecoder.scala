@@ -156,7 +156,7 @@ abstract class AbstractProtocolDecoder[K, V <: CacheValue](transport: NettyTrans
                case PutRequest => put
                case PutIfAbsentRequest => putIfAbsent
                case ReplaceRequest => replace
-               case ReplaceIfUnmodifiedRequest => replaceIfUmodified
+               case ReplaceIfUnmodifiedRequest => replaceIfUnmodified
             }
          }
          case RemoveRequest => remove
@@ -246,7 +246,7 @@ abstract class AbstractProtocolDecoder[K, V <: CacheValue](transport: NettyTrans
          createNotExecutedResponse(prev)
    }
 
-   private def replaceIfUmodified: AnyRef = {
+   private def replaceIfUnmodified: AnyRef = {
       val prev = cache.get(key)
       if (prev != null) {
          if (prev.version == params.streamVersion) {

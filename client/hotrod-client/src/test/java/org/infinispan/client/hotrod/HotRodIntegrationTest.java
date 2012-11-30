@@ -47,6 +47,7 @@ import java.util.concurrent.TimeUnit;
 import static org.infinispan.test.TestingUtil.k;
 import static org.infinispan.test.TestingUtil.v;
 import static org.testng.AssertJUnit.assertEquals;
+import static org.testng.AssertJUnit.assertNotNull;
 import static org.testng.AssertJUnit.assertNull;
 
 
@@ -153,6 +154,32 @@ public class HotRodIntegrationTest extends SingleCacheManagerTest {
       assertEquals(entry3.getValue(), "anotherValue");
       assert entry3.getVersion() != entry2.getVersion();
       assert !entry3.equals(entry2);
+   }
+
+   public void testGetWithMetadata() {
+      MetadataValue<?> value = remoteCache.getWithMetadata("aKey");
+      assertNull("expected null but received: " + value, value);
+      remoteCache.put("aKey", "aValue");
+      assert remoteCache.get("aKey").equals("aValue");
+      MetadataValue<?> immortalValue = remoteCache.getWithMetadata("aKey");
+      assertNotNull(immortalValue);
+      assertEquals("aValue", immortalValue.getValue());
+      assertEquals(-1, immortalValue.getLifespan());
+      assertEquals(-1, immortalValue.getMaxIdle());
+
+      remoteCache.put("bKey", "bValue", 60, TimeUnit.SECONDS);
+      MetadataValue<?> mortalValueWithLifespan = remoteCache.getWithMetadata("bKey");
+      assertNotNull(mortalValueWithLifespan);
+      assertEquals("bValue", mortalValueWithLifespan.getValue());
+      assertEquals(60, mortalValueWithLifespan.getLifespan());
+      assertEquals(-1, mortalValueWithLifespan.getMaxIdle());
+
+      remoteCache.put("cKey", "cValue", 60, TimeUnit.SECONDS, 30, TimeUnit.SECONDS);
+      MetadataValue<?> mortalValueWithMaxIdle = remoteCache.getWithMetadata("cKey");
+      assertNotNull(mortalValueWithMaxIdle);
+      assertEquals("cValue", mortalValueWithMaxIdle.getValue());
+      assertEquals(60, mortalValueWithMaxIdle.getLifespan());
+      assertEquals(30, mortalValueWithMaxIdle.getMaxIdle());
    }
 
    public void testReplace() {

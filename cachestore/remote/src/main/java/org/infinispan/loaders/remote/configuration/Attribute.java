@@ -47,6 +47,7 @@ public enum Attribute {
    PING_ON_STARTUP("pingOnStartup"),
    PORT("port"),
    PROTOCOL_VERSION("protocolVersion"),
+   RAW_VALUES("rawValues"),
    REMOTE_CACHE_NAME("remoteCacheName"),
    SOCKET_TIMEOUT("socketTimeout"),
    TCP_NO_DELAY("tcpNoDelay"),

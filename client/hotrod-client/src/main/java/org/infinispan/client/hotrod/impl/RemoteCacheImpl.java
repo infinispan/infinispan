@@ -37,6 +37,7 @@ import org.infinispan.client.hotrod.Flag;
 import org.infinispan.client.hotrod.RemoteCache;
 import org.infinispan.client.hotrod.RemoteCacheManager;
 import org.infinispan.client.hotrod.ServerStatistics;
+import org.infinispan.client.hotrod.MetadataValue;
 import org.infinispan.client.hotrod.Version;
 import org.infinispan.client.hotrod.VersionedValue;
 import org.infinispan.client.hotrod.exceptions.RemoteCacheManagerNotStartedException;
@@ -46,6 +47,7 @@ import org.infinispan.client.hotrod.impl.operations.BulkGetOperation;
 import org.infinispan.client.hotrod.impl.operations.ClearOperation;
 import org.infinispan.client.hotrod.impl.operations.ContainsKeyOperation;
 import org.infinispan.client.hotrod.impl.operations.GetOperation;
+import org.infinispan.client.hotrod.impl.operations.GetWithMetadataOperation;
 import org.infinispan.client.hotrod.impl.operations.GetWithVersionOperation;
 import org.infinispan.client.hotrod.impl.operations.OperationsFactory;
 import org.infinispan.client.hotrod.impl.operations.PingOperation;
@@ -151,8 +153,16 @@ public class RemoteCacheImpl<K, V> extends RemoteCacheSupport<K, V> {
    public VersionedValue<V> getVersioned(K key) {
       assertRemoteCacheManagerIsStarted();
       GetWithVersionOperation op = operationsFactory.newGetWithVersionOperation(obj2bytes(key, true));
-      BinaryVersionedValue value = op.execute();
+      VersionedValue<byte[]> value = op.execute();
       return binary2VersionedValue(value);
+   }
+
+   @Override
+   public MetadataValue<V> getWithMetadata(K key) {
+      assertRemoteCacheManagerIsStarted();
+      GetWithMetadataOperation op = operationsFactory.newGetWithMetadataOperation(obj2bytes(key, true));
+      MetadataValue<byte[]> value = op.execute();
+      return binary2MetadataValue(value);
    }
 
    @Override
@@ -181,7 +191,6 @@ public class RemoteCacheImpl<K, V> extends RemoteCacheSupport<K, V> {
    }
 
    @Override
-   @SuppressWarnings("unchecked")
    public int size() {
       assertRemoteCacheManagerIsStarted();
       StatsOperation op = operationsFactory.newStatsOperation();
@@ -194,7 +203,6 @@ public class RemoteCacheImpl<K, V> extends RemoteCacheSupport<K, V> {
    }
 
    @Override
-   @SuppressWarnings("unchecked")
    public ServerStatistics stats() {
       assertRemoteCacheManagerIsStarted();
       StatsOperation op = operationsFactory.newStatsOperation();
@@ -456,11 +464,19 @@ public class RemoteCacheImpl<K, V> extends RemoteCacheSupport<K, V> {
    }
 
    @SuppressWarnings("unchecked")
-   private VersionedValue<V> binary2VersionedValue(BinaryVersionedValue value) {
+   private VersionedValue<V> binary2VersionedValue(VersionedValue<byte[]> value) {
       if (value == null)
          return null;
       V valueObj = (V) bytes2obj(value.getValue());
       return new VersionedValueImpl<V>(value.getVersion(), valueObj);
+   }
+
+   @SuppressWarnings("unchecked")
+   private MetadataValue<V> binary2MetadataValue(MetadataValue<byte[]> value) {
+      if (value == null)
+         return null;
+      V valueObj = (V) bytes2obj(value.getValue());
+      return new MetadataValueImpl<V>(value.getCreated(), value.getLifespan(), value.getLastUsed(), value.getMaxIdle(), value.getVersion(), valueObj);
    }
 
    private int toSeconds(long duration, TimeUnit timeUnit) {

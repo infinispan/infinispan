@@ -23,6 +23,7 @@
 package org.infinispan.loaders.remote;
 
 import org.infinispan.client.hotrod.TestHelper;
+import org.infinispan.client.hotrod.test.HotRodClientTestingUtil;
 import org.infinispan.loaders.BaseCacheStoreFunctionalTest;
 import org.infinispan.loaders.CacheStoreConfig;
 import org.infinispan.manager.CacheContainer;
@@ -60,7 +61,7 @@ public class RemoteCacheStoreFunctionalTest extends BaseCacheStoreFunctionalTest
 
    @AfterMethod(alwaysRun = true)
    public void tearDown() {
-      hrServer.stop();
+      HotRodClientTestingUtil.killServers(hrServer);
       TestingUtil.killCacheManagers(localCacheManager);
    }
 

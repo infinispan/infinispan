@@ -41,6 +41,8 @@ import java.util.List;
 import java.util.Properties;
 import java.util.concurrent.ExecutionException;
 
+import static org.infinispan.client.hotrod.test.HotRodClientTestingUtil.killRemoteCacheManager;
+import static org.infinispan.client.hotrod.test.HotRodClientTestingUtil.killServers;
 import static org.testng.AssertJUnit.assertEquals;
 
 /**
@@ -88,8 +90,8 @@ public class HeavyLoadConnectionPoolingTest extends SingleCacheManagerTest {
    @Override
    protected void destroyAfterClass() {
       super.destroyAfterClass();
-      remoteCacheManager.stop();
-      hotRodServer.stop();
+      killRemoteCacheManager(remoteCacheManager);
+      killServers(hotRodServer);
    }
 
    public void testHeavyLoad() throws InterruptedException, ExecutionException {

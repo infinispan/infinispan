@@ -20,45 +20,22 @@
  * Software Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
  * 02110-1301 USA, or see the FSF site: http://www.fsf.org.
  */
-package org.infinispan.client.hotrod.impl;
-
-import java.util.Arrays;
+package org.infinispan.client.hotrod;
 
 /**
-* @author Mircea.Markus@jboss.com
-* @since 4.1
-*/
-public class BinaryVersionedValue {
-   private final long version;
-   private final byte[] value;
+ * Besides the value, also contains a version and expiration information.
+ *
+ * @author Tristan Tarrant
+ * @since 5.2
+ */
+public interface MetadataValue<V> extends VersionedValue<V> {
 
-   public BinaryVersionedValue(long version, byte[] value) {
-      this.version = version;
-      this.value = value;
-   }
+   long getCreated();
 
-   public long getVersion() {
-      return version;
-   }
+   int getLifespan();
 
-   public byte[] getValue() {
-      return value;
-   }
+   long getLastUsed();
 
-   @Override
-   public boolean equals(Object o) {
-      if (this == o) return true;
-      if (o == null || getClass() != o.getClass()) return false;
+   int getMaxIdle();
 
-      BinaryVersionedValue that = (BinaryVersionedValue) o;
-
-      return version == that.version && Arrays.equals(value, that.value);
-   }
-
-   @Override
-   public int hashCode() {
-      int result = (int) (version ^ (version >>> 32));
-      result = 31 * result + (value != null ? Arrays.hashCode(value) : 0);
-      return result;
-   }
 }

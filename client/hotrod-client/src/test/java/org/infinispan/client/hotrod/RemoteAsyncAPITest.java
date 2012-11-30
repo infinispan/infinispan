@@ -35,6 +35,8 @@ import java.util.Properties;
 import java.util.concurrent.Future;
 
 import static junit.framework.Assert.assertEquals;
+import static org.infinispan.client.hotrod.test.HotRodClientTestingUtil.killRemoteCacheManager;
+import static org.infinispan.client.hotrod.test.HotRodClientTestingUtil.killServers;
 
 /**
  * @author Mircea.Markus@jboss.com
@@ -64,8 +66,8 @@ public class RemoteAsyncAPITest extends SingleCacheManagerTest {
    @Override
    protected void destroyAfterClass() {
       super.destroyAfterClass();
-      rcm.stop();
-      hotrodServer.stop();
+      killRemoteCacheManager(rcm);
+      killServers(hotrodServer);
    }
 
    public void testAsyncPut() throws Exception {

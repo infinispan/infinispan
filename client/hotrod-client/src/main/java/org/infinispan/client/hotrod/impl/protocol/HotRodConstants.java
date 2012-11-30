@@ -53,6 +53,7 @@ public interface HotRodConstants {
    static final byte STATS_REQUEST = 0x15;
    static final byte PING_REQUEST = 0x17;
    static final byte BULK_GET_REQUEST = 0x19;
+   static final byte GET_WITH_METADATA = 0x1B;
 
 
    //responses
@@ -69,6 +70,7 @@ public interface HotRodConstants {
    static final byte STATS_RESPONSE = 0x16;
    static final byte PING_RESPONSE = 0x18;
    static final byte BULK_GET_RESPONSE = 0x1A;
+   static final byte GET_WITH_METADATA_RESPONSE = 0x1C;
    static final byte ERROR_RESPONSE = 0x50;
 
    //response status
@@ -89,4 +91,7 @@ public interface HotRodConstants {
    Charset HOTROD_STRING_CHARSET = Charset.forName("UTF-8");
 
    static final byte[] DEFAULT_CACHE_NAME_BYTES = new byte[]{};
+
+   static final byte INFINITE_LIFESPAN = 0x01;
+   static final byte INFINITE_MAXIDLE = 0x02;
 }
