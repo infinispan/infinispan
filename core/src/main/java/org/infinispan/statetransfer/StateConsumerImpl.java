@@ -204,27 +204,6 @@ public class StateConsumerImpl implements StateConsumer {
             addedSegments = new HashSet<Integer>(newSegments);
             addedSegments.removeAll(previousSegments);
 
-            // The actual owners keep track of the nodes that hold a key in L1 ("requestors") and
-            // they invalidate the key on every requestor after a change.
-            // But this information is only present on the owners where the ClusteredGetKeyValueCommand
-            // got executed - if the requestor only contacted one owner, and that node is no longer an owner
-            // (perhaps because it left the cluster), the other owners will not know to invalidate the key
-            // on that requestor. Furthermore, the requestors list is not copied to the new owners during
-            // state transfers.
-            // To compensate for this, we delete all L1 entries in segments that changed ownership during
-            // this topology update. We can't actually differentiate between L1 entries and regular entries,
-            // so we delete all entries that don't belong to this node in the current OR previous topology.
-            Set<Integer> invalidL1Segments = new HashSet<Integer>();
-            for (int segment = 0; segment < cacheTopology.getCurrentCH().getNumSegments(); segment++) {
-               if (!previousSegments.contains(segment) && newSegments.contains(segment)) {
-                  List<Address> previousOwners = previousCh.locateOwnersForSegment(segment);
-                  List<Address> newOwners = cacheTopology.getWriteConsistentHash().locateOwnersForSegment(segment);
-                  if (!newOwners.containsAll(previousOwners)) {
-                     invalidL1Segments.add(segment);
-                  }
-               }
-            }
-
             // remove inbound transfers and any data for segments we no longer own
             if (trace) {
                log.tracef("On cache %s we have: removed segments: %s; new segments: %s; old segments: %s; added segments: %s",
@@ -236,7 +215,7 @@ public class StateConsumerImpl implements StateConsumer {
 
             // If L1.onRehash is enabled, "removed" segments are actually moved to L1. The new (and old) owners
             // will automatically add the nodes that no longer own a key to that key's requestors list.
-            invalidateSegments(removedSegments, invalidL1Segments);
+            invalidateSegments(newSegments, removedSegments);
 
             // check if any of the existing transfers should be restarted from a different source because the initial source is no longer a member
             Set<Address> members = new HashSet<Address>(cacheTopology.getReadConsistentHash().getMembers());
@@ -533,16 +512,27 @@ public class StateConsumerImpl implements StateConsumer {
       }
    }
 
-   private void invalidateSegments(Set<Integer> segmentsToL1, Set<Integer> segmentsToRemove) {
+   private void invalidateSegments(Set<Integer> newSegments, Set<Integer> segmentsToL1) {
+      // The actual owners keep track of the nodes that hold a key in L1 ("requestors") and
+      // they invalidate the key on every requestor after a change.
+      // But this information is only present on the owners where the ClusteredGetKeyValueCommand
+      // got executed - if the requestor only contacted one owner, and that node is no longer an owner
+      // (perhaps because it left the cluster), the other owners will not know to invalidate the key
+      // on that requestor. Furthermore, the requestors list is not copied to the new owners during
+      // state transfers.
+      // To compensate for this, we delete all L1 entries in segments that changed ownership during
+      // this topology update. We can't actually differentiate between L1 entries and regular entries,
+      // so we delete all entries that don't belong to this node in the current OR previous topology.
       Set<Object> keysToL1 = new HashSet<Object>();
       Set<Object> keysToRemove = new HashSet<Object>();
+
       // gather all keys from cache store that belong to the segments that are being removed/moved to L1
       for (InternalCacheEntry ice : dataContainer) {
          Object key = ice.getKey();
          int keySegment = getSegment(key);
-         if (segmentsToRemove.contains(keySegment)) {
+         if (segmentsToL1.contains(keySegment)) {
             keysToL1.add(key);
-         } else if (segmentsToL1.contains(keySegment)) {
+         } else if (!newSegments.contains(keySegment)) {
             keysToRemove.add(key);
          }
       }
@@ -554,9 +544,9 @@ public class StateConsumerImpl implements StateConsumer {
             Set<Object> storedKeys = cacheStore.loadAllKeys(new ReadOnlyDataContainerBackedKeySet(dataContainer));
             for (Object key : storedKeys) {
                int keySegment = getSegment(key);
-               if (segmentsToRemove.contains(keySegment)) {
+               if (segmentsToL1.contains(keySegment)) {
                   keysToL1.add(key);
-               } else if (segmentsToL1.contains(keySegment)) {
+               } else if (!newSegments.contains(keySegment)) {
                   keysToRemove.add(key);
                }
             }
@@ -584,7 +574,7 @@ public class StateConsumerImpl implements StateConsumer {
          }
       }
 
-      log.debugf("Removing L1 state for segments %s of cache %s", segmentsToRemove, cacheName);
+      log.debugf("Removing L1 state for segments not in %s or %s for cache %s", newSegments, segmentsToL1, cacheName);
       if (!keysToRemove.isEmpty()) {
          try {
             InvalidateCommand invalidateCmd = commandsFactory.buildInvalidateFromL1Command(false, EnumSet.of(CACHE_MODE_LOCAL, SKIP_LOCKING), keysToRemove);

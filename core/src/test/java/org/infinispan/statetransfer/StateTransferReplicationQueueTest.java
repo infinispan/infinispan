@@ -174,8 +174,8 @@ public class StateTransferReplicationQueueTest extends MultipleCacheManagersTest
                if (tx) tm.begin();
                cache.put("test" + c, new PojoValue(c));
                cache.remove("test" + c);
-               c++;
                if (tx) tm.commit();
+               c++;
                if (c % 1000 == 0) TestingUtil.sleepThread(1); // Slow it down a bit
             }
             catch (Exception e) {
