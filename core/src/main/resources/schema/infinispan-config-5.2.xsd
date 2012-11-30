@@ -1595,7 +1595,7 @@
   
   <xs:simpleType name="versioningScheme">
     <xs:restriction base="xs:string">
-      <xs:enumeration value="DEFAULT">
+      <xs:enumeration value="SIMPLE">
         <xs:annotation>
           <xs:documentation>
            A simple versioning scheme that is cluster-aware
