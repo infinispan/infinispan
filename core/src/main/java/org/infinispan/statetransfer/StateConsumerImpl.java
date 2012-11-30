@@ -255,6 +255,7 @@ public class StateConsumerImpl implements StateConsumer {
                            log.tracef("Removing inbound transfers for segments %s from source %s for cache %s", inboundTransfer.getSegments(), source, cacheName);
                         }
                         transfersBySegment.keySet().removeAll(inboundTransfer.getSegments());
+                        addedSegments.addAll(inboundTransfer.getUnfinishedSegments());
                      }
                   }
                }
