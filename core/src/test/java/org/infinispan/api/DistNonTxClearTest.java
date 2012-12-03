@@ -1,6 +1,6 @@
 /*
  * JBoss, Home of Professional Open Source
- * Copyright 2010 Red Hat Inc. and/or its affiliates and other
+ * Copyright 2012 Red Hat Inc. and/or its affiliates and other
  * contributors as indicated by the @author tags. All rights reserved.
  * See the copyright.txt in the distribution for a full listing of
  * individual contributors.
@@ -20,45 +20,19 @@
  * Software Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
  * 02110-1301 USA, or see the FSF site: http://www.fsf.org.
  */
-package org.infinispan.client.hotrod.impl;
 
-import java.util.Arrays;
+package org.infinispan.api;
+
+import org.testng.annotations.Test;
 
 /**
-* @author Mircea.Markus@jboss.com
-* @since 4.1
-*/
-public class BinaryVersionedValue {
-   private final long version;
-   private final byte[] value;
+ * @author anistor@redhat.com
+ * @since 5.2
+ */
+@Test(groups = "functional", testName = "api.DistNonTxClearTest")
+public class DistNonTxClearTest extends BaseDistClearTest {
 
-   public BinaryVersionedValue(long version, byte[] value) {
-      this.version = version;
-      this.value = value;
-   }
-
-   public long getVersion() {
-      return version;
-   }
-
-   public byte[] getValue() {
-      return value;
-   }
-
-   @Override
-   public boolean equals(Object o) {
-      if (this == o) return true;
-      if (o == null || getClass() != o.getClass()) return false;
-
-      BinaryVersionedValue that = (BinaryVersionedValue) o;
-
-      return version == that.version && Arrays.equals(value, that.value);
-   }
-
-   @Override
-   public int hashCode() {
-      int result = (int) (version ^ (version >>> 32));
-      result = 31 * result + (value != null ? Arrays.hashCode(value) : 0);
-      return result;
+   public DistNonTxClearTest() {
+      super(false, false);
    }
 }

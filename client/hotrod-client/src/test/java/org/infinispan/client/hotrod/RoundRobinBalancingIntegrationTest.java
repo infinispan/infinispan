@@ -40,6 +40,8 @@ import java.net.SocketAddress;
 import java.util.ArrayList;
 import java.util.List;
 
+import static org.infinispan.client.hotrod.test.HotRodClientTestingUtil.killRemoteCacheManager;
+import static org.infinispan.client.hotrod.test.HotRodClientTestingUtil.killServers;
 import static org.testng.AssertJUnit.assertEquals;
 
 /**
@@ -64,6 +66,8 @@ public class RoundRobinBalancingIntegrationTest extends MultipleCacheManagersTes
 
    RemoteCache<String, String> remoteCache;
 
+   private RemoteCacheManager remoteCacheManager;
+
    @Override
    protected void assertSupportedConfig() {
       return;
@@ -85,16 +89,14 @@ public class RoundRobinBalancingIntegrationTest extends MultipleCacheManagersTes
       log.trace("Server 3 port: " + hotRodServer3.getPort());
       String servers = TestHelper.getServersString(hotRodServer1, hotRodServer2, hotRodServer3);
       log.trace("Server list is: " + servers);
-      RemoteCacheManager remoteCacheManager = new RemoteCacheManager(servers);
+      remoteCacheManager = new RemoteCacheManager(servers);
       remoteCache = remoteCacheManager.getCache();
    }
 
    @AfterTest(alwaysRun = true)
    public void tearDown() {
-      hotRodServer1.stop();
-      hotRodServer2.stop();
-      hotRodServer3.stop();
-      hotRodServer4.stop();
+      killRemoteCacheManager(remoteCacheManager);
+      killServers(hotRodServer1, hotRodServer2, hotRodServer3, hotRodServer4);
    }
 
    public void testRoundRobinLoadBalancing() {
@@ -125,7 +127,7 @@ public class RoundRobinBalancingIntegrationTest extends MultipleCacheManagersTes
    @Test(dependsOnMethods = "testRoundRobinLoadBalancing")
    public void testAddNewHotrodServer() {
       c4 = TestCacheManagerFactory.createLocalCacheManager(false).getCache();
-      hotRodServer4 = TestHelper.startHotRodServer((EmbeddedCacheManager) c4.getCacheManager());
+      hotRodServer4 = TestHelper.startHotRodServer(c4.getCacheManager());
       registerCacheManager(c4.getCacheManager());
 
       List<SocketAddress> serverAddresses = new ArrayList<SocketAddress>();

@@ -5,9 +5,9 @@
 .I cachename
 .B ]
 .SH DESCRIPTION
-Performs an upgrade command on the specified cache 
+This command performs operations used during the rolling upgrade procedure.
 .SH ARGUMENTS
 .IP --dumpkeys
-Performs the dump of all the keys in the cache to a known entry 
+Performs the dump of all the keys in the cache to a known entry. It should be performed on the "old" cluster so that the "new" cluster can fetch the entire keyset efficiently to complete the synchronization operation
 .IP cachename
 (optional) the name of the cache on which to invoke the specified upgrade command

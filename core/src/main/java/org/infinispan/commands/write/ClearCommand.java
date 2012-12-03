@@ -32,7 +32,6 @@ import org.infinispan.lifecycle.ComponentStatus;
 import org.infinispan.notifications.cachelistener.CacheNotifier;
 import org.infinispan.util.InfinispanCollections;
 
-import java.util.Collections;
 import java.util.Set;
 
 /**

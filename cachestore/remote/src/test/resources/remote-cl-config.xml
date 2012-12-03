@@ -22,21 +22,34 @@
   ~ 02110-1301 USA, or see the FSF site: http://www.fsf.org.
   -->
 <infinispan
-      xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-      xsi:schemaLocation="urn:infinispan:config:5.2 http://www.infinispan.org/schemas/infinispan-config-5.2.xsd"
-      xmlns="urn:infinispan:config:5.2">
+   xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+   xsi:schemaLocation="urn:infinispan:config:5.2 http://www.infinispan.org/schemas/infinispan-config-5.2.xsd
+                       urn:infinispan:config:remote:5.2 http://www.infinispan.org/schemas/infinispan-cachestore-remote-config-5.2.xsd"
+   xmlns="urn:infinispan:config:5.2"
+   xmlns:remote="urn:infinispan:config:remote:5.2" >
 
    <default>
       <jmxStatistics enabled="false"/>
       <deadlockDetection enabled="true" spinDuration="1221"/>
       <loaders passivation="false" shared="true" preload="false">
-         <loader class="org.infinispan.loaders.remote.RemoteCacheStore" fetchPersistentState="false"
-                 ignoreModifications="false" purgeOnStartup="false">
-            <properties>
-               <property name="hotRodClientPropertiesFile" value="hotrod-client.properties"/>
-               <property name="useDefaultRemoteCache" value="true"/>
-            </properties>
-         </loader>
+         <remoteStore xmlns="urn:infinispan:config:remote:5.2" 
+            fetchPersistentState="false" ignoreModifications="false" purgeOnStartup="false"
+            tcpNoDelay="true" pingOnStartup="true"
+            balancingStrategy="org.infinispan.client.hotrod.impl.transport.tcp.RoundRobinBalancingStrategy"
+            transportFactory="org.infinispan.client.hotrod.impl.transport.tcp.TcpTransportFactory"
+            keySizeEstimate="62" valueSizeEstimate="512"
+            forceReturnValues="false">
+            <asyncTransportExecutor factory="org.infinispan.client.hotrod.impl.async.DefaultAsyncExecutorFactory">
+              <properties>
+                <property name="pool_size" value="1" />
+                <property name="queue_size" value="10000" />
+              </properties>
+            </asyncTransportExecutor>
+            <servers>
+               <server host="127.0.0.1" port="19711"/>
+            </servers>
+            <connectionPool maxActive="99" maxIdle="97" maxTotal="98" />
+         </remoteStore>
       </loaders>
    </default>
 

@@ -23,6 +23,7 @@
 package org.infinispan.loaders.remote;
 
 import org.infinispan.client.hotrod.TestHelper;
+import org.infinispan.client.hotrod.test.HotRodClientTestingUtil;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.test.fwk.TestInternalCacheEntryFactory;
 import org.infinispan.eviction.EvictionStrategy;
@@ -61,6 +62,7 @@ public class RemoteCacheStoreTest extends BaseCacheStoreTest {
 
       localCacheManager = TestCacheManagerFactory.createCacheManager(cb);
       hrServer = TestHelper.startHotRodServer(localCacheManager);
+
       Properties properties = new Properties();
       properties.put("infinispan.client.hotrod.server_list", "localhost:" + hrServer.getPort());
       remoteCacheStoreConfig.setHotRodClientProperties(properties);
@@ -74,8 +76,8 @@ public class RemoteCacheStoreTest extends BaseCacheStoreTest {
    @Override
    @AfterMethod(alwaysRun = true)
    public void tearDown() {
-      hrServer.stop();
-      localCacheManager.stop();
+      HotRodClientTestingUtil.killServers(hrServer);
+      TestingUtil.killCacheManagers(localCacheManager);
    }
 
    @Override

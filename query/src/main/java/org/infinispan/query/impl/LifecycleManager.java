@@ -69,13 +69,13 @@ import javax.management.ObjectName;
 /**
  * Lifecycle of the Query module: initializes the Hibernate Search engine and shuts it down
  * at cache stop.
- * 
+ *
  * @author Sanne Grinovero <sanne@hibernate.org> (C) 2011 Red Hat Inc.
  */
 public class LifecycleManager extends AbstractModuleLifecycle {
-   
+
    private static final Log log = LogFactory.getLog(LifecycleManager.class, Log.class);
-   
+
    private final Map<String, SearchFactoryIntegrator> searchFactoriesToShutdown = new TreeMap<String,SearchFactoryIntegrator>();
 
    private static final Object REMOVED_REGISTRY_COMPONENT = new Object();
@@ -83,6 +83,8 @@ public class LifecycleManager extends AbstractModuleLifecycle {
    private MBeanServer mbeanServer;
 
    private ComponentMetadataRepo metadataRepo;
+
+   private String jmxDomain;
 
    @Override
    public void cacheManagerStarting(
@@ -160,7 +162,7 @@ public class LifecycleManager extends AbstractModuleLifecycle {
       Cache<?, ?> cache = cr.getComponent(Cache.class);
       CommandInitializer initializer = cr.getComponent(CommandInitializer.class);
       initializer.setCache(cache);
-      
+
       QueryBox queryBox = new QueryBox();
       queryBox.setCache(cache.getAdvancedCache());
       cr.registerComponent(queryBox, QueryBox.class);
@@ -181,8 +183,8 @@ public class LifecycleManager extends AbstractModuleLifecycle {
       mbeanServer = JmxUtil.lookupMBeanServer(globalCfg);
 
       // Resolve jmx domain to use for query mbeans
-      String queryGroupName = "type=Query,name=" + ObjectName.quote(cacheName);
-      String jmxDomain = JmxUtil.buildJmxDomain(globalCfg, mbeanServer, queryGroupName);
+      String queryGroupName = getQueryGroupName(cacheName);
+      jmxDomain = JmxUtil.buildJmxDomain(globalCfg, mbeanServer, queryGroupName);
 
       // Register statistics MBean, but only enable if Infinispan config says so
       Statistics stats = sf.getStatistics();
@@ -212,6 +214,10 @@ public class LifecycleManager extends AbstractModuleLifecycle {
       }
    }
 
+   private String getQueryGroupName(String cacheName) {
+      return "type=Query,name=" + ObjectName.quote(cacheName);
+   }
+
    private boolean verifyChainContainsQueryInterceptor(ComponentRegistry cr) {
       InterceptorChain interceptorChain = cr.getComponent(InterceptorChain.class);
       return interceptorChain.containsInterceptorType(QueryInterceptor.class, true);
@@ -234,25 +240,24 @@ public class LifecycleManager extends AbstractModuleLifecycle {
       }
       return searchFactory;
    }
-   
+
    @Override
    public void cacheStopping(ComponentRegistry cr, String cacheName) {
       //TODO move this to cacheStopped event (won't work right now as the ComponentRegistry is half empty at that point: ISPN-1006)
-      SearchFactoryIntegrator searchFactoryImplementor = cr.getComponent(SearchFactoryIntegrator.class);
-      if (searchFactoryImplementor != null && searchFactoryImplementor != REMOVED_REGISTRY_COMPONENT) {
-         searchFactoriesToShutdown.put(cacheName, searchFactoryImplementor);
+      Object searchFactoryIntegrator = cr.getComponent(SearchFactoryIntegrator.class);
+      if (searchFactoryIntegrator != null && searchFactoryIntegrator != REMOVED_REGISTRY_COMPONENT) {
+         searchFactoriesToShutdown.put(cacheName, (SearchFactoryIntegrator) searchFactoryIntegrator);
          //free some memory by de-registering the SearchFactory
          cr.registerComponent(REMOVED_REGISTRY_COMPONENT, SearchFactoryIntegrator.class);
       }
 
       // Unregister MBeans
       if (mbeanServer != null) {
-         String queryMBeanFilter = "*:type=Query,name="
-               + ObjectName.quote(cacheName) + ",*";
+         String queryMBeanFilter = jmxDomain + ":" + getQueryGroupName(cacheName) + ",*";
          JmxUtil.unregisterMBeans(queryMBeanFilter, mbeanServer);
       }
    }
-   
+
    @Override
    public void cacheStopped(ComponentRegistry cr, String cacheName) {
       SearchFactoryIntegrator searchFactoryIntegrator = searchFactoriesToShutdown.remove(cacheName);

@@ -57,4 +57,25 @@ public class ConfigurationCompatibilityTest {
 
    }
 
+   public void testDocumentationCacheLoadersConfiguration() {
+      ConfigurationBuilder builder = new ConfigurationBuilder();
+      builder.loaders()
+         .passivation(false).shared(false).preload(true)
+         .addFileCacheStore()
+            .fetchPersistentState(true)
+            .purgerThreads(3)
+            .purgeSynchronously(true)
+            .ignoreModifications(false)
+            .purgeOnStartup(false)
+            .location(System.getProperty("java.io.tmpdir"))
+            .async()
+               .enabled(true)
+               .flushLockTimeout(15000)
+               .threadPoolSize(5)
+            .singletonStore()
+              .enabled(true)
+              .pushStateWhenCoordinator(true)
+              .pushStateTimeout(20000);
+   }
+
 }

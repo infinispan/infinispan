@@ -90,6 +90,12 @@ public class InboundTransferTask {
       return segments;
    }
 
+   public Set<Integer> getUnfinishedSegments() {
+      Set<Integer> unfinishedSegments = new HashSet<Integer>(segments);
+      unfinishedSegments.removeAll(finishedSegments);
+      return unfinishedSegments;
+   }
+
    public Address getSource() {
       return source;
    }
@@ -167,12 +173,10 @@ public class InboundTransferTask {
 
    @Override
    public String toString() {
-      HashSet<Integer> unfinishedSegments = new HashSet<Integer>(segments);
-      unfinishedSegments.removeAll(finishedSegments);
       return "InboundTransferTask{" +
             "segments=" + segments +
             ", finishedSegments=" + finishedSegments +
-            ", unfinishedSegments=" + unfinishedSegments +
+            ", unfinishedSegments=" + getUnfinishedSegments() +
             ", source=" + source +
             ", isCancelled=" + isCancelled +
             ", topologyId=" + topologyId +

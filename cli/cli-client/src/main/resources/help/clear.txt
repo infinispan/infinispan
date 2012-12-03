@@ -1,0 +1,9 @@
+.SH SYNOPSIS
+.B clear [
+.I cachename
+.B ]
+.SH DESCRIPTION
+Clears a cache from all content
+.SH ARGUMENTS
+.IP cachename
+(optional) the name of the cache to clear. The currently selected cache will be cleared if this argument is missing

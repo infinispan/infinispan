@@ -24,6 +24,7 @@
 package org.infinispan.transaction;
 
 import org.infinispan.CacheException;
+import org.infinispan.commands.write.ClearCommand;
 import org.infinispan.commands.write.WriteCommand;
 import org.infinispan.container.entries.CacheEntry;
 import org.infinispan.remoting.transport.Address;
@@ -198,9 +199,15 @@ public abstract class LocalTransaction extends AbstractCacheTransaction {
     * this method returns the reunion between 'recipients' and {@link #getRemoteLocksAcquired()} from which it discards
     * the members that left.
     */
-   public Collection<Address> getCommitNodes(Collection<Address> recipients, int currentTopologyId, List<Address> members) {
+   public Collection<Address> getCommitNodes(Collection<Address> recipients, int currentTopologyId, Collection<Address> members) {
       if (trace) log.tracef("getCommitNodes recipients=%s, currentTopologyId=%s, members=%s, txTopologyId=%s",
                             recipients, currentTopologyId, members, getTopologyId());
+      if (hasModification(ClearCommand.class)) {
+         return members;
+      }
+      if (recipients == null) {
+         return null;
+      }
       Set<Address> allRecipients = new HashSet<Address>(getRemoteLocksAcquired());
       allRecipients.addAll(recipients);
       allRecipients.retainAll(members);

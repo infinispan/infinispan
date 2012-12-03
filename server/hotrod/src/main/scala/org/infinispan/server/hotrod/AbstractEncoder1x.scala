@@ -88,6 +88,22 @@ abstract class AbstractEncoder1x extends AbstractVersionedEncoder with Constants
                writeRangedBytes(g.data.get, buf)
             }
          }
+         case g: GetWithMetadataResponse => {
+            if (g.status == Success) {
+               val flags = (if (g.lifespan < 0) INFINITE_LIFESPAN else 0) + (if (g.maxIdle < 0 ) INFINITE_MAXIDLE else 0)
+               buf.writeByte(flags)
+               if (g.lifespan >= 0) {
+                  buf.writeLong(g.created)
+                  writeUnsignedInt(g.lifespan, buf)
+               }
+               if (g.maxIdle >= 0) {
+                  buf.writeLong(g.lastUsed)
+                  writeUnsignedInt(g.maxIdle, buf)
+               }
+               buf.writeLong(g.dataVersion)
+               writeRangedBytes(g.data.get, buf)
+            }
+         }
          case g: BulkGetResponse => {
             log.trace("About to respond to bulk get request")
             if (g.status == Success) {

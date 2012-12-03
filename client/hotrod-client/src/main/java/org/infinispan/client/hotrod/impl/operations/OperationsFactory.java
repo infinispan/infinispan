@@ -31,6 +31,8 @@ import org.infinispan.client.hotrod.impl.protocol.HotRodConstants;
 import org.infinispan.client.hotrod.impl.transport.Transport;
 import org.infinispan.client.hotrod.impl.transport.TransportFactory;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.concurrent.atomic.AtomicInteger;
 
 /**
@@ -44,7 +46,7 @@ public class OperationsFactory implements HotRodConstants {
 
    private static final Flag[] FORCE_RETURN_VALUE = {Flag.FORCE_RETURN_VALUE};
 
-   private final ThreadLocal<Flag[]> flagsMap = new ThreadLocal<Flag[]>();
+   private final ThreadLocal<List<Flag>> flagsMap = new ThreadLocal<List<Flag>>();
 
    private final TransportFactory transportFactory;
 
@@ -90,6 +92,11 @@ public class OperationsFactory implements HotRodConstants {
 
    public GetWithVersionOperation newGetWithVersionOperation(byte[] key) {
       return new GetWithVersionOperation(
+            codec, transportFactory, key, cacheNameBytes, topologyId, flags());
+   }
+
+   public GetWithMetadataOperation newGetWithMetadataOperation(byte[] key) {
+      return new GetWithMetadataOperation(
             codec, transportFactory, key, cacheNameBytes, topologyId, flags());
    }
 
@@ -157,15 +164,33 @@ public class OperationsFactory implements HotRodConstants {
    }
 
    private Flag[] flags() {
-      Flag[] flags = this.flagsMap.get();
+      List<Flag> flags = this.flagsMap.get();
       this.flagsMap.remove();
-      if (flags == null && forceReturnValue) {
-         return FORCE_RETURN_VALUE;
+      if (forceReturnValue) {
+         if (flags == null) {
+            return FORCE_RETURN_VALUE;
+         } else {
+            flags.add(Flag.FORCE_RETURN_VALUE);
+         }
       }
-      return flags;
+      return flags != null ? flags.toArray(new Flag[0]) : null;
    }
 
    public void setFlags(Flag[] flags) {
-      this.flagsMap.set(flags);
+      List<Flag> list = new ArrayList<Flag>();
+      for(Flag flag : flags)
+         list.add(flag);
+      this.flagsMap.set(list);
+   }
+
+   public void addFlags(Flag... flags) {
+      List<Flag> list = this.flagsMap.get();
+      if (list == null) {
+         list = new ArrayList<Flag>();
+         this.flagsMap.set(list);
+      }
+      for(Flag flag : flags)
+         list.add(flag);
+
    }
 }

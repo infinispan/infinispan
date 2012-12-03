@@ -41,6 +41,8 @@ import org.testng.annotations.Test;
 import java.lang.reflect.Method;
 import java.util.Properties;
 
+import static org.infinispan.client.hotrod.test.HotRodClientTestingUtil.killRemoteCacheManager;
+import static org.infinispan.client.hotrod.test.HotRodClientTestingUtil.killServers;
 import static org.infinispan.test.TestingUtil.k;
 import static org.infinispan.test.TestingUtil.v;
 
@@ -76,8 +78,8 @@ public class ServerErrorTest extends SingleCacheManagerTest {
 
    @AfterClass(alwaysRun = true)
    public void shutDownHotrod() {
-      remoteCacheManager.stop();
-      hotrodServer.stop();
+      killRemoteCacheManager(remoteCacheManager);
+      killServers(hotrodServer);
    }
 
    public void testErrorWhileDoingPut(Method m) throws Exception {

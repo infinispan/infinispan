@@ -48,6 +48,7 @@ public interface CacheTransaction {
     */
    List<WriteCommand> getModifications();
 
+   boolean hasModification(Class modificationClass);
 
    CacheEntry lookupEntry(Object key);
 

@@ -19,6 +19,7 @@
 
 package org.infinispan.client.hotrod;
 
+import org.infinispan.client.hotrod.test.HotRodClientTestingUtil;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.server.hotrod.HotRodServer;
 import org.infinispan.test.SingleCacheManagerTest;
@@ -26,7 +27,6 @@ import org.infinispan.test.fwk.CleanupAfterMethod;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.testng.annotations.AfterMethod;
 import org.testng.annotations.Test;
-import scala.remote;
 
 import java.util.Properties;
 
@@ -51,10 +51,10 @@ public class ForceReturnValuesTest extends SingleCacheManagerTest {
 
    @AfterMethod(alwaysRun = true)
    void shutdown() {
-      remoteCacheManager.stop();
-      remoteCacheManager = null;
+      HotRodClientTestingUtil.killRemoteCacheManager(remoteCacheManager);
+      HotRodClientTestingUtil.killServers(hotRodServer);
    }
-   
+
    public void testDontForceReturnValues() {
       RemoteCache<String, String> rc = remoteCacheManager.getCache();
       String rv = rc.put("Key", "Value");

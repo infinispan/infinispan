@@ -21,7 +21,7 @@ package org.infinispan.cli.io;
 import java.io.IOException;
 
 import org.fusesource.jansi.Ansi;
-import org.jboss.jreadline.console.Console;
+import org.jboss.aesh.console.Console;
 
 public class ConsoleIOAdapter implements IOAdapter {
    private final Console console;
@@ -37,18 +37,18 @@ public class ConsoleIOAdapter implements IOAdapter {
 
    @Override
    public String readln(String prompt) throws IOException {
-      return console.read(prompt);
+      return console.read(prompt).getBuffer();
    }
 
    @Override
    public String secureReadln(String prompt) throws IOException {
-      return console.read(prompt, (char) 0);
+      return console.read(prompt, (char) 0).getBuffer();
    }
 
    @Override
    public void println(String s) throws IOException {
-      console.pushToConsole(s);
-      console.pushToConsole("\n");
+      console.pushToStdOut(s);
+      console.pushToStdOut("\n");
    }
 
    @Override

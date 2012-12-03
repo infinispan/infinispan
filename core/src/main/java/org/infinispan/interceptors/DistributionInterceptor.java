@@ -374,7 +374,8 @@ public class DistributionInterceptor extends BaseRpcInterceptor {
       if (shouldInvokeRemoteTxCommand(ctx)) {
          if (command.isOnePhaseCommit()) flushL1Caches(ctx); // if we are one-phase, don't block on this future.
 
-         Collection<Address> recipients = dm.getAffectedNodes(ctx.getAffectedKeys());
+         boolean affectsAllNodes = ctx.getCacheTransaction().hasModification(ClearCommand.class);
+         Collection<Address> recipients = affectsAllNodes ? dm.getConsistentHash().getMembers() : dm.getAffectedNodes(ctx.getAffectedKeys());
          prepareOnAffectedNodes(ctx, command, recipients, defaultSynchronous);
 
          ((LocalTxInvocationContext) ctx).remoteLocksAcquired(recipients);

@@ -27,6 +27,10 @@ import java.io.FileReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.Reader;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.ScheduledFuture;
+import java.util.concurrent.TimeUnit;
 
 import org.fusesource.jansi.Ansi;
 import org.infinispan.cli.Config;
@@ -41,7 +45,7 @@ import org.infinispan.cli.impl.ContextImpl;
 import org.infinispan.cli.io.ConsoleIOAdapter;
 import org.infinispan.cli.io.StreamIOAdapter;
 import org.infinispan.cli.util.SystemUtils;
-import org.jboss.jreadline.console.Console;
+import org.jboss.aesh.console.Console;
 
 /**
  *
@@ -51,11 +55,13 @@ import org.jboss.jreadline.console.Console;
  * @since 5.2
  */
 public class ShellImpl implements Shell {
+   private static final int SESSION_PING_TIMEOUT = 30;
    private Config config;
    private Console console;
    private Context context;
    private ShellMode mode = ShellMode.INTERACTIVE;
    private String inputFile;
+   private ScheduledFuture<?> sessionPingTask;
 
    @Override
    public void init(final String[] args) throws Exception {
@@ -128,11 +134,13 @@ public class ShellImpl implements Shell {
       console = new Console();
       context.setOutputAdapter(new ConsoleIOAdapter(console));
       console.addCompletion(new Completer(context));
+      ScheduledExecutorService executor = Executors.newSingleThreadScheduledExecutor();
+      sessionPingTask = executor.scheduleWithFixedDelay(new PingTask(), SESSION_PING_TIMEOUT, SESSION_PING_TIMEOUT, TimeUnit.SECONDS);
 
       while (!context.isQuitting()) {
          try {
             context.refreshProperties();
-            String line = console.read(getPrompt());
+            String line = console.read(getPrompt()).getBuffer();
 
             if (line != null) {
                if (!"".equals(line.trim())) {
@@ -144,6 +152,8 @@ public class ShellImpl implements Shell {
          }
       }
       try {
+         sessionPingTask.cancel(true);
+         executor.shutdownNow();
          config.save();
          console.stop();
       } catch (Exception e) {
@@ -244,5 +254,14 @@ public class ShellImpl implements Shell {
       System.out.println("Copyright (C) 2012 Red Hat Inc. and/or its affiliates and other contributors");
       System.out.println("License GNU Lesser General Public License, v. 2.1. http://www.gnu.org/licenses/lgpl-2.1.txt");
       System.exit(0);
+   }
+
+   class PingTask implements Runnable {
+      @Override
+      public void run() {
+         if(context.isConnected()) {
+            execute("ping");
+         }
+      }
    }
 }
