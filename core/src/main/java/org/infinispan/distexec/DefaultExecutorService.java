@@ -131,6 +131,14 @@ public class DefaultExecutorService extends AbstractExecutorService implements D
       };
    };
    
+   public static final Address LOCAL_MODE_ADDRESS = new Address() {
+      
+      @Override
+      public int compareTo(Address o) {
+         return 0;
+      }
+   };
+   
    public static final DistributedTaskFailoverPolicy NO_FAILOVER = new NoTaskFailoverPolicy();
    public static final DistributedTaskFailoverPolicy RANDOM_NODE_FAILOVER = new RandomNodeTaskFailoverPolicy();
 
@@ -241,15 +249,23 @@ public class DefaultExecutorService extends AbstractExecutorService implements D
    }
 
    protected List<Address> getMembers() {
-      return rpc.getTransport().getMembers();
+      if (rpc != null) {
+         return rpc.getTransport().getMembers();
+      } else {
+         return Collections.singletonList(getAddress());
+      }
    }
 
    protected <T> List<Address> executionCandidates(DistributedTask<T> task) {
       return filterMembers(task.getTaskExecutionPolicy(), getMembers());
    }
 
-   private Address getAddress(){
-      return rpc.getAddress();
+   private Address getAddress() {
+      if (rpc != null) {
+         return rpc.getAddress();
+      } else {
+         return LOCAL_MODE_ADDRESS;
+      }
    }
 
    private List<Runnable> realShutdown(boolean interrupt) {
@@ -661,9 +677,6 @@ public class DefaultExecutorService extends AbstractExecutorService implements D
 
    private void ensureProperCacheState(AdvancedCache<?, ?> cache) throws NullPointerException,
             IllegalStateException {
-
-      if (cache.getRpcManager() == null)
-         throw new IllegalStateException("Can not use non-clustered cache for DefaultExecutorService");
 
       if (cache.getStatus() != ComponentStatus.RUNNING)
          throw new IllegalStateException("Invalid cache state " + cache.getStatus());
