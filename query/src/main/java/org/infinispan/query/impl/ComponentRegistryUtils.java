@@ -39,8 +39,12 @@ public class ComponentRegistryUtils {
    }
 
    public static <T> T getComponent(Cache<?, ?> cache, Class<T> class1) {
+      return getComponent(cache, class1, class1.getName());
+   }
+
+   public static <T> T getComponent(Cache<?, ?> cache, Class<T> class1, String name) {
       ComponentRegistry componentRegistry = cache.getAdvancedCache().getComponentRegistry();
-      T component = componentRegistry.getComponent(class1);
+      T component = componentRegistry.getComponent(class1, name);
       if (component == null) {
          throw new IllegalArgumentException("Indexing was not enabled on this cache. " + class1 + " not found in registry");
       }

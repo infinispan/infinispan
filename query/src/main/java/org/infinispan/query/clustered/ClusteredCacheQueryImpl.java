@@ -31,14 +31,20 @@ import java.util.concurrent.TimeUnit;
 
 import org.apache.lucene.search.Query;
 import org.apache.lucene.search.Sort;
+import org.apache.lucene.search.SortField;
 import org.hibernate.search.SearchException;
 import org.hibernate.search.spi.SearchFactoryIntegrator;
 import org.infinispan.AdvancedCache;
+import org.infinispan.factories.KnownComponentNames;
+import org.infinispan.marshall.Marshaller;
+import org.infinispan.marshall.StreamingMarshaller;
 import org.infinispan.query.CacheQuery;
 import org.infinispan.query.FetchOptions;
 import org.infinispan.query.ResultIterator;
 import org.infinispan.query.backend.KeyTransformationHandler;
 import org.infinispan.query.impl.CacheQueryImpl;
+import org.infinispan.query.impl.ComponentRegistryUtils;
+import org.infinispan.util.Util;
 
 /**
  * A extension of CacheQueryImpl used for distributed queries.
@@ -60,12 +66,16 @@ public class ClusteredCacheQueryImpl extends CacheQueryImpl {
 
    private int firstResult = 0;
 
+   private Marshaller marshaller;
+
    public ClusteredCacheQueryImpl(Query luceneQuery, SearchFactoryIntegrator searchFactory,
             ExecutorService asyncExecutor, AdvancedCache<?, ?> cache, KeyTransformationHandler keyTransformationHandler, Class<?>... classes) {
       super(luceneQuery, searchFactory, cache, keyTransformationHandler, classes);
       this.asyncExecutor = asyncExecutor;
-      hSearchQuery = searchFactory.createHSQuery().luceneQuery(luceneQuery)
+      this.hSearchQuery = searchFactory.createHSQuery().luceneQuery(luceneQuery)
                .targetedEntities(Arrays.asList(classes));
+      this.marshaller = ComponentRegistryUtils.getComponent(cache,
+            StreamingMarshaller.class, KnownComponentNames.CACHE_MARSHALLER);
    }
 
    @Override
@@ -114,20 +124,34 @@ public class ClusteredCacheQueryImpl extends CacheQueryImpl {
             ClusteredQueryCommand command = ClusteredQueryCommand.createEagerIterator(hSearchQuery, cache);
             HashMap<UUID, ClusteredTopDocs> topDocsResponses = broadcastQuery(command);
 
-            return new DistributedIterator(sort, fetchOptions.getFetchSize(), this.resultSize, maxResults, firstResult,
-                  topDocsResponses, cache);
+            return new DistributedIterator(deepCopy(sort),
+                  fetchOptions.getFetchSize(), this.resultSize, maxResults,
+                  firstResult, topDocsResponses, cache);
          }
          case LAZY: {
             UUID lazyItId = UUID.randomUUID();
             ClusteredQueryCommand command = ClusteredQueryCommand.createLazyIterator(hSearchQuery, cache, lazyItId);
             HashMap<UUID, ClusteredTopDocs> topDocsResponses = broadcastQuery(command);
 
-            return new DistributedLazyIterator(sort, fetchOptions.getFetchSize(), this.resultSize, maxResults,
+            // Make a sort copy to avoid reversed results
+            return new DistributedLazyIterator(deepCopy(sort),
+                  fetchOptions.getFetchSize(), this.resultSize, maxResults,
                   firstResult, lazyItId, topDocsResponses, asyncExecutor, cache);
          }
          default:
             throw new IllegalArgumentException("Unknown FetchMode " + fetchOptions.getFetchMode());
       }
+   }
+
+   private Sort deepCopy(Sort sort) {
+      if (sort == null) return null;
+
+      SortField[] fields = sort.getSort();
+      SortField[] copyFields = new SortField[fields.length];
+      for (int i = 0; i < copyFields.length; i++)
+         copyFields[i] = Util.cloneWithMarshaller(marshaller, fields[i]);
+
+      return new Sort(copyFields);
    }
 
    // number of results of each node of cluster
