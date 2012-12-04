@@ -23,13 +23,15 @@
 package org.infinispan.statetransfer;
 
 import org.infinispan.Cache;
-import org.infinispan.config.Configuration;
+import org.infinispan.configuration.cache.CacheMode;
+import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.test.MultipleCacheManagersTest;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.infinispan.test.fwk.TransportFlags;
+import org.infinispan.transaction.LockingMode;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 import org.testng.annotations.Test;
@@ -58,7 +60,7 @@ public class StateTransferFunctionalTest extends MultipleCacheManagersTest {
    public static final Integer TWENTY = 20;
    public static final Integer FORTY = 40;
 
-   Configuration config;
+   ConfigurationBuilder configurationBuilder;
    protected final String cacheName;
 
    private volatile int testCount = 0;
@@ -75,16 +77,16 @@ public class StateTransferFunctionalTest extends MultipleCacheManagersTest {
    }
 
    protected void createCacheManagers() throws Throwable {
-      // This impl only really sets up a configuration for use later.
-      config = getDefaultClusteredConfig(Configuration.CacheMode.REPL_SYNC, true);
-      config.setSyncReplTimeout(30000);
-      config.setFetchInMemoryState(true);
-      config.setUseLockStriping(false); // reduces the odd chance of a key collision and deadlock
+      configurationBuilder = getDefaultClusteredCacheConfig(CacheMode.REPL_SYNC, true);
+      configurationBuilder.transaction().lockingMode(LockingMode.PESSIMISTIC);
+      configurationBuilder.clustering().sync().replTimeout(30000);
+      configurationBuilder.clustering().stateTransfer().fetchInMemoryState(true);
+      configurationBuilder.locking().useLockStriping(false); // reduces the odd chance of a key collision and deadlock
    }
 
    protected EmbeddedCacheManager createCacheManager() {
       EmbeddedCacheManager cm = addClusterEnabledCacheManager(new TransportFlags().withMerge(true));
-      cm.defineConfiguration(cacheName, config.clone());
+      cm.defineConfiguration(cacheName, configurationBuilder.build());
       return cm;
    }
 
@@ -143,12 +145,12 @@ public class StateTransferFunctionalTest extends MultipleCacheManagersTest {
             try {
                if (tx)
                   tm.begin();
-               cache.put("test" + c, c++);
+               cache.put("test" + c, c);
                if (tx)
                   tm.commit();
                success = true;
+               c++;
             } catch (Exception e) {
-               c--;
                log.errorf("Error writing key test%s", c, e);
                stopThread();
             } finally {
@@ -198,7 +200,7 @@ public class StateTransferFunctionalTest extends MultipleCacheManagersTest {
       node.waitForJoin(60000, cache1, cache2);
       node.verifyStateTransfer(new CacheVerifier(cache2));
 
-      cacheManager1.defineConfiguration("otherCache", config.clone());
+      cacheManager1.defineConfiguration("otherCache", configurationBuilder.build());
       cacheManager1.getCache("otherCache");
       logTestEnd(m);
    }

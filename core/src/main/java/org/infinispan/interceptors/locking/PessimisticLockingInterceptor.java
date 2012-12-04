@@ -112,9 +112,11 @@ public class PessimisticLockingInterceptor extends AbstractTxLockingInterceptor 
 
       final TxInvocationContext txContext = (TxInvocationContext) ctx;
       try {
-         final boolean localNodeOwnsLock = cdl.localNodeIsPrimaryOwner(command.getKey());
-         acquireRemoteIfNeeded(ctx, command, localNodeOwnsLock);
-         if (command.hasFlag(Flag.SKIP_OWNERSHIP_CHECK) || localNodeOwnsLock) {
+         // The primary owner check doesn't work for preload, as we don't have a topology yet
+         boolean localOnly = command.hasFlag(Flag.CACHE_MODE_LOCAL);
+         boolean localLock = localOnly || cdl.localNodeIsPrimaryOwner(command.getKey());
+         acquireRemoteIfNeeded(ctx, command, localLock);
+         if (localLock) {
             boolean skipLocking = hasSkipLocking(command);
             long lockTimeout = getLockAcquisitionTimeout(command, skipLocking);
             lockKeyAndCheckOwnership(ctx, command.getKey(), lockTimeout, skipLocking);

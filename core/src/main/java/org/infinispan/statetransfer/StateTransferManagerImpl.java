@@ -96,7 +96,8 @@ public class StateTransferManagerImpl implements StateTransferManager {
       this.localTopologyManager = localTopologyManager;
    }
 
-   @Start(priority = 50)
+   // needs to be AFTER the DistributionManager and *after* the cache loader manager (if any) inits and preloads
+   @Start(priority = 60)
    @Override
    public void start() throws Exception {
       if (trace) {
@@ -259,7 +260,7 @@ public class StateTransferManagerImpl implements StateTransferManager {
       // forward commands with older topology ids to their new targets
       // but we need to make sure we have the latest topology
       CacheTopology cacheTopology = getCacheTopology();
-      int localTopologyId = cacheTopology.getTopologyId();
+      int localTopologyId = cacheTopology != null ? cacheTopology.getTopologyId() : -1;
       // if it's a tx/lock/write command, forward it to the new owners
       log.tracef("CommandTopologyId=%s, localTopologyId=%s", cmdTopologyId, localTopologyId);
 

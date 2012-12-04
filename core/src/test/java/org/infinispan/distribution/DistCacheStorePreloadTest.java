@@ -76,10 +76,13 @@ public class DistCacheStorePreloadTest extends BaseDistCacheStoreTest {
       EmbeddedCacheManager cm2 = cacheManagers.get(1);
       cm2.defineConfiguration(cacheName, buildConfiguration().build());
       c2 = cache(1, cacheName);
-      waitForClusterToForm(cacheName);
-      caches.add(c2);
+      waitForClusterToForm();
 
       DataContainer dc2 = c2.getAdvancedCache().getDataContainer();
-      assertEquals("No keys should be preloaded on the second cache", 0, dc2.size());
+      assertEquals("Expected all the cache store entries to be preloaded on the second cache", NUM_KEYS, dc2.size());
+
+      for (int i = 0; i < NUM_KEYS; i++) {
+         assertOwnershipAndNonOwnership("k" + i, true);
+      }
    }
 }

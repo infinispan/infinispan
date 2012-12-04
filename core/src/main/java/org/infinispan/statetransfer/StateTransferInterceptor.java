@@ -37,6 +37,7 @@ import org.infinispan.context.impl.TxInvocationContext;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.interceptors.base.CommandInterceptor;
 import org.infinispan.remoting.transport.Address;
+import org.infinispan.topology.CacheTopology;
 import org.infinispan.transaction.LockingMode;
 import org.infinispan.transaction.RemoteTransaction;
 import org.infinispan.transaction.WriteSkewHelper;
@@ -230,7 +231,10 @@ public class StateTransferInterceptor extends CommandInterceptor {   //todo [ani
       // set the topology id if it was not set before (ie. this is local command)
       // TODO Make tx commands extend FlagAffectedCommand so we can use CACHE_MODE_LOCAL in StaleTransactionCleanupService
       if (command.getTopologyId() == -1) {
-         command.setTopologyId(stateTransferManager.getCacheTopology().getTopologyId());
+         CacheTopology cacheTopology = stateTransferManager.getCacheTopology();
+         if (cacheTopology != null) {
+            command.setTopologyId(cacheTopology.getTopologyId());
+         }
       }
 
       // remote/forwarded command
