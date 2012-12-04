@@ -61,7 +61,7 @@ public class DefaultRebalancePolicy implements RebalancePolicy {
       }
 
       if (cacheStatus.isRebalanceInProgress()) {
-         log.tracef("Not triggering rebalance for cache %s, a rebalance is already in progress");
+         log.tracef("Not triggering rebalance for cache %s, a rebalance is already in progress", cacheName);
          return;
       }
 
