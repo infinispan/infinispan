@@ -173,7 +173,6 @@
       <version.testng>6.7</version.testng>
       <version.webdav.servlet>2.0.1</version.webdav.servlet>
       <version.weld>1.1.8.Final</version.weld>
-      <version.xsom>20081112</version.xsom>
       <version.xstream>1.4.1</version.xstream>
       <version.javassist>3.15.0-GA</version.javassist>
       <version.org.codehaus.woodstox.stax2-api>3.1.1</version.org.codehaus.woodstox.stax2-api>
@@ -305,11 +304,6 @@
             <groupId>com.sleepycat</groupId>
             <artifactId>je</artifactId>
             <version>${version.bdbje}</version>
-         </dependency>
-         <dependency>
-            <groupId>com.sun.xsom</groupId>
-            <artifactId>xsom</artifactId>
-            <version>${version.xsom}</version>
          </dependency>
          <dependency>
             <groupId>com.thoughtworks.xstream</groupId>

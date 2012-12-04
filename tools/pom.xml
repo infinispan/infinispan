@@ -68,11 +68,6 @@
       </dependency>
 
       <dependency>
-         <groupId>com.sun.xsom</groupId>
-         <artifactId>xsom</artifactId>
-      </dependency>
-
-      <dependency>
          <groupId>commons-logging</groupId>
          <artifactId>commons-logging</artifactId>
          <scope>test</scope>
