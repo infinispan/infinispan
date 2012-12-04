@@ -39,7 +39,7 @@ public class TopologyAwareSyncConsistentHashFactoryTest extends TopologyAwareCon
    public TopologyAwareSyncConsistentHashFactoryTest() {
       // Increase the number of segments to eliminate collisions (which would cause extra segment movements,
       // causing testConsistencyAfterLeave to fail.)
-      numSegments = 5000;
+      numSegments = 1000;
    }
 
    @Override

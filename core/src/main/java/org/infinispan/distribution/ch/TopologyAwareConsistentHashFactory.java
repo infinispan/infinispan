@@ -53,10 +53,12 @@ public class TopologyAwareConsistentHashFactory extends DefaultConsistentHashFac
       addBackupOwnersForLevel(builder, minSegments, Level.NONE);
 
       // 3. Now owners(segment) == numOwners for every segment because of steps 1 and 2.
+      replaceBackupOwnersForLevel(builder, Level.SITE);
+      replaceBackupOwnersForLevel(builder, Level.RACK);
+      replaceBackupOwnersForLevel(builder, Level.MACHINE);
+
       // Replace owners that have too many segments with owners that have too few.
-      replaceBackupOwnersForLevel(builder, minSegments, Level.MACHINE);
-      replaceBackupOwnersForLevel(builder, minSegments, Level.RACK);
-      replaceBackupOwnersForLevel(builder, minSegments, Level.SITE);
+      replaceBackupOwnerForMachineLevel(builder, minSegments);
    }
 
    private void addBackupOwnersForLevel(Builder builder, int minSegments, Level level) {
@@ -80,7 +82,7 @@ public class TopologyAwareConsistentHashFactory extends DefaultConsistentHashFac
                break;
 
             if (builder.getOwned(candidate) < maxSegments) {
-               if (!locationAlreadyAdded(owners, candidate, null, level)) {
+               if (!owners.contains(candidate) && !locationIsDuplicate(candidate, owners, level)) {
                   builder.addOwner(segment, candidate);
                   modified = true;
                }
@@ -93,22 +95,46 @@ public class TopologyAwareConsistentHashFactory extends DefaultConsistentHashFac
       return !sufficientOwners && modified;
    }
 
-   protected void replaceBackupOwnersForLevel(Builder builder, int minSegments, Level level) {
+   protected void replaceBackupOwnersForLevel(Builder builder, Level level) {
+      // At this point each segment already has actualNumOwners owners.
+      for (int segment = 0; segment < builder.getNumSegments(); segment++) {
+         List<Address> owners = builder.getOwners(segment);
+         List<Address> backupOwners = builder.getBackupOwners(segment);
+         for (int i = backupOwners.size() - 1; i >= 0; i--) {
+            Address owner = backupOwners.get(i);
+            if (locationIsDuplicate(owner, owners, level)) {
+               // Got a duplicate site/rack/machine, we might have an alternative for it.
+               for (Address candidate : builder.getMembers()) {
+                  if (!owners.contains(candidate) && !locationIsDuplicate(candidate, owners, level)) {
+                     builder.addOwner(segment, candidate);
+                     builder.removeOwner(segment, owner);
+                     // Update the owners list, needed for the locationIsDuplicate check.
+                     owners = builder.getOwners(segment);
+                     backupOwners = builder.getBackupOwners(segment);
+                     break;
+                  }
+               }
+            }
+         }
+      }
+   }
+
+   protected void replaceBackupOwnerForMachineLevel(Builder builder, int minSegments) {
       // 3.1. If there is an owner with owned(owner) > minSegments + 1, find another node
       // with owned(node) < minSegments and replace that owner with it.
-      doReplaceBackupOwnersForLevel(builder, minSegments, minSegments + 1, level);
+      doReplaceBackupOwnersSameMachine(builder, minSegments, minSegments + 1);
       // 3.2. Same as step 3.1, but also replace owners that own minSegments + 1 segments.
       // Doing this in a separate iteration minimizes the number of moves from nodes with
       // owned(node) == minSegments + 1, when numOwners*numSegments doesn't divide evenly with numNodes.
-      doReplaceBackupOwnersForLevel(builder, minSegments, minSegments, level);
+      doReplaceBackupOwnersSameMachine(builder, minSegments, minSegments);
       // 3.3. Same as step 3.1, but allow replacing with nodes that already have owned(node) = minSegments.
       // Necessary when numOwners*numSegments doesn't divide evenly with numNodes,
       // because all nodes could own minSegments segments and yet one node could own
       // minSegments + (numOwners*numSegments % numNodes) segments.
-      doReplaceBackupOwnersForLevel(builder, minSegments + 1, minSegments + 1, level);
+      doReplaceBackupOwnersSameMachine(builder, minSegments + 1, minSegments + 1);
    }
 
-   private void doReplaceBackupOwnersForLevel(Builder builder, int minSegments, int maxSegments, Level level) {
+   private void doReplaceBackupOwnersSameMachine(Builder builder, int minSegments, int maxSegments) {
       // Iterate over the owners in the outer loop so that we minimize the number of owner changes
       // for the same segment. At this point each segment already has actualNumOwners owners.
       for (int ownerIdx = builder.getActualNumOwners() - 1; ownerIdx >= 1; ownerIdx--) {
@@ -119,7 +145,7 @@ public class TopologyAwareConsistentHashFactory extends DefaultConsistentHashFac
                // Owner has too many segments. Find another node to replace it with.
                for (Address candidate : builder.getMembers()) {
                   if (builder.getOwned(candidate) < minSegments) {
-                     if (!owners.contains(candidate) && maintainsLocations(owners, candidate, owner)) {
+                     if (!owners.contains(candidate) && maintainsMachines(owners, candidate, owner)) {
                         builder.addOwner(segment, candidate);
                         builder.removeOwner(segment, owner);
                         break;
@@ -131,62 +157,46 @@ public class TopologyAwareConsistentHashFactory extends DefaultConsistentHashFac
       }
    }
 
-   private boolean maintainsLocations(List<Address> owners, Address candidate, Address replaced) {
-      TopologyAwareAddress topologyAwareCandidate = (TopologyAwareAddress) candidate;
-      TopologyAwareAddress topologyAwareReplaced = (TopologyAwareAddress) replaced;
-
-      Set<String> newSites = new HashSet<String>();
-      Set<String> newRacks = new HashSet<String>();
-      Set<String> newMachines = new HashSet<String>();
-      for (Address node : owners) {
-         if (node.equals(replaced))
-            continue;
-
-         TopologyAwareAddress topologyAwareNode = (TopologyAwareAddress) node;
-         newSites.add(topologyAwareNode.getSiteId());
-         newRacks.add(topologyAwareNode.getSiteId() + "|" + topologyAwareNode.getRackId());
-         newMachines.add(topologyAwareNode.getSiteId() + "|" + topologyAwareNode.getRackId()
-               + "|" + topologyAwareNode.getMachineId());
+   private Object getLocationId(Address address, Level level) {
+      TopologyAwareAddress taa = (TopologyAwareAddress) address;
+      Object locationId;
+      switch (level) {
+         case SITE:
+            locationId = "" + taa.getSiteId();
+            break;
+         case RACK:
+            locationId = taa.getSiteId() + "|" + taa.getRackId();
+            break;
+         case MACHINE:
+            locationId = taa.getSiteId() + "|" + taa.getRackId() + "|" + taa.getMachineId();
+            break;
+         case NONE:
+            locationId = address;
+            break;
+         default:
+            throw new IllegalStateException("Unknown level: " + level);
       }
-
-      newSites.add(topologyAwareCandidate.getSiteId());
-      newRacks.add(topologyAwareCandidate.getSiteId() + "|" + topologyAwareCandidate.getRackId());
-      newMachines.add(topologyAwareCandidate.getSiteId() + "|" + topologyAwareCandidate.getRackId()
-            + "|" + topologyAwareCandidate.getMachineId());
-
-      if (!newSites.contains(topologyAwareReplaced.getSiteId()))
-         return false;
-      if (!newRacks.contains(topologyAwareReplaced.getRackId()))
-         return false;
-      if (!newMachines.contains(topologyAwareReplaced.getMachineId()))
-         return false;
-      return true;
+      return locationId;
    }
 
-   private boolean locationAlreadyAdded(List<Address> owners, Address candidate, Address replaced, Level level) {
-      TopologyAwareAddress topologyAwareCandidate = (TopologyAwareAddress) candidate;
-      boolean locationAlreadyAdded = false;
-      for (Address owner : owners) {
-         if (owner.equals(replaced))
-            continue;
-
-         TopologyAwareAddress topologyAwareOwner = (TopologyAwareAddress) owner;
-         switch (level) {
-            case SITE:
-               locationAlreadyAdded = topologyAwareCandidate.isSameSite(topologyAwareOwner);
-               break;
-            case RACK:
-               locationAlreadyAdded = topologyAwareCandidate.isSameRack(topologyAwareOwner);
-               break;
-            case MACHINE:
-               locationAlreadyAdded = topologyAwareCandidate.isSameMachine(topologyAwareOwner);
-               break;
-            case NONE:
-               locationAlreadyAdded = owner.equals(candidate);
-         }
-         if (locationAlreadyAdded)
-            break;
+   private boolean locationIsDuplicate(Address target, List<Address> addresses, Level level) {
+      for (Address address : addresses) {
+         if (address != target && getLocationId(address, level).equals(getLocationId(target, level)))
+            return true;
       }
-      return locationAlreadyAdded;
+      return false;
+   }
+
+   private boolean maintainsMachines(List<Address> owners, Address candidate, Address replaced) {
+      Set<Object> newMachines = new HashSet<Object>(owners.size());
+      newMachines.add(getLocationId(candidate, Level.MACHINE));
+
+      for (Address node : owners) {
+         if (!node.equals(replaced)) {
+            newMachines.add(getLocationId(node, Level.MACHINE));
+         }
+      }
+
+      return newMachines.contains(getLocationId(replaced, Level.MACHINE));
    }
 }
