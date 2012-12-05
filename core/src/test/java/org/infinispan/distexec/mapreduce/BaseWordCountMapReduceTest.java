@@ -358,7 +358,7 @@ public abstract class BaseWordCountMapReduceTest extends MultipleCacheManagersTe
       verifyResults(result, counts);
    }
 
-   private static class WordCountMapper implements Mapper<String, String, String,Integer> {
+   static class WordCountMapper implements Mapper<String, String, String,Integer> {
       /** The serialVersionUID */
       private static final long serialVersionUID = -5943370243108735560L;
 

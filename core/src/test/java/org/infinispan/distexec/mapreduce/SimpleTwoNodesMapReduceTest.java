@@ -41,6 +41,7 @@ import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.test.CacheManagerCallable;
+import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.testng.annotations.Test;
 
@@ -104,7 +105,11 @@ public class SimpleTwoNodesMapReduceTest extends BaseWordCountMapReduceTest {
       }
       assert mapperCancelled : "Mapper not cancelled, root cause " + root;
       assert cancelled.get();
-      
+      assert future.isDone();
+
+      //Cancelling again - should return false
+      boolean canceled = future.cancel(true);
+      assert !canceled;
       //now call get() again and it should throw CancellationException
       future.get();
    }
@@ -164,6 +169,40 @@ public class SimpleTwoNodesMapReduceTest extends BaseWordCountMapReduceTest {
    public void testInvokeMapReduceWithException() throws Exception {
       MapReduceTask<String, String, String, Integer> task = invokeMapReduce(null, new ExceptionMapper(true), new ExceptionReducer(false));
       task.execute();
+   }
+
+   @Test(expectedExceptions = CacheException.class)
+   public void testInvokeMapWithReduceExceptionPhaseInLocalExecution() throws Exception {
+      Cache cache1 = cache(0, cacheName());
+      Cache cache2 = cache(1, cacheName());
+
+      cache1.put("key1", "value1");
+      cache2.put("key2", "valu2");
+      cache2.put("key3", "valu2");
+      cache2.put("key4", "valu2");
+      cache2.put("key5", "valu2");
+      MapReduceTask<String, String, String, Integer> task = new MapReduceTask<String, String, String, Integer>(cache1, true, false);
+      task.mappedWith(new WordCountMapper()).
+            reducedWith(new ExceptionReducer(true));
+
+      Map<String, Integer> val = task.execute();
+   }
+
+   @Test(expectedExceptions = CacheException.class)
+   public void testInvokeMapWithReduceExceptionPhaseInRemoteExecution() throws Exception {
+      Cache cache1 = cache(0, cacheName());
+      Cache cache2 = cache(1, cacheName());
+
+      cache1.put("key1", "value1");
+      cache2.put("key2", "valu2");
+      cache2.put("key3", "valu2");
+      cache2.put("key4", "valu2");
+      cache2.put("key5", "valu2");
+      MapReduceTask<String, String, String, Integer> task = new MapReduceTask<String, String, String, Integer>(cache1, true, false);
+      task.mappedWith(new WordCountMapper()).
+            reducedWith(new FailAfterSecondCallReducer());
+
+      Map<String, Integer> val = task.execute();
    }
 
    public void testMapReduceTasksComparison() throws Exception {
@@ -230,6 +269,8 @@ public class SimpleTwoNodesMapReduceTest extends BaseWordCountMapReduceTest {
       } catch(IllegalStateException ex) {
          assert ex.getMessage() != null && ex.getMessage().contains("Invalid cache state");
          throw ex;
+      } finally {
+         TestingUtil.killCacheManagers(cacheManager);
       }
    }
 
@@ -324,6 +365,24 @@ public class SimpleTwoNodesMapReduceTest extends BaseWordCountMapReduceTest {
             //simulating exception
             int a = 4 / 0;
          }
+
+         return 0;
+      }
+   }
+
+   private static class FailAfterSecondCallReducer implements Reducer<String, Integer> {
+      /** The serialVersionUID */
+      private static final long serialVersionUID = 1901016598354633256L;
+      private static int counter;
+
+      @Override
+      public Integer reduce(String key, Iterator<Integer> iter) {
+
+         if(counter > 0) {
+            //simulating exception
+            int a = 4 / 0;
+         }
+         counter++;
 
          return 0;
       }
