@@ -39,6 +39,7 @@ import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import static org.testng.Assert.assertEquals;
 
@@ -123,42 +124,21 @@ public class TopologyAwareConsistentHashFactoryTest extends AbstractInfinispanTe
       addNode(testAddresses[2], "m0", null, null);
       addNode(testAddresses[3], "m1", null, null);
 
-      updateConsistentHash(1);
-      assertAllLocations(1, 1, 1, 1);
-
-      updateConsistentHash(2);
-      assertAllLocations(2, 2, 1, 1);
-
-      updateConsistentHash(3);
-      assertAllLocations(3, 2, 1, 1);
+      assertAllLocationsWithRebalance(1);
+      assertAllLocationsWithRebalance(2);
+      assertAllLocationsWithRebalance(3);
    }
 
    public void testNumOwnerBiggerThanAvailableNodes() {
       // test first with one node
       addNode(testAddresses[0], "m0", null, null);
-
-      updateConsistentHash(2);
-      assertAllLocations(1, 1, 1, 1);
-
-      updateConsistentHash(99);
-      assertAllLocations(1, 1, 1, 1);
-
-      // test with two nodes
       addNode(testAddresses[1], "m0", null, null);
-
-      updateConsistentHash(3);
-      assertAllLocations(2, 1, 1, 1);
-      updateConsistentHash(4);
-      assertAllLocations(2, 1, 1, 1);
-
-      // test with three nodes
       addNode(testAddresses[2], "m0", null, null);
 
-      updateConsistentHash(4);
-      assertAllLocations(3, 1, 1, 1);
-      updateConsistentHash(6);
-      assertAllLocations(3, 1, 1, 1);
-      assertAllLocations(3, 1, 1, 1);
+      assertAllLocationsWithRebalance(2);
+      assertAllLocationsWithRebalance(3);
+      assertAllLocationsWithRebalance(4);
+      assertAllLocationsWithRebalance(99);
    }
    
    public void testDifferentMachines2() {
@@ -169,17 +149,10 @@ public class TopologyAwareConsistentHashFactoryTest extends AbstractInfinispanTe
       addNode(testAddresses[4], "m2", null, null);
       addNode(testAddresses[5], "m2", null, null);
 
-      updateConsistentHash(1);
-      assertAllLocations(1, 1, 1, 1);
-
-      updateConsistentHash(2);
-      assertAllLocations(2, 2, 1, 1);
-
-      updateConsistentHash(3);
-      assertAllLocations(3, 3, 1, 1);
-
-      updateConsistentHash(4);
-      assertAllLocations(4, 3, 1, 1);
+      assertAllLocationsWithRebalance(1);
+      assertAllLocationsWithRebalance(2);
+      assertAllLocationsWithRebalance(3);
+      assertAllLocationsWithRebalance(4);
    }
 
    public void testDifferentRacksAndMachines() {
@@ -190,17 +163,10 @@ public class TopologyAwareConsistentHashFactoryTest extends AbstractInfinispanTe
       addNode(testAddresses[4], "m2", "r1", null);
       addNode(testAddresses[5], "m2", "r2", null);
 
-      updateConsistentHash(1);
-      assertAllLocations(1, 1, 1, 1);
-
-      updateConsistentHash(2);
-      assertAllLocations(2, 2, 2, 1);
-
-      updateConsistentHash(3);
-      assertAllLocations(3, 3, 3, 1);
-
-      updateConsistentHash(4);
-      assertAllLocations(4, 4, 3, 1);
+      assertAllLocationsWithRebalance(1);
+      assertAllLocationsWithRebalance(2);
+      assertAllLocationsWithRebalance(3);
+      assertAllLocationsWithRebalance(4);
    }
 
    public void testAllSameMachine() {
@@ -211,14 +177,10 @@ public class TopologyAwareConsistentHashFactoryTest extends AbstractInfinispanTe
       addNode(testAddresses[4], "m0", null, null);
       addNode(testAddresses[5], "m0", null, null);
 
-      updateConsistentHash(1);
-      assertAllLocations(1, 1, 1, 1);
-
-      updateConsistentHash(2);
-      assertAllLocations(2, 1, 1, 1);
-
-      updateConsistentHash(3);
-      assertAllLocations(3, 1, 1, 1);
+      assertAllLocationsWithRebalance(1);
+      assertAllLocationsWithRebalance(2);
+      assertAllLocationsWithRebalance(3);
+      assertAllLocationsWithRebalance(4);
    }
 
    public void testDifferentSites() {
@@ -227,14 +189,10 @@ public class TopologyAwareConsistentHashFactoryTest extends AbstractInfinispanTe
       addNode(testAddresses[2], "m2", null, "s1");
       addNode(testAddresses[3], "m3", null, "s1");
 
-      updateConsistentHash(1);
-      assertAllLocations(1, 1, 1, 1);
-
-      updateConsistentHash(2);
-      assertAllLocations(2, 2, 2, 2);
-
-      updateConsistentHash(3);
-      assertAllLocations(3, 3, 2, 2);
+      assertAllLocationsWithRebalance(1);
+      assertAllLocationsWithRebalance(2);
+      assertAllLocationsWithRebalance(3);
+      assertAllLocationsWithRebalance(4);
    }
 
    public void testSitesMachines2() {
@@ -245,17 +203,10 @@ public class TopologyAwareConsistentHashFactoryTest extends AbstractInfinispanTe
       addNode(testAddresses[4], "m4", null, "s1");
       addNode(testAddresses[5], "m5", null, "s1");
 
-      updateConsistentHash(1);
-      assertAllLocations(1, 1, 1, 1);
-
-      updateConsistentHash(2);
-      assertAllLocations(2, 2, 2, 2);
-
-      updateConsistentHash(3);
-      assertAllLocations(3, 3, 3, 3);
-
-      updateConsistentHash(4);
-      assertAllLocations(4, 4, 3, 3);
+      assertAllLocationsWithRebalance(1);
+      assertAllLocationsWithRebalance(2);
+      assertAllLocationsWithRebalance(3);
+      assertAllLocationsWithRebalance(4);
    }
 
    public void testSitesMachinesSameMachineName() {
@@ -266,17 +217,10 @@ public class TopologyAwareConsistentHashFactoryTest extends AbstractInfinispanTe
       addNode(testAddresses[4], "m0", null, "r1");
       addNode(testAddresses[5], "m0", null, "r1");
 
-      updateConsistentHash(1);
-      assertAllLocations(1, 1, 1, 1);
-
-      updateConsistentHash(2);
-      assertAllLocations(2, 2, 2, 2);
-
-      updateConsistentHash(3);
-      assertAllLocations(3, 3, 3, 3);
-
-      updateConsistentHash(4);
-      assertAllLocations(4, 3, 3, 3);
+      assertAllLocationsWithRebalance(1);
+      assertAllLocationsWithRebalance(2);
+      assertAllLocationsWithRebalance(3);
+      assertAllLocationsWithRebalance(4);
    }
 
    public void testDifferentRacks() {
@@ -285,14 +229,10 @@ public class TopologyAwareConsistentHashFactoryTest extends AbstractInfinispanTe
       addNode(testAddresses[2], "m2", "r1", null);
       addNode(testAddresses[3], "m3", "r1", null);
 
-      updateConsistentHash(1);
-      assertAllLocations(1, 1, 1, 1);
-
-      updateConsistentHash(2);
-      assertAllLocations(2, 2, 2, 1);
-
-      updateConsistentHash(3);
-      assertAllLocations(3, 3, 2, 1);
+      assertAllLocationsWithRebalance(1);
+      assertAllLocationsWithRebalance(2);
+      assertAllLocationsWithRebalance(3);
+      assertAllLocationsWithRebalance(4);
    }
 
    public void testRacksMachines2() {
@@ -303,17 +243,10 @@ public class TopologyAwareConsistentHashFactoryTest extends AbstractInfinispanTe
       addNode(testAddresses[4], "m4", "r1", null);
       addNode(testAddresses[5], "m5", "r1", null);
 
-      updateConsistentHash(1);
-      assertAllLocations(1, 1, 1, 1);
-
-      updateConsistentHash(2);
-      assertAllLocations(2, 2, 2, 1);
-
-      updateConsistentHash(3);
-      assertAllLocations(3, 3, 3, 1);
-
-      updateConsistentHash(4);
-      assertAllLocations(4, 4, 3, 1);
+      assertAllLocationsWithRebalance(1);
+      assertAllLocationsWithRebalance(2);
+      assertAllLocationsWithRebalance(3);
+      assertAllLocationsWithRebalance(4);
    }
 
    public void testRacksMachinesSameMachineName() {
@@ -324,17 +257,10 @@ public class TopologyAwareConsistentHashFactoryTest extends AbstractInfinispanTe
       addNode(testAddresses[4], "m0", "r1", null);
       addNode(testAddresses[5], "m0", "r1", null);
 
-      updateConsistentHash(1);
-      assertAllLocations(1, 1, 1, 1);
-
-      updateConsistentHash(2);
-      assertAllLocations(2, 2, 2, 1);
-
-      updateConsistentHash(3);
-      assertAllLocations(3, 3, 3, 1);
-
-      updateConsistentHash(4);
-      assertAllLocations(4, 3, 3, 1);
+      assertAllLocationsWithRebalance(1);
+      assertAllLocationsWithRebalance(2);
+      assertAllLocationsWithRebalance(3);
+      assertAllLocationsWithRebalance(4);
    }
 
    public void testComplexScenario() {
@@ -350,17 +276,54 @@ public class TopologyAwareConsistentHashFactoryTest extends AbstractInfinispanTe
       addNode(testAddresses[8], "m0", "r0", "s0");
       addNode(testAddresses[9], "m0", "r0", "s0");
 
-      updateConsistentHash(1);
+      assertAllLocationsWithRebalance(1);
+      assertAllLocationsWithRebalance(2);
+      assertAllLocationsWithRebalance(3);
+      assertAllLocationsWithRebalance(4);
+   }
+
+   private void assertAllLocationsWithRebalance(int numOwners) {
+      ch = chf.create(new MurmurHash3(), numOwners, numSegments, chMembers.subList(0, 1));
       assertAllLocations(1, 1, 1, 1);
 
-      updateConsistentHash(2);
-      assertAllLocations(2, 2, 2, 2);
+      for (int i = 2; i < chMembers.size(); i++) {
+         List<Address> currentMembers = chMembers.subList(0, i);
+         int expectedOwners = Math.min(numOwners, i);
+         int expectedMachines = Math.min(expectedOwners, countMachines(currentMembers));
+         int expectedRacks = Math.min(expectedOwners, countRacks(currentMembers));
+         int expectedSites = Math.min(expectedOwners, countSites(currentMembers));
+         ch = chf.updateMembers(ch, currentMembers);
+         ch = chf.rebalance(ch);
+         assertAllLocations(expectedOwners, expectedMachines, expectedRacks, expectedSites);
+      }
+      log.debugf("Created CH with members %s", chMembers);
+   }
 
-      updateConsistentHash(3);
-      assertAllLocations(3, 3, 3, 2);
+   private int countMachines(List<Address> addresses) {
+      Set<String> machines = new HashSet<String>(addresses.size());
+      for (Address a : addresses) {
+         TopologyAwareAddress taa = (TopologyAwareAddress) a;
+         machines.add(taa.getMachineId() + taa.getRackId() + taa.getSiteId());
+      }
+      return machines.size();
+   }
 
-      updateConsistentHash(4);
-      assertAllLocations(4, 4, 4, 2);
+   private int countRacks(List<Address> addresses) {
+      Set<String> racks = new HashSet<String>(addresses.size());
+      for (Address a : addresses) {
+         TopologyAwareAddress taa = (TopologyAwareAddress) a;
+         racks.add(taa.getRackId() + taa.getSiteId());
+      }
+      return racks.size();
+   }
+
+   private int countSites(List<Address> addresses) {
+      Set<String> sites = new HashSet<String>(addresses.size());
+      for (Address a : addresses) {
+         TopologyAwareAddress taa = (TopologyAwareAddress) a;
+         sites.add(taa.getSiteId());
+      }
+      return sites.size();
    }
 
    private void assertAllLocations(int expectedOwners, int expectedMachines, int expectedRacks, int expectedSites) {
@@ -390,21 +353,28 @@ public class TopologyAwareConsistentHashFactoryTest extends AbstractInfinispanTe
          DefaultConsistentHash newCH = chf.updateMembers(ch, addressCopy);
          newCH = chf.rebalance(newCH);
 
+         // Allow a small number of segment moves, even though this is a leave, because the CH factory
+         // generates extra moves trying to balance the CH.
+         AtomicInteger movedSegmentsCount = new AtomicInteger(0);
          for (int segment = 0; segment < numSegments; segment++) {
-            checkConsistency(segment, 3, ch.locateOwnersForSegment(segment), addr, newCH);
+            checkConsistency(segment, 3, ch.locateOwnersForSegment(segment), addr, newCH, movedSegmentsCount);
          }
+         assert movedSegmentsCount.get() < 5 :
+               String.format("Too many moved segments after leave: %d. CH after leave is: %s\nPrevious: %s",
+                     movedSegmentsCount.get(), newCH, ch);
       }
    }
 
    private void checkConsistency(int segment, int replCount, List<Address> originalOwners,
-                                 Address removedAddress, DefaultConsistentHash newCH) {
+                                 Address removedAddress, DefaultConsistentHash newCH,
+                                 AtomicInteger movedSegmentsCount) {
       List<Address> currentOwners = newCH.locateOwnersForSegment(segment);
       originalOwners = new ArrayList<Address>(originalOwners);
       originalOwners.remove(removedAddress);
 
       assertEquals(replCount, currentOwners.size(), currentOwners.toString());
-      assert currentOwners.containsAll(originalOwners)
-            : "Current backups are: " + currentOwners + "Previous: " + originalOwners;
+      if (!currentOwners.containsAll(originalOwners))
+         movedSegmentsCount.incrementAndGet();
    }
 
 
