@@ -79,7 +79,16 @@ public class ShellImpl implements Shell {
          switch (c) {
          case 'c':
             Connection connection = ConnectionFactory.getConnection(g.getOptarg());
-            connection.connect(context);
+            String password = null;
+            if (connection.needsCredentials()) {
+               java.io.Console sysConsole = System.console();
+               if (sysConsole != null) {
+                  password = new String(sysConsole.readPassword("Password: "));
+               } else {
+                  exitWithError("Cannot read password non-interactively");
+               }
+            }
+            connection.connect(context, password);
             context.setConnection(connection);
             break;
          case 'f':
@@ -102,6 +111,7 @@ public class ShellImpl implements Shell {
 
    private void exitWithError(final String format, final Object... args) {
       System.err.printf(format, args);
+      System.err.println();
       System.exit(1);
    }
 
