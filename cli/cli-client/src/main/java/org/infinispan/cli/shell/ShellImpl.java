@@ -37,6 +37,7 @@ import org.infinispan.cli.Config;
 import org.infinispan.cli.Context;
 import org.infinispan.cli.commands.Command;
 import org.infinispan.cli.commands.ProcessedCommand;
+import org.infinispan.cli.commands.server.Ping;
 import org.infinispan.cli.commands.server.Version;
 import org.infinispan.cli.connection.Connection;
 import org.infinispan.cli.connection.ConnectionFactory;
@@ -257,10 +258,12 @@ public class ShellImpl implements Shell {
    }
 
    class PingTask implements Runnable {
+      Ping ping = new Ping();
+
       @Override
       public void run() {
          if(context.isConnected()) {
-            execute("ping");
+            ping.execute(context, null);
          }
       }
    }

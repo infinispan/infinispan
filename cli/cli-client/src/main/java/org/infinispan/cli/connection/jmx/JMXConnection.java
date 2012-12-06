@@ -40,6 +40,7 @@ import javax.management.remote.JMXConnector;
 import javax.management.remote.JMXConnectorFactory;
 import javax.management.remote.JMXServiceURL;
 
+import org.infinispan.cli.CommandBuffer;
 import org.infinispan.cli.Context;
 import org.infinispan.cli.connection.Connection;
 
@@ -166,11 +167,11 @@ public class JMXConnection implements Connection {
    }
 
    @Override
-   public void execute(Context context) {
+   public void execute(Context context, CommandBuffer commandBuffer) {
       ObjectInstance manager = cacheManagers.get(activeCacheManager);
       try {
          String sessionId = getSession(manager);
-         Map<String, String> response = (Map<String, String>) mbsc.invoke(manager.getObjectName(), "execute", new String[] { sessionId, context.getCommandBuffer().toString() },
+         Map<String, String> response = (Map<String, String>) mbsc.invoke(manager.getObjectName(), "execute", new String[] { sessionId, commandBuffer.toString() },
                new String[] { String.class.getName(), String.class.getName() });
          if (response.containsKey("OUTPUT")) {
             context.println(response.get("OUTPUT"));
@@ -190,8 +191,6 @@ public class JMXConnection implements Connection {
          context.error(e);
       } catch (IOException e) {
          context.error(e);
-      } finally {
-         context.getCommandBuffer().reset();
       }
    }
 
