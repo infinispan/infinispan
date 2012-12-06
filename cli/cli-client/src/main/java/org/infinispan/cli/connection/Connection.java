@@ -21,13 +21,14 @@ package org.infinispan.cli.connection;
 import java.io.Closeable;
 import java.util.Collection;
 
+import org.infinispan.cli.CommandBuffer;
 import org.infinispan.cli.Context;
 
 public interface Connection extends Closeable {
 
    void connect(Context context) throws Exception;
 
-   void execute(Context context);
+   void execute(Context context, CommandBuffer commandBuffer);
 
    String getActiveCache();
 

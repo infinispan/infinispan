@@ -14,7 +14,6 @@ org.infinispan.cli.commands.server.Evict
 org.infinispan.cli.commands.server.Get
 org.infinispan.cli.commands.server.Info
 org.infinispan.cli.commands.server.Locate
-org.infinispan.cli.commands.server.Ping
 org.infinispan.cli.commands.server.Put
 org.infinispan.cli.commands.server.PutIfAbsent
 org.infinispan.cli.commands.server.Remove

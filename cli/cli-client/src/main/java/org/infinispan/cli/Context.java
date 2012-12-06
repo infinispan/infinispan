@@ -61,4 +61,8 @@ public interface Context {
 
    void setOutputAdapter(IOAdapter outputAdapter);
 
+   void execute();
+
+   void execute(CommandBuffer commandBuffer);
+
 }
