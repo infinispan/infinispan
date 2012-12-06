@@ -179,7 +179,7 @@ public class HashConfigurationBuilder extends AbstractClusteringConfigurationChi
    @Override
    public HashConfiguration create() {
       // TODO stateTransfer().create() will create a duplicate StateTransferConfiguration instance. That's ok as long as none of the stateTransfer settings are modifiable at runtime.
-      return new HashConfiguration(null, hash, numOwners, numSegments,
+      return new HashConfiguration(consistentHashFactory, hash, numOwners, numSegments,
             groupsConfigurationBuilder.create(), stateTransfer().create());
    }
 
