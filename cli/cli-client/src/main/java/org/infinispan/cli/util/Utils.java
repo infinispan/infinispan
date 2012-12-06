@@ -16,20 +16,17 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston,
  * MA  02110-1301, USA.
  */
-package org.infinispan.cli.connection.jmx;
+package org.infinispan.cli.util;
 
-import java.util.Map;
-
-public interface JMXUrl {
-
-   String getJMXServiceURL();
-
-   String getContainer();
-
-   String getCache();
-
-   Map<String, Object> getConnectionEnvironment(String credentials);
-
-   boolean needsCredentials();
-
+public class Utils {
+   /**
+    * Returns null if the parameter is null or empty, otherwise it returns it untouched
+    */
+   public static String nullIfEmpty(String s) {
+      if (s != null && s.length() == 0) {
+         return null;
+      } else {
+         return s;
+      }
+   }
 }

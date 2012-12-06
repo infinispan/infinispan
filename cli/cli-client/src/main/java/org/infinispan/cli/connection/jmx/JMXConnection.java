@@ -59,9 +59,14 @@ public class JMXConnection implements Connection {
    }
 
    @Override
-   public void connect(Context context) throws Exception {
+   public boolean needsCredentials() {
+      return serviceUrl.needsCredentials();
+   }
+
+   @Override
+   public void connect(Context context, String credentials) throws Exception {
       JMXServiceURL url = new JMXServiceURL(serviceUrl.getJMXServiceURL());
-      jmxConnector = JMXConnectorFactory.connect(url, serviceUrl.getConnectionEnvironment());
+      jmxConnector = JMXConnectorFactory.connect(url, serviceUrl.getConnectionEnvironment(credentials));
       mbsc = jmxConnector.getMBeanServerConnection();
       cacheManagers = new TreeMap<String, ObjectInstance>();
       for (ObjectInstance mbean : mbsc.queryMBeans(null, INTERPRETER_QUERY)) {
@@ -78,7 +83,7 @@ public class JMXConnection implements Connection {
       if (activeCacheManager == null) {
          activeCacheManager = cacheManagers.keySet().iterator().next();
       } else if (!cacheManagers.containsKey(activeCacheManager)) {
-         throw new Exception("No such container: "+activeCacheManager);
+         throw new Exception("No such container: " + activeCacheManager);
       }
       activeCache = serviceUrl.getCache();
       if (activeCache != null) {
@@ -96,7 +101,7 @@ public class JMXConnection implements Connection {
       Exception te = e.getTargetException();
       if (te != null) {
          if (te instanceof InvocationTargetException) {
-            return ((InvocationTargetException)te).getCause();
+            return ((InvocationTargetException) te).getCause();
          } else {
             return te;
          }

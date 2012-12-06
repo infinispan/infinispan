@@ -45,7 +45,11 @@ public class Connect extends AbstractCommand {
       try {
          String connectionString = commandLine.getArguments().get(0).getValue();
          Connection connection = ConnectionFactory.getConnection(connectionString);
-         connection.connect(context);
+         String password = null;
+         if (connection.needsCredentials()) {
+            password = new String(context.getOutputAdapter().secureReadln("Password: "));
+         }
+         connection.connect(context, password);
          context.setConnection(connection);
       } catch (Exception e) {
          context.error(e);

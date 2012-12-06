@@ -18,64 +18,37 @@
  */
 package org.infinispan.cli.connection.jmx.remoting;
 
-import java.util.HashMap;
-import java.util.Map;
+import static org.infinispan.cli.util.Utils.nullIfEmpty;
+
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-import javax.management.remote.JMXConnector;
+import org.infinispan.cli.connection.jmx.AbstractJMXUrl;
 
-import org.infinispan.cli.connection.jmx.JMXUrl;
-
-public class JMXRemotingUrl implements JMXUrl {
+public class JMXRemotingUrl extends AbstractJMXUrl {
    private static final Pattern JMX_URL = Pattern.compile("^(?:(?![^:@]+:[^:@/]*@)(remoting):)?(?://)?((?:(([^:@]*):?([^:@]*))?@)?([^:/?#]*)(?::(\\d*))?)(?:/([^/]*)(?:/(.*))?)?");
    private static final int DEFAULT_REMOTING_PORT = 9999;
-   protected final String hostname;
-   protected final int port;
-   protected final String username;
-   protected final String password;
-   protected final String container;
-   protected final String cache;
 
    public JMXRemotingUrl(String connectionString) {
       Matcher matcher = JMX_URL.matcher(connectionString);
       if (!matcher.matches()) {
          throw new IllegalArgumentException(connectionString);
       }
-      username = matcher.group(4);
-      password = matcher.group(5);
-      hostname = matcher.group(6);
+      username = nullIfEmpty(matcher.group(4));
+      password = nullIfEmpty(matcher.group(5));
+      hostname = nullIfEmpty(matcher.group(6));
       if (matcher.group(7) != null) {
          port = Integer.parseInt(matcher.group(7));
       } else {
          port = DEFAULT_REMOTING_PORT;
       }
-      container = matcher.group(8);
-      cache = matcher.group(9);
+      container = nullIfEmpty(matcher.group(8));
+      cache = nullIfEmpty(matcher.group(9));
    }
 
    @Override
    public String getJMXServiceURL() {
       return "service:jmx:remoting-jmx://" + hostname + ":" + port;
-   }
-
-   @Override
-   public String getContainer() {
-      return container;
-   }
-
-   @Override
-   public String getCache() {
-      return cache;
-   }
-
-   @Override
-   public Map<String, Object> getConnectionEnvironment() {
-      Map<String, Object> env = new HashMap<String, Object>();
-      if (username != null || password != null) {
-         env.put(JMXConnector.CREDENTIALS, new String[] { username, password });
-      }
-      return env;
    }
 
    @Override
