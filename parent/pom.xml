@@ -1090,7 +1090,11 @@
             <plugin>
                <groupId>org.apache.maven.plugins</groupId>
                <artifactId>maven-javadoc-plugin</artifactId>
-               <version>2.9</version>
+               <!-- Upgrading to 2.9 seems to cause
+                    https://issues.jboss.org/browse/ISPN-2576, so avoid
+                    upgrade until a later version is in place which
+                    generates javadoc fine, and make sure you test!! -->
+               <version>2.8.1</version>
             </plugin>
             <plugin>
                <groupId>org.apache.maven.plugins</groupId>
