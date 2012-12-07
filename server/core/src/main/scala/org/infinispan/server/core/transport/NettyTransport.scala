@@ -155,7 +155,7 @@ class NettyTransport(server: ProtocolServer, encoder: ChannelDownstreamHandler,
 
    override def getIdleTimeout = idleTimeout.toString
 
-   override def getTpcNoDelay = tcpNoDelay.toString
+   override def getTcpNoDelay = tcpNoDelay.toString
 
    override def getSendBufferSize = sendBufSize.toString
 
