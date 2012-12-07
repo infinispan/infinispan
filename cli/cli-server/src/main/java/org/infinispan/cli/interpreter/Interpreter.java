@@ -40,6 +40,7 @@ import org.infinispan.api.BasicCacheContainer;
 import org.infinispan.cli.interpreter.logging.Log;
 import org.infinispan.cli.interpreter.result.EmptyResult;
 import org.infinispan.cli.interpreter.result.Result;
+import org.infinispan.cli.interpreter.result.ResultKeys;
 import org.infinispan.cli.interpreter.session.Session;
 import org.infinispan.cli.interpreter.session.SessionImpl;
 import org.infinispan.cli.interpreter.statement.Statement;
@@ -159,19 +160,19 @@ public class Interpreter {
             }
          }
          if (output.length() > 0) {
-            response.put("OUTPUT", output.toString());
+            response.put(ResultKeys.OUTPUT.toString(), output.toString());
          }
       } catch (Exception e) {
          log.interpreterError(e);
-         response.put("ERROR", e.getMessage());
+         response.put(ResultKeys.ERROR.toString(), e.getMessage());
          StringWriter sw = new StringWriter();
          PrintWriter pw = new PrintWriter(sw);
          e.printStackTrace(pw);
-         response.put("STACKTRACE", sw.toString());
+         response.put(ResultKeys.STACKTRACE.toString(), sw.toString());
       } finally {
          if (session != null) {
             session.reset();
-            response.put("CACHE", session.getCurrentCacheName());
+            response.put(ResultKeys.CACHE.toString(), session.getCurrentCacheName());
          }
          SysPropertyActions.setThreadContextClassLoader(oldCL);
 

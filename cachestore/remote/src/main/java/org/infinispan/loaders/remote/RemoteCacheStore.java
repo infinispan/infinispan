@@ -233,4 +233,8 @@ public class RemoteCacheStore extends AbstractCacheStore {
       }
       this.iceFactory = iceFactory;
    }
+
+   public RemoteCache<Object, Object> getRemoteCache() {
+      return remoteCache;
+   }
 }

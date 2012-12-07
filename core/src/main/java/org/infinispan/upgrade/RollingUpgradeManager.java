@@ -19,40 +19,87 @@
 
 package org.infinispan.upgrade;
 
+import org.infinispan.Cache;
+import org.infinispan.factories.annotations.Inject;
 import org.infinispan.factories.annotations.SurvivesRestarts;
 import org.infinispan.factories.scopes.Scope;
 import org.infinispan.factories.scopes.Scopes;
 import org.infinispan.jmx.annotations.MBean;
 import org.infinispan.jmx.annotations.ManagedOperation;
+import org.infinispan.util.Util;
+import org.infinispan.util.logging.Log;
+import org.infinispan.util.logging.LogFactory;
 import org.rhq.helpers.pluginAnnotations.agent.Operation;
 
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.ConcurrentMap;
+import java.util.HashSet;
+import java.util.ServiceLoader;
+import java.util.Set;
 
 /**
- * This component handles the control hooks to handle migrating from one version of Infinispan to another.
+ * This component handles the control hooks to handle migrating from one version of Infinispan to
+ * another.
  *
  * @author Manik Surtani
+ * @author Tristan Tarrant
  * @since 5.2
  */
 @MBean(objectName = "RollingUpgradeManager", description = "This component handles the control hooks to handle migrating data from one version of Infinispan to another")
 @Scope(value = Scopes.NAMED_CACHE)
 @SurvivesRestarts
 public class RollingUpgradeManager {
-   private final ConcurrentMap<String, Migrator> migrators = new ConcurrentHashMap<String, Migrator>(2);
+   private static final Log log = LogFactory.getLog(RollingUpgradeManager.class);
+   private final Set<SourceMigrator> sourceMigrators = new HashSet<SourceMigrator>(2);
+   private Cache<Object, Object> cache;
+
+   @Inject
+   public void initialize(final Cache<Object, Object> cache) {
+      this.cache = cache;
+   }
+
    @ManagedOperation(description = "Dumps the global known keyset to a well-known key for retrieval by the upgrade process")
    @Operation(displayName = "Dumps the global known keyset")
    public void recordKnownGlobalKeyset() {
-      for (Migrator m: migrators.values()) m.recordKnownGlobalKeyset();
+      for (SourceMigrator m : sourceMigrators)
+         m.recordKnownGlobalKeyset();
+   }
+
+   @ManagedOperation(description = "Synchronizes data from the old cluster to this using the specified migrator")
+   @Operation(displayName = "Synchronizes data from the old cluster to this using the specified migrator")
+   public long synchronizeData(String migratorName) throws Exception {
+      TargetMigrator migrator = getMigrator(migratorName);
+      long start = System.currentTimeMillis();
+      long count = migrator.synchronizeData(cache);
+      log.entriesMigrated(count, cache.getName(), Util.prettyPrintTime(System.currentTimeMillis() - start));
+      return count;
+
+   }
+
+   @ManagedOperation(description = "Disconnects the target cluster from the source cluster according to the specified migrator")
+   @Operation(displayName = "Disconnects the target cluster from the source cluster")
+   public void disconnectSource(String migratorName) throws Exception {
+      TargetMigrator migrator = getMigrator(migratorName);
+      migrator.disconnectSource(cache);
+   }
+
+   private TargetMigrator getMigrator(String name) throws Exception {
+      ClassLoader cl = cache.getCacheManager().getCacheManagerConfiguration().classLoader();
+      for (TargetMigrator m : ServiceLoader.load(TargetMigrator.class, cl)) {
+         if (name.equalsIgnoreCase(m.getName())) {
+            return m;
+         }
+      }
+      throw log.unknownMigrator(name);
    }
 
    /**
-    * Registers a migrator for a specific data format or endpoint.  In the Infinispan ecosystem, we'd typically have one
-    * Migrator implementation for Hot Rod, one for memcached, one for REST and one for embedded/in-VM mode, and these
-    * would typically be added to the upgrade manager on first access via any of these protocols.
+    * Registers a migrator for a specific data format or endpoint. In the Infinispan ecosystem, we'd
+    * typically have one Migrator implementation for Hot Rod, one for memcached, one for REST and
+    * one for embedded/in-VM mode, and these would typically be added to the upgrade manager on
+    * first access via any of these protocols.
+    *
     * @param migrator
     */
-   public void addMigrator(Migrator migrator) {
-      migrators.putIfAbsent(migrator.getCacheName(), migrator);
+   public void addSourceMigrator(SourceMigrator migrator) {
+      sourceMigrators.add(migrator);
    }
 }

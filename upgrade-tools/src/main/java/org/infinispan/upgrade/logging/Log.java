@@ -16,19 +16,18 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston,
  * MA  02110-1301, USA.
  */
-package org.infinispan.cli.interpreter.logging;
+package org.infinispan.upgrade.logging;
 
 import static org.jboss.logging.Logger.Level.ERROR;
 
-import org.infinispan.cli.interpreter.result.StatementException;
-import org.jboss.logging.Cause;
+import org.infinispan.CacheException;
 import org.jboss.logging.LogMessage;
 import org.jboss.logging.Message;
 import org.jboss.logging.MessageLogger;
 
 /**
- * Log abstraction for the ISPNQL interpreter. For this module, message ids
- * ranging from 19001 to 20000 inclusively have been reserved.
+ * Log abstraction for the Rolling Upgrade Tools. For this module, message ids
+ * ranging from 20001 to 21000 inclusively have been reserved.
  *
  * @author Tristan Tarrant
  * @since 5.2
@@ -36,20 +35,16 @@ import org.jboss.logging.MessageLogger;
 @MessageLogger(projectCode = "ISPN")
 public interface Log extends org.infinispan.util.logging.Log {
    @LogMessage(level = ERROR)
-   @Message(value = "Could not register interpreter MBean", id = 19001)
+   @Message(value = "Could not register upgrade MBean", id = 20001)
    void jmxRegistrationFailed();
 
    @LogMessage(level = ERROR)
-   @Message(value = "Could not unregister interpreter MBean", id = 19002)
+   @Message(value = "Could not unregister upgrade MBean", id = 20002)
    void jmxUnregistrationFailed();
 
-   @LogMessage(level = ERROR)
-   @Message(value = "Interpreter error", id = 19003)
-   void interpreterError(@Cause Exception e);
+   @Message(value = "The RemoteCacheStore for cache %s should be configured with hotRodWrapping enabled", id = 20003)
+   CacheException remoteStoreNoHotRodWrapping(String cacheName);
 
-   @Message(value = "No action has been specified for the upgrade command", id = 19004)
-   StatementException missingUpgradeAction();
-
-   @Message(value = "No migrator has been specified", id = 19005)
-   StatementException missingMigrator();
+   @Message(value = "Could not find migration data in cache %s")
+   CacheException missingMigrationData(String name);
 }

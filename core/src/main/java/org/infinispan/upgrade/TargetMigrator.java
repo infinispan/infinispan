@@ -19,14 +19,27 @@
 
 package org.infinispan.upgrade;
 
+import org.infinispan.Cache;
+import org.infinispan.CacheException;
+
 /**
- * Records all known keys and stores them under a well-known key which can be used for retrieval.
+ * Performs migration operations on the target server or cluster of servers
  *
- * @author Manik Surtani
+ * @author Tristan Tarrant
  * @since 5.2
  */
-public interface Migrator {
-   void recordKnownGlobalKeyset();
+public interface TargetMigrator {
+   /**
+    * Returns the name of this migrator
+    */
+   String getName();
+   /**
+    * Performs the synchronization of data between source and target by retrieving the set of known keys and fetching each key in turn
+    */
+   long synchronizeData(Cache<Object, Object> cache) throws CacheException;
 
-   String getCacheName();
+   /**
+    * Disconnects the target from the source. This operation is the last step that must be performed after a rolling upgrade.
+    */
+   void disconnectSource(Cache<Object, Object> cache) throws CacheException;
 }

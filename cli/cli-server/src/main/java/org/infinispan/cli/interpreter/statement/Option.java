@@ -26,13 +26,23 @@ package org.infinispan.cli.interpreter.statement;
  */
 public class Option {
    final String name;
+   final String parameter;
 
    public Option(String name) {
+      this(name, null);
+   }
+
+   public Option(String name, String parameter) {
       this.name = name;
+      this.parameter = parameter;
    }
 
    public String getName() {
       return name;
+   }
+
+   public String getParameter() {
+      return parameter;
    }
 
    @Override

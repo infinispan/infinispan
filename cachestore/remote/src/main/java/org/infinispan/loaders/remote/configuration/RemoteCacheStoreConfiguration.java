@@ -214,8 +214,5 @@ public class RemoteCacheStoreConfiguration extends AbstractStoreConfiguration im
       config.setHotRodClientProperties(hrp);
       return config;
    }
-
-
-
-
 }
+
