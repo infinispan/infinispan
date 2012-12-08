@@ -26,11 +26,10 @@ package org.infinispan.statetransfer;
 import org.infinispan.commands.TopologyAffectedCommand;
 import org.infinispan.factories.scopes.Scope;
 import org.infinispan.factories.scopes.Scopes;
+import org.infinispan.jmx.annotations.DataType;
 import org.infinispan.jmx.annotations.ManagedAttribute;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.topology.CacheTopology;
-import org.rhq.helpers.pluginAnnotations.agent.DataType;
-import org.rhq.helpers.pluginAnnotations.agent.Metric;
 
 import java.util.Set;
 
@@ -46,15 +45,13 @@ import java.util.Set;
 public interface StateTransferManager {
 
    //todo [anistor] this is inaccurate. this node does not hold state yet in current implementation
-   @ManagedAttribute(description = "If true, the node has successfully joined the grid and is considered to hold state.  If false, the join process is still in progress.")
-   @Metric(displayName = "Is join completed?", dataType = DataType.TRAIT)
+   @ManagedAttribute(description = "If true, the node has successfully joined the grid and is considered to hold state.  If false, the join process is still in progress.", displayName = "Is join completed?", dataType = DataType.TRAIT)
    boolean isJoinComplete();
 
    /**
     * Checks if an inbound state transfer is in progress.
     */
-   @ManagedAttribute(description = "Checks whether there is a pending inbound state transfer on this cluster member.")
-   @Metric(displayName = "Is state transfer in progress?", dataType = DataType.TRAIT)
+   @ManagedAttribute(description = "Checks whether there is a pending inbound state transfer on this cluster member.", displayName = "Is state transfer in progress?", dataType = DataType.TRAIT)
    boolean isStateTransferInProgress();
 
    /**

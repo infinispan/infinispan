@@ -59,6 +59,8 @@ import org.infinispan.factories.annotations.Inject;
 import org.infinispan.factories.annotations.SurvivesRestarts;
 import org.infinispan.interceptors.InterceptorChain;
 import org.infinispan.interceptors.base.CommandInterceptor;
+import org.infinispan.jmx.annotations.DataType;
+import org.infinispan.jmx.annotations.DisplayType;
 import org.infinispan.jmx.annotations.MBean;
 import org.infinispan.jmx.annotations.ManagedAttribute;
 import org.infinispan.jmx.annotations.ManagedOperation;
@@ -83,10 +85,6 @@ import org.infinispan.util.concurrent.NotifyingFutureAdaptor;
 import org.infinispan.util.concurrent.locks.LockManager;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
-import org.rhq.helpers.pluginAnnotations.agent.DataType;
-import org.rhq.helpers.pluginAnnotations.agent.DisplayType;
-import org.rhq.helpers.pluginAnnotations.agent.Metric;
-import org.rhq.helpers.pluginAnnotations.agent.Operation;
 
 import javax.transaction.InvalidTransactionException;
 import javax.transaction.SystemException;
@@ -311,8 +309,10 @@ public class CacheImpl<K, V> extends CacheSupport<K, V> implements AdvancedCache
    }
 
    @Override
-   @ManagedOperation(description = "Clears the cache.")
-   @Operation(displayName = "Clears the cache.")
+   @ManagedOperation(
+         description = "Clears the cache.",
+         displayName = "Clears the cache."
+   )
    public final void clear() {
       clear(null, null);
    }
@@ -551,8 +551,10 @@ public class CacheImpl<K, V> extends CacheSupport<K, V> implements AdvancedCache
    }
 
    @Override
-   @ManagedOperation(description = "Starts the cache.")
-   @Operation(displayName = "Starts cache.")
+   @ManagedOperation(
+         description = "Starts the cache.",
+         displayName = "Starts cache."
+   )
    public void start() {
       componentRegistry.start();
       defaultLifespan = config.expiration().lifespan();
@@ -566,8 +568,10 @@ public class CacheImpl<K, V> extends CacheSupport<K, V> implements AdvancedCache
    }
 
    @Override
-   @ManagedOperation(description = "Stops the cache.")
-   @Operation(displayName = "Stops cache.")
+   @ManagedOperation(
+         description = "Stops the cache.",
+         displayName = "Stops cache."
+   )
    public void stop() {
       stop(null);
    }
@@ -631,8 +635,12 @@ public class CacheImpl<K, V> extends CacheSupport<K, V> implements AdvancedCache
     * Returns String representation of ComponentStatus enumeration in order to avoid class not found exceptions in JMX
     * tools that don't have access to infinispan classes.
     */
-   @ManagedAttribute(description = "Returns the cache status")
-   @Metric(displayName = "Cache status", dataType = DataType.TRAIT, displayType = DisplayType.SUMMARY)
+   @ManagedAttribute(
+         description = "Returns the cache status",
+         displayName = "Cache status",
+         dataType = DataType.TRAIT,
+         displayType = DisplayType.SUMMARY
+   )
    public String getCacheStatus() {
       return getStatus().toString();
    }
@@ -661,8 +669,12 @@ public class CacheImpl<K, V> extends CacheSupport<K, V> implements AdvancedCache
    /**
     * Returns the cache name. If this is the default cache, it returns a more friendly name.
     */
-   @ManagedAttribute(description = "Returns the cache name")
-   @Metric(displayName = "Cache name", dataType = DataType.TRAIT, displayType = DisplayType.SUMMARY)
+   @ManagedAttribute(
+         description = "Returns the cache name",
+         displayName = "Cache name",
+         dataType = DataType.TRAIT,
+         displayType = DisplayType.SUMMARY
+   )
    public String getCacheName() {
       String name = getName().equals(CacheContainer.DEFAULT_CACHE_NAME) ? "Default Cache" : getName();
       return name + "(" + getConfiguration().getCacheModeString().toLowerCase() + ")";
@@ -671,8 +683,12 @@ public class CacheImpl<K, V> extends CacheSupport<K, V> implements AdvancedCache
    /**
     * Returns the cache configuration as XML string.
     */
-   @ManagedAttribute(description = "Returns the cache configuration as XML string")
-   @Metric(displayName = "Cache configuration (XML)", dataType = DataType.TRAIT, displayType = DisplayType.SUMMARY)
+   @ManagedAttribute(
+         description = "Returns the cache configuration as XML string",
+         displayName = "Cache configuration (XML)",
+         dataType = DataType.TRAIT,
+         displayType = DisplayType.SUMMARY
+   )
    public String getConfigurationAsXmlString() {
       return getConfiguration().toXmlString();
    }

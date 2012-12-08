@@ -33,9 +33,14 @@ import org.infinispan.configuration.global.GlobalConfiguration;
 import org.infinispan.factories.annotations.ComponentName;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.factories.annotations.Start;
+import org.infinispan.jmx.annotations.DataType;
+import org.infinispan.jmx.annotations.DisplayType;
 import org.infinispan.jmx.annotations.MBean;
 import org.infinispan.jmx.annotations.ManagedAttribute;
 import org.infinispan.jmx.annotations.ManagedOperation;
+import org.infinispan.jmx.annotations.MeasurementType;
+import org.infinispan.jmx.annotations.Parameter;
+import org.infinispan.jmx.annotations.Units;
 import org.infinispan.statetransfer.StateTransferManager;
 import org.infinispan.remoting.ReplicationQueue;
 import org.infinispan.remoting.RpcException;
@@ -48,13 +53,6 @@ import org.infinispan.util.InfinispanCollections;
 import org.infinispan.util.concurrent.NotifyingNotifiableFuture;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
-import org.rhq.helpers.pluginAnnotations.agent.DataType;
-import org.rhq.helpers.pluginAnnotations.agent.DisplayType;
-import org.rhq.helpers.pluginAnnotations.agent.MeasurementType;
-import org.rhq.helpers.pluginAnnotations.agent.Metric;
-import org.rhq.helpers.pluginAnnotations.agent.Operation;
-import org.rhq.helpers.pluginAnnotations.agent.Parameter;
-import org.rhq.helpers.pluginAnnotations.agent.Units;
 
 import java.text.NumberFormat;
 import java.util.Collection;
@@ -122,15 +120,13 @@ public class RpcManagerImpl implements RpcManager {
       statisticsEnabled = configuration.jmxStatistics().enabled();
    }
 
-   @ManagedAttribute(description = "Retrieves the committed view.")
-   @Metric(displayName = "Committed view", dataType = DataType.TRAIT)
+   @ManagedAttribute(description = "Retrieves the committed view.", displayName = "Committed view", dataType = DataType.TRAIT)
    public String getCommittedViewAsString() {
       return localTopologyManager == null ? "N/A" : String.valueOf(localTopologyManager.getCacheTopology(cacheName)
             .getCurrentCH());
    }
 
-   @ManagedAttribute(description = "Retrieves the pending view.")
-   @Metric(displayName = "Pending view", dataType = DataType.TRAIT)
+   @ManagedAttribute(description = "Retrieves the pending view.", displayName = "Pending view", dataType = DataType.TRAIT)
    public String getPendingViewAsString() {
       return localTopologyManager == null ? "N/A" : String.valueOf(localTopologyManager.getCacheTopology(cacheName)
             .getPendingCH());
@@ -332,19 +328,17 @@ public class RpcManagerImpl implements RpcManager {
          }
       }
    }
-   
+
    // -------------------------------------------- JMX information -----------------------------------------------
 
-   @ManagedOperation(description = "Resets statistics gathered by this component")
-   @Operation(displayName = "Reset statistics")
+   @ManagedOperation(description = "Resets statistics gathered by this component", displayName = "Reset statistics")
    public void resetStatistics() {
       replicationCount.set(0);
       replicationFailures.set(0);
       totalReplicationTime.set(0);
    }
 
-   @ManagedAttribute(description = "Number of successful replications")
-   @Metric(displayName = "Number of successful replications", measurementType = MeasurementType.TRENDSUP, displayType = DisplayType.SUMMARY)
+   @ManagedAttribute(description = "Number of successful replications", displayName = "Number of successful replications", measurementType = MeasurementType.TRENDSUP, displayType = DisplayType.SUMMARY)
    public long getReplicationCount() {
       if (!isStatisticsEnabled()) {
          return -1;
@@ -352,8 +346,7 @@ public class RpcManagerImpl implements RpcManager {
       return replicationCount.get();
    }
 
-   @ManagedAttribute(description = "Number of failed replications")
-   @Metric(displayName = "Number of failed replications", measurementType = MeasurementType.TRENDSUP, displayType = DisplayType.SUMMARY)
+   @ManagedAttribute(description = "Number of failed replications", displayName = "Number of failed replications", measurementType = MeasurementType.TRENDSUP, displayType = DisplayType.SUMMARY)
    public long getReplicationFailures() {
       if (!isStatisticsEnabled()) {
          return -1;
@@ -361,12 +354,12 @@ public class RpcManagerImpl implements RpcManager {
       return replicationFailures.get();
    }
 
-   @Metric(displayName = "Statistics enabled", dataType = DataType.TRAIT)
+   @ManagedAttribute(displayName = "Statistics enabled", dataType = DataType.TRAIT)
    public boolean isStatisticsEnabled() {
       return statisticsEnabled;
    }
 
-   @Operation(displayName = "Enable/disable statistics")
+   @ManagedOperation(displayName = "Enable/disable statistics")
    public void setStatisticsEnabled(@Parameter(name = "enabled", description = "Whether statistics should be enabled or disabled (true/false)") boolean statisticsEnabled) {
       this.statisticsEnabled = statisticsEnabled;
    }
@@ -380,8 +373,7 @@ public class RpcManagerImpl implements RpcManager {
       return NumberFormat.getInstance().format(ration) + "%";
    }
 
-   @ManagedAttribute(description = "Successful replications as a ratio of total replications in numeric double format")
-   @Metric(displayName = "Successful replication ratio", units = Units.PERCENTAGE, displayType = DisplayType.SUMMARY)
+   @ManagedAttribute(description = "Successful replications as a ratio of total replications in numeric double format", displayName = "Successful replication ratio", units = Units.PERCENTAGE, displayType = DisplayType.SUMMARY)
    public double getSuccessRatioFloatingPoint() {
       if (replicationCount.get() == 0 || !statisticsEnabled) return 0;
       return calculateSuccessRatio();
@@ -392,8 +384,7 @@ public class RpcManagerImpl implements RpcManager {
       return replicationCount.get() / totalCount;
    }
 
-   @ManagedAttribute(description = "The average time spent in the transport layer, in milliseconds")
-   @Metric(displayName = "Average time spent in the transport layer", units = Units.MILLISECONDS, displayType = DisplayType.SUMMARY)
+   @ManagedAttribute(description = "The average time spent in the transport layer, in milliseconds", displayName = "Average time spent in the transport layer", units = Units.MILLISECONDS, displayType = DisplayType.SUMMARY)
    public long getAverageReplicationTime() {
       if (replicationCount.get() == 0) {
          return 0;
@@ -411,6 +402,7 @@ public class RpcManagerImpl implements RpcManager {
       return t != null ? t.getAddress() : null;
    }
 
+   @Override
    public int getTopologyId() {
       CacheTopology cacheTopology = stateTransferManager.getCacheTopology();
       return cacheTopology != null ? cacheTopology.getTopologyId() : -1;

@@ -42,4 +42,14 @@ public @interface ManagedAttribute {
    String description() default "";
 
    boolean writable() default false;
+
+   String displayName() default "";
+
+   DataType dataType() default DataType.MEASUREMENT;
+
+   DisplayType displayType() default DisplayType.DETAIL;
+
+   MeasurementType measurementType() default MeasurementType.DYNAMIC;
+
+   Units units() default Units.NONE;
 }

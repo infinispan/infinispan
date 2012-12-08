@@ -26,6 +26,7 @@ import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.container.entries.CacheEntry;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.factories.annotations.Inject;
+import org.infinispan.jmx.annotations.DataType;
 import org.infinispan.jmx.annotations.MBean;
 import org.infinispan.jmx.annotations.ManagedAttribute;
 import org.infinispan.marshall.MarshalledValue;
@@ -34,8 +35,6 @@ import org.infinispan.util.concurrent.TimeoutException;
 import org.infinispan.util.concurrent.locks.containers.*;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
-import org.rhq.helpers.pluginAnnotations.agent.DataType;
-import org.rhq.helpers.pluginAnnotations.agent.Metric;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -150,21 +149,18 @@ public class LockManagerImpl implements LockManager {
       return entry == null || entry.isChanged() || entry.isNull() || entry.isLockPlaceholder();
    }
 
-   @ManagedAttribute(description = "The concurrency level that the MVCC Lock Manager has been configured with.")
-   @Metric(displayName = "Concurrency level", dataType = DataType.TRAIT)
+   @ManagedAttribute(description = "The concurrency level that the MVCC Lock Manager has been configured with.", displayName = "Concurrency level", dataType = DataType.TRAIT)
    public int getConcurrencyLevel() {
       return configuration.locking().concurrencyLevel();
    }
 
    @Override
-   @ManagedAttribute(description = "The number of exclusive locks that are held.")
-   @Metric(displayName = "Number of locks held")
+   @ManagedAttribute(description = "The number of exclusive locks that are held.", displayName = "Number of locks held")
    public int getNumberOfLocksHeld() {
       return lockContainer.getNumLocksHeld();
    }
 
-   @ManagedAttribute(description = "The number of exclusive locks that are available.")
-   @Metric(displayName = "Number of locks available")
+   @ManagedAttribute(description = "The number of exclusive locks that are available.", displayName = "Number of locks available")
    public int getNumberOfLocksAvailable() {
       return lockContainer.size() - lockContainer.getNumLocksHeld();
    }

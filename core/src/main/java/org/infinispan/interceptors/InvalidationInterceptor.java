@@ -22,6 +22,14 @@
  */
 package org.infinispan.interceptors;
 
+import java.util.Arrays;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
+import java.util.concurrent.atomic.AtomicLong;
+
+import javax.transaction.Transaction;
+
 import org.infinispan.commands.AbstractVisitor;
 import org.infinispan.commands.CommandsFactory;
 import org.infinispan.commands.FlagAffectedCommand;
@@ -41,26 +49,17 @@ import org.infinispan.context.impl.TxInvocationContext;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.factories.annotations.Start;
 import org.infinispan.interceptors.base.BaseRpcInterceptor;
+import org.infinispan.jmx.annotations.DataType;
 import org.infinispan.jmx.annotations.MBean;
 import org.infinispan.jmx.annotations.ManagedAttribute;
 import org.infinispan.jmx.annotations.ManagedOperation;
+import org.infinispan.jmx.annotations.MeasurementType;
+import org.infinispan.jmx.annotations.Parameter;
 import org.infinispan.util.InfinispanCollections;
 import org.infinispan.util.concurrent.NotifyingFutureImpl;
 import org.infinispan.util.concurrent.NotifyingNotifiableFuture;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
-import org.rhq.helpers.pluginAnnotations.agent.DataType;
-import org.rhq.helpers.pluginAnnotations.agent.MeasurementType;
-import org.rhq.helpers.pluginAnnotations.agent.Metric;
-import org.rhq.helpers.pluginAnnotations.agent.Operation;
-import org.rhq.helpers.pluginAnnotations.agent.Parameter;
-
-import javax.transaction.Transaction;
-import java.util.Arrays;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
-import java.util.concurrent.atomic.AtomicLong;
 
 
 /**
@@ -161,7 +160,7 @@ public class InvalidationInterceptor extends BaseRpcInterceptor {
       }
       return retVal;
    }
-   
+
    private Object handleInvalidate(InvocationContext ctx, WriteCommand command, Object... keys) throws Throwable {
       Object retval = invokeNextInterceptor(ctx, command);
       if (command.isSuccessful() && !ctx.isInTxScope()) {
@@ -258,24 +257,34 @@ public class InvalidationInterceptor extends BaseRpcInterceptor {
       return false;
    }
 
-   @ManagedOperation(description = "Resets statistics gathered by this component")
-   @Operation(displayName = "Reset statistics")
+   @ManagedOperation(
+         description = "Resets statistics gathered by this component",
+         displayName = "Reset statistics"
+   )
    public void resetStatistics() {
       invalidations.set(0);
    }
 
-   @Metric(displayName = "Statistics enabled", dataType = DataType.TRAIT)
+   @ManagedAttribute(
+         displayName = "Statistics enabled",
+         dataType = DataType.TRAIT
+   )
    public boolean getStatisticsEnabled() {
       return this.statisticsEnabled;
    }
 
-   @Operation(displayName = "Enable/disable statistics")
+   @ManagedAttribute(
+         displayName = "Enable/disable statistics"
+   )
    public void setStatisticsEnabled(@Parameter(name = "enabled", description = "Whether statistics should be enabled or disabled (true/false)") boolean enabled) {
       this.statisticsEnabled = enabled;
    }
 
-   @ManagedAttribute(description = "Number of invalidations")
-   @Metric(displayName = "Number of invalidations", measurementType = MeasurementType.TRENDSUP)
+   @ManagedAttribute(
+         description = "Number of invalidations",
+         displayName = "Number of invalidations",
+         measurementType = MeasurementType.TRENDSUP
+   )
    public long getInvalidations() {
       return invalidations.get();
    }

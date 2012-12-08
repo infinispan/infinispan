@@ -39,4 +39,6 @@ import java.lang.annotation.Target;
 @Target({ElementType.METHOD})
 public @interface ManagedOperation {
    String description() default "";
+   String displayName() default "";
+   String name() default "";
 }

@@ -43,9 +43,12 @@ import org.infinispan.factories.scopes.Scope;
 import org.infinispan.factories.scopes.Scopes;
 import org.infinispan.jmx.CacheJmxRegistration;
 import org.infinispan.jmx.CacheManagerJmxRegistration;
+import org.infinispan.jmx.annotations.DataType;
+import org.infinispan.jmx.annotations.DisplayType;
 import org.infinispan.jmx.annotations.MBean;
 import org.infinispan.jmx.annotations.ManagedAttribute;
 import org.infinispan.jmx.annotations.ManagedOperation;
+import org.infinispan.jmx.annotations.Parameter;
 import org.infinispan.lifecycle.ComponentStatus;
 import org.infinispan.lifecycle.Lifecycle;
 import org.infinispan.loaders.CacheLoaderManager;
@@ -59,11 +62,6 @@ import org.infinispan.util.InfinispanCollections;
 import org.infinispan.util.concurrent.ConcurrentMapFactory;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
-import org.rhq.helpers.pluginAnnotations.agent.DataType;
-import org.rhq.helpers.pluginAnnotations.agent.DisplayType;
-import org.rhq.helpers.pluginAnnotations.agent.Metric;
-import org.rhq.helpers.pluginAnnotations.agent.Operation;
-import org.rhq.helpers.pluginAnnotations.agent.Parameter;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -534,7 +532,6 @@ public class DefaultCacheManager implements EmbeddedCacheManager, CacheManager {
     * @return a cache instance identified by cacheName
     */
    @Override
-   @SuppressWarnings("unchecked")
    public <K, V> Cache<K, V> getCache(String cacheName) {
       assertIsNotTerminated();
       if (cacheName == null)
@@ -833,15 +830,12 @@ public class DefaultCacheManager implements EmbeddedCacheManager, CacheManager {
       return isRunning(DEFAULT_CACHE_NAME);
    }
 
-   @ManagedAttribute(description = "The status of the cache manager instance.")
-   @Metric(displayName = "Cache manager status", dataType = DataType.TRAIT, displayType = DisplayType.SUMMARY)
-   @SuppressWarnings("unused")
+   @ManagedAttribute(description = "The status of the cache manager instance.", displayName = "Cache manager status", dataType = DataType.TRAIT, displayType = DisplayType.SUMMARY)
    public String getCacheManagerStatus() {
       return getStatus().toString();
    }
 
-   @ManagedAttribute(description = "The defined cache names and their statuses.  The default cache is not included in this representation.")
-   @Metric(displayName = "List of defined caches", dataType = DataType.TRAIT, displayType = DisplayType.SUMMARY)
+   @ManagedAttribute(description = "The defined cache names and their statuses.  The default cache is not included in this representation.", displayName = "List of defined caches", dataType = DataType.TRAIT, displayType = DisplayType.SUMMARY)
    public String getDefinedCacheNames() {
       StringBuilder result = new StringBuilder("[");
       for (String cacheName : getCacheNames()) {
@@ -852,23 +846,17 @@ public class DefaultCacheManager implements EmbeddedCacheManager, CacheManager {
       return result.toString();
    }
 
-   @ManagedAttribute(description = "The total number of defined caches, excluding the default cache.")
-   @Metric(displayName = "Number of caches defined", displayType = DisplayType.SUMMARY)
-   @SuppressWarnings("unused")
+   @ManagedAttribute(description = "The total number of defined caches, excluding the default cache.", displayName = "Number of caches defined", displayType = DisplayType.SUMMARY)
    public String getDefinedCacheCount() {
       return String.valueOf(this.configurationOverrides.keySet().size());
    }
 
-   @ManagedAttribute(description = "The total number of created caches, including the default cache.")
-   @Metric(displayName = "Number of caches created", displayType = DisplayType.SUMMARY)
-   @SuppressWarnings("unused")
+   @ManagedAttribute(description = "The total number of created caches, including the default cache.", displayName = "Number of caches created", displayType = DisplayType.SUMMARY)
    public String getCreatedCacheCount() {
       return String.valueOf(this.caches.keySet().size());
    }
 
-   @ManagedAttribute(description = "The total number of running caches, including the default cache.")
-   @Metric(displayName = "Number of running caches", displayType = DisplayType.SUMMARY)
-   @SuppressWarnings("unused")
+   @ManagedAttribute(description = "The total number of running caches, including the default cache.", displayName = "Number of running caches", displayType = DisplayType.SUMMARY)
    public String getRunningCacheCount() {
       int running = 0;
       for (CacheWrapper cachew : caches.values()) {
@@ -879,42 +867,32 @@ public class DefaultCacheManager implements EmbeddedCacheManager, CacheManager {
       return String.valueOf(running);
    }
 
-   @ManagedAttribute(description = "Infinispan version.")
-   @Metric(displayName = "Infinispan version", displayType = DisplayType.SUMMARY, dataType = DataType.TRAIT)
+   @ManagedAttribute(description = "Infinispan version.", displayName = "Infinispan version", displayType = DisplayType.SUMMARY, dataType = DataType.TRAIT)
    public String getVersion() {
       return Version.printVersion();
    }
 
-   @ManagedAttribute(description = "The name of this cache manager")
-   @Metric(displayName = "Cache manager name", displayType = DisplayType.SUMMARY, dataType = DataType.TRAIT)
+   @ManagedAttribute(description = "The name of this cache manager", displayName = "Cache manager name", displayType = DisplayType.SUMMARY, dataType = DataType.TRAIT)
    public String getName() {
       return globalConfiguration.globalJmxStatistics().cacheManagerName();
    }
 
-   @ManagedOperation(description = "Starts the default cache associated with this cache manager")
-   @Operation(displayName = "Starts the default cache")
-   @SuppressWarnings("unused")
+   @ManagedOperation(description = "Starts the default cache associated with this cache manager", displayName = "Starts the default cache")
    public void startCache() {
       getCache();
    }
 
-   @ManagedOperation(description = "Starts a named cache from this cache manager")
-   @Operation(name = "startCacheWithCacheName", displayName = "Starts a cache with the given name")
-   @SuppressWarnings("unused")
+   @ManagedOperation(description = "Starts a named cache from this cache manager", name = "startCacheWithCacheName", displayName = "Starts a cache with the given name")
    public void startCache(@Parameter(name = "cacheName", description = "Name of cache to start") String cacheName) {
       getCache(cacheName);
    }
 
-   @ManagedAttribute(description = "The network address associated with this instance")
-   @Metric(displayName = "Network address", dataType = DataType.TRAIT, displayType = DisplayType.SUMMARY)
-   @SuppressWarnings("unused")
+   @ManagedAttribute(description = "The network address associated with this instance", displayName = "Network address", dataType = DataType.TRAIT, displayType = DisplayType.SUMMARY)
    public String getNodeAddress() {
       return getLogicalAddressString();
    }
 
-   @ManagedAttribute(description = "The physical network addresses associated with this instance")
-   @Metric(displayName = "Physical network addresses", dataType = DataType.TRAIT, displayType = DisplayType.SUMMARY)
-   @SuppressWarnings("unused")
+   @ManagedAttribute(description = "The physical network addresses associated with this instance", displayName = "Physical network addresses", dataType = DataType.TRAIT, displayType = DisplayType.SUMMARY)
    public String getPhysicalAddresses() {
       Transport t = getTransport();
       if (t == null) return "local";
@@ -922,9 +900,7 @@ public class DefaultCacheManager implements EmbeddedCacheManager, CacheManager {
       return address == null ? "local" : address.toString();
    }
 
-   @ManagedAttribute(description = "List of members in the cluster")
-   @Metric(displayName = "Cluster members", dataType = DataType.TRAIT, displayType = DisplayType.SUMMARY)
-   @SuppressWarnings("unused")
+   @ManagedAttribute(description = "List of members in the cluster", displayName = "Cluster members", dataType = DataType.TRAIT, displayType = DisplayType.SUMMARY)
    public String getClusterMembers() {
       Transport t = getTransport();
       if (t == null) return "local";
@@ -932,9 +908,7 @@ public class DefaultCacheManager implements EmbeddedCacheManager, CacheManager {
       return addressList.toString();
    }
 
-   @ManagedAttribute(description = "Size of the cluster in number of nodes")
-   @Metric(displayName = "Cluster size", displayType = DisplayType.SUMMARY)
-   @SuppressWarnings("unused")
+   @ManagedAttribute(description = "Size of the cluster in number of nodes", displayName = "Cluster size", displayType = DisplayType.SUMMARY)
    public int getClusterSize() {
       Transport t = getTransport();
       if (t == null) return 1;
@@ -944,8 +918,7 @@ public class DefaultCacheManager implements EmbeddedCacheManager, CacheManager {
    /**
     * {@inheritDoc}
     */
-   @ManagedAttribute(description = "Cluster name")
-   @Metric(displayName = "Cluster name", dataType = DataType.TRAIT, displayType = DisplayType.SUMMARY)
+   @ManagedAttribute(description = "Cluster name", displayName = "Cluster name", dataType = DataType.TRAIT, displayType = DisplayType.SUMMARY)
    @Override
    public String getClusterName() {
       return globalConfiguration.transport().clusterName();

@@ -27,12 +27,10 @@ import org.infinispan.factories.annotations.Start;
 import org.infinispan.jmx.annotations.MBean;
 import org.infinispan.jmx.annotations.ManagedAttribute;
 import org.infinispan.jmx.annotations.ManagedOperation;
+import org.infinispan.jmx.annotations.MeasurementType;
 import org.infinispan.transaction.xa.DldGlobalTransaction;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
-import org.rhq.helpers.pluginAnnotations.agent.MeasurementType;
-import org.rhq.helpers.pluginAnnotations.agent.Metric;
-import org.rhq.helpers.pluginAnnotations.agent.Operation;
 
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicLong;
@@ -128,7 +126,7 @@ public class DeadlockDetectingLockManager extends LockManagerImpl {
    }
 
    private boolean isSameKeyDeadlock(Object key, DldGlobalTransaction thisTx, DldGlobalTransaction lockOwnerTx) {
-      boolean iHaveRemoteLock = !thisTx.isRemote(); //this relies on the fact that when DLD is enabled a lock is first acquired remotely and then locally 
+      boolean iHaveRemoteLock = !thisTx.isRemote(); //this relies on the fact that when DLD is enabled a lock is first acquired remotely and then locally
       boolean otherHasLocalLock = lockOwnerTx.isRemote();
 
       //if we are here then 1) the other tx has a lock on this local key AND 2) I have a lock on the same key remotely
@@ -146,7 +144,7 @@ public class DeadlockDetectingLockManager extends LockManagerImpl {
       boolean localLockOwner = !lockOwnerTx.isRemote();
       if (localLockOwner) {
          // I've already acquired lock on this key before replicating here, so this mean we are in deadlock. This assumes the fact that
-         // if trying to acquire a remote lock, a tx first acquires a local lock. 
+         // if trying to acquire a remote lock, a tx first acquires a local lock.
          if (thisTx.hasLockAtOrigin(lockOwnerTx.getRemoteLockIntention())) {
             if (trace)
                log.tracef("Same key deadlock detected: lock owner tries to acquire lock remotely on %s but we have it!", key);
@@ -169,34 +167,29 @@ public class DeadlockDetectingLockManager extends LockManagerImpl {
    }
 
 
-   @ManagedAttribute (description = "Total number of local detected deadlocks")
-   @Metric(displayName = "Number of total detected deadlocks", measurementType = MeasurementType.TRENDSUP)
+   @ManagedAttribute (description = "Total number of local detected deadlocks", displayName = "Number of total detected deadlocks", measurementType = MeasurementType.TRENDSUP)
    public long getTotalNumberOfDetectedDeadlocks() {
       return localTxStopped.get() + remoteTxStopped.get();
    }
 
-   @ManagedOperation(description = "Resets statistics gathered by this component")
-   @Operation(displayName = "Reset statistics")
+   @ManagedOperation(description = "Resets statistics gathered by this component", displayName = "Reset statistics")
    public void resetStatistics() {
       localTxStopped.set(0);
       remoteTxStopped.set(0);
-      cannotRunDld.set(0); 
+      cannotRunDld.set(0);
    }
 
-   @ManagedAttribute(description = "Number of remote transaction that were roll backed due to deadlocks")
-   @Metric(displayName = "Number of remote transaction that were roll backed due to deadlocks", measurementType = MeasurementType.TRENDSUP)
+   @ManagedAttribute(description = "Number of remote transaction that were roll backed due to deadlocks", displayName = "Number of remote transaction that were roll backed due to deadlocks", measurementType = MeasurementType.TRENDSUP)
    public long getDetectedRemoteDeadlocks() {
       return remoteTxStopped.get();
    }
 
-   @ManagedAttribute (description = "Number of local transaction that were roll backed due to deadlocks")
-   @Metric(displayName = "Number of local transaction that were roll backed due to deadlocks", measurementType = MeasurementType.TRENDSUP)
+   @ManagedAttribute (description = "Number of local transaction that were roll backed due to deadlocks", displayName = "Number of local transaction that were roll backed due to deadlocks", measurementType = MeasurementType.TRENDSUP)
    public long getDetectedLocalDeadlocks() {
       return localTxStopped.get();
    }
 
-   @ManagedAttribute(description = "Number of situations when we try to determine a deadlock and the other lock owner is NOT a transaction. In this scenario we cannot run the deadlock detection mechanism")
-   @Metric(displayName = "Number of unsolvable deadlock situations", measurementType = MeasurementType.TRENDSUP)
+   @ManagedAttribute(description = "Number of situations when we try to determine a deadlock and the other lock owner is NOT a transaction. In this scenario we cannot run the deadlock detection mechanism", displayName = "Number of unsolvable deadlock situations", measurementType = MeasurementType.TRENDSUP)
    public long getOverlapWithNotDeadlockAwareLockOwners() {
       return cannotRunDld.get();
    }
@@ -213,8 +206,7 @@ public class DeadlockDetectingLockManager extends LockManagerImpl {
    }
 
 
-   @ManagedAttribute(description = "Number of locally originated transactions that were interrupted as a deadlock situation was detected")
-   @Metric(displayName = "Number of interrupted local transactions", measurementType = MeasurementType.TRENDSUP)
+   @ManagedAttribute(description = "Number of locally originated transactions that were interrupted as a deadlock situation was detected", displayName = "Number of interrupted local transactions", measurementType = MeasurementType.TRENDSUP)
    @Deprecated
    public static long getLocallyInterruptedTransactions() {
       return -1;

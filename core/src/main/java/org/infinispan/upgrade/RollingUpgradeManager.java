@@ -26,11 +26,10 @@ import org.infinispan.factories.scopes.Scope;
 import org.infinispan.factories.scopes.Scopes;
 import org.infinispan.jmx.annotations.MBean;
 import org.infinispan.jmx.annotations.ManagedOperation;
+import org.infinispan.jmx.annotations.Parameter;
 import org.infinispan.util.Util;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
-import org.rhq.helpers.pluginAnnotations.agent.Operation;
-
 import java.util.HashSet;
 import java.util.ServiceLoader;
 import java.util.Set;
@@ -56,16 +55,20 @@ public class RollingUpgradeManager {
       this.cache = cache;
    }
 
-   @ManagedOperation(description = "Dumps the global known keyset to a well-known key for retrieval by the upgrade process")
-   @Operation(displayName = "Dumps the global known keyset")
+   @ManagedOperation(
+         description = "Dumps the global known keyset to a well-known key for retrieval by the upgrade process",
+         displayName = "Dumps the global known keyset"
+   )
    public void recordKnownGlobalKeyset() {
       for (SourceMigrator m : sourceMigrators)
          m.recordKnownGlobalKeyset();
    }
 
-   @ManagedOperation(description = "Synchronizes data from the old cluster to this using the specified migrator")
-   @Operation(displayName = "Synchronizes data from the old cluster to this using the specified migrator")
-   public long synchronizeData(String migratorName) throws Exception {
+   @ManagedOperation(
+         description = "Synchronizes data from the old cluster to this using the specified migrator",
+         displayName = "Synchronizes data from the old cluster to this using the specified migrator"
+   )
+   public long synchronizeData(@Parameter(name="migratorName", description="The name of the migrator to use") String migratorName) throws Exception {
       TargetMigrator migrator = getMigrator(migratorName);
       long start = System.currentTimeMillis();
       long count = migrator.synchronizeData(cache);
@@ -74,9 +77,11 @@ public class RollingUpgradeManager {
 
    }
 
-   @ManagedOperation(description = "Disconnects the target cluster from the source cluster according to the specified migrator")
-   @Operation(displayName = "Disconnects the target cluster from the source cluster")
-   public void disconnectSource(String migratorName) throws Exception {
+   @ManagedOperation(
+         description = "Disconnects the target cluster from the source cluster according to the specified migrator",
+         displayName = "Disconnects the target cluster from the source cluster"
+   )
+   public void disconnectSource(@Parameter(name="migratorName", description="The name of the migrator to use") String migratorName) throws Exception {
       TargetMigrator migrator = getMigrator(migratorName);
       migrator.disconnectSource(cache);
    }
