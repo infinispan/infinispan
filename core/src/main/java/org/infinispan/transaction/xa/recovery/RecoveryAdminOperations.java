@@ -26,6 +26,7 @@ package org.infinispan.transaction.xa.recovery;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.jmx.annotations.MBean;
 import org.infinispan.jmx.annotations.ManagedOperation;
+import org.infinispan.jmx.annotations.Parameter;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
@@ -82,35 +83,44 @@ public class RecoveryAdminOperations {
    }
 
    @ManagedOperation(description = "Forces the commit of an in-doubt transaction")
-   public String forceCommit(long internalID) {
+   public String forceCommit(@Parameter(name = "internalId", description = "The internal identifier of the transaction") long internalId) {
       if (log.isTraceEnabled())
-         log.tracef("Forces the commit of an in-doubt transaction: %s", internalID);
-      return completeBasedOnInternalId(internalID, true);
+         log.tracef("Forces the commit of an in-doubt transaction: %s", internalId);
+      return completeBasedOnInternalId(internalId, true);
    }
 
-   @ManagedOperation(description = "Forces the commit of an in-doubt transaction")
-   public String forceCommit(int formatId, byte[] globalTxId, byte[] branchQualifier) {
+   @ManagedOperation(description = "Forces the commit of an in-doubt transaction", name="forceCommitByXid")
+   public String forceCommit(
+         @Parameter(name = "formatId", description = "The formatId of the transaction") int formatId,
+         @Parameter(name = "globalTxId", description = "The globalTxId of the transaction") byte[] globalTxId,
+         @Parameter(name = "branchQualifier", description = "The branchQualifier of the transaction") byte[] branchQualifier) {
       return completeBasedOnXid(formatId, globalTxId, branchQualifier, true);
    }
 
    @ManagedOperation(description = "Forces the rollback of an in-doubt transaction")
-   public String forceRollback(long internalId) {
+   public String forceRollback(@Parameter(name = "internalId", description = "The internal identifier of the transaction") long internalId) {
       return completeBasedOnInternalId(internalId, false);
    }
 
-   @ManagedOperation(description = "Forces the rollback of an in-doubt transaction")
-   public String forceRollback(int formatId, byte[] globalTxId, byte[] branchQualifier) {
+   @ManagedOperation(description = "Forces the rollback of an in-doubt transaction", name="forceRollbackByXid")
+   public String forceRollback(
+         @Parameter(name = "formatId", description = "The formatId of the transaction") int formatId,
+         @Parameter(name = "globalTxId", description = "The globalTxId of the transaction") byte[] globalTxId,
+         @Parameter(name = "branchQualifier", description = "The branchQualifier of the transaction") byte[] branchQualifier) {
       return completeBasedOnXid(formatId, globalTxId, branchQualifier, false);
    }
 
-   @ManagedOperation(description = "Removes recovery info for the given transaction.")
-   public String forget(int formatId, byte[] globalTxId, byte[] branchQualifier) {
+   @ManagedOperation(description = "Removes recovery info for the given transaction.", name="forgetByXid")
+   public String forget(
+         @Parameter(name = "formatId", description = "The formatId of the transaction") int formatId,
+         @Parameter(name = "globalTxId", description = "The globalTxId of the transaction") byte[] globalTxId,
+         @Parameter(name = "branchQualifier", description = "The branchQualifier of the transaction") byte[] branchQualifier) {
       recoveryManager.removeRecoveryInformationFromCluster(null, new SerializableXid(branchQualifier, globalTxId, formatId), true, null);
       return "Recovery info removed.";
    }
 
    @ManagedOperation(description = "Removes recovery info for the given transaction.")
-   public String forget(long internalId) {
+   public String forget(@Parameter(name = "internalId", description = "The internal identifier of the transaction") long internalId) {
       recoveryManager.removeRecoveryInformationFromCluster(null, internalId, true);
       return "Recovery info removed.";
    }

@@ -23,13 +23,13 @@ import org.infinispan.Cache;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.jmx.annotations.MBean;
 import org.infinispan.jmx.annotations.ManagedOperation;
+import org.infinispan.jmx.annotations.Parameter;
 import org.infinispan.remoting.responses.Response;
 import org.infinispan.remoting.responses.SuccessfulResponse;
 import org.infinispan.remoting.rpc.RpcManager;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
-import org.rhq.helpers.pluginAnnotations.agent.Operation;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -64,9 +64,8 @@ public class XSiteAdminOperations {
       this.cache = cache;
    }
 
-   @Operation(displayName = "Check whether the given backup site is offline or not.")
-   @ManagedOperation(description = "Check whether the given backup site is offline or not.")
-   public String siteStatus(String site) {
+   @ManagedOperation(description = "Check whether the given backup site is offline or not.", displayName = "Check whether the given backup site is offline or not.")
+   public String siteStatus(@Parameter(name = "site", description = "The name of the backup site") String site) {
       //also consider local node
       OfflineStatus offlineStatus = backupSender.getOfflineStatus(site);
       if (offlineStatus == null)
@@ -112,8 +111,7 @@ public class XSiteAdminOperations {
       return "Site appears online on nodes:" + online + " and offline on nodes: " + offline;
    }
 
-   @Operation(displayName = "Returns the the status(offline/online) of all the configured backup sites.")
-   @ManagedOperation(description = "Returns the the status(offline/online) of all the configured backup sites.")
+   @ManagedOperation(description = "Returns the the status(offline/online) of all the configured backup sites.", displayName = "Returns the the status(offline/online) of all the configured backup sites.")
    public String status() {
       //also consider local node
       Map<String, Boolean> localNodeStatus = backupSender.status();
@@ -167,9 +165,8 @@ public class XSiteAdminOperations {
       return resultStr.toString();
    }
 
-   @Operation(displayName = "Takes this site offline in all nodes in the cluster.")
-   @ManagedOperation(description = "Takes this site offline in all nodes in the cluster.")
-   public String takeSiteOffline(String site) {
+   @ManagedOperation(description = "Takes this site offline in all nodes in the cluster.",displayName = "Takes this site offline in all nodes in the cluster.")
+   public String takeSiteOffline(@Parameter(name = "site", description = "The name of the backup site") String site) {
       OfflineStatus offlineStatus = backupSender.getOfflineStatus(site);
       if (offlineStatus == null)
          return incorrectSiteName(site);
@@ -185,43 +182,44 @@ public class XSiteAdminOperations {
       return returnFailureOrSuccess(failed, prefix);
    }
 
-   @Operation(displayName = "Amends the values for 'TakeOffline.afterFailures' on all the nodes in the cluster.")
-   @ManagedOperation(description = "Amends the values for 'afterFailures' for the 'TakeOffline' functionality on all the nodes in the cluster.")
-   public String setTakeOfflineAfterFailures(String site, int afterFailures) {
+   @ManagedOperation(description = "Amends the values for 'afterFailures' for the 'TakeOffline' functionality on all the nodes in the cluster.", displayName = "Amends the values for 'TakeOffline.afterFailures' on all the nodes in the cluster.")
+   public String setTakeOfflineAfterFailures(
+         @Parameter(name = "site", description = "The name of the backup site") String site,
+         @Parameter(name = "afterFailures", description = "The number of failures after which the site will be taken offline") int afterFailures) {
       return takeOffline(site, afterFailures, null);
    }
 
-   @Operation(displayName = "Amends the values for 'TakeOffline.minTimeToWait' on all the nodes in the cluster.")
-   @ManagedOperation(description = "Amends the values for 'minTimeToWait' for the 'TakeOffline' functionality on all the nodes in the cluster.")
-   public String setTakeOfflineMinTimeToWait(String site, long minTimeToWait) {
+   @ManagedOperation(description = "Amends the values for 'minTimeToWait' for the 'TakeOffline' functionality on all the nodes in the cluster.", displayName = "Amends the values for 'TakeOffline.minTimeToWait' on all the nodes in the cluster.")
+   public String setTakeOfflineMinTimeToWait(
+         @Parameter(name = "site", description = "The name of the backup site") String site,
+         @Parameter(name = "minTimeToWait", description = "The minimum amount of time in milliseconds to wait before taking a site offline") long minTimeToWait) {
       return takeOffline(site, null, minTimeToWait);
    }
 
-   @Operation(displayName = "Amends the values for 'TakeOffline' functionality on all the nodes in the cluster.")
-   @ManagedOperation(description = "Amends the values for 'TakeOffline' functionality on all the nodes in the cluster.")
-   public String amendTakeOffline(String site, int afterFailures, long minTimeToWait) {
+   @ManagedOperation(description = "Amends the values for 'TakeOffline' functionality on all the nodes in the cluster.", displayName = "Amends the values for 'TakeOffline' functionality on all the nodes in the cluster.")
+   public String amendTakeOffline(
+         @Parameter(name = "site", description = "The name of the backup site") String site,
+         @Parameter(name = "afterFailures", description = "The number of failures after which the site will be taken offline") int afterFailures,
+         @Parameter(name = "minTimeToWait", description = "The minimum amount of time in milliseconds to wait before taking a site offline") long minTimeToWait) {
       return takeOffline(site, afterFailures, minTimeToWait);
    }
 
-   @Operation(displayName = "Returns the value of the 'minTimeToWait' for the 'TakeOffline' functionality.")
-   @ManagedOperation(description = "Returns the value of the 'minTimeToWait' for the 'TakeOffline' functionality.")
-   public String getTakeOfflineMinTimeToWait(String site) {
+   @ManagedOperation(description = "Returns the value of the 'minTimeToWait' for the 'TakeOffline' functionality.", displayName = "Returns the value of the 'minTimeToWait' for the 'TakeOffline' functionality.")
+   public String getTakeOfflineMinTimeToWait(@Parameter(name = "site", description = "The name of the backup site") String site) {
       OfflineStatus offlineStatus = backupSender.getOfflineStatus(site);
       if (offlineStatus == null) return incorrectSiteName(site);
       return String.valueOf(offlineStatus.getTakeOffline().minTimeToWait());
    }
 
-   @Operation(displayName = "Returns the value of the 'afterFailures' for the 'TakeOffline' functionality.")
-   @ManagedOperation(description = "Returns the value of the 'afterFailures' for the 'TakeOffline' functionality.")
-   public String getTakeOfflineAfterFailures(String site) {
+   @ManagedOperation(description = "Returns the value of the 'afterFailures' for the 'TakeOffline' functionality.", displayName = "Returns the value of the 'afterFailures' for the 'TakeOffline' functionality.")
+   public String getTakeOfflineAfterFailures(@Parameter(name = "site", description = "The name of the backup site") String site) {
       OfflineStatus offlineStatus = backupSender.getOfflineStatus(site);
       if (offlineStatus == null) return incorrectSiteName(site);
       return String.valueOf(offlineStatus.getTakeOffline().afterFailures());
    }
 
-   @Operation(displayName = "Brings the given site back online on all the cluster.")
-   @ManagedOperation(description = "Brings the given site back online on all the cluster.")
-   public String bringSiteOnline(String site) {
+   @ManagedOperation(description = "Brings the given site back online on all the cluster.", displayName = "Brings the given site back online on all the cluster.")
+   public String bringSiteOnline(@Parameter(name = "site", description = "The name of the backup site") String site) {
       OfflineStatus offlineStatus = backupSender.getOfflineStatus(site);
       if (offlineStatus == null)
          return "Incorrect site name: " + offlineStatus;

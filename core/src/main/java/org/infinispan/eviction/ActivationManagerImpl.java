@@ -30,15 +30,12 @@ import org.infinispan.factories.annotations.Start;
 import org.infinispan.jmx.annotations.MBean;
 import org.infinispan.jmx.annotations.ManagedAttribute;
 import org.infinispan.jmx.annotations.ManagedOperation;
+import org.infinispan.jmx.annotations.MeasurementType;
 import org.infinispan.loaders.CacheLoaderException;
 import org.infinispan.loaders.CacheLoaderManager;
 import org.infinispan.loaders.CacheStore;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
-import org.rhq.helpers.pluginAnnotations.agent.MeasurementType;
-import org.rhq.helpers.pluginAnnotations.agent.Metric;
-import org.rhq.helpers.pluginAnnotations.agent.Operation;
-
 import java.util.concurrent.atomic.AtomicLong;
 
 /**
@@ -103,10 +100,11 @@ public class ActivationManagerImpl implements ActivationManager {
       return activations.get();
    }
 
-   @ManagedAttribute(description = "Number of activation events")
-   @Metric(displayName = "Number of cache entries activated",
-         measurementType = MeasurementType.TRENDSUP)
-   @SuppressWarnings("unused")
+   @ManagedAttribute(
+         description = "Number of activation events",
+         displayName = "Number of cache entries activated",
+         measurementType = MeasurementType.TRENDSUP
+   )
    public String getActivations() {
       if (!statisticsEnabled)
          return "N/A";
@@ -114,8 +112,10 @@ public class ActivationManagerImpl implements ActivationManager {
       return String.valueOf(getActivationCount());
    }
 
-   @ManagedOperation(description = "Resets statistics gathered by this component")
-   @Operation(displayName = "Reset statistics")
+   @ManagedOperation(
+         description = "Resets statistics gathered by this component",
+         displayName = "Reset statistics"
+   )
    public void resetStatistics() {
       activations.set(0);
    }

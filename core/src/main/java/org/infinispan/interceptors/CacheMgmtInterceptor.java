@@ -31,16 +31,14 @@ import org.infinispan.container.DataContainer;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.interceptors.base.JmxStatsCommandInterceptor;
+import org.infinispan.jmx.annotations.DisplayType;
 import org.infinispan.jmx.annotations.MBean;
 import org.infinispan.jmx.annotations.ManagedAttribute;
 import org.infinispan.jmx.annotations.ManagedOperation;
+import org.infinispan.jmx.annotations.MeasurementType;
+import org.infinispan.jmx.annotations.Units;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
-import org.rhq.helpers.pluginAnnotations.agent.DisplayType;
-import org.rhq.helpers.pluginAnnotations.agent.MeasurementType;
-import org.rhq.helpers.pluginAnnotations.agent.Metric;
-import org.rhq.helpers.pluginAnnotations.agent.Operation;
-import org.rhq.helpers.pluginAnnotations.agent.Units;
 
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
@@ -147,44 +145,71 @@ public class CacheMgmtInterceptor extends JmxStatsCommandInterceptor {
       return retval;
    }
 
-   @ManagedAttribute(description = "Number of cache attribute hits")
-   @Metric(displayName = "Number of cache hits", measurementType = MeasurementType.TRENDSUP, displayType = DisplayType.SUMMARY)
+   @ManagedAttribute(
+         description = "Number of cache attribute hits",
+         displayName = "Number of cache hits",
+         measurementType = MeasurementType.TRENDSUP,
+         displayType = DisplayType.SUMMARY)
    public long getHits() {
       return hits.get();
    }
 
-   @ManagedAttribute(description = "Number of cache attribute misses")
-   @Metric(displayName = "Number of cache misses", measurementType = MeasurementType.TRENDSUP, displayType = DisplayType.SUMMARY)
+   @ManagedAttribute(
+         description = "Number of cache attribute misses",
+         displayName = "Number of cache misses",
+         measurementType = MeasurementType.TRENDSUP,
+         displayType = DisplayType.SUMMARY
+   )
    public long getMisses() {
       return misses.get();
    }
 
-   @ManagedAttribute(description = "Number of cache removal hits")
-   @Metric(displayName = "Number of cache removal hits", measurementType = MeasurementType.TRENDSUP, displayType = DisplayType.SUMMARY)
+   @ManagedAttribute(
+         description = "Number of cache removal hits",
+         displayName = "Number of cache removal hits",
+         measurementType = MeasurementType.TRENDSUP,
+         displayType = DisplayType.SUMMARY
+   )
    public long getRemoveHits() {
       return removeHits.get();
    }
 
-   @ManagedAttribute(description = "Number of cache removals where keys were not found")
-   @Metric(displayName = "Number of cache removal misses", measurementType = MeasurementType.TRENDSUP, displayType = DisplayType.SUMMARY)
+   @ManagedAttribute(
+         description = "Number of cache removals where keys were not found",
+         displayName = "Number of cache removal misses",
+         measurementType = MeasurementType.TRENDSUP,
+         displayType = DisplayType.SUMMARY
+   )
    public long getRemoveMisses() {
       return removeMisses.get();
    }
 
-   @ManagedAttribute(description = "number of cache attribute put operations")
-   @Metric(displayName = "Number of cache puts" , measurementType = MeasurementType.TRENDSUP, displayType = DisplayType.SUMMARY)
+   @ManagedAttribute(
+         description = "number of cache attribute put operations",
+         displayName = "Number of cache puts" ,
+         measurementType = MeasurementType.TRENDSUP,
+         displayType = DisplayType.SUMMARY
+   )
    public long getStores() {
       return stores.get();
    }
 
-   @ManagedAttribute(description = "Number of cache eviction operations")
-   @Metric(displayName = "Number of cache evictions", measurementType = MeasurementType.TRENDSUP, displayType = DisplayType.SUMMARY)
+   @ManagedAttribute(
+         description = "Number of cache eviction operations",
+         displayName = "Number of cache evictions",
+         measurementType = MeasurementType.TRENDSUP,
+         displayType = DisplayType.SUMMARY
+   )
    public long getEvictions() {
       return evictions.get();
    }
 
-   @ManagedAttribute(description = "Percentage hit/(hit+miss) ratio for the cache")
-   @Metric(displayName = "Hit ratio", units = Units.PERCENTAGE, displayType = DisplayType.SUMMARY)
+   @ManagedAttribute(
+         description = "Percentage hit/(hit+miss) ratio for the cache",
+         displayName = "Hit ratio",
+         units = Units.PERCENTAGE,
+         displayType = DisplayType.SUMMARY
+   )
    @SuppressWarnings("unused")
    public double getHitRatio() {
       long hitsL = hits.get();
@@ -196,8 +221,12 @@ public class CacheMgmtInterceptor extends JmxStatsCommandInterceptor {
       return (hitsL / total);
    }
 
-   @ManagedAttribute(description = "read/writes ratio for the cache")
-   @Metric(displayName = "Read/write ratio", units = Units.PERCENTAGE, displayType = DisplayType.SUMMARY)
+   @ManagedAttribute(
+         description = "read/writes ratio for the cache",
+         displayName = "Read/write ratio",
+         units = Units.PERCENTAGE,
+         displayType = DisplayType.SUMMARY
+   )
    @SuppressWarnings("unused")
    public double getReadWriteRatio() {
       if (stores.get() == 0)
@@ -205,8 +234,12 @@ public class CacheMgmtInterceptor extends JmxStatsCommandInterceptor {
       return (((double) (hits.get() + misses.get()) / (double) stores.get()));
    }
 
-   @ManagedAttribute(description = "Average number of milliseconds for a read operation on the cache")
-   @Metric(displayName = "Average read time", units = Units.MILLISECONDS, displayType = DisplayType.SUMMARY)
+   @ManagedAttribute(
+         description = "Average number of milliseconds for a read operation on the cache",
+         displayName = "Average read time",
+         units = Units.MILLISECONDS,
+         displayType = DisplayType.SUMMARY
+   )
    @SuppressWarnings("unused")
    public long getAverageReadTime() {
       long total = hits.get() + misses.get();
@@ -215,8 +248,12 @@ public class CacheMgmtInterceptor extends JmxStatsCommandInterceptor {
       return (hitTimes.get() + missTimes.get()) / total;
    }
 
-   @ManagedAttribute(description = "Average number of milliseconds for a write operation in the cache")
-   @Metric(displayName = "Average write time", units = Units.MILLISECONDS, displayType = DisplayType.SUMMARY)
+   @ManagedAttribute(
+         description = "Average number of milliseconds for a write operation in the cache",
+         displayName = "Average write time",
+         units = Units.MILLISECONDS,
+         displayType = DisplayType.SUMMARY
+   )
    @SuppressWarnings("unused")
    public long getAverageWriteTime() {
       if (stores.get() == 0)
@@ -224,28 +261,42 @@ public class CacheMgmtInterceptor extends JmxStatsCommandInterceptor {
       return (storeTimes.get()) / stores.get();
    }
 
-   @ManagedAttribute(description = "Number of entries currently in the cache")
-   @Metric(displayName = "Number of current cache entries", displayType = DisplayType.SUMMARY)
+   @ManagedAttribute(
+         description = "Number of entries currently in the cache",
+         displayName = "Number of current cache entries",
+         displayType = DisplayType.SUMMARY
+   )
    public int getNumberOfEntries() {
       return dataContainer.size();
    }
 
-   @ManagedAttribute(description = "Number of seconds since cache started")
-   @Metric(displayName = "Seconds since cache started", units = Units.SECONDS, measurementType = MeasurementType.TRENDSUP, displayType = DisplayType.SUMMARY)
+   @ManagedAttribute(
+         description = "Number of seconds since cache started",
+         displayName = "Seconds since cache started",
+         units = Units.SECONDS,
+         measurementType = MeasurementType.TRENDSUP,
+         displayType = DisplayType.SUMMARY
+   )
    public long getElapsedTime() {
       return TimeUnit.NANOSECONDS.toSeconds(System.nanoTime() - startNanoseconds.get());
    }
 
-   @ManagedAttribute(description = "Number of seconds since the cache statistics were last reset")
-   @Metric(displayName = "Seconds since cache statistics were reset", units = Units.SECONDS, displayType = DisplayType.SUMMARY)
+   @ManagedAttribute(
+         description = "Number of seconds since the cache statistics were last reset",
+         displayName = "Seconds since cache statistics were reset",
+         units = Units.SECONDS,
+         displayType = DisplayType.SUMMARY
+   )
    @SuppressWarnings("unused")
    public long getTimeSinceReset() {
       return TimeUnit.NANOSECONDS.toSeconds(System.nanoTime() - resetNanoseconds.get());
    }
 
    @Override
-   @ManagedOperation(description = "Resets statistics gathered by this component")
-   @Operation(displayName = "Reset Statistics (Statistics)")
+   @ManagedOperation(
+         description = "Resets statistics gathered by this component",
+         displayName = "Reset Statistics (Statistics)"
+   )
    public void resetStatistics() {
       hits.set(0);
       misses.set(0);

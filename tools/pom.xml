@@ -56,10 +56,11 @@
          <artifactId>infinispan-server-core</artifactId>
          <scope>provided</scope>
       </dependency>
-
+      
       <dependency>
-         <groupId>org.rhq.helpers</groupId>
-         <artifactId>rhq-pluginGen</artifactId>
+         <groupId>${project.groupId}</groupId>
+         <artifactId>infinispan-query</artifactId>
+         <scope>provided</scope>
       </dependency>
 
       <dependency>

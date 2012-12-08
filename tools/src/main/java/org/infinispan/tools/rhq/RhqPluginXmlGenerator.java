@@ -23,14 +23,21 @@
 package org.infinispan.tools.rhq;
 
 import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileOutputStream;
 import java.io.IOException;
-import java.nio.channels.FileChannel;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+
+import javax.xml.parsers.DocumentBuilder;
+import javax.xml.parsers.DocumentBuilderFactory;
+import javax.xml.transform.OutputKeys;
+import javax.xml.transform.Result;
+import javax.xml.transform.Transformer;
+import javax.xml.transform.TransformerFactory;
+import javax.xml.transform.dom.DOMSource;
+import javax.xml.transform.stream.StreamResult;
+import javax.xml.transform.stream.StreamSource;
 
 import javassist.ClassClassPath;
 import javassist.ClassPool;
@@ -43,20 +50,10 @@ import org.infinispan.factories.scopes.Scopes;
 import org.infinispan.jmx.annotations.MBean;
 import org.infinispan.jmx.annotations.ManagedAttribute;
 import org.infinispan.jmx.annotations.ManagedOperation;
+import org.infinispan.jmx.annotations.Parameter;
 import org.infinispan.util.ClassFinder;
-import org.infinispan.util.logging.Log;
-import org.infinispan.util.logging.LogFactory;
-import org.rhq.helpers.pluginAnnotations.agent.Metric;
-import org.rhq.helpers.pluginAnnotations.agent.Operation;
-import org.rhq.helpers.pluginAnnotations.agent.Parameter;
-import org.rhq.helpers.pluginGen.PluginGen;
-import org.rhq.helpers.pluginGen.Props;
-import org.rhq.helpers.pluginGen.ResourceCategory;
-import org.rhq.helpers.pluginGen.Props.MetricProps;
-import org.rhq.helpers.pluginGen.Props.OperationProps;
-import org.rhq.helpers.pluginGen.Props.SimpleProperty;
-import org.rhq.helpers.pluginGen.Props.TypeKey;
-
+import org.w3c.dom.Document;
+import org.w3c.dom.Element;
 import com.sun.javadoc.DocErrorReporter;
 import com.sun.javadoc.RootDoc;
 
@@ -67,7 +64,7 @@ import com.sun.javadoc.RootDoc;
  * @since 4.0
  */
 public class RhqPluginXmlGenerator {
-   private static final Log log = LogFactory.getLog(RhqPluginXmlGenerator.class);
+   private static final String URN_XMLNS_RHQ_CONFIGURATION = "urn:xmlns:rhq-configuration";
    private static ClassPool classPool;
    private static String cp;
 
@@ -81,7 +78,6 @@ public class RhqPluginXmlGenerator {
          if (option[0].equals("-classpath"))
             cp = option[1];
       }
-
       return true;
    }
 
@@ -92,10 +88,8 @@ public class RhqPluginXmlGenerator {
       for (Class<?> clazz : mbeanIspnClasses) {
          Scope scope = clazz.getAnnotation(Scope.class);
          if (scope != null && scope.value() == Scopes.GLOBAL) {
-            debug("Add as global class " + clazz);
             globalClasses.add(clazz);
          } else {
-            debug("Add as named cache class " + clazz);
             namedCacheClasses.add(clazz);
          }
       }
@@ -103,70 +97,29 @@ public class RhqPluginXmlGenerator {
       // Init the Javassist class pool.
       classPool = ClassPool.getDefault();
       classPool.insertClassPath(new ClassClassPath(RhqPluginXmlGenerator.class));
-      PluginGen pg = new PluginGen();
+      DocumentBuilderFactory dbf = DocumentBuilderFactory.newInstance();
+      dbf.setNamespaceAware(true);
+      DocumentBuilder db = dbf.newDocumentBuilder();
+      Document doc = db.newDocument();
+      Element root = doc.createElement("plugin");
+      root.setAttributeNS("http://www.w3.org/2000/xmlns/", "xmlns:c", URN_XMLNS_RHQ_CONFIGURATION);
+      doc.appendChild(root);
 
-      Props root = new Props();
-      root.setPluginName("Infinispan");
-      root.setPluginDescription("Supports management and monitoring of Infinispan");
-      root.setManualAddOfResourceType(true);
-      root.setName("Infinispan Cache Manager");
-      root.setPkg("org.infinispan.rhq");
-      root.setDependsOnJmxPlugin(true);
-      root.setDiscoveryClass("CacheManagerDiscovery");
-      root.setComponentClass("CacheManagerComponent");
-      root.setSingleton(false);
+      populateMetricsAndOperations(globalClasses, root, "cacheManager", false);
 
-      root.setCategory(ResourceCategory.SERVICE);
-      Set<TypeKey> servers = new HashSet<TypeKey>();
-      servers.add(new TypeKey("JMX Server", "JMX"));
-      servers.add(new TypeKey("JBossAS Server", "JBossAS"));
-      servers.add(new TypeKey("JBossAS Server", "JBossAS5"));
-      root.setRunsInsides(servers);
+      populateMetricsAndOperations(namedCacheClasses, root, "cache", true);
 
-
-      SimpleProperty pc = new SimpleProperty("name");
-      pc.setType("string");
-      pc.setDescription("Name");
-      pc.setDefaultValue("Infinispan Cache Manager");
-      pc.setReadOnly(true);
-      root.getSimpleProps().add(pc);
-
-      populateMetricsAndOperations(globalClasses, root, false);
-
-      Props cache = new Props();
-      cache.setName("Infinispan Cache");
-      cache.setPkg("org.infinispan.rhq");
-      cache.setDependsOnJmxPlugin(true);
-      cache.setDiscoveryClass("CacheDiscovery");
-      cache.setComponentClass("CacheComponent");
-      cache.setSingleton(false);
-      cache.setCategory(ResourceCategory.SERVICE);
-      populateMetricsAndOperations(namedCacheClasses, cache, true);
-
-      root.getChildren().add(cache);
-
-      String metaInfDir = "../../../src/main/resources/META-INF";
-      new File(metaInfDir).mkdirs();
       String targetMetaInfDir = "../../../target/classes/META-INF";
       new File(targetMetaInfDir).mkdirs();
 
-      pg.createFile(root, "ispnDescriptor", "rhq-plugin.xml", metaInfDir);
-      copyFile(new File(metaInfDir + "/rhq-plugin.xml"), new File(targetMetaInfDir + "/rhq-plugin.xml"));
+      TransformerFactory tf = TransformerFactory.newInstance();
+      StreamSource xslt = new StreamSource(RhqPluginXmlGenerator.class.getResourceAsStream("/META-INF/rhq-plugin.xslt"));
+      Transformer transformer = tf.newTransformer(xslt);
+      transformer.setOutputProperty(OutputKeys.INDENT, "yes");
+      Result output = new StreamResult(new File(targetMetaInfDir + "/rhq-plugin.xml"));
+      transformer.transform(new DOMSource(doc), output);
 
       return true;
-   }
-
-   private static void copyFile(File in, File out) throws IOException {
-      FileChannel inCh = new FileInputStream(in).getChannel();
-      FileChannel outCh = new FileOutputStream(out).getChannel();
-      try {
-         inCh.transferTo(0, inCh.size(), outCh);
-      } catch (IOException e) {
-         throw e;
-      } finally {
-         if (inCh != null) inCh.close();
-         if (outCh != null) outCh.close();
-      }
    }
 
    private static List<Class<?>> getMBeanClasses() throws IOException {
@@ -179,11 +132,10 @@ public class RhqPluginXmlGenerator {
       }
    }
 
-   private static void populateMetricsAndOperations(List<Class<?>> classes,
-            Props props, boolean withNamePrefix) throws Exception {
-      props.setHasOperations(true);
-      props.setHasMetrics(true);
+   private static void populateMetricsAndOperations(List<Class<?>> classes, Element root, String parentName, boolean withNamePrefix) throws Exception {
       Set<String> uniqueOperations = new HashSet<String>();
+      Document doc = root.getOwnerDocument();
+      Element parent = doc.createElement(parentName);
       for (Class<?> clazz : classes) {
          MBean mbean = clazz.getAnnotation(MBean.class);
          String prefix = withNamePrefix ? mbean.objectName() + '.' : "";
@@ -191,137 +143,110 @@ public class RhqPluginXmlGenerator {
 
          CtMethod[] ctMethods = ctClass.getMethods();
          for (CtMethod ctMethod : ctMethods) {
-            ManagedAttribute managedAttr = (ManagedAttribute)
-                  ctMethod.getAnnotation(ManagedAttribute.class);
-            ManagedOperation managedOp = (ManagedOperation)
-                  ctMethod.getAnnotation(ManagedOperation.class);
+            ManagedAttribute managedAttr = (ManagedAttribute) ctMethod.getAnnotation(ManagedAttribute.class);
+            ManagedOperation managedOp = (ManagedOperation) ctMethod.getAnnotation(ManagedOperation.class);
 
-            Metric rhqMetric = (Metric) ctMethod.getAnnotation(Metric.class);
-            if (rhqMetric != null) {
-               debug("Metric annotation found " + rhqMetric);
-               // Property and description resolution are the reason why annotation scanning is done here.
-               // These two fields are calculated from either the method name or the Managed* annotations,
-               // and so, only the infinispan side knows about that.
+            if (managedAttr != null) {
                String property = prefix + getPropertyFromBeanConvention(ctMethod);
-               if (!rhqMetric.property().isEmpty()) {
-                  property = prefix + rhqMetric.property();
-               }
-               MetricProps metric = new MetricProps(property);
-               String displayName = withNamePrefix ? "[" + mbean.objectName() + "] " + rhqMetric.displayName() : rhqMetric.displayName();
+
+               String displayName = withNamePrefix ? "[" + mbean.objectName() + "] " + managedAttr.displayName() : managedAttr.displayName();
                validateDisplayName(displayName);
-               metric.setDisplayName(displayName);
-               metric.setDisplayType(rhqMetric.displayType());
-               metric.setDataType(rhqMetric.dataType());
-               metric.setUnits(rhqMetric.units());
-               if (managedAttr != null) {
-                  debug("Metric has ManagedAttribute annotation " + managedAttr);
-                  metric.setDescription(managedAttr.description());
-               } else if (managedOp != null) {
-                  debug("Metric has ManagedOperation annotation " + managedOp);
-                  metric.setDescription(managedOp.description());
-               } else {
-                  log.debug("Metric has no managed annotations, so take the description from the display name.");
-                  metric.setDescription(rhqMetric.displayName());
-               }
-               props.getMetrics().add(metric);
+
+               Element metric = doc.createElement("metric");
+               metric.setAttribute("property", property);
+               metric.setAttribute("displayName", displayName);
+               metric.setAttribute("displayType", managedAttr.displayType().toString());
+               metric.setAttribute("dataType", managedAttr.dataType().toString());
+               metric.setAttribute("units", managedAttr.units().toString());
+               metric.setAttribute("description", managedAttr.description());
+
+               parent.appendChild(metric);
             }
 
-            Operation rhqOperation = (Operation) ctMethod.getAnnotation(Operation.class);
-            if (rhqOperation != null) {
-               debug("Operation annotation found " + rhqOperation);
+            if (managedOp != null) {
                String name;
-               if (!rhqOperation.name().isEmpty()) {
-                  name = prefix + rhqOperation.name();
+               if (!managedOp.name().isEmpty()) {
+                  name = prefix + managedOp.name();
                } else {
                   name = prefix + ctMethod.getName();
                }
                if (uniqueOperations.contains(name)) {
-                  throw new RuntimeException("Duplicate operation name: "+name);
+                  throw new RuntimeException("Duplicate operation name: " + name);
                }
                uniqueOperations.add(name);
-               OperationProps operation = new OperationProps(name);
-               String displayName = withNamePrefix ? "[" + mbean.objectName() + "] " + rhqOperation.displayName() : rhqOperation.displayName();
+
+               String displayName = withNamePrefix ? "[" + mbean.objectName() + "] " + managedOp.displayName() : managedOp.displayName();
                validateDisplayName(displayName);
-               operation.setDisplayName(displayName);
+
+               Element operation = doc.createElement("operation");
+               operation.setAttribute("name", name);
+               operation.setAttribute("displayName", displayName);
                if (managedAttr != null) {
-                  debug("Operation has ManagedAttribute annotation " + managedAttr);
-                  operation.setDescription(managedAttr.description());
-               } else if (managedOp != null) {
-                  debug("Operation has ManagedOperation annotation " + managedOp);
-                  operation.setDescription(managedOp.description());
+                  operation.setAttribute("description", managedAttr.description());
                } else {
-                  debug("Operation has no managed annotations, so take the description from the display name.");
-                  operation.setDescription(rhqOperation.displayName());
+                  operation.setAttribute("description", managedOp.description());
                }
 
                Object[][] paramAnnotations = ctMethod.getParameterAnnotations();
-               int i = 0;
+               Element parameters = doc.createElement("parameters");
                for (Object[] paramAnnotationsInEach : paramAnnotations) {
-                  boolean hadParameter = false;
+                  boolean annotatedParameter = false;
                   for (Object annot : paramAnnotationsInEach) {
-                     debug("Parameter annotation " + annot);
                      if (annot instanceof Parameter) {
                         Parameter param = (Parameter) annot;
-                        SimpleProperty prop = new SimpleProperty(param.name());
-                        prop.setDescription(param.description());
-                        operation.getParams().add(prop);
-                        hadParameter = true;
+                        Element prop = doc.createElementNS(URN_XMLNS_RHQ_CONFIGURATION, "simple-property");
+                        prop.setAttribute("name", param.name());
+                        prop.setAttribute("description", param.description());
+                        parameters.appendChild(prop);
+                        annotatedParameter = true;
                      }
                   }
-                  if (!hadParameter) {
-                     operation.getParams().add(new SimpleProperty("p" + i++));
+                  if (!annotatedParameter) {
+                     throw new RuntimeException("Duplicate operation name: " + name);
                   }
+               }
+               if(parameters.hasChildNodes()) {
+                  operation.appendChild(parameters);
                }
                CtClass returnType = ctMethod.getReturnType();
-               if (!returnType.equals(CtClass.voidType)) {
-                  if (!returnType.equals(Void.TYPE)) {
-                     SimpleProperty prop = new SimpleProperty("operationResult");
-                     operation.setResult(prop);
-                  }
+               if (!returnType.equals(CtClass.voidType) && !returnType.equals(Void.TYPE)) {
+                  Element results = doc.createElement("results");
+                  Element prop = doc.createElementNS(URN_XMLNS_RHQ_CONFIGURATION, "simple-property");
+                  prop.setAttribute("name", "operationResult");
+                  results.appendChild(prop);
+                  operation.appendChild(results);
                }
-               props.getOperations().add(operation);
+               parent.appendChild(operation);
             }
          }
 
          CtField[] ctFields = ctClass.getDeclaredFields();
          for (CtField ctField : ctFields) {
-            debug("Inspecting field " + ctField);
+            ManagedAttribute managedAttr = (ManagedAttribute) ctField.getAnnotation(ManagedAttribute.class);
+            if (managedAttr != null) {
+               String property = prefix + getPropertyFromBeanConvention(ctField);
+               Element metric = doc.createElement("metric");
+               metric.setAttribute("property", property);
 
-            Metric rhqMetric = (Metric)ctField.getAnnotation(Metric.class);
-            if (rhqMetric != null) {
-              debug("Field " + ctField + " contains Metric annotation " + rhqMetric);
-              String property;
-               if (!rhqMetric.property().isEmpty()) {
-                  property = prefix + rhqMetric.property();
-               } else {
-                  property = prefix + getPropertyFromBeanConvention(ctField);
-               }
-               MetricProps metric = new MetricProps(property);
-               String displayName = withNamePrefix ? "[" + mbean.objectName() + "] " + rhqMetric.displayName() : rhqMetric.displayName();
+               String displayName = withNamePrefix ? "[" + mbean.objectName() + "] " + managedAttr.displayName() : managedAttr.displayName();
                validateDisplayName(displayName);
-               metric.setDisplayName(displayName);
-               metric.setDisplayType(rhqMetric.displayType());
-               metric.setDataType(rhqMetric.dataType());
-               metric.setUnits(rhqMetric.units());
-               ManagedAttribute managedAttr = (ManagedAttribute)
-                     ctField.getAnnotation(ManagedAttribute.class);
-               if (managedAttr != null) {
-                  debug("Metric has ManagedAttribute annotation " + managedAttr);
-                  metric.setDescription(managedAttr.description());
-               } else {
-                  log.debug("Metric has no managed annotations, so take the description from the display name.");
-                  metric.setDescription(rhqMetric.displayName());
-               }
-               props.getMetrics().add(metric);
+               metric.setAttribute("property", property);
+               metric.setAttribute("displayName", displayName);
+               metric.setAttribute("displayType", managedAttr.displayType().toString());
+               metric.setAttribute("dataType", managedAttr.dataType().toString());
+               metric.setAttribute("units", managedAttr.units().toString());
+               metric.setAttribute("description", managedAttr.description());
+               parent.appendChild(metric);
             }
          }
 
       }
+      root.appendChild(parent);
    }
 
    private static void validateDisplayName(String displayName) {
       if (displayName.length() > 100) {
-         throw new RuntimeException("Display name too long (max 100 chars): "+displayName);
+         throw new RuntimeException("Display name too long (max 100 chars): " + displayName);
       }
    }
 
@@ -343,10 +268,4 @@ public class RhqPluginXmlGenerator {
       String withoutFirstChar = fieldName.substring(1);
       return Character.toUpperCase(fieldName.charAt(0)) + withoutFirstChar;
    }
-
-   private static void debug(Object o) {
-//      if (log.isDebugEnabled()) log.debug(o);
-      System.out.println(o);
-   }
-
 }

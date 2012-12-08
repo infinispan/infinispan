@@ -45,6 +45,7 @@ import org.infinispan.interceptors.base.JmxStatsCommandInterceptor;
 import org.infinispan.jmx.annotations.MBean;
 import org.infinispan.jmx.annotations.ManagedAttribute;
 import org.infinispan.jmx.annotations.ManagedOperation;
+import org.infinispan.jmx.annotations.MeasurementType;
 import org.infinispan.loaders.CacheLoaderException;
 import org.infinispan.loaders.CacheLoaderManager;
 import org.infinispan.loaders.CacheStore;
@@ -56,9 +57,6 @@ import org.infinispan.transaction.xa.GlobalTransaction;
 import org.infinispan.util.concurrent.ConcurrentMapFactory;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
-import org.rhq.helpers.pluginAnnotations.agent.MeasurementType;
-import org.rhq.helpers.pluginAnnotations.agent.Metric;
-import org.rhq.helpers.pluginAnnotations.agent.Operation;
 
 import javax.transaction.Transaction;
 import javax.transaction.TransactionManager;
@@ -381,15 +379,20 @@ public class CacheStoreInterceptor extends JmxStatsCommandInterceptor {
    }
 
    @Override
-   @ManagedOperation(description = "Resets statistics gathered by this component")
-   @Operation(displayName = "Reset statistics")
+   @ManagedOperation(
+         description = "Resets statistics gathered by this component",
+         displayName = "Reset statistics"
+   )
    public void resetStatistics() {
       cacheStores.set(0);
    }
 
-   @ManagedAttribute(description = "number of cache loader stores")
-   @Metric(displayName = "Number of cache stores", measurementType = MeasurementType.TRENDSUP)
-   @SuppressWarnings("unused")
+   @ManagedAttribute(
+         description = "number of cache loader stores",
+         displayName = "Number of cache stores",
+         measurementType = MeasurementType.TRENDSUP
+   )
+
    public long getCacheLoaderStores() {
       return cacheStores.get();
    }

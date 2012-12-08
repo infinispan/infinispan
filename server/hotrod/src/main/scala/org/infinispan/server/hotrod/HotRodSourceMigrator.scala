@@ -32,7 +32,6 @@ import org.infinispan.jmx.annotations.{ManagedOperation, MBean}
 import org.infinispan.util.ByteArrayKey
 import org.infinispan.server.core.{Operation, CacheValue}
 import org.infinispan.Cache
-import org.rhq.helpers.pluginAnnotations.agent.Operation
 import org.infinispan.server.core.Operation
 import org.infinispan.distexec.{DistributedCallable, DefaultExecutorService}
 import java.nio.charset.Charset

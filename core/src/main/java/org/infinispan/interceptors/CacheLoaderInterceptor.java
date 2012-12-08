@@ -38,9 +38,12 @@ import org.infinispan.context.InvocationContext;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.factories.annotations.Start;
 import org.infinispan.interceptors.base.JmxStatsCommandInterceptor;
+import org.infinispan.jmx.annotations.DisplayType;
 import org.infinispan.jmx.annotations.MBean;
 import org.infinispan.jmx.annotations.ManagedAttribute;
 import org.infinispan.jmx.annotations.ManagedOperation;
+import org.infinispan.jmx.annotations.MeasurementType;
+import org.infinispan.jmx.annotations.Parameter;
 import org.infinispan.loaders.CacheLoader;
 import org.infinispan.loaders.CacheLoaderManager;
 import org.infinispan.loaders.CacheStore;
@@ -49,10 +52,6 @@ import org.infinispan.notifications.cachelistener.CacheNotifier;
 import org.infinispan.util.InfinispanCollections;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
-import org.rhq.helpers.pluginAnnotations.agent.DisplayType;
-import org.rhq.helpers.pluginAnnotations.agent.MeasurementType;
-import org.rhq.helpers.pluginAnnotations.agent.Metric;
-import org.rhq.helpers.pluginAnnotations.agent.Operation;
 
 import java.util.Collection;
 import java.util.Collections;
@@ -235,28 +234,38 @@ public class CacheLoaderInterceptor extends JmxStatsCommandInterceptor {
       }
    }
 
-   @ManagedAttribute(description = "Number of entries loaded from cache store")
-   @Metric(displayName = "Number of cache store loads", measurementType = MeasurementType.TRENDSUP)
+   @ManagedAttribute(
+         description = "Number of entries loaded from cache store",
+         displayName = "Number of cache store loads",
+         measurementType = MeasurementType.TRENDSUP
+   )
    public long getCacheLoaderLoads() {
       return cacheLoads.get();
    }
 
-   @ManagedAttribute(description = "Number of entries that did not exist in cache store")
-   @Metric(displayName = "Number of cache store load misses", measurementType = MeasurementType.TRENDSUP)
+   @ManagedAttribute(
+         description = "Number of entries that did not exist in cache store",
+         displayName = "Number of cache store load misses",
+         measurementType = MeasurementType.TRENDSUP
+   )
    public long getCacheLoaderMisses() {
       return cacheMisses.get();
    }
 
    @Override
-   @ManagedOperation(description = "Resets statistics gathered by this component")
-   @Operation(displayName = "Reset Statistics")
+   @ManagedOperation(
+         description = "Resets statistics gathered by this component",
+         displayName = "Reset Statistics"
+   )
    public void resetStatistics() {
       cacheLoads.set(0);
       cacheMisses.set(0);
    }
 
-   @ManagedAttribute(description = "Returns a collection of cache loader types which configured and enabled")
-   @Metric(displayName = "Returns a collection of cache loader types which configured and enabled", displayType = DisplayType.DETAIL)
+   @ManagedAttribute(
+         description = "Returns a collection of cache loader types which configured and enabled",
+         displayName = "Returns a collection of cache loader types which configured and enabled",
+         displayType = DisplayType.DETAIL)
    /**
     * This method returns a collection of cache loader types (fully qualified class names) that are configured and enabled.
     */
@@ -275,8 +284,10 @@ public class CacheLoaderInterceptor extends JmxStatsCommandInterceptor {
          return InfinispanCollections.emptySet();
       }
    }
-   @ManagedOperation(description = "Disable all cache loaders of a given type, where type is a fully qualified class name of the cache loader to disable")
-   @Operation(displayName = "Disable all cache loaders of a given type")
+   @ManagedOperation(
+         description = "Disable all cache loaders of a given type, where type is a fully qualified class name of the cache loader to disable",
+         displayName = "Disable all cache loaders of a given type"
+   )
    /**
     * Disables a cache loader of a given type, where type is the fully qualified class name of a {@link CacheLoader} implementation.
     *
@@ -285,7 +296,7 @@ public class CacheLoaderInterceptor extends JmxStatsCommandInterceptor {
     *
     * @param loaderType fully qualified class name of the cache loader type to disable
     */
-   public void disableCacheLoader(String loaderType) {
+   public void disableCacheLoader(@Parameter(name="loaderType", description="Fully qualified class name of a CacheLoader implementation") String loaderType) {
       if (enabled) clm.disableCacheStore(loaderType);
    }
 

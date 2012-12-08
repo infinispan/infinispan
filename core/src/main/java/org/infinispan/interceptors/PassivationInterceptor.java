@@ -31,12 +31,9 @@ import org.infinispan.interceptors.base.JmxStatsCommandInterceptor;
 import org.infinispan.jmx.annotations.MBean;
 import org.infinispan.jmx.annotations.ManagedAttribute;
 import org.infinispan.jmx.annotations.ManagedOperation;
+import org.infinispan.jmx.annotations.MeasurementType;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
-import org.rhq.helpers.pluginAnnotations.agent.MeasurementType;
-import org.rhq.helpers.pluginAnnotations.agent.Metric;
-import org.rhq.helpers.pluginAnnotations.agent.Operation;
-
 /**
  * Writes evicted entries back to the store on the way in through the CacheStore
  *
@@ -44,7 +41,7 @@ import org.rhq.helpers.pluginAnnotations.agent.Operation;
  */
 @MBean(objectName = "Passivation", description = "Component that handles passivating entries to a CacheStore on eviction.")
 public class PassivationInterceptor extends JmxStatsCommandInterceptor {
-   
+
 
    PassivationManager passivator;
    DataContainer dataContainer;
@@ -70,14 +67,17 @@ public class PassivationInterceptor extends JmxStatsCommandInterceptor {
    }
 
    @Override
-   @ManagedOperation(description = "Resets statistics gathered by this component")
-   @Operation(displayName = "Reset statistics")
+   @ManagedOperation(
+         description = "Resets statistics gathered by this component", displayName = "Reset statistics")
    public void resetStatistics() {
       passivator.resetPassivationCount();
    }
 
-   @ManagedAttribute(description = "Number of passivation events")
-   @Metric(displayName = "Number of cache passivations", measurementType = MeasurementType.TRENDSUP)   
+   @ManagedAttribute(
+         description = "Number of passivation events",
+         displayName = "Number of cache passivations",
+         measurementType = MeasurementType.TRENDSUP
+   )
    public String getPassivations() {
       if (!getStatisticsEnabled()) return "N/A";
       return String.valueOf(passivator.getPassivationCount());

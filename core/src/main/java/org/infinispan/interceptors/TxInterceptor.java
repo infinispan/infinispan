@@ -22,6 +22,12 @@
  */
 package org.infinispan.interceptors;
 
+import java.util.concurrent.atomic.AtomicLong;
+
+import javax.transaction.Status;
+import javax.transaction.SystemException;
+import javax.transaction.Transaction;
+
 import org.infinispan.commands.FlagAffectedCommand;
 import org.infinispan.commands.VisitableCommand;
 import org.infinispan.commands.control.LockControlCommand;
@@ -45,9 +51,13 @@ import org.infinispan.context.impl.LocalTxInvocationContext;
 import org.infinispan.context.impl.TxInvocationContext;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.interceptors.base.CommandInterceptor;
+import org.infinispan.jmx.annotations.DataType;
+import org.infinispan.jmx.annotations.DisplayType;
 import org.infinispan.jmx.annotations.MBean;
 import org.infinispan.jmx.annotations.ManagedAttribute;
 import org.infinispan.jmx.annotations.ManagedOperation;
+import org.infinispan.jmx.annotations.MeasurementType;
+import org.infinispan.jmx.annotations.Parameter;
 import org.infinispan.remoting.rpc.RpcManager;
 import org.infinispan.transaction.LocalTransaction;
 import org.infinispan.transaction.RemoteTransaction;
@@ -58,17 +68,6 @@ import org.infinispan.transaction.xa.recovery.RecoverableTransactionIdentifier;
 import org.infinispan.transaction.xa.recovery.RecoveryManager;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
-import org.rhq.helpers.pluginAnnotations.agent.DataType;
-import org.rhq.helpers.pluginAnnotations.agent.DisplayType;
-import org.rhq.helpers.pluginAnnotations.agent.MeasurementType;
-import org.rhq.helpers.pluginAnnotations.agent.Metric;
-import org.rhq.helpers.pluginAnnotations.agent.Operation;
-import org.rhq.helpers.pluginAnnotations.agent.Parameter;
-
-import javax.transaction.Status;
-import javax.transaction.SystemException;
-import javax.transaction.Transaction;
-import java.util.concurrent.atomic.AtomicLong;
 
 /**
  * Interceptor in charge with handling transaction related operations, e.g enlisting cache as an transaction
@@ -193,7 +192,7 @@ public class TxInterceptor extends CommandInterceptor {
    public Object visitPutKeyValueCommand(InvocationContext ctx, PutKeyValueCommand command) throws Throwable {
       return enlistWriteAndInvokeNext(ctx, command);
    }
-   
+
    @Override
    public Object visitApplyDeltaCommand(InvocationContext ctx, ApplyDeltaCommand command) throws Throwable {
       return enlistWriteAndInvokeNext(ctx, command);
@@ -295,42 +294,57 @@ public class TxInterceptor extends CommandInterceptor {
       return true;
    }
 
-   @ManagedOperation(description = "Resets statistics gathered by this component")
-   @Operation(displayName = "Reset Statistics")
+   @ManagedOperation(
+         description = "Resets statistics gathered by this component",
+         displayName = "Reset Statistics"
+   )
    public void resetStatistics() {
       prepares.set(0);
       commits.set(0);
       rollbacks.set(0);
    }
 
-   @Operation(displayName = "Enable/disable statistics")
+   @ManagedOperation(
+         displayName = "Enable/disable statistics"
+   )
    public void setStatisticsEnabled(@Parameter(name = "enabled", description = "Whether statistics should be enabled or disabled (true/false)") boolean enabled) {
       this.statisticsEnabled = enabled;
    }
 
-   @Metric(displayName = "Statistics enabled", dataType = DataType.TRAIT)
-   @SuppressWarnings("unused")
+   @ManagedAttribute(
+         displayName = "Statistics enabled",
+         dataType = DataType.TRAIT
+   )
    public boolean isStatisticsEnabled() {
       return this.statisticsEnabled;
    }
 
-   @ManagedAttribute(description = "Number of transaction prepares performed since last reset")
-   @Metric(displayName = "Prepares", measurementType = MeasurementType.TRENDSUP, displayType = DisplayType.SUMMARY)
-   @SuppressWarnings("unused")
+   @ManagedAttribute(
+         description = "Number of transaction prepares performed since last reset",
+         displayName = "Prepares",
+         measurementType = MeasurementType.TRENDSUP,
+         displayType = DisplayType.SUMMARY
+   )
    public long getPrepares() {
       return prepares.get();
    }
 
-   @ManagedAttribute(description = "Number of transaction commits performed since last reset")
-   @Metric(displayName = "Commits", measurementType = MeasurementType.TRENDSUP, displayType = DisplayType.SUMMARY)
-   @SuppressWarnings("unused")
+   @ManagedAttribute(
+         description = "Number of transaction commits performed since last reset",
+         displayName = "Commits",
+         measurementType = MeasurementType.TRENDSUP,
+         displayType = DisplayType.SUMMARY
+   )
    public long getCommits() {
       return commits.get();
    }
 
-   @ManagedAttribute(description = "Number of transaction rollbacks performed since last reset")
-   @Metric(displayName = "Rollbacks", measurementType = MeasurementType.TRENDSUP, displayType = DisplayType.SUMMARY)
-   @SuppressWarnings("unused")
+   @ManagedAttribute(
+         description = "Number of transaction rollbacks performed since last reset",
+         displayName = "Rollbacks",
+         measurementType = MeasurementType.TRENDSUP,
+         displayType = DisplayType.SUMMARY
+   )
    public long getRollbacks() {
       return rollbacks.get();
    }

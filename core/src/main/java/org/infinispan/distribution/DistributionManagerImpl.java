@@ -36,6 +36,7 @@ import org.infinispan.factories.annotations.Inject;
 import org.infinispan.factories.annotations.Start;
 import org.infinispan.jmx.annotations.MBean;
 import org.infinispan.jmx.annotations.ManagedOperation;
+import org.infinispan.jmx.annotations.Parameter;
 import org.infinispan.statetransfer.StateTransferManager;
 import org.infinispan.remoting.responses.ClusteredGetResponseValidityFilter;
 import org.infinispan.remoting.responses.Response;
@@ -49,9 +50,6 @@ import org.infinispan.util.Immutables;
 import org.infinispan.util.InfinispanCollections;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
-import org.rhq.helpers.pluginAnnotations.agent.Operation;
-import org.rhq.helpers.pluginAnnotations.agent.Parameter;
-
 import java.util.*;
 
 /**
@@ -180,18 +178,22 @@ public class DistributionManagerImpl implements DistributionManager {
       return getWriteConsistentHash();
    }
 
+   @Override
    public ConsistentHash getReadConsistentHash() {
       return stateTransferManager.getCacheTopology().getReadConsistentHash();
    }
 
+   @Override
    public ConsistentHash getWriteConsistentHash() {
       return stateTransferManager.getCacheTopology().getWriteConsistentHash();
    }
 
    // TODO Move these methods to the StateTransferManager interface so we can eliminate the dependency
    @Override
-   @ManagedOperation(description = "Determines whether a given key is affected by an ongoing rehash, if any.")
-   @Operation(displayName = "Could key be affected by rehash?")
+   @ManagedOperation(
+         description = "Determines whether a given key is affected by an ongoing rehash, if any.",
+         displayName = "Could key be affected by rehash?"
+   )
    public boolean isAffectedByRehash(@Parameter(name = "key", description = "Key to check") Object key) {
       return stateTransferManager.isStateTransferInProgressForKey(key);
    }
@@ -221,14 +223,18 @@ public class DistributionManagerImpl implements DistributionManager {
       return Immutables.immutableListConvert(an);
    }
 
-   @ManagedOperation(description = "Tells you whether a given key is local to this instance of the cache.  Only works with String keys.")
-   @Operation(displayName = "Is key local?")
+   @ManagedOperation(
+         description = "Tells you whether a given key is local to this instance of the cache.  Only works with String keys.",
+         displayName = "Is key local?"
+   )
    public boolean isLocatedLocally(@Parameter(name = "key", description = "Key to query") String key) {
       return getLocality(key).isLocal();
    }
 
-   @ManagedOperation(description = "Locates an object in a cluster.  Only works with String keys.")
-   @Operation(displayName = "Locate key")
+   @ManagedOperation(
+         description = "Locates an object in a cluster.  Only works with String keys.",
+         displayName = "Locate key"
+   )
    public List<String> locateKey(@Parameter(name = "key", description = "Key to locate") String key) {
       List<String> l = new LinkedList<String>();
       for (Address a : locate(key)) l.add(a.toString());

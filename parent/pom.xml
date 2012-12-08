@@ -168,7 +168,6 @@
       <version.netty>3.6.1.Final</version.netty>
       <version.org.jboss.naming>5.0.6.CR1</version.org.jboss.naming>
       <version.resteasy>2.3.2.Final</version.resteasy>
-      <version.rhq.helpers>3.0.4</version.rhq.helpers>
       <version.rhq>4.2.0</version.rhq>
       <version.scala>2.10.0</version.scala>
       <version.shrinkwrapResolver>2.0.0-alpha-6</version.shrinkwrapResolver>
@@ -768,16 +767,6 @@
             <version>${version.rhq}</version>
          </dependency>
          <dependency>
-            <groupId>org.rhq.helpers</groupId>
-            <artifactId>rhq-pluginAnnotations</artifactId>
-            <version>${version.rhq.helpers}</version>
-         </dependency>
-         <dependency>
-            <groupId>org.rhq.helpers</groupId>
-            <artifactId>rhq-pluginGen</artifactId>
-            <version>${version.rhq.helpers}</version>
-         </dependency>
-         <dependency>
             <groupId>org.scala-lang</groupId>
             <artifactId>scala-library</artifactId>
             <version>${version.scala}</version>
@@ -1015,22 +1004,6 @@
          <artifactId>jboss-logging-processor</artifactId>
          <version>${version.jboss.logging.processor}</version>
          <scope>provided</scope>
-      </dependency>
-      <!-- As of v3.0.4, the RHQ annotations have a retention policy of COMPILE,
-           which means they are no longer required at runtime. However, 
-           because of a Sun compiler bug http://bugs.sun.com/view_bug.do?bug_id=6550655
-           it still needs to be present when using the Infinispan artifacts. This
-           doesn't happen when using Java 7. Please add exclusions accordingly
-           if you don't want to pull this in -->
-      <dependency>
-         <groupId>org.rhq.helpers</groupId>
-         <artifactId>rhq-pluginAnnotations</artifactId>
-         <exclusions>
-            <exclusion>
-               <artifactId>i18nlog</artifactId>
-               <groupId>i18nlog</groupId>
-            </exclusion>
-         </exclusions>
       </dependency>
       <dependency>
           <groupId>org.slf4j</groupId>
