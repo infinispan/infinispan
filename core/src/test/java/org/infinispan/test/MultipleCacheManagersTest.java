@@ -386,13 +386,27 @@ public abstract class MultipleCacheManagersTest extends AbstractCacheTest {
       return caches;
    }
 
-   protected <K, V> List<Cache<K, V>> createClusteredCaches(int numMembersInCluster, ConfigurationBuilder builder) {
+   protected <K, V> List<Cache<K, V>> createClusteredCaches(int numMembersInCluster,
+                                                            ConfigurationBuilder defaultConfigBuilder) {
       List<Cache<K, V>> caches = new ArrayList<Cache<K, V>>(numMembersInCluster);
       for (int i = 0; i < numMembersInCluster; i++) {
-         EmbeddedCacheManager cm = addClusterEnabledCacheManager(builder);
+         EmbeddedCacheManager cm = addClusterEnabledCacheManager(defaultConfigBuilder);
          Cache<K, V> cache = cm.getCache();
          caches.add(cache);
 
+      }
+      waitForClusterToForm();
+      return caches;
+   }
+
+   protected <K, V> List<Cache<K, V>> createClusteredCaches(int numMembersInCluster,
+                                                            ConfigurationBuilder defaultConfig,
+                                                            TransportFlags flags) {
+      List<Cache<K, V>> caches = new ArrayList<Cache<K, V>>(numMembersInCluster);
+      for (int i = 0; i < numMembersInCluster; i++) {
+         EmbeddedCacheManager cm = addClusterEnabledCacheManager(defaultConfig, flags);
+         Cache<K, V> cache = cm.getCache();
+         caches.add(cache);
       }
       waitForClusterToForm();
       return caches;

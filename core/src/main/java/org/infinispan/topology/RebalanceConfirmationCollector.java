@@ -79,7 +79,7 @@ class RebalanceConfirmationCollector {
       synchronized (this) {
          // only return true the first time
          boolean modified = confirmationsNeeded.retainAll(newMembers);
-         log.tracef("Rebalance confirmation collector %d@s members list updated, remaining list is %s",
+         log.tracef("Rebalance confirmation collector %d@%s members list updated, remaining list is %s",
                topologyId, cacheName, confirmationsNeeded);
          return modified && confirmationsNeeded.isEmpty();
       }
