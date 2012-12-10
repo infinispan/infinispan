@@ -1260,6 +1260,9 @@
                </executions>
                <configuration>
                   <scalaVersion>${version.scala}</scalaVersion>
+                  <jvmArgs>
+                     <jvmArg>-XX:+UseCompressedOops</jvmArg>
+                  </jvmArgs>
                </configuration>
             </plugin>
             <plugin>
