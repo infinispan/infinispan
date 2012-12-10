@@ -206,7 +206,7 @@ public class StateProviderTest {
       assertTrue(stateProvider.isStateTransferInProgress());
 
       log.debug("ch2: " + ch2);
-      cacheTopology = new CacheTopology(2, ch1, ch2);
+      cacheTopology = new CacheTopology(2, ch2, ch2);
       stateProvider.onTopologyUpdate(cacheTopology, true);
 
       assertFalse(stateProvider.isStateTransferInProgress());
@@ -310,7 +310,7 @@ public class StateProviderTest {
 
       // TestingUtil.sleepThread(15000);
       log.debug("ch2: " + ch2);
-      cacheTopology = new CacheTopology(2, ch1, ch2);
+      cacheTopology = new CacheTopology(2, ch2, ch2);
       stateProvider.onTopologyUpdate(cacheTopology, false);
 
       assertFalse(stateProvider.isStateTransferInProgress());

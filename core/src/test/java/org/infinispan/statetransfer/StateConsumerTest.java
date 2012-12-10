@@ -211,7 +211,8 @@ public class StateConsumerTest {
 
       assertTrue(stateConsumer.isStateTransferInProgress());
 
-      stateConsumer.onTopologyUpdate(new CacheTopology(2, ch1, ch2), true);
+      stateConsumer.onTopologyUpdate(new CacheTopology(2, ch2, ch2), true);
+      assertTrue(stateConsumer.isStateTransferInProgress());
 
       stateConsumer.stop();
 

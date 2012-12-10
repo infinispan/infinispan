@@ -163,9 +163,6 @@ public class TestingUtil {
    }
 
    public static void waitForRehashToComplete(Cache... caches) {
-      // give it 1 second to start rehashing
-      // TODO Should look at the last committed view instead and check if it contains all the caches
-      LockSupport.parkNanos(TimeUnit.SECONDS.toNanos(1));
       int gracetime = 90000; // 90 seconds
       long giveup = System.currentTimeMillis() + gracetime;
       for (Cache c : caches) {

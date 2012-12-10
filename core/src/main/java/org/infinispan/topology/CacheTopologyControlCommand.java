@@ -124,9 +124,9 @@ public class CacheTopologyControlCommand implements ReplicableCommand {
    }
 
    @Inject
-   public void init(LocalTopologyManager localTopologyManager, ClusterTopologyManager globalDistributionManager) {
+   public void init(LocalTopologyManager localTopologyManager, ClusterTopologyManager clusterTopologyManager) {
       this.localTopologyManager = localTopologyManager;
-      this.clusterTopologyManager = globalDistributionManager;
+      this.clusterTopologyManager = clusterTopologyManager;
    }
 
    @Override
