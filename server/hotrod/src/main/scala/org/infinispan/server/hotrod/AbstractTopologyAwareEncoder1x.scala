@@ -81,7 +81,7 @@ abstract class AbstractTopologyAwareEncoder1x extends AbstractEncoder1x with Con
             // The idea here is to be able to be compatible with clients running version 1.0 of the protocol.
             // With time, users should migrate to version 1.2 capable clients.
             val distManager = cache.getAdvancedCache.getDistributionManager
-            val ch = distManager.getConsistentHash
+            val ch = distManager.getReadConsistentHash
             val numSegments = ch.getNumSegments
 
             // Collect all the hash ids in a collection so we can write the correct size.
