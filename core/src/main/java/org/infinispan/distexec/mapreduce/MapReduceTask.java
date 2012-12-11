@@ -394,7 +394,7 @@ public class MapReduceTask<KIn, VIn, KOut, VOut> {
       Set<KOut> mapPhasesResult = new HashSet<KOut>();
       List<MapTaskPart<Set<KOut>>> futures = new ArrayList<MapTaskPart<Set<KOut>>>();
       if (inputTaskKeysEmpty()) {
-         for (Address target : rpc.getTransport().getMembers()) {
+         for (Address target : rpc.getMembers()) {
             if (target.equals(rpc.getAddress())) {
                cmd = buildMapCombineCommand(taskId.toString(), clone(mapper), clone(combiner),
                         null, true, useCompositeKeys);
@@ -440,7 +440,7 @@ public class MapReduceTask<KIn, VIn, KOut, VOut> {
       Map<KOut, List<VOut>> mapPhasesResult = new HashMap<KOut, List<VOut>>();
       List<MapTaskPart<Map<KOut, List<VOut>>>> futures = new ArrayList<MapTaskPart<Map<KOut, List<VOut>>>>();
       if (inputTaskKeysEmpty()) {
-         for (Address target : rpc.getTransport().getMembers()) {
+         for (Address target : rpc.getMembers()) {
             if (target.equals(rpc.getAddress())) {
                cmd = buildMapCombineCommand(taskId.toString(), clone(mapper), clone(combiner),
                         null, false, false);

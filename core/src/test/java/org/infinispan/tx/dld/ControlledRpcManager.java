@@ -40,6 +40,7 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
@@ -254,5 +255,12 @@ public class ControlledRpcManager implements RpcManager {
    @Override
    public int getTopologyId() {
       return realOne.getTopologyId();
+   }
+
+
+
+   @Override
+   public List<Address> getMembers() {
+      return realOne.getMembers();
    }
 }
