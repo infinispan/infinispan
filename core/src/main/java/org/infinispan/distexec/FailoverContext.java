@@ -48,15 +48,17 @@ public interface FailoverContext {
    List<Address> executionCandidates();
 
    /**
-    * Returns the Exception which was the cause of the task failure. This includes both system
+    * Returns the Throwable which was the cause of the task failure. This includes both system
     * exception related to Infinispan transient failures (node crash, transient errors etc) as well
-    * as application level exceptions. Exception will contain the full chain of Exceptions. If
-    * clients are interested in root cause of the Exception they can use appropriate
-    * {@link Exception#getCause()} API to recursively traverse the Exception chain.
+    * as application level exceptions. Returned Throwable will most likely contain the chain of
+    * Exceptions that interested clients can inspect and, if desired, find the root cause of the
+    * returned Throwable
     * 
-    * @return the Exception that caused task failure on the particular Infinispan node
+    * @see {@link Throwable#getCause()} API to recursively traverse the Exception chain
+    * 
+    * @return the Throwable that caused task failure on the particular Infinispan node
     */
-   Exception cause();
+   Throwable cause();
 
    /**
     * Returns a list of input keys for this task. Note that this method does not return all of the
