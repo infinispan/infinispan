@@ -414,4 +414,9 @@ public class RpcManagerImpl implements RpcManager {
    public int getTopologyId() {
       return stateTransferManager.getCacheTopology().getTopologyId();
    }
+
+   @Override
+   public List<Address> getMembers() {
+      return stateTransferManager.getCacheTopology().getMembers();
+   }
 }

@@ -250,7 +250,7 @@ public class DefaultExecutorService extends AbstractExecutorService implements D
 
    protected List<Address> getMembers() {
       if (rpc != null) {
-         return rpc.getTransport().getMembers();
+         return rpc.getMembers();
       } else {
          return Collections.singletonList(getAddress());
       }

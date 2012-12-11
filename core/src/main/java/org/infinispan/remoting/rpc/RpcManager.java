@@ -30,6 +30,7 @@ import org.infinispan.remoting.transport.Transport;
 import org.infinispan.util.concurrent.NotifyingNotifiableFuture;
 
 import java.util.Collection;
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -200,6 +201,15 @@ public interface RpcManager {
     * @return a reference to the underlying transport.
     */
    Transport getTransport();
+   
+   
+   /**
+    * Returns members of a cluster scoped to the cache owning this RpcManager. Note that this List
+    * is always a subset of {@link Transport#getMembers()}
+    * 
+    * @return a list of cache scoped cluster members
+    */
+   List<Address> getMembers();
 
    /**
     * Returns the address associated with this RpcManager or null if not part of the cluster.
