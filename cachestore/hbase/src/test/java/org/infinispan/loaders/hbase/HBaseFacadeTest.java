@@ -34,8 +34,7 @@ import java.util.Set;
 import org.apache.hadoop.hbase.TableExistsException;
 import org.apache.hadoop.hbase.util.Bytes;
 
-import org.infinispan.loaders.hbase.HBaseFacade;
-import org.infinispan.loaders.hbase.HBaseException;
+import org.infinispan.loaders.hbase.test.HBaseCluster;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
@@ -100,27 +99,17 @@ public class HBaseFacadeTest {
    private static final String COL_FAMILY_EXP = "expiration";
    private static final String EXP_VALUE_FIELD = "v";
 
-   private static EmbeddedServerHelper embedded = null;
+   private HBaseCluster hBaseCluster;
 
-   static {
-      if (USE_EMBEDDED) {
-         embedded = new EmbeddedServerHelper();
+   @BeforeClass(alwaysRun = true)
+   public void beforeClass() throws Exception {
+      if (USE_EMBEDDED)
+         hBaseCluster = new HBaseCluster();
 
-         try {
-            embedded.setup();
-         } catch (Exception ex) {
-            System.err.println(ex.getClass().getName() + " occured starting "
-                     + "up embedded HBase server: " + ex.getMessage());
-         }
-      }
-   }
-
-   @BeforeClass
-   public void setup() throws Exception {
       Map<String, String> props = new HashMap<String, String>();
-      if (USE_EMBEDDED) {
-         props.put("hbase.zookeeper.property.clientPort", Integer.toString(embedded.zooKeeperPort));
-      }
+      props.put("hbase.zookeeper.property.clientPort",
+            Integer.toString(hBaseCluster.getZooKeeperPort()));
+
       System.out.println("************************");
       HBF = new HBaseFacade(props);
 
@@ -152,8 +141,10 @@ public class HBaseFacadeTest {
    }
 
    @AfterClass(alwaysRun = true)
-   public void tearDown() throws Exception {
+   public void afterClass() throws Exception {
       HBF.deleteTable(TABLE_MESSAGE);
+
+      if (USE_EMBEDDED) HBaseCluster.shutdown(hBaseCluster);
    }
 
    /**
@@ -416,10 +407,9 @@ public class HBaseFacadeTest {
    private Map<String, Map<String, byte[]>> makeExpirationMap(String value) {
       Map<String, byte[]> expValMap = Collections.singletonMap(EXP_VALUE_FIELD,
                Bytes.toBytes(value));
-      Map<String, Map<String, byte[]>> expCfMap = Collections.singletonMap(COL_FAMILY_EXP,
-               expValMap);
 
-      return expCfMap;
+      return Collections.singletonMap(COL_FAMILY_EXP,
+               expValMap);
    }
 
 }

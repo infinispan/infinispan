@@ -30,13 +30,14 @@ import java.util.Map.Entry;
 import java.util.Set;
 
 import org.infinispan.Cache;
+import org.infinispan.loaders.hbase.test.HBaseCluster;
+import org.infinispan.manager.EmbeddedCacheManager;
+import org.infinispan.test.SingleCacheManagerTest;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
-import org.testng.annotations.AfterClass;
-import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
 
 @Test(groups = "manual", testName = "loaders.hbase.HBaseCacheStoreTestStandalone")
-public class HBaseCacheStoreTestStandalone {
+public class HBaseCacheStoreStandaloneTest extends SingleCacheManagerTest {
 
    private static final boolean USE_EMBEDDED = true;
 
@@ -51,36 +52,32 @@ public class HBaseCacheStoreTestStandalone {
 
    private static Cache<Object, Object> CACHE = null;
 
-   private static EmbeddedServerHelper embedded = null;
+   private HBaseCluster hBaseCluster;
 
-   static {
-      if (USE_EMBEDDED) {
-         embedded = new EmbeddedServerHelper();
-
-         try {
-            embedded.setup();
-         } catch (Exception ex) {
-            System.err.println(ex.getClass().getName() + " occured starting "
-                     + "up embedded HBase server: " + ex.getMessage());
-         }
-      }
-   }
-
-   @BeforeClass
-   public void setup() throws Exception {
+   @Override
+   protected EmbeddedCacheManager createCacheManager() throws Exception {
       System.setProperty("java.net.preferIPv4Stack", "true");
 
-      if (USE_EMBEDDED) {
-         CACHE = TestCacheManagerFactory.fromXml("hbase-cachestore-ispn-embedded.xml").getCache();
-      } else {
-         CACHE = TestCacheManagerFactory.fromXml("hbase-cachestore-ispn.xml").getCache();
-      }
+      if (USE_EMBEDDED)
+         return TestCacheManagerFactory.fromXml("hbase-cachestore-ispn-embedded.xml");
+      else
+         return TestCacheManagerFactory.fromXml("hbase-cachestore-ispn.xml");
    }
 
-   @AfterClass(alwaysRun = true)
-   public void tearDown() throws Exception {
-      CACHE.clear();
-      CACHE.stop();
+   @Override
+   protected void setup() throws Exception {
+      if (USE_EMBEDDED)
+         hBaseCluster = new HBaseCluster();
+
+      super.setup(); // Create the cache manager
+   }
+
+   @Override
+   protected void teardown() {
+      super.teardown(); // Stop cache manager
+
+      if (USE_EMBEDDED)
+         HBaseCluster.shutdown(hBaseCluster);
    }
 
    /**
@@ -103,8 +100,8 @@ public class HBaseCacheStoreTestStandalone {
          // test keySet()
          Set<Object> storedKeys = CACHE.keySet();
          assert storedKeys.size() == keys.length;
-         for (int i = 0; i < keys.length; i++) {
-            assert storedKeys.contains(keys[i]);
+         for (String key : keys) {
+            assert storedKeys.contains(key);
          }
 
          // test entrySet()
@@ -176,14 +173,14 @@ public class HBaseCacheStoreTestStandalone {
       for (int i = 0; i < keys.length; i++) {
          CACHE.put(keys[i], stringObjects[i]);
       }
-      for (int i = 0; i < keys.length; i++) {
-         assert CACHE.containsKey(keys[i]);
+      for (String key : keys) {
+         assert CACHE.containsKey(key);
       }
 
       CACHE.clear();
 
-      for (int i = 0; i < keys.length; i++) {
-         assert !CACHE.containsKey(keys[i]);
+      for (String key : keys) {
+         assert !CACHE.containsKey(key);
       }
       assert CACHE.keySet().size() == 0;
    }
@@ -202,48 +199,31 @@ public class HBaseCacheStoreTestStandalone {
       CACHE.remove(keys[0]);
    }
 
+   /**
+    * This class represents an object that will be stored in the cache.
+    *
+    * @author Justin Hayes
+    * @since 5.2
+    */
+   static class StringObject implements Serializable {
+
+      private static final long serialVersionUID = 254191608570966230L;
+
+      protected final String key;
+      protected final String value;
+      protected final String docId;
+
+      public StringObject(String key, String value, String docId) {
+         this.key = key;
+         this.value = value;
+         this.docId = docId;
+      }
+
+      @Override
+      public String toString() {
+         return key + "[" + value + "]" + (this.docId != null ? "-->" + this.docId : "");
+      }
+   }
+
 }
 
-/**
- * This class represents an object that will be stored in the cache.
- * 
- * @author Justin Hayes
- * @since 5.2
- */
-class StringObject implements Serializable {
-
-   private static final long serialVersionUID = 254191608570966230L;
-
-   protected final String key;
-   protected final String value;
-   protected final String docId;
-
-   public StringObject(String key, String value, String docId) {
-      this.key = key;
-      this.value = value;
-      this.docId = docId;
-   }
-
-   public StringObject(String key, String value) {
-      this.key = key;
-      this.value = value;
-      this.docId = null;
-   }
-
-   public String getKey() {
-      return key;
-   }
-
-   public String getValue() {
-      return this.value;
-   }
-
-   public String getDocId() {
-      return docId;
-   }
-
-   @Override
-   public String toString() {
-      return key + "[" + value + "]" + (this.docId != null ? "-->" + this.docId : "");
-   }
-}

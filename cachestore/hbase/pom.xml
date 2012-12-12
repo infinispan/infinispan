@@ -48,12 +48,23 @@
          <groupId>org.apache.hadoop</groupId>
          <artifactId>hadoop-core</artifactId>
       </dependency>
+
+      <dependency>
+         <groupId>org.apache.hbase</groupId>
+         <artifactId>hbase</artifactId>
+         <type>test-jar</type>
+         <scope>test</scope>
+      </dependency>
+      <dependency>
+         <groupId>org.apache.hadoop</groupId>
+         <artifactId>hadoop-test</artifactId>
+         <scope>test</scope>
+      </dependency>
       <dependency>
          <groupId>org.slf4j</groupId>
          <artifactId>slf4j-simple</artifactId>
          <scope>test</scope>
       </dependency>
-
       <dependency>
          <groupId>org.apache.commons</groupId>
          <artifactId>commons-io</artifactId>
@@ -71,17 +82,6 @@
          </testResource>
       </testResources>
       <plugins>
-         <plugin>
-            <groupId>org.apache.maven.plugins</groupId>
-            <artifactId>maven-surefire-plugin</artifactId>
-            <configuration>
-               <forkMode>pertest</forkMode>
-               <parallel>false</parallel>
-               <!--
-               <argLine>-Xmx256m</argLine>
-               -->
-            </configuration>
-         </plugin>
          <plugin>
             <groupId>org.apache.felix</groupId>
             <artifactId>maven-bundle-plugin</artifactId>
