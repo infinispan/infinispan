@@ -23,7 +23,8 @@
 
 package org.infinispan.tx.locking;
 
-import org.infinispan.config.Configuration;
+import org.infinispan.configuration.cache.CacheMode;
+import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.testng.annotations.Test;
 
 /**
@@ -33,10 +34,13 @@ import org.testng.annotations.Test;
 @Test(groups = "functional", testName = "tx.locking.PessimisticDistTxTest")
 public class PessimisticDistTxTest extends PessimisticReplTxTest {
 
-   public PessimisticDistTxTest() {
-      super();
-      conf = getDefaultClusteredConfig(Configuration.CacheMode.DIST_SYNC, true);
-      conf.fluent().hash().numOwners(1);
+   @Override
+   protected ConfigurationBuilder buildConfiguration() {
+      ConfigurationBuilder builder = super.buildConfiguration();
+      builder.clustering()
+            .cacheMode(CacheMode.DIST_SYNC)
+            .hash().numOwners(1);
+      return builder;
    }
 
    @Override

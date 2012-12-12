@@ -23,12 +23,14 @@
 
 package org.infinispan.tx.locking;
 
-import org.infinispan.config.Configuration;
+import javax.transaction.Transaction;
+
+import org.infinispan.configuration.cache.CacheMode;
+import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.transaction.LockingMode;
+import org.infinispan.transaction.lookup.DummyTransactionManagerLookup;
 import org.infinispan.util.concurrent.TimeoutException;
 import org.testng.annotations.Test;
-
-import javax.transaction.Transaction;
 
 import static org.testng.Assert.assertEquals;
 import static org.testng.Assert.assertFalse;
@@ -40,21 +42,26 @@ import static org.testng.Assert.assertTrue;
  */
 @Test(groups = "functional", testName = "tx.locking.PessimisticReplTxTest")
 public class PessimisticReplTxTest extends AbstractClusteredTxTest {
-   Configuration conf;
 
    @Override
    protected void createCacheManagers() throws Throwable {
-      conf.fluent().transaction().lockingMode(LockingMode.PESSIMISTIC);
-      conf.fluent().locking().lockAcquisitionTimeout(10l);//fail fast
+      final ConfigurationBuilder conf = buildConfiguration();
       createCluster(conf, 2);
-      assert conf.isTransactionalCache();
       waitForClusterToForm();
       System.out.println("PessimisticReplTxTest.createCacheManagers");
    }
 
+   protected ConfigurationBuilder buildConfiguration() {
+      final ConfigurationBuilder conf = getDefaultClusteredCacheConfig(CacheMode.REPL_SYNC, true);
+      conf.transaction()
+            .lockingMode(LockingMode.PESSIMISTIC)
+            .transactionManagerLookup(new DummyTransactionManagerLookup())
+         .locking().lockAcquisitionTimeout(10L); //fail fast
+      return conf;
+   }
+
    public PessimisticReplTxTest() {
       k = "k";
-      this.conf = getDefaultClusteredConfig(Configuration.CacheMode.REPL_SYNC, true);
    }
 
    public void testTxInProgress1() throws Exception {
@@ -116,10 +123,22 @@ public class PessimisticReplTxTest extends AbstractClusteredTxTest {
    @Override
    protected void assertLocking() {
       assertTrue(lockManager(0).isLocked(k));
-      assertTrue(lockManager(1).isLocked(k));
+      assertFalse(lockManager(1).isLocked(k));
       prepare();
       assertTrue(lockManager(0).isLocked(k));
-      assertTrue(lockManager(1).isLocked(k));
+      assertFalse(lockManager(1).isLocked(k));
+      commit();
+      assertFalse(lockManager(0).isLocked(k));
+      assertFalse(lockManager(1).isLocked(k));
+   }
+
+   @Override
+   protected void assertLockingNoChanges() {
+      assertTrue(lockManager(0).isLocked(k));
+      assertFalse(lockManager(1).isLocked(k));
+      prepare();
+      assertTrue(lockManager(0).isLocked(k));
+      assertFalse(lockManager(1).isLocked(k));
       commit();
       assertFalse(lockManager(0).isLocked(k));
       assertFalse(lockManager(1).isLocked(k));
