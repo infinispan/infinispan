@@ -103,6 +103,6 @@
    <FC max_credits="2000000"
        min_threshold="0.10"/>
    <FRAG2 frag_size="60000"/>
-   <relay.RELAY2 site="__site_name__" config="configs/xsite/relay-config.xml" relay_multicasts="false" />
+   <relay.RELAY2 site="__site_name__" config="configs/xsite/relay-config.xml" relay_multicasts="false" async_relay_creation="false"/>
 
 </config>

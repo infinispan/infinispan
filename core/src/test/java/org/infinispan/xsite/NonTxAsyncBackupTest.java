@@ -79,10 +79,10 @@ public class NonTxAsyncBackupTest extends AbstractTwoSitesTest {
    }
 
    public void testPut() throws Exception {
-      cache("LON",0).put("k", "v");
+      cache("LON", 0).put("k", "v");
       blockingInterceptor.invocationReceivedLatch.await(20000, TimeUnit.MILLISECONDS);
       assertEquals("v", cache("LON", 0).get("k"));
-      assertEquals("v", cache("LON",1).get("k"));
+      assertEquals("v", cache("LON", 1).get("k"));
       assertNull(backup("LON").get("k"));
       blockingInterceptor.waitingLatch.countDown();
       eventually(new Condition() {
@@ -94,11 +94,9 @@ public class NonTxAsyncBackupTest extends AbstractTwoSitesTest {
    }
 
    public void testRemove() throws Exception {
-      blockingInterceptor.isActive = false;
-      cache("LON",0).put("k", "v");
-      blockingInterceptor.isActive = true;
+      doPutWithDisabledBlockingInterceptor();
 
-      cache("LON",1).remove("k");
+      cache("LON", 1).remove("k");
       blockingInterceptor.invocationReceivedLatch.await(20000, TimeUnit.MILLISECONDS);
       assertNull(cache("LON", 0).get("k"));
       assertNull(cache("LON", 1).get("k"));
@@ -113,11 +111,9 @@ public class NonTxAsyncBackupTest extends AbstractTwoSitesTest {
    }
 
    public void testClear() throws Exception {
-      blockingInterceptor.isActive = false;
-      cache("LON",0).put("k", "v");
-      blockingInterceptor.isActive = true;
+      doPutWithDisabledBlockingInterceptor();
 
-      cache("LON",1).clear();
+      cache("LON", 1).clear();
       blockingInterceptor.invocationReceivedLatch.await(20000, TimeUnit.MILLISECONDS);
       assertNull(cache("LON", 0).get("k"));
       assertNull(cache("LON", 1).get("k"));
@@ -132,11 +128,9 @@ public class NonTxAsyncBackupTest extends AbstractTwoSitesTest {
    }
 
    public void testReplace() throws Exception {
-      blockingInterceptor.isActive = false;
-      cache("LON",0).put("k", "v");
-      blockingInterceptor.isActive = true;
+      doPutWithDisabledBlockingInterceptor();
 
-      cache("LON",1).replace("k", "v2");
+      cache("LON", 1).replace("k", "v2");
       blockingInterceptor.invocationReceivedLatch.await(20000, TimeUnit.MILLISECONDS);
       assertEquals("v2", cache("LON", 0).get("k"));
       assertEquals("v2", cache("LON", 1).get("k"));
@@ -151,7 +145,7 @@ public class NonTxAsyncBackupTest extends AbstractTwoSitesTest {
    }
 
    public void testPutAll() throws Exception {
-      cache("LON",0).putAll(Collections.singletonMap("k", "v"));
+      cache("LON", 0).putAll(Collections.singletonMap("k", "v"));
       blockingInterceptor.invocationReceivedLatch.await(20000, TimeUnit.MILLISECONDS);
       assertEquals("v", cache("LON", 0).get("k"));
       assertEquals("v", cache("LON", 1).get("k"));
@@ -163,6 +157,19 @@ public class NonTxAsyncBackupTest extends AbstractTwoSitesTest {
             return "v".equals(backup("LON").get("k"));
          }
       });
+   }
+
+   private void doPutWithDisabledBlockingInterceptor() {
+      blockingInterceptor.isActive = false;
+      cache("LON", 0).put("k", "v");
+
+      eventually(new Condition() {
+         @Override
+         public boolean isSatisfied() throws Exception {
+            return "v".equals(backup("LON").get("k"));
+         }
+      });
+      blockingInterceptor.isActive = true;
    }
 
    public static class BlockingInterceptor extends CommandInterceptor {

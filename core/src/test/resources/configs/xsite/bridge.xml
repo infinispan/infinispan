@@ -20,7 +20,8 @@
 
 <config>
 
-    <TCP bind_port="7200"
+    <TCP bind_addr="127.0.0.1"
+         bind_port="7200"
          loopback="true"
          port_range="30"
          recv_buf_size="20000000"
@@ -51,7 +52,7 @@
          oob_thread_pool.rejection_policy="Run"/>
 
     <TCPPING timeout="3000"
-             initial_hosts="localhost[7200]"
+             initial_hosts="127.0.0.1[7200]"
              port_range="3"
              ergonomics="false"
             />
@@ -62,7 +63,7 @@
            <!--break_on_coord_rsp="true"/>-->
     <!--MERGE2 max_interval="30000"
             min_interval="10000"/-->
-    <FD_SOCK/>
+    <FD_SOCK bind_addr="127.0.0.1"/>
 
     <pbcast.NAKACK2 xmit_interval="1000"
                     xmit_table_num_rows="100"
