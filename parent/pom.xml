@@ -420,9 +420,20 @@
             <version>${version.hadoop.core}</version>
          </dependency>
          <dependency>
+            <groupId>org.apache.hadoop</groupId>
+            <artifactId>hadoop-test</artifactId>
+            <version>${version.hadoop.core}</version>
+         </dependency>
+         <dependency>
             <groupId>org.apache.hbase</groupId>
             <artifactId>hbase</artifactId>
             <version>${version.hbase}</version>
+         </dependency>
+         <dependency>
+            <groupId>org.apache.hbase</groupId>
+            <artifactId>hbase</artifactId>
+            <version>${version.hbase}</version>
+            <type>test-jar</type>
          </dependency>
          <dependency>
             <groupId>junit</groupId>

@@ -23,35 +23,68 @@ package org.infinispan.loaders.hbase;
 
 import java.io.IOException;
 
+import org.apache.hadoop.conf.Configuration;
+import org.apache.hadoop.hbase.HBaseConfiguration;
+import org.apache.hadoop.hbase.HBaseTestingUtility;
+import org.apache.hadoop.hbase.HConstants;
+import org.apache.hadoop.hbase.MiniHBaseCluster;
 import org.infinispan.loaders.BaseCacheStoreTest;
+import org.infinispan.loaders.CacheLoaderException;
 import org.infinispan.loaders.CacheStore;
+import org.infinispan.loaders.hbase.test.HBaseCluster;
 import org.testng.annotations.AfterClass;
+import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeClass;
+import org.testng.annotations.BeforeMethod;
+import org.testng.annotations.Test;
 
+@Test(groups = "functional", testName = "loaders.hbase.HBaseCacheStoreTest")
 public class HBaseCacheStoreTest extends BaseCacheStoreTest {
-   private static EmbeddedServerHelper embedded;
 
-   private static final boolean USE_EMBEDDED = true;
+   HBaseCluster hBaseCluster;
 
-   /**
-    * Set embedded hbase up and spawn it in a new thread.
-    *
-    * @throws InterruptedException
-    */
-   @BeforeClass
-   public static void setup() throws InterruptedException {
-      if (USE_EMBEDDED) {
-         embedded = new EmbeddedServerHelper();
-         embedded.setup();
-      }
+   //   private static final boolean USE_EMBEDDED = true;
+//
+//   private EmbeddedServerHelper embedded;
+
+//   HBaseTestingUtility testUtil;
+//   MiniHBaseCluster cluster;
+//   private int zooKeeperPort;
+
+   @BeforeClass(alwaysRun = true)
+   public void beforeClass() throws Exception {
+      hBaseCluster = new HBaseCluster();
+
+//      log.info("Starting HBase cluster");
+//      Configuration conf = HBaseConfiguration.create();
+//      conf.setInt("hbase.master.assignment.timeoutmonitor.period", 2000);
+//      conf.setInt("hbase.master.assignment.timeoutmonitor.timeout", 5000);
+//      testUtil = new HBaseTestingUtility(conf);
+//      testUtil.startMiniCluster();
+//      cluster = testUtil.getHBaseCluster();
+//      log.info("Waiting for active/ready HBase master");
+//      cluster.waitForActiveAndReadyMaster();
+//
+//      zooKeeperPort = testUtil.getConfiguration()
+//            .getInt(HConstants.ZOOKEEPER_CLIENT_PORT, -1);
+
+//      if (USE_EMBEDDED) {
+//         embedded = new EmbeddedServerHelper();
+//         embedded.setup();
+//      }
+
+//      super.setUp();
    }
 
    @AfterClass(alwaysRun = true)
-   public static void cleanup() throws IOException {
-      if (USE_EMBEDDED) {
-         EmbeddedServerHelper.teardown();
-         embedded = null;
-      }
+   public void afterClass() throws CacheLoaderException {
+      HBaseCluster.shutdown(hBaseCluster);
+
+//      try {
+//         testUtil.shutdownMiniCluster();
+//      } catch (Exception e) {
+//         throw new CacheLoaderException(e);
+//      }
    }
 
    @Override
@@ -61,10 +94,8 @@ public class HBaseCacheStoreTest extends BaseCacheStoreTest {
       HBaseCacheStoreConfig conf = new HBaseCacheStoreConfig();
       conf.setPurgeSynchronously(true);
 
-      if (USE_EMBEDDED) {
-         // overwrite the ZooKeeper client port with the port from the embedded server
-         conf.setHbaseZookeeperPropertyClientPort(EmbeddedServerHelper.zooKeeperPort);
-      }
+      // overwrite the ZooKeeper client port with the port from the embedded server
+      conf.setHbaseZookeeperPropertyClientPort(hBaseCluster.getZooKeeperPort());
 
       cs.init(conf, getCache(), getMarshaller());
       cs.start();
