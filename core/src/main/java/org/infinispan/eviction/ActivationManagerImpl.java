@@ -119,20 +119,5 @@ public class ActivationManagerImpl implements ActivationManager {
    public void resetStatistics() {
       activations.set(0);
    }
-
-   /**
-    * Disables a cache loader of a given type, where type is the fully qualified class name of a {@link org.infinispan.loaders.CacheLoader} implementation.
-    *
-    * If the given type cannot be found, this is a no-op.  If more than one cache loader of the same type is configured,
-    * all cache loaders of the given type are disabled.
-    *
-    * @param loaderType fully qualified class name of the cache loader type to disable
-    */
-   @ManagedOperation(description = "Disable all cache loaders of a given type, where type is a fully qualified class name of the cache loader to disable")
-   @Operation(displayName = "Disable all cache loaders of a given type, where type is a fully qualified class name of the cache loader to disable")
-   @SuppressWarnings("unused")
-   public void disableCacheLoader(String loaderType) {
-      if (enabled) clm.disableCacheStore(loaderType);
-   }
-
 }
+
