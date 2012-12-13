@@ -25,6 +25,7 @@ package org.infinispan;
 import org.infinispan.atomic.Delta;
 import org.infinispan.batch.BatchContainer;
 import org.infinispan.container.DataContainer;
+import org.infinispan.container.entries.CacheEntry;
 import org.infinispan.context.Flag;
 import org.infinispan.context.InvocationContextContainer;
 import org.infinispan.distribution.DistributionManager;
@@ -158,25 +159,30 @@ public abstract class AbstractDelegatingAdvancedCache<K, V> extends AbstractDele
    public boolean lock(Collection<? extends K> keys) {
       return cache.lock(keys);
    }
-   
+
    @Override
    public void applyDelta(K deltaAwareValueKey, Delta delta, Object... locksToAcquire){
       cache.applyDelta(deltaAwareValueKey, delta, locksToAcquire);
    }
-   
+
    @Override
    public Stats getStats() {
        return cache.getStats();
    }
-   
+
    @Override
    public ClassLoader getClassLoader() {
       return cache.getClassLoader();
    }
-   
+
    @Override
    public AdvancedCache<K, V> with(ClassLoader classLoader) {
       return cache.with(classLoader);
+   }
+
+   @Override
+   public CacheEntry getCacheEntry(Object key, EnumSet<Flag> explicitFlags, ClassLoader explicitClassLoader) {
+      return cache.getCacheEntry(key, explicitFlags, explicitClassLoader);
    }
 
    protected final void putForExternalRead(K key, V value, EnumSet<Flag> flags, ClassLoader classLoader) {
