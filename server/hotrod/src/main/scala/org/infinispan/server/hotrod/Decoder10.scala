@@ -44,7 +44,6 @@ import org.infinispan.remoting.responses.ClusteredGetResponseValidityFilter
 import java.util.HashSet
 import org.infinispan.remoting.transport.Address
 import org.infinispan.remoting.rpc.ResponseMode
-import org.infinispan.CacheImpl
 import org.infinispan.container.entries.InternalCacheEntry
 
 /**
@@ -238,7 +237,7 @@ object Decoder10 extends AbstractVersionedDecoder with ServerConstants with Log 
    }
 
    def getKeyMetadata(h: HotRodHeader, k: ByteArrayKey, cache: Cache[ByteArrayKey, CacheValue]): GetWithMetadataResponse = {
-      val ce = cache.getAdvancedCache.asInstanceOf[CacheImpl[ByteArrayKey, CacheValue]].getCacheEntry(k, null, null)
+      val ce = cache.getAdvancedCache.getCacheEntry(k, null, null)
       if (ce != null) {
          val ice = ce.asInstanceOf[InternalCacheEntry]
          val v = ce.getValue.asInstanceOf[CacheValue]

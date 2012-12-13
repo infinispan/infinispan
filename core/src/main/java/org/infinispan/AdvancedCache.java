@@ -25,6 +25,7 @@ package org.infinispan;
 import org.infinispan.atomic.Delta;
 import org.infinispan.batch.BatchContainer;
 import org.infinispan.container.DataContainer;
+import org.infinispan.container.entries.CacheEntry;
 import org.infinispan.context.Flag;
 import org.infinispan.context.InvocationContextContainer;
 import org.infinispan.distribution.DistributionManager;
@@ -38,6 +39,7 @@ import org.infinispan.util.concurrent.locks.LockManager;
 import javax.transaction.TransactionManager;
 import javax.transaction.xa.XAResource;
 import java.util.Collection;
+import java.util.EnumSet;
 import java.util.List;
 
 /**
@@ -152,16 +154,16 @@ public interface AdvancedCache<K, V> extends Cache<K, V> {
     * @return true if the lock acquisition attempt was successful for <i>all</i> keys;
     * false will only be returned if the lock acquisition timed out and the
     * operation has been called with {@link Flag#FAIL_SILENTLY}.
-    * @throws org.infinispan.util.concurrent.TimeoutException if the lock 
+    * @throws org.infinispan.util.concurrent.TimeoutException if the lock
     * cannot be acquired within the configured lock acquisition time.
-    */   
+    */
    boolean lock(K... keys);
 
    /**
     * Locks collections of keys eagerly across cache nodes in a cluster.
     * <p>
     * Collections of keys can be locked eagerly in the context of a transaction only.
-    * 
+    *
     * @param keys collection of keys to lock
     * @return true if the lock acquisition attempt was successful for <i>all</i> keys;
     * false will only be returned if the lock acquisition timed out and the
@@ -170,14 +172,14 @@ public interface AdvancedCache<K, V> extends Cache<K, V> {
     * cannot be acquired within the configured lock acquisition time.
     */
    boolean lock(Collection<? extends K> keys);
-   
-   
+
+
    /**
     * Applies the given Delta to the DeltaAware object stored under deltaAwareValueKey if and only if all
     * locksToAcquire locks are successfully obtained
-    *     
-    *      
-    * @param deltaAwareValueKey the key for DeltaAware object 
+    *
+    *
+    * @param deltaAwareValueKey the key for DeltaAware object
     * @param delta the delta to be applied to DeltaAware object
     * @param locksToAcquire keys to be locked in DeltaAware scope
     */
@@ -249,7 +251,7 @@ public interface AdvancedCache<K, V> extends Cache<K, V> {
     * @return an instance of {@link XAResource}
     */
    XAResource getXAResource();
-   
+
    /**
     * Returns the cache loader associated associated with this cache.  As an alternative to setting this on every
     * invocation, users could also consider using the {@link DecoratedCache} wrapper.
@@ -257,7 +259,7 @@ public interface AdvancedCache<K, V> extends Cache<K, V> {
     * @return this cache's cache loader
     */
    ClassLoader getClassLoader();
-   
+
    /**
     * Using this operation, users can call any {@link AdvancedCache} operation
     * with a given {@link ClassLoader}. This means that any {@link ClassLoader} happening
@@ -291,4 +293,14 @@ public interface AdvancedCache<K, V> extends Cache<K, V> {
     * with a particular {@link ClassLoader}.
     */
    AdvancedCache<K, V> with(ClassLoader classLoader);
+
+   /**
+    * Retrieves a CacheEntry corresponding to a specific key
+    *
+    * @param key
+    * @param explicitFlags
+    * @param explicitClassLoader
+    * @return
+    */
+   CacheEntry getCacheEntry(Object key, EnumSet<Flag> explicitFlags, ClassLoader explicitClassLoader);
 }

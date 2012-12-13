@@ -280,6 +280,7 @@ public class CacheImpl<K, V> extends CacheSupport<K, V> implements AdvancedCache
       return (V) invoker.invoke(ctx, command);
    }
 
+   @Override
    public final CacheEntry getCacheEntry(Object key, EnumSet<Flag> explicitFlags, ClassLoader explicitClassLoader) {
       assertKeyNotNull(key);
       InvocationContext ctx = getInvocationContextForRead(null, explicitClassLoader, 1);
