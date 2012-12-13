@@ -301,6 +301,8 @@ public class CacheImpl<K, V> extends CacheSupport<K, V> implements AdvancedCache
    }
 
    @Override
+   @ManagedOperation(description = "Clears the cache.")
+   @Operation(displayName = "Clears the cache cache.")
    public final void clear() {
       clear(null, null);
    }
