@@ -344,7 +344,6 @@ public class BasicDistributedExecutorTest extends AbstractCacheTest {
       }
    }
 
-   @Test(expectedExceptions = ExecutionException.class)
    public void testDistributedCallableEmptyFailoverPolicy() throws Exception {
       Configuration config = TestCacheManagerFactory.getDefaultConfiguration(true, Configuration.CacheMode.REPL_SYNC);
       EmbeddedCacheManager cacheManager = TestCacheManagerFactory.createClusteredCacheManager(config);
@@ -365,6 +364,9 @@ public class BasicDistributedExecutorTest extends AbstractCacheTest {
          Future<Integer> f = des.submit(task);
 
          f.get();
+      } catch (ExecutionException e) {
+         // Verify that the distributed executor didn't wrap the exception in too many extra exceptions.
+         AssertJUnit.assertTrue("Wrong exception: " + e, e.getCause() instanceof ArithmeticException);
       } finally {
          des.shutdownNow();
          TestingUtil.killCacheManagers(cacheManager);
@@ -396,10 +398,10 @@ public class BasicDistributedExecutorTest extends AbstractCacheTest {
 
          val.get();
          throw new IllegalStateException("Should have raised exception");
-      } catch (Exception e){
-         assert e instanceof ExecutionException;
-         boolean duplicateEEInChain = e.getCause() instanceof ExecutionException;
-         AssertJUnit.assertEquals(false, duplicateEEInChain);
+      } catch (ExecutionException e){
+         // The failover policy throws an IllegalStateException because there are no nodes to retry on.
+         // Verify that the distributed executor didn't wrap the exception in too many extra exceptions.
+         AssertJUnit.assertTrue("Wrong exception: " + e, e.getCause() instanceof IllegalStateException);
       }
       finally {
          des.shutdownNow();
