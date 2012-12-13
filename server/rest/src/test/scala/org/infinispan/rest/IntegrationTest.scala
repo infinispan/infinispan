@@ -23,6 +23,7 @@
 package org.infinispan.rest
 
 
+import logging.Log
 import org.apache.commons.httpclient.methods._
 import javax.servlet.http.HttpServletResponse
 import javax.servlet.http.HttpServletResponse._
@@ -38,6 +39,12 @@ import org.apache.commons.httpclient.{HttpMethodBase, Header, HttpClient}
 import org.apache.commons.httpclient.HttpMethod
 import java.util.{Arrays, Calendar, Locale}
 import org.testng.AssertJUnit._
+import org.infinispan.manager.{EmbeddedCacheManager, AbstractDelegatingEmbeddedCacheManager}
+import org.infinispan.{AbstractDelegatingCache, Cache}
+import java.util.concurrent.{TimeUnit, CountDownLatch}
+import scala.concurrent.ops._
+import org.infinispan.server.core.logging.JavaLog
+import org.infinispan.util.logging.LogFactory
 
 /**
  * This tests using the Apache HTTP commons client library - but you could use anything
@@ -51,33 +58,34 @@ import org.testng.AssertJUnit._
  */
 @Test(groups = Array("functional"), testName = "rest.IntegrationTest")
 class IntegrationTest {
+
+   private lazy val log: JavaLog = LogFactory.getLog(getClass, classOf[JavaLog])
+
    val HOST = "http://localhost:8888"
    val cacheName = BasicCacheContainer.DEFAULT_CACHE_NAME
    val fullPath = HOST + "/rest/" + cacheName
-   val DATE_PATTERN_RFC1123 = "EEE, dd MMM yyyy HH:mm:ss zzz";
+   val DATE_PATTERN_RFC1123 = "EEE, dd MMM yyyy HH:mm:ss zzz"
 
    //val HOST = "http://localhost:8080/infinispan/"
 
    @BeforeClass
-   def setUp() = {
+   def setUp() {
       ServerInstance.start()
    }
 
    @AfterClass(alwaysRun = true)
-   def tearDown() = {
+   def tearDown() {
       ServerInstance.stop()
    }
 
-   def testBasicOperation(m: Method) = {
-      // Now invoke...via HTTP
-      val client = new HttpClient
-
+   def testBasicOperation(m: Method) {
       val fullPathKey = fullPath + "/" + m.getName
 
       val insert = new PutMethod(fullPathKey)
       val initialXML = <hey>ho</hey>
 
-      insert.setRequestEntity(new ByteArrayRequestEntity(initialXML.toString.getBytes, "application/octet-stream"))
+      insert.setRequestEntity(new ByteArrayRequestEntity(initialXML
+              .toString().getBytes, "application/octet-stream"))
 
       Client.call(insert)
 
@@ -87,12 +95,12 @@ class IntegrationTest {
       val get = new GetMethod(fullPathKey)
       Client.call(get)
       val bytes = get.getResponseBody
-      assertEquals(bytes.size, initialXML.toString.getBytes.size)
-      assertEquals(<hey>ho</hey>.toString, get.getResponseBodyAsString)
+      assertEquals(bytes.size, initialXML.toString().getBytes.size)
+      assertEquals(<hey>ho</hey>.toString(), get.getResponseBodyAsString)
       val hdr: Header = get.getResponseHeader("Content-Type")
       assertEquals("application/octet-stream", hdr.getValue)
 
-      val remove = new DeleteMethod(fullPathKey);
+      val remove = new DeleteMethod(fullPathKey)
       Client.call(remove)
       Client.call(get)
 
@@ -100,9 +108,9 @@ class IntegrationTest {
 
       Client.call(insert)
       Client.call(get)
-      assertEquals(<hey>ho</hey>.toString, get.getResponseBodyAsString)
+      assertEquals(<hey>ho</hey>.toString(), get.getResponseBodyAsString)
 
-      val removeAll = new DeleteMethod(fullPath);
+      val removeAll = new DeleteMethod(fullPath)
       assertEquals(HttpServletResponse.SC_OK, Client.call(removeAll).getStatusCode)
 
       Client.call(get)
@@ -111,7 +119,7 @@ class IntegrationTest {
       val bout = new ByteArrayOutputStream
       val oo = new ObjectOutputStream(bout)
       oo.writeObject(new MIMECacheEntry("foo", "hey".getBytes))
-      oo.flush
+      oo.flush()
       val byteData = bout.toByteArray
 
       val insertMore = new PutMethod(fullPathKey)
@@ -131,14 +139,14 @@ class IntegrationTest {
       assertEquals("foo", ce.contentType)
    }
 
-   def testEmptyGet = {
+   def testEmptyGet() {
       assertEquals(
          HttpServletResponse.SC_NOT_FOUND,
          Client.call(new GetMethod(HOST + "/rest/" + cacheName + "/nodata")).getStatusCode
       )
    }
 
-   def testGet(m: Method) = {
+   def testGet(m: Method) {
       val fullPathKey = fullPath + "/" + m.getName
       val post = new PostMethod(fullPathKey)
       post.setRequestEntity(new StringRequestEntity("data", "application/text", null))
@@ -152,7 +160,7 @@ class IntegrationTest {
       assertEquals("data", get.getResponseBodyAsString)
    }
 
-   def testHead(m: Method) = {
+   def testHead(m: Method) {
       val fullPathKey = fullPath + "/" + m.getName
       val post = new PostMethod(fullPathKey)
       post.setRequestEntity(new StringRequestEntity("data", "application/text", null))
@@ -167,7 +175,7 @@ class IntegrationTest {
       assertNull(get.getResponseBodyAsString)
    }
 
-   def testGetIfUnmodified(m: Method) = {
+   def testGetIfUnmodified(m: Method) {
       val fullPathKey = fullPath + "/" + m.getName
       val post = new PostMethod(fullPathKey)
       post.setRequestEntity(new StringRequestEntity("data", "application/text", null))
@@ -192,7 +200,7 @@ class IntegrationTest {
       assertEquals("data", get.getResponseBodyAsString)
    }
 
-   def testPostDuplicate(m: Method) = {
+   def testPostDuplicate(m: Method) {
       val fullPathKey = fullPath + "/" + m.getName
       val post = new PostMethod(fullPathKey)
       post.setRequestEntity(new StringRequestEntity("data", "application/text", "UTF-8"))
@@ -208,11 +216,17 @@ class IntegrationTest {
       assertEquals(HttpServletResponse.SC_OK, Client.call(put).getStatusCode)
    }
 
-   def testPutDataWithTimeToLive(m: Method) = putAndAssertEphemeralData(m, "2", "3")
+   def testPutDataWithTimeToLive(m: Method) {
+      putAndAssertEphemeralData(m, "2", "3")
+   }
 
-   def testPutDataWithMaxIdleOnly(m: Method) = putAndAssertEphemeralData(m, "", "3")
+   def testPutDataWithMaxIdleOnly(m: Method) {
+      putAndAssertEphemeralData(m, "", "3")
+   }
 
-   def testPutDataWithTimeToLiveOnly(m: Method) = putAndAssertEphemeralData(m, "3", "")
+   def testPutDataWithTimeToLiveOnly(m: Method) {
+      putAndAssertEphemeralData(m, "3", "")
+   }
 
    private def putAndAssertEphemeralData(m: Method, timeToLiveSeconds: String, maxIdleTimeSeconds: String) {
       val fullPathKey = fullPath + "/" + m.getName
@@ -253,13 +267,13 @@ class IntegrationTest {
 
       // Put again using the If-Match with the ETag we got back from the get
       val reput = new PutMethod(fullPathKey)
-      reput.setRequestHeader("If-Match", etag);
+      reput.setRequestHeader("If-Match", etag)
       reput.setRequestEntity(new StringRequestEntity("data", "application/text", "UTF-8"))
       assertEquals(HttpServletResponse.SC_OK, Client.call(reput).getStatusCode)
 
       // Try to put again, but with a different ETag
       val reputAgain = new PutMethod(fullPathKey)
-      reputAgain.setRequestHeader("If-Match", "x");
+      reputAgain.setRequestHeader("If-Match", "x")
       reputAgain.setRequestEntity(new StringRequestEntity("data", "application/text", "UTF-8"))
       assertEquals(HttpServletResponse.SC_PRECONDITION_FAILED, Client.call(reputAgain).getStatusCode)
    }
@@ -278,13 +292,13 @@ class IntegrationTest {
 
       // Put again using the If-Match with the ETag we got back from the get
       val reput = new PutMethod(fullPathKey)
-      reput.setRequestHeader("If-None-Match", "x");
+      reput.setRequestHeader("If-None-Match", "x")
       reput.setRequestEntity(new StringRequestEntity("data", "application/text", "UTF-8"))
       assertEquals(HttpServletResponse.SC_OK, Client.call(reput).getStatusCode)
 
       // Try to put again, but with a different ETag
       val reputAgain = new PutMethod(fullPathKey)
-      reputAgain.setRequestHeader("If-None-Match", etag);
+      reputAgain.setRequestHeader("If-None-Match", etag)
       reputAgain.setRequestEntity(new StringRequestEntity("data", "application/text", "UTF-8"))
       assertEquals(HttpServletResponse.SC_PRECONDITION_FAILED, Client.call(reputAgain).getStatusCode)
    }
@@ -336,7 +350,7 @@ class IntegrationTest {
 
       // Try to put again, but using the date returned by the GET
       val reputAgain = new PutMethod(fullPathKey)
-      reputAgain.setRequestHeader("If-Unmodified-Since", lastMod);
+      reputAgain.setRequestHeader("If-Unmodified-Since", lastMod)
       reputAgain.setRequestEntity(new StringRequestEntity("data", "application/text", "UTF-8"))
       assertEquals(HttpServletResponse.SC_OK, Client.call(reputAgain).getStatusCode)
    }
@@ -355,12 +369,12 @@ class IntegrationTest {
 
       // Attempt to delete with a wrong ETag
       val delete = new DeleteMethod(fullPathKey)
-      delete.setRequestHeader("If-Match", "x");
+      delete.setRequestHeader("If-Match", "x")
       assertEquals(HttpServletResponse.SC_PRECONDITION_FAILED, Client.call(delete).getStatusCode)
 
       // Try to delete again, but with the proper ETag
       val deleteAgain = new DeleteMethod(fullPathKey)
-      deleteAgain.setRequestHeader("If-Match", etag);
+      deleteAgain.setRequestHeader("If-Match", etag)
       assertEquals(HttpServletResponse.SC_OK, Client.call(deleteAgain).getStatusCode)
    }
 
@@ -378,12 +392,12 @@ class IntegrationTest {
 
       // Attempt to delete with the ETag
       val delete = new DeleteMethod(fullPathKey)
-      delete.setRequestHeader("If-None-Match", etag);
+      delete.setRequestHeader("If-None-Match", etag)
       assertEquals(HttpServletResponse.SC_PRECONDITION_FAILED, Client.call(delete).getStatusCode)
 
       // Try to delete again, but with a non-matching ETag
       val deleteAgain = new DeleteMethod(fullPathKey)
-      deleteAgain.setRequestHeader("If-None-Match", "x");
+      deleteAgain.setRequestHeader("If-None-Match", "x")
       assertEquals(HttpServletResponse.SC_OK, Client.call(deleteAgain).getStatusCode)
    }
 
@@ -435,8 +449,9 @@ class IntegrationTest {
       assertEquals(HttpServletResponse.SC_OK, Client.call(deleteAgain).getStatusCode)
    }
 
-   def testDeleteCachePreconditionUnimplemented(m: Method) =
+   def testDeleteCachePreconditionUnimplemented(m: Method) {
       testDeletePreconditionalUnimplemented(fullPath)
+   }
 
    private def testDeletePreconditionalUnimplemented(fullPathKey: String) {
      testDeletePreconditionalUnimplemented(fullPathKey, "If-Match")
@@ -446,21 +461,21 @@ class IntegrationTest {
    }
 
    private def testDeletePreconditionalUnimplemented(
-         fullPathKey: String, preconditionalHeaderName: String) = {
+         fullPathKey: String, preconditionalHeaderName: String) {
       val delete = new DeleteMethod(fullPathKey)
-      delete.setRequestHeader(preconditionalHeaderName, "*");
+      delete.setRequestHeader(preconditionalHeaderName, "*")
       Client.call(delete)
 
       assertNotImplemented(delete)
    }
 
-   private def assertNotImplemented(method: HttpMethod) = {
+   private def assertNotImplemented(method: HttpMethod) {
       assertEquals(method.getStatusCode, 501)
       assertEquals(method.getStatusText, "Not Implemented")
-      assert(method.getResponseBodyAsString.toLowerCase().contains("precondition"))
+      assert(method.getResponseBodyAsString.toLowerCase.contains("precondition"))
    }
 
-   def testRemoveEntry(m: Method) = {
+   def testRemoveEntry(m: Method) {
       val fullPathKey = fullPath + "/" + m.getName
       val put = new PostMethod(fullPathKey)
       put.setRequestEntity(new StringRequestEntity("data", "application/text", "UTF-8"))
@@ -472,7 +487,7 @@ class IntegrationTest {
       assertEquals(HttpServletResponse.SC_NOT_FOUND, Client.call(new HeadMethod(fullPathKey)).getStatusCode)
    }
 
-   def testWipeCacheBucket(m: Method) = {
+   def testWipeCacheBucket(m: Method) {
       val fullPathKey = fullPath + "/" + m.getName
       val put = new PostMethod(fullPathKey)
       put.setRequestEntity(new StringRequestEntity("data", "application/text", "UTF-8"))
@@ -487,7 +502,7 @@ class IntegrationTest {
       assertEquals(HttpServletResponse.SC_NOT_FOUND, Client.call(new HeadMethod(fullPathKey)).getStatusCode)
    }
 
-   def testAsyncAddRemove(m: Method) = {
+   def testAsyncAddRemove(m: Method) {
       val fullPathKey = fullPath + "/" + m.getName
       val put = new PostMethod(fullPathKey)
       put.setRequestHeader("performAsync", "true")
@@ -497,14 +512,14 @@ class IntegrationTest {
       Thread.sleep(50)
       assertEquals(HttpServletResponse.SC_OK, Client.call(new HeadMethod(fullPathKey)).getStatusCode)
 
-      val del = new DeleteMethod(fullPathKey);
+      val del = new DeleteMethod(fullPathKey)
       del.setRequestHeader("performAsync", "true")
       Client.call(del)
       Thread.sleep(50)
       assertEquals(HttpServletResponse.SC_NOT_FOUND, Client.call(new HeadMethod(fullPathKey)).getStatusCode)
    }
 
-   def testShouldCopeWithSerializable(m: Method) = {
+   def testShouldCopeWithSerializable(m: Method) {
       val fullPathKey = fullPath + "/" + m.getName
       Client.call(new GetMethod(fullPathKey))
 
@@ -515,7 +530,7 @@ class IntegrationTest {
       ManagerInstance getCache (BasicCacheContainer.DEFAULT_CACHE_NAME) put (m.getName + "3", new MyNonSer)
 
       //check we can get it back as an object...
-      val get = new GetMethod(fullPathKey);
+      val get = new GetMethod(fullPathKey)
       get.setRequestHeader("Accept", "application/x-java-serialized-object")
       Client.call(get)
       assertEquals(HttpServletResponse.SC_OK, get.getStatusCode)
@@ -557,7 +572,7 @@ class IntegrationTest {
               .get(m.getName).asInstanceOf[Array[Byte]]
    }
 
-   def testNonexistentCache(m: Method) = {
+   def testNonexistentCache(m: Method) {
       val fullPathKey = HOST + "/rest/nonexistent/" + m.getName
       val get = new GetMethod(fullPathKey)
       Client call get
@@ -572,11 +587,13 @@ class IntegrationTest {
       assertEquals(HttpServletResponse.SC_NOT_FOUND, put.getStatusCode)
    }
 
-   def testByteArrayAsSerializedObjects(m: Method) =
+   def testByteArrayAsSerializedObjects(m: Method) {
       sendByteArrayAs(m, "application/x-java-serialized-object")
+   }
 
-   def testByteArrayAsOctecStreamObjects(m: Method) =
+   def testByteArrayAsOctecStreamObjects(m: Method) {
       sendByteArrayAs(m, "application/octet-stream")
+   }
 
    private def sendByteArrayAs(m: Method, contentType: String) {
       val serializedOnClient: Array[Byte] = Array(0x65, 0x66, 0x67)
@@ -588,28 +605,77 @@ class IntegrationTest {
       assertEquals(serializedOnClient, bytesRead)
    }
 
-   def testIfUnmodifiedSince(m: Method) = {
+   def testIfUnmodifiedSince(m: Method) {
       put(m)
       var result = get(m)
-      val dateLast = result.getResponseHeader("Last-Modified").getValue()
+      val dateLast = result.getResponseHeader("Last-Modified").getValue
       val dateMinus = addDay(dateLast, -1)
       val datePlus = addDay(dateLast, 1)
-      assertNotNull(get(m, Some(dateLast)).getResponseBodyAsString())
-      assertNotNull(get(m, Some(datePlus)).getResponseBodyAsString())
+      assertNotNull(get(m, Some(dateLast)).getResponseBodyAsString)
+      assertNotNull(get(m, Some(datePlus)).getResponseBodyAsString)
       result = get(m, Some(dateMinus), None, HttpServletResponse.SC_PRECONDITION_FAILED)
    }
 
-   def testETagChanges(m: Method) = {
+   def testETagChanges(m: Method) {
       put(m, "data1")
-      val eTagFirst = get(m).getResponseHeader("ETag").getValue()
+      val eTagFirst = get(m).getResponseHeader("ETag").getValue
       // second get should get the same ETag
-      assertEquals(eTagFirst, get(m).getResponseHeader("ETag").getValue())
+      assertEquals(eTagFirst, get(m).getResponseHeader("ETag").getValue)
       // do second PUT
       put(m, "data2")
       // get ETag again
-      val eTagSecond = get(m).getResponseHeader("ETag").getValue()
-      // println("etag1 %s; etag2 %s; equals? %b".format(eTagFirst, eTagSecond, eTagFirst.equals(eTagSecond)))
-      assertFalse(eTagFirst.equals(eTagSecond))
+      val eTagSecond = get(m).getResponseHeader("ETag").getValue
+      assertFalse("etag1 %s; etag2 %s; equals? %b".format(
+         eTagFirst, eTagSecond, eTagFirst.equals(eTagSecond)),
+         eTagFirst.equals(eTagSecond))
+   }
+
+   def testConcurrentETagChanges(m: Method) {
+      put(m, "data1")
+
+      val v2PutLatch = new CountDownLatch(1)
+      val v3PutLatch = new CountDownLatch(1)
+      val v2FinishLatch = new CountDownLatch(1)
+      val mockCacheManager = new ControlledCacheManager(
+         ManagerInstance.instance, v2PutLatch, v3PutLatch, v2FinishLatch)
+      try {
+         ManagerInstance.knownCaches.put(
+            BasicCacheContainer.DEFAULT_CACHE_NAME,
+            mockCacheManager.getCache[String, Any]())
+
+         val replaceFuture = future {
+            // Put again, with a different client (separate thread)
+            val newClient = new HttpClient
+            val put = new PutMethod(fullPathKey(m))
+            put.setRequestHeader("Content-Type", "application/text")
+            put.setRequestEntity(new StringRequestEntity("data2", null, null))
+            newClient.executeMethod(put)
+            assertEquals(HttpServletResponse.SC_OK, put.getStatusCode)
+
+            // 5. v2 applied, let v3 finish
+            v2FinishLatch.countDown()
+         }
+         // 1. Wait for v3 to be allowed
+         val continue = v3PutLatch.await(10, TimeUnit.SECONDS)
+         assertTrue("Timed out waiting for concurrent put", continue)
+         // Ready to do concurrent put which should not be allowed
+         val put = new PutMethod(fullPathKey(m))
+         put.setRequestHeader("Content-Type", "application/text")
+         put.setRequestEntity(new StringRequestEntity("data3", null, null))
+         Client.call(put)
+         assertEquals(HttpServletResponse.SC_PRECONDITION_FAILED,
+            put.getStatusCode)
+
+         // Wait for replace to happen
+         replaceFuture.apply()
+         // Final data should be v2
+         assertEquals("data2", get(m).getResponseBodyAsString)
+      } finally {
+         ManagerInstance.knownCaches.put(
+            BasicCacheContainer.DEFAULT_CACHE_NAME,
+            ManagerInstance.instance.getCache[String, Any]())
+      }
+
    }
 
    def testSerializedStringGetBytes(m: Method) {
@@ -620,10 +686,10 @@ class IntegrationTest {
       oo.writeObject(data)
       oo.flush()
 
-      val bytes = bout.toByteArray()
+      val bytes = bout.toByteArray
       put(m, bytes, "application/x-java-serialized-object")
 
-      val bytesRead = get(m, None, Some("application/x-java-serialized-object")).getResponseBody()
+      val bytesRead = get(m, None, Some("application/x-java-serialized-object")).getResponseBody
       assertTrue(Arrays.equals(bytes, bytesRead))
 
       val oin = new ObjectInputStream(new ByteArrayInputStream(bytesRead))
@@ -742,7 +808,7 @@ class IntegrationTest {
       val put = new PutMethod(fullPathKey(m))
       put.setRequestHeader("Content-Type", contentType)
       val reqEntity = data match {
-         case s: String => new StringRequestEntity(s)
+         case s: String => new StringRequestEntity(s, null, null)
          case b: Array[Byte] => new InputStreamRequestEntity(new ByteArrayInputStream(b))
       }
       put.setRequestEntity(reqEntity)
@@ -778,17 +844,63 @@ class IntegrationTest {
       val cal = Calendar.getInstance()
       cal.setTime(date)
       cal.add(Calendar.DATE, days)
-      format.format(cal.getTime())
+      format.format(cal.getTime)
    }
-}
 
+   class ControlledCacheManager(cm: EmbeddedCacheManager,
+           v2PutLatch: CountDownLatch,
+           v3PutLatch: CountDownLatch,
+           v2FinishLatch: CountDownLatch)
+           extends AbstractDelegatingEmbeddedCacheManager(cm) {
+
+      // DO NOT REMOVE PARENTHESES!
+      override def getCache[K, V](): Cache[K, V] =
+         new ControlledCache[K, V](super.getCache[K, V],
+            v2PutLatch, v3PutLatch, v2FinishLatch)
+   }
+
+   class ControlledCache[String, Any](cache: Cache[String, Any],
+           v2PutLatch: CountDownLatch, v3PutLatch: CountDownLatch,
+           v2FinishLatch: CountDownLatch)
+           extends AbstractDelegatingCache(cache) {
+      override def replace(key: String, oldValue: Any, value: Any,
+              lifespan: Long, lifespanUnit: TimeUnit, maxIdleTime: Long,
+              maxIdleTimeUnit: TimeUnit): Boolean = {
+         val newMime = value.asInstanceOf[MIMECacheEntry]
+         val oldMime = oldValue.asInstanceOf[MIMECacheEntry]
+         val oldMimeAsString = new java.lang.String(oldMime.data)
+         val newMimeAsString = new java.lang.String(newMime.data)
+         if (Arrays.equals(newMime.data, "data2".getBytes)) {
+            log.debug("Let v3 apply...")
+            v3PutLatch.countDown() // 2. Let the v3 put come in
+            log.debug("Wait until v2 can be stored")
+            // 3. Wait until v2 can apply
+            val continue = v2PutLatch.await(10, TimeUnit.SECONDS)
+            if (!continue)
+               fail("Timed out waiting for v2 to be allowed")
+         } else if (Arrays.equals(newMime.data, "data3".getBytes)) {
+            log.debugf("About to store v3, let v2 apply, oldValue(for v3)=%s",
+               oldMimeAsString)
+            // 4. Let data2 apply
+            v2PutLatch.countDown()
+            v2FinishLatch.await(10, TimeUnit.SECONDS) // Wait for data2 apply
+         }
+         log.debugf("Replace key=%s, oldValue=%s, value=%s",
+            key, oldMimeAsString, newMimeAsString)
+
+         super.replace(key, oldValue, value,
+            lifespan, lifespanUnit, maxIdleTime, maxIdleTimeUnit)
+      }
+   }
+
+}
 
 class MyNonSer {
    var name: String = "mic"
 
    def getName = name
 
-   def setName(s: String) = {
+   def setName(s: String) {
       name = s
    }
 }
@@ -800,7 +912,7 @@ class MySer extends Serializable {
 
    def getName = name
 
-   def setName(s: String) = {
+   def setName(s: String) {
       name = s
    }
 }

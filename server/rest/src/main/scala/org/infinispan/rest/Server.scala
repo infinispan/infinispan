@@ -25,7 +25,7 @@ package org.infinispan.rest
 import com.thoughtworks.xstream.XStream
 import java.io._
 import java.util.Date
-import java.util.concurrent.TimeUnit
+import java.util.concurrent.TimeUnit.{SECONDS => SECS}
 import javax.ws.rs._
 import core._
 import core.Response.{ResponseBuilder, Status}
@@ -37,6 +37,7 @@ import org.infinispan.{CacheException, Cache}
 import org.infinispan.commons.hash.MurmurHash3
 import org.infinispan.util.concurrent.ConcurrentMapFactory
 import javax.ws.rs._
+import javax.servlet.http.HttpServletResponse
 
 /**
  * Integration server linking REST requests with Infinispan calls.
@@ -83,14 +84,14 @@ class Server(@Context request: Request, @HeaderParam("performAsync") useAsync: B
 
                }
             }
-            case null => Response status (Status.NOT_FOUND) build
+            case null => Response.status(Status.NOT_FOUND).build
             case _ => throw new Exception
          }
       }
    }
 
    /**create a JAX-RS streaming output */
-   def streamIt(action: (OutputStream) => Unit) = new StreamingOutput {def write(o: OutputStream) = {action(o)}}
+   def streamIt(action: (OutputStream) => Unit) = new StreamingOutput {def write(o: OutputStream) {action(o)}}
 
    @HEAD
    @Path("/{cacheName}/{cacheKey}")
@@ -105,7 +106,7 @@ class Server(@Context request: Request, @HeaderParam("performAsync") useAsync: B
                }
             }
             case x: Any => Response.ok.build
-            case null => Response status (Status.NOT_FOUND) build
+            case null => Response.status(Status.NOT_FOUND).build
          }
       }
    }
@@ -130,29 +131,66 @@ class Server(@Context request: Request, @HeaderParam("performAsync") useAsync: B
                      // One of the preconditions failed, build a response
                      case bldr: ResponseBuilder => bldr.build
                      // Preconditions passed
-                     case null => putInCache(cache, mediaType, key, data, ttl, idleTime)
+                     case null => putInCache(cache, key,
+                        toCacheEntry(data, mediaType), ttl, idleTime, Some(mime))
                   }
                }
                case binary: Array[Byte] =>
-                  putInCache(cache, mediaType, key, data, ttl, idleTime)
+                  putInCache(cache, key,
+                     toCacheEntry(data, mediaType), ttl, idleTime, None)
                case null =>
-                  putInCache(cache, mediaType, key, data, ttl, idleTime)
+                  putInCache(cache, key,
+                     toCacheEntry(data, mediaType), ttl, idleTime, None)
             }
          }
       }
    }
 
-   private def putInCache(cache: Cache[String, Any], mediaType: String, key: String, data: Array[Byte], ttl: Long, idleTime: Long): Response = {
-      val obj = if (isBinaryType(mediaType)) data else new MIMECacheEntry(mediaType, data)
-      (ttl, idleTime, useAsync) match {
-         case (0, 0, false) => cache.put(key, obj)
-         case (x, 0, false) => cache.put(key, obj, ttl, TimeUnit.SECONDS)
-         case (x, y, false) => cache.put(key, obj, ttl, TimeUnit.SECONDS, idleTime, TimeUnit.SECONDS)
-         case (0, 0, true) => cache.putAsync(key, obj)
-         case (x, 0, true) => cache.putAsync(key, obj, ttl, TimeUnit.SECONDS)
-         case (x, y, true) => cache.putAsync(key, obj, ttl, TimeUnit.SECONDS, idleTime, TimeUnit.SECONDS)
+   private def toCacheEntry(data: Array[Byte], mediaType: String): AnyRef =
+      if (isBinaryType(mediaType)) data else new MIMECacheEntry(mediaType, data)
+
+   private def putInCache(cache: Cache[String, Any],
+           key: String, obj: AnyRef, ttl: Long, idleTime: Long,
+           prevCond: Option[AnyRef]): Response = {
+      if (useAsync)
+         asyncPutInCache(cache, key, obj, ttl, idleTime)
+      else
+         putOrReplace(cache, key, obj, ttl, idleTime, prevCond)
+   }
+
+   def asyncPutInCache(cache: Cache[String, Any],
+           key: String, obj: AnyRef, ttl: Long, idleTime: Long): Response = {
+      (ttl, idleTime) match {
+         case (0, 0) => cache.putAsync(key, obj)
+         case (x, 0) => cache.putAsync(key, obj, ttl, SECS)
+         case (x, y) => cache.putAsync(key, obj, ttl, SECS, idleTime, SECS)
       }
       Response.ok.build
+   }
+
+   private def putOrReplace(cache: Cache[String, Any],
+           key: String, obj: AnyRef, ttl: Long, idleTime: Long,
+           prevCond: Option[AnyRef]): Response = {
+      prevCond match {
+         case None =>
+            (ttl, idleTime) match {
+               case (0, 0) => cache.put(key, obj)
+               case (x, 0) => cache.put(key, obj, ttl, SECS)
+               case (x, y) => cache.put(key, obj, ttl, SECS, idleTime, SECS)
+            }
+            Response.ok.build
+         case Some(prev) =>
+            val replaced = (ttl, idleTime) match {
+               case (0, 0) => cache.replace(key, prev, obj)
+               case (x, 0) => cache.replace(key, prev, obj, ttl, SECS)
+               case (x, y) =>
+                  cache.replace(key, prev, obj, ttl, SECS, idleTime, SECS)
+            }
+            // If not replaced, simply send back that the precondition failed
+            if (replaced) Response.ok.build
+            else Response.status(
+               HttpServletResponse.SC_PRECONDITION_FAILED).build()
+      }
    }
 
    @DELETE
@@ -196,10 +234,10 @@ class Server(@Context request: Request, @HeaderParam("performAsync") useAsync: B
                  @DefaultValue("") @HeaderParam("If-Modified-Since") ifModifiedSince: String,
                  @DefaultValue("") @HeaderParam("If-Unmodified-Since") ifUnmodifiedSince: String): Response = {
       if (ifMatch.isEmpty && ifNoneMatch.isEmpty && ifModifiedSince.isEmpty && ifUnmodifiedSince.isEmpty) {
-         ManagerInstance.getCache(cacheName).clear
+         ManagerInstance.getCache(cacheName).clear()
          Response.ok.build
       } else {
-         preconditionNotImplementedResponse
+         preconditionNotImplementedResponse()
       }
    }
 
@@ -216,7 +254,8 @@ class Server(@Context request: Request, @HeaderParam("performAsync") useAsync: B
       try {
          op(request, useAsync)
       } catch {
-         case e: CacheNotFoundException => Response status (Status.NOT_FOUND) build
+         case e: CacheNotFoundException =>
+            Response.status(Status.NOT_FOUND).build
       }
    }
 
@@ -230,10 +269,11 @@ class Server(@Context request: Request, @HeaderParam("performAsync") useAsync: B
  */
 object ManagerInstance {
    var instance: EmbeddedCacheManager = null
-   private val knownCaches : java.util.Map[String, Cache[String, Any]] = ConcurrentMapFactory.makeConcurrentMap(4, 0.9f, 16)
+   private[rest] val knownCaches : java.util.Map[String, Cache[String, Any]] =
+      ConcurrentMapFactory.makeConcurrentMap(4, 0.9f, 16)
 
    def getCache(name: String): Cache[String, Any] = {
-      val isKnownCache = knownCaches.containsKey(name);
+      val isKnownCache = knownCaches.containsKey(name)
       if (name != BasicCacheContainer.DEFAULT_CACHE_NAME && !isKnownCache && !instance.getCacheNames.contains(name))
          throw new CacheNotFoundException("Cache with name '" + name + "' not found amongst the configured caches")
 
