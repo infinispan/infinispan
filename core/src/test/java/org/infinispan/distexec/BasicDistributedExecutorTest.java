@@ -371,7 +371,6 @@ public class BasicDistributedExecutorTest extends AbstractCacheTest {
       }
    }
 
-   @Test(expectedExceptions = ExecutionException.class)
    public void testDistributedCallableRandomFailoverPolicy() throws Exception {
       Configuration config = TestCacheManagerFactory.getDefaultConfiguration(true, Configuration.CacheMode.REPL_SYNC);
       EmbeddedCacheManager cacheManager = TestCacheManagerFactory.createClusteredCacheManager(config);
@@ -396,13 +395,18 @@ public class BasicDistributedExecutorTest extends AbstractCacheTest {
          Future<Integer> val = des.submit(task, new String[] {"key1"});
 
          val.get();
-      } finally {
+         throw new IllegalStateException("Should have raised exception");
+      } catch (Exception e){
+         assert e instanceof ExecutionException;
+         boolean duplicateEEInChain = e.getCause() instanceof ExecutionException;
+         AssertJUnit.assertEquals(false, duplicateEEInChain);
+      }
+      finally {
          des.shutdownNow();
          TestingUtil.killCacheManagers(cacheManager);
       }
    }
 
-   @Test(expectedExceptions = ExecutionException.class)
    public void testDistributedCallableRandomFailoverPolicyWith2Nodes() throws Exception {
       Configuration config = TestCacheManagerFactory.getDefaultConfiguration(true, Configuration.CacheMode.REPL_SYNC);
       EmbeddedCacheManager cacheManager = TestCacheManagerFactory.createClusteredCacheManager(config);
@@ -429,7 +433,14 @@ public class BasicDistributedExecutorTest extends AbstractCacheTest {
 
          Future<Integer> val = des.submit(task, new String[] {"key1"});
          val.get();
-      } finally {
+         throw new IllegalStateException("Should have thrown exception");
+      }  catch (Exception e){
+         assert e instanceof ExecutionException;
+         ExecutionException ee = (ExecutionException)e;
+         boolean duplicateEEInChain = ee.getCause() instanceof ExecutionException;
+         AssertJUnit.assertEquals(false, duplicateEEInChain);
+      }
+      finally {
          des.shutdownNow();
          TestingUtil.killCacheManagers(cacheManager, cacheManager1);
       }
@@ -492,7 +503,6 @@ public class BasicDistributedExecutorTest extends AbstractCacheTest {
       }
    }
 
-   @Test(expectedExceptions = ExecutionException.class)
    public void testDistributedCallableCustomFailoverPolicy() throws Exception {
       Configuration config = TestCacheManagerFactory.getDefaultConfiguration(true, Configuration.CacheMode.REPL_SYNC);
       EmbeddedCacheManager cacheManager = TestCacheManagerFactory.createClusteredCacheManager(config);
@@ -527,7 +537,14 @@ public class BasicDistributedExecutorTest extends AbstractCacheTest {
 
          Future<Integer> val = des.submit(task, new String[] {"key1"});
          val.get();
-      } finally {
+         throw new IllegalStateException("Should have thrown exception");
+      } catch (Exception e) {
+         assert e instanceof ExecutionException;
+         ExecutionException ee = (ExecutionException) e;
+         boolean duplicateEEInChain = ee.getCause() instanceof ExecutionException;
+         AssertJUnit.assertEquals(false, duplicateEEInChain);
+      }
+      finally {
          des.shutdownNow();
          TestingUtil.killCacheManagers(cacheManager);
       }
