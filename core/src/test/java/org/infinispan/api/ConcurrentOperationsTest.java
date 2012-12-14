@@ -49,9 +49,9 @@ import static org.testng.Assert.assertTrue;
 @Test(groups = "functional", testName = "api.ConcurrentOperationsTest")
 public class ConcurrentOperationsTest extends MultipleCacheManagersTest {
 
-   public static final int THREADS = 5;
-   public static final int NUM_NODES = 5;
-   public static final int OP_COUNT = 1000;
+   public static final int THREADS = 3;
+   public static final int NUM_NODES = 3;
+   public static final int OP_COUNT = 300;
    private static final boolean CONSOLE_ENABLED = false;
 
    @Override

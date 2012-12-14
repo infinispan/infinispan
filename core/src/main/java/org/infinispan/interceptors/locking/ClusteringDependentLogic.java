@@ -190,7 +190,6 @@ public interface ClusteringDependentLogic {
       public boolean localNodeIsPrimaryOwner(Object key) {
          final Address address = rpcManager.getAddress();
          final boolean result = dm.getPrimaryLocation(key).equals(address);
-         log.tracef("My address is %s. Am I main owner? - %b", address, result);
          return result;
       }
 
