@@ -63,6 +63,8 @@ public abstract class LocalTransaction extends AbstractCacheTransaction {
 
    private volatile boolean isFromRemoteSite;
 
+   private volatile boolean isFromStateTransfer;
+
    public LocalTransaction(Transaction transaction, GlobalTransaction tx, boolean implicitTransaction, int topologyId) {
       super(tx, topologyId);
       this.transaction = transaction;
@@ -159,6 +161,7 @@ public abstract class LocalTransaction extends AbstractCacheTransaction {
             ", lockedKeys=" + lockedKeys +
             ", backupKeyLocks=" + backupKeyLocks +
             ", topologyId=" + topologyId +
+            ", isFromStateTransfer=" + isFromStateTransfer +
             "} " + super.toString();
    }
 
@@ -175,6 +178,14 @@ public abstract class LocalTransaction extends AbstractCacheTransaction {
    @Override
    public boolean keyRead(Object key) {
       return readKeys != null && readKeys.contains(key);
+   }
+
+   public boolean isFromStateTransfer() {
+      return isFromStateTransfer;
+   }
+
+   public void setFromStateTransfer(boolean isFromStateTransfer) {
+      this.isFromStateTransfer = isFromStateTransfer;
    }
 
    /**

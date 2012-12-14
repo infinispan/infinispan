@@ -182,7 +182,7 @@ public class StateConsumerTest {
 
       // create state provider
       StateConsumerImpl stateConsumer = new StateConsumerImpl();
-      stateConsumer.init(cache, stateTransferManager, interceptorChain, icc, configuration, rpcManager,
+      stateConsumer.init(cache, stateTransferManager, interceptorChain, icc, configuration, rpcManager, null,
             commandsFactory, cacheLoaderManager, dataContainer, transactionTable, stateTransferLock);
       stateConsumer.start();
 

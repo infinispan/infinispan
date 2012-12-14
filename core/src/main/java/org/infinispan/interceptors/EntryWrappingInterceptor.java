@@ -47,6 +47,8 @@ import org.infinispan.factories.annotations.Inject;
 import org.infinispan.factories.annotations.Start;
 import org.infinispan.interceptors.base.CommandInterceptor;
 import org.infinispan.interceptors.locking.ClusteringDependentLogic;
+import org.infinispan.statetransfer.StateConsumer;
+import org.infinispan.transaction.LocalTransaction;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
@@ -69,6 +71,7 @@ public class EntryWrappingInterceptor extends CommandInterceptor {
    protected final EntryWrappingVisitor entryWrappingVisitor = new EntryWrappingVisitor();
    private CommandsFactory commandFactory;
    private boolean isUsingLockDelegation;
+   private StateConsumer stateConsumer;       // optional
 
    private static final Log log = LogFactory.getLog(EntryWrappingInterceptor.class);
    private static final boolean trace = log.isTraceEnabled();
@@ -79,11 +82,12 @@ public class EntryWrappingInterceptor extends CommandInterceptor {
    }
 
    @Inject
-   public void init(EntryFactory entryFactory, DataContainer dataContainer, ClusteringDependentLogic cdl, CommandsFactory commandFactory) {
+   public void init(EntryFactory entryFactory, DataContainer dataContainer, ClusteringDependentLogic cdl, CommandsFactory commandFactory, StateConsumer stateConsumer) {
       this.entryFactory = entryFactory;
       this.dataContainer = dataContainer;
       this.cdl = cdl;
       this.commandFactory = commandFactory;
+      this.stateConsumer = stateConsumer;
    }
 
    @Start
@@ -91,7 +95,6 @@ public class EntryWrappingInterceptor extends CommandInterceptor {
       isUsingLockDelegation = !cacheConfiguration.transaction().transactionMode().isTransactional() &&
             cacheConfiguration.locking().supportsConcurrentUpdates() && cacheConfiguration.clustering().cacheMode().isDistributed();
    }
-
 
    @Override
    public Object visitPrepareCommand(TxInvocationContext ctx, PrepareCommand command) throws Throwable {
@@ -102,7 +105,7 @@ public class EntryWrappingInterceptor extends CommandInterceptor {
       }
       Object result = invokeNextInterceptor(ctx, command);
       if (command.isOnePhaseCommit()) {
-         commitContextEntries(ctx, false);
+         commitContextEntries(ctx, false, isFromStateTransfer(ctx));
       }
       return result;
    }
@@ -112,7 +115,7 @@ public class EntryWrappingInterceptor extends CommandInterceptor {
       try {
          return invokeNextInterceptor(ctx, command);
       } finally {
-         commitContextEntries(ctx, false);
+         commitContextEntries(ctx, false, isFromStateTransfer(ctx));
       }
    }
 
@@ -124,7 +127,7 @@ public class EntryWrappingInterceptor extends CommandInterceptor {
       } finally {
          //needed because entries might be added in L1
          if (!ctx.isInTxScope())
-            commitContextEntries(ctx, command.hasFlag(Flag.SKIP_OWNERSHIP_CHECK));
+            commitContextEntries(ctx, command.hasFlag(Flag.SKIP_OWNERSHIP_CHECK), false);
       }
    }
 
@@ -218,10 +221,32 @@ public class EntryWrappingInterceptor extends CommandInterceptor {
       return visitRemoveCommand(ctx, command);
    }
 
-   protected void commitContextEntries(final InvocationContext ctx, boolean skipOwnershipCheck) {
+   protected boolean isFromStateTransfer(InvocationContext ctx) {
+      if (ctx.isInTxScope() && ctx.isOriginLocal()) {
+         LocalTransaction localTx = (LocalTransaction) ((TxInvocationContext) ctx).getCacheTransaction();
+         if (localTx.isFromStateTransfer()) {
+            return true;
+         }
+      }
+      return false;
+   }
+
+   protected boolean isFromStateTransfer(FlagAffectedCommand command) {
+      return command.hasFlag(Flag.PUT_FOR_STATE_TRANSFER);
+   }
+
+   protected final void commitContextEntries(InvocationContext ctx, boolean skipOwnershipCheck, boolean isPutForStateTransfer) {
+      if (!isPutForStateTransfer && stateConsumer != null
+            && ctx instanceof TxInvocationContext
+            && ((TxInvocationContext) ctx).getCacheTransaction().hasModification(ClearCommand.class)) {
+         // If we are committing a ClearCommand now then no keys should be written by state transfer from
+         // now on until current rebalance ends.
+         stateConsumer.stopApplyingState();
+      }
+
       if (ctx instanceof SingleKeyNonTxInvocationContext) {
-         CacheEntry entry = ((SingleKeyNonTxInvocationContext) ctx).getCacheEntry();
-         commitEntryIfNeeded(ctx, skipOwnershipCheck, entry);
+         SingleKeyNonTxInvocationContext singleKeyCtx = (SingleKeyNonTxInvocationContext) ctx;
+         commitEntryIfNeeded(ctx, skipOwnershipCheck, singleKeyCtx.getKey(), singleKeyCtx.getCacheEntry(), isPutForStateTransfer);
       } else {
          Set<Map.Entry<Object, CacheEntry>> entries = ctx.getLookedUpEntries().entrySet();
          Iterator<Map.Entry<Object, CacheEntry>> it = entries.iterator();
@@ -229,7 +254,7 @@ public class EntryWrappingInterceptor extends CommandInterceptor {
          while (it.hasNext()) {
             Map.Entry<Object, CacheEntry> e = it.next();
             CacheEntry entry = e.getValue();
-            if (!commitEntryIfNeeded(ctx, skipOwnershipCheck, entry)) {
+            if (!commitEntryIfNeeded(ctx, skipOwnershipCheck, e.getKey(), entry, isPutForStateTransfer)) {
                if (trace) {
                   if (entry == null)
                      log.tracef("Entry for key %s is null : not calling commitUpdate", e.getKey());
@@ -248,7 +273,7 @@ public class EntryWrappingInterceptor extends CommandInterceptor {
    private Object invokeNextAndApplyChanges(InvocationContext ctx, FlagAffectedCommand command) throws Throwable {
       final Object result = invokeNextInterceptor(ctx, command);
       if (!ctx.isInTxScope())
-         commitContextEntries(ctx, command.hasFlag(Flag.SKIP_OWNERSHIP_CHECK));
+         commitContextEntries(ctx, command.hasFlag(Flag.SKIP_OWNERSHIP_CHECK), isFromStateTransfer(command));
       log.tracef("The return value is %s", result);
       return result;
    }
@@ -257,13 +282,18 @@ public class EntryWrappingInterceptor extends CommandInterceptor {
 
       @Override
       public Object visitClearCommand(InvocationContext ctx, ClearCommand command) throws Throwable {
-         boolean notWrapped = false;
+         boolean wrapped = false;
          for (Object key : dataContainer.keySet()) {
             entryFactory.wrapEntryForClear(ctx, key);
-            notWrapped = true;
+            wrapped = true;
          }
-         if (notWrapped)
+         if (wrapped)
             invokeNextInterceptor(ctx, command);
+         if (stateConsumer != null && !ctx.isInTxScope()) {
+            // If a non-tx ClearCommand was executed successfully we must stop recording updated keys and do not
+            // allow any further updates to be written by state transfer from now on until current rebalance ends.
+            stateConsumer.stopApplyingState();
+         }
          return null;
       }
 
@@ -321,10 +351,29 @@ public class EntryWrappingInterceptor extends CommandInterceptor {
       }
    }
 
-   private boolean commitEntryIfNeeded(InvocationContext ctx, boolean skipOwnershipCheck, CacheEntry entry) {
-      if (entry != null && entry.isChanged()) {
+   private boolean commitEntryIfNeeded(InvocationContext ctx, boolean skipOwnershipCheck, Object key, CacheEntry entry, boolean isPutForStateTransfer) {
+      if (entry == null) {
+         if (key != null && !isPutForStateTransfer && stateConsumer != null) {
+            // this key is not yet stored locally
+            stateConsumer.addUpdatedKey(key);
+         }
+         return false;
+      }
+
+      if (isPutForStateTransfer && stateConsumer.isKeyUpdated(key)) {
+         // This is a state transfer put command on a key that was already modified by other user commands. We need to back off.
+         entry.rollback();
+         return false;
+      }
+
+      if (entry.isChanged()) {
          log.tracef("About to commit entry %s", entry);
          commitContextEntry(entry, ctx, skipOwnershipCheck);
+
+         if (!isPutForStateTransfer && stateConsumer != null) {
+            stateConsumer.addUpdatedKey(key);
+         }
+
          return true;
       }
       return false;

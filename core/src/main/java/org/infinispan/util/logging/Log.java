@@ -138,7 +138,7 @@ public interface Log extends BasicLogger {
 
    @LogMessage(level = WARN)
    @Message(value = "Problem %s encountered when applying state for key %s!", id = 16)
-   void problemApplyingStateForKey(String msg, Object key);
+   void problemApplyingStateForKey(String msg, Object key, @Cause Throwable t);
 
    @LogMessage(level = WARN)
    @Message(value = "Unable to apply prepare %s", id = 18)
