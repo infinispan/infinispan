@@ -21,37 +21,27 @@
  */
 package org.infinispan.loaders.hbase;
 
-import java.io.IOException;
-
 import org.infinispan.loaders.BaseCacheStoreTest;
+import org.infinispan.loaders.CacheLoaderException;
 import org.infinispan.loaders.CacheStore;
+import org.infinispan.loaders.hbase.test.HBaseCluster;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
+import org.testng.annotations.Test;
 
+@Test(groups = "functional", testName = "loaders.hbase.HBaseCacheStoreTest")
 public class HBaseCacheStoreTest extends BaseCacheStoreTest {
-   private static EmbeddedServerHelper embedded;
 
-   private static final boolean USE_EMBEDDED = true;
+   HBaseCluster hBaseCluster;
 
-   /**
-    * Set embedded hbase up and spawn it in a new thread.
-    *
-    * @throws InterruptedException
-    */
-   @BeforeClass
-   public static void setup() throws InterruptedException {
-      if (USE_EMBEDDED) {
-         embedded = new EmbeddedServerHelper();
-         embedded.setup();
-      }
+   @BeforeClass(alwaysRun = true)
+   public void beforeClass() throws Exception {
+      hBaseCluster = new HBaseCluster();
    }
 
    @AfterClass(alwaysRun = true)
-   public static void cleanup() throws IOException {
-      if (USE_EMBEDDED) {
-         EmbeddedServerHelper.teardown();
-         embedded = null;
-      }
+   public void afterClass() throws CacheLoaderException {
+      HBaseCluster.shutdown(hBaseCluster);
    }
 
    @Override
@@ -61,10 +51,8 @@ public class HBaseCacheStoreTest extends BaseCacheStoreTest {
       HBaseCacheStoreConfig conf = new HBaseCacheStoreConfig();
       conf.setPurgeSynchronously(true);
 
-      if (USE_EMBEDDED) {
-         // overwrite the ZooKeeper client port with the port from the embedded server
-         conf.setHbaseZookeeperPropertyClientPort(EmbeddedServerHelper.zooKeeperPort);
-      }
+      // overwrite the ZooKeeper client port with the port from the embedded server
+      conf.setHbaseZookeeperPropertyClientPort(hBaseCluster.getZooKeeperPort());
 
       cs.init(conf, getCache(), getMarshaller());
       cs.start();

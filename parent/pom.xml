@@ -100,6 +100,7 @@
       <defaultTestGroup>functional,unit,arquillian</defaultTestGroup>
       <testNGListener>org.infinispan.test.fwk.UnitTestTestNGListener</testNGListener>
       <infinispan.test.parallel.threads>20</infinispan.test.parallel.threads>
+      <infinispan.test.jgroups.protocol>tcp</infinispan.test.jgroups.protocol>
       <jboss.releases.repo.url>https://repository.jboss.org/nexus/service/local/staging/deploy/maven2/</jboss.releases.repo.url>
       <jboss.snapshots.repo.url>https://repository.jboss.org/nexus/content/repositories/snapshots/</jboss.snapshots.repo.url>
       <packaging>jar</packaging>
@@ -180,6 +181,7 @@
       <version.org.jboss.staxmapper>1.1.0.Final</version.org.jboss.staxmapper>
       <version.maven.bundle>2.3.7</version.maven.bundle>
       <version.maven.source>2.2.1</version.maven.source>
+      <version.maven.scala>2.15.2</version.maven.scala>
       <version.jacoco>0.5.10.201208310627</version.jacoco>
       <version.asm>3.3.1</version.asm>
       <reportTitle>Infinispan JaCoCo Report</reportTitle>
@@ -419,9 +421,20 @@
             <version>${version.hadoop.core}</version>
          </dependency>
          <dependency>
+            <groupId>org.apache.hadoop</groupId>
+            <artifactId>hadoop-test</artifactId>
+            <version>${version.hadoop.core}</version>
+         </dependency>
+         <dependency>
             <groupId>org.apache.hbase</groupId>
             <artifactId>hbase</artifactId>
             <version>${version.hbase}</version>
+         </dependency>
+         <dependency>
+            <groupId>org.apache.hbase</groupId>
+            <artifactId>hbase</artifactId>
+            <version>${version.hbase}</version>
+            <type>test-jar</type>
          </dependency>
          <dependency>
             <groupId>junit</groupId>
@@ -1243,39 +1256,6 @@
                <version>8.0.0.M3</version>
             </plugin>
             <plugin>
-               <groupId>org.scala-tools</groupId>
-               <artifactId>maven-scala-plugin</artifactId>
-               <version>2.15.2</version>
-               <executions>
-                  <execution>
-                     <id>compile</id>
-                     <phase>compile</phase>
-                     <goals>
-                        <goal>compile</goal>
-                     </goals>
-                  </execution>
-                  <execution>
-                     <id>test-compile</id>
-                     <phase>test-compile</phase>
-                     <goals>
-                        <goal>testCompile</goal>
-                     </goals>
-                  </execution>
-                  <execution>
-                     <phase>process-resources</phase>
-                     <goals>
-                        <goal>compile</goal>
-                     </goals>
-                  </execution>
-               </executions>
-               <configuration>
-                  <scalaVersion>${version.scala}</scalaVersion>
-                  <jvmArgs>
-                     <jvmArg>-XX:+UseCompressedOops</jvmArg>
-                  </jvmArgs>
-               </configuration>
-            </plugin>
-            <plugin>
                <groupId>org.jacoco</groupId>
                <artifactId>jacoco-maven-plugin</artifactId>
                <version>${version.jacoco}</version>
@@ -1908,5 +1888,105 @@
             </plugins>
          </build>
       </profile>
+
+      <profile>
+         <id>32bitstuff</id>
+         <activation>
+            <property>
+               <name>sun.arch.data.model</name>
+               <value>32</value>
+            </property>
+         </activation>
+         <build>
+            <pluginManagement>
+               <plugins>
+                  <plugin>
+                     <groupId>org.scala-tools</groupId>
+                     <artifactId>maven-scala-plugin</artifactId>
+                     <version>${version.maven.scala}</version>
+                     <executions>
+                        <execution>
+                           <id>compile</id>
+                           <phase>compile</phase>
+                           <goals>
+                              <goal>compile</goal>
+                           </goals>
+                        </execution>
+                        <execution>
+                           <id>test-compile</id>
+                           <phase>test-compile</phase>
+                           <goals>
+                              <goal>testCompile</goal>
+                           </goals>
+                        </execution>
+                        <execution>
+                           <phase>process-resources</phase>
+                           <goals>
+                              <goal>compile</goal>
+                           </goals>
+                        </execution>
+                     </executions>
+                     <configuration>
+                        <scalaVersion>${version.scala}</scalaVersion>
+                        <jvmArgs>
+                           <jvmArg>-Xmx256m</jvmArg>
+                        </jvmArgs>
+                     </configuration>
+                  </plugin>
+               </plugins>
+            </pluginManagement>
+         </build>
+      </profile>
+
+      <profile>
+         <id>64bitstuff</id>
+         <activation>
+            <property>
+               <name>sun.arch.data.model</name>
+               <value>64</value>
+            </property>
+         </activation>
+         <build>
+            <pluginManagement>
+               <plugins>
+                  <plugin>
+                     <groupId>org.scala-tools</groupId>
+                     <artifactId>maven-scala-plugin</artifactId>
+                     <version>${version.maven.scala}</version>
+                     <executions>
+                        <execution>
+                           <id>compile</id>
+                           <phase>compile</phase>
+                           <goals>
+                              <goal>compile</goal>
+                           </goals>
+                        </execution>
+                        <execution>
+                           <id>test-compile</id>
+                           <phase>test-compile</phase>
+                           <goals>
+                              <goal>testCompile</goal>
+                           </goals>
+                        </execution>
+                        <execution>
+                           <phase>process-resources</phase>
+                           <goals>
+                              <goal>compile</goal>
+                           </goals>
+                        </execution>
+                     </executions>
+                     <configuration>
+                        <scalaVersion>${version.scala}</scalaVersion>
+                        <jvmArgs>
+                           <jvmArg>-Xmx256m</jvmArg>
+                           <jvmArg>-XX:+UseCompressedOops</jvmArg>
+                        </jvmArgs>
+                     </configuration>
+                  </plugin>
+               </plugins>
+            </pluginManagement>
+         </build>
+      </profile>
+
    </profiles>
 </project>
