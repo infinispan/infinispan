@@ -36,6 +36,7 @@ import org.infinispan.context.impl.LocalTxInvocationContext;
 import org.infinispan.context.impl.TxInvocationContext;
 import org.infinispan.distribution.DataLocality;
 import org.infinispan.distribution.L1Manager;
+import org.infinispan.distribution.ch.ConsistentHash;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.factories.annotations.Start;
 import org.infinispan.remoting.transport.Address;
@@ -62,6 +63,7 @@ public class TxDistributionInterceptor extends BaseDistributionInterceptor {
    private static Log log = LogFactory.getLog(TxDistributionInterceptor.class);
 
    private boolean isPessimisticCache;
+   private boolean useClusteredWriteSkewCheck;
 
    private L1Manager l1Manager;
    private boolean needReliableReturnValues;
@@ -89,6 +91,8 @@ public class TxDistributionInterceptor extends BaseDistributionInterceptor {
       isPessimisticCache = cacheConfiguration.transaction().lockingMode() == LockingMode.PESSIMISTIC;
       needReliableReturnValues = !cacheConfiguration.unsafe().unreliableReturnValues();
       isL1CacheEnabled = cacheConfiguration.clustering().l1().enabled();
+      useClusteredWriteSkewCheck = !isPessimisticCache &&
+            cacheConfiguration.versioning().enabled() && cacheConfiguration.locking().writeSkewCheck();
    }
 
    @Override
@@ -225,13 +229,34 @@ public class TxDistributionInterceptor extends BaseDistributionInterceptor {
       rpcManager.invokeRemotely(recipients, command, syncCommitPhase, true);
    }
 
+   private boolean shouldFetchRemoteValuesForWriteSkewCheck(InvocationContext ctx, WriteCommand cmd) {
+      if (useClusteredWriteSkewCheck && ctx.isInTxScope() && dm.isRehashInProgress()) {
+         for (Object key : cmd.getAffectedKeys()) {
+            if (isStateTransferInProgressForKey(key)) return true;
+         }
+      }
+      return false;
+   }
+
+   private boolean isStateTransferInProgressForKey(Object key) {
+      // todo [anistor] fix locality checks in StateTransferManager (ISPN-2401) and use them here
+      ConsistentHash rCh = dm.getReadConsistentHash();
+      ConsistentHash wCh = dm.getWriteConsistentHash();
+      if (wCh.isKeyLocalToNode(rpcManager.getAddress(), key)) {
+         if (!rCh.isKeyLocalToNode(rpcManager.getAddress(), key) && !dataContainer.containsKey(key)) {
+            return true;
+         }
+      }
+      return false;
+   }
+
    /**
     * If we are within one transaction we won't do any replication as replication would only be performed at commit
     * time. If the operation didn't originate locally we won't do any replication either.
     */
    protected Object handleWriteCommand(InvocationContext ctx, WriteCommand command, RecipientGenerator recipientGenerator, boolean skipRemoteGet, boolean skipL1Invalidation) throws Throwable {
-      // see if we need to load values from remote srcs first
-      if (ctx.isOriginLocal() && !skipRemoteGet)
+      // see if we need to load values from remote sources first
+      if (ctx.isOriginLocal() && !skipRemoteGet || shouldFetchRemoteValuesForWriteSkewCheck(ctx, command))
          remoteGetBeforeWrite(ctx, command, recipientGenerator);
 
       // if this is local mode then skip distributing
@@ -241,14 +266,13 @@ public class TxDistributionInterceptor extends BaseDistributionInterceptor {
 
       // FIRST pass this call up the chain.  Only if it succeeds (no exceptions) locally do we attempt to distribute.
       return invokeNextInterceptor(ctx, command);
-
    }
 
    protected void remoteGetBeforeWrite(InvocationContext ctx, WriteCommand command, KeyGenerator keygen) throws Throwable {
       // this should only happen if:
       //   a) unsafeUnreliableReturnValues is false
       //   b) unsafeUnreliableReturnValues is true, we are in a TX and the command is conditional
-      if (isNeedReliableReturnValues(command) || command.isConditional()) {
+      if (isNeedReliableReturnValues(command) || command.isConditional() || shouldFetchRemoteValuesForWriteSkewCheck(ctx, command)) {
          for (Object k : keygen.getKeys()) {
             remoteGetAndStoreInL1(ctx, k, true, command);
          }
@@ -260,11 +284,10 @@ public class TxDistributionInterceptor extends BaseDistributionInterceptor {
    }
 
    protected Object remoteGetAndStoreInL1(InvocationContext ctx, Object key, boolean isWrite, FlagAffectedCommand command) throws Throwable {
+      // todo [anistor] fix locality checks in StateTransferManager (ISPN-2401) and use them here
       DataLocality locality = dm.getReadConsistentHash().isKeyLocalToNode(rpcManager.getAddress(), key) ? DataLocality.LOCAL : DataLocality.NOT_LOCAL;
 
-      if (ctx.isOriginLocal() && !locality.isLocal() && isNotInL1(key)) {
-
-
+      if (ctx.isOriginLocal() && !locality.isLocal() && isNotInL1(key) || isStateTransferInProgressForKey(key)) {
          if (trace) log.tracef("Doing a remote get for key %s", key);
 
          boolean acquireRemoteLock = false;
@@ -279,8 +302,11 @@ public class TxDistributionInterceptor extends BaseDistributionInterceptor {
             ((TxInvocationContext) ctx).addAffectedKey(key);
          }
 
-
          if (ice != null) {
+            if (useClusteredWriteSkewCheck && ctx.isInTxScope()) {
+               ((TxInvocationContext)ctx).getCacheTransaction().putLookedUpRemoteVersion(key, ice.getVersion());
+            }
+
             if (isL1CacheEnabled) {
                // We've requested the key only from the owners current (read) CH.
                // If the intersection of owners in the current and pending CHs is empty,
@@ -289,6 +315,7 @@ public class TxDistributionInterceptor extends BaseDistributionInterceptor {
                List<Address> readOwners = dm.getReadConsistentHash().locateOwners(key);
                List<Address> writeOwners = dm.getWriteConsistentHash().locateOwners(key);
                if (!readOwners.equals(writeOwners)) {
+                  // todo [anistor] this check is not optimal and can yield false positives. here we should use StateTransferManager.isStateTransferInProgressForKey(key) after ISPN-2401 is fixed
                   if (trace) log.tracef("State transfer in progress for key %s, not storing to L1");
                   return ice.getValue();
                }
