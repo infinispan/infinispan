@@ -51,6 +51,8 @@ import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
 /**
+ * {@link StateTransferManager} implementation.
+ *
  * @author anistor@redhat.com
  * @since 5.2
  */
@@ -265,7 +267,6 @@ public class StateTransferManagerImpl implements StateTransferManager {
       log.tracef("CommandTopologyId=%s, localTopologyId=%s", cmdTopologyId, localTopologyId);
 
       if (cmdTopologyId < localTopologyId) {
-         ConsistentHash readCh = cacheTopology.getReadConsistentHash();
          ConsistentHash writeCh = cacheTopology.getWriteConsistentHash();
          Set<Address> newTargets = writeCh.locateAllOwners(affectedKeys);
          newTargets.remove(rpcManager.getAddress());

@@ -39,7 +39,7 @@ import java.io.Serializable;
 
 import static org.testng.Assert.assertEquals;
 
-@Test(groups = "functional", testName = "statetransfer.StateTransferCacheLoaderFunctionalTest", enabled = true)
+@Test(groups = "functional", testName = "statetransfer.StateTransferCacheLoaderFunctionalTest")
 public class StateTransferCacheLoaderFunctionalTest extends StateTransferFunctionalTest {
    int id;
    ThreadLocal<Boolean> sharedCacheLoader = new ThreadLocal<Boolean>() {

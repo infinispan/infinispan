@@ -48,7 +48,6 @@ import java.util.ArrayList;
 import java.util.IdentityHashMap;
 import java.util.List;
 
-import static org.testng.Assert.assertTrue;
 
 /**
  * Base class for tests that operates on clusters of caches. The way tests extending this class operates is:
@@ -458,12 +457,12 @@ public abstract class MultipleCacheManagersTest extends AbstractCacheTest {
       return manager(cacheIndex).getAddress();
    }
 
-   protected AdvancedCache advancedCache(int i) {
-      return cache(i).getAdvancedCache();
+   protected <A, B> AdvancedCache<A, B> advancedCache(int i) {
+      return this.<A,B>cache(i).getAdvancedCache();
    }
 
-   protected AdvancedCache advancedCache(int i, String cacheName) {
-      return cache(i, cacheName).getAdvancedCache();
+   protected <A, B> AdvancedCache<A, B> advancedCache(int i, String cacheName) {
+      return this.<A, B>cache(i, cacheName).getAdvancedCache();
    }
 
    protected <K, V> List<Cache<K, V>> caches(String name) {
