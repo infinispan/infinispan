@@ -43,7 +43,18 @@ public class HBaseCluster {
 
       testUtil = new HBaseTestingUtility(conf);
       try {
-         testUtil.startMiniCluster();
+         try {
+            testUtil.startMiniCluster();
+         } catch (NullPointerException e) {
+            // In some systems, this method can throw an NPE due to the system
+            // having an unexpected default umask setting. Hadoop expects the
+            // default umask to be 022 ('rwxr-x-r-x'), so if you get the NPE
+            // make sure you change it accordingly. More info:
+            // http://stackoverflow.com/questions/10525129/i-am-trying-to-run-showfilestatustest-given-in-hadoop-definited-guide-book-i-ge
+
+            throw new IllegalStateException("Hadoop expects default umask " +
+                  "to be 022, seems like your system has a different one", e);
+         }
          MiniHBaseCluster cluster = testUtil.getHBaseCluster();
          log.info("Waiting for active/ready HBase master");
          cluster.waitForActiveAndReadyMaster();
