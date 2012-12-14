@@ -27,7 +27,6 @@ import org.infinispan.commands.tx.CommitCommand;
 import org.infinispan.config.Configuration;
 import org.infinispan.test.MultipleCacheManagersTest;
 import org.infinispan.transaction.LockingMode;
-import org.infinispan.tx.LockCleanupStateTransferTest;
 import org.infinispan.util.mocks.ControlledCommandFactory;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;

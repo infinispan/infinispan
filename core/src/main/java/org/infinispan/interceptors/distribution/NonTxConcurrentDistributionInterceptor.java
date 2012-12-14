@@ -19,15 +19,12 @@
 
 package org.infinispan.interceptors.distribution;
 
-import org.infinispan.CacheException;
 import org.infinispan.commands.DataCommand;
-import org.infinispan.commands.write.ClearCommand;
 import org.infinispan.commands.write.PutMapCommand;
 import org.infinispan.commands.write.WriteCommand;
 import org.infinispan.context.Flag;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.remoting.responses.Response;
-import org.infinispan.remoting.responses.SuccessfulResponse;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;

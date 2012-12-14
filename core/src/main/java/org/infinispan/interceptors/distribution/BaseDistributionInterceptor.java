@@ -24,7 +24,6 @@ package org.infinispan.interceptors.distribution;
 
 import org.infinispan.commands.CommandsFactory;
 import org.infinispan.commands.read.AbstractDataCommand;
-import org.infinispan.commands.write.ClearCommand;
 import org.infinispan.commands.write.PutMapCommand;
 import org.infinispan.commands.write.RemoveCommand;
 import org.infinispan.commands.write.ReplaceCommand;
@@ -41,7 +40,6 @@ import org.infinispan.interceptors.base.BaseRpcInterceptor;
 import org.infinispan.interceptors.locking.ClusteringDependentLogic;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.util.Immutables;
-import org.infinispan.util.InfinispanCollections;
 import org.infinispan.util.concurrent.locks.LockManager;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
