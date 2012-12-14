@@ -181,6 +181,7 @@
       <version.org.jboss.staxmapper>1.1.0.Final</version.org.jboss.staxmapper>
       <version.maven.bundle>2.3.7</version.maven.bundle>
       <version.maven.source>2.2.1</version.maven.source>
+      <version.maven.scala>2.15.2</version.maven.scala>
       <version.jacoco>0.5.10.201208310627</version.jacoco>
       <version.asm>3.3.1</version.asm>
       <reportTitle>Infinispan JaCoCo Report</reportTitle>
@@ -1902,7 +1903,7 @@
                   <plugin>
                      <groupId>org.scala-tools</groupId>
                      <artifactId>maven-scala-plugin</artifactId>
-                     <version>2.15.2</version>
+                     <version>${version.maven.scala}</version>
                      <executions>
                         <execution>
                            <id>compile</id>
@@ -1951,7 +1952,7 @@
                   <plugin>
                      <groupId>org.scala-tools</groupId>
                      <artifactId>maven-scala-plugin</artifactId>
-                     <version>2.15.2</version>
+                     <version>${version.maven.scala}</version>
                      <executions>
                         <execution>
                            <id>compile</id>
