@@ -65,7 +65,7 @@ public class ReplSyncDistributedExecutorTest extends DistributedExecutorTest {
     */
    public void testTaskCancellation() throws Exception {
       DistributedExecutorService des = createDES(getCache());
-      List<Address> l = getCache().getAdvancedCache().getRpcManager().getTransport().getMembers();
+      List<Address> l = getCache().getAdvancedCache().getRpcManager().getMembers();
       List<Address> members = new ArrayList<Address>(l);
       members.remove(getCache().getAdvancedCache().getRpcManager().getAddress());
 
