@@ -75,7 +75,6 @@ public class HotRodServerStartStopTest extends MultipleCacheManagersTest {
 
    @Test (dependsOnMethods = "testTouchServer")
    public void testHrServerStop() {
-      hotRodServer1.stop();
-      hotRodServer2.stop();
+      killServers(hotRodServer1, hotRodServer2);
    }
 }

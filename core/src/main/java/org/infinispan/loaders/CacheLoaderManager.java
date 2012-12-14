@@ -22,6 +22,8 @@
  */
 package org.infinispan.loaders;
 
+import java.util.List;
+
 import org.infinispan.lifecycle.Lifecycle;
 
 /**
@@ -49,6 +51,8 @@ public interface CacheLoaderManager extends Lifecycle {
    boolean isEnabled();
 
    void disableCacheStore(String loaderType);
+
+   <T extends CacheLoader> List<T> getCacheLoaders(Class<T> loaderClass);
 }
 
 

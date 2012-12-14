@@ -41,6 +41,7 @@ import org.infinispan.util.logging.LogFactory;
 
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
+import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.LinkedHashMap;
@@ -357,5 +358,20 @@ public class ChainingCacheStore implements CacheStore {
       } finally {
          loadersAndStoresMutex.writeLock().unlock();
       }
+   }
+
+   @SuppressWarnings("unchecked")
+   public <T extends CacheLoader> List<T> getCacheLoaders(Class<T> loaderClass) {
+      List<T> matchingLoaders = new ArrayList<T>();
+
+      for (CacheStore cs : stores.keySet()) {
+         if (loaderClass.isInstance(cs)) matchingLoaders.add((T) cs);
+      }
+
+      for (CacheLoader cl : loaders.keySet()) {
+         if (loaderClass.isInstance(cl)) matchingLoaders.add((T) cl);
+      }
+
+      return matchingLoaders;
    }
 }

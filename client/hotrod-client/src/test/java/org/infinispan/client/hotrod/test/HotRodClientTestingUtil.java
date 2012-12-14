@@ -48,6 +48,26 @@ public class HotRodClientTestingUtil {
    }
 
    /**
+    * Kills a group of remote cache managers.
+    *
+    * @param rcm
+    *           the remote cache manager instances to kill
+    */
+   public static void killRemoteCacheManagers(RemoteCacheManager... rcms) {
+      if (rcms != null) {
+         for (RemoteCacheManager rcm : rcms) {
+            try {
+               if (rcm != null)
+                  rcm.stop();
+            } catch (Throwable t) {
+               log.warn("Error stopping remote cache manager", t);
+            }
+         }
+      }
+
+   }
+
+   /**
     * Kills a group of Hot Rod servers.
     *
     * @param servers the group of Hot Rod servers to kill

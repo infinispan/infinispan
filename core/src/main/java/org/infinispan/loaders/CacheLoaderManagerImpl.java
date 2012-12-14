@@ -204,6 +204,21 @@ public class CacheLoaderManagerImpl implements CacheLoaderManager {
       }
    }
 
+   @Override
+   public <T extends CacheLoader> List<T> getCacheLoaders(Class<T> loaderClass) {
+      List<T> loaders;
+      if (loader instanceof ChainingCacheStore) {
+         ChainingCacheStore ccs = (ChainingCacheStore) loader;
+         loaders = ccs.getCacheLoaders(loaderClass);
+      } else if (loaderClass.isInstance(loader)) {
+         loaders = Collections.singletonList((T)loader);
+      } else {
+         loaders = Collections.emptyList();
+      }
+
+      return loaders;
+   }
+
    /**
     * Performs a preload on the cache based on the cache loader preload configs used when configuring the cache.
     */

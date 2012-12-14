@@ -30,6 +30,7 @@ import org.infinispan.configuration.cache.LegacyConfigurationAdaptor;
 import org.infinispan.configuration.cache.LegacyLoaderAdapter;
 import org.infinispan.configuration.cache.SingletonStoreConfiguration;
 import org.infinispan.loaders.remote.RemoteCacheStoreConfig;
+import org.infinispan.loaders.remote.wrapper.EntryWrapper;
 import org.infinispan.util.TypedProperties;
 
 @BuiltBy(RemoteCacheStoreConfigurationBuilder.class)
@@ -40,7 +41,9 @@ public class RemoteCacheStoreConfiguration extends AbstractStoreConfiguration im
    private final String balancingStrategy;
    private final ConnectionPoolConfiguration connectionPool;
    private final long connectionTimeout;
+   private final EntryWrapper<?, ?> entryWrapper;
    private final boolean forceReturnValues;
+   private final boolean hotRodWrapping;
    private final int keySizeEstimate;
    private final String marshaller;
    private final boolean pingOnStartup;
@@ -54,9 +57,9 @@ public class RemoteCacheStoreConfiguration extends AbstractStoreConfiguration im
    private final int valueSizeEstimate;
 
    RemoteCacheStoreConfiguration(ExecutorFactoryConfiguration asyncExecutorFactory, String balancingStrategy,
-         ConnectionPoolConfiguration connectionPool, long connectionTimeout, boolean forceReturnValues,
-         int keySizeEstimate, String marshaller, boolean pingOnStartup, String protocolVersion, boolean rawValues, String remoteCacheName,
-         List<RemoteServerConfiguration> servers, long socketTimeout, boolean tcpNoDelay, String transportFactory,
+         ConnectionPoolConfiguration connectionPool, long connectionTimeout, EntryWrapper<?, ?> entryWrapper, boolean forceReturnValues,
+         boolean hotRodWrapping, int keySizeEstimate, String marshaller, boolean pingOnStartup, String protocolVersion, boolean rawValues,
+         String remoteCacheName, List<RemoteServerConfiguration> servers, long socketTimeout, boolean tcpNoDelay, String transportFactory,
          int valueSizeEstimate, boolean purgeOnStartup, boolean purgeSynchronously, int purgerThreads,
          boolean fetchPersistentState, boolean ignoreModifications, TypedProperties properties,
          AsyncStoreConfiguration asyncStoreConfiguration, SingletonStoreConfiguration singletonStoreConfiguration) {
@@ -66,7 +69,9 @@ public class RemoteCacheStoreConfiguration extends AbstractStoreConfiguration im
       this.balancingStrategy = balancingStrategy;
       this.connectionPool = connectionPool;
       this.connectionTimeout = connectionTimeout;
+      this.entryWrapper = entryWrapper;
       this.forceReturnValues = forceReturnValues;
+      this.hotRodWrapping = hotRodWrapping;
       this.keySizeEstimate = keySizeEstimate;
       this.marshaller = marshaller;
       this.pingOnStartup = pingOnStartup;
@@ -96,8 +101,16 @@ public class RemoteCacheStoreConfiguration extends AbstractStoreConfiguration im
       return connectionTimeout;
    }
 
+   public EntryWrapper<?, ?> entryWrapper() {
+      return entryWrapper;
+   }
+
    public boolean forceReturnValues() {
       return forceReturnValues;
+   }
+
+   public boolean hotRodWrapping() {
+      return hotRodWrapping;
    }
 
    public int keySizeEstimate() {
@@ -152,8 +165,12 @@ public class RemoteCacheStoreConfiguration extends AbstractStoreConfiguration im
 
       // RemoteCacheStoreConfiguration
       config.setRawValues(rawValues);
+      config.setHotRodWrapping(hotRodWrapping);
       config.setRemoteCacheName(remoteCacheName);
       config.setAsyncExecutorFactory(asyncExecutorFactory.factory());
+      if (entryWrapper != null) {
+         config.setEntryWrapper(entryWrapper);
+      }
 
       TypedProperties p = new TypedProperties();
 
@@ -197,5 +214,5 @@ public class RemoteCacheStoreConfiguration extends AbstractStoreConfiguration im
       config.setHotRodClientProperties(hrp);
       return config;
    }
-
 }
+

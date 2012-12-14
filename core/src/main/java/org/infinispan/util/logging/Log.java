@@ -797,11 +797,11 @@ public interface Log extends BasicLogger {
    @LogMessage(level = WARN)
    @Message(value = "Trying to bring back an non-existent site (%s)!", id=205)
    void tryingToBringOnlineNonexistentSite(String siteName);
-   
+
    @LogMessage(level = WARN)
    @Message(value = "Could not execute cancelation command locally %s", id=206)
    void couldNotExecuteCancellationLocally(String message);
-   
+
    @LogMessage(level = WARN)
    @Message(value = "Could not interrupt as no thread found for command uuid %s", id=207)
    void couldNotInterruptThread(UUID id);
@@ -834,4 +834,11 @@ public interface Log extends BasicLogger {
    @Message(value = "Unable to remove entry under %s from cache store after activation", id = 214)
    void unableToRemoveEntryAfterActivation(Object key, @Cause Exception e);
 
+   @Message(value = "Unknown migrator %s", id=215)
+   Exception unknownMigrator(String migratorName);
+
+   @LogMessage(level = INFO)
+   @Message(value = "%d entries migrated to cache %s in %s", id = 216)
+   void entriesMigrated(long count, String name, String prettyTime);
 }
+

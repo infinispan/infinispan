@@ -31,6 +31,7 @@ import org.infinispan.configuration.parsing.Namespace;
 import org.infinispan.configuration.parsing.ParseUtils;
 import org.infinispan.configuration.parsing.Parser52;
 import org.infinispan.executors.ExecutorFactory;
+import org.infinispan.loaders.remote.wrapper.EntryWrapper;
 import org.infinispan.util.Util;
 import org.jboss.staxmapper.XMLExtendedStreamReader;
 
@@ -75,7 +76,7 @@ public class RemoteCacheStoreConfigurationParser52 implements ConfigurationParse
    private void parseRemoteStore(final XMLExtendedStreamReader reader, LoadersConfigurationBuilder loadersBuilder,
          ClassLoader classLoader) throws XMLStreamException {
       RemoteCacheStoreConfigurationBuilder builder = new RemoteCacheStoreConfigurationBuilder(loadersBuilder);
-      parseRemoteStoreAttributes(reader, builder);
+      parseRemoteStoreAttributes(reader, builder, classLoader);
 
       while (reader.hasNext() && (reader.nextTag() != XMLStreamConstants.END_ELEMENT)) {
          Element element = Element.forName(reader.getLocalName());
@@ -213,7 +214,7 @@ public class RemoteCacheStoreConfigurationParser52 implements ConfigurationParse
       ParseUtils.requireNoContent(reader);
    }
 
-   private void parseRemoteStoreAttributes(XMLExtendedStreamReader reader, RemoteCacheStoreConfigurationBuilder builder)
+   private void parseRemoteStoreAttributes(XMLExtendedStreamReader reader, RemoteCacheStoreConfigurationBuilder builder, ClassLoader classLoader)
          throws XMLStreamException {
       for (int i = 0; i < reader.getAttributeCount(); i++) {
          ParseUtils.requireNoNamespaceAttribute(reader, i);
@@ -228,8 +229,16 @@ public class RemoteCacheStoreConfigurationParser52 implements ConfigurationParse
             builder.connectionTimeout(Long.parseLong(value));
             break;
          }
+         case ENTRY_WRAPPER: {
+            builder.entryWrapper(Util.<EntryWrapper<?,?>>getInstance(value, classLoader));
+            break;
+         }
          case FORCE_RETURN_VALUES: {
             builder.forceReturnValues(Boolean.parseBoolean(value));
+            break;
+         }
+         case HOTROD_WRAPPING: {
+            builder.hotRodWrapping(Boolean.parseBoolean(value));
             break;
          }
          case KEY_SIZE_ESTIMATE: {

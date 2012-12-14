@@ -233,7 +233,7 @@ statementOptions returns [List<Option> options]
    ;
 
 statementOption returns [Option option]
-   : '--' STRINGLITERAL { $option = new Option(unquote($STRINGLITERAL.text)); }
+   : '--' optionName = STRINGLITERAL ('=' optionParameter = STRINGLITERAL)? { $option = new Option(unquote($optionName.text), unquote($optionParameter.text)); }
    ;
 
 literal returns [Object o]

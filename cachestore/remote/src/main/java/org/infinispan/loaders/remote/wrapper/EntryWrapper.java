@@ -16,35 +16,20 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston,
  * MA  02110-1301, USA.
  */
-package org.infinispan.cli.commands.server;
+package org.infinispan.loaders.remote.wrapper;
 
-import java.util.Arrays;
-import java.util.List;
+import org.infinispan.client.hotrod.MetadataValue;
+import org.infinispan.loaders.CacheLoaderException;
 
-import org.infinispan.cli.Context;
-import org.infinispan.cli.commands.ProcessedCommand;
-import org.infinispan.cli.shell.Completer;
+/**
+ * EntryWrapper.
+ *
+ * @author Tristan Tarrant
+ * @since 5.2
+ */
+public interface EntryWrapper<K, V> {
 
-public class Upgrade extends AbstractServerCommand {
-   private static final List<String> OPTIONS = Arrays.asList("--dumpkeys", "--synchronize=", "--disconnectsource=", "--all");
+   K wrapKey(Object key) throws CacheLoaderException;
 
-   @Override
-   public String getName() {
-      return "upgrade";
-   }
-
-   @Override
-   public List<String> getOptions() {
-      return OPTIONS;
-   }
-
-   @Override
-   public int nesting() {
-      return 0;
-   }
-
-   @Override
-   public void complete(final Context context, final ProcessedCommand procCmd, final List<String> candidates) {
-      Completer.addPrefixMatches(procCmd.getCurrentArgument(), context.getConnection().getAvailableCaches(), candidates);
-   }
+   V wrapValue(MetadataValue<?> value) throws CacheLoaderException;
 }

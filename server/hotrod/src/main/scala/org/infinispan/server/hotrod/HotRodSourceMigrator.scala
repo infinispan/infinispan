@@ -36,12 +36,12 @@ import org.rhq.helpers.pluginAnnotations.agent.Operation
 import org.infinispan.server.core.Operation
 import org.infinispan.distexec.{DistributedCallable, DefaultExecutorService}
 import java.nio.charset.Charset
-import org.infinispan.marshall.jboss.JBossMarshaller
-import org.infinispan.upgrade.Migrator
+import org.infinispan.marshall.jboss.GenericJBossMarshaller
+import org.infinispan.upgrade.SourceMigrator
 
-class HotRodMigrator(cache: Cache[ByteArrayKey, CacheValue]) extends Migrator {
+class HotRodSourceMigrator(cache: Cache[ByteArrayKey, CacheValue]) extends SourceMigrator {
    val KNOWN_KEY = "___MigrationManager_HotRod_KnownKeys___"
-   val MARSHALLER = new JBossMarshaller // TODO: Hard coded!  Yuck!  Assumes the Synchronizer service will use the same marshaller.  Doesn't matter what actual clients use to store/retrieve data.
+   val MARSHALLER = new GenericJBossMarshaller // TODO: Hard coded!  Yuck!  Assumes the Synchronizer service will use the same marshaller.  Doesn't matter what actual clients use to store/retrieve data.
 
    @Override
    def getCacheName = cache.getName

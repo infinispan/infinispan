@@ -33,10 +33,12 @@ public enum Attribute {
 
    BALANCING_STRATEGY("balancingStrategy"),
    CONNECT_TIMEOUT("connectTimeout"),
+   ENTRY_WRAPPER("entryWrapper"),
    EXHAUSTED_ACTION("exhaustedAction"),
    FACTORY("factory"),
    FORCE_RETURN_VALUES("forceReturnValues"),
    HOST("host"),
+   HOTROD_WRAPPING("hotRodWrapping"),
    MARSHALLER("marshaller"),
    MAX_ACTIVE("maxActive"),
    MAX_IDLE("maxIdle"),
