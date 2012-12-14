@@ -30,12 +30,17 @@ public class StateTransferConfiguration {
    private Boolean originalFetchInMemoryState;
    private long timeout;
    private int chunkSize;
+   private boolean waitForInitialStateTransferToComplete;
+   private Boolean originalWaitForInitialStateTransferToComplete;
 
-   StateTransferConfiguration(boolean fetchInMemoryState, Boolean originalFetchInMemoryState, long timeout, int chunkSize) {
+   StateTransferConfiguration(boolean fetchInMemoryState, Boolean originalFetchInMemoryState, long timeout, int chunkSize,
+                              boolean waitForInitialStateTransferToComplete, Boolean originalWaitForInitialStateTransferToComplete) {
       this.fetchInMemoryState = fetchInMemoryState;
       this.originalFetchInMemoryState = originalFetchInMemoryState;
       this.timeout = timeout;
       this.chunkSize = chunkSize;
+      this.waitForInitialStateTransferToComplete = waitForInitialStateTransferToComplete;
+      this.originalWaitForInitialStateTransferToComplete = originalWaitForInitialStateTransferToComplete;
    }
 
    /**
@@ -82,6 +87,22 @@ public class StateTransferConfiguration {
       return chunkSize;
    }
 
+   /**
+    * If {@code true}, the {@code CacheManager.getCache()} call will not return until state transfer is complete for
+    * this cache on the current node, ie. its {@code DataContainer} has finished receiving the entries it should hold
+    * according to the new {@code ConsistentHash}. This option is only available in clustered mode and the default value is {@code true}.
+    */
+   public boolean waitForInitialStateTransferToComplete() {
+      return waitForInitialStateTransferToComplete;
+   }
+
+   /**
+    * We want to remember if the user didn't configure waitForInitialStateTransferToComplete for the default cache.
+    */
+   protected Boolean originalWaitForInitialStateTransferToComplete() {
+      return originalWaitForInitialStateTransferToComplete;
+   }
+
    @Override
    public String toString() {
       return "StateTransferConfiguration{" +
@@ -89,6 +110,8 @@ public class StateTransferConfiguration {
             ", fetchInMemoryState=" + fetchInMemoryState +
             ", originalFetchInMemoryState=" + originalFetchInMemoryState +
             ", timeout=" + timeout +
+            ", waitForInitialStateTransferToComplete=" + waitForInitialStateTransferToComplete +
+            ", originalWaitForInitialStateTransferToComplete=" + originalWaitForInitialStateTransferToComplete +
             '}';
    }
 
@@ -104,6 +127,9 @@ public class StateTransferConfiguration {
       if (timeout != that.timeout) return false;
       if (originalFetchInMemoryState != null ? !originalFetchInMemoryState.equals(that.originalFetchInMemoryState) : that.originalFetchInMemoryState != null)
          return false;
+      if (waitForInitialStateTransferToComplete != that.waitForInitialStateTransferToComplete) return false;
+      if (originalWaitForInitialStateTransferToComplete != null ? !originalWaitForInitialStateTransferToComplete.equals(that.originalWaitForInitialStateTransferToComplete) : that.originalWaitForInitialStateTransferToComplete != null)
+         return false;
 
       return true;
    }
@@ -114,6 +140,8 @@ public class StateTransferConfiguration {
       result = 31 * result + (originalFetchInMemoryState != null ? originalFetchInMemoryState.hashCode() : 0);
       result = 31 * result + (int) (timeout ^ (timeout >>> 32));
       result = 31 * result + chunkSize;
+      result = 31 * result + (waitForInitialStateTransferToComplete ? 1 : 0);
+      result = 31 * result + (originalWaitForInitialStateTransferToComplete != null ? originalWaitForInitialStateTransferToComplete.hashCode() : 0);
       return result;
    }
 

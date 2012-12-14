@@ -206,11 +206,13 @@ public class StateTransferManagerImpl implements StateTransferManager {
    @Start(priority = 1000)
    @SuppressWarnings("unused")
    public void waitForInitialStateTransferToComplete() throws InterruptedException {
-      if (trace) log.tracef("Waiting for initial state transfer to finish for cache %s on %s", cacheName, rpcManager.getAddress());
-      boolean success = initialStateTransferComplete.await(configuration.clustering().stateTransfer().timeout(), TimeUnit.MILLISECONDS);
-      if (!success) {
-         throw new CacheException(String.format("Initial state transfer timed out for cache %s on %s",
-               cacheName, rpcManager.getAddress()));
+      if (configuration.clustering().stateTransfer().waitForInitialStateTransferToComplete()) {
+         if (trace) log.tracef("Waiting for initial state transfer to finish for cache %s on %s", cacheName, rpcManager.getAddress());
+         boolean success = initialStateTransferComplete.await(configuration.clustering().stateTransfer().timeout(), TimeUnit.MILLISECONDS);
+         if (!success) {
+            throw new CacheException(String.format("Initial state transfer timed out for cache %s on %s",
+                  cacheName, rpcManager.getAddress()));
+         }
       }
    }
 

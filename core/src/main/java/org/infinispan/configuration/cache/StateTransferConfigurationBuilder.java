@@ -38,6 +38,7 @@ public class StateTransferConfigurationBuilder extends
    private static final Log log = LogFactory.getLog(StateTransferConfigurationBuilder.class);
 
    private Boolean fetchInMemoryState = null;
+   private Boolean waitForInitialStateTransferToComplete = null;
    private int chunkSize = 10000;
    private long timeout = TimeUnit.MINUTES.toMillis(4);
 
@@ -55,6 +56,16 @@ public class StateTransferConfigurationBuilder extends
     */
    public StateTransferConfigurationBuilder fetchInMemoryState(boolean b) {
       this.fetchInMemoryState = b;
+      return this;
+   }
+
+   /**
+    * If {@code true}, the {@code CacheManager.getCache()} call will not return until state transfer is complete for
+    * this cache on the current node, ie. its {@code DataContainer} has finished receiving the entries it should hold
+    * according to the new {@code ConsistentHash}. This option is only available in clustered mode and the default value is {@code true}.
+    */
+   public StateTransferConfigurationBuilder waitForInitialStateTransferToComplete(boolean b) {
+      this.waitForInitialStateTransferToComplete = b;
       return this;
    }
 
@@ -90,29 +101,46 @@ public class StateTransferConfigurationBuilder extends
       if (fetchInMemoryState != null && fetchInMemoryState && getClusteringBuilder().cacheMode().isInvalidation())
          throw new ConfigurationException(
                "Cache cannot use INVALIDATION mode and have fetchInMemoryState set to true.");
+      if (waitForInitialStateTransferToComplete != null && waitForInitialStateTransferToComplete
+            && !getClusteringBuilder().cacheMode().isReplicated() && !getClusteringBuilder().cacheMode().isDistributed())
+         throw new ConfigurationException(
+               "waitForInitialStateTransferToComplete can be enabled only if cache mode is distributed or replicated.");
    }
 
    @Override
    public  StateTransferConfiguration create() {
-      // If replicated and fetch state transfer was not explicitly
+      // If replicated or distributed and fetch state transfer was not explicitly
       // disabled, then force enabling of state transfer
       CacheMode cacheMode = getClusteringBuilder().cacheMode();
       boolean _fetchInMemoryState;
-      if ((cacheMode.isReplicated() || cacheMode.isDistributed()) && fetchInMemoryState == null) {
+      if (fetchInMemoryState != null) {
+         _fetchInMemoryState = fetchInMemoryState;
+      } else if (cacheMode.isReplicated() || cacheMode.isDistributed()) {
          log.trace("Cache is distributed or replicated but state transfer was not defined, enabling it by default");
          _fetchInMemoryState = true;
-      } else if (fetchInMemoryState != null) {
-         _fetchInMemoryState = fetchInMemoryState;
       } else {
          _fetchInMemoryState = false;
       }
+
+      // If replicated or distributed and waitForInitialStateTransferToComplete was not explicitly disabled,
+      // then enable it by default
+      boolean _waitForInitialStateTransferToComplete;
+      if (waitForInitialStateTransferToComplete != null) {
+         _waitForInitialStateTransferToComplete = waitForInitialStateTransferToComplete;
+      } else if (cacheMode.isReplicated() || cacheMode.isDistributed()) {
+         log.trace("Cache is distributed or replicated but waitForInitialStateTransferToComplete was not defined, enabling it by default");
+         _waitForInitialStateTransferToComplete = true;
+      } else {
+         _waitForInitialStateTransferToComplete = false;
+      }
       return new StateTransferConfiguration(_fetchInMemoryState, fetchInMemoryState,
-            timeout, chunkSize);
+            timeout, chunkSize, _waitForInitialStateTransferToComplete, waitForInitialStateTransferToComplete);
    }
 
    @Override
    public StateTransferConfigurationBuilder read(StateTransferConfiguration template) {
       this.fetchInMemoryState = template.originalFetchInMemoryState();
+      this.waitForInitialStateTransferToComplete = template.originalWaitForInitialStateTransferToComplete();
       this.timeout = template.timeout();
       this.chunkSize = template.chunkSize();
       return this;
@@ -123,6 +151,7 @@ public class StateTransferConfigurationBuilder extends
       return "StateTransferConfigurationBuilder{" +
             "chunkSize=" + chunkSize +
             ", fetchInMemoryState=" + fetchInMemoryState +
+            ", waitForInitialStateTransferToComplete=" + waitForInitialStateTransferToComplete +
             ", timeout=" + timeout +
             '}';
    }

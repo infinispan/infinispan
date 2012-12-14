@@ -813,6 +813,14 @@
                     </xs:documentation>
                   </xs:annotation>
                 </xs:attribute>
+                <xs:attribute name="waitForInitialStateTransferToComplete" type="xs:boolean">
+                  <xs:annotation>
+                    <xs:documentation>
+                       If true, this will cause the first call to method CacheManager.getCache() on a joiner node to block and wait until the joining is complete and the node has finished receiving state from neighboring caches (if fetchInMemoryState is enabled).
+                       This option applies to distributed and replicated caches only and is enabled by default.
+                    </xs:documentation>
+                  </xs:annotation>
+                </xs:attribute>
                 <xs:attribute name="timeout" type="xs:long">
                   <xs:annotation>
                     <xs:documentation>
