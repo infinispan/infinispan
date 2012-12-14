@@ -67,7 +67,7 @@ public class DistributedExecutorTest extends LocalDistributedExecutorTest {
    }
 
    protected String cacheName() {
-      return CACHE_NAME;
+      return "DistributedExecutorTest-DIST_SYNC";
    }
 
    protected CacheMode getCacheMode() {
@@ -193,8 +193,9 @@ public class DistributedExecutorTest extends LocalDistributedExecutorTest {
 
    public void testTaskCancellation() throws Exception {
       DistributedExecutorService des = createDES(getCache());
-      List<Address> members = new ArrayList<Address>(getCache().getAdvancedCache().getRpcManager()
-               .getTransport().getMembers());
+      List<Address> cacheMembers = getCache().getAdvancedCache().getRpcManager().getMembers();
+      List<Address> members = new ArrayList<Address>(cacheMembers);
+      AssertJUnit.assertEquals(caches(cacheName()).size(), members.size());
       members.remove(getCache().getAdvancedCache().getRpcManager().getAddress());
       
       DistributedTaskBuilder<Integer> tb = des.createDistributedTaskBuilder( new LongRunningCallable());
@@ -226,8 +227,9 @@ public class DistributedExecutorTest extends LocalDistributedExecutorTest {
    @Test(expectedExceptions = CancellationException.class)
    public void testCancelAndGet() throws Exception {
       DistributedExecutorService des = createDES(getCache());
-      List<Address> members = new ArrayList<Address>(getCache().getAdvancedCache().getRpcManager()
-               .getTransport().getMembers());
+      List<Address> cacheMembers = getCache().getAdvancedCache().getRpcManager().getMembers();
+      List<Address> members = new ArrayList<Address>(cacheMembers);
+      AssertJUnit.assertEquals(caches(cacheName()).size(), members.size());
       members.remove(getCache().getAdvancedCache().getRpcManager().getAddress());
       
       DistributedTaskBuilder<Integer> tb = des.createDistributedTaskBuilder( new LongRunningCallable());
