@@ -53,6 +53,7 @@ public enum Attribute {
     FACTORY("factory"),
     FETCH_IN_MEMORY_STATE("fetchInMemoryState"),
     FETCH_PERSISTENT_STATE("fetchPersistentState"),
+    WAIT_FOR_INITIAL_STATE_TRANSFER_TO_COMPLETE("waitForInitialStateTransferToComplete"),
     FLUSH_LOCK_TIMEOUT("flushLockTimeout"),
     FSYNC_INTERVAL("fsyncInterval"),
     FSYNC_MODE("fsyncMode"),

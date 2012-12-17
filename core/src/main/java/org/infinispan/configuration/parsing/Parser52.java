@@ -27,7 +27,6 @@ import static org.infinispan.configuration.cache.CacheMode.REPL_ASYNC;
 import static org.infinispan.configuration.cache.CacheMode.REPL_SYNC;
 
 import java.util.Properties;
-import java.util.StringTokenizer;
 
 import javax.xml.stream.XMLStreamConstants;
 import javax.xml.stream.XMLStreamException;
@@ -1323,6 +1322,9 @@ public class Parser52 implements ConfigurationParser<ConfigurationBuilderHolder>
          switch (attribute) {
             case FETCH_IN_MEMORY_STATE:
                builder.clustering().stateTransfer().fetchInMemoryState(Boolean.parseBoolean(value));
+               break;
+            case WAIT_FOR_INITIAL_STATE_TRANSFER_TO_COMPLETE:
+               builder.clustering().stateTransfer().waitForInitialStateTransferToComplete(Boolean.parseBoolean(value));
                break;
             case TIMEOUT:
                builder.clustering().stateTransfer().timeout(Long.parseLong(value));
