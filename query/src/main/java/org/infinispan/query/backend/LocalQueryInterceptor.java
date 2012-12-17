@@ -53,7 +53,8 @@ public class LocalQueryInterceptor extends QueryInterceptor {
    }
 
    @Override
-   protected boolean shouldModifyIndexes(final FlagAffectedCommand command, final InvocationContext ctx) {
-      return ctx.isOriginLocal() && ! command.hasFlag(Flag.SKIP_INDEXING);
+   protected boolean shouldModifyIndexes(FlagAffectedCommand command, InvocationContext ctx) {
+      // will index only local updates that were not flagged with SKIP_INDEXING and are not caused internally by state transfer
+      return ctx.isOriginLocal() && !command.hasFlag(Flag.SKIP_INDEXING) && !command.hasFlag(Flag.PUT_FOR_STATE_TRANSFER);
    }
 }

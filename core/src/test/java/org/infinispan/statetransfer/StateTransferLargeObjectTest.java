@@ -181,6 +181,6 @@ public class StateTransferLargeObjectTest extends MultipleCacheManagersTest {
 
    @AfterMethod(alwaysRun = true)
    @Override
-   protected void clearContent() throws Throwable {
+   protected void clearContent() {
    }
 }

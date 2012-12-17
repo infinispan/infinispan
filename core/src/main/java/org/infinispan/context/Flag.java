@@ -25,7 +25,6 @@ package org.infinispan.context;
 import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
-import java.util.Collections;
 import java.util.EnumSet;
 import java.util.Set;
 
@@ -170,6 +169,13 @@ public enum Flag {
     * used by clients calling into Infinispan.
     */
    PUT_FOR_EXTERNAL_READ,
+
+   /**
+    * Flags the invocation as a put operation done internally by the state transfer.
+    * This flag was created purely for internal Infinispan usage, and should not be
+    * used by clients calling into Infinispan.
+    */
+   PUT_FOR_STATE_TRANSFER,
 
    /**
     * If this flag is enabled, if a cache store is shared, then storage to the store is skipped.

@@ -49,7 +49,6 @@ import org.jgroups.blocks.RequestOptions;
 import org.jgroups.blocks.ResponseMode;
 import org.jgroups.blocks.RpcDispatcher;
 import org.jgroups.blocks.RspFilter;
-import org.jgroups.blocks.UnicastRequest;
 import org.jgroups.blocks.mux.Muxer;
 import org.jgroups.protocols.relay.SiteAddress;
 import org.jgroups.util.Buffer;

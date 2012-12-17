@@ -45,7 +45,9 @@ import java.io.Serializable;
 import java.lang.reflect.Method;
 import java.util.concurrent.Callable;
 
-@Test(groups = "functional", testName = "statetransfer.StateTransferFunctionalTest", enabled = true)
+import static org.junit.Assert.assertEquals;
+
+@Test(groups = "functional", testName = "statetransfer.StateTransferFunctionalTest")
 public class StateTransferFunctionalTest extends MultipleCacheManagersTest {
 
    public static final String A_B_NAME = "a_b_name";
@@ -288,7 +290,7 @@ public class StateTransferFunctionalTest extends MultipleCacheManagersTest {
       logTestEnd(m);
    }
 
-   @Test(enabled = false, description = "The new state transfer doesn't work with cache or cache manager restarts (yet)")
+   @Test
    public void testInitialStateTransferAfterRestart(Method m) throws Exception {
       testCount++;
       logTestStart(m);
@@ -349,8 +351,7 @@ public class StateTransferFunctionalTest extends MultipleCacheManagersTest {
       int count = writerThread.result();
 
       for (int c = 0; c < count; c++) {
-         Object o = cache2.get("test" + c);
-         assert new Integer(c).equals(o) : "Entry under key [test" + c + "] was [" + cache2.get("test" + c) + "] but expected [" + c + "]";
+         assertEquals(c, cache2.get("test" + c));
       }
    }
 
@@ -396,8 +397,9 @@ public class StateTransferFunctionalTest extends MultipleCacheManagersTest {
 
       int count = writerThread.result();
 
-      for (int c = 0; c < count; c++)
-         assert new Integer(c).equals(cache2.get("test" + c)) : "Entry under key [test" + c + "] was [" + cache2.get("test" + c) + "] but expected [" + c + "]";
+      for (int c = 0; c < count; c++) {
+         assertEquals(c, cache2.get("test" + c));
+      }
    }
 
    public class CacheVerifier implements Callable<Void> {
@@ -409,11 +411,10 @@ public class StateTransferFunctionalTest extends MultipleCacheManagersTest {
       }
 
       @Override
-      public Void call() throws Exception {
+      public Void call() {
          verifyInitialData(cache);
          return null;
       }
-
    }
 
 }

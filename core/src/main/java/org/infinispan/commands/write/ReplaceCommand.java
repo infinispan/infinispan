@@ -190,7 +190,8 @@ public class ReplaceCommand extends AbstractDataWriteCommand {
    @Override
    public String toString() {
       return "ReplaceCommand{" +
-            "oldValue=" + oldValue +
+            "key=" + key +
+            ", oldValue=" + oldValue +
             ", newValue=" + newValue +
             ", flags=" + flags +
             ", successful=" + successful +

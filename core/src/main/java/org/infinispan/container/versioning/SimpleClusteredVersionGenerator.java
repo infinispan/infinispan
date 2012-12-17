@@ -23,9 +23,8 @@ import org.infinispan.Cache;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.factories.annotations.Start;
 import org.infinispan.notifications.Listener;
-import org.infinispan.notifications.cachemanagerlistener.annotation.ViewChanged;
-import org.infinispan.notifications.cachemanagerlistener.event.ViewChangedEvent;
-import org.infinispan.remoting.transport.Transport;
+import org.infinispan.notifications.cachelistener.annotation.TopologyChanged;
+import org.infinispan.notifications.cachelistener.event.TopologyChangedEvent;
 
 /**
  * A version generator implementation for SimpleClusteredVersions
@@ -34,48 +33,48 @@ import org.infinispan.remoting.transport.Transport;
  * @since 5.1
  */
 public class SimpleClusteredVersionGenerator implements VersionGenerator {
-   // The current cluster view ID is recorded and used as a part of the version generated, and as such used as the
-   // most significant part of a version comparison.  If a version is generated based on an old view and another is
-   // generated based on a newer view, the one based on the newer view wins regardless of the version's counter.
+   // The current cache topology ID is recorded and used as a part of the version generated, and as such used as the
+   // most significant part of a version comparison. If a version is generated based on an old cache topology and another is
+   // generated based on a newer topology, the one based on the newer topology wins regardless of the version's counter.
    // See SimpleClusteredVersion for more details.
-   private volatile int viewId;
+   private volatile int topologyId = -1;
+
    private Cache<?, ?> cache;
-   private Transport transport;
 
    @Inject
-   public void init(Cache<?, ?> cache, Transport transport) {
+   public void init(Cache<?, ?> cache) {
       this.cache = cache;
-      this.transport = transport;
    }
 
-   @Start(priority = 11) // needs to happen *after* the transport starts.
+   @Start(priority = 11)
    public void start() {
-      if (transport != null) {
-         viewId = transport.getViewId();
-         cache.getCacheManager().addListener(new ViewIdUpdater());
-      }
+      cache.addListener(new TopologyIdUpdater());
    }
 
    @Override
    public IncrementableEntryVersion generateNew() {
-      return new SimpleClusteredVersion(viewId, 1);
+      if (topologyId == -1) {
+         throw new IllegalStateException("Topology id not set yet");
+      }
+      return new SimpleClusteredVersion(topologyId, 1);
    }
 
    @Override
    public IncrementableEntryVersion increment(IncrementableEntryVersion initialVersion) {
       if (initialVersion instanceof SimpleClusteredVersion) {
          SimpleClusteredVersion old = (SimpleClusteredVersion) initialVersion;
-         return new SimpleClusteredVersion(viewId, old.version + 1);
+         return new SimpleClusteredVersion(topologyId, old.version + 1);
       } else {
          throw new IllegalArgumentException("I only know how to deal with SimpleClusteredVersions, not " + initialVersion.getClass().getName());
       }
    }
 
    @Listener
-   public class ViewIdUpdater {
-      @ViewChanged
-      public void handleViewChange(ViewChangedEvent e) {
-         viewId = e.getViewId();
+   public class TopologyIdUpdater {
+
+      @TopologyChanged
+      public void onTopologyChange(TopologyChangedEvent<?, ?> tce) {
+         topologyId = tce.getNewTopologyId();
       }
    }
 }

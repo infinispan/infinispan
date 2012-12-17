@@ -35,6 +35,7 @@ import java.util.Set;
 
 import org.infinispan.commands.write.WriteCommand;
 import org.infinispan.container.entries.CacheEntry;
+import org.infinispan.container.versioning.EntryVersion;
 import org.infinispan.container.versioning.EntryVersionsMap;
 import org.infinispan.transaction.xa.CacheTransaction;
 import org.infinispan.transaction.xa.GlobalTransaction;
@@ -75,6 +76,8 @@ public abstract class AbstractCacheTransaction implements CacheTransaction {
    protected final int topologyId;
 
    private EntryVersionsMap updatedEntryVersions;
+
+   private Map<Object, EntryVersion> lookedUpRemoteVersions;
 
    /** mark as volatile as this might be set from the tx thread code on view change*/
    private volatile boolean isMarkedForRollback;
@@ -247,7 +250,20 @@ public abstract class AbstractCacheTransaction implements CacheTransaction {
    public void setUpdatedEntryVersions(EntryVersionsMap updatedEntryVersions) {
       this.updatedEntryVersions = updatedEntryVersions;
    }
-   
+
+   @Override
+   public EntryVersion getLookedUpRemoteVersion(Object key) {
+      return lookedUpRemoteVersions != null ? lookedUpRemoteVersions.get(key) : null;
+   }
+
+   @Override
+   public void putLookedUpRemoteVersion(Object key, EntryVersion version) {
+      if (lookedUpRemoteVersions == null) {
+         lookedUpRemoteVersions = new HashMap<Object, EntryVersion>();
+      }
+      lookedUpRemoteVersions.put(key, version);
+   }
+
    @Override
    public void addReadKey(Object key) {
       // No-op

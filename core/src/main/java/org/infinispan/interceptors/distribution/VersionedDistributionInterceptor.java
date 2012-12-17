@@ -35,7 +35,7 @@ import static org.infinispan.transaction.WriteSkewHelper.readVersionsFromRespons
 import static org.infinispan.transaction.WriteSkewHelper.setVersionsSeenOnPrepareCommand;
 
 /**
- * A version of the {@link BaseDistributionInterceptor} that adds logic to handling prepares when entries are versioned.
+ * A version of the {@link TxDistributionInterceptor} that adds logic to handling prepares when entries are versioned.
  *
  * @author Manik Surtani
  * @since 5.1
