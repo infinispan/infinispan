@@ -48,7 +48,7 @@ public abstract class AbstractKeyValueOperation<T> extends AbstractKeyOperation<
 
    protected AbstractKeyValueOperation(Codec codec, TransportFactory transportFactory, byte[] key, byte[] cacheName,
                                        AtomicInteger topologyId, Flag[] flags, byte[] value, int lifespan, int maxIdle) {
-      super(codec, transportFactory, key, cacheName, topologyId, flags);
+      super(codec, transportFactory, key, cacheName, true, topologyId, flags);
       this.value = value;
       this.lifespan = lifespan;
       this.maxIdle = maxIdle;

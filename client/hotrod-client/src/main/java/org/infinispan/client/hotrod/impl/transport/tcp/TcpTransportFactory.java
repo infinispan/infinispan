@@ -66,7 +66,7 @@ public class TcpTransportFactory implements TransportFactory {
    private Collection<SocketAddress> servers;
    private ConsistentHash consistentHash;
    private final ConsistentHashFactory hashFactory = new ConsistentHashFactory();
-   
+
    // the primitive fields are often accessed separately from the rest so it makes sense not to require synchronization for them
    private volatile boolean tcpNoDelay;
    private volatile int soTimeout;
@@ -147,10 +147,15 @@ public class TcpTransportFactory implements TransportFactory {
 
    @Override
    public Transport getTransport(byte[] key) {
+      return getTransport(key, false);
+   }
+
+   @Override
+   public Transport getTransport(byte[] key, boolean isWrite) {
       SocketAddress server;
       synchronized (lock) {
          if (consistentHash != null) {
-            server = consistentHash.getServer(key);
+            server = consistentHash.getServer(key, isWrite);
             if (log.isTraceEnabled()) {
                log.tracef("Using consistent hash for determining the server: " + server);
             }
@@ -282,7 +287,7 @@ public class TcpTransportFactory implements TransportFactory {
 
    @Override
    public int getTransportCount() {
-      if (Thread.currentThread().isInterrupted()) { 
+      if (Thread.currentThread().isInterrupted()) {
          return -1;
       }
       return transportCount;
