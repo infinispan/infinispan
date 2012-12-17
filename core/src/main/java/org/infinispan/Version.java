@@ -38,8 +38,8 @@ public class Version {
    private static final String MAJOR = "5";
    private static final String MINOR = "2";
    private static final String MICRO = "0";
-   private static final String MODIFIER = "SNAPSHOT";
-   private static final boolean SNAPSHOT = true;
+   private static final String MODIFIER = "Beta6";
+   private static final boolean SNAPSHOT = false;
 
    public static final String VERSION = String.format("%s.%s.%s%s%s", MAJOR, MINOR, MICRO, SNAPSHOT ? "-" : ".", MODIFIER);
    public static final String CODENAME = "Delirium";
