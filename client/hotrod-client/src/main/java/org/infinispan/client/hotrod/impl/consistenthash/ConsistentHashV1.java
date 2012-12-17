@@ -96,6 +96,11 @@ public class ConsistentHashV1 implements ConsistentHash {
 
    @Override
    public SocketAddress getServer(byte[] key) {
+      return getServer(key, false);
+   }
+
+   @Override
+   public SocketAddress getServer(byte[] key, boolean isWrite) {
       int keyHashCode = getNormalizedHash(key);
       if (keyHashCode == Integer.MIN_VALUE) keyHashCode += 1;
       int hash = Math.abs(keyHashCode);
@@ -103,7 +108,7 @@ public class ConsistentHashV1 implements ConsistentHash {
       int normalisedHashForKey = hash % hashSpace;
 
       int mainOwner = getHashIndex(normalisedHashForKey);
-      int randomOwner = getIndex();
+      int randomOwner = isWrite ? 0 : getIndex();
 
       int indexToReturn = (mainOwner + randomOwner) % hashes.length;
 

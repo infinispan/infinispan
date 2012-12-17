@@ -46,7 +46,7 @@ public class RemoveIfUnmodifiedOperation extends AbstractKeyOperation<VersionedO
 
    public RemoveIfUnmodifiedOperation(Codec codec, TransportFactory transportFactory,
             byte[] key, byte[] cacheName, AtomicInteger topologyId, Flag[] flags, long version) {
-      super(codec, transportFactory, key, cacheName, topologyId, flags);
+      super(codec, transportFactory, key, cacheName, true, topologyId, flags);
       this.version = version;
    }
 

@@ -33,10 +33,12 @@ import java.util.Set;
  * @since 4.1
  */
 public interface ConsistentHash {
-   
+
    void init(Map<SocketAddress, Set<Integer>> servers2Hash, int numKeyOwners, int hashSpace);
 
    SocketAddress getServer(byte[] key);
+
+   SocketAddress getServer(byte[] key, boolean isWrite);
 
    int getNormalizedHash(Object key);
 

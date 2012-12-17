@@ -49,7 +49,7 @@ public class GetWithMetadataOperation extends AbstractKeyOperation<MetadataValue
 
    public GetWithMetadataOperation(Codec codec, TransportFactory transportFactory,
             byte[] key, byte[] cacheName, AtomicInteger topologyId, Flag[] flags) {
-      super(codec, transportFactory, key, cacheName, topologyId, flags);
+      super(codec, transportFactory, key, cacheName, false, topologyId, flags);
    }
 
    @Override

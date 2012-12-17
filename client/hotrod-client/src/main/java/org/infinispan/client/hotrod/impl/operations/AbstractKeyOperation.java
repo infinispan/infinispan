@@ -48,17 +48,19 @@ public abstract class AbstractKeyOperation<T> extends RetryOnFailureOperation<T>
    private static final BasicLogger log = BasicLogFactory.getLog(AbstractKeyOperation.class);
 
    protected final byte[] key;
+   protected final boolean isWrite;
 
    protected AbstractKeyOperation(Codec codec, TransportFactory transportFactory,
-            byte[] key, byte[] cacheName, AtomicInteger topologyId, Flag[] flags) {
+            byte[] key, byte[] cacheName, boolean isWrite, AtomicInteger topologyId, Flag[] flags) {
       super(codec, transportFactory, cacheName, topologyId, flags);
       this.key = key;
+      this.isWrite = isWrite;
    }
 
    @Override
    protected Transport getTransport(int retryCount) {
       if (retryCount == 0) {
-         return transportFactory.getTransport(key);
+         return transportFactory.getTransport(key, isWrite);
       } else {
          return transportFactory.getTransport();
       }

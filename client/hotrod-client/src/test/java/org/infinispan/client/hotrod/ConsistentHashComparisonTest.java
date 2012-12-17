@@ -108,7 +108,8 @@ public class ConsistentHashComparisonTest {
     *
     * @author Mircea.Markus@jboss.com
     * @since 4.1
-    */ static class ConsistentHashV1Old implements ConsistentHash {
+    */
+   static class ConsistentHashV1Old implements ConsistentHash {
 
       private static final BasicLogger log = BasicLogFactory.getLog(ConsistentHashV1Old.class);
 
@@ -152,6 +153,11 @@ public class ConsistentHashComparisonTest {
 
       @Override
       public SocketAddress getServer(byte[] key) {
+         return getServer(key, false);
+      }
+
+      @Override
+      public SocketAddress getServer(byte[] key, boolean isWrite) {
          int keyHashCode = getNormalizedHash(key);
          if (keyHashCode == Integer.MIN_VALUE) keyHashCode += 1;
          int hash = Math.abs(keyHashCode);
@@ -160,7 +166,7 @@ public class ConsistentHashComparisonTest {
          if (log.isTraceEnabled()) {
             log.tracef("Found possible candidates: %s", candidates);
          }
-         int index = getIndex();
+         int index = isWrite ? 0 : getIndex();
          if (candidates.size() <= index) {
             int newIndex = index - candidates.size();
             SocketAddress socketAddress = getItemAtPosition(newIndex, positions);
