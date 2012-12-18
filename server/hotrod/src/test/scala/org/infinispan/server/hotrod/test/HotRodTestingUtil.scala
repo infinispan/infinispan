@@ -105,6 +105,9 @@ object HotRodTestingUtil extends Log {
       }
       props.setProperty(PROP_KEY_HOST, host)
       props.setProperty(PROP_KEY_PORT, port.toString)
+
+      // Minimize the number of threads
+      props.setProperty(PROP_KEY_WORKER_THREADS, "2")
       server.start(props, manager)
 
 

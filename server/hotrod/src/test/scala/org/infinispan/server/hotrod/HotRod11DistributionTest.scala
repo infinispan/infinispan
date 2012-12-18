@@ -51,62 +51,73 @@ class HotRod11DistributionTest extends HotRodMultiNodeTest {
    protected def virtualNodes = 1
 
    def testDistributedPutWithTopologyChanges(m: Method) {
-      var resp = clients.head.ping(3, 0)
+      val client1 = clients.head
+      val client2 = clients.tail.head
+
+      var resp = client1.ping(3, 0)
       assertStatus(resp, Success)
       assertHashTopologyReceived(resp.topologyResponse.get, servers, cacheName, 2, virtualNodes)
 
-      resp = clients.head.put(k(m) , 0, 0, v(m), 1, 0)
+      resp = client1.put(k(m) , 0, 0, v(m), 1, 0)
       assertStatus(resp, Success)
       assertEquals(resp.topologyResponse, None)
-      assertSuccess(clients.tail.head.get(k(m), 0), v(m))
+      assertSuccess(client2.get(k(m), 0), v(m))
 
-      resp = clients.head.put(k(m) , 0, 0, v(m, "v1-"), 2, 0)
+      resp = client1.put(k(m) , 0, 0, v(m, "v1-"), 2, 0)
       assertStatus(resp, Success)
       assertTopologyReceived(resp.topologyResponse.get, servers)
 
-      resp = clients.tail.head.put(k(m) , 0, 0, v(m, "v2-"), 2, 0)
+      resp = client2.put(k(m) , 0, 0, v(m, "v2-"), 2, 0)
       assertStatus(resp, Success)
       assertTopologyReceived(resp.topologyResponse.get, servers)
 
-      resp = clients.head.put(k(m) , 0, 0, v(m, "v3-"), 2, 1)
+      resp = client1.put(k(m) , 0, 0, v(m, "v3-"), 2, 1)
       assertStatus(resp, Success)
       assertEquals(resp.topologyResponse, None)
-      assertSuccess(clients.tail.head.get(k(m), 0), v(m, "v3-"))
+      assertSuccess(client2.get(k(m), 0), v(m, "v3-"))
 
-      resp = clients.head.put(k(m) , 0, 0, v(m, "v4-"), 3, 0)
+      resp = client1.put(k(m) , 0, 0, v(m, "v4-"), 3, 0)
       assertStatus(resp, Success)
       assertHashTopologyReceived(resp.topologyResponse.get, servers, cacheName, 2, virtualNodes)
-      assertSuccess(clients.tail.head.get(k(m), 0), v(m, "v4-"))
+      assertSuccess(client2.get(k(m), 0), v(m, "v4-"))
 
-      resp = clients.tail.head.put(k(m) , 0, 0, v(m, "v5-"), 3, 0)
+      resp = client2.put(k(m) , 0, 0, v(m, "v5-"), 3, 0)
       assertStatus(resp, Success)
       assertHashTopologyReceived(resp.topologyResponse.get, servers, cacheName, 2, virtualNodes)
-      assertSuccess(clients.tail.head.get(k(m), 0), v(m, "v5-"))
+      assertSuccess(client2.get(k(m), 0), v(m, "v5-"))
 
       val newServer = startClusteredServer(servers.tail.head.getPort + 25)
       val newClient = new HotRodClient(
             "127.0.0.1", newServer.getPort, cacheName, 60, protocolVersion)
+      val allServers = newServer :: servers
       val addressRemovalLatches = getAddressCacheRemovalLatches(servers)
       try {
          log.trace("New client started, modify key to be v6-*")
          resp = newClient.put(k(m) , 0, 0, v(m, "v6-"), 3, 0)
          assertStatus(resp, Success)
-         assertHashTopologyReceived(
-            resp.topologyResponse.get, newServer :: servers, cacheName, 2, virtualNodes)
+         assertHashTopologyReceived(resp.topologyResponse.get, allServers, cacheName, 2, virtualNodes)
 
-         log.trace("Get key and verify that's v6-*")
-         assertSuccess(clients.tail.head.get(k(m), 0), v(m, "v6-"))
+         log.trace("Get key from other client and verify that's v6-*")
+         assertSuccess(client2.get(k(m), 0), v(m, "v6-"))
+
+         resp = client2.put(k(m), 0, 0, v(m, "v7-"), 3, 0)
+         assertStatus(resp, Success)
+         assertHashTopologyReceived(resp.topologyResponse.get, allServers, cacheName, 2, virtualNodes)
+
+         assertSuccess(newClient.get(k(m), 0), v(m, "v7-"))
       } finally {
-         newClient.stop
+         log.trace("Stopping new server")
+         killClient(newClient)
          stopClusteredServer(newServer)
          waitAddressCacheRemoval(addressRemovalLatches)
+         log.trace("New server stopped")
       }
 
-      resp = clients.tail.head.put(k(m) , 0, 0, v(m, "v7-"), 3, 2)
+      resp = client2.put(k(m) , 0, 0, v(m, "v8-"), 3, 2)
       assertStatus(resp, Success)
       assertHashTopologyReceived(resp.topologyResponse.get, servers, cacheName, 2, virtualNodes)
 
-      assertSuccess(clients.tail.head.get(k(m), 0), v(m, "v7-"))
+      assertSuccess(client1.get(k(m), 0), v(m, "v8-"))
    }
 
 

@@ -307,10 +307,10 @@ public class TestingUtil {
       long failTime = System.currentTimeMillis() + timeout;
 
       while (System.currentTimeMillis() < failTime) {
-         sleepThread(100);
          if (areCacheViewsComplete(barfIfTooManyMembers, cacheContainers)) {
             return;
          }
+         sleepThread(100);
       }
 
       viewsTimedOut(cacheContainers);
