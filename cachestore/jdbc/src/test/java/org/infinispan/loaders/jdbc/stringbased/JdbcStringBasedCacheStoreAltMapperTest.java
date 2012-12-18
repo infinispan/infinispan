@@ -36,6 +36,7 @@ import org.infinispan.loaders.CacheStore;
 import org.infinispan.loaders.jdbc.TableManipulation;
 import org.infinispan.loaders.jdbc.connectionfactory.ConnectionFactory;
 import org.infinispan.loaders.jdbc.connectionfactory.ConnectionFactoryConfig;
+import org.infinispan.loaders.keymappers.DefaultTwoWayKey2StringMapper;
 import org.infinispan.loaders.keymappers.TwoWayKey2StringMapper;
 import org.infinispan.loaders.keymappers.UnsupportedKeyTypeException;
 import org.infinispan.marshall.StreamingMarshaller;
@@ -66,7 +67,7 @@ public class JdbcStringBasedCacheStoreAltMapperTest {
       tableManipulation = UnitTestDatabaseManager.buildStringTableManipulation();
       cfc = UnitTestDatabaseManager.getUniqueConnectionFactoryConfig();
       JdbcStringBasedCacheStoreConfig config = new JdbcStringBasedCacheStoreConfig(cfc, tableManipulation);
-      config.setKey2StringMapperClass(TwoWayKey2StringMapper.class.getName());
+      config.setKey2StringMapperClass(PersonKey2StringMapper.class.getName());
       config.setPurgeSynchronously(true);
       cacheStore = new JdbcStringBasedCacheStore();
       Cache<?, ?> mockCache = mock(Cache.class);
