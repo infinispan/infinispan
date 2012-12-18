@@ -93,14 +93,14 @@ public class JdbcBinaryCacheStoreTest extends BaseCacheStoreTest {
       FixedHashKey k1 = new FixedHashKey(1, "a");
       FixedHashKey k2 = new FixedHashKey(1, "b");
       cs.store(TestInternalCacheEntryFactory.create(k1, "value"));
-      cs.store(TestInternalCacheEntryFactory.create(k2, "value", 5000)); // will expire
+      cs.store(TestInternalCacheEntryFactory.create(k2, "value", 1000)); // will expire
       for (int i = 0; i < 120; i++) {
          cs.store(TestInternalCacheEntryFactory.create(new FixedHashKey(i + 10, "non-exp k" + i), "value"));
-         cs.store(TestInternalCacheEntryFactory.create(new FixedHashKey(i + 10, "exp k" + i), "value", 5000)); // will expire
+         cs.store(TestInternalCacheEntryFactory.create(new FixedHashKey(i + 10, "exp k" + i), "value", 1000)); // will expire
       }
+      TestingUtil.sleepThread(1000);
       assert cs.containsKey(k1);
-      assert cs.containsKey(k2);
-      TestingUtil.sleepThread(6000);
+      assert !cs.containsKey(k2);
       cs.purgeExpired();
       assert cs.containsKey(k1);
       assert !cs.containsKey(k2);
