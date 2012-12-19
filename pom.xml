@@ -54,6 +54,7 @@
       <module>cachestore/remote</module>
       <module>cachestore/cassandra</module>
       <module>cachestore/hbase</module>
+      <module>cachestore/leveldb</module>
       <module>server</module>
       <module>server/core</module>
       <module>server/memcached</module>
