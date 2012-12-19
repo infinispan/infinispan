@@ -27,7 +27,7 @@ import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.testng.annotations.AfterMethod;
 import org.testng.annotations.Test;
 
-@Test(testName = "marshall.StoreAsBinaryConfigTest")
+@Test(groups = "functional", testName = "marshall.StoreAsBinaryConfigTest")
 public class StoreAsBinaryConfigTest extends AbstractInfinispanTest {
 
    EmbeddedCacheManager ecm;

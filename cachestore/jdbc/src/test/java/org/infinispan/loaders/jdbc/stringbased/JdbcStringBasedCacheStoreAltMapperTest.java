@@ -52,8 +52,8 @@ import org.testng.annotations.Test;
  *
  * @author Mircea.Markus@jboss.com
  */
-@Test(groups = "functional", testName = "loaders.jdbc.stringbased.JdbcStringBasedCacheStoreTest2")
-public class JdbcStringBasedCacheStoreTest2 {
+@Test(groups = "functional", testName = "loaders.jdbc.stringbased.JdbcStringBasedCacheStoreAltMapperTest")
+public class JdbcStringBasedCacheStoreAltMapperTest {
 
    CacheStore cacheStore;
    private ConnectionFactoryConfig cfc;

@@ -36,6 +36,7 @@ import static org.testng.AssertJUnit.fail;
  * @author Galder Zamarreño
  * @since // TODO
  */
+@Test(groups = "functional", testName = "spring.config.CacheLoaderNotFoundTest")
 @ContextConfiguration
 public class CacheLoaderNotFoundTest extends AbstractTestNGSpringContextTests {
 

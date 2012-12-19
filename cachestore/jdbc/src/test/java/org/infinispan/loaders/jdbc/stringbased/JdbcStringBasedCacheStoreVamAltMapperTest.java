@@ -27,20 +27,19 @@ import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.marshall.StreamingMarshaller;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.testng.annotations.AfterClass;
-import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
 
 import static org.infinispan.test.TestingUtil.extractCacheMarshaller;
 
 /**
- * JdbcStringBasedCacheStoreTest2 using production level marshaller.
+ * JdbcStringBasedCacheStoreAltMapperTest using production level marshaller.
  * 
  * @author Galder Zamarreño
  * @since 4.0
  */
-@Test(groups = "functional", testName = "loaders.jdbc.stringbased.JdbcStringBasedCacheStoreVamTest2")
-public class JdbcStringBasedCacheStoreVamTest2 extends JdbcStringBasedCacheStoreTest2 {
+@Test(groups = "functional", testName = "loaders.jdbc.stringbased.JdbcStringBasedCacheStoreVamAltMapperTest")
+public class JdbcStringBasedCacheStoreVamAltMapperTest extends JdbcStringBasedCacheStoreAltMapperTest {
 
    EmbeddedCacheManager cm;
    StreamingMarshaller marshaller;

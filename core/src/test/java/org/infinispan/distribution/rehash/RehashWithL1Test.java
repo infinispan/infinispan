@@ -39,7 +39,7 @@ import static org.testng.AssertJUnit.assertFalse;
  * @author Galder Zamarreño
  * @since 5.2
  */
-@Test(groups = "functional", testName = "RayTest")
+@Test(groups = "functional", testName = "distribution.rehash.RehashWithL1Test")
 public class RehashWithL1Test extends MultipleCacheManagersTest {
 
    ConfigurationBuilder builder;

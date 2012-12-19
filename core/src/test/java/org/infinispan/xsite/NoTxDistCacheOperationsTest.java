@@ -43,29 +43,6 @@ public class NoTxDistCacheOperationsTest extends BaseCacheOperationsTest {
       return getDefaultClusteredCacheConfig(CacheMode.DIST_SYNC, false);
    }
 
-   //todo - if I don't explicitly override the test methods then testNG won't execute them from superclass.
-   //fix this once we move to JUnit
-
-   @Override
-   public void testRemove() {
-      super.testRemove();
-   }
-
-   @Override
-   public void testPutAndClear() {
-      super.testPutAndClear();
-   }
-
-   @Override
-   public void testReplace() {
-      super.testReplace();
-   }
-
-   @Override
-   public void testPutAll() {
-      super.testPutAll();
-   }
-
    public void testDataGetsReplicated() {
       cache("LON", 0).put("k_lon", "v_lon");
       assertNull(cache("NYC", 0).get("k_lon"));

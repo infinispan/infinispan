@@ -45,8 +45,8 @@ import org.testng.annotations.Test;
 /**
  * @author Sanne Grinovero <sanne@infinispan.org> (C) 2011 Red Hat Inc.
  */
-@Test(groups = "unit", testName = "config.MultipleCachesTests")
-public class MultipleCachesTests extends SingleCacheManagerTest {
+@Test(groups = "unit", testName = "config.MultipleCachesTest")
+public class MultipleCachesTest extends SingleCacheManagerTest {
 
    @Override
    protected EmbeddedCacheManager createCacheManager() throws Exception {

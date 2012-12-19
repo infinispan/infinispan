@@ -25,12 +25,12 @@ import org.infinispan.test.MultipleCacheManagersTest;
 import org.infinispan.test.TestingUtil;
 import org.testng.annotations.Test;
 
-@Test(groups="functional")
-public class ClusteredCLITests extends MultipleCacheManagersTest {
+@Test(groups="functional", testName = "cli-server.ClusteredCLITest")
+public class ClusteredCLITest extends MultipleCacheManagersTest {
 
    public static String CACHE_NAME = "distCache";
 
-   public ClusteredCLITests() {
+   public ClusteredCLITest() {
       cleanup = CleanupPhase.AFTER_TEST;
    }
 

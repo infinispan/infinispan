@@ -53,6 +53,7 @@ import org.testng.annotations.Test;
  * @author <a href="mailto:olaf DOT bergner AT gmx DOT de">Olaf Bergner</a>
  * 
  */
+@Test(groups = "unit", testName = "spring.ConfigurationPropertiesOverridesTest")
 public class ConfigurationPropertiesOverridesTest {
 
    private final Properties defaultConfigurationProperties = new ConfigurationProperties()

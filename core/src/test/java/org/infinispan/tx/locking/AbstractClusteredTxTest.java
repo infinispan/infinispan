@@ -26,6 +26,7 @@ package org.infinispan.tx.locking;
 import org.infinispan.test.MultipleCacheManagersTest;
 import org.infinispan.transaction.tm.DummyTransactionManager;
 import org.infinispan.transaction.tm.DummyXid;
+import org.testng.annotations.Test;
 
 import javax.transaction.xa.XAException;
 import java.util.Collections;
@@ -36,6 +37,7 @@ import java.util.UUID;
  * @author Mircea Markus
  * @since 5.1
  */
+@Test(groups = "functional")
 public abstract class AbstractClusteredTxTest extends MultipleCacheManagersTest {
    
    Object k;

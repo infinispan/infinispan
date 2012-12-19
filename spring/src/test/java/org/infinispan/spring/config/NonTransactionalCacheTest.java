@@ -34,6 +34,7 @@ import static org.testng.AssertJUnit.assertEquals;
  * @author Galder Zamarreño
  * @since 5.1
  */
+@Test(groups = "functional", testName = "spring.config.NonTransactionalCacheTest")
 @ContextConfiguration
 public class NonTransactionalCacheTest extends AbstractTestNGSpringContextTests {
 

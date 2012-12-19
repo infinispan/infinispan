@@ -44,6 +44,7 @@ import static org.testng.Assert.assertEquals;
 /**
  * A base test for all rehashing tests
  */
+@Test(groups = "functional")
 public abstract class RehashTestBase extends BaseDistFunctionalTest {
 
    protected RehashTestBase() {

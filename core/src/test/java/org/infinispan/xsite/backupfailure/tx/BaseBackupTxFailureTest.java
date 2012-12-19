@@ -22,6 +22,7 @@ package org.infinispan.xsite.backupfailure.tx;
 import org.infinispan.configuration.cache.BackupFailurePolicy;
 import org.infinispan.xsite.AbstractTwoSitesTest;
 import org.infinispan.xsite.backupfailure.BaseBackupFailureTest;
+import org.testng.annotations.Test;
 
 import static org.testng.AssertJUnit.assertEquals;
 import static org.testng.AssertJUnit.assertNull;
@@ -31,6 +32,7 @@ import static org.testng.AssertJUnit.fail;
  * @author Mircea Markus
  * @since 5.2
  */
+@Test(groups = "xsite")
 public abstract class BaseBackupTxFailureTest extends AbstractTwoSitesTest {
 
    private BaseBackupFailureTest.FailureInterceptor failureInterceptor;

@@ -37,27 +37,4 @@ public class OptReplCacheOperationsTest extends BaseCacheOperationsTest{
    protected ConfigurationBuilder getLonActiveConfig() {
       return getDefaultClusteredCacheConfig(CacheMode.REPL_SYNC, true);
    }
-
-   //todo - if I don't explicitly override the test methods then testNG won't execute them from superclass.
-   //fix this once we move to JUnit
-
-   @Override
-   public void testRemove() {
-      super.testRemove();
-   }
-
-   @Override
-   public void testPutAndClear() {
-      super.testPutAndClear();
-   }
-
-   @Override
-   public void testReplace() {
-      super.testReplace();
-   }
-
-   @Override
-   public void testPutAll() {
-      super.testPutAll();
-   }
 }
