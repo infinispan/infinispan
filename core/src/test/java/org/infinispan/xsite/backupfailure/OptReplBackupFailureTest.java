@@ -39,34 +39,5 @@ public class OptReplBackupFailureTest extends NonTxBackupFailureTest {
    protected ConfigurationBuilder getLonActiveConfig() {
       return getDefaultClusteredCacheConfig(CacheMode.REPL_SYNC, false);
    }
-
-
-   //todo - if I don't explicitly override the test methods then testNG won't execute them from superclass.
-   //fix this once we move to JUnit
-
-   @Override
-   public void testPutFailure() {
-      super.testPutFailure();
-   }
-
-   @Override
-   public void testRemoveFailure() {
-      super.testRemoveFailure();
-   }
-
-   @Override
-   public void testReplaceFailure() {
-      super.testReplaceFailure();
-   }
-
-   @Override
-   public void testClearFailure() {
-      super.testClearFailure();
-   }
-
-   @Override
-   public void testPutMapFailure() {
-      super.testPutMapFailure();
-   }
 }
 

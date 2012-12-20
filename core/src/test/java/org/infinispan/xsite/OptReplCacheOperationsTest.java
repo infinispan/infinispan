@@ -27,7 +27,7 @@ import org.testng.annotations.Test;
  * @author Mircea Markus
  * @since 5.2
  */
-@Test (groups = "xsite", testName = "xsite.OptReplCacheOperationsTest")
+@Test (groups = "xsite")
 public class OptReplCacheOperationsTest extends BaseCacheOperationsTest{
 
    protected ConfigurationBuilder getNycActiveConfig() {

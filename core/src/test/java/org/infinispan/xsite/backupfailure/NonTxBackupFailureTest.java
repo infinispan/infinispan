@@ -33,12 +33,8 @@ import static org.testng.AssertJUnit.*;
  * @author Mircea Markus
  * @since 5.2
  */
-@Test (groups = "xsite", testName = "xsite.backupfailure.NonTxBackupFailureTest")
+@Test (groups = "xsite")
 public class NonTxBackupFailureTest extends BaseBackupFailureTest {
-
-   //todo - if I don't explicitly override the test methods then testNG won't execute them from superclass.
-   //fix this once we move to JUnit
-
 
    @Override
    protected ConfigurationBuilder getLonActiveConfig() {

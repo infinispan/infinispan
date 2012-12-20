@@ -28,7 +28,7 @@ import static org.testng.AssertJUnit.assertEquals;
  * @author Mircea Markus
  * @since 5.2
  */
-@Test(groups = "xsite")
+@Test (groups = "xsite")
 public abstract class BaseDistCacheOperationsTest extends BaseCacheOperationsTest {
 
    public void testPutWithLocality() {

@@ -34,11 +34,13 @@ import org.infinispan.context.impl.TxInvocationContext;
 import org.infinispan.interceptors.base.CommandInterceptor;
 import org.infinispan.xsite.AbstractTwoSitesTest;
 import org.testng.annotations.BeforeMethod;
+import org.testng.annotations.Test;
 
 /**
  * @author Mircea Markus
  * @since 5.2
  */
+@Test (groups = "xsite")
 public abstract class BaseBackupFailureTest extends AbstractTwoSitesTest {
 
    protected FailureInterceptor failureInterceptor;
