@@ -33,7 +33,7 @@ import static org.testng.AssertJUnit.*;
  * @author Mircea Markus
  * @since 5.2
  */
-@Test (groups = "xsite")
+@Test (groups = "xsite", testName = "xsite.backupfailure.NonTxBackupFailureTest")
 public class NonTxBackupFailureTest extends BaseBackupFailureTest {
 
    @Override

@@ -32,7 +32,7 @@ import static junit.framework.Assert.assertTrue;
  * @author Mircea Markus
  * @since 5.2
  */
-@Test (groups = "xsite")
+@Test (groups = "xsite", testName = "xsite.backupfailure.CustomFailurePolicyTest")
 public class CustomFailurePolicyTest extends NonTxBackupFailureTest{
 
    public CustomFailurePolicyTest() {

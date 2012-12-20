@@ -17,26 +17,29 @@
  * MA  02110-1301, USA.
  */
 
-package org.infinispan.xsite.backupfailure.tx;
+package org.infinispan.xsite;
 
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
+import org.infinispan.transaction.LockingMode;
 import org.testng.annotations.Test;
 
-/**
- * @author Mircea Markus
- * @since 5.2
- */
-@Test (groups = "xsite", testName = "xsite.backupfailure.tx.DistBackupTxFailureTest")
-public class DistBackupTxFailureTest extends BaseBackupTxFailureTest {
+@Test (groups = "xsite", testName = "xsite.RollbackNoPreparePessimisticTest")
+public class RollbackNoPreparePessimisticTest extends RollbackNoPrepareOptimisticTest {
 
    @Override
    protected ConfigurationBuilder getNycActiveConfig() {
-      return getDefaultClusteredCacheConfig(CacheMode.DIST_SYNC, true);
+      return getPessimisticDistTxConnfig();
    }
 
    @Override
    protected ConfigurationBuilder getLonActiveConfig() {
-      return getDefaultClusteredCacheConfig(CacheMode.DIST_SYNC, true);
+      return getPessimisticDistTxConnfig();
+   }
+
+   private ConfigurationBuilder getPessimisticDistTxConnfig() {
+      ConfigurationBuilder cb = getDefaultClusteredCacheConfig(CacheMode.DIST_SYNC, true);
+      cb.transaction().lockingMode(LockingMode.PESSIMISTIC);
+      return cb;
    }
 }

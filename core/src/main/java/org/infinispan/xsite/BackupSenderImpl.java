@@ -168,6 +168,7 @@ public class BackupSenderImpl implements BackupSender {
    @Override
    public BackupResponse backupRollback(RollbackCommand command) throws Exception {
       List<XSiteBackup> xSiteBackups = calculateBackupInfo(BackupFilter.KEEP_2PC_ONLY);
+      log.tracef("Backing up rollback command to: %s", xSiteBackups);
       return backupCommand(command, xSiteBackups);
    }
 

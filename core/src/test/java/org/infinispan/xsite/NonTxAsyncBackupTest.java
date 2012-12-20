@@ -47,7 +47,7 @@ import static junit.framework.Assert.assertNull;
  * @author Mircea Markus
  * @since 5.2
  */
-@Test(groups = "xsite")
+@Test(groups = "xsite", testName = "xsite.NonTxAsyncBackupTest")
 public class NonTxAsyncBackupTest extends AbstractTwoSitesTest {
 
    private BlockingInterceptor blockingInterceptor;

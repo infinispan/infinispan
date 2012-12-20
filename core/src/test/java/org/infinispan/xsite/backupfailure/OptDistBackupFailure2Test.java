@@ -28,7 +28,7 @@ import org.testng.annotations.Test;
  * @author Mircea Markus
  * @since 5.2
  */
-@Test (groups = "xsite")
+@Test (groups = "xsite", testName = "xsite.backupfailure.OptDistBackupFailure2Test")
 public class OptDistBackupFailure2Test extends NonTxBackupFailureTest {
 
    public OptDistBackupFailure2Test() {

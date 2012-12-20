@@ -36,7 +36,7 @@ import static org.testng.AssertJUnit.assertTrue;
  * @author Mircea Markus
  * @since 5.2
  */
-@Test(groups = "functional", testName = "xsite.XSiteFileParsingTest")
+@Test(groups = "functional", testName = "xsite.XSiteFileParsing2Test")
 public class XSiteFileParsing2Test extends SingleCacheManagerTest {
 
    public static final String FILE_NAME = "configs/xsite/xsite-test2.xml";

@@ -22,6 +22,7 @@ package org.infinispan.interceptors.xsite;
 import org.infinispan.commands.tx.CommitCommand;
 import org.infinispan.commands.tx.PrepareCommand;
 import org.infinispan.commands.tx.RollbackCommand;
+import org.infinispan.context.impl.LocalTxInvocationContext;
 import org.infinispan.context.impl.TxInvocationContext;
 import org.infinispan.remoting.transport.BackupResponse;
 
@@ -67,7 +68,7 @@ public class OptimisticBackupInterceptor extends BaseBackupInterceptor {
 
    @Override
    public Object visitRollbackCommand(TxInvocationContext ctx, RollbackCommand command) throws Throwable {
-      if (!shouldInvokeRemoteTxCommand(ctx))
+      if (!shouldRollbackRemoteTxCommand(ctx))
          return super.visitRollbackCommand(ctx, command);
 
       if (isTxFromRemoteSite(command.getGlobalTransaction())) {
@@ -78,5 +79,17 @@ public class OptimisticBackupInterceptor extends BaseBackupInterceptor {
       Object result = invokeNextInterceptor(ctx, command);
       backupSender.processResponses(backupResponse, command, ctx.getTransaction());
       return result;
+   }
+
+   private boolean shouldRollbackRemoteTxCommand(TxInvocationContext ctx) {
+      return shouldInvokeRemoteTxCommand(ctx) && hasBeenPrepared((LocalTxInvocationContext) ctx);
+   }
+
+   /**
+    * This 'has been prepared' logic only applies to optimistic transactions, hence it is not present in the
+    * LocalTransaction object itself.
+    */
+   private boolean hasBeenPrepared(LocalTxInvocationContext ctx) {
+      return !ctx.getRemoteLocksAcquired().isEmpty();
    }
 }
