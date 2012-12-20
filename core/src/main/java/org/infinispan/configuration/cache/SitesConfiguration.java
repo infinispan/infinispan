@@ -32,7 +32,6 @@ import java.util.Set;
 public class SitesConfiguration {
 
    private final List<BackupConfiguration> allBackups;
-   private final List<BackupConfiguration> inUseBackups;
 
    private final BackupForConfiguration backupFor;
 
@@ -46,13 +45,6 @@ public class SitesConfiguration {
       this.backupFor = backupFor;
       this.disableBackups = disableBackups;
       this.inUseBackupSites = Collections.unmodifiableSet(new HashSet<String>(backupSites));
-      ArrayList<BackupConfiguration> filtered = new ArrayList<BackupConfiguration>(backupSites.size());
-      for (BackupConfiguration backupConfiguration : backups) {
-         if (backupSites.contains(backupConfiguration.site())){
-            filtered.add(backupConfiguration);
-         }
-      }
-      this.inUseBackups = Collections.unmodifiableList(filtered);
    }
 
    /**
@@ -73,14 +65,14 @@ public class SitesConfiguration {
 
 
    /**
-    * Returns the list of {@link BackupConfiguration} corresponding to the {@link #inUseBackupSites}.
+    * Returns the list of {@link BackupConfiguration} that have {@link org.infinispan.configuration.cache.BackupConfiguration#enabled()} == true.
     */
-   public List<BackupConfiguration> inUseBackups() {
-      return inUseBackups;
-   }
-
-   public Set<String> inUseBackupSites() {
-      return inUseBackupSites;
+   public List<BackupConfiguration> enabledBackups() {
+      List<BackupConfiguration> result = new ArrayList<BackupConfiguration>();
+      for (BackupConfiguration bc : allBackups) {
+         if (bc.enabled()) result.add(bc);
+      }
+      return result;
    }
 
    /**
@@ -100,13 +92,21 @@ public class SitesConfiguration {
    }
 
    public boolean hasInUseBackup(String siteName) {
-      for (BackupConfiguration bc : inUseBackups) {
+      for (BackupConfiguration bc : allBackups) {
          if (bc.site().equals(siteName)) {
-            return true;
+            return bc.enabled();
          }
       }
       return false;
    }
+
+   public boolean hasEnabledBackups() {
+      for (BackupConfiguration bc : allBackups) {
+         if (bc.enabled()) return true;
+      }
+      return false;
+   }
+
 
    @Override
    public boolean equals(Object o) {
@@ -134,7 +134,7 @@ public class SitesConfiguration {
 
    @Override
    public String toString() {
-      return "SitesConfiguration{" +
+      return "SiteConfiguration{" +
             "allBackups=" + allBackups +
             ", backupFor=" + backupFor +
             ", disableBackups=" + disableBackups +

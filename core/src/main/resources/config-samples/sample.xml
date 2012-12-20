@@ -121,14 +121,10 @@
             jmxDomain="org.infinispan" 
             cacheManagerName="SampleCacheManager"/>
      <!--
-        Defines the sites needed for Infinispan 's cross-site (x-site) replication.
+        Defines the site needed for Infinispan 's cross-site (x-site) replication.
      -->
      <!--
-     <sites local="LON">
-       <site name="LON"/>
-       <site name="SFO"/>
-       <site name="NYC"/>
-     </sites>
+     <site local="LON"/>
      -->
 
      <!--
@@ -292,7 +288,7 @@
 
 
       <!--
-       When x-site replication is used, configures the sites and caches where this (default) cache backs up the data.
+       When x-site replication is used, configures the site and caches where this (default) cache backs up the data.
       -->
       <!--
         <sites>

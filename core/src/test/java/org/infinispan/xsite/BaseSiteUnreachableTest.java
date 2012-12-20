@@ -42,7 +42,7 @@ public class BaseSiteUnreachableTest extends AbstractXSiteTest {
 
       GlobalConfigurationBuilder lonGc = GlobalConfigurationBuilder.defaultClusteredBuilder();
       lonGc
-            .sites().localSite("LON");
+            .site().localSite("LON");
       ConfigurationBuilder lon = getLonActiveConfig();
       lon.sites().addBackup()
             .site("NYC")

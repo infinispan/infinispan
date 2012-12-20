@@ -66,14 +66,14 @@ public class GlobalConfiguration {
    private final SerializationConfiguration serialization;
    private final ShutdownConfiguration shutdown;
    private final Map<Class<?>, ?> modules;
-   private final SitesConfiguration sites;
+   private final SiteConfiguration site;
    private final ClassLoader cl;
 
    GlobalConfiguration(ExecutorFactoryConfiguration asyncListenerExecutor,
          ExecutorFactoryConfiguration asyncTransportExecutor, ScheduledExecutorFactoryConfiguration evictionScheduledExecutor,
          ScheduledExecutorFactoryConfiguration replicationQueueScheduledExecutor, GlobalJmxStatisticsConfiguration globalJmxStatistics,
          TransportConfiguration transport, SerializationConfiguration serialization, ShutdownConfiguration shutdown,
-         List<?> modules, SitesConfiguration sites ,ClassLoader cl) {
+         List<?> modules, SiteConfiguration site,ClassLoader cl) {
       this.asyncListenerExecutor = asyncListenerExecutor;
       this.asyncTransportExecutor = asyncTransportExecutor;
       this.evictionScheduledExecutor = evictionScheduledExecutor;
@@ -87,7 +87,7 @@ public class GlobalConfiguration {
          moduleMap.put(module.getClass(), module);
       }
       this.modules = Collections.unmodifiableMap(moduleMap);
-      this.sites = sites;
+      this.site = site;
       this.cl = cl;
    }
 
@@ -139,8 +139,8 @@ public class GlobalConfiguration {
       return cl;
    }
 
-   public SitesConfiguration sites() {
-      return sites;
+   public SiteConfiguration sites() {
+      return site;
    }
    
    @Override
@@ -155,7 +155,7 @@ public class GlobalConfiguration {
             ", serialization=" + serialization +
             ", shutdown=" + shutdown +
             ", modules=" + modules +
-            ", sites=" + sites +
+            ", site=" + site +
             ", cl=" + cl +
             '}';
    }

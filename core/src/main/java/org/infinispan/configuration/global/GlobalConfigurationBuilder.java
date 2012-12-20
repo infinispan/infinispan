@@ -45,7 +45,7 @@ public class GlobalConfigurationBuilder implements GlobalConfigurationChildBuild
    private final ScheduledExecutorFactoryConfigurationBuilder replicationQueueScheduledExecutor;
    private final ShutdownConfigurationBuilder shutdown;
    private final List<Builder<?>> modules = new ArrayList<Builder<?>>();
-   private final SitesConfigurationBuilder sites;
+   private final SiteConfigurationBuilder site;
 
    public GlobalConfigurationBuilder() {
       this.cl = Thread.currentThread().getContextClassLoader();
@@ -57,7 +57,7 @@ public class GlobalConfigurationBuilder implements GlobalConfigurationChildBuild
       this.evictionScheduledExecutor = new ScheduledExecutorFactoryConfigurationBuilder(this);
       this.replicationQueueScheduledExecutor = new ScheduledExecutorFactoryConfigurationBuilder(this);
       this.shutdown = new ShutdownConfigurationBuilder(this);
-      this.sites = new SitesConfigurationBuilder(this);
+      this.site = new SiteConfigurationBuilder(this);
    }
 
    /**
@@ -150,8 +150,8 @@ public class GlobalConfigurationBuilder implements GlobalConfigurationChildBuild
    }
 
    @Override
-   public SitesConfigurationBuilder sites() {
-      return sites;
+   public SiteConfigurationBuilder site() {
+      return site;
    }
 
    public <T extends Builder<?>> T addModule(Class<T> klass) {
@@ -169,7 +169,7 @@ public class GlobalConfigurationBuilder implements GlobalConfigurationChildBuild
    public void validate() {
       for (AbstractGlobalConfigurationBuilder<?> validatable : asList(asyncListenerExecutor, asyncTransportExecutor,
             evictionScheduledExecutor, replicationQueueScheduledExecutor, globalJmxStatistics, transport,
-            serialization, shutdown, sites)) {
+            serialization, shutdown, site)) {
          validatable.validate();
       }
       for (Builder<?> m : modules) {
@@ -193,7 +193,7 @@ public class GlobalConfigurationBuilder implements GlobalConfigurationChildBuild
             serialization.create(),
             shutdown.create(),
             modulesConfig,
-            sites.create(),
+            site.create(),
             cl
             );
    }
@@ -215,7 +215,7 @@ public class GlobalConfigurationBuilder implements GlobalConfigurationChildBuild
       serialization.read(template.serialization());
       shutdown.read(template.shutdown());
       transport.read(template.transport());
-      sites.read(template.sites());
+      site.read(template.sites());
       return this;
    }
 
@@ -242,7 +242,7 @@ public class GlobalConfigurationBuilder implements GlobalConfigurationChildBuild
             ", evictionScheduledExecutor=" + evictionScheduledExecutor +
             ", replicationQueueScheduledExecutor=" + replicationQueueScheduledExecutor +
             ", shutdown=" + shutdown +
-            ", sites=" + sites +
+            ", site=" + site +
             '}';
    }
 
@@ -268,7 +268,7 @@ public class GlobalConfigurationBuilder implements GlobalConfigurationChildBuild
          return false;
       if (shutdown != null ? !shutdown.equals(that.shutdown) : that.shutdown != null)
          return false;
-      if (sites != null ? !sites.equals(that.sites) : that.sites != null)
+      if (site != null ? !site.equals(that.site) : that.site != null)
          return false;
       if (transport != null ? !transport.equals(that.transport) : that.transport != null)
          return false;
@@ -287,7 +287,7 @@ public class GlobalConfigurationBuilder implements GlobalConfigurationChildBuild
       result = 31 * result + (evictionScheduledExecutor != null ? evictionScheduledExecutor.hashCode() : 0);
       result = 31 * result + (replicationQueueScheduledExecutor != null ? replicationQueueScheduledExecutor.hashCode() : 0);
       result = 31 * result + (shutdown != null ? shutdown.hashCode() : 0);
-      result = 31 * result + (sites != null ? sites.hashCode() : 0);
+      result = 31 * result + (site != null ? site.hashCode() : 0);
       return result;
    }
 

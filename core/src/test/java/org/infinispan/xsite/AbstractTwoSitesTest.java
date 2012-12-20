@@ -47,7 +47,7 @@ public abstract class AbstractTwoSitesTest extends AbstractXSiteTest {
 
       GlobalConfigurationBuilder lonGc = GlobalConfigurationBuilder.defaultClusteredBuilder();
       lonGc
-            .sites().localSite("LON");
+            .site().localSite("LON");
       ConfigurationBuilder lon = getLonActiveConfig();
       lon.sites().addBackup()
             .site("NYC")
@@ -61,7 +61,7 @@ public abstract class AbstractTwoSitesTest extends AbstractXSiteTest {
 
       GlobalConfigurationBuilder nycGc = GlobalConfigurationBuilder.defaultClusteredBuilder();
       nycGc
-            .sites().localSite("NYC");
+            .site().localSite("NYC");
       ConfigurationBuilder nyc = getNycActiveConfig();
       nyc.sites().addBackup()
             .site("LON")

@@ -29,7 +29,7 @@
 
     <global>
 
-        <sites local="LON"/>
+        <site local="LON"/>
 
         <transport clusterName="infinispan-cluster" distributedSyncTimeout="50000" nodeName="Jalapeno" machineId="m1"
                    rackId="r1" siteId="s1">
@@ -44,10 +44,10 @@
     <default>
         <locking concurrencyLevel="100" lockAcquisitionTimeout="1000"/>
         <sites>
-            <backups backupSites="NYC,SFO">
-                <backup site="NYC" strategy="SYNC" backupFailurePolicy="IGNORE" timeout="12003"/>
-                <backup site="SFO" strategy="ASYNC"/>
-                <backup site="LON" strategy="SYNC"/>
+            <backups>
+                <backup site="NYC" strategy="SYNC" backupFailurePolicy="IGNORE" timeout="12003" enabled="true"/>
+                <backup site="SFO" strategy="ASYNC" enabled="true"/>
+                <backup site="LON" strategy="SYNC" enabled="false"/>
             </backups>
             <backupFor remoteCache="someCache" remoteSite="SFO"/>
         </sites>
@@ -58,7 +58,7 @@
 
     <namedCache name="noBackupFor">
         <sites>
-            <backups backupSites="NYC">
+            <backups>
                 <backup site="NYC" strategy="SYNC" backupFailurePolicy="WARN" timeout="12003"/>
             </backups>
             <backupFor/>

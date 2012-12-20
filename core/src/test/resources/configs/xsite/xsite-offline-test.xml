@@ -29,7 +29,7 @@
 
     <global>
 
-        <sites local="LON"/>
+        <site local="LON"/>
 
         <transport clusterName="infinispan-cluster" distributedSyncTimeout="50000" nodeName="Jalapeno" machineId="m1"
                    rackId="r1" siteId="s1">

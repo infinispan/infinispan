@@ -64,7 +64,7 @@
                   </xs:documentation>
                 </xs:annotation>
               </xs:element>
-              <xs:element name="sites" type="tns:sites" minOccurs="0">
+              <xs:element name="site" type="tns:site" minOccurs="0">
                 <xs:annotation>
                   <xs:documentation>
                     Configuration for the x-site replication.
@@ -445,14 +445,6 @@
                               </xs:annotation>
                           </xs:element>
                       </xs:sequence>
-                      <xs:attribute name="backupSites" type="xs:string">
-                          <xs:annotation>
-                              <xs:documentation>
-                                  Defines the list of comma-separated site names, from the list of sites names defined within 'backups' element,
-                                  to which this cache backups its data.
-                              </xs:documentation>
-                          </xs:annotation>
-                      </xs:attribute>
                   </xs:complexType>
               </xs:element>
               <xs:element name="backupFor" minOccurs="0" maxOccurs="1">
@@ -1271,9 +1263,16 @@
               </xs:documentation>
           </xs:annotation>
       </xs:attribute>
+      <xs:attribute name="enabled" type="xs:boolean">
+          <xs:annotation>
+              <xs:documentation>
+                  If 'false' then no data is backed up to this site. Defaults to 'true'.
+              </xs:documentation>
+          </xs:annotation>
+      </xs:attribute>
   </xs:complexType>
 
-  <xs:complexType name="sites">
+  <xs:complexType name="site">
     <xs:sequence minOccurs="0" maxOccurs="unbounded">
     </xs:sequence>
     <xs:attribute name="local" type="xs:string" use="required">
