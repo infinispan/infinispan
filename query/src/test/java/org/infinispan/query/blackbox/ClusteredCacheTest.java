@@ -33,18 +33,24 @@ import javax.transaction.TransactionManager;
 
 import org.apache.lucene.queryParser.QueryParser;
 import org.apache.lucene.search.Query;
+import org.hibernate.search.FullTextFilter;
 import org.hibernate.search.query.dsl.QueryBuilder;
 import org.infinispan.Cache;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.interceptors.base.CommandInterceptor;
 import org.infinispan.query.CacheQuery;
+import org.infinispan.query.FetchOptions;
+import org.infinispan.query.ResultIterator;
 import org.infinispan.query.Search;
 import org.infinispan.query.SearchManager;
 import org.infinispan.query.backend.QueryInterceptor;
+import org.infinispan.query.test.CustomKey3;
+import org.infinispan.query.test.CustomKey3Transformer;
 import org.infinispan.query.test.Person;
 import org.infinispan.test.MultipleCacheManagersTest;
 import org.infinispan.test.TestingUtil;
+import org.testng.AssertJUnit;
 import org.testng.annotations.Test;
 
 /**
@@ -88,10 +94,7 @@ public class ClusteredCacheTest extends MultipleCacheManagersTest {
       cache2 = caches.get(1);
    }
 
-   private void prepareTestData() throws Exception {
-      TransactionManager transactionManager = null;
-      transactionManager = cache1.getAdvancedCache().getTransactionManager();
-
+   private void prepareTestedObjects() {
       person1 = new Person();
       person1.setName("Navin Surtani");
       person1.setBlurb("Likes playing WoW");
@@ -103,6 +106,13 @@ public class ClusteredCacheTest extends MultipleCacheManagersTest {
       person3 = new Person();
       person3.setName("MiniGoat");
       person3.setBlurb("Eats cheese");
+   }
+
+   protected void prepareTestData() throws Exception {
+      prepareTestedObjects();
+
+      TransactionManager transactionManager = null;
+      transactionManager = cache1.getAdvancedCache().getTransactionManager();
 
       // Put the 3 created objects in the cache1.
 
@@ -261,6 +271,78 @@ public class ClusteredCacheTest extends MultipleCacheManagersTest {
 
       luceneQuery = queryParser.parse("playing");
       queries[1] = luceneQuery;
+
+      Query luceneQuery = queries[0].combine(queries);
+      CacheQuery cacheQuery = Search.getSearchManager(cache1).getQuery(luceneQuery);
+      assert cacheQuery.getResultSize() == 3;
+
+      cache2.clear();
+
+      assert cacheQuery.getResultSize() == 3;
+      cacheQuery = Search.getSearchManager(cache1).getQuery(luceneQuery);
+
+      assert cacheQuery.getResultSize() == 0;
+   }
+
+   public void testFullTextFilterOnOff() throws Exception {
+      prepareTestData();
+      queryParser = createQueryParser("blurb");
+      Query luceneQuery = queryParser.parse("eats");
+
+      CacheQuery query = Search.getSearchManager(cache1).getQuery(luceneQuery);
+      FullTextFilter filter = query.enableFullTextFilter("personFilter");
+      filter.setParameter("blurbText", "cheese");
+
+      AssertJUnit.assertEquals(1, query.getResultSize());
+      List result = query.list();
+
+      Person person = (Person) result.get(0);
+      AssertJUnit.assertEquals("MiniGoat", person.getName());
+      AssertJUnit.assertEquals("Eats cheese", person.getBlurb());
+
+      //Disabling the fullTextFilter.
+      query.disableFullTextFilter("personFilter");
+      AssertJUnit.assertEquals(2, query.getResultSize());
+   }
+
+   public void testSearchKeyTransformer() throws Exception {
+      Cache cache1 = caches().get(0);
+      Cache cache2 = caches().get(1);
+
+      SearchManager manager = Search.getSearchManager(cache1);
+      SearchManager manager1 = Search.getSearchManager(cache2);
+      manager.registerKeyTransformer(CustomKey3.class, CustomKey3Transformer.class);
+      manager1.registerKeyTransformer(CustomKey3.class, CustomKey3Transformer.class);
+
+      prepareTestedObjects();
+
+      TransactionManager transactionManager = cache1.getAdvancedCache().getTransactionManager();
+
+      CustomKey3 customeKey1 = new CustomKey3(key1);
+      CustomKey3 customeKey2 = new CustomKey3(key2);
+      CustomKey3 customeKey3 = new CustomKey3(key3);
+
+      // Put the 3 created objects in the cache1.
+      if (transactionsEnabled()) transactionManager.begin();
+      cache1.put(customeKey1, person1);
+      cache1.put(customeKey2, person2);
+      cache2.put(customeKey3, person3);
+      if (transactionsEnabled()) transactionManager.commit();
+
+      queryParser = createQueryParser("blurb");
+      Query luceneQuery = queryParser.parse("Eats");
+
+      CacheQuery cacheQuery = manager.getQuery(luceneQuery);
+
+      ResultIterator found = cacheQuery.iterator(new FetchOptions().fetchMode(FetchOptions.FetchMode.LAZY));
+
+      int counter = 0;
+      while(found.hasNext()) {
+         found.next();
+         counter++;
+      }
+
+      AssertJUnit.assertEquals(2, counter);
    }
 
 }
