@@ -35,7 +35,7 @@ public interface GlobalConfigurationChildBuilder {
 
    ShutdownConfigurationBuilder shutdown();
 
-   SitesConfigurationBuilder sites();
+   SiteConfigurationBuilder site();
 
    GlobalConfiguration build();
 }

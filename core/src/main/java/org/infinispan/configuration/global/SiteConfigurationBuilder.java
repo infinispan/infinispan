@@ -23,26 +23,50 @@ package org.infinispan.configuration.global;
  * @author Mircea.Markus@jboss.com
  * @since 5.2
  */
-public class SitesConfiguration {
-   private final String localSite;
+public class SiteConfigurationBuilder extends AbstractGlobalConfigurationBuilder<SiteConfiguration> {
 
-   SitesConfiguration(String localSite) {
-      this.localSite = localSite;
+   private String localSite;
+
+   SiteConfigurationBuilder(GlobalConfigurationBuilder globalConfig) {
+      super(globalConfig);
    }
 
    /**
-    * Returns the name of the local site. Must be a valid name defined in {@link #siteConfigurations()}
+    * Sets the name of the local site. Must be a valid name from the list of sites defined.
     */
-   public final String localSite() {
-      return localSite;
+   public SiteConfigurationBuilder localSite(String localSite) {
+      this.localSite = localSite;
+      return this;
+   }
+
+   @Override
+   void validate() {
+   }
+
+   @Override
+   SiteConfiguration create() {
+      return new SiteConfiguration(localSite);
+   }
+
+   @Override
+   protected GlobalConfigurationChildBuilder read(SiteConfiguration template) {
+      this.localSite = template.localSite();
+      return this;
+   }
+
+   @Override
+   public String toString() {
+      return "SiteConfigurationBuilder{" +
+            "localSite='" + localSite + '\'' +
+            '}';
    }
 
    @Override
    public boolean equals(Object o) {
       if (this == o) return true;
-      if (!(o instanceof SitesConfiguration)) return false;
+      if (!(o instanceof SiteConfigurationBuilder)) return false;
 
-      SitesConfiguration that = (SitesConfiguration) o;
+      SiteConfigurationBuilder that = (SiteConfigurationBuilder) o;
 
       if (localSite != null ? !localSite.equals(that.localSite) : that.localSite != null) return false;
 
@@ -51,13 +75,7 @@ public class SitesConfiguration {
 
    @Override
    public int hashCode() {
-      return localSite != null ? localSite.hashCode() : 0;
-   }
-
-   @Override
-   public String toString() {
-      return "SitesConfiguration{" +
-            "localSite='" + localSite + '\'' +
-            '}';
+      int result = localSite != null ? localSite.hashCode() : 0;
+      return result;
    }
 }

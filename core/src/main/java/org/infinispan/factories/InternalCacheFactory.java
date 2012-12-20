@@ -103,7 +103,7 @@ public class InternalCacheFactory<K, V> extends AbstractNamedCacheComponentFacto
       if (configuration.transaction().transactionMode().isTransactional() && configuration.transaction().recovery().enabled()) {
          componentRegistry.registerComponent(new RecoveryAdminOperations(), RecoveryAdminOperations.class.getName(), true);
       }
-      if (!configuration.sites().inUseBackups().isEmpty()) {
+      if (configuration.sites().hasEnabledBackups()) {
          componentRegistry.registerComponent(new XSiteAdminOperations(), XSiteAdminOperations.class.getName(), true);
       }
       // The RollingUpgradeManager should always be added so it is registered in JMX.

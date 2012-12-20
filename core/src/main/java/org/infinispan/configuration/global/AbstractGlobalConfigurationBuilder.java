@@ -73,8 +73,8 @@ abstract class AbstractGlobalConfigurationBuilder<T> implements GlobalConfigurat
    }
 
    @Override
-   public SitesConfigurationBuilder sites() {
-      return globalConfig.sites();
+   public SiteConfigurationBuilder site() {
+      return globalConfig.site();
    }
 
    @Override

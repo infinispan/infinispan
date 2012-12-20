@@ -19,59 +19,30 @@
 
 package org.infinispan.configuration.global;
 
-import org.infinispan.config.ConfigurationException;
-
-import java.util.ArrayList;
-import java.util.List;
-
 /**
  * @author Mircea.Markus@jboss.com
  * @since 5.2
  */
-public class SitesConfigurationBuilder extends AbstractGlobalConfigurationBuilder<SitesConfiguration> {
+public class SiteConfiguration {
+   private final String localSite;
 
-   private String localSite;
-
-   SitesConfigurationBuilder(GlobalConfigurationBuilder globalConfig) {
-      super(globalConfig);
+   SiteConfiguration(String localSite) {
+      this.localSite = localSite;
    }
 
    /**
-    * Sets the name of the local site. Must be a valid name from the list of sites defined.
+    * Returns the name of the local site. Must be a valid name defined in {@link #siteConfigurations()}
     */
-   public SitesConfigurationBuilder localSite(String localSite) {
-      this.localSite = localSite;
-      return this;
-   }
-
-   @Override
-   void validate() {
-   }
-
-   @Override
-   SitesConfiguration create() {
-      return new SitesConfiguration(localSite);
-   }
-
-   @Override
-   protected GlobalConfigurationChildBuilder read(SitesConfiguration template) {
-      this.localSite = template.localSite();
-      return this;
-   }
-
-   @Override
-   public String toString() {
-      return "SitesConfigurationBuilder{" +
-            "localSite='" + localSite + '\'' +
-            '}';
+   public final String localSite() {
+      return localSite;
    }
 
    @Override
    public boolean equals(Object o) {
       if (this == o) return true;
-      if (!(o instanceof SitesConfigurationBuilder)) return false;
+      if (!(o instanceof SiteConfiguration)) return false;
 
-      SitesConfigurationBuilder that = (SitesConfigurationBuilder) o;
+      SiteConfiguration that = (SiteConfiguration) o;
 
       if (localSite != null ? !localSite.equals(that.localSite) : that.localSite != null) return false;
 
@@ -80,7 +51,13 @@ public class SitesConfigurationBuilder extends AbstractGlobalConfigurationBuilde
 
    @Override
    public int hashCode() {
-      int result = localSite != null ? localSite.hashCode() : 0;
-      return result;
+      return localSite != null ? localSite.hashCode() : 0;
+   }
+
+   @Override
+   public String toString() {
+      return "SiteConfiguration{" +
+            "localSite='" + localSite + '\'' +
+            '}';
    }
 }

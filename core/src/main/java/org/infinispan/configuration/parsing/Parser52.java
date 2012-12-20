@@ -240,7 +240,7 @@ public class Parser52 implements ConfigurationParser<ConfigurationBuilderHolder>
       GlobalConfigurationBuilder gcb = holder.getGlobalConfigurationBuilder();
       ParseUtils.requireSingleAttribute(reader, "local");
       String value = replaceProperties(reader.getAttributeValue(0));
-      gcb.sites().localSite(value);
+      gcb.site().localSite(value);
       ParseUtils.requireNoContent(reader);
    }
 
@@ -257,21 +257,6 @@ public class Parser52 implements ConfigurationParser<ConfigurationBuilderHolder>
                //if backups is present then remove any existing backups as they were added
                // by the default config.
                ccb.sites().backups().clear();
-               ccb.sites().inUseBackupSites().clear();
-               for (int i = 0; i < reader.getAttributeCount(); i++) {
-                  ParseUtils.requireNoNamespaceAttribute(reader, i);
-                  String value = replaceProperties(reader.getAttributeValue(i));
-                  Attribute attribute = Attribute.forName(reader.getAttributeLocalName(i));
-                  switch (attribute) {
-                     case BACKUP_SITES:
-                        for (String s : value.split(",")) {
-                           ccb.sites().addInUseBackupSite(s);
-                        }
-                        break;
-                     default:
-                        throw ParseUtils.unexpectedElement(reader);
-                  }
-               }
                parseBackups(reader, ccb);
                break;
             case BACKUP_FOR:
@@ -283,7 +268,6 @@ public class Parser52 implements ConfigurationParser<ConfigurationBuilderHolder>
       }
       if (!isEmptyTag) {
          ccb.sites().backups().clear();
-         ccb.sites().inUseBackupSites().clear();
          ccb.sites().backupFor().reset();
       }
 
@@ -348,6 +332,9 @@ public class Parser52 implements ConfigurationParser<ConfigurationBuilderHolder>
                break;
             case FAILURE_POLICY_CLASS:
                backup.failurePolicyClass(value);
+               break;
+            case ENABLED:
+               backup.enabled(Boolean.parseBoolean(value));
                break;
             default:
                throw ParseUtils.unexpectedElement(reader);
@@ -1532,7 +1519,7 @@ public class Parser52 implements ConfigurationParser<ConfigurationBuilderHolder>
                parseTransport(reader, holder);
                transportParsed = true;
                break;
-            } case SITES: {
+            } case SITE: {
                parseGlobalSites(reader, holder);
                break;
             }
