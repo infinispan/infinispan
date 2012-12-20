@@ -27,22 +27,25 @@ import static java.util.concurrent.TimeUnit.MILLISECONDS;
 import java.io.IOException;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 
 import org.infinispan.client.hotrod.Flag;
+import org.infinispan.client.hotrod.MetadataValue;
 import org.infinispan.client.hotrod.RemoteCache;
 import org.infinispan.client.hotrod.RemoteCacheManager;
 import org.infinispan.client.hotrod.ServerStatistics;
-import org.infinispan.client.hotrod.MetadataValue;
 import org.infinispan.client.hotrod.Version;
 import org.infinispan.client.hotrod.VersionedValue;
 import org.infinispan.client.hotrod.exceptions.RemoteCacheManagerNotStartedException;
 import org.infinispan.client.hotrod.exceptions.TransportException;
 import org.infinispan.client.hotrod.impl.async.NotifyingFutureImpl;
+import org.infinispan.client.hotrod.impl.operations.BulkGetKeysOperation;
 import org.infinispan.client.hotrod.impl.operations.BulkGetOperation;
 import org.infinispan.client.hotrod.impl.operations.ClearOperation;
 import org.infinispan.client.hotrod.impl.operations.ContainsKeyOperation;
@@ -509,4 +512,17 @@ public class RemoteCacheImpl<K, V> extends RemoteCacheSupport<K, V> {
          operationsFactory.addFlags(Flag.DEFAULT_MAXIDLE);
       }
    }
+   
+   @Override
+   public Set<K> keySet() {
+	   assertRemoteCacheManagerIsStarted();
+	   BulkGetKeysOperation op = operationsFactory.newBulkGetKeysOperation();
+	   Set<byte[]> result = op.execute();
+       Set<K> toReturn = new HashSet<K>();
+       for (byte[] keyBytes : result) {
+          K key = (K) bytes2obj(keyBytes);
+          toReturn.add(key);
+       }
+       return Collections.unmodifiableSet(toReturn);
+   };
 }

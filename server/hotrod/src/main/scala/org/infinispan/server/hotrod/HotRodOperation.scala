@@ -38,4 +38,5 @@ object HotRodOperation extends Enumeration(20) {
    val PingRequest = Value
    val BulkGetRequest = Value
    val GetWithMetadataRequest = Value
+   val BulkGetKeysRequest = Value
 }

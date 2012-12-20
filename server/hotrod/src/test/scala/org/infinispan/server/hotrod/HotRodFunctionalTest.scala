@@ -442,6 +442,22 @@ class HotRodFunctionalTest extends HotRodSingleNodeTest {
          }
       }
    }
+   
+   def testBulkGetKeys(m: Method) {
+      var size = 100
+      for (i <- 0 until size) {
+         val resp = client.put(k(m, i + "k-") , 0, 0, v(m, i + "v-"))
+         assertStatus(resp, Success)
+      }
+      var resp = client.bulkGetKeys
+      assertStatus(resp, Success)
+      var bulkData = resp.bulkData
+      println(bulkData.size)
+      assertEquals(size, bulkData.size)
+      for (i <- 0 until size) {
+         assertTrue(bulkData.contains(new ByteArrayKey(k(m, i + "k-"))))
+      }
+   }
 
    def testPutBigSizeKey(m: Method) {
       val key = generateRandomString(1024 * 1024).getBytes

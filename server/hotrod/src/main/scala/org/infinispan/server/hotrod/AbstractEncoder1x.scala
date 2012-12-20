@@ -122,6 +122,19 @@ abstract class AbstractEncoder1x extends AbstractVersionedEncoder with Constants
                buf.writeByte(0) // Done
             }
          }
+         case g: BulkGetKeysResponse => {
+         	log.trace("About to respond to bulk get keys request")
+            if (g.status == Success) {
+               val cache: Cache[ByteArrayKey, CacheValue] =
+                  server.getCacheInstance(g.cacheName, cacheManager, false)
+               var iterator = asScalaIterator(cache.entrySet.iterator)
+               for (entry <- iterator) {
+                  buf.writeByte(1) // Not done
+                  writeRangedBytes(entry.getKey.getData, buf)
+               }
+               buf.writeByte(0) // Done
+            }
+         }
          case g: GetResponse =>
             if (g.status == Success) writeRangedBytes(g.data.get, buf)
          case e: ErrorResponse => writeString(e.msg, buf)

@@ -54,6 +54,7 @@ public interface HotRodConstants {
    static final byte PING_REQUEST = 0x17;
    static final byte BULK_GET_REQUEST = 0x19;
    static final byte GET_WITH_METADATA = 0x1B;
+   static final byte BULK_GET_KEYS_REQUEST = 0x1D;
 
 
    //responses
@@ -71,6 +72,7 @@ public interface HotRodConstants {
    static final byte PING_RESPONSE = 0x18;
    static final byte BULK_GET_RESPONSE = 0x1A;
    static final byte GET_WITH_METADATA_RESPONSE = 0x1C;
+   static final byte BULK_GET_KEYS_RESPONSE = 0x1E;
    static final byte ERROR_RESPONSE = 0x50;
 
    //response status

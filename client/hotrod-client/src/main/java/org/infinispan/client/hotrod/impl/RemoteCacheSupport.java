@@ -64,11 +64,6 @@ public abstract class RemoteCacheSupport<K,V> extends CacheSupport<K,V> implemen
    }
 
    @Override
-   public Set<K> keySet() {
-      throw new UnsupportedOperationException();
-   }
-
-   @Override
    public Collection<V> values() {
       throw new UnsupportedOperationException();
    }
