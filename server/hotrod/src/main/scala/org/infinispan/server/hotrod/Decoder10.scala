@@ -75,6 +75,7 @@ object Decoder10 extends AbstractVersionedDecoder with ServerConstants with Log 
          case 0x17 => (PingRequest, true)
          case 0x19 => (BulkGetRequest, false)
          case 0x1B => (GetWithMetadataRequest, false)
+         case 0x1D => (BulkGetKeysRequest, false)
          case _ => throw new HotRodUnknownOperationException(
                "Unknown operation: " + streamOp, version, messageId)
       }
@@ -229,6 +230,12 @@ object Decoder10 extends AbstractVersionedDecoder with ServerConstants with Log 
             new BulkGetResponse(h.version, h.messageId, h.cacheName, h.clientIntel,
                                 BulkGetResponse, Success, h.topologyId, count)
          }
+         case BulkGetKeysRequest => {
+            val scope = readUnsignedInt(buffer)
+            if (isTrace) trace("About to create bulk get keys response, scope = %d", scope)
+            new BulkGetKeysResponse(h.version, h.messageId, h.cacheName,
+                  h.clientIntel, BulkGetKeysResponse, Success, h.topologyId, scope)
+         }
          case GetWithMetadataRequest => {
             val k = readKey(buffer)
             getKeyMetadata(h, k, cache)
@@ -310,6 +317,7 @@ object Decoder10 extends AbstractVersionedDecoder with ServerConstants with Log 
          case PingRequest => PingResponse
          case BulkGetRequest => BulkGetResponse
          case GetWithMetadataRequest => GetWithMetadataResponse
+         case BulkGetKeysRequest => BulkGetKeysResponse
       }
    }
 
@@ -331,6 +339,7 @@ object OperationResponse extends Enumeration {
    val PingResponse = Value(0x18)
    val BulkGetResponse = Value(0x1A)
    val GetWithMetadataResponse = Value(0x1C)
+   val BulkGetKeysResponse = Value(0x1E)
    val ErrorResponse = Value(0x50)
 }
 

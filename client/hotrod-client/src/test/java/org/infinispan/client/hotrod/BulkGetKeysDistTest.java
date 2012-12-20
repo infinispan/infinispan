@@ -20,23 +20,47 @@
  * Software Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
  * 02110-1301 USA, or see the FSF site: http://www.fsf.org.
  */
-package org.infinispan.server.hotrod
+package org.infinispan.client.hotrod;
+
+import java.util.Set;
+
+import org.infinispan.configuration.cache.CacheMode;
+import org.infinispan.configuration.cache.ConfigurationBuilder;
+import org.testng.annotations.Test;
 
 /**
- * Hot Rod specific operations. Enumeration starts at a number other that 0 not to clash with common operations.
- *
- * @author Galder Zamarreño
- * @since 4.1
+ * Tests functionality related to getting multiple entries from a HotRod server
+ * in bulk.
+ * 
+ * @author <a href="mailto:rtsang@redhat.com">Ray Tsang</a>
+ * @since 5.2
  */
-object HotRodOperation extends Enumeration(20) {
-   type HotRodOperation = Value
+@Test(testName = "client.hotrod.BulkGetKeysDistTest", groups = "functional")
+public class BulkGetKeysDistTest extends BaseBulkGetKeysTest {
+	@Override
+	protected int numberOfHotRodServers() {
+		return 3;
+	}
 
-   val RemoveIfUnmodifiedRequest = Value
-   val ContainsKeyRequest = Value
-   val ClearRequest = Value
-   val QuitRequest = Value
-   val PingRequest = Value
-   val BulkGetRequest = Value
-   val GetWithMetadataRequest = Value
-   val BulkGetKeysRequest = Value
+	@Override
+	protected ConfigurationBuilder clusterConfig() {
+		return getDefaultClusteredCacheConfig(
+				CacheMode.DIST_SYNC, true);
+	}
+	
+	public void testDistribution() {
+		for (int i = 0; i < 100; i++) {
+			remoteCache.put(i, i);
+		}
+		
+		for (int i = 0 ; i < numberOfHotRodServers(); i++) {
+			assert cache(i).size() < 100;
+		}
+		
+		Set<Object> set = remoteCache.keySet();
+		assert set.size() == 100;
+		for (int i = 0; i < 100; i++) {
+			assert set.contains(i);
+		}
+	}
 }

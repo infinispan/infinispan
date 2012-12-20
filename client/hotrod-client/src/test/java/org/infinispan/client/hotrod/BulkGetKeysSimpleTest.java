@@ -20,23 +20,31 @@
  * Software Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
  * 02110-1301 USA, or see the FSF site: http://www.fsf.org.
  */
-package org.infinispan.server.hotrod
+package org.infinispan.client.hotrod;
+
+import org.infinispan.configuration.cache.CacheMode;
+import org.infinispan.configuration.cache.ConfigurationBuilder;
+import org.testng.annotations.Test;
 
 /**
- * Hot Rod specific operations. Enumeration starts at a number other that 0 not to clash with common operations.
+ * Tests functionality related to getting multiple entries from a HotRod server
+ * in bulk.
  *
- * @author Galder Zamarreño
- * @since 4.1
+ * @author <a href="mailto:rtsang@redhat.com">Ray Tsang</a>
+ * @since 5.2
  */
-object HotRodOperation extends Enumeration(20) {
-   type HotRodOperation = Value
+@Test(testName = "client.hotrod.BulkGetKeysSimpleTest", groups = "functional")
+public class BulkGetKeysSimpleTest extends BaseBulkGetKeysTest {
 
-   val RemoveIfUnmodifiedRequest = Value
-   val ContainsKeyRequest = Value
-   val ClearRequest = Value
-   val QuitRequest = Value
-   val PingRequest = Value
-   val BulkGetRequest = Value
-   val GetWithMetadataRequest = Value
-   val BulkGetKeysRequest = Value
+	@Override
+	protected int numberOfHotRodServers() {
+		return 1;
+	}
+
+	@Override
+	protected ConfigurationBuilder clusterConfig() {
+		return getDefaultClusteredCacheConfig(
+				CacheMode.LOCAL, true);
+	}
+   
 }
