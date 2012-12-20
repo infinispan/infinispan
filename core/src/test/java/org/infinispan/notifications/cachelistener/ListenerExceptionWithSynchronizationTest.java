@@ -1,6 +1,6 @@
 /*
  * JBoss, Home of Professional Open Source
- * Copyright 2011 Red Hat Inc. and/or its affiliates and other
+ * Copyright 2012 Red Hat Inc. and/or its affiliates and other
  * contributors as indicated by the @author tags. All rights reserved.
  * See the copyright.txt in the distribution for a full listing of
  * individual contributors.
@@ -44,22 +44,21 @@ import static org.testng.AssertJUnit.assertTrue;
 import static org.testng.AssertJUnit.fail;
 
 /**
- * Tests the behaviour of caches when hooked listeners throw exceptions under
- * different circumstances with XA transactions.
+ * Tests listener exception behaivour when caches are configured with
+ * synchronization instead of XA.
  *
  * @author Galder Zamarreño
- * @author Tomas Sykora
- * @since 5.0
+ * @since 5.2
  */
-@Test(groups = "functional", testName = "notifications.cachelistener.ListenerExceptionTest")
-public class ListenerExceptionTest extends MultipleCacheManagersTest {
+@Test(groups = "functional", testName = "notifications.cachelistener.ListenerExceptionWithSynchronizationTest")
+public class ListenerExceptionWithSynchronizationTest
+      extends MultipleCacheManagersTest {
 
    @Override
    protected void createCacheManagers() throws Throwable {
       ConfigurationBuilder builder = getDefaultClusteredCacheConfig(
             CacheMode.REPL_SYNC, true);
-      builder.transaction().useSynchronization(false)
-             .recovery().enabled(false);
+      builder.transaction().useSynchronization(true);
       createClusteredCaches(2, builder);
    }
 
@@ -68,7 +67,9 @@ public class ListenerExceptionTest extends MultipleCacheManagersTest {
    }
 
    public void testPostOpExceptionListenerOnCreate(Method m) {
-      doCallsWithExcepList(m, false, FailureLocation.ON_CREATE);
+      // Post listener events now happen after commit, so failures there
+      // don't have an impact on the operation outcome with synchronization
+      doCallsNormal(m, false, FailureLocation.ON_CREATE);
    }
 
    public void testPreOpExceptionListenerOnPut(Method m) {
@@ -78,29 +79,22 @@ public class ListenerExceptionTest extends MultipleCacheManagersTest {
 
    public void testPostOpExceptionListenerOnPut(Method m) {
       manager(0).getCache().put(k(m), "init");
-      doCallsWithExcepList(m, false, FailureLocation.ON_MODIFIED);
+      // Post listener events now happen after commit, so failures there
+      // don't have an impact on the operation outcome with synchronization
+      doCallsNormal(m, false, FailureLocation.ON_MODIFIED);
    }
 
-   public void testPreOpExceptionListenerOnCreateAsync(Method m) {
-      doCallsWithExcepListAsync(m, true, FailureLocation.ON_CREATE);
+   private void doCallsNormal(Method m,
+         boolean isInjectInPre, FailureLocation failLoc) {
+      Cache<String, String> cache = manager(0).getCache();
+      ErrorInducingListener listener =
+            new ErrorInducingListener(isInjectInPre, failLoc);
+      cache.addListener(listener);
+      cache.put(k(m), v(m));
    }
 
-   public void testPostOpExceptionListenerOnCreateAsync(Method m) {
-      doCallsWithExcepListAsync(m, false, FailureLocation.ON_CREATE);
-   }
-
-   public void testPreOpExceptionListenerOnPutAsync(Method m) {
-      manager(0).getCache().put(k(m), "init");
-      doCallsWithExcepListAsync(m, true, FailureLocation.ON_MODIFIED);
-   }
-
-   public void testPostOpExceptionListenerOnPutAsync(Method m) {
-      manager(0).getCache().put(k(m), "init");
-      doCallsWithExcepListAsync(m, false, FailureLocation.ON_MODIFIED);
-   }
-
-   private void doCallsWithExcepList(Method m, boolean isInjectInPre,
-                                     FailureLocation failLoc) {
+   private void doCallsWithExcepList(Method m,
+         boolean isInjectInPre, FailureLocation failLoc) {
       Cache<String, String> cache = manager(0).getCache();
       ErrorInducingListener listener =
             new ErrorInducingListener(isInjectInPre, failLoc);
@@ -124,22 +118,6 @@ public class ListenerExceptionTest extends MultipleCacheManagersTest {
 
    private void assertExpectedException(Throwable cause, boolean condition) {
       assertTrue("Unexpected exception cause " + cause, condition);
-   }
-
-   /**
-    * If it is used asynchronous listener all callbacks are made in separate thread. Exceptions are only logged, not
-    * thrown. See {@link org.infinispan.notifications.AbstractListenerImpl} invoke() method logic
-    */
-   private void doCallsWithExcepListAsync(Method m, boolean isInjectInPre,
-                                          FailureLocation failLoc) {
-      Cache<String, String> cache = manager(0).getCache();
-      ErrorInducingListenerAsync listenerAsync =
-            new ErrorInducingListenerAsync(isInjectInPre, failLoc);
-      cache.addListener(listenerAsync);
-
-      cache.put(k(m), v(m));
-      assert cache.get(k(m)).equals(v(m));
-      assert listenerAsync.caller != Thread.currentThread();
    }
 
    @Listener
@@ -178,52 +156,7 @@ public class ListenerExceptionTest extends MultipleCacheManagersTest {
 
       private void throwSuspectException() {
          throw new SuspectException(String.format(
-            "Simulated suspicion when isPre=%b and in %s",
-            isInjectInPre, failureLocation));
-      }
-
-   }
-
-   @Listener(sync = false)
-   public static class ErrorInducingListenerAsync {
-      boolean injectFailure = true;
-      boolean isInjectInPre;
-      FailureLocation failureLocation;
-      Thread caller;
-
-      public ErrorInducingListenerAsync(boolean injectInPre, FailureLocation failLoc) {
-         this.isInjectInPre = injectInPre;
-         this.failureLocation = failLoc;
-      }
-
-      @CacheEntryCreated
-      @SuppressWarnings("unused")
-      public void entryCreated(CacheEntryEvent event) throws Exception {
-         caller = Thread.currentThread();
-         if (failureLocation == FailureLocation.ON_CREATE)
-            injectFailure(event);
-      }
-
-      @CacheEntryModified
-      @SuppressWarnings("unused")
-      public void entryModified(CacheEntryEvent event) throws Exception {
-         caller = Thread.currentThread();
-         if (failureLocation == FailureLocation.ON_MODIFIED)
-            injectFailure(event);
-      }
-
-      private void injectFailure(CacheEntryEvent event) {
-         if (injectFailure) {
-            if (isInjectInPre && event.isPre())
-               throwSuspectException();
-            else if (!isInjectInPre && !event.isPre())
-               throwSuspectException();
-         }
-      }
-
-      private void throwSuspectException() {
-         throw new SuspectException(String.format(
-               "Simulated ASYNC suspicion when isPre=%b and in %s",
+               "Simulated suspicion when isPre=%b and in %s",
                isInjectInPre, failureLocation));
       }
 
@@ -232,4 +165,5 @@ public class ListenerExceptionTest extends MultipleCacheManagersTest {
    private static enum FailureLocation {
       ON_CREATE, ON_MODIFIED
    }
+
 }

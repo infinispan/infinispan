@@ -172,7 +172,7 @@ public class EvictionManagerImpl implements EvictionManager {
       // that will execute this code, so it could be the user thread, or could
       // be the eviction thread.
       // However, when a user calls cache.evict(), you do want to carry over the
-      // contextual information, hence it makes sense for the notifyyCacheEntriesEvicted()
+      // contextual information, hence it makes sense for the notifyCacheEntriesEvicted()
       // call to carry on taking an InvocationContext object.
       cacheNotifier.notifyCacheEntriesEvicted(evicted.values(), ctx);
    }

@@ -92,10 +92,10 @@ public class VersionedEntryWrappingInterceptor extends EntryWrappingInterceptor 
    protected void commitContextEntry(CacheEntry entry, InvocationContext ctx, boolean skipOwnershipCheck) {
       if (ctx.isInTxScope() && !isFromStateTransfer(ctx)) {
          EntryVersion version = ((TxInvocationContext) ctx).getCacheTransaction().getUpdatedEntryVersions().get(entry.getKey());
-         cdl.commitEntry(entry, version, skipOwnershipCheck);
+         cdl.commitEntry(entry, version, skipOwnershipCheck, ctx);
       } else {
          // This could be a state transfer call!
-         cdl.commitEntry(entry, entry.getVersion(), skipOwnershipCheck);
+         cdl.commitEntry(entry, entry.getVersion(), skipOwnershipCheck, ctx);
       }
    }
 }

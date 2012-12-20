@@ -24,7 +24,7 @@ package org.infinispan.context;
 
 import org.infinispan.Cache;
 import org.infinispan.CacheException;
-import org.infinispan.config.Configuration;
+import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.notifications.Listener;
 import org.infinispan.notifications.cachelistener.annotation.CacheEntryModified;
 import org.infinispan.notifications.cachelistener.event.CacheEntryModifiedEvent;
@@ -35,11 +35,15 @@ import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 import org.testng.annotations.Test;
 
+import javax.transaction.RollbackException;
 import javax.transaction.Transaction;
 import javax.transaction.TransactionManager;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.concurrent.CountDownLatch;
+
+import static org.testng.AssertJUnit.assertTrue;
+import static org.testng.AssertJUnit.fail;
 
 @Test(groups = {"functional"}, testName = "context.InvocationContextTest")
 public class InvocationContextTest extends MultipleCacheManagersTest {
@@ -51,25 +55,42 @@ public class InvocationContextTest extends MultipleCacheManagersTest {
 
    @Override
    protected void createCacheManagers() throws Throwable {
-      Configuration cfg = TestCacheManagerFactory.getDefaultConfiguration(true);
-      cfg.setSyncCommitPhase(true);
-      cfg.setSyncRollbackPhase(true);
-      cfg.fluent().transaction().lockingMode(LockingMode.PESSIMISTIC);
-      createClusteredCaches(1, "timestamps", cfg);
+      ConfigurationBuilder builder = TestCacheManagerFactory.getDefaultCacheConfiguration(true);
+      builder.transaction()
+            .syncCommitPhase(true).syncRollbackPhase(true)
+            .lockingMode(LockingMode.PESSIMISTIC)
+            // TODO: Default values have for synchronization and recovery have changed
+            // These two calls are requires to make test behave as before
+            // (more info: https://issues.jboss.org/browse/ISPN-2651)
+            .useSynchronization(false)
+            .recovery().enabled(false);
+
+      createClusteredCaches(1, "timestamps", builder);
+
+      // Keep old configuration commented as reference for ISPN-2651
+      //
+      // Configuration cfg = TestCacheManagerFactory.getDefaultConfiguration(true);
+      // cfg.setSyncCommitPhase(true);
+      // cfg.setSyncRollbackPhase(true);
+      // cfg.fluent().transaction().lockingMode(LockingMode.PESSIMISTIC);
+      // createClusteredCaches(1, "timestamps", cfg);
    }
 
    public void testMishavingListenerResumesContext() {
-      Cache cache = cache(0, "timestamps");
+      Cache<String, String> cache = cache(0, "timestamps");
       cache.addListener(new CacheListener());
       try {
          cache.getAdvancedCache().withFlags(Flag.CACHE_MODE_LOCAL).put("k", "v");
+         fail("Should have failed with an exception");
       } catch (CacheException ce) {
-         assert ce.getCause() instanceof RuntimeException;
+         Throwable cause = ce.getCause();
+         assertTrue("Unexpected exception cause " + cause,
+               cause instanceof RollbackException);
       }
    }
 
    public void testThreadInterruptedDuringLocking() throws Throwable {
-      final Cache cache = cache(0, "timestamps");
+      final Cache<String, String> cache = cache(0, "timestamps");
       cache.put("k", "v");
       // now acquire a lock on k so that subsequent threads will block
       TransactionManager tm = cache.getAdvancedCache().getTransactionManager();
@@ -103,7 +124,7 @@ public class InvocationContextTest extends MultipleCacheManagersTest {
 
 
    public void testThreadInterruptedAfterLocking() throws Throwable {
-      final Cache cache = cache(0, "timestamps");
+      final Cache<String, String> cache = cache(0, "timestamps");
       cache.put("k", "v");
       CountDownLatch willTimeoutLatch = new CountDownLatch(1);
       CountDownLatch lockAquiredSignal = new CountDownLatch(1);
@@ -144,6 +165,7 @@ public class InvocationContextTest extends MultipleCacheManagersTest {
       }
 
       @CacheEntryModified
+      @SuppressWarnings("unused")
       public void entryModified(CacheEntryModifiedEvent event) {
          if (!event.isPre()) {
             lockAcquiredLatch.countDown();
@@ -159,6 +181,7 @@ public class InvocationContextTest extends MultipleCacheManagersTest {
    @Listener
    public static class CacheListener {
       @CacheEntryModified
+      @SuppressWarnings("unused")
       public void entryModified(CacheEntryModifiedEvent event) {
          if (!event.isPre()) {
             log.debugf("Entry modified: %s, let's throw an exception!!", event);

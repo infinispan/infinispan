@@ -225,7 +225,6 @@ public class EntryFactoryImpl implements EntryFactory {
       mvccEntry = createWrappedEntry(key, null, null, true, false, -1);
       mvccEntry.setCreated(true);
       ctx.putLookedUpEntry(key, mvccEntry);
-      notifier.notifyCacheEntryCreated(key, false, ctx);
       return mvccEntry;
    }
 

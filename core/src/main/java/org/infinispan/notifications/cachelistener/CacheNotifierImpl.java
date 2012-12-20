@@ -194,28 +194,27 @@ public final class CacheNotifierImpl extends AbstractListenerImpl implements Cac
          if (!cacheEntriesEvictedListeners.isEmpty()) {
             EventImpl<Object, Object> e = EventImpl.createEvent(cache, CACHE_ENTRY_EVICTED);
             Map<Object, Object> evictedKeysAndValues = transformCollectionToMap(entries,
-                                                                                new InfinispanCollections.MapMakerFunction<Object, Object, InternalCacheEntry>() {
-                                                                                   @Override
-                                                                                   public Map.Entry<Object, Object> transform(final InternalCacheEntry input) {
-                                                                                      return new Map.Entry<Object, Object>() {
+               new InfinispanCollections.MapMakerFunction<Object, Object, InternalCacheEntry>() {
+                  @Override
+                  public Map.Entry<Object, Object> transform(final InternalCacheEntry input) {
+                     return new Map.Entry<Object, Object>() {
+                        @Override
+                        public Object getKey() {
+                          return input.getKey();
+                        }
 
-                                                                                         @Override
-                                                                                         public Object getKey() {
-                                                                                            return input.getKey();
-                                                                                         }
+                        @Override
+                        public Object getValue() {
+                          return input.getValue();
+                        }
 
-                                                                                         @Override
-                                                                                         public Object getValue() {
-                                                                                            return input.getValue();
-                                                                                         }
-
-                                                                                         @Override
-                                                                                         public Object setValue(Object value) {
-                                                                                            throw new UnsupportedOperationException();
-                                                                                         }
-                                                                                      };
-                                                                                   }
-                                                                                }
+                        @Override
+                        public Object setValue(Object value) {
+                          throw new UnsupportedOperationException();
+                        }
+                     };
+                  }
+               }
             );
 
             e.setEntries(evictedKeysAndValues);

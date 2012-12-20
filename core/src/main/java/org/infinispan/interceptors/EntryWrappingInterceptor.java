@@ -267,7 +267,7 @@ public class EntryWrappingInterceptor extends CommandInterceptor {
    }
 
    protected void commitContextEntry(CacheEntry entry, InvocationContext ctx, boolean skipOwnershipCheck) {
-      cdl.commitEntry(entry, null, skipOwnershipCheck);
+      cdl.commitEntry(entry, null, skipOwnershipCheck, ctx);
    }
 
    private Object invokeNextAndApplyChanges(InvocationContext ctx, FlagAffectedCommand command) throws Throwable {

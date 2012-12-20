@@ -100,16 +100,10 @@ public class RemoveCommand extends AbstractDataWriteCommand {
       e.setValid(false);
 
 
-      // Eviction has no notion of pre/post event since 4.2.0.ALPHA4.
-      // EvictionManagerImpl.onEntryEviction() triggers both pre and post events
-      // with non-null values, so we should do the same here as an ugly workaround.
       if (this instanceof EvictCommand) {
          e.setEvicted(true);
-         notify(ctx, removedValue, false);
-      } else {
-         // FIXME: Do we really need to notify with null when a user can be given with more information?
-         notify(ctx, null, false);
       }
+
       return value == null ? removedValue : true;
    }
 

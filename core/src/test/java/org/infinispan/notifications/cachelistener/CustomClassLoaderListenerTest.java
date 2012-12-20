@@ -67,10 +67,9 @@ public class CustomClassLoaderListenerTest extends SingleCacheManagerTest {
 
       cache().get("a"); // Loaded +  Activated + Visited
 
-      cache().remove("a"); // Removed
+      cache().remove("a"); // Modified + Removed
 
-
-      assertEquals(9, listener.invocationCount);
+      assertEquals(10, listener.invocationCount);
    }
 
    public static class CustomClassLoader extends ClassLoader {

@@ -39,7 +39,8 @@ import java.util.Map;
 import javax.transaction.TransactionManager;
 
 import org.infinispan.Cache;
-import org.infinispan.config.Configuration;
+import org.infinispan.configuration.cache.CacheMode;
+import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.manager.CacheContainer;
 import org.infinispan.test.AbstractInfinispanTest;
@@ -62,11 +63,12 @@ public class CacheNotifierTxTest extends AbstractInfinispanTest {
 
    @BeforeMethod(alwaysRun = true)
    public void setUp() throws Exception {
-      Configuration c = TestCacheManagerFactory.getDefaultConfiguration(true);
-      c.fluent().transaction().autoCommit(false);
-      c.setCacheMode(Configuration.CacheMode.LOCAL);
-      c.setIsolationLevel(IsolationLevel.REPEATABLE_READ);
-      cm = TestCacheManagerFactory.createCacheManager(c);
+      ConfigurationBuilder builder = TestCacheManagerFactory.getDefaultCacheConfiguration(true);
+      builder.transaction().autoCommit(false)
+             .clustering().cacheMode(CacheMode.LOCAL)
+             .locking().isolationLevel(IsolationLevel.REPEATABLE_READ);
+
+      cm = TestCacheManagerFactory.createCacheManager(builder);
 
       cache = cm.getCache();
       tm = TestingUtil.getTransactionManager(cache);
@@ -109,11 +111,20 @@ public class CacheNotifierTxTest extends AbstractInfinispanTest {
       expectSingleEntryCreated(key, value, this.mockNotifier);
    }
 
+   private void expectSingleEntryOnlyPreCreated(Object key) {
+      expectSingleEntryOnlyPreCreated(key, this.mockNotifier);
+   }
+
    static void expectSingleEntryCreated(Object key, Object value, CacheNotifier mockNotifier) {
       verify(mockNotifier).notifyCacheEntryCreated(eq(key), eq(true), isA(InvocationContext.class));
       verify(mockNotifier).notifyCacheEntryCreated(eq(key), eq(false), isA(InvocationContext.class));
       verify(mockNotifier).notifyCacheEntryModified(eq(key), isNull(), eq(true), isA(InvocationContext.class));
       verify(mockNotifier).notifyCacheEntryModified(eq(key), eq(value), eq(false), isA(InvocationContext.class));
+   }
+
+   static void expectSingleEntryOnlyPreCreated(Object key, CacheNotifier mockNotifier) {
+      verify(mockNotifier).notifyCacheEntryCreated(eq(key), eq(true), isA(InvocationContext.class));
+      verify(mockNotifier).notifyCacheEntryModified(eq(key), isNull(), eq(true), isA(InvocationContext.class));
    }
 
    private void expectTransactionBoundaries(boolean successful) {
@@ -146,7 +157,7 @@ public class CacheNotifierTxTest extends AbstractInfinispanTest {
       tm.rollback();
 
       expectTransactionBoundaries(false);
-      expectSingleEntryCreated("key", "value");
+      expectSingleEntryOnlyPreCreated("key");
    }
 
    public void testTxOnlyModification() throws Exception {
