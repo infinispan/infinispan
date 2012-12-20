@@ -452,7 +452,6 @@ class HotRodFunctionalTest extends HotRodSingleNodeTest {
       var resp = client.bulkGetKeys
       assertStatus(resp, Success)
       var bulkData = resp.bulkData
-      println(bulkData.size)
       assertEquals(size, bulkData.size)
       for (i <- 0 until size) {
          assertTrue(bulkData.contains(new ByteArrayKey(k(m, i + "k-"))))

@@ -27,10 +27,12 @@ import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.server.hotrod.HotRodServer;
 import org.infinispan.test.SingleCacheManagerTest;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
+import org.testng.annotations.AfterClass;
 import org.testng.annotations.AfterTest;
 import org.testng.annotations.Test;
 
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Map;
 import java.util.Properties;
 import java.util.Set;
@@ -44,10 +46,10 @@ import static org.testng.AssertJUnit.assertEquals;
  * Tests functionality related to getting multiple entries from a HotRod server
  * in bulk.
  *
- * @author Mircea.Markus@jboss.com
- * @since 4.1
+ * @author <a href="mailto:rtsang@redhat.com">Ray Tsang</a>
+ * @since 5.2
  */
-@Test(testName = "client.hotrod.BulkGetSimpleTest", groups = "functional")
+@Test(testName = "client.hotrod.BulkGetKeysSimpleTest", groups = "functional")
 public class BulkGetKeysSimpleTest extends SingleCacheManagerTest {
    private HotRodServer hotRodServer;
    private RemoteCacheManager remoteCacheManager;
@@ -55,22 +57,22 @@ public class BulkGetKeysSimpleTest extends SingleCacheManagerTest {
 
    @Override
    protected EmbeddedCacheManager createCacheManager() throws Exception {
-      cacheManager = TestCacheManagerFactory.createLocalCacheManager(false);
-      cache = cacheManager.getCache();
-
+      return TestCacheManagerFactory.createLocalCacheManager(false);
+   }
+   
+   @Override
+   protected void setup() throws Exception {
+      super.setup();
       hotRodServer = TestHelper.startHotRodServer(cacheManager);
-
-      Properties hotrodClientConf = new Properties();
-      hotrodClientConf.put("infinispan.client.hotrod.server_list", "localhost:" + hotRodServer.getPort());
-      remoteCacheManager = new RemoteCacheManager(hotrodClientConf);
+      remoteCacheManager = new RemoteCacheManager("localhost", hotRodServer.getPort());
       remoteCache = remoteCacheManager.getCache();
-      return cacheManager;
    }
 
-   @AfterTest(alwaysRun = true)
+   @AfterClass(alwaysRun = true)
    public void release() {
       killRemoteCacheManager(remoteCacheManager);
       killServers(hotRodServer);
+      super.teardown();
    }
 
    private void populateCacheManager() {
@@ -87,7 +89,7 @@ public class BulkGetKeysSimpleTest extends SingleCacheManagerTest {
          assert set.contains(i);
       }
    }
-/*
+
    public void testBulkGetAfterLifespanExpire() throws InterruptedException {
       Map dataIn = new HashMap();
       dataIn.put("aKey", "aValue");
@@ -96,24 +98,26 @@ public class BulkGetKeysSimpleTest extends SingleCacheManagerTest {
       final long lifespan = 10000;
       remoteCache.putAll(dataIn, lifespan, TimeUnit.MILLISECONDS);
 
-      Map dataOut = new HashMap();
+      Set dataOut = new HashSet();
       while (true) {
-         dataOut = remoteCache.getBulk();
+         dataOut = remoteCache.keySet();
          if (System.currentTimeMillis() >= startTime + lifespan)
             break;
-         assertEquals(dataIn, dataOut);
+         assert dataOut.size() == dataIn.size() : String.format("Data size not the same, put in %s elements, keySet has %s elements", dataIn.size(), dataOut.size());
+         for (Object outKey : dataOut) {
+        	 assert dataIn.containsKey(outKey); 
+         }
          Thread.sleep(100);
       }
 
       // Make sure that in the next 30 secs data is removed
       while (System.currentTimeMillis() < startTime + lifespan + 30000) {
-         dataOut = remoteCache.getBulk();
+         dataOut = remoteCache.keySet();
          if (dataOut.size() == 0) return;
       }
 
       assert dataOut.size() == 0 :
          String.format("Data not empty, it contains: %s elements", dataOut.size());
    }
-   */
 
 }

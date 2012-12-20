@@ -33,10 +33,10 @@ import org.infinispan.client.hotrod.impl.transport.Transport;
 import org.infinispan.client.hotrod.impl.transport.TransportFactory;
 
 /**
- * Reads more keys at a time. Specified <a href="http://community.jboss.org/wiki/HotRodBulkGet-Design">here</a>.
+ * Reads all keys. Similar to <a href="http://community.jboss.org/wiki/HotRodBulkGet-Design">BulkGet</a>, but without the entry values.
  *
- * @author Mircea.Markus@jboss.com
- * @since 4.1
+ * @author <a href="mailto:rtsang@redhat.com">Ray Tsang</a>
+ * @since 5.2
  */
 public class BulkGetKeysOperation extends RetryOnFailureOperation<Set<byte[]>> {
 
@@ -53,9 +53,7 @@ public class BulkGetKeysOperation extends RetryOnFailureOperation<Set<byte[]>> {
    protected Set<byte[]> executeOperation(Transport transport) {
       HeaderParams params = writeHeader(transport, BULK_GET_KEYS_REQUEST);
       transport.flush();
-      System.out.println("hello");
       readHeaderAndValidate(transport, params);
-      System.out.println("validated");
       Set<byte[]> result = new HashSet<byte[]>();
       while ( transport.readByte() == 1) { //there's more!
          result.add(transport.readArray());
