@@ -25,8 +25,7 @@ package org.infinispan.notifications;
 import java.util.List;
 
 import org.infinispan.Cache;
-import org.infinispan.config.Configuration;
-import org.infinispan.distribution.MagicKey;
+import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.notifications.cachelistener.annotation.CacheEntryCreated;
 import org.infinispan.notifications.cachelistener.annotation.CacheEntryModified;
 import org.infinispan.notifications.cachelistener.event.CacheEntryEvent;
@@ -49,7 +48,8 @@ public class DistListenerTest extends MultipleCacheManagersTest {
 
    @Override
    protected void createCacheManagers() throws Throwable {
-      createCluster(Configuration.CacheMode.DIST_SYNC, 3);
+      createCluster(getDefaultClusteredCacheConfig(
+            CacheMode.DIST_SYNC, true), 3);
       waitForClusterToForm();
    }
    
@@ -60,12 +60,13 @@ public class DistListenerTest extends MultipleCacheManagersTest {
 
       assert owners.size() == 2: "Key should have 2 owners";
 
-      Cache owner1 = getCacheForAddress(owners.get(0));
-      Cache owner2 = getCacheForAddress(owners.get(1));
+      Cache<String, String> owner1 = getCacheForAddress(owners.get(0));
+      Cache<String, String> owner2 = getCacheForAddress(owners.get(1));
       assert owner1 != owner2;
-      Cache nonOwner = null;
+      Cache<String, String> nonOwner = null;
       for (int i=0; i<3; i++) {
-         if (cache(i) != owner1 && cache(i) != owner2) {
+         if (this.<String, String>cache(i) != owner1
+               && this.<String, String>cache(i) != owner2) {
             nonOwner = cache(i);
             break;
          }
@@ -120,10 +121,10 @@ public class DistListenerTest extends MultipleCacheManagersTest {
       listener.modified = false;
    }
 
-   @SuppressWarnings("unchecked")
-   private Cache<MagicKey, String> getCacheForAddress(Address a) {
-      for (Cache<?, ?> c: caches())
-         if (c.getAdvancedCache().getRpcManager().getAddress().equals(a)) return (Cache<MagicKey, String>) c;
+   private <K, V> Cache<K, V> getCacheForAddress(Address a) {
+      for (Cache<K, V> c: this.<K, V>caches())
+         if (c.getAdvancedCache().getRpcManager().getAddress().equals(a))
+            return c;
       return null;
    }
    
@@ -134,11 +135,13 @@ public class DistListenerTest extends MultipleCacheManagersTest {
       boolean modified = false;
       
       @CacheEntryCreated
+      @SuppressWarnings("unused")
       public void create(CacheEntryEvent e) {
          created = true;
       }
       
       @CacheEntryModified
+      @SuppressWarnings("unused")
       public void modify(CacheEntryEvent e) {
          modified = true;
       }

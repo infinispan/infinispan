@@ -95,7 +95,6 @@ public class ReplaceCommand extends AbstractDataWriteCommand {
       
       if (successful) {
          this.notifier.notifyCacheEntryModified(key, previousValue, true, ctx);
-         this.notifier.notifyCacheEntryModified(key, this.newValue, false, ctx);
       }
       if (oldValue == null) {
          return beingReplaced;

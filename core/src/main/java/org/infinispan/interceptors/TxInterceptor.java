@@ -278,7 +278,9 @@ public class TxInterceptor extends CommandInterceptor {
    }
 
    private boolean isNotValid(int status) {
-      return status != Status.STATUS_ACTIVE && status != Status.STATUS_PREPARING;
+      return status != Status.STATUS_ACTIVE
+            && status != Status.STATUS_PREPARING
+            && status != Status.STATUS_COMMITTING;
    }
 
    private static boolean shouldEnlist(InvocationContext ctx) {
@@ -307,24 +309,28 @@ public class TxInterceptor extends CommandInterceptor {
    }
 
    @Metric(displayName = "Statistics enabled", dataType = DataType.TRAIT)
+   @SuppressWarnings("unused")
    public boolean isStatisticsEnabled() {
       return this.statisticsEnabled;
    }
 
    @ManagedAttribute(description = "Number of transaction prepares performed since last reset")
    @Metric(displayName = "Prepares", measurementType = MeasurementType.TRENDSUP, displayType = DisplayType.SUMMARY)
+   @SuppressWarnings("unused")
    public long getPrepares() {
       return prepares.get();
    }
 
    @ManagedAttribute(description = "Number of transaction commits performed since last reset")
    @Metric(displayName = "Commits", measurementType = MeasurementType.TRENDSUP, displayType = DisplayType.SUMMARY)
+   @SuppressWarnings("unused")
    public long getCommits() {
       return commits.get();
    }
 
    @ManagedAttribute(description = "Number of transaction rollbacks performed since last reset")
    @Metric(displayName = "Rollbacks", measurementType = MeasurementType.TRENDSUP, displayType = DisplayType.SUMMARY)
+   @SuppressWarnings("unused")
    public long getRollbacks() {
       return rollbacks.get();
    }
