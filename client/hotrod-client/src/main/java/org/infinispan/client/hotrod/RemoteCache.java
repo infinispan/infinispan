@@ -191,7 +191,9 @@ public interface RemoteCache<K, V> extends BasicCache<K, V> {
    boolean containsValue(Object value);
 
    /**
-    * @throws UnsupportedOperationException
+    * Returns all keys in the remote server.  It'll invoke a command over the network each time this method is called.
+    * If the remote cache is a distributed cache, it will retrieve all of the keys from all nodes in the cluster.
+    * Please use with care for cache with large data set.
     */
    @Override
    Set<K> keySet();

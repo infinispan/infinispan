@@ -234,6 +234,20 @@ class HotRodClient(host: String, port: Int, defaultCacheName: String, rspTimeout
       val handler = ch.getPipeline.getLast.asInstanceOf[ClientHandler]
       handler.getResponse(op.id).asInstanceOf[TestBulkGetResponse]
    }
+   
+   def bulkGetKeys: TestBulkGetKeysResponse = {
+   	  val op = new BulkGetKeysOp(0xA0, protocolVersion, 0x1D, defaultCacheName, 1, 0, 0)
+      val writeFuture = writeOp(op)
+      val handler = ch.getPipeline.getLast.asInstanceOf[ClientHandler]
+      handler.getResponse(op.id).asInstanceOf[TestBulkGetKeysResponse]
+   }
+   
+   def bulkGetKeys(scope: Int): TestBulkGetKeysResponse = {
+   	  val op = new BulkGetKeysOp(0xA0, protocolVersion, 0x1D, defaultCacheName, 1, 0, scope)
+      val writeFuture = writeOp(op)
+      val handler = ch.getPipeline.getLast.asInstanceOf[ClientHandler]
+      handler.getResponse(op.id).asInstanceOf[TestBulkGetKeysResponse]
+   }
 }
 
 private class ClientPipelineFactory(client: HotRodClient, rspTimeoutSeconds: Int) extends ChannelPipelineFactory {
@@ -276,7 +290,7 @@ private class Encoder extends OneToOneEncoder {
             buffer.writeByte(op.clientIntel) // client intelligence
             writeUnsignedInt(op.topologyId, buffer) // topology id
             writeRangedBytes(new Array[Byte](0), buffer)
-            if (op.code != 0x13 && op.code != 0x15 && op.code != 0x17 && op.code != 0x19) { // if it's a key based op...
+            if (op.code != 0x13 && op.code != 0x15 && op.code != 0x17 && op.code != 0x19 && op.code != 0x1D) { // if it's a key based op...
                writeRangedBytes(op.key, buffer) // key length + key
                if (op.value != null) {
                   if (op.code != 0x0D) { // If it's not removeIfUnmodified...
@@ -292,6 +306,8 @@ private class Encoder extends OneToOneEncoder {
                }
             } else if (op.code == 0x19) {
                writeUnsignedInt(op.asInstanceOf[BulkGetOp].count, buffer) // Entry count
+            } else if (op.code == 0x1D) {
+               writeUnsignedInt(op.asInstanceOf[BulkGetKeysOp].scope, buffer) // Bulk Get Keys Scope
             }
             buffer
          }
@@ -472,6 +488,17 @@ private class Decoder(client: HotRodClient) extends ReplayingDecoder[VoidEnum] w
             new TestBulkGetResponse(op.version, id, op.cacheName, op.clientIntel,
                   bulk, op.topologyId, topologyChangeResponse)
          }
+         case BulkGetKeysResponse => {
+            var done = buf.readByte
+            val bulkBuffer = mutable.Set.empty[ByteArrayKey]
+            while (done == 1) {
+               bulkBuffer += new ByteArrayKey(readRangedBytes(buf))
+               done = buf.readByte
+            }
+            val bulk = immutable.Set[ByteArrayKey]() ++ bulkBuffer
+            new TestBulkGetKeysResponse(op.version, id, op.cacheName, op.clientIntel,
+                  bulk, op.topologyId, topologyChangeResponse)
+         }
          case ErrorResponse => {
             if (op == null)
                new TestErrorResponse(10, id, "", 0, status, 0,
@@ -639,6 +666,16 @@ class BulkGetOp(override val magic: Int,
               val count: Int)
      extends Op(magic, version, code, cacheName, null, 0, 0, null, 0, 0,
                 clientIntel, topologyId)
+                
+class BulkGetKeysOp(override val magic: Int,
+              override val version: Byte,
+              override val code: Byte,
+              override val cacheName: String,
+              override val clientIntel: Byte,
+              override val topologyId: Int,
+              val scope: Int)
+     extends Op(magic, version, code, cacheName, null, 0, 0, null, 0, 0,
+                clientIntel, topologyId)
 
 class TestResponse(override val version: Byte, override val messageId: Long,
                    override val cacheName: String, override val clientIntel: Short,
@@ -717,6 +754,12 @@ class TestStatsResponse(override val version: Byte, override val messageId: Long
 class TestBulkGetResponse(override val version: Byte, override val messageId: Long,
                           override val cacheName: String, override val clientIntel: Short,
                           val bulkData: Map[ByteArrayKey, Array[Byte]],
+                          override val topologyId: Int, override val topologyResponse: Option[AbstractTopologyResponse])
+      extends TestResponse(version, messageId, cacheName, clientIntel, BulkGetResponse, Success, topologyId, topologyResponse)
+
+class TestBulkGetKeysResponse(override val version: Byte, override val messageId: Long,
+                          override val cacheName: String, override val clientIntel: Short,
+                          val bulkData: Set[ByteArrayKey],
                           override val topologyId: Int, override val topologyResponse: Option[AbstractTopologyResponse])
       extends TestResponse(version, messageId, cacheName, clientIntel, BulkGetResponse, Success, topologyId, topologyResponse)
 

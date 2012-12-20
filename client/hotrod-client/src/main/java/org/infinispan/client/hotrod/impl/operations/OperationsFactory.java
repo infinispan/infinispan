@@ -140,6 +140,11 @@ public class OperationsFactory implements HotRodConstants {
       return new BulkGetOperation(
             codec, transportFactory, cacheNameBytes, topologyId, flags(), size);
    }
+   
+   public BulkGetKeysOperation newBulkGetKeysOperation(int scope) {
+      return new BulkGetKeysOperation(
+    		codec, transportFactory, cacheNameBytes, topologyId, flags(), scope);
+   }
 
    /**
     * Construct a ping request directed to a particular node.
