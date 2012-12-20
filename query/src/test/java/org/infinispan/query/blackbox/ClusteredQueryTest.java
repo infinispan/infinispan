@@ -168,6 +168,18 @@ public class ClusteredQueryTest extends MultipleCacheManagersTest {
       iterator.close();
    }
 
+   @Test(expectedExceptions = IllegalArgumentException.class, enabled = false, expectedExceptionsMessageRegExp = "Unknown FetchMode null")
+   public void testIterator() throws Exception {
+      populateCache();
+
+      ResultIterator iterator = cacheQuery.iterator(new FetchOptions() {
+         public FetchOptions fetchMode(FetchMode fetchMode) {
+            return null;
+         }
+      });
+      assert iterator.hasNext();
+   }
+
    public void testList() throws ParseException {
       populateCache();
 

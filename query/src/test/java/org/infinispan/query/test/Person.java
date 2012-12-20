@@ -25,6 +25,8 @@ package org.infinispan.query.test;
 import org.hibernate.search.annotations.Analyze;
 import org.hibernate.search.annotations.Field;
 import org.hibernate.search.annotations.FieldBridge;
+import org.hibernate.search.annotations.FilterCacheModeType;
+import org.hibernate.search.annotations.FullTextFilterDef;
 import org.hibernate.search.annotations.Indexed;
 import org.hibernate.search.annotations.ProvidedId;
 import org.hibernate.search.annotations.Store;
@@ -37,6 +39,7 @@ import java.io.Serializable;
  */
 @ProvidedId(bridge = @FieldBridge(impl = StringBridge.class))
 @Indexed(index = "person")
+@FullTextFilterDef(name = "personFilter", impl = PersonFilter.class, cache = FilterCacheModeType.INSTANCE_AND_DOCIDSETRESULTS	)
 public class Person implements Serializable {
    @Field(store = Store.YES)
    private String name;
