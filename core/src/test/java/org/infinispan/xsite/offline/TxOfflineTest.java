@@ -21,11 +21,9 @@ package org.infinispan.xsite.offline;
 
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
+import org.testng.annotations.Test;
 
-/**
- * @author Mircea Markus
- * @since 5.2
- */
+@Test(groups = "xsite", testName = "xsite.offline.TxOfflineTest")
 public class TxOfflineTest extends NonTxOfflineTest {
 
    public TxOfflineTest() {

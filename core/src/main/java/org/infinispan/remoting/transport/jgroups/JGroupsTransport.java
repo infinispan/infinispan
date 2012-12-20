@@ -561,7 +561,7 @@ public class JGroupsTransport extends AbstractTransport implements MembershipLis
             syncBackupCalls.put(xsb, dispatcher.sendMessageWithFuture(dispatcher.constructMessage(buf, recipient, false, org.jgroups.blocks.ResponseMode.GET_ALL, false), sync));
          } else {
             RequestOptions async = new RequestOptions(org.jgroups.blocks.ResponseMode.GET_NONE, xsb.getTimeout());
-            dispatcher.sendMessageWithFuture(dispatcher.constructMessage(buf, recipient, false, org.jgroups.blocks.ResponseMode.GET_NONE, false), async);
+            dispatcher.sendMessage(dispatcher.constructMessage(buf, recipient, false, org.jgroups.blocks.ResponseMode.GET_NONE, false), async);
          }
       }
       return new JGroupsBackupResponse(syncBackupCalls);

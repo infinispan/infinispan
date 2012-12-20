@@ -36,7 +36,7 @@ import static org.junit.Assert.fail;
  * @author Mircea Markus
  * @since 5.2
  */
-@Test(groups = "xsite")
+@Test(groups = "xsite", testName = "xsite.offline.NonTxOfflineTest")
 public class NonTxOfflineTest extends BaseSiteUnreachableTest {
 
    private static final int FAILURES = 8;
