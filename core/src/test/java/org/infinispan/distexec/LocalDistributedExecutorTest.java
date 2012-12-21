@@ -128,17 +128,6 @@ public class LocalDistributedExecutorTest extends MultipleCacheManagersTest {
       assert object == result;
    }
 
-   public void testRunnableExecution() throws InterruptedException {
-      DistributedExecutorService des = createDES(getCache());
-      BoringRunnable runnable = new BoringRunnable();
-
-      des.execute(runnable);
-
-      Thread.sleep(100);
-
-      assert runnable.isExecuted();
-   }
-
    @Test(expectedExceptions = IllegalArgumentException.class)
    public void testNonSerializableRunnableExecution() {
       DistributedExecutorService des = createDES(getCache());
@@ -606,21 +595,14 @@ public class LocalDistributedExecutorTest extends MultipleCacheManagersTest {
 
       /** The serialVersionUID */
       private static final long serialVersionUID = 6898519516955822402L;
-      private static boolean isExecuted = false;
 
       //assuring that isExecuted is set to false.
       public BoringRunnable() {
-         this.isExecuted = false;
       }
 
       @Override
       public void run() {
          System.out.println("I am a boring runnable!" );
-         isExecuted = true;
-      }
-
-      public static boolean isExecuted() {
-         return isExecuted;
       }
    }
 }
