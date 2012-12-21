@@ -130,4 +130,7 @@ public interface Log extends org.infinispan.util.logging.Log {
 
    @Message(value = "A site name needs to be specified", id = 19028)
    StatementException siteNameNotSpecified();
+
+   @Message(value = "No cache selected yet", id = 19029)
+   StatementException noCacheSelectedYet();
 }
