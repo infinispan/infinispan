@@ -25,13 +25,16 @@ import static org.testng.AssertJUnit.*;
 import org.infinispan.Cache;
 import org.infinispan.api.BasicCacheContainer;
 import org.infinispan.cli.interpreter.Interpreter;
+import org.infinispan.cli.interpreter.logging.Log;
 import org.infinispan.cli.interpreter.result.ResultKeys;
+import org.infinispan.cli.interpreter.statement.CacheStatement;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.factories.GlobalComponentRegistry;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.test.SingleCacheManagerTest;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
+import org.infinispan.util.logging.LogFactory;
 import org.testng.annotations.Test;
 
 @Test(groups = "functional", testName="cli-server.InterpreterTest")
@@ -170,4 +173,15 @@ public class InterpreterTest extends SingleCacheManagerTest {
       Map<String, String> response = interpreter.execute(sessionId, "put 'a' 'a';");
       assert response.containsKey(ResultKeys.ERROR.toString());
    }
+
+   public void testCacheNotYetSelected() throws Exception {
+      GlobalComponentRegistry gcr = TestingUtil.extractGlobalComponentRegistry(this.cacheManager);
+      Interpreter interpreter = gcr.getComponent(Interpreter.class);
+      String sessionId = interpreter.createSessionId(null);
+      Map<String, String> response = interpreter.execute(sessionId, "cache;");
+      assert response.containsKey(ResultKeys.ERROR.toString());
+      String errorMsg = LogFactory.getLog(CacheStatement.class, Log.class).noCacheSelectedYet().getMessage();
+      assert response.get(ResultKeys.ERROR.toString()).contains(errorMsg);
+   }
+
 }
