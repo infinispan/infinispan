@@ -2,8 +2,9 @@
 
 source "`dirname "$0"`/functions.sh"
 
-add_classpath ${ISPN_HOME}/modules/demos/lucene-directory-demo/*.jar
-add_classpath ${ISPN_HOME}/modules/demos/lucene-directory-demo/runtime-classpath.txt
+add_classpath ${ISPN_HOME}/etc
+add_classpath ${ISPN_HOME}/modules/demos/gui/*.jar
+add_classpath ${ISPN_HOME}/modules/demos/gui/runtime-classpath.txt
 
 add_jvm_args $JVM_PARAMS
 add_jvm_args '-Djgroups.bind_addr=127.0.0.1'
@@ -20,5 +21,6 @@ add_jvm_args '-Dsun.nio.ch.bugLevel=""'
 # Sample JPDA settings for remote socket debugging
 #add_jvm_args "-Xrunjdwp:transport=dt_socket,address=8686,server=y,suspend=n"
 
-start org.infinispan.lucenedemo.DemoDriver
+add_program_args $@
 
+start org.infinispan.demo.InfinispanDemo &

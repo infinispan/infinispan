@@ -66,27 +66,10 @@
             <includeModuleDirectory>false</includeModuleDirectory>
 
             <fileSets>
-
-               <!-- resources -->
-               <fileSet>
-                  <directory>src/main/resources</directory>
-                  <outputDirectory>etc</outputDirectory>
-                  <lineEnding>unix</lineEnding>
-                  <excludes>
-                     <exclude>**/*.sh</exclude>
-                     <exclude>**/*.bat</exclude>
-                     <exclude>**/*.cmd</exclude>
-                     <exclude>**/*.py</exclude>
-                     <exclude>**/*.rb</exclude>
-                     <exclude>**/infinispan-module.properties</exclude>
-                     <exclude>org/*</exclude>
-                  </excludes>
-               </fileSet>
-
                <!-- Executable resources -->
                <fileSet>
-                  <directory>src/main/resources</directory>
-                  <outputDirectory>bin</outputDirectory>
+                  <directory>src/main/release</directory>
+                  <outputDirectory></outputDirectory>
                   <lineEnding>unix</lineEnding>
                   <includes>
                      <include>**/*.sh</include>
@@ -97,8 +80,8 @@
                </fileSet>
 
                <fileSet>
-                  <directory>src/main/resources</directory>
-                  <outputDirectory>bin</outputDirectory>
+                  <directory>src/main/release</directory>
+                  <outputDirectory></outputDirectory>
                   <lineEnding>dos</lineEnding>
                   <includes>
                      <include>**/*.cmd</include>
@@ -107,7 +90,32 @@
                   <fileMode>0644</fileMode>
                </fileSet>
 
-               <!-- schema (generated!) -->
+               <!-- Configuration resources -->
+               <fileSet>
+                  <directory>src/main/release</directory>
+                  <outputDirectory></outputDirectory>
+                  <lineEnding>unix</lineEnding>
+                  <includes>
+                     <include>**/*.properties</include>
+                     <include>**/*.xml</include>
+                     <include>**/*.xsd</include>
+                     <include>**/*.html</include>
+                     <include>**/*.js</include>
+                     <include>**/*.css</include>
+                  </includes>
+               </fileSet>
+               
+               <!-- Binary resources -->
+               <fileSet>
+                  <directory>src/main/release</directory>
+                  <outputDirectory></outputDirectory>
+                  <lineEnding>keep</lineEnding>
+                  <includes>
+                     <include>**/*.gz</include>
+                  </includes>
+               </fileSet>
+
+               <!-- Schema -->
                <fileSet>
                   <directory>target/classes</directory>
                   <outputDirectory>etc</outputDirectory>
@@ -188,37 +196,10 @@
             <includeModuleDirectory>false</includeModuleDirectory>
 
             <fileSets>
-
-               <!-- resources -->
-               <!-- Handles the binary data for the EC2 demo -->
-               <fileSet>
-                  <directory>src/main/resources</directory>
-                  <outputDirectory>etc</outputDirectory>
-                  <lineEnding>keep</lineEnding>
-                  <includes>
-                     <include>**/*.dat.gz</include>
-                  </includes>
-               </fileSet>
-
-               <fileSet>
-                  <directory>src/main/resources/</directory>
-                  <outputDirectory>etc</outputDirectory>
-                  <lineEnding>unix</lineEnding>
-                  <excludes>
-                     <exclude>**/*.sh</exclude>
-                     <exclude>**/*.bat</exclude>
-                     <exclude>**/*.cmd</exclude>
-                     <exclude>**/*.py</exclude>
-                     <exclude>**/*.rb</exclude>
-                     <exclude>**/infinispan-module.properties</exclude>
-                     <exclude>**/*.dat.gz</exclude>
-                  </excludes>
-               </fileSet>
-
                <!-- Executable resources -->
                <fileSet>
-                  <directory>src/main/resources</directory>
-                  <outputDirectory>bin</outputDirectory>
+                  <directory>src/main/release</directory>
+                  <outputDirectory></outputDirectory>
                   <lineEnding>unix</lineEnding>
                   <includes>
                      <include>**/*.sh</include>
@@ -229,17 +210,8 @@
                </fileSet>
 
                <fileSet>
-                  <directory>src/main/distribution</directory>
-                  <outputDirectory>etc</outputDirectory>
-                  <lineEnding>unix</lineEnding>
-                  <includes>
-                     <include>**/*.html</include>
-                  </includes>
-               </fileSet>
-
-               <fileSet>
-                  <directory>src/main/resources</directory>
-                  <outputDirectory>bin</outputDirectory>
+                  <directory>src/main/release</directory>
+                  <outputDirectory></outputDirectory>
                   <lineEnding>dos</lineEnding>
                   <includes>
                      <include>**/*.cmd</include>
@@ -248,6 +220,40 @@
                   <fileMode>0644</fileMode>
                </fileSet>
 
+               <!-- Configuration resources -->
+               <fileSet>
+                  <directory>src/main/release</directory>
+                  <outputDirectory></outputDirectory>
+                  <lineEnding>unix</lineEnding>
+                  <includes>
+                     <include>**/*.properties</include>
+                     <include>**/*.xml</include>
+                     <include>**/*.xsd</include>
+                     <include>**/*.html</include>
+                     <include>**/*.js</include>
+                     <include>**/*.css</include>
+                  </includes>
+               </fileSet>
+               
+               <!-- Binary resources -->
+               <fileSet>
+                  <directory>src/main/release</directory>
+                  <outputDirectory></outputDirectory>
+                  <lineEnding>keep</lineEnding>
+                  <includes>
+                     <include>**/*.gz</include>
+                  </includes>
+               </fileSet>
+
+               <!-- Schema -->
+               <fileSet>
+                  <directory>target/classes</directory>
+                  <outputDirectory>etc</outputDirectory>
+                  <lineEnding>unix</lineEnding>
+                  <includes>
+                     <include>**/*.xsd</include>
+                  </includes>
+               </fileSet>
 
                <!-- EULAs and license files -->
                <fileSet>
@@ -317,27 +323,10 @@
             <includeModuleDirectory>false</includeModuleDirectory>
 
             <fileSets>
-
-               <!-- resources -->
-               <fileSet>
-                  <directory>src/main/resources/</directory>
-                  <outputDirectory>etc</outputDirectory>
-                  <lineEnding>unix</lineEnding>
-                  <excludes>
-                     <exclude>**/*.sh</exclude>
-                     <exclude>**/*.bat</exclude>
-                     <exclude>**/*.cmd</exclude>
-                     <exclude>**/*.py</exclude>
-                     <exclude>**/*.rb</exclude>
-                     <exclude>**/infinispan-module.properties</exclude>
-                     <exclude>**/*.dat.gz</exclude>
-                  </excludes>
-               </fileSet>
-
                <!-- Executable resources -->
                <fileSet>
-                  <directory>src/main/resources</directory>
-                  <outputDirectory>bin</outputDirectory>
+                  <directory>src/main/release</directory>
+                  <outputDirectory></outputDirectory>
                   <lineEnding>unix</lineEnding>
                   <includes>
                      <include>**/*.sh</include>
@@ -348,17 +337,8 @@
                </fileSet>
 
                <fileSet>
-                  <directory>src/main/distribution</directory>
-                  <outputDirectory>etc</outputDirectory>
-                  <lineEnding>unix</lineEnding>
-                  <includes>
-                     <include>**/*.html</include>
-                  </includes>
-               </fileSet>
-
-               <fileSet>
-                  <directory>src/main/resources</directory>
-                  <outputDirectory>bin</outputDirectory>
+                  <directory>src/main/release</directory>
+                  <outputDirectory></outputDirectory>
                   <lineEnding>dos</lineEnding>
                   <includes>
                      <include>**/*.cmd</include>
@@ -367,6 +347,40 @@
                   <fileMode>0644</fileMode>
                </fileSet>
 
+               <!-- Configuration resources -->
+               <fileSet>
+                  <directory>src/main/release</directory>
+                  <outputDirectory></outputDirectory>
+                  <lineEnding>unix</lineEnding>
+                  <includes>
+                     <include>**/*.properties</include>
+                     <include>**/*.xml</include>
+                     <include>**/*.xsd</include>
+                     <include>**/*.html</include>
+                     <include>**/*.js</include>
+                     <include>**/*.css</include>
+                  </includes>
+               </fileSet>
+               
+               <!-- Binary resources -->
+               <fileSet>
+                  <directory>src/main/release</directory>
+                  <outputDirectory></outputDirectory>
+                  <lineEnding>keep</lineEnding>
+                  <includes>
+                     <include>**/*.gz</include>
+                  </includes>
+               </fileSet>
+
+               <!-- Schema -->
+               <fileSet>
+                  <directory>target/classes</directory>
+                  <outputDirectory>etc</outputDirectory>
+                  <lineEnding>unix</lineEnding>
+                  <includes>
+                     <include>**/*.xsd</include>
+                  </includes>
+               </fileSet>
 
                <!-- EULAs and license files -->
                <fileSet>
@@ -502,37 +516,10 @@
             <includeModuleDirectory>false</includeModuleDirectory>
 
             <fileSets>
-
-               <!-- resources -->
-               <!-- Handles the binary data for the EC2 demo -->
-               <fileSet>
-                  <directory>src/main/resources</directory>
-                  <outputDirectory>etc</outputDirectory>
-                  <lineEnding>keep</lineEnding>
-                  <includes>
-                     <include>**/*.dat.gz</include>
-                  </includes>
-               </fileSet>
-
-               <fileSet>
-                  <directory>src/main/resources/</directory>
-                  <outputDirectory>etc</outputDirectory>
-                  <lineEnding>unix</lineEnding>
-                  <excludes>
-                     <exclude>**/*.sh</exclude>
-                     <exclude>**/*.bat</exclude>
-                     <exclude>**/*.cmd</exclude>
-                     <exclude>**/*.py</exclude>
-                     <exclude>**/*.rb</exclude>
-                     <exclude>**/infinispan-module.properties</exclude>
-                     <exclude>**/*.dat.gz</exclude>
-                  </excludes>
-               </fileSet>
-
                <!-- Executable resources -->
                <fileSet>
-                  <directory>src/main/resources</directory>
-                  <outputDirectory>bin</outputDirectory>
+                  <directory>src/main/release</directory>
+                  <outputDirectory></outputDirectory>
                   <lineEnding>unix</lineEnding>
                   <includes>
                      <include>**/*.sh</include>
@@ -543,17 +530,8 @@
                </fileSet>
 
                <fileSet>
-                  <directory>src/main/distribution</directory>
-                  <outputDirectory>etc</outputDirectory>
-                  <lineEnding>unix</lineEnding>
-                  <includes>
-                     <include>**/*.html</include>
-                  </includes>
-               </fileSet>
-
-               <fileSet>
-                  <directory>src/main/resources</directory>
-                  <outputDirectory>bin</outputDirectory>
+                  <directory>src/main/release</directory>
+                  <outputDirectory></outputDirectory>
                   <lineEnding>dos</lineEnding>
                   <includes>
                      <include>**/*.cmd</include>
@@ -562,10 +540,45 @@
                   <fileMode>0644</fileMode>
                </fileSet>
 
+               <!-- Configuration resources -->
+               <fileSet>
+                  <directory>src/main/release</directory>
+                  <outputDirectory></outputDirectory>
+                  <lineEnding>unix</lineEnding>
+                  <includes>
+                     <include>**/*.properties</include>
+                     <include>**/*.xml</include>
+                     <include>**/*.xsd</include>
+                     <include>**/*.html</include>
+                     <include>**/*.js</include>
+                     <include>**/*.css</include>
+                  </includes>
+               </fileSet>
+               
+               <!-- Binary resources -->
+               <fileSet>
+                  <directory>src/main/release</directory>
+                  <outputDirectory></outputDirectory>
+                  <lineEnding>keep</lineEnding>
+                  <includes>
+                     <include>**/*.gz</include>
+                  </includes>
+               </fileSet>
+
+               <!-- Schema -->
+               <fileSet>
+                  <directory>target/classes</directory>
+                  <outputDirectory>etc</outputDirectory>
+                  <lineEnding>unix</lineEnding>
+                  <includes>
+                     <include>**/*.xsd</include>
+                  </includes>
+               </fileSet>
 
                <!-- EULAs and license files -->
                <fileSet>
                   <directory>src/main/release</directory>
+                  <outputDirectory></outputDirectory>
                   <lineEnding>dos</lineEnding>
                   <includes>
                      <include>**/*.txt</include>
@@ -624,11 +637,10 @@
             <includeModuleDirectory>false</includeModuleDirectory>
 
             <fileSets>
-
                <!-- Executable resources -->
                <fileSet>
-                  <directory>src/main/resources</directory>
-                  <outputDirectory>bin</outputDirectory>
+                  <directory>src/main/release</directory>
+                  <outputDirectory></outputDirectory>
                   <lineEnding>unix</lineEnding>
                   <includes>
                      <include>**/*.sh</include>
@@ -639,14 +651,49 @@
                </fileSet>
 
                <fileSet>
-                  <directory>src/main/resources</directory>
-                  <outputDirectory>bin</outputDirectory>
+                  <directory>src/main/release</directory>
+                  <outputDirectory></outputDirectory>
                   <lineEnding>dos</lineEnding>
                   <includes>
                      <include>**/*.cmd</include>
                      <include>**/*.bat</include>
                   </includes>
                   <fileMode>0644</fileMode>
+               </fileSet>
+
+               <!-- Configuration resources -->
+               <fileSet>
+                  <directory>src/main/release</directory>
+                  <outputDirectory></outputDirectory>
+                  <lineEnding>unix</lineEnding>
+                  <includes>
+                     <include>**/*.properties</include>
+                     <include>**/*.xml</include>
+                     <include>**/*.xsd</include>
+                     <include>**/*.html</include>
+                     <include>**/*.js</include>
+                     <include>**/*.css</include>
+                  </includes>
+               </fileSet>
+               
+               <!-- Binary resources -->
+               <fileSet>
+                  <directory>src/main/release</directory>
+                  <outputDirectory></outputDirectory>
+                  <lineEnding>keep</lineEnding>
+                  <includes>
+                     <include>**/*.gz</include>
+                  </includes>
+               </fileSet>
+
+               <!-- Schema -->
+               <fileSet>
+                  <directory>target/classes</directory>
+                  <outputDirectory>etc</outputDirectory>
+                  <lineEnding>unix</lineEnding>
+                  <includes>
+                     <include>**/*.xsd</include>
+                  </includes>
                </fileSet>
 
                <!-- EULAs and license files -->
@@ -656,16 +703,6 @@
                   <lineEnding>dos</lineEnding>
                   <includes>
                      <include>**/*.txt</include>
-                  </includes>
-               </fileSet>
-
-               <!-- runtime-classpath.txt file -->
-               <fileSet>
-                  <directory>target</directory>
-                  <outputDirectory></outputDirectory>
-                  <lineEnding>keep</lineEnding>
-                  <includes>
-                     <include>runtime-classpath.txt</include>
                   </includes>
                </fileSet>
             </fileSets>

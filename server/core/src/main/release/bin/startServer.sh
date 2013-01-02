@@ -2,6 +2,7 @@
 
 source "`dirname "$0"`/functions.sh"
 
+add_classpath ${ISPN_HOME}/etc
 add_classpath ${ISPN_HOME}/modules/memcached/*.jar
 add_classpath ${ISPN_HOME}/modules/hotrod/*.jar
 add_classpath ${ISPN_HOME}/modules/websocket/*.jar

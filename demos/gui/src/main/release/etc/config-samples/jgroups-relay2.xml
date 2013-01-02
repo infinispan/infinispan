@@ -10,21 +10,26 @@
 
 <config xmlns="urn:org:jgroups"
         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-        xsi:schemaLocation="urn:org:jgroups http://www.jgroups.org/schema/JGroups-2.8.xsd">
-    <TCP bind_port="7800" port_range="10"
-         recv_buf_size="20000000"
-         send_buf_size="640000"
-         loopback="false"
+        xsi:schemaLocation="urn:org:jgroups http://www.jgroups.org/schema/JGroups-3.2.xsd">
+    <UDP mcast_addr="239.2.2.2"
+         mcast_port="${jgroups.udp.mcast_port:45222}"
+         tos="8"
+         ucast_recv_buf_size="20000000"
+         ucast_send_buf_size="640000"
+         mcast_recv_buf_size="25000000"
+         mcast_send_buf_size="640000"
+         loopback="true"
          max_bundle_size="64000"
          max_bundle_timeout="30"
+         ip_ttl="${jgroups.udp.ip_ttl:0}"
          enable_bundling="true"
          enable_unicast_bundling="true"
          enable_diagnostics="true"
          thread_naming_pattern="cl"
 
          timer_type="new"
-         timer.min_threads="4"
-         timer.max_threads="10"
+         timer.min_threads="2"
+         timer.max_threads="4"
          timer.keep_alive_time="3000"
          timer.queue_max_size="1000"
          timer.wheel_size="200"
@@ -46,33 +51,28 @@
          oob_thread_pool.queue_max_size="100"
          oob_thread_pool.rejection_policy="discard"/>
 
-   <MPING bind_addr="${jgroups.bind_addr:127.0.0.1}" break_on_coord_rsp="true"
-          mcast_addr="${jgroups.mping.mcast_addr:228.2.4.6}"
-          mcast_port="${jgroups.mping.mcast_port:43366}"
-          ip_ttl="${jgroups.udp.ip_ttl:2}"
-          num_initial_members="3" timeout="2000"/>
 
+    <PING timeout="2000"
+            num_initial_members="3"/>
     <MERGE2 max_interval="30000"
             min_interval="10000"/>
-
     <FD_SOCK/>
-    <FD_ALL interval="2000" timeout="5000" />
-    <VERIFY_SUSPECT timeout="500"  />
+    <FD_ALL/>
+    <VERIFY_SUSPECT timeout="1500"  />
     <BARRIER />
-    <pbcast.NAKACK use_mcast_xmit="false"
+    <pbcast.NAKACK use_mcast_xmit="true"
                    retransmit_timeout="100,300,600,1200"
-                   discard_delivered_msgs="true" />
-    <UNICAST2 timeout="300,600,1200" />
-
+                   discard_delivered_msgs="true"/>
+    <UNICAST2 timeout="300,600,1200"/>
     <pbcast.STABLE stability_delay="1000" desired_avg_gossip="50000"
-                   max_bytes="10m"/>
+                   max_bytes="1000000"/>
     <pbcast.GMS print_local_addr="true" join_timeout="5000"
-                max_bundling_time="30"
+                max_bundling_time="200"
                 view_bundling="true"/>
-    <UFC max_credits="2M"
-         min_threshold="0.4"/>
-    <MFC max_credits="2M"
-         min_threshold="0.4"/>
+    <FC max_credits="2M"
+        min_threshold="0.40"/>
     <FRAG2 frag_size="60000"  />
-    <pbcast.STATE_TRANSFER  />
+    <pbcast.FLUSH />
+    <RELAY site="zrh" bridge_props="config-samples/jgroups-tcp.xml"  />
+
 </config>
