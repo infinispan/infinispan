@@ -33,13 +33,18 @@ import org.infinispan.remoting.transport.Address;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
-import java.util.*;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.CopyOnWriteArraySet;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
- * Inbound state transfer task. Fetches transactions and data segments from a remote source and applies it to local
- * cache. Instances of InboundTransferTask are created and managed by StateTransferManagerImpl. There should be at most
- * one such task per source at any time.
+ * Inbound state transfer task. Fetches multiple data segments from a remote source node and applies them to local
+ * cache. Instances of InboundTransferTask are created and managed by StateTransferManagerImpl. StateTransferManagerImpl
+ * must have zero or one such task for each segment.
  *
  * @author anistor@redhat.com
  * @since 5.2
@@ -56,6 +61,21 @@ public class InboundTransferTask {
    private final Address source;
 
    private volatile boolean isCancelled = false;
+
+   /**
+    * Indicates if the request was sent to source.
+    */
+   private final AtomicBoolean isStarted = new AtomicBoolean();
+
+   /**
+    * Indicates if the START_STATE_TRANSFER was successfully sent to source node and the source replied with a successful response.
+    */
+   private boolean isSuccessful = false;
+
+   /**
+    * This latch is counted down when all segments are completely received or in case of task cancellation.
+    */
+   private final CountDownLatch completionLatch = new CountDownLatch(1);
 
    private final StateConsumerImpl stateConsumer;
 
@@ -101,51 +121,42 @@ public class InboundTransferTask {
       return source;
    }
 
-   public boolean requestTransactions() {
-      if (trace) {
-         log.tracef("Requesting transactions for segments %s of cache %s from node %s", segments, cacheName, source);
-      }
-      // get transactions and locks
-      try {
-         StateRequestCommand cmd = commandsFactory.buildStateRequestCommand(StateRequestCommand.Type.GET_TRANSACTIONS, rpcManager.getAddress(), topologyId, segments);
-         Map<Address, Response> responses = rpcManager.invokeRemotely(Collections.singleton(source), cmd, ResponseMode.SYNCHRONOUS_IGNORE_LEAVERS, timeout);
-         Response response = responses.get(source);
-         if (response instanceof SuccessfulResponse) {
-            List<TransactionInfo> transactions = (List<TransactionInfo>) ((SuccessfulResponse) response).getResponseValue();
-            stateConsumer.applyTransactions(source, topologyId, transactions);
-            return true;
-         } else {
-            log.failedToRetrieveTransactionsForSegments(segments, cacheName, source, null);
-            return false;
-         }
-      } catch (CacheException e) {
-         log.failedToRetrieveTransactionsForSegments(segments, cacheName, source, e);
-         return false;
-      }
-   }
-
+   /**
+    * Send START_STATE_TRANSFER request to source node.
+    */
    public boolean requestSegments() {
-      if (trace) {
-         log.tracef("Requesting segments %s of cache %s from node %s", segments, cacheName, source);
-      }
-
-      // start transfer of cache entries
-      try {
-         StateRequestCommand cmd = commandsFactory.buildStateRequestCommand(StateRequestCommand.Type.START_STATE_TRANSFER, rpcManager.getAddress(), topologyId, segments);
-         Map<Address, Response> responses = rpcManager.invokeRemotely(Collections.singleton(source), cmd, ResponseMode.SYNCHRONOUS_IGNORE_LEAVERS, timeout);
-         Response response = responses.get(source);
-         boolean success = response instanceof SuccessfulResponse;
-         if (!success) {
-            log.failedToRequestSegments(segments, cacheName, source, null);
+      if (!isCancelled && isStarted.compareAndSet(false, true)) {
+         if (trace) {
+            log.tracef("Requesting segments %s of cache %s from node %s", segments, cacheName, source);
          }
-         return success;
-      } catch (CacheException e) {
-         log.failedToRequestSegments(segments, cacheName, source, e);
+         // start transfer of cache entries
+         try {
+            StateRequestCommand cmd = commandsFactory.buildStateRequestCommand(StateRequestCommand.Type.START_STATE_TRANSFER, rpcManager.getAddress(), topologyId, segments);
+            Map<Address, Response> responses = rpcManager.invokeRemotely(Collections.singleton(source), cmd, ResponseMode.SYNCHRONOUS_IGNORE_LEAVERS, timeout);
+            Response response = responses.get(source);
+            if (response instanceof SuccessfulResponse) {
+               isSuccessful = true;
+               return true;
+            }
+            log.failedToRequestSegments(segments, cacheName, source, null);
+         } catch (CacheException e) {
+            log.failedToRequestSegments(segments, cacheName, source, e);
+         }
          return false;
+      } else {
+         return true;
       }
    }
 
+   /**
+    * Cancels a subset of the segments. If it happens that all segments are cancelled then the whole task is marked as cancelled.
+    *
+    * @param cancelledSegments
+    */
    public void cancelSegments(Set<Integer> cancelledSegments) {
+      if (isCancelled) {
+         throw new IllegalArgumentException("The task is already cancelled.");
+      }
       if (cancelledSegments.retainAll(segments)) {
          throw new IllegalArgumentException("Some of the specified segments cannot be cancelled because they were not previously requested");
       }
@@ -160,7 +171,7 @@ public class InboundTransferTask {
       rpcManager.invokeRemotely(Collections.singleton(source), cmd, ResponseMode.SYNCHRONOUS_IGNORE_LEAVERS, timeout);
 
       if (isCancelled) {
-         stateConsumer.onTaskCompletion(this);
+         notifyCompletion();
       }
    }
 
@@ -171,7 +182,7 @@ public class InboundTransferTask {
          StateRequestCommand cmd = commandsFactory.buildStateRequestCommand(StateRequestCommand.Type.CANCEL_STATE_TRANSFER, rpcManager.getAddress(), topologyId, segments);
          rpcManager.invokeRemotely(Collections.singleton(source), cmd, ResponseMode.SYNCHRONOUS_IGNORE_LEAVERS, timeout);
 
-         stateConsumer.onTaskCompletion(this);
+         notifyCompletion();
       }
    }
 
@@ -182,9 +193,22 @@ public class InboundTransferTask {
             if (trace) {
                log.tracef("Finished receiving state for segments %s of cache %s", segments, cacheName);
             }
-            stateConsumer.onTaskCompletion(this);
+            notifyCompletion();
          }
       }
+   }
+
+   private void notifyCompletion() {
+      stateConsumer.onTaskCompletion(this);
+      completionLatch.countDown();
+   }
+
+   public void awaitCompletion() throws InterruptedException {
+      if (!isSuccessful) {
+         throw new IllegalStateException("Cannot await completion unless the request was previously sent to source node successfully.");
+      }
+
+      completionLatch.await();
    }
 
    @Override

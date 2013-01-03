@@ -53,6 +53,7 @@ import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 import org.mockito.invocation.InvocationOnMock;
 import org.mockito.stubbing.Answer;
+import org.testng.annotations.AfterTest;
 import org.testng.annotations.BeforeTest;
 import org.testng.annotations.Test;
 
@@ -69,7 +70,7 @@ import static org.mockito.Mockito.*;
  * @author anistor@redhat.com
  * @since 5.2
  */
-@Test(groups = "functional", testName = "statetransfer.StateProviderTest", enabled = true)
+@Test(groups = "functional", testName = "statetransfer.StateProviderTest")
 public class StateProviderTest {
 
    private static final Log log = LogFactory.getLog(StateProviderTest.class);
@@ -137,6 +138,11 @@ public class StateProviderTest {
             return cacheTopology;
          }
       });
+   }
+
+   @AfterTest
+   public void tearDown() {
+      pooledExecutorService.shutdownNow();
    }
 
    public void test1() throws InterruptedException {
@@ -238,7 +244,7 @@ public class StateProviderTest {
       when(commandsFactory.buildStateResponseCommand(any(Address.class), anyInt(), any(Collection.class))).thenAnswer(new Answer<StateResponseCommand>() {
          @Override
          public StateResponseCommand answer(InvocationOnMock invocation) {
-            return new StateResponseCommand("cache1", (Address) invocation.getArguments()[0],
+            return new StateResponseCommand("testCache", (Address) invocation.getArguments()[0],
                   ((Integer) invocation.getArguments()[1]).intValue(),
                   (Collection<StateChunk>) invocation.getArguments()[2]);
          }

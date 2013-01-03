@@ -59,7 +59,7 @@ public class OutboundTransferTask implements Runnable {
 
    private final boolean trace = log.isTraceEnabled();
 
-   private StateProviderImpl stateProvider;
+   private final StateProviderImpl stateProvider;
 
    private final int topologyId;
 
@@ -93,7 +93,7 @@ public class OutboundTransferTask implements Runnable {
    /**
     * The Future obtained from submitting this task to an executor service. This is used for cancellation.
     */
-   private FutureTask runnableFuture;
+   private FutureTask<Void> runnableFuture;
 
    public OutboundTransferTask(Address destination, Set<Integer> segments, int stateTransferChunkSize,
                                int topologyId, ConsistentHash readCh, StateProviderImpl stateProvider, DataContainer dataContainer,
@@ -201,7 +201,7 @@ public class OutboundTransferTask implements Runnable {
     * The CacheStore is ignored if it is disabled or if it is shared or if fetchPersistentState is disabled.
     */
    private CacheStore getCacheStore() {
-      if (cacheLoaderManager != null && cacheLoaderManager.isEnabled() && !cacheLoaderManager.isShared() && cacheLoaderManager.isFetchPersistentState()) {
+      if (cacheLoaderManager.isEnabled() && !cacheLoaderManager.isShared() && cacheLoaderManager.isFetchPersistentState()) {
          return cacheLoaderManager.getCacheStore();
       }
       return null;
