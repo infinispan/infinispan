@@ -27,7 +27,7 @@ import org.codehaus.jackson.map.ObjectMapper;
 import org.codehaus.jackson.map.ObjectMapper.DefaultTyping;
 import org.testng.annotations.Test;
 
-@Test
+@Test(groups = "functional", testName="cli-server.JSONTest")
 public class JSONTest {
 
    public void testJSONMapping() throws JsonGenerationException, JsonMappingException, IOException {

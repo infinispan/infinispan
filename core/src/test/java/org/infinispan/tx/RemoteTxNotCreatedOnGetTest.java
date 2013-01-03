@@ -12,7 +12,7 @@ import static org.testng.Assert.assertEquals;
  * @author Mircea Markus <mircea.markus@jboss.com> (C) 2011 Red Hat Inc.
  * @since 5.1
  */
-@Test
+@Test(groups = "functional", testName = "tx.RemoteTxNotCreatedOnGetTest")
 public class RemoteTxNotCreatedOnGetTest extends MultipleCacheManagersTest {
 
    @Override

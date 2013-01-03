@@ -40,7 +40,7 @@ import static org.testng.Assert.assertEquals;
  * @author Mircea Markus
  * @since 5.1
  */
-@Test
+@Test(groups = "functional")
 public abstract class AbstractNoCrashTest extends MultipleCacheManagersTest {
 
    protected Configuration.CacheMode cacheMode;

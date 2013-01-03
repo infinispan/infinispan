@@ -22,7 +22,7 @@ package org.infinispan.tx;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.testng.annotations.Test;
 
-@Test (testName = "tx.TxCompletionForRolledBackXaTxTest")
+@Test (groups = "functional", testName = "tx.TxCompletionForRolledBackXaTxTest")
 public class TxCompletionForRolledBackXaTxTest extends TxCompletionForRolledBackTxTest {
 
    @Override

@@ -400,13 +400,15 @@ public class ClusterTopologyManagerImpl implements ClusterTopologyManager {
    }
 
    private void broadcastRebalanceStart(String cacheName, ClusterCacheStatus cacheStatus) throws Exception {
-      CacheTopology cacheTopology = cacheStatus.getCacheTopology();
-      log.debugf("Starting cluster-wide rebalance for cache %s, topology = %s",
-            cacheName, cacheTopology);
-      ReplicableCommand command = new CacheTopologyControlCommand(cacheName,
-            CacheTopologyControlCommand.Type.REBALANCE_START, transport.getAddress(), cacheTopology,
-            transport.getViewId());
-      executeOnClusterSync(command, getGlobalTimeout());
+      synchronized (cacheStatus) {
+         CacheTopology cacheTopology = cacheStatus.getCacheTopology();
+         log.debugf("Starting cluster-wide rebalance for cache %s, topology = %s",
+               cacheName, cacheTopology);
+         ReplicableCommand command = new CacheTopologyControlCommand(cacheName,
+               CacheTopologyControlCommand.Type.REBALANCE_START, transport.getAddress(), cacheTopology,
+               transport.getViewId());
+         executeOnClusterSync(command, getGlobalTimeout());
+      }
    }
 
    private void endRebalance(String cacheName, ClusterCacheStatus cacheStatus) {

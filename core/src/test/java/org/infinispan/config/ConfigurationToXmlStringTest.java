@@ -38,6 +38,7 @@ import static org.testng.Assert.assertTrue;
  *
  * @author Juergen_Kellerer, 2011-03-13
  */
+@Test(groups = "unit", testName = "config.ConfigurationToXmlStringTest")
 public class ConfigurationToXmlStringTest {
 
    @Test

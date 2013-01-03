@@ -34,7 +34,7 @@ import java.util.concurrent.CountDownLatch;
  * @author Mircea Markus
  * @since 5.1
  */
-@Test
+@Test(groups = "functional")
 public abstract class AbstractInitiatorCrashTest extends AbstractCrashTest {
 
    public AbstractInitiatorCrashTest(Configuration.CacheMode cacheMode, LockingMode lockingMode, Boolean useSynchronization) {

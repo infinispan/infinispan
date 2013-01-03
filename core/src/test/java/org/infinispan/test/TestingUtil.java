@@ -39,6 +39,7 @@ import java.util.Random;
 import java.util.Set;
 import java.util.concurrent.Callable;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.locks.LockSupport;
 
 import javax.management.MBeanServer;
@@ -75,6 +76,8 @@ import org.infinispan.remoting.ReplicationQueue;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.remoting.transport.Transport;
 import org.infinispan.remoting.transport.jgroups.JGroupsTransport;
+import org.infinispan.statetransfer.StateConsumer;
+import org.infinispan.statetransfer.StateConsumerImpl;
 import org.infinispan.statetransfer.StateTransferManager;
 import org.infinispan.topology.CacheTopology;
 import org.infinispan.topology.DefaultRebalancePolicy;
@@ -167,14 +170,18 @@ public class TestingUtil {
       int gracetime = 90000; // 90 seconds
       long giveup = System.currentTimeMillis() + gracetime;
       for (Cache c : caches) {
-         StateTransferManager stateTransferManager = TestingUtil.extractComponent(c, StateTransferManager.class);
+         StateTransferManager stateTransferManager = extractComponent(c, StateTransferManager.class);
+         // HACK: We need to return only after all entries have been transferred/invalidated,
+         // and StateTransferManager.isStateTransferInProgress() doesn't do that.
+         StateConsumer stateConsumer = extractComponent(c, StateConsumer.class);
+         AtomicBoolean rebalanceInProgress = (AtomicBoolean) extractField(stateConsumer, "rebalanceInProgress");
          DefaultRebalancePolicy rebalancePolicy = (DefaultRebalancePolicy) TestingUtil.extractGlobalComponent(c.getCacheManager(), RebalancePolicy.class);
          Address cacheAddress = c.getAdvancedCache().getRpcManager().getAddress();
          while (true) {
             CacheTopology cacheTopology = stateTransferManager.getCacheTopology();
             boolean chContainsAllMembers = cacheTopology.getCurrentCH().getMembers().size() == caches.length;
             boolean chIsBalanced = rebalancePolicy.isBalanced(cacheTopology.getCurrentCH());
-            boolean stateTransferInProgress = cacheTopology.getPendingCH() != null;
+            boolean stateTransferInProgress = rebalanceInProgress.get();
             if (chContainsAllMembers && chIsBalanced && !stateTransferInProgress)
                break;
 

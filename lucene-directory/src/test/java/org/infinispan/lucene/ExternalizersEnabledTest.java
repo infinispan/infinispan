@@ -41,6 +41,7 @@ import org.testng.annotations.Test;
  * @author Sanne Grinovero
  * @since 5.0
  */
+@Test(groups = "functional", testName = "lucene.ExternalizersEnabledTest")
 public class ExternalizersEnabledTest extends SingleCacheManagerTest {
 
    @Override

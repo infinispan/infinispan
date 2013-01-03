@@ -44,7 +44,7 @@ import static org.testng.Assert.assertEquals;
 /**
  * @author Mircea.Markus@jboss.com
  */
-@Test (testName = "tx.recovery.LocalRecoveryTest")
+@Test (groups = "functional", testName = "tx.recovery.LocalRecoveryTest")
 public class LocalRecoveryTest extends SingleCacheManagerTest {
 
    @Override
@@ -52,6 +52,7 @@ public class LocalRecoveryTest extends SingleCacheManagerTest {
       ConfigurationBuilder cb = new ConfigurationBuilder();
       cb.transaction()
             .transactionMode(TransactionMode.TRANSACTIONAL)
+            .useSynchronization(false)
             .transactionManagerLookup(new RecoveryDummyTransactionManagerLookup())
             .recovery();
       return TestCacheManagerFactory.createCacheManager(cb);

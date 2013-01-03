@@ -45,7 +45,6 @@ import javax.transaction.TransactionManager;
  * @author Mircea.Markus@jboss.com
  * @see org.infinispan.test.MultipleCacheManagersTest
  */
-@Test
 public abstract class SingleCacheManagerTest extends AbstractCacheTest {
 
    protected EmbeddedCacheManager cacheManager;

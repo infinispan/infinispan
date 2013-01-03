@@ -250,10 +250,10 @@ public class StateConsumerImpl implements StateConsumer {
             Set<Integer> removedSegments = new HashSet<Integer>(previousSegments);
             removedSegments.removeAll(newSegments);
 
+            // This is a rebalance, we need to request the segments we own in the new CH.
             addedSegments = new HashSet<Integer>(newSegments);
             addedSegments.removeAll(previousSegments);
 
-            // remove inbound transfers and any data for segments we no longer own
             if (trace) {
                log.tracef("On cache %s we have: removed segments: %s; new segments: %s; old segments: %s; added segments: %s",
                      cacheName, removedSegments, newSegments, previousSegments, addedSegments);
@@ -532,7 +532,6 @@ public class StateConsumerImpl implements StateConsumer {
             // if requesting the transactions fails we need to retry from another source
             if (configuration.transaction().transactionMode().isTransactional()) {
                if (!inboundTransfer.requestTransactions()) {
-                  log.failedToRetrieveTransactionsForSegments(segmentsFromSource, cacheName, source);
                   failedSegments.addAll(segmentsFromSource);
                   faultysources.add(source);
                   removeTransfer(inboundTransfer);  // will be retried from another source
@@ -543,7 +542,6 @@ public class StateConsumerImpl implements StateConsumer {
             // if requesting the segments fails we need to retry from another source
             if (fetchEnabled) {
                if (!inboundTransfer.requestSegments()) {
-                  log.failedToRequestSegments(segmentsFromSource, cacheName, source);
                   failedSegments.addAll(segmentsFromSource);
                   faultysources.add(source);
                   removeTransfer(inboundTransfer);  // will be retried from another source

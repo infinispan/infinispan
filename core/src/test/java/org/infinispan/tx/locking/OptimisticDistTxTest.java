@@ -23,7 +23,7 @@
 
 package org.infinispan.tx.locking;
 
-import org.infinispan.config.Configuration;
+import org.infinispan.configuration.cache.CacheMode;
 import org.testng.annotations.Test;
 
 /**
@@ -33,6 +33,12 @@ import org.testng.annotations.Test;
 @Test (groups = "functional", testName = "tx.locking.OptimisticDistTxTest")
 public class OptimisticDistTxTest extends OptimisticReplTxTest {
    public OptimisticDistTxTest() {
-      this.cacheMode = Configuration.CacheMode.DIST_SYNC;
+      this.cacheMode = CacheMode.DIST_SYNC;
+   }
+
+   @Override
+   protected void createCacheManagers() throws Throwable {
+      super.createCacheManagers();
+      k = getKeyForCache(0);
    }
 }

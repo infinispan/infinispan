@@ -36,6 +36,7 @@ import org.infinispan.loaders.CacheStore;
 import org.infinispan.loaders.jdbc.TableManipulation;
 import org.infinispan.loaders.jdbc.connectionfactory.ConnectionFactory;
 import org.infinispan.loaders.jdbc.connectionfactory.ConnectionFactoryConfig;
+import org.infinispan.loaders.keymappers.DefaultTwoWayKey2StringMapper;
 import org.infinispan.loaders.keymappers.TwoWayKey2StringMapper;
 import org.infinispan.loaders.keymappers.UnsupportedKeyTypeException;
 import org.infinispan.marshall.StreamingMarshaller;
@@ -52,8 +53,8 @@ import org.testng.annotations.Test;
  *
  * @author Mircea.Markus@jboss.com
  */
-@Test(groups = "functional", testName = "loaders.jdbc.stringbased.JdbcStringBasedCacheStoreTest2")
-public class JdbcStringBasedCacheStoreTest2 {
+@Test(groups = "functional", testName = "loaders.jdbc.stringbased.JdbcStringBasedCacheStoreAltMapperTest")
+public class JdbcStringBasedCacheStoreAltMapperTest {
 
    CacheStore cacheStore;
    private ConnectionFactoryConfig cfc;
@@ -66,7 +67,7 @@ public class JdbcStringBasedCacheStoreTest2 {
       tableManipulation = UnitTestDatabaseManager.buildStringTableManipulation();
       cfc = UnitTestDatabaseManager.getUniqueConnectionFactoryConfig();
       JdbcStringBasedCacheStoreConfig config = new JdbcStringBasedCacheStoreConfig(cfc, tableManipulation);
-      config.setKey2StringMapperClass(TwoWayKey2StringMapper.class.getName());
+      config.setKey2StringMapperClass(PersonKey2StringMapper.class.getName());
       config.setPurgeSynchronously(true);
       cacheStore = new JdbcStringBasedCacheStore();
       Cache<?, ?> mockCache = mock(Cache.class);

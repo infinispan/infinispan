@@ -36,7 +36,7 @@ import java.io.Serializable;
  *
  * @author Manik Surtani
  */
-@Test(testName = "marshall.MarshalledValuesFineGrainedTest")
+@Test(groups = "functional", testName = "marshall.MarshalledValuesFineGrainedTest")
 public class MarshalledValuesFineGrainedTest extends AbstractInfinispanTest {
    EmbeddedCacheManager ecm;
    final CustomClass key = new CustomClass("key");

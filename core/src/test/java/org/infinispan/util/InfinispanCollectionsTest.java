@@ -34,12 +34,12 @@ import static org.testng.AssertJUnit.assertFalse;
 import static org.testng.AssertJUnit.assertTrue;
 
 /**
- * // TODO: Document this
+ * Tests for the {@link InfinispanCollections} helpers.
  *
  * @author Galder Zamarreño
- * @since // TODO
+ * @since 5.2
  */
-@Test(testName = "util.InfinispanCollectionsTest")
+@Test(groups = "unit", testName = "util.InfinispanCollectionsTest")
 public class InfinispanCollectionsTest {
 
    public void testDifferenceNotStored() {
