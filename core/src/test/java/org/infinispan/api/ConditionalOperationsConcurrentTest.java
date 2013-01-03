@@ -54,7 +54,7 @@ import java.util.concurrent.atomic.AtomicInteger;
  * @see java.util.concurrent.ConcurrentMap#replace(Object, Object, Object)
  * @since 5.2
  */
-@Test(groups = "functional", testName = "api.replaceOperationtressTest", enabled = true)
+@Test(groups = "functional", testName = "api.ConditionalOperationsConcurrentTest")
 public class ConditionalOperationsConcurrentTest extends MultipleCacheManagersTest {
 
    private static Log log = LogFactory.getLog(ConditionalOperationsConcurrentTest.class);
