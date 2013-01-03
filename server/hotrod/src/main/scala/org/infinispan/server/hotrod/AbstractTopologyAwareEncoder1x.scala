@@ -81,27 +81,35 @@ abstract class AbstractTopologyAwareEncoder1x extends AbstractEncoder1x with Con
             // The idea here is to be able to be compatible with clients running version 1.0 of the protocol.
             // With time, users should migrate to version 1.2 capable clients.
             val distManager = cache.getAdvancedCache.getDistributionManager
-            val ch = distManager.getConsistentHash
-
+            val ch = distManager.getReadConsistentHash
             val numSegments = ch.getNumSegments
-            val totalNumServers = (0 until numSegments).map(i => ch.locateOwnersForSegment(i).size).sum
-            writeCommonHashTopologyHeader(buf, h.viewId, h.numOwners,
-               h.hashFunction, h.hashSpace, totalNumServers)
-            writeUnsignedInt(1, buf) // Num virtual nodes
 
+            // Collect all the hash ids in a collection so we can write the correct size.
+            // There will be more than one hash id for each server, so we can't use a map.
+            var hashIds = collection.mutable.ArrayBuffer[(ServerAddress, Int)]()
             val allDenormalizedHashIds = denormalizeSegmentHashIds(ch)
             for (segmentIdx <- 0 until numSegments) {
                val denormalizedSegmentHashIds = allDenormalizedHashIds(segmentIdx)
                val segmentOwners = ch.locateOwnersForSegment(segmentIdx)
                for (ownerIdx <- 0 until segmentOwners.length) {
                   val address = segmentOwners(ownerIdx % segmentOwners.size)
-                  val serverAddress = members(address)
-                  val hashId = denormalizedSegmentHashIds(ownerIdx)
-                  log.tracef("Writing hash id %d for %s:%s", hashId, serverAddress.host, serverAddress.port)
-                  writeString(serverAddress.host, buf)
-                  writeUnsignedShort(serverAddress.port, buf)
-                  buf.writeInt(hashId)
+                  val serverAddress = members.get(address)
+                  if (serverAddress != null) {
+                     val hashId = denormalizedSegmentHashIds(ownerIdx)
+                     hashIds += ((serverAddress, hashId))
+                  }
                }
+            }
+
+            writeCommonHashTopologyHeader(buf, h.viewId, h.numOwners,
+               h.hashFunction, h.hashSpace, hashIds.size)
+            writeUnsignedInt(1, buf) // Num virtual nodes
+
+            hashIds.foreach { case (serverAddress, hashId) =>
+               log.tracef("Writing hash id %d for %s:%s", hashId, serverAddress.host, serverAddress.port)
+               writeString(serverAddress.host, buf)
+               writeUnsignedShort(serverAddress.port, buf)
+               buf.writeInt(hashId)
             }
          }
          case t: TopologyAwareResponse => {
