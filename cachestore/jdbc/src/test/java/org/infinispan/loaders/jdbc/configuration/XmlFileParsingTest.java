@@ -34,6 +34,7 @@ import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.testng.annotations.AfterMethod;
 import org.testng.annotations.Test;
+import static org.testng.AssertJUnit.*;
 
 @Test(groups = "unit", testName = "loaders.jdbc.configuration.XmlFileParsingTest")
 public class XmlFileParsingTest extends AbstractInfinispanTest {
@@ -49,9 +50,9 @@ public class XmlFileParsingTest extends AbstractInfinispanTest {
       String config = INFINISPAN_START_TAG +
             "   <default>\n" +
             "     <loaders>\n" +
-            "       <stringKeyedJdbcStore xmlns=\"urn:infinispan:config:jdbc:5.2\" >\n" +
+            "       <stringKeyedJdbcStore xmlns=\"urn:infinispan:config:jdbc:5.2\" key2StringMapper=\"org.infinispan.loaders.jdbc.configuration.DummyKey2StringMapper\">\n" +
             "         <connectionPool connectionUrl=\"jdbc:h2:mem:infinispan;DB_CLOSE_DELAY=-1\" username=\"dbuser\" password=\"dbpass\" />\n" +
-            "         <stringKeyedTable prefix=\"entry\" fetchSize=\"34\" batchSize=\"99\">\n" +
+            "         <stringKeyedTable prefix=\"entry\" fetchSize=\"34\" batchSize=\"99\" >\n" +
             "           <idColumn name=\"id\" type=\"VARCHAR\" />\n" +
             "           <dataColumn name=\"datum\" type=\"BINARY\" />\n" +
             "           <timestampColumn name=\"version\" type=\"BIGINT\" />\n" +
@@ -63,11 +64,13 @@ public class XmlFileParsingTest extends AbstractInfinispanTest {
             TestingUtil.INFINISPAN_END_TAG;
 
       JdbcStringBasedCacheStoreConfiguration store = (JdbcStringBasedCacheStoreConfiguration) buildCacheManagerWithCacheStore(config);
-      assert store.table().batchSize() == 99;
-      assert store.table().fetchSize() == 34;
-      assert store.table().dataColumnType().equals("BINARY");
-      assert store.table().timestampColumnName().equals("version");
-      assert store.async().enabled();
+      assertEquals(99, store.table().batchSize());
+      assertEquals(34, store.table().fetchSize());
+      assertEquals("BINARY", store.table().dataColumnType());
+      assertEquals("version", store.table().timestampColumnName());
+      assertTrue(store.async().enabled());
+      assertEquals("org.infinispan.loaders.jdbc.configuration.DummyKey2StringMapper", store.key2StringMapper());
+
    }
 
    public void testBinaryKeyedJdbcStore() throws Exception {
@@ -88,21 +91,20 @@ public class XmlFileParsingTest extends AbstractInfinispanTest {
             TestingUtil.INFINISPAN_END_TAG;
 
       JdbcBinaryCacheStoreConfiguration store = (JdbcBinaryCacheStoreConfiguration) buildCacheManagerWithCacheStore(config);
-      assert store.ignoreModifications();
-      assert store.table().tableNamePrefix().equals("bucket");
-      assert store.table().batchSize() == 99;
-      assert store.table().fetchSize() == 34;
-      assert store.table().dataColumnType().equals("BINARY");
-      assert store.table().timestampColumnName().equals("version");
-      assert store.singletonStore().enabled();
-
+      assertTrue(store.ignoreModifications());
+      assertEquals("bucket", store.table().tableNamePrefix());
+      assertEquals(99, store.table().batchSize());
+      assertEquals(34, store.table().fetchSize());
+      assertEquals("BINARY", store.table().dataColumnType());
+      assertEquals("version", store.table().timestampColumnName());
+      assertTrue(store.singletonStore().enabled());
    }
 
    public void testMixedKeyedJdbcStore() throws Exception {
       String config = INFINISPAN_START_TAG +
             "   <default>\n" +
             "     <loaders>\n" +
-            "       <mixedKeyedJdbcStore xmlns=\"urn:infinispan:config:jdbc:5.2\" >\n" +
+            "       <mixedKeyedJdbcStore xmlns=\"urn:infinispan:config:jdbc:5.2\" key2StringMapper=\"org.infinispan.loaders.jdbc.configuration.DummyKey2StringMapper\">\n" +
             "         <dataSource jndiUrl=\"java:MyDataSource\" />\n" +
             "         <stringKeyedTable prefix=\"entry\" fetchSize=\"34\" batchSize=\"99\">\n" +
             "           <idColumn name=\"id\" type=\"VARCHAR\" />\n" +
@@ -123,26 +125,27 @@ public class XmlFileParsingTest extends AbstractInfinispanTest {
 
       JdbcMixedCacheStoreConfiguration store = (JdbcMixedCacheStoreConfiguration) buildCacheManagerWithCacheStore(config);
 
-      assert store.stringTable().tableNamePrefix().equals("entry");
-      assert store.stringTable().batchSize() == 99;
-      assert store.stringTable().fetchSize() == 34;
-      assert store.stringTable().dataColumnType().equals("BINARY");
-      assert store.stringTable().timestampColumnName().equals("version");
+      assertEquals("entry", store.stringTable().tableNamePrefix());
+      assertEquals(99, store.stringTable().batchSize());
+      assertEquals(34, store.stringTable().fetchSize());
+      assertEquals("BINARY", store.stringTable().dataColumnType());
+      assertEquals("version", store.stringTable().timestampColumnName());
 
-      assert store.binaryTable().tableNamePrefix().equals("bucket");
-      assert store.binaryTable().batchSize() == 79;
-      assert store.binaryTable().fetchSize() == 44;
-      assert store.binaryTable().dataColumnType().equals("BINARY");
-      assert store.binaryTable().timestampColumnName().equals("version");
+      assertEquals("bucket", store.binaryTable().tableNamePrefix());
+      assertEquals(79, store.binaryTable().batchSize());
+      assertEquals(44, store.binaryTable().fetchSize());
+      assertEquals("BINARY", store.binaryTable().dataColumnType());
+      assertEquals("version", store.binaryTable().timestampColumnName());
 
-      assert store.async().enabled();
-      assert store.singletonStore().enabled();
+      assertTrue(store.async().enabled());
+      assertTrue(store.singletonStore().enabled());
+      assertEquals("org.infinispan.loaders.jdbc.configuration.DummyKey2StringMapper", store.key2StringMapper());
    }
 
    private CacheLoaderConfiguration buildCacheManagerWithCacheStore(final String config) throws IOException {
       InputStream is = new ByteArrayInputStream(config.getBytes());
       cacheManager = TestCacheManagerFactory.fromStream(is);
-      assert cacheManager.getDefaultCacheConfiguration().loaders().cacheLoaders().size() == 1;
+      assertEquals(1, cacheManager.getDefaultCacheConfiguration().loaders().cacheLoaders().size());
       return cacheManager.getDefaultCacheConfiguration().loaders().cacheLoaders().get(0);
    }
 }
