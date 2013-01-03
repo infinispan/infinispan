@@ -41,6 +41,8 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.concurrent.CountDownLatch;
 
+import static org.testng.FileAssert.fail;
+
 @Test(groups = {"functional"}, testName = "context.InvocationContextTest")
 public class InvocationContextTest extends MultipleCacheManagersTest {
    private static final Log log = LogFactory.getLog(InvocationContextTest.class);
@@ -63,6 +65,7 @@ public class InvocationContextTest extends MultipleCacheManagersTest {
       cache.addListener(new CacheListener());
       try {
          cache.getAdvancedCache().withFlags(Flag.CACHE_MODE_LOCAL).put("k", "v");
+         fail("Should have failed with an exception");
       } catch (CacheException ce) {
          assert ce.getCause() instanceof RuntimeException;
       }
