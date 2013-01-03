@@ -72,7 +72,7 @@ public class StateTransferLockImpl implements StateTransferLock {
    public void notifyTransactionDataReceived(int topologyId) {
       if (topologyId < transactionDataTopologyId) {
          throw new IllegalStateException("Cannot set a topology id (" + topologyId +
-               ") that is lower that the current one (" + transactionDataTopologyId + ")");
+               ") that is lower than the current one (" + transactionDataTopologyId + ")");
       }
       if (trace) {
          log.tracef("Signalling transaction data received for topology %d", topologyId);
@@ -109,7 +109,7 @@ public class StateTransferLockImpl implements StateTransferLock {
    public void notifyTopologyInstalled(int topologyId) {
       if (topologyId < this.topologyId) {
          throw new IllegalStateException("Cannot set a topology id (" + topologyId +
-               ") that is lower that the current one (" + this.topologyId + ")");
+               ") that is lower than the current one (" + this.topologyId + ")");
       }
       if (trace) {
          log.tracef("Signalling topology %d is installed", topologyId);
