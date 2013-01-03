@@ -38,8 +38,6 @@ public interface ConsistentHash {
 
    SocketAddress getServer(byte[] key);
 
-   SocketAddress getServer(byte[] key, boolean isWrite);
-
    int getNormalizedHash(Object key);
 
 }

@@ -153,11 +153,6 @@ public class ConsistentHashComparisonTest {
 
       @Override
       public SocketAddress getServer(byte[] key) {
-         return getServer(key, false);
-      }
-
-      @Override
-      public SocketAddress getServer(byte[] key, boolean isWrite) {
          int keyHashCode = getNormalizedHash(key);
          if (keyHashCode == Integer.MIN_VALUE) keyHashCode += 1;
          int hash = Math.abs(keyHashCode);
@@ -166,25 +161,7 @@ public class ConsistentHashComparisonTest {
          if (log.isTraceEnabled()) {
             log.tracef("Found possible candidates: %s", candidates);
          }
-         int index = isWrite ? 0 : getIndex();
-         if (candidates.size() <= index) {
-            int newIndex = index - candidates.size();
-            SocketAddress socketAddress = getItemAtPosition(newIndex, positions);
-            if (log.isTraceEnabled()) {
-               log.tracef("Over the wheel, returning member: %s", socketAddress);
-            }
-            return socketAddress;
-         } else {
-            SocketAddress socketAddress = getItemAtPosition(index, candidates);
-            if (log.isTraceEnabled()) {
-               log.tracef("Found candidate: %s", socketAddress);
-            }
-            return socketAddress;
-         }
-      }
-
-      private int getIndex() {
-         return rnd.nextInt(Math.min(numKeyOwners, positions.size()));
+         return (candidates.size() > 0 ? candidates : positions).entrySet().iterator().next().getValue();
       }
 
       private SocketAddress getItemAtPosition(int position, SortedMap<Integer, SocketAddress> map) {

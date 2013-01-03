@@ -147,15 +147,10 @@ public class TcpTransportFactory implements TransportFactory {
 
    @Override
    public Transport getTransport(byte[] key) {
-      return getTransport(key, false);
-   }
-
-   @Override
-   public Transport getTransport(byte[] key, boolean isWrite) {
       SocketAddress server;
       synchronized (lock) {
          if (consistentHash != null) {
-            server = consistentHash.getServer(key, isWrite);
+            server = consistentHash.getServer(key);
             if (log.isTraceEnabled()) {
                log.tracef("Using consistent hash for determining the server: " + server);
             }
