@@ -2,11 +2,11 @@
 
 source "`dirname "$0"`/functions.sh"
 
-add_classpath ${ISPN_HOME}/modules/demos/gui/*.jar
-add_classpath ${ISPN_HOME}/modules/demos/gui/runtime-classpath.txt
+add_classpath ${ISPN_HOME}/etc
+add_classpath ${ISPN_HOME}/modules/demos/distexec/*.jar
+add_classpath ${ISPN_HOME}/modules/demos/distexec/runtime-classpath.txt
 
 add_jvm_args $JVM_PARAMS
-add_jvm_args '-Djgroups.bind_addr=127.0.0.1'
 add_jvm_args '-Djava.net.preferIPv4Stack=true'
 
 # RHQ monitoring options
@@ -22,4 +22,4 @@ add_jvm_args '-Dsun.nio.ch.bugLevel=""'
 
 add_program_args $@
 
-start org.infinispan.demo.InfinispanDemo &
+start org.infinispan.demo.distexec.PiApproximationDemo

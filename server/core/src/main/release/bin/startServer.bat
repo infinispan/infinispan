@@ -10,6 +10,7 @@ set /p CP3=<%ISPN_HOME%\modules\websocket\runtime-classpath.txt
 set /p CP4=<%ISPN_HOME%\modules\cli-server\runtime-classpath.txt
 set CP=%CP1%;%CP2%;%CP3%;%CP4%
 set CP=%CP::=;%
+set CP=%ISPN_HOME%\etc;%CP%
 set CP=%CP:$ISPN_HOME=!ISPN_HOME!%
 set CP=%ISPN_HOME%\modules\memcached\infinispan-server-memcached.jar;%CP%
 set CP=%ISPN_HOME%\modules\hotrod\infinispan-server-hotrod.jar;%CP%

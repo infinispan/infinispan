@@ -6,6 +6,7 @@ set ISPN_HOME="%ISPN_HOME%.."
 
 set /p CP=<%ISPN_HOME%\modules\demos\gui\runtime-classpath.txt
 set CP=%CP::=;%
+set CP=%ISPN_HOME%\etc;%CP%
 set CP=%CP:$ISPN_HOME=!ISPN_HOME!%
 set CP=%ISPN_HOME%\modules\demos\gui\infinispan-gui-demo.jar;%CP%
 rem echo libs: %CP%

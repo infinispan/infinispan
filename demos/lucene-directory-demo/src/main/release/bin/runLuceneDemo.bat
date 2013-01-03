@@ -6,6 +6,7 @@ set ISPN_HOME="%ISPN_HOME%.."
 
 set /p CP=<%ISPN_HOME%\modules\demos\lucene-directory-demo\runtime-classpath.txt
 set CP=%CP::=;%
+set CP=%ISPN_HOME%\etc;%CP%
 set CP=%CP:$ISPN_HOME=!ISPN_HOME!%
 set CP=%ISPN_HOME%\modules\demos\lucene-directory-demo\infinispan-lucene-demo.jar;%CP%
 rem echo libs: %CP%

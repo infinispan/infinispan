@@ -10,9 +10,9 @@
 
 <config xmlns="urn:org:jgroups"
         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-        xsi:schemaLocation="urn:org:jgroups http://www.jgroups.org/schema/JGroups-2.8.xsd">
-    <UDP mcast_addr="239.2.2.2"
-         mcast_port="${jgroups.udp.mcast_port:45222}"
+        xsi:schemaLocation="urn:org:jgroups http://www.jgroups.org/schema/JGroups-3.2.xsd">
+    <UDP mcast_addr="239.1.1.1"
+         mcast_port="${jgroups.udp.mcast_port:45111}"
          tos="8"
          ucast_recv_buf_size="20000000"
          ucast_send_buf_size="640000"
@@ -51,13 +51,12 @@
          oob_thread_pool.queue_max_size="100"
          oob_thread_pool.rejection_policy="discard"/>
 
-
     <PING timeout="2000"
             num_initial_members="3"/>
     <MERGE2 max_interval="30000"
             min_interval="10000"/>
-    <FD_SOCK/>
-    <FD_ALL/>
+    <FD_SOCK />
+    <FD_ALL />
     <VERIFY_SUSPECT timeout="1500"  />
     <BARRIER />
     <pbcast.NAKACK use_mcast_xmit="true"
@@ -73,6 +72,6 @@
         min_threshold="0.40"/>
     <FRAG2 frag_size="60000"  />
     <pbcast.FLUSH />
-    <RELAY site="zrh" bridge_props="config-samples/jgroups-tcp.xml"  />
+    <RELAY site="nyc" bridge_props="config-samples/jgroups-tcp.xml" />
 
 </config>

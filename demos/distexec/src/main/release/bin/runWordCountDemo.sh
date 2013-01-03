@@ -2,6 +2,7 @@
 
 source "`dirname "$0"`/functions.sh"
 
+add_classpath ${ISPN_HOME}/etc
 add_classpath ${ISPN_HOME}/modules/demos/distexec/*.jar
 add_classpath ${ISPN_HOME}/modules/demos/distexec/runtime-classpath.txt
 
@@ -21,4 +22,4 @@ add_jvm_args '-Dsun.nio.ch.bugLevel=""'
 
 add_program_args $@
 
-start org.infinispan.demo.distexec.PiApproximationDemo
+start org.infinispan.demo.mapreduce.WordCountDemo
