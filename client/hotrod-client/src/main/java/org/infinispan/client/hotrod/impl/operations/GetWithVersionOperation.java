@@ -50,7 +50,7 @@ public class GetWithVersionOperation extends AbstractKeyOperation<VersionedValue
 
    public GetWithVersionOperation(Codec codec, TransportFactory transportFactory,
             byte[] key, byte[] cacheName, AtomicInteger topologyId, Flag[] flags) {
-      super(codec, transportFactory, key, cacheName, false, topologyId, flags);
+      super(codec, transportFactory, key, cacheName, topologyId, flags);
    }
 
    @Override

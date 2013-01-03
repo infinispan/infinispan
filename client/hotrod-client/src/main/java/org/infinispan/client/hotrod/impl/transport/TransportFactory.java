@@ -56,8 +56,6 @@ public interface TransportFactory {
 
    Transport getTransport(byte[] key);
 
-   Transport getTransport(byte[] key, boolean isWrite);
-
    boolean isTcpNoDelay();
 
    int getTransportCount();
