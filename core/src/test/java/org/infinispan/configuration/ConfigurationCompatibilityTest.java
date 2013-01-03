@@ -26,7 +26,7 @@ import org.infinispan.configuration.cache.LoadersConfigurationBuilder;
 import org.infinispan.loaders.file.FileCacheStore;
 import org.testng.annotations.Test;
 
-@Test(groups = "functional")
+@Test(groups = "functional", testName= "configuration.ConfigurationCompatibilityTest")
 public class ConfigurationCompatibilityTest {
 
    public void testModeShapeStoreConfiguration() {

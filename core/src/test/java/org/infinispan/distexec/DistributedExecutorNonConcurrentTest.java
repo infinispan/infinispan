@@ -21,7 +21,7 @@ package org.infinispan.distexec;
 
 import org.testng.annotations.Test;
 
-@Test(groups = "functional", testName = "disexec.DistributedExecutorNonConcurrentTest")
+@Test(groups = "functional", testName = "distexec.DistributedExecutorNonConcurrentTest")
 public class DistributedExecutorNonConcurrentTest extends DistributedExecutorTest {
 
    public DistributedExecutorNonConcurrentTest() {
