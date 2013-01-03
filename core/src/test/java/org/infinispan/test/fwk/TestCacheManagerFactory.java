@@ -659,8 +659,14 @@ public class TestCacheManagerFactory {
 
       public String getNextCacheName() {
          int index = cacheManagers.size();
-         char name = (char) ('A' + index);
-         return (testName != null ? testName + "-" : "") + "Node" + name;
+         return (testName != null ? testName + "-" : "") + "Node" + getNameForIndex(index);
+      }
+
+      private String getNameForIndex(int i) {
+         final int k = 'Z' - 'A' + 1;
+         String c = String.valueOf((char)('A' + i % k));
+         int q = i / k;
+         return q == 0 ? c : getNameForIndex(q - 1) + c;
       }
 
       public void add(String methodName, DefaultCacheManager cm) {
