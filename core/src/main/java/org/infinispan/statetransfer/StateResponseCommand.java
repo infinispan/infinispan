@@ -82,9 +82,7 @@ public class StateResponseCommand extends BaseRpcCommand {
       final boolean trace = log.isTraceEnabled();
       LogFactory.pushNDC(cacheName, trace);
       try {
-         for (StateChunk stateChunk : stateChunks) {
-            stateConsumer.applyState(getOrigin(), topologyId, stateChunk.getSegmentId(), stateChunk.getCacheEntries(), stateChunk.isLastChunk());
-         }
+         stateConsumer.applyState(getOrigin(), topologyId, stateChunks);
          return null;
       } finally {
          LogFactory.popNDC(trace);
