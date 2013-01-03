@@ -36,6 +36,8 @@ import java.lang.annotation.Annotation;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
+import java.security.AccessController;
+import java.security.PrivilegedAction;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -108,7 +110,11 @@ public abstract class AbstractListenerImpl {
    }
 
    public void addListener(Object listener) {
-      validateAndAddListenerInvocation(listener);
+      addListener(listener, null);
+   }
+
+   public void addListener(Object listener, ClassLoader classLoader) {
+      validateAndAddListenerInvocation(listener, classLoader);
    }
 
    public Set<Object> getListeners() {
@@ -126,7 +132,7 @@ public abstract class AbstractListenerImpl {
     * @param listener object to be considered as a listener.
     */
    @SuppressWarnings("unchecked")
-   private void validateAndAddListenerInvocation(Object listener) {
+   private void validateAndAddListenerInvocation(Object listener, ClassLoader classLoader) {
       boolean sync = testListenerClassValidity(listener.getClass());
       boolean foundMethods = false;
       Map<Class<? extends Annotation>, Class<?>> allowedListeners = getAllowedMethodAnnotations();
@@ -138,7 +144,7 @@ public abstract class AbstractListenerImpl {
             Class<?> value = annotationEntry.getValue();
             if (m.isAnnotationPresent(key)) {
                testListenerMethodValidity(m, value, key.getName());
-               addListenerInvocation(key, new ListenerInvocation(listener, m, sync));
+               addListenerInvocation(key, new ListenerInvocation(listener, m, sync, classLoader));
                foundMethods = true;
             }
          }
@@ -184,11 +190,13 @@ public abstract class AbstractListenerImpl {
       public final Object target;
       public final Method method;
       public final boolean sync;
+      public final ClassLoader classLoader;
 
-      public ListenerInvocation(Object target, Method method, boolean sync) {
+      public ListenerInvocation(Object target, Method method, boolean sync, ClassLoader classLoader) {
          this.target = target;
          this.method = method;
          this.sync = sync;
+         this.classLoader = classLoader;
       }
 
       public void invoke(final Object event) {
@@ -196,6 +204,10 @@ public abstract class AbstractListenerImpl {
 
             @Override
             public void run() {
+               ClassLoader contextClassLoader = null;
+               if (classLoader != null) {
+                  contextClassLoader = setContextClassLoader(classLoader);
+               }
                try {
                   method.invoke(target, event);
                }
@@ -213,6 +225,10 @@ public abstract class AbstractListenerImpl {
                catch (IllegalAccessException exception) {
                   getLog().unableToInvokeListenerMethod(method, target, exception);
                   removeListener(target);
+               } finally {
+                  if (classLoader != null) {
+                     setContextClassLoader(contextClassLoader);
+                  }
                }
             }
          };
@@ -233,4 +249,15 @@ public abstract class AbstractListenerImpl {
          return re;
    }
 
+   static ClassLoader setContextClassLoader(final ClassLoader loader) {
+      PrivilegedAction<ClassLoader> action = new PrivilegedAction<ClassLoader>() {
+         @Override
+         public ClassLoader run() {
+            ClassLoader contextClassLoader = Thread.currentThread().getContextClassLoader();
+            Thread.currentThread().setContextClassLoader(loader);
+            return contextClassLoader;
+         }
+      };
+      return AccessController.doPrivileged(action);
+   }
 }

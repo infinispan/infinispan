@@ -29,6 +29,7 @@ import org.infinispan.context.impl.TxInvocationContext;
 import org.infinispan.distribution.ch.ConsistentHash;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.notifications.AbstractListenerImpl;
+import org.infinispan.notifications.ClassLoaderAwareListenable;
 import org.infinispan.notifications.cachelistener.annotation.*;
 import org.infinispan.notifications.cachelistener.event.*;
 import org.infinispan.remoting.transport.Address;
@@ -55,7 +56,7 @@ import static org.infinispan.util.InfinispanCollections.transformCollectionToMap
  * @author Mircea.Markus@jboss.com
  * @since 4.0
  */
-public final class CacheNotifierImpl extends AbstractListenerImpl implements CacheNotifier {
+public final class CacheNotifierImpl extends AbstractListenerImpl implements CacheNotifier, ClassLoaderAwareListenable {
 
    private static final Log log = LogFactory.getLog(CacheNotifierImpl.class);
 

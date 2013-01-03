@@ -19,8 +19,7 @@
 
 package org.infinispan;
 
-import org.infinispan.context.Flag;
-import org.infinispan.util.concurrent.NotifyingFuture;
+import static java.util.concurrent.TimeUnit.MILLISECONDS;
 
 import java.util.Arrays;
 import java.util.Collection;
@@ -30,7 +29,9 @@ import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
 
-import static java.util.concurrent.TimeUnit.MILLISECONDS;
+import org.infinispan.context.Flag;
+import org.infinispan.notifications.ClassLoaderAwareListenable;
+import org.infinispan.util.concurrent.NotifyingFuture;
 
 /**
  * A decorator to a cache, which can be built with a specific {@link ClassLoader} and a set of {@link Flag}s.  This
@@ -372,5 +373,14 @@ public class DecoratedCache<K, V> extends AbstractDelegatingAdvancedCache<K, V> 
    //Not exposed on interface
    public EnumSet<Flag> getFlags() {
       return flags;
+   }
+
+   @Override
+   public void addListener(Object listener) {
+      if (cacheImplementation.notifier instanceof ClassLoaderAwareListenable) {
+         ((ClassLoaderAwareListenable)cacheImplementation.notifier).addListener(listener, classLoader);
+      } else {
+         throw new IllegalStateException("The CacheNotifier does not implement the ClassLoaderAwareListenable interface");
+      }
    }
 }
