@@ -38,7 +38,7 @@ public enum Attribute {
    DRIVER_CLASS("driverClass"),
    DROP_ON_EXIT("dropOnExit"),
    FETCH_SIZE("fetchSize"),
-   KEY_TO_STRING_MAPPER("keyToStringMapper"),
+   KEY_TO_STRING_MAPPER("key2StringMapper"),
    NAME("name"),
    PASSIVATION("passivation"),
    PASSWORD("password"),

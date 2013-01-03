@@ -86,7 +86,18 @@ public class JdbcCacheStoreConfigurationParser52 implements ConfigurationParser<
          LoadersConfigurationBuilder loadersBuilder) throws XMLStreamException {
       JdbcStringBasedCacheStoreConfigurationBuilder builder = new JdbcStringBasedCacheStoreConfigurationBuilder(
             loadersBuilder);
-      parseCommonJdbcStoreAttributes(reader, builder);
+      for (int i = 0; i < reader.getAttributeCount(); i++) {
+         String value = replaceProperties(reader.getAttributeValue(i));
+         Attribute attribute = Attribute.forName(reader.getAttributeLocalName(i));
+         switch (attribute) {
+         case KEY_TO_STRING_MAPPER:
+            builder.key2StringMapper(value);
+            break;
+         default:
+            Parser52.parseCommonStoreAttributes(reader, i, builder);
+            break;
+         }
+      }
       while (reader.hasNext() && (reader.nextTag() != XMLStreamConstants.END_ELEMENT)) {
          Element element = Element.forName(reader.getLocalName());
          switch (element) {
@@ -223,7 +234,18 @@ public class JdbcCacheStoreConfigurationParser52 implements ConfigurationParser<
    private void parseMixedKeyedJdbcStore(XMLExtendedStreamReader reader, LoadersConfigurationBuilder loadersBuilder)
          throws XMLStreamException {
       JdbcMixedCacheStoreConfigurationBuilder builder = new JdbcMixedCacheStoreConfigurationBuilder(loadersBuilder);
-      parseCommonJdbcStoreAttributes(reader, builder);
+      for (int i = 0; i < reader.getAttributeCount(); i++) {
+         String value = replaceProperties(reader.getAttributeValue(i));
+         Attribute attribute = Attribute.forName(reader.getAttributeLocalName(i));
+         switch (attribute) {
+         case KEY_TO_STRING_MAPPER:
+            builder.key2StringMapper(value);
+            break;
+         default:
+            Parser52.parseCommonStoreAttributes(reader, i, builder);
+            break;
+         }
+      }
       while (reader.hasNext() && (reader.nextTag() != XMLStreamConstants.END_ELEMENT)) {
          Element element = Element.forName(reader.getLocalName());
          switch (element) {
@@ -244,7 +266,7 @@ public class JdbcCacheStoreConfigurationParser52 implements ConfigurationParser<
       loadersBuilder.addStore(builder);
    }
 
-   private void parseTable(XMLExtendedStreamReader reader, TableManipulationConfigurationBuilder builder)
+   private void parseTable(XMLExtendedStreamReader reader, TableManipulationConfigurationBuilder<?, ?> builder)
          throws XMLStreamException {
       for (int i = 0; i < reader.getAttributeCount(); i++) {
          ParseUtils.requireNoNamespaceAttribute(reader, i);
@@ -279,7 +301,7 @@ public class JdbcCacheStoreConfigurationParser52 implements ConfigurationParser<
       parseTableElements(reader, builder);
    }
 
-   private void parseTableElements(XMLExtendedStreamReader reader, TableManipulationConfigurationBuilder builder)
+   private void parseTableElements(XMLExtendedStreamReader reader, TableManipulationConfigurationBuilder<?, ?> builder)
          throws XMLStreamException {
       while (reader.hasNext() && (reader.nextTag() != XMLStreamConstants.END_ELEMENT)) {
          Element element = Element.forName(reader.getLocalName());
