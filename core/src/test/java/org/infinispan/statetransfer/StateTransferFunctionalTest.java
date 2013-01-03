@@ -217,7 +217,7 @@ public class StateTransferFunctionalTest extends MultipleCacheManagersTest {
       JoiningNode node2 = new JoiningNode(createCacheManager());
       cache2 = node2.getCache(cacheName);
 
-      cache1.put("delay", new StateTransferFunctionalTest.DelayTransfer());
+      cache1.put("delay", new DelayTransfer());
 
       node2.waitForJoin(60000, cache1, cache2);
       node2.verifyStateTransfer(new CacheVerifier(cache2));
@@ -358,10 +358,10 @@ public class StateTransferFunctionalTest extends MultipleCacheManagersTest {
    protected void verifyInitialData(Cache<Object, Object> c) {
       Address address = c.getAdvancedCache().getRpcManager().getAddress();
       log.debugf("Checking values on cache " + address);
-      assert JOE.equals(c.get(A_B_NAME)) : "Incorrect value for key " + A_B_NAME;
-      assert TWENTY.equals(c.get(A_B_AGE)) : "Incorrect value for key " + A_B_AGE;
-      assert BOB.equals(c.get(A_C_NAME)) : "Incorrect value for key " + A_C_NAME;
-      assert FORTY.equals(c.get(A_C_AGE)) : "Incorrect value for key " + A_C_AGE;
+      assertEquals("Incorrect value for key " + A_B_NAME, JOE, c.get(A_B_NAME));
+      assertEquals("Incorrect value for key " + A_B_AGE, TWENTY, c.get(A_B_AGE));
+      assertEquals("Incorrect value for key " + A_C_NAME, BOB, c.get(A_C_NAME));
+      assertEquals("Incorrect value for key " + A_C_AGE, FORTY, c.get(A_C_AGE));
    }
 
    protected void writeInitialData(final Cache<Object, Object> c) {
