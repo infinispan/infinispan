@@ -62,6 +62,8 @@ public class ConcurrentFlushReplQueueTest extends MultipleCacheManagersTest {
       CacheContainer first = TestCacheManagerFactory.createCacheManager(GlobalConfiguration.getClusteredDefault(), cfg);
       CacheContainer second = TestCacheManagerFactory.createCacheManager(GlobalConfiguration.getClusteredDefault(), cfg);
       registerCacheManager(first, second);
+      // wait for the coordinator to install the balanced CH, otherwise StateTransferInterceptor will duplicate the command (via forwarding)
+      waitForClusterToForm();
    }
 
    public void testConcurrentFlush(Method m) throws Exception {
@@ -77,7 +79,7 @@ public class ConcurrentFlushReplQueueTest extends MultipleCacheManagersTest {
       final String v = "v-" + m.getName();
       cache1.put(k, v);
       // Wait for periodic repl queue task to try repl the single modification
-      secondPutLatch.await();
+      secondPutLatch.await(10, TimeUnit.SECONDS);
       // Put something random so that after remove call, the element number exceeds
       cache1.put("k-blah","v-blah");
       cache1.remove(k);
