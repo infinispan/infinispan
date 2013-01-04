@@ -45,11 +45,14 @@ import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
+
+import static org.infinispan.loaders.decorators.AbstractDelegatingStore.undelegateCacheLoader;
 
 /**
  * A chaining cache loader that allows us to configure > 1 cache loader.
@@ -338,7 +341,8 @@ public class ChainingCacheStore implements CacheStore {
          Set<CacheLoader> toRemove = new HashSet<CacheLoader>();
 
          for (CacheStore cs : stores.keySet()) {
-            if (cs.getClass().getName().equals(loaderType)) toRemove.add(cs);
+            String storeClass = undelegateCacheLoader(cs).getClass().getName();
+            if (storeClass.equals(loaderType)) toRemove.add(cs);
          }
 
          for (CacheLoader cl : loaders.keySet()) {
@@ -362,16 +366,16 @@ public class ChainingCacheStore implements CacheStore {
 
    @SuppressWarnings("unchecked")
    public <T extends CacheLoader> List<T> getCacheLoaders(Class<T> loaderClass) {
-      List<T> matchingLoaders = new ArrayList<T>();
+      Set<T> matchingLoaders = new LinkedHashSet<T>();
 
       for (CacheStore cs : stores.keySet()) {
-         if (loaderClass.isInstance(cs)) matchingLoaders.add((T) cs);
+         CacheLoader ucs = undelegateCacheLoader(cs);
+         if (loaderClass.isInstance(ucs)) matchingLoaders.add((T) ucs);
       }
 
       for (CacheLoader cl : loaders.keySet()) {
          if (loaderClass.isInstance(cl)) matchingLoaders.add((T) cl);
       }
-
-      return matchingLoaders;
+      return new ArrayList<T>(matchingLoaders);
    }
 }

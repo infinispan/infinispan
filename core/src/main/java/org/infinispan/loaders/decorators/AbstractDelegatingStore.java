@@ -26,6 +26,7 @@ import org.infinispan.Cache;
 import org.infinispan.marshall.StreamingMarshaller;
 import org.infinispan.transaction.xa.GlobalTransaction;
 import org.infinispan.container.entries.InternalCacheEntry;
+import org.infinispan.loaders.CacheLoader;
 import org.infinispan.loaders.CacheLoaderConfig;
 import org.infinispan.loaders.CacheLoaderException;
 import org.infinispan.loaders.CacheStore;
@@ -58,6 +59,10 @@ public class AbstractDelegatingStore implements CacheStore {
 
    public CacheStore getDelegate() {
       return delegate;
+   }
+
+   public static CacheLoader undelegateCacheLoader(CacheLoader store) {
+      return store instanceof AbstractDelegatingStore ? ((AbstractDelegatingStore)store).getDelegate() : store;
    }
 
    @Override
