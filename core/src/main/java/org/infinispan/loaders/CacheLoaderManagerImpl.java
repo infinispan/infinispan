@@ -25,6 +25,7 @@ package org.infinispan.loaders;
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
 import static org.infinispan.context.Flag.*;
 import static org.infinispan.factories.KnownComponentNames.CACHE_MARSHALLER;
+import static org.infinispan.loaders.decorators.AbstractDelegatingStore.undelegateCacheLoader;
 
 import java.util.*;
 import java.util.concurrent.TimeUnit;
@@ -179,7 +180,8 @@ public class CacheLoaderManagerImpl implements CacheLoaderManager {
             ccs.removeCacheLoader(loaderType);
             if (ccs.getStores().isEmpty()) disableInterceptors = true;
          } else {
-            if (loader.getClass().getName().equals(loaderType)) {
+            String loaderClassName = undelegateCacheLoader(loader).getClass().getName();
+            if (loaderClassName.equals(loaderType)) {
                try {
                   log.debugf("Stopping and removing cache loader %s", loaderType);
                   loader.stop();
@@ -206,12 +208,14 @@ public class CacheLoaderManagerImpl implements CacheLoaderManager {
       if (loader instanceof ChainingCacheStore) {
          ChainingCacheStore ccs = (ChainingCacheStore) loader;
          loaders = ccs.getCacheLoaders(loaderClass);
-      } else if (loaderClass.isInstance(loader)) {
-         loaders = Collections.singletonList((T)loader);
       } else {
-         loaders = Collections.emptyList();
+         CacheLoader cl = undelegateCacheLoader(loader);
+         if (loaderClass.isInstance(cl)) {
+            loaders = Collections.singletonList((T) cl);
+         } else {
+            loaders = Collections.emptyList();
+         }
       }
-
       return loaders;
    }
 

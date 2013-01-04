@@ -61,6 +61,8 @@ import java.util.LinkedHashMap;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicLong;
 
+import static org.infinispan.loaders.decorators.AbstractDelegatingStore.undelegateCacheLoader;
+
 @MBean(objectName = "CacheLoader", description = "Component that handles loading entries from a CacheStore into memory.")
 public class CacheLoaderInterceptor extends JmxStatsCommandInterceptor {
    private final AtomicLong cacheLoads = new AtomicLong(0);
@@ -263,10 +265,10 @@ public class CacheLoaderInterceptor extends JmxStatsCommandInterceptor {
             ChainingCacheStore chainingStore = (ChainingCacheStore) loader;
             LinkedHashMap<CacheStore, CacheStoreConfiguration> stores = chainingStore.getStores();
             Set<String> storeTypes = new HashSet<String>(stores.size());
-            for (CacheStore cs : stores.keySet()) storeTypes.add(cs.getClass().getName());
+            for (CacheStore cs : stores.keySet()) storeTypes.add(undelegateCacheLoader(cs).getClass().getName());
             return storeTypes;
          } else {
-            return Collections.singleton(loader.getClass().getName());
+            return Collections.singleton(undelegateCacheLoader(loader).getClass().getName());
          }
       } else {
          return InfinispanCollections.emptySet();
