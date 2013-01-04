@@ -23,12 +23,12 @@
 package org.infinispan.server.core.transport
 
 import org.jboss.netty.channel.group.DefaultChannelGroup
-import org.jboss.netty.channel.socket.nio.NioServerSocketChannelFactory
+import org.jboss.netty.channel.socket.nio.{NioServerBossPool, NioWorkerPool, NioServerSocketChannelFactory}
 import org.jboss.netty.bootstrap.ServerBootstrap
 import scala.collection.JavaConversions._
 import org.infinispan.server.core.ProtocolServer
 import org.infinispan.util.Util
-import org.jboss.netty.util.{ThreadNameDeterminer, ThreadRenamingRunnable}
+import org.jboss.netty.util.ThreadNameDeterminer
 import org.jboss.netty.logging.{InternalLoggerFactory, Log4JLoggerFactory}
 import org.infinispan.server.core.logging.Log
 import java.util.concurrent.atomic.AtomicLong
@@ -54,22 +54,7 @@ class NettyTransport(server: ProtocolServer, encoder: ChannelDownstreamHandler,
                      idleTimeout: Int, threadNamePrefix: String, tcpNoDelay: Boolean,
                      sendBufSize: Int, recvBufSize: Int, cacheManager: EmbeddedCacheManager)
         extends Transport with Log {
-   ThreadRenamingRunnable.setThreadNameDeterminer(new ThreadNameDeterminer {
-         override def determineThreadName(currentThreadName: String, proposedThreadName: String): String = {
-         val index = proposedThreadName.indexWhere(_ == '#')
-         val typeInFix =
-            if (proposedThreadName contains "server worker") "ServerWorker-"
-            else if (proposedThreadName contains "server boss") "ServerMaster-"
-            else if (proposedThreadName contains "client worker") "ClientWorker-"
-            else "ClientMaster-"
-         // Set thread name to be: <prefix><ServerWorker-|ServerMaster-|ClientWorker-|ClientMaster-><number>
-         val name = threadNamePrefix + typeInFix + proposedThreadName.substring(index + 1, proposedThreadName.length)
-         if (isTrace)
-            trace("Thread name will be %s, with current thread name being %s and proposed name being '%s'",
-               name, Thread.currentThread, proposedThreadName)
-         name
-      }
-   })
+
    private val serverChannels = new DefaultChannelGroup(threadNamePrefix + "-Channels")
    val acceptedChannels = new DefaultChannelGroup(threadNamePrefix + "-Accepted")
    private val pipeline =
@@ -78,9 +63,31 @@ class NettyTransport(server: ProtocolServer, encoder: ChannelDownstreamHandler,
       else // Idle timeout logic is disabled with -1 or 0 values
          new NettyChannelPipelineFactory(server, encoder, this)
 
-   private val masterExecutor = Executors.newCachedThreadPool
-   private val workerExecutor = Executors.newCachedThreadPool
-   private val factory = new NioServerSocketChannelFactory(masterExecutor, workerExecutor, workerThreads)
+   private val masterPool = new NioServerBossPool(Executors.newCachedThreadPool, 1, new ThreadNameDeterminer {
+     override def determineThreadName(currentThreadName: String, proposedThreadName: String): String = {
+       val index = proposedThreadName.indexWhere(_ == '#')
+       val typeInFix = "ServerMaster-"
+       // Set thread name to be: <prefix><ServerWorker-|ServerMaster-|ClientWorker-|ClientMaster-><number>
+       val name = threadNamePrefix + typeInFix + proposedThreadName.substring(index + 1, proposedThreadName.length)
+       if (isTrace)
+         trace("Thread name will be %s, with current thread name being %s and proposed name being '%s'",
+           name, Thread.currentThread, proposedThreadName)
+       name
+     }
+   })
+   private val workerPool = new NioWorkerPool(Executors.newCachedThreadPool, workerThreads, new ThreadNameDeterminer {
+     override def determineThreadName(currentThreadName: String, proposedThreadName: String): String = {
+       val index = proposedThreadName.indexWhere(_ == '#')
+       val typeInFix = "ServerWorker-"
+       // Set thread name to be: <prefix><ServerWorker-<number>
+       val name = threadNamePrefix + typeInFix + proposedThreadName.substring(index + 1, proposedThreadName.length)
+       if (isTrace)
+         trace("Thread name will be %s, with current thread name being %s and proposed name being '%s'",
+           name, Thread.currentThread, proposedThreadName)
+       name
+     }
+   })
+   private val factory = new NioServerSocketChannelFactory(masterPool, workerPool)
 
    private val totalBytesWritten, totalBytesRead = new AtomicLong
    private val isTrace = isTraceEnabled
@@ -126,7 +133,6 @@ class NettyTransport(server: ProtocolServer, encoder: ChannelDownstreamHandler,
          }
       }
 
-      workerExecutor.shutdown()
       serverChannels.close().awaitUninterruptibly()
       future = acceptedChannels.close().awaitUninterruptibly()
       if (!future.isCompleteSuccess) {
@@ -140,6 +146,7 @@ class NettyTransport(server: ProtocolServer, encoder: ChannelDownstreamHandler,
       pipeline.stop
       if (isDebugEnabled)
          debug("Channel group completely closed, release external resources")
+      factory.shutdown()
       factory.releaseExternalResources()
    }
 
