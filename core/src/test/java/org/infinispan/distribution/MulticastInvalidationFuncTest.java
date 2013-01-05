@@ -31,6 +31,8 @@ import org.testng.annotations.Test;
 import java.util.ArrayList;
 import java.util.Collection;
 
+import static org.testng.AssertJUnit.assertNull;
+
 @Test(groups = "functional", testName = "distribution.MulticastInvalidationFuncTest")
 public class MulticastInvalidationFuncTest extends BaseDistFunctionalTest {
 	
@@ -52,7 +54,7 @@ public class MulticastInvalidationFuncTest extends BaseDistFunctionalTest {
       // Put an object in from a non-owner, this will cause an L1 record to be created there
       
       nonOwner.put(KEY1, "foo");
-      Assert.assertEquals(nonOwner.getAdvancedCache().getDataContainer().get(KEY1).getValue(), "foo");
+      assertNull(nonOwner.getAdvancedCache().getDataContainer().get(KEY1));
       Assert.assertEquals(owner.getAdvancedCache().getDataContainer().get(KEY1).getValue(), "foo");
       
       // Check that all nodes (except the one we put to) are notified

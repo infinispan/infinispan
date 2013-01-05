@@ -46,6 +46,16 @@
          <artifactId>infinispan-core</artifactId>
       </dependency>
       <dependency>
+         <groupId>${project.groupId}</groupId>
+         <artifactId>infinispan-server-hotrod</artifactId>
+         <optional>true</optional>
+      </dependency>
+      <dependency>
+         <groupId>${project.groupId}</groupId>
+         <artifactId>infinispan-server-memcached</artifactId>
+         <optional>true</optional>
+      </dependency>
+      <dependency>
          <groupId>org.antlr</groupId>
          <artifactId>antlr-runtime</artifactId>
       </dependency>
@@ -57,6 +67,33 @@
          <groupId>${project.groupId}</groupId>
          <artifactId>infinispan-core</artifactId>
          <type>test-jar</type>
+         <scope>test</scope>
+      </dependency>
+      <dependency>
+         <groupId>${project.groupId}</groupId>
+         <artifactId>infinispan-client-hotrod</artifactId>
+         <type>test-jar</type>
+         <scope>test</scope>
+      </dependency>
+      <dependency>
+         <groupId>${project.groupId}</groupId>
+         <artifactId>infinispan-cachestore-remote</artifactId>
+         <scope>test</scope>
+      </dependency>
+      <dependency>
+         <groupId>${project.groupId}</groupId>
+         <artifactId>infinispan-server-hotrod</artifactId>
+         <scope>test</scope>
+      </dependency>
+      <dependency>
+         <groupId>${project.groupId}</groupId>
+         <artifactId>infinispan-server-hotrod</artifactId>
+         <type>test-jar</type>
+         <scope>test</scope>
+      </dependency>
+      <dependency>
+         <groupId>${project.groupId}</groupId>
+         <artifactId>infinispan-upgrade-tools</artifactId>
          <scope>test</scope>
       </dependency>
    </dependencies>

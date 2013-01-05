@@ -24,6 +24,7 @@ package org.infinispan.commands.read;
 
 import org.infinispan.commands.Visitor;
 import org.infinispan.container.entries.CacheEntry;
+import org.infinispan.container.entries.InternalCacheEntry;
 import org.infinispan.context.Flag;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.util.logging.Log;
@@ -42,6 +43,7 @@ public class GetKeyValueCommand extends AbstractDataCommand {
    public static final byte COMMAND_ID = 4;
    private static final Log log = LogFactory.getLog(GetKeyValueCommand.class);
    private static final boolean trace = log.isTraceEnabled();
+   private InternalCacheEntry remotelyFetchedValue;
 
    public GetKeyValueCommand(Object key, Set<Flag> flags) {
       this.key = key;
@@ -94,5 +96,20 @@ public class GetKeyValueCommand extends AbstractDataCommand {
    @Override
    public Object[] getParameters() {
       return new Object[]{key, Flag.copyWithoutRemotableFlags(flags)};
+   }
+
+   /**
+    * @see #getRemotelyFetchedValue()
+    */
+   public void setRemotelyFetchedValue(InternalCacheEntry remotelyFetchedValue) {
+      this.remotelyFetchedValue = remotelyFetchedValue;
+   }
+
+   /**
+    * If the cache needs to go remotely in order to obtain the value associated to this key, then the remote value
+    * is stored in this field.
+    */
+   public InternalCacheEntry getRemotelyFetchedValue() {
+      return remotelyFetchedValue;
    }
 }

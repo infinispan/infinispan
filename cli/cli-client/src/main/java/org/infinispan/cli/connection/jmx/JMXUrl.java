@@ -28,6 +28,8 @@ public interface JMXUrl {
 
    String getCache();
 
-   Map<String, Object> getConnectionEnvironment();
+   Map<String, Object> getConnectionEnvironment(String credentials);
+
+   boolean needsCredentials();
 
 }

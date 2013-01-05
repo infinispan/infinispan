@@ -21,7 +21,6 @@ package org.infinispan.xsite;
 
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
-import org.infinispan.configuration.global.GlobalConfigurationBuilder;
 import org.testng.annotations.Test;
 
 import static org.testng.AssertJUnit.assertEquals;
@@ -41,29 +40,6 @@ public class NoTxDistCacheOperationsTest extends BaseCacheOperationsTest {
 
    protected ConfigurationBuilder getLonActiveConfig() {
       return getDefaultClusteredCacheConfig(CacheMode.DIST_SYNC, false);
-   }
-
-   //todo - if I don't explicitly override the test methods then testNG won't execute them from superclass.
-   //fix this once we move to JUnit
-
-   @Override
-   public void testRemove() {
-      super.testRemove();
-   }
-
-   @Override
-   public void testPutAndClear() {
-      super.testPutAndClear();
-   }
-
-   @Override
-   public void testReplace() {
-      super.testReplace();
-   }
-
-   @Override
-   public void testPutAll() {
-      super.testPutAll();
    }
 
    public void testDataGetsReplicated() {

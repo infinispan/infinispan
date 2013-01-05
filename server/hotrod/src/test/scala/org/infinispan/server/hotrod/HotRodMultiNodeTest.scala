@@ -54,10 +54,8 @@ abstract class HotRodMultiNodeTest extends MultipleCacheManagersTest {
       super.createBeforeClass()
       hotRodServers = hotRodServers ::: List(startTestHotRodServer(cacheManagers.get(0)))
       hotRodServers = hotRodServers ::: List(startTestHotRodServer(cacheManagers.get(1), hotRodServers.head.getPort + 50))
-      hotRodServers.foreach {s =>
-         hotRodClients = new HotRodClient(
-            "127.0.0.1", s.getPort, cacheName, 60, protocolVersion) :: hotRodClients
-      }
+      hotRodClients = hotRodServers.map(s =>
+         new HotRodClient("127.0.0.1", s.getPort, cacheName, 60, protocolVersion))
    }
 
    protected def startTestHotRodServer(cacheManager: EmbeddedCacheManager) = startHotRodServer(cacheManager)

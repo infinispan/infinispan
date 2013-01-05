@@ -34,7 +34,7 @@ public class ConcurrentOverlappingLeaveTest extends RehashLeaveTestBase {
    Address l1, l2;
 
    {
-      // since we have two overlapping leavers, for some keys we're going to lose 2 owners
+      // since we have two leavers, for some keys we're going to lose 2 owners
       // we set numOwners to 3 so that all keys will have at least 1 owner remaining
       numOwners = 3;
    }

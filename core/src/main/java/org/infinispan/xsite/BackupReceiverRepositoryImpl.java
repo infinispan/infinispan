@@ -67,7 +67,7 @@ public class BackupReceiverRepositoryImpl implements BackupReceiverRepository {
     * Also starts the cache if not already stated; that is because the cache is needed for update after when this method
     * is invoked.
     */
-   private BackupReceiver getBackupCacheManager(String remoteSite, String remoteCache) {
+   public BackupReceiver getBackupCacheManager(String remoteSite, String remoteCache) {
       SiteCachePair toLookFor = new SiteCachePair(remoteCache, remoteSite);
       BackupReceiver backupManager = backupReceivers.get(toLookFor);
       if (backupManager != null) return backupManager;
@@ -76,7 +76,7 @@ public class BackupReceiverRepositoryImpl implements BackupReceiverRepository {
       Configuration dcc = cacheManager.getDefaultCacheConfiguration();
       if (isBackupForRemoteCache(remoteSite, remoteCache, dcc, EmbeddedCacheManager.DEFAULT_CACHE_NAME)) {
          Cache<Object, Object> cache = cacheManager.getCache();
-         backupReceivers.putIfAbsent(toLookFor, new BackupReceiver(cache));
+         backupReceivers.putIfAbsent(toLookFor, new BackupReceiverImpl(cache));
          return backupReceivers.get(toLookFor);
       }
 
@@ -85,7 +85,7 @@ public class BackupReceiverRepositoryImpl implements BackupReceiverRepository {
          Configuration cacheConfiguration = cacheManager.getCacheConfiguration(name);
          if (isBackupForRemoteCache(remoteSite, remoteCache, cacheConfiguration, name)) {
             Cache<Object, Object> cache = cacheManager.getCache(name);
-            backupReceivers.putIfAbsent(toLookFor, new BackupReceiver(cache));
+            backupReceivers.putIfAbsent(toLookFor, new BackupReceiverImpl(cache));
             return backupReceivers.get(toLookFor);
          }
       }
@@ -93,7 +93,7 @@ public class BackupReceiverRepositoryImpl implements BackupReceiverRepository {
                  remoteSite, remoteCache, remoteCache);
 
       Cache<Object, Object> cache = cacheManager.getCache(remoteCache);
-      backupReceivers.putIfAbsent(toLookFor, new BackupReceiver(cache));
+      backupReceivers.putIfAbsent(toLookFor, new BackupReceiverImpl(cache));
       return backupReceivers.get(toLookFor);
    }
 
@@ -141,5 +141,9 @@ public class BackupReceiverRepositoryImpl implements BackupReceiverRepository {
                ", cache='" + cache + '\'' +
                '}';
       }
+   }
+
+   public void replace(String site, String cache, BackupReceiver bcr) {
+      backupReceivers.replace(new SiteCachePair(cache, site), bcr);
    }
 }

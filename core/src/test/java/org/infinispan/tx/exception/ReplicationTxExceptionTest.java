@@ -39,7 +39,7 @@ import javax.transaction.TransactionManager;
  * @author Mircea.Markus@jboss.com
  * @since 4.2
  */
-@Test(testName = "tx.exception.ReplicationTxExceptionTest")
+@Test(groups = "functional", testName = "tx.exception.ReplicationTxExceptionTest")
 public class ReplicationTxExceptionTest extends MultipleCacheManagersTest {
    private ControlledRpcManager controlledRpcManager;
 

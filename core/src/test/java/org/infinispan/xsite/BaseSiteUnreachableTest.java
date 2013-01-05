@@ -24,12 +24,10 @@ import org.infinispan.configuration.cache.BackupFailurePolicy;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.global.GlobalConfigurationBuilder;
+import org.testng.annotations.Test;
 
-/**
- * @author Mircea Markus
- * @since 5.2
- */
-public class BaseSiteUnreachableTest extends AbstractXSiteTest {
+@Test (groups = "xsite")
+public abstract class BaseSiteUnreachableTest extends AbstractXSiteTest {
 
    protected BackupFailurePolicy lonBackupFailurePolicy = BackupFailurePolicy.WARN;
    protected BackupConfiguration.BackupStrategy lonBackupStrategy = BackupConfiguration.BackupStrategy.SYNC;
@@ -42,7 +40,7 @@ public class BaseSiteUnreachableTest extends AbstractXSiteTest {
 
       GlobalConfigurationBuilder lonGc = GlobalConfigurationBuilder.defaultClusteredBuilder();
       lonGc
-            .sites().localSite("LON");
+            .site().localSite("LON");
       ConfigurationBuilder lon = getLonActiveConfig();
       lon.sites().addBackup()
             .site("NYC")

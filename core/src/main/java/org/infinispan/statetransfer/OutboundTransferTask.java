@@ -254,7 +254,7 @@ public class OutboundTransferTask implements Runnable {
          StateResponseCommand cmd = commandsFactory.buildStateResponseCommand(rpcManager.getAddress(), topologyId, chunks);
          // send synchronously, in order. it is important that the last chunk is received last in order to correctly detect completion of the stream of chunks
          try {
-            rpcManager.invokeRemotely(Collections.singleton(destination), cmd, ResponseMode.SYNCHRONOUS, timeout, false, null);
+            rpcManager.invokeRemotely(Collections.singleton(destination), cmd, ResponseMode.SYNCHRONOUS, timeout, false);
          } catch (SuspectException e) {
             log.errorf(e, "Node %s left cache %s: %s", destination, cacheName, e.getMessage());
             cancel();

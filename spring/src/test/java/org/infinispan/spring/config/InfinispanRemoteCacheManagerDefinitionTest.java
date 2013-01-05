@@ -36,6 +36,7 @@ import org.testng.annotations.Test;
  * @author Marius Bogoevici
  */
 
+@Test(groups = "functional", testName = "spring.config.InfinispanRemoteCacheManagerDefinitionTest")
 @ContextConfiguration
 public class InfinispanRemoteCacheManagerDefinitionTest extends AbstractTestNGSpringContextTests {
 

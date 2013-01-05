@@ -23,6 +23,7 @@
 package org.infinispan.replication;
 
 import static org.infinispan.context.Flag.CACHE_MODE_LOCAL;
+import static org.testng.AssertJUnit.assertEquals;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -117,18 +118,18 @@ public abstract class BaseReplicatedAPITest extends MultipleCacheManagersTest {
       cache1.putIfAbsent("key", "value");
       waitForRpc(cache2);
 
-      assert cache1.get("key").equals("value");
-      assert cache2.get("key").equals("value");
+      assertEquals("value", cache1.get("key"));
+      assertEquals("valueOld", cache2.get("key"));
 
-      cache2.withFlags(CACHE_MODE_LOCAL).put("key", "value2");
-
-      assert cache1.get("key").equals("value");
-      assert cache2.get("key").equals("value2");
-
-      cache1.putIfAbsent("key", "value3");
+      cache2.withFlags(CACHE_MODE_LOCAL).put("key", "value3");
 
       assert cache1.get("key").equals("value");
-      assert cache2.get("key").equals("value2"); // should not invalidate cache2!!
+      assert cache2.get("key").equals("value3");
+
+      cache1.putIfAbsent("key", "value4");
+
+      assert cache1.get("key").equals("value");
+      assert cache2.get("key").equals("value3"); // should not invalidate cache2!!
    }
 
    public void testRemoveIfPresent() {
@@ -149,7 +150,7 @@ public abstract class BaseReplicatedAPITest extends MultipleCacheManagersTest {
       waitForRpc(cache2);
 
       assert cache1.get("key") == null;
-      assert cache2.get("key") == null;
+      assert cache2.get("key").equals("value2");
    }
 
    public void testClear() {
@@ -214,7 +215,7 @@ public abstract class BaseReplicatedAPITest extends MultipleCacheManagersTest {
       waitForRpc(cache2);
 
       assert cache1.get("key").equals("value1");
-      assert cache2.get("key").equals("value1");
+      assert cache2.get("key").equals("value2");
    }
 
    public void testLocalOnlyClear() {

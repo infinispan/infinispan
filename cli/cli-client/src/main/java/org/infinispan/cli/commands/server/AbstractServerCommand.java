@@ -35,7 +35,7 @@ public abstract class AbstractServerCommand extends AbstractCommand implements S
    public void execute(Context context, ProcessedCommand commandLine) {
       CommandBuffer commandBuffer = context.getCommandBuffer();
       if(commandBuffer.addCommand(commandLine.getCommandLine(), nesting())) {
-         context.getConnection().execute(context);
+         context.execute();
       }
    }
 }

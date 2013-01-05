@@ -64,4 +64,25 @@ public interface StateConsumer {
     * This is executed when the cache is shutting down.
     */
    void stop();
+
+   /**
+    * Receive notification of updated keys right before they are committed in DataContainer.
+    *
+    * @param key the key that is being modified
+    */
+   void addUpdatedKey(Object key);
+
+   /**
+    * Checks if a given key was updated by user code during state transfer (and consequently it is untouchable by state transfer).
+    *
+    * @param key the key to check
+    * @return true if the key is known to be modified, false otherwise
+    */
+   boolean isKeyUpdated(Object key);
+
+   /**
+    * Stops applying incoming state. Also stops tracking updated keys. Should be called at the end of state transfer or
+    * when a ClearCommand is committed during state transfer.
+    */
+   void stopApplyingState();
 }

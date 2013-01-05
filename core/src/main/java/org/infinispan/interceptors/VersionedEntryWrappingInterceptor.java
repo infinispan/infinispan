@@ -31,6 +31,7 @@ import org.infinispan.container.versioning.VersionGenerator;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.context.impl.TxInvocationContext;
 import org.infinispan.factories.annotations.Inject;
+import org.infinispan.transaction.LocalTransaction;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
@@ -61,18 +62,17 @@ public class VersionedEntryWrappingInterceptor extends EntryWrappingInterceptor 
          for (WriteCommand c : command.getModifications()) c.acceptVisitor(ctx, entryWrappingVisitor);
       }
       EntryVersionsMap newVersionData= null;
-      if (ctx.isOriginLocal()) newVersionData = cll.createNewVersionsAndCheckForWriteSkews(versionGenerator, ctx, (VersionedPrepareCommand) command);
+      if (ctx.isOriginLocal() && !((LocalTransaction)ctx.getCacheTransaction()).isFromStateTransfer()) newVersionData = cdl.createNewVersionsAndCheckForWriteSkews(versionGenerator, ctx, (VersionedPrepareCommand) command);
 
       Object retval = invokeNextInterceptor(ctx, command);
 
-      if (!ctx.isOriginLocal()) newVersionData = cll.createNewVersionsAndCheckForWriteSkews(versionGenerator, ctx, (VersionedPrepareCommand) command);
+      if (!ctx.isOriginLocal()) newVersionData = cdl.createNewVersionsAndCheckForWriteSkews(versionGenerator, ctx, (VersionedPrepareCommand) command);
       if (command.isOnePhaseCommit()) ctx.getCacheTransaction().setUpdatedEntryVersions(((VersionedPrepareCommand) command).getVersionsSeen());
 
       if (newVersionData != null) retval = newVersionData;
-      if (command.isOnePhaseCommit()) commitContextEntries(ctx, false);
+      if (command.isOnePhaseCommit()) commitContextEntries(ctx, false, isFromStateTransfer(ctx));
       return retval;
    }
-
 
    @Override
    public Object visitCommitCommand(TxInvocationContext ctx, CommitCommand command) throws Throwable {
@@ -84,18 +84,18 @@ public class VersionedEntryWrappingInterceptor extends EntryWrappingInterceptor 
       } finally {
          if (!ctx.isOriginLocal())
             ctx.getCacheTransaction().setUpdatedEntryVersions(((VersionedCommitCommand) command).getUpdatedVersions());
-         commitContextEntries(ctx, false);
+         commitContextEntries(ctx, false, isFromStateTransfer(ctx));
       }
    }
 
    @Override
    protected void commitContextEntry(CacheEntry entry, InvocationContext ctx, boolean skipOwnershipCheck) {
-      if (ctx.isInTxScope()) {
+      if (ctx.isInTxScope() && !isFromStateTransfer(ctx)) {
          EntryVersion version = ((TxInvocationContext) ctx).getCacheTransaction().getUpdatedEntryVersions().get(entry.getKey());
-         cll.commitEntry(entry, version, skipOwnershipCheck);
+         cdl.commitEntry(entry, version, skipOwnershipCheck);
       } else {
          // This could be a state transfer call!
-         cll.commitEntry(entry, entry.getVersion(), skipOwnershipCheck);
+         cdl.commitEntry(entry, entry.getVersion(), skipOwnershipCheck);
       }
    }
 }

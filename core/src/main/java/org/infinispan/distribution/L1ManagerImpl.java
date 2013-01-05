@@ -24,6 +24,7 @@ package org.infinispan.distribution;
 
 import org.infinispan.commands.CommandsFactory;
 import org.infinispan.commands.remote.CacheRpcCommand;
+import org.infinispan.commands.remote.SingleRpcCommand;
 import org.infinispan.commands.write.InvalidateCommand;
 import org.infinispan.context.Flag;
 import org.infinispan.factories.KnownComponentNames;
@@ -45,7 +46,6 @@ import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
 import java.util.Collection;
-import java.util.Collections;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
@@ -136,6 +136,7 @@ public class L1ManagerImpl implements L1Manager {
    public void addRequestor(Object key, Address origin) {
       //we do a plain get first as that's likely to be enough
       ConcurrentMap<Address, Long> as = requestors.get(key);
+      log.tracef("Registering requestor %s for key '%s'", origin, key);
       long now = System.currentTimeMillis();
       if (as == null) {
          // only if needed we create a new HashSet, but make sure we don't replace another one being created
@@ -157,8 +158,41 @@ public class L1ManagerImpl implements L1Manager {
    }
 
    @Override
-   public NotifyingNotifiableFuture<Object> flushCache(Collection<Object> keys, Object retval, Address origin, boolean assumeOriginKeptEntryInL1) {
-      return (NotifyingNotifiableFuture<Object>) flushCache(keys, retval, origin, assumeOriginKeptEntryInL1, true);
+   public Future<Object> flushCache(Collection<Object> keys, Address origin, boolean assumeOriginKeptEntryInL1) {
+      final Collection<Address> invalidationAddresses = buildInvalidationAddressList(keys, origin, assumeOriginKeptEntryInL1);
+
+      int nodes = invalidationAddresses.size();
+
+      if (nodes > 0) {
+         InvalidateCommand ic = commandsFactory.buildInvalidateFromL1Command(origin, false, InfinispanCollections.<Flag>emptySet(), keys);
+         final SingleRpcCommand rpcCommand = commandsFactory.buildSingleRpcCommand(ic);
+
+         // No need to invalidate at all if there is no one to invalidate!
+         boolean multicast = isUseMulticast(nodes);
+         if (trace) log.tracef("Invalidating keys %s on nodes %s. Use multicast? %s", keys, invalidationAddresses, multicast);
+
+         Runnable toExecute;
+         if (multicast) {
+            toExecute = new Runnable() {
+               @Override
+               public void run() {
+                  rpcManager.broadcastRpcCommand(rpcCommand, true);
+               }
+            };
+         } else {
+            toExecute = new Runnable() {
+               @Override
+               public void run() {
+                  rpcManager.invokeRemotely(invalidationAddresses, rpcCommand,
+                                            ResponseMode.SYNCHRONOUS, rpcTimeout, true);
+               }
+            };
+         }
+         return (Future<Object>) asyncTransportExecutor.submit(toExecute);
+      } else {
+         if (trace) log.tracef("No L1 caches to invalidate for keys %s", keys);
+         return null;
+      }
    }
 
    private Future<Object> flushCache(Collection<Object> keys, final Object retval, Address origin, boolean assumeOriginKeptEntryInL1, boolean useNotifyingFuture) {

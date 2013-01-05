@@ -24,6 +24,7 @@ package org.infinispan.transaction.xa;
 
 import org.infinispan.commands.write.WriteCommand;
 import org.infinispan.container.entries.CacheEntry;
+import org.infinispan.container.versioning.EntryVersion;
 import org.infinispan.container.versioning.EntryVersionsMap;
 
 import java.util.List;
@@ -95,6 +96,10 @@ public interface CacheTransaction {
    EntryVersionsMap getUpdatedEntryVersions();
 
    void setUpdatedEntryVersions(EntryVersionsMap updatedEntryVersions);
+
+   void putLookedUpRemoteVersion(Object key, EntryVersion version);
+
+   EntryVersion getLookedUpRemoteVersion(Object key);
 
    boolean keyRead(Object key);
 

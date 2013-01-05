@@ -124,17 +124,19 @@ public class ClusteredQueryTest extends MultipleCacheManagersTest {
       Sort sort = new Sort(sortField);
       cacheQuery.sort(sort);
 
-      ResultIterator iterator = cacheQuery.iterator(new FetchOptions().fetchMode(FetchOptions.FetchMode.LAZY));
-      assert cacheQuery.getResultSize() == 4 : cacheQuery.getResultSize();
+      for (int i = 0; i < 2; i ++) {
+         ResultIterator iterator = cacheQuery.iterator(new FetchOptions().fetchMode(FetchOptions.FetchMode.LAZY));
+         assert cacheQuery.getResultSize() == 4 : cacheQuery.getResultSize();
 
-      int previousAge = 0;
-      while (iterator.hasNext()) {
-         Person person = (Person) iterator.next();
-         assert person.getAge() > previousAge;
-         previousAge = person.getAge();
+         int previousAge = 0;
+         while (iterator.hasNext()) {
+            Person person = (Person) iterator.next();
+            assert person.getAge() > previousAge;
+            previousAge = person.getAge();
+         }
+
+         iterator.close();
       }
-
-      iterator.close();
    }
 
    public void testLazyNonOrdered() throws ParseException {
@@ -164,6 +166,18 @@ public class ClusteredQueryTest extends MultipleCacheManagersTest {
       }
 
       iterator.close();
+   }
+
+   @Test(expectedExceptions = IllegalArgumentException.class, enabled = false, expectedExceptionsMessageRegExp = "Unknown FetchMode null")
+   public void testIterator() throws Exception {
+      populateCache();
+
+      ResultIterator iterator = cacheQuery.iterator(new FetchOptions() {
+         public FetchOptions fetchMode(FetchMode fetchMode) {
+            return null;
+         }
+      });
+      assert iterator.hasNext();
    }
 
    public void testList() throws ParseException {

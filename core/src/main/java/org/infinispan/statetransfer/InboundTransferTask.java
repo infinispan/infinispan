@@ -23,6 +23,7 @@
 
 package org.infinispan.statetransfer;
 
+import org.infinispan.CacheException;
 import org.infinispan.commands.CommandsFactory;
 import org.infinispan.remoting.responses.Response;
 import org.infinispan.remoting.responses.SuccessfulResponse;
@@ -105,14 +106,20 @@ public class InboundTransferTask {
          log.tracef("Requesting transactions for segments %s of cache %s from node %s", segments, cacheName, source);
       }
       // get transactions and locks
-      StateRequestCommand cmd = commandsFactory.buildStateRequestCommand(StateRequestCommand.Type.GET_TRANSACTIONS, rpcManager.getAddress(), topologyId, segments);
-      Map<Address, Response> responses = rpcManager.invokeRemotely(Collections.singleton(source), cmd, ResponseMode.SYNCHRONOUS_IGNORE_LEAVERS, timeout);
-      Response response = responses.get(source);
-      if (response instanceof SuccessfulResponse) {
-         List<TransactionInfo> transactions = (List<TransactionInfo>) ((SuccessfulResponse) response).getResponseValue();
-         stateConsumer.applyTransactions(source, topologyId, transactions);
-         return true;
-      } else {
+      try {
+         StateRequestCommand cmd = commandsFactory.buildStateRequestCommand(StateRequestCommand.Type.GET_TRANSACTIONS, rpcManager.getAddress(), topologyId, segments);
+         Map<Address, Response> responses = rpcManager.invokeRemotely(Collections.singleton(source), cmd, ResponseMode.SYNCHRONOUS_IGNORE_LEAVERS, timeout);
+         Response response = responses.get(source);
+         if (response instanceof SuccessfulResponse) {
+            List<TransactionInfo> transactions = (List<TransactionInfo>) ((SuccessfulResponse) response).getResponseValue();
+            stateConsumer.applyTransactions(source, topologyId, transactions);
+            return true;
+         } else {
+            log.failedToRetrieveTransactionsForSegments(segments, cacheName, source, null);
+            return false;
+         }
+      } catch (CacheException e) {
+         log.failedToRetrieveTransactionsForSegments(segments, cacheName, source, e);
          return false;
       }
    }
@@ -123,10 +130,19 @@ public class InboundTransferTask {
       }
 
       // start transfer of cache entries
-      StateRequestCommand cmd = commandsFactory.buildStateRequestCommand(StateRequestCommand.Type.START_STATE_TRANSFER, rpcManager.getAddress(), topologyId, segments);
-      Map<Address, Response> responses = rpcManager.invokeRemotely(Collections.singleton(source), cmd, ResponseMode.SYNCHRONOUS_IGNORE_LEAVERS, timeout);
-      Response response = responses.get(source);
-      return response instanceof SuccessfulResponse;
+      try {
+         StateRequestCommand cmd = commandsFactory.buildStateRequestCommand(StateRequestCommand.Type.START_STATE_TRANSFER, rpcManager.getAddress(), topologyId, segments);
+         Map<Address, Response> responses = rpcManager.invokeRemotely(Collections.singleton(source), cmd, ResponseMode.SYNCHRONOUS_IGNORE_LEAVERS, timeout);
+         Response response = responses.get(source);
+         boolean success = response instanceof SuccessfulResponse;
+         if (!success) {
+            log.failedToRequestSegments(segments, cacheName, source, null);
+         }
+         return success;
+      } catch (CacheException e) {
+         log.failedToRequestSegments(segments, cacheName, source, e);
+         return false;
+      }
    }
 
    public void cancelSegments(Set<Integer> cancelledSegments) {

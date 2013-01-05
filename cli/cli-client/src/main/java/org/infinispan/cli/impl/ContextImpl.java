@@ -135,6 +135,20 @@ public class ContextImpl implements Context {
    }
 
    @Override
+   public void execute() {
+      try {
+         connection.execute(this, commandBuffer);
+      } finally {
+         commandBuffer.reset();
+      }
+   }
+
+   @Override
+   public void execute(CommandBuffer commandBuffer) {
+      connection.execute(this, commandBuffer);
+   }
+
+   @Override
    public Connection getConnection() {
       return connection;
    }

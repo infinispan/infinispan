@@ -54,7 +54,7 @@ public class TxCompletionNotificationCommand  extends RecoveryCommand implements
    private TransactionTable txTable;
    private LockManager lockManager;
    private StateTransferManager stateTransferManager;
-   private int topologyId;
+   private int topologyId = -1;
 
    private TxCompletionNotificationCommand() {
       super(null); // For command id uniqueness test

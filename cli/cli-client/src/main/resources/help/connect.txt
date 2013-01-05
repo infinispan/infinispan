@@ -1,17 +1,43 @@
 .SH SYNOPSIS
-.B connect [
+.B connect 
 .I protocol
-.B ]://[
+.B ://[
+.I user
+.B [:
+.I password
+.B ]@]
 .I host
 .B ][:
 .I port
-.B ]
+.B ][/
+.I container
+.B [/
+.I cache
+.B ]]
 .SH DESCRIPTION
-Connects to an Infinispan instance using the specified protocol, host and port.
+Connects to an Infinispan instance using the specified protocol, host and port and with the supplied credentials.
 .SH ARGUMENTS
 .IP protocol
-currently only the jmx protocol is supported
+currently only the 
+.I jmx 
+and the 
+.I remoting 
+(JMX over JBoss Remoting) protocols are supported. The 
+.I jmx
+protocol should be used to connect to directly over the standard JMX protocol, whereas the
+.I remoting
+protocol should be used to connect to an Infinispan instance managed within an AS/EAP/JDG-style container.
+.IP user (optional)
+The username to use when connecting if the server requires credentials
+.IP password (optional)
+The password to use when connecting if the server requires credentials. When omitted, the password will be asked for interactively
 .IP host
 the host name or IP address where the Infinispan instance is running
 .IP port
-the port to connect to
+the port to connect to. For the
+.I remoting
+protocol this defaults to 9999
+.IP container (optional)
+the cache container to connect to by default. If unspecified, the first cache container will be selected
+.IP cache (optional)
+the cache to connect to by default. If unspecified, no cache will be selected

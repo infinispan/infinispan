@@ -400,24 +400,29 @@ public class ClusterTopologyManagerImpl implements ClusterTopologyManager {
    }
 
    private void broadcastRebalanceStart(String cacheName, ClusterCacheStatus cacheStatus) throws Exception {
-      CacheTopology cacheTopology = cacheStatus.getCacheTopology();
-      log.debugf("Updating cluster-wide consistent hash for cache %s, topology = %s",
-            cacheName, cacheTopology);
-      ReplicableCommand command = new CacheTopologyControlCommand(cacheName,
-            CacheTopologyControlCommand.Type.REBALANCE_START, transport.getAddress(), cacheTopology,
-            transport.getViewId());
-      executeOnClusterSync(command, getGlobalTimeout());
+      synchronized (cacheStatus) {
+         CacheTopology cacheTopology = cacheStatus.getCacheTopology();
+         log.debugf("Starting cluster-wide rebalance for cache %s, topology = %s",
+               cacheName, cacheTopology);
+         ReplicableCommand command = new CacheTopologyControlCommand(cacheName,
+               CacheTopologyControlCommand.Type.REBALANCE_START, transport.getAddress(), cacheTopology,
+               transport.getViewId());
+         executeOnClusterSync(command, getGlobalTimeout());
+      }
    }
 
    private void endRebalance(String cacheName, ClusterCacheStatus cacheStatus) {
-      CacheTopology currentTopology = cacheStatus.getCacheTopology();
-      int currentTopologyId = currentTopology.getTopologyId();
-      log.debugf("Finished cluster-wide rebalance for cache %s, topology id = %d",
-            cacheName, currentTopologyId);
-      int newTopologyId = currentTopologyId + 1;
-      ConsistentHash newCurrentCH = currentTopology.getPendingCH();
-      CacheTopology newTopology = new CacheTopology(newTopologyId, newCurrentCH, null);
-      cacheStatus.endRebalance(newTopology);
+      synchronized (cacheStatus) {
+         CacheTopology currentTopology = cacheStatus.getCacheTopology();
+         int currentTopologyId = currentTopology.getTopologyId();
+         log.debugf("Finished cluster-wide rebalance for cache %s, topology id = %d",
+               cacheName, currentTopologyId);
+         int newTopologyId = currentTopologyId + 1;
+         ConsistentHash newCurrentCH = currentTopology.getPendingCH();
+         CacheTopology newTopology = new CacheTopology(newTopologyId, newCurrentCH, null);
+         cacheStatus.updateCacheTopology(newTopology);
+         cacheStatus.endRebalance();
+      }
    }
 
    private HashMap<String, List<CacheTopology>> recoverClusterStatus() throws Exception {
@@ -465,10 +470,9 @@ public class ClusterTopologyManagerImpl implements ClusterTopologyManager {
          String cacheName = e.getKey();
          ClusterCacheStatus cacheStatus = e.getValue();
          boolean cacheMembersModified = cacheStatus.updateClusterMembers(newClusterMembers);
-         if (!cacheMembersModified)
-            return;
-
-         onCacheMembershipChange(cacheName, cacheStatus);
+         if (cacheMembersModified) {
+            onCacheMembershipChange(cacheName, cacheStatus);
+         }
       }
    }
 

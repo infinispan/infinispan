@@ -43,7 +43,7 @@
          </includes>
       </fileSet>
       <fileSet>
-         <directory>server/rest/src/main/resources</directory>
+         <directory>server/rest/src/main/release/bin</directory>
          <outputDirectory>sample_clients</outputDirectory>
          <includes>
             <include>**/sample_*</include>

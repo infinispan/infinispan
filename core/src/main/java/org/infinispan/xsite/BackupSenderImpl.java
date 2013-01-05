@@ -98,7 +98,7 @@ public class BackupSenderImpl implements BackupSender {
    public void start() {
       this.config = cache.getCacheConfiguration();
       this.cacheName = cache.getName();
-      for (BackupConfiguration bc : config.sites().inUseBackups()) {
+      for (BackupConfiguration bc : config.sites().enabledBackups()) {
          if (bc.backupFailurePolicy() == BackupFailurePolicy.CUSTOM) {
             String backupPolicy = bc.failurePolicyClass();
             if (backupPolicy == null) {
@@ -168,6 +168,7 @@ public class BackupSenderImpl implements BackupSender {
    @Override
    public BackupResponse backupRollback(RollbackCommand command) throws Exception {
       List<XSiteBackup> xSiteBackups = calculateBackupInfo(BackupFilter.KEEP_2PC_ONLY);
+      log.tracef("Backing up rollback command to: %s", xSiteBackups);
       return backupCommand(command, xSiteBackups);
    }
 
@@ -231,7 +232,7 @@ public class BackupSenderImpl implements BackupSender {
    private List<XSiteBackup> calculateBackupInfo(BackupFilter backupFilter) {
       List<XSiteBackup> backupInfo = new ArrayList<XSiteBackup>(2);
       SitesConfiguration sites = config.sites();
-      for (BackupConfiguration bc : sites.inUseBackups()) {
+      for (BackupConfiguration bc : sites.enabledBackups()) {
          if (bc.site().equals(localSiteName)) {
             log.cacheBackupsDataToSameSite(localSiteName);
             continue;

@@ -41,21 +41,18 @@ import java.util.concurrent.locks.ReentrantReadWriteLock;
  * @author Manik Surtani
  * @since 4.0
  */
-public class NotifyingFutureImpl implements NotifyingNotifiableFuture<Object> {
+public class NotifyingFutureImpl<T> extends BaseNotifyingFuture<T> implements NotifyingNotifiableFuture<T>{
 
-   final Object actualReturnValue;
-   volatile Future<Object> ioFuture;
+   final T actualReturnValue;
+   volatile Future<T> ioFuture;
    //TODO revisit if volatile needed
-   volatile boolean callCompleted = false;
-   final Set<FutureListener<Object>> listeners = new CopyOnWriteArraySet<FutureListener<Object>>();
-   final ReadWriteLock listenerLock = new ReentrantReadWriteLock();
 
-   public NotifyingFutureImpl(Object actualReturnValue) {
+   public NotifyingFutureImpl(T actualReturnValue) {
       this.actualReturnValue = actualReturnValue;
    }
 
    @Override
-   public void setNetworkFuture(Future<Object> future) {
+   public void setNetworkFuture(Future<T> future) {
       this.ioFuture = future;
    }
 
@@ -75,7 +72,7 @@ public class NotifyingFutureImpl implements NotifyingNotifiableFuture<Object> {
    }
 
    @Override
-   public Object get() throws InterruptedException, ExecutionException {
+   public T get() throws InterruptedException, ExecutionException {
       if (!callCompleted) {
          ioFuture.get();
       }
@@ -83,33 +80,10 @@ public class NotifyingFutureImpl implements NotifyingNotifiableFuture<Object> {
    }
 
    @Override
-   public Object get(long timeout, TimeUnit unit) throws InterruptedException, ExecutionException, java.util.concurrent.TimeoutException {
+   public T get(long timeout, TimeUnit unit) throws InterruptedException, ExecutionException, java.util.concurrent.TimeoutException {
       if (!callCompleted) {
          ioFuture.get(timeout, unit);
       }
       return actualReturnValue;
-   }
-
-   @Override
-   public void notifyDone() {
-      listenerLock.writeLock().lock();
-      try {
-         callCompleted = true;
-         for (FutureListener<Object> l : listeners) l.futureDone(this);
-      } finally {
-         listenerLock.writeLock().unlock();
-      }
-   }
-
-   @Override
-   public NotifyingFuture<Object> attachListener(FutureListener<Object> objectFutureListener) {
-      listenerLock.readLock().lock();
-      try {
-         if (!callCompleted) listeners.add(objectFutureListener);
-         if (callCompleted) objectFutureListener.futureDone(this);
-         return this;
-      } finally {
-         listenerLock.readLock().unlock();
-      }
    }
 }

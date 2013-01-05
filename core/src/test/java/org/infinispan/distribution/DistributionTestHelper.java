@@ -94,13 +94,13 @@ public class DistributionTestHelper {
    }
 
    public static boolean isFirstOwner(Cache<?, ?> c, Object key) {
-      DistributionManager dm = c.getAdvancedCache().getComponentRegistry().getComponent(DistributionManager.class);
+      DistributionManager dm = c.getAdvancedCache().getDistributionManager();
       Address primaryOwnerAddress = dm.getPrimaryLocation(key);
       return addressOf(c).equals(primaryOwnerAddress);
    }
 
    public static boolean hasOwners(Object key, Cache<?, ?> primaryOwner, Cache<?, ?>... backupOwners) {
-      DistributionManager dm = primaryOwner.getAdvancedCache().getComponentRegistry().getComponent(DistributionManager.class);
+      DistributionManager dm = primaryOwner.getAdvancedCache().getDistributionManager();
       List<Address> ownerAddresses = dm.locate(key);
       if (!addressOf(primaryOwner).equals(ownerAddresses.get(0)))
          return false;

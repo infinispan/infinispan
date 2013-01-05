@@ -37,8 +37,8 @@ public class CQKillLazyIterator extends ClusteredQueryCommandWorker{
    public QueryResponse perform() {
       getQueryBox().kill(lazyQueryId);
       
-      // FIXME not a good idea...
-      return null;
+      // Not ideal, but more sane
+      return new QueryResponse(null);
    }
 
 }

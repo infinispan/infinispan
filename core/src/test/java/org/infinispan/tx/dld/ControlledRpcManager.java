@@ -40,6 +40,7 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
@@ -152,12 +153,14 @@ public class ControlledRpcManager implements RpcManager {
       return responseMap;
    }
 
-   public void invokeRemotely(Collection<Address> recipients, ReplicableCommand rpcCommand, boolean sync) throws RpcException {
+
+   public Map<Address, Response> invokeRemotely(Collection<Address> recipients, ReplicableCommand rpcCommand, boolean sync) throws RpcException {
       log.trace("invokeRemotely4");
       failIfNeeded(rpcCommand);
       waitBefore(rpcCommand);
       realOne.invokeRemotely(recipients, rpcCommand, sync);
       waitAfter(rpcCommand);
+      return null;
    }
 
    public Map<Address, Response> invokeRemotely(Collection<Address> recipients, ReplicableCommand rpcCommand, boolean sync, boolean usePriorityQueue) throws RpcException {
@@ -254,5 +257,12 @@ public class ControlledRpcManager implements RpcManager {
    @Override
    public int getTopologyId() {
       return realOne.getTopologyId();
+   }
+
+
+
+   @Override
+   public List<Address> getMembers() {
+      return realOne.getMembers();
    }
 }

@@ -47,7 +47,7 @@ import java.util.Arrays;
  */
 @Test(groups = "functional", testName = "config.SampleConfigFilesCorrectnessTest")
 public class SampleConfigFilesCorrectnessTest {
-   public static final String CONFIG_ROOT = "src" + File.separator + "main" + File.separator + "resources" + File.separator + "config-samples";
+   public static final String CONFIG_ROOT = "src" + File.separator + "main" + File.separator + "release" + File.separator + "etc" + File.separator + "config-samples";
    private static final Log log = LogFactory.getLog(SampleConfigFilesCorrectnessTest.class);
 
    private InMemoryAppender appender;

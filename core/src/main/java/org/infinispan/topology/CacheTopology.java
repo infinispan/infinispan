@@ -31,6 +31,10 @@ public class CacheTopology {
    private final ConsistentHash pendingCH;
 
    public CacheTopology(int topologyId, ConsistentHash currentCH, ConsistentHash pendingCH) {
+      if (pendingCH != null && !pendingCH.getMembers().containsAll(currentCH.getMembers())) {
+         throw new IllegalArgumentException("A cache topology's pending consistent hash must " +
+               "contain all the current consistent hash's members");
+      }
       this.topologyId = topologyId;
       this.currentCH = currentCH;
       this.pendingCH = pendingCH;
@@ -80,6 +84,28 @@ public class CacheTopology {
          return pendingCH;
       else
          return currentCH;
+   }
+
+   @Override
+   public boolean equals(Object o) {
+      if (this == o) return true;
+      if (o == null || getClass() != o.getClass()) return false;
+
+      CacheTopology that = (CacheTopology) o;
+
+      if (topologyId != that.topologyId) return false;
+      if (currentCH != null ? !currentCH.equals(that.currentCH) : that.currentCH != null) return false;
+      if (pendingCH != null ? !pendingCH.equals(that.pendingCH) : that.pendingCH != null) return false;
+
+      return true;
+   }
+
+   @Override
+   public int hashCode() {
+      int result = topologyId;
+      result = 31 * result + (currentCH != null ? currentCH.hashCode() : 0);
+      result = 31 * result + (pendingCH != null ? pendingCH.hashCode() : 0);
+      return result;
    }
 
    @Override

@@ -48,7 +48,6 @@ import java.util.ArrayList;
 import java.util.IdentityHashMap;
 import java.util.List;
 
-import static org.testng.Assert.assertTrue;
 
 /**
  * Base class for tests that operates on clusters of caches. The way tests extending this class operates is:
@@ -386,13 +385,27 @@ public abstract class MultipleCacheManagersTest extends AbstractCacheTest {
       return caches;
    }
 
-   protected <K, V> List<Cache<K, V>> createClusteredCaches(int numMembersInCluster, ConfigurationBuilder builder) {
+   protected <K, V> List<Cache<K, V>> createClusteredCaches(int numMembersInCluster,
+                                                            ConfigurationBuilder defaultConfigBuilder) {
       List<Cache<K, V>> caches = new ArrayList<Cache<K, V>>(numMembersInCluster);
       for (int i = 0; i < numMembersInCluster; i++) {
-         EmbeddedCacheManager cm = addClusterEnabledCacheManager(builder);
+         EmbeddedCacheManager cm = addClusterEnabledCacheManager(defaultConfigBuilder);
          Cache<K, V> cache = cm.getCache();
          caches.add(cache);
 
+      }
+      waitForClusterToForm();
+      return caches;
+   }
+
+   protected <K, V> List<Cache<K, V>> createClusteredCaches(int numMembersInCluster,
+                                                            ConfigurationBuilder defaultConfig,
+                                                            TransportFlags flags) {
+      List<Cache<K, V>> caches = new ArrayList<Cache<K, V>>(numMembersInCluster);
+      for (int i = 0; i < numMembersInCluster; i++) {
+         EmbeddedCacheManager cm = addClusterEnabledCacheManager(defaultConfig, flags);
+         Cache<K, V> cache = cm.getCache();
+         caches.add(cache);
       }
       waitForClusterToForm();
       return caches;
@@ -444,12 +457,12 @@ public abstract class MultipleCacheManagersTest extends AbstractCacheTest {
       return manager(cacheIndex).getAddress();
    }
 
-   protected AdvancedCache advancedCache(int i) {
-      return cache(i).getAdvancedCache();
+   protected <A, B> AdvancedCache<A, B> advancedCache(int i) {
+      return this.<A,B>cache(i).getAdvancedCache();
    }
 
-   protected AdvancedCache advancedCache(int i, String cacheName) {
-      return cache(i, cacheName).getAdvancedCache();
+   protected <A, B> AdvancedCache<A, B> advancedCache(int i, String cacheName) {
+      return this.<A, B>cache(i, cacheName).getAdvancedCache();
    }
 
    protected <K, V> List<Cache<K, V>> caches(String name) {

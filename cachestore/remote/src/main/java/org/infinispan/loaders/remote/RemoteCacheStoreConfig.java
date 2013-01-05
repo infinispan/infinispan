@@ -29,14 +29,18 @@ import java.util.Properties;
 
 import org.infinispan.CacheException;
 import org.infinispan.api.BasicCacheContainer;
+import org.infinispan.client.hotrod.impl.ConfigurationProperties;
 import org.infinispan.executors.ExecutorFactory;
 import org.infinispan.loaders.AbstractCacheStoreConfig;
+import org.infinispan.loaders.remote.logging.Log;
+import org.infinispan.loaders.remote.wrapper.DefaultEntryWrapper;
+import org.infinispan.loaders.remote.wrapper.EntryWrapper;
+import org.infinispan.loaders.remote.wrapper.HotRodEntryMarshaller;
 import org.infinispan.manager.CacheContainer;
 import org.infinispan.util.FileLookup;
 import org.infinispan.util.FileLookupFactory;
 import org.infinispan.util.TypedProperties;
 import org.infinispan.util.Util;
-import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
 /**
@@ -44,10 +48,9 @@ import org.infinispan.util.logging.LogFactory;
  * <p/>
  * Parameters:
  * <ul>
- * <li>HotRodClientPropertiesFile-the file that contains the configuration of Hot Rod client. See <a href="http://community.jboss.org/wiki/JavaHotRodclient">Hotrod Java Client</a>
- *     for more details on the Hot Rod client.
- * <li>remoteCacheName-the name of the remote cache in the remote infinispan cluster, to which to connect to</li>
- * <li>UseDefaultRemoteCache-if set to true, the default remote cache will be used, as obtained by {@link org.infinispan.manager.CacheContainer#getCache()}.
+ * <li><tt>HotRodClientPropertiesFile</tt> - the file that contains the configuration of Hot Rod client. See <a href="http://community.jboss.org/wiki/JavaHotRodclient">Hotrod Java Client</a> for more details on the Hot Rod client.
+ * <li><tt>RemoteCacheName</tt> - the name of the remote cache in the remote infinispan cluster, to which to connect to</li>
+ * <li><tt>UseDefaultRemoteCache</tt> - if set to true, the default remote cache will be used, as obtained by {@link org.infinispan.manager.CacheContainer#getCache()}.
  * </ul>
  *
  * @author Mircea.Markus@jboss.com
@@ -57,9 +60,11 @@ public class RemoteCacheStoreConfig extends AbstractCacheStoreConfig {
 
    private volatile String remoteCacheName;
    private boolean rawValues;
-   private static final Log log = LogFactory.getLog(RemoteCacheStoreConfig.class);
+   private boolean hotRodWrapping;
+   private static final Log log = LogFactory.getLog(RemoteCacheStoreConfig.class, Log.class);
    private final Properties hotRodClientProperties = new Properties();
    private ExecutorFactory asyncExecutorFactory = null;
+   private EntryWrapper<?, ?> entryWrapper = new DefaultEntryWrapper();
 
    public RemoteCacheStoreConfig() {
       setCacheLoaderClassName(RemoteCacheStore.class.getName());
@@ -81,6 +86,24 @@ public class RemoteCacheStoreConfig extends AbstractCacheStoreConfig {
 
    public boolean isRawValues() {
       return rawValues;
+   }
+
+   public boolean isHotRodWrapping() {
+      return hotRodWrapping;
+   }
+
+   public void setHotRodWrapping(boolean hotRodWrapping) {
+      this.hotRodWrapping = hotRodWrapping;
+      setProperty("hotRodWrapping", Boolean.toString(hotRodWrapping));
+      if (hotRodWrapping) {
+         this.setRawValues(true);
+         this.getHotRodClientProperties().put(ConfigurationProperties.MARSHALLER, HotRodEntryMarshaller.class.getName());
+         try {
+            this.setEntryWrapper((EntryWrapper<?, ?>) Util.getInstanceStrict("org.infinispan.loaders.remote.wrapper.HotRodEntryWrapper", getClassLoader()));
+         } catch (Exception e) {
+            throw log.cannotLoadHotRodEntryWrapper(e);
+         }
+      }
    }
 
    public void setUseDefaultRemoteCache(boolean useDefaultRemoteCache) {
@@ -114,6 +137,14 @@ public class RemoteCacheStoreConfig extends AbstractCacheStoreConfig {
 
    public void setAsyncExecutorFactory(ExecutorFactory asyncExecutorFactory) {
       this.asyncExecutorFactory = asyncExecutorFactory;
+   }
+
+   public EntryWrapper<?, ?> getEntryWrapper() {
+      return entryWrapper;
+   }
+
+   public void setEntryWrapper(EntryWrapper<?, ?> entryWrapper) {
+      this.entryWrapper = entryWrapper;
    }
 
    public void setHotRodClientPropertiesFile(String hotRodClientPropertiesFile) {

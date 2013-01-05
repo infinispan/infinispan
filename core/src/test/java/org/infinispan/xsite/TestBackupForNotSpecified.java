@@ -33,14 +33,14 @@ import static org.testng.AssertJUnit.assertNull;
  * @author Mircea Markus
  * @since 5.2
  */
-@Test(groups = "xsite")
+@Test(groups = "xsite", testName = "xsite.TestBackupForNotSpecified")
 public class TestBackupForNotSpecified extends AbstractXSiteTest {
 
    @Override
    protected void createSites() {
 
       GlobalConfigurationBuilder lonGc = GlobalConfigurationBuilder.defaultClusteredBuilder();
-      lonGc.sites().localSite("LON");
+      lonGc.site().localSite("LON");
       ConfigurationBuilder lonDefault = getDefaultClusteredCacheConfig(CacheMode.DIST_SYNC, true);
       lonDefault.sites().addBackup()
             .site("NYC")
@@ -50,7 +50,7 @@ public class TestBackupForNotSpecified extends AbstractXSiteTest {
       ConfigurationBuilder someCache = getDefaultClusteredCacheConfig(CacheMode.DIST_SYNC, true);
 
       GlobalConfigurationBuilder nycGc = GlobalConfigurationBuilder.defaultClusteredBuilder();
-      nycGc.sites().localSite("NYC");
+      nycGc.site().localSite("NYC");
       ConfigurationBuilder nycDefault = getDefaultClusteredCacheConfig(CacheMode.DIST_SYNC, true);
       nycDefault.sites().addBackup()
             .site("LON")

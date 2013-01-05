@@ -22,6 +22,7 @@ package org.infinispan.transaction;
 import org.infinispan.commands.tx.VersionedPrepareCommand;
 import org.infinispan.commands.write.WriteCommand;
 import org.infinispan.container.DataContainer;
+import org.infinispan.container.entries.CacheEntry;
 import org.infinispan.container.entries.ClusteredRepeatableReadEntry;
 import org.infinispan.container.versioning.EntryVersion;
 import org.infinispan.container.versioning.EntryVersionsMap;
@@ -44,7 +45,11 @@ public class WriteSkewHelper {
       EntryVersionsMap vs = new EntryVersionsMap();
       for (WriteCommand wc : command.getModifications()) {
          for (Object k : wc.getAffectedKeys()) {
-            vs.put(k, (IncrementableEntryVersion) context.lookupEntry(k).getVersion());
+            CacheEntry entry = context.lookupEntry(k);
+            // the entry might be null if an attempt to lock the key was done and the actual value for this key is missing from the data container
+            if (entry != null) {
+               vs.put(k, (IncrementableEntryVersion) entry.getVersion());
+            }
          }
       }
 
@@ -71,13 +76,17 @@ public class WriteSkewHelper {
             if (ksl.performCheckOnKey(k)) {
                ClusteredRepeatableReadEntry entry = (ClusteredRepeatableReadEntry) context.lookupEntry(k);
 
+               if (entry == null) {
+                  continue;
+               }
+
                if (!context.isOriginLocal()) {
                   // What version did the transaction originator see??
                   EntryVersion versionSeen = prepareCommand.getVersionsSeen().get(k);
                   if (versionSeen != null) entry.setVersion(versionSeen);
                }
 
-               if (entry.performWriteSkewCheck(dataContainer)) {
+               if (entry.performWriteSkewCheck(dataContainer, context)) {
                   IncrementableEntryVersion newVersion = entry.isCreated() ? versionGenerator.generateNew() : versionGenerator.increment((IncrementableEntryVersion) entry.getVersion());
                   uv.put(k, newVersion);
                } else {

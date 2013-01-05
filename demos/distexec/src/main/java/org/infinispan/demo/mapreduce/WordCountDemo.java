@@ -120,7 +120,7 @@ public class WordCountDemo extends Demo {
             "WordCountDemo",
             "Count words in Infinispan cache usin MapReduceTask ",
             new Parameter[]{
-                  new FlaggedOption("configFile", JSAP.STRING_PARSER, "config-samples/distributed-ec2.xml",
+                  new FlaggedOption("configFile", JSAP.STRING_PARSER, "config-samples/distributed-udp.xml",
                                     JSAP.NOT_REQUIRED, 'c', "configFile",
                                     "Infinispan transport config file"),
                   new FlaggedOption("nodeType", JSAP.STRING_PARSER, "slave", JSAP.REQUIRED,

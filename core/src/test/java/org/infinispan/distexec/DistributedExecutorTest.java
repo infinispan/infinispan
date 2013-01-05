@@ -39,6 +39,7 @@ import org.infinispan.Cache;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.remoting.transport.Address;
+import org.testng.AssertJUnit;
 import org.testng.annotations.Test;
 
 /**
@@ -51,7 +52,8 @@ import org.testng.annotations.Test;
 public class DistributedExecutorTest extends LocalDistributedExecutorTest {
 
    public static AtomicInteger counter = new AtomicInteger();
-   
+   protected boolean supportsConcurrentUpdates = true;
+
 
    public DistributedExecutorTest() {
       cleanup = CleanupPhase.AFTER_METHOD;
@@ -60,11 +62,12 @@ public class DistributedExecutorTest extends LocalDistributedExecutorTest {
    @Override
    protected void createCacheManagers() throws Throwable {
       ConfigurationBuilder builder = getDefaultClusteredCacheConfig(getCacheMode(), false);
+      builder.locking().supportsConcurrentUpdates(supportsConcurrentUpdates);
       createClusteredCaches(2, cacheName(), builder);
    }
 
    protected String cacheName() {
-      return CACHE_NAME;
+      return "DistributedExecutorTest-DIST_SYNC";
    }
 
    protected CacheMode getCacheMode() {
@@ -91,10 +94,108 @@ public class DistributedExecutorTest extends LocalDistributedExecutorTest {
       future.get();
    }
 
+   @Test(expectedExceptions = ExecutionException.class)
+   public void testBasicTargetRemoteDistributedCallableWithException() throws Exception {
+      Cache<Object, Object> cache1 = cache(0, cacheName());
+      Cache<Object, Object> cache2 = cache(1, cacheName());
+
+      // initiate task from cache1 and execute on same node
+      DistributedExecutorService des = createDES(cache1);
+      Address target = cache2.getAdvancedCache().getRpcManager().getAddress();
+
+      DistributedTaskBuilder builder = des
+            .createDistributedTaskBuilder(new ExceptionThrowingCallable());
+
+      Future<Integer> future = des.submit(target, builder.build());
+      future.get();
+   }
+
+   @Test(expectedExceptions = TimeoutException.class)
+   public void testBasicTargetLocalDistributedCallableWithHighFutureAndLowTaskTimeout() throws Exception {
+      Cache<Object, Object> cache1 = cache(0, cacheName());
+
+      // initiate task from cache1 and execute on same node
+      DistributedExecutorService des = createDES(cache1);
+      Address target = cache1.getAdvancedCache().getRpcManager().getAddress();
+
+      DistributedTaskBuilder builder = des
+            .createDistributedTaskBuilder(new SleepingSimpleCallable());
+      builder.timeout(1000, TimeUnit.MILLISECONDS);
+
+      Future<Integer> future = des.submit(target, builder.build());
+      future.get(10000, TimeUnit.MILLISECONDS);
+   }
+
+   @Test(expectedExceptions = TimeoutException.class)
+   public void testBasicTargetLocalDistributedCallableWithLowFutureAndHighTaskTimeout() throws Exception {
+      Cache<Object, Object> cache1 = cache(0, cacheName());
+
+      // initiate task from cache1 and execute on same node
+      DistributedExecutorService des = createDES(cache1);
+      Address target = cache1.getAdvancedCache().getRpcManager().getAddress();
+
+      DistributedTaskBuilder builder = des
+            .createDistributedTaskBuilder(new SleepingSimpleCallable());
+      builder.timeout(10000, TimeUnit.MILLISECONDS);
+
+      Future<Integer> future = des.submit(target, builder.build());
+      future.get(1000, TimeUnit.MILLISECONDS);
+   }
+
+   @Test(expectedExceptions = TimeoutException.class)
+   public void testBasicTargetRemoteDistributedCallableWithHighFutureAndLowTaskTimeout() throws Exception {
+      Cache<Object, Object> cache1 = cache(0, cacheName());
+      Cache<Object, Object> cache2 = cache(1, cacheName());
+
+      // initiate task from cache1 and execute on same node
+      DistributedExecutorService des = createDES(cache1);
+      Address target = cache2.getAdvancedCache().getRpcManager().getAddress();
+
+      DistributedTaskBuilder builder = des
+            .createDistributedTaskBuilder(new SleepingSimpleCallable());
+      builder.timeout(1000, TimeUnit.MILLISECONDS);
+
+      Future<Integer> future = des.submit(target, builder.build());
+      future.get(10000, TimeUnit.MILLISECONDS);
+   }
+
+   @Test(expectedExceptions = TimeoutException.class)
+   public void testBasicTargetRemoteDistributedCallableWithLowFutureAndHighTaskTimeout() throws Exception {
+      Cache<Object, Object> cache1 = cache(0, cacheName());
+      Cache<Object, Object> cache2 = cache(1, cacheName());
+
+      // initiate task from cache1 and execute on same node
+      DistributedExecutorService des = createDES(cache1);
+      Address target = cache2.getAdvancedCache().getRpcManager().getAddress();
+
+      DistributedTaskBuilder builder = des
+            .createDistributedTaskBuilder(new SleepingSimpleCallable());
+      builder.timeout(10000, TimeUnit.MILLISECONDS);
+
+      Future<Integer> future = des.submit(target, builder.build());
+      future.get(1000, TimeUnit.MILLISECONDS);
+   }
+
+   public void testBasicTargetLocalDistributedCallableWithoutSpecTimeout() throws Exception {
+      Cache<Object, Object> cache1 = cache(0, cacheName());
+
+      // initiate task from cache1 and execute on same node
+      DistributedExecutorService des = createDES(cache1);
+      Address target = cache1.getAdvancedCache().getRpcManager().getAddress();
+
+      DistributedTaskBuilder builder = des
+            .createDistributedTaskBuilder(new SleepingSimpleCallable());
+
+      Future<Integer> future = des.submit(target, builder.build());
+
+      AssertJUnit.assertEquals((Integer) 1, future.get());
+   }
+
    public void testTaskCancellation() throws Exception {
       DistributedExecutorService des = createDES(getCache());
-      List<Address> members = new ArrayList<Address>(getCache().getAdvancedCache().getRpcManager()
-               .getTransport().getMembers());
+      List<Address> cacheMembers = getCache().getAdvancedCache().getRpcManager().getMembers();
+      List<Address> members = new ArrayList<Address>(cacheMembers);
+      AssertJUnit.assertEquals(caches(cacheName()).size(), members.size());
       members.remove(getCache().getAdvancedCache().getRpcManager().getAddress());
       
       DistributedTaskBuilder<Integer> tb = des.createDistributedTaskBuilder( new LongRunningCallable());
@@ -117,13 +218,18 @@ public class DistributedExecutorTest extends LocalDistributedExecutorTest {
       assert counter.get() >= 2;
       assert future.isCancelled();      
       assert future.isDone(); 
+
+      //Testing whether the cancellation already happened.
+      boolean isCanceled = future.cancel(true);
+      assert !isCanceled;
    }
    
    @Test(expectedExceptions = CancellationException.class)
    public void testCancelAndGet() throws Exception {
       DistributedExecutorService des = createDES(getCache());
-      List<Address> members = new ArrayList<Address>(getCache().getAdvancedCache().getRpcManager()
-               .getTransport().getMembers());
+      List<Address> cacheMembers = getCache().getAdvancedCache().getRpcManager().getMembers();
+      List<Address> members = new ArrayList<Address>(cacheMembers);
+      AssertJUnit.assertEquals(caches(cacheName()).size(), members.size());
       members.remove(getCache().getAdvancedCache().getRpcManager().getAddress());
       
       DistributedTaskBuilder<Integer> tb = des.createDistributedTaskBuilder( new LongRunningCallable());

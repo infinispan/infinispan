@@ -78,7 +78,7 @@ public class DataContainerTest {
          AdvancedCache<Object, Object> cache = cm.getCache().getAdvancedCache();
 
          DataContainer ddc = DefaultDataContainer.unBoundedDataContainer(cache.getConfiguration().getConcurrencyLevel());
-         ((DefaultDataContainer) ddc).initialize(null, null,new InternalEntryFactoryImpl());
+         ((DefaultDataContainer) ddc).initialize(null, null,new InternalEntryFactoryImpl(), null, null);
          QueryableDataContainer.setDelegate(ddc);
 
          // Verify that the default is correctly established
@@ -111,7 +111,7 @@ public class DataContainerTest {
          AdvancedCache<Object, Object> cache = cm.getCache().getAdvancedCache();
 
          DataContainer ddc = DefaultDataContainer.unBoundedDataContainer(cache.getConfiguration().getConcurrencyLevel());
-         ((DefaultDataContainer) ddc).initialize(null, null,new InternalEntryFactoryImpl());
+         ((DefaultDataContainer) ddc).initialize(null, null,new InternalEntryFactoryImpl(), null, null);
          QueryableDataContainer.setDelegate(ddc);
 
          // Verify that the config is correct

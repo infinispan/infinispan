@@ -26,7 +26,7 @@ import org.infinispan.cli.commands.ProcessedCommand;
 import org.infinispan.cli.shell.Completer;
 
 public class Upgrade extends AbstractServerCommand {
-   private static final List<String> OPTIONS = Arrays.asList("--dumpkeys");
+   private static final List<String> OPTIONS = Arrays.asList("--dumpkeys", "--synchronize=", "--disconnectsource=", "--all");
 
    @Override
    public String getName() {

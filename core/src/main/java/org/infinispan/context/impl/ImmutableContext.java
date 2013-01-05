@@ -25,7 +25,6 @@ import org.infinispan.context.InvocationContext;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.util.InfinispanCollections;
 
-import java.util.Collections;
 import java.util.Map;
 import java.util.Set;
 

@@ -56,11 +56,22 @@ public class AsyncAPISyncInvalTest extends MultipleCacheManagersTest {
    protected void resetListeners() {
    }
 
-   private void assertInvalidated(Key k, String value) {
-      Cache c1 = cache(0,getClass().getSimpleName());
-      Cache c2 = cache(1,getClass().getSimpleName());
-      assert Util.safeEquals(c1.get(k), value);
-      assert !c2.containsKey(k);
+   protected void assertInvalidated(final Key k, final String value) {
+      final String cacheName = getClass().getSimpleName();
+      if (sync()) {
+         Cache c1 = cache(0, cacheName);
+         Cache c2 = cache(1, cacheName);
+         assert Util.safeEquals(c1.get(k), value);
+         assert !c2.containsKey(k);
+      } else {
+         eventually(new Condition() {
+            @Override
+            public boolean isSatisfied() throws Exception {
+               Object v0 = cache(0, cacheName).get(k);
+               return Util.safeEquals(v0, value) && !cache(1, cacheName).containsKey(k);
+            }
+         });
+      }
    }
 
    private void initC2(Key k) {
@@ -87,6 +98,7 @@ public class AsyncAPISyncInvalTest extends MultipleCacheManagersTest {
       assert !c1.containsKey(key);
       assert v.equals(c2.get(key));
 
+      log.trace("Here it is");
       // put
       Future<String> f = c1.putAsync(key, v);
       assert f != null;

@@ -18,10 +18,14 @@
  */
 package org.infinispan.cli.interpreter.statement;
 
+import org.infinispan.Cache;
+import org.infinispan.cli.interpreter.logging.Log;
 import org.infinispan.cli.interpreter.result.EmptyResult;
 import org.infinispan.cli.interpreter.result.Result;
+import org.infinispan.cli.interpreter.result.StatementException;
 import org.infinispan.cli.interpreter.result.StringResult;
 import org.infinispan.cli.interpreter.session.Session;
+import org.infinispan.util.logging.LogFactory;
 
 /**
  *
@@ -31,6 +35,7 @@ import org.infinispan.cli.interpreter.session.Session;
  * @since 5.2
  */
 public class CacheStatement implements Statement {
+   private static final Log log = LogFactory.getLog(CacheStatement.class, Log.class);
 
    final String cacheName;
 
@@ -39,12 +44,17 @@ public class CacheStatement implements Statement {
    }
 
    @Override
-   public Result execute(Session session) {
+   public Result execute(Session session) throws StatementException {
       if (cacheName != null) {
          session.setCurrentCache(cacheName);
          return EmptyResult.RESULT;
       } else {
-         return new StringResult(session.getCurrentCache().getName());
+         Cache<?, ?> currentCache = session.getCurrentCache();
+         if (currentCache != null) {
+            return new StringResult(currentCache.getName());
+         } else {
+            throw log.noCacheSelectedYet();
+         }
       }
    }
 

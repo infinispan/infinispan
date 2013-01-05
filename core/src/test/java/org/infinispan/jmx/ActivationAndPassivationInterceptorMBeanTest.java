@@ -22,14 +22,13 @@
  */
 package org.infinispan.jmx;
 
-import org.infinispan.Cache;
-import org.infinispan.config.CacheLoaderManagerConfig;
-import org.infinispan.config.Configuration;
-import org.infinispan.config.GlobalConfiguration;
+import org.infinispan.configuration.cache.ConfigurationBuilder;
+import org.infinispan.configuration.global.GlobalConfigurationBuilder;
+import org.infinispan.eviction.EvictionStrategy;
+import org.infinispan.loaders.dummy.DummyInMemoryCacheStoreConfigurationBuilder;
 import org.infinispan.test.fwk.TestInternalCacheEntryFactory;
 import org.infinispan.loaders.CacheLoaderManager;
 import org.infinispan.loaders.CacheStore;
-import org.infinispan.loaders.dummy.DummyInMemoryCacheStore;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.test.SingleCacheManagerTest;
 import static org.infinispan.test.TestingUtil.*;
@@ -55,36 +54,41 @@ import static org.testng.AssertJUnit.assertEquals;
  */
 @Test(groups = "functional", testName = "jmx.ActivationAndPassivationInterceptorMBeanTest")
 public class ActivationAndPassivationInterceptorMBeanTest extends SingleCacheManagerTest {
-   Cache cache;
-   MBeanServer threadMBeanServer;
-   ObjectName activationInterceptorObjName;
-   ObjectName passivationInterceptorObjName;
-   CacheStore cacheStore;
+
    private static final String JMX_DOMAIN = ActivationAndPassivationInterceptorMBeanTest.class.getSimpleName();
 
+   CacheStore cacheStore;
+   MBeanServer threadMBeanServer;
+   final ObjectName activationInterceptorObjName =
+         getCacheObjectName(JMX_DOMAIN, "___defaultcache(local)", "Activation");
+   final ObjectName passivationInterceptorObjName =
+         getCacheObjectName(JMX_DOMAIN, "___defaultcache(local)", "Passivation");
+
    protected EmbeddedCacheManager createCacheManager() throws Exception {
-      GlobalConfiguration globalConfiguration = GlobalConfiguration.getNonClusteredDefault();
-      globalConfiguration.setMBeanServerLookup(PerThreadMBeanServerLookup.class.getName());
-      globalConfiguration.setJmxDomain(JMX_DOMAIN);
-      globalConfiguration.setExposeGlobalJmxStatistics(true);
-      cacheManager = TestCacheManagerFactory.createCacheManagerEnforceJmxDomain(globalConfiguration);
-      DummyInMemoryCacheStore.Cfg cfg = new DummyInMemoryCacheStore.Cfg();
-      CacheLoaderManagerConfig clManagerConfig = new CacheLoaderManagerConfig();
-      clManagerConfig.setPassivation(true);
-      clManagerConfig.addCacheLoaderConfig(cfg);
-      Configuration configuration = getDefaultClusteredConfig(Configuration.CacheMode.LOCAL);
-      configuration.setExposeJmxStatistics(true);
-      configuration.setCacheLoaderManagerConfig(clManagerConfig);
+      GlobalConfigurationBuilder globalBuilder = new GlobalConfigurationBuilder();
+      globalBuilder.globalJmxStatistics()
+            .mBeanServerLookup(new PerThreadMBeanServerLookup())
+            .jmxDomain(JMX_DOMAIN)
+            .enable();
 
-      cacheManager.defineConfiguration("test", configuration);
-      cache = cacheManager.getCache("test");
-      activationInterceptorObjName = getCacheObjectName(JMX_DOMAIN, "test(local)", "Activation");
-      passivationInterceptorObjName = getCacheObjectName(JMX_DOMAIN, "test(local)", "Passivation");
+      ConfigurationBuilder builder = new ConfigurationBuilder();
+      builder.eviction().strategy(EvictionStrategy.LRU).maxEntries(1)
+            .jmxStatistics().enable()
+            .loaders()
+               .passivation(true)
+               .addLoader(DummyInMemoryCacheStoreConfigurationBuilder.class);
 
+      // Do not initiliaze this in instance declaration since a different
+      // thread will be used when running from maven, breaking the thread local
       threadMBeanServer = PerThreadMBeanServerLookup.getThreadMBeanServer();
-      cacheStore = TestingUtil.extractComponent(cache, CacheLoaderManager.class).getCacheStore();
 
-      return cacheManager;
+      return TestCacheManagerFactory.createCacheManager(globalBuilder, builder, true);
+   }
+
+   @Override
+   protected void setup() throws Exception {
+      super.setup();
+      cacheStore = extractCacheStore();
    }
 
    @AfterMethod(alwaysRun = true)
@@ -121,17 +125,6 @@ public class ActivationAndPassivationInterceptorMBeanTest extends SingleCacheMan
       assert !cacheStore.containsKey(k(m)) : "this should only be persisted on evict";
    }
 
-   public void testActivationOnRemove(Method m) throws Exception {
-      assertActivationCount(0);
-      assert cache.get(k(m)) == null;
-      assertActivationCount(0);
-      cacheStore.store(TestInternalCacheEntryFactory.create(k(m), v(m)));
-      assert cacheStore.containsKey(k(m));
-      assert cache.remove(k(m)).equals(v(m));
-      assertActivationCount(1);
-      assert !cacheStore.containsKey(k(m));
-   }
-
    public void testActivationOnReplace(Method m) throws Exception {
       assertActivationCount(0);
       assert cache.get(k(m)) == null;
@@ -150,7 +143,7 @@ public class ActivationAndPassivationInterceptorMBeanTest extends SingleCacheMan
       cacheStore.store(TestInternalCacheEntryFactory.create(k(m), v(m)));
       assert cacheStore.containsKey(k(m));
 
-      Map toAdd = new HashMap();
+      Map<String, String> toAdd = new HashMap<String, String>();
       toAdd.put(k(m), v(m, 2));
       cache.putAll(toAdd);
       assertActivationCount(1);
@@ -171,12 +164,21 @@ public class ActivationAndPassivationInterceptorMBeanTest extends SingleCacheMan
    }
 
    private void assertActivationCount(int activationCount) throws Exception {
-      assert Integer.valueOf(threadMBeanServer.getAttribute(activationInterceptorObjName, "Activations").toString()).equals(activationCount);
+      assert Integer.valueOf(threadMBeanServer.getAttribute(
+            activationInterceptorObjName, "Activations").toString())
+            .equals(activationCount);
    }
 
    private void assertPassivationCount(int activationCount) throws Exception {
-      Object passivations = threadMBeanServer.getAttribute(passivationInterceptorObjName, "Passivations");
-      assertEquals(activationCount, Integer.valueOf(passivations.toString()).intValue());
+      Object passivations = threadMBeanServer.getAttribute(
+            passivationInterceptorObjName, "Passivations");
+      assertEquals(activationCount,
+            Integer.valueOf(passivations.toString()).intValue());
+   }
+
+   private CacheStore extractCacheStore() {
+      return TestingUtil.extractComponent(cache,
+            CacheLoaderManager.class).getCacheStore();
    }
 
 }

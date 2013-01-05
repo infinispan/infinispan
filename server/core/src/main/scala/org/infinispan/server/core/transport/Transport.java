@@ -84,7 +84,7 @@ public interface Transport {
    @Metric(displayName = "TCP no delay", dataType = DataType.TRAIT,
            displayType = DisplayType.SUMMARY)
    @SuppressWarnings("unused")
-   String getTpcNoDelay();
+   String getTcpNoDelay();
 
    @ManagedAttribute(description = "Returns the send buffer size.")
    @Metric(displayName = "Send buffer size", dataType = DataType.TRAIT,

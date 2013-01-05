@@ -36,6 +36,7 @@ import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
 import java.util.Collection;
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -102,10 +103,11 @@ public class CountingRpcManager implements RpcManager {
       return realOne.invokeRemotely(recipients, rpcCommand, mode, timeout);
    }
 
-   public void invokeRemotely(Collection<Address> recipients, ReplicableCommand rpc, boolean sync) throws RpcException {
+   public Map<Address, Response> invokeRemotely(Collection<Address> recipients, ReplicableCommand rpc, boolean sync) throws RpcException {
       log.trace("invokeRemotely4");
       aboutToInvokeRpc(rpc);
       realOne.invokeRemotely(recipients, rpc, sync);
+      return null;
    }
 
    public Map<Address, Response> invokeRemotely(Collection<Address> recipients, ReplicableCommand rpc, boolean sync, boolean usePriorityQueue) throws RpcException {
@@ -178,5 +180,10 @@ public class CountingRpcManager implements RpcManager {
    @Override
    public int getTopologyId() {
       return realOne.getTopologyId();
+   }
+
+   @Override
+   public List<Address> getMembers() {
+      return realOne.getMembers();
    }
 }

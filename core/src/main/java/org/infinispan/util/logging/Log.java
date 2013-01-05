@@ -138,7 +138,7 @@ public interface Log extends BasicLogger {
 
    @LogMessage(level = WARN)
    @Message(value = "Problem %s encountered when applying state for key %s!", id = 16)
-   void problemApplyingStateForKey(String msg, Object key);
+   void problemApplyingStateForKey(String msg, Object key, @Cause Throwable t);
 
    @LogMessage(level = WARN)
    @Message(value = "Unable to apply prepare %s", id = 18)
@@ -797,11 +797,11 @@ public interface Log extends BasicLogger {
    @LogMessage(level = WARN)
    @Message(value = "Trying to bring back an non-existent site (%s)!", id=205)
    void tryingToBringOnlineNonexistentSite(String siteName);
-   
+
    @LogMessage(level = WARN)
    @Message(value = "Could not execute cancelation command locally %s", id=206)
    void couldNotExecuteCancellationLocally(String message);
-   
+
    @LogMessage(level = WARN)
    @Message(value = "Could not interrupt as no thread found for command uuid %s", id=207)
    void couldNotInterruptThread(UUID id);
@@ -812,11 +812,11 @@ public interface Log extends BasicLogger {
 
    @LogMessage(level = WARN)
    @Message(value = "Failed to retrieve transactions for segments %s of cache %s from node %s (node will not be retried)", id=209)
-   void failedToRetrieveTransactionsForSegments(Collection<Integer> segments, String cacheName, Address source);
+   void failedToRetrieveTransactionsForSegments(Collection<Integer> segments, String cacheName, Address source, @Cause Exception e);
 
    @LogMessage(level = WARN)
    @Message(value = "Failed to request segments %s of cache %s from node %s (node will not be retried)", id=210)
-   void failedToRequestSegments(Collection<Integer> segments, String cacheName, Address source);
+   void failedToRequestSegments(Collection<Integer> segments, String cacheName, Address source, @Cause Exception e);
 
    @LogMessage(level = WARN)
    @Message(value = "Transactions were requested by node %s with topology %d, older than the local topology (%d)", id=211)
@@ -829,4 +829,16 @@ public interface Log extends BasicLogger {
    @LogMessage(level = ERROR)
    @Message(value = "Unable to load %s from any of the following classloaders: %s", id=213)
    void unableToLoadClass(String classname, String classloaders, @Cause Throwable cause);
+
+   @LogMessage(level = WARN)
+   @Message(value = "Unable to remove entry under %s from cache store after activation", id = 214)
+   void unableToRemoveEntryAfterActivation(Object key, @Cause Exception e);
+
+   @Message(value = "Unknown migrator %s", id=215)
+   Exception unknownMigrator(String migratorName);
+
+   @LogMessage(level = INFO)
+   @Message(value = "%d entries migrated to cache %s in %s", id = 216)
+   void entriesMigrated(long count, String name, String prettyTime);
 }
+

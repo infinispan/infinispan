@@ -114,17 +114,18 @@ statement returns [Statement stmt]
    | clearStatement { $stmt = $clearStatement.stmt; }
    | commitTransactionStatement { $stmt = $commitTransactionStatement.stmt; }
    | createStatement { $stmt = $createStatement.stmt; }
+   | encodingStatement { $stmt = $encodingStatement.stmt; }
    | endBatchStatement { $stmt = $endBatchStatement.stmt; }
    | evictStatement { $stmt = $evictStatement.stmt; }
    | getStatement { $stmt = $getStatement.stmt; }
    | infoStatement { $stmt = $infoStatement.stmt; }
    | locateStatement { $stmt = $locateStatement.stmt; }
    | pingStatement { $stmt = $pingStatement.stmt; }
-   | putIfAbsentStatement { $stmt = $putIfAbsentStatement.stmt; }
    | putStatement { $stmt = $putStatement.stmt; }
    | removeStatement { $stmt = $removeStatement.stmt; }
    | replaceStatement { $stmt = $replaceStatement.stmt; }
    | rollbackTransactionStatement { $stmt = $rollbackTransactionStatement.stmt; }
+   | siteStatement { $stmt = $siteStatement.stmt; }
    | startBatchStatement { $stmt = $startBatchStatement.stmt; }
    | statsStatement { $stmt = $statsStatement.stmt; }
    | upgradeStatement { $stmt = $upgradeStatement.stmt; }
@@ -155,7 +156,11 @@ commitTransactionStatement returns [CommitTransactionStatement stmt]
 createStatement returns [CreateStatement stmt]
    : CREATE cacheName = STRINGLITERAL (LIKE baseCacheName = STRINGLITERAL)? (EOL | ';')! { $stmt = new CreateStatement(unquote($cacheName.text), unquote($baseCacheName.text)); }
    ;
-   
+
+encodingStatement returns [EncodingStatement stmt]
+   : ENCODING opts = statementOptions (codecName = STRINGLITERAL)? (EOL | ';')! { $stmt = new EncodingStatement($opts.options, unquote($codecName.text)); }
+   ;
+
 endBatchStatement returns [EndBatchStatement stmt]
    : END (cacheName = STRINGLITERAL)? (EOL | ';')! { $stmt = new EndBatchStatement(unquote($cacheName.text), true); }
    ;
@@ -165,7 +170,7 @@ evictStatement returns [EvictStatement stmt]
    ;
 
 getStatement returns [GetStatement stmt]
-   : GET key = keyIdentifier (EOL | ';')! { $stmt = new GetStatement($key.key); }
+   : GET opts = statementOptions key = keyIdentifier (EOL | ';')! { $stmt = new GetStatement($opts.options, $key.key); }
    ;
 
 infoStatement returns [InfoStatement stmt]
@@ -180,12 +185,8 @@ pingStatement returns [PingStatement stmt]
    : PING (EOL | ';')! { $stmt = new PingStatement(); }
    ;
 
-putIfAbsentStatement returns [PutIfAbsentStatement stmt]
-   : PUTIFABSENT key = keyIdentifier value = literal (exp = expirationClause)? (EOL | ';')! { $stmt = new PutIfAbsentStatement($key.key, $value.o, $exp.exp); }
-   ;
-
 putStatement returns [PutStatement stmt]
-   : PUT key = keyIdentifier value = literal (exp = expirationClause)? (EOL | ';')! { $stmt = new PutStatement($key.key, $value.o, $exp.exp); }
+   : PUT opts = statementOptions key = keyIdentifier value = literal (exp = expirationClause)? (EOL | ';')! { $stmt = new PutStatement($opts.options, $key.key, $value.o, $exp.exp); }
    ;
 
 removeStatement returns [RemoveStatement stmt]
@@ -193,11 +194,15 @@ removeStatement returns [RemoveStatement stmt]
    ;
 
 replaceStatement returns [ReplaceStatement stmt]
-   : REPLACE key = keyIdentifier value1 = literal (value2 = literal)? (exp = expirationClause)? (EOL | ';')! { if ($value2.o==null) $stmt = new ReplaceStatement($key.key, $value1.o, $exp.exp); else $stmt = new ReplaceStatement($key.key, $value1.o, $value2.o, $exp.exp);}
+   : REPLACE opts = statementOptions key = keyIdentifier value1 = literal (value2 = literal)? (exp = expirationClause)? (EOL | ';')! { if ($value2.o==null) $stmt = new ReplaceStatement($opts.options, $key.key, $value1.o, $exp.exp); else $stmt = new ReplaceStatement($opts.options, $key.key, $value1.o, $value2.o, $exp.exp);}
    ;
 
 rollbackTransactionStatement returns [RollbackTransactionStatement stmt]
    : ROLLBACK (cacheName = STRINGLITERAL)? (EOL | ';')! { $stmt = new RollbackTransactionStatement(unquote($cacheName.text)); }
+   ;
+   
+siteStatement returns [SiteStatement stmt]
+   : SITE opts = statementOptions (site = siteIdentifier)? (EOL | ';')! { $stmt = new SiteStatement($opts.options, $site.site); }
    ;
 
 startBatchStatement returns [StartBatchStatement stmt]
@@ -225,6 +230,11 @@ keyIdentifier returns [KeyData key]
    | literal { $key = new KeyData($literal.o); }
    ;
 
+siteIdentifier returns [SiteData site]
+   : cacheName = STRINGLITERAL '.' siteName = STRINGLITERAL { $site = new SiteData(unquote($cacheName.text), $siteName.text); }
+   | siteName = STRINGLITERAL { $site = new SiteData($siteName.text); }
+   ;
+
 statementOptions returns [List<Option> options]
 @init {
    $options = new ArrayList<Option>();
@@ -233,7 +243,7 @@ statementOptions returns [List<Option> options]
    ;
 
 statementOption returns [Option option]
-   : '--' STRINGLITERAL { $option = new Option(unquote($STRINGLITERAL.text)); }
+   : '--' optionName = STRINGLITERAL ('=' optionParameter = STRINGLITERAL)? { $option = new Option(unquote($optionName.text), unquote($optionParameter.text)); }
    ;
 
 literal returns [Object o]
@@ -292,6 +302,7 @@ CACHE:   'cache';
 CLEAR:   'clear';
 COMMIT:  'commit';
 CREATE:  'create';
+ENCODING: 'encoding';
 END:     'end';
 EVICT:   'evict';
 EXPIRES: 'expires';
@@ -304,10 +315,10 @@ MAXIDLE: 'maxidle';
 NULL:    'null';
 PING:    'ping';
 PUT:     'put';
-PUTIFABSENT:    'putifabsent';
 REMOVE:  'remove';
 REPLACE: 'replace';
 ROLLBACK:'rollback';
+SITE:    'site';
 START:   'start';
 STATS:   'stats';
 TRUE:    'true';

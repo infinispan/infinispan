@@ -32,9 +32,10 @@ public class BackupConfiguration {
    private final String failurePolicyClass;
    private final boolean useTwoPhaseCommit;
    private final TakeOfflineConfiguration takeOfflineConfiguration;
+   private final boolean enabled;
 
    public BackupConfiguration(String site, BackupStrategy strategy, long timeout, BackupFailurePolicy backupFailurePolicy,
-                              String failurePolicyClass, boolean useTwoPhaseCommit, TakeOfflineConfiguration takeOfflineConfiguration) {
+                              String failurePolicyClass, boolean useTwoPhaseCommit, TakeOfflineConfiguration takeOfflineConfiguration, boolean enabled) {
       this.site = site;
       this.strategy = strategy;
       this.timeout = timeout;
@@ -42,6 +43,7 @@ public class BackupConfiguration {
       this.failurePolicyClass = failurePolicyClass;
       this.useTwoPhaseCommit = useTwoPhaseCommit;
       this.takeOfflineConfiguration = takeOfflineConfiguration;
+      this.enabled = enabled;
    }
 
    /**
@@ -89,7 +91,14 @@ public class BackupConfiguration {
    public boolean isTwoPhaseCommit() {
       return useTwoPhaseCommit;
    }
-   
+
+   /**
+    * @see BackupConfigurationBuilder#enabled(boolean).
+    */
+   public boolean enabled() {
+      return enabled;
+   }
+
    @Override
    public boolean equals(Object o) {
       if (this == o) return true;
@@ -104,6 +113,7 @@ public class BackupConfiguration {
       if (site != null ? !site.equals(that.site) : that.site != null) return false;
       if( useTwoPhaseCommit != that.useTwoPhaseCommit ) return false;
       if (strategy != that.strategy) return false;
+      if (enabled != that.enabled) return false;
 
       return true;
    }
@@ -128,6 +138,7 @@ public class BackupConfiguration {
             ", useTwoPhaseCommit=" + useTwoPhaseCommit +
             ", backupFailurePolicy=" + backupFailurePolicy +
             ", failurePolicyClass='" + failurePolicyClass + '\'' +
+            ", enabled='" + enabled + '\'' +
             '}';
    }
 }

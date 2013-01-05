@@ -167,8 +167,7 @@ public class InvalidationInterceptor extends BaseRpcInterceptor {
       if (command.isSuccessful() && !ctx.isInTxScope()) {
          if (keys != null && keys.length != 0) {
             if (!isLocalModeForced(command))
-               return invalidateAcrossCluster(isSynchronous(command), keys,
-                     ctx.isUseFutureReturnType(), retval);
+            invalidateAcrossCluster(isSynchronous(command), keys);
          }
       }
       return retval;
@@ -187,7 +186,7 @@ public class InvalidationInterceptor extends BaseRpcInterceptor {
             log.debug("Modification list contains a local mode flagged operation.  Not invalidating.");
          } else {
             try {
-               invalidateAcrossCluster(defaultSynchronous, filterVisitor.result.toArray(), false, null);
+               invalidateAcrossCluster(defaultSynchronous, filterVisitor.result.toArray());
             } catch (Throwable t) {
                log.warn("Unable to broadcast evicts as a part of the prepare phase.  Rolling back.", t);
                if (t instanceof RuntimeException)
@@ -236,8 +235,7 @@ public class InvalidationInterceptor extends BaseRpcInterceptor {
    }
 
 
-   protected Object invalidateAcrossCluster(boolean synchronous, Object[] keys,
-         boolean useFuture, Object retvalForFuture) throws Throwable {
+   protected void invalidateAcrossCluster(boolean synchronous, Object[] keys) throws Throwable {
       // increment invalidations counter if statistics maintained
       incrementInvalidations();
       final InvalidateCommand command = commandsFactory.buildInvalidateCommand(
@@ -245,15 +243,7 @@ public class InvalidationInterceptor extends BaseRpcInterceptor {
       if (log.isDebugEnabled())
          log.debug("Cache [" + rpcManager.getTransport().getAddress() + "] replicating " + command);
       // voila, invalidated!
-      if (useFuture) {
-         NotifyingNotifiableFuture<Object> future = new NotifyingFutureImpl(retvalForFuture);
-         rpcManager.broadcastRpcCommandInFuture(command, future);
-         return future;
-      } else {
-         rpcManager.broadcastRpcCommand(command, synchronous);
-      }
-
-      return retvalForFuture;
+      rpcManager.broadcastRpcCommand(command, synchronous);
    }
 
    private void incrementInvalidations() {

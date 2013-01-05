@@ -45,6 +45,7 @@ import org.infinispan.factories.GlobalComponentRegistry;
 import org.infinispan.factories.KnownComponentNames;
 import org.infinispan.io.ExposedByteArrayOutputStream;
 import org.infinispan.io.UnsignedNumeric;
+import org.infinispan.lifecycle.ComponentStatus;
 import org.infinispan.marshall.AbstractExternalizer;
 import org.infinispan.marshall.BufferSizePredictor;
 import org.infinispan.marshall.Ids;
@@ -103,14 +104,8 @@ public final class CacheRpcCommandExternalizer extends AbstractExternalizer<Cach
 
       String cacheName = command.getCacheName();
       output.writeUTF(cacheName);
-      ComponentRegistry registry = gcr.getNamedComponentRegistry(cacheName);
-      StreamingMarshaller marshaller;
-      if (registry == null) {
-         // TODO This is a hack to able to externalize commands while a cache is stopping
-         marshaller = globalMarshaller;
-      } else {
-         marshaller = registry.getCacheMarshaller();
-      }
+      StreamingMarshaller marshaller = getCacheMarshaller(cacheName);
+
       // Take the cache marshaller and generate the payload for the rest of
       // the command using that cache marshaller and the write the bytes in
       // the original payload.
@@ -143,15 +138,7 @@ public final class CacheRpcCommandExternalizer extends AbstractExternalizer<Cach
       byte methodId = (byte) input.readShort();
 
       String cacheName = input.readUTF();
-      ComponentRegistry registry = gcr.getNamedComponentRegistry(cacheName);
-      StreamingMarshaller marshaller;
-      if (registry == null) {
-         // Even though the command is directed at a cache, it could happen
-         // that the cache is not yet started, so fallback on global marshaller.
-         marshaller = globalMarshaller;  // TODO [anistor] in this case it is better to return null rather than continue deserializing
-      } else {
-         marshaller = registry.getCacheMarshaller();
-      }
+      StreamingMarshaller marshaller = getCacheMarshaller(cacheName);
 
       byte[] paramsRaw = new byte[UnsignedNumeric.readUnsignedInt(input)];
       // This is not ideal cos it forces the code to read all parameters into
@@ -183,6 +170,25 @@ public final class CacheRpcCommandExternalizer extends AbstractExternalizer<Cach
    @Override
    public Integer getId() {
       return Ids.CACHE_RPC_COMMAND;
+   }
+
+   private StreamingMarshaller getCacheMarshaller(String cacheName) {
+      ComponentRegistry registry = gcr.getNamedComponentRegistry(cacheName);
+      if (registry == null || registry.getStatus() != ComponentStatus.RUNNING) {
+         // When starting, even though the command is directed at a cache,
+         // it could happen that the cache is not yet started, so fallback on
+         // global marshaller.
+
+         // The reason cache and global marshallers are different is cos right
+         // now they could be associated with different classloaders. There are
+         // situations when the cache marshaller might not yet be available
+         // (i.e. StateRequestCommand), so this fallback is basically saying:
+         // "when cache is starting, if you can't find the cache marshaller,
+         // use the global marshaller and the global classloader"
+         return globalMarshaller;
+      } else {
+         return registry.getCacheMarshaller();
+      }
    }
 
 }

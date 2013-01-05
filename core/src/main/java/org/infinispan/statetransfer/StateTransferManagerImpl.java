@@ -51,6 +51,8 @@ import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
 /**
+ * {@link StateTransferManager} implementation.
+ *
  * @author anistor@redhat.com
  * @since 5.2
  */
@@ -204,11 +206,13 @@ public class StateTransferManagerImpl implements StateTransferManager {
    @Start(priority = 1000)
    @SuppressWarnings("unused")
    public void waitForInitialStateTransferToComplete() throws InterruptedException {
-      if (trace) log.tracef("Waiting for initial state transfer to finish for cache %s on %s", cacheName, rpcManager.getAddress());
-      boolean success = initialStateTransferComplete.await(configuration.clustering().stateTransfer().timeout(), TimeUnit.MILLISECONDS);
-      if (!success) {
-         throw new CacheException(String.format("Initial state transfer timed out for cache %s on %s",
-               cacheName, rpcManager.getAddress()));
+      if (configuration.clustering().stateTransfer().waitForInitialStateTransferToComplete()) {
+         if (trace) log.tracef("Waiting for initial state transfer to finish for cache %s on %s", cacheName, rpcManager.getAddress());
+         boolean success = initialStateTransferComplete.await(configuration.clustering().stateTransfer().timeout(), TimeUnit.MILLISECONDS);
+         if (!success) {
+            throw new CacheException(String.format("Initial state transfer timed out for cache %s on %s",
+                  cacheName, rpcManager.getAddress()));
+         }
       }
    }
 
@@ -265,7 +269,6 @@ public class StateTransferManagerImpl implements StateTransferManager {
       log.tracef("CommandTopologyId=%s, localTopologyId=%s", cmdTopologyId, localTopologyId);
 
       if (cmdTopologyId < localTopologyId) {
-         ConsistentHash readCh = cacheTopology.getReadConsistentHash();
          ConsistentHash writeCh = cacheTopology.getWriteConsistentHash();
          Set<Address> newTargets = writeCh.locateAllOwners(affectedKeys);
          newTargets.remove(rpcManager.getAddress());

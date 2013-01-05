@@ -42,6 +42,8 @@ public class BackupConfigurationBuilder extends AbstractConfigurationChildBuilde
    
    private TakeOfflineConfigurationBuilder takeOfflineBuilder;
 
+   private boolean enabled = true;
+
    public BackupConfigurationBuilder(ConfigurationBuilder builder) {
       super(builder);
       takeOfflineBuilder = new TakeOfflineConfigurationBuilder(builder, this);
@@ -139,6 +141,14 @@ public class BackupConfigurationBuilder extends AbstractConfigurationChildBuilde
       return this;
    }
 
+   /**
+    * Configures whether this site is used for backing up data or not (defaults to true).
+    */
+   public BackupConfigurationBuilder enabled(boolean isEnabled) {
+      this.enabled = isEnabled;
+      return this;
+   }
+
    @Override
    public void validate() {
       takeOfflineBuilder.validate();
@@ -153,7 +163,7 @@ public class BackupConfigurationBuilder extends AbstractConfigurationChildBuilde
    @Override
    public BackupConfiguration create() {
       return new BackupConfiguration(site, strategy, replicationTimeout, backupFailurePolicy, failurePolicyClass,
-                                     useTwoPhaseCommit, takeOfflineBuilder.create());
+                                     useTwoPhaseCommit, takeOfflineBuilder.create(), enabled);
    }
 
    @Override
@@ -165,6 +175,7 @@ public class BackupConfigurationBuilder extends AbstractConfigurationChildBuilde
       this.replicationTimeout = template.replicationTimeout();
       this.failurePolicyClass = template.failurePolicyClass();
       this.useTwoPhaseCommit = template.isTwoPhaseCommit();
+      this.enabled = template.enabled();
       return this;
    }
 
@@ -184,6 +195,7 @@ public class BackupConfigurationBuilder extends AbstractConfigurationChildBuilde
       if (takeOfflineBuilder != null ? !takeOfflineBuilder.equals(that.takeOfflineBuilder) : that.takeOfflineBuilder != null)
          return false;
       if( useTwoPhaseCommit != that.useTwoPhaseCommit ) return false;
+      if( enabled != that.enabled) return false;
 
       return true;
    }
@@ -210,6 +222,7 @@ public class BackupConfigurationBuilder extends AbstractConfigurationChildBuilde
             ", backupFailurePolicy=" + backupFailurePolicy +
             ", failurePolicyClass='" + failurePolicyClass + '\'' +
             ", takeOfflineBuilder=" + takeOfflineBuilder +
+            ", enabled=" + enabled +
             '}';
    }
 }

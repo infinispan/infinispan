@@ -27,6 +27,7 @@ import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.test.SingleCacheManagerTest;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.infinispan.util.Util;
+import org.infinispan.util.concurrent.NotifyingFuture;
 import org.testng.annotations.Test;
 
 import java.util.Collections;
@@ -53,7 +54,7 @@ public class AsyncAPITest extends SingleCacheManagerTest {
       Future<String> f = c.getAsync("k");
       assert f != null;
       assert !f.isCancelled();
-      assert f.get() == null;
+      assertNull(f.get());
       assert f.isDone();
       assert c.get("k") == null;
 
@@ -61,7 +62,7 @@ public class AsyncAPITest extends SingleCacheManagerTest {
       f = c.putAsync("k", "v");
       assert f != null;
       assert !f.isCancelled();
-      assert f.get() == null;
+      assertEquals(f.get(), null);
       assert f.isDone();
       assert c.get("k").equals("v");
 
@@ -216,12 +217,13 @@ public class AsyncAPITest extends SingleCacheManagerTest {
       verifyEviction("k", "v5", 3000, true);
 
       // putIfAbsent lifespan only
-      c.putAsync("k", "v3");
+      f = c.putAsync("k", "v3");
+      assertNull(f.get());
       f = c.putIfAbsentAsync("k", "v4", 1000, TimeUnit.MILLISECONDS);
       markStartTime();
       assert f != null;
       assert !f.isCancelled();
-      assert f.get().equals("v3");
+      assertEquals("v3", f.get());
       assert f.isDone();
       assert c.get("k").equals("v3");
       assert !c.get("k").equals("v4");

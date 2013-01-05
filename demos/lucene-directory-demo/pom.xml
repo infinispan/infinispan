@@ -75,7 +75,7 @@
             <configuration>
                <parallel>false</parallel>
                <threadCount>1</threadCount>
-               <forkMode>once</forkMode>
+               <forkMode>never</forkMode>
                <systemProperties>
                   <property>
                      <name>jgroups.bind_addr</name>

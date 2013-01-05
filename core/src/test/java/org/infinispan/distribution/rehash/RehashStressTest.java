@@ -46,7 +46,7 @@ import java.util.concurrent.TimeUnit;
 /**
  * @author esalter
  */
-@Test(testName = "org.infinispan.RehashStressTest", enabled = false)
+@Test(groups = "stress", testName = "org.infinispan.RehashStressTest")
 public class RehashStressTest extends AbstractInfinispanTest {
 
     @AfterMethod(alwaysRun = true)

@@ -20,6 +20,7 @@ package org.infinispan.loaders.remote.configuration;
 
 import org.infinispan.client.hotrod.impl.transport.TransportFactory;
 import org.infinispan.configuration.cache.AbstractStoreConfigurationChildBuilder;
+import org.infinispan.loaders.remote.wrapper.EntryWrapper;
 import org.infinispan.marshall.Marshaller;
 
 /**
@@ -62,8 +63,18 @@ public abstract class AbstractRemoteCacheStoreConfigurationChildBuilder<S> exten
    }
 
    @Override
+   public RemoteCacheStoreConfigurationBuilder entryWrapper(EntryWrapper<?, ?> entryWrapper) {
+      return builder.entryWrapper(entryWrapper);
+   }
+
+   @Override
    public RemoteCacheStoreConfigurationBuilder forceReturnValues(boolean forceReturnValues) {
       return builder.forceReturnValues(forceReturnValues);
+   }
+
+   @Override
+   public RemoteCacheStoreConfigurationBuilder hotRodWrapping(boolean hotRodWrapping) {
+      return builder.hotRodWrapping(hotRodWrapping);
    }
 
    @Override

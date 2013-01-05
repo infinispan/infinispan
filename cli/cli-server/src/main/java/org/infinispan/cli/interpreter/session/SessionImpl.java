@@ -18,30 +18,41 @@
  */
 package org.infinispan.cli.interpreter.session;
 
+import java.util.Collection;
+
 import javax.transaction.TransactionManager;
 
 import org.infinispan.AdvancedCache;
 import org.infinispan.Cache;
-import org.infinispan.CacheException;
 import org.infinispan.api.BasicCacheContainer;
+import org.infinispan.cli.interpreter.codec.Codec;
+import org.infinispan.cli.interpreter.codec.CodecException;
+import org.infinispan.cli.interpreter.codec.CodecRegistry;
+import org.infinispan.cli.interpreter.logging.Log;
 import org.infinispan.commands.CommandsFactory;
 import org.infinispan.commands.CreateCacheCommand;
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.remoting.rpc.RpcManager;
+import org.infinispan.util.logging.LogFactory;
 
 public class SessionImpl implements Session {
+   public static final Log log = LogFactory.getLog(SessionImpl.class, Log.class);
    private final EmbeddedCacheManager cacheManager;
+   private final CodecRegistry codecRegistry;
    private final String id;
    private Cache<?, ?> cache = null;
    private String cacheName = null;
    private long timestamp;
+   private Codec codec;
 
-   public SessionImpl(final EmbeddedCacheManager cacheManager, final String id) {
+   public SessionImpl(final CodecRegistry codecRegistry, final EmbeddedCacheManager cacheManager, final String id) {
+      this.codecRegistry = codecRegistry;
       this.cacheManager = cacheManager;
       this.id = id;
       timestamp = System.nanoTime();
+      codec = this.codecRegistry.getCodec("none");
    }
 
    @Override
@@ -73,7 +84,7 @@ public class SessionImpl implements Session {
          c = getCurrentCache();
       }
       if (c == null) {
-         throw new IllegalArgumentException("No cache named " + cacheName);
+         throw log.nonExistentCache(cacheName);
       }
       return c;
    }
@@ -90,14 +101,14 @@ public class SessionImpl implements Session {
       if (baseCacheName != null) {
          configuration = cacheManager.getCacheConfiguration(baseCacheName);
          if (configuration == null) {
-            throw new IllegalArgumentException("A cache named " + baseCacheName + " doesn't exist");
+            throw log.nonExistentCache(baseCacheName);
          }
       } else {
          configuration = cacheManager.getDefaultCacheConfiguration();
          baseCacheName = BasicCacheContainer.DEFAULT_CACHE_NAME;
       }
       if (cacheManager.cacheExists(cacheName)) {
-         throw new IllegalArgumentException("A cache named " + cacheName + " already exists");
+         throw log.cacheAlreadyExists(cacheName);
       }
       if (configuration.clustering().cacheMode().isClustered()) {
          AdvancedCache<?, ?> clusteredCache = cacheManager.getCache(baseCacheName).getAdvancedCache();
@@ -111,7 +122,7 @@ public class SessionImpl implements Session {
             ccc.init(cacheManager);
             ccc.perform(null);
          } catch (Throwable e) {
-            throw new CacheException("Could not create cache on all clustered nodes", e);
+            throw log.cannotCreateClusteredCaches(e, cacheName);
          }
       } else {
          ConfigurationBuilder b = new ConfigurationBuilder();
@@ -147,4 +158,30 @@ public class SessionImpl implements Session {
    public long getTimestamp() {
       return timestamp;
    }
+
+   @Override
+   public void setCodec(String codec) throws CodecException {
+      this.codec = getCodec(codec);
+   }
+
+   @Override
+   public Collection<Codec> getCodecs() {
+      return codecRegistry.getCodecs();
+   }
+
+   @Override
+   public Codec getCodec() {
+      return codec;
+   }
+
+   @Override
+   public Codec getCodec(String codec) throws CodecException {
+      Codec c = codecRegistry.getCodec(codec);
+      if (c == null) {
+         throw log.noSuchCodec(codec);
+      } else {
+         return c;
+      }
+   }
+
 }

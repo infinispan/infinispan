@@ -31,12 +31,17 @@ import java.io.Serializable;
  */
 @Immutable
 public class SimpleClusteredVersion implements IncrementableEntryVersion, Serializable {
-   private final int viewId;
+
+   /**
+    * The cache topology id in which it was first created.
+    */
+   private final int topologyId;
+
    final long version;
 
-   public SimpleClusteredVersion(int viewId, long version) {
+   public SimpleClusteredVersion(int topologyId, long version) {
       this.version = version;
-      this.viewId = viewId;
+      this.topologyId = topologyId;
    }
 
    @Override
@@ -44,9 +49,9 @@ public class SimpleClusteredVersion implements IncrementableEntryVersion, Serial
       if (other instanceof SimpleClusteredVersion) {
          SimpleClusteredVersion otherVersion = (SimpleClusteredVersion) other;
 
-         if (viewId > otherVersion.viewId)
+         if (topologyId > otherVersion.topologyId)
             return InequalVersionComparisonResult.AFTER;
-         if (viewId < otherVersion.viewId)
+         if (topologyId < otherVersion.topologyId)
             return InequalVersionComparisonResult.BEFORE;
 
          if (version > otherVersion.version)
@@ -63,7 +68,7 @@ public class SimpleClusteredVersion implements IncrementableEntryVersion, Serial
    @Override
    public String toString() {
       return "SimpleClusteredVersion{" +
-            "viewId=" + viewId +
+            "topologyId=" + topologyId +
             ", version=" + version +
             '}';
    }

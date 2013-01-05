@@ -199,7 +199,7 @@ class HotRodServer extends AbstractProtocolServer("HotRod") with Log {
    def tryRegisterMigrationManager(cacheName: String, cache: Cache[ByteArrayKey, CacheValue]) {
       val cr = cache.getAdvancedCache.getComponentRegistry
       val migrationManager = cr.getComponent(classOf[RollingUpgradeManager])
-      if (migrationManager != null) migrationManager.addMigrator(new HotRodMigrator(cache))
+      if (migrationManager != null) migrationManager.addSourceMigrator(new HotRodSourceMigrator(cache))
    }
 
    private[hotrod] def getAddressCache = addressCache

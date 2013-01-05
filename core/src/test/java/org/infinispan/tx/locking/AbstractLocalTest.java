@@ -27,6 +27,7 @@ import org.infinispan.test.SingleCacheManagerTest;
 import org.infinispan.transaction.tm.DummyTransaction;
 import org.infinispan.transaction.tm.DummyTransactionManager;
 import org.infinispan.transaction.tm.DummyXid;
+import org.testng.annotations.Test;
 
 import javax.transaction.SystemException;
 import javax.transaction.xa.XAException;
@@ -38,6 +39,7 @@ import java.util.Map;
  * @author Mircea Markus
  * @since 5.1
  */
+@Test(groups = "functional")
 public abstract class AbstractLocalTest extends SingleCacheManagerTest {
 
    public void testPut() throws Exception {

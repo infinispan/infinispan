@@ -33,6 +33,8 @@ import org.infinispan.context.NonTransactionalInvocationContextContainer;
 import org.infinispan.context.TransactionalInvocationContextContainer;
 import org.infinispan.distribution.L1Manager;
 import org.infinispan.distribution.L1ManagerImpl;
+import org.infinispan.eviction.ActivationManager;
+import org.infinispan.eviction.ActivationManagerImpl;
 import org.infinispan.eviction.EvictionManager;
 import org.infinispan.eviction.EvictionManagerImpl;
 import org.infinispan.eviction.PassivationManager;
@@ -65,7 +67,8 @@ import static org.infinispan.util.Util.getInstance;
  * @since 4.0
  */
 @DefaultFactoryFor(classes = {CacheNotifier.class, CommandsFactory.class,
-                              CacheLoaderManager.class, InvocationContextContainer.class, PassivationManager.class,
+                              CacheLoaderManager.class, InvocationContextContainer.class,
+                              PassivationManager.class, ActivationManager.class,
                               BatchContainer.class, EvictionManager.class,
                               TransactionCoordinator.class, RecoveryAdminOperations.class, StateTransferLock.class,
                               ClusteringDependentLogic.class, LockContainer.class,
@@ -97,6 +100,8 @@ public class EmptyConstructorNamedCacheFactory extends AbstractNamedCacheCompone
             return (T) new CacheLoaderManagerImpl();
          } else if (componentType.equals(PassivationManager.class)) {
             return (T) new PassivationManagerImpl();
+         } else if (componentType.equals(ActivationManager.class)) {
+            return (T) new ActivationManagerImpl();
          } else if (componentType.equals(BatchContainer.class)) {
             return (T) new BatchContainer();
          } else if (componentType.equals(TransactionCoordinator.class)) {

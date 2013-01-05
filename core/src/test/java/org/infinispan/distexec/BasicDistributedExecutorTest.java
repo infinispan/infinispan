@@ -24,6 +24,8 @@ package org.infinispan.distexec;
 
 import org.infinispan.Cache;
 import org.infinispan.config.Configuration;
+import org.infinispan.configuration.cache.CacheMode;
+import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.test.AbstractCacheTest;
@@ -86,6 +88,24 @@ public class BasicDistributedExecutorTest extends AbstractCacheTest {
       }
    }
 
+   public void testDistributedExecutorWithPassedThreadExecutor() throws ExecutionException, InterruptedException {
+      Configuration config = TestCacheManagerFactory.getDefaultConfiguration(true, Configuration.CacheMode.REPL_SYNC);
+      EmbeddedCacheManager cacheManager = TestCacheManagerFactory.createClusteredCacheManager(config);
+      DistributedExecutorService des = null;
+      try {
+         Cache<Object, Object> cache = cacheManager.getCache();
+
+         ExecutorService service = new WithinThreadExecutor();
+         des = new DefaultExecutorService(cache, service);
+
+         Future<Integer> future = des.submit(new SimpleCallable());
+         Integer r = future.get();
+         assert r == 1;
+      } finally {
+         TestingUtil.killCacheManagers(cacheManager);
+      }
+   }
+
    @Test(expectedExceptions = { IllegalStateException.class })
    public void testStoppedCacheForDistributedExecutor() {
       Configuration config = TestCacheManagerFactory.getDefaultConfiguration(true, Configuration.CacheMode.REPL_SYNC);
@@ -109,6 +129,49 @@ public class BasicDistributedExecutorTest extends AbstractCacheTest {
          des.shutdown();
          assert des.isShutdown();
          assert des.isTerminated();
+      } finally {
+         TestingUtil.killCacheManagers(cacheManager);
+      }
+   }
+
+   public void testDistributedExecutorRealShutdown() {
+      Configuration config = TestCacheManagerFactory.getDefaultConfiguration(true, Configuration.CacheMode.REPL_SYNC);
+      EmbeddedCacheManager cacheManager = TestCacheManagerFactory.createClusteredCacheManager(config);
+      DistributedExecutorService des = null;
+      ExecutorService service = null;
+      try {
+         Cache<Object, Object> cache = cacheManager.getCache();
+         service = new WithinThreadExecutor();
+
+         des = new DefaultExecutorService(cache, service);
+
+         des.shutdown();
+
+         assert des.isShutdown();
+         assert des.isTerminated();
+         assert !service.isShutdown();
+      } finally {
+         TestingUtil.killCacheManagers(cacheManager);
+         service.shutdown();
+      }
+   }
+
+   public void testDistributedExecutorRealShutdownWithOwnership() {
+      Configuration config = TestCacheManagerFactory.getDefaultConfiguration(true, Configuration.CacheMode.REPL_SYNC);
+      EmbeddedCacheManager cacheManager = TestCacheManagerFactory.createClusteredCacheManager(config);
+      DistributedExecutorService des = null;
+      ExecutorService service = null;
+      try {
+         Cache<Object, Object> cache = cacheManager.getCache();
+         service = new WithinThreadExecutor();
+
+         des = new DefaultExecutorService(cache, service, true);
+
+         des.shutdown();
+
+         assert des.isShutdown();
+         assert des.isTerminated();
+         assert service.isShutdown();
       } finally {
          TestingUtil.killCacheManagers(cacheManager);
       }
@@ -281,7 +344,6 @@ public class BasicDistributedExecutorTest extends AbstractCacheTest {
       }
    }
 
-   @Test(expectedExceptions = ExecutionException.class)
    public void testDistributedCallableEmptyFailoverPolicy() throws Exception {
       Configuration config = TestCacheManagerFactory.getDefaultConfiguration(true, Configuration.CacheMode.REPL_SYNC);
       EmbeddedCacheManager cacheManager = TestCacheManagerFactory.createClusteredCacheManager(config);
@@ -302,13 +364,15 @@ public class BasicDistributedExecutorTest extends AbstractCacheTest {
          Future<Integer> f = des.submit(task);
 
          f.get();
+      } catch (ExecutionException e) {
+         // Verify that the distributed executor didn't wrap the exception in too many extra exceptions.
+         AssertJUnit.assertTrue("Wrong exception: " + e, e.getCause() instanceof ArithmeticException);
       } finally {
          des.shutdownNow();
          TestingUtil.killCacheManagers(cacheManager);
       }
    }
 
-   @Test(expectedExceptions = ExecutionException.class)
    public void testDistributedCallableRandomFailoverPolicy() throws Exception {
       Configuration config = TestCacheManagerFactory.getDefaultConfiguration(true, Configuration.CacheMode.REPL_SYNC);
       EmbeddedCacheManager cacheManager = TestCacheManagerFactory.createClusteredCacheManager(config);
@@ -333,13 +397,18 @@ public class BasicDistributedExecutorTest extends AbstractCacheTest {
          Future<Integer> val = des.submit(task, new String[] {"key1"});
 
          val.get();
-      } finally {
+         throw new IllegalStateException("Should have raised exception");
+      } catch (ExecutionException e){
+         // The failover policy throws an IllegalStateException because there are no nodes to retry on.
+         // Verify that the distributed executor didn't wrap the exception in too many extra exceptions.
+         AssertJUnit.assertTrue("Wrong exception: " + e, e.getCause() instanceof IllegalStateException);
+      }
+      finally {
          des.shutdownNow();
          TestingUtil.killCacheManagers(cacheManager);
       }
    }
 
-   @Test(expectedExceptions = ExecutionException.class)
    public void testDistributedCallableRandomFailoverPolicyWith2Nodes() throws Exception {
       Configuration config = TestCacheManagerFactory.getDefaultConfiguration(true, Configuration.CacheMode.REPL_SYNC);
       EmbeddedCacheManager cacheManager = TestCacheManagerFactory.createClusteredCacheManager(config);
@@ -366,13 +435,76 @@ public class BasicDistributedExecutorTest extends AbstractCacheTest {
 
          Future<Integer> val = des.submit(task, new String[] {"key1"});
          val.get();
-      } finally {
+         throw new IllegalStateException("Should have thrown exception");
+      }  catch (Exception e){
+         assert e instanceof ExecutionException;
+         ExecutionException ee = (ExecutionException)e;
+         boolean duplicateEEInChain = ee.getCause() instanceof ExecutionException;
+         AssertJUnit.assertEquals(false, duplicateEEInChain);
+      }
+      finally {
          des.shutdownNow();
          TestingUtil.killCacheManagers(cacheManager, cacheManager1);
       }
    }
 
-   @Test(expectedExceptions = ExecutionException.class)
+   public void testBasicTargetLocalDistributedCallableWithoutAnyTimeout() throws Exception {
+      ConfigurationBuilder confBuilder = getDefaultClusteredCacheConfig(CacheMode.DIST_SYNC, false);
+      confBuilder.clustering().sync().replTimeout(0L);
+      EmbeddedCacheManager cacheManager = TestCacheManagerFactory.createClusteredCacheManager(confBuilder);
+      EmbeddedCacheManager cacheManager1 = TestCacheManagerFactory.createClusteredCacheManager(confBuilder);
+
+      Cache<Object, Object> cache1 = cacheManager.getCache();
+      Cache<Object, Object> cache2 = cacheManager1.getCache();
+      DistributedExecutorService des = null;
+      try {
+         // initiate task from cache1 and execute on same node
+         des = new DefaultExecutorService(cache1);
+         Address target = cache1.getAdvancedCache().getRpcManager().getAddress();
+
+         DistributedTaskBuilder builder = des
+               .createDistributedTaskBuilder(new DistributedExecutorTest.SleepingSimpleCallable());
+
+         Future<Integer> future = des.submit(target, builder.build());
+
+         AssertJUnit.assertEquals((Integer) 1, future.get());
+      } catch(Exception ex) {
+         ex.printStackTrace();
+      }finally {
+         des.shutdown();
+         TestingUtil.killCacheManagers(cacheManager, cacheManager1);
+      }
+   }
+
+   public void testBasicTargetRemoteDistributedCallableWithoutAnyTimeout() throws Exception {
+      ConfigurationBuilder confBuilder = getDefaultClusteredCacheConfig(CacheMode.DIST_SYNC, false);
+      confBuilder.clustering().sync().replTimeout(0L);
+
+      EmbeddedCacheManager cacheManager = TestCacheManagerFactory.createClusteredCacheManager(confBuilder);
+      EmbeddedCacheManager cacheManager1 = TestCacheManagerFactory.createClusteredCacheManager(confBuilder);
+
+      Cache<Object, Object> cache1 = cacheManager.getCache();
+      Cache<Object, Object> cache2 = cacheManager1.getCache();
+      DistributedExecutorService des = null;
+      try {
+         // initiate task from cache1 and execute on same node
+         des = new DefaultExecutorService(cache1);
+         Address target = cache2.getAdvancedCache().getRpcManager().getAddress();
+
+         DistributedTaskBuilder builder = des
+               .createDistributedTaskBuilder(new DistributedExecutorTest.SleepingSimpleCallable());
+
+         Future<Integer> future = des.submit(target, builder.build());
+
+         AssertJUnit.assertEquals((Integer) 1, future.get());
+      } catch(Exception ex) {
+         ex.printStackTrace();
+      }finally {
+         des.shutdown();
+         TestingUtil.killCacheManagers(cacheManager, cacheManager1);
+      }
+   }
+
    public void testDistributedCallableCustomFailoverPolicy() throws Exception {
       Configuration config = TestCacheManagerFactory.getDefaultConfiguration(true, Configuration.CacheMode.REPL_SYNC);
       EmbeddedCacheManager cacheManager = TestCacheManagerFactory.createClusteredCacheManager(config);
@@ -407,7 +539,14 @@ public class BasicDistributedExecutorTest extends AbstractCacheTest {
 
          Future<Integer> val = des.submit(task, new String[] {"key1"});
          val.get();
-      } finally {
+         throw new IllegalStateException("Should have thrown exception");
+      } catch (Exception e) {
+         assert e instanceof ExecutionException;
+         ExecutionException ee = (ExecutionException) e;
+         boolean duplicateEEInChain = ee.getCause() instanceof ExecutionException;
+         AssertJUnit.assertEquals(false, duplicateEEInChain);
+      }
+      finally {
          des.shutdownNow();
          TestingUtil.killCacheManagers(cacheManager);
       }

@@ -36,6 +36,7 @@ import org.testng.annotations.AfterClass;
 import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.BeforeMethod;
+import org.testng.annotations.Test;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -45,6 +46,7 @@ import java.util.Map;
 /**
  * @author Mircea Markus
  */
+@Test (groups = "xsite")
 public abstract class AbstractXSiteTest extends AbstractCacheTest {
 
    List<TestSite> sites = new ArrayList<TestSite>();

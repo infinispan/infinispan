@@ -28,8 +28,11 @@ import org.infinispan.client.hotrod.impl.transport.tcp.RoundRobinBalancingStrate
 import org.infinispan.configuration.cache.AbstractStoreConfigurationBuilder;
 import org.infinispan.configuration.cache.LoadersConfigurationBuilder;
 import org.infinispan.loaders.remote.RemoteCacheStore;
+import org.infinispan.loaders.remote.logging.Log;
+import org.infinispan.loaders.remote.wrapper.EntryWrapper;
 import org.infinispan.marshall.Marshaller;
 import org.infinispan.util.TypedProperties;
+import org.infinispan.util.logging.LogFactory;
 
 /**
  * RemoteCacheStoreConfigurationBuilder. Configures a {@link RemoteCacheStore}
@@ -40,11 +43,14 @@ import org.infinispan.util.TypedProperties;
 public class RemoteCacheStoreConfigurationBuilder extends
       AbstractStoreConfigurationBuilder<RemoteCacheStoreConfiguration, RemoteCacheStoreConfigurationBuilder> implements
       RemoteCacheStoreConfigurationChildBuilder<RemoteCacheStoreConfigurationBuilder> {
+   private static final Log log = LogFactory.getLog(RemoteCacheStoreConfigurationBuilder.class, Log.class);
    private final ExecutorFactoryConfigurationBuilder asyncExecutorFactory;
    private String balancingStrategy = RoundRobinBalancingStrategy.class.getName();
    private final ConnectionPoolConfigurationBuilder connectionPool;
    private long connectionTimeout = ConfigurationProperties.DEFAULT_CONNECT_TIMEOUT;
+   private EntryWrapper<?, ?> entryWrapper;
    private boolean forceReturnValues;
+   private boolean hotRodWrapping;
    private int keySizeEstimate = ConfigurationProperties.DEFAULT_KEY_SIZE;
    private String marshaller;
    private boolean pingOnStartup = true;
@@ -91,8 +97,20 @@ public class RemoteCacheStoreConfigurationBuilder extends
    }
 
    @Override
+   public RemoteCacheStoreConfigurationBuilder entryWrapper(EntryWrapper<?, ?> entryWrapper) {
+      this.entryWrapper = entryWrapper;
+      return this;
+   }
+
+   @Override
    public RemoteCacheStoreConfigurationBuilder forceReturnValues(boolean forceReturnValues) {
       this.forceReturnValues = forceReturnValues;
+      return this;
+   }
+
+   @Override
+   public RemoteCacheStoreConfigurationBuilder hotRodWrapping(boolean hotRodWrapping) {
+      this.hotRodWrapping = hotRodWrapping;
       return this;
    }
 
@@ -182,7 +200,7 @@ public class RemoteCacheStoreConfigurationBuilder extends
          remoteServers.add(server.create());
       }
       return new RemoteCacheStoreConfiguration(asyncExecutorFactory.create(), balancingStrategy,
-            connectionPool.create(), connectionTimeout, forceReturnValues, keySizeEstimate, marshaller, pingOnStartup,
+            connectionPool.create(), connectionTimeout, entryWrapper, forceReturnValues, hotRodWrapping, keySizeEstimate, marshaller, pingOnStartup,
             protocolVersion, rawValues, remoteCacheName, remoteServers, socketTimeout, tcpNoDelay, transportFactory,
             valueSizeEstimate, purgeOnStartup, purgeSynchronously, purgerThreads, fetchPersistentState,
             ignoreModifications, TypedProperties.toTypedProperties(properties), async.create(), singletonStore.create());
@@ -194,7 +212,9 @@ public class RemoteCacheStoreConfigurationBuilder extends
       this.balancingStrategy = template.balancingStrategy();
       this.connectionPool.read(template.connectionPool());
       this.connectionTimeout = template.connectionTimeout();
+      this.entryWrapper = template.entryWrapper();
       this.forceReturnValues = template.forceReturnValues();
+      this.hotRodWrapping = template.hotRodWrapping();
       this.keySizeEstimate = template.keySizeEstimate();
       this.marshaller = template.marshaller();
       this.pingOnStartup = template.pingOnStartup();
@@ -220,4 +240,18 @@ public class RemoteCacheStoreConfigurationBuilder extends
       return this;
    }
 
+   @Override
+   public void validate() {
+      this.connectionPool.validate();
+      this.asyncExecutorFactory.validate();
+      for(RemoteServerConfigurationBuilder server : servers) {
+         server.validate();
+      }
+
+      if (hotRodWrapping) {
+         if (marshaller != null || entryWrapper != null) {
+            throw log.cannotEnableHotRodWrapping();
+         }
+      }
+   }
 }

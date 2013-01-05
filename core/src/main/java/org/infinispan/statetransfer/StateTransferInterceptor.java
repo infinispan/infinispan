@@ -186,24 +186,25 @@ public class StateTransferInterceptor extends CommandInterceptor {   //todo [ani
    private Object handleTxCommand(TxInvocationContext ctx, TransactionBoundaryCommand command) throws Throwable {
       // For local commands we may not have a GlobalTransaction yet
       Address address = ctx.isOriginLocal() ? ctx.getOrigin() : ctx.getGlobalTransaction().getAddress();
-      return handleTopologyAffectedCommand(ctx, command, address);
+      return handleTopologyAffectedCommand(ctx, command, address, true);
    }
 
    private Object handleWriteCommand(InvocationContext ctx, WriteCommand command) throws Throwable {
-      return handleTopologyAffectedCommand(ctx, command, ctx.getOrigin());
+      // ISPN-2473 - forward non-transactional commands asynchronously
+      return handleTopologyAffectedCommand(ctx, command, ctx.getOrigin(), false);
    }
 
    @Override
    protected Object handleDefault(InvocationContext ctx, VisitableCommand command) throws Throwable {
       if (command instanceof TopologyAffectedCommand) {
-         return handleTopologyAffectedCommand(ctx, command, ctx.getOrigin());
+         return handleTopologyAffectedCommand(ctx, command, ctx.getOrigin(), true);
       } else {
          return invokeNextInterceptor(ctx, command);
       }
    }
 
    private Object handleTopologyAffectedCommand(InvocationContext ctx, VisitableCommand command,
-                                                Address origin) throws Throwable {
+                                                Address origin, boolean sync) throws Throwable {
       log.tracef("handleTopologyAffectedCommand for command %s", command);
 
       if (isLocalOnly(ctx, command)) {
@@ -221,7 +222,7 @@ public class StateTransferInterceptor extends CommandInterceptor {   //todo [ani
       }
 
       if (isNonTransactionalWrite || isTransactionalAndNotRolledBack) {
-         stateTransferManager.forwardCommandIfNeeded(((TopologyAffectedCommand)command), getAffectedKeys(ctx, command), origin, true);
+         stateTransferManager.forwardCommandIfNeeded(((TopologyAffectedCommand)command), getAffectedKeys(ctx, command), origin, sync);
       }
 
       return localResult;

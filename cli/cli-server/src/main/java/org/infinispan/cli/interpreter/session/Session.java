@@ -18,7 +18,11 @@
  */
 package org.infinispan.cli.interpreter.session;
 
+import java.util.Collection;
+
 import org.infinispan.Cache;
+import org.infinispan.cli.interpreter.codec.Codec;
+import org.infinispan.cli.interpreter.codec.CodecException;
 import org.infinispan.manager.EmbeddedCacheManager;
 
 public interface Session {
@@ -68,15 +72,35 @@ public interface Session {
 
    /**
     * Returns the time the session was last accessed
-    *
-    * @return
     */
    long getTimestamp();
 
    /**
     * Returns the unique id of this session
-    *
-    * @return
     */
    String getId();
+
+
+   /**
+    * Sets the codec to use for encoding/decoding keys/values
+    *
+    * @param encoding the name of the codec to use
+    */
+   void setCodec(String encoding) throws CodecException;
+
+   /**
+    * Returns the list of available key/value codecs
+    */
+   Collection<Codec> getCodecs();
+
+   /**
+    * Returns the currently active codec used to encode/decode keys/values
+    */
+   Codec getCodec();
+
+   /**
+    * Returns a specific codec
+    * @throws CodecException
+    */
+   Codec getCodec(String parameter) throws CodecException;
 }

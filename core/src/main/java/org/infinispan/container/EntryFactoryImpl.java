@@ -133,6 +133,7 @@ public class EntryFactoryImpl implements EntryFactory {
          InternalCacheEntry ice = getFromContainer(key);
          if (ice != null) {
             mvccEntry = wrapInternalCacheEntryForPut(ctx, key, ice);
+            mvccEntry.setRemoved(true);
          }
       }
       if (mvccEntry == null) {

@@ -26,11 +26,7 @@ import static java.util.concurrent.TimeUnit.MILLISECONDS;
 import static org.infinispan.context.Flag.*;
 import static org.infinispan.factories.KnownComponentNames.CACHE_MARSHALLER;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 import java.util.concurrent.TimeUnit;
 
 import javax.transaction.Transaction;
@@ -204,6 +200,21 @@ public class CacheLoaderManagerImpl implements CacheLoaderManager {
       }
    }
 
+   @Override
+   public <T extends CacheLoader> List<T> getCacheLoaders(Class<T> loaderClass) {
+      List<T> loaders;
+      if (loader instanceof ChainingCacheStore) {
+         ChainingCacheStore ccs = (ChainingCacheStore) loader;
+         loaders = ccs.getCacheLoaders(loaderClass);
+      } else if (loaderClass.isInstance(loader)) {
+         loaders = Collections.singletonList((T)loader);
+      } else {
+         loaders = Collections.emptyList();
+      }
+
+      return loaders;
+   }
+
    /**
     * Performs a preload on the cache based on the cache loader preload configs used when configuring the cache.
     */
@@ -226,7 +237,7 @@ public class CacheLoaderManagerImpl implements CacheLoaderManager {
             }
 
             List<Flag> flags = new ArrayList(Arrays.asList(
-                  CACHE_MODE_LOCAL, SKIP_OWNERSHIP_CHECK, IGNORE_RETURN_VALUES, SKIP_CACHE_STORE));
+                  CACHE_MODE_LOCAL, SKIP_OWNERSHIP_CHECK, IGNORE_RETURN_VALUES, SKIP_CACHE_STORE, SKIP_LOCKING));
 
             if (clmConfig.shared() || !(loader instanceof ChainingCacheStore)) {
                flags.add(SKIP_CACHE_STORE);

@@ -550,6 +550,10 @@ public class RemoteCacheManager implements BasicCacheContainer {
    private void setMarshaller(Marshaller marshaller) {
       this.marshaller = marshaller;
    }
+
+   public Marshaller getMarshaller() {
+      return marshaller;
+   }
 }
 
 class RemoteCacheHolder {

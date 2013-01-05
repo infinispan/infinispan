@@ -65,7 +65,7 @@ public class ReplSyncDistributedExecutorTest extends DistributedExecutorTest {
     */
    public void testTaskCancellation() throws Exception {
       DistributedExecutorService des = createDES(getCache());
-      List<Address> l = getCache().getAdvancedCache().getRpcManager().getTransport().getMembers();
+      List<Address> l = getCache().getAdvancedCache().getRpcManager().getMembers();
       List<Address> members = new ArrayList<Address>(l);
       members.remove(getCache().getAdvancedCache().getRpcManager().getAddress());
 
@@ -89,6 +89,10 @@ public class ReplSyncDistributedExecutorTest extends DistributedExecutorTest {
       assert ReplSyncDistributedExecutorTestCancelCounter.get() >=2; //incremented means indeed canceled
       assert future.isCancelled();
       assert future.isDone();
+
+      //Calling the cancel one more time.
+      boolean canceled = future.cancel(true);
+      assert !canceled;
    }
    static class MyLongRunningCallable implements Callable<Integer>, Serializable {
 

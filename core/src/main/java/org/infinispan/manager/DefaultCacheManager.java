@@ -68,7 +68,6 @@ import org.rhq.helpers.pluginAnnotations.agent.Parameter;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;

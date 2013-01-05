@@ -104,7 +104,6 @@ public class SitesConfigurationBuilder extends AbstractConfigurationChildBuilder
          backups.add(bcb);
       }
       this.disableBackups = template.disableBackups();
-      this.inUseBackupSites.addAll(template.inUseBackupSites());
       return this;
    }
 
@@ -123,12 +122,5 @@ public class SitesConfigurationBuilder extends AbstractConfigurationChildBuilder
    public SitesConfigurationBuilder addInUseBackupSite(String site) {
       inUseBackupSites.add(site);
       return this;
-   }
-
-   /**
-    * @see #backupSites(String)
-    */
-   public Set<String> inUseBackupSites() {
-      return inUseBackupSites;
    }
 }

@@ -18,11 +18,20 @@
  */
 package org.infinispan.cli.commands.server;
 
+import java.util.Arrays;
+import java.util.List;
+
 public class Replace extends AbstractServerCommand {
+   private final static List<String> OPTIONS = Arrays.asList("--encoding=");
 
    @Override
    public String getName() {
       return "replace";
+   }
+
+   @Override
+   public List<String> getOptions() {
+      return OPTIONS;
    }
 
    @Override

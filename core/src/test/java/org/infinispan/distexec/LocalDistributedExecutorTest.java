@@ -27,7 +27,6 @@ import org.testng.annotations.Test;
 @Test(groups = "functional", testName = "distexec.LocalDistributedExecutorTest")
 public class LocalDistributedExecutorTest extends MultipleCacheManagersTest {
    
-   public static String CACHE_NAME = "DistributedExecutorTest-DIST_SYNC";
    private DistributedExecutorService cleanupService;
    
    public LocalDistributedExecutorTest() {
@@ -54,7 +53,7 @@ public class LocalDistributedExecutorTest extends MultipleCacheManagersTest {
    }
 
    protected String cacheName() {
-      return CACHE_NAME;
+      return "LocalDistributedExecutorTest";
    }
 
    protected Cache<Object, Object> getCache() {

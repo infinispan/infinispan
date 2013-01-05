@@ -23,13 +23,18 @@
 package org.infinispan.container;
 
 import net.jcip.annotations.ThreadSafe;
+import org.infinispan.CacheException;
 import org.infinispan.container.entries.InternalCacheEntry;
 import org.infinispan.container.versioning.EntryVersion;
+import org.infinispan.eviction.ActivationManager;
 import org.infinispan.eviction.EvictionManager;
 import org.infinispan.eviction.EvictionStrategy;
 import org.infinispan.eviction.EvictionThreadPolicy;
 import org.infinispan.eviction.PassivationManager;
 import org.infinispan.factories.annotations.Inject;
+import org.infinispan.loaders.CacheLoaderException;
+import org.infinispan.loaders.CacheLoaderManager;
+import org.infinispan.loaders.CacheStore;
 import org.infinispan.util.Immutables;
 import org.infinispan.util.concurrent.BoundedConcurrentHashMap;
 import org.infinispan.util.concurrent.BoundedConcurrentHashMap.Eviction;
@@ -64,6 +69,9 @@ public class DefaultDataContainer implements DataContainer {
    final protected DefaultEvictionListener evictionListener;
    private EvictionManager evictionManager;
    private PassivationManager passivator;
+   private ActivationManager activator;
+   private CacheLoaderManager clm;
+
 
    public DefaultDataContainer(int concurrencyLevel) {
       entries = ConcurrentMapFactory.makeConcurrentMap(128, concurrencyLevel);
@@ -99,10 +107,12 @@ public class DefaultDataContainer implements DataContainer {
 
    @Inject
    public void initialize(EvictionManager evictionManager, PassivationManager passivator,
-         InternalEntryFactory entryFactory) {
+         InternalEntryFactory entryFactory, ActivationManager activator, CacheLoaderManager clm) {
       this.evictionManager = evictionManager;
       this.passivator = passivator;
       this.entryFactory = entryFactory;
+      this.activator = activator;
+      this.clm = clm;
    }
 
    public static DataContainer boundedDataContainer(int concurrencyLevel, int maxEntries,
@@ -222,6 +232,21 @@ public class DefaultDataContainer implements DataContainer {
          passivator.passivate(entry);
       }
 
+      @Override
+      public void onEntryActivated(Object key) {
+         activator.activate(key);
+      }
+
+      @Override
+      public void onEntryRemoved(Object key) {
+         try {
+            CacheStore cacheStore = clm.getCacheStore();
+            if (cacheStore != null)
+               cacheStore.remove(key);
+         } catch (CacheLoaderException e) {
+            throw new CacheException(e);
+         }
+      }
    }
 
    private static class ImmutableEntryIterator extends EntryIterator {

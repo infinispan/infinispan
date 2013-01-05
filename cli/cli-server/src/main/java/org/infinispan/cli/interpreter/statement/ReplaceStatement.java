@@ -18,12 +18,17 @@
  */
 package org.infinispan.cli.interpreter.statement;
 
+import java.util.List;
 import java.util.concurrent.TimeUnit;
 
 import org.infinispan.Cache;
+import org.infinispan.cli.interpreter.codec.Codec;
+import org.infinispan.cli.interpreter.logging.Log;
 import org.infinispan.cli.interpreter.result.EmptyResult;
 import org.infinispan.cli.interpreter.result.Result;
+import org.infinispan.cli.interpreter.result.StatementException;
 import org.infinispan.cli.interpreter.session.Session;
+import org.infinispan.util.logging.LogFactory;
 
 /**
  * Replaces an existing entry in the cache
@@ -32,17 +37,21 @@ import org.infinispan.cli.interpreter.session.Session;
  * @since 5.2
  */
 public class ReplaceStatement implements Statement {
+   private static final Log log = LogFactory.getLog(ReplaceStatement.class, Log.class);
+   private enum Options { CODEC };
    final KeyData keyData;
    final Object oldValue;
    final Object newValue;
    final Long expires;
    final Long maxIdle;
+   final private List<Option> options;
 
-   public ReplaceStatement(final KeyData key, final Object newValue, final ExpirationData exp) {
-      this(key, null, newValue, exp);
+   public ReplaceStatement(final List<Option> options, final KeyData key, final Object newValue, final ExpirationData exp) {
+      this(options, key, null, newValue, exp);
    }
 
-   public ReplaceStatement(final KeyData key, final Object oldValue, final Object newValue, final ExpirationData exp) {
+   public ReplaceStatement(final List<Option> options, final KeyData key, final Object oldValue, final Object newValue, final ExpirationData exp) {
+      this.options = options;
       this.keyData = key;
       this.oldValue = oldValue;
       this.newValue = newValue;
@@ -56,25 +65,43 @@ public class ReplaceStatement implements Statement {
    }
 
    @Override
-   public Result execute(Session session) {
+   public Result execute(Session session) throws StatementException {
       Cache<Object, Object> cache = session.getCache(keyData.getCacheName());
+      Codec codec = session.getCodec();
+      if (options.size() > 0) {
+         for (Option option : options) {
+            switch (option.toEnum(Options.class)) {
+            case CODEC: {
+               if(option.getParameter()==null) {
+                  throw log.missingOptionParameter(option.getName());
+               } else {
+                  codec = session.getCodec(option.getParameter());
+               }
+               break;
+            }
+            }
+         }
+      }
+      Object encodedKey = codec.encodeKey(keyData.getKey());
+      Object encodedOldValue = codec.encodeValue(oldValue);
+      Object encodedNewValue = codec.encodeValue(newValue);
       if (expires == null) {
          if(oldValue!=null) {
-            cache.replace(keyData.getKey(), oldValue, newValue);
+            cache.replace(encodedKey, encodedOldValue, encodedNewValue);
          } else {
-            cache.replace(keyData.getKey(), newValue);
+            cache.replace(encodedKey, encodedNewValue);
          }
       } else if (maxIdle == null) {
          if(oldValue!=null) {
-            cache.replace(keyData.getKey(), oldValue, newValue, expires, TimeUnit.MILLISECONDS);
+            cache.replace(encodedKey, encodedOldValue, encodedNewValue, expires, TimeUnit.MILLISECONDS);
          } else {
-            cache.replace(keyData.getKey(), newValue, expires, TimeUnit.MILLISECONDS);
+            cache.replace(encodedKey, encodedNewValue, expires, TimeUnit.MILLISECONDS);
          }
       } else {
          if(oldValue!=null) {
-            cache.replace(keyData.getKey(), oldValue, newValue, expires, TimeUnit.MILLISECONDS, maxIdle, TimeUnit.MILLISECONDS);
+            cache.replace(encodedKey, encodedOldValue, encodedNewValue, expires, TimeUnit.MILLISECONDS, maxIdle, TimeUnit.MILLISECONDS);
          } else {
-            cache.replace(keyData.getKey(), newValue, expires, TimeUnit.MILLISECONDS, maxIdle, TimeUnit.MILLISECONDS);
+            cache.replace(encodedKey, encodedNewValue, expires, TimeUnit.MILLISECONDS, maxIdle, TimeUnit.MILLISECONDS);
          }
       }
 

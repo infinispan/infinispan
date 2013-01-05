@@ -42,7 +42,7 @@ public class RemoveOperation extends AbstractKeyOperation<byte[]> {
 
    public RemoveOperation(Codec codec, TransportFactory transportFactory,
             byte[] key, byte[] cacheName, AtomicInteger topologyId, Flag[] flags) {
-      super(codec, transportFactory, key, cacheName, topologyId, flags);
+      super(codec, transportFactory, key, cacheName, true, topologyId, flags);
    }
 
    @Override

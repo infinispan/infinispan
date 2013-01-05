@@ -71,23 +71,17 @@ public class ReplaceCommand extends AbstractDataWriteCommand {
       MVCCEntry e = (MVCCEntry) ctx.lookupEntry(key);
       if (e != null) {
          if (ctx.isOriginLocal()) {
-        	 	//ISPN-514
-            if (e.isNull() || e.getValue() == null) return returnValue(null, false, ctx);    
+            //ISPN-514
+            if (e.isNull() || e.getValue() == null) return returnValue(null, false, ctx);
+         }
 
-            if (oldValue == null || oldValue.equals(e.getValue())) {
-               Object old = e.setValue(newValue);
-               e.setLifespan(lifespanMillis);
-               e.setMaxIdle(maxIdleTimeMillis);
-               return returnValue(old, true, ctx);
-            }
-            return returnValue(null, false, ctx);
-         } else {
-            // for remotely originating calls, this doesn't check the status of what is under the key at the moment
+         if (oldValue == null || oldValue.equals(e.getValue())) {
             Object old = e.setValue(newValue);
             e.setLifespan(lifespanMillis);
             e.setMaxIdle(maxIdleTimeMillis);
             return returnValue(old, true, ctx);
          }
+         return returnValue(null, false, ctx);
       }
 
       return returnValue(null, false, ctx);
@@ -196,7 +190,8 @@ public class ReplaceCommand extends AbstractDataWriteCommand {
    @Override
    public String toString() {
       return "ReplaceCommand{" +
-            "oldValue=" + oldValue +
+            "key=" + key +
+            ", oldValue=" + oldValue +
             ", newValue=" + newValue +
             ", flags=" + flags +
             ", successful=" + successful +

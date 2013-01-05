@@ -62,7 +62,7 @@ public class DistSkipRemoteLookupTest extends BaseDistFunctionalTest {
       assertIsInContainerImmortal(c1, k1);
       assertIsInContainerImmortal(c2, k1);
       assertIsNotInL1(c3, k1);
-      if (l1CacheEnabled) assertIsInL1(c4, k1);
+      if (l1CacheEnabled) assertIsNotInL1(c4, k1);
    }
 
    public void testCorrectFunctionalityOnUnconditionalWrite() {

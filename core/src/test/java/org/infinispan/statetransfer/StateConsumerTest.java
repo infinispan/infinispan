@@ -104,18 +104,18 @@ public class StateConsumerTest {
       Configuration configuration = cb.build();
 
       // create list of 6 members
-      List<Address> members1 = new ArrayList<Address>();
-      for (int i = 0; i < 6; i++) {
-         members1.add(new TestAddress(i));
+      Address[] addresses = new Address[10];
+      for (int i = 0; i < 10; i++) {
+         addresses[i] = new TestAddress(i);
       }
-      List<Address> members2 = new ArrayList<Address>(members1);
-      members2.remove(new TestAddress(5));
-      members2.add(new TestAddress(6));
+      List<Address> members1 = Arrays.asList(addresses[0], addresses[1], addresses[2], addresses[3], addresses[4]);
+      List<Address> members2 = Arrays.asList(addresses[0], addresses[1], addresses[2], addresses[3]);
 
       // create CHes
       DefaultConsistentHashFactory chf = new DefaultConsistentHashFactory();
       DefaultConsistentHash ch1 = chf.create(new MurmurHash3(), 2, 4, members1);
-      DefaultConsistentHash ch2 = chf.updateMembers(ch1, members2);   //todo [anistor] it seems that address 6 is not used for un-owned segments
+      DefaultConsistentHash ch2 = chf.updateMembers(ch1, members2);
+      DefaultConsistentHash ch3 = chf.rebalance(ch2);
 
       log.debug(ch1);
       log.debug(ch2);
@@ -182,7 +182,7 @@ public class StateConsumerTest {
 
       // create state provider
       StateConsumerImpl stateConsumer = new StateConsumerImpl();
-      stateConsumer.init(cache, stateTransferManager, interceptorChain, icc, configuration, rpcManager,
+      stateConsumer.init(cache, stateTransferManager, interceptorChain, icc, configuration, rpcManager, null,
             commandsFactory, cacheLoaderManager, dataContainer, transactionTable, stateTransferLock);
       stateConsumer.start();
 
@@ -207,14 +207,13 @@ public class StateConsumerTest {
 
       assertFalse(stateConsumer.isStateTransferInProgress());
 
-      stateConsumer.onTopologyUpdate(new CacheTopology(1, ch1, ch1), false);
-
+      stateConsumer.onTopologyUpdate(new CacheTopology(1, ch2, null), false);
       assertTrue(stateConsumer.isStateTransferInProgress());
 
-      stateConsumer.onTopologyUpdate(new CacheTopology(2, ch1, ch2), true);
+      stateConsumer.onTopologyUpdate(new CacheTopology(2, ch2, ch3), true);
+      assertTrue(stateConsumer.isStateTransferInProgress());
 
       stateConsumer.stop();
-
       assertFalse(stateConsumer.isStateTransferInProgress());
    }
 }

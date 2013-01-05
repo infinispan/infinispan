@@ -46,9 +46,11 @@ public class BaseBackupInterceptor extends CommandInterceptor {
       LocalTransaction remoteTx = txTable.getLocalTransaction(gtx);
       return remoteTx != null && remoteTx.isFromRemoteSite();
    }
-   
+
    protected boolean shouldInvokeRemoteTxCommand(TxInvocationContext ctx) {
       // ISPN-2362: For backups, we should only replicate to the remote site if there are modifications to replay.
-      return ctx.isOriginLocal() && (ctx.hasModifications() );
+      boolean shouldBackupRemotely = ctx.isOriginLocal() && ctx.hasModifications();
+      getLog().tracef("Should backup remotely? %s", shouldBackupRemotely);
+      return shouldBackupRemotely;
    }
 }

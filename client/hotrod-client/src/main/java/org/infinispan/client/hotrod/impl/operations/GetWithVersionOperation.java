@@ -43,13 +43,14 @@ import org.infinispan.client.hotrod.logging.LogFactory;
  * @since 4.1
  */
 @Immutable
+@Deprecated
 public class GetWithVersionOperation extends AbstractKeyOperation<VersionedValue<byte[]>> {
 
    private static final Log log = LogFactory.getLog(GetWithVersionOperation.class);
 
    public GetWithVersionOperation(Codec codec, TransportFactory transportFactory,
             byte[] key, byte[] cacheName, AtomicInteger topologyId, Flag[] flags) {
-      super(codec, transportFactory, key, cacheName, topologyId, flags);
+      super(codec, transportFactory, key, cacheName, false, topologyId, flags);
    }
 
    @Override

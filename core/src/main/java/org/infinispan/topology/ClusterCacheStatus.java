@@ -27,6 +27,8 @@ import org.infinispan.distribution.ch.ConsistentHash;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.util.Immutables;
 import org.infinispan.util.InfinispanCollections;
+import org.infinispan.util.logging.Log;
+import org.infinispan.util.logging.LogFactory;
 
 /**
 * Keeps track of a cache's status: members, current/pending consistent hashes, and rebalance status
@@ -34,14 +36,18 @@ import org.infinispan.util.InfinispanCollections;
 * @author Dan Berindei
 * @since 5.2
 */
-class ClusterCacheStatus {
+public class ClusterCacheStatus {
+   private static final Log log = LogFactory.getLog(ClusterCacheStatus.class);
+   private static boolean trace = log.isTraceEnabled();
+
    private final String cacheName;
    private final CacheJoinInfo joinInfo;
    // Cache members, some of which may not have received state yet
    private volatile List<Address> members;
-   // Cache members that have not yet received state
+   // Cache members that have not yet received state. Always included in the members list.
    private volatile List<Address> joiners;
    // Cache topology. Its consistent hashes contain only members that did receive/are receiving state
+   // The members of both consistent hashes must be included in the members list.
    private volatile CacheTopology cacheTopology;
 
    private volatile RebalanceConfirmationCollector rebalanceStatus;
@@ -53,6 +59,7 @@ class ClusterCacheStatus {
       this.cacheTopology = new CacheTopology(-1, null, null);
       this.members = InfinispanCollections.emptyList();
       this.joiners = InfinispanCollections.emptyList();
+      if (trace) log.tracef("Cache %s initialized, join info is %s", cacheName, joinInfo);
    }
 
    public CacheJoinInfo getJoinInfo() {
@@ -85,6 +92,8 @@ class ClusterCacheStatus {
          } else {
             joiners = members;
          }
+         if (trace) log.tracef("Cache %s members list updated, members = %s, joiners = %s", cacheName,
+               members, joiners);
       }
    }
 
@@ -93,11 +102,16 @@ class ClusterCacheStatus {
     */
    public boolean addMember(Address joiner) {
       synchronized (this) {
-         if (members.contains(joiner))
+         if (members.contains(joiner)) {
+            if (trace) log.tracef("Trying to add node %s to cache %s, but it is already a member: " +
+                  "joiner = %s, members = %s", cacheName, members, joiners);
             return false;
+         }
 
          members = immutableAdd(members, joiner);
          joiners = immutableAdd(joiners, joiner);
+         if (trace) log.tracef("Added joiner %s to cache %s: members = %s, joiners = %s", joiner, cacheName,
+               members, joiners);
          return true;
       }
    }
@@ -107,11 +121,16 @@ class ClusterCacheStatus {
     */
    public boolean removeMember(Address leaver) {
       synchronized (this) {
-         if (!members.contains(leaver))
+         if (!members.contains(leaver)) {
+            if (trace) log.tracef("Trying to remove node %s from cache %s, but it is not a member: " +
+                  "members = %s", leaver, cacheName, members);
             return false;
+         }
 
          members = immutableRemove(members, leaver);
          joiners = immutableRemove(joiners, leaver);
+         if (trace) log.tracef("Removed node %s from cache %s: members = %s, joiners = %s", leaver,
+               cacheName, members, joiners);
          return true;
       }
    }
@@ -121,11 +140,16 @@ class ClusterCacheStatus {
     */
    public boolean updateClusterMembers(List<Address> newClusterMembers) {
       synchronized (this) {
-         if (newClusterMembers.containsAll(members))
+         if (newClusterMembers.containsAll(members)) {
+            if (trace) log.tracef("Cluster members updated for cache %s, no leavers detected: " +
+                  "cache members = %s", members, newClusterMembers);
             return false;
+         }
 
          members = immutableRetainAll(members, newClusterMembers);
          joiners = immutableRetainAll(joiners, newClusterMembers);
+         if (trace) log.tracef("Cluster members updated for cache %s: members = %s, joiners = %s", cacheName,
+               members, joiners);
          return true;
       }
    }
@@ -137,11 +161,17 @@ class ClusterCacheStatus {
    public void updateCacheTopology(CacheTopology newTopology) {
       synchronized (this) {
          this.cacheTopology = newTopology;
+         if (!members.containsAll(cacheTopology.getMembers())) {
+            throw new IllegalStateException(String.format("Trying to set a topology with invalid members " +
+                  "for cache %s: members = %s, topology = %s", cacheName, members, cacheTopology));
+         }
 
          // update the joiners list
          if (newTopology.getCurrentCH() != null) {
-            joiners = immutableRemoveAll(joiners, newTopology.getCurrentCH().getMembers());
+            joiners = immutableRemoveAll(members, newTopology.getCurrentCH().getMembers());
          }
+         if (trace) log.tracef("Cache %s topology updated: members = %s, joiners = %s, topology = %s",
+               cacheName, members, joiners, cacheTopology);
       }
    }
 
@@ -204,13 +234,11 @@ class ClusterCacheStatus {
       }
    }
 
-   public void endRebalance(CacheTopology newTopology) {
+   public void endRebalance() {
       synchronized (this) {
          if (rebalanceStatus == null) {
             throw new IllegalStateException("Can't end rebalance, there is no rebalance in progress");
          }
-
-         updateCacheTopology(newTopology);
          rebalanceStatus = null;
       }
    }
@@ -240,5 +268,14 @@ class ClusterCacheStatus {
       return Collections.unmodifiableList(result);
    }
 
-
+   @Override
+   public String toString() {
+      return "ClusterCacheStatus{" +
+            "cacheName='" + cacheName + '\'' +
+            ", members=" + members +
+            ", joiners=" + joiners +
+            ", cacheTopology=" + cacheTopology +
+            ", rebalanceStatus=" + rebalanceStatus +
+            '}';
+   }
 }

@@ -23,6 +23,7 @@ import org.infinispan.client.hotrod.impl.transport.TransportFactory;
 import org.infinispan.configuration.cache.StoreConfigurationChildBuilder;
 import org.infinispan.container.entries.InternalCacheEntry;
 import org.infinispan.loaders.remote.RemoteCacheStore;
+import org.infinispan.loaders.remote.wrapper.EntryWrapper;
 import org.infinispan.marshall.Marshaller;
 
 public interface RemoteCacheStoreConfigurationChildBuilder<S> extends StoreConfigurationChildBuilder<S> {
@@ -56,9 +57,20 @@ public interface RemoteCacheStoreConfigurationChildBuilder<S> extends StoreConfi
    RemoteCacheStoreConfigurationBuilder connectionTimeout(long connectionTimeout);
 
    /**
+    * Allows you to specify a custom {@link EntryWrapper} implementation to wrap cache entries
+    */
+   RemoteCacheStoreConfigurationBuilder entryWrapper(EntryWrapper<?, ?> entryWrapper);
+
+   /**
     * Whether or not to implicitly FORCE_RETURN_VALUE for all calls.
     */
    RemoteCacheStoreConfigurationBuilder forceReturnValues(boolean forceReturnValues);
+
+   /**
+    * Configures this RemoteCacheStore so that it enables all settings needed to create entries to be served
+    * by a HotRod endpoint, for example when performing rolling upgrades.
+    */
+   RemoteCacheStoreConfigurationBuilder hotRodWrapping(boolean hotRodWrapping);
 
    /**
     * The class name of the driver used for connecting to the database.

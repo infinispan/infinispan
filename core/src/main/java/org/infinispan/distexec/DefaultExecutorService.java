@@ -250,7 +250,7 @@ public class DefaultExecutorService extends AbstractExecutorService implements D
 
    protected List<Address> getMembers() {
       if (rpc != null) {
-         return rpc.getTransport().getMembers();
+         return rpc.getMembers();
       } else {
          return Collections.singletonList(getAddress());
       }
@@ -957,19 +957,26 @@ public class DefaultExecutorService extends AbstractExecutorService implements D
                try {
                   response = failoverExecution(e, timeout, unit);
                } catch (Exception failedOver) {
-                  throw new ExecutionException(failedOver);
+                  throw wrapIntoExecutionException(failedOver);
                }
             } else {
-               throw new ExecutionException(e);
+               throw wrapIntoExecutionException(e);
             }
          }
          return response;
       }
+      
+      protected ExecutionException wrapIntoExecutionException(Exception e){
+         if (e instanceof ExecutionException) {
+            return (ExecutionException) e;
+         } else {
+            return new ExecutionException(e);
+         }
+      }
 
 
       private V failoverExecution(final Exception cause, long timeout, TimeUnit unit)
-               throws ExecutionException {
-         V response = null;
+               throws Exception {
          final List<Address> executionCandidates = executionCandidates(getOwningTask());
          FailoverContext fc = new FailoverContext() {
             @Override
@@ -988,25 +995,16 @@ public class DefaultExecutorService extends AbstractExecutorService implements D
             }
 
             @Override
-            public Exception cause() {
+            public Throwable cause() {
                return cause;
             }
          };
 
-         try {
-            Address target = getOwningTask().getTaskFailoverPolicy().failover(fc);
-            DistributedTaskPart<V> part = createDistributedTaskPart(owningTask, distCommand,
-                     getInputKeys(), target, failedOverCount);
-            part.execute();
-            response = part.get(timeout, unit);
-            if (response == null)
-               throw new ExecutionException("Failover execution failed", new Exception(
-                        "Failover execution failed", cause));
-         } catch (Exception e2) {
-            throw new ExecutionException("Failover execution failed", new Exception(
-                     "Failover execution failed", e2));
-         }
-         return response;
+         Address target = getOwningTask().getTaskFailoverPolicy().failover(fc);
+         DistributedTaskPart<V> part = createDistributedTaskPart(owningTask, distCommand,
+                  getInputKeys(), target, failedOverCount);
+         part.execute();
+         return part.get(timeout, unit);
       }
 
       @Override

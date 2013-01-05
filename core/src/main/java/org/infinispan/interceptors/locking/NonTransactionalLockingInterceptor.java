@@ -24,7 +24,10 @@
 package org.infinispan.interceptors.locking;
 
 import org.infinispan.InvalidCacheUsageException;
+import org.infinispan.commands.FlagAffectedCommand;
 import org.infinispan.commands.read.GetKeyValueCommand;
+import org.infinispan.commands.write.ClearCommand;
+import org.infinispan.commands.write.DataWriteCommand;
 import org.infinispan.commands.write.EvictCommand;
 import org.infinispan.commands.write.PutKeyValueCommand;
 import org.infinispan.commands.write.PutMapCommand;
@@ -32,6 +35,8 @@ import org.infinispan.commands.write.RemoveCommand;
 import org.infinispan.commands.write.ReplaceCommand;
 import org.infinispan.context.Flag;
 import org.infinispan.context.InvocationContext;
+import org.infinispan.factories.annotations.Inject;
+import org.infinispan.remoting.transport.Transport;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
@@ -45,9 +50,18 @@ public class NonTransactionalLockingInterceptor extends AbstractLockingIntercept
 
    private static final Log log = LogFactory.getLog(NonTransactionalLockingInterceptor.class);
 
+   private ClusteringDependentLogic cdl;
+   private Transport transport;
+
    @Override
    protected Log getLog() {
       return log;
+   }
+
+   @Inject
+   public void init(ClusteringDependentLogic cdl, Transport transport) {
+      this.cdl = cdl;
+      this.transport = transport;
    }
 
    @Override
@@ -64,9 +78,9 @@ public class NonTransactionalLockingInterceptor extends AbstractLockingIntercept
    public Object visitPutKeyValueCommand(InvocationContext ctx, PutKeyValueCommand command) throws Throwable {
       assertNonTransactional(ctx);
       try {
-         boolean skipLocking = hasSkipLocking(command);
-         long lockTimeout = getLockAcquisitionTimeout(command, skipLocking);
-         lockKey(ctx, command.getKey(), lockTimeout, skipLocking);
+         if (!shouldLock(command.getKey(), command))
+            return invokeNextInterceptor(ctx, command);
+         lockKey(ctx, command);
          return invokeNextInterceptor(ctx, command);
       } catch (Throwable te) {
          throw cleanLocksAndRethrow(ctx, te);
@@ -77,13 +91,32 @@ public class NonTransactionalLockingInterceptor extends AbstractLockingIntercept
    }
 
    @Override
+   public Object visitClearCommand(InvocationContext ctx, ClearCommand command) throws Throwable {
+      boolean skipLocking = hasSkipLocking(command);
+      long lockTimeout = getLockAcquisitionTimeout(command, skipLocking);
+      for (Object key: dataContainer.keySet()) {
+         if (shouldLock(key, command)) {
+            lockKey(ctx, key, lockTimeout, skipLocking);
+         }
+      }
+      try {
+         return invokeNextInterceptor(ctx, command);
+      } finally {
+         lockManager.unlockAll(ctx);
+      }
+   }
+
+   @Override
    public Object visitPutMapCommand(InvocationContext ctx, PutMapCommand command) throws Throwable {
       assertNonTransactional(ctx);
       try {
          boolean skipLocking = hasSkipLocking(command);
          long lockTimeout = getLockAcquisitionTimeout(command, skipLocking);
-         for (Object key : command.getMap().keySet()) {
-            lockKey(ctx, key, lockTimeout, skipLocking);
+         if (!command.isForwarded()) {
+            for (Object key : command.getMap().keySet()) {
+               if (shouldLock(key, command))
+                  lockKey(ctx, key, lockTimeout, skipLocking);
+            }
          }
          return invokeNextInterceptor(ctx, command);
       } catch (Throwable te) {
@@ -98,9 +131,9 @@ public class NonTransactionalLockingInterceptor extends AbstractLockingIntercept
    public Object visitRemoveCommand(InvocationContext ctx, RemoveCommand command) throws Throwable {
       assertNonTransactional(ctx);
       try {
-         boolean skipLocking = hasSkipLocking(command);
-         long lockTimeout = getLockAcquisitionTimeout(command, skipLocking);
-         lockKey(ctx, command.getKey(), lockTimeout, skipLocking);
+         if (!shouldLock(command.getKey(), command))
+            return invokeNextInterceptor(ctx, command);
+         lockKey(ctx, command);
          return invokeNextInterceptor(ctx, command);
       } catch (Throwable te) {
          throw cleanLocksAndRethrow(ctx, te);
@@ -113,9 +146,9 @@ public class NonTransactionalLockingInterceptor extends AbstractLockingIntercept
    public Object visitReplaceCommand(InvocationContext ctx, ReplaceCommand command) throws Throwable {
       assertNonTransactional(ctx);
       try {
-         boolean skipLocking = hasSkipLocking(command);
-         long lockTimeout = getLockAcquisitionTimeout(command, skipLocking);
-         lockKey(ctx, command.getKey(), lockTimeout, skipLocking);
+         if (!shouldLock(command.getKey(), command))
+            return invokeNextInterceptor(ctx, command);
+         lockKey(ctx, command);
          return invokeNextInterceptor(ctx, command);
       } catch (Throwable te) {
          throw cleanLocksAndRethrow(ctx, te);
@@ -138,5 +171,21 @@ public class NonTransactionalLockingInterceptor extends AbstractLockingIntercept
          throw new InvalidCacheUsageException(
                "This is a non-transactional cache and cannot be accessed with a transactional InvocationContext.");
       }
+   }
+
+   private boolean shouldLock(Object key, FlagAffectedCommand command) {
+      if (hasSkipLocking(command))
+         return false;
+      if (!cacheConfiguration.clustering().cacheMode().isClustered())
+         return true;
+      boolean shouldLock = cdl.localNodeIsPrimaryOwner(key);
+      log.tracef("Are (%s) we the lock owners for key '%s'? %s", transport.getAddress(), key, shouldLock);
+      return shouldLock;
+   }
+
+   private void lockKey(InvocationContext ctx, DataWriteCommand command) throws InterruptedException {
+      boolean skipLocking = hasSkipLocking(command);
+      long lockTimeout = getLockAcquisitionTimeout(command, skipLocking);
+      lockKey(ctx, command.getKey(), lockTimeout, skipLocking);
    }
 }

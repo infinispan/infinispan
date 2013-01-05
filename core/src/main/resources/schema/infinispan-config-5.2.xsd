@@ -64,7 +64,7 @@
                   </xs:documentation>
                 </xs:annotation>
               </xs:element>
-              <xs:element name="sites" type="tns:sites" minOccurs="0">
+              <xs:element name="site" type="tns:site" minOccurs="0">
                 <xs:annotation>
                   <xs:documentation>
                     Configuration for the x-site replication.
@@ -349,6 +349,13 @@
               </xs:documentation>
             </xs:annotation>
           </xs:attribute>
+          <xs:attribute name="supportsConcurrentUpdates" type="xs:boolean">
+            <xs:annotation>
+              <xs:documentation>
+                  For non-transactional caches only: if set to true(default value) the cache keeps data consistent in the case of concurrent updates. For clustered caches this comes at the cost of an additional RPC, so if you don't expect your application to write data concurrently, disabling this flag increases performance.
+              </xs:documentation>
+            </xs:annotation>
+          </xs:attribute>
         </xs:complexType>
       </xs:element>
       <xs:element name="loaders" minOccurs="0">
@@ -438,14 +445,6 @@
                               </xs:annotation>
                           </xs:element>
                       </xs:sequence>
-                      <xs:attribute name="backupSites" type="xs:string">
-                          <xs:annotation>
-                              <xs:documentation>
-                                  Defines the list of comma-separated site names, from the list of sites names defined within 'backups' element,
-                                  to which this cache backups its data.
-                              </xs:documentation>
-                          </xs:annotation>
-                      </xs:attribute>
                   </xs:complexType>
               </xs:element>
               <xs:element name="backupFor" minOccurs="0" maxOccurs="1">
@@ -803,6 +802,14 @@
                   <xs:annotation>
                     <xs:documentation>
                       If true, this will cause the cache to ask neighboring caches for state when it starts up, so the cache starts 'warm', although it will impact startup time.
+                    </xs:documentation>
+                  </xs:annotation>
+                </xs:attribute>
+                <xs:attribute name="waitForInitialStateTransferToComplete" type="xs:boolean">
+                  <xs:annotation>
+                    <xs:documentation>
+                       If true, this will cause the first call to method CacheManager.getCache() on a joiner node to block and wait until the joining is complete and the node has finished receiving state from neighboring caches (if fetchInMemoryState is enabled).
+                       This option applies to distributed and replicated caches only and is enabled by default.
                     </xs:documentation>
                   </xs:annotation>
                 </xs:attribute>
@@ -1256,9 +1263,16 @@
               </xs:documentation>
           </xs:annotation>
       </xs:attribute>
+      <xs:attribute name="enabled" type="xs:boolean">
+          <xs:annotation>
+              <xs:documentation>
+                  If 'false' then no data is backed up to this site. Defaults to 'true'.
+              </xs:documentation>
+          </xs:annotation>
+      </xs:attribute>
   </xs:complexType>
 
-  <xs:complexType name="sites">
+  <xs:complexType name="site">
     <xs:sequence minOccurs="0" maxOccurs="unbounded">
     </xs:sequence>
     <xs:attribute name="local" type="xs:string" use="required">

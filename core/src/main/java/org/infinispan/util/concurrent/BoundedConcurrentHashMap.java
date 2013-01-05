@@ -298,6 +298,10 @@ public class BoundedConcurrentHashMap<K, V> extends AbstractMap<K, V>
       void onEntryEviction(Map<K, V> evicted);
 
       void onEntryChosenForEviction(V internalCacheEntry);
+
+      void onEntryActivated(Object key);
+
+      void onEntryRemoved(Object key);
    }
 
    static final class NullEvictionListener<K, V> implements EvictionListener<K, V> {
@@ -307,6 +311,14 @@ public class BoundedConcurrentHashMap<K, V> extends AbstractMap<K, V>
       }
       @Override
       public void onEntryChosenForEviction(V internalCacheEntry) {
+         // Do nothing.
+      }
+      @Override
+      public void onEntryActivated(Object key) {
+         // Do nothing.
+      }
+      @Override
+      public void onEntryRemoved(Object key) {
          // Do nothing.
       }
    }
@@ -524,8 +536,7 @@ public class BoundedConcurrentHashMap<K, V> extends AbstractMap<K, V>
          boolean aboveThreshold = isAboveThreshold();
          if(aboveThreshold){
             HashEntry<K, V> evictedEntry = eldest.getKey();
-            segment.evictionListener.onEntryChosenForEviction(evictedEntry.value);
-            segment.remove(evictedEntry.key, evictedEntry.hash, null);
+            segment.remove(evictedEntry.key, evictedEntry.hash, null, true);
             evicted.add(evictedEntry);
          }
          return aboveThreshold;
@@ -602,8 +613,7 @@ public class BoundedConcurrentHashMap<K, V> extends AbstractMap<K, V>
             LRUHashEntry<K, V> evictedEntry = head.nextEntry;
             //remove eldest entry from doubly-linked list
             head.nextEntry.remove();
-            segment.evictionListener.onEntryChosenForEviction(evictedEntry.value);
-            segment.remove(evictedEntry.key, evictedEntry.hash, null);
+            segment.remove(evictedEntry.key, evictedEntry.hash, null, true);
             evicted.add(evictedEntry);
          }
       }
@@ -1228,10 +1238,7 @@ public class BoundedConcurrentHashMap<K, V> extends AbstractMap<K, V>
       private void removeFromSegment(Set<HashEntry<K, V>> evicted) {
          for (HashEntry<K, V> e : evicted) {
             ((LIRSHashEntry<K, V>)e).evict();
-//            boolean evict =
-            segment.evictionListener.onEntryChosenForEviction(e.value);
-//            if (evict)
-            segment.remove(e.key, e.hash, null);
+            segment.remove(e.key, e.hash, null, true);
          }
       }
 
@@ -1601,6 +1608,8 @@ public class BoundedConcurrentHashMap<K, V> extends AbstractMap<K, V>
                } else {
                   tab[index] = eviction.createNewEntry(key, hash, first, value);
                }
+               // When entry not present, attempt to activate if necessary
+               evictionListener.onEntryActivated(key);
             }
             return oldValue;
          } finally {
@@ -1675,7 +1684,7 @@ public class BoundedConcurrentHashMap<K, V> extends AbstractMap<K, V>
       /**
        * Remove; match on key only if value null, else match both.
        */
-      V remove(Object key, int hash, Object value) {
+      V remove(Object key, int hash, Object value, boolean isEvict) {
          lock();
          try {
             int c = count - 1;
@@ -1690,6 +1699,12 @@ public class BoundedConcurrentHashMap<K, V> extends AbstractMap<K, V>
             V oldValue = null;
             if (e != null) {
                V v = e.value;
+               if (isEvict) {
+                  // If evicting, entry has to be passivated if enabled and
+                  // hence its cost is limited to this use case.
+                  // Required to guarantee passivation/activation correctness.
+                  evictionListener.onEntryChosenForEviction(v);
+               }
                if (value == null || value.equals(v)) {
                   oldValue = v;
                   // All entries following removed node can stay
@@ -1714,6 +1729,12 @@ public class BoundedConcurrentHashMap<K, V> extends AbstractMap<K, V>
                   count = c; // write-volatile
                }
             }
+
+            if (!isEvict) {
+               // If removing (and not evicting), remove from cache store too
+               evictionListener.onEntryRemoved(key);
+            }
+
             return oldValue;
          } finally {
             unlock();
@@ -2201,7 +2222,7 @@ public class BoundedConcurrentHashMap<K, V> extends AbstractMap<K, V>
    @Override
    public V remove(Object key) {
       int hash = hash(key.hashCode());
-      return segmentFor(hash).remove(key, hash, null);
+      return segmentFor(hash).remove(key, hash, null, false);
    }
 
    /**
@@ -2215,7 +2236,7 @@ public class BoundedConcurrentHashMap<K, V> extends AbstractMap<K, V>
       if (value == null) {
          return false;
       }
-      return segmentFor(hash).remove(key, hash, value) != null;
+      return segmentFor(hash).remove(key, hash, value, false) != null;
    }
 
    /**

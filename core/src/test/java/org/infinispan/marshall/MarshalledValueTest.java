@@ -33,7 +33,6 @@ import org.infinispan.context.InvocationContext;
 import org.infinispan.interceptors.InterceptorChain;
 import org.infinispan.interceptors.MarshalledValueInterceptor;
 import org.infinispan.interceptors.base.CommandInterceptor;
-import org.infinispan.io.MarshalledValueByteStream;
 import org.infinispan.loaders.CacheLoaderConfig;
 import org.infinispan.loaders.dummy.DummyInMemoryCacheStore;
 import org.infinispan.notifications.Listener;

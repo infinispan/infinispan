@@ -22,6 +22,9 @@
 
 package org.infinispan.loaders.remote.logging;
 
+import org.infinispan.config.ConfigurationException;
+import org.infinispan.loaders.CacheLoaderException;
+import org.jboss.logging.Cause;
 import org.jboss.logging.LogMessage;
 import org.jboss.logging.Message;
 import org.jboss.logging.MessageLogger;
@@ -42,5 +45,18 @@ public interface Log extends org.infinispan.util.logging.Log {
    @Message(value = "RemoteCacheStore can only run in shared mode! This method shouldn't be called in shared mode", id = 10001)
    void sharedModeOnlyAllowed();
 
+   @Message(value = "Cannot marshall objects of class %s", id = 10002)
+   IllegalArgumentException unsupportedMarshallingForObject(String name);
 
+   @Message(value = "Wrapper cannot handle keys of class %s", id = 10003)
+   CacheLoaderException unsupportedKeyFormat(String name);
+
+   @Message(value = "Wrapper cannot handle values of class %s", id = 10004)
+   CacheLoaderException unsupportedValueFormat(String name);
+
+   @Message(value = "Cannot enable HotRod wrapping if a marshaller and/or an entryWrapper have already been set", id = 10005)
+   ConfigurationException cannotEnableHotRodWrapping();
+
+   @Message(value = "Cannot load the HotRodEntryWrapper class (make sure the infinispan-server-hotrod classes are available)", id = 10006)
+   ConfigurationException cannotLoadHotRodEntryWrapper(@Cause Exception e);
 }

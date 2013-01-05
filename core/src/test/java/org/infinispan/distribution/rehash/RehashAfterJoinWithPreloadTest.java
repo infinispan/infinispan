@@ -47,6 +47,7 @@ public class RehashAfterJoinWithPreloadTest extends MultipleCacheManagersTest {
    private final String testCacheName = "testCache" + getClass().getSimpleName();
 
    private final String fileCacheStoreTmpDir = TestingUtil.tmpDirectory(this);
+   protected boolean supportsConcurrentUpdates = true;
 
    @Override
    protected void createCacheManagers() throws Throwable {
@@ -79,6 +80,7 @@ public class RehashAfterJoinWithPreloadTest extends MultipleCacheManagersTest {
          cb.clustering().stateTransfer().fetchInMemoryState(true);
          cb.clustering().hash().groups().enabled();
       }
+      cb.locking().supportsConcurrentUpdates(supportsConcurrentUpdates);
       return cb.build(true);
    }
 

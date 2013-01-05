@@ -36,7 +36,7 @@ import javax.transaction.Transaction;
  * @author Mircea Markus
  * @since 5.1
  */
-@Test
+@Test(groups = "functional")
 public abstract class AbstractLockOwnerCrashTest extends AbstractCrashTest {
 
    public AbstractLockOwnerCrashTest(Configuration.CacheMode cacheMode, LockingMode lockingMode,

@@ -71,6 +71,11 @@ public final class MockTransportFactory implements TransportFactory {
    }
 
    @Override
+   public Transport getTransport(byte[] key, boolean isWrite) {
+      return null;
+   }
+
+   @Override
    public boolean isTcpNoDelay() {
       return false;
    }
@@ -94,5 +99,4 @@ public final class MockTransportFactory implements TransportFactory {
    public ConsistentHashFactory getConsistentHashFactory() {
       return null;
    }
-
 }

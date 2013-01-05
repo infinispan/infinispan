@@ -27,62 +27,64 @@ import org.infinispan.commands.write.PutKeyValueCommand;
 import org.infinispan.commands.write.PutMapCommand;
 import org.infinispan.commands.write.RemoveCommand;
 import org.infinispan.commands.write.ReplaceCommand;
-import org.infinispan.config.ConfigurationException;
+import org.infinispan.configuration.cache.Configuration;
+import org.infinispan.configuration.cache.EvictionConfiguration;
 import org.infinispan.context.InvocationContext;
+import org.infinispan.eviction.ActivationManager;
+import org.infinispan.eviction.EvictionStrategy;
+import org.infinispan.factories.annotations.Inject;
 import org.infinispan.factories.annotations.Start;
-import org.infinispan.jmx.annotations.MBean;
-import org.infinispan.jmx.annotations.ManagedAttribute;
-import org.infinispan.jmx.annotations.ManagedOperation;
-import org.infinispan.loaders.CacheLoaderException;
-import org.infinispan.loaders.CacheStore;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
-import org.rhq.helpers.pluginAnnotations.agent.MeasurementType;
-import org.rhq.helpers.pluginAnnotations.agent.Metric;
-import org.rhq.helpers.pluginAnnotations.agent.Operation;
 
-import java.util.concurrent.atomic.AtomicLong;
-
-@MBean(objectName = "Activation", description = "Component that handles activating entries that have been passivated to a CacheStore by loading them into memory.")
 public class ActivationInterceptor extends CacheLoaderInterceptor {
 
-   private final AtomicLong activations = new AtomicLong(0);
-   private CacheStore store;
-
    private static final Log log = LogFactory.getLog(ActivationInterceptor.class);
-   private static final boolean trace = log.isTraceEnabled();
+
+   private Configuration cfg;
+   private boolean isManualEviction;
+   private ActivationManager activationManager;
 
    @Override
    protected Log getLog() {
       return log;
    }
 
+   @Inject
+   public void inject(Configuration cfg, ActivationManager activationManager) {
+      this.cfg = cfg;
+      this.activationManager = activationManager;
+   }
+
    @Start(priority = 15)
-   public void setCacheStore() {
-      store = clm == null ? null : clm.getCacheStore();
-      if (store == null) {
-         throw new ConfigurationException("Passivation can only be used with a CacheLoader that implements CacheStore!");
-      }
+   @SuppressWarnings("unused")
+   public void start() {
+      // Treat caches configured with manual eviction differently.
+      // These caches require activation at the interceptor level.
+      EvictionConfiguration evictCfg = cfg.eviction();
+      isManualEviction = evictCfg.strategy() == EvictionStrategy.NONE
+            || evictCfg.maxEntries() < 0;
    }
 
    @Override
    public Object visitPutKeyValueCommand(InvocationContext ctx, PutKeyValueCommand command) throws Throwable {
       Object retval = super.visitPutKeyValueCommand(ctx, command);
-      if (enabled) removeFromStore(command.getKey());
+      removeFromStoreIfNeeded(command.getKey());
+
       return retval;
    }
 
    @Override
    public Object visitRemoveCommand(InvocationContext ctx, RemoveCommand command) throws Throwable {
       Object retval = super.visitRemoveCommand(ctx, command);
-      if (enabled) removeFromStore(command.getKey());
+      removeFromStoreIfNeeded(command.getKey());
       return retval;
    }
 
    @Override
    public Object visitReplaceCommand(InvocationContext ctx, ReplaceCommand command) throws Throwable {
       Object retval = super.visitReplaceCommand(ctx, command);
-      if (enabled) removeFromStore(command.getKey());
+      removeFromStoreIfNeeded(command.getKey());
       return retval;
    }
 
@@ -90,7 +92,7 @@ public class ActivationInterceptor extends CacheLoaderInterceptor {
    @Override
    public Object visitPutMapCommand(InvocationContext ctx, PutMapCommand command) throws Throwable {
       Object retval = super.visitPutMapCommand(ctx, command);
-      if (enabled) removeFromStore(command.getMap().keySet().toArray());
+      removeFromStoreIfNeeded(command.getMap().keySet().toArray());
       return retval;
    }
 
@@ -99,20 +101,8 @@ public class ActivationInterceptor extends CacheLoaderInterceptor {
    @Override
    public Object visitGetKeyValueCommand(InvocationContext ctx, GetKeyValueCommand command) throws Throwable {
       Object retval = super.visitGetKeyValueCommand(ctx, command);
-      if (enabled) removeFromStore(command.getKey());
+      removeFromStoreIfNeeded(command.getKey());
       return retval;
-   }
-
-   private void removeFromStore(Object... keys) throws CacheLoaderException {
-      if (!clm.isShared()) {
-         for (Object k : keys) {
-            if (store.remove(k) && getStatisticsEnabled()) {
-               activations.incrementAndGet();
-            }
-         }
-      } else {
-         if (trace) log.trace("CacheStore is shared; will not remove from store when passivating!");
-      }
    }
 
    @Override
@@ -121,22 +111,13 @@ public class ActivationInterceptor extends CacheLoaderInterceptor {
       notifier.notifyCacheEntryActivated(key, value, pre, ctx);
    }
 
-   @ManagedAttribute(description = "Number of activation events")
-   @Metric(displayName = "Number of cache entries activated", measurementType = MeasurementType.TRENDSUP)
-   public String getActivations() {
-      if (!getStatisticsEnabled()) {
-         return "N/A";
+   private void removeFromStoreIfNeeded(Object... keys) {
+      if (enabled && isManualEviction) {
+         for (Object key: keys)
+            activationManager.activate(key);
       }
-      return String.valueOf(activations.get());
    }
 
-   @Override
-   @ManagedOperation(description = "Resets statistics gathered by this component")
-   @Operation(displayName = "Reset statistics")
-   public void resetStatistics() {
-      super.resetStatistics();
-      activations.set(0);
-   }
 }
 
 
