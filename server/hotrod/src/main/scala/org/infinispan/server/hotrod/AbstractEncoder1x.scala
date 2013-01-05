@@ -32,6 +32,7 @@ import org.infinispan.server.core.CacheValue
 import org.infinispan.configuration.cache.Configuration
 import org.infinispan.distribution.ch.DefaultConsistentHash
 import collection.mutable.ArrayBuffer
+import org.infinispan.server.hotrod.util.BulkUtil
 
 /**
  * Hot Rod encoder for protocol version 1.1
@@ -127,10 +128,12 @@ abstract class AbstractEncoder1x extends AbstractVersionedEncoder with Constants
             if (g.status == Success) {
                val cache: Cache[ByteArrayKey, CacheValue] =
                   server.getCacheInstance(g.cacheName, cacheManager, false)
-               var iterator = asScalaIterator(cache.entrySet.iterator)
-               for (entry <- iterator) {
+               
+               var keys = BulkUtil.getAllKeys(cache);
+               var iterator = asScalaIterator(keys.iterator)
+               for (key <- iterator) {
                   buf.writeByte(1) // Not done
-                  writeRangedBytes(entry.getKey.getData, buf)
+                  writeRangedBytes(key.getData, buf)
                }
                buf.writeByte(0) // Done
             }

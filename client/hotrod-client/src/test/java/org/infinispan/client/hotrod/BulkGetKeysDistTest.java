@@ -22,6 +22,8 @@
  */
 package org.infinispan.client.hotrod;
 
+import java.util.Set;
+
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.testng.annotations.Test;
@@ -29,22 +31,38 @@ import org.testng.annotations.Test;
 /**
  * Tests functionality related to getting multiple entries from a HotRod server
  * in bulk.
- *
+ * 
  * @author <a href="mailto:rtsang@redhat.com">Ray Tsang</a>
  * @since 5.2
  */
-@Test(testName = "client.hotrod.BulkGetKeysSimpleTest", groups = "functional")
-public class BulkGetKeysSimpleTest extends BaseBulkGetKeysTest {
-
+@Test(testName = "client.hotrod.BulkGetKeysDistTest", groups = "functional")
+public class BulkGetKeysDistTest extends BaseBulkGetKeysTest {
 	@Override
 	protected int numberOfHotRodServers() {
-		return 1;
+		return 3;
 	}
 
 	@Override
 	protected ConfigurationBuilder clusterConfig() {
 		return getDefaultClusteredCacheConfig(
-				CacheMode.LOCAL, true);
+				CacheMode.DIST_SYNC, true);
 	}
-   
+	
+	public void testDistribution() {
+		for (int i = 0; i < 100; i++) {
+			remoteCache.put(i, i);
+		}
+		
+		for (int i = 0 ; i < numberOfHotRodServers(); i++) {
+			assert cache(i).size() < 100;
+			assert cache(i).size() < 100;
+			assert cache(i).size() < 100;
+		}
+		
+		Set<Object> set = remoteCache.keySet();
+		assert set.size() == 100;
+		for (int i = 0; i < 100; i++) {
+			assert set.contains(i);
+		}
+	}
 }
