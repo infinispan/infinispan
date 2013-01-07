@@ -19,16 +19,22 @@
 
 package org.infinispan.distribution.ch;
 
+import java.io.IOException;
+import java.io.ObjectInput;
+import java.io.ObjectOutput;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.SortedMap;
 import java.util.TreeMap;
 
 import org.infinispan.commons.hash.Hash;
+import org.infinispan.marshall.AbstractExternalizer;
+import org.infinispan.marshall.Ids;
 import org.infinispan.remoting.transport.Address;
 
 /**
@@ -260,6 +266,29 @@ public class SyncConsistentHashFactory implements ConsistentHashFactory<DefaultC
          ArrayList<Address> result = new ArrayList<Address>(list);
          Collections.sort(result);
          return result;
+      }
+   }
+   
+   public static class Externalizer extends AbstractExternalizer<SyncConsistentHashFactory> {
+
+      @Override
+      public void writeObject(ObjectOutput output, SyncConsistentHashFactory chf) throws IOException {
+      }
+
+      @Override
+      @SuppressWarnings("unchecked")
+      public SyncConsistentHashFactory readObject(ObjectInput unmarshaller) throws IOException, ClassNotFoundException {
+         return new SyncConsistentHashFactory();
+      }
+
+      @Override
+      public Integer getId() {
+         return Ids.SYNC_CONSISTENT_HASH_FACTORY;
+      }
+
+      @Override
+      public Set<Class<? extends SyncConsistentHashFactory>> getTypeClasses() {
+         return Collections.<Class<? extends SyncConsistentHashFactory>>singleton(SyncConsistentHashFactory.class);
       }
    }
 }
