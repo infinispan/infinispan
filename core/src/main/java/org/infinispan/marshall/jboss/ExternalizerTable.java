@@ -56,6 +56,7 @@ import org.infinispan.distribution.ch.DefaultConsistentHash;
 import org.infinispan.distribution.ch.DefaultConsistentHashFactory;
 import org.infinispan.distribution.ch.ReplicatedConsistentHash;
 import org.infinispan.distribution.ch.ReplicatedConsistentHashFactory;
+import org.infinispan.distribution.ch.SyncConsistentHashFactory;
 import org.infinispan.factories.GlobalComponentRegistry;
 import org.infinispan.factories.annotations.ComponentName;
 import org.infinispan.factories.annotations.Inject;
@@ -292,6 +293,7 @@ public class ExternalizerTable implements ObjectTable {
       addInternalExternalizer(new ReplicatedConsistentHash.Externalizer());
       addInternalExternalizer(new DefaultConsistentHashFactory.Externalizer());
       addInternalExternalizer(new ReplicatedConsistentHashFactory.Externalizer());
+      addInternalExternalizer(new SyncConsistentHashFactory.Externalizer());
       addInternalExternalizer(new CacheTopology.Externalizer());
       addInternalExternalizer(new CacheJoinInfo.Externalizer());
       addInternalExternalizer(new TransactionInfo.Externalizer());
