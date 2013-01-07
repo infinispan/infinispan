@@ -328,11 +328,12 @@ def release():
   prettyprint("Step 5: Complete", Levels.INFO)
   
   prettyprint("Step 6: Uploading Artifacts", Levels.INFO)
-  do_task(upload_artifacts, [base_dir, version], async_processes)    
+  do_task(upload_artifacts, [base_dir, version], async_processes)
+  do_task(upload_artifacts, [base_dir % "as-modules", version], async_processes)
   prettyprint("Step 6: Complete", Levels.INFO)
   
   prettyprint("Step 7: Uploading to configuration XML schema", Levels.INFO)
-  do_task(upload_schema, [base_dir, version], async_processes)    
+  do_task(upload_schema, [base_dir, version], async_processes)
   prettyprint("Step 7: Complete", Levels.INFO)
 
   prettyprint("Step 8: Uploading to configuration documentation", Levels.INFO)

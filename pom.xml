@@ -33,7 +33,6 @@
       <relativePath>parent/pom.xml</relativePath>
    </parent>
 
-   <groupId>org.infinispan</groupId>
    <artifactId>infinispan</artifactId>
 
    <name>Infinispan Distribution</name>
@@ -78,7 +77,9 @@
       <module>demos/nearcache-client</module>
       <module>cdi/extension</module>
       <module>cdi/tck-runner</module>
+      <module>as-modules</module>
       <module>integrationtests/luceneintegration</module>
+      <module>integrationtests/as-integration</module>
    </modules>
 
    <profiles>
