@@ -19,6 +19,7 @@
 
 package org.infinispan.distribution.ch;
 
+import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
@@ -41,7 +42,7 @@ import org.infinispan.remoting.transport.Address;
  * @author Dan Berindei
  * @since 5.2
  */
-public class SyncConsistentHashFactory implements ConsistentHashFactory<DefaultConsistentHash> {
+public class SyncConsistentHashFactory implements ConsistentHashFactory<DefaultConsistentHash>, Serializable {
 
    @Override
    public DefaultConsistentHash create(Hash hashFunction, int numOwners, int numSegments, List<Address> members) {
