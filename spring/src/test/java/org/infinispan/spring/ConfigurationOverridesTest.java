@@ -48,7 +48,8 @@ import org.testng.annotations.Test;
  * @author <a href="mailto:olaf DOT bergner AT gmx DOT de">Olaf Bergner</a>
  *
  */
-@Test(groups = "unit", testName = "spring.ConfigurationOverridesTest")
+@Test(groups = "unit", testName = "spring.ConfigurationOverridesTest",
+      enabled = false, description = "Disabled temporarily, see https://issues.jboss.org/browse/ISPN-2701")
 public class ConfigurationOverridesTest {
 
    @Test
