@@ -76,7 +76,8 @@ public class AsyncStoreTest extends AbstractInfinispanTest {
    @BeforeMethod
    public void setUp() throws CacheLoaderException {
       underlying = new DummyInMemoryCacheStore();
-      asyncConfig = new AsyncStoreConfig().threadPoolSize(10);
+      asyncConfig = new AsyncStoreConfig().threadPoolSize(10)
+            .shutdownTimeout(7500L); // Adjust shutdown timeout to test timeout
       store = new AsyncStore(underlying, asyncConfig);
       dummyCfg = new DummyInMemoryCacheStore.Cfg().storeName(AsyncStoreTest.class.getName());
       store.init(dummyCfg, null, null);
