@@ -35,7 +35,8 @@ import org.testng.annotations.Test;
 /**
  * @author Marius Bogoevici
  */
-@Test(groups = "functional", testName = "spring.config.InfinispanContainerCacheManagerDefinitionTest")
+@Test(groups = "functional", testName = "spring.config.InfinispanContainerCacheManagerDefinitionTest",
+      enabled = false, description = "Disabled temporarily, see https://issues.jboss.org/browse/ISPN-2701")
 @ContextConfiguration
 public class InfinispanContainerCacheManagerDefinitionTest extends AbstractTestNGSpringContextTests {
 
@@ -45,10 +46,8 @@ public class InfinispanContainerCacheManagerDefinitionTest extends AbstractTestN
     @Autowired @Qualifier("cacheManager2")
     private CacheManager containerCacheManager2;
 
-    @Test
     public void testContainerCacheManagerExists() {
        Assert.assertNotNull(containerCacheManager);
        Assert.assertNotNull(containerCacheManager2);
     }
-
 }
