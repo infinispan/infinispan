@@ -693,8 +693,7 @@ public class StateConsumerImpl implements StateConsumer {
             int segmentId = segmentsToCancel.remove(0);
             InboundTransferTask inboundTransfer = transfersBySegment.remove(segmentId);
             if (inboundTransfer != null) { // we need to check the transfer was not already completed
-               log.debugf("Cancelling inbound state transfer for segment %d of cache %s", segmentId, cacheName);
-               Set<Integer> cancelledSegments = new HashSet<Integer>(segmentsToCancel);
+               Set<Integer> cancelledSegments = new HashSet<Integer>(removedSegments);
                cancelledSegments.retainAll(inboundTransfer.getSegments());
                segmentsToCancel.removeAll(cancelledSegments);
                inboundTransfer.cancelSegments(cancelledSegments);   //this will also remove it from transfersBySource if the entire task gets cancelled

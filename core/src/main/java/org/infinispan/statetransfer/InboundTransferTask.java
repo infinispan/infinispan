@@ -161,6 +161,10 @@ public class InboundTransferTask {
          throw new IllegalArgumentException("Some of the specified segments cannot be cancelled because they were not previously requested");
       }
 
+      if (trace) {
+         log.tracef("Cancelling inbound state transfer of segments %s of cache %s", cancelledSegments, cacheName);
+      }
+
       segments.removeAll(cancelledSegments);
       finishedSegments.removeAll(cancelledSegments);
       if (segments.isEmpty()) {
@@ -178,6 +182,10 @@ public class InboundTransferTask {
    public void cancel() {
       if (!isCancelled) {
          isCancelled = true;
+
+         if (trace) {
+            log.tracef("Cancelling inbound state transfer of segments %s of cache %s", segments, cacheName);
+         }
 
          StateRequestCommand cmd = commandsFactory.buildStateRequestCommand(StateRequestCommand.Type.CANCEL_STATE_TRANSFER, rpcManager.getAddress(), topologyId, segments);
          rpcManager.invokeRemotely(Collections.singleton(source), cmd, ResponseMode.SYNCHRONOUS_IGNORE_LEAVERS, timeout);
