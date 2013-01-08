@@ -36,7 +36,8 @@ import org.testng.annotations.Test;
  * @author Marius Bogoevici
  */
 
-@Test(groups = "functional", testName = "spring.config.InfinispanEmbeddedCacheManagerDefinitionTest")
+@Test(groups = "functional", testName = "spring.config.InfinispanEmbeddedCacheManagerDefinitionTest",
+      enabled = false, description = "Disabled temporarily, see https://issues.jboss.org/browse/ISPN-2701")
 @ContextConfiguration
 public class InfinispanEmbeddedCacheManagerDefinitionTest extends AbstractTestNGSpringContextTests {
 
@@ -46,7 +47,6 @@ public class InfinispanEmbeddedCacheManagerDefinitionTest extends AbstractTestNG
     @Autowired @Qualifier("withConfigFile")
     private CacheManager embeddedCacheManagerWithConfigFile;
 
-    @Test
     public void testEmbeddedCacheManagerExists() {
        Assert.assertNotNull(embeddedCacheManager);
        Assert.assertNotNull(embeddedCacheManagerWithConfigFile);
