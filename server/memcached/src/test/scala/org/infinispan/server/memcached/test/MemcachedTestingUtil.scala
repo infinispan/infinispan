@@ -27,8 +27,9 @@ import java.net.InetSocketAddress
 import java.util.concurrent.atomic.AtomicInteger
 import org.infinispan.server.memcached.{MemcachedDecoder, MemcachedValue, MemcachedServer}
 import org.infinispan.manager.EmbeddedCacheManager
-import java.util.{Properties, Arrays}
+import java.util.Properties
 import org.infinispan.server.core.Main._
+import java.util
 
 /**
  * Utils for Memcached tests.
@@ -44,7 +45,7 @@ object MemcachedTestingUtil {
       val d: DefaultConnectionFactory = new DefaultConnectionFactory {
          override def getOperationTimeout: Long = timeout
       }
-      new MemcachedClient(d, Arrays.asList(new InetSocketAddress(host, port)))
+      new MemcachedClient(d, util.Arrays.asList(new InetSocketAddress(host, port)))
    }
 
    def startMemcachedTextServer(cacheManager: EmbeddedCacheManager): MemcachedServer =
@@ -89,7 +90,6 @@ object MemcachedTestingUtil {
       catch {
          case t: Throwable => {
             error("Error stopping client", t)
-            null
          }
       }
    }

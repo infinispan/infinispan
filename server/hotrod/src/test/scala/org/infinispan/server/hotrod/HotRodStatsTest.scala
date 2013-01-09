@@ -45,7 +45,7 @@ class HotRodStatsTest extends HotRodSingleNodeTest {
       var bytesWritten = 0
 
       var s = client.stats
-      assertTrue(s.get("timeSinceStart") != 0)
+      assertTrue(s.get("timeSinceStart") != "0")
       assertEquals(s.get("currentNumberOfEntries").get, "0")
       assertEquals(s.get("totalNumberOfEntries").get, "0")
       assertEquals(s.get("stores").get, "0")
@@ -66,8 +66,8 @@ class HotRodStatsTest extends HotRodSingleNodeTest {
       bytesRead = assertHigherBytes(bytesRead, s.get("totalBytesRead"))
       bytesWritten = assertHigherBytes(bytesWritten, s.get("totalBytesWritten"))
 
-      assertTrue(s.get("totalBytesRead") != 0)
-      assertTrue(s.get("totalBytesWritten") != 0)
+      assertTrue(s.get("totalBytesRead") != "0")
+      assertTrue(s.get("totalBytesWritten") != "0")
 
       assertSuccess(client.assertGet(m), v(m))
       s = client.stats
