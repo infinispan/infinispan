@@ -85,7 +85,6 @@ class Server(@Context request: Request, @HeaderParam("performAsync") useAsync: B
                }
             }
             case null => Response.status(Status.NOT_FOUND).build
-            case _ => throw new Exception
          }
       }
    }

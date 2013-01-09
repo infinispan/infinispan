@@ -173,7 +173,7 @@ abstract class AbstractProtocolDecoder[K, V <: CacheValue](transport: NettyTrans
             if (isTrace) trace("Write response %s", response)
             response match {
                // We only expect Lists of ChannelBuffer instances, so don't worry about type erasure
-               case l: List[ChannelBuffer] => l.foreach(ch.write(_))
+               case l: Array[ChannelBuffer] => l.foreach(ch.write(_))
                case a: Array[Byte] => ch.write(wrappedBuffer(a))
                case cs: CharSequence => ch.write(ChannelBuffers.copiedBuffer(cs, CharsetUtil.UTF_8))
                case _ => ch.write(response)

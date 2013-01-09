@@ -32,15 +32,14 @@ import java.util.concurrent.atomic.AtomicLong
 import org.infinispan.server.core._
 import org.infinispan.server.core.transport.ExtendedChannelBuffer._
 import org.infinispan.{AdvancedCache, Version, CacheException, Cache}
-import collection.mutable.{HashMap, ListBuffer}
-import scala.collection.immutable
+import collection.mutable.ListBuffer
+import collection.{mutable, immutable}
 import org.jboss.netty.buffer.ChannelBuffer
 import transport.NettyTransport
 import DecoderState._
 import java.lang.StringBuilder
 import java.io.{ByteArrayOutputStream, IOException, EOFException, StreamCorruptedException}
 import org.jboss.netty.channel.Channel
-import org.infinispan.util.Util
 import org.infinispan.server.memcached.TextProtocolUtil._
 import scala.Predef._
 
@@ -60,7 +59,8 @@ class MemcachedDecoder(memcachedCache: Cache[String, MemcachedValue], scheduler:
    type SuitableParameters = MemcachedParameters
    type SuitableHeader = RequestHeader
 
-   private lazy val isStatsEnabled = cache.getConfiguration.isExposeJmxStatistics
+   private lazy val isStatsEnabled =
+      cache.getCacheConfiguration.jmxStatistics().enabled()
    private final val incrMisses = new AtomicLong(0)
    private final val incrHits = new AtomicLong(0)
    private final val decrMisses = new AtomicLong(0)
@@ -106,16 +106,16 @@ class MemcachedDecoder(memcachedCache: Cache[String, MemcachedValue], scheduler:
    override protected def get(buffer: ChannelBuffer): AnyRef = {
       val keys = readKeys(buffer)
       if (keys.length > 1) {
-         val map = new HashMap[String, MemcachedValue]()
+         val map = new mutable.HashMap[String, MemcachedValue]()
          for (k <- keys) {
-            val v = cache.get(checkKeyLength(k, true, buffer))
+            val v = cache.get(checkKeyLength(k, endOfOp = true, buffer))
             if (v != null)
                map += (k -> v)
          }
          createMultiGetResponse(new immutable.HashMap ++ map)
       } else {
          val key = keys(0)
-         createGetResponse(key, cache.get(checkKeyLength(key, true, buffer)))
+         createGetResponse(key, cache.get(checkKeyLength(key, endOfOp = true, buffer)))
       }
    }
 
@@ -262,7 +262,7 @@ class MemcachedDecoder(memcachedCache: Cache[String, MemcachedValue], scheduler:
 
    override protected def customDecodeHeader(ch: Channel, buffer: ChannelBuffer): AnyRef = {
       header.op match {
-         case FlushAllRequest => flushAll(buffer, ch, false) // Without params
+         case FlushAllRequest => flushAll(buffer, ch, isReadParams = false) // Without params
          case VersionRequest => {
             val ret = new StringBuilder().append("VERSION ").append(Version.VERSION).append(CRLF)
             writeResponse(ch, ret)
@@ -277,7 +277,7 @@ class MemcachedDecoder(memcachedCache: Cache[String, MemcachedValue], scheduler:
             key = readKey(buffer)._1
             checkpointTo(DECODE_PARAMETERS)
          }
-         case FlushAllRequest => flushAll(buffer, ch, true) // With params
+         case FlushAllRequest => flushAll(buffer, ch, isReadParams = true) // With params
       }
    }
 
@@ -290,11 +290,11 @@ class MemcachedDecoder(memcachedCache: Cache[String, MemcachedValue], scheduler:
             val ret =
                if (prev != null) {
                   val concatenated = header.op match {
-                     case AppendRequest => concat(prev.data, rawValue);
-                     case PrependRequest => concat(rawValue, prev.data);
+                     case AppendRequest => concat(prev.data, rawValue)
+                     case PrependRequest => concat(rawValue, prev.data)
                   }
                   val next = createValue(concatenated, generateVersion(cache), params.flags)
-                  val replaced = cache.replace(key, prev, next);
+                  val replaced = cache.replace(key, prev, next)
                   if (replaced)
                      if (!params.noReply) STORED else null
                   else // If there's a concurrent modification on this key, treat it as we couldn't replace it
@@ -344,7 +344,8 @@ class MemcachedDecoder(memcachedCache: Cache[String, MemcachedValue], scheduler:
 
    private def flushAll(b: ChannelBuffer, ch: Channel, isReadParams: Boolean): AnyRef = {
       if (isReadParams) readParameters(ch, b)
-      val flushFunction = (cache: AdvancedCache[String, MemcachedValue]) => cache.withFlags(Flag.CACHE_MODE_LOCAL, Flag.SKIP_CACHE_STORE).clear
+      val flushFunction = (cache: AdvancedCache[String, MemcachedValue]) =>
+         cache.withFlags(Flag.CACHE_MODE_LOCAL, Flag.SKIP_CACHE_STORE).clear()
       val flushDelay = if (params == null) 0 else params.flushDelay
       if (flushDelay == 0)
          flushFunction(cache.getAdvancedCache)
@@ -427,7 +428,7 @@ class MemcachedDecoder(memcachedCache: Cache[String, MemcachedValue], scheduler:
             elements += wrappedBuffer(END)
          }
       }
-      elements.toList
+      elements.toArray
    }
 
    override def createErrorResponse(t: Throwable): AnyRef = {
@@ -484,7 +485,7 @@ class MemcachedDecoder(memcachedCache: Cache[String, MemcachedValue], scheduler:
    override def createStatsResponse: AnyRef = {
       val stats = cache.getAdvancedCache.getStats
       val sb = new StringBuilder
-      List[ChannelBuffer] (
+      Array[ChannelBuffer] (
          buildStat("pid", 0, sb),
          buildStat("uptime", stats.getTimeSinceStart, sb),
          buildStat("uptime", stats.getTimeSinceStart, sb),
