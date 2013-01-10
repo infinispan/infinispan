@@ -52,4 +52,12 @@ public class ClassResolverConfigTest extends WithClassLoaderTest {
       super.testReadingWithCorrectClassLoaderAfterReplication();
    }
 
+   @Override
+   @Test(expectedExceptions = AssertionError.class,
+         expectedExceptionsMessageRegExp = "Expected a ClassNotFoundException")
+   public void testReadingWithCorrectClassLoaderAfterReplicationWithDelegateCache() {
+      // Same reason as method above...
+      super.testReadingWithCorrectClassLoaderAfterReplicationWithDelegateCache();
+   }
+
 }
