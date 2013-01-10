@@ -137,6 +137,9 @@ public class AsyncStore extends AbstractDelegatingStore {
    private void put(Modification mod, int count) {
       stateLock.writeLock(count);
       try {
+         if (log.isTraceEnabled())
+            log.tracef("Queue modification: %s", mod);
+
          state.put(mod);
       } finally {
          stateLock.writeUnlock();
@@ -315,6 +318,7 @@ public class AsyncStore extends AbstractDelegatingStore {
 
    @Override
    public void stop() throws CacheLoaderException {
+      log.trace("Stop async store");
       stateLock.writeLock(1);
       state.stopped = true;
       stateLock.writeUnlock();
@@ -607,6 +611,19 @@ public class AsyncStore extends AbstractDelegatingStore {
          try {
             for (;;) {
                State s, head, tail;
+               s = state;
+               if (shouldStop(s)) {
+                  // Wait for existing workers to finish
+                  try {
+                     executor.shutdown();
+                     executor.awaitTermination(
+                           shutdownTimeout, TimeUnit.MILLISECONDS);
+                     return;
+                  } catch (InterruptedException e) {
+                     Thread.currentThread().interrupt();
+                  }
+               }
+
                stateLock.readLock();
                try {
                   s = state;
@@ -666,7 +683,7 @@ public class AsyncStore extends AbstractDelegatingStore {
                   }
 
                   // if this is the last state to process, wait for background threads, then quit
-                  if (s.stopped && s.modifications.isEmpty()) {
+                  if (shouldStop(s)) {
                      s.workerThreads.await();
                      return;
                   }
@@ -678,6 +695,10 @@ public class AsyncStore extends AbstractDelegatingStore {
          } finally {
             LogFactory.popNDC(trace);
          }
+      }
+
+      private boolean shouldStop(State s) {
+         return s.stopped && s.modifications.isEmpty();
       }
    }
 
