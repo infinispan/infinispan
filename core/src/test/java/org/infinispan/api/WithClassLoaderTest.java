@@ -1,6 +1,7 @@
 package org.infinispan.api;
 
-import org.infinispan.Cache;
+import org.infinispan.AbstractDelegatingAdvancedCache;
+import org.infinispan.AdvancedCache;
 import org.infinispan.CacheException;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.global.GlobalConfigurationBuilder;
@@ -54,21 +55,31 @@ public class WithClassLoaderTest extends MultipleCacheManagersTest {
    }
 
    public void testReadingWithCorrectClassLoaderAfterReplication() {
-      Cache<Integer, Car> cache0 = cache(0);
-      Cache<Integer, Car> cache1 = cache(1);
+      writeReadWithCorrectClassLoader(this.<Integer, Car>cache(1).getAdvancedCache());
+   }
 
+   public void testReadingWithCorrectClassLoaderAfterReplicationWithDelegateCache() {
+      AdvancedCache<Integer, Car> cache = advancedCache(1);
+      AdvancedCache<Integer, Car> delegate =
+            new CustomDelegateCache<Integer, Car>(cache);
+      writeReadWithCorrectClassLoader(delegate);
+   }
+
+   private void writeReadWithCorrectClassLoader(AdvancedCache<Integer, Car> readWithCache) {
+      AdvancedCache<Integer, Car> c0 = advancedCache(0);
+      AdvancedCache<Integer, Car> c1 = advancedCache(1);
       Car value = new Car().plateNumber("1234");
-      cache0.put(1, value);
+      c0.put(1, value);
 
       try {
-         cache1.get(1);
+         c1.get(1);
          fail("Expected a ClassNotFoundException");
       } catch (CacheException e) {
          if (!(e.getCause() instanceof ClassNotFoundException))
             throw e;
       }
 
-      assertEquals(value, cache1.getAdvancedCache().with(systemCl).get(1));
+      assertEquals(value, readWithCache.with(systemCl).get(1));
    }
 
    // TODO: Add test where contents come from state transfer rather than replication
@@ -85,15 +96,27 @@ public class WithClassLoaderTest extends MultipleCacheManagersTest {
 
          Car car = (Car) o;
 
-         if (plateNumber != null ? !plateNumber.equals(car.plateNumber) : car.plateNumber != null)
-            return false;
-
-         return true;
+         return !(plateNumber != null
+                        ? !plateNumber.equals(car.plateNumber)
+                        : car.plateNumber != null);
       }
 
       @Override
       public int hashCode() {
          return plateNumber != null ? plateNumber.hashCode() : 0;
+      }
+   }
+
+   public static class CustomDelegateCache<K, V>
+         extends AbstractDelegatingAdvancedCache<K, V> {
+
+      public CustomDelegateCache(AdvancedCache<K, V> cache) {
+         super(cache, new AdvancedCacheWrapper<K, V>() {
+            @Override
+            public AdvancedCache<K, V> wrap(AdvancedCache<K, V> cache) {
+               return new CustomDelegateCache<K, V>(cache);
+            }
+         });
       }
    }
 

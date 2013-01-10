@@ -48,13 +48,25 @@ import java.util.List;
  * @author Mircea.Markus@jboss.com
  * @see org.infinispan.AbstractDelegatingCache
  */
-public abstract class AbstractDelegatingAdvancedCache<K, V> extends AbstractDelegatingCache<K, V> implements AdvancedCache<K, V> {
+public class AbstractDelegatingAdvancedCache<K, V> extends AbstractDelegatingCache<K, V> implements AdvancedCache<K, V> {
 
    protected final AdvancedCache<K, V> cache;
+   private final AdvancedCacheWrapper<K, V> wrapper;
 
-   public AbstractDelegatingAdvancedCache(AdvancedCache<K, V> cache) {
+   public AbstractDelegatingAdvancedCache(final AdvancedCache<K, V> cache) {
+      this(cache, new AdvancedCacheWrapper<K, V>() {
+         @Override
+         public AdvancedCache<K, V> wrap(AdvancedCache<K, V> cache) {
+            return new AbstractDelegatingAdvancedCache<K, V>(cache);
+         }
+      });
+   }
+
+   public AbstractDelegatingAdvancedCache(
+         AdvancedCache<K, V> cache, AdvancedCacheWrapper<K, V> wrapper) {
       super(cache);
       this.cache = cache;
+      this.wrapper = wrapper;
    }
 
    @Override
@@ -146,8 +158,7 @@ public abstract class AbstractDelegatingAdvancedCache<K, V> extends AbstractDele
 
    @Override
    public AdvancedCache<K, V> withFlags(Flag... flags) {
-      cache.withFlags(flags);
-      return this;
+      return this.wrapper.wrap(this.cache.withFlags(flags));
    }
 
    @Override
@@ -177,7 +188,7 @@ public abstract class AbstractDelegatingAdvancedCache<K, V> extends AbstractDele
 
    @Override
    public AdvancedCache<K, V> with(ClassLoader classLoader) {
-      return cache.with(classLoader);
+      return this.wrapper.wrap(this.cache.with(classLoader));
    }
 
    @Override
@@ -186,7 +197,11 @@ public abstract class AbstractDelegatingAdvancedCache<K, V> extends AbstractDele
    }
 
    protected final void putForExternalRead(K key, V value, EnumSet<Flag> flags, ClassLoader classLoader) {
-
-      ((CacheImpl) cache).putForExternalRead(key, value, flags, classLoader);
+      ((CacheImpl<K, V>) cache).putForExternalRead(key, value, flags, classLoader);
    }
+
+   public interface AdvancedCacheWrapper<K, V> {
+      AdvancedCache<K, V> wrap(AdvancedCache<K, V> cache);
+   }
+
 }

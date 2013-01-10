@@ -27,7 +27,9 @@ import static org.infinispan.context.Flag.SKIP_CACHE_STORE;
 import static org.infinispan.test.TestingUtil.k;
 import static org.infinispan.test.TestingUtil.v;
 import static org.infinispan.test.TestingUtil.withTx;
+import static org.testng.AssertJUnit.assertEquals;
 
+import org.infinispan.AbstractDelegatingAdvancedCache;
 import org.infinispan.AdvancedCache;
 import org.infinispan.Cache;
 import org.infinispan.configuration.cache.CacheMode;
@@ -69,17 +71,17 @@ public class FlagsEnabledTest extends MultipleCacheManagersTest {
    CountingCacheStore getCacheStore(Cache cache) {
       CacheLoaderManager clm = TestingUtil.extractComponent(cache, CacheLoaderManager.class);
       ChainingCacheStore ccs = (ChainingCacheStore) clm.getCacheLoader();
-      CountingCacheStore countingCS = (CountingCacheStore) ccs.getStores().keySet().iterator().next();
-      return countingCS;
+      return (CountingCacheStore) ccs.getStores().keySet().iterator().next();
    }
 
    public void testWithFlagsSemantics() {
-      AdvancedCache cache1 = cache(0,"replication").getAdvancedCache();
-      AdvancedCache cache2 = cache(1,"replication").getAdvancedCache();
+      AdvancedCache<String, String> cache1 = advancedCache(0, "replication");
+      AdvancedCache<String, String> cache2 = advancedCache(1, "replication");
       assert getCacheStore(cache1).numLoads == 0;
       assert getCacheStore(cache2).numLoads == 0;
 
-      AdvancedCache cache1LocalOnly = cache1.withFlags(CACHE_MODE_LOCAL);
+      AdvancedCache<String, String> cache1LocalOnly =
+            cache1.withFlags(CACHE_MODE_LOCAL);
       cache1LocalOnly.put("key", "value1");
       cache2.withFlags(CACHE_MODE_LOCAL).put("key", "value2");
       assert cache1.get("key").equals("value1");
@@ -94,7 +96,7 @@ public class FlagsEnabledTest extends MultipleCacheManagersTest {
       assert getCacheStore(cache1).numLoads == 2;
       assert getCacheStore(cache2).numLoads == 1; //not incremented since ISPN-1642
 
-      AdvancedCache cache1SkipRemoteAndStores = cache1LocalOnly.withFlags(SKIP_CACHE_STORE);
+      AdvancedCache<String, String> cache1SkipRemoteAndStores = cache1LocalOnly.withFlags(SKIP_CACHE_STORE);
       cache1SkipRemoteAndStores.put("again", "value");
       assert getCacheStore(cache1).numLoads == 2;
       assert getCacheStore(cache2).numLoads == 1;
@@ -114,9 +116,19 @@ public class FlagsEnabledTest extends MultipleCacheManagersTest {
       assert getCacheStore(cache1).numLoads == 3; //options on cache1SkipRemoteAndStores did NOT affect this cache
    }
 
+   public void testWithFlagsAndDelegateCache() {
+      AdvancedCache<Integer, String> c1 = advancedCache(0, "replication");
+      AdvancedCache<Integer, String> c2 = advancedCache(1, "replication");
+
+      c1 = new CustomDelegateCache<Integer, String>(c1);
+
+      c1.withFlags(CACHE_MODE_LOCAL).put(1, "v1");
+      assertEquals(null, c2.get(1));
+   }
+
    public void testReplicateSkipCacheLoad(Method m) {
-      AdvancedCache cache1 = cache(0,"replication").getAdvancedCache();
-      AdvancedCache cache2 = cache(1,"replication").getAdvancedCache();
+      AdvancedCache<String, String> cache1 = advancedCache(0,"replication");
+      AdvancedCache<String, String> cache2 = advancedCache(1,"replication");
       assert getCacheStore(cache1).numLoads == 0;
       assert getCacheStore(cache2).numLoads == 0;
 
@@ -130,18 +142,22 @@ public class FlagsEnabledTest extends MultipleCacheManagersTest {
    }
 
    public void testReplicateSkipCacheLoaderWithinTxInCoordinator(Method m) throws Exception {
-      final AdvancedCache cache1 = cache(0, "replication").getAdvancedCache();
-      final AdvancedCache cache2 = cache(1, "replication").getAdvancedCache();
+      final AdvancedCache<String, String> cache1 = advancedCache(0, "replication");
+      final AdvancedCache<String, String> cache2 = advancedCache(1, "replication");
       doReplicateSkipCacheLoaderWithinTx(m, cache1, cache2);
    }
 
    public void testReplicateSkipCacheLoaderWithinTxInNonCoordinator(Method m) throws Exception {
-      final AdvancedCache cache1 = cache(0,"replication").getAdvancedCache();
-      final AdvancedCache cache2 = cache(1,"replication").getAdvancedCache();
+      final AdvancedCache<String, String> cache1 =
+            this.<String, String>cache(0,"replication").getAdvancedCache();
+      final AdvancedCache<String, String> cache2 =
+            this.<String, String>cache(1, "replication").getAdvancedCache();
       doReplicateSkipCacheLoaderWithinTx(m, cache2, cache1);
    }
 
-   private void doReplicateSkipCacheLoaderWithinTx(Method m, final AdvancedCache cache1, AdvancedCache cache2) throws Exception {
+   private void doReplicateSkipCacheLoaderWithinTx(Method m,
+         final AdvancedCache<String, String> cache1,
+         AdvancedCache<String, String> cache2) throws Exception {
       assert getCacheStore(cache1).numLoads == 0;
       assert getCacheStore(cache2).numLoads == 0;
 
@@ -158,6 +174,19 @@ public class FlagsEnabledTest extends MultipleCacheManagersTest {
       assert v.equals(cache2.get(k));
       assert getCacheStore(cache1).numLoads == 0;
       assert getCacheStore(cache2).numLoads == 0;
+   }
+
+   public static class CustomDelegateCache<K, V>
+         extends AbstractDelegatingAdvancedCache<K, V> {
+
+      public CustomDelegateCache(AdvancedCache<K, V> cache) {
+         super(cache, new AdvancedCacheWrapper<K, V>() {
+            @Override
+            public AdvancedCache<K, V> wrap(AdvancedCache<K, V> cache) {
+               return new CustomDelegateCache<K, V>(cache);
+            }
+         });
+      }
    }
 
 }
