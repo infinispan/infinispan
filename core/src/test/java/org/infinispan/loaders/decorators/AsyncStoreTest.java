@@ -64,7 +64,7 @@ import java.util.concurrent.locks.ReentrantLock;
 import static org.infinispan.test.TestingUtil.k;
 import static org.infinispan.test.TestingUtil.v;
 
-@Test(groups = "unit", testName = "loaders.decorators.AsyncTest", sequential=true)
+@Test(groups = "unit", testName = "loaders.decorators.AsyncStoreTest", sequential=true)
 public class AsyncStoreTest extends AbstractInfinispanTest {
    private static final Log log = LogFactory.getLog(AsyncStoreTest.class);
    AsyncStore store;
@@ -76,8 +76,7 @@ public class AsyncStoreTest extends AbstractInfinispanTest {
    @BeforeMethod
    public void setUp() throws CacheLoaderException {
       underlying = new DummyInMemoryCacheStore();
-      asyncConfig = new AsyncStoreConfig().threadPoolSize(10)
-            .shutdownTimeout(7500L); // Adjust shutdown timeout to test timeout
+      asyncConfig = new AsyncStoreConfig().threadPoolSize(10);
       store = new AsyncStore(underlying, asyncConfig);
       dummyCfg = new DummyInMemoryCacheStore.Cfg().storeName(AsyncStoreTest.class.getName());
       store.init(dummyCfg, null, null);
@@ -421,7 +420,8 @@ public class AsyncStoreTest extends AbstractInfinispanTest {
       for (int i = 0; i < number; i++) store.remove(key + i);
 
       for (int i = 0; i < number; i++) {
-         assert store.load(key + i) == null;
+         String loadKey = key + i;
+         assert store.load(loadKey) == null : loadKey + " still in store";
       }
    }
 
