@@ -42,7 +42,7 @@ import org.infinispan.util.logging.LogFactory;
  * @author anistor@redhat.com
  * @since 5.2
  */
-public class DefaultConsistentHashFactory implements ConsistentHashFactory<DefaultConsistentHash>, Serializable {
+public class DefaultConsistentHashFactory implements ConsistentHashFactory<DefaultConsistentHash> {
 
    private static final Log log = LogFactory.getLog(DefaultConsistentHashFactory.class);
 

@@ -19,10 +19,16 @@
 
 package org.infinispan.distribution.ch;
 
+import java.io.IOException;
+import java.io.ObjectInput;
+import java.io.ObjectOutput;
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
+import org.infinispan.marshall.AbstractExternalizer;
+import org.infinispan.marshall.Ids;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.remoting.transport.TopologyAwareAddress;
 
@@ -198,5 +204,28 @@ public class TopologyAwareConsistentHashFactory extends DefaultConsistentHashFac
       }
 
       return newMachines.contains(getLocationId(replaced, Level.MACHINE));
+   }
+   
+   public static class Externalizer extends AbstractExternalizer<TopologyAwareConsistentHashFactory> {
+
+      @Override
+      public void writeObject(ObjectOutput output, TopologyAwareConsistentHashFactory chf) throws IOException {
+      }
+
+      @Override
+      @SuppressWarnings("unchecked")
+      public TopologyAwareConsistentHashFactory readObject(ObjectInput unmarshaller) throws IOException, ClassNotFoundException {
+         return new TopologyAwareConsistentHashFactory();
+      }
+
+      @Override
+      public Integer getId() {
+         return Ids.TOPOLOGY_AWARE_CONSISTENT_HASH_FACTORY;
+      }
+
+      @Override
+      public Set<Class<? extends TopologyAwareConsistentHashFactory>> getTypeClasses() {
+         return Collections.<Class<? extends TopologyAwareConsistentHashFactory>>singleton(TopologyAwareConsistentHashFactory.class);
+      }
    }
 }

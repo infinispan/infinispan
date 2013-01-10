@@ -40,7 +40,7 @@ import java.util.Set;
  * @author Dan Berindei
  * @since 5.2
  */
-public class ReplicatedConsistentHashFactory implements ConsistentHashFactory<ReplicatedConsistentHash>, Serializable {
+public class ReplicatedConsistentHashFactory implements ConsistentHashFactory<ReplicatedConsistentHash> {
    @Override
    public ReplicatedConsistentHash create(Hash hashFunction, int numOwners, int numSegments, List<Address> members) {
       return new ReplicatedConsistentHash(members);
