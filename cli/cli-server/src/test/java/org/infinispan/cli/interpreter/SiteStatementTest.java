@@ -52,13 +52,15 @@ public class SiteStatementTest extends AbstractTwoSitesTest {
 
    public void testSiteStatus() throws Exception {
       Interpreter lonInterpreter = interpreter("LON", 0);
-      String lonSessionId = lonInterpreter.createSessionId(cache("LON", 0).getName());
+      String lonCache = cache("LON", 0).getName();
+      String lonSessionId = lonInterpreter.createSessionId(lonCache);
       Interpreter nycInterpreter = interpreter("NYC", 0);
-      String nycSessionId = nycInterpreter.createSessionId(cache("NYC", 0).getName());
+      String nycCache = cache("NYC", 0).getName();
+      String nycSessionId = nycInterpreter.createSessionId(nycCache);
 
       assertInterpreterOutput(lonInterpreter, lonSessionId, "site --status NYC;", "online");
 
-      assertInterpreterOutput(nycInterpreter, nycSessionId, "site --status LON;", "online");
+      assertInterpreterOutput(nycInterpreter, nycSessionId, String.format("site --status %s.LON;", lonCache), "online");
 
       assertInterpreterOutput(lonInterpreter, lonSessionId, "site --offline NYC;", "ok");
 

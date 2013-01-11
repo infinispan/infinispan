@@ -53,8 +53,8 @@ public class SiteStatement implements Statement {
 
    @Override
    public Result execute(Session session) throws StatementException {
-      Cache<Object, Object> cache = session.getCache(siteData.getCacheName());
-      String siteName = siteData.getSiteName();
+      Cache<Object, Object> cache = session.getCache(siteData != null ? siteData.getCacheName() : null);
+      String siteName = siteData != null ? siteData.getSiteName() : null;
       XSiteAdminOperations xsiteAdmin = cache.getAdvancedCache().getComponentRegistry().getComponent(XSiteAdminOperations.class);
       for (Option opt : options) {
          switch (opt.toEnum(Options.class)) {
