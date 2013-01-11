@@ -152,7 +152,8 @@ public class EntryWrappingInterceptor extends CommandInterceptor {
    public Object visitInvalidateL1Command(InvocationContext ctx, InvalidateL1Command command) throws Throwable {
       for (Object key : command.getKeys()) {
         entryFactory.wrapEntryForRemove(ctx, key);
-        log.trace("Entry to be removed: " + ctx.getLookedUpEntries());
+        if (trace)
+           log.tracef("Entry to be removed: %s", ctx.getLookedUpEntries());
       }
       return invokeNextAndApplyChanges(ctx, command);
    }
