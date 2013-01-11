@@ -12,9 +12,9 @@ Performs the dump of all the keys in the cache to a known entry. It must be perf
 .IP --synchronize=migrator
 Performs the synchronization of all data from the "source" cluster to the "target" cluster using the specified migrator. It must be performed on the "target" cluster after the 
 .I --dumpkeys
-operation has been performed on the "source" cluster. The only migrator currently available is
+operation has been performed on the "source" cluster. The only migrator currently available is 
 .B hotrod
-which migrates entries between caches exposed via the HotRod remoting protocol.
+ which migrates entries between caches exposed via the HotRod remoting protocol.
 .IP --disconnectsource=migrator
 Disconnects the "target" cluster from the "source" cluster. This is performed in a 
 .I migrator
