@@ -1,3 +1,5 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
 <!--
   ~ JBoss, Home of Professional Open Source
   ~ Copyright 2009 Red Hat Inc. and/or its affiliates and other
@@ -50,6 +52,47 @@
    </formats>
 
    <moduleSets>
+
+      <!--
+         Gather all transitive runtime dependencies and place them in lib dir of the zip package (runtime-classpath.txt of each module will reference them from here).
+         This is done in a single moduleSet instead of the 'binaries' section of each module in order to avoid the issue with possibly skipped dependencies or
+         incorrectly resolved versions that is already described in the assembly plugin user guide in relation with multiple moduleSets. This issue appeared in
+         version 2.2 of the plugin and is a documented limitation of the moduleSets mechanism (which might become deprecated in the future). The user guide
+         recommends avoiding moduleSets altogether in favor of dependencySets but that solution does not work in our case because we would not be able to include
+         other files in the distribution (scripts, config files, demo data files, etc). That means we'll continue to live (dangerously) with moduleSets.
+      -->
+      <moduleSet>
+         <includeSubModules>false</includeSubModules>
+         <includes>
+            <include>org.infinispan:infinispan-core</include>
+            <include>org.infinispan:infinispan-rhq-plugin</include>
+            <include>org.infinispan:infinispan-tree</include>
+            <include>org.infinispan:infinispan-query</include>
+            <include>org.infinispan:infinispan-server-memcached</include>
+            <include>org.infinispan:infinispan-server-hotrod</include>
+            <include>org.infinispan:infinispan-server-websocket</include>
+            <include>org.infinispan:infinispan-client-hotrod</include>
+            <include>org.infinispan:infinispan-lucene-directory</include>
+            <include>org.infinispan:infinispan-cli-client</include>
+            <include>org.infinispan:infinispan-cli-server</include>
+            <include>org.infinispan:infinispan-gui-demo</include>
+            <include>org.infinispan:infinispan-cdi</include>
+         </includes>
+
+         <binaries>
+            <unpack>false</unpack>
+            <outputDirectory>lib</outputDirectory>
+            <dependencySets>
+               <dependencySet>
+                  <useStrictFiltering>true</useStrictFiltering>
+                  <useTransitiveDependencies>true</useTransitiveDependencies>
+                  <useTransitiveFiltering>true</useTransitiveFiltering>
+                  <outputDirectory>lib</outputDirectory>
+               </dependencySet>
+            </dependencySets>
+         </binaries>
+      </moduleSet>
+
       <!-- Core module -->
       <moduleSet>
          <includeSubModules>false</includeSubModules>
@@ -98,7 +141,7 @@
                      <include>**/*.css</include>
                   </includes>
                </fileSet>
-               
+
                <!-- Binary resources -->
                <fileSet>
                   <directory>src/main/release</directory>
@@ -149,38 +192,31 @@
                   </includes>
                </fileSet>
             </fileSets>
-            
+
          </sources>
 
          <binaries>
-            <unpack>false</unpack>
             <outputFileNameMapping>
                ${module.artifactId}.${module.extension}
             </outputFileNameMapping>
-
-            <dependencySets>
-               <dependencySet>
-                  <useTransitiveDependencies>false</useTransitiveDependencies>
-                  <outputDirectory>lib</outputDirectory>
-               </dependencySet>
-            </dependencySets>
-
+            <unpack>false</unpack>
          </binaries>
       </moduleSet>
 
+      <!-- Rest of modules except demos, rest server and cache stores -->
       <moduleSet>
          <includeSubModules>false</includeSubModules>
          <includes>
-            <include>org.infinispan:infinispan-cli-client</include>
-            <include>org.infinispan:infinispan-cli-server</include>
             <include>org.infinispan:infinispan-rhq-plugin</include>
             <include>org.infinispan:infinispan-tree</include>
             <include>org.infinispan:infinispan-query</include>
-            <include>org.infinispan:infinispan-lucene-directory</include>
             <include>org.infinispan:infinispan-server-memcached</include>
             <include>org.infinispan:infinispan-server-hotrod</include>
             <include>org.infinispan:infinispan-server-websocket</include>
             <include>org.infinispan:infinispan-client-hotrod</include>
+            <include>org.infinispan:infinispan-lucene-directory</include>
+            <include>org.infinispan:infinispan-cli-client</include>
+            <include>org.infinispan:infinispan-cli-server</include>
          </includes>
          <sources>
             <includeModuleDirectory>false</includeModuleDirectory>
@@ -224,7 +260,7 @@
                      <include>**/*.css</include>
                   </includes>
                </fileSet>
-               
+
                <!-- Binary resources -->
                <fileSet>
                   <directory>src/main/release</directory>
@@ -270,25 +306,10 @@
 
          <binaries>
             <outputDirectory>modules/${module.basedir.name}</outputDirectory>
-            <unpack>false</unpack>
             <outputFileNameMapping>
                ${module.artifactId}.${module.extension}
             </outputFileNameMapping>
-            <dependencySets>
-               <dependencySet>
-                  <excludes>
-                     <exclude>infinispan-core*</exclude>
-                     <exclude>net.jcip:jcip-annotations</exclude>
-                     <exclude>org.rhq.helpers:rhq-pluginAnnotations</exclude>
-                     <exclude>javax.transaction:jta</exclude>
-                     <exclude>log4j:log4j</exclude>
-                  </excludes>
-                  <useTransitiveDependencies>true</useTransitiveDependencies>
-                  <useTransitiveFiltering>true</useTransitiveFiltering>
-                  <outputDirectory>lib</outputDirectory>
-               </dependencySet>
-            </dependencySets>
-
+            <unpack>false</unpack>
          </binaries>
       </moduleSet>
 
@@ -384,32 +405,12 @@
 
          </sources>
 
-         <!-- All modules except core and Webapp modules -->
          <binaries>
-
             <outputDirectory>modules/demos/${module.basedir.name}</outputDirectory>
             <outputFileNameMapping>
                ${module.artifactId}.${module.extension}
             </outputFileNameMapping>
             <unpack>false</unpack>
-
-            <dependencySets>
-               <dependencySet>
-                  <excludes>
-                     <exclude>infinispan-core*</exclude>
-                     <exclude>net.jcip:jcip-annotations</exclude>
-                     <exclude>org.rhq.helpers:rhq-pluginAnnotations</exclude>
-                     <exclude>org.infinispan:infinispan-core</exclude>
-                     <exclude>org.infinispan:infinispan-server-rest</exclude>
-                     <exclude>org.infinispan:infinispan-gridfs-webdav</exclude>
-                     <exclude>log4j:log4j</exclude>
-                  </excludes>
-                  <useTransitiveDependencies>true</useTransitiveDependencies>
-                  <useTransitiveFiltering>true</useTransitiveFiltering>
-                  <outputDirectory>lib</outputDirectory>
-               </dependencySet>
-            </dependencySets>
-
          </binaries>
       </moduleSet>
 
@@ -420,21 +421,42 @@
             <include>org.infinispan:infinispan-server-rest</include>
          </includes>
 
+         <sources>
+            <includeModuleDirectory>false</includeModuleDirectory>
+
+            <fileSets>
+               <!-- Executable resources -->
+               <fileSet>
+                  <directory>src/main/release</directory>
+                  <outputDirectory></outputDirectory>
+                  <lineEnding>unix</lineEnding>
+                  <includes>
+                     <include>**/*.sh</include>
+                     <include>**/*.py</include>
+                     <include>**/*.rb</include>
+                  </includes>
+                  <fileMode>0755</fileMode>
+               </fileSet>
+
+               <fileSet>
+                  <directory>src/main/release</directory>
+                  <outputDirectory></outputDirectory>
+                  <lineEnding>dos</lineEnding>
+                  <includes>
+                     <include>**/*.cmd</include>
+                     <include>**/*.bat</include>
+                  </includes>
+                  <fileMode>0644</fileMode>
+               </fileSet>
+            </fileSets>
+         </sources>
+
          <binaries>
             <outputDirectory>modules/${module.basedir.name}</outputDirectory>
-            <unpack>false</unpack>
             <outputFileNameMapping>
                ${module.artifactId}.${module.extension}
             </outputFileNameMapping>
-            <dependencySets>
-               <dependencySet>
-                  <includes>
-                     <include>NONEXISTENT_DEPENDENCY*</include>
-                  </includes>
-                  <outputDirectory>modules/${module.basedir.name}</outputDirectory>
-               </dependencySet>
-            </dependencySets>
-
+            <unpack>false</unpack>
          </binaries>
       </moduleSet>
 
@@ -486,7 +508,7 @@
                      <include>**/*.css</include>
                   </includes>
                </fileSet>
-               
+
                <!-- Binary resources -->
                <fileSet>
                   <directory>src/main/release</directory>
@@ -544,32 +566,12 @@
             </fileSets>
          </sources>
 
-         <!-- All modules except core and Webapp modules -->
          <binaries>
-
             <outputDirectory>modules/cdi</outputDirectory>
             <outputFileNameMapping>
                ${module.artifactId}.${module.extension}
             </outputFileNameMapping>
             <unpack>false</unpack>
-
-            <dependencySets>
-               <dependencySet>
-                  <excludes>
-                     <exclude>infinispan-core*</exclude>
-                     <exclude>net.jcip:jcip-annotations</exclude>
-                     <exclude>org.rhq.helpers:rhq-pluginAnnotations</exclude>
-                     <exclude>org.infinispan:infinispan-core</exclude>
-                     <exclude>org.infinispan:infinispan-server-rest</exclude>
-                     <exclude>org.infinispan:infinispan-gridfs-webdav</exclude>
-                     <exclude>log4j:log4j</exclude>
-                  </excludes>
-                  <useTransitiveDependencies>true</useTransitiveDependencies>
-                  <useTransitiveFiltering>true</useTransitiveFiltering>
-                  <outputDirectory>lib</outputDirectory>
-               </dependencySet>
-            </dependencySets>
-
          </binaries>
       </moduleSet>
 

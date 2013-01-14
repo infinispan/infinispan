@@ -89,6 +89,13 @@
          <scope>provided</scope>
       </dependency>
 
+      <!-- We need to force the version defined in parent pom for this indirect dependency -->
+      <dependency>
+         <groupId>commons-collections</groupId>
+         <artifactId>commons-collections</artifactId>
+         <scope>runtime</scope>
+      </dependency>
+
       <dependency>
             <groupId>org.jboss.logging</groupId>
             <artifactId>jboss-logging</artifactId>
