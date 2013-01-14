@@ -92,6 +92,13 @@ public class VersionedEntryWrappingInterceptor extends EntryWrappingInterceptor 
    protected void commitContextEntry(CacheEntry entry, InvocationContext ctx, boolean skipOwnershipCheck) {
       if (ctx.isInTxScope() && !isFromStateTransfer(ctx)) {
          EntryVersion version = ((TxInvocationContext) ctx).getCacheTransaction().getUpdatedEntryVersions().get(entry.getKey());
+
+         // If no updated version (i.e. cos it's written first time, or
+         // it's loaded from cache store via activation or loading), set
+         // the version to the entries own version.
+         if (version == null)
+            version = entry.getVersion();
+
          cdl.commitEntry(entry, version, skipOwnershipCheck, ctx);
       } else {
          // This could be a state transfer call!
