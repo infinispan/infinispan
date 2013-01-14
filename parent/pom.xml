@@ -120,6 +120,8 @@
       <version.cdi>1.0-SP4</version.cdi>
       <version.com.intellij.forms_rt>6.0.5</version.com.intellij.forms_rt>
       <version.commons.compress>1.4</version.commons.compress>
+      <version.commons.codec>1.4</version.commons.codec>
+      <version.commons.collections>3.2.1</version.commons.collections>
       <version.commons.dbcp>1.4</version.commons.dbcp>
       <version.commons.pool>1.6</version.commons.pool>
       <version.commons.httpclient>3.1</version.commons.httpclient>
@@ -470,6 +472,16 @@
             <groupId>org.apache.commons</groupId>
             <artifactId>commons-compress</artifactId>
             <version>${version.commons.compress}</version>
+         </dependency>
+         <dependency>
+            <groupId>commons-codec</groupId>
+            <artifactId>commons-codec</artifactId>
+            <version>${version.commons.codec}</version>
+         </dependency>
+         <dependency>
+            <groupId>commons-collections</groupId>
+            <artifactId>commons-collections</artifactId>
+            <version>${version.commons.collections}</version>
          </dependency>
          <dependency>
             <groupId>org.apache.commons</groupId>
@@ -1523,7 +1535,6 @@
                         <configuration>
                            <includeScope>runtime</includeScope>
                            <excludeScope>test</excludeScope>
-                           <!-- all jar paths are relative to bin dir inside the distribution bundle -->
                            <prefix>$ISPN_HOME/lib</prefix>
                            <outputFile>${project.build.directory}/runtime-classpath.txt</outputFile>
                         </configuration>
