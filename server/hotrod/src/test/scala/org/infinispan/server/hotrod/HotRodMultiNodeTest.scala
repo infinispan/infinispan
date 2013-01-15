@@ -22,13 +22,13 @@
  */
 package org.infinispan.server.hotrod
 
-import org.infinispan.config.Configuration
 import test.HotRodClient
 import test.HotRodTestingUtil._
 import org.infinispan.manager.EmbeddedCacheManager
 import org.infinispan.test.{TestingUtil, MultipleCacheManagersTest}
 import org.infinispan.server.core.test.ServerTestingUtil._
 import org.testng.annotations.{BeforeClass, AfterMethod, AfterClass, Test}
+import org.infinispan.configuration.cache.ConfigurationBuilder
 
 /**
  * Base test class for multi node or clustered Hot Rod tests.
@@ -41,10 +41,10 @@ abstract class HotRodMultiNodeTest extends MultipleCacheManagersTest {
    private[this] var hotRodClients: List[HotRodClient] = List()
 
    @Test(enabled=false) // Disable explicitly to avoid TestNG thinking this is a test!!
-   override def createCacheManagers {
+   override def createCacheManagers() {
       for (i <- 0 until 2) {
          val cm = super.addClusterEnabledCacheManager()
-         cm.defineConfiguration(cacheName, createCacheConfig)
+         cm.defineConfiguration(cacheName, createCacheConfig.build())
       }
    }
 
@@ -63,11 +63,11 @@ abstract class HotRodMultiNodeTest extends MultipleCacheManagersTest {
    protected def startTestHotRodServer(cacheManager: EmbeddedCacheManager, port: Int) = startHotRodServer(cacheManager, port)
 
    protected def startClusteredServer(port: Int): HotRodServer =
-      startClusteredServer(port, false)
+      startClusteredServer(port, doCrash = false)
 
    protected def startClusteredServer(port: Int, doCrash: Boolean): HotRodServer = {
       val cm = addClusterEnabledCacheManager()
-      cm.defineConfiguration(cacheName, createCacheConfig)
+      cm.defineConfiguration(cacheName, createCacheConfig.build())
 
       val newServer =
          try {
@@ -94,13 +94,14 @@ abstract class HotRodMultiNodeTest extends MultipleCacheManagersTest {
    }
 
    @AfterClass(alwaysRun = true)
-   override def destroy {
+   override def destroy() {
       try {
          log.debug("Test finished, close Hot Rod server")
          hotRodClients.foreach(killClient(_))
          hotRodServers.foreach(killServer(_))
       } finally {
-         super.destroy // Stop the caches last so that at stoppage time topology cache can be updated properly
+        // Stop the caches last so that at stoppage time topology cache can be updated properly
+         super.destroy()
       }
    }
 
@@ -115,7 +116,7 @@ abstract class HotRodMultiNodeTest extends MultipleCacheManagersTest {
 
    protected def cacheName: String
 
-   protected def createCacheConfig: Configuration
+   protected def createCacheConfig: ConfigurationBuilder
 
    protected def protocolVersion: Byte
 }

@@ -23,17 +23,13 @@
 package org.infinispan.server.hotrod
 
 import org.testng.annotations.Test
-import org.infinispan.config.Configuration.CacheMode
-import org.infinispan.config.Configuration
 import java.lang.reflect.Method
 import org.infinispan.server.hotrod.OperationStatus._
 import test.HotRodTestingUtil._
 import org.testng.Assert._
 import org.infinispan.test.AbstractCacheTest._
-import test.{TestHashDistAware10Response, HotRodClient}
-
-// Do not remove, otherwise getDefaultClusteredConfig is not found
-import scala.collection.JavaConversions._
+import test.HotRodClient
+import org.infinispan.configuration.cache.{CacheMode, ConfigurationBuilder}
 
 /**
  * Tests Hot Rod logic when interacting with distributed caches, particularly logic to do with
@@ -47,9 +43,9 @@ class HotRodDistributionTest extends HotRodMultiNodeTest {
 
    override protected def cacheName: String = "hotRodDistSync"
 
-   override protected def createCacheConfig: Configuration = {
-      val cfg = getDefaultClusteredConfig(CacheMode.DIST_SYNC)
-      cfg.fluent().l1().disable() // Disable L1 explicitly
+   override protected def createCacheConfig: ConfigurationBuilder = {
+      val cfg = getDefaultClusteredCacheConfig(CacheMode.DIST_SYNC, false)
+      cfg.clustering().l1().disable() // Disable L1 explicitly
       cfg
    }
 

@@ -40,7 +40,7 @@ public class HotRodAsyncReplicationTest extends MultiHotRodServersTest {
       builder.clustering().async().replQueueInterval(1000L).useReplQueue(true);
       builder.eviction().maxEntries(3);
 
-      createHotRodServers(2, builder.build());
+      createHotRodServers(2, builder);
    }
 
    public void testPutKeyValue(Method m) {

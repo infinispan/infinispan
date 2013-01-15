@@ -22,7 +22,6 @@
  */
 package org.infinispan.server.hotrod
 
-import org.infinispan.config.Configuration
 import java.lang.reflect.Method
 import test.HotRodTestingUtil._
 import org.infinispan.server.hotrod.OperationStatus._
@@ -30,6 +29,7 @@ import org.testng.annotations.Test
 import org.infinispan.test.AbstractCacheTest._
 import org.testng.Assert._
 import test.TestHashDistAware10Response
+import org.infinispan.configuration.cache.{CacheMode, ConfigurationBuilder}
 
 /**
  * Tests Hot Rod instances configured with replication.
@@ -42,9 +42,9 @@ class HotRodReplicationTest extends HotRodMultiNodeTest {
 
    override protected def cacheName: String = "hotRodReplSync"
 
-   override protected def createCacheConfig: Configuration = {
-      val config = getDefaultClusteredConfig(Configuration.CacheMode.REPL_SYNC)
-      config.setFetchInMemoryState(true)
+   override protected def createCacheConfig: ConfigurationBuilder = {
+      val config = getDefaultClusteredCacheConfig(CacheMode.REPL_SYNC, false)
+      config.clustering().stateTransfer().fetchInMemoryState(true)
       config
    }
 
@@ -79,7 +79,7 @@ class HotRodReplicationTest extends HotRodMultiNodeTest {
       assertSuccess(clients.tail.head.assertGet(m), v(m, "v2-"))
    }
 
-   def testPingWithTopologyAwareClient {
+   def testPingWithTopologyAwareClient() {
       var resp = clients.head.ping
       assertStatus(resp, Success)
       assertEquals(resp.topologyResponse, None)
@@ -145,7 +145,8 @@ class HotRodReplicationTest extends HotRodMultiNodeTest {
          addr => assertTrue(topoResp.members.exists(_ == addr)))
       assertSuccess(clients.tail.head.get(k(m), 0), v(m, "v5-"))
 
-      val crashingServer = startClusteredServer(servers.tail.head.getPort + 25, true)
+      val crashingServer = startClusteredServer(
+            servers.tail.head.getPort + 25, doCrash = true)
       addressRemovalLatches = getAddressCacheRemovalLatches(servers)
       try {
          val resp = clients.head.put(k(m) , 0, 0, v(m, "v6-"), 2, 3)

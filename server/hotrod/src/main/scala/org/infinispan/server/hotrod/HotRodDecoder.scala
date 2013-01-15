@@ -26,7 +26,6 @@ import org.infinispan.server.core._
 import transport._
 import OperationStatus._
 import org.infinispan.manager.EmbeddedCacheManager
-import org.infinispan.server.hotrod.ProtocolFlag._
 import org.infinispan.server.core.transport.ExtendedChannelBuffer._
 import java.nio.channels.ClosedChannelException
 import org.infinispan.Cache
@@ -107,15 +106,16 @@ class HotRodDecoder(cacheManager: EmbeddedCacheManager, transport: NettyTranspor
             "Remote requests are not allowed to topology cache. Do no send remote requests to cache '%s'".format(HotRodServer.ADDRESS_CACHE_NAME),
             header.version, header.messageId)
 
-      var seenForFirstTime = false;
+      var seenForFirstTime = false
       // Try to avoid calling cacheManager.getCacheNames() if possible, since this creates a lot of unnecessary garbage
       if (server.isCacheNameKnown(cacheName)) {
          if (!(cacheManager.getCacheNames contains cacheName)) {
+            isError = true // Mark it as error so that the rest of request is ignored
             throw new CacheNotFoundException(
                "Cache with name '%s' not found amongst the configured caches".format(cacheName),
                header.version, header.messageId)
          } else {
-            seenForFirstTime = true;
+            seenForFirstTime = true
          }
       }
 

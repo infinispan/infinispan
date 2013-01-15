@@ -27,9 +27,8 @@ import test.HotRodTestingUtil._
 import org.infinispan.server.hotrod.OperationStatus._
 import org.testng.annotations.Test
 import org.testng.Assert._
-import org.infinispan.config.Configuration
 import org.infinispan.test.AbstractCacheTest._
-import collection.JavaConversions._
+import org.infinispan.configuration.cache.{CacheMode, ConfigurationBuilder}
 
 /**
  * Tests Hot Rod instances that are behind a proxy.
@@ -47,9 +46,9 @@ class HotRodProxyTest extends HotRodMultiNodeTest {
 
    override protected def cacheName: String = "hotRodProxy"
 
-   override protected def createCacheConfig: Configuration = {
-      val config = getDefaultClusteredConfig(Configuration.CacheMode.REPL_SYNC)
-      config.setFetchInMemoryState(true)
+   override protected def createCacheConfig: ConfigurationBuilder = {
+      val config = getDefaultClusteredCacheConfig(CacheMode.REPL_SYNC, false)
+      config.clustering().stateTransfer().fetchInMemoryState(true)
       config
    }
 
@@ -61,7 +60,7 @@ class HotRodProxyTest extends HotRodMultiNodeTest {
    override protected def startTestHotRodServer(cacheManager: EmbeddedCacheManager, port: Int) =
       startHotRodServer(cacheManager, port, proxyHost2, proxyPort2)
 
-   def testTopologyWithProxiesReturned {
+   def testTopologyWithProxiesReturned() {
       val resp = clients.head.ping(2, 0)
       assertStatus(resp, Success)
       val topoResp = resp.asTopologyAwareResponse
