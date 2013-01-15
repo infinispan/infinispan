@@ -65,10 +65,15 @@ public class LegacyConfigurationAdaptor {
          legacy.clustering()
             .async()
                .asyncMarshalling(config.clustering().async().asyncMarshalling())
-               .replQueueClass(config.clustering().async().replQueue().getClass())
                .replQueueInterval(config.clustering().async().replQueueInterval())
                .replQueueMaxElements(config.clustering().async().replQueueMaxElements())
                .useReplQueue(config.clustering().async().useReplQueue());
+
+
+         ReplicationQueue replQueue = config.clustering().async().replQueue();
+         if (replQueue != null) {
+            legacy.clustering().async().replQueueClass(replQueue.getClass());
+         }
       }
 
       if (config.clustering().hash().hash() != null) {

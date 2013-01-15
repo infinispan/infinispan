@@ -22,8 +22,10 @@
  */
 package org.infinispan.factories;
 
+import org.infinispan.configuration.cache.ClusteringConfiguration;
 import org.infinispan.factories.annotations.DefaultFactoryFor;
 import org.infinispan.remoting.ReplicationQueue;
+import org.infinispan.remoting.ReplicationQueueImpl;
 
 /**
  * Factory for ReplicationQueue.
@@ -36,8 +38,10 @@ public class ReplicationQueueFactory extends EmptyConstructorNamedCacheFactory i
    @Override
    @SuppressWarnings("unchecked")
    public <T> T construct(Class<T> componentType) {
-      if ((!configuration.clustering().cacheMode().isSynchronous()) && configuration.clustering().async().useReplQueue()) {
-         return componentType.cast(configuration.clustering().async().replQueue());
+      ClusteringConfiguration clustering = configuration.clustering();
+      if ((!clustering.cacheMode().isSynchronous()) && clustering.async().useReplQueue()) {
+         ReplicationQueue replQueue = clustering.async().replQueue();
+         return replQueue != null ? componentType.cast(replQueue) : (T) new ReplicationQueueImpl();
       } else {
          return null;
       }

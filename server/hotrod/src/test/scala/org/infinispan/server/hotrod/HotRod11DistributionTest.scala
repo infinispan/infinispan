@@ -19,15 +19,14 @@
 
 package org.infinispan.server.hotrod
 
-import org.infinispan.config.Configuration
 import org.infinispan.test.AbstractCacheTest._
-import org.infinispan.config.Configuration.CacheMode
 import java.lang.reflect.Method
 import test.HotRodTestingUtil._
 import org.testng.Assert._
 import test.HotRodClient
 import org.infinispan.server.hotrod.OperationStatus._
 import org.testng.annotations.Test
+import org.infinispan.configuration.cache.{CacheMode, ConfigurationBuilder}
 
 /**
  * Tests Hot Rod distribution mode using Hot Rod's 1.1 protocol.
@@ -40,9 +39,9 @@ class HotRod11DistributionTest extends HotRodMultiNodeTest {
 
    override protected def cacheName = "distributedVersion11"
 
-   override protected def createCacheConfig: Configuration = {
-      val cfg = getDefaultClusteredConfig(CacheMode.DIST_SYNC)
-      cfg.fluent().l1().disable() // Disable L1 explicitly
+   override protected def createCacheConfig: ConfigurationBuilder = {
+      val cfg = getDefaultClusteredCacheConfig(CacheMode.DIST_SYNC, false)
+      cfg.clustering().l1().disable() // Disable L1 explicitly
       cfg
    }
 

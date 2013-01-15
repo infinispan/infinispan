@@ -34,7 +34,7 @@ import org.infinispan.remoting.ReplicationQueueImpl;
 public class AsyncConfigurationBuilder extends AbstractClusteringConfigurationChildBuilder implements Builder<AsyncConfiguration> {
 
    private boolean asyncMarshalling = false;
-   private ReplicationQueue replicationQueue = new ReplicationQueueImpl();
+   private ReplicationQueue replicationQueue;
    private long replicationQueueInterval = TimeUnit.SECONDS.toMillis(5);
    private int replicationQueueMaxElements = 1000;
    private boolean useReplicationQueue = false;

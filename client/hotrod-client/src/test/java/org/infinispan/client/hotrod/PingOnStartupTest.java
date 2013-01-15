@@ -47,7 +47,7 @@ public class PingOnStartupTest extends MultiHotRodServersTest {
    @Override
    protected void createCacheManagers() throws Throwable {
       ConfigurationBuilder builder = getDefaultClusteredCacheConfig(CacheMode.DIST_SYNC, false);
-      createHotRodServers(2, builder.build());
+      createHotRodServers(2, builder);
    }
 
    public void testTopologyFetched() {

@@ -28,7 +28,7 @@ public class ExpiryTest extends MultiHotRodServersTest {
    protected void createCacheManagers() throws Throwable {
       ConfigurationBuilder builder = getDefaultClusteredCacheConfig(CacheMode.REPL_SYNC, false);
       builder.expiration().lifespan(2000L).maxIdle(3000L);
-      createHotRodServers(1, builder.build());
+      createHotRodServers(1, builder);
    }
 
    public void testGlobalExpiry(Method m) throws Exception {

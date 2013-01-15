@@ -19,17 +19,16 @@
 
 package org.infinispan.server.hotrod
 
-import org.infinispan.config.Configuration
 import org.infinispan.test.AbstractCacheTest._
-import org.infinispan.config.Configuration.CacheMode
 import java.lang.reflect.Method
 import test.HotRodTestingUtil._
 import org.testng.Assert._
-import test.{HotRodMagicKeyGenerator, HotRodClient}
+import test.HotRodMagicKeyGenerator
 import org.infinispan.server.hotrod.OperationStatus._
 import org.testng.annotations.Test
 import org.infinispan.test.TestingUtil
 import org.infinispan.server.core.test.ServerTestingUtil
+import org.infinispan.configuration.cache.{CacheMode, ConfigurationBuilder}
 
 /**
  * Tests Hot Rod distribution mode when some of the cache managers do not have HotRod servers running.
@@ -42,9 +41,9 @@ class HotRod11StorageOnlyNodesTest extends HotRodMultiNodeTest {
 
    override protected def cacheName = "distributed"
 
-   override protected def createCacheConfig: Configuration = {
-      val cfg = getDefaultClusteredConfig(CacheMode.DIST_SYNC)
-      cfg.fluent().l1().disable() // Disable L1 explicitly
+   override protected def createCacheConfig: ConfigurationBuilder = {
+      val cfg = getDefaultClusteredCacheConfig(CacheMode.DIST_SYNC, false)
+      cfg.clustering().l1().disable() // Disable L1 explicitly
       cfg
    }
 
@@ -65,7 +64,7 @@ class HotRod11StorageOnlyNodesTest extends HotRodMultiNodeTest {
 
       val newCacheManager = addClusterEnabledCacheManager()
       try {
-         newCacheManager.defineConfiguration(cacheName, createCacheConfig)
+         newCacheManager.defineConfiguration(cacheName, createCacheConfig.build())
          newCacheManager.getCache(cacheName)
          TestingUtil.blockUntilViewsReceived(50000, true, manager(0), manager(1), manager(2))
          TestingUtil.waitForRehashToComplete(cache(0, cacheName), cache(1, cacheName), cache(2, cacheName))
