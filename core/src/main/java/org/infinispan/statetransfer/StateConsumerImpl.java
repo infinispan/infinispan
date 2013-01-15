@@ -160,9 +160,11 @@ public class StateConsumerImpl implements StateConsumer {
     */
    @Override
    public void addUpdatedKey(Object key) {
-      if (updatedKeys != null) {
+      // grab a copy of the reference to prevent issues if another thread calls stopApplyingState() between null check and actual usage
+      final Set<Object> localUpdatedKeys = updatedKeys;
+      if (localUpdatedKeys != null) {
          if (cacheTopology.getWriteConsistentHash().isKeyLocalToNode(rpcManager.getAddress(), key)) {
-            updatedKeys.add(key);
+            localUpdatedKeys.add(key);
          }
       }
    }
@@ -175,7 +177,9 @@ public class StateConsumerImpl implements StateConsumer {
     */
    @Override
    public boolean isKeyUpdated(Object key) {
-      return updatedKeys == null || updatedKeys.contains(key);
+      // grab a copy of the reference to prevent issues if another thread calls stopApplyingState() between null check and actual usage
+      final Set<Object> localUpdatedKeys = updatedKeys;
+      return localUpdatedKeys == null || localUpdatedKeys.contains(key);
    }
 
    @Inject
