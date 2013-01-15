@@ -136,8 +136,8 @@ public class MapReduceManagerImpl implements MapReduceManager {
                if (checkInterrupt(interruptCount++) && Thread.currentThread().isInterrupted())
                   throw new InterruptedException();
                //load result value from map phase
-               List<VOut> value = null;
-               if(useIntermediateKeys){
+               List<VOut> value;
+               if(useIntermediateKeys) {
                   value = tmpCache.get(new IntermediateCompositeKey<KOut>(taskId, key));
                } else {
                   value = tmpCache.get(key);

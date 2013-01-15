@@ -25,14 +25,16 @@ package org.infinispan.commands;
 
 import java.util.concurrent.TimeUnit;
 
+import org.infinispan.Cache;
 import org.infinispan.commands.remote.BaseRpcCommand;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
+import org.infinispan.context.Flag;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.manager.EmbeddedCacheManager;
-import org.infinispan.transaction.LockingMode;
-import org.infinispan.transaction.TransactionMode;
+import org.infinispan.remoting.rpc.RpcManager;
+import org.infinispan.remoting.transport.Address;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
@@ -49,6 +51,8 @@ public class CreateCacheCommand extends BaseRpcCommand {
    private EmbeddedCacheManager cacheManager;
    private String cacheNameToCreate;
    private String cacheConfigurationName;
+   private boolean start;
+   private int size;
 
    private CreateCacheCommand() {
       super(null);
@@ -58,13 +62,20 @@ public class CreateCacheCommand extends BaseRpcCommand {
       super(ownerCacheName);      
    }
 
-   public CreateCacheCommand(String ownerCacheName, String cacheNameToCreate, 
-            String cacheConfigurationName) {
-      super(ownerCacheName);      
+   public CreateCacheCommand(String ownerCacheName, String cacheNameToCreate, String cacheConfigurationName) {
+      this(ownerCacheName, cacheNameToCreate, cacheConfigurationName, false, 0);
+   }
+
+   public CreateCacheCommand(String cacheName, String cacheNameToCreate, String cacheConfigurationName, boolean start, int size) {
+      super(cacheName);
       this.cacheNameToCreate = cacheNameToCreate;
       this.cacheConfigurationName = cacheConfigurationName;
+      this.start = start;
+      this.size = size;
    }
-   
+
+
+
    public void init(EmbeddedCacheManager cacheManager){
       this.cacheManager = cacheManager;
    }
@@ -80,11 +91,39 @@ public class CreateCacheCommand extends BaseRpcCommand {
                   .wakeUpInterval(30, TimeUnit.SECONDS).enableReaper().clustering()
                   .cacheMode(CacheMode.DIST_SYNC).hash().numOwners(2).sync().build();
          cacheManager.defineConfiguration(cacheNameToCreate, cacheConfig);
-         log.debug("Using default tmp cache configuration, defined as " + cacheNameToCreate);
+         log.debugf("Using default tmp cache configuration, defined as ", cacheNameToCreate);
       }
-      cacheManager.getCache(cacheNameToCreate); // getCache starts the cache as well*/
-      log.debug("Defined and started cache " + cacheNameToCreate);
+      Cache<Object,Object> cache = cacheManager.getCache(cacheNameToCreate);
+      if (start) {
+         waitForClusterToForm(cache);
+      }
+
+      log.debugf("Defined and started cache %s", cacheNameToCreate);
       return true;
+   }
+
+   private void waitForClusterToForm(Cache<Object, Object> cache) throws InterruptedException {
+      RpcManager rpcManager = cache.getAdvancedCache().getRpcManager();
+      //wait till we see all the expected members
+      while (rpcManager.getMembers().size() != size) {
+         Thread.sleep(50);
+      }
+      //now make sure that all the expected members have also seen us
+      //do this for 15 secs
+      Address localAddress = cacheManager.getTransport().getAddress();
+      for (int i = 0; i < 300; i++) {
+         cache.getAdvancedCache().withFlags(Flag.SKIP_LOCKING, Flag.FORCE_ASYNCHRONOUS, Flag.SKIP_REMOTE_LOOKUP).put(localAddress, "0");
+         boolean clusterFormed = true;
+         for (Address a : rpcManager.getMembers()) {
+            if (!cache.containsKey(a)) {
+               clusterFormed = false;
+               break;
+            }
+
+         }
+         if (clusterFormed) break;
+         Thread.sleep(50);
+      }
    }
 
    @Override
@@ -94,7 +133,19 @@ public class CreateCacheCommand extends BaseRpcCommand {
 
    @Override
    public Object[] getParameters() {
-      return new Object[] {cacheNameToCreate, cacheConfigurationName};
+      return new Object[] {cacheNameToCreate, cacheConfigurationName, start, size};
+   }
+
+   @Override
+   public void setParameters(int commandId, Object[] parameters) {
+      if (commandId != COMMAND_ID)
+         throw new IllegalStateException("Invalid method id " + commandId + " but " +
+                                               this.getClass() + " has id " + getCommandId());
+      int i = 0;
+      cacheNameToCreate = (String) parameters[i++];
+      cacheConfigurationName = (String) parameters[i++];
+      start = (Boolean) parameters[i++];
+      size = (Integer) parameters[i];
    }
 
    @Override
@@ -133,23 +184,18 @@ public class CreateCacheCommand extends BaseRpcCommand {
       } else if (!cacheNameToCreate.equals(other.cacheNameToCreate)) {
          return false;
       }
-      return true;
-   }
-
-   @Override
-   public void setParameters(int commandId, Object[] parameters) {
-      if (commandId != COMMAND_ID)
-         throw new IllegalStateException("Invalid method id " + commandId + " but " +
-                  this.getClass() + " has id " + getCommandId());
-      int i = 0;
-      cacheNameToCreate = (String) parameters[i++];
-      cacheConfigurationName = (String) parameters[i++];
+      return this.start == other.start && this.size == other.size;
    }
 
    @Override
    public String toString() {
-      return "CreateCacheCommand [cacheNameToCreate=" + cacheNameToCreate
-               + ", cacheConfigurationName=" + cacheConfigurationName + "]";
+      return "CreateCacheCommand{" +
+            "cacheManager=" + cacheManager +
+            ", cacheNameToCreate='" + cacheNameToCreate + '\'' +
+            ", cacheConfigurationName='" + cacheConfigurationName + '\'' +
+            ", start=" + start + '\'' +
+            ", size=" + size +
+            '}';
    }
 
    @Override
