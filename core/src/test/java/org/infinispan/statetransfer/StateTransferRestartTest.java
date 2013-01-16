@@ -113,7 +113,7 @@ public class StateTransferRestartTest extends MultipleCacheManagersTest {
       cfgBuilder.transaction().transactionManagerLookup(new DummyTransactionManagerLookup());
       cfgBuilder.clustering().hash().numOwners(2);
       cfgBuilder.clustering().stateTransfer().fetchInMemoryState(true);
-      cfgBuilder.clustering().stateTransfer().timeout(10000);
+      cfgBuilder.clustering().stateTransfer().timeout(20000);
 
       gcfgBuilder = new GlobalConfigurationBuilder();
       gcfgBuilder.transport().transport(mockTransport);
@@ -156,7 +156,7 @@ public class StateTransferRestartTest extends MultipleCacheManagersTest {
             });
             try {
                // sleep and wait to be killed
-               Thread.sleep(20000);
+               Thread.sleep(25000);
             } catch (InterruptedException e) {
                log.info("Interrupted as expected.");
                Thread.currentThread().interrupt();
