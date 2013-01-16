@@ -98,6 +98,15 @@ public class LocalCacheTest extends SingleCacheManagerTest {
       assert val.equals(person1) : "Expected " + person1 + " but was " + val;
    }
 
+   public void testSimpleForNonField() throws ParseException {
+      loadTestingData();
+      CacheQuery cacheQuery = createCacheQuery(cache, "nonSearchableField", "test1" );
+      List<Object> found = cacheQuery.list();
+
+      int elems = found.size();
+      assert elems == 0 : "Expected 0 but was " + elems;
+   }
+
    public void testEagerIterator() throws ParseException {
       loadTestingData();
       CacheQuery cacheQuery = createCacheQuery(cache, "blurb", "playing" );
@@ -603,14 +612,17 @@ public class LocalCacheTest extends SingleCacheManagerTest {
       person1 = new Person();
       person1.setName("Navin Surtani");
       person1.setBlurb("Likes playing WoW");
+      person1.setNonSearchableField("test1");
 
       person2 = new Person();
       person2.setName("Big Goat");
       person2.setBlurb("Eats grass");
+      person1.setNonSearchableField("test2");
 
       person3 = new Person();
       person3.setName("Mini Goat");
       person3.setBlurb("Eats cheese");
+      person1.setNonSearchableField("test3");
 
       anotherGrassEater = new AnotherGrassEater("Another grass-eater", "Eats grass");
    }

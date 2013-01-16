@@ -18,17 +18,13 @@
  */
 package org.infinispan.query.distributed;
 
-import java.io.IOException;
-import java.util.ArrayList;
-import java.util.List;
-
-import javax.transaction.TransactionManager;
-
 import junit.framework.Assert;
-
 import org.apache.lucene.search.MatchAllDocsQuery;
 import org.hibernate.search.engine.spi.SearchFactoryImplementor;
 import org.infinispan.Cache;
+import org.infinispan.configuration.cache.CacheMode;
+import org.infinispan.configuration.parsing.ConfigurationBuilderHolder;
+import org.infinispan.configuration.parsing.ParserRegistry;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.query.CacheQuery;
 import org.infinispan.query.Search;
@@ -39,7 +35,15 @@ import org.infinispan.query.test.Person;
 import org.infinispan.test.AbstractInfinispanTest;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
+import org.infinispan.util.FileLookupFactory;
 import org.testng.annotations.Test;
+
+import javax.transaction.TransactionManager;
+import java.io.FileNotFoundException;
+import java.io.IOException;
+import java.io.InputStream;
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * Configures the Hibernate Search backend to use Infinispan custom commands as a backend
@@ -51,8 +55,8 @@ import org.testng.annotations.Test;
 @Test(groups = "functional", testName = "query.distributed.MultiNodeDistributedTest")
 public class MultiNodeDistributedTest extends AbstractInfinispanTest {
 
-   private List<EmbeddedCacheManager> cacheManagers = new ArrayList<EmbeddedCacheManager>(4);
-   private List<Cache<String, Person>> caches = new ArrayList<Cache<String, Person>>(4);
+   protected List<EmbeddedCacheManager> cacheManagers = new ArrayList<EmbeddedCacheManager>(4);
+   protected List<Cache<String, Person>> caches = new ArrayList<Cache<String, Person>>(4);
 
    protected EmbeddedCacheManager createCacheManager() throws IOException {
       EmbeddedCacheManager cacheManager = TestCacheManagerFactory.fromXml(getConfigurationResourceName());
@@ -67,7 +71,7 @@ public class MultiNodeDistributedTest extends AbstractInfinispanTest {
       return "dynamic-indexing-distribution.xml";
    }
 
-   private void storeOn(Cache<String, Person> cache, String key, Person person) throws Exception {
+   protected void storeOn(Cache<String, Person> cache, String key, Person person) throws Exception {
       TransactionManager transactionManager = cache.getAdvancedCache().getTransactionManager();
       if (transactionsEnabled()) transactionManager.begin();
       cache.put(key, person);
@@ -103,13 +107,15 @@ public class MultiNodeDistributedTest extends AbstractInfinispanTest {
       }
    }
 
-   private void killMasterNode() {
+   protected void killMasterNode() {
       for (Cache cache : caches) {
          if (isMasterNode(cache)) {
             TestingUtil.killCacheManagers(cache.getCacheManager());
             caches.remove(cache);
             cacheManagers.remove(cache.getCacheManager());
-            TestingUtil.waitForRehashToComplete(caches);
+
+            if(cache.getCacheConfiguration().clustering().cacheMode() != CacheMode.LOCAL)
+               TestingUtil.waitForRehashToComplete(caches);
             break;
          }
       }
@@ -124,7 +130,7 @@ public class MultiNodeDistributedTest extends AbstractInfinispanTest {
       return commandsBackend.isMasterLocal();
    }
 
-   private void assertIndexSize(int expectedIndexSize) {
+   protected void assertIndexSize(int expectedIndexSize) {
       for (Cache cache : caches) {
          SearchManager searchManager = Search.getSearchManager(cache);
          CacheQuery query = searchManager.getQuery(new MatchAllDocsQuery(), Person.class);
@@ -132,8 +138,17 @@ public class MultiNodeDistributedTest extends AbstractInfinispanTest {
       }
    }
 
-   private boolean transactionsEnabled() {
+   protected boolean transactionsEnabled() {
       return false; //TODO extend this test using a Transactional configuration
+   }
+
+   protected ConfigurationBuilderHolder readFromXml() throws FileNotFoundException {
+      InputStream is = FileLookupFactory.newInstance().lookupFileStrict(
+            getConfigurationResourceName(), Thread.currentThread().getContextClassLoader());
+      ParserRegistry parserRegistry = new ParserRegistry(Thread.currentThread().getContextClassLoader());
+      ConfigurationBuilderHolder holder = parserRegistry.parse(is);
+
+      return holder;
    }
 
 }
