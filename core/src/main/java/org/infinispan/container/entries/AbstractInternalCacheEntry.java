@@ -53,6 +53,11 @@ public abstract class AbstractInternalCacheEntry implements InternalCacheEntry {
    }
 
    @Override
+   public void setChanged(boolean changed) {
+      // no-op
+   }
+
+   @Override
    public final void setCreated(boolean created) {
       // no-op
    }
@@ -69,6 +74,11 @@ public abstract class AbstractInternalCacheEntry implements InternalCacheEntry {
 
    @Override
    public final void setValid(boolean valid) {
+      // no-op
+   }
+
+   @Override
+   public void setLoaded(boolean loaded) {
       // no-op
    }
 
@@ -99,6 +109,11 @@ public abstract class AbstractInternalCacheEntry implements InternalCacheEntry {
 
    @Override
    public final boolean isValid() {
+      return false;
+   }
+
+   @Override
+   public boolean isLoaded() {
       return false;
    }
 

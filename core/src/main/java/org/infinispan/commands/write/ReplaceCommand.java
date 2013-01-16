@@ -72,7 +72,11 @@ public class ReplaceCommand extends AbstractDataWriteCommand {
       if (e != null) {
          if (ctx.isOriginLocal()) {
             //ISPN-514
-            if (e.isNull() || e.getValue() == null) return returnValue(null, false, ctx);
+            if (e.isNull() || e.getValue() == null) {
+               // Revert assumption that new value is to be committed
+               e.setChanged(false);
+               return returnValue(null, false, ctx);
+            }
          }
 
          if (oldValue == null || oldValue.equals(e.getValue())) {
@@ -81,7 +85,8 @@ public class ReplaceCommand extends AbstractDataWriteCommand {
             e.setMaxIdle(maxIdleTimeMillis);
             return returnValue(old, true, ctx);
          }
-         return returnValue(null, false, ctx);
+         // Revert assumption that new value is to be committed
+         e.setChanged(false);
       }
 
       return returnValue(null, false, ctx);

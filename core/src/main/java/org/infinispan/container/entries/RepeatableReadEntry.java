@@ -46,7 +46,7 @@ public class RepeatableReadEntry extends ReadCommittedEntry {
       if (isChanged()) return; // already copied
 
       // mark entry as changed.
-      setChanged();
+      setChanged(true);
 
       if (localModeWriteSkewCheck) {
          performLocalWriteSkewCheck(container, false);

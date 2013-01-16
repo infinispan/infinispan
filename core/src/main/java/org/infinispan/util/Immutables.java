@@ -604,6 +604,11 @@ public class Immutables {
       }
 
       @Override
+      public boolean isLoaded() {
+         return entry.isLoaded();
+      }
+
+      @Override
       public void rollback() {
          throw new UnsupportedOperationException();
       }
@@ -619,12 +624,22 @@ public class Immutables {
       }
 
       @Override
+      public void setChanged(boolean changed) {
+         throw new UnsupportedOperationException();
+      }
+
+      @Override
       public void setEvicted(boolean evicted) {
          entry.setEvicted(evicted);
       }
 
       @Override
       public void setValid(boolean valid) {
+         throw new UnsupportedOperationException();
+      }
+
+      @Override
+      public void setLoaded(boolean loaded) {
          throw new UnsupportedOperationException();
       }
 

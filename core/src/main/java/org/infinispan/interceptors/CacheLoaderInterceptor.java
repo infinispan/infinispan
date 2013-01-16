@@ -216,6 +216,7 @@ public class CacheLoaderInterceptor extends JmxStatsCommandInterceptor {
          entry.setMaxIdle(loadedEntry.getMaxIdle());
          // TODO shouldn't we also be setting last used and created timestamps?
          entry.setValid(true);
+         entry.setLoaded(true); // mark the entry as loaded from the store
 
          sendNotification(key, value, false, ctx);
       }

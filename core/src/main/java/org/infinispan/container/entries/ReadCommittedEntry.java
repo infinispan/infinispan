@@ -77,7 +77,8 @@ public class ReadCommittedEntry implements MVCCEntry {
       REMOVED(1 << 2),
       VALID(1 << 3),
       LOCK_PLACEHOLDER(1 << 4),
-      EVICTED(1 << 5);
+      EVICTED(1 << 5),
+      LOADED(1 << 6);
 
       final byte mask;
 
@@ -161,7 +162,7 @@ public class ReadCommittedEntry implements MVCCEntry {
    public void copyForUpdate(DataContainer container, boolean writeSkewCheck) {
       if (isChanged()) return; // already copied
 
-      setChanged(); // mark as changed
+      setChanged(true); // mark as changed
 
       // if newly created, then nothing to copy.
       if (!isCreated()) oldValue = value;
@@ -169,10 +170,7 @@ public class ReadCommittedEntry implements MVCCEntry {
 
    @Override
    public void setLockPlaceholder(boolean placeholder) {   //todo [anistor] why is this method never used?
-      if (placeholder)
-         setFlag(LOCK_PLACEHOLDER);
-      else
-         unsetFlag(LOCK_PLACEHOLDER);
+      setFlag(placeholder, LOCK_PLACEHOLDER);
    }
 
    @Override
@@ -180,10 +178,10 @@ public class ReadCommittedEntry implements MVCCEntry {
       // TODO: No tombstones for now!!  I'll only need them for an eventually consistent cache
 
       // only do stuff if there are changes.
-      if (isChanged()) {
+      if (isChanged() || isLoaded()) {
          if (trace)
-            log.tracef("Updating entry (key=%s removed=%s valid=%s changed=%s created=%s value=%s]", getKey(),
-                      isRemoved(), isValid(), isChanged(), isCreated(), value);
+            log.tracef("Updating entry (key=%s removed=%s valid=%s changed=%s created=%s loaded=%s value=%s]",
+                  getKey(), isRemoved(), isValid(), isChanged(), isCreated(), isLoaded(), value);
 
          // Ugh!
          if (value instanceof AtomicHashMap) {
@@ -224,8 +222,9 @@ public class ReadCommittedEntry implements MVCCEntry {
       return isFlagSet(CHANGED);
    }
 
-   protected final void setChanged() {
-      setFlag(CHANGED);
+   @Override
+   public final void setChanged(boolean changed) {
+      setFlag(changed, CHANGED);
    }
 
    @Override
@@ -235,10 +234,7 @@ public class ReadCommittedEntry implements MVCCEntry {
 
    @Override
    public final void setValid(boolean valid) {
-      if (valid)
-         setFlag(VALID);
-      else
-         unsetFlag(VALID);
+      setFlag(valid, VALID);
    }
 
    @Override
@@ -262,10 +258,7 @@ public class ReadCommittedEntry implements MVCCEntry {
 
    @Override
    public final void setCreated(boolean created) {
-      if (created)
-         setFlag(CREATED);
-      else
-         unsetFlag(CREATED);
+      setFlag(created, CREATED);
    }
 
    @Override
@@ -280,18 +273,29 @@ public class ReadCommittedEntry implements MVCCEntry {
 
    @Override
    public final void setRemoved(boolean removed) {
-      if (removed)
-         setFlag(REMOVED);
-      else
-         unsetFlag(REMOVED);
+      setFlag(removed, REMOVED);
    }
 
    @Override
    public void setEvicted(boolean evicted) {
-      if (evicted)
-         setFlag(EVICTED);
+      setFlag(evicted, EVICTED);
+   }
+
+   @Override
+   public boolean isLoaded() {
+      return isFlagSet(LOADED);
+   }
+
+   @Override
+   public void setLoaded(boolean loaded) {
+      setFlag(loaded, LOADED);
+   }
+
+   private void setFlag(boolean enable, Flags flag) {
+      if (enable)
+         setFlag(flag);
       else
-         unsetFlag(EVICTED);
+         unsetFlag(flag);
    }
 
    @Override

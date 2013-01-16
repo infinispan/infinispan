@@ -367,7 +367,7 @@ public class EntryWrappingInterceptor extends CommandInterceptor {
          return false;
       }
 
-      if (entry.isChanged()) {
+      if (entry.isChanged() || entry.isLoaded()) {
          log.tracef("About to commit entry %s", entry);
          commitContextEntry(entry, ctx, skipOwnershipCheck);
 
