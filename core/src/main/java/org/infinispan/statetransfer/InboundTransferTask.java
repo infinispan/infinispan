@@ -70,7 +70,13 @@ public class InboundTransferTask {
    /**
     * Indicates if the START_STATE_TRANSFER was successfully sent to source node and the source replied with a successful response.
     */
-   private boolean isSuccessful = false;
+   private boolean isStartedSuccessfully = false;
+
+   /**
+    * Indicates if the task was completed normally: all requested segments were completely received except for the cancelled ones.
+    * This flag is only meaningful when completionLatch becomes 0.
+    */
+   private volatile boolean isCompletedSuccessfully = false;
 
    /**
     * This latch is counted down when all segments are completely received or in case of task cancellation.
@@ -135,7 +141,10 @@ public class InboundTransferTask {
             Map<Address, Response> responses = rpcManager.invokeRemotely(Collections.singleton(source), cmd, ResponseMode.SYNCHRONOUS_IGNORE_LEAVERS, timeout);
             Response response = responses.get(source);
             if (response instanceof SuccessfulResponse) {
-               isSuccessful = true;
+               isStartedSuccessfully = true;
+               if (trace) {
+                  log.tracef("Successfully requested segments %s of cache %s from node %s", segments, cacheName, source);
+               }
                return true;
             }
             log.failedToRequestSegments(segments, cacheName, source, null);
@@ -149,9 +158,9 @@ public class InboundTransferTask {
    }
 
    /**
-    * Cancels a subset of the segments. If it happens that all segments are cancelled then the whole task is marked as cancelled.
+    * Cancels a subset of the segments. If it happens that all segments are cancelled then the whole task is marked as cancelled and completion is signalled..
     *
-    * @param cancelledSegments
+    * @param cancelledSegments the segments to be cancelled
     */
    public void cancelSegments(Set<Integer> cancelledSegments) {
       if (isCancelled) {
@@ -207,16 +216,31 @@ public class InboundTransferTask {
    }
 
    private void notifyCompletion() {
+      isCompletedSuccessfully = true;
       stateConsumer.onTaskCompletion(this);
       completionLatch.countDown();
    }
 
-   public void awaitCompletion() throws InterruptedException {
-      if (!isSuccessful) {
+   /**
+    * Wait until all segments are received, cancelled, or the task is terminated abruptly by <code>terminate()</code>.
+    *
+    * @return true if the task completed normally or false if it was terminated abruptly
+    * @throws InterruptedException if the thread is interrupted while waiting
+    */
+   public boolean awaitCompletion() throws InterruptedException {
+      if (!isStartedSuccessfully) {
          throw new IllegalStateException("Cannot await completion unless the request was previously sent to source node successfully.");
       }
-
       completionLatch.await();
+      return isCompletedSuccessfully;
+   }
+
+   /**
+    * Terminate abruptly regardless if the segments were received or not. This is used when the source node
+    * is no longer alive.
+    */
+   public void terminate() {
+      completionLatch.countDown();
    }
 
    @Override
@@ -227,6 +251,8 @@ public class InboundTransferTask {
             ", unfinishedSegments=" + getUnfinishedSegments() +
             ", source=" + source +
             ", isCancelled=" + isCancelled +
+            ", isStartedSuccessfully=" + isStartedSuccessfully +
+            ", isCompletedSuccessfully=" + isCompletedSuccessfully +
             ", topologyId=" + topologyId +
             ", timeout=" + timeout +
             ", cacheName=" + cacheName +

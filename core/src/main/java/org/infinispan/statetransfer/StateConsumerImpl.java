@@ -139,7 +139,7 @@ public class StateConsumerImpl implements StateConsumer {
     */
    private final BlockingDeque<InboundTransferTask> taskQueue = new LinkedBlockingDeque<InboundTransferTask>();
 
-   private final AtomicBoolean isTransferThreadRunning = new AtomicBoolean();
+   private boolean isTransferThreadRunning;
 
    public StateConsumerImpl() {
    }
@@ -242,7 +242,7 @@ public class StateConsumerImpl implements StateConsumer {
 
    @Override
    public void onTopologyUpdate(CacheTopology cacheTopology, boolean isRebalance) {
-      if (trace) log.tracef("Received new CH %s for cache %s", cacheTopology.getWriteConsistentHash(), cacheName);
+      if (trace) log.tracef("Received new CH %s for cache %s (isRebalance=%b)", cacheTopology.getWriteConsistentHash(), cacheName, isRebalance);
 
       int numStartedTopologyUpdates = activeTopologyUpdates.incrementAndGet();
       if (isRebalance) {
@@ -287,9 +287,10 @@ public class StateConsumerImpl implements StateConsumer {
                         cacheName, removedSegments, newSegments, previousSegments, addedSegments);
                }
 
-               // remove inbound transfers and any data for segments we no longer own
+               // remove inbound transfers for segments we no longer own
                cancelTransfers(removedSegments);
 
+               // any data for segments we no longer own should be removed from data container and cache store or moved to L1 if enabled
                // If L1.onRehash is enabled, "removed" segments are actually moved to L1. The new (and old) owners
                // will automatically add the nodes that no longer own a key to that key's requestors list.
                invalidateSegments(newSegments, removedSegments);
@@ -310,6 +311,8 @@ public class StateConsumerImpl implements StateConsumer {
                            if (trace) {
                               log.tracef("Removing inbound transfers for segments %s from source %s for cache %s", inboundTransfer.getSegments(), source, cacheName);
                            }
+                           taskQueue.remove(inboundTransfer);
+                           inboundTransfer.terminate();
                            transfersBySegment.keySet().removeAll(inboundTransfer.getSegments());
                            addedSegments.addAll(inboundTransfer.getUnfinishedSegments());
                         }
@@ -620,75 +623,87 @@ public class StateConsumerImpl implements StateConsumer {
    }
 
    private void startTransferThread(final Set<Address> excludedSources) {
-      if (isTransferThreadRunning.compareAndSet(false, true)) {
-         executorService.submit(new Runnable() {
-            @Override
-            public void run() {
-               try {
+      synchronized (this) {
+         if (isTransferThreadRunning) {
+            return;
+         }
+         isTransferThreadRunning = true;
+      }
+
+      executorService.submit(new Runnable() {
+         @Override
+         public void run() {
+            try {
+               while (true) {
+                  List<InboundTransferTask> failedTasks = new ArrayList<InboundTransferTask>();
                   while (true) {
-                     List<InboundTransferTask> failedTasks = new ArrayList<InboundTransferTask>();
-                     while (true) {
-                        InboundTransferTask task;
+                     InboundTransferTask task;
+                     try {
+                        task = taskQueue.pollFirst(200, TimeUnit.MILLISECONDS);
+                        if (task == null) {
+                           break;
+                        }
+                     } catch (InterruptedException e) {
+                        Thread.currentThread().interrupt();
+                        return;
+                     }
+
+                     if (!task.requestSegments()) {
+                        // if requesting the segments failed we'll take care of it later
+                        failedTasks.add(task);
+                     } else {
                         try {
-                           task = taskQueue.pollFirst(1, TimeUnit.SECONDS);
-                           if (task == null) {
-                              break;
+                           if (!task.awaitCompletion()) {
+                              failedTasks.add(task);
                            }
                         } catch (InterruptedException e) {
                            Thread.currentThread().interrupt();
                            return;
                         }
-
-                        if (!task.requestSegments()) {
-                           // if requesting the segments failed we'll take care of it later
-                           failedTasks.add(task);
-                        } else {
-                           try {
-                              task.awaitCompletion();
-                           } catch (InterruptedException e) {
-                              Thread.currentThread().interrupt();
-                              return;
-                           }
-                        }
-                     }
-
-                     if (failedTasks.isEmpty()) {
-                        break;
-                     }
-
-                     // look for other sources for the failed segments and replace all failed tasks with new tasks to be retried
-                     synchronized (StateConsumerImpl.this) {
-                        Set<Integer> failedSegments = new HashSet<Integer>();
-                        for (InboundTransferTask task : failedTasks) {
-                           if (removeTransfer(task)) {
-                              excludedSources.add(task.getSource());
-                              failedSegments.addAll(task.getSegments());
-                           }
-                        }
-
-                        // should re-add only segments we still own and are not already in
-                        failedSegments.retainAll(getOwnedSegments(cacheTopology.getWriteConsistentHash()));
-                        failedSegments.removeAll(getOwnedSegments(cacheTopology.getReadConsistentHash()));
-
-                        Map<Address, Set<Integer>> sources = new HashMap<Address, Set<Integer>>();
-                        findSources(failedSegments, sources, excludedSources);
-                        for (Map.Entry<Address, Set<Integer>> e : sources.entrySet()) {
-                           addTransfer(e.getKey(), e.getValue());
-                        }
                      }
                   }
-               } finally {
-                  isTransferThreadRunning.set(false);
+
+                  if (failedTasks.isEmpty() && taskQueue.isEmpty()) {
+                     break;
+                  }
+
+                  log.tracef("Retrying %d failed tasks", failedTasks.size());
+
+                  // look for other sources for the failed segments and replace all failed tasks with new tasks to be retried
+                  // remove+add needs to be atomic
+                  synchronized (StateConsumerImpl.this) {
+                     Set<Integer> failedSegments = new HashSet<Integer>();
+                     for (InboundTransferTask task : failedTasks) {
+                        if (removeTransfer(task)) {
+                           excludedSources.add(task.getSource());
+                           failedSegments.addAll(task.getSegments());
+                        }
+                     }
+
+                     // should re-add only segments we still own and are not already in
+                     failedSegments.retainAll(getOwnedSegments(cacheTopology.getWriteConsistentHash()));
+                     failedSegments.removeAll(getOwnedSegments(cacheTopology.getReadConsistentHash()));
+
+                     Map<Address, Set<Integer>> sources = new HashMap<Address, Set<Integer>>();
+                     findSources(failedSegments, sources, excludedSources);
+                     for (Map.Entry<Address, Set<Integer>> e : sources.entrySet()) {
+                        addTransfer(e.getKey(), e.getValue());
+                     }
+                  }
+               }
+            } finally {
+               synchronized (StateConsumerImpl.this) {
+                  isTransferThreadRunning = false;
                }
             }
-         });
-      }
+         }
+      });
    }
 
    /**
-    * Remove the segment's data from the data container and cache store because we no longer own it.
+    * Cancel transfers for segments we no longer own.
     *
-    * @param removedSegments to be cancelled and discarded
+    * @param removedSegments segments to be cancelled
     */
    private void cancelTransfers(Set<Integer> removedSegments) {
       synchronized (this) {
