@@ -32,10 +32,20 @@ import org.apache.lucene.search.Query;
 import org.apache.lucene.util.Version;
 import org.hibernate.search.spi.SearchFactoryIntegrator;
 import org.infinispan.Cache;
+import org.infinispan.configuration.cache.CacheMode;
+import org.infinispan.configuration.cache.ConfigurationBuilder;
+import org.infinispan.configuration.global.GlobalConfigurationBuilder;
 import org.infinispan.factories.ComponentRegistry;
+import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.query.CacheQuery;
 import org.infinispan.query.Search;
 import org.infinispan.query.SearchManager;
+import org.infinispan.query.test.Person;
+import org.infinispan.test.AbstractCacheTest;
+import org.infinispan.test.fwk.TestCacheManagerFactory;
+
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * Creates a test query helper
@@ -69,6 +79,37 @@ public class TestQueryHelperFactory {
       SearchFactoryIntegrator component = componentRegistry.getComponent(SearchFactoryIntegrator.class);
       Assert.assertNotNull(component);
       return component;
+   }
+
+   public static List createTopologyAwareCacheNodes(int numberOfNodes, CacheMode cacheMode, boolean transactional,
+                                                    boolean indexLocalOnly, boolean isRamDirectoryProvider) {
+      List caches = new ArrayList();
+
+      ConfigurationBuilder builder = AbstractCacheTest.getDefaultClusteredCacheConfig(cacheMode, transactional);
+
+      builder.indexing().enable().indexLocalOnly(indexLocalOnly);
+
+      if(isRamDirectoryProvider) {
+         builder.indexing().addProperty("default.directory_provider", "ram").addProperty("lucene_version", "LUCENE_CURRENT");
+      } else {
+         builder.indexing().addProperty("hibernate.search.default.indexmanager", "org.infinispan.query.indexmanager.InfinispanIndexManager")
+               .addProperty("default.directory_provider", "infinispan")
+               .addProperty("hibernate.search.default.exclusive_index_use", "false")
+               .addProperty("lucene_version", "LUCENE_36");
+      }
+
+      for(int i = 0; i < numberOfNodes; i++) {
+         GlobalConfigurationBuilder globalConfigurationBuilder = GlobalConfigurationBuilder
+               .defaultClusteredBuilder();
+         globalConfigurationBuilder.transport().machineId("a" + i).rackId("b" + i).siteId("test" + i);
+
+         EmbeddedCacheManager cm1 = TestCacheManagerFactory.createClusteredCacheManager(
+               globalConfigurationBuilder, builder);
+
+         caches.add(cm1.getCache());
+      }
+
+      return caches;
    }
    
 }

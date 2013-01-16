@@ -73,7 +73,7 @@ public class ClusteredQueryTest extends MultipleCacheManagersTest {
 
    @Override
    protected void createCacheManagers() throws Throwable {
-      ConfigurationBuilder cacheCfg = getDefaultClusteredCacheConfig(CacheMode.REPL_SYNC, false);
+      ConfigurationBuilder cacheCfg = getDefaultClusteredCacheConfig(getCacheMode(), false);
       cacheCfg
          .indexing()
             .enable()
@@ -84,6 +84,10 @@ public class ClusteredQueryTest extends MultipleCacheManagersTest {
       List<Cache<String, Person>> caches = createClusteredCaches(2, cacheCfg);
       cache1 = caches.get(0);
       cache2 = caches.get(1);
+   }
+
+   protected CacheMode getCacheMode() {
+      return CacheMode.REPL_SYNC;
    }
 
    private void prepareTestData() {

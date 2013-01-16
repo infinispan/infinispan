@@ -47,6 +47,8 @@ public class Person implements Serializable {
    private String blurb;
    @Field(store = Store.YES, analyze=Analyze.NO)
    private int age;
+
+   private String nonSearchableField;
    private static final long serialVersionUID = 8251606115293644545L;
 
    public Person() {
@@ -80,6 +82,14 @@ public class Person implements Serializable {
 
    public void setAge(int age) {
       this.age = age;
+   }
+
+   public String getNonSearchableField() {
+      return nonSearchableField;
+   }
+
+   public void setNonSearchableField(String nonSearchableField) {
+      this.nonSearchableField = nonSearchableField;
    }
 
    public boolean equals(Object o) {

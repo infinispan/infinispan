@@ -22,15 +22,6 @@
  */
 package org.infinispan.query.blackbox;
 
-import static org.infinispan.query.helper.TestQueryHelperFactory.createCacheQuery;
-import static org.infinispan.query.helper.TestQueryHelperFactory.createQueryParser;
-
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-
-import javax.transaction.TransactionManager;
-
 import org.apache.lucene.queryParser.QueryParser;
 import org.apache.lucene.search.Query;
 import org.hibernate.search.FullTextFilter;
@@ -52,6 +43,14 @@ import org.infinispan.test.MultipleCacheManagersTest;
 import org.infinispan.test.TestingUtil;
 import org.testng.AssertJUnit;
 import org.testng.annotations.Test;
+
+import javax.transaction.TransactionManager;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+
+import static org.infinispan.query.helper.TestQueryHelperFactory.createCacheQuery;
+import static org.infinispan.query.helper.TestQueryHelperFactory.createQueryParser;
 
 /**
  * @author Navin Surtani
@@ -189,7 +188,7 @@ public class ClusteredCacheTest extends MultipleCacheManagersTest {
       cacheQuery = Search.getSearchManager(cache2).getQuery(luceneQuery);
       List<Object> found = cacheQuery.list();
 
-      assert found.size() == 2 : "Size of list should be 2";
+      AssertJUnit.assertEquals(2, found.size());
       assert found.contains(person2);
       assert found.contains(person3);
       assert !found.contains(person4) : "This should not contain object person4";
@@ -204,7 +203,7 @@ public class ClusteredCacheTest extends MultipleCacheManagersTest {
       cacheQuery = Search.getSearchManager(cache2).getQuery(luceneQuery);
       found = cacheQuery.list();
 
-      assert found.size() == 3 : "Size of list should be 3";
+      AssertJUnit.assertEquals(3, found.size());
       assert found.contains(person2);
       assert found.contains(person3);
       assert found.contains(person4) : "This should now contain object person4";
@@ -236,7 +235,7 @@ public class ClusteredCacheTest extends MultipleCacheManagersTest {
       cacheQuery = Search.getSearchManager(cache2).getQuery(luceneQuery);
       List<Object> found = cacheQuery.list();
 
-      assert found.size() == 1;
+      AssertJUnit.assertEquals(1, found.size());
    }
 
    public void testPutMap() throws Exception {
@@ -254,10 +253,12 @@ public class ClusteredCacheTest extends MultipleCacheManagersTest {
       allWrites.put(key3, person3);
 
       cache2.putAll(allWrites);
-      assert searchManager.getQuery(allQuery, Person.class).list().size() == 3;
+      List found = searchManager.getQuery(allQuery, Person.class).list();
+      AssertJUnit.assertEquals(3, found.size());
 
       cache2.putAll(allWrites);
-      assert searchManager.getQuery(allQuery, Person.class).list().size() == 3;
+      found = searchManager.getQuery(allQuery, Person.class).list();
+      AssertJUnit.assertEquals(3, found.size());
    }
 
    public void testClear() throws Exception {
@@ -274,14 +275,14 @@ public class ClusteredCacheTest extends MultipleCacheManagersTest {
 
       Query luceneQuery = queries[0].combine(queries);
       CacheQuery cacheQuery = Search.getSearchManager(cache1).getQuery(luceneQuery);
-      assert cacheQuery.getResultSize() == 3;
+      AssertJUnit.assertEquals(3, cacheQuery.getResultSize());
 
       cache2.clear();
 
-      assert cacheQuery.getResultSize() == 3;
+      AssertJUnit.assertEquals(3, cacheQuery.getResultSize());
       cacheQuery = Search.getSearchManager(cache1).getQuery(luceneQuery);
 
-      assert cacheQuery.getResultSize() == 0;
+      AssertJUnit.assertEquals(0, cacheQuery.getResultSize());
    }
 
    public void testFullTextFilterOnOff() throws Exception {
