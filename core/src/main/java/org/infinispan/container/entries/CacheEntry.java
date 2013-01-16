@@ -71,6 +71,11 @@ public interface CacheEntry extends Map.Entry<Object, Object>, Versioned {
    boolean isValid();
 
    /**
+    * @return true if the entry was loaded from a cache store.
+    */
+   boolean isLoaded();
+
+   /**
     * Retrieves the key to this entry
     *
     * @return a key
@@ -131,6 +136,8 @@ public interface CacheEntry extends Map.Entry<Object, Object>, Versioned {
     */
    void rollback();
 
+   void setChanged(boolean changed);
+
    void setCreated(boolean created);
 
    void setRemoved(boolean removed);
@@ -138,6 +145,8 @@ public interface CacheEntry extends Map.Entry<Object, Object>, Versioned {
    void setEvicted(boolean evicted);
 
    void setValid(boolean valid);
+
+   void setLoaded(boolean loaded);
 
    /**
     * @return true if this entry is a placeholder for the sake of acquiring a lock; and false if it is a real entry. 

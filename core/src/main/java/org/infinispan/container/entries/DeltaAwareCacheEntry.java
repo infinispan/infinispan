@@ -84,7 +84,7 @@ public class DeltaAwareCacheEntry implements CacheEntry, StateChangingEntry {
    public void appendDelta(Delta d) {
       deltas.add(d);
       d.merge(uncommittedChanges);
-      setChanged();
+      setChanged(true);
    }
 
    public AtomicHashMap<?, ?> getUncommittedChages() {
@@ -93,7 +93,12 @@ public class DeltaAwareCacheEntry implements CacheEntry, StateChangingEntry {
 
    protected static enum Flags {
       CHANGED(1), // same as 1 << 0
-      CREATED(1 << 1), REMOVED(1 << 2), VALID(1 << 3), LOCK_PLACEHOLDER(1 << 4), EVICTED(1 << 5);
+      CREATED(1 << 1),
+      REMOVED(1 << 2),
+      VALID(1 << 3),
+      LOCK_PLACEHOLDER(1 << 4),
+      EVICTED(1 << 5),
+      LOADED(1 << 6);
 
       final byte mask;
 
@@ -175,17 +180,6 @@ public class DeltaAwareCacheEntry implements CacheEntry, StateChangingEntry {
       return false;
    }
 
-   public void copyForUpdate(DataContainer container, boolean writeSkewCheck) {
-      if (isChanged())
-         return; // already copied
-
-      setChanged(); // mark as changed
-
-      // if newly created, then nothing to copy.
-      if (!isCreated())
-         oldValue = value;
-   }
-
    @Override
    public final void commit(DataContainer container, EntryVersion version) {
       // only do stuff if there are changes.
@@ -224,8 +218,9 @@ public class DeltaAwareCacheEntry implements CacheEntry, StateChangingEntry {
       return isFlagSet(CHANGED);
    }
 
-   protected final void setChanged() {
-      setFlag(CHANGED);
+   @Override
+   public final void setChanged(boolean changed) {
+      setFlag(changed, CHANGED);
    }
 
    @Override
@@ -239,10 +234,7 @@ public class DeltaAwareCacheEntry implements CacheEntry, StateChangingEntry {
 
    @Override
    public final void setValid(boolean valid) {
-      if (valid)
-         setFlag(VALID);
-      else
-         unsetFlag(VALID);
+      setFlag(valid, VALID);
    }
 
    @Override
@@ -266,10 +258,7 @@ public class DeltaAwareCacheEntry implements CacheEntry, StateChangingEntry {
 
    @Override
    public final void setCreated(boolean created) {
-      if (created)
-         setFlag(CREATED);
-      else
-         unsetFlag(CREATED);
+      setFlag(created, CREATED);
    }
 
    @Override
@@ -292,18 +281,29 @@ public class DeltaAwareCacheEntry implements CacheEntry, StateChangingEntry {
 
    @Override
    public final void setRemoved(boolean removed) {
-      if (removed)
-         setFlag(REMOVED);
-      else
-         unsetFlag(REMOVED);
+      setFlag(removed, REMOVED);
    }
 
    @Override
    public void setEvicted(boolean evicted) {
-      if (evicted)
-         setFlag(EVICTED);
+      setFlag(evicted, EVICTED);
+   }
+
+   @Override
+   public boolean isLoaded() {
+      return isFlagSet(LOADED);
+   }
+
+   @Override
+   public void setLoaded(boolean loaded) {
+      setFlag(loaded, LOADED);
+   }
+
+   private void setFlag(boolean enable, Flags flag) {
+      if (enable)
+         setFlag(flag);
       else
-         unsetFlag(EVICTED);
+         unsetFlag(flag);
    }
 
    @Override
