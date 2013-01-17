@@ -102,21 +102,10 @@ public class PrepareCommand extends AbstractTransactionBoundaryCommand {
          return null;
       }
 
-      // 1. first create a remote transaction
-      RemoteTransaction remoteTransaction = txTable.getRemoteTransaction(globalTx);
-      boolean remoteTxInitiated = remoteTransaction != null;
-      if (!remoteTxInitiated) {
-         remoteTransaction = txTable.createRemoteTransaction(globalTx, modifications);
-      } else {
-         /*
-          * remote tx was already created by Cache#lock() API call
-          * set the proper modifications since lock has none
-          * 
-          * @see LockControlCommand.java 
-          * https://jira.jboss.org/jira/browse/ISPN-48
-          */
-         remoteTransaction.setModifications(getModifications());
-      }
+      RemoteTransaction remoteTransaction = txTable.getOrCreateRemoteTransaction(globalTx, modifications);
+      //set the list of modifications anyway, as the transaction might have already been created by a previous
+      //LockControlCommand.
+      remoteTransaction.setModifications(getModifications());
 
       // 2. then set it on the invocation context
       RemoteTxInvocationContext ctx = icc.createRemoteTxInvocationContext(remoteTransaction, getOrigin());

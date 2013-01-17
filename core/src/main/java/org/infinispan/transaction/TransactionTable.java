@@ -268,39 +268,31 @@ public class TransactionTable {
    }
 
    /**
-    * Creates and register a {@link RemoteTransaction}. Returns the created transaction.
-    *
-    * @throws IllegalStateException if an attempt to create a {@link RemoteTransaction} for an already registered id is
-    *                               made.
+    * Returns an existing remote transaction or creates one if none exists.
+    * Atomicity: this method supports concurrent invocations, guaranteeing that all threads will see the same
+    * transaction object.
     */
-   public RemoteTransaction createRemoteTransaction(GlobalTransaction globalTx, WriteCommand[] modifications) {
-      return createRemoteTransaction(globalTx, modifications, currentTopologyId);
+   public RemoteTransaction getOrCreateRemoteTransaction(GlobalTransaction globalTx, WriteCommand[] modifications) {
+      return getOrCreateRemoteTransaction(globalTx, modifications, currentTopologyId);
    }
 
-   /**
-    * Creates and register a {@link RemoteTransaction}. Returns the created transaction.
-    *
-    * @throws IllegalStateException if an attempt to create a {@link RemoteTransaction} for an already registered id is
-    *                               made.
-    */
-   public RemoteTransaction createRemoteTransaction(GlobalTransaction globalTx, WriteCommand[] modifications, int topologyId) {
-      RemoteTransaction remoteTransaction = modifications == null ? txFactory.newRemoteTransaction(globalTx, topologyId)
+   private RemoteTransaction getOrCreateRemoteTransaction(GlobalTransaction globalTx, WriteCommand[] modifications, int topologyId) {
+      RemoteTransaction remoteTransaction = remoteTransactions.get(globalTx);
+      if (remoteTransaction != null)
+         return remoteTransaction;
+      remoteTransaction = modifications == null ? txFactory.newRemoteTransaction(globalTx, topologyId)
             : txFactory.newRemoteTransaction(modifications, globalTx, topologyId);
-      registerRemoteTransaction(globalTx, remoteTransaction);
-      return remoteTransaction;
-   }
-
-   private void registerRemoteTransaction(GlobalTransaction gtx, RemoteTransaction rtx) {
-      RemoteTransaction transaction = remoteTransactions.put(gtx, rtx);
-      if (transaction != null) {
-         log.remoteTxAlreadyRegistered();
-         throw new IllegalStateException("A remote transaction with the given id was already registered!!!");
-      }
-
-      log.tracef("Created and registered remote transaction %s", rtx);
-      if (rtx.getTopologyId() < minTxTopologyId) {
-         log.tracef("Changing minimum topology ID from %d to %d", minTxTopologyId, rtx.getTopologyId());
-         minTxTopologyId = rtx.getTopologyId();
+      RemoteTransaction existing = remoteTransactions.putIfAbsent(globalTx, remoteTransaction);
+      if (existing != null) {
+         log.tracef("Remote transaction already registered: %s", existing);
+         return existing;
+      } else {
+         log.tracef("Created and registered remote transaction %s", remoteTransaction);
+         if (remoteTransaction.getTopologyId() < minTxTopologyId) {
+            log.tracef("Changing minimum topology ID from %d to %d", minTxTopologyId, remoteTransaction.getTopologyId());
+            minTxTopologyId = remoteTransaction.getTopologyId();
+         }
+         return remoteTransaction;
       }
    }
 

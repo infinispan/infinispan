@@ -82,6 +82,12 @@ public abstract class AbstractCacheTransaction implements CacheTransaction {
    /** mark as volatile as this might be set from the tx thread code on view change*/
    private volatile boolean isMarkedForRollback;
 
+   /**
+    * Used internally by the {@link #waitForLockRelease} method in order to notify other transactions that wait on this
+    * one to complete.
+    */
+   private final Object lockReleaseNotifier = new Object();
+
    public final boolean isMarkedForRollback() {
       return isMarkedForRollback;
    }
@@ -152,9 +158,9 @@ public abstract class AbstractCacheTransaction implements CacheTransaction {
       if (trace) log.tracef("Transaction %s has completed, notifying listening threads.", tx);
       txComplete = true; //this one is cheap but does not guarantee visibility
       if (needToNotifyWaiters) {
-         synchronized (this) {
+         synchronized (lockReleaseNotifier) {
             txComplete = true; //in this case we want to guarantee visibility to other threads
-            this.notifyAll();
+            lockReleaseNotifier.notifyAll();
          }
       }
    }
@@ -165,7 +171,7 @@ public abstract class AbstractCacheTransaction implements CacheTransaction {
       final boolean potentiallyLocked = hasLockOrIsLockBackup(key);
       if (trace) log.tracef("Transaction gtx=%s potentially locks key %s? %s", tx, key, potentiallyLocked);
       if (potentiallyLocked) {
-         synchronized (this) {
+         synchronized (lockReleaseNotifier) {
             // Check again after acquiring a lock on the monitor that the transaction has completed.
             // If it has completed, all of its locks would have been released.
             needToNotifyWaiters = true;
@@ -174,7 +180,7 @@ public abstract class AbstractCacheTransaction implements CacheTransaction {
                needToNotifyWaiters = false;
                return true;
             }
-            this.wait(lockAcquisitionTimeout);
+            lockReleaseNotifier.wait(lockAcquisitionTimeout);
 
             // Check again in case of spurious thread signalling
             return txComplete;
