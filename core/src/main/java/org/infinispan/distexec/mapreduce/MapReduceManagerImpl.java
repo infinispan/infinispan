@@ -24,7 +24,6 @@ import static org.infinispan.factories.KnownComponentNames.ASYNC_TRANSPORT_EXECU
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedList;
@@ -34,8 +33,6 @@ import java.util.Map.Entry;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutorService;
-
-import javax.transaction.TransactionManager;
 
 import org.infinispan.Cache;
 import org.infinispan.CacheException;
@@ -139,8 +136,8 @@ public class MapReduceManagerImpl implements MapReduceManager {
                if (checkInterrupt(interruptCount++) && Thread.currentThread().isInterrupted())
                   throw new InterruptedException();
                //load result value from map phase
-               List<VOut> value = null;
-               if(useIntermediateKeys){
+               List<VOut> value;
+               if(useIntermediateKeys) {
                   value = tmpCache.get(new IntermediateCompositeKey<KOut>(taskId, key));
                } else {
                   value = tmpCache.get(key);
@@ -242,9 +239,9 @@ public class MapReduceManagerImpl implements MapReduceManager {
             Map<KOut, List<VOut>> collectedValues = collector.collectedValues();
             for (Entry<KOut, List<VOut>> e : collectedValues.entrySet()) {
                List<VOut> list = e.getValue();
-               VOut combined = null;
+               VOut combined;
                if (list.size() > 1) {
-                  combined = (VOut) combiner.reduce(e.getKey(), list.iterator());
+                  combined = combiner.reduce(e.getKey(), list.iterator());
                   combinedMap.put(e.getKey(), combined);
                } else {
                   combined = list.get(0);
@@ -258,11 +255,9 @@ public class MapReduceManagerImpl implements MapReduceManager {
          Map<Address, List<KOut>> keysToNodes = mapKeysToNodes(dm, taskId, combinedMap.keySet(),
                   emitCompositeIntermediateKeys);
 
-         TransactionManager tm = tmpCache.getAdvancedCache().getTransactionManager();
          for (Entry<Address, List<KOut>> entry : keysToNodes.entrySet()) {
             List<KOut> keysHashedToAddress = entry.getValue();
             try {
-               tm.begin();
                log.tracef("For m/r task %s migrating intermediate keys %s to %s",  taskId, keysHashedToAddress, entry.getKey());
                for (KOut key : keysHashedToAddress) {
                   VOut value = combinedMap.get(key);
@@ -274,9 +269,7 @@ public class MapReduceManagerImpl implements MapReduceManager {
                   }
                   mapPhaseKeys.add(key);
                }
-               tm.commit();
             } catch (Exception e) {
-               tm.rollback();
                throw new CacheException("Could not move intermediate keys/values for M/R task " + taskId, e);
             }
          }
@@ -287,11 +280,9 @@ public class MapReduceManagerImpl implements MapReduceManager {
          Map<Address, List<KOut>> keysToNodes = mapKeysToNodes(dm, taskId, collectedValues.keySet(),
                   emitCompositeIntermediateKeys);
                   
-         TransactionManager tm = tmpCache.getAdvancedCache().getTransactionManager();
          for (Entry<Address, List<KOut>> entry : keysToNodes.entrySet()) {
             List<KOut> keysHashedToAddress = entry.getValue();
             try {
-               tm.begin();
                log.tracef("For m/r task %s migrating intermediate keys %s to %s",  taskId, keysHashedToAddress, entry.getKey());
                for (KOut key : keysHashedToAddress) {
                   List<VOut> value = collectedValues.get(key);
@@ -303,9 +294,7 @@ public class MapReduceManagerImpl implements MapReduceManager {
                   }
                   mapPhaseKeys.add(key);
                }
-               tm.commit();
             } catch (Exception e) { 
-               tm.rollback();
                throw new CacheException("Could not move intermediate keys/values for M/R task " + taskId, e);
             }
          }
@@ -330,11 +319,11 @@ public class MapReduceManagerImpl implements MapReduceManager {
             taskLifecycleService.onPreExecute(combiner, cache);
             Map<KOut, List<VOut>> collectedValues = collector.collectedValues();
             for (Entry<KOut, List<VOut>> e : collectedValues.entrySet()) {
-               VOut combined = null;
+               VOut combined;
                List<VOut> list = e.getValue();               
                List<VOut> l = new LinkedList<VOut>();
                if (list.size() > 1) {
-                  combined = (VOut) combiner.reduce(e.getKey(), list.iterator());                                    
+                  combined = combiner.reduce(e.getKey(), list.iterator());
                } else {
                   combined = list.get(0);                  
                }                              

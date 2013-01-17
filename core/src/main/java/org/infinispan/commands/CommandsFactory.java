@@ -385,17 +385,20 @@ public interface CommandsFactory {
     * @see ApplyDeltaCommand
     */
    ApplyDeltaCommand buildApplyDeltaCommand(Object deltaAwareValueKey, Delta delta, Collection keys);
-   
+
    /**
-    * Builds a CreateCacheCommand used to create/start cache around Infinispan cluster
-    * 
-    * @param cacheName name of the cache to construct and start
-    * @param cacheConfigurationName configuration name for the cache to create/start
-    * @return created CreateCacheCommand 
+    * Same as {@link #buildCreateCacheCommand(String, String, false)}.
     */
    CreateCacheCommand buildCreateCacheCommand(String cacheName, String cacheConfigurationName);
-   
- 
+
+   /**
+    * Builds a CreateCacheCommand used to create/start cache around Infinispan cluster
+    *
+    * @param start if true, then this command also makes sure that the cache is started on all the nodes in the cluster.
+    * @param size the expected number of nodes where this node runs
+    */
+   CreateCacheCommand buildCreateCacheCommand(String tmpCacheName, String defaultTmpCacheConfigurationName, boolean start, int size);
+
    /**
     * Builds CancelCommandCommand used to cancel other commands executing on Infinispan cluster
     * 
