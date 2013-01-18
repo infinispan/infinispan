@@ -226,7 +226,10 @@ public abstract class AbstractCacheTransaction implements CacheTransaction {
    }
 
    private boolean hasLockOrIsLockBackup(Object key) {
-      return (lockedKeys != null && lockedKeys.contains(key)) || (backupKeyLocks != null && backupKeyLocks.contains(key));
+      //stopgap fix for ISPN-2728. The real fix would be to synchronize this with the intrinsic lock.
+      Set<Object> lockedKeysCopy = lockedKeys;
+      Set<Object> backupKeyLocksCopy = backupKeyLocks;
+      return (lockedKeysCopy != null && lockedKeysCopy.contains(key)) || (backupKeyLocksCopy != null && backupKeyLocksCopy.contains(key));
    }
 
    public Set<Object> getAffectedKeys() {
