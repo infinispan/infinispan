@@ -177,23 +177,23 @@ class StatsResponse(override val version: Byte, override val messageId: Long, ov
    }
 }
 
-abstract class AbstractTopologyResponse(val viewId: Int)
+abstract class AbstractTopologyResponse(val topologyId: Int)
 
-abstract class AbstractHashDistAwareResponse(override val viewId: Int,
+abstract class AbstractHashDistAwareResponse(override val topologyId: Int,
         val numOwners: Int, val hashFunction: Byte, val hashSpace: Int)
-        extends AbstractTopologyResponse(viewId)
+        extends AbstractTopologyResponse(topologyId)
 
-case class TopologyAwareResponse(override val viewId: Int)
-      extends AbstractTopologyResponse(viewId)
+case class TopologyAwareResponse(override val topologyId: Int)
+      extends AbstractTopologyResponse(topologyId)
 
-case class HashDistAwareResponse(override val viewId: Int,
+case class HashDistAwareResponse(override val topologyId: Int,
         override val numOwners: Int, override val hashFunction: Byte,
         override val hashSpace: Int)
         extends AbstractHashDistAwareResponse(
-           viewId, numOwners, hashFunction, hashSpace)
+           topologyId, numOwners, hashFunction, hashSpace)
 
-case class HashDistAware11Response(override val viewId: Int,
+case class HashDistAware11Response(override val topologyId: Int,
         override val numOwners: Int, override val hashFunction: Byte,
         override val hashSpace: Int, numVNodes: Int)
         extends AbstractHashDistAwareResponse(
-           viewId, numOwners, hashFunction, hashSpace)
+           topologyId, numOwners, hashFunction, hashSpace)

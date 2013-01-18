@@ -47,11 +47,7 @@ class CrashedMemberDetectorTest extends SingleCacheManagerTest {
       cache.put(new TestAddress(2), new ServerAddress("b", 456))
       cache.put(new TestAddress(3), new ServerAddress("c", 789))
 
-      val detector = new CrashedMemberDetectorListener(cache, null) {
-         override protected def updateViewdId(e: ViewChangedEvent) = {
-            // Do nothing...
-         }
-      }
+      val detector = new CrashedMemberDetectorListener(cache, null)
 
       val oldMembers = new ArrayList[Address]()
       oldMembers.add(new TestAddress(1))

@@ -66,13 +66,13 @@ class HotRodDistributionTest extends HotRodMultiNodeTest {
 
       resp = client1.put(k(m) , 0, 0, v(m, "v1-"), 2, 0)
       assertStatus(resp, Success)
-      assertTopologyReceived(resp.topologyResponse.get, servers)
+      assertTopologyReceived(resp.topologyResponse.get, cacheName, servers)
 
       resp = client2.put(k(m) , 0, 0, v(m, "v2-"), 2, 0)
       assertStatus(resp, Success)
-      assertTopologyReceived(resp.topologyResponse.get, servers)
+      assertTopologyReceived(resp.topologyResponse.get, cacheName, servers)
 
-      resp = client1.put(k(m) , 0, 0, v(m, "v3-"), 2, 1)
+      resp = client1.put(k(m) , 0, 0, v(m, "v3-"), 2, 2)
       assertStatus(resp, Success)
       assertEquals(resp.topologyResponse, None)
       assertSuccess(client2.get(k(m), 0), v(m, "v3-"))

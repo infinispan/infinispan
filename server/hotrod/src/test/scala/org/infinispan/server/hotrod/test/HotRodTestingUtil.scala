@@ -197,8 +197,8 @@ object HotRodTestingUtil extends Log {
       status == KeyDoesNotExist
    }
 
-   def assertTopologyReceived(resp: AbstractTopologyResponse, servers: List[HotRodServer]) {
-      assertTopologyId(resp.viewId, servers.head.getCacheManager)
+   def assertTopologyReceived(resp: AbstractTopologyResponse, cacheName: String, servers: List[HotRodServer]) {
+      assertTopologyId(resp.topologyId, cacheName, servers.head.getCacheManager)
       resp match {
          case t: TestTopologyAwareResponse =>
             assertEquals(t.members.size, 2)
@@ -227,7 +227,7 @@ object HotRodTestingUtil extends Log {
                                     servers: List[HotRodServer], cacheName: String,
                                     expectedNumOwners: Int, expectedHashFct: Int, expectedHashSpace: Int) {
       val hashTopologyResp = topoResp.asInstanceOf[TestHashDistAware10Response]
-      assertTopologyId(hashTopologyResp.viewId, servers.head.getCacheManager)
+      assertTopologyId(hashTopologyResp.topologyId, cacheName, servers.head.getCacheManager)
       assertEquals(hashTopologyResp.members.size, servers.size)
       hashTopologyResp.members.foreach(member => servers.map(_.getAddress).exists(_ == member))
       assertEquals(hashTopologyResp.numOwners, expectedNumOwners)
@@ -241,7 +241,7 @@ object HotRodTestingUtil extends Log {
                                   servers: List[HotRodServer], cacheName: String,
                                   expectedNumOwners: Int, expectedVirtualNodes: Int) {
       val hashTopologyResp = topoResp.asInstanceOf[TestHashDistAware11Response]
-      assertTopologyId(hashTopologyResp.viewId, servers.head.getCacheManager)
+      assertTopologyId(hashTopologyResp.topologyId, cacheName, servers.head.getCacheManager)
       assertEquals(hashTopologyResp.membersToHash.size, servers.size)
       hashTopologyResp.membersToHash.foreach(member => servers.map(_.getAddress).exists(_ == member))
       assertEquals(hashTopologyResp.numOwners, expectedNumOwners)
@@ -302,9 +302,9 @@ object HotRodTestingUtil extends Log {
       return servers.find(_.getCacheManager.getAddress == clusterAddress).get.getAddress
    }
 
-   def assertTopologyId(viewId: Int, cm: EmbeddedCacheManager) {
-      assertEquals(viewId, cm.getCache(HotRodServer.ADDRESS_CACHE_NAME)
-              .getAdvancedCache.getRpcManager.getTransport.getViewId)
+   def assertTopologyId(topologyId: Int, cacheName : String, cm: EmbeddedCacheManager) {
+      assertEquals(topologyId, cm.getCache(cacheName)
+              .getAdvancedCache.getRpcManager.getTopologyId)
    }
 
    def getAddressCacheRemovalLatches(servers: List[HotRodServer]): Seq[CountDownLatch] = {

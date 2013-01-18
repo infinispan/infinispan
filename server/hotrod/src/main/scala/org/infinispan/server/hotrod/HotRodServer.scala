@@ -62,18 +62,10 @@ class HotRodServer extends AbstractProtocolServer("HotRod") with Log {
    private var address: ServerAddress = _
    private var addressCache: Cache[Address, ServerAddress] = _
    private var topologyUpdateTimeout: Long = _
-   private var viewId: Int = DEFAULT_VIEW_ID
    private val knownCaches : java.util.Map[String, Cache[ByteArrayKey, CacheValue]] = ConcurrentMapFactory.makeConcurrentMap(4, 0.9f, 16)
    private val isTrace = isTraceEnabled
 
    def getAddress: ServerAddress = address
-
-   def getViewId: Int = viewId
-
-   def setViewId(viewId: Int) {
-      trace("Set view id to %d", viewId)
-      this.viewId = viewId
-   }
 
    override def getEncoder = new HotRodEncoder(getCacheManager, this)
 
@@ -157,9 +149,6 @@ class HotRodServer extends AbstractProtocolServer("HotRod") with Log {
              .locking().lockAcquisitionTimeout(lockTimeout)
              .eviction().strategy(EvictionStrategy.NONE)
              .expiration().lifespan(-1).maxIdle(-1)
-             .customInterceptors().addInterceptor()
-                  .interceptor(new ViewIdUpdater)
-                  .before(classOf[EntryWrappingInterceptor])
 
       if (doStateTransfer) {
          builder.clustering().stateTransfer().fetchInMemoryState(true)
@@ -204,74 +193,11 @@ class HotRodServer extends AbstractProtocolServer("HotRod") with Log {
 
    private[hotrod] def getAddressCache = addressCache
 
-   /**
-    * Cache interceptor that provides guarantees for view id updates. So, a
-    * view id will only be considered to have changed once the address cache
-    * has been updated to add an address from the cache. That way, when the
-    * encoder makes the view id comparison (client provided vs server side
-    * view id), it has the guarantees that the address cache has already been
-    * updated.
-    *
-    * The choice of using interceptor (rather than a cache listener) is
-    * intentional because the consistency it provides stronger guarantees on
-    * the visibility of cache state than a cache listener.
-    */
-   private class ViewIdUpdater extends BaseCustomInterceptor {
-
-      override def visitPutKeyValueCommand(ctx: InvocationContext,
-              cmd: PutKeyValueCommand): AnyRef = {
-         // First, let the put execute
-         val ret = super.visitPutKeyValueCommand(ctx, cmd)
-         // The key set contains the new address too
-         val cachedAddresses = cache.keySet()
-         val transport = embeddedCacheManager.getTransport
-         val clusterMembers = transport.getMembers
-         if (isCacheAndViewSynched(clusterMembers.iterator(), cachedAddresses)) {
-            // Once the address cache has all the nodes in the view
-            val localViewId = transport.getViewId
-            setViewId(localViewId)
-            if (isTrace) {
-               trace("Address cache added %s for cluster address %s. View id is now %d",
-                  cmd.getKey, cmd.getValue, localViewId)
-            }
-         } else if (isTrace) {
-            tracef("View [%s] (id=%d) is not yet fully present in address" +
-                    " cache [%s], with [%s] new joining node.",
-               clusterMembers, transport.getViewId, cachedAddresses, cmd.getKey)
-         }
-         ret
-      }
-
-      /**
-       * Check whether the address cache and the JGroups view are synced.
-       * They are considered to be synced when all the addresses in the
-       * JGroups view are present in the address cache.
-       *
-       * This check is necessary to make sure that the view id is only
-       * updated once the cache contains all the members in the cluster,
-       * otherwise partial views could be returned leading to uneven request
-       * balancing.
-       */
-      @tailrec
-      private def isCacheAndViewSynched(clusterIt: java.util.Iterator[Address],
-              addrs: java.util.Set[_]): Boolean = {
-         if (!clusterIt.hasNext) true
-         else {
-            val clusterAddr = clusterIt.next()
-            if (!addrs.contains(clusterAddr))
-               false
-            else
-               isCacheAndViewSynched(clusterIt, addrs)
-         }
-      }
-
-   }
-
 }
 
 object HotRodServer {
 
    val ADDRESS_CACHE_NAME = "___hotRodTopologyCache"
-   val DEFAULT_VIEW_ID = -1
+   val DEFAULT_TOPOLOGY_ID = -1
 
 }

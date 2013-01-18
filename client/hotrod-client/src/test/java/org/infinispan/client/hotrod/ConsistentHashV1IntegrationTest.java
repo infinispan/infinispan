@@ -31,10 +31,13 @@ import org.infinispan.client.hotrod.retry.DistributionRetryTest;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.distribution.ch.ConsistentHash;
+import org.infinispan.factories.TransportFactory;
 import org.infinispan.interceptors.InterceptorChain;
+import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.server.hotrod.HotRodServer;
 import org.infinispan.test.MultipleCacheManagersTest;
+import org.infinispan.test.TestingUtil;
 import org.infinispan.util.ReflectionUtil;
 import org.infinispan.util.Util;
 import org.testng.annotations.AfterMethod;
@@ -42,12 +45,16 @@ import org.testng.annotations.AfterTest;
 import org.testng.annotations.Test;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
 import java.util.Properties;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import static org.infinispan.client.hotrod.test.HotRodClientTestingUtil.*;
+import static org.testng.Assert.assertEquals;
+import static org.testng.Assert.assertNotEquals;
 
 /**
  * @author Mircea Markus
@@ -66,9 +73,7 @@ public class ConsistentHashV1IntegrationTest extends MultipleCacheManagersTest {
 
    @Override
    protected void createCacheManagers() throws Throwable {
-      ConfigurationBuilder builder = getDefaultClusteredCacheConfig(CacheMode.DIST_SYNC, false);
-      builder.jmxStatistics().enable();
-      builder.clustering().hash().numOwners(2).stateTransfer().fetchInMemoryState(false);
+      ConfigurationBuilder builder = buildConfiguration();
 
       addClusterEnabledCacheManager(builder);
       addClusterEnabledCacheManager(builder);
@@ -99,6 +104,13 @@ public class ConsistentHashV1IntegrationTest extends MultipleCacheManagersTest {
       for (int i = 0; i < 4; i++) {
          advancedCache(i).addInterceptor(new HitsAwareCacheManagersTest.HitCountInterceptor(), 1);
       }
+   }
+
+   private ConfigurationBuilder buildConfiguration() {
+      ConfigurationBuilder builder = getDefaultClusteredCacheConfig(CacheMode.DIST_SYNC, false);
+      builder.jmxStatistics().enable();
+      builder.clustering().hash().numOwners(2).stateTransfer().fetchInMemoryState(false);
+      return builder;
    }
 
    @AfterMethod(alwaysRun = true)
@@ -136,7 +148,7 @@ public class ConsistentHashV1IntegrationTest extends MultipleCacheManagersTest {
 
       // compatibility with 1.0/1.1 clients is not perfect, so we must allow for some misses
       int misses = 0;
-      for (int i = 0; i < 1000; i++) {
+      for (int i = 0; i < 200; i++) {
          byte[] keyBytes = (byte[]) kas.getKeyForAddress(address(cacheIndex));
          String key = DistributionRetryTest.ByteKeyGenerator.getStringObject(keyBytes);
          List<Address> serverBackups = serverCH.locateOwners(keyBytes);
@@ -148,9 +160,62 @@ public class ConsistentHashV1IntegrationTest extends MultipleCacheManagersTest {
             misses++;
          }
 
-         assert misses < 10 : String.format("i=%s, backups: %s, hit server: %s, key=%s", i, serverBackups, hitServer, Util.printArray(key.getBytes(), false));
+         assert misses < 5 : String.format("i=%s, backups: %s, hit server: %s, key=%s", i, serverBackups, hitServer, Util.printArray(key.getBytes(), false));
       }
 
+   }
+
+   public void testCorrectBalancingOfKeysAfterNodeKill() {
+      final AtomicInteger clientTopologyId = (AtomicInteger) TestingUtil.extractField(remoteCacheManager, "topologyId");
+
+      final int topologyIdBeforeJoin = clientTopologyId.get();
+      log.tracef("Starting test with client topology id %d", topologyIdBeforeJoin);
+      EmbeddedCacheManager cm5 = addClusterEnabledCacheManager(buildConfiguration());
+      HotRodServer hotRodServer5 = TestHelper.startHotRodServer(cm5);
+
+      // Rebalancing to include the joiner will increment the topology id by 2
+      eventually(new Condition() {
+         @Override
+         public boolean isSatisfied() throws Exception {
+            log.tracef("Client topology id is %d, waiting for it to become %d", clientTopologyId.get(),
+                  topologyIdBeforeJoin + 2);
+            // The put operation will update the client topology (if necessary)
+            remoteCache.put("k", "v");
+            return clientTopologyId.get() >= topologyIdBeforeJoin + 2;
+         }
+      });
+
+      resetHitInterceptors();
+      runTest(0);
+      runTest(1);
+      runTest(2);
+      runTest(3);
+
+      stopServer(hotRodServer5);
+      TestingUtil.killCacheManagers(cm5);
+
+      // Rebalancing to exclude the leaver will again increment the topology id by 2
+      eventually(new Condition() {
+         @Override
+         public boolean isSatisfied() throws Exception {
+            log.tracef("Client topology id is %d, waiting for it to become %d", clientTopologyId.get(),
+                  topologyIdBeforeJoin + 4);
+            // The put operation will update the client topology (if necessary)
+            remoteCache.put("k", "v");
+            return clientTopologyId.get() >= topologyIdBeforeJoin + 4;
+         }
+      });
+
+      resetHitInterceptors();
+      runTest(0);
+      runTest(1);
+      runTest(2);
+      runTest(3);
+   }
+
+   private org.infinispan.client.hotrod.impl.consistenthash.ConsistentHash extractClientConsistentHash() {
+      TcpTransportFactory transport = (TcpTransportFactory) TestingUtil.extractField(remoteCacheManager, "transport");
+      return transport.getConsistentHash();
    }
 
    private Address getHitServer() {
@@ -166,5 +231,14 @@ public class ConsistentHashV1IntegrationTest extends MultipleCacheManagersTest {
       }
       if (result.size() > 1) throw new IllegalStateException("More than one hit! : " + result);
       return result.get(0);
+   }
+
+   private void resetHitInterceptors() {
+      for (int i = 0; i < 4; i++) {
+         InterceptorChain ic = advancedCache(i).getComponentRegistry().getComponent(InterceptorChain.class);
+         HitsAwareCacheManagersTest.HitCountInterceptor interceptor =
+               (HitsAwareCacheManagersTest.HitCountInterceptor) ic.getInterceptorsWithClass(HitsAwareCacheManagersTest.HitCountInterceptor.class).get(0);
+         interceptor.reset();
+      }
    }
 }
