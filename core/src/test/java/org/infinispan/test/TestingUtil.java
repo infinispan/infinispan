@@ -40,6 +40,7 @@ import java.util.Set;
 import java.util.concurrent.Callable;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.locks.LockSupport;
 
 import javax.management.MBeanServer;
@@ -78,6 +79,7 @@ import org.infinispan.remoting.transport.Transport;
 import org.infinispan.remoting.transport.jgroups.JGroupsTransport;
 import org.infinispan.statetransfer.StateConsumer;
 import org.infinispan.statetransfer.StateConsumerImpl;
+import org.infinispan.statetransfer.StateTransferLock;
 import org.infinispan.statetransfer.StateTransferManager;
 import org.infinispan.topology.CacheTopology;
 import org.infinispan.topology.DefaultRebalancePolicy;
@@ -174,16 +176,23 @@ public class TestingUtil {
          // HACK: We need to return only after all entries have been transferred/invalidated,
          // and StateTransferManager.isStateTransferInProgress() doesn't do that.
          StateConsumer stateConsumer = extractComponent(c, StateConsumer.class);
-         AtomicBoolean rebalanceInProgress = (AtomicBoolean) extractField(stateConsumer, "rebalanceInProgress");
+         StateTransferLock stateTransferLock = extractComponent(c, StateTransferLock.class);
          DefaultRebalancePolicy rebalancePolicy = (DefaultRebalancePolicy) TestingUtil.extractGlobalComponent(c.getCacheManager(), RebalancePolicy.class);
          Address cacheAddress = c.getAdvancedCache().getRpcManager().getAddress();
          while (true) {
             CacheTopology cacheTopology = stateTransferManager.getCacheTopology();
             boolean chContainsAllMembers = cacheTopology.getCurrentCH().getMembers().size() == caches.length;
-            boolean chIsBalanced = rebalancePolicy.isBalanced(cacheTopology.getCurrentCH());
-            boolean stateTransferInProgress = rebalanceInProgress.get();
-            if (chContainsAllMembers && chIsBalanced && !stateTransferInProgress)
+            boolean chIsBalanced = cacheTopology.getPendingCH() == null && rebalancePolicy.isBalanced(cacheTopology.getCurrentCH());
+            if (chContainsAllMembers && chIsBalanced) {
+               // This is the part where we wait for the old entries to be invalidated
+               // because the "transaction data received" flag is only set after the invalidation.
+               try {
+                  stateTransferLock.waitForTransactionData(cacheTopology.getTopologyId());
+               } catch (InterruptedException e) {
+                  Thread.currentThread().interrupt();
+               }
                break;
+            }
 
             if (System.currentTimeMillis() > giveup) {
                String message;

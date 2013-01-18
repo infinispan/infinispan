@@ -521,7 +521,7 @@ public class ClusterTopologyManagerImpl implements ClusterTopologyManager {
             List<Address> newPendingMembers = cacheStatus.pruneInvalidMembers(pendingCH.getMembers());
             newPendingCH = consistentHashFactory.updateMembers(pendingCH, newPendingMembers);
          }
-         CacheTopology newTopology = new CacheTopology(topologyId, newCurrentCH, newPendingCH);
+         CacheTopology newTopology = new CacheTopology(topologyId + 1, newCurrentCH, newPendingCH);
          cacheStatus.updateCacheTopology(newTopology);
          log.tracef("Cache %s topology updated: %s", cacheName, newTopology);
          return true;

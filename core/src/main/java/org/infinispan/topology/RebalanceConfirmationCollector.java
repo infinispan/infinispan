@@ -54,7 +54,7 @@ class RebalanceConfirmationCollector {
     */
    public boolean confirmRebalance(Address node, int receivedTopologyId) {
       synchronized (this) {
-         if (topologyId != receivedTopologyId) {
+         if (topologyId > receivedTopologyId) {
             throw new CacheException(String.format("Received invalid rebalance confirmation from %s " +
                   "for cache %s, expecting topology id %d but got %d", node, cacheName, topologyId, receivedTopologyId));
          }
