@@ -1,8 +1,32 @@
+/*
+ * JBoss, Home of Professional Open Source
+ * Copyright 2012 Red Hat Inc. and/or its affiliates and other
+ * contributors as indicated by the @author tags. All rights reserved.
+ * See the copyright.txt in the distribution for a full listing of
+ * individual contributors.
+ *
+ * This is free software; you can redistribute it and/or modify it
+ * under the terms of the GNU Lesser General Public License as
+ * published by the Free Software Foundation; either version 2.1 of
+ * the License, or (at your option) any later version.
+ *
+ * This software is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
+ * Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with this software; if not, write to the Free
+ * Software Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
+ * 02110-1301 USA, or see the FSF site: http://www.fsf.org.
+ */
+
 package org.infinispan.lock.singlelock;
 
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.container.entries.InternalCacheEntry;
+import org.infinispan.distribution.ch.ConsistentHash;
 import org.infinispan.test.MultipleCacheManagersTest;
 import org.infinispan.test.fwk.CleanupAfterMethod;
 import org.infinispan.transaction.lookup.DummyTransactionManagerLookup;
@@ -19,6 +43,8 @@ import static org.testng.AssertJUnit.assertEquals;
 import static org.testng.AssertJUnit.fail;
 
 /**
+ * Main owner changes due to state transfer in a distributed cluster using optimistic locking.
+ *
  * @since 5.1
  */
 @Test(groups = "functional", testName = "lock.singlelock.MainOwnerChangesLockTest")
@@ -68,9 +94,11 @@ public class MainOwnerChangesLockTest extends MultipleCacheManagersTest {
       waitForClusterToForm();
 
       Object migratedKey = null;
+      ConsistentHash ch = advancedCache(2).getDistributionManager().getConsistentHash();
       for (Object key : key2Tx.keySet()) {
-         if (advancedCache(2).getDistributionManager().getConsistentHash().locatePrimaryOwner(key).equals(address(2))) {
+         if (ch.locatePrimaryOwner(key).equals(address(2))) {
             migratedKey = key;
+            break;
          }
       }
       if (migratedKey == null) {
@@ -97,7 +125,7 @@ public class MainOwnerChangesLockTest extends MultipleCacheManagersTest {
       
       for (Object key : key2Tx.keySet()) {
          Object value = getValue(key);//make sure that data from the container, just to make sure all replicas are correctly set
-         assertEquals(value, key);
+         assertEquals(key, value);
       }
    }
 
@@ -122,7 +150,6 @@ public class MainOwnerChangesLockTest extends MultipleCacheManagersTest {
    private boolean sameValue(InternalCacheEntry d1, InternalCacheEntry d2) {
       return d1.getValue().equals(d2.getValue());
    }
-
 
    private DummyTransactionManager dummyTm(int cacheIndex) {
       return (DummyTransactionManager) tm(cacheIndex);

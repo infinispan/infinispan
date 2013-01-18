@@ -49,6 +49,7 @@ public abstract class AbstractEnlistmentAdapter {
    private final ClusteringDependentLogic clusteringLogic;
    private final int hashCode;
    private final boolean isSecondPhaseAsync;
+   private final boolean isPessimisticLocking;
 
    public AbstractEnlistmentAdapter(CacheTransaction cacheTransaction,
             CommandsFactory commandsFactory, RpcManager rpcManager,
@@ -59,6 +60,7 @@ public abstract class AbstractEnlistmentAdapter {
       this.txTable = txTable;
       this.clusteringLogic = clusteringLogic;
       this.isSecondPhaseAsync = Configurations.isSecondPhaseAsync(configuration);
+      this.isPessimisticLocking = configuration.transaction().lockingMode() == LockingMode.PESSIMISTIC;
       hashCode = preComputeHashCode(cacheTransaction);
    }
 
@@ -70,6 +72,7 @@ public abstract class AbstractEnlistmentAdapter {
       this.txTable = txTable;
       this.clusteringLogic = clusteringLogic;
       this.isSecondPhaseAsync = Configurations.isSecondPhaseAsync(configuration);
+      this.isPessimisticLocking = configuration.transaction().lockingMode() == LockingMode.PESSIMISTIC;
       hashCode = 31;
    }
 
@@ -83,7 +86,7 @@ public abstract class AbstractEnlistmentAdapter {
       if (mayHaveRemoteLocks(localTransaction) && isClustered() && !isSecondPhaseAsync) {
          final TxCompletionNotificationCommand command = commandsFactory.buildTxCompletionNotificationCommand(null, gtx);
          final Collection<Address> owners = clusteringLogic.getOwners(localTransaction.getAffectedKeys());
-         Collection<Address> commitNodes = localTransaction.getCommitNodes(owners, rpcManager.getTopologyId(), rpcManager.getTransport().getMembers());
+         Collection<Address> commitNodes = localTransaction.getCommitNodes(owners, rpcManager.getTopologyId(), rpcManager.getMembers());
          log.tracef("About to invoke tx completion notification on commitNodes: %s", commitNodes);
          rpcManager.invokeRemotely(commitNodes, command, false, true);
       }
@@ -91,7 +94,8 @@ public abstract class AbstractEnlistmentAdapter {
 
    private boolean mayHaveRemoteLocks(LocalTransaction lt) {
       return (lt.getRemoteLocksAcquired() != null && !lt.getRemoteLocksAcquired().isEmpty()) ||
-            (lt.getModifications() != null && !lt.getModifications().isEmpty());
+            (lt.getModifications() != null && !lt.getModifications().isEmpty()) ||
+            (isPessimisticLocking && lt.getTopologyId() != rpcManager.getTopologyId());
    }
 
    /**
