@@ -453,7 +453,7 @@ public class StateConsumerImpl implements StateConsumer {
             if (tx == null) {
                tx = transactionTable.getRemoteTransaction(transactionInfo.getGlobalTransaction());
                if (tx == null) {
-                  tx = transactionTable.createRemoteTransaction(transactionInfo.getGlobalTransaction(), transactionInfo.getModifications());
+                  tx = transactionTable.getOrCreateRemoteTransaction(transactionInfo.getGlobalTransaction(), transactionInfo.getModifications());
                   ((RemoteTransaction) tx).setMissingLookedUpEntries(true);
                }
             }
