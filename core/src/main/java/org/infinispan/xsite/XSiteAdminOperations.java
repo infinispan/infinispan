@@ -238,7 +238,7 @@ public class XSiteAdminOperations {
    private List<Address> checkForErrors(Map<Address, Response> responses) {
       List<Address> failed = new ArrayList<Address>(responses.size());
       for (Map.Entry<Address, Response> e : responses.entrySet()) {
-         if (!e.getValue().isSuccessful() || !e.getValue().isValid()) {
+         if (e.getValue() == null || !e.getValue().isSuccessful() || !e.getValue().isValid()) {
             failed.add(e.getKey());
          }
       }
