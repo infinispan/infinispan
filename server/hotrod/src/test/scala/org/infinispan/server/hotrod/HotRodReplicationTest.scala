@@ -90,13 +90,13 @@ class HotRodReplicationTest extends HotRodMultiNodeTest {
 
       resp = clients.head.ping(2, 0)
       assertStatus(resp, Success)
-      assertTopologyReceived(resp.topologyResponse.get, servers)
+      assertTopologyReceived(resp.topologyResponse.get, cacheName, servers)
 
       resp = clients.tail.head.ping(2, 0)
       assertStatus(resp, Success)
-      assertTopologyReceived(resp.topologyResponse.get, servers)
+      assertTopologyReceived(resp.topologyResponse.get, cacheName, servers)
 
-      resp = clients.tail.head.ping(2, 1)
+      resp = clients.tail.head.ping(2, 2)
       assertStatus(resp, Success)
       assertEquals(resp.topologyResponse, None)
    }
@@ -109,13 +109,13 @@ class HotRodReplicationTest extends HotRodMultiNodeTest {
 
       resp = clients.head.put(k(m) , 0, 0, v(m, "v1-"), 2, 0)
       assertStatus(resp, Success)
-      assertTopologyReceived(resp.topologyResponse.get, servers)
+      assertTopologyReceived(resp.topologyResponse.get, cacheName, servers)
 
       resp = clients.tail.head.put(k(m) , 0, 0, v(m, "v2-"), 2, 0)
       assertStatus(resp, Success)
-      assertTopologyReceived(resp.topologyResponse.get, servers)
+      assertTopologyReceived(resp.topologyResponse.get, cacheName, servers)
 
-      resp = clients.head.put(k(m) , 0, 0, v(m, "v3-"), 2, 1)
+      resp = clients.head.put(k(m) , 0, 0, v(m, "v3-"), 2, 2)
       assertStatus(resp, Success)
       assertEquals(resp.topologyResponse, None)
       assertSuccess(clients.tail.head.get(k(m), 0), v(m, "v3-"))
@@ -125,7 +125,7 @@ class HotRodReplicationTest extends HotRodMultiNodeTest {
       try {
          val resp = clients.head.put(k(m) , 0, 0, v(m, "v4-"), 2, 1)
          assertStatus(resp, Success)
-         assertTopologyId(resp.topologyResponse.get.viewId, cacheManagers.get(0))
+         assertTopologyId(resp.topologyResponse.get.topologyId, cacheName, cacheManagers.get(0))
          val topoResp = resp.asTopologyAwareResponse
          assertEquals(topoResp.members.size, 3)
          (newServer.getAddress :: servers.map(_.getAddress)).foreach(
@@ -138,7 +138,7 @@ class HotRodReplicationTest extends HotRodMultiNodeTest {
 
       resp = clients.head.put(k(m) , 0, 0, v(m, "v5-"), 2, 2)
       assertStatus(resp, Success)
-      assertTopologyId(resp.topologyResponse.get.viewId, cacheManagers.get(0))
+      assertTopologyId(resp.topologyResponse.get.topologyId, cacheName, cacheManagers.get(0))
       var topoResp = resp.asTopologyAwareResponse
       assertEquals(topoResp.members.size, 2)
       servers.map(_.getAddress).foreach(
@@ -151,7 +151,7 @@ class HotRodReplicationTest extends HotRodMultiNodeTest {
       try {
          val resp = clients.head.put(k(m) , 0, 0, v(m, "v6-"), 2, 3)
          assertStatus(resp, Success)
-         assertTopologyId(resp.topologyResponse.get.viewId, cacheManagers.get(0))
+         assertTopologyId(resp.topologyResponse.get.topologyId, cacheName, cacheManagers.get(0))
          val topoResp = resp.asTopologyAwareResponse
          assertEquals(topoResp.members.size, 3)
          (crashingServer.getAddress :: servers.map(_.getAddress)).foreach(
@@ -164,7 +164,7 @@ class HotRodReplicationTest extends HotRodMultiNodeTest {
 
       resp = clients.head.put(k(m) , 0, 0, v(m, "v7-"), 2, 4)
       assertStatus(resp, Success)
-      assertTopologyId(resp.topologyResponse.get.viewId, cacheManagers.get(0))
+      assertTopologyId(resp.topologyResponse.get.topologyId, cacheName, cacheManagers.get(0))
       topoResp = resp.asTopologyAwareResponse
       assertEquals(topoResp.members.size, 2)
       servers.map(_.getAddress).foreach(
@@ -174,7 +174,7 @@ class HotRodReplicationTest extends HotRodMultiNodeTest {
       resp = clients.head.put(k(m) , 0, 0, v(m, "v8-"), 3, 1)
       assertStatus(resp, Success)
       val hashTopologyResp = resp.topologyResponse.get.asInstanceOf[TestHashDistAware10Response]
-      assertTopologyId(resp.topologyResponse.get.viewId, cacheManagers.get(0))
+      assertTopologyId(resp.topologyResponse.get.topologyId, cacheName, cacheManagers.get(0))
       assertEquals(hashTopologyResp.members.size, 2)
       servers.map(_.getAddress).foreach(
          addr => assertTrue(hashTopologyResp.members.exists(_ == addr)))

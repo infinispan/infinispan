@@ -765,18 +765,18 @@ class TestBulkGetKeysResponse(override val version: Byte, override val messageId
 
 case class ServerNode(val host: String, val port: Int)
 
-case class TestTopologyAwareResponse(override val viewId: Int,
+case class TestTopologyAwareResponse(override val topologyId: Int,
                                      val members: Iterable[ServerAddress])
-        extends AbstractTopologyResponse(viewId)
+        extends AbstractTopologyResponse(topologyId)
 
-case class TestHashDistAware10Response(override val viewId: Int,
+case class TestHashDistAware10Response(override val topologyId: Int,
                         val members: Iterable[ServerAddress],
                         hashIds: Map[ServerAddress, Seq[Int]],
                         numOwners: Int, hashFunction: Byte, hashSpace: Int)
-      extends AbstractTopologyResponse(viewId)
+      extends AbstractTopologyResponse(topologyId)
 
-case class TestHashDistAware11Response(override val viewId: Int,
+case class TestHashDistAware11Response(override val topologyId: Int,
                         val membersToHash: Map[ServerAddress, Int],
                         numOwners: Int, hashFunction: Byte, hashSpace: Int,
                         numVirtualNodes: Int)
-      extends AbstractTopologyResponse(viewId)
+      extends AbstractTopologyResponse(topologyId)

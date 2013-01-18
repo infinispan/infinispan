@@ -22,15 +22,10 @@ package org.infinispan.server.hotrod
 import logging.Log
 import org.jboss.netty.buffer.ChannelBuffer
 import org.infinispan.Cache
-import org.infinispan.manager.EmbeddedCacheManager
 import org.infinispan.remoting.transport.Address
 import org.infinispan.server.core.transport.ExtendedChannelBuffer._
 import collection.JavaConversions._
-import OperationStatus._
-import org.infinispan.util.ByteArrayKey
-import org.infinispan.server.core.CacheValue
 import org.infinispan.configuration.cache.Configuration
-import org.infinispan.distribution.ch.DefaultConsistentHash
 import collection.mutable.ArrayBuffer
 import org.infinispan.distribution.ch.ConsistentHash
 
@@ -49,6 +44,7 @@ abstract class AbstractTopologyAwareEncoder1x extends AbstractEncoder1x with Con
             cfg.clustering().hash().numVirtualNodes())
    }
 
+
    override protected def writeHashTopologyHeader(
             topoResp: AbstractTopologyResponse, buf: ChannelBuffer, r: Response,
             members: Cache[Address, ServerAddress], server: HotRodServer) {
@@ -56,20 +52,7 @@ abstract class AbstractTopologyAwareEncoder1x extends AbstractEncoder1x with Con
          case h: HashDistAware11Response => {
             trace("Write hash distribution change response header %s", h)
             if (h.hashFunction == 0) {
-               // When the cache is replicated, we just send the addresses without any hash ids
-               writeCommonHashTopologyHeader(buf, h.viewId, h.numOwners,
-                  h.hashFunction, h.hashSpace, members.size)
-               writeUnsignedInt(1, buf) // Num virtual nodes
-
-               mapAsScalaMap(members).foreach { case (addr, serverAddr) =>
-                  writeString(serverAddr.host, buf)
-                  writeUnsignedShort(serverAddr.port, buf)
-                  // Send the address' hash code as is
-                  // With virtual nodes off, clients will have to normalize it
-                  // With virtual nodes on, it's used as root to calculate
-                  // hash code and then normalize it
-                  buf.writeInt(0)
-               }
+               writeLimitedHashTopologyUpdate11(h, members.values(), buf)
                return
             }
 
@@ -88,43 +71,63 @@ abstract class AbstractTopologyAwareEncoder1x extends AbstractEncoder1x with Con
             // There will be more than one hash id for each server, so we can't use a map.
             var hashIds = collection.mutable.ArrayBuffer[(ServerAddress, Int)]()
             val allDenormalizedHashIds = denormalizeSegmentHashIds(ch)
+            var incompleteAddressCache = false
             for (segmentIdx <- 0 until numSegments) {
                val denormalizedSegmentHashIds = allDenormalizedHashIds(segmentIdx)
                val segmentOwners = ch.locateOwnersForSegment(segmentIdx)
                for (ownerIdx <- 0 until segmentOwners.length) {
                   val address = segmentOwners(ownerIdx % segmentOwners.size)
                   val serverAddress = members.get(address)
-                  if (serverAddress != null) {
-                     val hashId = denormalizedSegmentHashIds(ownerIdx)
-                     hashIds += ((serverAddress, hashId))
+                  if (serverAddress == null) {
+                     incompleteAddressCache = true
                   }
+
+                  val hashId = denormalizedSegmentHashIds(ownerIdx)
+                  hashIds += ((serverAddress, hashId))
                }
             }
 
-            writeCommonHashTopologyHeader(buf, h.viewId, h.numOwners,
-               h.hashFunction, h.hashSpace, hashIds.size)
-            writeUnsignedInt(1, buf) // Num virtual nodes
-
-            hashIds.foreach { case (serverAddress, hashId) =>
-               log.tracef("Writing hash id %d for %s:%s", hashId, serverAddress.host, serverAddress.port)
-               writeString(serverAddress.host, buf)
-               writeUnsignedShort(serverAddress.port, buf)
-               buf.writeInt(hashId)
+            if (incompleteAddressCache) {
+               // Postpone the topology update until all the CH members are in the address cache
+               writeNoTopologyUpdate(buf)
+            } else {
+               writeHashTopologyUpdate11(h, hashIds, buf)
             }
          }
          case t: TopologyAwareResponse => {
-            trace("Return limited hash distribution aware header in spite of having a hash aware client %s", t)
-            val serverAddresses = members.values()
-            writeCommonHashTopologyHeader(buf, t.viewId, 0, 0, 0, serverAddresses.size)
-            writeUnsignedInt(0, buf) // Num virtual nodes
-            serverAddresses.foreach { address =>
-               writeString(address.host, buf)
-               writeUnsignedShort(address.port, buf)
-               buf.writeInt(0) // Address' hash id
-            }
+            writeLimitedHashTopologyUpdate11(t, members.values(), buf)
          }
          case _ => throw new IllegalStateException(
             "Expected version 1.1 specific response: " + topoResp)
+      }
+   }
+
+
+   def writeHashTopologyUpdate11(h: HashDistAware11Response,
+                                 hashIds: ArrayBuffer[(ServerAddress, Int)],
+                                 buf: ChannelBuffer) {
+      writeCommonHashTopologyHeader(buf, h.topologyId, h.numOwners,
+         h.hashFunction, h.hashSpace, hashIds.size)
+      writeUnsignedInt(1, buf) // Num virtual nodes
+
+      for ((serverAddress, hashId) <- hashIds) {
+         log.tracef("Writing hash id %d for %s:%s", hashId, serverAddress.host, serverAddress.port)
+         writeString(serverAddress.host, buf)
+         writeUnsignedShort(serverAddress.port, buf)
+         buf.writeInt(hashId)
+      }
+   }
+
+   def writeLimitedHashTopologyUpdate11(t: AbstractTopologyResponse,
+                                        serverAddresses: Iterable[ServerAddress],
+                                        buf: ChannelBuffer) {
+      trace("Return limited hash distribution aware header in spite of having a hash aware client %s", t)
+      writeCommonHashTopologyHeader(buf, t.topologyId, 0, 0, 0, serverAddresses.size)
+      writeUnsignedInt(1, buf) // Num virtual nodes
+      for (address <- serverAddresses) {
+         writeString(address.host, buf)
+         writeUnsignedShort(address.port, buf)
+         buf.writeInt(0) // Address' hash id
       }
    }
 

@@ -60,7 +60,7 @@ class HotRod11StorageOnlyNodesTest extends HotRodMultiNodeTest {
       var resp = client1.ping(3, 0)
       assertStatus(resp, Success)
       assertHashTopologyReceived(resp.topologyResponse.get, servers, cacheName, 2, virtualNodes)
-      var topologyId = resp.topologyResponse.get.viewId
+      var topologyId = resp.topologyResponse.get.topologyId
 
       val newCacheManager = addClusterEnabledCacheManager()
       try {
@@ -90,20 +90,21 @@ class HotRod11StorageOnlyNodesTest extends HotRodMultiNodeTest {
          TestingUtil.blockUntilViewsReceived(50000, false, manager(0), manager(2))
          TestingUtil.waitForRehashToComplete(cache(0, cacheName), cache(2, cacheName))
 
-         resp = client1.put(key1, 0, 0, v(m, "v1-"), 3, topologyId)
+         // The client still doesn't receive a topology update because one of the nodes is not in the address cache
+         // Note that this means further HotRod client requests may go to a dead node
+         resp = client1.put(key1, 0, 0, v(m, "v3-"), 3, topologyId)
          assertStatus(resp, Success)
-         assertHashTopologyReceived(resp.topologyResponse.get, List(server1), cacheName, 2, virtualNodes)
-         topologyId = resp.topologyResponse.get.viewId
+         assertFalse(resp.topologyResponse.isDefined)
       } finally {
          TestingUtil.killCacheManagers(newCacheManager)
       }
 
       log.trace("Check that only the topology id changes after the storage-only server is killed")
-      resp = client1.put(k(m), 0, 0, v(m, "v3-"), 3, topologyId)
+      resp = client1.put(k(m), 0, 0, v(m, "v4-"), 3, topologyId)
       assertStatus(resp, Success)
       assertHashTopologyReceived(resp.topologyResponse.get, List(server1), cacheName, 2, virtualNodes)
 
-      assertSuccess(client1.get(k(m), 0), v(m, "v3-"))
+      assertSuccess(client1.get(k(m), 0), v(m, "v4-"))
    }
 
 

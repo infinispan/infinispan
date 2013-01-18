@@ -55,7 +55,7 @@ abstract class AbstractEncoder1x extends AbstractVersionedEncoder with Constants
          topologyResp match {
             case t: TopologyAwareResponse => {
                if (r.clientIntel == 2)
-                  writeTopologyHeader(t, buf, addressCache)
+                  writeTopologyUpdate(t, addressCache.values(), buf)
                else
                   writeHashTopologyHeader(t, buf, r, addressCache, server)
             }
@@ -63,7 +63,7 @@ abstract class AbstractEncoder1x extends AbstractVersionedEncoder with Constants
                writeHashTopologyHeader(h, buf, r, addressCache, server)
          }
       } else {
-         buf.writeByte(0) // No topology change
+         writeNoTopologyUpdate(buf)
       }
    }
 
@@ -152,16 +152,14 @@ abstract class AbstractEncoder1x extends AbstractVersionedEncoder with Constants
       if (addressCache != null) {
          r.clientIntel match {
             case 2 | 3 => {
-               val lastViewId = server.getViewId
-               // Topology is only considered to be outdated when it's older
-               // (smaller value), than the one sent by the client. If the
-               // comparison was only done on whether the view id was different,
-               // it could result in receiving old topologies and potentially
-               // trying to connect to servers that are down.
-               // Besides, make sure that a view has actually been set! In other
-               // words, check against default value to see if it's higher.
-               if (lastViewId >= DEFAULT_VIEW_ID && r.topologyId < lastViewId)
-                  generateTopologyResponse(r, addressCache, server, lastViewId)
+               // Use the request cache's topology id as the HotRod topologyId.
+               // We can't use the address cache because it is a replicated cache, so it doesn't rebalance
+               // after a node leaves (and a distributed cache won't be able to update the clients'
+               // topology to the balanced consistent hash).
+               val cache = server.getCacheInstance(r.cacheName, addressCache.getCacheManager, false)
+               val currentTopologyId = cache.getAdvancedCache.getRpcManager.getTopologyId
+               if (currentTopologyId >= DEFAULT_TOPOLOGY_ID && r.topologyId < currentTopologyId)
+                  generateTopologyResponse(r, addressCache, server, currentTopologyId)
                else null
             }
             case 1 => null
@@ -170,33 +168,20 @@ abstract class AbstractEncoder1x extends AbstractVersionedEncoder with Constants
    }
 
    private def generateTopologyResponse(r: Response, addressCache: Cache[Address, ServerAddress],
-           server: HotRodServer, lastViewId: Int): AbstractTopologyResponse = {
+           server: HotRodServer, currentTopologyId: Int): AbstractTopologyResponse = {
       val cache = server.getCacheInstance(r.cacheName, addressCache.getCacheManager, false)
       val config = cache.getCacheConfiguration
       if (r.clientIntel == 2 || !config.clustering().cacheMode().isDistributed) {
-         TopologyAwareResponse(lastViewId)
+         TopologyAwareResponse(currentTopologyId)
       } else {
          // Must be 3 and distributed
-         createHashDistAwareResp(lastViewId, config)
+         createHashDistAwareResp(currentTopologyId, config)
       }
    }
 
-   protected def createHashDistAwareResp(lastViewId: Int, cfg: Configuration): AbstractHashDistAwareResponse = {
-      HashDistAwareResponse(lastViewId, cfg.clustering().hash().numOwners(),
+   protected def createHashDistAwareResp(topologyId: Int, cfg: Configuration): AbstractHashDistAwareResponse = {
+      HashDistAwareResponse(topologyId, cfg.clustering().hash().numOwners(),
          DEFAULT_HASH_FUNCTION_VERSION, Integer.MAX_VALUE)
-   }
-
-   def writeTopologyHeader(t: TopologyAwareResponse,
-           buffer: ChannelBuffer, addrCache: Cache[Address, ServerAddress]) {
-      trace("Write topology change response header %s", t)
-      buffer.writeByte(1) // Topology changed
-      writeUnsignedInt(t.viewId, buffer)
-      val serverAddresses = addrCache.values()
-      writeUnsignedInt(serverAddresses.size, buffer)
-      serverAddresses.foreach{address =>
-         writeString(address.host, buffer)
-         writeUnsignedShort(address.port, buffer)
-      }
    }
 
    protected def writeHashTopologyHeader(topoRsp: AbstractTopologyResponse,
@@ -209,44 +194,83 @@ abstract class AbstractEncoder1x extends AbstractVersionedEncoder with Constants
             val distManager = cache.getAdvancedCache.getDistributionManager
             val ch = distManager.getConsistentHash
 
-            val numSegments = ch.getNumSegments
-            val totalNumServers = (0 until numSegments).map(i => ch.locateOwnersForSegment(i).size).sum
-            writeCommonHashTopologyHeader(buffer, h.viewId, h.numOwners, h.hashFunction,
-               h.hashSpace, totalNumServers)
+            if (!members.keySet().containsAll(ch.getMembers)) {
+               // Postpone the topology update until all the CH members are in the address cache
+               writeNoTopologyUpdate(buffer)
+               return
+            }
 
-            // This is not quite correct, as the ownership of segments on the 1.0/1.1 clients is not exactly
+            // This is not quite correct, as the ownership of segments on the 1.0/1.1/1.2 clients is not exactly
             // the same as on the server. But the difference appears only for (numSegment*numOwners/MAX_INT)
             // of the keys (at the "segment borders"), so it's still much better than having no hash information.
             // The idea here is to be able to be compatible with clients running version 1.0 of the protocol.
-            // With time, users should migrate to version 1.2 capable clients.
             // TODO Need a check somewhere on startup, this only works with the default consistent hash
+            val numSegments = ch.getNumSegments
             val segmentHashIds = ch.asInstanceOf[DefaultConsistentHash].getSegmentEndHashes
+            val serverHashes = ArrayBuffer[(ServerAddress, Int)]()
             for ((address, serverAddress) <- members) {
                for (segmentIdx <- 0 until numSegments) {
                   val ownerIdx = ch.locateOwnersForSegment(segmentIdx).indexOf(address)
                   if (ownerIdx >= 0) {
                      val segmentHashId = segmentHashIds(segmentIdx)
                      val hashId = (segmentHashId + ownerIdx) & Int.MaxValue
-
-                     writeString(serverAddress.host, buffer)
-                     writeUnsignedShort(serverAddress.port, buffer)
-                     log.tracef("Writing hash id %d for %s:%s", hashId, serverAddress.host, serverAddress.port)
-                     buffer.writeInt(hashId)
+                     serverHashes += ((serverAddress, hashId))
                   }
                }
             }
+
+            writeHashTopologyUpdate(serverHashes, h, buffer)
          }
          case t: TopologyAwareResponse => {
-            trace("Return limited hash distribution aware header in spite of having a hash aware client %s", t)
-            val serverAddresses = members.values()
-            writeCommonHashTopologyHeader(buffer, t.viewId, 0, 0, 0, serverAddresses.size)
-            serverAddresses.foreach { address =>
-               writeString(address.host, buffer)
-               writeUnsignedShort(address.port, buffer)
-               buffer.writeInt(0) // Address' hash id
-            }
+            writeLimitedHashTopologyUpdate(t, members.values(), buffer)
          }
       }
+   }
+
+
+   def writeHashTopologyUpdate(serverHashes: Iterable[(ServerAddress, Int)],
+                               h: AbstractHashDistAwareResponse,
+                               buffer: ChannelBuffer) {
+      val totalNumServers = serverHashes.size
+      writeCommonHashTopologyHeader(buffer, h.topologyId, h.numOwners, h.hashFunction,
+         h.hashSpace, totalNumServers)
+      for ((serverAddress, hashId) <- serverHashes) {
+         writeString(serverAddress.host, buffer)
+         writeUnsignedShort(serverAddress.port, buffer)
+         log.tracef("Writing hash id %d for %s:%s", hashId, serverAddress.host, serverAddress.port)
+         buffer.writeInt(hashId)
+      }
+   }
+
+   def writeLimitedHashTopologyUpdate(t: AbstractTopologyResponse,
+                                      serverAddresses: Iterable[ServerAddress],
+                                      buffer: ChannelBuffer) {
+      trace("Return limited hash distribution aware header in spite of having a hash aware client %s", t)
+      writeCommonHashTopologyHeader(buffer, t.topologyId, 0, 0, 0, serverAddresses.size)
+      for (address <- serverAddresses) {
+         writeString(address.host, buffer)
+         writeUnsignedShort(address.port, buffer)
+         buffer.writeInt(0) // Address' hash id
+      }
+   }
+
+   def writeTopologyUpdate(t: TopologyAwareResponse,
+                           serverAddresses: Iterable[ServerAddress],
+                           buffer: ChannelBuffer) {
+      trace("Write topology change response header %s", t)
+      buffer.writeByte(1) // Topology changed
+      writeUnsignedInt(t.topologyId, buffer)
+      writeUnsignedInt(serverAddresses.size, buffer)
+      for (address <- serverAddresses) {
+         writeString(address.host, buffer)
+         writeUnsignedShort(address.port, buffer)
+      }
+   }
+
+
+   def writeNoTopologyUpdate(buffer: ChannelBuffer) {
+      trace("Write topology response header with no change")
+      buffer.writeByte(0)
    }
 
    protected def writeCommonHashTopologyHeader(buffer: ChannelBuffer, viewId: Int,
