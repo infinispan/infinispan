@@ -97,7 +97,7 @@ public abstract class BaseReplStateTransferConsistencyTest extends MultipleCache
 
       cacheConfigBuilder.clustering().l1().disable().onRehash(false).locking().lockAcquisitionTimeout(1000l);
       cacheConfigBuilder.clustering().hash().numSegments(10)
-            .stateTransfer().fetchInMemoryState(true).waitForInitialStateTransferToComplete(false);
+            .stateTransfer().fetchInMemoryState(true).awaitInitialTransfer(false);
 
       createCluster(cacheConfigBuilder, 2);
       waitForClusterToForm();

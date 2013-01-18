@@ -92,7 +92,7 @@ public abstract class BaseDistStateTransferConsistencyTest extends MultipleCache
       }
 
       builder.clustering().hash().numSegments(10).numOwners(2).l1().disable().onRehash(false).locking().lockAcquisitionTimeout(1000l);
-      builder.clustering().stateTransfer().fetchInMemoryState(true).waitForInitialStateTransferToComplete(false);
+      builder.clustering().stateTransfer().fetchInMemoryState(true).awaitInitialTransfer(false);
 
       createCluster(builder, 3);
       waitForClusterToForm();

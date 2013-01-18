@@ -1310,8 +1310,8 @@ public class Parser52 implements ConfigurationParser<ConfigurationBuilderHolder>
             case FETCH_IN_MEMORY_STATE:
                builder.clustering().stateTransfer().fetchInMemoryState(Boolean.parseBoolean(value));
                break;
-            case WAIT_FOR_INITIAL_STATE_TRANSFER_TO_COMPLETE:
-               builder.clustering().stateTransfer().waitForInitialStateTransferToComplete(Boolean.parseBoolean(value));
+            case AWAIT_INITIAL_TRANSFER:
+               builder.clustering().stateTransfer().awaitInitialTransfer(Boolean.parseBoolean(value));
                break;
             case TIMEOUT:
                builder.clustering().stateTransfer().timeout(Long.parseLong(value));

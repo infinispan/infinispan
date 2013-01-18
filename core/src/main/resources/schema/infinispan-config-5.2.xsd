@@ -805,11 +805,13 @@
                     </xs:documentation>
                   </xs:annotation>
                 </xs:attribute>
-                <xs:attribute name="waitForInitialStateTransferToComplete" type="xs:boolean">
+                <xs:attribute name="awaitInitialTransfer" type="xs:boolean">
                   <xs:annotation>
                     <xs:documentation>
-                       If true, this will cause the first call to method CacheManager.getCache() on a joiner node to block and wait until the joining is complete and the node has finished receiving state from neighboring caches (if fetchInMemoryState is enabled).
-                       This option applies to distributed and replicated caches only and is enabled by default.
+                       If true, this will cause the first call to method CacheManager.getCache() on the joiner node to block and wait until the joining is complete and the cache has finished
+                       receiving state from neighboring caches (if fetchInMemoryState is enabled). This option applies to distributed and replicated caches only and is enabled by default.
+                       Please note that setting this to false will make the cache object available immediately but any access to keys that should be available locally but are not yet transferred
+                       will actually cause a (transparent) remote access. While this will not have any impact on the logic of your application it might impact performance.
                     </xs:documentation>
                   </xs:annotation>
                 </xs:attribute>

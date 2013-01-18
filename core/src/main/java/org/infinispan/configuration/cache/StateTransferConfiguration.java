@@ -30,17 +30,17 @@ public class StateTransferConfiguration {
    private Boolean originalFetchInMemoryState;
    private long timeout;
    private int chunkSize;
-   private boolean waitForInitialStateTransferToComplete;
-   private Boolean originalWaitForInitialStateTransferToComplete;
+   private boolean awaitInitialTransfer;
+   private Boolean originalAwaitInitialTransfer;
 
    StateTransferConfiguration(boolean fetchInMemoryState, Boolean originalFetchInMemoryState, long timeout, int chunkSize,
-                              boolean waitForInitialStateTransferToComplete, Boolean originalWaitForInitialStateTransferToComplete) {
+                              boolean awaitInitialTransfer, Boolean originalAwaitInitialTransfer) {
       this.fetchInMemoryState = fetchInMemoryState;
       this.originalFetchInMemoryState = originalFetchInMemoryState;
       this.timeout = timeout;
       this.chunkSize = chunkSize;
-      this.waitForInitialStateTransferToComplete = waitForInitialStateTransferToComplete;
-      this.originalWaitForInitialStateTransferToComplete = originalWaitForInitialStateTransferToComplete;
+      this.awaitInitialTransfer = awaitInitialTransfer;
+      this.originalAwaitInitialTransfer = originalAwaitInitialTransfer;
    }
 
    /**
@@ -88,19 +88,22 @@ public class StateTransferConfiguration {
    }
 
    /**
-    * If {@code true}, the {@code CacheManager.getCache()} call will not return until state transfer is complete for
-    * this cache on the current node, ie. its {@code DataContainer} has finished receiving the entries it should hold
-    * according to the new {@code ConsistentHash}. This option is only available in clustered mode and the default value is {@code true}.
+    * If {@code true}, this will cause the first call to method {@code CacheManager.getCache()} on the joiner node to
+    * block and wait until the joining is complete and the cache has finished receiving state from neighboring caches
+    * (if fetchInMemoryState is enabled). This option applies to distributed and replicated caches only and is enabled
+    * by default. Please note that setting this to {@code false} will make the cache object available immediately but
+    * any access to keys that should be available locally but are not yet transferred will actually cause a (transparent)
+    * remote access. While this will not have any impact on the logic of your application it might impact performance.
     */
-   public boolean waitForInitialStateTransferToComplete() {
-      return waitForInitialStateTransferToComplete;
+   public boolean awaitInitialTransfer() {
+      return awaitInitialTransfer;
    }
 
    /**
-    * We want to remember if the user didn't configure waitForInitialStateTransferToComplete for the default cache.
+    * We want to remember if the user didn't configure awaitInitialTransfer for the default cache.
     */
-   protected Boolean originalWaitForInitialStateTransferToComplete() {
-      return originalWaitForInitialStateTransferToComplete;
+   protected Boolean originalAwaitInitialTransfer() {
+      return originalAwaitInitialTransfer;
    }
 
    @Override
@@ -110,8 +113,8 @@ public class StateTransferConfiguration {
             ", fetchInMemoryState=" + fetchInMemoryState +
             ", originalFetchInMemoryState=" + originalFetchInMemoryState +
             ", timeout=" + timeout +
-            ", waitForInitialStateTransferToComplete=" + waitForInitialStateTransferToComplete +
-            ", originalWaitForInitialStateTransferToComplete=" + originalWaitForInitialStateTransferToComplete +
+            ", awaitInitialTransfer=" + awaitInitialTransfer +
+            ", originalAwaitInitialTransfer=" + originalAwaitInitialTransfer +
             '}';
    }
 
@@ -127,8 +130,8 @@ public class StateTransferConfiguration {
       if (timeout != that.timeout) return false;
       if (originalFetchInMemoryState != null ? !originalFetchInMemoryState.equals(that.originalFetchInMemoryState) : that.originalFetchInMemoryState != null)
          return false;
-      if (waitForInitialStateTransferToComplete != that.waitForInitialStateTransferToComplete) return false;
-      if (originalWaitForInitialStateTransferToComplete != null ? !originalWaitForInitialStateTransferToComplete.equals(that.originalWaitForInitialStateTransferToComplete) : that.originalWaitForInitialStateTransferToComplete != null)
+      if (awaitInitialTransfer != that.awaitInitialTransfer) return false;
+      if (originalAwaitInitialTransfer != null ? !originalAwaitInitialTransfer.equals(that.originalAwaitInitialTransfer) : that.originalAwaitInitialTransfer != null)
          return false;
 
       return true;
@@ -140,8 +143,8 @@ public class StateTransferConfiguration {
       result = 31 * result + (originalFetchInMemoryState != null ? originalFetchInMemoryState.hashCode() : 0);
       result = 31 * result + (int) (timeout ^ (timeout >>> 32));
       result = 31 * result + chunkSize;
-      result = 31 * result + (waitForInitialStateTransferToComplete ? 1 : 0);
-      result = 31 * result + (originalWaitForInitialStateTransferToComplete != null ? originalWaitForInitialStateTransferToComplete.hashCode() : 0);
+      result = 31 * result + (awaitInitialTransfer ? 1 : 0);
+      result = 31 * result + (originalAwaitInitialTransfer != null ? originalAwaitInitialTransfer.hashCode() : 0);
       return result;
    }
 
