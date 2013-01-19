@@ -354,6 +354,16 @@ public class StateConsumerImpl implements StateConsumer {
    }
 
    public void applyState(Address sender, int topologyId, Collection<StateChunk> stateChunks) {
+      ConsistentHash wCh = cacheTopology.getWriteConsistentHash();
+      // ignore responses received after we are no longer a member
+      if (!wCh.getMembers().contains(rpcManager.getAddress())) {
+         if (trace) {
+            log.tracef("Ignoring received state because we are no longer a member");
+         }
+
+         return;
+      }
+
       if (trace) {
          log.tracef("Before applying the received state the data container of cache %s has %d keys", cacheName, dataContainer.size());
       }
@@ -361,7 +371,7 @@ public class StateConsumerImpl implements StateConsumer {
       for (StateChunk stateChunk : stateChunks) {
          // it's possible to receive a late message so we must be prepared to ignore segments we no longer own
          //todo [anistor] this check should be based on topologyId
-         if (!cacheTopology.getWriteConsistentHash().getSegmentsForOwner(rpcManager.getAddress()).contains(stateChunk.getSegmentId())) {
+         if (!wCh.getSegmentsForOwner(rpcManager.getAddress()).contains(stateChunk.getSegmentId())) {
             log.warnf("Discarding received cache entries for segment %d of cache %s because they do not belong to this node.", stateChunk.getSegmentId(), cacheName);
             continue;
          }
