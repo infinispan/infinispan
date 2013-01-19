@@ -105,7 +105,6 @@ public class TransactionTable {
     */
    private volatile int minTxTopologyId = CACHE_STOPPED_TOPOLOGY_ID;
    private volatile int currentTopologyId = CACHE_STOPPED_TOPOLOGY_ID;
-   private volatile boolean useStrictTopologyIdComparison = true;
    private String cacheName;
 
    @Inject
@@ -215,17 +214,6 @@ public class TransactionTable {
 
    public int getMinTopologyId() {
       return minTxTopologyId;
-   }
-
-   /**
-    * Indicates if topology id comparisons should be strict if one wants to compare topology ids in oder to tell
-    * if a transaction was started in an older topology than a second transaction. This flag is true most of the time
-    * except when the current topology did not increase its id (it's not caused by a rebalance).
-    *
-    * @return true if strict topology id comparisons should be used, false otherwise
-    */
-   public boolean useStrictTopologyIdComparison() {
-      return useStrictTopologyIdComparison;
    }
 
    protected void updateStateOnNodesLeaving(Collection<Address> leavers) {
@@ -414,7 +402,6 @@ public class TransactionTable {
       // don't do anything if this cache is not clustered
       if (clustered) {
          if (tce.isPre()) {
-            useStrictTopologyIdComparison = tce.getNewTopologyId() != currentTopologyId;
             currentTopologyId = tce.getNewTopologyId();
          } else {
             log.debugf("Topology changed, recalculating minTopologyId");
