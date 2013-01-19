@@ -154,13 +154,11 @@ public abstract class AbstractTxLockingInterceptor extends AbstractLockingInterc
       }
       TxInvocationContext txContext = (TxInvocationContext) ctx;
       int transactionTopologyId = -1;
-      boolean useStrictComparison = true;
       boolean checkForPendingLocks = false;
       if (clustered) {
          transactionTopologyId = txContext.getCacheTransaction().getTopologyId();
          if (transactionTopologyId != TransactionTable.CACHE_STOPPED_TOPOLOGY_ID) {
-            useStrictComparison = txTable.useStrictTopologyIdComparison();
-            checkForPendingLocks = isFromOlderTopology(txTable.getMinTopologyId(), transactionTopologyId, useStrictComparison);
+            checkForPendingLocks = txTable.getMinTopologyId() < transactionTopologyId;
          }
       }
 
@@ -170,10 +168,10 @@ public abstract class AbstractTxLockingInterceptor extends AbstractLockingInterc
          final long expectedEndTime = nowMillis() + cacheConfiguration.locking().lockAcquisitionTimeout();
 
          // Check local transactions first
-         waitForTransactionsToComplete(txContext, txTable.getLocalTransactions(), key, transactionTopologyId, useStrictComparison, expectedEndTime);
+         waitForTransactionsToComplete(txContext, txTable.getLocalTransactions(), key, transactionTopologyId, expectedEndTime);
 
          // ... then remote ones
-         waitForTransactionsToComplete(txContext, txTable.getRemoteTransactions(), key, transactionTopologyId, useStrictComparison, expectedEndTime);
+         waitForTransactionsToComplete(txContext, txTable.getRemoteTransactions(), key, transactionTopologyId, expectedEndTime);
 
          // Then try to acquire a lock
          final long remaining = expectedEndTime - nowMillis();
@@ -190,11 +188,10 @@ public abstract class AbstractTxLockingInterceptor extends AbstractLockingInterc
    }
 
    private void waitForTransactionsToComplete(TxInvocationContext txContext, Collection<? extends CacheTransaction> transactions,
-                                              Object key, int transactionTopologyId, boolean useStrictComparison,
-                                              long expectedEndTime) throws InterruptedException {
+                                              Object key, int transactionTopologyId, long expectedEndTime) throws InterruptedException {
       GlobalTransaction thisTransaction = txContext.getGlobalTransaction();
       for (CacheTransaction tx : transactions) {
-         if (isFromOlderTopology(tx.getTopologyId(), transactionTopologyId, useStrictComparison)) {
+         if (tx.getTopologyId() < transactionTopologyId) {
             // don't wait for the current transaction
             if (tx.getGlobalTransaction().equals(thisTransaction))
                continue;
@@ -214,19 +211,6 @@ public abstract class AbstractTxLockingInterceptor extends AbstractLockingInterc
             }
          }
       }
-   }
-
-   /**
-    * Checks if first topology id is smaller than the second. The comparison can be strict or non-strict,
-    * depending on the isStrictComparison flag.
-    *
-    * @param tx1TopologyId topology id of first transaction
-    * @param tx2TopologyId topology id of second transaction
-    * @param useStrictComparison a flag indicating if comparison must be strict
-    * @return if the first transaction was started in an older topology than the second transaction
-    */
-   private boolean isFromOlderTopology(int tx1TopologyId, int tx2TopologyId, boolean useStrictComparison) {
-      return useStrictComparison ? tx1TopologyId < tx2TopologyId : tx1TopologyId <= tx2TopologyId;
    }
 
    private TimeoutException newTimeoutException(Object key, TxInvocationContext txContext) {

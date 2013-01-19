@@ -219,6 +219,9 @@ public abstract class LocalTransaction extends AbstractCacheTransaction {
       if (recipients == null) {
          return null;
       }
+      if (getTopologyId() == currentTopologyId) {
+         return recipients;
+      }
       Set<Address> allRecipients = new HashSet<Address>(getRemoteLocksAcquired());
       allRecipients.addAll(recipients);
       allRecipients.retainAll(members);
