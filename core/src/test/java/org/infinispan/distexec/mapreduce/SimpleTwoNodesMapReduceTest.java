@@ -88,6 +88,9 @@ public class SimpleTwoNodesMapReduceTest extends BaseWordCountMapReduceTest {
                   return counter.get() >= nodeCount();
                }
             });
+
+            Thread.sleep(1500);
+
             //...are ready to be canceled
             return future.cancel(true);
          }
