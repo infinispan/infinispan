@@ -32,10 +32,10 @@
       <relativePath>../pom.xml</relativePath>
    </parent>
 
-   <artifactId>infinispan-lucene-directory</artifactId>
+   <artifactId>infinispan-lucene-v4</artifactId>
    <packaging>bundle</packaging>
-   <name>Infinispan Lucene Directory Implementation</name>
-   <description>A Lucene directory implementation based on Infinispan</description>
+   <name>Infinispan integration with Lucene v.4</name>
+   <description>Support to store and encode Lucene v4 indexes in Infinispan</description>
 
    <dependencies>
       <dependency>
