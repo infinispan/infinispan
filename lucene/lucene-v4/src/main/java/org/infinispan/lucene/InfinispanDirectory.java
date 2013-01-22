@@ -24,9 +24,11 @@ package org.infinispan.lucene;
 
 import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.util.Collection;
 import java.util.Set;
 
 import org.apache.lucene.store.Directory;
+import org.apache.lucene.store.IOContext;
 import org.apache.lucene.store.IndexInput;
 import org.apache.lucene.store.IndexOutput;
 import org.apache.lucene.store.LockFactory;
@@ -174,7 +176,6 @@ public class InfinispanDirectory extends Directory {
    /**
     * {@inheritDoc}
     */
-   @Override
    public long fileModified(String name) {
       ensureOpen();
       FileMetadata fileMetadata = fileOps.getFileMetadata(name);
@@ -189,7 +190,6 @@ public class InfinispanDirectory extends Directory {
    /**
     * {@inheritDoc}
     */
-   @Override
    public void touchFile(String fileName) {
       ensureOpen();
       FileMetadata file = fileOps.getFileMetadata(fileName);
@@ -269,7 +269,7 @@ public class InfinispanDirectory extends Directory {
     * {@inheritDoc}
     */
    @Override
-   public IndexOutput createOutput(String name) {
+   public IndexOutput createOutput(String name, IOContext context) {
       final FileCacheKey key = new FileCacheKey(indexName, name);
       // creating new file, metadata is added on flush() or close() of IndexOutPut
       return new InfinispanIndexOutput(metadataCache, chunksCache, key, chunkSize, fileOps);
@@ -279,7 +279,7 @@ public class InfinispanDirectory extends Directory {
     * {@inheritDoc}
     */
    @Override
-   public IndexInput openInput(String name) throws IOException {
+   public IndexInput openInput(String name, IOContext context) throws IOException {
       final FileCacheKey fileKey = new FileCacheKey(indexName, name);
       FileMetadata fileMetadata = (FileMetadata) metadataCache.get(fileKey);
       if (fileMetadata == null) {
@@ -340,6 +340,11 @@ public class InfinispanDirectory extends Directory {
    private static void checkNotNull(Object v, String objectname) {
       if (v == null)
          throw new IllegalArgumentException(objectname + " must not be null");
+   }
+
+   @Override
+   public void sync(Collection<String> names) throws IOException {
+      //This implementation is always in sync with the storage, so NOOP is fine
    }
    
 }
