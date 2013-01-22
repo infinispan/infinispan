@@ -34,15 +34,10 @@
 
    <artifactId>infinispan-lucene-v4</artifactId>
    <packaging>bundle</packaging>
-   <name>Infinispan integration with Lucene v.4</name>
+   <name>Infinispan integration with Lucene v.4.x</name>
    <description>Support to store and encode Lucene v4 indexes in Infinispan</description>
 
    <dependencies>
-      <dependency>
-         <groupId>${project.groupId}</groupId>
-         <artifactId>infinispan-core</artifactId>
-      </dependency>
-
       <dependency>
          <groupId>org.apache.lucene</groupId>
          <artifactId>lucene-core</artifactId>
@@ -55,20 +50,12 @@
       </dependency>
 
       <dependency>
-         <groupId>${project.groupId}</groupId>
-         <artifactId>infinispan-core</artifactId>
-         <version>${project.version}</version>
-         <type>test-jar</type>
-         <scope>test</scope>
-      </dependency>
-      
-      <dependency>
          <groupId>org.infinispan</groupId>
          <artifactId>infinispan-cachestore-jdbc</artifactId>
          <type>test-jar</type>
          <scope>test</scope>
       </dependency>
-      
+
       <dependency>
          <groupId>c3p0</groupId>
          <artifactId>c3p0</artifactId>
@@ -80,7 +67,6 @@
          <artifactId>h2</artifactId>
          <scope>test</scope>
       </dependency>
-
    </dependencies>
 
    <build>
