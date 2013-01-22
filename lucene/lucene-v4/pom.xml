@@ -45,6 +45,12 @@
       </dependency>
 
       <dependency>
+         <groupId>org.apache.lucene</groupId>
+         <artifactId>lucene-analyzers-common</artifactId>
+         <version>${version.lucene.v4}</version>
+      </dependency>
+
+      <dependency>
          <groupId>org.infinispan</groupId>
          <artifactId>infinispan-cachestore-jdbc</artifactId>
          <optional>true</optional>
@@ -62,7 +68,7 @@
          <artifactId>c3p0</artifactId>
          <scope>test</scope>
       </dependency>
-      
+
       <dependency>
          <groupId>com.h2database</groupId>
          <artifactId>h2</artifactId>

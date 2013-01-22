@@ -165,9 +165,10 @@ public abstract class CacheTestSupport {
    }
 
    protected static void doReadOperation(Directory d) throws Exception {
+   	IndexReader indexReader = null;
       IndexSearcher search = null;
       try {
-         IndexReader indexReader = IndexReader.open(d);
+         indexReader = IndexReader.open(d);
          // this is a read
          search = new IndexSearcher(indexReader);
          // dummy query that probably won't return anything
@@ -176,7 +177,7 @@ public abstract class CacheTestSupport {
          search.search(termQuery, null, 1);
       } finally {
          if (search != null) {
-            search.close();
+         	indexReader.close();
          }
       }
    }
@@ -229,7 +230,6 @@ public abstract class CacheTestSupport {
          Integer idFoundElement = Integer.valueOf(idString);
          assert expectedDocumendIds.contains(idFoundElement);
       }
-      searcher.close();
       reader.close();
    }
 

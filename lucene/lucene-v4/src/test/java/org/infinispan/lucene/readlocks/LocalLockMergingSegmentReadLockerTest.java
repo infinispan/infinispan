@@ -25,6 +25,7 @@ package org.infinispan.lucene.readlocks;
 import java.io.IOException;
 
 import org.apache.lucene.store.Directory;
+import org.apache.lucene.store.IOContext;
 import org.apache.lucene.store.IndexInput;
 import org.apache.lucene.store.IndexOutput;
 import org.infinispan.Cache;
@@ -45,12 +46,12 @@ public class LocalLockMergingSegmentReadLockerTest extends DistributedSegmentRea
    @Test @Override
    public void testIndexWritingAndFinding() throws IOException, InterruptedException {
       verifyBoth(cache0,cache1);
-      IndexOutput indexOutput = dirA.createOutput(filename);
+      IndexOutput indexOutput = dirA.createOutput(filename, IOContext.DEFAULT);
       indexOutput.writeString("no need to write, nobody ever will read this");
       indexOutput.flush();
       indexOutput.close();
       assertFileExistsHavingRLCount(filename, 1, true);
-      IndexInput firstOpenOnB = dirB.openInput(filename);
+      IndexInput firstOpenOnB = dirB.openInput(filename, IOContext.DEFAULT);
       assertFileExistsHavingRLCount(filename, 2, true);
       dirA.deleteFile(filename);
       assertFileExistsHavingRLCount(filename, 1, false);
@@ -60,9 +61,9 @@ public class LocalLockMergingSegmentReadLockerTest extends DistributedSegmentRea
       assertFileExistsHavingRLCount(filename, 1, false);
       cloneOfFirstOpenOnB.close();
       assertFileExistsHavingRLCount(filename, 1, false);
-      IndexInput firstOpenOnA = dirA.openInput(filename);
+      IndexInput firstOpenOnA = dirA.openInput(filename, IOContext.DEFAULT);
       assertFileExistsHavingRLCount(filename, 2, false);
-      IndexInput secondOpenOnA = dirA.openInput(filename);
+      IndexInput secondOpenOnA = dirA.openInput(filename, IOContext.DEFAULT);
       assertFileExistsHavingRLCount(filename, 2, false);
       firstOpenOnA.close();
       assertFileExistsHavingRLCount(filename, 2, false);

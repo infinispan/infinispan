@@ -77,7 +77,6 @@ public class InfinispanDirectoryStressTest {
       Query query = new TermQuery(t);
       TopDocs hits = search.search(query, 1);
 
-      search.close();
       ir.close();
 
       assert OPERATIONS == hits.totalHits;
@@ -134,12 +133,10 @@ public class InfinispanDirectoryStressTest {
       int expectedDocs = writeCount.get();
       TopDocs hits = search.search(query, 1);
 
-      search.close();
       indexReader1.close();
 
       assert expectedDocs == hits.totalHits;
 
-      search.close();
       directory1.close();
       directory2.close();
       cache.getCacheManager().stop();

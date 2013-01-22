@@ -25,6 +25,7 @@ import java.util.HashSet;
 import java.util.Set;
 
 import org.apache.lucene.store.Directory;
+import org.apache.lucene.store.IOContext;
 import org.apache.lucene.store.IndexInput;
 import org.infinispan.container.entries.ImmortalCacheEntry;
 import org.infinispan.container.entries.InternalCacheEntry;
@@ -230,7 +231,7 @@ final class DirectoryLoaderAdaptor {
     */
    private FileMetadata loadIntern(final FileCacheKey key) throws IOException {
       final String fileName = key.getFileName();
-      final long fileModified = directory.fileModified(fileName);
+      final long fileModified = 0L; // directory.fileModified(fileName);
       final long fileLength = directory.fileLength(fileName);
       // We're forcing the buffer size of a to-be-read segment to the full file size:
       final FileMetadata meta = new FileMetadata((int) fileLength);
@@ -250,7 +251,7 @@ final class DirectoryLoaderAdaptor {
       int bufferSize = key.getBufferSize();
       final int seekTo = chunkId * bufferSize;
       final byte[] buffer;
-      final IndexInput input = directory.openInput(fileName);
+      final IndexInput input = directory.openInput(fileName, IOContext.READ);
       final int length = (int) input.length();//TODO verify size
       try {
          if (seekTo != 0) {

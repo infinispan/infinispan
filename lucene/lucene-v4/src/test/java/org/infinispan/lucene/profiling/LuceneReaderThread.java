@@ -27,6 +27,7 @@ import java.util.HashSet;
 import java.util.Set;
 
 import org.apache.lucene.index.CorruptIndexException;
+import org.apache.lucene.index.DirectoryReader;
 import org.apache.lucene.index.IndexReader;
 import org.apache.lucene.index.Term;
 import org.apache.lucene.search.IndexSearcher;
@@ -47,7 +48,7 @@ import org.apache.lucene.store.Directory;
 public class LuceneReaderThread extends LuceneUserThread {
 
    protected IndexSearcher searcher;
-   protected IndexReader indexReader;
+   protected DirectoryReader indexReader;
 
    LuceneReaderThread(Directory dir, SharedState state) {
       super(dir, state);
@@ -73,18 +74,16 @@ public class LuceneReaderThread extends LuceneUserThread {
 
    protected void refreshIndexReader() throws CorruptIndexException, IOException {
       if (indexReader == null) {
-         indexReader = IndexReader.open(directory);
+         indexReader = DirectoryReader.open(directory);
       }
       else {
          IndexReader before = indexReader;
-         indexReader = indexReader.reopen();
+         indexReader = DirectoryReader.openIfChanged(indexReader);
          if (before != indexReader) {
             before.close();
          }
       }
-      if (searcher != null) {
-         searcher.close();
-      }
+      
       searcher = new IndexSearcher(indexReader);
    }
    
