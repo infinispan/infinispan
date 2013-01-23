@@ -118,28 +118,6 @@
          <artifactId>javassist</artifactId>
          <scope>test</scope>
       </dependency>
-      
-      <dependency>
-         <groupId>org.codehaus.woodstox</groupId>
-         <artifactId>woodstox-core-asl</artifactId>
-         <exclusions>
-            <exclusion>
-               <groupId>javax.xml.stream</groupId>
-               <artifactId>stax-api</artifactId>
-            </exclusion>
-         </exclusions>
-      </dependency>
-     
-      <dependency>
-         <groupId>org.codehaus.woodstox</groupId>
-         <artifactId>stax2-api</artifactId>
-         <exclusions>
-            <exclusion>
-               <groupId>javax.xml.stream</groupId>
-               <artifactId>stax-api</artifactId>
-            </exclusion>
-         </exclusions>
-      </dependency>
    </dependencies>
 
    <build>

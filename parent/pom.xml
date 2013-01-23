@@ -182,8 +182,6 @@
       <version.weld>1.1.8.Final</version.weld>
       <version.xstream>1.4.1</version.xstream>
       <version.javassist>3.15.0-GA</version.javassist>
-      <version.org.codehaus.woodstox.stax2-api>3.1.1</version.org.codehaus.woodstox.stax2-api>
-      <version.org.codehaus.woodstox.woodstox-core-asl>4.1.1</version.org.codehaus.woodstox.woodstox-core-asl>
       <version.org.jboss.staxmapper>1.1.0.Final</version.org.jboss.staxmapper>
       <version.maven.bundle>2.3.7</version.maven.bundle>
       <version.maven.source>2.2.1</version.maven.source>
@@ -549,28 +547,6 @@
             <groupId>org.codehaus.jackson</groupId>
             <artifactId>jackson-mapper-asl</artifactId>
             <version>${version.jackson}</version>
-         </dependency>
-         <dependency>
-            <groupId>org.codehaus.woodstox</groupId>
-            <artifactId>stax2-api</artifactId>
-            <version>${version.org.codehaus.woodstox.stax2-api}</version>
-            <exclusions>
-               <exclusion>
-                  <artifactId>stax-api</artifactId>
-                  <groupId>javax.xml.stream</groupId>
-               </exclusion>
-            </exclusions>
-         </dependency>
-         <dependency>
-            <groupId>org.codehaus.woodstox</groupId>
-            <artifactId>woodstox-core-asl</artifactId>
-            <version>${version.org.codehaus.woodstox.woodstox-core-asl}</version>
-            <exclusions>
-               <exclusion>
-                  <artifactId>stax-api</artifactId>
-                  <groupId>javax.xml.stream</groupId>
-               </exclusion>
-            </exclusions>
          </dependency>
          <dependency>
             <groupId>org.hibernate</groupId>
