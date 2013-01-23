@@ -21,10 +21,14 @@ package org.infinispan.distribution;
 
 import org.testng.annotations.Test;
 
-@Test (groups = "functional", testName = "distribution.DistCacheStorePreload2Test")
-public class DistCacheStorePreload2Test extends DistCacheStorePreloadTest {
+/**
+ * Tests distributed caches with cache store from which data is preloaded
+ * works fine with support for concurrent writes is disabled.
+ */
+@Test (groups = "functional", testName = "distribution.DistPreloadWithoutConcurrentWritesTest")
+public class DistPreloadWithoutConcurrentWritesTest extends DistCacheStorePreloadTest {
 
-   public DistCacheStorePreload2Test() {
+   public DistPreloadWithoutConcurrentWritesTest() {
       supportConcurrentWrites = false;
    }
 
