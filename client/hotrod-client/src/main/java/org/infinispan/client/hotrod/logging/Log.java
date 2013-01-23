@@ -125,4 +125,8 @@ public interface Log extends BasicLogger {
    @Message(value = "Unable to convert string property [%s] to a boolean! Using default value of %b", id = 4020)
    void unableToConvertStringPropertyToBoolean(String value, boolean defaultValue);
 
+   @LogMessage(level = INFO)
+   @Message(value = "Infinispan version: %s", id = 4021)
+   void version(String version);
+
 }

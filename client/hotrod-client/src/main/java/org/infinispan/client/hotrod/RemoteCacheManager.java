@@ -481,6 +481,10 @@ public class RemoteCacheManager implements BasicCacheContainer {
             startRemoteCache(rcc);
          }
       }
+
+      // Print version to help figure client version run
+      log.version(org.infinispan.Version.printVersion());
+
       started = true;
    }
 
