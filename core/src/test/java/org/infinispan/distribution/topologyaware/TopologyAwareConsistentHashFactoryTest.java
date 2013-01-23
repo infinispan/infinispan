@@ -140,7 +140,7 @@ public class TopologyAwareConsistentHashFactoryTest extends AbstractInfinispanTe
       assertAllLocationsWithRebalance(4);
       assertAllLocationsWithRebalance(99);
    }
-   
+
    public void testDifferentMachines2() {
       addNode(testAddresses[0], "m0", null, null);
       addNode(testAddresses[1], "m0", null, null);
@@ -148,6 +148,17 @@ public class TopologyAwareConsistentHashFactoryTest extends AbstractInfinispanTe
       addNode(testAddresses[3], "m1", null, null);
       addNode(testAddresses[4], "m2", null, null);
       addNode(testAddresses[5], "m2", null, null);
+
+      assertAllLocationsWithRebalance(1);
+      assertAllLocationsWithRebalance(2);
+      assertAllLocationsWithRebalance(3);
+      assertAllLocationsWithRebalance(4);
+   }
+
+   public void testDifferentMachines3() {
+      addNode(testAddresses[0], "primary", "primary", "primary");
+      addNode(testAddresses[1], "primary", "primary", "primary");
+      addNode(testAddresses[2], "secondary", "primary", "primary");
 
       assertAllLocationsWithRebalance(1);
       assertAllLocationsWithRebalance(2);

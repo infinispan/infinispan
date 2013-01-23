@@ -19,7 +19,7 @@
 
 package org.infinispan.notifications.cachelistener.annotation;
 
-import org.infinispan.config.Configuration;
+import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.notifications.IncorrectListenerException;
 import org.infinispan.notifications.cachelistener.event.DataRehashedEvent;
 import org.infinispan.notifications.cachelistener.event.Event;
@@ -31,7 +31,7 @@ import java.lang.annotation.Target;
 
 /**
  * This annotation should be used on methods that need to be notified when a rehash starts or ends.  This is only fired
- * in a {@link Configuration.CacheMode#DIST_SYNC} or {@link Configuration.CacheMode#DIST_ASYNC} configured cache.
+ * in a {@link CacheMode#DIST_SYNC} or {@link CacheMode#DIST_ASYNC} configured cache.
  * <p/>
  * Methods annotated with this annotation should accept a single parameter, a {@link DataRehashedEvent} otherwise a
  * {@link IncorrectListenerException} will be thrown when registering your listener.

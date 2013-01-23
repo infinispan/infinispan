@@ -44,6 +44,7 @@ import org.infinispan.interceptors.InterceptorChain;
 import org.infinispan.loaders.CacheLoaderException;
 import org.infinispan.loaders.CacheLoaderManager;
 import org.infinispan.loaders.CacheStore;
+import org.infinispan.notifications.cachelistener.CacheNotifier;
 import org.infinispan.remoting.responses.Response;
 import org.infinispan.remoting.responses.SuccessfulResponse;
 import org.infinispan.remoting.rpc.ResponseMode;
@@ -95,6 +96,7 @@ public class StateConsumerImpl implements StateConsumer {
    private InterceptorChain interceptorChain;
    private InvocationContextContainer icc;
    private StateTransferLock stateTransferLock;
+   private CacheNotifier cacheNotifier;
    private long timeout;
    private boolean useVersionedPut;
    private boolean isFetchEnabled;
@@ -116,9 +118,15 @@ public class StateConsumerImpl implements StateConsumer {
    private final AtomicInteger activeTopologyUpdates = new AtomicInteger(0);
 
    /**
-    * Indicates if the currently executing topology update is a rebalance.
+    * Indicates if there is a rebalance in progress.
     */
    private final AtomicBoolean rebalanceInProgress = new AtomicBoolean(false);
+
+   /**
+    * Indicates if there is a rebalance in progress and there the local node has not yet received
+    * all the new segments yet.
+    */
+   private final AtomicBoolean waitingForState = new AtomicBoolean(false);
 
    /**
     * A map that keeps track of current inbound state transfers by source address. There could be multiple transfers
@@ -195,7 +203,8 @@ public class StateConsumerImpl implements StateConsumer {
                     CacheLoaderManager cacheLoaderManager,
                     DataContainer dataContainer,
                     TransactionTable transactionTable,
-                    StateTransferLock stateTransferLock) {
+                    StateTransferLock stateTransferLock,
+                    CacheNotifier cacheNotifier) {
       this.cacheName = cache.getName();
       this.executorService = executorService;
       this.stateTransferManager = stateTransferManager;
@@ -209,6 +218,7 @@ public class StateConsumerImpl implements StateConsumer {
       this.dataContainer = dataContainer;
       this.transactionTable = transactionTable;
       this.stateTransferLock = stateTransferLock;
+      this.cacheNotifier = cacheNotifier;
 
       isTransactional = configuration.transaction().transactionMode().isTransactional();
 
@@ -222,11 +232,15 @@ public class StateConsumerImpl implements StateConsumer {
       timeout = configuration.clustering().stateTransfer().timeout();
    }
 
-   public boolean isStateTransferInProgress() {
-      // TODO This is called quite often, use an extra volatile, a concurrent collection or a RWLock instead
+   public boolean hasActiveTransfers() {
       synchronized (this) {
          return !transfersBySource.isEmpty();
       }
+   }
+
+   @Override
+   public boolean isStateTransferInProgress() {
+      return rebalanceInProgress.get();
    }
 
    @Override
@@ -234,19 +248,27 @@ public class StateConsumerImpl implements StateConsumer {
       if (configuration.clustering().cacheMode().isInvalidation()) {
          return false;
       }
-      // todo [anistor] also return true for keys to be removed (now we report only keys to be added)
       synchronized (this) {
-         return cacheTopology != null && transfersBySegment.containsKey(getSegment(key));
+         CacheTopology localCacheTopology = cacheTopology;
+         if (localCacheTopology == null || localCacheTopology.getPendingCH() == null)
+            return false;
+         Address address = rpcManager.getAddress();
+         boolean keyWillBeLocal = localCacheTopology.getPendingCH().isKeyLocalToNode(address, key);
+         boolean keyIsLocal = localCacheTopology.getCurrentCH().isKeyLocalToNode(address, key);
+         return keyWillBeLocal && !keyIsLocal;
       }
    }
 
    @Override
    public void onTopologyUpdate(CacheTopology cacheTopology, boolean isRebalance) {
-      if (trace) log.tracef("Received new CH %s for cache %s (isRebalance=%b)", cacheTopology.getWriteConsistentHash(), cacheName, isRebalance);
+      if (trace) log.tracef("Received new topology for cache %s, isRebalance = %s, topology = %s", cacheTopology.getWriteConsistentHash(), cacheName);
 
       int numStartedTopologyUpdates = activeTopologyUpdates.incrementAndGet();
       if (isRebalance) {
          rebalanceInProgress.set(true);
+         waitingForState.set(true);
+         cacheNotifier.notifyDataRehashed(cacheTopology.getCurrentCH(), cacheTopology.getPendingCH(),
+               cacheTopology.getTopologyId(), true);
       }
       final ConsistentHash previousCh = this.cacheTopology != null ? this.cacheTopology.getWriteConsistentHash() : null;
       // Ensures writes to the data container use the right consistent hash
@@ -328,6 +350,22 @@ public class StateConsumerImpl implements StateConsumer {
                addTransfers(addedSegments);  // add transfers for new or restarted segments
             }
          }
+
+         log.tracef("Topology update processed, rebalanceInProgress = %s, isRebalance = %s, pending CH = %s",
+               rebalanceInProgress.get(), isRebalance, cacheTopology.getPendingCH());
+         if (rebalanceInProgress.get()) {
+            // there was a rebalance in progress
+            if (!isRebalance && cacheTopology.getPendingCH() == null) {
+               // we have received a topology update without a pending CH, signalling the end of the rebalance
+               boolean changed = rebalanceInProgress.compareAndSet(true, false);
+               if (changed) {
+                  // if the coordinator changed, we might get two concurrent topology updates,
+                  // but we only want to notify the @DataRehashed listeners once
+                  cacheNotifier.notifyDataRehashed(cacheTopology.getCurrentCH(), cacheTopology.getPendingCH(),
+                        cacheTopology.getTopologyId(), false);
+               }
+            }
+         }
       } finally {
          stateTransferLock.notifyTransactionDataReceived(cacheTopology.getTopologyId());
 
@@ -338,8 +376,8 @@ public class StateConsumerImpl implements StateConsumer {
    }
 
    private void notifyEndOfTopologyUpdate(int topologyId) {
-      if (!isStateTransferInProgress()) {
-         if (rebalanceInProgress.compareAndSet(true, false)) {
+      if (!hasActiveTransfers()) {
+         if (waitingForState.compareAndSet(true, false)) {
             log.debugf("Finished receiving of segments for cache %s for topology %d.", cacheName, topologyId);
             stopApplyingState();
             stateTransferManager.notifyEndOfTopologyUpdate(topologyId);
@@ -807,8 +845,6 @@ public class StateConsumerImpl implements StateConsumer {
             log.failedToInvalidateKeys(e);
          }
       }
-
-      //todo [anistor] call CacheNotifier.notifyDataRehashed
    }
 
    private int getSegment(Object key) {
