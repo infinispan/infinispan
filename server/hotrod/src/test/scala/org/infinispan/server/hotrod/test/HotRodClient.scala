@@ -349,48 +349,12 @@ private class Decoder(client: HotRodClient) extends ReplayingDecoder[VoidEnum] w
                op.version match {
                   case 10 => read10HashDistAwareHeader(buf, topologyId,
                         numOwners, hashFunction, hashSpace, numServersInTopo)
-                  case 11 => read11HashDistAwareHeader(buf, topologyId,
+                  case _ => read11HashDistAwareHeader(buf, topologyId,
                         numOwners, hashFunction, hashSpace, numServersInTopo)
                }
-
-//               // The exact number of topology addresses in the list is unknown
-//               // until we loop through the entire list and we figure out how
-//               // hash ids are per HotRod server (i.e. num virtual nodes > 1)
-//               val members = new ListBuffer[ServerAddress]()
-//               val allHashIds = mutable.Map.empty[ServerAddress, Seq[Int]]
-//               var hashIdsOfAddr = new ListBuffer[Int]()
-//               var prevNode: ServerAddress = null
-//               for (i <- 1 to numServersInTopo) {
-//                  val node = new ServerAddress(readString(buf), readUnsignedShort(buf))
-//                  val hashId = buf.readInt
-//                  if (prevNode == null || node == prevNode) {
-//                     // First time node has been seen, so cache it
-//                     if (prevNode == null)
-//                        prevNode = node
-//
-//                     // Add current hash id to list
-//                     hashIdsOfAddr += hashId
-//                  } else {
-//                     // A new node has been detected, so create the topology
-//                     // address and store it in the view
-//                     allHashIds += (prevNode -> hashIdsOfAddr)
-//                     members += prevNode
-//                     prevNode = node
-//                     hashIdsOfAddr = new ListBuffer[Int]()
-//                     hashIdsOfAddr += hashId
-//                  }
-//                  // Check for last server hash in which case just add it
-//                  if (i == numServersInTopo) {
-//                     allHashIds += (prevNode -> hashIdsOfAddr)
-//                     members += prevNode
-//                  }
-//
-//               }
-//               Some(TestHashDistAware10Response(topologyId, members.toList,
-//                     immutable.Map[ServerAddress, Seq[Int]]() ++ allHashIds,
-//                     numOwners, hashFunction, hashSpace))
             } else {
-               None // Is it possible?
+               throw new UnsupportedOperationException(
+                  "Client intelligence " + op.clientIntel + " not supported");
             }
          } else {
             None
