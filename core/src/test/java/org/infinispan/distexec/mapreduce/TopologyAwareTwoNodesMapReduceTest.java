@@ -53,7 +53,7 @@ public class TopologyAwareTwoNodesMapReduceTest extends SimpleTwoNodesMapReduceT
       cm2.defineConfiguration(cacheName(), builder.build());
       cacheManagers.add(cm2);
 
-      waitForClusterToForm();
+      waitForClusterToForm(cacheName());
    }
 
    //Overriding these tests with empty body due to additional cache that is created during these tests.
