@@ -173,26 +173,16 @@ public class TestingUtil {
       long giveup = System.currentTimeMillis() + gracetime;
       for (Cache c : caches) {
          StateTransferManager stateTransferManager = extractComponent(c, StateTransferManager.class);
-         // HACK: We need to return only after all entries have been transferred/invalidated,
-         // and StateTransferManager.isStateTransferInProgress() doesn't do that.
          StateConsumer stateConsumer = extractComponent(c, StateConsumer.class);
-         StateTransferLock stateTransferLock = extractComponent(c, StateTransferLock.class);
          DefaultRebalancePolicy rebalancePolicy = (DefaultRebalancePolicy) TestingUtil.extractGlobalComponent(c.getCacheManager(), RebalancePolicy.class);
          Address cacheAddress = c.getAdvancedCache().getRpcManager().getAddress();
          while (true) {
             CacheTopology cacheTopology = stateTransferManager.getCacheTopology();
+            boolean rebalanceInProgress = stateTransferManager.isStateTransferInProgress();
+            boolean chIsBalanced = !rebalanceInProgress && rebalancePolicy.isBalanced(cacheTopology.getCurrentCH());
             boolean chContainsAllMembers = cacheTopology.getCurrentCH().getMembers().size() == caches.length;
-            boolean chIsBalanced = cacheTopology.getPendingCH() == null && rebalancePolicy.isBalanced(cacheTopology.getCurrentCH());
-            if (chContainsAllMembers && chIsBalanced) {
-               // This is the part where we wait for the old entries to be invalidated
-               // because the "transaction data received" flag is only set after the invalidation.
-               try {
-                  stateTransferLock.waitForTransactionData(cacheTopology.getTopologyId());
-               } catch (InterruptedException e) {
-                  Thread.currentThread().interrupt();
-               }
+            if (chIsBalanced && chContainsAllMembers)
                break;
-            }
 
             if (System.currentTimeMillis() > giveup) {
                String message;

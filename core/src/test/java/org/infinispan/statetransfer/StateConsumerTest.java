@@ -184,7 +184,7 @@ public class StateConsumerTest {
       // create state provider
       StateConsumerImpl stateConsumer = new StateConsumerImpl();
       stateConsumer.init(cache, pooledExecutorService, stateTransferManager, interceptorChain, icc, configuration, rpcManager, null,
-            commandsFactory, cacheLoaderManager, dataContainer, transactionTable, stateTransferLock);
+            commandsFactory, cacheLoaderManager, dataContainer, transactionTable, stateTransferLock, cacheNotifier);
       stateConsumer.start();
 
       final List<InternalCacheEntry> cacheEntries = new ArrayList<InternalCacheEntry>();
@@ -206,15 +206,15 @@ public class StateConsumerTest {
 
       Set<Integer> seg = new HashSet<Integer>(Arrays.asList(0));
 
-      assertFalse(stateConsumer.isStateTransferInProgress());
+      assertFalse(stateConsumer.hasActiveTransfers());
 
       stateConsumer.onTopologyUpdate(new CacheTopology(1, ch2, null), false);
-      assertTrue(stateConsumer.isStateTransferInProgress());
+      assertTrue(stateConsumer.hasActiveTransfers());
 
       stateConsumer.onTopologyUpdate(new CacheTopology(2, ch2, ch3), true);
-      assertTrue(stateConsumer.isStateTransferInProgress());
+      assertTrue(stateConsumer.hasActiveTransfers());
 
       stateConsumer.stop();
-      assertFalse(stateConsumer.isStateTransferInProgress());
+      assertFalse(stateConsumer.hasActiveTransfers());
    }
 }
