@@ -38,6 +38,7 @@ import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.test.CacheManagerCallable;
 import org.infinispan.test.MultipleCacheManagersTest;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
+import org.testng.AssertJUnit;
 import org.testng.annotations.Test;
 
 /**
@@ -214,8 +215,9 @@ public abstract class BaseWordCountMapReduceTest extends MultipleCacheManagersTe
  
       MapReduceTask<String,String,String,Integer> task2 = invokeMapReduce(null, false);
       Map<String, Integer> mapReduce2 = task2.execute();
-      assert mapReduce2.get("Infinispan") == mapReduce.get("Infinispan");
-      assert mapReduce2.get("RedHat") == mapReduce.get("RedHat");      
+
+      AssertJUnit.assertEquals(mapReduce2.get("Infinispan"), mapReduce.get("Infinispan"));
+      AssertJUnit.assertEquals(mapReduce2.get("RedHat"), mapReduce.get("RedHat"));
    }
    
    /**
