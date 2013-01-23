@@ -28,7 +28,6 @@ import org.infinispan.server.hotrod.OperationStatus._
 import org.testng.annotations.Test
 import org.infinispan.test.AbstractCacheTest._
 import org.testng.Assert._
-import test.TestHashDistAware10Response
 import org.infinispan.configuration.cache.{CacheMode, ConfigurationBuilder}
 
 /**
@@ -173,17 +172,15 @@ class HotRodReplicationTest extends HotRodMultiNodeTest {
 
       resp = clients.head.put(k(m) , 0, 0, v(m, "v8-"), 3, 1)
       assertStatus(resp, Success)
-      val hashTopologyResp = resp.topologyResponse.get.asInstanceOf[TestHashDistAware10Response]
-      assertTopologyId(resp.topologyResponse.get.topologyId, cacheName, cacheManagers.get(0))
-      assertEquals(hashTopologyResp.members.size, 2)
-      servers.map(_.getAddress).foreach(
-         addr => assertTrue(hashTopologyResp.members.exists(_ == addr)))
-      assertReplicatedHashIds(hashTopologyResp.hashIds, servers, cacheName)
 
-      assertEquals(hashTopologyResp.numOwners, 0)
-      assertEquals(hashTopologyResp.hashFunction, 0)
-      assertEquals(hashTopologyResp.hashSpace, 0)
+      checkTopologyReceived(resp.topologyResponse.get, servers, cacheName)
       assertSuccess(clients.tail.head.get(k(m), 0), v(m, "v8-"))
+   }
+
+   @Test(enabled=false) // Disable explicitly to avoid TestNG thinking this is a test!!
+   protected def checkTopologyReceived(topoResp: AbstractTopologyResponse,
+           servers: List[HotRodServer], cacheName: String) {
+      assertNoHashTopologyReceived(topoResp, servers, cacheName)
    }
 
 }

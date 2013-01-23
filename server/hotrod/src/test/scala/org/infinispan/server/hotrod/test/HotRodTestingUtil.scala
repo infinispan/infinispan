@@ -233,7 +233,8 @@ object HotRodTestingUtil extends Log {
       assertEquals(hashTopologyResp.numOwners, expectedNumOwners)
       assertEquals(hashTopologyResp.hashFunction, expectedHashFct)
       assertEquals(hashTopologyResp.hashSpace, expectedHashSpace)
-      assertHashIds(hashTopologyResp.hashIds, servers, cacheName)
+      if (expectedNumOwners != 0) // Hash ids worth comparing
+         assertHashIds(hashTopologyResp.hashIds, servers, cacheName)
    }
 
 
@@ -245,8 +246,10 @@ object HotRodTestingUtil extends Log {
       assertEquals(hashTopologyResp.membersToHash.size, servers.size)
       hashTopologyResp.membersToHash.foreach(member => servers.map(_.getAddress).exists(_ == member))
       assertEquals(hashTopologyResp.numOwners, expectedNumOwners)
-      assertEquals(hashTopologyResp.hashFunction, EXPECTED_HASH_FUNCTION_VERSION)
-      assertEquals(hashTopologyResp.hashSpace, Integer.MAX_VALUE)
+      assertEquals(hashTopologyResp.hashFunction,
+         if (expectedNumOwners != 0) EXPECTED_HASH_FUNCTION_VERSION else 0)
+      assertEquals(hashTopologyResp.hashSpace,
+         if (expectedNumOwners != 0) Integer.MAX_VALUE else 0)
       assertEquals(hashTopologyResp.numVirtualNodes, expectedVirtualNodes)
    }
 
