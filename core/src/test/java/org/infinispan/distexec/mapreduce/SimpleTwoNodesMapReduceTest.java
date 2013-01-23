@@ -58,7 +58,7 @@ import static org.infinispan.test.TestingUtil.withCacheManager;
 public class SimpleTwoNodesMapReduceTest extends BaseWordCountMapReduceTest {
    
    
-   private static AtomicInteger counter = new AtomicInteger();
+   private static AtomicInteger counter = null;
 
    @Override
    protected void createCacheManagers() throws Throwable {
@@ -73,6 +73,10 @@ public class SimpleTwoNodesMapReduceTest extends BaseWordCountMapReduceTest {
     */
    @Test(expectedExceptions={CancellationException.class})
    public void testInvokeMapperCancellation() throws Exception {
+      //Initializing the counter in test itself, so that when each time the test runs, the execution is correct
+      // and is not based on previous values.
+      counter = new AtomicInteger();
+
       MapReduceTask<String, String, String, Integer> task = invokeMapReduce(null,
                new LatchMapper(), new WordCountReducer());
       final Future<Map<String, Integer>> future = task.executeAsynchronously();
