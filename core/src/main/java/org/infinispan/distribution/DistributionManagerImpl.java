@@ -45,6 +45,7 @@ import org.infinispan.remoting.rpc.ResponseFilter;
 import org.infinispan.remoting.rpc.ResponseMode;
 import org.infinispan.remoting.rpc.RpcManager;
 import org.infinispan.remoting.transport.Address;
+import org.infinispan.topology.CacheTopology;
 import org.infinispan.transaction.xa.GlobalTransaction;
 import org.infinispan.util.Immutables;
 import org.infinispan.util.InfinispanCollections;
@@ -91,6 +92,7 @@ public class DistributionManagerImpl implements DistributionManager {
 
    // The DMI is cache-scoped, so it will always start after the RMI, which is global-scoped
    @Start(priority = 20)
+   @SuppressWarnings("unused")
    private void start() throws Exception {
       if (trace) log.tracef("starting distribution manager on %s", getAddress());
    }
@@ -108,7 +110,12 @@ public class DistributionManagerImpl implements DistributionManager {
    @Override
    public DataLocality getLocality(Object key) {
       boolean transferInProgress = stateTransferManager.isStateTransferInProgressForKey(key);
-      boolean local = stateTransferManager.getCacheTopology().getWriteConsistentHash().isKeyLocalToNode(getAddress(), key);
+      CacheTopology topology = stateTransferManager.getCacheTopology();
+
+      // Null topology means state transfer has not occurred,
+      // hence data should be stored locally.
+      boolean local = topology == null
+            || topology.getWriteConsistentHash().isKeyLocalToNode(getAddress(), key);
 
       if (transferInProgress) {
          if (local) {

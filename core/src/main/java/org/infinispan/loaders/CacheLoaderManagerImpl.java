@@ -240,7 +240,7 @@ public class CacheLoaderManagerImpl implements CacheLoaderManager {
                throw new CacheException("Unable to preload!", e);
             }
 
-            List<Flag> flags = new ArrayList(Arrays.asList(
+            List<Flag> flags = new ArrayList<Flag>(Arrays.asList(
                   CACHE_MODE_LOCAL, SKIP_OWNERSHIP_CHECK, IGNORE_RETURN_VALUES, SKIP_CACHE_STORE, SKIP_LOCKING));
 
             if (clmConfig.shared() || !(loader instanceof ChainingCacheStore)) {
@@ -252,7 +252,7 @@ public class CacheLoaderManagerImpl implements CacheLoaderManager {
             }
 
             AdvancedCache<Object, Object> flaggedCache = cache.getAdvancedCache()
-                  .withFlags(flags.toArray(new Flag[]{}));
+                  .withFlags(flags.toArray(new Flag[flags.size()]));
 
             for (InternalCacheEntry e : state)
                flaggedCache.put(e.getKey(), e.getValue(),
