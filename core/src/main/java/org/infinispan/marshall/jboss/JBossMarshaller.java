@@ -28,8 +28,10 @@ import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.configuration.global.GlobalConfiguration;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.context.InvocationContextContainer;
+import org.infinispan.marshall.SerializeWith;
 import org.infinispan.marshall.StreamingMarshaller;
 import org.jboss.marshalling.ClassResolver;
+import org.jboss.marshalling.Externalize;
 import org.jboss.marshalling.ObjectTable;
 import org.jboss.marshalling.Unmarshaller;
 
@@ -99,7 +101,10 @@ public class JBossMarshaller extends AbstractJBossMarshaller implements Streamin
 
    @Override
    public boolean isMarshallableCandidate(Object o) {
-      return super.isMarshallableCandidate(o) || externalizerTable.isMarshallableCandidate(o);
+      return super.isMarshallableCandidate(o)
+            || externalizerTable.isMarshallableCandidate(o)
+            || o.getClass().getAnnotation(SerializeWith.class) != null
+            || o.getClass().getAnnotation(Externalize.class) != null;
    }
 
    /**

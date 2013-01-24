@@ -94,6 +94,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import static org.infinispan.test.TestingUtil.extractCacheMarshaller;
 import static org.infinispan.test.TestingUtil.k;
 import static org.testng.AssertJUnit.assertEquals;
+import static org.testng.AssertJUnit.assertTrue;
 
 @Test(groups = "functional", testName = "marshall.VersionAwareMarshallerTest")
 public class VersionAwareMarshallerTest extends AbstractInfinispanTest {
@@ -133,8 +134,8 @@ public class VersionAwareMarshallerTest extends AbstractInfinispanTest {
    }
 
    public void testListMarshalling() throws Exception {
-      List l1 = new ArrayList();
-      List l2 = new LinkedList();
+      List<GlobalTransaction> l1 = new ArrayList<GlobalTransaction>();
+      List<GlobalTransaction> l2 = new LinkedList<GlobalTransaction>();
       for (int i = 0; i < 10; i++) {
          JGroupsAddress jGroupsAddress = new JGroupsAddress(new IpAddress(1000 * i));
          GlobalTransaction gtx = gtf.newGlobalTransaction(jGroupsAddress, false);
@@ -537,6 +538,16 @@ public class VersionAwareMarshallerTest extends AbstractInfinispanTest {
 
    public void testFlagMarshalling() throws Exception {
       marshallAndAssertEquality(Arrays.asList(Flag.values()));
+   }
+
+   public void testIsMarshallableSerializableWithAnnotation() throws Exception {
+      PojoWithSerializeWith pojo = new PojoWithSerializeWith(17, "k1");
+      assertTrue(marshaller.isMarshallable(pojo));
+   }
+
+   public void testIsMarshallableJBossExternalizeAnnotation() throws Exception {
+      PojoWithJBossExternalize pojo = new PojoWithJBossExternalize(34, "k2");
+      assertTrue(marshaller.isMarshallable(pojo));
    }
 
    protected void marshallAndAssertEquality(Object writeObj) throws Exception {
