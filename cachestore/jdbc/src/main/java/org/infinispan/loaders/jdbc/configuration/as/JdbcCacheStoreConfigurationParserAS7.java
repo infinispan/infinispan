@@ -30,16 +30,16 @@ import org.infinispan.configuration.parsing.ConfigurationBuilderHolder;
 import org.infinispan.configuration.parsing.ConfigurationParser;
 import org.infinispan.configuration.parsing.Namespace;
 import org.infinispan.configuration.parsing.ParseUtils;
+import org.infinispan.configuration.parsing.xmlmapper.XMLExtendedStreamReader;
 import org.infinispan.loaders.jdbc.configuration.AbstractJdbcCacheStoreConfigurationBuilder;
 import org.infinispan.loaders.jdbc.configuration.JdbcBinaryCacheStoreConfigurationBuilder;
 import org.infinispan.loaders.jdbc.configuration.JdbcMixedCacheStoreConfigurationBuilder;
 import org.infinispan.loaders.jdbc.configuration.JdbcStringBasedCacheStoreConfigurationBuilder;
 import org.infinispan.loaders.jdbc.configuration.TableManipulationConfigurationBuilder;
-import org.jboss.staxmapper.XMLExtendedStreamReader;
 
 /**
  *
- * RemoteCacheStoreConfigurationParserAS7.
+ * JdbcCacheStoreConfigurationParserAS7.
  *
  * @author Tristan Tarrant
  * @since 5.2

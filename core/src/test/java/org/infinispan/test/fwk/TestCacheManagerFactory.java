@@ -50,6 +50,7 @@ import org.infinispan.configuration.parsing.ConfigurationBuilderHolder;
 import org.infinispan.configuration.parsing.ConfigurationParser;
 import org.infinispan.configuration.parsing.Namespace;
 import org.infinispan.configuration.parsing.ParserRegistry;
+import org.infinispan.configuration.parsing.xmlmapper.XMLMapper;
 import org.infinispan.jmx.MBeanServerLookup;
 import org.infinispan.jmx.PerThreadMBeanServerLookup;
 import org.infinispan.manager.DefaultCacheManager;
@@ -64,7 +65,6 @@ import org.infinispan.util.LegacyKeySupportSystemProperties;
 import org.infinispan.util.Util;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
-import org.jboss.staxmapper.XMLMapper;
 
 /**
  * CacheManagers in unit tests should be created with this factory, in order to avoid resource clashes. See

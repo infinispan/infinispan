@@ -29,18 +29,18 @@ import javax.xml.stream.XMLStreamException;
 
 import org.infinispan.configuration.cache.AsyncStoreConfigurationBuilder;
 import org.infinispan.configuration.cache.CacheMode;
+import org.infinispan.configuration.cache.CacheStoreConfigurationBuilder;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.cache.FileCacheStoreConfigurationBuilder;
 import org.infinispan.configuration.cache.LegacyStoreConfigurationBuilder;
-import org.infinispan.configuration.cache.CacheStoreConfigurationBuilder;
 import org.infinispan.configuration.parsing.ConfigurationBuilderHolder;
 import org.infinispan.configuration.parsing.ConfigurationParser;
 import org.infinispan.configuration.parsing.Namespace;
 import org.infinispan.configuration.parsing.ParseUtils;
+import org.infinispan.configuration.parsing.xmlmapper.XMLExtendedStreamReader;
 import org.infinispan.eviction.EvictionStrategy;
 import org.infinispan.transaction.LockingMode;
 import org.infinispan.util.concurrent.IsolationLevel;
-import org.jboss.staxmapper.XMLExtendedStreamReader;
 
 /**
  * This class implements the parser for AS7/EAP/JDG schema files
