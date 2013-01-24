@@ -234,25 +234,31 @@ public class StateProviderImpl implements StateProvider {
                                               Collection<? extends CacheTransaction> transactions,
                                               Set<Integer> segments, ConsistentHash readCh) {
       for (CacheTransaction tx : transactions) {
-         // transfer only locked keys that belong to requested segments, located on local node
-         Set<Object> lockedKeys = new HashSet<Object>();
-         for (Object key : tx.getLockedKeys()) {
-            if (segments.contains(readCh.getSegment(key))) {
-               lockedKeys.add(key);
+         // transfer only locked keys that belong to requested segments
+         Set<Object> filteredLockedKeys = new HashSet<Object>();
+         Set<Object> lockedKeys = tx.getLockedKeys();
+         synchronized (lockedKeys) {
+            for (Object key : lockedKeys) {
+               if (segments.contains(readCh.getSegment(key))) {
+                  filteredLockedKeys.add(key);
+               }
             }
          }
-         for (Object key : tx.getBackupLockedKeys()) {
-            if (segments.contains(readCh.getSegment(key))) {
-               lockedKeys.add(key);
+         Set<Object> backupLockedKeys = tx.getBackupLockedKeys();
+         synchronized (backupLockedKeys) {
+            for (Object key : backupLockedKeys) {
+               if (segments.contains(readCh.getSegment(key))) {
+                  filteredLockedKeys.add(key);
+               }
             }
          }
-         if (!lockedKeys.isEmpty()) {
+         if (!filteredLockedKeys.isEmpty()) {
             List<WriteCommand> txModifications = tx.getModifications();
             WriteCommand[] modifications = null;
             if (txModifications != null) {
                modifications = txModifications.toArray(new WriteCommand[txModifications.size()]);
             }
-            transactionsToTransfer.add(new TransactionInfo(tx.getGlobalTransaction(), tx.getTopologyId(), modifications, lockedKeys));
+            transactionsToTransfer.add(new TransactionInfo(tx.getGlobalTransaction(), tx.getTopologyId(), modifications, filteredLockedKeys));
          }
       }
    }
