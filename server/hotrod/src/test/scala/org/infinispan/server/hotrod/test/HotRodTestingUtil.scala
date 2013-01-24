@@ -201,14 +201,14 @@ object HotRodTestingUtil extends Log {
       assertTopologyId(resp.topologyId, cacheName, servers.head.getCacheManager)
       resp match {
          case t: TestTopologyAwareResponse =>
-            assertEquals(t.members.size, 2)
-            t.members.foreach(member => servers.map(_.getAddress).exists(_ == member))
+            assertEquals(t.members.size, servers.size)
+            assertEquals(t.members.toSet, servers.map(_.getAddress).toSet)
          case h10: TestHashDistAware10Response =>
-            assertEquals(h10.members.size, 2)
-            h10.members.foreach(member => servers.map(_.getAddress).exists(_ == member))
+            assertEquals(h10.members.size, servers.size)
+            assertEquals(h10.members.toSet, servers.map(_.getAddress).toSet)
          case h11: TestHashDistAware11Response =>
-            assertEquals(h11.membersToHash.size, 2)
-            h11.membersToHash.foreach(member => servers.map(_.getAddress).exists(_ == member))
+            assertEquals(h11.membersToHash.size, servers.size)
+            assertEquals(h11.membersToHash.keySet, servers.map(_.getAddress).toSet)
       }
    }
 

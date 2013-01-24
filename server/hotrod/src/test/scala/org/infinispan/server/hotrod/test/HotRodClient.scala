@@ -32,7 +32,6 @@ import org.testng.Assert._
 import org.infinispan.server.hotrod.logging.Log
 import org.infinispan.server.hotrod.OperationStatus._
 import org.infinispan.server.hotrod.OperationResponse._
-import org.infinispan.server.hotrod.ProtocolFlag
 import collection.mutable
 import collection.immutable
 import java.lang.reflect.Method
@@ -320,7 +319,7 @@ object HotRodClient {
    val idCounter = new AtomicLong
 }
 
-private class Decoder(client: HotRodClient) extends ReplayingDecoder[VoidEnum] with Log {
+private class Decoder(client: HotRodClient) extends ReplayingDecoder[VoidEnum] with Log with Constants {
 
    override def decode(ctx: ChannelHandlerContext, ch: Channel, buf: ChannelBuffer, state: VoidEnum): Object = {
       trace("Decode response from server")
@@ -333,7 +332,7 @@ private class Decoder(client: HotRodClient) extends ReplayingDecoder[VoidEnum] w
       val topologyChangeResponse =
          if (topologyChangeMarker == 1) {
             val topologyId = readUnsignedInt(buf)
-            if (op.clientIntel == 2) {
+            if (op.clientIntel == INTELLIGENCE_TOPOLOGY_AWARE) {
                val numberClusterMembers = readUnsignedInt(buf)
                val viewArray = new Array[ServerAddress](numberClusterMembers)
                for (i <- 0 until numberClusterMembers) {
@@ -342,7 +341,7 @@ private class Decoder(client: HotRodClient) extends ReplayingDecoder[VoidEnum] w
                   viewArray(i) = new ServerAddress(host, port)
                }
                Some(TestTopologyAwareResponse(topologyId, viewArray.toList))
-            } else if (op.clientIntel == 3) {
+            } else if (op.clientIntel == INTELLIGENCE_HASH_DISTRIBUTION_AWARE) {
                val numOwners = readUnsignedShort(buf)
                val hashFunction = buf.readByte
                val hashSpace = readUnsignedInt(buf)
