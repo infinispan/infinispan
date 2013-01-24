@@ -39,12 +39,9 @@ import java.util.Random;
 import java.util.Set;
 import java.util.concurrent.Callable;
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.locks.LockSupport;
 
 import javax.management.MBeanServer;
-import javax.management.MalformedObjectNameException;
 import javax.management.ObjectName;
 import javax.transaction.Status;
 import javax.transaction.TransactionManager;
@@ -77,9 +74,6 @@ import org.infinispan.remoting.ReplicationQueue;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.remoting.transport.Transport;
 import org.infinispan.remoting.transport.jgroups.JGroupsTransport;
-import org.infinispan.statetransfer.StateConsumer;
-import org.infinispan.statetransfer.StateConsumerImpl;
-import org.infinispan.statetransfer.StateTransferLock;
 import org.infinispan.statetransfer.StateTransferManager;
 import org.infinispan.topology.CacheTopology;
 import org.infinispan.topology.DefaultRebalancePolicy;
@@ -173,7 +167,6 @@ public class TestingUtil {
       long giveup = System.currentTimeMillis() + gracetime;
       for (Cache c : caches) {
          StateTransferManager stateTransferManager = extractComponent(c, StateTransferManager.class);
-         StateConsumer stateConsumer = extractComponent(c, StateConsumer.class);
          DefaultRebalancePolicy rebalancePolicy = (DefaultRebalancePolicy) TestingUtil.extractGlobalComponent(c.getCacheManager(), RebalancePolicy.class);
          Address cacheAddress = c.getAdvancedCache().getRpcManager().getAddress();
          while (true) {
@@ -316,29 +309,6 @@ public class TestingUtil {
    }
 
    /**
-    * Loops, continually calling {@link #areCacheViewsComplete(CacheSPI[])} until it either returns true or
-    * <code>timeout</code> ms have elapsed.
-    *
-    * @param caches  caches which must all have consistent views
-    * @param timeout max number of ms to loop
-    * @throws RuntimeException if <code>timeout</code> ms have elapse without all caches having the same number of
-    *                          members.
-    */
-//   public static void blockUntilViewsReceived(Cache[] caches, long timeout) {
-//      long failTime = System.currentTimeMillis() + timeout;
-//
-//      while (System.currentTimeMillis() < failTime) {
-//         sleepThread(100);
-//         if (areCacheViewsComplete(caches)) {
-//            return;
-//         }
-//      }
-//
-//      throw new RuntimeException("timed out before caches had complete views");
-//   }
-
-
-   /**
     * An overloaded version of {@link #blockUntilViewsReceived(long,Cache[])} that allows for 'shrinking' clusters.
     * I.e., the usual method barfs if there are more members than expected.  This one takes a param
     * (barfIfTooManyMembers) which, if false, will NOT barf but will wait until the cluster 'shrinks' to the desired
@@ -442,37 +412,6 @@ public class TestingUtil {
 
       return true;
    }
-
-//   /**
-//    * @param cache
-//    * @param memberCount
-//    */
-//   public static boolean isCacheViewComplete(Cache cache, int memberCount) {
-//      List members = cache.getCacheManager().getMembers();
-//      if (members == null || memberCount > members.size()) {
-//         return false;
-//      } else if (memberCount < members.size()) {
-//         // This is an exceptional condition
-//         StringBuilder sb = new StringBuilder("Cache at address ");
-//         sb.append(cache.getCacheManager().getAddress());
-//         sb.append(" had ");
-//         sb.append(members.size());
-//         sb.append(" members; expecting ");
-//         sb.append(memberCount);
-//         sb.append(". Members were (");
-//         for (int j = 0; j < members.size(); j++) {
-//            if (j > 0) {
-//               sb.append(", ");
-//            }
-//            sb.append(members.get(j));
-//         }
-//         sb.append(')');
-//
-//         throw new IllegalStateException(sb.toString());
-//      }
-//
-//      return true;
-//   }
 
    /**
     * @param c
@@ -608,18 +547,19 @@ public class TestingUtil {
    public static void recursiveFileRemove(File file) {
       if (file.exists()) {
          System.out.println("Deleting file " + file);
-         recursivedelete(file);
+         recursiveDelete(file);
       }
    }
 
-   private static void recursivedelete(File f) {
+   private static void recursiveDelete(File f) {
       if (f.isDirectory()) {
          File[] files = f.listFiles();
-         for (File file : files) {
-            recursivedelete(file);
+         if (files != null) {
+            for (File file : files) {
+               recursiveDelete(file);
+            }
          }
       }
-      //System.out.println("File " + f.toURI() + " deleted = " + f.delete());
       f.delete();
    }
 
