@@ -103,7 +103,7 @@ public class InboundInvocationHandlerImpl implements InboundInvocationHandler {
          log.tracef("About to send back response %s for command %s", response, cmd);
          return response;
       } catch (Exception e) {
-         log.trace("Exception executing command", e);
+         log.error("Exception executing command", e);
          return new ExceptionResponse(e);
       } finally {
          if(cmd instanceof CancellableCommand){
