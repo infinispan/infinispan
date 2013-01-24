@@ -1,9 +1,13 @@
 .SH SYNOPSIS
 .B encoding [
-.I cachename
+.I --list |
+.I codec
 .B ]
 .SH DESCRIPTION
-Shows the currently selected cache or selects a cache to be used as default for CLI operations 
+The encoding command is used to set a default codec to use when reading/writing entries from/to a cache. When invoked 
+without arguments it shows the currently selected codec.
 .SH ARGUMENTS
-.IP cachename
-(optional) the name of the cache to set as default for the following operations
+.IP --list
+shows a list of available codecs
+.IP codec
+specifies the default codec to use for all subsequent operations on caches 
