@@ -28,6 +28,7 @@ import org.infinispan.loaders.CacheLoaderException;
 import org.infinispan.loaders.CacheLoaderManager;
 import org.infinispan.loaders.CacheStore;
 import org.infinispan.test.TestingUtil;
+import org.infinispan.test.fwk.CleanupAfterMethod;
 import org.testng.annotations.Test;
 
 import java.util.HashMap;
@@ -44,6 +45,7 @@ import static org.junit.Assert.*;
  * @since 4.0
  */
 @Test(groups = "functional", testName = "distribution.DistSyncCacheStoreNotSharedTest")
+@CleanupAfterMethod
 public class DistSyncCacheStoreNotSharedTest extends BaseDistCacheStoreTest {
    
    private static final String k1 = "1", v1 = "one", k2 = "2", v2 = "two", k3 = "3", v3 = "three", k4 = "4", v4 = "four";
