@@ -196,10 +196,12 @@ public class StateTransferManagerImpl implements StateTransferManager {
 
       cacheNotifier.notifyTopologyChanged(oldCH, newCH, newCacheTopology.getTopologyId(), false);
 
-      boolean isJoined = stateConsumer.getCacheTopology().getReadConsistentHash().getMembers().contains(rpcManager.getAddress());
-      if (initialStateTransferComplete.getCount() > 0 && isJoined) {
-         initialStateTransferComplete.countDown();
-         log.tracef("Initial state transfer complete for cache %s on node %s", cacheName, rpcManager.getAddress());
+      if (initialStateTransferComplete.getCount() > 0) {
+         boolean isJoined = stateConsumer.getCacheTopology().getReadConsistentHash().getMembers().contains(rpcManager.getAddress());
+         if (isJoined) {
+            initialStateTransferComplete.countDown();
+            log.tracef("Initial state transfer complete for cache %s on node %s", cacheName, rpcManager.getAddress());
+         }
       }
    }
 
@@ -288,11 +290,6 @@ public class StateTransferManagerImpl implements StateTransferManager {
 
    @Override
    public void notifyEndOfTopologyUpdate(int topologyId) {
-      if (initialStateTransferComplete.getCount() > 0
-            && stateConsumer.getCacheTopology().getWriteConsistentHash().getMembers().contains(rpcManager.getAddress())) {
-         initialStateTransferComplete.countDown();
-         log.tracef("Initial state transfer complete for cache %s on node %s", cacheName, rpcManager.getAddress());
-      }
       localTopologyManager.confirmRebalance(cacheName, topologyId, null);
    }
 }
