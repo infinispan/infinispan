@@ -29,6 +29,7 @@ import org.testng.annotations.Test
 import org.infinispan.test.TestingUtil
 import org.infinispan.server.core.test.ServerTestingUtil
 import org.infinispan.configuration.cache.{CacheMode, ConfigurationBuilder}
+import org.infinispan.server.hotrod.Constants._
 
 /**
  * Tests Hot Rod distribution mode when some of the cache managers do not have HotRod servers running.
@@ -57,10 +58,10 @@ class HotRod11StorageOnlyNodesTest extends HotRodMultiNodeTest {
       val client1 = clients.head
       val client2 = clients.last
 
-      var resp = client1.ping(3, 0)
+      var resp = client1.ping(INTELLIGENCE_HASH_DISTRIBUTION_AWARE, 0)
       assertStatus(resp, Success)
       assertHashTopologyReceived(resp.topologyResponse.get, servers, cacheName, 2, virtualNodes)
-      var topologyId = resp.topologyResponse.get.topologyId
+      val topologyId = resp.topologyResponse.get.topologyId
 
       val newCacheManager = addClusterEnabledCacheManager()
       try {
@@ -71,13 +72,13 @@ class HotRod11StorageOnlyNodesTest extends HotRodMultiNodeTest {
 
          log.trace("Check that the clients do not receive a new topology")
          val key1 = HotRodMagicKeyGenerator.newKey(cache(0, cacheName))
-         resp = client1.put(key1, 0, 0, v(m, "v1-"), 3, topologyId)
+         resp = client1.put(key1, 0, 0, v(m, "v1-"), INTELLIGENCE_HASH_DISTRIBUTION_AWARE, topologyId)
          assertStatus(resp, Success)
          assertFalse(resp.topologyResponse.isDefined)
 
          log.trace("Check that the clients can access a key for which the storage-only node is primary owner")
          val key2 = HotRodMagicKeyGenerator.newKey(cache(2, cacheName))
-         resp = client1.put(key2, 0, 0, v(m, "v2-"), 3, topologyId)
+         resp = client1.put(key2, 0, 0, v(m, "v2-"), INTELLIGENCE_HASH_DISTRIBUTION_AWARE, topologyId)
          assertStatus(resp, Success)
          assertFalse(resp.topologyResponse.isDefined)
 
@@ -92,7 +93,7 @@ class HotRod11StorageOnlyNodesTest extends HotRodMultiNodeTest {
 
          // The client still doesn't receive a topology update because one of the nodes is not in the address cache
          // Note that this means further HotRod client requests may go to a dead node
-         resp = client1.put(key1, 0, 0, v(m, "v3-"), 3, topologyId)
+         resp = client1.put(key1, 0, 0, v(m, "v3-"), INTELLIGENCE_HASH_DISTRIBUTION_AWARE, topologyId)
          assertStatus(resp, Success)
          assertFalse(resp.topologyResponse.isDefined)
       } finally {
@@ -100,7 +101,7 @@ class HotRod11StorageOnlyNodesTest extends HotRodMultiNodeTest {
       }
 
       log.trace("Check that only the topology id changes after the storage-only server is killed")
-      resp = client1.put(k(m), 0, 0, v(m, "v4-"), 3, topologyId)
+      resp = client1.put(k(m), 0, 0, v(m, "v4-"), INTELLIGENCE_HASH_DISTRIBUTION_AWARE, topologyId)
       assertStatus(resp, Success)
       assertHashTopologyReceived(resp.topologyResponse.get, List(server1), cacheName, 2, virtualNodes)
 

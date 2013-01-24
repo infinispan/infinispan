@@ -45,67 +45,55 @@ abstract class AbstractTopologyAwareEncoder1x extends AbstractEncoder1x with Con
    }
 
 
-   override protected def writeHashTopologyHeader(
-            topoResp: AbstractTopologyResponse, buf: ChannelBuffer, r: Response,
-            members: Cache[Address, ServerAddress], server: HotRodServer) {
-      topoResp match {
+   override def writeHashTopologyUpdate(h: AbstractHashDistAwareResponse, server: HotRodServer, r: Response,
+                                        members: Cache[Address, ServerAddress], buf: ChannelBuffer) {
+      h match {
          case h: HashDistAware11Response => {
-            trace("Write hash distribution change response header %s", h)
-            if (h.hashFunction == 0) {
-               writeLimitedHashTopologyUpdate11(h, members.values(), buf)
-               return
-            }
-
-            val cache = server.getCacheInstance(r.cacheName, members.getCacheManager, false)
-
-            // This is not quite correct, as the ownership of segments on the 1.0/1.1 clients is not exactly
-            // the same as on the server. But the difference appears only for (numSegment*numOwners/MAX_INT)
-            // of the keys (at the "segment borders"), so it's still much better than having no hash information.
-            // The idea here is to be able to be compatible with clients running version 1.0 of the protocol.
-            // With time, users should migrate to version 1.2 capable clients.
-            val distManager = cache.getAdvancedCache.getDistributionManager
-            val ch = distManager.getReadConsistentHash
-            val numSegments = ch.getNumSegments
-
-            // Collect all the hash ids in a collection so we can write the correct size.
-            // There will be more than one hash id for each server, so we can't use a map.
-            var hashIds = collection.mutable.ArrayBuffer[(ServerAddress, Int)]()
-            val allDenormalizedHashIds = denormalizeSegmentHashIds(ch)
-            var incompleteAddressCache = false
-            for (segmentIdx <- 0 until numSegments) {
-               val denormalizedSegmentHashIds = allDenormalizedHashIds(segmentIdx)
-               val segmentOwners = ch.locateOwnersForSegment(segmentIdx)
-               for (ownerIdx <- 0 until segmentOwners.length) {
-                  val address = segmentOwners(ownerIdx % segmentOwners.size)
-                  val serverAddress = members.get(address)
-                  if (serverAddress == null) {
-                     incompleteAddressCache = true
-                  }
-
-                  val hashId = denormalizedSegmentHashIds(ownerIdx)
-                  hashIds += ((serverAddress, hashId))
-               }
-            }
-
-            if (incompleteAddressCache) {
-               // Postpone the topology update until all the CH members are in the address cache
-               writeNoTopologyUpdate(buf)
-            } else {
-               writeHashTopologyUpdate11(h, hashIds, buf)
-            }
-         }
-         case t: TopologyAwareResponse => {
-            writeLimitedHashTopologyUpdate11(t, members.values(), buf)
+            writeHashTopologyUpdate11(h, members, server, r, buf)
          }
          case _ => throw new IllegalStateException(
-            "Expected version 1.1 specific response: " + topoResp)
+            "Expected version 1.1 specific response: " + h)
       }
    }
 
+   def writeHashTopologyUpdate11(h: HashDistAware11Response, members: Cache[Address, ServerAddress],
+                               server: HotRodServer, r: Response, buf: ChannelBuffer) {
+      trace("Write hash distribution change response header %s", h)
+      if (h.hashFunction == 0) {
+         writeLimitedHashTopologyUpdate(h, members, buf)
+         return
+      }
 
-   def writeHashTopologyUpdate11(h: HashDistAware11Response,
-                                 hashIds: ArrayBuffer[(ServerAddress, Int)],
-                                 buf: ChannelBuffer) {
+      val cache = server.getCacheInstance(r.cacheName, members.getCacheManager, false)
+
+      // This is not quite correct, as the ownership of segments on the 1.0/1.1 clients is not exactly
+      // the same as on the server. But the difference appears only for (numSegment*numOwners/MAX_INT)
+      // of the keys (at the "segment borders"), so it's still much better than having no hash information.
+      // The idea here is to be able to be compatible with clients running version 1.0 of the protocol.
+      // With time, users should migrate to version 1.2 capable clients.
+      val distManager = cache.getAdvancedCache.getDistributionManager
+      val ch = distManager.getReadConsistentHash
+      val numSegments = ch.getNumSegments
+
+      // Collect all the hash ids in a collection so we can write the correct size.
+      // There will be more than one hash id for each server, so we can't use a map.
+      var hashIds = collection.mutable.ArrayBuffer[(ServerAddress, Int)]()
+      val allDenormalizedHashIds = denormalizeSegmentHashIds(ch)
+      for (segmentIdx <- 0 until numSegments) {
+         val denormalizedSegmentHashIds = allDenormalizedHashIds(segmentIdx)
+         val segmentOwners = ch.locateOwnersForSegment(segmentIdx)
+         for (ownerIdx <- 0 until segmentOwners.length) {
+            val address = segmentOwners(ownerIdx % segmentOwners.size)
+            val serverAddress = members.get(address)
+            if (serverAddress == null) {
+               log.debugf("Could not find member %s in the address cache", address)
+            }
+
+            val hashId = denormalizedSegmentHashIds(ownerIdx)
+            hashIds += ((serverAddress, hashId))
+         }
+      }
+
       writeCommonHashTopologyHeader(buf, h.topologyId, h.numOwners,
          h.hashFunction, h.hashSpace, hashIds.size)
       writeUnsignedInt(1, buf) // Num virtual nodes
@@ -118,13 +106,14 @@ abstract class AbstractTopologyAwareEncoder1x extends AbstractEncoder1x with Con
       }
    }
 
-   def writeLimitedHashTopologyUpdate11(t: AbstractTopologyResponse,
-                                        serverAddresses: Iterable[ServerAddress],
-                                        buf: ChannelBuffer) {
+
+   override def writeLimitedHashTopologyUpdate(t: AbstractTopologyResponse,
+                                               serverAddresses: Cache[Address, ServerAddress],
+                                               buf: ChannelBuffer) {
       trace("Return limited hash distribution aware header in spite of having a hash aware client %s", t)
       writeCommonHashTopologyHeader(buf, t.topologyId, 0, 0, 0, serverAddresses.size)
       writeUnsignedInt(1, buf) // Num virtual nodes
-      for (address <- serverAddresses) {
+      for (address <- serverAddresses.values()) {
          writeString(address.host, buf)
          writeUnsignedShort(address.port, buf)
          buf.writeInt(0) // Address' hash id
