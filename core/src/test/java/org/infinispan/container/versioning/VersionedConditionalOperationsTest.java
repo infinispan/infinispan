@@ -55,7 +55,7 @@ public class VersionedConditionalOperationsTest extends MultipleCacheManagersTes
    protected final boolean syncCommit;
 
    public VersionedConditionalOperationsTest() {
-      this(2, CacheMode.REPL_SYNC, false);
+      this(2, CacheMode.REPL_SYNC, true);
    }
 
    protected VersionedConditionalOperationsTest(
