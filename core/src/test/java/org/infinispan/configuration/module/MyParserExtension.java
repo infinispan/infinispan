@@ -27,7 +27,7 @@ import org.infinispan.configuration.parsing.ConfigurationBuilderHolder;
 import org.infinispan.configuration.parsing.ConfigurationParser;
 import org.infinispan.configuration.parsing.Namespace;
 import org.infinispan.configuration.parsing.ParseUtils;
-import org.jboss.staxmapper.XMLExtendedStreamReader;
+import org.infinispan.configuration.parsing.xmlmapper.XMLExtendedStreamReader;
 
 /**
  * MyParserExtension. This is a simple extension parser which parses modules in the "urn:infinispan:config:mymodule" namespace

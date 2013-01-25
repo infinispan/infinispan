@@ -30,10 +30,10 @@ import org.infinispan.configuration.parsing.ConfigurationParser;
 import org.infinispan.configuration.parsing.Namespace;
 import org.infinispan.configuration.parsing.ParseUtils;
 import org.infinispan.configuration.parsing.Parser52;
+import org.infinispan.configuration.parsing.xmlmapper.XMLExtendedStreamReader;
 import org.infinispan.executors.ExecutorFactory;
 import org.infinispan.loaders.remote.wrapper.EntryWrapper;
 import org.infinispan.util.Util;
-import org.jboss.staxmapper.XMLExtendedStreamReader;
 
 /**
  *

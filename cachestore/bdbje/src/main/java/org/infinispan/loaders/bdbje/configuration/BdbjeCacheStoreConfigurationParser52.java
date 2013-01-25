@@ -30,7 +30,7 @@ import org.infinispan.configuration.parsing.ConfigurationParser;
 import org.infinispan.configuration.parsing.Namespace;
 import org.infinispan.configuration.parsing.ParseUtils;
 import org.infinispan.configuration.parsing.Parser52;
-import org.jboss.staxmapper.XMLExtendedStreamReader;
+import org.infinispan.configuration.parsing.xmlmapper.XMLExtendedStreamReader;
 
 /**
  *

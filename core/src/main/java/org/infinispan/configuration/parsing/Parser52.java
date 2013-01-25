@@ -25,6 +25,7 @@ import static org.infinispan.configuration.cache.CacheMode.INVALIDATION_SYNC;
 import static org.infinispan.configuration.cache.CacheMode.LOCAL;
 import static org.infinispan.configuration.cache.CacheMode.REPL_ASYNC;
 import static org.infinispan.configuration.cache.CacheMode.REPL_SYNC;
+import static org.infinispan.util.StringPropertyReplacer.replaceProperties;
 
 import java.util.Properties;
 
@@ -33,11 +34,26 @@ import javax.xml.stream.XMLStreamException;
 
 import org.infinispan.commons.hash.Hash;
 import org.infinispan.config.ConfigurationException;
-import org.infinispan.configuration.cache.*;
+import org.infinispan.configuration.cache.BackupConfiguration;
+import org.infinispan.configuration.cache.BackupConfigurationBuilder;
+import org.infinispan.configuration.cache.BackupFailurePolicy;
+import org.infinispan.configuration.cache.BackupForBuilder;
+import org.infinispan.configuration.cache.CacheLoaderConfigurationBuilder;
+import org.infinispan.configuration.cache.CacheStoreConfigurationBuilder;
+import org.infinispan.configuration.cache.ClusterCacheLoaderConfigurationBuilder;
+import org.infinispan.configuration.cache.ConfigurationBuilder;
+import org.infinispan.configuration.cache.FileCacheStoreConfigurationBuilder;
 import org.infinispan.configuration.cache.FileCacheStoreConfigurationBuilder.FsyncMode;
+import org.infinispan.configuration.cache.IndexingConfigurationBuilder;
 import org.infinispan.configuration.cache.InterceptorConfiguration.Position;
+import org.infinispan.configuration.cache.InterceptorConfigurationBuilder;
+import org.infinispan.configuration.cache.LegacyLoaderConfigurationBuilder;
+import org.infinispan.configuration.cache.LegacyStoreConfigurationBuilder;
+import org.infinispan.configuration.cache.LockSupportStoreConfigurationBuilder;
+import org.infinispan.configuration.cache.VersioningScheme;
 import org.infinispan.configuration.global.GlobalConfigurationBuilder;
 import org.infinispan.configuration.global.ShutdownHookBehavior;
+import org.infinispan.configuration.parsing.xmlmapper.XMLExtendedStreamReader;
 import org.infinispan.container.DataContainer;
 import org.infinispan.distribution.ch.ConsistentHashFactory;
 import org.infinispan.distribution.group.Grouper;
@@ -62,9 +78,6 @@ import org.infinispan.util.Util;
 import org.infinispan.util.concurrent.IsolationLevel;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
-import org.jboss.staxmapper.XMLExtendedStreamReader;
-
-import static org.infinispan.util.StringPropertyReplacer.replaceProperties;
 
 /**
  * This class implements the parser for 5.2 schema files

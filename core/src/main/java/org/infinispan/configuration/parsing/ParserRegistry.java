@@ -29,10 +29,10 @@ import javax.xml.stream.XMLInputFactory;
 import javax.xml.stream.XMLStreamReader;
 
 import org.infinispan.config.ConfigurationException;
+import org.infinispan.configuration.parsing.xmlmapper.XMLMapper;
 import org.infinispan.util.FileLookup;
 import org.infinispan.util.FileLookupFactory;
 import org.infinispan.util.Util;
-import org.jboss.staxmapper.XMLMapper;
 
 /**
  *

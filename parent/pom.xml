@@ -181,7 +181,6 @@
       <version.weld>1.1.8.Final</version.weld>
       <version.xstream>1.4.1</version.xstream>
       <version.javassist>3.15.0-GA</version.javassist>
-      <version.org.jboss.staxmapper>1.1.0.Final</version.org.jboss.staxmapper>
       <version.maven.bundle>2.3.7</version.maven.bundle>
       <version.maven.source>2.2.1</version.maven.source>
       <version.maven.scala>2.15.2</version.maven.scala>
@@ -684,11 +683,6 @@
             <artifactId>weld-se</artifactId>
             <version>${version.weld}</version>
             <scope>test</scope>
-         </dependency>
-         <dependency>
-            <groupId>org.jboss</groupId>
-            <artifactId>staxmapper</artifactId>
-            <version>${version.org.jboss.staxmapper}</version>
          </dependency>
          <dependency>
             <groupId>org.jclouds</groupId>

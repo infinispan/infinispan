@@ -33,9 +33,9 @@ import org.infinispan.configuration.parsing.Namespace;
 import org.infinispan.configuration.parsing.ParseUtils;
 import org.infinispan.configuration.parsing.ParserContext;
 import org.infinispan.configuration.parsing.ParserContextListener;
+import org.infinispan.configuration.parsing.xmlmapper.XMLExtendedStreamReader;
 import org.infinispan.loaders.remote.configuration.RemoteCacheStoreConfigurationBuilder;
 import org.infinispan.loaders.remote.configuration.RemoteServerConfigurationBuilder;
-import org.jboss.staxmapper.XMLExtendedStreamReader;
 
 /**
  *

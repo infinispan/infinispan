@@ -18,7 +18,7 @@
  */
 package org.infinispan.configuration.parsing;
 
-import org.jboss.staxmapper.XMLElementReader;
+import org.infinispan.configuration.parsing.xmlmapper.XMLElementReader;
 
 /**
  *
