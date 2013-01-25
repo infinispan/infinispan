@@ -95,9 +95,9 @@ public abstract class AbstractEnlistmentAdapter {
    }
 
    private boolean mayHaveRemoteLocks(LocalTransaction lt) {
-      return (lt.getRemoteLocksAcquired() != null && !lt.getRemoteLocksAcquired().isEmpty()) ||
-            (lt.getModifications() != null && !lt.getModifications().isEmpty()) ||
-            (isPessimisticLocking && lt.getTopologyId() != rpcManager.getTopologyId());
+      return lt.getRemoteLocksAcquired() != null && !lt.getRemoteLocksAcquired().isEmpty() ||
+            !lt.getModifications().isEmpty() ||
+            isPessimisticLocking && lt.getTopologyId() != rpcManager.getTopologyId();
    }
 
    /**

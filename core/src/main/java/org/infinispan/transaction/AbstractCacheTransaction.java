@@ -23,7 +23,6 @@
 
 package org.infinispan.transaction;
 
-import java.util.Arrays;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -37,6 +36,7 @@ import org.infinispan.commands.write.WriteCommand;
 import org.infinispan.container.entries.CacheEntry;
 import org.infinispan.container.versioning.EntryVersion;
 import org.infinispan.container.versioning.EntryVersionsMap;
+import org.infinispan.context.Flag;
 import org.infinispan.transaction.xa.CacheTransaction;
 import org.infinispan.transaction.xa.GlobalTransaction;
 import org.infinispan.util.InfinispanCollections;
@@ -59,6 +59,7 @@ public abstract class AbstractCacheTransaction implements CacheTransaction {
    private static final boolean trace = log.isTraceEnabled();
    private static final int INITIAL_LOCK_CAPACITY = 4;
 
+   protected volatile boolean hasLocalOnlyModifications;
    protected volatile List<WriteCommand> modifications;
    protected HashMap<Object, CacheEntry> lookedUpEntries;
 
@@ -107,18 +108,43 @@ public abstract class AbstractCacheTransaction implements CacheTransaction {
    }
 
    @Override
-   public List<WriteCommand> getModifications() {
-      return modifications;
+   public final List<WriteCommand> getModifications() {
+      if (hasLocalOnlyModifications) {
+         List<WriteCommand> mods = new ArrayList<WriteCommand>();
+         for (WriteCommand cmd : modifications) {
+            if (!cmd.hasFlag(Flag.CACHE_MODE_LOCAL)) {
+               mods.add(cmd);
+            }
+         }
+         return mods;
+      } else {
+         return getAllModifications();
+      }
    }
 
-   public void setModifications(WriteCommand[] modifications) {
+   @Override
+   public final List<WriteCommand> getAllModifications() {
+      return modifications == null ? InfinispanCollections.<WriteCommand>emptyList() : modifications;
+   }
+
+   public final void setModifications(List<WriteCommand> modifications) {
+      if (modifications == null) {
+         throw new IllegalArgumentException("modification list cannot be null");
+      }
+      List<WriteCommand> mods = new ArrayList<WriteCommand>();
+      for (WriteCommand cmd : modifications) {
+         if (cmd.hasFlag(Flag.CACHE_MODE_LOCAL)) {
+            hasLocalOnlyModifications = true;
+         }
+         mods.add(cmd);
+      }
       // we need to synchronize this collection to be able to get a valid copy from another thread during state transfer
-      this.modifications = Collections.synchronizedList(new ArrayList<WriteCommand>(Arrays.asList(modifications)));
+      this.modifications = Collections.synchronizedList(mods);
    }
 
-   public boolean hasModification(Class modificationClass) {
+   public final boolean hasModification(Class<?> modificationClass) {
       if (modifications != null) {
-         for (WriteCommand mod : modifications) {
+         for (WriteCommand mod : getModifications()) {
             if (modificationClass.isAssignableFrom(mod.getClass())) {
                return true;
             }

@@ -28,7 +28,6 @@ import javax.transaction.Status;
 import javax.transaction.SystemException;
 import javax.transaction.Transaction;
 
-import org.infinispan.commands.FlagAffectedCommand;
 import org.infinispan.commands.VisitableCommand;
 import org.infinispan.commands.control.LockControlCommand;
 import org.infinispan.commands.read.GetKeyValueCommand;
@@ -242,11 +241,9 @@ public class TxInterceptor extends CommandInterceptor {
 
    private Object enlistWriteAndInvokeNext(InvocationContext ctx, WriteCommand command) throws Throwable {
       LocalTransaction localTransaction = null;
-      boolean shouldAddMod = false;
       if (shouldEnlist(ctx)) {
          localTransaction = enlist((TxInvocationContext) ctx);
          LocalTxInvocationContext localTxContext = (LocalTxInvocationContext) ctx;
-         if (localModeNotForced(command)) shouldAddMod = true;
          localTxContext.setLocalTransaction(localTransaction);
       }
       Object rv;
@@ -260,7 +257,7 @@ public class TxInterceptor extends CommandInterceptor {
          }
          throw throwable;
       }
-      if (command.isSuccessful() && shouldAddMod) localTransaction.addModification(command);
+      if (command.isSuccessful() && localTransaction != null) localTransaction.addModification(command);
       return rv;
    }
 
@@ -283,14 +280,6 @@ public class TxInterceptor extends CommandInterceptor {
 
    private static boolean shouldEnlist(InvocationContext ctx) {
       return ctx.isInTxScope() && ctx.isOriginLocal();
-   }
-
-   private boolean localModeNotForced(FlagAffectedCommand command) {
-      if (command.hasFlag(Flag.CACHE_MODE_LOCAL)) {
-         if (getLog().isTraceEnabled()) getLog().debug("LOCAL mode forced on invocation.  Suppressing clustered events.");
-         return false;
-      }
-      return true;
    }
 
    @ManagedOperation(
