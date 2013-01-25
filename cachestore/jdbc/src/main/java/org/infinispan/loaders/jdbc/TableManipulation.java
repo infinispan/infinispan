@@ -379,7 +379,7 @@ public class TableManipulation implements Cloneable {
       if (tableNamePrefix == null || cacheName == null) {
          throw new IllegalStateException("Both tableNamePrefix and cacheName must be non null at this point!");
       }
-      return tableNamePrefix + "_" + cacheName.replaceAll("[^\\p{Alnum}]", "_");
+      return (tableNamePrefix + "_" + cacheName).replaceAll("[^\\p{Alnum}]", "_");
    }
 
    public String getIdentifierQuoteString() {
