@@ -363,6 +363,7 @@ public class EntryWrappingInterceptor extends CommandInterceptor {
 
       if (isPutForStateTransfer && stateConsumer.isKeyUpdated(key)) {
          // This is a state transfer put command on a key that was already modified by other user commands. We need to back off.
+         log.tracef("State transfer will not write key/value %s/%s because it was already updated by somebody else", key, entry.getValue());
          entry.rollback();
          return false;
       }

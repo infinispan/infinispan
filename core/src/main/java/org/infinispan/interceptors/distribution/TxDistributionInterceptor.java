@@ -256,7 +256,7 @@ public class TxDistributionInterceptor extends BaseDistributionInterceptor {
     */
    protected Object handleWriteCommand(InvocationContext ctx, WriteCommand command, RecipientGenerator recipientGenerator, boolean skipRemoteGet, boolean skipL1Invalidation) throws Throwable {
       // see if we need to load values from remote sources first
-      if (ctx.isOriginLocal() && !skipRemoteGet || shouldFetchRemoteValuesForWriteSkewCheck(ctx, command))
+      if (ctx.isOriginLocal() && !skipRemoteGet || command.isConditional() || shouldFetchRemoteValuesForWriteSkewCheck(ctx, command))
          remoteGetBeforeWrite(ctx, command, recipientGenerator);
 
       // if this is local mode then skip distributing
