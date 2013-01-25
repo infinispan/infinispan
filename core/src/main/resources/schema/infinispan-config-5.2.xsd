@@ -394,7 +394,7 @@
                 </xs:documentation>
               </xs:annotation>
             </xs:element>
-            <xs:any namespace="##other" minOccurs="0" />
+            <xs:any namespace="##other" minOccurs="0" maxOccurs="unbounded" />
           </xs:sequence>
           <xs:attribute name="passivation" type="xs:boolean">
             <xs:annotation>
