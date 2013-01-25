@@ -49,9 +49,8 @@ import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
+import static org.junit.Assert.*;
 import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
-import static org.junit.Assert.assertNull;
 
 /**
  * Base test class for ISPN-2362 and ISPN-2502 in distributed mode. Uses a cluster which initially has 3 nodes and
@@ -67,7 +66,7 @@ public abstract class BaseDistStateTransferConsistencyTest extends MultipleCache
    private static final Log log = LogFactory.getLog(BaseDistStateTransferConsistencyTest.class);
 
    private enum Operation {
-      REMOVE, CLEAR, PUT, PUT_MAP, REPLACE
+      REMOVE, CLEAR, PUT, PUT_MAP, PUT_IF_ABSENT, REPLACE
    }
 
    private final boolean isOptimistic;
@@ -114,20 +113,23 @@ public abstract class BaseDistStateTransferConsistencyTest extends MultipleCache
       testStateTransferConsistency(Operation.PUT_MAP);
    }
 
-   @Test(enabled = false)  // disabled due to ISPN-2647
+   public void testPutIfAbsent() throws Exception {
+      testStateTransferConsistency(Operation.PUT_IF_ABSENT);
+   }
+
    public void testReplace() throws Exception {
       testStateTransferConsistency(Operation.REPLACE);
    }
 
    private void testStateTransferConsistency(Operation op) throws Exception {
-      final int num = 5;
-      log.infof("Putting %d keys into cache ..", num);
-      for (int i = 0; i < num; i++) {
+      final int numKeys = 5;
+      log.infof("Putting %d keys into cache ..", numKeys);
+      for (int i = 0; i < numKeys; i++) {
          cache(0).put(i, "before_st_" + i);
       }
       log.info("Finished putting keys");
 
-      for (int i = 0; i < num; i++) {
+      for (int i = 0; i < numKeys; i++) {
          assertEquals("before_st_" + i, cache(0).get(i));
          assertEquals("before_st_" + i, cache(1).get(i));
          assertEquals("before_st_" + i, cache(2).get(i));
@@ -194,30 +196,36 @@ public abstract class BaseDistStateTransferConsistencyTest extends MultipleCache
          assertEquals(0, dc2.size());
       } else if (op == Operation.REMOVE) {
          log.info("Removing all keys one by one ..");
-         for (int i = 0; i < num; i++) {
+         for (int i = 0; i < numKeys; i++) {
             cache(0).remove(i);
          }
          log.info("Finished removing keys");
 
          assertEquals(0, dc0.size());
          assertEquals(0, dc2.size());
-      } else if (op == Operation.PUT || op == Operation.PUT_MAP || op == Operation.REPLACE) {
+      } else if (op == Operation.PUT || op == Operation.PUT_MAP || op == Operation.REPLACE || op == Operation.PUT_IF_ABSENT) {
          log.info("Updating all keys ..");
          if (op == Operation.PUT) {
-            for (int i = 0; i < num; i++) {
+            for (int i = 0; i < numKeys; i++) {
                cache(0).put(i, "after_st_" + i);
             }
          } else if (op == Operation.PUT_MAP) {
             Map<Integer, String> toPut = new HashMap<Integer, String>();
-            for (int i = 0; i < num; i++) {
+            for (int i = 0; i < numKeys; i++) {
                toPut.put(i, "after_st_" + i);
             }
             cache(0).putAll(toPut);
-         } else {
-            for (int i = 0; i < num; i++) {
+         } else if (op == Operation.REPLACE) {
+            for (int i = 0; i < numKeys; i++) {
                String expectedOldValue = "before_st_" + i;
                boolean replaced = cache(0).replace(i, expectedOldValue, "after_st_" + i);
                assertTrue(replaced);
+            }
+         } else { // PUT_IF_ABSENT
+            for (int i = 0; i < numKeys; i++) {
+               String expectedOldValue = "before_st_" + i;
+               Object prevValue = cache(0).putIfAbsent(i, "after_st_" + i);
+               assertEquals(expectedOldValue, prevValue);
             }
          }
          log.info("Finished updating keys");
@@ -235,17 +243,33 @@ public abstract class BaseDistStateTransferConsistencyTest extends MultipleCache
 
       if (op == Operation.CLEAR || op == Operation.REMOVE) {
          // caches should be empty. check that no keys were revived by an inconsistent state transfer
-         for (int i = 0; i < num; i++) {
+         for (int i = 0; i < numKeys; i++) {
             assertNull(dc0.get(i));
             assertNull(dc2.get(i));
          }
       } else if (op == Operation.PUT || op == Operation.PUT_MAP || op == Operation.REPLACE) {
          ConsistentHash ch = advancedCache(0).getComponentRegistry().getStateTransferManager().getCacheTopology().getReadConsistentHash();
          // check that all values are the ones expected after state transfer
-         for (int i = 0; i < num; i++) {
+         for (int i = 0; i < numKeys; i++) {
             // check values were not overwritten with old values carried by state transfer
             assertEquals("after_st_" + i, cache(0).get(i));
             assertEquals("after_st_" + i, cache(2).get(i));
+
+            // check number of owners
+            int owners = 0;
+            if (dc0.get(i) != null) {
+               owners++;
+            }
+            if (dc2.get(i) != null) {
+               owners++;
+            }
+            assertEquals("Wrong number of owners", ch.locateOwners(i).size(), owners);
+         }
+      } else { // PUT_IF_ABSENT
+         for (int i = 0; i < numKeys; i++) {
+            ConsistentHash ch = advancedCache(0).getComponentRegistry().getStateTransferManager().getCacheTopology().getReadConsistentHash();
+            assertEquals("before_st_" + i, cache(0).get(i));
+            assertEquals("before_st_" + i, cache(2).get(i));
 
             // check number of owners
             int owners = 0;

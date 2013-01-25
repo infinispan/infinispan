@@ -718,7 +718,11 @@ public class TestingUtil {
                      // don't care
                   }
                }
-               log.tracef("Cache contents before stopping: %s", c.entrySet());
+               if (c.getAdvancedCache().getRpcManager() != null) {
+                  log.tracef("Cache contents on %s before stopping: %s", c.getAdvancedCache().getRpcManager().getAddress(), c.entrySet());
+               } else {
+                  log.tracef("Cache contents before stopping: %s", c.entrySet());
+               }
                c.stop();
             }
          }

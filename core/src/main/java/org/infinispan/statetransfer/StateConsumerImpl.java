@@ -261,7 +261,7 @@ public class StateConsumerImpl implements StateConsumer {
 
    @Override
    public void onTopologyUpdate(CacheTopology cacheTopology, boolean isRebalance) {
-      if (trace) log.tracef("Received new topology for cache %s, isRebalance = %s, topology = %s", cacheTopology.getWriteConsistentHash(), cacheName);
+      if (trace) log.tracef("Received new topology for cache %s, isRebalance = %b, topology = %s", cacheName, isRebalance, cacheTopology);
 
       int numStartedTopologyUpdates = activeTopologyUpdates.incrementAndGet();
       if (isRebalance) {
