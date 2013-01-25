@@ -186,8 +186,9 @@ public class CacheComponent extends MBeanResourceComponent<CacheManagerComponent
          throw new Exception("Operation " + fullOpName + " can't be found");
 
       Object result = ops.invoke(realParams);
-      if (trace) log.trace("Returning operation result containing " + result.toString());
-      return new OperationResult(result.toString());
+      if (trace)
+         log.trace("Returning operation result containing " + result != null ? result.toString() : "");
+      return new OperationResult(result != null ? result.toString() : "");
    }
 
    private EmsConnection getConnection() {
