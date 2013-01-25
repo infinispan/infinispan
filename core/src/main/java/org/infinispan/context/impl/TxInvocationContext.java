@@ -41,7 +41,7 @@ import java.util.Set;
 public interface TxInvocationContext extends InvocationContext {
 
    /**
-    * Were there any modifications performed within the tx's scope?
+    * Checks if there are modifications performed within the tx's scope. Any modifications having Flag.CACHE_MODE_LOCAL are ignored.
     */
    boolean hasModifications();
 
@@ -57,7 +57,8 @@ public interface TxInvocationContext extends InvocationContext {
    GlobalTransaction getGlobalTransaction();
 
    /**
-    * Returns all the modifications performed in the scope of the current transaction.
+    * Returns the modifications performed in the scope of the current transaction. Any modifications having Flag.CACHE_MODE_LOCAL are ignored.
+    * The returned list can be null.
     */
    List<WriteCommand> getModifications();
 

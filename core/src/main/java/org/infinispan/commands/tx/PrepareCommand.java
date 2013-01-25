@@ -106,7 +106,9 @@ public class PrepareCommand extends AbstractTransactionBoundaryCommand {
       RemoteTransaction remoteTransaction = txTable.getOrCreateRemoteTransaction(globalTx, modifications);
       //set the list of modifications anyway, as the transaction might have already been created by a previous
       //LockControlCommand with null modifications.
-      remoteTransaction.setModifications(getModifications());
+      if (hasModifications()) {
+         remoteTransaction.setModifications(Arrays.asList(modifications));
+      }
 
       // 2. then set it on the invocation context
       RemoteTxInvocationContext ctx = icc.createRemoteTxInvocationContext(remoteTransaction, getOrigin());

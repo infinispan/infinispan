@@ -233,6 +233,7 @@ public class StateProviderImpl implements StateProvider {
    private void collectTransactionsToTransfer(List<TransactionInfo> transactionsToTransfer,
                                               Collection<? extends CacheTransaction> transactions,
                                               Set<Integer> segments, ConsistentHash readCh) {
+      // no need to filter out state transfer generated transactions because there should not be any such transactions running for any of the requested segments
       for (CacheTransaction tx : transactions) {
          // transfer only locked keys that belong to requested segments
          Set<Object> filteredLockedKeys = new HashSet<Object>();
@@ -255,7 +256,7 @@ public class StateProviderImpl implements StateProvider {
          if (!filteredLockedKeys.isEmpty()) {
             List<WriteCommand> txModifications = tx.getModifications();
             WriteCommand[] modifications = null;
-            if (txModifications != null) {
+            if (!txModifications.isEmpty()) {
                modifications = txModifications.toArray(new WriteCommand[txModifications.size()]);
             }
             transactionsToTransfer.add(new TransactionInfo(tx.getGlobalTransaction(), tx.getTopologyId(), modifications, filteredLockedKeys));

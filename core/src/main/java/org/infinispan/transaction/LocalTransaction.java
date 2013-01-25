@@ -27,6 +27,7 @@ import org.infinispan.CacheException;
 import org.infinispan.commands.write.ClearCommand;
 import org.infinispan.commands.write.WriteCommand;
 import org.infinispan.container.entries.CacheEntry;
+import org.infinispan.context.Flag;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.transaction.xa.GlobalTransaction;
 import org.infinispan.util.InfinispanCollections;
@@ -39,7 +40,6 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedList;
-import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
@@ -71,11 +71,14 @@ public abstract class LocalTransaction extends AbstractCacheTransaction {
       this.implicitTransaction = implicitTransaction;
    }
 
-   public void addModification(WriteCommand mod) {
+   public final void addModification(WriteCommand mod) {
       if (trace) log.tracef("Adding modification %s. Mod list is %s", mod, modifications);
       if (modifications == null) {
          // we need to synchronize this collection to be able to get a valid snapshot from another thread during state transfer
          modifications = Collections.synchronizedList(new LinkedList<WriteCommand>());
+      }
+      if (mod.hasFlag(Flag.CACHE_MODE_LOCAL)) {
+         hasLocalOnlyModifications = true;
       }
       modifications.add(mod);
    }
@@ -163,10 +166,6 @@ public abstract class LocalTransaction extends AbstractCacheTransaction {
             ", topologyId=" + topologyId +
             ", isFromStateTransfer=" + isFromStateTransfer +
             "} " + super.toString();
-   }
-
-   public void setModifications(List<WriteCommand> modifications) {
-      this.modifications = modifications;
    }
 
    @Override

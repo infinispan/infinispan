@@ -149,7 +149,7 @@ public class CacheStoreInterceptor extends JmxStatsCommandInterceptor {
    }
 
    protected void commitCommand(TxInvocationContext ctx) throws Throwable {
-      if (ctx.hasModifications()) {
+      if (!ctx.getCacheTransaction().getAllModifications().isEmpty()) {
          // this is a commit call.
          GlobalTransaction tx = ctx.getGlobalTransaction();
          if (getLog().isTraceEnabled()) getLog().tracef("Calling loader.commit() for transaction %s", tx);
@@ -187,7 +187,7 @@ public class CacheStoreInterceptor extends JmxStatsCommandInterceptor {
    public Object visitRollbackCommand(TxInvocationContext ctx, RollbackCommand command) throws Throwable {
       if (!skip(ctx)) {
          if (getLog().isTraceEnabled()) getLog().trace("Transactional so don't put stuff in the cache store yet.");
-         if (ctx.hasModifications()) {
+         if (!ctx.getCacheTransaction().getAllModifications().isEmpty()) {
             GlobalTransaction tx = ctx.getGlobalTransaction();
             // this is a rollback method
             if (preparingTxs.containsKey(tx)) {
@@ -282,15 +282,19 @@ public class CacheStoreInterceptor extends JmxStatsCommandInterceptor {
       if (transactionContext == null) {
          throw new Exception("transactionContext for transaction " + gtx + " not found in transaction table");
       }
-      List<WriteCommand> modifications = transactionContext.getModifications();
 
-      if (!transactionContext.hasModifications()) {
+      List<WriteCommand> modifications = transactionContext.getCacheTransaction().getAllModifications();
+      if (modifications.isEmpty()) {
          if (getLog().isTraceEnabled()) getLog().trace("Transaction has not logged any modifications!");
          return;
       }
       if (getLog().isTraceEnabled()) getLog().tracef("Cache loader modification list: %s", modifications);
       StoreModificationsBuilder modsBuilder = new StoreModificationsBuilder(getStatisticsEnabled(), modifications.size());
-      for (WriteCommand cacheCommand : modifications) cacheCommand.acceptVisitor(ctx, modsBuilder);
+      for (WriteCommand cacheCommand : modifications) {
+         if (!skip(ctx, cacheCommand)) {
+            cacheCommand.acceptVisitor(ctx, modsBuilder);
+         }
+      }
       int numMods = modsBuilder.modifications.size();
       if (getLog().isTraceEnabled()) getLog().tracef("Converted method calls to cache loader modifications.  List size: %s", numMods);
 
@@ -326,23 +330,19 @@ public class CacheStoreInterceptor extends JmxStatsCommandInterceptor {
          this.generateStatistics = generateStatistics;
          affectedKeys = new HashSet<Object>(numMods);
          modifications = new ArrayList<Modification>(numMods);
-
       }
 
       @Override
-      @SuppressWarnings("unchecked")
       public Object visitPutKeyValueCommand(InvocationContext ctx, PutKeyValueCommand command) throws Throwable {
          return visitSingleStore(ctx, command.getKey());
       }
 
       @Override
-      @SuppressWarnings("unchecked")
       public Object visitReplaceCommand(InvocationContext ctx, ReplaceCommand command) throws Throwable {
          return visitSingleStore(ctx, command.getKey());
       }
 
       @Override
-      @SuppressWarnings("unchecked")
       public Object visitPutMapCommand(InvocationContext ctx, PutMapCommand command) throws Throwable {
          Map<Object, Object> map = command.getMap();
          for (Object key : map.keySet())
@@ -351,7 +351,6 @@ public class CacheStoreInterceptor extends JmxStatsCommandInterceptor {
       }
 
       @Override
-      @SuppressWarnings("unchecked")
       public Object visitRemoveCommand(InvocationContext ctx, RemoveCommand command) throws Throwable {
          Object key = command.getKey();
          if (!skipKey(key)) {
@@ -362,7 +361,6 @@ public class CacheStoreInterceptor extends JmxStatsCommandInterceptor {
       }
 
       @Override
-      @SuppressWarnings("unchecked")
       public Object visitClearCommand(InvocationContext ctx, ClearCommand command) throws Throwable {
          modifications.add(new Clear());
          return null;
@@ -392,7 +390,6 @@ public class CacheStoreInterceptor extends JmxStatsCommandInterceptor {
          displayName = "Number of cache stores",
          measurementType = MeasurementType.TRENDSUP
    )
-
    public long getCacheLoaderStores() {
       return cacheStores.get();
    }

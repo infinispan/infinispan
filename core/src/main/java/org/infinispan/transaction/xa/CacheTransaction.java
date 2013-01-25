@@ -45,11 +45,24 @@ public interface CacheTransaction {
    GlobalTransaction getGlobalTransaction();
 
    /**
-    * Returns the modifications visible within the current transaction.
+    * Returns the modifications visible within the current transaction. Any modifications using Flag#CACHE_MODE_LOCAL are excluded.
+    * The returned list is never null.
     */
    List<WriteCommand> getModifications();
 
-   boolean hasModification(Class modificationClass);
+   /**
+    * Returns all the modifications visible within the current transaction, including those using Flag#CACHE_MODE_LOCAL.
+    * The returned list is never null.
+    */
+   List<WriteCommand> getAllModifications();
+
+   /**
+    * Checks if a modification of the given class (or subclass) is present in this transaction. Any modifications using Flag#CACHE_MODE_LOCAL are ignored.
+    *
+    * @param modificationClass the modification type to look for
+    * @return true if found, false otherwise
+    */
+   boolean hasModification(Class<?> modificationClass);
 
    CacheEntry lookupEntry(Object key);
 
