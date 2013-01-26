@@ -174,6 +174,7 @@ public class InfinispanDirectory extends Directory {
    }
 
    /**
+    * Overrides a method in Lucene v3.x only
     * {@inheritDoc}
     */
    public long fileModified(String name) {
@@ -188,6 +189,7 @@ public class InfinispanDirectory extends Directory {
    }
 
    /**
+    * Overrides a method in Lucene v3.x only
     * {@inheritDoc}
     */
    public void touchFile(String fileName) {
@@ -342,7 +344,9 @@ public class InfinispanDirectory extends Directory {
          throw new IllegalArgumentException(objectname + " must not be null");
    }
 
-   @Override
+   /**
+    * Overrides a method in Lucene v4.x only
+    */
    public void sync(Collection<String> names) throws IOException {
       //This implementation is always in sync with the storage, so NOOP is fine
    }
