@@ -24,6 +24,7 @@ package org.infinispan.lucene;
 
 import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.util.Collection;
 import java.util.Set;
 
 import org.apache.lucene.store.Directory;
@@ -172,9 +173,9 @@ public class InfinispanDirectory extends Directory {
    }
 
    /**
+    * Overrides a method in Lucene v3.x only
     * {@inheritDoc}
     */
-   @Override
    public long fileModified(String name) {
       ensureOpen();
       FileMetadata fileMetadata = fileOps.getFileMetadata(name);
@@ -187,9 +188,9 @@ public class InfinispanDirectory extends Directory {
    }
 
    /**
+    * Overrides a method in Lucene v3.x only
     * {@inheritDoc}
     */
-   @Override
    public void touchFile(String fileName) {
       ensureOpen();
       FileMetadata file = fileOps.getFileMetadata(fileName);
@@ -340,6 +341,13 @@ public class InfinispanDirectory extends Directory {
    private static void checkNotNull(Object v, String objectname) {
       if (v == null)
          throw new IllegalArgumentException(objectname + " must not be null");
+   }
+
+   /**
+    * Overrides a method in Lucene v4.x only
+    */
+   public void sync(Collection<String> names) throws IOException {
+      //This implementation is always in sync with the storage, so NOOP is fine
    }
    
 }

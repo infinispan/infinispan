@@ -162,7 +162,7 @@ final public class InfinispanIndexInput extends IndexInput {
    }
    
    @Override
-   public Object clone() {
+   public IndexInput clone() {
       InfinispanIndexInput clone = (InfinispanIndexInput)super.clone();
       // reference counting doesn't work properly: need to use isClone
       // as in other Directory implementations. Apparently not all clones
