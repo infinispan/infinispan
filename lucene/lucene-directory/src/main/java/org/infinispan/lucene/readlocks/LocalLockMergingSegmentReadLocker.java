@@ -23,7 +23,7 @@
 package org.infinispan.lucene.readlocks;
 
 import org.infinispan.Cache;
-import org.infinispan.lucene.InfinispanDirectory;
+import org.infinispan.lucene.impl.InfinispanDirectory;
 import org.infinispan.util.concurrent.ConcurrentMapFactory;
 
 import java.util.concurrent.ConcurrentMap;

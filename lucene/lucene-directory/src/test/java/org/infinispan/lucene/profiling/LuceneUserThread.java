@@ -25,7 +25,7 @@ package org.infinispan.lucene.profiling;
 import java.io.IOException;
 
 import org.apache.lucene.store.Directory;
-import org.infinispan.lucene.InfinispanDirectory;
+import org.infinispan.lucene.impl.InfinispanDirectory;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 

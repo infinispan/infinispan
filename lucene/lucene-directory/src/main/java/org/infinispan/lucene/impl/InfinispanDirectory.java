@@ -20,7 +20,7 @@
  * Software Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
  * 02110-1301 USA, or see the FSF site: http://www.fsf.org.
  */
-package org.infinispan.lucene;
+package org.infinispan.lucene.impl;
 
 import java.io.FileNotFoundException;
 import java.io.IOException;
@@ -34,6 +34,10 @@ import org.apache.lucene.store.LockFactory;
 import org.infinispan.AdvancedCache;
 import org.infinispan.Cache;
 import org.infinispan.context.Flag;
+import org.infinispan.lucene.ChunkCacheKey;
+import org.infinispan.lucene.FileCacheKey;
+import org.infinispan.lucene.FileMetadata;
+import org.infinispan.lucene.SingleChunkIndexInput;
 import org.infinispan.lucene.locking.BaseLockFactory;
 import org.infinispan.lucene.readlocks.DistributedSegmentReadLocker;
 import org.infinispan.lucene.readlocks.SegmentReadLocker;
