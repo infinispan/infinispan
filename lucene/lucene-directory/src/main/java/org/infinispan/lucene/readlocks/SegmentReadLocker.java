@@ -22,8 +22,6 @@
  */
 package org.infinispan.lucene.readlocks;
 
-import org.infinispan.lucene.impl.InfinispanDirectory;
-
 /**
  * <p>SegmentReadLocker implementations have to make sure that segments are not deleted while they are
  * being used by an IndexReader.</p>

@@ -63,7 +63,7 @@ import org.infinispan.lucene.readlocks.SegmentReadLocker;
  * @see org.infinispan.lucene.locking.BaseLockFactory
  * @see org.infinispan.lucene.locking.TransactionalLockFactory
  */
-public class InfinispanDirectory extends Directory implements DirectoryExtensions {
+class InfinispanDirectory extends Directory implements DirectoryExtensions {
 
    private final DirectoryImplementor impl;
 

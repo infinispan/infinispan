@@ -31,7 +31,6 @@ import java.io.IOException;
 import org.apache.lucene.store.Directory;
 import org.infinispan.Cache;
 import org.infinispan.lucene.directory.DirectoryBuilder;
-import org.infinispan.lucene.impl.InfinispanDirectory;
 import org.infinispan.manager.CacheContainer;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.util.concurrent.ConcurrentHashSet;

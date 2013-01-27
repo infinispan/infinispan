@@ -32,7 +32,6 @@ import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.lucene.CacheTestSupport;
 import org.infinispan.lucene.DirectoryIntegrityCheck;
 import org.infinispan.lucene.directory.DirectoryBuilder;
-import org.infinispan.lucene.impl.InfinispanDirectory;
 import org.infinispan.test.MultipleCacheManagersTest;
 import org.infinispan.transaction.TransactionMode;
 import org.testng.annotations.BeforeMethod;

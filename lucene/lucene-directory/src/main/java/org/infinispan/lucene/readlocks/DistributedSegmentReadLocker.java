@@ -29,7 +29,6 @@ import org.infinispan.lucene.ChunkCacheKey;
 import org.infinispan.lucene.FileCacheKey;
 import org.infinispan.lucene.FileMetadata;
 import org.infinispan.lucene.FileReadLockKey;
-import org.infinispan.lucene.impl.InfinispanDirectory;
 import org.infinispan.lucene.impl.InfinispanIndexInput;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;

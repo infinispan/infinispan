@@ -20,7 +20,6 @@ package org.infinispan.lucene.cachestore;
 
 import org.infinispan.config.ConfigurationBeanVisitor;
 import org.infinispan.loaders.CacheLoaderConfig;
-import org.infinispan.lucene.impl.InfinispanDirectory;
 
 /**
  * Configuration for a {@link LuceneCacheLoader}.
