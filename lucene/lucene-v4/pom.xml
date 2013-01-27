@@ -39,6 +39,17 @@
 
    <dependencies>
       <dependency>
+         <groupId>org.infinispan</groupId>
+         <artifactId>infinispan-lucene-directory</artifactId>
+         <exclusions>
+            <exclusion>
+                <groupId>org.apache.lucene</groupId>
+                <artifactId>lucene-core</artifactId>
+            </exclusion>
+         </exclusions>
+      </dependency>
+
+      <dependency>
          <groupId>org.apache.lucene</groupId>
          <artifactId>lucene-core</artifactId>
          <version>${version.lucene.v4}</version>

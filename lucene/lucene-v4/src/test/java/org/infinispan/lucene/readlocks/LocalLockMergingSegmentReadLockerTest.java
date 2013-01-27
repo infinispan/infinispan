@@ -29,7 +29,7 @@ import org.apache.lucene.store.IOContext;
 import org.apache.lucene.store.IndexInput;
 import org.apache.lucene.store.IndexOutput;
 import org.infinispan.Cache;
-import org.infinispan.lucene.InfinispanDirectory;
+import org.infinispan.lucene.impl.InfinispanDirectory;
 import org.testng.annotations.Test;
 
 /**

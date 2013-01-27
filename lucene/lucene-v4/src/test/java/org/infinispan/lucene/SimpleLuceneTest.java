@@ -33,6 +33,7 @@ import org.infinispan.Cache;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.context.Flag;
 import org.infinispan.interceptors.locking.NonTransactionalLockingInterceptor;
+import org.infinispan.lucene.impl.InfinispanDirectory;
 import org.infinispan.test.MultipleCacheManagersTest;
 import org.infinispan.transaction.TransactionMode;
 import org.testng.annotations.Test;
