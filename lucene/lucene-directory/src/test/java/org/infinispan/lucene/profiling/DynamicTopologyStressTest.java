@@ -43,7 +43,7 @@ import org.apache.lucene.store.Directory;
 import org.infinispan.Cache;
 import org.infinispan.config.Configuration;
 import org.infinispan.config.Configuration.CacheMode;
-import org.infinispan.lucene.InfinispanDirectory;
+import org.infinispan.lucene.impl.InfinispanDirectory;
 import org.infinispan.lucene.testutils.LuceneSettings;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.test.MultipleCacheManagersTest;

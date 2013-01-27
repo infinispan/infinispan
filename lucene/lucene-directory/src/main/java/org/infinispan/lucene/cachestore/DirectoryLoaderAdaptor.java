@@ -61,7 +61,7 @@ final class DirectoryLoaderAdaptor {
     * Create a new DirectoryLoaderAdaptor.
     * 
     * @param directory The {@link org.apache.lucene.store.Directory} to which delegate actual IO operations
-    * @param indexName the index name as used by {@link org.infinispan.lucene.InfinispanDirectory}
+    * @param indexName the index name as used by {@link org.infinispan.lucene.impl.InfinispanDirectory}
     * @param autoChunkSize index segments might be large; we'll split them in chunks of this amount of bytes
     */
    protected DirectoryLoaderAdaptor(final Directory directory, String indexName, int autoChunkSize) {

@@ -22,12 +22,12 @@
  */
 package org.infinispan.lucene.readlocks;
 
-import org.infinispan.lucene.InfinispanDirectory;
+import org.infinispan.lucene.impl.InfinispanDirectory;
 
 /**
  * <p>SegmentReadLocker implementations have to make sure that segments are not deleted while they are
  * being used by an IndexReader.</p>
- * <p>When an {@link org.infinispan.lucene.InfinispanIndexInput} is opened on a file which is split in smaller chunks,
+ * <p>When an {@link org.infinispan.lucene.impl.InfinispanIndexInput} is opened on a file which is split in smaller chunks,
  * {@link #acquireReadLock(String)} is invoked; then the {@link #deleteOrReleaseReadLock(String)} is
  * invoked when the stream is closed.</p>
  * <p>The same {@link #deleteOrReleaseReadLock(String)} is invoked when a file is deleted, so if this invocation is not balancing

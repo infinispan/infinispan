@@ -34,7 +34,7 @@ import org.infinispan.util.logging.LogFactory;
  * 
  * @since 4.0
  * @author Sanne Grinovero
- * @see org.infinispan.lucene.InfinispanDirectory
+ * @see org.infinispan.lucene.impl.InfinispanDirectory
  * @see org.infinispan.lucene.locking.BaseLuceneLock
  */
 @SuppressWarnings("unchecked")

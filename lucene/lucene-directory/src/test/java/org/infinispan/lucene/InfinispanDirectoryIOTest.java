@@ -35,6 +35,7 @@ import org.apache.lucene.store.IndexInput;
 import org.apache.lucene.store.IndexOutput;
 import org.apache.lucene.store.RAMDirectory;
 import org.infinispan.Cache;
+import org.infinispan.lucene.impl.InfinispanDirectory;
 import org.infinispan.lucene.testutils.RepeatableLongByteSequence;
 import org.infinispan.manager.CacheContainer;
 import org.infinispan.test.TestingUtil;

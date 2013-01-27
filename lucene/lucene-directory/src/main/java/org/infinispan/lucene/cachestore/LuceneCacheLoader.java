@@ -34,7 +34,7 @@ import org.infinispan.loaders.CacheLoaderConfig;
 import org.infinispan.loaders.CacheLoaderException;
 import org.infinispan.loaders.CacheLoaderMetadata;
 import org.infinispan.lucene.IndexScopedKey;
-import org.infinispan.lucene.InfinispanDirectory;
+import org.infinispan.lucene.impl.InfinispanDirectory;
 import org.infinispan.lucene.logging.Log;
 import org.infinispan.marshall.StreamingMarshaller;
 import org.infinispan.util.logging.LogFactory;
