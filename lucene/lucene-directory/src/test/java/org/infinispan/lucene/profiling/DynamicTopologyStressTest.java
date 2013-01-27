@@ -43,7 +43,7 @@ import org.apache.lucene.store.Directory;
 import org.infinispan.Cache;
 import org.infinispan.config.Configuration;
 import org.infinispan.config.Configuration.CacheMode;
-import org.infinispan.lucene.impl.InfinispanDirectory;
+import org.infinispan.lucene.directory.DirectoryBuilder;
 import org.infinispan.lucene.testutils.LuceneSettings;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.test.MultipleCacheManagersTest;
@@ -108,7 +108,8 @@ public class DynamicTopologyStressTest extends MultipleCacheManagersTest {
 
    @Test
    void testDirectoryUnstableCluster() throws IOException {
-      InfinispanDirectory masterDirectory = new InfinispanDirectory(writingNode.getCache(), INDEX_NAME);
+      Directory masterDirectory = DirectoryBuilder.newDirectoryInstance(writingNode.getCache(),
+            writingNode.getCache(), writingNode.getCache(), INDEX_NAME).create();
       SharedState sharedIndexState = IndexReadingStressTest.fillDirectory(masterDirectory, INITIAL_INDEX_TERMS);
 
       ExecutorService executor = Executors.newFixedThreadPool(READERS + 1);

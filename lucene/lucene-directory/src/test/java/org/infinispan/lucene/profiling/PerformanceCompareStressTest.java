@@ -34,7 +34,7 @@ import org.apache.lucene.store.RAMDirectory;
 import org.infinispan.Cache;
 import org.infinispan.lucene.CacheTestSupport;
 import org.infinispan.lucene.DirectoryIntegrityCheck;
-import org.infinispan.lucene.impl.InfinispanDirectory;
+import org.infinispan.lucene.directory.DirectoryBuilder;
 import org.infinispan.manager.CacheContainer;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.test.TestingUtil;
@@ -100,7 +100,7 @@ public class PerformanceCompareStressTest {
    @Test
    public void profileTestInfinispanDirectoryWithNetworkDelayZero() throws InterruptedException, IOException {
       // TestingUtil.setDelayForCache(cache, 0, 0);
-      InfinispanDirectory dir = new InfinispanDirectory(cache, cache, cache, indexName, CHUNK_SIZE);
+      Directory dir = DirectoryBuilder.newDirectoryInstance(cache, cache, cache, indexName).chunkSize(CHUNK_SIZE).create();
       stressTestDirectory(dir, "InfinispanClustered-delayedIO:0");
       verifyDirectoryState();
    }
@@ -108,7 +108,7 @@ public class PerformanceCompareStressTest {
    @Test
    public void profileTestInfinispanDirectoryWithNetworkDelay4() throws Exception {
       TestingUtil.setDelayForCache(cache, 4, 4);
-      InfinispanDirectory dir = new InfinispanDirectory(cache, cache, cache, indexName, CHUNK_SIZE);
+      Directory dir = DirectoryBuilder.newDirectoryInstance(cache, cache, cache, indexName).chunkSize(CHUNK_SIZE).create();
       stressTestDirectory(dir, "InfinispanClustered-delayedIO:4");
       verifyDirectoryState();
    }
@@ -116,7 +116,7 @@ public class PerformanceCompareStressTest {
    @Test
    public void profileTestInfinispanDirectoryWithHighNetworkDelay40() throws Exception {
       TestingUtil.setDelayForCache(cache, 40, 40);
-      InfinispanDirectory dir = new InfinispanDirectory(cache, cache, cache, indexName, CHUNK_SIZE);
+      Directory dir = DirectoryBuilder.newDirectoryInstance(cache, cache, cache, indexName).chunkSize(CHUNK_SIZE).create();
       stressTestDirectory(dir, "InfinispanClustered-delayedIO:40");
       verifyDirectoryState();
    }
@@ -126,7 +126,7 @@ public class PerformanceCompareStressTest {
       CacheContainer cacheContainer = CacheTestSupport.createLocalCacheManager();
       try {
          cache = cacheContainer.getCache();
-         InfinispanDirectory dir = new InfinispanDirectory(cache, cache, cache, indexName, CHUNK_SIZE);
+         Directory dir = DirectoryBuilder.newDirectoryInstance(cache, cache, cache, indexName).chunkSize(CHUNK_SIZE).create();
          stressTestDirectory(dir, "InfinispanLocal");
          verifyDirectoryState();
       } finally {
