@@ -136,7 +136,7 @@ public class RpcManagerMBeanTest extends MultipleCacheManagersTest {
       cache1.put("key", "value");
       assertEquals(cache2.get("key"), "value");
       assertEquals(mBeanServer.getAttribute(rpcManager1, "ReplicationCount"), (long) -1);
-      assertEquals(mBeanServer.getAttribute(rpcManager1, "ReplicationCount"), (long) -1);
+      assertEquals(mBeanServer.getAttribute(rpcManager1, "ReplicationFailures"), (long) -1);
 
       // reset stats enabled parameter
       mBeanServer.setAttribute(rpcManager1, new Attribute("StatisticsEnabled", Boolean.TRUE));
