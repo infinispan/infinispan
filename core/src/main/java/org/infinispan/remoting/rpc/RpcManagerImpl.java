@@ -87,8 +87,7 @@ public class RpcManagerImpl implements RpcManager {
    private final AtomicLong replicationFailures = new AtomicLong(0);
    private final AtomicLong totalReplicationTime = new AtomicLong(0);
 
-   @ManagedAttribute(description = "Enables or disables the gathering of statistics by this component", writable = true)
-   boolean statisticsEnabled = false; // by default, don't gather statistics.
+   private boolean statisticsEnabled = false; // by default, don't gather statistics.
    private Configuration configuration;
    private GlobalConfiguration globalCfg;
    private ReplicationQueue replicationQueue;
@@ -354,12 +353,15 @@ public class RpcManagerImpl implements RpcManager {
       return replicationFailures.get();
    }
 
-   @ManagedAttribute(displayName = "Statistics enabled", dataType = DataType.TRAIT)
+   @ManagedAttribute(description = "Statistics enabled", dataType = DataType.TRAIT, writable = true)
    public boolean isStatisticsEnabled() {
       return statisticsEnabled;
    }
 
-   @ManagedOperation(displayName = "Enable/disable statistics")
+   /**
+    * @deprecated We already have an attribute, we shouldn't have an operation for the same thing.
+    */
+   @ManagedOperation(displayName = "Enable/disable statistics. Deprecated, use the statisticsEnabled attribute instead.")
    public void setStatisticsEnabled(@Parameter(name = "enabled", description = "Whether statistics should be enabled or disabled (true/false)") boolean statisticsEnabled) {
       this.statisticsEnabled = statisticsEnabled;
    }

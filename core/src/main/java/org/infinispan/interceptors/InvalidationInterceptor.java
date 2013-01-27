@@ -79,7 +79,6 @@ import org.infinispan.util.logging.LogFactory;
 public class InvalidationInterceptor extends BaseRpcInterceptor {
    private final AtomicLong invalidations = new AtomicLong(0);
    private CommandsFactory commandsFactory;
-   @ManagedAttribute(description = "Enables or disables the gathering of statistics by this component", writable = true)
    private boolean statisticsEnabled;
 
    private static final Log log = LogFactory.getLog(InvalidationInterceptor.class);
@@ -267,15 +266,13 @@ public class InvalidationInterceptor extends BaseRpcInterceptor {
 
    @ManagedAttribute(
          displayName = "Statistics enabled",
-         dataType = DataType.TRAIT
+         dataType = DataType.TRAIT,
+         writable = true
    )
    public boolean getStatisticsEnabled() {
       return this.statisticsEnabled;
    }
 
-   @ManagedAttribute(
-         displayName = "Enable/disable statistics"
-   )
    public void setStatisticsEnabled(@Parameter(name = "enabled", description = "Whether statistics should be enabled or disabled (true/false)") boolean enabled) {
       this.statisticsEnabled = enabled;
    }

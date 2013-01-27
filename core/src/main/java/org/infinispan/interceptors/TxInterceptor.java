@@ -86,7 +86,6 @@ public class TxInterceptor extends CommandInterceptor {
    private final AtomicLong prepares = new AtomicLong(0);
    private final AtomicLong commits = new AtomicLong(0);
    private final AtomicLong rollbacks = new AtomicLong(0);
-   @ManagedAttribute(description = "Enables or disables the gathering of statistics by this component", writable = true)
    private boolean statisticsEnabled;
    protected TransactionCoordinator txCoordinator;
    protected RpcManager rpcManager;
@@ -304,8 +303,11 @@ public class TxInterceptor extends CommandInterceptor {
       rollbacks.set(0);
    }
 
+   /**
+    * @deprecated Use the statisticsEnabled attribute instead.
+    */
    @ManagedOperation(
-         displayName = "Enable/disable statistics"
+         displayName = "Enable/disable statistics. Deprecated, use the statisticsEnabled attribute instead."
    )
    public void setStatisticsEnabled(@Parameter(name = "enabled", description = "Whether statistics should be enabled or disabled (true/false)") boolean enabled) {
       this.statisticsEnabled = enabled;
@@ -313,7 +315,8 @@ public class TxInterceptor extends CommandInterceptor {
 
    @ManagedAttribute(
          displayName = "Statistics enabled",
-         dataType = DataType.TRAIT
+         dataType = DataType.TRAIT,
+         writable = true
    )
    public boolean isStatisticsEnabled() {
       return this.statisticsEnabled;

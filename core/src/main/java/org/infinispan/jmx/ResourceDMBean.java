@@ -92,15 +92,19 @@ public class ResourceDMBean implements DynamicMBean {
       this.mBeanMetadata = mBeanMetadata;
 
       // Load up all fields.
-      InvokableMBeanAttributeInfo info;
       int i = 0;
       attInfos = new MBeanAttributeInfo[mBeanMetadata.getAttributeMetadata().size()];
       for (JmxAttributeMetadata attributeMetadata : mBeanMetadata.getAttributeMetadata()) {
-         info = toJmxInfo(attributeMetadata);
-         atts.put(info.getMBeanAttributeInfo().getName(), info);
+         String attributeName = attributeMetadata.getName();
+         InvokableMBeanAttributeInfo info = toJmxInfo(attributeMetadata);
+         if (atts.containsKey(attributeName)) {
+            throw new IllegalArgumentException("Component " + mBeanMetadata.getName()
+                  + " metadata has a duplicate attribute: " + attributeName);
+         }
+         atts.put(attributeName, info);
          attInfos[i++] = info.getMBeanAttributeInfo();
          if (trace)
-            log.tracef("Attribute %s [r=%b,w=%b,is=%b,type=%s]", info.getMBeanAttributeInfo().getName(),
+            log.tracef("Attribute %s [r=%b,w=%b,is=%b,type=%s]", attributeName,
                        info.getMBeanAttributeInfo().isReadable(), info.getMBeanAttributeInfo().isWritable(),
                        info.getMBeanAttributeInfo().isIs(), info.getMBeanAttributeInfo().getType());
       }
@@ -205,7 +209,7 @@ public class ResourceDMBean implements DynamicMBean {
    }
 
    @Override
-   public synchronized void setAttribute(Attribute attribute) {
+   public synchronized void setAttribute(Attribute attribute) throws AttributeNotFoundException, MBeanException {
       if (attribute == null || attribute.getName() == null)
          throw new NullPointerException("Invalid attribute requested " + attribute);
 
@@ -232,9 +236,10 @@ public class ResourceDMBean implements DynamicMBean {
       for (Object aList : list) {
          Attribute attr = (Attribute) aList;
 
-         if (setNamedAttribute(attr)) {
+         try {
+            setNamedAttribute(attr);
             results.add(attr);
-         } else {
+         } catch (Exception e) {
             log.failedToUpdateAtribute(attr.getName(), attr.getValue());
          }
       }
@@ -303,8 +308,7 @@ public class ResourceDMBean implements DynamicMBean {
       return result;
    }
 
-   private boolean setNamedAttribute(Attribute attribute) {
-      boolean result = false;
+   private void setNamedAttribute(Attribute attribute) throws MBeanException, AttributeNotFoundException {
       if (log.isDebugEnabled())
          log.debugf("Invoking set on attribute %s with value %s",
                     attribute.getName(), attribute.getValue());
@@ -323,14 +327,14 @@ public class ResourceDMBean implements DynamicMBean {
       if (i != null) {
          try {
             i.invoke(attribute);
-            result = true;
          } catch (Exception e) {
             log.errorWritingValueForAttribute(name, e);
+            throw new MBeanException(e, "Error invoking setter for attribute " + name);
          }
       } else {
          log.couldNotInvokeSetOnAttribute(name, attribute.getValue());
+         throw new AttributeNotFoundException("Could not find attribute " + name);
       }
-      return result;
    }
 
    private static abstract class InvokableMBeanAttributeInfo {
