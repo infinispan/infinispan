@@ -36,7 +36,6 @@ import org.infinispan.loaders.jdbc.TableManipulation;
 import org.infinispan.loaders.jdbc.connectionfactory.ConnectionFactoryConfig;
 import org.infinispan.loaders.jdbc.stringbased.JdbcStringBasedCacheStoreConfig;
 import org.infinispan.lucene.directory.DirectoryBuilder;
-import org.infinispan.lucene.impl.InfinispanDirectory;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.test.SingleCacheManagerTest;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
