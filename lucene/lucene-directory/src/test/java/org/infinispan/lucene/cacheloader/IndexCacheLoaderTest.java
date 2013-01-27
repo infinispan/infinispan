@@ -34,11 +34,12 @@ import org.apache.lucene.search.TermQuery;
 import org.apache.lucene.search.TopDocs;
 import org.apache.lucene.store.Directory;
 import org.apache.lucene.store.FSDirectory;
+import org.infinispan.Cache;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.lucene.CacheTestSupport;
 import org.infinispan.lucene.cachestore.LuceneCacheLoader;
 import org.infinispan.lucene.cachestore.LuceneCacheLoaderConfig;
-import org.infinispan.lucene.impl.InfinispanDirectory;
+import org.infinispan.lucene.directory.DirectoryBuilder;
 import org.infinispan.lucene.testutils.LuceneSettings;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.test.TestingUtil;
@@ -87,7 +88,8 @@ public class IndexCacheLoaderTest {
       }
       EmbeddedCacheManager cacheManager = initializeInfinispan(rootDir, indexName);
       try {
-         directory = new InfinispanDirectory(cacheManager.getCache(), indexName);
+         Cache<Object, Object> cache = cacheManager.getCache();
+         directory = DirectoryBuilder.newDirectoryInstance(cache, cache, cache, indexName).create();
          try {
             verifyOnDirectory(directory, indexName, termsAdded, inverted);
          }

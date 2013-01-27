@@ -23,15 +23,12 @@
 package org.infinispan.lucene.impl;
 
 import java.io.IOException;
-import java.util.Collection;
 
 import org.apache.lucene.store.Directory;
 import org.apache.lucene.store.IndexInput;
 import org.apache.lucene.store.IndexOutput;
 import org.apache.lucene.store.LockFactory;
 import org.infinispan.Cache;
-import org.infinispan.lucene.locking.BaseLockFactory;
-import org.infinispan.lucene.readlocks.DistributedSegmentReadLocker;
 import org.infinispan.lucene.readlocks.SegmentReadLocker;
 
 /**
@@ -66,14 +63,7 @@ import org.infinispan.lucene.readlocks.SegmentReadLocker;
  * @see org.infinispan.lucene.locking.BaseLockFactory
  * @see org.infinispan.lucene.locking.TransactionalLockFactory
  */
-@SuppressWarnings("unchecked")
-public class InfinispanDirectory extends Directory {
-
-    /**
-    * Used as default chunk size, can be overriden at construction time.
-    * Each Lucene index segment is splitted into parts with default size defined here
-    */
-   public final static int DEFAULT_BUFFER_SIZE = 16 * 1024;
+public class InfinispanDirectory extends Directory implements DirectoryExtensions {
 
    private final DirectoryImplementor impl;
 
@@ -88,49 +78,11 @@ public class InfinispanDirectory extends Directory {
     * @param chunkSize segments are fragmented in chunkSize bytes; larger values are more efficient for searching but less for distribution and network replication
     * @param readLocker @see org.infinispan.lucene.readlocks for some implementations; you might be able to provide more efficient implementations by controlling the IndexReader's lifecycle.
     */
-   public InfinispanDirectory(Cache<?, ?> metadataCache, Cache<?, ?> chunksCache, String indexName, LockFactory lf, int chunkSize, SegmentReadLocker readLocker) {
-      checkNotNull(metadataCache, "metadataCache");
-      checkNotNull(chunksCache, "chunksCache");
-      checkNotNull(indexName, "indexName");
-      checkNotNull(lf, "LockFactory");
-      checkNotNull(readLocker, "SegmentReadLocker");
-      if (chunkSize <= 0)
-         throw new IllegalArgumentException("chunkSize must be a positive integer");
+   InfinispanDirectory(Cache<?, ?> metadataCache, Cache<?, ?> chunksCache, String indexName, LockFactory lf, int chunkSize, SegmentReadLocker readLocker) {
       this.impl = new DirectoryImplementor(metadataCache, chunksCache, indexName, chunkSize, readLocker);
       this.indexName = indexName;
       this.lockFactory = lf;
       this.lockFactory.setLockPrefix(this.getLockID());
-   }
-
-   public InfinispanDirectory(Cache<?, ?> cache, String indexName, int chunkSize, SegmentReadLocker readLocker) {
-      this(cache, cache, indexName, makeDefaultLockFactory(cache, indexName), chunkSize, readLocker);
-   }
-
-   /**
-    * This constructor assumes that three different caches are being used with specialized configurations for each
-    * cache usage
-    * @param metadataCache contains the metadata of stored elements
-    * @param chunksCache cache containing the bulk of the index; this is the larger part of data
-    * @param distLocksCache cache to store locks; should be replicated and not using a persistent CacheStore
-    * @param indexName identifies the index; you can store different indexes in the same set of caches using different identifiers
-    * @param chunkSize the maximum size in bytes for each chunk of data: larger sizes offer better search performance
-    * but might be problematic to handle during network replication or storage
-    */
-   public InfinispanDirectory(Cache<?, ?> metadataCache, Cache<?, ?> chunksCache, Cache<?, ?> distLocksCache, String indexName, int chunkSize) {
-      this(metadataCache, chunksCache, indexName, makeDefaultLockFactory(distLocksCache, indexName),
-               chunkSize, makeDefaultSegmentReadLocker(metadataCache, chunksCache, distLocksCache, indexName));
-   }
-
-   /**
-    * @param cache the cache to use to store the index
-    * @param indexName identifies the index; you can store different indexes in the same set of caches using different identifiers
-    */
-   public InfinispanDirectory(Cache<?, ?> cache, String indexName) {
-      this(cache, cache, cache, indexName, DEFAULT_BUFFER_SIZE);
-   }
-
-   public InfinispanDirectory(Cache<?, ?> cache) {
-      this(cache, cache, cache, "", DEFAULT_BUFFER_SIZE);
    }
 
    /**
@@ -180,6 +132,7 @@ public class InfinispanDirectory extends Directory {
    /**
     * {@inheritDoc}
     */
+   @Override
    public void renameFile(final String from, final String to) {
       impl.renameFile(from, to);
    }
@@ -233,23 +186,6 @@ public class InfinispanDirectory extends Directory {
     */
    public String getIndexName() {
        return indexName;
-   }
-
-   private static LockFactory makeDefaultLockFactory(Cache<?, ?> cache, String indexName) {
-      checkNotNull(cache, "cache");
-      checkNotNull(indexName, "indexName");
-      return new BaseLockFactory(cache, indexName);
-   }
-
-   private static SegmentReadLocker makeDefaultSegmentReadLocker(Cache<?, ?> metadataCache, Cache<?, ?> chunksCache, Cache<?, ?> distLocksCache, String indexName) {
-      checkNotNull(distLocksCache, "distLocksCache");
-      checkNotNull(indexName, "indexName");
-      return new DistributedSegmentReadLocker((Cache<Object, Integer>) distLocksCache, chunksCache, metadataCache, indexName);
-   }
-
-   private static void checkNotNull(Object v, String objectname) {
-      if (v == null)
-         throw new IllegalArgumentException(objectname + " must not be null");
    }
 
 }
