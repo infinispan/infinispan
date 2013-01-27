@@ -252,11 +252,4 @@ public class InfinispanDirectory extends Directory {
          throw new IllegalArgumentException(objectname + " must not be null");
    }
 
-   /**
-    * Overrides a method in Lucene v4.x only
-    */
-   public void sync(Collection<String> names) throws IOException {
-      //This implementation is always in sync with the storage, so NOOP is fine
-   }
-
 }

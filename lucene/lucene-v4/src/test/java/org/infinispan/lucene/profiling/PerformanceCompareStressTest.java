@@ -34,7 +34,7 @@ import org.apache.lucene.store.RAMDirectory;
 import org.infinispan.Cache;
 import org.infinispan.lucene.CacheTestSupport;
 import org.infinispan.lucene.DirectoryIntegrityCheck;
-import org.infinispan.lucene.InfinispanDirectory;
+import org.infinispan.lucene.impl.InfinispanDirectory;
 import org.infinispan.manager.CacheContainer;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.test.TestingUtil;

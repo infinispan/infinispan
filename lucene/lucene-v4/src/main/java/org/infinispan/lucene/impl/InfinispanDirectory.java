@@ -1,6 +1,6 @@
 /*
  * JBoss, Home of Professional Open Source
- * Copyright 2009 Red Hat Inc. and/or its affiliates and other
+ * Copyright 2013 Red Hat Inc. and/or its affiliates and other
  * contributors as indicated by the @author tags. All rights reserved.
  * See the copyright.txt in the distribution for a full listing of
  * individual contributors.
@@ -20,26 +20,20 @@
  * Software Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
  * 02110-1301 USA, or see the FSF site: http://www.fsf.org.
  */
-package org.infinispan.lucene;
+package org.infinispan.lucene.impl;
 
-import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.util.Collection;
-import java.util.Set;
 
 import org.apache.lucene.store.Directory;
 import org.apache.lucene.store.IOContext;
 import org.apache.lucene.store.IndexInput;
 import org.apache.lucene.store.IndexOutput;
 import org.apache.lucene.store.LockFactory;
-import org.infinispan.AdvancedCache;
 import org.infinispan.Cache;
-import org.infinispan.context.Flag;
 import org.infinispan.lucene.locking.BaseLockFactory;
 import org.infinispan.lucene.readlocks.DistributedSegmentReadLocker;
 import org.infinispan.lucene.readlocks.SegmentReadLocker;
-import org.infinispan.util.logging.Log;
-import org.infinispan.util.logging.LogFactory;
 
 /**
  * An implementation of Lucene's {@link org.apache.lucene.store.Directory} which uses Infinispan to store Lucene indexes.
@@ -75,27 +69,17 @@ import org.infinispan.util.logging.LogFactory;
  */
 @SuppressWarnings("unchecked")
 public class InfinispanDirectory extends Directory {
-   
-   /**
+
+    /**
     * Used as default chunk size, can be overriden at construction time.
     * Each Lucene index segment is splitted into parts with default size defined here
     */
    public final static int DEFAULT_BUFFER_SIZE = 16 * 1024;
 
-   private static final Log log = LogFactory.getLog(InfinispanDirectory.class);
+   private final DirectoryImplementor impl;
 
-   private final AdvancedCache<FileCacheKey, FileMetadata> metadataCache;
-   private final AdvancedCache<ChunkCacheKey, Object> chunksCache;
-
-   // indexName is required when one common cache is used
+   // indexName is used to be able to store multiple named indexes in the same caches
    private final String indexName;
-
-   // chunk size used in this directory, static field not used as we want to have different chunk
-   // size per dir
-   private final int chunkSize;
-
-   private final FileListOperations fileOps;
-   private final SegmentReadLocker readLocks;
 
    /**
     * @param metadataCache the cache to be used for all smaller metadata: prefer replication over distribution, avoid eviction
@@ -113,14 +97,10 @@ public class InfinispanDirectory extends Directory {
       checkNotNull(readLocker, "SegmentReadLocker");
       if (chunkSize <= 0)
          throw new IllegalArgumentException("chunkSize must be a positive integer");
-      this.metadataCache = (AdvancedCache<FileCacheKey, FileMetadata>) metadataCache.getAdvancedCache();
-      this.chunksCache = (AdvancedCache<ChunkCacheKey, Object>) chunksCache.getAdvancedCache();
+      this.impl = new DirectoryImplementor(metadataCache, chunksCache, indexName, chunkSize, readLocker);
       this.indexName = indexName;
       this.lockFactory = lf;
       this.lockFactory.setLockPrefix(this.getLockID());
-      this.chunkSize = chunkSize;
-      this.fileOps = new FileListOperations(this.metadataCache, indexName);
-      this.readLocks = readLocker;
    }
 
    public InfinispanDirectory(Cache<?, ?> cache, String indexName, int chunkSize, SegmentReadLocker readLocker) {
@@ -159,146 +139,57 @@ public class InfinispanDirectory extends Directory {
     */
    public String[] list() {
       ensureOpen();
-      Set<String> filesList = fileOps.getFileList();
-      String[] array = filesList.toArray(new String[0]);
-      return array;
+      return impl.list();
    }
 
    /**
     * {@inheritDoc}
     */
    @Override
-   public boolean fileExists(String name) {
+   public boolean fileExists(final String name) {
       ensureOpen();
-      return fileOps.getFileList().contains(name);
-   }
-
-   /**
-    * Overrides a method in Lucene v3.x only
-    * {@inheritDoc}
-    */
-   public long fileModified(String name) {
-      ensureOpen();
-      FileMetadata fileMetadata = fileOps.getFileMetadata(name);
-      if (fileMetadata == null) {
-         return 0L;
-      }
-      else {
-         return fileMetadata.getLastModified();
-      }
-   }
-
-   /**
-    * Overrides a method in Lucene v3.x only
-    * {@inheritDoc}
-    */
-   public void touchFile(String fileName) {
-      ensureOpen();
-      FileMetadata file = fileOps.getFileMetadata(fileName);
-      if (file == null) {
-         return;
-      }
-      else {
-         FileCacheKey key = new FileCacheKey(indexName, fileName);
-         file.touch();
-         metadataCache.put(key, file);
-      }
+      return impl.fileExists(name);
    }
 
    /**
     * {@inheritDoc}
     */
    @Override
-   public void deleteFile(String name) {
+   public void deleteFile(final String name) {
       ensureOpen();
-      fileOps.deleteFileName(name);
-      readLocks.deleteOrReleaseReadLock(name);
-      if (log.isDebugEnabled()) {
-         log.debugf("Removed file: %s from index: %s", name, indexName);
-      }
+      impl.deleteFile(name);
    }
 
    /**
     * {@inheritDoc}
     */
-   public void renameFile(String from, String to) {
-      ensureOpen();
-
-      final FileCacheKey fromKey = new FileCacheKey(indexName, from);
-      final FileMetadata metadata = (FileMetadata) metadataCache.get(fromKey);
-      final int bufferSize = metadata.getBufferSize();
-      // preparation: copy all chunks to new keys
-      int i = -1;
-      Object ob;
-      do {
-         ChunkCacheKey fromChunkKey = new ChunkCacheKey(indexName, from, ++i, bufferSize);
-         ob = chunksCache.get(fromChunkKey);
-         if (ob == null) {
-            break;
-         }
-         ChunkCacheKey toChunkKey = new ChunkCacheKey(indexName, to, i, bufferSize);
-         chunksCache.withFlags(Flag.IGNORE_RETURN_VALUES).put(toChunkKey, ob);
-      } while (true);
-
-      // rename metadata first
-
-      metadataCache.put(new FileCacheKey(indexName, to), metadata);
-      fileOps.removeAndAdd(from, to);
-      
-      // now trigger deletion of old file chunks:
-      readLocks.deleteOrReleaseReadLock(from);
-      if (log.isTraceEnabled()) {
-         log.tracef("Renamed file from: %s to: %s in index %s", from, to, indexName);
-      }
+   public void renameFile(final String from, final String to) {
+      impl.renameFile(from, to);
    }
 
    /**
     * {@inheritDoc}
     */
    @Override
-   public long fileLength(String name) {
+   public long fileLength(final String name) {
       ensureOpen();
-      FileMetadata fileMetadata = fileOps.getFileMetadata(name);
-      if (fileMetadata == null) {
-         return 0L;//as in FSDirectory (RAMDirectory throws an exception instead)
-      }
-      else {
-         return fileMetadata.getSize();
-      }
+      return impl.fileLength(name);
    }
 
    /**
     * {@inheritDoc}
     */
    @Override
-   public IndexOutput createOutput(String name, IOContext context) {
-      final FileCacheKey key = new FileCacheKey(indexName, name);
-      // creating new file, metadata is added on flush() or close() of IndexOutPut
-      return new InfinispanIndexOutput(metadataCache, chunksCache, key, chunkSize, fileOps);
+   public IndexOutput createOutput(final String name, final IOContext context) throws IOException {
+      return impl.createOutput(name);
    }
 
    /**
     * {@inheritDoc}
     */
    @Override
-   public IndexInput openInput(String name, IOContext context) throws IOException {
-      final FileCacheKey fileKey = new FileCacheKey(indexName, name);
-      FileMetadata fileMetadata = (FileMetadata) metadataCache.get(fileKey);
-      if (fileMetadata == null) {
-         throw new FileNotFoundException("Error loading metadata for index file: " + fileKey);
-      }
-      else if (fileMetadata.getSize() <= fileMetadata.getBufferSize()) {
-         //files smaller than chunkSize don't need a readLock
-         return new SingleChunkIndexInput(chunksCache, fileKey, fileMetadata);
-      }
-      else {
-         boolean locked = readLocks.acquireReadLock(name);
-         if (!locked) {
-            // safest reaction is to tell this file doesn't exist anymore.
-            throw new FileNotFoundException("Error loading metadata for index file: " + fileKey);
-         }
-         return new InfinispanIndexInput(chunksCache, fileKey, fileMetadata, readLocks);
-      }
+   public IndexInput openInput(final String name, final IOContext context) throws IOException {
+      return impl.openInput(name);
    }
 
    /**
@@ -314,7 +205,9 @@ public class InfinispanDirectory extends Directory {
       return "InfinispanDirectory{indexName=\'" + indexName + "\'}";
    }
 
-   /** new name for list() in Lucene 3.0 **/
+   /**
+    * {@inheritDoc}
+    */
    @Override
    public String[] listAll() {
       return list();
@@ -326,29 +219,29 @@ public class InfinispanDirectory extends Directory {
    public String getIndexName() {
        return indexName;
    }
-   
+
    private static LockFactory makeDefaultLockFactory(Cache<?, ?> cache, String indexName) {
       checkNotNull(cache, "cache");
       checkNotNull(indexName, "indexName");
       return new BaseLockFactory(cache, indexName);
    }
-   
+
    private static SegmentReadLocker makeDefaultSegmentReadLocker(Cache<?, ?> metadataCache, Cache<?, ?> chunksCache, Cache<?, ?> distLocksCache, String indexName) {
       checkNotNull(distLocksCache, "distLocksCache");
       checkNotNull(indexName, "indexName");
       return new DistributedSegmentReadLocker((Cache<Object, Integer>) distLocksCache, chunksCache, metadataCache, indexName);
    }
-   
+
    private static void checkNotNull(Object v, String objectname) {
       if (v == null)
          throw new IllegalArgumentException(objectname + " must not be null");
    }
 
    /**
-    * Overrides a method in Lucene v4.x only
+    * {@inheritDoc}
     */
    public void sync(Collection<String> names) throws IOException {
       //This implementation is always in sync with the storage, so NOOP is fine
    }
-   
+
 }
