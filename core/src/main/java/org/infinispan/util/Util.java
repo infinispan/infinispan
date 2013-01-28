@@ -388,8 +388,10 @@ public final class Util {
       if (array == null) return "null";
       StringBuilder sb = new StringBuilder();
       sb.append("ByteArray{size=").append(array.length);
-      if (withHash)
-         sb.append(", hashCode=").append(Integer.toHexString(array.hashCode()));
+      if (withHash) {
+         sb.append(", hashCode=").append(
+               Integer.toHexString(Arrays.hashCode(array)));
+      }
 
       sb.append(", array=0x");
       if (isArraysDebug) {
