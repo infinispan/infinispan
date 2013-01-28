@@ -77,10 +77,11 @@ public class LuceneReaderThread extends LuceneUserThread {
          indexReader = DirectoryReader.open(directory);
       }
       else {
-         IndexReader before = indexReader;
-         indexReader = DirectoryReader.openIfChanged(indexReader);
-         if (before != indexReader) {
+         DirectoryReader before = indexReader;
+         DirectoryReader after = DirectoryReader.openIfChanged(indexReader);
+         if (after != null) {
             before.close();
+            indexReader = after;
          }
       }
       
