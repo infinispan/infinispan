@@ -111,7 +111,13 @@ class DirectoryLuceneV4 extends Directory implements DirectoryExtensions {
     */
    @Override
    public IndexInput openInput(final String name, final IOContext context) throws IOException {
-      return impl.openInput(name);
+      final IndexInputContext indexInputContext = impl.openInput(name);
+      if ( indexInputContext.readLocks == null ) {
+         return new SingleChunkIndexInput(indexInputContext);
+      }
+      else {
+         return new InfinispanIndexInputV4(indexInputContext);
+      }
    }
 
    /**

@@ -20,12 +20,12 @@
  * Software Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
  * 02110-1301 USA, or see the FSF site: http://www.fsf.org.
  */
-package org.infinispan.lucene;
+package org.infinispan.lucene.impl;
 
 import java.io.IOException;
 
 import org.apache.lucene.store.IndexInput;
-import org.infinispan.AdvancedCache;
+import org.infinispan.lucene.ChunkCacheKey;
 
 /**
  * SingleChunkIndexInput can be used instead of InfinispanIndexInput to read a segment
@@ -37,16 +37,15 @@ import org.infinispan.AdvancedCache;
  * @author Sanne Grinovero
  * @since 4.0
  */
-@SuppressWarnings("unchecked")
 final public class SingleChunkIndexInput extends IndexInput {
 
    private final byte[] buffer;
    private int bufferPosition;
 
-   public SingleChunkIndexInput(final AdvancedCache<?, ?> chunksCache, final FileCacheKey fileKey, final FileMetadata fileMetadata) {
-      super(fileKey.getFileName());
-      ChunkCacheKey key = new ChunkCacheKey(fileKey.getIndexName(), fileKey.getFileName(), 0, fileMetadata.getBufferSize());
-      byte[] b = (byte[]) chunksCache.get(key);
+   public SingleChunkIndexInput(final IndexInputContext iic) {
+      super(iic.fileKey.getFileName());
+      ChunkCacheKey key = new ChunkCacheKey(iic.fileKey.getIndexName(), iic.fileKey.getFileName(), 0, iic.fileMetadata.getBufferSize());
+      byte[] b = (byte[]) iic.chunksCache.get(key);
       if (b == null) {
          buffer = new byte[0];
       }
