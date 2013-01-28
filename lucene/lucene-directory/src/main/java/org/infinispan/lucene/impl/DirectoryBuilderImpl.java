@@ -119,18 +119,18 @@ public class DirectoryBuilderImpl implements BuildContext {
       return this;
    }
 
-   static SegmentReadLocker makeDefaultSegmentReadLocker(Cache<?, ?> metadataCache, Cache<?, ?> chunksCache, Cache<?, ?> distLocksCache, String indexName) {
+   private static SegmentReadLocker makeDefaultSegmentReadLocker(Cache<?, ?> metadataCache, Cache<?, ?> chunksCache, Cache<?, ?> distLocksCache, String indexName) {
       checkNotNull(distLocksCache, "distLocksCache");
       checkNotNull(indexName, "indexName");
       return new DistributedSegmentReadLocker((Cache<Object, Integer>) distLocksCache, chunksCache, metadataCache, indexName);
    }
 
-   static void checkNotNull(Object v, String objectname) {
+   private static void checkNotNull(Object v, String objectname) {
       if (v == null)
          throw new IllegalArgumentException(objectname + " must not be null");
    }
 
-   static LockFactory makeDefaultLockFactory(Cache<?, ?> cache, String indexName) {
+   private static LockFactory makeDefaultLockFactory(Cache<?, ?> cache, String indexName) {
       checkNotNull(cache, "cache");
       checkNotNull(indexName, "indexName");
       return new BaseLockFactory(cache, indexName);

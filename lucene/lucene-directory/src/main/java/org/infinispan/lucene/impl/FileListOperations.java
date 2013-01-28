@@ -41,7 +41,7 @@ import org.infinispan.util.logging.LogFactory;
  * @since 4.1
  */
 @SuppressWarnings("unchecked")
-final class FileListOperations {
+public final class FileListOperations {
 
    private static final Log log = LogFactory.getLog(InfinispanIndexOutput.class);
    private static final boolean trace = log.isTraceEnabled();
@@ -51,7 +51,7 @@ final class FileListOperations {
    private final String indexName;
    private final AdvancedCache<FileListCacheKey, Set<String>> cacheNoRetrieve;
 
-   FileListOperations(AdvancedCache<?, ?> cache, String indexName){
+   public FileListOperations(AdvancedCache<?, ?> cache, String indexName){
       this.cache = (AdvancedCache<FileListCacheKey, Object>) cache.withFlags(Flag.SKIP_INDEXING);
       this.cacheNoRetrieve = (AdvancedCache<FileListCacheKey, Set<String>>)
             cache.withFlags(Flag.IGNORE_RETURN_VALUES, Flag.SKIP_INDEXING);
@@ -62,7 +62,7 @@ final class FileListOperations {
    /**
     * @return the current list of files being part of the index 
     */
-   Set<String> getFileList() {
+   public Set<String> getFileList() {
       Set<String> fileList = (Set<String>) cache.get(fileListCacheKey);
       if (fileList == null) {
          fileList = new ConcurrentHashSet<String>();
@@ -80,7 +80,7 @@ final class FileListOperations {
     * Deleted a file from the list of files actively part of the index
     * @param fileName
     */
-   void deleteFileName(String fileName) {
+   public void deleteFileName(String fileName) {
       Set<String> fileList = getFileList();
       boolean done = fileList.remove(fileName);
       if (done) {
@@ -108,7 +108,7 @@ final class FileListOperations {
     * @param fileName
     * @return the FileMetadata associated with the fileName, or null if the file wasn't found.
     */
-   FileMetadata getFileMetadata(String fileName) {
+   public FileMetadata getFileMetadata(String fileName) {
       FileCacheKey key = new FileCacheKey(indexName, fileName);
       FileMetadata metadata = (FileMetadata) cache.get(key);
       return metadata;
@@ -119,7 +119,7 @@ final class FileListOperations {
     * @param toRemove
     * @param toAdd
     */
-   void removeAndAdd(String toRemove, String toAdd) {
+   public void removeAndAdd(String toRemove, String toAdd) {
       Set<String> fileList = getFileList();
       boolean doneAdd = fileList.add(toAdd);
       boolean doneRemove = fileList.remove(toRemove);

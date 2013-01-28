@@ -41,7 +41,6 @@ import org.infinispan.util.logging.LogFactory;
  * @see org.apache.lucene.store.Directory
  * @see org.apache.lucene.store.IndexInput
  */
-@SuppressWarnings("unchecked")
 abstract class InfinispanIndexInput extends IndexInput {
 
    private static final Log log = LogFactory.getLog(InfinispanIndexInput.class);

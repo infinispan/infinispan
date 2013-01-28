@@ -1,6 +1,6 @@
 /*
  * JBoss, Home of Professional Open Source
- * Copyright 2009 Red Hat Inc. and/or its affiliates and other
+ * Copyright 2013 Red Hat Inc. and/or its affiliates and other
  * contributors as indicated by the @author tags. All rights reserved.
  * See the copyright.txt in the distribution for a full listing of
  * individual contributors.
@@ -37,12 +37,12 @@ public final class DirectoryBuilder {
     }
 
     /**
-     * @param metadataCache the cache to be used for all smaller metadata: prefer replication over distribution, avoid eviction
-     * @param chunksCache the cache to use for the space consuming segments: prefer distribution, enable eviction if needed
-     * @param indexName the unique index name, useful to store multiple indexes in the same caches
-     * @param lf the LockFactory to be used by IndexWriters. @see org.infinispan.lucene.locking
-     * @param chunkSize segments are fragmented in chunkSize bytes; larger values are more efficient for searching but less for distribution and network replication
-     * @param readLocker @see org.infinispan.lucene.readlocks for some implementations; you might be able to provide more efficient implementations by controlling the IndexReader's lifecycle.
+     * Starting point to create a Directory instance.
+     * 
+     * @param metadataCache contains the metadata of stored elements
+     * @param chunksCache cache containing the bulk of the index; this is the larger part of data
+     * @param distLocksCache cache to store locks; should be replicated and not using a persistent CacheStore
+     * @param indexName identifies the index; you can store different indexes in the same set of caches using different identifiers
      */
     public static BuildContext newDirectoryInstance(Cache<?, ?> metadataCache, Cache<?, ?> chunksCache, Cache<?, ?> distLocksCache, String indexName) {
         return new DirectoryBuilderImpl(metadataCache, chunksCache, distLocksCache, indexName);

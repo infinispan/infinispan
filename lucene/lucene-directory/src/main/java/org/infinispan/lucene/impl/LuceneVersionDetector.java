@@ -25,6 +25,11 @@ package org.infinispan.lucene.impl;
 import org.infinispan.lucene.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
+
+/**
+ * @since 5.2
+ * @author Sanne Grinovero
+ */
 public class LuceneVersionDetector {
 
    public static final int VERSION = detectVersion();
