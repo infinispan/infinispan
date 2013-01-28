@@ -32,7 +32,7 @@ import org.infinispan.Cache;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.lucene.CacheTestSupport;
 import org.infinispan.lucene.DirectoryIntegrityCheck;
-import org.infinispan.lucene.impl.InfinispanDirectory;
+import org.infinispan.lucene.directory.DirectoryBuilder;
 import org.infinispan.test.MultipleCacheManagersTest;
 import org.infinispan.transaction.TransactionMode;
 import org.testng.annotations.BeforeMethod;
@@ -114,8 +114,10 @@ public class DistributedSegmentReadLockerTest extends MultipleCacheManagersTest 
    }
    
    Directory createDirectory(Cache cache) {
-      return new InfinispanDirectory(cache, INDEX_NAME, CHUNK_SIZE,
-               new DistributedSegmentReadLocker(cache, INDEX_NAME));
+      return DirectoryBuilder.newDirectoryInstance(cache, cache, cache, INDEX_NAME)
+             .chunkSize(CHUNK_SIZE)
+             .overrideSegmentReadLocker(new DistributedSegmentReadLocker(cache, INDEX_NAME))
+             .create();
    }
 
    void verifyBoth(Cache cache0, Cache cache1) {

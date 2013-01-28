@@ -25,7 +25,6 @@ package org.infinispan.lucene.profiling;
 import java.io.IOException;
 
 import org.apache.lucene.store.Directory;
-import org.infinispan.lucene.impl.InfinispanDirectory;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
@@ -38,7 +37,7 @@ import org.infinispan.util.logging.LogFactory;
  */
 public abstract class LuceneUserThread implements Runnable {
    
-   private static final Log log = LogFactory.getLog(InfinispanDirectory.class);
+   private static final Log log = LogFactory.getLog(LuceneUserThread.class);
 
    protected final Directory directory;
    protected final SharedState state;

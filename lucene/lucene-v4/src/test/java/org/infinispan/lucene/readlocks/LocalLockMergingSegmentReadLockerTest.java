@@ -29,7 +29,7 @@ import org.apache.lucene.store.IOContext;
 import org.apache.lucene.store.IndexInput;
 import org.apache.lucene.store.IndexOutput;
 import org.infinispan.Cache;
-import org.infinispan.lucene.impl.InfinispanDirectory;
+import org.infinispan.lucene.directory.DirectoryBuilder;
 import org.testng.annotations.Test;
 
 /**
@@ -78,8 +78,10 @@ public class LocalLockMergingSegmentReadLockerTest extends DistributedSegmentRea
    
    @Override
    Directory createDirectory(Cache cache) {
-      return new InfinispanDirectory(cache, INDEX_NAME, CHUNK_SIZE,
-               new LocalLockMergingSegmentReadLocker(cache, INDEX_NAME));
+      return DirectoryBuilder.newDirectoryInstance(cache, cache, cache, INDEX_NAME)
+            .chunkSize(CHUNK_SIZE)
+            .overrideSegmentReadLocker(new LocalLockMergingSegmentReadLocker(cache, INDEX_NAME))
+            .create();
    }
 
 }

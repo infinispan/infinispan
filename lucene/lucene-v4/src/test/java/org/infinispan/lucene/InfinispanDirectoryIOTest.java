@@ -36,7 +36,9 @@ import org.apache.lucene.store.IndexInput;
 import org.apache.lucene.store.IndexOutput;
 import org.apache.lucene.store.RAMDirectory;
 import org.infinispan.Cache;
-import org.infinispan.lucene.impl.InfinispanDirectory;
+import org.infinispan.lucene.directory.DirectoryBuilder;
+import org.infinispan.lucene.impl.DirectoryBuilderImpl;
+import org.infinispan.lucene.impl.DirectoryExtensions;
 import org.infinispan.lucene.testutils.RepeatableLongByteSequence;
 import org.infinispan.manager.CacheContainer;
 import org.infinispan.test.TestingUtil;
@@ -82,7 +84,7 @@ public class InfinispanDirectoryIOTest {
       final int BUFFER_SIZE = 64;
       
       Cache cache = cacheManager.getCache();
-      InfinispanDirectory dir = new InfinispanDirectory(cache, cache, cache, INDEXNAME, BUFFER_SIZE);
+      Directory dir = DirectoryBuilder.newDirectoryInstance(cache, cache, cache, INDEXNAME).chunkSize(BUFFER_SIZE).create();
       
       String fileName = "SomeText.txt";
       IndexOutput io = dir.createOutput(fileName, IOContext.DEFAULT);
@@ -146,7 +148,7 @@ public class InfinispanDirectoryIOTest {
       final int BUFFER_SIZE = 64;
 
       Cache cache = cacheManager.getCache();
-      InfinispanDirectory dir = new InfinispanDirectory(cache, cache, cache, INDEXNAME, BUFFER_SIZE);
+      Directory dir = DirectoryBuilder.newDirectoryInstance(cache, cache, cache, INDEXNAME).chunkSize(BUFFER_SIZE).create();
 
       verifyOnBuffer("SingleChunk.txt", 61, BUFFER_SIZE, cache, dir, 15);
 
@@ -174,13 +176,13 @@ public class InfinispanDirectoryIOTest {
     * creates a file and then verifies it's readability in specific corner cases.
     * Then reuses the same parameters to verify the file rename capabilities. 
     */
-   private void verifyOnBuffer(final String fileName, final int fileSize, final int bufferSize, Cache cache, InfinispanDirectory dir, final int readBuffer) throws IOException {
+   private void verifyOnBuffer(final String fileName, final int fileSize, final int bufferSize, Cache cache, Directory dir, final int readBuffer) throws IOException {
       createFileWithRepeatableContent(dir, fileName, fileSize);
       assertReadByteWorkingCorrectly(dir, fileName, fileSize);
       assertReadBytesWorkingCorrectly(dir, fileName, fileSize, readBuffer);
       DirectoryIntegrityCheck.verifyDirectoryStructure(cache, INDEXNAME);
       final String newFileName = fileName+".bak";
-      dir.renameFile(fileName, newFileName);
+      ((DirectoryExtensions)dir).renameFile(fileName, newFileName);
       assertReadByteWorkingCorrectly(dir, newFileName, fileSize);
       assertReadBytesWorkingCorrectly(dir, newFileName, fileSize, readBuffer);
       DirectoryIntegrityCheck.verifyDirectoryStructure(cache, INDEXNAME);
@@ -193,7 +195,7 @@ public class InfinispanDirectoryIOTest {
       final int BUFFER_SIZE = 64;
 
       Cache cache = cacheManager.getCache();
-      InfinispanDirectory dir = new InfinispanDirectory(cache, cache, cache, INDEXNAME, BUFFER_SIZE);
+      Directory dir = DirectoryBuilder.newDirectoryInstance(cache, cache, cache, INDEXNAME).chunkSize(BUFFER_SIZE).create();
 
       final int FILE_SIZE = 1000;
       assert BUFFER_SIZE < FILE_SIZE;
@@ -237,7 +239,7 @@ public class InfinispanDirectoryIOTest {
     *           The length of byte array to read
     * @throws IOException
     */
-   private void assertReadBytesWorkingCorrectly(InfinispanDirectory dir, String fileName,
+   private void assertReadBytesWorkingCorrectly(Directory dir, String fileName,
             final int contentFileSizeExpected, final int arrayLengthToRead) throws IOException {
       IndexInput indexInput = dir.openInput(fileName, IOContext.DEFAULT);
       assert indexInput.length() == contentFileSizeExpected;
@@ -279,7 +281,7 @@ public class InfinispanDirectoryIOTest {
     *           The size content file expected
     * @throws IOException
     */
-   private void assertReadByteWorkingCorrectly(InfinispanDirectory dir, String fileName,
+   private void assertReadByteWorkingCorrectly(Directory dir, String fileName,
             final int contentFileSizeExpected) throws IOException {
       IndexInput indexInput = dir.openInput(fileName, IOContext.DEFAULT);
       assert indexInput.length() == contentFileSizeExpected;
@@ -316,7 +318,7 @@ public class InfinispanDirectoryIOTest {
     *           The size content file to create
     * @throws IOException
     */
-   private void createFileWithRepeatableContent(InfinispanDirectory dir, String fileName, final int contentFileSize) throws IOException {
+   private void createFileWithRepeatableContent(Directory dir, String fileName, final int contentFileSize) throws IOException {
       IndexOutput indexOutput = dir.createOutput(fileName, IOContext.DEFAULT);
       RepeatableLongByteSequence bytesGenerator = new RepeatableLongByteSequence();
       for (int i = 0; i < contentFileSize; i++) {
@@ -331,7 +333,7 @@ public class InfinispanDirectoryIOTest {
       final int BUFFER_SIZE = 64;
 
       Cache cache = cacheManager.getCache();
-      InfinispanDirectory dir = new InfinispanDirectory(cache, cache, cache, INDEXNAME, BUFFER_SIZE);
+      Directory dir = DirectoryBuilder.newDirectoryInstance(cache, cache, cache, INDEXNAME).chunkSize(BUFFER_SIZE).create();
 
       // create file headers
       FileMetadata file1 = new FileMetadata(5);
@@ -370,7 +372,7 @@ public class InfinispanDirectoryIOTest {
       Set<String> s = new HashSet<String>();
       s.add("Hello.txt");
       s.add("World.txt");
-      Set other = new HashSet(Arrays.asList(dir.list()));
+      Set other = new HashSet(Arrays.asList(new String[0]));
 
       // ok, file listing works.
       assert s.equals(other);
@@ -443,7 +445,7 @@ public class InfinispanDirectoryIOTest {
       Object ob2 = cache.get(new ChunkCacheKey(INDEXNAME, "World.txt", 0, BUFFER_SIZE));
       Object ob3 = cache.get(new ChunkCacheKey(INDEXNAME, "World.txt", 1, BUFFER_SIZE));
 
-      dir.renameFile("World.txt", "HelloWorld.txt");
+      ((DirectoryExtensions)dir).renameFile("World.txt", "HelloWorld.txt");
       assert null == cache.get(new FileCacheKey(INDEXNAME, "Hello.txt"));
       assert null == cache.get(new ChunkCacheKey(INDEXNAME, "Hello.txt", 0, BUFFER_SIZE));
       assert null == cache.get(new ChunkCacheKey(INDEXNAME, "Hello.txt", 1, BUFFER_SIZE));
@@ -478,7 +480,7 @@ public class InfinispanDirectoryIOTest {
       final int BUFFER_SIZE = 64;
 
       Cache cache = cacheManager.getCache();
-      InfinispanDirectory dir = new InfinispanDirectory(cache, cache, cache, INDEXNAME, BUFFER_SIZE);
+      Directory dir = DirectoryBuilder.newDirectoryInstance(cache, cache, cache, INDEXNAME).chunkSize(BUFFER_SIZE).create();
 
       IndexOutput io = dir.createOutput("MyNewFile.txt", IOContext.DEFAULT);
 
@@ -519,7 +521,7 @@ public class InfinispanDirectoryIOTest {
    @Test
    public void testWriteChunksDefaultChunks() throws Exception {
       Cache cache = cacheManager.getCache();
-      InfinispanDirectory dir = new InfinispanDirectory(cache, INDEXNAME);
+      Directory dir = DirectoryBuilder.newDirectoryInstance(cache, cache, cache, INDEXNAME).create();
 
       final String testText = "This is some rubbish";
       final byte[] testTextAsBytes = testText.getBytes();
@@ -537,7 +539,7 @@ public class InfinispanDirectoryIOTest {
       assert null != cache.get(fileCacheKey);
       FileMetadata metadata = (FileMetadata) cache.get(fileCacheKey);
       Assert.assertEquals(testTextAsBytes.length + 3, metadata.getSize());
-      assert null != cache.get(new ChunkCacheKey(INDEXNAME, "MyNewFile.txt", 0, InfinispanDirectory.DEFAULT_BUFFER_SIZE));
+      assert null != cache.get(new ChunkCacheKey(INDEXNAME, "MyNewFile.txt", 0, DirectoryBuilderImpl.DEFAULT_BUFFER_SIZE));
 
       // test contents by reading:
       IndexInput ii = dir.openInput("MyNewFile.txt", IOContext.DEFAULT);
@@ -559,7 +561,7 @@ public class InfinispanDirectoryIOTest {
    public void testChunkBordersOnInfinispan() throws IOException {
       Cache cache = cacheManager.getCache();
       cache.clear();
-      InfinispanDirectory dir = new InfinispanDirectory(cache, cache, cache, INDEXNAME, 13);
+      Directory dir = DirectoryBuilder.newDirectoryInstance(cache, cache, cache, INDEXNAME).chunkSize(13).create();
       testChunkBorders(dir, cache);
       cache.clear();
    }
@@ -645,7 +647,7 @@ public class InfinispanDirectoryIOTest {
       final int bufferSize = 300;
       Cache cache = cacheManager.getCache();
       cache.clear();
-      InfinispanDirectory dir = new InfinispanDirectory(cache, cache, cache, INDEXNAME, 13);
+      Directory dir = DirectoryBuilder.newDirectoryInstance(cache, cache, cache, INDEXNAME).chunkSize(13).create();
       byte[] manyBytes = fillBytes(bufferSize);
       IndexOutput indexOutput = dir.createOutput(filename, IOContext.DEFAULT);
       for (int i = 0; i < 10; i++) {

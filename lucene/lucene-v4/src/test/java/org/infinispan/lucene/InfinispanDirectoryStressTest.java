@@ -37,7 +37,7 @@ import org.apache.lucene.search.TermQuery;
 import org.apache.lucene.search.TopDocs;
 
 import org.infinispan.Cache;
-import org.infinispan.lucene.impl.InfinispanDirectory;
+import org.infinispan.lucene.directory.DirectoryBuilder;
 import org.infinispan.manager.CacheContainer;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
@@ -63,7 +63,7 @@ public class InfinispanDirectoryStressTest {
       final int OPERATIONS = 100;
       CacheContainer cacheContainer = CacheTestSupport.createTestCacheManager();
       Cache cache = cacheContainer.getCache();
-      Directory directory = new InfinispanDirectory(cache, "indexName");
+      Directory directory = DirectoryBuilder.newDirectoryInstance(cache, cache, cache, "indexName").create();
       CacheTestSupport.initializeDirectory(directory);
       File document = CacheTestSupport.createDummyDocToIndex("document.lucene", 10000);
 
@@ -90,12 +90,12 @@ public class InfinispanDirectoryStressTest {
       final CountDownLatch latch = new CountDownLatch(1);
       List<InfinispanDirectoryThread> threads = new ArrayList<InfinispanDirectoryThread>();
       Cache cache = CacheTestSupport.createTestCacheManager().getCache();
-      Directory directory1 = new InfinispanDirectory(cache, "indexName");
+      Directory directory1 = DirectoryBuilder.newDirectoryInstance(cache, cache, cache, "indexName").create();
       CacheTestSupport.initializeDirectory(directory1);
 
       // second cache joins after index creation: tests proper configuration
       Cache cache2 = CacheTestSupport.createTestCacheManager().getCache(); // dummy cache, to force replication
-      Directory directory2 = new InfinispanDirectory(cache2, "indexName");
+      Directory directory2 = DirectoryBuilder.newDirectoryInstance(cache2, cache2, cache2, "indexName").create();
       Thread.sleep(3000);
 
       // create first writing thread

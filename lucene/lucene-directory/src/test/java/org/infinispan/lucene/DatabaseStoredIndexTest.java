@@ -22,12 +22,12 @@
  */
 package org.infinispan.lucene;
 
+import java.io.IOException;
+import java.util.HashMap;
+
 import static org.infinispan.lucene.CacheTestSupport.assertTextIsFoundInIds;
 import static org.infinispan.lucene.CacheTestSupport.removeByTerm;
 import static org.infinispan.lucene.CacheTestSupport.writeTextToIndex;
-
-import java.io.IOException;
-import java.util.HashMap;
 
 import org.apache.lucene.store.Directory;
 import org.infinispan.config.CacheLoaderManagerConfig;
