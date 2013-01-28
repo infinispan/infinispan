@@ -48,7 +48,6 @@ import javax.transaction.TransactionManager;
  * @since 4.0
  * @author Sanne Grinovero
  * @author Lukasz Moren
- * @see org.infinispan.lucene.impl.InfinispanDirectory
  * @see org.infinispan.lucene.locking.TransactionalSharedLuceneLock
  * @see org.apache.lucene.index.SerialMergeScheduler
  */

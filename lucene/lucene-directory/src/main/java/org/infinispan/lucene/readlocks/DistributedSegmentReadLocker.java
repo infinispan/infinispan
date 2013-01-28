@@ -81,7 +81,7 @@ public class DistributedSegmentReadLocker implements SegmentReadLocker {
     * be effectively deleted.
     * 
     * @see #acquireReadLock(String)
-    * @see InfinispanDirectory#deleteFile(String)
+    * @see Directory#deleteFile(String)
     */
    @Override
    public void deleteOrReleaseReadLock(String filename) {
@@ -161,7 +161,7 @@ public class DistributedSegmentReadLocker implements SegmentReadLocker {
    }
    
    /**
-    * The {@link InfinispanDirectory#deleteFile(String)} is not deleting the elements from the cache
+    * The {@link Directory#deleteFile(String)} is not deleting the elements from the cache
     * but instead flagging the file as deletable.
     * This method will really remove the elements from the cache; should be invoked only
     * by {@link #deleteOrReleaseReadLock(String)} after having verified that there
