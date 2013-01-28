@@ -175,7 +175,9 @@ class InfinispanDirectory extends Directory implements DirectoryExtensions {
       return "InfinispanDirectory{indexName=\'" + indexName + "\'}";
    }
 
-   /** new name for list() in Lucene 3.0 **/
+   /**
+    * {@inheritDoc}
+    */
    @Override
    public String[] listAll() {
       return list();
@@ -184,6 +186,7 @@ class InfinispanDirectory extends Directory implements DirectoryExtensions {
    /**
     * @return The value of indexName, same constant as provided to the constructor.
     */
+   @Override
    public String getIndexName() {
        return indexName;
    }
