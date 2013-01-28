@@ -28,10 +28,14 @@ import org.apache.lucene.store.LockFactory;
 import org.infinispan.Cache;
 import org.infinispan.lucene.directory.BuildContext;
 import org.infinispan.lucene.locking.BaseLockFactory;
+import org.infinispan.lucene.logging.Log;
 import org.infinispan.lucene.readlocks.DistributedSegmentReadLocker;
 import org.infinispan.lucene.readlocks.SegmentReadLocker;
+import org.infinispan.util.logging.LogFactory;
 
 public class DirectoryBuilderImpl implements BuildContext {
+
+   private static final Log log = LogFactory.getLog(DirectoryBuilderImpl.class, Log.class);
 
    /**
     * Used as default chunk size: each Lucene index segment is splitted into smaller parts having a default size in bytes as
@@ -75,7 +79,22 @@ public class DirectoryBuilderImpl implements BuildContext {
       if (srl == null) {
          srl = makeDefaultSegmentReadLocker(metadataCache, chunksCache, distLocksCache, indexName);
       }
-      return new DirectoryLuceneV3(metadataCache, chunksCache, indexName, lockFactory, chunkSize, srl);
+      if (LuceneVersionDetector.VERSION == 3) {
+         return new DirectoryLuceneV3(metadataCache, chunksCache, indexName, lockFactory, chunkSize, srl);
+      }
+      else {
+         Class<?>[] ctorType = new Class[]{ Cache.class, Cache.class, String.class, LockFactory.class, int.class, SegmentReadLocker.class };
+         Directory d;
+         try {
+            d = (Directory) DirectoryBuilderImpl.class.getClassLoader()
+               .loadClass("org.infinispan.lucene.impl.DirectoryLuceneV4")
+               .getConstructor(ctorType)
+               .newInstance(metadataCache, chunksCache, indexName, lockFactory, chunkSize, srl);
+         } catch (Exception e) {
+            throw log.failedToCreateLucene4Directory(e);
+         }
+         return d;
+      }
    }
 
    @Override
