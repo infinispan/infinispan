@@ -75,7 +75,7 @@ public class DirectoryBuilderImpl implements BuildContext {
       if (srl == null) {
          srl = makeDefaultSegmentReadLocker(metadataCache, chunksCache, distLocksCache, indexName);
       }
-      return new InfinispanDirectory(metadataCache, chunksCache, indexName, lockFactory, chunkSize, srl);
+      return new DirectoryLuceneV3(metadataCache, chunksCache, indexName, lockFactory, chunkSize, srl);
    }
 
    @Override
