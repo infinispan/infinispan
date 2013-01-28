@@ -24,7 +24,6 @@ import java.util.Collections;
 import java.util.HashSet;
 import java.util.Set;
 
-import org.apache.lucene.store.Directory;
 import org.apache.lucene.store.IndexInput;
 import org.infinispan.container.entries.ImmortalCacheEntry;
 import org.infinispan.container.entries.InternalCacheEntry;
@@ -51,7 +50,7 @@ final class DirectoryLoaderAdaptor {
 
    private static final Log log = LogFactory.getLog(DirectoryLoaderAdaptor.class, Log.class);
 
-   private final Directory directory;
+   private final InternalDirectoryContract directory;
    private final LoadVisitor loadVisitor = new LoadVisitor();
    private final ContainsKeyVisitor containsKeyVisitor = new ContainsKeyVisitor();
    private final String indexName;
@@ -64,7 +63,7 @@ final class DirectoryLoaderAdaptor {
     * @param indexName the index name
     * @param autoChunkSize index segments might be large; we'll split them in chunks of this amount of bytes
     */
-   protected DirectoryLoaderAdaptor(final Directory directory, String indexName, int autoChunkSize) {
+   protected DirectoryLoaderAdaptor(final InternalDirectoryContract directory, String indexName, int autoChunkSize) {
       this.directory = directory;
       this.indexName = indexName;
       this.autoChunkSize = autoChunkSize;

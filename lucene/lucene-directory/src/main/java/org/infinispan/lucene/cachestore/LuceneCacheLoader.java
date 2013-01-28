@@ -192,7 +192,8 @@ public class LuceneCacheLoader implements CacheLoader {
             if (adapter == null) {
                final File path = new File(this.rootDirectory, indexName);
                final FSDirectory directory = openLuceneDirectory(path);
-               adapter = new DirectoryLoaderAdaptor(directory, indexName, autoChunkSize);
+               InternalDirectoryContract dlav3 = new DirectoryV3Adaptor(directory);
+               adapter = new DirectoryLoaderAdaptor(dlav3, indexName, autoChunkSize);
                openDirectories.put(indexName, adapter);
             }
          }
