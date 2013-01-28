@@ -17,18 +17,12 @@
  * MA  02110-1301, USA.
  */
 
-
-/**
- * @author Sanne Grinovero
- * @since 5.2
- */
 package org.infinispan.lucene.cachestore;
 
 import org.apache.lucene.store.Directory;
 import org.infinispan.lucene.impl.LuceneVersionDetector;
 import org.infinispan.lucene.logging.Log;
 import org.infinispan.util.logging.LogFactory;
-
 
 /**
  * @since 5.2

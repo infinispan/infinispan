@@ -25,7 +25,6 @@ package org.infinispan.lucene.impl;
 
 import java.io.FileNotFoundException;
 import java.io.IOException;
-import java.util.Collection;
 import java.util.Set;
 
 import org.apache.lucene.store.IndexOutput;
@@ -88,7 +87,7 @@ final class DirectoryImplementor {
      * Used by Lucene v3.x only
      */
     long fileModified(final String name) {
-       FileMetadata fileMetadata = fileOps.getFileMetadata(name);
+       final FileMetadata fileMetadata = fileOps.getFileMetadata(name);
        if (fileMetadata == null) {
           return 0L;
        }
@@ -101,12 +100,12 @@ final class DirectoryImplementor {
      * Used by Lucene v3.x only
      */
     void touchFile(final String fileName) {
-       FileMetadata file = fileOps.getFileMetadata(fileName);
+       final FileMetadata file = fileOps.getFileMetadata(fileName);
        if (file == null) {
           return;
        }
        else {
-          FileCacheKey key = new FileCacheKey(indexName, fileName);
+          final FileCacheKey key = new FileCacheKey(indexName, fileName);
           file.touch();
           metadataCache.put(key, file);
        }
@@ -128,12 +127,12 @@ final class DirectoryImplementor {
        int i = -1;
        Object ob;
        do {
-          ChunkCacheKey fromChunkKey = new ChunkCacheKey(indexName, from, ++i, bufferSize);
+          final ChunkCacheKey fromChunkKey = new ChunkCacheKey(indexName, from, ++i, bufferSize);
           ob = chunksCache.get(fromChunkKey);
           if (ob == null) {
              break;
           }
-          ChunkCacheKey toChunkKey = new ChunkCacheKey(indexName, to, i, bufferSize);
+          final ChunkCacheKey toChunkKey = new ChunkCacheKey(indexName, to, i, bufferSize);
           chunksCache.withFlags(Flag.IGNORE_RETURN_VALUES).put(toChunkKey, ob);
        } while (true);
 
@@ -150,7 +149,7 @@ final class DirectoryImplementor {
     }
 
     long fileLength(final String name) {
-       FileMetadata fileMetadata = fileOps.getFileMetadata(name);
+       final FileMetadata fileMetadata = fileOps.getFileMetadata(name);
        if (fileMetadata == null) {
           return 0L; //as in FSDirectory (RAMDirectory throws an exception instead)
        }
@@ -167,7 +166,7 @@ final class DirectoryImplementor {
 
     IndexInputContext openInput(final String name) throws IOException {
        final FileCacheKey fileKey = new FileCacheKey(indexName, name);
-       FileMetadata fileMetadata = (FileMetadata) metadataCache.get(fileKey);
+       final FileMetadata fileMetadata = (FileMetadata) metadataCache.get(fileKey);
        if (fileMetadata == null) {
           throw new FileNotFoundException("Error loading metadata for index file: " + fileKey);
        }
@@ -190,13 +189,6 @@ final class DirectoryImplementor {
      */
     public String getIndexName() {
         return indexName;
-    }
-
-    /**
-     * Used by Lucene v4.x only
-     */
-    void sync(final Collection<String> names) throws IOException {
-       //This implementation is always in sync with the storage, so NOOP is fine
     }
 
     @Override
