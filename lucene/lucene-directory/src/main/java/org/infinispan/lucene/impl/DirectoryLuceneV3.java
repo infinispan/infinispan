@@ -70,14 +70,6 @@ class DirectoryLuceneV3 extends Directory implements DirectoryExtensions {
    // indexName is used to be able to store multiple named indexes in the same caches
    private final String indexName;
 
-   /**
-    * @param metadataCache the cache to be used for all smaller metadata: prefer replication over distribution, avoid eviction
-    * @param chunksCache the cache to use for the space consuming segments: prefer distribution, enable eviction if needed
-    * @param indexName the unique index name, useful to store multiple indexes in the same caches
-    * @param lf the LockFactory to be used by IndexWriters. @see org.infinispan.lucene.locking
-    * @param chunkSize segments are fragmented in chunkSize bytes; larger values are more efficient for searching but less for distribution and network replication
-    * @param readLocker @see org.infinispan.lucene.readlocks for some implementations; you might be able to provide more efficient implementations by controlling the IndexReader's lifecycle.
-    */
    DirectoryLuceneV3(Cache<?, ?> metadataCache, Cache<?, ?> chunksCache, String indexName, LockFactory lf, int chunkSize, SegmentReadLocker readLocker) {
       this.impl = new DirectoryImplementor(metadataCache, chunksCache, indexName, chunkSize, readLocker);
       this.indexName = indexName;

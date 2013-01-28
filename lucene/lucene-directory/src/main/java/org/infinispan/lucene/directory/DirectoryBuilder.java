@@ -22,15 +22,28 @@
  */
 package org.infinispan.lucene.directory;
 
+import org.apache.lucene.store.Directory;
 import org.infinispan.Cache;
 import org.infinispan.lucene.impl.DirectoryBuilderImpl;
 
+/**
+ * Builder class to create instances of the {@link Directory} implementation which stored data
+ * in the data grid.
+ */
 public final class DirectoryBuilder {
 
     private DirectoryBuilder() {
         //not to be created
     }
 
+    /**
+     * @param metadataCache the cache to be used for all smaller metadata: prefer replication over distribution, avoid eviction
+     * @param chunksCache the cache to use for the space consuming segments: prefer distribution, enable eviction if needed
+     * @param indexName the unique index name, useful to store multiple indexes in the same caches
+     * @param lf the LockFactory to be used by IndexWriters. @see org.infinispan.lucene.locking
+     * @param chunkSize segments are fragmented in chunkSize bytes; larger values are more efficient for searching but less for distribution and network replication
+     * @param readLocker @see org.infinispan.lucene.readlocks for some implementations; you might be able to provide more efficient implementations by controlling the IndexReader's lifecycle.
+     */
     public static BuildContext newDirectoryInstance(Cache<?, ?> metadataCache, Cache<?, ?> chunksCache, Cache<?, ?> distLocksCache, String indexName) {
         return new DirectoryBuilderImpl(metadataCache, chunksCache, distLocksCache, indexName);
     }
