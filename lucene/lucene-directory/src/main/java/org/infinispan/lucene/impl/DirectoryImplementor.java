@@ -37,7 +37,6 @@ import org.infinispan.context.Flag;
 import org.infinispan.lucene.ChunkCacheKey;
 import org.infinispan.lucene.FileCacheKey;
 import org.infinispan.lucene.FileMetadata;
-import org.infinispan.lucene.SingleChunkIndexInput;
 import org.infinispan.lucene.locking.BaseLockFactory;
 import org.infinispan.lucene.readlocks.DistributedSegmentReadLocker;
 import org.infinispan.lucene.readlocks.SegmentReadLocker;
@@ -170,7 +169,7 @@ final class DirectoryImplementor {
        return new InfinispanIndexOutput(metadataCache, chunksCache, key, chunkSize, fileOps);
     }
 
-    IndexInput openInput(final String name) throws IOException {
+    IndexInputContext openInput(final String name) throws IOException {
        final FileCacheKey fileKey = new FileCacheKey(indexName, name);
        FileMetadata fileMetadata = (FileMetadata) metadataCache.get(fileKey);
        if (fileMetadata == null) {
@@ -178,7 +177,7 @@ final class DirectoryImplementor {
        }
        else if (fileMetadata.getSize() <= fileMetadata.getBufferSize()) {
           //files smaller than chunkSize don't need a readLock
-          return new SingleChunkIndexInput(chunksCache, fileKey, fileMetadata);
+          return new IndexInputContext(chunksCache, fileKey, fileMetadata, null);
        }
        else {
           boolean locked = readLocks.acquireReadLock(name);
@@ -186,7 +185,7 @@ final class DirectoryImplementor {
              // safest reaction is to tell this file doesn't exist anymore.
              throw new FileNotFoundException("Error loading metadata for index file: " + fileKey);
           }
-          return new InfinispanIndexInput(chunksCache, fileKey, fileMetadata, readLocks);
+          return new IndexInputContext(chunksCache, fileKey, fileMetadata, readLocks);
        }
     }
 

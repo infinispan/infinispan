@@ -44,7 +44,7 @@ import org.infinispan.util.logging.LogFactory;
  * @see org.apache.lucene.store.IndexInput
  */
 @SuppressWarnings("unchecked")
-final public class InfinispanIndexInput extends IndexInput {
+abstract class InfinispanIndexInput extends IndexInput {
 
    private static final Log log = LogFactory.getLog(InfinispanIndexInput.class);
    private static final boolean trace = log.isTraceEnabled();
@@ -61,15 +61,15 @@ final public class InfinispanIndexInput extends IndexInput {
    private int bufferPosition;
    private int currentLoadedChunk = -1;
 
-   private boolean isClone;
+   protected boolean isClone;
 
-   public InfinispanIndexInput(final AdvancedCache<?, ?> chunksCache, final FileCacheKey fileKey, final FileMetadata fileMetadata, final SegmentReadLocker readLocks) {
-      super(fileKey.getFileName());
-      this.chunksCache = (Cache<ChunkCacheKey, Object>) chunksCache;
-      this.fileKey = fileKey;
-      this.chunkSize = fileMetadata.getBufferSize();
-      this.fileLength = fileMetadata.getSize();
-      this.readLocks = readLocks;
+   public InfinispanIndexInput(final IndexInputContext ctx) {
+      super(ctx.fileKey.getFileName());
+      this.chunksCache = (Cache<ChunkCacheKey, Object>) ctx.chunksCache;
+      this.fileKey = ctx.fileKey;
+      this.chunkSize = ctx.fileMetadata.getBufferSize();
+      this.fileLength = ctx.fileMetadata.getSize();
+      this.readLocks = ctx.readLocks;
       this.filename = fileKey.getFileName();
       if (trace) {
          log.tracef("Opened new IndexInput for file:%s in index: %s", filename, fileKey.getIndexName());
@@ -163,15 +163,5 @@ final public class InfinispanIndexInput extends IndexInput {
    public long length() {
       return this.fileLength;
    }
-   
-   @Override
-   public IndexInput clone() {
-      InfinispanIndexInput clone = (InfinispanIndexInput)super.clone();
-      // reference counting doesn't work properly: need to use isClone
-      // as in other Directory implementations. Apparently not all clones
-      // are cleaned up, but the original is (especially .tis files)
-      clone.isClone = true; 
-      return clone;
-    }
 
 }
