@@ -29,7 +29,7 @@ import java.util.concurrent.ConcurrentMap;
 
 /**
  * LocalLockMergingSegmentReadLocker decorates the {@link DistributedSegmentReadLocker} to minimize
- * remote operations in case several IndexReaders are opened on the same {@link InfinispanDirectory}.
+ * remote operations in case several IndexReaders are opened on the same Infinispan based {@link Directory}.
  * It keeps track of locks which where already acquired for a specific filename from another request on
  * the same node and merges the request so that the different clients share the same remote lock.
  * 

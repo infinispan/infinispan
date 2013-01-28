@@ -46,7 +46,7 @@ public final class LuceneCacheLoaderConfig implements CacheLoaderConfig {
    /**
     * Path to the root directory containing all indexes. Indexes are loaded from the immediate subdirectories
     * of specified path, and each such subdirectory name will be the index name that must match the name
-    * parameter of a {@link InfinispanDirectory} constructor.
+    * parameter of a {@link Directory} constructor.
     * 
     * @param location path to the root directory of all indexes
     * @return this for method chaining

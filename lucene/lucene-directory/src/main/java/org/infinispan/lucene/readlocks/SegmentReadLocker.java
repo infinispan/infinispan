@@ -47,7 +47,7 @@ public interface SegmentReadLocker {
     * If it's invoked on a file without pending locks the file is deleted.
     * 
     * @param fileName of the file to release or delete
-    * @see InfinispanDirectory#deleteFile(String)
+    * @see Directory#deleteFile(String)
     */
    void deleteOrReleaseReadLock(String fileName);
 
@@ -58,7 +58,7 @@ public interface SegmentReadLocker {
     * @param filename
     * @return true if the lock was acquired, false if the implementation
     * detects the file does not exist, or that it's being deleted by some other thread.
-    * @see InfinispanDirectory#openInput(String)
+    * @see Directory#openInput(String)
     */
    boolean acquireReadLock(String filename);
 

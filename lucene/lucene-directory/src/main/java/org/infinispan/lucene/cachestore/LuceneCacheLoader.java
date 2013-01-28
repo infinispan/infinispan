@@ -40,7 +40,7 @@ import org.infinispan.util.logging.LogFactory;
 
 /**
  * A CacheLoader meant to load Lucene index(es) from filesystem based Lucene index(es).
- * This is exclusively suitable for keys being used by the {@link InfinispanDirectory}, any other key
+ * This is exclusively suitable for keys being used by the {@link Directory}, any other key
  * will be ignored.
  * 
  * The InfinispanDirectory requires indexes to be named; this CacheLoader needs to be configured
