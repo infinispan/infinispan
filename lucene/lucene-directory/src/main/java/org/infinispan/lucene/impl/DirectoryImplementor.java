@@ -75,7 +75,7 @@ final class DirectoryImplementor {
 
     String[] list() {
        final Set<String> filesList = fileOps.getFileList();
-       final String[] array = filesList.toArray(new String[filesList.size()]);
+       final String[] array = filesList.toArray(new String[0]);
        return array;
     }
 
