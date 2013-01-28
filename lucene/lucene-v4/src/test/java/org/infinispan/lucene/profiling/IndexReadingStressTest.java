@@ -46,7 +46,7 @@ import org.apache.lucene.store.LockObtainFailedException;
 import org.apache.lucene.store.RAMDirectory;
 import org.infinispan.Cache;
 import org.infinispan.lucene.CacheTestSupport;
-import org.infinispan.lucene.impl.InfinispanDirectory;
+import org.infinispan.lucene.directory.DirectoryBuilder;
 import org.infinispan.lucene.testutils.ClusteredCacheFactory;
 import org.infinispan.lucene.testutils.LuceneSettings;
 import org.infinispan.manager.CacheContainer;
@@ -66,7 +66,6 @@ import org.testng.annotations.Test;
  * @author Sanne Grinovero
  * @since 4.0
  */
-@SuppressWarnings("unchecked")
 @Test(groups = "profiling", testName = "lucene.profiling.IndexReadingStressTest", sequential = true)
 public class IndexReadingStressTest {
 
@@ -103,7 +102,7 @@ public class IndexReadingStressTest {
    public void profileTestInfinispanDirectory() throws InterruptedException, IOException {
       // these defaults are not for performance settings but meant for problem detection:
       Cache cache = cacheFactory.createClusteredCache();
-      InfinispanDirectory dir = new InfinispanDirectory(cache, "iname");
+      Directory dir = DirectoryBuilder.newDirectoryInstance(cache, cache, cache, "iname").create();
       testDirectory(dir, "InfinispanClustered");
    }
 
@@ -112,7 +111,7 @@ public class IndexReadingStressTest {
       CacheContainer cacheManager = CacheTestSupport.createLocalCacheManager();
       try {
          Cache cache = cacheManager.getCache();
-         InfinispanDirectory dir = new InfinispanDirectory(cache, "iname");
+         Directory dir = DirectoryBuilder.newDirectoryInstance(cache, cache, cache, "iname").create();
          testDirectory(dir, "InfinispanLocal");
       } finally {
          cacheManager.stop();

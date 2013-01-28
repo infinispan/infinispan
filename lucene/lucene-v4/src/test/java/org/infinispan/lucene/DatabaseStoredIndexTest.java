@@ -35,7 +35,7 @@ import org.infinispan.config.Configuration;
 import org.infinispan.loaders.jdbc.TableManipulation;
 import org.infinispan.loaders.jdbc.connectionfactory.ConnectionFactoryConfig;
 import org.infinispan.loaders.jdbc.stringbased.JdbcStringBasedCacheStoreConfig;
-import org.infinispan.lucene.impl.InfinispanDirectory;
+import org.infinispan.lucene.directory.DirectoryBuilder;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.test.SingleCacheManagerTest;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
@@ -86,7 +86,7 @@ public class DatabaseStoredIndexTest extends SingleCacheManagerTest {
    @Test
    public void testIndexUsage() throws IOException {
       cache = cacheManager.getCache();
-      Directory dir = new InfinispanDirectory(cache, INDEX_NAME);
+      Directory dir = DirectoryBuilder.newDirectoryInstance(cache, cache, cache, INDEX_NAME).create();
       writeTextToIndex(dir, 0, "hello database");
       assertTextIsFoundInIds(dir, "hello", 0);
       writeTextToIndex(dir, 1, "you have to store my index segments");
@@ -128,7 +128,7 @@ public class DatabaseStoredIndexTest extends SingleCacheManagerTest {
       }
       Assert.assertFalse(failed);
       Assert.assertEquals(cacheCopy.keySet().size(), cache.keySet().size(), "have a different number of keys");
-      Directory dir = new InfinispanDirectory(cache, INDEX_NAME);
+      Directory dir = DirectoryBuilder.newDirectoryInstance(cache, cache, cache, INDEX_NAME).create();
       assertTextIsFoundInIds(dir, "index", 1);
       dir.close();
    }
