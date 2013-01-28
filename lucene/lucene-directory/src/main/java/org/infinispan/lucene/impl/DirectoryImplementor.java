@@ -28,24 +28,20 @@ import java.io.IOException;
 import java.util.Collection;
 import java.util.Set;
 
-import org.apache.lucene.store.IndexInput;
 import org.apache.lucene.store.IndexOutput;
-import org.apache.lucene.store.LockFactory;
 import org.infinispan.AdvancedCache;
 import org.infinispan.Cache;
 import org.infinispan.context.Flag;
 import org.infinispan.lucene.ChunkCacheKey;
 import org.infinispan.lucene.FileCacheKey;
 import org.infinispan.lucene.FileMetadata;
-import org.infinispan.lucene.locking.BaseLockFactory;
-import org.infinispan.lucene.readlocks.DistributedSegmentReadLocker;
 import org.infinispan.lucene.readlocks.SegmentReadLocker;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
 
 /**
- * Common code for different Directory implementations. Extracted to accomodate support
+ * Common code for different Directory implementations. Extracted to accommodate support
  * for both Apache Lucene v.3.x and v.4
  *
  * @author Sanne Grinovero

@@ -25,11 +25,9 @@ package org.infinispan.lucene.impl;
 import java.io.IOException;
 
 import org.apache.lucene.store.IndexInput;
-import org.infinispan.AdvancedCache;
 import org.infinispan.Cache;
 import org.infinispan.lucene.ChunkCacheKey;
 import org.infinispan.lucene.FileCacheKey;
-import org.infinispan.lucene.FileMetadata;
 import org.infinispan.lucene.readlocks.SegmentReadLocker;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
