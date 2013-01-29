@@ -1,16 +1,5 @@
 package org.infinispan.distexec;
 
-import java.io.Serializable;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Set;
-import java.util.concurrent.Callable;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.Future;
-import java.util.concurrent.RejectedExecutionException;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.TimeoutException;
-
 import org.infinispan.Cache;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
@@ -18,6 +7,21 @@ import org.infinispan.remoting.transport.Address;
 import org.infinispan.test.MultipleCacheManagersTest;
 import org.testng.annotations.AfterMethod;
 import org.testng.annotations.Test;
+
+import java.io.Serializable;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.UUID;
+import java.util.concurrent.Callable;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.Future;
+import java.util.concurrent.RejectedExecutionException;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
+import java.util.concurrent.atomic.AtomicInteger;
 
 /**
  * Test for verifying that the DistributedExecutors also work on the Local Cache.
@@ -28,7 +32,8 @@ import org.testng.annotations.Test;
 public class LocalDistributedExecutorTest extends MultipleCacheManagersTest {
    
    private DistributedExecutorService cleanupService;
-   
+   private static final Map<String, AtomicInteger> counterMap = new ConcurrentHashMap<String, AtomicInteger>();
+
    public LocalDistributedExecutorTest() {
       cleanup = CleanupPhase.AFTER_METHOD;
    }
@@ -129,14 +134,23 @@ public class LocalDistributedExecutorTest extends MultipleCacheManagersTest {
    }
 
    public void testRunnableExecution() throws InterruptedException {
-      DistributedExecutorService des = createDES(getCache());
-      BoringRunnable runnable = new BoringRunnable();
+      final String uuid = UUID.randomUUID().toString();
 
-      des.execute(runnable);
+      try {
+         DistributedExecutorService des = createDES(getCache());
+         BoringRunnable runnable = new BoringRunnable(uuid);
 
-      Thread.sleep(100);
+         des.execute(runnable);
 
-      assert runnable.isExecuted();
+         eventually(new Condition() {
+            @Override
+            public boolean isSatisfied() throws Exception {
+               return counterMap.get(uuid) != null && counterMap.get(uuid).get() >= 1;
+            }
+         });
+      } finally {
+         counterMap.remove(uuid);
+      }
    }
 
    @Test(expectedExceptions = IllegalArgumentException.class)
@@ -606,21 +620,27 @@ public class LocalDistributedExecutorTest extends MultipleCacheManagersTest {
 
       /** The serialVersionUID */
       private static final long serialVersionUID = 6898519516955822402L;
-      private static boolean isExecuted = false;
+      private String uuid;
 
-      //assuring that isExecuted is set to false.
       public BoringRunnable() {
-         this.isExecuted = false;
+      }
+
+      public BoringRunnable(final String uuid) {
+         this.uuid = uuid;
       }
 
       @Override
       public void run() {
          System.out.println("I am a boring runnable!" );
-         isExecuted = true;
-      }
 
-      public static boolean isExecuted() {
-         return isExecuted;
+         if(uuid != null) {
+            AtomicInteger counter = counterMap.get(uuid);
+            if(counter == null) {
+               counter = new AtomicInteger();
+               counterMap.put(uuid, counter);
+            }
+            counter.incrementAndGet();
+         }
       }
    }
 }
