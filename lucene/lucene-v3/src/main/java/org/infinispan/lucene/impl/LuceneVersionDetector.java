@@ -27,6 +27,10 @@ import org.infinispan.util.logging.LogFactory;
 
 
 /**
+ * Since Lucene requires extension of Directory (it's not an interface)
+ * we need to apply some tricks to provide the correct Directory implementation
+ * depending on the Lucene version detected on the classpath.
+ *
  * @since 5.2
  * @author Sanne Grinovero
  */

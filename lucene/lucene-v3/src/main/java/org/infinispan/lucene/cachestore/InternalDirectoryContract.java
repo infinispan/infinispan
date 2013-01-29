@@ -23,6 +23,9 @@ import java.io.IOException;
 import org.apache.lucene.store.IndexInput;
 
 /**
+ * This is not meant as a public API but as an internal contract
+ * to make it possible to use different versions of Lucene
+ *
  * @author Sanne Grinovero
  * @since 5.2
  */

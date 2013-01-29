@@ -30,9 +30,9 @@ package org.infinispan.lucene.impl;
  */
 public interface DirectoryExtensions {
 
-   public String getIndexName();
+   String getIndexName();
 
    //Was part of the Directory contract for Lucene 2.9.x
-   public void renameFile(final String from, final String to);
+   void renameFile(final String from, final String to);
 
 }
