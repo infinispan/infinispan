@@ -48,6 +48,7 @@
       <module>lucene</module>
       <module>lucene/lucene-directory</module>
       <module>lucene/lucene-v4</module>
+      <module>lucene/lucene-v3</module>
       <module>cachestore</module>
       <module>cachestore/jdbc</module>
       <module>cachestore/jdbm</module>
