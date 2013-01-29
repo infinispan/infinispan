@@ -23,15 +23,16 @@
 
 package org.infinispan.commons.hash;
 
-import java.io.ObjectInput;
-import java.nio.charset.Charset;
-import java.util.Set;
-
+import net.jcip.annotations.Immutable;
 import net.jcip.annotations.ThreadSafe;
 import org.infinispan.marshall.Ids;
 import org.infinispan.marshall.exts.NoStateExternalizer;
 import org.infinispan.util.ByteArrayKey;
 import org.infinispan.util.Util;
+
+import java.io.ObjectInput;
+import java.nio.charset.Charset;
+import java.util.Set;
 
 /**
  * MurmurHash3 implementation in Java, based on Austin Appleby's <a href=
@@ -48,6 +49,7 @@ import org.infinispan.util.Util;
  * @since 5.0
  */
 @ThreadSafe
+@Immutable
 public class MurmurHash3 implements Hash {
    private static final Charset UTF8 = Charset.forName("UTF-8");
 
@@ -410,8 +412,14 @@ public class MurmurHash3 implements Hash {
          return hash(o.hashCode());
    }
 
+   @Override
    public boolean equals(Object other) {
       return other != null && other.getClass() == getClass();
+   }
+
+   @Override
+   public String toString() {
+      return "MurmurHash3";
    }
 
    public static class Externalizer extends NoStateExternalizer<MurmurHash3> {
@@ -430,6 +438,4 @@ public class MurmurHash3 implements Hash {
          return Ids.MURMURHASH_3;
       }
    }
-
-
 }
