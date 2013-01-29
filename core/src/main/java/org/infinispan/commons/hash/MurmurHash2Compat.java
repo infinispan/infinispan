@@ -22,6 +22,8 @@
  */
 package org.infinispan.commons.hash;
 
+import net.jcip.annotations.Immutable;
+import net.jcip.annotations.ThreadSafe;
 import org.infinispan.marshall.Ids;
 import org.infinispan.marshall.exts.NoStateExternalizer;
 import org.infinispan.util.ByteArrayKey;
@@ -49,6 +51,8 @@ import java.util.Set;
  * @author Manik Surtani
  * @version 4.1
  */
+@ThreadSafe
+@Immutable
 public class MurmurHash2Compat implements Hash {
    private static final int M = 0x5bd1e995;
    private static final int R = 24;
@@ -114,8 +118,14 @@ public class MurmurHash2Compat implements Hash {
          return hash(o.hashCode());
    }
 
+   @Override
    public boolean equals(Object other) {
       return other != null && other.getClass() == getClass();
+   }
+
+   @Override
+   public String toString() {
+      return "MurmurHash2Compat";
    }
 
    public static class Externalizer extends NoStateExternalizer<MurmurHash2Compat> {

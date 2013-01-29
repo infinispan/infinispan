@@ -77,4 +77,9 @@ public class JBossStandaloneJTAManagerLookup implements TransactionManagerLookup
    public UserTransaction getUserTransaction() throws Exception {
       return (UserTransaction) user.invoke(null);
    }
+
+   @Override
+   public String toString() {
+      return "JBossStandaloneJTAManagerLookup";
+   }
 }

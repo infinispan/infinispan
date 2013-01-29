@@ -60,5 +60,10 @@ public class JBossTransactionManagerLookup implements TransactionManagerLookup {
       } finally {
          Util.close(initialContext);
       }
-  }
+   }
+
+   @Override
+   public String toString() {
+      return "JBossTransactionManagerLookup";
+   }
 }

@@ -49,4 +49,9 @@ public class DummyTransactionManagerLookup implements TransactionManagerLookup {
    public static void cleanup() {
       DummyTransactionManager.destroy();
    }
+
+   @Override
+   public String toString() {
+      return "DummyTransactionManagerLookup";
+   }
 }
