@@ -120,6 +120,8 @@ public class StateTransferRestartTest extends MultipleCacheManagersTest {
    }
 
    public void testStateTransferRestart() throws Throwable {
+      final int numKeys = 100;
+
       addClusterEnabledCacheManager(cfgBuilder, new TransportFlags().withFD(true));
       addClusterEnabledCacheManager(gcfgBuilder, cfgBuilder, new TransportFlags().withFD(true));
       log.info("waiting for cluster { c0, c1 }");
@@ -128,13 +130,13 @@ public class StateTransferRestartTest extends MultipleCacheManagersTest {
       log.info("putting in data");
       final Cache<Object, Object> c0 = cache(0);
       final Cache<Object, Object> c1 = cache(1);
-      for (int k = 0; k < 1000; k++) {
+      for (int k = 0; k < numKeys; k++) {
          c0.put(k, k);
       }
       waitForStateTransfer(c0, c1);
 
-      assertEquals(1000, c0.entrySet().size());
-      assertEquals(1000, c1.entrySet().size());
+      assertEquals(numKeys, c0.entrySet().size());
+      assertEquals(numKeys, c1.entrySet().size());
 
       mockTransport.callOnStateResponseCommand = new Callable<Void>() {
          @Override
@@ -179,7 +181,7 @@ public class StateTransferRestartTest extends MultipleCacheManagersTest {
       eventually(new Condition() {
          @Override
          public boolean isSatisfied() throws Exception {
-            return c0.entrySet().size() == 1000 && c2.entrySet().size() == 1000;
+            return c0.entrySet().size() == numKeys && c2.entrySet().size() == numKeys;
          }
       });
 
