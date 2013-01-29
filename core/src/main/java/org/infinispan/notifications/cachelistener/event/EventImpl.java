@@ -28,6 +28,7 @@ import org.infinispan.distribution.ch.ConsistentHash;
 import org.infinispan.marshall.MarshalledValue;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.transaction.xa.GlobalTransaction;
+import org.infinispan.util.InfinispanCollections;
 import org.infinispan.util.Util;
 
 import java.util.Collection;
@@ -51,7 +52,6 @@ public class EventImpl<K, V> implements CacheEntryActivatedEvent, CacheEntryCrea
    private boolean transactionSuccessful;
    private Type type;
    private V value;
-   private Collection<Address> membersAtStart, membersAtEnd;
    private ConsistentHash consistentHashAtStart, consistentHashAtEnd;
    private int newTopologyId;
    private Map<Object, Object> entries;
@@ -110,10 +110,6 @@ public class EventImpl<K, V> implements CacheEntryActivatedEvent, CacheEntryCrea
       this.pre = pre;
    }
 
-   public void setCache(Cache<K, V> cache) {
-      this.cache = cache;
-   }
-
    public void setKey(K key) {
       this.key = key;
    }
@@ -128,18 +124,6 @@ public class EventImpl<K, V> implements CacheEntryActivatedEvent, CacheEntryCrea
 
    public void setTransactionSuccessful(boolean transactionSuccessful) {
       this.transactionSuccessful = transactionSuccessful;
-   }
-
-   public void setType(Type type) {
-      this.type = type;
-   }
-
-   public void setMembersAtStart(Collection<Address> membersAtStart) {
-      this.membersAtStart = membersAtStart;
-   }
-
-   public void setMembersAtEnd(Collection<Address> membersAtEnd) {
-      this.membersAtEnd = membersAtEnd;
    }
 
    public void setConsistentHashAtStart(ConsistentHash consistentHashAtStart) {
@@ -187,8 +171,6 @@ public class EventImpl<K, V> implements CacheEntryActivatedEvent, CacheEntryCrea
       if (value != null ? !value.equals(event.value) : event.value != null) return false;
       if (!Util.safeEquals(consistentHashAtStart, event.consistentHashAtStart)) return false;
       if (!Util.safeEquals(consistentHashAtEnd, event.consistentHashAtEnd)) return false;
-      if (!Util.safeEquals(membersAtStart, event.membersAtStart)) return false;
-      if (!Util.safeEquals(membersAtEnd, event.membersAtEnd)) return false;
       if (newTopologyId != event.newTopologyId) return false;
 
       return true;
@@ -204,11 +186,9 @@ public class EventImpl<K, V> implements CacheEntryActivatedEvent, CacheEntryCrea
       result = 31 * result + (transactionSuccessful ? 1 : 0);
       result = 31 * result + (type != null ? type.hashCode() : 0);
       result = 31 * result + (value != null ? value.hashCode() : 0);
-      result = 31 * result + (membersAtStart != null ? membersAtStart.hashCode() : 0);
-      result = 31 * result + (membersAtEnd != null ? membersAtEnd.hashCode() : 0);
       result = 31 * result + (consistentHashAtStart != null ? consistentHashAtStart.hashCode() : 0);
       result = 31 * result + (consistentHashAtEnd != null ? consistentHashAtEnd.hashCode() : 0);
-      result = 31 * result + ((int) newTopologyId);
+      result = 31 * result + newTopologyId;
       return result;
    }
 
@@ -217,6 +197,7 @@ public class EventImpl<K, V> implements CacheEntryActivatedEvent, CacheEntryCrea
       return "EventImpl{" +
             "pre=" + pre +
             ", key=" + key +
+            ", cache=" + cache.getName() +
             ", transaction=" + transaction +
             ", originLocal=" + originLocal +
             ", transactionSuccessful=" + transactionSuccessful +
@@ -227,12 +208,12 @@ public class EventImpl<K, V> implements CacheEntryActivatedEvent, CacheEntryCrea
 
    @Override
    public Collection<Address> getMembersAtStart() {
-      return membersAtStart;
+      return consistentHashAtStart != null ? consistentHashAtStart.getMembers() : InfinispanCollections.<Address>emptySet();
    }
 
    @Override
    public Collection<Address> getMembersAtEnd() {
-      return membersAtEnd;
+      return consistentHashAtEnd != null ? consistentHashAtEnd.getMembers() : InfinispanCollections.<Address>emptySet();
    }
 
    @Override
@@ -251,6 +232,7 @@ public class EventImpl<K, V> implements CacheEntryActivatedEvent, CacheEntryCrea
    }
 
    @Override
+   @SuppressWarnings("unchecked")
    public Map<K, V> getEntries() {
       return (Map<K, V>) entries;
    }

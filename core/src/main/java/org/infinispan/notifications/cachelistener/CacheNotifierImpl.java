@@ -32,7 +32,6 @@ import org.infinispan.notifications.AbstractListenerImpl;
 import org.infinispan.notifications.ClassLoaderAwareListenable;
 import org.infinispan.notifications.cachelistener.annotation.*;
 import org.infinispan.notifications.cachelistener.event.*;
-import org.infinispan.remoting.transport.Address;
 import org.infinispan.transaction.xa.GlobalTransaction;
 import org.infinispan.util.InfinispanCollections;
 import org.infinispan.util.logging.Log;
