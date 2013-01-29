@@ -33,14 +33,13 @@
    </parent>
 
    <artifactId>infinispan-lucene-v4</artifactId>
-   <packaging>bundle</packaging>
    <name>Infinispan integration with Lucene v.4.x</name>
    <description>Support to store and encode Lucene v4 indexes in Infinispan</description>
 
    <dependencies>
       <dependency>
          <groupId>org.infinispan</groupId>
-         <artifactId>infinispan-lucene-directory</artifactId>
+         <artifactId>infinispan-lucene-v3</artifactId>
          <exclusions>
             <exclusion>
                 <groupId>org.apache.lucene</groupId>
@@ -91,6 +90,13 @@
       <plugins>
          <plugin>
             <groupId>org.apache.maven.plugins</groupId>
+            <artifactId>maven-deploy-plugin</artifactId>
+            <configuration>
+               <skip>true</skip>
+            </configuration>
+         </plugin>
+         <plugin>
+            <groupId>org.apache.maven.plugins</groupId>
             <artifactId>maven-surefire-plugin</artifactId>
             <configuration>
               <excludes>
@@ -125,17 +131,6 @@
                 </property>
               </properties>
               <argLine>-Xmx2048m -XX:MaxPermSize=256m</argLine>
-            </configuration>
-         </plugin>
-         <plugin>
-            <groupId>org.apache.felix</groupId>
-            <artifactId>maven-bundle-plugin</artifactId>
-            <configuration>
-               <instructions>
-                  <Export-Package>
-                     ${project.groupId}.lucene.*;version=${project.version};-split-package:=error
-                  </Export-Package>
-               </instructions>
             </configuration>
          </plugin>
       </plugins>
