@@ -497,6 +497,7 @@ public abstract class MultipleCacheManagersTest extends AbstractCacheTest {
       List<Cache<Object, Object>> caches = caches();
       caches.remove(cacheIndex);
       manager(cacheIndex).stop();
+      cacheManagers.remove(cacheIndex);
       TestingUtil.blockUntilViewsReceived(60000, false, caches);
       TestingUtil.waitForRehashToComplete(caches);
    }

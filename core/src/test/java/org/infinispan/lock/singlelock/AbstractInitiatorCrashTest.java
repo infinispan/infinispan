@@ -59,7 +59,6 @@ public abstract class AbstractInitiatorCrashTest extends AbstractCrashTest {
       assertLocked(cache(2), k);
 
       killMember(1);
-      cacheManagers.remove(1);
 
       eventually(new Condition() {
          @Override
@@ -89,7 +88,6 @@ public abstract class AbstractInitiatorCrashTest extends AbstractCrashTest {
       checkTxCount(2, 0, 1);
 
       killMember(1);
-      cacheManagers.remove(1);
 
       assertNotLocked(k);
       eventually(new Condition() {
