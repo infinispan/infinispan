@@ -453,7 +453,7 @@ public class QueryRegionImplTestCase extends AbstractGeneralDataRegionTestCase {
 	private void putDoesNotBlockGetTest() throws Exception {
 		Configuration cfg = createConfiguration();
 		InfinispanRegionFactory regionFactory = CacheTestUtil.startRegionFactory(
-				new StandardServiceRegistryBuilder().applySettings( cfg.getProperties() ).buildServiceRegistry(),
+				new StandardServiceRegistryBuilder().applySettings( cfg.getProperties() ).build(),
 				cfg,
 				getCacheTestSupport()
 		);
@@ -553,7 +553,7 @@ public class QueryRegionImplTestCase extends AbstractGeneralDataRegionTestCase {
 	private void getDoesNotBlockPutTest() throws Exception {
 		Configuration cfg = createConfiguration();
 		InfinispanRegionFactory regionFactory = CacheTestUtil.startRegionFactory(
-				new StandardServiceRegistryBuilder().applySettings( cfg.getProperties() ).buildServiceRegistry(),
+				new StandardServiceRegistryBuilder().applySettings( cfg.getProperties() ).build(),
 				cfg,
 				getCacheTestSupport()
 		);
