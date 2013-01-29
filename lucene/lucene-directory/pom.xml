@@ -43,6 +43,18 @@
             <artifactId>lucene-core</artifactId>
             <version>${version.lucene.v3}</version>
         </dependency>
+        <dependency>
+            <groupId>org.infinispan</groupId>
+            <artifactId>infinispan-lucene-v3</artifactId>
+            <!-- Not actually needed: we just want to make sure the reactor builds it first -->
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.infinispan</groupId>
+            <artifactId>infinispan-lucene-v4</artifactId>
+            <!-- Not actually needed: we just want to make sure the reactor builds it first -->
+            <scope>test</scope>
+        </dependency>
     </dependencies>
 
     <build>
