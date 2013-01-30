@@ -61,7 +61,7 @@ public class TcpTransportFactory implements TransportFactory {
     */
    private final Object lock = new Object();
    // The connection pool implementation is assumed to be thread-safe, so we need to synchronize just the access to this field and not the method calls
-   private GenericKeyedObjectPool connectionPool;
+   private GenericKeyedObjectPool<SocketAddress, TcpTransport> connectionPool;
    private RequestBalancingStrategy balancer;
    private Collection<SocketAddress> servers;
    private ConsistentHash consistentHash;
@@ -92,8 +92,10 @@ public class TcpTransportFactory implements TransportFactory {
             log.debugf("Tcp no delay = %b; client socket timeout = %d ms; connect timeout = %d ms",
                        tcpNoDelay, soTimeout, connectTimeout);
          }
-         PropsKeyedObjectPoolFactory poolFactory = new PropsKeyedObjectPoolFactory(
-               new TransportObjectFactory(codec, this, topologyId, pingOnStartup), cfg.getProperties());
+         PropsKeyedObjectPoolFactory<SocketAddress, TcpTransport> poolFactory =
+               new PropsKeyedObjectPoolFactory<SocketAddress, TcpTransport>(
+                     new TransportObjectFactory(codec, this, topologyId, pingOnStartup),
+                     cfg.getProperties());
          createAndPreparePool(staticConfiguredServers, poolFactory);
          balancer.setServers(servers);
          updateTransportCount();
@@ -104,8 +106,10 @@ public class TcpTransportFactory implements TransportFactory {
     * This will makes sure that, when the evictor thread kicks in the minIdle is set. We don't want to do this is the caller's thread,
     * as this is the user.
     */
-   private void createAndPreparePool(Collection<SocketAddress> staticConfiguredServers, PropsKeyedObjectPoolFactory poolFactory) {
-      connectionPool = (GenericKeyedObjectPool) poolFactory.createPool();
+   private void createAndPreparePool(Collection<SocketAddress> staticConfiguredServers,
+         PropsKeyedObjectPoolFactory<SocketAddress, TcpTransport> poolFactory) {
+      connectionPool = (GenericKeyedObjectPool<SocketAddress, TcpTransport>)
+            poolFactory.createPool();
       for (SocketAddress addr: staticConfiguredServers) {
          connectionPool.preparePool(addr, false);
       }
@@ -167,7 +171,7 @@ public class TcpTransportFactory implements TransportFactory {
    @Override
    public void releaseTransport(Transport transport) {
       // The invalidateObject()/returnObject() calls could take a long time, so we hold the lock only until we get the connection pool reference
-      KeyedObjectPool pool = getConnectionPool();
+      KeyedObjectPool<SocketAddress, TcpTransport> pool = getConnectionPool();
       TcpTransport tcpTransport = (TcpTransport) transport;
       if (!tcpTransport.isValid()) {
          try {
@@ -186,6 +190,18 @@ public class TcpTransportFactory implements TransportFactory {
          } finally {
             logConnectionInfo(tcpTransport.getServerAddress());
          }
+      }
+   }
+
+   @Override
+   public void invalidateTransport(SocketAddress serverAddress, Transport transport) {
+      KeyedObjectPool<SocketAddress, TcpTransport> pool = getConnectionPool();
+      try {
+         // Transport could be null, in which case all connections
+         // to the server address will be invalidated
+         pool.invalidateObject(serverAddress, (TcpTransport) transport);
+      } catch (Exception e) {
+         log.unableToInvalidateTransport(serverAddress);
       }
    }
 
@@ -242,20 +258,21 @@ public class TcpTransportFactory implements TransportFactory {
 
    private void logConnectionInfo(SocketAddress server) {
       if (log.isTraceEnabled()) {
-         KeyedObjectPool pool = getConnectionPool();
-         log.tracef("For server %s: active = %d; idle = %d", server, pool.getNumActive(server), pool.getNumIdle(server));
+         KeyedObjectPool<SocketAddress, TcpTransport> pool = getConnectionPool();
+         log.tracef("For server %s: active = %d; idle = %d",
+               server, pool.getNumActive(server), pool.getNumIdle(server));
       }
    }
 
    private Transport borrowTransportFromPool(SocketAddress server) {
       // The borrowObject() call could take a long time, so we hold the lock only until we get the connection pool reference
-      KeyedObjectPool pool = getConnectionPool();
+      KeyedObjectPool<SocketAddress, TcpTransport> pool = getConnectionPool();
       try {
-         return (Transport) pool.borrowObject(server);
+         return pool.borrowObject(server);
       } catch (Exception e) {
          String message = "Could not fetch transport";
          log.couldNotFetchTransport(e);
-         throw new TransportException(message, e);
+         throw new TransportException(message, e, server);
       } finally {
          logConnectionInfo(server);
       }
@@ -307,7 +324,7 @@ public class TcpTransportFactory implements TransportFactory {
       }
    }
 
-   public GenericKeyedObjectPool getConnectionPool() {
+   public GenericKeyedObjectPool<SocketAddress, TcpTransport> getConnectionPool() {
       synchronized (lock) {
          return connectionPool;
       }

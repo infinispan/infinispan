@@ -27,6 +27,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 import net.jcip.annotations.Immutable;
 
 import org.infinispan.client.hotrod.exceptions.HotRodClientException;
+import org.infinispan.client.hotrod.exceptions.InvalidResponseException;
 import org.infinispan.client.hotrod.impl.protocol.Codec;
 import org.infinispan.client.hotrod.impl.protocol.HeaderParams;
 import org.infinispan.client.hotrod.impl.protocol.HotRodConstants;
@@ -68,19 +69,19 @@ public class PingOperation extends HotRodOperation {
                log.tracef("Successfully validated transport: %s", transport);
             return PingResult.SUCCESS;
          } else {
+            String hexStatus = Integer.toHexString(respStatus);
             if (log.isTraceEnabled())
-               log.tracef("Unknown response status: %s", respStatus);
-            return PingResult.FAIL;
+               log.tracef("Unknown response status: %s", hexStatus);
+
+            throw new InvalidResponseException(
+                  "Unexpected response status: " + hexStatus);
          }
       } catch (HotRodClientException e) {
          if (e.getMessage().contains("CacheNotFoundException"))
             return PingResult.CACHE_DOES_NOT_EXIST;
-         else
-            return PingResult.FAIL;
-      } catch (Exception e) {
-         if (log.isTraceEnabled())
-            log.tracef(e, "Failed to validate transport: %s", transport);
-         return PingResult.FAIL;
+
+         // Any other situation, rethrow the exception
+         throw e;
       }
    }
 
