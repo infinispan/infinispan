@@ -24,9 +24,11 @@ package org.infinispan.remoting.transport.jgroups;
 
 import net.jcip.annotations.GuardedBy;
 import org.infinispan.CacheException;
+import org.infinispan.commands.FlagAffectedCommand;
 import org.infinispan.commands.ReplicableCommand;
 import org.infinispan.commands.remote.CacheRpcCommand;
 import org.infinispan.commands.remote.SingleRpcCommand;
+import org.infinispan.context.Flag;
 import org.infinispan.factories.GlobalComponentRegistry;
 import org.infinispan.statetransfer.StateRequestCommand;
 import org.infinispan.statetransfer.StateResponseCommand;
@@ -290,7 +292,8 @@ public class CommandAwareRpcDispatcher extends RpcDispatcher {
       // Replay capability requires responses from all members!
       /// HACK ALERT!  Used for ISPN-1789.  Enable RSVP if the command is a state transfer control command or cache topology control command.
       boolean rsvp = command instanceof StateRequestCommand || command instanceof StateResponseCommand
-            || command instanceof CacheTopologyControlCommand;
+            || command instanceof CacheTopologyControlCommand
+            || isRsvpCommand(command);
 
       Response retval;
       Buffer buf;
@@ -320,7 +323,8 @@ public class CommandAwareRpcDispatcher extends RpcDispatcher {
       if (trace) log.tracef("Replication task sending %s to addresses %s with response mode %s", command, dests, mode);
 
       /// HACK ALERT!  Used for ISPN-1789.  Enable RSVP if the command is a cache topology control command.
-      boolean rsvp = command instanceof CacheTopologyControlCommand;
+      boolean rsvp = command instanceof CacheTopologyControlCommand
+            || isRsvpCommand(command);
 
       RspList<Object> retval = null;
       Buffer buf;
@@ -390,6 +394,11 @@ public class CommandAwareRpcDispatcher extends RpcDispatcher {
       }
 
       return retval;
+   }
+
+   private static boolean isRsvpCommand(ReplicableCommand command) {
+      return command instanceof FlagAffectedCommand
+            && ((FlagAffectedCommand) command).hasFlag(Flag.GUARANTEED_DELIVERY);
    }
 
    static class SenderContainer {

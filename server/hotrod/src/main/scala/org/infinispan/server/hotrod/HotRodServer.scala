@@ -128,7 +128,10 @@ class HotRodServer extends AbstractProtocolServer("HotRod") with Log {
       cacheManager.addListener(new CrashedMemberDetectorListener(addressCache, this))
       // Map cluster address to server endpoint address
       debug("Map %s cluster address with %s server endpoint in address cache", clusterAddress, address)
-      addressCache.getAdvancedCache.withFlags(Flag.SKIP_CACHE_LOAD)
+      // Guaranteed delivery required since if data is lost, there won't be
+      // any further cache calls, so negative acknowledgment can cause issues.
+      addressCache.getAdvancedCache
+              .withFlags(Flag.SKIP_CACHE_LOAD, Flag.GUARANTEED_DELIVERY)
               .put(clusterAddress, address)
    }
 
