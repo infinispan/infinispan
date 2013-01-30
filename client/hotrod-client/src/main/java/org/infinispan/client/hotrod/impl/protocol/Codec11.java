@@ -109,7 +109,7 @@ public class Codec11 extends Codec10 {
 
    private void cacheHashCode(Map<SocketAddress, Set<Integer>> servers2Hash,
             String host, int port, int hashCode) {
-      InetSocketAddress address = new InetSocketAddress(host, port);
+      SocketAddress address = new InetSocketAddress(host, port);
       Set<Integer> hashes = servers2Hash.get(address);
       if (hashes == null) {
          hashes = new HashSet<Integer>();

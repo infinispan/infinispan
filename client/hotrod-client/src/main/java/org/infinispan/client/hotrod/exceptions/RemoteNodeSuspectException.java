@@ -30,9 +30,9 @@ package org.infinispan.client.hotrod.exceptions;
  * @author Galder Zamarreño
  * @since 4.2
  */
-public class RemoteNodeSuspecException extends HotRodClientException {
+public class RemoteNodeSuspectException extends HotRodClientException {
 
-   public RemoteNodeSuspecException(String msgFromServer, long messageId, short status) {
+   public RemoteNodeSuspectException(String msgFromServer, long messageId, short status) {
       super(msgFromServer, messageId, status);
    }
 

@@ -33,7 +33,7 @@ import java.util.concurrent.atomic.AtomicLong;
 import org.infinispan.client.hotrod.Flag;
 import org.infinispan.client.hotrod.exceptions.HotRodClientException;
 import org.infinispan.client.hotrod.exceptions.InvalidResponseException;
-import org.infinispan.client.hotrod.exceptions.RemoteNodeSuspecException;
+import org.infinispan.client.hotrod.exceptions.RemoteNodeSuspectException;
 import org.infinispan.client.hotrod.impl.transport.Transport;
 import org.infinispan.client.hotrod.logging.Log;
 import org.infinispan.client.hotrod.logging.LogFactory;
@@ -105,9 +105,17 @@ public class Codec10 implements Codec {
       localLog.tracef("Received response for message id: %d", receivedMessageId);
 
       short receivedOpCode = transport.readByte();
+      // Read both the status and new topology (if present),
+      // before deciding how to react to error situations.
+      short status = transport.readByte();
+      readNewTopologyIfPresent(transport, params);
+
+      // Now that all headers values have been read, check the error responses.
+      // This avoids situatiations where an exceptional return ends up with
+      // the socket containing data from previous request responses.
       if (receivedOpCode != params.opRespCode) {
          if (receivedOpCode == HotRodConstants.ERROR_RESPONSE) {
-            checkForErrorsInResponseStatus(transport, params, transport.readByte());
+            checkForErrorsInResponseStatus(transport, params, status);
          }
          throw new InvalidResponseException(String.format(
                "Invalid response operation. Expected %#x and received %#x",
@@ -115,10 +123,6 @@ public class Codec10 implements Codec {
       }
       localLog.tracef("Received operation code is: %#04x", receivedOpCode);
 
-      short status = transport.readByte();
-      // There's not need to check for errors in status here because if there
-      // was an error, the server would have replied with error response op code.
-      readNewTopologyIfPresent(transport, params);
       return status;
    }
 
@@ -132,32 +136,47 @@ public class Codec10 implements Codec {
       boolean isTrace = localLog.isTraceEnabled();
       if (isTrace) localLog.tracef("Received operation status: %#x", status);
 
-      switch (status) {
-         case HotRodConstants.INVALID_MAGIC_OR_MESSAGE_ID_STATUS:
-         case HotRodConstants.REQUEST_PARSING_ERROR_STATUS:
-         case HotRodConstants.UNKNOWN_COMMAND_STATUS:
-         case HotRodConstants.SERVER_ERROR_STATUS:
-         case HotRodConstants.COMMAND_TIMEOUT_STATUS:
-         case HotRodConstants.UNKNOWN_VERSION_STATUS: {
-            readNewTopologyIfPresent(transport, params);
-            String msgFromServer = transport.readString();
-            if (status == HotRodConstants.COMMAND_TIMEOUT_STATUS && isTrace) {
-               localLog.tracef("Server-side timeout performing operation: %s", msgFromServer);
-            } if (msgFromServer.contains("SuspectException")
-                  || msgFromServer.contains("SuspectedException")) {
-               // Handle both Infinispan's and JGroups' suspicions
-               if (isTrace)
-                  localLog.tracef("A remote node was suspected while executing messageId=%d. " +
-                     "Check if retry possible. Message from server: %s", params.messageId, msgFromServer);
-               // TODO: This will be better handled with its own status id in version 2 of protocol
-               throw new RemoteNodeSuspecException(msgFromServer, params.messageId, status);
-            } else {
-               localLog.errorFromServer(msgFromServer);
+      try {
+         switch (status) {
+            case HotRodConstants.INVALID_MAGIC_OR_MESSAGE_ID_STATUS:
+            case HotRodConstants.REQUEST_PARSING_ERROR_STATUS:
+            case HotRodConstants.UNKNOWN_COMMAND_STATUS:
+            case HotRodConstants.SERVER_ERROR_STATUS:
+            case HotRodConstants.COMMAND_TIMEOUT_STATUS:
+            case HotRodConstants.UNKNOWN_VERSION_STATUS: {
+               // If error, the body of the message just contains a message
+               String msgFromServer = transport.readString();
+               if (status == HotRodConstants.COMMAND_TIMEOUT_STATUS && isTrace) {
+                  localLog.tracef("Server-side timeout performing operation: %s", msgFromServer);
+               } if (msgFromServer.contains("SuspectException")
+                     || msgFromServer.contains("SuspectedException")) {
+                  // Handle both Infinispan's and JGroups' suspicions
+                  if (isTrace)
+                     localLog.tracef("A remote node was suspected while executing messageId=%d. " +
+                        "Check if retry possible. Message from server: %s", params.messageId, msgFromServer);
+                  // TODO: This will be better handled with its own status id in version 2 of protocol
+                  throw new RemoteNodeSuspectException(msgFromServer, params.messageId, status);
+               } else {
+                  localLog.errorFromServer(msgFromServer);
+               }
+               throw new HotRodClientException(msgFromServer, params.messageId, status);
             }
-            throw new HotRodClientException(msgFromServer, params.messageId, status);
+            default: {
+               throw new IllegalStateException(String.format("Unknown status: %#04x", status));
+            }
          }
-         default: {
-            throw new IllegalStateException(String.format("Unknown status: %#04x", status));
+      } finally {
+         // Errors related to protocol parsing are odd, and they can sometimes
+         // be the consequence of previous errors, so whenever these errors
+         // occur, invalidate the underlying transport instance so that a
+         // brand new connection is established next time around.
+         switch (status) {
+            case HotRodConstants.INVALID_MAGIC_OR_MESSAGE_ID_STATUS:
+            case HotRodConstants.REQUEST_PARSING_ERROR_STATUS:
+            case HotRodConstants.UNKNOWN_COMMAND_STATUS:
+            case HotRodConstants.UNKNOWN_VERSION_STATUS: {
+               transport.invalidate();
+            }
          }
       }
    }
@@ -211,7 +230,7 @@ public class Codec10 implements Codec {
          int port = transport.readUnsignedShort();
          int hashCode = transport.read4ByteInt();
          localLog.tracef("Server read: %s:%d - hash code is %d", host, port, hashCode);
-         InetSocketAddress address = new InetSocketAddress(host, port);
+         SocketAddress address = new InetSocketAddress(host, port);
          Set<Integer> hashes = servers2Hash.get(address);
          if (hashes == null) {
             hashes = new HashSet<Integer>();

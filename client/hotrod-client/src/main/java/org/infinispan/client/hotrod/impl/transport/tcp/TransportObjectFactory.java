@@ -22,7 +22,7 @@
  */
 package org.infinispan.client.hotrod.impl.transport.tcp;
 
-import java.net.InetSocketAddress;
+import java.net.SocketAddress;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import org.apache.commons.pool.BaseKeyedPoolableObjectFactory;
@@ -35,7 +35,8 @@ import org.infinispan.client.hotrod.logging.LogFactory;
  * @author Mircea.Markus@jboss.com
  * @since 4.1
  */
-public class TransportObjectFactory extends BaseKeyedPoolableObjectFactory {
+public class TransportObjectFactory
+      extends BaseKeyedPoolableObjectFactory<SocketAddress, TcpTransport> {
 
    private static final Log log = LogFactory.getLog(TransportObjectFactory.class);
    private final TcpTransportFactory tcpTransportFactory;
@@ -52,20 +53,18 @@ public class TransportObjectFactory extends BaseKeyedPoolableObjectFactory {
    }
 
    @Override
-   public Object makeObject(Object key) throws Exception {
-      InetSocketAddress serverAddress = (InetSocketAddress) key;
-      TcpTransport tcpTransport = new TcpTransport(serverAddress, tcpTransportFactory);
+   public TcpTransport makeObject(SocketAddress address) throws Exception {
+      TcpTransport tcpTransport = new TcpTransport(address, tcpTransportFactory);
       if (log.isTraceEnabled()) {
          log.tracef("Created tcp transport: %s", tcpTransport);
       }
       if (pingOnStartup && !firstPingExecuted) {
          log.trace("Executing first ping!");
          firstPingExecuted = true;
-         try {
-            ping(tcpTransport, topologyId);
-         } catch (Exception e) {
-            log.tracef("Ignoring ping request failure during ping on startup: %s", e.getMessage());
-         }
+
+         // Don't ignore exceptions from ping() command, since
+         // they indicate that the transport instance is invalid.
+         ping(tcpTransport, topologyId);
       }
       return tcpTransport;
    }
@@ -79,36 +78,35 @@ public class TransportObjectFactory extends BaseKeyedPoolableObjectFactory {
     * This will be called by the test thread when testWhileIdle==true.
     */
    @Override
-   public boolean validateObject(Object key, Object obj) {
-      TcpTransport transport = (TcpTransport) obj;
+   public boolean validateObject(SocketAddress address, TcpTransport transport) {
       if (log.isTraceEnabled()) {
-         log.tracef("About to validate(ping) connection to server %s. TcpTransport is %s", key, transport);
+         log.tracef("About to validate(ping) connection to server %s. TcpTransport is %s",
+               address, transport);
       }
       return ping(transport, topologyId) == PingOperation.PingResult.SUCCESS;
    }
 
    @Override
-   public void destroyObject(Object key, Object obj) throws Exception {
+   public void destroyObject(SocketAddress address, TcpTransport transport) throws Exception {
       if (log.isTraceEnabled()) {
-         log.tracef("About to destroy tcp transport: %s", obj);
+         log.tracef("About to destroy tcp transport: %s", transport);
       }
-      TcpTransport transport = (TcpTransport) obj;
       transport.destroy();
    }
 
    @Override
-   public void activateObject(Object key, Object obj) throws Exception {
-      super.activateObject(key, obj);
+   public void activateObject(SocketAddress address, TcpTransport transport) throws Exception {
+      super.activateObject(address, transport);
       if (log.isTraceEnabled()) {
-         log.tracef("Fetching from pool: %s", obj);
+         log.tracef("Fetching from pool: %s", transport);
       }
    }
 
    @Override
-   public void passivateObject(Object key, Object obj) throws Exception {
-      super.passivateObject(key, obj);
+   public void passivateObject(SocketAddress address, TcpTransport transport) throws Exception {
+      super.passivateObject(address, transport);
       if (log.isTraceEnabled()) {
-         log.tracef("Returning to pool: %s", obj);
+         log.tracef("Returning to pool: %s", transport);
       }
    }
 }

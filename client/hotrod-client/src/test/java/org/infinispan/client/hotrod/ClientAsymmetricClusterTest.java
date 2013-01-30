@@ -55,7 +55,7 @@ public class ClientAsymmetricClusterTest extends MultiHotRodServersTest {
 
    @Test(expectedExceptions = HotRodClientException.class,
          expectedExceptionsMessageRegExp = ".*CacheNotFoundException.*")
-   public void test000() {
+   public void testAsymmetricCluster() {
       RemoteCacheManager client0 = client(0);
       RemoteCache<Object, Object> cache0 = client0.getCache(CACHE_NAME);
       cache0.put(1, "v1");
