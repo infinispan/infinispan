@@ -157,7 +157,12 @@ abstract class AbstractEncoder1x extends AbstractVersionedEncoder with Constants
                // after a node leaves (and a distributed cache won't be able to update the clients'
                // topology to the balanced consistent hash).
                val cache = server.getCacheInstance(r.cacheName, addressCache.getCacheManager, false)
-               val currentTopologyId = cache.getAdvancedCache.getRpcManager.getTopologyId
+               val rpcManager = cache.getAdvancedCache.getRpcManager
+               // Only send a topology update if the cache is clustered
+               val currentTopologyId = rpcManager match {
+                  case null => DEFAULT_TOPOLOGY_ID
+                  case _ => rpcManager.getTopologyId
+               }
                if (currentTopologyId >= DEFAULT_TOPOLOGY_ID && r.topologyId < currentTopologyId)
                   generateTopologyResponse(r, addressCache, server, currentTopologyId)
                else null
