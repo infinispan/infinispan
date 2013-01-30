@@ -80,13 +80,16 @@ public class ClientSocketReadTimeoutTest extends SingleCacheManagerTest {
       config.put("infinispan.client.hotrod.server_list", "127.0.0.1:" + hotrodServer.getPort());
       config.put("infinispan.client.hotrod.socket_timeout", "5000");
       config.put("infinispan.client.hotrod.connect_timeout", "5000");
+      config.put("maxActive", 2);
       return new RemoteCacheManager(config);
    }
 
-   @AfterClass(alwaysRun = true)
-   public void destroyRemoteCacheFactory() {
+   @Override
+   protected void teardown() {
+      latch.countDown();
       killRemoteCacheManager(remoteCacheManager);
       killServers(hotrodServer);
+      super.teardown();
    }
 
    @Test(expectedExceptions = SocketTimeoutException.class)

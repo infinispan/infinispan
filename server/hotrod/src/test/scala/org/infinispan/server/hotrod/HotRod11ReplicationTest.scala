@@ -35,7 +35,7 @@ import org.infinispan.server.hotrod.Constants._
  * @author Galder Zamarreño
  * @since 5.1
  */
-@Test(groups = Array("functional"), testName = "server.hotrod.HotRod11DReplicationTest")
+@Test(groups = Array("functional"), testName = "server.hotrod.HotRod11ReplicationTest")
 class HotRod11ReplicationTest extends HotRodMultiNodeTest {
 
    override protected def cacheName = "distributedVersion11"
