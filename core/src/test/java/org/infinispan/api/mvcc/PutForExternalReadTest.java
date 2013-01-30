@@ -28,15 +28,13 @@ import static org.infinispan.test.TestingUtil.v;
 import static org.mockito.Matchers.anyBoolean;
 import static org.mockito.Matchers.anyLong;
 import static org.mockito.Matchers.anyObject;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.when;
+import static org.mockito.Mockito.*;
 import static org.testng.AssertJUnit.assertEquals;
 import static org.testng.AssertJUnit.assertFalse;
 import static org.testng.AssertJUnit.assertNull;
 import static org.testng.AssertJUnit.fail;
 
 import java.lang.reflect.Method;
-import java.util.ArrayList;
 import java.util.List;
 
 import javax.transaction.Status;
@@ -46,7 +44,8 @@ import javax.transaction.TransactionManager;
 import org.infinispan.Cache;
 import org.infinispan.commands.remote.CacheRpcCommand;
 import org.infinispan.commands.write.PutKeyValueCommand;
-import org.infinispan.config.Configuration;
+import org.infinispan.configuration.cache.CacheMode;
+import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.remoting.rpc.ResponseFilter;
 import org.infinispan.remoting.rpc.ResponseMode;
 import org.infinispan.remoting.rpc.RpcManager;
@@ -67,13 +66,13 @@ public class PutForExternalReadTest extends MultipleCacheManagersTest {
 
    @Override
    protected void createCacheManagers() throws Throwable {
-      Configuration c = getDefaultClusteredConfig(Configuration.CacheMode.REPL_SYNC, true);
+      ConfigurationBuilder c = getDefaultClusteredCacheConfig(CacheMode.REPL_SYNC, true);
       createClusteredCaches(2, "replSync", c);
    }
 
    public void testNoOpWhenKeyPresent() {
-      final Cache cache1 = cache(0, "replSync");
-      final Cache cache2 = cache(1, "replSync");
+      final Cache<String, String> cache1 = cache(0, "replSync");
+      final Cache<String, String> cache2 = cache(1, "replSync");
       cache1.putForExternalRead(key, value);
 
       eventually(new Condition() {
@@ -120,8 +119,8 @@ public class PutForExternalReadTest extends MultipleCacheManagersTest {
    }
 
    public void testTxSuspension() throws Exception {
-      final Cache cache1 = cache(0, "replSync");
-      final Cache cache2 = cache(1, "replSync");
+      final Cache<String, String> cache1 = cache(0, "replSync");
+      final Cache<String, String> cache2 = cache(1, "replSync");
 
       cache1.put(key + "0", value);
 
@@ -156,60 +155,43 @@ public class PutForExternalReadTest extends MultipleCacheManagersTest {
       });
    }
 
-
    public void testExceptionSuppression() throws Exception {
-      Cache cache1 = cache(0, "replSync");
-      Cache cache2 = cache(1, "replSync");
-      Transport mockTransport = mock(Transport.class);
-      RpcManagerImpl rpcManager = (RpcManagerImpl) TestingUtil.extractComponent(cache1, RpcManager.class);
+      Cache<String, String> cache1 = cache(0, "replSync");
+      Cache<String, String> cache2 = cache(1, "replSync");
+
       Transport originalTransport = TestingUtil.extractComponent(cache1, Transport.class);
+      Transport mockTransport = spy(originalTransport);
+      doThrow(new RuntimeException("Barf!")).when(mockTransport).invokeRemotely(anyAddresses(),
+            (CacheRpcCommand) anyObject(), anyResponseMode(), anyLong(), anyBoolean(), (ResponseFilter) anyObject());
+
+      RpcManagerImpl rpcManager = (RpcManagerImpl) TestingUtil.extractComponent(cache1, RpcManager.class);
+      rpcManager.setTransport(mockTransport);
+
       try {
-
-         Address mockAddress1 = mock(Address.class);
-         Address mockAddress2 = mock(Address.class);
-
-         List<Address> memberList = new ArrayList<Address>(2);
-         memberList.add(mockAddress1);
-         memberList.add(mockAddress2);
-
-         rpcManager.setTransport(mockTransport);
-
-         when(mockTransport.getMembers()).thenReturn(memberList);
-
-         when(mockTransport.getViewId()).thenReturn(originalTransport.getViewId());
-
-         when(mockTransport.invokeRemotely(anyAddresses(), (CacheRpcCommand) anyObject(), anyResponseMode(),
-                                             anyLong(), anyBoolean(), (ResponseFilter) anyObject()))
-               .thenThrow(new RuntimeException("Barf!"));
-
-         try {
-            cache1.put(key, value);
-            fail("Should have barfed");
-         }
-         catch (RuntimeException re) {
-         }
-
-         // clean up any indeterminate state left over
-         try {
-            cache1.remove(key);
-            fail("Should have barfed");
-         }
-         catch (RuntimeException re) {
-         }
-
-         assertNull("Should have cleaned up", cache1.get(key));
-
-         // should not barf
-         cache1.putForExternalRead(key, value);
+         cache1.put(key, value);
+         fail("Should have barfed");
+      } catch (RuntimeException re) {
       }
-      finally {
-         if (rpcManager != null) rpcManager.setTransport(originalTransport);
+
+      // clean up any indeterminate state left over
+      try {
+         cache1.remove(key);
+         fail("Should have barfed");
+      } catch (RuntimeException re) {
       }
+
+      assertNull("Should have cleaned up", cache1.get(key));
+      assertNull("Should have cleaned up", cache1.getAdvancedCache().getDataContainer().get(key));
+      assertNull("Should have cleaned up", cache2.get(key));
+      assertNull("Should have cleaned up", cache2.getAdvancedCache().getDataContainer().get(key));
+
+      // should not barf
+      cache1.putForExternalRead(key, value);
    }
 
    public void testBasicPropagation() throws Exception {
-      Cache cache1 = cache(0, "replSync");
-      Cache cache2 = cache(1, "replSync");
+      Cache<String, String> cache1 = cache(0, "replSync");
+      Cache<String, String> cache2 = cache(1, "replSync");
 
       assert !cache1.containsKey(key);
       assert !cache2.containsKey(key);
@@ -252,8 +234,8 @@ public class PutForExternalReadTest extends MultipleCacheManagersTest {
     * Tests that suspended transactions do not leak.  See JBCACHE-1246.
     */
    public void testMemLeakOnSuspendedTransactions() throws Exception {
-      Cache cache1 = cache(0, "replSync");
-      Cache cache2 = cache(1, "replSync");
+      Cache<String, String> cache1 = cache(0, "replSync");
+      Cache<String, String> cache2 = cache(1, "replSync");
       TransactionManager tm1 = TestingUtil.getTransactionManager(cache1);
       TransactionManager tm2 = TestingUtil.getTransactionManager(cache2);
       ReplListener replListener2 = replListener(cache2);
@@ -324,7 +306,7 @@ public class PutForExternalReadTest extends MultipleCacheManagersTest {
    }
 
    public void testMultipleIdenticalPutForExternalReadCalls() {
-      Cache cache1 = cache(0, "replSync");
+      Cache<String, String> cache1 = cache(0, "replSync");
       cache1.putForExternalRead(key, value);
       cache1.putForExternalRead(key, value2);
       assertEquals(value, cache1.get(key));
@@ -336,8 +318,8 @@ public class PutForExternalReadTest extends MultipleCacheManagersTest {
     * @throws Exception
     */
    private void cacheModeLocalTest(boolean transactional, Method m) throws Exception {
-      Cache<Object, Object> cache1 = cache(0, "replSync");
-      Cache<Object, Object> cache2 = cache(1, "replSync");
+      Cache<String, String> cache1 = cache(0, "replSync");
+      Cache<String, String> cache2 = cache(1, "replSync");
       TransactionManager tm1 = TestingUtil.getTransactionManager(cache1);
       if (transactional)
          tm1.begin();
