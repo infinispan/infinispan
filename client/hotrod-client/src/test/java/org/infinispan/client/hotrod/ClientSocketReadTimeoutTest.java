@@ -81,6 +81,9 @@ public class ClientSocketReadTimeoutTest extends SingleCacheManagerTest {
       config.put("infinispan.client.hotrod.socket_timeout", "5000");
       config.put("infinispan.client.hotrod.connect_timeout", "5000");
       config.put("maxActive", 2);
+      // Set ping on startup false, so that the hang can happen
+      // when the put comes, and not when the remote cache manager is built.
+      config.put("infinispan.client.hotrod.ping_on_startup", "false");
       return new RemoteCacheManager(config);
    }
 

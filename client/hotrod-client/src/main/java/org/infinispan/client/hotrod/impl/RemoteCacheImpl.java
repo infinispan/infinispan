@@ -42,8 +42,8 @@ import org.infinispan.client.hotrod.RemoteCacheManager;
 import org.infinispan.client.hotrod.ServerStatistics;
 import org.infinispan.client.hotrod.Version;
 import org.infinispan.client.hotrod.VersionedValue;
+import org.infinispan.client.hotrod.exceptions.HotRodClientException;
 import org.infinispan.client.hotrod.exceptions.RemoteCacheManagerNotStartedException;
-import org.infinispan.client.hotrod.exceptions.TransportException;
 import org.infinispan.client.hotrod.impl.async.NotifyingFutureImpl;
 import org.infinispan.client.hotrod.impl.operations.BulkGetKeysOperation;
 import org.infinispan.client.hotrod.impl.operations.BulkGetOperation;
@@ -450,7 +450,8 @@ public class RemoteCacheImpl<K, V> extends RemoteCacheSupport<K, V> {
       try {
          return marshaller.objectToByteBuffer(o, isKey ? estimateKeySize : estimateValueSize);
       } catch (IOException ioe) {
-         throw new TransportException("Unable to marshall object of type [" + o.getClass().getName() + "]", ioe);
+         throw new HotRodClientException(
+               "Unable to marshall object of type [" + o.getClass().getName() + "]", ioe);
       } catch (InterruptedException ie) {
          Thread.currentThread().interrupt();
          return null;
@@ -462,7 +463,8 @@ public class RemoteCacheImpl<K, V> extends RemoteCacheSupport<K, V> {
       try {
          return marshaller.objectFromByteBuffer(bytes);
       } catch (Exception e) {
-         throw new TransportException("Unable to unmarshall byte stream", e);
+         throw new HotRodClientException(
+               "Unable to unmarshall byte stream", e);
       }
    }
 
