@@ -26,6 +26,7 @@ import org.infinispan.client.hotrod.impl.ConfigurationProperties;
 import org.infinispan.client.hotrod.impl.consistenthash.ConsistentHashFactory;
 import org.infinispan.client.hotrod.impl.protocol.Codec;
 
+import java.net.InetSocketAddress;
 import java.net.SocketAddress;
 import java.util.Collection;
 import java.util.Map;
@@ -63,5 +64,7 @@ public interface TransportFactory {
    int getSoTimeout();
 
    int getConnectTimeout();
+
+   void invalidateTransport(SocketAddress serverAddress);
 
 }
