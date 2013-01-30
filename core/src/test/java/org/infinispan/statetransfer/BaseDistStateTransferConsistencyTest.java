@@ -251,26 +251,23 @@ public abstract class BaseDistStateTransferConsistencyTest extends MultipleCache
          ConsistentHash ch = advancedCache(0).getComponentRegistry().getStateTransferManager().getCacheTopology().getReadConsistentHash();
          // check that all values are the ones expected after state transfer
          for (int i = 0; i < numKeys; i++) {
+            // check number of owners
+            int owners = 0;
+            if (dc0.get(i) != null) {
+               owners++;
+            }
+            if (dc2.get(i) != null) {
+               owners++;
+            }
+            assertEquals("Wrong number of owners", ch.locateOwners(i).size(), owners);
+
             // check values were not overwritten with old values carried by state transfer
             assertEquals("after_st_" + i, cache(0).get(i));
             assertEquals("after_st_" + i, cache(2).get(i));
-
-            // check number of owners
-            int owners = 0;
-            if (dc0.get(i) != null) {
-               owners++;
-            }
-            if (dc2.get(i) != null) {
-               owners++;
-            }
-            assertEquals("Wrong number of owners", ch.locateOwners(i).size(), owners);
          }
       } else { // PUT_IF_ABSENT
+         ConsistentHash ch = advancedCache(0).getComponentRegistry().getStateTransferManager().getCacheTopology().getReadConsistentHash();
          for (int i = 0; i < numKeys; i++) {
-            ConsistentHash ch = advancedCache(0).getComponentRegistry().getStateTransferManager().getCacheTopology().getReadConsistentHash();
-            assertEquals("before_st_" + i, cache(0).get(i));
-            assertEquals("before_st_" + i, cache(2).get(i));
-
             // check number of owners
             int owners = 0;
             if (dc0.get(i) != null) {
@@ -280,6 +277,9 @@ public abstract class BaseDistStateTransferConsistencyTest extends MultipleCache
                owners++;
             }
             assertEquals("Wrong number of owners", ch.locateOwners(i).size(), owners);
+
+            assertEquals("before_st_" + i, cache(0).get(i));
+            assertEquals("before_st_" + i, cache(2).get(i));
          }
       }
    }
