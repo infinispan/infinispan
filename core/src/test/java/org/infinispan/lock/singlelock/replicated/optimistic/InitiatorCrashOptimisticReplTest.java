@@ -66,7 +66,6 @@ public class InitiatorCrashOptimisticReplTest extends AbstractCrashTest {
       checkTxCount(2, 0, 1);
 
       killMember(1);
-      cacheManagers.remove(1);
 
       assertNotLocked("k");
       eventually(new Condition() {
@@ -94,7 +93,6 @@ public class InitiatorCrashOptimisticReplTest extends AbstractCrashTest {
       assertNotLocked(cache(2), "k");
 
       killMember(1);
-      cacheManagers.remove(1);
 
       eventually(new Condition() {
          @Override
@@ -121,7 +119,6 @@ public class InitiatorCrashOptimisticReplTest extends AbstractCrashTest {
       assert checkTxCount(2, 0, 1);
 
       killMember(1);
-      cacheManagers.remove(1);
 
       assert caches().size() == 2;
       txControlInterceptor.prepareProgress.countDown();

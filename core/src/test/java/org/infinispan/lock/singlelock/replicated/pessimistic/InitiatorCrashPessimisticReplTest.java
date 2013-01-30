@@ -60,7 +60,6 @@ public class InitiatorCrashPessimisticReplTest extends InitiatorCrashOptimisticR
       checkTxCount(2, 0, 1);
 
       killMember(1);
-      cacheManagers.remove(1);
 
       assertNotLocked("k");
       eventually(new Condition() {
@@ -88,7 +87,6 @@ public class InitiatorCrashPessimisticReplTest extends InitiatorCrashOptimisticR
       assertNotLocked(cache(2), "k");
 
       killMember(1);
-      cacheManagers.remove(1);
 
       eventually(new Condition() {
          @Override
@@ -121,7 +119,6 @@ public class InitiatorCrashPessimisticReplTest extends InitiatorCrashOptimisticR
       });
 
       killMember(1);
-      cacheManagers.remove(1);
 
       assert caches().size() == 2;
       txControlInterceptor.prepareProgress.countDown();

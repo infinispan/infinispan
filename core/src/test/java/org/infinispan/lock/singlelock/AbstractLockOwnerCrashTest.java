@@ -82,7 +82,6 @@ public abstract class AbstractLockOwnerCrashTest extends AbstractCrashTest {
       });
 
       killMember(2);
-      cacheManagers.remove(2);
       assert caches().size() == 2;
 
 

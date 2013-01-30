@@ -270,7 +270,8 @@ public class StateConsumerImpl implements StateConsumer {
          cacheNotifier.notifyDataRehashed(cacheTopology.getCurrentCH(), cacheTopology.getPendingCH(),
                cacheTopology.getTopologyId(), true);
       }
-      final ConsistentHash previousCh = this.cacheTopology != null ? this.cacheTopology.getWriteConsistentHash() : null;
+      final ConsistentHash previousReadCh = this.cacheTopology != null ? this.cacheTopology.getReadConsistentHash() : null;
+      final ConsistentHash previousWriteCh = this.cacheTopology != null ? this.cacheTopology.getWriteConsistentHash() : null;
       // Ensures writes to the data container use the right consistent hash
       // No need for a try/finally block, since it's just an assignment
       stateTransferLock.acquireExclusiveTopologyLock();
@@ -285,7 +286,7 @@ public class StateConsumerImpl implements StateConsumer {
          // fetch transactions and data segments from other owners if this is enabled
          if (isTransactional || isFetchEnabled) {
             Set<Integer> addedSegments;
-            if (previousCh == null) {
+            if (previousWriteCh == null) {
                // we start fresh, without any data, so we need to pull everything we own according to writeCh
 
                addedSegments = getOwnedSegments(cacheTopology.getWriteConsistentHash());
@@ -294,7 +295,7 @@ public class StateConsumerImpl implements StateConsumer {
                   log.tracef("On cache %s we have: added segments: %s", cacheName, addedSegments);
                }
             } else {
-               Set<Integer> previousSegments = getOwnedSegments(previousCh);
+               Set<Integer> previousSegments = getOwnedSegments(previousWriteCh);
                Set<Integer> newSegments = getOwnedSegments(cacheTopology.getWriteConsistentHash());
 
                Set<Integer> removedSegments = new HashSet<Integer>(previousSegments);
@@ -361,7 +362,7 @@ public class StateConsumerImpl implements StateConsumer {
                if (changed) {
                   // if the coordinator changed, we might get two concurrent topology updates,
                   // but we only want to notify the @DataRehashed listeners once
-                  cacheNotifier.notifyDataRehashed(cacheTopology.getCurrentCH(), cacheTopology.getPendingCH(),
+                  cacheNotifier.notifyDataRehashed(previousReadCh, cacheTopology.getCurrentCH(),
                         cacheTopology.getTopologyId(), false);
                }
             }

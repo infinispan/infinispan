@@ -70,7 +70,6 @@ public class InitiatorCrashPessimisticTest extends AbstractInitiatorCrashTest {
       assert checkTxCount(2, 0, 1);
 
       killMember(1);
-      cacheManagers.remove(1);
 
       assert caches().size() == 2;
 

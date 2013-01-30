@@ -70,7 +70,6 @@ public class LockOwnerCrashOptimisticTest extends AbstractLockOwnerCrashTest {
       });
 
       killMember(2);
-      cacheManagers.remove(2);
       assert caches().size() == 2;
 
       tm(1).resume(transaction);
@@ -113,7 +112,6 @@ public class LockOwnerCrashOptimisticTest extends AbstractLockOwnerCrashTest {
       });
 
       killMember(2);
-      cacheManagers.remove(2);
       assert caches().size() == 2;
 
 
