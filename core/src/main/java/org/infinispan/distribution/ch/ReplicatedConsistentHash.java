@@ -39,11 +39,13 @@ import java.util.*;
 public class ReplicatedConsistentHash implements ConsistentHash {
 
    private final List<Address> members;
+   private final Set<Address> membersSet;
 
    private static final Set<Integer> theSegment = Collections.singleton(0);
 
    public ReplicatedConsistentHash(List<Address> members) {
-      this.members = new ArrayList<Address>(members);
+      this.members = Collections.unmodifiableList(new ArrayList<Address>(members));
+      this.membersSet = Collections.unmodifiableSet(new HashSet<Address>(members));
    }
 
    @Override
@@ -73,16 +75,28 @@ public class ReplicatedConsistentHash implements ConsistentHash {
 
    @Override
    public List<Address> locateOwnersForSegment(int segmentId) {
+      if (segmentId != 0) {
+         throw new IllegalArgumentException("Unknown segment id : " + segmentId);
+      }
       return members;
    }
 
    @Override
    public Address locatePrimaryOwnerForSegment(int segmentId) {
+      if (segmentId != 0) {
+         throw new IllegalArgumentException("Unknown segment id : " + segmentId);
+      }
       return members.get(0);
    }
 
    @Override
    public Set<Integer> getSegmentsForOwner(Address owner) {
+      if (owner == null) {
+         throw new IllegalArgumentException("owner cannot be null");
+      }
+      if (!membersSet.contains(owner)) {
+         throw new IllegalArgumentException("The node is not a member : " + owner);
+      }
       return theSegment;
    }
 
@@ -103,12 +117,12 @@ public class ReplicatedConsistentHash implements ConsistentHash {
 
    @Override
    public Set<Address> locateAllOwners(Collection<Object> keys) {
-      return new HashSet<Address>(members);
+      return membersSet;
    }
 
    @Override
    public boolean isKeyLocalToNode(Address nodeAddress, Object key) {
-      return true;
+      return membersSet.contains(nodeAddress);
    }
 
    @Override
