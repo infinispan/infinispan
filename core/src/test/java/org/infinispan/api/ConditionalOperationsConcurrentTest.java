@@ -24,12 +24,18 @@ package org.infinispan.api;
 
 import org.infinispan.AdvancedCache;
 import org.infinispan.Cache;
+import org.infinispan.CacheException;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
+import org.infinispan.configuration.cache.VersioningScheme;
+import org.infinispan.remoting.transport.Address;
 import org.infinispan.test.MultipleCacheManagersTest;
+import org.infinispan.transaction.LockingMode;
+import org.infinispan.util.concurrent.IsolationLevel;
 import org.infinispan.util.concurrent.locks.LockManager;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
+import org.testng.Assert;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
@@ -41,6 +47,7 @@ import java.util.concurrent.BrokenBarrierException;
 import java.util.concurrent.CyclicBarrier;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -65,16 +72,19 @@ public class ConditionalOperationsConcurrentTest extends MultipleCacheManagersTe
    private static final int MOVES = 1000;
    private static final int THREAD_COUNT = 4;
    private static final String SHARED_KEY = "thisIsTheKeyForConcurrentAccess";
+   private final AtomicInteger threadIndex = new AtomicInteger();
 
    private static final String[] validMoves = generateValidMoves();
 
-   private static final AtomicBoolean failed = new AtomicBoolean(false);
-   private static final AtomicBoolean quit = new AtomicBoolean(false);
-   private static final AtomicInteger liveWorkers = new AtomicInteger();
-   private static volatile String failureMessage = "";
+   private final AtomicBoolean failed = new AtomicBoolean(false);
+   private AtomicBoolean quit = new AtomicBoolean(false);
+   private final AtomicInteger liveWorkers = new AtomicInteger();
+   private volatile String failureMessage = "";
 
-   private boolean transactional = false;
+   protected boolean transactional = false;
    private CacheMode mode = CacheMode.DIST_SYNC;
+   protected LockingMode lockingMode = LockingMode.OPTIMISTIC;
+   protected boolean writeSkewCheck = false;
 
    @BeforeMethod
    public void init() {
@@ -87,33 +97,45 @@ public class ConditionalOperationsConcurrentTest extends MultipleCacheManagersTe
    @Override
    protected void createCacheManagers() throws Throwable {
       ConfigurationBuilder dcc = getDefaultClusteredCacheConfig(mode, transactional);
+      dcc.transaction().lockingMode(lockingMode);
+      if (writeSkewCheck) {
+         dcc.transaction().locking().writeSkewCheck(true);
+         dcc.transaction().locking().isolationLevel(IsolationLevel.REPEATABLE_READ);
+         dcc.transaction().versioning().enable().scheme(VersioningScheme.SIMPLE);
+      }
       createCluster(dcc, NODES_NUM);
       waitForClusterToForm();
    }
 
    public void testReplace() throws Exception {
       List caches = caches(null);
-      testOnCaches(caches, new ReplaceOperation());
+      testOnCaches(caches, new ReplaceOperation(true));
    }
 
    public void testConditionalRemove() throws Exception {
       List caches = caches(null);
-      testOnCaches(caches, new ConditionalRemoveOperation());
+      testOnCaches(caches, new ConditionalRemoveOperation(true));
    }
 
    public void testPutIfAbsent() throws Exception {
       List caches = caches(null);
-      testOnCaches(caches, new PutIfAbsentOperation());
+      testOnCaches(caches, new PutIfAbsentOperation(true));
    }
 
-   private void testOnCaches(List<Cache> caches, CacheOperation operation) {
+   protected void testOnCaches(List<Cache> caches, CacheOperation operation) {
       failed.set(false);
       quit.set(false);
       caches.get(0).put(SHARED_KEY, "initialValue");
       final SharedState state = new SharedState(THREAD_COUNT);
       final PostOperationStateCheck stateCheck = new PostOperationStateCheck(caches, state, operation);
       final CyclicBarrier barrier = new CyclicBarrier(THREAD_COUNT, stateCheck);
-      ExecutorService exec = Executors.newFixedThreadPool(THREAD_COUNT);
+      final String className = getClass().getSimpleName();//in order to be able filter this test's log file correctly
+      ExecutorService exec = Executors.newFixedThreadPool(THREAD_COUNT, new ThreadFactory() {
+         @Override
+         public Thread newThread(Runnable r) {
+            return new Thread(r, className + "-" + threadIndex.getAndIncrement());
+         }
+      });
       for (int threadIndex = 0; threadIndex < THREAD_COUNT; threadIndex++) {
          Runnable validMover = new ValidMover(caches, barrier, threadIndex, state, operation);
          exec.execute(validMover);
@@ -122,8 +144,7 @@ public class ConditionalOperationsConcurrentTest extends MultipleCacheManagersTe
       try {
          exec.awaitTermination(5, TimeUnit.MINUTES);
       } catch (InterruptedException e) {
-         e.printStackTrace();
-         assert false : e.getMessage();
+         Assert.fail("Thread interrupted!");
       }
       assert !failed.get() : failureMessage;
    }
@@ -137,21 +158,19 @@ public class ConditionalOperationsConcurrentTest extends MultipleCacheManagersTe
       return validMoves;
    }
 
-   private static void fail(final String message) {
+   private void fail(final String message) {
       boolean firstFailure = failed.compareAndSet(false, true);
       if (firstFailure) {
          failureMessage = message;
       }
    }
 
-   private static void fail(final Exception e) {
-      StringWriter sw = new StringWriter();
-      PrintWriter pw = new PrintWriter(sw);
-      e.printStackTrace(pw);
-      fail(sw.toString());
+   private void fail(final Exception e) {
+      log.error("Failing because of exception", e);
+      fail(e.toString());
    }
 
-   static final class ValidMover implements Runnable {
+   final class ValidMover implements Runnable {
 
       private final List<Cache> caches;
       private final int threadIndex;
@@ -192,14 +211,14 @@ public class ConditionalOperationsConcurrentTest extends MultipleCacheManagersTe
             quit.set(true);
             barrier.reset();
          } catch (InterruptedException e) {
-            log.error("Caught exception %s", e);
+            log.error("Caught exception", e);
             fail(e);
          } catch (BrokenBarrierException e) {
-            log.error("Caught exception %s", e);
+            log.error("Caught exception", e);
             //just quit
             print("Broken barrier!");
          } catch (RuntimeException e) {
-            log.error("Caught exception %s", e);
+            log.error("Caught exception", e);
             fail(e);
          } finally {
             int andGet = liveWorkers.decrementAndGet();
@@ -243,7 +262,6 @@ public class ConditionalOperationsConcurrentTest extends MultipleCacheManagersTe
       public boolean isAfter() {
          return after;
       }
-
    }
 
    static final class SharedThreadState {
@@ -269,7 +287,7 @@ public class ConditionalOperationsConcurrentTest extends MultipleCacheManagersTe
       }
    }
 
-   static final class PostOperationStateCheck implements Runnable {
+   final class PostOperationStateCheck implements Runnable {
 
       private final List<Cache> caches;
       private final SharedState state;
@@ -286,6 +304,7 @@ public class ConditionalOperationsConcurrentTest extends MultipleCacheManagersTe
       public void run() {
          if (state.isAfter()) {
             cycle++;
+            log.tracef("Starting cycle %d", cycle);
             if (cycle % (MOVES / 100) == 0) {
                print((cycle * 100 * THREAD_COUNT / MOVES) + "%");
             }
@@ -301,10 +320,11 @@ public class ConditionalOperationsConcurrentTest extends MultipleCacheManagersTe
                     currentStored);
          for (Cache c : caches) {
             Object v = c.get(SHARED_KEY);
-            log.tracef("Value seen by cache %s is %s", c.getAdvancedCache().getRpcManager().getAddress(), v);
+            Address currentCache = c.getAdvancedCache().getRpcManager().getAddress();
+            log.tracef("Value seen by cache %s is %s", currentCache, v);
             boolean sameValue = v == null ? currentStored == null : v.equals(currentStored);
             if (!sameValue) {
-               fail("Not all the caches see the same value");
+               fail("Not all the caches see the same value. first cache:" + currentStored + " cache " + currentCache +" saw " + v);
             }
          }
       }
@@ -344,7 +364,20 @@ public class ConditionalOperationsConcurrentTest extends MultipleCacheManagersTe
       private void checkNoLocks() {
          for (Cache c : caches) {
             LockManager lockManager = c.getAdvancedCache().getComponentRegistry().getComponent(LockManager.class);
-            if (lockManager.isLocked(SHARED_KEY)) {
+            //locks might be released async, so give it some time
+            boolean isLocked = true;
+            for (int i = 0; i < 30; i++) {
+               if (!lockManager.isLocked(SHARED_KEY)) {
+                  isLocked = false;
+                  break;
+               }
+               try {
+                  Thread.currentThread().sleep(500);
+               } catch (InterruptedException e) {
+                  throw new RuntimeException(e);
+               }
+            }
+            if (isLocked) {
                fail("lock on the entry wasn't cleaned up");
             }
          }
@@ -379,7 +412,15 @@ public class ConditionalOperationsConcurrentTest extends MultipleCacheManagersTe
    }
 
    public static abstract class CacheOperation {
-      abstract boolean isCas();
+      private final boolean isCas;
+
+      protected CacheOperation(boolean cas) {
+         isCas = cas;
+      }
+
+      public final boolean isCas() {
+         return isCas;
+      }
 
       abstract boolean execute(Cache cache, String sharedKey, Object existing, String targetValue);
 
@@ -391,14 +432,18 @@ public class ConditionalOperationsConcurrentTest extends MultipleCacheManagersTe
    }
 
    static class ReplaceOperation extends CacheOperation {
-      @Override
-      public boolean isCas() {
-         return true;
+
+      ReplaceOperation(boolean cas) {
+         super(cas);
       }
 
       @Override
       public boolean execute(Cache cache, String sharedKey, Object existing, String targetValue) {
-         return cache.replace(SHARED_KEY, existing, targetValue);
+         try {
+            return cache.replace(SHARED_KEY, existing, targetValue);
+         } catch (CacheException e) {
+            return false;
+         }
       }
 
       @Override
@@ -408,37 +453,52 @@ public class ConditionalOperationsConcurrentTest extends MultipleCacheManagersTe
 
    static class PutIfAbsentOperation extends CacheOperation {
 
-      @Override
-      public boolean isCas() {
-         return true;
+      PutIfAbsentOperation(boolean cas) {
+         super(cas);
       }
 
       @Override
       public boolean execute(Cache cache, String sharedKey, Object existing, String targetValue) {
-         return cache.putIfAbsent(SHARED_KEY, targetValue) == null;
+         try {
+            Object o = cache.putIfAbsent(SHARED_KEY, targetValue);
+            return o == null;
+         } catch (CacheException e) {
+            return false;
+         }
       }
 
       @Override
       public void beforeOperation(Cache cache) {
-         cache.remove(SHARED_KEY);
+         try {
+            cache.remove(SHARED_KEY);
+         } catch (CacheException e) {
+            log.debug("Write skew check error while removing the key", e);
+         }
       }
    }
 
    static class ConditionalRemoveOperation extends CacheOperation {
 
-      @Override
-      public boolean isCas() {
-         return true;
+      ConditionalRemoveOperation(boolean cas) {
+         super(cas);
       }
 
       @Override
       public boolean execute(Cache cache, String sharedKey, Object existing, String targetValue) {
-         return cache.remove(SHARED_KEY, existing);
+         try {
+            return cache.remove(SHARED_KEY, existing);
+         } catch (CacheException e) {
+            return false;
+         }
       }
 
       @Override
       public void beforeOperation(Cache cache) {
-         cache.put(SHARED_KEY, "someValue");
+         try {
+            cache.put(SHARED_KEY, "someValue");
+         } catch (CacheException e) {
+            log.warn("Write skew check error while inserting the key", e);
+         }
       }
 
       @Override

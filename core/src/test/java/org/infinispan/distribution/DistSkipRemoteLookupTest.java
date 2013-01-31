@@ -23,6 +23,8 @@
 package org.infinispan.distribution;
 
 import static org.infinispan.context.Flag.SKIP_REMOTE_LOOKUP;
+import static org.testng.Assert.assertEquals;
+
 import java.util.concurrent.ExecutionException;
 import org.infinispan.context.Flag;
 import org.testng.annotations.Test;
@@ -117,7 +119,8 @@ public class DistSkipRemoteLookupTest extends BaseDistFunctionalTest {
       assert null == c1.put(k1, value);
 
       assertIsNotInL1(c3, k1);
-      assert value.equals(c3.remove(k1));
+      log.trace("here it is");
+      assertEquals(value, c3.remove(k1));
       assert null == c1.put(k1, value);
 
       assert null == c4.getAdvancedCache().withFlags(Flag.SKIP_REMOTE_LOOKUP).removeAsync(k1).get();
