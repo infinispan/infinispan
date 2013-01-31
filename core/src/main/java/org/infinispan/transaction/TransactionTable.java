@@ -44,6 +44,7 @@ import org.infinispan.notifications.cachelistener.annotation.TopologyChanged;
 import org.infinispan.notifications.cachelistener.event.TopologyChangedEvent;
 import org.infinispan.remoting.rpc.RpcManager;
 import org.infinispan.remoting.transport.Address;
+import org.infinispan.topology.CacheTopology;
 import org.infinispan.transaction.synchronization.SyncLocalTransaction;
 import org.infinispan.transaction.synchronization.SynchronizationAdapter;
 import org.infinispan.transaction.xa.CacheTransaction;
@@ -82,8 +83,6 @@ public class TransactionTable {
    private ConcurrentMap<Transaction, LocalTransaction> localTransactions;
    private ConcurrentMap<GlobalTransaction, LocalTransaction> globalToLocalTransactions;
    private ConcurrentMap<GlobalTransaction, RemoteTransaction> remoteTransactions;
-
-   private final StaleTransactionCleanupService cleanupService = new StaleTransactionCleanupService(this);
 
    protected Configuration configuration;
    protected InvocationContextContainer icc;
@@ -136,8 +135,6 @@ public class TransactionTable {
          minTopologyRecalculationLock = new ReentrantLock();
          // Only initialize this if we are clustered.
          remoteTransactions = ConcurrentMapFactory.makeConcurrentMap(concurrencyLevel, 0.75f, concurrencyLevel);
-         cleanupService.start(cacheName, rpcManager, configuration);
-         notifier.addListener(cleanupService);
          notifier.addListener(this);
          clustered = true;
       }
@@ -147,8 +144,6 @@ public class TransactionTable {
    @SuppressWarnings("unused")
    private void stop() {
       if (clustered) {
-         notifier.removeListener(cleanupService);
-         cleanupService.stop();
          notifier.removeListener(this);
          currentTopologyId = CACHE_STOPPED_TOPOLOGY_ID; // indicate that the cache has stopped
       }
@@ -216,16 +211,32 @@ public class TransactionTable {
       return minTxTopologyId;
    }
 
-   protected void updateStateOnNodesLeaving(Collection<Address> leavers) {
+   public void cleanupStaleTransactions(CacheTopology cacheTopology) {
+      int topologyId = cacheTopology.getTopologyId();
+      List<Address> members = cacheTopology.getMembers();
+
+      // We only care about transactions originated before this topology update
+      if (getMinTopologyId() >= topologyId)
+         return;
+
+      log.tracef("Checking for transactions originated on leavers. Current members are %s, remote transactions: %d",
+            members, remoteTransactions.size());
       Set<GlobalTransaction> toKill = new HashSet<GlobalTransaction>();
-      for (GlobalTransaction gt : remoteTransactions.keySet()) {
-         if (leavers.contains(gt.getAddress())) toKill.add(gt);
+      for (Map.Entry<GlobalTransaction, RemoteTransaction> e : remoteTransactions.entrySet()) {
+         GlobalTransaction gt = e.getKey();
+         RemoteTransaction remoteTx = e.getValue();
+         log.tracef("Checking transaction %s", gt);
+         // The topology id check is needed for joiners
+         if (remoteTx.getTopologyId() < topologyId && !members.contains(gt.getAddress())) {
+            toKill.add(gt);
+         }
       }
 
-      if (toKill.isEmpty())
-         log.tracef("No global transactions pertain to originator(s) %s who have left the cluster.", leavers);
-      else
-         log.tracef("%s global transactions pertain to leavers list %s and need to be killed", toKill.size(), leavers);
+      if (toKill.isEmpty()) {
+         log.tracef("No global transactions pertain to originator(s) who have left the cluster.");
+      } else {
+         log.tracef("%s global transactions pertain to leavers and need to be killed", toKill.size());
+      }
 
       for (GlobalTransaction gtx : toKill) {
          log.tracef("Killing remote transaction originating on leaver %s", gtx);
@@ -239,7 +250,8 @@ public class TransactionTable {
          }
       }
 
-      log.trace("Completed cleaning transactions originating on leavers");
+      log.tracef("Completed cleaning transactions originating on leavers. Remote transactions remaining: %d",
+            remoteTransactions.size());
    }
 
    /**

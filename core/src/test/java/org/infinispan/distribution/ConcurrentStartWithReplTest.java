@@ -177,10 +177,7 @@ public class ConcurrentStartWithReplTest extends AbstractInfinispanTest {
          }
       };
       if (nonBlockingStartup) {
-         final ExecutorService e = Executors.newFixedThreadPool(1);
-         Future<Cache<String, String>> future = e.submit(cacheCreator);
-         e.shutdown();
-         return future;
+         return fork(cacheCreator);
       } else {
          return new AbstractInProcessFuture<Cache<String, String>>() {
             @Override

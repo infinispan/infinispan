@@ -197,8 +197,8 @@ public class StateProviderImpl implements StateProvider {
       List<TransactionInfo> transactions = new ArrayList<TransactionInfo>();
       //we migrate locks only if the cache is transactional and distributed
       if (configuration.transaction().transactionMode().isTransactional()) {
-         collectTransactionsToTransfer(transactions, transactionTable.getRemoteTransactions(), segments, readCh);
-         collectTransactionsToTransfer(transactions, transactionTable.getLocalTransactions(), segments, readCh);
+         collectTransactionsToTransfer(transactions, transactionTable.getRemoteTransactions(), segments, cacheTopology);
+         collectTransactionsToTransfer(transactions, transactionTable.getLocalTransactions(), segments, cacheTopology);
          if (trace) {
             log.tracef("Found %d transaction(s) to transfer", transactions.size());
          }
@@ -232,9 +232,17 @@ public class StateProviderImpl implements StateProvider {
 
    private void collectTransactionsToTransfer(List<TransactionInfo> transactionsToTransfer,
                                               Collection<? extends CacheTransaction> transactions,
-                                              Set<Integer> segments, ConsistentHash readCh) {
+                                              Set<Integer> segments, CacheTopology cacheTopology) {
+      int topologyId = cacheTopology.getTopologyId();
+      List<Address> members = cacheTopology.getMembers();
+      ConsistentHash readCh = cacheTopology.getReadConsistentHash();
+
       // no need to filter out state transfer generated transactions because there should not be any such transactions running for any of the requested segments
       for (CacheTransaction tx : transactions) {
+         // Skip transactions whose originators left. The topology id check is needed for joiners.
+         if (tx.getTopologyId() < topologyId && !members.contains(tx.getGlobalTransaction().getAddress()))
+            continue;
+
          // transfer only locked keys that belong to requested segments
          Set<Object> filteredLockedKeys = new HashSet<Object>();
          Set<Object> lockedKeys = tx.getLockedKeys();
