@@ -74,10 +74,10 @@ public class RecoveryAwareRemoteTransaction extends RemoteTransaction implements
    /**
     * Check's if this transaction's originator is no longer part of the cluster (orphan transaction) and updates
     * {@link #isOrphan()}.
-    * @param leavers the nodes that left the cluster
+    * @param currentMembers The current members of the cache.
     */
-   public void computeOrphan(Collection<Address> leavers) {
-      if (leavers.contains(getGlobalTransaction().getAddress())) {
+   public void computeOrphan(Collection<Address> currentMembers) {
+      if (!currentMembers.contains(getGlobalTransaction().getAddress())) {
          if (log.isTraceEnabled()) log.tracef("This transaction's originator has left the cluster: %s", getGlobalTransaction());
          isOrphan = true;
       }

@@ -230,7 +230,7 @@ public class StateTransferInterceptor extends CommandInterceptor {   //todo [ani
 
    private void updateTopologyIdAndWaitForTransactionData(TopologyAffectedCommand command) throws InterruptedException {
       // set the topology id if it was not set before (ie. this is local command)
-      // TODO Make tx commands extend FlagAffectedCommand so we can use CACHE_MODE_LOCAL in StaleTransactionCleanupService
+      // TODO Make tx commands extend FlagAffectedCommand so we can use CACHE_MODE_LOCAL in TransactionTable.cleanupStaleTransactions
       if (command.getTopologyId() == -1) {
          CacheTopology cacheTopology = stateTransferManager.getCacheTopology();
          if (cacheTopology != null) {

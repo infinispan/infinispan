@@ -24,7 +24,7 @@ package org.infinispan.transaction.xa.recovery;
 
 import org.infinispan.CacheException;
 import org.infinispan.factories.annotations.Inject;
-import org.infinispan.remoting.transport.Address;
+import org.infinispan.topology.CacheTopology;
 import org.infinispan.transaction.LocalTransaction;
 import org.infinispan.transaction.RemoteTransaction;
 import org.infinispan.transaction.xa.GlobalTransaction;
@@ -35,7 +35,6 @@ import org.infinispan.util.logging.LogFactory;
 
 import javax.transaction.Transaction;
 import javax.transaction.xa.Xid;
-import java.util.Collection;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.LinkedList;
@@ -63,7 +62,7 @@ public class RecoveryAwareTransactionTable extends XaTransactionTable {
    /**
     * Marks the transaction as prepared. If at a further point the originator fails, the transaction is removed form the
     * "normal" transactions collection and moved into the cache that holds in-doubt transactions. See {@link
-    * #updateStateOnNodesLeaving(java.util.Collection)}
+    * #cleanupStaleTransactions(org.infinispan.topology.CacheTopology)}
     */
    @Override
    public void remoteTransactionPrepared(GlobalTransaction gtx) {
@@ -86,20 +85,27 @@ public class RecoveryAwareTransactionTable extends XaTransactionTable {
    /**
     * First moves the prepared transactions originated on the leavers into the recovery cache and then cleans up the
     * transactions that are not yet prepared.
+    * @param cacheTopology
     */
    @Override
-   protected void updateStateOnNodesLeaving(Collection<Address> leavers) {
+   public void cleanupStaleTransactions(CacheTopology cacheTopology) {
+      // We only care about transactions originated before this topology update
+      if (getMinTopologyId() >= cacheTopology.getTopologyId())
+         return;
+
       Iterator<RemoteTransaction> it = getRemoteTransactions().iterator();
       while (it.hasNext()) {
          RecoveryAwareRemoteTransaction recTx = (RecoveryAwareRemoteTransaction) it.next();
-         recTx.computeOrphan(leavers);
-         if (recTx.isInDoubt()) {
-            recoveryManager.registerInDoubtTransaction(recTx);
-            it.remove();
+         if (recTx.getTopologyId() < cacheTopology.getTopologyId()) {
+            recTx.computeOrphan(cacheTopology.getMembers());
+            if (recTx.isInDoubt()) {
+               recoveryManager.registerInDoubtTransaction(recTx);
+               it.remove();
+            }
          }
       }
       //this cleans up the transactions that are not yet prepared
-      super.updateStateOnNodesLeaving(leavers);
+      super.cleanupStaleTransactions(cacheTopology);
    }
 
    @Override

@@ -48,7 +48,7 @@ import static org.testng.AssertJUnit.assertFalse;
  *  - tx1 originated on N1 writes a single key that maps to N2
  *  - tx1 prepares and before committing crashes
  *  - the prepare is blocked on N2 before reaching the TxInterceptor where the tx is created
- *  - the StaleTransactionCleanupService kicks in on N2 but doesn't clean up the transaction
+ *  - TransactionTable.cleanupStaleTransactions kicks in on N2 but doesn't clean up the transaction
  *  as it hasn't been prepared yet
  *  - the prepare is now executed on N2
  *  - the test makes sure that the transaction doesn't acquire any locks and doesn't leak
@@ -105,7 +105,7 @@ public class PrepareProcessedAfterOriginatorCrashTest extends MultipleCacheManag
 
       killMember(0);
 
-      //give the StaleTransactionCleanupService some time to run
+      //give TransactionTable.cleanupStaleTransactions some time to run
       Thread.sleep(5000);
 
       ccf.gate.open();

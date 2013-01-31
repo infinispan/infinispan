@@ -373,6 +373,13 @@ public class StateConsumerImpl implements StateConsumer {
          if (activeTopologyUpdates.decrementAndGet() == 0) {
             notifyEndOfTopologyUpdate(cacheTopology.getTopologyId());
          }
+
+         // Remove the transactions whose originators have left the cache.
+         // Need to do it now, after we have applied any transactions from other nodes,
+         // and after notifyTransactionDataReceived - otherwise the RollbackCommands would block.
+         if (transactionTable != null) {
+            transactionTable.cleanupStaleTransactions(cacheTopology);
+         }
       }
    }
 
