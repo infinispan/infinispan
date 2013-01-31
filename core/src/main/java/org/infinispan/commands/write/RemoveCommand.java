@@ -46,6 +46,7 @@ public class RemoveCommand extends AbstractDataWriteCommand {
    protected CacheNotifier notifier;
    boolean successful = true;
    boolean nonExistent = false;
+   private boolean ignorePreviousValue;
 
    /**
     * When not null, value indicates that the entry should only be removed if the key is mapped to this value. By the
@@ -88,7 +89,7 @@ public class RemoveCommand extends AbstractDataWriteCommand {
 
       if (!(e instanceof MVCCEntry)) ctx.putLookedUpEntry(key, null);
 
-      if (value != null && e.getValue() != null && !e.getValue().equals(value)) {
+      if (!ignorePreviousValue && value != null && e.getValue() != null && !e.getValue().equals(value)) {
          successful = false;
          e.rollback();
          return false;
@@ -152,6 +153,7 @@ public class RemoveCommand extends AbstractDataWriteCommand {
          .append(key)
          .append(", value=").append(value)
          .append(", flags=").append(flags)
+         .append(", ignorePreviousValue=").append(ignorePreviousValue)
          .append("}")
          .toString();
    }
@@ -177,11 +179,16 @@ public class RemoveCommand extends AbstractDataWriteCommand {
       key = parameters[0];
       value = parameters[1];
       flags = (Set<Flag>) parameters[2];
+      ignorePreviousValue = (Boolean) parameters[3];
    }
 
    @Override
    public Object[] getParameters() {
-      return new Object[]{key, value, Flag.copyWithoutRemotableFlags(flags)};
+      return new Object[]{key, value, Flag.copyWithoutRemotableFlags(flags), ignorePreviousValue};
+   }
+
+   public void setIgnorePreviousValue(boolean ignorePreviousValue) {
+      this.ignorePreviousValue = ignorePreviousValue;
    }
 
    @Override

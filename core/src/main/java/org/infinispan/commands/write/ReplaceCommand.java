@@ -45,6 +45,8 @@ public class ReplaceCommand extends AbstractDataWriteCommand {
    CacheNotifier notifier;
    boolean successful = true;
 
+   private boolean ignorePreviousValue;
+
    public ReplaceCommand() {
    }
 
@@ -79,7 +81,8 @@ public class ReplaceCommand extends AbstractDataWriteCommand {
             }
          }
 
-         if (oldValue == null || oldValue.equals(e.getValue())) {
+         if (oldValue == null || oldValue.equals(e.getValue()) || ignorePreviousValue) {
+            e.setChanged(true);
             Object old = e.setValue(newValue);
             e.setLifespan(lifespanMillis);
             e.setMaxIdle(maxIdleTimeMillis);
@@ -115,7 +118,7 @@ public class ReplaceCommand extends AbstractDataWriteCommand {
 
    @Override
    public Object[] getParameters() {
-      return new Object[]{key, oldValue, newValue, lifespanMillis, maxIdleTimeMillis,
+      return new Object[]{key, oldValue, newValue, lifespanMillis, maxIdleTimeMillis, ignorePreviousValue,
                           Flag.copyWithoutRemotableFlags(flags)};
    }
 
@@ -128,7 +131,8 @@ public class ReplaceCommand extends AbstractDataWriteCommand {
       newValue = parameters[2];
       lifespanMillis = (Long) parameters[3];
       maxIdleTimeMillis = (Long) parameters[4];
-      flags = (Set<Flag>) parameters[5];
+      ignorePreviousValue = (Boolean) parameters[5];
+      flags = (Set<Flag>) parameters[6];
    }
 
    @Override
@@ -191,6 +195,14 @@ public class ReplaceCommand extends AbstractDataWriteCommand {
       this.newValue = newValue;
    }
 
+   public boolean isIgnorePreviousValue() {
+      return ignorePreviousValue;
+   }
+
+   public void setIgnorePreviousValue(boolean ignorePreviousValue) {
+      this.ignorePreviousValue = ignorePreviousValue;
+   }
+
    @Override
    public String toString() {
       return "ReplaceCommand{" +
@@ -199,6 +211,7 @@ public class ReplaceCommand extends AbstractDataWriteCommand {
             ", newValue=" + newValue +
             ", flags=" + flags +
             ", successful=" + successful +
+            ", ignorePreviousValue=" + ignorePreviousValue +
             '}';
    }
 }
