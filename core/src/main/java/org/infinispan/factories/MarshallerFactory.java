@@ -35,22 +35,31 @@ import static org.infinispan.factories.KnownComponentNames.*;
 /**
  * MarshallerFactory.
  *
- * @author <a href="mailto:galder.zamarreno@jboss.com">Galder Zamarreno</a>
+ * @author Galder Zamarreño
  * @since 4.0
  */
 @DefaultFactoryFor(classes = {StreamingMarshaller.class, Marshaller.class})
+@SuppressWarnings("unused")
 public class MarshallerFactory extends NamedComponentFactory implements AutoInstantiableFactory {
 
    @Override
    public <T> T construct(Class<T> componentType, String componentName) {
       Object comp;
-      if (componentName.equals(GLOBAL_MARSHALLER))
-         comp = new GlobalMarshaller((VersionAwareMarshaller)
-               globalConfiguration.serialization().marshaller());
-      else if (componentName.equals(CACHE_MARSHALLER))
-         comp = new CacheMarshaller(new VersionAwareMarshaller());
-      else
-         throw new CacheException("Don't know how to handle type " + componentType);
+      Marshaller configMarshaller =
+            globalConfiguration.serialization().marshaller();
+      boolean isVersionAwareMarshaller =
+            configMarshaller instanceof VersionAwareMarshaller;
+
+      if (isVersionAwareMarshaller) {
+         if (componentName.equals(GLOBAL_MARSHALLER))
+            comp = new GlobalMarshaller((VersionAwareMarshaller) configMarshaller);
+         else if (componentName.equals(CACHE_MARSHALLER))
+            comp = new CacheMarshaller(new VersionAwareMarshaller());
+         else
+            throw new CacheException("Don't know how to handle type " + componentType);
+      } else {
+         comp = configMarshaller;
+      }
 
       try {
          return componentType.cast(comp);
