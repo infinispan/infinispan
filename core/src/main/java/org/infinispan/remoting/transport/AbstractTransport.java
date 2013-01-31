@@ -46,6 +46,7 @@ public abstract class AbstractTransport implements Transport {
    protected GlobalConfiguration configuration;
 
    @Inject
+   @SuppressWarnings("unused")
    public void setConfiguration(GlobalConfiguration globalConfiguration) {
       this.configuration = globalConfiguration;
    }
@@ -63,13 +64,15 @@ public abstract class AbstractTransport implements Transport {
       if (responseObject instanceof Response) {
          Response response = (Response) responseObject;
          if (response instanceof ExceptionResponse) {
-            Exception e = ((ExceptionResponse) response).getException();
+            ExceptionResponse exceptionResponse = (ExceptionResponse) response;
+            Exception e = exceptionResponse.getException();
             if (!(e instanceof RpcException)) {
                // if we have any application-level exceptions make sure we throw them!!
                if (shouldThrowException(e)) {
-                  throw e;
+                  throw log.remoteException(sender, e);
                } else {
-                  if (log.isDebugEnabled()) log.debug("Received exception from sender" + sender, e);
+                  if (log.isDebugEnabled())
+                     log.debug("Received exception from " + sender, e);
                }
             }
          }
