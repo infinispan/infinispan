@@ -27,6 +27,8 @@ import org.infinispan.commands.tx.PrepareCommand;
 import org.infinispan.commands.tx.RollbackCommand;
 import org.infinispan.commands.write.ClearCommand;
 import org.infinispan.commands.write.PutKeyValueCommand;
+import org.infinispan.commands.write.RemoveCommand;
+import org.infinispan.commands.write.ReplaceCommand;
 import org.infinispan.commands.write.WriteCommand;
 import org.infinispan.container.entries.CacheEntry;
 import org.infinispan.container.entries.InternalCacheEntry;
@@ -86,6 +88,40 @@ public class TxDistributionInterceptor extends BaseDistributionInterceptor {
       this.l1Manager = l1Manager;
    }
 
+   @Override
+   public Object visitReplaceCommand(InvocationContext ctx, ReplaceCommand command) throws Throwable {
+      try {
+         return super.visitReplaceCommand(ctx, command);
+      } finally {
+         boolean ignorePreviousValues = ignorePreviousValueOnBackup(command, ctx);
+         command.setIgnorePreviousValue(ignorePreviousValues);
+      }
+   }
+
+   @Override
+   public Object visitRemoveCommand(InvocationContext ctx, RemoveCommand command) throws Throwable {
+      try {
+         return super.visitRemoveCommand(ctx, command);
+      } finally {
+         boolean ignorePreviousValues = ignorePreviousValueOnBackup(command, ctx);
+         command.setIgnorePreviousValue(ignorePreviousValues);
+      }
+   }
+
+   /**
+    * For conditional operations (replace, remove, put if absent) Used only for optimistic transactional caches, to solve the following situation:
+    * <pre>
+    * - node A (owner, tx originator) does a successful replace
+    * - the actual value changes
+    * - tx commits. The value is applied on A (the check was performed at operation time) but is not applied on
+    *   B (check is performed at commit time).
+    * In such situations (optimistic caches) the remote conditional command should not re-check the old value.
+    * </pre>
+    */
+   private boolean ignorePreviousValueOnBackup(WriteCommand command, InvocationContext ctx) {
+      return ctx.isOriginLocal() && command.isSuccessful() && cacheConfiguration.transaction().lockingMode() == LockingMode.OPTIMISTIC;
+   }
+
    @Start
    public void start() {
       isPessimisticCache = cacheConfiguration.transaction().lockingMode() == LockingMode.PESSIMISTIC;
@@ -99,6 +135,9 @@ public class TxDistributionInterceptor extends BaseDistributionInterceptor {
    public Object visitPutKeyValueCommand(InvocationContext ctx, PutKeyValueCommand command) throws Throwable {
       SingleKeyRecipientGenerator skrg = new SingleKeyRecipientGenerator(command.getKey());
       Object returnValue = handleWriteCommand(ctx, command, skrg, command.hasFlag(Flag.PUT_FOR_STATE_TRANSFER), false);
+      if (ignorePreviousValueOnBackup(command, ctx)) {
+         command.setPutIfAbsent(false);
+      }
       // If this was a remote put record that which sent it
       if (isL1CacheEnabled && !ctx.isOriginLocal() && !skrg.generateRecipients().contains(ctx.getOrigin()))
          l1Manager.addRequestor(command.getKey(), ctx.getOrigin());
