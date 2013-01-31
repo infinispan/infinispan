@@ -46,4 +46,6 @@ public interface MVCCEntry extends CacheEntry, StateChangingEntry {
     * @param placeholder if true, the entry is marked as a lock placeholder.  If false, the entry is un-marked as a placeholder.
     */
    void setLockPlaceholder(boolean placeholder);
+
+   void setChanged(boolean isChanged);
 }
