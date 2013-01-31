@@ -81,9 +81,10 @@ public class TransportSenderExceptionHandlingTest extends MultipleCacheManagersT
          dispatcher2.setRequestMarshaller(mockMarshaller);
          cache1.put(key, value);
          assert false : "Should have thrown an exception";
-      } catch(CacheException ce) {
+      } catch (RemoteException ce) {
          assert !(ce.getCause() instanceof ClassCastException) : "No way a ClassCastException must be sent back to user!";
-         assert ce.getCause() instanceof EOFException;
+         assert ce.getCause() instanceof CacheException;
+         assert ce.getCause().getCause() instanceof EOFException;
       } finally {
          dispatcher1.setMarshaller(originalMarshaller1);
          dispatcher2.setMarshaller(originalMarshaller);
@@ -120,7 +121,11 @@ public class TransportSenderExceptionHandlingTest extends MultipleCacheManagersT
       try {
          cache1.put(failureType, 1);
       } catch (CacheException e) {
-         throw e.getCause();
+         Throwable cause = e.getCause();
+         if (cause.getCause() == null)
+            throw cause;
+         else
+            throw cause.getCause();
       } finally {
          cache2.getAdvancedCache().removeInterceptor(ErrorInducingInterceptor.class);
       }
@@ -133,11 +138,12 @@ public class TransportSenderExceptionHandlingTest extends MultipleCacheManagersT
       cache2.addListener(listener);
       try {
          cache1.put(failureType, 1);
-      } catch (CacheException e) {
-         if (throwError && e.getCause() instanceof InvocationTargetException)
-            throw e.getCause().getCause();
+      } catch (RemoteException e) {
+         Throwable cause = e.getCause(); // get the exception behind the remote one
+         if (throwError && cause.getCause() instanceof InvocationTargetException)
+            throw cause.getCause().getCause();
          else
-            throw e.getCause();
+            throw cause.getCause();
       } finally {
          cache2.removeListener(listener);
       }

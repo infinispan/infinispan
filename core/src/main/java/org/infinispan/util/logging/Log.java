@@ -28,6 +28,7 @@ import org.infinispan.commands.tx.PrepareCommand;
 import org.infinispan.loaders.CacheLoaderException;
 import org.infinispan.loaders.bucket.Bucket;
 import org.infinispan.loaders.decorators.SingletonStore;
+import org.infinispan.remoting.RemoteException;
 import org.infinispan.remoting.responses.Response;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.transaction.LocalTransaction;
@@ -840,5 +841,9 @@ public interface Log extends BasicLogger {
    @LogMessage(level = INFO)
    @Message(value = "%d entries migrated to cache %s in %s", id = 216)
    void entriesMigrated(long count, String name, String prettyTime);
+
+   @Message(value = "Received exception from %s, see cause for remote stack trace", id = 217)
+   RemoteException remoteException(Address sender, @Cause Exception e);
+
 }
 
