@@ -34,8 +34,6 @@ import org.infinispan.marshall.StreamingMarshaller;
 import org.infinispan.test.TestingUtil;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
-import org.testng.annotations.Optional;
-import org.testng.annotations.Parameters;
 import org.testng.annotations.Test;
 
 import java.io.ByteArrayInputStream;
@@ -61,7 +59,6 @@ public class FileCacheStoreTest extends BaseCacheStoreTest {
    @AfterClass(alwaysRun = true)
    protected void clearTempDir() {
       TestingUtil.recursiveFileRemove(tmpDirectory);
-      new File(tmpDirectory).mkdirs();
    }
 
    @Override
@@ -147,7 +144,7 @@ public class FileCacheStoreTest extends BaseCacheStoreTest {
       InternalCacheEntry entry = b.getEntry(key);
       entry.setValue("updatedValue");
       fcs.updateBucket(b);
-      "updatedValue".equals(fcs.load(key).getValue());
+      assert "updatedValue".equals(fcs.load(key).getValue());
    }
 
    protected void checkBucketExists(Bucket b) {
