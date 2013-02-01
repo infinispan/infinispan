@@ -40,16 +40,14 @@ import org.infinispan.notifications.cachelistener.CacheNotifier;
 import org.infinispan.remoting.rpc.RpcManager;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.statetransfer.StateTransferLock;
+import org.infinispan.statetransfer.StateTransferManager;
 import org.infinispan.transaction.WriteSkewHelper;
 import org.infinispan.transaction.xa.CacheTransaction;
-import org.infinispan.util.logging.Log;
-import org.infinispan.util.logging.LogFactory;
 
 import java.util.Collection;
 
 import static org.infinispan.transaction.WriteSkewHelper.performWriteSkewCheckAndReturnNewVersions;
 
-// todo [anistor] need to review this for NBST
 /**
  * Abstractization for logic related to different clustering modes: replicated or distributed. This implements the <a
  * href="http://en.wikipedia.org/wiki/Bridge_pattern">Bridge</a> pattern as described by the GoF: this plays the role of
@@ -60,8 +58,6 @@ import static org.infinispan.transaction.WriteSkewHelper.performWriteSkewCheckAn
  */
 @Scope(Scopes.NAMED_CACHE)
 public interface ClusteringDependentLogic {
-
-   Log log = LogFactory.getLog(ClusteringDependentLogic.class);
 
    boolean localNodeIsOwner(Object key);
 
@@ -77,9 +73,17 @@ public interface ClusteringDependentLogic {
    
    Address getAddress();
 
-   public static abstract class AbstractClusteringDependentLogic implements  ClusteringDependentLogic {
+   public static abstract class AbstractClusteringDependentLogic implements ClusteringDependentLogic {
+
+      protected DataContainer dataContainer;
 
       protected CacheNotifier notifier;
+
+      @Inject
+      public void init(DataContainer dataContainer, CacheNotifier notifier) {
+         this.dataContainer = dataContainer;
+         this.notifier = notifier;
+      }
 
       protected void notifyCommitEntry(boolean created, boolean removed,
             boolean evicted, CacheEntry entry, InvocationContext ctx) {
@@ -109,13 +113,61 @@ public interface ClusteringDependentLogic {
    }
 
    /**
-    * This logic is used when a changing a key affects all the nodes in the cluster, e.g. int the replicated,
-    * invalidated and local cache modes.
+    * This logic is used in local mode caches.
     */
-   public static final class AllNodesLogic extends AbstractClusteringDependentLogic {
+   public static class LocalLogic extends AbstractClusteringDependentLogic {
 
-      private DataContainer dataContainer;
+      @Override
+      public boolean localNodeIsOwner(Object key) {
+         return true;
+      }
 
+      @Override
+      public boolean localNodeIsPrimaryOwner(Object key) {
+         return true;
+      }
+
+      @Override
+      public Address getPrimaryOwner(Object key) {
+         throw new IllegalStateException("Cannot invoke this method for local caches");
+      }
+
+      @Override
+      public Collection<Address> getOwners(Collection<Object> keys) {
+         return null;
+      }
+
+      @Override
+      public Address getAddress() {
+         return null;
+      }
+
+      @Override
+      public void commitEntry(CacheEntry entry, EntryVersion newVersion, boolean skipOwnershipCheck, InvocationContext ctx) {
+         // Cache flags before they're reset
+         // TODO: Can the reset be done after notification instead?
+         boolean created = entry.isCreated();
+         boolean removed = entry.isRemoved();
+         boolean evicted = entry.isEvicted();
+
+         entry.commit(dataContainer, newVersion);
+
+         // Notify after events if necessary
+         notifyCommitEntry(created, removed, evicted, entry, ctx);
+      }
+
+      @Override
+      public EntryVersionsMap createNewVersionsAndCheckForWriteSkews(VersionGenerator versionGenerator, TxInvocationContext context, VersionedPrepareCommand prepareCommand) {
+         throw new IllegalStateException("Cannot invoke this method for local caches");
+      }
+   }
+
+   /**
+    * This logic is used in invalidation mode caches.
+    */
+   public static class InvalidationLogic extends AbstractClusteringDependentLogic {
+
+      private StateTransferManager stateTransferManager;
       private RpcManager rpcManager;
 
       private static final WriteSkewHelper.KeySpecificLogic keySpecificLogic = new WriteSkewHelper.KeySpecificLogic() {
@@ -126,27 +178,24 @@ public interface ClusteringDependentLogic {
       };
 
       @Inject
-      public void init(DataContainer dc, RpcManager rpcManager, CacheNotifier notifier) {
-         this.dataContainer = dc;
+      public void init(RpcManager rpcManager, StateTransferManager stateTransferManager) {
          this.rpcManager = rpcManager;
-         this.notifier = notifier;
+         this.stateTransferManager = stateTransferManager;
       }
 
       @Override
       public boolean localNodeIsOwner(Object key) {
-         return true;
+         return stateTransferManager.getCacheTopology().getWriteConsistentHash().isKeyLocalToNode(rpcManager.getAddress(), key);
       }
 
       @Override
       public boolean localNodeIsPrimaryOwner(Object key) {
-         return rpcManager == null || rpcManager.getTransport().isCoordinator();
+         return stateTransferManager.getCacheTopology().getWriteConsistentHash().locatePrimaryOwner(key).equals(rpcManager.getAddress());
       }
 
       @Override
       public Address getPrimaryOwner(Object key) {
-         if (rpcManager == null)
-            throw new IllegalStateException("Cannot invoke this method for local caches");
-         return rpcManager.getTransport().getCoordinator();
+         return stateTransferManager.getCacheTopology().getWriteConsistentHash().locatePrimaryOwner(key);
       }
 
       @Override
@@ -165,7 +214,7 @@ public interface ClusteringDependentLogic {
 
       @Override
       public Collection<Address> getOwners(Collection<Object> keys) {
-         return null;
+         return null;    //todo [anistor] should I actually return this based on current CH?
       }
       
       @Override
@@ -176,7 +225,7 @@ public interface ClusteringDependentLogic {
       @Override
       public EntryVersionsMap createNewVersionsAndCheckForWriteSkews(VersionGenerator versionGenerator, TxInvocationContext context, VersionedPrepareCommand prepareCommand) {
          // In REPL mode, this happens if we are the coordinator.
-         if (rpcManager.getTransport().isCoordinator()) {
+         if (stateTransferManager.getCacheTopology().getReadConsistentHash().getMembers().get(0).equals(rpcManager.getAddress())) {
             // Perform a write skew check on each entry.
             EntryVersionsMap uv = performWriteSkewCheckAndReturnNewVersions(prepareCommand, dataContainer,
                                                                             versionGenerator, context,
@@ -194,10 +243,35 @@ public interface ClusteringDependentLogic {
       }
    }
 
-   public static final class DistributionLogic extends AbstractClusteringDependentLogic {
+   /**
+    * This logic is used in replicated mode caches.
+    */
+   public static class ReplicationLogic extends InvalidationLogic {
+
+      private StateTransferLock stateTransferLock;
+
+      @Inject
+      public void init(StateTransferLock stateTransferLock) {
+         this.stateTransferLock = stateTransferLock;
+      }
+
+      @Override
+      public void commitEntry(CacheEntry entry, EntryVersion newVersion, boolean skipOwnershipCheck, InvocationContext ctx) {
+         stateTransferLock.acquireSharedTopologyLock();
+         try {
+            super.commitEntry(entry, newVersion, skipOwnershipCheck, ctx);
+         } finally {
+            stateTransferLock.releaseSharedTopologyLock();
+         }
+      }
+   }
+
+   /**
+    * This logic is used in distributed mode caches.
+    */
+   public static class DistributionLogic extends AbstractClusteringDependentLogic {
 
       private DistributionManager dm;
-      private DataContainer dataContainer;
       private Configuration configuration;
       private RpcManager rpcManager;
       private StateTransferLock stateTransferLock;
@@ -210,14 +284,12 @@ public interface ClusteringDependentLogic {
       };
 
       @Inject
-      public void init(DistributionManager dm, DataContainer dataContainer, Configuration configuration,
-                       RpcManager rpcManager, StateTransferLock stateTransferLock, CacheNotifier notifier) {
+      public void init(DistributionManager dm, Configuration configuration,
+                       RpcManager rpcManager, StateTransferLock stateTransferLock) {
          this.dm = dm;
-         this.dataContainer = dataContainer;
          this.configuration = configuration;
          this.rpcManager = rpcManager;
          this.stateTransferLock = stateTransferLock;
-         this.notifier = notifier;
       }
 
       @Override

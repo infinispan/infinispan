@@ -76,7 +76,7 @@ public abstract class CommandInterceptor extends AbstractVisitor {
    }
 
    @Inject
-   private void injectConfiguration(Configuration configuration) {
+   public void injectConfiguration(Configuration configuration) {
       this.cacheConfiguration = configuration;
    }
 

@@ -39,7 +39,7 @@ import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.test.MultipleCacheManagersTest;
 import org.testng.annotations.Test;
 
-@Test(groups = "functional", testName = "replication.BaseReplicatedAPITest")
+@Test(groups = "functional")
 public abstract class BaseReplicatedAPITest extends MultipleCacheManagersTest {
 
    protected boolean isSync;
@@ -150,7 +150,7 @@ public abstract class BaseReplicatedAPITest extends MultipleCacheManagersTest {
       waitForRpc(cache2);
 
       assert cache1.get("key") == null;
-      assert cache2.get("key").equals("value2");
+      assert cache2.get("key") == null;
    }
 
    public void testClear() {
@@ -214,8 +214,9 @@ public abstract class BaseReplicatedAPITest extends MultipleCacheManagersTest {
       cache1.replace("key", "valueN", "value1");
       waitForRpc(cache2);
 
-      assert cache1.get("key").equals("value1");
-      assert cache2.get("key").equals("value2");
+      // the replace executed identically on both of them
+      assertEquals("value1", cache1.get("key"));
+      assertEquals("value1", cache2.get("key"));
    }
 
    public void testLocalOnlyClear() {
