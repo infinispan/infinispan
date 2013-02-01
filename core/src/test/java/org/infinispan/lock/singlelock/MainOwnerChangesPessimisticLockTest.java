@@ -168,15 +168,15 @@ public class MainOwnerChangesPessimisticLockTest extends MultipleCacheManagersTe
          InternalCacheEntry d1 = advancedCache(1).getDataContainer().get(key);
          InternalCacheEntry d2 = advancedCache(2).getDataContainer().get(key);
          int c = 0;
-         if (d0 != null) {
+         if (d0 != null && !d0.isExpired()) {
             assertEquals(expectedValue, d0.getValue());
             c++;
          }
-         if (d1 != null) {
+         if (d1 != null && !d1.isExpired()) {
             assertEquals(expectedValue, d1.getValue());
             c++;
          }
-         if (d2 != null) {
+         if (d2 != null && !d2.isExpired()) {
             assertEquals(expectedValue, d2.getValue());
             c++;
          }
