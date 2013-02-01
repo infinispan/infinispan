@@ -34,14 +34,17 @@ import org.infinispan.transaction.lookup.DummyTransactionManagerLookup;
 import org.infinispan.util.concurrent.IsolationLevel;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
+import org.testng.annotations.AfterClass;
 import org.testng.annotations.Test;
+
+import java.io.File;
 
 import static org.testng.AssertJUnit.assertEquals;
 
 /**
- * Short test to reproduce the scenario form MODE-1754 (https://issues.jboss.org/browse/MODE-1754).
+ * Short test to reproduce the scenario from ISPN-2712/MODE-1754 (https://issues.jboss.org/browse/MODE-2712, https://issues.jboss.org/browse/MODE-1754).
  * <p/>
- * This test passes on 5.1.x but fails on 5.2 so we need to investigate further.
+ * This test passes on 5.1.x but fails on 5.2.0 without the fix.
  *
  * @author anistor@redhat.com
  * @since 5.2
@@ -52,11 +55,13 @@ public class ReplStateTransferCacheLoaderTest extends MultipleCacheManagersTest 
 
    private static final Log log = LogFactory.getLog(ReplStateTransferCacheLoaderTest.class);
 
+   private File tmpDir;
    private ConfigurationBuilder builder;
 
    @Override
    protected void createCacheManagers() {
-      TestingUtil.recursiveFileRemove("./target/tmp");
+      tmpDir = new File(TestingUtil.tmpDirectory(this));
+      TestingUtil.recursiveFileRemove(tmpDir);
 
       // reproduce the MODE-1754 config as closely as possible
       builder = getDefaultClusteredCacheConfig(CacheMode.REPL_SYNC, true, true);
@@ -69,7 +74,7 @@ public class ReplStateTransferCacheLoaderTest extends MultipleCacheManagersTest 
             .dataContainer().storeAsBinary()
             .clustering().sync().replTimeout(20000)
             .stateTransfer().timeout(240000).fetchInMemoryState(false).chunkSize(0)
-            .loaders().passivation(false).shared(false).preload(false).addFileCacheStore().location("./target/tmp/store_0")
+            .loaders().passivation(false).shared(false).preload(false).addFileCacheStore().location(new File(tmpDir, "store0").getAbsolutePath())
             .fetchPersistentState(true)
             .purgerThreads(3)
             .purgeSynchronously(true)
@@ -78,6 +83,11 @@ public class ReplStateTransferCacheLoaderTest extends MultipleCacheManagersTest 
 
       createCluster(builder, 1);
       waitForClusterToForm();
+   }
+
+   @AfterClass(alwaysRun = true)
+   protected void clearTempDir() {
+      TestingUtil.recursiveFileRemove(tmpDir);
    }
 
    public void testStateTransfer() throws Exception {
@@ -92,7 +102,7 @@ public class ReplStateTransferCacheLoaderTest extends MultipleCacheManagersTest 
       }
 
       log.info("Adding a new node ..");
-      builder.loaders().clearCacheLoaders().addFileCacheStore().location("./target/tmp/store_1")   // make sure this node writes in a different location
+      builder.loaders().clearCacheLoaders().addFileCacheStore().location(new File(tmpDir, "store1").getAbsolutePath())  // make sure this node writes in a different location
             .fetchPersistentState(true)
             .purgerThreads(3)
             .purgeSynchronously(true)
