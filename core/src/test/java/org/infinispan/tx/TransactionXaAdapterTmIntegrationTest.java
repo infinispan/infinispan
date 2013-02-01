@@ -68,10 +68,10 @@ public class TransactionXaAdapterTmIntegrationTest {
       txTable.addLocalTransactionMapping(localTx);      
 
       configuration = new ConfigurationBuilder().build();
-      TransactionCoordinator txCoordinator = new TransactionCoordinator();
+      txCoordinator = new TransactionCoordinator();
       txCoordinator.init(null, null, null, null, configuration);
       xaAdapter = new TransactionXaAdapter(localTx, txTable, null, txCoordinator, null, null,
-                                           new ClusteringDependentLogic.AllNodesLogic(), configuration, "");
+                                           new ClusteringDependentLogic.InvalidationLogic(), configuration, "");
    }
 
    public void testPrepareOnNonexistentXid() {

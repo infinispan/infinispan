@@ -120,7 +120,6 @@ public abstract class BaseReplStateTransferConsistencyTest extends MultipleCache
       testStateTransferConsistency(Operation.PUT_IF_ABSENT);
    }
 
-   @Test(enabled = false)  // disabled due to ISPN-2647
    public void testReplace() throws Exception {
       testStateTransferConsistency(Operation.REPLACE);
    }
@@ -222,9 +221,9 @@ public abstract class BaseReplStateTransferConsistencyTest extends MultipleCache
       TestingUtil.waitForRehashToComplete(cache(0), cache(1), cache(2));
 
       // at this point state transfer is fully done
-      log.infof("Data container of NodeA has %d keys: %s", dc0.size(), dc0.keySet());
-      log.infof("Data container of NodeB has %d keys: %s", dc1.size(), dc1.keySet());
-      log.infof("Data container of NodeC has %d keys: %s", dc2.size(), dc2.keySet());
+      log.infof("Data container of NodeA has %d keys: %s", dc0.size(), dc0.entrySet());
+      log.infof("Data container of NodeB has %d keys: %s", dc1.size(), dc1.entrySet());
+      log.infof("Data container of NodeC has %d keys: %s", dc2.size(), dc2.entrySet());
 
       if (op == Operation.CLEAR || op == Operation.REMOVE) {
          // caches should be empty. check that no keys were revived by an inconsistent state transfer
@@ -253,9 +252,9 @@ public abstract class BaseReplStateTransferConsistencyTest extends MultipleCache
    }
 
    private void assertValue(int cacheIndex, int key, String expectedValue) {
-      InternalCacheEntry object = cache(cacheIndex).getAdvancedCache().getDataContainer().get(key);
-      assertNotNull(object);
-      assertEquals(expectedValue, object.getValue());
-      assertEquals(expectedValue, cache(cacheIndex).get(key));
+      InternalCacheEntry ice = cache(cacheIndex).getAdvancedCache().getDataContainer().get(key);
+      assertNotNull("Found null on cache " + cacheIndex,  ice);
+      assertEquals("Did not find the expected value on cache " + cacheIndex, expectedValue, ice.getValue());
+      assertEquals("Did not find the expected value on cache " + cacheIndex, expectedValue, cache(cacheIndex).get(key));
    }
 }

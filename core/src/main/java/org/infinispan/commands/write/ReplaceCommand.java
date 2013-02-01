@@ -168,7 +168,7 @@ public class ReplaceCommand extends AbstractDataWriteCommand {
 
    @Override
    public boolean isConditional() {
-      return true;
+      return !ignorePreviousValue;
    }
 
    public long getLifespanMillis() {
