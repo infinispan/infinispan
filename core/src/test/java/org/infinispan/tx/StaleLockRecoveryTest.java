@@ -25,6 +25,7 @@ package org.infinispan.tx;
 import org.infinispan.Cache;
 import org.infinispan.config.Configuration;
 import org.infinispan.manager.EmbeddedCacheManager;
+import org.infinispan.remoting.RemoteException;
 import org.infinispan.test.MultipleCacheManagersTest;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.transaction.LockingMode;
@@ -89,6 +90,9 @@ public class StaleLockRecoveryTest extends MultipleCacheManagersTest {
          c.put(key, "dummy"); // should time out
          assert false : "Should have been locked!";
       } catch (TimeoutException e) {
+         // ignoring timeout exception
+      } catch (RemoteException e) {
+         assert e.getCause() instanceof TimeoutException;
          // ignoring timeout exception
       } finally {
          tm.rollback();

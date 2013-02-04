@@ -27,6 +27,7 @@ import javax.transaction.Transaction;
 
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
+import org.infinispan.remoting.RemoteException;
 import org.infinispan.transaction.LockingMode;
 import org.infinispan.transaction.lookup.DummyTransactionManagerLookup;
 import org.infinispan.util.concurrent.TimeoutException;
@@ -95,8 +96,12 @@ public class PessimisticReplTxTest extends AbstractClusteredTxTest {
       tm(secondTxIndex).begin();
       try {
          cache(secondTxIndex).put(k, "v2");
-         assert false : "Timeout exception expected";
+         assert false : "Exception expected";
       } catch (TimeoutException e) {
+         //expected
+         tm(secondTxIndex).suspend();
+      } catch (RemoteException e) {
+         assert e.getCause() instanceof TimeoutException;
          //expected
          tm(secondTxIndex).suspend();
       }
