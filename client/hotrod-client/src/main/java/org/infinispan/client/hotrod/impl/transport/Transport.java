@@ -83,4 +83,9 @@ public interface Transport {
     */
    SocketAddress getRemoteSocketAddress();
 
+   /**
+    * Invalidates transport instance.
+    */
+   void invalidate();
+
 }

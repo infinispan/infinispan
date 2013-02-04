@@ -46,6 +46,7 @@ import org.testng.annotations.BeforeTest;
 import org.testng.annotations.Test;
 
 import java.net.InetSocketAddress;
+import java.net.SocketAddress;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Properties;
@@ -167,7 +168,7 @@ public class CSAIntegrationTest extends HitsAwareCacheManagersTest {
       for (int i = 0; i < 1000; i++) {
          byte[] key = generateKey(i);
          TcpTransport transport = (TcpTransport) tcpConnectionFactory.getTransport(key);
-         InetSocketAddress serverAddress = transport.getServerAddress();
+         SocketAddress serverAddress = transport.getServerAddress();
          CacheContainer cacheContainer = hrServ2CacheManager.get(serverAddress);
          assertNotNull("For server address " + serverAddress + " found " + cacheContainer + ". Map is: " + hrServ2CacheManager, cacheContainer);
          DistributionManager distributionManager = cacheContainer.getCache().getAdvancedCache().getDistributionManager();
@@ -211,7 +212,7 @@ public class CSAIntegrationTest extends HitsAwareCacheManagersTest {
       }
    }
 
-   private void assertCacheContainsKey(InetSocketAddress serverAddress, byte[] keyBytes) {
+   private void assertCacheContainsKey(SocketAddress serverAddress, byte[] keyBytes) {
       CacheContainer cacheContainer = hrServ2CacheManager.get(serverAddress);
       Cache<Object, Object> cache = cacheContainer.getCache();
       DataContainer dataContainer = cache.getAdvancedCache().getDataContainer();

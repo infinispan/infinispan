@@ -25,7 +25,7 @@ package org.infinispan.client.hotrod.impl.operations;
 import net.jcip.annotations.Immutable;
 import org.infinispan.client.hotrod.Flag;
 import org.infinispan.client.hotrod.exceptions.HotRodClientException;
-import org.infinispan.client.hotrod.exceptions.RemoteNodeSuspecException;
+import org.infinispan.client.hotrod.exceptions.RemoteNodeSuspectException;
 import org.infinispan.client.hotrod.exceptions.TransportException;
 import org.infinispan.client.hotrod.impl.protocol.Codec;
 import org.infinispan.client.hotrod.impl.transport.Transport;
@@ -67,8 +67,15 @@ public abstract class RetryOnFailureOperation<T> extends HotRodOperation {
             transport = getTransport(retryCount);
             return executeOperation(transport);
          } catch (TransportException te) {
+            // Invalidate transport since this exception means that this
+            // instance is no longer usable and should be destroyed.
+            transportFactory.invalidateTransport(te.getServerAddress());
             logErrorAndThrowExceptionIfNeeded(retryCount, te);
-         } catch (RemoteNodeSuspecException e) {
+         } catch (RemoteNodeSuspectException e) {
+            // Do not invalidate transport because this exception is caused
+            // as a result of a server finding out that another node has
+            // been suspected, so there's nothing really wrong with the server
+            // from which this node was received.
             logErrorAndThrowExceptionIfNeeded(retryCount, e);
          } finally {
             releaseTransport(transport);
