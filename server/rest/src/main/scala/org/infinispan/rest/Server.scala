@@ -38,6 +38,7 @@ import org.infinispan.commons.hash.MurmurHash3
 import org.infinispan.util.concurrent.ConcurrentMapFactory
 import javax.ws.rs._
 import javax.servlet.http.HttpServletResponse
+import javax.servlet.ServletContext
 
 /**
  * Integration server linking REST requests with Infinispan calls.
@@ -47,18 +48,19 @@ import javax.servlet.http.HttpServletResponse
  * @since 4.0
  */
 @Path("/rest")
-class Server(@Context request: Request, @HeaderParam("performAsync") useAsync: Boolean) {
+class Server(@Context request: Request, @Context servletContext: ServletContext, @HeaderParam("performAsync") useAsync: Boolean) {
 
    /**For dealing with binary entries in the cache */
    lazy val variantList = Variant.VariantListBuilder.newInstance.mediaTypes(MediaType.APPLICATION_XML_TYPE, MediaType.APPLICATION_JSON_TYPE).build
    lazy val jsonMapper = new ObjectMapper
    lazy val xstream = new XStream
+   val manager = servletContext.getAttribute(ServerBootstrap.MANAGER).asInstanceOf[ManagerInstance]
 
    @GET
    @Path("/{cacheName}/{cacheKey}")
    def getEntry(@PathParam("cacheName") cacheName: String, @PathParam("cacheKey") key: String): Response = {
       protectCacheNotFound(request, useAsync) { (request, useAsync) =>
-         ManagerInstance.getEntry(cacheName, key) match {
+         manager.getEntry(cacheName, key) match {
             case b: MIMECacheEntry => {
                val lastMod = new Date(b.lastModified)
                request.evaluatePreconditions(lastMod, calcETAG(b)) match {
@@ -96,7 +98,7 @@ class Server(@Context request: Request, @HeaderParam("performAsync") useAsync: B
    @Path("/{cacheName}/{cacheKey}")
    def headEntry(@PathParam("cacheName") cacheName: String, @PathParam("cacheKey") key: String): Response = {
       protectCacheNotFound(request, useAsync) { (request, useAsync) =>
-         ManagerInstance.getEntry(cacheName, key) match {
+         manager.getEntry(cacheName, key) match {
             case b: MIMECacheEntry => {
                val lastMod = new Date(b.lastModified)
                request.evaluatePreconditions(lastMod, calcETAG(b)) match {
@@ -118,11 +120,11 @@ class Server(@Context request: Request, @HeaderParam("performAsync") useAsync: B
                 @DefaultValue("-1") @HeaderParam("timeToLiveSeconds") ttl: Long,
                 @DefaultValue("-1") @HeaderParam("maxIdleTimeSeconds") idleTime: Long): Response = {
       protectCacheNotFound(request, useAsync) { (request, useAsync) =>
-         val cache = ManagerInstance.getCache(cacheName)
+         val cache = manager.getCache(cacheName)
          if (request.getMethod == "POST" && cache.containsKey(key)) {
             Response.status(Status.CONFLICT).build()
          } else {
-            ManagerInstance.getEntry(cacheName, key) match {
+            manager.getEntry(cacheName, key) match {
                case mime: MIMECacheEntry => {
                   // The item already exists in the cache, evaluate preconditions based on its attributes and the headers
                   val lastMod = new Date(mime.lastModified)
@@ -195,7 +197,7 @@ class Server(@Context request: Request, @HeaderParam("performAsync") useAsync: B
    @DELETE
    @Path("/{cacheName}/{cacheKey}")
    def removeEntry(@PathParam("cacheName") cacheName: String, @PathParam("cacheKey") key: String): Response = {
-      ManagerInstance.getEntry(cacheName, key) match {
+      manager.getEntry(cacheName, key) match {
          case b: MIMECacheEntry => {
             // The item exists in the cache, evaluate preconditions based on its attributes and the headers
 	        val lastMod = new Date(b.lastModified)
@@ -205,9 +207,9 @@ class Server(@Context request: Request, @HeaderParam("performAsync") useAsync: B
                // Preconditions passed
                case null => {
                   if (useAsync) {
-                     ManagerInstance.getCache(cacheName).removeAsync(key)
+                     manager.getCache(cacheName).removeAsync(key)
                   } else {
-                     ManagerInstance.getCache(cacheName).remove(key)
+                     manager.getCache(cacheName).remove(key)
                   }
                   Response.ok.build
                }
@@ -215,9 +217,9 @@ class Server(@Context request: Request, @HeaderParam("performAsync") useAsync: B
          }
          case obj: Any => {
             if (useAsync) {
-               ManagerInstance.getCache(cacheName).removeAsync(key)
+               manager.getCache(cacheName).removeAsync(key)
             } else {
-               ManagerInstance.getCache(cacheName).remove(key)
+               manager.getCache(cacheName).remove(key)
             }
             Response.ok.build
          }
@@ -233,7 +235,7 @@ class Server(@Context request: Request, @HeaderParam("performAsync") useAsync: B
                  @DefaultValue("") @HeaderParam("If-Modified-Since") ifModifiedSince: String,
                  @DefaultValue("") @HeaderParam("If-Unmodified-Since") ifUnmodifiedSince: String): Response = {
       if (ifMatch.isEmpty && ifNoneMatch.isEmpty && ifModifiedSince.isEmpty && ifUnmodifiedSince.isEmpty) {
-         ManagerInstance.getCache(cacheName).clear()
+         manager.getCache(cacheName).clear()
          Response.ok.build
       } else {
          preconditionNotImplementedResponse()
@@ -266,8 +268,7 @@ class Server(@Context request: Request, @HeaderParam("performAsync") useAsync: B
 /**
  * Just wrap a single instance of the Infinispan cache manager.
  */
-object ManagerInstance {
-   var instance: EmbeddedCacheManager = null
+class ManagerInstance(instance: EmbeddedCacheManager) {
    private[rest] val knownCaches : java.util.Map[String, Cache[String, Any]] =
       ConcurrentMapFactory.makeConcurrentMap(4, 0.9f, 16)
 
@@ -291,6 +292,8 @@ object ManagerInstance {
    }
 
    def getEntry(cacheName: String, key: String): Any = getCache(cacheName).get(key)
+
+   def getInstance = instance
 
 }
 
