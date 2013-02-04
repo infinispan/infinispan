@@ -22,6 +22,11 @@
 
 package org.infinispan.rest.logging;
 
+import static org.jboss.logging.Logger.Level.ERROR;
+
+import org.jboss.logging.Cause;
+import org.jboss.logging.LogMessage;
+import org.jboss.logging.Message;
 import org.jboss.logging.MessageLogger;
 
 /**
@@ -33,5 +38,12 @@ import org.jboss.logging.MessageLogger;
  */
 @MessageLogger(projectCode = "ISPN")
 public interface JavaLog extends org.infinispan.util.logging.Log {
-}
 
+   @LogMessage(level = ERROR)
+   @Message(value = "Error reading configuration file for REST server: %s", id = 12001)
+   void errorReadingConfigurationFile(@Cause Throwable t, String path);
+
+   @LogMessage(level = ERROR)
+   @Message(value = "Error while retrieving cache manager from JBoss Microcontainer", id = 12002)
+   void errorRetrievingCacheManagerFromMC(@Cause Throwable t);
+}
