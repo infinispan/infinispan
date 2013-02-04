@@ -45,6 +45,7 @@ import java.util.concurrent.{TimeUnit, CountDownLatch}
 import scala.concurrent.ops._
 import org.infinispan.server.core.logging.JavaLog
 import org.infinispan.util.logging.LogFactory
+import org.infinispan.rest.ServerInstance.Client;
 
 /**
  * This tests using the Apache HTTP commons client library - but you could use anything
@@ -70,13 +71,17 @@ class IntegrationTest {
 
    @BeforeClass
    def setUp() {
+      ServerInstance.addSingleServer(8888, "test-config.xml")
       ServerInstance.start()
+      Client.create
    }
 
    @AfterClass(alwaysRun = true)
    def tearDown() {
       ServerInstance.stop()
       assertNull(ManagerInstance.instance)
+      ServerInstance.removeServers()
+      Client.destroy
    }
 
    def testBasicOperation(m: Method) {
