@@ -104,7 +104,7 @@ public class ClusterCacheStatus {
       synchronized (this) {
          if (members.contains(joiner)) {
             if (trace) log.tracef("Trying to add node %s to cache %s, but it is already a member: " +
-                  "joiner = %s, members = %s", cacheName, members, joiners);
+                  "members = %s, joiners = %s", joiner, cacheName, members, joiners);
             return false;
          }
 
