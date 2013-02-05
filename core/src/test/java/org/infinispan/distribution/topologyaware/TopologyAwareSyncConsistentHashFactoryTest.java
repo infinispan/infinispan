@@ -22,7 +22,6 @@
  */
 package org.infinispan.distribution.topologyaware;
 
-import org.infinispan.commons.hash.MurmurHash3;
 import org.infinispan.distribution.ch.ConsistentHashFactory;
 import org.infinispan.distribution.ch.DefaultConsistentHash;
 import org.infinispan.distribution.ch.TopologyAwareSyncConsistentHashFactory;
@@ -33,7 +32,7 @@ import org.testng.annotations.Test;
  * @author Dan Berindei
  * @since 5.2
  */
-@Test(groups = "unit", testName = "topologyaware.TopologyAwareConsistentHashFactoryTest")
+@Test(groups = "unit", testName = "topologyaware.TopologyAwareSyncConsistentHashFactoryTest")
 public class TopologyAwareSyncConsistentHashFactoryTest extends TopologyAwareConsistentHashFactoryTest {
 
    public TopologyAwareSyncConsistentHashFactoryTest() {

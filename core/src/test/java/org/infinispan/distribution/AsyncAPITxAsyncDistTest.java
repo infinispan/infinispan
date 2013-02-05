@@ -23,13 +23,12 @@
 package org.infinispan.distribution;
 
 import org.infinispan.commands.write.WriteCommand;
-import org.infinispan.test.AbstractCacheTest;
 import org.infinispan.test.ReplListener;
 import org.testng.annotations.Test;
 
 import java.util.concurrent.TimeUnit;
 
-@Test(groups = "functional", testName = "distribution.AsyncAPIAsyncDistTest")
+@Test(groups = "functional", testName = "distribution.AsyncAPITxAsyncDistTest")
 public class AsyncAPITxAsyncDistTest extends AsyncAPITxSyncDistTest {
 
    ReplListener rl;
@@ -62,7 +61,5 @@ public class AsyncAPITxAsyncDistTest extends AsyncAPITxSyncDistTest {
             rlNoTx.expect(cmds);
          rlNoTx.waitForRpc(240, TimeUnit.SECONDS);
       }
-
-
    }
 }

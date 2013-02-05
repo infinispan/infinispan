@@ -22,6 +22,7 @@
  */
 package org.infinispan.tx.dld;
 
+import org.infinispan.test.MultipleCacheManagersTest;
 import org.infinispan.test.PerCacheExecutorThread;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.util.concurrent.locks.DeadlockDetectingLockManager;
@@ -34,7 +35,8 @@ import javax.transaction.SystemException;
 
 import static org.testng.Assert.assertEquals;
 
-public abstract class BaseDldPessimisticLockingTest extends BaseDldTest {
+public abstract class BaseDldPessimisticLockingTest extends MultipleCacheManagersTest {
+
    protected PerCacheExecutorThread ex0;
    protected PerCacheExecutorThread ex1;
    protected DeadlockDetectingLockManager lm0;

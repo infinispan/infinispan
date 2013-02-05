@@ -38,7 +38,7 @@ import org.infinispan.test.fwk.TestCacheManagerFactory;
 
 import org.testng.annotations.Test;
 
-@Test(groups = "unit", testName = "loaders.decorators.AsyncTest")
+@Test(groups = "unit", testName = "loaders.decorators.AsyncStoreEvictionTest")
 public class AsyncStoreEvictionTest {
 
    // set to false to fix all the tests
