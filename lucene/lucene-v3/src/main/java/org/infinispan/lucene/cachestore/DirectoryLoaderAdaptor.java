@@ -96,6 +96,10 @@ final class DirectoryLoaderAdaptor {
 
    /**
     * Load some keys in the collector, excluding some and to a maximum number of collected (non-excluded) keys.
+    * @param keysCollector the set where to add loaded keys to
+    * @param keysToExclude which keys should not be loaded. Warning: can be null! Means all keys are to be returned
+    * @param maxElements
+    * @throws CacheLoaderException
     */
    private void loadSomeKeys(final HashSet<IndexScopedKey> keysCollector, final Set<IndexScopedKey> keysToExclude, final int maxElements) throws CacheLoaderException {
       if (maxElements <= 0) {
@@ -104,7 +108,7 @@ final class DirectoryLoaderAdaptor {
       int collectedKeys = 0;
       //First we collect the (single) FileListCacheKey
       FileListCacheKey rootKey = new FileListCacheKey(indexName);
-      if (! keysToExclude.contains(rootKey)) { //unless it was excluded
+      if (keysToExclude==null || ! keysToExclude.contains(rootKey)) { //unless it was excluded
          if (keysCollector.add(rootKey) ) { //unless it was already collected
             collectedKeys++;
          }
@@ -169,6 +173,11 @@ final class DirectoryLoaderAdaptor {
       }
    }
 
+   /**
+    * @param keysCollector the Set where to add loaded keys to
+    * @param keysToExclude Could be null!
+    * @throws CacheLoaderException
+    */
    protected void loadAllKeys(final HashSet<IndexScopedKey> keysCollector, final Set<IndexScopedKey> keysToExclude) throws CacheLoaderException {
       loadSomeKeys(keysCollector, keysToExclude, Integer.MAX_VALUE);
    }
