@@ -24,7 +24,6 @@
 package org.infinispan.api;
 
 import org.infinispan.config.Configuration;
-import org.infinispan.manager.DefaultCacheManager;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.test.SingleCacheManagerTest;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
@@ -37,7 +36,7 @@ import java.util.Collections;
  * @author Mircea Markus
  * @since 5.1
  */
-@Test (groups = "functional", testName = "api.TxAndAsyncOpsTest")
+@Test (groups = "functional", testName = "api.TxCacheAndAsyncOpsTest")
 public class TxCacheAndAsyncOpsTest extends SingleCacheManagerTest {
 
    @Override

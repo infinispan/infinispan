@@ -22,9 +22,6 @@
  */
 package org.infinispan.tx.dld;
 
-import org.infinispan.affinity.KeyAffinityService;
-import org.infinispan.affinity.KeyAffinityServiceFactory;
-import org.infinispan.affinity.RndKeyGenerator;
 import org.infinispan.config.Configuration;
 import org.infinispan.distribution.MagicKey;
 import org.infinispan.manager.EmbeddedCacheManager;
@@ -32,15 +29,12 @@ import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.testng.annotations.Test;
 
 import javax.transaction.SystemException;
-import java.util.concurrent.Executor;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
 
 /**
  * @author Mircea.Markus@jboss.com
  * @since 4.2
  */
-@Test (groups = "functional", testName = "tx.dld.DldEagerLockingDistributedTest")
+@Test (groups = "functional", testName = "tx.dld.DldPessimisticLockingDistributedTest")
 public class DldPessimisticLockingDistributedTest extends BaseDldPessimisticLockingTest {
 
    private Object k0;

@@ -61,7 +61,7 @@ import static org.testng.AssertJUnit.assertTrue;
  * @author Galder Zamarreño
  * @since 5.2
  */
-@Test(groups = "functional", testName = "loaders.RemovedEntryFoundAsyncStoreTest")
+@Test(groups = "functional", testName = "loaders.AsyncStoreFunctionalTest")
 public class AsyncStoreFunctionalTest {
 
    private static final Log log = LogFactory.getLog(AsyncStoreFunctionalTest.class);

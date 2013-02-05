@@ -31,6 +31,7 @@ import org.testng.ITestContext;
 import org.testng.ITestListener;
 import org.testng.ITestResult;
 
+import java.lang.reflect.Modifier;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -109,7 +110,8 @@ public class UnitTestTestNGListener implements ITestListener, IInvokedMethodList
       String fullName = arg0.getName();
       String simpleName = fullName.substring(fullName.lastIndexOf('.') + 1);
       Class testClass = arg0.getCurrentXmlTest().getXmlClasses().get(0).getSupportClass();
-      if (!simpleName.equals(testClass.getSimpleName())) {
+      boolean isAbstract = Modifier.isAbstract(testClass.getModifiers());
+      if (!isAbstract && !simpleName.equals(testClass.getSimpleName())) {
          log.warnf("Wrong test name %s for class %s", simpleName, testClass.getSimpleName());
       }
       TestCacheManagerFactory.testStarted(testClass.getSimpleName(), testClass.getName());

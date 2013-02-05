@@ -40,7 +40,7 @@ import javax.transaction.TransactionManager;
 import java.util.Collections;
 import java.util.concurrent.Future;
 
-@Test(groups = "functional", testName = "replication.AsyncAPISyncReplTest")
+@Test(groups = "functional", testName = "replication.AsyncAPITxSyncReplTest")
 public class AsyncAPITxSyncReplTest extends MultipleCacheManagersTest {
 
 
