@@ -32,7 +32,6 @@ import org.testng.annotations.AfterClass;
 import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.BeforeMethod;
-import org.testng.annotations.Test;
 
 import javax.transaction.SystemException;
 import javax.transaction.Transaction;
@@ -133,11 +132,12 @@ public abstract class SingleCacheManagerTest extends AbstractCacheTest {
 
    protected abstract EmbeddedCacheManager createCacheManager() throws Exception;
 
-   protected Cache cache() {
-      return cache;
+   @SuppressWarnings("unchecked")
+   protected <K,V> Cache<K, V> cache() {
+      return (Cache<K, V>)cache;
    }
 
-   protected Cache cache(String name) {
+   protected <K,V> Cache<K, V> cache(String name) {
       return cacheManager.getCache(name);
    }
 }
