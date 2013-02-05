@@ -43,6 +43,16 @@
         <param name="ConversionPattern" value="%d %-5r %-5p [%c] (%t:%x) %m%n"/>
          -->
       </layout>
+      <!--
+      Uncomment the filter definition below to only allow TRACE and DEBUG messages from threads
+      whose names include the log4j.thread.filter system property. Useful to get TRACE logs
+      only for a test that we know is failing, instead of all the tests (although not all threads
+      follow the convention).
+      -->
+      <!--<filter class="org.infinispan.util.logging.log4j.ThreadNameFilter">-->
+         <!--<param name="Include" value="${log4j.thread.filter}"/>-->
+         <!--<param name="Threshold" value="INFO"/>-->
+      <!--</filter>-->
    </appender>
 
    <appender name="CONSOLE" class="org.apache.log4j.ConsoleAppender">
@@ -51,7 +61,7 @@
 
       <layout class="org.apache.log4j.PatternLayout">
          <!-- The default pattern: Date Priority [Category] Message\n -->
-         <param name="ConversionPattern" value="%d %-5p [%c{1}] (%t) %m%n"/>
+         <param name="ConversionPattern" value="%d %-5p (%t) [%c{1}] %m%n"/>
       </layout>
    </appender>
 
