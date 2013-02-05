@@ -28,28 +28,28 @@ import org.jboss.resteasy.plugins.server.servlet.{ResteasyBootstrap, HttpServlet
 import org.mortbay.jetty.servlet.{ServletHolder, ServletHandler, Context}
 
 /**
- * 
+ *
  * @author Michael Neale
  */
 
 object ServerInstance {
   private val server = new org.mortbay.jetty.Server(8888);
-  
+
   initServer()
-  
+
   private def initServer() = {
     val ctx = new Context(server, "/", Context.SESSIONS)
     ctx.setInitParams(params)
     ctx.addEventListener(new ResteasyBootstrap)
     ctx.addServlet(classOf[HttpServletDispatcher], "/rest/*")
-    
+
     val sh = new ServletHolder(classOf[StartupListener])
     sh setInitOrder 1
     sh.setInitParameter("infinispan.config", "test-config.xml")
-    
+
     ctx.addServlet(sh, "/listener/*")
   }
-  
+
   def started(): Boolean = {
     server.isStarted
   }
@@ -57,7 +57,7 @@ object ServerInstance {
   def start(): Unit = {
     server.start
   }
-  
+
   def stop(): Unit = {
     server.stop
   }
