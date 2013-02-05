@@ -69,6 +69,14 @@ class StartupListener extends HttpServlet with Log {
       cm.getCache[String, Any]()
    }
 
+   override def destroy() {
+      super.destroy()
+      if (ManagerInstance.instance != null) {
+         ManagerInstance.instance.stop()
+      }
+      ManagerInstance.instance = null
+   }
+
    /**
     * To avoid any hard dependencies, checking whether the cache manager is injected
     * via the JBoss MicroContainer is done using reflection.
