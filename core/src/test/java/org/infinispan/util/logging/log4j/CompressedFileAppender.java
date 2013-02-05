@@ -20,6 +20,7 @@
 package org.infinispan.util.logging.log4j;
 
 import org.apache.log4j.FileAppender;
+import org.apache.log4j.LogManager;
 
 import java.io.IOException;
 import java.io.OutputStream;
@@ -34,6 +35,16 @@ import java.util.zip.GZIPOutputStream;
 public class CompressedFileAppender extends FileAppender {
 
    GZIPOutputStream gzos;
+
+   static {
+      final Thread shutdownThread = new Thread(new Runnable() {
+         public void run() {
+            // This will close all the appenders gracefully.
+            LogManager.shutdown();
+         }
+      }, "Log4j shutdown thread");
+      Runtime.getRuntime().addShutdownHook(shutdownThread);
+   }
 
    @Override
    protected OutputStreamWriter createWriter(OutputStream os) {
