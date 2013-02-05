@@ -43,7 +43,8 @@
       </dependency>
       <dependency>
          <groupId>${project.groupId}</groupId>
-         <artifactId>infinispan-lucene-directory</artifactId>
+         <artifactId>infinispan-lucene-v3</artifactId>
+         <version>${project.version}</version>
          <type>test-jar</type>
          <scope>test</scope>
       </dependency>
