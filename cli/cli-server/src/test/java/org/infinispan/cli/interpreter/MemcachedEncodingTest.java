@@ -23,103 +23,93 @@ import static org.testng.AssertJUnit.assertTrue;
 
 import java.util.Map;
 
+import net.spy.memcached.MemcachedClient;
+
 import org.infinispan.Cache;
-import org.infinispan.api.BasicCacheContainer;
 import org.infinispan.cli.interpreter.result.ResultKeys;
-import org.infinispan.client.hotrod.RemoteCache;
-import org.infinispan.client.hotrod.RemoteCacheManager;
-import org.infinispan.client.hotrod.TestHelper;
-import org.infinispan.client.hotrod.test.HotRodClientTestingUtil;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.factories.GlobalComponentRegistry;
 import org.infinispan.manager.EmbeddedCacheManager;
-import org.infinispan.marshall.jboss.GenericJBossMarshaller;
 import org.infinispan.server.core.CacheValue;
-import org.infinispan.server.hotrod.HotRodServer;
+import org.infinispan.server.memcached.MemcachedServer;
+import org.infinispan.server.memcached.test.MemcachedTestingUtil;
 import org.infinispan.test.SingleCacheManagerTest;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.CleanupAfterMethod;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.infinispan.util.ByteArrayKey;
-import org.testng.annotations.AfterTest;
+import org.testng.annotations.AfterMethod;
 import org.testng.annotations.Test;
-
 /**
- * EncodingTest.
+ * MemcachedEncodingTest.
  *
  * @author Tristan Tarrant
  * @since 5.2
  */
-@Test(testName = "cli-server.HotRodEncodingTest", groups = "functional")
+@Test(testName = "cli-server.MemcachedEncodingTest", groups = "functional")
 @CleanupAfterMethod
-public class HotRodEncodingTest extends SingleCacheManagerTest {
+public class MemcachedEncodingTest extends SingleCacheManagerTest {
 
-   HotRodServer hotrodServer;
+   private static final String MEMCACHED_CACHE = "memcachedCache";
+   MemcachedServer memcachedServer;
    int port;
    Interpreter interpreter;
-   private RemoteCacheManager remoteCacheManager;
+   MemcachedClient memcachedClient;
 
    @Override
    protected EmbeddedCacheManager createCacheManager() throws Exception {
       ConfigurationBuilder c = getDefaultStandaloneCacheConfig(false);
       c.jmxStatistics().enable();
-      return TestCacheManagerFactory.createCacheManager(c);
-   }
-
-   @Override
-   protected void setup() throws Exception {
-      super.setup();
-      hotrodServer = TestHelper.startHotRodServer(cacheManager);
-      port = hotrodServer.getPort();
-      remoteCacheManager = new RemoteCacheManager("localhost", hotrodServer.getPort());
-      remoteCacheManager.start();
+      cacheManager = TestCacheManagerFactory.createCacheManager(c);
+      memcachedServer = MemcachedTestingUtil.startMemcachedTextServer(cacheManager);
+      port = memcachedServer.getPort();
+      memcachedClient = MemcachedTestingUtil.createMemcachedClient(60000, port);
       GlobalComponentRegistry gcr = TestingUtil.extractGlobalComponentRegistry(cacheManager);
       interpreter = gcr.getComponent(Interpreter.class);
+      return cacheManager;
    }
 
-   @AfterTest(alwaysRun = true)
+   @AfterMethod(alwaysRun = true)
    public void release() {
       try {
-         HotRodClientTestingUtil.killRemoteCacheManager(remoteCacheManager);
-         HotRodClientTestingUtil.killServers(hotrodServer);
+         memcachedServer.stop();
          TestingUtil.killCacheManagers(cacheManager);
+         memcachedClient.shutdown();
       } catch (Exception e) {
          e.printStackTrace();
       }
    }
 
-   public void testHotRodCodec() throws Exception {
-      Cache<ByteArrayKey, CacheValue> cache = cacheManager.getCache();
-      RemoteCache<String, String> remoteCache = remoteCacheManager.getCache();
-      remoteCache.put("k1", "v1");
-      GenericJBossMarshaller marshaller = new GenericJBossMarshaller();
-      ByteArrayKey k1 = new ByteArrayKey(marshaller.objectToByteBuffer("k1"));
-      assertTrue(cache.containsKey(k1));
+   public void testMemcachedCodec() throws Exception {
+      Cache<ByteArrayKey, CacheValue> cache = cacheManager.getCache(MEMCACHED_CACHE);
 
-      String sessionId = interpreter.createSessionId(BasicCacheContainer.DEFAULT_CACHE_NAME);
-      Map<String, String> response = interpreter.execute(sessionId, "get --codec=hotrod k1;");
+      memcachedClient.set("k1", 3600, "v1").get();
+
+      assertTrue(cache.containsKey("k1"));
+
+      String sessionId = interpreter.createSessionId(MEMCACHED_CACHE);
+      Map<String, String> response = interpreter.execute(sessionId, "get --codec=memcached k1;");
       assertEquals("v1", response.get(ResultKeys.OUTPUT.toString()));
 
-      interpreter.execute(sessionId, "put --codec=hotrod k2 v2;");
-      String v2 = remoteCache.get("k2");
+      interpreter.execute(sessionId, "put --codec=memcached k2 v2;");
+      String v2 = (String) memcachedClient.get("k2");
       assertEquals("v2", v2);
    }
 
-   public void testHotRodEncoding() throws Exception {
-      Cache<ByteArrayKey, CacheValue> cache = cacheManager.getCache();
-      RemoteCache<String, String> remoteCache = remoteCacheManager.getCache();
-      remoteCache.put("k1", "v1");
-      GenericJBossMarshaller marshaller = new GenericJBossMarshaller();
-      ByteArrayKey k1 = new ByteArrayKey(marshaller.objectToByteBuffer("k1"));
-      assertTrue(cache.containsKey(k1));
+   public void testMemcachedEncoding() throws Exception {
+      Cache<ByteArrayKey, CacheValue> cache = cacheManager.getCache(MEMCACHED_CACHE);
 
-      String sessionId = interpreter.createSessionId(BasicCacheContainer.DEFAULT_CACHE_NAME);
-      interpreter.execute(sessionId, "encoding hotrod;");
+      memcachedClient.set("k1", 3600, "v1").get();
+
+      assertTrue(cache.containsKey("k1"));
+
+      String sessionId = interpreter.createSessionId(MEMCACHED_CACHE);
+      interpreter.execute(sessionId, "encoding memcached;");
       Map<String, String> response = interpreter.execute(sessionId, "get k1;");
       assertEquals("v1", response.get(ResultKeys.OUTPUT.toString()));
 
       interpreter.execute(sessionId, "put k2 v2;");
-      String v2 = remoteCache.get("k2");
+      String v2 = (String) memcachedClient.get("k2");
       assertEquals("v2", v2);
    }
 }

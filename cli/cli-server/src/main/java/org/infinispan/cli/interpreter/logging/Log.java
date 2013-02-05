@@ -60,25 +60,25 @@ public interface Log extends org.infinispan.util.logging.Log {
    @Message(value = "No migrator has been specified", id = 19005)
    StatementException missingMigrator();
 
-   @Message(value = "Unknown option %s", id = 19006)
+   @Message(value = "Unknown option '%s'", id = 19006)
    StatementException unknownOption(String name);
 
    @Message(value = "The option %s requires a parameter", id = 19007)
    StatementException missingOptionParameter(String name);
 
-   @Message(value = "Failure while encoding key using codec %s", id = 19008)
+   @Message(value = "Failure while encoding key using codec '%s'", id = 19008)
    CodecException keyEncodingFailed(@Cause Exception e, String codec);
 
-   @Message(value = "Failure while decoding key using codec %s", id = 19009)
+   @Message(value = "Failure while decoding key using codec '%s'", id = 19009)
    CodecException keyDecodingFailed(@Cause Exception e, String codec);
 
-   @Message(value = "Failure while encoding value using codec %s", id = 19010)
+   @Message(value = "Failure while encoding value using codec '%s'", id = 19010)
    CodecException valueEncodingFailed(@Cause Exception e, String codec);
 
-   @Message(value = "Failure while decoding value using codec %s", id = 19011)
+   @Message(value = "Failure while decoding value using codec '%s'", id = 19011)
    CodecException valueDecodingFailed(@Cause Exception e, String codec);
 
-   @Message(value = "No such codec named %s", id = 19012)
+   @Message(value = "No such codec named '%s'", id = 19012)
    CodecException noSuchCodec(String codec);
 
    @LogMessage(level = WARN)
@@ -86,22 +86,22 @@ public interface Log extends org.infinispan.util.logging.Log {
    void loadingCodecFailed(@Cause ServiceConfigurationError e);
 
    @LogMessage(level = ERROR)
-   @Message(value = "Codec %s attempts to override codec %s", id = 19014)
+   @Message(value = "Codec '%s' attempts to override codec '%s'", id = 19014)
    void duplicateCodec(String codec1, String codec2);
 
-   @Message(value = "Invalid session id %s", id = 19015)
+   @Message(value = "Invalid session id '%s'", id = 19015)
    IllegalArgumentException invalidSession(String sessionId);
 
-   @Message(value = "No such cache: %s", id = 19016)
+   @Message(value = "No such cache: '%s'", id = 19016)
    IllegalArgumentException nonExistentCache(String cacheName);
 
-   @Message(value = "A cache named %s already exists", id = 19017)
+   @Message(value = "A cache named '%s' already exists", id = 19017)
    IllegalArgumentException cacheAlreadyExists(String cacheName);
 
-   @Message(value = "Could not create cache named %s on all cluster nodes", id = 19018)
+   @Message(value = "Could not create cache named '%s' on all cluster nodes", id = 19018)
    CacheException cannotCreateClusteredCaches(@Cause Throwable e, String cacheName);
 
-   @Message(value = "Statistics not enabled on cache %s", id = 19019)
+   @Message(value = "Statistics not enabled on cache '%s'", id = 19019)
    StatementException statisticsNotEnabled(String cacheName);
 
    @Message(value = "Cannot retrieve a transaction manager", id = 19020)
@@ -133,4 +133,7 @@ public interface Log extends org.infinispan.util.logging.Log {
 
    @Message(value = "No cache selected yet", id = 19029)
    StatementException noCacheSelectedYet();
+
+   @Message(value = "Failure while encoding value of type '%s' using codec '%s'", id = 19030)
+   CodecException valueEncodingFailed(String type, String codec);
 }

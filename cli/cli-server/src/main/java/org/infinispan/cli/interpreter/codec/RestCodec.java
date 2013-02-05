@@ -18,43 +18,38 @@
  */
 package org.infinispan.cli.interpreter.codec;
 
-import java.nio.charset.Charset;
-
-import org.infinispan.cli.interpreter.Interpreter;
 import org.infinispan.cli.interpreter.logging.Log;
-import org.infinispan.server.memcached.MemcachedValue;
+import org.infinispan.remoting.MIMECacheEntry;
 import org.infinispan.util.logging.LogFactory;
 
 /**
- *
- * MemcachedCodec.
+ * RestCodec.
  *
  * @author Tristan Tarrant
  * @since 5.2
  */
-public class MemcachedCodec implements Codec {
-   private static final Log log = LogFactory.getLog(Interpreter.class, Log.class);
-   private Charset UTF8 = Charset.forName("UTF-8");
+public class RestCodec implements Codec {
+   public static final Log log = LogFactory.getLog(RestCodec.class, Log.class);
 
    @Override
    public String getName() {
-      return "memcached";
+      return "rest";
    }
 
    @Override
-   public Object encodeKey(Object key) {
+   public Object encodeKey(Object key) throws CodecException {
       return key;
    }
 
    @Override
    public Object encodeValue(Object value) throws CodecException {
       if (value != null) {
-         if (value instanceof MemcachedValue) {
+         if (value instanceof MIMECacheEntry) {
             return value;
-         } else if (value instanceof byte[]) {
-            return new MemcachedValue((byte[])value, 1, 0);
          } else if (value instanceof String) {
-            return new MemcachedValue(((String)value).getBytes(UTF8), 1, 0);
+            return new MIMECacheEntry("text/plain", ((String)value).getBytes());
+         } else if (value instanceof byte[]) {
+            return new MIMECacheEntry("application/binary", (byte[])value);
          } else {
             throw log.valueEncodingFailed(value.getClass().getName(), this.getName());
          }
@@ -64,19 +59,22 @@ public class MemcachedCodec implements Codec {
    }
 
    @Override
-   public Object decodeKey(Object key) {
+   public Object decodeKey(Object key) throws CodecException {
       return key;
    }
 
    @Override
-   public Object decodeValue(Object value) {
+   public Object decodeValue(Object value) throws CodecException {
       if (value != null) {
-         MemcachedValue mv = (MemcachedValue)value;
-         return new String(mv.data(), UTF8);
+         MIMECacheEntry e = (MIMECacheEntry)value;
+         if (e.contentType.startsWith("text/") || e.contentType.equals("application/xml") || e.contentType.equals("application/json")) {
+            return new String(e.data);
+         } else {
+            return e.data;
+         }
       } else {
          return null;
       }
-
    }
 
 }
