@@ -43,9 +43,9 @@ import static org.testng.AssertJUnit.assertNull;
  *
  * @author Vladimir Blagojevic
  */
-@Test(groups = "functional", testName = "replication.SyncReplImplicitLockingTest")
+@Test(groups = "functional", testName = "replication.SyncReplPessimisticLockingTest")
 public class SyncReplPessimisticLockingTest extends MultipleCacheManagersTest {
-   //Cache<String, String> cache1, cache2;
+
    String k = "key", v = "value";
 
    public SyncReplPessimisticLockingTest() {

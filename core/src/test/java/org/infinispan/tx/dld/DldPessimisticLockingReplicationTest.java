@@ -33,7 +33,7 @@ import org.testng.annotations.Test;
  * @author Mircea.Markus@jboss.com
  * @since 4.1
  */
-@Test(groups = "functional", testName = "tx.dld.DldEagerLockingReplicationTest")
+@Test(groups = "functional", testName = "tx.dld.DldPessimisticLockingReplicationTest")
 public class DldPessimisticLockingReplicationTest extends BaseDldPessimisticLockingTest {
 
    @Override

@@ -26,7 +26,7 @@ import org.infinispan.commands.write.WriteCommand;
 import org.infinispan.test.ReplListener;
 import org.testng.annotations.Test;
 
-@Test(groups = "functional", testName = "replication.AsyncAPIAsyncReplTest")
+@Test(groups = "functional", testName = "replication.AsyncAPITxAsyncReplTest")
 public class AsyncAPITxAsyncReplTest extends AsyncAPITxSyncReplTest {
 
    ReplListener rl;
@@ -54,8 +54,5 @@ public class AsyncAPITxAsyncReplTest extends AsyncAPITxSyncReplTest {
             rlNoTx.expect(cmds);
          rlNoTx.waitForRpc();
       }
-
-
-
    }
 }

@@ -26,11 +26,9 @@ package org.infinispan.tx.locking;
 import org.infinispan.test.SingleCacheManagerTest;
 import org.infinispan.transaction.tm.DummyTransaction;
 import org.infinispan.transaction.tm.DummyTransactionManager;
-import org.infinispan.transaction.tm.DummyXid;
 import org.testng.annotations.Test;
 
 import javax.transaction.SystemException;
-import javax.transaction.xa.XAException;
 import javax.transaction.xa.Xid;
 import java.util.Collections;
 import java.util.Map;

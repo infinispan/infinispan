@@ -33,7 +33,7 @@ import org.testng.annotations.Test;
  * @author Mircea Markus
  * @since 5.1
  */
-@Test (groups = "functional", testName = "lock.singlelock.replicated.optimistic.BasicSingleLockRepOptTest")
+@Test (groups = "functional", testName = "lock.singlelock.replicated.optimistic.BasicSingleLockReplOptTest")
 public class BasicSingleLockReplOptTest extends AbstractNoCrashTest {
 
    public BasicSingleLockReplOptTest() {
