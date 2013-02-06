@@ -276,7 +276,7 @@ public class StateConsumerImpl implements StateConsumer {
       // No need for a try/finally block, since it's just an assignment
       stateTransferLock.acquireExclusiveTopologyLock();
       this.cacheTopology = cacheTopology;
-      if (numStartedTopologyUpdates == 1) {
+      if (isRebalance) {
          updatedKeys = new ConcurrentHashSet<Object>();
       }
       stateTransferLock.releaseExclusiveTopologyLock();
