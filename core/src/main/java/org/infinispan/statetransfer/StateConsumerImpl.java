@@ -263,7 +263,7 @@ public class StateConsumerImpl implements StateConsumer {
    public void onTopologyUpdate(CacheTopology cacheTopology, boolean isRebalance) {
       if (trace) log.tracef("Received new topology for cache %s, isRebalance = %b, topology = %s", cacheName, isRebalance, cacheTopology);
 
-      int numStartedTopologyUpdates = activeTopologyUpdates.incrementAndGet();
+      activeTopologyUpdates.incrementAndGet();
       if (isRebalance) {
          rebalanceInProgress.set(true);
          waitingForState.set(true);
@@ -276,7 +276,7 @@ public class StateConsumerImpl implements StateConsumer {
       // No need for a try/finally block, since it's just an assignment
       stateTransferLock.acquireExclusiveTopologyLock();
       this.cacheTopology = cacheTopology;
-      if (numStartedTopologyUpdates == 1) {
+      if (isRebalance) {
          updatedKeys = new ConcurrentHashSet<Object>();
       }
       stateTransferLock.releaseExclusiveTopologyLock();
