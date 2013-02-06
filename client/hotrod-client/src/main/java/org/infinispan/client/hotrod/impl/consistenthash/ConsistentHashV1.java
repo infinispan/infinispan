@@ -96,11 +96,7 @@ public class ConsistentHashV1 implements ConsistentHash {
 
    @Override
    public SocketAddress getServer(byte[] key) {
-      int keyHashCode = getNormalizedHash(key);
-      if (keyHashCode == Integer.MIN_VALUE) keyHashCode += 1;
-      int hash = Math.abs(keyHashCode);
-
-      int normalisedHashForKey = hash % hashSpace;
+      int normalisedHashForKey = getNormalizedHash(key) % hashSpace;
 
       int mainOwner = getHashIndex(normalisedHashForKey);
 
@@ -132,7 +128,7 @@ public class ConsistentHashV1 implements ConsistentHash {
    }
 
    @Override
-   public int getNormalizedHash(Object key) {
-      return Util.getNormalizedHash(key, hash);
+   public final int getNormalizedHash(Object object) {
+      return Util.getNormalizedHash(object, hash);
    }
 }
