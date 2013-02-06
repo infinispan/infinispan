@@ -128,7 +128,7 @@
           <xs:choice minOccurs="1" maxOccurs="1">
             <xs:element name="connectionPool" type="tns:connectionPool" />
             <xs:element name="dataSource" type="tns:dataSource" />
-            <xs:element name="singleConnection" type="tns:singleConnection" />
+            <xs:element name="simpleConnection" type="tns:simpleConnection" />
           </xs:choice>
         </xs:sequence>
       </xs:extension>
@@ -176,7 +176,7 @@
     </xs:attribute>
   </xs:complexType>
   
-  <xs:complexType name="singleConnection">
+  <xs:complexType name="simpleConnection">
     <xs:attribute name="connectionUrl" type="xs:string">
       <xs:annotation>
         <xs:documentation>
