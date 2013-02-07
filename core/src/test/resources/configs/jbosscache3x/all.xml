@@ -145,7 +145,8 @@
             <VERIFY_SUSPECT timeout="1500"/>
             <pbcast.NAKACK discard_delivered_msgs="true" retransmit_timeout="300,600,1200,2400,4800"
                            use_mcast_xmit="false"/>
-            <UNICAST timeout="300,600,1200,2400,3600"/>
+            <UNICAST timeout="300,600,1200,2400,3600"
+                     conn_expiry_timeout="0"/>
             <pbcast.STABLE desired_avg_gossip="50000" max_bytes="400000" stability_delay="1000"/>
             <pbcast.GMS join_timeout="5000" print_local_addr="true" shun="false" view_ack_collection_timeout="5000"
                         view_bundling="true"/>
