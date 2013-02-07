@@ -449,13 +449,10 @@ public class MarshalledValueTest extends MultipleCacheManagersTest {
       cache2.put(key, "2");
 
       // Deserialization only occurs when the cache2.put occurs, not during transport thread execution.
-      // Serialized 5 times:
-      //    twice when cache1 is stored, one to check if the type can be serialized, 2nd to replicate.
-      //    twice when cache1 is stored, one to check if the type can be serialized, 2nd to replicate.
-      //    the final time is when in the 1st node it compares the received
-      //    value and the one in the cache, whose comparison happens in
-      //    serialized mode since serializing is cheaper than deserializing.
-      assertSerializationCounts(5, 1);
+      // Serialized 4 times:
+      //    twice when put is invoked on cache1, one to check if the type can be serialized, 2nd to replicate.
+      //    twice when put is invoked on cache2, one to check if the type can be serialized, 2nd to replicate.
+      assertSerializationCounts(4, 1);
    }
 
    public void testReturnValueDeserialization() { 
