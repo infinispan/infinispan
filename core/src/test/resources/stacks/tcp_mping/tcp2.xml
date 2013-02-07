@@ -91,7 +91,8 @@
               xmit_table_num_rows="20"
               xmit_table_msgs_per_row="10000"
               xmit_table_max_compaction_time="10000"
-              max_msg_batch_size="100"/> 
+              max_msg_batch_size="100"
+              conn_expiry_timeout="0"/>
    <RSVP />
    <pbcast.STABLE stability_delay="1000" desired_avg_gossip="50000"
                   max_bytes="400000"/>

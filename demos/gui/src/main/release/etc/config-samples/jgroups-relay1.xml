@@ -62,7 +62,8 @@
     <pbcast.NAKACK use_mcast_xmit="true"
                    retransmit_timeout="100,300,600,1200"
                    discard_delivered_msgs="true"/>
-    <UNICAST2 timeout="300,600,1200"/>
+    <UNICAST2 timeout="300,600,1200"
+              conn_expiry_timeout="0"/>
     <pbcast.STABLE stability_delay="1000" desired_avg_gossip="50000"
                    max_bytes="1000000"/>
     <pbcast.GMS print_local_addr="true" join_timeout="5000"
