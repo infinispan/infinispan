@@ -60,6 +60,9 @@ import javax.transaction.Transaction;
 import javax.transaction.TransactionSynchronizationRegistry;
 import java.util.*;
 import java.util.concurrent.ConcurrentMap;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
@@ -98,6 +101,7 @@ public class TransactionTable {
    private Lock minTopologyRecalculationLock;
    private final ConcurrentMap<GlobalTransaction, Long> completedTransactions = ConcurrentMapFactory.makeConcurrentMap();
 
+   private ScheduledExecutorService executorService;
 
    /**
     * minTxTopologyId is the minimum topology ID across all ongoing local and remote transactions.
@@ -138,11 +142,37 @@ public class TransactionTable {
          notifier.addListener(this);
          clustered = true;
       }
+      
+      // Periodically run a task to cleanup the transaction table from completed transactions.
+      ThreadFactory tf = new ThreadFactory() {
+         @Override
+         public Thread newThread(Runnable r) {
+            String address = rpcManager != null ? rpcManager.getTransport().getAddress().toString() : "local";
+            Thread th = new Thread(r, "TxCleanupService," + cacheName + "," + address);
+            th.setDaemon(true);
+            return th;
+         }
+      };
+
+      executorService = Executors.newSingleThreadScheduledExecutor(tf);
+
+      long interval = configuration.transaction().reaperWakeUpInterval();
+      executorService.scheduleAtFixedRate(new Runnable() {
+         @Override
+         public void run() {
+            cleanupCompletedTransactions();
+         }
+      }, interval, interval, TimeUnit.MILLISECONDS);
+
    }
 
    @Stop
    @SuppressWarnings("unused")
    private void stop() {
+      
+      if (executorService != null)
+         executorService.shutdownNow();
+      
       if (clustered) {
          notifier.removeListener(this);
          currentTopologyId = CACHE_STOPPED_TOPOLOGY_ID; // indicate that the cache has stopped
@@ -537,5 +567,5 @@ public class TransactionTable {
             log.errorf(e, "Failed to cleanup completed transactions: %s", e.getMessage());
          }
       }
-   }
+   }   
 }
