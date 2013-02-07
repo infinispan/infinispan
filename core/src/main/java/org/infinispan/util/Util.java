@@ -596,9 +596,16 @@ public final class Util {
       throw new IllegalStateException(String.format("Expected a value that can be converted into a double: type=%s, value=%s", type, o));
    }
 
-   public static int getNormalizedHash(Object key, Hash hashFct) {
-      // more efficient impl
-      return hashFct.hash(key) & Integer.MAX_VALUE; // make sure no negative numbers are involved.
+   /**
+    * Applies the given hash function to the hash code of a given object, and then normalizes it to ensure a positive
+    * value is always returned.
+    * @param object to hash
+    * @param hashFct hash function to apply
+    * @return a non-null, non-negative normalized hash code for a given object
+    */
+   public static int getNormalizedHash(Object object, Hash hashFct) {
+      // make sure no negative numbers are involved.
+      return hashFct.hash(object) & Integer.MAX_VALUE;
    }
 
    public static boolean isIBMJavaVendor() {
