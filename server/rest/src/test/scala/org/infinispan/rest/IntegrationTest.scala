@@ -76,6 +76,7 @@ class IntegrationTest {
    @AfterClass(alwaysRun = true)
    def tearDown() {
       ServerInstance.stop()
+      assertNull(ManagerInstance.instance)
    }
 
    def testBasicOperation(m: Method) {
