@@ -33,6 +33,8 @@ import org.infinispan.upgrade.RollingUpgradeManager;
 import org.infinispan.transaction.xa.recovery.RecoveryAdminOperations;
 import org.infinispan.xsite.XSiteAdminOperations;
 
+import java.lang.ref.WeakReference;
+
 /**
  * An internal factory for constructing Caches.  Used by the {@link DefaultCacheManager}, this is not intended as public
  * API.
@@ -45,7 +47,7 @@ import org.infinispan.xsite.XSiteAdminOperations;
  * @since 4.0
  */
 public class InternalCacheFactory<K, V> extends AbstractNamedCacheComponentFactory {
-   private ClassLoader defaultClassLoader;
+   private WeakReference<ClassLoader> defaultClassLoader;
 
    /**
     * This implementation clones the configuration passed in before using it.
@@ -89,7 +91,8 @@ public class InternalCacheFactory<K, V> extends AbstractNamedCacheComponentFacto
       this.configuration = configuration;
 
       // injection bootstrap stuff
-      componentRegistry = new ComponentRegistry(cacheName, configuration, cache, globalComponentRegistry, defaultClassLoader);
+      componentRegistry = new ComponentRegistry(cacheName, configuration, cache, globalComponentRegistry,
+            defaultClassLoader == null ? null : defaultClassLoader.get());
 
       /*
          --------------------------------------------------------------------------------------------------------------
@@ -116,7 +119,7 @@ public class InternalCacheFactory<K, V> extends AbstractNamedCacheComponentFacto
     * @param loader class loader to use as a default.
     */
    public void setDefaultClassLoader(ClassLoader loader) {
-      this.defaultClassLoader = loader;
+      this.defaultClassLoader = new WeakReference<ClassLoader>(loader);
    }
 
    @Override

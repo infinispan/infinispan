@@ -20,6 +20,7 @@ package org.infinispan.configuration.cache;
 
 import static java.util.Arrays.asList;
 
+import java.lang.ref.WeakReference;
 import java.lang.reflect.Constructor;
 import java.util.ArrayList;
 import java.util.LinkedList;
@@ -31,7 +32,7 @@ import org.infinispan.configuration.ConfigurationUtils;
 
 public class ConfigurationBuilder implements ConfigurationChildBuilder {
 
-   private ClassLoader classLoader;
+   private WeakReference<ClassLoader> classLoader;
    private final ClusteringConfigurationBuilder clustering;
    private final CustomInterceptorsConfigurationBuilder customInterceptors;
    private final DataContainerConfigurationBuilder dataContainer;
@@ -70,12 +71,12 @@ public class ConfigurationBuilder implements ConfigurationChildBuilder {
    }
 
    public ConfigurationBuilder classLoader(ClassLoader cl) {
-      this.classLoader = cl;
+      this.classLoader = new WeakReference<ClassLoader>(cl);
       return this;
    }
 
    ClassLoader classLoader() {
-      return classLoader;
+      return classLoader.get();
    }
 
    @Override
@@ -209,11 +210,12 @@ public class ConfigurationBuilder implements ConfigurationChildBuilder {
                dataContainer.create(), deadlockDetection.create(), eviction.create(),
                expiration.create(), indexing.create(), invocationBatching.create(),
                jmxStatistics.create(), loaders.create(), locking.create(), storeAsBinary.create(),
-               transaction.create(), unsafe.create(), versioning.create(), modulesConfig,sites.create() , classLoader);
+               transaction.create(), unsafe.create(), versioning.create(), modulesConfig,sites.create() ,
+               classLoader == null ? null : classLoader.get());
    }
 
    public ConfigurationBuilder read(Configuration template) {
-      this.classLoader = template.classLoader();
+      this.classLoader = new WeakReference<ClassLoader>(template.classLoader());
       this.clustering.read(template.clustering());
       this.customInterceptors.read(template.customInterceptors());
       this.dataContainer.read(template.dataContainer());

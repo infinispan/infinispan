@@ -33,6 +33,7 @@ import org.infinispan.util.concurrent.WithinThreadExecutor;
 import org.infinispan.util.logging.Log;
 
 import java.lang.annotation.Annotation;
+import java.lang.ref.WeakReference;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
@@ -190,13 +191,13 @@ public abstract class AbstractListenerImpl {
       public final Object target;
       public final Method method;
       public final boolean sync;
-      public final ClassLoader classLoader;
+      public final WeakReference<ClassLoader> classLoader;
 
       public ListenerInvocation(Object target, Method method, boolean sync, ClassLoader classLoader) {
          this.target = target;
          this.method = method;
          this.sync = sync;
-         this.classLoader = classLoader;
+         this.classLoader = new WeakReference<ClassLoader>(classLoader);
       }
 
       public void invoke(final Object event) {
@@ -206,7 +207,7 @@ public abstract class AbstractListenerImpl {
             public void run() {
                ClassLoader contextClassLoader = null;
                if (classLoader != null) {
-                  contextClassLoader = setContextClassLoader(classLoader);
+                  contextClassLoader = setContextClassLoader(classLoader.get());
                }
                try {
                   method.invoke(target, event);

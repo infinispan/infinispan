@@ -23,6 +23,7 @@
 
 package org.infinispan.configuration.global;
 
+import java.lang.ref.WeakReference;
 import java.lang.reflect.Constructor;
 import java.util.ArrayList;
 import java.util.LinkedList;
@@ -35,7 +36,7 @@ import static java.util.Arrays.asList;
 
 public class GlobalConfigurationBuilder implements GlobalConfigurationChildBuilder {
 
-   private ClassLoader cl;
+   private WeakReference<ClassLoader> cl;
    private final TransportConfigurationBuilder transport;
    private final GlobalJmxStatisticsConfigurationBuilder globalJmxStatistics;
    private final SerializationConfigurationBuilder serialization;
@@ -48,7 +49,7 @@ public class GlobalConfigurationBuilder implements GlobalConfigurationChildBuild
    private final SiteConfigurationBuilder site;
 
    public GlobalConfigurationBuilder() {
-      this.cl = Thread.currentThread().getContextClassLoader();
+      this.cl = new WeakReference<ClassLoader>(Thread.currentThread().getContextClassLoader());
       this.transport = new TransportConfigurationBuilder(this);
       this.globalJmxStatistics = new GlobalJmxStatisticsConfigurationBuilder(this);
       this.serialization = new SerializationConfigurationBuilder(this);
@@ -88,11 +89,11 @@ public class GlobalConfigurationBuilder implements GlobalConfigurationChildBuild
    }
 
    protected ClassLoader getClassLoader() {
-      return cl;
+      return cl.get();
    }
 
    public GlobalConfigurationBuilder classLoader(ClassLoader cl) {
-      this.cl = cl;
+      this.cl = new WeakReference<ClassLoader>(cl);
       return this;
    }
 
@@ -194,12 +195,12 @@ public class GlobalConfigurationBuilder implements GlobalConfigurationChildBuild
             shutdown.create(),
             modulesConfig,
             site.create(),
-            cl
+            cl.get()
             );
    }
 
    public GlobalConfigurationBuilder read(GlobalConfiguration template) {
-      this.cl = template.classLoader();
+      this.cl = new WeakReference<ClassLoader>(template.classLoader());
 
       for (Object c : template.modules().values()) {
          BuiltBy builtBy = c.getClass().getAnnotation(BuiltBy.class);

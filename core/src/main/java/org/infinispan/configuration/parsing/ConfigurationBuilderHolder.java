@@ -18,6 +18,7 @@
  */
 package org.infinispan.configuration.parsing;
 
+import java.lang.ref.WeakReference;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -31,7 +32,7 @@ public class ConfigurationBuilderHolder {
    private final Map<String, ConfigurationBuilder> namedConfigurationBuilders;
    private ConfigurationBuilder currentConfigurationBuilder;
    private final Map<Class<? extends ConfigurationParser<?>>, ParserContext> parserContexts;
-   private final ClassLoader classLoader;
+   private final WeakReference<ClassLoader> classLoader;
 
    public ConfigurationBuilderHolder() {
       this(Thread.currentThread().getContextClassLoader());
@@ -43,7 +44,7 @@ public class ConfigurationBuilderHolder {
       this.namedConfigurationBuilders = new HashMap<String, ConfigurationBuilder>();
       this.currentConfigurationBuilder = defaultConfigurationBuilder;
       this.parserContexts = new HashMap<Class<? extends ConfigurationParser<?>>, ParserContext>();
-      this.classLoader = classLoader;
+      this.classLoader = new WeakReference<ClassLoader>(classLoader);
    }
 
    public GlobalConfigurationBuilder getGlobalConfigurationBuilder() {
@@ -82,7 +83,7 @@ public class ConfigurationBuilderHolder {
    }
 
    public ClassLoader getClassLoader() {
-      return classLoader;
+      return classLoader.get();
    }
 
    Map<Class<? extends ConfigurationParser<?>>, ParserContext> getParserContexts() {

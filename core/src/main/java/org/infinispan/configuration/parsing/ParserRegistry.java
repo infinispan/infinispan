@@ -22,6 +22,7 @@ import java.io.BufferedInputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
+import java.lang.ref.WeakReference;
 import java.util.ServiceLoader;
 
 import javax.xml.namespace.QName;
@@ -43,12 +44,12 @@ import org.jboss.staxmapper.XMLMapper;
  */
 public class ParserRegistry {
    private final XMLMapper xmlMapper;
-   private final ClassLoader cl;
+   private final WeakReference<ClassLoader> cl;
 
    public ParserRegistry(ClassLoader classLoader) {
       xmlMapper = XMLMapper.Factory.create();
-      this.cl = classLoader;
-      ServiceLoader<ConfigurationParser> parsers = ServiceLoader.load(ConfigurationParser.class, cl);
+      this.cl = new WeakReference<ClassLoader>(classLoader);
+      ServiceLoader<ConfigurationParser> parsers = ServiceLoader.load(ConfigurationParser.class, cl.get());
       for (ConfigurationParser<?> parser : parsers) {
          for (Namespace ns : parser.getSupportedNamespaces()) {
             xmlMapper.registerRootElement(new QName(ns.getUri(), ns.getRootElement()), parser);
@@ -58,7 +59,7 @@ public class ParserRegistry {
 
    public ConfigurationBuilderHolder parseFile(String filename) throws IOException {
       FileLookup fileLookup = FileLookupFactory.newInstance();
-      InputStream is = fileLookup.lookupFile(filename, cl);
+      InputStream is = fileLookup.lookupFile(filename, cl.get());
       if(is==null) {
          throw new FileNotFoundException(filename);
       }
@@ -73,7 +74,7 @@ public class ParserRegistry {
       try {
          BufferedInputStream input = new BufferedInputStream(is);
          XMLStreamReader streamReader = XMLInputFactory.newInstance().createXMLStreamReader(input);
-         ConfigurationBuilderHolder holder = new ConfigurationBuilderHolder(cl);
+         ConfigurationBuilderHolder holder = new ConfigurationBuilderHolder(cl.get());
          xmlMapper.parseDocument(holder, streamReader);
          streamReader.close();
          // Fire all parsingComplete events if any

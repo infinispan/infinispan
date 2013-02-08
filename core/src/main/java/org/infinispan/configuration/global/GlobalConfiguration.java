@@ -22,6 +22,7 @@
  */
 package org.infinispan.configuration.global;
 
+import java.lang.ref.WeakReference;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
@@ -67,7 +68,7 @@ public class GlobalConfiguration {
    private final ShutdownConfiguration shutdown;
    private final Map<Class<?>, ?> modules;
    private final SiteConfiguration site;
-   private final ClassLoader cl;
+   private final WeakReference<ClassLoader> cl;
 
    GlobalConfiguration(ExecutorFactoryConfiguration asyncListenerExecutor,
          ExecutorFactoryConfiguration asyncTransportExecutor, ScheduledExecutorFactoryConfiguration evictionScheduledExecutor,
@@ -88,7 +89,7 @@ public class GlobalConfiguration {
       }
       this.modules = Collections.unmodifiableMap(moduleMap);
       this.site = site;
-      this.cl = cl;
+      this.cl = new WeakReference<ClassLoader>(cl);
    }
 
    public ExecutorFactoryConfiguration asyncListenerExecutor() {
@@ -136,7 +137,7 @@ public class GlobalConfiguration {
     * Get the classloader in use by this configuration.
     */
    public ClassLoader classLoader() {
-      return cl;
+      return cl.get();
    }
 
    public SiteConfiguration sites() {

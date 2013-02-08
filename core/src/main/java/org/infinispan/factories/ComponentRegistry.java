@@ -41,6 +41,7 @@ import org.infinispan.util.InfinispanCollections;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
+import java.lang.ref.WeakReference;
 import java.util.Map;
 
 import static org.infinispan.factories.KnownComponentNames.MODULE_COMMAND_INITIALIZERS;
@@ -64,7 +65,7 @@ public final class ComponentRegistry extends AbstractComponentRegistry {
    private ResponseGenerator responseGenerator;
    private CommandsFactory commandsFactory;
 
-   protected final ClassLoader defaultClassLoader;
+   protected final WeakReference<ClassLoader> defaultClassLoader;
 
    @Inject
    public void setCacheManagerNotifier(CacheManagerNotifier cacheManagerNotifier) {
@@ -80,7 +81,7 @@ public final class ComponentRegistry extends AbstractComponentRegistry {
     */
    public ComponentRegistry(String cacheName, Configuration configuration, AdvancedCache<?, ?> cache,
                             GlobalComponentRegistry globalComponents, ClassLoader defaultClassLoader) {
-      this.defaultClassLoader = defaultClassLoader;
+      this.defaultClassLoader = new WeakReference<ClassLoader>(defaultClassLoader);
       try {
          this.cacheName = cacheName;
          if (cacheName == null) throw new ConfigurationException("Cache name cannot be null!");
