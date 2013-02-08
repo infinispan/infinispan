@@ -1,0 +1,209 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  ~ JBoss, Home of Professional Open Source
+  ~ Copyright 2013 Red Hat Inc. and/or its affiliates and other
+  ~ contributors as indicated by the @author tags. All rights reserved.
+  ~ See the copyright.txt in the distribution for a full listing of
+  ~ individual contributors.
+  ~
+  ~ This is free software; you can redistribute it and/or modify it
+  ~ under the terms of the GNU Lesser General Public License as
+  ~ published by the Free Software Foundation; either version 2.1 of
+  ~ the License, or (at your option) any later version.
+  ~
+  ~ This software is distributed in the hope that it will be useful,
+  ~ but WITHOUT ANY WARRANTY; without even the implied warranty of
+  ~ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
+  ~ Lesser General Public License for more details.
+  ~
+  ~ You should have received a copy of the GNU Lesser General Public
+  ~ License along with this software; if not, write to the Free
+  ~ Software Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
+  ~ 02110-1301 USA, or see the FSF site: http://www.fsf.org.
+  -->
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+   <modelVersion>4.0.0</modelVersion>
+
+   <parent>
+      <groupId>org.infinispan</groupId>
+      <artifactId>infinispan-parent</artifactId>
+      <version>5.3.0-SNAPSHOT</version>
+      <relativePath>../../../../parent/pom.xml</relativePath>
+   </parent>
+
+   <artifactId>infinispan-jcache-tck-runner</artifactId>
+   <packaging>bundle</packaging>
+   <name>Infinispan JCACHE (JSR-107) TCK Runner</name>
+   <description>JCACHE (JSR-107) TCK runner for Infinispan implementation</description>
+
+   <properties>
+      <domain-lib-dir>${project.build.directory}/domainlib</domain-lib-dir>
+      <domain-jar>domain.jar</domain-jar>
+
+      <CacheManagerImpl>org.infinispan.jcache.InfinispanCacheManager</CacheManagerImpl>
+      <CacheImpl>org.infinispan.jcache.InfinispanCache</CacheImpl>
+      <CacheInvocationContextImpl>org.infinispan.cdi.interceptor.context.CacheKeyInvocationContextImpl</CacheInvocationContextImpl>
+   </properties>
+
+   <dependencies>
+      <dependency>
+         <groupId>${project.groupId}</groupId>
+         <artifactId>infinispan-jcache</artifactId>
+         <scope>test</scope>
+      </dependency>
+      <!--<dependency>-->
+         <!--<groupId>${project.groupId}</groupId>-->
+         <!--<artifactId>infinispan-cdi</artifactId>-->
+         <!--<scope>test</scope>-->
+      <!--</dependency>-->
+
+      <dependency>
+         <groupId>javax.cache</groupId>
+         <artifactId>cache-tests</artifactId>
+         <classifier>tests</classifier>
+         <scope>test</scope>
+      </dependency>
+      <!--<dependency>-->
+         <!--<groupId>javax.cache</groupId>-->
+         <!--<artifactId>cdi-weld-annotations-test-harness</artifactId>-->
+         <!--<scope>test</scope>-->
+      <!--</dependency>-->
+   </dependencies>
+
+   <build>
+      <testResources>
+         <testResource>
+            <directory>src/test/resources</directory>
+            <filtering>true</filtering>
+         </testResource>
+      </testResources>
+
+      <plugins>
+         <plugin>
+            <groupId>org.apache.maven.plugins</groupId>
+            <artifactId>maven-dependency-plugin</artifactId>
+            <executions>
+               <!--Required because JUnit will not detect tests simply included in a dep-->
+               <execution>
+                  <id>copy-cache-tests</id>
+                  <goals>
+                     <goal>unpack-dependencies</goal>
+                  </goals>
+                  <configuration>
+                     <outputDirectory>${project.build.testOutputDirectory}</outputDirectory>
+                     <includeArtifactIds>cache-tests</includeArtifactIds>
+                     <includeScope>test</includeScope>
+                     <excludes>**/unwrap.properties</excludes>
+                  </configuration>
+               </execution>
+               <execution>
+                  <id>copy-domain</id>
+                  <goals>
+                     <goal>copy</goal>
+                  </goals>
+                  <configuration>
+                     <artifactItems>
+                        <artifactItem>
+                           <groupId>javax.cache</groupId>
+                           <artifactId>app-domain</artifactId>
+                           <version>${version.javax.cache}</version>
+                           <outputDirectory>${domain-lib-dir}</outputDirectory>
+                           <destFileName>${domain-jar}</destFileName>
+                        </artifactItem>
+                     </artifactItems>
+                  </configuration>
+               </execution>
+            </executions>
+         </plugin>
+
+         <plugin>
+            <groupId>org.apache.maven.plugins</groupId>
+            <artifactId>maven-surefire-plugin</artifactId>
+            <configuration>
+               <forkMode>none</forkMode>
+               <systemPropertyVariables>
+                  <domainJar>${domain-lib-dir}/${domain-jar}</domainJar>
+               </systemPropertyVariables>
+               <properties>
+                  <property>
+                     <name>listener</name>
+                     <value>org.infinispan.jcache.test.tck.DummyTestListener</value>
+                  </property>
+               </properties>
+            </configuration>
+            <dependencies>
+               <dependency>
+                  <groupId>org.apache.maven.surefire</groupId>
+                  <artifactId>surefire-junit4</artifactId>
+                  <version>${version.maven.surefire}</version>
+               </dependency>
+            </dependencies>
+         </plugin>
+
+      </plugins>
+   </build>
+
+   <repositories>
+      <repository>
+         <releases>
+            <enabled>true</enabled>
+         </releases>
+         <snapshots>
+            <enabled>true</enabled>
+         </snapshots>
+         <id>sonatype-snapshot-repository</id>
+         <name>Sonatype snapshot to be removed once everything becomes stable</name>
+         <url>https://oss.sonatype.org/content/repositories/snapshots</url>
+      </repository>
+   </repositories>
+
+   <profiles>
+
+      <!--To run all tests do not specify any profile-->
+
+      <!-- Profile for running basic tests.
+           Use mvn -P test-basic-cache clean install -->
+      <profile>
+         <id>test-basic-cache</id>
+         <build>
+            <plugins>
+               <plugin>
+                  <groupId>org.apache.maven.plugins</groupId>
+                  <artifactId>maven-surefire-plugin</artifactId>
+                  <configuration>
+                     <excludes>
+                        <include>**/interceptor/*Test.java</include>
+                     </excludes>
+                     <systemPropertyVariables>
+                        <domainJar>${domain-lib-dir}/${domain-jar}</domainJar>
+                     </systemPropertyVariables>
+                  </configuration>
+               </plugin>
+            </plugins>
+         </build>
+      </profile>
+
+      <!-- Profile for running optional tests.
+           Use mvn -P test-optional-cache clean install -->
+      <profile>
+         <id>test-optional-cache</id>
+         <build>
+            <plugins>
+               <plugin>
+                  <groupId>org.apache.maven.plugins</groupId>
+                  <artifactId>maven-surefire-plugin</artifactId>
+                  <configuration>
+                     <includes>
+                        <include>**/interceptor/*Test.java</include>
+                     </includes>
+                  </configuration>
+               </plugin>
+            </plugins>
+         </build>
+      </profile>
+
+   </profiles>
+
+</project>

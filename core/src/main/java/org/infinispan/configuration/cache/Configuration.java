@@ -18,6 +18,7 @@
  */
 package org.infinispan.configuration.cache;
 
+import java.lang.ref.WeakReference;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
@@ -25,7 +26,7 @@ import java.util.Map;
 
 public class Configuration {
 
-   private final ClassLoader classLoader; //TODO remove this
+   private final WeakReference<ClassLoader> classLoader; //TODO remove this
    private final ClusteringConfiguration clusteringConfiguration;
    private final CustomInterceptorsConfiguration customInterceptorsConfiguration;
    private final DataContainerConfiguration dataContainerConfiguration;
@@ -75,7 +76,7 @@ public class Configuration {
       }
       this.moduleConfiguration = Collections.unmodifiableMap(modulesMap);
       this.sites = sites;
-      this.classLoader = cl;
+      this.classLoader = new WeakReference<ClassLoader>(cl);
    }
 
    /**
@@ -83,7 +84,7 @@ public class Configuration {
     */
    @Deprecated
    public ClassLoader classLoader() {
-      return classLoader;
+      return classLoader == null ? null : classLoader.get();
    }
 
    public ClusteringConfiguration clustering() {

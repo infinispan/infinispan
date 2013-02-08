@@ -50,6 +50,7 @@ import org.infinispan.util.logging.LogFactory;
 
 import javax.management.MBeanServer;
 import javax.management.MBeanServerFactory;
+import java.lang.ref.WeakReference;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -96,7 +97,7 @@ public class GlobalComponentRegistry extends AbstractComponentRegistry {
 
    final ConcurrentMap<String, ComponentRegistry> namedComponents = new ConcurrentHashMap<String, ComponentRegistry>(4);
 
-   protected final ClassLoader defaultClassLoader;
+   protected final WeakReference<ClassLoader> defaultClassLoader;
 
    /**
     * Creates an instance of the component registry.  The configuration passed in is automatically registered.
@@ -114,7 +115,7 @@ public class GlobalComponentRegistry extends AbstractComponentRegistry {
       // Load up the component metadata
       componentMetadataRepo.initialize(moduleProperties.getModuleMetadataFiles(configuredClassLoader), configuredClassLoader);
 
-      defaultClassLoader = registerDefaultClassLoader(configuredClassLoader);
+      defaultClassLoader = new WeakReference<ClassLoader>(registerDefaultClassLoader(configuredClassLoader));
 
       try {
          // this order is important ...

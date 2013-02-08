@@ -21,6 +21,8 @@ package org.infinispan.marshall.jboss;
 
 import org.jboss.marshalling.ContextClassResolver;
 
+import java.lang.ref.WeakReference;
+
 /**
  * This class refines <code>ContextClassLoader</code> to add a default class loader
  * in case the context class loader is <code>null</code>.
@@ -30,15 +32,15 @@ import org.jboss.marshalling.ContextClassResolver;
  */
 public class DefaultContextClassResolver extends ContextClassResolver {
 
-   private ClassLoader defaultClassLoader;
+   private WeakReference<ClassLoader> defaultClassLoader;
 
    public DefaultContextClassResolver(ClassLoader defaultClassLoader) {
-      this.defaultClassLoader = defaultClassLoader;
+      this.defaultClassLoader = new WeakReference<ClassLoader>(defaultClassLoader);
    }
 
    @Override
    protected ClassLoader getClassLoader() {
       ClassLoader loader = super.getClassLoader();
-      return loader != null ? loader : defaultClassLoader;
+      return loader != null ? loader : defaultClassLoader.get();
    }
 }
