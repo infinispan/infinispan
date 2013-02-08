@@ -207,7 +207,7 @@ public interface Log extends BasicLogger {
 
    @LogMessage(level = WARN)
    @Message(value = "Failed to update attribute name %s with value %s", id = 37)
-   void failedToUpdateAtribute(String name, Object value);
+   void failedToUpdateAttribute(String name, Object value);
 
    @LogMessage(level = WARN)
    @Message(value = "Method name %s doesn't start with \"get\", \"set\", or \"is\" " +
