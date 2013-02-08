@@ -87,16 +87,16 @@ import org.jboss.solder.reflection.annotated.AnnotatedTypeBuilder;
 public class InfinispanExtension extends BeanManagerAware implements Extension {
 
    private Producer<RemoteCache<?, ?>> remoteCacheProducer;
-   private static final Log log = LogFactory.getLog(InfinispanExtension.class, Log.class);  
+   private static final Log log = LogFactory.getLog(InfinispanExtension.class, Log.class);
    private static BeanManagerController bmc;
-  
+
    private final Set<ConfigurationHolder> configurations;
    private final Map<Type, Set<Annotation>> remoteCacheInjectionPoints;
-   
+
    private volatile boolean registered = false;
    private final Object registerLock = new Object();
-   
-   InfinispanExtension() {
+
+   public InfinispanExtension() {
       this.configurations = new HashSet<InfinispanExtension.ConfigurationHolder>();
       this.remoteCacheInjectionPoints = new HashMap<Type, Set<Annotation>>();
    }
@@ -207,9 +207,9 @@ public class InfinispanExtension extends BeanManagerAware implements Extension {
                              }).create());
       }
    }
-   
+
    <K, V> void registerInputCacheCustomBean(@Observes AfterBeanDiscovery event, BeanManager beanManager) {
-      
+
       @SuppressWarnings("serial")
       TypeLiteral<Cache<K, V>> typeLiteral = new TypeLiteral<Cache<K, V>>() {};
       event.addBean(new BeanBuilder<Cache<K, V>>(beanManager)
@@ -237,16 +237,16 @@ public class InfinispanExtension extends BeanManagerAware implements Extension {
             if (!registered) {
                final CreationalContext<Configuration> ctx = beanManager.createCreationalContext(null);
                final EmbeddedCacheManager defaultCacheManager = cacheManagers.select(new AnnotationLiteral<Default>() {}).get();
-          
+
                for (ConfigurationHolder oneConfigurationHolder : configurations) {
                   final String cacheName = oneConfigurationHolder.getName();
                   final Configuration cacheConfiguration = oneConfigurationHolder.getProducer().produce(ctx);
                   final Set<Annotation> cacheQualifiers = oneConfigurationHolder.getQualifiers();
-           
+
                   // if a specific cache manager is defined for this cache we use it
                   final Instance<EmbeddedCacheManager> specificCacheManager = cacheManagers.select(cacheQualifiers.toArray(new Annotation[cacheQualifiers.size()]));
                   final EmbeddedCacheManager cacheManager = specificCacheManager.isUnsatisfied() ? defaultCacheManager : specificCacheManager.get();
-           
+
                   // the default configuration is registered by the default cache manager producer
                   if (!cacheName.trim().isEmpty()) {
                      if (cacheConfiguration != null) {
@@ -257,7 +257,7 @@ public class InfinispanExtension extends BeanManagerAware implements Extension {
                         log.cacheConfigurationDefined(cacheName, cacheManager);
                      }
                   }
-           
+
                   // register cache manager observers
                   eventBridge.registerObservers(cacheQualifiers, cacheName, cacheManager);
                }
@@ -268,8 +268,8 @@ public class InfinispanExtension extends BeanManagerAware implements Extension {
          }
       }
    }
-   
-   
+
+
    public static BeanManagerController getBeanManagerController() {
       if (bmc == null) {
          throw new IllegalStateException("CDI not properly set up in your execution environment!");
@@ -277,14 +277,14 @@ public class InfinispanExtension extends BeanManagerAware implements Extension {
       return bmc;
    }
 
-   protected void setBeanManager(@Observes AfterBeanDiscovery afterBeanDiscovery, BeanManager beanManager) {      
-      if (bmc == null) {        
+   protected void setBeanManager(@Observes AfterBeanDiscovery afterBeanDiscovery, BeanManager beanManager) {
+      if (bmc == null) {
          bmc = new BeanManagerController();
       }
       bmc.registerBeanManager(beanManager);
    }
 
-   protected void cleanupBeanManager(@Observes BeforeShutdown beforeShutdown) {      
+   protected void cleanupBeanManager(@Observes BeforeShutdown beforeShutdown) {
       bmc.deregisterBeanManager();
    }
 
