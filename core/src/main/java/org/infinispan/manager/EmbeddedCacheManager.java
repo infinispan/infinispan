@@ -85,7 +85,7 @@ public interface EmbeddedCacheManager extends CacheContainer, Listenable {
     */
    @Deprecated
    org.infinispan.config.Configuration defineConfiguration(String cacheName, org.infinispan.config.Configuration configurationOverride);
-   
+
    /**
     * Defines a named cache's configuration using the following algorithm:
     * <p/>
@@ -175,14 +175,14 @@ public interface EmbeddedCacheManager extends CacheContainer, Listenable {
     */
    @Deprecated
    org.infinispan.config.GlobalConfiguration getGlobalConfiguration();
-   
+
    /**
     * Returns global configuration for this CacheManager
     *
     * @return the global configuration object associated to this CacheManager
     */
    GlobalConfiguration getCacheManagerConfiguration();
-   
+
    /**
     * Returns the configuration for the given cache.
     *
@@ -203,7 +203,7 @@ public interface EmbeddedCacheManager extends CacheContainer, Listenable {
     */
    @Deprecated
    org.infinispan.config.Configuration getDefaultConfiguration();
-   
+
    /**
     * Returns default configuration for this CacheManager
     *
@@ -272,9 +272,9 @@ public interface EmbeddedCacheManager extends CacheContainer, Listenable {
    <K, V> Cache<K, V> getCache(String cacheName, boolean createIfAbsent);
 
    /**
-    * Starts a set of caches in parallel.
-    * Infinispan doesn't yet support asymmetric clusters (that is, two nodes
-    * having different sets of caches running). Calling this method on
+    * Starts a set of caches in parallel. Infinispan supports both symmetric
+    * and asymmetric clusters; that is, multiple nodes having the same or
+    * different sets of caches running, respectively. Calling this method on
     * application/application server startup with all your cache names
     * will ensure that the cluster is symmetric.
     *
