@@ -32,8 +32,6 @@ import java.io.BufferedOutputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import java.net.InetAddress;
-import java.net.InetSocketAddress;
 import java.net.Socket;
 import java.net.SocketAddress;
 import java.nio.channels.SocketChannel;
@@ -67,12 +65,12 @@ public class TcpTransport extends AbstractTransport {
    private final SocketChannel socketChannel;
    private final InputStream socketInputStream;
    private final BufferedOutputStream socketOutputStream;
-   private final InetSocketAddress serverAddress;
+   private final SocketAddress serverAddress;
    private final long id = ID_COUNTER.incrementAndGet();
 
    private volatile boolean invalid;
 
-   public TcpTransport(InetSocketAddress serverAddress, TransportFactory transportFactory) {
+   public TcpTransport(SocketAddress serverAddress, TransportFactory transportFactory) {
       super(transportFactory);
       this.serverAddress = serverAddress;
       try {
@@ -87,7 +85,7 @@ public class TcpTransport extends AbstractTransport {
       } catch (IOException e) {
          String message = String.format("Could not connect to server: %s", serverAddress);
          log.tracef(e, "Could not connect to server: %s", serverAddress);
-         throw new TransportException(message, e);
+         throw new TransportException(message, e, serverAddress);
       }
    }
 
@@ -97,7 +95,7 @@ public class TcpTransport extends AbstractTransport {
          writeUnsignedInt(socketOutputStream, vInt);
       } catch (IOException e) {
          invalid = true;
-         throw new TransportException(e);
+         throw new TransportException(e, serverAddress);
       }
    }
 
@@ -107,7 +105,7 @@ public class TcpTransport extends AbstractTransport {
          writeUnsignedLong(socketOutputStream, l);
       } catch (IOException e) {
          invalid = true;
-         throw new TransportException(e);
+         throw new TransportException(e, serverAddress);
       }
    }
 
@@ -117,7 +115,7 @@ public class TcpTransport extends AbstractTransport {
          return readUnsignedLong(socketInputStream);
       } catch (IOException e) {
          invalid = true;
-         throw new TransportException(e);
+         throw new TransportException(e, serverAddress);
       }
    }
 
@@ -127,7 +125,7 @@ public class TcpTransport extends AbstractTransport {
          return readUnsignedInt(socketInputStream);
       } catch (IOException e) {
          invalid = true;
-         throw new TransportException(e);
+         throw new TransportException(e, serverAddress);
       }
    }
 
@@ -140,7 +138,8 @@ public class TcpTransport extends AbstractTransport {
          }
       } catch (IOException e) {
          invalid = true;
-         throw new TransportException("Problems writing data to stream", e);
+         throw new TransportException(
+               "Problems writing data to stream", e, serverAddress);
       }
    }
 
@@ -154,7 +153,8 @@ public class TcpTransport extends AbstractTransport {
 
       } catch (IOException e) {
          invalid = true;
-         throw new TransportException("Problems writing data to stream", e);
+         throw new TransportException(
+               "Problems writing data to stream", e, serverAddress);
       }
    }
 
@@ -168,7 +168,7 @@ public class TcpTransport extends AbstractTransport {
 
       } catch (IOException e) {
          invalid = true;
-         throw new TransportException(e);
+         throw new TransportException(e, serverAddress);
       }
    }
 
@@ -181,10 +181,10 @@ public class TcpTransport extends AbstractTransport {
             log.tracef("Read byte %d from socket input in %s", resultInt, socket);
       } catch (IOException e) {
          invalid = true;
-         throw new TransportException(e);
+         throw new TransportException(e, serverAddress);
       }
       if (resultInt == -1) {
-         throw new TransportException("End of stream reached!");
+         throw new TransportException("End of stream reached!", serverAddress);
       }
       return (short) resultInt;
    }
@@ -214,7 +214,7 @@ public class TcpTransport extends AbstractTransport {
             read = socketInputStream.read(result, offset, len);
          } catch (IOException e) {
             invalid = true;
-            throw new TransportException(e);
+            throw new TransportException(e, serverAddress);
          }
          if (read == -1) {
             throw new RuntimeException("End of stream reached!");
@@ -234,7 +234,7 @@ public class TcpTransport extends AbstractTransport {
       return result;
    }
 
-   public InetSocketAddress getServerAddress() {
+   public SocketAddress getServerAddress() {
       return serverAddress;
    }
 
@@ -329,6 +329,10 @@ public class TcpTransport extends AbstractTransport {
    @Override
    public SocketAddress getRemoteSocketAddress() {
       return socket.getRemoteSocketAddress();
+   }
+
+   public void invalidate() {
+      invalid = true;
    }
 
 }

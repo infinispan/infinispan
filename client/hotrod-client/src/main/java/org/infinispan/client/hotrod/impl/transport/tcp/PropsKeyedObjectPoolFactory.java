@@ -34,12 +34,11 @@ import org.infinispan.client.hotrod.logging.LogFactory;
  * @author Mircea.Markus@jboss.com
  * @since 4.1
  */
-public class PropsKeyedObjectPoolFactory extends GenericKeyedObjectPoolFactory {
-
+public class PropsKeyedObjectPoolFactory<K, V> extends GenericKeyedObjectPoolFactory<K, V> {
 
    private static final Log log = LogFactory.getLog(PropsKeyedObjectPoolFactory.class);
 
-   public PropsKeyedObjectPoolFactory(KeyedPoolableObjectFactory factory, Properties props) {
+   public PropsKeyedObjectPoolFactory(KeyedPoolableObjectFactory<K, V> factory, Properties props) {
       super(factory);
       _maxActive = intProp(props, "maxActive", -1);
       _maxTotal = intProp(props, "maxTotal", -1);

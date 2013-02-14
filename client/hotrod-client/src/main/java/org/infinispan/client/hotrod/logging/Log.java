@@ -129,4 +129,8 @@ public interface Log extends BasicLogger {
    @Message(value = "Infinispan version: %s", id = 4021)
    void version(String version);
 
+   @LogMessage(level = WARN)
+   @Message(value = "Unable to invalidate transport for server: %s", id = 4022)
+   void unableToInvalidateTransport(SocketAddress serverAddress);
+
 }
