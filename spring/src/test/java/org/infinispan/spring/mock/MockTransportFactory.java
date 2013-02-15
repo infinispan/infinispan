@@ -25,6 +25,7 @@ package org.infinispan.spring.mock;
 
 import java.net.SocketAddress;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -99,5 +100,10 @@ public final class MockTransportFactory implements TransportFactory {
    @Override
    public ConsistentHashFactory getConsistentHashFactory() {
       return null;
+   }
+
+   @Override
+   public Collection<String> locate(byte[] key) {
+      return Collections.emptySet();
    }
 }

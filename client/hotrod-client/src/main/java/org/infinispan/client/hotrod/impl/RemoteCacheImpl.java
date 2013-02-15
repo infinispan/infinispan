@@ -22,19 +22,6 @@
  */
 package org.infinispan.client.hotrod.impl;
 
-import static java.util.concurrent.TimeUnit.MILLISECONDS;
-
-import java.io.IOException;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Map;
-import java.util.Set;
-import java.util.concurrent.Callable;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Future;
-import java.util.concurrent.TimeUnit;
-
 import org.infinispan.client.hotrod.Flag;
 import org.infinispan.client.hotrod.MetadataValue;
 import org.infinispan.client.hotrod.RemoteCache;
@@ -61,10 +48,25 @@ import org.infinispan.client.hotrod.impl.operations.RemoveOperation;
 import org.infinispan.client.hotrod.impl.operations.ReplaceIfUnmodifiedOperation;
 import org.infinispan.client.hotrod.impl.operations.ReplaceOperation;
 import org.infinispan.client.hotrod.impl.operations.StatsOperation;
+import org.infinispan.client.hotrod.impl.transport.TransportFactory;
 import org.infinispan.client.hotrod.logging.Log;
 import org.infinispan.client.hotrod.logging.LogFactory;
 import org.infinispan.marshall.Marshaller;
 import org.infinispan.util.concurrent.NotifyingFuture;
+
+import java.io.IOException;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Map;
+import java.util.Set;
+import java.util.concurrent.Callable;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Future;
+import java.util.concurrent.TimeUnit;
+
+import static java.util.concurrent.TimeUnit.MILLISECONDS;
 
 /**
  * @author Mircea.Markus@jboss.com
@@ -79,6 +81,7 @@ public class RemoteCacheImpl<K, V> extends RemoteCacheSupport<K, V> {
    private final RemoteCacheManager remoteCacheManager;
    private volatile ExecutorService executorService;
    private OperationsFactory operationsFactory;
+   private TransportFactory transportFactory;
    private int estimateKeySize;
    private int estimateValueSize;
 
@@ -91,9 +94,11 @@ public class RemoteCacheImpl<K, V> extends RemoteCacheSupport<K, V> {
       this.remoteCacheManager = rcm;
    }
 
-   public void init(Marshaller marshaller, ExecutorService executorService, OperationsFactory operationsFactory, int estimateKeySize, int estimateValueSize) {
+   public void init(Marshaller marshaller, ExecutorService executorService, TransportFactory transportFactory,
+                    OperationsFactory operationsFactory, int estimateKeySize, int estimateValueSize) {
       this.marshaller = marshaller;
       this.executorService = executorService;
+      this.transportFactory = transportFactory;
       this.operationsFactory = operationsFactory;
       this.estimateKeySize = estimateKeySize;
       this.estimateValueSize = estimateValueSize;
@@ -446,7 +451,7 @@ public class RemoteCacheImpl<K, V> extends RemoteCacheSupport<K, V> {
       return operationsFactory.newFaultTolerantPingOperation().execute();
    }
 
-   private byte[] obj2bytes(Object o, boolean isKey) {
+   public final byte[] obj2bytes(Object o, boolean isKey) {
       try {
          return marshaller.objectToByteBuffer(o, isKey ? estimateKeySize : estimateValueSize);
       } catch (IOException ioe) {
@@ -528,4 +533,10 @@ public class RemoteCacheImpl<K, V> extends RemoteCacheSupport<K, V> {
        }
        return Collections.unmodifiableSet(toReturn);
    };
+
+   @Override
+   public Collection<String> locate(K key) {
+      if (key == null) throw new IllegalArgumentException("Cannot locate a null key");
+      return transportFactory.locate(obj2bytes(key, true));
+   }
 }
