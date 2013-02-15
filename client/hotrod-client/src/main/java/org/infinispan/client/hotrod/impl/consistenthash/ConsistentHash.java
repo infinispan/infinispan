@@ -23,6 +23,7 @@
 package org.infinispan.client.hotrod.impl.consistenthash;
 
 import java.net.SocketAddress;
+import java.util.Collection;
 import java.util.Map;
 import java.util.Set;
 
@@ -37,6 +38,8 @@ public interface ConsistentHash {
    void init(Map<SocketAddress, Set<Integer>> servers2Hash, int numKeyOwners, int hashSpace);
 
    SocketAddress getServer(byte[] key);
+
+   Collection<SocketAddress> getServers(byte[] key);
 
    /**
     * Computes hash code of a given object, and then normalizes it to ensure a positive
