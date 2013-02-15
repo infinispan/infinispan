@@ -91,6 +91,12 @@ public final class MockTransportFactory implements TransportFactory {
    }
 
    @Override
+   public void invalidateTransport(SocketAddress serverAddress, Transport transport) {
+      // Do nothing
+
+   }
+
+   @Override
    public ConsistentHashFactory getConsistentHashFactory() {
       return null;
    }
