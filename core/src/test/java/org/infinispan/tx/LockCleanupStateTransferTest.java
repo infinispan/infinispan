@@ -42,6 +42,8 @@ import org.testng.annotations.Test;
 import java.util.HashSet;
 import java.util.Set;
 import java.util.concurrent.Callable;
+import java.util.concurrent.Future;
+import java.util.concurrent.TimeUnit;
 
 import static org.junit.Assert.*;
 
@@ -88,7 +90,7 @@ public class LockCleanupStateTransferTest extends MultipleCacheManagersTest {
       final Set<Object> keys = new HashSet<Object>(KEY_SET_SIZE);
 
       //fork it into another test as this is going to block in commit
-      fork(new Callable<Object>() {
+      Future<Object> future = fork(new Callable<Object>() {
          @Override
          public Object call() throws Exception {
             tm(0).begin();
@@ -149,22 +151,28 @@ public class LockCleanupStateTransferTest extends MultipleCacheManagersTest {
       log.trace("Releasing the gate");
       ccf.gate.open();
 
-      eventually(new Condition() {
-         @Override
-         public boolean isSatisfied() throws Exception {
-            int remoteTxCount = TestingUtil.getTransactionTable(cache(2)).getRemoteTxCount();
-            log.trace("remoteTxCount==" + remoteTxCount);
-            return remoteTxCount == 0;
-         }
-      });
-
+      // wait for the forked thread to finish its transaction
+      future.get(10, TimeUnit.SECONDS);
 
       for (int i = 0; i < 3; i++) {
          TransactionTable tt = TestingUtil.getTransactionTable(cache(i));
          assertEquals("For cache " + i, 0, tt.getLocalTxCount());
-         assertEquals("For cache " + i, 0, tt.getRemoteTxCount());
       }
 
+      // the tx completion is async, so we need to wait a little more
+      eventually(new Condition() {
+         @Override
+         public boolean isSatisfied() throws Exception {
+            boolean success = true;
+            for (int i = 0; i < 3; i++) {
+               TransactionTable tt = TestingUtil.getTransactionTable(cache(i));
+               int remoteTxCount = tt.getRemoteTxCount();
+               log.tracef("For cache %s, remoteTxCount==%d", cache(i), remoteTxCount);
+               success &= remoteTxCount == 0;
+            }
+            return success;
+         }
+      });
 
       for (Object key : keys) {
          assertNotLocked(key);
