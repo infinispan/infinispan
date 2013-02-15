@@ -340,4 +340,13 @@ public class TcpTransportFactory implements TransportFactory {
          }
       }
    }
+
+   @Override
+   public Collection<String> locate(byte[] key) {
+      Collection<SocketAddress> servers = consistentHash == null ? getServers() : consistentHash.getServers(key);
+      Set<String> retval = new HashSet<String>(servers.size());
+      for (SocketAddress sa : servers) retval.add(sa.toString());
+      return retval;
+
+   }
 }
