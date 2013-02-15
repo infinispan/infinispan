@@ -234,26 +234,45 @@ public class LocalCacheTest extends SingleCacheManagerTest {
 
    public void testSetSort() throws ParseException {
       loadTestingData();
-      person2.setAge(35);
-      person3.setAge(12);
 
       Sort sort = new Sort( new SortField("age", SortField.STRING));
 
       queryParser = createQueryParser("name");
 
       Query luceneQuery = queryParser.parse("Goat");
-      CacheQuery cacheQuery = Search.getSearchManager(cache).getQuery(luceneQuery);
-      List<Object> found = cacheQuery.list();
+      {
+         CacheQuery cacheQuery = Search.getSearchManager( cache ).getQuery( luceneQuery );
+         List<Object> found = cacheQuery.list();
 
-      assert found.size() == 2;
+         assert found.size() == 2;
 
-      cacheQuery.sort(sort);
+         cacheQuery.sort( sort );
 
-      found = cacheQuery.list();
+         found = cacheQuery.list();
 
-      assert found.size() == 2;
-      assert found.get(0).equals(person2);
-      assert found.get(1).equals(person3);
+         assert found.size() == 2;
+         assert found.get( 0 ).equals( person3 ); // person3 is 25 and named Goat
+         assert found.get( 1 ).equals( person2 ); // person2 is 30 and named Goat
+      }
+
+      //Now change the stored values:
+      person2.setAge(10);
+      cache.put(key2, person2);
+
+      {
+         CacheQuery cacheQuery = Search.getSearchManager( cache ).getQuery( luceneQuery );
+         List<Object> found = cacheQuery.list();
+
+         assert found.size() == 2;
+
+         cacheQuery.sort( sort );
+
+         found = cacheQuery.list();
+
+         assert found.size() == 2;
+         assert found.get( 0 ).equals( person2 ); // person2 is 30 and named Goat
+         assert found.get( 1 ).equals( person3 ); // person3 is 25 and named Goat
+      }
    }
 
    public void testSetFilter() throws ParseException {
@@ -611,16 +630,19 @@ public class LocalCacheTest extends SingleCacheManagerTest {
    protected void prepareTestingData() {
       person1 = new Person();
       person1.setName("Navin Surtani");
+      person1.setAge(20);
       person1.setBlurb("Likes playing WoW");
       person1.setNonSearchableField("test1");
 
       person2 = new Person();
       person2.setName("Big Goat");
+      person2.setAge(30);
       person2.setBlurb("Eats grass");
       person1.setNonSearchableField("test2");
 
       person3 = new Person();
       person3.setName("Mini Goat");
+      person3.setAge(25);
       person3.setBlurb("Eats cheese");
       person1.setNonSearchableField("test3");
 
