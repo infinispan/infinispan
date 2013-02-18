@@ -29,6 +29,7 @@ import org.testng.annotations.Test
 import org.infinispan.test.AbstractCacheTest._
 import org.testng.Assert._
 import org.infinispan.configuration.cache.{CacheMode, ConfigurationBuilder}
+import org.infinispan.test.TestingUtil
 
 /**
  * Tests Hot Rod instances configured with replication.
@@ -120,7 +121,6 @@ class HotRodReplicationTest extends HotRodMultiNodeTest {
       assertSuccess(clients.tail.head.get(k(m), 0), v(m, "v3-"))
 
       val newServer = startClusteredServer(servers.tail.head.getPort + 25)
-      var addressRemovalLatches = getAddressCacheRemovalLatches(servers)
       try {
          val resp = clients.head.put(k(m) , 0, 0, v(m, "v4-"), 2, 1)
          assertStatus(resp, Success)
@@ -132,7 +132,7 @@ class HotRodReplicationTest extends HotRodMultiNodeTest {
          assertSuccess(clients.tail.head.get(k(m), 0), v(m, "v4-"))
       } finally {
          stopClusteredServer(newServer)
-         waitAddressCacheRemoval(addressRemovalLatches)
+         TestingUtil.waitForRehashToComplete(cache(0, cacheName), cache(1, cacheName))
       }
 
       resp = clients.head.put(k(m) , 0, 0, v(m, "v5-"), 2, 2)
@@ -146,7 +146,6 @@ class HotRodReplicationTest extends HotRodMultiNodeTest {
 
       val crashingServer = startClusteredServer(
             servers.tail.head.getPort + 25, doCrash = true)
-      addressRemovalLatches = getAddressCacheRemovalLatches(servers)
       try {
          val resp = clients.head.put(k(m) , 0, 0, v(m, "v6-"), 2, 3)
          assertStatus(resp, Success)
@@ -158,7 +157,7 @@ class HotRodReplicationTest extends HotRodMultiNodeTest {
          assertSuccess(clients.tail.head.get(k(m), 0), v(m, "v6-"))
       } finally {
          stopClusteredServer(crashingServer)
-         waitAddressCacheRemoval(addressRemovalLatches)
+         TestingUtil.waitForRehashToComplete(cache(0, cacheName), cache(1, cacheName))
       }
 
       resp = clients.head.put(k(m) , 0, 0, v(m, "v7-"), 2, 4)
