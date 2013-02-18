@@ -32,7 +32,6 @@
         send_buf_size="640k"
         max_bundle_size="64000"
         max_bundle_timeout="30"
-        enable_bundling="true"
         use_send_queues="true"
         enable_diagnostics="false"
         bundler_type="old"
