@@ -82,7 +82,7 @@ public class DistributedMassIndexingTest extends MultipleCacheManagersTest {
       verifyFindsCar(2, "megane");
    }
 
-   private Object key(String keyId) {
+   protected Object key(String keyId) {
       //Used to verify remoting is fine with non serializable keys
       return new NonSerializableKeyType(keyId);
    }
@@ -93,7 +93,7 @@ public class DistributedMassIndexingTest extends MultipleCacheManagersTest {
       searchManager.getMassIndexer().start();
    }
 
-   private void verifyFindsCar(int expectedCount, String carMake) {
+   protected void verifyFindsCar(int expectedCount, String carMake) {
       for (Cache cache: caches) {
          verifyFindsCar(cache, expectedCount, carMake);
       }
