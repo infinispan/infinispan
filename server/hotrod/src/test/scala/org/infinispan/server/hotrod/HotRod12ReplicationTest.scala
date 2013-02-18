@@ -25,6 +25,7 @@ package org.infinispan.server.hotrod
 
 import org.testng.annotations.Test
 import test.HotRodTestingUtil._
+import test.AbstractTestTopologyAwareResponse
 
 /**
  * Test Hot Rod protocol version 1.2 with replicated caches.
@@ -38,9 +39,9 @@ class HotRod12ReplicationTest extends HotRodReplicationTest {
    override protected def protocolVersion: Byte = 12
 
    @Test(enabled = false)
-   override protected def checkTopologyReceived(topoResp: AbstractTopologyResponse,
+   override protected def checkTopologyReceived(topoResp: AbstractTestTopologyAwareResponse,
            servers: List[HotRodServer], cacheName: String) {
-      assertHashTopologyReceived(topoResp, servers, cacheName, 0, 1)
+      assertHashTopologyReceived(topoResp, servers, cacheName, 0, 1, currentServerTopologyId)
    }
 
 }

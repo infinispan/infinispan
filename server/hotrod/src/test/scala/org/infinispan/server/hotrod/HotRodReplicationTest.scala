@@ -30,6 +30,7 @@ import org.infinispan.test.AbstractCacheTest._
 import org.testng.Assert._
 import org.infinispan.configuration.cache.{CacheMode, ConfigurationBuilder}
 import org.infinispan.test.TestingUtil
+import test.AbstractTestTopologyAwareResponse
 
 /**
  * Tests Hot Rod instances configured with replication.
@@ -90,11 +91,11 @@ class HotRodReplicationTest extends HotRodMultiNodeTest {
 
       resp = clients.head.ping(2, 0)
       assertStatus(resp, Success)
-      assertTopologyReceived(resp.topologyResponse.get, cacheName, servers)
+      assertTopologyReceived(resp.topologyResponse.get, servers, currentServerTopologyId)
 
       resp = clients.tail.head.ping(2, 0)
       assertStatus(resp, Success)
-      assertTopologyReceived(resp.topologyResponse.get, cacheName, servers)
+      assertTopologyReceived(resp.topologyResponse.get, servers, currentServerTopologyId)
 
       resp = clients.tail.head.ping(2, 2)
       assertStatus(resp, Success)
@@ -109,11 +110,11 @@ class HotRodReplicationTest extends HotRodMultiNodeTest {
 
       resp = clients.head.put(k(m) , 0, 0, v(m, "v1-"), 2, 0)
       assertStatus(resp, Success)
-      assertTopologyReceived(resp.topologyResponse.get, cacheName, servers)
+      assertTopologyReceived(resp.topologyResponse.get, servers, currentServerTopologyId)
 
       resp = clients.tail.head.put(k(m) , 0, 0, v(m, "v2-"), 2, 0)
       assertStatus(resp, Success)
-      assertTopologyReceived(resp.topologyResponse.get, cacheName, servers)
+      assertTopologyReceived(resp.topologyResponse.get, servers, currentServerTopologyId)
 
       resp = clients.head.put(k(m) , 0, 0, v(m, "v3-"), 2, 2)
       assertStatus(resp, Success)
@@ -124,7 +125,7 @@ class HotRodReplicationTest extends HotRodMultiNodeTest {
       try {
          val resp = clients.head.put(k(m) , 0, 0, v(m, "v4-"), 2, 1)
          assertStatus(resp, Success)
-         assertTopologyId(resp.topologyResponse.get.topologyId, cacheName, cacheManagers.get(0))
+         assertEquals(resp.topologyResponse.get.topologyId, currentServerTopologyId)
          val topoResp = resp.asTopologyAwareResponse
          assertEquals(topoResp.members.size, 3)
          (newServer.getAddress :: servers.map(_.getAddress)).foreach(
@@ -137,7 +138,7 @@ class HotRodReplicationTest extends HotRodMultiNodeTest {
 
       resp = clients.head.put(k(m) , 0, 0, v(m, "v5-"), 2, 2)
       assertStatus(resp, Success)
-      assertTopologyId(resp.topologyResponse.get.topologyId, cacheName, cacheManagers.get(0))
+      assertEquals(resp.topologyResponse.get.topologyId, currentServerTopologyId)
       var topoResp = resp.asTopologyAwareResponse
       assertEquals(topoResp.members.size, 2)
       servers.map(_.getAddress).foreach(
@@ -149,7 +150,7 @@ class HotRodReplicationTest extends HotRodMultiNodeTest {
       try {
          val resp = clients.head.put(k(m) , 0, 0, v(m, "v6-"), 2, 3)
          assertStatus(resp, Success)
-         assertTopologyId(resp.topologyResponse.get.topologyId, cacheName, cacheManagers.get(0))
+         assertEquals(resp.topologyResponse.get.topologyId, currentServerTopologyId)
          val topoResp = resp.asTopologyAwareResponse
          assertEquals(topoResp.members.size, 3)
          (crashingServer.getAddress :: servers.map(_.getAddress)).foreach(
@@ -162,7 +163,7 @@ class HotRodReplicationTest extends HotRodMultiNodeTest {
 
       resp = clients.head.put(k(m) , 0, 0, v(m, "v7-"), 2, 4)
       assertStatus(resp, Success)
-      assertTopologyId(resp.topologyResponse.get.topologyId, cacheName, cacheManagers.get(0))
+      assertEquals(resp.topologyResponse.get.topologyId, currentServerTopologyId)
       topoResp = resp.asTopologyAwareResponse
       assertEquals(topoResp.members.size, 2)
       servers.map(_.getAddress).foreach(
@@ -177,9 +178,9 @@ class HotRodReplicationTest extends HotRodMultiNodeTest {
    }
 
    @Test(enabled=false) // Disable explicitly to avoid TestNG thinking this is a test!!
-   protected def checkTopologyReceived(topoResp: AbstractTopologyResponse,
+   protected def checkTopologyReceived(topoResp: AbstractTestTopologyAwareResponse,
            servers: List[HotRodServer], cacheName: String) {
-      assertNoHashTopologyReceived(topoResp, servers, cacheName)
+      assertNoHashTopologyReceived(topoResp, servers, cacheName, currentServerTopologyId)
    }
 
 }

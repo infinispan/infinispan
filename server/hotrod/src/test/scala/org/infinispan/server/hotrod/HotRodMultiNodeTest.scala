@@ -22,7 +22,7 @@
  */
 package org.infinispan.server.hotrod
 
-import test.HotRodClient
+import test.{HotRodTestingUtil, HotRodClient}
 import test.HotRodTestingUtil._
 import org.infinispan.manager.EmbeddedCacheManager
 import org.infinispan.test.{TestingUtil, MultipleCacheManagersTest}
@@ -91,6 +91,10 @@ abstract class HotRodMultiNodeTest extends MultipleCacheManagersTest {
       TestingUtil.killCacheManagers(server.getCacheManager)
       TestingUtil.blockUntilViewsReceived(
          50000, false, manager(0), manager(1))
+   }
+
+   def currentServerTopologyId: Int = {
+      getServerTopologyId(servers.head.getCacheManager, cacheName)
    }
 
    @AfterClass(alwaysRun = true)
