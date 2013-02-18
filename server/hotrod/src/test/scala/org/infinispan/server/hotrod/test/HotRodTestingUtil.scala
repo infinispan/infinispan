@@ -197,37 +197,39 @@ object HotRodTestingUtil extends Log {
       status == KeyDoesNotExist
    }
 
-   def assertTopologyReceived(resp: AbstractTopologyResponse, cacheName: String, servers: List[HotRodServer]) {
-      assertTopologyId(resp.topologyId, cacheName, servers.head.getCacheManager)
+   def assertTopologyReceived(resp: AbstractTestTopologyAwareResponse, servers: List[HotRodServer],
+                              expectedTopologyId : Int) {
+      assertEquals(resp.topologyId, expectedTopologyId)
       resp match {
-         case t: TestTopologyAwareResponse =>
-            assertEquals(t.members.size, servers.size)
-            assertEquals(t.members.toSet, servers.map(_.getAddress).toSet)
          case h10: TestHashDistAware10Response =>
             assertEquals(h10.members.size, servers.size)
             assertEquals(h10.members.toSet, servers.map(_.getAddress).toSet)
          case h11: TestHashDistAware11Response =>
             assertEquals(h11.membersToHash.size, servers.size)
             assertEquals(h11.membersToHash.keySet, servers.map(_.getAddress).toSet)
+         case t: TestTopologyAwareResponse =>
+            assertEquals(t.members.size, servers.size)
+            assertEquals(t.members.toSet, servers.map(_.getAddress).toSet)
       }
    }
 
-   def assertHashTopology10Received(topoResp: AbstractTopologyResponse, servers: List[HotRodServer],
-                                  cacheName: String) {
+   def assertHashTopology10Received(topoResp: AbstractTestTopologyAwareResponse, servers: List[HotRodServer],
+                                    cacheName: String, expectedTopologyId : Int) {
       assertHashTopology10Received(topoResp, servers, cacheName, 2,
-            EXPECTED_HASH_FUNCTION_VERSION, Integer.MAX_VALUE)
+            EXPECTED_HASH_FUNCTION_VERSION, Integer.MAX_VALUE, expectedTopologyId)
    }
 
-   def assertNoHashTopologyReceived(topoResp: AbstractTopologyResponse, servers: List[HotRodServer],
-                                    cacheName: String) {
-      assertHashTopology10Received(topoResp, servers, cacheName, 0, 0, 0)
+   def assertNoHashTopologyReceived(topoResp: AbstractTestTopologyAwareResponse, servers: List[HotRodServer],
+                                    cacheName: String, expectedTopologyId : Int) {
+      assertHashTopology10Received(topoResp, servers, cacheName, 0, 0, 0, expectedTopologyId)
    }
 
-   def assertHashTopology10Received(topoResp: AbstractTopologyResponse,
+   def assertHashTopology10Received(topoResp: AbstractTestTopologyAwareResponse,
                                     servers: List[HotRodServer], cacheName: String,
-                                    expectedNumOwners: Int, expectedHashFct: Int, expectedHashSpace: Int) {
+                                    expectedNumOwners: Int, expectedHashFct: Int, expectedHashSpace: Int,
+                                    expectedTopologyId : Int) {
       val hashTopologyResp = topoResp.asInstanceOf[TestHashDistAware10Response]
-      assertTopologyId(hashTopologyResp.topologyId, cacheName, servers.head.getCacheManager)
+      assertEquals(hashTopologyResp.topologyId, expectedTopologyId)
       assertEquals(hashTopologyResp.members.size, servers.size)
       hashTopologyResp.members.foreach(member => servers.map(_.getAddress).exists(_ == member))
       assertEquals(hashTopologyResp.numOwners, expectedNumOwners)
@@ -238,11 +240,12 @@ object HotRodTestingUtil extends Log {
    }
 
 
-   def assertHashTopologyReceived(topoResp: AbstractTopologyResponse,
-                                  servers: List[HotRodServer], cacheName: String,
-                                  expectedNumOwners: Int, expectedVirtualNodes: Int) {
+   def assertHashTopologyReceived(topoResp: AbstractTestTopologyAwareResponse,
+                                  servers: List[HotRodServer], cacheName : String,
+                                  expectedNumOwners: Int, expectedVirtualNodes: Int,
+                                  expectedTopologyId : Int) {
       val hashTopologyResp = topoResp.asInstanceOf[TestHashDistAware11Response]
-      assertTopologyId(hashTopologyResp.topologyId, cacheName, servers.head.getCacheManager)
+      assertEquals(hashTopologyResp.topologyId, expectedTopologyId)
       assertEquals(hashTopologyResp.membersToHash.size, servers.size)
       hashTopologyResp.membersToHash.foreach(member => servers.map(_.getAddress).exists(_ == member))
       assertEquals(hashTopologyResp.numOwners, expectedNumOwners)
@@ -305,9 +308,8 @@ object HotRodTestingUtil extends Log {
       return servers.find(_.getCacheManager.getAddress == clusterAddress).get.getAddress
    }
 
-   def assertTopologyId(topologyId: Int, cacheName : String, cm: EmbeddedCacheManager) {
-      assertEquals(topologyId, cm.getCache(cacheName)
-              .getAdvancedCache.getRpcManager.getTopologyId)
+   def getServerTopologyId(cm: EmbeddedCacheManager, cacheName: String): Int = {
+      cm.getCache(cacheName).getAdvancedCache.getRpcManager.getTopologyId
    }
 
    def killClient(client: HotRodClient): ChannelFuture = {

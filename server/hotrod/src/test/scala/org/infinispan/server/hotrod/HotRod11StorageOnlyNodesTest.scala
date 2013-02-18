@@ -57,28 +57,38 @@ class HotRod11StorageOnlyNodesTest extends HotRodMultiNodeTest {
       val server2 = servers.last
       val client1 = clients.head
       val client2 = clients.last
+      val initialTopologyId = currentServerTopologyId
 
       var resp = client1.ping(INTELLIGENCE_HASH_DISTRIBUTION_AWARE, 0)
       assertStatus(resp, Success)
-      assertHashTopologyReceived(resp.topologyResponse.get, servers, cacheName, 2, virtualNodes)
-      val topologyId = resp.topologyResponse.get.topologyId
+      assertHashTopologyReceived(resp.topologyResponse.get, servers, cacheName, 2, virtualNodes, initialTopologyId)
 
       val newCacheManager = addClusterEnabledCacheManager()
+      var leaveTopologyId : Option[Int] = None
       try {
          newCacheManager.defineConfiguration(cacheName, createCacheConfig.build())
          newCacheManager.getCache(cacheName)
          TestingUtil.blockUntilViewsReceived(50000, true, manager(0), manager(1), manager(2))
          TestingUtil.waitForRehashToComplete(cache(0, cacheName), cache(1, cacheName), cache(2, cacheName))
+         val joinTopologyId = currentServerTopologyId
 
-         log.trace("Check that the clients do not receive a new topology")
+         // The clients receive a new topology (because the rebalance increased the topology id by 2)
+         // but the storage-only node is not included in the new topology.
          val key1 = HotRodMagicKeyGenerator.newKey(cache(0, cacheName))
-         resp = client1.put(key1, 0, 0, v(m, "v1-"), INTELLIGENCE_HASH_DISTRIBUTION_AWARE, topologyId)
+         resp = client1.put(key1, 0, 0, v(m, "v1-"), INTELLIGENCE_HASH_DISTRIBUTION_AWARE, initialTopologyId)
+         assertStatus(resp, Success)
+         assertHashTopologyReceived(resp.topologyResponse.get, servers, cacheName, 2, virtualNodes, joinTopologyId - 1)
+
+         // The clients won't receive another topology (the client topology will stay behind the
+         // server topology id by 1).
+         log.trace("Check that the clients do not receive a new topology")
+         resp = client1.put(key1, 0, 0, v(m, "v1-"), INTELLIGENCE_HASH_DISTRIBUTION_AWARE, joinTopologyId - 1)
          assertStatus(resp, Success)
          assertFalse(resp.topologyResponse.isDefined)
 
          log.trace("Check that the clients can access a key for which the storage-only node is primary owner")
          val key2 = HotRodMagicKeyGenerator.newKey(cache(2, cacheName))
-         resp = client1.put(key2, 0, 0, v(m, "v2-"), INTELLIGENCE_HASH_DISTRIBUTION_AWARE, topologyId)
+         resp = client1.put(key2, 0, 0, v(m, "v2-"), INTELLIGENCE_HASH_DISTRIBUTION_AWARE, joinTopologyId - 1)
          assertStatus(resp, Success)
          assertFalse(resp.topologyResponse.isDefined)
 
@@ -90,22 +100,23 @@ class HotRod11StorageOnlyNodesTest extends HotRodMultiNodeTest {
          TestingUtil.killCacheManagers(servers.last.getCacheManager)
          TestingUtil.blockUntilViewsReceived(50000, false, manager(0), manager(2))
          TestingUtil.waitForRehashToComplete(cache(0, cacheName), cache(2, cacheName))
+         leaveTopologyId = Some(currentServerTopologyId)
 
-         // The client still doesn't receive a topology update because one of the nodes is not in the address cache
-         // Note that this means further HotRod client requests may go to a dead node
-         resp = client1.put(key1, 0, 0, v(m, "v3-"), INTELLIGENCE_HASH_DISTRIBUTION_AWARE, topologyId)
+         resp = client1.put(key1, 0, 0, v(m, "v3-"), INTELLIGENCE_HASH_DISTRIBUTION_AWARE, joinTopologyId - 1)
          assertStatus(resp, Success)
-         assertFalse(resp.topologyResponse.isDefined)
+         assertHashTopologyReceived(resp.topologyResponse.get, List(server1), cacheName, 2, virtualNodes,
+            leaveTopologyId.get - 1)
       } finally {
          TestingUtil.killCacheManagers(newCacheManager)
          TestingUtil.blockUntilViewsReceived(50000, false, manager(0))
          TestingUtil.waitForRehashToComplete(cache(0, cacheName))
       }
 
+      val storageOnlyLeaveTopologyId = currentServerTopologyId
       log.trace("Check that only the topology id changes after the storage-only server is killed")
-      resp = client1.put(k(m), 0, 0, v(m, "v4-"), INTELLIGENCE_HASH_DISTRIBUTION_AWARE, topologyId)
+      resp = client1.put(k(m), 0, 0, v(m, "v4-"), INTELLIGENCE_HASH_DISTRIBUTION_AWARE, leaveTopologyId.get - 1)
       assertStatus(resp, Success)
-      assertHashTopologyReceived(resp.topologyResponse.get, List(server1), cacheName, 2, virtualNodes)
+      assertHashTopologyReceived(resp.topologyResponse.get, List(server1), cacheName, 2, 1, storageOnlyLeaveTopologyId)
 
       assertSuccess(client1.get(k(m), 0), v(m, "v4-"))
    }

@@ -55,12 +55,12 @@ abstract class AbstractEncoder1x extends AbstractVersionedEncoder with Constants
          topologyResp match {
             case t: TopologyAwareResponse => {
                if (r.clientIntel == INTELLIGENCE_TOPOLOGY_AWARE)
-                  writeTopologyUpdate(t, addressCache.values(), buf)
+                  writeTopologyUpdate(t, buf)
                else
-                  writeLimitedHashTopologyUpdate(t, addressCache, buf)
+                  writeLimitedHashTopologyUpdate(t, buf)
             }
             case h: AbstractHashDistAwareResponse =>
-               writeHashTopologyUpdate(h, server, r, addressCache, buf)
+               writeHashTopologyUpdate(h, server, r, buf)
          }
       } else {
          writeNoTopologyUpdate(buf)
@@ -142,7 +142,7 @@ abstract class AbstractEncoder1x extends AbstractVersionedEncoder with Constants
             if (g.status == Success) writeRangedBytes(g.data.get, buf)
          case e: ErrorResponse => writeString(e.msg, buf)
          case _ => if (buf == null)
-            throw new IllegalArgumentException("Response received is unknown: " + r);
+            throw new IllegalArgumentException("Response received is unknown: " + r)
       }
    }
 
@@ -153,9 +153,6 @@ abstract class AbstractEncoder1x extends AbstractVersionedEncoder with Constants
          r.clientIntel match {
             case INTELLIGENCE_TOPOLOGY_AWARE | INTELLIGENCE_HASH_DISTRIBUTION_AWARE => {
                // Use the request cache's topology id as the HotRod topologyId.
-               // We can't use the address cache because it is a replicated cache, so it doesn't rebalance
-               // after a node leaves (and a distributed cache won't be able to update the clients'
-               // topology to the balanced consistent hash).
                val cache = server.getCacheInstance(r.cacheName, addressCache.getCacheManager, false)
                val rpcManager = cache.getAdvancedCache.getRpcManager
                // Only send a topology update if the cache is clustered
@@ -163,6 +160,7 @@ abstract class AbstractEncoder1x extends AbstractVersionedEncoder with Constants
                   case null => DEFAULT_TOPOLOGY_ID
                   case _ => rpcManager.getTopologyId
                }
+               // AND if the client's topology id is smaller than the server's topology id
                if (currentTopologyId >= DEFAULT_TOPOLOGY_ID && r.topologyId < currentTopologyId)
                   generateTopologyResponse(r, addressCache, server, currentTopologyId)
                else null
@@ -174,29 +172,51 @@ abstract class AbstractEncoder1x extends AbstractVersionedEncoder with Constants
 
    private def generateTopologyResponse(r: Response, addressCache: Cache[Address, ServerAddress],
            server: HotRodServer, currentTopologyId: Int): AbstractTopologyResponse = {
+      // If the topology cache is incomplete, we assume that a node has joined but hasn't added his HotRod
+      // endpoint address to the topology cache yet. We delay the topology update until the next client
+      // request by returning null here (so the client topology id stays the same).
+      // If a new client connects while the join is in progress, though, we still have to generate a topology
+      // response. Same if we have cache manager that is a member of the cluster but doesn't have a HotRod
+      // endpoint (aka a storage-only node), and a HotRod server shuts down.
+      // Our workaround is to send a "partial" topology update when the topology cache is incomplete, but the
+      // difference between the client topology id and the server topology id is 2 or more. The partial update
+      // will have the topology id of the server - 1, so it won't prevent a regular topology update if/when
+      // the topology cache is updated.
       val cache = server.getCacheInstance(r.cacheName, addressCache.getCacheManager, false)
-      val config = cache.getCacheConfiguration
       val cacheMembers = cache.getAdvancedCache.getRpcManager.getMembers
-      if (!addressCache.keySet().containsAll(cacheMembers))
-         return null
+      val serverEndpointsMap = addressCache.toMap
+      var responseTopologyId = currentTopologyId
+      if (!serverEndpointsMap.keySet.containsAll(cacheMembers)) {
+         // At least one cache member is missing from the topology cache
+         val clientTopologyId = r.topologyId
+         if (currentTopologyId - clientTopologyId < 2) {
+            // Postpone topology update
+            return null
+         } else {
+            // Send partial topology update
+            responseTopologyId -= 1
+         }
+      }
 
+      val config = cache.getCacheConfiguration
       if (r.clientIntel == INTELLIGENCE_TOPOLOGY_AWARE || !config.clustering().cacheMode().isDistributed) {
-         TopologyAwareResponse(currentTopologyId)
+         TopologyAwareResponse(responseTopologyId, serverEndpointsMap)
       } else {
          // Must be 3 and distributed
-         createHashDistAwareResp(currentTopologyId, config)
+         createHashDistAwareResp(responseTopologyId, serverEndpointsMap, config)
       }
    }
 
-   protected def createHashDistAwareResp(topologyId: Int, cfg: Configuration): AbstractHashDistAwareResponse = {
-      HashDistAwareResponse(topologyId, cfg.clustering().hash().numOwners(),
+   protected def createHashDistAwareResp(topologyId: Int, serverEndpointsMap: Map[Address, ServerAddress],
+                                         cfg: Configuration): AbstractHashDistAwareResponse = {
+      HashDistAwareResponse(topologyId, serverEndpointsMap, cfg.clustering().hash().numOwners(),
          DEFAULT_HASH_FUNCTION_VERSION, Integer.MAX_VALUE)
    }
 
    def writeHashTopologyUpdate(h: AbstractHashDistAwareResponse, server: HotRodServer, r: Response,
-                               members: Cache[Address, ServerAddress], buffer: ChannelBuffer) {
+                               buffer: ChannelBuffer) {
       trace("Write hash distribution change response header %s", h)
-      val cache = server.getCacheInstance(r.cacheName, members.getCacheManager, false)
+      val cache = server.getCacheInstance(r.cacheName, server.getCacheManager, false)
       val distManager = cache.getAdvancedCache.getDistributionManager
       val ch = distManager.getConsistentHash
 
@@ -208,7 +228,7 @@ abstract class AbstractEncoder1x extends AbstractVersionedEncoder with Constants
       val numSegments = ch.getNumSegments
       val segmentHashIds = ch.asInstanceOf[DefaultConsistentHash].getSegmentEndHashes
       val serverHashes = ArrayBuffer[(ServerAddress, Int)]()
-      for ((address, serverAddress) <- members) {
+      for ((address, serverAddress) <- h.serverEndpointsMap) {
          for (segmentIdx <- 0 until numSegments) {
             val ownerIdx = ch.locateOwnersForSegment(segmentIdx).indexOf(address)
             if (ownerIdx >= 0) {
@@ -230,26 +250,22 @@ abstract class AbstractEncoder1x extends AbstractVersionedEncoder with Constants
       }
    }
 
-   def writeLimitedHashTopologyUpdate(t: AbstractTopologyResponse,
-                                      serverAddresses: Cache[Address, ServerAddress],
-                                      buffer: ChannelBuffer) {
+   def writeLimitedHashTopologyUpdate(t: AbstractTopologyResponse, buffer: ChannelBuffer) {
       trace("Return limited hash distribution aware header because the client %s doesn't ", t)
-      writeCommonHashTopologyHeader(buffer, t.topologyId, 0, 0, 0, serverAddresses.size)
-      for (address <- serverAddresses.values()) {
+      writeCommonHashTopologyHeader(buffer, t.topologyId, 0, 0, 0, t.serverEndpointsMap.size)
+      for (address <- t.serverEndpointsMap.values) {
          writeString(address.host, buffer)
          writeUnsignedShort(address.port, buffer)
          buffer.writeInt(0) // Address' hash id
       }
    }
 
-   def writeTopologyUpdate(t: TopologyAwareResponse,
-                           serverAddresses: Iterable[ServerAddress],
-                           buffer: ChannelBuffer) {
+   def writeTopologyUpdate(t: TopologyAwareResponse, buffer: ChannelBuffer) {
       trace("Write topology change response header %s", t)
       buffer.writeByte(1) // Topology changed
       writeUnsignedInt(t.topologyId, buffer)
-      writeUnsignedInt(serverAddresses.size, buffer)
-      for (address <- serverAddresses) {
+      writeUnsignedInt(t.serverEndpointsMap.size, buffer)
+      for (address <- t.serverEndpointsMap.values) {
          writeString(address.host, buffer)
          writeUnsignedShort(address.port, buffer)
       }
