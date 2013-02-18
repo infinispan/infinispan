@@ -1,6 +1,6 @@
-/* 
+/*
  * JBoss, Home of Professional Open Source
- * Copyright 2012 Red Hat Inc. and/or its affiliates and other contributors
+ * Copyright 2013 Red Hat Inc. and/or its affiliates and other contributors
  * as indicated by the @author tags. All rights reserved.
  * See the copyright.txt in the distribution for a
  * full listing of individual contributors.
@@ -18,21 +18,23 @@
  */
 package org.infinispan.query.api;
 
-import java.io.Serializable;
+import org.testng.annotations.Test;
 
 /**
- * A test value having a non-standard constructor, no setter and not indexed
+ * Testing non-indexed values on InfinispanDirectory in case of transactional cache.
+ *
+ * @author Anna Manukyan
  */
-public class NotIndexedType implements Serializable {
+@Test(groups = "functional", testName = "query.api.TransactionalInfinispanDirectoryNonIndexedValuesTest", enabled = false,
+      description = "Enable when the ISPN-2815 is fixed.")
+public class TransactionalInfinispanDirectoryNonIndexedValuesTest extends InfinispanDirectoryNonIndexedValuesTest {
 
-   public NotIndexedType(String name) {
-      this.name = name;
+   protected boolean isTransactional() {
+      return true;
    }
 
-   private final String name;
+   @Test(enabled = false, description = "Enable when the ISPN-2815 is fixed.")
+   public void testReplaceSimpleSearchable() {
 
-   public String getName() {
-      return name;
    }
-
 }
