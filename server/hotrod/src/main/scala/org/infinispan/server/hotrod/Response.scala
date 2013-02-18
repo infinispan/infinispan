@@ -25,6 +25,7 @@ package org.infinispan.server.hotrod
 import OperationStatus._
 import OperationResponse._
 import org.infinispan.util.Util
+import org.infinispan.remoting.transport.Address
 import java.lang.StringBuilder
 
 /**
@@ -177,23 +178,25 @@ class StatsResponse(override val version: Byte, override val messageId: Long, ov
    }
 }
 
-abstract class AbstractTopologyResponse(val topologyId: Int)
+abstract class AbstractTopologyResponse(val topologyId: Int, val serverEndpointsMap : Map[Address, ServerAddress])
 
 abstract class AbstractHashDistAwareResponse(override val topologyId: Int,
-        val numOwners: Int, val hashFunction: Byte, val hashSpace: Int)
-        extends AbstractTopologyResponse(topologyId)
+                                             override val serverEndpointsMap : Map[Address, ServerAddress],
+                                             val numOwners: Int, val hashFunction: Byte, val hashSpace: Int)
+        extends AbstractTopologyResponse(topologyId, serverEndpointsMap)
 
-case class TopologyAwareResponse(override val topologyId: Int)
-      extends AbstractTopologyResponse(topologyId)
+case class TopologyAwareResponse(override val topologyId: Int,
+                                 override val serverEndpointsMap : Map[Address, ServerAddress])
+      extends AbstractTopologyResponse(topologyId, serverEndpointsMap)
 
 case class HashDistAwareResponse(override val topologyId: Int,
-        override val numOwners: Int, override val hashFunction: Byte,
-        override val hashSpace: Int)
-        extends AbstractHashDistAwareResponse(
-           topologyId, numOwners, hashFunction, hashSpace)
+                                 override val serverEndpointsMap : Map[Address, ServerAddress],
+                                 override val numOwners: Int, override val hashFunction: Byte,
+                                 override val hashSpace: Int)
+        extends AbstractHashDistAwareResponse(topologyId, serverEndpointsMap, numOwners, hashFunction, hashSpace)
 
 case class HashDistAware11Response(override val topologyId: Int,
-        override val numOwners: Int, override val hashFunction: Byte,
-        override val hashSpace: Int, numVNodes: Int)
-        extends AbstractHashDistAwareResponse(
-           topologyId, numOwners, hashFunction, hashSpace)
+                                   override val serverEndpointsMap : Map[Address, ServerAddress],
+                                   override val numOwners: Int, override val hashFunction: Byte,
+                                   override val hashSpace: Int, numVNodes: Int)
+        extends AbstractHashDistAwareResponse(topologyId, serverEndpointsMap, numOwners, hashFunction, hashSpace)

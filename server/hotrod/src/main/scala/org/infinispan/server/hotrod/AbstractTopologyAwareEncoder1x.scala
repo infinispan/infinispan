@@ -38,33 +38,34 @@ import org.infinispan.distribution.ch.ConsistentHash
 abstract class AbstractTopologyAwareEncoder1x extends AbstractEncoder1x with Constants with Log {
 
    override protected def createHashDistAwareResp(lastViewId: Int,
-            cfg: Configuration): AbstractHashDistAwareResponse = {
-      HashDistAware11Response(lastViewId, cfg.clustering().hash().numOwners(),
+                                                  serverEndpointsMap: Map[Address, ServerAddress],
+                                                  cfg: Configuration): AbstractHashDistAwareResponse = {
+      HashDistAware11Response(lastViewId, serverEndpointsMap, cfg.clustering().hash().numOwners(),
             DEFAULT_HASH_FUNCTION_VERSION, Integer.MAX_VALUE,
             cfg.clustering().hash().numVirtualNodes())
    }
 
 
    override def writeHashTopologyUpdate(h: AbstractHashDistAwareResponse, server: HotRodServer, r: Response,
-                                        members: Cache[Address, ServerAddress], buf: ChannelBuffer) {
+                                        buf: ChannelBuffer) {
       h match {
          case h: HashDistAware11Response => {
-            writeHashTopologyUpdate11(h, members, server, r, buf)
+            writeHashTopologyUpdate11(h, server, r, buf)
          }
          case _ => throw new IllegalStateException(
             "Expected version 1.1 specific response: " + h)
       }
    }
 
-   def writeHashTopologyUpdate11(h: HashDistAware11Response, members: Cache[Address, ServerAddress],
+   def writeHashTopologyUpdate11(h: HashDistAware11Response,
                                server: HotRodServer, r: Response, buf: ChannelBuffer) {
       trace("Write hash distribution change response header %s", h)
       if (h.hashFunction == 0) {
-         writeLimitedHashTopologyUpdate(h, members, buf)
+         writeLimitedHashTopologyUpdate(h, buf)
          return
       }
 
-      val cache = server.getCacheInstance(r.cacheName, members.getCacheManager, false)
+      val cache = server.getCacheInstance(r.cacheName, server.getCacheManager, false)
 
       // This is not quite correct, as the ownership of segments on the 1.0/1.1 clients is not exactly
       // the same as on the server. But the difference appears only for (numSegment*numOwners/MAX_INT)
@@ -84,13 +85,15 @@ abstract class AbstractTopologyAwareEncoder1x extends AbstractEncoder1x with Con
          val segmentOwners = ch.locateOwnersForSegment(segmentIdx)
          for (ownerIdx <- 0 until segmentOwners.length) {
             val address = segmentOwners(ownerIdx % segmentOwners.size)
-            val serverAddress = members.get(address)
-            if (serverAddress == null) {
-               log.debugf("Could not find member %s in the address cache", address)
+            h.serverEndpointsMap.get(address) match {
+               case Some(serverAddress) => {
+                  val hashId = denormalizedSegmentHashIds(ownerIdx)
+                  hashIds += ((serverAddress, hashId))
+               }
+               case None => {
+                  log.tracef("Could not find member %s in the address cache", address)
+               }
             }
-
-            val hashId = denormalizedSegmentHashIds(ownerIdx)
-            hashIds += ((serverAddress, hashId))
          }
       }
 
@@ -107,13 +110,11 @@ abstract class AbstractTopologyAwareEncoder1x extends AbstractEncoder1x with Con
    }
 
 
-   override def writeLimitedHashTopologyUpdate(t: AbstractTopologyResponse,
-                                               serverAddresses: Cache[Address, ServerAddress],
-                                               buf: ChannelBuffer) {
+   override def writeLimitedHashTopologyUpdate(t: AbstractTopologyResponse, buf: ChannelBuffer) {
       trace("Return limited hash distribution aware header in spite of having a hash aware client %s", t)
-      writeCommonHashTopologyHeader(buf, t.topologyId, 0, 0, 0, serverAddresses.size)
+      writeCommonHashTopologyHeader(buf, t.topologyId, 0, 0, 0, t.serverEndpointsMap.size)
       writeUnsignedInt(1, buf) // Num virtual nodes
-      for (address <- serverAddresses.values()) {
+      for (address <- t.serverEndpointsMap.values) {
          writeString(address.host, buf)
          writeUnsignedShort(address.port, buf)
          buf.writeInt(0) // Address' hash id

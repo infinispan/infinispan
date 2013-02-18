@@ -64,7 +64,7 @@ class HotRodProxyTest extends HotRodMultiNodeTest {
       val resp = clients.head.ping(2, 0)
       assertStatus(resp, Success)
       val topoResp = resp.asTopologyAwareResponse
-      assertTopologyId(topoResp.topologyId, cacheName, cacheManagers.get(0))
+      assertEquals(topoResp.topologyId, currentServerTopologyId)
       assertEquals(topoResp.members.size, 2)
       topoResp.members.foreach(member => servers.map(_.getAddress).exists(_ == member))
    }

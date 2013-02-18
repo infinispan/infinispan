@@ -482,7 +482,7 @@ private class Decoder(client: HotRodClient) extends ReplayingDecoder[VoidEnum] w
 
    private def read10HashDistAwareHeader(buf: ChannelBuffer, topologyId: Int,
             numOwners: Int, hashFunction: Byte, hashSpace: Int,
-            numServersInTopo: Int): Option[AbstractTopologyResponse] = {
+            numServersInTopo: Int): Option[AbstractTestTopologyAwareResponse] = {
       // The exact number of topology addresses in the list is unknown
       // until we loop through the entire list and we figure out how
       // hash ids are per HotRod server (i.e. num virtual nodes > 1)
@@ -523,7 +523,7 @@ private class Decoder(client: HotRodClient) extends ReplayingDecoder[VoidEnum] w
 
    private def read11HashDistAwareHeader(buf: ChannelBuffer, topologyId: Int,
             numOwners: Int, hashFunction: Byte, hashSpace: Int,
-            numServersInTopo: Int): Option[AbstractTopologyResponse] = {
+            numServersInTopo: Int): Option[AbstractTestTopologyAwareResponse] = {
       val numVirtualNodes = readUnsignedInt(buf)
       val hashToAddress = mutable.Map[ServerAddress, Int]()
       for (i <- 1 to numServersInTopo)
@@ -547,8 +547,8 @@ private class ClientHandler(rspTimeoutSeconds: Int) extends SimpleChannelUpstrea
 
    def getResponse(messageId: Long): TestResponse = {
       // TODO: Very very primitive way of waiting for a response. Convert to a Future
-      var i = 0;
-      var v: TestResponse = null;
+      var i = 0
+      var v: TestResponse = null
       do {
          v = responses.get(messageId)
          if (v == null) {
@@ -645,7 +645,7 @@ class TestResponse(override val version: Byte, override val messageId: Long,
                    override val operation: OperationResponse,
                    override val status: OperationStatus,
                    override val topologyId: Int,
-                   val topologyResponse: Option[AbstractTopologyResponse])
+                   val topologyResponse: Option[AbstractTestTopologyAwareResponse])
       extends Response(version, messageId, cacheName, clientIntel, operation, status, topologyId) {
    override def toString = {
       new StringBuilder().append("Response").append("{")
@@ -658,9 +658,9 @@ class TestResponse(override val version: Byte, override val messageId: Long,
          .append("}").toString()
    }
 
-   def asTopologyAwareResponse: TestTopologyAwareResponse = {
+   def asTopologyAwareResponse: AbstractTestTopologyAwareResponse = {
       topologyResponse.get match {
-         case t: TestTopologyAwareResponse => t
+         case t: AbstractTestTopologyAwareResponse => t
          case _ => throw new IllegalStateException("Unexpected response: " + topologyResponse.get);
       }
    }
@@ -671,14 +671,14 @@ class TestResponseWithPrevious(override val version: Byte, override val messageI
                            override val operation: OperationResponse,
                            override val status: OperationStatus,
                            override val topologyId: Int, val previous: Option[Array[Byte]],
-                           override val topologyResponse: Option[AbstractTopologyResponse])
+                           override val topologyResponse: Option[AbstractTestTopologyAwareResponse])
       extends TestResponse(version, messageId, cacheName, clientIntel, operation, status, topologyId, topologyResponse)
 
 class TestGetResponse(override val version: Byte, override val messageId: Long,
                   override val cacheName: String, override val clientIntel: Short,
                   override val operation: OperationResponse, override val status: OperationStatus,
                   override val topologyId: Int, val data: Option[Array[Byte]],
-                  override val topologyResponse: Option[AbstractTopologyResponse])
+                  override val topologyResponse: Option[AbstractTestTopologyAwareResponse])
       extends TestResponse(version, messageId, cacheName, clientIntel, operation, status, topologyId, topologyResponse)
 
 class TestGetWithVersionResponse(override val version: Byte, override val messageId: Long,
@@ -687,7 +687,7 @@ class TestGetWithVersionResponse(override val version: Byte, override val messag
                              override val status: OperationStatus,
                              override val topologyId: Int,
                              override val data: Option[Array[Byte]], val dataVersion: Long,
-                             override val topologyResponse: Option[AbstractTopologyResponse])
+                             override val topologyResponse: Option[AbstractTestTopologyAwareResponse])
       extends TestGetResponse(version, messageId, cacheName, clientIntel, operation, status, topologyId, data, topologyResponse)
 
 class TestGetWithMetadataResponse(override val version: Byte, override val messageId: Long,
@@ -697,7 +697,7 @@ class TestGetWithMetadataResponse(override val version: Byte, override val messa
                              override val topologyId: Int,
                              override val data: Option[Array[Byte]], val dataVersion: Long,
                              val created: Long, val lifespan: Int, val lastUsed: Long, val maxIdle: Int,
-                             override val topologyResponse: Option[AbstractTopologyResponse])
+                             override val topologyResponse: Option[AbstractTestTopologyAwareResponse])
       extends TestGetResponse(version, messageId, cacheName, clientIntel, operation, status, topologyId, data, topologyResponse)
 
 
@@ -705,41 +705,44 @@ class TestErrorResponse(override val version: Byte, override val messageId: Long
                     override val cacheName: String, override val clientIntel: Short,
                     override val status: OperationStatus,
                     override val topologyId: Int, val msg: String,
-                    override val topologyResponse: Option[AbstractTopologyResponse])
+                    override val topologyResponse: Option[AbstractTestTopologyAwareResponse])
       extends TestResponse(version, messageId, cacheName, clientIntel, ErrorResponse, status, topologyId, topologyResponse)
 
 class TestStatsResponse(override val version: Byte, override val messageId: Long,
                         override val cacheName: String, override val clientIntel: Short,
                         val stats: Map[String, String], override val topologyId: Int,
-                        override val topologyResponse: Option[AbstractTopologyResponse])
+                        override val topologyResponse: Option[AbstractTestTopologyAwareResponse])
       extends TestResponse(version, messageId, cacheName, clientIntel, StatsResponse, Success, topologyId, topologyResponse)
 
 class TestBulkGetResponse(override val version: Byte, override val messageId: Long,
                           override val cacheName: String, override val clientIntel: Short,
                           val bulkData: Map[ByteArrayKey, Array[Byte]],
-                          override val topologyId: Int, override val topologyResponse: Option[AbstractTopologyResponse])
+                          override val topologyId: Int, override val topologyResponse: Option[AbstractTestTopologyAwareResponse])
       extends TestResponse(version, messageId, cacheName, clientIntel, BulkGetResponse, Success, topologyId, topologyResponse)
 
 class TestBulkGetKeysResponse(override val version: Byte, override val messageId: Long,
                           override val cacheName: String, override val clientIntel: Short,
                           val bulkData: Set[ByteArrayKey],
-                          override val topologyId: Int, override val topologyResponse: Option[AbstractTopologyResponse])
+                          override val topologyId: Int, override val topologyResponse: Option[AbstractTestTopologyAwareResponse])
       extends TestResponse(version, messageId, cacheName, clientIntel, BulkGetResponse, Success, topologyId, topologyResponse)
 
 case class ServerNode(val host: String, val port: Int)
 
-case class TestTopologyAwareResponse(override val topologyId: Int,
+abstract class AbstractTestTopologyAwareResponse(val topologyId: Int,
                                      val members: Iterable[ServerAddress])
-        extends AbstractTopologyResponse(topologyId)
+
+case class TestTopologyAwareResponse(override val topologyId: Int,
+                                         override val members : Iterable[ServerAddress])
+      extends AbstractTestTopologyAwareResponse(topologyId, members)
 
 case class TestHashDistAware10Response(override val topologyId: Int,
-                        val members: Iterable[ServerAddress],
+                        override val members: Iterable[ServerAddress],
                         hashIds: Map[ServerAddress, Seq[Int]],
                         numOwners: Int, hashFunction: Byte, hashSpace: Int)
-      extends AbstractTopologyResponse(topologyId)
+      extends AbstractTestTopologyAwareResponse(topologyId, members)
 
 case class TestHashDistAware11Response(override val topologyId: Int,
                         val membersToHash: Map[ServerAddress, Int],
                         numOwners: Int, hashFunction: Byte, hashSpace: Int,
                         numVirtualNodes: Int)
-      extends AbstractTopologyResponse(topologyId)
+      extends AbstractTestTopologyAwareResponse(topologyId, membersToHash.keys)
