@@ -22,7 +22,6 @@
          max_bundle_size="64000"
          max_bundle_timeout="30"
          ip_ttl="${jgroups.udp.ip_ttl:0}"
-         enable_bundling="true"
          enable_unicast_bundling="true"
          enable_diagnostics="true"
          thread_naming_pattern="cl"

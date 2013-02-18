@@ -17,7 +17,6 @@
          loopback="false"
          max_bundle_size="64000"
          max_bundle_timeout="30"
-         enable_bundling="true"
          enable_unicast_bundling="true"
          enable_diagnostics="true"
          thread_naming_pattern="cl"

@@ -95,9 +95,9 @@ public class ClusteredCacheManagerMBeanTest extends MultipleCacheManagersTest {
    public void testJGroupsInformation() throws Exception {
       ObjectName jchannelName1 = getJGroupsChannelObjectName(JMX_DOMAIN, manager(0).getClusterName());
       ObjectName jchannelName2 = getJGroupsChannelObjectName(JMX_DOMAIN2, manager(1).getClusterName());
-      assertEquals(server.getAttribute(name1, "NodeAddress"), server.getAttribute(jchannelName1, "Address"));
-      assertEquals(server.getAttribute(name2, "NodeAddress"), server.getAttribute(jchannelName2, "Address"));
-      assert (Boolean) server.getAttribute(jchannelName1, "Connected");
-      assert (Boolean) server.getAttribute(jchannelName2, "Connected");
+      assertEquals(server.getAttribute(name1, "NodeAddress"), server.getAttribute(jchannelName1, "address"));
+      assertEquals(server.getAttribute(name2, "NodeAddress"), server.getAttribute(jchannelName2, "address"));
+      assert (Boolean) server.getAttribute(jchannelName1, "connected");
+      assert (Boolean) server.getAttribute(jchannelName2, "connected");
    }
 }
