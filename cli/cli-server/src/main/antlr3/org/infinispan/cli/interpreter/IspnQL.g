@@ -178,7 +178,7 @@ infoStatement returns [InfoStatement stmt]
    ;
 
 locateStatement returns [LocateStatement stmt]
-   : LOCATE key = keyIdentifier (EOL | ';')! { $stmt = new LocateStatement($key.key); }
+   : LOCATE opts = statementOptions key = keyIdentifier (EOL | ';')! { $stmt = new LocateStatement($opts.options, $key.key); }
    ;
 
 pingStatement returns [PingStatement stmt]
