@@ -225,7 +225,7 @@ public class CacheComponent extends MBeanResourceComponent<CacheManagerComponent
             log.warn(String.format("More than one bean returned from applying %s pattern: %s", pattern, beans));
          }
       }
-      EmsBean bean = beans.get(0);
+      EmsBean bean = beans.size() > 0 ? beans.get(0) : null;
       if (bean == null) {
          if (log.isTraceEnabled()) log.trace("No mbean found with name " + pattern);
       }
