@@ -35,6 +35,8 @@ import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.context.Flag;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.context.impl.TxInvocationContext;
+import org.infinispan.factories.annotations.Inject;
+import org.infinispan.interceptors.base.BaseCustomInterceptor;
 import org.infinispan.interceptors.base.CommandInterceptor;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.test.MultipleCacheManagersTest;
@@ -67,7 +69,7 @@ public class ReplCommandForwardingTest extends MultipleCacheManagersTest {
 
    private ConfigurationBuilder buildConfig(boolean transactional) {
       ConfigurationBuilder configurationBuilder = getDefaultClusteredCacheConfig(CacheMode.REPL_SYNC, transactional);
-      configurationBuilder.clustering().sync().replTimeout(10000);
+      configurationBuilder.clustering().sync().replTimeout(15000);
       configurationBuilder.clustering().stateTransfer().fetchInMemoryState(true);
       configurationBuilder.customInterceptors().addInterceptor().after(StateTransferInterceptor.class).interceptor(new DelayInterceptor());
       return configurationBuilder;
@@ -103,18 +105,18 @@ public class ReplCommandForwardingTest extends MultipleCacheManagersTest {
       // StateTransferInterceptor will forward the command to c3.
       // The DelayInterceptor on c3 will then block, waiting for an unblock() call.
       log.tracef("Forwarding the command from %s", c2);
-      di2.unblock();
+      di2.unblock(1);
 
       // Wait to ensure that the c3 receives the forwarded commands in the "right" order
       Thread.sleep(1000);
 
       // Unblock the command on the originator (c1), while forwarding is still in progress.
       // StateTransferInterceptor will forward the command to c2 and c3.
-      di1.unblock();
+      di1.unblock(1);
 
       // Unblock the command forwarded from c1 on c2 (c2 won't forward the command again).
       // Don't unblock the command on c3, because we'd actually unblock the command forwarded from c2.
-      di2.unblock();
+      di2.unblock(2);
 
       // c4 joins, topology id changes
       EmbeddedCacheManager cm4 = addClusterEnabledCacheManager(buildConfig(false));
@@ -125,20 +127,20 @@ public class ReplCommandForwardingTest extends MultipleCacheManagersTest {
       // Allow command forwarded from c2 to proceed on c3.
       // StateTransferInterceptor will then forward the command to c1 and c4.
       log.tracef("Forwarding the command from %s", c3);
-      di3.unblock();
+      di3.unblock(1);
 
       // Check that c1 and c4 receive the forwarded command (no extra forwarding).
-      di1.unblock();
-      di4.unblock();
+      di1.unblock(2);
+      di4.unblock(1);
 
       // Allow the DelayInterceptor on c3 to proceed again (for the command forwarded from c1).
       // StateTransferInterceptor will then forward the command to c2 and c4.
       log.tracef("Forwarding the command from %s for a second time", c3);
-      di3.unblock();
+      di3.unblock(2);
 
       // Check that c2 and c4 receive the forwarded command (no extra forwarding).
-      di2.unblock();
-      di4.unblock();
+      di2.unblock(3);
+      di4.unblock(2);
 
       log.tracef("Waiting for the put command to finish on %s", c1);
       f.get(10, TimeUnit.SECONDS);
@@ -184,7 +186,7 @@ public class ReplCommandForwardingTest extends MultipleCacheManagersTest {
       // StateTransferInterceptor will forward the command to c3.
       // The DelayInterceptor on c3 will then block, waiting for an unblock() call.
       log.tracef("Forwarding the prepare command from %s", c2);
-      di2.unblock();
+      di2.unblock(1);
 
       // c4 joins, topology id changes
       EmbeddedCacheManager cm4 = addClusterEnabledCacheManager(buildConfig(true));
@@ -195,21 +197,21 @@ public class ReplCommandForwardingTest extends MultipleCacheManagersTest {
       // Unblock the forwarded command on c3.
       // StateTransferInterceptor will then forward the command to c2 and c4.
       log.tracef("Forwarding the prepare command from %s", c3);
-      di3.unblock();
+      di3.unblock(1);
 
       // Check that the c2 and c4 received the forwarded command.
-      di2.unblock();
-      di4.unblock();
+      di2.unblock(2);
+      di4.unblock(1);
 
       // Allow the command to proceed on the originator (c1).
       // StateTransferInterceptor will forward the command to c2, c3, and c4.
       log.tracef("Forwarding the prepare command from %s", c1);
-      di1.unblock();
+      di1.unblock(1);
 
       // Check that c2, c3, and c4 received the forwarded command.
-      di2.unblock();
-      di3.unblock();
-      di4.unblock();
+      di2.unblock(3);
+      di3.unblock(2);
+      di4.unblock(2);
 
       log.tracef("Waiting for the transaction to finish on %s", c1);
       f.get(10, TimeUnit.SECONDS);
@@ -234,7 +236,7 @@ public class ReplCommandForwardingTest extends MultipleCacheManagersTest {
       }
    }
 
-   private class DelayInterceptor extends CommandInterceptor {
+   private class DelayInterceptor extends BaseCustomInterceptor {
       private final AtomicInteger counter = new AtomicInteger(0);
       private final SynchronousQueue<Object> barrier = new SynchronousQueue<Object>(true);
 
@@ -242,9 +244,11 @@ public class ReplCommandForwardingTest extends MultipleCacheManagersTest {
          return counter.get();
       }
 
-      public void unblock() throws InterruptedException, TimeoutException, BrokenBarrierException {
-         boolean offerResult = barrier.offer("bla", 5, TimeUnit.SECONDS);
-         assertTrue(offerResult);
+      public void unblock(int count) throws InterruptedException, TimeoutException, BrokenBarrierException {
+         log.tracef("Unblocking command on cache %s", cache);
+         boolean offerResult = barrier.offer(count, 5, TimeUnit.SECONDS);
+         assertTrue(offerResult,
+               String.format("There is no DelayInterceptor waiting to be unblocked on cache %s", cache));
       }
 
       @Override
@@ -253,9 +257,11 @@ public class ReplCommandForwardingTest extends MultipleCacheManagersTest {
 
          if (!ctx.isInTxScope() && !command.hasFlag(Flag.PUT_FOR_STATE_TRANSFER)) {
             log.tracef("Delaying command %s", command);
-            counter.incrementAndGet();
-            Object pollResult = barrier.poll(3, TimeUnit.SECONDS);
-            assertNotNull(pollResult, "Timed out waiting for unblock() call");
+            Integer myCount = counter.incrementAndGet();
+            Object pollResult = barrier.poll(15, TimeUnit.SECONDS);
+            assertEquals(pollResult, myCount,
+                  String.format("Timed out waiting for unblock(%d) call on cache %s", myCount, cache));
+            log.tracef("Command unblocked: %s", command);
          }
          return result;
       }
@@ -265,9 +271,11 @@ public class ReplCommandForwardingTest extends MultipleCacheManagersTest {
          Object result = super.visitPrepareCommand(ctx, command);
          if (!ctx.isOriginLocal() || !((LocalTransaction)ctx.getCacheTransaction()).isFromStateTransfer()) {
             log.tracef("Delaying command %s", command);
-            counter.incrementAndGet();
-            Object pollResult = barrier.poll(3, TimeUnit.SECONDS);
-            assertNotNull(pollResult, "Timed out waiting for unblock() call");
+            Integer myCount = counter.incrementAndGet();
+            Object pollResult = barrier.poll(15, TimeUnit.SECONDS);
+            assertEquals(pollResult, myCount,
+                  String.format("Timed out waiting for unblock(%d) call on cache %s", myCount, cache));
+            log.tracef("Command unblocked: %s", command);
          }
          return result;
       }
