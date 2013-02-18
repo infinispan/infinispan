@@ -310,25 +310,6 @@ object HotRodTestingUtil extends Log {
               .getAdvancedCache.getRpcManager.getTopologyId)
    }
 
-   def getAddressCacheRemovalLatches(servers: List[HotRodServer]): Seq[CountDownLatch] = {
-      val latches = new ListBuffer[CountDownLatch]
-      servers.foreach { server =>
-         val addressRemovalLatch = new CountDownLatch(1)
-         server.getAddressCache.addListener(
-            new AddressRemovalListener(addressRemovalLatch))
-         latches += addressRemovalLatch
-      }
-      latches.toList
-   }
-
-   def waitAddressCacheRemoval(latches: Seq[CountDownLatch]) {
-      latches.foreach { latch =>
-         val completed = latch.await(60, TimeUnit.SECONDS)
-         if (!completed)
-          throw new Exception("Timed out waiting for address cache to be updated")
-      }
-   }
-
    def killClient(client: HotRodClient): ChannelFuture = {
       try {
          if (client != null) client.stop
