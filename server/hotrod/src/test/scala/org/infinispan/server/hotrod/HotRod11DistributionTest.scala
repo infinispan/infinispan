@@ -28,6 +28,7 @@ import org.infinispan.server.hotrod.OperationStatus._
 import org.testng.annotations.Test
 import org.infinispan.configuration.cache.{CacheMode, ConfigurationBuilder}
 import org.infinispan.server.hotrod.Constants._
+import org.infinispan.test.TestingUtil
 
 /**
  * Tests Hot Rod distribution mode using Hot Rod's 1.1 protocol.
@@ -90,7 +91,6 @@ class HotRod11DistributionTest extends HotRodMultiNodeTest {
       val newClient = new HotRodClient(
             "127.0.0.1", newServer.getPort, cacheName, 60, protocolVersion)
       val allServers = newServer :: servers
-      val addressRemovalLatches = getAddressCacheRemovalLatches(servers)
       try {
          log.trace("New client started, modify key to be v6-*")
          resp = newClient.put(k(m) , 0, 0, v(m, "v6-"), INTELLIGENCE_HASH_DISTRIBUTION_AWARE, 0)
@@ -109,7 +109,7 @@ class HotRod11DistributionTest extends HotRodMultiNodeTest {
          log.trace("Stopping new server")
          killClient(newClient)
          stopClusteredServer(newServer)
-         waitAddressCacheRemoval(addressRemovalLatches)
+         TestingUtil.waitForRehashToComplete(cache(0, cacheName), cache(1, cacheName))
          log.trace("New server stopped")
       }
 

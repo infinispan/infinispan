@@ -98,6 +98,8 @@ class HotRod11StorageOnlyNodesTest extends HotRodMultiNodeTest {
          assertFalse(resp.topologyResponse.isDefined)
       } finally {
          TestingUtil.killCacheManagers(newCacheManager)
+         TestingUtil.blockUntilViewsReceived(50000, false, manager(0))
+         TestingUtil.waitForRehashToComplete(cache(0, cacheName))
       }
 
       log.trace("Check that only the topology id changes after the storage-only server is killed")
