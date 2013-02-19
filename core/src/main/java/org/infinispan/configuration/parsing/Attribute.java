@@ -115,6 +115,7 @@ public enum Attribute {
     SPIN_DURATION("spinDuration"),
     STORE_KEYS_AS_BINARY("storeKeysAsBinary"),
     STORE_VALUES_AS_BINARY("storeValuesAsBinary"),
+    DEFENSIVE("defensive"),
     STRATEGY("strategy"),
     STREAM_BUFFER_SIZE("streamBufferSize"),
     SYNC_COMMIT_PHASE("syncCommitPhase"),

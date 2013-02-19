@@ -251,7 +251,38 @@ public class XmlFileParsingTest extends AbstractInfinispanTest {
             cm.getDefaultCacheConfiguration();
          }
       });
+   }
 
+   public void testDefensive() throws IOException {
+      String config = INFINISPAN_START_TAG_NO_SCHEMA +
+            "<default>\n" +
+            "<storeAsBinary enabled=\"true\" defensive=\"true\" />\n" +
+            "</default>\n" +
+            INFINISPAN_END_TAG;
+      InputStream is = new ByteArrayInputStream(config.getBytes());
+      withCacheManager(new CacheManagerCallable(TestCacheManagerFactory.fromStream(is)) {
+         @Override
+         public void call() {
+            Configuration cfg = cm.getDefaultCacheConfiguration();
+            assert cfg.storeAsBinary().enabled();
+            assert cfg.storeAsBinary().defensive();
+         }
+      });
+
+      config = INFINISPAN_START_TAG_NO_SCHEMA +
+            "<default>\n" +
+            "<storeAsBinary enabled=\"true\" defensive=\"false\" />\n" +
+            "</default>\n" +
+            INFINISPAN_END_TAG;
+      is = new ByteArrayInputStream(config.getBytes());
+      withCacheManager(new CacheManagerCallable(TestCacheManagerFactory.fromStream(is)) {
+         @Override
+         public void call() {
+            Configuration cfg = cm.getDefaultCacheConfiguration();
+            assert cfg.storeAsBinary().enabled();
+            assert !cfg.storeAsBinary().defensive();
+         }
+      });
    }
 
    private void assertNamedCacheFile(EmbeddedCacheManager cm, boolean deprecated) {

@@ -315,7 +315,7 @@ public class MarshalledValueInterceptor extends CommandInterceptor {
       return processRetVal(retVal, ctx);
    }
 
-   private void compact(MarshalledValue mv) {
+   protected void compact(MarshalledValue mv) {
       if (mv == null) return;
       mv.compact(false, false);
    }

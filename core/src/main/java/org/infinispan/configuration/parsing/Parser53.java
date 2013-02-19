@@ -497,6 +497,9 @@ public class Parser53 implements ConfigurationParser<ConfigurationBuilderHolder>
             case STORE_VALUES_AS_BINARY:
                builder.storeAsBinary().storeValuesAsBinary(Boolean.parseBoolean(value));
                break;
+            case DEFENSIVE:
+               builder.storeAsBinary().defensive(Boolean.parseBoolean(value));
+               break;
             default:
                throw ParseUtils.unexpectedAttribute(reader, i);
          }

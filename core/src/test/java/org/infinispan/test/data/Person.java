@@ -31,6 +31,14 @@ public class Person implements Serializable {
    String name = null;
    Address address;
 
+   public Person() {
+      // Needed for serialization
+   }
+
+   public Person(String name) {
+      this.name = name;
+   }
+
    public String getName() {
       return name;
    }
