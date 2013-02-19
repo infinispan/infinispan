@@ -42,7 +42,8 @@ public class ConfigurationAdapter<K, V> {
 
    public org.infinispan.configuration.cache.Configuration build() {
       ConfigurationBuilder cb = new ConfigurationBuilder();
-      cb.storeAsBinary().enabled(c.isStoreByValue());
+      if (c.isStoreByValue())
+         cb.storeAsBinary().enable().defensive(true);
 
       switch (c.getTransactionMode()) {
          case NONE:

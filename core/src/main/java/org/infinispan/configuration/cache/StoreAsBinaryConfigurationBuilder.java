@@ -36,6 +36,7 @@ public class StoreAsBinaryConfigurationBuilder extends AbstractConfigurationChil
    private boolean enabled = false;
    private boolean storeKeysAsBinary = true;
    private boolean storeValuesAsBinary = true;
+   private boolean defensive = false;
 
    StoreAsBinaryConfigurationBuilder(ConfigurationBuilder builder) {
       super(builder);
@@ -83,6 +84,30 @@ public class StoreAsBinaryConfigurationBuilder extends AbstractConfigurationChil
       return this;
    }
 
+   /**
+    * When defensive copying is disabled, Infinispan keeps object references
+    * around and marshalls keys lazily. So clients can modify entries via
+    * original object references, and marshalling only happens when entries
+    * are to be replicated/distributed, or stored in a cache store.
+    *
+    * Since client references are valid, clients can make changes to entries
+    * in the cache using those references, but these modifications are only
+    * local and you still need to call one of the cache's put/replace...
+    * methods in order for changes to replicate.
+    *
+    * When defensive copies are enabled, Infinispan marshalls objects the
+    * moment they're stored, hence changes made to object references are
+    * not stored in the cache, not even for local caches.
+    *
+    * @param defensive boolean indicating whether defensive copies
+    *                  should be enabled cache wide
+    * @return a configuration builder for fluent programmatic configuration
+    */
+   public StoreAsBinaryConfigurationBuilder defensive(boolean defensive) {
+      this.defensive = defensive;
+      return this;
+   }
+
    @Override
    public void validate() {
       // Nothing to validate.
@@ -90,7 +115,8 @@ public class StoreAsBinaryConfigurationBuilder extends AbstractConfigurationChil
 
    @Override
    public StoreAsBinaryConfiguration create() {
-      return new StoreAsBinaryConfiguration(enabled, storeKeysAsBinary, storeValuesAsBinary);
+      return new StoreAsBinaryConfiguration(
+            enabled, storeKeysAsBinary, storeValuesAsBinary, defensive);
    }
 
    @Override
@@ -98,6 +124,7 @@ public class StoreAsBinaryConfigurationBuilder extends AbstractConfigurationChil
       this.enabled = template.enabled();
       this.storeKeysAsBinary = template.storeKeysAsBinary();
       this.storeValuesAsBinary = template.storeValuesAsBinary();
+      this.defensive = template.defensive();
 
       return this;
    }
