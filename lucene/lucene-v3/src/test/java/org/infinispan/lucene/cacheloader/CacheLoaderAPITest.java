@@ -95,6 +95,35 @@ public class CacheLoaderAPITest extends SingleCacheManagerTest {
       cacheLoader.loadAllKeys(null);
    }
 
+   public void testLoadAllKeysWithExclusion() throws Exception {
+      TestHelper.createIndex(rootDir, indexName, elementCount, true);
+
+      String[] fileNamesFromIndexDir = TestHelper.getFileNamesFromDir(rootDir, indexName);
+
+      LuceneCacheLoader cacheLoader = (LuceneCacheLoader) TestingUtil.extractComponent(cacheManager.getCache(),
+                                                                                       CacheLoaderManager.class).getCacheLoader();
+
+      Set keyList = cacheLoader.loadAllKeys(null);
+      int initialCount = keyList.size();
+
+      HashSet exclusionSet = new HashSet();
+      for(String fileName : fileNamesFromIndexDir) {
+         FileCacheKey key = new FileCacheKey(indexName, fileName);
+         assert cacheLoader.load(key) != null;
+
+         exclusionSet.add(key);
+      }
+
+      keyList = cacheLoader.loadAllKeys(exclusionSet);
+
+      AssertJUnit.assertEquals((initialCount - fileNamesFromIndexDir.length), keyList.size());
+
+      Iterator it = keyList.iterator();
+      if(it.hasNext()) {
+         assert !(it.next() instanceof FileCacheKey);
+      }
+   }
+
    @Test(dataProvider = "passEntriesCount")
    public void testLoadEntries(int entriesNum) throws Exception {
       TestHelper.createIndex(rootDir, indexName, elementCount, true);
@@ -136,6 +165,96 @@ public class CacheLoaderAPITest extends SingleCacheManagerTest {
       }
    }
 
+   public void testLoadAllKeys() throws Exception {
+      TestHelper.createIndex(rootDir, indexName, elementCount, true);
+      String[] fileNamesFromIndexDir = TestHelper.getFileNamesFromDir(rootDir, indexName);
+
+      LuceneCacheLoader cacheLoader = (LuceneCacheLoader) TestingUtil.extractComponent(cacheManager.getCache(),
+                                                                                       CacheLoaderManager.class).getCacheLoader();
+
+      Set keyList = cacheLoader.loadAllKeys(new HashSet());
+      for(String fileName : fileNamesFromIndexDir) {
+         FileCacheKey key = new FileCacheKey(indexName, fileName);
+         assert cacheLoader.load(key) != null;
+
+         boolean found = false;
+         for(Object keyFromList : keyList) {
+            if(keyFromList instanceof FileCacheKey && keyFromList.equals(key)) {
+               found = true;
+               break;
+            }
+         }
+
+         assert found : "No corresponding key was found for " + key;
+      }
+   }
+
+   public void testLoadAllKeysWithExclusionOfRootKey() throws Exception {
+      TestHelper.createIndex(rootDir, indexName, elementCount, true);
+
+      LuceneCacheLoader cacheLoader = (LuceneCacheLoader) TestingUtil.extractComponent(cacheManager.getCache(),
+                                                                                       CacheLoaderManager.class).getCacheLoader();
+      Set keySet = cacheLoader.loadAllKeys(null);
+      int initialCount = keySet.size();
+
+      HashSet exclusionSet = new HashSet();
+      exclusionSet.add(new FileListCacheKey(indexName));
+
+      keySet = cacheLoader.loadAllKeys(exclusionSet);
+      String[] fileNamesArr = TestHelper.getFileNamesFromDir(rootDir, indexName);
+      AssertJUnit.assertEquals((initialCount - 1), keySet.size());
+
+      Iterator it = keySet.iterator();
+      while (it.hasNext()) {
+         assert !(it.next() instanceof FileListCacheKey);
+      }
+   }
+
+   public void testLoadAllKeysWithChunkExclusion() throws Exception {
+      TestHelper.createIndex(rootDir, indexName, elementCount, true);
+      LuceneCacheLoader cacheLoader = (LuceneCacheLoader) TestingUtil.extractComponent(cacheManager.getCache(),
+                                                                                       CacheLoaderManager.class).getCacheLoader();
+
+      HashSet exclusionSet = new HashSet();
+      String[] fileNames = TestHelper.getFileNamesFromDir(rootDir, indexName);
+      for(String fileName : fileNames) {
+         exclusionSet.add(new ChunkCacheKey(indexName, fileName, 0, 110));
+      }
+
+      Set keyList = cacheLoader.loadAllKeys(null);
+      checkIfExists(keyList, exclusionSet, true, false);
+
+      keyList = cacheLoader.loadAllKeys(exclusionSet);
+      checkIfExists(keyList, exclusionSet, false, true);
+   }
+
+   @Test
+   public void testLoadAllKeysWithNullExclusion() throws Exception {
+      TestHelper.createIndex(rootDir, indexName, elementCount, true);
+
+      String[] fileNamesFromIndexDir = TestHelper.getFileNamesFromDir(rootDir, indexName);
+
+      LuceneCacheLoader cacheLoader = (LuceneCacheLoader) TestingUtil.extractComponent(cacheManager.getCache(),
+                                                                                       CacheLoaderManager.class).getCacheLoader();
+
+      Set keyList = cacheLoader.loadAllKeys(null);
+
+      for(String fileName : fileNamesFromIndexDir) {
+         FileCacheKey key = new FileCacheKey(indexName, fileName);
+         assert cacheLoader.load(key) != null;
+
+         boolean found = false;
+         for(Object keyFromList : keyList) {
+            if(keyFromList instanceof FileCacheKey && keyFromList.equals(key)) {
+               found = true;
+               break;
+            }
+         }
+
+         assert found : "No corresponding key was found for " + key;
+      }
+   }
+
    @DataProvider(name = "passEntriesCount")
    public Object[][] provideEntriesCount() {
       return new Object[][]{
@@ -150,6 +269,29 @@ public class CacheLoaderAPITest extends SingleCacheManagerTest {
       super.teardown();
       File rootDir = new File(new File(parentDir), rootDirectoryName);
       TestingUtil.recursiveFileRemove(rootDir);
+   }
+
+   private void checkIfExists(Set result, Set exclusionSet, boolean shouldExist, boolean allShouldBeChecked) {
+      boolean keyExists = false;
+      for(Object obj : exclusionSet) {
+         ChunkCacheKey key = (ChunkCacheKey) obj;
+
+         boolean exists = false;
+         for(Object expectedChunk : result) {
+            if(obj.equals(expectedChunk)) {
+               exists = true;
+               break;
+            }
+         }
+
+         keyExists = exists;
+
+         if(!allShouldBeChecked && exists) {
+            break;
+         }
+      }
+
+      assert keyExists == shouldExist;
    }
 
 }
