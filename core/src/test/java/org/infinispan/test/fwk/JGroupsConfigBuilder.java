@@ -159,7 +159,6 @@ public class JGroupsConfigBuilder {
     */
    private static void removeFailureDetectionTcp(JGroupsProtocolCfg jgroupsCfg) {
       jgroupsCfg.removeProtocol(FD)
-            .removeProtocol(FD_SOCK)
             .removeProtocol(VERIFY_SUSPECT);
    }
 
