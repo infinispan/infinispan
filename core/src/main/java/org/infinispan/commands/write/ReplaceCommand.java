@@ -38,12 +38,12 @@ import java.util.Set;
 public class ReplaceCommand extends AbstractDataWriteCommand {
    public static final byte COMMAND_ID = 11;
 
-   Object oldValue;
-   Object newValue;
-   long lifespanMillis = -1;
-   long maxIdleTimeMillis = -1;
-   CacheNotifier notifier;
-   boolean successful = true;
+   private Object oldValue;
+   private Object newValue;
+   private long lifespanMillis = -1;
+   private long maxIdleTimeMillis = -1;
+   private CacheNotifier notifier;
+   private boolean successful = true;
 
    private boolean ignorePreviousValue;
 
@@ -209,6 +209,8 @@ public class ReplaceCommand extends AbstractDataWriteCommand {
             "key=" + key +
             ", oldValue=" + oldValue +
             ", newValue=" + newValue +
+            ", lifespanMillis=" + lifespanMillis +
+            ", maxIdleTimeMillis=" + maxIdleTimeMillis +
             ", flags=" + flags +
             ", successful=" + successful +
             ", ignorePreviousValue=" + ignorePreviousValue +

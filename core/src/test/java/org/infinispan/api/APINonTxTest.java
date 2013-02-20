@@ -30,6 +30,7 @@ import org.infinispan.test.SingleCacheManagerTest;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.infinispan.util.ObjectDuplicator;
 import org.testng.annotations.Test;
+import static org.testng.AssertJUnit.*;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -340,13 +341,45 @@ public class APINonTxTest extends SingleCacheManagerTest {
    }
 
    @Test(expectedExceptions = NullPointerException.class)
-   public void testNullKeyParameter() {
+   public void testPutNullKeyParameter() {
       cache.put(null, null);
    }
 
    @Test(expectedExceptions = NullPointerException.class)
-   public void testNullValueParameter() {
+   public void testPutNullValueParameter() {
       cache.put("hello", null);
+   }
+
+   public void testReplaceNullKeyParameter() {
+      try {
+         cache.replace(null, "X");
+         fail();
+      } catch (NullPointerException npe) {
+         assertEquals("Null keys are not supported!", npe.getMessage());
+      }
+
+      try {
+         cache.replace(null, "X", "Y");
+         fail();
+      } catch (NullPointerException npe) {
+         assertEquals("Null keys are not supported!", npe.getMessage());
+      }
+   }
+
+   public void testReplaceNullValueParameter() {
+      try {
+         cache.replace("hello", null, "X");
+         fail();
+      } catch (NullPointerException npe) {
+         assertEquals("Null values are not supported!", npe.getMessage());
+      }
+
+      try {
+         cache.replace("hello", "X", null);
+         fail();
+      } catch (NullPointerException npe) {
+         assertEquals("Null values are not supported!", npe.getMessage());
+      }
    }
 
    public void testPutIfAbsentLockCleanup() {
