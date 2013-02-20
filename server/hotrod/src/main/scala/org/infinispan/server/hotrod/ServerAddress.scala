@@ -70,7 +70,7 @@ class ServerAddress(val host: String, val port: Int) extends Address {
       }
    }
 
-   override def toString = "/%s:%d".format(host, port)
+   override def toString = "%s:%d".format(host, port)
 
    def compareTo(o: Address) : Int = {
       o match {

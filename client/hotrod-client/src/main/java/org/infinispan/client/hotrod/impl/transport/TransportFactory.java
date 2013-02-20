@@ -67,10 +67,4 @@ public interface TransportFactory {
 
    void invalidateTransport(SocketAddress serverAddress, Transport transport);
 
-   /**
-    * Returns a collection of server nodes, as Strings, that are known to be owners for a given key.
-    * @param key to locate.  Cannot be null.
-    * @return A non-empty and non-null collection of Strings.
-    */
-   Collection<String> locate(byte[] key);
 }

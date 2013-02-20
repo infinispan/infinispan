@@ -12,7 +12,6 @@ import org.testng.annotations.Test;
 
 import java.net.InetSocketAddress;
 import java.net.SocketAddress;
-import java.util.Collection;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.LinkedHashMap;
@@ -154,11 +153,6 @@ public class ConsistentHashComparisonTest {
 
       @Override
       public SocketAddress getServer(byte[] key) {
-         return getServers(key).iterator().next();
-      }
-
-      @Override
-      public Collection<SocketAddress> getServers(byte[] key) {
          int keyHashCode = getNormalizedHash(key);
          if (keyHashCode == Integer.MIN_VALUE) keyHashCode += 1;
          int hash = Math.abs(keyHashCode);
@@ -167,7 +161,7 @@ public class ConsistentHashComparisonTest {
          if (log.isTraceEnabled()) {
             log.tracef("Found possible candidates: %s", candidates);
          }
-         return (candidates.size() > 0 ? candidates : positions).values();
+         return (candidates.size() > 0 ? candidates : positions).entrySet().iterator().next().getValue();
       }
 
       private SocketAddress getItemAtPosition(int position, SortedMap<Integer, SocketAddress> map) {
