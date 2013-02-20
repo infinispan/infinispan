@@ -356,14 +356,4 @@ public interface RemoteCache<K, V> extends BasicCache<K, V> {
     * guarantee that "size" elements are returned( e.g. if the number of elements in the back-end server is smaller that "size")
     */
    Map<K, V> getBulk(int size);
-
-   /**
-    * Returns a collection of server nodes, as Strings, that are known to be
-    * owners for a given key. The format of the Strings is
-    * '<code>/HOST:PORT</code>'.
-    *
-    * @param key to locate.  Cannot be null.
-    * @return A non-empty and non-null collection of Strings.
-    */
-   Collection<String> locate(K key);
 }

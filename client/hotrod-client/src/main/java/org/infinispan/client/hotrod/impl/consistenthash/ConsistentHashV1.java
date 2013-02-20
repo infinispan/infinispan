@@ -22,22 +22,20 @@
  */
 package org.infinispan.client.hotrod.impl.consistenthash;
 
-import org.infinispan.commons.hash.Hash;
-import org.infinispan.commons.hash.MurmurHash2;
-import org.infinispan.util.Util;
-import org.infinispan.util.logging.BasicLogFactory;
-import org.jboss.logging.BasicLogger;
-
 import java.net.SocketAddress;
 import java.util.Arrays;
-import java.util.Collection;
-import java.util.HashSet;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.Random;
 import java.util.Set;
 import java.util.SortedMap;
 import java.util.TreeMap;
+
+import org.infinispan.commons.hash.Hash;
+import org.infinispan.commons.hash.MurmurHash2;
+import org.infinispan.util.Util;
+import org.infinispan.util.logging.BasicLogFactory;
+import org.jboss.logging.BasicLogger;
 
 /**
  * Version one consistent hash function based on {@link org.infinispan.commons.hash.MurmurHash2};
@@ -105,23 +103,6 @@ public class ConsistentHashV1 implements ConsistentHash {
       int indexToReturn = mainOwner % hashes.length;
 
       return addresses[indexToReturn];
-   }
-
-   @Override
-   public Collection<SocketAddress> getServers(byte[] key) {
-      int normalisedHashForKey = getNormalizedHash(key) % hashSpace;
-
-      int mainOwner = getHashIndex(normalisedHashForKey);
-
-      int firstIndexToReturn = mainOwner % hashes.length;
-      Set<SocketAddress> retval = new HashSet<SocketAddress>(numKeyOwners);
-      int nextIndex = firstIndexToReturn;
-      for (int i=0; i<numKeyOwners; i++) {
-         retval.add(addresses[nextIndex]);
-         nextIndex++;
-         nextIndex = nextIndex % hashes.length;
-      }
-      return retval;
    }
 
    private int getHashIndex(int normalisedHashForKey) {
