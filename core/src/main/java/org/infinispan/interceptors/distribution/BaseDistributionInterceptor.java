@@ -86,13 +86,21 @@ public abstract class BaseDistributionInterceptor extends BaseRpcInterceptor {
       this.cdl = cdl;
    }
 
-   protected boolean needsRemoteGet(InvocationContext ctx, AbstractDataCommand command, boolean retvalCheck) {
+   protected boolean needsRemoteGet(InvocationContext ctx, AbstractDataCommand command) {
+      boolean shouldFetchFromRemote = false;
       final CacheEntry entry;
-      return retvalCheck
-            && !command.hasFlag(Flag.CACHE_MODE_LOCAL)
+      if (!command.hasFlag(Flag.CACHE_MODE_LOCAL)
             && !command.hasFlag(Flag.SKIP_REMOTE_LOOKUP)
             && !command.hasFlag(Flag.IGNORE_RETURN_VALUES)
-            && ((entry = ctx.lookupEntry(command.getKey())) == null || entry.isNull() || entry.isLockPlaceholder());   //todo [anistor] this condition seems wrong
+            && ((entry = ctx.lookupEntry(command.getKey())) == null || entry.isNull() || entry.isLockPlaceholder())) {
+         Object key = command.getKey();
+         DataLocality locality = dm.getReadConsistentHash().isKeyLocalToNode(rpcManager.getAddress(), key) ? DataLocality.LOCAL : DataLocality.NOT_LOCAL;
+         shouldFetchFromRemote = ctx.isOriginLocal() && !locality.isLocal() && !dataContainer.containsKey(key);
+         if (!shouldFetchFromRemote) {
+            log.tracef("Not doing a remote get for key %s since entry is mapped to current node (%s), or is in L1.  Owners are %s", key, rpcManager.getAddress(), dm.locate(key));
+         }
+      }
+      return shouldFetchFromRemote;
    }
 
    @Override
@@ -113,15 +121,6 @@ public abstract class BaseDistributionInterceptor extends BaseRpcInterceptor {
    public Object visitReplaceCommand(InvocationContext ctx, ReplaceCommand command) throws Throwable {
       return handleWriteCommand(ctx, command,
                                 new SingleKeyRecipientGenerator(command.getKey()), false, false);
-   }
-
-   protected boolean shouldFetchFromRemote(InvocationContext ctx, Object key) {
-      DataLocality locality = dm.getReadConsistentHash().isKeyLocalToNode(rpcManager.getAddress(), key) ? DataLocality.LOCAL : DataLocality.NOT_LOCAL;
-      boolean shouldFetch = ctx.isOriginLocal() && !locality.isLocal() && !dataContainer.containsKey(key);
-      if (!shouldFetch) {
-         log.tracef("Not doing a remote get for key %s since entry is mapped to current node (%s), or is in L1.  Owners are %s", key, rpcManager.getAddress(), dm.locate(key));
-      }
-      return shouldFetch;
    }
 
    protected abstract Object handleWriteCommand(InvocationContext ctx, WriteCommand command, RecipientGenerator recipientGenerator, boolean skipRemoteGet, boolean skipL1Invalidation) throws Throwable;
