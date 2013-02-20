@@ -28,35 +28,73 @@ import org.infinispan.AdvancedCache;
 import javax.cache.Cache;
 
 /**
- * Mutable cache entry
+ * Infinispan implementation of {@link Cache.MutableEntry<K, V>} designed to
+ * be passed as parameter to {@link Cache.EntryProcessor#process(javax.cache.Cache.MutableEntry)}.
  *
+ * @param <K> the type of key maintained by this cache entry
+ * @param <V> the type of value maintained by this cache entry
  * @author Galder Zamarreño
  * @since 5.3
  */
-public class MutableJCacheEntry<K, V>
-      extends JCacheEntry<K, V> implements Cache.MutableEntry<K, V> {
+public final class MutableJCacheEntry<K, V> implements Cache.MutableEntry<K, V> {
 
    private final AdvancedCache<K, V> cache;
 
-   public MutableJCacheEntry(
-         AdvancedCache<K, V> cache, K key, V value) {
-      super(key, value);
+   private final K key;
+
+   private final V oldValue;
+
+   private V value; // mutable
+
+   private boolean removed;
+
+   public MutableJCacheEntry(AdvancedCache<K, V> cache, K key, V value) {
       this.cache = cache;
+      this.key = key;
+      this.oldValue = value;
    }
 
    @Override
    public boolean exists() {
-      return cache.containsKey(key);
+      if (value != null)
+         return true;
+      else if (!removed)
+         return cache.containsKey(key);
+
+      return false;
    }
 
    @Override
    public void remove() {
-      cache.remove(key);
+      removed = true;
+      value = null;
    }
 
    @Override
    public void setValue(V value) {
-      cache.put(key, value);
+      this.value = value;
+      removed = false;
+   }
+
+   @Override
+   public K getKey() {
+      return key;
+   }
+
+   @Override
+   public V getValue() {
+      if (value != null)
+         return value;
+
+      return oldValue;
+   }
+
+   V getNewValue() {
+      return value;
+   }
+
+   boolean isRemoved() {
+      return removed;
    }
 
 }

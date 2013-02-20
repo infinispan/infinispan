@@ -20,7 +20,16 @@ package org.infinispan.jcache;
 
 import javax.cache.Cache.Entry;
 
-public class JCacheEntry<K, V> implements Entry<K, V> {
+/**
+ * Infinispan implementation of {@link javax.cache.Cache.Entry<K, V>}.
+ *
+ * @param <K> the type of key maintained by this cache entry
+ * @param <V> the type of value maintained by this cache entry
+ * @author Vladimir Blagojevic
+ * @author Galder Zamarreño
+ * @since 5.3
+ */
+public final class JCacheEntry<K, V> implements Entry<K, V> {
 
    protected final K key;
 

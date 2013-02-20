@@ -41,7 +41,11 @@ import javax.cache.event.CacheEntryListenerRegistration;
 
 import org.infinispan.AdvancedCache;
 import org.infinispan.context.Flag;
+import org.infinispan.jcache.logging.Log;
 import org.infinispan.util.InfinispanCollections;
+import org.infinispan.util.concurrent.locks.containers.LockContainer;
+import org.infinispan.util.concurrent.locks.containers.ReentrantPerEntryLockContainer;
+import org.infinispan.util.logging.LogFactory;
 
 /**
  * Infinispan's implementation of {@link javax.cache.Cache} interface.
@@ -52,6 +56,9 @@ import org.infinispan.util.InfinispanCollections;
  */
 public class JCache<K, V> implements Cache<K, V> {
 
+   private static final Log log =
+         LogFactory.getLog(JCache.class, Log.class);
+
    private final JCacheManager cacheManager;
    private final Configuration<K, V> configuration;
    private final AdvancedCache<K, V> cache;
@@ -59,10 +66,15 @@ public class JCache<K, V> implements Cache<K, V> {
    private final AdvancedCache<K, V> skipCacheLoadCache;
    private final CacheStatisticsMXBean stats;
    private final CacheMXBean mxBean;
-   private final ConcurrentHashMap<CacheEntryListener<? super K, ? super V>, CacheEntryListenerRegistration<? super K, ? super V>> listeners = new ConcurrentHashMap<CacheEntryListener<? super K, ? super V>, CacheEntryListenerRegistration<? super K, ? super V>>();
+   private final ConcurrentHashMap<
+         CacheEntryListener<? super K, ? super V>,
+         CacheEntryListenerRegistration<? super K, ? super V>> listeners =
+         new ConcurrentHashMap<CacheEntryListener<? super K, ? super V>, CacheEntryListenerRegistration<? super K, ? super V>>();
    
    private final ExpiryPolicy<? super K, ? super V> expiryPolicy;
    private final ExecutorService executorService = Executors.newFixedThreadPool(1);
+   private final LockContainer processorLocks = new ReentrantPerEntryLockContainer(32);
+   private final long lockTimeout; // milliseconds
 
    public JCache(AdvancedCache<K, V> cache,
          JCacheManager cacheManager, Configuration<K, V> c) {
@@ -76,7 +88,9 @@ public class JCache<K, V> implements Cache<K, V> {
       this.mxBean = new RIDelegatingCacheMXBean<K, V>(this);
       this.stats = new RICacheStatistics(this);
       this.expiryPolicy = configuration.getExpiryPolicy();
-      
+      this.lockTimeout =  cache.getCacheConfiguration()
+            .locking().lockAcquisitionTimeout();
+
       for (CacheEntryListenerRegistration<? super K, ? super V> r : c
                .getCacheEntryListenerRegistrations()) {
 
@@ -118,14 +132,44 @@ public class JCache<K, V> implements Cache<K, V> {
    }
 
    @Override
-   public boolean containsKey(K key) {
+   public boolean containsKey(final K key) {
       checkStarted();
+      // TODO: Remove logging once isContainsKey has been added to GetKeyValueCommand
+      if (log.isTraceEnabled())
+         log.tracef("Invoke containsKey(key=%s)", key);
+
+      if (lockRequired(key)) {
+         return new WithProcessorLock<Boolean>().call(key, new Callable<Boolean>() {
+            @Override
+            public Boolean call() {
+               return doContainsKey(key);
+            }
+         });
+      }
+
+      return doContainsKey(key);
+   }
+
+   private boolean doContainsKey(K key) {
       return skipCacheLoadCache.containsKey(key);
    }
 
    @Override
-   public V get(K key) {
+   public V get(final K key) {
       checkStarted();
+      if (lockRequired(key)) {
+         return new WithProcessorLock<V>().call(key, new Callable<V>() {
+            @Override
+            public V call() {
+               return doGet(key);
+            }
+         });
+      }
+
+      return doGet(key);
+   }
+
+   private V doGet(K key) {
       V value = cache.get(key);
       if (value != null)
          updateTTLForAccessed(cache,
@@ -159,20 +203,47 @@ public class JCache<K, V> implements Cache<K, V> {
    }
 
    @Override
-   public V getAndPut(K key, V value) {
+   public V getAndPut(final K key, final V value) {
       checkStarted();
+      if (lockRequired(key)) {
+         return new WithProcessorLock<V>().call(key, new Callable<V>() {
+            @Override
+            public V call() {
+               return put(cache, key, value, false);
+            }
+         });
+      }
+
       return put(cache, key, value, false);
    }
 
    @Override
-   public V getAndRemove(K key) {
+   public V getAndRemove(final K key) {
       checkStarted();
+      if (lockRequired(key)) {
+         return new WithProcessorLock<V>().call(key, new Callable<V>() {
+            @Override
+            public V call() {
+               return skipCacheLoadCache.remove(key);
+            }
+         });
+      }
+
       return skipCacheLoadCache.remove(key);
    }
 
    @Override
-   public V getAndReplace(K key, V value) {
+   public V getAndReplace(final K key, final V value) {
       checkStarted();
+      if (lockRequired(key)) {
+         return new WithProcessorLock<V>().call(key, new Callable<V>() {
+            @Override
+            public V call() {
+               return skipCacheLoadCache.replace(key, value);
+            }
+         });
+      }
+
       return skipCacheLoadCache.replace(key, value);
    }
 
@@ -207,15 +278,73 @@ public class JCache<K, V> implements Cache<K, V> {
    }
 
    @Override
-   public <T> T invokeEntryProcessor(K key, EntryProcessor<K, V, T> entryProcessor) {
+   public <T> T invokeEntryProcessor(
+         final K key, final EntryProcessor<K, V, T> entryProcessor) {
       checkStarted();
 
-      // TODO: We've no unlock, and this is supposed be executable without transactions
-      // TODO: We force a transaction somehow? What if no transaction config is available?
-      // TODO: Spec says exclusive lock should be on reads too...
+      // spec required null checks
+      verifyKey(key);
+      if (entryProcessor == null)
+         throw new NullPointerException("Entry processor cannot be null");
 
-      return entryProcessor.process(
-            new MutableJCacheEntry<K, V>(cache, key, cache.get(key)));
+      // Using references for backup copies to provide perceived exclusive
+      // read access, and only apply changes if original value was not
+      // changed by another thread, the JSR requirements for this method could
+      // have been full filled. However, the TCK has some timing checks which
+      // verify that under contended access, one of the threads should "wait"
+      // for the other, hence the use locks.
+
+      if (log.isTraceEnabled())
+         log.tracef("Invoke entry processor %s for key=%s", entryProcessor, key);
+
+      return new WithProcessorLock<T>().call(key, new Callable<T>() {
+         @Override
+         public T call() throws Exception {
+            V oldValue = cache.get(key);
+            MutableJCacheEntry<K, V> mutable =
+                  new MutableJCacheEntry<K, V>(cache, key, oldValue);
+            T ret = entryProcessor.process(mutable);
+
+            if (mutable.isRemoved()) {
+               cache.remove(key);
+            } else {
+               V newValue = mutable.getNewValue();
+               if (newValue != null) {
+                  if (oldValue != null) {
+                     // Only allow change to be applied if value has not
+                     // changed since the start of the processing.
+                     cache.replace(key, oldValue, newValue);
+                  } else {
+                     cache.putIfAbsent(key, newValue);
+                  }
+               }
+            }
+            return ret;
+         }
+      });
+   }
+
+   private boolean lockRequired(K key) {
+      // Check if processor is locking a key, so that exclusive locking can
+      // be avoided for majority of use cases. This way, only when
+      // invokeProcessor is locking a key there's a need for CRUD cache
+      // methods to acquire the exclusive lock. This latter requirement is
+      // specifically tested by the TCK comparing duration of paralell
+      // executions.
+      boolean locked = processorLocks.isLocked(key);
+      if (log.isTraceEnabled())
+         log.tracef("Lock required for key=%s? %s", key, locked);
+
+      return locked;
+   }
+
+   private void acquiredProcessorLock(K key) throws InterruptedException {
+      processorLocks.acquireLock(
+            Thread.currentThread(), key, lockTimeout, TimeUnit.MILLISECONDS);
+   }
+
+   private void releaseProcessorLock(K key) {
+      processorLocks.releaseLock(Thread.currentThread(), key);
    }
 
    @Override
@@ -279,9 +408,19 @@ public class JCache<K, V> implements Cache<K, V> {
    }
 
    @Override
-   public void put(K key, V value) {
+   public void put(final K key, final V value) {
       checkStarted();
-      put(ignoreReturnValuesCache, key, value, false);
+      if (lockRequired(key)) {
+         new WithProcessorLock<Void>().call(key, new Callable<Void>() {
+            @Override
+            public Void call() {
+               doPut(key, value);
+               return null;
+            }
+         });
+      } else {
+         doPut(key, value);
+      }
    }
 
    @Override
@@ -297,13 +436,38 @@ public class JCache<K, V> implements Cache<K, V> {
        * could be executed in parallel to speed up.
        * 
        */
-      for (Map.Entry<? extends K, ? extends V> e : inputMap.entrySet())
-         put(ignoreReturnValuesCache, e.getKey(), e.getValue(), false);
+      for (final Map.Entry<? extends K, ? extends V> e : inputMap.entrySet()) {
+         final K key = e.getKey();
+         if (lockRequired(key)) {
+            new WithProcessorLock<Void>().call(key, new Callable<Void>() {
+               @Override
+               public Void call() {
+                  doPut(key, e.getValue());
+                  return null;
+               }
+            });
+         } else {
+            doPut(key, e.getValue());
+         }
+      }
+   }
+
+   private void doPut(K key, V value) {
+      put(ignoreReturnValuesCache, key, value, false);
    }
 
    @Override
-   public boolean putIfAbsent(K key, V value) {
+   public boolean putIfAbsent(final K key, final V value) {
       checkStarted();
+      if (lockRequired(key)) {
+         return new WithProcessorLock<Boolean>().call(key, new Callable<Boolean>() {
+            @Override
+            public Boolean call() {
+               return put(skipCacheLoadCache, key, value, true) == null;
+            }
+         });
+      }
+
       return put(skipCacheLoadCache, key, value, true) == null;
    }
 
@@ -320,15 +484,32 @@ public class JCache<K, V> implements Cache<K, V> {
    }
 
    @Override
-   public boolean remove(K key) {
+   public boolean remove(final K key) {
       checkStarted();
-      V remove = cache.remove(key);
-      return remove != null;
+      if (lockRequired(key)) {
+         return new WithProcessorLock<Boolean>().call(key, new Callable<Boolean>() {
+            @Override
+            public Boolean call() {
+               return cache.remove(key) != null;
+            }
+         });
+      }
+
+      return cache.remove(key) != null;
    }
 
    @Override
-   public boolean remove(K key, V oldValue) {
+   public boolean remove(final K key, final V oldValue) {
       checkStarted();
+      if (lockRequired(key)) {
+         return new WithProcessorLock<Boolean>().call(key, new Callable<Boolean>() {
+            @Override
+            public Boolean call() {
+               return cache.remove(key, oldValue);
+            }
+         });
+      }
+
       return cache.remove(key, oldValue);
    }
 
@@ -342,8 +523,21 @@ public class JCache<K, V> implements Cache<K, V> {
 
       // Delete asynchronously and then wait for removals to complete
       List<Future<V>> futures = new ArrayList<Future<V>>();
-      for (Cache.Entry<K, V> entry : this)
-         futures.add(cache.removeAsync(entry.getKey()));
+      for (Cache.Entry<K, V> entry : this) {
+         final K key = entry.getKey();
+         if (lockRequired(key)) {
+            new WithProcessorLock<Void>().call(key, new Callable<Void>() {
+               @Override
+               public Void call() {
+                  cache.remove(key);
+                  return null;
+               }
+            });
+         } else {
+            futures.add(cache.removeAsync(key));
+         }
+      }
+
 
       for (Future<V> future : futures) {
          try {
@@ -370,19 +564,38 @@ public class JCache<K, V> implements Cache<K, V> {
    }
 
    @Override
-   public boolean replace(K key, V value) {
+   public boolean replace(final K key, final V value) {
       checkStarted();
+      if (lockRequired(key)) {
+         return new WithProcessorLock<Boolean>().call(key, new Callable<Boolean>() {
+            @Override
+            public Boolean call() {
+               return replace(skipCacheLoadCache, key, null, value, false);
+            }
+         });
+      }
+
       return replace(skipCacheLoadCache, key, null, value, false);
    }
 
    @Override
-   public boolean replace(K key, V oldValue, V newValue) {
+   public boolean replace(final K key, final V oldValue, final V newValue) {
       checkStarted();
+      if (lockRequired(key)) {
+         return new WithProcessorLock<Boolean>().call(key, new Callable<Boolean>() {
+            @Override
+            public Boolean call() {
+               return replace(skipCacheLoadCache, key, oldValue, newValue, true);
+            }
+         });
+      }
+
       return replace(skipCacheLoadCache, key, oldValue, newValue, true);
    }
 
    @Override
-   public boolean unregisterCacheEntryListener(CacheEntryListener<?, ?> cacheEntryListener) {
+   public boolean unregisterCacheEntryListener(
+         CacheEntryListener<?, ?> cacheEntryListener) {
       return cacheEntryListener != null
             && listeners.remove(cacheEntryListener) != null;
    }
@@ -525,6 +738,24 @@ public class JCache<K, V> implements Cache<K, V> {
             cache.put(entry.getKey(), entry.getValue(), durationAmount, timeUnit);
          }
       }
+   }
+
+   private class WithProcessorLock<V> {
+      public V call(K key, Callable<V> callabale) {
+         try {
+            acquiredProcessorLock(key);
+            return callabale.call();
+         } catch (InterruptedException e) {
+            // restore interrupted status
+            Thread.currentThread().interrupt();
+            return null;
+         } catch (Exception e) {
+            throw new RuntimeException(e);
+         } finally {
+            releaseProcessorLock(key);
+         }
+      }
+
    }
 
    private class Itr implements Iterator<Cache.Entry<K, V>> {
