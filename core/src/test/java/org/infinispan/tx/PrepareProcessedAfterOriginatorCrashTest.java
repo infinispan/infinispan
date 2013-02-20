@@ -28,9 +28,7 @@ import org.infinispan.commands.tx.PrepareCommand;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.context.impl.TxInvocationContext;
-import org.infinispan.factories.ComponentRegistry;
 import org.infinispan.interceptors.base.CommandInterceptor;
-import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.test.MultipleCacheManagersTest;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.transaction.TransactionTable;
@@ -69,16 +67,8 @@ public class PrepareProcessedAfterOriginatorCrashTest extends MultipleCacheManag
    }
 
    public void testBelatedTransactionDoesntLeak() throws Throwable {
-
-      ComponentRegistry componentRegistry = advancedCache(1).getComponentRegistry();
-      final ControlledCommandFactory ccf = new ControlledCommandFactory(componentRegistry.getCommandsFactory(), PrepareCommand.class);
-      TestingUtil.replaceField(ccf, "commandsFactory", componentRegistry, ComponentRegistry.class);
-
-      //hack: re-add the component registry to the GlobalComponentRegistry's "namedComponents" (CHM) in order to correctly publish it for
-      // when it will be read by the InboundInvocationHandlder. IIH reads the value from the GlobalComponentRegistry.namedComponents before using it
-      advancedCache(1).getComponentRegistry().getGlobalComponentRegistry().registerNamedComponentRegistry(componentRegistry, EmbeddedCacheManager.DEFAULT_CACHE_NAME);
+      final ControlledCommandFactory ccf = ControlledCommandFactory.registerControlledCommandFactory(advancedCache(1), PrepareCommand.class);
       ccf.gate.close();
-
 
       Cache receiver = cache(1);
       BlockingPrepareInterceptor interceptor = new BlockingPrepareInterceptor();
