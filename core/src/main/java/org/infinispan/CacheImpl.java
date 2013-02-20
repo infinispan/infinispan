@@ -205,6 +205,12 @@ public class CacheImpl<K, V> extends CacheSupport<K, V> implements AdvancedCache
       }
    }
 
+   private void assertValueNotNull(Object value) {
+      if (value == null) {
+         throw new NullPointerException("Null values are not supported!");
+      }
+   }
+
    private void assertKeysNotNull(Map<?, ?> data) {
       if (data == null) {
          throw new NullPointerException("Expected map cannot be null");
@@ -824,6 +830,7 @@ public class CacheImpl<K, V> extends CacheSupport<K, V> implements AdvancedCache
 
    private boolean replaceInternal(K key, V oldValue, V value, long lifespan, TimeUnit lifespanUnit, long maxIdleTime, TimeUnit idleTimeUnit, EnumSet<Flag> explicitFlags, InvocationContext ctx) {
       assertKeyValueNotNull(key, value);
+      assertValueNotNull(oldValue);
       ReplaceCommand command = commandsFactory.buildReplaceCommand(key, oldValue, value, lifespanUnit.toMillis(lifespan), idleTimeUnit.toMillis(maxIdleTime), explicitFlags);
       return (Boolean) executeCommandAndCommitIfNeeded(ctx, command);
    }
