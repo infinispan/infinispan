@@ -19,7 +19,6 @@
 
 package org.infinispan.util.mocks;
 
-import org.infinispan.AdvancedCache;
 import org.infinispan.Cache;
 import org.infinispan.atomic.Delta;
 import org.infinispan.commands.CancelCommand;
@@ -125,14 +124,14 @@ public class ControlledCommandFactory implements CommandsFactory {
    }
 
    public static ControlledCommandFactory registerControlledCommandFactory(Cache cache, Class<? extends ReplicableCommand> toBlock) {
-      AdvancedCache advancedCache = cache.getAdvancedCache();
-      ComponentRegistry componentRegistry = advancedCache.getComponentRegistry();
+      ComponentRegistry componentRegistry = cache.getAdvancedCache().getComponentRegistry();
       final ControlledCommandFactory ccf = new ControlledCommandFactory(componentRegistry.getCommandsFactory(), toBlock);
       TestingUtil.replaceField(ccf, "commandsFactory", componentRegistry, ComponentRegistry.class);
+      componentRegistry.registerComponent(ccf, CommandsFactory.class);
 
       //hack: re-add the component registry to the GlobalComponentRegistry's "namedComponents" (CHM) in order to correctly publish it for
       // when it will be read by the InboundInvocationHandlder. InboundInvocationHandlder reads the value from the GlobalComponentRegistry.namedComponents before using it
-      advancedCache.getComponentRegistry().getGlobalComponentRegistry().registerNamedComponentRegistry(componentRegistry, EmbeddedCacheManager.DEFAULT_CACHE_NAME);
+      componentRegistry.getGlobalComponentRegistry().registerNamedComponentRegistry(componentRegistry, EmbeddedCacheManager.DEFAULT_CACHE_NAME);
       return ccf;
    }
 
