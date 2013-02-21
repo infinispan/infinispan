@@ -84,7 +84,7 @@ final class DirectoryLoaderAdaptor {
       if (toLoadElements <= 0) {
          return;
       }
-      HashSet<IndexScopedKey> keysCollector = new HashSet<IndexScopedKey>(toLoadElements);
+      HashSet<IndexScopedKey> keysCollector = new HashSet<IndexScopedKey>();
       loadSomeKeys(keysCollector, Collections.EMPTY_SET, toLoadElements);
       for (IndexScopedKey key : keysCollector) {
          Object value = load(key);
@@ -199,7 +199,7 @@ final class DirectoryLoaderAdaptor {
    }
 
    /**
-    * @param indexKey
+    * @param key
     * @return true if the indexKey matches a loadable entry
     */
    protected boolean containsKey(final IndexScopedKey key) throws CacheLoaderException {
