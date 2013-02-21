@@ -116,7 +116,7 @@ final class DirectoryLoaderAdaptor {
          for (String fileName : listAll) {
             if (collectedKeys >= maxElements) return;
             FileCacheKey key = new FileCacheKey(indexName, fileName);
-            if (! keysToExclude.contains(key)) {
+            if (keysToExclude == null || !keysToExclude.contains(key)) {
                if (keysCollector.add(key)) {
                   if (++collectedKeys >= maxElements) return;
                }
@@ -128,7 +128,7 @@ final class DirectoryLoaderAdaptor {
             for (int i = 0; i < numChunksInt; i++) {
                //Inner loop: we actually have several Chunks per file name
                ChunkCacheKey key = new ChunkCacheKey(indexName, fileName, i, autoChunkSize);
-               if (! keysToExclude.contains(key)) {
+               if (keysToExclude == null || !keysToExclude.contains(key)) {
                   if (keysCollector.add(key)) {
                      if (++collectedKeys >= maxElements) return;
                   }
