@@ -98,6 +98,8 @@ public class GridInputStream extends InputStream {
    @Override
    public long skip(long len) throws IOException {
        checkClosed();
+      if (len <= 0)
+         return 0;
        //naive and inefficient, but working
        long count = 0;
        while(len!=count && read()!=-1){
