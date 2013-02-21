@@ -69,7 +69,7 @@ public class ConditionalOperationsConcurrentTest extends MultipleCacheManagersTe
    private static boolean ENABLE_DEBUG = false;
 
    private static final int NODES_NUM = 3;
-   private static final int MOVES = 1000;
+   private static final int MOVES = 500;
    private static final int THREAD_COUNT = 4;
    private static final String SHARED_KEY = "thisIsTheKeyForConcurrentAccess";
    private final AtomicInteger threadIndex = new AtomicInteger();
@@ -142,9 +142,13 @@ public class ConditionalOperationsConcurrentTest extends MultipleCacheManagersTe
       }
       exec.shutdown();
       try {
-         exec.awaitTermination(5, TimeUnit.MINUTES);
+         boolean finished = exec.awaitTermination(5, TimeUnit.MINUTES);
+         Assert.assertTrue(finished, "Test took too long");
       } catch (InterruptedException e) {
          Assert.fail("Thread interrupted!");
+      } finally {
+         // Stop the worker threads so that they don't affect the following tests
+         exec.shutdownNow();
       }
       assert !failed.get() : failureMessage;
    }
