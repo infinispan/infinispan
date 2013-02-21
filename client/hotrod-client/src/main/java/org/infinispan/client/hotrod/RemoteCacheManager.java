@@ -548,7 +548,7 @@ public class RemoteCacheManager implements BasicCacheContainer {
       RemoteCacheImpl<?, ?> remoteCache = remoteCacheHolder.remoteCache;
       OperationsFactory operationsFactory = new OperationsFactory(
             transportFactory, remoteCache.getName(), topologyId, remoteCacheHolder.forceReturnValue, codec);
-      remoteCache.init(marshaller, asyncExecutorService, operationsFactory, config.getKeySizeEstimate(), config.getValueSizeEstimate());
+      remoteCache.init(marshaller, asyncExecutorService, transportFactory, operationsFactory, config.getKeySizeEstimate(), config.getValueSizeEstimate());
    }
 
    private void setMarshaller(Marshaller marshaller) {
