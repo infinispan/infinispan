@@ -48,12 +48,10 @@ public class GridInputStream extends InputStream {
    @Override
    public int read() throws IOException {
       checkClosed();
-      int remaining = getBytesRemainingInChunk();
-      if (remaining == 0) {
-         if (isEndReached())
-            return -1;
-         fetchNextChunk();
-      }
+      if (isEndReached())
+         return -1;
+      if (getBytesRemainingInChunk() == 0)
+         fetchChunk();
       int retval = 0x0ff&currentBuffer[localIndex++];
       index++;
       return retval;
@@ -81,11 +79,11 @@ public class GridInputStream extends InputStream {
    }
 
    private int readFromChunk(byte[] b, int off, int len) {
+      if (isEndReached())
+         return -1;
       int remaining = getBytesRemainingInChunk();
       if (remaining == 0) {
-         if (isEndReached())
-            return -1;
-         fetchNextChunk();
+         fetchChunk();
          remaining = getBytesRemainingInChunk();
       }
       int bytesToRead = Math.min(len, remaining);
@@ -97,15 +95,19 @@ public class GridInputStream extends InputStream {
 
    @Override
    public long skip(long len) throws IOException {
-       checkClosed();
+      checkClosed();
       if (len <= 0)
          return 0;
-       //naive and inefficient, but working
-       long count = 0;
-       while(len!=count && read()!=-1){
-           count++;
-       }
-       return count;
+
+      int bytesToSkip = Math.min((int)len, getBytesRemainingInStream());
+      index += bytesToSkip;
+      if (bytesToSkip <= getBytesRemainingInChunk()) {
+         localIndex += bytesToSkip;
+      } else {
+         fetchChunk();
+         localIndex = index % getChunkSize();
+      }
+      return bytesToSkip;
    }
 
    @Override
@@ -134,7 +136,11 @@ public class GridInputStream extends InputStream {
       return currentBuffer == null ? 0 : currentBuffer.length - localIndex;
    }
 
-   private void fetchNextChunk() {
+   private int getBytesRemainingInStream() {
+      return fileSize - index;
+   }
+
+   private void fetchChunk() {
       currentBuffer = fileChunkMapper.fetchChunk(getChunkNumber());
       localIndex = 0;
    }
