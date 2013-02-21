@@ -368,6 +368,27 @@ public class GridFileTest extends SingleCacheManagerTest {
       }
    }
 
+   @SuppressWarnings("ResultOfMethodCallIgnored")
+   public void testAvailable() throws Exception {
+      String filePath = "available.txt";
+      writeToFile(filePath, "abcde" + "fghij" + "klmno" + "pqrst" + "uvwxy" + "z", 5);
+
+      InputStream in = fs.getInput(filePath);
+      try {
+         assertEquals(in.available(), 0); // since first chunk hasn't been fetched yet
+         in.read();
+         assertEquals(in.available(), 4);
+         in.skip(3);
+         assertEquals(in.available(), 1);
+         in.read();
+         assertEquals(in.available(), 0);
+         in.read();
+         assertEquals(in.available(), 4);
+      } finally {
+         in.close();
+      }
+   }
+
    public void testLastModified() throws Exception {
       assertEquals(fs.getFile("nonExistentFile.txt").lastModified(), 0);
 
