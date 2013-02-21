@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<infinispan xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+   xsi:schemaLocation="urn:infinispan:config:5.1 http://www.infinispan.org/schemas/infinispan-config-5.2.xsd"
+   xmlns="urn:infinispan:config:5.2">
+
+   <global>
+      <globalJmxStatistics enabled="true"
+         jmxDomain="jboss.infinispan2" cacheManagerName="default" />
+      <transport clusterName="default" distributedSyncTimeout="600000">
+         <properties>
+            <property name="configurationFile" value="jgroups.xml" />
+         </properties>
+      </transport>
+   </global>
+
+   <default>
+      <jmxStatistics enabled="true" />
+
+      <clustering mode="distribution">
+         <l1 enabled="false" />
+         <hash numOwners="2" numSegments="100" />
+         <sync replTimeout="60000" />
+         <stateTransfer timeout="60000" />
+      </clustering>
+      <locking lockAcquisitionTimeout="3000" concurrencyLevel="1000"
+         useLockStriping="false" />
+   </default>
+
+</infinispan>

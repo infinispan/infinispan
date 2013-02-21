@@ -1,0 +1,88 @@
+<!--
+~ JBoss, Home of Professional Open Source
+~ Copyright 2013 Red Hat Inc. and/or its affiliates and other
+~ contributors as indicated by the @author tags. All rights reserved.
+~ See the copyright.txt in the distribution for a full listing of
+~ individual contributors.
+~
+~ This is free software; you can redistribute it and/or modify it
+~ under the terms of the GNU Lesser General Public License as
+~ published by the Free Software Foundation; either version 2.1 of
+~ the License, or (at your option) any later version.
+~
+~ This software is distributed in the hope that it will be useful,
+~ but WITHOUT ANY WARRANTY; without even the implied warranty of
+~ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
+~ Lesser General Public License for more details.
+~
+~ You should have received a copy of the GNU Lesser General Public
+~ License along with this software; if not, write to the Free
+~ Software Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
+~ 02110-1301 USA, or see the FSF site: http://www.fsf.org.
+-->
+<config xmlns="urn:org:jgroups"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+   <UDP
+         bind_addr="${jgroups.udp.bind_addr:localhost}"
+         bind_port="52000"
+         port_range="200"
+         mcast_addr="${jgroups.udp.mcast_addr:234.99.54.14}"
+         mcast_port="${jgroups.udp.mcast_port:45688}"
+         tos="8"
+         ucast_recv_buf_size="100k"
+         ucast_send_buf_size="100k"
+         mcast_recv_buf_size="100k"
+         mcast_send_buf_size="100k"
+         loopback="true"
+         max_bundle_size="64000"
+         max_bundle_timeout="30"
+         ip_ttl="${jgroups.udp.ip_ttl:2}"
+         enable_bundling="true"
+         enable_diagnostics="false"
+         bundler_type="old"
+
+         thread_naming_pattern="pl"
+
+         thread_pool.enabled="true"
+         thread_pool.min_threads="4"
+         thread_pool.max_threads="10"
+         thread_pool.keep_alive_time="60000"
+         thread_pool.queue_enabled="false"
+         thread_pool.queue_max_size="100"
+         thread_pool.rejection_policy="Discard"
+
+         oob_thread_pool.enabled="true"
+         oob_thread_pool.min_threads="4"
+         oob_thread_pool.max_threads="10"
+         oob_thread_pool.keep_alive_time="60000"
+         oob_thread_pool.queue_enabled="false"
+         oob_thread_pool.queue_max_size="100"
+         oob_thread_pool.rejection_policy="Discard"
+         />
+
+   <PING timeout="3000" num_initial_members="3"/>
+   <MERGE2 max_interval="30000" min_interval="10000"/>
+   <FD_SOCK/>
+   <FD_ALL timeout="15000"/>
+   <VERIFY_SUSPECT timeout="5000"/>
+   <pbcast.NAKACK2
+                   xmit_interval="1000"
+                   xmit_table_num_rows="100"
+                   xmit_table_msgs_per_row="10000"
+                   xmit_table_max_compaction_time="10000"
+                   max_msg_batch_size="100"/>
+   <UNICAST2
+              stable_interval="5000"
+              xmit_interval="500"
+              max_bytes="1m"
+              xmit_table_num_rows="20"
+              xmit_table_msgs_per_row="10000"
+              xmit_table_max_compaction_time="10000"
+              max_msg_batch_size="100"/>
+   <pbcast.STABLE stability_delay="500" desired_avg_gossip="5000" max_bytes="1m"/>
+   <pbcast.GMS print_local_addr="false" join_timeout="3000" view_bundling="true"/>
+   <UFC max_credits="500k" min_threshold="0.20"/>
+   <MFC max_credits="500k" min_threshold="0.20"/>
+   <FRAG2 frag_size="60k" />
+   <RSVP timeout="5000" resend_interval="500" ack_on_delivery="false" />
+</config>
