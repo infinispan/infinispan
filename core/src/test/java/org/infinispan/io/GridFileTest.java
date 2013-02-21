@@ -334,30 +334,62 @@ public class GridFileTest extends SingleCacheManagerTest {
         assertNotNull(e);
     }
 
+   public void testSkip() throws Exception {
+      String filePath = "skip.txt";
+      writeToFile(filePath, "abcde" + "fghij" + "klmno" + "pqrst" + "uvwxy" + "z", 5);
 
+      InputStream in = fs.getInput(filePath);
+      try {
+         long skipped = in.skip(2); // skip inside current chunk
+         assertEquals(skipped, 2);
+         assertEquals((char)in.read(), 'c');
 
+         skipped = in.skip(2);  // skip to end of chunk
+         assertEquals(skipped, 2);
+         assertEquals((char)in.read(), 'f');
 
-    public void testSkipAndAvailable() throws Exception {
-        String filePath = "skip.dat";
-        OutputStream out = fs.getOutput(filePath);
-        try{
-            out.write(1);
-            out.write(2);
-            out.write(3);
-        }finally{
-            out.close();
-        }
-        InputStream in = fs.getInput(filePath);
-        try{
-            long skipped = in.skip(2);
-            assertEquals(skipped, 2);
-            assertEquals(in.read(), 3);
-        }finally{
-            in.close();
-        }
-    }
+         skipped = in.skip(6); // skip into next chunk
+         assertEquals(skipped, 6);
+         assertEquals((char)in.read(), 'm');
 
-    public void testLastModified() throws Exception {
+         skipped = in.skip(9);      // skip _over_ next chunk
+         assertEquals(skipped, 9);
+         assertEquals((char)in.read(), 'w');
+
+         skipped = in.skip(-1);  // negative skip
+         assertEquals(skipped, 0);
+         assertEquals((char)in.read(), 'x');
+
+         skipped = in.skip(10);  // skip beyond EOF
+         assertEquals(skipped, 2);
+         assertEquals(in.read(), -1);
+      } finally {
+         in.close();
+      }
+   }
+
+   @SuppressWarnings("ResultOfMethodCallIgnored")
+   public void testAvailable() throws Exception {
+      String filePath = "available.txt";
+      writeToFile(filePath, "abcde" + "fghij" + "klmno" + "pqrst" + "uvwxy" + "z", 5);
+
+      InputStream in = fs.getInput(filePath);
+      try {
+         assertEquals(in.available(), 0); // since first chunk hasn't been fetched yet
+         in.read();
+         assertEquals(in.available(), 4);
+         in.skip(3);
+         assertEquals(in.available(), 1);
+         in.read();
+         assertEquals(in.available(), 0);
+         in.read();
+         assertEquals(in.available(), 4);
+      } finally {
+         in.close();
+      }
+   }
+
+   public void testLastModified() throws Exception {
       assertEquals(fs.getFile("nonExistentFile.txt").lastModified(), 0);
 
       long time1 = System.currentTimeMillis();

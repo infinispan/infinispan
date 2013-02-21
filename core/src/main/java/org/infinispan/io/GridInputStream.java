@@ -36,27 +36,22 @@ public class GridInputStream extends InputStream {
    private int index = 0;                // index into the file for writing
    private int localIndex = 0;
    private byte[] currentBuffer = null;
-   private boolean endReached = false;
+   private int fileSize;
    private boolean closed = false;
    private FileChunkMapper fileChunkMapper;
 
    GridInputStream(GridFile file, Cache<String, byte[]> cache) {
       fileChunkMapper = new FileChunkMapper(file, cache);
+      fileSize = (int)file.length();
    }
 
    @Override
    public int read() throws IOException {
       checkClosed();
-      int remaining = getBytesRemainingInChunk();
-      if (remaining == 0) {
-         if (endReached)
-            return -1;
-         fetchNextChunk();
-         if (currentBuffer == null)
-            return -1;
-         else if (isLastChunk())
-            endReached = true;
-      }
+      if (isEndReached())
+         return -1;
+      if (getBytesRemainingInChunk() == 0)
+         fetchChunk();
       int retval = 0x0ff&currentBuffer[localIndex++];
       index++;
       return retval;
@@ -84,15 +79,11 @@ public class GridInputStream extends InputStream {
    }
 
    private int readFromChunk(byte[] b, int off, int len) {
+      if (isEndReached())
+         return -1;
       int remaining = getBytesRemainingInChunk();
       if (remaining == 0) {
-         if (endReached)
-            return -1;
-         fetchNextChunk();
-         if (currentBuffer == null)
-            return -1;
-         else if (isLastChunk())
-            endReached = true;
+         fetchChunk();
          remaining = getBytesRemainingInChunk();
       }
       int bytesToRead = Math.min(len, remaining);
@@ -102,19 +93,21 @@ public class GridInputStream extends InputStream {
       return bytesToRead;
    }
 
-   private boolean isLastChunk() {
-      return currentBuffer.length < getChunkSize();
-   }
-
    @Override
    public long skip(long len) throws IOException {
-       checkClosed();
-       //naive and inefficient, but working
-       long count = 0;
-       while(len!=count && read()!=-1){
-           count++;
-       }
-       return count;
+      checkClosed();
+      if (len <= 0)
+         return 0;
+
+      int bytesToSkip = Math.min((int)len, getBytesRemainingInStream());
+      index += bytesToSkip;
+      if (bytesToSkip <= getBytesRemainingInChunk()) {
+         localIndex += bytesToSkip;
+      } else {
+         fetchChunk();
+         localIndex = index % getChunkSize();
+      }
+      return bytesToSkip;
    }
 
    @Override
@@ -126,8 +119,11 @@ public class GridInputStream extends InputStream {
    @Override
    public void close() throws IOException {
       localIndex = index = 0;
-      endReached = false;
       closed = true;
+   }
+
+   private boolean isEndReached() {
+      return index == fileSize;
    }
 
    private void checkClosed() throws IOException{
@@ -140,7 +136,11 @@ public class GridInputStream extends InputStream {
       return currentBuffer == null ? 0 : currentBuffer.length - localIndex;
    }
 
-   private void fetchNextChunk() {
+   private int getBytesRemainingInStream() {
+      return fileSize - index;
+   }
+
+   private void fetchChunk() {
       currentBuffer = fileChunkMapper.fetchChunk(getChunkNumber());
       localIndex = 0;
    }
