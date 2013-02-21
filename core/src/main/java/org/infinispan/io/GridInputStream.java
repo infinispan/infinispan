@@ -36,12 +36,13 @@ public class GridInputStream extends InputStream {
    private int index = 0;                // index into the file for writing
    private int localIndex = 0;
    private byte[] currentBuffer = null;
-   private boolean endReached = false;
+   private int fileSize;
    private boolean closed = false;
    private FileChunkMapper fileChunkMapper;
 
    GridInputStream(GridFile file, Cache<String, byte[]> cache) {
       fileChunkMapper = new FileChunkMapper(file, cache);
+      fileSize = (int)file.length();
    }
 
    @Override
@@ -49,13 +50,9 @@ public class GridInputStream extends InputStream {
       checkClosed();
       int remaining = getBytesRemainingInChunk();
       if (remaining == 0) {
-         if (endReached)
+         if (isEndReached())
             return -1;
          fetchNextChunk();
-         if (currentBuffer == null)
-            return -1;
-         else if (isLastChunk())
-            endReached = true;
       }
       int retval = 0x0ff&currentBuffer[localIndex++];
       index++;
@@ -86,13 +83,9 @@ public class GridInputStream extends InputStream {
    private int readFromChunk(byte[] b, int off, int len) {
       int remaining = getBytesRemainingInChunk();
       if (remaining == 0) {
-         if (endReached)
+         if (isEndReached())
             return -1;
          fetchNextChunk();
-         if (currentBuffer == null)
-            return -1;
-         else if (isLastChunk())
-            endReached = true;
          remaining = getBytesRemainingInChunk();
       }
       int bytesToRead = Math.min(len, remaining);
@@ -100,10 +93,6 @@ public class GridInputStream extends InputStream {
       localIndex += bytesToRead;
       index += bytesToRead;
       return bytesToRead;
-   }
-
-   private boolean isLastChunk() {
-      return currentBuffer.length < getChunkSize();
    }
 
    @Override
@@ -126,8 +115,11 @@ public class GridInputStream extends InputStream {
    @Override
    public void close() throws IOException {
       localIndex = index = 0;
-      endReached = false;
       closed = true;
+   }
+
+   private boolean isEndReached() {
+      return index == fileSize;
    }
 
    private void checkClosed() throws IOException{
