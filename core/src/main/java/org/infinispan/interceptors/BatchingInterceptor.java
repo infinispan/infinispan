@@ -24,6 +24,7 @@ package org.infinispan.interceptors;
 
 import org.infinispan.batch.BatchContainer;
 import org.infinispan.commands.VisitableCommand;
+import org.infinispan.commands.write.EvictCommand;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.context.InvocationContextContainer;
 import org.infinispan.factories.annotations.Inject;
@@ -41,9 +42,9 @@ import javax.transaction.TransactionManager;
  * @since 4.0
  */
 public class BatchingInterceptor extends CommandInterceptor {
-   BatchContainer batchContainer;
-   TransactionManager transactionManager;
-   InvocationContextContainer icc;
+   private BatchContainer batchContainer;
+   private TransactionManager transactionManager;
+   private InvocationContextContainer icc;
 
    private static final Log log = LogFactory.getLog(BatchingInterceptor.class);
 
@@ -59,6 +60,12 @@ public class BatchingInterceptor extends CommandInterceptor {
       this.icc = icc;
    }
 
+   @Override
+   public Object visitEvictCommand(InvocationContext ctx, EvictCommand command) throws Throwable {
+      // eviction is non-tx, so this interceptor should be no-op for EvictCommands
+      return invokeNextInterceptor(ctx, command);
+   }
+
    /**
     * Simply check if there is an ongoing tx. <ul> <li>If there is one, this is a no-op and just passes the call up the
     * chain.</li> <li>If there isn't one and there is a batch in progress, resume the batch's tx, pass up, and finally
@@ -66,9 +73,9 @@ public class BatchingInterceptor extends CommandInterceptor {
     */
    @Override
    protected Object handleDefault(InvocationContext ctx, VisitableCommand command) throws Throwable {
-      Transaction tx;
       if (!ctx.isOriginLocal()) return invokeNextInterceptor(ctx, command);
       // if in a batch, attach tx
+      Transaction tx;
       if (transactionManager.getTransaction() == null && (tx = batchContainer.getBatchTransaction()) != null) {
          try {
             transactionManager.resume(tx);
