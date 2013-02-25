@@ -49,7 +49,7 @@ public class SharedState {
    
    public SharedState(int initialDictionarySize) {
       HashSet<String> strings = new HashSet<String>();
-      for (int i=1; i<=initialDictionarySize; i++){
+      for (int i=1; i<=initialDictionarySize; i++) {
          strings.add( String.valueOf(i));
       }
       stringsOutOfIndex.addAll(strings);
@@ -59,7 +59,7 @@ public class SharedState {
       return quit || (errors.get()!=0);
    }
    
-   public void errorManage(Exception e){
+   public void errorManage(Exception e) {
       errors.incrementAndGet();
       e.printStackTrace();
    }

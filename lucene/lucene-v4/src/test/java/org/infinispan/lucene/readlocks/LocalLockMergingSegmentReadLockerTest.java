@@ -29,6 +29,7 @@ import org.apache.lucene.store.IOContext;
 import org.apache.lucene.store.IndexInput;
 import org.apache.lucene.store.IndexOutput;
 import org.infinispan.Cache;
+import org.infinispan.lucene.CacheTestSupport;
 import org.infinispan.lucene.directory.DirectoryBuilder;
 import org.testng.annotations.Test;
 
@@ -45,6 +46,8 @@ public class LocalLockMergingSegmentReadLockerTest extends DistributedSegmentRea
    
    @Test @Override
    public void testIndexWritingAndFinding() throws IOException, InterruptedException {
+      prepareEnvironment(false);
+
       verifyBoth(cache0,cache1);
       IndexOutput indexOutput = dirA.createOutput(filename, IOContext.DEFAULT);
       indexOutput.writeString("no need to write, nobody ever will read this");
@@ -75,13 +78,41 @@ public class LocalLockMergingSegmentReadLockerTest extends DistributedSegmentRea
       dirB.close();
       verifyBoth(cache0, cache1);
    }
-   
+
+   public void testAdditionalIndexWritingAndFinding() throws IOException, InterruptedException {
+      prepareEnvironment(true);
+
+      testIndexWritingAndFinding();
+   }
+
    @Override
    Directory createDirectory(Cache cache) {
       return DirectoryBuilder.newDirectoryInstance(cache, cache, cache, INDEX_NAME)
             .chunkSize(CHUNK_SIZE)
             .overrideSegmentReadLocker(new LocalLockMergingSegmentReadLocker(cache, INDEX_NAME))
             .create();
+   }
+
+   Directory createAdditionalDirectory(Cache cache) {
+      return DirectoryBuilder.newDirectoryInstance(cache, cache, cache, INDEX_NAME)
+            .chunkSize(CHUNK_SIZE)
+            .overrideSegmentReadLocker(new LocalLockMergingSegmentReadLocker(cache, cache, cache, INDEX_NAME))
+            .create();
+   }
+
+   private void prepareEnvironment(final boolean useDefConstructor) throws IOException {
+      cache0 = cache(0, CACHE_NAME);
+      cache1 = cache(1, CACHE_NAME);
+
+      if (useDefConstructor) {
+         dirA = createDirectory(cache0);
+         dirB = createDirectory(cache1);
+      } else {
+         dirA = createAdditionalDirectory(cache0);
+         dirB = createAdditionalDirectory(cache1);
+      }
+
+      CacheTestSupport.initializeDirectory(dirA);
    }
 
 }

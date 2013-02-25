@@ -28,6 +28,7 @@ import static org.infinispan.lucene.CacheTestSupport.optimizeIndex;
 
 import java.io.IOException;
 
+import junit.framework.Assert;
 import org.apache.lucene.store.Directory;
 import org.infinispan.Cache;
 import org.infinispan.lucene.directory.DirectoryBuilder;
@@ -83,9 +84,9 @@ public class DirectoryOnMultipleCachesTest {
       int chunks = 0;
       for (Object key : chunkCache.keySet()) {
          chunks++;
-         assert key.getClass().equals(ChunkCacheKey.class);
+         Assert.assertEquals(ChunkCacheKey.class, key.getClass());
          Object value = chunkCache.get(key);
-         assert byte[].class.equals(value.getClass());
+         Assert.assertEquals(value.getClass(), byte[].class);
       }
       assert chunks != 0;
    }
@@ -94,8 +95,8 @@ public class DirectoryOnMultipleCachesTest {
    public void verifyIntendedLockCachesUsage() {
       //all locks should be cleared now, so if any value is left it should be equal to one.
       for (Object key : lockCache.keySet()) {
-         assert key.getClass().equals(FileReadLockKey.class);
-         assert lockCache.get(key).equals(1);
+         Assert.assertEquals(FileReadLockKey.class, key.getClass());
+         Assert.assertEquals(1, lockCache.get(key));
       }
    }
    
@@ -107,17 +108,17 @@ public class DirectoryOnMultipleCachesTest {
          Object value = metadataCache.get(key);
          if (key.getClass().equals(org.infinispan.lucene.FileListCacheKey.class)) {
             filelists++;
-            assert value.getClass().equals(ConcurrentHashSet.class);
+            Assert.assertEquals(ConcurrentHashSet.class, value.getClass());
          }
          else if (key.getClass().equals(FileCacheKey.class)) {
             metadata++;
-            assert value.getClass().equals(FileMetadata.class);
+            Assert.assertEquals(FileMetadata.class, value.getClass());
          }
          else {
             assert false : "unexpected type of key in metadata cache: " + key.getClass();
          }
       }
-      assert filelists == 1;
+      Assert.assertEquals(1, filelists);
       assert metadata != 0;
    }
    

@@ -25,10 +25,6 @@ package org.infinispan.lucene;
 import java.util.Set;
 
 import org.infinispan.Cache;
-import org.infinispan.lucene.ChunkCacheKey;
-import org.infinispan.lucene.FileCacheKey;
-import org.infinispan.lucene.FileListCacheKey;
-import org.infinispan.lucene.FileMetadata;
 import org.testng.Assert;
 
 /**
@@ -141,7 +137,7 @@ public class DirectoryIntegrityCheck {
          ChunkCacheKey chunkKey = new ChunkCacheKey(indexName, fileName, i, bufferSize);
          byte[] buffer = (byte[]) cache.get(chunkKey);
          if (buffer == null) {
-            assert cache.containsKey(chunkKey)==false;
+            Assert.assertFalse(cache.containsKey(chunkKey));
             return accumulator;
          } else {
             assert buffer.length > 0; //check we don't store useless data
@@ -187,7 +183,7 @@ public class DirectoryIntegrityCheck {
       }
       FileReadLockKey readLockKey = new FileReadLockKey(indexName,fileName);
       Object value = cache.get(readLockKey);
-      if (expectedReadcount == 1) {
+      if (expectedReadcount <= 1) {
          Assert.assertTrue(value == null || Integer.valueOf(1).equals(value), "readlock value is " + value);
       }
       else {
