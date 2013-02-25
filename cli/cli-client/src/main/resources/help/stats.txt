@@ -1,10 +1,16 @@
 .SH SYNOPSIS
-.B info [
+.B stats [
+.I --container
+.B ] [
 .I cachename
 .B ]
 .SH DESCRIPTION
-Shows information about the specified cache or about the active cache manager
+Shows statistics about the specified cache or about the active cache manager
 .SH ARGUMENTS
 .IP cachename
 (optional) the name of the cache for which information will be printed. If 
-omitted, information about the active cache manager will be shown 
+omitted, information about the current cache will be shown
+If the 
+.I --container
+option is specified, then information about the current container will be shown 
+instead. 
