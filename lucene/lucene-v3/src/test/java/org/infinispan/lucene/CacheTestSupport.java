@@ -22,6 +22,7 @@
  */
 package org.infinispan.lucene;
 
+import junit.framework.Assert;
 import org.apache.lucene.document.DateTools;
 import org.apache.lucene.document.Document;
 import org.apache.lucene.document.Field;
@@ -220,12 +221,12 @@ public abstract class CacheTestSupport {
       IndexSearcher searcher = new IndexSearcher(reader);
       Query query = new TermQuery(new Term("body", term));
       TopDocs docs = searcher.search(query, null, expectedResults + 1);
-      assert docs.totalHits == expectedResults;
+      Assert.assertEquals(expectedResults, docs.totalHits );
       for (ScoreDoc scoreDoc : docs.scoreDocs) {
          int docId = scoreDoc.doc;
          Document document = searcher.doc(docId);
          String idString = document.get("id");
-         assert idString != null;
+         Assert.assertNotNull(idString);
          Integer idFoundElement = Integer.valueOf(idString);
          assert expectedDocumendIds.contains(idFoundElement);
       }

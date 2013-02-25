@@ -20,10 +20,12 @@
 package org.infinispan.lucene.cachestore;
 
 import java.io.File;
+import java.io.IOException;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.Set;
 
+import org.apache.lucene.store.Directory;
 import org.apache.lucene.store.FSDirectory;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.container.entries.InternalCacheEntry;
@@ -33,6 +35,8 @@ import org.infinispan.loaders.CacheLoaderManager;
 import org.infinispan.lucene.ChunkCacheKey;
 import org.infinispan.lucene.FileCacheKey;
 import org.infinispan.lucene.FileListCacheKey;
+import org.infinispan.lucene.FileReadLockKey;
+import org.infinispan.lucene.directory.DirectoryBuilder;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.test.SingleCacheManagerTest;
 import org.infinispan.test.TestingUtil;
@@ -101,7 +105,7 @@ public class CacheLoaderAPITest extends SingleCacheManagerTest {
       HashSet exclusionSet = new HashSet();
       for(String fileName : fileNamesFromIndexDir) {
          FileCacheKey key = new FileCacheKey(indexName, fileName);
-         assert cacheLoader.load(key) != null;
+         Assert.assertNotNull(cacheLoader.load(key));
 
          exclusionSet.add(key);
       }
@@ -114,6 +118,98 @@ public class CacheLoaderAPITest extends SingleCacheManagerTest {
       if(it.hasNext()) {
          assert !(it.next() instanceof FileCacheKey);
       }
+   }
+
+   public void testContainsKeyWithNoExistentRootDir() throws IOException, CacheLoaderException {
+      Directory directory = DirectoryBuilder.newDirectoryInstance(cache, cache, cache, indexName).create();
+
+      TestHelper.createIndex(rootDir, indexName, elementCount, true);
+      TestHelper.verifyOnDirectory(directory, elementCount, true);
+
+      String[] fileNamesFromIndexDir = TestHelper.getFileNamesFromDir(rootDir, indexName);
+
+      LuceneCacheLoader cacheLoader = (LuceneCacheLoader) TestingUtil.extractComponent(cacheManager.getCache(),
+                                                                                       CacheLoaderManager.class).getCacheLoader();
+      for(String fileName : fileNamesFromIndexDir) {
+         FileCacheKey key = new FileCacheKey(indexName, fileName);
+         assert cacheLoader.containsKey(key);
+
+         //Testing non-existent keys with non-acceptable type
+         assert !cacheLoader.containsKey(fileName);
+      }
+
+   }
+
+   public void testContainsKeyCacheKeyTypes() throws Exception {
+      TestHelper.createIndex(rootDir, indexName, elementCount, true);
+
+      LuceneCacheLoader cacheLoader = (LuceneCacheLoader) TestingUtil.extractComponent(cacheManager.getCache(),
+                                                                                       CacheLoaderManager.class).getCacheLoader();
+
+      assert cacheLoader.containsKey(new FileListCacheKey(indexName));
+
+      String[] fileNamesFromIndexDir = TestHelper.getFileNamesFromDir(rootDir, indexName);
+      for(String fileName : fileNamesFromIndexDir) {
+         assert !cacheLoader.containsKey(new FileReadLockKey(indexName, fileName)) : "Failed for " + fileName;
+         assert cacheLoader.containsKey(new ChunkCacheKey(indexName, fileName, 0, 1024)) : "Failed for " + fileName;
+      }
+
+      assert !cacheLoader.containsKey(new ChunkCacheKey(indexName, "testFile.txt", 0, 1024));
+   }
+
+   public void testLoadKey() throws Exception {
+      TestHelper.createIndex(rootDir, indexName, elementCount, true);
+
+      String[] fileNamesFromIndexDir = TestHelper.getFileNamesFromDir(rootDir, indexName);
+
+      LuceneCacheLoader cacheLoader = (LuceneCacheLoader) TestingUtil.extractComponent(cacheManager.getCache(),
+                                                                                       CacheLoaderManager.class).getCacheLoader();
+      for(String fileName : fileNamesFromIndexDir) {
+         FileCacheKey key = new FileCacheKey(indexName, fileName);
+         Assert.assertNotNull(cacheLoader.load(key));
+
+         //Testing non-existent keys with non-acceptable type
+         Assert.assertNull(cacheLoader.load(fileName));
+      }
+   }
+
+   @Test(expectedExceptions = CacheLoaderException.class)
+   public void testLoadKeyWithNonExistentFile() throws Exception {
+      LuceneCacheLoader cacheLoader = (LuceneCacheLoader) TestingUtil.extractComponent(cacheManager.getCache(),
+                                                                                       CacheLoaderManager.class).getCacheLoader();
+      FileCacheKey key = new FileCacheKey(indexName, "testKey");
+      Assert.assertNull(cacheLoader.load(key));
+   }
+
+   @Test(expectedExceptions = CacheLoaderException.class)
+   public void testLoadKeyWithInnerNonReadableDir() throws Exception {
+      TestHelper.createIndex(rootDir, indexName, elementCount, true);
+      File innerDir = new File(rootDir, "index-B");
+      try {
+
+         LuceneCacheLoader cacheLoader = (LuceneCacheLoader) TestingUtil.extractComponent(cacheManager.getCache(),
+                                                                                          CacheLoaderManager.class).getCacheLoader();
+
+         boolean created = innerDir.mkdirs();
+         assert created;
+
+         innerDir.setReadable(false);
+         innerDir.setWritable(false);
+
+         cacheLoader.load(5);
+      } finally {
+         innerDir.setReadable(true);
+         innerDir.setWritable(true);
+      }
+   }
+
+   public void testLoad0Entries() throws Exception {
+      TestHelper.createIndex(rootDir, indexName, elementCount, true);
+      LuceneCacheLoader cacheLoader = (LuceneCacheLoader) TestingUtil.extractComponent(cacheManager.getCache(),
+                                                                                       CacheLoaderManager.class).getCacheLoader();
+
+      Set<InternalCacheEntry> loadedEntrySet = cacheLoader.load(0);
+      assert loadedEntrySet.isEmpty();
    }
 
    @Test(dataProvider = "passEntriesCount")
@@ -136,7 +232,7 @@ public class CacheLoaderAPITest extends SingleCacheManagerTest {
       } else {
          for(String fileName : fileNamesFromIndexDir) {
             FileCacheKey key = new FileCacheKey(indexName, fileName);
-            assert cacheLoader.load(key) != null;
+            Assert.assertNotNull(cacheLoader.load(key));
 
             boolean found = false;
             for(InternalCacheEntry entry : loadedEntrySet) {
@@ -167,7 +263,7 @@ public class CacheLoaderAPITest extends SingleCacheManagerTest {
       Set keyList = cacheLoader.loadAllKeys(new HashSet());
       for(String fileName : fileNamesFromIndexDir) {
          FileCacheKey key = new FileCacheKey(indexName, fileName);
-         assert cacheLoader.load(key) != null;
+         Assert.assertNotNull(cacheLoader.load(key));
 
          boolean found = false;
          for(Object keyFromList : keyList) {
@@ -233,7 +329,7 @@ public class CacheLoaderAPITest extends SingleCacheManagerTest {
 
       for(String fileName : fileNamesFromIndexDir) {
          FileCacheKey key = new FileCacheKey(indexName, fileName);
-         assert cacheLoader.load(key) != null;
+         Assert.assertNotNull(cacheLoader.load(key));
 
          boolean found = false;
          for(Object keyFromList : keyList) {
@@ -245,6 +341,13 @@ public class CacheLoaderAPITest extends SingleCacheManagerTest {
 
          assert found : "No corresponding key was found for " + key;
       }
+   }
+
+   public void testGetConfigurationClass() {
+      LuceneCacheLoader cacheLoader = (LuceneCacheLoader) TestingUtil.extractComponent(cacheManager.getCache(),
+                                                                                       CacheLoaderManager.class).getCacheLoader();
+
+      Assert.assertSame(cacheLoader.getConfigurationClass(), LuceneCacheLoaderConfig.class);
    }
 
    @DataProvider(name = "passEntriesCount")
@@ -283,7 +386,7 @@ public class CacheLoaderAPITest extends SingleCacheManagerTest {
          }
       }
 
-      assert keyExists == shouldExist;
+      Assert.assertEquals(shouldExist, keyExists);
    }
 
 }
