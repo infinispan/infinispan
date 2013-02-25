@@ -116,7 +116,7 @@ public class DatabaseStoredIndexTest extends SingleCacheManagerTest {
             Object actual = cache.get(key);
             if (expected==null && actual==null)
                continue;
-            if (expected instanceof byte[]){
+            if (expected instanceof byte[]) {
                expected = Util.printArray((byte[]) expected, false);
                actual = Util.printArray((byte[]) actual, false);
             }
