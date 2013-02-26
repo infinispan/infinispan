@@ -115,4 +115,11 @@ public interface InvocationContext extends EntryLookup, Cloneable {
     * @param key lock to test
     */
    boolean hasLockedKey(Object key);
+
+   /**
+    * Tries to replace the value of the wrapped entry associated with the given key in the context, if one exists.
+    *
+    * @return true if the context already contained a wrapped entry for which this value was changed, false otherwise.
+    */
+   boolean replaceValue(Object key, Object value);
 }

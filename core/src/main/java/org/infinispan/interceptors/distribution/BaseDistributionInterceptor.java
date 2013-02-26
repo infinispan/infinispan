@@ -23,6 +23,7 @@
 package org.infinispan.interceptors.distribution;
 
 import org.infinispan.commands.CommandsFactory;
+import org.infinispan.commands.FlagAffectedCommand;
 import org.infinispan.commands.read.AbstractDataCommand;
 import org.infinispan.commands.write.PutMapCommand;
 import org.infinispan.commands.write.RemoveCommand;
@@ -36,6 +37,7 @@ import org.infinispan.context.InvocationContext;
 import org.infinispan.distribution.DataLocality;
 import org.infinispan.distribution.DistributionManager;
 import org.infinispan.factories.annotations.Inject;
+import org.infinispan.factories.annotations.Start;
 import org.infinispan.interceptors.base.BaseRpcInterceptor;
 import org.infinispan.interceptors.locking.ClusteringDependentLogic;
 import org.infinispan.remoting.transport.Address;
@@ -65,9 +67,9 @@ public abstract class BaseDistributionInterceptor extends BaseRpcInterceptor {
    protected EntryFactory entryFactory;
    protected LockManager lockManager;
    protected ClusteringDependentLogic cdl;
+   private boolean needReliableReturnValues;
 
    private static final Log log = LogFactory.getLog(BaseDistributionInterceptor.class);
-   protected static final boolean trace = log.isTraceEnabled();
 
    @Override
    protected Log getLog() {
@@ -86,6 +88,11 @@ public abstract class BaseDistributionInterceptor extends BaseRpcInterceptor {
       this.cdl = cdl;
    }
 
+   @Start
+   public void configure() {
+      needReliableReturnValues = !cacheConfiguration.unsafe().unreliableReturnValues();
+   }
+
    protected boolean needsRemoteGet(InvocationContext ctx, AbstractDataCommand command) {
       boolean shouldFetchFromRemote = false;
       final CacheEntry entry;
@@ -101,6 +108,11 @@ public abstract class BaseDistributionInterceptor extends BaseRpcInterceptor {
          }
       }
       return shouldFetchFromRemote;
+   }
+
+   protected boolean isNeedReliableReturnValues(FlagAffectedCommand command) {
+      return !command.hasFlag(Flag.SKIP_REMOTE_LOOKUP)
+            && !command.hasFlag(Flag.IGNORE_RETURN_VALUES) && needReliableReturnValues;
    }
 
    @Override

@@ -23,6 +23,7 @@
 package org.infinispan.distribution;
 
 import org.infinispan.distribution.ch.ConsistentHash;
+import org.infinispan.distribution.ch.DefaultConsistentHashFactory;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.remoting.transport.jgroups.JGroupsAddress;
 import org.infinispan.test.AbstractInfinispanTest;
@@ -51,6 +52,17 @@ public class ConsistentHashPerfTest extends AbstractInfinispanTest {
       return addresses;
    }
 
+   private ConsistentHash createNewConsistentHash(List<Address> servers) {
+      try {
+         // TODO Revisit after we have replaced the CH with the CHFactory in the configuration
+         return new DefaultConsistentHashFactory().create(new org.infinispan.commons.hash.MurmurHash3(), 2, 10, servers);
+      } catch (RuntimeException re) {
+         throw re;
+      } catch (Exception e) {
+         throw new RuntimeException(e);
+      }
+   }
+
    public void testSpeed() {
       int[] numNodes = {1, 2, 3, 4, 10, 100, 1000};
       int iterations = 100000;
@@ -67,7 +79,7 @@ public class ConsistentHashPerfTest extends AbstractInfinispanTest {
    }
 
    private Long doPerfTest(int numNodes, int numOwners, int iterations) {
-      ConsistentHash ch = BaseDistFunctionalTest.createNewConsistentHash(createAddresses(numNodes));
+      ConsistentHash ch = createNewConsistentHash(createAddresses(numNodes));
       int dummy = 0;
       long start = System.nanoTime();
       for (int i = 0; i < iterations; i++) {
@@ -92,7 +104,7 @@ public class ConsistentHashPerfTest extends AbstractInfinispanTest {
    }
 
    private void doTestDistribution(int numKeys, int numNodes, List<Object> keys) {
-      ConsistentHash ch = BaseDistFunctionalTest.createNewConsistentHash(createAddresses(numNodes));
+      ConsistentHash ch = createNewConsistentHash(createAddresses(numNodes));
 
       Map<Address, Integer> distribution = new HashMap<Address, Integer>();
 

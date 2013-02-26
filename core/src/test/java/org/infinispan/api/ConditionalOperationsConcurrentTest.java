@@ -35,12 +35,10 @@ import org.infinispan.util.concurrent.IsolationLevel;
 import org.infinispan.util.concurrent.locks.LockManager;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
-import org.testng.Assert;
+import org.junit.Assert;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
-import java.io.PrintWriter;
-import java.io.StringWriter;
 import java.util.HashSet;
 import java.util.List;
 import java.util.concurrent.BrokenBarrierException;
@@ -66,7 +64,7 @@ public class ConditionalOperationsConcurrentTest extends MultipleCacheManagersTe
 
    private static Log log = LogFactory.getLog(ConditionalOperationsConcurrentTest.class);
 
-   private static boolean ENABLE_DEBUG = false;
+   private static final boolean ENABLE_DEBUG = false;
 
    private static final int NODES_NUM = 3;
    private static final int MOVES = 500;
@@ -77,12 +75,12 @@ public class ConditionalOperationsConcurrentTest extends MultipleCacheManagersTe
    private static final String[] validMoves = generateValidMoves();
 
    private final AtomicBoolean failed = new AtomicBoolean(false);
-   private AtomicBoolean quit = new AtomicBoolean(false);
+   private final AtomicBoolean quit = new AtomicBoolean(false);
    private final AtomicInteger liveWorkers = new AtomicInteger();
    private volatile String failureMessage = "";
 
    protected boolean transactional = false;
-   private CacheMode mode = CacheMode.DIST_SYNC;
+   private final CacheMode mode = CacheMode.DIST_SYNC;
    protected LockingMode lockingMode = LockingMode.OPTIMISTIC;
    protected boolean writeSkewCheck = false;
 
@@ -143,14 +141,14 @@ public class ConditionalOperationsConcurrentTest extends MultipleCacheManagersTe
       exec.shutdown();
       try {
          boolean finished = exec.awaitTermination(5, TimeUnit.MINUTES);
-         Assert.assertTrue(finished, "Test took too long");
+         Assert.assertTrue("Test took too long", finished);
       } catch (InterruptedException e) {
          Assert.fail("Thread interrupted!");
       } finally {
          // Stop the worker threads so that they don't affect the following tests
          exec.shutdownNow();
       }
-      assert !failed.get() : failureMessage;
+      Assert.assertFalse(failureMessage, failed.get());
    }
 
    private static String[] generateValidMoves() {
@@ -273,7 +271,7 @@ public class ConditionalOperationsConcurrentTest extends MultipleCacheManagersTe
       Object beforeTargetValue;
       Object afterExpected;
       Object afterTargetValue;
-      boolean successfullOperation;
+      boolean successfulOperation;
 
       public void beforeReplace(Object expected, Object targetValue) {
          this.beforeExpected = expected;
@@ -283,7 +281,7 @@ public class ConditionalOperationsConcurrentTest extends MultipleCacheManagersTe
       public void afterReplace(Object expected, Object targetValue, boolean replaced) {
          this.afterExpected = expected;
          this.afterTargetValue = targetValue;
-         this.successfullOperation = replaced;
+         this.successfulOperation = replaced;
       }
 
       public boolean sameBeforeValue(Object currentStored) {
@@ -328,7 +326,7 @@ public class ConditionalOperationsConcurrentTest extends MultipleCacheManagersTe
             log.tracef("Value seen by cache %s is %s", currentCache, v);
             boolean sameValue = v == null ? currentStored == null : v.equals(currentStored);
             if (!sameValue) {
-               fail("Not all the caches see the same value. first cache:" + currentStored + " cache " + currentCache +" saw " + v);
+               fail("Not all the caches see the same value. first cache: " + currentStored + " cache " + currentCache +" saw " + v);
             }
          }
       }
@@ -376,7 +374,7 @@ public class ConditionalOperationsConcurrentTest extends MultipleCacheManagersTe
                   break;
                }
                try {
-                  Thread.currentThread().sleep(500);
+                  Thread.sleep(500);
                } catch (InterruptedException e) {
                   throw new RuntimeException(e);
                }
@@ -389,7 +387,7 @@ public class ConditionalOperationsConcurrentTest extends MultipleCacheManagersTe
 
       private void checkSuccessfulOperation(Object currentStored) {
          for (SharedThreadState threadState : state.threadStates) {
-            if (threadState.successfullOperation) {
+            if (threadState.successfulOperation) {
                if (!operation.validateTargetValueForSuccess(threadState.afterTargetValue, currentStored)) {
                   fail("operation successful but the current stored value doesn't match the write operation of the successful thread");
                }
@@ -405,7 +403,7 @@ public class ConditionalOperationsConcurrentTest extends MultipleCacheManagersTe
          //for CAS operations there's only one successful thread
          int successfulThreads = 0;
          for (SharedThreadState threadState : state.threadStates) {
-            if (threadState.successfullOperation) {
+            if (threadState.successfulOperation) {
                successfulThreads++;
             }
          }
@@ -512,6 +510,6 @@ public class ConditionalOperationsConcurrentTest extends MultipleCacheManagersTe
    }
 
    private static void print(String s) {
-      if (ENABLE_DEBUG) System.out.println(s);
+      if (ENABLE_DEBUG) log.debug(s);
    }
 }

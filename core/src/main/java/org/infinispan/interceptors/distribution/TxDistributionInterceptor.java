@@ -31,7 +31,6 @@ import org.infinispan.commands.write.PutKeyValueCommand;
 import org.infinispan.commands.write.RemoveCommand;
 import org.infinispan.commands.write.ReplaceCommand;
 import org.infinispan.commands.write.WriteCommand;
-import org.infinispan.container.entries.CacheEntry;
 import org.infinispan.container.entries.InternalCacheEntry;
 import org.infinispan.context.Flag;
 import org.infinispan.context.InvocationContext;
@@ -39,7 +38,6 @@ import org.infinispan.context.impl.LocalTxInvocationContext;
 import org.infinispan.context.impl.TxInvocationContext;
 import org.infinispan.distribution.DataLocality;
 import org.infinispan.distribution.L1Manager;
-import org.infinispan.distribution.ch.ConsistentHash;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.factories.annotations.Start;
 import org.infinispan.remoting.transport.Address;
@@ -64,15 +62,15 @@ import java.util.concurrent.TimeoutException;
 public class TxDistributionInterceptor extends BaseDistributionInterceptor {
 
    private static Log log = LogFactory.getLog(TxDistributionInterceptor.class);
+   private static final boolean trace = log.isTraceEnabled();
 
    private boolean isPessimisticCache;
    private boolean useClusteredWriteSkewCheck;
 
    private L1Manager l1Manager;
-   private boolean needReliableReturnValues;
    private boolean isL1CacheEnabled;
 
-   static final RecipientGenerator CLEAR_COMMAND_GENERATOR = new RecipientGenerator() {
+   private static final RecipientGenerator CLEAR_COMMAND_GENERATOR = new RecipientGenerator() {
       @Override
       public List<Address> generateRecipients() {
          return null;
@@ -126,7 +124,6 @@ public class TxDistributionInterceptor extends BaseDistributionInterceptor {
    @Start
    public void start() {
       isPessimisticCache = cacheConfiguration.transaction().lockingMode() == LockingMode.PESSIMISTIC;
-      needReliableReturnValues = !cacheConfiguration.unsafe().unreliableReturnValues();
       isL1CacheEnabled = cacheConfiguration.clustering().l1().enabled();
       useClusteredWriteSkewCheck = !isPessimisticCache &&
             cacheConfiguration.versioning().enabled() && cacheConfiguration.locking().writeSkewCheck();
@@ -277,19 +274,7 @@ public class TxDistributionInterceptor extends BaseDistributionInterceptor {
    private boolean shouldFetchRemoteValuesForWriteSkewCheck(InvocationContext ctx, WriteCommand cmd) {
       if (useClusteredWriteSkewCheck && ctx.isInTxScope() && dm.isRehashInProgress()) {
          for (Object key : cmd.getAffectedKeys()) {
-            if (isStateTransferInProgressForKey(key)) return true;
-         }
-      }
-      return false;
-   }
-
-   private boolean isStateTransferInProgressForKey(Object key) {
-      // todo [anistor] fix locality checks in StateTransferManager (ISPN-2401) and use them here
-      ConsistentHash rCh = dm.getReadConsistentHash();
-      ConsistentHash wCh = dm.getWriteConsistentHash();
-      if (wCh.isKeyLocalToNode(rpcManager.getAddress(), key)) {
-         if (!rCh.isKeyLocalToNode(rpcManager.getAddress(), key) && !dataContainer.containsKey(key)) {
-            return true;
+            if (dm.isAffectedByRehash(key) && !dataContainer.containsKey(key)) return true;
          }
       }
       return false;
@@ -308,30 +293,24 @@ public class TxDistributionInterceptor extends BaseDistributionInterceptor {
       return invokeNextInterceptor(ctx, command);
    }
 
-   protected Object localGet(InvocationContext ctx, Object key, boolean isWrite, FlagAffectedCommand command) throws Throwable {
-      CacheEntry ce = ctx.lookupEntry(key);
-      if (ce == null || ce.isNull() || ce.isLockPlaceholder() || ce.getValue() == null) {
-         InternalCacheEntry ice = dataContainer.get(key);
-         if (ice != null) {
-            if (isWrite && isPessimisticCache && ctx.isInTxScope()) {
-               ((TxInvocationContext) ctx).addAffectedKey(key);
-            }
-            if (ce != null && ce.isChanged()) {
-               ce.setValue(ice.getValue());
-            } else {
-               if (isWrite)
-                  lockAndWrap(ctx, key, ice, command);
-               else
-                  ctx.putLookedUpEntry(key, ice);
-            }
-            return command instanceof GetCacheEntryCommand ? ice : ice.getValue();
+   private Object localGet(InvocationContext ctx, Object key, boolean isWrite, FlagAffectedCommand command) throws Throwable {
+      InternalCacheEntry ice = dataContainer.get(key);
+      if (ice != null) {
+         if (isWrite && isPessimisticCache && ctx.isInTxScope()) {
+            ((TxInvocationContext) ctx).addAffectedKey(key);
          }
+         if (!ctx.replaceValue(key, ice.getValue())) {
+            if (isWrite)
+               lockAndWrap(ctx, key, ice, command);
+            else
+               ctx.putLookedUpEntry(key, ice);
+         }
+         return command instanceof GetCacheEntryCommand ? ice : ice.getValue();
       }
-
       return null;
    }
 
-   protected void remoteGetBeforeWrite(InvocationContext ctx, WriteCommand command, KeyGenerator keygen) throws Throwable {
+   private void remoteGetBeforeWrite(InvocationContext ctx, WriteCommand command, KeyGenerator keygen) throws Throwable {
       // this should only happen if:
       //   a) unsafeUnreliableReturnValues is false
       //   b) unsafeUnreliableReturnValues is true, we are in a TX and the command is conditional
@@ -349,11 +328,11 @@ public class TxDistributionInterceptor extends BaseDistributionInterceptor {
       return !isL1CacheEnabled || !dataContainer.containsKey(key);
    }
 
-   protected Object remoteGetAndStoreInL1(InvocationContext ctx, Object key, boolean isWrite, FlagAffectedCommand command) throws Throwable {
+   private Object remoteGetAndStoreInL1(InvocationContext ctx, Object key, boolean isWrite, FlagAffectedCommand command) throws Throwable {
       // todo [anistor] fix locality checks in StateTransferManager (ISPN-2401) and use them here
       DataLocality locality = dm.getReadConsistentHash().isKeyLocalToNode(rpcManager.getAddress(), key) ? DataLocality.LOCAL : DataLocality.NOT_LOCAL;
 
-      if (ctx.isOriginLocal() && !locality.isLocal() && isNotInL1(key) || isStateTransferInProgressForKey(key)) {
+      if (ctx.isOriginLocal() && !locality.isLocal() && isNotInL1(key) || dm.isAffectedByRehash(key) && !dataContainer.containsKey(key)) {
          if (trace) log.tracef("Doing a remote get for key %s", key);
 
          boolean acquireRemoteLock = false;
@@ -401,16 +380,11 @@ public class TxDistributionInterceptor extends BaseDistributionInterceptor {
                   log.debug("Inability to store in L1 caused by", e);
                }
             } else {
-               CacheEntry ce = ctx.lookupEntry(key);
-               if (ce == null || ce.isNull() || ce.isLockPlaceholder() || ce.getValue() == null) {
-                  if (ce != null && ce.isChanged()) {
-                     ce.setValue(ice.getValue());
-                  } else {
-                     if (isWrite)
-                        lockAndWrap(ctx, key, ice, command);
-                     else
-                        ctx.putLookedUpEntry(key, ice);
-                  }
+               if (!ctx.replaceValue(key, ice.getValue())) {
+                  if (isWrite)
+                     lockAndWrap(ctx, key, ice, command);
+                  else
+                     ctx.putLookedUpEntry(key, ice);
                }
             }
             return ice.getValue();
@@ -419,11 +393,6 @@ public class TxDistributionInterceptor extends BaseDistributionInterceptor {
          if (trace) log.tracef("Not doing a remote get for key %s since entry is mapped to current node (%s), or is in L1.  Owners are %s", key, rpcManager.getAddress(), dm.locate(key));
       }
       return null;
-   }
-
-   private boolean isNeedReliableReturnValues(FlagAffectedCommand command) {
-      return !command.hasFlag(Flag.SKIP_REMOTE_LOOKUP)
-            && !command.hasFlag(Flag.IGNORE_RETURN_VALUES) && needReliableReturnValues;
    }
 
    protected Future<?> flushL1Caches(InvocationContext ctx) {
