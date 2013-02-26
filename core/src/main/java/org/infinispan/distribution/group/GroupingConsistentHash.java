@@ -87,6 +87,11 @@ public class GroupingConsistentHash implements ConsistentHash {
    }
 
    @Override
+   public String getRoutingTableAsString() {
+      return ch.getRoutingTableAsString();
+   }
+
+   @Override
    public Address locatePrimaryOwner(Object key) {
       return ch.locatePrimaryOwner(getGroupKey(key));
    }

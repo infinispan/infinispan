@@ -55,6 +55,7 @@ import static org.infinispan.factories.KnownComponentNames.ASYNC_TRANSPORT_EXECU
  */
 public class LocalTopologyManagerImpl implements LocalTopologyManager {
    private static Log log = LogFactory.getLog(LocalTopologyManagerImpl.class);
+   private static final boolean trace = log.isTraceEnabled();
 
    private Transport transport;
    private ExecutorService asyncTransportExecutor;
@@ -179,8 +180,7 @@ public class LocalTopologyManagerImpl implements LocalTopologyManager {
             return;
          }
 
-         log.debugf("Updating local consistent hash(es) for cache %s: new topology = %s",
-               cacheName, cacheTopology);
+         log.debugf("Updating local consistent hash(es) for cache %s: new topology = %s", cacheName, cacheTopology);
          cacheStatus.setTopology(cacheTopology);
          ConsistentHash unionCH = null;
          if (cacheTopology.getPendingCH() != null) {
@@ -189,8 +189,8 @@ public class LocalTopologyManagerImpl implements LocalTopologyManager {
          }
 
          CacheTopologyHandler handler = cacheStatus.getHandler();
-         CacheTopology unionTopology = new CacheTopology(cacheTopology.getTopologyId(),
-               cacheTopology.getCurrentCH(), unionCH);
+         CacheTopology unionTopology = new CacheTopology(cacheTopology.getTopologyId(), cacheTopology.getCurrentCH(), unionCH);
+         unionTopology.logRoutingTableInformation();
          handler.updateConsistentHash(unionTopology);
       }
    }
@@ -221,6 +221,7 @@ public class LocalTopologyManagerImpl implements LocalTopologyManager {
          }
 
          log.debugf("Starting local rebalance for cache %s, topology = %s", cacheName, cacheTopology);
+         cacheTopology.logRoutingTableInformation();
          cacheStatus.setTopology(cacheTopology);
       }
 

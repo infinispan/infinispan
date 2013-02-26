@@ -60,7 +60,8 @@ import java.util.concurrent.TimeUnit;
  */
 public final class Util {
 
-   private static final boolean isArraysDebug = Boolean.getBoolean("infinispan.arrays.debug");
+   private static final boolean IS_ARRAYS_DEBUG = Boolean.getBoolean("infinispan.arrays.debug");
+
    public static final Object[] EMPTY_OBJECT_ARRAY = new Object[0];
    public static final byte[] EMPTY_BYTE_ARRAY = new byte[0];
 
@@ -394,7 +395,7 @@ public final class Util {
       }
 
       sb.append(", array=0x");
-      if (isArraysDebug) {
+      if (IS_ARRAYS_DEBUG) {
          // Convert the entire byte array
          sb.append(toHexString(array));
       } else {
