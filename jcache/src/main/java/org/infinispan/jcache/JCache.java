@@ -67,15 +67,15 @@ public class JCache<K, V> implements Cache<K, V> {
    private final AdvancedCache<K, V> skipListenerCache;
    private final CacheStatisticsMXBean stats;
    private final CacheMXBean mxBean;
-   private final JCacheNotifier<K, V> notifier = new JCacheNotifier<K, V>();
+   private final JCacheNotifier<K, V> notifier;
 
    private final ExpiryPolicy<? super K, ? super V> expiryPolicy;
    private final ExecutorService executorService = Executors.newFixedThreadPool(1);
    private final LockContainer processorLocks = new ReentrantPerEntryLockContainer(32);
    private final long lockTimeout; // milliseconds
 
-   public JCache(AdvancedCache<K, V> cache,
-         JCacheManager cacheManager, Configuration<K, V> c) {
+   public JCache(AdvancedCache<K, V> cache, JCacheManager cacheManager,
+         JCacheNotifier<K, V> notifier,  Configuration<K, V> c) {
       super();
       this.cache = cache;
       this.ignoreReturnValuesCache = cache.withFlags(Flag.IGNORE_RETURN_VALUES);
@@ -91,7 +91,7 @@ public class JCache<K, V> implements Cache<K, V> {
       this.expiryPolicy = configuration.getExpiryPolicy();
       this.lockTimeout =  cache.getCacheConfiguration()
             .locking().lockAcquisitionTimeout();
-
+      this.notifier = notifier;
       for (CacheEntryListenerRegistration<? super K, ? super V> r
             : c.getCacheEntryListenerRegistrations()) {
          notifier.addListener(r);
@@ -110,7 +110,8 @@ public class JCache<K, V> implements Cache<K, V> {
       cache.start();
       
       // Add listener as they were wiped out on stop
-      cache.addListener(new JCacheListenerAdapter<K, V>(this));
+      // TODO: Why not add listener only when a listener is actually registered?
+      cache.addListener(new JCacheListenerAdapter<K, V>(this, notifier));
    }
 
    @Override
@@ -606,10 +607,6 @@ public class JCache<K, V> implements Cache<K, V> {
 
    public long size() {
       return cache.size();
-   }
-
-   public JCacheNotifier<K, V> getNotifier() {
-      return notifier;
    }
 
    private void checkStarted() {

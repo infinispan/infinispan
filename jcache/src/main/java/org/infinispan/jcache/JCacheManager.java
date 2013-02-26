@@ -43,6 +43,8 @@ import org.infinispan.AdvancedCache;
 import org.infinispan.configuration.global.GlobalConfigurationBuilder;
 import org.infinispan.configuration.parsing.ConfigurationBuilderHolder;
 import org.infinispan.configuration.parsing.ParserRegistry;
+import org.infinispan.interceptors.EntryWrappingInterceptor;
+import org.infinispan.jcache.interceptor.ExpirationTrackingInterceptor;
 import org.infinispan.jcache.logging.Log;
 import org.infinispan.loaders.CacheLoaderManager;
 import org.infinispan.manager.DefaultCacheManager;
@@ -106,7 +108,7 @@ public class JCacheManager implements CacheManager {
       for (String cacheName : cacheNames) {
          caches.put(cacheName, new JCache<Object, Object>(
                cm.getCache(cacheName).getAdvancedCache(),
-               this, null));
+               this, new JCacheNotifier<Object, Object>(), null));
       }
       
       status = Status.STARTED;
@@ -193,7 +195,13 @@ public class JCacheManager implements CacheManager {
                ispnCacheStore.setCacheWriter(cacheWriter);
             }
 
-            cache = new JCache<K, V>(ispnCache, this, c);
+            JCacheNotifier<K, V> notifier = new JCacheNotifier<K, V>();
+            cache = new JCache<K, V>(ispnCache, this, notifier, c);
+
+            ispnCache.addInterceptorBefore(new ExpirationTrackingInterceptor(
+                  ispnCache.getDataContainer(), cache, notifier),
+                  EntryWrappingInterceptor.class);
+
             cache.start();
             caches.put(cache.getName(), cache);
          } else {
