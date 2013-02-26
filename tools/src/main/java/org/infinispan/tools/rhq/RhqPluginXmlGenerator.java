@@ -149,7 +149,11 @@ public class RhqPluginXmlGenerator {
             if (managedAttr != null) {
                String property = prefix + getPropertyFromBeanConvention(ctMethod);
 
-               String displayName = withNamePrefix ? "[" + mbean.objectName() + "] " + managedAttr.displayName() : managedAttr.displayName();
+               String attrDisplayName = managedAttr.displayName();
+               if (attrDisplayName.length() == 0) {
+                  throw new RuntimeException("Missing displayName on: " + property);
+               }
+               String displayName = withNamePrefix ? "[" + mbean.objectName() + "] " + attrDisplayName : attrDisplayName;
                validateDisplayName(displayName);
 
                Element metric = doc.createElement("metric");
@@ -175,7 +179,11 @@ public class RhqPluginXmlGenerator {
                }
                uniqueOperations.add(name);
 
-               String displayName = withNamePrefix ? "[" + mbean.objectName() + "] " + managedOp.displayName() : managedOp.displayName();
+               String opDisplayName = managedOp.displayName();
+               if (opDisplayName.length() == 0) {
+                  throw new RuntimeException("Missing displayName on: " + name);
+               }
+               String displayName = withNamePrefix ? "[" + mbean.objectName() + "] " + opDisplayName : opDisplayName;
                validateDisplayName(displayName);
 
                Element operation = doc.createElement("operation");
