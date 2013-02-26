@@ -87,6 +87,11 @@ public class ReplicatedConsistentHash implements ConsistentHash {
    }
 
    @Override
+   public String getRoutingTableAsString() {
+      return "(replicated cache)";
+   }
+
+   @Override
    public Address locatePrimaryOwner(Object key) {
       return members.get(0);
    }
