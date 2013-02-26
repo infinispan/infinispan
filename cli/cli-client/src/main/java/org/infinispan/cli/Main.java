@@ -39,6 +39,7 @@ public class Main {
       Shell shell = new ShellImpl();
       shell.init(args);
       shell.run();
+      System.exit(0);
    }
 
 }
