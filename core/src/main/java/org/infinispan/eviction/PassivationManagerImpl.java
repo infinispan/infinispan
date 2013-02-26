@@ -87,7 +87,8 @@ public class PassivationManagerImpl implements PassivationManager {
       if (enabled && entry != null) {
          Object key = entry.getKey();
          // notify listeners that this entry is about to be passivated
-         notifier.notifyCacheEntryPassivated(key, entry.getValue(), true, ImmutableContext.INSTANCE);
+         notifier.notifyCacheEntryPassivated(key, entry.getValue(), true,
+               ImmutableContext.INSTANCE, null);
          if (trace) log.tracef("Passivating entry %s", key);
          try {
             cacheStore.store(entry);
@@ -95,7 +96,8 @@ public class PassivationManagerImpl implements PassivationManager {
          } catch (CacheLoaderException e) {
             log.unableToPassivateEntry(key, e);
          }
-         notifier.notifyCacheEntryPassivated(key, null, false, ImmutableContext.INSTANCE);
+         notifier.notifyCacheEntryPassivated(key, null, false,
+               ImmutableContext.INSTANCE, null);
       }
    }
 

@@ -226,6 +226,20 @@ public enum Flag {
     */
    GUARANTEED_DELIVERY,
 
+   /**
+    * This flag skips listener notifications as a result of a cache operation.
+    * For example, if this flag is passed as a result of a {@link Cache#get(Object)}
+    * call, no callbacks will be made on listeners annotated with
+    * {@link org.infinispan.notifications.cachelistener.annotation.CacheEntryVisited}.
+    *
+    * A typical use case of this flag is when trying to comply with
+    * specifications such as JSR-107, which mandate that
+    * {@link Cache#containsKey(Object)}} calls do not fire entry visited
+    * notifications, while maintaining the same behaviour that Infinispan
+    * has done in the past.
+    */
+   SKIP_LISTENER_NOTIFICATION,
+
    ;
 
    /**

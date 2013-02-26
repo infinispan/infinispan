@@ -21,6 +21,7 @@ package org.infinispan.interceptors;
 
 import org.infinispan.commands.VisitableCommand;
 import org.infinispan.commands.read.GetKeyValueCommand;
+import org.infinispan.commands.FlagAffectedCommand;
 import org.infinispan.commands.tx.CommitCommand;
 import org.infinispan.commands.tx.PrepareCommand;
 import org.infinispan.commands.tx.VersionedCommitCommand;
@@ -74,7 +75,7 @@ public class VersionedEntryWrappingInterceptor extends EntryWrappingInterceptor 
       if (command.isOnePhaseCommit()) ctx.getCacheTransaction().setUpdatedEntryVersions(((VersionedPrepareCommand) command).getVersionsSeen());
 
       if (newVersionData != null) retval = newVersionData;
-      if (command.isOnePhaseCommit()) commitContextEntries(ctx, false, isFromStateTransfer(ctx));
+      if (command.isOnePhaseCommit()) commitContextEntries(ctx, null);
       return retval;
    }
 
@@ -88,18 +89,18 @@ public class VersionedEntryWrappingInterceptor extends EntryWrappingInterceptor 
       } finally {
          if (!ctx.isOriginLocal())
             ctx.getCacheTransaction().setUpdatedEntryVersions(((VersionedCommitCommand) command).getUpdatedVersions());
-         commitContextEntries(ctx, false, isFromStateTransfer(ctx));
+         commitContextEntries(ctx, null);
       }
    }
 
    @Override
-   protected void commitContextEntry(CacheEntry entry, InvocationContext ctx, boolean skipOwnershipCheck) {
+   protected void commitContextEntry(CacheEntry entry, InvocationContext ctx, FlagAffectedCommand command) {
       if (ctx.isInTxScope() && !isFromStateTransfer(ctx)) {
          EntryVersion version = ((TxInvocationContext) ctx).getCacheTransaction().getUpdatedEntryVersions().get(entry.getKey());
-         cdl.commitEntry(entry, version, skipOwnershipCheck, ctx);
+         cdl.commitEntry(entry, version, command, ctx);
       } else {
          // This could be a state transfer call!
-         cdl.commitEntry(entry, entry.getVersion(), skipOwnershipCheck, ctx);
+         cdl.commitEntry(entry, entry.getVersion(), command, ctx);
       }
    }
 

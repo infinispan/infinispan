@@ -106,7 +106,7 @@ public class EntryWrappingInterceptor extends CommandInterceptor {
       }
       Object result = invokeNextInterceptor(ctx, command);
       if (command.isOnePhaseCommit()) {
-         commitContextEntries(ctx, false, isFromStateTransfer(ctx));
+         commitContextEntries(ctx, null);
       }
       return result;
    }
@@ -116,7 +116,7 @@ public class EntryWrappingInterceptor extends CommandInterceptor {
       try {
          return invokeNextInterceptor(ctx, command);
       } finally {
-         commitContextEntries(ctx, false, isFromStateTransfer(ctx));
+         commitContextEntries(ctx, null);
       }
    }
 
@@ -129,7 +129,7 @@ public class EntryWrappingInterceptor extends CommandInterceptor {
       } finally {
          //needed because entries might be added in L1
          if (!ctx.isInTxScope())
-            commitContextEntries(ctx, command.hasFlag(Flag.SKIP_OWNERSHIP_CHECK), false);
+            commitContextEntries(ctx, command);
       }
    }
 
@@ -241,7 +241,11 @@ public class EntryWrappingInterceptor extends CommandInterceptor {
       return command.hasFlag(Flag.PUT_FOR_STATE_TRANSFER);
    }
 
-   protected final void commitContextEntries(InvocationContext ctx, boolean skipOwnershipCheck, boolean isPutForStateTransfer) {
+   protected final void commitContextEntries(InvocationContext ctx, FlagAffectedCommand command) {
+      boolean isPutForStateTransfer = command == null
+            ? isFromStateTransfer(ctx)
+            : isFromStateTransfer(command);
+
       if (!isPutForStateTransfer && stateConsumer != null
             && ctx instanceof TxInvocationContext
             && ((TxInvocationContext) ctx).getCacheTransaction().hasModification(ClearCommand.class)) {
@@ -252,7 +256,7 @@ public class EntryWrappingInterceptor extends CommandInterceptor {
 
       if (ctx instanceof SingleKeyNonTxInvocationContext) {
          SingleKeyNonTxInvocationContext singleKeyCtx = (SingleKeyNonTxInvocationContext) ctx;
-         commitEntryIfNeeded(ctx, skipOwnershipCheck, singleKeyCtx.getKey(), singleKeyCtx.getCacheEntry(), isPutForStateTransfer);
+         commitEntryIfNeeded(ctx, command, singleKeyCtx.getKey(), singleKeyCtx.getCacheEntry(), isPutForStateTransfer);
       } else {
          Set<Map.Entry<Object, CacheEntry>> entries = ctx.getLookedUpEntries().entrySet();
          Iterator<Map.Entry<Object, CacheEntry>> it = entries.iterator();
@@ -260,7 +264,7 @@ public class EntryWrappingInterceptor extends CommandInterceptor {
          while (it.hasNext()) {
             Map.Entry<Object, CacheEntry> e = it.next();
             CacheEntry entry = e.getValue();
-            if (!commitEntryIfNeeded(ctx, skipOwnershipCheck, e.getKey(), entry, isPutForStateTransfer)) {
+            if (!commitEntryIfNeeded(ctx, command, e.getKey(), entry, isPutForStateTransfer)) {
                if (trace) {
                   if (entry == null)
                      log.tracef("Entry for key %s is null : not calling commitUpdate", e.getKey());
@@ -272,14 +276,14 @@ public class EntryWrappingInterceptor extends CommandInterceptor {
       }
    }
 
-   protected void commitContextEntry(CacheEntry entry, InvocationContext ctx, boolean skipOwnershipCheck) {
-      cdl.commitEntry(entry, null, skipOwnershipCheck, ctx);
+   protected void commitContextEntry(CacheEntry entry, InvocationContext ctx, FlagAffectedCommand command) {
+      cdl.commitEntry(entry, null, command, ctx);
    }
 
    private Object invokeNextAndApplyChanges(InvocationContext ctx, FlagAffectedCommand command) throws Throwable {
       final Object result = invokeNextInterceptor(ctx, command);
       if (!ctx.isInTxScope())
-         commitContextEntries(ctx, command.hasFlag(Flag.SKIP_OWNERSHIP_CHECK), isFromStateTransfer(command));
+         commitContextEntries(ctx, command);
       log.tracef("The return value is %s", result);
       return result;
    }
@@ -375,7 +379,8 @@ public class EntryWrappingInterceptor extends CommandInterceptor {
       //no-op, it is only needed to check the write skew
    }
 
-   private boolean commitEntryIfNeeded(InvocationContext ctx, boolean skipOwnershipCheck, Object key, CacheEntry entry, boolean isPutForStateTransfer) {
+   private boolean commitEntryIfNeeded(InvocationContext ctx, FlagAffectedCommand command,
+         Object key, CacheEntry entry, boolean isPutForStateTransfer) {
       if (entry == null) {
          if (key != null && !isPutForStateTransfer && stateConsumer != null) {
             // this key is not yet stored locally
@@ -393,7 +398,7 @@ public class EntryWrappingInterceptor extends CommandInterceptor {
 
       if (entry.isChanged() || entry.isLoaded()) {
          log.tracef("About to commit entry %s", entry);
-         commitContextEntry(entry, ctx, skipOwnershipCheck);
+         commitContextEntry(entry, ctx, command);
 
          if (!isPutForStateTransfer && stateConsumer != null) {
             stateConsumer.addUpdatedKey(key);

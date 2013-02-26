@@ -170,7 +170,7 @@ public class CacheLoaderInterceptor extends JmxStatsCommandInterceptor {
          InternalCacheEntry loaded = loader.load(key);
          if (loaded != null) {
             MVCCEntry mvccEntry = entryFactory.wrapEntryForPut(ctx, key, loaded, false, cmd);
-            recordLoadedEntry(ctx, key, mvccEntry, loaded);
+            recordLoadedEntry(ctx, key, mvccEntry, loaded, cmd);
             return true;
          } else {
             return false;
@@ -192,7 +192,8 @@ public class CacheLoaderInterceptor extends JmxStatsCommandInterceptor {
     * @param entry       the appropriately locked entry in the caller's context
     * @param loadedEntry the internal entry loaded from the cache store.
     */
-   private MVCCEntry recordLoadedEntry(InvocationContext ctx, Object key, MVCCEntry entry, InternalCacheEntry loadedEntry) throws Exception {
+   private MVCCEntry recordLoadedEntry(InvocationContext ctx, Object key,
+         MVCCEntry entry, InternalCacheEntry loadedEntry, FlagAffectedCommand cmd) throws Exception {
       boolean entryExists = loadedEntry != null;
       if (log.isTraceEnabled()) {
          log.trace("Entry exists in loader? " + entryExists);
@@ -209,7 +210,7 @@ public class CacheLoaderInterceptor extends JmxStatsCommandInterceptor {
       if (entryExists) {
          final Object value = loadedEntry.getValue();
          // FIXME: There's no point to trigger the entryLoaded/Activated event twice.
-         sendNotification(key, value, true, ctx);
+         sendNotification(key, value, true, ctx, cmd);
          entry.setValue(value);
          entry.setLifespan(loadedEntry.getLifespan());
          entry.setMaxIdle(loadedEntry.getMaxIdle());
@@ -217,14 +218,15 @@ public class CacheLoaderInterceptor extends JmxStatsCommandInterceptor {
          entry.setValid(true);
          entry.setLoaded(true); // mark the entry as loaded from the store
 
-         sendNotification(key, value, false, ctx);
+         sendNotification(key, value, false, ctx, cmd);
       }
 
       return entry;
    }
 
-   protected void sendNotification(Object key, Object value, boolean pre, InvocationContext ctx) {
-      notifier.notifyCacheEntryLoaded(key, value, pre, ctx);
+   protected void sendNotification(Object key, Object value, boolean pre,
+         InvocationContext ctx, FlagAffectedCommand cmd) {
+      notifier.notifyCacheEntryLoaded(key, value, pre, ctx, cmd);
    }
 
    private void loadIfNeededAndUpdateStats(InvocationContext ctx, Object key, boolean isRetrieval, FlagAffectedCommand cmd) throws Throwable {

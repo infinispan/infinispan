@@ -26,7 +26,6 @@ import java.util.Map;
 import java.util.NoSuchElementException;
 import java.util.Set;
 import java.util.concurrent.Callable;
-import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
@@ -64,13 +63,12 @@ public class JCache<K, V> implements Cache<K, V> {
    private final AdvancedCache<K, V> cache;
    private final AdvancedCache<K, V> ignoreReturnValuesCache;
    private final AdvancedCache<K, V> skipCacheLoadCache;
+   private final AdvancedCache<K, V> containsKeyCache;
+   private final AdvancedCache<K, V> skipListenerCache;
    private final CacheStatisticsMXBean stats;
    private final CacheMXBean mxBean;
-   private final ConcurrentHashMap<
-         CacheEntryListener<? super K, ? super V>,
-         CacheEntryListenerRegistration<? super K, ? super V>> listeners =
-         new ConcurrentHashMap<CacheEntryListener<? super K, ? super V>, CacheEntryListenerRegistration<? super K, ? super V>>();
-   
+   private final JCacheNotifier<K, V> notifier = new JCacheNotifier<K, V>();
+
    private final ExpiryPolicy<? super K, ? super V> expiryPolicy;
    private final ExecutorService executorService = Executors.newFixedThreadPool(1);
    private final LockContainer processorLocks = new ReentrantPerEntryLockContainer(32);
@@ -82,6 +80,9 @@ public class JCache<K, V> implements Cache<K, V> {
       this.cache = cache;
       this.ignoreReturnValuesCache = cache.withFlags(Flag.IGNORE_RETURN_VALUES);
       this.skipCacheLoadCache = cache.withFlags(Flag.SKIP_CACHE_LOAD);
+      this.containsKeyCache = skipCacheLoadCache
+            .withFlags(Flag.SKIP_LISTENER_NOTIFICATION);
+      this.skipListenerCache = cache.withFlags(Flag.SKIP_LISTENER_NOTIFICATION);
       this.cacheManager = cacheManager;
       // a configuration copy as required by the spec
       this.configuration = new SimpleConfiguration<K, V>(c);
@@ -91,21 +92,12 @@ public class JCache<K, V> implements Cache<K, V> {
       this.lockTimeout =  cache.getCacheConfiguration()
             .locking().lockAcquisitionTimeout();
 
-      for (CacheEntryListenerRegistration<? super K, ? super V> r : c
-               .getCacheEntryListenerRegistrations()) {
-
-         RICacheEntryListenerRegistration<K, V> lr = new RICacheEntryListenerRegistration<K, V>(
-                  r.getCacheEntryListener(), r.getCacheEntryFilter(), r.isOldValueRequired(),
-                  r.isSynchronous());
-
-         listeners.put(r.getCacheEntryListener(), lr);
-      }            
+      for (CacheEntryListenerRegistration<? super K, ? super V> r
+            : c.getCacheEntryListenerRegistrations()) {
+         notifier.addListener(r);
+      }
    }
    
-   public Map<CacheEntryListener<? super K, ? super V>, CacheEntryListenerRegistration<? super K, ? super V>> getListeners(){
-      return listeners;
-   }
-
    @Override
    public Status getStatus() {
       return JStatusConverter.convert(cache.getStatus());
@@ -114,10 +106,10 @@ public class JCache<K, V> implements Cache<K, V> {
    @Override
    public void start() {
       // no op
-      //TOOD need to check state before start?
+      // TODO need to check state before start?
       cache.start();
       
-      //add listener as they were wiped out on stop
+      // Add listener as they were wiped out on stop
       cache.addListener(new JCacheListenerAdapter<K, V>(this));
    }
 
@@ -128,13 +120,14 @@ public class JCache<K, V> implements Cache<K, V> {
 
    @Override
    public void clear() {
-      cache.clear();
+      // TCK expects clear() to not fire any remove events
+      skipListenerCache.clear();
    }
 
    @Override
    public boolean containsKey(final K key) {
       checkStarted();
-      // TODO: Remove logging once isContainsKey has been added to GetKeyValueCommand
+
       if (log.isTraceEnabled())
          log.tracef("Invoke containsKey(key=%s)", key);
 
@@ -142,16 +135,12 @@ public class JCache<K, V> implements Cache<K, V> {
          return new WithProcessorLock<Boolean>().call(key, new Callable<Boolean>() {
             @Override
             public Boolean call() {
-               return doContainsKey(key);
+               return containsKeyCache.containsKey(key);
             }
          });
       }
 
-      return doContainsKey(key);
-   }
-
-   private boolean doContainsKey(K key) {
-      return skipCacheLoadCache.containsKey(key);
+      return containsKeyCache.containsKey(key);
    }
 
    @Override
@@ -209,17 +198,20 @@ public class JCache<K, V> implements Cache<K, V> {
          return new WithProcessorLock<V>().call(key, new Callable<V>() {
             @Override
             public V call() {
-               return put(cache, key, value, false);
+               return put(cache, cache, key, value, false);
             }
          });
       }
-
-      return put(cache, key, value, false);
+      //
+      return put(cache, cache, key, value, false);
    }
 
    @Override
    public V getAndRemove(final K key) {
       checkStarted();
+      // Dummy cache.get call to force a cache entry read event
+      // to be fired if the entry exists in the cache.
+      skipCacheLoadCache.get(key);
       if (lockRequired(key)) {
          return new WithProcessorLock<V>().call(key, new Callable<V>() {
             @Override
@@ -239,12 +231,12 @@ public class JCache<K, V> implements Cache<K, V> {
          return new WithProcessorLock<V>().call(key, new Callable<V>() {
             @Override
             public V call() {
-               return skipCacheLoadCache.replace(key, value);
+               return replace(skipCacheLoadCache, key, value);
             }
          });
       }
 
-      return skipCacheLoadCache.replace(key, value);
+      return replace(skipCacheLoadCache, key, value);
    }
 
    @Override
@@ -300,7 +292,9 @@ public class JCache<K, V> implements Cache<K, V> {
       return new WithProcessorLock<T>().call(key, new Callable<T>() {
          @Override
          public T call() throws Exception {
-            V oldValue = cache.get(key);
+            // Get old value skipping any listeners to impacting
+            // listener invocation expectations set by the TCK.
+            V oldValue = skipListenerCache.get(key);
             MutableJCacheEntry<K, V> mutable =
                   new MutableJCacheEntry<K, V>(cache, key, oldValue);
             T ret = entryProcessor.process(mutable);
@@ -453,7 +447,8 @@ public class JCache<K, V> implements Cache<K, V> {
    }
 
    private void doPut(K key, V value) {
-      put(ignoreReturnValuesCache, key, value, false);
+      // A normal put should not fire notifications when checking TTL
+      put(ignoreReturnValuesCache, containsKeyCache, key, value, false);
    }
 
    @Override
@@ -463,24 +458,25 @@ public class JCache<K, V> implements Cache<K, V> {
          return new WithProcessorLock<Boolean>().call(key, new Callable<Boolean>() {
             @Override
             public Boolean call() {
-               return put(skipCacheLoadCache, key, value, true) == null;
+               return put(skipCacheLoadCache,
+                     skipCacheLoadCache, key, value, true) == null;
             }
          });
       }
 
-      return put(skipCacheLoadCache, key, value, true) == null;
+      return put(skipCacheLoadCache,
+            skipCacheLoadCache, key, value, true) == null;
    }
 
    @Override
    public boolean registerCacheEntryListener(
             CacheEntryListener<? super K, ? super V> cacheEntryListener, boolean requireOldValue,
             CacheEntryEventFilter<? super K, ? super V> cacheEntryFilter, boolean synchronous) {
-      if (cacheEntryListener == null) {
+      if (cacheEntryListener == null)
          throw new CacheEntryListenerException("A listener may not be null");
-      }
-      RICacheEntryListenerRegistration<K, V> registration = new RICacheEntryListenerRegistration<K, V>(
-               cacheEntryListener, cacheEntryFilter, requireOldValue, synchronous);
-      return listeners.putIfAbsent(cacheEntryListener, registration) != null;
+
+      return notifier.addListenerIfAbsent(new JCacheListenerRegistration<K, V>(
+            cacheEntryListener, cacheEntryFilter, requireOldValue, synchronous));
    }
 
    @Override
@@ -537,7 +533,6 @@ public class JCache<K, V> implements Cache<K, V> {
             futures.add(cache.removeAsync(key));
          }
       }
-
 
       for (Future<V> future : futures) {
          try {
@@ -597,7 +592,7 @@ public class JCache<K, V> implements Cache<K, V> {
    public boolean unregisterCacheEntryListener(
          CacheEntryListener<?, ?> cacheEntryListener) {
       return cacheEntryListener != null
-            && listeners.remove(cacheEntryListener) != null;
+            && notifier.removeListener(cacheEntryListener);
    }
 
    @Override
@@ -611,6 +606,10 @@ public class JCache<K, V> implements Cache<K, V> {
 
    public long size() {
       return cache.size();
+   }
+
+   public JCacheNotifier<K, V> getNotifier() {
+      return notifier;
    }
 
    private void checkStarted() {
@@ -644,9 +643,14 @@ public class JCache<K, V> implements Cache<K, V> {
                "Old value cannot be null");
    }
 
-   private V put(AdvancedCache<K, V> cache, K key, V value,
-         boolean isPutIfAbsent) {
-      boolean isCreated = !cache.containsKey(key);
+   private V put(AdvancedCache<K, V> cache, AdvancedCache<K, V> createCheckCache,
+         K key, V value, boolean isPutIfAbsent) {
+      boolean isCreated;
+      // Use a separate cache reference to check whether entry is created or
+      // not. A separate reference allows for listener notifications to be
+      // skipped selectively.
+      isCreated = !createCheckCache.containsKey(key);
+
       V ret;
       Configuration.Duration ttl;
       Entry<K, V> entry = new JCacheEntry<K, V>(key, value);
@@ -684,7 +688,6 @@ public class JCache<K, V> implements Cache<K, V> {
       return ret;
    }
 
-   @SuppressWarnings("unchecked") // Varargs as generics should be supportable
    private boolean replace(AdvancedCache<K, V> cache,
          K key, V oldValue, V value, boolean isConditional) {
       boolean exists = cache.containsKey(key);
@@ -718,6 +721,31 @@ public class JCache<K, V> implements Cache<K, V> {
 
       verifyNewValue(value);
       return false;
+   }
+
+   private V replace(AdvancedCache<K, V> cache, K key, V value) {
+      boolean exists = cache.containsKey(key);
+      if (exists) {
+         Entry<K, V> entry = new JCacheEntry<K, V>(key, value);
+         // TODO: Retrieve existing lifespan setting for entry from internal container?
+         Configuration.Duration ttl = expiryPolicy
+               .getTTLForModifiedEntry(entry, null);
+
+         if (ttl == null || ttl.isEternal()) {
+            return cache.replace(key, value);
+         } else if (ttl.equals(Configuration.Duration.ZERO)) {
+            // TODO: Can this be avoided?
+            // Remove explicitly
+            return cache.remove(key);
+         } else {
+            long duration = ttl.getDurationAmount();
+            TimeUnit timeUnit = ttl.getTimeUnit();
+            return cache.replace(key, value, duration, timeUnit);
+         }
+      }
+
+      verifyNewValue(value);
+      return null;
    }
 
    private void updateTTLForAccessed(AdvancedCache<K, V> cache, Entry<K, V> entry) {
@@ -802,6 +830,10 @@ public class JCache<K, V> implements Cache<K, V> {
          // Fetch next...
          fetchNext();
 
+         // Return cannot be null here, use cache.get to force
+         // next() operation to fire a listener visit event.
+         cache.get(ret.getKey());
+
          return ret;
       }
 
@@ -810,6 +842,8 @@ public class JCache<K, V> implements Cache<K, V> {
          if (current == null)
             throw new IllegalStateException();
 
+         // TODO: Should Infinispan's core iterators be mutable?
+         // It can be worked around as shown here for JSR-107 needs
          K k = current.getKey();
          current = null;
          cache.remove(k);

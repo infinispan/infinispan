@@ -78,7 +78,9 @@ public class PutMapCommand extends AbstractFlagAffectedCommand implements WriteC
          Object key = e.getKey();
          MVCCEntry me = lookupMvccEntry(ctx, key);
          if (me != null) {
-            notifier.notifyCacheEntryModified(key, me.getValue(), true, ctx);
+            Object value = me.getValue();
+            notifier.notifyCacheEntryModified(
+                  key, value, value == null, true, ctx, this);
             me.setValue(e.getValue());
             me.setLifespan(lifespanMillis);
             me.setMaxIdle(maxIdleTimeMillis);

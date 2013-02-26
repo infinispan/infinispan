@@ -86,7 +86,18 @@ public final class MutableJCacheEntry<K, V> implements Cache.MutableEntry<K, V> 
       if (value != null)
          return value;
 
-      return oldValue;
+      if (!removed) {
+         // No new value has been set, so going to return old value. TCK
+         // listener tests expect a visit event to be fired, but we don't
+         // wanna change the semantics of perceived exclusive access. So,
+         // call cache.get to fire the event, and return oldValue set at
+         // the start in order to comply with expectations that getValue()
+         // should not see newer values in cache.
+         cache.get(key);
+         return oldValue;
+      }
+
+      return null;
    }
 
    V getNewValue() {

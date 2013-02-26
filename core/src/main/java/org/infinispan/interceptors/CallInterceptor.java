@@ -31,6 +31,7 @@ import org.infinispan.commands.tx.CommitCommand;
 import org.infinispan.commands.tx.PrepareCommand;
 import org.infinispan.commands.tx.RollbackCommand;
 import org.infinispan.container.entries.CacheEntry;
+import org.infinispan.context.Flag;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.context.impl.TxInvocationContext;
 import org.infinispan.factories.annotations.Inject;
@@ -97,8 +98,9 @@ public class CallInterceptor extends CommandInterceptor {
          // TODO: Create a visitGetCacheEntryCommand method ?
          Object value = command instanceof GetCacheEntryCommand ?
                ((CacheEntry) ret).getValue() : ret;
-         notifier.notifyCacheEntryVisited(key, value, true, ctx);
-         notifier.notifyCacheEntryVisited(key, value, false, ctx);
+
+         notifier.notifyCacheEntryVisited(key, value, true, ctx, command);
+         notifier.notifyCacheEntryVisited(key, value, false, ctx, command);
       }
 
       return ret;

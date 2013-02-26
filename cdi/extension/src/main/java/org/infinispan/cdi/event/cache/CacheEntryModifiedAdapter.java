@@ -74,6 +74,11 @@ public class CacheEntryModifiedAdapter<K, V> extends AbstractAdapter<CacheEntryM
          return null;
       }
 
+      @Override
+      public boolean isCreated() {
+         return false;
+      }
+
    };
 
    @SuppressWarnings("serial")

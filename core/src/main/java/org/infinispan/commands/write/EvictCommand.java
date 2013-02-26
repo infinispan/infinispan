@@ -64,7 +64,7 @@ public class EvictCommand extends RemoveCommand implements LocalCommand {
          if (log.isTraceEnabled())
             log.tracef("Notify eviction listeners for key=%", key);
 
-         notifier.notifyCacheEntryEvicted(key, value, ctx);
+         notifier.notifyCacheEntryEvicted(key, value, ctx, this);
       }
    }
 

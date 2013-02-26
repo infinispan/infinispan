@@ -23,6 +23,7 @@
 
 package org.infinispan.interceptors.locking;
 
+import org.infinispan.commands.FlagAffectedCommand;
 import org.infinispan.commands.tx.VersionedPrepareCommand;
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.container.DataContainer;
@@ -30,6 +31,7 @@ import org.infinispan.container.entries.CacheEntry;
 import org.infinispan.container.versioning.EntryVersion;
 import org.infinispan.container.versioning.EntryVersionsMap;
 import org.infinispan.container.versioning.VersionGenerator;
+import org.infinispan.context.Flag;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.context.impl.TxInvocationContext;
 import org.infinispan.distribution.DistributionManager;
@@ -65,7 +67,7 @@ public interface ClusteringDependentLogic {
 
    Address getPrimaryOwner(Object key);
 
-   void commitEntry(CacheEntry entry, EntryVersion newVersion, boolean skipOwnershipCheck, InvocationContext ctx);
+   void commitEntry(CacheEntry entry, EntryVersion newVersion, FlagAffectedCommand command, InvocationContext ctx);
 
    Collection<Address> getOwners(Collection<Object> keys);
 
@@ -86,15 +88,17 @@ public interface ClusteringDependentLogic {
       }
 
       protected void notifyCommitEntry(boolean created, boolean removed,
-            boolean evicted, CacheEntry entry, InvocationContext ctx) {
+            boolean evicted, CacheEntry entry, InvocationContext ctx,
+            FlagAffectedCommand command) {
          // Eviction has no notion of pre/post event since 4.2.0.ALPHA4.
          // EvictionManagerImpl.onEntryEviction() triggers both pre and post events
          // with non-null values, so we should do the same here as an ugly workaround.
          if (removed && evicted) {
             notifier.notifyCacheEntryEvicted(
-                  entry.getKey(), entry.getValue(), ctx);
+                  entry.getKey(), entry.getValue(), ctx, command);
          } else if (removed) {
-            notifier.notifyCacheEntryRemoved(entry.getKey(), null, false, ctx);
+            notifier.notifyCacheEntryRemoved(
+                  entry.getKey(), null, entry.getValue(), false, ctx, command);
          } else {
             // TODO: We're not very consistent (will JSR-107 solve it?):
             // Current tests expect entry modified to be fired when entry
@@ -102,11 +106,12 @@ public interface ClusteringDependentLogic {
 
             // Notify entry modified after container has been updated
             notifier.notifyCacheEntryModified(entry.getKey(),
-                  entry.getValue(), false, ctx);
+                  entry.getValue(), created, false, ctx, command);
 
             // Notify entry created event after container has been updated
             if (created)
-               notifier.notifyCacheEntryCreated(entry.getKey(), false, ctx);
+               notifier.notifyCacheEntryCreated(
+                     entry.getKey(), entry.getValue(), false, ctx, command);
          }
       }
 
@@ -143,7 +148,7 @@ public interface ClusteringDependentLogic {
       }
 
       @Override
-      public void commitEntry(CacheEntry entry, EntryVersion newVersion, boolean skipOwnershipCheck, InvocationContext ctx) {
+      public void commitEntry(CacheEntry entry, EntryVersion newVersion, FlagAffectedCommand command, InvocationContext ctx) {
          // Cache flags before they're reset
          // TODO: Can the reset be done after notification instead?
          boolean created = entry.isCreated();
@@ -153,7 +158,7 @@ public interface ClusteringDependentLogic {
          entry.commit(dataContainer, newVersion);
 
          // Notify after events if necessary
-         notifyCommitEntry(created, removed, evicted, entry, ctx);
+         notifyCommitEntry(created, removed, evicted, entry, ctx, command);
       }
 
       @Override
@@ -199,7 +204,8 @@ public interface ClusteringDependentLogic {
       }
 
       @Override
-      public void commitEntry(CacheEntry entry, EntryVersion newVersion, boolean skipOwnershipCheck, InvocationContext ctx) {
+      public void commitEntry(CacheEntry entry, EntryVersion newVersion,
+            FlagAffectedCommand command, InvocationContext ctx) {
          // Cache flags before they're reset
          // TODO: Can the reset be done after notification instead?
          boolean created = entry.isCreated();
@@ -209,7 +215,7 @@ public interface ClusteringDependentLogic {
          entry.commit(dataContainer, newVersion);
 
          // Notify after events if necessary
-         notifyCommitEntry(created, removed, evicted, entry, ctx);
+         notifyCommitEntry(created, removed, evicted, entry, ctx, command);
       }
 
       @Override
@@ -256,10 +262,10 @@ public interface ClusteringDependentLogic {
       }
 
       @Override
-      public void commitEntry(CacheEntry entry, EntryVersion newVersion, boolean skipOwnershipCheck, InvocationContext ctx) {
+      public void commitEntry(CacheEntry entry, EntryVersion newVersion, FlagAffectedCommand command, InvocationContext ctx) {
          stateTransferLock.acquireSharedTopologyLock();
          try {
-            super.commitEntry(entry, newVersion, skipOwnershipCheck, ctx);
+            super.commitEntry(entry, newVersion, command, ctx);
          } finally {
             stateTransferLock.releaseSharedTopologyLock();
          }
@@ -314,13 +320,16 @@ public interface ClusteringDependentLogic {
       }
 
       @Override
-      public void commitEntry(CacheEntry entry, EntryVersion newVersion, boolean skipOwnershipCheck, InvocationContext ctx) {
+      public void commitEntry(CacheEntry entry, EntryVersion newVersion, FlagAffectedCommand command, InvocationContext ctx) {
          // Don't allow the CH to change (and state transfer to invalidate entries)
          // between the ownership check and the commit
          stateTransferLock.acquireSharedTopologyLock();
          try {
             boolean doCommit = true;
             // ignore locality for removals, even if skipOwnershipCheck is not true
+            boolean skipOwnershipCheck = command != null &&
+                  command.hasFlag(Flag.SKIP_OWNERSHIP_CHECK);
+
             boolean isForeignOwned = !skipOwnershipCheck && !localNodeIsOwner(entry.getKey());
             if (isForeignOwned && !entry.isRemoved()) {
                if (configuration.clustering().l1().enabled()) {
@@ -347,7 +356,7 @@ public interface ClusteringDependentLogic {
                entry.rollback();
 
             if (!isForeignOwned) {
-               notifyCommitEntry(created, removed, evicted, entry, ctx);
+               notifyCommitEntry(created, removed, evicted, entry, ctx, command);
             }
          } finally {
             stateTransferLock.releaseSharedTopologyLock();

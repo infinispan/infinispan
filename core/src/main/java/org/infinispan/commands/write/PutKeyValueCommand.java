@@ -95,7 +95,8 @@ public class PutKeyValueCommand extends AbstractDataWriteCommand {
          successful = false;
          return entryValue;
       } else {
-         notifier.notifyCacheEntryModified(key, entryValue, true, ctx);
+         notifier.notifyCacheEntryModified(
+               key, entryValue, entryValue == null, true, ctx, this);
 
          if (value instanceof Delta) {
             // magic

@@ -58,23 +58,25 @@ public class CacheNotifierImplTest extends AbstractInfinispanTest {
    }
 
    public void testNotifyCacheEntryCreated() {
-      n.notifyCacheEntryCreated("k", true, ctx);
-      n.notifyCacheEntryCreated("k", false, ctx);
+      n.notifyCacheEntryCreated("k", null, true, ctx, null);
+      n.notifyCacheEntryCreated("k", "v1", false, ctx, null);
 
       assert cl.isReceivedPost();
       assert cl.isReceivedPre();
       assert cl.getInvocationCount() == 2;
       assert cl.getEvents().get(0).getCache() == mockCache;
       assert cl.getEvents().get(0).getType() == Event.Type.CACHE_ENTRY_CREATED;
-      assert ((CacheEntryEvent) cl.getEvents().get(0)).getKey().equals("k");
+      assert ((CacheEntryCreatedEvent) cl.getEvents().get(0)).getKey().equals("k");
+      assert ((CacheEntryCreatedEvent) cl.getEvents().get(0)).getValue() == null;
       assert cl.getEvents().get(1).getCache() == mockCache;
       assert cl.getEvents().get(1).getType() == Event.Type.CACHE_ENTRY_CREATED;
-      assert ((CacheEntryEvent) cl.getEvents().get(1)).getKey().equals("k");
+      assert ((CacheEntryCreatedEvent) cl.getEvents().get(1)).getKey().equals("k");
+      assert ((CacheEntryCreatedEvent) cl.getEvents().get(1)).getValue().equals("v1");
    }
 
    public void testNotifyCacheEntryModified() {
-      n.notifyCacheEntryModified("k", "v1", true, ctx);
-      n.notifyCacheEntryModified("k", "v2", false, ctx);
+      n.notifyCacheEntryModified("k", "v1", false, true, ctx, null);
+      n.notifyCacheEntryModified("k", "v2", false, false, ctx, null);
 
       assert cl.isReceivedPost();
       assert cl.isReceivedPre();
@@ -83,15 +85,35 @@ public class CacheNotifierImplTest extends AbstractInfinispanTest {
       assert cl.getEvents().get(0).getType() == Event.Type.CACHE_ENTRY_MODIFIED;
       assert ((CacheEntryModifiedEvent) cl.getEvents().get(0)).getKey().equals("k");
       assert ((CacheEntryModifiedEvent) cl.getEvents().get(0)).getValue().equals("v1");
+      assert ((CacheEntryModifiedEvent) cl.getEvents().get(0)).getKey().equals("k");
+      assert !((CacheEntryModifiedEvent) cl.getEvents().get(0)).isCreated();
       assert cl.getEvents().get(1).getCache() == mockCache;
       assert cl.getEvents().get(1).getType() == Event.Type.CACHE_ENTRY_MODIFIED;
       assert ((CacheEntryModifiedEvent) cl.getEvents().get(1)).getKey().equals("k");
       assert ((CacheEntryModifiedEvent) cl.getEvents().get(1)).getValue().equals("v2");
+      assert !((CacheEntryModifiedEvent) cl.getEvents().get(1)).isCreated();
+
+      n.notifyCacheEntryModified("k2", null, true, true, ctx, null);
+      n.notifyCacheEntryModified("k2", "v", true, false, ctx, null);
+
+      assert cl.isReceivedPost();
+      assert cl.isReceivedPre();
+      assert cl.getInvocationCount() == 4;
+      assert cl.getEvents().get(2).getCache() == mockCache;
+      assert cl.getEvents().get(2).getType() == Event.Type.CACHE_ENTRY_MODIFIED;
+      assert ((CacheEntryModifiedEvent) cl.getEvents().get(2)).getKey().equals("k2");
+      assert ((CacheEntryModifiedEvent) cl.getEvents().get(2)).getValue() == null;
+      assert ((CacheEntryModifiedEvent) cl.getEvents().get(2)).isCreated();
+      assert cl.getEvents().get(3).getCache() == mockCache;
+      assert cl.getEvents().get(3).getType() == Event.Type.CACHE_ENTRY_MODIFIED;
+      assert ((CacheEntryModifiedEvent) cl.getEvents().get(3)).getKey().equals("k2");
+      assert ((CacheEntryModifiedEvent) cl.getEvents().get(3)).getValue().equals("v");
+      assert ((CacheEntryModifiedEvent) cl.getEvents().get(3)).isCreated();
    }
 
    public void testNotifyCacheEntryRemoved() {
-      n.notifyCacheEntryRemoved("k", "v", true, ctx);
-      n.notifyCacheEntryRemoved("k", null, false, ctx);
+      n.notifyCacheEntryRemoved("k", "v", "v", true, ctx, null);
+      n.notifyCacheEntryRemoved("k", null, "v", false, ctx, null);
 
       assert cl.isReceivedPost();
       assert cl.isReceivedPre();
@@ -100,15 +122,17 @@ public class CacheNotifierImplTest extends AbstractInfinispanTest {
       assert cl.getEvents().get(0).getType() == Event.Type.CACHE_ENTRY_REMOVED;
       assert ((CacheEntryRemovedEvent) cl.getEvents().get(0)).getKey().equals("k");
       assert ((CacheEntryRemovedEvent) cl.getEvents().get(0)).getValue().equals("v");
+      assert ((CacheEntryRemovedEvent) cl.getEvents().get(0)).getOldValue().equals("v");
       assert cl.getEvents().get(1).getCache() == mockCache;
       assert cl.getEvents().get(1).getType() == Event.Type.CACHE_ENTRY_REMOVED;
       assert ((CacheEntryRemovedEvent) cl.getEvents().get(1)).getKey().equals("k");
       assert ((CacheEntryRemovedEvent) cl.getEvents().get(1)).getValue() == null;
+      assert ((CacheEntryRemovedEvent) cl.getEvents().get(1)).getOldValue().equals("v");
    }
 
    public void testNotifyCacheEntryVisited() {
-      n.notifyCacheEntryVisited("k", "v", true, ctx);
-      n.notifyCacheEntryVisited("k", "v", false, ctx);
+      n.notifyCacheEntryVisited("k", "v", true, ctx, null);
+      n.notifyCacheEntryVisited("k", "v", false, ctx, null);
 
       assert cl.isReceivedPost();
       assert cl.isReceivedPre();
@@ -124,7 +148,7 @@ public class CacheNotifierImplTest extends AbstractInfinispanTest {
    }
 
    public void testNotifyCacheEntryEvicted() {
-      n.notifyCacheEntryEvicted("k", "v", null);
+      n.notifyCacheEntryEvicted("k", "v", null, null);
 
       assert cl.isReceivedPost();
       assert cl.getInvocationCount() == 1;
@@ -138,7 +162,7 @@ public class CacheNotifierImplTest extends AbstractInfinispanTest {
 
    public void testNotifyCacheEntriesEvicted() {
       InternalCacheEntry ice = TestInternalCacheEntryFactory.create("k", "v");
-      n.notifyCacheEntriesEvicted(Collections.singleton(ice), null);
+      n.notifyCacheEntriesEvicted(Collections.singleton(ice), null, null);
 
       assert cl.isReceivedPost();
       assert cl.getInvocationCount() == 1;
@@ -151,8 +175,8 @@ public class CacheNotifierImplTest extends AbstractInfinispanTest {
    }
 
    public void testNotifyCacheEntryInvalidated() {
-      n.notifyCacheEntryInvalidated("k", "v", true, ctx);
-      n.notifyCacheEntryInvalidated("k", "v", false, ctx);
+      n.notifyCacheEntryInvalidated("k", "v", true, ctx, null);
+      n.notifyCacheEntryInvalidated("k", "v", false, ctx, null);
 
       assert cl.isReceivedPost();
       assert cl.isReceivedPre();
@@ -168,8 +192,8 @@ public class CacheNotifierImplTest extends AbstractInfinispanTest {
    }
 
    public void testNotifyCacheEntryLoaded() {
-      n.notifyCacheEntryLoaded("k", "v", true, ctx);
-      n.notifyCacheEntryLoaded("k", "v", false, ctx);
+      n.notifyCacheEntryLoaded("k", "v", true, ctx, null);
+      n.notifyCacheEntryLoaded("k", "v", false, ctx, null);
 
       assert cl.isReceivedPost();
       assert cl.isReceivedPre();
@@ -185,8 +209,8 @@ public class CacheNotifierImplTest extends AbstractInfinispanTest {
    }
 
    public void testNotifyCacheEntryActivated() {
-      n.notifyCacheEntryActivated("k", "v", true, ctx);
-      n.notifyCacheEntryActivated("k", "v", false, ctx);
+      n.notifyCacheEntryActivated("k", "v", true, ctx, null);
+      n.notifyCacheEntryActivated("k", "v", false, ctx, null);
 
       assert cl.isReceivedPost();
       assert cl.isReceivedPre();
@@ -202,8 +226,8 @@ public class CacheNotifierImplTest extends AbstractInfinispanTest {
    }
 
    public void testNotifyCacheEntryPassivated() {
-      n.notifyCacheEntryPassivated("k", "v", true, null);
-      n.notifyCacheEntryPassivated("k", "v", false, null);
+      n.notifyCacheEntryPassivated("k", "v", true, null, null);
+      n.notifyCacheEntryPassivated("k", "v", false, null, null);
 
       assert cl.isReceivedPost();
       assert cl.isReceivedPre();
