@@ -57,7 +57,7 @@ public class ActivationManagerImpl implements ActivationManager {
    private Configuration cfg;
    private boolean enabled;
 
-   @ManagedAttribute(description = "Enables or disables the gathering of statistics by this component", writable = true)
+   @ManagedAttribute(description = "Enables or disables the gathering of statistics by this component", displayName = "Statistics enabled", writable = true)
    private boolean statisticsEnabled = false;
 
    @Inject

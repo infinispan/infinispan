@@ -79,24 +79,29 @@ public class CacheManagerDiscovery extends MBeanResourceDiscoveryComponent<JMXCo
 
          Set<DiscoveredResourceDetails> discoveredResources = new HashSet<DiscoveredResourceDetails>();
          for (EmsBean bean : beans) {
-            String managerName = bean.getBeanName().getCanonicalName();
-            String resourceName = bean.getAttribute("Name").getValue().toString();
-            String version = bean.getAttribute("Version").getValue().toString();
-            /* A discovered resource must have a unique key, that must stay the same when the resource is discovered the next time */
-            if (trace) log.trace("Add resource with version '"+version+"' and type " + ctx.getResourceType());
-            DiscoveredResourceDetails detail = new DiscoveredResourceDetails(
-                  ctx.getResourceType(), // Resource type
-                  resourceName, // Resource key
-                  resourceName, // Resource name
-                  version, // Resource version
-                  "A cache manager within Infinispan", // Description
-                  pluginConfiguration, // Plugin config
-                  null // Process info from a process scan
-            );
-            if(log.isInfoEnabled()) {
-               log.info(String.format("Discovered Infinispan instance with key %s and name %s", resourceName, managerName));
+            // Filter out spurious beans
+            if (CacheManagerComponent.isCacheManagerComponent(bean)) {
+               String managerName = bean.getBeanName().getCanonicalName();
+               String resourceName = bean.getAttribute("Name").getValue().toString();
+               String version = bean.getAttribute("Version").getValue().toString();
+               /* A discovered resource must have a unique key, that must stay the same when the resource is discovered the next time */
+               if (trace) log.trace("Add resource with version '"+version+"' and type " + ctx.getResourceType());
+               DiscoveredResourceDetails detail = new DiscoveredResourceDetails(
+                     ctx.getResourceType(), // Resource type
+                     resourceName, // Resource key
+                     resourceName, // Resource name
+                     version, // Resource version
+                     "A cache manager within Infinispan", // Description
+                     pluginConfiguration, // Plugin config
+                     null // Process info from a process scan
+               );
+               if(log.isInfoEnabled()) {
+                  log.info(String.format("Discovered Infinispan instance with key %s and name %s", resourceName, managerName));
+               }
+               discoveredResources.add(detail);
+            } else {
+               log.warn(String.format("MBeanServer returned spurious object %s", bean.getBeanName().getCanonicalName()));
             }
-            discoveredResources.add(detail);
          }
          return discoveredResources;
       } else {

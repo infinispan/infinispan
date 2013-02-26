@@ -56,7 +56,7 @@ public class RecoveryAdminOperations {
       this.recoveryManager = recoveryManager;
    }
 
-   @ManagedOperation(description = "Shows all the prepared transactions for which the originating node crashed")
+   @ManagedOperation(description = "Shows all the prepared transactions for which the originating node crashed", displayName="Show in doubt transactions")
    public String showInDoubtTransactions() {
       Set<RecoveryManager.InDoubtTxInfo> info = getRecoveryInfoFromCluster();
       if (log.isTraceEnabled()) {
@@ -82,14 +82,14 @@ public class RecoveryAdminOperations {
       return result.toString();
    }
 
-   @ManagedOperation(description = "Forces the commit of an in-doubt transaction")
+   @ManagedOperation(description = "Forces the commit of an in-doubt transaction", displayName="Force commit by internal id")
    public String forceCommit(@Parameter(name = "internalId", description = "The internal identifier of the transaction") long internalId) {
       if (log.isTraceEnabled())
          log.tracef("Forces the commit of an in-doubt transaction: %s", internalId);
       return completeBasedOnInternalId(internalId, true);
    }
 
-   @ManagedOperation(description = "Forces the commit of an in-doubt transaction", name="forceCommitByXid")
+   @ManagedOperation(description = "Forces the commit of an in-doubt transaction", displayName="Force commit by Xid", name="forceCommitByXid")
    public String forceCommit(
          @Parameter(name = "formatId", description = "The formatId of the transaction") int formatId,
          @Parameter(name = "globalTxId", description = "The globalTxId of the transaction") byte[] globalTxId,
@@ -97,12 +97,12 @@ public class RecoveryAdminOperations {
       return completeBasedOnXid(formatId, globalTxId, branchQualifier, true);
    }
 
-   @ManagedOperation(description = "Forces the rollback of an in-doubt transaction")
+   @ManagedOperation(description = "Forces the rollback of an in-doubt transaction", displayName="Force rollback by internal id")
    public String forceRollback(@Parameter(name = "internalId", description = "The internal identifier of the transaction") long internalId) {
       return completeBasedOnInternalId(internalId, false);
    }
 
-   @ManagedOperation(description = "Forces the rollback of an in-doubt transaction", name="forceRollbackByXid")
+   @ManagedOperation(description = "Forces the rollback of an in-doubt transaction", displayName="Force rollback by Xid", name="forceRollbackByXid")
    public String forceRollback(
          @Parameter(name = "formatId", description = "The formatId of the transaction") int formatId,
          @Parameter(name = "globalTxId", description = "The globalTxId of the transaction") byte[] globalTxId,
@@ -110,7 +110,7 @@ public class RecoveryAdminOperations {
       return completeBasedOnXid(formatId, globalTxId, branchQualifier, false);
    }
 
-   @ManagedOperation(description = "Removes recovery info for the given transaction.", name="forgetByXid")
+   @ManagedOperation(description = "Removes recovery info for the given transaction.", displayName="Remove recovery info by Xid", name="forgetByXid")
    public String forget(
          @Parameter(name = "formatId", description = "The formatId of the transaction") int formatId,
          @Parameter(name = "globalTxId", description = "The globalTxId of the transaction") byte[] globalTxId,
@@ -119,7 +119,7 @@ public class RecoveryAdminOperations {
       return "Recovery info removed.";
    }
 
-   @ManagedOperation(description = "Removes recovery info for the given transaction.")
+   @ManagedOperation(description = "Removes recovery info for the given transaction.", displayName="Remove recovery info by internal id")
    public String forget(@Parameter(name = "internalId", description = "The internal identifier of the transaction") long internalId) {
       recoveryManager.removeRecoveryInformationFromCluster(null, internalId, true);
       return "Recovery info removed.";
