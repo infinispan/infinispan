@@ -70,4 +70,5 @@ public abstract class AbstractFlagAffectedCommand implements FlagAffectedCommand
    public void setTopologyId(int topologyId) {
       this.topologyId = topologyId;
    }
+
 }

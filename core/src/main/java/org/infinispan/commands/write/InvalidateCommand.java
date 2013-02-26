@@ -90,7 +90,7 @@ public class InvalidateCommand extends RemoveCommand {
 
    @Override
    protected void notify(InvocationContext ctx, Object value, boolean isPre) {
-      notifier.notifyCacheEntryInvalidated(key, value, isPre, ctx);
+      notifier.notifyCacheEntryInvalidated(key, value, isPre, ctx, this);
    }
 
    @Override

@@ -165,7 +165,7 @@ public class EntryFactoryImpl implements EntryFactory {
 
          mvccEntry = ice != null ?
              wrapInternalCacheEntryForPut(ctx, key, ice) :
-             newMvccEntryForPut(ctx, key);
+             newMvccEntryForPut(ctx, key, cmd);
       }
       mvccEntry.copyForUpdate(container, localModeWriteSkewCheck);
       return mvccEntry;
@@ -218,10 +218,11 @@ public class EntryFactoryImpl implements EntryFactory {
       return ice;
    }
 
-   private MVCCEntry newMvccEntryForPut(InvocationContext ctx, Object key) {
+   private MVCCEntry newMvccEntryForPut(
+         InvocationContext ctx, Object key, FlagAffectedCommand cmd) {
       MVCCEntry mvccEntry;
       if (trace) log.trace("Creating new entry.");
-      notifier.notifyCacheEntryCreated(key, true, ctx);
+      notifier.notifyCacheEntryCreated(key, null, true, ctx, cmd);
       mvccEntry = createWrappedEntry(key, null, null, true, false, -1);
       mvccEntry.setCreated(true);
       ctx.putLookedUpEntry(key, mvccEntry);

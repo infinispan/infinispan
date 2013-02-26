@@ -22,6 +22,7 @@
  */
 package org.infinispan.interceptors;
 
+import org.infinispan.commands.FlagAffectedCommand;
 import org.infinispan.commands.read.GetKeyValueCommand;
 import org.infinispan.commands.write.PutKeyValueCommand;
 import org.infinispan.commands.write.PutMapCommand;
@@ -108,9 +109,10 @@ public class ActivationInterceptor extends CacheLoaderInterceptor {
    }
 
    @Override
-   protected void sendNotification(Object key, Object value, boolean pre, InvocationContext ctx) {
-      super.sendNotification(key, value, pre, ctx);
-      notifier.notifyCacheEntryActivated(key, value, pre, ctx);
+   protected void sendNotification(Object key, Object value, boolean pre,
+         InvocationContext ctx, FlagAffectedCommand cmd) {
+      super.sendNotification(key, value, pre, ctx, cmd);
+      notifier.notifyCacheEntryActivated(key, value, pre, ctx, cmd);
    }
 
    private void removeFromStoreIfNeeded(Object... keys) {

@@ -109,6 +109,7 @@
          <plugin>
             <groupId>org.apache.maven.plugins</groupId>
             <artifactId>maven-invoker-plugin</artifactId>
+            <version>${version.maven.invoker}</version>
             <configuration>
                <addTestClassPath>true</addTestClassPath>
                <cloneProjectsTo>${project.build.directory}/it</cloneProjectsTo>
@@ -120,6 +121,12 @@
                   <goal>clean</goal>
                   <goal>package</goal>
                </goals>
+               <properties>
+                  <!-- Skip tests parent's tests are skipped -->
+                  <maven.test.skip.exec>${maven.test.skip.exec}</maven.test.skip.exec>
+                  <!-- If logging enabled by client, pass it on -->
+                  <log4j.configuration>${log4j.configuration}</log4j.configuration>
+               </properties>
             </configuration>
             <executions>
                <execution>

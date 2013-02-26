@@ -45,7 +45,7 @@ public class GetKeyValueCommand extends AbstractDataCommand {
    private static final boolean trace = log.isTraceEnabled();
    private InternalCacheEntry remotelyFetchedValue;
 
-   public GetKeyValueCommand(Object key, Set<Flag> flags) {
+      public GetKeyValueCommand(Object key, Set<Flag> flags) {
       this.key = key;
       this.flags = flags;
    }
@@ -112,4 +112,5 @@ public class GetKeyValueCommand extends AbstractDataCommand {
    public InternalCacheEntry getRemotelyFetchedValue() {
       return remotelyFetchedValue;
    }
+
 }

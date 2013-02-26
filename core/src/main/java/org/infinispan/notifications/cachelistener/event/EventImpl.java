@@ -52,9 +52,11 @@ public class EventImpl<K, V> implements CacheEntryActivatedEvent, CacheEntryCrea
    private boolean transactionSuccessful;
    private Type type;
    private V value;
+   private V oldValue;
    private ConsistentHash consistentHashAtStart, consistentHashAtEnd;
    private int newTopologyId;
    private Map<Object, Object> entries;
+   private boolean created;
 
    public EventImpl() {
    }
@@ -146,12 +148,30 @@ public class EventImpl<K, V> implements CacheEntryActivatedEvent, CacheEntryCrea
       return value;
    }
 
+   @Override
+   public boolean isCreated() {
+      return created;
+   }
+
+   @Override
+   public Object getOldValue() {
+      return oldValue;
+   }
+
    public void setValue(V value) {
       this.value = value;
    }
 
    public void setEntries(Map<Object, Object> entries) {
       this.entries = entries;
+   }
+
+   public void setCreated(boolean created) {
+      this.created = created;
+   }
+
+   public void setOldValue(V oldValue) {
+      this.oldValue = oldValue;
    }
 
    @Override
@@ -172,6 +192,8 @@ public class EventImpl<K, V> implements CacheEntryActivatedEvent, CacheEntryCrea
       if (!Util.safeEquals(consistentHashAtStart, event.consistentHashAtStart)) return false;
       if (!Util.safeEquals(consistentHashAtEnd, event.consistentHashAtEnd)) return false;
       if (newTopologyId != event.newTopologyId) return false;
+      if (created != event.created) return false;
+      if (oldValue != null ? !oldValue.equals(event.oldValue) : event.oldValue != null) return false;
 
       return true;
    }
@@ -189,6 +211,8 @@ public class EventImpl<K, V> implements CacheEntryActivatedEvent, CacheEntryCrea
       result = 31 * result + (consistentHashAtStart != null ? consistentHashAtStart.hashCode() : 0);
       result = 31 * result + (consistentHashAtEnd != null ? consistentHashAtEnd.hashCode() : 0);
       result = 31 * result + newTopologyId;
+      result = 31 * result + (created ? 1 : 0);
+      result = 31 * result + (oldValue != null ? oldValue.hashCode() : 0);
       return result;
    }
 
@@ -203,6 +227,8 @@ public class EventImpl<K, V> implements CacheEntryActivatedEvent, CacheEntryCrea
             ", transactionSuccessful=" + transactionSuccessful +
             ", type=" + type +
             ", value=" + value +
+            ", oldValue=" + oldValue +
+            ", created=" + created +
             '}';
    }
 

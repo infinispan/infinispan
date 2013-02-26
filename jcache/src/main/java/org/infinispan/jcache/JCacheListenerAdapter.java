@@ -18,18 +18,9 @@
  */
 package org.infinispan.jcache;
 
-import java.util.ArrayList;
-import java.util.List;
-
-import javax.cache.event.CacheEntryCreatedListener;
 import javax.cache.event.CacheEntryEvent;
-import javax.cache.event.CacheEntryEventFilter;
-import javax.cache.event.CacheEntryListener;
-import javax.cache.event.CacheEntryListenerRegistration;
-import javax.cache.event.CacheEntryReadListener;
-import javax.cache.event.CacheEntryRemovedListener;
-import javax.cache.event.CacheEntryUpdatedListener;
 
+import org.infinispan.jcache.logging.Log;
 import org.infinispan.notifications.Listener;
 import org.infinispan.notifications.cachelistener.annotation.CacheEntryCreated;
 import org.infinispan.notifications.cachelistener.annotation.CacheEntryModified;
@@ -39,100 +30,76 @@ import org.infinispan.notifications.cachelistener.event.CacheEntryCreatedEvent;
 import org.infinispan.notifications.cachelistener.event.CacheEntryModifiedEvent;
 import org.infinispan.notifications.cachelistener.event.CacheEntryRemovedEvent;
 import org.infinispan.notifications.cachelistener.event.CacheEntryVisitedEvent;
+import org.infinispan.util.logging.LogFactory;
 
 /**
- * InfinispanCacheListenerAdapter as its name implies adapts Infinispan notification mechanism to
- * JSR 107 notification mechanism.
- * 
- * 
+ * Adapts Infinispan notification mechanism to JSR 107 requirements.
+ *
  * @author Vladimir Blagojevic
+ * @author Galder Zamarreño
  * @since 5.3
  */
 @Listener
 public class JCacheListenerAdapter<K, V> {
+
+   private static final Log log =
+         LogFactory.getLog(JCacheListenerAdapter.class, Log.class);
+
+   private static final boolean isTrace = log.isTraceEnabled();
+
    private final JCache<K, V> cache;
 
-   public JCacheListenerAdapter(JCache<K, V> jCache) {
-      this.cache = jCache;
+   public JCacheListenerAdapter(JCache<K, V> cache) {
+      this.cache = cache;
    }
 
    @CacheEntryCreated
+   @SuppressWarnings("unused")
    public void handleCacheEntryCreatedEvent(CacheEntryCreatedEvent<K, V> e) {
-      //TODO as CacheEntryEvent does not have value...it will cause NPE in listener invocation tck test
-      RICacheEntryEvent<K, V> jsrEvent = new RICacheEntryEvent<K, V>(cache, e.getKey(), null);
-      List<CacheEntryEvent<K, V>> events = new ArrayList<CacheEntryEvent<K, V>>();
-      events.add(jsrEvent);
-
-      for (CacheEntryListenerRegistration<? super K, ? super V> registration : cache.getListeners()
-               .values()) {
-         CacheEntryEventFilter<? super K, ? super V> filter = registration.getCacheEntryFilter();
-         Iterable<CacheEntryEvent<K, V>> iterable = filter == null ? events
-                  : new RICacheEntryEventFilteringIterable<K, V>(events, filter);
-
-         CacheEntryListener<? super K, ? super V> listener = registration.getCacheEntryListener();
-         if (listener instanceof CacheEntryCreatedListener) {
-            ((CacheEntryCreatedListener) listener).onCreated(iterable);
-         }
+      // JCache listeners notified only once, so do it after the event
+      if (!e.isPre()) {
+         JCacheNotifier<K, V> notifier = cache.getNotifier();
+         CacheEntryEvent<? extends K, ? extends V> event =
+               new RICacheEntryEvent<K, V>(cache, e.getKey(), e.getValue());
+         if (isTrace) log.tracef("Received event: %s", e);
+         notifier.notifyEntryCreated(event);
       }
    }
 
    @CacheEntryModified
+   @SuppressWarnings("unused")
    public void handleCacheEntryModifiedEvent(CacheEntryModifiedEvent<K, V> e) {
-      RICacheEntryEvent<K, V> jsrEvent = new RICacheEntryEvent<K, V>(cache, e.getKey(),
-               e.getValue());
-      List<CacheEntryEvent<K, V>> events = new ArrayList<CacheEntryEvent<K, V>>();
-      events.add(jsrEvent);
-
-      for (CacheEntryListenerRegistration<? super K, ? super V> registration : cache.getListeners()
-               .values()) {
-         CacheEntryEventFilter<? super K, ? super V> filter = registration.getCacheEntryFilter();
-         Iterable<CacheEntryEvent<K, V>> iterable = filter == null ? events
-                  : new RICacheEntryEventFilteringIterable<K, V>(events, filter);
-
-         CacheEntryListener<? super K, ? super V> listener = registration.getCacheEntryListener();
-         if (listener instanceof CacheEntryUpdatedListener) {
-            ((CacheEntryUpdatedListener) listener).onUpdated(iterable);
-         }
+      // JCache listeners notified only once, so do it after the event
+      if (!e.isPre() && !e.isCreated()) {
+         JCacheNotifier<K, V> notifier = cache.getNotifier();
+         CacheEntryEvent<? extends K, ? extends V> event =
+               new RICacheEntryEvent<K, V>(cache, e.getKey(), e.getValue());
+         if (isTrace) log.tracef("Received event: %s", e);
+         notifier.notifyEntryUpdated(event);
       }
    }
 
    @CacheEntryRemoved
+   @SuppressWarnings("unused")
    public void handleCacheEntryRemovedEvent(CacheEntryRemovedEvent<K, V> e) {
-      RICacheEntryEvent<K, V> jsrEvent = new RICacheEntryEvent<K, V>(cache, e.getKey(),
-               e.getValue());
-      List<CacheEntryEvent<K, V>> events = new ArrayList<CacheEntryEvent<K, V>>();
-      events.add(jsrEvent);
-
-      for (CacheEntryListenerRegistration<? super K, ? super V> registration : cache.getListeners()
-               .values()) {
-         CacheEntryEventFilter<? super K, ? super V> filter = registration.getCacheEntryFilter();
-         Iterable<CacheEntryEvent<K, V>> iterable = filter == null ? events
-                  : new RICacheEntryEventFilteringIterable<K, V>(events, filter);
-
-         CacheEntryListener<? super K, ? super V> listener = registration.getCacheEntryListener();
-         if (listener instanceof CacheEntryRemovedListener) {
-            ((CacheEntryRemovedListener) listener).onRemoved(iterable);
-         }
+      // JCache listeners notified only once, so do it after the event
+      if (!e.isPre()) {
+         JCacheNotifier<K, V> notifier = cache.getNotifier();
+         CacheEntryEvent<? extends K, ? extends V> event =
+               new RICacheEntryEvent<K, V>(cache, e.getKey(), e.getOldValue());
+         notifier.notifyEntryRemoved(event);
       }
    }
 
    @CacheEntryVisited
+   @SuppressWarnings("unused")
    public void handleCacheEntryVisitedEvent(CacheEntryVisitedEvent<K, V> e) {
-      RICacheEntryEvent<K, V> jsrEvent = new RICacheEntryEvent<K, V>(cache, e.getKey(),
-               e.getValue());
-      List<CacheEntryEvent<K, V>> events = new ArrayList<CacheEntryEvent<K, V>>();
-      events.add(jsrEvent);
-
-      for (CacheEntryListenerRegistration<? super K, ? super V> registration : cache.getListeners()
-               .values()) {
-         CacheEntryEventFilter<? super K, ? super V> filter = registration.getCacheEntryFilter();
-         Iterable<CacheEntryEvent<K, V>> iterable = filter == null ? events
-                  : new RICacheEntryEventFilteringIterable<K, V>(events, filter);
-
-         CacheEntryListener<? super K, ? super V> listener = registration.getCacheEntryListener();
-         if (listener instanceof CacheEntryReadListener) {
-            ((CacheEntryReadListener) listener).onRead(iterable);
-         }
+      // JCache listeners notified only once, so do it after the event
+      if (!e.isPre()) {
+         JCacheNotifier<K, V> notifier = cache.getNotifier();
+         CacheEntryEvent<? extends K, ? extends V> event =
+               new RICacheEntryEvent<K, V>(cache, e.getKey(), e.getValue());
+         notifier.notifyEntryRead(event);
       }
    }
 

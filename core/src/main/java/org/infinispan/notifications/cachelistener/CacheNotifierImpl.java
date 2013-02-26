@@ -23,7 +23,9 @@
 package org.infinispan.notifications.cachelistener;
 
 import org.infinispan.Cache;
+import org.infinispan.commands.FlagAffectedCommand;
 import org.infinispan.container.entries.InternalCacheEntry;
+import org.infinispan.context.Flag;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.context.impl.TxInvocationContext;
 import org.infinispan.distribution.ch.ConsistentHash;
@@ -135,11 +137,16 @@ public final class CacheNotifierImpl extends AbstractListenerImpl implements Cac
    }
 
    @Override
-   public void notifyCacheEntryCreated(Object key, boolean pre, InvocationContext ctx) {
+   public void notifyCacheEntryCreated(Object key, Object value, boolean pre,
+         InvocationContext ctx, FlagAffectedCommand command) {
       if (!cacheEntryCreatedListeners.isEmpty()) {
          boolean originLocal = ctx.isOriginLocal();
          EventImpl<Object, Object> e = EventImpl.createEvent(cache, CACHE_ENTRY_CREATED);
          e.setOriginLocal(originLocal);
+         // Added capability to set cache entry created value in order
+         // to avoid breaking behaviour of CacheEntryModifiedEvent.getValue()
+         // when isPre=false.
+         e.setValue(value);
          e.setPre(pre);
          e.setKey(key);
          setTx(ctx, e);
@@ -148,7 +155,9 @@ public final class CacheNotifierImpl extends AbstractListenerImpl implements Cac
    }
 
    @Override
-   public void notifyCacheEntryModified(Object key, Object value, boolean pre, InvocationContext ctx) {
+   public void notifyCacheEntryModified(Object key, Object value,
+         boolean created, boolean pre, InvocationContext ctx,
+         FlagAffectedCommand command) {
       if (!cacheEntryModifiedListeners.isEmpty()) {
          boolean originLocal = ctx.isOriginLocal();
          EventImpl<Object, Object> e = EventImpl.createEvent(cache, CACHE_ENTRY_MODIFIED);
@@ -156,18 +165,28 @@ public final class CacheNotifierImpl extends AbstractListenerImpl implements Cac
          e.setValue(value);
          e.setPre(pre);
          e.setKey(key);
+         // Even if CacheEntryCreatedEvent.getValue() has been added, to
+         // avoid breaking old behaviour and make it easy to comply with
+         // JSR-107 specification TCK, it's necessary to find out whether a
+         // modification is the result of a cache entry being created or not.
+         // This is needed because on JSR-107, a modification is only fired
+         // when the entry is updated, and only one event is fired, so you
+         // want to fire it when isPre=false.
+         e.setCreated(created);
          setTx(ctx, e);
          for (ListenerInvocation listener : cacheEntryModifiedListeners) listener.invoke(e);
       }
    }
 
    @Override
-   public void notifyCacheEntryRemoved(Object key, Object value, boolean pre, InvocationContext ctx) {
-      if (!cacheEntryRemovedListeners.isEmpty()) {
+   public void notifyCacheEntryRemoved(Object key, Object value, Object oldValue,
+         boolean pre, InvocationContext ctx, FlagAffectedCommand command) {
+      if (isNotificationAllowed(command, cacheEntryRemovedListeners)) {
          boolean originLocal = ctx.isOriginLocal();
          EventImpl<Object, Object> e = EventImpl.createEvent(cache, CACHE_ENTRY_REMOVED);
          e.setOriginLocal(originLocal);
          e.setValue(value);
+         e.setOldValue(oldValue);
          e.setPre(pre);
          e.setKey(key);
          setTx(ctx, e);
@@ -176,8 +195,8 @@ public final class CacheNotifierImpl extends AbstractListenerImpl implements Cac
    }
 
    @Override
-   public void notifyCacheEntryVisited(Object key, Object value, boolean pre, InvocationContext ctx) {
-      if (!cacheEntryVisitedListeners.isEmpty()) {
+   public void notifyCacheEntryVisited(Object key, Object value, boolean pre, InvocationContext ctx, FlagAffectedCommand command) {
+      if (isNotificationAllowed(command, cacheEntryVisitedListeners)) {
          EventImpl<Object, Object> e = EventImpl.createEvent(cache, CACHE_ENTRY_VISITED);
          e.setPre(pre);
          e.setKey(key);
@@ -188,9 +207,9 @@ public final class CacheNotifierImpl extends AbstractListenerImpl implements Cac
    }
 
    @Override
-   public void notifyCacheEntriesEvicted(Collection<InternalCacheEntry> entries, InvocationContext ctx) {
+   public void notifyCacheEntriesEvicted(Collection<InternalCacheEntry> entries, InvocationContext ctx, FlagAffectedCommand command) {
       if (!entries.isEmpty()) {
-         if (!cacheEntriesEvictedListeners.isEmpty()) {
+         if (isNotificationAllowed(command, cacheEntriesEvictedListeners)) {
             EventImpl<Object, Object> e = EventImpl.createEvent(cache, CACHE_ENTRY_EVICTED);
             Map<Object, Object> evictedKeysAndValues = transformCollectionToMap(entries,
                new InfinispanCollections.MapMakerFunction<Object, Object, InternalCacheEntry>() {
@@ -221,7 +240,7 @@ public final class CacheNotifierImpl extends AbstractListenerImpl implements Cac
          }
 
          // For backward compat
-         if (!cacheEntryEvictedListeners.isEmpty()) {
+         if (isNotificationAllowed(command, cacheEntryEvictedListeners)) {
             for (InternalCacheEntry ice : entries) {
                EventImpl<Object, Object> e = EventImpl.createEvent(cache, CACHE_ENTRY_EVICTED);
                e.setKey(ice.getKey());
@@ -233,15 +252,16 @@ public final class CacheNotifierImpl extends AbstractListenerImpl implements Cac
    }
 
    @Override
-   public void notifyCacheEntryEvicted(Object key, Object value, InvocationContext ctx) {
-      if (!cacheEntriesEvictedListeners.isEmpty()) {
+   public void notifyCacheEntryEvicted(Object key, Object value,
+         InvocationContext ctx, FlagAffectedCommand command) {
+      if (isNotificationAllowed(command, cacheEntriesEvictedListeners)) {
          EventImpl<Object, Object> e = EventImpl.createEvent(cache, CACHE_ENTRY_EVICTED);
          e.setEntries(Collections.singletonMap(key, value));
          for (ListenerInvocation listener : cacheEntriesEvictedListeners) listener.invoke(e);
       }
 
       // For backward compat
-      if (!cacheEntryEvictedListeners.isEmpty()) {
+      if (isNotificationAllowed(command, cacheEntryEvictedListeners)) {
          EventImpl<Object, Object> e = EventImpl.createEvent(cache, CACHE_ENTRY_EVICTED);
          e.setKey(key);
          e.setValue(value);
@@ -250,8 +270,9 @@ public final class CacheNotifierImpl extends AbstractListenerImpl implements Cac
    }
 
    @Override
-   public void notifyCacheEntryInvalidated(final Object key, Object value, final boolean pre, InvocationContext ctx) {
-      if (!cacheEntryInvalidatedListeners.isEmpty()) {
+   public void notifyCacheEntryInvalidated(final Object key, Object value, final boolean pre,
+         InvocationContext ctx, FlagAffectedCommand command) {
+      if (isNotificationAllowed(command, cacheEntryInvalidatedListeners)) {
          final boolean originLocal = ctx.isOriginLocal();
          EventImpl<Object, Object> e = EventImpl.createEvent(cache, CACHE_ENTRY_INVALIDATED);
          e.setOriginLocal(originLocal);
@@ -264,8 +285,9 @@ public final class CacheNotifierImpl extends AbstractListenerImpl implements Cac
    }
 
    @Override
-   public void notifyCacheEntryLoaded(Object key, Object value, boolean pre, InvocationContext ctx) {
-      if (!cacheEntryLoadedListeners.isEmpty()) {
+   public void notifyCacheEntryLoaded(Object key, Object value, boolean pre,
+         InvocationContext ctx, FlagAffectedCommand command) {
+      if (isNotificationAllowed(command, cacheEntryLoadedListeners)) {
          boolean originLocal = ctx.isOriginLocal();
          EventImpl<Object, Object> e = EventImpl.createEvent(cache, CACHE_ENTRY_LOADED);
          e.setOriginLocal(originLocal);
@@ -278,8 +300,8 @@ public final class CacheNotifierImpl extends AbstractListenerImpl implements Cac
    }
 
    @Override
-   public void notifyCacheEntryActivated(Object key, Object value, boolean pre, InvocationContext ctx) {
-      if (!cacheEntryActivatedListeners.isEmpty()) {
+   public void notifyCacheEntryActivated(Object key, Object value, boolean pre, InvocationContext ctx, FlagAffectedCommand command) {
+      if (isNotificationAllowed(command, cacheEntryActivatedListeners)) {
          boolean originLocal = ctx.isOriginLocal();
          EventImpl<Object, Object> e = EventImpl.createEvent(cache, CACHE_ENTRY_ACTIVATED);
          e.setOriginLocal(originLocal);
@@ -299,8 +321,8 @@ public final class CacheNotifierImpl extends AbstractListenerImpl implements Cac
    }
 
    @Override
-   public void notifyCacheEntryPassivated(Object key, Object value, boolean pre, InvocationContext ctx) {
-      if (!cacheEntryPassivatedListeners.isEmpty()) {
+   public void notifyCacheEntryPassivated(Object key, Object value, boolean pre, InvocationContext ctx, FlagAffectedCommand command) {
+      if (isNotificationAllowed(command, cacheEntryPassivatedListeners)) {
          EventImpl<Object, Object> e = EventImpl.createEvent(cache, CACHE_ENTRY_PASSIVATED);
          e.setPre(pre);
          e.setKey(key);
@@ -355,4 +377,11 @@ public final class CacheNotifierImpl extends AbstractListenerImpl implements Cac
          for (ListenerInvocation listener : topologyChangedListeners) listener.invoke(e);
       }
    }
+
+   public boolean isNotificationAllowed(
+         FlagAffectedCommand cmd, List<ListenerInvocation> listeners) {
+      return (cmd == null || !cmd.hasFlag(Flag.SKIP_LISTENER_NOTIFICATION))
+            && !listeners.isEmpty();
+   }
+
 }

@@ -96,7 +96,9 @@ public class RemoveCommand extends AbstractDataWriteCommand {
       }
 
       final Object removedValue = e.getValue();
+
       notify(ctx, removedValue, true);
+
       e.setRemoved(true);
       e.setValid(false);
 
@@ -109,7 +111,7 @@ public class RemoveCommand extends AbstractDataWriteCommand {
    }
 
    protected void notify(InvocationContext ctx, Object value, boolean isPre) {
-      notifier.notifyCacheEntryRemoved(key, value, isPre, ctx);
+      notifier.notifyCacheEntryRemoved(key, value, value, isPre, ctx, this);
    }
 
    @Override

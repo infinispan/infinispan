@@ -22,6 +22,7 @@
  */
 package org.infinispan.notifications.cachelistener;
 
+import org.infinispan.commands.FlagAffectedCommand;
 import org.infinispan.container.entries.InternalCacheEntry;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.distribution.ch.ConsistentHash;
@@ -40,30 +41,37 @@ import java.util.Collection;
  */
 @Scope(Scopes.NAMED_CACHE)
 public interface CacheNotifier extends Listenable {
+
    /**
     * Notifies all registered listeners of a CacheEntryCreated event.
     */
-   void notifyCacheEntryCreated(Object key, boolean pre, InvocationContext ctx);
+   void notifyCacheEntryCreated(Object key, Object value, boolean pre,
+         InvocationContext ctx, FlagAffectedCommand command);
 
    /**
     * Notifies all registered listeners of a CacheEntryModified event.
     */
-   void notifyCacheEntryModified(Object key, Object value, boolean pre, InvocationContext ctx);
+   void notifyCacheEntryModified(Object key, Object value,
+         boolean created, boolean pre, InvocationContext ctx,
+         FlagAffectedCommand command);
 
    /**
     * Notifies all registered listeners of a CacheEntryRemoved event.
     */
-   void notifyCacheEntryRemoved(Object key, Object value, boolean pre, InvocationContext ctx);
+   void notifyCacheEntryRemoved(Object key, Object value, Object oldValue,
+         boolean pre, InvocationContext ctx, FlagAffectedCommand command);
 
    /**
     * Notifies all registered listeners of a CacheEntryVisited event.
     */
-   void notifyCacheEntryVisited(Object key, Object value, boolean pre, InvocationContext ctx);
+   void notifyCacheEntryVisited(Object key, Object value, boolean pre,
+         InvocationContext ctx, FlagAffectedCommand command);
 
    /**
     * Notifies all registered listeners of a CacheEntriesEvicted event.
     */
-   void notifyCacheEntriesEvicted(Collection<InternalCacheEntry> entries, InvocationContext ctx);
+   void notifyCacheEntriesEvicted(Collection<InternalCacheEntry> entries,
+         InvocationContext ctx, FlagAffectedCommand command);
 
    /**
     * Syntactic sugar
@@ -71,27 +79,32 @@ public interface CacheNotifier extends Listenable {
     * @param value value evicted
     * @param ctx context
     */
-   void notifyCacheEntryEvicted(Object key, Object value, InvocationContext ctx);
+   void notifyCacheEntryEvicted(Object key, Object value,
+         InvocationContext ctx, FlagAffectedCommand command);
 
    /**
     * Notifies all registered listeners of a CacheEntryInvalidated event.
     */
-   void notifyCacheEntryInvalidated(Object key, Object value, boolean pre, InvocationContext ctx);
+   void notifyCacheEntryInvalidated(Object key, Object value, boolean pre,
+         InvocationContext ctx, FlagAffectedCommand command);
 
    /**
     * Notifies all registered listeners of a CacheEntryLoaded event.
     */
-   void notifyCacheEntryLoaded(Object key, Object value, boolean pre, InvocationContext ctx);
+   void notifyCacheEntryLoaded(Object key, Object value, boolean pre,
+         InvocationContext ctx, FlagAffectedCommand command);
 
    /**
     * Notifies all registered listeners of a CacheEntryActivated event.
     */
-   void notifyCacheEntryActivated(Object key, Object value, boolean pre, InvocationContext ctx);
+   void notifyCacheEntryActivated(Object key, Object value, boolean pre,
+         InvocationContext ctx, FlagAffectedCommand command);
 
    /**
     * Notifies all registered listeners of a CacheEntryPassivated event.
     */
-   void notifyCacheEntryPassivated(Object key, Object value, boolean pre, InvocationContext ctx);
+   void notifyCacheEntryPassivated(Object key, Object value, boolean pre,
+         InvocationContext ctx, FlagAffectedCommand command);
 
    /**
     * Notifies all registered listeners of a transaction completion event.
@@ -111,4 +124,5 @@ public interface CacheNotifier extends Listenable {
    void notifyDataRehashed(ConsistentHash oldCH, ConsistentHash newCH, int newTopologyId, boolean pre);
 
    void notifyTopologyChanged(ConsistentHash oldConsistentHash, ConsistentHash newConsistentHash, int newTopologyId, boolean pre);
+
 }

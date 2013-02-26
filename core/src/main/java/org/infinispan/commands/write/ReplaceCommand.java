@@ -100,10 +100,12 @@ public class ReplaceCommand extends AbstractDataWriteCommand {
       this.successful = successful;
       
       Object previousValue = oldValue == null ? beingReplaced : oldValue;
-      
+
       if (successful) {
-         this.notifier.notifyCacheEntryModified(key, previousValue, true, ctx);
+         notifier.notifyCacheEntryModified(
+               key, previousValue, previousValue == null, true, ctx, this);
       }
+
       if (oldValue == null) {
          return beingReplaced;
       } else {

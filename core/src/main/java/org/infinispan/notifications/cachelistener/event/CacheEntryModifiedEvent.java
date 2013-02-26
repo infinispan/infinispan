@@ -34,10 +34,23 @@ package org.infinispan.notifications.cachelistener.event;
  * @since 4.0
  */
 public interface CacheEntryModifiedEvent<K, V> extends CacheEntryEvent<K, V> {
+
    /**
     * Retrieves the value of the entry being modified.
     * <p />
     * @return the previous or new value of the entry, depending on whether isPre() is true or false.
     */
    V getValue();
+
+   /**
+    * Indicates whether the cache entry modification event is the result of
+    * the cache entry being created. This method helps determine if the cache
+    * entry was created when <tt>event.isPre()</tt> is <tt>false</tt>.
+    *
+    * @return true if the event is the result of the entry being created,
+    * otherwise it returns false indicating that the event was the result of
+    * a cache entry being updated
+    */
+   boolean isCreated();
+
 }

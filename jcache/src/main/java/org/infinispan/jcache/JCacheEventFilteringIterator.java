@@ -25,17 +25,19 @@ import javax.cache.event.CacheEntryEventFilter;
 /**
  * A adapter to {@link Iterator}s to allow filtering of {@link CacheEntryEvent}s
  * 
- * @author Brian Oliver
- *
+ * @author Galder Zamarreño
  * @param <K> the type of keys
  * @param <V> the type of value
+ * @see Class based on the JSR-107 reference implementation (RI) of
+ * {@link Iterator<CacheEntryEvent<? extends K, ? extends V>>}
  */
-public class RICacheEntryEventFilteringIterator<K, V> implements Iterator<CacheEntryEvent<K, V>> {
+public class JCacheEventFilteringIterator<K, V>
+      implements Iterator<CacheEntryEvent<? extends K, ? extends V>> {
 
     /**
      * The underlying iterator to filter.
      */
-    private Iterator<CacheEntryEvent<K, V>> iterator;
+    private Iterator<CacheEntryEvent<? extends K, ? extends V>> iterator;
     
     /**
      * The filter to apply to Cache Entry Events in the {@link Iterator}.
@@ -46,16 +48,17 @@ public class RICacheEntryEventFilteringIterator<K, V> implements Iterator<CacheE
      * The next available Cache Entry Event that satisfies the filter.
      * (when null we must seek to find the next event)
      */
-    private CacheEntryEvent<K, V> nextEntry;
+    private CacheEntryEvent<? extends K, ? extends V> nextEntry;
     
     /**
-     * Constructs an {@link RICacheEntryEventFilteringIterator}.
+     * Constructs an {@link JCacheEventFilteringIterator}.
      * 
      * @param iterator the underlying iterator to filter
      * @param filter   the filter to apply to entries in the iterator
      */
-    public RICacheEntryEventFilteringIterator(Iterator<CacheEntryEvent<K, V>> iterator, 
-                                               CacheEntryEventFilter<? super K, ? super V> filter) {
+    public JCacheEventFilteringIterator(
+          Iterator<CacheEntryEvent<? extends K, ? extends V>> iterator,
+          CacheEntryEventFilter<? super K, ? super V> filter) {
         this.iterator = iterator;
         this.filter = filter;
         this.nextEntry = null;
@@ -67,7 +70,7 @@ public class RICacheEntryEventFilteringIterator<K, V> implements Iterator<CacheE
      */
     private void fetch() {
         while (nextEntry == null && iterator.hasNext()) {
-            CacheEntryEvent<K, V> entry = iterator.next();
+            CacheEntryEvent<? extends K, ? extends V> entry = iterator.next();
             
             if (filter.evaluate(entry)) {
                 nextEntry = entry;
@@ -90,9 +93,9 @@ public class RICacheEntryEventFilteringIterator<K, V> implements Iterator<CacheE
      * {@inheritDoc}
      */
     @Override
-    public CacheEntryEvent<K, V> next() {
+    public CacheEntryEvent<? extends K, ? extends V> next() {
         if (hasNext()) {
-            CacheEntryEvent<K, V> entry = nextEntry;
+            CacheEntryEvent<? extends K, ? extends V> entry = nextEntry;
             
             //reset nextEntry to force fetching the next available entry
             nextEntry = null;
@@ -111,4 +114,5 @@ public class RICacheEntryEventFilteringIterator<K, V> implements Iterator<CacheE
         iterator.remove();
         nextEntry = null;
     }
+
 }
