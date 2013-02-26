@@ -63,25 +63,30 @@ public class CacheDiscovery extends MBeanResourceDiscoveryComponent<CacheManager
       if (trace) log.trace("Querying "+queryUtility.getTranslatedQuery()+" returned beans: " + beans);
 
       for (EmsBean bean : beans) {
-         /* A discovered resource must have a unique key, that must
-          * stay the same when the resource is discovered the next
-          * time */
-         String name = bean.getAttribute("CacheName").getValue().toString();
-         String mbeanCacheName = bean.getBeanName().getKeyProperty("name");
-         if (trace) log.trace("Resource name is "+name+" and resource key "+ mbeanCacheName);
-         DiscoveredResourceDetails detail = new DiscoveredResourceDetails(
-               ctx.getResourceType(), // Resource Type
-               mbeanCacheName, // Resource Key
-               name, // Resource name
-               null, // Version
-               "One cache within Infinispan", // ResourceDescription
-               ctx.getDefaultPluginConfiguration(), // Plugin Config
-               null // ProcessInfo
-         );
+         // Filter out spurious beans
+         if (CacheComponent.isCacheComponent(bean)) {
+            /* A discovered resource must have a unique key, that must
+             * stay the same when the resource is discovered the next
+             * time */
+            String name = bean.getAttribute("CacheName").getValue().toString();
+            String mbeanCacheName = bean.getBeanName().getKeyProperty("name");
+            if (trace) log.trace("Resource name is "+name+" and resource key "+ mbeanCacheName);
+            DiscoveredResourceDetails detail = new DiscoveredResourceDetails(
+                  ctx.getResourceType(), // Resource Type
+                  mbeanCacheName, // Resource Key
+                  name, // Resource name
+                  null, // Version
+                  "One cache within Infinispan", // ResourceDescription
+                  ctx.getDefaultPluginConfiguration(), // Plugin Config
+                  null // ProcessInfo
+            );
 
-         // Add to return values
-         discoveredResources.add(detail);
-         log.info("Discovered new ...  " + bean.getBeanName().getCanonicalName());
+            // Add to return values
+            discoveredResources.add(detail);
+            log.info("Discovered new ...  " + bean.getBeanName().getCanonicalName());
+         } else {
+            log.warn(String.format("MBeanServer returned spurious object %s", bean.getBeanName().getCanonicalName()));
+         }
       }
       return discoveredResources;
    }

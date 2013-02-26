@@ -353,7 +353,7 @@ public class RpcManagerImpl implements RpcManager {
       return replicationFailures.get();
    }
 
-   @ManagedAttribute(description = "Statistics enabled", dataType = DataType.TRAIT, writable = true)
+   @ManagedAttribute(description = "Statistics enabled", displayName = "Statistics enabled", dataType = DataType.TRAIT, writable = true)
    public boolean isStatisticsEnabled() {
       return statisticsEnabled;
    }
@@ -361,12 +361,13 @@ public class RpcManagerImpl implements RpcManager {
    /**
     * @deprecated We already have an attribute, we shouldn't have an operation for the same thing.
     */
+   @Deprecated
    @ManagedOperation(displayName = "Enable/disable statistics. Deprecated, use the statisticsEnabled attribute instead.")
    public void setStatisticsEnabled(@Parameter(name = "enabled", description = "Whether statistics should be enabled or disabled (true/false)") boolean statisticsEnabled) {
       this.statisticsEnabled = statisticsEnabled;
    }
 
-   @ManagedAttribute(description = "Successful replications as a ratio of total replications")
+   @ManagedAttribute(description = "Successful replications as a ratio of total replications", displayName = "Successful replications ratio")
    public String getSuccessRatio() {
       if (replicationCount.get() == 0 || !statisticsEnabled) {
          return "N/A";

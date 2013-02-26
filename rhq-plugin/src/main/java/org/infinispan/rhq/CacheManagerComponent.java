@@ -33,6 +33,7 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.mc4j.ems.connection.EmsConnection;
 import org.mc4j.ems.connection.bean.EmsBean;
+import org.mc4j.ems.connection.bean.EmsBeanName;
 import org.mc4j.ems.connection.bean.attribute.EmsAttribute;
 import org.rhq.core.domain.measurement.AvailabilityType;
 import org.rhq.core.domain.measurement.DataType;
@@ -134,12 +135,18 @@ public class CacheManagerComponent extends MBeanResourceComponent<JMXServerCompo
       if (log.isTraceEnabled()) log.trace("Pattern to query is " + pattern);
       ObjectNameQueryUtility queryUtility = new ObjectNameQueryUtility(pattern);
       List<EmsBean> beans = conn.queryBeans(queryUtility.getTranslatedQuery());
-      if (beans.size() > 1) {
-         // If more than one are returned, most likely is due to duplicate domains which is not the general case
-         if(log.isWarnEnabled()) {
-            log.warn(String.format("More than one bean returned from applying %s pattern: %s", pattern, beans));
+      for(EmsBean bean : beans) {
+         if (isCacheManagerComponent(bean)) {
+            return bean;
+         } else {
+            log.warn(String.format("MBeanServer returned spurious object %s", bean.getBeanName().getCanonicalName()));
          }
       }
-      return beans.get(0);
+      throw new IllegalStateException("MBeanServer unexpectedly did not return any CacheManager components");
+   }
+
+   protected static boolean isCacheManagerComponent(EmsBean bean) {
+      EmsBeanName beanName = bean.getBeanName();
+      return "CacheManager".equals(beanName.getKeyProperty("type")) && "CacheManager".equals(beanName.getKeyProperty("component"));
    }
 }
