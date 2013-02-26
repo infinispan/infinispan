@@ -18,7 +18,7 @@
  */
 package org.infinispan.jcache;
 
-import javax.cache.event.CacheEntryEvent;
+import javax.cache.Cache;
 
 import org.infinispan.jcache.logging.Log;
 import org.infinispan.notifications.Listener;
@@ -47,60 +47,44 @@ public class JCacheListenerAdapter<K, V> {
 
    private static final boolean isTrace = log.isTraceEnabled();
 
-   private final JCache<K, V> cache;
+   private final Cache<K, V> cache;
+   private final JCacheNotifier<K, V> notifier;
 
-   public JCacheListenerAdapter(JCache<K, V> cache) {
+   public JCacheListenerAdapter(Cache<K, V> cache, JCacheNotifier<K, V> notifier) {
       this.cache = cache;
+      this.notifier = notifier;
    }
 
    @CacheEntryCreated
    @SuppressWarnings("unused")
    public void handleCacheEntryCreatedEvent(CacheEntryCreatedEvent<K, V> e) {
       // JCache listeners notified only once, so do it after the event
-      if (!e.isPre()) {
-         JCacheNotifier<K, V> notifier = cache.getNotifier();
-         CacheEntryEvent<? extends K, ? extends V> event =
-               new RICacheEntryEvent<K, V>(cache, e.getKey(), e.getValue());
-         if (isTrace) log.tracef("Received event: %s", e);
-         notifier.notifyEntryCreated(event);
-      }
+      if (!e.isPre())
+         notifier.notifyEntryCreated(cache, e.getKey(), e.getValue());
    }
 
    @CacheEntryModified
    @SuppressWarnings("unused")
    public void handleCacheEntryModifiedEvent(CacheEntryModifiedEvent<K, V> e) {
       // JCache listeners notified only once, so do it after the event
-      if (!e.isPre() && !e.isCreated()) {
-         JCacheNotifier<K, V> notifier = cache.getNotifier();
-         CacheEntryEvent<? extends K, ? extends V> event =
-               new RICacheEntryEvent<K, V>(cache, e.getKey(), e.getValue());
-         if (isTrace) log.tracef("Received event: %s", e);
-         notifier.notifyEntryUpdated(event);
-      }
+      if (!e.isPre() && !e.isCreated())
+         notifier.notifyEntryUpdated(cache, e.getKey(), e.getValue());
    }
 
    @CacheEntryRemoved
    @SuppressWarnings("unused")
    public void handleCacheEntryRemovedEvent(CacheEntryRemovedEvent<K, V> e) {
       // JCache listeners notified only once, so do it after the event
-      if (!e.isPre()) {
-         JCacheNotifier<K, V> notifier = cache.getNotifier();
-         CacheEntryEvent<? extends K, ? extends V> event =
-               new RICacheEntryEvent<K, V>(cache, e.getKey(), e.getOldValue());
-         notifier.notifyEntryRemoved(event);
-      }
+      if (!e.isPre())
+         notifier.notifyEntryRemoved(cache, e.getKey(), e.getOldValue());
    }
 
    @CacheEntryVisited
    @SuppressWarnings("unused")
    public void handleCacheEntryVisitedEvent(CacheEntryVisitedEvent<K, V> e) {
       // JCache listeners notified only once, so do it after the event
-      if (!e.isPre()) {
-         JCacheNotifier<K, V> notifier = cache.getNotifier();
-         CacheEntryEvent<? extends K, ? extends V> event =
-               new RICacheEntryEvent<K, V>(cache, e.getKey(), e.getValue());
-         notifier.notifyEntryRead(event);
-      }
+      if (!e.isPre())
+         notifier.notifyEntryRead(cache, e.getKey(), e.getValue());
    }
 
 }
