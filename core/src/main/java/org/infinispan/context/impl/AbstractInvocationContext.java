@@ -22,6 +22,7 @@
  */
 package org.infinispan.context.impl;
 
+import org.infinispan.container.entries.CacheEntry;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.remoting.transport.Address;
 
@@ -140,4 +141,16 @@ public abstract class AbstractInvocationContext implements InvocationContext {
       this.classLoader = classLoader;
    }
 
+   @Override
+   public boolean replaceValue(Object key, Object value) {
+      CacheEntry ce = lookupEntry(key);
+      if (ce == null || ce.isNull() || ce.isLockPlaceholder() || ce.getValue() == null) {
+         if (ce != null && ce.isChanged()) {
+            ce.setValue(value);
+         } else {
+            return false;
+         }
+      }
+      return true;
+   }
 }

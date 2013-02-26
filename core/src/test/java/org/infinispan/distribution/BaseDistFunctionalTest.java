@@ -25,7 +25,6 @@ package org.infinispan.distribution;
 import org.infinispan.Cache;
 import org.infinispan.commands.VisitableCommand;
 import org.infinispan.commands.write.PutKeyValueCommand;
-import org.infinispan.commons.hash.MurmurHash3;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.container.DataContainer;
@@ -34,14 +33,12 @@ import org.infinispan.container.entries.InternalCacheEntry;
 import org.infinispan.container.entries.MortalCacheEntry;
 import org.infinispan.distribution.group.Grouper;
 import org.infinispan.distribution.ch.ConsistentHash;
-import org.infinispan.distribution.ch.DefaultConsistentHashFactory;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.test.MultipleCacheManagersTest;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.transaction.LockingMode;
 import org.infinispan.test.fwk.TransportFlags;
-import org.infinispan.util.Util;
 import org.infinispan.util.concurrent.IsolationLevel;
 
 import javax.transaction.TransactionManager;
@@ -120,36 +117,7 @@ public abstract class BaseDistFunctionalTest extends MultipleCacheManagersTest {
       return configuration;
    }
 
-   protected static ConsistentHash createNewConsistentHash(List<Address> servers) {
-      try {
-         ConfigurationBuilder builder = new ConfigurationBuilder();
-         builder.clustering().hash()
-            .consistentHash(null);
-         // TODO Revisit after we have replaced the CH with the CHFactory in the configuration
-         return new DefaultConsistentHashFactory().create(new MurmurHash3(), 2, 10, servers);
-      } catch (RuntimeException re) {
-         throw re;
-      } catch (Exception e) {
-         throw new RuntimeException(e);
-      }
-   }
-
    // ----------------- HELPERS ----------------
-
-   protected void waitForJoinTasksToComplete(long timeout, Cache... joiners) {
-      long giveupTime = System.currentTimeMillis() + timeout;
-      while (System.currentTimeMillis() < giveupTime) {
-         boolean allOK = true;
-         for (Cache c : joiners) {
-            DistributionManagerImpl dmi = (DistributionManagerImpl) getDistributionManager(c);
-            allOK &= dmi.isJoinComplete();
-         }
-         if (allOK) return;
-         TestingUtil.sleepThread(100);
-      }
-      throw new RuntimeException("Some caches have not finished rehashing after " + Util.prettyPrintTime(timeout));
-   }
-
 
    protected void initAndTest() {
       for (Cache<Object, String> c : caches) assert c.isEmpty();
