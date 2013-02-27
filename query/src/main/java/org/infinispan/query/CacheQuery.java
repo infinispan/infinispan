@@ -93,9 +93,9 @@ public interface CacheQuery extends Iterable<Object> {
    FacetManager getFacetManager();
 
    /**
-    * Gets the integer number of results.
+    * Gets the total number of results matching the query, ignoring pagination (firstResult, maxResult).
     *
-    * @return integer number of results.
+    * @return total number of results.
     */
    int getResultSize();
 
