@@ -47,6 +47,7 @@ import org.infinispan.cli.io.ConsoleIOAdapter;
 import org.infinispan.cli.io.StreamIOAdapter;
 import org.infinispan.cli.util.SystemUtils;
 import org.jboss.aesh.console.Console;
+import org.jboss.aesh.console.settings.Settings;
 
 /**
  *
@@ -142,6 +143,8 @@ public class ShellImpl implements Shell {
    private void interactiveRun() throws IOException {
       config = new ConfigImpl(SystemUtils.getAppConfigFolder("InfinispanShell"));
       config.load();
+      Settings settings = Settings.getInstance();
+      settings.setAliasEnabled(false);
       console = new Console();
       context.setOutputAdapter(new ConsoleIOAdapter(console));
       console.addCompletion(new Completer(context));

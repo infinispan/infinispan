@@ -3,7 +3,7 @@
 .I --codec=codec
 .B ] [
 .I --ifabsent
-. B ] [
+.B ] [
 .I cache.
 .B ]
 .I key value 

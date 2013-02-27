@@ -1,5 +1,5 @@
 .SH SYNOPSIS
-.B get [--encoding=codec] [
+.B get [--codec=codec] [
 .I cache.
 .B ]
 .I key
@@ -12,7 +12,7 @@ Retrieves the value associated with the specified key from a cache.
 command).
 .IP key
 the key for which to retrieve the associated value. If the 
-.I --codec=codec
-option has been specified then the key will be encoded using the specified codec, otherwise the default session codec will be used. See the
-.B encoding
+.I --codec=codec 
+option has been specified then the key will be encoded using the specified codec, otherwise the default session codec will be used. See the 
+.B encoding 
 command for more information
