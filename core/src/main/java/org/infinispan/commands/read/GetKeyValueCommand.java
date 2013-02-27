@@ -112,5 +112,4 @@ public class GetKeyValueCommand extends AbstractDataCommand {
    public InternalCacheEntry getRemotelyFetchedValue() {
       return remotelyFetchedValue;
    }
-
 }

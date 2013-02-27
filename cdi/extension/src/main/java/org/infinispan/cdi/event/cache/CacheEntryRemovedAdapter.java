@@ -74,6 +74,11 @@ public class CacheEntryRemovedAdapter<K, V> extends AbstractAdapter<CacheEntryRe
          return null;
       }
 
+      @Override
+      public Object getOldValue() {
+         return null;
+      }
+
    };
 
    @SuppressWarnings("serial")

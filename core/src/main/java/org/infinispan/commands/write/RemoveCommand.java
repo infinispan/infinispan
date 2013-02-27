@@ -96,7 +96,6 @@ public class RemoveCommand extends AbstractDataWriteCommand {
       }
 
       final Object removedValue = e.getValue();
-
       notify(ctx, removedValue, true);
 
       e.setRemoved(true);

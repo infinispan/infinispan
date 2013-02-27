@@ -68,6 +68,12 @@ public class CacheEntryCreatedAdapter<K, V> extends AbstractAdapter<CacheEntryCr
       public Cache<Object, Object> getCache() {
          return null;
       }
+
+      @Override
+      public Object getValue() {
+         return null;
+      }
+
    };
 
    @SuppressWarnings("serial")

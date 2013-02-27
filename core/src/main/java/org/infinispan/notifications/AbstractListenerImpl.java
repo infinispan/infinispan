@@ -206,7 +206,7 @@ public abstract class AbstractListenerImpl {
             @Override
             public void run() {
                ClassLoader contextClassLoader = null;
-               if (classLoader != null) {
+               if (classLoader != null && classLoader.get() != null) {
                   contextClassLoader = setContextClassLoader(classLoader.get());
                }
                try {
@@ -227,7 +227,7 @@ public abstract class AbstractListenerImpl {
                   getLog().unableToInvokeListenerMethod(method, target, exception);
                   removeListener(target);
                } finally {
-                  if (classLoader != null) {
+                  if (classLoader != null && classLoader.get() != null) {
                      setContextClassLoader(contextClassLoader);
                   }
                }
