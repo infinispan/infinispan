@@ -12,5 +12,4 @@ Shows the current status
 .IP cachename
 (optional) the name of the cache on which to invoke the specified site command
 .IP sitename
-(optional for status, required for all other operations) the name of the site
-on which to invoke the specified command
+(optional for status, required for all other operations) the name of the site on which to invoke the specified command

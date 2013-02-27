@@ -1,5 +1,5 @@
 .SH SYNOPSIS
-.B locate [--encoding=codec] [
+.B locate [--codec=codec] [
 .I cache.
 .B ]
 .I key
@@ -13,7 +13,7 @@ works for distributed caches
 command
 .IP key
 the key of the entry for which to show the address
-.I --codec=codec
+.I --codec=codec 
 option has been specified then the key will be encoded using the specified codec, otherwise the default session codec will be used. See the
-.B encoding
+.B encoding 
 command for more information
