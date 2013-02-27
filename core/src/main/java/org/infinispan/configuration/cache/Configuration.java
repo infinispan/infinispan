@@ -191,7 +191,7 @@ public class Configuration {
 
       Configuration that = (Configuration) o;
 
-      if (classLoader != null ? !classLoader.equals(that.classLoader) : that.classLoader != null)
+      if (classLoader != null && classLoader.get() != null && that.classLoader != null ? !classLoader.get().equals(that.classLoader.get()) : that.classLoader != null && that.classLoader.get() != null)
          return false;
       if (clusteringConfiguration != null ? !clusteringConfiguration.equals(that.clusteringConfiguration) : that.clusteringConfiguration != null)
          return false;
@@ -233,7 +233,7 @@ public class Configuration {
 
    @Override
    public int hashCode() {
-      int result = classLoader != null ? classLoader.hashCode() : 0;
+      int result = classLoader != null && classLoader.get() != null ? classLoader.get().hashCode() : 0;
       result = 31 * result + (clusteringConfiguration != null ? clusteringConfiguration.hashCode() : 0);
       result = 31 * result + (customInterceptorsConfiguration != null ? customInterceptorsConfiguration.hashCode() : 0);
       result = 31 * result + (dataContainerConfiguration != null ? dataContainerConfiguration.hashCode() : 0);

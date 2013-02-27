@@ -76,7 +76,7 @@ public class ConfigurationBuilder implements ConfigurationChildBuilder {
    }
 
    ClassLoader classLoader() {
-      return classLoader.get();
+      return classLoader != null ? classLoader.get() : null;
    }
 
    @Override

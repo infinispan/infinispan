@@ -80,9 +80,16 @@ public class JCache<K, V> implements Cache<K, V> {
       this.cache = cache;
       this.ignoreReturnValuesCache = cache.withFlags(Flag.IGNORE_RETURN_VALUES);
       this.skipCacheLoadCache = cache.withFlags(Flag.SKIP_CACHE_LOAD);
+
+      // Typical use cases of the SKIP_LISTENER_NOTIFICATION is when trying
+      // to comply with specifications such as JSR-107, which mandate that
+      // {@link Cache#containsKey(Object)}} calls do not fire entry visited
+      // notifications, while maintaining the same behaviour that Infinispan
+      // has done in the past.
       this.containsKeyCache = skipCacheLoadCache
             .withFlags(Flag.SKIP_LISTENER_NOTIFICATION);
       this.skipListenerCache = cache.withFlags(Flag.SKIP_LISTENER_NOTIFICATION);
+
       this.cacheManager = cacheManager;
       // a configuration copy as required by the spec
       this.configuration = new SimpleConfiguration<K, V>(c);

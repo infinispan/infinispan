@@ -136,7 +136,7 @@ public abstract class AbstractInvocationContext implements InvocationContext {
 
    @Override
    public ClassLoader getClassLoader() {
-      return classLoader.get();
+      return classLoader != null ? classLoader.get() : null;
    }
 
    @Override

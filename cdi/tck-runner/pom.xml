@@ -53,6 +53,16 @@
       </developer>
    </developers>
 
+   <properties>
+      <!-- Version 0.6 version has this issue:
+      https://github.com/jsr107/jsr107spec/pull/59
+
+      Upgrade to 0.6 once that issue has been fixed
+      See https://issues.jboss.org/browse/ISPN-2855
+      -->
+      <version.javax.cache>0.4</version.javax.cache>
+   </properties>
+
    <dependencies>
       <!-- JCache annotations implementation -->
       <dependency>
