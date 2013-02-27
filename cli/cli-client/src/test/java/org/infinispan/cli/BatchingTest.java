@@ -23,6 +23,8 @@ import java.io.ByteArrayOutputStream;
 import java.io.InputStream;
 import java.io.PrintStream;
 
+import org.infinispan.cli.shell.Shell;
+import org.infinispan.cli.shell.ShellImpl;
 import org.infinispan.util.Util;
 import org.testng.annotations.Test;
 
@@ -39,7 +41,9 @@ public class BatchingTest {
          baos = new ByteArrayOutputStream();
          System.setIn(bais);
          System.setOut(new PrintStream(baos));
-         Main.main(new String[]{"-f","-"});
+         Shell shell = new ShellImpl();
+         shell.init(new String[]{"-f","-"});
+         shell.run();
          System.out.flush();
          String output = baos.toString("UTF-8");
          assert output.contains("Version");
