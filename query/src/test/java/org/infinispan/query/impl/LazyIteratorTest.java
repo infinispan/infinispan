@@ -51,6 +51,7 @@ public class LazyIteratorTest extends EagerIteratorTest {
       super.setUp();
 
       extractor = mock(DocumentExtractor.class);
+      when(extractor.getMaxIndex()).thenReturn(entityInfos.size() - 1);
       when(extractor.extract(anyInt())).thenAnswer(new Answer<EntityInfo>() {
          @Override
          public EntityInfo answer(InvocationOnMock invocation) throws Throwable {
@@ -61,7 +62,6 @@ public class LazyIteratorTest extends EagerIteratorTest {
 
       HSQuery hsQuery = mock(HSQuery.class);
       when(hsQuery.queryDocumentExtractor()).thenReturn(extractor);
-      when(hsQuery.queryResultSize()).thenReturn(entityInfos.size());
 
       iterator = new LazyIterator(hsQuery, new EntityLoader(cache, new KeyTransformationHandler()), getFetchSize());
    }
