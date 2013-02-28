@@ -660,35 +660,38 @@ public class DefaultCacheManager implements EmbeddedCacheManager, CacheManager {
     * @return a null return value means the cache was created by someone else before we got the lock
     */
    private <K, V> Cache<K, V> wireAndStartCache(String cacheName) {
-      CacheWrapper cacheWrapper;
+      CacheWrapper createdCacheWrapper = null;
 
-      synchronized (caches) {
-         //fetch it again with the lock held
-         cacheWrapper = caches.get(cacheName);
-         if (cacheWrapper != null) {
-            return null; //signal that the cache was created by someone else
-         }
-         cacheWrapper = new CacheWrapper();
-         if (caches.put(cacheName, cacheWrapper) != null) {
-            throw new IllegalStateException("attempt to initialize the cache twice");
-         }
-      }
-
-      globalComponentRegistry.start();
-      Configuration c = getConfiguration(cacheName);
-
-      log.tracef("About to wire and start cache %s", cacheName);
-      Cache<K, V> cache = new InternalCacheFactory<K, V>().createCache(c, globalComponentRegistry, cacheName);
-      cacheWrapper.setCache(cache);
-
-      // start the cache-level components
       try {
+         synchronized (caches) {
+            //fetch it again with the lock held
+            CacheWrapper existingCacheWrapper = caches.get(cacheName);
+            if (existingCacheWrapper != null) {
+               return null; //signal that the cache was created by someone else
+            }
+            createdCacheWrapper = new CacheWrapper();
+            if (caches.put(cacheName, createdCacheWrapper) != null) {
+               throw new IllegalStateException("attempt to initialize the cache twice");
+            }
+         }
+
+         globalComponentRegistry.start();
+         Configuration c = getConfiguration(cacheName);
+
+         log.tracef("About to wire and start cache %s", cacheName);
+         Cache<K, V> cache = new InternalCacheFactory<K, V>().createCache(c, globalComponentRegistry, cacheName);
+         createdCacheWrapper.setCache(cache);
+
+         // start the cache-level components
          cache.start();
+         return cache;
       } finally {
          // allow other threads to access the cache
-         cacheWrapper.latch.countDown();
+         if (createdCacheWrapper != null) {
+            log.tracef("Closing latch for cache %s", cacheName);
+            createdCacheWrapper.latch.countDown();
+         }
       }
-      return cache;
    }
 
    private Configuration getConfiguration(String cacheName) {

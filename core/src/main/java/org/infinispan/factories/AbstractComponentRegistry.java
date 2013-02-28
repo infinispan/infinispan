@@ -287,6 +287,7 @@ public abstract class AbstractComponentRegistry implements Lifecycle, Cloneable 
       } else {
          // create this component and add it to the registry
          AbstractComponentFactory factory = getFactory(componentClass);
+         getLog().tracef("Creating component %s with factory %s", name, factory.getClass());
          component = factory instanceof NamedComponentFactory ?
                ((NamedComponentFactory) factory).construct(componentClass, name)
                : factory.construct(componentClass);
@@ -310,7 +311,8 @@ public abstract class AbstractComponentRegistry implements Lifecycle, Cloneable 
     * @param componentClass type of component to construct
     * @return component factory capable of constructing such components
     */
-   protected AbstractComponentFactory getFactory(Class<?> componentClass) {
+   protected synchronized AbstractComponentFactory getFactory(Class<?> componentClass) {
+      getLog().tracef("Looking up factory for class %s", componentClass);
       String cfClass = getComponentMetadataRepo().findFactoryForComponent(componentClass);
       if (cfClass == null) {
          throwStackAwareConfigurationException("No registered default factory for component '" + componentClass + "' found!");
@@ -334,6 +336,7 @@ public abstract class AbstractComponentRegistry implements Lifecycle, Cloneable 
       if (component != null) return component;
 
       //hasn't yet been created.  Create and put in registry
+      getLog().tracef("Creating factory %s for component %s", cfClass, componentClass);
       AbstractComponentFactory cf = instantiateFactory(cfClass);
       if (cf == null)
          throwStackAwareConfigurationException("Unable to locate component factory for component " + componentClass);
@@ -893,7 +896,7 @@ public abstract class AbstractComponentRegistry implements Lifecycle, Cloneable 
 
    }
 
-   private void throwStackAwareConfigurationException(String message) {
+   protected void throwStackAwareConfigurationException(String message) {
       if (debugStack == null) {
          throw new ConfigurationException(message + ". To get more detail set the system property " + DEPENDENCIES_ENABLE_JVMOPTION + " to true");
       } else {
