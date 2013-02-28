@@ -69,7 +69,7 @@ public class NonTxConcurrentDistributionInterceptor extends NonTxDistributionInt
       } else {
          if (!command.isForwarded()) {
             //I need to forward this to all the nodes that are secondary owners
-            Set keysIOwn = new HashSet(command.getAffectedKeys());
+            Set<Object> keysIOwn = new HashSet<Object>(command.getAffectedKeys());
             for (Object k : command.getAffectedKeys())
                if (cdl.localNodeIsPrimaryOwner(k)) {
                   keysIOwn.add(k);
@@ -85,7 +85,6 @@ public class NonTxConcurrentDistributionInterceptor extends NonTxDistributionInt
       }
       return invokeNextInterceptor(ctx, command);
    }
-
 
    protected Object handleLocalWrite(InvocationContext ctx, WriteCommand command, RecipientGenerator rg, boolean skipL1Invalidation, boolean sync) throws Throwable {
       Object key = ((DataCommand) command).getKey();

@@ -35,8 +35,6 @@ import org.infinispan.commands.write.RemoveCommand;
 import org.infinispan.commands.write.ReplaceCommand;
 import org.infinispan.context.Flag;
 import org.infinispan.context.InvocationContext;
-import org.infinispan.factories.annotations.Inject;
-import org.infinispan.remoting.transport.Transport;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
@@ -50,18 +48,9 @@ public class NonTransactionalLockingInterceptor extends AbstractLockingIntercept
 
    private static final Log log = LogFactory.getLog(NonTransactionalLockingInterceptor.class);
 
-   private ClusteringDependentLogic cdl;
-   private Transport transport;
-
    @Override
    protected Log getLog() {
       return log;
-   }
-
-   @Inject
-   public void init(ClusteringDependentLogic cdl, Transport transport) {
-      this.cdl = cdl;
-      this.transport = transport;
    }
 
    @Override
@@ -179,7 +168,7 @@ public class NonTransactionalLockingInterceptor extends AbstractLockingIntercept
       if (!cacheConfiguration.clustering().cacheMode().isClustered())
          return true;
       boolean shouldLock = cdl.localNodeIsPrimaryOwner(key);
-      log.tracef("Are (%s) we the lock owners for key '%s'? %s", transport.getAddress(), key, shouldLock);
+      log.tracef("Are (%s) we the lock owners for key '%s'? %s", cdl.getAddress(), key, shouldLock);
       return shouldLock;
    }
 
