@@ -217,7 +217,12 @@ public class DefaultConsistentHash implements ConsistentHash {
       sb.append("numSegments=").append(numSegments);
       sb.append(", numOwners=").append(numOwners);
       sb.append(", members=").append(members);
-      sb.append(", owners={");
+      sb.append('}');
+      return sb.toString();
+   }
+
+   public String getRoutingTableAsString() {
+      StringBuilder sb = new StringBuilder();
       for (int i = 0; i < numSegments; i++) {
          if (i > 0) {
             sb.append(", ");
@@ -227,26 +232,6 @@ public class DefaultConsistentHash implements ConsistentHash {
             sb.append(' ').append(members.indexOf(segmentOwners[i].get(j)));
          }
       }
-      sb.append('}');
-      return sb.toString();
-   }
-
-   public String prettyPrint() {
-      StringBuilder sb = new StringBuilder("DefaultConsistentHash{");
-      sb.append("numSegments=").append(numSegments);
-      sb.append(", numOwners=").append(numOwners);
-      sb.append(",\nmembers=").append(members);
-      sb.append(",\nowners={");
-      for (int i = 0; i < numSegments; i++) {
-         if (i > 0) {
-            sb.append(",\n");
-         }
-         sb.append(i).append(":");
-         for (int j = 0; j < segmentOwners[i].size(); j++) {
-            sb.append(' ').append(segmentOwners[i].get(j));
-         }
-      }
-      sb.append('}');
       return sb.toString();
    }
 

@@ -142,4 +142,9 @@ public interface ConsistentHash {
     * @return a non-nul set of segment IDs
     */
    Set<Integer> getSegmentsForOwner(Address owner);
+
+   /**
+    * Returns a string containing all the segments and their associated addresses.
+    */
+   String getRoutingTableAsString();
 }

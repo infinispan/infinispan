@@ -26,6 +26,7 @@ package org.infinispan.statetransfer;
 import org.infinispan.commands.remote.BaseRpcCommand;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.remoting.transport.Address;
+import org.infinispan.util.Util;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
@@ -118,7 +119,6 @@ public class StateResponseCommand extends BaseRpcCommand {
             "cache=" + cacheName +
             ", origin=" + getOrigin() +
             ", topologyId=" + topologyId +
-            ", stateChunks=" + stateChunks +
             '}';
    }
 }

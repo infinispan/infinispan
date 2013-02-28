@@ -12,6 +12,8 @@ import org.infinispan.marshall.AbstractExternalizer;
 import org.infinispan.marshall.Ids;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.util.InfinispanCollections;
+import org.infinispan.util.logging.Log;
+import org.infinispan.util.logging.LogFactory;
 
 /**
  * The status of a cache from a distribution/state transfer point of view.
@@ -26,6 +28,10 @@ import org.infinispan.util.InfinispanCollections;
  * @since 5.2
  */
 public class CacheTopology {
+
+   private static Log log = LogFactory.getLog(CacheTopology.class);
+   private static final boolean trace = log.isTraceEnabled();
+
    private final int topologyId;
    private final ConsistentHash currentCH;
    private final ConsistentHash pendingCH;
@@ -115,6 +121,13 @@ public class CacheTopology {
             ", currentCH=" + currentCH +
             ", pendingCH=" + pendingCH +
             '}';
+   }
+
+   public final void logRoutingTableInformation() {
+      if (trace) {
+         log.tracef("Current consistent hash's routing table: %s", currentCH.getRoutingTableAsString());
+         if (pendingCH != null) log.tracef("Pending consistent hash's routing table: %s", pendingCH.getRoutingTableAsString());
+      }
    }
 
 
