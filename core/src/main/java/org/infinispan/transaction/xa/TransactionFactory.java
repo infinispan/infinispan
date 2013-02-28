@@ -295,7 +295,11 @@ public class TransactionFactory {
 
    public void init(boolean dldEnabled, boolean recoveryEnabled, boolean xa, boolean batchingEnabled) {
       if (batchingEnabled) {
-         txFactoryEnum = TxFactoryEnum.NODLD_NORECOVERY_NOXA;
+         if (dldEnabled) {
+            txFactoryEnum = TxFactoryEnum.DLD_NORECOVERY_NOXA;
+         } else {
+            txFactoryEnum = TxFactoryEnum.NODLD_NORECOVERY_NOXA;
+         }
       } else {
          if (dldEnabled) {
             if (recoveryEnabled) {
