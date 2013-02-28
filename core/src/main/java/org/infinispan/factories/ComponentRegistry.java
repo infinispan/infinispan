@@ -163,6 +163,24 @@ public final class ComponentRegistry extends AbstractComponentRegistry {
    }
 
    @Override
+   protected AbstractComponentFactory getFactory(Class<?> componentClass) {
+      String cfClass = getComponentMetadataRepo().findFactoryForComponent(componentClass);
+      if (cfClass == null) {
+         throwStackAwareConfigurationException("No registered default factory for component '" + componentClass + "' found!");
+      }
+
+      AbstractComponentFactory cf;
+      if (isGlobal(cfClass)) {
+         log.tracef("Looking up global factory for component %s", componentClass);
+         cf = globalComponents.getFactory(componentClass);
+      } else {
+         log.tracef("Looking up local factory for component %s", componentClass);
+         cf = super.getFactory(componentClass);
+      }
+      return cf;
+   }
+
+   @Override
    protected final void registerComponentInternal(Object component, String name, boolean nameIsFQCN) {
       if (isGlobal(nameIsFQCN ? name : component.getClass().getName())) {
          globalComponents.registerComponentInternal(component, name, nameIsFQCN);

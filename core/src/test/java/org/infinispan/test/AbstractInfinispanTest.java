@@ -31,6 +31,8 @@ import java.util.Set;
 import java.util.concurrent.Callable;
 import java.util.concurrent.Future;
 import java.util.concurrent.FutureTask;
+import java.util.concurrent.ThreadFactory;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import static org.testng.Assert.assertTrue;
 
@@ -46,6 +48,7 @@ public class AbstractInfinispanTest {
    protected final Log log = LogFactory.getLog(getClass());
 
    private Set<Thread> spawnedThreads = new HashSet<Thread>();
+   private final AtomicInteger spawnedThreadsCounter = new AtomicInteger(0);
 
    @AfterTest(alwaysRun = true)
    protected void killSpawnedThreads() {
@@ -80,7 +83,7 @@ public class AbstractInfinispanTest {
    }
 
    protected Thread fork(Runnable r, boolean waitForCompletion) {
-      final String name = "ForkThread-" + getClass().getSimpleName() + "-" + r.hashCode();
+      final String name = "ForkThread-" + spawnedThreadsCounter.incrementAndGet() + "," + getClass().getSimpleName();
       log.tracef("About to start thread '%s' as child of thread '%s'", name, Thread.currentThread().getName());
       final Thread t = new Thread(new RunnableWrapper(r), name);
       spawnedThreads.add(t);
@@ -97,7 +100,7 @@ public class AbstractInfinispanTest {
    }
 
    protected <T> Future<T> fork(Runnable r, T result) {
-      final String name = "ForkThread-" + getClass().getSimpleName() + "-" + r.hashCode();
+      final String name = "ForkThread-" + spawnedThreadsCounter.incrementAndGet() + "," + getClass().getSimpleName();
       log.tracef("About to start thread '%s' as child of thread '%s'", name, Thread.currentThread().getName());
       FutureTask<T> future = new FutureTask<T>(r, result);
       final Thread t = new Thread(future, name);
@@ -107,13 +110,27 @@ public class AbstractInfinispanTest {
    }
 
    protected <T> Future<T> fork(Callable<T> c) {
-      final String name = "ForkThread-" + getClass().getSimpleName() + "-" + c.hashCode();
+      final String name = "ForkThread-" + spawnedThreadsCounter.incrementAndGet() + "," + getClass().getSimpleName();
       log.tracef("About to start thread '%s' as child of thread '%s'", name, Thread.currentThread().getName());
       FutureTask<T> future = new FutureTask<T>(c);
       final Thread t = new Thread(future, name);
       spawnedThreads.add(t);
       t.start();
       return future;
+   }
+
+   protected ThreadFactory getTestThreadFactory(final String prefix) {
+      final String className = getClass().getSimpleName();
+
+      return new ThreadFactory() {
+         private final AtomicInteger counter = new AtomicInteger(0);
+
+         @Override
+         public Thread newThread(Runnable r) {
+            String threadName = prefix + "-" + counter.incrementAndGet() + "," + className;
+            return new Thread(r, threadName);
+         }
+      };
    }
 
    public final class RunnableWrapper implements Runnable {
