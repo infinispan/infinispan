@@ -347,7 +347,7 @@ public class JGroupsTransport extends AbstractTransport implements MembershipLis
             String channelLookupClassName = props.getProperty(CHANNEL_LOOKUP);
 
             try {
-               JGroupsChannelLookup lookup = (JGroupsChannelLookup) Util.getInstance(channelLookupClassName, configuration.classLoader());
+               JGroupsChannelLookup lookup = Util.getInstance(channelLookupClassName, configuration.classLoader());
                channel = lookup.getJGroupsChannel(props);
                startChannel = lookup.shouldStartAndConnect();
                stopChannel = lookup.shouldStopAndDisconnect();
@@ -504,12 +504,12 @@ public class JGroupsTransport extends AbstractTransport implements MembershipLis
       org.jgroups.Address singleJGAddress = null;
 
       if (broadcast || (totalOrder && !anycast)) {
-         rsps = dispatcher.broadcastRemoteCommands(rpcCommand, toJGroupsMode(mode), timeout, recipients != null,
+         rsps = dispatcher.broadcastRemoteCommands(rpcCommand, toJGroupsMode(mode), timeout,
                                                    usePriorityQueue, toJGroupsFilter(responseFilter),
                                                    asyncMarshalling, ignoreLeavers, totalOrder, anycast);
       } else if (totalOrder && anycast) {
          rsps = dispatcher.invokeRemoteCommands(jgAddressList, rpcCommand, toJGroupsMode(mode), timeout,
-                                                recipients != null, usePriorityQueue, toJGroupsFilter(responseFilter),
+                                                usePriorityQueue, toJGroupsFilter(responseFilter),
                                                 asyncMarshalling, ignoreLeavers, totalOrder, anycast);
       } else {         
          if (jgAddressList == null || !jgAddressList.isEmpty()) {
@@ -529,7 +529,7 @@ public class JGroupsTransport extends AbstractTransport implements MembershipLis
                                                                   usePriorityQueue, asyncMarshalling);
                } else {
                   rsps = dispatcher.invokeRemoteCommands(jgAddressList, rpcCommand, toJGroupsMode(mode), timeout,
-                                                         recipients != null, usePriorityQueue, toJGroupsFilter(responseFilter),
+                                                         usePriorityQueue, toJGroupsFilter(responseFilter),
                                                          asyncMarshalling, ignoreLeavers, totalOrder, anycast);
                }
             }
@@ -565,16 +565,16 @@ public class JGroupsTransport extends AbstractTransport implements MembershipLis
    @Override
    public BackupResponse backupRemotely(Collection<XSiteBackup> backups, ReplicableCommand rpcCommand) throws Exception {
       log.tracef("About to send to backups %s, command %s", backups, rpcCommand);
-      Buffer buf = dispatcher.marshallCall(dispatcher.getMarshaller(), rpcCommand);
+      Buffer buf = CommandAwareRpcDispatcher.marshallCall(dispatcher.getMarshaller(), rpcCommand);
       Map<XSiteBackup, Future<Object>> syncBackupCalls = new HashMap<XSiteBackup, Future<Object>>(backups.size());
       for (XSiteBackup xsb : backups) {
          SiteMaster recipient = new SiteMaster(xsb.getSiteName());
          if (xsb.isSync()) {
             RequestOptions sync = new RequestOptions(org.jgroups.blocks.ResponseMode.GET_ALL, xsb.getTimeout());
-            syncBackupCalls.put(xsb, dispatcher.sendMessageWithFuture(dispatcher.constructMessage(buf, recipient, false, org.jgroups.blocks.ResponseMode.GET_ALL, false, false), sync));
+            syncBackupCalls.put(xsb, dispatcher.sendMessageWithFuture(CommandAwareRpcDispatcher.constructMessage(buf, recipient, false, false, false), sync));
          } else {
             RequestOptions async = new RequestOptions(org.jgroups.blocks.ResponseMode.GET_NONE, xsb.getTimeout());
-            dispatcher.sendMessage(dispatcher.constructMessage(buf, recipient, false, org.jgroups.blocks.ResponseMode.GET_NONE, false, false), async);
+            dispatcher.sendMessage(CommandAwareRpcDispatcher.constructMessage(buf, recipient, false, false, false), async);
          }
       }
       return new JGroupsBackupResponse(syncBackupCalls);

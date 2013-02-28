@@ -30,11 +30,10 @@
         port_range="30"
         recv_buf_size="20m"
         send_buf_size="640k"
-        max_bundle_size="64000"
-        max_bundle_timeout="30"
+        max_bundle_size="64k"
         use_send_queues="true"
         enable_diagnostics="false"
-        bundler_type="old"
+        bundler_type="new"
 
         thread_naming_pattern="pl"
 
