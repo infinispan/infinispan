@@ -26,10 +26,10 @@ import org.infinispan.commands.read.GetKeyValueCommand;
 import org.infinispan.commands.write.ClearCommand;
 import org.infinispan.commands.write.PutKeyValueCommand;
 import org.infinispan.commands.write.WriteCommand;
-import org.infinispan.container.entries.CacheEntry;
 import org.infinispan.container.entries.InternalCacheEntry;
 import org.infinispan.context.Flag;
 import org.infinispan.context.InvocationContext;
+import org.infinispan.factories.annotations.Start;
 import org.infinispan.remoting.responses.Response;
 import org.infinispan.remoting.responses.SuccessfulResponse;
 import org.infinispan.remoting.transport.Address;
@@ -49,6 +49,14 @@ import java.util.Map;
 public class NonTxDistributionInterceptor extends BaseDistributionInterceptor {
 
    private static Log log = LogFactory.getLog(NonTxDistributionInterceptor.class);
+   private static final boolean trace = log.isTraceEnabled();
+
+   private boolean useLockForwarding;
+
+   @Start
+   public void start() {
+      useLockForwarding = cacheConfiguration.locking().supportsConcurrentUpdates();
+   }
 
    @Override
    public Object visitGetKeyValueCommand(InvocationContext ctx, GetKeyValueCommand command) throws Throwable {
@@ -88,10 +96,8 @@ public class NonTxDistributionInterceptor extends BaseDistributionInterceptor {
    }
 
    protected Object handleWriteCommand(InvocationContext ctx, WriteCommand command, RecipientGenerator recipientGenerator, boolean skipRemoteGet, boolean skipL1Invalidation) throws Throwable {
-// TODO [anistor] this can be a brutal fix for ISPN-2688 in non-tx mode (see OperationsDuringStateTransferTest.testReplace failure when non-tx)
-//      for (Object k : recipientGenerator.getKeys()) {
-//         localGet(ctx, k, true, command);
-//      }
+      // see if we need to load values from remote sources first
+      remoteGetBeforeWrite(ctx, command, recipientGenerator);
 
       // if this is local mode then skip distributing
       if (isLocalModeForced(command)) {
@@ -107,31 +113,57 @@ public class NonTxDistributionInterceptor extends BaseDistributionInterceptor {
       }
    }
 
-   protected Object localGet(InvocationContext ctx, Object key, boolean isWrite, FlagAffectedCommand command) throws Throwable {
-      CacheEntry ce = ctx.lookupEntry(key);
-      if (ce == null || ce.isNull() || ce.isLockPlaceholder() || ce.getValue() == null) {
-         InternalCacheEntry ice = dataContainer.get(key);
-         if (ice != null) {
-            if (ce != null && ce.isChanged()) {
-               ce.setValue(ice.getValue());
-            } else {
-               if (isWrite)
-                  lockAndWrap(ctx, key, ice, command);
-               else
-                  ctx.putLookedUpEntry(key, ice);
+   private void remoteGetBeforeWrite(InvocationContext ctx, WriteCommand command, KeyGenerator keygen) throws Throwable {
+      // this should only happen if:
+      //   a) unsafeUnreliableReturnValues is false
+      //   b) unsafeUnreliableReturnValues is true, the command is conditional
+      if (isNeedReliableReturnValues(command) || command.isConditional()) {
+         for (Object k : keygen.getKeys()) {
+            Object returnValue = remoteGetBeforeWrite(ctx, k, command);
+            if (returnValue == null && (!useLockForwarding || cdl.localNodeIsPrimaryOwner(k))) {
+               // We either did not go remotely (because the value should be local now) or we did but the remote value is null.
+               // Then it makes sense to try a local get and wrap again. This will compensate the fact the the entry was not local
+               // earlier when the EntryWrappingInterceptor executed during current invocation context but it should be now.
+               localGet(ctx, k, true, command);
             }
-            return command instanceof GetCacheEntryCommand ? ice : ice.getValue();
          }
       }
+   }
 
+   private Object remoteGetBeforeWrite(InvocationContext ctx, Object key, FlagAffectedCommand command) throws Throwable {
+      // During state transfer it is possible for an entry to map to the local node, but not have been brought locally yet
+      // (not present in data container yet). In that case we fetch the value remotely first. If the value exists remotely (non-null)
+      // then we use it. Otherwise if remote value is null it's possible that the state transfer finished in between
+      // the "isAffectedByRehash" and "retrieveFromRemoteSource" so the caller can hope to find the value in the local data container.
+      if (dm.isAffectedByRehash(key) && !dataContainer.containsKey(key)) {
+         if (trace) log.tracef("Doing a remote get for key %s", key);
+
+         // attempt a remote lookup
+         InternalCacheEntry ice = dm.retrieveFromRemoteSource(key, ctx, false, command);
+         if (ice != null) {
+            if (!ctx.replaceValue(key, ice.getValue())) {
+               entryFactory.wrapEntryForPut(ctx, key, ice, false, command);
+            }
+            return ice.getValue();
+         }
+      } else {
+         if (trace) log.tracef("Not doing a remote get for key %s since entry is not affected by rehash or is already in data container. We are %s, owners are %s", key, rpcManager.getAddress(), dm.locate(key));
+      }
       return null;
    }
 
-   private void lockAndWrap(InvocationContext ctx, Object key, InternalCacheEntry ice, FlagAffectedCommand command) throws InterruptedException {
-      boolean skipLocking = hasSkipLocking(command);
-      long lockTimeout = getLockAcquisitionTimeout(command, skipLocking);
-      lockManager.acquireLock(ctx, key, lockTimeout, skipLocking);
-      entryFactory.wrapEntryForPut(ctx, key, ice, false, command);
+   private Object localGet(InvocationContext ctx, Object key, boolean isWrite, FlagAffectedCommand command) throws Throwable {
+      InternalCacheEntry ice = dataContainer.get(key);
+      if (ice != null) {
+         if (!ctx.replaceValue(key, ice.getValue()))  {
+            if (isWrite)
+               entryFactory.wrapEntryForPut(ctx, key, ice, false, command);
+            else
+               ctx.putLookedUpEntry(key, ice);
+         }
+         return command instanceof GetCacheEntryCommand ? ice : ice.getValue();
+      }
+      return null;
    }
 
    protected Object handleLocalWrite(InvocationContext ctx, WriteCommand command, RecipientGenerator rg, boolean skipL1Invalidation, boolean sync) throws Throwable {
@@ -166,11 +198,10 @@ public class NonTxDistributionInterceptor extends BaseDistributionInterceptor {
    }
 
    protected Object getResponseFromPrimaryOwner(Address primaryOwner, Map<Address, Response> addressResponseMap) {
-      if (addressResponseMap.isEmpty() || addressResponseMap.get(primaryOwner) == null) {
+      Response fromPrimaryOwner = addressResponseMap.get(primaryOwner);
+      if (fromPrimaryOwner == null) {
          return null;
       }
-
-      Response fromPrimaryOwner = addressResponseMap.get(primaryOwner);
       if (!fromPrimaryOwner.isSuccessful()) {
          throw new CacheException("Got unsuccessful response " + fromPrimaryOwner);
       } else {
