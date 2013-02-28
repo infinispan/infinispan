@@ -22,6 +22,7 @@
  */
 package org.infinispan.manager;
 
+import org.infinispan.Cache;
 import org.infinispan.test.AbstractCacheTest;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
@@ -67,7 +68,7 @@ public class ConcurrentCacheManagerTest extends AbstractCacheTest {
    public void testConcurrentGetCacheCalls() throws Exception {
       final CyclicBarrier barrier = new CyclicBarrier(NUM_THREADS + 1);
       List<Future<Void>> futures = new ArrayList<Future<Void>>(NUM_THREADS);
-      ExecutorService executorService = Executors.newFixedThreadPool(NUM_THREADS);
+      ExecutorService executorService = Executors.newFixedThreadPool(NUM_THREADS, getTestThreadFactory("Worker"));
       for (int i = 0; i < NUM_THREADS; i++) {
          log.debug("Schedule execution");
          final String name = "cache" + (i % NUM_CACHES);
@@ -77,7 +78,9 @@ public class ConcurrentCacheManagerTest extends AbstractCacheTest {
             public Void call() throws Exception {
                try {
                   barrier.await();
-                  cacheManager.getCache(name).put("a", "b");
+                  log.tracef("Creating cache %s", name);
+                  Cache<Object,Object> cache = cacheManager.getCache(name);
+                  cache.put("a", "b");
                   return null;
                } catch (Throwable t) {
                   log.error("Got", t);
