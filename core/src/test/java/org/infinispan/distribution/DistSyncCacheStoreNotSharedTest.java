@@ -31,10 +31,12 @@ import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.CleanupAfterMethod;
 import org.testng.annotations.Test;
 
+import java.lang.reflect.Method;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.Future;
 
+import static org.infinispan.test.TestingUtil.k;
 import static org.junit.Assert.*;
 
 /**
@@ -58,9 +60,8 @@ public class DistSyncCacheStoreNotSharedTest extends BaseDistCacheStoreTest {
       shared = false;
    }
 
-   public void testPutFromNonOwner() throws Exception {
-      String key = "k2", value = "value2";
-      for (Cache<Object, String> c : caches) assert c.isEmpty();
+   public void testPutFromNonOwner(Method m) throws Exception {
+      String key = k(m), value = "value2";
       Cache<Object, String> nonOwner = getFirstNonOwner(key);
       Cache<Object, String> owner = getFirstOwner(key);
       CacheStore nonOwnerStore = TestingUtil.extractComponent(nonOwner, CacheLoaderManager.class).getCacheStore();
@@ -74,9 +75,8 @@ public class DistSyncCacheStoreNotSharedTest extends BaseDistCacheStoreTest {
       assertOnAllCachesAndOwnership(key, value);
    }
    
-   public void testGetFromNonOwnerWithFlags() throws Exception {
-      String key = "k2", value = "value2";
-      for (Cache<Object, String> c : caches) assert c.isEmpty();
+   public void testGetFromNonOwnerWithFlags(Method m) throws Exception {
+      String key = k(m), value = "value2";
       Cache<Object, String> nonOwner = getFirstNonOwner(key);
       Cache<Object, String> owner = getFirstOwner(key);
       CacheStore ownerStore = TestingUtil.extractComponent(owner, CacheLoaderManager.class).getCacheStore();
@@ -92,9 +92,8 @@ public class DistSyncCacheStoreNotSharedTest extends BaseDistCacheStoreTest {
       assertOwnershipAndNonOwnership(key, true);
    }
    
-   public void testAsyncGetCleansContextFlags() throws Exception {
-      String key = "k2", value = "value2";
-      for (Cache<Object, String> c : caches) assert c.isEmpty();
+   public void testAsyncGetCleansContextFlags(Method m) throws Exception {
+      String key = k(m), value = "value2";
 
       Cache<Object, String> nonOwner = getFirstNonOwner(key);
       Cache<Object, String> owner = getFirstOwner(key);
@@ -112,9 +111,8 @@ public class DistSyncCacheStoreNotSharedTest extends BaseDistCacheStoreTest {
       assert value.equals(returnedValue);
    }
 
-   public void testPutFromNonOwnerWithFlags() throws Exception {
-      String key = "k2", value = "value2";
-      for (Cache<Object, String> c : caches) assert c.isEmpty();
+   public void testPutFromNonOwnerWithFlags(Method m) throws Exception {
+      String key = k(m), value = "value2";
       Cache<Object, String> nonOwner = getFirstNonOwner(key);
       Cache<Object, String> owner = getFirstOwner(key);
       CacheStore nonOwnerStore = TestingUtil.extractComponent(nonOwner, CacheLoaderManager.class).getCacheStore();
@@ -128,9 +126,8 @@ public class DistSyncCacheStoreNotSharedTest extends BaseDistCacheStoreTest {
       assertOnAllCachesAndOwnership(key, value);
    }
 
-   public void testPutFromOwner() throws Exception {
-      String key = "k3", value = "value3";
-      for (Cache<Object, String> c : caches) assert c.isEmpty();
+   public void testPutFromOwner(Method m) throws Exception {
+      String key = k(m), value = "value3";
       getOwners(key)[0].put(key, value);
       for (Cache<Object, String> c : caches) {
          CacheStore store = TestingUtil.extractComponent(c, CacheLoaderManager.class).getCacheStore();
@@ -294,12 +291,11 @@ public class DistSyncCacheStoreNotSharedTest extends BaseDistCacheStoreTest {
       }
    }
 
-   public void testAtomicPutIfAbsentFromNonOwner() throws Exception {
-      String key = "k1", value = "value", value2 = "v2";
-      for (Cache<Object, String> c : caches) assert c.isEmpty();
-      String replaced = getFirstNonOwner(key).putIfAbsent("k1", value);
+   public void testAtomicPutIfAbsentFromNonOwner(Method m) throws Exception {
+      String key = k(m), value = "value", value2 = "v2";
+      String replaced = getFirstNonOwner(key).putIfAbsent(key, value);
       assertNull(replaced);
-      replaced = getFirstNonOwner(key).putIfAbsent("k1", value2);
+      replaced = getFirstNonOwner(key).putIfAbsent(key, value2);
       assertEquals(replaced, value);
       for (Cache<Object, String> c : caches) {
          assertEquals(replaced, c.get(key));
@@ -311,13 +307,12 @@ public class DistSyncCacheStoreNotSharedTest extends BaseDistCacheStoreTest {
       }
    }
    
-   public void testAtomicPutIfAbsentFromNonOwnerWithFlag() throws Exception {
-      String key = "k1", value = "value";
-      for (Cache<Object, String> c : caches) assert c.isEmpty();
-      String replaced = getFirstNonOwner(key).getAdvancedCache().withFlags(Flag.SKIP_CACHE_STORE).putIfAbsent("k1", value);
+   public void testAtomicPutIfAbsentFromNonOwnerWithFlag(Method m) throws Exception {
+      String key = k(m), value = "value";
+      String replaced = getFirstNonOwner(key).getAdvancedCache().withFlags(Flag.SKIP_CACHE_STORE).putIfAbsent(key, value);
       assertNull(replaced);
       //interesting case: fails to put as value exists, put actually missing in Store
-      replaced = getFirstNonOwner(key).putIfAbsent("k1", value);
+      replaced = getFirstNonOwner(key).putIfAbsent(key, value);
       assertEquals(replaced, value);
       for (Cache<Object, String> c : caches) {
          assertEquals(replaced, c.get(key));
