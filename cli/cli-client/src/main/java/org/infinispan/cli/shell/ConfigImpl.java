@@ -71,8 +71,12 @@ public class ConfigImpl implements Config {
       p.setProperty("colors", String.valueOf(colorsEnabled));
       p.setProperty("history", String.valueOf(historyEnabled));
       p.setProperty("prompt", prompt);
+      File configDir = new File(configHome);
       File configFile = new File(configHome, CONFIG_FILE);
       try {
+         if (!configDir.exists()) {
+            configDir.mkdirs();
+         }
          Writer w = new BufferedWriter(new FileWriter(configFile));
          p.store(w, null);
          w.close();

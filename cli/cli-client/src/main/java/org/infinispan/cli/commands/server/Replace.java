@@ -22,7 +22,7 @@ import java.util.Arrays;
 import java.util.List;
 
 public class Replace extends AbstractServerCommand {
-   private final static List<String> OPTIONS = Arrays.asList("--encoding=");
+   private final static List<String> OPTIONS = Arrays.asList("--codec=");
 
    @Override
    public String getName() {
