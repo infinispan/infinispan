@@ -38,6 +38,9 @@ import static org.testng.AssertJUnit.assertEquals;
 import static org.testng.AssertJUnit.assertFalse;
 
 /**
+ * Tests ping-on-startup logic whose objective is to retrieve the Hot Rod
+ * server topology before a client executes an operation against the server.
+ *
  * @author Mircea.Markus@jboss.com
  * @since 4.1
  */
@@ -56,7 +59,6 @@ public class PingOnStartupTest extends MultiHotRodServersTest {
       props.put("infinispan.client.hotrod.server_list",
             "localhost:" + hotRodServer2.getPort() + ";localhost:" + hotRodServer2.getPort());
       props.put("infinispan.client.hotrod.ping_on_startup", "true");
-      props.put("timeBetweenEvictionRunsMillis", "500");
 
       withRemoteCacheManager(new RemoteCacheManagerCallable(
             new RemoteCacheManager(props)) {
@@ -131,7 +133,6 @@ public class PingOnStartupTest extends MultiHotRodServersTest {
       props.put("infinispan.client.hotrod.server_list",
             "boomoo:12345;localhost:" + hotRodServer2.getPort());
       props.put("infinispan.client.hotrod.ping_on_startup", "true");
-      props.put("timeBetweenEvictionRunsMillis", "500");
 
       withRemoteCacheManager(new RemoteCacheManagerCallable(
             new RemoteCacheManager(props)) {
@@ -148,7 +149,6 @@ public class PingOnStartupTest extends MultiHotRodServersTest {
       props.put("infinispan.client.hotrod.server_list",
             "localhost:" + hotRodServer2.getPort());
       props.put("infinispan.client.hotrod.ping_on_startup", "true");
-      props.put("timeBetweenEvictionRunsMillis", "500");
       withRemoteCacheManager(new RemoteCacheManagerCallable(
             new RemoteCacheManager(props)) {
          @Override

@@ -39,6 +39,7 @@ import org.infinispan.client.hotrod.exceptions.TransportException;
 import org.infinispan.client.hotrod.impl.ConfigurationProperties;
 import org.infinispan.client.hotrod.impl.consistenthash.ConsistentHash;
 import org.infinispan.client.hotrod.impl.consistenthash.ConsistentHashFactory;
+import org.infinispan.client.hotrod.impl.operations.PingOperation;
 import org.infinispan.client.hotrod.impl.protocol.Codec;
 import org.infinispan.client.hotrod.impl.transport.Transport;
 import org.infinispan.client.hotrod.impl.transport.TransportFactory;
@@ -99,6 +100,27 @@ public class TcpTransportFactory implements TransportFactory {
          createAndPreparePool(staticConfiguredServers, poolFactory);
          balancer.setServers(servers);
          updateTransportCount();
+      }
+
+      if (cfg.getPingOnStartup())
+         pingServers(staticConfiguredServers);
+   }
+
+   private void pingServers(Collection<SocketAddress> staticConfiguredServers) {
+      GenericKeyedObjectPool<SocketAddress, TcpTransport> pool = getConnectionPool();
+      for (SocketAddress addr : staticConfiguredServers) {
+         try {
+            // Go through all statically configured nodes and force a
+            // connection to be established and a ping message to be sent.
+            pool.returnObject(addr, pool.borrowObject(addr));
+         } catch (Exception e) {
+            // Ping's objective is to retrieve a potentially newer
+            // version of the Hot Rod cluster topology, so ignore
+            // exceptions from nodes that might not be up any more.
+            if (log.isTraceEnabled())
+               log.tracef(e, "Ignoring exception pinging configured servers %s to establish a connection",
+                     staticConfiguredServers);
+         }
       }
    }
 
