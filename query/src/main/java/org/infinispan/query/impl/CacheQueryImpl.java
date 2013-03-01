@@ -42,6 +42,7 @@ import org.infinispan.AdvancedCache;
 import org.infinispan.query.CacheQuery;
 import org.infinispan.query.FetchOptions;
 import org.infinispan.query.ResultIterator;
+import org.infinispan.query.FetchOptions.FetchMode;
 import org.infinispan.query.backend.KeyTransformationHandler;
 
 /**
@@ -54,7 +55,14 @@ import org.infinispan.query.backend.KeyTransformationHandler;
  */
 public class CacheQueryImpl implements CacheQuery {
 
-   private static final FetchOptions DEFAULT_FETCH_OPTIONS = new FetchOptions();
+   /**
+    * Since CacheQuery extends {@link Iterable} it is possible to implicitly invoke
+    * {@link #iterator()} in an "enhanced for loop".
+    * When using the {@link FetchMode#LAZY} it is mandatory to close the {@link ResultIterator},
+    * but users of the enhanced loop have no chance to invoke the method.
+    * Therefore, it's important that the default fetch options use EAGER iteration.
+    */
+   private static final FetchOptions DEFAULT_FETCH_OPTIONS = new FetchOptions().fetchMode(FetchMode.EAGER);
 
    protected final AdvancedCache<?, ?> cache;
    protected final KeyTransformationHandler keyTransformationHandler;

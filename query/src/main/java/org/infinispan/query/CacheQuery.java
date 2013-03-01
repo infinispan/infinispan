@@ -28,6 +28,7 @@ import org.apache.lucene.search.Sort;
 import org.hibernate.search.FullTextFilter;
 import org.hibernate.search.query.engine.spi.FacetManager;
 
+import java.util.Iterator;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 
@@ -54,6 +55,9 @@ public interface CacheQuery extends Iterable<Object> {
    /**
     * Returns the results of a search as a {@link ResultIterator}.
     *
+    * Warning: the return type is an extension of {@link Iterator} which introduces a {@link ResultIterator#close()}
+    * method. This close method needs to be invoked when the iteration is complete to avoid resource leakage.
+    *
     * @param fetchOptions how to fetch results (see @link FetchOptions)
     * @return a QueryResultIterator which can be used to iterate through the results that were found.
     */
@@ -61,7 +65,7 @@ public interface CacheQuery extends Iterable<Object> {
 
    /**
     * Returns the results of a search as a {@link ResultIterator}. This calls {@link CacheQuery#iterator(FetchOptions fetchOptions)}
-    * with default FetchOptions
+    * with default FetchOptions; this implies eager loading of all results.
     *
     * @return a ResultIterator which can be used to iterate through the results that were found.
     */
