@@ -34,6 +34,11 @@
          <optional>true</optional>
       </dependency>
       <dependency>
+         <groupId>${project.groupId}</groupId>
+         <artifactId>infinispan-scripting</artifactId>
+         <optional>true</optional>
+      </dependency>
+      <dependency>
          <groupId>org.jboss.sasl</groupId>
          <artifactId>jboss-sasl</artifactId>
          <scope>test</scope>

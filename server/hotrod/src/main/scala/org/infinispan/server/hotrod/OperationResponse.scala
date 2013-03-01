@@ -40,6 +40,9 @@ object OperationResponse extends Enumeration {
    val CacheEntryCreatedEventResponse = Value(0x60)
    val CacheEntryModifiedEventResponse = Value(0x61)
    val CacheEntryRemovedEventResponse = Value(0x62)
+   
+   // 2.1
+   val ExecResponse = Value(0x2C)
 
    def toResponse(request: Enumeration#Value): OperationResponse = {
       request match {
@@ -63,6 +66,7 @@ object OperationResponse extends Enumeration {
          case AuthRequest => AuthResponse
          case AddClientListenerRequest => AddClientListenerResponse
          case RemoveClientListenerRequest => RemoveClientListenerResponse
+         case ExecRequest => ExecResponse
       }
    }
 

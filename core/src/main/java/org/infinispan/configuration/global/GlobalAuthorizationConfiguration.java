@@ -1,6 +1,5 @@
 package org.infinispan.configuration.global;
 
-import java.util.Collections;
 import java.util.Map;
 
 import org.infinispan.security.AuditLogger;
@@ -24,7 +23,7 @@ public class GlobalAuthorizationConfiguration {
       this.enabled = enabled;
       this.auditLogger = auditLogger;
       this.principalRoleMapper = principalRoleMapper;
-      this.roles = Collections.unmodifiableMap(roles);
+      this.roles = roles;
    }
 
    public boolean enabled() {

@@ -1,7 +1,6 @@
 package org.infinispan.server.hotrod
 
 import javax.net.ssl.SSLPeerUnverifiedException
-
 import io.netty.buffer.ByteBuf
 import io.netty.channel.Channel
 import java.io.IOException
@@ -38,6 +37,9 @@ import scala.collection.immutable
 import scala.collection.mutable
 import scala.collection.mutable.ListBuffer
 import org.infinispan.server.core.transport.SaslQopHandler
+import org.infinispan.scripting.ScriptingManager
+import javax.script.SimpleBindings
+import org.infinispan.commons.marshall.jboss.GenericJBossMarshaller
 
 /**
  * HotRod protocol decoder specific for specification version 2.0.
@@ -77,6 +79,7 @@ object Decoder2x extends AbstractVersionedDecoder with ServerConstants with Log 
          case 0x25 => (AddClientListenerRequest, false)
          case 0x27 => (RemoveClientListenerRequest, false)
          case 0x29 => (SizeRequest, true)
+         case 0x2B => (ExecRequest, true)
          case _ => throw new HotRodUnknownOperationException(
             "Unknown operation: " + streamOp, version, messageId)
       }
@@ -267,6 +270,21 @@ object Decoder2x extends AbstractVersionedDecoder with ServerConstants with Log 
             val size = cache.size()
             new SizeResponse(h.version, h.messageId, h.cacheName, h.clientIntel,
                h.topologyId, size)
+         case ExecRequest =>
+            val marshaller = new GenericJBossMarshaller() // FIXME: don't create a new one every time and allow changing it
+            val name = readString(buffer)
+            val paramCount = readUnsignedInt(buffer)
+            val params = new HashMap[String, Object]
+            for (i <- 0 until paramCount) {
+               val paramName = readString(buffer)
+               val paramValue = marshaller.objectFromByteBuffer(readRangedBytes(buffer))
+               params.put(paramName, paramValue)
+            }
+            params.put("marshaller", marshaller)
+            params.put("cache", cache)
+            val scriptingManager = SecurityActions.getCacheGlobalComponentRegistry(cache).getComponent(classOf[ScriptingManager]);
+            val result: Any = scriptingManager.runScript(name, cache, new SimpleBindings(params)).get
+            new ExecResponse(h.version, h.messageId, h.cacheName, h.clientIntel, h.topologyId, marshaller.objectToByteBuffer(result))
       }
    }
 

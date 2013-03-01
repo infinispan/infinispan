@@ -23,4 +23,5 @@ object HotRodOperation extends Enumeration(20) {
    val AddClientListenerRequest = Value
    val RemoveClientListenerRequest = Value
    val SizeRequest = Value
+   val ExecRequest = Value
 }

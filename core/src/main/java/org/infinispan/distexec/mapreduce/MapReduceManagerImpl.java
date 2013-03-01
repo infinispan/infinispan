@@ -208,7 +208,7 @@ public class MapReduceManagerImpl implements MapReduceManager {
             });
          }
          // in case we have stores, we have to process key/values from there as well
-         if (persistenceManager != null && !inputKeysSpecified) { 
+         if (persistenceManager != null && !inputKeysSpecified) {
                KeyFilter<?> keyFilter = new CompositeKeyFilter<KIn>(new PrimaryOwnerFilter<KIn>(cdl), new CollectionKeyFilter<KIn>(dc.keySet()));
                persistenceManager.processOnAllStores(keyFilter, new MapReduceCacheLoaderTask<KIn, VIn, KOut, VOut>(mapper, collector),
                      true, false);
@@ -337,7 +337,7 @@ public class MapReduceManagerImpl implements MapReduceManager {
                   int entryTransferCount = chunkSize;
                   for (int i = 0; i < values.size(); i += entryTransferCount) {
                      List<VOut> chunk = values.subList(i, Math.min(values.size(), i + entryTransferCount));
-                     DeltaList<VOut> delta = new DeltaList<VOut>(chunk);                     
+                     DeltaList<VOut> delta = new DeltaList<VOut>(chunk);
                      tmpCache.put(new IntermediateKey<KOut>(taskId, key), delta);
                   }
                   mapPhaseKeys.add(key);
@@ -446,7 +446,7 @@ public class MapReduceManagerImpl implements MapReduceManager {
 
       @Override
       public void processEntry(MarshalledEntry<K, V> marshalledEntry, TaskContext taskContext) throws InterruptedException {
-         executeMapWithCollector((K)marshalledEntry.getKey(), (V)getValue(marshalledEntry));
+         executeMapWithCollector(marshalledEntry.getKey(), getValue(marshalledEntry));
       }
 
       @Override
@@ -486,7 +486,7 @@ public class MapReduceManagerImpl implements MapReduceManager {
             // grab collector C from the bounded queue
             c = queue.take();
             //invoke mapper with collector C
-            mcc.getMapper().map((K) key, value, c);
+            mcc.getMapper().map(key, value, c);
             migrate(c);
          } finally {
             queue.put(c);
@@ -574,6 +574,7 @@ public class MapReduceManagerImpl implements MapReduceManager {
          }
       }
 
+      @Override
       public void emitReduced(KOut key, VOut value) {
          List<VOut> list = store.get(key);
          int prevSize = list.size();
@@ -630,6 +631,7 @@ public class MapReduceManagerImpl implements MapReduceManager {
          delegate.emit(key, value);
       }
 
+      @Override
       public synchronized void emitReduced(KOut key, VOut value) {
          delegate.emitReduced(key, value);
       }

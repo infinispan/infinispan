@@ -23,10 +23,12 @@ abstract class RemoteCacheWrapper<K, V> implements RemoteCache<K, V> {
       this.delegate = delegate;
    }
 
+   @Override
    public void addClientListener(Object listener) {
       delegate.addClientListener(listener);
    }
 
+   @Override
    public void addClientListener(Object listener, Object[] filterFactoryParams, Object[] converterFactoryParams) {
       delegate.addClientListener(listener, filterFactoryParams, converterFactoryParams);
    }
@@ -66,14 +68,17 @@ abstract class RemoteCacheWrapper<K, V> implements RemoteCache<K, V> {
       return delegate.getAsync(key);
    }
 
+   @Override
    public Map<K, V> getBulk() {
       return delegate.getBulk();
    }
 
+   @Override
    public Map<K, V> getBulk(int size) {
       return delegate.getBulk(size);
    }
 
+   @Override
    public Set<Object> getListeners() {
       return delegate.getListeners();
    }
@@ -83,10 +88,12 @@ abstract class RemoteCacheWrapper<K, V> implements RemoteCache<K, V> {
       return delegate.getName();
    }
 
+   @Override
    public String getProtocolVersion() {
       return delegate.getProtocolVersion();
    }
 
+   @Override
    public RemoteCacheManager getRemoteCacheManager() {
       return delegate.getRemoteCacheManager();
    }
@@ -96,10 +103,12 @@ abstract class RemoteCacheWrapper<K, V> implements RemoteCache<K, V> {
       return delegate.getVersion();
    }
 
+   @Override
    public VersionedValue<V> getVersioned(K key) {
       return delegate.getVersioned(key);
    }
 
+   @Override
    public MetadataValue<V> getWithMetadata(K key) {
       return delegate.getWithMetadata(key);
    }
@@ -228,14 +237,17 @@ abstract class RemoteCacheWrapper<K, V> implements RemoteCache<K, V> {
       return delegate.removeAsync(key, value);
    }
 
+   @Override
    public void removeClientListener(Object listener) {
       delegate.removeClientListener(listener);
    }
 
+   @Override
    public boolean removeWithVersion(K key, long version) {
       return delegate.removeWithVersion(key, version);
    }
 
+   @Override
    public NotifyingFuture<Boolean> removeWithVersionAsync(K key, long version) {
       return delegate.removeWithVersionAsync(key, version);
    }
@@ -303,26 +315,32 @@ abstract class RemoteCacheWrapper<K, V> implements RemoteCache<K, V> {
       return delegate.replaceAsync(key, oldValue, newValue, lifespan, lifespanUnit, maxIdle, maxIdleUnit);
    }
 
+   @Override
    public boolean replaceWithVersion(K key, V newValue, long version) {
       return delegate.replaceWithVersion(key, newValue, version);
    }
 
+   @Override
    public boolean replaceWithVersion(K key, V newValue, long version, int lifespanSeconds) {
       return delegate.replaceWithVersion(key, newValue, version, lifespanSeconds);
    }
 
+   @Override
    public boolean replaceWithVersion(K key, V newValue, long version, int lifespanSeconds, int maxIdleTimeSeconds) {
       return delegate.replaceWithVersion(key, newValue, version, lifespanSeconds, maxIdleTimeSeconds);
    }
 
+   @Override
    public NotifyingFuture<Boolean> replaceWithVersionAsync(K key, V newValue, long version) {
       return delegate.replaceWithVersionAsync(key, newValue, version);
    }
 
+   @Override
    public NotifyingFuture<Boolean> replaceWithVersionAsync(K key, V newValue, long version, int lifespanSeconds) {
       return delegate.replaceWithVersionAsync(key, newValue, version, lifespanSeconds);
    }
 
+   @Override
    public NotifyingFuture<Boolean> replaceWithVersionAsync(K key, V newValue, long version, int lifespanSeconds,
          int maxIdleSeconds) {
       return delegate.replaceWithVersionAsync(key, newValue, version, lifespanSeconds, maxIdleSeconds);
@@ -338,6 +356,7 @@ abstract class RemoteCacheWrapper<K, V> implements RemoteCache<K, V> {
       delegate.start();
    }
 
+   @Override
    public ServerStatistics stats() {
       return delegate.stats();
    }
@@ -352,8 +371,16 @@ abstract class RemoteCacheWrapper<K, V> implements RemoteCache<K, V> {
       return delegate.values();
    }
 
+   @Override
    public RemoteCache<K, V> withFlags(Flag... flags) {
       delegate.withFlags(flags);
       return this;
    }
+
+   @Override
+   public <T> T execute(String scriptName, Map<String, ?> params) {
+      return delegate.execute(scriptName, params);
+   }
+
+
 }

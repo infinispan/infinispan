@@ -270,10 +270,11 @@ object Encoder2x extends AbstractVersionedEncoder with Constants with Log {
             }
          }
          case s: SizeResponse => writeUnsignedLong(s.size, buf)
+         case e: ExecResponse =>
+            writeRangedBytes(e.result, buf)
          case e: ErrorResponse => writeString(e.msg, buf)
          case _ => if (buf == null)
             throw new IllegalArgumentException("Response received is unknown: " + r)
       }
    }
-
 }

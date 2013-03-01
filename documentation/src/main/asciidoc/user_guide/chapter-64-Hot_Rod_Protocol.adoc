@@ -1283,6 +1283,37 @@ clustered set ups, and if present, takes cache store contents into account as
 well.
 |==============================================================================
 
+.Exec
+
+Request format:
+[cols="3,^2,10",options="header"]
+|==============================================================================
+| Field Name          | Size       | Value
+| Header | variable | Request header
+|==============================================================================
+| Script | string | Name of the script to execute
+| Parameter Count | vInt | The number of parameters
+| Parameter 1 Name | string | The name of the first parameter
+| Parameter 1 Length | vInt | The length of the first parameter
+| Parameter 1 Value | byte array | The value of the first parameter
+| ...
+|==============================================================================
+
+Response format:
+
+[cols="3,^2,10",options="header"]
+|==============================================================================
+| Field Name          | Size       | Value
+
+| Header              | variable   | Response header
+| Response status     | 1 byte     |
++0x00+ = success, if execution completed successfully +
++0x85+ = server error +
+| Value Length        | vInt       | If success, length of return value
+| Value               | byte array | If success, the result of the execution
+|==============================================================================
+
+
 ====== Remote Events
 
 Starting with Hot Rod 2.0, clients can register listeners for remote events
