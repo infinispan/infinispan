@@ -1,7 +1,9 @@
 package org.infinispan.security.impl;
 
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.Set;
 
 import org.infinispan.security.AuthorizationPermission;
@@ -17,6 +19,10 @@ public class CacheRoleImpl implements Role {
    private final String name;
    private final Set<AuthorizationPermission> permissions;
    private final int mask;
+
+   public CacheRoleImpl(String name, AuthorizationPermission... authorizationPermissions) {
+      this(name, new HashSet<>(Arrays.asList(authorizationPermissions)));
+   }
 
    public CacheRoleImpl(String name, Set<AuthorizationPermission> permissions) {
       this.name = name;

@@ -68,9 +68,13 @@ import javax.management.ObjectName;
 import javax.security.auth.Subject;
 import javax.transaction.Status;
 import javax.transaction.TransactionManager;
+
+import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
 import java.io.OutputStream;
 import java.io.Serializable;
 import java.lang.reflect.Field;
@@ -1456,6 +1460,16 @@ public class TestingUtil {
       }
       return new Subject(true, set, InfinispanCollections.emptySet(), InfinispanCollections.emptySet());
    }
+   
+	public static String loadFileAsString(InputStream is) throws IOException {
+		StringBuilder sb = new StringBuilder();
+		BufferedReader r = new BufferedReader(new InputStreamReader(is));
+		for (String line = r.readLine(); line != null; line = r.readLine()) {
+			sb.append(line);
+			sb.append("\n");
+		}
+		return sb.toString();
+	}
 
    static public void assertAnyEquals(Object expected, Object actual) {
       if (expected instanceof byte[] && actual instanceof byte[])

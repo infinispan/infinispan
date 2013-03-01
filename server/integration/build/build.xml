@@ -195,6 +195,10 @@
          <maven-resource group="org.infinispan" artifact="infinispan-remote-query-server" />
       </module-def>
 
+   	  <module-def name="org.infinispan.scripting">
+   	     <maven-resource group="org.infinispan" artifact="infinispan-scripting" />
+   	  </module-def>
+   	
       <module-def name="org.infinispan.server">
          <maven-resource group="org.infinispan" artifact="infinispan-server-core" />
       </module-def>

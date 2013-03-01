@@ -58,6 +58,7 @@
       <module>spring/spring4</module>
       <module>cli/cli-interpreter</module>
       <module>cli/cli-client</module>
+      <module>scripting</module>
       <module>demos/gui</module>
       <module>demos/ec2</module>
       <module>demos/distexec</module>

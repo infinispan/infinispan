@@ -8,7 +8,6 @@ import java.util.Set;
 import org.infinispan.Cache;
 import org.infinispan.commons.marshall.Marshaller;
 import org.infinispan.commons.util.Immutables;
-import org.infinispan.compat.TypeConverter;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.CompatibilityModeConfiguration;
 import org.infinispan.distexec.mapreduce.Collator;

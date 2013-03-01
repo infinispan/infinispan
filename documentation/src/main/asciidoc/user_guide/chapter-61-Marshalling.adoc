@@ -434,6 +434,7 @@ This is the list of Externalizer identifiers that are used by Infinispan based m
 |Hibernate Search:|1500 - 1599
 |Infinispan Query Module:|1600 - 1699
 |Infinispan Remote Query Module:|1700 - 1799
+|Infinispan Scripting Module:|1800 - 1899
 |===============
 
 

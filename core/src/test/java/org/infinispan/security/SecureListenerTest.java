@@ -49,7 +49,7 @@ public class SecureListenerTest extends SingleCacheManagerTest {
          @Override
          public Void run() throws Exception {
             cacheManager = createCacheManager();
-            cache = cacheManager.getCache();
+            if (cache == null) cache = cacheManager.getCache();
             return null;
          }
       });

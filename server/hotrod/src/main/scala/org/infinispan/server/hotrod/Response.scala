@@ -207,6 +207,19 @@ class SizeResponse(override val version: Byte, override val messageId: Long, ove
    }
 }
 
+class ExecResponse(override val version: Byte, override val messageId: Long, override val cacheName: String,
+        override val clientIntel: Short, override val topologyId: Int, val result: Array[Byte])
+      extends Response(version, messageId, cacheName, clientIntel, ExecResponse, Success, topologyId) {
+   override def toString: String = {
+      new StringBuilder().append("ExecResponse").append("{")
+              .append("version=").append(version)
+              .append(", messageId=").append(messageId)
+              .append(", result=").append(Util.printArray(result, true))
+              .append("}").toString
+   }
+}
+
+
 abstract class AbstractTopologyResponse(val topologyId: Int, val serverEndpointsMap : Map[Address, ServerAddress])
 
 abstract class AbstractHashDistAwareResponse(override val topologyId: Int,

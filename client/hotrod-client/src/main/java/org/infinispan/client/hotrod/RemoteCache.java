@@ -300,4 +300,8 @@ public interface RemoteCache<K, V> extends BasicCache<K, V> {
     */
    Set<Object> getListeners();
 
+   /**
+    * Executes a remote script passing a set of named parameters
+    */
+   <T> T execute(String scriptName, Map<String, ?> params);
 }
