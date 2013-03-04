@@ -55,6 +55,7 @@ public class CacheLoaderAndCacheStoreInterceptorMBeanTest extends SingleCacheMan
    private CacheStore cacheStore;
    private static final String JMX_DOMAIN = CacheLoaderAndCacheStoreInterceptorMBeanTest.class.getName();
 
+   @Override
    protected EmbeddedCacheManager createCacheManager() throws Exception {
       GlobalConfiguration globalConfiguration = GlobalConfiguration.getNonClusteredDefault();
       globalConfiguration.setMBeanServerLookup(PerThreadMBeanServerLookup.class.getName());
@@ -85,6 +86,11 @@ public class CacheLoaderAndCacheStoreInterceptorMBeanTest extends SingleCacheMan
    public void resetStats() throws Exception {
       threadMBeanServer.invoke(loaderInterceptorObjName, "resetStatistics", new Object[0], new String[0]);
       threadMBeanServer.invoke(storeInterceptorObjName, "resetStatistics", new Object[0], new String[0]);
+   }
+
+   public void testJmxOperationMetadata() throws Exception {
+      checkMBeanOperationParameterNaming(loaderInterceptorObjName);
+      checkMBeanOperationParameterNaming(storeInterceptorObjName);
    }
 
    public void testPutKeyValue() throws Exception {

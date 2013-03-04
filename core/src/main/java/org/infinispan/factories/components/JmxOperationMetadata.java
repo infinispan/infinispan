@@ -20,9 +20,10 @@
 package org.infinispan.factories.components;
 
 import org.infinispan.jmx.annotations.ManagedOperation;
-import org.infinispan.util.ReflectionUtil;
+import org.infinispan.jmx.annotations.Parameter;
 
 import java.io.Serializable;
+import java.lang.annotation.Annotation;
 import java.lang.reflect.Method;
 import java.util.Arrays;
 
@@ -33,18 +34,33 @@ import java.util.Arrays;
  * @since 5.1
  */
 public class JmxOperationMetadata implements Serializable {
-   private String methodName;
-   private String[] methodParameters;
-   private String description;
-   
+   private final String methodName;
+   private final JmxOperationParameter[] methodParameters;
+   private final String description;
+   private final String returnType;
+
    public JmxOperationMetadata(Method m) {
       methodName = m.getName();
+      returnType = m.getReturnType().getName();
       Class<?>[] params = m.getParameterTypes();
-      methodParameters = ReflectionUtil.toStringArray(params);
-      ManagedOperation mo = m.getAnnotation(ManagedOperation.class);
-      if (mo != null) {
-         description = mo.description();
+      Annotation[][] annots = m.getParameterAnnotations();
+      methodParameters = new JmxOperationParameter[params.length];
+      for (int i = 0; i < params.length; i++) {
+         Parameter annot = null;
+         for (int j = 0; j < annots[i].length; j++) {
+            if (annots[i][j] instanceof Parameter) {
+               annot = (Parameter) annots[i][j];
+               break;
+            }
+         }
+         if (annot == null) {
+            methodParameters[i] = new JmxOperationParameter("p" + i, params[i].getName(), null);
+         } else {
+            methodParameters[i] = new JmxOperationParameter(annot.name(), params[i].getName(), annot.description());
+         }
       }
+      ManagedOperation mo = m.getAnnotation(ManagedOperation.class);
+      description = mo != null ? mo.description() : null;
    }
 
    public String getDescription() {
@@ -55,9 +71,14 @@ public class JmxOperationMetadata implements Serializable {
       return methodName;
    }
 
-   public String[] getMethodParameters() {
+   public JmxOperationParameter[] getMethodParameters() {
       return methodParameters;
    }
+
+   public String getReturnType() {
+      return returnType;
+   }
+
 
    @Override
    public String toString() {
@@ -67,4 +88,5 @@ public class JmxOperationMetadata implements Serializable {
             ", description='" + description + '\'' +
             '}';
    }
+
 }

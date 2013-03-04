@@ -53,6 +53,7 @@ import static org.infinispan.rhq.RhqUtil.constructNumericMeasure;
  *
  * @author Heiko W. Rupp
  * @author Galder Zamarreño
+ * @author Tristan Tarrant
  */
 public class CacheComponent extends MBeanResourceComponent<CacheManagerComponent> {
    private static final Log log = LogFactory.getLog(CacheComponent.class);
@@ -169,8 +170,10 @@ public class CacheComponent extends MBeanResourceComponent<CacheManagerComponent
     * @throws Exception       If operation was not successful
     */
    @Override
-   public OperationResult invokeOperation(String fullOpName, Configuration parameters) throws Exception {
+   public OperationResult invokeOperation(String fullName, Configuration parameters) throws Exception {
       boolean trace = log.isTraceEnabled();
+      int paramSep = fullName.indexOf('|');
+      String fullOpName = paramSep < 0 ? fullName : fullName.substring(0, paramSep);
       EmsBean bean = queryComponentBean(fullOpName);
       String opName = fullOpName.substring(fullOpName.indexOf(".") + 1);
       EmsOperation ops = bean.getOperation(opName);
@@ -187,9 +190,10 @@ public class CacheComponent extends MBeanResourceComponent<CacheManagerComponent
          throw new Exception("Operation " + fullOpName + " can't be found");
 
       Object result = ops.invoke(realParams);
+      String sResult = result != null ? result.toString() : "";
       if (trace)
-         log.trace("Returning operation result containing " + result != null ? result.toString() : "");
-      return new OperationResult(result != null ? result.toString() : "");
+         log.trace("Returning operation result containing " + sResult);
+      return new OperationResult(sResult);
    }
 
    private EmsConnection getConnection() {
@@ -221,7 +225,7 @@ public class CacheComponent extends MBeanResourceComponent<CacheManagerComponent
       ObjectNameQueryUtility queryUtility = new ObjectNameQueryUtility(pattern);
       List<EmsBean> beans = conn.queryBeans(queryUtility.getTranslatedQuery());
       for (EmsBean bean : beans) {
-         if (isCacheComponent(bean)) {
+         if (isCacheComponent(bean, componentName)) {
             return bean;
          } else {
             log.warn(String.format("MBeanServer returned spurious object %s", bean.getBeanName().getCanonicalName()));
@@ -231,8 +235,8 @@ public class CacheComponent extends MBeanResourceComponent<CacheManagerComponent
       return null;
    }
 
-   protected static boolean isCacheComponent(EmsBean bean) {
+   protected static boolean isCacheComponent(EmsBean bean, String componentName) {
       EmsBeanName beanName = bean.getBeanName();
-      return "Cache".equals(beanName.getKeyProperty("type")) && "Cache".equals(beanName.getKeyProperty("component"));
+      return "Cache".equals(beanName.getKeyProperty("type")) && componentName.equals(beanName.getKeyProperty("component"));
    }
 }

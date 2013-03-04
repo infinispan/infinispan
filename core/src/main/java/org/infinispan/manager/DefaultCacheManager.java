@@ -885,7 +885,7 @@ public class DefaultCacheManager implements EmbeddedCacheManager, CacheManager {
       getCache();
    }
 
-   @ManagedOperation(description = "Starts a named cache from this cache manager", name = "startCacheWithCacheName", displayName = "Starts a cache with the given name")
+   @ManagedOperation(description = "Starts a named cache from this cache manager", name = "startCache|cacheName", displayName = "Starts a cache with the given name")
    public void startCache(@Parameter(name = "cacheName", description = "Name of cache to start") String cacheName) {
       getCache(cacheName);
    }

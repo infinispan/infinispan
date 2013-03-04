@@ -24,6 +24,7 @@
 package org.infinispan.test;
 
 import static java.io.File.separator;
+import static org.testng.AssertJUnit.assertFalse;
 
 import java.io.File;
 import java.lang.reflect.Field;
@@ -41,8 +42,14 @@ import java.util.concurrent.Callable;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.LockSupport;
 
+import javax.management.InstanceNotFoundException;
+import javax.management.IntrospectionException;
+import javax.management.MBeanInfo;
+import javax.management.MBeanOperationInfo;
+import javax.management.MBeanParameterInfo;
 import javax.management.MBeanServer;
 import javax.management.ObjectName;
+import javax.management.ReflectionException;
 import javax.transaction.Status;
 import javax.transaction.TransactionManager;
 
@@ -1161,6 +1168,16 @@ public class TestingUtil {
          if (domainSet.contains(domain)) return true;
       }
       return false;
+   }
+
+   public static void checkMBeanOperationParameterNaming(ObjectName objectName) throws Exception {
+      MBeanServer mBeanServer = PerThreadMBeanServerLookup.getThreadMBeanServer();
+      MBeanInfo mBeanInfo = mBeanServer.getMBeanInfo(objectName);
+      for(MBeanOperationInfo op : mBeanInfo.getOperations()) {
+         for(MBeanParameterInfo param : op.getSignature()) {
+            assertFalse(param.getName().matches("p[0-9]+"));
+         }
+      }
    }
 
    public static String generateRandomString(int numberOfChars) {

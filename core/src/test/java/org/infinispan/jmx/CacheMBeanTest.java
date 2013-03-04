@@ -25,6 +25,9 @@ package org.infinispan.jmx;
 import java.lang.reflect.Method;
 
 import javax.management.InstanceNotFoundException;
+import javax.management.MBeanInfo;
+import javax.management.MBeanOperationInfo;
+import javax.management.MBeanParameterInfo;
 import javax.management.MBeanServer;
 import javax.management.ObjectName;
 
@@ -56,7 +59,12 @@ public class CacheMBeanTest extends SingleCacheManagerTest {
       server = PerThreadMBeanServerLookup.getThreadMBeanServer();
       return cacheManager;
    }
-   
+
+   public void testJmxOperationMetadata() throws Exception {
+      ObjectName name = getCacheObjectName(JMX_DOMAIN);
+      checkMBeanOperationParameterNaming(name);
+   }
+
    public void testStartStopManagedOperations() throws Exception {
       ObjectName defaultOn = getCacheObjectName(JMX_DOMAIN);
       ObjectName managerON = getCacheManagerObjectName(JMX_DOMAIN);
@@ -85,7 +93,7 @@ public class CacheMBeanTest extends SingleCacheManagerTest {
       assert server.getAttribute(managerON, "RunningCacheCount").equals("0");
       assert ComponentStatus.TERMINATED.toString().equals(server.getAttribute(defaultOn, "CacheStatus"));
    }
-   
+
    public void testManagerStopRemovesCacheMBean(Method m) throws Exception {
       final String otherJmxDomain = getMethodSpecificJmxDomain(m, JMX_DOMAIN);
       ObjectName defaultOn = getCacheObjectName(otherJmxDomain);
