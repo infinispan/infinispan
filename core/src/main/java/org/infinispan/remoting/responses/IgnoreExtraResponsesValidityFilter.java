@@ -45,10 +45,10 @@ public final class IgnoreExtraResponsesValidityFilter implements ResponseFilter 
    private final Set<Address> targets;
    private int missingResponses;
 
-   public IgnoreExtraResponsesValidityFilter(Collection<Address> targets, Address self) {
+   public IgnoreExtraResponsesValidityFilter(Collection<Address> targets, Address self, boolean removeSelf) {
       this.targets = new HashSet<Address>(targets);
       this.missingResponses = targets.size();
-      if (this.targets.contains(self)) {
+      if (removeSelf && this.targets.contains(self)) {
          missingResponses--;
       }
    }

@@ -23,12 +23,26 @@
 package org.infinispan.interceptors.base;
 
 import org.infinispan.commands.FlagAffectedCommand;
+import org.infinispan.commands.tx.PrepareCommand;
 import org.infinispan.context.Flag;
 import org.infinispan.context.impl.LocalTxInvocationContext;
 import org.infinispan.context.impl.TxInvocationContext;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.factories.annotations.Start;
+import org.infinispan.remoting.responses.IgnoreExtraResponsesValidityFilter;
+import org.infinispan.remoting.responses.Response;
+import org.infinispan.remoting.responses.SelfDeliverFilter;
+import org.infinispan.remoting.rpc.ResponseFilter;
+import org.infinispan.remoting.rpc.ResponseMode;
 import org.infinispan.remoting.rpc.RpcManager;
+import org.infinispan.remoting.transport.Address;
+import org.infinispan.statetransfer.StateConsumer;
+import org.infinispan.transaction.LocalTransaction;
+
+import java.util.Collection;
+import java.util.HashSet;
+import java.util.Map;
+import java.util.Set;
 
 /**
  * Acts as a base for all RPC calls
@@ -40,12 +54,14 @@ import org.infinispan.remoting.rpc.RpcManager;
 public abstract class BaseRpcInterceptor extends CommandInterceptor {
 
    protected RpcManager rpcManager;
+   private StateConsumer stateConsumer;
 
    protected boolean defaultSynchronous;
 
    @Inject
-   public void inject(RpcManager rpcManager) {
+   public void inject(RpcManager rpcManager, StateConsumer stateConsumer) {
       this.rpcManager = rpcManager;
+      this.stateConsumer = stateConsumer;
    }
 
    @Start
@@ -87,5 +103,73 @@ public abstract class BaseRpcInterceptor extends CommandInterceptor {
       }
 
       return shouldInvokeRemotely;
+   }
+
+   protected static void totalOrderTxPrepare(TxInvocationContext ctx) {
+      if (ctx.isOriginLocal()) {
+         ((LocalTransaction)ctx.getCacheTransaction()).markPrepareSent();
+      }
+   }
+
+   protected static void totalOrderTxCommit(TxInvocationContext ctx) {
+      if (ctx.isOriginLocal()) {
+         ((LocalTransaction)ctx.getCacheTransaction()).markCommitOrRollbackSent();
+      }
+   }
+
+   protected static void totalOrderTxRollback(TxInvocationContext ctx) {
+      if (ctx.isOriginLocal()) {
+         ((LocalTransaction)ctx.getCacheTransaction()).markCommitOrRollbackSent();
+      }
+   }
+
+   protected static boolean shouldTotalOrderRollbackBeInvokedRemotely(TxInvocationContext ctx) {
+      return ctx.isOriginLocal() && ((LocalTransaction)ctx.getCacheTransaction()).isPrepareSent()
+            && !((LocalTransaction)ctx.getCacheTransaction()).isCommitOrRollbackSent();
+   }
+
+   protected final Map<Address, Response> totalOrderAnycastPrepare(Collection<Address> recipients,
+                                                                   PrepareCommand prepareCommand,
+                                                                   ResponseFilter responseFilter) {
+      Set<Address> realRecipients = new HashSet<Address>(recipients);
+      realRecipients.add(rpcManager.getAddress());
+      return internalTotalOrderPrepare(realRecipients, prepareCommand, responseFilter);
+   }
+
+   protected final Map<Address, Response> totalOrderBroadcastPrepare(PrepareCommand prepareCommand, ResponseFilter responseFilter) {
+      return internalTotalOrderPrepare(null, prepareCommand, responseFilter);
+   }
+
+   private Map<Address, Response> internalTotalOrderPrepare(Collection<Address> recipients, PrepareCommand prepareCommand,
+                                                            ResponseFilter responseFilter) {
+      if (defaultSynchronous && responseFilter == null) {
+         return rpcManager.invokeRemotely(recipients, prepareCommand, ResponseMode.SYNCHRONOUS_IGNORE_LEAVERS,
+                                          getReplicationTimeout(), true, getIgnoreExtraResponseFilter(recipients), true);
+      } else if (defaultSynchronous) {
+         return rpcManager.invokeRemotely(recipients, prepareCommand, ResponseMode.SYNCHRONOUS_IGNORE_LEAVERS,
+                                          getReplicationTimeout(), true, responseFilter, true);
+      } else {
+         return rpcManager.invokeRemotely(recipients, prepareCommand, false, true);
+      }
+   }
+
+   protected final long getReplicationTimeout() {
+      return cacheConfiguration.clustering().sync().replTimeout();
+   }
+
+   protected final boolean isSyncCommitPhase() {
+      return cacheConfiguration.transaction().syncCommitPhase();
+   }
+
+   protected final ResponseFilter getSelfDeliverFilter() {
+      return new SelfDeliverFilter(rpcManager.getAddress());
+   }
+
+   protected final ResponseFilter getIgnoreExtraResponseFilter(Collection<Address> recipients) {
+      Set<Address> liveMembers = new HashSet<Address>(stateConsumer.getCacheTopology().getMembers());
+      if (recipients != null) {
+         liveMembers.retainAll(recipients);
+      }
+      return new IgnoreExtraResponsesValidityFilter(liveMembers, rpcManager.getAddress(), false);
    }
 }

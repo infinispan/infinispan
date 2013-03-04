@@ -56,8 +56,13 @@ public class VersionedReplStateTransferTest extends MultipleCacheManagersTest {
                .lockingMode(LockingMode.OPTIMISTIC)
                .syncCommitPhase(true);
 
+      amendConfig(builder);
+
       createCluster(builder, 2);
       waitForClusterToForm();
+   }
+
+   protected void amendConfig(ConfigurationBuilder builder) {
    }
 
    public void testStateTransfer() throws Exception {

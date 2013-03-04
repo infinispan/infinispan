@@ -94,7 +94,7 @@ public class ClusteredQueryInvoker {
          addresss.add(address);
 
          Map<Address, Response> responses = rpcManager.invokeRemotely(addresss, clusteredQuery,
-                  ResponseMode.SYNCHRONOUS, 10000);
+                  ResponseMode.SYNCHRONOUS, 10000, false);
          List<QueryResponse> objects = cast(responses);
          return objects.get(0).getFetchedValue();
       }
@@ -111,7 +111,7 @@ public class ClusteredQueryInvoker {
       // invoke on own node
       Future<QueryResponse> localResponse = localInvoke(clusteredQuery);
       Map<Address, Response> responses = rpcManager.invokeRemotely(null, clusteredQuery,
-               ResponseMode.SYNCHRONOUS, 10000);
+               ResponseMode.SYNCHRONOUS, 10000, false);
 
       List<QueryResponse> objects = cast(responses);
       final QueryResponse localReturnValue;

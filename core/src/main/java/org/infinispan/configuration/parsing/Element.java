@@ -89,7 +89,8 @@ public enum Element {
     BACKUPS("backups"),
     BACKUP("backup"),
     BACKUP_FOR("backupFor"),
-    TAKE_OFFLINE("takeOffline")
+    TAKE_OFFLINE("takeOffline"),
+    TOTAL_ORDER_EXECUTOR("totalOrderExecutor"),
     ;
 
     private final String name;

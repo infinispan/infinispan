@@ -52,6 +52,7 @@ import static javax.transaction.xa.XAResource.XA_RDONLY;
  * through {@link org.infinispan.transaction.synchronization.SynchronizationAdapter}.
  *
  * @author Mircea.Markus@jboss.com
+ * @author Pedro Ruivo
  * @since 5.0
  */
 public class TransactionCoordinator {
@@ -90,8 +91,7 @@ public class TransactionCoordinator {
 
    @Start
    public void start() {
-      if (configuration.locking().writeSkewCheck() && configuration.transaction().lockingMode() == LockingMode.OPTIMISTIC
-            && configuration.versioning().enabled()) {
+      if (Configurations.isVersioningEnabled(configuration)) {
          // We need to create versioned variants of PrepareCommand and CommitCommand
          commandCreator = new CommandCreator() {
             @Override
@@ -100,8 +100,8 @@ public class TransactionCoordinator {
             }
 
             @Override
-            public PrepareCommand createPrepareCommand(GlobalTransaction gtx, List<WriteCommand> modifications) {
-               return commandsFactory.buildVersionedPrepareCommand(gtx, modifications, false);
+            public PrepareCommand createPrepareCommand(GlobalTransaction gtx, List<WriteCommand> modifications, boolean onePhaseCommit) {
+               return commandsFactory.buildVersionedPrepareCommand(gtx, modifications, onePhaseCommit);
             }
          };
       } else {
@@ -112,8 +112,8 @@ public class TransactionCoordinator {
             }
 
             @Override
-            public PrepareCommand createPrepareCommand(GlobalTransaction gtx, List<WriteCommand> modifications) {
-               return commandsFactory.buildPrepareCommand(gtx, modifications, false);
+            public PrepareCommand createPrepareCommand(GlobalTransaction gtx, List<WriteCommand> modifications, boolean onePhaseCommit) {
+               return commandsFactory.buildPrepareCommand(gtx, modifications, onePhaseCommit);
             }
          };
       }
@@ -126,12 +126,13 @@ public class TransactionCoordinator {
    public final int prepare(LocalTransaction localTransaction, boolean replayEntryWrapping) throws XAException {
       validateNotMarkedForRollback(localTransaction);
 
-      if (Configurations.isOnePhaseCommit(configuration) || is1PcForAutoCommitTransaction(localTransaction)) {
+      if (Configurations.isOnePhaseCommit(configuration) || is1PcForAutoCommitTransaction(localTransaction) ||
+            Configurations.isOnePhaseTotalOrderCommit(configuration)) {
          if (trace) log.tracef("Received prepare for tx: %s. Skipping call as 1PC will be used.", localTransaction);
          return XA_OK;
       }
 
-      PrepareCommand prepareCommand = commandCreator.createPrepareCommand(localTransaction.getGlobalTransaction(), localTransaction.getModifications());
+      PrepareCommand prepareCommand = commandCreator.createPrepareCommand(localTransaction.getGlobalTransaction(), localTransaction.getModifications(), false);
       if (trace) log.tracef("Sending prepare command through the chain: %s", prepareCommand);
 
       LocalTxInvocationContext ctx = icc.createTxInvocationContext();
@@ -166,11 +167,12 @@ public class TransactionCoordinator {
       if (trace) log.tracef("Committing transaction %s", localTransaction.getGlobalTransaction());
       LocalTxInvocationContext ctx = icc.createTxInvocationContext();
       ctx.setLocalTransaction(localTransaction);
-      if (Configurations.isOnePhaseCommit(configuration) || isOnePhase || is1PcForAutoCommitTransaction(localTransaction)) {
+      if (Configurations.isOnePhaseCommit(configuration) || isOnePhase || is1PcForAutoCommitTransaction(localTransaction) ||
+            Configurations.isOnePhaseTotalOrderCommit(configuration)) {
          validateNotMarkedForRollback(localTransaction);
 
          if (trace) log.trace("Doing an 1PC prepare call on the interceptor chain");
-         PrepareCommand command = commandsFactory.buildPrepareCommand(localTransaction.getGlobalTransaction(), localTransaction.getModifications(), true);
+         PrepareCommand command = commandCreator.createPrepareCommand(localTransaction.getGlobalTransaction(), localTransaction.getModifications(), true);
          try {
             invoker.invoke(ctx, command);
          } catch (Throwable e) {
@@ -213,7 +215,12 @@ public class TransactionCoordinator {
          log.errorProcessing2pcCommitCommand(e);
       }
       try {
-         rollbackInternal(localTransaction);
+         if (!(onePhaseCommit && configuration.transaction().transactionProtocol().isTotalOrder())) {
+            //we cannot send the rollback in Total Order because it will create a new remote transaction.
+            //the rollback is not needed any way, because if one node aborts the transaction, then all the nodes will
+            //abort too.
+            rollbackInternal(localTransaction);
+         }
       } catch (Throwable e1) {
          log.couldNotRollbackPrepared1PcTransaction(localTransaction, e1);
          // inform the TM that a resource manager error has occurred in the transaction branch (XAER_RMERR).
@@ -247,6 +254,6 @@ public class TransactionCoordinator {
 
    private static interface CommandCreator {
       CommitCommand createCommitCommand(GlobalTransaction gtx);
-      PrepareCommand createPrepareCommand(GlobalTransaction gtx, List<WriteCommand> modifications);
+      PrepareCommand createPrepareCommand(GlobalTransaction gtx, List<WriteCommand> modifications, boolean onePhaseCommit);
    }
 }

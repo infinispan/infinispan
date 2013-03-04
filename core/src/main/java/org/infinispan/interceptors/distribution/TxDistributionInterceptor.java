@@ -176,7 +176,7 @@ public class TxDistributionInterceptor extends BaseDistributionInterceptor {
       }
    }
 
-   private void lockAndWrap(InvocationContext ctx, Object key, InternalCacheEntry ice, FlagAffectedCommand command) throws InterruptedException {
+   protected void lockAndWrap(InvocationContext ctx, Object key, InternalCacheEntry ice, FlagAffectedCommand command) throws InterruptedException {
       boolean skipLocking = hasSkipLocking(command);
       long lockTimeout = getLockAcquisitionTimeout(command, skipLocking);
       lockManager.acquireLock(ctx, key, lockTimeout, skipLocking);
@@ -189,7 +189,7 @@ public class TxDistributionInterceptor extends BaseDistributionInterceptor {
          final Collection<Address> affectedNodes = dm.getAffectedNodes(command.getKeys());
          ((LocalTxInvocationContext) ctx).remoteLocksAcquired(affectedNodes);
          log.tracef("Registered remote locks acquired %s", affectedNodes);
-         rpcManager.invokeRemotely(affectedNodes, command, true, true);
+         rpcManager.invokeRemotely(affectedNodes, command, true, true, false);
       }
       return invokeNextInterceptor(ctx, command);
    }
@@ -245,13 +245,13 @@ public class TxDistributionInterceptor extends BaseDistributionInterceptor {
 
    protected void prepareOnAffectedNodes(TxInvocationContext ctx, PrepareCommand command, Collection<Address> recipients, boolean sync) {
       // this method will return immediately if we're the only member (because exclude_self=true)
-      rpcManager.invokeRemotely(recipients, command, sync);
+      rpcManager.invokeRemotely(recipients, command, sync, false);
    }
 
    @Override
    public Object visitRollbackCommand(TxInvocationContext ctx, RollbackCommand command) throws Throwable {
       if (shouldInvokeRemoteTxCommand(ctx)) {
-         rpcManager.invokeRemotely(getCommitNodes(ctx), command, cacheConfiguration.transaction().syncRollbackPhase(), true);
+         rpcManager.invokeRemotely(getCommitNodes(ctx), command, cacheConfiguration.transaction().syncRollbackPhase(), true,false);
       }
 
       return invokeNextInterceptor(ctx, command);
@@ -267,7 +267,7 @@ public class TxDistributionInterceptor extends BaseDistributionInterceptor {
    protected void sendCommitCommand(TxInvocationContext ctx, CommitCommand command) throws TimeoutException, InterruptedException {
       Collection<Address> recipients = getCommitNodes(ctx);
       boolean syncCommitPhase = cacheConfiguration.transaction().syncCommitPhase();
-      rpcManager.invokeRemotely(recipients, command, syncCommitPhase, true);
+      rpcManager.invokeRemotely(recipients, command, syncCommitPhase, true,false);
    }
 
    private boolean shouldFetchRemoteValuesForWriteSkewCheck(InvocationContext ctx, WriteCommand cmd) {

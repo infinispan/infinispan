@@ -20,6 +20,7 @@ package org.infinispan.configuration.cache;
 
 import org.infinispan.transaction.LockingMode;
 import org.infinispan.transaction.TransactionMode;
+import org.infinispan.transaction.TransactionProtocol;
 import org.infinispan.transaction.lookup.TransactionManagerLookup;
 import org.infinispan.transaction.lookup.TransactionSynchronizationRegistryLookup;
 
@@ -27,6 +28,7 @@ import org.infinispan.transaction.lookup.TransactionSynchronizationRegistryLooku
  * Defines transactional (JTA) characteristics of the cache.
  * 
  * @author pmuir
+ * @author Pedro Ruivo
  * 
  */
 public class TransactionConfiguration {
@@ -46,13 +48,14 @@ public class TransactionConfiguration {
    private final boolean use1PcForAutoCommitTransactions;
    private final long reaperWakeUpInterval;
    private final long completedTxTimeout;
+   private final TransactionProtocol transactionProtocol; //2PC or Total order protocol
 
 
    TransactionConfiguration(boolean autoCommit, long cacheStopTimeout, boolean eagerLockingSingleNode, LockingMode lockingMode,
                             boolean syncCommitPhase, boolean syncRollbackPhase, TransactionManagerLookup transactionManagerLookup,
                             TransactionSynchronizationRegistryLookup transactionSynchronizationRegistryLookup, TransactionMode transactionMode,
                             boolean useEagerLocking, boolean useSynchronization, boolean use1PcForAutoCommitTransactions,
-                            long reaperWakeUpInterval, long completedTxTimeout, RecoveryConfiguration recovery) {
+                            long reaperWakeUpInterval, long completedTxTimeout, RecoveryConfiguration recovery, TransactionProtocol transactionProtocol) {
       this.autoCommit = autoCommit;
       this.cacheStopTimeout = cacheStopTimeout;
       this.eagerLockingSingleNode = eagerLockingSingleNode;
@@ -68,6 +71,7 @@ public class TransactionConfiguration {
       this.use1PcForAutoCommitTransactions = use1PcForAutoCommitTransactions;
       this.reaperWakeUpInterval = reaperWakeUpInterval;
       this.completedTxTimeout = completedTxTimeout;
+      this.transactionProtocol = transactionProtocol;
    }
 
    /**
@@ -324,6 +328,9 @@ public class TransactionConfiguration {
       if (transactionMode != that.transactionMode) return false;
       if (transactionSynchronizationRegistryLookup != null ? !transactionSynchronizationRegistryLookup.equals(that.transactionSynchronizationRegistryLookup) : that.transactionSynchronizationRegistryLookup != null)
          return false;
+      if (transactionProtocol != that.transactionProtocol) {
+         return false;
+      }
 
       return true;
    }
@@ -343,7 +350,14 @@ public class TransactionConfiguration {
       result = 31 * result + (useSynchronization ? 1 : 0);
       result = 31 * result + (recovery != null ? recovery.hashCode() : 0);
       result = 31 * result + (use1PcForAutoCommitTransactions ? 1 : 0);
+      result = 31 * result + (transactionProtocol != null ? transactionProtocol.hashCode() : 0);
       return result;
    }
 
+   /**
+    * @return the transaction protocol in use (2PC or Total Order)
+    */
+   public TransactionProtocol transactionProtocol() {
+      return transactionProtocol;
+   }
 }

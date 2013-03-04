@@ -135,7 +135,7 @@ public class ClusterCacheLoader extends AbstractCacheLoader {
       Address self = rpcManager.getTransport().getAddress();
       ResponseFilter filter = new ClusteredGetResponseValidityFilter(members, self);
       try {
-         return rpcManager.invokeRemotely(null, clusteredGetCommand, ResponseMode.WAIT_FOR_VALID_RESPONSE, config.getRemoteCallTimeout(), false, filter).values();
+         return rpcManager.invokeRemotely(null, clusteredGetCommand, ResponseMode.WAIT_FOR_VALID_RESPONSE, config.getRemoteCallTimeout(), false, filter, false).values();
       } catch (Exception e) {
          log.errorDoingRemoteCall(e);
          throw new CacheLoaderException(e);

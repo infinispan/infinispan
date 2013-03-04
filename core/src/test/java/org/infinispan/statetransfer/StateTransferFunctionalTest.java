@@ -62,7 +62,7 @@ public class StateTransferFunctionalTest extends MultipleCacheManagersTest {
    public static final Integer TWENTY = 20;
    public static final Integer FORTY = 40;
 
-   ConfigurationBuilder configurationBuilder;
+   protected ConfigurationBuilder configurationBuilder;
    protected final String cacheName;
 
    private volatile int testCount = 0;

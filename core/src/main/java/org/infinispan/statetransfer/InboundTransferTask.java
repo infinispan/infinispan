@@ -138,7 +138,7 @@ public class InboundTransferTask {
          // start transfer of cache entries
          try {
             StateRequestCommand cmd = commandsFactory.buildStateRequestCommand(StateRequestCommand.Type.START_STATE_TRANSFER, rpcManager.getAddress(), topologyId, segments);
-            Map<Address, Response> responses = rpcManager.invokeRemotely(Collections.singleton(source), cmd, ResponseMode.SYNCHRONOUS_IGNORE_LEAVERS, timeout);
+            Map<Address, Response> responses = rpcManager.invokeRemotely(Collections.singleton(source), cmd, ResponseMode.SYNCHRONOUS_IGNORE_LEAVERS, timeout, false);
             Response response = responses.get(source);
             if (response instanceof SuccessfulResponse) {
                isStartedSuccessfully = true;
@@ -181,7 +181,7 @@ public class InboundTransferTask {
       }
 
       StateRequestCommand cmd = commandsFactory.buildStateRequestCommand(StateRequestCommand.Type.CANCEL_STATE_TRANSFER, rpcManager.getAddress(), topologyId, cancelledSegments);
-      rpcManager.invokeRemotely(Collections.singleton(source), cmd, ResponseMode.SYNCHRONOUS_IGNORE_LEAVERS, timeout);
+      rpcManager.invokeRemotely(Collections.singleton(source), cmd, ResponseMode.SYNCHRONOUS_IGNORE_LEAVERS, timeout, false);
 
       if (isCancelled) {
          notifyCompletion();
@@ -197,7 +197,7 @@ public class InboundTransferTask {
          }
 
          StateRequestCommand cmd = commandsFactory.buildStateRequestCommand(StateRequestCommand.Type.CANCEL_STATE_TRANSFER, rpcManager.getAddress(), topologyId, segments);
-         rpcManager.invokeRemotely(Collections.singleton(source), cmd, ResponseMode.SYNCHRONOUS_IGNORE_LEAVERS, timeout);
+         rpcManager.invokeRemotely(Collections.singleton(source), cmd, ResponseMode.SYNCHRONOUS_IGNORE_LEAVERS, timeout, false);
 
          notifyCompletion();
       }

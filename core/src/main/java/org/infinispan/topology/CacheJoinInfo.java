@@ -42,14 +42,18 @@ public class CacheJoinInfo {
    private final int numSegments;
    private final int numOwners;
    private final long timeout;
+   private final boolean totalOrder;
+   private final boolean distributed;
 
    public CacheJoinInfo(ConsistentHashFactory consistentHashFactory, Hash hashFunction, int numSegments,
-                        int numOwners, long timeout) {
+                        int numOwners, long timeout, boolean totalOrder, boolean distributed) {
       this.consistentHashFactory = consistentHashFactory;
       this.hashFunction = hashFunction;
       this.numSegments = numSegments;
       this.numOwners = numOwners;
       this.timeout = timeout;
+      this.totalOrder = totalOrder;
+      this.distributed = distributed;
    }
 
    public ConsistentHashFactory getConsistentHashFactory() {
@@ -72,6 +76,14 @@ public class CacheJoinInfo {
       return timeout;
    }
 
+   public boolean isTotalOrder() {
+      return totalOrder;
+   }
+
+   public boolean isDistributed() {
+      return distributed;
+   }
+
    @Override
    public String toString() {
       return "CacheJoinInfo{" +
@@ -80,6 +92,8 @@ public class CacheJoinInfo {
             ", numSegments=" + numSegments +
             ", numOwners=" + numOwners +
             ", timeout=" + timeout +
+            ", totalOrder=" + totalOrder +
+            ", distributed=" + distributed +
             '}';
    }
 
@@ -91,6 +105,8 @@ public class CacheJoinInfo {
          output.writeInt(cacheJoinInfo.numSegments);
          output.writeInt(cacheJoinInfo.numOwners);
          output.writeLong(cacheJoinInfo.timeout);
+         output.writeBoolean(cacheJoinInfo.totalOrder);
+         output.writeBoolean(cacheJoinInfo.distributed);
       }
 
       @Override
@@ -100,7 +116,9 @@ public class CacheJoinInfo {
          int numSegments = unmarshaller.readInt();
          int numOwners = unmarshaller.readInt();
          long timeout = unmarshaller.readLong();
-         return new CacheJoinInfo(consistentHashFactory, hashFunction, numSegments, numOwners, timeout);
+         boolean totalOrder = unmarshaller.readBoolean();
+         boolean distributed = unmarshaller.readBoolean();
+         return new CacheJoinInfo(consistentHashFactory, hashFunction, numSegments, numOwners, timeout, totalOrder, distributed);
       }
 
       @Override

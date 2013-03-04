@@ -25,6 +25,8 @@ package org.infinispan.interceptors.locking;
 
 import org.infinispan.commands.FlagAffectedCommand;
 import org.infinispan.commands.tx.VersionedPrepareCommand;
+import org.infinispan.commands.tx.totalorder.TotalOrderPrepareCommand;
+import org.infinispan.commands.write.WriteCommand;
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.container.DataContainer;
 import org.infinispan.container.entries.CacheEntry;
@@ -48,6 +50,7 @@ import org.infinispan.transaction.xa.CacheTransaction;
 
 import java.util.Collection;
 
+import static org.infinispan.transaction.WriteSkewHelper.performTotalOrderWriteSkewCheckAndReturnNewVersions;
 import static org.infinispan.transaction.WriteSkewHelper.performWriteSkewCheckAndReturnNewVersions;
 
 /**
@@ -56,6 +59,7 @@ import static org.infinispan.transaction.WriteSkewHelper.performWriteSkewCheckAn
  * the <b>Implementor</b> and various LockingInterceptors are the <b>Abstraction</b>.
  *
  * @author Mircea Markus
+ * @author Pedro Ruivo
  * @since 5.1
  */
 @Scope(Scopes.NAMED_CACHE)
@@ -113,6 +117,34 @@ public interface ClusteringDependentLogic {
                notifier.notifyCacheEntryCreated(
                      entry.getKey(), entry.getValue(), false, ctx, command);
          }
+      }
+
+      protected final EntryVersionsMap totalOrderCreateNewVersionsAndCheckForWriteSkews(TxInvocationContext context,
+                                                                                        VersionedPrepareCommand prepareCommand,
+                                                                                        WriteSkewHelper.KeySpecificLogic keySpecificLogic) {
+         if (context.isOriginLocal()) {
+            throw new IllegalStateException("This must not be reached");
+         }
+
+         EntryVersionsMap updatedVersionMap = new EntryVersionsMap();
+
+         if (!((TotalOrderPrepareCommand) prepareCommand).skipWriteSkewCheck()) {
+            updatedVersionMap = performTotalOrderWriteSkewCheckAndReturnNewVersions(prepareCommand, dataContainer,
+                                                                                    context, keySpecificLogic);
+         }
+
+         for (WriteCommand c : prepareCommand.getModifications()) {
+            for (Object k : c.getAffectedKeys()) {
+               if (keySpecificLogic.performCheckOnKey(k)) {
+                  if (!updatedVersionMap.containsKey(k)) {
+                     updatedVersionMap.put(k, null);
+                  }
+               }
+            }
+         }
+
+         context.getCacheTransaction().setUpdatedEntryVersions(updatedVersionMap);
+         return updatedVersionMap;
       }
 
    }
@@ -175,7 +207,7 @@ public interface ClusteringDependentLogic {
       private StateTransferManager stateTransferManager;
       private RpcManager rpcManager;
 
-      private static final WriteSkewHelper.KeySpecificLogic keySpecificLogic = new WriteSkewHelper.KeySpecificLogic() {
+      protected static final WriteSkewHelper.KeySpecificLogic keySpecificLogic = new WriteSkewHelper.KeySpecificLogic() {
          @Override
          public boolean performCheckOnKey(Object key) {
             return true;
@@ -255,10 +287,12 @@ public interface ClusteringDependentLogic {
    public static class ReplicationLogic extends InvalidationLogic {
 
       private StateTransferLock stateTransferLock;
+      private Configuration configuration;
 
       @Inject
-      public void init(StateTransferLock stateTransferLock) {
+      public void init(StateTransferLock stateTransferLock, Configuration configuration) {
          this.stateTransferLock = stateTransferLock;
+         this.configuration = configuration;
       }
 
       @Override
@@ -268,6 +302,15 @@ public interface ClusteringDependentLogic {
             super.commitEntry(entry, newVersion, command, ctx);
          } finally {
             stateTransferLock.releaseSharedTopologyLock();
+         }
+      }
+
+      @Override
+      public EntryVersionsMap createNewVersionsAndCheckForWriteSkews(VersionGenerator versionGenerator, TxInvocationContext context, VersionedPrepareCommand prepareCommand) {
+         if (configuration.transaction().transactionProtocol().isTotalOrder()) {
+            return totalOrderCreateNewVersionsAndCheckForWriteSkews(context, prepareCommand, keySpecificLogic);
+         } else {
+            return super.createNewVersionsAndCheckForWriteSkews(versionGenerator, context, prepareCommand);
          }
       }
    }
@@ -370,6 +413,9 @@ public interface ClusteringDependentLogic {
 
       @Override
       public EntryVersionsMap createNewVersionsAndCheckForWriteSkews(VersionGenerator versionGenerator, TxInvocationContext context, VersionedPrepareCommand prepareCommand) {
+         if (configuration.transaction().transactionProtocol().isTotalOrder()) {
+            return totalOrderCreateNewVersionsAndCheckForWriteSkews(context, prepareCommand, keySpecificLogic);
+         }
          // Perform a write skew check on mapped entries.
          EntryVersionsMap uv = performWriteSkewCheckAndReturnNewVersions(prepareCommand, dataContainer,
                                                                          versionGenerator, context,

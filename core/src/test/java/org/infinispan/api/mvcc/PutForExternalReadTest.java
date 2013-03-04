@@ -162,7 +162,8 @@ public class PutForExternalReadTest extends MultipleCacheManagersTest {
       Transport originalTransport = TestingUtil.extractComponent(cache1, Transport.class);
       Transport mockTransport = spy(originalTransport);
       doThrow(new RuntimeException("Barf!")).when(mockTransport).invokeRemotely(anyAddresses(),
-            (CacheRpcCommand) anyObject(), anyResponseMode(), anyLong(), anyBoolean(), (ResponseFilter) anyObject());
+            (CacheRpcCommand) anyObject(), anyResponseMode(), anyLong(), anyBoolean(), (ResponseFilter) anyObject(),
+            anyBoolean(), anyBoolean());
 
       RpcManagerImpl rpcManager = (RpcManagerImpl) TestingUtil.extractComponent(cache1, RpcManager.class);
       rpcManager.setTransport(mockTransport);

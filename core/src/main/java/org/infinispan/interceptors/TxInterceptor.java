@@ -91,6 +91,7 @@ public class TxInterceptor extends CommandInterceptor {
 
    private static final Log log = LogFactory.getLog(TxInterceptor.class);
    private RecoveryManager recoveryManager;
+   private boolean isTotalOrder;
 
    @Override
    protected Log getLog() {
@@ -106,6 +107,7 @@ public class TxInterceptor extends CommandInterceptor {
       this.rpcManager = rpcManager;
       this.recoveryManager = recoveryManager;
       setStatisticsEnabled(cacheConfiguration.jmxStatistics().enabled());
+      this.isTotalOrder = c.transaction().transactionProtocol().isTotalOrder();
    }
 
    @Override
@@ -151,7 +153,7 @@ public class TxInterceptor extends CommandInterceptor {
    public Object visitCommitCommand(TxInvocationContext ctx, CommitCommand command) throws Throwable {
       if (this.statisticsEnabled) commits.incrementAndGet();
       Object result = invokeNextInterceptor(ctx, command);
-      if (!ctx.isOriginLocal()) {
+      if (!ctx.isOriginLocal() || isTotalOrder) {
          txTable.remoteTransactionCommitted(ctx.getGlobalTransaction());
       }
       return result;
@@ -160,7 +162,7 @@ public class TxInterceptor extends CommandInterceptor {
    @Override
    public Object visitRollbackCommand(TxInvocationContext ctx, RollbackCommand command) throws Throwable {
       if (this.statisticsEnabled) rollbacks.incrementAndGet();
-      if (!ctx.isOriginLocal()) {
+      if (!ctx.isOriginLocal() || isTotalOrder) {
          txTable.remoteTransactionRollback(command.getGlobalTransaction());
       }
       try {

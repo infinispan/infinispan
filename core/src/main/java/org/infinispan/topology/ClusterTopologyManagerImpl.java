@@ -61,6 +61,7 @@ import static org.infinispan.factories.KnownComponentNames.ASYNC_TRANSPORT_EXECU
  * The {@code ClusterTopologyManager} implementation.
  *
  * @author Dan Berindei
+ * @author Pedro Ruivo
  * @since 5.2
  */
 public class ClusterTopologyManagerImpl implements ClusterTopologyManager {
@@ -329,7 +330,7 @@ public class ClusterTopologyManagerImpl implements ClusterTopologyManager {
       ReplicableCommand command = new CacheTopologyControlCommand(cacheName,
             CacheTopologyControlCommand.Type.CH_UPDATE, transport.getAddress(), cacheTopology,
             transport.getViewId());
-      executeOnClusterSync(command, getGlobalTimeout());
+      executeOnClusterSync(command, getGlobalTimeout(), cacheStatus.isTotalOrder(), cacheStatus.isDistributed());
    }
 
    private void startRebalance(String cacheName) throws Exception {
@@ -389,7 +390,7 @@ public class ClusterTopologyManagerImpl implements ClusterTopologyManager {
       ReplicableCommand command = new CacheTopologyControlCommand(cacheName,
             CacheTopologyControlCommand.Type.REBALANCE_START, transport.getAddress(), cacheTopology,
             transport.getViewId());
-      executeOnClusterSync(command, getGlobalTimeout());
+      executeOnClusterSync(command, getGlobalTimeout(), cacheStatus.isTotalOrder(), cacheStatus.isDistributed());
    }
 
    private void endRebalance(String cacheName, ClusterCacheStatus cacheStatus) {
@@ -410,7 +411,7 @@ public class ClusterTopologyManagerImpl implements ClusterTopologyManager {
       log.debugf("Recovering running caches in the cluster");
       ReplicableCommand command = new CacheTopologyControlCommand(null,
             CacheTopologyControlCommand.Type.GET_STATUS, transport.getAddress(), viewId);
-      Map<Address, Object> statusResponses = executeOnClusterSync(command, getGlobalTimeout());
+      Map<Address, Object> statusResponses = executeOnClusterSync(command, getGlobalTimeout(), false, false);
 
       HashMap<String, List<CacheTopology>> clusterCacheMap = new HashMap<String, List<CacheTopology>>();
       for (Map.Entry<Address, Object> responseEntry : statusResponses.entrySet()) {
@@ -522,14 +523,33 @@ public class ClusterTopologyManagerImpl implements ClusterTopologyManager {
       }
    }
 
-   private Map<Address, Object> executeOnClusterSync(final ReplicableCommand command, final int timeout)
+   private Map<Address, Object> executeOnClusterSync(final ReplicableCommand command, final int timeout,
+                                                     boolean totalOrder, boolean distributed)
          throws Exception {
       // first invoke remotely
+
+      if (totalOrder) {
+         Map<Address, Response> responseMap = transport.invokeRemotely(null, command,
+                                                                       ResponseMode.SYNCHRONOUS_IGNORE_LEAVERS,
+                                                                       timeout, false, null, totalOrder, distributed);
+         Map<Address, Object> responseValues = new HashMap<Address, Object>(transport.getMembers().size());
+         for (Map.Entry<Address, Response> entry : responseMap.entrySet()) {
+            Address address = entry.getKey();
+            Response response = entry.getValue();
+            if (!response.isSuccessful()) {
+               Throwable cause = response instanceof ExceptionResponse ? ((ExceptionResponse) response).getException() : null;
+               throw new CacheException("Unsuccessful response received from node " + address + ": " + response, cause);
+            }
+            responseValues.put(address, ((SuccessfulResponse) response).getResponseValue());
+         }
+         return responseValues;
+      }
+
       Future<Map<Address, Response>> remoteFuture = asyncTransportExecutor.submit(new Callable<Map<Address, Response>>() {
          @Override
          public Map<Address, Response> call() throws Exception {
             return transport.invokeRemotely(null, command,
-                  ResponseMode.SYNCHRONOUS_IGNORE_LEAVERS, timeout, true, null);
+                  ResponseMode.SYNCHRONOUS_IGNORE_LEAVERS, timeout, true, null, false, false);
          }
       });
 

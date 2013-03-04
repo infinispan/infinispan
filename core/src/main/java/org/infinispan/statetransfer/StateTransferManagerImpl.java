@@ -112,8 +112,9 @@ public class StateTransferManagerImpl implements StateTransferManager {
             configuration.clustering().hash().hash(),
             configuration.clustering().hash().numSegments(),
             configuration.clustering().hash().numOwners(),
-            configuration.clustering().stateTransfer().timeout()
-      );
+            configuration.clustering().stateTransfer().timeout(),
+            configuration.transaction().transactionProtocol().isTotalOrder(),
+            configuration.clustering().cacheMode().isDistributed());
 
       CacheTopology initialTopology = localTopologyManager.join(cacheName, joinInfo, new CacheTopologyHandler() {
          @Override
@@ -288,7 +289,7 @@ public class StateTransferManagerImpl implements StateTransferManager {
             command.setTopologyId(localTopologyId);
             log.tracef("Forwarding command %s to new targets %s", command, newTargets);
             // TODO find a way to forward the command async if it was received async
-            rpcManager.invokeRemotely(newTargets, command, sync, false);
+            rpcManager.invokeRemotely(newTargets, command, sync, false, false);
          }
       }
    }
@@ -296,5 +297,10 @@ public class StateTransferManagerImpl implements StateTransferManager {
    @Override
    public void notifyEndOfTopologyUpdate(int topologyId) {
       localTopologyManager.confirmRebalance(cacheName, topologyId, null);
+   }
+
+   @Override
+   public boolean ownsData() {
+      return stateConsumer.ownsData();
    }
 }

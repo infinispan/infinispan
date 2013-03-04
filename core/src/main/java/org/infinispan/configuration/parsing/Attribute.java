@@ -149,7 +149,9 @@ public enum Attribute {
     MIN_TIME_TO_WAIT("minTimeToWait"),
     USE_TWO_PHASE_COMMIT("useTwoPhaseCommit"),
     REAPER_WAKE_UP_INTERVAL("reaperWakeUpInterval"),
-    COMPLETED_TX_TIMEOUT("completedTxTimeout");
+    COMPLETED_TX_TIMEOUT("completedTxTimeout"),
+    TRANSACTION_PROTOCOL("transactionProtocol"),
+    ;
 
     private final String name;
 

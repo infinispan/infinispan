@@ -387,7 +387,7 @@ public class MapReduceTask<KIn, VIn, KOut, VOut> {
             }
          }
       });
-      rpc.invokeRemotely(cache.getRpcManager().getMembers(), ccc, true, false);
+      rpc.invokeRemotely(cache.getRpcManager().getMembers(), ccc, true, false, false);
    }
 
    protected Set<KOut> executeMapPhase(boolean useCompositeKeys) throws InterruptedException,
@@ -769,7 +769,7 @@ public class MapReduceTask<KIn, VIn, KOut, VOut> {
                      }
                   } else {
                      rpc.invokeRemotely(Collections.singletonList(task.getExecutionTarget()), cc,
-                              true);
+                              true, false);
                   }
                   cancelled = true;
                   done = true;

@@ -37,6 +37,7 @@ import org.infinispan.marshall.StreamingMarshaller;
 import org.infinispan.notifications.cachemanagerlistener.CacheManagerNotifier;
 import org.infinispan.remoting.responses.ResponseGenerator;
 import org.infinispan.statetransfer.StateTransferManager;
+import org.infinispan.transaction.totalorder.TotalOrderManager;
 import org.infinispan.util.InfinispanCollections;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
@@ -64,6 +65,7 @@ public final class ComponentRegistry extends AbstractComponentRegistry {
    private StateTransferManager stateTransferManager;
    private ResponseGenerator responseGenerator;
    private CommandsFactory commandsFactory;
+   private TotalOrderManager totalOrderManager;
 
    protected final WeakReference<ClassLoader> defaultClassLoader;
 
@@ -289,11 +291,16 @@ public final class ComponentRegistry extends AbstractComponentRegistry {
       stateTransferManager = getOrCreateComponent(StateTransferManager.class);
       responseGenerator = getOrCreateComponent(ResponseGenerator.class);
       commandsFactory = getLocalComponent(CommandsFactory.class);
+      totalOrderManager = getOrCreateComponent(TotalOrderManager.class);
    }
 
    @Override
    public ComponentMetadataRepo getComponentMetadataRepo() {
       return globalComponents.getComponentMetadataRepo();
+   }
+
+   public final TotalOrderManager getTotalOrderManager() {
+      return totalOrderManager;
    }
 
 }

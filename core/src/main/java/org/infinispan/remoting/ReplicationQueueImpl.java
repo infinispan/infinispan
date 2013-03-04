@@ -172,7 +172,7 @@ public class ReplicationQueueImpl implements ReplicationQueue {
             // send to all live caches in the cluster
             rpcManager.invokeRemotely(null, multipleRpcCommand,
                   ResponseMode.getAsyncResponseMode(configuration),
-                  configuration.clustering().sync().replTimeout());
+                  configuration.clustering().sync().replTimeout(), false);
          } catch (Throwable t) {
             log.failedReplicatingQueue(toReplicate.size(), t);
          }

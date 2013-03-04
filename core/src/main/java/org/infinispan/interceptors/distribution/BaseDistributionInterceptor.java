@@ -87,7 +87,7 @@ public abstract class BaseDistributionInterceptor extends ClusteringInterceptor 
       targets.retainAll(rpcManager.getTransport().getMembers());
       ResponseFilter filter = new ClusteredGetResponseValidityFilter(targets, rpcManager.getAddress());
       Map<Address, Response> responses = rpcManager.invokeRemotely(targets, get, ResponseMode.WAIT_FOR_VALID_RESPONSE,
-            cacheConfiguration.clustering().sync().replTimeout(), true, filter);
+            cacheConfiguration.clustering().sync().replTimeout(), true, filter, false);
 
       if (!responses.isEmpty()) {
          for (Response r : responses.values()) {

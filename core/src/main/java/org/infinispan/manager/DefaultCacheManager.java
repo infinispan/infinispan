@@ -596,7 +596,7 @@ public class DefaultCacheManager implements EmbeddedCacheManager, CacheManager {
             if (transport != null) {
                Configuration c = getConfiguration(cacheName);
                // Use sync replication timeout
-               transport.invokeRemotely(null, cmd, ResponseMode.SYNCHRONOUS, c.clustering().sync().replTimeout(), false, null);
+               transport.invokeRemotely(null, cmd, ResponseMode.SYNCHRONOUS, c.clustering().sync().replTimeout(), false, null, false, false);
             }
             // Once sent to the cluster, remove the local cache
             cmd.perform(null);

@@ -23,6 +23,8 @@
 package org.infinispan.factories;
 
 import org.infinispan.config.ConfigurationException;
+import org.infinispan.executors.LazyInitializingBlockingTaskAwareExecutorService;
+import org.infinispan.util.concurrent.BlockingTaskAwareExecutorService;
 import org.infinispan.executors.ExecutorFactory;
 import org.infinispan.executors.LazyInitializingExecutorService;
 import org.infinispan.executors.LazyInitializingScheduledExecutorService;
@@ -41,9 +43,11 @@ import static org.infinispan.factories.KnownComponentNames.*;
  * A factory that specifically knows how to create named executors.
  *
  * @author Manik Surtani
+ * @author Pedro Ruivo
  * @since 4.0
  */
-@DefaultFactoryFor(classes = {ExecutorService.class, Executor.class, ScheduledExecutorService.class})
+@DefaultFactoryFor(classes = {ExecutorService.class, Executor.class, ScheduledExecutorService.class,
+                              BlockingTaskAwareExecutorService.class})
 public class NamedExecutorsFactory extends NamedComponentFactory implements AutoInstantiableFactory {
 
    private ExecutorService notificationExecutor;
@@ -51,6 +55,7 @@ public class NamedExecutorsFactory extends NamedComponentFactory implements Auto
    private ExecutorService remoteCommandsExecutor;
    private ScheduledExecutorService evictionExecutor;
    private ScheduledExecutorService asyncReplicationExecutor;
+   private BlockingTaskAwareExecutorService totalOrderExecutor;
 
    @Override
    @SuppressWarnings("unchecked")
@@ -106,6 +111,15 @@ public class NamedExecutorsFactory extends NamedComponentFactory implements Auto
                }
             }
             return (T) remoteCommandsExecutor;
+         } else if (componentName.equals(TOTAL_ORDER_EXECUTOR)) {
+            synchronized (this) {
+               if (totalOrderExecutor == null) {
+                  totalOrderExecutor = buildAndConfigureBlockingTaskAwareExecutorService(
+                        globalConfiguration.totalOrderExecutor().factory(),
+                        globalConfiguration.totalOrderExecutor().properties(), componentName, nodeName);
+               }
+            }
+            return (T) totalOrderExecutor;
          } else {
             throw new ConfigurationException("Unknown named executor " + componentName);
          }
@@ -123,6 +137,7 @@ public class NamedExecutorsFactory extends NamedComponentFactory implements Auto
       if (asyncTransportExecutor != null) asyncTransportExecutor.shutdownNow();
       if (asyncReplicationExecutor != null) asyncReplicationExecutor.shutdownNow();
       if (evictionExecutor != null) evictionExecutor.shutdownNow();
+      if (totalOrderExecutor != null) totalOrderExecutor.shutdownNow();
    }
 
    private ExecutorService buildAndConfigureExecutorService(ExecutorFactory f, Properties p,
@@ -146,6 +161,19 @@ public class NamedExecutorsFactory extends NamedComponentFactory implements Auto
       setComponentName(componentName, props);
       setDefaultThreadPrio(KnownComponentNames.getDefaultThreadPrio(componentName), props);
       return new LazyInitializingScheduledExecutorService(f, props);
+   }
+
+   private BlockingTaskAwareExecutorService buildAndConfigureBlockingTaskAwareExecutorService(ExecutorFactory f,
+                                                                                              Properties p, String componentName,
+                                                                                              String nodeName) throws Exception {
+      Properties props = new Properties(); // defensive copy
+      if (p != null && !p.isEmpty()) props.putAll(p);
+      setThreadSuffix(nodeName, props);
+      setComponentName(componentName, props);
+      setDefaultThreads(KnownComponentNames.getDefaultThreads(componentName), props);
+      setDefaultThreadPrio(KnownComponentNames.getDefaultThreadPrio(componentName), props);
+      setDefaultQueueSize(KnownComponentNames.getDefaultQueueSize(componentName), props);
+      return new LazyInitializingBlockingTaskAwareExecutorService(f, props);
    }
 
    private void setThreadSuffix(String nodeName, Properties props) {

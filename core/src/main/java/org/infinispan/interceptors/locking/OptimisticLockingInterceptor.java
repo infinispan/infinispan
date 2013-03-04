@@ -32,13 +32,11 @@ import org.infinispan.commands.read.GetKeyValueCommand;
 import org.infinispan.commands.tx.PrepareCommand;
 import org.infinispan.commands.write.ApplyDeltaCommand;
 import org.infinispan.commands.write.ClearCommand;
-import org.infinispan.commands.write.DataWriteCommand;
 import org.infinispan.commands.write.PutKeyValueCommand;
 import org.infinispan.commands.write.PutMapCommand;
 import org.infinispan.commands.write.RemoveCommand;
 import org.infinispan.commands.write.ReplaceCommand;
 import org.infinispan.commands.write.WriteCommand;
-import org.infinispan.commons.hash.MurmurHash3;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.container.EntryFactory;
 import org.infinispan.container.entries.CacheEntry;
@@ -48,14 +46,10 @@ import org.infinispan.context.InvocationContext;
 import org.infinispan.context.impl.TxInvocationContext;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.factories.annotations.Start;
-import org.infinispan.util.TimSort;
 import org.infinispan.util.concurrent.IsolationLevel;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
-import java.util.Arrays;
-import java.util.Comparator;
-import java.util.HashSet;
 import java.util.Set;
 
 /**
@@ -67,16 +61,7 @@ import java.util.Set;
 public class OptimisticLockingInterceptor extends AbstractTxLockingInterceptor {
 
    private LockAcquisitionVisitor lockAcquisitionVisitor;
-   private static final MurmurHash3 HASH = new MurmurHash3();
    private boolean needToMarkReads;
-   private final static Comparator<Object> keyComparator = new Comparator<Object>() {
-      @Override
-      public int compare(Object o1, Object o2) {
-         int thisVal = HASH.hash(o1);
-         int anotherVal = HASH.hash(o2);
-         return (thisVal<anotherVal ? -1 : (thisVal==anotherVal ? 0 : 1));
-      }
-   };
 
    EntryFactory entryFactory;
 
@@ -122,7 +107,7 @@ public class OptimisticLockingInterceptor extends AbstractTxLockingInterceptor {
          log.trace("Not using lock reordering as we have a single key.");
          acquireLocksVisitingCommands(ctx, command);
       } else {
-         Object[] orderedKeys = sort(command.getModifications());
+         Object[] orderedKeys = command.getAffectedKeysToLock(true);
          boolean hasClear = orderedKeys == null;
          if (hasClear) {
             log.trace("Not using lock reordering as the prepare contains a clear command.");
@@ -290,35 +275,6 @@ public class OptimisticLockingInterceptor extends AbstractTxLockingInterceptor {
       if (ce instanceof RepeatableReadEntry && ctx.getCacheTransaction().keyRead(key)) {
          ((RepeatableReadEntry) ce).performLocalWriteSkewCheck(dataContainer, true);
       }
-   }
-
-   private Object[] sort(WriteCommand[] writes) {
-      Set<Object> set = new HashSet<Object>();
-      for (WriteCommand wc: writes) {
-         switch (wc.getCommandId()) {
-            case ClearCommand.COMMAND_ID:
-               return null;
-            case PutKeyValueCommand.COMMAND_ID:
-            case RemoveCommand.COMMAND_ID:
-            case ReplaceCommand.COMMAND_ID:
-               set.add(((DataWriteCommand) wc).getKey());
-               break;
-            case PutMapCommand.COMMAND_ID:
-               set.addAll(wc.getAffectedKeys());
-               break;
-            case ApplyDeltaCommand.COMMAND_ID:
-               ApplyDeltaCommand command = (ApplyDeltaCommand) wc;
-               if (cdl.localNodeIsOwner(command.getKey())) {
-                  Object[] compositeKeys = command.getCompositeKeys();
-                  set.addAll(Arrays.asList(compositeKeys));
-               }
-               break;
-         }
-      }
-
-      Object[] sorted = set.toArray(new Object[set.size()]);
-      TimSort.sort(sorted, keyComparator);
-      return sorted;
    }
 
    private void acquireAllLocks(TxInvocationContext ctx, Object[] orderedKeys) throws InterruptedException {

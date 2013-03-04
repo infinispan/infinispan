@@ -845,5 +845,21 @@ public interface Log extends BasicLogger {
    @Message(value = "Received exception from %s, see cause for remote stack trace", id = 217)
    RemoteException remoteException(Address sender, @Cause Exception e);
 
+   @LogMessage(level = INFO)
+   @Message(value = "Timeout while waiting for the transaction validation. The command will not be processed. " +
+         "Transaction is %s", id = 218)
+   void timeoutWaitingUntilTransactionPrepared(String globalTx);
+
+   @LogMessage(level = WARN)
+   @Message(value = "Shutdown while handling command %s", id = 219)
+   void shutdownHandlingCommand(ReplicableCommand command);
+
+   @LogMessage(level = WARN)
+   @Message(value = "Problems un-marshalling remote command from byte buffer", id = 220)
+   void errorUnMarshallingCommand(@Cause Throwable throwable);
+
+   @LogMessage(level = WARN)
+   @Message(value = "Unknown response value [%s]. Expected [%s]", id = 221)
+   void unexpectedResponse(String actual, String expected);
 }
 

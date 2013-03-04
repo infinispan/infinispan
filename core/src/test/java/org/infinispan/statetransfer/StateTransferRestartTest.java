@@ -71,7 +71,7 @@ public class StateTransferRestartTest extends MultipleCacheManagersTest {
 
       @Override
       public Map<Address, Response> invokeRemotely(Collection<Address> recipients, ReplicableCommand rpcCommand, ResponseMode mode, long timeout,
-                                                   boolean usePriorityQueue, ResponseFilter responseFilter) throws Exception {
+                                                   boolean usePriorityQueue, ResponseFilter responseFilter, boolean totalOrder, boolean anycast) throws Exception {
          if (callOnStateResponseCommand != null && rpcCommand.getClass() == StateResponseCommand.class) {
             log.trace("Ignoring StateResponseCommand");
             try {
@@ -81,7 +81,7 @@ public class StateTransferRestartTest extends MultipleCacheManagersTest {
             }
             return InfinispanCollections.emptyMap();
          }
-         return super.invokeRemotely(recipients, rpcCommand, mode, timeout, usePriorityQueue, responseFilter);
+         return super.invokeRemotely(recipients, rpcCommand, mode, timeout, usePriorityQueue, responseFilter, totalOrder, anycast);
       }
    }
 

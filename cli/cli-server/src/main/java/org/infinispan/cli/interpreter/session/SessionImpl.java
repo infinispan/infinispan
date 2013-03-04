@@ -118,7 +118,7 @@ public class SessionImpl implements Session {
          CreateCacheCommand ccc = factory.buildCreateCacheCommand(cacheName, baseCacheName);
 
          try {
-            rpc.invokeRemotely(null, ccc, true, false);
+            rpc.invokeRemotely(null, ccc, true, false, false);
             ccc.init(cacheManager);
             ccc.perform(null);
          } catch (Throwable e) {

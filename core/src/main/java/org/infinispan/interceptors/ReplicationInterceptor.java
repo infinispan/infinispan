@@ -91,7 +91,7 @@ public class ReplicationInterceptor extends ClusteringInterceptor {
          throws TimeoutException, InterruptedException {
       // may need to resend, so make the commit command synchronous
       // TODO keep the list of prepared nodes or the view id when the prepare command was sent to know whether we need to resend the prepare info
-      rpcManager.invokeRemotely(null, command, cacheConfiguration.transaction().syncCommitPhase(), true);
+      rpcManager.invokeRemotely(null, command, cacheConfiguration.transaction().syncCommitPhase(), true, false);
    }
 
    @Override
@@ -112,7 +112,7 @@ public class ReplicationInterceptor extends ClusteringInterceptor {
    @Override
    public Object visitRollbackCommand(TxInvocationContext ctx, RollbackCommand command) throws Throwable {
       if (shouldInvokeRemoteTxCommand(ctx) && !Configurations.isOnePhaseCommit(cacheConfiguration)) {
-         rpcManager.broadcastRpcCommand(command, cacheConfiguration.transaction().syncRollbackPhase(), true);
+         rpcManager.broadcastRpcCommand(command, cacheConfiguration.transaction().syncRollbackPhase(), true, false);
       }
       return invokeNextInterceptor(ctx, command);
    }
@@ -206,7 +206,7 @@ public class ReplicationInterceptor extends ClusteringInterceptor {
       List<Address> targets = Collections.singletonList(getPrimaryOwner());
       ResponseFilter filter = new ClusteredGetResponseValidityFilter(targets, rpcManager.getAddress());
       Map<Address, Response> responses = rpcManager.invokeRemotely(targets, get, ResponseMode.WAIT_FOR_VALID_RESPONSE,
-            cacheConfiguration.clustering().sync().replTimeout(), true, filter);
+            cacheConfiguration.clustering().sync().replTimeout(), true, filter, false);
 
       if (!responses.isEmpty()) {
          for (Response r : responses.values()) {
@@ -294,7 +294,7 @@ public class ReplicationInterceptor extends ClusteringInterceptor {
       // FIRST pass this call up the chain.  Only if it succeeds (no exceptions) locally do we attempt to replicate.
       final Object returnValue = invokeNextInterceptor(ctx, command);
       if (!isLocalModeForced(command) && command.isSuccessful() && ctx.isOriginLocal() && !ctx.isInTxScope()) {
-         rpcManager.broadcastRpcCommand(command, isSynchronous(command));
+         rpcManager.broadcastRpcCommand(command, isSynchronous(command), false);
       }
       return returnValue;
    }

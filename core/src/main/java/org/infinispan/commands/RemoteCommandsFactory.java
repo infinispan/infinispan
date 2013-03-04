@@ -43,6 +43,11 @@ import org.infinispan.commands.tx.PrepareCommand;
 import org.infinispan.commands.tx.RollbackCommand;
 import org.infinispan.commands.tx.VersionedCommitCommand;
 import org.infinispan.commands.tx.VersionedPrepareCommand;
+import org.infinispan.commands.tx.totalorder.TotalOrderCommitCommand;
+import org.infinispan.commands.tx.totalorder.TotalOrderNonVersionedPrepareCommand;
+import org.infinispan.commands.tx.totalorder.TotalOrderRollbackCommand;
+import org.infinispan.commands.tx.totalorder.TotalOrderVersionedCommitCommand;
+import org.infinispan.commands.tx.totalorder.TotalOrderVersionedPrepareCommand;
 import org.infinispan.commands.write.ApplyDeltaCommand;
 import org.infinispan.commands.write.ClearCommand;
 import org.infinispan.commands.write.InvalidateCommand;
@@ -180,14 +185,29 @@ public class RemoteCommandsFactory {
             case VersionedPrepareCommand.COMMAND_ID:
                command = new VersionedPrepareCommand(cacheName);
                break;
+            case TotalOrderNonVersionedPrepareCommand.COMMAND_ID:
+               command = new TotalOrderNonVersionedPrepareCommand(cacheName);
+               break;
+            case TotalOrderVersionedPrepareCommand.COMMAND_ID:
+               command = new TotalOrderVersionedPrepareCommand(cacheName);
+               break;
             case CommitCommand.COMMAND_ID:
                command = new CommitCommand(cacheName);
                break;
             case VersionedCommitCommand.COMMAND_ID:
                command = new VersionedCommitCommand(cacheName);
                break;
+            case TotalOrderCommitCommand.COMMAND_ID:
+               command = new TotalOrderCommitCommand(cacheName);
+               break;
+            case TotalOrderVersionedCommitCommand.COMMAND_ID:
+               command = new TotalOrderVersionedCommitCommand(cacheName);
+               break;
             case RollbackCommand.COMMAND_ID:
                command = new RollbackCommand(cacheName);
+               break;
+            case TotalOrderRollbackCommand.COMMAND_ID:
+               command = new TotalOrderRollbackCommand(cacheName);
                break;
             case MultipleRpcCommand.COMMAND_ID:
                command = new MultipleRpcCommand(cacheName);

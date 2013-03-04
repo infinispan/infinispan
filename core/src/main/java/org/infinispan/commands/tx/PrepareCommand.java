@@ -23,10 +23,16 @@
 package org.infinispan.commands.tx;
 
 import org.infinispan.commands.Visitor;
+import org.infinispan.commands.write.ApplyDeltaCommand;
+import org.infinispan.commands.write.ClearCommand;
+import org.infinispan.commands.write.DataWriteCommand;
 import org.infinispan.commands.write.PutKeyValueCommand;
+import org.infinispan.commands.write.PutMapCommand;
 import org.infinispan.commands.write.RemoveCommand;
 import org.infinispan.commands.write.ReplaceCommand;
 import org.infinispan.commands.write.WriteCommand;
+import org.infinispan.commons.hash.Hash;
+import org.infinispan.commons.hash.MurmurHash3;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.context.impl.RemoteTxInvocationContext;
 import org.infinispan.context.impl.TxInvocationContext;
@@ -35,10 +41,12 @@ import org.infinispan.transaction.RemoteTransaction;
 import org.infinispan.transaction.xa.GlobalTransaction;
 import org.infinispan.transaction.xa.recovery.RecoveryManager;
 import org.infinispan.util.InfinispanCollections;
+import org.infinispan.util.TimSort;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
 import java.util.Arrays;
+import java.util.Comparator;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -64,6 +72,16 @@ public class PrepareCommand extends AbstractTransactionBoundaryCommand {
    private transient boolean replayEntryWrapping  = false;
    
    private static final WriteCommand[] EMPTY_WRITE_COMMAND_ARRAY = new WriteCommand[0];
+   private static final Object[] EMPTY_ARRAY = new Object[0];
+   private static final Comparator<Object> KEY_COMPARATOR = new Comparator<Object>() {
+
+      private final Hash hash = new MurmurHash3();
+
+      @Override
+      public int compare(Object o1, Object o2) {
+         return Integer.valueOf(hash.hash(o1)).compareTo(hash.hash(o2));
+      }
+   };
 
    public void initialize(CacheNotifier notifier, RecoveryManager recoveryManager) {
       this.notifier = notifier;
@@ -103,7 +121,7 @@ public class PrepareCommand extends AbstractTransactionBoundaryCommand {
       }
 
       // 1. first create a remote transaction (or get the existing one)
-      RemoteTransaction remoteTransaction = txTable.getOrCreateRemoteTransaction(globalTx, modifications);
+      RemoteTransaction remoteTransaction = getRemoteTransaction();
       //set the list of modifications anyway, as the transaction might have already been created by a previous
       //LockControlCommand with null modifications.
       if (hasModifications()) {
@@ -117,6 +135,11 @@ public class PrepareCommand extends AbstractTransactionBoundaryCommand {
          log.tracef("Invoking remotely originated prepare: %s with invocation context: %s", this, ctx);
       notifier.notifyTransactionRegistered(ctx.getGlobalTransaction(), ctx);
       return invoker.invoke(ctx, this);
+   }
+
+   @Override
+   protected RemoteTransaction getRemoteTransaction() {
+      return txTable.getOrCreateRemoteTransaction(globalTx, modifications);
    }
 
    @Override
@@ -217,5 +240,42 @@ public class PrepareCommand extends AbstractTransactionBoundaryCommand {
    @Override
    public boolean isReturnValueExpected() {
       return false;
+   }
+
+   /**
+    * It returns an array of keys affected by the WriteCommand in modifications.
+    *
+    * @param sort          if {@code true}, the array returned is sorted by the key hash.
+    * @return  an array of keys
+    */
+   public Object[] getAffectedKeysToLock(boolean sort) {
+      if (modifications == null) {
+         return EMPTY_ARRAY;
+      }
+      Set<Object> set = new HashSet<Object>(modifications.length);
+      for (WriteCommand wc : modifications) {
+         switch (wc.getCommandId()) {
+            case ClearCommand.COMMAND_ID:
+               return null;
+            case PutKeyValueCommand.COMMAND_ID:
+            case RemoveCommand.COMMAND_ID:
+            case ReplaceCommand.COMMAND_ID:
+               set.add(((DataWriteCommand) wc).getKey());
+               break;
+            case PutMapCommand.COMMAND_ID:
+               set.addAll(wc.getAffectedKeys());
+               break;
+            case ApplyDeltaCommand.COMMAND_ID:
+               ApplyDeltaCommand command = (ApplyDeltaCommand) wc;
+               Object[] compositeKeys = command.getCompositeKeys();
+               set.addAll(Arrays.asList(compositeKeys));
+               break;
+         }
+      }
+      Object[] sorted = set.toArray(new Object[set.size()]);
+      if (sort) {
+         TimSort.sort(sorted, KEY_COMPARATOR);
+      }
+      return sorted;
    }
 }
