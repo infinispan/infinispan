@@ -30,6 +30,7 @@ import org.infinispan.container.entries.InternalCacheEntry;
 import org.infinispan.context.Flag;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.factories.annotations.Start;
+import org.infinispan.remoting.responses.ExceptionResponse;
 import org.infinispan.remoting.responses.Response;
 import org.infinispan.remoting.responses.SuccessfulResponse;
 import org.infinispan.remoting.transport.Address;
@@ -171,7 +172,7 @@ public class NonTxDistributionInterceptor extends BaseDistributionInterceptor {
       if (!isSingleOwnerAndLocal(rg)) {
          List<Address> recipients = rg.generateRecipients();
          if (!command.isSuccessful() && recipients.contains(rpcManager.getAddress())) {
-            log.trace("Skipping remote invocation as the command hasn't executed correctly on owner");
+            log.tracef("Skipping remote invocation as the command hasn't executed correctly on owner %s", rpcManager.getAddress());
          } else {
             Map<Address, Response> responseMap = rpcManager.invokeRemotely(recipients, command, sync);
             if (sync && !recipients.isEmpty()) {
@@ -200,10 +201,12 @@ public class NonTxDistributionInterceptor extends BaseDistributionInterceptor {
    protected Object getResponseFromPrimaryOwner(Address primaryOwner, Map<Address, Response> addressResponseMap) {
       Response fromPrimaryOwner = addressResponseMap.get(primaryOwner);
       if (fromPrimaryOwner == null) {
+         log.tracef("Primary owner %s returned null", primaryOwner);
          return null;
       }
       if (!fromPrimaryOwner.isSuccessful()) {
-         throw new CacheException("Got unsuccessful response " + fromPrimaryOwner);
+         Throwable cause = fromPrimaryOwner instanceof ExceptionResponse ? ((ExceptionResponse)fromPrimaryOwner).getException() : null;
+         throw new CacheException("Got unsuccessful response from primary owner: " + fromPrimaryOwner, cause);
       } else {
          return ((SuccessfulResponse) fromPrimaryOwner).getResponseValue();
       }
