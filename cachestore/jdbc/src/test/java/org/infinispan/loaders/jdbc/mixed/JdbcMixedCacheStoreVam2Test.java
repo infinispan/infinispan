@@ -34,13 +34,13 @@ import org.testng.annotations.Test;
 import static org.infinispan.test.TestingUtil.extractCacheMarshaller;
 
 /**
- * JdbcMixedCacheStoreTest2 using production level marshaller.
+ * JdbcMixedCacheStore2Test using production level marshaller.
  * 
  * @author Galder Zamarreño
  * @since 4.0
  */
-@Test(groups = "functional", testName = "loaders.jdbc.mixed.JdbcMixedCacheStoreVamTest2")
-public class JdbcMixedCacheStoreVamTest2 extends JdbcMixedCacheStoreTest2 {
+@Test(groups = "functional", testName = "loaders.jdbc.mixed.JdbcMixedCacheStoreVam2Test")
+public class JdbcMixedCacheStoreVam2Test extends JdbcMixedCacheStore2Test {
 
    EmbeddedCacheManager cm;
    StreamingMarshaller marshaller;
