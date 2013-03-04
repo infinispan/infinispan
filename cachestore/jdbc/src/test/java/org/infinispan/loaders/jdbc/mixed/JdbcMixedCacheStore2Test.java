@@ -33,8 +33,8 @@ import org.infinispan.loaders.jdbc.connectionfactory.ConnectionFactoryConfig;
 import org.infinispan.test.fwk.UnitTestDatabaseManager;
 import org.testng.annotations.Test;
 
-@Test(groups = "functional", testName = "loaders.jdbc.mixed.JdbcMixedCacheStoreTest2")
-public class JdbcMixedCacheStoreTest2 extends BaseCacheStoreTest {
+@Test(groups = "functional", testName = "loaders.jdbc.mixed.JdbcMixedCacheStore2Test")
+public class JdbcMixedCacheStore2Test extends BaseCacheStoreTest {
    @Override
    protected CacheStore createCacheStore() throws Exception {
       JdbcMixedCacheStoreConfig jdbcCacheStoreConfig = new JdbcMixedCacheStoreConfig();
@@ -47,6 +47,7 @@ public class JdbcMixedCacheStoreTest2 extends BaseCacheStoreTest {
       jdbcCacheStoreConfig.setConnectionFactoryConfig(cfc);
       jdbcCacheStoreConfig.setStringsTableManipulation(stringsTm);
       jdbcCacheStoreConfig.setBinaryTableManipulation(binaryTm);
+      jdbcCacheStoreConfig.setPurgeSynchronously(true);
 
       JdbcMixedCacheStore cacheStore = new JdbcMixedCacheStore();
       Cache<?, ?> mockCache = mock(Cache.class);
