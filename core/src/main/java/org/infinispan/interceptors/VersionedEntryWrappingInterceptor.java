@@ -48,7 +48,7 @@ import org.infinispan.util.logging.LogFactory;
  */
 public class VersionedEntryWrappingInterceptor extends EntryWrappingInterceptor {
 
-   private VersionGenerator versionGenerator;
+   protected VersionGenerator versionGenerator;
    private static final Log log = LogFactory.getLog(VersionedEntryWrappingInterceptor.class);
 
    @Override
@@ -63,9 +63,7 @@ public class VersionedEntryWrappingInterceptor extends EntryWrappingInterceptor 
 
    @Override
    public Object visitPrepareCommand(TxInvocationContext ctx, PrepareCommand command) throws Throwable {
-      if (!ctx.isOriginLocal() || command.isReplayEntryWrapping()) {
-         for (WriteCommand c : command.getModifications()) c.acceptVisitor(ctx, entryWrappingVisitor);
-      }
+      wrapEntriesForPrepare(ctx, command);
       EntryVersionsMap newVersionData= null;
       if (ctx.isOriginLocal() && !((LocalTransaction)ctx.getCacheTransaction()).isFromStateTransfer()) newVersionData = cdl.createNewVersionsAndCheckForWriteSkews(versionGenerator, ctx, (VersionedPrepareCommand) command);
 

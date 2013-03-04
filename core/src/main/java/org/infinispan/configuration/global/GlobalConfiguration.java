@@ -44,6 +44,7 @@ import org.infinispan.factories.scopes.Scopes;
  * @author Mircea.Markus@jboss.com
  * @author Galder Zamarreño
  * @author Pete Muir
+ * @author Pedro Ruivo
  * @since 5.1
  *
  * @see <a href="../../../config.html#ce_infinispan_global">Configuration reference</a>
@@ -61,6 +62,7 @@ public class GlobalConfiguration {
    private final ExecutorFactoryConfiguration asyncListenerExecutor;
    private final ExecutorFactoryConfiguration asyncTransportExecutor;
    private final ExecutorFactoryConfiguration remoteCommandsExecutor;
+   private final ExecutorFactoryConfiguration totalOrderExecutor;
    private final ScheduledExecutorFactoryConfiguration evictionScheduledExecutor;
    private final ScheduledExecutorFactoryConfiguration replicationQueueScheduledExecutor;
    private final GlobalJmxStatisticsConfiguration globalJmxStatistics;
@@ -76,7 +78,7 @@ public class GlobalConfiguration {
          ScheduledExecutorFactoryConfiguration evictionScheduledExecutor,
          ScheduledExecutorFactoryConfiguration replicationQueueScheduledExecutor, GlobalJmxStatisticsConfiguration globalJmxStatistics,
          TransportConfiguration transport, SerializationConfiguration serialization, ShutdownConfiguration shutdown,
-         List<?> modules, SiteConfiguration site,ClassLoader cl) {
+         List<?> modules, SiteConfiguration site,ClassLoader cl, ExecutorFactoryConfiguration totalOrderExecutor) {
       this.asyncListenerExecutor = asyncListenerExecutor;
       this.asyncTransportExecutor = asyncTransportExecutor;
       this.remoteCommandsExecutor = remoteCommandsExecutor;
@@ -93,6 +95,7 @@ public class GlobalConfiguration {
       this.modules = Collections.unmodifiableMap(moduleMap);
       this.site = site;
       this.cl = new WeakReference<ClassLoader>(cl);
+      this.totalOrderExecutor = totalOrderExecutor;
    }
 
    public ExecutorFactoryConfiguration asyncListenerExecutor() {
@@ -166,6 +169,11 @@ public class GlobalConfiguration {
             ", modules=" + modules +
             ", site=" + site +
             ", cl=" + cl +
+            ", totalOrderExecutor=" + totalOrderExecutor +
             '}';
+   }
+
+   public ExecutorFactoryConfiguration totalOrderExecutor() {
+      return totalOrderExecutor;
    }
 }

@@ -31,6 +31,11 @@ import org.infinispan.commands.remote.MultipleRpcCommand;
 import org.infinispan.commands.tx.CommitCommand;
 import org.infinispan.commands.tx.PrepareCommand;
 import org.infinispan.commands.tx.RollbackCommand;
+import org.infinispan.commands.tx.totalorder.TotalOrderCommitCommand;
+import org.infinispan.commands.tx.totalorder.TotalOrderNonVersionedPrepareCommand;
+import org.infinispan.commands.tx.totalorder.TotalOrderRollbackCommand;
+import org.infinispan.commands.tx.totalorder.TotalOrderVersionedCommitCommand;
+import org.infinispan.commands.tx.totalorder.TotalOrderVersionedPrepareCommand;
 import org.infinispan.commands.write.ClearCommand;
 import org.infinispan.commands.write.InvalidateCommand;
 import org.infinispan.commands.write.InvalidateL1Command;
@@ -38,6 +43,7 @@ import org.infinispan.commands.write.PutKeyValueCommand;
 import org.infinispan.commands.write.PutMapCommand;
 import org.infinispan.commands.write.RemoveCommand;
 import org.infinispan.commands.write.ReplaceCommand;
+import org.infinispan.commands.write.WriteCommand;
 import org.infinispan.commons.hash.MurmurHash3;
 import org.infinispan.config.Configuration;
 import org.infinispan.container.entries.ImmortalCacheEntry;
@@ -279,6 +285,21 @@ public class VersionAwareMarshallerTest extends AbstractInfinispanTest {
 
       MultipleRpcCommand c99 = new MultipleRpcCommand(Arrays.<ReplicableCommand>asList(c2, c5, c6, c8, c10, c12, c13), cacheName);
       marshallAndAssertEquality(c99);
+
+      TotalOrderNonVersionedPrepareCommand c14 = new TotalOrderNonVersionedPrepareCommand(cacheName, gtx, c5, c6, c8, c10);
+      marshallAndAssertEquality(c14);
+
+      TotalOrderVersionedPrepareCommand c15 = new TotalOrderVersionedPrepareCommand(cacheName, gtx, Arrays.<WriteCommand>asList(c5, c10), true);
+      marshallAndAssertEquality(c15);
+
+      TotalOrderRollbackCommand c16 = new TotalOrderRollbackCommand(cacheName, gtx);
+      marshallAndAssertEquality(c16);
+
+      TotalOrderCommitCommand c17 = new TotalOrderCommitCommand(cacheName, gtx);
+      marshallAndAssertEquality(c17);
+
+      TotalOrderVersionedCommitCommand c18 = new TotalOrderVersionedCommitCommand(cacheName, gtx);
+      marshallAndAssertEquality(c18);
    }
 
    public void testStateTransferControlCommand() throws Exception {

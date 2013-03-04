@@ -64,7 +64,7 @@ public class NonTxConcurrentDistributionInterceptor extends NonTxDistributionInt
          }
          primaryOwners.remove(rpcManager.getAddress());
          if (!primaryOwners.isEmpty()) {
-            rpcManager.invokeRemotely(primaryOwners, command, isSynchronous(command));
+            rpcManager.invokeRemotely(primaryOwners, command, isSynchronous(command), false);
          }
       } else {
          if (!command.isForwarded()) {
@@ -78,7 +78,7 @@ public class NonTxConcurrentDistributionInterceptor extends NonTxDistributionInt
             if (!backupOwners.isEmpty()) {
                command.setFlags(Flag.SKIP_LOCKING);
                command.setForwarded(true);
-               rpcManager.invokeRemotely(backupOwners, command, isSynchronous(command));
+               rpcManager.invokeRemotely(backupOwners, command, isSynchronous(command), false);
                command.setForwarded(false);
             }
          }
@@ -94,13 +94,13 @@ public class NonTxConcurrentDistributionInterceptor extends NonTxDistributionInt
          log.tracef("I'm the primary owner, sending the command to all (%s) the recipients in order to be applied.", recipients);
          Object result = invokeNextInterceptor(ctx, command);
          if (!isSingleOwnerAndLocal(rg)) {
-            rpcManager.invokeRemotely(recipients, command, sync);
+            rpcManager.invokeRemotely(recipients, command, sync, false);
          }
          return result;
       } else {
          log.tracef("I'm not the primary owner, so sending the command to the primary owner(%s) in order to be forwarded", primaryOwner);
          Object localResult = invokeNextInterceptor(ctx, command);
-         Map<Address, Response> addressResponseMap = rpcManager.invokeRemotely(Collections.singletonList(primaryOwner), command, sync);
+         Map<Address, Response> addressResponseMap = rpcManager.invokeRemotely(Collections.singletonList(primaryOwner), command, sync, false);
          //the remote node always returns the correct result, but if we're async, then our best option is the local
          //node. That might be incorrect though.
          if (!sync) return localResult;
@@ -114,7 +114,7 @@ public class NonTxConcurrentDistributionInterceptor extends NonTxDistributionInt
          DataCommand dataCommand = (DataCommand) command;
          Address primaryOwner = cdl.getPrimaryOwner(dataCommand.getKey());
          if (primaryOwner.equals(rpcManager.getAddress())) {
-            rpcManager.invokeRemotely(recipientGenerator.generateRecipients(), command, sync);
+            rpcManager.invokeRemotely(recipientGenerator.generateRecipients(), command, sync, false);
          }
       }
    }

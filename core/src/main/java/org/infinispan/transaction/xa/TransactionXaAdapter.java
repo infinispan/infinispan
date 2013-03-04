@@ -72,6 +72,7 @@ public class TransactionXaAdapter extends AbstractEnlistmentAdapter implements X
    private volatile RecoveryManager.RecoveryIterator recoveryIterator;
    private boolean recoveryEnabled;
    private String cacheName;
+   private boolean onePhaseTotalOrder;
 
    public TransactionXaAdapter(LocalXaTransaction localTransaction, TransactionTable txTable,
                                RecoveryManager rm, TransactionCoordinator txCoordinator,
@@ -85,6 +86,9 @@ public class TransactionXaAdapter extends AbstractEnlistmentAdapter implements X
       this.txCoordinator = txCoordinator;
       this.cacheName = cacheName;
       recoveryEnabled = configuration.transaction().recovery().enabled();
+      //in distributed mode with write skew check, we only allow 2 phases!!
+      this.onePhaseTotalOrder = configuration.transaction().transactionProtocol().isTotalOrder() &&
+            !(configuration.clustering().cacheMode().isDistributed() && configuration.locking().writeSkewCheck());
    }
    public TransactionXaAdapter(TransactionTable txTable,
                                RecoveryManager rm, TransactionCoordinator txCoordinator,
@@ -98,6 +102,9 @@ public class TransactionXaAdapter extends AbstractEnlistmentAdapter implements X
       this.txCoordinator = txCoordinator;
       this.cacheName = cacheName;
       recoveryEnabled = configuration.transaction().recovery().enabled();
+      //in distributed mode, we only allow 2 phases!!
+      this.onePhaseTotalOrder = configuration.transaction().transactionProtocol().isTotalOrder() &&
+            !configuration.clustering().cacheMode().isDistributed();
    }
 
    /**
@@ -117,7 +124,9 @@ public class TransactionXaAdapter extends AbstractEnlistmentAdapter implements X
    public void commit(Xid externalXid, boolean isOnePhase) throws XAException {
       Xid xid = convertXid(externalXid);
       LocalXaTransaction localTransaction = getLocalTransactionAndValidate(xid);
-      if (isOnePhase) {
+      if (isOnePhase && onePhaseTotalOrder) {
+         txCoordinator.commit(localTransaction, true);
+      } else if (isOnePhase) {
          //isOnePhase being true means that we're the only participant in the distributed transaction and TM does the
          //1PC optimization. We run a 2PC though, as running only 1PC has a high chance of leaving the cluster in
          //inconsistent state.
@@ -159,7 +168,9 @@ public class TransactionXaAdapter extends AbstractEnlistmentAdapter implements X
       Xid xid = convertXid(externalXid);
       if (trace) log.tracef("forget called for xid %s", xid);
       try {
-         recoveryManager.removeRecoveryInformationFromCluster(null, xid, true, null);
+         if (recoveryManager != null) {
+            recoveryManager.removeRecoveryInformationFromCluster(null, xid, true, null);
+         }
       } catch (Exception e) {
          log.warn("Exception removing recovery information: ", e);
          throw new XAException(XAException.XAER_RMERR);

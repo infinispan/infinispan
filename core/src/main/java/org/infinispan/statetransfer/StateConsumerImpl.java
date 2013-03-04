@@ -29,6 +29,7 @@ import org.infinispan.commands.CommandsFactory;
 import org.infinispan.commands.write.InvalidateCommand;
 import org.infinispan.commands.write.PutKeyValueCommand;
 import org.infinispan.configuration.cache.Configuration;
+import org.infinispan.configuration.cache.Configurations;
 import org.infinispan.container.DataContainer;
 import org.infinispan.container.entries.InternalCacheEntry;
 import org.infinispan.context.Flag;
@@ -51,9 +52,10 @@ import org.infinispan.remoting.rpc.ResponseMode;
 import org.infinispan.remoting.rpc.RpcManager;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.topology.CacheTopology;
-import org.infinispan.transaction.LockingMode;
 import org.infinispan.transaction.RemoteTransaction;
 import org.infinispan.transaction.TransactionTable;
+import org.infinispan.transaction.totalorder.TotalOrderLatch;
+import org.infinispan.transaction.totalorder.TotalOrderManager;
 import org.infinispan.transaction.xa.CacheTransaction;
 import org.infinispan.util.InfinispanCollections;
 import org.infinispan.util.ReadOnlyDataContainerBackedKeySet;
@@ -96,10 +98,12 @@ public class StateConsumerImpl implements StateConsumer {
    private InvocationContextContainer icc;
    private StateTransferLock stateTransferLock;
    private CacheNotifier cacheNotifier;
+   private TotalOrderManager totalOrderManager;
    private long timeout;
    private boolean useVersionedPut;
    private boolean isFetchEnabled;
    private boolean isTransactional;
+   private boolean isTotalOrder;
 
    private volatile CacheTopology cacheTopology;
 
@@ -147,6 +151,8 @@ public class StateConsumerImpl implements StateConsumer {
    private final BlockingDeque<InboundTransferTask> taskQueue = new LinkedBlockingDeque<InboundTransferTask>();
 
    private boolean isTransferThreadRunning;
+
+   private volatile boolean ownsData = false;
 
    public StateConsumerImpl() {
    }
@@ -203,7 +209,8 @@ public class StateConsumerImpl implements StateConsumer {
                     DataContainer dataContainer,
                     TransactionTable transactionTable,
                     StateTransferLock stateTransferLock,
-                    CacheNotifier cacheNotifier) {
+                    CacheNotifier cacheNotifier,
+                    TotalOrderManager totalOrderManager) {
       this.cacheName = cache.getName();
       this.executorService = executorService;
       this.stateTransferManager = stateTransferManager;
@@ -218,14 +225,14 @@ public class StateConsumerImpl implements StateConsumer {
       this.transactionTable = transactionTable;
       this.stateTransferLock = stateTransferLock;
       this.cacheNotifier = cacheNotifier;
+      this.totalOrderManager = totalOrderManager;
 
       isTransactional = configuration.transaction().transactionMode().isTransactional();
+      isTotalOrder = configuration.transaction().transactionProtocol().isTotalOrder();
 
       // we need to use a special form of PutKeyValueCommand that can apply versions too
       useVersionedPut = isTransactional &&
-            configuration.versioning().enabled() &&
-            configuration.locking().writeSkewCheck() &&
-            configuration.transaction().lockingMode() == LockingMode.OPTIMISTIC &&
+            Configurations.isVersioningEnabled(configuration) &&
             configuration.clustering().cacheMode().isClustered();
 
       timeout = configuration.clustering().stateTransfer().timeout();
@@ -259,15 +266,51 @@ public class StateConsumerImpl implements StateConsumer {
    }
 
    @Override
+   public boolean ownsData() {
+      return ownsData;
+   }
+
+   @Override
    public void onTopologyUpdate(CacheTopology cacheTopology, boolean isRebalance) {
       if (trace) log.tracef("Received new topology for cache %s, isRebalance = %b, topology = %s", cacheName, isRebalance, cacheTopology);
 
       activeTopologyUpdates.incrementAndGet();
       if (isRebalance) {
+         if (!ownsData && cacheTopology.getMembers().contains(rpcManager.getAddress())) {
+            ownsData = true;
+         }
          rebalanceInProgress.set(true);
          waitingForState.set(true);
          cacheNotifier.notifyDataRehashed(cacheTopology.getCurrentCH(), cacheTopology.getPendingCH(),
                cacheTopology.getTopologyId(), true);
+
+         //in total order, we should wait for remote transactions before proceeding
+         if (configuration.transaction().transactionProtocol().isTotalOrder()) {
+            if (log.isTraceEnabled()) {
+               log.trace("State Transfer in Total Order cache. Waiting for remote transactions to finish");
+            }
+            try {
+               for (TotalOrderLatch block : totalOrderManager.notifyStateTransferStart(cacheTopology.getTopologyId())) {
+                  block.awaitUntilUnBlock();
+               }
+            } catch (InterruptedException e) {
+               //interrupted...
+               Thread.currentThread().interrupt();
+               throw new CacheException(e);
+            }
+            if (log.isTraceEnabled()) {
+               log.trace("State Transfer in Total Order cache. All remote transactions are finished. Moving on...");
+            }
+         }
+
+         if (log.isTraceEnabled()) {
+            log.tracef("Lock State Transfer in Progress for topology ID %s", cacheTopology.getTopologyId());
+         }
+      } else {
+         if (cacheTopology.getMembers().size() == 1 && cacheTopology.getMembers().get(0).equals(rpcManager.getAddress())) {
+            //we are the first member in the cache...
+            ownsData = true;
+         }
       }
       final ConsistentHash previousReadCh = this.cacheTopology != null ? this.cacheTopology.getReadConsistentHash() : null;
       final ConsistentHash previousWriteCh = this.cacheTopology != null ? this.cacheTopology.getWriteConsistentHash() : null;
@@ -363,6 +406,10 @@ public class StateConsumerImpl implements StateConsumer {
                   // but we only want to notify the @DataRehashed listeners once
                   cacheNotifier.notifyDataRehashed(previousReadCh, cacheTopology.getCurrentCH(),
                         cacheTopology.getTopologyId(), false);
+                  if (log.isTraceEnabled()) {
+                     log.tracef("Unlock State Transfer in Progress for topology ID %s", cacheTopology.getTopologyId());
+                  }
+                  totalOrderManager.notifyStateTransferEnd();
                }
             }
          }
@@ -567,7 +614,7 @@ public class StateConsumerImpl implements StateConsumer {
       // the sources and segments we are going to get from each source
       Map<Address, Set<Integer>> sources = new HashMap<Address, Set<Integer>>();
 
-      if (isTransactional) {
+      if (isTransactional && !isTotalOrder) {
          requestTransactions(segments, sources, excludedSources);
       }
 
@@ -652,7 +699,7 @@ public class StateConsumerImpl implements StateConsumer {
       // get transactions and locks
       try {
          StateRequestCommand cmd = commandsFactory.buildStateRequestCommand(StateRequestCommand.Type.GET_TRANSACTIONS, rpcManager.getAddress(), topologyId, segments);
-         Map<Address, Response> responses = rpcManager.invokeRemotely(Collections.singleton(source), cmd, ResponseMode.SYNCHRONOUS_IGNORE_LEAVERS, timeout);
+         Map<Address, Response> responses = rpcManager.invokeRemotely(Collections.singleton(source), cmd, ResponseMode.SYNCHRONOUS_IGNORE_LEAVERS, timeout, false);
          Response response = responses.get(source);
          if (response instanceof SuccessfulResponse) {
             return (List<TransactionInfo>) ((SuccessfulResponse) response).getResponseValue();

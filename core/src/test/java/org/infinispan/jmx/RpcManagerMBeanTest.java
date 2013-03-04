@@ -182,7 +182,7 @@ public class RpcManagerMBeanTest extends MultipleCacheManagersTest {
          when(transport.getMembers()).thenReturn(memberList);
          when(transport.getAddress()).thenReturn(null);
          when(transport.invokeRemotely(any(Collection.class), any(ReplicableCommand.class), any(ResponseMode.class),
-               anyLong(), anyBoolean(), any(ResponseFilter.class))).thenThrow(new RuntimeException());
+               anyLong(), anyBoolean(), any(ResponseFilter.class), anyBoolean(), anyBoolean())).thenThrow(new RuntimeException());
          rpcManager.setTransport(transport);
          cache1.put("a5", "b5");
          assert false : "rpc manager should have thrown an exception";

@@ -50,6 +50,7 @@ public abstract class AbstractEnlistmentAdapter {
    private final int hashCode;
    private final boolean isSecondPhaseAsync;
    private final boolean isPessimisticLocking;
+   private final boolean isTotalOrder;
 
    public AbstractEnlistmentAdapter(CacheTransaction cacheTransaction,
             CommandsFactory commandsFactory, RpcManager rpcManager,
@@ -61,6 +62,7 @@ public abstract class AbstractEnlistmentAdapter {
       this.clusteringLogic = clusteringLogic;
       this.isSecondPhaseAsync = Configurations.isSecondPhaseAsync(configuration);
       this.isPessimisticLocking = configuration.transaction().lockingMode() == LockingMode.PESSIMISTIC;
+      this.isTotalOrder = configuration.transaction().transactionProtocol().isTotalOrder();
       hashCode = preComputeHashCode(cacheTransaction);
    }
 
@@ -73,6 +75,7 @@ public abstract class AbstractEnlistmentAdapter {
       this.clusteringLogic = clusteringLogic;
       this.isSecondPhaseAsync = Configurations.isSecondPhaseAsync(configuration);
       this.isPessimisticLocking = configuration.transaction().lockingMode() == LockingMode.PESSIMISTIC;
+      this.isTotalOrder = configuration.transaction().transactionProtocol().isTotalOrder();
       hashCode = 31;
    }
 
@@ -90,14 +93,14 @@ public abstract class AbstractEnlistmentAdapter {
          final Collection<Address> owners = clusteringLogic.getOwners(localTransaction.getAffectedKeys());
          Collection<Address> commitNodes = localTransaction.getCommitNodes(owners, rpcManager.getTopologyId(), rpcManager.getMembers());
          log.tracef("About to invoke tx completion notification on commitNodes: %s", commitNodes);
-         rpcManager.invokeRemotely(commitNodes, command, false, true);
+         rpcManager.invokeRemotely(commitNodes, command, false, true, false);
       }
    }
 
    private boolean mayHaveRemoteLocks(LocalTransaction lt) {
-      return lt.getRemoteLocksAcquired() != null && !lt.getRemoteLocksAcquired().isEmpty() ||
+      return !isTotalOrder && (lt.getRemoteLocksAcquired() != null && !lt.getRemoteLocksAcquired().isEmpty() ||
             !lt.getModifications().isEmpty() ||
-            isPessimisticLocking && lt.getTopologyId() != rpcManager.getTopologyId();
+            isPessimisticLocking && lt.getTopologyId() != rpcManager.getTopologyId());
    }
 
    /**

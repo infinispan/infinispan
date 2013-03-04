@@ -891,7 +891,7 @@ public class DefaultExecutorService extends AbstractExecutorService implements D
                   log.couldNotExecuteCancellationLocally(e.getLocalizedMessage());
                }
             } else {
-               rpc.invokeRemotely(Collections.singletonList(getExecutionTarget()), ccc, true);
+               rpc.invokeRemotely(Collections.singletonList(getExecutionTarget()), ccc, true, false);
             }
             cancelled = true;
             done = true;

@@ -376,7 +376,7 @@ public class TransactionTable {
     * Removes the {@link RemoteTransaction} corresponding to the given tx.
     */
    public void remoteTransactionCommitted(GlobalTransaction gtx) {
-      if (Configurations.isSecondPhaseAsync(configuration)) {
+      if (Configurations.isSecondPhaseAsync(configuration) || configuration.transaction().transactionProtocol().isTotalOrder()) {
          removeRemoteTransaction(gtx);
       }
    }
@@ -567,5 +567,5 @@ public class TransactionTable {
             log.errorf(e, "Failed to cleanup completed transactions: %s", e.getMessage());
          }
       }
-   }   
+   }
 }

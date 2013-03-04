@@ -100,6 +100,8 @@
    <pbcast.STABLE stability_delay="1000" desired_avg_gossip="5000"
                   max_bytes="400000"/>
    <pbcast.GMS print_local_addr="false" join_timeout="7000" view_bundling="true"/>
+   <SEQUENCER/> <!-- the sequencer is only needed for total order transactions-->
+   <tom.TOA/> <!-- the Total Order Anycast is only needed for total order transactions (in distributed mode)-->
    <FC max_credits="2000000"
        min_threshold="0.10"/>
    <FRAG2 frag_size="60000"/>

@@ -197,13 +197,13 @@ public class SyncReplTest extends MultipleCacheManagersTest {
          when(
                mockTransport.invokeRemotely((List<Address>) anyObject(),
                      (CacheRpcCommand) anyObject(), eq(ResponseMode.SYNCHRONOUS), anyLong(),
-                     anyBoolean(), (ResponseFilter) anyObject())).thenReturn(emptyResponses);
+                     anyBoolean(), (ResponseFilter) anyObject(), anyBoolean(), anyBoolean())).thenReturn(emptyResponses);
 
          // check that the replication call was sync
          cache1.put("k", "v");
          verify(mockTransport).invokeRemotely((List<Address>) anyObject(),
                                               (CacheRpcCommand) anyObject(), eq(ResponseMode.SYNCHRONOUS), anyLong(),
-                                              anyBoolean(), (ResponseFilter) anyObject());
+                                              anyBoolean(), (ResponseFilter) anyObject(), anyBoolean(), anyBoolean());
 
          // resume to test for async
          asyncRpcManager = (RpcManagerImpl) TestingUtil.extractComponent(asyncCache1, RpcManager.class);
@@ -215,12 +215,12 @@ public class SyncReplTest extends MultipleCacheManagersTest {
          when(
                   mockTransport.invokeRemotely((List<Address>) anyObject(),
                            (CacheRpcCommand) anyObject(), eq(ResponseMode.ASYNCHRONOUS), anyLong(),
-                           anyBoolean(), (ResponseFilter) anyObject())).thenReturn(emptyResponses);
+                           anyBoolean(), (ResponseFilter) anyObject(), anyBoolean(), anyBoolean())).thenReturn(emptyResponses);
 
          asyncCache1.put("k", "v");
          verify(mockTransport).invokeRemotely((List<Address>) anyObject(),
                                                (CacheRpcCommand) anyObject(), eq(ResponseMode.ASYNCHRONOUS), anyLong(),
-                                               anyBoolean(), (ResponseFilter) anyObject());
+                                               anyBoolean(), (ResponseFilter) anyObject(), anyBoolean(), anyBoolean());
       } finally {
          // replace original transport
          if (rpcManager != null)

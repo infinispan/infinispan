@@ -124,64 +124,64 @@ public class ControlledRpcManager implements RpcManager {
       return cmdClass;
    }
 
-   public Map<Address, Response> invokeRemotely(Collection<Address> recipients, ReplicableCommand rpcCommand, ResponseMode mode, long timeout, boolean usePriorityQueue, ResponseFilter responseFilter) {
+   public Map<Address, Response> invokeRemotely(Collection<Address> recipients, ReplicableCommand rpcCommand, ResponseMode mode, long timeout, boolean usePriorityQueue, ResponseFilter responseFilter, boolean totalOrder) {
       log.trace("invokeRemotely1");
       failIfNeeded(rpcCommand);
       waitBefore(rpcCommand);
-      Map<Address, Response> responseMap = realOne.invokeRemotely(recipients, rpcCommand, mode, timeout, usePriorityQueue, responseFilter);
+      Map<Address, Response> responseMap = realOne.invokeRemotely(recipients, rpcCommand, mode, timeout, usePriorityQueue, responseFilter, totalOrder);
       waitAfter(rpcCommand);
       return responseMap;
    }
 
-   public Map<Address, Response> invokeRemotely(Collection<Address> recipients, ReplicableCommand rpcCommand, ResponseMode mode, long timeout, boolean usePriorityQueue) {
+   public Map<Address, Response> invokeRemotely(Collection<Address> recipients, ReplicableCommand rpcCommand, ResponseMode mode, long timeout, boolean usePriorityQueue, boolean totalOrder) {
       log.trace("invokeRemotely2");
       failIfNeeded(rpcCommand);
       waitBefore(rpcCommand);
-      Map<Address, Response> responseMap = realOne.invokeRemotely(recipients, rpcCommand, mode, timeout, usePriorityQueue);
+      Map<Address, Response> responseMap = realOne.invokeRemotely(recipients, rpcCommand, mode, timeout, usePriorityQueue, totalOrder);
       waitAfter(rpcCommand);
       return responseMap;
    }
 
-   public Map<Address, Response> invokeRemotely(Collection<Address> recipients, ReplicableCommand rpcCommand, ResponseMode mode, long timeout) {
+   public Map<Address, Response> invokeRemotely(Collection<Address> recipients, ReplicableCommand rpcCommand, ResponseMode mode, long timeout, boolean totalOrder) {
       log.trace("invokeRemotely3");
       failIfNeeded(rpcCommand);
       waitBefore(rpcCommand);
-      Map<Address, Response> responseMap = realOne.invokeRemotely(recipients, rpcCommand, mode, timeout);
+      Map<Address, Response> responseMap = realOne.invokeRemotely(recipients, rpcCommand, mode, timeout, totalOrder);
       waitAfter(rpcCommand);
       return responseMap;
    }
 
-   public Map<Address, Response> invokeRemotely(Collection<Address> recipients, ReplicableCommand rpcCommand, boolean sync) throws RpcException {
+   public Map<Address, Response> invokeRemotely(Collection<Address> recipients, ReplicableCommand rpcCommand, boolean sync, boolean totalOrder) throws RpcException {
       log.trace("invokeRemotely4");
       failIfNeeded(rpcCommand);
       waitBefore(rpcCommand);
-      Map<Address, Response> responseMap = realOne.invokeRemotely(recipients, rpcCommand, sync);
+      Map<Address, Response> responseMap = realOne.invokeRemotely(recipients, rpcCommand, sync, totalOrder);
       waitAfter(rpcCommand);
       return responseMap;
    }
 
-   public Map<Address, Response> invokeRemotely(Collection<Address> recipients, ReplicableCommand rpcCommand, boolean sync, boolean usePriorityQueue) throws RpcException {
+   public Map<Address, Response> invokeRemotely(Collection<Address> recipients, ReplicableCommand rpcCommand, boolean sync, boolean usePriorityQueue, boolean totalOrder) throws RpcException {
       log.trace("invokeRemotely5");
       failIfNeeded(rpcCommand);
       waitBefore(rpcCommand);
-      Map<Address, Response> responses = realOne.invokeRemotely(recipients, rpcCommand, sync, usePriorityQueue);
+      Map<Address, Response> responses = realOne.invokeRemotely(recipients, rpcCommand, sync, usePriorityQueue, totalOrder);
       waitAfter(rpcCommand);
       return responses;
    }
 
-   public void broadcastRpcCommand(ReplicableCommand rpcCommand, boolean sync) throws RpcException {
+   public void broadcastRpcCommand(ReplicableCommand rpcCommand, boolean sync, boolean totalOrder) throws RpcException {
       log.trace("ControlledRpcManager.broadcastRpcCommand1");
       failIfNeeded(rpcCommand);
       waitBefore(rpcCommand);
-      realOne.broadcastRpcCommand(rpcCommand, sync);
+      realOne.broadcastRpcCommand(rpcCommand, sync, totalOrder);
       waitAfter(rpcCommand);
    }
 
-   public void broadcastRpcCommand(ReplicableCommand rpcCommand, boolean sync, boolean usePriorityQueue) throws RpcException {
+   public void broadcastRpcCommand(ReplicableCommand rpcCommand, boolean sync, boolean usePriorityQueue, boolean totalOrder) throws RpcException {
       log.trace("ControlledRpcManager.broadcastRpcCommand2");
       failIfNeeded(rpcCommand);
       waitBefore(rpcCommand);
-      realOne.broadcastRpcCommand(rpcCommand, sync, usePriorityQueue);
+      realOne.broadcastRpcCommand(rpcCommand, sync, usePriorityQueue, totalOrder);
       waitAfter(rpcCommand);
    }
 

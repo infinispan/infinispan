@@ -20,8 +20,10 @@ package org.infinispan.configuration.cache;
 
 import org.infinispan.CacheConfigurationException;
 import org.infinispan.configuration.Builder;
+import org.infinispan.config.ConfigurationException;
 import org.infinispan.transaction.LockingMode;
 import org.infinispan.transaction.TransactionMode;
+import org.infinispan.transaction.TransactionProtocol;
 import org.infinispan.transaction.lookup.GenericTransactionManagerLookup;
 import org.infinispan.transaction.lookup.TransactionManagerLookup;
 import org.infinispan.transaction.lookup.TransactionSynchronizationRegistryLookup;
@@ -34,6 +36,7 @@ import java.util.concurrent.TimeUnit;
  * Defines transactional (JTA) characteristics of the cache.
  *
  * @author pmuir
+ * @author Pedro Ruivo
  */
 public class TransactionConfigurationBuilder extends AbstractConfigurationChildBuilder implements Builder<TransactionConfiguration> {
 
@@ -52,6 +55,7 @@ public class TransactionConfigurationBuilder extends AbstractConfigurationChildB
    private boolean use1PcForAutoCommitTransactions = false;
    private long reaperWakeUpInterval = 1000;
    private long completedTxTimeout = 15000;
+   private TransactionProtocol transactionProtocol = TransactionProtocol.DEFAULT;
 
 
    TransactionConfigurationBuilder(ConfigurationBuilder builder) {
@@ -254,6 +258,25 @@ public class TransactionConfigurationBuilder extends AbstractConfigurationChildB
          throw new CacheConfigurationException("reaperWakeUpInterval must be > 0, we got " + reaperWakeUpInterval);
       if (completedTxTimeout < 0)
          throw new CacheConfigurationException("completedTxTimeout must be > 0, we got " + reaperWakeUpInterval);
+      if(transactionProtocol == TransactionProtocol.TOTAL_ORDER) {
+         //total order only supports transactional caches
+         if(transactionMode != TransactionMode.TRANSACTIONAL) {
+            throw new ConfigurationException("Total Order based protocol not available in " + transactionMode +" cache");
+         }
+
+         //total order only supports replicated and distributed mode
+         if(!clustering().cacheMode().isReplicated() && !clustering().cacheMode().isDistributed()) {
+            throw new ConfigurationException(clustering().cacheMode().friendlyCacheModeString() + " is not supported by Total Order based protocol");
+         }
+
+         if (recovery.create().enabled()) {
+            throw new ConfigurationException("Total Order based protocol not available with recovery");
+         }
+
+         if (lockingMode != LockingMode.OPTIMISTIC) {
+            throw new ConfigurationException("Total Order based protocol not available with " + lockingMode);
+         }
+      }
    }
 
    @Override
@@ -267,7 +290,7 @@ public class TransactionConfigurationBuilder extends AbstractConfigurationChildB
          transactionMode = TransactionMode.NON_TRANSACTIONAL;
       return new TransactionConfiguration(autoCommit, cacheStopTimeout, eagerLockingSingleNode, lockingMode, syncCommitPhase,
             syncRollbackPhase, transactionManagerLookup, transactionSynchronizationRegistryLookup, transactionMode,
-            useEagerLocking, useSynchronization, use1PcForAutoCommitTransactions, reaperWakeUpInterval, completedTxTimeout, recovery.create());
+            useEagerLocking, useSynchronization, use1PcForAutoCommitTransactions, reaperWakeUpInterval, completedTxTimeout, recovery.create(), transactionProtocol);
    }
 
    @Override
@@ -287,6 +310,7 @@ public class TransactionConfigurationBuilder extends AbstractConfigurationChildB
       this.recovery.read(template.recovery());
       this.reaperWakeUpInterval = template.reaperWakeUpInterval();
       this.completedTxTimeout = template.completedTxTimeout();
+      this.transactionProtocol = template.transactionProtocol();
 
       return this;
    }
@@ -312,4 +336,8 @@ public class TransactionConfigurationBuilder extends AbstractConfigurationChildB
             '}';
    }
 
+   public TransactionConfigurationBuilder transactionProtocol(TransactionProtocol transactionProtocol) {
+      this.transactionProtocol = transactionProtocol;
+      return this;
+   }
 }

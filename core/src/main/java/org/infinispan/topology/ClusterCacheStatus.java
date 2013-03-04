@@ -82,6 +82,14 @@ public class ClusterCacheStatus {
       return !joiners.isEmpty();
    }
 
+   public boolean isTotalOrder() {
+      return joinInfo.isTotalOrder();
+   }
+
+   public boolean isDistributed() {
+      return joinInfo.isDistributed();
+   }
+
    public void setMembers(List<Address> newMembers) {
       synchronized (this) {
          members = Immutables.immutableListCopy(newMembers);

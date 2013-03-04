@@ -54,6 +54,9 @@ public class RemoteTransaction extends AbstractCacheTransaction implements Clone
     */
    private volatile boolean missingLookedUpEntries = false;
 
+   private volatile TotalOrderRemoteTransactionState transactionState;
+   private final Object transactionStateLock = new Object();
+
    public RemoteTransaction(WriteCommand[] modifications, GlobalTransaction tx, int topologyId) {
       super(tx, topologyId);
       this.modifications = modifications == null || modifications.length == 0
@@ -122,6 +125,7 @@ public class RemoteTransaction extends AbstractCacheTransaction implements Clone
             ", missingLookedUpEntries=" + missingLookedUpEntries +
             ", isMarkedForRollback=" + isMarkedForRollback()+
             ", tx=" + tx +
+            ", state=" + transactionState +
             '}';
    }
 
@@ -136,6 +140,21 @@ public class RemoteTransaction extends AbstractCacheTransaction implements Clone
    private void checkIfRolledBack() {
       if (isMarkedForRollback()) {
          throw new InvalidTransactionException("This remote transaction " + getGlobalTransaction() + " is already rolled back");
+      }
+   }
+
+   /**
+    * @return  get (or create if needed) the {@code TotalOrderRemoteTransactionState} associated to this remote transaction
+    */
+   public final TotalOrderRemoteTransactionState getTransactionState() {
+      if (transactionState != null) {
+         return transactionState;
+      }
+      synchronized (transactionStateLock) {
+         if (transactionState == null) {
+            transactionState = new TotalOrderRemoteTransactionState(getGlobalTransaction());
+         }
+         return transactionState;
       }
    }
 }

@@ -176,7 +176,7 @@ public class L1ManagerImpl implements L1Manager {
             toExecute = new Runnable() {
                @Override
                public void run() {
-                  rpcManager.broadcastRpcCommand(rpcCommand, true);
+                  rpcManager.broadcastRpcCommand(rpcCommand, true, false);
                }
             };
          } else {
@@ -184,7 +184,7 @@ public class L1ManagerImpl implements L1Manager {
                @Override
                public void run() {
                   rpcManager.invokeRemotely(invalidationAddresses, rpcCommand,
-                                            ResponseMode.SYNCHRONOUS, rpcTimeout, true);
+                                            ResponseMode.SYNCHRONOUS, rpcTimeout, true, false);
                }
             };
          }
@@ -221,7 +221,7 @@ public class L1ManagerImpl implements L1Manager {
                return asyncTransportExecutor.submit(new Callable<Object>() {
                   @Override
                   public Object call() throws Exception {
-                     rpcManager.broadcastRpcCommand(ic, true);
+                     rpcManager.broadcastRpcCommand(ic, true, false);
                      return retval;
                   }
                });
@@ -240,7 +240,7 @@ public class L1ManagerImpl implements L1Manager {
                return asyncTransportExecutor.submit(new Callable<Object>() {
                   @Override
                   public Object call() throws Exception {
-                     rpcManager.invokeRemotely(invalidationAddresses, rpc, ResponseMode.SYNCHRONOUS, rpcTimeout, true);
+                     rpcManager.invokeRemotely(invalidationAddresses, rpc, ResponseMode.SYNCHRONOUS, rpcTimeout, true, false);
                      return retval;
                   }
                });

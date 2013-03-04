@@ -71,6 +71,13 @@
                   </xs:documentation>
                 </xs:annotation>
               </xs:element>
+                <xs:element name="totalOrderExecutor" type="tns:executorFactory" minOccurs="0">
+                    <xs:annotation>
+                        <xs:documentation>
+                            Configuration for the total order executor service used to concurrent validate non conflicting transactions
+                        </xs:documentation>
+                    </xs:annotation>
+                </xs:element>
               <xs:element name="site" type="tns:site" minOccurs="0">
                 <xs:annotation>
                   <xs:documentation>
@@ -603,6 +610,13 @@
               </xs:documentation>
             </xs:annotation>
           </xs:attribute>
+            <xs:attribute name="transactionProtocol" type="tns:transactionProtocol">
+                <xs:annotation>
+                    <xs:documentation>
+                        Configures the commit protocol to use.
+                    </xs:documentation>
+                </xs:annotation>
+            </xs:attribute>
         </xs:complexType>
       </xs:element>
       <xs:element name="customInterceptors" minOccurs="0">
@@ -1359,6 +1373,18 @@
       <xs:enumeration value="TRANSACTIONAL" />
     </xs:restriction>
   </xs:simpleType>
+
+    <xs:simpleType name="transactionProtocol">
+        <xs:annotation>
+            <xs:documentation>
+                Enumeration containing the available commit protocols
+            </xs:documentation>
+        </xs:annotation>
+        <xs:restriction base="xs:string">
+            <xs:enumeration value="TWO_PHASE_COMMIT" />
+            <xs:enumeration value="TOTAL_ORDER" />
+        </xs:restriction>
+    </xs:simpleType>
 
   <xs:complexType name="loader" abstract="true">
     <xs:sequence>

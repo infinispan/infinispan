@@ -45,8 +45,13 @@ import org.infinispan.commands.remote.recovery.TxCompletionNotificationCommand;
 import org.infinispan.commands.tx.CommitCommand;
 import org.infinispan.commands.tx.PrepareCommand;
 import org.infinispan.commands.tx.RollbackCommand;
+import org.infinispan.commands.tx.totalorder.TotalOrderCommitCommand;
+import org.infinispan.commands.tx.totalorder.TotalOrderNonVersionedPrepareCommand;
 import org.infinispan.commands.tx.VersionedCommitCommand;
 import org.infinispan.commands.tx.VersionedPrepareCommand;
+import org.infinispan.commands.tx.totalorder.TotalOrderRollbackCommand;
+import org.infinispan.commands.tx.totalorder.TotalOrderVersionedCommitCommand;
+import org.infinispan.commands.tx.totalorder.TotalOrderVersionedPrepareCommand;
 import org.infinispan.commands.write.ApplyDeltaCommand;
 import org.infinispan.commands.write.ClearCommand;
 import org.infinispan.commands.write.EvictCommand;
@@ -116,6 +121,7 @@ public class CommandsFactoryImpl implements CommandsFactory {
    private CacheNotifier notifier;
    private Cache<Object, Object> cache;
    private String cacheName;
+   private boolean totalOrderProtocol;
 
    // some stateless commands can be reused so that they aren't constructed again all the time.
    private SizeCommand cachedSizeCommand;
@@ -171,6 +177,7 @@ public class CommandsFactoryImpl implements CommandsFactory {
    // needs to happen early on
    public void start() {
       cacheName = cache.getName();
+      this.totalOrderProtocol = configuration.transaction().transactionProtocol().isTotalOrder();
    }
 
    @Override
@@ -272,27 +279,31 @@ public class CommandsFactoryImpl implements CommandsFactory {
 
    @Override
    public PrepareCommand buildPrepareCommand(GlobalTransaction gtx, List<WriteCommand> modifications, boolean onePhaseCommit) {
-      return new PrepareCommand(cacheName, gtx, modifications, onePhaseCommit);
+      return totalOrderProtocol ? new TotalOrderNonVersionedPrepareCommand(cacheName, gtx, modifications) :
+            new PrepareCommand(cacheName, gtx, modifications, onePhaseCommit);
    }
 
    @Override
    public VersionedPrepareCommand buildVersionedPrepareCommand(GlobalTransaction gtx, List<WriteCommand> modifications, boolean onePhase) {
-      return new VersionedPrepareCommand(cacheName, gtx, modifications, onePhase);
+      return totalOrderProtocol ? new TotalOrderVersionedPrepareCommand(cacheName, gtx, modifications, onePhase) :
+            new VersionedPrepareCommand(cacheName, gtx, modifications, onePhase);
    }
 
    @Override
    public CommitCommand buildCommitCommand(GlobalTransaction gtx) {
-      return new CommitCommand(cacheName, gtx);
+      return totalOrderProtocol ? new TotalOrderCommitCommand(cacheName, gtx) :
+            new CommitCommand(cacheName, gtx);
    }
 
    @Override
    public VersionedCommitCommand buildVersionedCommitCommand(GlobalTransaction gtx) {
-      return new VersionedCommitCommand(cacheName, gtx);
+      return totalOrderProtocol ? new TotalOrderVersionedCommitCommand(cacheName, gtx) :
+            new VersionedCommitCommand(cacheName, gtx);
    }
 
    @Override
    public RollbackCommand buildRollbackCommand(GlobalTransaction gtx) {
-      return new RollbackCommand(cacheName, gtx);
+      return totalOrderProtocol ? new TotalOrderRollbackCommand(cacheName, gtx) : new RollbackCommand(cacheName, gtx);
    }
 
    @Override
@@ -355,6 +366,8 @@ public class CommandsFactoryImpl implements CommandsFactory {
             break;
          case PrepareCommand.COMMAND_ID:
          case VersionedPrepareCommand.COMMAND_ID:
+         case TotalOrderNonVersionedPrepareCommand.COMMAND_ID:
+         case TotalOrderVersionedPrepareCommand.COMMAND_ID:
             PrepareCommand pc = (PrepareCommand) c;
             pc.init(interceptorChain, icc, txTable);
             pc.initialize(notifier, recoveryManager);
@@ -370,11 +383,14 @@ public class CommandsFactoryImpl implements CommandsFactory {
             break;
          case CommitCommand.COMMAND_ID:
          case VersionedCommitCommand.COMMAND_ID:
+         case TotalOrderCommitCommand.COMMAND_ID:
+         case TotalOrderVersionedCommitCommand.COMMAND_ID:
             CommitCommand commitCommand = (CommitCommand) c;
             commitCommand.init(interceptorChain, icc, txTable);
             commitCommand.markTransactionAsRemote(isRemote);
             break;
          case RollbackCommand.COMMAND_ID:
+         case TotalOrderRollbackCommand.COMMAND_ID:
             RollbackCommand rollbackCommand = (RollbackCommand) c;
             rollbackCommand.init(interceptorChain, icc, txTable);
             rollbackCommand.markTransactionAsRemote(isRemote);

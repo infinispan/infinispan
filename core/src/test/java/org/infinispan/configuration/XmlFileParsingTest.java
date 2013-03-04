@@ -61,6 +61,7 @@ import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.infinispan.test.tx.TestLookup;
 import org.infinispan.transaction.LockingMode;
+import org.infinispan.transaction.TransactionProtocol;
 import org.infinispan.transaction.lookup.GenericTransactionManagerLookup;
 import org.infinispan.util.concurrent.IsolationLevel;
 import org.testng.Assert;
@@ -313,6 +314,15 @@ public class XmlFileParsingTest extends AbstractInfinispanTest {
          assertEquals(String.valueOf(TestCacheManagerFactory.KEEP_ALIVE), gc.remoteCommandsExecutor().properties().getProperty("keepAliveTime"));
       }
 
+      if (!deprecated) {
+         assertTrue(gc.totalOrderExecutor().factory() instanceof DefaultExecutorFactory);
+         assertEquals("16", gc.totalOrderExecutor().properties().getProperty("maxThreads"));
+         assertEquals("TotalOrderValidatorThread", gc.totalOrderExecutor().properties().getProperty("threadNamePrefix"));
+         assertEquals("1", gc.totalOrderExecutor().properties().getProperty("coreThreads"));
+         assertEquals("1000", gc.totalOrderExecutor().properties().getProperty("keepAliveTime"));
+         assertEquals("0", gc.totalOrderExecutor().properties().getProperty("queueSize"));
+      }
+
       assert gc.evictionScheduledExecutor().factory() instanceof DefaultScheduledExecutorFactory;
       assert gc.evictionScheduledExecutor().properties().getProperty("threadNamePrefix").equals("EvictionThread");
 
@@ -360,6 +370,12 @@ public class XmlFileParsingTest extends AbstractInfinispanTest {
       assert c.transaction().cacheStopTimeout() == 10000;
       assert c.transaction().lockingMode().equals(LockingMode.PESSIMISTIC);
       assert !c.transaction().autoCommit();
+
+      c = cm.getCacheConfiguration("transactional3");
+
+      if (!deprecated) {
+         Assert.assertEquals(c.transaction().transactionProtocol(), TransactionProtocol.TOTAL_ORDER);
+      }
 
       c = cm.getCacheConfiguration("syncRepl");
 

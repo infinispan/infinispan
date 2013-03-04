@@ -80,4 +80,9 @@ public interface StateTransferManager {
    void forwardCommandIfNeeded(TopologyAffectedCommand command, Set<Object> affectedKeys, Address origin, boolean sync);
 
    void notifyEndOfTopologyUpdate(int topologyId);
+
+   /**
+    * @return  true if this node has already received the first rebalance start
+    */
+   boolean ownsData();
 }

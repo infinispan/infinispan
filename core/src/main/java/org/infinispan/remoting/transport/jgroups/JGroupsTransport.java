@@ -26,6 +26,7 @@ import org.infinispan.CacheConfigurationException;
 import org.infinispan.CacheException;
 import org.infinispan.commands.ReplicableCommand;
 import org.infinispan.commands.remote.ClusteredGetCommand;
+import org.infinispan.config.ConfigurationException;
 import org.infinispan.config.parsing.XmlConfigHelper;
 import org.infinispan.configuration.global.TransportConfiguration;
 import org.infinispan.factories.GlobalComponentRegistry;
@@ -59,7 +60,9 @@ import org.jgroups.View;
 import org.jgroups.blocks.RequestOptions;
 import org.jgroups.blocks.RspFilter;
 import org.jgroups.jmx.JmxConfigurator;
+import org.jgroups.protocols.SEQUENCER;
 import org.jgroups.protocols.relay.SiteMaster;
+import org.jgroups.protocols.tom.TOA;
 import org.jgroups.stack.AddressGenerator;
 import org.jgroups.util.Buffer;
 import org.jgroups.util.Rsp;
@@ -293,7 +296,9 @@ public class JGroupsTransport extends AbstractTransport implements MembershipLis
 
       // Channel.LOCAL *must* be set to false so we don't see our own messages - otherwise
       // invalidations targeted at remote instances will be received by self.
-      channel.setDiscardOwnMessages(true);
+      // NOTE: total order needs to deliver own messages. the invokeRemotely method has a total order boolean
+      //       that when it is false, it discard our own messages, maintaining the property needed
+      channel.setDiscardOwnMessages(false);
 
       // if we have a TopologyAwareConsistentHash, we need to set our own address generator in JGroups
       if (transportCfg.hasTopologyInfo()) {
@@ -465,8 +470,8 @@ public class JGroupsTransport extends AbstractTransport implements MembershipLis
    // ------------------------------------------------------------------------------------------------------------------
 
    @Override
-   public Map<Address, Response> invokeRemotely(Collection<Address> recipients, ReplicableCommand rpcCommand, ResponseMode mode, long timeout, boolean usePriorityQueue, ResponseFilter responseFilter)
-         throws Exception {
+   public Map<Address, Response> invokeRemotely(Collection<Address> recipients, ReplicableCommand rpcCommand, ResponseMode mode, long timeout, boolean usePriorityQueue, ResponseFilter responseFilter,
+                                                boolean totalOrder, boolean anycast) throws Exception {
 
       if (recipients != null && recipients.isEmpty()) {
          // don't send if recipients list is empty
@@ -490,18 +495,22 @@ public class JGroupsTransport extends AbstractTransport implements MembershipLis
       if (!usePriorityQueue && (ResponseMode.SYNCHRONOUS == mode || ResponseMode.SYNCHRONOUS_IGNORE_LEAVERS == mode))
          usePriorityQueue = true;
 
-      List<org.jgroups.Address> jgAddressList = toJGroupsAddressListExcludingSelf(recipients);
+      List<org.jgroups.Address> jgAddressList = toJGroupsAddressListExcludingSelf(recipients, totalOrder);
       int membersSize = members.size();
       boolean broadcast = jgAddressList == null || recipients.size() == membersSize;
-      if (membersSize < 3 || (jgAddressList != null && jgAddressList.size() < 2)) broadcast = false;
+      if (!totalOrder && (membersSize < 3 || (jgAddressList != null && jgAddressList.size() < 2))) broadcast = false;
       RspList<Object> rsps = null;
       Response singleResponse = null;
       org.jgroups.Address singleJGAddress = null;
 
-      if (broadcast) {
+      if (broadcast || (totalOrder && !anycast)) {
          rsps = dispatcher.broadcastRemoteCommands(rpcCommand, toJGroupsMode(mode), timeout, recipients != null,
                                                    usePriorityQueue, toJGroupsFilter(responseFilter),
-                                                   asyncMarshalling, ignoreLeavers);
+                                                   asyncMarshalling, ignoreLeavers, totalOrder, anycast);
+      } else if (totalOrder && anycast) {
+         rsps = dispatcher.invokeRemoteCommands(jgAddressList, rpcCommand, toJGroupsMode(mode), timeout,
+                                                recipients != null, usePriorityQueue, toJGroupsFilter(responseFilter),
+                                                asyncMarshalling, ignoreLeavers, totalOrder, anycast);
       } else {         
          if (jgAddressList == null || !jgAddressList.isEmpty()) {
             boolean singleRecipient = !ignoreLeavers && jgAddressList != null && jgAddressList.size() == 1;
@@ -521,7 +530,7 @@ public class JGroupsTransport extends AbstractTransport implements MembershipLis
                } else {
                   rsps = dispatcher.invokeRemoteCommands(jgAddressList, rpcCommand, toJGroupsMode(mode), timeout,
                                                          recipients != null, usePriorityQueue, toJGroupsFilter(responseFilter),
-                                                         asyncMarshalling, ignoreLeavers);
+                                                         asyncMarshalling, ignoreLeavers, totalOrder, anycast);
                }
             }
          }
@@ -562,10 +571,10 @@ public class JGroupsTransport extends AbstractTransport implements MembershipLis
          SiteMaster recipient = new SiteMaster(xsb.getSiteName());
          if (xsb.isSync()) {
             RequestOptions sync = new RequestOptions(org.jgroups.blocks.ResponseMode.GET_ALL, xsb.getTimeout());
-            syncBackupCalls.put(xsb, dispatcher.sendMessageWithFuture(dispatcher.constructMessage(buf, recipient, false, org.jgroups.blocks.ResponseMode.GET_ALL, false), sync));
+            syncBackupCalls.put(xsb, dispatcher.sendMessageWithFuture(dispatcher.constructMessage(buf, recipient, false, org.jgroups.blocks.ResponseMode.GET_ALL, false, false), sync));
          } else {
             RequestOptions async = new RequestOptions(org.jgroups.blocks.ResponseMode.GET_NONE, xsb.getTimeout());
-            dispatcher.sendMessage(dispatcher.constructMessage(buf, recipient, false, org.jgroups.blocks.ResponseMode.GET_NONE, false), async);
+            dispatcher.sendMessage(dispatcher.constructMessage(buf, recipient, false, org.jgroups.blocks.ResponseMode.GET_NONE, false, false), async);
          }
       }
       return new JGroupsBackupResponse(syncBackupCalls);
@@ -690,14 +699,14 @@ public class JGroupsTransport extends AbstractTransport implements MembershipLis
          return new JGroupsAddress(addr);
    }
 
-   private List<org.jgroups.Address> toJGroupsAddressListExcludingSelf(Collection<Address> list) {
+   private List<org.jgroups.Address> toJGroupsAddressListExcludingSelf(Collection<Address> list, boolean totalOrder) {
       if (list == null)
          return null;
       if (list.isEmpty())
          return InfinispanCollections.emptyList();
 
       List<org.jgroups.Address> retval = new ArrayList<org.jgroups.Address>(list.size());
-      boolean ignoreSelf = true;
+      boolean ignoreSelf = !totalOrder; //in total order, we need to send the message to ourselves!
       Address self = getAddress();
       for (Address a : list) {
          if (!ignoreSelf || !a.equals(self)) {
@@ -728,5 +737,16 @@ public class JGroupsTransport extends AbstractTransport implements MembershipLis
 
    public Channel getChannel() {
       return channel;
+   }
+
+   @Override
+   public final void checkTotalOrderSupported(boolean anycast) {
+      if (!anycast && channel.getProtocolStack().findProtocol(SEQUENCER.class) == null)  {
+         throw new ConfigurationException("In order to support total order based transaction, the SEQUENCER protocol " +
+                                                "must be present in the JGroups's config.");
+      } else if (anycast && channel.getProtocolStack().findProtocol(TOA.class) == null) {
+         throw new ConfigurationException("In order to support total order based transaction, the TOA protocol " +
+                                                "must be present in the JGroups's config.");
+      }
    }
 }

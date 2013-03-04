@@ -53,6 +53,7 @@ import org.infinispan.topology.CacheTopology;
 import org.infinispan.transaction.LocalTransaction;
 import org.infinispan.transaction.RemoteTransaction;
 import org.infinispan.transaction.TransactionTable;
+import org.infinispan.transaction.totalorder.TotalOrderManager;
 import org.infinispan.util.concurrent.IsolationLevel;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
@@ -155,6 +156,7 @@ public class StateConsumerTest {
       StateTransferLock stateTransferLock = mock(StateTransferLock.class);
       InterceptorChain interceptorChain = mock(InterceptorChain.class);
       InvocationContextContainer icc = mock(InvocationContextContainer.class);
+      TotalOrderManager totalOrderManager = mock(TotalOrderManager.class);
 
       when(commandsFactory.buildStateRequestCommand(any(StateRequestCommand.Type.class), any(Address.class), anyInt(), any(Set.class))).thenAnswer(new Answer<StateRequestCommand>() {
          @Override
@@ -167,7 +169,7 @@ public class StateConsumerTest {
       when(rpcManager.getAddress()).thenReturn(new TestAddress(0));
       when(rpcManager.getTransport()).thenReturn(transport);
 
-      when(rpcManager.invokeRemotely(any(Collection.class), any(ReplicableCommand.class), any(ResponseMode.class), anyLong())).thenAnswer(new Answer<Map<Address, Response>>() {
+      when(rpcManager.invokeRemotely(any(Collection.class), any(ReplicableCommand.class), any(ResponseMode.class), anyLong(), anyBoolean())).thenAnswer(new Answer<Map<Address, Response>>() {
          @Override
          public Map<Address, Response> answer(InvocationOnMock invocation) {
             Collection<Address> recipients = (Collection<Address>) invocation.getArguments()[0];
@@ -194,7 +196,7 @@ public class StateConsumerTest {
       // create state provider
       StateConsumerImpl stateConsumer = new StateConsumerImpl();
       stateConsumer.init(cache, pooledExecutorService, stateTransferManager, interceptorChain, icc, configuration, rpcManager, null,
-            commandsFactory, cacheLoaderManager, dataContainer, transactionTable, stateTransferLock, cacheNotifier);
+            commandsFactory, cacheLoaderManager, dataContainer, transactionTable, stateTransferLock, cacheNotifier, totalOrderManager);
       stateConsumer.start();
 
       final List<InternalCacheEntry> cacheEntries = new ArrayList<InternalCacheEntry>();

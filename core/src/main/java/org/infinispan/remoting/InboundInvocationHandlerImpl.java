@@ -27,6 +27,8 @@ import org.infinispan.commands.CancellableCommand;
 import org.infinispan.commands.CancellationService;
 import org.infinispan.commands.CommandsFactory;
 import org.infinispan.commands.remote.CacheRpcCommand;
+import org.infinispan.commands.tx.PrepareCommand;
+import org.infinispan.commands.tx.totalorder.TotalOrderPrepareCommand;
 import org.infinispan.configuration.global.GlobalConfiguration;
 import org.infinispan.factories.ComponentRegistry;
 import org.infinispan.factories.GlobalComponentRegistry;
@@ -35,6 +37,7 @@ import org.infinispan.factories.annotations.ComponentName;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.factories.scopes.Scope;
 import org.infinispan.factories.scopes.Scopes;
+import org.infinispan.interceptors.totalorder.RetryPrepareException;
 import org.infinispan.manager.NamedCacheNotFoundException;
 import org.infinispan.statetransfer.StateTransferManager;
 import org.infinispan.remoting.responses.ExceptionResponse;
@@ -42,6 +45,11 @@ import org.infinispan.remoting.responses.Response;
 import org.infinispan.remoting.responses.ResponseGenerator;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.remoting.transport.Transport;
+import org.infinispan.transaction.TotalOrderRemoteTransactionState;
+import org.infinispan.transaction.totalorder.TotalOrderLatch;
+import org.infinispan.transaction.totalorder.TotalOrderManager;
+import org.infinispan.util.concurrent.BlockingRunnable;
+import org.infinispan.util.concurrent.BlockingTaskAwareExecutorService;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
@@ -62,16 +70,19 @@ public class InboundInvocationHandlerImpl implements InboundInvocationHandler {
    private Transport transport;
    private CancellationService cancelService;
    private ExecutorService remoteCommandsExecutor;
+   private BlockingTaskAwareExecutorService totalOrderExecutorService;
 
    @Inject
    public void inject(GlobalComponentRegistry gcr, Transport transport,
                       @ComponentName(KnownComponentNames.REMOTE_COMMAND_EXECUTOR) ExecutorService remoteCommandsExecutor,
+                      @ComponentName(KnownComponentNames.TOTAL_ORDER_EXECUTOR) BlockingTaskAwareExecutorService totalOrderExecutorService,
                       GlobalConfiguration globalConfiguration, CancellationService cancelService) {
       this.gcr = gcr;
       this.transport = transport;
       this.globalConfiguration = globalConfiguration;
       this.cancelService = cancelService;
       this.remoteCommandsExecutor = remoteCommandsExecutor;
+      this.totalOrderExecutorService = totalOrderExecutorService;
    }
 
    @Override
@@ -126,14 +137,51 @@ public class InboundInvocationHandlerImpl implements InboundInvocationHandler {
       if (!stm.isJoinComplete()) {
          reply(response, null);
          return;
+      } else if (cmd instanceof TotalOrderPrepareCommand && !stm.ownsData()) {
+         reply(response, null);
+         return;
       }
 
       CommandsFactory commandsFactory = cr.getCommandsFactory();
 
       // initialize this command with components specific to the intended cache instance
       commandsFactory.initializeReplicableCommand(cmd, true);
+      if (cmd instanceof TotalOrderPrepareCommand) {
+         final TotalOrderRemoteTransactionState state = ((TotalOrderPrepareCommand) cmd).getOrCreateState();
+         final TotalOrderManager totalOrderManager = cr.getTotalOrderManager();
+         totalOrderManager.ensureOrder(state, ((PrepareCommand) cmd).getAffectedKeysToLock(false));
+         totalOrderExecutorService.execute(new BlockingRunnable() {
+            @Override
+            public boolean isReady() {
+               for (TotalOrderLatch block : state.getConflictingTransactionBlocks()) {
+                  if (block.isBlocked()) {
+                     return false;
+                  }
+               }
+               return true;
+            }
 
-      if (!preserveOrder && cmd.canBlock()) {
+            @Override
+            public void run() {
+               Response resp;
+               try {
+                  resp = handleInternal(cmd, cr);
+               } catch (RetryPrepareException retry) {
+                  log.debugf(retry, "Prepare [%s] conflicted with state transfer", cmd);
+                  resp = new ExceptionResponse(retry);
+               } catch (Throwable throwable) {
+                  log.exceptionHandlingCommand(cmd, throwable);
+                  resp = new ExceptionResponse(new CacheException("Problems invoking command.", throwable));
+               }
+               if (resp instanceof ExceptionResponse) {
+                  totalOrderManager.release(state);
+               }
+               //the ResponseGenerated is null in this case because the return value is a Response
+               reply(response, resp);
+            }
+         });
+         return;
+      } else if (!preserveOrder && cmd.canBlock()) {
          remoteCommandsExecutor.execute(new Runnable() {
             @Override
             public void run() {
@@ -141,10 +189,9 @@ public class InboundInvocationHandlerImpl implements InboundInvocationHandler {
                try {
                   resp = handleInternal(cmd, cr);
                } catch (Throwable throwable) {
-                  log.warnf(throwable, "Problems invoking command %s", cmd);
+                  log.exceptionHandlingCommand(cmd, throwable);
                   resp = new ExceptionResponse(new CacheException("Problems invoking command.", throwable));
                }
-               //the ResponseGenerated is null in this case because the return value is a Response
                reply(response, resp);
             }
          });

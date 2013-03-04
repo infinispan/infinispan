@@ -65,6 +65,16 @@
          </properties>
       </replicationQueueScheduledExecutor>
 
+       <totalOrderExecutor factory="org.infinispan.executors.DefaultExecutorFactory">
+           <properties>
+               <property name="threadNamePrefix" value="TotalOrderValidatorThread" />
+               <property name="coreThreads" value="1" />
+               <property name="maxThreads" value="16" />
+               <property name="queueSize" value="0" />
+               <property name="keepAliveTime" value="1000" />
+           </properties>
+       </totalOrderExecutor>
+
       <transport clusterName="infinispan-cluster" distributedSyncTimeout="50000" nodeName="Jalapeno" machineId="m1" rackId="r1" siteId="s1">
          <!-- Note that the JGroups transport uses sensible defaults if no configuration property is defined. -->
          <properties>
@@ -104,6 +114,15 @@
                    cacheStopTimeout="10000" lockingMode="PESSIMISTIC"
                    autoCommit="false" />
    </namedCache>
+
+    <namedCache name="transactional3">
+        <transaction transactionMode="TRANSACTIONAL" autoCommit="true"
+                     transactionProtocol="TOTAL_ORDER">
+            <recovery enabled="false" />
+        </transaction>
+
+        <clustering mode="r" />
+    </namedCache>
 
    <namedCache name="testCache1">
       <locking lockAcquisitionTimeout="20000"/>

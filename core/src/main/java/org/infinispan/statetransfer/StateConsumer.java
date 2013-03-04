@@ -82,4 +82,9 @@ public interface StateConsumer {
     * when a ClearCommand is committed during state transfer.
     */
    void stopApplyingState();
+
+   /**
+    * @return  true if this node has already received the first rebalance command
+    */
+   boolean ownsData();
 }

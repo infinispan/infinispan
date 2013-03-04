@@ -73,7 +73,7 @@ public class AbstractInfinispanTest {
       try {
          for (int i = 0; i < loops; i++) {
 
-            if (ec.isSatisfied()) break;
+            if (ec.isSatisfied()) return;
             Thread.sleep(sleepDuration);
          }
          assertTrue(ec.isSatisfied());

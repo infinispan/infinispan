@@ -57,6 +57,11 @@
             <property name="foo" value="bar"/>
           </properties>
         </replicationQueueScheduledExecutor>
+          <totalOrderExecutor factory="com.acme.Factory">
+              <properties>
+                  <property name="foo" value="bar"/>
+              </properties>
+          </totalOrderExecutor>
         <serialization marshallerClass="com.acme.Marshaller" version="1">
           <advancedExternalizers>
             <advancedExternalizer externalizerClass="com.acme.Externalizer" id="1" />
@@ -118,7 +123,7 @@
         </loaders>
         <locking concurrencyLevel="1" isolationLevel="NONE" lockAcquisitionTimeout="1" useLockStriping="true" writeSkewCheck="true" supportsConcurrentUpdates="false"/>
         <storeAsBinary enabled="true" storeKeysAsBinary="true" storeValuesAsBinary="true"/>
-        <transaction autoCommit="true" cacheStopTimeout="1" eagerLockSingleNode="true" lockingMode="OPTIMISTIC" syncCommitPhase="true" syncRollbackPhase="true" transactionManagerLookupClass="com.acme.TransactionManagerLookup" transactionMode="NON_TRANSACTIONAL" use1PcForAutoCommitTransactions="true" useEagerLocking="true" useSynchronization="true">
+        <transaction autoCommit="true" cacheStopTimeout="1" eagerLockSingleNode="true" lockingMode="OPTIMISTIC" syncCommitPhase="true" syncRollbackPhase="true" transactionManagerLookupClass="com.acme.TransactionManagerLookup" transactionMode="NON_TRANSACTIONAL" use1PcForAutoCommitTransactions="true" useEagerLocking="true" useSynchronization="true" transactionProtocol="TOTAL_ORDER">
           <recovery enabled="true"/>
         </transaction>
         <unsafe unreliableReturnValues="true"/>

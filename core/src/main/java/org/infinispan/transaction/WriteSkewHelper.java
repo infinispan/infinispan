@@ -98,6 +98,38 @@ public class WriteSkewHelper {
       }
       return uv;
    }
+
+   public static EntryVersionsMap performTotalOrderWriteSkewCheckAndReturnNewVersions(VersionedPrepareCommand prepareCommand,
+                                                                                      DataContainer dataContainer,
+                                                                                      TxInvocationContext context,
+                                                                                      KeySpecificLogic ksl) {
+      EntryVersionsMap uv = new EntryVersionsMap();
+      for (WriteCommand c : prepareCommand.getModifications()) {
+         for (Object k : c.getAffectedKeys()) {
+            if (ksl.performCheckOnKey(k)) {
+               ClusteredRepeatableReadEntry entry = (ClusteredRepeatableReadEntry) context.lookupEntry(k);
+
+               if (entry == null) {
+                  continue;
+               }
+
+               // What version did the transaction originator see??
+               EntryVersion versionSeen = prepareCommand.getVersionsSeen().get(k);
+               entry.setVersion(versionSeen);
+
+
+               if (entry.performWriteSkewCheck(dataContainer, context, c.wasPreviousRead())) {
+                  //in total order, it does not care about the version returned. It just need the keys validated
+                  uv.put(k, null);
+               } else {
+                  // Write skew check detected!
+                  throw new WriteSkewException("Write skew detected on key " + k + " for transaction " + context.getTransaction());
+               }
+            }
+         }
+      }
+      return uv;
+   }
    
    public static interface KeySpecificLogic {
       boolean performCheckOnKey(Object key);
