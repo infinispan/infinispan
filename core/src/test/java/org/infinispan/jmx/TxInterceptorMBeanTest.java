@@ -37,6 +37,7 @@ import javax.management.MBeanServer;
 import javax.management.ObjectName;
 import javax.transaction.TransactionManager;
 
+import static org.infinispan.test.TestingUtil.checkMBeanOperationParameterNaming;
 import static org.infinispan.test.TestingUtil.getCacheObjectName;
 
 @Test(groups = "functional", testName = "jmx.TxInterceptorMBeanTest")
@@ -50,6 +51,7 @@ public class TxInterceptorMBeanTest extends MultipleCacheManagersTest {
    private Cache cache1;
    private Cache cache2;
 
+   @Override
    protected void createCacheManagers() throws Throwable {
       GlobalConfiguration globalConfiguration = GlobalConfiguration.getClusteredDefault();
       globalConfiguration.setExposeGlobalJmxStatistics(true);
@@ -82,7 +84,11 @@ public class TxInterceptorMBeanTest extends MultipleCacheManagersTest {
       threadMBeanServer.invoke(txInterceptor2, "resetStatistics", new Object[0], new String[0]);
    }
 
-   public void testCommit() throws Exception {      
+   public void testJmxOperationMetadata() throws Exception {
+      checkMBeanOperationParameterNaming(txInterceptor);
+   }
+
+   public void testCommit() throws Exception {
       assertCommitRollback(0, 0, txInterceptor);
       tm.begin();
       //enlist another resource adapter to force TM to execute 2PC (otherwise 1PC)

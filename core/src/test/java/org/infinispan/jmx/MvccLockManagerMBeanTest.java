@@ -36,6 +36,7 @@ import javax.management.MBeanServer;
 import javax.management.ObjectName;
 import javax.transaction.TransactionManager;
 
+import static org.infinispan.test.TestingUtil.checkMBeanOperationParameterNaming;
 import static org.infinispan.test.TestingUtil.getCacheObjectName;
 
 /**
@@ -52,6 +53,7 @@ public class MvccLockManagerMBeanTest extends SingleCacheManagerTest {
    private MBeanServer threadMBeanServer;
    private static final String JMX_DOMAIN = "MvccLockManagerMBeanTest";
 
+   @Override
    protected EmbeddedCacheManager createCacheManager() throws Exception {
       GlobalConfiguration globalConfiguration = GlobalConfiguration.getNonClusteredDefault().fluent()
             .globalJmxStatistics()
@@ -76,6 +78,10 @@ public class MvccLockManagerMBeanTest extends SingleCacheManagerTest {
 
       threadMBeanServer = PerThreadMBeanServerLookup.getThreadMBeanServer();
       return cacheManager;
+   }
+
+   public void testJmxOperationMetadata() throws Exception {
+      checkMBeanOperationParameterNaming(lockManagerObjName);
    }
 
    public void testConcurrencyLevel() throws Exception {

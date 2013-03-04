@@ -64,7 +64,7 @@ public class CacheDiscovery extends MBeanResourceDiscoveryComponent<CacheManager
 
       for (EmsBean bean : beans) {
          // Filter out spurious beans
-         if (CacheComponent.isCacheComponent(bean)) {
+         if (CacheComponent.isCacheComponent(bean, "Cache")) {
             /* A discovered resource must have a unique key, that must
              * stay the same when the resource is discovered the next
              * time */

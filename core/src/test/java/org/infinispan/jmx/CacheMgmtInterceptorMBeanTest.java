@@ -28,10 +28,15 @@ import org.infinispan.config.GlobalConfiguration;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.test.SingleCacheManagerTest;
 import static org.infinispan.test.TestingUtil.*;
+import static org.testng.AssertJUnit.assertFalse;
+
 import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.testng.annotations.AfterMethod;
 import org.testng.annotations.Test;
 
+import javax.management.MBeanInfo;
+import javax.management.MBeanOperationInfo;
+import javax.management.MBeanParameterInfo;
 import javax.management.MBeanServer;
 import javax.management.ObjectName;
 import java.util.HashMap;
@@ -46,10 +51,11 @@ import java.util.Map;
 @Test(groups = "functional", testName = "jmx.CacheMgmtInterceptorMBeanTest")
 public class CacheMgmtInterceptorMBeanTest extends SingleCacheManagerTest {
    private ObjectName mgmtInterceptor;
-   private MBeanServer threadMBeanServer;
+   private MBeanServer server;
    AdvancedCache advanced;
    private static final String JMX_DOMAIN = CacheMgmtInterceptorMBeanTest.class.getSimpleName();
 
+   @Override
    protected EmbeddedCacheManager createCacheManager() throws Exception {
       GlobalConfiguration globalConfiguration = GlobalConfiguration.getNonClusteredDefault();
       globalConfiguration.setExposeGlobalJmxStatistics(true);
@@ -64,13 +70,17 @@ public class CacheMgmtInterceptorMBeanTest extends SingleCacheManagerTest {
       advanced = cache.getAdvancedCache();
       mgmtInterceptor = getCacheObjectName(JMX_DOMAIN, "test(local)", "Statistics");
 
-      threadMBeanServer = PerThreadMBeanServerLookup.getThreadMBeanServer();
+      server = PerThreadMBeanServerLookup.getThreadMBeanServer();
       return cacheManager;
    }
 
    @AfterMethod(alwaysRun = true)
    public void resetStats() throws Exception {
-      threadMBeanServer.invoke(mgmtInterceptor, "resetStatistics", new Object[0], new String[0]);
+      server.invoke(mgmtInterceptor, "resetStatistics", new Object[0], new String[0]);
+   }
+
+   public void testJmxOperationMetadata() throws Exception {
+      checkMBeanOperationParameterNaming(mgmtInterceptor);
    }
 
    public void testEviction() throws Exception {
@@ -173,7 +183,7 @@ public class CacheMgmtInterceptorMBeanTest extends SingleCacheManagerTest {
    }
 
    private void assertAttributeValue(String attrName, float expectedValue) throws Exception {
-      String receivedVal = threadMBeanServer.getAttribute(mgmtInterceptor, attrName).toString();
+      String receivedVal = server.getAttribute(mgmtInterceptor, attrName).toString();
       assert Float.parseFloat(receivedVal) == expectedValue : "expecting " + expectedValue + " for " + attrName + ", but received " + receivedVal;
    }
 

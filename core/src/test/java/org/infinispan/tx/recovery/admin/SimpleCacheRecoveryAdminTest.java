@@ -42,6 +42,7 @@ import javax.management.ObjectName;
 import javax.transaction.xa.Xid;
 import java.util.List;
 
+import static org.infinispan.test.TestingUtil.checkMBeanOperationParameterNaming;
 import static org.infinispan.test.TestingUtil.getCacheObjectName;
 import static org.infinispan.tx.recovery.RecoveryTestUtil.beginAndSuspendTx;
 import static org.infinispan.tx.recovery.RecoveryTestUtil.prepareTransaction;
@@ -99,6 +100,10 @@ public class SimpleCacheRecoveryAdminTest extends AbstractRecoveryTest {
       TestingUtil.killCacheManagers(manager(2));
       TestingUtil.blockUntilViewsReceived(90000, false, cache(0, "test"), cache(1, "test"));
 
+   }
+
+   public void testJmxOperationMetadata() throws Exception {
+      checkMBeanOperationParameterNaming(getRecoveryAdminObjectName(0));
    }
 
    public void testForceCommitOnOtherNode() throws Exception {
@@ -169,6 +174,7 @@ public class SimpleCacheRecoveryAdminTest extends AbstractRecoveryTest {
    }
 
 
+   @Override
    protected void checkProperlyCleanup(final int managerIndex) {
       eventually(new Condition() {
          @Override

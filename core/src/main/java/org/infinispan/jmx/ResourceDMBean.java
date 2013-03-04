@@ -24,6 +24,7 @@ package org.infinispan.jmx;
 
 import org.infinispan.factories.components.JmxAttributeMetadata;
 import org.infinispan.factories.components.JmxOperationMetadata;
+import org.infinispan.factories.components.JmxOperationParameter;
 import org.infinispan.factories.components.ManageableComponentMetadata;
 import org.infinispan.jmx.annotations.MBean;
 import org.infinispan.jmx.annotations.ManagedOperation;
@@ -40,6 +41,7 @@ import javax.management.MBeanAttributeInfo;
 import javax.management.MBeanException;
 import javax.management.MBeanInfo;
 import javax.management.MBeanOperationInfo;
+import javax.management.MBeanParameterInfo;
 import javax.management.ReflectionException;
 import javax.management.ServiceNotFoundException;
 import java.lang.reflect.Field;
@@ -180,10 +182,12 @@ public class ResourceDMBean implements DynamicMBean {
    }
 
    private MBeanOperationInfo toJmxInfo(JmxOperationMetadata operationMetadata) throws ClassNotFoundException {
-      return new MBeanOperationInfo(operationMetadata.getDescription(),
-                                    ReflectionUtil.findMethod(objectClass,
-                                                              operationMetadata.getMethodName(),
-                                                              getParameterArray(operationMetadata.getMethodParameters())));
+      JmxOperationParameter[] parameters = operationMetadata.getMethodParameters();
+      MBeanParameterInfo[] params = new MBeanParameterInfo[parameters.length];
+      for(int i=0; i< parameters.length; i++) {
+         params[i] = new MBeanParameterInfo(parameters[i].getName(), parameters[i].getType(), parameters[i].getDescription());
+      }
+      return new MBeanOperationInfo(operationMetadata.getMethodName(), operationMetadata.getDescription(), params, operationMetadata.getReturnType(), MBeanOperationInfo.UNKNOWN);
    }
 
    Object getObject() {

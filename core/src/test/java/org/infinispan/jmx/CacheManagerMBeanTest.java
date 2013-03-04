@@ -22,7 +22,9 @@
  */
 package org.infinispan.jmx;
 
+import static org.testng.AssertJUnit.assertFalse;
 import java.lang.reflect.Method;
+import java.util.regex.Pattern;
 
 import org.infinispan.config.Configuration;
 import org.infinispan.manager.CacheContainer;
@@ -34,6 +36,9 @@ import org.testng.annotations.Test;
 
 import javax.management.InstanceNotFoundException;
 import javax.management.MBeanException;
+import javax.management.MBeanInfo;
+import javax.management.MBeanOperationInfo;
+import javax.management.MBeanParameterInfo;
 import javax.management.MBeanServer;
 import javax.management.ObjectName;
 import javax.management.ServiceNotFoundException;
@@ -53,6 +58,7 @@ public class CacheManagerMBeanTest extends SingleCacheManagerTest {
    private MBeanServer server;
    private ObjectName name;
 
+   @Override
    protected EmbeddedCacheManager createCacheManager() throws Exception {
       cacheManager = TestCacheManagerFactory.createCacheManagerEnforceJmxDomain(JMX_DOMAIN, true, false);
       name = getCacheManagerObjectName(JMX_DOMAIN);
@@ -90,7 +96,11 @@ public class CacheManagerMBeanTest extends SingleCacheManagerTest {
       assert attribute.contains("b(");
       assert attribute.contains("c(");
    }
-   
+
+   public void testJmxOperationMetadata() throws Exception {
+      checkMBeanOperationParameterNaming(name);
+   }
+
    public void testInvokeJmxOperationNotExposed() throws Exception {
       try {
          server.invoke(name, "stop", new Object[]{}, new String[]{});
@@ -98,9 +108,9 @@ public class CacheManagerMBeanTest extends SingleCacheManagerTest {
       } catch (MBeanException mbe) {
          assert mbe.getCause() instanceof ServiceNotFoundException;
       }
-      
+
    }
-   
+
    public void testJmxRegistrationAtStartupAndStop(Method m) throws Exception {
       final String otherJmxDomain = getMethodSpecificJmxDomain(m, JMX_DOMAIN);
       CacheContainer otherContainer = TestCacheManagerFactory.createCacheManagerEnforceJmxDomain(otherJmxDomain, true, false);
@@ -110,7 +120,7 @@ public class CacheManagerMBeanTest extends SingleCacheManagerTest {
       } finally {
          otherContainer.stop();
       }
-      
+
       try {
          server.getAttribute(otherName, "CreatedCacheCount").equals("0");
          assert false : "Failure expected, " + otherName + " shouldn't be registered in mbean server";

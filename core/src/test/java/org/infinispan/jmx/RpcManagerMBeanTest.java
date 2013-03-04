@@ -52,6 +52,7 @@ import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.infinispan.test.fwk.TransportFlags;
 import org.testng.annotations.Test;
 
+import static org.infinispan.test.TestingUtil.checkMBeanOperationParameterNaming;
 import static org.infinispan.test.TestingUtil.getCacheObjectName;
 import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.anyBoolean;
@@ -100,6 +101,11 @@ public class RpcManagerMBeanTest extends MultipleCacheManagersTest {
       cb.clustering().cacheMode(CacheMode.REPL_SYNC).jmxStatistics().enable();
       defineConfigurationOnAllManagers(cachename, cb);
       waitForClusterToForm(cachename);
+   }
+
+   public void testJmxOperationMetadata() throws Exception {
+      ObjectName rpcManager = getCacheObjectName(JMX_DOMAIN, cachename + "(repl_sync)", "RpcManager");
+      checkMBeanOperationParameterNaming(rpcManager);
    }
 
    public void testEnableJmxStats() throws Exception {
