@@ -174,9 +174,10 @@ public class LocalTopologyManagerImpl implements LocalTopologyManager {
       }
 
       synchronized (cacheStatus) {
-         if (cacheStatus.getTopology() != null && cacheStatus.getTopology().getTopologyId() > cacheTopology.getTopologyId()){
+         CacheTopology existingTopology = cacheStatus.getTopology();
+         if (existingTopology != null && cacheTopology.getTopologyId() < existingTopology.getTopologyId()){
             log.tracef("Ignoring consistent hash update %s for cache %s, we have already received a newer topology %s",
-                  cacheTopology.getTopologyId(), cacheName, cacheStatus.getTopology().getTopologyId());
+                  cacheTopology.getTopologyId(), cacheName, existingTopology.getTopologyId());
             return;
          }
 
@@ -189,9 +190,17 @@ public class LocalTopologyManagerImpl implements LocalTopologyManager {
          }
 
          CacheTopologyHandler handler = cacheStatus.getHandler();
-         CacheTopology unionTopology = new CacheTopology(cacheTopology.getTopologyId(), cacheTopology.getCurrentCH(), unionCH);
+         CacheTopology unionTopology = new CacheTopology(cacheTopology.getTopologyId(),
+               cacheTopology.getCurrentCH(), unionCH);
          unionTopology.logRoutingTableInformation();
-         handler.updateConsistentHash(unionTopology);
+         if ((existingTopology == null || existingTopology.getPendingCH() == null) && unionCH != null) {
+            // This CH_UPDATE command was sent after a REBALANCE_START command, but arrived first.
+            // We will start the rebalance now and ignore the REBALANCE_START command when it arrives.
+            log.tracef("This topology update has a pending CH, starting the rebalance now");
+            handler.rebalance(unionTopology);
+         } else {
+            handler.updateConsistentHash(unionTopology);
+         }
       }
    }
 
@@ -223,12 +232,12 @@ public class LocalTopologyManagerImpl implements LocalTopologyManager {
          log.debugf("Starting local rebalance for cache %s, topology = %s", cacheName, cacheTopology);
          cacheTopology.logRoutingTableInformation();
          cacheStatus.setTopology(cacheTopology);
-      }
 
-      ConsistentHash unionCH = cacheStatus.getJoinInfo().getConsistentHashFactory().union(
-            cacheTopology.getCurrentCH(), cacheTopology.getPendingCH());
-      CacheTopologyHandler handler = cacheStatus.getHandler();
-      handler.rebalance(new CacheTopology(cacheTopology.getTopologyId(), cacheTopology.getCurrentCH(), unionCH));
+         ConsistentHash unionCH = cacheStatus.getJoinInfo().getConsistentHashFactory().union(
+               cacheTopology.getCurrentCH(), cacheTopology.getPendingCH());
+         CacheTopologyHandler handler = cacheStatus.getHandler();
+         handler.rebalance(new CacheTopology(cacheTopology.getTopologyId(), cacheTopology.getCurrentCH(), unionCH));
+      }
    }
 
    @Override
