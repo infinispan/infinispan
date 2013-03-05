@@ -45,6 +45,7 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 
 import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
 
 @Test(groups = "functional", testName = "statetransfer.MergeDuringReplaceTest")
 @CleanupAfterMethod
@@ -107,6 +108,7 @@ public class MergeDuringReplaceTest extends MultipleCacheManagersTest {
 
       try {
          future.get();
+         fail("The expected ExecutionException did not occur!");
       } catch (ExecutionException e) {
          Throwable cause = e.getCause();
          assertTrue(cause instanceof SuspectException);
