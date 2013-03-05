@@ -126,6 +126,15 @@ public class ReplCommandForwardingTest extends MultipleCacheManagersTest {
 
       // Allow command forwarded from c2 to proceed on c3.
       // StateTransferInterceptor will then forward the command to c1 and c4.
+      // NB: This will fail if the number of core threads in the regular thread pool is < 3
+      // and queueing is enabled because of a deadlock:
+      // a) an Incoming thread on c3 is blocked in DelayInterceptor, waiting for the unblock(1) call
+      // b) another Incoming thread on c3 is blocked in DelayInterceptor, waiting for the unblock(2) call
+      // c) the OOB thread on c3 processing the REBALANCE_START is blocked in LocalTopologyManagerImpl,
+      //    waiting for the new JGroups view to be installed on c3
+      // d) the VIEW message is queued by the regular thread pool on c3, waiting for a) or b) to finish
+      // e) the main thread is blocked waiting for the rebalance to finish, so it won't call unblock(1)
+      //    until c) is done
       log.tracef("Forwarding the command from %s", c3);
       di3.unblock(1);
 

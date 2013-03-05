@@ -79,7 +79,7 @@ public class ClusterTopologyManagerImpl implements ClusterTopologyManager {
 
 
    private final ConcurrentMap<String, ClusterCacheStatus> cacheStatusMap = ConcurrentMapFactory.makeConcurrentMap();
-   private ClusterTopologyManagerImpl.ClusterViewListener viewListener;
+   private ClusterViewListener viewListener;
 
    @Inject
    public void inject(Transport transport, RebalancePolicy rebalancePolicy,
@@ -336,18 +336,13 @@ public class ClusterTopologyManagerImpl implements ClusterTopologyManager {
    }
 
    private void broadcastConsistentHashUpdate(String cacheName, ClusterCacheStatus cacheStatus) throws Exception {
-      // Serialize CH update commands, so that they don't arrive on the other members out-of-order.
-      // We are ok with sending the same CH update twice, we just don't want the other members to receive
-      // an older CH after they got the latest CH.
-      synchronized (cacheStatus) {
-         CacheTopology cacheTopology = cacheStatus.getCacheTopology();
-         log.debugf("Updating cluster-wide consistent hash for cache %s, topology = %s",
-               cacheName, cacheTopology);
-         ReplicableCommand command = new CacheTopologyControlCommand(cacheName,
-               CacheTopologyControlCommand.Type.CH_UPDATE, transport.getAddress(), cacheTopology,
-               transport.getViewId());
-         executeOnClusterSync(command, getGlobalTimeout());
-      }
+      CacheTopology cacheTopology = cacheStatus.getCacheTopology();
+      log.debugf("Updating cluster-wide consistent hash for cache %s, topology = %s",
+            cacheName, cacheTopology);
+      ReplicableCommand command = new CacheTopologyControlCommand(cacheName,
+            CacheTopologyControlCommand.Type.CH_UPDATE, transport.getAddress(), cacheTopology,
+            transport.getViewId());
+      executeOnClusterSync(command, getGlobalTimeout());
    }
 
    private void startRebalance(String cacheName) throws Exception {
@@ -401,15 +396,13 @@ public class ClusterTopologyManagerImpl implements ClusterTopologyManager {
    }
 
    private void broadcastRebalanceStart(String cacheName, ClusterCacheStatus cacheStatus) throws Exception {
-      synchronized (cacheStatus) {
-         CacheTopology cacheTopology = cacheStatus.getCacheTopology();
-         log.debugf("Starting cluster-wide rebalance for cache %s, topology = %s",
-               cacheName, cacheTopology);
-         ReplicableCommand command = new CacheTopologyControlCommand(cacheName,
-               CacheTopologyControlCommand.Type.REBALANCE_START, transport.getAddress(), cacheTopology,
-               transport.getViewId());
-         executeOnClusterSync(command, getGlobalTimeout());
-      }
+      CacheTopology cacheTopology = cacheStatus.getCacheTopology();
+      log.debugf("Starting cluster-wide rebalance for cache %s, topology = %s",
+            cacheName, cacheTopology);
+      ReplicableCommand command = new CacheTopologyControlCommand(cacheName,
+            CacheTopologyControlCommand.Type.REBALANCE_START, transport.getAddress(), cacheTopology,
+            transport.getViewId());
+      executeOnClusterSync(command, getGlobalTimeout());
    }
 
    private void endRebalance(String cacheName, ClusterCacheStatus cacheStatus) {
