@@ -35,6 +35,7 @@ import java.util.Arrays;
  */
 public class JmxOperationMetadata implements Serializable {
    private final String methodName;
+   private final String operationName;
    private final JmxOperationParameter[] methodParameters;
    private final String description;
    private final String returnType;
@@ -60,11 +61,16 @@ public class JmxOperationMetadata implements Serializable {
          }
       }
       ManagedOperation mo = m.getAnnotation(ManagedOperation.class);
+      operationName = mo.name();
       description = mo != null ? mo.description() : null;
    }
 
    public String getDescription() {
       return description;
+   }
+
+   public String getOperationName() {
+      return operationName.isEmpty() ? methodName : operationName;
    }
 
    public String getMethodName() {
