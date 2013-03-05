@@ -49,7 +49,6 @@ import org.infinispan.remoting.transport.Address;
 import org.infinispan.remoting.transport.Transport;
 import org.infinispan.topology.CacheTopology;
 import org.infinispan.topology.LocalTopologyManager;
-import org.infinispan.util.InfinispanCollections;
 import org.infinispan.util.concurrent.NotifyingNotifiableFuture;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
@@ -140,18 +139,13 @@ public class RpcManagerImpl implements RpcManager {
       if (!configuration.clustering().cacheMode().isClustered())
          throw new IllegalStateException("Trying to invoke a remote command but the cache is not clustered");
 
-      List<Address> clusterMembers = t.getMembers();
-      if (clusterMembers.size() < 2) {
-         log.tracef("We're the only member in the cluster; Don't invoke remotely.");
-         return InfinispanCollections.emptyMap();
-      } else {
-         long startTimeNanos = 0;
-         if (statisticsEnabled) startTimeNanos = System.nanoTime();
-         try {
-            // TODO Re-enable the filter (and test MirrsingRpcDispatcherTest) after we find a way to update the cache members list before state transfer has started
-            // add a response filter that will ensure we don't wait for replies from non-members
-            // but only if the target is the whole cluster and the call is synchronous
-            // if strict peer-to-peer is enabled we have to wait for replies from everyone, not just cache members
+      long startTimeNanos = 0;
+      if (statisticsEnabled) startTimeNanos = System.nanoTime();
+      try {
+         // TODO Re-enable the filter (and test MirrsingRpcDispatcherTest) after we find a way to update the cache members list before state transfer has started
+         // add a response filter that will ensure we don't wait for replies from non-members
+         // but only if the target is the whole cluster and the call is synchronous
+         // if strict peer-to-peer is enabled we have to wait for replies from everyone, not just cache members
 //            if (recipients == null && mode.isSynchronous() && !globalCfg.transport().strictPeerToPeer()) {
 //               // TODO Could improve performance a tiny bit by caching the members in RpcManagerImpl
 //               Collection<Address> cacheMembers = localTopologyManager.getCacheTopology(cacheName).getMembers();
@@ -166,28 +160,27 @@ public class RpcManagerImpl implements RpcManager {
 //                  responseFilter = new IgnoreExtraResponsesValidityFilter(cacheMembers, getAddress());
 //               }
 //            }
-            if (rpcCommand instanceof TopologyAffectedCommand) {
-               TopologyAffectedCommand topologyAffectedCommand = (TopologyAffectedCommand) rpcCommand;
-               if (topologyAffectedCommand.getTopologyId() == -1) {
-                  topologyAffectedCommand.setTopologyId(stateTransferManager.getCacheTopology().getTopologyId());
-               }
+         if (rpcCommand instanceof TopologyAffectedCommand) {
+            TopologyAffectedCommand topologyAffectedCommand = (TopologyAffectedCommand) rpcCommand;
+            if (topologyAffectedCommand.getTopologyId() == -1) {
+               topologyAffectedCommand.setTopologyId(stateTransferManager.getCacheTopology().getTopologyId());
             }
-            Map<Address, Response> result = t.invokeRemotely(recipients, rpcCommand, mode, timeout, usePriorityQueue, responseFilter);
-            if (statisticsEnabled) replicationCount.incrementAndGet();
-            return result;
-         } catch (CacheException e) {
-            log.trace("replication exception: ", e);
-            if (statisticsEnabled) replicationFailures.incrementAndGet();
-            throw e;
-         } catch (Throwable th) {
-            log.unexpectedErrorReplicating(th);
-            if (statisticsEnabled) replicationFailures.incrementAndGet();
-            throw new CacheException(th);
-         } finally {
-            if (statisticsEnabled) {
-               long timeTaken = TimeUnit.MILLISECONDS.convert(System.nanoTime() - startTimeNanos, TimeUnit.NANOSECONDS);
-               totalReplicationTime.getAndAdd(timeTaken);
-            }
+         }
+         Map<Address, Response> result = t.invokeRemotely(recipients, rpcCommand, mode, timeout, usePriorityQueue, responseFilter);
+         if (statisticsEnabled) replicationCount.incrementAndGet();
+         return result;
+      } catch (CacheException e) {
+         log.trace("replication exception: ", e);
+         if (statisticsEnabled) replicationFailures.incrementAndGet();
+         throw e;
+      } catch (Throwable th) {
+         log.unexpectedErrorReplicating(th);
+         if (statisticsEnabled) replicationFailures.incrementAndGet();
+         throw new CacheException(th);
+      } finally {
+         if (statisticsEnabled) {
+            long timeTaken = TimeUnit.MILLISECONDS.convert(System.nanoTime() - startTimeNanos, TimeUnit.NANOSECONDS);
+            totalReplicationTime.getAndAdd(timeTaken);
          }
       }
    }
