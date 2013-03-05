@@ -187,15 +187,18 @@ public class JGroupsConfigBuilder {
    private static String replaceTcpStartPort(JGroupsProtocolCfg jgroupsCfg, TransportFlags transportFlags) {
       Map<String, String> props = jgroupsCfg.getProtocol(TCP).getProperties();
       Integer startPort = threadTcpStartPort.get();
+      int portRange = TCP_PORT_RANGE_PER_THREAD;
       if (transportFlags.isSiteIndexSpecified()) {
-         int sitePortRange = 10;
-         int maxIndex = TCP_PORT_RANGE_PER_THREAD / sitePortRange - 1;
+         portRange = 10;
+         int maxIndex = TCP_PORT_RANGE_PER_THREAD / portRange - 1;
          if (transportFlags.siteIndex() > maxIndex) {
             throw new IllegalStateException("Currently we only support " + (maxIndex + 1) + " sites!");
          }
-         startPort += transportFlags.siteIndex() * sitePortRange;
+         startPort += transportFlags.siteIndex() * portRange;
       }
       props.put("bind_port", startPort.toString());
+      // In JGroups, the port_range is inclusive
+      props.put("port_range", String.valueOf(portRange - 1));
       return replaceProperties(jgroupsCfg, props, TCP);
    }
 
