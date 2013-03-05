@@ -65,7 +65,9 @@ public abstract class AbstractIterator implements ResultIterator {
       this.resultLoader = resultLoader;
       this.index = firstIndex;
       this.lastIndex = lastIndex;
-      this.buffer = new Object[fetchSize];
+
+      int resultCount = lastIndex == -1 ? 0 : (lastIndex + 1 - firstIndex);
+      this.buffer = new Object[Math.min(fetchSize, resultCount)]; // don't allocate more than necessary
    }
 
    @Override
