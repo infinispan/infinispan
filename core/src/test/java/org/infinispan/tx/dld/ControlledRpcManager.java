@@ -65,8 +65,6 @@ public class ControlledRpcManager implements RpcManager {
       this.realOne = realOne;
    }
 
-
-
    public void failFor(Class... filter) {
       this.failFilter = new HashSet<Class>(Arrays.asList(filter));
    }
@@ -153,14 +151,13 @@ public class ControlledRpcManager implements RpcManager {
       return responseMap;
    }
 
-
    public Map<Address, Response> invokeRemotely(Collection<Address> recipients, ReplicableCommand rpcCommand, boolean sync) throws RpcException {
       log.trace("invokeRemotely4");
       failIfNeeded(rpcCommand);
       waitBefore(rpcCommand);
-      realOne.invokeRemotely(recipients, rpcCommand, sync);
+      Map<Address, Response> responseMap = realOne.invokeRemotely(recipients, rpcCommand, sync);
       waitAfter(rpcCommand);
-      return null;
+      return responseMap;
    }
 
    public Map<Address, Response> invokeRemotely(Collection<Address> recipients, ReplicableCommand rpcCommand, boolean sync, boolean usePriorityQueue) throws RpcException {
@@ -171,7 +168,6 @@ public class ControlledRpcManager implements RpcManager {
       waitAfter(rpcCommand);
       return responses;
    }
-
 
    public void broadcastRpcCommand(ReplicableCommand rpcCommand, boolean sync) throws RpcException {
       log.trace("ControlledRpcManager.broadcastRpcCommand1");
@@ -189,7 +185,6 @@ public class ControlledRpcManager implements RpcManager {
       waitAfter(rpcCommand);
    }
 
-
    public void broadcastRpcCommandInFuture(ReplicableCommand rpcCommand, NotifyingNotifiableFuture<Object> future) {
       log.trace("ControlledRpcManager.broadcastRpcCommandInFuture1");
       failIfNeeded(rpcCommand);
@@ -205,7 +200,6 @@ public class ControlledRpcManager implements RpcManager {
       realOne.broadcastRpcCommandInFuture(rpcCommand, usePriorityQueue, future);
       waitAfter(rpcCommand);
    }
-
 
    public void invokeRemotelyInFuture(Collection<Address> recipients, ReplicableCommand rpcCommand, NotifyingNotifiableFuture<Object> future) {
       log.trace("ControlledRpcManager.invokeRemotelyInFuture1");
@@ -258,8 +252,6 @@ public class ControlledRpcManager implements RpcManager {
    public int getTopologyId() {
       return realOne.getTopologyId();
    }
-
-
 
    @Override
    public List<Address> getMembers() {
