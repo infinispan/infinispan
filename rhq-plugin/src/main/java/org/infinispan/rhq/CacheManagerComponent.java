@@ -35,6 +35,7 @@ import org.mc4j.ems.connection.EmsConnection;
 import org.mc4j.ems.connection.bean.EmsBean;
 import org.mc4j.ems.connection.bean.EmsBeanName;
 import org.mc4j.ems.connection.bean.attribute.EmsAttribute;
+import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.measurement.AvailabilityType;
 import org.rhq.core.domain.measurement.DataType;
 import org.rhq.core.domain.measurement.MeasurementDataNumeric;
@@ -42,6 +43,7 @@ import org.rhq.core.domain.measurement.MeasurementDataTrait;
 import org.rhq.core.domain.measurement.MeasurementReport;
 import org.rhq.core.domain.measurement.MeasurementScheduleRequest;
 import org.rhq.core.pluginapi.inventory.ResourceContext;
+import org.rhq.core.pluginapi.operation.OperationResult;
 import org.rhq.plugins.jmx.JMXServerComponent;
 import org.rhq.plugins.jmx.MBeanResourceComponent;
 import org.rhq.plugins.jmx.ObjectNameQueryUtility;
@@ -51,6 +53,7 @@ import org.rhq.plugins.jmx.ObjectNameQueryUtility;
  *
  * @author Heiko W. Rupp
  * @author Galder Zamarreño
+ * @author Tristan Tarrant
  */
 public class CacheManagerComponent extends MBeanResourceComponent<JMXServerComponent<?>> {
    private static final Log log = LogFactory.getLog(CacheManagerComponent.class);
@@ -88,14 +91,29 @@ public class CacheManagerComponent extends MBeanResourceComponent<JMXServerCompo
     */
    @Override
    public void start(ResourceContext<JMXServerComponent<?>> context) {
-      // TODO: Call super.start() ?
       this.context = context;
       this.cacheManagerPattern = "*:" + CacheManagerDiscovery.CACHE_MANAGER_JMX_GROUP + ",name=" + ObjectName.quote(context.getResourceKey()) + ",*";
+      super.start(context);
    }
 
    @Override
    public EmsConnection getEmsConnection() {
       return context.getParentResourceComponent().getEmsConnection();
+   }
+
+   @Override
+   protected EmsBean loadBean() {
+      return queryCacheManagerBean(getEmsConnection());
+   }
+
+   @Override
+   public OperationResult invokeOperation(String name, Configuration parameters) throws Exception {
+      int paramSep = name.indexOf('|');
+      if (paramSep > 0) {
+         return super.invokeOperation(name.substring(0, paramSep), parameters);
+      } else {
+         return super.invokeOperation(name, parameters);
+      }
    }
 
    /**

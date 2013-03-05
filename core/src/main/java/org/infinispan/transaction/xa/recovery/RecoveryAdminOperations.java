@@ -89,7 +89,7 @@ public class RecoveryAdminOperations {
       return completeBasedOnInternalId(internalId, true);
    }
 
-   @ManagedOperation(description = "Forces the commit of an in-doubt transaction", displayName="Force commit by Xid", name="forceCommitByXid")
+   @ManagedOperation(description = "Forces the commit of an in-doubt transaction", displayName="Force commit by Xid", name="forceCommit|ByXid")
    public String forceCommit(
          @Parameter(name = "formatId", description = "The formatId of the transaction") int formatId,
          @Parameter(name = "globalTxId", description = "The globalTxId of the transaction") byte[] globalTxId,
@@ -102,7 +102,7 @@ public class RecoveryAdminOperations {
       return completeBasedOnInternalId(internalId, false);
    }
 
-   @ManagedOperation(description = "Forces the rollback of an in-doubt transaction", displayName="Force rollback by Xid", name="forceRollbackByXid")
+   @ManagedOperation(description = "Forces the rollback of an in-doubt transaction", displayName="Force rollback by Xid", name="forceRollback|ByXid")
    public String forceRollback(
          @Parameter(name = "formatId", description = "The formatId of the transaction") int formatId,
          @Parameter(name = "globalTxId", description = "The globalTxId of the transaction") byte[] globalTxId,
@@ -110,7 +110,7 @@ public class RecoveryAdminOperations {
       return completeBasedOnXid(formatId, globalTxId, branchQualifier, false);
    }
 
-   @ManagedOperation(description = "Removes recovery info for the given transaction.", displayName="Remove recovery info by Xid", name="forgetByXid")
+   @ManagedOperation(description = "Removes recovery info for the given transaction.", displayName="Remove recovery info by Xid", name="forget|ByXid")
    public String forget(
          @Parameter(name = "formatId", description = "The formatId of the transaction") int formatId,
          @Parameter(name = "globalTxId", description = "The globalTxId of the transaction") byte[] globalTxId,
