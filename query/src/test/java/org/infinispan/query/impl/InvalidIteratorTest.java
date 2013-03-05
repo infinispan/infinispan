@@ -24,7 +24,6 @@ package org.infinispan.query.impl;
 
 import org.hibernate.search.query.engine.spi.DocumentExtractor;
 import org.hibernate.search.query.engine.spi.EntityInfo;
-import org.hibernate.search.query.engine.spi.HSQuery;
 import org.infinispan.AdvancedCache;
 import org.infinispan.query.backend.KeyTransformationHandler;
 import org.mockito.invocation.InvocationOnMock;
@@ -60,31 +59,14 @@ public class InvalidIteratorTest {
          }
       });
 
-      HSQuery hsQuery = mock(HSQuery.class);
       cache = mock(AdvancedCache.class);
-      when(hsQuery.queryDocumentExtractor()).thenReturn(extractor);
-      when(hsQuery.queryResultSize()).thenReturn(entityInfos.size());
-
-      LazyIterator iterator = new LazyIterator(hsQuery, new EntityLoader(cache, new KeyTransformationHandler()), getFetchSize());
+      new LazyIterator(extractor, new EntityLoader(cache, new KeyTransformationHandler()), getFetchSize());
    }
 
    @Test(expectedExceptions = IllegalArgumentException.class)
    public void testEagerIteratorInitWithInvalidFetchSize() throws IOException {
-      DocumentExtractor extractor = mock(DocumentExtractor.class);
-      when(extractor.extract(anyInt())).thenAnswer(new Answer<EntityInfo>() {
-         @Override
-         public EntityInfo answer(InvocationOnMock invocation) throws Throwable {
-            int index = (Integer) invocation.getArguments()[0];
-            return entityInfos.get(index);
-         }
-      });
-
-      HSQuery hsQuery = mock(HSQuery.class);
       cache = mock(AdvancedCache.class);
-      when(hsQuery.queryDocumentExtractor()).thenReturn(extractor);
-      when(hsQuery.queryResultSize()).thenReturn(entityInfos.size());
-
-      EagerIterator iterator = new EagerIterator(entityInfos, new EntityLoader(cache, new KeyTransformationHandler()), getFetchSize());
+      new EagerIterator(entityInfos, new EntityLoader(cache, new KeyTransformationHandler()), getFetchSize());
    }
 
    private int getFetchSize() {
