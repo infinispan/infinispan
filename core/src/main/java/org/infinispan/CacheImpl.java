@@ -314,11 +314,28 @@ public class CacheImpl<K, V> extends CacheSupport<K, V> implements AdvancedCache
       return (V) executeCommandAndCommitIfNeeded(ctx, command);
    }
 
-   @Override
+
    @ManagedOperation(
-         description = "Clears the cache.",
-         displayName = "Clears the cache."
+         description = "Clears the cache",
+         displayName = "Clears the cache", name = "clear"
    )
+   public final void clearOperation() {
+      //if we have a TM then this cache is transactional.
+      // We shouldn't rely on the auto-commit option as it might be disabled, so always start a tm.
+      if (transactionManager != null) {
+         try {
+            transactionManager.begin();
+            clear(null, null);
+            transactionManager.commit();
+         } catch (Throwable e) {
+            throw new CacheException(e);
+         }
+      } else {
+         clear(null, null);
+      }
+   }
+
+   @Override
    public final void clear() {
       clear(null, null);
    }
