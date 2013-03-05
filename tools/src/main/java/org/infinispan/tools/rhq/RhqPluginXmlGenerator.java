@@ -174,6 +174,27 @@ public class RhqPluginXmlGenerator {
                } else {
                   name = prefix + ctMethod.getName();
                }
+
+               Object[][] paramAnnotations = ctMethod.getParameterAnnotations();
+               Element parameters = doc.createElement("parameters");
+               for (Object[] paramAnnotationsInEach : paramAnnotations) {
+                  boolean annotatedParameter = false;
+                  for (Object annot : paramAnnotationsInEach) {
+                     if (annot instanceof Parameter) {
+                        Parameter param = (Parameter) annot;
+                        Element prop = doc.createElementNS(URN_XMLNS_RHQ_CONFIGURATION, "simple-property");
+                        name += "|" + param.name();
+                        prop.setAttribute("name", param.name());
+                        prop.setAttribute("description", param.description());
+                        parameters.appendChild(prop);
+                        annotatedParameter = true;
+                     }
+                  }
+                  if (!annotatedParameter) {
+                     throw new RuntimeException("Duplicate operation name: " + name);
+                  }
+               }
+
                if (uniqueOperations.contains(name)) {
                   throw new RuntimeException("Duplicate operation name: " + name);
                }
@@ -195,24 +216,6 @@ public class RhqPluginXmlGenerator {
                   operation.setAttribute("description", managedOp.description());
                }
 
-               Object[][] paramAnnotations = ctMethod.getParameterAnnotations();
-               Element parameters = doc.createElement("parameters");
-               for (Object[] paramAnnotationsInEach : paramAnnotations) {
-                  boolean annotatedParameter = false;
-                  for (Object annot : paramAnnotationsInEach) {
-                     if (annot instanceof Parameter) {
-                        Parameter param = (Parameter) annot;
-                        Element prop = doc.createElementNS(URN_XMLNS_RHQ_CONFIGURATION, "simple-property");
-                        prop.setAttribute("name", param.name());
-                        prop.setAttribute("description", param.description());
-                        parameters.appendChild(prop);
-                        annotatedParameter = true;
-                     }
-                  }
-                  if (!annotatedParameter) {
-                     throw new RuntimeException("Duplicate operation name: " + name);
-                  }
-               }
                if(parameters.hasChildNodes()) {
                   operation.appendChild(parameters);
                }
