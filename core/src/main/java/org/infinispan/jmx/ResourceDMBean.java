@@ -75,7 +75,7 @@ public class ResourceDMBean implements DynamicMBean {
    private static final boolean trace = log.isTraceEnabled();
    private final Object obj;
    private final Class<?> objectClass;
-   private final MBeanOperationInfo[] opInfos;
+   private final IspnMBeanOperationInfo[] opInfos;
    private final MBeanAttributeInfo[] attInfos;
    private final HashMap<String, InvokableMBeanAttributeInfo> atts = new HashMap<String, InvokableMBeanAttributeInfo>(2);
    private final ManageableComponentMetadata mBeanMetadata;
@@ -112,8 +112,8 @@ public class ResourceDMBean implements DynamicMBean {
       }
 
       // And operations
-      MBeanOperationInfo op;
-      opInfos = new MBeanOperationInfo[mBeanMetadata.getOperationMetadata().size()];
+      IspnMBeanOperationInfo op;
+      opInfos = new IspnMBeanOperationInfo[mBeanMetadata.getOperationMetadata().size()];
       i = 0;
       for (JmxOperationMetadata operation : mBeanMetadata.getOperationMetadata()) {
          op = toJmxInfo(operation);
@@ -181,13 +181,14 @@ public class ResourceDMBean implements DynamicMBean {
                                                         attributeMetadata.isIs(), getter, setter, this);
    }
 
-   private MBeanOperationInfo toJmxInfo(JmxOperationMetadata operationMetadata) throws ClassNotFoundException {
+   private IspnMBeanOperationInfo toJmxInfo(JmxOperationMetadata operationMetadata) throws ClassNotFoundException {
       JmxOperationParameter[] parameters = operationMetadata.getMethodParameters();
       MBeanParameterInfo[] params = new MBeanParameterInfo[parameters.length];
       for(int i=0; i< parameters.length; i++) {
          params[i] = new MBeanParameterInfo(parameters[i].getName(), parameters[i].getType(), parameters[i].getDescription());
       }
-      return new MBeanOperationInfo(operationMetadata.getMethodName(), operationMetadata.getDescription(), params, operationMetadata.getReturnType(), MBeanOperationInfo.UNKNOWN);
+      return new IspnMBeanOperationInfo(operationMetadata.getMethodName(), operationMetadata.getDescription(), params, operationMetadata.getReturnType(), MBeanOperationInfo.UNKNOWN,
+                                        operationMetadata.getOperationName());
    }
 
    Object getObject() {
@@ -196,7 +197,14 @@ public class ResourceDMBean implements DynamicMBean {
 
    @Override
    public synchronized MBeanInfo getMBeanInfo() {
-      return new MBeanInfo(getObject().getClass().getCanonicalName(), mBeanMetadata.getDescription(), attInfos, null, opInfos, null);
+      //the client doesn't know about IspnMBeanOperationInfo so we need to convert first
+      MBeanOperationInfo[] operationInfoForClient = new MBeanOperationInfo[opInfos.length];
+      for (int i = 0; i < opInfos.length; i++) {
+         IspnMBeanOperationInfo current = opInfos[i];
+         operationInfoForClient[i] = new MBeanOperationInfo(current.getOperationName(), current.getDescription(),
+                                                            current.getSignature(), current.getReturnType(), MBeanOperationInfo.UNKNOWN);
+      }
+      return new MBeanInfo(getObject().getClass().getCanonicalName(), mBeanMetadata.getDescription(), attInfos, null, operationInfoForClient, null);
    }
 
    @Override
@@ -258,8 +266,8 @@ public class ResourceDMBean implements DynamicMBean {
       }
 
       MBeanOperationInfo opInfo = null;
-      for (MBeanOperationInfo op : opInfos) {
-         if (op.getName().equals(name)) {
+      for (IspnMBeanOperationInfo op : opInfos) {
+         if (op.getOperationName().equals(name)) {
             opInfo = op;
             break;
          }
@@ -275,7 +283,7 @@ public class ResourceDMBean implements DynamicMBean {
          for (int i = 0; i < classes.length; i++) {
             classes[i] = ReflectionUtil.getClassForName(sig[i], null);
          }
-         Method method = getObject().getClass().getMethod(name, classes);
+         Method method = getObject().getClass().getMethod(opInfo.getName(), classes);
          return method.invoke(getObject(), args);
       } catch (Exception e) {
          throw new MBeanException(e);
