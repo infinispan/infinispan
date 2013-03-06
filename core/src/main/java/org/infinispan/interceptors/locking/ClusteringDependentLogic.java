@@ -324,7 +324,9 @@ public interface ClusteringDependentLogic {
             boolean isForeignOwned = !skipOwnershipCheck && !localNodeIsOwner(entry.getKey());
             if (isForeignOwned && !entry.isRemoved()) {
                if (configuration.clustering().l1().enabled()) {
-                  dm.transformForL1(entry);
+                  // transform for L1
+                  if (entry.getLifespan() < 0 || entry.getLifespan() > configuration.clustering().l1().lifespan())
+                     entry.setLifespan(configuration.clustering().l1().lifespan());
                } else {
                   doCommit = false;
                }

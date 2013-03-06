@@ -22,34 +22,32 @@
  */
 package org.infinispan.interceptors.distribution;
 
-import org.infinispan.commands.CommandsFactory;
 import org.infinispan.commands.FlagAffectedCommand;
-import org.infinispan.commands.read.AbstractDataCommand;
+import org.infinispan.commands.remote.ClusteredGetCommand;
 import org.infinispan.commands.write.PutMapCommand;
 import org.infinispan.commands.write.RemoveCommand;
 import org.infinispan.commands.write.ReplaceCommand;
 import org.infinispan.commands.write.WriteCommand;
-import org.infinispan.container.DataContainer;
-import org.infinispan.container.EntryFactory;
-import org.infinispan.container.entries.CacheEntry;
-import org.infinispan.context.Flag;
+import org.infinispan.container.entries.InternalCacheEntry;
+import org.infinispan.container.entries.InternalCacheValue;
 import org.infinispan.context.InvocationContext;
-import org.infinispan.distribution.DataLocality;
+import org.infinispan.context.impl.TxInvocationContext;
 import org.infinispan.distribution.DistributionManager;
 import org.infinispan.factories.annotations.Inject;
-import org.infinispan.factories.annotations.Start;
-import org.infinispan.interceptors.base.BaseRpcInterceptor;
+import org.infinispan.interceptors.ClusteringInterceptor;
 import org.infinispan.interceptors.locking.ClusteringDependentLogic;
+import org.infinispan.remoting.responses.ClusteredGetResponseValidityFilter;
+import org.infinispan.remoting.responses.Response;
+import org.infinispan.remoting.responses.SuccessfulResponse;
+import org.infinispan.remoting.rpc.ResponseFilter;
+import org.infinispan.remoting.rpc.ResponseMode;
 import org.infinispan.remoting.transport.Address;
+import org.infinispan.transaction.xa.GlobalTransaction;
 import org.infinispan.util.Immutables;
-import org.infinispan.util.concurrent.locks.LockManager;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
-import java.util.Collection;
-import java.util.Collections;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 
 /**
  * Base class for distribution of entries across a cluster.
@@ -60,14 +58,11 @@ import java.util.Set;
  * @author Dan Berindei <dan@infinispan.org>
  * @since 4.0
  */
-public abstract class BaseDistributionInterceptor extends BaseRpcInterceptor {
+public abstract class BaseDistributionInterceptor extends ClusteringInterceptor {
+
    protected DistributionManager dm;
-   protected CommandsFactory cf;
-   protected DataContainer dataContainer;
-   protected EntryFactory entryFactory;
-   protected LockManager lockManager;
+
    protected ClusteringDependentLogic cdl;
-   private boolean needReliableReturnValues;
 
    private static final Log log = LogFactory.getLog(BaseDistributionInterceptor.class);
 
@@ -77,42 +72,36 @@ public abstract class BaseDistributionInterceptor extends BaseRpcInterceptor {
    }
 
    @Inject
-   public void injectDependencies(DistributionManager distributionManager,
-                                  CommandsFactory cf, DataContainer dataContainer, EntryFactory entryFactory,
-                                  LockManager lockManager, ClusteringDependentLogic cdl) {
+   public void injectDependencies(DistributionManager distributionManager, ClusteringDependentLogic cdl) {
       this.dm = distributionManager;
-      this.cf = cf;
-      this.dataContainer = dataContainer;
-      this.entryFactory = entryFactory;
-      this.lockManager = lockManager;
       this.cdl = cdl;
    }
 
-   @Start
-   public void configure() {
-      needReliableReturnValues = !cacheConfiguration.unsafe().unreliableReturnValues();
-   }
+   @Override
+   protected InternalCacheEntry retrieveFromRemoteSource(Object key, InvocationContext ctx, boolean acquireRemoteLock, FlagAffectedCommand command) throws Exception {
+      GlobalTransaction gtx = acquireRemoteLock ? ((TxInvocationContext)ctx).getGlobalTransaction() : null;
+      ClusteredGetCommand get = cf.buildClusteredGetCommand(key, command.getFlags(), acquireRemoteLock, gtx);
 
-   protected boolean needsRemoteGet(InvocationContext ctx, AbstractDataCommand command) {
-      boolean shouldFetchFromRemote = false;
-      final CacheEntry entry;
-      if (!command.hasFlag(Flag.CACHE_MODE_LOCAL)
-            && !command.hasFlag(Flag.SKIP_REMOTE_LOOKUP)
-            && !command.hasFlag(Flag.IGNORE_RETURN_VALUES)
-            && ((entry = ctx.lookupEntry(command.getKey())) == null || entry.isNull() || entry.isLockPlaceholder())) {
-         Object key = command.getKey();
-         DataLocality locality = dm.getReadConsistentHash().isKeyLocalToNode(rpcManager.getAddress(), key) ? DataLocality.LOCAL : DataLocality.NOT_LOCAL;
-         shouldFetchFromRemote = ctx.isOriginLocal() && !locality.isLocal() && !dataContainer.containsKey(key);
-         if (!shouldFetchFromRemote) {
-            log.tracef("Not doing a remote get for key %s since entry is mapped to current node (%s), or is in L1.  Owners are %s", key, rpcManager.getAddress(), dm.locate(key));
+      List<Address> targets = new ArrayList<Address>(stateTransferManager.getCacheTopology().getReadConsistentHash().locateOwners(key));
+      // if any of the recipients has left the cluster since the command was issued, just don't wait for its response
+      targets.retainAll(rpcManager.getTransport().getMembers());
+      ResponseFilter filter = new ClusteredGetResponseValidityFilter(targets, rpcManager.getAddress());
+      Map<Address, Response> responses = rpcManager.invokeRemotely(targets, get, ResponseMode.WAIT_FOR_VALID_RESPONSE,
+            cacheConfiguration.clustering().sync().replTimeout(), true, filter);
+
+      if (!responses.isEmpty()) {
+         for (Response r : responses.values()) {
+            if (r instanceof SuccessfulResponse) {
+               InternalCacheValue cacheValue = (InternalCacheValue) ((SuccessfulResponse) r).getResponseValue();
+               return cacheValue.toInternalCacheEntry(key);
+            }
          }
       }
-      return shouldFetchFromRemote;
-   }
 
-   protected boolean isNeedReliableReturnValues(FlagAffectedCommand command) {
-      return !command.hasFlag(Flag.SKIP_REMOTE_LOOKUP)
-            && !command.hasFlag(Flag.IGNORE_RETURN_VALUES) && needReliableReturnValues;
+      // TODO If everyone returned null, and the read CH has changed, retry the remote get.
+      // Otherwise our get command might be processed by the old owners after they have invalidated their data
+      // and we'd return a null even though the key exists on
+      return null;
    }
 
    @Override
@@ -157,9 +146,9 @@ public abstract class BaseDistributionInterceptor extends BaseRpcInterceptor {
    }
 
    class SingleKeyRecipientGenerator implements RecipientGenerator {
-      final Object key;
-      final Set<Object> keys;
-      List<Address> recipients = null;
+      private final Object key;
+      private final Set<Object> keys;
+      private List<Address> recipients = null;
 
       SingleKeyRecipientGenerator(Object key) {
          this.key = key;
@@ -180,8 +169,8 @@ public abstract class BaseDistributionInterceptor extends BaseRpcInterceptor {
 
    class MultipleKeysRecipientGenerator implements RecipientGenerator {
 
-      final Collection<Object> keys;
-      List<Address> recipients = null;
+      private final Collection<Object> keys;
+      private List<Address> recipients = null;
 
       MultipleKeysRecipientGenerator(Collection<Object> keys) {
          this.keys = keys;

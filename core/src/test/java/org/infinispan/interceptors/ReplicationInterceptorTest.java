@@ -45,8 +45,6 @@ import org.infinispan.statetransfer.StateTransferManager;
 import org.infinispan.topology.CacheTopology;
 import org.infinispan.transaction.xa.GlobalTransaction;
 import org.infinispan.util.concurrent.locks.LockManager;
-import org.infinispan.util.logging.Log;
-import org.infinispan.util.logging.LogFactory;
 import org.mockito.invocation.InvocationOnMock;
 import org.mockito.stubbing.Answer;
 import org.testng.annotations.Test;
@@ -66,8 +64,6 @@ import static org.mockito.Mockito.when;
  */
 @Test(groups = "functional", testName = "interceptors.ReplicationInterceptorTest")
 public class ReplicationInterceptorTest {
-
-   private static final Log log = LogFactory.getLog(ReplicationInterceptorTest.class);
 
    public void testRemoteGetForGetKeyValueCommand() throws Throwable {
       ConfigurationBuilder cb = new ConfigurationBuilder();
@@ -114,7 +110,7 @@ public class ReplicationInterceptorTest {
             return cacheTopology;
          }
       });
-      replInterceptor.init(commandsFactory, entryFactory, dataContainer, lockManager, stateTransferManager);
+      replInterceptor.injectDependencies(commandsFactory, entryFactory, lockManager, dataContainer, stateTransferManager);
       RpcManager rpcManager = mock(RpcManager.class);
       Transport transport = mock(Transport.class);
       when(rpcManager.getAddress()).thenReturn(B);

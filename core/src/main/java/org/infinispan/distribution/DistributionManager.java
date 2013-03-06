@@ -22,10 +22,6 @@
  */
 package org.infinispan.distribution;
 
-import org.infinispan.commands.FlagAffectedCommand;
-import org.infinispan.container.entries.CacheEntry;
-import org.infinispan.container.entries.InternalCacheEntry;
-import org.infinispan.context.InvocationContext;
 import org.infinispan.distribution.ch.ConsistentHash;
 import org.infinispan.factories.scopes.Scope;
 import org.infinispan.factories.scopes.Scopes;
@@ -94,24 +90,6 @@ public interface DistributionManager {
     * @return a list of addresses where the key may reside
     */
    Set<Address> locateAll(Collection<Object> keys); //todo [anistor] this has to take an additional parameter that specifies if the lookup is for read or write
-
-   /**
-    * Transforms a cache entry so it is marked for L1 rather than the primary cache data structure.  This should be done
-    * if it is deemed that the entry is targeted for L1 storage rather than storage in the primary data container.
-    *
-    * @param entry entry to transform
-    */
-   void transformForL1(CacheEntry entry);
-
-   /**
-    * Retrieves a cache entry from a remote source.  Would typically involve an RPC call using a {@link org.infinispan.commands.remote.ClusteredGetCommand}
-    * and some form of quorum of responses if the responses returned are inconsistent - often the case if there is a
-    * rehash in progress, involving nodes that the key maps to.
-    *
-    * @param key key to look up
-    * @return an internal cache entry, or null if it cannot be located
-    */
-   InternalCacheEntry retrieveFromRemoteSource(Object key, InvocationContext ctx, boolean acquireRemoteLock, FlagAffectedCommand command) throws Exception;
 
    /**
     * Retrieves the consistent hash instance currently in use, an instance of the configured ConsistentHash
