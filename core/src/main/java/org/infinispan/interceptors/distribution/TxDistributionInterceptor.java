@@ -117,8 +117,9 @@ public class TxDistributionInterceptor extends BaseDistributionInterceptor {
     * In such situations (optimistic caches) the remote conditional command should not re-check the old value.
     * </pre>
     */
-   private boolean ignorePreviousValueOnBackup(WriteCommand command, InvocationContext ctx) {
-      return ctx.isOriginLocal() && command.isSuccessful() && cacheConfiguration.transaction().lockingMode() == LockingMode.OPTIMISTIC && !useClusteredWriteSkewCheck;
+   protected boolean ignorePreviousValueOnBackup(WriteCommand command, InvocationContext ctx) {
+      return super.ignorePreviousValueOnBackup(command, ctx)
+          && cacheConfiguration.transaction().lockingMode() == LockingMode.OPTIMISTIC && !useClusteredWriteSkewCheck;
    }
 
    @Start
@@ -175,7 +176,6 @@ public class TxDistributionInterceptor extends BaseDistributionInterceptor {
          return visitGetKeyValueCommand(ctx, command);
       }
    }
-
 
    private void lockAndWrap(InvocationContext ctx, Object key, InternalCacheEntry ice, FlagAffectedCommand command) throws InterruptedException {
       boolean skipLocking = hasSkipLocking(command);
@@ -341,7 +341,7 @@ public class TxDistributionInterceptor extends BaseDistributionInterceptor {
             acquireRemoteLock = isWrite && isPessimisticCache && !txContext.getAffectedKeys().contains(key);
          }
          // attempt a remote lookup
-         InternalCacheEntry ice = dm.retrieveFromRemoteSource(key, ctx, acquireRemoteLock, command);
+         InternalCacheEntry ice = retrieveFromRemoteSource(key, ctx, acquireRemoteLock, command);
 
          if (acquireRemoteLock) {
             ((TxInvocationContext) ctx).addAffectedKey(key);

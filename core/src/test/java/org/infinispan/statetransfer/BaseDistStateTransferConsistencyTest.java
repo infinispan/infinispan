@@ -238,8 +238,8 @@ public abstract class BaseDistStateTransferConsistencyTest extends MultipleCache
       TestingUtil.waitForRehashToComplete(cache(0), cache(2));
 
       // at this point state transfer is fully done
-      log.infof("Data container of NodeA has %d keys: %s", dc0.size(), dc0.keySet());
-      log.infof("Data container of NodeC has %d keys: %s", dc2.size(), dc2.keySet());
+      log.infof("Data container of NodeA has %d keys: %s", dc0.size(), dc0.entrySet());
+      log.infof("Data container of NodeC has %d keys: %s", dc2.size(), dc2.entrySet());
 
       if (op == Operation.CLEAR || op == Operation.REMOVE) {
          // caches should be empty. check that no keys were revived by an inconsistent state transfer
@@ -262,7 +262,8 @@ public abstract class BaseDistStateTransferConsistencyTest extends MultipleCache
             assertEquals("Wrong number of owners", ch.locateOwners(i).size(), owners);
 
             // check values were not overwritten with old values carried by state transfer
-            assertEquals("after_st_" + i, cache(0).get(i));
+            String expected = "after_st_" + i;
+            assertEquals(expected, cache(0).get(i));
             assertEquals("after_st_" + i, cache(2).get(i));
          }
       } else { // PUT_IF_ABSENT
@@ -278,8 +279,9 @@ public abstract class BaseDistStateTransferConsistencyTest extends MultipleCache
             }
             assertEquals("Wrong number of owners", ch.locateOwners(i).size(), owners);
 
-            assertEquals("before_st_" + i, cache(0).get(i));
-            assertEquals("before_st_" + i, cache(2).get(i));
+            String expected = "before_st_" + i;
+            assertEquals(expected, cache(0).get(i));
+            assertEquals(expected, cache(2).get(i));
          }
       }
    }

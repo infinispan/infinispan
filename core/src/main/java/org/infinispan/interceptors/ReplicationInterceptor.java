@@ -22,7 +22,6 @@
  */
 package org.infinispan.interceptors;
 
-import org.infinispan.commands.CommandsFactory;
 import org.infinispan.commands.FlagAffectedCommand;
 import org.infinispan.commands.control.LockControlCommand;
 import org.infinispan.commands.read.AbstractDataCommand;
@@ -35,19 +34,12 @@ import org.infinispan.commands.tx.RollbackCommand;
 import org.infinispan.commands.write.*;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.Configurations;
-import org.infinispan.container.DataContainer;
-import org.infinispan.container.EntryFactory;
-import org.infinispan.container.entries.CacheEntry;
 import org.infinispan.container.entries.InternalCacheEntry;
 import org.infinispan.container.entries.InternalCacheValue;
-import org.infinispan.context.Flag;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.context.impl.LocalTxInvocationContext;
 import org.infinispan.context.impl.TxInvocationContext;
-import org.infinispan.distribution.ch.ConsistentHash;
-import org.infinispan.factories.annotations.Inject;
 import org.infinispan.factories.annotations.Start;
-import org.infinispan.interceptors.base.BaseRpcInterceptor;
 import org.infinispan.remoting.responses.ClusteredGetResponseValidityFilter;
 import org.infinispan.remoting.responses.Response;
 import org.infinispan.remoting.responses.SuccessfulResponse;
@@ -55,10 +47,8 @@ import org.infinispan.remoting.rpc.ResponseFilter;
 import org.infinispan.remoting.rpc.ResponseMode;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.remoting.transport.jgroups.SuspectException;
-import org.infinispan.statetransfer.StateTransferManager;
 import org.infinispan.transaction.LockingMode;
 import org.infinispan.transaction.xa.GlobalTransaction;
-import org.infinispan.util.concurrent.locks.LockManager;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
@@ -71,16 +61,8 @@ import java.util.concurrent.TimeoutException;
  * @author Bela Ban
  * @since 4.0
  */
-public class ReplicationInterceptor extends BaseRpcInterceptor {
+public class ReplicationInterceptor extends ClusteringInterceptor {
 
-   private CommandsFactory cf;
-
-   private EntryFactory entryFactory;
-   private LockManager lockManager;
-   private DataContainer dataContainer;
-   private StateTransferManager stateTransferManager;
-
-   private boolean needReliableReturnValues;
    private boolean isPessimisticCache;
 
    private static final Log log = LogFactory.getLog(ReplicationInterceptor.class);
@@ -91,19 +73,9 @@ public class ReplicationInterceptor extends BaseRpcInterceptor {
       return log;
    }
 
-   @Inject
-   public void init(CommandsFactory cf, EntryFactory entryFactory, DataContainer dataContainer, LockManager lockManager, StateTransferManager stateTransferManager) {
-      this.cf = cf;
-      this.entryFactory = entryFactory;
-      this.dataContainer = dataContainer;
-      this.lockManager = lockManager;
-      this.stateTransferManager = stateTransferManager;
-   }
-
    @Start
    public void start() {
       isPessimisticCache = cacheConfiguration.transaction().lockingMode() == LockingMode.PESSIMISTIC;
-      needReliableReturnValues = !cacheConfiguration.unsafe().unreliableReturnValues();
    }
 
    @Override
@@ -180,44 +152,6 @@ public class ReplicationInterceptor extends BaseRpcInterceptor {
       return retVal;
    }
 
-   private boolean needsRemoteGet(InvocationContext ctx, AbstractDataCommand command) {
-      if (command.hasFlag(Flag.CACHE_MODE_LOCAL)
-            || command.hasFlag(Flag.SKIP_REMOTE_LOOKUP)   //todo [anistor] clarify usage of this flag in REPL mode
-            || command.hasFlag(Flag.IGNORE_RETURN_VALUES)) {
-         return false;
-      }
-      boolean shouldFetchFromRemote = false;
-      CacheEntry entry = ctx.lookupEntry(command.getKey());
-      if (entry == null || entry.isNull() || entry.isLockPlaceholder()) {
-         Object key = command.getKey();
-         ConsistentHash ch = stateTransferManager.getCacheTopology().getReadConsistentHash();
-         shouldFetchFromRemote = ctx.isOriginLocal() && !ch.isKeyLocalToNode(rpcManager.getAddress(), key) && !dataContainer.containsKey(key);
-         if (!shouldFetchFromRemote) {
-            log.tracef("Not doing a remote get for key %s since entry is mapped to current node (%s). Owners are %s", key, rpcManager.getAddress(), ch.locateOwners(key));
-         }
-      }
-      return shouldFetchFromRemote;
-   }
-
-   private boolean isNeedReliableReturnValues(FlagAffectedCommand command) {
-      return !command.hasFlag(Flag.SKIP_REMOTE_LOOKUP)
-            && !command.hasFlag(Flag.IGNORE_RETURN_VALUES) && needReliableReturnValues;
-   }
-
-   /**
-    * For conditional operations (replace, remove, put if absent) Used only for optimistic transactional caches, to solve the following situation:
-    * <pre>
-    * - node A (owner, tx originator) does a successful replace
-    * - the actual value changes
-    * - tx commits. The value is applied on A (the check was performed at operation time) but is not applied on
-    *   B (check is performed at commit time).
-    * In such situations (optimistic caches) the remote conditional command should not re-check the old value.
-    * </pre>
-    */
-   private boolean ignorePreviousValueOnBackup(WriteCommand command, InvocationContext ctx) {
-      return ctx.isOriginLocal() && command.isSuccessful();
-   }
-
    /**
     * This method retrieves an entry from a remote cache.
     * <p/>
@@ -242,7 +176,7 @@ public class ReplicationInterceptor extends BaseRpcInterceptor {
          acquireRemoteLock = isWrite && isPessimisticCache && !txContext.getAffectedKeys().contains(key);
       }
       // attempt a remote lookup
-      InternalCacheEntry ice = retrieveFromRemoteSource(key, ctx, acquireRemoteLock, command.getFlags());
+      InternalCacheEntry ice = retrieveFromRemoteSource(key, ctx, acquireRemoteLock, command);
 
       if (acquireRemoteLock) {
          ((TxInvocationContext) ctx).addAffectedKey(key);
@@ -265,9 +199,9 @@ public class ReplicationInterceptor extends BaseRpcInterceptor {
       return stateTransferManager.getCacheTopology().getReadConsistentHash().getMembers().get(0);
    }
 
-   private InternalCacheEntry retrieveFromRemoteSource(Object key, InvocationContext ctx, boolean acquireRemoteLock, Set<Flag> flags) {
+   protected InternalCacheEntry retrieveFromRemoteSource(Object key, InvocationContext ctx, boolean acquireRemoteLock, FlagAffectedCommand command) {
       GlobalTransaction gtx = acquireRemoteLock ? ((TxInvocationContext)ctx).getGlobalTransaction() : null;
-      ClusteredGetCommand get = cf.buildClusteredGetCommand(key, flags, acquireRemoteLock, gtx);
+      ClusteredGetCommand get = cf.buildClusteredGetCommand(key, command.getFlags(), acquireRemoteLock, gtx);
 
       List<Address> targets = Collections.singletonList(getPrimaryOwner());
       ResponseFilter filter = new ClusteredGetResponseValidityFilter(targets, rpcManager.getAddress());
@@ -289,7 +223,7 @@ public class ReplicationInterceptor extends BaseRpcInterceptor {
    private Object localGet(InvocationContext ctx, Object key, boolean isWrite, FlagAffectedCommand command) throws Throwable {
       InternalCacheEntry ice = dataContainer.get(key);
       if (ice != null) {
-         if (!ctx.replaceValue(key, ice.getValue()))  {
+         if (!ctx.replaceValue(key, ice.getValue())) {
             if (isWrite)
                lockAndWrap(ctx, key, ice, command);
             else
