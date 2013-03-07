@@ -142,7 +142,7 @@ public class ClusterCacheStatus {
       synchronized (this) {
          if (newClusterMembers.containsAll(members)) {
             if (trace) log.tracef("Cluster members updated for cache %s, no leavers detected: " +
-                  "cache members = %s", members, newClusterMembers);
+                  "cache members = %s", cacheName, newClusterMembers);
             return false;
          }
 
