@@ -23,6 +23,7 @@
 
 package org.infinispan.statetransfer;
 
+import java.util.HashSet;
 import java.util.Set;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
@@ -270,7 +271,7 @@ public class StateTransferManagerImpl implements StateTransferManager {
 
       if (cmdTopologyId < localTopologyId) {
          ConsistentHash writeCh = cacheTopology.getWriteConsistentHash();
-         Set<Address> newTargets = writeCh.locateAllOwners(affectedKeys);
+         Set<Address> newTargets = new HashSet<Address>(writeCh.locateAllOwners(affectedKeys));
          newTargets.remove(rpcManager.getAddress());
          // Forwarding to the originator would create a cycle
          // TODO This may not be the "real" originator, but one of the original recipients
