@@ -184,4 +184,13 @@ public class InterpreterTest extends SingleCacheManagerTest {
       assert response.get(ResultKeys.ERROR.toString()).contains(errorMsg);
    }
 
+   public void testStats() throws Exception {
+      GlobalComponentRegistry gcr = TestingUtil.extractGlobalComponentRegistry(this.cacheManager);
+      Interpreter interpreter = gcr.getComponent(Interpreter.class);
+      String sessionId = interpreter.createSessionId(BasicCacheContainer.DEFAULT_CACHE_NAME);
+      Map<String, String> response = interpreter.execute(sessionId, "stats;");
+      assert !response.containsKey(ResultKeys.ERROR.toString());
+      response = interpreter.execute(sessionId, "stats --container;");
+      assert !response.containsKey(ResultKeys.ERROR.toString());
+   }
 }
