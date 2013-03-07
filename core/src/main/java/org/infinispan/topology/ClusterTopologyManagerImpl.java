@@ -233,7 +233,7 @@ public class ClusterTopologyManagerImpl implements ClusterTopologyManager {
             for (Map.Entry<String, List<CacheTopology>> e : clusterCacheMap.entrySet()) {
                String cacheName = e.getKey();
                List<CacheTopology> topologyList = e.getValue();
-               updateCacheStatusAfterMerge(cacheName, topologyList);
+               updateCacheStatusAfterMerge(cacheName, newMembers, topologyList);
             }
          } catch (InterruptedException e) {
             log.tracef("Cluster state recovery interrupted because the coordinator is shutting down");
@@ -270,7 +270,8 @@ public class ClusterTopologyManagerImpl implements ClusterTopologyManager {
       return cacheStatus;
    }
 
-   public void updateCacheStatusAfterMerge(String cacheName, List<CacheTopology> partitionTopologies)
+   public void updateCacheStatusAfterMerge(String cacheName, List<Address> clusterMembers,
+                                           List<CacheTopology> partitionTopologies)
          throws Exception {
       log.tracef("Initializing rebalance policy for cache %s, pre-existing partitions are %s",
             cacheName, partitionTopologies);
@@ -278,61 +279,47 @@ public class ClusterTopologyManagerImpl implements ClusterTopologyManager {
       if (partitionTopologies.isEmpty())
          return;
 
-      int unionTopologyId = 0;
-      ConsistentHash currentCHUnion = null;
-      ConsistentHash pendingCHUnion = null;
-      ConsistentHashFactory chFactory = cacheStatus.getJoinInfo().getConsistentHashFactory();
-      for (CacheTopology topology : partitionTopologies) {
-         if (topology.getTopologyId() > unionTopologyId) {
-            unionTopologyId = topology.getTopologyId();
-         }
-         if (currentCHUnion == null) {
-            currentCHUnion = topology.getCurrentCH();
-         } else {
-            currentCHUnion = chFactory.union(currentCHUnion, topology.getCurrentCH());
-         }
-
-         if (pendingCHUnion == null) {
-            pendingCHUnion = topology.getPendingCH();
-         } else {
-            if (topology.getPendingCH() != null)
-               pendingCHUnion = chFactory.union(pendingCHUnion, topology.getPendingCH());
-         }
-      }
-
-      // We have added each node to the cache status when we received its status response
-      List<Address> members = cacheStatus.getMembers();
-      if (currentCHUnion != null) {
-         currentCHUnion = chFactory.updateMembers(currentCHUnion, members);
-      }
-      if (pendingCHUnion != null) {
-         pendingCHUnion = chFactory.updateMembers(pendingCHUnion, members);
-      }
-
-      // Make sure the topology id is higher than any topology id we had before in the cluster
-      unionTopologyId += 2;
-      CacheTopology cacheTopology = new CacheTopology(unionTopologyId, currentCHUnion, pendingCHUnion);
-      boolean wasRebalanceInProgress = pendingCHUnion != null;
-
       synchronized (cacheStatus) {
-         // TODO Deal with members had joined in a partition, but which did not start receiving data yet
-         // (i.e. they weren't in the current or in the pending CH)
-         cacheStatus.setMembers(cacheTopology.getMembers());
-         if (wasRebalanceInProgress) {
-            cacheStatus.startRebalance(cacheTopology);
-         } else {
-            cacheStatus.updateCacheTopology(cacheTopology);
+         int unionTopologyId = 0;
+         // We only use the currentCH, we ignore any ongoing rebalance in the partitions
+         ConsistentHash currentCHUnion = null;
+         ConsistentHashFactory chFactory = cacheStatus.getJoinInfo().getConsistentHashFactory();
+         for (CacheTopology topology : partitionTopologies) {
+            if (topology.getTopologyId() > unionTopologyId) {
+               unionTopologyId = topology.getTopologyId();
+            }
+
+            if (currentCHUnion == null) {
+               currentCHUnion = topology.getCurrentCH();
+            } else {
+               currentCHUnion = chFactory.union(currentCHUnion, topology.getCurrentCH());
+            }
          }
+
+         // We have added each node to the cache status when we received its status response
+         List<Address> members = cacheStatus.getMembers();
+         // Filter out any nodes that aren't members of the cluster any more
+         cacheStatus.updateClusterMembers(clusterMembers);
+         if (currentCHUnion != null) {
+            currentCHUnion = chFactory.updateMembers(currentCHUnion, members);
+         }
+
+         // Make sure the topology id is higher than any topology id we had before in the cluster
+         unionTopologyId += 2;
+         CacheTopology cacheTopology = new CacheTopology(unionTopologyId, currentCHUnion, null);
+
+         // End any running rebalance
+         if (cacheStatus.isRebalanceInProgress()) {
+            cacheStatus.endRebalance();
+         }
+         cacheStatus.updateCacheTopology(cacheTopology);
       }
 
+      // End any rebalance that was running in the other partitions
       broadcastConsistentHashUpdate(cacheName, cacheStatus);
 
-      if (wasRebalanceInProgress) {
-         broadcastRebalanceStart(cacheName, cacheStatus);
-      } else {
-         // Trigger another rebalance in case the CH is not balanced (even though there was no rebalance in progress)
-         triggerRebalance(cacheName);
-      }
+      // Trigger another rebalance in case the CH is not balanced
+      triggerRebalance(cacheName);
    }
 
    private void broadcastConsistentHashUpdate(String cacheName, ClusterCacheStatus cacheStatus) throws Exception {
