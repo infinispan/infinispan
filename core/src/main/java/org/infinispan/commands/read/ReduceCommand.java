@@ -141,6 +141,11 @@ public class ReduceCommand<KOut, VOut> extends BaseRpcCommand implements Cancell
       return true;
    }
 
+   @Override
+   public boolean canBlock() {
+      return true;
+   }
+
    @SuppressWarnings("rawtypes")
    @Override
    public boolean equals(Object obj) {

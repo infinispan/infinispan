@@ -50,7 +50,7 @@ public class StateRequestCommand extends BaseRpcCommand {
 
    public static final byte COMMAND_ID = 15;
 
-   private Type type;
+   private Type type = Type.CANCEL_STATE_TRANSFER; //default value for org.infinispan.remoting.AsynchronousInvocationTest
 
    private int topologyId;
 
@@ -108,6 +108,11 @@ public class StateRequestCommand extends BaseRpcCommand {
    @Override
    public boolean isReturnValueExpected() {
       return type != Type.CANCEL_STATE_TRANSFER;
+   }
+
+   @Override
+   public boolean canBlock() {
+      return type == Type.GET_TRANSACTIONS || type == Type.START_STATE_TRANSFER;
    }
 
    public Type getType() {

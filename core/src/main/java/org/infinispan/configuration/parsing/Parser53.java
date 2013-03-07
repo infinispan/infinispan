@@ -1486,6 +1486,10 @@ public class Parser53 implements ConfigurationParser<ConfigurationBuilderHolder>
                parseAsyncTransportExecutor(reader, holder);
                break;
             }
+            case REMOTE_COMMNAND_EXECUTOR: {
+               parseRemoteCommandsExecutor(reader, holder);
+               break;
+            }
             case EVICTION_SCHEDULED_EXECUTOR: {
                parseEvictionScheduledExecutor(reader, holder);
                break;
@@ -1531,6 +1535,38 @@ public class Parser53 implements ConfigurationParser<ConfigurationBuilderHolder>
          // The transport *has* been parsed.  If we don't have a transport set, make sure we set the default.
          if (builder.transport().getTransport() == null) {
             builder.transport().defaultTransport();
+         }
+      }
+   }
+
+   private void parseRemoteCommandsExecutor(final XMLExtendedStreamReader reader, final ConfigurationBuilderHolder holder)
+         throws XMLStreamException {
+      GlobalConfigurationBuilder builder = holder.getGlobalConfigurationBuilder();
+      for (int i = 0; i < reader.getAttributeCount(); i++) {
+         ParseUtils.requireNoNamespaceAttribute(reader, i);
+         String value = replaceProperties(reader.getAttributeValue(i));
+         Attribute attribute = Attribute.forName(reader.getAttributeLocalName(i));
+         switch (attribute) {
+            case FACTORY: {
+               builder.remoteCommandsExecutor().factory(Util.<ExecutorFactory> getInstance(value, holder.getClassLoader()));
+               break;
+            }
+            default: {
+               throw ParseUtils.unexpectedAttribute(reader, i);
+            }
+         }
+      }
+
+      while (reader.hasNext() && (reader.nextTag() != XMLStreamConstants.END_ELEMENT)) {
+         Element element = Element.forName(reader.getLocalName());
+         switch (element) {
+            case PROPERTIES: {
+               builder.remoteCommandsExecutor().withProperties(parseProperties(reader));
+               break;
+            }
+            default: {
+               throw ParseUtils.unexpectedElement(reader);
+            }
          }
       }
    }

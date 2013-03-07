@@ -132,6 +132,11 @@ public class ClearCommand extends AbstractFlagAffectedCommand implements WriteCo
    }
 
    @Override
+   public boolean canBlock() {
+      return true;
+   }
+
+   @Override
    public boolean ignoreCommandOnStatus(ComponentStatus status) {
       return false;
    }

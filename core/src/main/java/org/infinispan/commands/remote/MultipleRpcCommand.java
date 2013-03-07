@@ -140,4 +140,14 @@ public class MultipleRpcCommand extends BaseRpcInvokingCommand {
    public boolean isReturnValueExpected() {
       return false;
    }
+
+   @Override
+   public boolean canBlock() {
+      for (ReplicableCommand command : commands) {
+         if (command.canBlock()) {
+            return true;
+         }
+      }
+      return false;            
+   }
 }

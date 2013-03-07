@@ -212,6 +212,14 @@ public class AbstractEmbeddedCacheManagerFactory {
    }
 
    /**
+    * @param remoteCommandsExecutorFactoryClass
+    * @see org.infinispan.config.GlobalConfiguration#setRemoteCommandsExecutorFactoryClass(java.lang.String)
+    */
+   public void setRemoteCommandsExecutorFactoryClass(final String remoteCommandsExecutorFactoryClass) {
+      this.globalConfigurationOverrides.remoteCommandsExecutorFactoryClass = remoteCommandsExecutorFactoryClass;
+   }
+
+   /**
     * @param evictionScheduledExecutorFactoryClass
     * @see org.infinispan.config.GlobalConfiguration#setEvictionScheduledExecutorFactoryClass(java.lang.String)
     */
@@ -315,6 +323,14 @@ public class AbstractEmbeddedCacheManagerFactory {
     */
    public void setAsyncTransportExecutorProperties(final Properties asyncTransportExecutorProperties) {
       this.globalConfigurationOverrides.asyncTransportExecutorProperties = asyncTransportExecutorProperties;
+   }
+
+   /**
+    * @param remoteCommandsExecutorProperties
+    * @see org.infinispan.config.GlobalConfiguration#setRemoteCommandsExecutorProperties(java.util.Properties)
+    */
+   public void setRemoteCommandsExecutorProperties(final Properties remoteCommandsExecutorProperties) {
+      this.globalConfigurationOverrides.remoteCommandsExecutorProperties = remoteCommandsExecutorProperties;
    }
 
    /**
@@ -810,6 +826,8 @@ public class AbstractEmbeddedCacheManagerFactory {
 
       private String asyncTransportExecutorFactoryClass;
 
+      private String remoteCommandsExecutorFactoryClass;
+
       private String evictionScheduledExecutorFactoryClass;
 
       private String replicationQueueScheduledExecutorFactoryClass;
@@ -823,6 +841,8 @@ public class AbstractEmbeddedCacheManagerFactory {
       private Properties asyncListenerExecutorProperties;
 
       private Properties asyncTransportExecutorProperties;
+
+      private Properties remoteCommandsExecutorProperties;
 
       private Properties evictionScheduledExecutorProperties;
 
@@ -927,6 +947,14 @@ public class AbstractEmbeddedCacheManagerFactory {
                   Util.<ExecutorFactory>getInstance(this.asyncTransportExecutorFactoryClass,
                         Thread.currentThread().getContextClassLoader()));
          }
+         if (this.remoteCommandsExecutorFactoryClass != null) {
+            this.logger
+                  .debug("Overriding property [remoteCommandsExecutorFactoryClass] with new value ["
+                               + this.remoteCommandsExecutorFactoryClass + "]");
+            globalConfigurationToOverride.remoteCommandsExecutor().factory(
+                  Util.<ExecutorFactory>getInstance(this.remoteCommandsExecutorFactoryClass,
+                                                    Thread.currentThread().getContextClassLoader()));
+         }
          if (this.evictionScheduledExecutorFactoryClass != null) {
             this.logger
                      .debug("Overriding property [evictionScheduledExecutorFactoryClass] with new value ["
@@ -974,6 +1002,13 @@ public class AbstractEmbeddedCacheManagerFactory {
                               + this.asyncTransportExecutorProperties + "]");
             globalConfigurationToOverride.asyncTransportExecutor().withProperties(
                   this.asyncTransportExecutorProperties);
+         }
+         if (this.remoteCommandsExecutorProperties != null) {
+            this.logger
+                  .debug("Overriding property [remoteCommandsExecutorProperties] with new value ["
+                               + this.remoteCommandsExecutorProperties + "]");
+            globalConfigurationToOverride.remoteCommandsExecutor().withProperties(
+                  this.remoteCommandsExecutorProperties);
          }
          if (this.evictionScheduledExecutorProperties != null) {
             this.logger

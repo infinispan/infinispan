@@ -164,6 +164,11 @@ public class MapCombineCommand<KIn, VIn, KOut, VOut> extends BaseRpcCommand impl
    }
 
    @Override
+   public boolean canBlock() {
+      return true;
+   }
+
+   @Override
    public int hashCode() {
       final int prime = 31;
       int result = 1;

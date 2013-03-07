@@ -86,6 +86,12 @@ public class CompleteTransactionCommand extends RecoveryCommand {
    }
 
    @Override
+   public boolean canBlock() {
+      //this command performs the 2PC commit.
+      return true;
+   }
+
+   @Override
    public String toString() {
       return getClass().getSimpleName() +
             "{ xid=" + xid +

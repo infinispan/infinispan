@@ -78,11 +78,13 @@ import static org.infinispan.util.Util.*;
  * A JGroups RPC dispatcher that knows how to deal with {@link ReplicableCommand}s.
  *
  * @author Manik Surtani (<a href="mailto:manik@jboss.org">manik@jboss.org</a>)
+ * @author Pedro Ruivo
  * @since 4.0
  */
 public class CommandAwareRpcDispatcher extends RpcDispatcher {
 
    private final ExecutorService asyncExecutor;
+   private final ExecutorService remoteCommandsExecutor;
    private final InboundInvocationHandler inboundInvocationHandler;
    private static final Log log = LogFactory.getLog(CommandAwareRpcDispatcher.class);
    private static final boolean trace = log.isTraceEnabled();
@@ -94,10 +96,12 @@ public class CommandAwareRpcDispatcher extends RpcDispatcher {
    public CommandAwareRpcDispatcher(Channel channel,
                                     JGroupsTransport transport,
                                     ExecutorService asyncExecutor,
+                                    ExecutorService remoteCommandsExecutor,
                                     InboundInvocationHandler inboundInvocationHandler,
                                     GlobalComponentRegistry gcr, BackupReceiverRepository backupReceiverRepository) {
       this.server_obj = transport;
       this.asyncExecutor = asyncExecutor;
+      this.remoteCommandsExecutor = remoteCommandsExecutor;
       this.inboundInvocationHandler = inboundInvocationHandler;
       this.transport = transport;
       this.gcr = gcr;
@@ -114,6 +118,7 @@ public class CommandAwareRpcDispatcher extends RpcDispatcher {
          mux.setDefaultHandler(this.prot_adapter);
       }
       channel.addChannelListener(this);
+      asyncDispatching(true);
    }
 
    private boolean isValid(Message req) {
@@ -208,55 +213,108 @@ public class CommandAwareRpcDispatcher extends RpcDispatcher {
     * Message contains a Command. Execute it against *this* object and return result.
     */
    @Override
-   public Object handle(Message req) {
+   public void handle(Message req, org.jgroups.blocks.Response response) throws Exception {
       if (isValid(req)) {
+         boolean cannotBeReordered = !req.isFlagSet(Message.Flag.OOB);
          ReplicableCommand cmd = null;
          try {
             cmd = (ReplicableCommand) req_marshaller.objectFromBuffer(req.getRawBuffer(), req.getOffset(), req.getLength());
-            if (cmd == null) throw new NullPointerException("Unable to execute a null command!  Message was " + req);
+            if (cmd == null) throw new NullPointerException("Unable to execute a null command!  Message was " + req);            
             if (req.getSrc() instanceof SiteAddress) {
-               return executeCommandFromRemoteSite(cmd, (SiteAddress)req.getSrc());
+               executeCommandFromRemoteSite(cmd, (SiteAddress) req.getSrc(), response, cannotBeReordered);
             } else {
-               return executeCommandFromLocalCluster(cmd, req);
+               executeCommandFromLocalCluster(cmd, req, response, cannotBeReordered);
             }
          } catch (InterruptedException e) {
             log.warnf("Shutdown while handling command %s", cmd);
-            return new ExceptionResponse(new CacheException("Cache is shutting down"));
+            reply(response, new ExceptionResponse(new CacheException("Cache is shutting down")));
          } catch (Throwable x) {
             if (cmd == null)
                log.warnf(x, "Problems unmarshalling remote command from byte buffer");
             else
                log.warnf(x, "Problems invoking command %s", cmd);
-            return new ExceptionResponse(new CacheException("Problems invoking command.", x));
+            reply(response, new ExceptionResponse(new CacheException("Problems invoking command.", x)));
          }
       } else {
-         return null;
+         reply(response, null);
       }
    }
 
-   private Object executeCommandFromRemoteSite(ReplicableCommand cmd, SiteAddress src) throws Throwable {
+   private void executeCommandFromRemoteSite(final ReplicableCommand cmd, final SiteAddress src, final org.jgroups.blocks.Response response, boolean cannotBeReordered) throws Throwable {
       if (! (cmd instanceof SingleRpcCommand)) {
          throw new IllegalStateException("Only CacheRpcCommand commands expected as a result of xsite calls but got " + cmd.getClass().getName());
       }
-      return backupReceiverRepository.handleRemoteCommand((SingleRpcCommand) cmd, src);
+      
+      if (cannotBeReordered) {
+         reply(response, backupReceiverRepository.handleRemoteCommand((SingleRpcCommand) cmd, src));
+         return;
+      }
+      
+      //the remote site commands may need to be forwarded to the appropriate owners
+      remoteCommandsExecutor.execute(new Runnable() {
+         @Override
+         public void run() {
+            try {
+               Object retVal = backupReceiverRepository.handleRemoteCommand((SingleRpcCommand) cmd, src);
+               reply(response, retVal);
+            } catch (InterruptedException e) {
+               log.warnf("Shutdown while handling command %s", cmd);
+               reply(response, new ExceptionResponse(new CacheException("Cache is shutting down")));
+            } catch (Throwable throwable) {
+               log.warnf(throwable, "Problems invoking command %s", cmd);
+               reply(response, new ExceptionResponse(new CacheException("Problems invoking command.", throwable)));
+            }
+         }
+      });
    }
 
-   private Object executeCommandFromLocalCluster(ReplicableCommand cmd, Message req) throws Throwable {
+   private void executeCommandFromLocalCluster(final ReplicableCommand cmd, final Message req, final org.jgroups.blocks.Response response, boolean cannotBeReordered) throws Throwable {
       if (cmd instanceof CacheRpcCommand) {
          if (trace) log.tracef("Attempting to execute command: %s [sender=%s]", cmd, req.getSrc());
-         return inboundInvocationHandler.handle((CacheRpcCommand) cmd, fromJGroupsAddress(req.getSrc()));
+         inboundInvocationHandler.handle((CacheRpcCommand) cmd, fromJGroupsAddress(req.getSrc()), response, cannotBeReordered);
       } else {
-         if (trace) log.tracef("Attempting to execute non-CacheRpcCommand command: %s [sender=%s]", cmd, req.getSrc());
-         gcr.wireDependencies(cmd);
+         if (!cannotBeReordered && cmd.canBlock()) {
+            remoteCommandsExecutor.execute(new Runnable() {
+               @Override
+               public void run() {
+                  try {
+                     if (trace)
+                        log.tracef("Attempting to execute non-CacheRpcCommand command: %s [sender=%s]", cmd, req.getSrc());
+                     gcr.wireDependencies(cmd);
 
-         //todo [anistor] the call to perform() should be wrapped in try/catch and any exception should be wrapped in an ExceptionResponse, as it happens for commands that go through InboundInvocationHandler
-         return cmd.perform(null);  //todo [anistor] here we should provide an InvocationContext that at least is able to provide the Address of the origin
+                     //todo [anistor] the call to perform() should be wrapped in try/catch and any exception should be wrapped in an ExceptionResponse, as it happens for commands that go through InboundInvocationHandler
+                     Object retVal = cmd.perform(null);  //todo [anistor] here we should provide an InvocationContext that at least is able to provide the Address of the origin
+                     reply(response, retVal);
+                  } catch (InterruptedException e) {
+                     log.warnf("Shutdown while handling command %s", cmd);
+                     reply(response, new ExceptionResponse(new CacheException("Cache is shutting down")));
+                  } catch (Throwable throwable) {
+                     log.warnf(throwable, "Problems invoking command %s", cmd);
+                     reply(response, new ExceptionResponse(new CacheException("Problems invoking command.", throwable)));
+                  }
+               }
+            });
+         } else {
+            if (trace) log.tracef("Attempting to execute non-CacheRpcCommand command: %s [sender=%s]", cmd, req.getSrc());
+            gcr.wireDependencies(cmd);
+
+            //todo [anistor] the call to perform() should be wrapped in try/catch and any exception should be wrapped in an ExceptionResponse, as it happens for commands that go through InboundInvocationHandler
+            Object retVal = cmd.perform(null);  //todo [anistor] here we should provide an InvocationContext that at least is able to provide the Address of the origin
+            reply(response, retVal);
+         }
       }
    }
 
    @Override
    public String toString() {
       return getClass().getSimpleName() + "[Outgoing marshaller: " + req_marshaller + "; incoming marshaller: " + rsp_marshaller + "]";
+   }
+   
+   private void reply(org.jgroups.blocks.Response response, Object retVal) {
+      if (response != null) {
+         //exceptionThrown is always false because the exceptions are wrapped in an ExceptionResponse 
+         response.send(retVal, false);
+      }
    }
 
    protected static Message constructMessage(Buffer buf, Address recipient, boolean oob, ResponseMode mode, boolean rsvp) {

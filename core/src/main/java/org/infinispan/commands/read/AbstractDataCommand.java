@@ -112,4 +112,9 @@ public abstract class AbstractDataCommand extends AbstractFlagAffectedCommand im
    public boolean isReturnValueExpected() {
       return true;
    }
+
+   @Override
+   public boolean canBlock() {
+      return false;
+   }
 }

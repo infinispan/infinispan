@@ -31,6 +31,7 @@
       <asyncListenerExecutor factory="org.infinispan.executors.DefaultExecutorFactory">
       	 <properties>
          	<property name="maxThreads" value="5"/>
+            <property name="queueSize" value="10000"/>
          	<property name="threadNamePrefix" value="AsyncListenerThread"/>
          </properties>         
       </asyncListenerExecutor>
@@ -38,9 +39,19 @@
       <asyncTransportExecutor factory="org.infinispan.executors.DefaultExecutorFactory">
       	<properties>	
          <property name="maxThreads" value="25"/>
+         <property name="queueSize" value="10000"/>
          <property name="threadNamePrefix" value="AsyncSerializationThread"/>
          </properties>
       </asyncTransportExecutor>
+
+      <remoteCommandsExecutor factory="org.infinispan.executors.DefaultExecutorFactory">
+        <properties>
+            <property name="maxThreads" value="30"/>
+            <property name="coreThreads" value="2"/>
+            <property name="keepAliveTime" value="10000"/>
+            <property name="threadNamePrefix" value="RemoteCommandThread"/>
+        </properties>
+      </remoteCommandsExecutor>
 
       <evictionScheduledExecutor factory="org.infinispan.executors.DefaultScheduledExecutorFactory">
       <properties>

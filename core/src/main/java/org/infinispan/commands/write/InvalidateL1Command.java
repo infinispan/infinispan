@@ -161,7 +161,7 @@ public class InvalidateL1Command extends InvalidateCommand {
    @Override
    public Object[] getParameters() {
       if (keys == null || keys.length == 0) {
-         return new Object[]{forRehash, writeOrigin};
+         return new Object[]{forRehash, writeOrigin, 0};
       } else if (keys.length == 1) {
          return new Object[]{forRehash, writeOrigin, 1,  keys[0]};
       } else {

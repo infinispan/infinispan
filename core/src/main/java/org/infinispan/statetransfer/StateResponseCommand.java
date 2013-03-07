@@ -96,6 +96,11 @@ public class StateResponseCommand extends BaseRpcCommand {
    }
 
    @Override
+   public boolean canBlock() {
+      return true;            
+   }
+
+   @Override
    public byte getCommandId() {
       return COMMAND_ID;
    }

@@ -111,6 +111,11 @@ public class IndexUpdateCommand extends BaseRpcCommand implements ReplicableComm
       return false;
    }
 
+   @Override
+   public boolean canBlock() {
+      return true;
+   }
+
    /**
     * This is invoked only on the receiving node, before {@link #perform(InvocationContext)}
     */

@@ -92,4 +92,9 @@ public class RemoveCacheCommand extends BaseRpcCommand {
    public boolean isReturnValueExpected() {
       return false;
    }
+
+   @Override
+   public boolean canBlock() {
+      return true;
+   }
 }
