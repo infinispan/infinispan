@@ -54,10 +54,11 @@ public class VersionedReplicationInterceptor extends ReplicationInterceptor {
       // is then stored in the transactional context to be used during the commit phase.
       // However if the current node is already the coordinator, then we fall back to "normal" ReplicationInterceptor
       // logic for this step.
-      if (!rpcManager.getTransport().isCoordinator()) {
+      Address primaryOwner = getPrimaryOwner();
+      if (!primaryOwner.equals(rpcManager.getAddress())) {
          setVersionsSeenOnPrepareCommand((VersionedPrepareCommand) command, context);
          Map<Address, Response> resps = rpcManager.invokeRemotely(null, command, true, true);
-         Response r = resps.get(rpcManager.getTransport().getCoordinator());  // We only really care about the coordinator's response.
+         Response r = resps.get(primaryOwner);  // We only really care about the coordinator's response.
          readVersionsFromResponse(r, context.getCacheTransaction());
       } else {
          super.broadcastPrepare(context, command);

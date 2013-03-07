@@ -81,8 +81,12 @@ public class EmptyConstructorNamedCacheFactory extends AbstractNamedCacheCompone
       Class<?> componentImpl;
       if (componentType.equals(ClusteringDependentLogic.class)) {
          CacheMode cacheMode = configuration.clustering().cacheMode();
-         if (cacheMode.isReplicated() || !cacheMode.isClustered() || cacheMode.isInvalidation()) {
-            return componentType.cast(new ClusteringDependentLogic.AllNodesLogic());
+         if (!cacheMode.isClustered()) {
+            return componentType.cast(new ClusteringDependentLogic.LocalLogic());
+         } else if (cacheMode.isInvalidation()) {
+            return componentType.cast(new ClusteringDependentLogic.InvalidationLogic());
+         } else if (cacheMode.isReplicated()) {
+            return componentType.cast(new ClusteringDependentLogic.ReplicationLogic());
          } else {
             return componentType.cast(new ClusteringDependentLogic.DistributionLogic());
          }
