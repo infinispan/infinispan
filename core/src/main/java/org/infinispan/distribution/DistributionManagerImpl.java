@@ -22,15 +22,6 @@
  */
 package org.infinispan.distribution;
 
-import org.infinispan.commands.CommandsFactory;
-import org.infinispan.commands.FlagAffectedCommand;
-import org.infinispan.commands.remote.ClusteredGetCommand;
-import org.infinispan.configuration.cache.Configuration;
-import org.infinispan.container.entries.CacheEntry;
-import org.infinispan.container.entries.InternalCacheEntry;
-import org.infinispan.container.entries.InternalCacheValue;
-import org.infinispan.context.InvocationContext;
-import org.infinispan.context.impl.TxInvocationContext;
 import org.infinispan.distribution.ch.ConsistentHash;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.factories.annotations.Start;
@@ -38,15 +29,9 @@ import org.infinispan.jmx.annotations.MBean;
 import org.infinispan.jmx.annotations.ManagedOperation;
 import org.infinispan.jmx.annotations.Parameter;
 import org.infinispan.statetransfer.StateTransferManager;
-import org.infinispan.remoting.responses.ClusteredGetResponseValidityFilter;
-import org.infinispan.remoting.responses.Response;
-import org.infinispan.remoting.responses.SuccessfulResponse;
-import org.infinispan.remoting.rpc.ResponseFilter;
-import org.infinispan.remoting.rpc.ResponseMode;
 import org.infinispan.remoting.rpc.RpcManager;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.topology.CacheTopology;
-import org.infinispan.transaction.xa.GlobalTransaction;
 import org.infinispan.util.Immutables;
 import org.infinispan.util.InfinispanCollections;
 import org.infinispan.util.logging.Log;
@@ -70,9 +55,7 @@ public class DistributionManagerImpl implements DistributionManager {
    private static final boolean trace = log.isTraceEnabled();
 
    // Injected components
-   private Configuration configuration;
    private RpcManager rpcManager;
-   private CommandsFactory cf;
    private StateTransferManager stateTransferManager;
 
    /**
@@ -82,11 +65,8 @@ public class DistributionManagerImpl implements DistributionManager {
    }
 
    @Inject
-   public void init(Configuration configuration, RpcManager rpcManager, CommandsFactory cf,
-                    StateTransferManager stateTransferManager) {
-      this.configuration = configuration;
+   public void init(RpcManager rpcManager, StateTransferManager stateTransferManager) {
       this.rpcManager = rpcManager;
-      this.cf = cf;
       this.stateTransferManager = stateTransferManager;
    }
 
@@ -145,39 +125,6 @@ public class DistributionManagerImpl implements DistributionManager {
    @Override
    public Set<Address> locateAll(Collection<Object> keys) {
       return getConsistentHash().locateAllOwners(keys);
-   }
-
-   @Override
-   public void transformForL1(CacheEntry entry) {
-      if (entry.getLifespan() < 0 || entry.getLifespan() > configuration.clustering().l1().lifespan())
-         entry.setLifespan(configuration.clustering().l1().lifespan());
-   }
-
-   @Override
-   public InternalCacheEntry retrieveFromRemoteSource(Object key, InvocationContext ctx, boolean acquireRemoteLock, FlagAffectedCommand command) throws Exception {
-      GlobalTransaction gtx = acquireRemoteLock ? ((TxInvocationContext)ctx).getGlobalTransaction() : null;
-      ClusteredGetCommand get = cf.buildClusteredGetCommand(key, command.getFlags(), acquireRemoteLock, gtx);
-
-      List<Address> targets = new ArrayList<Address>(getReadConsistentHash().locateOwners(key));
-      // if any of the recipients has left the cluster since the command was issued, just don't wait for its response
-      targets.retainAll(rpcManager.getTransport().getMembers());
-      ResponseFilter filter = new ClusteredGetResponseValidityFilter(targets, getAddress());
-      Map<Address, Response> responses = rpcManager.invokeRemotely(targets, get, ResponseMode.WAIT_FOR_VALID_RESPONSE,
-                                                                   configuration.clustering().sync().replTimeout(), true, filter);
-
-      if (!responses.isEmpty()) {
-         for (Response r : responses.values()) {
-            if (r instanceof SuccessfulResponse) {
-               InternalCacheValue cacheValue = (InternalCacheValue) ((SuccessfulResponse) r).getResponseValue();
-               return cacheValue.toInternalCacheEntry(key);
-            }
-         }
-      }
-
-      // TODO If everyone returned null, and the read CH has changed, retry the remote get.
-      // Otherwise our get command might be processed by the old owners after they have invalidated their data
-      // and we'd return a null even though the key exists on
-      return null;
    }
 
    @Override
