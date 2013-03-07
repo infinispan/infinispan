@@ -29,7 +29,6 @@ import static org.mockito.Mockito.when;
 
 import org.hibernate.search.query.engine.spi.DocumentExtractor;
 import org.hibernate.search.query.engine.spi.EntityInfo;
-import org.hibernate.search.query.engine.spi.HSQuery;
 import org.infinispan.query.backend.KeyTransformationHandler;
 import org.mockito.invocation.InvocationOnMock;
 import org.mockito.stubbing.Answer;
@@ -60,10 +59,7 @@ public class LazyIteratorTest extends EagerIteratorTest {
          }
       });
 
-      HSQuery hsQuery = mock(HSQuery.class);
-      when(hsQuery.queryDocumentExtractor()).thenReturn(extractor);
-
-      iterator = new LazyIterator(hsQuery, new EntityLoader(cache, new KeyTransformationHandler()), getFetchSize());
+      iterator = new LazyIterator(extractor, new EntityLoader(cache, new KeyTransformationHandler()), getFetchSize());
    }
 
    @AfterMethod(alwaysRun = false)

@@ -44,10 +44,8 @@ public class EagerIterator extends AbstractIterator {
    private List<EntityInfo> entityInfos;
 
    public EagerIterator(List<EntityInfo> entityInfos, QueryResultLoader resultLoader, int fetchSize) {
-      super(resultLoader, fetchSize);
+      super(resultLoader, 0, entityInfos.size() - 1, fetchSize);
       this.entityInfos = entityInfos;
-
-      max = entityInfos.size() - 1;
    }
 
    @Override

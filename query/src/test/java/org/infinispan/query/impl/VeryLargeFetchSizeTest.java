@@ -1,6 +1,6 @@
 /*
  * JBoss, Home of Professional Open Source
- * Copyright 2009 Red Hat Inc. and/or its affiliates and other
+ * Copyright 2013 Red Hat Inc. and/or its affiliates and other
  * contributors as indicated by the @author tags. All rights reserved.
  * See the copyright.txt in the distribution for a full listing of
  * individual contributors.
@@ -26,50 +26,39 @@ import org.hibernate.search.query.engine.spi.DocumentExtractor;
 import org.hibernate.search.query.engine.spi.EntityInfo;
 import org.infinispan.AdvancedCache;
 import org.infinispan.query.backend.KeyTransformationHandler;
-import org.mockito.invocation.InvocationOnMock;
-import org.mockito.stubbing.Answer;
 import org.testng.annotations.Test;
 
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
-import static org.mockito.Matchers.anyInt;
 import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.when;
 
 /**
- * Simple test for checking the Iterator Initialization with wrong fetch size.
+ * Test whether LazyIterator and EagerIterator can handle a very large fetch size (Integer.MAX_VALUE). This makes sure
+ * that neither of the two iterators actually try to create an array of size Integer.MAX_VALUE in such cases.
  *
- * @author Anna Manukyan
+ * @author Marko Luksa
  */
-@Test(groups = "functional", testName = "query.impl.InvalidIteratorTest")
-public class InvalidIteratorTest {
+@Test(groups = "functional", testName = "query.impl.VeryLargeFetchSizeTest")
+public class VeryLargeFetchSizeTest {
+
+   public static final int VERY_LARGE_FETCH_SIZE = Integer.MAX_VALUE;
+
    private List<EntityInfo> entityInfos = new ArrayList<EntityInfo>();
    private AdvancedCache<String, String> cache;
 
-   @Test(expectedExceptions = IllegalArgumentException.class)
-   public void testLazyIteratorInitWithInvalidFetchSize() throws IOException {
+   @Test
+   public void testLazyIteratorHandlesVeryLargeFetchSize() throws IOException {
+      cache = mock(AdvancedCache.class);
       DocumentExtractor extractor = mock(DocumentExtractor.class);
-      when(extractor.extract(anyInt())).thenAnswer(new Answer<EntityInfo>() {
-         @Override
-         public EntityInfo answer(InvocationOnMock invocation) throws Throwable {
-            int index = (Integer) invocation.getArguments()[0];
-            return entityInfos.get(index);
-         }
-      });
+      new LazyIterator(extractor, new EntityLoader(cache, new KeyTransformationHandler()), VERY_LARGE_FETCH_SIZE);
+   }
 
+   @Test
+   public void testEagerIteratorHandlesVeryLargeFetchSize() throws IOException {
       cache = mock(AdvancedCache.class);
-      new LazyIterator(extractor, new EntityLoader(cache, new KeyTransformationHandler()), getFetchSize());
+      new EagerIterator(entityInfos, new EntityLoader(cache, new KeyTransformationHandler()), VERY_LARGE_FETCH_SIZE);
    }
 
-   @Test(expectedExceptions = IllegalArgumentException.class)
-   public void testEagerIteratorInitWithInvalidFetchSize() throws IOException {
-      cache = mock(AdvancedCache.class);
-      new EagerIterator(entityInfos, new EntityLoader(cache, new KeyTransformationHandler()), getFetchSize());
-   }
-
-   private int getFetchSize() {
-      return 0;
-   }
 }

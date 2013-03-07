@@ -33,6 +33,7 @@ import org.apache.lucene.search.Query;
 import org.apache.lucene.search.Sort;
 import org.hibernate.search.FullTextFilter;
 import org.hibernate.search.SearchException;
+import org.hibernate.search.query.engine.spi.DocumentExtractor;
 import org.hibernate.search.query.engine.spi.EntityInfo;
 import org.hibernate.search.query.engine.spi.FacetManager;
 import org.hibernate.search.query.engine.spi.HSQuery;
@@ -166,7 +167,8 @@ public class CacheQueryImpl implements CacheQuery {
          List<EntityInfo> entityInfos = hSearchQuery.queryEntityInfos();
          return new EagerIterator(entityInfos, getResultLoader(), fetchOptions.getFetchSize() );
       } else if (fetchOptions.getFetchMode() == FetchOptions.FetchMode.LAZY) {
-         return new LazyIterator(hSearchQuery, getResultLoader(), fetchOptions.getFetchSize());
+         DocumentExtractor extractor = hSearchQuery.queryDocumentExtractor();   //triggers actual Lucene search
+         return new LazyIterator(extractor, getResultLoader(), fetchOptions.getFetchSize());
       } else {
          throw new IllegalArgumentException("Unknown FetchMode " + fetchOptions.getFetchMode());
       }

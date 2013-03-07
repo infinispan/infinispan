@@ -39,34 +39,40 @@ import java.util.NoSuchElementException;
  */
 public abstract class AbstractIterator implements ResultIterator {
 
-   protected final Object[] buffer;
+   private final Object[] buffer;
 
    /**
     * Index of the element that will be returned by next()
     */
-   protected int index = 0;
+   private int index = 0;
 
    /**
     * The index at which the buffer starts (the global index of the element at buffer[0])
     */
-   protected int bufferIndex = -1;
+   private int bufferIndex = -1;
 
-   protected int max;
-   protected final int fetchSize;
+   /**
+    * The index of the last element that will be returned by this iterator.
+    */
+   private final int lastIndex;
+
    private final QueryResultLoader resultLoader;
 
-   protected AbstractIterator(QueryResultLoader resultLoader, int fetchSize) {
+   protected AbstractIterator(QueryResultLoader resultLoader, int firstIndex, int lastIndex, int fetchSize) {
       if (fetchSize < 1) {
          throw new IllegalArgumentException("Incorrect value for fetchSize passed. Your fetchSize is less than 1");
       }
       this.resultLoader = resultLoader;
-      this.fetchSize = fetchSize;
-      this.buffer = new Object[fetchSize];
+      this.index = firstIndex;
+      this.lastIndex = lastIndex;
+
+      int resultCount = lastIndex == -1 ? 0 : (lastIndex + 1 - firstIndex);
+      this.buffer = new Object[Math.min(fetchSize, resultCount)]; // don't allocate more than necessary
    }
 
    @Override
    public boolean hasNext() {
-      return index <= max;
+      return index <= lastIndex;
    }
 
    /**
@@ -98,7 +104,7 @@ public abstract class AbstractIterator implements ResultIterator {
 
    private void fillBuffer(int startIndex) {
       bufferIndex = startIndex;
-      int resultsToLoad = Math.min( buffer.length, max + 1 - bufferIndex);
+      int resultsToLoad = Math.min( buffer.length, lastIndex + 1 - bufferIndex);
       for (int i = 0; i < resultsToLoad; i++) {
          buffer[i] = loadResult(bufferIndex + i);
       }
