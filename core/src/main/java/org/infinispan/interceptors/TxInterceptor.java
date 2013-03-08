@@ -245,6 +245,10 @@ public class TxInterceptor extends CommandInterceptor {
          localTransaction = enlist((TxInvocationContext) ctx);
          LocalTxInvocationContext localTxContext = (LocalTxInvocationContext) ctx;
          localTxContext.setLocalTransaction(localTransaction);
+         if (command.hasFlag(Flag.PUT_FOR_STATE_TRANSFER)) {
+            // mark the transaction as originating from state transfer as early as possible
+            localTransaction.setFromStateTransfer(true);
+         }
       }
       Object rv;
       try {

@@ -30,28 +30,11 @@ import org.testng.annotations.Test;
  * @author anistor@redhat.com
  * @since 5.2
  */
-@Test(groups = "functional", testName = "statetransfer.DistPessimisticTxOperationsDuringStateTransferTest",
-      enabled = false, description = "Disabled due to https://issues.jboss.org/browse/ISPN-2847")
+@Test(groups = "functional", testName = "statetransfer.DistPessimisticTxOperationsDuringStateTransferTest")
 @CleanupAfterMethod
 public class DistPessimisticTxOperationsDuringStateTransferTest extends BaseOperationsDuringStateTransferTest {
 
    public DistPessimisticTxOperationsDuringStateTransferTest() {
       super(CacheMode.DIST_SYNC, true, false, false);
-   }
-
-   @Test(enabled = false)
-   public void testPut() throws Exception {
-   }
-
-   @Test(enabled = false)
-   public void testReplace() throws Exception {
-   }
-
-   @Test(enabled = false)
-   public void testGet() throws Exception {
-   }
-
-   @Test(enabled = false)
-   public void testRemove() throws Exception {
    }
 }
