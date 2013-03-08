@@ -34,6 +34,7 @@ import org.infinispan.context.InvocationContext;
 import org.infinispan.context.impl.TxInvocationContext;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.remoting.rpc.RpcManager;
+import org.infinispan.transaction.LocalTransaction;
 import org.infinispan.transaction.TransactionTable;
 import org.infinispan.transaction.xa.CacheTransaction;
 import org.infinispan.transaction.xa.GlobalTransaction;
@@ -147,18 +148,18 @@ public abstract class AbstractTxLockingInterceptor extends AbstractLockingInterc
     * when the cluster is stable.
     */
    protected final void lockKeyAndCheckOwnership(InvocationContext ctx, Object key, long lockTimeout, boolean skipLocking) throws InterruptedException {
-      //this is possible when the put is originated as a result of a state transfer
-      if (!ctx.isInTxScope()) {
-         lockManager.acquireLock(ctx, key, lockTimeout, skipLocking);
-         return;
-      }
       TxInvocationContext txContext = (TxInvocationContext) ctx;
       int transactionTopologyId = -1;
       boolean checkForPendingLocks = false;
       if (clustered) {
-         transactionTopologyId = txContext.getCacheTransaction().getTopologyId();
-         if (transactionTopologyId != TransactionTable.CACHE_STOPPED_TOPOLOGY_ID) {
-            checkForPendingLocks = txTable.getMinTopologyId() < transactionTopologyId;
+         CacheTransaction tx = txContext.getCacheTransaction();
+         boolean isFromStateTransfer = txContext.isOriginLocal() && ((LocalTransaction)tx).isFromStateTransfer();
+         // if the transaction is from state transfer it should not wait for the backup locks of other transactions
+         if (!isFromStateTransfer) {
+            transactionTopologyId = tx.getTopologyId();
+            if (transactionTopologyId != TransactionTable.CACHE_STOPPED_TOPOLOGY_ID) {
+               checkForPendingLocks = txTable.getMinTopologyId() < transactionTopologyId;
+            }
          }
       }
 
