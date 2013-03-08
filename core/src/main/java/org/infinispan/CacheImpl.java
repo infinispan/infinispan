@@ -135,8 +135,6 @@ public class CacheImpl<K, V> extends CacheSupport<K, V> implements AdvancedCache
    private static final Log log = LogFactory.getLog(CacheImpl.class);
    private static final boolean trace = log.isTraceEnabled();
    private EmbeddedCacheManager cacheManager;
-   // this is never used here but should be injected - this is a hack to make sure the ResponseGenerator is properly constructed if needed.
-   private ResponseGenerator responseGenerator;
    private LockManager lockManager;
    private DistributionManager distributionManager;
    private ExecutorService asyncExecutor;
@@ -162,7 +160,6 @@ public class CacheImpl<K, V> extends CacheSupport<K, V> implements AdvancedCache
                                   BatchContainer batchContainer,
                                   RpcManager rpcManager, DataContainer dataContainer,
                                   @ComponentName(CACHE_MARSHALLER) StreamingMarshaller marshaller,
-                                  ResponseGenerator responseGenerator,
                                   DistributionManager distributionManager,
                                   EmbeddedCacheManager cacheManager,
                                   @ComponentName(ASYNC_TRANSPORT_EXECUTOR) ExecutorService asyncExecutor,
@@ -181,7 +178,6 @@ public class CacheImpl<K, V> extends CacheSupport<K, V> implements AdvancedCache
       this.dataContainer = dataContainer;
       this.marshaller = marshaller;
       this.cacheManager = cacheManager;
-      this.responseGenerator = responseGenerator;
       this.icc = icc;
       this.distributionManager = distributionManager;
       this.asyncExecutor = asyncExecutor;
