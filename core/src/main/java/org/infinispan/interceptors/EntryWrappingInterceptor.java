@@ -22,6 +22,7 @@ package org.infinispan.interceptors;
 import org.infinispan.commands.AbstractVisitor;
 import org.infinispan.commands.CommandsFactory;
 import org.infinispan.commands.FlagAffectedCommand;
+import org.infinispan.commands.VisitableCommand;
 import org.infinispan.commands.read.GetKeyValueCommand;
 import org.infinispan.commands.tx.CommitCommand;
 import org.infinispan.commands.tx.PrepareCommand;
@@ -122,6 +123,7 @@ public class EntryWrappingInterceptor extends CommandInterceptor {
    @Override
    public final Object visitGetKeyValueCommand(InvocationContext ctx, GetKeyValueCommand command) throws Throwable {
       try {
+         checkIfKeyRead(ctx, command.getKey(), command);
          entryFactory.wrapEntryForReading(ctx, command.getKey());
          return invokeNextInterceptor(ctx, command);
       } finally {
@@ -163,6 +165,7 @@ public class EntryWrappingInterceptor extends CommandInterceptor {
       if (shouldWrap(command.getKey(), ctx, command)) {
          entryFactory.wrapEntryForPut(ctx, command.getKey(), null, !command.isPutIfAbsent(), command);
       }
+      checkIfKeyRead(ctx, command.getKey(), command);
       return invokeNextAndApplyChanges(ctx, command);
    }
 
@@ -196,6 +199,7 @@ public class EntryWrappingInterceptor extends CommandInterceptor {
       if (shouldWrap(command.getKey(), ctx, command)) {
          entryFactory.wrapEntryForRemove(ctx, command.getKey());
       }
+      checkIfKeyRead(ctx, command.getKey(), command);
       return invokeNextAndApplyChanges(ctx, command);
    }
 
@@ -204,6 +208,7 @@ public class EntryWrappingInterceptor extends CommandInterceptor {
       if (shouldWrap(command.getKey(), ctx, command)) {
          entryFactory.wrapEntryForReplace(ctx, command.getKey());
       }
+      checkIfKeyRead(ctx, command.getKey(), command);
       return invokeNextAndApplyChanges(ctx, command);
    }
 
@@ -356,6 +361,18 @@ public class EntryWrappingInterceptor extends CommandInterceptor {
          }
          return null;
       }
+   }
+
+   /**
+    * invoked when a command that may return a value to the application, it has the logic of keep track of the keys read
+    * by the transaction. This information is later used to perform the write skew check.
+    * 
+    * @param context the invocation context
+    * @param key     the key accessed
+    * @param command the visitable command (can be a read or write command)
+    */
+   protected void checkIfKeyRead(InvocationContext context, Object key, VisitableCommand command) {
+      //no-op, it is only needed to check the write skew
    }
 
    private boolean commitEntryIfNeeded(InvocationContext ctx, boolean skipOwnershipCheck, Object key, CacheEntry entry, boolean isPutForStateTransfer) {

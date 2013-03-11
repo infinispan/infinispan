@@ -142,7 +142,7 @@ public class NonTxDistributionInterceptor extends BaseDistributionInterceptor {
          // attempt a remote lookup
          InternalCacheEntry ice = retrieveFromRemoteSource(key, ctx, false, command);
          if (ice != null) {
-            if (!ctx.replaceValue(key, ice.getValue())) {
+            if (!ctx.replaceValue(key, ice)) {
                entryFactory.wrapEntryForPut(ctx, key, ice, false, command);
             }
             return ice.getValue();
@@ -156,7 +156,7 @@ public class NonTxDistributionInterceptor extends BaseDistributionInterceptor {
    private Object localGet(InvocationContext ctx, Object key, boolean isWrite, FlagAffectedCommand command) throws Throwable {
       InternalCacheEntry ice = dataContainer.get(key);
       if (ice != null) {
-         if (!ctx.replaceValue(key, ice.getValue()))  {
+         if (!ctx.replaceValue(key, ice))  {
             if (isWrite)
                entryFactory.wrapEntryForPut(ctx, key, ice, false, command);
             else

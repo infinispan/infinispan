@@ -86,7 +86,7 @@ public class WriteSkewHelper {
                   if (versionSeen != null) entry.setVersion(versionSeen);
                }
 
-               if (entry.performWriteSkewCheck(dataContainer, context)) {
+               if (entry.performWriteSkewCheck(dataContainer, context, c.wasPreviousRead())) {
                   IncrementableEntryVersion newVersion = entry.isCreated() ? versionGenerator.generateNew() : versionGenerator.increment((IncrementableEntryVersion) entry.getVersion());
                   uv.put(k, newVersion);
                } else {

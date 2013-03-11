@@ -43,7 +43,7 @@ public class ClusteredRepeatableReadEntry extends RepeatableReadEntry {
       this.version = version;
    }
 
-   public boolean performWriteSkewCheck(DataContainer container, TxInvocationContext ctx) {
+   public boolean performWriteSkewCheck(DataContainer container, TxInvocationContext ctx, boolean previousRead) {
       EntryVersion prevVersion;
       InternalCacheEntry ice = container.get(key);
       if (ice == null) {
@@ -58,8 +58,11 @@ public class ClusteredRepeatableReadEntry extends RepeatableReadEntry {
          if (prevVersion == null)
             throw new IllegalStateException("Entries cannot have null versions!");
       }
+      if (log.isTraceEnabled()) {
+         log.tracef("Is going to compare versions %s and %s for key %s. Was previously read? %s", prevVersion, version, key, previousRead);
+      }
       // Could be that we didn't do a remote get first ... so we haven't effectively read this entry yet.
-      if (version == null) return true;
+      if (version == null) return !previousRead;
       log.tracef("Comparing versions %s and %s for key %s: %s", prevVersion, version, key, prevVersion.compareTo(version));
       return InequalVersionComparisonResult.AFTER != prevVersion.compareTo(version);
    }

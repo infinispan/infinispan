@@ -183,7 +183,7 @@ public class ReplicationInterceptor extends ClusteringInterceptor {
       }
 
       if (ice != null) {
-         if (!ctx.replaceValue(key, ice.getValue()))  {
+         if (!ctx.replaceValue(key, ice))  {
             if (isWrite) {
                lockAndWrap(ctx, key, ice, command);
             } else {
@@ -223,7 +223,7 @@ public class ReplicationInterceptor extends ClusteringInterceptor {
    private Object localGet(InvocationContext ctx, Object key, boolean isWrite, FlagAffectedCommand command) throws Throwable {
       InternalCacheEntry ice = dataContainer.get(key);
       if (ice != null) {
-         if (!ctx.replaceValue(key, ice.getValue())) {
+         if (!ctx.replaceValue(key, ice)) {
             if (isWrite)
                lockAndWrap(ctx, key, ice, command);
             else

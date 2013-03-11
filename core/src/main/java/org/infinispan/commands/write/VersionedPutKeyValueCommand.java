@@ -79,7 +79,7 @@ public class VersionedPutKeyValueCommand extends PutKeyValueCommand {
    @Override
    public Object[] getParameters() {
       return new Object[]{key, value, lifespanMillis, maxIdleTimeMillis, version,
-                          Flag.copyWithoutRemotableFlags(flags)};
+                          Flag.copyWithoutRemotableFlags(flags), previousRead};
    }
 
    @SuppressWarnings("unchecked")
@@ -92,6 +92,7 @@ public class VersionedPutKeyValueCommand extends PutKeyValueCommand {
       maxIdleTimeMillis = (Long) parameters[3];
       version = (EntryVersion) parameters[4];
       flags = (Set<Flag>) parameters[5];
+      previousRead = (Boolean) parameters[6];
    }
 
    @Override
