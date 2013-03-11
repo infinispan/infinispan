@@ -241,7 +241,8 @@ final class DirectoryLoaderAdaptor {
       final long fileModified = directory.fileModified(fileName);
       final long fileLength = directory.fileLength(fileName);
       // We're forcing the buffer size of a to-be-read segment to the full file size:
-      final FileMetadata meta = new FileMetadata((int) fileLength);
+      final int bufferSize = (int) Math.min(fileLength, (long)autoChunkSize);
+      final FileMetadata meta = new FileMetadata(bufferSize);
       meta.setLastModified(fileModified);
       meta.setSize(fileLength);
       return meta;
@@ -254,17 +255,17 @@ final class DirectoryLoaderAdaptor {
     */
    private byte[] loadIntern(final ChunkCacheKey key) throws IOException {
       final String fileName = key.getFileName();
-      final int chunkId = key.getChunkId();
+      final long chunkId = key.getChunkId(); //needs to be long to upcast following operations
       int bufferSize = key.getBufferSize();
-      final int seekTo = chunkId * bufferSize;
+      final long seekTo = chunkId * bufferSize;
       final byte[] buffer;
       final IndexInput input = directory.openInput(fileName);
-      final int length = (int) input.length();//TODO verify size
+      final long length = input.length();
       try {
          if (seekTo != 0) {
             input.seek(seekTo);
          }
-         bufferSize = Math.min(length - seekTo, bufferSize);
+         bufferSize = (int) Math.min(length - seekTo, (long)bufferSize);
          buffer = new byte[bufferSize];
          input.readBytes(buffer, 0, bufferSize);
       }
