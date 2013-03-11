@@ -34,8 +34,10 @@ import org.hibernate.search.annotations.Store;
  */
 @Indexed(index = "person")
 public class NumericType {
+
    @Field(store = Store.YES, analyze = Analyze.YES)
    private int num1;
+
    @Field(store = Store.YES, analyze = Analyze.YES)
    private int num2;
 

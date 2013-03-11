@@ -29,6 +29,7 @@ import org.infinispan.query.impl.massindex.IndexingMapper;
 import org.infinispan.query.impl.massindex.IndexingReducer;
 import org.infinispan.query.queries.faceting.Car;
 import org.infinispan.test.MultipleCacheManagersTest;
+import org.testng.Assert;
 import org.testng.annotations.Test;
 
 import java.util.Iterator;
@@ -47,9 +48,8 @@ public class MapReduceInitializerTest extends MultipleCacheManagersTest {
       cacheCfg.indexing()
             .enable()
             .indexLocalOnly(true)
-            .addProperty("hibernate.search.default.indexmanager", "org.infinispan.query.indexmanager.InfinispanIndexManager")
-            .addProperty("hibernate.search.default.directory_provider", "infinispan")
-            .addProperty("hibernate.search.default.exclusive_index_use", "false")
+            .addProperty("default.indexmanager", "org.infinispan.query.indexmanager.InfinispanIndexManager")
+            .addProperty("default.exclusive_index_use", "false")
             .addProperty("lucene_version", "LUCENE_36");
 
       createClusteredCaches(2, cacheCfg);
@@ -65,7 +65,7 @@ public class MapReduceInitializerTest extends MultipleCacheManagersTest {
             .reducedWith(new IndexingReducer())
             .execute();
 
-      assert result.isEmpty();
+      Assert.assertTrue(result.isEmpty());
    }
 
    public void testInitReducer () throws InterruptedException {
@@ -78,19 +78,17 @@ public class MapReduceInitializerTest extends MultipleCacheManagersTest {
             .reducedWith(new SomeReducer())
             .execute();
 
-      assert !result.isEmpty();
+      Assert.assertFalse(result.isEmpty());
    }
 
-   static class SomeReducer implements Reducer<Object, LuceneWork> {
-
+   private static class SomeReducer implements Reducer<Object, LuceneWork> {
       @Override
       public LuceneWork reduce(Object reducedKey, Iterator<LuceneWork> iter) {
          return iter.next();
       }
    }
 
-   static class SomeMapper implements Mapper<Object, Object, Object, LuceneWork> {
-
+   private static class SomeMapper implements Mapper<Object, Object, Object, LuceneWork> {
       @Override
       public void map(Object key, Object value, Collector<Object, LuceneWork> collector) {
          System.out.println("Some stuff to do.");

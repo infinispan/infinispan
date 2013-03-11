@@ -25,7 +25,6 @@ package org.infinispan.query.queries.spatial;
 import junit.framework.Assert;
 import org.apache.lucene.search.Query;
 import org.hibernate.search.annotations.Field;
-import org.hibernate.search.annotations.Index;
 import org.hibernate.search.annotations.Indexed;
 import org.hibernate.search.annotations.Spatial;
 import org.hibernate.search.annotations.SpatialMode;
@@ -52,16 +51,15 @@ import java.util.List;
 @Test(groups = "functional", testName = "query.ranges.QuerySpatialTest")
 public class QuerySpatialTest extends SingleCacheManagerTest {
 
-      public QuerySpatialTest() {
+   public QuerySpatialTest() {
       cleanup = AbstractCacheTest.CleanupPhase.AFTER_METHOD;
    }
 
-      @Override
-      protected EmbeddedCacheManager createCacheManager() throws Exception {
+   @Override
+   protected EmbeddedCacheManager createCacheManager() throws Exception {
       ConfigurationBuilder cfg = getDefaultStandaloneCacheConfig(true);
-      cfg
-            .indexing()
-            .enable()
+      cfg.indexing()
+         .enable()
             .indexLocalOnly(false)
             .addProperty("default.directory_provider", "ram")
             .addProperty("lucene_version", "LUCENE_CURRENT");
@@ -71,12 +69,12 @@ public class QuerySpatialTest extends SingleCacheManagerTest {
    public void testSpatialQueries() {
       loadData();
 
-      double centerLatitude= 24;
-      double centerLongitude= 31.5;
+      double centerLatitude = 24;
+      double centerLongitude = 31.5;
 
       Query query = Search.getSearchManager(cache).buildQueryBuilderForClass(CitySpatial.class).get().spatial()
-            .onCoordinates( "city_location" )
-            .within( 50, Unit.KM ).ofLatitude( centerLatitude ).andLongitude( centerLongitude ).createQuery();
+         .onCoordinates("city_location")
+         .within(50, Unit.KM).ofLatitude(centerLatitude).andLongitude(centerLongitude).createQuery();
 
       CacheQuery cacheQuery = Search.getSearchManager(cache).getQuery(query);
       List<Object> found = cacheQuery.list();
@@ -84,14 +82,13 @@ public class QuerySpatialTest extends SingleCacheManagerTest {
       Assert.assertEquals(0, found.size());
 
       query = Search.getSearchManager(cache).buildQueryBuilderForClass(CitySpatial.class).get().spatial()
-            .onCoordinates( "city_location" )
-            .within( 51, Unit.KM ).ofLatitude( centerLatitude ).andLongitude( centerLongitude ).createQuery();
+            .onCoordinates("city_location")
+            .within(51, Unit.KM).ofLatitude(centerLatitude).andLongitude(centerLongitude).createQuery();
 
       cacheQuery = Search.getSearchManager(cache).getQuery(query);
       found = cacheQuery.list();
 
       Assert.assertEquals(1, found.size());
-
    }
 
    private void loadData() {
@@ -101,13 +98,13 @@ public class QuerySpatialTest extends SingleCacheManagerTest {
 
    @Indexed
    @Spatial(name = "city_location", spatialMode = SpatialMode.GRID)
-   static public class CitySpatial implements Coordinates{
+   static public class CitySpatial implements Coordinates {
+
       private Double latitude;
       private Double longitude;
 
       @Field(store = Store.YES)
       String name;
-
 
       public CitySpatial(Double latitude, Double longitude, String name) {
          this.latitude = latitude;

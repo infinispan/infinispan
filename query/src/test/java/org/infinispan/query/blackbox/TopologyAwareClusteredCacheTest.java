@@ -38,12 +38,13 @@ import java.util.List;
  */
 @Test(groups = "functional", testName = "query.distributed.TopologyAwareClusteredCacheTest")
 public class TopologyAwareClusteredCacheTest extends ClusteredCacheTest {
+
    @Override
    protected void createCacheManagers() throws Throwable {
-      List caches = TestQueryHelperFactory.createTopologyAwareCacheNodes(2, getCacheMode(), transactionEnabled(),
-                                                                         isIndexLocalOnly(), isRamDirectory());
+      List caches = TestQueryHelperFactory.createTopologyAwareCacheNodes(
+               2, getCacheMode(), transactionEnabled(), isIndexLocalOnly(), isRamDirectory());
 
-      for(Object cache : caches) {
+      for (Object cache : caches) {
          cacheManagers.add(((Cache) cache).getCacheManager());
       }
 
