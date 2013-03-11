@@ -43,7 +43,7 @@ public class JdbmCacheStoreConfigurationParser52 implements ConfigurationParser<
 
    private static final Namespace NAMESPACES[] = {
          new Namespace(Namespace.INFINISPAN_NS_BASE_URI, "jdbm", Element.JDBM_STORE.getLocalName(), 5, 2),
-         new Namespace("", Element.JDBM_STORE.getLocalName(), 0, 0) };
+         };
 
    public JdbmCacheStoreConfigurationParser52() {
    }

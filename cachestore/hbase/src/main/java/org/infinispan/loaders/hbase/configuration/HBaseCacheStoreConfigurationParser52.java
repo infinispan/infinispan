@@ -42,7 +42,7 @@ import org.jboss.staxmapper.XMLExtendedStreamReader;
 public class HBaseCacheStoreConfigurationParser52 implements ConfigurationParser<ConfigurationBuilderHolder> {
 
    private static final Namespace NAMESPACES[] = { new Namespace(Namespace.INFINISPAN_NS_BASE_URI, "hbase", Element.HBASE_STORE.getLocalName(), 5, 2),
-         new Namespace("", Element.HBASE_STORE.getLocalName(), 0, 0) };
+         };
 
    public HBaseCacheStoreConfigurationParser52() {
    }

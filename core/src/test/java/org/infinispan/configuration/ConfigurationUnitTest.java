@@ -28,11 +28,6 @@ import static org.infinispan.test.fwk.TestCacheManagerFactory.createCacheManager
 import static org.infinispan.transaction.TransactionMode.NON_TRANSACTIONAL;
 import static org.testng.Assert.assertEquals;
 
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.ObjectInput;
-import java.io.ObjectOutput;
-import java.io.OutputStream;
 import java.net.URL;
 
 import javax.xml.XMLConstants;
@@ -48,9 +43,6 @@ import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.cache.LegacyConfigurationAdaptor;
 import org.infinispan.configuration.global.GlobalConfigurationBuilder;
 import org.infinispan.eviction.EvictionStrategy;
-import org.infinispan.io.ByteBuffer;
-import org.infinispan.marshall.BufferSizePredictor;
-import org.infinispan.marshall.StreamingMarshaller;
 import org.infinispan.marshall.TestObjectStreamMarshaller;
 import org.infinispan.test.CacheManagerCallable;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
@@ -213,7 +205,7 @@ public class ConfigurationUnitTest {
    @Test
    public void testSchema() throws Exception {
       FileLookup lookup = FileLookupFactory.newInstance();
-      URL schemaFile = lookup.lookupFileLocation("schema/infinispan-config-5.2.xsd", Thread.currentThread().getContextClassLoader());
+      URL schemaFile = lookup.lookupFileLocation("schema/infinispan-config-5.3.xsd", Thread.currentThread().getContextClassLoader());
       Source xmlFile = new StreamSource(lookup.lookupFile("configs/all.xml", Thread.currentThread().getContextClassLoader()));
       SchemaFactory.newInstance(XMLConstants.W3C_XML_SCHEMA_NS_URI).newSchema(schemaFile).newValidator().validate(xmlFile);
    }
