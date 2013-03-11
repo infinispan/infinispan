@@ -46,7 +46,7 @@ public class RemoteCacheStoreConfigurationParser52 implements ConfigurationParse
 
    private static final Namespace NAMESPACES[] = {
          new Namespace(Namespace.INFINISPAN_NS_BASE_URI, "remote", Element.REMOTE_STORE.getLocalName(), 5, 2),
-         new Namespace("", Element.REMOTE_STORE.getLocalName(), 0, 0) };
+         };
 
    public RemoteCacheStoreConfigurationParser52() {
    }

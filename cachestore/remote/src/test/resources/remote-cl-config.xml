@@ -23,16 +23,16 @@
   -->
 <infinispan
    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-   xsi:schemaLocation="urn:infinispan:config:5.2 http://www.infinispan.org/schemas/infinispan-config-5.2.xsd
-                       urn:infinispan:config:remote:5.2 http://www.infinispan.org/schemas/infinispan-cachestore-remote-config-5.2.xsd"
-   xmlns="urn:infinispan:config:5.2"
-   xmlns:remote="urn:infinispan:config:remote:5.2" >
+   xsi:schemaLocation="urn:infinispan:config:5.3 http://www.infinispan.org/schemas/infinispan-config-5.3.xsd
+                       urn:infinispan:config:remote:5.3 http://www.infinispan.org/schemas/infinispan-cachestore-remote-config-5.3.xsd"
+   xmlns="urn:infinispan:config:5.3"
+   xmlns:remote="urn:infinispan:config:remote:5.3" >
 
    <default>
       <jmxStatistics enabled="false"/>
       <deadlockDetection enabled="true" spinDuration="1221"/>
       <loaders passivation="false" shared="true" preload="false">
-         <remoteStore xmlns="urn:infinispan:config:remote:5.2" 
+         <remoteStore xmlns="urn:infinispan:config:remote:5.3"
             fetchPersistentState="false" ignoreModifications="false" purgeOnStartup="false"
             tcpNoDelay="true" pingOnStartup="true"
             balancingStrategy="org.infinispan.client.hotrod.impl.transport.tcp.RoundRobinBalancingStrategy"
@@ -44,7 +44,7 @@
             </servers>
             <connectionPool maxActive="99" maxIdle="97" maxTotal="98" />
             <asyncTransportExecutor factory="org.infinispan.client.hotrod.impl.async.DefaultAsyncExecutorFactory">
-              <properties xmlns="urn:infinispan:config:5.2">
+              <properties xmlns="urn:infinispan:config:5.3">
                 <property name="pool_size" value="1" />
                 <property name="queue_size" value="10000" />
               </properties>

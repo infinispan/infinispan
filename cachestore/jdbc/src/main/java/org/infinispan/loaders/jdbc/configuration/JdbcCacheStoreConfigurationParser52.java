@@ -43,11 +43,9 @@ public class JdbcCacheStoreConfigurationParser52 implements ConfigurationParser<
 
    private static final Namespace NAMESPACES[] = {
          new Namespace(Namespace.INFINISPAN_NS_BASE_URI, "jdbc", Element.STRING_KEYED_JDBC_STORE.getLocalName(), 5, 2),
-         new Namespace("", Element.STRING_KEYED_JDBC_STORE.getLocalName(), 0, 0),
          new Namespace(Namespace.INFINISPAN_NS_BASE_URI, "jdbc", Element.BINARY_KEYED_JDBC_STORE.getLocalName(), 5, 2),
-         new Namespace("", Element.BINARY_KEYED_JDBC_STORE.getLocalName(), 0, 0),
          new Namespace(Namespace.INFINISPAN_NS_BASE_URI, "jdbc", Element.MIXED_KEYED_JDBC_STORE.getLocalName(), 5, 2),
-         new Namespace("", Element.MIXED_KEYED_JDBC_STORE.getLocalName(), 0, 0) };
+         };
 
    public JdbcCacheStoreConfigurationParser52() {
    }

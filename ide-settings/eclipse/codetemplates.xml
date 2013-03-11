@@ -6,7 +6,7 @@
  * ${type_name}.
  * 
  * @author ${user}
- * @since 5.2
+ * @since 5.3
  */</template><template autoinsert="true" context="fieldcomment_context" deleted="false" description="Comment for fields" enabled="true" id="org.eclipse.jdt.ui.text.codetemplates.fieldcomment" name="fieldcomment">/** The ${field} */</template><template autoinsert="true" context="methodcomment_context" deleted="false" description="Comment for non-overriding methods" enabled="true" id="org.eclipse.jdt.ui.text.codetemplates.methodcomment" name="methodcomment">/**
  * FIXME Comment this
  * 

@@ -66,7 +66,7 @@
             writeSkewCheck="false"
             concurrencyLevel="500" useLockStriping="false"/>
       <loaders>
-         <stringKeyedJdbcStore xmlns="urn:infinispan:config:jdbc:5.2" fetchPersistentState="false" ignoreModifications="false" purgeOnStartup="false">
+         <stringKeyedJdbcStore xmlns="urn:infinispan:config:jdbc:5.3" fetchPersistentState="false" ignoreModifications="false" purgeOnStartup="false">
             <dataSource jndiUrl="java:/StringStoreWithManagedConnectionTest/DS" />
             <stringKeyedTable prefix="ISPN_STRING_TABLE" createOnStart="true" dropOnExit="true">
                <idColumn name="ID_COLUMN" type="VARCHAR(255)" />

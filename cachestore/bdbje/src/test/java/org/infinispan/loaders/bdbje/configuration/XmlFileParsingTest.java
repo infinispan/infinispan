@@ -49,7 +49,7 @@ public class XmlFileParsingTest extends AbstractInfinispanTest {
       String config = INFINISPAN_START_TAG +
             "   <default>\n" +
             "     <loaders>\n" +
-            "       <bdbjeStore xmlns=\"urn:infinispan:config:bdbje:5.2\" location=\"/tmp/bdbje\" catalogDbName=\"mycatalog\">\n" +
+            "       <bdbjeStore xmlns=\"urn:infinispan:config:bdbje:5.3\" location=\"/tmp/bdbje\" catalogDbName=\"mycatalog\">\n" +
             "         <async enabled=\"true\" />\n" +
             "       </bdbjeStore>\n" +
             "     </loaders>\n" +

@@ -78,7 +78,6 @@ public class Parser52 implements ConfigurationParser<ConfigurationBuilderHolder>
 
    private static final Namespace NAMESPACES[] = {
       new Namespace(Namespace.INFINISPAN_NS_BASE_URI, Element.ROOT.getLocalName(), 5, 2),
-      new Namespace("", Element.ROOT.getLocalName(), 0, 0)
    };
 
    public Parser52() {}
