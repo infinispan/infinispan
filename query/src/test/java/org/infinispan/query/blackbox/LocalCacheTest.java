@@ -647,13 +647,13 @@ public class LocalCacheTest extends SingleCacheManagerTest {
       person2.setName("Big Goat");
       person2.setAge(30);
       person2.setBlurb("Eats grass");
-      person1.setNonSearchableField("test2");
+      person2.setNonSearchableField("test2");
 
       person3 = new Person();
       person3.setName("Mini Goat");
       person3.setAge(25);
       person3.setBlurb("Eats cheese");
-      person1.setNonSearchableField("test3");
+      person3.setNonSearchableField("test3");
 
       anotherGrassEater = new AnotherGrassEater("Another grass-eater", "Eats grass");
    }

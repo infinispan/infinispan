@@ -94,6 +94,8 @@ public class EagerIteratorTest {
 
    @AfterMethod (alwaysRun = true)
    public void tearDown() {
+      iterator.close();
+
       keys = null;
       dummyResults = null;
       iterator = null;
