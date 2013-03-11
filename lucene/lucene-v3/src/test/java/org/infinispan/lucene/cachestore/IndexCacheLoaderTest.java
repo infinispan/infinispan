@@ -16,7 +16,7 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston,
  * MA  02110-1301, USA.
  */
-package org.infinispan.lucene.cacheloader;
+package org.infinispan.lucene.cachestore;
 
 import java.io.File;
 import java.io.IOException;
