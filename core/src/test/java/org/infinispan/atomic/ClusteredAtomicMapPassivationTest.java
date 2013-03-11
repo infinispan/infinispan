@@ -48,8 +48,9 @@ public class ClusteredAtomicMapPassivationTest extends MultipleCacheManagersTest
    protected void createCacheManagers() throws Throwable {
       ConfigurationBuilder builder = getDefaultClusteredCacheConfig(
             CacheMode.REPL_SYNC, true);
-      builder.loaders().passivation(true)
-                  .addStore().cacheStore(new DummyInMemoryCacheStore());
+      builder.eviction().maxEntries(1024)
+            .loaders().passivation(true)
+            .addStore().cacheStore(new DummyInMemoryCacheStore());
       createClusteredCaches(2, "atomic", builder);
    }
 
@@ -77,8 +78,8 @@ public class ClusteredAtomicMapPassivationTest extends MultipleCacheManagersTest
          @Override
          public Void call() throws Exception {
             // Modify atomic map from first node
-            AtomicMap<String, String> map = AtomicMapLookup.getAtomicMap(
-                  cache1, "map");
+            AtomicMap<String, String> map = AtomicMapLookup
+                  .getAtomicMap(cache1, "map");
             map.put("key1", "new_value1");
             assertTrue(map.containsKey("key2"));
             assertEquals("value2", map.get("key2"));

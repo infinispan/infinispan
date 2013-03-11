@@ -34,7 +34,6 @@ import java.io.ObjectOutput;
 import java.util.Collection;
 import java.util.LinkedList;
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
 
 /**
@@ -71,6 +70,10 @@ public class AtomicHashMapDelta implements Delta {
       if(o instanceof ClearOperation) {
          hasClearOperation = true;
       }
+
+      if (trace)
+         log.tracef("Add operation %s to delta", o);
+
       changeLog.add((Operation<Object, Object>) o);
    }
    

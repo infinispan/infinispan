@@ -31,8 +31,12 @@
  */
 
 package org.infinispan.util.concurrent;
+import org.infinispan.container.entries.CacheEntry;
 import org.infinispan.util.InfinispanCollections;
 import org.infinispan.util.Util;
+import org.infinispan.util.logging.Log;
+import org.infinispan.util.logging.LogFactory;
+
 import java.io.IOException;
 import java.io.Serializable;
 import java.util.*;
@@ -107,6 +111,10 @@ import static java.util.Collections.unmodifiableMap;
  */
 public class BoundedConcurrentHashMap<K, V> extends AbstractMap<K, V>
         implements ConcurrentMap<K, V>, Serializable {
+
+   private static final Log log = LogFactory.getLog(BoundedConcurrentHashMap.class);
+   private static final boolean trace = log.isTraceEnabled();
+
    private static final long serialVersionUID = 7249069246763182397L;
 
    /*
@@ -1699,7 +1707,7 @@ public class BoundedConcurrentHashMap<K, V> extends AbstractMap<K, V>
             V oldValue = null;
             if (e != null) {
                V v = e.value;
-               if (isEvict) {
+               if (isEvictionRemoval(isEvict, oldValue)) {
                   // If evicting, entry has to be passivated if enabled and
                   // hence its cost is limited to this use case.
                   // Required to guarantee passivation/activation correctness.
@@ -1730,7 +1738,10 @@ public class BoundedConcurrentHashMap<K, V> extends AbstractMap<K, V>
                }
             }
 
-            if (!isEvict) {
+            if (!isEvictionRemoval(isEvict, oldValue)) {
+               if (trace)
+                  log.tracef("Entry removed (not evicting), so remove from cache store too");
+
                // If removing (and not evicting), remove from cache store too
                evictionListener.onEntryRemoved(key);
             }
@@ -1739,6 +1750,11 @@ public class BoundedConcurrentHashMap<K, V> extends AbstractMap<K, V>
          } finally {
             unlock();
          }
+      }
+
+      private boolean isEvictionRemoval(boolean isEvict, V oldValue) {
+         return isEvict ||
+               ((oldValue instanceof CacheEntry) && ((CacheEntry) oldValue).isEvicted());
       }
 
       void clear() {
