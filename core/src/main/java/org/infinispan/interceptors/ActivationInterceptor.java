@@ -37,6 +37,8 @@ import org.infinispan.factories.annotations.Start;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
+import java.util.Arrays;
+
 public class ActivationInterceptor extends CacheLoaderInterceptor {
 
    private static final Log log = LogFactory.getLog(ActivationInterceptor.class);
@@ -113,6 +115,9 @@ public class ActivationInterceptor extends CacheLoaderInterceptor {
 
    private void removeFromStoreIfNeeded(Object... keys) {
       if (enabled && isManualEviction) {
+         if (log.isTraceEnabled())
+            log.tracef("Remove from store keys=%s, if needed", Arrays.toString(keys));
+
          for (Object key: keys)
             activationManager.activate(key);
       }

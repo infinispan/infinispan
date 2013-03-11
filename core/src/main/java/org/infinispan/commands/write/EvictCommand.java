@@ -27,6 +27,8 @@ import org.infinispan.commands.Visitor;
 import org.infinispan.context.Flag;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.notifications.cachelistener.CacheNotifier;
+import org.infinispan.util.logging.Log;
+import org.infinispan.util.logging.LogFactory;
 
 import java.util.Set;
 
@@ -35,6 +37,8 @@ import java.util.Set;
  * @since 4.0
  */
 public class EvictCommand extends RemoveCommand implements LocalCommand {
+
+   private static final Log log = LogFactory.getLog(EvictCommand.class);
 
    public EvictCommand(Object key, CacheNotifier notifier, Set<Flag> flags) {
       super(key, null, notifier, flags);
@@ -57,6 +61,9 @@ public class EvictCommand extends RemoveCommand implements LocalCommand {
    @Override
    public void notify(InvocationContext ctx, Object value, boolean isPre) {
       if (!isPre) {
+         if (log.isTraceEnabled())
+            log.tracef("Notify eviction listeners for key=%", key);
+
          notifier.notifyCacheEntryEvicted(key, value, ctx);
       }
    }
