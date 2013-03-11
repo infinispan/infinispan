@@ -30,6 +30,8 @@ import org.infinispan.marshall.AbstractExternalizer;
 import org.infinispan.marshall.Ids;
 import org.infinispan.util.FastCopyHashMap;
 import org.infinispan.util.Util;
+import org.infinispan.util.logging.Log;
+import org.infinispan.util.logging.LogFactory;
 
 import java.io.IOException;
 import java.io.ObjectInput;
@@ -60,6 +62,9 @@ import java.util.Set;
  */
 @NotThreadSafe
 public final class AtomicHashMap<K, V> implements AtomicMap<K, V>, DeltaAware, Cloneable {
+
+   private static final Log log = LogFactory.getLog(AtomicHashMap.class);
+   private static final boolean trace = log.isTraceEnabled();
 
    protected final FastCopyHashMap<K, V> delegate;
    private AtomicHashMapDelta delta = null;
@@ -125,7 +130,11 @@ public final class AtomicHashMap<K, V> implements AtomicMap<K, V>, DeltaAware, C
 
    @Override
    public V get(Object key) {
-      return delegate.get(key);
+      V v = delegate.get(key);
+      if (trace)
+         log.tracef("Atomic hash map get(key=%s) returns %s", key, v);
+
+      return v;
    }
 
    @Override
@@ -214,8 +223,12 @@ public final class AtomicHashMap<K, V> implements AtomicMap<K, V>, DeltaAware, C
 
    @Override
    public String toString() {
-      //Avoid iterating on the delegate as that might lead to exceptions from concurrent iterators:
-      //not nice to have during a toString!
+      // Sanne: Avoid iterating on the delegate as that might lead to
+      // exceptions from concurrent iterators: not nice to have during a toString!
+      //
+      // Galder: Sure, but we need a way to track the contents of the atomic
+      // hash map somehow, so, we need to log each operation that affects its
+      // contents, and when its state is restored.
       return "AtomicHashMap";
    }
 
@@ -241,6 +254,9 @@ public final class AtomicHashMap<K, V> implements AtomicMap<K, V>, DeltaAware, C
       @SuppressWarnings("unchecked")
       public AtomicHashMap readObject(ObjectInput input) throws IOException, ClassNotFoundException {
          FastCopyHashMap<?, ?> delegate = (FastCopyHashMap<?, ?>) input.readObject();
+         if (trace)
+            log.tracef("Restore atomic hash map from %s", delegate);
+
          return new AtomicHashMap(delegate);
       }
 

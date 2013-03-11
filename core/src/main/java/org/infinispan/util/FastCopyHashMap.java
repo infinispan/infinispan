@@ -22,6 +22,9 @@
  */
 package org.infinispan.util;
 
+import org.infinispan.util.logging.Log;
+import org.infinispan.util.logging.LogFactory;
+
 import java.io.IOException;
 import java.io.Serializable;
 import java.util.AbstractCollection;
@@ -42,6 +45,10 @@ import java.util.Set;
  * @since 4.0
  */
 public class FastCopyHashMap<K, V> extends AbstractMap<K, V> implements Map<K, V>, Cloneable, Serializable {
+
+   private static final Log log = LogFactory.getLog(FastCopyHashMap.class);
+   private static final boolean trace = log.isTraceEnabled();
+
    /**
     * Serialization ID
     */
@@ -597,6 +604,9 @@ public class FastCopyHashMap<K, V> extends AbstractMap<K, V> implements Map<K, V
       @Override
       public Map.Entry<K, V> next() {
          Entry<K, V> e = nextEntry();
+         if (trace)
+            log.tracef("Next entry: key=%s, value=%s", e.key, e.value);
+
          return new WriteThroughEntry(e.key, e.value);
       }
    }

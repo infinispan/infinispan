@@ -83,6 +83,9 @@ public class ActivationManagerImpl implements ActivationManager {
    public void activate(Object key) {
       if (enabled) {
          try {
+            if (trace)
+               log.tracef("Try to activate key=%s removing it from the store", key);
+
             if (store.remove(key) && statisticsEnabled) {
                activations.incrementAndGet();
             }
