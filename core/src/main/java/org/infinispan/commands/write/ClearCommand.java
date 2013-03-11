@@ -122,6 +122,11 @@ public class ClearCommand extends AbstractFlagAffectedCommand implements WriteCo
    }
 
    @Override
+   public boolean wasPreviousRead() {
+      return false; //no return value from clear
+   }
+
+   @Override
    public boolean isReturnValueExpected() {
       return false;
    }

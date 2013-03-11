@@ -25,6 +25,7 @@ import org.infinispan.context.Flag;
 import org.infinispan.distribution.DistributionTestHelper;
 import org.infinispan.distribution.MagicKey;
 import org.infinispan.test.fwk.CleanupAfterMethod;
+import org.testng.Assert;
 import org.testng.annotations.Test;
 
 import javax.transaction.RollbackException;
@@ -266,6 +267,54 @@ public class DistWriteSkewTest extends AbstractClusteredWriteSkewTest {
       localOnlyPut(this.<Integer, String>cache(1), 2, "v2");
       localOnlyPut(this.<Integer, String>cache(2), 3, "v3");
       localOnlyPut(this.<Integer, String>cache(3), 4, "v4");
+   }
+
+   public void testSameNodeKeyCreation() throws Exception {
+      tm(0).begin();
+      Assert.assertEquals(cache(0).get("NewKey"), null);
+      cache(0).put("NewKey", "v1");
+      Transaction tx0 = tm(0).suspend();
+
+      //other transaction do the same thing
+      tm(0).begin();
+      Assert.assertEquals(cache(0).get("NewKey"), null);
+      cache(0).put("NewKey", "v2");
+      tm(0).commit();
+
+      tm(0).resume(tx0);
+      try {
+         tm(0).commit();
+         Assert.fail("The transaction should rollback");
+      } catch (RollbackException expected) {
+         //expected
+      }
+
+      Assert.assertEquals(cache(0).get("NewKey"), "v2");
+      Assert.assertEquals(cache(1).get("NewKey"), "v2");
+   }
+
+   public void testDifferentNodeKeyCreation() throws Exception {
+      tm(0).begin();
+      Assert.assertEquals(cache(0).get("NewKey"), null);
+      cache(0).put("NewKey", "v1");
+      Transaction tx0 = tm(0).suspend();
+
+      //other transaction, in other node,  do the same thing
+      tm(1).begin();
+      Assert.assertEquals(cache(1).get("NewKey"), null);
+      cache(1).put("NewKey", "v2");
+      tm(1).commit();
+
+      tm(0).resume(tx0);
+      try {
+         tm(0).commit();
+         Assert.fail("The transaction should rollback");
+      } catch (RollbackException expected) {
+         //expected
+      }
+
+      Assert.assertEquals(cache(0).get("NewKey"), "v2");
+      Assert.assertEquals(cache(1).get("NewKey"), "v2");
    }
 
    private void localOnlyPut(Cache<Integer, String> cache, Integer k, String v) {

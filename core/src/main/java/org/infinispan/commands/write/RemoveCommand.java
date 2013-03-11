@@ -180,11 +180,12 @@ public class RemoveCommand extends AbstractDataWriteCommand {
       value = parameters[1];
       flags = (Set<Flag>) parameters[2];
       ignorePreviousValue = (Boolean) parameters[3];
+      previousRead = (Boolean) parameters[4];
    }
 
    @Override
    public Object[] getParameters() {
-      return new Object[]{key, value, Flag.copyWithoutRemotableFlags(flags), ignorePreviousValue};
+      return new Object[]{key, value, Flag.copyWithoutRemotableFlags(flags), ignorePreviousValue, previousRead};
    }
 
    public void setIgnorePreviousValue(boolean ignorePreviousValue) {

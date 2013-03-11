@@ -58,4 +58,9 @@ public interface WriteCommand extends VisitableCommand, FlagAffectedCommand {
     * an empty collection for this method.
     */
    Set<Object> getAffectedKeys();
+
+   /**
+    * @return  {@code true} if the key was previously read in the transaction during this command execution
+    */
+   boolean wasPreviousRead();
 }

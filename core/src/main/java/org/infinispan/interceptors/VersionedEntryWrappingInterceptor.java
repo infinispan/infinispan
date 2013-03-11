@@ -19,15 +19,19 @@
 
 package org.infinispan.interceptors;
 
+import org.infinispan.commands.VisitableCommand;
+import org.infinispan.commands.read.GetKeyValueCommand;
 import org.infinispan.commands.tx.CommitCommand;
 import org.infinispan.commands.tx.PrepareCommand;
 import org.infinispan.commands.tx.VersionedCommitCommand;
 import org.infinispan.commands.tx.VersionedPrepareCommand;
+import org.infinispan.commands.write.AbstractDataWriteCommand;
 import org.infinispan.commands.write.WriteCommand;
 import org.infinispan.container.entries.CacheEntry;
 import org.infinispan.container.versioning.EntryVersion;
 import org.infinispan.container.versioning.EntryVersionsMap;
 import org.infinispan.container.versioning.VersionGenerator;
+import org.infinispan.context.Flag;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.context.impl.TxInvocationContext;
 import org.infinispan.factories.annotations.Inject;
@@ -96,6 +100,30 @@ public class VersionedEntryWrappingInterceptor extends EntryWrappingInterceptor 
       } else {
          // This could be a state transfer call!
          cdl.commitEntry(entry, entry.getVersion(), skipOwnershipCheck, ctx);
+      }
+   }
+
+   @Override
+   protected void checkIfKeyRead(InvocationContext context, Object key, VisitableCommand command) {
+      if (command instanceof AbstractDataWriteCommand) {
+         AbstractDataWriteCommand writeCommand = (AbstractDataWriteCommand) command;
+         //keep track is only need in a clustered and transactional environment to perform the write skew check
+         if (context.isInTxScope() && context.isOriginLocal()) {
+            TxInvocationContext txInvocationContext = (TxInvocationContext) context;
+            if (!writeCommand.hasFlag(Flag.PUT_FOR_STATE_TRANSFER) && writeCommand.isConditional() || 
+                  !writeCommand.hasFlag(Flag.IGNORE_RETURN_VALUES)) {
+               //State transfer does not show the old value for the application neither with the IGNORE_RETURN_VALUES.
+               //on other hand, the conditional always read key!
+               txInvocationContext.getCacheTransaction().addReadKey(key);
+            }
+            writeCommand.setPreviousRead(txInvocationContext.getCacheTransaction().keyRead(key));
+         }
+      } else if (command instanceof GetKeyValueCommand) {
+         if (context.isInTxScope() && context.isOriginLocal()) {
+            //always show the value to the application
+            TxInvocationContext txInvocationContext = (TxInvocationContext) context;
+            txInvocationContext.getCacheTransaction().addReadKey(key);
+         }
       }
    }
 }

@@ -21,6 +21,7 @@ package org.infinispan.context.impl;
 
 import org.infinispan.CacheException;
 import org.infinispan.container.entries.CacheEntry;
+import org.infinispan.container.entries.InternalCacheEntry;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.util.InfinispanCollections;
@@ -144,7 +145,7 @@ public final class ImmutableContext implements InvocationContext {
    }
 
    @Override
-   public boolean replaceValue(Object key, Object value) {
+   public boolean replaceValue(Object key, InternalCacheEntry cacheEntry) {
       throw new CacheException("This context is immutable");
    }
 }

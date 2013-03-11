@@ -188,6 +188,11 @@ public class PutMapCommand extends AbstractFlagAffectedCommand implements WriteC
    }
 
    @Override
+   public boolean wasPreviousRead() {
+      return false; //no return value
+   }
+
+   @Override
    public boolean isReturnValueExpected() {
       return false;
    }

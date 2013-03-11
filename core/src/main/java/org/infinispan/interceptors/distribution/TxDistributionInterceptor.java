@@ -299,7 +299,7 @@ public class TxDistributionInterceptor extends BaseDistributionInterceptor {
          if (isWrite && isPessimisticCache && ctx.isInTxScope()) {
             ((TxInvocationContext) ctx).addAffectedKey(key);
          }
-         if (!ctx.replaceValue(key, ice.getValue())) {
+         if (!ctx.replaceValue(key, ice)) {
             if (isWrite)
                lockAndWrap(ctx, key, ice, command);
             else
@@ -380,7 +380,7 @@ public class TxDistributionInterceptor extends BaseDistributionInterceptor {
                   log.debug("Inability to store in L1 caused by", e);
                }
             } else {
-               if (!ctx.replaceValue(key, ice.getValue())) {
+               if (!ctx.replaceValue(key, ice)) {
                   if (isWrite)
                      lockAndWrap(ctx, key, ice, command);
                   else

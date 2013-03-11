@@ -119,7 +119,7 @@ public class ReplaceCommand extends AbstractDataWriteCommand {
    @Override
    public Object[] getParameters() {
       return new Object[]{key, oldValue, newValue, lifespanMillis, maxIdleTimeMillis, ignorePreviousValue,
-                          Flag.copyWithoutRemotableFlags(flags)};
+                          Flag.copyWithoutRemotableFlags(flags),previousRead};
    }
 
    @Override
@@ -133,6 +133,7 @@ public class ReplaceCommand extends AbstractDataWriteCommand {
       maxIdleTimeMillis = (Long) parameters[4];
       ignorePreviousValue = (Boolean) parameters[5];
       flags = (Set<Flag>) parameters[6];
+      previousRead = (Boolean) parameters[7];
    }
 
    @Override

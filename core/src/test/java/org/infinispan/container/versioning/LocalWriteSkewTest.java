@@ -28,6 +28,7 @@ import org.infinispan.test.fwk.CleanupAfterMethod;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.infinispan.transaction.LockingMode;
 import org.infinispan.util.concurrent.IsolationLevel;
+import org.testng.Assert;
 import org.testng.annotations.Test;
 
 import javax.transaction.RollbackException;
@@ -178,5 +179,28 @@ public class LocalWriteSkewTest extends SingleCacheManagerTest {
          // expected
       }
       assert null == cache.get("hello");
+   }
+
+   public void testSameNodeKeyCreation() throws Exception {
+      tm().begin();
+      Assert.assertEquals(cache.get("NewKey"), null);
+      cache.put("NewKey", "v1");
+      Transaction tx0 = tm().suspend();
+
+      //other transaction do the same thing
+      tm().begin();
+      Assert.assertEquals(cache.get("NewKey"), null);
+      cache.put("NewKey", "v2");
+      tm().commit();
+
+      tm().resume(tx0);
+      try {
+         tm().commit();
+         Assert.fail("The transaction should rollback");
+      } catch (RollbackException expected) {
+         //expected
+      }
+
+      Assert.assertEquals(cache.get("NewKey"), "v2");      
    }
 }
