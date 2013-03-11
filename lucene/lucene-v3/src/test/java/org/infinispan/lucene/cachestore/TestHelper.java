@@ -17,7 +17,7 @@
  * MA  02110-1301, USA.
  */
 
-package org.infinispan.lucene.cacheloader;
+package org.infinispan.lucene.cachestore;
 
 import org.apache.lucene.document.Document;
 import org.apache.lucene.document.Field;
