@@ -19,7 +19,11 @@
 
 package org.infinispan.lucene.cachestore;
 
-import org.apache.lucene.store.Directory;
+import java.io.File;
+import java.util.HashSet;
+import java.util.Iterator;
+import java.util.Set;
+
 import org.apache.lucene.store.FSDirectory;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.container.entries.InternalCacheEntry;
@@ -29,10 +33,6 @@ import org.infinispan.loaders.CacheLoaderManager;
 import org.infinispan.lucene.ChunkCacheKey;
 import org.infinispan.lucene.FileCacheKey;
 import org.infinispan.lucene.FileListCacheKey;
-import org.infinispan.lucene.FileReadLockKey;
-import org.infinispan.lucene.cachestore.LuceneCacheLoader;
-import org.infinispan.lucene.cachestore.LuceneCacheLoaderConfig;
-import org.infinispan.lucene.directory.DirectoryBuilder;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.test.SingleCacheManagerTest;
 import org.infinispan.test.TestingUtil;
@@ -42,19 +42,11 @@ import org.testng.AssertJUnit;
 import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
 
-import java.io.File;
-import java.io.IOException;
-import java.util.HashSet;
-import java.util.Iterator;
-import java.util.Set;
-
-
 /**
  * @author Sanne Grinovero <sanne@hibernate.org> (C) 2013 Red Hat Inc.
  * @since 5.2
  */
-@Test(groups = "functional", testName = "lucene.cacheloader.CacheLoaderAPITest")
-
+@Test(groups = "functional", testName = "lucene.cachestore.CacheLoaderAPITest")
 public class CacheLoaderAPITest extends SingleCacheManagerTest {
 
    private static final String rootDirectoryName = "CacheLoaderAPITest.indexesRootDirTmp";

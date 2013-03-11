@@ -55,7 +55,7 @@ import org.testng.annotations.Test;
  * @author Sanne Grinovero
  * @since 5.2
  */
-@Test(groups = "functional", testName = "lucene.cacheloader.IndexCacheLoaderTest")
+@Test(groups = "functional", testName = "lucene.cachestore.IndexCacheLoaderTest")
 public class IndexCacheLoaderTest {
 
    private static final String rootDirectoryName = "indexesRootDirTmp";
