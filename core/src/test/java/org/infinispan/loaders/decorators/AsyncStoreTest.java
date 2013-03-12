@@ -416,13 +416,24 @@ public class AsyncStoreTest extends AbstractInfinispanTest {
       assert ice != null && (value + (number - 1)).equals(ice.getValue());
    }
 
-   private void doTestRemove(int number, String key) throws Exception {
+   private void doTestRemove(final int number, final String key) throws Exception {
       for (int i = 0; i < number; i++) store.remove(key + i);
 
-      for (int i = 0; i < number; i++) {
-         String loadKey = key + i;
-         assert store.load(loadKey) == null : loadKey + " still in store";
-      }
+      eventually( new Condition() {
+         public boolean isSatisfied() throws Exception {
+            boolean allRemoved = true;
+
+            for (int i = 0; i < number; i++) {
+               String loadKey = key + i;
+               if(store.load(loadKey) != null) {
+                  allRemoved = false;
+                  break;
+               }
+            }
+
+            return allRemoved;
+         }
+      });
    }
 
    private void doTestSameKeyRemove(String key) throws Exception {
