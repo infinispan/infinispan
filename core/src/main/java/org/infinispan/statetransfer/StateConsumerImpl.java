@@ -51,7 +51,6 @@ import org.infinispan.remoting.rpc.ResponseMode;
 import org.infinispan.remoting.rpc.RpcManager;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.topology.CacheTopology;
-import org.infinispan.transaction.LocalTransaction;
 import org.infinispan.transaction.LockingMode;
 import org.infinispan.transaction.RemoteTransaction;
 import org.infinispan.transaction.TransactionTable;
@@ -483,7 +482,6 @@ public class StateConsumerImpl implements StateConsumer {
             } finally {
                if (ctx.isInTxScope()) {
                   if (success) {
-                     ((LocalTransaction)((TxInvocationContext)ctx).getCacheTransaction()).setFromStateTransfer(true);
                      try {
                         transactionManager.commit();
                      } catch (Throwable ex) {
