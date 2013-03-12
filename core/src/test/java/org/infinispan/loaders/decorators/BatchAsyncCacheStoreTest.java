@@ -28,6 +28,7 @@ import java.util.HashMap;
 import org.infinispan.AdvancedCache;
 import org.infinispan.config.CacheLoaderManagerConfig;
 import org.infinispan.config.Configuration;
+import org.infinispan.config.GlobalConfiguration;
 import org.infinispan.loaders.CacheStoreConfig;
 import org.infinispan.loaders.file.FileCacheStoreConfig;
 import org.infinispan.manager.EmbeddedCacheManager;
@@ -61,7 +62,8 @@ public class BatchAsyncCacheStoreTest extends SingleCacheManagerTest {
       configuration.setCacheMode(Configuration.CacheMode.LOCAL);
       configuration.setInvocationBatchingEnabled(true);
       enableTestJdbcStorage(configuration);
-      return TestCacheManagerFactory.createCacheManager(configuration);
+
+      return TestCacheManagerFactory.createCacheManager(GlobalConfiguration.getNonClusteredDefault(), configuration);
    }
 
    private void enableTestJdbcStorage(Configuration configuration) throws Exception {
