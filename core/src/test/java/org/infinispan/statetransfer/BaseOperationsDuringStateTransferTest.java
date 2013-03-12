@@ -22,7 +22,6 @@
  */
 package org.infinispan.statetransfer;
 
-import org.infinispan.commands.ReplicableCommand;
 import org.infinispan.commands.VisitableCommand;
 import org.infinispan.commands.read.GetKeyValueCommand;
 import org.infinispan.commands.write.PutKeyValueCommand;
@@ -31,7 +30,6 @@ import org.infinispan.commands.write.ReplaceCommand;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.cache.VersioningScheme;
-import org.infinispan.configuration.global.GlobalConfigurationBuilder;
 import org.infinispan.context.Flag;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.interceptors.CallInterceptor;
@@ -39,16 +37,13 @@ import org.infinispan.interceptors.EntryWrappingInterceptor;
 import org.infinispan.interceptors.InvocationContextInterceptor;
 import org.infinispan.interceptors.VersionedEntryWrappingInterceptor;
 import org.infinispan.interceptors.base.CommandInterceptor;
-import org.infinispan.remoting.responses.Response;
-import org.infinispan.remoting.rpc.ResponseFilter;
-import org.infinispan.remoting.rpc.ResponseMode;
-import org.infinispan.remoting.transport.Address;
-import org.infinispan.remoting.transport.jgroups.JGroupsTransport;
 import org.infinispan.test.MultipleCacheManagersTest;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.CleanupAfterMethod;
 import org.infinispan.topology.CacheTopology;
-import org.infinispan.topology.CacheTopologyControlCommand;
+import org.infinispan.topology.ClusterCacheStatus;
+import org.infinispan.topology.DefaultRebalancePolicy;
+import org.infinispan.topology.RebalancePolicy;
 import org.infinispan.transaction.LockingMode;
 import org.infinispan.transaction.TransactionMode;
 import org.infinispan.transaction.lookup.DummyTransactionManagerLookup;
@@ -58,8 +53,6 @@ import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 import org.testng.annotations.Test;
 
-import java.util.Collection;
-import java.util.Map;
 import java.util.concurrent.*;
 
 import static org.junit.Assert.*;
@@ -84,7 +77,7 @@ public abstract class BaseOperationsDuringStateTransferTest extends MultipleCach
 
    private ConfigurationBuilder cacheConfigBuilder;
 
-   private ReclosableLatch transportGate;
+   private ReclosableLatch rebalanceGate;
 
    protected BaseOperationsDuringStateTransferTest(CacheMode cacheMode, boolean isTransactional,
                                                    boolean isOptimistic, boolean supportsConcurrentUpdates) {
@@ -116,25 +109,26 @@ public abstract class BaseOperationsDuringStateTransferTest extends MultipleCach
       cacheConfigBuilder.locking().supportsConcurrentUpdates(supportsConcurrentUpdates);
       cacheConfigBuilder.clustering().stateTransfer().fetchInMemoryState(true).awaitInitialTransfer(false);
 
-      transportGate = new ReclosableLatch(true);
-      GlobalConfigurationBuilder globalConfigurationBuilder = new GlobalConfigurationBuilder();
-      globalConfigurationBuilder.transport().transport(new JGroupsTransport() {
-         @Override
-         public Map<Address, Response> invokeRemotely(Collection<Address> recipients, ReplicableCommand rpcCommand, ResponseMode mode, long timeout,
-                                                      boolean usePriorityQueue, ResponseFilter responseFilter) throws Exception {
-            if (rpcCommand instanceof CacheTopologyControlCommand) {
-               try {
-                  transportGate.await();
-               } catch (InterruptedException e) {
-                  throw new RuntimeException(e);
-               }
-            }
-            return super.invokeRemotely(recipients, rpcCommand, mode, timeout, usePriorityQueue, responseFilter);
-         }
-      });
+      rebalanceGate = new ReclosableLatch(true);
 
-      addClusterEnabledCacheManager(globalConfigurationBuilder, cacheConfigBuilder);
+      addClusterEnabledCacheManager(cacheConfigBuilder);
       waitForClusterToForm();
+
+      TestingUtil.replaceComponent(manager(0), RebalancePolicy.class,
+            new DefaultRebalancePolicy() {
+               @Override
+               public void updateCacheStatus(String cacheName, ClusterCacheStatus cacheStatus) throws Exception {
+                  if (cacheStatus.getCacheTopology().getPendingCH() != null) {
+                     // block the rebalance until the test reaches the desired spot
+                     try {
+                        rebalanceGate.await();
+                     } catch (InterruptedException e) {
+                        throw new RuntimeException(e);
+                     }
+                  }
+                  super.updateCacheStatus(cacheName, cacheStatus);
+               }
+            }, true);
    }
 
    public void testRemove() throws Exception {
@@ -160,7 +154,7 @@ public abstract class BaseOperationsDuringStateTransferTest extends MultipleCach
       });
 
       // do not allow coordinator to send topology updates to node B
-      transportGate.close();
+      rebalanceGate.close();
 
       log.info("Adding a new node ..");
       addClusterEnabledCacheManager(cacheConfigBuilder);
@@ -199,7 +193,7 @@ public abstract class BaseOperationsDuringStateTransferTest extends MultipleCach
       assertTrue(cache(1).keySet().isEmpty());
 
       // allow rebalance to start
-      transportGate.open();
+      rebalanceGate.open();
 
       // wait for state transfer to end
       TestingUtil.waitForRehashToComplete(cache(0), cache(1));
@@ -241,7 +235,7 @@ public abstract class BaseOperationsDuringStateTransferTest extends MultipleCach
       });
 
       // do not allow coordinator to send topology updates to node B
-      transportGate.close();
+      rebalanceGate.close();
 
       log.info("Adding a new node ..");
       addClusterEnabledCacheManager(cacheConfigBuilder);
@@ -280,7 +274,7 @@ public abstract class BaseOperationsDuringStateTransferTest extends MultipleCach
       assertTrue(cache(1).keySet().isEmpty());
 
       // allow rebalance to start
-      transportGate.open();
+      rebalanceGate.open();
 
       // wait for state transfer to end
       TestingUtil.waitForRehashToComplete(cache(0), cache(1));
@@ -322,7 +316,7 @@ public abstract class BaseOperationsDuringStateTransferTest extends MultipleCach
       });
 
       // do not allow coordinator to send topology updates to node B
-      transportGate.close();
+      rebalanceGate.close();
 
       log.info("Adding a new node ..");
       addClusterEnabledCacheManager(cacheConfigBuilder);
@@ -361,7 +355,7 @@ public abstract class BaseOperationsDuringStateTransferTest extends MultipleCach
       assertTrue(cache(1).keySet().isEmpty());
 
       // allow rebalance to start
-      transportGate.open();
+      rebalanceGate.open();
 
       // wait for state transfer to end
       TestingUtil.waitForRehashToComplete(cache(0), cache(1));

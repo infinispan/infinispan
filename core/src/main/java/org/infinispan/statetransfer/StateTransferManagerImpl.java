@@ -115,7 +115,7 @@ public class StateTransferManagerImpl implements StateTransferManager {
             configuration.clustering().stateTransfer().timeout()
       );
 
-      localTopologyManager.join(cacheName, joinInfo, new CacheTopologyHandler() {
+      CacheTopology initialTopology = localTopologyManager.join(cacheName, joinInfo, new CacheTopologyHandler() {
          @Override
          public void updateConsistentHash(CacheTopology cacheTopology) {
             doTopologyUpdate(cacheTopology, false);
@@ -126,6 +126,10 @@ public class StateTransferManagerImpl implements StateTransferManager {
             doTopologyUpdate(cacheTopology, true);
          }
       });
+
+      if (trace) {
+         log.tracef("StateTransferManager of cache %s on node %s received initial topology %s", cacheName, rpcManager.getAddress(), initialTopology);
+      }
    }
 
    /**

@@ -71,8 +71,8 @@ public class DefaultRebalancePolicy implements RebalancePolicy {
 
    public boolean isBalanced(ConsistentHash ch) {
       int numSegments = ch.getNumSegments();
+      int actualNumOwners = Math.min(ch.getMembers().size(), ch.getNumOwners());
       for (int i = 0; i < numSegments; i++) {
-         int actualNumOwners = Math.min(ch.getMembers().size(), ch.getNumOwners());
          if (ch.locateOwnersForSegment(i).size() != actualNumOwners) {
             return false;
          }
