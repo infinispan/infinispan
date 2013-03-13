@@ -44,7 +44,7 @@ public class CassandraCacheStoreConfigurationParser52 implements ConfigurationPa
 
    private static final Namespace NAMESPACES[] = {
          new Namespace(Namespace.INFINISPAN_NS_BASE_URI, "cassandra", Element.CASSANDRA_STORE.getLocalName(), 5, 2),
-         new Namespace("", Element.CASSANDRA_STORE.getLocalName(), 0, 0) };
+         };
 
    public CassandraCacheStoreConfigurationParser52() {
    }

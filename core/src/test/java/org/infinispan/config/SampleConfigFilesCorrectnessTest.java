@@ -47,9 +47,10 @@ import java.util.Arrays;
  */
 @Test(groups = "functional", testName = "config.SampleConfigFilesCorrectnessTest")
 public class SampleConfigFilesCorrectnessTest {
-   public static final String CONFIG_ROOT = "src" + File.separator + "main" + File.separator + "release" + File.separator + "etc" + File.separator + "config-samples";
    private static final Log log = LogFactory.getLog(SampleConfigFilesCorrectnessTest.class);
 
+   public String configFolder;
+   public String configRoot;
    private InMemoryAppender appender;
    private Level oldLevel;
 
@@ -60,6 +61,9 @@ public class SampleConfigFilesCorrectnessTest {
       log4jLogger.setLevel(Level.WARN);
       appender = new InMemoryAppender();
       log4jLogger.addAppender(appender);
+      configFolder = getConfigFolder();
+      configRoot = "src" + File.separator + "main" + File.separator
+            + "release" + File.separator + "etc" + File.separator + configFolder;
    }
 
    @AfterMethod(alwaysRun = true)
@@ -115,13 +119,17 @@ public class SampleConfigFilesCorrectnessTest {
    }
 
    private File getRootFolder() {
-      File file = new File(new File(CONFIG_ROOT).getAbsolutePath());
+      File file = new File(new File(configRoot).getAbsolutePath());
       //this is a hack. If the tests are run from core folder then following if should not be entered.
       //otherwise assume we are runnin
       if (!file.isDirectory()) {
-         file = new File("core/" + CONFIG_ROOT);
+         file = new File("core/" + configRoot);
       }
       return file;
+   }
+
+   public String getConfigFolder() {
+      return "config-samples";
    }
 
    private static class InMemoryAppender extends AppenderSkeleton {

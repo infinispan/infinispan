@@ -101,9 +101,13 @@ public class TestingUtil {
    private static final Random random = new Random();
    public static final String TEST_PATH = "infinispanTempFiles";
    public static final String INFINISPAN_START_TAG = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n<infinispan\n" +
-           "      xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\"\n" +
-           "      xsi:schemaLocation=\"urn:infinispan:config:5.2 http://www.infinispan.org/schemas/infinispan-config-5.2.xsd\"\n" +
-           "      xmlns=\"urn:infinispan:config:5.2\">";
+         "      xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\"\n" +
+         "      xsi:schemaLocation=\"urn:infinispan:config:5.3 http://www.infinispan.org/schemas/infinispan-config-5.3.xsd\"\n" +
+         "      xmlns=\"urn:infinispan:config:5.3\">";
+   public static final String INFINISPAN_START_TAG_52 = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n<infinispan\n" +
+         "      xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\"\n" +
+         "      xsi:schemaLocation=\"urn:infinispan:config:5.2 http://www.infinispan.org/schemas/infinispan-config-5.2.xsd\"\n" +
+         "      xmlns=\"urn:infinispan:config:5.2\">";
    public static final String INFINISPAN_START_TAG_51 = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n<infinispan\n" +
          "      xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\"\n" +
          "      xsi:schemaLocation=\"urn:infinispan:config:5.1 http://www.infinispan.org/schemas/infinispan-config-5.1.xsd\"\n" +

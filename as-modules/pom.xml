@@ -17,8 +17,8 @@
    <packaging>pom</packaging>
 
    <properties>
-      <infinispan.slot>5.2</infinispan.slot>
-      <jgroups.slot>3.2</jgroups.slot>
+      <infinispan.slot>5.3</infinispan.slot>
+      <jgroups.slot>3.3</jgroups.slot>
    </properties>
 
    <dependencies>

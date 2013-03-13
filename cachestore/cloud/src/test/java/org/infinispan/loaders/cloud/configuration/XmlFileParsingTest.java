@@ -49,7 +49,7 @@ public class XmlFileParsingTest extends AbstractInfinispanTest {
       String config = INFINISPAN_START_TAG +
             "   <default>\n" +
             "     <loaders>\n" +
-            "       <cloudStore xmlns=\"urn:infinispan:config:cloud:5.2\" cloudService=\"transient\" identity=\"me\" password=\"s3cr3t\" secure=\"true\" proxyHost=\"my-proxy\" proxyPort=\"8080\" fetchPersistentState=\"true\">\n" +
+            "       <cloudStore xmlns=\"urn:infinispan:config:cloud:5.3\" cloudService=\"transient\" identity=\"me\" password=\"s3cr3t\" secure=\"true\" proxyHost=\"my-proxy\" proxyPort=\"8080\" fetchPersistentState=\"true\">\n" +
             "         <async enabled=\"true\" />\n" +
             "       </cloudStore>\n" +
             "     </loaders>\n" +

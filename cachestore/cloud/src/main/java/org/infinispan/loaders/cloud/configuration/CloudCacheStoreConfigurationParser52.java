@@ -43,7 +43,7 @@ public class CloudCacheStoreConfigurationParser52 implements ConfigurationParser
 
    private static final Namespace NAMESPACES[] = {
          new Namespace(Namespace.INFINISPAN_NS_BASE_URI, "cloud", Element.CLOUD_STORE.getLocalName(), 5, 2),
-         new Namespace("", Element.CLOUD_STORE.getLocalName(), 0, 0) };
+         };
 
    public CloudCacheStoreConfigurationParser52() {
    }

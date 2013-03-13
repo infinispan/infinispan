@@ -50,7 +50,7 @@ public class XmlFileParsingTest extends AbstractInfinispanTest {
       String config = INFINISPAN_START_TAG +
             "   <default>\n" +
             "     <loaders>\n" +
-            "       <stringKeyedJdbcStore xmlns=\"urn:infinispan:config:jdbc:5.2\" key2StringMapper=\"org.infinispan.loaders.jdbc.configuration.DummyKey2StringMapper\">\n" +
+            "       <stringKeyedJdbcStore xmlns=\"urn:infinispan:config:jdbc:5.3\" key2StringMapper=\"org.infinispan.loaders.jdbc.configuration.DummyKey2StringMapper\">\n" +
             "         <connectionPool connectionUrl=\"jdbc:h2:mem:infinispan;DB_CLOSE_DELAY=-1\" username=\"dbuser\" password=\"dbpass\" />\n" +
             "         <stringKeyedTable prefix=\"entry\" fetchSize=\"34\" batchSize=\"99\" >\n" +
             "           <idColumn name=\"id\" type=\"VARCHAR\" />\n" +
