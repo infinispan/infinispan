@@ -27,8 +27,8 @@ import org.testng.annotations.Test;
  * @author Mircea Markus
  * @since 5.2
  */
-@Test (groups = "xsite")
-public class DistLocalClusterFailure extends BaseLocalClusterTxFailureTest {
+@Test (groups = "xsite", testName = "xsite.backupfailure.tx.DistLocalClusterFailureTest")
+public class DistLocalClusterFailureTest extends BaseLocalClusterTxFailureTest {
 
    @Override
    protected ConfigurationBuilder getNycActiveConfig() {

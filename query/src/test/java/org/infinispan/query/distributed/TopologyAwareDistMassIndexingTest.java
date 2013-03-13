@@ -34,7 +34,7 @@ import org.testng.annotations.Test;
 /**
  * Tests verifying that Mass Indexer works properly on Topology Aware nodes.
  */
-@Test(groups = "functional", testName = "query.distributed.ClusteredQueryMassIndexingTest")
+@Test(groups = "functional", testName = "query.distributed.TopologyAwareDistMassIndexingTest")
 public class TopologyAwareDistMassIndexingTest extends DistributedMassIndexingTest {
 
    @Override

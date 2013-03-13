@@ -61,7 +61,7 @@ import static org.testng.AssertJUnit.assertNull;
  * @author Galder Zamarreño
  * @since 5.0
  */
-@Test(groups = "functional", testName = "marshall.MultiPojoVersionMarshallTest")
+@Test(groups = "functional", testName = "marshall.multiversion.MultiPojoVersionMarshallTest")
 public class MultiPojoVersionMarshallTest extends AbstractInfinispanTest {
 
    private static final String BASE = "org.infinispan.marshall.multiversion.MultiPojoVersionMarshallTest$";

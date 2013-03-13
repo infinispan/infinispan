@@ -41,7 +41,7 @@ import org.testng.annotations.Test;
  * @author Dan Berindei
  * @since 5.3
  */
-@Test(groups = "profiling", testName = "client.hotrod.ClientConsistentHashPerfTest")
+@Test(groups = "profiling", testName = "client.hotrod.stress.ClientConsistentHashPerfTest")
 public class ClientConsistentHashPerfTest extends MultiHotRodServersTest {
 
    private static final int NUM_SERVERS = 64;

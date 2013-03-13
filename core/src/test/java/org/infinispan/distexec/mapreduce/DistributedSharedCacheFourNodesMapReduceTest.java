@@ -35,7 +35,7 @@ import java.util.Map;
  * @author Vladimir Blagojevic
  * @since 5.2
  */
-@Test(groups = "functional", testName = "distexec.DistributedSharedCacheFourNodesMapReduceTest")
+@Test(groups = "functional", testName = "distexec.mapreduce.DistributedSharedCacheFourNodesMapReduceTest")
 public class DistributedSharedCacheFourNodesMapReduceTest extends BaseWordCountMapReduceTest {
 
    @Override

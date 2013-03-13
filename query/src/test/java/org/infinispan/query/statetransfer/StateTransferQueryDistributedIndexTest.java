@@ -26,7 +26,7 @@ import org.testng.annotations.Test;
  * @author anistor@redhat.com
  * @since 5.2
  */
-@Test(groups = "functional", testName = "query.statetransfer.StateTransferQueryIndexTest")
+@Test(groups = "functional", testName = "query.statetransfer.StateTransferQueryDistributedIndexTest")
 public class StateTransferQueryDistributedIndexTest extends StateTransferQueryIndexTest {
 
    @Override

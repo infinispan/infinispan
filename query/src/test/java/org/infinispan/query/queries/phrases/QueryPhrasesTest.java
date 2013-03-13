@@ -47,7 +47,7 @@ import static org.infinispan.query.helper.TestQueryHelperFactory.createQueryPars
  *
  * @author Anna Manukyan
  */
-@Test(groups = "functional", testName = "query.ranges.QueryPhrasesTest")
+@Test(groups = "functional", testName = "query.queries.phrases.QueryPhrasesTest")
 public class QueryPhrasesTest extends SingleCacheManagerTest {
    private Person person1;
    private Person person2;

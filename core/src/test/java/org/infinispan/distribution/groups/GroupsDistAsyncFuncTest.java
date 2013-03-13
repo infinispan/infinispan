@@ -32,7 +32,7 @@ import org.testng.annotations.Test;
  * @author Pete Muir
  * @since 5.0
  */
-@Test (groups = "functional", testName = "distribution.GroupsDistAsyncFuncTest")
+@Test (groups = "functional", testName = "distribution.groups.GroupsDistAsyncFuncTest")
 public class GroupsDistAsyncFuncTest extends DistAsyncFuncTest {
 
    public GroupsDistAsyncFuncTest() {

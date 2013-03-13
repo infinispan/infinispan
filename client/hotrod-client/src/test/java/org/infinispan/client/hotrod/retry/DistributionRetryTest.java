@@ -49,7 +49,7 @@ import static org.testng.Assert.assertEquals;
  * @author Mircea.Markus@jboss.com
  * @since 4.1
  */
-@Test(testName = "hotrod.retry.DistributionRetryTest", groups = "functional")
+@Test(testName = "client.hotrod.retry.DistributionRetryTest", groups = "functional")
 public class DistributionRetryTest extends AbstractRetryTest {
 
    @Override

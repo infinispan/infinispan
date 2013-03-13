@@ -53,7 +53,7 @@ import static org.testng.Assert.assertEquals;
  * @author Mircea.Markus@jboss.com
  * @since 4.2
  */
-@Test(groups = "functional", testName = "tx.TxAndRemoteTimeoutExceptionTest")
+@Test(groups = "functional", testName = "tx.exception.TxAndRemoteTimeoutExceptionTest")
 public class TxAndRemoteTimeoutExceptionTest extends MultipleCacheManagersTest {
 
    private static final Log log = LogFactory.getLog(TxAndRemoteTimeoutExceptionTest.class);

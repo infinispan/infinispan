@@ -37,7 +37,7 @@ import static org.testng.Assert.fail;
  * @author Mircea Markus
  * @since 5.1
  */
-@Test (groups = "functional", testName = "lock.singlelock.LockOwnerCrashOptimisticTest")
+@Test (groups = "functional", testName = "lock.singlelock.optimistic.LockOwnerCrashOptimisticTest")
 @CleanupAfterMethod
 public class LockOwnerCrashOptimisticTest extends AbstractLockOwnerCrashTest {
 

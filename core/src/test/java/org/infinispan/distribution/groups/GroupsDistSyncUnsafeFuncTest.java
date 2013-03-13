@@ -32,7 +32,7 @@ import org.testng.annotations.Test;
  * @author Pete Muir
  * @since 5.0
  */
-@Test(testName="distribution.GroupsDistSyncUnsafeFuncTest", groups = "functional")
+@Test(testName="distribution.groups.GroupsDistSyncUnsafeFuncTest", groups = "functional")
 public class GroupsDistSyncUnsafeFuncTest extends DistSyncUnsafeFuncTest {
    
    public GroupsDistSyncUnsafeFuncTest() {

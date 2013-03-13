@@ -36,7 +36,7 @@ import static org.testng.Assert.assertEquals;
  * @author Mircea Markus
  * @since 5.1
  */
-@Test (groups = "functional", testName = "lock.singlelock.BasicSingleLockPessimisticTest")
+@Test (groups = "functional", testName = "lock.singlelock.pessimistic.BasicSingleLockPessimisticTest")
 public class BasicSingleLockPessimisticTest extends AbstractNoCrashTest {
 
    public BasicSingleLockPessimisticTest() {

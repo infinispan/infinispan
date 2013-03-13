@@ -21,7 +21,7 @@ package org.infinispan.distribution.rehash;
 
 import org.testng.annotations.Test;
 
-@Test(groups = "functional", testName = "distribution.RehashCompletedOnJoinNotConcurrentTest")
+@Test(groups = "functional", testName = "distribution.rehash.RehashCompletedOnJoinNotConcurrentTest")
 public class RehashCompletedOnJoinNotConcurrentTest extends RehashCompletedOnJoinTest {
 
    public RehashCompletedOnJoinNotConcurrentTest() {

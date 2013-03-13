@@ -36,7 +36,7 @@ import java.util.List;
  *
  * @author Anna Manukyan
  */
-@Test(groups = "functional", testName = "query.distributed.TopologyAwareClusteredQueryTest")
+@Test(groups = "functional", testName = "query.blackbox.TopologyAwareClusteredQueryTest")
 public class TopologyAwareClusteredQueryTest extends ClusteredQueryTest {
 
    @Override

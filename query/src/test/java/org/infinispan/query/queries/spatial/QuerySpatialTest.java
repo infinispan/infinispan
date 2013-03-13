@@ -48,7 +48,7 @@ import java.util.List;
  *
  * @author Anna Manukyan
  */
-@Test(groups = "functional", testName = "query.ranges.QuerySpatialTest")
+@Test(groups = "functional", testName = "query.queries.spatial.QuerySpatialTest")
 public class QuerySpatialTest extends SingleCacheManagerTest {
 
    public QuerySpatialTest() {

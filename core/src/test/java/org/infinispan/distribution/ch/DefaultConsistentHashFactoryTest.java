@@ -44,7 +44,7 @@ import static org.testng.Assert.*;
  * @author Dan Berindei
  * @since 5.2
  */
-@Test(groups = "unit", testName = "ch.DefaultConsistentHashFactoryTest")
+@Test(groups = "unit", testName = "distribution.ch.DefaultConsistentHashFactoryTest")
 public class DefaultConsistentHashFactoryTest extends AbstractInfinispanTest {
 
    private int iterationCount = 0;

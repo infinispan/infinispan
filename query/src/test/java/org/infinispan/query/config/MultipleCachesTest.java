@@ -45,7 +45,7 @@ import org.testng.annotations.Test;
 /**
  * @author Sanne Grinovero <sanne@infinispan.org> (C) 2011 Red Hat Inc.
  */
-@Test(groups = "unit", testName = "config.MultipleCachesTest")
+@Test(groups = "unit", testName = "query.config.MultipleCachesTest")
 public class MultipleCachesTest extends SingleCacheManagerTest {
 
    @Override

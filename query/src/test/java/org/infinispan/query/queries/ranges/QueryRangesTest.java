@@ -42,8 +42,8 @@ import java.util.List;
  *
  * @author Anna Manukyan
  */
-@Test(groups = "functional", testName = "query.ranges.QueryRangesTests")
-public class QueryRangesTests extends SingleCacheManagerTest {
+@Test(groups = "functional", testName = "query.queries.ranges.QueryRangesTest")
+public class QueryRangesTest extends SingleCacheManagerTest {
    private Person person1;
    private Person person2;
    private Person person3;
@@ -53,7 +53,7 @@ public class QueryRangesTests extends SingleCacheManagerTest {
    protected String key2 = "test2";
    protected String key3 = "test3";
 
-   public QueryRangesTests() {
+   public QueryRangesTest() {
       cleanup = CleanupPhase.AFTER_METHOD;
    }
 

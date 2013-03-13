@@ -14,7 +14,7 @@ import org.testng.annotations.Test;
 
 import javax.transaction.Transaction;
 
-@Test(groups = "functional", testName = "TransactionCleanupWithRecoveryTest")
+@Test(groups = "functional", testName = "tx.TransactionCleanupWithRecoveryTest")
 public class TransactionCleanupWithRecoveryTest extends MultipleCacheManagersTest {
 
    @Override

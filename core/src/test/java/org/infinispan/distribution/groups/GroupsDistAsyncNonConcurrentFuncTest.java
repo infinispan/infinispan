@@ -21,7 +21,7 @@ package org.infinispan.distribution.groups;
 
 import org.testng.annotations.Test;
 
-@Test(groups = "functional", testName = "distribution.GroupsDistAsyncNonConcurrentFuncTest")
+@Test(groups = "functional", testName = "distribution.groups.GroupsDistAsyncNonConcurrentFuncTest")
 public class GroupsDistAsyncNonConcurrentFuncTest extends GroupsDistAsyncFuncTest {
    public GroupsDistAsyncNonConcurrentFuncTest() {
       supportConcurrentWrites = false;

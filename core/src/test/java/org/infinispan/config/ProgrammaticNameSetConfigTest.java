@@ -36,8 +36,9 @@ import static org.testng.Assert.assertEquals;
  * @author Mircea Markus
  * @since 4.2
  */
-@Test (groups = "functional", testName = "config.ProgrammaticNameSetConfig")
-public class ProgrammaticNameSetConfig extends SingleCacheManagerTest {
+@Test (groups = "functional", testName = "config.ProgrammaticNameSetConfigTest", enabled = false,
+       description = "Disabled as this functionality is not working for Old API and for New API it is useless.")
+public class ProgrammaticNameSetConfigTest extends SingleCacheManagerTest {
 
    @Override
    protected EmbeddedCacheManager createCacheManager() throws Exception {

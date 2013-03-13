@@ -35,7 +35,7 @@ import org.testng.annotations.Test;
  * @author Mircea.Markus@jboss.com
  * @since 4.2
  */
-@Test (groups = "functional", testName = "distribution.TopologyAwareChFunctionalTest")
+@Test (groups = "functional", testName = "distribution.topologyaware.TopologyAwareChFunctionalTest")
 public class TopologyAwareChFunctionalTest extends DistSyncFuncTest {
 
    @Override

@@ -40,7 +40,7 @@ import static org.testng.Assert.assertEquals;
  * @author Mircea.Markus@jboss.com
  * @since 4.2
  */
-@Test(groups = "functional", testName = "CustomInterceptorException")
+@Test(groups = "functional", testName = "tx.exception.CustomInterceptorException")
 public class CustomInterceptorException extends SingleCacheManagerTest {
 
    @Override

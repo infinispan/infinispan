@@ -36,7 +36,7 @@ import java.util.Collections;
  * @author Pete Muir
  * @since 5.0
  */
-@Test(groups = "functional", testName = "distribution.GroupsChFunctionalTest")
+@Test(groups = "functional", testName = "distribution.groups.GroupsChFunctionalTest")
 @CleanupAfterMethod
 public class GroupsChFunctionalTest extends DistSyncFuncTest {
 

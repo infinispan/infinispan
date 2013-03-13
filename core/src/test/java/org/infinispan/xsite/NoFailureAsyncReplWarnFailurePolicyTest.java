@@ -30,7 +30,7 @@ import java.util.Collections;
 import static org.testng.Assert.assertNull;
 import static org.testng.AssertJUnit.assertEquals;
 
-@Test (groups = "xsite", testName = "xsite.bridgemissing.NoFailureAsyncReplWarnFailurePolicyTest")
+@Test (groups = "xsite", testName = "xsite.NoFailureAsyncReplWarnFailurePolicyTest")
 public class NoFailureAsyncReplWarnFailurePolicyTest extends BaseSiteUnreachableTest {
 
    public NoFailureAsyncReplWarnFailurePolicyTest() {

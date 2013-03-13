@@ -43,7 +43,7 @@ import static junit.framework.Assert.assertEquals;
  * @author Emmanuel Bernard
  * @author Hardy Ferentschik
  */
-@Test(groups = "functional", testName = "query.analyzer.SolrAnalyzerTest")
+@Test(groups = "functional", testName = "query.analysis.SolrAnalyzerTest")
 public class SolrAnalyzerTest extends SingleCacheManagerTest {
 
    protected EmbeddedCacheManager createCacheManager() throws Exception {

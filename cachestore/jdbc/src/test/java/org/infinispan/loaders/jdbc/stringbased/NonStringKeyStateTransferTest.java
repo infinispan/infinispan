@@ -36,7 +36,7 @@ import static junit.framework.Assert.assertEquals;
  * @author Mircea.Markus@jboss.com
  * @since 4.1
  */
-@Test(groups = "functional", testName = "jdbc.stringbased.NonStringKeyStateTransferTest")
+@Test(groups = "functional", testName = "loaders.jdbc.stringbased.NonStringKeyStateTransferTest")
 public class NonStringKeyStateTransferTest extends AbstractCacheTest {
 
    public void testReplicatedStateTransfer() {

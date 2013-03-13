@@ -40,7 +40,7 @@ import static org.infinispan.test.TestingUtil.withCacheManager;
  * @author Sanne Grinovero
  * @since 5.2
  */
-@Test(groups = "unit", testName = "query.config.QueryParsingTest")
+@Test(groups = "unit", testName = "query.config.DefaultCacheInheritancePreventedTest")
 public class DefaultCacheInheritancePreventedTest {
 
    @Test

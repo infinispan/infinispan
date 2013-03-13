@@ -32,7 +32,7 @@ import org.infinispan.configuration.parsing.ParserRegistry;
 import org.infinispan.test.AbstractInfinispanTest;
 import org.testng.annotations.Test;
 
-@Test(groups = "unit", testName = "config.parsing.QueryParsingTest")
+@Test(groups = "unit", testName = "query.config.QueryParsingTest")
 public class QueryParsingTest extends AbstractInfinispanTest {
 
    public void testConfigurationFileParsing() throws IOException {

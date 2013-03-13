@@ -39,7 +39,7 @@ import static org.testng.Assert.assertTrue;
  * @author Dan Berindei
  * @since 5.2
  */
-@Test(groups = "unit", testName = "topologyaware.TopologyAwareSyncConsistentHashFactoryTest")
+@Test(groups = "unit", testName = "distribution.topologyaware.TopologyAwareSyncConsistentHashFactoryTest")
 public class TopologyAwareSyncConsistentHashFactoryTest extends TopologyAwareConsistentHashFactoryTest {
 
    private Log log = LogFactory.getLog(TopologyAwareSyncConsistentHashFactoryTest.class);

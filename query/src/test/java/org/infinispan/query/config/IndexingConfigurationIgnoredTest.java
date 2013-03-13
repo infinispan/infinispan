@@ -27,8 +27,8 @@ import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 import static org.testng.Assert.assertFalse;
 
-@Test(groups = "functional", testName = "query.config.IndexingConfigurationIgnored")
-public class IndexingConfigurationIgnored {
+@Test(groups = "functional", testName = "query.config.IndexingConfigurationIgnoredTest")
+public class IndexingConfigurationIgnoredTest {
 
    private EmbeddedCacheManager manager;
 

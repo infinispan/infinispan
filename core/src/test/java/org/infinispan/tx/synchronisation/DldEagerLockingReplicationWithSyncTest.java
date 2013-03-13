@@ -31,7 +31,7 @@ import org.testng.annotations.Test;
  * @author Mircea.Markus@jboss.com
  * @since 5.0
  */
-@Test (groups = "functional", testName = "tx.synchronization.DldEagerLockingReplicationWithSyncTest")
+@Test (groups = "functional", testName = "tx.synchronisation.DldEagerLockingReplicationWithSyncTest")
 public class DldEagerLockingReplicationWithSyncTest extends DldPessimisticLockingReplicationTest {
    @Override
    protected Configuration getConfiguration() throws Exception {

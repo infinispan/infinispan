@@ -47,7 +47,7 @@ import static org.testng.Assert.assertEquals;
  * @author Mircea.Markus@jboss.com
  * @since 4.2
  */
-@Test(testName = "tx.TxAndTimeoutExceptionTest", groups = "functional")
+@Test(testName = "tx.exception.TxAndTimeoutExceptionTest", groups = "functional")
 public class TxAndTimeoutExceptionTest extends SingleCacheManagerTest {
 
    @Override

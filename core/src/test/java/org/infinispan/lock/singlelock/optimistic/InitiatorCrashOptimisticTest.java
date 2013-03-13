@@ -33,7 +33,7 @@ import org.testng.annotations.Test;
  * @author Mircea Markus
  * @since 5.1
  */
-@Test (groups = "functional", testName = "lock.singlelock.InitiatorCrashOptimisticTest")
+@Test (groups = "functional", testName = "lock.singlelock.optimistic.InitiatorCrashOptimisticTest")
 @CleanupAfterMethod
 public class InitiatorCrashOptimisticTest extends AbstractInitiatorCrashTest {
 

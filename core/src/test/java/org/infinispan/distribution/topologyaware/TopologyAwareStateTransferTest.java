@@ -41,7 +41,7 @@ import java.util.List;
  * @author Mircea.Markus@jboss.com
  * @since 4.2
  */
-@Test(groups = "functional", testName = "topologyaware.TopologyAwareStateTransferTest")
+@Test(groups = "functional", testName = "distribution.topologyaware.TopologyAwareStateTransferTest")
 @CleanupAfterTest
 public class TopologyAwareStateTransferTest extends MultipleCacheManagersTest {
 

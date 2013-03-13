@@ -33,7 +33,7 @@ import org.testng.annotations.Test;
  * @author Mircea.Markus@jboss.com
  * @since 4.2
  */
-@Test(testName="topologyaware.TopologyAwareDistSyncUnsafeFuncTest", groups = "functional")
+@Test(testName="distribution.topologyaware.TopologyAwareDistSyncUnsafeFuncTest", groups = "functional")
 public class TopologyAwareDistSyncUnsafeFuncTest extends DistSyncUnsafeFuncTest {
 
    @Override

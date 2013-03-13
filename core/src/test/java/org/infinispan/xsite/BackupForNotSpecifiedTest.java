@@ -33,8 +33,8 @@ import static org.testng.AssertJUnit.assertNull;
  * @author Mircea Markus
  * @since 5.2
  */
-@Test(groups = "xsite", testName = "xsite.TestBackupForNotSpecified")
-public class TestBackupForNotSpecified extends AbstractXSiteTest {
+@Test(groups = "xsite", testName = "xsite.BackupForNotSpecifiedTest")
+public class BackupForNotSpecifiedTest extends AbstractXSiteTest {
 
    @Override
    protected void createSites() {

@@ -39,7 +39,7 @@ import org.testng.annotations.Test;
  * @author Mircea.Markus@jboss.com
  * @since 4.1
  */
-@Test (testName = "client.hotrod.ReplicationRetryTest", groups = "functional")
+@Test (testName = "client.hotrod.retry.ReplicationRetryTest", groups = "functional")
 public class ReplicationRetryTest extends AbstractRetryTest {
 
    public void testGet() {

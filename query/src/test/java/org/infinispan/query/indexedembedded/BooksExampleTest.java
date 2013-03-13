@@ -34,7 +34,7 @@ import org.testng.annotations.Test;
 /**
  * @author Sanne Grinovero <sanne@infinispan.org> (C) 2011 Red Hat Inc.
  */
-@Test(groups = "functional", testName = "query.BooksExampleTest")
+@Test(groups = "functional", testName = "query.indexedembedded.BooksExampleTest")
 public class BooksExampleTest extends SingleCacheManagerTest {
 
    protected EmbeddedCacheManager createCacheManager() throws Exception {

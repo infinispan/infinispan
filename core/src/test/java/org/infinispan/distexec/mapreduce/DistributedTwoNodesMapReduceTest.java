@@ -33,7 +33,7 @@ import org.testng.annotations.Test;
  * @author Vladimir Blagojevic
  * @since 5.2
  */
-@Test(groups = "functional", testName = "distexec.DistributedTwoNodesMapReduceTest")
+@Test(groups = "functional", testName = "distexec.mapreduce.DistributedTwoNodesMapReduceTest")
 public class DistributedTwoNodesMapReduceTest extends BaseWordCountMapReduceTest {
 
    @Override

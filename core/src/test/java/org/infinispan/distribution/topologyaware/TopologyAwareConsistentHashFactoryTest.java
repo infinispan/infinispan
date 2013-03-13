@@ -50,7 +50,7 @@ import static org.testng.Assert.assertTrue;
  * @author Dan Berindei
  * @since 4.2
  */
-@Test(groups = "unit", testName = "topologyaware.TopologyAwareConsistentHashFactoryTest")
+@Test(groups = "unit", testName = "distribution.topologyaware.TopologyAwareConsistentHashFactoryTest")
 public class TopologyAwareConsistentHashFactoryTest extends AbstractInfinispanTest {
    private static final Log log = LogFactory.getLog(TopologyAwareConsistentHashFactoryTest.class);
    private static final int CLUSTER_SIZE = 10;

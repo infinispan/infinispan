@@ -42,7 +42,7 @@ import java.util.Set;
  * @author Thomas Fromm
  * @since 5.1
  */
-@Test(groups = "functional", testName = "loaders.PessimisticDistSyncTxCacheStoreSharedTest")
+@Test(groups = "functional", testName = "distribution.PessimisticDistSyncTxCacheStoreSharedTest")
 public class PessimisticDistSyncTxCacheStoreSharedTest extends MultipleCacheManagersTest {
 
    private ConfigurationBuilder getCB(){

@@ -44,7 +44,7 @@ import org.testng.annotations.Test;
  * 
  * @author Vladimir Blagojevic 
  */
-@Test(enabled = true, groups = "functional", testName = "distexec.DistributedExecutorTest")
+@Test(enabled = true, groups = "functional", testName = "cdi.test.distexec.DistributedExecutorCDITest")
 public class DistributedExecutorCDITest extends MultipleCacheManagersArquillianTest {
    
    DistributedExecutorTest delegate;

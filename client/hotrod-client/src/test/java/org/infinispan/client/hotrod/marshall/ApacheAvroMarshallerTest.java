@@ -33,7 +33,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-@Test(groups = "functional", testName = "client.hotrod.ApacheAvroMarshallerTest")
+@Test(groups = "functional", testName = "client.hotrod.marshall.ApacheAvroMarshallerTest")
 public class ApacheAvroMarshallerTest {
 
    private final ApacheAvroMarshaller marshaller = new ApacheAvroMarshaller();
