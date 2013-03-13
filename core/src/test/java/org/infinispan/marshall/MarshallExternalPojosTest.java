@@ -37,7 +37,7 @@ import java.lang.reflect.Method;
 import static org.infinispan.test.TestingUtil.k;
 import static org.testng.AssertJUnit.assertEquals;
 
-@Test(groups = "functional", testName = "marshall.jboss.MarshallExternalPojosTest")
+@Test(groups = "functional", testName = "marshall.MarshallExternalPojosTest")
 public class MarshallExternalPojosTest extends MultipleCacheManagersTest {
 
    private static final String CACHE_NAME = MarshallExternalPojosTest.class.getName();

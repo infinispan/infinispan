@@ -32,7 +32,7 @@ import org.testng.annotations.Test;
  * @author Dan Berindei
  * @since 5.3
  */
-@Test(groups = "stress", testName = "statetransfer.LargeClusterStressTest")
+@Test(groups = "stress", testName = "stress.LargeClusterStressTest")
 public class LargeClusterStressTest extends MultipleCacheManagersTest {
 
    private static final int NUM_NODES = 64;

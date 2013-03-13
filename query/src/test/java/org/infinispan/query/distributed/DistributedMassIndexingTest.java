@@ -39,7 +39,7 @@ import org.testng.annotations.Test;
 /**
  * @author Sanne Grinovero <sanne@hibernate.org> (C) 2012 Red Hat Inc.
  */
-@Test(groups = "functional", testName = "query.distributed.DistributedMassIndexing")
+@Test(groups = "functional", testName = "query.distributed.DistributedMassIndexingTest")
 public class DistributedMassIndexingTest extends MultipleCacheManagersTest {
 
    protected static final int NUM_NODES = 4;

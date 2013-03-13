@@ -29,7 +29,7 @@ import org.testng.annotations.Test;
 import static org.testng.Assert.assertEquals;
 import static org.testng.Assert.assertNull;
 
-@Test(groups = "functional", testName = "api.SimpleConditionalOperationsWriteSkewTest")
+@Test(groups = "functional", testName = "container.versioning.SimpleConditionalOperationsWriteSkewTest")
 public class SimpleConditionalOperationsWriteSkewTest extends MultipleCacheManagersTest {
 
    protected ConfigurationBuilder getConfig() {

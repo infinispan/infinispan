@@ -36,7 +36,7 @@ import org.infinispan.test.SingleCacheManagerTest;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.testng.annotations.Test;
 
-@Test(groups = "manual", testName = "loaders.hbase.HBaseCacheStoreTestStandalone")
+@Test(groups = "manual", testName = "loaders.hbase.HBaseCacheStoreStandaloneTest")
 public class HBaseCacheStoreStandaloneTest extends SingleCacheManagerTest {
 
    private static final boolean USE_EMBEDDED = true;

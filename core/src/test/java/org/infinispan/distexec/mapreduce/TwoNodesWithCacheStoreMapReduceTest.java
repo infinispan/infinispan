@@ -41,7 +41,7 @@ import org.testng.annotations.Test;
  * @author Vladimir Blagojevic
  * @since 5.2
  */
-@Test(groups = "functional", testName = "distexec.TwoNodesWithCacheStoreMapReduceTest")
+@Test(groups = "functional", testName = "distexec.mapreduce.TwoNodesWithCacheStoreMapReduceTest")
 public class TwoNodesWithCacheStoreMapReduceTest extends BaseWordCountMapReduceTest {
 
    @Override

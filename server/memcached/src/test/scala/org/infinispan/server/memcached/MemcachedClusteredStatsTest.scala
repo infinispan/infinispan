@@ -26,7 +26,7 @@ package org.infinispan.server.memcached
 import org.infinispan.manager.EmbeddedCacheManager
 import org.infinispan.test.fwk.TestCacheManagerFactory
 import org.infinispan.configuration.cache.{CacheMode, ConfigurationBuilder}
-import org.infinispan.server.core.ConnectionStatsTests._
+import org.infinispan.server.core.ConnectionStatsTest._
 import org.testng.annotations.Test
 import javax.management.{MBeanServer, MBeanServerFactory}
 import org.infinispan.jmx.MBeanServerLookup

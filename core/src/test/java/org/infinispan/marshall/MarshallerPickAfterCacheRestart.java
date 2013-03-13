@@ -37,7 +37,7 @@ import static org.testng.AssertJUnit.assertEquals;
  * @author Galder Zamarreño
  * @since 5.1
  */
-@Test(groups = "functional", testName = "marshall.CustomClassResolverCacheRestartTest")
+@Test(groups = "functional", testName = "marshall.MarshallerPickAfterCacheRestart")
 public class MarshallerPickAfterCacheRestart extends MultipleCacheManagersTest {
 
    @Override

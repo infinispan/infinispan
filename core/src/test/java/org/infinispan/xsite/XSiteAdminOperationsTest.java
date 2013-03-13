@@ -34,7 +34,7 @@ import static org.testng.AssertJUnit.assertEquals;
  * @author Mircea Markus
  * @since 5.2
  */
-@Test(groups = "xsite", testName = "xsite.admin.XSiteAdminOperationsTest")
+@Test(groups = "xsite", testName = "xsite.XSiteAdminOperationsTest")
 public class XSiteAdminOperationsTest extends AbstractTwoSitesTest {
 
    @Override

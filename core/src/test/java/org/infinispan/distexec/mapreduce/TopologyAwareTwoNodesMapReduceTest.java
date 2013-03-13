@@ -29,7 +29,7 @@ import org.testng.annotations.Test;
  *
  * @author Anna Manukyan
  */
-@Test(groups = "functional", testName = "distexec.TopologyAwareTwoNodesMapReduceTest")
+@Test(groups = "functional", testName = "distexec.mapreduce.TopologyAwareTwoNodesMapReduceTest")
 public class TopologyAwareTwoNodesMapReduceTest extends SimpleTwoNodesMapReduceTest {
 
    @Override

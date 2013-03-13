@@ -47,7 +47,7 @@ import org.testng.annotations.Test;
  * @author Sanne Grinovero
  * @since 4.1
  */
-@Test(groups = "functional", testName = "loaders.BatchAsyncCacheStoreTest")
+@Test(groups = "functional", testName = "loaders.decorators.BatchAsyncCacheStoreTest")
 public class BatchAsyncCacheStoreTest extends SingleCacheManagerTest {
 
    private final HashMap<Object, Object> cacheCopy = new HashMap<Object, Object>();

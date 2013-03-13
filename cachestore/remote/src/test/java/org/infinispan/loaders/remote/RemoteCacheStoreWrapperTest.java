@@ -42,7 +42,7 @@ import org.testng.annotations.BeforeClass;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
-@Test(testName = "loaders.remote.RemoteCacheStoreMixedAccessTest", groups="functional")
+@Test(testName = "loaders.remote.RemoteCacheStoreWrapperTest", groups="functional")
 public class RemoteCacheStoreWrapperTest extends AbstractInfinispanTest {
 
    private HotRodServer sourceServer;

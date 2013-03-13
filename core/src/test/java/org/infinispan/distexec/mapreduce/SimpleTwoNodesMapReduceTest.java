@@ -54,7 +54,7 @@ import static org.infinispan.test.TestingUtil.withCacheManager;
  * @author Vladimir Blagojevic
  * @since 5.0
  */
-@Test(groups = "functional", testName = "distexec.SimpleTwoNodesMapReduceTest")
+@Test(groups = "functional", testName = "distexec.mapreduce.SimpleTwoNodesMapReduceTest")
 public class SimpleTwoNodesMapReduceTest extends BaseWordCountMapReduceTest {
    
    

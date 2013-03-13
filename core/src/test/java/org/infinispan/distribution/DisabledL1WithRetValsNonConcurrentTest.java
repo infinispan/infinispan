@@ -21,7 +21,7 @@ package org.infinispan.distribution;
 
 import org.testng.annotations.Test;
 
-@Test(groups = "functional", testName = "DisabledL1WithRetValsNonConcurrentTest")
+@Test(groups = "functional", testName = "distribution.DisabledL1WithRetValsNonConcurrentTest")
 public class DisabledL1WithRetValsNonConcurrentTest extends DisabledL1WithRetValsTest {
 
    public DisabledL1WithRetValsNonConcurrentTest() {

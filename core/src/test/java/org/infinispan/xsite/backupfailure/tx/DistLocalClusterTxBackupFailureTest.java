@@ -27,10 +27,10 @@ import org.testng.annotations.Test;
  * @author Mircea Markus
  * @since 5.2
  */
-@Test (groups = "xsite", testName = "xsite.backupfailure.tx.DistLocalClusterTxBackupFailure")
-public class DistLocalClusterTxBackupFailure extends BaseLocalClusterTxFailureTest {
+@Test (groups = "xsite", testName = "xsite.backupfailure.tx.DistLocalClusterTxBackupFailureTest")
+public class DistLocalClusterTxBackupFailureTest extends BaseLocalClusterTxFailureTest {
 
-   public DistLocalClusterTxBackupFailure() {
+   public DistLocalClusterTxBackupFailureTest() {
       isLonBackupTransactional = true;
    }
 

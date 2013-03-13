@@ -42,12 +42,12 @@ import static java.lang.String.format;
  * Should ensure that persistent state is not rehashed if the cache store is shared.  See ISPN-861
  *
  */
-@Test (testName = "distribution.rehash.RehashWithSharedCacheStore", groups = "functional")
-public class RehashWithSharedCacheStore extends BaseDistCacheStoreTest {
+@Test (testName = "distribution.rehash.RehashWithSharedCacheStoreTest", groups = "functional")
+public class RehashWithSharedCacheStoreTest extends BaseDistCacheStoreTest {
 
-   private static final Log log = LogFactory.getLog(RehashWithSharedCacheStore.class);
+   private static final Log log = LogFactory.getLog(RehashWithSharedCacheStoreTest.class);
 
-   public RehashWithSharedCacheStore() {
+   public RehashWithSharedCacheStoreTest() {
       INIT_CLUSTER_SIZE = 3;
       sync = true;
       tx = false;

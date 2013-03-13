@@ -31,7 +31,7 @@ import org.testng.annotations.Test;
  * @author Mircea.Markus@jboss.com
  * @since 5.0
  */
-@Test(groups = "functional", testName = "tx.synchronization.APIDistWithSyncTest")
+@Test(groups = "functional", testName = "tx.synchronisation.APIDistWithSyncTest")
 public class APIDistWithSyncTest extends APIDistTest {
    @Override
    protected Configuration createConfig() {

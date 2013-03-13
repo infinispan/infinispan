@@ -34,7 +34,7 @@ import javax.transaction.xa.Xid;
  * @author Mircea Markus
  * @since 5.1
  */
-@Test (groups = "functional", testName = "tx.RecoveryHandlerTest")
+@Test (groups = "functional", testName = "tx.recovery.RecoveryHandlerTest")
 public class RecoveryHandlerTest extends MultipleCacheManagersTest {
 
    @Override

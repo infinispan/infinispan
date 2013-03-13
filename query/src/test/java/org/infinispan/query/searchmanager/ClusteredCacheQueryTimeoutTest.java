@@ -46,7 +46,7 @@ import static org.infinispan.query.helper.TestQueryHelperFactory.createQueryPars
  *
  * @author Anna Manukyan
  */
-@Test(groups = "functional", testName = "query.ClusteredCacheQueryTimeoutTest")
+@Test(groups = "functional", testName = "query.searchmanager.ClusteredCacheQueryTimeoutTest")
 public class ClusteredCacheQueryTimeoutTest extends MultipleCacheManagersTest {
    private Cache cache1;
 

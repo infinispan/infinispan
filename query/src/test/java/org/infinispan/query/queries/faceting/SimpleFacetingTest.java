@@ -46,7 +46,7 @@ import static junit.framework.Assert.assertEquals;
  * @author Sanne Grinovero <sanne@hibernate.org> (C) 2011 Red Hat Inc.
  * @author Hardy Ferentschik
  */
-@Test(groups = "functional", testName = "query.faceting.SimpleFacetingTest")
+@Test(groups = "functional", testName = "query.queries.faceting.SimpleFacetingTest")
 public class SimpleFacetingTest extends SingleCacheManagerTest {
    
    private static final String indexFieldName = "cubicCapacity";

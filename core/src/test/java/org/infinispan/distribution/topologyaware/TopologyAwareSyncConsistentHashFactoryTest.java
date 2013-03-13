@@ -32,7 +32,7 @@ import org.testng.annotations.Test;
  * @author Dan Berindei
  * @since 5.2
  */
-@Test(groups = "unit", testName = "topologyaware.TopologyAwareSyncConsistentHashFactoryTest")
+@Test(groups = "unit", testName = "distribution.topologyaware.TopologyAwareSyncConsistentHashFactoryTest")
 public class TopologyAwareSyncConsistentHashFactoryTest extends TopologyAwareConsistentHashFactoryTest {
 
    public TopologyAwareSyncConsistentHashFactoryTest() {

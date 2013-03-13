@@ -44,7 +44,7 @@ import org.testng.annotations.BeforeClass;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
-@Test(testName = "loaders.remote.RemoteCacheStoreMixedAccessTest", groups = "functional")
+@Test(testName = "upgrade.hotrod.HotRodUpgradeSynchronizerTest", groups = "functional")
 public class HotRodUpgradeSynchronizerTest extends AbstractInfinispanTest {
 
    private HotRodServer sourceServer;

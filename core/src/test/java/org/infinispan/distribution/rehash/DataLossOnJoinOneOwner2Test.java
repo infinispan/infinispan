@@ -21,7 +21,7 @@ package org.infinispan.distribution.rehash;
 
 import org.testng.annotations.Test;
 
-@Test(groups="functional", testName = "DataLossOnJoinOneOwner2Test")
+@Test(groups="functional", testName = "distribution.rehash.DataLossOnJoinOneOwner2Test")
 public class DataLossOnJoinOneOwner2Test extends DataLossOnJoinOneOwnerTest {
    public DataLossOnJoinOneOwner2Test() {
       supportsConcurrentUpdates = false;

@@ -34,7 +34,7 @@ import org.testng.Assert._
  * @author Galder Zamarreño
  * @since 5.2
  */
-object ConnectionStatsTests {
+object ConnectionStatsTest {
 
    def testSingleLocalConnection(jmxDomain: String, serverName: String) {
       val mbeanServer = PerThreadMBeanServerLookup.getThreadMBeanServer

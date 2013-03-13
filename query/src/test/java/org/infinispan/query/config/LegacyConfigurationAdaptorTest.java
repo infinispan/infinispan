@@ -31,8 +31,8 @@ import org.testng.annotations.Test;
  *
  * @author Anna Manukyan
  */
-@Test(groups = "functional", testName = "query.config.LegacyConfigurationAdaptorTests")
-public class LegacyConfigurationAdaptorTests {
+@Test(groups = "functional", testName = "query.config.LegacyConfigurationAdaptorTest")
+public class LegacyConfigurationAdaptorTest {
 
    @Test
    public void testIndexingWithLegacyAdapt() {

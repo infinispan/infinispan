@@ -32,7 +32,7 @@ import static org.testng.AssertJUnit.*;
  * @author Mircea Markus
  * @since 5.2
  */
-@Test (groups = "xsite", testName = "xsite.NonTxAsyncBackupTest")
+@Test (groups = "xsite", testName = "xsite.BackupCacheStoppedTest")
 public class BackupCacheStoppedTest extends AbstractTwoSitesTest {
 
    public void testCacheStopped() {

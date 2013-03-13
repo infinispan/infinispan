@@ -41,7 +41,7 @@ import org.testng.annotations.Test;
  * @author Sanne Grinovero <sanne@hibernate.org> (C) 2011 Red Hat Inc.
  * @since 5.0
  */
-@Test(groups = "functional", testName = "distribution.DistListenerTest")
+@Test(groups = "functional", testName = "notifications.DistListenerTest")
 public class DistListenerTest extends MultipleCacheManagersTest {
 
    private TestListener listener;

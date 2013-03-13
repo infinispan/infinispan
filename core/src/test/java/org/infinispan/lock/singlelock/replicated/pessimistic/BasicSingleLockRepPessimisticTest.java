@@ -34,7 +34,7 @@ import org.testng.annotations.Test;
  * @author Mircea Markus
  * @since 5.1
  */
-@Test (groups = "functional", testName = "singlelock.replicated.pessimistic.BasicSingleLockRepPessimisticTest")
+@Test (groups = "functional", testName = "lock.singlelock.replicated.pessimistic.BasicSingleLockRepPessimisticTest")
 public class BasicSingleLockRepPessimisticTest extends AbstractNoCrashTest {
 
    public BasicSingleLockRepPessimisticTest() {

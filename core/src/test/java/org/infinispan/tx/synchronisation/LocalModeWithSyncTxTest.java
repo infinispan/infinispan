@@ -41,7 +41,7 @@ import static org.testng.Assert.assertEquals;
  * @author Mircea.Markus@jboss.com
  * @since 5.0
  */
-@Test(groups = "functional", testName = "tx.synchronization.LocalModeWithSyncTxTest")
+@Test(groups = "functional", testName = "tx.synchronisation.LocalModeWithSyncTxTest")
 public class LocalModeWithSyncTxTest extends LocalModeTxTest {
 
    @Override

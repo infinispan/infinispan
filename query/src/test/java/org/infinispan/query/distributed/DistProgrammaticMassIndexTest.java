@@ -45,7 +45,7 @@ import static org.infinispan.query.helper.TestQueryHelperFactory.createQueryPars
  *
  * @author Anna Manukyan
  */
-@Test(groups = "functional", testName = "query.distributed.DistProgrammaticMassIndex")
+@Test(groups = "functional", testName = "query.distributed.DistProgrammaticMassIndexTest")
 public class DistProgrammaticMassIndexTest extends DistributedMassIndexingTest {
 
    @Override

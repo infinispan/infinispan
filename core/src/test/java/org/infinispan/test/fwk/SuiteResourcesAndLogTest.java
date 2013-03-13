@@ -34,7 +34,7 @@ import org.testng.annotations.Test;
  * @author Mircea.Markus@jboss.com
  * @author Galder Zamarreño
  */
-@Test(groups = "functional", testName = "test.testng.SuiteResourcesAndLogTest", alwaysRun=true)
+@Test(groups = "functional", testName = "test.fwk.SuiteResourcesAndLogTest", alwaysRun=true)
 public class SuiteResourcesAndLogTest {
 
    private static final Log log = LogFactory.getLog(SuiteResourcesAndLogTest.class);

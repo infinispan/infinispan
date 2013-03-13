@@ -45,7 +45,7 @@ import org.testng.annotations.Test;
 /**
  * @author Sanne Grinovero <sanne@hibernate.org> (C) 2011 Red Hat Inc.
  */
-@Test(groups = "functional", testName = "query.CollectionsIndexingTest")
+@Test(groups = "functional", testName = "query.indexedembedded.CollectionsIndexingTest")
 public class CollectionsIndexingTest extends SingleCacheManagerTest {
 
    private SearchManager qf;

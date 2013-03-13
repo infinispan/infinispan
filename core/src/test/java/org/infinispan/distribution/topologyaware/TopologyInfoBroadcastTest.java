@@ -42,7 +42,7 @@ import static org.testng.Assert.assertEquals;
  * @author Mircea.Markus@jboss.com
  * @since 4.2
  */
-@Test(groups = "functional", testName = "topologyaware.TopologyInfoBroadcastTest")
+@Test(groups = "functional", testName = "distribution.topologyaware.TopologyInfoBroadcastTest")
 public class TopologyInfoBroadcastTest extends MultipleCacheManagersTest {
 
    @Override

@@ -31,7 +31,7 @@ import org.testng.annotations.Test;
  *
  * @author Anna Manukyan
  */
-@Test(groups = "functional", testName = "query.distributed.TopologyAwareDistributedCacheTest")
+@Test(groups = "functional", testName = "query.blackbox.TopologyAwareDistributedCacheTest")
 public class TopologyAwareDistributedCacheTest extends TopologyAwareClusteredCacheTest {
 
    @Override

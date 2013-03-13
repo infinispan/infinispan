@@ -44,7 +44,7 @@ import java.util.concurrent.Future;
  * @author Galder Zamarreño
  * @since 4.2
  */
-@Test(groups = "functional", testName = "ConcurrentCacheManagerTest")
+@Test(groups = "functional", testName = "manager.ConcurrentCacheManagerTest")
 public class ConcurrentCacheManagerTest extends AbstractCacheTest {
    static final int NUM_CACHES = 4;
    static final int NUM_THREADS = 25;

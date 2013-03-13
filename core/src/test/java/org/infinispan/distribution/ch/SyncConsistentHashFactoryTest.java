@@ -30,7 +30,7 @@ import org.testng.annotations.Test;
  * @author Dan Berindei
  * @since 5.2
  */
-@Test(groups = "unit", testName = "ch.SyncConsistentHashFactoryTest")
+@Test(groups = "unit", testName = "distribution.ch.SyncConsistentHashFactoryTest")
 public class SyncConsistentHashFactoryTest extends DefaultConsistentHashFactoryTest {
    @Override
    protected ConsistentHashFactory createConsistentHashFactory() {
