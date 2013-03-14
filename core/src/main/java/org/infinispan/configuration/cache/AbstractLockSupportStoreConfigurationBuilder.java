@@ -30,8 +30,8 @@ import java.util.concurrent.TimeUnit;
 public abstract class AbstractLockSupportStoreConfigurationBuilder<T extends LockSupportStoreConfiguration, S extends AbstractLockSupportStoreConfigurationBuilder<T, S>> extends
       AbstractStoreConfigurationBuilder<T, S> implements LockSupportStoreConfigurationBuilder<T, S> {
 
-   protected long lockAcquistionTimeout;
-   protected int lockConcurrencyLevel;
+   protected long lockAcquistionTimeout = 60000;
+   protected int lockConcurrencyLevel = 2048;
 
    public AbstractLockSupportStoreConfigurationBuilder(LoadersConfigurationBuilder builder) {
       super(builder);
