@@ -20,23 +20,18 @@
   ~ License along with this software; if not, write to the Free
   ~ Software Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
   ~ 02110-1301 USA, or see the FSF site: http://www.fsf.org.
-  -->
-<project xmlns="http://maven.apache.org/POM/4.0.0"
-         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+  --><project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
    <modelVersion>4.0.0</modelVersion>
    <parent>
       <groupId>org.infinispan</groupId>
       <artifactId>infinispan-cachestore-parent</artifactId>
-      <version>5.1.8.Final</version>
+      <version>5.1.8.Final-redhat-2</version>
       <relativePath>../pom.xml</relativePath>
    </parent>
    <artifactId>infinispan-cachestore-remote</artifactId>
    <packaging>bundle</packaging>
    <name>Infinispan remote CacheStore</name>
    <description>Infinispan remote CacheStore based on Hotrod protocol</description>
-   <properties>
-   </properties>
 
    <dependencies>
       <dependency>
@@ -45,23 +40,11 @@
       </dependency>
       <dependency>
          <groupId>${project.groupId}</groupId>
-         <artifactId>infinispan-client-hotrod</artifactId>
-         <type>test-jar</type>
-         <scope>test</scope>
-      </dependency>
-      <dependency>
-         <groupId>${project.groupId}</groupId>
          <artifactId>infinispan-core</artifactId>
       </dependency>
       <dependency>
          <groupId>${project.groupId}</groupId>
          <artifactId>infinispan-server-hotrod</artifactId>
-         <scope>test</scope>
-      </dependency>
-      <dependency>
-         <groupId>${project.groupId}</groupId>
-         <artifactId>infinispan-server-hotrod</artifactId>
-         <type>test-jar</type>
          <scope>test</scope>
       </dependency>
    </dependencies>
@@ -73,9 +56,7 @@
             <artifactId>maven-bundle-plugin</artifactId>
             <configuration>
                <instructions>
-                  <Export-Package>
-                     ${project.groupId}.loaders.remote.*;version=${project.version};-split-package:=error
-                  </Export-Package>
+                  <Export-Package>${project.groupId}.loaders.remote.*;version=${project.version};-split-package:=error</Export-Package>
                </instructions>
             </configuration>
          </plugin>

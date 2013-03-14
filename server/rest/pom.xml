@@ -20,23 +20,20 @@
   ~ License along with this software; if not, write to the Free
   ~ Software Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
   ~ 02110-1301 USA, or see the FSF site: http://www.fsf.org.
-  -->
-<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
+  --><project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
    <modelVersion>4.0.0</modelVersion>
 
    <parent>
       <groupId>org.infinispan</groupId>
       <artifactId>infinispan-server-parent</artifactId>
-      <version>5.1.8.Final</version>
+      <version>5.1.8.Final-redhat-2</version>
       <relativePath>../pom.xml</relativePath>
    </parent>
 
    <artifactId>infinispan-server-rest</artifactId>
    <packaging>war</packaging>
    <name>Infinispan REST Server</name>
-   <description>REST interface for Infinispan, packaged as a WAR file for deployment in a servlet container
-   </description>
+   <description>REST interface for Infinispan, packaged as a WAR file for deployment in a servlet container</description>
 
    <build>
       <finalName>infinispan</finalName>
@@ -47,10 +44,6 @@
          <plugin>
             <groupId>org.scala-tools</groupId>
             <artifactId>maven-scala-plugin</artifactId>
-         </plugin>
-         <plugin>
-            <groupId>org.mortbay.jetty</groupId>
-            <artifactId>jetty-maven-plugin</artifactId>
          </plugin>
          <plugin>
             <artifactId>maven-war-plugin</artifactId>
@@ -79,8 +72,8 @@
       </dependency>
 
       <dependency>
-         <groupId>javax.servlet</groupId>
-         <artifactId>servlet-api</artifactId>
+         <groupId>org.jboss.spec.javax.servlet</groupId>
+         <artifactId>jboss-servlet-api_3.0_spec</artifactId>
          <scope>provided</scope>
       </dependency>
 
@@ -89,18 +82,6 @@
         <artifactId>infinispan-server-core</artifactId>
       </dependency>
 
-      <!-- and now for unit and integration tests -->
-      <dependency>
-         <groupId>org.mortbay.jetty</groupId>
-         <artifactId>jetty-embedded</artifactId>
-         <scope>test</scope>
-      </dependency>
-
-      <dependency>
-         <groupId>commons-httpclient</groupId>
-         <artifactId>commons-httpclient</artifactId>
-         <scope>test</scope>
-      </dependency>
 
    </dependencies>
 </project>

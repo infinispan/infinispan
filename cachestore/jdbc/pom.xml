@@ -20,15 +20,12 @@
   ~ License along with this software; if not, write to the Free
   ~ Software Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
   ~ 02110-1301 USA, or see the FSF site: http://www.fsf.org.
-  -->
-<project xmlns="http://maven.apache.org/POM/4.0.0"
-         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+  --><project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
    <modelVersion>4.0.0</modelVersion>
    <parent>
       <groupId>org.infinispan</groupId>
       <artifactId>infinispan-cachestore-parent</artifactId>
-      <version>5.1.8.Final</version>
+      <version>5.1.8.Final-redhat-2</version>
       <relativePath>../pom.xml</relativePath>
    </parent>
 
@@ -38,11 +35,6 @@
    <description>Infinispan JDBC CacheStore module</description>
 
    <dependencies>
-      <dependency>
-         <groupId>c3p0</groupId>
-         <artifactId>c3p0</artifactId>
-         <optional>true</optional>
-      </dependency>
 
       <dependency>
          <groupId>com.h2database</groupId>
@@ -50,12 +42,6 @@
          <scope>test</scope>
       </dependency>
 
-      <!-- for testing against MySQL -->
-      <dependency>
-         <groupId>mysql</groupId>
-         <artifactId>mysql-connector-java</artifactId>
-         <scope>test</scope>
-      </dependency>
    </dependencies>
 
    <build>     
@@ -65,9 +51,7 @@
             <artifactId>maven-bundle-plugin</artifactId>
             <configuration>
                <instructions>
-                  <Export-Package>
-                     ${project.groupId}.loaders.jdbc.*;version=${project.version};-split-package:=error
-                  </Export-Package>
+                  <Export-Package>${project.groupId}.loaders.jdbc.*;version=${project.version};-split-package:=error</Export-Package>
                </instructions>
             </configuration>
          </plugin>

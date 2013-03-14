@@ -20,16 +20,13 @@
   ~ License along with this software; if not, write to the Free
   ~ Software Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
   ~ 02110-1301 USA, or see the FSF site: http://www.fsf.org.
-  -->
-<project xmlns="http://maven.apache.org/POM/4.0.0"
-         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+  --><project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
    <modelVersion>4.0.0</modelVersion>
 
    <parent>
       <groupId>org.infinispan</groupId>
       <artifactId>infinispan-parent</artifactId>
-      <version>5.1.8.Final</version>
+      <version>5.1.8.Final-redhat-2</version>
       <relativePath>parent/pom.xml</relativePath>
    </parent>
 
@@ -43,44 +40,22 @@
    <modules>
       <module>parent</module>
       <module>core</module>
-      <module>tools</module>
-      <module>query</module>
       <module>tree</module>
-      <module>lucene-directory</module>
-      <module>cachestore</module>
-      <module>cachestore/jdbc</module>
-      <module>cachestore/jdbm</module>
-      <module>cachestore/bdbje</module>
-      <module>cachestore/cloud</module>
-      <module>cachestore/remote</module>
-      <module>cachestore/cassandra</module>
-      <module>server</module>
-      <module>server/core</module>
-      <module>server/memcached</module>
-      <module>server/hotrod</module>
-      <module>server/websocket</module>
-      <module>server/rest</module>
-      <module>client/hotrod-client</module>
-      <module>rhq-plugin</module>
-      <module>spring</module>
-      <module>demos/gui</module>
-      <module>demos/ec2</module>
-      <module>demos/distexec</module>
-      <module>demos/ec2-ui</module>
-      <module>demos/directory</module>
-      <module>demos/lucene-directory-demo</module>
-      <module>demos/gridfs-webdav</module>
-      <module>demos/nearcache</module>
-      <module>demos/nearcache-client</module>
-      <module>cdi/extension</module>
-      <module>cdi/tck-runner</module>
+<!--       <module>cachestore</module> -->
+<!--       <module>cachestore/jdbc</module> -->
+<!--       <module>cachestore/remote</module> -->
+<!--       <module>server</module> -->
+<!--       <module>server/core</module> -->
+<!--       <module>server/memcached</module> -->
+<!--       <module>server/hotrod</module> -->
+<!--       <module>server/rest</module> -->
+<!--       <module>client/hotrod-client</module> -->
    </modules>
 
    <profiles>
       <profile>
          <id>distribution</id>
          <activation>
-            <activeByDefault>false</activeByDefault>
          </activation>
          <properties>
             <maven.test.skip.exec>true</maven.test.skip.exec>
@@ -109,20 +84,18 @@
                               <link>http://java.sun.com/javase/6/docs/api/</link>
                               <link>http://java.sun.com/javaee/5/docs/api/</link>
                            </links>
-                           <footer><![CDATA[
--->
-                      <!-- Google Analytics -->
-<!--
-<script type='text/javascript'>
+                           <footer>--&gt;
+                      &lt;!-- Google Analytics --&gt;
+&lt;!--
+&lt;script type='text/javascript'&gt;
 var gaJsHost = (("https:" == document.location.protocol) ? "https://ssl." : "http://www.");
 document.write(unescape("%3Cscript src='" + gaJsHost + "google-analytics.com/ga.js' type='text/javascript'%3E%3C/script%3E"));
-</script>
-<script type='text/javascript'>
+&lt;/script&gt;
+&lt;script type='text/javascript'&gt;
 try {
 var pageTracker = _gat._getTracker("UA-8601422-4");
 pageTracker._trackPageview();
-} catch(err) {}</script>
-                     ]]></footer>
+} catch(err) {}&lt;/script&gt;</footer>
                         </configuration>
                      </execution>
                   </executions>
@@ -173,7 +146,6 @@ pageTracker._trackPageview();
       <profile>
          <id>minimal-distribution</id>
          <activation>
-            <activeByDefault>false</activeByDefault>
          </activation>
          <properties>
             <maven.test.skip.exec>true</maven.test.skip.exec>
@@ -219,7 +191,6 @@ pageTracker._trackPageview();
       <profile>
          <id>jmxdoc</id>
          <activation>
-            <activeByDefault>false</activeByDefault>
          </activation>
          <properties>
             <maven.test.skip.exec>true</maven.test.skip.exec>
@@ -236,18 +207,16 @@ pageTracker._trackPageview();
                         <artifactId>infinispan-tools</artifactId>
                         <version>${project.version}</version>
                      </docletArtifact>
-                     <footer><![CDATA[
-                <!-- Google Analytics -->
-<script type='text/javascript'>
+                     <footer>&lt;!-- Google Analytics --&gt;
+&lt;script type='text/javascript'&gt;
 var gaJsHost = (("https:" == document.location.protocol) ? "https://ssl." : "http://www.");
 document.write(unescape("%3Cscript src='" + gaJsHost + "google-analytics.com/ga.js' type='text/javascript'%3E%3C/script%3E"));
-</script>
-<script type='text/javascript'>
+&lt;/script&gt;
+&lt;script type='text/javascript'&gt;
 try {
 var pageTracker = _gat._getTracker("UA-8601422-4");
 pageTracker._trackPageview();
-} catch(err) {}</script>
-               ]]></footer>
+} catch(err) {}&lt;/script&gt;</footer>
                   </configuration>
                   <executions>
                      <execution>
@@ -267,7 +236,6 @@ pageTracker._trackPageview();
       <profile>
          <id>configdoc</id>
          <activation>
-            <activeByDefault>false</activeByDefault>
          </activation>
          <properties>
             <maven.test.skip.exec>true</maven.test.skip.exec>
@@ -291,18 +259,16 @@ pageTracker._trackPageview();
                         <artifactId>infinispan-tools</artifactId>
                         <version>${project.version}</version>
                      </docletArtifact>
-                     <footer><![CDATA[
-                <!-- Google Analytics -->
-<script type='text/javascript'>
+                     <footer>&lt;!-- Google Analytics --&gt;
+&lt;script type='text/javascript'&gt;
 var gaJsHost = (("https:" == document.location.protocol) ? "https://ssl." : "http://www.");
 document.write(unescape("%3Cscript src='" + gaJsHost + "google-analytics.com/ga.js' type='text/javascript'%3E%3C/script%3E"));
-</script>
-<script type='text/javascript'>
+&lt;/script&gt;
+&lt;script type='text/javascript'&gt;
 try {
 var pageTracker = _gat._getTracker("UA-8601422-4");
 pageTracker._trackPageview();
-} catch(err) {}</script>
-               ]]></footer>
+} catch(err) {}&lt;/script&gt;</footer>
                   </configuration>
                   <executions>
                      <execution>
@@ -326,7 +292,7 @@ pageTracker._trackPageview();
                         </goals>
                         <configuration>
                            <tasks>
-                              <copy file="tools/src/main/resources/stylesheet2.css" todir="${buildDirectory}/site/apidocs"/>
+                              <copy file="tools/src/main/resources/stylesheet2.css" todir="${buildDirectory}/site/apidocs" />
                            </tasks>
                         </configuration>
                      </execution>
