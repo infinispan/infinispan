@@ -99,7 +99,7 @@ public class ClassFinder {
 
       // either infinispan jar or a directory of output classes contains infinispan classes
       for (String path : javaClassPath.split(File.pathSeparator)) {
-         if (path.contains("infinispan")) {
+         if (contains("infinispan", path)) {
             files.add(new File(path));
          }
       }
@@ -113,6 +113,17 @@ public class ClassFinder {
          }
          return new ArrayList<Class<?>>(classFiles);
       }
+   }
+
+   private static boolean contains(String what, String path) {
+      if (path.contains(what)) return true;
+      String[] list = new File(path).list();
+      if (list == null) //file
+        return false;
+      for (String childPath: list) {
+         if (contains(what, childPath)) return true;
+      }
+      return false;
    }
 
    private static List<Class<?>> findClassesOnPath(File path) {
