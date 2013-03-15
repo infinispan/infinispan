@@ -177,7 +177,7 @@ public class JdbcCacheStoreConfigurationParser52 implements ConfigurationParser<
          Attribute attribute = Attribute.forName(reader.getAttributeLocalName(i));
          switch (attribute) {
          case CONNECTION_URL: {
-            builder.driverClass(value);
+            builder.connectionUrl(value);
             break;
          }
          case DRIVER_CLASS: {
@@ -208,7 +208,7 @@ public class JdbcCacheStoreConfigurationParser52 implements ConfigurationParser<
          Attribute attribute = Attribute.forName(reader.getAttributeLocalName(i));
          switch (attribute) {
          case CONNECTION_URL: {
-            builder.driverClass(value);
+            builder.connectionUrl(value);
             break;
          }
          case DRIVER_CLASS: {

@@ -51,7 +51,7 @@ public class XmlFileParsingTest extends AbstractInfinispanTest {
             "   <default>\n" +
             "     <loaders>\n" +
             "       <stringKeyedJdbcStore xmlns=\"urn:infinispan:config:jdbc:5.2\" key2StringMapper=\"org.infinispan.loaders.jdbc.configuration.DummyKey2StringMapper\">\n" +
-            "         <connectionPool connectionUrl=\"jdbc:h2:mem:infinispan;DB_CLOSE_DELAY=-1\" username=\"dbuser\" password=\"dbpass\" />\n" +
+            "         <connectionPool connectionUrl=\"jdbc:h2:mem:infinispan;DB_CLOSE_DELAY=-1\" username=\"dbuser\" password=\"dbpass\" driverClass=\"org.h2.Driver\"/>\n" +
             "         <stringKeyedTable prefix=\"entry\" fetchSize=\"34\" batchSize=\"99\" >\n" +
             "           <idColumn name=\"id\" type=\"VARCHAR\" />\n" +
             "           <dataColumn name=\"datum\" type=\"BINARY\" />\n" +
@@ -70,7 +70,11 @@ public class XmlFileParsingTest extends AbstractInfinispanTest {
       assertEquals("version", store.table().timestampColumnName());
       assertTrue(store.async().enabled());
       assertEquals("org.infinispan.loaders.jdbc.configuration.DummyKey2StringMapper", store.key2StringMapper());
-
+      PooledConnectionFactoryConfiguration connectionFactory = (PooledConnectionFactoryConfiguration) store.connectionFactory();
+      assertEquals("jdbc:h2:mem:infinispan;DB_CLOSE_DELAY=-1", connectionFactory.connectionUrl());
+      assertEquals("org.h2.Driver", connectionFactory.driverClass());
+      assertEquals("dbuser", connectionFactory.username());
+      assertEquals("dbpass", connectionFactory.password());
    }
 
    public void testBinaryKeyedJdbcStore() throws Exception {
@@ -78,7 +82,7 @@ public class XmlFileParsingTest extends AbstractInfinispanTest {
             "   <default>\n" +
             "     <loaders>\n" +
             "       <binaryKeyedJdbcStore xmlns=\"urn:infinispan:config:jdbc:5.2\" ignoreModifications=\"true\">\n" +
-            "         <simpleConnection connectionUrl=\"jdbc:h2:mem:infinispan;DB_CLOSE_DELAY=-1\" username=\"dbuser\" password=\"dbpass\" />\n" +
+            "         <simpleConnection connectionUrl=\"jdbc:h2:mem:infinispan;DB_CLOSE_DELAY=-1\" username=\"dbuser\" password=\"dbpass\" driverClass=\"org.h2.Driver\"/>\n" +
             "         <binaryKeyedTable prefix=\"bucket\" fetchSize=\"34\" batchSize=\"99\">\n" +
             "           <idColumn name=\"id\" type=\"BINARY\" />\n" +
             "           <dataColumn name=\"datum\" type=\"BINARY\" />\n" +
@@ -98,6 +102,11 @@ public class XmlFileParsingTest extends AbstractInfinispanTest {
       assertEquals("BINARY", store.table().dataColumnType());
       assertEquals("version", store.table().timestampColumnName());
       assertTrue(store.singletonStore().enabled());
+      SimpleConnectionFactoryConfiguration connectionFactory = (SimpleConnectionFactoryConfiguration) store.connectionFactory();
+      assertEquals("jdbc:h2:mem:infinispan;DB_CLOSE_DELAY=-1", connectionFactory.connectionUrl());
+      assertEquals("org.h2.Driver", connectionFactory.driverClass());
+      assertEquals("dbuser", connectionFactory.username());
+      assertEquals("dbpass", connectionFactory.password());
    }
 
    public void testMixedKeyedJdbcStore() throws Exception {
