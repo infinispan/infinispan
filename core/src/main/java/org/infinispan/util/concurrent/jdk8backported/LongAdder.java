@@ -1,3 +1,5 @@
+// Revision 1.14
+
 /*
  * Written by Doug Lea with assistance from members of JCP JSR-166
  * Expert Group and released to the public domain, as explained at
@@ -5,11 +7,9 @@
  */
 
 package org.infinispan.util.concurrent.jdk8backported;
+
 import java.util.concurrent.atomic.AtomicLong;
-import java.io.IOException;
 import java.io.Serializable;
-import java.io.ObjectInputStream;
-import java.io.ObjectOutputStream;
 
 /**
  * One or more variables that together maintain an initially zero
@@ -19,7 +19,7 @@ import java.io.ObjectOutputStream;
  * #longValue}) returns the current total combined across the
  * variables maintaining the sum.
  *
- * <p> This class is usually preferable to {@link AtomicLong} when
+ * <p>This class is usually preferable to {@link AtomicLong} when
  * multiple threads update a common sum that is used for purposes such
  * as collecting statistics, not for fine-grained synchronization
  * control.  Under low update contention, the two classes have similar
@@ -28,12 +28,12 @@ import java.io.ObjectOutputStream;
  * consumption.
  *
  * <p>This class extends {@link Number}, but does <em>not</em> define
- * methods such as {@code hashCode} and {@code compareTo} because
- * instances are expected to be mutated, and so are not useful as
- * collection keys.
+ * methods such as {@code equals}, {@code hashCode} and {@code
+ * compareTo} because instances are expected to be mutated, and so are
+ * not useful as collection keys.
  *
  * <p><em>jsr166e note: This class is targeted to be placed in
- * java.util.concurrent.atomic<em>
+ * java.util.concurrent.atomic.</em>
  *
  * @since 1.8
  * @author Doug Lea
@@ -85,7 +85,7 @@ public class LongAdder extends Striped64 implements Serializable {
 
    /**
     * Returns the current sum.  The returned value is <em>NOT</em> an
-    * atomic snapshot: Invocation in the absence of concurrent
+    * atomic snapshot; invocation in the absence of concurrent
     * updates returns an accurate result, but concurrent updates that
     * occur while the sum is being calculated might not be
     * incorporated.
@@ -191,8 +191,8 @@ public class LongAdder extends Striped64 implements Serializable {
       s.writeLong(sum());
    }
 
-   private void readObject(ObjectInputStream s)
-         throws IOException, ClassNotFoundException {
+   private void readObject(java.io.ObjectInputStream s)
+         throws java.io.IOException, ClassNotFoundException {
       s.defaultReadObject();
       busy = 0;
       cells = null;
