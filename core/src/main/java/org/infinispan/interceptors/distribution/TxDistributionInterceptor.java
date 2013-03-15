@@ -36,7 +36,6 @@ import org.infinispan.context.Flag;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.context.impl.LocalTxInvocationContext;
 import org.infinispan.context.impl.TxInvocationContext;
-import org.infinispan.distribution.DataLocality;
 import org.infinispan.distribution.L1Manager;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.factories.annotations.Start;
@@ -329,10 +328,9 @@ public class TxDistributionInterceptor extends BaseDistributionInterceptor {
    }
 
    private Object remoteGetAndStoreInL1(InvocationContext ctx, Object key, boolean isWrite, FlagAffectedCommand command) throws Throwable {
-      // todo [anistor] fix locality checks in StateTransferManager (ISPN-2401) and use them here
-      DataLocality locality = dm.getReadConsistentHash().isKeyLocalToNode(rpcManager.getAddress(), key) ? DataLocality.LOCAL : DataLocality.NOT_LOCAL;
+      boolean isKeyLocalToNode = dm.getReadConsistentHash().isKeyLocalToNode(rpcManager.getAddress(), key);
 
-      if (ctx.isOriginLocal() && !locality.isLocal() && isNotInL1(key) || dm.isAffectedByRehash(key) && !dataContainer.containsKey(key)) {
+      if (ctx.isOriginLocal() && !isKeyLocalToNode && isNotInL1(key) || dm.isAffectedByRehash(key) && !dataContainer.containsKey(key)) {
          if (trace) log.tracef("Doing a remote get for key %s", key);
 
          boolean acquireRemoteLock = false;
@@ -356,15 +354,10 @@ public class TxDistributionInterceptor extends BaseDistributionInterceptor {
                // We've requested the key only from the owners current (read) CH.
                // If the intersection of owners in the current and pending CHs is empty,
                // the requestor information might be lost, so we shouldn't store the entry in L1.
-               // TODO We don't have access to the pending CH here, so we just check if the owners list changed.
-               List<Address> readOwners = dm.getReadConsistentHash().locateOwners(key);
-               List<Address> writeOwners = dm.getWriteConsistentHash().locateOwners(key);
-               if (!readOwners.equals(writeOwners)) {
-                  // todo [anistor] this check is not optimal and can yield false positives. here we should use StateTransferManager.isStateTransferInProgressForKey(key) after ISPN-2401 is fixed
+               if (dm.isAffectedByRehash(key)) {
                   if (trace) log.tracef("State transfer in progress for key %s, not storing to L1");
                   return ice.getValue();
                }
-
 
                if (trace) log.tracef("Caching remotely retrieved entry for key %s in L1", key);
                // This should be fail-safe
