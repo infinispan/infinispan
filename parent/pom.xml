@@ -29,7 +29,7 @@
    </parent>
    <groupId>org.infinispan</groupId>
    <artifactId>infinispan-parent</artifactId>
-   <version>5.1.8.Final-redhat-2</version>
+   <version>5.1.8.Final-redhat-1</version>
    <packaging>pom</packaging>
    <name>Infinispan Common Parent</name>
    <description>Infinispan common parent POM module</description>
@@ -69,11 +69,6 @@
             <type>pom</type>
             <scope>import</scope>
          </dependency>
-         <dependency>
-         	<groupId>org.infinispan</groupId>
-         	<artifactId>infinispan-core</artifactId>
-         	<version>5.1.8.Final-redhat-2</version>
-         </dependency>             
       </dependencies>
    </dependencyManagement>
    <dependencies>

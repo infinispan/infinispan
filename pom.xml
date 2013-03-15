@@ -26,7 +26,7 @@
    <parent>
       <groupId>org.infinispan</groupId>
       <artifactId>infinispan-parent</artifactId>
-      <version>5.1.8.Final-redhat-2</version>
+      <version>5.1.8.Final-redhat-1</version>
       <relativePath>parent/pom.xml</relativePath>
    </parent>
 
@@ -40,16 +40,15 @@
    <modules>
       <module>parent</module>
       <module>core</module>
-      <module>tree</module>
-<!--       <module>cachestore</module> -->
-<!--       <module>cachestore/jdbc</module> -->
-<!--       <module>cachestore/remote</module> -->
-<!--       <module>server</module> -->
-<!--       <module>server/core</module> -->
-<!--       <module>server/memcached</module> -->
-<!--       <module>server/hotrod</module> -->
-<!--       <module>server/rest</module> -->
-<!--       <module>client/hotrod-client</module> -->
+      <module>cachestore</module> 
+      <module>cachestore/jdbc</module> 
+      <module>cachestore/remote</module>
+      <module>server</module>
+      <module>server/core</module>
+      <module>server/memcached</module>
+      <module>server/hotrod</module>
+      <module>server/rest</module>
+      <module>client/hotrod-client</module>
    </modules>
 
    <profiles>
