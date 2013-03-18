@@ -159,7 +159,11 @@ public class TransactionXaAdapter extends AbstractEnlistmentAdapter implements X
       Xid xid = convertXid(externalXid);
       if (trace) log.tracef("forget called for xid %s", xid);
       try {
-         recoveryManager.removeRecoveryInformationFromCluster(null, xid, true, null);
+         if (recoveryEnabled) {
+            recoveryManager.removeRecoveryInformationFromCluster(null, xid, true, null);
+         } else {
+            if (trace) log.trace("Recovery not enabled");
+         }
       } catch (Exception e) {
          log.warn("Exception removing recovery information: ", e);
          throw new XAException(XAException.XAER_RMERR);
