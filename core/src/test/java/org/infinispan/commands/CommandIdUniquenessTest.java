@@ -40,7 +40,7 @@ public class CommandIdUniquenessTest extends AbstractInfinispanTest {
 
       for (Class<?> c : commands) {
          if (!c.isInterface() && !Modifier.isAbstract(c.getModifiers()) && !LocalCommand.class.isAssignableFrom(c)) {
-            System.out.println("Testing " + c.getSimpleName());
+            log.infof("Testing %s", c.getSimpleName());
             Constructor<?>[] declaredCtors = c.getDeclaredConstructors();
             Constructor<?> constructor = null;
             for (Constructor<?> declaredCtor : declaredCtors) {
@@ -51,7 +51,7 @@ public class CommandIdUniquenessTest extends AbstractInfinispanTest {
                }
             }
 
-            ReplicableCommand cmd = (ReplicableCommand) constructor.newInstance(null);
+            ReplicableCommand cmd = (ReplicableCommand) constructor.newInstance();
             byte b = cmd.getCommandId();
             assert b > 0 : "Command " + c.getSimpleName() + " has a command id of " + b + " and does not implement LocalCommand!";
             assert !cmdIds.containsKey(b) : "Command ID [" + b + "] is duplicated in " + c.getSimpleName() + " and " + cmdIds.get(b);

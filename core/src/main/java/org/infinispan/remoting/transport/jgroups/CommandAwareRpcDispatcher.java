@@ -30,6 +30,7 @@ import org.infinispan.commands.remote.CacheRpcCommand;
 import org.infinispan.commands.remote.SingleRpcCommand;
 import org.infinispan.context.Flag;
 import org.infinispan.factories.GlobalComponentRegistry;
+import org.infinispan.remoting.responses.SuccessfulResponse;
 import org.infinispan.statetransfer.StateRequestCommand;
 import org.infinispan.statetransfer.StateResponseCommand;
 import org.infinispan.remoting.InboundInvocationHandler;
@@ -287,8 +288,10 @@ public class CommandAwareRpcDispatcher extends RpcDispatcher {
                         log.tracef("Attempting to execute non-CacheRpcCommand command: %s [sender=%s]", cmd, req.getSrc());
                      gcr.wireDependencies(cmd);
 
-                     //todo [anistor] the call to perform() should be wrapped in try/catch and any exception should be wrapped in an ExceptionResponse, as it happens for commands that go through InboundInvocationHandler
-                     Object retVal = cmd.perform(null);  //todo [anistor] here we should provide an InvocationContext that at least is able to provide the Address of the origin
+                     Object retVal = cmd.perform(null);
+                     if (retVal != null && !(retVal instanceof Response)) {
+                        retVal = SuccessfulResponse.create(retVal);
+                     }
                      reply(response, retVal);
                   } catch (InterruptedException e) {
                      log.shutdownHandlingCommand(cmd);
@@ -303,8 +306,10 @@ public class CommandAwareRpcDispatcher extends RpcDispatcher {
             if (trace) log.tracef("Attempting to execute non-CacheRpcCommand command: %s [sender=%s]", cmd, req.getSrc());
             gcr.wireDependencies(cmd);
 
-            //todo [anistor] the call to perform() should be wrapped in try/catch and any exception should be wrapped in an ExceptionResponse, as it happens for commands that go through InboundInvocationHandler
-            Object retVal = cmd.perform(null);  //todo [anistor] here we should provide an InvocationContext that at least is able to provide the Address of the origin
+            Object retVal = cmd.perform(null);
+            if (retVal != null && !(retVal instanceof Response)) {
+               retVal = SuccessfulResponse.create(retVal);
+            }
             reply(response, retVal);
          }
       }
