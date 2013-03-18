@@ -121,16 +121,7 @@ public interface CommandsFactory {
     * @param keys keys to invalidate
     * @return an InvalidateFromL1Command
     */
-   InvalidateCommand buildInvalidateFromL1Command(boolean forRehash, Set<Flag> flags, Object... keys);
-
-   /**
-    * Builds an InvalidateFromL1Command
-    * @param forRehash set to true if the invalidation is happening due to a new node taking ownership.  False if it is due to a write, changing the state of the entry.
-    * @param keys keys to invalidate
-    * @return an InvalidateFromL1Command
-    */
    InvalidateCommand buildInvalidateFromL1Command(boolean forRehash, Set<Flag> flags, Collection<Object> keys);
-
 
    /**
     * @see #buildInvalidateFromL1Command(org.infinispan.remoting.transport.Address, boolean, java.util.Set, java.util.Collection)

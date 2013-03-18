@@ -69,7 +69,6 @@ import javax.transaction.TransactionManager;
 import java.util.*;
 import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.concurrent.atomic.AtomicInteger;
 
 import static org.infinispan.context.Flag.*;
 import static org.infinispan.factories.KnownComponentNames.ASYNC_TRANSPORT_EXECUTOR;
@@ -104,6 +103,7 @@ public class StateConsumerImpl implements StateConsumer {
    private boolean useVersionedPut;
    private boolean isFetchEnabled;
    private boolean isTransactional;
+   private boolean isInvalidationMode;
    private boolean isTotalOrder;
 
    private volatile CacheTopology cacheTopology;
@@ -116,19 +116,15 @@ public class StateConsumerImpl implements StateConsumer {
    private volatile Set<Object> updatedKeys;
 
    /**
-    * The number of topology updates that are being processed concurrently (in method onTopologyUpdate()).
-    * This is needed to be able to detect completion.
-    */
-   private final AtomicInteger activeTopologyUpdates = new AtomicInteger(0);
-
-   /**
-    * Indicates if there is a rebalance in progress.
+    * Indicates if there is a rebalance in progress. It is set to true when onTopologyUpdate with isRebalance==true is called.
+    * It becomes false when a topology update with a null pending CH is received.
     */
    private final AtomicBoolean rebalanceInProgress = new AtomicBoolean(false);
 
    /**
     * Indicates if there is a rebalance in progress and there the local node has not yet received
-    * all the new segments yet.
+    * all the new segments yet. It is set to true when rebalance starts and becomes when all inbound transfers have completed
+    * (before rebalanceInProgress is set back to false).
     */
    private final AtomicBoolean waitingForState = new AtomicBoolean(false);
 
@@ -230,6 +226,8 @@ public class StateConsumerImpl implements StateConsumer {
       this.cacheNotifier = cacheNotifier;
       this.totalOrderManager = totalOrderManager;
 
+      isInvalidationMode = configuration.clustering().cacheMode().isInvalidation();
+
       isTransactional = configuration.transaction().transactionMode().isTransactional();
       isTotalOrder = configuration.transaction().transactionProtocol().isTotalOrder();
 
@@ -254,7 +252,11 @@ public class StateConsumerImpl implements StateConsumer {
 
    @Override
    public boolean isStateTransferInProgressForKey(Object key) {
-      if (configuration.clustering().cacheMode().isInvalidation()) {
+      if (isInvalidationMode) {
+         // In invalidation mode it is of not much relevance if the key is actually being transferred right now.
+         // A false response to this will just mean the usual remote lookup before a write operation is not
+         // performed and a null is assumed. But in invalidation mode the user must expect the data can disappear
+         // from cache at any time so this null previous value should not cause any trouble.
          return false;
       }
       synchronized (this) {
@@ -274,10 +276,10 @@ public class StateConsumerImpl implements StateConsumer {
    }
 
    @Override
-   public void onTopologyUpdate(CacheTopology cacheTopology, boolean isRebalance) {
-      if (trace) log.tracef("Received new topology for cache %s, isRebalance = %b, topology = %s", cacheName, isRebalance, cacheTopology);
+   public void onTopologyUpdate(final CacheTopology cacheTopology, final boolean isRebalance) {
+      final boolean isMember = cacheTopology.getMembers().contains(rpcManager.getAddress());
+      if (trace) log.tracef("Received new topology for cache %s, isRebalance = %b, isMember = %b, topology = %s", cacheName, isRebalance, isMember, cacheTopology);
 
-      activeTopologyUpdates.incrementAndGet();
       if (isRebalance) {
          if (!ownsData && cacheTopology.getMembers().contains(rpcManager.getAddress())) {
             ownsData = true;
@@ -358,38 +360,16 @@ public class StateConsumerImpl implements StateConsumer {
                // remove inbound transfers for segments we no longer own
                cancelTransfers(removedSegments);
 
-               // any data for segments we no longer own should be removed from data container and cache store or moved to L1 if enabled
-               // If L1.onRehash is enabled, "removed" segments are actually moved to L1. The new (and old) owners
-               // will automatically add the nodes that no longer own a key to that key's requestors list.
-               invalidateSegments(newSegments, removedSegments);
+               // if we are still a member then we need to discard/move to L1 the segments we no longer own
+               if (isMember) {
+                  // any data for segments we no longer own should be removed from data container and cache store or moved to L1 if enabled
+                  // If L1.onRehash is enabled, "removed" segments are actually moved to L1. The new (and old) owners
+                  // will automatically add the nodes that no longer own a key to that key's requestors list.
+                  invalidateSegments(newSegments, removedSegments);
+               }
 
                // check if any of the existing transfers should be restarted from a different source because the initial source is no longer a member
-               Set<Address> members = new HashSet<Address>(cacheTopology.getReadConsistentHash().getMembers());
-               synchronized (this) {
-                  for (Iterator<Address> it = transfersBySource.keySet().iterator(); it.hasNext(); ) {
-                     Address source = it.next();
-                     if (!members.contains(source)) {
-                        if (trace) {
-                           log.tracef("Removing inbound transfers from source %s for cache %s", source, cacheName);
-                        }
-                        List<InboundTransferTask> inboundTransfers = transfersBySource.get(source);
-                        it.remove();
-                        for (InboundTransferTask inboundTransfer : inboundTransfers) {
-                           // these segments will be restarted if they are still in new write CH
-                           if (trace) {
-                              log.tracef("Removing inbound transfers for segments %s from source %s for cache %s", inboundTransfer.getSegments(), source, cacheName);
-                           }
-                           taskQueue.remove(inboundTransfer);
-                           inboundTransfer.terminate();
-                           transfersBySegment.keySet().removeAll(inboundTransfer.getSegments());
-                           addedSegments.addAll(inboundTransfer.getUnfinishedSegments());
-                        }
-                     }
-                  }
-
-                  // exclude those that are already in progress from a valid source
-                  addedSegments.removeAll(transfersBySegment.keySet());
-               }
+               restartBrokenTransfers(cacheTopology, addedSegments);
             }
 
             if (!addedSegments.isEmpty()) {
@@ -419,9 +399,7 @@ public class StateConsumerImpl implements StateConsumer {
       } finally {
          stateTransferLock.notifyTransactionDataReceived(cacheTopology.getTopologyId());
 
-         if (activeTopologyUpdates.decrementAndGet() == 0) {
-            notifyEndOfTopologyUpdate(cacheTopology.getTopologyId());
-         }
+         notifyEndOfRebalanceIfNeeded(cacheTopology.getTopologyId());
 
          // Remove the transactions whose originators have left the cache.
          // Need to do it now, after we have applied any transactions from other nodes,
@@ -432,7 +410,7 @@ public class StateConsumerImpl implements StateConsumer {
       }
    }
 
-   private void notifyEndOfTopologyUpdate(int topologyId) {
+   private void notifyEndOfRebalanceIfNeeded(int topologyId) {
       if (!hasActiveTransfers()) {
          if (waitingForState.compareAndSet(true, false)) {
             log.debugf("Finished receiving of segments for cache %s for topology %d.", cacheName, topologyId);
@@ -891,10 +869,10 @@ public class StateConsumerImpl implements StateConsumer {
          }
       }
 
-      log.debugf("Removing L1 state for segments not in %s or %s for cache %s", newSegments, segmentsToL1, cacheName);
+      log.debugf("Removing state for segments not in %s or %s for cache %s", newSegments, segmentsToL1, cacheName);
       if (!keysToRemove.isEmpty()) {
          try {
-            InvalidateCommand invalidateCmd = commandsFactory.buildInvalidateFromL1Command(false, EnumSet.of(CACHE_MODE_LOCAL, SKIP_LOCKING), keysToRemove);
+            InvalidateCommand invalidateCmd = commandsFactory.buildInvalidateCommand(EnumSet.of(CACHE_MODE_LOCAL, SKIP_LOCKING), keysToRemove.toArray());
             InvocationContext ctx = icc.createNonTxInvocationContext();
             interceptorChain.invoke(ctx, invalidateCmd);
 
@@ -906,8 +884,43 @@ public class StateConsumerImpl implements StateConsumer {
       }
    }
 
+   /**
+    * Check if any of the existing transfers should be restarted from a different source because the initial source is no longer a member.
+    *
+    * @param cacheTopology
+    * @param addedSegments
+    */
+   private void restartBrokenTransfers(CacheTopology cacheTopology, Set<Integer> addedSegments) {
+      Set<Address> members = new HashSet<Address>(cacheTopology.getReadConsistentHash().getMembers());
+      synchronized (this) {
+         for (Iterator<Address> it = transfersBySource.keySet().iterator(); it.hasNext(); ) {
+            Address source = it.next();
+            if (!members.contains(source)) {
+               if (trace) {
+                  log.tracef("Removing inbound transfers from source %s for cache %s", source, cacheName);
+               }
+               List<InboundTransferTask> inboundTransfers = transfersBySource.get(source);
+               it.remove();
+               for (InboundTransferTask inboundTransfer : inboundTransfers) {
+                  // these segments will be restarted if they are still in new write CH
+                  if (trace) {
+                     log.tracef("Removing inbound transfers for segments %s from source %s for cache %s", inboundTransfer.getSegments(), source, cacheName);
+                  }
+                  taskQueue.remove(inboundTransfer);
+                  inboundTransfer.terminate();
+                  transfersBySegment.keySet().removeAll(inboundTransfer.getSegments());
+                  addedSegments.addAll(inboundTransfer.getUnfinishedSegments());
+               }
+            }
+         }
+
+         // exclude those that are already in progress from a valid source
+         addedSegments.removeAll(transfersBySegment.keySet());
+      }
+   }
+
    private int getSegment(Object key) {
-      // there we can use any CH version because the routing table is not involved
+      // here we can use any CH version because the routing table is not involved in computing the segment
       return cacheTopology.getReadConsistentHash().getSegment(key);
    }
 
@@ -966,8 +979,6 @@ public class StateConsumerImpl implements StateConsumer {
       log.tracef("Completion of inbound transfer task: %s ", inboundTransfer);
       removeTransfer(inboundTransfer);
 
-      if (activeTopologyUpdates.get() == 0) {
-         notifyEndOfTopologyUpdate(cacheTopology.getTopologyId());
-      }
+      notifyEndOfRebalanceIfNeeded(cacheTopology.getTopologyId());
    }
 }
