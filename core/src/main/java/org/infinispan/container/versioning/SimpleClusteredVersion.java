@@ -20,8 +20,14 @@
 package org.infinispan.container.versioning;
 
 import net.jcip.annotations.Immutable;
+import org.infinispan.marshall.AbstractExternalizer;
+import org.infinispan.marshall.Ids;
 
-import java.io.Serializable;
+import java.io.IOException;
+import java.io.ObjectInput;
+import java.io.ObjectOutput;
+import java.util.Collections;
+import java.util.Set;
 
 /**
  * A simple versioning scheme that is cluster-aware
@@ -30,7 +36,7 @@ import java.io.Serializable;
  * @since 5.1
  */
 @Immutable
-public class SimpleClusteredVersion implements IncrementableEntryVersion, Serializable {
+public class SimpleClusteredVersion implements IncrementableEntryVersion {
 
    /**
     * The cache topology id in which it was first created.
@@ -71,5 +77,32 @@ public class SimpleClusteredVersion implements IncrementableEntryVersion, Serial
             "topologyId=" + topologyId +
             ", version=" + version +
             '}';
+   }
+
+   public static class Externalizer extends AbstractExternalizer<SimpleClusteredVersion> {
+
+      @Override
+      public void writeObject(ObjectOutput output, SimpleClusteredVersion ch) throws IOException {
+         output.writeInt(ch.topologyId);
+         output.writeLong(ch.version);
+      }
+
+      @Override
+      @SuppressWarnings("unchecked")
+      public SimpleClusteredVersion readObject(ObjectInput unmarshaller) throws IOException, ClassNotFoundException {
+         int topologyId = unmarshaller.readInt();
+         long version = unmarshaller.readLong();
+         return new SimpleClusteredVersion(topologyId, version);
+      }
+
+      @Override
+      public Integer getId() {
+         return Ids.SIMPLE_CLUSTERED_VERSION;
+      }
+
+      @Override
+      public Set<Class<? extends SimpleClusteredVersion>> getTypeClasses() {
+         return Collections.<Class<? extends SimpleClusteredVersion>>singleton(SimpleClusteredVersion.class);
+      }
    }
 }
