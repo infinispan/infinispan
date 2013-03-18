@@ -61,7 +61,7 @@ public class LocalTopologyManagerImpl implements LocalTopologyManager {
    private ExecutorService asyncTransportExecutor;
    private GlobalComponentRegistry gcr;
 
-   private ConcurrentMap<String, LocalCacheStatus> runningCaches = ConcurrentMapFactory.makeConcurrentMap();
+   private final ConcurrentMap<String, LocalCacheStatus> runningCaches = ConcurrentMapFactory.makeConcurrentMap();
    private volatile boolean running;
 
    @Inject

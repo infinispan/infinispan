@@ -50,7 +50,9 @@ public interface LocalTopologyManager {
     * <p>The coordinator can change during the state transfer, so we make the rebalance RPC async
     * and we send the response as a different command.
     *
-    * @param throwable {@code null} if local rebalance ended because of an error.
+    * @param cacheName the name of the cache
+    * @param topologyId the current topology id of the node at the time the rebalance is completed. This must be >= than the one when rebalance starts.
+    * @param throwable {@code null} unless local rebalance ended because of an error.
     */
    void confirmRebalance(String cacheName, int topologyId, Throwable throwable);
 
