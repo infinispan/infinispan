@@ -437,7 +437,7 @@ public class StateConsumerImpl implements StateConsumer {
          if (waitingForState.compareAndSet(true, false)) {
             log.debugf("Finished receiving of segments for cache %s for topology %d.", cacheName, topologyId);
             stopApplyingState();
-            stateTransferManager.notifyEndOfTopologyUpdate(topologyId);
+            stateTransferManager.notifyEndOfRebalance(topologyId);
          }
       }
    }

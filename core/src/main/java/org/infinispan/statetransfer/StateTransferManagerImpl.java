@@ -256,16 +256,6 @@ public class StateTransferManagerImpl implements StateTransferManager {
    }
 
    @Override
-   public boolean isLocalNodeFirst() {
-      CacheTopology cacheTopology = stateConsumer.getCacheTopology();
-      if (cacheTopology == null || cacheTopology.getMembers().isEmpty()) {
-         throw new IllegalStateException("Can only check if the local node is the first to join after joining");
-      }
-
-      return cacheTopology.getMembers().get(0).equals(rpcManager.getAddress());
-   }
-
-   @Override
    public void forwardCommandIfNeeded(TopologyAffectedCommand command, Set<Object> affectedKeys, Address origin, boolean sync) {
       int cmdTopologyId = command.getTopologyId();
       // forward commands with older topology ids to their new targets
@@ -296,7 +286,7 @@ public class StateTransferManagerImpl implements StateTransferManager {
    }
 
    @Override
-   public void notifyEndOfTopologyUpdate(int topologyId) {
+   public void notifyEndOfRebalance(int topologyId) {
       localTopologyManager.confirmRebalance(cacheName, topologyId, null);
    }
 

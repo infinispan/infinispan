@@ -69,17 +69,12 @@ public interface StateTransferManager {
    void stop();
 
    /**
-    * @return {@code true} if the local node was the first to start this cache in the cluster.
-    */
-   boolean isLocalNodeFirst();
-
-   /**
     * If there is an state transfer happening at the moment, this method forwards the supplied
     * command to the nodes that are new owners of the data, in order to assure consistency.
     */
    void forwardCommandIfNeeded(TopologyAffectedCommand command, Set<Object> affectedKeys, Address origin, boolean sync);
 
-   void notifyEndOfTopologyUpdate(int topologyId);
+   void notifyEndOfRebalance(int topologyId);
 
    /**
     * @return  true if this node has already received the first rebalance start
