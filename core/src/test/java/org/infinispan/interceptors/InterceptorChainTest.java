@@ -20,6 +20,7 @@
 package org.infinispan.interceptors;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.Callable;
 import java.util.concurrent.CyclicBarrier;
@@ -28,6 +29,7 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 
 import org.infinispan.factories.components.ComponentMetadataRepo;
+import org.infinispan.factories.components.ModuleMetadataFileFinder;
 import org.infinispan.interceptors.base.CommandInterceptor;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
@@ -46,7 +48,9 @@ public class InterceptorChainTest {
    private static final Log log = LogFactory.getLog(InterceptorChainTest.class);
 
    public void testConcurrentAddRemove() throws Exception {
-      InterceptorChain ic = new InterceptorChain(new ComponentMetadataRepo());
+      ComponentMetadataRepo componentMetadataRepo = new ComponentMetadataRepo();
+      componentMetadataRepo.initialize(Collections.<ModuleMetadataFileFinder>emptyList(), InterceptorChainTest.class.getClassLoader());
+      InterceptorChain ic = new InterceptorChain(componentMetadataRepo);
       ic.setFirstInChain(new CallInterceptor());
       ic.addInterceptor(new ActivationInterceptor(), 1);
       CyclicBarrier barrier = new CyclicBarrier(4);
