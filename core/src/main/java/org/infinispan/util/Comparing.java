@@ -26,7 +26,7 @@ package org.infinispan.util;
 /**
  * An interface that allows custom implementations for objects are comparable
  * based on equality, hash code calculations, or according to
- * {@link Comparable} rules, but where the behaivour provided by the JDK, or
+ * {@link Comparable} rules, but where the behaviour provided by the JDK, or
  * external libraries, cannot be modified, for example: arrays.
  *
  * This interface is not typed because a lot of the uses of these methods

@@ -20,6 +20,7 @@ package org.infinispan.configuration.cache;
 
 import org.infinispan.configuration.AbstractTypedPropertiesConfiguration;
 import org.infinispan.container.DataContainer;
+import org.infinispan.util.Comparing;
 import org.infinispan.util.TypedProperties;
 
 /**
@@ -31,10 +32,15 @@ import org.infinispan.util.TypedProperties;
 public class DataContainerConfiguration extends AbstractTypedPropertiesConfiguration {
 
    private final DataContainer dataContainer;
+   private final Comparing comparingKey;
+   private final Comparing comparingValue;
 
-   DataContainerConfiguration(DataContainer dataContainer, TypedProperties properties) {
+   DataContainerConfiguration(DataContainer dataContainer,
+         TypedProperties properties, Comparing comparingKey, Comparing comparingValue) {
       super(properties);
       this.dataContainer = dataContainer;
+      this.comparingKey = comparingKey;
+      this.comparingValue = comparingValue;
    }
    
    /**
@@ -45,10 +51,20 @@ public class DataContainerConfiguration extends AbstractTypedPropertiesConfigura
       return dataContainer;
    }
 
+   public Comparing comparingKey() {
+      return comparingKey;
+   }
+
+   public Comparing comparingValue() {
+      return comparingValue;
+   }
+
    @Override
    public String toString() {
       return "DataContainerConfiguration{" +
             "dataContainer=" + dataContainer +
+            ", comparingKey=" + comparingKey +
+            ", comparingValue=" + comparingValue +
             '}';
    }
 
@@ -56,10 +72,15 @@ public class DataContainerConfiguration extends AbstractTypedPropertiesConfigura
    public boolean equals(Object o) {
       if (this == o) return true;
       if (o == null || getClass() != o.getClass()) return false;
+      if (!super.equals(o)) return false;
 
       DataContainerConfiguration that = (DataContainerConfiguration) o;
 
       if (dataContainer != null ? !dataContainer.equals(that.dataContainer) : that.dataContainer != null)
+         return false;
+      if (comparingKey != null ? !comparingKey.equals(that.comparingKey) : that.comparingKey != null)
+         return false;
+      if (comparingValue != null ? !comparingValue.equals(that.comparingValue) : that.comparingValue != null)
          return false;
 
       return true;
@@ -67,7 +88,11 @@ public class DataContainerConfiguration extends AbstractTypedPropertiesConfigura
 
    @Override
    public int hashCode() {
-      return dataContainer != null ? dataContainer.hashCode() : 0;
+      int result = super.hashCode();
+      result = 31 * result + (dataContainer != null ? dataContainer.hashCode() : 0);
+      result = 31 * result + (comparingKey != null ? comparingKey.hashCode() : 0);
+      result = 31 * result + (comparingValue != null ? comparingValue.hashCode() : 0);
+      return result;
    }
 
 }

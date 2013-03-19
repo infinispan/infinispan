@@ -22,6 +22,7 @@ import java.util.Properties;
 
 import org.infinispan.configuration.Builder;
 import org.infinispan.container.DataContainer;
+import org.infinispan.util.Comparing;
 import org.infinispan.util.TypedProperties;
 
 /**
@@ -34,6 +35,11 @@ public class DataContainerConfigurationBuilder extends AbstractConfigurationChil
 
    // No default here. DataContainerFactory figures out default.
    private DataContainer dataContainer;
+   // No defaults here for Comparing, need to be able to know
+   // when no Comparing implementation has been configured.
+   private Comparing comparingKey;
+   private Comparing comparingValue;
+   // TODO: What are properties used for? Is it just legacy?
    private Properties properties = new Properties();
 
    DataContainerConfigurationBuilder(ConfigurationBuilder builder) {
@@ -73,21 +79,53 @@ public class DataContainerConfigurationBuilder extends AbstractConfigurationChil
       return this;
    }
 
+   /**
+    * Set the {@link Comparing} instance to use to compare keys stored in
+    * data container. {@link Comparing} implementations allow for custom
+    * comparisons to be provided when the JDK, or external libraries, do
+    * not provide adequate comparison implementations, i.e. arrays.
+    *
+    * @param comparingKey instance of {@link Comparing} used to compare
+    *                     key types.
+    * @return this configuration builder
+    */
+   public DataContainerConfigurationBuilder comparingKey(Comparing comparingKey) {
+      this.comparingKey = comparingKey;
+      return this;
+   }
+
+   /**
+    * Set the {@link Comparing} instance to use to compare values stored in
+    * data container. {@link Comparing} implementations allow for custom
+    * comparisons to be provided when the JDK, or external libraries, do
+    * not provide adequate comparison implementations, i.e. arrays.
+    *
+    * @param comparingValue instance of {@link Comparing} used to compare
+    *                       value types.
+    * @return this configuration builder
+    */
+   public DataContainerConfigurationBuilder comparingValue(Comparing comparingValue) {
+      this.comparingValue = comparingValue;
+      return this;
+   }
+
    @Override
-   public
-   void validate() {
+   public void validate() {
    }
 
    @Override
    public
    DataContainerConfiguration create() {
-      return new DataContainerConfiguration(dataContainer, TypedProperties.toTypedProperties(properties));
+      return new DataContainerConfiguration(dataContainer,
+            TypedProperties.toTypedProperties(properties), comparingKey, comparingValue);
    }
 
    @Override
    public DataContainerConfigurationBuilder read(DataContainerConfiguration template) {
       this.dataContainer = template.dataContainer();
       this.properties = template.properties();
+      this.comparingKey = template.comparingKey();
+      this.comparingValue = template.comparingValue();
 
       return this;
    }
@@ -97,6 +135,8 @@ public class DataContainerConfigurationBuilder extends AbstractConfigurationChil
       return "DataContainerConfigurationBuilder{" +
             "dataContainer=" + dataContainer +
             ", properties=" + properties +
+            ", comparingKey=" + comparingKey +
+            ", comparingKey=" + comparingValue +
             '}';
    }
 
