@@ -32,6 +32,7 @@
 
 package org.infinispan.util.concurrent;
 import org.infinispan.container.entries.CacheEntry;
+import org.infinispan.util.Comparing;
 import org.infinispan.util.InfinispanCollections;
 import org.infinispan.util.Util;
 import org.infinispan.util.logging.Log;
@@ -106,6 +107,8 @@ import static java.util.Collections.unmodifiableMap;
  *
  * @since 1.5
  * @author Doug Lea
+ * @author Vladimir Blagojevic
+ * @author Galder Zamarreño
  * @param <K> the type of keys maintained by this map
  * @param <V> the type of mapped values
  */
@@ -185,6 +188,11 @@ public class BoundedConcurrentHashMap<K, V> extends AbstractMap<K, V>
    transient Set<K> keySet;
    transient Set<Map.Entry<K,V>> entrySet;
    transient Collection<V> values;
+
+   private transient final Comparing comparingKey;
+   private transient final Comparing comparingValue;
+   private transient final EvictionListener<K, V> evictionListener;
+   private final int evictCap;
 
    /* ---------------- Small Utilities -------------- */
 
@@ -1400,17 +1408,14 @@ public class BoundedConcurrentHashMap<K, V> extends AbstractMap<K, V>
        */
       final float loadFactor;
 
-      final int evictCap;
-
       transient final EvictionPolicy<K, V> eviction;
 
-      transient final EvictionListener<K, V> evictionListener;
+      transient final BoundedConcurrentHashMap map;
 
-      Segment(int cap, int evictCap, float lf, Eviction es, EvictionListener<K, V> listener) {
+      Segment(int cap, float lf, Eviction es, BoundedConcurrentHashMap map) {
+         this.map = map;
          loadFactor = lf;
-         this.evictCap = evictCap;
-         eviction = es.make(this, evictCap, lf);
-         evictionListener = listener;
+         eviction = es.make(this, map.evictCap, lf);
          setTable(HashEntry.<K, V> newArray(cap));
       }
 
@@ -1420,7 +1425,7 @@ public class BoundedConcurrentHashMap<K, V> extends AbstractMap<K, V>
       }
 
       EvictionListener<K, V> getEvictionListener() {
-         return evictionListener;
+         return map.evictionListener;
       }
 
       /**
@@ -1464,7 +1469,7 @@ public class BoundedConcurrentHashMap<K, V> extends AbstractMap<K, V>
             V result = null;
             HashEntry<K, V> e = getFirst(hash);
             while (e != null) {
-               if (e.hash == hash && key.equals(e.key)) {
+               if (e.hash == hash && map.comparingKey.equals(key, e.key)) {
                   V v = e.value;
                   if (v != null) {
                      result = v;
@@ -1492,7 +1497,7 @@ public class BoundedConcurrentHashMap<K, V> extends AbstractMap<K, V>
          if (count != 0) { // read-volatile
             HashEntry<K,V> e = getFirst(hash);
             while (e != null) {
-               if (e.hash == hash && key.equals(e.key)) {
+               if (e.hash == hash && map.comparingKey.equals(key, e.key)) {
                   return true;
                }
                e = e.next;
@@ -1511,7 +1516,7 @@ public class BoundedConcurrentHashMap<K, V> extends AbstractMap<K, V>
                   if (v == null) {
                      v = readValueUnderLock(e);
                   }
-                  if (value.equals(v)) {
+                  if (map.comparingValue.equals(value, v)) {
                      return true;
                   }
                }
@@ -1525,12 +1530,12 @@ public class BoundedConcurrentHashMap<K, V> extends AbstractMap<K, V>
          Set<HashEntry<K, V>> evicted = null;
          try {
             HashEntry<K, V> e = getFirst(hash);
-            while (e != null && (e.hash != hash || !key.equals(e.key))) {
+            while (e != null && (e.hash != hash || !map.comparingKey.equals(key, e.key))) {
                e = e.next;
             }
 
             boolean replaced = false;
-            if (e != null && oldValue.equals(e.value)) {
+            if (e != null && map.comparingValue.equals(oldValue, e.value)) {
                replaced = true;
                e.value = newValue;
                if (eviction.onEntryHit(e)) {
@@ -1580,7 +1585,7 @@ public class BoundedConcurrentHashMap<K, V> extends AbstractMap<K, V>
             int index = hash & tab.length - 1;
             HashEntry<K, V> first = tab[index];
             HashEntry<K, V> e = first;
-            while (e != null && (e.hash != hash || !key.equals(e.key))) {
+            while (e != null && (e.hash != hash || !map.comparingKey.equals(key, e.key))) {
                e = e.next;
             }
 
@@ -1596,7 +1601,7 @@ public class BoundedConcurrentHashMap<K, V> extends AbstractMap<K, V>
                ++modCount;
                count = c; // write-volatile
                if (eviction.strategy() != Eviction.NONE) {
-                  if (c > evictCap) {
+                  if (c > map.evictCap) {
                      // remove entries;lower count
                      evicted = eviction.execute();
                      // re-read first
@@ -1617,7 +1622,7 @@ public class BoundedConcurrentHashMap<K, V> extends AbstractMap<K, V>
                   tab[index] = eviction.createNewEntry(key, hash, first, value);
                }
                // When entry not present, attempt to activate if necessary
-               evictionListener.onEntryActivated(key);
+               map.evictionListener.onEntryActivated(key);
             }
             return oldValue;
          } finally {
@@ -1700,7 +1705,7 @@ public class BoundedConcurrentHashMap<K, V> extends AbstractMap<K, V>
             int index = hash & tab.length - 1;
             HashEntry<K, V> first = tab[index];
             HashEntry<K, V> e = first;
-            while (e != null && (e.hash != hash || !key.equals(e.key))) {
+            while (e != null && (e.hash != hash || !map.comparingKey.equals(key, e.key))) {
                e = e.next;
             }
 
@@ -1711,9 +1716,9 @@ public class BoundedConcurrentHashMap<K, V> extends AbstractMap<K, V>
                   // If evicting, entry has to be passivated if enabled and
                   // hence its cost is limited to this use case.
                   // Required to guarantee passivation/activation correctness.
-                  evictionListener.onEntryChosenForEviction(v);
+                  map.evictionListener.onEntryChosenForEviction(v);
                }
-               if (value == null || value.equals(v)) {
+               if (value == null || map.comparingValue.equals(value, v)) {
                   oldValue = v;
                   // All entries following removed node can stay
                   // in list, but all preceding ones need to be
@@ -1743,7 +1748,7 @@ public class BoundedConcurrentHashMap<K, V> extends AbstractMap<K, V>
                   log.tracef("Entry removed (not evicting), so remove from cache store too");
 
                // If removing (and not evicting), remove from cache store too
-               evictionListener.onEntryRemoved(key);
+               map.evictionListener.onEntryRemoved(key);
             }
 
             return oldValue;
@@ -1816,7 +1821,7 @@ public class BoundedConcurrentHashMap<K, V> extends AbstractMap<K, V>
                }
                evictedCopy = unmodifiableMap(evictedCopy);
             }
-            evictionListener.onEntryEviction(evictedCopy);
+            map.evictionListener.onEntryEviction(evictedCopy);
          }
       }
    }
@@ -1847,7 +1852,11 @@ public class BoundedConcurrentHashMap<K, V> extends AbstractMap<K, V>
     *             nonpositive.
     */
    public BoundedConcurrentHashMap(int capacity, int concurrencyLevel,
-         Eviction evictionStrategy, EvictionListener<K, V> evictionListener) {
+         Eviction evictionStrategy, EvictionListener<K, V> evictionListener,
+         Comparing comparingKey, Comparing comparingValue) {
+      this.comparingKey = comparingKey;
+      this.comparingValue = comparingValue;
+
       if (capacity < 0 || concurrencyLevel <= 0) {
          throw new IllegalArgumentException();
       }
@@ -1863,6 +1872,8 @@ public class BoundedConcurrentHashMap<K, V> extends AbstractMap<K, V>
       if (evictionStrategy == null || evictionListener == null) {
          throw new IllegalArgumentException();
       }
+
+      this.evictionListener = evictionListener;
 
       if (concurrencyLevel > MAX_SEGMENTS) {
          concurrencyLevel = MAX_SEGMENTS;
@@ -1888,8 +1899,10 @@ public class BoundedConcurrentHashMap<K, V> extends AbstractMap<K, V>
          cap <<= 1;
       }
 
+      this.evictCap = c;
+
       for (int i = 0; i < this.segments.length; ++i) {
-         this.segments[i] = new Segment<K, V>(cap, c, DEFAULT_LOAD_FACTOR, evictionStrategy, evictionListener);
+         this.segments[i] = new Segment<K, V>(cap, DEFAULT_LOAD_FACTOR, evictionStrategy, this);
       }
    }
 
@@ -1908,8 +1921,8 @@ public class BoundedConcurrentHashMap<K, V> extends AbstractMap<K, V>
     *             if the initial capacity is negative or the load factor or concurrencyLevel are
     *             nonpositive.
     */
-   public BoundedConcurrentHashMap(int capacity, int concurrencyLevel) {
-      this(capacity, concurrencyLevel, Eviction.LRU);
+   public BoundedConcurrentHashMap(int capacity, int concurrencyLevel, Comparing comparingKey, Comparing comparingValue) {
+      this(capacity, concurrencyLevel, Eviction.LRU, comparingKey, comparingValue);
    }
 
    /**
@@ -1930,8 +1943,9 @@ public class BoundedConcurrentHashMap<K, V> extends AbstractMap<K, V>
     *             if the initial capacity is negative or the load factor or concurrencyLevel are
     *             nonpositive.
     */
-   public BoundedConcurrentHashMap(int capacity, int concurrencyLevel, Eviction evictionStrategy) {
-      this(capacity, concurrencyLevel, evictionStrategy, new NullEvictionListener<K, V>());
+   public BoundedConcurrentHashMap(int capacity, int concurrencyLevel,
+         Eviction evictionStrategy, Comparing comparingKey, Comparing comparingValue) {
+      this(capacity, concurrencyLevel, evictionStrategy, new NullEvictionListener<K, V>(), comparingKey, comparingValue);
    }
 
    /**
@@ -1947,15 +1961,19 @@ public class BoundedConcurrentHashMap<K, V> extends AbstractMap<K, V>
     *
     * @since 1.6
     */
-   public BoundedConcurrentHashMap(int capacity) {
-      this(capacity, DEFAULT_CONCURRENCY_LEVEL);
+   public BoundedConcurrentHashMap(int capacity, Comparing comparingKey, Comparing comparingValue) {
+      this(capacity, DEFAULT_CONCURRENCY_LEVEL, comparingKey, comparingValue);
    }
 
    /**
     * Creates a new, empty map with the default maximum capacity
     */
-   public BoundedConcurrentHashMap() {
-      this(DEFAULT_MAXIMUM_CAPACITY, DEFAULT_CONCURRENCY_LEVEL);
+   public BoundedConcurrentHashMap(Comparing comparingKey, Comparing comparingValue) {
+      this(DEFAULT_MAXIMUM_CAPACITY, DEFAULT_CONCURRENCY_LEVEL, comparingKey, comparingValue);
+   }
+
+   public BoundedConcurrentHashMap(Comparing comparing) {
+      this(DEFAULT_MAXIMUM_CAPACITY, DEFAULT_CONCURRENCY_LEVEL, comparing, comparing);
    }
 
    /**
@@ -2068,7 +2086,7 @@ public class BoundedConcurrentHashMap<K, V> extends AbstractMap<K, V>
     */
    @Override
    public V get(Object key) {
-      int hash = hash(key.hashCode());
+      int hash = hash(comparingKey.hashCode(key));
       return segmentFor(hash).get(key, hash);
    }
 
@@ -2083,7 +2101,7 @@ public class BoundedConcurrentHashMap<K, V> extends AbstractMap<K, V>
     */
    @Override
    public boolean containsKey(Object key) {
-      int hash = hash(key.hashCode());
+      int hash = hash(comparingKey.hashCode(key));
       return segmentFor(hash).containsKey(key, hash);
    }
 
@@ -2192,7 +2210,7 @@ public class BoundedConcurrentHashMap<K, V> extends AbstractMap<K, V>
       if (value == null) {
          throw new NullPointerException();
       }
-      int hash = hash(key.hashCode());
+      int hash = hash(comparingKey.hashCode(key));
       return segmentFor(hash).put(key, hash, value, false);
    }
 
@@ -2208,7 +2226,7 @@ public class BoundedConcurrentHashMap<K, V> extends AbstractMap<K, V>
       if (value == null) {
          throw new NullPointerException();
       }
-      int hash = hash(key.hashCode());
+      int hash = hash(comparingKey.hashCode(key));
       return segmentFor(hash).put(key, hash, value, true);
    }
 
@@ -2237,7 +2255,7 @@ public class BoundedConcurrentHashMap<K, V> extends AbstractMap<K, V>
     */
    @Override
    public V remove(Object key) {
-      int hash = hash(key.hashCode());
+      int hash = hash(comparingKey.hashCode(key));
       return segmentFor(hash).remove(key, hash, null, false);
    }
 
@@ -2248,7 +2266,7 @@ public class BoundedConcurrentHashMap<K, V> extends AbstractMap<K, V>
     */
    @Override
    public boolean remove(Object key, Object value) {
-      int hash = hash(key.hashCode());
+      int hash = hash(comparingKey.hashCode(key));
       if (value == null) {
          return false;
       }
@@ -2265,7 +2283,7 @@ public class BoundedConcurrentHashMap<K, V> extends AbstractMap<K, V>
       if (oldValue == null || newValue == null) {
          throw new NullPointerException();
       }
-      int hash = hash(key.hashCode());
+      int hash = hash(comparingKey.hashCode(key));
       return segmentFor(hash).replace(key, hash, oldValue, newValue);
    }
 
@@ -2379,6 +2397,49 @@ public class BoundedConcurrentHashMap<K, V> extends AbstractMap<K, V>
     */
    public Enumeration<V> elements() {
       return new ValueIterator();
+   }
+
+   @Override
+   public boolean equals(Object o) {
+      if (o == this)
+         return true;
+
+      if (!(o instanceof Map))
+         return false;
+      Map<K,V> m = (Map<K,V>) o;
+      if (m.size() != size())
+         return false;
+
+      try {
+         Iterator<Entry<K,V>> i = entrySet().iterator();
+         while (i.hasNext()) {
+            Entry<K,V> e = i.next();
+            K key = e.getKey();
+            V value = e.getValue();
+            if (value == null) {
+               if (!(m.get(key)==null && m.containsKey(key)))
+                  return false;
+            } else {
+               if (!comparingValue.equals(value, m.get(key)))
+                  return false;
+            }
+         }
+      } catch (ClassCastException unused) {
+         return false;
+      } catch (NullPointerException unused) {
+         return false;
+      }
+
+      return true;
+   }
+
+   @Override
+   public int hashCode() {
+      int h = 0;
+      Iterator<Entry<K,V>> i = entrySet().iterator();
+      while (i.hasNext())
+         h += i.next().hashCode();
+      return h;
    }
 
    /* ---------------- Iterator Support -------------- */
@@ -2505,6 +2566,22 @@ public class BoundedConcurrentHashMap<K, V> extends AbstractMap<K, V>
          BoundedConcurrentHashMap.this.put(getKey(), value);
          return v;
       }
+
+      @Override
+      public boolean equals(Object o) {
+         if (!(o instanceof Map.Entry))
+            return false;
+         Map.Entry e = (Map.Entry)o;
+         return comparingKey.equals(getKey(), e.getKey())
+               && comparingValue.equals(getValue(), e.getValue());
+      }
+
+      @Override
+      public int hashCode() {
+         return (getKey() == null ? 0 : comparingKey.hashCode(getKey()) ^
+               (getValue() == null ? 0 : comparingValue.hashCode(getValue())));
+      }
+
    }
 
    final class EntryIterator extends HashIterator implements Iterator<Entry<K, V>> {
@@ -2572,6 +2649,27 @@ public class BoundedConcurrentHashMap<K, V> extends AbstractMap<K, V>
       public void clear() {
          BoundedConcurrentHashMap.this.clear();
       }
+
+      @Override
+      public boolean remove(Object o) {
+         Iterator<V> e = iterator();
+         if (o==null) {
+            while (e.hasNext()) {
+               if (e.next()==null) {
+                  e.remove();
+                  return true;
+               }
+            }
+         } else {
+            while (e.hasNext()) {
+               if (comparingValue.equals(o, e.next())) {
+                  e.remove();
+                  return true;
+               }
+            }
+         }
+         return false;
+      }
    }
 
    final class EntrySet extends AbstractSet<Map.Entry<K, V>> {
@@ -2587,7 +2685,7 @@ public class BoundedConcurrentHashMap<K, V> extends AbstractMap<K, V>
          }
          Map.Entry<?, ?> e = (Map.Entry<?, ?>) o;
          V v = BoundedConcurrentHashMap.this.get(e.getKey());
-         return v != null && v.equals(e.getValue());
+         return v != null && comparingValue.equals(v, e.getValue());
       }
 
       @Override

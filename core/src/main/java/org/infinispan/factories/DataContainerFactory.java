@@ -28,6 +28,7 @@ import org.infinispan.container.DefaultDataContainer;
 import org.infinispan.eviction.EvictionStrategy;
 import org.infinispan.eviction.EvictionThreadPolicy;
 import org.infinispan.factories.annotations.DefaultFactoryFor;
+import org.infinispan.util.Comparing;
 
 /**
  * Constructs the data container
@@ -48,10 +49,13 @@ public class DataContainerFactory extends AbstractNamedCacheComponentFactory imp
       } else {
          EvictionStrategy st = configuration.eviction().strategy();
          int level = configuration.locking().concurrencyLevel();
-        
+         Comparing comparingKey = configuration.dataContainer().comparingKey();
+         Comparing comparingValue = configuration.dataContainer().comparingValue();
+
          switch (st) {
             case NONE:         
-               return (T) DefaultDataContainer.unBoundedDataContainer(level);
+               return (T) DefaultDataContainer.unBoundedDataContainer(
+                     level, comparingKey, comparingValue);
             case UNORDERED:   
             case LRU:
             case FIFO:
@@ -59,10 +63,12 @@ public class DataContainerFactory extends AbstractNamedCacheComponentFactory imp
                int maxEntries = configuration.eviction().maxEntries();
                //handle case when < 0 value signifies unbounded container 
                if(maxEntries < 0) {
-                   return (T) DefaultDataContainer.unBoundedDataContainer(level);
+                   return (T) DefaultDataContainer.unBoundedDataContainer(
+                         level, comparingKey, comparingValue);
                }
                EvictionThreadPolicy policy = configuration.eviction().threadPolicy();
-               return (T) DefaultDataContainer.boundedDataContainer(level, maxEntries, st, policy);
+               return (T) DefaultDataContainer.boundedDataContainer(
+                     level, maxEntries, st, policy, comparingKey, comparingValue);
             default:
                throw new ConfigurationException("Unknown eviction strategy "
                         + configuration.eviction().strategy());

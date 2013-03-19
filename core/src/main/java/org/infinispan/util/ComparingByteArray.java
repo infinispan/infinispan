@@ -39,10 +39,7 @@ public enum ComparingByteArray implements Comparing {
 
    @Override
    public int hashCode(Object obj) {
-      if (obj instanceof byte[])
-         return 41 + Arrays.hashCode((byte[]) obj);
-      else
-         return obj.hashCode();
+      return 41 + Arrays.hashCode((byte[]) obj);
    }
 
    @Override
@@ -57,10 +54,7 @@ public enum ComparingByteArray implements Comparing {
 
    @Override
    public String toString(Object obj) {
-      if (obj instanceof byte[])
-         return Arrays.toString((byte[]) obj);
-      else
-         return obj.toString();
+      return Arrays.toString((byte[]) obj);
    }
 
    @Override
