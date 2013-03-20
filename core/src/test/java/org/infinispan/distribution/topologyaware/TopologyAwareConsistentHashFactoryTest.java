@@ -26,6 +26,7 @@ import org.infinispan.commons.hash.MurmurHash3;
 import org.infinispan.distribution.TestTopologyAwareAddress;
 import org.infinispan.distribution.ch.ConsistentHashFactory;
 import org.infinispan.distribution.ch.DefaultConsistentHash;
+import org.infinispan.distribution.ch.OwnershipStatistics;
 import org.infinispan.distribution.ch.TopologyAwareConsistentHashFactory;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.remoting.transport.TopologyAwareAddress;
@@ -42,6 +43,7 @@ import java.util.Set;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import static org.testng.Assert.assertEquals;
+import static org.testng.Assert.assertTrue;
 
 /**
  * @author Mircea.Markus@jboss.com
@@ -50,7 +52,6 @@ import static org.testng.Assert.assertEquals;
  */
 @Test(groups = "unit", testName = "topologyaware.TopologyAwareConsistentHashFactoryTest")
 public class TopologyAwareConsistentHashFactoryTest extends AbstractInfinispanTest {
-   
    private static final Log log = LogFactory.getLog(TopologyAwareConsistentHashFactoryTest.class);
    private static final int CLUSTER_SIZE = 10;
    public int numSegments = 100;
@@ -58,7 +59,7 @@ public class TopologyAwareConsistentHashFactoryTest extends AbstractInfinispanTe
    private TestTopologyAwareAddress[] testAddresses;
    private List<Address> chMembers;
    private ConsistentHashFactory<DefaultConsistentHash> chf;
-   private DefaultConsistentHash ch;
+   protected DefaultConsistentHash ch;
 
    @BeforeMethod()
    public void setUp() {
@@ -156,9 +157,9 @@ public class TopologyAwareConsistentHashFactoryTest extends AbstractInfinispanTe
    }
 
    public void testDifferentMachines3() {
-      addNode(testAddresses[0], "primary", "primary", "primary");
-      addNode(testAddresses[1], "primary", "primary", "primary");
-      addNode(testAddresses[2], "secondary", "primary", "primary");
+      addNode(testAddresses[0], "m0", "r1", "s1");
+      addNode(testAddresses[1], "m1", "r1", "s1");
+      addNode(testAddresses[2], "m2", "r1", "s1");
 
       assertAllLocationsWithRebalance(1);
       assertAllLocationsWithRebalance(2);
@@ -293,21 +294,52 @@ public class TopologyAwareConsistentHashFactoryTest extends AbstractInfinispanTe
       assertAllLocationsWithRebalance(4);
    }
 
-   private void assertAllLocationsWithRebalance(int numOwners) {
-      ch = chf.create(new MurmurHash3(), numOwners, numSegments, chMembers.subList(0, 1));
-      assertAllLocations(1, 1, 1, 1);
+   public void testComplexScenario2() {
+      // {s0: {r0: {m0, m1, m2}, r1: {m3, m4, m5}, r1: {m6, m7, m8}}}
+      addNode(testAddresses[0], "m0", "r0", "s0");
+      addNode(testAddresses[1], "m1", "r0", "s0");
+      addNode(testAddresses[2], "m2", "r0", "s0");
+      addNode(testAddresses[3], "m3", "r1", "s0");
+      addNode(testAddresses[4], "m4", "r1", "s0");
+      addNode(testAddresses[5], "m5", "r1", "s0");
+      addNode(testAddresses[6], "m6", "r2", "s0");
+      addNode(testAddresses[7], "m7", "r2", "s0");
+      addNode(testAddresses[8], "m8", "r2", "s0");
 
-      for (int i = 2; i < chMembers.size(); i++) {
+      assertAllLocationsWithRebalance(1);
+      assertAllLocationsWithRebalance(2);
+   }
+
+   private void assertAllLocationsWithRebalance(int numOwners) {
+      ch = chf.create(new MurmurHash3(), numOwners, numSegments, chMembers);
+      assertAllLocations(numOwners, chMembers);
+      assertDistribution(numOwners, chMembers);
+
+      ch = chf.create(new MurmurHash3(), numOwners, numSegments, chMembers.subList(0, 1));
+      assertAllLocations(numOwners, chMembers.subList(0, 1));
+
+      for (int i = 2; i <= chMembers.size(); i++) {
          List<Address> currentMembers = chMembers.subList(0, i);
-         int expectedOwners = Math.min(numOwners, i);
-         int expectedMachines = Math.min(expectedOwners, countMachines(currentMembers));
-         int expectedRacks = Math.min(expectedOwners, countRacks(currentMembers));
-         int expectedSites = Math.min(expectedOwners, countSites(currentMembers));
+         log.debugf("Created CH with numOwners %d, members %s", numOwners, currentMembers);
          ch = chf.updateMembers(ch, currentMembers);
          ch = chf.rebalance(ch);
-         assertAllLocations(expectedOwners, expectedMachines, expectedRacks, expectedSites);
+
+         assertAllLocations(numOwners, currentMembers);
+         assertDistribution(numOwners, currentMembers);
       }
-      log.debugf("Created CH with members %s", chMembers);
+   }
+
+   protected void assertDistribution(int numOwners, List<Address> currentMembers) {
+      TopologyAwareOwnershipStatistics stats = new TopologyAwareOwnershipStatistics(ch);
+      log.tracef("Ownership stats: %s", stats);
+      int maxPrimarySegments = numSegments / currentMembers.size() + 1;
+      for (Address node : currentMembers) {
+         int maxSegments = stats.computeMaxSegments(numSegments, numOwners, node);
+         assertTrue(maxPrimarySegments - 1 <= stats.getPrimaryOwned(node), "Too few primary segments for node " + node);
+         assertTrue(stats.getPrimaryOwned(node) <= maxPrimarySegments, "Too many primary segments for node " + node);
+         assertTrue(maxSegments * 0.7 <= stats.getOwned(node), "Too few segments for node " + node);
+         assertTrue(stats.getOwned(node) <= maxSegments * 1.2, "Too many segments for node " + node);
+      }
    }
 
    private int countMachines(List<Address> addresses) {
@@ -337,7 +369,12 @@ public class TopologyAwareConsistentHashFactoryTest extends AbstractInfinispanTe
       return sites.size();
    }
 
-   private void assertAllLocations(int expectedOwners, int expectedMachines, int expectedRacks, int expectedSites) {
+   private void assertAllLocations(int numOwners, List<Address> currentMembers) {
+      int expectedOwners = Math.min(numOwners, currentMembers.size());
+      int expectedMachines = Math.min(expectedOwners, countMachines(currentMembers));
+      int expectedRacks = Math.min(expectedOwners, countRacks(currentMembers));
+      int expectedSites = Math.min(expectedOwners, countSites(currentMembers));
+
       for (int segment = 0; segment < numSegments; segment++) {
          assertSegmentLocation(segment, expectedOwners, expectedMachines, expectedRacks, expectedSites);
       }
@@ -355,9 +392,12 @@ public class TopologyAwareConsistentHashFactoryTest extends AbstractInfinispanTe
       addNode(testAddresses[8], "m0", "r0", "s2");
       addNode(testAddresses[9], "m0", "r0", "s0");
 
-      updateConsistentHash(3);
+      int numOwners = 3;
+      updateConsistentHash(numOwners);
+      assertAllLocations(numOwners, chMembers);
+      assertDistribution(numOwners, chMembers);
 
-      for (Address addr: chMembers) {
+      for (Address addr : chMembers) {
          log.debugf("Removing node %s" + addr);
          List<Address> addressCopy = new ArrayList<Address>(chMembers);
          addressCopy.remove(addr);
@@ -368,9 +408,9 @@ public class TopologyAwareConsistentHashFactoryTest extends AbstractInfinispanTe
          // generates extra moves trying to balance the CH.
          AtomicInteger movedSegmentsCount = new AtomicInteger(0);
          for (int segment = 0; segment < numSegments; segment++) {
-            checkConsistency(segment, 3, ch.locateOwnersForSegment(segment), addr, newCH, movedSegmentsCount);
+            checkConsistency(segment, numOwners, ch.locateOwnersForSegment(segment), addr, newCH, movedSegmentsCount);
          }
-         assert movedSegmentsCount.get() < 5 :
+         assert movedSegmentsCount.get() <= numOwners * numSegments * 0.1 :
                String.format("Too many moved segments after leave: %d. CH after leave is: %s\nPrevious: %s",
                      movedSegmentsCount.get(), newCH, ch);
       }
@@ -432,6 +472,102 @@ public class TopologyAwareConsistentHashFactoryTest extends AbstractInfinispanTe
 
    protected void updateConsistentHash(int numOwners) {
       ch = chf.create(new MurmurHash3(), numOwners, numSegments, chMembers);
-      log.debugf("Created CH with members %s", chMembers);
+      log.debugf("Created CH with numOwners %d, members %s", numOwners, chMembers);
+   }
+}
+
+
+class TopologyAwareOwnershipStatistics {
+   private final DefaultConsistentHash ch;
+   TopologyInfo topologyInfo;
+   OwnershipStatistics stats;
+
+   public TopologyAwareOwnershipStatistics(DefaultConsistentHash ch) {
+      this.ch = ch;
+      topologyInfo = new TopologyInfo(ch.getMembers());
+      stats = new OwnershipStatistics(ch, ch.getMembers());
+   }
+
+   public int getSiteOwned(String site) {
+      int count = 0;
+      for (Address node : topologyInfo.getSiteNodes(site)) {
+         count += stats.getOwned(node);
+      }
+      return count;
+   }
+
+   public int getSitePrimaryOwned(String site) {
+      int count = 0;
+      for (Address node : topologyInfo.getSiteNodes(site)) {
+         count += stats.getPrimaryOwned(node);
+      }
+      return count;
+   }
+
+   public int getRackOwned(String site, String rack) {
+      int count = 0;
+      for (Address node : topologyInfo.getRackNodes(site, rack)) {
+         count += stats.getOwned(node);
+      }
+      return count;
+   }
+
+   public int getRackPrimaryOwned(String site, String rack) {
+      int count = 0;
+      for (Address node : topologyInfo.getRackNodes(site, rack)) {
+         count += stats.getPrimaryOwned(node);
+      }
+      return count;
+   }
+
+   public int getMachineOwned(String site, String rack, String machine) {
+      int count = 0;
+      for (Address node : topologyInfo.getMachineNodes(site, rack, machine)) {
+         count += stats.getOwned(node);
+      }
+      return count;
+   }
+
+   public int getMachinePrimaryOwned(String site, String rack, String machine) {
+      int count = 0;
+      for (Address node : topologyInfo.getMachineNodes(site, rack, machine)) {
+         count += stats.getPrimaryOwned(node);
+      }
+      return count;
+   }
+
+   public int getOwned(Address node) {
+      return stats.getOwned(node);
+   }
+
+   public int getPrimaryOwned(Address node) {
+      return stats.getPrimaryOwned(node);
+   }
+
+   public int computeMaxSegments(int numSegments, int numOwners, Address node) {
+      return topologyInfo.computeMaxSegments(numSegments, numOwners, node);
+   }
+
+   @Override
+   public String toString() {
+      StringBuilder sb = new StringBuilder("TopologyAwareOwnershipStatistics{\n");
+      for (String site : topologyInfo.getAllSites()) {
+         sb.append(String.format("  %s: %d/%d\n", site, getSitePrimaryOwned(site), getSiteOwned(site)));
+         for (String rack : topologyInfo.getSiteRacks(site)) {
+            sb.append(String.format("    %s: %d/%d\n", rack, getRackPrimaryOwned(site, rack),
+                  getRackOwned(site, rack)));
+            for (String machine : topologyInfo.getRackMachines(site, rack)) {
+               sb.append(String.format("      %s: %d/%d\n", machine,
+                     getMachinePrimaryOwned(site, rack, machine),
+                     getMachineOwned(site, rack, machine)));
+               for (Address node : topologyInfo.getMachineNodes(site, rack, machine)) {
+                  sb.append(String.format("        %s: %d/%d (%d)\n", node, stats.getPrimaryOwned(node),
+                        stats.getOwned(node), topologyInfo.computeMaxSegments(ch.getNumSegments(), ch.getNumOwners(), node)));
+               }
+            }
+         }
+      }
+      sb.append('}');
+      return sb.toString();
    }
 }

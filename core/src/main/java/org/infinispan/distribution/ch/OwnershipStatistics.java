@@ -33,7 +33,7 @@ import org.infinispan.remoting.transport.Address;
  * @author Dan Berindei
  * @since 5.2
  */
-class OwnershipStatistics {
+public class OwnershipStatistics {
    private final Map<Address, Integer> nodes;
    private final int[] primaryOwned;
    private final int[] owned;
