@@ -204,11 +204,11 @@ public class DefaultConsistentHashFactoryTest extends AbstractInfinispanTest {
    }
 
    protected int minOwned(int numSegments, int numNodes, int actualNumOwners) {
-      return numSegments * actualNumOwners / numNodes;
+      return Math.min(numSegments, numSegments * actualNumOwners / numNodes);
    }
 
    protected int maxOwned(int numSegments, int numNodes, int actualNumOwners) {
-      return (int) Math.ceil((double)numSegments * actualNumOwners / numNodes);
+      return Math.min(numSegments, (int) Math.ceil((double)numSegments * actualNumOwners / numNodes));
    }
 
    protected int allowedMoves(int numSegments, int numOwners, Collection<Address> oldMembers,
@@ -269,18 +269,18 @@ public class DefaultConsistentHashFactoryTest extends AbstractInfinispanTest {
       TestAddress D = new TestAddress(3, "D");
 
       DefaultConsistentHash ch1 = chf.create(new MurmurHash3(), 2, 60, Arrays.<Address>asList(A));
-      System.out.println(ch1);
+      //System.out.println(ch1);
 
       DefaultConsistentHash ch2 = chf.updateMembers(ch1, Arrays.<Address>asList(A, B));
       ch2 = chf.rebalance(ch2);
-      System.out.println(ch2);
+      //System.out.println(ch2);
 
       DefaultConsistentHash ch3 = chf.updateMembers(ch2, Arrays.<Address>asList(A, B, C));
       ch3 = chf.rebalance(ch3);
-      System.out.println(ch3);
+      //System.out.println(ch3);
 
       DefaultConsistentHash ch4 = chf.updateMembers(ch3, Arrays.<Address>asList(A, B, C, D));
       ch4 = chf.rebalance(ch4);
-      System.out.println(ch4);
+      //System.out.println(ch4);
    }
 }

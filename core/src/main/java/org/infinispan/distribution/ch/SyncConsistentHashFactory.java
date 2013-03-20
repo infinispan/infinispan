@@ -138,7 +138,7 @@ public class SyncConsistentHashFactory implements ConsistentHashFactory<DefaultC
       // based on numSegments. This is not perfect because we may end up with too many virtual nodes,
       // but the only downside in that is a little more shuffling when a node joins/leaves.
       int numSegments = builder.getNumSegments();
-      int numVirtualNodes = (int) (Math.log(numSegments + 1) / Math.log(2));
+      int numVirtualNodes = (int) (Math.log(builder.getNumOwners() * numSegments + 1) / Math.log(2)) + 1;
       int numNodes = builder.getSortedMembers().size();
       Map<Integer, Address> primarySegments = new HashMap<Integer, Address>(numNodes * numVirtualNodes);
 
@@ -216,6 +216,7 @@ public class SyncConsistentHashFactory implements ConsistentHashFactory<DefaultC
 
    protected static class Builder {
       private final Hash hashFunction;
+      private final int numOwners;
       private final int actualNumOwners;
       private final int numSegments;
       private final List<Address> sortedMembers;
@@ -225,6 +226,7 @@ public class SyncConsistentHashFactory implements ConsistentHashFactory<DefaultC
       private Builder(Hash hashFunction, int numOwners, int numSegments, List<Address> members) {
          this.hashFunction = hashFunction;
          this.numSegments = numSegments;
+         this.numOwners = numOwners;
          this.actualNumOwners = Math.min(numOwners, members.size());
          this.sortedMembers = sort(members);
          this.segmentSize = (int)Math.ceil((double)Integer.MAX_VALUE / numSegments);
@@ -236,6 +238,10 @@ public class SyncConsistentHashFactory implements ConsistentHashFactory<DefaultC
 
       public Hash getHashFunction() {
          return hashFunction;
+      }
+
+      public int getNumOwners() {
+         return numOwners;
       }
 
       public int getActualNumOwners() {

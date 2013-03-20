@@ -28,6 +28,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.SortedMap;
 
+import org.infinispan.distribution.topologyaware.TopologyLevel;
 import org.infinispan.marshall.AbstractExternalizer;
 import org.infinispan.marshall.Ids;
 import org.infinispan.remoting.transport.Address;
@@ -49,9 +50,6 @@ import org.infinispan.remoting.transport.TopologyAwareAddress;
  * @since 5.2
  */
 public class TopologyAwareSyncConsistentHashFactory extends SyncConsistentHashFactory {
-
-   private enum Level { SITE, RACK, MACHINE, NONE }
-
    @Override
    protected void populateOwnersFewSegments(Builder builder, SortedMap<Integer, Address> primarySegments) {
       // Too few segments for each member to have one "primary segment",
@@ -67,13 +65,13 @@ public class TopologyAwareSyncConsistentHashFactory extends SyncConsistentHashFa
 
       // Continue with the backup owners. Assign each member as owner to one segment,
       // then repeat until each segment has numOwners owners.
-      populateBackupOwners(builder, Level.SITE);
-      populateBackupOwners(builder, Level.RACK);
-      populateBackupOwners(builder, Level.MACHINE);
-      populateBackupOwners(builder, Level.NONE);
+      populateBackupOwners(builder, TopologyLevel.SITE);
+      populateBackupOwners(builder, TopologyLevel.RACK);
+      populateBackupOwners(builder, TopologyLevel.MACHINE);
+      populateBackupOwners(builder, TopologyLevel.NODE);
    }
 
-   private boolean populateBackupOwners(Builder builder, Level level) {
+   private boolean populateBackupOwners(Builder builder, TopologyLevel level) {
       boolean modified = false;
       // Try to add each node as an owner to one segment
       for (Address member : builder.getSortedMembers()) {
@@ -98,15 +96,15 @@ public class TopologyAwareSyncConsistentHashFactory extends SyncConsistentHashFa
       // to populate the owner lists. For each segment assign the owners of the next numOwners
       // "primary segments" as owners.
       for (int segment = 0; segment < builder.getNumSegments(); segment++) {
-         populateSegmentOwners(builder, primarySegments, segment, Level.SITE);
-         populateSegmentOwners(builder, primarySegments, segment, Level.RACK);
-         populateSegmentOwners(builder, primarySegments, segment, Level.MACHINE);
-         populateSegmentOwners(builder, primarySegments, segment, Level.NONE);
+         populateSegmentOwners(builder, primarySegments, segment, TopologyLevel.SITE);
+         populateSegmentOwners(builder, primarySegments, segment, TopologyLevel.RACK);
+         populateSegmentOwners(builder, primarySegments, segment, TopologyLevel.MACHINE);
+         populateSegmentOwners(builder, primarySegments, segment, TopologyLevel.NODE);
       }
    }
 
    private void populateSegmentOwners(Builder builder, SortedMap<Integer, Address> primarySegments,
-                                      int segment, Level level) {
+                                      int segment, TopologyLevel level) {
       List<Address> owners = builder.getOwners(segment);
       if (owners.size() >= builder.getActualNumOwners())
          return;
@@ -127,7 +125,7 @@ public class TopologyAwareSyncConsistentHashFactory extends SyncConsistentHashFa
       }
    }
 
-   private boolean locationAlreadyAdded(Address candidate, List<Address> owners, Level level) {
+   private boolean locationAlreadyAdded(Address candidate, List<Address> owners, TopologyLevel level) {
       TopologyAwareAddress topologyAwareCandidate = (TopologyAwareAddress) candidate;
       boolean locationAlreadyAdded = false;
       for (Address owner : owners) {
@@ -142,7 +140,7 @@ public class TopologyAwareSyncConsistentHashFactory extends SyncConsistentHashFa
             case MACHINE:
                locationAlreadyAdded = topologyAwareCandidate.isSameMachine(topologyAwareOwner);
                break;
-            case NONE:
+            case NODE:
                locationAlreadyAdded = owner.equals(candidate);
          }
          if (locationAlreadyAdded)
