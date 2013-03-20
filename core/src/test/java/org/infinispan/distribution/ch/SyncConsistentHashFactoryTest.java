@@ -42,22 +42,22 @@ public class SyncConsistentHashFactoryTest extends DefaultConsistentHashFactoryT
    // in order to guarantee a better distribution, but I haven't done anything in that area yet.
    @Override
    protected int minPrimaryOwned(int numSegments, int numNodes) {
-      return (int) (0.25 * super.minPrimaryOwned(numSegments, numNodes));
+      return (int) (0.4 * super.minPrimaryOwned(numSegments, numNodes));
    }
 
    @Override
    protected int maxPrimaryOwned(int numSegments, int numNodes) {
-      return (int) Math.ceil(3 * super.maxPrimaryOwned(numSegments, numNodes));
+      return (int) Math.ceil(2.5 * super.maxPrimaryOwned(numSegments, numNodes));
    }
 
    @Override
    protected int minOwned(int numSegments, int numNodes, int actualNumOwners) {
-      return (int) (0.25 * super.minOwned(numSegments, numNodes, actualNumOwners));
+      return (int) (0.4 * super.minOwned(numSegments, numNodes, actualNumOwners));
    }
 
    @Override
    protected int maxOwned(int numSegments, int numNodes, int actualNumOwners) {
-      return (int) Math.ceil(3 * super.maxOwned(numSegments, numNodes, actualNumOwners));
+      return (int) Math.ceil(2.5 * super.maxOwned(numSegments, numNodes, actualNumOwners));
    }
 
    @Override

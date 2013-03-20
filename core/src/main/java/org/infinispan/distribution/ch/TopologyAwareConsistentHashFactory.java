@@ -27,6 +27,8 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
+import org.infinispan.distribution.topologyaware.TopologyInfo;
+import org.infinispan.distribution.topologyaware.TopologyLevel;
 import org.infinispan.marshall.AbstractExternalizer;
 import org.infinispan.marshall.Ids;
 import org.infinispan.remoting.transport.Address;
@@ -39,10 +41,10 @@ import org.infinispan.remoting.transport.TopologyAwareAddress;
  * @since 5.2
  */
 public class TopologyAwareConsistentHashFactory extends DefaultConsistentHashFactory {
-   private enum Level { SITE, RACK, MACHINE, NONE }
 
    @Override
    protected void addBackupOwners(Builder builder) {
+      TopologyInfo topologyInfo = new TopologyInfo(builder.getMembers());
       int minSegments = builder.getActualNumOwners() * builder.getNumSegments() / builder.getNumNodes();
 
       // 1. Remove extra owners (could be leftovers from addPrimaryOwners).
@@ -52,108 +54,145 @@ public class TopologyAwareConsistentHashFactory extends DefaultConsistentHashFac
       // 2. If owners(segment) < numOwners, add new owners.
       // Unlike the parent class, we allow many more segments for one node just in order to get
       // as many different sites, racks and machines in the same owner list.
-      addBackupOwnersForLevel(builder, minSegments, Level.SITE);
-      addBackupOwnersForLevel(builder, minSegments, Level.RACK);
-      addBackupOwnersForLevel(builder, minSegments, Level.MACHINE);
+      addBackupOwnersForLevel(builder, topologyInfo, TopologyLevel.SITE);
+      addBackupOwnersForLevel(builder, topologyInfo, TopologyLevel.RACK);
+      addBackupOwnersForLevel(builder, topologyInfo, TopologyLevel.MACHINE);
 
-      addBackupOwnersForLevel(builder, minSegments, Level.NONE);
+      addBackupOwnersForLevel(builder, topologyInfo, TopologyLevel.NODE);
 
       // 3. Now owners(segment) == numOwners for every segment because of steps 1 and 2.
-      replaceBackupOwnersForLevel(builder, Level.SITE);
-      replaceBackupOwnersForLevel(builder, Level.RACK);
-      replaceBackupOwnersForLevel(builder, Level.MACHINE);
+      replaceBackupOwnersForLevel(builder, topologyInfo, TopologyLevel.SITE);
+      replaceBackupOwnersForLevel(builder, topologyInfo, TopologyLevel.RACK);
+      replaceBackupOwnersForLevel(builder, topologyInfo, TopologyLevel.MACHINE);
 
       // Replace owners that have too many segments with owners that have too few.
-      replaceBackupOwnerForMachineLevel(builder, minSegments);
+      replaceBackupOwnerNoLevel(builder, topologyInfo);
    }
 
-   private void addBackupOwnersForLevel(Builder builder, int minSegments, Level level) {
+   private void addBackupOwnersForLevel(Builder builder, TopologyInfo topologyInfo, TopologyLevel level) {
       // In the first phase, the new owners must own < minSegments segments.
       // It may not be possible to fill all the segments with numOwners owners this way,
       // so we repeat this in a loop, each iteration with a higher limit of owned segments
-      int currentMax = minSegments;
-      while (doAddBackupOwnersForLevel(builder, currentMax, level)) {
-         currentMax++;
+      int extraSegments = 0;
+      while (doAddBackupOwnersForLevel(builder, topologyInfo, level, extraSegments)) {
+         extraSegments++;
       }
    }
 
-   private boolean doAddBackupOwnersForLevel(Builder builder, int maxSegments, Level level) {
-      // Mostly copied from DefaultConsistentHashFactory.doAddBackupOwners, but with an extra location check
+   private boolean doAddBackupOwnersForLevel(Builder builder, TopologyInfo topologyInfo, TopologyLevel level, int extraSegments) {
       boolean sufficientOwners = true;
-      boolean modified = false;
       for (int segment = 0; segment < builder.getNumSegments(); segment++) {
          List<Address> owners = builder.getOwners(segment);
-         for (Address candidate : builder.getMembers()) {
-            if (owners.size() >= builder.getActualNumOwners())
-               break;
+         if (owners.size() >= builder.getActualNumOwners())
+            continue;
 
+         int maxDistinctLocations = topologyInfo.getDistinctLocationsCount(level, builder.getActualNumOwners());
+         int distinctLocations = new TopologyInfo(owners).getDistinctLocationsCount(level, builder.getActualNumOwners());
+         if (distinctLocations == maxDistinctLocations)
+            continue;
+
+         for (Address candidate : builder.getMembers()) {
+            int maxSegments = topologyInfo.computeMaxSegments(builder.getNumSegments(),
+                  builder.getActualNumOwners(), candidate) + extraSegments;
             if (builder.getOwned(candidate) < maxSegments) {
-               if (!owners.contains(candidate) && !locationIsDuplicate(candidate, owners, level)) {
+               if (!owners.contains(candidate) && !locationIsDuplicate(owners, candidate, level)) {
                   builder.addOwner(segment, candidate);
-                  modified = true;
+                  distinctLocations++;
+                  // The owners list is live, no need to query it again
+                  if (owners.size() >= builder.getActualNumOwners())
+                     break;
                }
             }
          }
-         sufficientOwners &= owners.size() >= builder.getActualNumOwners();
+
+         if (distinctLocations < maxDistinctLocations && owners.size() < builder.getActualNumOwners()) {
+            sufficientOwners = false;
+         }
       }
 
-      // If we didn't add any owners this time, we won't add any owners with a higher maxSegments either
-      return !sufficientOwners && modified;
+      return !sufficientOwners;
    }
 
-   protected void replaceBackupOwnersForLevel(Builder builder, Level level) {
+   private void replaceBackupOwnersForLevel(Builder builder, TopologyInfo topologyInfo, TopologyLevel level) {
+      int extraSegments = 0;
+      while (doReplaceBackupOwnersForLevel(builder, topologyInfo, level, extraSegments)) {
+         extraSegments++;
+      }
+   }
+
+   private boolean doReplaceBackupOwnersForLevel(Builder builder, TopologyInfo topologyInfo,
+                                                   TopologyLevel level, int extraSegments) {
+      boolean sufficientLocations = true;
       // At this point each segment already has actualNumOwners owners.
       for (int segment = 0; segment < builder.getNumSegments(); segment++) {
          List<Address> owners = builder.getOwners(segment);
-         List<Address> backupOwners = builder.getBackupOwners(segment);
-         for (int i = backupOwners.size() - 1; i >= 0; i--) {
-            Address owner = backupOwners.get(i);
-            if (locationIsDuplicate(owner, owners, level)) {
+         int maxDistinctLocations = topologyInfo.getDistinctLocationsCount(level, builder.getActualNumOwners());
+         int distinctLocations = new TopologyInfo(owners).getDistinctLocationsCount(level, builder.getActualNumOwners());
+         if (distinctLocations == maxDistinctLocations)
+            continue;
+
+         for (int i = owners.size() - 1; i >= 1; i--) {
+            Address owner = owners.get(i);
+            if (locationIsDuplicate(owners, owner, level)) {
                // Got a duplicate site/rack/machine, we might have an alternative for it.
                for (Address candidate : builder.getMembers()) {
-                  if (!owners.contains(candidate) && !locationIsDuplicate(candidate, owners, level)) {
-                     builder.addOwner(segment, candidate);
-                     builder.removeOwner(segment, owner);
-                     // Update the owners list, needed for the locationIsDuplicate check.
-                     owners = builder.getOwners(segment);
-                     backupOwners = builder.getBackupOwners(segment);
-                     break;
+                  int maxSegments = topologyInfo.computeMaxSegments(builder.getNumSegments(),
+                        builder.getActualNumOwners(), candidate);
+                  if (builder.getOwned(candidate) < maxSegments + extraSegments) {
+                     if (!owners.contains(candidate) && !locationIsDuplicate(owners, candidate, level)) {
+                        builder.addOwner(segment, candidate);
+                        builder.removeOwner(segment, owner);
+                        distinctLocations++;
+                        // The owners list is live, no need to query it again
+                        break;
+                     }
                   }
                }
             }
          }
+
+         if (distinctLocations < maxDistinctLocations) {
+            sufficientLocations = false;
+         }
       }
+      return !sufficientLocations;
    }
 
-   protected void replaceBackupOwnerForMachineLevel(Builder builder, int minSegments) {
-      // 3.1. If there is an owner with owned(owner) > minSegments + 1, find another node
-      // with owned(node) < minSegments and replace that owner with it.
-      doReplaceBackupOwnersSameMachine(builder, minSegments, minSegments + 1);
-      // 3.2. Same as step 3.1, but also replace owners that own minSegments + 1 segments.
+   private void replaceBackupOwnerNoLevel(Builder builder, TopologyInfo topologyInfo) {
+      // 3.1. If there is an owner with owned(owner) > maxSegments, find another node
+      // with owned(node) < maxSegments and replace that owner with it.
+      doReplaceBackupOwnersNoLevel(builder, topologyInfo, -1, 0);
+      // 3.2. Same as step 3.1, but also replace owners that own maxSegments segments.
       // Doing this in a separate iteration minimizes the number of moves from nodes with
-      // owned(node) == minSegments + 1, when numOwners*numSegments doesn't divide evenly with numNodes.
-      doReplaceBackupOwnersSameMachine(builder, minSegments, minSegments);
-      // 3.3. Same as step 3.1, but allow replacing with nodes that already have owned(node) = minSegments.
+      // owned(node) == maxSegments, when numOwners*numSegments doesn't divide evenly with numNodes.
+      doReplaceBackupOwnersNoLevel(builder, topologyInfo, -1, -1);
+      // 3.3. Same as step 3.1, but allow replacing with nodes that already have owned(node) = maxSegments - 1.
       // Necessary when numOwners*numSegments doesn't divide evenly with numNodes,
-      // because all nodes could own minSegments segments and yet one node could own
-      // minSegments + (numOwners*numSegments % numNodes) segments.
-      doReplaceBackupOwnersSameMachine(builder, minSegments + 1, minSegments + 1);
+      // because all nodes could own maxSegments - 1 segments and yet one node could own
+      // maxSegments + (numOwners*numSegments % numNodes) segments.
+      doReplaceBackupOwnersNoLevel(builder, topologyInfo, 0, 0);
    }
 
-   private void doReplaceBackupOwnersSameMachine(Builder builder, int minSegments, int maxSegments) {
+   private void doReplaceBackupOwnersNoLevel(Builder builder, TopologyInfo topologyInfo,
+                                             int minSegmentsDiff, int maxSegmentsDiff) {
       // Iterate over the owners in the outer loop so that we minimize the number of owner changes
       // for the same segment. At this point each segment already has actualNumOwners owners.
       for (int ownerIdx = builder.getActualNumOwners() - 1; ownerIdx >= 1; ownerIdx--) {
          for (int segment = 0; segment < builder.getNumSegments(); segment++) {
             List<Address> owners = builder.getOwners(segment);
             Address owner = owners.get(ownerIdx);
+            int maxSegments = topologyInfo.computeMaxSegments(builder.getNumSegments(),
+                  builder.getActualNumOwners(), owner) + maxSegmentsDiff;
             if (builder.getOwned(owner) > maxSegments) {
                // Owner has too many segments. Find another node to replace it with.
                for (Address candidate : builder.getMembers()) {
+                  int minSegments = topologyInfo.computeMaxSegments(builder.getNumSegments(),
+                        builder.getActualNumOwners(), candidate) + minSegmentsDiff;
                   if (builder.getOwned(candidate) < minSegments) {
-                     if (!owners.contains(candidate) && maintainsMachines(owners, candidate, owner)) {
+                     if (!owners.contains(candidate) && maintainsDiversity(owners, candidate, owner)) {
                         builder.addOwner(segment, candidate);
                         builder.removeOwner(segment, owner);
+                        // The owners list is live, no need to query it again
                         break;
                      }
                   }
@@ -163,7 +202,7 @@ public class TopologyAwareConsistentHashFactory extends DefaultConsistentHashFac
       }
    }
 
-   private Object getLocationId(Address address, Level level) {
+   private Object getLocationId(Address address, TopologyLevel level) {
       TopologyAwareAddress taa = (TopologyAwareAddress) address;
       Object locationId;
       switch (level) {
@@ -176,7 +215,7 @@ public class TopologyAwareConsistentHashFactory extends DefaultConsistentHashFac
          case MACHINE:
             locationId = taa.getSiteId() + "|" + taa.getRackId() + "|" + taa.getMachineId();
             break;
-         case NONE:
+         case NODE:
             locationId = address;
             break;
          default:
@@ -185,27 +224,36 @@ public class TopologyAwareConsistentHashFactory extends DefaultConsistentHashFac
       return locationId;
    }
 
-   private boolean locationIsDuplicate(Address target, List<Address> addresses, Level level) {
+   private boolean locationIsDuplicate(List<Address> addresses, Address target, TopologyLevel level) {
+      Object targetLocationId = getLocationId(target, level);
       for (Address address : addresses) {
-         if (address != target && getLocationId(address, level).equals(getLocationId(target, level)))
+         if (address != target && getLocationId(address, level).equals(targetLocationId))
             return true;
       }
       return false;
    }
 
-   private boolean maintainsMachines(List<Address> owners, Address candidate, Address replaced) {
+   private boolean maintainsDiversity(List<Address> owners, Address candidate, Address replaced) {
+      return maintainsDiversity(owners, candidate, replaced, TopologyLevel.SITE)
+            && maintainsDiversity(owners, candidate, replaced, TopologyLevel.RACK)
+            && maintainsDiversity(owners, candidate, replaced, TopologyLevel.MACHINE);
+   }
+
+   private boolean maintainsDiversity(List<Address> owners, Address candidate, Address replaced, TopologyLevel machine) {
+      Set<Object> oldMachines = new HashSet<Object>(owners.size());
       Set<Object> newMachines = new HashSet<Object>(owners.size());
-      newMachines.add(getLocationId(candidate, Level.MACHINE));
+      newMachines.add(getLocationId(candidate, machine));
 
       for (Address node : owners) {
+         oldMachines.add(getLocationId(node, machine));
          if (!node.equals(replaced)) {
-            newMachines.add(getLocationId(node, Level.MACHINE));
+            newMachines.add(getLocationId(node, machine));
          }
       }
 
-      return newMachines.contains(getLocationId(replaced, Level.MACHINE));
+      return newMachines.size() >= oldMachines.size();
    }
-   
+
    public static class Externalizer extends AbstractExternalizer<TopologyAwareConsistentHashFactory> {
 
       @Override
