@@ -7,10 +7,8 @@ import readline
 import shutil
 import random
 settings_file = '%s/.infinispan_dev_settings' % os.getenv('HOME')
-
+upstream_url = 'git@github.com:infinispan/infinispan.git'
 ### Known config keys
-svn_base_key = "svn_base"
-local_tags_dir_key = "local_tags_dir"
 local_mvn_repo_dir_key = "local_mvn_repo_dir"
 maven_pom_xml_namespace = "http://maven.apache.org/POM/4.0.0"
 default_settings = {'dry_run': False, 'multi_threaded': False, 'verbose': False, 'use_colors': True}
@@ -25,7 +23,7 @@ class Colors(object):
   END = '\033[0m'  
   UNDERLINE = '\033[4m'  
   
-  @staticmethod  
+  @staticmethod
   def magenta():
     if use_colors():
       return Colors.MAGENTA
@@ -273,7 +271,7 @@ class Git(object):
     def push(e): return e.startswith('PushURL:')
     def remove_noise(e): return e.replace('PushURL:', '')
     push_urls = map(remove_noise, filter(push, cleaned))
-    return len(push_urls) == 1 and push_urls[0] == 'git@github.com:infinispan/infinispan.git'
+    return len(push_urls) == 1 and push_urls[0] == upstream_url
  
   def clean_branches(self, raw_branch_list):
     return map(self.clean, filter(self.non_empty, raw_branch_list))
@@ -307,9 +305,13 @@ class Git(object):
     '''Tags the current branch for release using the tag name.'''
     self.run_git(["tag", "-a", "-m", "'Release Script: tag %s'" % self.tag, self.tag])
   
-  def push_to_origin(self):
+  def push_tag_to_origin(self):
     '''Pushes the updated tags to origin'''
     self.run_git("push origin --tags")
+    
+  def push_branch_to_origin(self):
+    '''Pushes the updated branch to origin'''
+    self.run_git("push origin %s" % (self.branch))
  
   def current_branch(self):
     '''Returns the current branch you are on'''
