@@ -1,0 +1,126 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  ~ JBoss, Home of Professional Open Source
+  ~ Copyright 2013 Red Hat Inc. and/or its affiliates and other
+  ~ contributors as indicated by the @author tags. All rights reserved.
+  ~ See the copyright.txt in the distribution for a full listing of
+  ~ individual contributors.
+  ~
+  ~ This is free software; you can redistribute it and/or modify it
+  ~ under the terms of the GNU Lesser General Public License as
+  ~ published by the Free Software Foundation; either version 2.1 of
+  ~ the License, or (at your option) any later version.
+  ~
+  ~ This software is distributed in the hope that it will be useful,
+  ~ but WITHOUT ANY WARRANTY; without even the implied warranty of
+  ~ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
+  ~ Lesser General Public License for more details.
+  ~
+  ~ You should have received a copy of the GNU Lesser General Public
+  ~ License along with this software; if not, write to the Free
+  ~ Software Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
+  ~ 02110-1301 USA, or see the FSF site: http://www.fsf.org.
+  ~ 
+  ~ Author: Sanne Grinovero
+ -->
+<infinispan xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:schemaLocation="urn:infinispan:config:5.3 http://www.infinispan.org/schemas/infinispan-config-5.3.xsd"
+    xmlns="urn:infinispan:config:5.3">
+
+    <!-- *************************** -->
+    <!-- System-wide global settings -->
+    <!-- *************************** -->
+
+    <global>
+        <globalJmxStatistics
+            enabled="false"
+            cacheManagerName="QueryEnabledGrid-Local-NRTIndexing"
+            allowDuplicateDomains="true"
+            />
+    </global>
+
+    <!-- *************************************** -->
+    <!--  Default Cache                          -->
+    <!-- *************************************** -->
+    <default>
+
+        <jmxStatistics
+            enabled="false" />
+
+        <indexing
+            enabled="false" />
+
+        <eviction
+            maxEntries="-1"
+            strategy="NONE" />
+
+        <expiration
+            maxIdle="-1"
+            reaperEnabled="false" />
+
+    </default>
+
+    <!-- *************************************** -->
+    <!--  Tested Cache: indexing enabled         -->
+    <!-- *************************************** -->
+    <namedCache
+        name="Indexed">
+
+        <indexing enabled="true" indexLocalOnly="false">
+            <properties>
+
+                <!-- Enabled fastest writer: NRT backend -->
+                <property name="default.indexmanager" value="near-real-time" />
+
+                <!-- Default is to write on FSDirectory; to write in a dedicated cache uncomment: -->
+                <!-- Write indexes in Infinispan
+                <property name="default.directory_provider" value="infinispan" />
+                <property name="default.chunk_size" value="32000" />
+                <property name="default.metadata_cachename" value="LuceneIndexesMetadataOWR" />
+                <property name="default.data_cachename" value="LuceneIndexesDataOWR" /> -->
+
+                <!-- This index is dedicated to the current node -->
+                <property name="default.exclusive_index_use" value="true" />
+
+                <!-- The default is 10, but we don't want to waste many cycles in merging
+                 (tune for writes at cost of reader fragmentation) -->
+                <property name="default.indexwriter.merge_factor" value="30" />
+
+                <!-- Never create segments larger than 4GB -->
+                <property name="default.indexwriter.merge_max_size" value="4096" />
+
+                <!-- IndexWriter flush buffer size in MB -->
+                <property name="default.indexwriter.ram_buffer_size" value="220" />
+
+                <!-- Make sure to use native locking -->
+                <property name="default.​locking_strategy" value="native" />
+
+                <!-- Enable sharding on writers -->
+                <property name="default.sharding_strategy.nbr_of_shards" value="6" />
+
+                <!-- No need to be backwards compatible regarding Lucene version -->
+                <property name="lucene_version" value="LUCENE_36" />
+
+            </properties>
+        </indexing>
+
+        <!--  For our test we don't want to keep all data in memory: throw some away -->
+        <eviction
+            maxEntries="200"
+            strategy="LIRS" />
+
+    </namedCache>
+
+    <!-- *************************************** -->
+    <!--  Cache to store Lucene's file metadata  -->
+    <!-- *************************************** -->
+    <namedCache
+        name="LuceneIndexesMetadataOWR" />
+
+    <!-- **************************** -->
+    <!--  Cache to store Lucene data  -->
+    <!-- **************************** -->
+    <namedCache
+        name="LuceneIndexesDataOWR" />
+
+</infinispan>
