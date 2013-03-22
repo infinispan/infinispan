@@ -2,6 +2,7 @@
 import re
 import sys
 import os
+import os.path
 import subprocess
 import shutil
 from datetime import *
@@ -143,43 +144,44 @@ def update_versions(base_dir, version):
   for pom in poms_to_patch:
     if patch(pom, version):
       modified_files.append(pom)
-  
-  ## Now look for Version.java
-  version_java = "./core/src/main/java/org/infinispan/Version.java"
-  modified_files.append(version_java)
-  
-  f_in = open(version_java)
-  f_out = open(version_java+".tmp", "w")
-
-  regexp = re.compile('\s*private static final (String (MAJOR|MINOR|MICRO|MODIFIER)|boolean SNAPSHOT)')
   pieces = re.compile('[\.\-]').split(version)
   snapshot = pieces[3]=='SNAPSHOT'
-  try:
-    for l in f_in:
-      if regexp.match(l):
-        if l.find('MAJOR') > -1:
-          f_out.write('   private static final String MAJOR = "%s";\n' % pieces[0])
-        elif l.find('MINOR') > -1:
-          f_out.write('   private static final String MINOR = "%s";\n' % pieces[1])
-        elif l.find('MICRO') > -1:
-          f_out.write('   private static final String MICRO = "%s";\n' % pieces[2])
-        elif l.find('MODIFIER') > -1:
-          f_out.write('   private static final String MODIFIER = "%s";\n' % pieces[3])
-        elif l.find('SNAPSHOT') > -1:
-          f_out.write('   private static final boolean SNAPSHOT = %s;\n' % ('true' if snapshot else 'false'))
-      else:
-        f_out.write(l)
-  finally:
-    f_in.close()
-    f_out.close()
-    
-  os.rename(version_java+".tmp", version_java)
+  final = pieces[3]=='Final'
+  ## Now look for Version.java
+  version_java = "./core/src/main/java/org/infinispan/Version.java"
+  if os.path.isfile(version_java):
+    modified_files.append(version_java)
+    f_in = open(version_java)
+    f_out = open(version_java+".tmp", "w")
+    regexp = re.compile('\s*private static final (String (MAJOR|MINOR|MICRO|MODIFIER)|boolean SNAPSHOT)')
+    try:
+      for l in f_in:
+        if regexp.match(l):
+          if l.find('MAJOR') > -1:
+            f_out.write('   private static final String MAJOR = "%s";\n' % pieces[0])
+          elif l.find('MINOR') > -1:
+            f_out.write('   private static final String MINOR = "%s";\n' % pieces[1])
+          elif l.find('MICRO') > -1:
+            f_out.write('   private static final String MICRO = "%s";\n' % pieces[2])
+          elif l.find('MODIFIER') > -1:
+            f_out.write('   private static final String MODIFIER = "%s";\n' % pieces[3])
+          elif l.find('SNAPSHOT') > -1:
+            f_out.write('   private static final boolean SNAPSHOT = %s;\n' % ('true' if snapshot else 'false'))
+        else:
+          f_out.write(l)
+    finally:
+      f_in.close()
+      f_out.close()
+    os.rename(version_java+".tmp", version_java)
   
   # Now make sure this goes back into the repository.
   git.commit(modified_files, "'Release Script: update versions for %s'" % version)
   
   # And return the next version
-  return pieces[0] + '.' + pieces[1] + '.' + str(int(pieces[2])+1) + ('.Final' if snapshot else '-SNAPSHOT')
+  if final:
+    return pieces[0] + '.' + pieces[1] + '.' + str(int(pieces[2])+ 1) + '-SNAPSHOT'
+  else:
+    return None
 
 def get_module_name(pom_file):
   tree = ElementTree()
@@ -246,7 +248,7 @@ def upload_configdocs(base_dir, version):
   os.rename("configdocs", "%s/configdocs" % version_short)
 
   ## rsync this stuff to filemgmt.jboss.org
-  uploader.upload_rsync(version_short, "infinispan@filemgmt.jboss.org:/docs_htdocs/infinispan")
+  uploader.upload_rsync(version_short, "infinispan@filemgmt.jboss.org:/docs_htdocs/infinispan")    
   os.chdir(base_dir)
 
 def do_task(target, args, async_processes):
@@ -350,13 +352,19 @@ def release():
   ## Tag the release
   git.tag_for_release()
   
+  # Switch back to the branch being released
+  git.switch_to_branch()
+  
   # Update to next version
-  prettyprint("Step 9: Updating version number for next release", Levels.INFO)
-  update_versions(base_dir, version_next)
-  prettyprint("Step 9: Complete", Levels.INFO)
+  if version_next is not None:
+    prettyprint("Step 9: Updating version number for next release", Levels.INFO)
+    update_versions(base_dir, version_next)
+    prettyprint("Step 9: Complete", Levels.INFO)
   
   if not settings['dry_run']:
-    git.push_to_origin()
+    git.push_tag_to_origin()
+    if version_next is not None:
+      git.push_branch_to_origin()
     git.cleanup()
   else:
     prettyprint("In dry-run mode.  Not pushing tag to remote origin and not removing temp release branch %s." % git.working_branch, Levels.DEBUG)
@@ -365,3 +373,4 @@ def release():
 
 if __name__ == "__main__":
   release()
+
