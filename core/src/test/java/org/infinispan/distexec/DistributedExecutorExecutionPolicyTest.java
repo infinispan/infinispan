@@ -122,13 +122,17 @@ public class DistributedExecutorExecutionPolicyTest extends MultipleCacheManager
       //initiate task from cache1 and select cache2 as target
       DistributedExecutorService des = new DefaultExecutorService(cache1);
 
-      //the same using DistributedTask API
-      DistributedTaskBuilder<Boolean> taskBuilder = des.createDistributedTaskBuilder(new LocalDistributedExecutorTest.SimpleDistributedCallable(true));
-      taskBuilder.executionPolicy(policy);
+      try {
+         //the same using DistributedTask API
+         DistributedTaskBuilder<Boolean> taskBuilder = des.createDistributedTaskBuilder(new LocalDistributedExecutorTest.SimpleDistributedCallable(true));
+         taskBuilder.executionPolicy(policy);
 
-      DistributedTask<Boolean> distributedTask = taskBuilder.build();
-      Future<Boolean> future = des.submit(distributedTask, new String[] {"key1", "key6"});
+         DistributedTask<Boolean> distributedTask = taskBuilder.build();
+         Future<Boolean> future = des.submit(distributedTask, new String[] {"key1", "key6"});
 
-      assert future.get();
+         assert future.get();
+      } finally {
+         des.shutdownNow();
+      }
    }
 }

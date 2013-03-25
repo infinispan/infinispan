@@ -36,8 +36,6 @@ import org.testng.annotations.Test;
 
 import java.util.concurrent.Callable;
 import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 
@@ -84,11 +82,9 @@ public class ConcurrentPassivationActivationTest extends SingleCacheManagerTest 
       assertEquals(0, activation.getActivationCount());
       assertEquals(0, passivation.getPassivationCount());
 
-      ExecutorService exec = Executors.newFixedThreadPool(2);
-
       // 2. Add another entry and block just after passivation has stored
       // entry in cache store, but it's still in memory
-      Future<Object> passivatorFuture = exec.submit(new Callable<Object>() {
+      Future<Object> passivatorFuture = fork(new Callable<Object>() {
          @Override
          public Object call() throws Exception {
             // Store a second entry to force the previous entry
@@ -101,7 +97,7 @@ public class ConcurrentPassivationActivationTest extends SingleCacheManagerTest 
 
       // 3. Retrieve entry to be passivated from memory
       // and let it remove it from cache store
-      Future<Object> activatorFuture = exec.submit(new Callable<Object>() {
+      Future<Object> activatorFuture = fork(new Callable<Object>() {
          @Override
          public Object call() throws Exception {
             // Retrieve first key forcing an activation

@@ -73,11 +73,11 @@ public class DebuggingUnitTestNGListener extends UnitTestTestNGListener {
    }
 
    public static void describeErrorsIfAny() {
-      if ( ! failedTestDescriptions.isEmpty() ) {
+      if (!failedTestDescriptions.isEmpty()) {
          log("~~~~~~~~~~~~~~~~~~~~~~~~~ TEST HEALTH INFO ~~~~~~~~~~~~~~~~~~~~~~~~~~");
          log("Some tests didn't properly shutdown the CacheManager:");
          for (String errorMsg : failedTestDescriptions) {
-            System.out.println( "\t" + errorMsg);
+            log("\t" + errorMsg);
          }
          log("~~~~~~~~~~~~~~~~~~~~~~~~~ TEST HEALTH INFO ~~~~~~~~~~~~~~~~~~~~~~~~~~");
       }

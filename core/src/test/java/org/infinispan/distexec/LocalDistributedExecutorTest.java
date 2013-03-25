@@ -51,7 +51,7 @@ public class LocalDistributedExecutorTest extends MultipleCacheManagersTest {
    @AfterMethod
    public void shutDownDistributedExecutorService() {
       if (cleanupService != null) {
-         cleanupService.shutdown();
+         cleanupService.shutdownNow();
       } else {
          log.warn("Should have shutdown DistributedExecutorService but none was set");
       }
