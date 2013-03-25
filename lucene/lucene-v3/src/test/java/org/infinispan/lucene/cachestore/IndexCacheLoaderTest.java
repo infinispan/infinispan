@@ -46,14 +46,20 @@ import org.testng.annotations.Test;
 @Test(groups = "functional", testName = "lucene.cachestore.IndexCacheLoaderTest")
 public class IndexCacheLoaderTest {
 
-   protected static final String rootDirectoryName = "indexesRootDirTmp";
    private static final int SCALE = 600;
    protected final String parentDir = ".";
    protected File rootDir = null;
 
    @BeforeMethod(alwaysRun = true)
    public void setUp() {
-      rootDir = TestHelper.createRootDir(parentDir, rootDirectoryName);
+      rootDir = TestHelper.createRootDir(parentDir, getIndexPathName());
+   }
+
+   /**
+    * @return a unique name for this test, where we store indexes
+    */
+   protected String getIndexPathName() {
+      return this.getClass().getSimpleName();
    }
 
    @AfterMethod(alwaysRun = true)
