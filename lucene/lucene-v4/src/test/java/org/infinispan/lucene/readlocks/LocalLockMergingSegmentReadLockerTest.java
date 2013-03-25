@@ -79,6 +79,7 @@ public class LocalLockMergingSegmentReadLockerTest extends DistributedSegmentRea
       verifyBoth(cache0, cache1);
    }
 
+   @Test
    public void testAdditionalIndexWritingAndFinding() throws IOException, InterruptedException {
       prepareEnvironment(true);
 

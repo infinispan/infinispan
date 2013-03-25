@@ -86,7 +86,7 @@ public class DirectoryOnMultipleCachesTest {
          chunks++;
          Assert.assertEquals(ChunkCacheKey.class, key.getClass());
          Object value = chunkCache.get(key);
-         Assert.assertEquals(value.getClass(), byte[].class);
+         Assert.assertEquals(byte[].class, value.getClass());
       }
       assert chunks != 0;
    }
@@ -115,7 +115,7 @@ public class DirectoryOnMultipleCachesTest {
             Assert.assertEquals(FileMetadata.class, value.getClass());
          }
          else {
-            assert false : "unexpected type of key in metadata cache: " + key.getClass();
+            Assert.fail("unexpected type of key in metadata cache: " + key.getClass());
          }
       }
       Assert.assertEquals(1, filelists);
