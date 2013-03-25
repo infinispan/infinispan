@@ -67,21 +67,15 @@ import static org.infinispan.test.TestingUtil.v;
 @Test(groups = "unit", testName = "loaders.decorators.AsyncStoreTest", sequential=true)
 public class AsyncStoreTest extends AbstractInfinispanTest {
    private static final Log log = LogFactory.getLog(AsyncStoreTest.class);
-   AsyncStore store;
-   ExecutorService asyncExecutor;
-   DummyInMemoryCacheStore underlying;
-   AsyncStoreConfig asyncConfig;
-   DummyInMemoryCacheStore.Cfg dummyCfg;
+   private AsyncStore store;
 
-   @BeforeMethod
-   public void setUp() throws CacheLoaderException {
-      underlying = new DummyInMemoryCacheStore();
-      asyncConfig = new AsyncStoreConfig().threadPoolSize(10);
+   private void createStore() throws CacheLoaderException {
+      DummyInMemoryCacheStore underlying = new DummyInMemoryCacheStore();
+      AsyncStoreConfig asyncConfig = new AsyncStoreConfig().threadPoolSize(10);
       store = new AsyncStore(underlying, asyncConfig);
-      dummyCfg = new DummyInMemoryCacheStore.Cfg().storeName(AsyncStoreTest.class.getName());
+      DummyInMemoryCacheStore.Cfg dummyCfg = new DummyInMemoryCacheStore.Cfg().storeName(AsyncStoreTest.class.getName());
       store.init(dummyCfg, null, null);
       store.start();
-      asyncExecutor = (ExecutorService) TestingUtil.extractField(store, "executor");
    }
 
    @AfterMethod(alwaysRun = true)
@@ -92,6 +86,8 @@ public class AsyncStoreTest extends AbstractInfinispanTest {
    @Test(timeOut=10000)
    public void testPutRemove() throws Exception {
       TestCacheManagerFactory.backgroundTestStarted(this);
+      createStore();
+
       final int number = 1000;
       String key = "testPutRemove-k-";
       String value = "testPutRemove-v-";
@@ -102,6 +98,8 @@ public class AsyncStoreTest extends AbstractInfinispanTest {
    @Test(timeOut=10000)
    public void testPutClearPut() throws Exception {
       TestCacheManagerFactory.backgroundTestStarted(this);
+      createStore();
+
       final int number = 1000;
       String key = "testPutClearPut-k-";
       String value = "testPutClearPut-v-";
@@ -115,6 +113,8 @@ public class AsyncStoreTest extends AbstractInfinispanTest {
    @Test(timeOut=10000)
    public void testMultiplePutsOnSameKey() throws Exception {
       TestCacheManagerFactory.backgroundTestStarted(this);
+      createStore();
+
       final int number = 1000;
       String key = "testMultiplePutsOnSameKey-k";
       String value = "testMultiplePutsOnSameKey-v-";
@@ -125,6 +125,8 @@ public class AsyncStoreTest extends AbstractInfinispanTest {
    @Test(timeOut=10000)
    public void testRestrictionOnAddingToAsyncQueue() throws Exception {
       TestCacheManagerFactory.backgroundTestStarted(this);
+      createStore();
+
       store.remove("blah");
 
       final int number = 10;
@@ -153,9 +155,10 @@ public class AsyncStoreTest extends AbstractInfinispanTest {
          final CountDownLatch v2Latch = new CountDownLatch(1);
          final CountDownLatch endLatch = new CountDownLatch(1);
          DummyInMemoryCacheStore underlying = new DummyInMemoryCacheStore();
+         AsyncStoreConfig asyncConfig = new AsyncStoreConfig().threadPoolSize(10);
          store = new MockAsyncStore(key, v1Latch, v2Latch, endLatch, underlying, asyncConfig);
-         dummyCfg = new DummyInMemoryCacheStore.Cfg();
-         dummyCfg.setStoreName(m.getName());
+         DummyInMemoryCacheStore.Cfg dummyCfg = new DummyInMemoryCacheStore.Cfg();
+         dummyCfg.storeName(m.getName());
          store.init(dummyCfg, null, null);
          store.start();
 
@@ -182,6 +185,7 @@ public class AsyncStoreTest extends AbstractInfinispanTest {
          final ConcurrentMap<Object, Modification> localMods = new ConcurrentHashMap<Object, Modification>();
          final CyclicBarrier barrier = new CyclicBarrier(2);
          DummyInMemoryCacheStore underlying = new DummyInMemoryCacheStore();
+         AsyncStoreConfig asyncConfig = new AsyncStoreConfig().threadPoolSize(10);
          store = new AsyncStore(underlying, asyncConfig) {
             @Override
             protected void applyModificationsSync(List<Modification> mods) throws CacheLoaderException {
@@ -209,8 +213,8 @@ public class AsyncStoreTest extends AbstractInfinispanTest {
                }
             }
          };
-         dummyCfg = new DummyInMemoryCacheStore.Cfg();
-         dummyCfg.setStoreName(m.getName());
+         DummyInMemoryCacheStore.Cfg dummyCfg = new DummyInMemoryCacheStore.Cfg();
+         dummyCfg.storeName(m.getName());
          store.init(dummyCfg, null, null);
          store.start();
 
@@ -270,6 +274,7 @@ public class AsyncStoreTest extends AbstractInfinispanTest {
                clearCount.getAndIncrement();
             }
          };
+         AsyncStoreConfig asyncConfig = new AsyncStoreConfig().threadPoolSize(10);
          store = new AsyncStore(underlying, asyncConfig) {
             @Override
             protected void applyModificationsSync(List<Modification> mods)
@@ -285,8 +290,8 @@ public class AsyncStoreTest extends AbstractInfinispanTest {
                }
             }
          };
-         dummyCfg = new DummyInMemoryCacheStore.Cfg();
-         dummyCfg.setStoreName(m.getName());
+         DummyInMemoryCacheStore.Cfg dummyCfg = new DummyInMemoryCacheStore.Cfg();
+         dummyCfg.storeName(m.getName());
          store.init(dummyCfg, null, null);
          store.start();
 
@@ -555,6 +560,7 @@ public class AsyncStoreTest extends AbstractInfinispanTest {
 
    public void testModificationQueueSize(final Method m) throws Exception {
       LockableCacheStore underlying = new LockableCacheStore();
+      AsyncStoreConfig asyncConfig = new AsyncStoreConfig().threadPoolSize(10);
       asyncConfig.modificationQueueSize(10);
       store = new AsyncStore(underlying, asyncConfig);
       store.init(new LockableCacheStoreConfig(), null, null);

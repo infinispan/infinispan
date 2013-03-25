@@ -51,7 +51,7 @@ import org.testng.annotations.Test;
 @Test(groups = "functional", testName = "distexec.DistributedExecutorTest")
 public class DistributedExecutorTest extends LocalDistributedExecutorTest {
 
-   public static AtomicInteger counter = new AtomicInteger();
+   private static AtomicInteger counter = new AtomicInteger();
    protected boolean supportsConcurrentUpdates = true;
 
 
@@ -360,6 +360,7 @@ public class DistributedExecutorTest extends LocalDistributedExecutorTest {
          try {
             latch.await(5000, TimeUnit.MILLISECONDS);            
          } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
             //interrupted successfully, increase counter 
             counter.incrementAndGet();
          }

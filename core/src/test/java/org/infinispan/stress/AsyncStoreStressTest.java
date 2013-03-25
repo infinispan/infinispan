@@ -33,7 +33,6 @@ import org.infinispan.loaders.decorators.AsyncStore;
 import org.infinispan.loaders.decorators.AsyncStoreConfig;
 import org.infinispan.loaders.dummy.DummyInMemoryCacheStore;
 import org.infinispan.marshall.TestObjectStreamMarshaller;
-import org.infinispan.test.TestingUtil;
 import org.infinispan.util.concurrent.locks.containers.LockContainer;
 import org.infinispan.util.concurrent.locks.containers.ReentrantPerEntryLockContainer;
 import org.infinispan.util.logging.Log;
@@ -41,13 +40,7 @@ import org.infinispan.util.logging.LogFactory;
 import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
 
-import java.util.ArrayList;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Map;
-import java.util.Random;
-import java.util.Set;
-import java.util.TreeMap;
+import java.util.*;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CountDownLatch;
@@ -55,6 +48,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.Lock;
 
 import static java.lang.Math.sqrt;
+import static org.junit.Assert.assertTrue;
 
 /**
  * Async store stress test.
@@ -65,7 +59,7 @@ import static java.lang.Math.sqrt;
  * @since 5.2
  */
 @Test(testName = "stress.AsyncStoreStressTest", groups = "stress",
-      enabled = true, description = "Disabled by default, designed to be run manually.")
+      enabled = false, description = "Disabled by default, designed to be run manually.")
 public class AsyncStoreStressTest {
 
    static final Log log = LogFactory.getLog(AsyncStoreStressTest.class);
@@ -124,7 +118,7 @@ public class AsyncStoreStressTest {
       };
    }
 
-   @Test(dataProvider = "readWriteRemove", enabled = true)
+   @Test(dataProvider = "readWriteRemove")
    public void testReadWriteRemove(int capacity, int numKeys,
          int readerThreads, int writerThreads, int removerThreads) throws Exception {
       System.out.printf("Testing independent read/write/remove performance " +
@@ -134,12 +128,24 @@ public class AsyncStoreStressTest {
       generateKeyList(numKeys);
 
       Map<String, AbstractDelegatingStore> stores = createAsyncStores();
-
-      for (Map.Entry<String, AbstractDelegatingStore> e : stores.entrySet()) {
-         mapTestReadWriteRemove(e.getKey(), e.getValue(), numKeys,
-               readerThreads, writerThreads, removerThreads);
-         e.setValue(null);
+      try {
+         for (Map.Entry<String, AbstractDelegatingStore> e : stores.entrySet()) {
+            mapTestReadWriteRemove(e.getKey(), e.getValue(), numKeys,
+                  readerThreads, writerThreads, removerThreads);
+            e.setValue(null);
+         }
+      } finally {
+         for (Iterator<AbstractDelegatingStore> it = stores.values().iterator(); it.hasNext(); ) {
+            AbstractDelegatingStore store = it.next();
+            try {
+               store.stop();
+               it.remove();
+            } catch (Exception ex) {
+               log.error("Failed to stop cache store", ex);
+            }
+         }
       }
+      assertTrue("Not all stores were properly shut down", stores.isEmpty());
    }
 
    private void mapTestReadWriteRemove(String name, AbstractDelegatingStore store,

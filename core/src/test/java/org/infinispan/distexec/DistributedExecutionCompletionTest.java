@@ -24,7 +24,6 @@ package org.infinispan.distexec;
 
 import org.infinispan.Cache;
 import org.infinispan.distribution.BaseDistFunctionalTest;
-import org.infinispan.test.TestingUtil;
 import org.infinispan.util.concurrent.NotifyingFuture;
 import org.testng.AssertJUnit;
 import org.testng.annotations.Test;

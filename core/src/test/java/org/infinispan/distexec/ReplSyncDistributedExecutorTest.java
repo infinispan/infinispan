@@ -44,7 +44,7 @@ import org.testng.annotations.Test;
 @Test(groups = "functional", testName = "distexec.ReplSyncDistributedExecutorTest")
 public class ReplSyncDistributedExecutorTest extends DistributedExecutorTest {
 
-   public static AtomicInteger ReplSyncDistributedExecutorTestCancelCounter = new AtomicInteger();
+   private static AtomicInteger ReplSyncDistributedExecutorTestCancelCounter = new AtomicInteger();
 
    public ReplSyncDistributedExecutorTest() {
       cleanup = CleanupPhase.AFTER_METHOD;
@@ -82,7 +82,7 @@ public class ReplSyncDistributedExecutorTest extends DistributedExecutorTest {
       boolean taskCancelled = false;
       try {
          future.get();
-      } catch (Exception e) {         
+      } catch (Exception e) {
          taskCancelled = e instanceof CancellationException;
       }
       assert taskCancelled : "Dist task not cancelled";
@@ -94,6 +94,7 @@ public class ReplSyncDistributedExecutorTest extends DistributedExecutorTest {
       boolean canceled = future.cancel(true);
       assert !canceled;
    }
+
    static class MyLongRunningCallable implements Callable<Integer>, Serializable {
 
       /** The serialVersionUID */
@@ -106,6 +107,7 @@ public class ReplSyncDistributedExecutorTest extends DistributedExecutorTest {
          try {
             latch.await(5000, TimeUnit.MILLISECONDS);
          } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
             ReplSyncDistributedExecutorTestCancelCounter.incrementAndGet();
          }
          return 1;

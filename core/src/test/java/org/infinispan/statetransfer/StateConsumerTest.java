@@ -58,6 +58,7 @@ import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 import org.mockito.invocation.InvocationOnMock;
 import org.mockito.stubbing.Answer;
+import org.testng.annotations.AfterMethod;
 import org.testng.annotations.Test;
 
 import java.util.ArrayList;
@@ -88,6 +89,15 @@ import static org.mockito.Mockito.when;
 public class StateConsumerTest {
 
    private static final Log log = LogFactory.getLog(StateConsumerTest.class);
+
+   private ExecutorService pooledExecutorService;
+
+   @AfterMethod
+   public void tearDown() {
+      if (pooledExecutorService != null) {
+         pooledExecutorService.shutdownNow();
+      }
+   }
 
    public void test1() throws Exception {
       // create cache configuration
@@ -131,7 +141,7 @@ public class StateConsumerTest {
          }
       };
 
-      ExecutorService pooledExecutorService = new ThreadPoolExecutor(10, 20, 0L, TimeUnit.MILLISECONDS,
+      pooledExecutorService = new ThreadPoolExecutor(10, 20, 0L, TimeUnit.MILLISECONDS,
             new LinkedBlockingDeque<Runnable>(), threadFactory, new ThreadPoolExecutor.CallerRunsPolicy());
 
       StateTransferManager stateTransferManager = mock(StateTransferManager.class);
