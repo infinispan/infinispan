@@ -60,7 +60,7 @@ public class TransactionalLockManagerExcFunctionalTest extends TransactionalLock
       makeLockFactory(cache1, commonIndexName);
    }
 
-   @Test(dataProvider = "writeLockNameProvider", enabled = false) @Override
+   @Test(dataProvider = "writeLockNameProvider", enabled=false) @Override
    public void testLuceneIndexLocking(final String writeLockProvider) throws IOException {
       //do nothing
    }
