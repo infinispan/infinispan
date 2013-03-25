@@ -21,6 +21,7 @@ package org.infinispan.lucene.cacheloader;
 import java.io.File;
 import java.io.IOException;
 
+import junit.framework.Assert;
 import org.apache.lucene.document.Document;
 import org.apache.lucene.document.Field;
 import org.apache.lucene.document.Field.Index;
@@ -44,6 +45,8 @@ import org.infinispan.lucene.testutils.LuceneSettings;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
+import org.testng.annotations.AfterMethod;
+import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
 /**
@@ -58,26 +61,32 @@ import org.testng.annotations.Test;
 @Test(groups = "functional", testName = "lucene.cacheloader.IndexCacheLoaderTest")
 public class IndexCacheLoaderTest {
 
-   private static final String rootDirectoryName = "indexesRootDirTmp";
+   protected static final String rootDirectoryName = "indexesRootDirTmp";
    private static final int SCALE = 600;
+   protected final String parentDir = ".";
+   private File rootDir = null;
 
-   @Test
-   public void readExistingIndexTest() throws IOException {
-      File rootDir = new File(new File("."), rootDirectoryName);
-      boolean directoriesCreated = rootDir.mkdirs();
-      assert directoriesCreated : "couldn't create directory for test";
-      try {
-         createIndex(rootDir, "index-A", 10 * SCALE, true);
-         createIndex(rootDir, "index-B", 20 * SCALE, false);
-         verifyIndex(rootDir, "index-A", 10 * SCALE, true);
-         verifyIndex(rootDir, "index-B", 20 * SCALE, false);
-      }
-      finally {
+   @BeforeMethod (alwaysRun = true)
+   public void setUp() {
+      rootDir = createRootDir();
+   }
+
+   @AfterMethod (alwaysRun = true)
+   public void tearDown() {
+      if(rootDir != null) {
          TestingUtil.recursiveFileRemove(rootDir);
       }
    }
 
-   private void verifyIndex(File rootDir, String indexName, int termsAdded, boolean inverted) throws IOException {
+   @Test
+   public void readExistingIndexTest() throws IOException {
+      createIndex(rootDir, "index-A", 10 * SCALE, true);
+      createIndex(rootDir, "index-B", 20 * SCALE, false);
+      verifyIndex(rootDir, "index-A", 10 * SCALE, true);
+      verifyIndex(rootDir, "index-B", 20 * SCALE, false);
+   }
+
+   protected void verifyIndex(File rootDir, String indexName, int termsAdded, boolean inverted) throws IOException {
       File indexDir = new File(rootDir, indexName);
       Directory directory = FSDirectory.open(indexDir);
       try {
@@ -102,7 +111,7 @@ public class IndexCacheLoaderTest {
       }
    }
 
-   private EmbeddedCacheManager initializeInfinispan(File rootDir, String indexName) {
+   protected EmbeddedCacheManager initializeInfinispan(File rootDir, String indexName) {
       ConfigurationBuilder builder = new ConfigurationBuilder();
       builder
          .loaders()
@@ -113,7 +122,7 @@ public class IndexCacheLoaderTest {
       return TestCacheManagerFactory.createCacheManager(builder);
    }
 
-   private void verifyOnDirectory(Directory directory, String indexName, int termsAdded, boolean inverted) throws IOException {
+   protected void verifyOnDirectory(Directory directory, String indexName, int termsAdded, boolean inverted) throws IOException {
       IndexReader indexReader = IndexReader.open(directory);
       IndexSearcher searcher = new IndexSearcher(indexReader);
       try {
@@ -130,9 +139,9 @@ public class IndexCacheLoaderTest {
                queryNotToFind = new TermQuery(new Term("main", term));
             }
             TopDocs docs = searcher.search(queryToFind, null, 2);
-            assert docs.totalHits == 1 : "String '" + term + "' should exist but was not found in index";
+            Assert.assertEquals("String '" + term + "' should exist but was not found in index", 1, docs.totalHits);
             docs = searcher.search(queryNotToFind, null, 1);
-            assert docs.totalHits == 0 : "String '" + term + "' should NOT exist but was found in index";
+            Assert.assertEquals("String '" + term + "' should NOT exist but was found in index", 0, docs.totalHits);
             }
       }
       finally {
@@ -140,7 +149,7 @@ public class IndexCacheLoaderTest {
       }
    }
 
-   private void createIndex(File rootDir, String indexName, int termsToAdd, boolean invert) throws IOException {
+   protected void createIndex(File rootDir, String indexName, int termsToAdd, boolean invert) throws IOException {
       File indexDir = new File(rootDir, indexName);
       FSDirectory directory = FSDirectory.open(indexDir);
       try {
@@ -170,4 +179,11 @@ public class IndexCacheLoaderTest {
       }
    }
 
+   protected File createRootDir() {
+      File rootDir = new File(new File(parentDir), rootDirectoryName);
+      boolean directoriesCreated = rootDir.mkdirs();
+      assert directoriesCreated : "couldn't create directory for test";
+
+      return rootDir;
+   }
 }

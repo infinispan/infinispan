@@ -19,6 +19,7 @@
 
 package org.infinispan.lucene.cachestore;
 
+import junit.framework.Assert;
 import org.apache.lucene.document.Document;
 import org.apache.lucene.document.Field;
 import org.apache.lucene.index.IndexReader;
@@ -87,9 +88,9 @@ public class TestHelper {
                queryNotToFind = new TermQuery(new Term("main", term));
             }
             TopDocs docs = searcher.search(queryToFind, null, 2);
-            assert docs.totalHits == 1 : "String '" + term + "' should exist but was not found in index";
+            Assert.assertEquals("String '" + term + "' should exist but was not found in index", 1, docs.totalHits);
             docs = searcher.search(queryNotToFind, null, 1);
-            assert docs.totalHits == 0 : "String '" + term + "' should NOT exist but was found in index";
+            Assert.assertEquals("String '" + term + "' should NOT exist but was found in index", 0, docs.totalHits);
          }
       }
       finally {
