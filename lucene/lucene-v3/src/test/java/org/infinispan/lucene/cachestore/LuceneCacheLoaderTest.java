@@ -83,7 +83,7 @@ public class LuceneCacheLoaderTest extends IndexCacheLoaderTest {
    }
 
    public void testContainsKeyWithNoExistentRootDir() throws IOException, CacheLoaderException {
-      File rootDir = new File(new File(parentDir), rootDirectoryName + "___");
+      File rootDir = new File(new File(parentDir), getIndexPathName() + "___");
       EmbeddedCacheManager cacheManager = null;
       try {
          cacheManager = initializeInfinispan(rootDir);
