@@ -25,6 +25,7 @@ package org.infinispan.commands.write;
 import org.infinispan.atomic.Delta;
 import org.infinispan.atomic.DeltaAware;
 import org.infinispan.commands.Visitor;
+import org.infinispan.container.entries.CacheEntry;
 import org.infinispan.container.entries.MVCCEntry;
 import org.infinispan.context.Flag;
 import org.infinispan.context.InvocationContext;
@@ -80,11 +81,12 @@ public class PutKeyValueCommand extends AbstractDataWriteCommand {
    @Override
    public Object perform(InvocationContext ctx) throws Throwable {
       Object o;
-      MVCCEntry e = (MVCCEntry) ctx.lookupEntry(key);
-      if (e == null && hasFlag(Flag.PUT_FOR_EXTERNAL_READ)) {
+      CacheEntry ice = ctx.lookupEntry(key);
+      if ((ice == null || !(ice instanceof MVCCEntry)) && hasFlag(Flag.PUT_FOR_EXTERNAL_READ)) {
          successful = false;
          return null;
       }
+      MVCCEntry e = (MVCCEntry) ice;
       //possible as in certain situations (e.g. when locking delegation is used) we don't wrap
       if (e == null) return null;
 

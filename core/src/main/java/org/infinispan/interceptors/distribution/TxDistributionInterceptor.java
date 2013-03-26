@@ -40,6 +40,7 @@ import org.infinispan.distribution.DataLocality;
 import org.infinispan.distribution.L1Manager;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.factories.annotations.Start;
+import org.infinispan.remoting.responses.Response;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.remoting.transport.jgroups.SuspectException;
 import org.infinispan.transaction.LocalTransaction;
@@ -50,6 +51,7 @@ import org.infinispan.util.logging.LogFactory;
 
 import java.util.Collection;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeoutException;
 
@@ -140,6 +142,16 @@ public class TxDistributionInterceptor extends BaseDistributionInterceptor {
       // If this was a remote put record that which sent it
       if (isL1CacheEnabled && !ctx.isOriginLocal() && !skrg.generateRecipients().contains(ctx.getOrigin()))
          l1Manager.addRequestor(command.getKey(), ctx.getOrigin());
+      
+      if (!ctx.isInTxScope() && command.hasFlag(Flag.PUT_FOR_EXTERNAL_READ) && !isSingleOwnerAndLocal(skrg)) {
+         // putForExternalRead needs to inform owner
+         List<Address> recipients = skrg.generateRecipients();
+         if (recipients.contains(rpcManager.getAddress()) && (!command.isSuccessful())) {
+            log.trace("Skipping remote invocation as the command hasn't executed correctly on owner");
+         } else {
+            rpcManager.invokeRemotely(recipients, command, defaultSynchronous);
+         }
+      }
 
       return returnValue;
    }
