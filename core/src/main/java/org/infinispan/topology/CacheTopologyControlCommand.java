@@ -247,4 +247,9 @@ public class CacheTopologyControlCommand implements ReplicableCommand {
    public boolean isReturnValueExpected() {
       return true;
    }
+
+   @Override
+   public boolean canBlock() {
+      return true;
+   }
 }

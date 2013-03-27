@@ -37,6 +37,11 @@
             <property name="foo" value="bar"/>
           </properties>
         </asyncTransportExecutor>
+        <remoteCommandsExecutor factory="com.acme.Factory">
+          <properties>
+            <property name="foo" value="bar"/>
+          </properties>
+        </remoteCommandsExecutor>
         <evictionScheduledExecutor factory="com.acme.Factory">
           <properties>
             <property name="foo" value="bar"/>

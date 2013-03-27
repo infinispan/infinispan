@@ -199,6 +199,11 @@ public class PutMapCommand extends AbstractFlagAffectedCommand implements WriteC
       return false;
    }
 
+   @Override
+   public boolean canBlock() {
+      return true;            
+   }
+
    public long getLifespanMillis() {
       return lifespanMillis;
    }

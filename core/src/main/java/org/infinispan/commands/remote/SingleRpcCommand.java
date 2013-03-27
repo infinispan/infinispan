@@ -109,4 +109,9 @@ public class SingleRpcCommand extends BaseRpcInvokingCommand {
    public boolean isReturnValueExpected() {
       return command.isReturnValueExpected();
    }
+
+   @Override
+   public boolean canBlock() {
+      return command.canBlock();
+   }
 }

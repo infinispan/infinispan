@@ -58,6 +58,11 @@ abstract class AbstractGlobalConfigurationBuilder<T> implements GlobalConfigurat
    }
 
    @Override
+   public ExecutorFactoryConfigurationBuilder remoteCommandsExecutor() {
+      return globalConfig.remoteCommandsExecutor();
+   }
+
+   @Override
    public ScheduledExecutorFactoryConfigurationBuilder evictionScheduledExecutor() {
       return globalConfig.evictionScheduledExecutor();
    }

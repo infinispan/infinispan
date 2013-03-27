@@ -48,6 +48,7 @@ public class NamedExecutorsFactory extends NamedComponentFactory implements Auto
 
    private ExecutorService notificationExecutor;
    private ExecutorService asyncTransportExecutor;
+   private ExecutorService remoteCommandsExecutor;
    private ScheduledExecutorService evictionExecutor;
    private ScheduledExecutorService asyncReplicationExecutor;
 
@@ -96,6 +97,15 @@ public class NamedExecutorsFactory extends NamedComponentFactory implements Auto
                }
             }
             return (T) asyncReplicationExecutor;
+         } else if (componentName.equals(REMOTE_REQUEST_EXECUTOR)) {
+            synchronized (this) {
+               if (remoteCommandsExecutor == null) {
+                  remoteCommandsExecutor = buildAndConfigureExecutorService(
+                        globalConfiguration.remoteCommandsExecutor().factory(),
+                        globalConfiguration.remoteCommandsExecutor().properties(), componentName, nodeName);
+               }
+            }
+            return (T) remoteCommandsExecutor;
          } else {
             throw new ConfigurationException("Unknown named executor " + componentName);
          }
@@ -108,6 +118,7 @@ public class NamedExecutorsFactory extends NamedComponentFactory implements Auto
 
    @Stop(priority = 999)
    public void stop() {
+      if (remoteCommandsExecutor != null) remoteCommandsExecutor.shutdownNow();
       if (notificationExecutor != null) notificationExecutor.shutdownNow();
       if (asyncTransportExecutor != null) asyncTransportExecutor.shutdownNow();
       if (asyncReplicationExecutor != null) asyncReplicationExecutor.shutdownNow();
@@ -122,6 +133,7 @@ public class NamedExecutorsFactory extends NamedComponentFactory implements Auto
       setComponentName(componentName, props);
       setDefaultThreads(KnownComponentNames.getDefaultThreads(componentName), props);
       setDefaultThreadPrio(KnownComponentNames.getDefaultThreadPrio(componentName), props);
+      setDefaultQueueSize(KnownComponentNames.getDefaultQueueSize(componentName), props);
       return new LazyInitializingExecutorService(f, props);
    }
 
@@ -140,6 +152,10 @@ public class NamedExecutorsFactory extends NamedComponentFactory implements Auto
       if (nodeName != null && !nodeName.isEmpty()) {
          props.setProperty("threadNameSuffix", ',' + nodeName);
       }
+   }
+
+   private void setDefaultQueueSize(int queueSize, Properties props) {
+      if (!props.containsKey("queueSize")) props.setProperty("queueSize", String.valueOf(queueSize));
    }
 
    private void setDefaultThreadPrio(int prio, Properties props) {

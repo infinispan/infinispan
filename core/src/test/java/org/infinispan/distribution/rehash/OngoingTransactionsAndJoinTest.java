@@ -308,7 +308,7 @@ public class OngoingTransactionsAndJoinTest extends MultipleCacheManagersTest {
       }
 
       @Override
-      public Response handle(CacheRpcCommand cmd, Address origin) throws Throwable {
+      public void handle(CacheRpcCommand cmd, Address origin, org.jgroups.blocks.Response response, boolean cannotBeReordered) throws Throwable {
          boolean notifyRehashStarted = false;
          if (cmd instanceof CacheTopologyControlCommand) {
             CacheTopologyControlCommand rcc = (CacheTopologyControlCommand) cmd;
@@ -325,9 +325,8 @@ public class OngoingTransactionsAndJoinTest extends MultipleCacheManagersTest {
             }
          }
 
-         Response r = delegate.handle(cmd, origin);
+         delegate.handle(cmd, origin, response, cannotBeReordered);
          if (notifyRehashStarted) rehashStarted.countDown();
-         return r;
       }
    }
 

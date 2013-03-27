@@ -60,6 +60,7 @@ public class GlobalConfiguration {
 
    private final ExecutorFactoryConfiguration asyncListenerExecutor;
    private final ExecutorFactoryConfiguration asyncTransportExecutor;
+   private final ExecutorFactoryConfiguration remoteCommandsExecutor;
    private final ScheduledExecutorFactoryConfiguration evictionScheduledExecutor;
    private final ScheduledExecutorFactoryConfiguration replicationQueueScheduledExecutor;
    private final GlobalJmxStatisticsConfiguration globalJmxStatistics;
@@ -71,12 +72,14 @@ public class GlobalConfiguration {
    private final WeakReference<ClassLoader> cl;
 
    GlobalConfiguration(ExecutorFactoryConfiguration asyncListenerExecutor,
-         ExecutorFactoryConfiguration asyncTransportExecutor, ScheduledExecutorFactoryConfiguration evictionScheduledExecutor,
+         ExecutorFactoryConfiguration asyncTransportExecutor, ExecutorFactoryConfiguration remoteCommandsExecutor,
+         ScheduledExecutorFactoryConfiguration evictionScheduledExecutor,
          ScheduledExecutorFactoryConfiguration replicationQueueScheduledExecutor, GlobalJmxStatisticsConfiguration globalJmxStatistics,
          TransportConfiguration transport, SerializationConfiguration serialization, ShutdownConfiguration shutdown,
          List<?> modules, SiteConfiguration site,ClassLoader cl) {
       this.asyncListenerExecutor = asyncListenerExecutor;
       this.asyncTransportExecutor = asyncTransportExecutor;
+      this.remoteCommandsExecutor = remoteCommandsExecutor;
       this.evictionScheduledExecutor = evictionScheduledExecutor;
       this.replicationQueueScheduledExecutor = replicationQueueScheduledExecutor;
       this.globalJmxStatistics = globalJmxStatistics;
@@ -98,6 +101,10 @@ public class GlobalConfiguration {
 
    public ExecutorFactoryConfiguration asyncTransportExecutor() {
       return asyncTransportExecutor;
+   }
+
+   public ExecutorFactoryConfiguration remoteCommandsExecutor() {
+      return remoteCommandsExecutor;
    }
 
    public ScheduledExecutorFactoryConfiguration evictionScheduledExecutor() {
@@ -149,6 +156,7 @@ public class GlobalConfiguration {
       return "GlobalConfiguration{" +
             "asyncListenerExecutor=" + asyncListenerExecutor +
             ", asyncTransportExecutor=" + asyncTransportExecutor +
+            ", remoteCommandsExecutor=" + remoteCommandsExecutor +
             ", evictionScheduledExecutor=" + evictionScheduledExecutor +
             ", replicationQueueScheduledExecutor=" + replicationQueueScheduledExecutor +
             ", globalJmxStatistics=" + globalJmxStatistics +

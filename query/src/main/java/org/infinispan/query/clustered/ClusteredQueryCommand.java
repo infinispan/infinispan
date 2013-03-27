@@ -191,4 +191,9 @@ public class ClusteredQueryCommand extends BaseRpcCommand implements ReplicableC
    public boolean isReturnValueExpected() {
       return true;
    }
+
+   @Override
+   public boolean canBlock() {
+      return true;
+   }
 }

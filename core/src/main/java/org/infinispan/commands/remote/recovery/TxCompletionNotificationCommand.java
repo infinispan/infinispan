@@ -152,6 +152,12 @@ public class TxCompletionNotificationCommand  extends RecoveryCommand implements
    }
 
    @Override
+   public boolean canBlock() {
+      //this command can be forwarded (state transfer)
+      return true;
+   }
+
+   @Override
    public String toString() {
       return getClass().getSimpleName() +
             "{ xid=" + xid +
