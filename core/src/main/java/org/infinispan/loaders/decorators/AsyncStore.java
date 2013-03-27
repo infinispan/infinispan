@@ -318,7 +318,7 @@ public class AsyncStore extends AbstractDelegatingStore {
 
    @Override
    public void stop() throws CacheLoaderException {
-      log.trace("Stop async store");
+      if (trace) log.tracef("Stop async store %s", this);
       stateLock.writeLock(1);
       state.stopped = true;
       stateLock.writeUnlock();
@@ -613,15 +613,7 @@ public class AsyncStore extends AbstractDelegatingStore {
                State s, head, tail;
                s = state;
                if (shouldStop(s)) {
-                  // Wait for existing workers to finish
-                  try {
-                     executor.shutdown();
-                     executor.awaitTermination(
-                           shutdownTimeout, TimeUnit.MILLISECONDS);
-                     return;
-                  } catch (InterruptedException e) {
-                     Thread.currentThread().interrupt();
-                  }
+                  return;
                }
 
                stateLock.readLock();
@@ -693,7 +685,22 @@ public class AsyncStore extends AbstractDelegatingStore {
                }
             }
          } finally {
-            LogFactory.popNDC(trace);
+            try {
+               // Wait for existing workers to finish
+               boolean workersTerminated = false;
+               try {
+                  executor.shutdown();
+                  workersTerminated = executor.awaitTermination(shutdownTimeout, TimeUnit.MILLISECONDS);
+               } catch (InterruptedException e) {
+                  Thread.currentThread().interrupt();
+               }
+               if (!workersTerminated) {
+                  // if the worker threads did not finish cleanly in the allotted time then we try to interrupt them to shut down
+                  executor.shutdownNow();
+               }
+            } finally {
+               LogFactory.popNDC(trace);
+            }
          }
       }
 
