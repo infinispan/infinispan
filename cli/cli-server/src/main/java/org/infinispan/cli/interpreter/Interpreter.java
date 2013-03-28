@@ -155,7 +155,11 @@ public class Interpreter {
          IspnQLParser parser = new IspnQLParser(tokens);
 
          parser.statements();
-         session = sessions.get(sessionId);
+
+         if (parser.hasParserErrors()) {
+            throw new ParseException(parser.getParserErrors());
+         }
+
          StringBuilder output = new StringBuilder();
          for (Statement stmt : parser.statements) {
             Result result = stmt.execute(session);

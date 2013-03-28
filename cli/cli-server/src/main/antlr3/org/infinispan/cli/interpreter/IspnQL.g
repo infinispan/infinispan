@@ -71,11 +71,15 @@ import static org.infinispan.cli.interpreter.utils.ParserSupport.*;
    private ObjectMapper jsonMapper = new ObjectMapper().enableDefaultTyping(DefaultTyping.NON_FINAL, JsonTypeInfo.As.WRAPPER_OBJECT);
 
    public void displayRecognitionError(String[] tokenNames, RecognitionException e) {
-     parserErrors.add(getErrorHeader(e)+" "+getErrorMessage(e, tokenNames));
+     parserErrors.add(getErrorHeader(e) + " " + getErrorMessage(e, tokenNames));
    }
 
    public List<String> getParserErrors() {
      return parserErrors;
+   }
+
+   public boolean hasParserErrors() {
+     return parserErrors.size() > 0;
    }
 }
 

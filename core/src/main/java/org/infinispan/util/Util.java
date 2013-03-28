@@ -48,6 +48,7 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.Date;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
 
@@ -78,7 +79,7 @@ public final class Util {
     * Loads the specified class using the passed classloader, or, if it is <code>null</code> the Infinispan classes'
     * classloader.
     * </p>
-    * 
+    *
     * <p>
     * If loadtime instrumentation via GenerateInstrumentedClassLoader is used, this class may be loaded by the bootstrap
     * classloader.
@@ -87,7 +88,7 @@ public final class Util {
     * If the class is not found, the {@link ClassNotFoundException} or {@link NoClassDefFoundError} is wrapped as a
     * {@link CacheConfigurationException} and is re-thrown.
     * </p>
-    * 
+    *
     * @param classname name of the class to load
     * @param cl the application classloader which should be used to load the class, or null if the class is always packaged with
     *        Infinispan
@@ -101,7 +102,7 @@ public final class Util {
          throw new CacheConfigurationException("Unable to instantiate class " + classname, e);
       }
    }
-   
+
    public static ClassLoader[] getClassLoaders(ClassLoader appClassLoader) {
       return new ClassLoader[] {
             appClassLoader,  // User defined classes
@@ -114,7 +115,7 @@ public final class Util {
     * <p>
     * Loads the specified class using the passed classloader, or, if it is <code>null</code> the Infinispan classes' classloader.
     * </p>
-    * 
+    *
     * <p>
     * If loadtime instrumentation via GenerateInstrumentedClassLoader is used, this class may be loaded by the bootstrap classloader.
     * </p>
@@ -237,28 +238,28 @@ public final class Util {
       Class<T> clazz = loadClassStrict(classname, cl);
       return getInstanceStrict(clazz);
    }
-   
+
    /**
     * Clones parameter x of type T with a given Marshaller reference;
-    * 
-    * 
-    * @return a deep clone of an object parameter x 
+    *
+    *
+    * @return a deep clone of an object parameter x
     */
    @SuppressWarnings("unchecked")
    public static <T> T cloneWithMarshaller(Marshaller marshaller, T x){
       if (marshaller == null)
          throw new IllegalArgumentException("Cannot use null Marshaller for clone");
-      
+
       byte[] byteBuffer;
       try {
          byteBuffer = marshaller.objectToByteBuffer(x);
          return (T) marshaller.objectFromByteBuffer(byteBuffer);
       } catch (InterruptedException e) {
          Thread.currentThread().interrupt();
-         throw new CacheException(e);      
+         throw new CacheException(e);
       } catch (Exception e) {
          throw new CacheException(e);
-      }     
+      }
    }
 
 
@@ -611,5 +612,21 @@ public final class Util {
 
    public static boolean isIBMJavaVendor() {
       return javaVendor.toLowerCase().contains("ibm");
+   }
+
+   public static String join(List<String> strings, String separator) {
+      StringBuilder sb = new StringBuilder();
+      boolean first = true;
+
+      for (String string : strings) {
+         if (!first) {
+            sb.append(separator);
+         } else {
+            first = false;
+         }
+         sb.append(string);
+      }
+
+      return sb.toString();
    }
 }

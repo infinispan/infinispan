@@ -175,8 +175,7 @@ public class InterpreterTest extends SingleCacheManagerTest {
    }
 
    public void testCacheNotYetSelected() throws Exception {
-      GlobalComponentRegistry gcr = TestingUtil.extractGlobalComponentRegistry(this.cacheManager);
-      Interpreter interpreter = gcr.getComponent(Interpreter.class);
+      Interpreter interpreter = getInterpreter();
       String sessionId = interpreter.createSessionId(null);
       Map<String, String> response = interpreter.execute(sessionId, "cache;");
       assert response.containsKey(ResultKeys.ERROR.toString());
@@ -185,12 +184,18 @@ public class InterpreterTest extends SingleCacheManagerTest {
    }
 
    public void testStats() throws Exception {
-      GlobalComponentRegistry gcr = TestingUtil.extractGlobalComponentRegistry(this.cacheManager);
-      Interpreter interpreter = gcr.getComponent(Interpreter.class);
+      Interpreter interpreter = getInterpreter();
       String sessionId = interpreter.createSessionId(BasicCacheContainer.DEFAULT_CACHE_NAME);
       Map<String, String> response = interpreter.execute(sessionId, "stats;");
       assert !response.containsKey(ResultKeys.ERROR.toString());
       response = interpreter.execute(sessionId, "stats --container;");
       assert !response.containsKey(ResultKeys.ERROR.toString());
+   }
+
+   public void testParserErrors() throws Exception {
+      Interpreter interpreter = getInterpreter();
+      String sessionId = interpreter.createSessionId(BasicCacheContainer.DEFAULT_CACHE_NAME);
+      Map<String, String> response = interpreter.execute(sessionId, "got a;");
+      assertTrue(response.containsKey(ResultKeys.ERROR.toString()));
    }
 }
