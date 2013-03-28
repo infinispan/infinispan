@@ -28,6 +28,7 @@ import static org.infinispan.test.TestingUtil.INFINISPAN_START_TAG_40;
 import static org.infinispan.test.TestingUtil.INFINISPAN_START_TAG_NO_SCHEMA;
 import static org.infinispan.test.TestingUtil.withCacheManager;
 import static org.testng.AssertJUnit.assertEquals;
+import static org.testng.AssertJUnit.assertTrue;
 
 import java.io.ByteArrayInputStream;
 import java.io.FileNotFoundException;
@@ -290,12 +291,27 @@ public class XmlFileParsingTest extends AbstractInfinispanTest {
 
       assert gc.asyncListenerExecutor().factory() instanceof DefaultExecutorFactory;
       assert gc.asyncListenerExecutor().properties().getProperty("maxThreads").equals("5");
+      if (!deprecated) {
+         assertEquals("10000", gc.asyncListenerExecutor().properties().getProperty("queueSize"));
+      }
       assert gc.asyncListenerExecutor().properties().getProperty("threadNamePrefix").equals("AsyncListenerThread");
 
       assert gc.asyncTransportExecutor().factory() instanceof DefaultExecutorFactory;
       // Should be 25, but it's overriden by the test cache manager factory
-      assertEquals("6", gc.asyncTransportExecutor().properties().getProperty("maxThreads"));
+      assertEquals(String.valueOf(TestCacheManagerFactory.MAX_ASYNC_EXEC_THREADS), gc.asyncTransportExecutor().properties().getProperty("maxThreads"));
+      if (!deprecated) {
+         assertEquals(String.valueOf(TestCacheManagerFactory.ASYNC_EXEC_QUEUE_SIZE), gc.asyncTransportExecutor().properties().getProperty("queueSize"));
+      }
       assert gc.asyncTransportExecutor().properties().getProperty("threadNamePrefix").equals("AsyncSerializationThread");
+
+      if (!deprecated) {
+         assertTrue(gc.remoteCommandsExecutor().factory() instanceof DefaultExecutorFactory);
+         assertEquals(String.valueOf(TestCacheManagerFactory.MAX_REQ_EXEC_THREADS),
+                      gc.remoteCommandsExecutor().properties().getProperty("maxThreads"));
+         assertEquals("RemoteCommandThread", gc.remoteCommandsExecutor().properties().getProperty("threadNamePrefix"));
+         assertEquals("2", gc.remoteCommandsExecutor().properties().getProperty("coreThreads"));
+         assertEquals(String.valueOf(TestCacheManagerFactory.KEEP_ALIVE), gc.remoteCommandsExecutor().properties().getProperty("keepAliveTime"));
+      }
 
       assert gc.evictionScheduledExecutor().factory() instanceof DefaultScheduledExecutorFactory;
       assert gc.evictionScheduledExecutor().properties().getProperty("threadNamePrefix").equals("EvictionThread");

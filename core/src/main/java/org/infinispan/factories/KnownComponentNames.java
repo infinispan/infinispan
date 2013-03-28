@@ -36,6 +36,7 @@ import java.util.Map;
  */
 public class KnownComponentNames {
    public static final String ASYNC_TRANSPORT_EXECUTOR = "org.infinispan.executors.transport";
+   public static final String REMOTE_COMMAND_EXECUTOR = "org.infinispan.executors.remote";
    public static final String ASYNC_NOTIFICATION_EXECUTOR = "org.infinispan.executors.notification";
    public static final String EVICTION_SCHEDULED_EXECUTOR = "org.infinispan.executors.eviction";
    public static final String ASYNC_REPLICATION_QUEUE_EXECUTOR = "org.infinispan.executors.replicationQueue";
@@ -48,18 +49,26 @@ public class KnownComponentNames {
    // Please make sure this is kept up to date
    public static final Collection<String> ALL_KNOWN_COMPONENT_NAMES = Arrays.asList(
       ASYNC_TRANSPORT_EXECUTOR, ASYNC_NOTIFICATION_EXECUTOR, EVICTION_SCHEDULED_EXECUTOR, ASYNC_REPLICATION_QUEUE_EXECUTOR,
-      MODULE_COMMAND_INITIALIZERS, MODULE_COMMAND_FACTORIES, GLOBAL_MARSHALLER, CACHE_MARSHALLER, CLASS_LOADER
+      MODULE_COMMAND_INITIALIZERS, MODULE_COMMAND_FACTORIES, GLOBAL_MARSHALLER, CACHE_MARSHALLER, CLASS_LOADER,
+      REMOTE_COMMAND_EXECUTOR
    );
 
-   private static final Map<String, Integer> DEFAULT_THREADCOUNTS = new HashMap<String, Integer>(2);
-   private static final Map<String, Integer> DEFAULT_THREADPRIO = new HashMap<String, Integer>(4);
+   private static final Map<String, Integer> DEFAULT_THREADCOUNTS = new HashMap<String, Integer>(3);
+   private static final Map<String, Integer> DEFAULT_QUEUE_SIZE = new HashMap<String, Integer>(3);
+   private static final Map<String, Integer> DEFAULT_THREADPRIO = new HashMap<String, Integer>(5);
 
    static {
       DEFAULT_THREADCOUNTS.put(ASYNC_NOTIFICATION_EXECUTOR, 1);
       DEFAULT_THREADCOUNTS.put(ASYNC_TRANSPORT_EXECUTOR, 25);
+      DEFAULT_THREADCOUNTS.put(REMOTE_COMMAND_EXECUTOR, 32);
+
+      DEFAULT_QUEUE_SIZE.put(ASYNC_NOTIFICATION_EXECUTOR, 100000);
+      DEFAULT_QUEUE_SIZE.put(ASYNC_TRANSPORT_EXECUTOR, 100000);
+      DEFAULT_QUEUE_SIZE.put(REMOTE_COMMAND_EXECUTOR, 0);
 
       DEFAULT_THREADPRIO.put(ASYNC_NOTIFICATION_EXECUTOR, Thread.MIN_PRIORITY);
       DEFAULT_THREADPRIO.put(ASYNC_TRANSPORT_EXECUTOR, Thread.NORM_PRIORITY);
+      DEFAULT_THREADPRIO.put(REMOTE_COMMAND_EXECUTOR, Thread.NORM_PRIORITY);
       DEFAULT_THREADPRIO.put(EVICTION_SCHEDULED_EXECUTOR, Thread.MIN_PRIORITY);
       DEFAULT_THREADPRIO.put(ASYNC_REPLICATION_QUEUE_EXECUTOR, Thread.NORM_PRIORITY);
    }
@@ -70,5 +79,9 @@ public class KnownComponentNames {
 
    public static int getDefaultThreadPrio(String componentName) {
       return DEFAULT_THREADPRIO.get(componentName);
+   }
+   
+   public static int getDefaultQueueSize(String componentName) {
+      return DEFAULT_QUEUE_SIZE.get(componentName);
    }
 }

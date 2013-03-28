@@ -29,6 +29,8 @@ public interface GlobalConfigurationChildBuilder {
 
    ExecutorFactoryConfigurationBuilder asyncTransportExecutor();
    
+   ExecutorFactoryConfigurationBuilder remoteCommandsExecutor();
+   
    ScheduledExecutorFactoryConfigurationBuilder evictionScheduledExecutor();
 
    ScheduledExecutorFactoryConfigurationBuilder replicationQueueScheduledExecutor();

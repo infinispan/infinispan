@@ -82,6 +82,7 @@ import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Future;
 
+import static org.infinispan.factories.KnownComponentNames.REMOTE_COMMAND_EXECUTOR;
 import static org.infinispan.factories.KnownComponentNames.ASYNC_TRANSPORT_EXECUTOR;
 import static org.infinispan.factories.KnownComponentNames.GLOBAL_MARSHALLER;
 
@@ -119,6 +120,7 @@ public class JGroupsTransport extends AbstractTransport implements MembershipLis
    protected InboundInvocationHandler inboundInvocationHandler;
    protected StreamingMarshaller marshaller;
    protected ExecutorService asyncExecutor;
+   protected ExecutorService remoteCommandsExecutor;
    protected CacheManagerNotifier notifier;
    private GlobalComponentRegistry gcr;
    private BackupReceiverRepository backupReceiverRepository;
@@ -177,10 +179,12 @@ public class JGroupsTransport extends AbstractTransport implements MembershipLis
    @Inject
    public void initialize(@ComponentName(GLOBAL_MARSHALLER) StreamingMarshaller marshaller,
                           @ComponentName(ASYNC_TRANSPORT_EXECUTOR) ExecutorService asyncExecutor,
+                          @ComponentName(REMOTE_COMMAND_EXECUTOR) ExecutorService remoteCommandsExecutor,
                           InboundInvocationHandler inboundInvocationHandler, CacheManagerNotifier notifier,
                           GlobalComponentRegistry gcr, BackupReceiverRepository backupReceiverRepository) {
       this.marshaller = marshaller;
       this.asyncExecutor = asyncExecutor;
+      this.remoteCommandsExecutor = remoteCommandsExecutor;
       this.inboundInvocationHandler = inboundInvocationHandler;
       this.notifier = notifier;
       this.gcr = gcr;
@@ -320,7 +324,7 @@ public class JGroupsTransport extends AbstractTransport implements MembershipLis
 
    private void initChannelAndRPCDispatcher() throws CacheException {
       initChannel();
-      dispatcher = new CommandAwareRpcDispatcher(channel, this, asyncExecutor, inboundInvocationHandler, gcr, backupReceiverRepository);
+      dispatcher = new CommandAwareRpcDispatcher(channel, this, asyncExecutor, remoteCommandsExecutor, inboundInvocationHandler, gcr, backupReceiverRepository);
       MarshallerAdapter adapter = new MarshallerAdapter(marshaller);
       dispatcher.setRequestMarshaller(adapter);
       dispatcher.setResponseMarshaller(adapter);

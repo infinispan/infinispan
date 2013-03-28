@@ -40,6 +40,7 @@ public enum Element {
     ASYNC("async"),
     ASYNC_LISTENER_EXECUTOR("asyncListenerExecutor"),
     ASYNC_TRANSPORT_EXECUTOR("asyncTransportExecutor"),
+    REMOTE_COMMNAND_EXECUTOR("remoteCommandsExecutor"),
     CLUSTERING("clustering"),
     CLUSTER_LOADER("clusterLoader"),
     CUSTOM_INTERCEPTORS("customInterceptors"),

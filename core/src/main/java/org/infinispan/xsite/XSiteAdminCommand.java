@@ -128,6 +128,11 @@ public class XSiteAdminCommand extends BaseRpcCommand {
    }
 
    @Override
+   public boolean canBlock() {
+      return false;
+   }
+
+   @Override
    public String toString() {
       return "XSiteAdminCommand{" +
             "siteName='" + siteName + '\'' +

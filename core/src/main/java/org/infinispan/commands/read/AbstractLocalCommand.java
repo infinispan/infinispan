@@ -64,4 +64,8 @@ public class AbstractLocalCommand implements LocalCommand {
    public boolean isReturnValueExpected() {
       return false;
    }
+
+   public boolean canBlock() {
+      return false;
+   }
 }

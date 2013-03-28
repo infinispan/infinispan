@@ -45,7 +45,9 @@ import org.infinispan.config.Configuration;
 import org.infinispan.config.GlobalConfiguration;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
+import org.infinispan.configuration.cache.LegacyConfigurationAdaptor;
 import org.infinispan.configuration.global.GlobalConfigurationBuilder;
+import org.infinispan.configuration.global.LegacyGlobalConfigurationAdaptor;
 import org.infinispan.configuration.parsing.ConfigurationBuilderHolder;
 import org.infinispan.configuration.parsing.ConfigurationParser;
 import org.infinispan.configuration.parsing.Namespace;
@@ -75,7 +77,11 @@ import org.jboss.staxmapper.XMLMapper;
  */
 public class TestCacheManagerFactory {
 
-   private static final int MAX_ASYNC_EXEC_THREADS = 6;
+   public static final int MAX_ASYNC_EXEC_THREADS = 6;
+   public static final int ASYNC_EXEC_QUEUE_SIZE = 10000;
+   public static final int MAX_REQ_EXEC_THREADS = 6;
+   public static final int REQ_EXEC_QUEUE_SIZE = 0;
+   public static final int KEEP_ALIVE = 30000;
 
    public static final String MARSHALLER = LegacyKeySupportSystemProperties.getProperty("infinispan.test.marshaller.class", "infinispan.marshaller.class");
    private static final Log log = LogFactory.getLog(TestCacheManagerFactory.class);
@@ -535,7 +541,12 @@ public class TestCacheManagerFactory {
    }
 
    public static void minimizeThreads(GlobalConfigurationBuilder builder) {
-      builder.asyncTransportExecutor().addProperty("maxThreads", String.valueOf(MAX_ASYNC_EXEC_THREADS));
+      builder.asyncTransportExecutor().addProperty("maxThreads", String.valueOf(MAX_ASYNC_EXEC_THREADS))
+            .addProperty("queueSize", String.valueOf(ASYNC_EXEC_QUEUE_SIZE))
+            .addProperty("keepAliveTime", String.valueOf(KEEP_ALIVE));
+      builder.remoteCommandsExecutor().addProperty("maxThreads", String.valueOf(MAX_REQ_EXEC_THREADS))
+            .addProperty("queueSize", String.valueOf(REQ_EXEC_QUEUE_SIZE))
+            .addProperty("keepAliveTime", String.valueOf(KEEP_ALIVE));
    }
 
    public static void amendMarshaller(GlobalConfiguration configuration) {
@@ -566,7 +577,9 @@ public class TestCacheManagerFactory {
    }
 
    private static DefaultCacheManager newDefaultCacheManager(boolean start, GlobalConfiguration gc, Configuration c) {
-      DefaultCacheManager defaultCacheManager = new DefaultCacheManager(gc, c, start);
+      GlobalConfigurationBuilder builder = new GlobalConfigurationBuilder().read(LegacyGlobalConfigurationAdaptor.adapt(gc));
+      minimizeThreads(builder);
+      DefaultCacheManager defaultCacheManager = new DefaultCacheManager(builder.build(), LegacyConfigurationAdaptor.adapt(c), start);
       return addThreadCacheManager(defaultCacheManager);
    }
 

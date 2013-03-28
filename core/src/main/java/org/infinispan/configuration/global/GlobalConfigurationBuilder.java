@@ -42,6 +42,7 @@ public class GlobalConfigurationBuilder implements GlobalConfigurationChildBuild
    private final SerializationConfigurationBuilder serialization;
    private final ExecutorFactoryConfigurationBuilder asyncTransportExecutor;
    private final ExecutorFactoryConfigurationBuilder asyncListenerExecutor;
+   private final ExecutorFactoryConfigurationBuilder remoteCommandsExecutor;
    private final ScheduledExecutorFactoryConfigurationBuilder evictionScheduledExecutor;
    private final ScheduledExecutorFactoryConfigurationBuilder replicationQueueScheduledExecutor;
    private final ShutdownConfigurationBuilder shutdown;
@@ -55,6 +56,7 @@ public class GlobalConfigurationBuilder implements GlobalConfigurationChildBuild
       this.serialization = new SerializationConfigurationBuilder(this);
       this.asyncListenerExecutor = new ExecutorFactoryConfigurationBuilder(this);
       this.asyncTransportExecutor = new ExecutorFactoryConfigurationBuilder(this);
+      this.remoteCommandsExecutor = new ExecutorFactoryConfigurationBuilder(this);
       this.evictionScheduledExecutor = new ScheduledExecutorFactoryConfigurationBuilder(this);
       this.replicationQueueScheduledExecutor = new ScheduledExecutorFactoryConfigurationBuilder(this);
       this.shutdown = new ShutdownConfigurationBuilder(this);
@@ -127,6 +129,11 @@ public class GlobalConfigurationBuilder implements GlobalConfigurationChildBuild
    }
 
    @Override
+   public ExecutorFactoryConfigurationBuilder remoteCommandsExecutor() {
+      return remoteCommandsExecutor;
+   }
+
+   @Override
    public ScheduledExecutorFactoryConfigurationBuilder evictionScheduledExecutor() {
       return evictionScheduledExecutor;
    }
@@ -169,7 +176,7 @@ public class GlobalConfigurationBuilder implements GlobalConfigurationChildBuild
    @SuppressWarnings("unchecked")
    public void validate() {
       for (AbstractGlobalConfigurationBuilder<?> validatable : asList(asyncListenerExecutor, asyncTransportExecutor,
-            evictionScheduledExecutor, replicationQueueScheduledExecutor, globalJmxStatistics, transport,
+            remoteCommandsExecutor, evictionScheduledExecutor, replicationQueueScheduledExecutor, globalJmxStatistics, transport,
             serialization, shutdown, site)) {
          validatable.validate();
       }
@@ -187,6 +194,7 @@ public class GlobalConfigurationBuilder implements GlobalConfigurationChildBuild
       return new GlobalConfiguration(
             asyncListenerExecutor.create(),
             asyncTransportExecutor.create(),
+            remoteCommandsExecutor.create(),
             evictionScheduledExecutor.create(),
             replicationQueueScheduledExecutor.create(),
             globalJmxStatistics.create(),
@@ -210,6 +218,7 @@ public class GlobalConfigurationBuilder implements GlobalConfigurationChildBuild
 
       asyncListenerExecutor.read(template.asyncListenerExecutor());
       asyncTransportExecutor.read(template.asyncTransportExecutor());
+      remoteCommandsExecutor.read(template.remoteCommandsExecutor());
       evictionScheduledExecutor.read(template.evictionScheduledExecutor());
       globalJmxStatistics.read(template.globalJmxStatistics());
       replicationQueueScheduledExecutor.read(template.replicationQueueScheduledExecutor());
@@ -240,6 +249,7 @@ public class GlobalConfigurationBuilder implements GlobalConfigurationChildBuild
             ", globalJmxStatistics=" + globalJmxStatistics +
             ", serialization=" + serialization +
             ", asyncTransportExecutor=" + asyncTransportExecutor +
+            ", remoteCommandsExecutor=" + remoteCommandsExecutor +
             ", evictionScheduledExecutor=" + evictionScheduledExecutor +
             ", replicationQueueScheduledExecutor=" + replicationQueueScheduledExecutor +
             ", shutdown=" + shutdown +
@@ -257,6 +267,8 @@ public class GlobalConfigurationBuilder implements GlobalConfigurationChildBuild
       if (asyncListenerExecutor != null ? !asyncListenerExecutor.equals(that.asyncListenerExecutor) : that.asyncListenerExecutor != null)
          return false;
       if (asyncTransportExecutor != null ? !asyncTransportExecutor.equals(that.asyncTransportExecutor) : that.asyncTransportExecutor != null)
+         return false;
+      if (remoteCommandsExecutor != null ? !remoteCommandsExecutor.equals(that.remoteCommandsExecutor) : that.remoteCommandsExecutor != null)
          return false;
       if (cl != null ? !cl.equals(that.cl) : that.cl != null) return false;
       if (evictionScheduledExecutor != null ? !evictionScheduledExecutor.equals(that.evictionScheduledExecutor) : that.evictionScheduledExecutor != null)
@@ -285,6 +297,7 @@ public class GlobalConfigurationBuilder implements GlobalConfigurationChildBuild
       result = 31 * result + (serialization != null ? serialization.hashCode() : 0);
       result = 31 * result + (asyncTransportExecutor != null ? asyncTransportExecutor.hashCode() : 0);
       result = 31 * result + (asyncListenerExecutor != null ? asyncListenerExecutor.hashCode() : 0);
+      result = 31 * result + (remoteCommandsExecutor != null ? remoteCommandsExecutor.hashCode() : 0);
       result = 31 * result + (evictionScheduledExecutor != null ? evictionScheduledExecutor.hashCode() : 0);
       result = 31 * result + (replicationQueueScheduledExecutor != null ? replicationQueueScheduledExecutor.hashCode() : 0);
       result = 31 * result + (shutdown != null ? shutdown.hashCode() : 0);

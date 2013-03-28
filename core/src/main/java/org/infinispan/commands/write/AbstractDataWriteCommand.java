@@ -69,4 +69,9 @@ public abstract class AbstractDataWriteCommand extends AbstractDataCommand imple
    public final boolean wasPreviousRead() {
       return previousRead;
    }
+   
+   @Override
+   public boolean canBlock() {
+      return true;
+   }
 }

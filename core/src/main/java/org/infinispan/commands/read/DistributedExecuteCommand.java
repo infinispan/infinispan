@@ -203,4 +203,9 @@ public class DistributedExecuteCommand<V> extends BaseRpcCommand implements Visi
       return true;
    }
 
+   @Override
+   public boolean canBlock() {
+      return true;
+   }
+
 }

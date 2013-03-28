@@ -22,6 +22,7 @@
  */
 package org.infinispan.remoting;
 
+import org.infinispan.CacheException;
 import org.infinispan.commands.CancellableCommand;
 import org.infinispan.commands.CancellationService;
 import org.infinispan.commands.CommandsFactory;
@@ -29,6 +30,8 @@ import org.infinispan.commands.remote.CacheRpcCommand;
 import org.infinispan.configuration.global.GlobalConfiguration;
 import org.infinispan.factories.ComponentRegistry;
 import org.infinispan.factories.GlobalComponentRegistry;
+import org.infinispan.factories.KnownComponentNames;
+import org.infinispan.factories.annotations.ComponentName;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.factories.scopes.Scope;
 import org.infinispan.factories.scopes.Scopes;
@@ -41,6 +44,8 @@ import org.infinispan.remoting.transport.Address;
 import org.infinispan.remoting.transport.Transport;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
+
+import java.util.concurrent.ExecutorService;
 
 /**
  * Sets the cache interceptor chain on an RPCCommand before calling it to perform
@@ -56,18 +61,21 @@ public class InboundInvocationHandlerImpl implements InboundInvocationHandler {
    private GlobalConfiguration globalConfiguration;
    private Transport transport;
    private CancellationService cancelService;
+   private ExecutorService remoteCommandsExecutor;
 
    @Inject
    public void inject(GlobalComponentRegistry gcr, Transport transport,
+                      @ComponentName(KnownComponentNames.REMOTE_COMMAND_EXECUTOR) ExecutorService remoteCommandsExecutor,
                       GlobalConfiguration globalConfiguration, CancellationService cancelService) {
       this.gcr = gcr;
       this.transport = transport;
       this.globalConfiguration = globalConfiguration;
       this.cancelService = cancelService;
+      this.remoteCommandsExecutor = remoteCommandsExecutor;
    }
 
    @Override
-   public Response handle(final CacheRpcCommand cmd, Address origin) throws Throwable {
+   public void handle(final CacheRpcCommand cmd, Address origin, org.jgroups.blocks.Response response, boolean preserveOrder) throws Throwable {
       cmd.setOrigin(origin);
 
       String cacheName = cmd.getCacheName();
@@ -76,22 +84,21 @@ public class InboundInvocationHandlerImpl implements InboundInvocationHandler {
       if (cr == null) {
          if (!globalConfiguration.transport().strictPeerToPeer()) {
             if (trace) log.tracef("Strict peer to peer off, so silently ignoring that %s cache is not defined", cacheName);
-            return null;
+            reply(response, null);
+            return;
          }
 
          log.namedCacheDoesNotExist(cacheName);
-         return new ExceptionResponse(new NamedCacheNotFoundException(cacheName, "Cache has not been started on node " + transport.getAddress()));
+         Response retVal = new ExceptionResponse(new NamedCacheNotFoundException(cacheName, "Cache has not been started on node " + transport.getAddress()));
+         reply(response, retVal);
+         return;
       }
 
-      return handleWithWaitForBlocks(cmd, cr);
+      handleWithWaitForBlocks(cmd, cr, response, preserveOrder);
    }
 
 
    private Response handleInternal(final CacheRpcCommand cmd, final ComponentRegistry cr) throws Throwable {
-      CommandsFactory commandsFactory = cr.getCommandsFactory();
-
-      // initialize this command with components specific to the intended cache instance
-      commandsFactory.initializeReplicableCommand(cmd, true);
       try {
          if (trace) log.tracef("Calling perform() on %s", cmd);
          ResponseGenerator respGen = cr.getResponseGenerator();
@@ -112,13 +119,37 @@ public class InboundInvocationHandlerImpl implements InboundInvocationHandler {
       }
    }
 
-   private Response handleWithWaitForBlocks(final CacheRpcCommand cmd, final ComponentRegistry cr) throws Throwable {
+   private void handleWithWaitForBlocks(final CacheRpcCommand cmd, final ComponentRegistry cr, final org.jgroups.blocks.Response response, boolean preserveOrder) throws Throwable {
       StateTransferManager stm = cr.getStateTransferManager();
       // We must have completed the join before handling commands
       // (even if we didn't complete the initial state transfer)
-      if (!stm.isJoinComplete())
-         return null;
+      if (!stm.isJoinComplete()) {
+         reply(response, null);
+         return;
+      }
 
+      CommandsFactory commandsFactory = cr.getCommandsFactory();
+
+      // initialize this command with components specific to the intended cache instance
+      commandsFactory.initializeReplicableCommand(cmd, true);
+
+      if (!preserveOrder && cmd.canBlock()) {
+         remoteCommandsExecutor.execute(new Runnable() {
+            @Override
+            public void run() {
+               Response resp;
+               try {
+                  resp = handleInternal(cmd, cr);
+               } catch (Throwable throwable) {
+                  log.warnf(throwable, "Problems invoking command %s", cmd);
+                  resp = new ExceptionResponse(new CacheException("Problems invoking command.", throwable));
+               }
+               //the ResponseGenerated is null in this case because the return value is a Response
+               reply(response, resp);
+            }
+         });
+         return;
+      }
       Response resp = handleInternal(cmd, cr);
 
       // A null response is valid and OK ...
@@ -126,8 +157,13 @@ public class InboundInvocationHandlerImpl implements InboundInvocationHandler {
          // invalid response
          log.tracef("Unable to execute command, got invalid response %s", resp);
       }
-
-      return resp;
+      reply(response, resp);
+   }
+   
+   private void reply(org.jgroups.blocks.Response response, Object retVal) {
+      if (response != null) {
+         response.send(retVal, false);
+      }
    }
 
 }

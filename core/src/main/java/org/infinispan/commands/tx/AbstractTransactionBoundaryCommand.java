@@ -180,4 +180,10 @@ public abstract class AbstractTransactionBoundaryCommand implements TransactionB
    public boolean isReturnValueExpected() {
       return true;
    }
+
+   @Override
+   public final boolean canBlock() {
+      //all tx commands must wait for the correct topology
+      return true;
+   }
 }

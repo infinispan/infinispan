@@ -34,7 +34,6 @@ import org.infinispan.interceptors.base.CommandInterceptor;
 import org.infinispan.manager.CacheContainer;
 import org.infinispan.remoting.InboundInvocationHandler;
 import org.infinispan.remoting.InboundInvocationHandlerImpl;
-import org.infinispan.remoting.responses.Response;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.remoting.transport.Transport;
 import org.infinispan.remoting.transport.jgroups.CommandAwareRpcDispatcher;
@@ -308,7 +307,7 @@ public class OngoingTransactionsAndJoinTest extends MultipleCacheManagersTest {
       }
 
       @Override
-      public Response handle(CacheRpcCommand cmd, Address origin) throws Throwable {
+      public void handle(CacheRpcCommand cmd, Address origin, org.jgroups.blocks.Response response, boolean preserveOrder) throws Throwable {
          boolean notifyRehashStarted = false;
          if (cmd instanceof CacheTopologyControlCommand) {
             CacheTopologyControlCommand rcc = (CacheTopologyControlCommand) cmd;
@@ -325,9 +324,8 @@ public class OngoingTransactionsAndJoinTest extends MultipleCacheManagersTest {
             }
          }
 
-         Response r = delegate.handle(cmd, origin);
+         delegate.handle(cmd, origin, response, preserveOrder);
          if (notifyRehashStarted) rehashStarted.countDown();
-         return r;
       }
    }
 

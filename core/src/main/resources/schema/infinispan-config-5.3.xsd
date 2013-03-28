@@ -50,6 +50,13 @@
                   </xs:documentation>
                 </xs:annotation>
               </xs:element>
+              <xs:element name="remoteCommandsExecutor" type="tns:executorFactory" minOccurs="0">
+                <xs:annotation>
+                  <xs:documentation>
+                    Configuration for the executor service used to execute remote commands. Use org.infinispan.executors.WithinThreadExecutorFactory to disable.
+                  </xs:documentation>
+                </xs:annotation>
+              </xs:element>
               <xs:element name="evictionScheduledExecutor" type="tns:scheduledExecutorFactory" minOccurs="0">
                 <xs:annotation>
                   <xs:documentation>
