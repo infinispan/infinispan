@@ -198,4 +198,11 @@ public class InterpreterTest extends SingleCacheManagerTest {
       Map<String, String> response = interpreter.execute(sessionId, "got a;");
       assertTrue(response.containsKey(ResultKeys.ERROR.toString()));
    }
+
+   public void testTemporarySession() throws Exception {
+      Interpreter interpreter = getInterpreter();
+      Map<String, String> response = interpreter.execute(null, "put 'a' 'a';");
+      assertFalse(response.containsKey(ResultKeys.ERROR.toString()));
+      assertEquals("a", (String)cache.get("a"));
+   }
 }

@@ -189,7 +189,12 @@ public class Interpreter {
    }
 
    private Session validateSession(final String sessionId) {
-      if (sessionId == null || !sessions.containsKey(sessionId)) {
+      if (sessionId == null) {
+         Session session = new SessionImpl(codecRegistry, cacheManager, null);
+         session.setCurrentCache(BasicCacheContainer.DEFAULT_CACHE_NAME);
+         return session;
+      }
+      if (!sessions.containsKey(sessionId)) {
          throw log.invalidSession(sessionId);
       }
       return sessions.get(sessionId);
