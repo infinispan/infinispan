@@ -143,6 +143,7 @@ public class DefaultExecutorService extends AbstractExecutorService implements D
    public static final DistributedTaskFailoverPolicy RANDOM_NODE_FAILOVER = new RandomNodeTaskFailoverPolicy();
 
    private static final Log log = LogFactory.getLog(DefaultExecutorService.class);
+   private static final boolean trace = log.isTraceEnabled();
    protected final AtomicBoolean isShutdown = new AtomicBoolean(false);
    protected final AdvancedCache cache;
    protected final RpcManager rpc;
@@ -921,8 +922,8 @@ public class DefaultExecutorService extends AbstractExecutorService implements D
        *
        */
       @Override
-      public V get(long timeout, TimeUnit unit) throws InterruptedException, ExecutionException,
-               TimeoutException {
+      public V get(long timeout, TimeUnit unit)
+            throws InterruptedException, ExecutionException, TimeoutException {
          try {
             return innerGet(timeout, unit);
          } finally {
@@ -930,32 +931,34 @@ public class DefaultExecutorService extends AbstractExecutorService implements D
          }
       }
       
-      private V innerGet(long timeout, TimeUnit unit) throws ExecutionException, TimeoutException {
+      private V innerGet(long timeout, TimeUnit unit)
+            throws ExecutionException, TimeoutException, InterruptedException {
          if (isCancelled())
             throw new CancellationException("Task already cancelled");
-         
-         V response = null;
+
+         long timeoutNanos = computeTimeoutNanos(timeout, unit);
+         long endNanos = System.nanoTime() + timeoutNanos;
+         V response;
          try {
-            long taskTimeout = getOwningTask().timeout();
-            long futureTimeout = TimeUnit.MILLISECONDS.convert(timeout, unit);
-            long actualTimeout = 0;           
-            if (taskTimeout > 0 && futureTimeout > 0) {
-               actualTimeout = Math.min(taskTimeout, futureTimeout);
-            } else {
-               actualTimeout = Math.max(taskTimeout, futureTimeout);
-            }            
-            if (actualTimeout > 0) {
-               response = retrieveResult(f.get(actualTimeout, TimeUnit.MILLISECONDS));
+            if (timeoutNanos > 0) {
+               response = retrieveResult(f.get(timeoutNanos, TimeUnit.NANOSECONDS));
             } else {               
                response = retrieveResult(f.get());
             }
          } catch (TimeoutException te) {
             throw te;
          } catch (Exception e) {
+            // The RPC could have finished with a org.infinispan.util.concurrent.TimeoutException right before
+            // the Future.get timeout expired. If that's the case, we want to throw a TimeoutException.
+            long remainingNanos = timeoutNanos > 0 ? endNanos - System.nanoTime() : timeoutNanos;
+            if (timeoutNanos > 0 && remainingNanos <= 0) {
+               if (trace) log.tracef("Distributed task timed out, throwing a TimeoutException and ignoring exception", e);
+               throw new TimeoutException();
+            }
             boolean canFailover = failedOverCount++ < getOwningTask().getTaskFailoverPolicy().maxFailoverAttempts();
             if (canFailover) {
                try {
-                  response = failoverExecution(e, timeout, unit);
+                  response = failoverExecution(e, timeoutNanos, TimeUnit.NANOSECONDS);
                } catch (Exception failedOver) {
                   throw wrapIntoExecutionException(failedOver);
                }
@@ -965,7 +968,19 @@ public class DefaultExecutorService extends AbstractExecutorService implements D
          }
          return response;
       }
-      
+
+      private long computeTimeoutNanos(long timeout, TimeUnit unit) {
+         long taskTimeout = TimeUnit.MILLISECONDS.toNanos(getOwningTask().timeout());
+         long futureTimeout = TimeUnit.NANOSECONDS.convert(timeout, unit);
+         long actualTimeout;
+         if (taskTimeout > 0 && futureTimeout > 0) {
+            actualTimeout = Math.min(taskTimeout, futureTimeout);
+         } else {
+            actualTimeout = Math.max(taskTimeout, futureTimeout);
+         }
+         return actualTimeout;
+      }
+
       protected ExecutionException wrapIntoExecutionException(Exception e){
          if (e instanceof ExecutionException) {
             return (ExecutionException) e;
@@ -1066,7 +1081,7 @@ public class DefaultExecutorService extends AbstractExecutorService implements D
          if (isLocalNodeExecutionTarget()) {
             invokeLocally();
          } else {
-            log.tracef("Sending %s to remote execution at node %s", f, getExecutionTarget());
+            if (trace) log.tracef("Sending %s to remote execution at node %s", f, getExecutionTarget());
             try {
                rpc.invokeRemotelyInFuture(Collections.singletonList(getExecutionTarget()), getCommand(), false,
                         (DistributedTaskPart<Object>) this, getOwningTask().timeout());
