@@ -77,6 +77,7 @@ public class ClusterTopologyManagerImpl implements ClusterTopologyManager {
    private volatile boolean isShuttingDown;
    private volatile int viewId = -1;
    private final Object viewUpdateLock = new Object();
+   private final Object viewHandlingLock = new Object();
 
 
    private final ConcurrentMap<String, ClusterCacheStatus> cacheStatusMap = ConcurrentMapFactory.makeConcurrentMap();
@@ -216,46 +217,49 @@ public class ClusterTopologyManagerImpl implements ClusterTopologyManager {
       }
    }
 
-   protected void handleNewView(List<Address> newMembers, boolean mergeView, int newViewId) {
-      // check to ensure this is not an older view
-      if (newViewId <= viewId) {
-         log.tracef("Ignoring old cluster view notification: %s", newViewId);
-         return;
-      }
-
-      log.tracef("Received new cluster view: %s", newViewId);
-      boolean becameCoordinator = !isCoordinator && transport.isCoordinator();
-      isCoordinator = transport.isCoordinator();
-
-      if ((isCoordinator && mergeView) || becameCoordinator) {
-         try {
-            Map<String, List<CacheTopology>> clusterCacheMap = recoverClusterStatus();
-
-            for (Map.Entry<String, List<CacheTopology>> e : clusterCacheMap.entrySet()) {
-               String cacheName = e.getKey();
-               List<CacheTopology> topologyList = e.getValue();
-               updateCacheStatusAfterMerge(cacheName, newMembers, topologyList);
-            }
-         } catch (InterruptedException e) {
-            log.tracef("Cluster state recovery interrupted because the coordinator is shutting down");
-            // the CTMI has already stopped, no need to update the view id or notify waiters
+   protected void handleNewView(List<Address> ignored, boolean mergeView, int newViewId) {
+      synchronized (viewHandlingLock) {
+         // check to ensure this is not an older view
+         if (newViewId <= viewId) {
+            log.tracef("Ignoring old cluster view notification: %s", newViewId);
             return;
-         } catch (Exception e) {
-            // TODO Retry?
-            log.failedToRecoverClusterState(e);
          }
-      } else if (isCoordinator) {
-         try {
-            updateClusterMembers(newMembers);
-         } catch (Exception e) {
-            log.errorUpdatingMembersList(e);
-         }
-      }
 
-      synchronized (viewUpdateLock) {
+         boolean becameCoordinator = !isCoordinator && transport.isCoordinator();
+         isCoordinator = transport.isCoordinator();
+         log.tracef("Received new cluster view: %s, isCoordinator = %s, becameCoordinator = %s", newViewId,
+               isCoordinator, becameCoordinator);
+
+         if ((isCoordinator && mergeView) || becameCoordinator) {
+            try {
+               Map<String, List<CacheTopology>> clusterCacheMap = recoverClusterStatus(newViewId);
+
+               for (Map.Entry<String, List<CacheTopology>> e : clusterCacheMap.entrySet()) {
+                  String cacheName = e.getKey();
+                  List<CacheTopology> topologyList = e.getValue();
+                  updateCacheStatusAfterMerge(cacheName, transport.getMembers(), topologyList);
+               }
+            } catch (InterruptedException e) {
+               log.tracef("Cluster state recovery interrupted because the coordinator is shutting down");
+               // the CTMI has already stopped, no need to update the view id or notify waiters
+               return;
+            } catch (Exception e) {
+               // TODO Retry?
+               log.failedToRecoverClusterState(e);
+            }
+         } else if (isCoordinator) {
+            try {
+               updateClusterMembers(transport.getMembers());
+            } catch (Exception e) {
+               log.errorUpdatingMembersList(e);
+            }
+         }
+
          // update the view id last, so join requests from other nodes wait until we recovered existing members' info
-         viewId = newViewId;
-         viewUpdateLock.notifyAll();
+         synchronized (viewUpdateLock) {
+            viewId = newViewId;
+            viewUpdateLock.notifyAll();
+         }
       }
    }
 
@@ -298,9 +302,10 @@ public class ClusterTopologyManagerImpl implements ClusterTopologyManager {
          }
 
          // We have added each node to the cache status when we received its status response
+         // Prune those that have left the cluster.
+         cacheStatus.updateClusterMembers(clusterMembers);
          List<Address> members = cacheStatus.getMembers();
          // Filter out any nodes that aren't members of the cluster any more
-         cacheStatus.updateClusterMembers(clusterMembers);
          if (currentCHUnion != null) {
             currentCHUnion = chFactory.updateMembers(currentCHUnion, members);
          }
@@ -407,10 +412,10 @@ public class ClusterTopologyManagerImpl implements ClusterTopologyManager {
       }
    }
 
-   private HashMap<String, List<CacheTopology>> recoverClusterStatus() throws Exception {
+   private HashMap<String, List<CacheTopology>> recoverClusterStatus(int newViewId) throws Exception {
       log.debugf("Recovering running caches in the cluster");
       ReplicableCommand command = new CacheTopologyControlCommand(null,
-            CacheTopologyControlCommand.Type.GET_STATUS, transport.getAddress(), viewId);
+            CacheTopologyControlCommand.Type.GET_STATUS, transport.getAddress(), newViewId);
       Map<Address, Object> statusResponses = executeOnClusterSync(command, getGlobalTimeout(), false, false);
 
       HashMap<String, List<CacheTopology>> clusterCacheMap = new HashMap<String, List<CacheTopology>>();
@@ -590,13 +595,18 @@ public class ClusterTopologyManagerImpl implements ClusterTopologyManager {
       return (int) globalConfiguration.transport().distributedSyncTimeout();
    }
 
-   // need to recover existing caches asynchronously (in case we just became the coordinator)
-   @Listener(sync = false)
+   @Listener(sync = true)
    public class ClusterViewListener {
+      @SuppressWarnings("unused")
       @Merged
       @ViewChanged
       public void handleViewChange(final ViewChangedEvent e) {
-         handleNewView(e.getNewMembers(), e.isMergeView(), e.getViewId());
+         // need to recover existing caches asynchronously (in case we just became the coordinator)
+         asyncTransportExecutor.submit(new Runnable() {
+            public void run() {
+               handleNewView(e.getNewMembers(), e.isMergeView(), e.getViewId());
+            }
+         });
       }
    }
 }
