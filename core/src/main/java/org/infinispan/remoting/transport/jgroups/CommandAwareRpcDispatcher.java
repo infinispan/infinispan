@@ -154,6 +154,8 @@ public class CommandAwareRpcDispatcher extends RpcDispatcher {
             throw e;
          } catch (SuspectedException e) {
             throw new SuspectException("One of the nodes " + recipients + " was suspected", e);
+         } catch (org.jgroups.TimeoutException e) {
+            throw new TimeoutException("One of the nodes " + recipients + " timed out", e);
          } catch (Exception e) {
             throw rewrapAsCacheException(e);
          }
@@ -187,6 +189,8 @@ public class CommandAwareRpcDispatcher extends RpcDispatcher {
             throw e;
          } catch (SuspectedException e) {
             throw new SuspectException("Node " + recipient + " was suspected", e);
+         } catch (org.jgroups.TimeoutException e) {
+            throw new TimeoutException("Node " + recipient + " timed out", e);
          } catch (Exception e) {
             throw rewrapAsCacheException(e);
          }
