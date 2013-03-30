@@ -72,7 +72,7 @@ public class ClusteredQueryCommand extends BaseRpcCommand implements ReplicableC
 
    @Override
    public void fetchExecutionContext(CommandInitializer ci) {
-      this.cache = ci.getCache();
+      this.cache = ci.getCacheManager().getCache(cacheName);
    }
 
    public static ClusteredQueryCommand createLazyIterator(HSQuery query, Cache<?, ?> cache, UUID id) {

@@ -158,10 +158,12 @@ public class LifecycleManager extends AbstractModuleLifecycle {
          throw new IllegalStateException( "It was expected to find the Query interceptor registered in the InterceptorChain but it wasn't found" );
       }
 
-      // initializing the query module command initializer. we can t inject Cache with @inject in there
+      // initializing the query module command initializer.
+      // we can t inject Cache and CacheManager with @inject in there
       Cache<?, ?> cache = cr.getComponent(Cache.class);
       CommandInitializer initializer = cr.getComponent(CommandInitializer.class);
-      initializer.setCache(cache);
+      EmbeddedCacheManager cacheManager = cr.getGlobalComponentRegistry().getComponent(EmbeddedCacheManager.class); 
+      initializer.setCache(cache, cacheManager);
 
       QueryBox queryBox = new QueryBox();
       queryBox.setCache(cache.getAdvancedCache());
