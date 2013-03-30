@@ -26,6 +26,7 @@ import org.hibernate.search.engine.spi.SearchFactoryImplementor;
 import org.infinispan.Cache;
 import org.infinispan.commands.ReplicableCommand;
 import org.infinispan.commands.module.ModuleCommandInitializer;
+import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.query.backend.QueryInterceptor;
 import org.infinispan.query.impl.ComponentRegistryUtils;
 
@@ -41,8 +42,10 @@ public final class CommandInitializer implements ModuleCommandInitializer {
    private Cache<?, ?> cache;
    private SearchFactoryImplementor searchFactoryImplementor;
    private QueryInterceptor queryInterceptor;
+   private EmbeddedCacheManager cacheManager;
    
-   public void setCache(Cache<?, ?> cache){
+   public void setCache(Cache<?, ?> cache, EmbeddedCacheManager cacheManager){
+	   this.cacheManager = cacheManager;
       this.cache = cache;
       SearchManager searchManager = Search.getSearchManager(cache);
       SearchFactory searchFactory = searchManager.getSearchFactory();
@@ -58,16 +61,16 @@ public final class CommandInitializer implements ModuleCommandInitializer {
       queryCommand.fetchExecutionContext(this);
    }
 
-   public final Cache<?, ?> getCache() {
-      return cache;
-   }
-
    public final SearchFactoryImplementor getSearchFactory() {
       return searchFactoryImplementor;
    }
 
    public final QueryInterceptor getQueryInterceptor() {
       return queryInterceptor;
+   }
+   
+   public EmbeddedCacheManager getCacheManager(){
+      return cacheManager;
    }
 
 }

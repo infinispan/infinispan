@@ -411,6 +411,31 @@ public abstract class MultipleCacheManagersTest extends AbstractCacheTest {
       waitForClusterToForm();
       return caches;
    }
+   
+   /**
+    * Create cacheNames.lenght in each CacheManager (numMembersInCluster cacheManagers).
+    * 
+    * @param numMembersInCluster
+    * @param defaultConfigBuilder
+    * @param cacheNames
+    * @return A list with size numMembersInCluster containing a list of cacheNames.length caches
+    */
+   protected <K, V> List<List<Cache<K, V>>> createClusteredCaches(int numMembersInCluster,
+         ConfigurationBuilder defaultConfigBuilder, String[] cacheNames) {
+      List<List<Cache<K, V>>> allCaches = new ArrayList<List<Cache<K, V>>>(numMembersInCluster);
+      for (int i = 0; i < numMembersInCluster; i++) {
+         EmbeddedCacheManager cm = addClusterEnabledCacheManager(defaultConfigBuilder);
+         List<Cache<K, V>> currentCacheManagerCaches = new ArrayList<Cache<K, V>>(cacheNames.length);
+
+         for (String cacheName : cacheNames) {
+            Cache<K, V> cache = cm.getCache(cacheName);
+            currentCacheManagerCaches.add(cache);
+         }
+         allCaches.add(currentCacheManagerCaches);
+      }
+      waitForClusterToForm(cacheNames);
+      return allCaches;
+   }
 
    protected ReplListener replListener(Cache cache) {
       ReplListener listener = listeners.get(cache);

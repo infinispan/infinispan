@@ -50,7 +50,7 @@ import org.testng.annotations.Test;
 @Test(groups = "functional", testName = "query.blackbox.ClusteredQueryTest")
 public class ClusteredQueryTest extends MultipleCacheManagersTest {
 
-   Cache<String, Person> cache1, cache2;
+   Cache<String, Person> cacheAMachine1, cacheAMachine2;
    Person person1;
    Person person2;
    Person person3;
@@ -82,15 +82,15 @@ public class ClusteredQueryTest extends MultipleCacheManagersTest {
             .addProperty("lucene_version", "LUCENE_CURRENT");
       enhanceConfig(cacheCfg);
       List<Cache<String, Person>> caches = createClusteredCaches(2, cacheCfg);
-      cache1 = caches.get(0);
-      cache2 = caches.get(1);
+      cacheAMachine1 = caches.get(0);
+      cacheAMachine2 = caches.get(1);
    }
 
    protected CacheMode getCacheMode() {
       return CacheMode.REPL_SYNC;
    }
 
-   private void prepareTestData() {
+   protected void prepareTestData() {
       person1 = new Person();
       person1.setName("NavinSurtani");
       person1.setBlurb("Likes playing WoW");
@@ -108,16 +108,16 @@ public class ClusteredQueryTest extends MultipleCacheManagersTest {
 
       // Put the 3 created objects in the cache1.
 
-      cache2.put(key1, person1);
-      cache1.put(key2, person2);
-      cache1.put(key3, person3);
+      cacheAMachine2.put(key1, person1);
+      cacheAMachine1.put(key2, person2);
+      cacheAMachine1.put(key3, person3);
 
       person4 = new Person();
       person4.setName("MightyGoat");
       person4.setBlurb("Also eats grass");
       person4.setAge(66);
 
-      cache1.put("newOne", person4);
+      cacheAMachine1.put("newOne", person4);
    }
 
    public void testLazyOrdered() throws ParseException {
@@ -237,7 +237,7 @@ public class ClusteredQueryTest extends MultipleCacheManagersTest {
       queries[1] = luceneQuery;
 
       luceneQuery = luceneQuery.combine(queries);
-      cacheQuery = Search.getSearchManager(cache1).getClusteredQuery(luceneQuery);
+      cacheQuery = Search.getSearchManager(cacheAMachine1).getClusteredQuery(luceneQuery);
    }
 
 }
