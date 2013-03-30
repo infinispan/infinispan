@@ -305,7 +305,10 @@ public class ClusterTopologyManagerImpl implements ClusterTopologyManager {
          // Prune those that have left the cluster.
          cacheStatus.updateClusterMembers(clusterMembers);
          List<Address> members = cacheStatus.getMembers();
-         // Filter out any nodes that aren't members of the cluster any more
+         if (members.isEmpty()) {
+            log.tracef("Cache %s has no members left, skipping topology update", cacheName);
+            return;
+         }
          if (currentCHUnion != null) {
             currentCHUnion = chFactory.updateMembers(currentCHUnion, members);
          }
