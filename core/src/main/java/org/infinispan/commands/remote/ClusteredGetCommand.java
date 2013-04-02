@@ -232,11 +232,6 @@ public class ClusteredGetCommand extends BaseRpcCommand implements FlagAffectedC
    }
 
    @Override
-   public boolean canBlock() {
-      return false;
-   }
-
-   @Override
    public int getTopologyId() {
       return topologyId;
    }
