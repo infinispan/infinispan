@@ -43,6 +43,8 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.locks.ReentrantLock;
 
 import static org.testng.AssertJUnit.assertEquals;
+import static org.testng.AssertJUnit.assertFalse;
+import static org.testng.AssertJUnit.assertTrue;
 
 import static org.infinispan.test.TestingUtil.*;
 import static org.infinispan.client.hotrod.test.HotRodClientTestingUtil.*;
@@ -56,14 +58,14 @@ public class ClientConnectionPoolingTest extends MultipleCacheManagersTest {
 
    private static final Log log = LogFactory.getLog(ClientConnectionPoolingTest.class);
 
-   Cache c1;
-   Cache c2;
+   Cache<String, String> c1;
+   Cache<String, String> c2;
    private HotRodServer hotRodServer1;
    private HotRodServer hotRodServer2;
 
    RemoteCache<String, String> remoteCache;
    private RemoteCacheManager remoteCacheManager;
-   private GenericKeyedObjectPool connectionPool;
+   private GenericKeyedObjectPool<?, ?> connectionPool;
    private InetSocketAddress hrServ1Addr;
    private InetSocketAddress hrServ2Addr;
 
@@ -95,25 +97,25 @@ public class ClientConnectionPoolingTest extends MultipleCacheManagersTest {
 
       String servers = TestHelper.getServersString(hotRodServer1, hotRodServer2);
       Properties hotrodClientConf = new Properties();
-      hotrodClientConf.put(ConfigurationProperties.SERVER_LIST, servers);
-      hotrodClientConf.put("maxActive", 2);
-      hotrodClientConf.put("maxTotal", 8);
-      hotrodClientConf.put("maxIdle", 6);
-      hotrodClientConf.put("whenExhaustedAction", 1);
-      hotrodClientConf.put("testOnBorrow", "false");
-      hotrodClientConf.put("testOnReturn", "false");
-      hotrodClientConf.put("timeBetweenEvictionRunsMillis", "-2");
-      hotrodClientConf.put("minEvictableIdleTimeMillis", "7");
-      hotrodClientConf.put("testWhileIdle", "true");
-      hotrodClientConf.put("minIdle", "-5");
-      hotrodClientConf.put("lifo", "true");
-      hotrodClientConf.put("infinispan.client.hotrod.ping_on_startup", "false");
+      hotrodClientConf.setProperty(ConfigurationProperties.SERVER_LIST, servers);
+      hotrodClientConf.setProperty("maxActive", "2");
+      hotrodClientConf.setProperty("maxTotal", "8");
+      hotrodClientConf.setProperty("maxIdle", "6");
+      hotrodClientConf.setProperty("whenExhaustedAction", "1");
+      hotrodClientConf.setProperty("testOnBorrow", "false");
+      hotrodClientConf.setProperty("testOnReturn", "false");
+      hotrodClientConf.setProperty("timeBetweenEvictionRunsMillis", "-2");
+      hotrodClientConf.setProperty("minEvictableIdleTimeMillis", "7");
+      hotrodClientConf.setProperty("testWhileIdle", "true");
+      hotrodClientConf.setProperty("minIdle", "-5");
+      hotrodClientConf.setProperty("lifo", "true");
+      hotrodClientConf.setProperty("infinispan.client.hotrod.ping_on_startup", "false");
 
       remoteCacheManager = new RemoteCacheManager(hotrodClientConf);
       remoteCache = remoteCacheManager.getCache();
 
       TcpTransportFactory tcpConnectionFactory = (TcpTransportFactory) extractField(remoteCacheManager, "transportFactory");
-      connectionPool = (GenericKeyedObjectPool) extractField(tcpConnectionFactory, "connectionPool");
+      connectionPool = (GenericKeyedObjectPool<?, ?>) extractField(tcpConnectionFactory, "connectionPool");
       workerThread1 = new WorkerThread(remoteCache);
       workerThread2 = new WorkerThread(remoteCache);
       workerThread3 = new WorkerThread(remoteCache);
@@ -152,13 +154,13 @@ public class ClientConnectionPoolingTest extends MultipleCacheManagersTest {
       assertEquals(8, connectionPool.getMaxTotal());
       assertEquals(6, connectionPool.getMaxIdle());
       assertEquals(1, connectionPool.getWhenExhaustedAction());
-      assertEquals(false, connectionPool.getTestOnBorrow());
-      assertEquals(false, connectionPool.getTestOnReturn());
+      assertFalse(connectionPool.getTestOnBorrow());
+      assertFalse(connectionPool.getTestOnReturn());
       assertEquals(-2, connectionPool.getTimeBetweenEvictionRunsMillis());
       assertEquals(7, connectionPool.getMinEvictableIdleTimeMillis());
-      assertEquals(true, connectionPool.getTestWhileIdle());
+      assertTrue(connectionPool.getTestWhileIdle());
       assertEquals(-5, connectionPool.getMinIdle());
-      assertEquals(true, connectionPool.getLifo());
+      assertTrue(connectionPool.getLifo());
    }
 
    public void testMaxActiveReached() throws Exception {
@@ -237,6 +239,7 @@ public class ClientConnectionPoolingTest extends MultipleCacheManagersTest {
 
       // give the servers some time to process the operations
       eventually(new Condition() {
+         @Override
          public boolean isSatisfied() throws Exception {
             return connectionPool.getNumActive() == 0;
          }

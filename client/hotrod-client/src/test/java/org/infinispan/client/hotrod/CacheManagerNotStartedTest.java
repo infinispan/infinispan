@@ -62,7 +62,7 @@ public class CacheManagerNotStartedTest extends SingleCacheManagerTest {
       super.setup();
       hotrodServer = TestHelper.startHotRodServer(cacheManager);
       remoteCacheManager = new RemoteCacheManager(
-            "localhost:" + hotrodServer.getHost(), false);
+            "127.0.0.1:" + hotrodServer.getPort(), false);
    }
 
    @AfterClass(alwaysRun = true)

@@ -22,6 +22,7 @@
  */
 package org.infinispan.client.hotrod.impl.transport.tcp;
 
+import java.net.InetSocketAddress;
 import java.net.SocketAddress;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -35,11 +36,11 @@ import net.jcip.annotations.ThreadSafe;
 
 import org.apache.commons.pool.KeyedObjectPool;
 import org.apache.commons.pool.impl.GenericKeyedObjectPool;
+import org.infinispan.client.hotrod.configuration.Configuration;
+import org.infinispan.client.hotrod.configuration.ServerConfiguration;
 import org.infinispan.client.hotrod.exceptions.TransportException;
-import org.infinispan.client.hotrod.impl.ConfigurationProperties;
 import org.infinispan.client.hotrod.impl.consistenthash.ConsistentHash;
 import org.infinispan.client.hotrod.impl.consistenthash.ConsistentHashFactory;
-import org.infinispan.client.hotrod.impl.operations.PingOperation;
 import org.infinispan.client.hotrod.impl.protocol.Codec;
 import org.infinispan.client.hotrod.impl.transport.Transport;
 import org.infinispan.client.hotrod.impl.transport.TransportFactory;
@@ -75,40 +76,41 @@ public class TcpTransportFactory implements TransportFactory {
    private volatile int transportCount;
 
    @Override
-   public void start(Codec codec, ConfigurationProperties cfg,
-                     Collection<SocketAddress> staticConfiguredServers,
-                     AtomicInteger topologyId, ClassLoader classLoader) {
+   public void start(Codec codec, Configuration configuration, AtomicInteger topologyId) {
       synchronized (lock) {
-         hashFactory.init(cfg, classLoader);
-         boolean pingOnStartup = cfg.getPingOnStartup();
-         servers = Collections.unmodifiableCollection(new ArrayList(staticConfiguredServers));
-         String balancerClass = cfg.getRequestBalancingStrategy();
-         balancer = (RequestBalancingStrategy) Util.getInstance(balancerClass, classLoader);
-         tcpNoDelay = cfg.getTcpNoDelay();
-         soTimeout = cfg.getSoTimeout();
-         connectTimeout = cfg.getConnectTimeout();
+         hashFactory.init(configuration);
+         boolean pingOnStartup = configuration.pingOnStartup();
+         servers = new ArrayList<SocketAddress>();
+         for(ServerConfiguration server : configuration.servers()) {
+            servers.add(new InetSocketAddress(server.host(), server.port()));
+         }
+         servers = Collections.unmodifiableCollection(servers);
+         balancer = Util.getInstance(configuration.balancingStrategy());
+         tcpNoDelay = configuration.tcpNoDelay();
+         soTimeout = configuration.socketTimeout();
+         connectTimeout = configuration.connectionTimeout();
          if (log.isDebugEnabled()) {
-            log.debugf("Statically configured servers: %s", staticConfiguredServers);
-            log.debugf("Load balancer class: %s", balancerClass);
+            log.debugf("Statically configured servers: %s", servers);
+            log.debugf("Load balancer class: %s", balancer.getClass().getName());
             log.debugf("Tcp no delay = %b; client socket timeout = %d ms; connect timeout = %d ms",
                        tcpNoDelay, soTimeout, connectTimeout);
          }
          PropsKeyedObjectPoolFactory<SocketAddress, TcpTransport> poolFactory =
                new PropsKeyedObjectPoolFactory<SocketAddress, TcpTransport>(
                      new TransportObjectFactory(codec, this, topologyId, pingOnStartup),
-                     cfg.getProperties());
-         createAndPreparePool(staticConfiguredServers, poolFactory);
+                     configuration.connectionPool());
+         createAndPreparePool(poolFactory);
          balancer.setServers(servers);
          updateTransportCount();
       }
 
-      if (cfg.getPingOnStartup())
-         pingServers(staticConfiguredServers);
+      if (configuration.pingOnStartup())
+         pingServers();
    }
 
-   private void pingServers(Collection<SocketAddress> staticConfiguredServers) {
+   private void pingServers() {
       GenericKeyedObjectPool<SocketAddress, TcpTransport> pool = getConnectionPool();
-      for (SocketAddress addr : staticConfiguredServers) {
+      for (SocketAddress addr : servers) {
          try {
             // Go through all statically configured nodes and force a
             // connection to be established and a ping message to be sent.
@@ -119,7 +121,7 @@ public class TcpTransportFactory implements TransportFactory {
             // exceptions from nodes that might not be up any more.
             if (log.isTraceEnabled())
                log.tracef(e, "Ignoring exception pinging configured servers %s to establish a connection",
-                     staticConfiguredServers);
+                     servers);
          }
       }
    }
@@ -128,11 +130,10 @@ public class TcpTransportFactory implements TransportFactory {
     * This will makes sure that, when the evictor thread kicks in the minIdle is set. We don't want to do this is the caller's thread,
     * as this is the user.
     */
-   private void createAndPreparePool(Collection<SocketAddress> staticConfiguredServers,
-         PropsKeyedObjectPoolFactory<SocketAddress, TcpTransport> poolFactory) {
+   private void createAndPreparePool(PropsKeyedObjectPoolFactory<SocketAddress, TcpTransport> poolFactory) {
       connectionPool = (GenericKeyedObjectPool<SocketAddress, TcpTransport>)
             poolFactory.createPool();
-      for (SocketAddress addr: staticConfiguredServers) {
+      for (SocketAddress addr: servers) {
          connectionPool.preparePool(addr, false);
       }
    }
