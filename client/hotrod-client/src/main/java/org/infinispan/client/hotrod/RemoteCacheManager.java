@@ -22,13 +22,9 @@
  */
 package org.infinispan.client.hotrod;
 
-import static org.infinispan.util.Util.getInstance;
-
 import java.io.IOException;
 import java.io.InputStream;
-import java.net.SocketAddress;
 import java.net.URL;
-import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Properties;
@@ -36,6 +32,9 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import org.infinispan.api.BasicCacheContainer;
+import org.infinispan.client.hotrod.configuration.Configuration;
+import org.infinispan.client.hotrod.configuration.ConfigurationBuilder;
+import org.infinispan.client.hotrod.configuration.ServerConfiguration;
 import org.infinispan.client.hotrod.exceptions.HotRodClientException;
 import org.infinispan.client.hotrod.impl.ConfigurationProperties;
 import org.infinispan.client.hotrod.impl.RemoteCacheImpl;
@@ -69,8 +68,9 @@ import org.infinispan.util.Util;
  * <p/>
  * <b>Configuration:</b>
  * <p/>
- * The cache manager is configured through a {@link java.util.Properties} object passed to the constructor (there are also
- * "simplified" constructors that rely on default values).
+ * The cache manager is configured through a {@link Configuration} object passed to the constructor (there are also
+ * "simplified" constructors that rely on default values). If migrating from a previous version of Infinispan, where {@link Properties}
+ * were used to configure the RemoteCacheManager, please use the {@link ConfigurationBuilder#withProperties(Properties)} method.
  * <p/>
  * Below is the list of supported configuration elements:
  * <ul>
@@ -153,18 +153,42 @@ public class RemoteCacheManager implements BasicCacheContainer {
    private static final Log log = LogFactory.getLog(RemoteCacheManager.class);
 
    public static final String HOTROD_CLIENT_PROPERTIES = "hotrod-client.properties";
-
-   ConfigurationProperties config;
-   private TransportFactory transportFactory;
-   private Marshaller marshaller;
    private volatile boolean started = false;
-   private boolean forceReturnValueDefault = false;
-   private ExecutorService asyncExecutorService;
    private final Map<String, RemoteCacheHolder> cacheName2RemoteCache = new HashMap<String, RemoteCacheHolder>();
    // Use an invalid topologyID (-1) so we always get a topology update on connection.
    private AtomicInteger topologyId = new AtomicInteger(-1);
-   private ClassLoader classLoader;
+   private Configuration configuration;
    private Codec codec;
+
+   private Marshaller marshaller;
+   private TransportFactory transportFactory;
+   private ExecutorService asyncExecutorService;
+
+   /**
+    *
+    * Create a new RemoteCacheManager using the supplied {@link Configuration}.
+    * The RemoteCacheManager will be started automatically
+    *
+    * @param configuration the configuration to use for this RemoteCacheManager
+    * @since 5.3
+    */
+   public RemoteCacheManager(Configuration configuration) {
+      this(configuration, true);
+   }
+
+   /**
+    *
+    * Create a new RemoteCacheManager using the supplied {@link Configuration}.
+    * The RemoteCacheManager will be started automatically only if the start parameter is true
+    *
+    * @param configuration the configuration to use for this RemoteCacheManager
+    * @param start whether or not to start the manager on return from the constructor.
+    * @since 5.3
+    */
+   public RemoteCacheManager(Configuration configuration, boolean start) {
+      this.configuration = configuration;
+      if (start) start();
+   }
 
    /**
     * Builds a remote cache manager that relies on the provided {@link Marshaller} for marshalling
@@ -172,10 +196,11 @@ public class RemoteCacheManager implements BasicCacheContainer {
     *
     * @param marshaller marshaller implementation to be used
     * @param props      other properties
-    * @param start      weather or not to start the manager on return from the constructor.
+    * @param start      whether or not to start the manager on return from the constructor.
     */
+   @Deprecated
    public RemoteCacheManager(Marshaller marshaller, Properties props, boolean start) {
-      this(marshaller, props, start, Thread.currentThread().getContextClassLoader(), null);
+      this(new ConfigurationBuilder().classLoader(Thread.currentThread().getContextClassLoader()).withProperties(props).marshaller(marshaller.getClass()).build(), start);
    }
 
    /**
@@ -186,17 +211,15 @@ public class RemoteCacheManager implements BasicCacheContainer {
     * @param props      other properties
     * @param start      weather or not to start the manager on return from the constructor.
     */
+   @Deprecated
    public RemoteCacheManager(Marshaller marshaller, Properties props, boolean start, ClassLoader classLoader, ExecutorFactory asyncExecutorFactory) {
-      this(props, start, classLoader, asyncExecutorFactory);
-      setMarshaller(marshaller);
-      if (log.isTraceEnabled())
-         log.tracef("Using explicitly set marshaller type: %s", marshaller.getClass().getName());
-      if (start) start();
+      this(new ConfigurationBuilder().classLoader(classLoader).withProperties(props).marshaller(marshaller).asyncExecutorFactory().factory(asyncExecutorFactory).build(), start);
    }
 
    /**
     * Same as {@link #RemoteCacheManager(Marshaller, java.util.Properties, boolean)} with start = true.
     */
+   @Deprecated
    public RemoteCacheManager(Marshaller marshaller, Properties props) {
       this(marshaller, props, true);
    }
@@ -204,49 +227,70 @@ public class RemoteCacheManager implements BasicCacheContainer {
    /**
     * Same as {@link #RemoteCacheManager(Marshaller, java.util.Properties, boolean)} with start = true.
     */
+   @Deprecated
    public RemoteCacheManager(Marshaller marshaller, Properties props, ExecutorFactory asyncExecutorFactory) {
-      this(marshaller, props, true, Thread.currentThread().getContextClassLoader(), asyncExecutorFactory);
+      this(new ConfigurationBuilder().withProperties(props).marshaller(marshaller).asyncExecutorFactory().factory(asyncExecutorFactory).build());
    }
 
    /**
     * Same as {@link #RemoteCacheManager(Marshaller, java.util.Properties, boolean)} with start = true.
     */
+   @Deprecated
    public RemoteCacheManager(Marshaller marshaller, Properties props, ClassLoader classLoader) {
-      this(marshaller, props, true, classLoader, null);
+      this(new ConfigurationBuilder().classLoader(classLoader).marshaller(marshaller).withProperties(props).build());
    }
 
    /**
     * Build a cache manager based on supplied properties.
     */
+   @Deprecated
    public RemoteCacheManager(Properties props, boolean start) {
-	   this(props, start, Thread.currentThread().getContextClassLoader(), null);
+      this(new ConfigurationBuilder().withProperties(props).build(), start);
    }
 
    /**
     * Build a cache manager based on supplied properties.
     */
+   @Deprecated
    public RemoteCacheManager(Properties props, boolean start, ClassLoader classLoader, ExecutorFactory asyncExecutorFactory) {
-      this.config = new ConfigurationProperties(props);
-      this.classLoader = classLoader;
-      forceReturnValueDefault = config.getForceReturnValues();
-      if (asyncExecutorFactory != null) this.asyncExecutorService = asyncExecutorFactory.getExecutor(props);
-      if (start) start();
+      this(new ConfigurationBuilder().classLoader(classLoader).asyncExecutorFactory().factory(asyncExecutorFactory).withProperties(props).build(), start);
    }
 
    /**
     * Same as {@link #RemoteCacheManager(java.util.Properties, boolean)}, and it also starts the cache (start==true).
     */
+   @Deprecated
    public RemoteCacheManager(Properties props) {
-      this(props, Thread.currentThread().getContextClassLoader());
+      this(new ConfigurationBuilder().withProperties(props).build());
    }
 
    /**
     * Same as {@link #RemoteCacheManager(java.util.Properties, boolean)}, and it also starts the cache (start==true).
     */
+   @Deprecated
    public RemoteCacheManager(Properties props, ClassLoader classLoader) {
-      this(props, true, classLoader, null);
+      this(new ConfigurationBuilder().classLoader(classLoader).withProperties(props).build());
    }
 
+
+   /**
+    * Retrieves the configuration currently in use. The configuration object is immutable. If you wish to change configuration,
+    * you should use the following pattern:
+    *
+    * <code>
+    * ConfigurationBuilder builder = new ConfigurationBuilder();
+    * builder.read(remoteCacheManager.getConfiguration());
+    * // modify builder
+    * remoteCacheManager.stop();
+    * remoteCacheManager = new RemoteCacheManager(builder.build());
+    * </code>
+    *
+    * @since 5.3
+    * @return The configuration of this RemoteCacheManager
+    */
+   public Configuration getConfiguration() {
+      return configuration;
+   }
 
    /**
     * Retrieves a clone of the properties currently in use.  Note that making any changes to the properties instance
@@ -262,8 +306,52 @@ public class RemoteCacheManager implements BasicCacheContainer {
     * @return a clone of the properties used to configure this RemoteCacheManager
     * @since 4.2
     */
+   @Deprecated
    public Properties getProperties() {
-      return (Properties) config.getProperties().clone();
+      Properties properties = new Properties();
+      if (configuration.asyncExecutorFactory().factoryClass() != null) {
+         properties.setProperty(ConfigurationProperties.ASYNC_EXECUTOR_FACTORY, configuration.asyncExecutorFactory().factoryClass().getName());
+      }
+      properties.setProperty(ConfigurationProperties.REQUEST_BALANCING_STRATEGY, configuration.balancingStrategy().getName());
+      properties.setProperty(ConfigurationProperties.CONNECT_TIMEOUT, Integer.toString(configuration.connectionTimeout()));
+      for (int i = 1; i <= configuration.consistentHashImpl().length; i++) {
+         properties.setProperty(ConfigurationProperties.HASH_FUNCTION_PREFIX + "." + i, configuration.consistentHashImpl()[i-1].getName());
+      }
+      properties.setProperty(ConfigurationProperties.FORCE_RETURN_VALUES, Boolean.toString(configuration.forceReturnValues()));
+      properties.setProperty(ConfigurationProperties.KEY_SIZE_ESTIMATE, Integer.toString(configuration.keySizeEstimate()));
+      properties.setProperty(ConfigurationProperties.MARSHALLER, configuration.marshallerClass().getName());
+      properties.setProperty(ConfigurationProperties.PING_ON_STARTUP, Boolean.toString(configuration.pingOnStartup()));
+      properties.setProperty(ConfigurationProperties.PROTOCOL_VERSION, configuration.protocolVersion());
+      properties.setProperty(ConfigurationProperties.SO_TIMEOUT, Integer.toString(configuration.socketTimeout()));
+      properties.setProperty(ConfigurationProperties.TCP_NO_DELAY, Boolean.toString(configuration.tcpNoDelay()));
+      properties.setProperty(ConfigurationProperties.TRANSPORT_FACTORY, configuration.transportFactory().getName());
+      properties.setProperty(ConfigurationProperties.VALUE_SIZE_ESTIMATE, Integer.toString(configuration.valueSizeEstimate()));
+
+      properties.setProperty("exhaustedAction", Integer.toString(configuration.connectionPool().exhaustedAction().ordinal()));
+      properties.setProperty("maxActive", Integer.toString(configuration.connectionPool().maxActive()));
+      properties.setProperty("maxTotal", Integer.toString(configuration.connectionPool().maxTotal()));
+      properties.setProperty("maxWait", Long.toString(configuration.connectionPool().maxWait()));
+      properties.setProperty("maxIdle", Integer.toString(configuration.connectionPool().maxIdle()));
+      properties.setProperty("minIdle", Integer.toString(configuration.connectionPool().minIdle()));
+      properties.setProperty("numTestsPerEvictionRun", Integer.toString(configuration.connectionPool().numTestsPerEvictionRun()));
+      properties.setProperty("minEvictableIdleTimeMillis", Long.toString(configuration.connectionPool().minEvictableIdleTime()));
+      properties.setProperty("timeBetweenEvictionRunsMillis", Long.toString(configuration.connectionPool().timeBetweenEvictionRuns()));
+
+      properties.setProperty("lifo", Boolean.toString(configuration.connectionPool().lifo()));
+      properties.setProperty("testOnBorrow", Boolean.toString(configuration.connectionPool().testOnBorrow()));
+      properties.setProperty("testOnReturn", Boolean.toString(configuration.connectionPool().testOnReturn()));
+      properties.setProperty("testWhileIdle", Boolean.toString(configuration.connectionPool().testWhileIdle()));
+
+      StringBuilder servers = new StringBuilder();
+      for(ServerConfiguration server : configuration.servers()) {
+         if (servers.length() > 0) {
+            servers.append(";");
+         }
+         servers.append(server.host()).append(":").append(server.port());
+      }
+      properties.setProperty(ConfigurationProperties.SERVER_LIST, servers.toString());
+
+      return properties;
    }
 
    /**
@@ -275,18 +363,20 @@ public class RemoteCacheManager implements BasicCacheContainer {
     * @throws HotRodClientException if such a file cannot be found in the classpath
     */
    public RemoteCacheManager(boolean start) {
-	  this.classLoader = Thread.currentThread().getContextClassLoader();
-      InputStream stream = FileLookupFactory.newInstance().lookupFile(HOTROD_CLIENT_PROPERTIES, classLoader);
+      ConfigurationBuilder builder = new ConfigurationBuilder();
+      ClassLoader cl = Thread.currentThread().getContextClassLoader();
+      builder.classLoader(cl);
+      InputStream stream = FileLookupFactory.newInstance().lookupFile(HOTROD_CLIENT_PROPERTIES, cl);
       if (stream == null) {
          log.couldNotFindPropertiesFile(HOTROD_CLIENT_PROPERTIES);
-         config = new ConfigurationProperties();
       } else {
          try {
-            loadFromStream(stream);
+            builder.withProperties(loadFromStream(stream));
          } finally {
             Util.close(stream);
          }
       }
+      this.configuration = builder.build();
       if (start) start();
    }
 
@@ -302,6 +392,7 @@ public class RemoteCacheManager implements BasicCacheContainer {
     *
     * @param start weather or not to start the RemoteCacheManager.
     */
+   @Deprecated
    public RemoteCacheManager(String host, int port, boolean start) {
 	   this(host, port, start, Thread.currentThread().getContextClassLoader());
    }
@@ -311,15 +402,15 @@ public class RemoteCacheManager implements BasicCacheContainer {
     *
     * @param start weather or not to start the RemoteCacheManager.
     */
+   @Deprecated
    public RemoteCacheManager(String host, int port, boolean start, ClassLoader classLoader) {
-      config = new ConfigurationProperties(host + ":" + port);
-      this.classLoader = classLoader;
-      if (start) start();
+      this(new ConfigurationBuilder().classLoader(classLoader).addServer().host(host).port(port).build(), start);
    }
 
    /**
     * Same as {@link #RemoteCacheManager(String, int, boolean)} with start=true.
     */
+   @Deprecated
    public RemoteCacheManager(String host, int port) {
 	   this(host, port, Thread.currentThread().getContextClassLoader());
    }
@@ -327,6 +418,7 @@ public class RemoteCacheManager implements BasicCacheContainer {
    /**
     * Same as {@link #RemoteCacheManager(String, int, boolean)} with start=true.
     */
+   @Deprecated
    public RemoteCacheManager(String host, int port, ClassLoader classLoader) {
       this(host, port, true, classLoader);
    }
@@ -335,6 +427,7 @@ public class RemoteCacheManager implements BasicCacheContainer {
     * The given string should have the following structure: "host1:port2;host:port2...". Every host:port defines a
     * server.
     */
+   @Deprecated
    public RemoteCacheManager(String servers, boolean start) {
 	   this(servers, start, Thread.currentThread().getContextClassLoader());
    }
@@ -343,15 +436,15 @@ public class RemoteCacheManager implements BasicCacheContainer {
     * The given string should have the following structure: "host1:port2;host:port2...". Every host:port defines a
     * server.
     */
+   @Deprecated
    public RemoteCacheManager(String servers, boolean start, ClassLoader classLoader) {
-      config = new ConfigurationProperties(servers);
-      this.classLoader = classLoader;
-      if (start) start();
+      this(new ConfigurationBuilder().classLoader(classLoader).addServers(servers).build(), start);
    }
 
    /**
     * Same as {@link #RemoteCacheManager(String, boolean)}, with start=true.
     */
+   @Deprecated
    public RemoteCacheManager(String servers) {
 	   this(servers, Thread.currentThread().getContextClassLoader());
    }
@@ -359,6 +452,7 @@ public class RemoteCacheManager implements BasicCacheContainer {
    /**
     * Same as {@link #RemoteCacheManager(String, boolean)}, with start=true.
     */
+   @Deprecated
    public RemoteCacheManager(String servers, ClassLoader classLoader) {
       this(servers, true, classLoader);
    }
@@ -370,6 +464,7 @@ public class RemoteCacheManager implements BasicCacheContainer {
     * @param start weather or not to start the RemoteCacheManager
     * @throws HotRodClientException if properties could not be loaded
     */
+   @Deprecated
    public RemoteCacheManager(URL config, boolean start) {
 	   this(config, start, Thread.currentThread().getContextClassLoader());
    }
@@ -381,12 +476,14 @@ public class RemoteCacheManager implements BasicCacheContainer {
     * @param start weather or not to start the RemoteCacheManager
     * @throws HotRodClientException if properties could not be loaded
     */
+   @Deprecated
    public RemoteCacheManager(URL config, boolean start, ClassLoader classLoader) {
-	  this.classLoader = classLoader;
+
       InputStream stream = null;
       try {
          stream = config.openStream();
-         loadFromStream(stream);
+         Properties properties = loadFromStream(stream);
+         configuration = new ConfigurationBuilder().classLoader(classLoader).withProperties(properties).build();
       } catch (IOException e) {
          throw new HotRodClientException("Could not read URL:" + config, e);
       } finally {
@@ -406,6 +503,7 @@ public class RemoteCacheManager implements BasicCacheContainer {
     *
     * @param config
     */
+   @Deprecated
    public RemoteCacheManager(URL config) {
 	   this(config, Thread.currentThread().getContextClassLoader());
    }
@@ -415,6 +513,7 @@ public class RemoteCacheManager implements BasicCacheContainer {
     *
     * @param config
     */
+   @Deprecated
    public RemoteCacheManager(URL config, ClassLoader classLoader) {
       this(config, true, classLoader);
    }
@@ -429,7 +528,7 @@ public class RemoteCacheManager implements BasicCacheContainer {
     */
    @Override
    public <K, V> RemoteCache<K, V> getCache(String cacheName) {
-      return getCache(cacheName, forceReturnValueDefault);
+      return getCache(cacheName, configuration.forceReturnValues());
    }
 
    public <K, V> RemoteCache<K, V> getCache(String cacheName, boolean forceReturnValue) {
@@ -444,7 +543,7 @@ public class RemoteCacheManager implements BasicCacheContainer {
     */
    @Override
    public <K, V> RemoteCache<K, V> getCache() {
-      return getCache(forceReturnValueDefault);
+      return getCache(configuration.forceReturnValues());
    }
 
    public <K, V> RemoteCache<K, V> getCache(boolean forceReturnValue) {
@@ -457,23 +556,24 @@ public class RemoteCacheManager implements BasicCacheContainer {
       // Workaround for JDK6 NPE: http://bugs.sun.com/view_bug.do?bug_id=6427854
       SysPropertyActions.setProperty("sun.nio.ch.bugLevel", "\"\"");
 
-      forceReturnValueDefault = config.getForceReturnValues();
-      codec = CodecFactory.getCodec(config.getProtocolVersion());
+      codec = CodecFactory.getCodec(configuration.protocolVersion());
 
-      String factory = config.getTransportFactory();
-      transportFactory = (TransportFactory) getInstance(factory, classLoader);
+      transportFactory = Util.getInstance(configuration.transportFactory());
 
-      Collection<SocketAddress> servers = config.getServerList();
-      transportFactory.start(codec, config, servers, topologyId, classLoader);
+      transportFactory.start(codec, configuration, topologyId);
       if (marshaller == null) {
-         String marshallerName = config.getMarshaller();
-         setMarshaller((Marshaller) getInstance(marshallerName, classLoader));
+         marshaller = configuration.marshaller();
+         if (marshaller == null) {
+            marshaller = Util.getInstance(configuration.marshallerClass());
+         }
       }
 
       if (asyncExecutorService == null) {
-         String asyncExecutorClass = config.getAsyncExecutorFactory();
-         ExecutorFactory executorFactory = (ExecutorFactory) getInstance(asyncExecutorClass, classLoader);
-         asyncExecutorService = executorFactory.getExecutor(config.getProperties());
+         ExecutorFactory executorFactory = configuration.asyncExecutorFactory().factory();
+         if (executorFactory == null) {
+            executorFactory = Util.getInstance(configuration.asyncExecutorFactory().factoryClass());
+         }
+         asyncExecutorService = executorFactory.getExecutor(configuration.asyncExecutorFactory().properties());
       }
 
       synchronized (cacheName2RemoteCache) {
@@ -501,15 +601,14 @@ public class RemoteCacheManager implements BasicCacheContainer {
       return started;
    }
 
-   private void loadFromStream(InputStream stream) {
+   private Properties loadFromStream(InputStream stream) {
       Properties properties = new Properties();
       try {
          properties.load(stream);
       } catch (IOException e) {
          throw new HotRodClientException("Issues configuring from client hotrod-client.properties", e);
       }
-      config = new ConfigurationProperties(properties);
-      forceReturnValueDefault = config.getForceReturnValues();
+      return properties;
    }
 
    @SuppressWarnings("unchecked")
@@ -517,9 +616,9 @@ public class RemoteCacheManager implements BasicCacheContainer {
       synchronized (cacheName2RemoteCache) {
          if (!cacheName2RemoteCache.containsKey(cacheName)) {
             RemoteCacheImpl<K, V> result = new RemoteCacheImpl<K, V>(this, cacheName);
-            RemoteCacheHolder rcc = new RemoteCacheHolder(result, forceReturnValueOverride == null ? forceReturnValueDefault : forceReturnValueOverride);
+            RemoteCacheHolder rcc = new RemoteCacheHolder(result, forceReturnValueOverride == null ? configuration.forceReturnValues() : forceReturnValueOverride);
             startRemoteCache(rcc);
-            if (config.getPingOnStartup()) {
+            if (configuration.pingOnStartup()) {
                // If ping not successful assume that the cache does not exist
                // Default cache is always started, so don't do for it
                if (!cacheName.equals(BasicCacheContainer.DEFAULT_CACHE_NAME) &&
@@ -548,11 +647,7 @@ public class RemoteCacheManager implements BasicCacheContainer {
       RemoteCacheImpl<?, ?> remoteCache = remoteCacheHolder.remoteCache;
       OperationsFactory operationsFactory = new OperationsFactory(
             transportFactory, remoteCache.getName(), topologyId, remoteCacheHolder.forceReturnValue, codec);
-      remoteCache.init(marshaller, asyncExecutorService, operationsFactory, config.getKeySizeEstimate(), config.getValueSizeEstimate());
-   }
-
-   private void setMarshaller(Marshaller marshaller) {
-      this.marshaller = marshaller;
+      remoteCache.init(marshaller, asyncExecutorService, operationsFactory, configuration.keySizeEstimate(), configuration.valueSizeEstimate());
    }
 
    public Marshaller getMarshaller() {

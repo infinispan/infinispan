@@ -22,13 +22,11 @@
  */
 package org.infinispan.client.hotrod.impl.transport.tcp;
 
-import java.util.Properties;
-
 import org.apache.commons.pool.KeyedPoolableObjectFactory;
 import org.apache.commons.pool.impl.GenericKeyedObjectPool;
 import org.apache.commons.pool.impl.GenericKeyedObjectPoolFactory;
-import org.infinispan.client.hotrod.logging.Log;
-import org.infinispan.client.hotrod.logging.LogFactory;
+import org.infinispan.client.hotrod.configuration.ConnectionPoolConfiguration;
+import org.infinispan.client.hotrod.configuration.ExhaustedAction;
 
 /**
  * @author Mircea.Markus@jboss.com
@@ -36,53 +34,32 @@ import org.infinispan.client.hotrod.logging.LogFactory;
  */
 public class PropsKeyedObjectPoolFactory<K, V> extends GenericKeyedObjectPoolFactory<K, V> {
 
-   private static final Log log = LogFactory.getLog(PropsKeyedObjectPoolFactory.class);
-
-   public PropsKeyedObjectPoolFactory(KeyedPoolableObjectFactory<K, V> factory, Properties props) {
-      super(factory);
-      _maxActive = intProp(props, "maxActive", -1);
-      _maxTotal = intProp(props, "maxTotal", -1);
-      _maxIdle = intProp(props, "maxIdle", -1);
-      _whenExhaustedAction = (byte) intProp(props, "whenExhaustedAction", (int) GenericKeyedObjectPool.WHEN_EXHAUSTED_BLOCK);
-      _testOnBorrow = booleanProp(props, "testOnBorrow", false);
-      _testOnReturn = booleanProp(props, "testOnReturn", false);
-      _timeBetweenEvictionRunsMillis = intProp(props, "timeBetweenEvictionRunsMillis", 2 * 60 * 1000);
-      _minEvictableIdleTimeMillis = longProp(props, "minEvictableIdleTimeMillis", 5 * 60 * 1000);
-      _numTestsPerEvictionRun = intProp(props, "numTestsPerEvictionRun", 3);
-      _testWhileIdle = booleanProp(props, "testWhileIdle", true);
-      _minIdle = intProp(props, "minIdle", 1);
-      _lifo = booleanProp(props, "lifo", true);
+   public PropsKeyedObjectPoolFactory(KeyedPoolableObjectFactory<K, V> factory, ConnectionPoolConfiguration configuration) {
+      super(factory,
+            configuration.maxActive(),
+            mapExhaustedAction(configuration.exhaustedAction()),
+            configuration.maxWait(),
+            configuration.maxIdle(),
+            configuration.maxTotal(),
+            configuration.minIdle(),
+            configuration.testOnBorrow(),
+            configuration.testOnReturn(),
+            configuration.timeBetweenEvictionRuns(),
+            configuration.numTestsPerEvictionRun(),
+            configuration.minEvictableIdleTime(),
+            configuration.testWhileIdle(),
+            configuration.lifo());
    }
 
-   private int intProp(Properties p, String name, int defaultValue) {
-      return (Integer) getValue(p, name, defaultValue);
-   }
-
-   private boolean booleanProp(Properties p, String name, Boolean defaultValue) {
-      return (Boolean) getValue(p, name, defaultValue);
-   }
-
-   private long longProp(Properties p, String name, long defaultValue) {
-      return (Long) getValue(p, name, defaultValue);
-   }
-
-   public Object getValue(Properties p, String name, Object defaultValue) {
-      Object propValue = p.get(name);
-      if (propValue == null) {
-         log.tracef("%s property not specified, using default value (%s)", name, defaultValue);
-         return defaultValue;
-      } else {
-         log.tracef("%s = %s", name, propValue);
-         if (defaultValue instanceof Integer) {
-            return Integer.parseInt(propValue.toString());
-         } else if (defaultValue instanceof Boolean) {
-            return Boolean.parseBoolean(propValue.toString());
-         } else if (defaultValue instanceof Long) {
-            return Long.parseLong(propValue.toString());
-         } else {
-            throw new IllegalStateException();
-         }
+   private static byte mapExhaustedAction(ExhaustedAction action) {
+      switch (action) {
+      case CREATE_NEW:
+         return GenericKeyedObjectPool.WHEN_EXHAUSTED_GROW;
+      case EXCEPTION:
+         return GenericKeyedObjectPool.WHEN_EXHAUSTED_FAIL;
+      case WAIT:
+      default:
+         return GenericKeyedObjectPool.WHEN_EXHAUSTED_BLOCK;
       }
    }
 }
-

@@ -22,11 +22,10 @@
  */
 package org.infinispan.client.hotrod.impl.transport;
 
-import org.infinispan.client.hotrod.impl.ConfigurationProperties;
+import org.infinispan.client.hotrod.configuration.Configuration;
 import org.infinispan.client.hotrod.impl.consistenthash.ConsistentHashFactory;
 import org.infinispan.client.hotrod.impl.protocol.Codec;
 
-import java.net.InetSocketAddress;
 import java.net.SocketAddress;
 import java.util.Collection;
 import java.util.Map;
@@ -45,7 +44,7 @@ public interface TransportFactory {
 
    void releaseTransport(Transport transport);
 
-   void start(Codec codec, ConfigurationProperties props, Collection<SocketAddress> staticConfiguredServers, AtomicInteger topologyId, ClassLoader classLoader);
+   void start(Codec codec, Configuration configuration, AtomicInteger topologyId);
 
    void updateServers(Collection<SocketAddress> newServers);
 
