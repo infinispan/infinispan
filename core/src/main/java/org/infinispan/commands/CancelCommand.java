@@ -128,8 +128,4 @@ public class CancelCommand extends BaseRpcCommand {
       return "CancelCommand [uuid=" + commandToCancel + "]";
    }
 
-   @Override
-   public boolean canBlock() {
-      return false;
-   }
 }

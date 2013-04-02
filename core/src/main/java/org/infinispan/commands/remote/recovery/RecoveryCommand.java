@@ -51,9 +51,4 @@ public abstract class RecoveryCommand extends BaseRpcCommand {
    public boolean isReturnValueExpected() {
       return true;
    }
-
-   @Override
-   public boolean canBlock() {
-      return false;
-   }
 }
