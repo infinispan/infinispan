@@ -18,7 +18,6 @@
  */
 package org.infinispan.lucene;
 
-import junit.framework.Assert;
 import org.apache.lucene.store.Directory;
 import org.apache.lucene.store.IndexOutput;
 import org.apache.lucene.store.Lock;
@@ -26,7 +25,6 @@ import org.apache.lucene.store.LockFactory;
 import org.infinispan.Cache;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.lucene.readlocks.DistributedSegmentReadLocker;
-import org.infinispan.lucene.readlocks.SegmentReadLocker;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.test.SingleCacheManagerTest;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
@@ -110,113 +108,147 @@ public class InfinispanDirectoryTest extends SingleCacheManagerTest {
 
    @Test
    public void testInitWithConstructor1() throws Exception {
-      Cache cache = cacheManager.getCache();
+      Directory dir = null;
+      try {
+         Cache cache = cacheManager.getCache();
 
-      Directory dir = new InfinispanDirectory(cache, "index", 10, new DistributedSegmentReadLocker(cache, cache, cache, "index"));
-      verifyDir(dir, "index");
-      dir.close();
+         dir = new InfinispanDirectory(cache, "index", 10, new DistributedSegmentReadLocker(cache, cache, cache, "index"));
+         verifyDir(dir, "index");
+      } finally {
+         if (dir != null) dir.close();
+      }
    }
 
    @Test
    public void testInitWithConstructor2() throws Exception {
-      Cache cache = cacheManager.getCache();
+      Directory dir = null;
+      try {
+         Cache cache = cacheManager.getCache();
 
-      Directory dir = new InfinispanDirectory(cache, "index");
-      verifyDir(dir, "index");
-      dir.close();
+         dir = new InfinispanDirectory(cache, "index");
+         verifyDir(dir, "index");
+      } finally {
+         if (dir != null) dir.close();
+      }
    }
 
    @Test
    public void testInitWithConstructor3() throws Exception {
-      Cache cache = cacheManager.getCache();
+      Directory dir = null;
+      try {
+         Cache cache = cacheManager.getCache();
 
-      Directory dir = new InfinispanDirectory(cache);
-      verifyDir(dir, "");
-      dir.close();
+         dir = new InfinispanDirectory(cache);
+         verifyDir(dir, "");
+      } finally {
+         if (dir != null) dir.close();
+      }
    }
 
    @Test
    public void testFileModified() throws Exception {
-      Cache cache = cacheManager.getCache();
-      String fileName = "dummyFileName";
+      Directory dir = null;
+      try {
+         Cache cache = cacheManager.getCache();
+         String fileName = "dummyFileName";
 
-      Directory dir = new InfinispanDirectory(cache, "index");
-      createFile(fileName, dir);
+         dir = new InfinispanDirectory(cache, "index");
+         createFile(fileName, dir);
 
-      assert dir.fileExists(fileName);
-      assert dir.fileModified(fileName) != 0;
+         assert dir.fileExists(fileName);
+         assert dir.fileModified(fileName) != 0;
 
-      assert dir.fileModified("nonExistentFileName.txt") == 0;
-
-      dir.close();
+         assert dir.fileModified("nonExistentFileName.txt") == 0;
+      } finally {
+         if (dir != null) dir.close();
+      }
    }
 
    @Test
    public void testTouchFile() throws Exception {
-      Cache cache = cacheManager.getCache();
-      String fileName = "testfile.txt";
+      Directory dir = null;
+      try {
+         Cache cache = cacheManager.getCache();
+         String fileName = "testfile.txt";
 
-      Directory dir = new InfinispanDirectory(cache, "index");
-      createFile(fileName, dir);
+         dir = new InfinispanDirectory(cache, "index");
+         createFile(fileName, dir);
 
-      long lastModifiedDate = dir.fileModified(fileName);
+         long lastModifiedDate = dir.fileModified(fileName);
 
-      Thread.sleep(100);
+         Thread.sleep(100);
 
-      dir.touchFile(fileName);
-      assert lastModifiedDate != dir.fileModified(fileName);
-
-      dir.close();
+         dir.touchFile(fileName);
+         assert lastModifiedDate != dir.fileModified(fileName);
+      } finally {
+         if (dir != null) dir.close();
+      }
    }
 
    @Test
    public void testTouchNonExistentFile() throws Exception {
-      Cache cache = cacheManager.getCache();
-      String fileName = "nonExistent.txt";
+      Directory dir = null;
+      try {
+         Cache cache = cacheManager.getCache();
+         String fileName = "nonExistent.txt";
 
-      Directory dir = new InfinispanDirectory(cache, "index");
+         dir = new InfinispanDirectory(cache, "index");
 
-      long lastModifiedDate = dir.fileModified(fileName);
-      Thread.sleep(100);
+         long lastModifiedDate = dir.fileModified(fileName);
+         Thread.sleep(100);
 
-      dir.touchFile(fileName);
-      Assert.assertEquals(lastModifiedDate, dir.fileModified(fileName));
-
-      dir.close();
+         dir.touchFile(fileName);
+         AssertJUnit.assertEquals(lastModifiedDate, dir.fileModified(fileName));
+      } finally {
+         dir.close();
+      }
    }
 
    @Test
    public void testRenameFile() throws Exception {
-      Cache cache = cacheManager.getCache();
-      String fileName = "testfile.txt";
-      String newFileName = "newtestfile.txt";
+      Directory dir = null;
+      try {
+         Cache cache = cacheManager.getCache();
+         String fileName = "testfile.txt";
+         String newFileName = "newtestfile.txt";
 
-      Directory dir = new InfinispanDirectory(cache, "index");
-      createFile(fileName, dir);
+         dir = new InfinispanDirectory(cache, "index");
+         createFile(fileName, dir);
 
-      ((InfinispanDirectory) dir).renameFile(fileName, newFileName);
+         ((InfinispanDirectory) dir).renameFile(fileName, newFileName);
 
-      assert !dir.fileExists(fileName);
-      assert dir.fileExists(newFileName);
-
-      dir.close();
+         assert !dir.fileExists(fileName);
+         assert dir.fileExists(newFileName);
+      } finally {
+         if (dir != null) dir.close();
+      }
    }
 
    @Test
    public void testFileLength() throws IOException {
-      Directory dir = new InfinispanDirectory(cache, "index");
+      Directory dir = null;
+      try {
+         dir = new InfinispanDirectory(cache, "index");
+         AssertJUnit.assertEquals(0, dir.fileLength("nonExistentFile.txt"));
+      } finally {
+         if (dir != null) dir.close();
+      }
 
-      Assert.assertEquals(0, dir.fileLength("nonExistentFile.txt"));
    }
 
    private void createFile(final String fileName, final Directory dir) throws IOException {
-      IndexOutput io = dir.createOutput(fileName);
+      IndexOutput io = null;
 
-      io.writeByte((byte) 66);
-      io.writeByte((byte) 69);
+      try {
+         io = dir.createOutput(fileName);
 
-      io.flush();
-      io.close();
+         io.writeByte((byte) 66);
+         io.writeByte((byte) 69);
+      } finally {
+         io.flush();
+         io.close();
+      }
+
    }
    private void verifyDir(final Directory dir, final String expectedIndexName) throws IOException {
       InfinispanDirectory infDir = (InfinispanDirectory) dir;

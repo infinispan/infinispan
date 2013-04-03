@@ -23,7 +23,6 @@
 
 package org.infinispan.lucene.impl;
 
-import junit.framework.Assert;
 import org.apache.lucene.store.Directory;
 import org.apache.lucene.store.IndexOutput;
 import org.apache.lucene.store.Lock;
@@ -61,37 +60,47 @@ public class V3DirectoryImplementerTests extends SingleCacheManagerTest {
 
    @Test(expectedExceptions = IllegalArgumentException.class, expectedExceptionsMessageRegExp = "chunkSize must be a positive integer")
    public void testInitWithInvalidChunkSize() throws IOException {
-      Directory dir = DirectoryBuilder.newDirectoryInstance(cache, cache, cache, INDEX_NAME).chunkSize(0).create();
-
-      dir.close();
+      Directory dir = null;
+      try {
+         dir = DirectoryBuilder.newDirectoryInstance(cache, cache, cache, INDEX_NAME).chunkSize(0).create();
+      } finally {
+         if (dir != null) dir.close();
+      }
    }
 
    @Test(expectedExceptions = IllegalArgumentException.class)
    public void testFailureOfOverrideWriteLocker() throws IOException {
-      Directory dir = DirectoryBuilder.newDirectoryInstance(cache, cache, cache, INDEX_NAME).chunkSize(BUFFER_SIZE)
-            .overrideWriteLocker(null)
-            .create();
-
-      dir.close();
+      Directory dir = null;
+      try {
+         dir = DirectoryBuilder.newDirectoryInstance(cache, cache, cache, INDEX_NAME).chunkSize(BUFFER_SIZE)
+               .overrideWriteLocker(null)
+               .create();
+      } finally {
+         if (dir != null) dir.close();
+      }
    }
 
    public void testOverrideWriteLocker() throws IOException {
-      Directory dir = DirectoryBuilder.newDirectoryInstance(cache, cache, cache, INDEX_NAME).chunkSize(BUFFER_SIZE)
-            .overrideWriteLocker(new LockFactory() {
-               @Override
-               public Lock makeLock(String lockName) {
-                  return null;
-               }
+      Directory dir = null;
+      try {
+         dir = DirectoryBuilder.newDirectoryInstance(cache, cache, cache, INDEX_NAME).chunkSize(BUFFER_SIZE)
+               .overrideWriteLocker(new LockFactory() {
+                  @Override
+                  public Lock makeLock(String lockName) {
+                     return null;
+                  }
 
-               @Override
-               public void clearLock(String lockName) throws IOException {
+                  @Override
+                  public void clearLock(String lockName) throws IOException {
 
-               }
-            })
-            .create();
+                  }
+               })
+               .create();
 
-      Assert.assertEquals(0, dir.listAll().length);
-      dir.close();
+         AssertJUnit.assertEquals(0, dir.listAll().length);
+      } finally {
+         if (dir != null) dir.close();
+      }
    }
 
    @Test
@@ -99,15 +108,18 @@ public class V3DirectoryImplementerTests extends SingleCacheManagerTest {
       Cache cache = cacheManager.getCache();
       String fileName = "dummyFileName";
 
-      Directory dir = DirectoryBuilder.newDirectoryInstance(cache, cache, cache, INDEX_NAME).chunkSize(BUFFER_SIZE).create();
-      createFile(fileName, dir);
+      Directory dir = null;
+      try {
+         dir = DirectoryBuilder.newDirectoryInstance(cache, cache, cache, INDEX_NAME).chunkSize(BUFFER_SIZE).create();
+         createFile(fileName, dir);
 
-      assert dir.fileExists(fileName);
-      assert dir.fileModified(fileName) != 0;
+         assert dir.fileExists(fileName);
+         assert dir.fileModified(fileName) != 0;
 
-      Assert.assertEquals(0, dir.fileModified("nonExistentFileName.txt"));
-
-      dir.close();
+         AssertJUnit.assertEquals(0, dir.fileModified("nonExistentFileName.txt"));
+      } finally {
+         if (dir != null) dir.close();
+      }
    }
 
    @Test
@@ -115,17 +127,20 @@ public class V3DirectoryImplementerTests extends SingleCacheManagerTest {
       Cache cache = cacheManager.getCache();
       String fileName = "testfile.txt";
 
-      Directory dir = DirectoryBuilder.newDirectoryInstance(cache, cache, cache, INDEX_NAME).chunkSize(BUFFER_SIZE).create();
-      createFile(fileName, dir);
+      Directory dir = null;
+      try {
+         dir = DirectoryBuilder.newDirectoryInstance(cache, cache, cache, INDEX_NAME).chunkSize(BUFFER_SIZE).create();
+         createFile(fileName, dir);
 
-      long lastModifiedDate = dir.fileModified(fileName);
+         long lastModifiedDate = dir.fileModified(fileName);
 
-      Thread.sleep(1);
+         Thread.sleep(1);
 
-      dir.touchFile(fileName);
-      assert lastModifiedDate != dir.fileModified(fileName);
-
-      dir.close();
+         dir.touchFile(fileName);
+         assert lastModifiedDate != dir.fileModified(fileName);
+      } finally {
+         if (dir != null) dir.close();
+      }
    }
 
    @Test
@@ -133,24 +148,34 @@ public class V3DirectoryImplementerTests extends SingleCacheManagerTest {
       Cache cache = cacheManager.getCache();
       String fileName = "nonExistent.txt";
 
-      Directory dir = DirectoryBuilder.newDirectoryInstance(cache, cache, cache, INDEX_NAME).chunkSize(BUFFER_SIZE).create();
-      long lastModifiedDate = dir.fileModified(fileName);
-      Assert.assertEquals(0L, lastModifiedDate);
-      Thread.sleep(1);
+      Directory dir = null;
 
-      dir.touchFile(fileName);
-      Assert.assertEquals(lastModifiedDate, dir.fileModified(fileName));
+      try {
+         dir = DirectoryBuilder.newDirectoryInstance(cache, cache, cache, INDEX_NAME).chunkSize(BUFFER_SIZE).create();
+         long lastModifiedDate = dir.fileModified(fileName);
+         AssertJUnit.assertEquals(0L, lastModifiedDate);
+         Thread.sleep(1);
 
-      dir.close();
+         dir.touchFile(fileName);
+         AssertJUnit.assertEquals(lastModifiedDate, dir.fileModified(fileName));
+      } finally {
+         if (dir != null) dir.close();
+      }
    }
 
    @Test
-   public void testGetIndexNameAndToString() {
+   public void testGetIndexNameAndToString() throws IOException {
       Cache cache = cacheManager.getCache();
-      Directory dir = DirectoryBuilder.newDirectoryInstance(cache, cache, cache, INDEX_NAME).chunkSize(BUFFER_SIZE).create();
+      Directory dir = null;
 
-      AssertJUnit.assertEquals(INDEX_NAME, ((DirectoryLuceneV3) dir).getIndexName());
-      AssertJUnit.assertEquals("InfinispanDirectory{indexName=\'" + INDEX_NAME + "\'}", dir.toString());
+      try {
+         dir = DirectoryBuilder.newDirectoryInstance(cache, cache, cache, INDEX_NAME).chunkSize(BUFFER_SIZE).create();
+
+         AssertJUnit.assertEquals(INDEX_NAME, ((DirectoryLuceneV3) dir).getIndexName());
+         AssertJUnit.assertEquals("InfinispanDirectory{indexName=\'" + INDEX_NAME + "\'}", dir.toString());
+      } finally {
+         if (dir != null) dir.close();
+      }
    }
 
    private void createFile(final String fileName, final Directory dir) throws IOException {

@@ -28,13 +28,13 @@ import static org.infinispan.lucene.CacheTestSupport.optimizeIndex;
 
 import java.io.IOException;
 
-import junit.framework.Assert;
 import org.apache.lucene.store.Directory;
 import org.infinispan.Cache;
 import org.infinispan.lucene.directory.DirectoryBuilder;
 import org.infinispan.manager.CacheContainer;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.util.concurrent.ConcurrentHashSet;
+import org.testng.AssertJUnit;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
@@ -84,9 +84,9 @@ public class DirectoryOnMultipleCachesTest {
       int chunks = 0;
       for (Object key : chunkCache.keySet()) {
          chunks++;
-         Assert.assertEquals(ChunkCacheKey.class, key.getClass());
+         AssertJUnit.assertEquals(ChunkCacheKey.class, key.getClass());
          Object value = chunkCache.get(key);
-         Assert.assertEquals(byte[].class, value.getClass());
+         AssertJUnit.assertEquals(byte[].class, value.getClass());
       }
       assert chunks != 0;
    }
@@ -95,8 +95,8 @@ public class DirectoryOnMultipleCachesTest {
    public void verifyIntendedLockCachesUsage() {
       //all locks should be cleared now, so if any value is left it should be equal to one.
       for (Object key : lockCache.keySet()) {
-         Assert.assertEquals(FileReadLockKey.class, key.getClass());
-         Assert.assertEquals(1, lockCache.get(key));
+         AssertJUnit.assertEquals(FileReadLockKey.class, key.getClass());
+         AssertJUnit.assertEquals(1, lockCache.get(key));
       }
    }
    
@@ -108,17 +108,17 @@ public class DirectoryOnMultipleCachesTest {
          Object value = metadataCache.get(key);
          if (key.getClass().equals(org.infinispan.lucene.FileListCacheKey.class)) {
             filelists++;
-            Assert.assertEquals(ConcurrentHashSet.class, value.getClass());
+            AssertJUnit.assertEquals(ConcurrentHashSet.class, value.getClass());
          }
          else if (key.getClass().equals(FileCacheKey.class)) {
             metadata++;
-            Assert.assertEquals(FileMetadata.class, value.getClass());
+            AssertJUnit.assertEquals(FileMetadata.class, value.getClass());
          }
          else {
-            Assert.fail("unexpected type of key in metadata cache: " + key.getClass());
+            AssertJUnit.fail("unexpected type of key in metadata cache: " + key.getClass());
          }
       }
-      Assert.assertEquals(1, filelists);
+      AssertJUnit.assertEquals(1, filelists);
       assert metadata != 0;
    }
    

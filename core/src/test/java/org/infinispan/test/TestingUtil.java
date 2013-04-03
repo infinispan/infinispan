@@ -563,15 +563,16 @@ public class TestingUtil {
    }
 
    private static void recursiveDelete(File f) {
-      if (f.isDirectory()) {
-         File[] files = f.listFiles();
+      File absoluteFile = f.getAbsoluteFile();
+      if (absoluteFile.isDirectory()) {
+         File[] files = absoluteFile.listFiles();
          if (files != null) {
             for (File file : files) {
                recursiveDelete(file);
             }
          }
       }
-      f.delete();
+      absoluteFile.delete();
    }
 
    public static void killCacheManagers(CacheContainer... cacheContainers) {

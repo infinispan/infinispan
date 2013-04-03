@@ -24,8 +24,7 @@ package org.infinispan.lucene;
 
 import java.util.Arrays;
 
-import junit.framework.Assert;
-
+import org.testng.AssertJUnit;
 import org.testng.annotations.Test;
 
 /**
@@ -43,28 +42,28 @@ public class Key2StringMapperTest {
    @Test
    public void testRegex() {
       String[] split = LuceneKey2StringMapper.singlePipePattern.split("hello|world");
-      Assert.assertTrue(Arrays.deepEquals(new String[] { "hello", "world" }, split));
+      AssertJUnit.assertTrue(Arrays.deepEquals(new String[]{"hello", "world"}, split));
    }
    
    @Test
    public void loadChunkCacheKey() {
-      Assert.assertEquals(new ChunkCacheKey("my addressbook", "sgments0.gen", 34, 16000000), mapper.getKeyMapping("sgments0.gen|34|16000000|my addressbook"));
+      AssertJUnit.assertEquals(new ChunkCacheKey("my addressbook", "sgments0.gen", 34, 16000000), mapper.getKeyMapping("sgments0.gen|34|16000000|my addressbook"));
    }
    
    @Test
    public void loadFileCacheKey() {
-      Assert.assertEquals(new FileCacheKey("poems and songs, 3000AC-2000DC", "filename.extension"), mapper.getKeyMapping("filename.extension|M|poems and songs, 3000AC-2000DC"));
+      AssertJUnit.assertEquals(new FileCacheKey("poems and songs, 3000AC-2000DC", "filename.extension"), mapper.getKeyMapping("filename.extension|M|poems and songs, 3000AC-2000DC"));
    }
    
    @Test
    public void loadFileListCacheKey() {
-      Assert.assertEquals(new FileListCacheKey(""), mapper.getKeyMapping("*|"));
-      Assert.assertEquals(new FileListCacheKey("the leaves of Amazonia"), mapper.getKeyMapping("*|the leaves of Amazonia"));
+      AssertJUnit.assertEquals(new FileListCacheKey(""), mapper.getKeyMapping("*|"));
+      AssertJUnit.assertEquals(new FileListCacheKey("the leaves of Amazonia"), mapper.getKeyMapping("*|the leaves of Amazonia"));
    }
    
    @Test
    public void loadReadLockKey() {
-      Assert.assertEquals(new FileReadLockKey("poems and songs, 3000AC-2000DC", "brushed steel lock"), mapper.getKeyMapping("brushed steel lock|RL|poems and songs, 3000AC-2000DC"));
+      AssertJUnit.assertEquals(new FileReadLockKey("poems and songs, 3000AC-2000DC", "brushed steel lock"), mapper.getKeyMapping("brushed steel lock|RL|poems and songs, 3000AC-2000DC"));
    }
    
    @Test(expectedExceptions=IllegalArgumentException.class)
@@ -104,10 +103,10 @@ public class Key2StringMapperTest {
 
    @Test
    public void testChunkCacheKeyComparison() {
-      Assert.assertFalse("The object should not be equals to null.", new ChunkCacheKey("index-A", "fileName", 0, 1024).equals(null));
-      Assert.assertFalse("The ChunkCacheKey objects should not be equal due to different file names.",
+      AssertJUnit.assertFalse("The object should not be equals to null.", new ChunkCacheKey("index-A", "fileName", 0, 1024).equals(null));
+      AssertJUnit.assertFalse("The ChunkCacheKey objects should not be equal due to different file names.",
                          new ChunkCacheKey("index-A", "fileName", 0, 1024).equals(new ChunkCacheKey("index-A", "fileName1", 0, 1024)));
-      Assert.assertEquals("The ChunkCacheKey objects should be equal.",
+      AssertJUnit.assertEquals("The ChunkCacheKey objects should be equal.",
                         new ChunkCacheKey("index-A", "fileName", 0, 1024), new ChunkCacheKey("index-A", "fileName", 0, 1024));
    }
 
@@ -133,14 +132,14 @@ public class Key2StringMapperTest {
       FileReadLockKey key = new FileReadLockKey("poems and songs, 3000AC-2000DC", "brushed steel lock");
       assert !key.equals(null);
 
-      Assert.assertFalse(new FileReadLockKey("poems and songs, 3000AC-2000DC", "brushed lock")
+      AssertJUnit.assertFalse(new FileReadLockKey("poems and songs, 3000AC-2000DC", "brushed lock")
                      .equals(mapper.getKeyMapping("brushed steel lock|RL|poems and songs, 3000AC-2000DC")));
    }
 
    @Test
    public void testFileListCacheKeyComparison() {
-      Assert.assertFalse("The instance of FileListCacheKey should not be equal to null.", new FileListCacheKey("index-A").equals(null));
-      Assert.assertFalse("The instance of FileListCacheKey should not be equal to FileCacheKey instance.", new FileListCacheKey("index-A").equals(new FileCacheKey("index-A", "test.txt")));
+      AssertJUnit.assertFalse("The instance of FileListCacheKey should not be equal to null.", new FileListCacheKey("index-A").equals(null));
+      AssertJUnit.assertFalse("The instance of FileListCacheKey should not be equal to FileCacheKey instance.", new FileListCacheKey("index-A").equals(new FileCacheKey("index-A", "test.txt")));
    }
 
    @Test(expectedExceptions = IllegalArgumentException.class, expectedExceptionsMessageRegExp = "filename must not be null")
@@ -150,6 +149,6 @@ public class Key2StringMapperTest {
 
    @Test
    public void testFileCacheKeyCompWithNull() {
-      Assert.assertFalse("The Instance of FileCacheKey should not be equal to null.", new FileCacheKey("poems and songs, 3000AC-2000DC", "fileName.txt").equals(null));
+      AssertJUnit.assertFalse("The Instance of FileCacheKey should not be equal to null.", new FileCacheKey("poems and songs, 3000AC-2000DC", "fileName.txt").equals(null));
    }
 }

@@ -25,8 +25,7 @@ import org.infinispan.loaders.CacheLoaderException;
 import org.infinispan.lucene.ChunkCacheKey;
 import org.infinispan.lucene.FileCacheKey;
 import org.infinispan.lucene.FileMetadata;
-import org.infinispan.lucene.cachestore.InternalDirectoryContract;
-import org.junit.Assert;
+import org.testng.AssertJUnit;
 import org.testng.annotations.Test;
 
 /**
@@ -47,27 +46,27 @@ public class LargeIndexesTest {
       FileCacheKey k = new FileCacheKey(INDEX_NAME, FILE_NAME);
       DirectoryLoaderAdaptor adaptor = new DirectoryLoaderAdaptor(new InternalDirectoryContractImpl(), INDEX_NAME, AUTO_BUFFER);
       Object loaded = adaptor.load(k);
-      Assert.assertTrue(loaded instanceof FileMetadata);
+      AssertJUnit.assertTrue(loaded instanceof FileMetadata);
       FileMetadata metadata = (FileMetadata)loaded;
-      Assert.assertEquals(23, metadata.getLastModified());
-      Assert.assertEquals(TEST_SIZE, metadata.getSize());
-      Assert.assertEquals(AUTO_BUFFER, metadata.getBufferSize());
+      AssertJUnit.assertEquals(23, metadata.getLastModified());
+      AssertJUnit.assertEquals(TEST_SIZE, metadata.getSize());
+      AssertJUnit.assertEquals(AUTO_BUFFER, metadata.getBufferSize());
    }
 
    public void testSmallChunkLoading() throws CacheLoaderException {
       DirectoryLoaderAdaptor adaptor = new DirectoryLoaderAdaptor(new InternalDirectoryContractImpl(), INDEX_NAME, AUTO_BUFFER);
       Object loaded = adaptor.load(new ChunkCacheKey(INDEX_NAME, FILE_NAME, 0, AUTO_BUFFER));
-      Assert.assertTrue(loaded instanceof byte[]);
-      Assert.assertEquals(AUTO_BUFFER, ((byte[])loaded).length);
+      AssertJUnit.assertTrue(loaded instanceof byte[]);
+      AssertJUnit.assertEquals(AUTO_BUFFER, ((byte[])loaded).length);
       loaded = adaptor.load(new ChunkCacheKey(INDEX_NAME, FILE_NAME, 5, AUTO_BUFFER));
-      Assert.assertTrue(loaded instanceof byte[]);
-      Assert.assertEquals(AUTO_BUFFER, ((byte[])loaded).length);
+      AssertJUnit.assertTrue(loaded instanceof byte[]);
+      AssertJUnit.assertEquals(AUTO_BUFFER, ((byte[])loaded).length);
       final int lastChunk = (int)(TEST_SIZE / AUTO_BUFFER);
       final long lastChunkSize = TEST_SIZE % AUTO_BUFFER;
-      Assert.assertEquals(9, lastChunkSize);
+      AssertJUnit.assertEquals(9, lastChunkSize);
       loaded = adaptor.load(new ChunkCacheKey(INDEX_NAME, FILE_NAME, lastChunk, AUTO_BUFFER));
-      Assert.assertTrue(loaded instanceof byte[]);
-      Assert.assertEquals(lastChunkSize, ((byte[])loaded).length);
+      AssertJUnit.assertTrue(loaded instanceof byte[]);
+      AssertJUnit.assertEquals(lastChunkSize, ((byte[])loaded).length);
    }
 
    //Simple home-made mock:
@@ -75,13 +74,13 @@ public class LargeIndexesTest {
 
       @Override
       public String[] listAll() throws IOException {
-         Assert.fail("should not be invoked");
+         AssertJUnit.fail("should not be invoked");
          return null;//compiler thinks we could reach this
       }
 
       @Override
       public long fileLength(String fileName) throws IOException {
-         Assert.assertEquals(FILE_NAME, fileName);
+         AssertJUnit.assertEquals(FILE_NAME, fileName);
          return TEST_SIZE;
       }
 
@@ -91,19 +90,19 @@ public class LargeIndexesTest {
 
       @Override
       public long fileModified(String fileName) {
-         Assert.assertEquals(FILE_NAME, fileName);
+         AssertJUnit.assertEquals(FILE_NAME, fileName);
          return 23;
       }
 
       @Override
       public IndexInput openInput(String fileName) {
-         Assert.assertEquals(FILE_NAME, fileName);
+         AssertJUnit.assertEquals(FILE_NAME, fileName);
          return new IndexInputMock(fileName);
       }
 
       @Override
       public boolean fileExists(String fileName) {
-         Assert.fail("should not be invoked");
+         AssertJUnit.fail("should not be invoked");
          return false;
       }
    }
@@ -119,13 +118,13 @@ public class LargeIndexesTest {
 
       @Override
       public void close() throws IOException {
-         Assert.assertFalse(closed);
+         AssertJUnit.assertFalse(closed);
          closed = true;
       }
 
       @Override
       public long getFilePointer() {
-         Assert.fail("should not be invoked");
+         AssertJUnit.fail("should not be invoked");
          return 0;
       }
 
@@ -148,9 +147,9 @@ public class LargeIndexesTest {
       public void readBytes(byte[] b, int offset, int len) throws IOException {
          final long remainingFileSize = TEST_SIZE - position;
          final long expectedReadSize = Math.min(remainingFileSize, AUTO_BUFFER);
-         Assert.assertEquals(expectedReadSize, b.length);
-         Assert.assertEquals(0, offset);
-         Assert.assertEquals(expectedReadSize, len);
+         AssertJUnit.assertEquals(expectedReadSize, b.length);
+         AssertJUnit.assertEquals(0, offset);
+         AssertJUnit.assertEquals(expectedReadSize, len);
       }
    }
 

@@ -32,7 +32,7 @@ import org.infinispan.test.SingleCacheManagerTest;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.jboss.marshalling.ObjectTable.Writer;
-import org.testng.Assert;
+import org.testng.AssertJUnit;
 import org.testng.annotations.Test;
 
 /**
@@ -85,13 +85,13 @@ public class ExternalizersEnabledTest extends SingleCacheManagerTest {
 
       Writer objectWriter = externalizerTable.getObjectWriter(keySampleType);
 
-      Assert.assertEquals(objectWriter.getClass().toString(),
-            "class org.infinispan.marshall.jboss.ExternalizerTable$ForeignExternalizerAdapter",
-            "Registered Externalizers should be wrapped by a ForeignExternalizerAdapter");
+      AssertJUnit.assertEquals("Registered Externalizers should be wrapped by a ForeignExternalizerAdapter",
+            objectWriter.getClass().toString(),
+            "class org.infinispan.marshall.jboss.ExternalizerTable$ForeignExternalizerAdapter");
 
-      Assert.assertEquals("class " + objectWriter.toString(),
-            expectedExcternalizerClass.toString(),
-            "Type of delegate used by the adapter doesn't match expected: " + expectedExcternalizerClass.getClass());
+      AssertJUnit.assertEquals("Type of delegate used by the adapter doesn't match expected: " + expectedExcternalizerClass.getClass(),
+            "class " + objectWriter.toString(),
+            expectedExcternalizerClass.toString());
    }
 
 }

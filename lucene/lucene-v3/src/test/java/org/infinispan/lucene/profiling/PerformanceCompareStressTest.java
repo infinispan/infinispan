@@ -40,7 +40,7 @@ import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.infinispan.transaction.TransactionMode;
-import org.testng.Assert;
+import org.testng.AssertJUnit;
 import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
@@ -152,7 +152,7 @@ public class PerformanceCompareStressTest {
       long writerTaskCount = state.incrementIndexWriterTaskCount(0);
       state.quit();
       boolean terminatedCorrectly = e.awaitTermination(20, TimeUnit.SECONDS);
-      Assert.assertTrue(terminatedCorrectly);
+      AssertJUnit.assertTrue(terminatedCorrectly);
       System.out.println("Test " + testLabel + " run in " + DURATION_MS + "ms:\n\tSearches: " + searchesCount + "\n\t" + "Writes: "
                + writerTaskCount);
    }

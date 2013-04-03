@@ -27,8 +27,6 @@ import static org.infinispan.lucene.CacheTestSupport.writeTextToIndex;
 
 import java.io.IOException;
 
-import junit.framework.Assert;
-
 import org.apache.lucene.store.Directory;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
@@ -60,20 +58,20 @@ public class DynamicBufferSizeTest extends SingleCacheManagerTest {
    @Test
    public void roundingTest() {
       FileMetadata m = new FileMetadata(10);
-      Assert.assertEquals(0, m.getNumberOfChunks());
+      AssertJUnit.assertEquals(0, m.getNumberOfChunks());
       m.setSize(10);
-      Assert.assertEquals(1, m.getNumberOfChunks());
+      AssertJUnit.assertEquals(1, m.getNumberOfChunks());
       m.setSize(11);
-      Assert.assertEquals(2, m.getNumberOfChunks());
+      AssertJUnit.assertEquals(2, m.getNumberOfChunks());
       m = new FileMetadata(11);
       m.setSize(11);
-      Assert.assertEquals(1, m.getNumberOfChunks());
+      AssertJUnit.assertEquals(1, m.getNumberOfChunks());
       m.setSize(22);
-      Assert.assertEquals(2, m.getNumberOfChunks());
+      AssertJUnit.assertEquals(2, m.getNumberOfChunks());
       m.setSize(31);
       m = new FileMetadata(10);
       m.setSize(31);
-      Assert.assertEquals(4, m.getNumberOfChunks());
+      AssertJUnit.assertEquals(4, m.getNumberOfChunks());
    }
    
    @Test

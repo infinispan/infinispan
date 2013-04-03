@@ -28,6 +28,7 @@ import org.infinispan.lucene.cachestore.LuceneCacheLoader;
 import org.infinispan.lucene.cachestore.LuceneCacheLoaderConfig;
 import org.infinispan.lucene.directory.DirectoryBuilder;
 import org.infinispan.manager.EmbeddedCacheManager;
+import org.infinispan.test.CacheManagerCallable;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.testng.annotations.AfterMethod;
@@ -70,7 +71,7 @@ public class IndexCacheLoaderTest {
    }
 
    @Test
-   public void readExistingIndexTest() throws IOException {
+   public void testReadExistingIndex() throws IOException {
       TestHelper.createIndex(rootDir, "index-A", 10 * SCALE, true);
       TestHelper.createIndex(rootDir, "index-B", 20 * SCALE, false);
 
@@ -83,16 +84,19 @@ public class IndexCacheLoaderTest {
 
    private void verifyDirectory (final File rootDir, final String indexName, final int termsAdded, final boolean inverted)
          throws IOException {
-      EmbeddedCacheManager cacheManager = null;
-      try {
-         cacheManager = initializeInfinispan(rootDir);
-         Cache<Object, Object> cache = cacheManager.getCache();
-         Directory directory = DirectoryBuilder.newDirectoryInstance(cache, cache, cache, indexName).create();
+      final EmbeddedCacheManager cacheManager = initializeInfinispan(rootDir);
+      TestingUtil.withCacheManager(new CacheManagerCallable(cacheManager) {
+         public void call() {
+            Cache<Object, Object> cache = cacheManager.getCache();
+            Directory directory = DirectoryBuilder.newDirectoryInstance(cache, cache, cache, indexName).create();
 
-         TestHelper.verifyOnDirectory(directory, termsAdded, inverted);
-      } finally {
-         TestingUtil.killCacheManagers(cacheManager);
-      }
+            try {
+               TestHelper.verifyOnDirectory(directory, termsAdded, inverted);
+            } catch (IOException e) {
+               throw new RuntimeException(e);
+            }
+         }
+      });
    }
 
    protected EmbeddedCacheManager initializeInfinispan(File rootDir) {

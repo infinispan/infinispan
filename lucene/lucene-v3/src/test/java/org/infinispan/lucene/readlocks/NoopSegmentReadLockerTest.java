@@ -32,7 +32,7 @@ import org.infinispan.lucene.FileCacheKey;
 import org.infinispan.lucene.FileListCacheKey;
 import org.infinispan.lucene.FileMetadata;
 import org.infinispan.lucene.directory.DirectoryBuilder;
-import org.testng.Assert;
+import org.testng.AssertJUnit;
 import org.testng.annotations.Test;
 
 import java.io.IOException;
@@ -93,16 +93,16 @@ public class NoopSegmentReadLockerTest extends DistributedSegmentReadLockerTest 
 
    private void assertFileAfterDeletion(Cache cache) {
       Set<String> fileList = (Set<String>) cache.get(new FileListCacheKey(INDEX_NAME));
-      Assert.assertNotNull(fileList);
-      Assert.assertFalse(fileList.contains(filename));
+      AssertJUnit.assertNotNull(fileList);
+      AssertJUnit.assertFalse(fileList.contains(filename));
 
       FileMetadata metadata = (FileMetadata) cache.get(new FileCacheKey(INDEX_NAME, filename));
-      Assert.assertNotNull(metadata);
+      AssertJUnit.assertNotNull(metadata);
       long totalFileSize = metadata.getSize();
       int chunkNumbers = (int)(totalFileSize / CHUNK_SIZE);
 
       for(int i = 0; i < chunkNumbers; i++) {
-         Assert.assertNotNull(cache.get(new ChunkCacheKey(INDEX_NAME, filename, CHUNK_SIZE, 0)));
+         AssertJUnit.assertNotNull(cache.get(new ChunkCacheKey(INDEX_NAME, filename, CHUNK_SIZE, 0)));
       }
 
       boolean fileNameExistsInCache = false;
@@ -116,43 +116,43 @@ public class NoopSegmentReadLockerTest extends DistributedSegmentReadLockerTest 
          }
       }
 
-      Assert.assertTrue(fileNameExistsInCache);
+      AssertJUnit.assertTrue(fileNameExistsInCache);
    }
 
    private void verifyDirectoryStructure(Cache cache) {
       Set<String> fileList = (Set<String>) cache.get(new FileListCacheKey(INDEX_NAME));
-      Assert.assertNotNull(fileList);
+      AssertJUnit.assertNotNull(fileList);
       int fileListCacheKeyInstances = 0;
 
       for (Object key : cache.keySet()) {
          if (key instanceof ChunkCacheKey) {
             ChunkCacheKey existingChunkKey = (ChunkCacheKey) key;
-            Assert.assertEquals(existingChunkKey.getIndexName(), INDEX_NAME);
+            AssertJUnit.assertEquals(existingChunkKey.getIndexName(), INDEX_NAME);
             Object value = cache.get(existingChunkKey);
-            Assert.assertNotNull(value);
-            Assert.assertTrue(value instanceof byte[]);
+            AssertJUnit.assertNotNull(value);
+            AssertJUnit.assertTrue(value instanceof byte[]);
             byte[] buffer = (byte[]) cache.get(existingChunkKey);
-            Assert.assertTrue(buffer.length != 0);
+            AssertJUnit.assertTrue(buffer.length != 0);
          } else if (key instanceof FileCacheKey) {
             FileCacheKey fileCacheKey = (FileCacheKey) key;
-            Assert.assertEquals(fileCacheKey.getIndexName(), INDEX_NAME);
+            AssertJUnit.assertEquals(fileCacheKey.getIndexName(), INDEX_NAME);
             String filename = fileCacheKey.getFileName();
             Object value = cache.get(fileCacheKey);
-            Assert.assertNotNull(value);
-            Assert.assertTrue(value instanceof FileMetadata);
+            AssertJUnit.assertNotNull(value);
+            AssertJUnit.assertTrue(value instanceof FileMetadata);
             FileMetadata metadata = (FileMetadata) value;
             long totalFileSize = metadata.getSize();
             long actualFileSize = DirectoryIntegrityCheck.deepCountFileSize(fileCacheKey, cache);
-            Assert.assertEquals(actualFileSize, totalFileSize);
+            AssertJUnit.assertEquals(actualFileSize, totalFileSize);
 
             if(filename.contains(this.filename)) {
-               Assert.assertFalse(fileList.contains(filename), fileCacheKey + " should not have existed");
+               AssertJUnit.assertFalse(fileCacheKey + " should not have existed", fileList.contains(filename));
             } else {
-               Assert.assertTrue(fileList.contains(filename), fileCacheKey + " should not have existed");
+               AssertJUnit.assertTrue(fileCacheKey + " should not have existed", fileList.contains(filename));
             }
          } else if (key instanceof FileListCacheKey) {
             fileListCacheKeyInstances++;
-            Assert.assertEquals(1, fileListCacheKeyInstances);
+            AssertJUnit.assertEquals(1, fileListCacheKeyInstances);
          }
       }
    }

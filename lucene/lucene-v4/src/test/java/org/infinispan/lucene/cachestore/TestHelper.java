@@ -19,7 +19,6 @@
 
 package org.infinispan.lucene.cachestore;
 
-import junit.framework.Assert;
 import org.apache.lucene.document.Document;
 import org.apache.lucene.document.Field;
 import org.apache.lucene.index.IndexReader;
@@ -33,6 +32,7 @@ import org.apache.lucene.store.Directory;
 import org.apache.lucene.store.FSDirectory;
 import org.infinispan.lucene.CacheTestSupport;
 import org.infinispan.lucene.testutils.LuceneSettings;
+import org.testng.AssertJUnit;
 
 import java.io.File;
 import java.io.IOException;
@@ -88,9 +88,9 @@ public class TestHelper {
                queryNotToFind = new TermQuery(new Term("main", term));
             }
             TopDocs docs = searcher.search(queryToFind, null, 2);
-            Assert.assertEquals("String '" + term + "' should exist but was not found in index", 1, docs.totalHits);
+            AssertJUnit.assertEquals("String '" + term + "' should exist but was not found in index", 1, docs.totalHits);
             docs = searcher.search(queryNotToFind, null, 1);
-            Assert.assertEquals("String '" + term + "' should NOT exist but was found in index", 0, docs.totalHits);
+            AssertJUnit.assertEquals("String '" + term + "' should NOT exist but was found in index", 0, docs.totalHits);
          }
       }
       finally {
@@ -145,8 +145,8 @@ public class TestHelper {
     * @return                       the created file.
     */
    public static File createRootDir(final String parentDir, final String rootDirectoryName) {
-      File rootDir = new File(new File(parentDir), rootDirectoryName);
-      boolean directoriesCreated = rootDir.mkdirs();
+      File rootDir = new File(new File(parentDir).getAbsoluteFile(), rootDirectoryName);
+      boolean directoriesCreated = rootDir.mkdir();
       assert directoriesCreated : "couldn't create directory for test";
 
       rootDir.deleteOnExit();
@@ -162,7 +162,7 @@ public class TestHelper {
     * @return              the array of the names of the files.
     */
    public static String[] getFileNamesFromDir(File rootDir, String indexName) {
-      File indexDir = new File(rootDir, indexName);
+      File indexDir = new File(rootDir.getAbsoluteFile(), indexName);
       assert indexDir.exists();
 
       String[] fileNames = indexDir.list();

@@ -23,7 +23,6 @@
 
 package org.infinispan.lucene.impl;
 
-import junit.framework.Assert;
 import org.apache.lucene.store.Directory;
 import org.apache.lucene.store.Lock;
 import org.apache.lucene.store.LockFactory;
@@ -33,6 +32,7 @@ import org.infinispan.lucene.CacheTestSupport;
 import org.infinispan.lucene.directory.DirectoryBuilder;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.test.SingleCacheManagerTest;
+import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.testng.AssertJUnit;
 import org.testng.annotations.Test;
@@ -60,45 +60,63 @@ public class DirectoryImplementerTests extends SingleCacheManagerTest {
 
    @Test(expectedExceptions = IllegalArgumentException.class, expectedExceptionsMessageRegExp = "chunkSize must be a positive integer")
    public void testInitWithInvalidChunkSize() throws IOException {
-      Directory dir = DirectoryBuilder.newDirectoryInstance(cache, cache, cache, INDEX_NAME).chunkSize(0).create();
-
-      dir.close();
+      Directory dir = null;
+      try {
+         dir = DirectoryBuilder.newDirectoryInstance(cache, cache, cache, INDEX_NAME).chunkSize(0).create();
+      } finally {
+         if (dir != null) dir.close();
+      }
    }
 
    @Test(expectedExceptions = IllegalArgumentException.class)
    public void testFailureOfOverrideWriteLocker() throws IOException {
-      Directory dir = DirectoryBuilder.newDirectoryInstance(cache, cache, cache, INDEX_NAME).chunkSize(BUFFER_SIZE)
-            .overrideWriteLocker(null)
-            .create();
+      Directory dir = null;
+      try {
+         dir = DirectoryBuilder.newDirectoryInstance(cache, cache, cache, INDEX_NAME).chunkSize(BUFFER_SIZE)
+               .overrideWriteLocker(null)
+               .create();
+      } finally {
+         if (dir != null) dir.close();
+      }
 
-      dir.close();
    }
 
    public void testOverrideWriteLocker() throws IOException {
-      Directory dir = DirectoryBuilder.newDirectoryInstance(cache, cache, cache, INDEX_NAME).chunkSize(BUFFER_SIZE)
-            .overrideWriteLocker(new LockFactory() {
-               @Override
-               public Lock makeLock(String lockName) {
-                  return null;
-               }
+      Directory dir = null;
+      try {
+         dir = DirectoryBuilder.newDirectoryInstance(cache, cache, cache, INDEX_NAME).chunkSize(BUFFER_SIZE)
+               .overrideWriteLocker(new LockFactory() {
+                  @Override
+                  public Lock makeLock(String lockName) {
+                     return null;
+                  }
 
-               @Override
-               public void clearLock(String lockName) throws IOException {
+                  @Override
+                  public void clearLock(String lockName) throws IOException {
 
-               }
-            })
-            .create();
+                  }
+               })
+               .create();
 
-      Assert.assertEquals(0, dir.listAll().length);
-      dir.close();
+         AssertJUnit.assertEquals(0, dir.listAll().length);
+      } finally {
+         if (dir != null) dir.close();
+      }
    }
 
    @Test
-   public void testGetIndexNameAndToString() {
+   public void testGetIndexNameAndToString() throws IOException {
       Cache cache = cacheManager.getCache();
-      Directory dir = DirectoryBuilder.newDirectoryInstance(cache, cache, cache, INDEX_NAME).chunkSize(BUFFER_SIZE).create();
+      Directory dir = null;
 
-      AssertJUnit.assertEquals(INDEX_NAME, ((DirectoryLuceneV4) dir).getIndexName());
-      AssertJUnit.assertEquals("InfinispanDirectory{indexName=\'" + INDEX_NAME + "\'}", dir.toString());
+      try {
+
+         dir = DirectoryBuilder.newDirectoryInstance(cache, cache, cache, INDEX_NAME).chunkSize(BUFFER_SIZE).create();
+         AssertJUnit.assertEquals(INDEX_NAME, ((DirectoryLuceneV4) dir).getIndexName());
+         AssertJUnit.assertEquals("InfinispanDirectory{indexName=\'" + INDEX_NAME + "\'}", dir.toString());
+
+      } finally {
+         if(dir != null) dir.close();
+      }
    }
 }

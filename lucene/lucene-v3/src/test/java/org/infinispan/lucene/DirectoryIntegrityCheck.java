@@ -25,7 +25,7 @@ package org.infinispan.lucene;
 import java.util.Set;
 
 import org.infinispan.Cache;
-import org.testng.Assert;
+import org.testng.AssertJUnit;
 
 /**
  * DirectoryIntegrityCheck contains helpers to assert assumptions we make on the structure of an
@@ -54,25 +54,25 @@ public class DirectoryIntegrityCheck {
 
    public static void verifyDirectoryStructure(Cache cache, String indexName, boolean wasAStressTest) {
       Set<String> fileList = (Set<String>) cache.get(new FileListCacheKey(indexName));
-      Assert.assertNotNull(fileList);
+      AssertJUnit.assertNotNull(fileList);
       int fileListCacheKeyInstances = 0;
       for (Object key : cache.keySet()) {
          if (key instanceof ChunkCacheKey) {
             ChunkCacheKey existingChunkKey = (ChunkCacheKey) key;
             String filename = existingChunkKey.getFileName();
-            Assert.assertEquals(existingChunkKey.getIndexName(), indexName);
+            AssertJUnit.assertEquals(existingChunkKey.getIndexName(), indexName);
             // the chunk must either match an entry in fileList or have a pending readLock:
 //            if (fileList.contains(filename) == false) {
 //               verifyReadlockExists(cache, indexName, filename);
 //            }
             Object value = cache.get(existingChunkKey);
-            Assert.assertNotNull(value);
-            Assert.assertTrue(value instanceof byte[]);
+            AssertJUnit.assertNotNull(value);
+            AssertJUnit.assertTrue(value instanceof byte[]);
             byte[] buffer = (byte[]) cache.get(existingChunkKey);
-            Assert.assertTrue(buffer.length != 0);
+            AssertJUnit.assertTrue(buffer.length != 0);
          } else if (key instanceof FileCacheKey) {
             FileCacheKey fileCacheKey = (FileCacheKey) key;
-            Assert.assertEquals(fileCacheKey.getIndexName(), indexName);
+            AssertJUnit.assertEquals(fileCacheKey.getIndexName(), indexName);
             String filename = fileCacheKey.getFileName();
 //            if (fileList.contains(filename) == false) {
 //               // if the file is not registered, assert that a readlock prevented it from being
@@ -80,16 +80,16 @@ public class DirectoryIntegrityCheck {
 //               verifyReadlockExists(cache, indexName, filename);
 //            }
             Object value = cache.get(fileCacheKey);
-            Assert.assertNotNull(value);
-            Assert.assertTrue(value instanceof FileMetadata);
+            AssertJUnit.assertNotNull(value);
+            AssertJUnit.assertTrue(value instanceof FileMetadata);
             FileMetadata metadata = (FileMetadata) value;
             long totalFileSize = metadata.getSize();
             long actualFileSize = deepCountFileSize(fileCacheKey, cache);
-            Assert.assertEquals(actualFileSize, totalFileSize);
-            Assert.assertTrue(fileList.contains(fileCacheKey.getFileName()), fileCacheKey + " should not have existed");
+            AssertJUnit.assertEquals(actualFileSize, totalFileSize);
+            AssertJUnit.assertTrue(fileCacheKey + " should not have existed", fileList.contains(fileCacheKey.getFileName()));
          } else if (key instanceof FileListCacheKey) {
             fileListCacheKeyInstances++;
-            Assert.assertEquals(1, fileListCacheKeyInstances);
+            AssertJUnit.assertEquals(1, fileListCacheKeyInstances);
          } else if (key instanceof FileReadLockKey) {
             /*//FIXME testcase to be fixed after ISPN-616 
             FileReadLockKey readLockKey = (FileReadLockKey) key;
@@ -104,7 +104,7 @@ public class DirectoryIntegrityCheck {
             Assert.assertTrue(value == null || value.equals(1));
             */
          } else {
-            Assert.fail("an unexpected key was found in the cache having key type " + key.getClass() + " toString:" + key);
+            AssertJUnit.fail("an unexpected key was found in the cache having key type " + key.getClass() + " toString:" + key);
          }
       }
    }
@@ -112,10 +112,10 @@ public class DirectoryIntegrityCheck {
    private static void verifyReadlockExists(Cache cache, String indexName, String filename) {
       FileReadLockKey readLockKey = new FileReadLockKey(indexName, filename);
       Object readLockValue = cache.get(readLockKey);
-      Assert.assertNotNull(readLockValue);
-      Assert.assertTrue(readLockValue instanceof Integer);
+      AssertJUnit.assertNotNull(readLockValue);
+      AssertJUnit.assertTrue(readLockValue instanceof Integer);
       int v = ((Integer) readLockValue).intValue();
-      Assert.assertTrue(v > 1, "readlock exists for unregistered file of unexpected value: " + v + " for file: " + filename);
+      AssertJUnit.assertTrue("readlock exists for unregistered file of unexpected value: " + v + " for file: " + filename, v > 1);
    }
 
    /**
@@ -137,7 +137,7 @@ public class DirectoryIntegrityCheck {
          ChunkCacheKey chunkKey = new ChunkCacheKey(indexName, fileName, i, bufferSize);
          byte[] buffer = (byte[]) cache.get(chunkKey);
          if (buffer == null) {
-            Assert.assertFalse(cache.containsKey(chunkKey));
+            AssertJUnit.assertFalse(cache.containsKey(chunkKey));
             return accumulator;
          } else {
             assert buffer.length > 0; //check we don't store useless data
@@ -148,8 +148,8 @@ public class DirectoryIntegrityCheck {
    
    public static void assertFileNotExists(Cache cache, String indexName, String fileName, long maxWaitForCondition) throws InterruptedException {
       Set<String> fileList = (Set<String>) cache.get(new FileListCacheKey(indexName));
-      Assert.assertNotNull(fileList);
-      Assert.assertFalse(fileList.contains(fileName)); //check is in sync: no waiting allowed in this case
+      AssertJUnit.assertNotNull(fileList);
+      AssertJUnit.assertFalse(fileList.contains(fileName)); //check is in sync: no waiting allowed in this case
       boolean allok = false;
       while (maxWaitForCondition >= 0 && !allok) {
          Thread.sleep(10);
@@ -163,7 +163,7 @@ public class DirectoryIntegrityCheck {
             if (cache.get(key)!=null) allok=false;
          }
       }
-      Assert.assertTrue(allok);
+      AssertJUnit.assertTrue(allok);
    }
 
    /**
@@ -172,25 +172,25 @@ public class DirectoryIntegrityCheck {
     */
    public static void assertFileExistsHavingRLCount(Cache cache, String fileName, String indexName, int expectedReadcount, int chunkSize, boolean expectRegisteredInFat) {
       Set<String> fileList = (Set<String>) cache.get(new FileListCacheKey(indexName));
-      Assert.assertNotNull(fileList);
-      Assert.assertTrue(fileList.contains(fileName) == expectRegisteredInFat);
+      AssertJUnit.assertNotNull(fileList);
+      AssertJUnit.assertTrue(fileList.contains(fileName) == expectRegisteredInFat);
       FileMetadata metadata = (FileMetadata) cache.get(new FileCacheKey(indexName, fileName));
-      Assert.assertNotNull(metadata);
+      AssertJUnit.assertNotNull(metadata);
       long totalFileSize = metadata.getSize();
       int chunkNumbers = (int)(totalFileSize / chunkSize);
       for (int i = 0; i < chunkNumbers; i++) {
-         Assert.assertNotNull(cache.get(new ChunkCacheKey(indexName, fileName, i, metadata.getBufferSize())));
+         AssertJUnit.assertNotNull(cache.get(new ChunkCacheKey(indexName, fileName, i, metadata.getBufferSize())));
       }
       FileReadLockKey readLockKey = new FileReadLockKey(indexName,fileName);
       Object value = cache.get(readLockKey);
       if (expectedReadcount <= 1) {
-         Assert.assertTrue(value == null || Integer.valueOf(1).equals(value), "readlock value is " + value);
+         AssertJUnit.assertTrue("readlock value is " + value, value == null || Integer.valueOf(1).equals(value));
       }
       else {
-         Assert.assertNotNull(value);
-         Assert.assertTrue(value instanceof Integer);
+         AssertJUnit.assertNotNull(value);
+         AssertJUnit.assertTrue(value instanceof Integer);
          int v = (Integer)value;
-         Assert.assertEquals(v, expectedReadcount);
+         AssertJUnit.assertEquals(v, expectedReadcount);
       }
    }
 
