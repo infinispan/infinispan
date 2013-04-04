@@ -66,13 +66,19 @@ public class JGroupsBackupResponse implements BackupResponse {
       errors = new HashMap<String, Throwable>(syncBackupCalls.size());
       long elapsedTime = 0;
       for (Map.Entry<XSiteBackup, Future<Object>> entry : syncBackupCalls.entrySet()) {
+                  
          long timeout = entry.getKey().getTimeout();
          String siteName = entry.getKey().getSiteName();
+
          if (timeout > 0) { //0 means wait forever
             timeout -= deductFromTimeout;
             timeout -= elapsedTime;
-            if (timeout <= 0 && !entry.getValue().isDone())
+            if (timeout <= 0 && !entry.getValue().isDone() ) {
+               log.tracef( "Timeout period %ld exhausted with site %s", entry.getKey().getTimeout(), siteName);
                errors.put(siteName, newTimeoutException(entry, entry.getKey().getTimeout()));
+               addCommunicationError(siteName);
+               continue;
+            }
          }
 
          long startNanos = System.nanoTime();
