@@ -109,7 +109,7 @@ public class TransactionalInvocationContextContainer extends AbstractInvocationC
 
    @Override
    public InvocationContext createInvocationContext(Transaction tx) {
-      if (tx == null) throw new IllegalStateException("This is a tx cache!");
+      if (tx == null) throw new IllegalArgumentException("Cannot create a transactional context without a valid Transaction instance.");
       LocalTxInvocationContext localContext = new LocalTxInvocationContext();
       LocalTransaction localTransaction = transactionTable.getLocalTransaction(tx);
       localContext.setLocalTransaction(localTransaction);
