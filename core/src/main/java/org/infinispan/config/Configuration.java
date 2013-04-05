@@ -111,7 +111,7 @@ public class Configuration extends AbstractNamedCacheConfigurationBean {
 
    @XmlTransient
    FluentConfiguration fluentConfig = new FluentConfiguration(this);
-   
+
    @XmlTransient
    private ClassLoader cl;
 
@@ -241,11 +241,11 @@ public class Configuration extends AbstractNamedCacheConfigurationBean {
       else if (cl == null && globalConfiguration != null)
          // The classloader is not set for this configuration, and we have a global config
          return globalConfiguration.getClassLoader();
-      else 
-         // Return the default CL 
+      else
+         // Return the default CL
          return Thread.currentThread().getContextClassLoader();
    }
-   
+
    public void setClassLoader(ClassLoader cl) {
       this.cl = cl;
    }
@@ -1019,21 +1019,21 @@ public class Configuration extends AbstractNamedCacheConfigurationBean {
    public void setL1OnRehash(boolean l1OnRehash) {
       this.clustering.l1.setOnRehash(l1OnRehash);
    }
-   
+
    /**
     * <p>
     * Determines whether a multicast or a web of unicasts are used when performing L1 invalidations.
     * </p>
-    * 
+    *
     * <p>
     * By default multicast will be used.
     * </p>
-    * 
+    *
     * <p>
-    * If the threshold is set to -1, then unicasts will always be used. If the threshold is set to 0, then multicast 
+    * If the threshold is set to -1, then unicasts will always be used. If the threshold is set to 0, then multicast
     * will be always be used.
     * </p>
-    * 
+    *
     * @param threshold the threshold over which to use a multicast
     * @deprecated Use {@link FluentConfiguration.L1Config#invalidationThreshold(Integer)} instead
     */
@@ -1041,7 +1041,7 @@ public class Configuration extends AbstractNamedCacheConfigurationBean {
    public void setL1InvalidationThreshold(int threshold) {
       this.clustering.l1.setInvalidationThreshold(threshold);
    }
-   
+
    public int getL1InvalidationThreshold() {
    	return this.clustering.l1.invalidationThreshold;
    }
@@ -1176,7 +1176,7 @@ public class Configuration extends AbstractNamedCacheConfigurationBean {
    public boolean isIndexLocalOnly() {
       return indexing.isIndexLocalOnly();
    }
-   
+
    public TypedProperties getIndexingProperties() {
       return indexing.properties;
    }
@@ -1417,6 +1417,7 @@ public class Configuration extends AbstractNamedCacheConfigurationBean {
    /**
     * @deprecated No longer used since 5.2, use {@link org.infinispan.configuration.cache.HashConfigurationBuilder#consistentHashFactory(org.infinispan.distribution.ch.ConsistentHashFactory)} instead.
     */
+   @Deprecated
    public String getConsistentHashClass() {
       return clustering.hash.consistentHashClass;
    }
@@ -1424,6 +1425,7 @@ public class Configuration extends AbstractNamedCacheConfigurationBean {
    /**
     * @deprecated No longer useful, since {@link #getConsistentHashClass()} is not used.
     */
+   @Deprecated
    public boolean isCustomConsistentHashClass() {
       return false;
    }
@@ -1440,19 +1442,19 @@ public class Configuration extends AbstractNamedCacheConfigurationBean {
    public int getNumOwners() {
       return clustering.hash.numOwners;
    }
-   
+
    public int getNumVirtualNodes() {
       return clustering.hash.numVirtualNodes;
    }
-   
+
    public boolean isGroupsEnabled() {
       clustering.hash.groups.setConfiguration(this);
       return clustering.hash.groups.enabled;
    }
-   
+
    public List<Grouper<?>> getGroupers() {
       clustering.hash.groups.setConfiguration(this);
-      return clustering.hash.groups.groupers; 
+      return clustering.hash.groups.groupers;
    }
 
    public boolean isRehashEnabled() {
@@ -2303,14 +2305,14 @@ public class Configuration extends AbstractNamedCacheConfigurationBean {
    }
 
    /**
-    * Recovery makes sure data in both transactional resource and Infinispan end up in a consistent state. 
-    * Fore more details see 
+    * Recovery makes sure data in both transactional resource and Infinispan end up in a consistent state.
+    * Fore more details see
     * <a href="https://docs.jboss.org/author/display/ISPN/Transaction+recovery">Infinispan Transaction Recovery</a>.
     */
    @XmlAccessorType(XmlAccessType.PROPERTY)
    @ConfigurationDoc(name = "recovery", parentName = "transaction")
    @Deprecated public static class RecoveryType extends AbstractFluentConfigurationBean implements RecoveryConfig {
-      
+
       /** The serialVersionUID */
       private static final long serialVersionUID = 7727835976746044904L;
 
@@ -2956,7 +2958,6 @@ public class Configuration extends AbstractNamedCacheConfigurationBean {
       @XmlAttribute
       @Deprecated
       public Long getWakeUpInterval() {
-         log.evictionWakeUpIntervalDeprecated();
          return wakeUpInterval;
       }
 
@@ -2966,7 +2967,6 @@ public class Configuration extends AbstractNamedCacheConfigurationBean {
        */
       @Deprecated
       public void setWakeUpInterval(Long wakeUpInterval) {
-         log.evictionWakeUpIntervalDeprecated();
          testImmutability("wakeUpInterval");
          this.wakeUpInterval = wakeUpInterval;
       }
@@ -3525,10 +3525,10 @@ public class Configuration extends AbstractNamedCacheConfigurationBean {
 
       @ConfigurationDocRef(bean = Configuration.class, targetElement = "setRehashEnabled")
       protected Boolean rehashEnabled = true;
-      
+
       @ConfigurationDocRef(bean = HashConfig.class, targetElement = "numVirtualNodes")
       protected Integer numVirtualNodes = 1;
-      
+
       @ConfigurationDocRef(bean = HashConfig.class, targetElement = "groups")
       protected GroupsConfiguration groups = new GroupsConfiguration();
       @XmlTransient
@@ -3575,7 +3575,7 @@ public class Configuration extends AbstractNamedCacheConfigurationBean {
          activate();
          this.hashFunctionClass = hashFunctionClass;
       }
-      
+
       private void activate() {
          activated = true;
          overriddenConfigurationElements.add("activated");
@@ -3591,18 +3591,18 @@ public class Configuration extends AbstractNamedCacheConfigurationBean {
       public Integer getNumOwners() {
          return numOwners;
       }
-      
+
       @XmlAttribute
       public Integer getNumVirtualNodes() {
          return numVirtualNodes;
       }
-      
+
       @Override
       public HashConfig numVirtualNodes(Integer numVirtualNodes) {
          setNumVirtualNodes(numVirtualNodes);
          return this;
       }
-      
+
       /**
        * @deprecated No longer used since 5.2, use {@link org.infinispan.configuration.cache.HashConfigurationBuilder#numSegments(int)} instead.
        */
@@ -3695,21 +3695,21 @@ public class Configuration extends AbstractNamedCacheConfigurationBean {
          setRehashEnabled(rehashEnabled);
          return this;
       }
-      
+
       @Override
       public GroupsConfiguration groups() {
          groups.setConfiguration(config);
          activate();
          return groups;
       }
-      
+
       @XmlElement
       public void setGroups(GroupsConfiguration groups) {
          testImmutability("groups");
          this.groups = groups;
       }
-      
-      
+
+
       public GroupsConfiguration getGroups() {
          return groups();
       }
@@ -3748,7 +3748,7 @@ public class Configuration extends AbstractNamedCacheConfigurationBean {
          result = 31 * result + (rehashEnabled ? 0 : 1);
          return result;
       }
-      
+
       @Override
       public HashType clone() throws CloneNotSupportedException {
          HashType dolly = (HashType) super.clone();
@@ -3787,7 +3787,7 @@ public class Configuration extends AbstractNamedCacheConfigurationBean {
 
       @ConfigurationDocRef(bean = Configuration.class, targetElement = "setL1OnRehash")
       protected Boolean onRehash = true;
-      
+
       @ConfigurationDocRef(bean = Configuration.class, targetElement = "setL1InvalidationThreshold")
       protected Integer invalidationThreshold = 0;
 
@@ -3886,20 +3886,20 @@ public class Configuration extends AbstractNamedCacheConfigurationBean {
          setOnRehash(onRehash);
          return this;
       }
-      
+
       @Override
       public L1Config invalidationThreshold(Integer threshold) {
          setInvalidationThreshold(threshold);
          return this;
       }
-      
-     
+
+
       public void setInvalidationThreshold(Integer threshold) {
          testImmutability("invalidationThreshold");
          activate();
          this.invalidationThreshold = threshold;
       }
-      
+
       @XmlAttribute
       public Integer getInvalidationThreshold() {
 	      return invalidationThreshold;
@@ -3921,7 +3921,7 @@ public class Configuration extends AbstractNamedCacheConfigurationBean {
          if (lifespan != null ? !lifespan.equals(l1Type.lifespan) : l1Type.lifespan != null) return false;
          if (onRehash != null ? !onRehash.equals(l1Type.onRehash) : l1Type.onRehash != null) return false;
          if (invalidationThreshold != null ? !invalidationThreshold.equals(l1Type.invalidationThreshold) : l1Type.invalidationThreshold != null) return false;
-         
+
          return true;
       }
 
@@ -4395,8 +4395,8 @@ public class Configuration extends AbstractNamedCacheConfigurationBean {
    /**
     * Allows you to tune various unsafe or non-standard characteristics. Certain operations such as Cache.put() that are
     * supposed to return the previous value associated with the specified key according to the java.util.Map contract
-    * will not fulfill this contract if unsafe toggle is turned on. Use with care. See details at 
-    * <a href="https://docs.jboss.org/author/display/ISPN/Technical+FAQs">Technical FAQ</a> 
+    * will not fulfill this contract if unsafe toggle is turned on. Use with care. See details at
+    * <a href="https://docs.jboss.org/author/display/ISPN/Technical+FAQs">Technical FAQ</a>
     *
     * @see <a href="../../../config.html#ce_default_unsafe">Configuration reference</a>
     */
@@ -4477,7 +4477,7 @@ public class Configuration extends AbstractNamedCacheConfigurationBean {
 
       @XmlElement(name = "interceptor")
       private List<CustomInterceptorConfig> customInterceptors = new LinkedList<CustomInterceptorConfig>();
-      
+
       public CustomInterceptorsType() {
          testImmutability("customInterceptors");
       }
@@ -4650,10 +4650,10 @@ public class Configuration extends AbstractNamedCacheConfigurationBean {
          setIndexLocalOnly(indexLocalOnly);
          return this;
       }
-      
+
       @XmlElement(name = "properties")
       protected TypedProperties properties = new TypedProperties();
-      
+
       @Override
       public IndexingConfig withProperties(Properties properties) {
          testImmutability("properties");
@@ -4696,7 +4696,7 @@ public class Configuration extends AbstractNamedCacheConfigurationBean {
 
          if (indexLocalOnly != null ? !indexLocalOnly.equals(that.indexLocalOnly) : that.indexLocalOnly != null)
             return false;
-         
+
          if (!properties.equals(that.properties))
             return false;
 
@@ -4728,7 +4728,8 @@ public class Configuration extends AbstractNamedCacheConfigurationBean {
             throw new RuntimeException("Should not happen!", shouldNotHappen);
          }
       }
-      
+
+      @Override
       public String toString(){
          return "Indexing[enabled="+enabled+",localOnly="+indexLocalOnly+"]";
       }

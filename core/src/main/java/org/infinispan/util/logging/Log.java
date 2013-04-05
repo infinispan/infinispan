@@ -629,9 +629,7 @@ public interface Log extends BasicLogger {
       "Only manually evicted entities will be passivated.", id = 152)
    void passivationWithoutEviction();
 
-   @LogMessage(level = WARN)
-   @Message(value = "Ignoring eviction wakeUpInterval configuration since it is deprecated, please configure Expiration's wakeUpInterval instead", id = 153)
-   void evictionWakeUpIntervalDeprecated();
+   // Warning ISPN000153 removed as per ISPN-2554
 
    @LogMessage(level = ERROR)
    @Message(value = "Unable to unlock keys %2$s for transaction %1$s after they were rebalanced off node %3$s", id = 154)
