@@ -55,7 +55,7 @@ public class PutKeyValueCommand extends AbstractDataWriteCommand {
 
    public PutKeyValueCommand(Object key, Object value, boolean putIfAbsent, CacheNotifier notifier, long lifespanMillis, long maxIdleTimeMillis, Set<Flag> flags) {
       super(key, flags);
-      this.value = value;
+      setValue(value);
       this.putIfAbsent = putIfAbsent;
       this.notifier = notifier;
       this.lifespanMillis = lifespanMillis;
@@ -72,6 +72,9 @@ public class PutKeyValueCommand extends AbstractDataWriteCommand {
 
    public void setValue(Object value) {
       this.value = value;
+      if (value instanceof DeltaAware) {
+         setFlags(Flag.DELTA_WRITE);
+      }
    }
 
    @Override

@@ -21,10 +21,9 @@ package org.infinispan.interceptors;
 
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.context.Flag;
-import org.infinispan.distribution.DistributionManager;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.factories.annotations.Start;
-import org.infinispan.remoting.transport.Transport;
+import org.infinispan.interceptors.locking.ClusteringDependentLogic;
 
 import java.util.Set;
 
@@ -37,29 +36,26 @@ import java.util.Set;
  */
 public class ClusteredCacheLoaderInterceptor extends CacheLoaderInterceptor {
 
-   private CacheMode cacheMode;
    private boolean isWriteSkewConfigured;
-   private Transport transport;
-   private DistributionManager distributionManager;
+   private ClusteringDependentLogic cdl;
 
    @Inject
-   private void injectClusteredCacheLoaderInterceptorDependencies(Transport transport, DistributionManager distributionManager) {
-      this.transport = transport;
-      this.distributionManager = distributionManager;
+   private void injectDependencies(ClusteringDependentLogic cdl) {
+      this.cdl = cdl;
    }
    
    @Start(priority = 15)
    private void startClusteredCacheLoaderInterceptor() {
-      cacheMode = cacheConfiguration.clustering().cacheMode();
-      // For now the coordinator/primary data owner may need to load from the cache store, even if
+      CacheMode cacheMode = cacheConfiguration.clustering().cacheMode();
+      // For now the primary data owner may need to load from the cache store, even if
       // this is a remote call, if write skew checking is enabled.  Once ISPN-317 is in, this may also need to
       // happen if running in distributed mode and eviction is enabled.
-      isWriteSkewConfigured = cacheConfiguration.locking().writeSkewCheck() && cacheMode.isClustered();
+      isWriteSkewConfigured = cacheConfiguration.locking().writeSkewCheck()
+            && (cacheMode.isReplicated() || cacheMode.isDistributed());
    }
 
    @Override
    protected boolean forceLoad(Object key, Set<Flag> flags) {
-      return isWriteSkewConfigured && ((cacheMode.isReplicated() && transport.isCoordinator()) ||
-            (cacheMode.isDistributed() && distributionManager.getPrimaryLocation(key).equals(transport.getAddress())));
+      return isDeltaWrite(flags) || isWriteSkewConfigured && cdl.localNodeIsPrimaryOwner(key);
    }
 }

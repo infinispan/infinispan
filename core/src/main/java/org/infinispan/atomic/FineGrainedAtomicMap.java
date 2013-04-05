@@ -24,7 +24,6 @@ package org.infinispan.atomic;
 
 import java.util.Map;
 import org.infinispan.util.concurrent.IsolationLevel;
-import org.infinispan.atomic.AtomicMapLookup;
 
 /**
  * FineGrainedAtomicMap is a special type of Map geared for use in Infinispan.  FineGrainedAtomicMap has 

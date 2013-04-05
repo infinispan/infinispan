@@ -154,13 +154,22 @@ public class CacheLoaderInterceptor extends JmxStatsCommandInterceptor {
       return false;
    }
 
+   /**
+    * Indicates whether the operation is a delta write. If it is, the
+    * previous value needs to be loaded from the cache store so that
+    * it can be merged.
+    */
+   protected boolean isDeltaWrite(Set<Flag> flags) {
+      return flags != null && flags.contains(Flag.DELTA_WRITE);
+   }
+
    private boolean loadIfNeeded(InvocationContext ctx, Object key, boolean isRetrieval, FlagAffectedCommand cmd) throws Throwable {
       if (cmd.hasFlag(Flag.SKIP_CACHE_STORE) || cmd.hasFlag(Flag.SKIP_CACHE_LOAD)
             || cmd.hasFlag(Flag.IGNORE_RETURN_VALUES)) {
          return false; //skip operation
       }
 
-      // If this is a remote call, skip loading UNLESS we are the coordinator/primary data owner of this key, and
+      // If this is a remote call, skip loading UNLESS we are the primary data owner of this key, and
       // are using eviction or write skew checking.
       if (!isRetrieval && !ctx.isOriginLocal() && !forceLoad(key, cmd.getFlags())) return false;
 
