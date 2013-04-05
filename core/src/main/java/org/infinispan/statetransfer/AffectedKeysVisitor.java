@@ -75,7 +75,7 @@ class AffectedKeysVisitor extends AbstractVisitor {
 
    @Override
    public Object visitApplyDeltaCommand(InvocationContext ctx, ApplyDeltaCommand command) {
-      return Collections.singleton(command.getDeltaAwareKey());
+      return Collections.singleton(command.getKey());
    }
 
    @Override
