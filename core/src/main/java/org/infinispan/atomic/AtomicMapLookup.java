@@ -28,7 +28,6 @@ import org.infinispan.context.Flag;
 import org.infinispan.context.FlagContainer;
 import org.infinispan.util.InfinispanCollections;
 
-import java.util.Collections;
 import java.util.Map;
 
 import static org.infinispan.util.Immutables.immutableMapWrap;

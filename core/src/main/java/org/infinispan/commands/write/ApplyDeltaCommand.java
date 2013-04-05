@@ -23,12 +23,11 @@
 package org.infinispan.commands.write;
 
 import java.io.Serializable;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.List;
+import java.util.*;
 
 import org.infinispan.atomic.Delta;
 import org.infinispan.commands.Visitor;
+import org.infinispan.context.Flag;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.lifecycle.ComponentStatus;
 
@@ -49,7 +48,7 @@ public class ApplyDeltaCommand extends AbstractDataWriteCommand {
    }
    
    public ApplyDeltaCommand(Object deltaAwareValueKey, Delta delta, Collection<Object> keys) {
-      //todo [anistor] should invoke super(deltaAwareValueKey)
+      super(deltaAwareValueKey, EnumSet.of(Flag.DELTA_WRITE));
       if (keys == null || keys.isEmpty())
          throw new IllegalArgumentException("At least one key to be locked needs to be specified");
       else
@@ -96,7 +95,7 @@ public class ApplyDeltaCommand extends AbstractDataWriteCommand {
 
    @Override
    public Object[] getParameters() {
-      return new Object[]{deltaAwareValueKey, delta, keys};
+      return new Object[]{deltaAwareValueKey, delta, keys, Flag.copyWithoutRemotableFlags(flags)};
    }
 
    @Override
@@ -109,6 +108,7 @@ public class ApplyDeltaCommand extends AbstractDataWriteCommand {
       deltaAwareValueKey = args[i++];
       delta = (Delta)args[i++];
       keys = (List<Object>) args[i++];
+      flags = (Set<Flag>) args[i];
    }
    @Override
    public Object acceptVisitor(InvocationContext ctx, Visitor visitor) throws Throwable {
