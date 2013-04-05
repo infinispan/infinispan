@@ -22,7 +22,9 @@
  */
 package org.infinispan.commands.write;
 
-import java.io.Serializable;
+import java.io.IOException;
+import java.io.ObjectInput;
+import java.io.ObjectOutput;
 import java.util.*;
 
 import org.infinispan.atomic.Delta;
@@ -30,6 +32,8 @@ import org.infinispan.commands.Visitor;
 import org.infinispan.context.Flag;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.lifecycle.ComponentStatus;
+import org.infinispan.marshall.AbstractExternalizer;
+import org.infinispan.marshall.Ids;
 
 
 /**
@@ -37,38 +41,27 @@ import org.infinispan.lifecycle.ComponentStatus;
  * @since 5.1
  */
 public class ApplyDeltaCommand extends AbstractDataWriteCommand {
-   
+
    public static final int COMMAND_ID = 25;
-   private Object deltaAwareValueKey;
+
    private Collection<Object> keys;
    private Delta delta;
-   
+
    public ApplyDeltaCommand() {
-      super();
    }
-   
+
    public ApplyDeltaCommand(Object deltaAwareValueKey, Delta delta, Collection<Object> keys) {
       super(deltaAwareValueKey, EnumSet.of(Flag.DELTA_WRITE));
+
       if (keys == null || keys.isEmpty())
          throw new IllegalArgumentException("At least one key to be locked needs to be specified");
-      else
-         this.keys = keys;
-      
+
+      this.keys = keys;
       this.delta = delta;
-      this.deltaAwareValueKey = deltaAwareValueKey;      
    }
-   
-   public Object getDeltaAwareKey(){
-      return deltaAwareValueKey;
-   }
-   
+
    public Delta getDelta(){
       return delta;
-   }
-   
-   @Override
-   public Object getKey() {
-      return getDeltaAwareKey();
    }
 
    /**
@@ -90,12 +83,12 @@ public class ApplyDeltaCommand extends AbstractDataWriteCommand {
 
    @Override
    public String toString() {
-      return "ApplyDeltaCommand[key=" + deltaAwareValueKey + ", delta=" + delta + ",keys=" + keys+ ']';
+      return "ApplyDeltaCommand[key=" + key + ", delta=" + delta + ", keys=" + keys+ ']';
    }
 
    @Override
    public Object[] getParameters() {
-      return new Object[]{deltaAwareValueKey, delta, keys, Flag.copyWithoutRemotableFlags(flags)};
+      return new Object[]{key, delta, keys, Flag.copyWithoutRemotableFlags(flags)};
    }
 
    @Override
@@ -103,13 +96,14 @@ public class ApplyDeltaCommand extends AbstractDataWriteCommand {
    public void setParameters(int commandId, Object[] args) {
       // TODO: Check duplicated in all commands? A better solution is needed.
       if (commandId != COMMAND_ID)
-         throw new IllegalStateException("Unusupported command id:" + commandId);
+         throw new IllegalStateException("Unsupported command id:" + commandId);
       int i = 0;
-      deltaAwareValueKey = args[i++];
+      key = args[i++];
       delta = (Delta)args[i++];
       keys = (List<Object>) args[i++];
       flags = (Set<Flag>) args[i];
    }
+
    @Override
    public Object acceptVisitor(InvocationContext ctx, Visitor visitor) throws Throwable {
       return visitor.visitApplyDeltaCommand(ctx, this);
@@ -118,13 +112,14 @@ public class ApplyDeltaCommand extends AbstractDataWriteCommand {
    public Object[] getKeys() {
       return keys.toArray();
    }
-   
-   public Object[] getCompositeKeys(){
-      List<DeltaCompositeKey> composite = new ArrayList<DeltaCompositeKey>(keys.size());
+
+   public Object[] getCompositeKeys() {
+      DeltaCompositeKey[] compositeKeys = new DeltaCompositeKey[keys.size()];
+      int i = 0;
       for (Object k : keys) {
-         composite.add(new DeltaCompositeKey(deltaAwareValueKey, k));         
-      }      
-      return composite.toArray();      
+         compositeKeys[i++] = new DeltaCompositeKey(key, k);
+      }
+      return compositeKeys;
    }
 
    @Override
@@ -153,18 +148,12 @@ public class ApplyDeltaCommand extends AbstractDataWriteCommand {
       }
 
       ApplyDeltaCommand that = (ApplyDeltaCommand) o;
-
-      if (!keys.equals(that.keys)) {
-         return false;
-      }
-      return true;
+      return keys.equals(that.keys);
    }
 
    @Override
    public int hashCode() {
-      int result = super.hashCode();
-      result = 31 * result + (keys != null ? keys.hashCode() : 0);
-      return result;
+      return 31 * super.hashCode() + keys.hashCode();
    }
 
    @Override
@@ -176,31 +165,26 @@ public class ApplyDeltaCommand extends AbstractDataWriteCommand {
    public boolean isConditional() {
       return false;
    }
-   
+
    /**
     * DeltaCompositeKey is the key guarding access to a specific entry in DeltaAware
-    * 
     */
-   private static final class DeltaCompositeKey implements Serializable {
-      /** The serialVersionUID */
-      private static final long serialVersionUID = -8598408570487324159L;
-      
+   private static final class DeltaCompositeKey {
+
       private final Object deltaAwareValueKey;
       private final Object entryKey;
-      
-      public DeltaCompositeKey(Object deltaAwareValueKey, Object entryKey) {         
+
+      public DeltaCompositeKey(Object deltaAwareValueKey, Object entryKey) {
+         if (deltaAwareValueKey == null || entryKey == null)
+            throw new IllegalArgumentException("Keys cannot be null");
+
          this.deltaAwareValueKey = deltaAwareValueKey;
          this.entryKey = entryKey;
       }
 
       @Override
       public int hashCode() {
-         final int prime = 31;
-         int result = 1;
-         result = prime * result
-                  + ((deltaAwareValueKey == null) ? 0 : deltaAwareValueKey.hashCode());
-         result = prime * result + ((entryKey == null) ? 0 : entryKey.hashCode());
-         return result;
+         return 31 * deltaAwareValueKey.hashCode() + entryKey.hashCode();
       }
 
       @Override
@@ -208,34 +192,43 @@ public class ApplyDeltaCommand extends AbstractDataWriteCommand {
          if (this == obj) {
             return true;
          }
-         if (obj == null) {
-            return false;
-         }
          if (!(obj instanceof DeltaCompositeKey)) {
             return false;
          }
          DeltaCompositeKey other = (DeltaCompositeKey) obj;
-         if (deltaAwareValueKey == null) {
-            if (other.deltaAwareValueKey != null) {
-               return false;
-            }
-         } else if (!deltaAwareValueKey.equals(other.deltaAwareValueKey)) {
-            return false;
-         }
-         if (entryKey == null) {
-            if (other.entryKey != null) {
-               return false;
-            }
-         } else if (!entryKey.equals(other.entryKey)) {
-            return false;
-         }
-         return true;
+         return deltaAwareValueKey.equals(other.deltaAwareValueKey) && entryKey.equals(other.entryKey);
       }
 
       @Override
       public String toString() {
-         //This is used by logger messages when debugging
-         return "ApplyDeltaCommand#DeltaCompositeKey[deltaAwareValueKey=" + deltaAwareValueKey + ", entryKey=" + entryKey + ']';
+         return "DeltaCompositeKey[deltaAwareValueKey=" + deltaAwareValueKey + ", entryKey=" + entryKey + ']';
+      }
+   }
+
+   public static class DeltaCompositeKeyExternalizer extends AbstractExternalizer<DeltaCompositeKey> {
+
+      @Override
+      public void writeObject(ObjectOutput output, DeltaCompositeKey dck) throws IOException {
+         output.writeObject(dck.deltaAwareValueKey);
+         output.writeObject(dck.entryKey);
+      }
+
+      @Override
+      @SuppressWarnings("unchecked")
+      public DeltaCompositeKey readObject(ObjectInput unmarshaller) throws IOException, ClassNotFoundException {
+         Object deltaAwareValueKey = unmarshaller.readObject();
+         Object entryKey = unmarshaller.readObject();
+         return new DeltaCompositeKey(deltaAwareValueKey, entryKey);
+      }
+
+      @Override
+      public Integer getId() {
+         return Ids.DELTA_COMPOSITE_KEY;
+      }
+
+      @Override
+      public Set<Class<? extends DeltaCompositeKey>> getTypeClasses() {
+         return Collections.<Class<? extends DeltaCompositeKey>>singleton(DeltaCompositeKey.class);
       }
    }
 }

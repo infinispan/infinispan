@@ -187,7 +187,7 @@ public class EntryWrappingInterceptor extends CommandInterceptor {
 
    @Override
    public Object visitApplyDeltaCommand(InvocationContext ctx, ApplyDeltaCommand command) throws Throwable {
-      entryFactory.wrapEntryForDelta(ctx, command.getDeltaAwareKey(), command.getDelta());
+      entryFactory.wrapEntryForDelta(ctx, command.getKey(), command.getDelta());
       return invokeNextInterceptor(ctx, command);
    }
 
@@ -355,7 +355,7 @@ public class EntryWrappingInterceptor extends CommandInterceptor {
       @Override
       public Object visitApplyDeltaCommand(InvocationContext ctx, ApplyDeltaCommand command) throws Throwable {
          if (cdl.localNodeIsOwner(command.getKey())) {
-            entryFactory.wrapEntryForDelta(ctx, command.getDeltaAwareKey(), command.getDelta());
+            entryFactory.wrapEntryForDelta(ctx, command.getKey(), command.getDelta());
             invokeNextInterceptor(ctx, command);
          }
          return null;
