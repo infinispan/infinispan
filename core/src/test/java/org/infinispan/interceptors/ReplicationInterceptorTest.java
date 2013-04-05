@@ -87,7 +87,7 @@ public class ReplicationInterceptorTest {
             Set<Flag> flags = (Set<Flag>) invocation.getArguments()[1];
             boolean acquireRemoteLock = (Boolean) invocation.getArguments()[2];
             GlobalTransaction gtx = (GlobalTransaction) invocation.getArguments()[3];
-            return new ClusteredGetCommand(key, "cache1", flags, acquireRemoteLock, gtx);
+            return new ClusteredGetCommand(key, "cache1", flags, acquireRemoteLock, gtx, null);
          }
       });
 

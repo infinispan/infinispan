@@ -62,7 +62,7 @@ import org.infinispan.marshall.MarshalledValue;
 import org.infinispan.query.Transformer;
 import org.infinispan.query.impl.DefaultSearchWorkCreator;
 import org.infinispan.query.logging.Log;
-import org.infinispan.util.concurrent.ConcurrentMapFactory;
+import org.infinispan.util.CollectionFactory;
 import org.infinispan.util.logging.LogFactory;
 
 /**
@@ -80,7 +80,7 @@ import org.infinispan.util.logging.LogFactory;
 public class QueryInterceptor extends CommandInterceptor {
 
    private final SearchFactoryIntegrator searchFactory;
-   private final ConcurrentMap<Class<?>,Boolean> knownClasses = ConcurrentMapFactory.makeConcurrentMap();
+   private final ConcurrentMap<Class<?>,Boolean> knownClasses = CollectionFactory.makeConcurrentMap();
    private final Lock mutating = new ReentrantLock();
    private final KeyTransformationHandler keyTransformationHandler = new KeyTransformationHandler();
    private SearchWorkCreator<Object> searchWorkCreator = new DefaultSearchWorkCreator<Object>();

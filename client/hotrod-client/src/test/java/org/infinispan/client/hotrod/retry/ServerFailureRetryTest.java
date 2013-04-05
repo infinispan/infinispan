@@ -33,6 +33,7 @@ import org.testng.annotations.Test;
 
 import java.lang.reflect.Method;
 
+import static org.infinispan.server.hotrod.test.HotRodTestingUtil.hotRodCacheConfiguration;
 import static org.infinispan.test.TestingUtil.k;
 import static org.infinispan.test.TestingUtil.v;
 
@@ -48,7 +49,8 @@ public class ServerFailureRetryTest extends AbstractRetryTest {
 
    @Override
    protected ConfigurationBuilder getCacheConfig() {
-      return getDefaultClusteredCacheConfig(CacheMode.REPL_SYNC, false);
+      return hotRodCacheConfiguration(
+            getDefaultClusteredCacheConfig(CacheMode.REPL_SYNC, false));
    }
 
    public void testRetryWithSuspectException(Method m) {

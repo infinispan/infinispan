@@ -37,9 +37,9 @@ import org.infinispan.remoting.rpc.ResponseMode;
 import org.infinispan.remoting.rpc.RpcManager;
 import org.infinispan.remoting.rpc.RpcOptions;
 import org.infinispan.remoting.transport.Address;
+import org.infinispan.util.CollectionFactory;
 import org.infinispan.util.InfinispanCollections;
 import org.infinispan.util.concurrent.AggregatingNotifyingFutureImpl;
-import org.infinispan.util.concurrent.ConcurrentMapFactory;
 import org.infinispan.util.concurrent.NoOpFuture;
 import org.infinispan.util.concurrent.NotifyingFutureImpl;
 import org.infinispan.util.concurrent.NotifyingNotifiableFuture;
@@ -81,7 +81,7 @@ public class L1ManagerImpl implements L1Manager {
    private RpcOptions syncIgnoreLeaversRpcOptions;
 
    public L1ManagerImpl() {
-	   requestors = ConcurrentMapFactory.makeConcurrentMap();
+	   requestors = CollectionFactory.makeConcurrentMap();
    }
 
    @Inject
@@ -144,7 +144,7 @@ public class L1ManagerImpl implements L1Manager {
       long now = System.currentTimeMillis();
       if (as == null) {
          // only if needed we create a new HashSet, but make sure we don't replace another one being created
-         as = ConcurrentMapFactory.makeConcurrentMap();
+         as = CollectionFactory.makeConcurrentMap();
          as.put(origin, now);
          ConcurrentMap<Address, Long> previousAs = requestors.putIfAbsent(key, as);
          if (previousAs != null) {

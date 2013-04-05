@@ -25,6 +25,7 @@ package org.infinispan.context;
 
 import org.infinispan.container.entries.CacheEntry;
 import org.infinispan.context.impl.AbstractInvocationContext;
+import org.infinispan.util.Equivalence;
 import org.infinispan.util.InfinispanCollections;
 
 import java.util.Collections;
@@ -48,8 +49,12 @@ public class SingleKeyNonTxInvocationContext extends AbstractInvocationContext {
 
    private CacheEntry cacheEntry;
 
-   public SingleKeyNonTxInvocationContext(boolean originLocal) {
+   private final Equivalence keyEquivalence;
+
+   public SingleKeyNonTxInvocationContext(
+         boolean originLocal, Equivalence keyEquivalence) {
       isOriginLocal = originLocal;
+      this.keyEquivalence = keyEquivalence;
    }
 
    @Override
@@ -91,8 +96,11 @@ public class SingleKeyNonTxInvocationContext extends AbstractInvocationContext {
    }
 
    @Override
+   @SuppressWarnings("unchecked")
    public CacheEntry lookupEntry(Object key) {
-      if (key != null && this.key !=null && key.equals(this.key)) return cacheEntry;
+      if (key != null && this.key !=null && keyEquivalence.equals(key, this.key))
+         return cacheEntry;
+
       return null;
    }
 

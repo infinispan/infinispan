@@ -29,9 +29,23 @@ package org.infinispan.util;
  * @author Galder Zamarreño
  * @since 5.3
  */
-public enum ComparingObject implements Comparing {
+public class AnyEquivalence<T> implements Equivalence<T> {
 
-   INSTANCE;
+   public static AnyEquivalence<Object> OBJECT = new AnyEquivalence<Object>();
+
+   public static AnyEquivalence<String> STRING = new AnyEquivalence<String>();
+
+   public static AnyEquivalence<Byte> BYTE = new AnyEquivalence<Byte>();
+
+   public static AnyEquivalence<Short> SHORT = new AnyEquivalence<Short>();
+
+   public static AnyEquivalence<Integer> INT = new AnyEquivalence<Integer>();
+
+   public static AnyEquivalence<Long> LONG = new AnyEquivalence<Long>();
+
+   public static AnyEquivalence<Double> DOUBLE  = new AnyEquivalence<Double>();
+
+   public static AnyEquivalence<Float> FLOAT = new AnyEquivalence<Float>();
 
    @Override
    public int hashCode(Object obj) {
@@ -39,7 +53,7 @@ public enum ComparingObject implements Comparing {
    }
 
    @Override
-   public boolean equals(Object obj, Object otherObj) {
+   public boolean equals(T obj, Object otherObj) {
       return obj != null && obj.equals(otherObj);
    }
 

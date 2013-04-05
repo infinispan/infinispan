@@ -38,7 +38,7 @@ import org.infinispan.loaders.modifications.Store;
 import org.infinispan.marshall.StreamingMarshaller;
 import org.infinispan.transaction.xa.GlobalTransaction;
 import org.infinispan.transaction.xa.TransactionFactory;
-import org.infinispan.util.concurrent.ConcurrentMapFactory;
+import org.infinispan.util.CollectionFactory;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
@@ -126,11 +126,11 @@ public class AsyncStore extends AbstractDelegatingStore {
          shutdownTimeout = configuredAsyncStopTimeout;
       }
 
-      transactions = ConcurrentMapFactory.makeConcurrentMap(64, concurrencyLevel);
+      transactions = CollectionFactory.makeConcurrentMap(64, concurrencyLevel);
    }
 
    private State newState(boolean clear, State next) {
-      ConcurrentMap<Object, Modification> map = ConcurrentMapFactory.makeConcurrentMap(64, concurrencyLevel);
+      ConcurrentMap<Object, Modification> map = CollectionFactory.makeConcurrentMap(64, concurrencyLevel);
       return new State(clear, map, next);
    }
 

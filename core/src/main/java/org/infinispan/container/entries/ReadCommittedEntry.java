@@ -30,6 +30,7 @@ import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
 import static org.infinispan.container.entries.ReadCommittedEntry.Flags.*;
+import static org.infinispan.util.Util.toStr;
 
 /**
  * A wrapper around a cached entry that encapsulates read committed semantics when writes are initiated, committed or
@@ -175,7 +176,7 @@ public class ReadCommittedEntry implements MVCCEntry {
       if (isChanged() || isLoaded()) {
          if (trace)
             log.tracef("Updating entry (key=%s removed=%s valid=%s changed=%s created=%s loaded=%s value=%s]",
-                  getKey(), isRemoved(), isValid(), isChanged(), isCreated(), isLoaded(), value);
+                  toStr(getKey()), isRemoved(), isValid(), isChanged(), isCreated(), isLoaded(), value);
 
          // Ugh!
          if (value instanceof AtomicHashMap) {
@@ -290,7 +291,7 @@ public class ReadCommittedEntry implements MVCCEntry {
    @Override
    public String toString() {
       return getClass().getSimpleName() + "(" + Util.hexIdHashCode(this) + "){" +
-            "key=" + key +
+            "key=" + toStr(key) +
             ", value=" + value +
             ", oldValue=" + oldValue +
             ", isCreated=" + isCreated() +

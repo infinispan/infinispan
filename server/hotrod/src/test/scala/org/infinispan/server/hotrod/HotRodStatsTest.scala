@@ -38,7 +38,11 @@ import org.infinispan.manager.EmbeddedCacheManager
 @Test(groups = Array("functional"), testName = "server.hotrod.FunctionalTest")
 class HotRodStatsTest extends HotRodSingleNodeTest {
 
-   override def createTestCacheManager: EmbeddedCacheManager = TestCacheManagerFactory.createCacheManagerEnforceJmxDomain(jmxDomain)
+   override def createTestCacheManager: EmbeddedCacheManager = {
+      val cfg = hotRodCacheConfiguration()
+      cfg.jmxStatistics().enable()
+      TestCacheManagerFactory.createClusteredCacheManagerEnforceJmxDomain(jmxDomain, cfg)
+   }
 
    def testStats(m: Method) {
       var bytesRead = 0

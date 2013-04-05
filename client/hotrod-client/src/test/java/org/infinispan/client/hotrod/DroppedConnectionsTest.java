@@ -38,6 +38,7 @@ import java.net.InetSocketAddress;
 import java.util.Properties;
 
 import static org.testng.AssertJUnit.assertEquals;
+import static org.infinispan.server.hotrod.test.HotRodTestingUtil.hotRodCacheConfiguration;
 
 /**
  * @author Mircea.Markus@jboss.com
@@ -52,7 +53,8 @@ public class DroppedConnectionsTest extends SingleCacheManagerTest {
 
    @Override
    protected EmbeddedCacheManager createCacheManager() throws Exception {
-      cacheManager = TestCacheManagerFactory.createCacheManager(getDefaultStandaloneConfig(true));
+      cacheManager = TestCacheManagerFactory.createCacheManager(
+            hotRodCacheConfiguration(getDefaultStandaloneCacheConfig(true)));
       hotRodServer = TestHelper.startHotRodServer(cacheManager);
       Properties hrClientConfig = new Properties();
       hrClientConfig.put("testWhileIdle", "false");

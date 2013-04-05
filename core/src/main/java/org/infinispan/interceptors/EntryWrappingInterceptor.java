@@ -58,6 +58,8 @@ import java.util.Iterator;
 import java.util.Map;
 import java.util.Set;
 
+import static org.infinispan.util.Util.toStr;
+
 /**
  * Interceptor in charge with wrapping entries and add them in caller's context.
  *
@@ -168,7 +170,9 @@ public class EntryWrappingInterceptor extends CommandInterceptor {
 
    private boolean shouldWrap(Object key, InvocationContext ctx, FlagAffectedCommand command) {
       if (command.hasFlag(Flag.SKIP_OWNERSHIP_CHECK)) {
-         log.tracef("Skipping ownership check and wrapping key %s", key);
+         if (trace)
+            log.tracef("Skipping ownership check and wrapping key %s", toStr(key));
+
          return true;
       }
       boolean result;
@@ -181,7 +185,10 @@ public class EntryWrappingInterceptor extends CommandInterceptor {
             result = cdl.localNodeIsOwner(key);
          }
       }
-      log.tracef("Wrapping entry '%s'? %s", key, result);
+
+      if (trace)
+         log.tracef("Wrapping entry '%s'? %s", toStr(key), result);
+
       return result;
    }
 

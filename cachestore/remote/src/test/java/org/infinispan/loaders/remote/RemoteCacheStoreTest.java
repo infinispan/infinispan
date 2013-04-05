@@ -40,6 +40,8 @@ import org.testng.annotations.Test;
 
 import java.util.Properties;
 
+import static org.infinispan.server.hotrod.test.HotRodTestingUtil.hotRodCacheConfiguration;
+
 /**
  * @author Mircea.Markus@jboss.com
  * @since 4.1
@@ -64,7 +66,8 @@ public class RemoteCacheStoreTest extends BaseCacheStoreTest {
       GlobalConfigurationBuilder globalConfig = new GlobalConfigurationBuilder().nonClusteredDefault();
       globalConfig.globalJmxStatistics().allowDuplicateDomains(true);
 
-      localCacheManager = TestCacheManagerFactory.createCacheManager(globalConfig, cb);
+      localCacheManager = TestCacheManagerFactory.createCacheManager(
+            globalConfig, hotRodCacheConfiguration(cb));
       hrServer = TestHelper.startHotRodServer(localCacheManager);
 
       Properties properties = new Properties();

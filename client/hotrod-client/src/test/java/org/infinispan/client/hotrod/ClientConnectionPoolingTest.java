@@ -48,6 +48,7 @@ import static org.testng.AssertJUnit.assertTrue;
 
 import static org.infinispan.test.TestingUtil.*;
 import static org.infinispan.client.hotrod.test.HotRodClientTestingUtil.*;
+import static org.infinispan.server.hotrod.test.HotRodTestingUtil.hotRodCacheConfiguration;
 
 /**
  * @author Mircea.Markus@jboss.com
@@ -80,7 +81,7 @@ public class ClientConnectionPoolingTest extends MultipleCacheManagersTest {
 
    @Override
    protected void assertSupportedConfig() {
-      return;
+      // No-op
    }
 
    @Override
@@ -88,8 +89,8 @@ public class ClientConnectionPoolingTest extends MultipleCacheManagersTest {
       // The caches are not configured to form a cluster
       // so the client will have to use round-robin for balancing.
       // This means requests will alternate between server 1 and server 2.
-      c1 = TestCacheManagerFactory.createLocalCacheManager(false).getCache();
-      c2 = TestCacheManagerFactory.createLocalCacheManager(false).getCache();
+      c1 = TestCacheManagerFactory.createCacheManager(hotRodCacheConfiguration()).getCache();
+      c2 = TestCacheManagerFactory.createCacheManager(hotRodCacheConfiguration()).getCache();
       registerCacheManager(c1.getCacheManager(), c2.getCacheManager());
 
       hotRodServer1 = TestHelper.startHotRodServer(c1.getCacheManager());

@@ -22,17 +22,12 @@
  */
 package org.infinispan.client.hotrod;
 
-import org.infinispan.Cache;
 import org.infinispan.client.hotrod.test.HotRodClientTestingUtil;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.manager.EmbeddedCacheManager;
-import org.infinispan.marshall.Marshaller;
-import org.infinispan.marshall.jboss.JBossMarshaller;
-import org.infinispan.server.core.CacheValue;
 import org.infinispan.server.hotrod.HotRodServer;
 import org.infinispan.test.SingleCacheManagerTest;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
-import org.infinispan.util.ByteArrayKey;
 import org.infinispan.util.concurrent.NotifyingFuture;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
@@ -40,7 +35,6 @@ import org.testng.annotations.AfterClass;
 import org.testng.annotations.Test;
 
 import java.lang.reflect.Method;
-import java.util.Arrays;
 import java.util.Properties;
 import java.util.concurrent.TimeUnit;
 
@@ -49,7 +43,7 @@ import static org.infinispan.test.TestingUtil.v;
 import static org.testng.AssertJUnit.assertEquals;
 import static org.testng.AssertJUnit.assertNotNull;
 import static org.testng.AssertJUnit.assertNull;
-
+import static org.infinispan.server.hotrod.test.HotRodTestingUtil.*;
 
 /**
  * @author mmarkus
@@ -61,24 +55,26 @@ public class HotRodIntegrationTest extends SingleCacheManagerTest {
    private static final Log log = LogFactory.getLog(HotRodIntegrationTest.class);
 
    private static final String CACHE_NAME = "replSync";
-   private Cache cache;
-   private Cache defaultCache;
 
-   RemoteCache defaultRemote;
-   RemoteCache remoteCache;
+   RemoteCache<String, String> defaultRemote;
+   RemoteCache<Object, String> remoteCache;
    private RemoteCacheManager remoteCacheManager;
 
    protected HotRodServer hotrodServer;
 
    @Override
    protected EmbeddedCacheManager createCacheManager() throws Exception {
-      ConfigurationBuilder builder = getDefaultStandaloneCacheConfig(false);
-      cacheManager = TestCacheManagerFactory.createLocalCacheManager(false);
-      cacheManager.defineConfiguration(CACHE_NAME, builder.build());
-      defaultCache = cacheManager.getCache();
-      cache = cacheManager.getCache(CACHE_NAME);
+      ConfigurationBuilder builder = hotRodCacheConfiguration(
+            getDefaultStandaloneCacheConfig(false));
+      EmbeddedCacheManager cm = TestCacheManagerFactory
+            .createCacheManager(hotRodCacheConfiguration());
+      cm.defineConfiguration(CACHE_NAME, builder.build());
+      return cm;
+   }
 
-
+   @Override
+   protected void setup() throws Exception {
+      super.setup();
       //pass the config file to the cache
       hotrodServer = TestHelper.startHotRodServer(cacheManager);
       log.info("Started server on port: " + hotrodServer.getPort());
@@ -86,7 +82,6 @@ public class HotRodIntegrationTest extends SingleCacheManagerTest {
       remoteCacheManager = getRemoteCacheManager();
       defaultRemote = remoteCacheManager.getCache();
       remoteCache = remoteCacheManager.getCache(CACHE_NAME);
-      return cacheManager;
    }
 
    protected RemoteCacheManager getRemoteCacheManager() {
@@ -104,9 +99,9 @@ public class HotRodIntegrationTest extends SingleCacheManagerTest {
 
    public void testPut() throws Exception {
       assert null == remoteCache.put("aKey", "aValue");
-      assertCacheContains(cache, "aKey", "aValue");
+      assertHotRodEquals(cacheManager, CACHE_NAME, "aKey", "aValue");
       assert null == defaultRemote.put("otherKey", "otherValue");
-      assertCacheContains(defaultCache, "otherKey", "otherValue");
+      assertHotRodEquals(cacheManager, "otherKey", "otherValue");
       assert remoteCache.containsKey("aKey");
       assert defaultRemote.containsKey("otherKey");
       assert remoteCache.get("aKey").equals("aValue");
@@ -115,12 +110,12 @@ public class HotRodIntegrationTest extends SingleCacheManagerTest {
 
    public void testRemove() throws Exception {
       assert null == remoteCache.put("aKey", "aValue");
-      assertCacheContains(cache, "aKey", "aValue");
+      assertHotRodEquals(cacheManager, CACHE_NAME, "aKey", "aValue");
 
       assert remoteCache.get("aKey").equals("aValue");
 
       assert null == remoteCache.remove("aKey");
-      assertCacheContains(cache, "aKey", null);
+      assertHotRodEquals(cacheManager, CACHE_NAME, "aKey", null);
       assert !remoteCache.containsKey("aKey");
    }
 
@@ -267,7 +262,7 @@ public class HotRodIntegrationTest extends SingleCacheManagerTest {
       remoteCache.put("aKey", "aValue");
       VersionedValue valueBinary = remoteCache.getVersioned("aKey");
       assert remoteCache.removeWithVersion("aKey", valueBinary.getVersion());
-      assert !cache.containsKey("aKey");
+      assertHotRodEquals(cacheManager, CACHE_NAME, "aKey", null);
 
       remoteCache.put("aKey", "aNewValue");
 
@@ -298,16 +293,4 @@ public class HotRodIntegrationTest extends SingleCacheManagerTest {
       assert cache.isEmpty();
    }
 
-   private void assertCacheContains(Cache cache, String key, String value) throws Exception {
-      Marshaller marshaller = new JBossMarshaller();
-      byte[] keyBytes = marshaller.objectToByteBuffer(key, 64);
-      byte[] valueBytes = marshaller.objectToByteBuffer(value, 64);
-      ByteArrayKey cacheKey = new ByteArrayKey(keyBytes);
-      CacheValue cacheValue = (CacheValue) cache.get(cacheKey);
-      if (value == null) {
-         assert cacheValue == null : "Expected null value but received: " + cacheValue;
-      } else {
-         assert Arrays.equals(valueBytes, (byte[])cacheValue.data());
-      }
-   }
 }

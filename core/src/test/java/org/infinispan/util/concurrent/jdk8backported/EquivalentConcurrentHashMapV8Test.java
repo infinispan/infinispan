@@ -23,8 +23,6 @@
 
 package org.infinispan.util.concurrent.jdk8backported;
 
-import org.infinispan.util.Comparing;
-import org.infinispan.util.ComparingByteArray;
 import org.infinispan.util.concurrent.BoundedConcurrentHashMapTest;
 import org.testng.annotations.Test;
 
@@ -35,7 +33,7 @@ import java.util.concurrent.ConcurrentMap;
 import static org.testng.AssertJUnit.*;
 
 /**
- * Verifies that the {@link ComparingConcurrentHashMapV8}'s customizations
+ * Verifies that the {@link EquivalentConcurrentHashMapV8}'s customizations
  * for equals and hashCode callbacks are working as expected. In other words,
  * if byte arrays are used as key/value types, the equals and hashCode
  * calculations are done based on their contents and not on their standard
@@ -45,7 +43,7 @@ import static org.testng.AssertJUnit.*;
  * @since 5.3
  */
 @Test(groups = "functional", testName = "util.concurrent.jdk8backported.ComparingConcurrentHashMapV8Test")
-public class ComparingConcurrentHashMapV8Test extends BoundedConcurrentHashMapTest {
+public class EquivalentConcurrentHashMapV8Test extends BoundedConcurrentHashMapTest {
 
    public void testByteArrayComputeIfAbsent() {
       byteArrayComputeIfAbsent(createComparingConcurrentMap());
@@ -78,14 +76,14 @@ public class ComparingConcurrentHashMapV8Test extends BoundedConcurrentHashMapTe
 //   }
 
    private void byteArrayComputeIfAbsent(
-         ComparingConcurrentHashMapV8<byte[], byte[]> map) {
+         EquivalentConcurrentHashMapV8<byte[], byte[]> map) {
       byte[] key = {1, 2, 3};
       byte[] value = {4, 5, 6};
       map.put(key, value);
 
       byte[] computeKey = {1, 2, 3}; // on purpose, different instance required
       byte[] newValue = map.computeIfAbsent(
-            computeKey, new ComparingConcurrentHashMapV8.Fun<byte[], byte[]>() {
+            computeKey, new EquivalentConcurrentHashMapV8.Fun<byte[], byte[]>() {
          @Override
          public byte[] apply(byte[] bytes) {
             return new byte[]{7, 8, 9};
@@ -100,14 +98,14 @@ public class ComparingConcurrentHashMapV8Test extends BoundedConcurrentHashMapTe
    }
 
    private void byteArrayComputeIfPresent(
-         ComparingConcurrentHashMapV8<byte[], byte[]> map) {
+         EquivalentConcurrentHashMapV8<byte[], byte[]> map) {
       byte[] key = {1, 2, 3};
       byte[] value = {4, 5, 6};
       map.put(key, value);
 
       byte[] computeKey = {1, 2, 3}; // on purpose, different instance required
       byte[] newValue = map.computeIfPresent(computeKey,
-            new ComparingConcurrentHashMapV8.BiFun<byte[], byte[], byte[]>() {
+            new EquivalentConcurrentHashMapV8.BiFun<byte[], byte[], byte[]>() {
                @Override
                public byte[] apply(byte[] bytes, byte[] bytes2) {
                   return new byte[]{7, 8, 9};
@@ -123,14 +121,14 @@ public class ComparingConcurrentHashMapV8Test extends BoundedConcurrentHashMapTe
    }
 
    private void byteArrayMerge(
-         ComparingConcurrentHashMapV8<byte[], byte[]> map) {
+         EquivalentConcurrentHashMapV8<byte[], byte[]> map) {
       byte[] key = {1, 2, 3};
       byte[] value = {4, 5, 6};
       map.put(key, value);
 
       byte[] computeKey = {1, 2, 3}; // on purpose, different instance required
       byte[] newValue = map.merge(computeKey, new byte[]{},
-         new ComparingConcurrentHashMapV8.BiFun<byte[], byte[], byte[]>() {
+         new EquivalentConcurrentHashMapV8.BiFun<byte[], byte[], byte[]>() {
             @Override
             public byte[] apply(byte[] bytes, byte[] bytes2) {
                return new byte[]{7, 8, 9};
@@ -152,8 +150,9 @@ public class ComparingConcurrentHashMapV8Test extends BoundedConcurrentHashMapTe
    }
 
    @Override
-   protected ComparingConcurrentHashMapV8<byte[], byte[]> createComparingConcurrentMap() {
-      return new ComparingConcurrentHashMapV8<byte[], byte[]>(COMPARING);
+   protected EquivalentConcurrentHashMapV8<byte[], byte[]> createComparingConcurrentMap() {
+      return new EquivalentConcurrentHashMapV8<byte[], byte[]>(
+            EQUIVALENCE, EQUIVALENCE);
    }
 
 //
@@ -163,12 +162,12 @@ public class ComparingConcurrentHashMapV8Test extends BoundedConcurrentHashMapTe
 //      return new ComparingConcurrentHashMapV8<byte[], byte[]>(2, new SameHashByteArray(), COMPARING);
 //   }
 
-   private String str(byte[] array) {
-      // Ignore IDE warning about hashCode() call!!
-      return array != null
-            ? Arrays.toString(array) + "@" + Integer.toHexString(array.hashCode())
-            : "null";
-   }
+//   private String str(byte[] array) {
+//      // Ignore IDE warning about hashCode() call!!
+//      return array != null
+//            ? Arrays.toString(array) + "@" + Integer.toHexString(array.hashCode())
+//            : "null";
+//   }
 
 //
 //   TODO: Enable test when Comparing.compare() function for a byte[] has been created and tree hash bins can be used

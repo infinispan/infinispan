@@ -35,14 +35,13 @@ import org.infinispan.factories.annotations.Inject;
 import org.infinispan.loaders.CacheLoaderException;
 import org.infinispan.loaders.CacheLoaderManager;
 import org.infinispan.loaders.CacheStore;
-import org.infinispan.util.Comparing;
-import org.infinispan.util.ComparingObject;
+import org.infinispan.util.CollectionFactory;
+import org.infinispan.util.Equivalence;
 import org.infinispan.util.Immutables;
 import org.infinispan.util.concurrent.BoundedConcurrentHashMap;
 import org.infinispan.util.concurrent.BoundedConcurrentHashMap.Eviction;
 import org.infinispan.util.concurrent.BoundedConcurrentHashMap.EvictionListener;
-import org.infinispan.util.concurrent.ConcurrentMapFactory;
-import org.infinispan.util.concurrent.jdk8backported.ComparingConcurrentHashMapV8;
+import org.infinispan.util.concurrent.jdk8backported.EquivalentConcurrentHashMapV8;
 
 import java.util.AbstractCollection;
 import java.util.AbstractSet;
@@ -75,31 +74,22 @@ public class DefaultDataContainer implements DataContainer {
    private ActivationManager activator;
    private CacheLoaderManager clm;
 
-
-   public DefaultDataContainer(int concurrencyLevel, Comparing cfgComparingKey, Comparing cfgComparingValue) {
-      if (cfgComparingKey == null && cfgComparingValue == null) {
-         // If no comparing implementations passed, could fallback on JDK CHM
-         entries = ConcurrentMapFactory.makeConcurrentMap(128, concurrencyLevel);
-      } else {
-         Comparing comparingKey = resolveComparingFunction(cfgComparingKey);
-         Comparing comparingValue = resolveComparingFunction(cfgComparingValue);
-
-         // If at least one comparing implementation give, use ComparingCHMv8
-         entries = new ComparingConcurrentHashMapV8<Object, InternalCacheEntry>(
-               128, concurrencyLevel, comparingKey, comparingValue);
-      }
-
+   public DefaultDataContainer(int concurrencyLevel) {
+      // If no comparing implementations passed, could fallback on JDK CHM
+      entries = CollectionFactory.makeConcurrentMap(128, concurrencyLevel);
       evictionListener = null;
    }
 
-   private Comparing resolveComparingFunction(Comparing cfgComparingKey) {
-      return cfgComparingKey == null ?
-            ComparingObject.INSTANCE : cfgComparingKey;
+   public DefaultDataContainer(int concurrencyLevel,
+         Equivalence keyEq, Equivalence valueEq) {
+      // If at least one comparing implementation give, use ComparingCHMv8
+      entries = CollectionFactory.makeConcurrentMap(128, concurrencyLevel, keyEq, valueEq);
+      evictionListener = null;
    }
 
    protected DefaultDataContainer(int concurrencyLevel, int maxEntries,
          EvictionStrategy strategy, EvictionThreadPolicy policy,
-         Comparing cfgComparingKey, Comparing cfgComparingValue) {
+         Equivalence keyEquivalence, Equivalence valueEquivalence) {
       // translate eviction policy and strategy
       switch (policy) {
          case PIGGYBACK:
@@ -124,12 +114,9 @@ public class DefaultDataContainer implements DataContainer {
             throw new IllegalArgumentException("No such eviction strategy " + strategy);
       }
 
-      Comparing comparingKey = resolveComparingFunction(cfgComparingKey);
-      Comparing comparingValue = resolveComparingFunction(cfgComparingValue);
-
       entries = new BoundedConcurrentHashMap<Object, InternalCacheEntry>(
             maxEntries, concurrencyLevel, eviction, evictionListener,
-            comparingKey, comparingValue);
+            keyEquivalence, valueEquivalence);
    }
 
    @Inject
@@ -144,18 +131,18 @@ public class DefaultDataContainer implements DataContainer {
 
    public static DataContainer boundedDataContainer(int concurrencyLevel, int maxEntries,
             EvictionStrategy strategy, EvictionThreadPolicy policy,
-            Comparing comparingKey, Comparing comparingValue) {
+            Equivalence keyEquivalence, Equivalence valueEquivalence) {
       return new DefaultDataContainer(concurrencyLevel, maxEntries, strategy,
-            policy, comparingKey, comparingValue);
+            policy, keyEquivalence, valueEquivalence);
    }
 
    public static DataContainer unBoundedDataContainer(int concurrencyLevel,
-         Comparing comparingKey, Comparing comparingValue) {
-      return new DefaultDataContainer(concurrencyLevel, comparingKey, comparingValue);
+         Equivalence keyEquivalence, Equivalence valueEquivalence) {
+      return new DefaultDataContainer(concurrencyLevel, keyEquivalence, valueEquivalence);
    }
 
    public static DataContainer unBoundedDataContainer(int concurrencyLevel) {
-      return new DefaultDataContainer(concurrencyLevel, null, null);
+      return new DefaultDataContainer(concurrencyLevel);
    }
 
    @Override
@@ -345,6 +332,11 @@ public class DefaultDataContainer implements DataContainer {
       @Override
       public int size() {
          return entries.size();
+      }
+
+      @Override
+      public String toString() {
+         return entries.toString();
       }
    }
 

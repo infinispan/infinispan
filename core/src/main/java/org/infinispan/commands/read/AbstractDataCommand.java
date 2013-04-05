@@ -30,6 +30,8 @@ import org.infinispan.lifecycle.ComponentStatus;
 
 import java.util.Set;
 
+import static org.infinispan.util.Util.toStr;
+
 /**
  * @author Mircea.Markus@jboss.com
  * @author Sanne Grinovero <sanne@hibernate.org> (C) 2011 Red Hat Inc.
@@ -102,7 +104,7 @@ public abstract class AbstractDataCommand extends AbstractFlagAffectedCommand im
    public String toString() {
       return new StringBuilder(getClass().getSimpleName())
          .append(" {key=")
-         .append(key)
+         .append(toStr(key))
          .append(", flags=").append(flags)
          .append("}")
          .toString();

@@ -45,10 +45,12 @@ import java.nio.ByteBuffer;
 import java.text.NumberFormat;
 import java.text.SimpleDateFormat;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.Date;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Iterator;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
 
@@ -384,6 +386,44 @@ public final class Util {
       if (params.length == 0) return message == null ? "null" : message.toString();
 
       return String.format(message.toString(), params);
+   }
+
+   public static String toStr(Object o) {
+      if (o instanceof byte[]) {
+         byte[] array = (byte[]) o;
+         StringBuilder sb = new StringBuilder();
+         sb.append("[B0x");
+         if (IS_ARRAYS_DEBUG) {
+            // Convert the entire byte array
+            sb.append(toHexString(array));
+         } else {
+            // Pick the first 8 characters and convert that part
+            sb.append(toHexString(array, 8));
+            sb.append("..");
+         }
+         return sb.toString();
+      } else {
+         return o.toString();
+      }
+   }
+
+   public static <E> String toStr(Collection<E> collection) {
+      if (collection == null)
+         return "[]";
+
+      Iterator<E> i = collection.iterator();
+      if (!i.hasNext())
+         return "[]";
+
+      StringBuilder sb = new StringBuilder();
+      sb.append('[');
+      for (;;) {
+         E e = i.next();
+         sb.append(e == collection ? "(this Collection)" : toStr(e));
+         if (! i.hasNext())
+            return sb.append(']').toString();
+         sb.append(", ");
+      }
    }
 
    public static String printArray(byte[] array, boolean withHash) {

@@ -29,24 +29,26 @@ import org.infinispan.server.hotrod._
 import logging.Log
 import org.infinispan.manager.EmbeddedCacheManager
 import org.infinispan.server.core.Main._
-import java.util.{Properties, Arrays}
-import org.infinispan.util.{TypedProperties, Util}
+import java.util.Arrays
+import org.infinispan.util.{ByteArrayEquivalence, Util}
 import org.testng.Assert._
 import org.infinispan.notifications.Listener
 import org.infinispan.notifications.cachelistener.annotation.CacheEntryRemoved
 import org.infinispan.notifications.cachelistener.event.CacheEntryRemovedEvent
 import org.infinispan.remoting.transport.Address
-import java.util.concurrent.{TimeUnit, CountDownLatch}
-import collection.mutable.{ArrayBuffer, ListBuffer}
+import java.util.concurrent.CountDownLatch
 import org.jboss.netty.channel.ChannelFuture
 import org.infinispan.configuration.cache.ConfigurationBuilder
-import scala.Byte
-import org.infinispan.distribution.ch.ConsistentHash
+import scala.{Array, Byte}
 import scala.collection.JavaConversions._
 import org.infinispan.test.TestingUtil
 import org.infinispan.statetransfer.StateTransferManager
 import org.infinispan.server.hotrod.configuration.HotRodServerConfigurationBuilder
-import org.infinispan.server.hotrod.configuration.HotRodServerConfiguration
+import org.infinispan.server.core.CacheValue
+import org.infinispan.marshall.jboss.JBossMarshaller
+import org.testng.AssertJUnit.assertEquals
+import org.infinispan.container.entries.InternalCacheEntry
+import org.infinispan.Cache
 
 /**
  * Test utils for Hot Rod tests.
@@ -308,6 +310,47 @@ object HotRodTestingUtil extends Log {
          }
       }
    }
+
+   def hotRodCacheConfiguration(): ConfigurationBuilder =
+      hotRodCacheConfiguration(new ConfigurationBuilder())
+
+   def hotRodCacheConfiguration(base: ConfigurationBuilder): ConfigurationBuilder = {
+      base.dataContainer().keyEquivalence(ByteArrayEquivalence.INSTANCE)
+      base
+   }
+
+   def assertHotRodEquals(cm: EmbeddedCacheManager,
+           key: String, expectedValue: String): InternalCacheEntry =
+      assertHotRodEquals(cm, cm.getCache[Array[Byte], CacheValue](), key, expectedValue)
+
+   def assertHotRodEquals(cm: EmbeddedCacheManager,
+           cacheName: String, key: String, expectedValue: String): InternalCacheEntry =
+      assertHotRodEquals(cm, cm.getCache[Array[Byte], CacheValue](cacheName), key, expectedValue)
+
+   private def assertHotRodEquals(cm: EmbeddedCacheManager,
+           cache: Cache[Array[Byte], CacheValue],
+           key: String, expectedValue: String): InternalCacheEntry = {
+      val keyBytes = marshall(key)
+      val entry = cache.getAdvancedCache.getDataContainer.get(keyBytes)
+      // Assert based on passed parameters
+      if (expectedValue == null) {
+         assertNull(entry)
+      } else {
+         val value =
+            if (entry == null) cache.get(keyBytes)
+            else entry.getValue.asInstanceOf[CacheValue]
+
+         assertEquals(marshall(expectedValue), value.data)
+      }
+
+      entry
+   }
+
+   def marshall(key: String): Array[Byte] =
+      new JBossMarshaller().objectToByteBuffer(key, 64)
+
+   def unmarshall[T](key: Array[Byte]): T =
+      new JBossMarshaller().objectFromByteBuffer(key).asInstanceOf[T]
 
    @Listener
    private class AddressRemovalListener(latch: CountDownLatch) {

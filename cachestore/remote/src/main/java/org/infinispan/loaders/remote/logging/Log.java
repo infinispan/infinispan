@@ -45,12 +45,6 @@ public interface Log extends org.infinispan.util.logging.Log {
    @Message(value = "RemoteCacheStore can only run in shared mode! This method shouldn't be called in shared mode", id = 10001)
    void sharedModeOnlyAllowed();
 
-   @Message(value = "Cannot marshall objects of class %s", id = 10002)
-   IllegalArgumentException unsupportedMarshallingForObject(String name);
-
-   @Message(value = "Wrapper cannot handle keys of class %s", id = 10003)
-   CacheLoaderException unsupportedKeyFormat(String name);
-
    @Message(value = "Wrapper cannot handle values of class %s", id = 10004)
    CacheLoaderException unsupportedValueFormat(String name);
 

@@ -41,7 +41,7 @@ import org.infinispan.remoting.responses.SuccessfulResponse;
 import org.infinispan.remoting.rpc.ResponseMode;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.remoting.transport.Transport;
-import org.infinispan.util.concurrent.ConcurrentMapFactory;
+import org.infinispan.util.CollectionFactory;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
@@ -61,7 +61,7 @@ public class LocalTopologyManagerImpl implements LocalTopologyManager {
    private ExecutorService asyncTransportExecutor;
    private GlobalComponentRegistry gcr;
 
-   private final ConcurrentMap<String, LocalCacheStatus> runningCaches = ConcurrentMapFactory.makeConcurrentMap();
+   private final ConcurrentMap<String, LocalCacheStatus> runningCaches = CollectionFactory.makeConcurrentMap();
    private volatile boolean running;
 
    @Inject

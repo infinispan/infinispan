@@ -19,9 +19,12 @@
 
 package org.infinispan.context;
 
+import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.context.impl.LocalTxInvocationContext;
 import org.infinispan.context.impl.NonTxInvocationContext;
 import org.infinispan.context.impl.RemoteTxInvocationContext;
+import org.infinispan.factories.annotations.Inject;
+import org.infinispan.factories.annotations.Start;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.transaction.RemoteTransaction;
 
@@ -35,14 +38,25 @@ import javax.transaction.Transaction;
  */
 public class NonTransactionalInvocationContextContainer extends AbstractInvocationContextContainer {
 
+   @Inject
+   public void init(Configuration config) {
+      super.init(config);
+   }
+
+   @Start
+   public void start() {
+      super.start();
+   }
+
    @Override
    public InvocationContext createInvocationContext(boolean isWrite, int keyCount) {
       if (keyCount == 1) {
-         SingleKeyNonTxInvocationContext result = new SingleKeyNonTxInvocationContext(true);
+         SingleKeyNonTxInvocationContext result =
+               new SingleKeyNonTxInvocationContext(true, keyEq);
          ctxHolder.set(result);
          return result;
       } else if (keyCount > 0) {
-         NonTxInvocationContext ctx = new NonTxInvocationContext(keyCount, true);
+         NonTxInvocationContext ctx = new NonTxInvocationContext(keyCount, true, keyEq);
          ctxHolder.set(ctx);
          return ctx;
       }
@@ -56,7 +70,7 @@ public class NonTransactionalInvocationContextContainer extends AbstractInvocati
 
    @Override
    public NonTxInvocationContext createNonTxInvocationContext() {
-      NonTxInvocationContext ctx = new NonTxInvocationContext();
+      NonTxInvocationContext ctx = new NonTxInvocationContext(keyEq);
       ctx.setOriginLocal(true);
       ctxHolder.set(ctx);
       return ctx;
@@ -64,14 +78,14 @@ public class NonTransactionalInvocationContextContainer extends AbstractInvocati
 
    @Override
    public InvocationContext createSingleKeyNonTxInvocationContext() {
-      SingleKeyNonTxInvocationContext result = new SingleKeyNonTxInvocationContext(true);
+      SingleKeyNonTxInvocationContext result = new SingleKeyNonTxInvocationContext(true, keyEq);
       ctxHolder.set(result);
       return result;
    }
 
    @Override
    public NonTxInvocationContext createRemoteInvocationContext(Address origin) {
-      NonTxInvocationContext ctx = new NonTxInvocationContext();
+      NonTxInvocationContext ctx = new NonTxInvocationContext(keyEq);
       ctx.setOrigin(origin);
       ctxHolder.set(ctx);
       return ctx;

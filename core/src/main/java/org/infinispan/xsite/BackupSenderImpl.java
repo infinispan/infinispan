@@ -48,7 +48,7 @@ import org.infinispan.remoting.transport.Transport;
 import org.infinispan.transaction.LocalTransaction;
 import org.infinispan.transaction.TransactionTable;
 import org.infinispan.util.Util;
-import org.infinispan.util.concurrent.ConcurrentMapFactory;
+import org.infinispan.util.CollectionFactory;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
@@ -73,7 +73,7 @@ public class BackupSenderImpl implements BackupSender {
    private Configuration config;
    private TransactionTable txTable;
    private final Map<String, CustomFailurePolicy> siteFailurePolicy = new HashMap<String, CustomFailurePolicy>();
-   private final ConcurrentMap<String, OfflineStatus> offlineStatus = ConcurrentMapFactory.makeConcurrentMap();
+   private final ConcurrentMap<String, OfflineStatus> offlineStatus = CollectionFactory.makeConcurrentMap();
 
 
    private final String localSiteName;

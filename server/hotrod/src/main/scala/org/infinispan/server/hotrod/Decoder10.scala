@@ -34,16 +34,9 @@ import collection.immutable
 import org.infinispan.util.concurrent.TimeoutException
 import java.io.IOException
 import org.infinispan.context.Flag.IGNORE_RETURN_VALUES
-import org.infinispan.util.ByteArrayKey
 import org.jboss.netty.buffer.ChannelBuffer
 import org.infinispan.server.core.transport.ExtendedChannelBuffer._
 import transport.NettyTransport
-import org.infinispan.container.entries.InternalCacheValue
-import org.infinispan.remoting.rpc.RpcManager
-import org.infinispan.remoting.responses.ClusteredGetResponseValidityFilter
-import java.util.HashSet
-import org.infinispan.remoting.transport.Address
-import org.infinispan.remoting.rpc.ResponseMode
 import org.infinispan.container.entries.InternalCacheEntry
 
 /**
@@ -100,7 +93,7 @@ object Decoder10 extends AbstractVersionedDecoder with ServerConstants with Log 
       endOfOp
    }
 
-   override def readKey(h: HotRodHeader, buffer: ChannelBuffer): (ByteArrayKey, Boolean) = {
+   override def readKey(h: HotRodHeader, buffer: ChannelBuffer): (Array[Byte], Boolean) = {
       val k = readKey(buffer)
       h.op match {
          case RemoveRequest => (k, true)
@@ -108,7 +101,7 @@ object Decoder10 extends AbstractVersionedDecoder with ServerConstants with Log 
       }
    }
 
-   private def readKey(buffer: ChannelBuffer): ByteArrayKey = new ByteArrayKey(readRangedBytes(buffer))
+   private def readKey(buffer: ChannelBuffer): Array[Byte] = readRangedBytes(buffer)
 
    override def readParameters(header: HotRodHeader, buffer: ChannelBuffer): (RequestParameters, Boolean) = {
       header.op match {
@@ -182,7 +175,7 @@ object Decoder10 extends AbstractVersionedDecoder with ServerConstants with Log 
                h.topologyId, None, 0)
    }
 
-   override def customReadHeader(h: HotRodHeader, buffer: ChannelBuffer, cache: Cache[ByteArrayKey, CacheValue]): AnyRef = {
+   override def customReadHeader(h: HotRodHeader, buffer: ChannelBuffer, cache: Cache[Array[Byte], CacheValue]): AnyRef = {
       h.op match {
          case ClearRequest => {
             // Get an optimised cache in case we can make the operation more efficient
@@ -195,7 +188,7 @@ object Decoder10 extends AbstractVersionedDecoder with ServerConstants with Log 
       }
    }
 
-   override def customReadKey(h: HotRodHeader, buffer: ChannelBuffer, cache: Cache[ByteArrayKey, CacheValue]): AnyRef = {
+   override def customReadKey(h: HotRodHeader, buffer: ChannelBuffer, cache: Cache[Array[Byte], CacheValue]): AnyRef = {
       h.op match {
          case RemoveIfUnmodifiedRequest => {
             val k = readKey(buffer)
@@ -243,7 +236,7 @@ object Decoder10 extends AbstractVersionedDecoder with ServerConstants with Log 
       }
    }
 
-   def getKeyMetadata(h: HotRodHeader, k: ByteArrayKey, cache: Cache[ByteArrayKey, CacheValue]): GetWithMetadataResponse = {
+   def getKeyMetadata(h: HotRodHeader, k: Array[Byte], cache: Cache[Array[Byte], CacheValue]): GetWithMetadataResponse = {
       val ce = cache.getAdvancedCache.getCacheEntry(k, null, null)
       if (ce != null) {
          val ice = ce.asInstanceOf[InternalCacheEntry]
@@ -260,7 +253,7 @@ object Decoder10 extends AbstractVersionedDecoder with ServerConstants with Log 
       }
    }
 
-   override def customReadValue(header: HotRodHeader, buffer: ChannelBuffer, cache: Cache[ByteArrayKey, CacheValue]): AnyRef = null
+   override def customReadValue(header: HotRodHeader, buffer: ChannelBuffer, cache: Cache[Array[Byte], CacheValue]): AnyRef = null
 
    override def createStatsResponse(h: HotRodHeader, cacheStats: Stats, t: NettyTransport): AnyRef = {
       val stats = mutable.Map.empty[String, String]
@@ -293,7 +286,7 @@ object Decoder10 extends AbstractVersionedDecoder with ServerConstants with Log 
       }
    }
 
-   override def getOptimizedCache(h: HotRodHeader, c: Cache[ByteArrayKey, CacheValue]): Cache[ByteArrayKey, CacheValue] = {
+   override def getOptimizedCache(h: HotRodHeader, c: Cache[Array[Byte], CacheValue]): Cache[Array[Byte], CacheValue] = {
       if (!hasFlag(h, ForceReturnPreviousValue)) {
          c.getAdvancedCache.withFlags(IGNORE_RETURN_VALUES)
       } else {

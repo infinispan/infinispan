@@ -29,12 +29,11 @@ import org.infinispan.server.hotrod.HotRodServer;
 import org.infinispan.test.SingleCacheManagerTest;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.testng.annotations.AfterClass;
-import org.testng.annotations.AfterTest;
 import org.testng.annotations.Test;
 
 import java.util.HashMap;
 
-import static org.infinispan.test.TestingUtil.*;
+import static org.infinispan.server.hotrod.test.HotRodTestingUtil.hotRodCacheConfiguration;
 import static org.infinispan.client.hotrod.test.HotRodClientTestingUtil.*;
 
 /**
@@ -52,8 +51,9 @@ public class CacheManagerNotStartedTest extends SingleCacheManagerTest {
 
    @Override
    protected EmbeddedCacheManager createCacheManager() throws Exception {
-      cacheManager = TestCacheManagerFactory.createLocalCacheManager(false);
-      cacheManager.defineConfiguration(CACHE_NAME, new ConfigurationBuilder().build());
+      cacheManager = TestCacheManagerFactory
+            .createCacheManager(hotRodCacheConfiguration());
+      cacheManager.defineConfiguration(CACHE_NAME, hotRodCacheConfiguration().build());
       return cacheManager;
    }
 

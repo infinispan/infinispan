@@ -30,13 +30,15 @@ import java.lang.reflect.Method;
 
 import static org.infinispan.test.TestingUtil.v;
 import static org.testng.AssertJUnit.assertEquals;
+import static org.infinispan.server.hotrod.test.HotRodTestingUtil.hotRodCacheConfiguration;
 
 @Test(groups = "functional", testName = "client.hotrod.HotRodAsyncReplicationTest")
 public class HotRodAsyncReplicationTest extends MultiHotRodServersTest {
 
    @Override
    protected void createCacheManagers() throws Throwable {
-      ConfigurationBuilder builder = getDefaultClusteredCacheConfig(CacheMode.REPL_ASYNC, false);
+      ConfigurationBuilder builder = hotRodCacheConfiguration(
+            getDefaultClusteredCacheConfig(CacheMode.REPL_ASYNC, false));
       builder.clustering().async().replQueueInterval(1000L).useReplQueue(true);
       builder.eviction().maxEntries(3);
 

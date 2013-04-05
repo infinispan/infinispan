@@ -35,6 +35,7 @@ import org.testng.annotations.Test;
 
 import static org.infinispan.client.hotrod.test.HotRodClientTestingUtil.killRemoteCacheManager;
 import static org.infinispan.client.hotrod.test.HotRodClientTestingUtil.killServers;
+import static org.infinispan.server.hotrod.test.HotRodTestingUtil.hotRodCacheConfiguration;
 
 /**
  * @author Mircea.Markus@jboss.com
@@ -52,7 +53,8 @@ public class ServerRestartTest extends SingleCacheManagerTest {
 
    @Override
    protected EmbeddedCacheManager createCacheManager() throws Exception {
-      return TestCacheManagerFactory.createLocalCacheManager(false);
+      return TestCacheManagerFactory.createCacheManager(
+            hotRodCacheConfiguration());
    }
 
    @Override

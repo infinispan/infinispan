@@ -23,11 +23,11 @@
 package org.infinispan.context.impl;
 
 import org.infinispan.container.entries.CacheEntry;
+import org.infinispan.util.AnyEquivalence;
+import org.infinispan.util.Equivalence;
 import org.infinispan.util.InfinispanCollections;
+import org.infinispan.util.CollectionFactory;
 
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 
@@ -40,17 +40,22 @@ import java.util.Set;
 public class NonTxInvocationContext extends AbstractInvocationContext {
 
    private static final int INITIAL_CAPACITY = 4;
+
    protected final Map<Object, CacheEntry> lookedUpEntries;
 
    protected Set<Object> lockedKeys;
 
-   public NonTxInvocationContext(int numEntries, boolean local) {
-      lookedUpEntries = new HashMap<Object, CacheEntry>(numEntries);
+   private final Equivalence keyEq;
+
+   public NonTxInvocationContext(int numEntries, boolean local, Equivalence keyEq) {
+      lookedUpEntries = CollectionFactory.makeMap(numEntries, keyEq, AnyEquivalence.OBJECT);
       setOriginLocal(local);
+      this.keyEq = keyEq;
    }
 
-   public NonTxInvocationContext() {
-      lookedUpEntries = new HashMap<Object, CacheEntry>(INITIAL_CAPACITY);
+   public NonTxInvocationContext(Equivalence keyEq) {
+      lookedUpEntries = CollectionFactory.makeMap(INITIAL_CAPACITY, keyEq, AnyEquivalence.OBJECT);
+      this.keyEq = keyEq;
    }
 
    @Override
@@ -114,7 +119,9 @@ public class NonTxInvocationContext extends AbstractInvocationContext {
 
    @Override
    public void addLockedKey(Object key) {
-      if (lockedKeys == null) lockedKeys = new HashSet<Object>(INITIAL_CAPACITY);
+      if (lockedKeys == null)
+         lockedKeys = CollectionFactory.makeSet(INITIAL_CAPACITY, keyEq);
+
       lockedKeys.add(key);
    }
 

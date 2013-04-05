@@ -27,6 +27,7 @@ import org.infinispan.Cache;
 import org.infinispan.commands.remote.ClusteredGetCommand;
 import org.infinispan.container.entries.InternalCacheEntry;
 import org.infinispan.container.entries.InternalCacheValue;
+import org.infinispan.context.Flag;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.lifecycle.ComponentStatus;
 import org.infinispan.loaders.AbstractCacheLoader;
@@ -75,7 +76,11 @@ public class ClusterCacheLoader extends AbstractCacheLoader {
    @Override
    public InternalCacheEntry load(Object key) throws CacheLoaderException {
       if (!(isCacheReady() && isLocalCall())) return null;
-      ClusteredGetCommand clusteredGetCommand = new ClusteredGetCommand(key, cache.getName());
+
+      ClusteredGetCommand clusteredGetCommand = new ClusteredGetCommand(
+            key, cache.getName(), InfinispanCollections.<Flag>emptySet(), false, null,
+            cache.getCacheConfiguration().dataContainer().keyEquivalence());
+
       Collection<Response> responses = doRemoteCall(clusteredGetCommand);
       if (responses.isEmpty()) return null;
 

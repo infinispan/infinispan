@@ -313,7 +313,8 @@ public class CommandsFactoryImpl implements CommandsFactory {
 
    @Override
    public ClusteredGetCommand buildClusteredGetCommand(Object key, Set<Flag> flags, boolean acquireRemoteLock, GlobalTransaction gtx) {
-      return new ClusteredGetCommand(key, cacheName, flags, acquireRemoteLock, gtx);
+      return new ClusteredGetCommand(key, cacheName, flags, acquireRemoteLock, gtx,
+            configuration.dataContainer().keyEquivalence());
    }
 
    /**
@@ -396,7 +397,9 @@ public class CommandsFactoryImpl implements CommandsFactory {
             break;
          case ClusteredGetCommand.COMMAND_ID:
             ClusteredGetCommand clusteredGetCommand = (ClusteredGetCommand) c;
-            clusteredGetCommand.initialize(icc, this, entryFactory, interceptorChain, distributionManager, txTable);
+            clusteredGetCommand.initialize(icc, this, entryFactory,
+                  interceptorChain, distributionManager, txTable,
+                  configuration.dataContainer().keyEquivalence());
             break;
          case LockControlCommand.COMMAND_ID:
             LockControlCommand lcc = (LockControlCommand) c;

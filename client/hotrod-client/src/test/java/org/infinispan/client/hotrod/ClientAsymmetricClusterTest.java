@@ -30,6 +30,7 @@ import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.testng.annotations.Test;
 
 import static org.testng.AssertJUnit.assertEquals;
+import static org.infinispan.server.hotrod.test.HotRodTestingUtil.hotRodCacheConfiguration;
 
 /**
  * Tests behaviour of Hot Rod clients with asymmetric clusters.
@@ -44,8 +45,8 @@ public class ClientAsymmetricClusterTest extends MultiHotRodServersTest {
 
    @Override
    protected void createCacheManagers() throws Throwable {
-      ConfigurationBuilder builder = getDefaultClusteredCacheConfig(
-            CacheMode.REPL_SYNC, false);
+      ConfigurationBuilder builder = hotRodCacheConfiguration(
+            getDefaultClusteredCacheConfig(CacheMode.REPL_SYNC, false));
 
       createHotRodServers(2, builder);
 

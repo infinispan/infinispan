@@ -30,6 +30,7 @@ import org.infinispan.context.impl.NonTxInvocationContext;
 import org.infinispan.notifications.cachelistener.event.*;
 import org.infinispan.test.AbstractInfinispanTest;
 import org.infinispan.transaction.xa.GlobalTransaction;
+import org.infinispan.util.AnyEquivalence;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
@@ -54,7 +55,7 @@ public class CacheNotifierImplTest extends AbstractInfinispanTest {
       cl = new CacheListener();
       n.start();
       n.addListener(cl);
-      ctx = new NonTxInvocationContext();
+      ctx = new NonTxInvocationContext(AnyEquivalence.OBJECT);
    }
 
    public void testNotifyCacheEntryCreated() {
@@ -261,7 +262,7 @@ public class CacheNotifierImplTest extends AbstractInfinispanTest {
    }
 
    public void testNotifyTransactionRegistered() {
-      InvocationContext ctx = new NonTxInvocationContext();
+      InvocationContext ctx = new NonTxInvocationContext(AnyEquivalence.OBJECT);
       GlobalTransaction tx = mock(GlobalTransaction.class);
       n.notifyTransactionRegistered(tx, ctx);
       n.notifyTransactionRegistered(tx, ctx);

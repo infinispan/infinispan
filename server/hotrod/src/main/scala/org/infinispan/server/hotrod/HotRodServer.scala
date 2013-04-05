@@ -28,22 +28,16 @@ import org.infinispan.manager.EmbeddedCacheManager
 import java.util.Properties
 import org.infinispan.server.core.{CacheValue, AbstractProtocolServer}
 import org.infinispan.eviction.EvictionStrategy
-import org.infinispan.util.{TypedProperties, ByteArrayKey}
-import org.infinispan.server.core.Main._
+import org.infinispan.util.{CollectionFactory, ByteArrayEquivalence, AnyEquivalence}
 import org.infinispan.Cache
 import org.infinispan.remoting.transport.Address
-import org.infinispan.util.concurrent.ConcurrentMapFactory
-import org.infinispan.loaders.cluster.ClusterCacheLoader
-import org.infinispan.configuration.cache.{CacheMode, ConfigurationBuilder}
-import annotation.tailrec
-import org.infinispan.context.{InvocationContext, Flag}
-import org.infinispan.commands.write.PutKeyValueCommand
-import org.infinispan.interceptors.base.BaseCustomInterceptor
-import org.infinispan.interceptors.EntryWrappingInterceptor
+import org.infinispan.configuration.cache.{Configuration, CacheMode, ConfigurationBuilder}
+import org.infinispan.context.Flag
 import org.infinispan.upgrade.RollingUpgradeManager
 import org.infinispan.server.hotrod.configuration.HotRodServerConfiguration
-import org.infinispan.server.hotrod.configuration.HotRodServerConfiguration
 import org.infinispan.server.hotrod.configuration.HotRodServerConfigurationBuilder
+import org.infinispan.config.ConfigurationException
+import org.infinispan.api.BasicCacheContainer
 
 /**
  * Hot Rod server, in charge of defining its encoder/decoder and, if clustered, update the topology information
@@ -65,7 +59,8 @@ class HotRodServer extends AbstractProtocolServer("HotRod") with Log {
    private var clusterAddress: Address = _
    private var address: ServerAddress = _
    private var addressCache: Cache[Address, ServerAddress] = _
-   private val knownCaches : java.util.Map[String, Cache[ByteArrayKey, CacheValue]] = ConcurrentMapFactory.makeConcurrentMap(4, 0.9f, 16)
+   private val knownCaches : java.util.Map[String, Cache[Array[Byte], CacheValue]] =
+         CollectionFactory.makeConcurrentMap(4, 0.9f, 16)
    private val isTrace = isTraceEnabled
 
    def getAddress: ServerAddress = address
@@ -108,6 +103,8 @@ class HotRodServer extends AbstractProtocolServer("HotRod") with Log {
    }
 
    override def startDefaultCache = {
+      assertKeyEquivalence(cacheManager.getDefaultCacheConfiguration,
+         BasicCacheContainer.DEFAULT_CACHE_NAME)
       cacheManager.getCache()
    }
 
@@ -115,8 +112,19 @@ class HotRodServer extends AbstractProtocolServer("HotRod") with Log {
       // Start defined caches to avoid issues with lazily started caches
       for (cacheName <- asScalaIterator(cacheManager.getCacheNames.iterator)) {
          if (cacheName != HotRodServer.ADDRESS_CACHE_NAME) {
+            assertKeyEquivalence(cacheManager.getCacheConfiguration(cacheName), cacheName)
             cacheManager.getCache(cacheName)
          }
+      }
+   }
+
+   private def assertKeyEquivalence(cfg: Configuration, cacheName: String) {
+      if (cfg != null) {
+         val keyEquivalence = cfg.dataContainer().keyEquivalence()
+         if (keyEquivalence != ByteArrayEquivalence.INSTANCE)
+            throw new ConfigurationException(
+               "Hot Rod server expects key equivalence configuration for cache '"
+                       + cacheName + "' to be ByteArrayEquivalence")
       }
    }
 
@@ -145,6 +153,10 @@ class HotRodServer extends AbstractProtocolServer("HotRod") with Log {
              .locking().lockAcquisitionTimeout(configuration.topologyLockTimeout)
              .eviction().strategy(EvictionStrategy.NONE)
              .expiration().lifespan(-1).maxIdle(-1)
+             // Topology cache uses Object based equals/hashCodes
+             .dataContainer()
+                .keyEquivalence(AnyEquivalence.OBJECT)
+                .valueEquivalence(AnyEquivalence.OBJECT)
 
       if (configuration.topologyStateTransfer) {
          builder.clustering().stateTransfer().fetchInMemoryState(true)
@@ -160,13 +172,13 @@ class HotRodServer extends AbstractProtocolServer("HotRod") with Log {
       cacheName != null && !cacheName.isEmpty && !(knownCaches containsKey cacheName)
    }
 
-   def getCacheInstance(cacheName: String, cacheManager: EmbeddedCacheManager, skipCacheCheck: Boolean): Cache[ByteArrayKey, CacheValue] = {
-      var cache: Cache[ByteArrayKey, CacheValue] = null
+   def getCacheInstance(cacheName: String, cacheManager: EmbeddedCacheManager, skipCacheCheck: Boolean): Cache[Array[Byte], CacheValue] = {
+      var cache: Cache[Array[Byte], CacheValue] = null
       if (!skipCacheCheck) cache = knownCaches.get(cacheName)
 
       if (cache == null) {
          if (cacheName.isEmpty)
-            cache = cacheManager.getCache[ByteArrayKey, CacheValue]
+            cache = cacheManager.getCache[Array[Byte], CacheValue]
          else
             cache = cacheManager.getCache(cacheName)
 
@@ -178,7 +190,7 @@ class HotRodServer extends AbstractProtocolServer("HotRod") with Log {
       cache
    }
 
-   def tryRegisterMigrationManager(cacheName: String, cache: Cache[ByteArrayKey, CacheValue]) {
+   def tryRegisterMigrationManager(cacheName: String, cache: Cache[Array[Byte], CacheValue]) {
       val cr = cache.getAdvancedCache.getComponentRegistry
       val migrationManager = cr.getComponent(classOf[RollingUpgradeManager])
       if (migrationManager != null) migrationManager.addSourceMigrator(new HotRodSourceMigrator(cache))

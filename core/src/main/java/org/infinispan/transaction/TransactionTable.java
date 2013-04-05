@@ -50,9 +50,9 @@ import org.infinispan.transaction.synchronization.SynchronizationAdapter;
 import org.infinispan.transaction.xa.CacheTransaction;
 import org.infinispan.transaction.xa.GlobalTransaction;
 import org.infinispan.transaction.xa.TransactionFactory;
+import org.infinispan.util.CollectionFactory;
 import org.infinispan.util.InfinispanCollections;
 import org.infinispan.util.Util;
-import org.infinispan.util.concurrent.ConcurrentMapFactory;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
@@ -99,7 +99,7 @@ public class TransactionTable {
    protected ClusteringDependentLogic clusteringLogic;
    protected boolean clustered = false;
    private Lock minTopologyRecalculationLock;
-   private final ConcurrentMap<GlobalTransaction, Long> completedTransactions = ConcurrentMapFactory.makeConcurrentMap();
+   private final ConcurrentMap<GlobalTransaction, Long> completedTransactions = CollectionFactory.makeConcurrentMap();
 
    private ScheduledExecutorService executorService;
 
@@ -133,12 +133,12 @@ public class TransactionTable {
    @SuppressWarnings("unused")
    private void start() {
       final int concurrencyLevel = configuration.locking().concurrencyLevel();
-      localTransactions = ConcurrentMapFactory.makeConcurrentMap(concurrencyLevel, 0.75f, concurrencyLevel);
-      globalToLocalTransactions = ConcurrentMapFactory.makeConcurrentMap(concurrencyLevel, 0.75f, concurrencyLevel);
+      localTransactions = CollectionFactory.makeConcurrentMap(concurrencyLevel, 0.75f, concurrencyLevel);
+      globalToLocalTransactions = CollectionFactory.makeConcurrentMap(concurrencyLevel, 0.75f, concurrencyLevel);
       if (configuration.clustering().cacheMode().isClustered()) {
          minTopologyRecalculationLock = new ReentrantLock();
          // Only initialize this if we are clustered.
-         remoteTransactions = ConcurrentMapFactory.makeConcurrentMap(concurrencyLevel, 0.75f, concurrencyLevel);
+         remoteTransactions = CollectionFactory.makeConcurrentMap(concurrencyLevel, 0.75f, concurrencyLevel);
          notifier.addListener(this);
          clustered = true;
       }

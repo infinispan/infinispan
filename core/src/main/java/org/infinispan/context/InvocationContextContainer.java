@@ -31,6 +31,7 @@ import org.infinispan.factories.scopes.Scope;
 import org.infinispan.factories.scopes.Scopes;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.transaction.RemoteTransaction;
+import org.infinispan.util.Equivalence;
 
 import javax.transaction.Transaction;
 
@@ -115,8 +116,8 @@ public interface InvocationContextContainer {
    InvocationContext createRemoteInvocationContext(Address origin);
 
    /**
-    * As {@link #createRemoteInvocationContext(org.infinispan.remoting.transport.Address)}, but returning the flags to
-    * the context from the Command if any Flag was set.
+    * As {@link #createRemoteInvocationContext(org.infinispan.remoting.transport.Address)},
+    * but returning the flags to the context from the Command if any Flag was set.
     *
     * @param cacheCommand
     * @param origin       the origin of the command, or null if local

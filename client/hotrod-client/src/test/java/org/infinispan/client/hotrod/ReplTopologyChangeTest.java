@@ -42,6 +42,7 @@ import java.util.Collection;
 
 import static org.infinispan.client.hotrod.test.HotRodClientTestingUtil.killRemoteCacheManager;
 import static org.infinispan.client.hotrod.test.HotRodClientTestingUtil.killServers;
+import static org.infinispan.server.hotrod.test.HotRodTestingUtil.hotRodCacheConfiguration;
 import static org.testng.AssertJUnit.assertEquals;
 
 /**
@@ -79,7 +80,7 @@ public class ReplTopologyChangeTest extends MultipleCacheManagersTest {
 
    @Override
    protected void createCacheManagers() throws Throwable {
-      config = getDefaultClusteredCacheConfig(getCacheMode(), false);
+      config = hotRodCacheConfiguration(getDefaultClusteredCacheConfig(getCacheMode(), false));
       CacheContainer cm1 = TestCacheManagerFactory.createClusteredCacheManager(config);
       CacheContainer cm2 = TestCacheManagerFactory.createClusteredCacheManager(config);
       registerCacheManager(cm1);
@@ -93,12 +94,6 @@ public class ReplTopologyChangeTest extends MultipleCacheManagersTest {
       super.createBeforeClass(); // Create cache managers
       hotRodServer1 = TestHelper.startHotRodServer(manager(0));
       hotRodServer2 = TestHelper.startHotRodServer(manager(1));
-
-      manager(0).getCache().put("k_test", "v");
-      manager(0).getCache().get("k_test").equals("v");
-      manager(1).getCache().get("k_test").equals("v");
-
-      log.info("Local replication test passed!");
 
       //Important: this only connects to one of the two servers!
       remoteCacheManager = new RemoteCacheManager("localhost", hotRodServer2.getPort());

@@ -44,6 +44,7 @@ import java.util.Set;
 import java.util.concurrent.locks.Lock;
 
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
+import static org.infinispan.util.Util.toStr;
 
 /**
  * Handles locks for the MVCC based LockingInterceptor
@@ -68,15 +69,15 @@ public class LockManagerImpl implements LockManager {
 
    @Override
    public boolean lockAndRecord(Object key, InvocationContext ctx, long timeoutMillis) throws InterruptedException {
-      if (trace) log.tracef("Attempting to lock %s with acquisition timeout of %s millis", key, timeoutMillis);
+      if (trace) log.tracef("Attempting to lock %s with acquisition timeout of %s millis", toStr(key), timeoutMillis);
       if (lockContainer.acquireLock(ctx.getLockOwner(), key, timeoutMillis, MILLISECONDS) != null) {
-         if (trace) log.tracef("Successfully acquired lock %s!", key);
+         if (trace) log.tracef("Successfully acquired lock %s!", toStr(key));
          return true;
       }
 
       // couldn't acquire lock!
       if (log.isDebugEnabled()) {
-         log.debugf("Failed to acquire lock %s, owner is %s", key, getOwner(key));
+         log.debugf("Failed to acquire lock %s, owner is %s", toStr(key), getOwner(key));
          Object owner = ctx.getLockOwner();
          Set<Map.Entry<Object, CacheEntry>> entries = ctx.getLookedUpEntries().entrySet();
          List<Object> lockedKeys = new ArrayList<Object>(entries.size());
@@ -93,15 +94,19 @@ public class LockManagerImpl implements LockManager {
 
    @Override
    public void unlock(Collection<Object> lockedKeys, Object lockOwner) {
-      log.tracef("Attempting to unlock keys %s", lockedKeys);
-      for (Object k : lockedKeys) lockContainer.releaseLock(lockOwner, k);
+      for (Object k : lockedKeys) {
+         if (trace)
+            log.tracef("Attempting to unlock key %s", toStr(k));
+
+         lockContainer.releaseLock(lockOwner, k);
+      }
    }
 
    @Override
    @SuppressWarnings("unchecked")
    public void unlockAll(InvocationContext ctx) {
       for (Object k : ctx.getLockedKeys()) {
-         if (trace) log.tracef("Attempting to unlock %s", k);
+         if (trace) log.tracef("Attempting to unlock %s", toStr(k));
          lockContainer.releaseLock(ctx.getLockOwner(), k);
       }
       ctx.clearLockedKeys();

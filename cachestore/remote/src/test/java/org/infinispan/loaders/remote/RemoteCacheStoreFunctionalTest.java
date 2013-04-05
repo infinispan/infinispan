@@ -36,6 +36,8 @@ import org.testng.annotations.Test;
 
 import java.util.Properties;
 
+import static org.infinispan.server.hotrod.test.HotRodTestingUtil.hotRodCacheConfiguration;
+
 /**
  * @author Mircea.Markus@jboss.com
  * @since 4.1
@@ -48,7 +50,7 @@ public class RemoteCacheStoreFunctionalTest extends BaseCacheStoreFunctionalTest
    @Override
    protected CacheStoreConfig createCacheStoreConfig() throws Exception {
       RemoteCacheStoreConfig remoteCacheStoreConfig = new RemoteCacheStoreConfig();
-      localCacheManager = TestCacheManagerFactory.createLocalCacheManager(false);
+      localCacheManager = TestCacheManagerFactory.createCacheManager(hotRodCacheConfiguration());
       hrServer = TestHelper.startHotRodServer(localCacheManager);
 
       remoteCacheStoreConfig.setRemoteCacheName(CacheContainer.DEFAULT_CACHE_NAME);

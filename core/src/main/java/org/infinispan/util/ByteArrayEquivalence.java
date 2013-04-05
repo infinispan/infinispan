@@ -33,7 +33,7 @@ import java.util.Arrays;
  * @author Galder Zamarreño
  * @since 5.3
  */
-public enum ComparingByteArray implements Comparing {
+public enum ByteArrayEquivalence implements Equivalence<byte[]> {
 
    INSTANCE;
 
@@ -43,7 +43,7 @@ public enum ComparingByteArray implements Comparing {
    }
 
    @Override
-   public boolean equals(Object obj, Object otherObj) {
+   public boolean equals(byte[] obj, Object otherObj) {
       if (obj == otherObj) return true;
       if (obj == null || byte[].class != obj.getClass()) return false;
       if (otherObj == null || byte[].class != otherObj.getClass()) return false;

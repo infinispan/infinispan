@@ -40,14 +40,18 @@ import java.util.concurrent.{ConcurrentHashMap, Executors}
 import java.util.concurrent.atomic.{AtomicLong}
 import mutable.ListBuffer
 import org.infinispan.test.TestingUtil
-import org.infinispan.util.{ByteArrayKey, Util}
+import org.infinispan.util.Util
 import org.infinispan.server.core.transport.ExtendedChannelBuffer._
 import org.jboss.netty.handler.codec.replay.{VoidEnum, ReplayingDecoder}
 import org.infinispan.server.hotrod._
 import java.lang.IllegalStateException
 import java.lang.StringBuilder
+<<<<<<< HEAD
 import javax.net.ssl.SSLEngine
 import org.jboss.netty.handler.ssl.SslHandler
+=======
+import java.util
+>>>>>>> ISPN-2281 Hot Rod uses byte[] as raw key type instead of ByteArrayKey
 
 /**
  * A very simply Hot Rod client for testing purpouses. It's a quick and dirty client implementation done for testing
@@ -447,23 +451,23 @@ private class Decoder(client: HotRodClient) extends ReplayingDecoder[VoidEnum] w
          }
          case BulkGetResponse => {
             var done = buf.readByte
-            val bulkBuffer = mutable.Map.empty[ByteArrayKey, Array[Byte]]
+            val bulkBuffer = mutable.Map.empty[Array[Byte], Array[Byte]]
             while (done == 1) {
-               bulkBuffer += (new ByteArrayKey(readRangedBytes(buf)) -> readRangedBytes(buf))
+               bulkBuffer += (readRangedBytes(buf) -> readRangedBytes(buf))
                done = buf.readByte
             }
-            val bulk = immutable.Map[ByteArrayKey, Array[Byte]]() ++ bulkBuffer
+            val bulk = immutable.Map[Array[Byte], Array[Byte]]() ++ bulkBuffer
             new TestBulkGetResponse(op.version, id, op.cacheName, op.clientIntel,
                   bulk, op.topologyId, topologyChangeResponse)
          }
          case BulkGetKeysResponse => {
             var done = buf.readByte
-            val bulkBuffer = mutable.Set.empty[ByteArrayKey]
+            val bulkBuffer = mutable.Set.empty[Array[Byte]]
             while (done == 1) {
-               bulkBuffer += new ByteArrayKey(readRangedBytes(buf))
+               bulkBuffer += readRangedBytes(buf)
                done = buf.readByte
             }
-            val bulk = immutable.Set[ByteArrayKey]() ++ bulkBuffer
+            val bulk = immutable.Set[Array[Byte]]() ++ bulkBuffer
             new TestBulkGetKeysResponse(op.version, id, op.cacheName, op.clientIntel,
                   bulk, op.topologyId, topologyChangeResponse)
          }
@@ -721,13 +725,13 @@ class TestStatsResponse(override val version: Byte, override val messageId: Long
 
 class TestBulkGetResponse(override val version: Byte, override val messageId: Long,
                           override val cacheName: String, override val clientIntel: Short,
-                          val bulkData: Map[ByteArrayKey, Array[Byte]],
+                          val bulkData: Map[Array[Byte], Array[Byte]],
                           override val topologyId: Int, override val topologyResponse: Option[AbstractTestTopologyAwareResponse])
       extends TestResponse(version, messageId, cacheName, clientIntel, BulkGetResponse, Success, topologyId, topologyResponse)
 
 class TestBulkGetKeysResponse(override val version: Byte, override val messageId: Long,
                           override val cacheName: String, override val clientIntel: Short,
-                          val bulkData: Set[ByteArrayKey],
+                          val bulkData: Set[Array[Byte]],
                           override val topologyId: Int, override val topologyResponse: Option[AbstractTestTopologyAwareResponse])
       extends TestResponse(version, messageId, cacheName, clientIntel, BulkGetResponse, Success, topologyId, topologyResponse)
 

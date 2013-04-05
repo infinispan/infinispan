@@ -26,8 +26,11 @@ import org.infinispan.util.ByRef;
 import org.infinispan.util.Util;
 import org.infinispan.util.concurrent.jdk8backported.ConcurrentHashMapV8;
 import org.infinispan.util.concurrent.locks.RefCountingLock;
+import org.infinispan.util.logging.Log;
 
 import java.util.concurrent.TimeUnit;
+
+import static org.infinispan.util.Util.toStr;
 
 /**
  * An abstract lock container that creates and maintains a new lock per entry
@@ -69,7 +72,10 @@ public abstract class AbstractPerEntryLockContainer<L extends RefCountingLock> e
          public L apply(Object key, L lock) {
             // This happens atomically in the CHM
             if (lock == null) {
-               getLog().tracef("Creating and acquiring new lock instance for key %s", key);
+               Log log = getLog();
+               if (log.isTraceEnabled())
+                  log.tracef("Creating and acquiring new lock instance for key %s", toStr(key));
+
                lock = newLock();
                // Since this is a new lock, it is certainly uncontended.
                lock(lock, lockOwner);
@@ -120,7 +126,10 @@ public abstract class AbstractPerEntryLockContainer<L extends RefCountingLock> e
          public L apply(Object key, L lock) {
             // This will happen atomically in the CHM
             // We have a reference, so value can't be null
-            getLog().tracef("Unlocking lock instance for key %s", key);
+            Log log = getLog();
+            if (log.isTraceEnabled())
+               log.tracef("Unlocking lock instance for key %s", toStr(key));
+
             unlock(lock, lockOwner);
 
             int refCount = lock.getReferenceCounter().decrementAndGet();

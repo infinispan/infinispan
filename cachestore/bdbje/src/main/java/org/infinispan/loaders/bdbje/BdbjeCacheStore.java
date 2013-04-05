@@ -47,7 +47,7 @@ import org.infinispan.loaders.modifications.Modification;
 import org.infinispan.marshall.StreamingMarshaller;
 import org.infinispan.transaction.xa.GlobalTransaction;
 import org.infinispan.util.ReflectionUtil;
-import org.infinispan.util.concurrent.ConcurrentMapFactory;
+import org.infinispan.util.CollectionFactory;
 import org.infinispan.util.logging.LogFactory;
 
 import java.io.File;
@@ -153,7 +153,7 @@ public class BdbjeCacheStore extends AbstractCacheStore {
    }
 
    private void openTransactionServices() {
-      txnMap = ConcurrentMapFactory.makeConcurrentMap(64, getConcurrencyLevel());
+      txnMap = CollectionFactory.makeConcurrentMap(64, getConcurrencyLevel());
       currentTransaction = factory.createCurrentTransaction(env);
       transactionRunner = factory.createPreparableTransactionRunner(env);
    }

@@ -35,7 +35,6 @@ import org.infinispan.marshall.Marshaller;
 import org.infinispan.marshall.jboss.GenericJBossMarshaller;
 import org.infinispan.upgrade.TargetMigrator;
 import org.infinispan.upgrade.logging.Log;
-import org.infinispan.util.ByteArrayKey;
 import org.infinispan.util.logging.LogFactory;
 
 public class HotRodTargetMigrator implements TargetMigrator {
@@ -58,9 +57,9 @@ public class HotRodTargetMigrator implements TargetMigrator {
       CacheLoaderManager loaderManager = cr.getComponent(CacheLoaderManager.class);
       List<RemoteCacheStore> stores = loaderManager.getCacheLoaders(RemoteCacheStore.class);
       Marshaller marshaller = new GenericJBossMarshaller();
-      ByteArrayKey knownKeys;
+      byte[] knownKeys;
       try {
-         knownKeys = new ByteArrayKey(marshaller.objectToByteBuffer(MIGRATION_MANAGER_HOT_ROD_KNOWN_KEYS));
+         knownKeys = marshaller.objectToByteBuffer(MIGRATION_MANAGER_HOT_ROD_KNOWN_KEYS);
       } catch (Exception e) {
          throw new CacheException(e);
       }
@@ -74,16 +73,16 @@ public class HotRodTargetMigrator implements TargetMigrator {
             }
 
 
-            Set<ByteArrayKey> keys;
+            Set<byte[]> keys;
             try {
-               keys = (Set<ByteArrayKey>) marshaller.objectFromByteBuffer((byte[])storeCache.get(knownKeys));
+               keys = (Set<byte[]>) marshaller.objectFromByteBuffer((byte[])storeCache.get(knownKeys));
             } catch (Exception e) {
                throw new CacheException(e);
             }
 
             ExecutorService es = Executors.newFixedThreadPool(threads);
             final AtomicInteger count = new AtomicInteger(0);
-            for (final ByteArrayKey key : keys) {
+            for (final byte[] key : keys) {
                es.submit(new Runnable() {
 
                   @Override

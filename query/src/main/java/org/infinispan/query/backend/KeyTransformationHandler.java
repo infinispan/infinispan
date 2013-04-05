@@ -30,7 +30,7 @@ import org.infinispan.query.Transformer;
 import org.infinispan.query.impl.ComponentRegistryUtils;
 import org.infinispan.query.logging.Log;
 import org.infinispan.util.Util;
-import org.infinispan.util.concurrent.ConcurrentMapFactory;
+import org.infinispan.util.CollectionFactory;
 import org.infinispan.util.logging.LogFactory;
 
 import java.util.Map;
@@ -58,7 +58,7 @@ public class KeyTransformationHandler {
 
    private static final Log log = LogFactory.getLog(KeyTransformationHandler.class, Log.class);
 
-   private final Map<Class<?>, Class<? extends Transformer>> transformerTypes = ConcurrentMapFactory.makeConcurrentMap();
+   private final Map<Class<?>, Class<? extends Transformer>> transformerTypes = CollectionFactory.makeConcurrentMap();
 
    public Object stringToKey(String s, ClassLoader classLoader) {
       char type = s.charAt(0);

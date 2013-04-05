@@ -39,8 +39,11 @@ import org.infinispan.transaction.TransactionTable;
 import org.infinispan.transaction.xa.CacheTransaction;
 import org.infinispan.transaction.xa.GlobalTransaction;
 import org.infinispan.util.concurrent.TimeoutException;
+import org.infinispan.util.logging.Log;
 
 import java.util.Collection;
+
+import static org.infinispan.util.Util.toStr;
 
 /**
  * Base class for transaction based locking interceptors.
@@ -163,8 +166,11 @@ public abstract class AbstractTxLockingInterceptor extends AbstractLockingInterc
          }
       }
 
+      Log log = getLog();
+      boolean trace = log.isTraceEnabled();
       if (checkForPendingLocks) {
-         getLog().tracef("Checking for pending locks and then locking key %s", key);
+         if (trace)
+            log.tracef("Checking for pending locks and then locking key %s", toStr(key));
 
          final long expectedEndTime = nowMillis() + cacheConfiguration.locking().lockAcquisitionTimeout();
 
@@ -179,11 +185,15 @@ public abstract class AbstractTxLockingInterceptor extends AbstractLockingInterc
          if (remaining <= 0) {
             throw newTimeoutException(key, txContext);
          } else {
-            getLog().tracef("Finished waiting for other potential lockers, trying to acquire the lock on %s", key);
+            if (trace)
+               log.tracef("Finished waiting for other potential lockers, trying to acquire the lock on %s", toStr(key));
+
             lockManager.acquireLock(ctx, key, remaining, skipLocking);
          }
       } else {
-         getLog().tracef("Locking key %s, no need to check for pending locks.", key);
+         if (trace)
+            log.tracef("Locking key %s, no need to check for pending locks.", toStr(key));
+
          lockManager.acquireLock(ctx, key, lockTimeout, skipLocking);
       }
    }

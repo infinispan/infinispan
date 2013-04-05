@@ -39,6 +39,8 @@ import org.testng.annotations.Test;
 import java.net.URL;
 import java.util.Properties;
 
+import static org.infinispan.server.hotrod.test.HotRodTestingUtil.hotRodCacheConfiguration;
+
 /**
  * @author Mircea.Markus@jboss.com
  * @since 4.1
@@ -52,7 +54,8 @@ public class RemoteCacheManagerTest extends SingleCacheManagerTest {
 
    @Override
    protected EmbeddedCacheManager createCacheManager() throws Exception {
-      return TestCacheManagerFactory.createLocalCacheManager(false);
+      return TestCacheManagerFactory.createCacheManager(
+            hotRodCacheConfiguration());
    }
 
    @Override

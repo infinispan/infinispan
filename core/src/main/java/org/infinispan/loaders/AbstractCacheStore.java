@@ -28,7 +28,7 @@ import org.infinispan.loaders.modifications.Remove;
 import org.infinispan.loaders.modifications.Store;
 import org.infinispan.marshall.StreamingMarshaller;
 import org.infinispan.transaction.xa.GlobalTransaction;
-import org.infinispan.util.concurrent.ConcurrentMapFactory;
+import org.infinispan.util.CollectionFactory;
 import org.infinispan.util.concurrent.WithinThreadExecutor;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
@@ -88,7 +88,7 @@ public abstract class AbstractCacheStore extends AbstractCacheLoader implements 
             }
          });
       }
-      transactions = ConcurrentMapFactory.makeConcurrentMap(64, getConcurrencyLevel());
+      transactions = CollectionFactory.makeConcurrentMap(64, getConcurrencyLevel());
    }
 
    protected boolean supportsMultiThreadedPurge() {

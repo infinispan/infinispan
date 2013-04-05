@@ -41,6 +41,7 @@ import org.infinispan.commands.write.PutMapCommand;
 import org.infinispan.commands.write.RemoveCommand;
 import org.infinispan.commands.write.ReplaceCommand;
 import org.infinispan.configuration.cache.Configuration;
+import org.infinispan.configuration.cache.DataContainerConfiguration;
 import org.infinispan.configuration.cache.LegacyConfigurationAdaptor;
 import org.infinispan.config.ConfigurationException;
 import org.infinispan.configuration.global.GlobalConfiguration;
@@ -77,6 +78,8 @@ import org.infinispan.transaction.TransactionCoordinator;
 import org.infinispan.transaction.TransactionTable;
 import org.infinispan.transaction.xa.TransactionXaAdapter;
 import org.infinispan.transaction.xa.recovery.RecoveryManager;
+import org.infinispan.util.AnyEquivalence;
+import org.infinispan.util.Equivalence;
 import org.infinispan.util.Util;
 import org.infinispan.util.concurrent.AbstractInProcessNotifyingFuture;
 import org.infinispan.util.concurrent.NotifyingFuture;
@@ -457,8 +460,9 @@ public class CacheImpl<K, V> extends CacheSupport<K, V> implements AdvancedCache
    }
 
    private InvocationContext getInvocationContextForWrite(ClassLoader explicitClassLoader, int keyCount, boolean isPutForExternalRead) {
-      InvocationContext ctx = isPutForExternalRead ?
-            icc.createSingleKeyNonTxInvocationContext() : icc.createInvocationContext(true, keyCount);
+      InvocationContext ctx = isPutForExternalRead
+            ? icc.createSingleKeyNonTxInvocationContext()
+            : icc.createInvocationContext(true, keyCount);
       return setInvocationContextClassLoader(ctx, explicitClassLoader);
    }
 

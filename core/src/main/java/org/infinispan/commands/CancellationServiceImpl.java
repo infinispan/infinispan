@@ -21,7 +21,7 @@ package org.infinispan.commands;
 import java.util.Map;
 import java.util.UUID;
 
-import org.infinispan.util.concurrent.ConcurrentMapFactory;
+import org.infinispan.util.CollectionFactory;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
@@ -34,7 +34,7 @@ import org.infinispan.util.logging.LogFactory;
 public class CancellationServiceImpl implements CancellationService {
 
    private static final Log log = LogFactory.getLog(CancellationServiceImpl.class);
-   private final Map<UUID, Thread> commandThreadMap = ConcurrentMapFactory.makeConcurrentMap();
+   private final Map<UUID, Thread> commandThreadMap = CollectionFactory.makeConcurrentMap();
 
    @Override
    public void register(Thread t, UUID id) {

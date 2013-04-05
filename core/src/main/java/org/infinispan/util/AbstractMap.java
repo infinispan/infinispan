@@ -23,6 +23,7 @@
 package org.infinispan.util;
 
 import java.util.Collection;
+import java.util.Iterator;
 import java.util.Map;
 import java.util.Set;
 
@@ -39,6 +40,14 @@ public abstract class AbstractMap<K, V> implements Map<K, V> {
    protected transient Set<K> keySet = null;
    protected transient Collection<V> values = null;
 
+   @Override
+   public int hashCode() {
+      int h = 0;
+      Iterator<Entry<K,V>> i = entrySet().iterator();
+      while (i.hasNext())
+         h += i.next().hashCode();
+      return h;
+   }
 
    // The normal bit spreader...
    protected static int hash(Object key) {

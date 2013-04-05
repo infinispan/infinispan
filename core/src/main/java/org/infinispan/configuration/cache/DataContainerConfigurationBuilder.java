@@ -22,7 +22,8 @@ import java.util.Properties;
 
 import org.infinispan.configuration.Builder;
 import org.infinispan.container.DataContainer;
-import org.infinispan.util.Comparing;
+import org.infinispan.util.AnyEquivalence;
+import org.infinispan.util.Equivalence;
 import org.infinispan.util.TypedProperties;
 
 /**
@@ -35,10 +36,8 @@ public class DataContainerConfigurationBuilder extends AbstractConfigurationChil
 
    // No default here. DataContainerFactory figures out default.
    private DataContainer dataContainer;
-   // No defaults here for Comparing, need to be able to know
-   // when no Comparing implementation has been configured.
-   private Comparing comparingKey;
-   private Comparing comparingValue;
+   private Equivalence keyEquivalence = AnyEquivalence.OBJECT;
+   private Equivalence valueEquivalence = AnyEquivalence.OBJECT;
    // TODO: What are properties used for? Is it just legacy?
    private Properties properties = new Properties();
 
@@ -80,32 +79,32 @@ public class DataContainerConfigurationBuilder extends AbstractConfigurationChil
    }
 
    /**
-    * Set the {@link Comparing} instance to use to compare keys stored in
-    * data container. {@link Comparing} implementations allow for custom
+    * Set the {@link org.infinispan.util.Equivalence} instance to use to compare keys stored in
+    * data container. {@link org.infinispan.util.Equivalence} implementations allow for custom
     * comparisons to be provided when the JDK, or external libraries, do
     * not provide adequate comparison implementations, i.e. arrays.
     *
-    * @param comparingKey instance of {@link Comparing} used to compare
+    * @param keyEquivalence instance of {@link org.infinispan.util.Equivalence} used to compare
     *                     key types.
     * @return this configuration builder
     */
-   public DataContainerConfigurationBuilder comparingKey(Comparing comparingKey) {
-      this.comparingKey = comparingKey;
+   public DataContainerConfigurationBuilder keyEquivalence(Equivalence keyEquivalence) {
+      this.keyEquivalence = keyEquivalence;
       return this;
    }
 
    /**
-    * Set the {@link Comparing} instance to use to compare values stored in
-    * data container. {@link Comparing} implementations allow for custom
+    * Set the {@link org.infinispan.util.Equivalence} instance to use to compare values stored in
+    * data container. {@link org.infinispan.util.Equivalence} implementations allow for custom
     * comparisons to be provided when the JDK, or external libraries, do
     * not provide adequate comparison implementations, i.e. arrays.
     *
-    * @param comparingValue instance of {@link Comparing} used to compare
+    * @param valueEquivalence instance of {@link org.infinispan.util.Equivalence} used to compare
     *                       value types.
     * @return this configuration builder
     */
-   public DataContainerConfigurationBuilder comparingValue(Comparing comparingValue) {
-      this.comparingValue = comparingValue;
+   public DataContainerConfigurationBuilder valueEquivalence(Equivalence valueEquivalence) {
+      this.valueEquivalence = valueEquivalence;
       return this;
    }
 
@@ -114,18 +113,17 @@ public class DataContainerConfigurationBuilder extends AbstractConfigurationChil
    }
 
    @Override
-   public
-   DataContainerConfiguration create() {
+   public DataContainerConfiguration create() {
       return new DataContainerConfiguration(dataContainer,
-            TypedProperties.toTypedProperties(properties), comparingKey, comparingValue);
+            TypedProperties.toTypedProperties(properties), keyEquivalence, valueEquivalence);
    }
 
    @Override
    public DataContainerConfigurationBuilder read(DataContainerConfiguration template) {
       this.dataContainer = template.dataContainer();
       this.properties = template.properties();
-      this.comparingKey = template.comparingKey();
-      this.comparingValue = template.comparingValue();
+      this.keyEquivalence = template.keyEquivalence();
+      this.valueEquivalence = template.valueEquivalence();
 
       return this;
    }
@@ -135,8 +133,8 @@ public class DataContainerConfigurationBuilder extends AbstractConfigurationChil
       return "DataContainerConfigurationBuilder{" +
             "dataContainer=" + dataContainer +
             ", properties=" + properties +
-            ", comparingKey=" + comparingKey +
-            ", comparingKey=" + comparingValue +
+            ", comparingKey=" + keyEquivalence +
+            ", comparingKey=" + valueEquivalence +
             '}';
    }
 
