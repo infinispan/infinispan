@@ -22,7 +22,6 @@
  */
 package org.infinispan.server.hotrod
 
-import org.infinispan.config.Configuration
 import test.HotRodClient
 import java.lang.reflect.Method
 import org.infinispan.server.hotrod.OperationStatus._
@@ -31,6 +30,9 @@ import test.HotRodTestingUtil._
 import org.infinispan.test.AbstractCacheTest._
 import org.testng.annotations.{AfterClass, BeforeClass, Test}
 import org.infinispan.server.core.test.ServerTestingUtil._
+import org.infinispan.test.fwk.TestCacheManagerFactory
+import org.infinispan.configuration.cache.CacheMode
+import org.infinispan.util.ByteArrayEquivalence
 
 @Test(groups = Array("functional"), testName = "server.hotrod.HotRodSingleClusteredTest")
 class HotRodSingleClusteredTest extends MultipleCacheManagersTest {
@@ -40,9 +42,12 @@ class HotRodSingleClusteredTest extends MultipleCacheManagersTest {
    private val cacheName = "HotRodCache"
 
    @Test(enabled=false) // Disable explicitly to avoid TestNG thinking this is a test!!
-   override def createCacheManagers {
-      val cm = addClusterEnabledCacheManager()
-      cm.defineConfiguration(cacheName, getDefaultClusteredConfig(Configuration.CacheMode.REPL_SYNC))
+   override def createCacheManagers() {
+      val cm = TestCacheManagerFactory.createClusteredCacheManager(hotRodCacheConfiguration())
+      cacheManagers.add(cm)
+      val builder = hotRodCacheConfiguration(
+         getDefaultClusteredCacheConfig(CacheMode.REPL_SYNC, false))
+      cm.defineConfiguration(cacheName, builder.build())
    }
 
    @BeforeClass(alwaysRun = true)
@@ -54,11 +59,11 @@ class HotRodSingleClusteredTest extends MultipleCacheManagersTest {
    }
 
    @AfterClass(alwaysRun = true)
-   override def destroy {
+   override def destroy() {
       log.debug("Test finished, close client, server, and cache managers")
       killClient(hotRodClient)
       killServer(hotRodServer)
-      super.destroy
+      super.destroy()
    }
 
    def testPutGet(m: Method) {

@@ -29,7 +29,7 @@ import org.infinispan.factories.components.ManageableComponentMetadata;
 import org.infinispan.jmx.annotations.MBean;
 import org.infinispan.jmx.annotations.ManagedOperation;
 import org.infinispan.util.ReflectionUtil;
-import org.infinispan.util.concurrent.ConcurrentMapFactory;
+import org.infinispan.util.CollectionFactory;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
@@ -80,9 +80,9 @@ public class ResourceDMBean implements DynamicMBean {
    private final HashMap<String, InvokableMBeanAttributeInfo> atts = new HashMap<String, InvokableMBeanAttributeInfo>(2);
    private final ManageableComponentMetadata mBeanMetadata;
 
-   private static final Map<String, Field> FIELD_CACHE = ConcurrentMapFactory.makeConcurrentMap(64);
-   private static final Map<String, Method> METHOD_CACHE = ConcurrentMapFactory.makeConcurrentMap(64);
-   private static final Map<String[], Class<?>[]> PARAM_TYPE_CACHE = ConcurrentMapFactory.makeConcurrentMap(64);
+   private static final Map<String, Field> FIELD_CACHE = CollectionFactory.makeConcurrentMap(64);
+   private static final Map<String, Method> METHOD_CACHE = CollectionFactory.makeConcurrentMap(64);
+   private static final Map<String[], Class<?>[]> PARAM_TYPE_CACHE = CollectionFactory.makeConcurrentMap(64);
 
    public ResourceDMBean(Object instance, ManageableComponentMetadata mBeanMetadata) throws NoSuchFieldException, ClassNotFoundException {
 

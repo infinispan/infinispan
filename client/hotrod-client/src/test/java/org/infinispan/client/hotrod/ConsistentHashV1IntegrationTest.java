@@ -53,6 +53,7 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import static org.infinispan.client.hotrod.test.HotRodClientTestingUtil.*;
+import static org.infinispan.server.hotrod.test.HotRodTestingUtil.hotRodCacheConfiguration;
 import static org.testng.Assert.assertEquals;
 import static org.testng.Assert.assertNotEquals;
 
@@ -97,9 +98,7 @@ public class ConsistentHashV1IntegrationTest extends MultipleCacheManagersTest {
 
       ex = Executors.newSingleThreadExecutor();
       kas = KeyAffinityServiceFactory.newKeyAffinityService(cache(0),
-                                                            ex,
-                                                            new DistributionRetryTest.ByteKeyGenerator(),
-                                                            2, true);
+            ex, new DistributionRetryTest.ByteKeyGenerator(), 2, true);
 
       for (int i = 0; i < 4; i++) {
          advancedCache(i).addInterceptor(new HitsAwareCacheManagersTest.HitCountInterceptor(), 1);
@@ -110,7 +109,7 @@ public class ConsistentHashV1IntegrationTest extends MultipleCacheManagersTest {
       ConfigurationBuilder builder = getDefaultClusteredCacheConfig(CacheMode.DIST_SYNC, false);
       builder.jmxStatistics().enable();
       builder.clustering().hash().numOwners(2).stateTransfer().fetchInMemoryState(false);
-      return builder;
+      return hotRodCacheConfiguration(builder);
    }
 
    @AfterMethod(alwaysRun = true)

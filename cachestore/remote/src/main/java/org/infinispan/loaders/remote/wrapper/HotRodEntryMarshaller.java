@@ -22,11 +22,8 @@ import java.io.IOException;
 import java.util.Arrays;
 
 import org.infinispan.io.ByteBuffer;
-import org.infinispan.loaders.remote.logging.Log;
 import org.infinispan.marshall.BufferSizePredictor;
 import org.infinispan.marshall.Marshaller;
-import org.infinispan.util.ByteArrayKey;
-import org.infinispan.util.logging.LogFactory;
 
 /**
  * HotRodEntryMarshaller.
@@ -35,16 +32,12 @@ import org.infinispan.util.logging.LogFactory;
  * @since 5.2
  */
 public class HotRodEntryMarshaller implements Marshaller {
-   private static final Log log = LogFactory.getLog(HotRodEntryMarshaller.class, Log.class);
+
    BufferSizePredictor predictor = new IdentityBufferSizePredictor();
 
    @Override
    public byte[] objectToByteBuffer(Object obj, int estimatedSize) throws IOException, InterruptedException {
-      if (obj instanceof ByteArrayKey) {
-         return ((ByteArrayKey)obj).getData();
-      } else {
-         throw log.unsupportedMarshallingForObject(obj.getClass().getName());
-      }
+      return (byte[]) obj;
    }
 
    @Override
@@ -70,7 +63,7 @@ public class HotRodEntryMarshaller implements Marshaller {
 
    @Override
    public boolean isMarshallable(Object o) throws Exception {
-      return o instanceof ByteArrayKey;
+      return o instanceof byte[];
    }
 
    @Override

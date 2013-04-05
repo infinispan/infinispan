@@ -29,6 +29,7 @@ import org.testng.annotations.Test
 import org.infinispan.configuration.cache.{CacheMode, ConfigurationBuilder}
 import org.infinispan.server.hotrod.Constants._
 import org.infinispan.test.TestingUtil
+import org.infinispan.util.ByteArrayEquivalence
 
 /**
  * Tests Hot Rod with a local (non-clustered) cache using Hot Rod's 1.1 protocol.
@@ -41,10 +42,9 @@ class HotRod11LocalCacheTest extends HotRodMultiNodeTest {
 
    override protected def cacheName = "localVersion11"
 
-   override protected def createCacheConfig: ConfigurationBuilder = {
-      val cfg = getDefaultClusteredCacheConfig(CacheMode.LOCAL, false)
-      cfg
-   }
+   override protected def createCacheConfig: ConfigurationBuilder =
+      hotRodCacheConfiguration(
+         getDefaultClusteredCacheConfig(CacheMode.LOCAL, false))
 
    override protected def protocolVersion : Byte = 11
 

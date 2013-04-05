@@ -31,6 +31,7 @@ import org.testng.annotations.Test;
 
 import static org.infinispan.client.hotrod.test.HotRodClientTestingUtil.killRemoteCacheManager;
 import static org.infinispan.client.hotrod.test.HotRodClientTestingUtil.killServers;
+import static org.infinispan.server.hotrod.test.HotRodTestingUtil.hotRodCacheConfiguration;
 import static org.testng.AssertJUnit.assertEquals;
 
 /**
@@ -49,7 +50,8 @@ public class HotRodServerStartStopTest extends MultipleCacheManagersTest {
 
    @Override
    protected void createCacheManagers() throws Throwable {
-      ConfigurationBuilder builder = getDefaultClusteredCacheConfig(CacheMode.DIST_SYNC, false);
+      ConfigurationBuilder builder = hotRodCacheConfiguration(
+            getDefaultClusteredCacheConfig(CacheMode.DIST_SYNC, false));
       addClusterEnabledCacheManager(builder);
       addClusterEnabledCacheManager(builder);
 
@@ -60,9 +62,6 @@ public class HotRodServerStartStopTest extends MultipleCacheManagersTest {
       assert manager(1).getCache() != null;
 
       waitForClusterToForm();
-
-      cache(0).put("k","v");
-      assertEquals("v", cache(1).get("k"));
    }
 
    public void testTouchServer() {

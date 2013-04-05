@@ -26,7 +26,7 @@ import org.infinispan.cdi.interceptor.context.metadata.AggregatedParameterMetaDa
 import org.infinispan.cdi.interceptor.context.metadata.MethodMetaData;
 import org.infinispan.cdi.interceptor.context.metadata.ParameterMetaData;
 import org.infinispan.cdi.util.logging.Log;
-import org.infinispan.util.concurrent.ConcurrentMapFactory;
+import org.infinispan.util.CollectionFactory;
 import org.infinispan.util.logging.LogFactory;
 
 import javax.cache.annotation.CacheDefaults;
@@ -68,7 +68,7 @@ public class CacheKeyInvocationContextFactory {
    @Inject
    public CacheKeyInvocationContextFactory(BeanManager beanManager) {
       this.beanManager = beanManager;
-      this.methodMetaDataCache = ConcurrentMapFactory.makeConcurrentMap();
+      this.methodMetaDataCache = CollectionFactory.makeConcurrentMap();
    }
 
    // for proxy.

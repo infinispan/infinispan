@@ -35,13 +35,13 @@ import org.infinispan.manager._
 import org.codehaus.jackson.map.ObjectMapper
 import org.infinispan.{CacheException, Cache}
 import org.infinispan.commons.hash.MurmurHash3
-import org.infinispan.util.concurrent.ConcurrentMapFactory
 import javax.ws.rs._
 import javax.servlet.http.HttpServletResponse
 import javax.servlet.ServletContext
 import scala.collection.JavaConverters._
 import scala.xml.Utility
 import org.infinispan.tasks.GlobalKeySetTask
+import org.infinispan.util.CollectionFactory
 
 /**
  * Integration server linking REST requests with Infinispan calls.
@@ -326,7 +326,7 @@ class Server(@Context request: Request, @Context servletContext: ServletContext,
  */
 class ManagerInstance(instance: EmbeddedCacheManager) {
    private[rest] val knownCaches : java.util.Map[String, Cache[String, Any]] =
-      ConcurrentMapFactory.makeConcurrentMap(4, 0.9f, 16)
+      CollectionFactory.makeConcurrentMap(4, 0.9f, 16)
 
    def getCache(name: String): Cache[String, Any] = {
       val isKnownCache = knownCaches.containsKey(name)

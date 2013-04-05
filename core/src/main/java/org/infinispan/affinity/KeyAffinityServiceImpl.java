@@ -31,8 +31,8 @@ import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.notifications.cachelistener.event.TopologyChangedEvent;
 import org.infinispan.notifications.cachemanagerlistener.event.CacheStoppedEvent;
 import org.infinispan.remoting.transport.Address;
+import org.infinispan.util.CollectionFactory;
 import org.infinispan.util.concurrent.ConcurrentHashSet;
-import org.infinispan.util.concurrent.ConcurrentMapFactory;
 import org.infinispan.util.concurrent.ReclosableLatch;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
@@ -66,7 +66,7 @@ public class KeyAffinityServiceImpl<K> implements KeyAffinityService<K> {
    private final Set<Address> filter;
 
    @GuardedBy("maxNumberInvariant")
-   private final Map<Address, BlockingQueue<K>> address2key = ConcurrentMapFactory.makeConcurrentMap();
+   private final Map<Address, BlockingQueue<K>> address2key = CollectionFactory.makeConcurrentMap();
    private final Executor executor;
    private final Cache<? extends K, ?> cache;
    private final KeyGenerator<? extends K> keyGenerator;

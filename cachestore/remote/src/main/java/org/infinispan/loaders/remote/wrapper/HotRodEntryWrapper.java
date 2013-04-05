@@ -22,7 +22,6 @@ import org.infinispan.client.hotrod.MetadataValue;
 import org.infinispan.loaders.CacheLoaderException;
 import org.infinispan.loaders.remote.logging.Log;
 import org.infinispan.server.core.CacheValue;
-import org.infinispan.util.ByteArrayKey;
 import org.infinispan.util.logging.LogFactory;
 
 /**
@@ -31,16 +30,12 @@ import org.infinispan.util.logging.LogFactory;
  * @author Tristan Tarrant
  * @since 5.2
  */
-public class HotRodEntryWrapper implements EntryWrapper<ByteArrayKey, CacheValue> {
+public class HotRodEntryWrapper implements EntryWrapper<byte[], CacheValue> {
    private static final Log log = LogFactory.getLog(HotRodEntryWrapper.class, Log.class);
 
    @Override
-   public ByteArrayKey wrapKey(Object key) throws CacheLoaderException {
-      if (key instanceof ByteArrayKey) {
-         return (ByteArrayKey) key;
-      } else {
-         throw log.unsupportedKeyFormat(key.getClass().getName());
-      }
+   public byte[] wrapKey(Object key) throws CacheLoaderException {
+      return (byte[]) key;
    }
 
    @Override

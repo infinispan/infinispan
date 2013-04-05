@@ -36,7 +36,6 @@ import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.server.hotrod.HotRodServer;
 import org.infinispan.test.MultipleCacheManagersTest;
 import org.testng.annotations.AfterClass;
-import org.testng.annotations.Test;
 
 /**
  * Tests functionality related to getting multiple entries from a HotRod server

@@ -18,8 +18,6 @@
  */
 package org.infinispan.loaders.remote;
 
-import static org.testng.AssertJUnit.assertEquals;
-
 import org.infinispan.Cache;
 import org.infinispan.client.hotrod.RemoteCache;
 import org.infinispan.client.hotrod.RemoteCacheManager;
@@ -29,18 +27,18 @@ import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.eviction.EvictionStrategy;
 import org.infinispan.loaders.remote.configuration.RemoteCacheStoreConfigurationBuilder;
 import org.infinispan.manager.EmbeddedCacheManager;
-import org.infinispan.marshall.Marshaller;
-import org.infinispan.marshall.jboss.GenericJBossMarshaller;
 import org.infinispan.server.core.CacheValue;
 import org.infinispan.server.hotrod.HotRodServer;
 import org.infinispan.test.AbstractInfinispanTest;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
-import org.infinispan.util.ByteArrayKey;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
+
+import static org.infinispan.server.hotrod.test.HotRodTestingUtil.*;
+import static org.testng.AssertJUnit.assertEquals;
 
 @Test(testName = "loaders.remote.RemoteCacheStoreWrapperTest", groups="functional")
 public class RemoteCacheStoreWrapperTest extends AbstractInfinispanTest {
@@ -48,21 +46,21 @@ public class RemoteCacheStoreWrapperTest extends AbstractInfinispanTest {
    private HotRodServer sourceServer;
    private HotRodServer targetServer;
    private EmbeddedCacheManager serverCacheManager;
-   private Cache<ByteArrayKey, CacheValue> serverCache;
+   private Cache<byte[], CacheValue> serverCache;
    private EmbeddedCacheManager targetCacheManager;
-   private Cache<ByteArrayKey, CacheValue> targetCache;
+   private Cache<byte[], CacheValue> targetCache;
    private RemoteCacheManager remoteSourceCacheManager;
    private RemoteCache<String, String> remoteSourceCache;
    private RemoteCacheManager remoteTargetCacheManager;
    private RemoteCache<String, String> remoteTargetCache;
-   private Marshaller marshaller;
 
    @BeforeClass
    public void setup() throws Exception {
       ConfigurationBuilder serverBuilder = TestCacheManagerFactory.getDefaultCacheConfiguration(true);
       serverBuilder.eviction().maxEntries(100).strategy(EvictionStrategy.UNORDERED)
             .expiration().wakeUpInterval(10L);
-      serverCacheManager = TestCacheManagerFactory.createCacheManager(serverBuilder);
+      serverCacheManager = TestCacheManagerFactory
+            .createCacheManager(hotRodCacheConfiguration(serverBuilder));
       serverCache = serverCacheManager.getCache();
       sourceServer = TestHelper.startHotRodServer(serverCacheManager);
 
@@ -76,23 +74,20 @@ public class RemoteCacheStoreWrapperTest extends AbstractInfinispanTest {
          .addServer()
             .host("localhost")
             .port(sourceServer.getPort());
-      targetCacheManager = TestCacheManagerFactory.createCacheManager(clientBuilder);
+      targetCacheManager = TestCacheManagerFactory
+            .createCacheManager(hotRodCacheConfiguration(clientBuilder));
       targetCache = targetCacheManager.getCache();
       targetServer = TestHelper.startHotRodServer(targetCacheManager);
 
       remoteTargetCacheManager = new RemoteCacheManager("localhost", targetServer.getPort());
       remoteTargetCacheManager.start();
       remoteTargetCache = remoteTargetCacheManager.getCache();
-
-      marshaller = remoteTargetCacheManager.getMarshaller();
    }
 
    public void testEntryWrapping() throws Exception {
       remoteSourceCache.put("k1", "v1");
       remoteSourceCache.put("k2", "v2");
-      ByteArrayKey key = new ByteArrayKey(marshaller.objectToByteBuffer("k1"));
-      CacheValue cv1 = targetCache.get(key);
-      assertEquals(marshaller.objectToByteBuffer("v1"), cv1.data());
+      assertHotRodEquals(targetCacheManager, "k1", "v1");
       String v1 = remoteTargetCache.get("k1");
       assertEquals("v1", v1);
       String v2 = remoteTargetCache.get("k2");

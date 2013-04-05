@@ -29,14 +29,15 @@ import org.infinispan.client.hotrod.impl.RemoteCacheImpl;
 import org.infinispan.client.hotrod.impl.transport.tcp.RoundRobinBalancingStrategy;
 import org.infinispan.client.hotrod.impl.transport.tcp.TcpTransportFactory;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
-import org.infinispan.lifecycle.ComponentStatus;
-import org.infinispan.manager.CacheContainer;
+import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.server.hotrod.HotRodServer;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.testng.annotations.AfterMethod;
 
 import java.util.Properties;
+
+import static org.infinispan.server.hotrod.test.HotRodTestingUtil.hotRodCacheConfiguration;
 
 /**
  * @author Mircea.Markus@jboss.com
@@ -66,10 +67,10 @@ public abstract class AbstractRetryTest extends HitsAwareCacheManagersTest {
    protected void createCacheManagers() throws Throwable {
       assert cleanupAfterMethod();
 
-      config = getCacheConfig();
-      CacheContainer cm1 = TestCacheManagerFactory.createClusteredCacheManager(config);
-      CacheContainer cm2 = TestCacheManagerFactory.createClusteredCacheManager(config);
-      CacheContainer cm3 = TestCacheManagerFactory.createClusteredCacheManager(config);
+      config = hotRodCacheConfiguration(getCacheConfig());
+      EmbeddedCacheManager cm1 = TestCacheManagerFactory.createClusteredCacheManager(config);
+      EmbeddedCacheManager cm2 = TestCacheManagerFactory.createClusteredCacheManager(config);
+      EmbeddedCacheManager cm3 = TestCacheManagerFactory.createClusteredCacheManager(config);
       registerCacheManager(cm1);
       registerCacheManager(cm2);
       registerCacheManager(cm3);

@@ -17,10 +17,16 @@
  * 02110-1301 USA
  */
 
-package org.infinispan.util.concurrent;
+package org.infinispan.util;
 
+import org.infinispan.container.entries.InternalCacheEntry;
 import org.infinispan.util.concurrent.jdk8backported.ConcurrentHashMapV8;
+import org.infinispan.util.concurrent.jdk8backported.EquivalentConcurrentHashMapV8;
 
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 
@@ -28,9 +34,10 @@ import java.util.concurrent.ConcurrentMap;
  * A factory for ConcurrentMaps.
  *
  * @author Manik Surtani
+ * @author Galder Zamarreño
  * @since 5.1
  */
-public class ConcurrentMapFactory {
+public class CollectionFactory {
    
    private static final ConcurrentMapCreator MAP_CREATOR;
 
@@ -127,4 +134,79 @@ public class ConcurrentMapFactory {
    public static <K, V> ConcurrentMap<K, V> makeConcurrentMap(int initCapacity, float loadFactor, int concurrencyLevel) {
       return MAP_CREATOR.createConcurrentMap(initCapacity, loadFactor, concurrencyLevel);
    }
+
+   public static <K, V> ConcurrentMap<K, V> makeConcurrentMap(
+         Equivalence<K> keyEq, Equivalence<V> valueEq) {
+      if (requiresEquivalent(keyEq, valueEq))
+         return new EquivalentConcurrentHashMapV8<K, V>(keyEq, valueEq);
+      else
+         return MAP_CREATOR.createConcurrentMap();
+   }
+
+   public static <K, V> ConcurrentMap<K, V> makeConcurrentMap(
+         int initCapacity, Equivalence<K> keyEq, Equivalence<V> valueEq) {
+      if (requiresEquivalent(keyEq, valueEq))
+         return new EquivalentConcurrentHashMapV8<K, V>(initCapacity, keyEq, valueEq);
+      else
+         return MAP_CREATOR.createConcurrentMap(initCapacity);
+   }
+
+   public static <K, V> ConcurrentMap<K, V> makeConcurrentMap(
+         int initCapacity, int concurrencyLevel, Equivalence<K> keyEq, Equivalence<V> valueEq) {
+      if (requiresEquivalent(keyEq, valueEq))
+         return new EquivalentConcurrentHashMapV8<K, V>(
+               initCapacity, concurrencyLevel, keyEq, valueEq);
+      else
+         return MAP_CREATOR.createConcurrentMap(initCapacity, concurrencyLevel);
+   }
+
+   public static <K, V> ConcurrentMap<K, V> makeConcurrentMap(
+         int initCapacity, float loadFactor, int concurrencyLevel,
+         Equivalence<K> keyEq, Equivalence<V> valueEq) {
+      if (requiresEquivalent(keyEq, valueEq))
+         return new EquivalentConcurrentHashMapV8<K, V>(
+               initCapacity, loadFactor, concurrencyLevel, keyEq, valueEq);
+      else
+         return MAP_CREATOR.createConcurrentMap(initCapacity, loadFactor, concurrencyLevel);
+   }
+
+   public static <K, V> Map<K, V> makeMap(
+         Equivalence<K> keyEq, Equivalence<V> valueEq) {
+      if (requiresEquivalent(keyEq, valueEq))
+         return new EquivalentHashMap<K, V>(keyEq, valueEq);
+      else
+         return new HashMap<K, V>();
+   }
+
+   public static <K, V> Map<K, V> makeMap(
+         int initialCapacity, Equivalence<K> keyEq, Equivalence<V> valueEq) {
+      if (requiresEquivalent(keyEq, valueEq))
+         return new EquivalentHashMap<K, V>(initialCapacity, keyEq, valueEq);
+      else
+         return new HashMap<K, V>(initialCapacity);
+   }
+
+   public static <T> Set<T> makeSet(Equivalence<T> entryEq) {
+      if (requiresEquivalent(entryEq))
+         return new EquivalentHashSet<T>(entryEq);
+      else
+         return new HashSet<T>();
+   }
+
+   public static <T> Set<T> makeSet(int initialCapacity, Equivalence<T> entryEq) {
+      if (requiresEquivalent(entryEq))
+         return new EquivalentHashSet<T>(initialCapacity, entryEq);
+      else
+         return new HashSet<T>(initialCapacity);
+   }
+
+   private static <K, V> boolean requiresEquivalent(
+         Equivalence<K> keyEq, Equivalence<V> valueEq) {
+      return keyEq != AnyEquivalence.OBJECT || valueEq != AnyEquivalence.OBJECT;
+   }
+
+   private static <T> boolean requiresEquivalent(Equivalence<T> typeEq) {
+      return typeEq != AnyEquivalence.OBJECT;
+   }
+
 }

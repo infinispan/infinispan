@@ -48,7 +48,7 @@ import org.infinispan.transaction.LockingMode;
 import org.infinispan.transaction.TransactionMode;
 import org.infinispan.transaction.TransactionProtocol;
 import org.infinispan.transaction.lookup.TransactionManagerLookup;
-import org.infinispan.util.Comparing;
+import org.infinispan.util.Equivalence;
 import org.infinispan.util.Util;
 import org.infinispan.util.concurrent.IsolationLevel;
 import org.infinispan.util.logging.Log;
@@ -1125,10 +1125,10 @@ public class Parser53 implements ConfigurationParser<ConfigurationBuilderHolder>
                builder.dataContainer().dataContainer(Util.<DataContainer>getInstance(value, holder.getClassLoader()));
                break;
             case COMPARING_KEY:
-               builder.dataContainer().comparingKey(Util.<Comparing>getInstance(value, holder.getClassLoader()));
+               builder.dataContainer().keyEquivalence(Util.<Equivalence>getInstance(value, holder.getClassLoader()));
                break;
             case COMPARING_VALUE:
-               builder.dataContainer().comparingValue(Util.<Comparing>getInstance(value, holder.getClassLoader()));
+               builder.dataContainer().valueEquivalence(Util.<Equivalence>getInstance(value, holder.getClassLoader()));
                break;
             default:
                throw ParseUtils.unexpectedAttribute(reader, i);

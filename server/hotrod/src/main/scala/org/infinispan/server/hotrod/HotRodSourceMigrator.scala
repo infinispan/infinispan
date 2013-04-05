@@ -26,20 +26,14 @@
 
 package org.infinispan.server.hotrod
 
-import org.infinispan.factories.annotations.{Inject, SurvivesRestarts}
-import org.infinispan.factories.scopes.{Scope, Scopes}
-import org.infinispan.jmx.annotations.{ManagedOperation, MBean}
-import org.infinispan.util.ByteArrayKey
-import org.infinispan.server.core.{Operation, CacheValue}
+import org.infinispan.server.core.CacheValue
 import org.infinispan.Cache
-import org.infinispan.server.core.Operation
 import org.infinispan.distexec.{DistributedCallable, DefaultExecutorService}
-import java.nio.charset.Charset
 import org.infinispan.marshall.jboss.GenericJBossMarshaller
 import org.infinispan.upgrade.SourceMigrator
 import org.infinispan.tasks.GlobalKeySetTask
 
-class HotRodSourceMigrator(cache: Cache[ByteArrayKey, CacheValue]) extends SourceMigrator {
+class HotRodSourceMigrator(cache: Cache[Array[Byte], CacheValue]) extends SourceMigrator {
    val KNOWN_KEY = "___MigrationManager_HotRod_KnownKeys___"
    val MARSHALLER = new GenericJBossMarshaller // TODO: Hard coded!  Yuck!  Assumes the Synchronizer service will use the same marshaller.  Doesn't matter what actual clients use to store/retrieve data.
 
@@ -53,9 +47,8 @@ class HotRodSourceMigrator(cache: Cache[ByteArrayKey, CacheValue]) extends Sourc
    }
 
    def recordKnownGlobalKeyset(keyToRecordKnownKeySet: String) {
-
       // TODO: the bulk of ths code is reusable across different implementations of Migrator
-      val bak = new ByteArrayKey(MARSHALLER.objectToByteBuffer(keyToRecordKnownKeySet))
+      val bak = MARSHALLER.objectToByteBuffer(keyToRecordKnownKeySet)
 
       val cm = cache.getCacheConfiguration().clustering().cacheMode()
       val keys = GlobalKeySetTask.getGlobalKeySet(cache)
@@ -68,3 +61,4 @@ class HotRodSourceMigrator(cache: Cache[ByteArrayKey, CacheValue]) extends Sourc
       cache.put(bak, new CacheValue(MARSHALLER.objectToByteBuffer(keys), 1))
    }
 }
+

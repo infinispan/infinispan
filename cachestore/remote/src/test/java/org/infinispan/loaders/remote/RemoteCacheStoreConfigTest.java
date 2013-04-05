@@ -41,6 +41,7 @@ import org.testng.annotations.Test;
 import java.io.IOException;
 
 import static junit.framework.Assert.assertEquals;
+import static org.infinispan.server.hotrod.test.HotRodTestingUtil.hotRodCacheConfiguration;
 import static org.infinispan.test.TestingUtil.withCacheManager;
 
 /**
@@ -58,7 +59,7 @@ public class RemoteCacheStoreConfigTest {
 
    @BeforeTest
    public void startUp() {
-      cacheManager = TestCacheManagerFactory.createLocalCacheManager(false);
+      cacheManager = TestCacheManagerFactory.createCacheManager(hotRodCacheConfiguration());
       assertEquals(cacheManager.getCache().size(), 0);
       hotRodServer = HotRodTestingUtil.startHotRodServer(cacheManager, 19711);
    }

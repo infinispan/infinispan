@@ -59,7 +59,7 @@ import org.infinispan.remoting.transport.Transport;
 import org.infinispan.util.FileLookupFactory;
 import org.infinispan.util.Immutables;
 import org.infinispan.util.InfinispanCollections;
-import org.infinispan.util.concurrent.ConcurrentMapFactory;
+import org.infinispan.util.CollectionFactory;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
@@ -126,8 +126,8 @@ public class DefaultCacheManager implements EmbeddedCacheManager, CacheManager {
    private static final Log log = LogFactory.getLog(DefaultCacheManager.class);
    protected final GlobalConfiguration globalConfiguration;
    protected final Configuration defaultConfiguration;
-   private final ConcurrentMap<String, CacheWrapper> caches = ConcurrentMapFactory.makeConcurrentMap();
-   private final ConcurrentMap<String, Configuration> configurationOverrides = ConcurrentMapFactory.makeConcurrentMap();
+   private final ConcurrentMap<String, CacheWrapper> caches = CollectionFactory.makeConcurrentMap();
+   private final ConcurrentMap<String, Configuration> configurationOverrides = CollectionFactory.makeConcurrentMap();
    private final GlobalComponentRegistry globalComponentRegistry;
    private volatile boolean stopping;
 

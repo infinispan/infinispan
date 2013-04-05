@@ -31,6 +31,7 @@ import org.testng.Assert._
 import org.infinispan.configuration.cache.{CacheMode, ConfigurationBuilder}
 import org.infinispan.test.TestingUtil
 import test.AbstractTestTopologyAwareResponse
+import org.infinispan.util.ByteArrayEquivalence
 
 /**
  * Tests Hot Rod instances configured with replication.
@@ -44,7 +45,8 @@ class HotRodReplicationTest extends HotRodMultiNodeTest {
    override protected def cacheName: String = "hotRodReplSync"
 
    override protected def createCacheConfig: ConfigurationBuilder = {
-      val config = getDefaultClusteredCacheConfig(CacheMode.REPL_SYNC, false)
+      val config = hotRodCacheConfiguration(
+         getDefaultClusteredCacheConfig(CacheMode.REPL_SYNC, false))
       config.clustering().stateTransfer().fetchInMemoryState(true)
       config
    }

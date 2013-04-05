@@ -43,6 +43,8 @@ import org.infinispan.util.InfinispanCollections;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
+import static org.infinispan.util.Util.toStr;
+
 /**
  * Base class for local and remote transaction. Impl note: The aggregated modification list and lookedUpEntries are not
  * instantiated here but in subclasses. This is done in order to take advantage of the fact that, for remote
@@ -61,7 +63,12 @@ public abstract class AbstractCacheTransaction implements CacheTransaction {
 
    protected volatile boolean hasLocalOnlyModifications;
    protected volatile List<WriteCommand> modifications;
+
+   // TODO: Use EquivalentHashSet for lookedUpEntries to support array keys...
+
    protected HashMap<Object, CacheEntry> lookedUpEntries;
+
+   // TODO: Use EquivalentHashSet for affected and lockedKeys to support array keys...
 
    /** Holds all the locked keys that were acquired by the transaction allover the cluster. */
    protected Set<Object> affectedKeys = null;
@@ -230,7 +237,7 @@ public abstract class AbstractCacheTransaction implements CacheTransaction {
    public void registerLockedKey(Object key) {
       // we need to synchronize this collection to be able to get a valid snapshot from another thread during state transfer
       if (lockedKeys == null) lockedKeys = Collections.synchronizedSet(new HashSet<Object>(INITIAL_LOCK_CAPACITY));
-      if (trace) log.tracef("Registering locked key: %s", key);
+      if (trace) log.tracef("Registering locked key: %s", toStr(key));
       lockedKeys.add(key);
    }
 
@@ -247,7 +254,7 @@ public abstract class AbstractCacheTransaction implements CacheTransaction {
 
    @Override
    public void clearLockedKeys() {
-      if (trace) log.tracef("Clearing locked keys: %s", lockedKeys);
+      if (trace) log.tracef("Clearing locked keys: %s", toStr(lockedKeys));
       lockedKeys = null;
    }
 

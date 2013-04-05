@@ -22,6 +22,8 @@
  */
 package org.infinispan.util.concurrent;
 
+import org.infinispan.util.CollectionFactory;
+
 import java.io.Serializable;
 import java.util.AbstractSet;
 import java.util.Collection;
@@ -48,7 +50,7 @@ public class ConcurrentHashSet<E> extends AbstractSet<E> implements Serializable
    private static final Serializable DUMMY = 0;
 
    public ConcurrentHashSet() {
-      map = ConcurrentMapFactory.makeConcurrentMap();
+      map = CollectionFactory.makeConcurrentMap();
    }
 
    /**
@@ -56,7 +58,7 @@ public class ConcurrentHashSet<E> extends AbstractSet<E> implements Serializable
     *                         float, int)} javadocs for details.
     */
    public ConcurrentHashSet(int concurrencyLevel) {
-      map = ConcurrentMapFactory.makeConcurrentMap(16, concurrencyLevel);
+      map = CollectionFactory.makeConcurrentMap(16, concurrencyLevel);
    }
 
    /**
@@ -64,7 +66,7 @@ public class ConcurrentHashSet<E> extends AbstractSet<E> implements Serializable
     * float, int)} javadocs for details.
     */
    public ConcurrentHashSet(int initSize, float loadFactor, int concurrencyLevel) {
-      map = ConcurrentMapFactory.makeConcurrentMap(initSize, loadFactor, concurrencyLevel);
+      map = CollectionFactory.makeConcurrentMap(initSize, loadFactor, concurrencyLevel);
    }
 
 

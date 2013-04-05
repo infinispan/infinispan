@@ -25,7 +25,8 @@ package org.infinispan.server.hotrod
 import org.testng.annotations.Test
 import org.testng.Assert._
 import org.infinispan.server.core.test.Stoppable
-import org.infinispan.test.fwk.TestCacheManagerFactory
+import org.infinispan.test.fwk.TestCacheManagerFactory._
+import test.HotRodTestingUtil._
 
 /**
  * Hot Rod server unit test.
@@ -36,8 +37,8 @@ import org.infinispan.test.fwk.TestCacheManagerFactory
 @Test(groups = Array("functional"), testName = "server.hotrod.HotRodServerTest")
 class HotRodServerTest {
 
-   def testValidateProtocolServerNullProperties {
-      Stoppable.useCacheManager(TestCacheManagerFactory.createCacheManager()) { cm =>
+   def testValidateProtocolServerNullProperties() {
+      Stoppable.useCacheManager(createCacheManager(hotRodCacheConfiguration())) { cm =>
          Stoppable.useServer(new HotRodServer) { server =>
             server.startWithProperties(null, cm)
             assertEquals(server.getHost, "127.0.0.1")

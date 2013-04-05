@@ -30,7 +30,6 @@ import test.HotRodTestingUtil._
 import org.jboss.netty.channel.ChannelFuture
 import org.infinispan.test.fwk.TestCacheManagerFactory
 import org.infinispan.manager.EmbeddedCacheManager
-import org.infinispan.util.ByteArrayKey
 import org.infinispan.server.core.test.ServerTestingUtil._
 import org.testng.annotations.{Test, AfterClass}
 
@@ -44,13 +43,12 @@ abstract class HotRodSingleNodeTest extends SingleCacheManagerTest {
    val cacheName = "HotRodCache"
    protected var hotRodServer: HotRodServer = _
    private var hotRodClient: HotRodClient = _
-   private var advancedCache: AdvancedCache[ByteArrayKey, CacheValue] = _
+   private var advancedCache: AdvancedCache[Array[Byte], CacheValue] = _
    private var hotRodJmxDomain = getClass.getSimpleName
-
+   
    override def createCacheManager: EmbeddedCacheManager = {
       val cacheManager = createTestCacheManager
-      cacheManager.defineConfiguration(cacheName, cacheManager.getDefaultConfiguration)
-      advancedCache = cacheManager.getCache[ByteArrayKey, CacheValue](cacheName).getAdvancedCache
+      advancedCache = cacheManager.getCache[Array[Byte], CacheValue](cacheName).getAdvancedCache
       cacheManager
    }
 
@@ -61,14 +59,15 @@ abstract class HotRodSingleNodeTest extends SingleCacheManagerTest {
       hotRodClient = connectClient
    }
 
-   protected def createTestCacheManager: EmbeddedCacheManager = TestCacheManagerFactory.createLocalCacheManager(true)
+   protected def createTestCacheManager: EmbeddedCacheManager =
+      TestCacheManagerFactory.createCacheManager(hotRodCacheConfiguration())
 
    protected def createStartHotRodServer(cacheManager: EmbeddedCacheManager) = startHotRodServer(cacheManager)
 
    @AfterClass(alwaysRun = true)
-   override def destroyAfterClass {
+   override def destroyAfterClass() {
       log.debug("Test finished, close cache, client and Hot Rod server")
-      super.destroyAfterClass
+      super.destroyAfterClass()
       shutdownClient
       killServer(hotRodServer)
    }

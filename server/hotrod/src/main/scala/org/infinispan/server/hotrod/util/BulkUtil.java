@@ -30,7 +30,6 @@ import org.infinispan.distexec.mapreduce.MapReduceTask;
 import org.infinispan.distexec.mapreduce.Mapper;
 import org.infinispan.distexec.mapreduce.Reducer;
 import org.infinispan.server.core.CacheValue;
-import org.infinispan.util.ByteArrayKey;
 
 /**
  * 
@@ -43,41 +42,41 @@ public final class BulkUtil {
 	public static final int GLOBAL_SCOPE = 1;
 	public static final int LOCAL_SCOPE = 2;
 	
-	public static final Set<ByteArrayKey> getAllKeys(Cache<ByteArrayKey, CacheValue> cache, int scope) {
+	public static final Set<byte[]> getAllKeys(Cache<byte[], CacheValue> cache, int scope) {
 		CacheMode cacheMode = cache.getAdvancedCache().getCacheConfiguration().clustering().cacheMode(); 
 		boolean keysAreLocal = !cacheMode.isClustered() || cacheMode.isReplicated();
 		if (keysAreLocal || scope == LOCAL_SCOPE) {
 			return cache.keySet();
 		} else {
-			MapReduceTask<ByteArrayKey, CacheValue, ByteArrayKey, Object> task = new MapReduceTask<ByteArrayKey, CacheValue, ByteArrayKey, Object>(cache)
+			MapReduceTask<byte[], CacheValue, byte[], Object> task = new MapReduceTask<byte[], CacheValue, byte[], Object>(cache)
 					.mappedWith(new KeyMapper())
 					.reducedWith(new KeyReducer());
 			return task.execute(new KeysCollator());
 		}
 	}
 	
-	static class KeyMapper implements Mapper<ByteArrayKey, CacheValue, ByteArrayKey, Object> {
+	static class KeyMapper implements Mapper<byte[], CacheValue, byte[], Object> {
 		private static final long serialVersionUID = -5054573988280497412L;
 
 		@Override
-		public void map(ByteArrayKey key, CacheValue value,
-				Collector<ByteArrayKey, Object> collector) {
+		public void map(byte[] key, CacheValue value,
+				Collector<byte[], Object> collector) {
 			collector.emit(key, null);
 		}
 	}
 	
-	static class KeyReducer implements Reducer<ByteArrayKey, Object> {
+	static class KeyReducer implements Reducer<byte[], Object> {
 		private static final long serialVersionUID = -8199097945001793869L;
 
 		@Override
-		public Boolean reduce(ByteArrayKey reducedKey, Iterator<Object> iter) {
+		public Boolean reduce(byte[] reducedKey, Iterator<Object> iter) {
 			return iter.hasNext();
 		}
 	}
 	
-	static class KeysCollator implements Collator<ByteArrayKey, Object, Set<ByteArrayKey>> {
+	static class KeysCollator implements Collator<byte[], Object, Set<byte[]>> {
 		@Override
-		public Set<ByteArrayKey> collate(Map<ByteArrayKey, Object> reducedResults) {
+		public Set<byte[]> collate(Map<byte[], Object> reducedResults) {
 			return reducedResults.keySet();
 		}
 		

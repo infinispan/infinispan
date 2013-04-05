@@ -19,7 +19,7 @@
 
 package org.infinispan.marshall;
 
-import org.infinispan.util.concurrent.ConcurrentMapFactory;
+import org.infinispan.util.CollectionFactory;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
@@ -45,7 +45,7 @@ public final class MarshallableTypeHints {
     * known to be marshallable or not is advantageous.
     */
    private final ConcurrentMap<Class<?>, MarshallingType> typeHints =
-         ConcurrentMapFactory.makeConcurrentMap();
+         CollectionFactory.makeConcurrentMap();
 
    /**
     * Get the serialized form size predictor for a particular type.

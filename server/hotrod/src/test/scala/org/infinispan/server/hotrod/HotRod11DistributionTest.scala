@@ -42,7 +42,8 @@ class HotRod11DistributionTest extends HotRodMultiNodeTest {
    override protected def cacheName = "distributedVersion11"
 
    override protected def createCacheConfig: ConfigurationBuilder = {
-      val cfg = getDefaultClusteredCacheConfig(CacheMode.DIST_SYNC, false)
+      val cfg = hotRodCacheConfiguration(
+         getDefaultClusteredCacheConfig(CacheMode.DIST_SYNC, false))
       cfg.clustering().l1().disable() // Disable L1 explicitly
       cfg
    }

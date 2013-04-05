@@ -22,7 +22,6 @@
  */
 package org.infinispan.client.hotrod;
 
-import org.infinispan.client.hotrod.test.HotRodClientTestingUtil;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.server.hotrod.HotRodServer;
 import org.infinispan.test.SingleCacheManagerTest;
@@ -36,7 +35,7 @@ import java.util.Properties;
 import java.util.concurrent.TimeUnit;
 
 import static org.infinispan.client.hotrod.test.HotRodClientTestingUtil.*;
-import static org.infinispan.test.TestingUtil.killCacheManagers;
+import static org.infinispan.server.hotrod.test.HotRodTestingUtil.hotRodCacheConfiguration;
 import static org.testng.AssertJUnit.assertEquals;
 
 /**
@@ -54,7 +53,8 @@ public class BulkGetSimpleTest extends SingleCacheManagerTest {
 
    @Override
    protected EmbeddedCacheManager createCacheManager() throws Exception {
-      cacheManager = TestCacheManagerFactory.createLocalCacheManager(false);
+      cacheManager = TestCacheManagerFactory.createCacheManager(
+            hotRodCacheConfiguration());
       cache = cacheManager.getCache();
 
       hotRodServer = TestHelper.startHotRodServer(cacheManager);

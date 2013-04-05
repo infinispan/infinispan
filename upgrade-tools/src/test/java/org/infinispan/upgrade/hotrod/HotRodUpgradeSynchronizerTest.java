@@ -18,10 +18,6 @@
  */
 package org.infinispan.upgrade.hotrod;
 
-import static org.testng.AssertJUnit.*;
-
-import java.util.List;
-
 import org.infinispan.Cache;
 import org.infinispan.client.hotrod.RemoteCache;
 import org.infinispan.client.hotrod.RemoteCacheManager;
@@ -29,7 +25,6 @@ import org.infinispan.client.hotrod.TestHelper;
 import org.infinispan.client.hotrod.test.HotRodClientTestingUtil;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.loaders.CacheLoaderManager;
-import org.infinispan.loaders.remote.RemoteCacheStore;
 import org.infinispan.loaders.remote.configuration.RemoteCacheStoreConfigurationBuilder;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.server.core.CacheValue;
@@ -43,6 +38,9 @@ import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
+
+import static org.testng.AssertJUnit.*;
+import static org.infinispan.server.hotrod.test.HotRodTestingUtil.hotRodCacheConfiguration;
 
 @Test(testName = "upgrade.hotrod.HotRodUpgradeSynchronizerTest", groups = "functional")
 public class HotRodUpgradeSynchronizerTest extends AbstractInfinispanTest {
@@ -61,14 +59,16 @@ public class HotRodUpgradeSynchronizerTest extends AbstractInfinispanTest {
    @BeforeClass
    public void setup() throws Exception {
       ConfigurationBuilder serverBuilder = TestCacheManagerFactory.getDefaultCacheConfiguration(true);
-      sourceContainer = TestCacheManagerFactory.createCacheManager(serverBuilder);
+      sourceContainer = TestCacheManagerFactory
+            .createCacheManager(hotRodCacheConfiguration(serverBuilder));
       sourceServerCache = sourceContainer.getCache();
       sourceServer = TestHelper.startHotRodServer(sourceContainer);
 
       ConfigurationBuilder targetConfigurationBuilder = TestCacheManagerFactory.getDefaultCacheConfiguration(false);
       targetConfigurationBuilder.loaders().addStore(RemoteCacheStoreConfigurationBuilder.class).hotRodWrapping(true).addServer().host("localhost").port(sourceServer.getPort());
 
-      targetContainer = TestCacheManagerFactory.createCacheManager(targetConfigurationBuilder);
+      targetContainer = TestCacheManagerFactory
+            .createCacheManager(hotRodCacheConfiguration(targetConfigurationBuilder));
       targetServerCache = targetContainer.getCache();
       targetServer = TestHelper.startHotRodServer(targetContainer);
 

@@ -48,19 +48,19 @@ public class TransactionalInvocationContextContainer extends AbstractInvocationC
 
    private TransactionManager tm;
    private TransactionTable transactionTable;
-   private Configuration config;
    private boolean isThreadLocalRequired;
 
    @Inject
    public void init(TransactionManager tm,
          TransactionTable transactionTable, Configuration config) {
+      super.init(config);
       this.tm = tm;
       this.transactionTable = transactionTable;
-      this.config = config;
    }
 
    @Start
    public void start() {
+      super.start();
       isThreadLocalRequired =
             config.clustering().cacheMode().isClustered()
                   || config.storeAsBinary().enabled()
@@ -86,7 +86,7 @@ public class TransactionalInvocationContextContainer extends AbstractInvocationC
 
    @Override
    public InvocationContext createSingleKeyNonTxInvocationContext() {
-      InvocationContext ctx = new SingleKeyNonTxInvocationContext(true);
+      InvocationContext ctx = new SingleKeyNonTxInvocationContext(true, keyEq);
 
       // Required only for marshaller is required, or cluster cache loader needed
       if (isThreadLocalRequired)
@@ -96,7 +96,8 @@ public class TransactionalInvocationContextContainer extends AbstractInvocationC
    }
 
    @Override
-   public InvocationContext createInvocationContext(boolean isWrite, int keyCount) {
+   public InvocationContext createInvocationContext(
+         boolean isWrite, int keyCount) {
       final Transaction runningTx = getRunningTx();
       if (runningTx == null && !isWrite) {
          if (keyCount == 1)
@@ -110,7 +111,7 @@ public class TransactionalInvocationContextContainer extends AbstractInvocationC
    @Override
    public InvocationContext createInvocationContext(Transaction tx) {
       if (tx == null) throw new IllegalArgumentException("Cannot create a transactional context without a valid Transaction instance.");
-      LocalTxInvocationContext localContext = new LocalTxInvocationContext();
+      LocalTxInvocationContext localContext = new LocalTxInvocationContext(keyEq);
       LocalTransaction localTransaction = transactionTable.getLocalTransaction(tx);
       localContext.setLocalTransaction(localTransaction);
       localContext.setTransaction(tx);
@@ -120,7 +121,7 @@ public class TransactionalInvocationContextContainer extends AbstractInvocationC
 
    @Override
    public LocalTxInvocationContext createTxInvocationContext() {
-      LocalTxInvocationContext ctx = new LocalTxInvocationContext();
+      LocalTxInvocationContext ctx = new LocalTxInvocationContext(keyEq);
       ctxHolder.set(ctx);
       return ctx;
    }
@@ -151,7 +152,7 @@ public class TransactionalInvocationContextContainer extends AbstractInvocationC
    }
 
    protected final NonTxInvocationContext newNonTxInvocationContext(boolean local) {
-      NonTxInvocationContext ctx = new NonTxInvocationContext();
+      NonTxInvocationContext ctx = new NonTxInvocationContext(keyEq);
       ctx.setOriginLocal(local);
       ctxHolder.set(ctx);
       return ctx;

@@ -20,7 +20,8 @@ package org.infinispan.configuration.cache;
 
 import org.infinispan.configuration.AbstractTypedPropertiesConfiguration;
 import org.infinispan.container.DataContainer;
-import org.infinispan.util.Comparing;
+import org.infinispan.util.AnyEquivalence;
+import org.infinispan.util.Equivalence;
 import org.infinispan.util.TypedProperties;
 
 /**
@@ -32,15 +33,15 @@ import org.infinispan.util.TypedProperties;
 public class DataContainerConfiguration extends AbstractTypedPropertiesConfiguration {
 
    private final DataContainer dataContainer;
-   private final Comparing comparingKey;
-   private final Comparing comparingValue;
+   private final Equivalence keyEquivalence;
+   private final Equivalence valueEquivalence;
 
    DataContainerConfiguration(DataContainer dataContainer,
-         TypedProperties properties, Comparing comparingKey, Comparing comparingValue) {
+         TypedProperties properties, Equivalence keyEquivalence, Equivalence valueEquivalence) {
       super(properties);
       this.dataContainer = dataContainer;
-      this.comparingKey = comparingKey;
-      this.comparingValue = comparingValue;
+      this.keyEquivalence = keyEquivalence;
+      this.valueEquivalence = valueEquivalence;
    }
    
    /**
@@ -51,20 +52,25 @@ public class DataContainerConfiguration extends AbstractTypedPropertiesConfigura
       return dataContainer;
    }
 
-   public Comparing comparingKey() {
-      return comparingKey;
+   public Equivalence keyEquivalence() {
+      return keyEquivalence;
    }
 
-   public Comparing comparingValue() {
-      return comparingValue;
+   public Equivalence valueEquivalence() {
+      return valueEquivalence;
+   }
+
+   public boolean isEquivalentContainer() {
+      return keyEquivalence != AnyEquivalence.OBJECT
+            || valueEquivalence != AnyEquivalence.OBJECT;
    }
 
    @Override
    public String toString() {
       return "DataContainerConfiguration{" +
             "dataContainer=" + dataContainer +
-            ", comparingKey=" + comparingKey +
-            ", comparingValue=" + comparingValue +
+            ", comparingKey=" + keyEquivalence +
+            ", comparingValue=" + valueEquivalence +
             '}';
    }
 
@@ -78,9 +84,9 @@ public class DataContainerConfiguration extends AbstractTypedPropertiesConfigura
 
       if (dataContainer != null ? !dataContainer.equals(that.dataContainer) : that.dataContainer != null)
          return false;
-      if (comparingKey != null ? !comparingKey.equals(that.comparingKey) : that.comparingKey != null)
+      if (keyEquivalence != null ? !keyEquivalence.equals(that.keyEquivalence) : that.keyEquivalence != null)
          return false;
-      if (comparingValue != null ? !comparingValue.equals(that.comparingValue) : that.comparingValue != null)
+      if (valueEquivalence != null ? !valueEquivalence.equals(that.valueEquivalence) : that.valueEquivalence != null)
          return false;
 
       return true;
@@ -90,8 +96,8 @@ public class DataContainerConfiguration extends AbstractTypedPropertiesConfigura
    public int hashCode() {
       int result = super.hashCode();
       result = 31 * result + (dataContainer != null ? dataContainer.hashCode() : 0);
-      result = 31 * result + (comparingKey != null ? comparingKey.hashCode() : 0);
-      result = 31 * result + (comparingValue != null ? comparingValue.hashCode() : 0);
+      result = 31 * result + (keyEquivalence != null ? keyEquivalence.hashCode() : 0);
+      result = 31 * result + (valueEquivalence != null ? valueEquivalence.hashCode() : 0);
       return result;
    }
 

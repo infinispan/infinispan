@@ -29,6 +29,7 @@ import org.testng.annotations.Test
 import org.testng.Assert._
 import org.infinispan.test.AbstractCacheTest._
 import org.infinispan.configuration.cache.{CacheMode, ConfigurationBuilder}
+import org.infinispan.util.ByteArrayEquivalence
 
 /**
  * Tests Hot Rod instances that are behind a proxy.
@@ -47,7 +48,8 @@ class HotRodProxyTest extends HotRodMultiNodeTest {
    override protected def cacheName: String = "hotRodProxy"
 
    override protected def createCacheConfig: ConfigurationBuilder = {
-      val config = getDefaultClusteredCacheConfig(CacheMode.REPL_SYNC, false)
+      val config = hotRodCacheConfiguration(
+         getDefaultClusteredCacheConfig(CacheMode.REPL_SYNC, false))
       config.clustering().stateTransfer().fetchInMemoryState(true)
       config
    }

@@ -22,6 +22,7 @@
  */
 package org.infinispan.client.hotrod;
 
+import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.manager.CacheContainer;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.server.hotrod.HotRodServer;
@@ -34,6 +35,7 @@ import org.testng.annotations.Test;
 import java.util.Map;
 
 import static org.infinispan.client.hotrod.test.HotRodClientTestingUtil.*;
+import static org.infinispan.server.hotrod.test.HotRodTestingUtil.hotRodCacheConfiguration;
 import static org.testng.AssertJUnit.assertEquals;
 import static org.testng.AssertJUnit.assertTrue;
 
@@ -52,7 +54,10 @@ public class HotRodStatisticsTest {
 
    @BeforeMethod
    protected void setup() throws Exception {
-      cacheContainer = TestCacheManagerFactory.createCacheManagerEnforceJmxDomain(getClass().getSimpleName());
+      ConfigurationBuilder cfg = hotRodCacheConfiguration();
+      cfg.jmxStatistics().enable();
+      cacheContainer = TestCacheManagerFactory
+            .createClusteredCacheManagerEnforceJmxDomain(getClass().getSimpleName(), cfg);
 
       hotrodServer = TestHelper.startHotRodServer((EmbeddedCacheManager) cacheContainer);
       startTime = System.currentTimeMillis();

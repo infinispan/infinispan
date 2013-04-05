@@ -31,8 +31,8 @@
 
 package org.infinispan.util.concurrent.jdk8backported;
 
-import org.infinispan.util.Comparing;
-import org.infinispan.util.ComparingObject;
+import org.infinispan.util.AnyEquivalence;
+import org.infinispan.util.Equivalence;
 
 import java.io.Serializable;
 import java.util.AbstractMap;
@@ -103,7 +103,7 @@ import java.util.concurrent.locks.AbstractQueuedSynchronizer;
  * hash table.
  *
  * <p>A {@link java.util.Set} projection of a ConcurrentHashMapV8 may be created
- * (using {@link #newKeySet()} or {@link #newKeySet(int)}), or viewed
+ * (using {@link #newKeySet(org.infinispan.util.Equivalence)} or {@link #newKeySet(int)}), or viewed
  * (using {@link #keySet(Object)} when only keys are of interest, and the
  * mapped values are (perhaps transiently) not used or all take the
  * same mapping value.
@@ -230,13 +230,13 @@ import java.util.concurrent.locks.AbstractQueuedSynchronizer;
  * Java Collections Framework</a>.
  *
  * <b>NOTE</b>: This map has been tweaked so that equality and hash code
- * calculations are done based on a passed {@link org.infinispan.util.Comparing} function
+ * calculations are done based on a passed {@link org.infinispan.util.Equivalence} function
  * implementation for keys and values, as opposed to relying on their own
  * equals/hashCode/toString implementations. This is handy when using
  * key/values whose mentioned methods cannot be overriden, i.e. arrays,
  * and in situations where users want to avoid using wrapper objects.
  * To help with future revisions of this class, changes other than
- * constructor changes have been marked with 'COMPARING_MOD' comment.
+ * constructor changes have been marked with 'EQUIVALENCE_MOD' comment.
  *
  * @since 1.5
  * @author Doug Lea
@@ -244,7 +244,7 @@ import java.util.concurrent.locks.AbstractQueuedSynchronizer;
  * @param <K> the type of keys maintained by this map
  * @param <V> the type of mapped values
  */
-public class ComparingConcurrentHashMapV8<K,V>
+public class EquivalentConcurrentHashMapV8<K,V>
       implements ConcurrentMap<K,V>, Serializable {
    private static final long serialVersionUID = 7249069246763182397L;
 
@@ -662,8 +662,8 @@ public class ComparingConcurrentHashMapV8<K,V>
    /** For serialization compatibility. Null unless serialized; see below */
    private Segment<K,V>[] segments;
 
-   private transient final Comparing comparingKey;
-   private transient final Comparing comparingValue;
+   private transient final Equivalence<K> keyEquivalence;
+   private transient final Equivalence<V> valueEquivalence;
 
     /* ---------------- Table element access -------------- */
 
@@ -1226,7 +1226,7 @@ public class ComparingConcurrentHashMapV8<K,V>
 
    /** Implementation for get and containsKey */
    @SuppressWarnings("unchecked") private final V internalGet(Object k) {
-      int h = spread(comparingKey.hashCode(k)); // COMPARING_MOD
+      int h = spread(keyEquivalence.hashCode(k)); // EQUIVALENCE_MOD
       retry: for (Node<V>[] tab = table; tab != null;) {
          Node<V> e; Object ek; V ev; int eh; // locals to read fields once
          for (e = tabAt(tab, (tab.length - 1) & h); e != null; e = e.next) {
@@ -1239,7 +1239,7 @@ public class ComparingConcurrentHashMapV8<K,V>
                }
             }
             else if (eh == h && (ev = e.val) != null &&
-                  ((ek = e.key) == k || comparingKey.equals(k, ek))) // COMPARING_MOD
+                  ((ek = e.key) == k || keyEquivalence.equals((K) ek, k))) // EQUIVALENCE_MOD
                return ev;
          }
          break;
@@ -1254,7 +1254,7 @@ public class ComparingConcurrentHashMapV8<K,V>
     */
    @SuppressWarnings("unchecked") private final V internalReplace
    (Object k, V v, Object cv) {
-      int h = spread(comparingKey.hashCode(k)); // COMPARING_MOD
+      int h = spread(keyEquivalence.hashCode(k)); // EQUIVALENCE_MOD
       V oldVal = null;
       for (Node<V>[] tab = table;;) {
          Node<V> f; int i, fh; Object fk;
@@ -1273,7 +1273,7 @@ public class ComparingConcurrentHashMapV8<K,V>
                      TreeNode<V> p = t.getTreeNode(h, k, t.root);
                      if (p != null) {
                         V pv = p.val;
-                        if (cv == null || cv == pv || comparingValue.equals(cv, pv)) { // COMPARING_MOD
+                        if (cv == null || cv == pv || valueEquivalence.equals(pv, cv)) { // EQUIVALENCE_MOD
                            oldVal = pv;
                            if ((p.val = v) == null) {
                               deleted = true;
@@ -1306,8 +1306,8 @@ public class ComparingConcurrentHashMapV8<K,V>
                      Object ek; V ev;
                      if (e.hash == h &&
                            ((ev = e.val) != null) &&
-                           ((ek = e.key) == k || comparingKey.equals(k, ek))) { // COMPARING_MOD
-                        if (cv == null || cv == ev || comparingValue.equals(cv, ev)) { // COMPARING_MOD
+                           ((ek = e.key) == k || keyEquivalence.equals((K) ek, k))) { // EQUIVALENCE_MOD
+                        if (cv == null || cv == ev || valueEquivalence.equals(ev, cv)) { // EQUIVALENCE_MOD
                            oldVal = ev;
                            if ((e.val = v) == null) {
                               deleted = true;
@@ -1358,7 +1358,7 @@ public class ComparingConcurrentHashMapV8<K,V>
    @SuppressWarnings("unchecked") private final V internalPut
    (K k, V v, boolean onlyIfAbsent) {
       if (k == null || v == null) throw new NullPointerException();
-      int h = spread(comparingKey.hashCode(k)); // COMPARING_MOD
+      int h = spread(keyEquivalence.hashCode(k)); // EQUIVALENCE_MOD
       int len = 0;
       for (Node<V>[] tab = table;;) {
          int i, fh; Node<V> f; Object fk; V fv;
@@ -1396,7 +1396,7 @@ public class ComparingConcurrentHashMapV8<K,V>
                tab = (Node<V>[])fk;
          }
          else if (onlyIfAbsent && fh == h && (fv = f.val) != null &&
-               ((fk = f.key) == k || comparingKey.equals(k, fk))) // peek while nearby // COMPARING_MOD
+               ((fk = f.key) == k || keyEquivalence.equals(k, fk))) // peek while nearby // EQUIVALENCE_MOD
             return fv;
          else {
             V oldVal = null;
@@ -1407,7 +1407,7 @@ public class ComparingConcurrentHashMapV8<K,V>
                      Object ek; V ev;
                      if (e.hash == h &&
                            (ev = e.val) != null &&
-                           ((ek = e.key) == k || comparingKey.equals(k, ek))) { // COMPARING_MOD
+                           ((ek = e.key) == k || keyEquivalence.equals(k, ek))) { // EQUIVALENCE_MOD
                         oldVal = ev;
                         if (!onlyIfAbsent)
                            e.val = v;
@@ -1439,7 +1439,7 @@ public class ComparingConcurrentHashMapV8<K,V>
    (K k, Fun<? super K, ? extends V> mf) {
       if (k == null || mf == null)
          throw new NullPointerException();
-      int h = spread(comparingKey.hashCode(k)); // COMPARING_MOD
+      int h = spread(keyEquivalence.hashCode(k)); // EQUIVALENCE_MOD
       V val = null;
       int len = 0;
       for (Node<V>[] tab = table;;) {
@@ -1496,7 +1496,7 @@ public class ComparingConcurrentHashMapV8<K,V>
             for (Node<V> e = f; e != null; e = e.next) { // prescan
                Object ek; V ev;
                if (e.hash == h && (ev = e.val) != null &&
-                     ((ek = e.key) == k || comparingKey.equals(k, ek))) // COMPARING_MOD
+                     ((ek = e.key) == k || keyEquivalence.equals(k, ek))) // EQUIVALENCE_MOD
                   return ev;
             }
             boolean added = false;
@@ -1507,7 +1507,7 @@ public class ComparingConcurrentHashMapV8<K,V>
                      Object ek; V ev;
                      if (e.hash == h &&
                            (ev = e.val) != null &&
-                           ((ek = e.key) == k || comparingKey.equals(k, ek))) { // COMPARING_MOD
+                           ((ek = e.key) == k || keyEquivalence.equals(k, ek))) { // EQUIVALENCE_MOD
                         val = ev;
                         break;
                      }
@@ -1542,7 +1542,7 @@ public class ComparingConcurrentHashMapV8<K,V>
          BiFun<? super K, ? super V, ? extends V> mf) {
       if (k == null || mf == null)
          throw new NullPointerException();
-      int h = spread(comparingKey.hashCode(k)); // COMPARING_MOD
+      int h = spread(keyEquivalence.hashCode(k)); // EQUIVALENCE_MOD
       V val = null;
       int delta = 0;
       int len = 0;
@@ -1613,7 +1613,7 @@ public class ComparingConcurrentHashMapV8<K,V>
                      Object ek; V ev;
                      if (e.hash == h &&
                            (ev = e.val) != null &&
-                           ((ek = e.key) == k || comparingKey.equals(k, ek))) { // COMPARING_MOD
+                           ((ek = e.key) == k || keyEquivalence.equals(k, ek))) { // EQUIVALENCE_MOD
                         val = mf.apply(k, ev);
                         if (val != null)
                            e.val = val;
@@ -1655,7 +1655,7 @@ public class ComparingConcurrentHashMapV8<K,V>
    (K k, V v, BiFun<? super V, ? super V, ? extends V> mf) {
       if (k == null || v == null || mf == null)
          throw new NullPointerException();
-      int h = spread(comparingKey.hashCode(k)); // COMPARING_MOD
+      int h = spread(keyEquivalence.hashCode(k)); // EQUIVALENCE_MOD
       V val = null;
       int delta = 0;
       int len = 0;
@@ -1710,7 +1710,7 @@ public class ComparingConcurrentHashMapV8<K,V>
                      Object ek; V ev;
                      if (e.hash == h &&
                            (ev = e.val) != null &&
-                           ((ek = e.key) == k || comparingKey.equals(k, ek))) { // COMPARING_MOD
+                           ((ek = e.key) == k || keyEquivalence.equals(k, ek))) { // EQUIVALENCE_MOD
                         val = mf.apply(ev, v);
                         if (val != null)
                            e.val = val;
@@ -1759,7 +1759,7 @@ public class ComparingConcurrentHashMapV8<K,V>
                npe = true;
                break;
             }
-            int h = spread(comparingKey.hashCode(k)); // COMPARING_MOD
+            int h = spread(keyEquivalence.hashCode(k)); // EQUIVALENCE_MOD
             for (Node<V>[] tab = table;;) {
                int i; Node<V> f; int fh; Object fk;
                if (tab == null)
@@ -1804,7 +1804,7 @@ public class ComparingConcurrentHashMapV8<K,V>
                            Object ek; V ev;
                            if (e.hash == h &&
                                  (ev = e.val) != null &&
-                                 ((ek = e.key) == k || comparingKey.equals(k, ek))) { // COMPARING_MOD
+                                 ((ek = e.key) == k || keyEquivalence.equals((K) ek, k))) { // EQUIVALENCE_MOD
                               e.val = v;
                               break;
                            }
@@ -2314,7 +2314,7 @@ public class ComparingConcurrentHashMapV8<K,V>
     */
    @SuppressWarnings("serial") static class Traverser<K,V,R>
          extends CountedCompleter<R> {
-      final ComparingConcurrentHashMapV8<K,V> map;
+      final EquivalentConcurrentHashMapV8<K,V> map;
       Node<V> next;        // the next entry to use
       Object nextKey;      // cached key field of next
       V nextVal;           // cached val field of next
@@ -2326,12 +2326,12 @@ public class ComparingConcurrentHashMapV8<K,V>
       int batch;           // split control
 
       /** Creates iterator for all entries in the table. */
-      Traverser(ComparingConcurrentHashMapV8<K,V> map) {
+      Traverser(EquivalentConcurrentHashMapV8<K,V> map) {
          this.map = map;
       }
 
       /** Creates iterator for split() methods and task constructors */
-      Traverser(ComparingConcurrentHashMapV8<K,V> map, Traverser<K,V,?> it, int batch) {
+      Traverser(EquivalentConcurrentHashMapV8<K,V> map, Traverser<K,V,?> it, int batch) {
          super(it);
          this.batch = batch;
          if ((this.map = map) != null && it != null) { // split parent
@@ -2358,7 +2358,7 @@ public class ComparingConcurrentHashMapV8<K,V>
             if (e != null)                  // advance past used/skipped node
                e = e.next;
             while (e == null) {             // get to next non-null bin
-               ComparingConcurrentHashMapV8<K,V> m;
+               EquivalentConcurrentHashMapV8<K,V> m;
                Node<V>[] t; int b, i, n; Object ek; //  must use locals
                if ((t = tab) != null)
                   n = t.length;
@@ -2411,7 +2411,7 @@ public class ComparingConcurrentHashMapV8<K,V>
        * anyway.
        */
       final int preSplit() {
-         ComparingConcurrentHashMapV8<K,V> m; int b; Node<V>[] t;  ForkJoinPool pool;
+         EquivalentConcurrentHashMapV8<K,V> m; int b; Node<V>[] t;  ForkJoinPool pool;
          if ((b = batch) < 0 && (m = map) != null) { // force initialization
             if ((t = tab) == null && (t = tab = m.table) != null)
                baseLimit = baseSize = t.length;
@@ -2437,14 +2437,10 @@ public class ComparingConcurrentHashMapV8<K,V>
    /**
     * Creates a new, empty map with the default initial table size (16).
     */
-   public ComparingConcurrentHashMapV8(
-         Comparing comparingKey, Comparing comparingValue) {
-      this.comparingKey = comparingKey;
-      this.comparingValue = comparingValue;
-   }
-
-   public ComparingConcurrentHashMapV8(Comparing comparing) {
-      this(comparing, comparing);
+   public EquivalentConcurrentHashMapV8(
+         Equivalence<K> keyEquivalence, Equivalence<V> valueEquivalence) {
+      this.keyEquivalence = keyEquivalence;
+      this.valueEquivalence = valueEquivalence;
    }
 
    /**
@@ -2457,9 +2453,9 @@ public class ComparingConcurrentHashMapV8<K,V>
     * @throws IllegalArgumentException if the initial capacity of
     * elements is negative
     */
-   public ComparingConcurrentHashMapV8(int initialCapacity,
-         Comparing comparingKey, Comparing comparingValue) {
-      this(comparingKey, comparingValue);
+   public EquivalentConcurrentHashMapV8(int initialCapacity,
+         Equivalence<K> keyEquivalence, Equivalence<V> valueEquivalence) {
+      this(keyEquivalence, valueEquivalence);
       if (initialCapacity < 0)
          throw new IllegalArgumentException();
       int cap = ((initialCapacity >= (MAXIMUM_CAPACITY >>> 1)) ?
@@ -2473,9 +2469,9 @@ public class ComparingConcurrentHashMapV8<K,V>
     *
     * @param m the map
     */
-   public ComparingConcurrentHashMapV8(Map<? extends K, ? extends V> m,
-         Comparing comparingKey, Comparing comparingValue) {
-      this(comparingKey, comparingValue);
+   public EquivalentConcurrentHashMapV8(Map<? extends K, ? extends V> m,
+         Equivalence<K> keyEquivalence, Equivalence<V> valueEquivalence) {
+      this(keyEquivalence, valueEquivalence);
       this.sizeCtl = DEFAULT_CAPACITY;
       internalPutAll(m);
    }
@@ -2495,9 +2491,9 @@ public class ComparingConcurrentHashMapV8<K,V>
     *
     * @since 1.6
     */
-   public ComparingConcurrentHashMapV8(int initialCapacity, float loadFactor,
-         Comparing comparingKey, Comparing comparingValue) {
-      this(initialCapacity, loadFactor, 1, comparingKey, comparingValue);
+   public EquivalentConcurrentHashMapV8(int initialCapacity, float loadFactor,
+         Equivalence<K> keyEquivalence, Equivalence<V> valueEquivalence) {
+      this(initialCapacity, loadFactor, 1, keyEquivalence, valueEquivalence);
    }
 
    /**
@@ -2518,10 +2514,10 @@ public class ComparingConcurrentHashMapV8<K,V>
     * negative or the load factor or concurrencyLevel are
     * nonpositive
     */
-   public ComparingConcurrentHashMapV8(int initialCapacity,
+   public EquivalentConcurrentHashMapV8(int initialCapacity,
          float loadFactor, int concurrencyLevel,
-         Comparing comparingKey, Comparing comparingValue) {
-      this(comparingKey, comparingValue);
+         Equivalence<K> keyEquivalence, Equivalence<V> valueEquivalence) {
+      this(keyEquivalence, valueEquivalence);
       if (!(loadFactor > 0.0f) || initialCapacity < 0 || concurrencyLevel <= 0)
          throw new IllegalArgumentException();
       if (initialCapacity < concurrencyLevel)   // Use at least as many bins
@@ -2539,10 +2535,10 @@ public class ComparingConcurrentHashMapV8<K,V>
     * @return the new set
     */
    public static <K> KeySetView<K,Boolean> newKeySet(
-         Comparing comparingKey) {
+         Equivalence<K> keyEquivalence) {
       return new KeySetView<K,Boolean>(
-            new ComparingConcurrentHashMapV8<K,Boolean>(comparingKey,
-                  ComparingObject.INSTANCE), Boolean.TRUE);
+            new EquivalentConcurrentHashMapV8<K,Boolean>(keyEquivalence,
+                  new AnyEquivalence<Boolean>()), Boolean.TRUE);
    }
 
    /**
@@ -2556,9 +2552,9 @@ public class ComparingConcurrentHashMapV8<K,V>
     * @return the new set
     */
    public static <K> KeySetView<K,Boolean> newKeySet(int initialCapacity,
-         Comparing comparingKey) {
-      return new KeySetView<K,Boolean>(new ComparingConcurrentHashMapV8<K,Boolean>(
-            initialCapacity, comparingKey, ComparingObject.INSTANCE), Boolean.TRUE);
+         Equivalence<K> keyEquivalence) {
+      return new KeySetView<K,Boolean>(new EquivalentConcurrentHashMapV8<K,Boolean>(
+            initialCapacity, keyEquivalence, new AnyEquivalence<Boolean>()), Boolean.TRUE);
    }
 
    /**
@@ -2651,7 +2647,7 @@ public class ComparingConcurrentHashMapV8<K,V>
       V v;
       Traverser<K,V,Object> it = new Traverser<K,V,Object>(this);
       while ((v = it.advance()) != null) {
-         if (v == value || comparingValue.equals(value, v)) // COMPARING_MOD
+         if (v == value || valueEquivalence.equals(v, value)) // EQUIVALENCE_MOD
             return true;
       }
       return false;
@@ -3046,7 +3042,7 @@ public class ComparingConcurrentHashMapV8<K,V>
       Traverser<K,V,Object> it = new Traverser<K,V,Object>(this);
       V v;
       while ((v = it.advance()) != null) {
-         h += comparingKey.hashCode(it.nextKey) ^ comparingValue.hashCode(v); // COMPARING_MOD
+         h += keyEquivalence.hashCode(it.nextKey) ^ valueEquivalence.hashCode(v); // EQUIVALENCE_MOD
       }
       return h;
    }
@@ -3070,9 +3066,9 @@ public class ComparingConcurrentHashMapV8<K,V>
       if ((v = it.advance()) != null) {
          for (;;) {
             Object k = it.nextKey;
-            sb.append(k == this ? "(this Map)" : comparingKey.toString(k)); // COMPARING_MOD
+            sb.append(k == this ? "(this Map)" : keyEquivalence.toString(k)); // EQUIVALENCE_MOD
             sb.append('=');
-            sb.append(v == this ? "(this Map)" : comparingValue.toString(v)); // COMPARING_MOD
+            sb.append(v == this ? "(this Map)" : valueEquivalence.toString(v)); // EQUIVALENCE_MOD
             if ((v = it.advance()) == null)
                break;
             sb.append(',').append(' ');
@@ -3100,15 +3096,15 @@ public class ComparingConcurrentHashMapV8<K,V>
          V val;
          while ((val = it.advance()) != null) {
             Object v = m.get(it.nextKey);
-            if (v == null || (v != val && !comparingValue.equals(v, val))) // COMPARING_MOD
+            if (v == null || (v != val && !valueEquivalence.equals(val, v))) // EQUIVALENCE_MOD
                return false;
          }
          for (Entry<?,?> e : m.entrySet()) {
-            Object mk, mv, v;
+            Object mk, mv; V v; // EQUIVALENCE_MOD
             if ((mk = e.getKey()) == null ||
                   (mv = e.getValue()) == null ||
                   (v = internalGet(mk)) == null ||
-                  (mv != v && !comparingValue.equals(mv, v))) // COMPARING_MOD
+                  (mv != v && !valueEquivalence.equals(v, mv))) // EQUIVALENCE_MOD
                return false;
          }
       }
@@ -3120,8 +3116,8 @@ public class ComparingConcurrentHashMapV8<K,V>
    @SuppressWarnings("serial") static final class KeyIterator<K,V>
          extends Traverser<K,V,Object>
          implements Spliterator<K>, Enumeration<K> {
-      KeyIterator(ComparingConcurrentHashMapV8<K,V> map) { super(map); }
-      KeyIterator(ComparingConcurrentHashMapV8<K,V> map, Traverser<K,V,Object> it) {
+      KeyIterator(EquivalentConcurrentHashMapV8<K,V> map) { super(map); }
+      KeyIterator(EquivalentConcurrentHashMapV8<K,V> map, Traverser<K,V,Object> it) {
          super(map, it, -1);
       }
       public KeyIterator<K,V> split() {
@@ -3143,8 +3139,8 @@ public class ComparingConcurrentHashMapV8<K,V>
    @SuppressWarnings("serial") static final class ValueIterator<K,V>
          extends Traverser<K,V,Object>
          implements Spliterator<V>, Enumeration<V> {
-      ValueIterator(ComparingConcurrentHashMapV8<K,V> map) { super(map); }
-      ValueIterator(ComparingConcurrentHashMapV8<K,V> map, Traverser<K,V,Object> it) {
+      ValueIterator(EquivalentConcurrentHashMapV8<K,V> map) { super(map); }
+      ValueIterator(EquivalentConcurrentHashMapV8<K,V> map, Traverser<K,V,Object> it) {
          super(map, it, -1);
       }
       public ValueIterator<K,V> split() {
@@ -3167,8 +3163,8 @@ public class ComparingConcurrentHashMapV8<K,V>
    @SuppressWarnings("serial") static final class EntryIterator<K,V>
          extends Traverser<K,V,Object>
          implements Spliterator<Entry<K,V>> {
-      EntryIterator(ComparingConcurrentHashMapV8<K,V> map) { super(map); }
-      EntryIterator(ComparingConcurrentHashMapV8<K,V> map, Traverser<K,V,Object> it) {
+      EntryIterator(EquivalentConcurrentHashMapV8<K,V> map) { super(map); }
+      EntryIterator(EquivalentConcurrentHashMapV8<K,V> map, Traverser<K,V,Object> it) {
          super(map, it, -1);
       }
       public EntryIterator<K,V> split() {
@@ -3193,24 +3189,24 @@ public class ComparingConcurrentHashMapV8<K,V>
    static final class MapEntry<K,V> implements Entry<K,V> {
       final K key; // non-null
       V val;       // non-null
-      final ComparingConcurrentHashMapV8<K,V> map;
-      MapEntry(K key, V val, ComparingConcurrentHashMapV8<K,V> map) {
+      final EquivalentConcurrentHashMapV8<K,V> map;
+      MapEntry(K key, V val, EquivalentConcurrentHashMapV8<K,V> map) {
          this.key = key;
          this.val = val;
          this.map = map;
       }
       public final K getKey()       { return key; }
       public final V getValue()     { return val; }
-      public final int hashCode()   { return map.comparingKey.hashCode(key) ^ map.comparingValue.hashCode(val); } // COMPARING_MOD
-      public final String toString(){ return map.comparingKey.toString(key) + "=" + map.comparingValue.toString(val); } // COMPARING_MOD
+      public final int hashCode()   { return map.keyEquivalence.hashCode(key) ^ map.valueEquivalence.hashCode(val); } // EQUIVALENCE_MOD
+      public final String toString(){ return map.keyEquivalence.toString(key) + "=" + map.valueEquivalence.toString(val); } // EQUIVALENCE_MOD
 
       public final boolean equals(Object o) {
          Object k, v; Entry<?,?> e;
          return ((o instanceof Entry) &&
                        (k = (e = (Entry<?,?>)o).getKey()) != null &&
                        (v = e.getValue()) != null &&
-                       (k == key || map.comparingKey.equals(k, key)) && // COMPARING_MOD
-                       (v == val || map.comparingValue.equals(v, val))); // COMPARING_MOD
+                       (k == key || map.keyEquivalence.equals(key, k)) && // EQUIVALENCE_MOD
+                       (v == val || map.valueEquivalence.equals(val, v))); // EQUIVALENCE_MOD
       }
 
       /**
@@ -4631,15 +4627,15 @@ public class ComparingConcurrentHashMapV8<K,V>
     * Base class for views.
     */
    abstract static class CHMView<K,V> {
-      final ComparingConcurrentHashMapV8<K,V> map;
-      CHMView(ComparingConcurrentHashMapV8<K,V> map)  { this.map = map; }
+      final EquivalentConcurrentHashMapV8<K,V> map;
+      CHMView(EquivalentConcurrentHashMapV8<K,V> map)  { this.map = map; }
 
       /**
        * Returns the map backing this view.
        *
        * @return the map backing this view
        */
-      public ComparingConcurrentHashMapV8<K,V> getMap() { return map; }
+      public EquivalentConcurrentHashMapV8<K,V> getMap() { return map; }
 
       public final int size()                 { return map.size(); }
       public final boolean isEmpty()          { return map.isEmpty(); }
@@ -4719,7 +4715,13 @@ public class ComparingConcurrentHashMapV8<K,V>
          if (it.hasNext()) {
             for (;;) {
                Object e = it.next();
-               sb.append(e == this ? "(this Collection)" : e); // TODO: COMPARING_MOD, select comparingKey/comparingValue based on instanceOf?
+               String eStr = this instanceof KeySetView
+                     ? map.keyEquivalence.toString(e)
+                     : this instanceof ValuesView
+                        ? map.valueEquivalence.toString(e)
+                        : e.toString();
+
+               sb.append(e == this ? "(this Collection)" : eStr); // EQUIVALENCE_MOD
                if (!it.hasNext())
                   break;
                sb.append(',').append(' ');
@@ -4767,14 +4769,14 @@ public class ComparingConcurrentHashMapV8<K,V>
     * A view of a ConcurrentHashMapV8 as a {@link java.util.Set} of keys, in
     * which additions may optionally be enabled by mapping to a
     * common value.  This class cannot be directly instantiated. See
-    * {@link #keySet()}, {@link #keySet(Object)}, {@link #newKeySet()},
+    * {@link #keySet()}, {@link #keySet(Object)}, {@link #newKeySet(org.infinispan.util.Equivalence)},
     * {@link #newKeySet(int)}.
     */
    public static class KeySetView<K,V> extends CHMView<K,V>
          implements Set<K>, Serializable {
       private static final long serialVersionUID = 7249069246763182397L;
       private final V value;
-      KeySetView(ComparingConcurrentHashMapV8<K,V> map, V value) {  // non-public
+      KeySetView(EquivalentConcurrentHashMapV8<K,V> map, V value) {  // non-public
          super(map);
          this.value = value;
       }
@@ -4842,13 +4844,13 @@ public class ComparingConcurrentHashMapV8<K,V>
     */
    public static final class ValuesView<K,V> extends CHMView<K,V>
          implements Collection<V> {
-      ValuesView(ComparingConcurrentHashMapV8<K,V> map)   { super(map); }
+      ValuesView(EquivalentConcurrentHashMapV8<K,V> map)   { super(map); }
       public final boolean contains(Object o) { return map.containsValue(o); }
       public final boolean remove(Object o) {
          if (o != null) {
             Iterator<V> it = new ValueIterator<K,V>(map);
             while (it.hasNext()) {
-               if (map.comparingValue.equals(o, it.next())) { // COMPARING_MOD
+               if (map.valueEquivalence.equals(it.next(), o)) { // EQUIVALENCE_MOD
                   it.remove();
                   return true;
                }
@@ -4886,14 +4888,14 @@ public class ComparingConcurrentHashMapV8<K,V>
     */
    public static final class EntrySetView<K,V> extends CHMView<K,V>
          implements Set<Entry<K,V>> {
-      EntrySetView(ComparingConcurrentHashMapV8<K,V> map) { super(map); }
+      EntrySetView(EquivalentConcurrentHashMapV8<K,V> map) { super(map); }
       public final boolean contains(Object o) {
-         Object k, v, r; Entry<?,?> e;
+         Object k, r; V v;Entry<?,V> e; // EQUIVALENCE_MOD
          return ((o instanceof Entry) &&
-                       (k = (e = (Entry<?,?>)o).getKey()) != null &&
+                       (k = (e = (Entry<?,V>)o).getKey()) != null && // EQUIVALENCE_MOD
                        (r = map.get(k)) != null &&
                        (v = e.getValue()) != null &&
-                       (v == r || map.comparingValue.equals(v, r))); // COMPARING_MOD
+                       (v == r || map.valueEquivalence.equals(v, r))); // EQUIVALENCE_MOD
       }
       public final boolean remove(Object o) {
          Object k, v; Entry<?,?> e;
@@ -4959,7 +4961,7 @@ public class ComparingConcurrentHashMapV8<K,V>
        * @return the task
        */
       public static <K,V> ForkJoinTask<Void> forEach
-      (ComparingConcurrentHashMapV8<K,V> map,
+      (EquivalentConcurrentHashMapV8<K,V> map,
             BiAction<K,V> action) {
          if (action == null) throw new NullPointerException();
          return new ForEachMappingTask<K,V>(map, null, -1, action);
@@ -4977,7 +4979,7 @@ public class ComparingConcurrentHashMapV8<K,V>
        * @return the task
        */
       public static <K,V,U> ForkJoinTask<Void> forEach
-      (ComparingConcurrentHashMapV8<K,V> map,
+      (EquivalentConcurrentHashMapV8<K,V> map,
             BiFun<? super K, ? super V, ? extends U> transformer,
             Action<U> action) {
          if (transformer == null || action == null)
@@ -4999,7 +5001,7 @@ public class ComparingConcurrentHashMapV8<K,V>
        * @return the task
        */
       public static <K,V,U> ForkJoinTask<U> search
-      (ComparingConcurrentHashMapV8<K,V> map,
+      (EquivalentConcurrentHashMapV8<K,V> map,
             BiFun<? super K, ? super V, ? extends U> searchFunction) {
          if (searchFunction == null) throw new NullPointerException();
          return new SearchMappingsTask<K,V,U>
@@ -5020,7 +5022,7 @@ public class ComparingConcurrentHashMapV8<K,V>
        * @return the task
        */
       public static <K,V,U> ForkJoinTask<U> reduce
-      (ComparingConcurrentHashMapV8<K,V> map,
+      (EquivalentConcurrentHashMapV8<K,V> map,
             BiFun<? super K, ? super V, ? extends U> transformer,
             BiFun<? super U, ? super U, ? extends U> reducer) {
          if (transformer == null || reducer == null)
@@ -5043,7 +5045,7 @@ public class ComparingConcurrentHashMapV8<K,V>
        * @return the task
        */
       public static <K,V> ForkJoinTask<Double> reduceToDouble
-      (ComparingConcurrentHashMapV8<K,V> map,
+      (EquivalentConcurrentHashMapV8<K,V> map,
             ObjectByObjectToDouble<? super K, ? super V> transformer,
             double basis,
             DoubleByDoubleToDouble reducer) {
@@ -5067,7 +5069,7 @@ public class ComparingConcurrentHashMapV8<K,V>
        * @return the task
        */
       public static <K,V> ForkJoinTask<Long> reduceToLong
-      (ComparingConcurrentHashMapV8<K,V> map,
+      (EquivalentConcurrentHashMapV8<K,V> map,
             ObjectByObjectToLong<? super K, ? super V> transformer,
             long basis,
             LongByLongToLong reducer) {
@@ -5090,7 +5092,7 @@ public class ComparingConcurrentHashMapV8<K,V>
        * @return the task
        */
       public static <K,V> ForkJoinTask<Integer> reduceToInt
-      (ComparingConcurrentHashMapV8<K,V> map,
+      (EquivalentConcurrentHashMapV8<K,V> map,
             ObjectByObjectToInt<? super K, ? super V> transformer,
             int basis,
             IntByIntToInt reducer) {
@@ -5109,7 +5111,7 @@ public class ComparingConcurrentHashMapV8<K,V>
        * @return the task
        */
       public static <K,V> ForkJoinTask<Void> forEachKey
-      (ComparingConcurrentHashMapV8<K,V> map,
+      (EquivalentConcurrentHashMapV8<K,V> map,
             Action<K> action) {
          if (action == null) throw new NullPointerException();
          return new ForEachKeyTask<K,V>(map, null, -1, action);
@@ -5127,7 +5129,7 @@ public class ComparingConcurrentHashMapV8<K,V>
        * @return the task
        */
       public static <K,V,U> ForkJoinTask<Void> forEachKey
-      (ComparingConcurrentHashMapV8<K,V> map,
+      (EquivalentConcurrentHashMapV8<K,V> map,
             Fun<? super K, ? extends U> transformer,
             Action<U> action) {
          if (transformer == null || action == null)
@@ -5149,7 +5151,7 @@ public class ComparingConcurrentHashMapV8<K,V>
        * @return the task
        */
       public static <K,V,U> ForkJoinTask<U> searchKeys
-      (ComparingConcurrentHashMapV8<K,V> map,
+      (EquivalentConcurrentHashMapV8<K,V> map,
             Fun<? super K, ? extends U> searchFunction) {
          if (searchFunction == null) throw new NullPointerException();
          return new SearchKeysTask<K,V,U>
@@ -5167,7 +5169,7 @@ public class ComparingConcurrentHashMapV8<K,V>
        * @return the task
        */
       public static <K,V> ForkJoinTask<K> reduceKeys
-      (ComparingConcurrentHashMapV8<K,V> map,
+      (EquivalentConcurrentHashMapV8<K,V> map,
             BiFun<? super K, ? super K, ? extends K> reducer) {
          if (reducer == null) throw new NullPointerException();
          return new ReduceKeysTask<K,V>
@@ -5187,7 +5189,7 @@ public class ComparingConcurrentHashMapV8<K,V>
        * @return the task
        */
       public static <K,V,U> ForkJoinTask<U> reduceKeys
-      (ComparingConcurrentHashMapV8<K,V> map,
+      (EquivalentConcurrentHashMapV8<K,V> map,
             Fun<? super K, ? extends U> transformer,
             BiFun<? super U, ? super U, ? extends U> reducer) {
          if (transformer == null || reducer == null)
@@ -5210,7 +5212,7 @@ public class ComparingConcurrentHashMapV8<K,V>
        * @return the task
        */
       public static <K,V> ForkJoinTask<Double> reduceKeysToDouble
-      (ComparingConcurrentHashMapV8<K,V> map,
+      (EquivalentConcurrentHashMapV8<K,V> map,
             ObjectToDouble<? super K> transformer,
             double basis,
             DoubleByDoubleToDouble reducer) {
@@ -5234,7 +5236,7 @@ public class ComparingConcurrentHashMapV8<K,V>
        * @return the task
        */
       public static <K,V> ForkJoinTask<Long> reduceKeysToLong
-      (ComparingConcurrentHashMapV8<K,V> map,
+      (EquivalentConcurrentHashMapV8<K,V> map,
             ObjectToLong<? super K> transformer,
             long basis,
             LongByLongToLong reducer) {
@@ -5258,7 +5260,7 @@ public class ComparingConcurrentHashMapV8<K,V>
        * @return the task
        */
       public static <K,V> ForkJoinTask<Integer> reduceKeysToInt
-      (ComparingConcurrentHashMapV8<K,V> map,
+      (EquivalentConcurrentHashMapV8<K,V> map,
             ObjectToInt<? super K> transformer,
             int basis,
             IntByIntToInt reducer) {
@@ -5276,7 +5278,7 @@ public class ComparingConcurrentHashMapV8<K,V>
        * @param action the action
        */
       public static <K,V> ForkJoinTask<Void> forEachValue
-      (ComparingConcurrentHashMapV8<K,V> map,
+      (EquivalentConcurrentHashMapV8<K,V> map,
             Action<V> action) {
          if (action == null) throw new NullPointerException();
          return new ForEachValueTask<K,V>(map, null, -1, action);
@@ -5293,7 +5295,7 @@ public class ComparingConcurrentHashMapV8<K,V>
        * @param action the action
        */
       public static <K,V,U> ForkJoinTask<Void> forEachValue
-      (ComparingConcurrentHashMapV8<K,V> map,
+      (EquivalentConcurrentHashMapV8<K,V> map,
             Fun<? super V, ? extends U> transformer,
             Action<U> action) {
          if (transformer == null || action == null)
@@ -5315,7 +5317,7 @@ public class ComparingConcurrentHashMapV8<K,V>
        * @return the task
        */
       public static <K,V,U> ForkJoinTask<U> searchValues
-      (ComparingConcurrentHashMapV8<K,V> map,
+      (EquivalentConcurrentHashMapV8<K,V> map,
             Fun<? super V, ? extends U> searchFunction) {
          if (searchFunction == null) throw new NullPointerException();
          return new SearchValuesTask<K,V,U>
@@ -5333,7 +5335,7 @@ public class ComparingConcurrentHashMapV8<K,V>
        * @return the task
        */
       public static <K,V> ForkJoinTask<V> reduceValues
-      (ComparingConcurrentHashMapV8<K,V> map,
+      (EquivalentConcurrentHashMapV8<K,V> map,
             BiFun<? super V, ? super V, ? extends V> reducer) {
          if (reducer == null) throw new NullPointerException();
          return new ReduceValuesTask<K,V>
@@ -5353,7 +5355,7 @@ public class ComparingConcurrentHashMapV8<K,V>
        * @return the task
        */
       public static <K,V,U> ForkJoinTask<U> reduceValues
-      (ComparingConcurrentHashMapV8<K,V> map,
+      (EquivalentConcurrentHashMapV8<K,V> map,
             Fun<? super V, ? extends U> transformer,
             BiFun<? super U, ? super U, ? extends U> reducer) {
          if (transformer == null || reducer == null)
@@ -5376,7 +5378,7 @@ public class ComparingConcurrentHashMapV8<K,V>
        * @return the task
        */
       public static <K,V> ForkJoinTask<Double> reduceValuesToDouble
-      (ComparingConcurrentHashMapV8<K,V> map,
+      (EquivalentConcurrentHashMapV8<K,V> map,
             ObjectToDouble<? super V> transformer,
             double basis,
             DoubleByDoubleToDouble reducer) {
@@ -5400,7 +5402,7 @@ public class ComparingConcurrentHashMapV8<K,V>
        * @return the task
        */
       public static <K,V> ForkJoinTask<Long> reduceValuesToLong
-      (ComparingConcurrentHashMapV8<K,V> map,
+      (EquivalentConcurrentHashMapV8<K,V> map,
             ObjectToLong<? super V> transformer,
             long basis,
             LongByLongToLong reducer) {
@@ -5424,7 +5426,7 @@ public class ComparingConcurrentHashMapV8<K,V>
        * @return the task
        */
       public static <K,V> ForkJoinTask<Integer> reduceValuesToInt
-      (ComparingConcurrentHashMapV8<K,V> map,
+      (EquivalentConcurrentHashMapV8<K,V> map,
             ObjectToInt<? super V> transformer,
             int basis,
             IntByIntToInt reducer) {
@@ -5442,7 +5444,7 @@ public class ComparingConcurrentHashMapV8<K,V>
        * @param action the action
        */
       public static <K,V> ForkJoinTask<Void> forEachEntry
-      (ComparingConcurrentHashMapV8<K,V> map,
+      (EquivalentConcurrentHashMapV8<K,V> map,
             Action<Entry<K,V>> action) {
          if (action == null) throw new NullPointerException();
          return new ForEachEntryTask<K,V>(map, null, -1, action);
@@ -5459,7 +5461,7 @@ public class ComparingConcurrentHashMapV8<K,V>
        * @param action the action
        */
       public static <K,V,U> ForkJoinTask<Void> forEachEntry
-      (ComparingConcurrentHashMapV8<K,V> map,
+      (EquivalentConcurrentHashMapV8<K,V> map,
             Fun<Entry<K,V>, ? extends U> transformer,
             Action<U> action) {
          if (transformer == null || action == null)
@@ -5481,7 +5483,7 @@ public class ComparingConcurrentHashMapV8<K,V>
        * @return the task
        */
       public static <K,V,U> ForkJoinTask<U> searchEntries
-      (ComparingConcurrentHashMapV8<K,V> map,
+      (EquivalentConcurrentHashMapV8<K,V> map,
             Fun<Entry<K,V>, ? extends U> searchFunction) {
          if (searchFunction == null) throw new NullPointerException();
          return new SearchEntriesTask<K,V,U>
@@ -5499,7 +5501,7 @@ public class ComparingConcurrentHashMapV8<K,V>
        * @return the task
        */
       public static <K,V> ForkJoinTask<Entry<K,V>> reduceEntries
-      (ComparingConcurrentHashMapV8<K,V> map,
+      (EquivalentConcurrentHashMapV8<K,V> map,
             BiFun<Entry<K,V>, Entry<K,V>, ? extends Entry<K,V>> reducer) {
          if (reducer == null) throw new NullPointerException();
          return new ReduceEntriesTask<K,V>
@@ -5519,7 +5521,7 @@ public class ComparingConcurrentHashMapV8<K,V>
        * @return the task
        */
       public static <K,V,U> ForkJoinTask<U> reduceEntries
-      (ComparingConcurrentHashMapV8<K,V> map,
+      (EquivalentConcurrentHashMapV8<K,V> map,
             Fun<Entry<K,V>, ? extends U> transformer,
             BiFun<? super U, ? super U, ? extends U> reducer) {
          if (transformer == null || reducer == null)
@@ -5542,7 +5544,7 @@ public class ComparingConcurrentHashMapV8<K,V>
        * @return the task
        */
       public static <K,V> ForkJoinTask<Double> reduceEntriesToDouble
-      (ComparingConcurrentHashMapV8<K,V> map,
+      (EquivalentConcurrentHashMapV8<K,V> map,
             ObjectToDouble<Entry<K,V>> transformer,
             double basis,
             DoubleByDoubleToDouble reducer) {
@@ -5566,7 +5568,7 @@ public class ComparingConcurrentHashMapV8<K,V>
        * @return the task
        */
       public static <K,V> ForkJoinTask<Long> reduceEntriesToLong
-      (ComparingConcurrentHashMapV8<K,V> map,
+      (EquivalentConcurrentHashMapV8<K,V> map,
             ObjectToLong<Entry<K,V>> transformer,
             long basis,
             LongByLongToLong reducer) {
@@ -5590,7 +5592,7 @@ public class ComparingConcurrentHashMapV8<K,V>
        * @return the task
        */
       public static <K,V> ForkJoinTask<Integer> reduceEntriesToInt
-      (ComparingConcurrentHashMapV8<K,V> map,
+      (EquivalentConcurrentHashMapV8<K,V> map,
             ObjectToInt<Entry<K,V>> transformer,
             int basis,
             IntByIntToInt reducer) {
@@ -5615,7 +5617,7 @@ public class ComparingConcurrentHashMapV8<K,V>
          extends Traverser<K,V,Void> {
       final Action<K> action;
       ForEachKeyTask
-            (ComparingConcurrentHashMapV8<K,V> m, Traverser<K,V,?> p, int b,
+            (EquivalentConcurrentHashMapV8<K,V> m, Traverser<K,V,?> p, int b,
                   Action<K> action) {
          super(m, p, b);
          this.action = action;
@@ -5636,7 +5638,7 @@ public class ComparingConcurrentHashMapV8<K,V>
          extends Traverser<K,V,Void> {
       final Action<V> action;
       ForEachValueTask
-            (ComparingConcurrentHashMapV8<K,V> m, Traverser<K,V,?> p, int b,
+            (EquivalentConcurrentHashMapV8<K,V> m, Traverser<K,V,?> p, int b,
                   Action<V> action) {
          super(m, p, b);
          this.action = action;
@@ -5658,7 +5660,7 @@ public class ComparingConcurrentHashMapV8<K,V>
          extends Traverser<K,V,Void> {
       final Action<Entry<K,V>> action;
       ForEachEntryTask
-            (ComparingConcurrentHashMapV8<K,V> m, Traverser<K,V,?> p, int b,
+            (EquivalentConcurrentHashMapV8<K,V> m, Traverser<K,V,?> p, int b,
                   Action<Entry<K,V>> action) {
          super(m, p, b);
          this.action = action;
@@ -5680,7 +5682,7 @@ public class ComparingConcurrentHashMapV8<K,V>
          extends Traverser<K,V,Void> {
       final BiAction<K,V> action;
       ForEachMappingTask
-            (ComparingConcurrentHashMapV8<K,V> m, Traverser<K,V,?> p, int b,
+            (EquivalentConcurrentHashMapV8<K,V> m, Traverser<K,V,?> p, int b,
                   BiAction<K,V> action) {
          super(m, p, b);
          this.action = action;
@@ -5703,7 +5705,7 @@ public class ComparingConcurrentHashMapV8<K,V>
       final Fun<? super K, ? extends U> transformer;
       final Action<U> action;
       ForEachTransformedKeyTask
-            (ComparingConcurrentHashMapV8<K,V> m, Traverser<K,V,?> p, int b,
+            (EquivalentConcurrentHashMapV8<K,V> m, Traverser<K,V,?> p, int b,
                   Fun<? super K, ? extends U> transformer, Action<U> action) {
          super(m, p, b);
          this.transformer = transformer; this.action = action;
@@ -5731,7 +5733,7 @@ public class ComparingConcurrentHashMapV8<K,V>
       final Fun<? super V, ? extends U> transformer;
       final Action<U> action;
       ForEachTransformedValueTask
-            (ComparingConcurrentHashMapV8<K,V> m, Traverser<K,V,?> p, int b,
+            (EquivalentConcurrentHashMapV8<K,V> m, Traverser<K,V,?> p, int b,
                   Fun<? super V, ? extends U> transformer, Action<U> action) {
          super(m, p, b);
          this.transformer = transformer; this.action = action;
@@ -5759,7 +5761,7 @@ public class ComparingConcurrentHashMapV8<K,V>
       final Fun<Entry<K,V>, ? extends U> transformer;
       final Action<U> action;
       ForEachTransformedEntryTask
-            (ComparingConcurrentHashMapV8<K,V> m, Traverser<K,V,?> p, int b,
+            (EquivalentConcurrentHashMapV8<K,V> m, Traverser<K,V,?> p, int b,
                   Fun<Entry<K,V>, ? extends U> transformer, Action<U> action) {
          super(m, p, b);
          this.transformer = transformer; this.action = action;
@@ -5788,7 +5790,7 @@ public class ComparingConcurrentHashMapV8<K,V>
       final BiFun<? super K, ? super V, ? extends U> transformer;
       final Action<U> action;
       ForEachTransformedMappingTask
-            (ComparingConcurrentHashMapV8<K,V> m, Traverser<K,V,?> p, int b,
+            (EquivalentConcurrentHashMapV8<K,V> m, Traverser<K,V,?> p, int b,
                   BiFun<? super K, ? super V, ? extends U> transformer,
                   Action<U> action) {
          super(m, p, b);
@@ -5817,7 +5819,7 @@ public class ComparingConcurrentHashMapV8<K,V>
       final Fun<? super K, ? extends U> searchFunction;
       final AtomicReference<U> result;
       SearchKeysTask
-            (ComparingConcurrentHashMapV8<K,V> m, Traverser<K,V,?> p, int b,
+            (EquivalentConcurrentHashMapV8<K,V> m, Traverser<K,V,?> p, int b,
                   Fun<? super K, ? extends U> searchFunction,
                   AtomicReference<U> result) {
          super(m, p, b);
@@ -5858,7 +5860,7 @@ public class ComparingConcurrentHashMapV8<K,V>
       final Fun<? super V, ? extends U> searchFunction;
       final AtomicReference<U> result;
       SearchValuesTask
-            (ComparingConcurrentHashMapV8<K,V> m, Traverser<K,V,?> p, int b,
+            (EquivalentConcurrentHashMapV8<K,V> m, Traverser<K,V,?> p, int b,
                   Fun<? super V, ? extends U> searchFunction,
                   AtomicReference<U> result) {
          super(m, p, b);
@@ -5899,7 +5901,7 @@ public class ComparingConcurrentHashMapV8<K,V>
       final Fun<Entry<K,V>, ? extends U> searchFunction;
       final AtomicReference<U> result;
       SearchEntriesTask
-            (ComparingConcurrentHashMapV8<K,V> m, Traverser<K,V,?> p, int b,
+            (EquivalentConcurrentHashMapV8<K,V> m, Traverser<K,V,?> p, int b,
                   Fun<Entry<K,V>, ? extends U> searchFunction,
                   AtomicReference<U> result) {
          super(m, p, b);
@@ -5941,7 +5943,7 @@ public class ComparingConcurrentHashMapV8<K,V>
       final BiFun<? super K, ? super V, ? extends U> searchFunction;
       final AtomicReference<U> result;
       SearchMappingsTask
-            (ComparingConcurrentHashMapV8<K,V> m, Traverser<K,V,?> p, int b,
+            (EquivalentConcurrentHashMapV8<K,V> m, Traverser<K,V,?> p, int b,
                   BiFun<? super K, ? super V, ? extends U> searchFunction,
                   AtomicReference<U> result) {
          super(m, p, b);
@@ -5983,7 +5985,7 @@ public class ComparingConcurrentHashMapV8<K,V>
       K result;
       ReduceKeysTask<K,V> rights, nextRight;
       ReduceKeysTask
-            (ComparingConcurrentHashMapV8<K,V> m, Traverser<K,V,?> p, int b,
+            (EquivalentConcurrentHashMapV8<K,V> m, Traverser<K,V,?> p, int b,
                   ReduceKeysTask<K,V> nextRight,
                   BiFun<? super K, ? super K, ? extends K> reducer) {
          super(m, p, b); this.nextRight = nextRight;
@@ -6025,7 +6027,7 @@ public class ComparingConcurrentHashMapV8<K,V>
       V result;
       ReduceValuesTask<K,V> rights, nextRight;
       ReduceValuesTask
-            (ComparingConcurrentHashMapV8<K,V> m, Traverser<K,V,?> p, int b,
+            (EquivalentConcurrentHashMapV8<K,V> m, Traverser<K,V,?> p, int b,
                   ReduceValuesTask<K,V> nextRight,
                   BiFun<? super V, ? super V, ? extends V> reducer) {
          super(m, p, b); this.nextRight = nextRight;
@@ -6068,7 +6070,7 @@ public class ComparingConcurrentHashMapV8<K,V>
       Entry<K,V> result;
       ReduceEntriesTask<K,V> rights, nextRight;
       ReduceEntriesTask
-            (ComparingConcurrentHashMapV8<K,V> m, Traverser<K,V,?> p, int b,
+            (EquivalentConcurrentHashMapV8<K,V> m, Traverser<K,V,?> p, int b,
                   ReduceEntriesTask<K,V> nextRight,
                   BiFun<Entry<K,V>, Entry<K,V>, ? extends Entry<K,V>> reducer) {
          super(m, p, b); this.nextRight = nextRight;
@@ -6112,7 +6114,7 @@ public class ComparingConcurrentHashMapV8<K,V>
       U result;
       MapReduceKeysTask<K,V,U> rights, nextRight;
       MapReduceKeysTask
-            (ComparingConcurrentHashMapV8<K,V> m, Traverser<K,V,?> p, int b,
+            (EquivalentConcurrentHashMapV8<K,V> m, Traverser<K,V,?> p, int b,
                   MapReduceKeysTask<K,V,U> nextRight,
                   Fun<? super K, ? extends U> transformer,
                   BiFun<? super U, ? super U, ? extends U> reducer) {
@@ -6159,7 +6161,7 @@ public class ComparingConcurrentHashMapV8<K,V>
       U result;
       MapReduceValuesTask<K,V,U> rights, nextRight;
       MapReduceValuesTask
-            (ComparingConcurrentHashMapV8<K,V> m, Traverser<K,V,?> p, int b,
+            (EquivalentConcurrentHashMapV8<K,V> m, Traverser<K,V,?> p, int b,
                   MapReduceValuesTask<K,V,U> nextRight,
                   Fun<? super V, ? extends U> transformer,
                   BiFun<? super U, ? super U, ? extends U> reducer) {
@@ -6207,7 +6209,7 @@ public class ComparingConcurrentHashMapV8<K,V>
       U result;
       MapReduceEntriesTask<K,V,U> rights, nextRight;
       MapReduceEntriesTask
-            (ComparingConcurrentHashMapV8<K,V> m, Traverser<K,V,?> p, int b,
+            (EquivalentConcurrentHashMapV8<K,V> m, Traverser<K,V,?> p, int b,
                   MapReduceEntriesTask<K,V,U> nextRight,
                   Fun<Entry<K,V>, ? extends U> transformer,
                   BiFun<? super U, ? super U, ? extends U> reducer) {
@@ -6256,7 +6258,7 @@ public class ComparingConcurrentHashMapV8<K,V>
       U result;
       MapReduceMappingsTask<K,V,U> rights, nextRight;
       MapReduceMappingsTask
-            (ComparingConcurrentHashMapV8<K,V> m, Traverser<K,V,?> p, int b,
+            (EquivalentConcurrentHashMapV8<K,V> m, Traverser<K,V,?> p, int b,
                   MapReduceMappingsTask<K,V,U> nextRight,
                   BiFun<? super K, ? super V, ? extends U> transformer,
                   BiFun<? super U, ? super U, ? extends U> reducer) {
@@ -6305,7 +6307,7 @@ public class ComparingConcurrentHashMapV8<K,V>
       double result;
       MapReduceKeysToDoubleTask<K,V> rights, nextRight;
       MapReduceKeysToDoubleTask
-            (ComparingConcurrentHashMapV8<K,V> m, Traverser<K,V,?> p, int b,
+            (EquivalentConcurrentHashMapV8<K,V> m, Traverser<K,V,?> p, int b,
                   MapReduceKeysToDoubleTask<K,V> nextRight,
                   ObjectToDouble<? super K> transformer,
                   double basis,
@@ -6349,7 +6351,7 @@ public class ComparingConcurrentHashMapV8<K,V>
       double result;
       MapReduceValuesToDoubleTask<K,V> rights, nextRight;
       MapReduceValuesToDoubleTask
-            (ComparingConcurrentHashMapV8<K,V> m, Traverser<K,V,?> p, int b,
+            (EquivalentConcurrentHashMapV8<K,V> m, Traverser<K,V,?> p, int b,
                   MapReduceValuesToDoubleTask<K,V> nextRight,
                   ObjectToDouble<? super V> transformer,
                   double basis,
@@ -6394,7 +6396,7 @@ public class ComparingConcurrentHashMapV8<K,V>
       double result;
       MapReduceEntriesToDoubleTask<K,V> rights, nextRight;
       MapReduceEntriesToDoubleTask
-            (ComparingConcurrentHashMapV8<K,V> m, Traverser<K,V,?> p, int b,
+            (EquivalentConcurrentHashMapV8<K,V> m, Traverser<K,V,?> p, int b,
                   MapReduceEntriesToDoubleTask<K,V> nextRight,
                   ObjectToDouble<Entry<K,V>> transformer,
                   double basis,
@@ -6440,7 +6442,7 @@ public class ComparingConcurrentHashMapV8<K,V>
       double result;
       MapReduceMappingsToDoubleTask<K,V> rights, nextRight;
       MapReduceMappingsToDoubleTask
-            (ComparingConcurrentHashMapV8<K,V> m, Traverser<K,V,?> p, int b,
+            (EquivalentConcurrentHashMapV8<K,V> m, Traverser<K,V,?> p, int b,
                   MapReduceMappingsToDoubleTask<K,V> nextRight,
                   ObjectByObjectToDouble<? super K, ? super V> transformer,
                   double basis,
@@ -6485,7 +6487,7 @@ public class ComparingConcurrentHashMapV8<K,V>
       long result;
       MapReduceKeysToLongTask<K,V> rights, nextRight;
       MapReduceKeysToLongTask
-            (ComparingConcurrentHashMapV8<K,V> m, Traverser<K,V,?> p, int b,
+            (EquivalentConcurrentHashMapV8<K,V> m, Traverser<K,V,?> p, int b,
                   MapReduceKeysToLongTask<K,V> nextRight,
                   ObjectToLong<? super K> transformer,
                   long basis,
@@ -6529,7 +6531,7 @@ public class ComparingConcurrentHashMapV8<K,V>
       long result;
       MapReduceValuesToLongTask<K,V> rights, nextRight;
       MapReduceValuesToLongTask
-            (ComparingConcurrentHashMapV8<K,V> m, Traverser<K,V,?> p, int b,
+            (EquivalentConcurrentHashMapV8<K,V> m, Traverser<K,V,?> p, int b,
                   MapReduceValuesToLongTask<K,V> nextRight,
                   ObjectToLong<? super V> transformer,
                   long basis,
@@ -6574,7 +6576,7 @@ public class ComparingConcurrentHashMapV8<K,V>
       long result;
       MapReduceEntriesToLongTask<K,V> rights, nextRight;
       MapReduceEntriesToLongTask
-            (ComparingConcurrentHashMapV8<K,V> m, Traverser<K,V,?> p, int b,
+            (EquivalentConcurrentHashMapV8<K,V> m, Traverser<K,V,?> p, int b,
                   MapReduceEntriesToLongTask<K,V> nextRight,
                   ObjectToLong<Entry<K,V>> transformer,
                   long basis,
@@ -6620,7 +6622,7 @@ public class ComparingConcurrentHashMapV8<K,V>
       long result;
       MapReduceMappingsToLongTask<K,V> rights, nextRight;
       MapReduceMappingsToLongTask
-            (ComparingConcurrentHashMapV8<K,V> m, Traverser<K,V,?> p, int b,
+            (EquivalentConcurrentHashMapV8<K,V> m, Traverser<K,V,?> p, int b,
                   MapReduceMappingsToLongTask<K,V> nextRight,
                   ObjectByObjectToLong<? super K, ? super V> transformer,
                   long basis,
@@ -6665,7 +6667,7 @@ public class ComparingConcurrentHashMapV8<K,V>
       int result;
       MapReduceKeysToIntTask<K,V> rights, nextRight;
       MapReduceKeysToIntTask
-            (ComparingConcurrentHashMapV8<K,V> m, Traverser<K,V,?> p, int b,
+            (EquivalentConcurrentHashMapV8<K,V> m, Traverser<K,V,?> p, int b,
                   MapReduceKeysToIntTask<K,V> nextRight,
                   ObjectToInt<? super K> transformer,
                   int basis,
@@ -6709,7 +6711,7 @@ public class ComparingConcurrentHashMapV8<K,V>
       int result;
       MapReduceValuesToIntTask<K,V> rights, nextRight;
       MapReduceValuesToIntTask
-            (ComparingConcurrentHashMapV8<K,V> m, Traverser<K,V,?> p, int b,
+            (EquivalentConcurrentHashMapV8<K,V> m, Traverser<K,V,?> p, int b,
                   MapReduceValuesToIntTask<K,V> nextRight,
                   ObjectToInt<? super V> transformer,
                   int basis,
@@ -6754,7 +6756,7 @@ public class ComparingConcurrentHashMapV8<K,V>
       int result;
       MapReduceEntriesToIntTask<K,V> rights, nextRight;
       MapReduceEntriesToIntTask
-            (ComparingConcurrentHashMapV8<K,V> m, Traverser<K,V,?> p, int b,
+            (EquivalentConcurrentHashMapV8<K,V> m, Traverser<K,V,?> p, int b,
                   MapReduceEntriesToIntTask<K,V> nextRight,
                   ObjectToInt<Entry<K,V>> transformer,
                   int basis,
@@ -6800,7 +6802,7 @@ public class ComparingConcurrentHashMapV8<K,V>
       int result;
       MapReduceMappingsToIntTask<K,V> rights, nextRight;
       MapReduceMappingsToIntTask
-            (ComparingConcurrentHashMapV8<K,V> m, Traverser<K,V,?> p, int b,
+            (EquivalentConcurrentHashMapV8<K,V> m, Traverser<K,V,?> p, int b,
                   MapReduceMappingsToIntTask<K,V> nextRight,
                   ObjectByObjectToInt<? super K, ? super V> transformer,
                   int basis,
@@ -6851,7 +6853,7 @@ public class ComparingConcurrentHashMapV8<K,V>
    static {
       try {
          U = getUnsafe();
-         Class<?> k = ComparingConcurrentHashMapV8.class;
+         Class<?> k = EquivalentConcurrentHashMapV8.class;
          SIZECTL = U.objectFieldOffset
                (k.getDeclaredField("sizeCtl"));
          TRANSFERINDEX = U.objectFieldOffset

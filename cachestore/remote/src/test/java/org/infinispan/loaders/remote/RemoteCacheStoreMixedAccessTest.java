@@ -18,6 +18,7 @@
  */
 package org.infinispan.loaders.remote;
 
+import static org.infinispan.server.hotrod.test.HotRodTestingUtil.hotRodCacheConfiguration;
 import static org.testng.AssertJUnit.assertEquals;
 
 import java.util.concurrent.TimeUnit;
@@ -58,7 +59,8 @@ public class RemoteCacheStoreMixedAccessTest extends AbstractInfinispanTest {
       ConfigurationBuilder serverBuilder = TestCacheManagerFactory.getDefaultCacheConfiguration(true);
       serverBuilder.eviction().maxEntries(100).strategy(EvictionStrategy.UNORDERED)
             .expiration().wakeUpInterval(10L);
-      serverCacheManager = TestCacheManagerFactory.createCacheManager(serverBuilder);
+      serverCacheManager = TestCacheManagerFactory.createCacheManager(
+            hotRodCacheConfiguration(serverBuilder));
       serverCache = serverCacheManager.getCache();
       hrServer = TestHelper.startHotRodServer(serverCacheManager);
 

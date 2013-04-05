@@ -42,6 +42,7 @@ import java.util.Properties;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 
+import static org.infinispan.server.hotrod.test.HotRodTestingUtil.hotRodCacheConfiguration;
 import static org.infinispan.test.TestingUtil.*;
 import static org.infinispan.client.hotrod.test.HotRodClientTestingUtil.*;
 
@@ -63,7 +64,9 @@ public class ClientSocketReadTimeoutTest extends SingleCacheManagerTest {
    @Override
    protected EmbeddedCacheManager createCacheManager() throws Exception {
       latch = new CountDownLatch(1);
-      cacheManager = new HangingCacheManager(TestCacheManagerFactory.createLocalCacheManager(false), latch);
+      cacheManager = new HangingCacheManager(
+            TestCacheManagerFactory.createCacheManager(hotRodCacheConfiguration()),
+            latch);
       // cacheManager = TestCacheManagerFactory.createLocalCacheManager();
       // pass the config file to the cache
       hotrodServer = TestHelper.startHotRodServer(cacheManager);

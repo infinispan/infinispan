@@ -30,7 +30,6 @@ import java.util.Arrays
 import org.infinispan.server.core.CacheValue
 import org.infinispan.server.hotrod.OperationStatus._
 import org.infinispan.server.hotrod.test._
-import org.infinispan.util.ByteArrayKey
 import org.infinispan.test.TestingUtil.generateRandomString
 import org.infinispan.config.Configuration
 import java.util.concurrent.TimeUnit
@@ -69,9 +68,9 @@ class HotRodFunctionalTest extends HotRodSingleNodeTest {
    def testPutOnDefaultCache(m: Method) {
       val resp = client.execute(0xA0, 0x01, "", k(m), 0, 0, v(m), 0, 1, 0)
       assertStatus(resp, Success)
-      val cache = cacheManager.getCache[ByteArrayKey, CacheValue]()
-      val value = cache.get(new ByteArrayKey(k(m)))
-      assertTrue(Arrays.equals(value.data, v(m)));
+      val cache = cacheManager.getCache[Array[Byte], CacheValue]()
+      val value = cache.get(k(m))
+      assertTrue(Arrays.equals(value.data, v(m)))
    }
 
    def testPutOnUndefinedCache(m: Method) {
@@ -427,8 +426,13 @@ class HotRodFunctionalTest extends HotRodSingleNodeTest {
       assertStatus(resp, Success)
       var bulkData = resp.bulkData
       assertEquals(size, bulkData.size)
-      for (i <- 0 until size)
-         assertTrue(Arrays.equals(bulkData.get(new ByteArrayKey(k(m, i + "k-"))).get, v(m, i + "v-")))
+      for (i <- 0 until size) {
+         val key = k(m, i + "k-")
+         val filtered = bulkData.filter {
+            case (k, v) => java.util.Arrays.equals(k, key)
+         }
+         assertEquals(1, filtered.size)
+      }
 
       size = 50
       resp = client.bulkGet(size)
@@ -436,9 +440,13 @@ class HotRodFunctionalTest extends HotRodSingleNodeTest {
       bulkData = resp.bulkData
       assertEquals(size, bulkData.size)
       for (i <- 0 until size) {
-         val key = new ByteArrayKey(k(m, i + "k-"))
-         if (bulkData.contains(key)) {
-            assertTrue(Arrays.equals(bulkData.get(key).get, v(m, i + "v-")))
+         val key = k(m, i + "k-")
+         val filtered = bulkData.filter { case (k, v) =>
+            java.util.Arrays.equals(k, key)
+         }
+
+         if (!filtered.isEmpty) {
+            assertTrue(java.util.Arrays.equals(filtered.head._2, v(m, i + "v-")))
          }
       }
    }
@@ -454,7 +462,8 @@ class HotRodFunctionalTest extends HotRodSingleNodeTest {
       var bulkData = resp.bulkData
       assertEquals(size, bulkData.size)
       for (i <- 0 until size) {
-         assertTrue(bulkData.contains(new ByteArrayKey(k(m, i + "k-"))))
+         val filtered = bulkData.filter(java.util.Arrays.equals(_, k(m, i + "k-")))
+         assertEquals(1, filtered.size)
       }
       
       resp = client.bulkGetKeys(1)
@@ -462,7 +471,8 @@ class HotRodFunctionalTest extends HotRodSingleNodeTest {
       bulkData = resp.bulkData
       assertEquals(size, bulkData.size)
       for (i <- 0 until size) {
-         assertTrue(bulkData.contains(new ByteArrayKey(k(m, i + "k-"))))
+         val filtered = bulkData.filter(java.util.Arrays.equals(_, k(m, i + "k-")))
+         assertEquals(1, filtered.size)
       }
       
       resp = client.bulkGetKeys(2)
@@ -470,7 +480,8 @@ class HotRodFunctionalTest extends HotRodSingleNodeTest {
       bulkData = resp.bulkData
       assertEquals(size, bulkData.size)
       for (i <- 0 until size) {
-         assertTrue(bulkData.contains(new ByteArrayKey(k(m, i + "k-"))))
+         val filtered = bulkData.filter(java.util.Arrays.equals(_, k(m, i + "k-")))
+         assertEquals(1, filtered.size)
       }
    }
 

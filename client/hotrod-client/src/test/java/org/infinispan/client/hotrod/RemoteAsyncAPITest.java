@@ -37,6 +37,7 @@ import java.util.concurrent.Future;
 import static junit.framework.Assert.assertEquals;
 import static org.infinispan.client.hotrod.test.HotRodClientTestingUtil.killRemoteCacheManager;
 import static org.infinispan.client.hotrod.test.HotRodClientTestingUtil.killServers;
+import static org.infinispan.server.hotrod.test.HotRodTestingUtil.hotRodCacheConfiguration;
 
 /**
  * @author Mircea.Markus@jboss.com
@@ -50,16 +51,20 @@ public class RemoteAsyncAPITest extends SingleCacheManagerTest {
 
    @Override
    protected EmbeddedCacheManager createCacheManager() throws Exception {
-      EmbeddedCacheManager cm = TestCacheManagerFactory.createLocalCacheManager(false);
-      cache = cm.getCache();
-      hotrodServer = TestHelper.startHotRodServer(cm);
+      return TestCacheManagerFactory.createCacheManager(
+            hotRodCacheConfiguration());
+   }
+
+   @Override
+   protected void setup() throws Exception {
+      super.setup();
+      hotrodServer = TestHelper.startHotRodServer(cacheManager);
       Properties props = new Properties();
       props.put("infinispan.client.hotrod.server_list", "127.0.0.1:" + hotrodServer.getPort());
       props.put("infinispan.client.hotrod.force_return_values","true");
       props.put("testOnBorrow", "false");
       rcm = new RemoteCacheManager(props);
       c = rcm.getCache(true);
-      return cm;
    }
 
    @AfterClass(alwaysRun = true)

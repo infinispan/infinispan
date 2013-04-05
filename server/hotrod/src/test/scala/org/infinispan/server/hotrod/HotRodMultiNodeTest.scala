@@ -22,13 +22,14 @@
  */
 package org.infinispan.server.hotrod
 
-import test.{HotRodTestingUtil, HotRodClient}
+import test.HotRodClient
 import test.HotRodTestingUtil._
 import org.infinispan.manager.EmbeddedCacheManager
 import org.infinispan.test.{TestingUtil, MultipleCacheManagersTest}
 import org.infinispan.server.core.test.ServerTestingUtil._
 import org.testng.annotations.{BeforeClass, AfterMethod, AfterClass, Test}
 import org.infinispan.configuration.cache.ConfigurationBuilder
+import org.infinispan.test.fwk.TestCacheManagerFactory
 
 /**
  * Base test class for multi node or clustered Hot Rod tests.
@@ -43,7 +44,8 @@ abstract class HotRodMultiNodeTest extends MultipleCacheManagersTest {
    @Test(enabled=false) // Disable explicitly to avoid TestNG thinking this is a test!!
    override def createCacheManagers() {
       for (i <- 0 until 2) {
-         val cm = super.addClusterEnabledCacheManager()
+         val cm = TestCacheManagerFactory.createClusteredCacheManager(hotRodCacheConfiguration())
+         cacheManagers.add(cm)
          cm.defineConfiguration(cacheName, createCacheConfig.build())
       }
    }
@@ -66,7 +68,8 @@ abstract class HotRodMultiNodeTest extends MultipleCacheManagersTest {
       startClusteredServer(port, doCrash = false)
 
    protected def startClusteredServer(port: Int, doCrash: Boolean): HotRodServer = {
-      val cm = addClusterEnabledCacheManager()
+      val cm = TestCacheManagerFactory.createClusteredCacheManager(hotRodCacheConfiguration())
+      cacheManagers.add(cm)
       cm.defineConfiguration(cacheName, createCacheConfig.build())
 
       val newServer =

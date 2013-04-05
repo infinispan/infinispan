@@ -42,6 +42,8 @@ import org.infinispan.test.fwk.TestInternalCacheEntryFactory;
 import org.testng.annotations.AfterMethod;
 import org.testng.annotations.Test;
 
+import static org.infinispan.server.hotrod.test.HotRodTestingUtil.hotRodCacheConfiguration;
+
 
 /**
  * @author Mircea.Markus@jboss.com
@@ -60,7 +62,7 @@ public class RemoteCacheStoreRawValuesTest extends BaseCacheStoreTest {
       cb.eviction().maxEntries(100).strategy(EvictionStrategy.UNORDERED)
             .expiration().wakeUpInterval(10L);
 
-      localCacheManager = TestCacheManagerFactory.createCacheManager(cb);
+      localCacheManager = TestCacheManagerFactory.createCacheManager(hotRodCacheConfiguration(cb));
       hrServer = TestHelper.startHotRodServer(localCacheManager);
 
       RemoteCacheStoreConfig remoteCacheStoreConfig = new RemoteCacheStoreConfig();

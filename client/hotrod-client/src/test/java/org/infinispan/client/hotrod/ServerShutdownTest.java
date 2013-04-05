@@ -31,6 +31,7 @@ import org.testng.annotations.Test;
 import static junit.framework.Assert.assertEquals;
 import static org.infinispan.client.hotrod.test.HotRodClientTestingUtil.killServers;
 import static org.infinispan.client.hotrod.test.HotRodClientTestingUtil.withRemoteCacheManager;
+import static org.infinispan.server.hotrod.test.HotRodTestingUtil.hotRodCacheConfiguration;
 import static org.infinispan.test.TestingUtil.withCacheManager;
 
 /**
@@ -42,7 +43,8 @@ public class ServerShutdownTest {
 
    public void testServerShutdownWithConnectedClient() {
       withCacheManager(new CacheManagerCallable(
-            TestCacheManagerFactory.createLocalCacheManager(false)) {
+            TestCacheManagerFactory.createCacheManager(
+                  hotRodCacheConfiguration())) {
          @Override
          public void call() {
             HotRodServer hotrodServer = TestHelper.startHotRodServer(cm);
@@ -65,7 +67,8 @@ public class ServerShutdownTest {
 
    public void testServerShutdownWithoutConnectedClient() {
       withCacheManager(new CacheManagerCallable(
-            TestCacheManagerFactory.createLocalCacheManager(false)) {
+            TestCacheManagerFactory.createCacheManager(
+                  hotRodCacheConfiguration())) {
          @Override
          public void call() {
             HotRodServer hotrodServer = TestHelper.startHotRodServer(cm);

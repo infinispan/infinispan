@@ -51,7 +51,7 @@ import org.infinispan.remoting.responses.SuccessfulResponse;
 import org.infinispan.remoting.rpc.ResponseMode;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.remoting.transport.Transport;
-import org.infinispan.util.concurrent.ConcurrentMapFactory;
+import org.infinispan.util.CollectionFactory;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
@@ -80,7 +80,7 @@ public class ClusterTopologyManagerImpl implements ClusterTopologyManager {
    private final Object viewHandlingLock = new Object();
 
 
-   private final ConcurrentMap<String, ClusterCacheStatus> cacheStatusMap = ConcurrentMapFactory.makeConcurrentMap();
+   private final ConcurrentMap<String, ClusterCacheStatus> cacheStatusMap = CollectionFactory.makeConcurrentMap();
    private ClusterViewListener viewListener;
 
    @Inject

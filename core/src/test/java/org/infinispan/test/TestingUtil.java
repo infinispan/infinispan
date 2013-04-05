@@ -86,6 +86,7 @@ import org.infinispan.topology.CacheTopology;
 import org.infinispan.topology.DefaultRebalancePolicy;
 import org.infinispan.topology.RebalancePolicy;
 import org.infinispan.transaction.TransactionTable;
+import org.infinispan.util.AnyEquivalence;
 import org.infinispan.util.concurrent.locks.LockManager;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;

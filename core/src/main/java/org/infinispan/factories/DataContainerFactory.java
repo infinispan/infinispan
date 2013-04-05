@@ -28,7 +28,8 @@ import org.infinispan.container.DefaultDataContainer;
 import org.infinispan.eviction.EvictionStrategy;
 import org.infinispan.eviction.EvictionThreadPolicy;
 import org.infinispan.factories.annotations.DefaultFactoryFor;
-import org.infinispan.util.Comparing;
+import org.infinispan.util.AnyEquivalence;
+import org.infinispan.util.Equivalence;
 
 /**
  * Constructs the data container
@@ -49,14 +50,14 @@ public class DataContainerFactory extends AbstractNamedCacheComponentFactory imp
       } else {
          EvictionStrategy st = configuration.eviction().strategy();
          int level = configuration.locking().concurrencyLevel();
-         Comparing comparingKey = configuration.dataContainer().comparingKey();
-         Comparing comparingValue = configuration.dataContainer().comparingValue();
+         Equivalence keyEquivalence = configuration.dataContainer().keyEquivalence();
+         Equivalence valueEquivalence = configuration.dataContainer().valueEquivalence();
 
          switch (st) {
-            case NONE:         
+            case NONE:
                return (T) DefaultDataContainer.unBoundedDataContainer(
-                     level, comparingKey, comparingValue);
-            case UNORDERED:   
+                     level, keyEquivalence, valueEquivalence);
+            case UNORDERED:
             case LRU:
             case FIFO:
             case LIRS:
@@ -64,11 +65,13 @@ public class DataContainerFactory extends AbstractNamedCacheComponentFactory imp
                //handle case when < 0 value signifies unbounded container 
                if(maxEntries < 0) {
                    return (T) DefaultDataContainer.unBoundedDataContainer(
-                         level, comparingKey, comparingValue);
+                         level, keyEquivalence, valueEquivalence);
                }
+
                EvictionThreadPolicy policy = configuration.eviction().threadPolicy();
+
                return (T) DefaultDataContainer.boundedDataContainer(
-                     level, maxEntries, st, policy, comparingKey, comparingValue);
+                  level, maxEntries, st, policy, keyEquivalence, valueEquivalence);
             default:
                throw new ConfigurationException("Unknown eviction strategy "
                         + configuration.eviction().strategy());

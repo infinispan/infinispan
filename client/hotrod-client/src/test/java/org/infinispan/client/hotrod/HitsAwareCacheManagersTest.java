@@ -44,7 +44,7 @@ import java.util.Map;
  */
 public abstract class HitsAwareCacheManagersTest extends MultipleCacheManagersTest {
 
-   protected Map<SocketAddress, CacheContainer> hrServ2CacheManager = new HashMap<SocketAddress, CacheContainer>();
+   protected Map<SocketAddress, EmbeddedCacheManager> hrServ2CacheManager = new HashMap<SocketAddress, EmbeddedCacheManager>();
    protected Map<SocketAddress, HotRodServer> addr2hrServer = new HashMap<SocketAddress, HotRodServer>();
 
    @Override
@@ -113,16 +113,6 @@ public abstract class HitsAwareCacheManagersTest extends MultipleCacheManagersTe
    private void addHitCountInterceptor(Cache<Object, Object> cache) {
       HitCountInterceptor interceptor = new HitCountInterceptor();
       cache.getAdvancedCache().addInterceptor(interceptor, 1);
-   }
-
-   private SocketAddress getHotRodServerAddress(Cache<Object, Object> cache) {
-      SocketAddress addr = null;
-      for (Map.Entry<SocketAddress, CacheContainer> entry : hrServ2CacheManager.entrySet()) {
-         if (entry.getValue().equals(cache.getCacheManager())) {
-            addr = entry.getKey();
-         }
-      }
-      return addr;
    }
 
    /**

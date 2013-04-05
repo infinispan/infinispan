@@ -32,6 +32,8 @@ import org.infinispan.notifications.cachelistener.CacheNotifier;
 
 import java.util.Set;
 
+import static org.infinispan.util.Util.toStr;
+
 /**
  * Implements functionality defined by {@link org.infinispan.Cache#put(Object, Object)}
  *
@@ -190,7 +192,7 @@ public class PutKeyValueCommand extends AbstractDataWriteCommand {
    public String toString() {
       return new StringBuilder()
             .append("PutKeyValueCommand{key=")
-            .append(key)
+            .append(toStr(key))
             .append(", value=").append(value)
             .append(", flags=").append(flags)
             .append(", putIfAbsent=").append(putIfAbsent)

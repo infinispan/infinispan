@@ -28,13 +28,15 @@ import org.infinispan.remoting.transport.Address;
 import org.infinispan.transaction.AbstractCacheTransaction;
 import org.infinispan.transaction.LocalTransaction;
 import org.infinispan.transaction.xa.GlobalTransaction;
+import org.infinispan.util.AnyEquivalence;
+import org.infinispan.util.CollectionFactory;
+import org.infinispan.util.Equivalence;
 import org.infinispan.util.InfinispanCollections;
 
 import javax.transaction.Status;
 import javax.transaction.SystemException;
 import javax.transaction.Transaction;
 import java.util.Collection;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -48,9 +50,13 @@ import java.util.Set;
  */
 public class LocalTxInvocationContext extends AbstractTxInvocationContext {
 
-   public static final Map<Object,CacheEntry> EMPTY_ENTRY_MAP = new HashMap<Object, CacheEntry>(0);
+   public final Map<Object,CacheEntry> emptyEntryMap;
 
    private LocalTransaction localTransaction;
+
+   public LocalTxInvocationContext(Equivalence keyEq) {
+      emptyEntryMap = CollectionFactory.makeMap(0, keyEq, AnyEquivalence.OBJECT);
+   }
 
    @Override
    public boolean isTransactionValid() {
@@ -97,7 +103,7 @@ public class LocalTxInvocationContext extends AbstractTxInvocationContext {
 
    @Override
    public Map<Object, CacheEntry> getLookedUpEntries() {
-      return localTransaction != null ? localTransaction.getLookedUpEntries() : EMPTY_ENTRY_MAP;
+      return localTransaction != null ? localTransaction.getLookedUpEntries() : emptyEntryMap;
    }
 
    @Override

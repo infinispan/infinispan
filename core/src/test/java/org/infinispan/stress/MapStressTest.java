@@ -28,7 +28,7 @@ import org.infinispan.config.GlobalConfiguration;
 import org.infinispan.eviction.EvictionStrategy;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
-import org.infinispan.util.ComparingObject;
+import org.infinispan.util.AnyEquivalence;
 import org.infinispan.util.concurrent.BoundedConcurrentHashMap;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
@@ -134,10 +134,10 @@ public class MapStressTest {
       Map<String, Map<String, Integer>> maps = new TreeMap<String, Map<String, Integer>>();
       maps.put("BCHM:LRU", new BoundedConcurrentHashMap<String, Integer>(
             capacity, concurrency, BoundedConcurrentHashMap.Eviction.LRU,
-            ComparingObject.INSTANCE, ComparingObject.INSTANCE));
+            AnyEquivalence.STRING, AnyEquivalence.INT));
       maps.put("BCHM:LIRS", new BoundedConcurrentHashMap<String, Integer>(
             capacity, concurrency, BoundedConcurrentHashMap.Eviction.LIRS,
-            ComparingObject.INSTANCE, ComparingObject.INSTANCE));
+            AnyEquivalence.STRING, AnyEquivalence.INT));
       // CHM doesn't have eviction, so we size it to the total number of keys to avoid resizing
       maps.put("CHM", new ConcurrentHashMap<String, Integer>(numKeys, MAP_LOAD_FACTOR, concurrency));
       maps.put("SLHM", synchronizedLinkedHashMap(capacity, MAP_LOAD_FACTOR));

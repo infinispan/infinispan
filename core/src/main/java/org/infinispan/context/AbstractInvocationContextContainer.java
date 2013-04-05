@@ -25,7 +25,12 @@ package org.infinispan.context;
 
 import org.infinispan.commands.FlagAffectedCommand;
 import org.infinispan.commands.VisitableCommand;
+import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.remoting.transport.Address;
+import org.infinispan.transaction.TransactionTable;
+import org.infinispan.util.Equivalence;
+
+import javax.transaction.TransactionManager;
 
 
 /**
@@ -45,8 +50,20 @@ public abstract class AbstractInvocationContextContainer implements InvocationCo
    // can also be removed.
    protected final ThreadLocal<InvocationContext> ctxHolder = new ThreadLocal<InvocationContext>();
 
+   protected Configuration config;
+   protected Equivalence keyEq;
+
+   public void init(Configuration config) {
+      this.config = config;
+   }
+
+   public void start() {
+      keyEq = config.dataContainer().keyEquivalence();
+   }
+
    @Override
-   public InvocationContext createRemoteInvocationContextForCommand(VisitableCommand cacheCommand, Address origin) {
+   public InvocationContext createRemoteInvocationContextForCommand(
+         VisitableCommand cacheCommand, Address origin) {
       if (cacheCommand instanceof FlagAffectedCommand) {
          InvocationContext context = createRemoteInvocationContext(origin);
          ctxHolder.set(context);

@@ -6,6 +6,8 @@ import org.testng.annotations.Test
 import java.lang.reflect.Method
 import test.HotRodTestingUtil._
 import org.infinispan.server.hotrod.OperationStatus._
+import org.infinispan.test.fwk.TestCacheManagerFactory
+import org.infinispan.util.ByteArrayEquivalence
 
 /**
  * Tests behaviour of Hot Rod servers with asymmetric clusters
@@ -19,12 +21,15 @@ class HotRodAsymmetricClusterTest extends HotRodMultiNodeTest {
   protected def cacheName: String = "asymmetricCache"
 
   protected def createCacheConfig: ConfigurationBuilder =
-     getDefaultClusteredCacheConfig(CacheMode.REPL_SYNC, false)
+     hotRodCacheConfiguration(
+        getDefaultClusteredCacheConfig(CacheMode.REPL_SYNC, false))
+
 
   @Test(enabled = false)
   override def createCacheManagers() {
      for (i <- 0 until 2) {
-        val cm = super.addClusterEnabledCacheManager()
+        val cm = TestCacheManagerFactory.createClusteredCacheManager(hotRodCacheConfiguration())
+        cacheManagers.add(cm)
         if (i == 0) {
            cm.defineConfiguration(cacheName, createCacheConfig.build())
         }

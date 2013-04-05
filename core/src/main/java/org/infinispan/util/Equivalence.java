@@ -35,7 +35,7 @@ package org.infinispan.util;
  * @author Galder Zamarreño
  * @since 5.3
  */
-public interface Comparing {
+public interface Equivalence<T> {
 
    /**
     * Returns a hash code value for the object passed.
@@ -61,7 +61,7 @@ public interface Comparing {
     * @return <code>true</code> if both objects are the same;
     *         <code>false</code> otherwise
     */
-   boolean equals(Object obj, Object otherObj);
+   boolean equals(T obj, Object otherObj);
 
    /**
     * Returns a string representation of the given object.

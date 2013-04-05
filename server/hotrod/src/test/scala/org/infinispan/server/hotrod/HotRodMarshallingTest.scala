@@ -26,8 +26,8 @@ import org.testng.annotations.Test
 import org.testng.Assert._
 import org.infinispan.commands.remote.ClusteredGetCommand
 import org.infinispan.server.core.AbstractMarshallingTest
-import org.infinispan.util.ByteArrayKey
 import org.infinispan.api.BasicCacheContainer
+import org.infinispan.util.{ByteArrayEquivalence, InfinispanCollections}
 
 /**
  * Tests marshalling of Hot Rod classes.
@@ -38,16 +38,18 @@ import org.infinispan.api.BasicCacheContainer
 @Test(groups = Array("functional"), testName = "server.hotrod.HotRodMarshallingTest")
 class HotRodMarshallingTest extends AbstractMarshallingTest {
 
-   def testMarshallingBigByteArrayKey {
-      val cacheKey = new ByteArrayKey(getBigByteArray)      
+   def testMarshallingBigByteArrayKey() {
+      val cacheKey = getBigByteArray
       val bytes = marshaller.objectToByteBuffer(cacheKey)
-      val readKey = marshaller.objectFromByteBuffer(bytes).asInstanceOf[ByteArrayKey]
+      val readKey = marshaller.objectFromByteBuffer(bytes).asInstanceOf[Array[Byte]]
       assertEquals(readKey, cacheKey)
    }
 
-   def testMarshallingCommandWithBigByteArrayKey {
-      val cacheKey = new ByteArrayKey(getBigByteArray)
-      val command = new ClusteredGetCommand(cacheKey, BasicCacheContainer.DEFAULT_CACHE_NAME)
+   def testMarshallingCommandWithBigByteArrayKey() {
+      val cacheKey = getBigByteArray
+      val command = new ClusteredGetCommand(cacheKey,
+         BasicCacheContainer.DEFAULT_CACHE_NAME, InfinispanCollections.emptySet(), false, null,
+         ByteArrayEquivalence.INSTANCE)
       val bytes = marshaller.objectToByteBuffer(command)
       val readCommand = marshaller.objectFromByteBuffer(bytes).asInstanceOf[ClusteredGetCommand]
       assertEquals(readCommand, command)

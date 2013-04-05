@@ -24,7 +24,6 @@ package org.infinispan.server.hotrod
 
 import org.infinispan.Cache
 import org.infinispan.stats.Stats
-import org.infinispan.util.ByteArrayKey
 import org.jboss.netty.buffer.ChannelBuffer
 import org.infinispan.server.core.{RequestParameters, CacheValue}
 import org.infinispan.server.core.transport.NettyTransport
@@ -45,7 +44,7 @@ abstract class AbstractVersionedDecoder {
    /**
     * Read the key to operate on from the message.
     */
-   def readKey(header: HotRodHeader, buffer: ChannelBuffer): (ByteArrayKey, Boolean)
+   def readKey(header: HotRodHeader, buffer: ChannelBuffer): (Array[Byte], Boolean)
 
    /**
     * Read the parameters of the operation, if present.
@@ -80,17 +79,17 @@ abstract class AbstractVersionedDecoder {
    /**
     * Handle a protocol specific header reading.
     */
-   def customReadHeader(header: HotRodHeader, buffer: ChannelBuffer, cache: Cache[ByteArrayKey, CacheValue]): AnyRef
+   def customReadHeader(header: HotRodHeader, buffer: ChannelBuffer, cache: Cache[Array[Byte], CacheValue]): AnyRef
 
    /**
     * Handle a protocol specific key reading.
     */
-   def customReadKey(header: HotRodHeader, buffer: ChannelBuffer, cache: Cache[ByteArrayKey, CacheValue]): AnyRef
+   def customReadKey(header: HotRodHeader, buffer: ChannelBuffer, cache: Cache[Array[Byte], CacheValue]): AnyRef
 
    /**
     * Handle a protocol specific value reading.
     */
-   def customReadValue(header: HotRodHeader, buffer: ChannelBuffer, cache: Cache[ByteArrayKey, CacheValue]): AnyRef
+   def customReadValue(header: HotRodHeader, buffer: ChannelBuffer, cache: Cache[Array[Byte], CacheValue]): AnyRef
 
    /**
     * Create a response for the stats command.
@@ -105,5 +104,5 @@ abstract class AbstractVersionedDecoder {
    /**
     * Get an optimized cache instance depending on the operation parameters.
     */
-   def getOptimizedCache(h: HotRodHeader, c: Cache[ByteArrayKey, CacheValue]): Cache[ByteArrayKey, CacheValue]
+   def getOptimizedCache(h: HotRodHeader, c: Cache[Array[Byte], CacheValue]): Cache[Array[Byte], CacheValue]
 }

@@ -25,7 +25,7 @@ import org.hibernate.search.query.engine.spi.DocumentExtractor;
 import org.infinispan.AdvancedCache;
 import org.infinispan.query.backend.KeyTransformationHandler;
 import org.infinispan.query.clustered.commandworkers.QueryExtractorUtil;
-import org.infinispan.util.concurrent.ConcurrentMapFactory;
+import org.infinispan.util.CollectionFactory;
 
 import java.util.LinkedList;
 import java.util.UUID;
@@ -48,7 +48,7 @@ import java.util.concurrent.ConcurrentMap;
 public class QueryBox {
 
    // <query UUID, ISPNQuery>
-   private final ConcurrentMap<UUID, DocumentExtractor> queries = ConcurrentMapFactory.makeConcurrentMap();
+   private final ConcurrentMap<UUID, DocumentExtractor> queries = CollectionFactory.makeConcurrentMap();
 
    // queries UUIDs ordered (for eviction)
    private final LinkedList<UUID> ageOrderedQueries = new LinkedList<UUID>();

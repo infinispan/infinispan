@@ -2,8 +2,6 @@ package org.infinispan.client.hotrod.test;
 
 import org.infinispan.client.hotrod.RemoteCacheManager;
 import org.infinispan.client.hotrod.TestHelper;
-import org.infinispan.commands.write.PutKeyValueCommand;
-import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.lifecycle.ComponentStatus;
 import org.infinispan.manager.EmbeddedCacheManager;
@@ -18,7 +16,6 @@ import java.util.Properties;
 
 import static org.infinispan.test.TestingUtil.blockUntilCacheStatusAchieved;
 import static org.infinispan.test.TestingUtil.blockUntilViewReceived;
-import static org.testng.AssertJUnit.assertEquals;
 import static org.infinispan.client.hotrod.impl.ConfigurationProperties.*;
 
 /**
@@ -43,22 +40,6 @@ public abstract class MultiHotRodServersTest extends MultipleCacheManagersTest {
       for (int i = 0; i < num; i++) {
          blockUntilCacheStatusAchieved(
                manager(i).getCache(), ComponentStatus.RUNNING, 10000);
-      }
-
-      Configuration defaultCfg = defaultBuilder.build();
-      if (defaultCfg.clustering().cacheMode().isSynchronous()) {
-         // Do a put and verify that is present in other nodes
-         cache(0).put("k","v");
-         for (int i = 0; i < num; i++) assertEquals("v", cache(i).get("k"));
-      } else {
-         // It must be asynchronous
-         for (int i = 1; i < num; i++)
-            replListener(cache(i)).expect(PutKeyValueCommand.class);
-         cache(0).put("k","v");
-         for (int i = 1; i < num; i++) {
-            replListener(cache(i)).waitForRpc();
-            assertEquals("v", cache(i).get("k"));
-         }
       }
 
       for (int i = 0; i < num; i++) {

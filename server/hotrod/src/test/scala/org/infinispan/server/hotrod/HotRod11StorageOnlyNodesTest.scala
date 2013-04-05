@@ -30,6 +30,7 @@ import org.infinispan.test.TestingUtil
 import org.infinispan.server.core.test.ServerTestingUtil
 import org.infinispan.configuration.cache.{CacheMode, ConfigurationBuilder}
 import org.infinispan.server.hotrod.Constants._
+import org.infinispan.util.ByteArrayEquivalence
 
 /**
  * Tests Hot Rod distribution mode when some of the cache managers do not have HotRod servers running.
@@ -43,7 +44,7 @@ class HotRod11StorageOnlyNodesTest extends HotRodMultiNodeTest {
    override protected def cacheName = "distributed"
 
    override protected def createCacheConfig: ConfigurationBuilder = {
-      val cfg = getDefaultClusteredCacheConfig(CacheMode.DIST_SYNC, false)
+      val cfg = hotRodCacheConfiguration(getDefaultClusteredCacheConfig(CacheMode.DIST_SYNC, false))
       cfg.clustering().l1().disable() // Disable L1 explicitly
       cfg
    }

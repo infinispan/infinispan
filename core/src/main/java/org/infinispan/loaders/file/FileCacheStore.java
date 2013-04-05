@@ -31,8 +31,8 @@ import org.infinispan.loaders.CacheLoaderMetadata;
 import org.infinispan.loaders.bucket.Bucket;
 import org.infinispan.loaders.bucket.BucketBasedCacheStore;
 import org.infinispan.marshall.StreamingMarshaller;
+import org.infinispan.util.CollectionFactory;
 import org.infinispan.util.Util;
-import org.infinispan.util.concurrent.ConcurrentMapFactory;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
@@ -507,7 +507,7 @@ public class FileCacheStore extends BucketBasedCacheStore {
    }
 
    private static class BufferedFileSync implements FileSync {
-      protected final ConcurrentMap<String, FileChannel> streams = ConcurrentMapFactory.makeConcurrentMap();
+      protected final ConcurrentMap<String, FileChannel> streams = CollectionFactory.makeConcurrentMap();
 
       @Override
       public void write(byte[] bytes, File f) throws IOException {
@@ -602,7 +602,7 @@ public class FileCacheStore extends BucketBasedCacheStore {
    private class PeriodicFileSync extends BufferedFileSync {
       private final ScheduledExecutorService executor =
             Executors.newSingleThreadScheduledExecutor();
-      protected final ConcurrentMap<String, IOException> flushErrors = ConcurrentMapFactory.makeConcurrentMap();
+      protected final ConcurrentMap<String, IOException> flushErrors = CollectionFactory.makeConcurrentMap();
 
       private PeriodicFileSync(long interval) {
          executor.scheduleWithFixedDelay(new Runnable() {

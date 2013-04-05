@@ -47,6 +47,8 @@ import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.infinispan.util.ByteArrayKey;
 import org.testng.annotations.Test;
 
+import static org.infinispan.server.hotrod.test.HotRodTestingUtil.hotRodCacheConfiguration;
+
 /**
  * Tests the behaviour of the client upon a socket timeout exception
  * and any invocation after that.
@@ -64,8 +66,9 @@ public class SocketTimeoutErrorTest extends SingleCacheManagerTest {
    @Override
    protected EmbeddedCacheManager createCacheManager() throws Exception {
       ConfigurationBuilder builder = new ConfigurationBuilder();
-      builder.customInterceptors().addInterceptor().interceptor(new TimeoutInducingInterceptor()).after(EntryWrappingInterceptor.class);
-      return TestCacheManagerFactory.createCacheManager(builder);
+      builder.customInterceptors().addInterceptor().interceptor(
+            new TimeoutInducingInterceptor()).after(EntryWrappingInterceptor.class);
+      return TestCacheManagerFactory.createCacheManager(hotRodCacheConfiguration(builder));
    }
 
    @Override

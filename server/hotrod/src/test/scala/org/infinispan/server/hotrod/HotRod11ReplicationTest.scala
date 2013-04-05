@@ -29,6 +29,7 @@ import org.testng.annotations.Test
 import org.infinispan.configuration.cache.{CacheMode, ConfigurationBuilder}
 import org.infinispan.server.hotrod.Constants._
 import org.infinispan.test.TestingUtil
+import org.infinispan.util.ByteArrayEquivalence
 
 /**
  * Tests Hot Rod replication mode using Hot Rod's 1.1 protocol.
@@ -39,12 +40,11 @@ import org.infinispan.test.TestingUtil
 @Test(groups = Array("functional"), testName = "server.hotrod.HotRod11ReplicationTest")
 class HotRod11ReplicationTest extends HotRodMultiNodeTest {
 
-   override protected def cacheName = "distributedVersion11"
+   override protected def cacheName = "replicateVersion11"
 
-   override protected def createCacheConfig: ConfigurationBuilder = {
-      val cfg = getDefaultClusteredCacheConfig(CacheMode.REPL_SYNC, false)
-      cfg
-   }
+   override protected def createCacheConfig: ConfigurationBuilder =
+      hotRodCacheConfiguration(
+         getDefaultClusteredCacheConfig(CacheMode.REPL_SYNC, false))
 
    override protected def protocolVersion : Byte = 11
 

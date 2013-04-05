@@ -52,7 +52,7 @@ import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.marshall.MarshalledValue;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.util.InfinispanCollections;
-import org.infinispan.util.concurrent.ConcurrentMapFactory;
+import org.infinispan.util.CollectionFactory;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
@@ -425,7 +425,7 @@ public class MapReduceManagerImpl implements MapReduceManager {
     */
    private static class DefaultCollector<KOut, VOut> implements CollectableCollector<KOut, VOut> {
 
-      private final Map<KOut, List<VOut>> store = ConcurrentMapFactory.makeConcurrentMap();
+      private final Map<KOut, List<VOut>> store = CollectionFactory.makeConcurrentMap();
 
       @Override
       public void emit(KOut key, VOut value) {

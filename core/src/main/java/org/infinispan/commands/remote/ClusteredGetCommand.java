@@ -40,6 +40,7 @@ import org.infinispan.interceptors.InterceptorChain;
 import org.infinispan.lifecycle.ComponentStatus;
 import org.infinispan.transaction.TransactionTable;
 import org.infinispan.transaction.xa.GlobalTransaction;
+import org.infinispan.util.Equivalence;
 import org.infinispan.util.InfinispanCollections;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
@@ -75,6 +76,7 @@ public class ClusteredGetCommand extends BaseRpcCommand implements FlagAffectedC
    private TransactionTable txTable;
    private InternalEntryFactory entryFactory;
    private int topologyId;
+   private Equivalence keyEquivalence;
 
    private ClusteredGetCommand() {
       super(null); // For command id uniqueness test
@@ -84,32 +86,28 @@ public class ClusteredGetCommand extends BaseRpcCommand implements FlagAffectedC
       super(cacheName);
    }
 
-   public ClusteredGetCommand(Object key, String cacheName, Set<Flag> flags, boolean acquireRemoteLock, GlobalTransaction gtx) {
+   public ClusteredGetCommand(Object key, String cacheName, Set<Flag> flags,
+         boolean acquireRemoteLock, GlobalTransaction gtx, Equivalence keyEquivalence) {
       super(cacheName);
       this.key = key;
       this.flags = flags;
       this.acquireRemoteLock = acquireRemoteLock;
       this.gtx = gtx;
+      this.keyEquivalence = keyEquivalence;
       if (acquireRemoteLock && (gtx == null))
          throw new IllegalArgumentException("Cannot have null tx if we need to acquire locks");
    }
 
-   public ClusteredGetCommand(Object key, String cacheName) {
-      this(key, cacheName, InfinispanCollections.<Flag>emptySet(), false, null);
-   }
-
-   public ClusteredGetCommand(String key, String cacheName, Set<Flag> flags) {
-      this(key, cacheName, flags, false, null);
-   }
-
    public void initialize(InvocationContextContainer icc, CommandsFactory commandsFactory, InternalEntryFactory entryFactory,
-                          InterceptorChain interceptorChain, DistributionManager distributionManager, TransactionTable txTable) {
+         InterceptorChain interceptorChain, DistributionManager distributionManager, TransactionTable txTable,
+         Equivalence keyEquivalence) {
       this.distributionManager = distributionManager;
       this.icc = icc;
       this.commandsFactory = commandsFactory;
       this.invoker = interceptorChain;
       this.txTable = txTable;
       this.entryFactory = entryFactory;
+      this.keyEquivalence = keyEquivalence;
    }
 
    /**
@@ -178,13 +176,13 @@ public class ClusteredGetCommand extends BaseRpcCommand implements FlagAffectedC
 
       ClusteredGetCommand that = (ClusteredGetCommand) o;
 
-      return !(key != null ? !key.equals(that.key) : that.key != null);
+      return !(key != null ? !keyEquivalence.equals(key, that.key) : that.key != null);
    }
 
    @Override
    public int hashCode() {
       int result;
-      result = (key != null ? key.hashCode() : 0);
+      result = (key != null ? keyEquivalence.hashCode(key) : 0);
       return result;
    }
 

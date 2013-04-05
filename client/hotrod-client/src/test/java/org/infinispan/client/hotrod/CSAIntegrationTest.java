@@ -32,8 +32,6 @@ import org.infinispan.distribution.DistributionManager;
 import org.infinispan.distribution.ch.ConsistentHash;
 import org.infinispan.lifecycle.ComponentStatus;
 import org.infinispan.manager.CacheContainer;
-import org.infinispan.marshall.Marshaller;
-import org.infinispan.marshall.jboss.GenericJBossMarshaller;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.server.hotrod.HotRodServer;
 import org.infinispan.util.ByteArrayKey;
@@ -41,8 +39,6 @@ import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.AfterMethod;
-import org.testng.annotations.AfterTest;
-import org.testng.annotations.BeforeTest;
 import org.testng.annotations.Test;
 
 import java.net.InetSocketAddress;
@@ -52,6 +48,7 @@ import java.util.List;
 import java.util.Properties;
 import java.util.Random;
 
+import static org.infinispan.server.hotrod.test.HotRodTestingUtil.*;
 import static org.testng.AssertJUnit.assertEquals;
 import static org.testng.AssertJUnit.assertNotNull;
 
@@ -74,18 +71,6 @@ public class CSAIntegrationTest extends HitsAwareCacheManagersTest {
 
    private static final Log log = LogFactory.getLog(CSAIntegrationTest.class);
 
-   private Marshaller m;
-
-   @BeforeTest
-   public void createMarshaller() {
-      m = new GenericJBossMarshaller();
-   }
-
-   @AfterTest(alwaysRun = true)
-   public void destroyMarshaller() {
-      m = null;
-   }
-
    @AfterMethod(alwaysRun = true)
    @Override
    protected void clearContent() throws Throwable {
@@ -93,7 +78,8 @@ public class CSAIntegrationTest extends HitsAwareCacheManagersTest {
 
    @Override
    protected void createCacheManagers() throws Throwable {
-      ConfigurationBuilder builder = getDefaultClusteredCacheConfig(CacheMode.DIST_SYNC, false);
+      ConfigurationBuilder builder = hotRodCacheConfiguration(
+            getDefaultClusteredCacheConfig(CacheMode.DIST_SYNC, false));
       builder.clustering().hash().numOwners(1);
       builder.unsafe().unreliableReturnValues(true);
       addClusterEnabledCacheManager(builder);
@@ -115,13 +101,6 @@ public class CSAIntegrationTest extends HitsAwareCacheManagersTest {
       blockUntilCacheStatusAchieved(manager(0).getCache(), ComponentStatus.RUNNING, 10000);
       blockUntilCacheStatusAchieved(manager(1).getCache(), ComponentStatus.RUNNING, 10000);
       blockUntilCacheStatusAchieved(manager(2).getCache(), ComponentStatus.RUNNING, 10000);
-
-      manager(0).getCache().put("k", "v");
-      assertEquals("v", cache(0).get("k"));
-      assertEquals("v", cache(1).get("k"));
-      assertEquals("v", cache(2).get("k"));
-
-      log.info("Local replication test passed!");
 
       //Important: this only connects to one of the two servers!
       Properties props = new Properties();
@@ -193,9 +172,8 @@ public class CSAIntegrationTest extends HitsAwareCacheManagersTest {
          keys.add(key);
          String keyStr = new String(key);
          remoteCache.put(keyStr, "value");
-         byte[] keyBytes = m.objectToByteBuffer(keyStr);
-         TcpTransport transport = (TcpTransport) tcpConnectionFactory.getTransport(keyBytes);
-         assertCacheContainsKey(transport.getServerAddress(), keyBytes);
+         TcpTransport transport = (TcpTransport) tcpConnectionFactory.getTransport(marshall(keyStr));
+         assertHotRodEquals(hrServ2CacheManager.get(transport.getServerAddress()), keyStr, "value");
          tcpConnectionFactory.releaseTransport(transport);
       }
 
@@ -205,8 +183,7 @@ public class CSAIntegrationTest extends HitsAwareCacheManagersTest {
          resetStats();
          String keyStr = new String(key);
          assert remoteCache.get(keyStr).equals("value");
-         byte[] keyBytes = m.objectToByteBuffer(keyStr);
-         TcpTransport transport = (TcpTransport) tcpConnectionFactory.getTransport(keyBytes);
+         TcpTransport transport = (TcpTransport) tcpConnectionFactory.getTransport(marshall(keyStr));
          assertOnlyServerHit(transport.getServerAddress());
          tcpConnectionFactory.releaseTransport(transport);
       }

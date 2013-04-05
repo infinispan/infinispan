@@ -30,6 +30,8 @@ import org.testng.annotations.Test;
 
 import java.util.Properties;
 
+import static org.infinispan.server.hotrod.test.HotRodTestingUtil.hotRodCacheConfiguration;
+
 @Test(testName = "client.hotrod.ForceReturnValuesTest", groups = "functional")
 @CleanupAfterMethod
 public class ForceReturnValuesTest extends SingleCacheManagerTest {
@@ -38,7 +40,7 @@ public class ForceReturnValuesTest extends SingleCacheManagerTest {
 
    @Override
    protected EmbeddedCacheManager createCacheManager() throws Exception {
-      cacheManager = TestCacheManagerFactory.createLocalCacheManager(false);
+      cacheManager = TestCacheManagerFactory.createCacheManager(hotRodCacheConfiguration());
       cache = cacheManager.getCache();
 
       hotRodServer = TestHelper.startHotRodServer(cacheManager);
