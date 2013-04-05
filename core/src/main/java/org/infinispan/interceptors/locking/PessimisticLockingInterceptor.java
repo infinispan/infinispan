@@ -172,7 +172,7 @@ public class PessimisticLockingInterceptor extends AbstractTxLockingInterceptor 
          acquireRemoteIfNeeded(ctx, keysToLock, command);
          boolean skipLocking = hasSkipLocking(command);
          long lockTimeout = getLockAcquisitionTimeout(command, skipLocking);
-         if (cdl.localNodeIsOwner(command.getDeltaAwareKey())) {
+         if (cdl.localNodeIsOwner(command.getKey())) {
             for (Object key : compositeKeys) {
                lockKey(ctx, key, lockTimeout, skipLocking);
             }      
