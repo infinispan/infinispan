@@ -31,6 +31,8 @@ import java.io.ObjectInput;
 import java.io.ObjectOutput;
 import java.util.Set;
 
+import static org.infinispan.util.Util.toStr;
+
 /**
  * A form of {@link ImmortalCacheValue} that is {@link Versioned}
  *
@@ -64,7 +66,7 @@ public class VersionedImmortalCacheValue extends ImmortalCacheValue implements V
    @Override
    public String toString() {
       return getClass().getSimpleName() + " {" +
-            "value=" + value +
+            "value=" + toStr(value) +
             ", version=" + version +
             '}';
    }

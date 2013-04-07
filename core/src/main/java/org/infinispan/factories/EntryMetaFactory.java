@@ -24,7 +24,6 @@ import org.infinispan.container.EntryFactoryImpl;
 import org.infinispan.container.IncrementalVersionableEntryFactoryImpl;
 import org.infinispan.container.InternalEntryFactory;
 import org.infinispan.container.InternalEntryFactoryImpl;
-import org.infinispan.container.VersionedInternalEntryFactoryImpl;
 import org.infinispan.factories.annotations.DefaultFactoryFor;
 import org.infinispan.transaction.LockingMode;
 import org.infinispan.util.concurrent.IsolationLevel;
@@ -49,10 +48,7 @@ public class EntryMetaFactory extends AbstractNamedCacheComponentFactory impleme
          else
             return (T) new EntryFactoryImpl();
       } else {
-         if (useVersioning)
-            return (T) new VersionedInternalEntryFactoryImpl();
-         else
-            return (T) new InternalEntryFactoryImpl();
+         return (T) new InternalEntryFactoryImpl();
       }
    }
 }

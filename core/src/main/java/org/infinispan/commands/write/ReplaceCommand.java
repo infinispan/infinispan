@@ -30,6 +30,8 @@ import org.infinispan.notifications.cachelistener.CacheNotifier;
 
 import java.util.Set;
 
+import static org.infinispan.util.Util.toStr;
+
 /**
  * @author Mircea.Markus@jboss.com
  * @author Galder Zamarreño
@@ -38,14 +40,14 @@ import java.util.Set;
 public class ReplaceCommand extends AbstractDataWriteCommand {
    public static final byte COMMAND_ID = 11;
 
-   private Object oldValue;
-   private Object newValue;
-   private long lifespanMillis = -1;
-   private long maxIdleTimeMillis = -1;
+   Object oldValue;
+   Object newValue;
+   long lifespanMillis = -1;
+   long maxIdleTimeMillis = -1;
    private CacheNotifier notifier;
-   private boolean successful = true;
+   boolean successful = true;
 
-   private boolean ignorePreviousValue;
+   boolean ignorePreviousValue;
 
    public ReplaceCommand() {
    }
@@ -209,9 +211,9 @@ public class ReplaceCommand extends AbstractDataWriteCommand {
    @Override
    public String toString() {
       return "ReplaceCommand{" +
-            "key=" + key +
-            ", oldValue=" + oldValue +
-            ", newValue=" + newValue +
+            "key=" + toStr(key) +
+            ", oldValue=" + toStr(oldValue) +
+            ", newValue=" + toStr(newValue) +
             ", lifespanMillis=" + lifespanMillis +
             ", maxIdleTimeMillis=" + maxIdleTimeMillis +
             ", flags=" + flags +

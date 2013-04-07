@@ -20,6 +20,7 @@
 package org.infinispan.commands.write;
 
 import org.infinispan.atomic.Delta;
+import org.infinispan.commands.Visitor;
 import org.infinispan.container.entries.MVCCEntry;
 import org.infinispan.container.versioning.EntryVersion;
 import org.infinispan.context.Flag;
@@ -27,6 +28,8 @@ import org.infinispan.context.InvocationContext;
 import org.infinispan.notifications.cachelistener.CacheNotifier;
 
 import java.util.Set;
+
+import static org.infinispan.util.Util.toStr;
 
 /**
  * A form of {@link PutKeyValueCommand} that also applies a version to the entry created.
@@ -58,13 +61,18 @@ public class VersionedPutKeyValueCommand extends PutKeyValueCommand {
    }
 
    @Override
+   public Object acceptVisitor(InvocationContext ctx, Visitor visitor) throws Throwable {
+      return visitor.visitVersionedPutKeyValueCommand(ctx, this);
+   }
+
+   @Override
    public Object perform(InvocationContext ctx) throws Throwable {
       // Perform the regular put
       Object r = super.perform(ctx);
 
       // Apply the version to the entry
       MVCCEntry e = (MVCCEntry) ctx.lookupEntry(key);
-      if (!(value instanceof Delta)) {
+      if (e != null && !(value instanceof Delta)) {
          e.setVersion(version);
       }
 
@@ -99,8 +107,8 @@ public class VersionedPutKeyValueCommand extends PutKeyValueCommand {
    public String toString() {
       return new StringBuilder()
             .append("VersionedPutKeyValueCommand{key=")
-            .append(key)
-            .append(", value=").append(value)
+            .append(toStr(key))
+            .append(", value=").append(toStr(value))
             .append(", version=").append(version)
             .append(", flags=").append(flags)
             .append(", putIfAbsent=").append(putIfAbsent)

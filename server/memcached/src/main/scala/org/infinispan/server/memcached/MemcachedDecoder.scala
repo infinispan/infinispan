@@ -42,6 +42,7 @@ import java.io.{ByteArrayOutputStream, IOException, EOFException, StreamCorrupte
 import org.jboss.netty.channel.Channel
 import org.infinispan.server.memcached.TextProtocolUtil._
 import scala.Predef._
+import org.infinispan.container.versioning.EntryVersion
 
 /**
  * A Memcached protocol specific decoder
@@ -49,7 +50,7 @@ import scala.Predef._
  * @author Galder Zamarreño
  * @since 4.1
  */
-class MemcachedDecoder(memcachedCache: Cache[String, MemcachedValue], scheduler: ScheduledExecutorService, transport: NettyTransport)
+class MemcachedDecoder(memcachedCache: AdvancedCache[String, MemcachedValue], scheduler: ScheduledExecutorService, transport: NettyTransport)
       extends AbstractProtocolDecoder[String, MemcachedValue](transport) {
 
    cache = memcachedCache
@@ -114,8 +115,10 @@ class MemcachedDecoder(memcachedCache: Cache[String, MemcachedValue], scheduler:
          }
          createMultiGetResponse(new immutable.HashMap ++ map)
       } else {
-         val key = keys(0)
-         createGetResponse(key, cache.get(checkKeyLength(key, endOfOp = true, buffer)))
+         val key = checkKeyLength(keys(0), endOfOp = true, buffer)
+         val entry = cache.getCacheEntry(key)
+         createGetResponse(key, entry.getValue.asInstanceOf[MemcachedValue],
+            entry.getVersion.asInstanceOf[ServerEntryVersion])
       }
    }
 
@@ -335,7 +338,8 @@ class MemcachedDecoder(memcachedCache: Cache[String, MemcachedValue], scheduler:
                // If there's a concurrent modification on this key, the spec does not say what to do, so treat it as exceptional
                throw new CacheException("Value modified since we retrieved from the cache, old value was " + prevCounter)
             }
-         } else {
+         }
+         else {
             if (isStatsEnabled) if (op == IncrementRequest) incrMisses.incrementAndGet() else decrMisses.incrementAndGet
             if (!params.noReply) NOT_FOUND else null
          }
@@ -407,7 +411,7 @@ class MemcachedDecoder(memcachedCache: Cache[String, MemcachedValue], scheduler:
          null
    }
 
-   override def createGetResponse(k: String, v: MemcachedValue): AnyRef = {
+   override def createGetResponse(k: String, v: MemcachedValue, entryVersion: EntryVersion): AnyRef = {
       if (v != null) {
          header.op match {
             case GetRequest => buildSingleGetResponse(k, v)

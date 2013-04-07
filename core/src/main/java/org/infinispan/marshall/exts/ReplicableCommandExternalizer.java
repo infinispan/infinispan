@@ -29,15 +29,7 @@ import org.infinispan.commands.TopologyAffectedCommand;
 import org.infinispan.commands.read.DistributedExecuteCommand;
 import org.infinispan.commands.read.GetKeyValueCommand;
 import org.infinispan.commands.remote.CacheRpcCommand;
-import org.infinispan.commands.write.ApplyDeltaCommand;
-import org.infinispan.commands.write.ClearCommand;
-import org.infinispan.commands.write.EvictCommand;
-import org.infinispan.commands.write.InvalidateCommand;
-import org.infinispan.commands.write.InvalidateL1Command;
-import org.infinispan.commands.write.PutKeyValueCommand;
-import org.infinispan.commands.write.PutMapCommand;
-import org.infinispan.commands.write.RemoveCommand;
-import org.infinispan.commands.write.ReplaceCommand;
+import org.infinispan.commands.write.*;
 import org.infinispan.factories.GlobalComponentRegistry;
 import org.infinispan.io.UnsignedNumeric;
 import org.infinispan.marshall.AbstractExternalizer;
@@ -147,8 +139,9 @@ public class ReplicableCommandExternalizer extends AbstractExternalizer<Replicab
             CacheTopologyControlCommand.class, DistributedExecuteCommand.class, GetKeyValueCommand.class,
             ClearCommand.class, EvictCommand.class, ApplyDeltaCommand.class,
             InvalidateCommand.class, InvalidateL1Command.class,
-            PutKeyValueCommand.class, PutMapCommand.class,
-            RemoveCommand.class, ReplaceCommand.class);
+            PutKeyValueCommand.class, VersionedPutKeyValueCommand.class,
+            PutMapCommand.class, RemoveCommand.class,
+            ReplaceCommand.class, VersionedReplaceCommand.class);
       // Search only those commands that replicable and not cache specific replicable commands
       Collection<Class<? extends ReplicableCommand>> moduleCommands = globalComponentRegistry.getModuleProperties().moduleOnlyReplicableCommands();
       if (moduleCommands != null && !moduleCommands.isEmpty()) coreCommands.addAll(moduleCommands);

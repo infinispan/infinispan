@@ -27,7 +27,6 @@ import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.eviction.EvictionStrategy;
 import org.infinispan.loaders.remote.configuration.RemoteCacheStoreConfigurationBuilder;
 import org.infinispan.manager.EmbeddedCacheManager;
-import org.infinispan.server.core.CacheValue;
 import org.infinispan.server.hotrod.HotRodServer;
 import org.infinispan.test.AbstractInfinispanTest;
 import org.infinispan.test.TestingUtil;
@@ -46,9 +45,9 @@ public class RemoteCacheStoreWrapperTest extends AbstractInfinispanTest {
    private HotRodServer sourceServer;
    private HotRodServer targetServer;
    private EmbeddedCacheManager serverCacheManager;
-   private Cache<byte[], CacheValue> serverCache;
+   private Cache<byte[], byte[]> serverCache;
    private EmbeddedCacheManager targetCacheManager;
-   private Cache<byte[], CacheValue> targetCache;
+   private Cache<byte[], byte[]> targetCache;
    private RemoteCacheManager remoteSourceCacheManager;
    private RemoteCache<String, String> remoteSourceCache;
    private RemoteCacheManager remoteTargetCacheManager;
@@ -56,7 +55,7 @@ public class RemoteCacheStoreWrapperTest extends AbstractInfinispanTest {
 
    @BeforeClass
    public void setup() throws Exception {
-      ConfigurationBuilder serverBuilder = TestCacheManagerFactory.getDefaultCacheConfiguration(true);
+      ConfigurationBuilder serverBuilder = TestCacheManagerFactory.getDefaultCacheConfiguration(false);
       serverBuilder.eviction().maxEntries(100).strategy(EvictionStrategy.UNORDERED)
             .expiration().wakeUpInterval(10L);
       serverCacheManager = TestCacheManagerFactory

@@ -26,7 +26,7 @@ import logging.Log
 import org.infinispan.server.core.Operation._
 import HotRodOperation._
 import OperationStatus._
-import org.infinispan.Cache
+import org.infinispan.{AdvancedCache, Cache}
 import org.infinispan.stats.Stats
 import org.infinispan.server.core._
 import collection.mutable
@@ -37,7 +37,8 @@ import org.infinispan.context.Flag.IGNORE_RETURN_VALUES
 import org.jboss.netty.buffer.ChannelBuffer
 import org.infinispan.server.core.transport.ExtendedChannelBuffer._
 import transport.NettyTransport
-import org.infinispan.container.entries.InternalCacheEntry
+import org.infinispan.container.entries.{CacheEntry, InternalCacheEntry}
+import org.infinispan.container.versioning.EntryVersion
 
 /**
  * HotRod protocol decoder specific for specification version 1.0.
@@ -137,36 +138,35 @@ object Decoder10 extends AbstractVersionedDecoder with ServerConstants with Log 
       } else stream
    }
 
-   override def createValue(params: RequestParameters, nextVersion: Long, rawValue: Array[Byte]): CacheValue =
-      new CacheValue(rawValue, nextVersion)
-
-   override def createSuccessResponse(header: HotRodHeader, prev: CacheValue): AnyRef =
+   override def createSuccessResponse(header: HotRodHeader, prev: Array[Byte]): AnyRef =
       createResponse(header, toResponse(header.op), Success, prev)
 
-   override def createNotExecutedResponse(header: HotRodHeader, prev: CacheValue): AnyRef =
+   override def createNotExecutedResponse(header: HotRodHeader, prev: Array[Byte]): AnyRef =
       createResponse(header, toResponse(header.op), OperationNotExecuted, prev)
 
    override def createNotExistResponse(header: HotRodHeader): AnyRef =
       createResponse(header, toResponse(header.op), KeyDoesNotExist, null)
 
-   private def createResponse(h: HotRodHeader, op: OperationResponse, st: OperationStatus, prev: CacheValue): AnyRef = {
+   private def createResponse(h: HotRodHeader, op: OperationResponse, st: OperationStatus, prev: Array[Byte]): AnyRef = {
       if (hasFlag(h, ForceReturnPreviousValue))
          new ResponseWithPrevious(h.version, h.messageId, h.cacheName,
-               h.clientIntel, op, st, h.topologyId, if (prev == null) None else Some(prev.data))
+               h.clientIntel, op, st, h.topologyId, if (prev == null) None else Some(prev))
       else
          new Response(h.version, h.messageId, h.cacheName, h.clientIntel, op, st, h.topologyId)
    }
 
-   override def createGetResponse(h: HotRodHeader, v: CacheValue): AnyRef = {
+   override def createGetResponse(h: HotRodHeader, entry: CacheEntry): AnyRef = {
       val op = h.op
-      if (v != null && op == GetRequest)
+      if (entry != null && op == GetRequest)
          new GetResponse(h.version, h.messageId, h.cacheName, h.clientIntel,
-               GetResponse, Success, h.topologyId, Some(v.data))
-      else if (v != null && op == GetWithVersionRequest)
+               GetResponse, Success, h.topologyId,
+               Some(entry.getValue.asInstanceOf[Array[Byte]]))
+      else if (entry != null && op == GetWithVersionRequest) {
+         val version = entry.getVersion.asInstanceOf[ServerEntryVersion].version
          new GetWithVersionResponse(h.version, h.messageId, h.cacheName,
-               h.clientIntel, GetWithVersionResponse, Success, h.topologyId,
-               Some(v.data), v.version)
-      else if (op == GetRequest)
+            h.clientIntel, GetWithVersionResponse, Success, h.topologyId,
+            Some(entry.getValue.asInstanceOf[Array[Byte]]), version)
+      } else if (op == GetRequest)
          new GetResponse(h.version, h.messageId, h.cacheName, h.clientIntel,
                          GetResponse, KeyDoesNotExist, h.topologyId, None)
       else
@@ -175,7 +175,8 @@ object Decoder10 extends AbstractVersionedDecoder with ServerConstants with Log 
                h.topologyId, None, 0)
    }
 
-   override def customReadHeader(h: HotRodHeader, buffer: ChannelBuffer, cache: Cache[Array[Byte], CacheValue]): AnyRef = {
+   override def customReadHeader(h: HotRodHeader, buffer: ChannelBuffer,
+           cache: AdvancedCache[Array[Byte], Array[Byte]]): AnyRef = {
       h.op match {
          case ClearRequest => {
             // Get an optimised cache in case we can make the operation more efficient
@@ -188,15 +189,19 @@ object Decoder10 extends AbstractVersionedDecoder with ServerConstants with Log 
       }
    }
 
-   override def customReadKey(h: HotRodHeader, buffer: ChannelBuffer, cache: Cache[Array[Byte], CacheValue]): AnyRef = {
+   override def customReadKey(h: HotRodHeader, buffer: ChannelBuffer,
+           cache: AdvancedCache[Array[Byte], Array[Byte]]): AnyRef = {
       h.op match {
          case RemoveIfUnmodifiedRequest => {
             val k = readKey(buffer)
             val params = readParameters(h, buffer)._1
-            val prev = cache.get(k)
-            if (prev != null) {
-               if (prev.version == params.streamVersion) {
-                  val removed = cache.remove(k, prev);
+            val entry = cache.getCacheEntry(k)
+            if (entry != null) {
+               // Hacky, but CacheEntry has not been generified
+               val prev = entry.getValue.asInstanceOf[Array[Byte]]
+               val streamVersion = new ServerEntryVersion(params.streamVersion)
+               if (entry.getVersion == streamVersion) {
+                  val removed = cache.remove(k, prev)
                   if (removed)
                      createResponse(h, RemoveIfUnmodifiedResponse, Success, prev)
                   else
@@ -205,7 +210,7 @@ object Decoder10 extends AbstractVersionedDecoder with ServerConstants with Log 
                   createResponse(h, RemoveIfUnmodifiedResponse, OperationNotExecuted, prev)
                }
             } else {
-               createResponse(h, RemoveIfUnmodifiedResponse, KeyDoesNotExist, prev)
+               createResponse(h, RemoveIfUnmodifiedResponse, KeyDoesNotExist, null)
             }
          }
          case ContainsKeyRequest => {
@@ -236,16 +241,18 @@ object Decoder10 extends AbstractVersionedDecoder with ServerConstants with Log 
       }
    }
 
-   def getKeyMetadata(h: HotRodHeader, k: Array[Byte], cache: Cache[Array[Byte], CacheValue]): GetWithMetadataResponse = {
-      val ce = cache.getAdvancedCache.getCacheEntry(k, null, null)
+   def getKeyMetadata(h: HotRodHeader, k: Array[Byte],
+           cache: AdvancedCache[Array[Byte], Array[Byte]]): GetWithMetadataResponse = {
+      val ce = cache.getAdvancedCache.getCacheEntry(k)
       if (ce != null) {
          val ice = ce.asInstanceOf[InternalCacheEntry]
-         val v = ce.getValue.asInstanceOf[CacheValue]
+         val entryVersion = ice.getVersion.asInstanceOf[ServerEntryVersion]
+         val v = ce.getValue.asInstanceOf[Array[Byte]]
          val lifespan = if (ice.getLifespan < 0) -1 else (ice.getLifespan / 1000).toInt
          val maxIdle = if (ice.getMaxIdle < 0) -1 else (ice.getMaxIdle / 1000).toInt
          new GetWithMetadataResponse(h.version, h.messageId, h.cacheName,
                   h.clientIntel, GetWithMetadataResponse, Success, h.topologyId,
-                  Some(v.data), v.version, ice.getCreated, lifespan, ice.getLastUsed, maxIdle)
+                  Some(v), entryVersion.version, ice.getCreated, lifespan, ice.getLastUsed, maxIdle)
       } else {
          new GetWithMetadataResponse(h.version, h.messageId, h.cacheName,
                   h.clientIntel, GetWithMetadataResponse, KeyDoesNotExist, h.topologyId,
@@ -253,7 +260,8 @@ object Decoder10 extends AbstractVersionedDecoder with ServerConstants with Log 
       }
    }
 
-   override def customReadValue(header: HotRodHeader, buffer: ChannelBuffer, cache: Cache[Array[Byte], CacheValue]): AnyRef = null
+   override def customReadValue(header: HotRodHeader, buffer: ChannelBuffer,
+           cache: AdvancedCache[Array[Byte], Array[Byte]]): AnyRef = null
 
    override def createStatsResponse(h: HotRodHeader, cacheStats: Stats, t: NettyTransport): AnyRef = {
       val stats = mutable.Map.empty[String, String]
@@ -286,7 +294,8 @@ object Decoder10 extends AbstractVersionedDecoder with ServerConstants with Log 
       }
    }
 
-   override def getOptimizedCache(h: HotRodHeader, c: Cache[Array[Byte], CacheValue]): Cache[Array[Byte], CacheValue] = {
+   override def getOptimizedCache(h: HotRodHeader,
+           c: AdvancedCache[Array[Byte], Array[Byte]]): AdvancedCache[Array[Byte], Array[Byte]] = {
       if (!hasFlag(h, ForceReturnPreviousValue)) {
          c.getAdvancedCache.withFlags(IGNORE_RETURN_VALUES)
       } else {

@@ -27,7 +27,6 @@ import org.infinispan.remoting.transport.Address
 import org.infinispan.server.core.transport.ExtendedChannelBuffer._
 import collection.JavaConversions._
 import OperationStatus._
-import org.infinispan.server.core.CacheValue
 import org.infinispan.configuration.cache.Configuration
 import org.infinispan.distribution.ch.DefaultConsistentHash
 import collection.mutable.ArrayBuffer
@@ -107,7 +106,7 @@ abstract class AbstractEncoder1x extends AbstractVersionedEncoder with Constants
          case g: BulkGetResponse => {
             log.trace("About to respond to bulk get request")
             if (g.status == Success) {
-               val cache: Cache[Array[Byte], CacheValue] =
+               val cache: Cache[Array[Byte], Array[Byte]] =
                   server.getCacheInstance(g.cacheName, cacheManager, false)
                var iterator = asScalaIterator(cache.entrySet.iterator)
                if (g.count != 0) {
@@ -117,7 +116,7 @@ abstract class AbstractEncoder1x extends AbstractVersionedEncoder with Constants
                for (entry <- iterator) {
                   buf.writeByte(1) // Not done
                   writeRangedBytes(entry.getKey, buf)
-                  writeRangedBytes(entry.getValue.data, buf)
+                  writeRangedBytes(entry.getValue, buf)
                }
                buf.writeByte(0) // Done
             }
@@ -125,7 +124,7 @@ abstract class AbstractEncoder1x extends AbstractVersionedEncoder with Constants
          case g: BulkGetKeysResponse => {
          	log.trace("About to respond to bulk get keys request")
             if (g.status == Success) {
-               val cache: Cache[Array[Byte], CacheValue] =
+               val cache: Cache[Array[Byte], Array[Byte]] =
                   server.getCacheInstance(g.cacheName, cacheManager, false)
                
                var keys = BulkUtil.getAllKeys(cache, g.scope)

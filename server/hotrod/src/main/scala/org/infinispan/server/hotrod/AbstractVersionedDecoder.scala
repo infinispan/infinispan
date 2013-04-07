@@ -22,11 +22,13 @@
  */
 package org.infinispan.server.hotrod
 
-import org.infinispan.Cache
+import org.infinispan.AdvancedCache
 import org.infinispan.stats.Stats
 import org.jboss.netty.buffer.ChannelBuffer
-import org.infinispan.server.core.{RequestParameters, CacheValue}
+import org.infinispan.server.core.RequestParameters
 import org.infinispan.server.core.transport.NettyTransport
+import org.infinispan.container.versioning.EntryVersion
+import org.infinispan.container.entries.CacheEntry
 
 /**
  * This class represents the work to be done by a decoder of a particular Hot Rod protocol version.
@@ -52,19 +54,14 @@ abstract class AbstractVersionedDecoder {
    def readParameters(header: HotRodHeader, buffer: ChannelBuffer): (RequestParameters, Boolean)
 
    /**
-    * Read the value part of the operation.
-    */
-   def createValue(params: RequestParameters, nextVersion: Long, rawValue: Array[Byte]): CacheValue
-
-   /**
     * Create a successful response.
     */
-   def createSuccessResponse(header: HotRodHeader, prev: CacheValue): AnyRef
+   def createSuccessResponse(header: HotRodHeader, prev: Array[Byte]): AnyRef
 
    /**
     * Create a response indicating the the operation could not be executed.
     */
-   def createNotExecutedResponse(header: HotRodHeader, prev: CacheValue): AnyRef
+   def createNotExecutedResponse(header: HotRodHeader, prev: Array[Byte]): AnyRef
 
    /**
     * Create a response indicating that the key, which the message tried to operate on, did not exist.
@@ -74,22 +71,22 @@ abstract class AbstractVersionedDecoder {
    /**
     * Create a response for get a request.
     */
-   def createGetResponse(header: HotRodHeader, v: CacheValue): AnyRef
+   def createGetResponse(header: HotRodHeader, entry: CacheEntry): AnyRef
 
    /**
     * Handle a protocol specific header reading.
     */
-   def customReadHeader(header: HotRodHeader, buffer: ChannelBuffer, cache: Cache[Array[Byte], CacheValue]): AnyRef
+   def customReadHeader(header: HotRodHeader, buffer: ChannelBuffer, cache: AdvancedCache[Array[Byte], Array[Byte]]): AnyRef
 
    /**
     * Handle a protocol specific key reading.
     */
-   def customReadKey(header: HotRodHeader, buffer: ChannelBuffer, cache: Cache[Array[Byte], CacheValue]): AnyRef
+   def customReadKey(header: HotRodHeader, buffer: ChannelBuffer, cache: AdvancedCache[Array[Byte], Array[Byte]]): AnyRef
 
    /**
     * Handle a protocol specific value reading.
     */
-   def customReadValue(header: HotRodHeader, buffer: ChannelBuffer, cache: Cache[Array[Byte], CacheValue]): AnyRef
+   def customReadValue(header: HotRodHeader, buffer: ChannelBuffer, cache: AdvancedCache[Array[Byte], Array[Byte]]): AnyRef
 
    /**
     * Create a response for the stats command.
@@ -104,5 +101,6 @@ abstract class AbstractVersionedDecoder {
    /**
     * Get an optimized cache instance depending on the operation parameters.
     */
-   def getOptimizedCache(h: HotRodHeader, c: Cache[Array[Byte], CacheValue]): Cache[Array[Byte], CacheValue]
+   def getOptimizedCache(h: HotRodHeader, c: AdvancedCache[Array[Byte], Array[Byte]]): AdvancedCache[Array[Byte], Array[Byte]]
+
 }

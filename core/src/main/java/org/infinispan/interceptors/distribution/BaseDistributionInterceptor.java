@@ -27,6 +27,7 @@ import org.infinispan.commands.remote.ClusteredGetCommand;
 import org.infinispan.commands.write.PutMapCommand;
 import org.infinispan.commands.write.RemoveCommand;
 import org.infinispan.commands.write.ReplaceCommand;
+import org.infinispan.commands.write.VersionedPutKeyValueCommand;
 import org.infinispan.commands.write.WriteCommand;
 import org.infinispan.container.entries.InternalCacheEntry;
 import org.infinispan.container.entries.InternalCacheValue;
@@ -124,6 +125,11 @@ public abstract class BaseDistributionInterceptor extends ClusteringInterceptor 
    public Object visitReplaceCommand(InvocationContext ctx, ReplaceCommand command) throws Throwable {
       return handleWriteCommand(ctx, command,
                                 new SingleKeyRecipientGenerator(command.getKey()), false, false);
+   }
+
+   @Override
+   public Object visitVersionedPutKeyValueCommand(InvocationContext ctx, VersionedPutKeyValueCommand command) throws Throwable {
+      return visitPutKeyValueCommand(ctx, command);
    }
 
    protected abstract Object handleWriteCommand(InvocationContext ctx, WriteCommand command, RecipientGenerator recipientGenerator, boolean skipRemoteGet, boolean skipL1Invalidation) throws Throwable;

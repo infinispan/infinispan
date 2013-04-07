@@ -31,6 +31,8 @@ import java.io.ObjectInput;
 import java.io.ObjectOutput;
 import java.util.Set;
 
+import static org.infinispan.util.Util.toStr;
+
 /**
  * A cache entry that is immortal/cannot expire
  *
@@ -175,7 +177,7 @@ public class ImmortalCacheEntry extends AbstractInternalCacheEntry {
    @Override
    public String toString() {
       return "ImmortalCacheEntry{" +
-            "key=" + key +
+            "key=" + toStr(key) +
             ", value=" + cacheValue +
             "}";
    }

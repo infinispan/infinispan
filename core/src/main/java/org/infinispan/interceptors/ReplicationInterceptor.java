@@ -56,6 +56,8 @@ import org.infinispan.util.logging.LogFactory;
 import java.util.*;
 import java.util.concurrent.TimeoutException;
 
+import static org.infinispan.util.Util.toStr;
+
 /**
  * Takes care of replicating modifications to other caches in a cluster.
  *
@@ -171,7 +173,7 @@ public class ReplicationInterceptor extends ClusteringInterceptor {
     */
    private Object remoteGet(InvocationContext ctx, Object key, FlagAffectedCommand command, boolean isWrite) throws Throwable {
       if (trace) {
-         log.tracef("Key %s is not yet available on %s, so we may need to look elsewhere", key, rpcManager.getAddress());
+         log.tracef("Key %s is not yet available on %s, so we may need to look elsewhere", toStr(key), rpcManager.getAddress());
       }
       boolean acquireRemoteLock = false;
       if (ctx.isInTxScope()) {
@@ -249,6 +251,11 @@ public class ReplicationInterceptor extends ClusteringInterceptor {
 
    @Override
    public Object visitPutKeyValueCommand(InvocationContext ctx, PutKeyValueCommand command) throws Throwable {
+      return handleCrudMethod(ctx, command, !ctx.isOriginLocal());
+   }
+
+   @Override
+   public Object visitVersionedPutKeyValueCommand(InvocationContext ctx, VersionedPutKeyValueCommand command) throws Throwable {
       return handleCrudMethod(ctx, command, !ctx.isOriginLocal());
    }
 

@@ -320,34 +320,39 @@ object HotRodTestingUtil extends Log {
    }
 
    def assertHotRodEquals(cm: EmbeddedCacheManager,
+           key: Array[Byte], expectedValue: Array[Byte]): InternalCacheEntry =
+      assertHotRodEquals(cm, cm.getCache[Array[Byte], Array[Byte]](), key, expectedValue)
+
+   def assertHotRodEquals(cm: EmbeddedCacheManager,
            key: String, expectedValue: String): InternalCacheEntry =
-      assertHotRodEquals(cm, cm.getCache[Array[Byte], CacheValue](), key, expectedValue)
+      assertHotRodEquals(cm, cm.getCache[Array[Byte], Array[Byte]](),
+         marshall(key), marshall(expectedValue))
 
    def assertHotRodEquals(cm: EmbeddedCacheManager,
            cacheName: String, key: String, expectedValue: String): InternalCacheEntry =
-      assertHotRodEquals(cm, cm.getCache[Array[Byte], CacheValue](cacheName), key, expectedValue)
+      assertHotRodEquals(cm, cm.getCache[Array[Byte], Array[Byte]](cacheName),
+         marshall(key), marshall(expectedValue))
 
    private def assertHotRodEquals(cm: EmbeddedCacheManager,
-           cache: Cache[Array[Byte], CacheValue],
-           key: String, expectedValue: String): InternalCacheEntry = {
-      val keyBytes = marshall(key)
-      val entry = cache.getAdvancedCache.getDataContainer.get(keyBytes)
+           cache: Cache[Array[Byte], Array[Byte]],
+           key: Array[Byte], expectedValue: Array[Byte]): InternalCacheEntry = {
+      val entry = cache.getAdvancedCache.getDataContainer.get(key)
       // Assert based on passed parameters
       if (expectedValue == null) {
          assertNull(entry)
       } else {
          val value =
-            if (entry == null) cache.get(keyBytes)
-            else entry.getValue.asInstanceOf[CacheValue]
+            if (entry == null) cache.get(key)
+            else entry.getValue.asInstanceOf[Array[Byte]]
 
-         assertEquals(marshall(expectedValue), value.data)
+         assertEquals(expectedValue, value)
       }
 
       entry
    }
 
-   def marshall(key: String): Array[Byte] =
-      new JBossMarshaller().objectToByteBuffer(key, 64)
+   def marshall(obj: String): Array[Byte] =
+      if (obj == null) null else new JBossMarshaller().objectToByteBuffer(obj, 64)
 
    def unmarshall[T](key: Array[Byte]): T =
       new JBossMarshaller().objectFromByteBuffer(key).asInstanceOf[T]

@@ -22,7 +22,7 @@
  */
 package org.infinispan.server.core
 
-import org.infinispan.Cache
+import org.infinispan.{Metadata, EmbeddedMetadata, AdvancedCache, Cache}
 import Operation._
 import java.util.concurrent.TimeUnit
 import transport._
@@ -37,6 +37,8 @@ import java.lang.StringBuilder
 import org.jboss.netty.handler.codec.replay.ReplayingDecoder
 import org.jboss.netty.buffer.ChannelBuffers
 import org.jboss.netty.util.CharsetUtil
+import org.infinispan.container.versioning.EntryVersion
+import org.infinispan.container.entries.CacheEntry
 
 /**
  * Common abstract decoder for Memcached and Hot Rod protocols.
@@ -44,7 +46,7 @@ import org.jboss.netty.util.CharsetUtil
  * @author Galder Zamarreño
  * @since 4.1
  */
-abstract class AbstractProtocolDecoder[K, V <: CacheValue](transport: NettyTransport)
+abstract class AbstractProtocolDecoder[K, V](transport: NettyTransport)
       extends ReplayingDecoder[DecoderState](DECODE_HEADER, true) with ServerConstants with Log {
    import AbstractProtocolDecoder._
 
@@ -59,7 +61,7 @@ abstract class AbstractProtocolDecoder[K, V <: CacheValue](transport: NettyTrans
    protected var params: SuitableParameters = null.asInstanceOf[SuitableParameters]
    protected var key: K = null.asInstanceOf[K]
    protected var rawValue: Array[Byte] = null.asInstanceOf[Array[Byte]]
-   protected var cache: Cache[K, V] = null
+   protected var cache: AdvancedCache[K, V] = null
 
    override def decode(ctx: ChannelHandlerContext, ch: Channel, buffer: ChannelBuffer, state: DecoderState): AnyRef = {
       val ch = ctx.getChannel
@@ -98,7 +100,7 @@ abstract class AbstractProtocolDecoder[K, V <: CacheValue](transport: NettyTrans
          return null
       }
 
-      cache = getCache
+      cache = getCache.getAdvancedCache
       if (endOfOp.get) {
          header.op match {
             case StatsRequest => writeResponse(ch, createStatsResponse)
@@ -195,20 +197,27 @@ abstract class AbstractProtocolDecoder[K, V <: CacheValue](transport: NettyTrans
    }
 
    private def put: AnyRef = {
-      val v = createValue(generateVersion(cache))
+      val v = createValue(Integer.MIN_VALUE) // Version parameter unused, send anything
       // Get an optimised cache in case we can make the operation more efficient
-      val prev = (params.lifespan, params.maxIdle) match {
-         case (EXPIRATION_DEFAULT, EXPIRATION_DEFAULT) => getOptimizedCache(cache).put(key, v)
-         case (_, EXPIRATION_DEFAULT) => getOptimizedCache(cache).put(key, v, toMillis(params.lifespan), DefaultTimeUnit)
-         case (_, _) => getOptimizedCache(cache).put(key, v,
-               toMillis(params.lifespan), DefaultTimeUnit,
-               toMillis(params.maxIdle), DefaultTimeUnit)
-      }
-
+      val prev = getOptimizedCache(cache).put(key, v, buildMetadata())
       createSuccessResponse(prev)
    }
 
-   protected def getOptimizedCache(c: Cache[K, V]): Cache[K, V] = c
+   private def buildMetadata(): Metadata = {
+      val metadata = new EmbeddedMetadata.Builder
+      metadata.version(new ServerEntryVersion(generateVersion(cache)))
+      (params.lifespan, params.maxIdle) match {
+         case (EXPIRATION_DEFAULT, EXPIRATION_DEFAULT) => // Don't add to metadata
+         case (_, EXPIRATION_DEFAULT) =>
+            metadata.lifespan(toMillis(params.lifespan), DefaultTimeUnit)
+         case (_, _) =>
+            metadata.lifespan(toMillis(params.lifespan), DefaultTimeUnit)
+                    .maxIdle(toMillis(params.maxIdle), DefaultTimeUnit)
+      }
+      metadata.build()
+   }
+
+   protected def getOptimizedCache(c: AdvancedCache[K, V]): AdvancedCache[K, V] = c
 
    private def putIfAbsent: AnyRef = {
       var prev = cache.get(key)
@@ -247,18 +256,15 @@ abstract class AbstractProtocolDecoder[K, V <: CacheValue](transport: NettyTrans
    }
 
    private def replaceIfUnmodified: AnyRef = {
-      val prev = cache.get(key)
-      if (prev != null) {
-         if (prev.version == params.streamVersion) {
+      val entry = cache.getCacheEntry(key)
+      if (entry != null) {
+         // Hacky, but CacheEntry has not been generified
+         val prev: V = entry.getValue.asInstanceOf[V]
+         val streamVersion = new ServerEntryVersion(params.streamVersion)
+         if (entry.getVersion == streamVersion) {
+            val v = createValue(Integer.MIN_VALUE) // Version unused within method
             // Generate new version only if key present and version has not changed, otherwise it's wasteful
-            val v = createValue(generateVersion(cache))
-            val replaced = (params.lifespan, params.maxIdle) match {
-               case (EXPIRATION_DEFAULT, EXPIRATION_DEFAULT) => cache.replace(key, prev, v)
-               case (_, EXPIRATION_DEFAULT) => cache.replace(key, prev, v, toMillis(params.lifespan), DefaultTimeUnit)
-               case (_, _) => cache.replace(key, prev, v,
-                     toMillis(params.lifespan), DefaultTimeUnit,
-                     toMillis(params.maxIdle), DefaultTimeUnit)
-            }
+            val replaced = cache.replace(key, prev, v, buildMetadata())
             if (replaced)
                createSuccessResponse(prev)
             else
@@ -278,7 +284,7 @@ abstract class AbstractProtocolDecoder[K, V <: CacheValue](transport: NettyTrans
    }
 
    protected def get(buffer: ChannelBuffer): AnyRef =
-      createGetResponse(key, cache.get(readKey(buffer)._1))
+      createGetResponse(key, cache.getCacheEntry(readKey(buffer)._1))
 
    override def exceptionCaught(ctx: ChannelHandlerContext, e: ExceptionEvent) {
       val ch = ctx.getChannel
@@ -335,7 +341,7 @@ abstract class AbstractProtocolDecoder[K, V <: CacheValue](transport: NettyTrans
 
    protected def createNotExistResponse: AnyRef
 
-   protected def createGetResponse(k: K, v: V): AnyRef
+   protected def createGetResponse(k: K, entry: CacheEntry): AnyRef
 
    protected def createMultiGetResponse(pairs: Map[K, V]): AnyRef
 

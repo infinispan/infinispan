@@ -27,6 +27,7 @@ import org.infinispan.commands.write.EvictCommand;
 import org.infinispan.commands.write.PutKeyValueCommand;
 import org.infinispan.commands.write.PutMapCommand;
 import org.infinispan.commands.write.RemoveCommand;
+import org.infinispan.commands.write.VersionedPutKeyValueCommand;
 import org.infinispan.container.DataContainer;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.factories.annotations.Inject;
@@ -130,6 +131,11 @@ public class CacheMgmtInterceptor extends JmxStatsCommandInterceptor {
          stores.incrementAndGet();
       }
       return retval;
+   }
+
+   @Override
+   public Object visitVersionedPutKeyValueCommand(InvocationContext ctx, VersionedPutKeyValueCommand command) throws Throwable {
+      return visitPutKeyValueCommand(ctx, command);
    }
 
    @Override

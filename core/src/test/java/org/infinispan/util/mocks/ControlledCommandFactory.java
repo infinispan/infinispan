@@ -171,6 +171,11 @@ public class ControlledCommandFactory implements CommandsFactory {
    }
 
    @Override
+   public VersionedReplaceCommand buildVersionedReplaceCommand(Object key, Object oldValue, Object newValue, long lifespanMillis, long maxIdleTimeMillis, EntryVersion version, Set<Flag> flags) {
+      return actual.buildVersionedReplaceCommand(key, oldValue, newValue, lifespanMillis, maxIdleTimeMillis, version, flags);
+   }
+
+   @Override
    public SizeCommand buildSizeCommand() {
       return actual.buildSizeCommand();
    }

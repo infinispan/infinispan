@@ -26,6 +26,7 @@ import org.infinispan.atomic.Delta;
 import org.infinispan.batch.BatchContainer;
 import org.infinispan.container.DataContainer;
 import org.infinispan.container.entries.CacheEntry;
+import org.infinispan.container.versioning.EntryVersion;
 import org.infinispan.context.Flag;
 import org.infinispan.context.InvocationContextContainer;
 import org.infinispan.distribution.DistributionManager;
@@ -46,6 +47,7 @@ import java.util.List;
  * An advanced interface that exposes additional methods not available on {@link Cache}.
  *
  * @author Manik Surtani
+ * @author Galder Zamarreño
  * @since 4.0
  */
 public interface AdvancedCache<K, V> extends Cache<K, V> {
@@ -301,6 +303,26 @@ public interface AdvancedCache<K, V> extends Cache<K, V> {
     * @param explicitFlags
     * @param explicitClassLoader
     * @return
+    * @deprecated
     */
+   @Deprecated
    CacheEntry getCacheEntry(Object key, EnumSet<Flag> explicitFlags, ClassLoader explicitClassLoader);
+
+//   AdvancedCache<K, V> withMetadata(Metadata metadata);
+
+   V put(K key, V value, Metadata metadata);
+
+   boolean replace(K key, V oldValue, V value, Metadata metadata);
+
+//   V putIfAbsent(K key, V value, Metadata metadata);
+//
+//   void putAll(Map<? extends K, ? extends V> map, Metadata metadata);
+//
+//   V replace(K key, V value, Metadata metadata);
+//
+
+   // TODO: You could have replace calls that compare not only value, but also version internally?
+
+   CacheEntry getCacheEntry(K key);
+
 }

@@ -139,6 +139,8 @@ public interface CommandsFactory {
     */
    ReplaceCommand buildReplaceCommand(Object key, Object oldValue, Object newValue, long lifespanMillis, long maxIdleTimeMillis, Set<Flag> flags);
 
+   VersionedReplaceCommand buildVersionedReplaceCommand(Object key, Object oldValue, Object newValue, long lifespanMillis, long maxIdleTimeMillis, EntryVersion version, Set<Flag> flags);
+
    /**
     * Builds a SizeCommand
     * @return a SizeCommand

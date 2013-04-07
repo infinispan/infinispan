@@ -153,7 +153,9 @@ public class DecoratedCache<K, V> extends AbstractDelegatingAdvancedCache<K, V> 
 
    @Override
    public V put(K key, V value, long lifespan, TimeUnit unit) {
-      return cacheImplementation.put(key, value, lifespan, unit, cacheImplementation.defaultMaxIdleTime, MILLISECONDS, flags, classLoader.get());
+      return cacheImplementation.put(key, value, lifespan, unit,
+            cacheImplementation.defaultMaxIdleTime, MILLISECONDS, flags,
+            classLoader.get(), null);
    }
 
    @Override
@@ -173,12 +175,15 @@ public class DecoratedCache<K, V> extends AbstractDelegatingAdvancedCache<K, V> 
 
    @Override
    public boolean replace(K key, V oldValue, V value, long lifespan, TimeUnit unit) {
-      return cacheImplementation.replace(key, oldValue, value, lifespan, unit, cacheImplementation.defaultMaxIdleTime, MILLISECONDS, flags, classLoader.get());
+      return cacheImplementation.replace(key, oldValue, value, lifespan, unit,
+            cacheImplementation.defaultMaxIdleTime, MILLISECONDS, flags,
+            classLoader.get(), null);
    }
 
    @Override
    public V put(K key, V value, long lifespan, TimeUnit lifespanUnit, long maxIdleTime, TimeUnit maxIdleTimeUnit) {
-      return cacheImplementation.put(key, value, lifespan, lifespanUnit, maxIdleTime, maxIdleTimeUnit, flags, classLoader.get());
+      return cacheImplementation.put(key, value, lifespan, lifespanUnit,
+            maxIdleTime, maxIdleTimeUnit, flags, classLoader.get(), null);
    }
 
    @Override
@@ -198,7 +203,8 @@ public class DecoratedCache<K, V> extends AbstractDelegatingAdvancedCache<K, V> 
 
    @Override
    public boolean replace(K key, V oldValue, V value, long lifespan, TimeUnit lifespanUnit, long maxIdleTime, TimeUnit maxIdleTimeUnit) {
-      return cacheImplementation.replace(key, oldValue, value, lifespan, lifespanUnit, maxIdleTime, maxIdleTimeUnit, flags, classLoader.get());
+      return cacheImplementation.replace(key, oldValue, value, lifespan, lifespanUnit,
+            maxIdleTime, maxIdleTimeUnit, flags, classLoader.get(), null);
    }
 
    @Override
@@ -318,7 +324,9 @@ public class DecoratedCache<K, V> extends AbstractDelegatingAdvancedCache<K, V> 
 
    @Override
    public V put(K key, V value) {
-      return cacheImplementation.put(key, value, cacheImplementation.defaultLifespan, MILLISECONDS, cacheImplementation.defaultMaxIdleTime, MILLISECONDS, flags, classLoader.get());
+      return cacheImplementation.put(key, value, cacheImplementation.defaultLifespan,
+            MILLISECONDS, cacheImplementation.defaultMaxIdleTime, MILLISECONDS,
+            flags, classLoader.get(), null);
    }
 
    @Override
@@ -363,7 +371,9 @@ public class DecoratedCache<K, V> extends AbstractDelegatingAdvancedCache<K, V> 
 
    @Override
    public boolean replace(K key, V oldValue, V newValue) {
-      return cacheImplementation.replace(key, oldValue, newValue, cacheImplementation.defaultLifespan, MILLISECONDS, cacheImplementation.defaultMaxIdleTime, MILLISECONDS, flags, classLoader.get());
+      return cacheImplementation.replace(key, oldValue, newValue, cacheImplementation.defaultLifespan,
+            MILLISECONDS, cacheImplementation.defaultMaxIdleTime, MILLISECONDS,
+            flags, classLoader.get(), null);
    }
 
    @Override

@@ -58,7 +58,7 @@ public class RemoteCacheStoreRawValuesTest extends BaseCacheStoreTest {
 
    @Override
    protected CacheStore createCacheStore() throws Exception {
-      ConfigurationBuilder cb = TestCacheManagerFactory.getDefaultCacheConfiguration(true);
+      ConfigurationBuilder cb = TestCacheManagerFactory.getDefaultCacheConfiguration(false);
       cb.eviction().maxEntries(100).strategy(EvictionStrategy.UNORDERED)
             .expiration().wakeUpInterval(10L);
 

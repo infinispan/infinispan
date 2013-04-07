@@ -402,6 +402,9 @@ public final class Util {
             sb.append("..");
          }
          return sb.toString();
+      } else if (o == null) {
+         return "null";
+
       } else {
          return o.toString();
       }
