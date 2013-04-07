@@ -21,6 +21,7 @@ package org.infinispan.client.hotrod;
 
 import org.infinispan.client.hotrod.test.MultiHotRodServersTest;
 import org.infinispan.commands.write.PutKeyValueCommand;
+import org.infinispan.commands.write.VersionedPutKeyValueCommand;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.test.ReplListener;
@@ -52,8 +53,8 @@ public class HotRodAsyncReplicationTest extends MultiHotRodServersTest {
       ReplListener replList0 = getReplListener(0);
       ReplListener replList1 = getReplListener(1);
 
-      replList0.expect(PutKeyValueCommand.class);
-      replList1.expect(PutKeyValueCommand.class);
+      replList0.expect(VersionedPutKeyValueCommand.class);
+      replList1.expect(VersionedPutKeyValueCommand.class);
 
       final String v1 = v(m);
       remoteCache0.put(1, v1);

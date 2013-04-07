@@ -39,6 +39,8 @@ import org.infinispan.interceptors.base.BaseRpcInterceptor;
 import org.infinispan.statetransfer.StateTransferManager;
 import org.infinispan.util.concurrent.locks.LockManager;
 
+import static org.infinispan.util.Util.toStr;
+
 /**
  * Base class for replication and distribution interceptors.
  *
@@ -88,7 +90,7 @@ public abstract class ClusteringInterceptor extends BaseRpcInterceptor {
          ConsistentHash ch = stateTransferManager.getCacheTopology().getReadConsistentHash();
          shouldFetchFromRemote = ctx.isOriginLocal() && !ch.isKeyLocalToNode(rpcManager.getAddress(), key) && !dataContainer.containsKey(key);
          if (!shouldFetchFromRemote && getLog().isTraceEnabled()) {
-            getLog().tracef("Not doing a remote get for key %s since entry is mapped to current node (%s) or is in L1. Owners are %s", key, rpcManager.getAddress(), ch.locateOwners(key));
+            getLog().tracef("Not doing a remote get for key %s since entry is mapped to current node (%s) or is in L1. Owners are %s", toStr(key), rpcManager.getAddress(), ch.locateOwners(key));
          }
       }
       return shouldFetchFromRemote;

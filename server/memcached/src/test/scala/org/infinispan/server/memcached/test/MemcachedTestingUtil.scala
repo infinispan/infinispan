@@ -66,7 +66,8 @@ object MemcachedTestingUtil {
       val server = new MemcachedServer {
 
          override def getDecoder: MemcachedDecoder = {
-            val memcachedDecoder = new MemcachedDecoder(getCacheManager.getCache[String, MemcachedValue](cacheName), scheduler, transport)
+            val memcachedDecoder = new MemcachedDecoder(
+               getCacheManager.getCache[String, MemcachedValue](cacheName).getAdvancedCache, scheduler, transport)
             memcachedDecoder.versionGenerator = this.versionGenerator
             memcachedDecoder
          }

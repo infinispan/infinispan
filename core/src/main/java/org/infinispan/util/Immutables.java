@@ -40,6 +40,8 @@ import java.lang.reflect.Array;
 import java.util.*;
 import java.util.Map.Entry;
 
+import static org.infinispan.util.Util.toStr;
+
 /**
  * Factory for generating immutable type wrappers.
  *
@@ -490,7 +492,7 @@ public class Immutables {
       }
 
       public String toString() {
-         return getKey() + "=" + getValue();
+         return toStr(getKey()) + "=" + toStr(getValue());
       }
 
       @Override

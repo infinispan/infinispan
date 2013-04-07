@@ -27,7 +27,6 @@ import java.lang.reflect.Method
 import test.HotRodTestingUtil._
 import org.testng.Assert._
 import java.util.Arrays
-import org.infinispan.server.core.CacheValue
 import org.infinispan.server.hotrod.OperationStatus._
 import org.infinispan.server.hotrod.test._
 import org.infinispan.test.TestingUtil.generateRandomString
@@ -68,9 +67,7 @@ class HotRodFunctionalTest extends HotRodSingleNodeTest {
    def testPutOnDefaultCache(m: Method) {
       val resp = client.execute(0xA0, 0x01, "", k(m), 0, 0, v(m), 0, 1, 0)
       assertStatus(resp, Success)
-      val cache = cacheManager.getCache[Array[Byte], CacheValue]()
-      val value = cache.get(k(m))
-      assertTrue(Arrays.equals(value.data, v(m)))
+      assertHotRodEquals(cacheManager, k(m), v(m))
    }
 
    def testPutOnUndefinedCache(m: Method) {

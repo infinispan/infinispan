@@ -26,7 +26,7 @@ import logging.Log
 import scala.collection.JavaConversions._
 import org.infinispan.manager.EmbeddedCacheManager
 import java.util.Properties
-import org.infinispan.server.core.{CacheValue, AbstractProtocolServer}
+import org.infinispan.server.core.AbstractProtocolServer
 import org.infinispan.eviction.EvictionStrategy
 import org.infinispan.util.{CollectionFactory, ByteArrayEquivalence, AnyEquivalence}
 import org.infinispan.Cache
@@ -59,9 +59,8 @@ class HotRodServer extends AbstractProtocolServer("HotRod") with Log {
    private var clusterAddress: Address = _
    private var address: ServerAddress = _
    private var addressCache: Cache[Address, ServerAddress] = _
-   private val knownCaches : java.util.Map[String, Cache[Array[Byte], CacheValue]] =
+   private val knownCaches : java.util.Map[String, Cache[Array[Byte], Array[Byte]]] =
          CollectionFactory.makeConcurrentMap(4, 0.9f, 16)
-   private val isTrace = isTraceEnabled
 
    def getAddress: ServerAddress = address
 
@@ -172,13 +171,13 @@ class HotRodServer extends AbstractProtocolServer("HotRod") with Log {
       cacheName != null && !cacheName.isEmpty && !(knownCaches containsKey cacheName)
    }
 
-   def getCacheInstance(cacheName: String, cacheManager: EmbeddedCacheManager, skipCacheCheck: Boolean): Cache[Array[Byte], CacheValue] = {
-      var cache: Cache[Array[Byte], CacheValue] = null
+   def getCacheInstance(cacheName: String, cacheManager: EmbeddedCacheManager, skipCacheCheck: Boolean): Cache[Array[Byte], Array[Byte]] = {
+      var cache: Cache[Array[Byte], Array[Byte]] = null
       if (!skipCacheCheck) cache = knownCaches.get(cacheName)
 
       if (cache == null) {
          if (cacheName.isEmpty)
-            cache = cacheManager.getCache[Array[Byte], CacheValue]
+            cache = cacheManager.getCache[Array[Byte], Array[Byte]]
          else
             cache = cacheManager.getCache(cacheName)
 
@@ -190,7 +189,7 @@ class HotRodServer extends AbstractProtocolServer("HotRod") with Log {
       cache
    }
 
-   def tryRegisterMigrationManager(cacheName: String, cache: Cache[Array[Byte], CacheValue]) {
+   def tryRegisterMigrationManager(cacheName: String, cache: Cache[Array[Byte], Array[Byte]]) {
       val cr = cache.getAdvancedCache.getComponentRegistry
       val migrationManager = cr.getComponent(classOf[RollingUpgradeManager])
       if (migrationManager != null) migrationManager.addSourceMigrator(new HotRodSourceMigrator(cache))

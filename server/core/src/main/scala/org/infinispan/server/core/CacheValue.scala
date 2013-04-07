@@ -43,8 +43,10 @@ import java.lang.StringBuilder
  *
  * @author Galder Zamarreño
  * @since 4.1
+ * @deprecated
  */
 @serializable
+@deprecated
 class CacheValue(val data: Array[Byte], val version: Long) {
 
    override def toString = {

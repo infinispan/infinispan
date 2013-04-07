@@ -59,7 +59,7 @@ public class RemoteCacheStoreTest extends BaseCacheStoreTest {
       remoteCacheStoreConfig.setUseDefaultRemoteCache(true);
       assert remoteCacheStoreConfig.isUseDefaultRemoteCache();
 
-      ConfigurationBuilder cb = TestCacheManagerFactory.getDefaultCacheConfiguration(true);
+      ConfigurationBuilder cb = TestCacheManagerFactory.getDefaultCacheConfiguration(false);
       cb.eviction().maxEntries(100).strategy(EvictionStrategy.UNORDERED)
             .expiration().wakeUpInterval(10L);
 

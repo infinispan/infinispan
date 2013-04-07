@@ -25,6 +25,7 @@ import org.infinispan.commands.read.GetCacheEntryCommand;
 import org.infinispan.commands.read.GetKeyValueCommand;
 import org.infinispan.commands.write.ClearCommand;
 import org.infinispan.commands.write.PutKeyValueCommand;
+import org.infinispan.commands.write.VersionedPutKeyValueCommand;
 import org.infinispan.commands.write.WriteCommand;
 import org.infinispan.container.entries.InternalCacheEntry;
 import org.infinispan.context.Flag;
@@ -162,6 +163,7 @@ public class NonTxDistributionInterceptor extends BaseDistributionInterceptor {
             else
                ctx.putLookedUpEntry(key, ice);
          }
+         // TODO: This return statement is hacky, GetCacheEntryCommand should have its own visit visitGetCacheEntryCommand() callback
          return command instanceof GetCacheEntryCommand ? ice : ice.getValue();
       }
       return null;
@@ -193,7 +195,8 @@ public class NonTxDistributionInterceptor extends BaseDistributionInterceptor {
       InternalCacheEntry ice = retrieveFromRemoteSource(key, ctx, false, command);
       command.setRemotelyFetchedValue(ice);
       if (ice != null) {
-         return ice.getValue();
+         // TODO: This return statement is hacky, GetCacheEntryCommand should have its own visit visitGetCacheEntryCommand() callback
+         return command instanceof GetCacheEntryCommand ? ice : ice.getValue();
       }
       return null;
    }

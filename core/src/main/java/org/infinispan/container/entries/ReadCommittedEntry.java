@@ -176,7 +176,7 @@ public class ReadCommittedEntry implements MVCCEntry {
       if (isChanged() || isLoaded()) {
          if (trace)
             log.tracef("Updating entry (key=%s removed=%s valid=%s changed=%s created=%s loaded=%s value=%s]",
-                  toStr(getKey()), isRemoved(), isValid(), isChanged(), isCreated(), isLoaded(), value);
+                  toStr(getKey()), isRemoved(), isValid(), isChanged(), isCreated(), isLoaded(), toStr(value));
 
          // Ugh!
          if (value instanceof AtomicHashMap) {
@@ -292,8 +292,8 @@ public class ReadCommittedEntry implements MVCCEntry {
    public String toString() {
       return getClass().getSimpleName() + "(" + Util.hexIdHashCode(this) + "){" +
             "key=" + toStr(key) +
-            ", value=" + value +
-            ", oldValue=" + oldValue +
+            ", value=" + toStr(value) +
+            ", oldValue=" + toStr(oldValue) +
             ", isCreated=" + isCreated() +
             ", isChanged=" + isChanged() +
             ", isRemoved=" + isRemoved() +

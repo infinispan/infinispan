@@ -29,7 +29,6 @@ import org.infinispan.distexec.mapreduce.Collector;
 import org.infinispan.distexec.mapreduce.MapReduceTask;
 import org.infinispan.distexec.mapreduce.Mapper;
 import org.infinispan.distexec.mapreduce.Reducer;
-import org.infinispan.server.core.CacheValue;
 
 /**
  * 
@@ -42,24 +41,25 @@ public final class BulkUtil {
 	public static final int GLOBAL_SCOPE = 1;
 	public static final int LOCAL_SCOPE = 2;
 	
-	public static final Set<byte[]> getAllKeys(Cache<byte[], CacheValue> cache, int scope) {
+	public static final Set<byte[]> getAllKeys(Cache<byte[], byte[]> cache, int scope) {
 		CacheMode cacheMode = cache.getAdvancedCache().getCacheConfiguration().clustering().cacheMode(); 
 		boolean keysAreLocal = !cacheMode.isClustered() || cacheMode.isReplicated();
 		if (keysAreLocal || scope == LOCAL_SCOPE) {
 			return cache.keySet();
 		} else {
-			MapReduceTask<byte[], CacheValue, byte[], Object> task = new MapReduceTask<byte[], CacheValue, byte[], Object>(cache)
+			MapReduceTask<byte[], byte[], byte[], Object> task =
+               new MapReduceTask<byte[], byte[], byte[], Object>(cache)
 					.mappedWith(new KeyMapper())
 					.reducedWith(new KeyReducer());
 			return task.execute(new KeysCollator());
 		}
 	}
 	
-	static class KeyMapper implements Mapper<byte[], CacheValue, byte[], Object> {
+	static class KeyMapper implements Mapper<byte[], byte[], byte[], Object> {
 		private static final long serialVersionUID = -5054573988280497412L;
 
 		@Override
-		public void map(byte[] key, CacheValue value,
+		public void map(byte[] key, byte[] value,
 				Collector<byte[], Object> collector) {
 			collector.emit(key, null);
 		}

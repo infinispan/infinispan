@@ -56,7 +56,7 @@ public class RemoteCacheStoreMixedAccessTest extends AbstractInfinispanTest {
 
    @BeforeClass
    public void setup() throws Exception {
-      ConfigurationBuilder serverBuilder = TestCacheManagerFactory.getDefaultCacheConfiguration(true);
+      ConfigurationBuilder serverBuilder = TestCacheManagerFactory.getDefaultCacheConfiguration(false);
       serverBuilder.eviction().maxEntries(100).strategy(EvictionStrategy.UNORDERED)
             .expiration().wakeUpInterval(10L);
       serverCacheManager = TestCacheManagerFactory.createCacheManager(

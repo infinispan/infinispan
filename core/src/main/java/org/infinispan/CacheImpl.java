@@ -40,6 +40,8 @@ import org.infinispan.commands.write.PutKeyValueCommand;
 import org.infinispan.commands.write.PutMapCommand;
 import org.infinispan.commands.write.RemoveCommand;
 import org.infinispan.commands.write.ReplaceCommand;
+import org.infinispan.compat.ToStringConverter;
+import org.infinispan.compat.TypeConverter;
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.configuration.cache.DataContainerConfiguration;
 import org.infinispan.configuration.cache.LegacyConfigurationAdaptor;
@@ -48,6 +50,7 @@ import org.infinispan.configuration.global.GlobalConfiguration;
 import org.infinispan.container.DataContainer;
 import org.infinispan.container.entries.CacheEntry;
 import org.infinispan.container.entries.InternalCacheEntry;
+import org.infinispan.container.versioning.EntryVersion;
 import org.infinispan.context.Flag;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.context.InvocationContextContainer;
@@ -292,7 +295,13 @@ public class CacheImpl<K, V> extends CacheSupport<K, V> implements AdvancedCache
       assertKeyNotNull(key);
       InvocationContext ctx = getInvocationContextForRead(null, explicitClassLoader, 1);
       GetCacheEntryCommand command = commandsFactory.buildGetCacheEntryCommand(key, explicitFlags);
-      return (CacheEntry) invoker.invoke(ctx, command);
+      Object ret = invoker.invoke(ctx, command);
+      return (CacheEntry) ret;
+   }
+
+   @Override
+   public final CacheEntry getCacheEntry(K key) {
+      return getCacheEntry(key, null, null);
    }
 
    @Override
@@ -767,18 +776,29 @@ public class CacheImpl<K, V> extends CacheSupport<K, V> implements AdvancedCache
 
    @Override
    public final V put(K key, V value, long lifespan, TimeUnit lifespanUnit, long maxIdleTime, TimeUnit idleTimeUnit) {
-      return put(key, value, lifespan, lifespanUnit, maxIdleTime, idleTimeUnit, null, null);
+      return put(key, value, lifespan, lifespanUnit, maxIdleTime, idleTimeUnit, null, null, null);
    }
 
    @SuppressWarnings("unchecked")
-   final V put(K key, V value, long lifespan, TimeUnit lifespanUnit, long maxIdleTime, TimeUnit idleTimeUnit, EnumSet<Flag> explicitFlags, ClassLoader explicitClassLoader) {
+   final V put(K key, V value, long lifespan, TimeUnit lifespanUnit,
+         long maxIdleTime, TimeUnit idleTimeUnit,
+         EnumSet<Flag> explicitFlags, ClassLoader explicitClassLoader,
+         EntryVersion explicitVersion) {
       InvocationContext ctx = getInvocationContextWithImplicitTransaction(false, explicitClassLoader, 1);
-      return putInternal(key, value, lifespan, lifespanUnit, maxIdleTime, idleTimeUnit, explicitFlags, ctx);
+      return putInternal(key, value, lifespan, lifespanUnit, maxIdleTime,
+            idleTimeUnit, explicitFlags, ctx, explicitVersion);
    }
 
-   private V putInternal(K key, V value, long lifespan, TimeUnit lifespanUnit, long maxIdleTime, TimeUnit idleTimeUnit, EnumSet<Flag> explicitFlags, InvocationContext ctx) {
+   @SuppressWarnings("unchecked")
+   private V putInternal(K key, V value, long lifespan, TimeUnit lifespanUnit,
+         long maxIdleTime, TimeUnit idleTimeUnit,
+         EnumSet<Flag> explicitFlags, InvocationContext ctx,
+         EntryVersion version) {
       assertKeyValueNotNull(key, value);
-      PutKeyValueCommand command = commandsFactory.buildPutKeyValueCommand(key, value, lifespanUnit.toMillis(lifespan), idleTimeUnit.toMillis(maxIdleTime), explicitFlags);
+      long lifespanMillis = lifespanUnit.toMillis(lifespan);
+      long maxIdleTimeMillis = idleTimeUnit.toMillis(maxIdleTime);
+      PutKeyValueCommand command = buildPutKeyValueCommand(key, value,
+            explicitFlags, version, lifespanMillis, maxIdleTimeMillis);
       return (V) executeCommandAndCommitIfNeeded(ctx, command);
    }
 
@@ -790,15 +810,32 @@ public class CacheImpl<K, V> extends CacheSupport<K, V> implements AdvancedCache
    @SuppressWarnings("unchecked")
    final V putIfAbsent(K key, V value, long lifespan, TimeUnit lifespanUnit, long maxIdleTime, TimeUnit idleTimeUnit, EnumSet<Flag> explicitFlags, ClassLoader explicitClassLoader) {
       InvocationContext ctx = getInvocationContextWithImplicitTransaction(isPutForExternalRead(explicitFlags), explicitClassLoader, 1);
-      return putIfAbsentInternal(key, value, lifespan, lifespanUnit, maxIdleTime, idleTimeUnit, explicitFlags, ctx);
+      return putIfAbsentInternal(key, value, lifespan, lifespanUnit,
+            maxIdleTime, idleTimeUnit, explicitFlags, ctx, null);
    }
 
-   private V putIfAbsentInternal(K key, V value, long lifespan, TimeUnit lifespanUnit, long maxIdleTime, TimeUnit idleTimeUnit, EnumSet<Flag> explicitFlags, InvocationContext ctx) {
+   @SuppressWarnings("unchecked")
+   private V putIfAbsentInternal(K key, V value, long lifespan,
+         TimeUnit lifespanUnit, long maxIdleTime, TimeUnit idleTimeUnit,
+         EnumSet<Flag> explicitFlags, InvocationContext ctx, EntryVersion version) {
       assertKeyValueNotNull(key, value);
       // putForExternalRead calls only here, so only check here
-      PutKeyValueCommand command = commandsFactory.buildPutKeyValueCommand(key, value, lifespanUnit.toMillis(lifespan), idleTimeUnit.toMillis(maxIdleTime), explicitFlags);
+      long lifespanMillis = lifespanUnit.toMillis(lifespan);
+      long maxIdleTimeMillis = idleTimeUnit.toMillis(maxIdleTime);
+      PutKeyValueCommand command = buildPutKeyValueCommand(key, value,
+            explicitFlags, version, lifespanMillis, maxIdleTimeMillis);
       command.setPutIfAbsent(true);
       return (V) executeCommandAndCommitIfNeeded(ctx, command);
+   }
+
+   private PutKeyValueCommand buildPutKeyValueCommand(K key, V value,
+         EnumSet<Flag> explicitFlags, EntryVersion version,
+         long lifespanMillis, long maxIdleTimeMillis) {
+      return version == null
+         ? commandsFactory.buildPutKeyValueCommand(key, value,
+               lifespanMillis, maxIdleTimeMillis, explicitFlags)
+         : commandsFactory.buildVersionedPutKeyValueCommand(key, value,
+               lifespanMillis, maxIdleTimeMillis, version, explicitFlags);
    }
 
    @Override
@@ -836,18 +873,35 @@ public class CacheImpl<K, V> extends CacheSupport<K, V> implements AdvancedCache
 
    @Override
    public final boolean replace(K key, V oldValue, V value, long lifespan, TimeUnit lifespanUnit, long maxIdleTime, TimeUnit idleTimeUnit) {
-      return replace(key, oldValue, value, lifespan, lifespanUnit, maxIdleTime, idleTimeUnit, null, null);
+      return replace(key, oldValue, value, lifespan, lifespanUnit, maxIdleTime, idleTimeUnit, null, null, null);
    }
 
-   final boolean replace(K key, V oldValue, V value, long lifespan, TimeUnit lifespanUnit, long maxIdleTime, TimeUnit idleTimeUnit, EnumSet<Flag> explicitFlags, ClassLoader explicitClassLoader) {
+   final boolean replace(K key, V oldValue, V value, long lifespan,
+         TimeUnit lifespanUnit, long maxIdleTime, TimeUnit idleTimeUnit,
+         EnumSet<Flag> explicitFlags, ClassLoader explicitClassLoader,
+         EntryVersion explicitVersion) {
       InvocationContext ctx = getInvocationContextWithImplicitTransaction(false, explicitClassLoader, 1);
-      return replaceInternal(key, oldValue, value, lifespan, lifespanUnit, maxIdleTime, idleTimeUnit, explicitFlags, ctx);
+      return replaceInternal(key, oldValue, value, lifespan, lifespanUnit,
+            maxIdleTime, idleTimeUnit, explicitFlags, ctx, explicitVersion);
    }
 
-   private boolean replaceInternal(K key, V oldValue, V value, long lifespan, TimeUnit lifespanUnit, long maxIdleTime, TimeUnit idleTimeUnit, EnumSet<Flag> explicitFlags, InvocationContext ctx) {
+   private boolean replaceInternal(K key, V oldValue, V value, long lifespan,
+         TimeUnit lifespanUnit, long maxIdleTime, TimeUnit idleTimeUnit,
+         EnumSet<Flag> explicitFlags, InvocationContext ctx,
+         EntryVersion version) {
       assertKeyValueNotNull(key, value);
       assertValueNotNull(oldValue);
-      ReplaceCommand command = commandsFactory.buildReplaceCommand(key, oldValue, value, lifespanUnit.toMillis(lifespan), idleTimeUnit.toMillis(maxIdleTime), explicitFlags);
+      ReplaceCommand command;
+      if (version == null) {
+         command = commandsFactory.buildReplaceCommand(key,
+               oldValue, value, lifespanUnit.toMillis(lifespan),
+               idleTimeUnit.toMillis(maxIdleTime), explicitFlags);
+      } else {
+         command = commandsFactory.buildVersionedReplaceCommand(key,
+               oldValue, value, lifespanUnit.toMillis(lifespan),
+               idleTimeUnit.toMillis(maxIdleTime), version, explicitFlags);
+      }
+
       return (Boolean) executeCommandAndCommitIfNeeded(ctx, command);
    }
 
@@ -891,7 +945,8 @@ public class CacheImpl<K, V> extends CacheSupport<K, V> implements AdvancedCache
          public V call() throws Exception {
             try {
                associateImplicitTransactionWithCurrentThread(ctx);
-               return putInternal(key, value, lifespan, lifespanUnit, maxIdle, maxIdleUnit, explicitFlags, ctx);
+               return putInternal(key, value, lifespan, lifespanUnit,
+                     maxIdle, maxIdleUnit, explicitFlags, ctx, null);
             } finally {
                try {
                   result.notifyDone();
@@ -967,7 +1022,8 @@ public class CacheImpl<K, V> extends CacheSupport<K, V> implements AdvancedCache
          public V call() throws Exception {
             try {
                associateImplicitTransactionWithCurrentThread(ctx);
-               return putIfAbsentInternal(key, value, lifespan, lifespanUnit, maxIdle, maxIdleUnit, explicitFlags, ctx);
+               return putIfAbsentInternal(key, value, lifespan, lifespanUnit,
+                     maxIdle, maxIdleUnit, explicitFlags, ctx, null);
             } finally {
                result.notifyDone();
             }
@@ -1059,7 +1115,7 @@ public class CacheImpl<K, V> extends CacheSupport<K, V> implements AdvancedCache
          public Boolean call() throws Exception {
             try {
                associateImplicitTransactionWithCurrentThread(ctx);
-               return replaceInternal(key, oldValue, newValue, lifespan, lifespanUnit, maxIdle, maxIdleUnit, explicitFlags, ctx);
+               return replaceInternal(key, oldValue, newValue, lifespan, lifespanUnit, maxIdle, maxIdleUnit, explicitFlags, ctx, null);
             } finally {
                result.notifyDone();
             }
@@ -1232,6 +1288,61 @@ public class CacheImpl<K, V> extends CacheSupport<K, V> implements AdvancedCache
    public AdvancedCache<K, V> with(ClassLoader classLoader) {
       return new DecoratedCache<K, V>(this, classLoader);
    }
+
+   @Override
+   public V put(K key, V value, Metadata metadata) {
+      // TODO: This is temporary, as it gets refined, entire metadata object will be passed down the stack
+      TimeUnit lifespanUnit = metadata.lifespanUnit();
+      TimeUnit maxIdleUnit = metadata.maxIdleUnit();
+      long lifespan = metadata.lifespan();
+      long maxIdleTime = metadata.maxIdle();
+      EntryVersion version = metadata.version();
+      if (version == null) {
+         if (lifespanUnit != null && maxIdleUnit != null)
+            return put(key, value, lifespan, lifespanUnit, maxIdleTime, maxIdleUnit);
+         else if (lifespanUnit != null)
+            return put(key, value, lifespan, lifespanUnit);
+         else
+            return put(key, value);
+      } else {
+         if (lifespanUnit != null && maxIdleUnit != null)
+            return put(key, value, lifespan, lifespanUnit,
+                  maxIdleTime, maxIdleUnit, null, null, version);
+         else if (lifespanUnit != null)
+            return put(key, value, lifespan, lifespanUnit,
+                  defaultMaxIdleTime, MILLISECONDS, null, null, version);
+         else
+            return put(key, value, defaultLifespan, MILLISECONDS,
+                  defaultMaxIdleTime, MILLISECONDS, null, null, version);
+      }
+   }
+
+   @Override
+   public boolean replace(K key, V oldValue, V value, Metadata metadata) {
+      // TODO: This is temporary, as it gets refined, entire metadata object will be passed down the stack
+      TimeUnit lifespanUnit = metadata.lifespanUnit();
+      TimeUnit maxIdleUnit = metadata.maxIdleUnit();
+      long lifespan = metadata.lifespan();
+      long maxIdleTime = metadata.maxIdle();
+      EntryVersion version = metadata.version();
+      if (version == null) {
+         if (lifespanUnit != null && maxIdleUnit != null)
+            return replace(key, oldValue, value, lifespan, lifespanUnit, maxIdleTime, maxIdleUnit);
+         else if (lifespanUnit != null)
+            return replace(key, oldValue, value, lifespan, lifespanUnit);
+         else
+            return replace(key, oldValue, value);
+      } else {
+         if (lifespanUnit != null && maxIdleUnit != null)
+            return replace(key, oldValue, value, lifespan, lifespanUnit,
+                  maxIdleTime, maxIdleUnit, null, null, version);
+         else if (lifespanUnit != null)
+            return replace(key, oldValue, value, lifespan, lifespanUnit,
+                  defaultMaxIdleTime, MILLISECONDS, null, null, version);
+         else
+            return replace(key, oldValue, value, defaultLifespan, MILLISECONDS,
+                  defaultMaxIdleTime, MILLISECONDS, null, null, version);
+      }   }
 
    @Override
    protected void set(K key, V value) {

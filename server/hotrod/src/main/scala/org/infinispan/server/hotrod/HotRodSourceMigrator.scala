@@ -26,14 +26,15 @@
 
 package org.infinispan.server.hotrod
 
-import org.infinispan.server.core.CacheValue
 import org.infinispan.Cache
 import org.infinispan.distexec.{DistributedCallable, DefaultExecutorService}
 import org.infinispan.marshall.jboss.GenericJBossMarshaller
 import org.infinispan.upgrade.SourceMigrator
 import org.infinispan.tasks.GlobalKeySetTask
+import org.infinispan.EmbeddedMetadata.Builder
+import org.infinispan.container.versioning.NumericVersion
 
-class HotRodSourceMigrator(cache: Cache[Array[Byte], CacheValue]) extends SourceMigrator {
+class HotRodSourceMigrator(cache: Cache[Array[Byte], Array[Byte]]) extends SourceMigrator {
    val KNOWN_KEY = "___MigrationManager_HotRod_KnownKeys___"
    val MARSHALLER = new GenericJBossMarshaller // TODO: Hard coded!  Yuck!  Assumes the Synchronizer service will use the same marshaller.  Doesn't matter what actual clients use to store/retrieve data.
 
@@ -58,7 +59,7 @@ class HotRodSourceMigrator(cache: Cache[Array[Byte], CacheValue]) extends Source
 
       // we cannot store the Set as it is; it will break if attempting to be read via Hot Rod.  This should be wrapped
       // in a CacheValue.
-      cache.put(bak, new CacheValue(MARSHALLER.objectToByteBuffer(keys), 1))
+      val metadata = new Builder().version(new NumericVersion(1)).build()
+      cache.getAdvancedCache.put(bak, MARSHALLER.objectToByteBuffer(keys), metadata)
    }
 }
-

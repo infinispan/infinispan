@@ -47,7 +47,7 @@ public class BulkGetKeysDistTest extends BaseBulkGetKeysTest {
 	@Override
 	protected ConfigurationBuilder clusterConfig() {
 		return hotRodCacheConfiguration(getDefaultClusteredCacheConfig(
-				CacheMode.DIST_SYNC, true));
+				CacheMode.DIST_SYNC, false));
 	}
 	
 	public void testDistribution() {

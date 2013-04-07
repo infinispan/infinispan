@@ -58,7 +58,7 @@ public class HotRodUpgradeSynchronizerTest extends AbstractInfinispanTest {
 
    @BeforeClass
    public void setup() throws Exception {
-      ConfigurationBuilder serverBuilder = TestCacheManagerFactory.getDefaultCacheConfiguration(true);
+      ConfigurationBuilder serverBuilder = TestCacheManagerFactory.getDefaultCacheConfiguration(false);
       sourceContainer = TestCacheManagerFactory
             .createCacheManager(hotRodCacheConfiguration(serverBuilder));
       sourceServerCache = sourceContainer.getCache();

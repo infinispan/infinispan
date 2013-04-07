@@ -41,6 +41,7 @@ import org.infinispan.loaders.remote.wrapper.EntryWrapper;
 import org.infinispan.marshall.Marshaller;
 import org.infinispan.marshall.StreamingMarshaller;
 import org.infinispan.marshall.jboss.GenericJBossMarshaller;
+import org.infinispan.server.core.ServerEntryVersion;
 import org.infinispan.util.logging.LogFactory;
 
 import java.io.IOException;
@@ -75,7 +76,6 @@ public class RemoteCacheStore extends AbstractCacheStore {
    private volatile RemoteCacheStoreConfig config;
    private volatile RemoteCacheManager remoteCacheManager;
    private volatile RemoteCache<Object, Object> remoteCache;
-   private EntryWrapper<?, ?> entryWrapper;
 
    private InternalEntryFactory iceFactory;
    private static final String LIFESPAN = "lifespan";
@@ -86,7 +86,9 @@ public class RemoteCacheStore extends AbstractCacheStore {
       if (config.isRawValues()) {
          MetadataValue<?> value = remoteCache.getWithMetadata(key);
          if (value != null)
-            return iceFactory.create(entryWrapper.wrapKey(key), entryWrapper.wrapValue(value), null, value.getCreated(), TimeUnit.SECONDS.toMillis(value.getLifespan()), value.getLastUsed(), TimeUnit.SECONDS.toMillis(value.getMaxIdle()));
+            return iceFactory.create(key, value.getValue(), new ServerEntryVersion(value.getVersion()),
+                  value.getCreated(), TimeUnit.SECONDS.toMillis(value.getLifespan()),
+                  value.getLastUsed(), TimeUnit.SECONDS.toMillis(value.getMaxIdle()));
          else
             return null;
       } else {
@@ -189,7 +191,6 @@ public class RemoteCacheStore extends AbstractCacheStore {
       if (config.isRawValues() && iceFactory == null) {
          iceFactory = cache.getAdvancedCache().getComponentRegistry().getComponent(InternalEntryFactory.class);
       }
-      this.entryWrapper = config.getEntryWrapper();
    }
 
    @Override

@@ -32,6 +32,8 @@ import org.infinispan.util.logging.LogFactory;
 
 import java.util.Set;
 
+import static org.infinispan.util.Util.toStr;
+
 /**
  * Implements functionality defined by {@link org.infinispan.Cache#get(Object)} and
  * {@link org.infinispan.Cache#containsKey(Object)} operations
@@ -75,7 +77,7 @@ public class GetKeyValueCommand extends AbstractDataCommand {
       }
       final Object value = entry.getValue();
       if (trace) {
-         log.tracef("Found value %s", value);
+         log.tracef("Found value %s", toStr(value));
       }
       return value;
    }

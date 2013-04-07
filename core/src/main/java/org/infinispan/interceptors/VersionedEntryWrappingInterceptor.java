@@ -73,7 +73,7 @@ public class VersionedEntryWrappingInterceptor extends EntryWrappingInterceptor 
       if (command.isOnePhaseCommit()) ctx.getCacheTransaction().setUpdatedEntryVersions(((VersionedPrepareCommand) command).getVersionsSeen());
 
       if (newVersionData != null) retval = newVersionData;
-      if (command.isOnePhaseCommit()) commitContextEntries(ctx, null);
+      if (command.isOnePhaseCommit()) commitContextEntries(ctx, null, null);
       return retval;
    }
 
@@ -87,14 +87,16 @@ public class VersionedEntryWrappingInterceptor extends EntryWrappingInterceptor 
       } finally {
          if (!ctx.isOriginLocal())
             ctx.getCacheTransaction().setUpdatedEntryVersions(((VersionedCommitCommand) command).getUpdatedVersions());
-         commitContextEntries(ctx, null);
+         commitContextEntries(ctx, null, null);
       }
    }
 
    @Override
-   protected void commitContextEntry(CacheEntry entry, InvocationContext ctx, FlagAffectedCommand command) {
+   protected void commitContextEntry(CacheEntry entry, InvocationContext ctx, FlagAffectedCommand command, EntryVersion userProvidedVersion) {
       if (ctx.isInTxScope() && !isFromStateTransfer(ctx)) {
-         EntryVersion version = ((TxInvocationContext) ctx).getCacheTransaction().getUpdatedEntryVersions().get(entry.getKey());
+         EntryVersion version = userProvidedVersion == null
+               ? ((TxInvocationContext) ctx).getCacheTransaction().getUpdatedEntryVersions().get(entry.getKey())
+               : userProvidedVersion;
          cdl.commitEntry(entry, version, command, ctx);
       } else {
          // This could be a state transfer call!
