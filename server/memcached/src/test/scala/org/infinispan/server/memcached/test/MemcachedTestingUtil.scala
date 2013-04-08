@@ -30,10 +30,11 @@ import org.infinispan.manager.EmbeddedCacheManager
 import java.util.Properties
 import org.infinispan.server.core.Main._
 import java.util
+import org.infinispan.server.memcached.configuration.MemcachedServerConfigurationBuilder
 
 /**
  * Utils for Memcached tests.
- * 
+ *
  * @author Galder Zamarreño
  * @since 4.1
  */
@@ -53,15 +54,8 @@ object MemcachedTestingUtil {
 
    def startMemcachedTextServer(cacheManager: EmbeddedCacheManager, port: Int): MemcachedServer = {
       val server = new MemcachedServer
-      server.start(getProperties(host, port), cacheManager)
+      server.start(new MemcachedServerConfigurationBuilder().host(host).port(port).build(), cacheManager)
       server
-   }
-
-   private def getProperties(host: String, port: Int): Properties = {
-      val properties = new Properties
-      properties.setProperty(PROP_KEY_HOST, host)
-      properties.setProperty(PROP_KEY_PORT, port.toString)
-      properties
    }
 
    def startMemcachedTextServer(cacheManager: EmbeddedCacheManager, cacheName: String): MemcachedServer = {
@@ -79,7 +73,7 @@ object MemcachedTestingUtil {
 
          override def startDefaultCache = getCacheManager.getCache(cacheName)
       }
-      server.start(getProperties(host, port), cacheManager)
+      server.start(new MemcachedServerConfigurationBuilder().host(host).port(port).build(), cacheManager)
       server
    }
 

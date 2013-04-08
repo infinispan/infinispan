@@ -22,16 +22,16 @@
  */
 package org.infinispan.client.hotrod;
 
+import org.infinispan.client.hotrod.configuration.ConfigurationBuilder;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.server.hotrod.HotRodServer;
+import org.infinispan.server.hotrod.configuration.HotRodServerConfigurationBuilder;
 import org.infinispan.test.SingleCacheManagerTest;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.Test;
-
-import java.util.Properties;
 
 import static org.infinispan.client.hotrod.test.HotRodClientTestingUtil.killRemoteCacheManager;
 import static org.infinispan.client.hotrod.test.HotRodClientTestingUtil.killServers;
@@ -45,7 +45,7 @@ public class ServerRestartTest extends SingleCacheManagerTest {
 
    private static final Log log = LogFactory.getLog(HotRodIntegrationTest.class);
 
-   private RemoteCache defaultRemote;
+   private RemoteCache<String, String> defaultRemote;
    private RemoteCacheManager remoteCacheManager;
 
    protected HotRodServer hotrodServer;
@@ -61,10 +61,9 @@ public class ServerRestartTest extends SingleCacheManagerTest {
       hotrodServer = TestHelper.startHotRodServer(cacheManager);
       log.info("Started server on port: " + hotrodServer.getPort());
 
-      Properties config = new Properties();
-      config.put("infinispan.client.hotrod.server_list", "127.0.0.1:" + hotrodServer.getPort());
-      config.put("timeBetweenEvictionRunsMillis", "2000");
-      remoteCacheManager = new RemoteCacheManager(config);
+      ConfigurationBuilder builder = new ConfigurationBuilder();
+      builder.addServer().host("127.0.0.1").port(hotrodServer.getPort()).connectionPool().timeBetweenEvictionRuns(2000);
+      remoteCacheManager = new RemoteCacheManager(builder.build());
       defaultRemote = remoteCacheManager.getCache();
    }
 
@@ -81,16 +80,9 @@ public class ServerRestartTest extends SingleCacheManagerTest {
       int port = hotrodServer.getPort();
       hotrodServer.stop();
 
-      Properties properties = new Properties();
-      properties.setProperty("infinispan.server.host", "localhost");
-      properties.setProperty("infinispan.server.port", Integer.toString(port));
-      properties.setProperty("infinispan.server.master_threads", "2");
-      properties.setProperty("infinispan.server.worker_threads", "2");
-      properties.setProperty("infinispan.server.idle_timeout", "20000");
-      properties.setProperty("infinispan.server.tcp_no_delay", "true");
-      properties.setProperty("infinispan.server.send_buf_size", "15000");
-      properties.setProperty("infinispan.server.recv_buf_size", "25000");
-      hotrodServer.start(properties, cacheManager);
+      HotRodServerConfigurationBuilder builder = new HotRodServerConfigurationBuilder();
+      builder.host("127.0.0.1").port(port).workerThreads(2).idleTimeout(20000).tcpNoDelay(true).sendBufSize(15000).recvBufSize(25000);
+      hotrodServer.start(builder.build(), cacheManager);
 
       Thread.sleep(3000);
 

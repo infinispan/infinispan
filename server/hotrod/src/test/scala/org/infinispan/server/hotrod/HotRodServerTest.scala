@@ -39,7 +39,7 @@ class HotRodServerTest {
    def testValidateProtocolServerNullProperties {
       Stoppable.useCacheManager(TestCacheManagerFactory.createCacheManager()) { cm =>
          Stoppable.useServer(new HotRodServer) { server =>
-            server.start(null, cm)
+            server.startWithProperties(null, cm)
             assertEquals(server.getHost, "127.0.0.1")
             assertEquals(server.getPort, 11222)
          }
