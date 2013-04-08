@@ -31,6 +31,8 @@ import java.lang.reflect.Method
 import org.infinispan.util.TypedProperties
 import test.Stoppable
 import org.infinispan.test.fwk.TestCacheManagerFactory
+import org.infinispan.server.core.configuration.MockServerConfigurationBuilder
+import org.infinispan.server.core.configuration.MockServerConfiguration
 
 /**
  * Abstract protocol server test.
@@ -41,40 +43,28 @@ import org.infinispan.test.fwk.TestCacheManagerFactory
 @Test(groups = Array("functional"), testName = "server.core.AbstractProtocolServerTest")
 class AbstractProtocolServerTest {
 
-   def testValidateNegativeMasterThreads() {
-      val p = new Properties
-      p.setProperty(PROP_KEY_MASTER_THREADS, "-1")
-      expectIllegalArgument(p, createServer)
-   }
-
    def testValidateNegativeWorkerThreads() {
-      val p = new Properties
-      p.setProperty(PROP_KEY_WORKER_THREADS, "-1")
-      expectIllegalArgument(p, createServer)
+      val b = new MockServerConfigurationBuilder
+      b.workerThreads(-1);
+      expectIllegalArgument(b, createServer)
    }
 
    def testValidateNegativeIdleTimeout() {
-      val p = new Properties
-      p.setProperty(PROP_KEY_IDLE_TIMEOUT, "-1")
-      expectIllegalArgument(p, createServer)
-   }
-
-   def testValidateIllegalTcpNoDelay() {
-      val p = new Properties
-      p.setProperty(PROP_KEY_TCP_NO_DELAY, "blah")
-      expectIllegalArgument(p, createServer)
+      val b = new MockServerConfigurationBuilder
+      b.idleTimeout(-2);
+      expectIllegalArgument(b, createServer)
    }
 
    def testValidateNegativeSendBufSize() {
-      val p = new Properties
-      p.setProperty(PROP_KEY_SEND_BUF_SIZE, "-1")
-      expectIllegalArgument(p, createServer)
+      val b = new MockServerConfigurationBuilder
+      b.sendBufSize(-1);
+      expectIllegalArgument(b, createServer)
    }
 
    def testValidateNegativeRecvBufSize() {
-      val p = new Properties
-      p.setProperty(PROP_KEY_RECV_BUF_SIZE, "-1")
-      expectIllegalArgument(p, createServer)
+      val b = new MockServerConfigurationBuilder
+      b.recvBufSize(-1);
+      expectIllegalArgument(b, createServer)
    }
 
    def testHostPropertySubstitution(m: Method) {
@@ -83,7 +73,7 @@ class AbstractProtocolServerTest {
       p.setProperty(PROP_KEY_HOST, host)
       Stoppable.useServer(createServer) { server =>
          Stoppable.useCacheManager(TestCacheManagerFactory.createCacheManager) { cm =>
-            server.start(p, cm)
+            server.startWithProperties(p, cm)
             assertEquals(server.getHost, host)
          }
 
@@ -91,7 +81,7 @@ class AbstractProtocolServerTest {
          p = new Properties
          p.setProperty(PROP_KEY_HOST, host)
          Stoppable.useCacheManager(TestCacheManagerFactory.createCacheManager) { cm =>
-            server.start(p, cm)
+            server.startWithProperties(p, cm)
             assertEquals(server.getHost, "5.6.7.8")
          }
 
@@ -100,7 +90,7 @@ class AbstractProtocolServerTest {
          p = new Properties
          p.setProperty(PROP_KEY_HOST, host)
          Stoppable.useCacheManager(TestCacheManagerFactory.createCacheManager) { cm =>
-            server.start(p, cm)
+            server.startWithProperties(p, cm)
             assertEquals(server.getHost, "13.14.15.16")
          }
 
@@ -108,7 +98,7 @@ class AbstractProtocolServerTest {
          p = new Properties
          p.setProperty(PROP_KEY_HOST, host)
          Stoppable.useCacheManager(TestCacheManagerFactory.createCacheManager) { cm =>
-            server.start(p, cm)
+            server.startWithProperties(p, cm)
             assertEquals(server.getHost, host)
          }
 
@@ -117,7 +107,7 @@ class AbstractProtocolServerTest {
          p = new Properties
          p.setProperty(PROP_KEY_HOST, host)
          Stoppable.useCacheManager(TestCacheManagerFactory.createCacheManager) { cm =>
-            server.start(p, cm)
+            server.startWithProperties(p, cm)
             assertEquals(server.getHost, "17.18.19.20")
          }
       }
@@ -129,7 +119,7 @@ class AbstractProtocolServerTest {
       p.setProperty(PROP_KEY_PORT, port)
       Stoppable.useServer(createServer) { server =>
          Stoppable.useCacheManager(TestCacheManagerFactory.createCacheManager) { cm =>
-            server.start(p, cm)
+            server.startWithProperties(p, cm)
             assertEquals(server.getPort, port.toInt)
          }
 
@@ -137,7 +127,7 @@ class AbstractProtocolServerTest {
          p = new Properties
          p.setProperty(PROP_KEY_PORT, port)
          Stoppable.useCacheManager(TestCacheManagerFactory.createCacheManager) { cm =>
-            server.start(p, cm)
+            server.startWithProperties(p, cm)
             assertEquals(server.getPort, 567)
          }
 
@@ -146,7 +136,7 @@ class AbstractProtocolServerTest {
          p = new Properties
          p.setProperty(PROP_KEY_PORT, port)
          Stoppable.useCacheManager(TestCacheManagerFactory.createCacheManager) { cm =>
-            server.start(p, cm)
+            server.startWithProperties(p, cm)
             assertEquals(server.getPort, 234)
          }
 
@@ -154,7 +144,7 @@ class AbstractProtocolServerTest {
          p = new Properties
          p.setProperty(PROP_KEY_PORT, port)
          Stoppable.useCacheManager(TestCacheManagerFactory.createCacheManager) { cm =>
-            server.start(p, cm)
+            server.startWithProperties(p, cm)
             assertEquals(server.getPort, 12345)
          }
 
@@ -163,7 +153,7 @@ class AbstractProtocolServerTest {
          p = new Properties
          p.setProperty(PROP_KEY_PORT, port)
          Stoppable.useCacheManager(TestCacheManagerFactory.createCacheManager) { cm =>
-            server.start(p, cm)
+            server.startWithProperties(p, cm)
             assertEquals(server.getPort, 5567)
          }
       }
@@ -175,7 +165,7 @@ class AbstractProtocolServerTest {
       p.setProperty(PROP_KEY_TCP_NO_DELAY, tcpNoDelay)
       Stoppable.useServer(createServer) { server =>
          Stoppable.useCacheManager(TestCacheManagerFactory.createCacheManager) { cm =>
-            server.start(p, cm)
+            server.startWithProperties(p, cm)
             assertEquals(server.asInstanceOf[MockProtocolServer]
                     .tcpNoDelay, tcpNoDelay.toBoolean)
          }
@@ -184,7 +174,7 @@ class AbstractProtocolServerTest {
          p = new Properties
          p.setProperty(PROP_KEY_TCP_NO_DELAY, tcpNoDelay)
          Stoppable.useCacheManager(TestCacheManagerFactory.createCacheManager) { cm =>
-            server.start(p, cm)
+            server.startWithProperties(p, cm)
             assertEquals(server.asInstanceOf[MockProtocolServer].tcpNoDelay, false)
          }
 
@@ -193,7 +183,7 @@ class AbstractProtocolServerTest {
          p = new Properties
          p.setProperty(PROP_KEY_TCP_NO_DELAY, tcpNoDelay)
          Stoppable.useCacheManager(TestCacheManagerFactory.createCacheManager) { cm =>
-            server.start(p, cm)
+            server.startWithProperties(p, cm)
             assertEquals(server.asInstanceOf[MockProtocolServer].tcpNoDelay, false)
          }
 
@@ -201,7 +191,7 @@ class AbstractProtocolServerTest {
          p = new Properties
          p.setProperty(PROP_KEY_TCP_NO_DELAY, tcpNoDelay)
          Stoppable.useCacheManager(TestCacheManagerFactory.createCacheManager) { cm =>
-            server.start(p, cm)
+            server.startWithProperties(p, cm)
             // Boolean.parseBoolean() returning false to anything other than true, no exception thrown
             assertEquals(server.asInstanceOf[MockProtocolServer].tcpNoDelay, false)
          }
@@ -211,16 +201,16 @@ class AbstractProtocolServerTest {
          p = new Properties
          p.setProperty(PROP_KEY_PORT, tcpNoDelay)
          Stoppable.useCacheManager(TestCacheManagerFactory.createCacheManager) { cm =>
-            server.start(p, cm)
+            server.startWithProperties(p, cm)
             assertEquals(server.asInstanceOf[MockProtocolServer].tcpNoDelay, true)
          }
       }
    }
 
-   private def expectIllegalArgument(p: Properties, server: ProtocolServer) {
+   private def expectIllegalArgument(builder: MockServerConfigurationBuilder, server: MockProtocolServer) {
       try {
          Stoppable.useCacheManager(TestCacheManagerFactory.createCacheManager) { cm =>
-            server.start(p, cm)
+            server.start(builder.build(), cm)
          }
       } catch {
          case i: IllegalArgumentException => // expected
@@ -232,19 +222,25 @@ class AbstractProtocolServerTest {
    private def createServer : MockProtocolServer = new MockProtocolServer
 
    class MockProtocolServer extends AbstractProtocolServer("Mock") {
+      type SuitableConfiguration = MockServerConfiguration
+
       var tcpNoDelay: Boolean = _
 
-      override def start(properties: Properties, cacheManager: EmbeddedCacheManager) {
-         super.start(properties, cacheManager, 12345)
+      override def start(configuration: MockServerConfiguration, cacheManager: EmbeddedCacheManager) {
+         super.start(configuration, cacheManager)
+      }
+
+      override def startWithProperties(properties: Properties, cacheManager: EmbeddedCacheManager) {
+         val builder = new MockServerConfigurationBuilder
+         super.start(builder.withProperties(properties).build(), cacheManager)
       }
 
       override def getEncoder = null
 
       override def getDecoder = null
 
-      override def startTransport(idleTimeout: Int, tcpNoDelay: Boolean,
-            sendBufSize: Int, recvBufSize: Int, typedProps: TypedProperties) {
-         this.tcpNoDelay = tcpNoDelay
+      override def startTransport {
+         this.tcpNoDelay = configuration.tcpNoDelay
       }
    }
 

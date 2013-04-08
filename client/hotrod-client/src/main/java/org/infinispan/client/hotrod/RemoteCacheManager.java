@@ -25,6 +25,7 @@ package org.infinispan.client.hotrod;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.URL;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Properties;
@@ -49,6 +50,7 @@ import org.infinispan.executors.ExecutorFactory;
 import org.infinispan.marshall.Marshaller;
 import org.infinispan.util.FileLookupFactory;
 import org.infinispan.util.SysPropertyActions;
+import org.infinispan.util.TypedProperties;
 import org.infinispan.util.Util;
 
 /**
@@ -311,6 +313,12 @@ public class RemoteCacheManager implements BasicCacheContainer {
       Properties properties = new Properties();
       if (configuration.asyncExecutorFactory().factoryClass() != null) {
          properties.setProperty(ConfigurationProperties.ASYNC_EXECUTOR_FACTORY, configuration.asyncExecutorFactory().factoryClass().getName());
+         TypedProperties aefProps = configuration.asyncExecutorFactory().properties();
+         for(String key : Arrays.asList(ConfigurationProperties.DEFAULT_EXECUTOR_FACTORY_POOL_SIZE, ConfigurationProperties.DEFAULT_EXECUTOR_FACTORY_QUEUE_SIZE)) {
+            if (aefProps.containsKey(key)) {
+               properties.setProperty(key, aefProps.getProperty(key));
+            }
+         }
       }
       properties.setProperty(ConfigurationProperties.REQUEST_BALANCING_STRATEGY, configuration.balancingStrategy().getName());
       properties.setProperty(ConfigurationProperties.CONNECT_TIMEOUT, Integer.toString(configuration.connectionTimeout()));

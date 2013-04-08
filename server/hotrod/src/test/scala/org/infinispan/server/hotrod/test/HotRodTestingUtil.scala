@@ -45,6 +45,8 @@ import org.infinispan.distribution.ch.ConsistentHash
 import scala.collection.JavaConversions._
 import org.infinispan.test.TestingUtil
 import org.infinispan.statetransfer.StateTransferManager
+import org.infinispan.server.hotrod.configuration.HotRodServerConfigurationBuilder
+import org.infinispan.server.hotrod.configuration.HotRodServerConfiguration
 
 /**
  * Test utils for Hot Rod tests.
@@ -81,59 +83,41 @@ object HotRodTestingUtil extends Log {
 
    def startHotRodServer(manager: EmbeddedCacheManager, port: Int, idleTimeout: Int,
                          proxyHost: String, proxyPort: Int, delay: Long): HotRodServer = {
-      val properties = new Properties
-      properties.setProperty(PROP_KEY_IDLE_TIMEOUT, idleTimeout.toString)
-      properties.setProperty(PROP_KEY_PROXY_HOST, proxyHost)
-      properties.setProperty(PROP_KEY_PROXY_PORT, proxyPort.toString)
-      startHotRodServer(manager, port, delay, properties)
+      val builder = new HotRodServerConfigurationBuilder
+      builder.proxyHost(proxyHost).proxyPort(proxyPort).idleTimeout(idleTimeout)
+      startHotRodServer(manager, port, delay, builder)
    }
 
-   def startHotRodServer(manager: EmbeddedCacheManager, port: Int, props: Properties): HotRodServer =
-      startHotRodServer(manager, port, 0, props)
+   def startHotRodServer(manager: EmbeddedCacheManager, port: Int, builder: HotRodServerConfigurationBuilder): HotRodServer =
+      startHotRodServer(manager, port, 0, builder)
 
-   def startHotRodServer(manager: EmbeddedCacheManager, port: Int, delay: Long, props: Properties): HotRodServer = {
+   def startHotRodServer(manager: EmbeddedCacheManager, port: Int, delay: Long, builder: HotRodServerConfigurationBuilder): HotRodServer = {
       info("Start server in port %d", port)
       val server = new HotRodServer {
-         override protected def createTopologyCacheConfig(typedProps: TypedProperties, distSyncTimeout: Long): ConfigurationBuilder = {
+         override protected def createTopologyCacheConfig(distSyncTimeout: Long): ConfigurationBuilder = {
             if (delay > 0)
                Thread.sleep(delay)
 
-            val cfg = super.createTopologyCacheConfig(typedProps, distSyncTimeout)
+            val cfg = super.createTopologyCacheConfig(distSyncTimeout)
             cfg.transaction().syncCommitPhase(false).syncRollbackPhase(false)
             cfg
          }
       }
-      props.setProperty(PROP_KEY_HOST, host)
-      props.setProperty(PROP_KEY_PORT, port.toString)
-
-      // Minimize the number of threads
-      props.setProperty(PROP_KEY_WORKER_THREADS, "2")
-      server.start(props, manager)
-
-
+      builder.host(host).port(port).workerThreads(2)
+      server.start(builder.build(), manager)
 
       server
    }
 
-   private def getProperties(host: String, port: Int, idleTimeout: Int, proxyHost: String, proxyPort: Int): Properties = {
-      val properties = new Properties
-      properties.setProperty(PROP_KEY_HOST, host)
-      properties.setProperty(PROP_KEY_PORT, port.toString)
-      properties.setProperty(PROP_KEY_IDLE_TIMEOUT, idleTimeout.toString)
-      properties.setProperty(PROP_KEY_PROXY_HOST, proxyHost)
-      properties.setProperty(PROP_KEY_PROXY_PORT, proxyPort.toString)
-      properties
-   }
-
    def startCrashingHotRodServer(manager: EmbeddedCacheManager, port: Int): HotRodServer = {
       val server = new HotRodServer {
-         override protected def createTopologyCacheConfig(typedProps: TypedProperties, distSyncTimeout: Long): ConfigurationBuilder = {
-            val cfg = super.createTopologyCacheConfig(typedProps, distSyncTimeout)
+         override protected def createTopologyCacheConfig(distSyncTimeout: Long): ConfigurationBuilder = {
+            val cfg = super.createTopologyCacheConfig(distSyncTimeout)
             cfg.transaction().syncCommitPhase(false).syncRollbackPhase(false)
             cfg
          }
       }
-      server.start(getProperties(host, port, 0, host, port), manager)
+      server.start(new HotRodServerConfigurationBuilder().proxyHost(host).proxyPort(port).host(host).port(port).idleTimeout(0).build(), manager)
       server
    }
 

@@ -37,18 +37,20 @@ import org.infinispan.Cache;
 import org.infinispan.manager.CacheContainer;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.server.core.AbstractProtocolServer;
+import org.infinispan.server.core.configuration.ProtocolServerConfiguration;
+import org.infinispan.server.websocket.configuration.WebSocketServerConfiguration;
+import org.infinispan.server.websocket.configuration.WebSocketServerConfigurationBuilder;
 import org.infinispan.server.websocket.handlers.GetHandler;
 import org.infinispan.server.websocket.handlers.NotifyHandler;
 import org.infinispan.server.websocket.handlers.PutHandler;
 import org.infinispan.server.websocket.handlers.RemoveHandler;
-import org.infinispan.util.TypedProperties;
 import org.infinispan.util.concurrent.ConcurrentMapFactory;
 import org.jboss.netty.bootstrap.ServerBootstrap;
+import org.jboss.netty.channel.Channel;
 import org.jboss.netty.channel.ChannelHandler;
 import org.jboss.netty.channel.ChannelPipeline;
 import org.jboss.netty.channel.ChannelPipelineFactory;
 import org.jboss.netty.channel.Channels;
-import org.jboss.netty.channel.Channel;
 import org.jboss.netty.channel.socket.nio.NioServerSocketChannelFactory;
 import org.jboss.netty.handler.codec.http.HttpChunkAggregator;
 import org.jboss.netty.handler.codec.http.HttpRequestDecoder;
@@ -66,6 +68,7 @@ public class WebSocketServer extends AbstractProtocolServer {
 
    private static String javascript;
    private Channel channel;
+   private WebSocketServerConfiguration configuration;
 
    public WebSocketServer() {
       super("WebSocketServerThread");
@@ -79,19 +82,28 @@ public class WebSocketServer extends AbstractProtocolServer {
       return null;
    }
 
-//   @Override
-   public void start(Properties p, EmbeddedCacheManager cacheManager) {
-      Properties properties = p == null ? new Properties() : p;
-      super.start(properties, cacheManager, 8181);
+   public void start(Object configuration, EmbeddedCacheManager cacheManager) {
+      // This method is here only because it is required by the scala typing
+   }
+
+   public void start(ProtocolServerConfiguration configuration, EmbeddedCacheManager cacheManager) {
+      this.configuration = (WebSocketServerConfiguration) configuration;
+      super.start(configuration, cacheManager);
+   }
+
+
+   public void startWithProperties(Properties p, EmbeddedCacheManager cacheManager) {
+      WebSocketServerConfigurationBuilder builder = new WebSocketServerConfigurationBuilder().withProperties(p);
+      super.start(builder.build(), cacheManager);
    }
 
    @Override
-   public void startTransport(int idleTimeout, boolean tcpNoDelay, int sendBufSize, int recvBufSize, TypedProperties typedProps) {
-      InetSocketAddress address = new InetSocketAddress(getHost(), getPort());
+   public void startTransport() {
+      InetSocketAddress address = new InetSocketAddress(configuration.host(), configuration.port());
       Executor masterExecutor = Executors.newCachedThreadPool();
       Executor workerExecutor = Executors.newCachedThreadPool();
 
-      NioServerSocketChannelFactory factory = new NioServerSocketChannelFactory(masterExecutor, workerExecutor, workerThreads());
+      NioServerSocketChannelFactory factory = new NioServerSocketChannelFactory(masterExecutor, workerExecutor, configuration.workerThreads());
 
       // Configure the server.
       ServerBootstrap bootstrap = new ServerBootstrap(factory);
@@ -100,9 +112,9 @@ public class WebSocketServer extends AbstractProtocolServer {
       bootstrap.setPipelineFactory(new WebSocketServerPipelineFactory(cacheManager()));
 
       // Bind and start to accept incoming connections.
-      bootstrap.setOption("child.tcpNoDelay", tcpNoDelay);
-      if (sendBufSize > 0) bootstrap.setOption("child.sendBufferSize", sendBufSize);
-      if (recvBufSize > 0) bootstrap.setOption("child.receiveBufferSize", recvBufSize);
+      bootstrap.setOption("child.tcpNoDelay", configuration.tcpNoDelay());
+      if (configuration.sendBufSize() > 0) bootstrap.setOption("child.sendBufferSize", configuration.sendBufSize());
+      if (configuration.recvBufSize() > 0) bootstrap.setOption("child.receiveBufferSize", configuration.recvBufSize());
 
       bootstrap.bind(address);
    }

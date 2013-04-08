@@ -34,6 +34,8 @@ import org.infinispan.config.{Configuration, GlobalConfiguration}
 import org.infinispan.manager.{EmbeddedCacheManager, CacheContainer, DefaultCacheManager}
 import org.infinispan.config.GlobalConfiguration.ShutdownHookBehavior
 import org.infinispan.util.logging.LogFactory
+import org.infinispan.server.core.configuration.ProtocolServerConfiguration
+import org.infinispan.server.core.configuration.ProtocolServerConfigurationBuilder
 
 /**
  * Main class for server startup.
@@ -42,7 +44,7 @@ import org.infinispan.util.logging.LogFactory
  * @since 4.1
  */
 object Main extends Log {
-   
+
    val PROP_KEY_PORT = "infinispan.server.port"
    val PROP_KEY_HOST = "infinispan.server.host"
    val PROP_KEY_MASTER_THREADS = "infinispan.server.master_threads"
@@ -77,7 +79,7 @@ object Main extends Log {
     * properties for defaults.
     */
    private val props: Properties = new TypedProperties(System.getProperties)
-   
+
    private var server: ProtocolServer = _
 
    private var cacheManager: EmbeddedCacheManager = _
@@ -121,14 +123,14 @@ object Main extends Log {
          System.err.println("ERROR: Please indicate protocol to run with -r parameter")
          showAndExit
       }
-      
+
       // TODO: move class name and protocol number to a resource file under the corresponding project
-      val clazz = protocol match {
+      val serverClazz = protocol match {
          case "memcached" => "org.infinispan.server.memcached.MemcachedServer"
          case "hotrod" => "org.infinispan.server.hotrod.HotRodServer"
          case "websocket" => "org.infinispan.server.websocket.WebSocketServer"
       }
-      server = Util.getInstance(clazz, Thread.currentThread().getContextClassLoader()).asInstanceOf[ProtocolServer]
+      server = Util.getInstance(serverClazz, Thread.currentThread().getContextClassLoader()).asInstanceOf[ProtocolServer]
 
       val configFile = props.getProperty(PROP_KEY_CACHE_CONFIG)
       cacheManager = instantiateCacheManager(configFile)
@@ -137,7 +139,7 @@ object Main extends Log {
       // issues with having the JGroups channel disconnected before it's removed itself from the topology view.
       cacheManager.getGlobalConfiguration.setShutdownHookBehavior(ShutdownHookBehavior.DONT_REGISTER)
       addShutdownHook(new ShutdownHook(server, cacheManager))
-      server.start(props, cacheManager)
+      server.startWithProperties(props, cacheManager)
    }
 
    private def instantiateCacheManager(configFile: String): EmbeddedCacheManager = {
