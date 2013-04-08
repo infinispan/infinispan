@@ -169,29 +169,29 @@ public class QueryInterceptor extends CommandInterceptor {
    private void purgeAllIndexes(TransactionContext transactionContext) {
       transactionContext = transactionContext == null ? makeTransactionalEventContext() : transactionContext;
       for (Class c : this.knownClasses.keySet()) {
-         EntityIndexBinder binder = this.searchFactory.getIndexBindingForEntity(c);
-         if ( binder != null ) { //check as not all known classes are indexed
-            searchFactory.getWorker().performWork(new Work<Object>(c, (Serializable)null, WorkType.PURGE_ALL), transactionContext);
+         if (isIndexed(c)) {
+            performSearchWork(c, null, WorkType.PURGE_ALL, transactionContext);
          }
       }
    }
 
    // Method that will be called when data needs to be removed from Lucene.
    protected void removeFromIndexes(final Object value, final Object key, final TransactionContext transactionContext) {
-
-      // The key here is the String representation of the key that is stored in the cache.
-      // The key is going to be the documentID for Lucene.
-      // The object parameter is the actual value that needs to be removed from lucene.
-      if (value == null) throw new NullPointerException("Cannot handle a null value!");
-      searchFactory.getWorker().performWork(new Work<Object>(value, keyToString(key), WorkType.DELETE), transactionContext);
+      performSearchWork(value, keyToString(key), WorkType.DELETE, transactionContext);
    }
 
    protected void updateIndexes(Object value, Object key, TransactionContext transactionContext) {
-      // The key here is the String representation of the key that is stored in the cache.
-      // The key is going to be the documentID for Lucene.
-      // The object parameter is the actual value that needs to be removed from lucene.
+      performSearchWork(value, keyToString(key), WorkType.UPDATE, transactionContext);
+   }
+
+   private void performSearchWork(Object value, Serializable id, WorkType workType, TransactionContext transactionContext) {
       if (value == null) throw new NullPointerException("Cannot handle a null value!");
-      searchFactory.getWorker().performWork(new Work<Object>(value, keyToString(key), WorkType.UPDATE), transactionContext);
+      searchFactory.getWorker().performWork(new Work<Object>(value, id, workType), transactionContext);
+   }
+
+   private boolean isIndexed(Class c) {
+      EntityIndexBinder binder = this.searchFactory.getIndexBindingForEntity(c);
+      return binder != null;
    }
 
    private Object extractValue(Object wrappedValue) {
@@ -224,12 +224,7 @@ public class QueryInterceptor extends CommandInterceptor {
          Class[] array = toAdd.toArray(new Class[toAdd.size()]);
          searchFactory.addClasses(array);
          for (Class<?> type : toAdd) {
-            if (searchFactory.getIndexBindingForEntity(type) != null) {
-               knownClasses.put(type, Boolean.TRUE);
-            }
-            else {
-               knownClasses.put(type, Boolean.FALSE);
-            }
+            knownClasses.put(type, isIndexed(type));
          }
       } else {
          mutating.lock();
