@@ -198,6 +198,10 @@ public class EntryFactoryImpl implements EntryFactory {
       if(cacheEntry instanceof MVCCEntry){
          e = createWrappedDeltaEntry(key, (DeltaAware) cacheEntry.getValue(), cacheEntry);
       }
+      else if (cacheEntry instanceof InternalCacheEntry) {
+         cacheEntry = wrapInternalCacheEntryForPut(ctx, key, (InternalCacheEntry) cacheEntry);
+         e = createWrappedDeltaEntry(key, (DeltaAware) cacheEntry.getValue(), cacheEntry);
+      }
       else {
          e = createWrappedDeltaEntry(key, (DeltaAware) cacheEntry.getValue(), null);
       }
