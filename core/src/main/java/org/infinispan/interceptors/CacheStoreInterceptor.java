@@ -22,20 +22,17 @@
  */
 package org.infinispan.interceptors;
 
+import org.infinispan.atomic.AtomicHashMap;
 import org.infinispan.commands.AbstractVisitor;
 import org.infinispan.commands.FlagAffectedCommand;
 import org.infinispan.commands.tx.CommitCommand;
 import org.infinispan.commands.tx.PrepareCommand;
 import org.infinispan.commands.tx.RollbackCommand;
-import org.infinispan.commands.write.ClearCommand;
-import org.infinispan.commands.write.PutKeyValueCommand;
-import org.infinispan.commands.write.PutMapCommand;
-import org.infinispan.commands.write.RemoveCommand;
-import org.infinispan.commands.write.ReplaceCommand;
-import org.infinispan.commands.write.WriteCommand;
+import org.infinispan.commands.write.*;
 import org.infinispan.configuration.cache.LoadersConfiguration;
 import org.infinispan.container.InternalEntryFactory;
 import org.infinispan.container.entries.CacheEntry;
+import org.infinispan.container.entries.DeltaAwareCacheEntry;
 import org.infinispan.container.entries.InternalCacheEntry;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.context.impl.TxInvocationContext;
@@ -335,6 +332,27 @@ public class CacheStoreInterceptor extends JmxStatsCommandInterceptor {
       @Override
       public Object visitPutKeyValueCommand(InvocationContext ctx, PutKeyValueCommand command) throws Throwable {
          return visitSingleStore(ctx, command.getKey());
+      }
+
+      @Override
+      public Object visitApplyDeltaCommand(InvocationContext ctx, ApplyDeltaCommand command) throws Throwable {
+         if (!skipKey(command.getKey())) {
+            if (generateStatistics) putCount++;
+            CacheEntry entry = ctx.lookupEntry(command.getKey());
+            InternalCacheEntry ice;
+            if (entry instanceof InternalCacheEntry) {
+               ice = (InternalCacheEntry) entry;
+            } else if (entry instanceof DeltaAwareCacheEntry) {
+               AtomicHashMap<?,?> uncommittedChanges = ((DeltaAwareCacheEntry) entry).getUncommittedChages();
+               ice = entryFactory.create(entry.getKey(), uncommittedChanges, entry.getVersion(), entry.getLifespan(), entry.getMaxIdle());
+            } else {
+               ice = entryFactory.create(entry);
+            }
+
+            modifications.add(new Store(ice));
+            affectedKeys.add(command.getKey());
+         }
+         return null;
       }
 
       @Override

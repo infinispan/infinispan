@@ -24,15 +24,11 @@ package org.infinispan.interceptors;
 
 import org.infinispan.commands.FlagAffectedCommand;
 import org.infinispan.commands.read.GetKeyValueCommand;
-import org.infinispan.commands.write.InvalidateCommand;
-import org.infinispan.commands.write.PutKeyValueCommand;
-import org.infinispan.commands.write.RemoveCommand;
-import org.infinispan.commands.write.ReplaceCommand;
+import org.infinispan.commands.write.*;
 import org.infinispan.configuration.cache.CacheStoreConfiguration;
 import org.infinispan.container.EntryFactory;
 import org.infinispan.container.entries.CacheEntry;
 import org.infinispan.container.entries.InternalCacheEntry;
-import org.infinispan.container.entries.MVCCEntry;
 import org.infinispan.context.Flag;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.factories.annotations.Inject;
@@ -90,6 +86,17 @@ public class CacheLoaderInterceptor extends JmxStatsCommandInterceptor {
    @Start(priority = 15)
    protected void startInterceptor() {
       loader = clm.getCacheLoader();
+   }
+
+   @Override
+   public Object visitApplyDeltaCommand(InvocationContext ctx, ApplyDeltaCommand command) throws Throwable {
+      if (enabled) {
+         Object key;
+         if ((key = command.getKey()) != null) {
+            loadIfNeeded(ctx, key, false, command);
+         }
+      }
+      return invokeNextInterceptor(ctx, command);
    }
 
    @Override
@@ -178,8 +185,14 @@ public class CacheLoaderInterceptor extends JmxStatsCommandInterceptor {
       if (e == null || e.isNull() || e.getValue() == null) {
          InternalCacheEntry loaded = loader.load(key);
          if (loaded != null) {
-            MVCCEntry mvccEntry = entryFactory.wrapEntryForPut(ctx, key, loaded, false, cmd);
-            recordLoadedEntry(ctx, key, mvccEntry, loaded, cmd);
+            CacheEntry wrappedEntry;
+            if (cmd instanceof ApplyDeltaCommand) {
+               ctx.putLookedUpEntry(key, loaded);
+               wrappedEntry = entryFactory.wrapEntryForDelta(ctx, key, ((ApplyDeltaCommand)cmd).getDelta());
+            } else {
+               wrappedEntry = entryFactory.wrapEntryForPut(ctx, key, loaded, false, cmd);
+            }
+            recordLoadedEntry(ctx, key, wrappedEntry, loaded, cmd);
             return true;
          } else {
             return false;
@@ -201,8 +214,8 @@ public class CacheLoaderInterceptor extends JmxStatsCommandInterceptor {
     * @param entry       the appropriately locked entry in the caller's context
     * @param loadedEntry the internal entry loaded from the cache store.
     */
-   private MVCCEntry recordLoadedEntry(InvocationContext ctx, Object key,
-         MVCCEntry entry, InternalCacheEntry loadedEntry, FlagAffectedCommand cmd) throws Exception {
+   private void recordLoadedEntry(InvocationContext ctx, Object key,
+         CacheEntry entry, InternalCacheEntry loadedEntry, FlagAffectedCommand cmd) throws Exception {
       boolean entryExists = loadedEntry != null;
       if (log.isTraceEnabled()) {
          log.trace("Entry exists in loader? " + entryExists);
@@ -229,8 +242,6 @@ public class CacheLoaderInterceptor extends JmxStatsCommandInterceptor {
 
          sendNotification(key, value, false, ctx, cmd);
       }
-
-      return entry;
    }
 
    protected void sendNotification(Object key, Object value, boolean pre,
