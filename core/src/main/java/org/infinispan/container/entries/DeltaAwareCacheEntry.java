@@ -181,17 +181,20 @@ public class DeltaAwareCacheEntry implements CacheEntry, StateChangingEntry {
 
    @Override
    public final void commit(DataContainer container, EntryVersion version) {
-      // only do stuff if there are changes.
-      if (wrappedEntry != null) {
-         wrappedEntry.commit(container, version);
-      }
       if (value != null && !deltas.isEmpty()) {
          for (Delta delta : deltas) {
             delta.merge(value);
          }
          value.commit();
+         if (wrappedEntry != null) {
+            wrappedEntry.setChanged(true);
+         }
       }
       reset();
+      // only do stuff if there are changes.
+      if (wrappedEntry != null) {
+         wrappedEntry.commit(container, version);
+      }
    }
 
    private void reset() {
