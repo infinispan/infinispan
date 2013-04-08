@@ -36,9 +36,10 @@ import org.infinispan.distribution.ch.ReplicatedConsistentHash;
 import org.infinispan.interceptors.base.CommandInterceptor;
 import org.infinispan.remoting.responses.Response;
 import org.infinispan.remoting.responses.SuccessfulResponse;
-import org.infinispan.remoting.rpc.ResponseFilter;
 import org.infinispan.remoting.rpc.ResponseMode;
 import org.infinispan.remoting.rpc.RpcManager;
+import org.infinispan.remoting.rpc.RpcOptions;
+import org.infinispan.remoting.rpc.RpcOptionsBuilder;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.remoting.transport.Transport;
 import org.infinispan.statetransfer.StateTransferManager;
@@ -50,6 +51,7 @@ import org.mockito.stubbing.Answer;
 import org.testng.annotations.Test;
 
 import java.util.*;
+import java.util.concurrent.TimeUnit;
 
 import static org.junit.Assert.assertEquals;
 import static org.mockito.Matchers.*;
@@ -119,8 +121,8 @@ public class ReplicationInterceptorTest {
       replInterceptor.inject(rpcManager, null);
       replInterceptor.injectConfiguration(configuration);
 
-      when(rpcManager.invokeRemotely(any(Collection.class), any(ClusteredGetCommand.class), any(ResponseMode.class),
-            anyLong(), anyBoolean(), any(ResponseFilter.class), anyBoolean())).thenAnswer(new Answer<Map<Address, Response>>() {
+      when(rpcManager.invokeRemotely(any(Collection.class), any(ClusteredGetCommand.class), any(RpcOptions.class)))
+                 .thenAnswer(new Answer<Map<Address, Response>>() {
          @Override
          public Map<Address, Response> answer(InvocationOnMock invocation) {
             Collection<Address> recipients = (Collection<Address>) invocation.getArguments()[0];
@@ -135,6 +137,21 @@ public class ReplicationInterceptorTest {
             return Collections.emptyMap();
          }
       });
+
+      when(rpcManager.getRpcOptionsBuilder(any(ResponseMode.class)))
+            .thenAnswer(new Answer<RpcOptionsBuilder>() {
+               public RpcOptionsBuilder answer(InvocationOnMock invocation) {
+                  Object[] args = invocation.getArguments();
+                  return new RpcOptionsBuilder(10000, TimeUnit.MILLISECONDS, (ResponseMode) args[0], true);
+               }
+            });
+      when(rpcManager.getRpcOptionsBuilder(any(ResponseMode.class), anyBoolean()))
+            .thenAnswer(new Answer<RpcOptionsBuilder>() {
+               public RpcOptionsBuilder answer(InvocationOnMock invocation) {
+                  Object[] args = invocation.getArguments();
+                  return new RpcOptionsBuilder(10000, TimeUnit.MILLISECONDS, (ResponseMode) args[0], (Boolean) args[1]);
+               }
+            });
 
       InvocationContext ctx = mock(InvocationContext.class);
       when(ctx.isOriginLocal()).thenReturn(true);

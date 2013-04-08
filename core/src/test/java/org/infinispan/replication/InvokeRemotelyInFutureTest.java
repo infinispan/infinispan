@@ -63,7 +63,8 @@ public class InvokeRemotelyInFutureTest extends MultipleCacheManagersTest {
          }
       });
       CommandsFactory cf = cache1.getAdvancedCache().getComponentRegistry().getComponent(CommandsFactory.class);
-      cache1.getAdvancedCache().getRpcManager().invokeRemotelyInFuture(null, cf.buildPutKeyValueCommand("k","v", -1, -1, null), f);
+      cache1.getAdvancedCache().getRpcManager().invokeRemotelyInFuture(null, cf.buildPutKeyValueCommand("k","v", -1, -1, null),
+                                                                       cache1.getAdvancedCache().getRpcManager().getDefaultRpcOptions(true), f);
       TestingUtil.sleepThread(2000);
       assert futureDoneOk.get();   
    }

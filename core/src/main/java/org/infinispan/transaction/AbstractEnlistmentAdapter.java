@@ -93,7 +93,7 @@ public abstract class AbstractEnlistmentAdapter {
          final Collection<Address> owners = clusteringLogic.getOwners(localTransaction.getAffectedKeys());
          Collection<Address> commitNodes = localTransaction.getCommitNodes(owners, rpcManager.getTopologyId(), rpcManager.getMembers());
          log.tracef("About to invoke tx completion notification on commitNodes: %s", commitNodes);
-         rpcManager.invokeRemotely(commitNodes, command, false, true, false);
+         rpcManager.invokeRemotely(commitNodes, command, rpcManager.getDefaultRpcOptions(false, false));
       }
    }
 

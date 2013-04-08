@@ -47,6 +47,8 @@ import org.infinispan.remoting.responses.Response;
 import org.infinispan.remoting.responses.SuccessfulResponse;
 import org.infinispan.remoting.rpc.ResponseMode;
 import org.infinispan.remoting.rpc.RpcManager;
+import org.infinispan.remoting.rpc.RpcOptions;
+import org.infinispan.remoting.rpc.RpcOptionsBuilder;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.remoting.transport.Transport;
 import org.infinispan.topology.CacheTopology;
@@ -169,7 +171,8 @@ public class StateConsumerTest {
       when(rpcManager.getAddress()).thenReturn(new TestAddress(0));
       when(rpcManager.getTransport()).thenReturn(transport);
 
-      when(rpcManager.invokeRemotely(any(Collection.class), any(ReplicableCommand.class), any(ResponseMode.class), anyLong(), anyBoolean())).thenAnswer(new Answer<Map<Address, Response>>() {
+      when(rpcManager.invokeRemotely(any(Collection.class), any(ReplicableCommand.class), any(RpcOptions.class)))
+            .thenAnswer(new Answer<Map<Address, Response>>() {
          @Override
          public Map<Address, Response> answer(InvocationOnMock invocation) {
             Collection<Address> recipients = (Collection<Address>) invocation.getArguments()[0];
@@ -189,6 +192,13 @@ public class StateConsumerTest {
                return results;
             }
             return Collections.emptyMap();
+         }
+      });
+
+      when(rpcManager.getRpcOptionsBuilder(any(ResponseMode.class))).thenAnswer(new Answer<RpcOptionsBuilder>() {
+         public RpcOptionsBuilder answer(InvocationOnMock invocation) {
+            Object[] args = invocation.getArguments();
+            return new RpcOptionsBuilder(10000, TimeUnit.MILLISECONDS, (ResponseMode) args[0], true);
          }
       });
 

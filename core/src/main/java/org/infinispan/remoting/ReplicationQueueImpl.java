@@ -170,9 +170,10 @@ public class ReplicationQueueImpl implements ReplicationQueue {
             log.tracef("Flushing %s elements", toReplicateSize);
             MultipleRpcCommand multipleRpcCommand = commandsFactory.buildReplicateCommand(toReplicate);
             // send to all live caches in the cluster
+            //default rpc options
             rpcManager.invokeRemotely(null, multipleRpcCommand,
-                  ResponseMode.getAsyncResponseMode(configuration),
-                  configuration.clustering().sync().replTimeout(), false);
+                                      rpcManager.getRpcOptionsBuilder(ResponseMode.getAsyncResponseMode(configuration))
+                                            .skipReplicationQueue(true).build());
          } catch (Throwable t) {
             log.failedReplicatingQueue(toReplicate.size(), t);
          }

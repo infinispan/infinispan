@@ -35,6 +35,7 @@ import org.infinispan.remoting.responses.SelfDeliverFilter;
 import org.infinispan.remoting.rpc.ResponseFilter;
 import org.infinispan.remoting.rpc.ResponseMode;
 import org.infinispan.remoting.rpc.RpcManager;
+import org.infinispan.remoting.rpc.RpcOptionsBuilder;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.statetransfer.StateConsumer;
 import org.infinispan.transaction.LocalTransaction;
@@ -142,19 +143,21 @@ public abstract class BaseRpcInterceptor extends CommandInterceptor {
 
    private Map<Address, Response> internalTotalOrderPrepare(Collection<Address> recipients, PrepareCommand prepareCommand,
                                                             ResponseFilter responseFilter) {
-      if (defaultSynchronous && responseFilter == null) {
-         return rpcManager.invokeRemotely(recipients, prepareCommand, ResponseMode.SYNCHRONOUS_IGNORE_LEAVERS,
-                                          getReplicationTimeout(), true, getIgnoreExtraResponseFilter(recipients), true);
-      } else if (defaultSynchronous) {
-         return rpcManager.invokeRemotely(recipients, prepareCommand, ResponseMode.SYNCHRONOUS_IGNORE_LEAVERS,
-                                          getReplicationTimeout(), true, responseFilter, true);
+      if (defaultSynchronous) {
+         RpcOptionsBuilder builder = rpcManager.getRpcOptionsBuilder(ResponseMode.SYNCHRONOUS_IGNORE_LEAVERS, false);
+         if (responseFilter != null) {
+            builder.responseFilter(responseFilter);
+         } else {
+            builder.responseFilter(getIgnoreExtraResponseFilter(recipients));
+         }
+         builder.totalOrder(true);
+         return rpcManager.invokeRemotely(recipients, prepareCommand, builder.build());
       } else {
-         return rpcManager.invokeRemotely(recipients, prepareCommand, false, true);
+         RpcOptionsBuilder builder = rpcManager.getRpcOptionsBuilder(ResponseMode.getAsyncResponseMode(cacheConfiguration),
+                                                                     false);
+         builder.totalOrder(true);
+         return rpcManager.invokeRemotely(recipients, prepareCommand, builder.build());
       }
-   }
-
-   protected final long getReplicationTimeout() {
-      return cacheConfiguration.clustering().sync().replTimeout();
    }
 
    protected final boolean isSyncCommitPhase() {

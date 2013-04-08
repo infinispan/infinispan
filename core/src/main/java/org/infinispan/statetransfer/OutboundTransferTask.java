@@ -32,6 +32,7 @@ import org.infinispan.loaders.CacheLoaderManager;
 import org.infinispan.loaders.CacheStore;
 import org.infinispan.remoting.rpc.ResponseMode;
 import org.infinispan.remoting.rpc.RpcManager;
+import org.infinispan.remoting.rpc.RpcOptions;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.remoting.transport.jgroups.SuspectException;
 import org.infinispan.util.InfinispanCollections;
@@ -44,6 +45,7 @@ import java.util.*;
 import java.util.concurrent.CopyOnWriteArraySet;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.FutureTask;
+import java.util.concurrent.TimeUnit;
 
 /**
  * Outbound state transfer task. Pushes data segments to another cluster member on request. Instances of
@@ -95,6 +97,8 @@ public class OutboundTransferTask implements Runnable {
     */
    private FutureTask<Void> runnableFuture;
 
+   private final RpcOptions rpcOptions;
+
    public OutboundTransferTask(Address destination, Set<Integer> segments, int stateTransferChunkSize,
                                int topologyId, ConsistentHash readCh, StateProviderImpl stateProvider, DataContainer dataContainer,
                                CacheLoaderManager cacheLoaderManager, RpcManager rpcManager,
@@ -120,6 +124,9 @@ public class OutboundTransferTask implements Runnable {
       this.commandsFactory = commandsFactory;
       this.timeout = timeout;
       this.cacheName = cacheName;
+      //the rpc options does not change in runtime. re-use the same instance
+      this.rpcOptions = rpcManager.getRpcOptionsBuilder(ResponseMode.SYNCHRONOUS)
+            .timeout(timeout, TimeUnit.MILLISECONDS).build();
    }
 
    public void execute(ExecutorService executorService) {
@@ -254,7 +261,7 @@ public class OutboundTransferTask implements Runnable {
          StateResponseCommand cmd = commandsFactory.buildStateResponseCommand(rpcManager.getAddress(), topologyId, chunks);
          // send synchronously, in order. it is important that the last chunk is received last in order to correctly detect completion of the stream of chunks
          try {
-            rpcManager.invokeRemotely(Collections.singleton(destination), cmd, ResponseMode.SYNCHRONOUS, timeout, false, false);
+            rpcManager.invokeRemotely(Collections.singleton(destination), cmd, rpcOptions);
          } catch (SuspectException e) {
             log.errorf(e, "Node %s left cache %s: %s", destination, cacheName, e.getMessage());
             cancel();

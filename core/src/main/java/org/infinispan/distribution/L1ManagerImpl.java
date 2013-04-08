@@ -35,6 +35,7 @@ import org.infinispan.factories.annotations.Start;
 import org.infinispan.factories.annotations.Stop;
 import org.infinispan.remoting.rpc.ResponseMode;
 import org.infinispan.remoting.rpc.RpcManager;
+import org.infinispan.remoting.rpc.RpcOptions;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.util.InfinispanCollections;
 import org.infinispan.util.concurrent.AggregatingNotifyingFutureImpl;
@@ -68,7 +69,6 @@ public class L1ManagerImpl implements L1Manager {
    private RpcManager rpcManager;
    private CommandsFactory commandsFactory;
    private int threshold;
-   private long rpcTimeout;
    private long l1Lifespan;
    private ExecutorService asyncTransportExecutor;
 
@@ -77,6 +77,8 @@ public class L1ManagerImpl implements L1Manager {
    private ScheduledExecutorService scheduledExecutor;
    private ScheduledFuture<?> scheduledRequestorsCleanupTask;
 
+   private RpcOptions syncRpcOptions;
+   private RpcOptions syncIgnoreLeaversRpcOptions;
 
    public L1ManagerImpl() {
 	   requestors = ConcurrentMapFactory.makeConcurrentMap();
@@ -96,7 +98,6 @@ public class L1ManagerImpl implements L1Manager {
    @Start (priority = 3)
    public void start() {
       this.threshold = configuration.clustering().l1().invalidationThreshold();
-      this.rpcTimeout = configuration.clustering().sync().replTimeout();
       this.l1Lifespan = configuration.clustering().l1().lifespan();
       if (configuration.clustering().l1().cleanupTaskFrequency() > 0) {
          scheduledRequestorsCleanupTask = scheduledExecutor.scheduleAtFixedRate(new Runnable() {
@@ -109,6 +110,9 @@ public class L1ManagerImpl implements L1Manager {
       } else {
          log.warn("Not using an L1 invalidation reaper thread. This could lead to memory leaks as the requestors map may grow indefinitely!");
       }
+      syncRpcOptions = rpcManager.getRpcOptionsBuilder(ResponseMode.SYNCHRONOUS, false).build();
+      syncIgnoreLeaversRpcOptions = rpcManager.getRpcOptionsBuilder(ResponseMode.SYNCHRONOUS_IGNORE_LEAVERS, false)
+            .build();
    }
 
    @Stop (priority = 3)
@@ -176,15 +180,14 @@ public class L1ManagerImpl implements L1Manager {
             toExecute = new Runnable() {
                @Override
                public void run() {
-                  rpcManager.broadcastRpcCommand(rpcCommand, true, false);
+                  rpcManager.invokeRemotely(null, rpcCommand, rpcManager.getDefaultRpcOptions(true));
                }
             };
          } else {
             toExecute = new Runnable() {
                @Override
                public void run() {
-                  rpcManager.invokeRemotely(invalidationAddresses, rpcCommand,
-                                            ResponseMode.SYNCHRONOUS, rpcTimeout, true, false);
+                  rpcManager.invokeRemotely(invalidationAddresses, rpcCommand, syncRpcOptions);
                }
             };
          }
@@ -215,13 +218,13 @@ public class L1ManagerImpl implements L1Manager {
                   origin, false, InfinispanCollections.<Flag>emptySet(), keys);
             if (useNotifyingFuture) {
                NotifyingNotifiableFuture<Object> future = new AggregatingNotifyingFutureImpl(retval, 2);
-               rpcManager.broadcastRpcCommandInFuture(ic, future);
+               rpcManager.invokeRemotelyInFuture(null, ic, rpcManager.getDefaultRpcOptions(true), future);
                return future;
             } else {
                return asyncTransportExecutor.submit(new Callable<Object>() {
                   @Override
                   public Object call() throws Exception {
-                     rpcManager.broadcastRpcCommand(ic, true, false);
+                     rpcManager.invokeRemotely(null, ic, rpcManager.getDefaultRpcOptions(true));
                      return retval;
                   }
                });
@@ -234,13 +237,13 @@ public class L1ManagerImpl implements L1Manager {
             if (trace) log.tracef("Keys %s needs invalidation on %s", keys, invalidationAddresses);
             if (useNotifyingFuture) {
                NotifyingNotifiableFuture<Object> future = new AggregatingNotifyingFutureImpl(retval, 2);
-               rpcManager.invokeRemotelyInFuture(invalidationAddresses, rpc, true, future, rpcTimeout, true);
+               rpcManager.invokeRemotelyInFuture(invalidationAddresses, rpc, syncIgnoreLeaversRpcOptions, future);
                return future;
             } else {
                return asyncTransportExecutor.submit(new Callable<Object>() {
                   @Override
                   public Object call() throws Exception {
-                     rpcManager.invokeRemotely(invalidationAddresses, rpc, ResponseMode.SYNCHRONOUS, rpcTimeout, true, false);
+                     rpcManager.invokeRemotely(invalidationAddresses, rpc, syncRpcOptions);
                      return retval;
                   }
                });

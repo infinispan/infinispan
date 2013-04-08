@@ -387,7 +387,7 @@ public class MapReduceTask<KIn, VIn, KOut, VOut> {
             }
          }
       });
-      rpc.invokeRemotely(cache.getRpcManager().getMembers(), ccc, true, false, false);
+      rpc.invokeRemotely(cache.getRpcManager().getMembers(), ccc, rpc.getDefaultRpcOptions(true));
    }
 
    protected Set<KOut> executeMapPhase(boolean useCompositeKeys) throws InterruptedException,
@@ -768,8 +768,7 @@ public class MapReduceTask<KIn, VIn, KOut, VOut> {
                         log.couldNotExecuteCancellationLocally(e.getLocalizedMessage());
                      }
                   } else {
-                     rpc.invokeRemotely(Collections.singletonList(task.getExecutionTarget()), cc,
-                              true, false);
+                     rpc.invokeRemotely(Collections.singletonList(task.getExecutionTarget()), cc, rpc.getDefaultRpcOptions(true));
                   }
                   cancelled = true;
                   done = true;
@@ -923,7 +922,7 @@ public class MapReduceTask<KIn, VIn, KOut, VOut> {
             RpcManager rpc = cache.getRpcManager();
             try {
                log.debugf("Invoking %s on %s", mcc, getExecutionTarget());
-               rpc.invokeRemotelyInFuture(Collections.singleton(getExecutionTarget()), mcc,
+               rpc.invokeRemotelyInFuture(Collections.singleton(getExecutionTarget()), mcc, rpc.getDefaultRpcOptions(true),
                         (NotifyingNotifiableFuture<Object>) this);
                log.debugf("Invoked %s on %s ", mcc, getExecutionTarget());
             } catch (Exception ex) {
@@ -996,7 +995,7 @@ public class MapReduceTask<KIn, VIn, KOut, VOut> {
             RpcManager rpc = cache.getRpcManager();
             try {
                log.debugf("Invoking %s on %s", rc, getExecutionTarget());
-               rpc.invokeRemotelyInFuture(Collections.singleton(getExecutionTarget()), rc,
+               rpc.invokeRemotelyInFuture(Collections.singleton(getExecutionTarget()), rc, rpc.getDefaultRpcOptions(true),
                         (NotifyingNotifiableFuture<Object>) this);
                log.debugf("Invoked %s on %s ", rc, getExecutionTarget());
             } catch (Exception ex) {

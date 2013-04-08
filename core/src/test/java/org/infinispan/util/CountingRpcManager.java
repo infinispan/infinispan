@@ -29,6 +29,8 @@ import org.infinispan.remoting.responses.Response;
 import org.infinispan.remoting.rpc.ResponseFilter;
 import org.infinispan.remoting.rpc.ResponseMode;
 import org.infinispan.remoting.rpc.RpcManager;
+import org.infinispan.remoting.rpc.RpcOptions;
+import org.infinispan.remoting.rpc.RpcOptionsBuilder;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.remoting.transport.Transport;
 import org.infinispan.util.concurrent.NotifyingNotifiableFuture;
@@ -85,49 +87,49 @@ public class CountingRpcManager implements RpcManager {
       otherCount = 0;
    }
 
-   public Map<Address, Response> invokeRemotely(Collection<Address> recipients, ReplicableCommand rpcCommand, ResponseMode mode, long timeout, boolean usePriorityQueue, ResponseFilter responseFilter, boolean totalOrder) {
+   public Map<Address, Response> invokeRemotely(Collection<Address> recipients, ReplicableCommand rpcCommand, ResponseMode mode, long timeout, boolean usePriorityQueue, ResponseFilter responseFilter) {
       log.trace("invokeRemotely1");
       aboutToInvokeRpc(rpcCommand);
-      return realOne.invokeRemotely(recipients, rpcCommand, mode, timeout, usePriorityQueue, responseFilter, totalOrder);
+      return realOne.invokeRemotely(recipients, rpcCommand, mode, timeout, usePriorityQueue, responseFilter);
    }
 
-   public Map<Address, Response> invokeRemotely(Collection<Address> recipients, ReplicableCommand rpcCommand, ResponseMode mode, long timeout, boolean usePriorityQueue, boolean totalOrder) {
+   public Map<Address, Response> invokeRemotely(Collection<Address> recipients, ReplicableCommand rpcCommand, ResponseMode mode, long timeout, boolean usePriorityQueue) {
       log.trace("invokeRemotely2");
       aboutToInvokeRpc(rpcCommand);
-      return realOne.invokeRemotely(recipients, rpcCommand, mode, timeout, usePriorityQueue, totalOrder);
+      return realOne.invokeRemotely(recipients, rpcCommand, mode, timeout, usePriorityQueue);
    }
 
-   public Map<Address, Response> invokeRemotely(Collection<Address> recipients, ReplicableCommand rpcCommand, ResponseMode mode, long timeout, boolean totalOrder) {
+   public Map<Address, Response> invokeRemotely(Collection<Address> recipients, ReplicableCommand rpcCommand, ResponseMode mode, long timeout) {
       log.trace("invokeRemotely3");
       aboutToInvokeRpc(rpcCommand);
-      return realOne.invokeRemotely(recipients, rpcCommand, mode, timeout, totalOrder);
+      return realOne.invokeRemotely(recipients, rpcCommand, mode, timeout);
    }
 
-   public Map<Address, Response> invokeRemotely(Collection<Address> recipients, ReplicableCommand rpc, boolean sync, boolean totalOrder) throws RpcException {
+   public Map<Address, Response> invokeRemotely(Collection<Address> recipients, ReplicableCommand rpc, boolean sync) throws RpcException {
       log.trace("invokeRemotely4");
       aboutToInvokeRpc(rpc);
-      realOne.invokeRemotely(recipients, rpc, sync, totalOrder);
+      realOne.invokeRemotely(recipients, rpc, sync);
       return null;
    }
 
-   public Map<Address, Response> invokeRemotely(Collection<Address> recipients, ReplicableCommand rpc, boolean sync, boolean usePriorityQueue, boolean totalOrder) throws RpcException {
+   public Map<Address, Response> invokeRemotely(Collection<Address> recipients, ReplicableCommand rpc, boolean sync, boolean usePriorityQueue) throws RpcException {
       log.trace("invokeRemotely5");
       aboutToInvokeRpc(rpc);
-      Map<Address, Response> responses = realOne.invokeRemotely(recipients, rpc, sync, usePriorityQueue, totalOrder);
+      Map<Address, Response> responses = realOne.invokeRemotely(recipients, rpc, sync, usePriorityQueue);
       return responses;
    }
 
 
-   public void broadcastRpcCommand(ReplicableCommand rpc, boolean sync, boolean totalOrder) throws RpcException {
+   public void broadcastRpcCommand(ReplicableCommand rpc, boolean sync) throws RpcException {
       log.trace("ControlledRpcManager.broadcastRpcCommand1");
       aboutToInvokeRpc(rpc);
-      realOne.broadcastRpcCommand(rpc, sync, totalOrder);
+      realOne.broadcastRpcCommand(rpc, sync);
    }
 
-   public void broadcastRpcCommand(ReplicableCommand rpc, boolean sync, boolean usePriorityQueue, boolean totalOrder) throws RpcException {
+   public void broadcastRpcCommand(ReplicableCommand rpc, boolean sync, boolean usePriorityQueue) throws RpcException {
       log.trace("ControlledRpcManager.broadcastRpcCommand2");
       aboutToInvokeRpc(rpc);
-      realOne.broadcastRpcCommand(rpc, sync, usePriorityQueue, totalOrder);
+      realOne.broadcastRpcCommand(rpc, sync, usePriorityQueue);
    }
 
 
@@ -169,6 +171,20 @@ public class CountingRpcManager implements RpcManager {
       realOne.invokeRemotelyInFuture(recipients, rpc, usePriorityQueue, future, timeout, ignoreLeavers);
    }
 
+   @Override
+   public Map<Address, Response> invokeRemotely(Collection<Address> recipients, ReplicableCommand rpc, RpcOptions options) {
+      log.trace("CountingRpcManager.invokeRemotely6");
+      aboutToInvokeRpc(rpc);
+      return realOne.invokeRemotely(recipients, rpc, options);
+   }
+
+   @Override
+   public void invokeRemotelyInFuture(Collection<Address> recipients, ReplicableCommand rpc, RpcOptions options, NotifyingNotifiableFuture<Object> future) {
+      log.trace("CountingRpcManager.invokeRemotelyInFuture5");
+      aboutToInvokeRpc(rpc);
+      realOne.invokeRemotelyInFuture(recipients, rpc, options, future);
+   }
+
    public Transport getTransport() {
       return realOne.getTransport();
    }
@@ -180,6 +196,26 @@ public class CountingRpcManager implements RpcManager {
    @Override
    public int getTopologyId() {
       return realOne.getTopologyId();
+   }
+
+   @Override
+   public RpcOptionsBuilder getRpcOptionsBuilder(ResponseMode responseMode) {
+      return realOne.getRpcOptionsBuilder(responseMode);
+   }
+
+   @Override
+   public RpcOptionsBuilder getRpcOptionsBuilder(ResponseMode responseMode, boolean fifoOrder) {
+      return realOne.getRpcOptionsBuilder(responseMode, fifoOrder);
+   }
+
+   @Override
+   public RpcOptions getDefaultRpcOptions(boolean sync) {
+      return realOne.getDefaultRpcOptions(sync);
+   }
+
+   @Override
+   public RpcOptions getDefaultRpcOptions(boolean sync, boolean fifoOrder) {
+      return realOne.getDefaultRpcOptions(sync, fifoOrder);
    }
 
    @Override

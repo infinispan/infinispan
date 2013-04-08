@@ -45,6 +45,7 @@ import org.infinispan.remoting.responses.Response;
 import org.infinispan.remoting.responses.SuccessfulResponse;
 import org.infinispan.remoting.rpc.ResponseFilter;
 import org.infinispan.remoting.rpc.ResponseMode;
+import org.infinispan.remoting.rpc.RpcOptions;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.remoting.transport.jgroups.SuspectException;
 import org.infinispan.transaction.LockingMode;
@@ -91,7 +92,8 @@ public class ReplicationInterceptor extends ClusteringInterceptor {
          throws TimeoutException, InterruptedException {
       // may need to resend, so make the commit command synchronous
       // TODO keep the list of prepared nodes or the view id when the prepare command was sent to know whether we need to resend the prepare info
-      rpcManager.invokeRemotely(null, command, cacheConfiguration.transaction().syncCommitPhase(), true, false);
+      rpcManager.invokeRemotely(null, command, rpcManager.getDefaultRpcOptions(
+            cacheConfiguration.transaction().syncCommitPhase(), false));
    }
 
    @Override
@@ -106,13 +108,14 @@ public class ReplicationInterceptor extends ClusteringInterceptor {
 
    protected void broadcastPrepare(TxInvocationContext context, PrepareCommand command) {
       boolean async = cacheConfiguration.clustering().cacheMode() == CacheMode.REPL_ASYNC;
-      rpcManager.broadcastRpcCommand(command, !async, false);
+      rpcManager.invokeRemotely(null, command, rpcManager.getDefaultRpcOptions(!async));
    }
 
    @Override
    public Object visitRollbackCommand(TxInvocationContext ctx, RollbackCommand command) throws Throwable {
       if (shouldInvokeRemoteTxCommand(ctx) && !Configurations.isOnePhaseCommit(cacheConfiguration)) {
-         rpcManager.broadcastRpcCommand(command, cacheConfiguration.transaction().syncRollbackPhase(), true, false);
+         rpcManager.invokeRemotely(null, command, rpcManager.getDefaultRpcOptions(
+               cacheConfiguration.transaction().syncRollbackPhase(), false));
       }
       return invokeNextInterceptor(ctx, command);
    }
@@ -147,7 +150,7 @@ public class ReplicationInterceptor extends ClusteringInterceptor {
          //unlock will happen async as it is a best effort
          boolean sync = !command.isUnlock();
          ((LocalTxInvocationContext) ctx).remoteLocksAcquired(rpcManager.getTransport().getMembers());
-         rpcManager.broadcastRpcCommand(command, sync, false);
+         rpcManager.invokeRemotely(null, command, rpcManager.getDefaultRpcOptions(sync));
       }
       return retVal;
    }
@@ -205,8 +208,9 @@ public class ReplicationInterceptor extends ClusteringInterceptor {
 
       List<Address> targets = Collections.singletonList(getPrimaryOwner());
       ResponseFilter filter = new ClusteredGetResponseValidityFilter(targets, rpcManager.getAddress());
-      Map<Address, Response> responses = rpcManager.invokeRemotely(targets, get, ResponseMode.WAIT_FOR_VALID_RESPONSE,
-            cacheConfiguration.clustering().sync().replTimeout(), true, filter, false);
+      RpcOptions options = rpcManager.getRpcOptionsBuilder(ResponseMode.WAIT_FOR_VALID_RESPONSE, false)
+            .responseFilter(filter).build();
+      Map<Address, Response> responses = rpcManager.invokeRemotely(targets, get, options);
 
       if (!responses.isEmpty()) {
          for (Response r : responses.values()) {
@@ -294,7 +298,7 @@ public class ReplicationInterceptor extends ClusteringInterceptor {
       // FIRST pass this call up the chain.  Only if it succeeds (no exceptions) locally do we attempt to replicate.
       final Object returnValue = invokeNextInterceptor(ctx, command);
       if (!isLocalModeForced(command) && command.isSuccessful() && ctx.isOriginLocal() && !ctx.isInTxScope()) {
-         rpcManager.broadcastRpcCommand(command, isSynchronous(command), false);
+         rpcManager.invokeRemotely(null, command, rpcManager.getDefaultRpcOptions(isSynchronous(command)));
       }
       return returnValue;
    }

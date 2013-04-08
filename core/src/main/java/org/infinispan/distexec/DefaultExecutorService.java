@@ -73,6 +73,7 @@ import org.infinispan.marshall.Marshaller;
 import org.infinispan.marshall.StreamingMarshaller;
 import org.infinispan.remoting.responses.Response;
 import org.infinispan.remoting.responses.SuccessfulResponse;
+import org.infinispan.remoting.rpc.ResponseMode;
 import org.infinispan.remoting.rpc.RpcManager;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.remoting.transport.TopologyAwareAddress;
@@ -891,7 +892,7 @@ public class DefaultExecutorService extends AbstractExecutorService implements D
                   log.couldNotExecuteCancellationLocally(e.getLocalizedMessage());
                }
             } else {
-               rpc.invokeRemotely(Collections.singletonList(getExecutionTarget()), ccc, true, false);
+               rpc.invokeRemotely(Collections.singletonList(getExecutionTarget()), ccc, rpc.getDefaultRpcOptions(true));
             }
             cancelled = true;
             done = true;
@@ -1083,8 +1084,10 @@ public class DefaultExecutorService extends AbstractExecutorService implements D
          } else {
             if (trace) log.tracef("Sending %s to remote execution at node %s", f, getExecutionTarget());
             try {
-               rpc.invokeRemotelyInFuture(Collections.singletonList(getExecutionTarget()), getCommand(), false,
-                        (DistributedTaskPart<Object>) this, getOwningTask().timeout());
+               rpc.invokeRemotelyInFuture(Collections.singletonList(getExecutionTarget()), getCommand(),
+                                          rpc.getRpcOptionsBuilder(ResponseMode.SYNCHRONOUS)
+                                                .timeout(getOwningTask().timeout(), TimeUnit.MILLISECONDS).build(),
+                                          (DistributedTaskPart<Object>) this);
             } catch (Throwable e) {
                log.remoteExecutionFailed(getExecutionTarget(), e);
             }
