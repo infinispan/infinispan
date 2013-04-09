@@ -50,6 +50,7 @@ import org.testng.annotations.Test;
 
 import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.anyInt;
+import static org.mockito.Matchers.anySet;
 import static org.mockito.Matchers.eq;
 import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.spy;
@@ -65,7 +66,7 @@ public class ClusterTopologyManagerTest extends MultipleCacheManagersTest {
 
    @Override
    protected void createCacheManagers() throws Throwable {
-      defaultConfig = getDefaultClusteredCacheConfig(CacheMode.DIST_SYNC, false);
+      defaultConfig = getDefaultClusteredCacheConfig(CacheMode.DIST_SYNC, true);
       createClusteredCaches(3, defaultConfig, new TransportFlags().withFD(true).withMerge(true));
 
       c1 = cache(0, CACHE_NAME);
@@ -111,7 +112,7 @@ public class ClusterTopologyManagerTest extends MultipleCacheManagersTest {
       assert endTime - startTime < 30000 : "Recovery took too long: " + Util.prettyPrintTime(endTime - startTime);
 
       // Check that a new node can join
-      ConfigurationBuilder defaultConfig = getDefaultClusteredCacheConfig(CacheMode.DIST_SYNC, false);
+      ConfigurationBuilder defaultConfig = getDefaultClusteredCacheConfig(CacheMode.DIST_SYNC, true);
       addClusterEnabledCacheManager(defaultConfig, new TransportFlags().withFD(true).withMerge(true));
       Cache<Object, Object> c4 = cache(3, CACHE_NAME);
       TestingUtil.blockUntilViewsReceived(30000, true, c1, c2, c4);
@@ -144,7 +145,7 @@ public class ClusterTopologyManagerTest extends MultipleCacheManagersTest {
       assert endTime - startTime < 30000 : "Recovery took too long: " + Util.prettyPrintTime(endTime - startTime);
 
       // Check that a new node can join
-      ConfigurationBuilder defaultConfig = getDefaultClusteredCacheConfig(CacheMode.DIST_SYNC, false);
+      ConfigurationBuilder defaultConfig = getDefaultClusteredCacheConfig(CacheMode.DIST_SYNC, true);
       addClusterEnabledCacheManager(defaultConfig, new TransportFlags().withFD(true).withMerge(true));
       Cache<Object, Object> c4 = cache(3, CACHE_NAME);
       TestingUtil.blockUntilViewsReceived(30000, true, c2, c3, c4);
@@ -182,7 +183,7 @@ public class ClusterTopologyManagerTest extends MultipleCacheManagersTest {
       assert endTime - startTime < 30000 : "Merge took too long: " + Util.prettyPrintTime(endTime - startTime);
 
       // Check that a new node can join
-      ConfigurationBuilder defaultConfig = getDefaultClusteredCacheConfig(CacheMode.DIST_SYNC, false);
+      ConfigurationBuilder defaultConfig = getDefaultClusteredCacheConfig(CacheMode.DIST_SYNC, true);
       addClusterEnabledCacheManager(defaultConfig, new TransportFlags().withFD(true).withMerge(true));
       Cache<Object, Object> c4 = cache(3, CACHE_NAME);
       TestingUtil.blockUntilViewsReceived(30000, true, c1, c2, c3, c4);
@@ -222,7 +223,7 @@ public class ClusterTopologyManagerTest extends MultipleCacheManagersTest {
       assert endTime - startTime < 30000 : "Merge took too long: " + Util.prettyPrintTime(endTime - startTime);
 
       // Check that a new node can join
-      ConfigurationBuilder defaultConfig = getDefaultClusteredCacheConfig(CacheMode.DIST_SYNC, false);
+      ConfigurationBuilder defaultConfig = getDefaultClusteredCacheConfig(CacheMode.DIST_SYNC, true);
       addClusterEnabledCacheManager(defaultConfig, new TransportFlags().withFD(true).withMerge(true));
       Cache<Object, Object> c4 = cache(3, CACHE_NAME);
       TestingUtil.blockUntilViewsReceived(30000, true, c2, c3, c4);
@@ -309,7 +310,7 @@ public class ClusterTopologyManagerTest extends MultipleCacheManagersTest {
       assert endTime - startTime < 30000 : "Merge took too long: " + Util.prettyPrintTime(endTime - startTime);
 
       // Check that another node can join
-      ConfigurationBuilder defaultConfig = getDefaultClusteredCacheConfig(CacheMode.DIST_SYNC, false);
+      ConfigurationBuilder defaultConfig = getDefaultClusteredCacheConfig(CacheMode.DIST_SYNC, true);
       EmbeddedCacheManager cm5 = addClusterEnabledCacheManager(defaultConfig,
             new TransportFlags().withFD(true).withMerge(true));
       Cache<Object, Object> c5 = cm5.getCache(CACHE_NAME);
@@ -350,6 +351,36 @@ public class ClusterTopologyManagerTest extends MultipleCacheManagersTest {
 
       // Wait for node 2 to install a view with only itself and unblock the GET_STATUS command
       TestingUtil.waitForRehashToComplete(c2);
+   }
+
+   public void testLeaveDuringGetTransactions() throws InterruptedException, TimeoutException {
+      final CheckPoint checkpoint = new CheckPoint();
+      StateProvider stateProvider = TestingUtil.extractComponent(c2, StateProvider.class);
+      StateProvider spyStateProvider = spy(stateProvider);
+      TestingUtil.replaceComponent(c2, StateProvider.class, spyStateProvider, true);
+      doAnswer(new Answer<Object>() {
+         @Override
+         public Object answer(InvocationOnMock invocation) throws Throwable {
+            int topologyId = (Integer) invocation.getArguments()[1];
+            checkpoint.trigger("GET_TRANSACTIONS");
+            log.debugf("Blocking the GET_TRANSACTIONS(%d) command on the %s", topologyId, c2);
+            checkpoint.awaitStrict("LEAVE", 10, TimeUnit.SECONDS);
+            return invocation.callRealMethod();
+         }
+      }).when(spyStateProvider).getTransactionsForSegments(any(Address.class), anyInt(), anySet());
+
+      long startTime = System.currentTimeMillis();
+      manager(2).stop();
+
+      checkpoint.awaitStrict("GET_TRANSACTIONS", 10, TimeUnit.SECONDS);
+      manager(1).stop();
+      checkpoint.trigger("LEAVE");
+
+      TestingUtil.blockUntilViewsReceived(30000, false, c1);
+      TestingUtil.waitForRehashToComplete(c1);
+      long endTime = System.currentTimeMillis();
+      log.debugf("Recovery took %s", Util.prettyPrintTime(endTime - startTime));
+      assert endTime - startTime < 30000 : "Recovery took too long: " + Util.prettyPrintTime(endTime - startTime);
    }
 }
 
