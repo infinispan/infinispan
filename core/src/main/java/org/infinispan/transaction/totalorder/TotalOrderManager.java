@@ -135,6 +135,10 @@ public class TotalOrderManager {
     */
    public final void release(TotalOrderRemoteTransactionState state) {
       TotalOrderLatch synchronizedBlock = state.getTransactionSynchronizedBlock();
+      if (synchronizedBlock == null) {
+         //already released!
+         return;
+      }
       Collection<Object> lockedKeys = state.getLockedKeys();
       synchronizedBlock.unBlock();
       if (lockedKeys == null) {
