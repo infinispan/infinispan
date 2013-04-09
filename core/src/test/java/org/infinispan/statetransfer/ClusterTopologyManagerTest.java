@@ -24,16 +24,11 @@ package org.infinispan.statetransfer;
 
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 import java.util.concurrent.Callable;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
-import java.util.concurrent.locks.Condition;
-import java.util.concurrent.locks.Lock;
-import java.util.concurrent.locks.ReentrantLock;
 
 import org.infinispan.Cache;
 import org.infinispan.configuration.cache.CacheMode;
@@ -42,6 +37,7 @@ import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.test.MultipleCacheManagersTest;
 import org.infinispan.test.TestingUtil;
+import org.infinispan.test.fwk.CheckPoint;
 import org.infinispan.test.fwk.CleanupAfterMethod;
 import org.infinispan.test.fwk.TransportFlags;
 import org.infinispan.topology.CacheTopology;
@@ -54,6 +50,7 @@ import org.testng.annotations.Test;
 
 import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.anyInt;
+import static org.mockito.Matchers.anySet;
 import static org.mockito.Matchers.eq;
 import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.spy;
@@ -69,7 +66,7 @@ public class ClusterTopologyManagerTest extends MultipleCacheManagersTest {
 
    @Override
    protected void createCacheManagers() throws Throwable {
-      defaultConfig = getDefaultClusteredCacheConfig(CacheMode.DIST_SYNC, false);
+      defaultConfig = getDefaultClusteredCacheConfig(CacheMode.DIST_SYNC, true);
       createClusteredCaches(3, defaultConfig, new TransportFlags().withFD(true).withMerge(true));
 
       c1 = cache(0, CACHE_NAME);
@@ -115,7 +112,7 @@ public class ClusterTopologyManagerTest extends MultipleCacheManagersTest {
       assert endTime - startTime < 30000 : "Recovery took too long: " + Util.prettyPrintTime(endTime - startTime);
 
       // Check that a new node can join
-      ConfigurationBuilder defaultConfig = getDefaultClusteredCacheConfig(CacheMode.DIST_SYNC, false);
+      ConfigurationBuilder defaultConfig = getDefaultClusteredCacheConfig(CacheMode.DIST_SYNC, true);
       addClusterEnabledCacheManager(defaultConfig, new TransportFlags().withFD(true).withMerge(true));
       Cache<Object, Object> c4 = cache(3, CACHE_NAME);
       TestingUtil.blockUntilViewsReceived(30000, true, c1, c2, c4);
@@ -148,7 +145,7 @@ public class ClusterTopologyManagerTest extends MultipleCacheManagersTest {
       assert endTime - startTime < 30000 : "Recovery took too long: " + Util.prettyPrintTime(endTime - startTime);
 
       // Check that a new node can join
-      ConfigurationBuilder defaultConfig = getDefaultClusteredCacheConfig(CacheMode.DIST_SYNC, false);
+      ConfigurationBuilder defaultConfig = getDefaultClusteredCacheConfig(CacheMode.DIST_SYNC, true);
       addClusterEnabledCacheManager(defaultConfig, new TransportFlags().withFD(true).withMerge(true));
       Cache<Object, Object> c4 = cache(3, CACHE_NAME);
       TestingUtil.blockUntilViewsReceived(30000, true, c2, c3, c4);
@@ -186,7 +183,7 @@ public class ClusterTopologyManagerTest extends MultipleCacheManagersTest {
       assert endTime - startTime < 30000 : "Merge took too long: " + Util.prettyPrintTime(endTime - startTime);
 
       // Check that a new node can join
-      ConfigurationBuilder defaultConfig = getDefaultClusteredCacheConfig(CacheMode.DIST_SYNC, false);
+      ConfigurationBuilder defaultConfig = getDefaultClusteredCacheConfig(CacheMode.DIST_SYNC, true);
       addClusterEnabledCacheManager(defaultConfig, new TransportFlags().withFD(true).withMerge(true));
       Cache<Object, Object> c4 = cache(3, CACHE_NAME);
       TestingUtil.blockUntilViewsReceived(30000, true, c1, c2, c3, c4);
@@ -226,7 +223,7 @@ public class ClusterTopologyManagerTest extends MultipleCacheManagersTest {
       assert endTime - startTime < 30000 : "Merge took too long: " + Util.prettyPrintTime(endTime - startTime);
 
       // Check that a new node can join
-      ConfigurationBuilder defaultConfig = getDefaultClusteredCacheConfig(CacheMode.DIST_SYNC, false);
+      ConfigurationBuilder defaultConfig = getDefaultClusteredCacheConfig(CacheMode.DIST_SYNC, true);
       addClusterEnabledCacheManager(defaultConfig, new TransportFlags().withFD(true).withMerge(true));
       Cache<Object, Object> c4 = cache(3, CACHE_NAME);
       TestingUtil.blockUntilViewsReceived(30000, true, c2, c3, c4);
@@ -266,19 +263,20 @@ public class ClusterTopologyManagerTest extends MultipleCacheManagersTest {
             LocalTopologyManager.class);
       final CheckPoint checkpoint = new CheckPoint();
       LocalTopologyManager spyLocalTopologyManager = spy(localTopologyManager);
+      TestingUtil.replaceComponent(mergeCoordManager, LocalTopologyManager.class, spyLocalTopologyManager, true);
       doAnswer(new Answer<Object>() {
          @Override
          public Object answer(InvocationOnMock invocation) throws Throwable {
             int viewId = (Integer) invocation.getArguments()[2];
-            checkpoint.trigger("rebalance" + viewId);
+            checkpoint.trigger("rebalance_" + viewId);
             log.debugf("Blocking the REBALANCE_START command on the merge coordinator");
             checkpoint.awaitStrict("merge", 10, TimeUnit.SECONDS);
             return invocation.callRealMethod();
          }
       }).when(spyLocalTopologyManager).handleRebalance(eq(CACHE_NAME), any(CacheTopology.class), anyInt());
-      TestingUtil.replaceComponent(mergeCoordManager, LocalTopologyManager.class, spyLocalTopologyManager, true);
 
-      final EmbeddedCacheManager cm4 = addClusterEnabledCacheManager(defaultConfig, new TransportFlags().withFD(true).withMerge(true));
+      final EmbeddedCacheManager cm4 = addClusterEnabledCacheManager(defaultConfig,
+            new TransportFlags().withFD(true).withMerge(true));
       Future<Cache<Object,Object>> cacheFuture = fork(new Callable<Cache<Object, Object>>() {
          @Override
          public Cache<Object, Object> call() throws Exception {
@@ -287,7 +285,7 @@ public class ClusterTopologyManagerTest extends MultipleCacheManagersTest {
       });
 
       log.debugf("Waiting for the REBALANCE_START command to reach the merge coordinator");
-      checkpoint.awaitStrict("rebalance" + (viewIdAfterSplit + 1), 10, TimeUnit.SECONDS);
+      checkpoint.awaitStrict("rebalance_" + (viewIdAfterSplit + 1), 10, TimeUnit.SECONDS);
 
       // merge the partitions
       log.debugf("Merging the cluster partitions");
@@ -312,84 +310,77 @@ public class ClusterTopologyManagerTest extends MultipleCacheManagersTest {
       assert endTime - startTime < 30000 : "Merge took too long: " + Util.prettyPrintTime(endTime - startTime);
 
       // Check that another node can join
-      ConfigurationBuilder defaultConfig = getDefaultClusteredCacheConfig(CacheMode.DIST_SYNC, false);
-      EmbeddedCacheManager cm5 = addClusterEnabledCacheManager(defaultConfig, new TransportFlags().withFD(true).withMerge(true));
+      ConfigurationBuilder defaultConfig = getDefaultClusteredCacheConfig(CacheMode.DIST_SYNC, true);
+      EmbeddedCacheManager cm5 = addClusterEnabledCacheManager(defaultConfig,
+            new TransportFlags().withFD(true).withMerge(true));
       Cache<Object, Object> c5 = cm5.getCache(CACHE_NAME);
       TestingUtil.blockUntilViewsReceived(30000, true, c1, c2, c3, c4, c5);
       TestingUtil.waitForRehashToComplete(c1, c2, c3, c4, c5);
    }
 
+   public void testAbruptLeaveAfterGetStatus() throws TimeoutException, InterruptedException {
+      // Block the GET_STATUS command on node 2
+      final LocalTopologyManager localTopologyManager = TestingUtil.extractGlobalComponent(manager(1),
+            LocalTopologyManager.class);
+      final CheckPoint checkpoint = new CheckPoint();
+      LocalTopologyManager spyLocalTopologyManager = spy(localTopologyManager);
+      TestingUtil.replaceComponent(manager(1), LocalTopologyManager.class, spyLocalTopologyManager, true);
+      doAnswer(new Answer<Object>() {
+         @Override
+         public Object answer(InvocationOnMock invocation) throws Throwable {
+            int viewId = (Integer) invocation.getArguments()[0];
+            checkpoint.trigger("GET_STATUS_" + viewId);
+            log.debugf("Blocking the GET_STATUS command on the merge coordinator");
+            checkpoint.awaitStrict("3 left", 10, TimeUnit.SECONDS);
+            return invocation.callRealMethod();
+         }
+      }).when(spyLocalTopologyManager).handleStatusRequest(anyInt());
+
+      // Node 1 (the coordinator) dies. Node 2 becomes coordinator and tries to call GET_STATUS
+      log.debugf("Killing coordinator");
+      manager(0).stop();
+      TestingUtil.blockUntilViewsReceived(30000, false, manager(1), manager(2));
+
+      // Wait for the GET_STATUS command and stop node 3 abruptly
+      int viewId = manager(1).getTransport().getViewId();
+      checkpoint.awaitStrict("GET_STATUS_" + viewId, 10, TimeUnit.SECONDS);
+      d3.setDiscardAll(true);
+      manager(2).stop();
+      TestingUtil.blockUntilViewsReceived(30000, false, manager(1));
+      checkpoint.trigger("3 left");
+
+      // Wait for node 2 to install a view with only itself and unblock the GET_STATUS command
+      TestingUtil.waitForRehashToComplete(c2);
+   }
+
+   public void testLeaveDuringGetTransactions() throws InterruptedException, TimeoutException {
+      final CheckPoint checkpoint = new CheckPoint();
+      StateProvider stateProvider = TestingUtil.extractComponent(c2, StateProvider.class);
+      StateProvider spyStateProvider = spy(stateProvider);
+      TestingUtil.replaceComponent(c2, StateProvider.class, spyStateProvider, true);
+      doAnswer(new Answer<Object>() {
+         @Override
+         public Object answer(InvocationOnMock invocation) throws Throwable {
+            int topologyId = (Integer) invocation.getArguments()[1];
+            checkpoint.trigger("GET_TRANSACTIONS");
+            log.debugf("Blocking the GET_TRANSACTIONS(%d) command on the %s", topologyId, c2);
+            checkpoint.awaitStrict("LEAVE", 10, TimeUnit.SECONDS);
+            return invocation.callRealMethod();
+         }
+      }).when(spyStateProvider).getTransactionsForSegments(any(Address.class), anyInt(), anySet());
+
+      long startTime = System.currentTimeMillis();
+      manager(2).stop();
+
+      checkpoint.awaitStrict("GET_TRANSACTIONS", 10, TimeUnit.SECONDS);
+      manager(1).stop();
+      checkpoint.trigger("LEAVE");
+
+      TestingUtil.blockUntilViewsReceived(30000, false, c1);
+      TestingUtil.waitForRehashToComplete(c1);
+      long endTime = System.currentTimeMillis();
+      log.debugf("Recovery took %s", Util.prettyPrintTime(endTime - startTime));
+      assert endTime - startTime < 30000 : "Recovery took too long: " + Util.prettyPrintTime(endTime - startTime);
+   }
 }
 
-class CheckPoint {
-   private final Lock lock = new ReentrantLock();
-   private final Condition unblockCondition = lock.newCondition();
-   private final Map<String, Integer> events = new HashMap<String, Integer>();
-
-   public void awaitStrict(String event, long timeout, TimeUnit unit)
-         throws InterruptedException, TimeoutException {
-      awaitStrict(event, 1, timeout, unit);
-   }
-
-   public boolean await(String event, long timeout, TimeUnit unit) throws InterruptedException {
-      return await(event, 1, timeout, unit);
-   }
-
-   public void awaitStrict(String event, int count, long timeout, TimeUnit unit)
-         throws InterruptedException, TimeoutException {
-      if (!await(event, count, timeout, unit)) {
-         throw new TimeoutException("Timed out waiting for event " + event);
-      }
-   }
-
-   public boolean await(String event, int count, long timeout, TimeUnit unit) throws InterruptedException {
-      lock.lock();
-      try {
-         long waitNanos = unit.toNanos(timeout);
-         while (waitNanos > 0) {
-            Integer currentCount = events.get(event);
-            if (currentCount != null && currentCount >= count) {
-               events.put(event, currentCount - count);
-               break;
-            }
-            waitNanos = unblockCondition.awaitNanos(waitNanos);
-         }
-
-         if (waitNanos <= 0) {
-            // let the triggering thread know that we timed out
-            events.put(event, -1);
-            return false;
-         }
-
-         return true;
-      } finally {
-         lock.unlock();
-      }
-   }
-
-   public void trigger(String event) {
-      trigger(event, 1);
-   }
-
-   public void triggerForever(String event) {
-      trigger(event, Integer.MAX_VALUE);
-   }
-
-   public void trigger(String event, int count) {
-      lock.lock();
-      try {
-         Integer currentCount = events.get(event);
-         if (currentCount == null) {
-            currentCount = 0;
-         } else if (currentCount < 0) {
-            throw new IllegalStateException("Thread already timed out waiting for event " + event);
-         }
-
-         // If triggerForever is called more than once, it will cause an overflow and the waiters will fail.
-         events.put(event, currentCount + count);
-         unblockCondition.signalAll();
-      } finally {
-         lock.unlock();
-      }
-   }
-}
