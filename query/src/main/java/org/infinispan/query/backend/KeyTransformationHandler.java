@@ -24,6 +24,7 @@ package org.infinispan.query.backend;
 
 import org.infinispan.AdvancedCache;
 import org.infinispan.CacheException;
+import org.infinispan.query.DefaultTransformer;
 import org.infinispan.query.Transformable;
 import org.infinispan.query.Transformer;
 import org.infinispan.query.impl.ComponentRegistryUtils;
@@ -209,8 +210,12 @@ public class KeyTransformationHandler {
       Class<? extends Transformer> transformerClass = transformerTypes.get(keyClass);
       if (transformerClass == null) {
          transformerClass = getTransformerClassFromAnnotation(keyClass);
-         if (transformerClass != null)
-            registerTransformer(keyClass, transformerClass);
+         if (transformerClass != null) {
+             if (transformerClass.equals(DefaultTransformer.class)) {
+                log.typeIsUsingDefaultTransformer(keyClass);
+             }
+             registerTransformer(keyClass, transformerClass);
+         }
       }
       return transformerClass;
    }
