@@ -42,7 +42,7 @@ public class Version {
    private static final boolean SNAPSHOT = true;
 
    public static final String VERSION = String.format("%s.%s.%s%s%s", MAJOR, MINOR, MICRO, SNAPSHOT ? "-" : ".", MODIFIER);
-   public static final String CODENAME = "Delirium";
+   public static final String CODENAME = "Tactical Nuclear Penguin";
    public static final String PROJECT_NAME = "Infinispan";
    public static final byte[] VERSION_ID = readVersionBytes();
    public static final String MAJOR_MINOR = MAJOR + "." + MINOR;
