@@ -77,4 +77,8 @@ public interface Log extends org.infinispan.util.logging.Log {
    		" overriden to use the Infinispan Directory", id = 14008)
    void ignoreDirectoryProviderProperty(String indexName, String directoryOption);
 
+   @LogMessage(level = WARN)
+   @Message(value = "Indexed type '%1$s' is using a default Transformer. This is slow! Register a custom implementation using @Transformable", id = 14009)
+   void typeIsUsingDefaultTransformer(Class<?> keyClass);
+
 }
