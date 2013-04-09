@@ -70,11 +70,11 @@
    </scm>
    <issueManagement>
       <system>jira</system>
-      <url>https://jira.jboss.com/jira/browse/ISPN</url>
+      <url>https://issues.jboss.org/browse/ISPN</url>
    </issueManagement>
    <ciManagement>
-      <system>hudson</system>
-      <url>http://hudson.jboss.org/hudson/view/Infinispan</url>
+      <system>TeamCity</system>
+      <url>http://ci.infinispan.org/</url>
       <notifiers>
          <notifier>
             <type>mail</type>
