@@ -29,6 +29,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicInteger;
 
+import org.infinispan.client.hotrod.configuration.Configuration;
 import org.infinispan.client.hotrod.impl.ConfigurationProperties;
 import org.infinispan.client.hotrod.impl.consistenthash.ConsistentHashFactory;
 import org.infinispan.client.hotrod.impl.protocol.Codec;
@@ -47,9 +48,7 @@ public final class MockTransportFactory implements TransportFactory {
    }
 
    @Override
-   public void start(Codec codec, final ConfigurationProperties props,
-                     final Collection<SocketAddress> staticConfiguredServers,
-                     final AtomicInteger topologyId, ClassLoader cl) {
+   public void start(Codec codec, Configuration configuration, AtomicInteger topologyId) {
    }
 
    @Override
