@@ -105,7 +105,16 @@ public class TableManipulation implements Cloneable {
      ResultSet rs = null;
      try {
         DatabaseMetaData metaData = connection.getMetaData();
-        rs = metaData.getTables(null, null, tableName, new String[] {"TABLE"});
+        // explicit set of the schema to the current user one to make sure only tables of the current users are requested
+        String schemaPattern;
+        switch (getDatabaseType()) {
+           case ORACLE:
+              schemaPattern = metaData.getUserName();
+              break;
+           default:
+              schemaPattern = null;
+        }
+        rs = metaData.getTables(null, schemaPattern, tableName, new String[] {"TABLE"});
         return rs.next();
      } catch (SQLException e) {
         if (log.isTraceEnabled())
