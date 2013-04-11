@@ -74,7 +74,7 @@
    </issueManagement>
    <ciManagement>
       <system>TeamCity</system>
-      <url>http://ci.infinispan.org/</url>
+      <url>http://ci.infinispan.org</url>
       <notifiers>
          <notifier>
             <type>mail</type>
@@ -1594,7 +1594,7 @@
          </properties>
       </profile>
       <profile>
-         <id>test-hudson</id>
+         <id>test-CI</id>
          <activation>
             <activeByDefault>true</activeByDefault>
          </activation>
@@ -1602,6 +1602,23 @@
             <defaultTestGroup>functional,unit,arquillian</defaultTestGroup>
             <infinispan.test.jgroups.protocol>tcp</infinispan.test.jgroups.protocol>
          </properties>
+         <build>
+            <plugins>
+               <plugin>
+                  <groupId>org.apache.maven.plugins</groupId>
+                  <artifactId>maven-surefire-plugin</artifactId>
+                  <configuration>
+                     <systemProperties>
+                        <property>
+                           <!-- this is picked up in the log4j xml which prepends it to each module's log file-->
+                           <name>infinispan.module-name</name>
+                           <value>${project.artifactId}</value>
+                        </property>
+                     </systemProperties>
+                  </configuration>
+               </plugin>
+            </plugins>
+         </build>
       </profile>
       <profile>
          <id>test-functional</id>
@@ -1665,46 +1682,17 @@
                   <groupId>org.apache.maven.plugins</groupId>
                   <artifactId>maven-surefire-plugin</artifactId>
                   <configuration>
-                     <parallel>tests</parallel>
-                     <forkCount>1</forkCount>
-                     <reuseForks>true</reuseForks>
-                     <threadCount>${infinispan.test.parallel.threads}</threadCount>
-                     <groups>${defaultTestGroup}</groups>
                      <systemProperties>
-                        <property>
-                           <name>infinispan.test.jgroups.protocol</name>
-                           <value>${infinispan.test.jgroups.protocol}</value>
-                        </property>
-                        <property>
-                           <name>jgroups.bind_addr</name>
-                           <value>127.0.0.1</value>
-                        </property>
-                        <property>
-                           <name>java.net.preferIPv4Stack</name>
-                           <value>true</value>
-                        </property>
                         <property>
                            <name>log4j.configuration</name>
                            <value>log4j-trace.xml</value>
                         </property>
                      </systemProperties>
-                     <trimStackTrace>false</trimStackTrace>
-                     <properties>
-                        <property>
-                           <name>listener</name>
-                           <value>${testNGListener}</value>
-                        </property>
-                     </properties>
-                     <argLine>-Xmx1024m -XX:MaxPermSize=1024m</argLine>
                   </configuration>
                </plugin>
             </plugins>
          </build>
-         <properties>
-            <infinispan.test.jgroups.protocol>tcp</infinispan.test.jgroups.protocol>
-         </properties>
       </profile>
-
       <profile>
          <id>coverage</id>
 
