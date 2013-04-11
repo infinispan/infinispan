@@ -27,8 +27,6 @@ import static org.infinispan.lucene.CacheTestSupport.writeTextToIndex;
 
 import java.io.IOException;
 
-import junit.framework.Assert;
-
 import org.apache.lucene.store.Directory;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
@@ -36,6 +34,7 @@ import org.infinispan.lucene.directory.DirectoryBuilder;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.test.SingleCacheManagerTest;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
+import org.testng.AssertJUnit;
 import org.testng.annotations.Test;
 
 /**
@@ -59,20 +58,20 @@ public class DynamicBufferSizeTest extends SingleCacheManagerTest {
    @Test
    public void roundingTest() {
       FileMetadata m = new FileMetadata(10);
-      Assert.assertEquals(0, m.getNumberOfChunks());
+      AssertJUnit.assertEquals(0, m.getNumberOfChunks());
       m.setSize(10);
-      Assert.assertEquals(1, m.getNumberOfChunks());
+      AssertJUnit.assertEquals(1, m.getNumberOfChunks());
       m.setSize(11);
-      Assert.assertEquals(2, m.getNumberOfChunks());
+      AssertJUnit.assertEquals(2, m.getNumberOfChunks());
       m = new FileMetadata(11);
       m.setSize(11);
-      Assert.assertEquals(1, m.getNumberOfChunks());
+      AssertJUnit.assertEquals(1, m.getNumberOfChunks());
       m.setSize(22);
-      Assert.assertEquals(2, m.getNumberOfChunks());
+      AssertJUnit.assertEquals(2, m.getNumberOfChunks());
       m.setSize(31);
       m = new FileMetadata(10);
       m.setSize(31);
-      Assert.assertEquals(4, m.getNumberOfChunks());
+      AssertJUnit.assertEquals(4, m.getNumberOfChunks());
    }
    
    @Test
@@ -86,4 +85,31 @@ public class DynamicBufferSizeTest extends SingleCacheManagerTest {
       assertTextIsFoundInIds(dirA, "size", 1);
    }
 
+   @Test
+   public void testFileMetaData() {
+      FileMetadata data1 = new FileMetadata(1024);
+      FileMetadata data2 = new FileMetadata(2048);
+      FileMetadata data3 = new FileMetadata(1024);
+
+      FileMetadata data4 = data1;
+
+      data1.touch();
+      data2.touch();
+
+      assert !data1.equals(new FileCacheKey("testIndex", "testFile"));
+      assert !data1.equals(null);
+      assert data1.equals(data4);
+      assert !data1.equals(data3);
+
+      data3.setLastModified(data1.getLastModified());
+      assert data1.equals(data3);
+
+      data3.setSize(2048);
+      assert !data1.equals(data3);
+
+      data2.setLastModified(data1.getLastModified());
+      assert !data1.equals(data2);
+
+      AssertJUnit.assertEquals("FileMetadata{" + "lastModified=" + data1.getLastModified() + ", size=" + data1.getSize() + '}', data1.toString());
+   }
 }

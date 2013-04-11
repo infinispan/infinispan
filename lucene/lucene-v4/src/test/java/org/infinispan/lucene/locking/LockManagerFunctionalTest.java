@@ -32,6 +32,7 @@ import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.lucene.CacheTestSupport;
 import org.infinispan.test.MultipleCacheManagersTest;
 import org.infinispan.transaction.TransactionMode;
+import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
 
 /**
@@ -53,14 +54,15 @@ public class LockManagerFunctionalTest extends MultipleCacheManagersTest {
       return TransactionMode.NON_TRANSACTIONAL;
    }
 
-   public void testLuceneIndexLocking() throws IOException {
+   @Test(dataProvider = "writeLockNameProvider")
+   public void testLuceneIndexLocking(final String writeLockProvider) throws IOException {
       final String commonIndexName = "myIndex";
       LockFactory lockManagerA = makeLockFactory(cache(0,"lucene"), commonIndexName);
       LockFactory lockManagerB = makeLockFactory(cache(1, "lucene"), commonIndexName);
       LockFactory isolatedLockManager = makeLockFactory(cache(0, "lucene"), "anotherIndex");
-      Lock luceneLockA = lockManagerA.makeLock(IndexWriter.WRITE_LOCK_NAME);
-      Lock luceneLockB = lockManagerB.makeLock(IndexWriter.WRITE_LOCK_NAME);
-      Lock anotherLock = isolatedLockManager.makeLock(IndexWriter.WRITE_LOCK_NAME);
+      Lock luceneLockA = lockManagerA.makeLock(writeLockProvider);
+      Lock luceneLockB = lockManagerB.makeLock(writeLockProvider);
+      Lock anotherLock = isolatedLockManager.makeLock(writeLockProvider);
       
       assert luceneLockA.obtain();
       assert luceneLockB.isLocked();
@@ -70,8 +72,13 @@ public class LockManagerFunctionalTest extends MultipleCacheManagersTest {
       luceneLockA.release();
       assert ! luceneLockB.isLocked();
       assert luceneLockB.obtain();
-      lockManagerA.clearLock(IndexWriter.WRITE_LOCK_NAME);
+      lockManagerA.clearLock(writeLockProvider);
       assert ! luceneLockB.isLocked();
+   }
+
+   @DataProvider(name = "writeLockNameProvider")
+   public Object[][] provideWriteLockName() {
+      return new Object[][] {{IndexWriter.WRITE_LOCK_NAME}, {"SomeTestLockName"}};
    }
 
    protected LockFactory makeLockFactory(Cache cache, String commonIndexName) {

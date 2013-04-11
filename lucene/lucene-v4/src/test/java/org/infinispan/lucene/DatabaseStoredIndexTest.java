@@ -41,7 +41,7 @@ import org.infinispan.test.SingleCacheManagerTest;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.infinispan.test.fwk.UnitTestDatabaseManager;
 import org.infinispan.util.Util;
-import org.testng.Assert;
+import org.testng.AssertJUnit;
 import org.testng.annotations.Test;
 
 /**
@@ -116,7 +116,7 @@ public class DatabaseStoredIndexTest extends SingleCacheManagerTest {
             Object actual = cache.get(key);
             if (expected==null && actual==null)
                continue;
-            if (expected instanceof byte[]){
+            if (expected instanceof byte[]) {
                expected = Util.printArray((byte[]) expected, false);
                actual = Util.printArray((byte[]) actual, false);
             }
@@ -126,8 +126,8 @@ public class DatabaseStoredIndexTest extends SingleCacheManagerTest {
             }
          }
       }
-      Assert.assertFalse(failed);
-      Assert.assertEquals(cacheCopy.keySet().size(), cache.keySet().size(), "have a different number of keys");
+      AssertJUnit.assertFalse(failed);
+      AssertJUnit.assertEquals("have a different number of keys", cacheCopy.keySet().size(), cache.keySet().size());
       Directory dir = DirectoryBuilder.newDirectoryInstance(cache, cache, cache, INDEX_NAME).create();
       assertTextIsFoundInIds(dir, "index", 1);
       dir.close();

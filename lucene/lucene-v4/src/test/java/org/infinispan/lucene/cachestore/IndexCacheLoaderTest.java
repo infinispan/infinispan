@@ -82,9 +82,9 @@ public class IndexCacheLoaderTest {
       verifyDirectory(rootDir, "index-B", 20 * SCALE, false);
    }
 
-   private void verifyDirectory (final File rootDir, final String indexName, final int termsAdded, final boolean inverted)
-         throws IOException {
+   private void verifyDirectory (final File rootDir, final String indexName, final int termsAdded, final boolean inverted) {
       final EmbeddedCacheManager cacheManager = initializeInfinispan(rootDir);
+
       TestingUtil.withCacheManager(new CacheManagerCallable(cacheManager) {
          public void call() {
             Cache<Object, Object> cache = cacheManager.getCache();
@@ -92,11 +92,12 @@ public class IndexCacheLoaderTest {
 
             try {
                TestHelper.verifyOnDirectory(directory, termsAdded, inverted);
-            } catch (IOException e) {
-               throw new RuntimeException(e);
+            } catch(Exception ex) {
+               throw new RuntimeException(ex);
             }
          }
       });
+
    }
 
    protected EmbeddedCacheManager initializeInfinispan(File rootDir) {

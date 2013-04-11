@@ -46,6 +46,7 @@ import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.infinispan.transaction.TransactionMode;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
+import org.testng.AssertJUnit;
 
 import java.io.File;
 import java.io.FileReader;
@@ -195,7 +196,7 @@ public abstract class CacheTestSupport {
     * Used in test to remove all documents containing some term
     * 
     * @param dir The Directory containing the Index to verify
-    * @param string
+    * @param term
     */
    public static void removeByTerm(Directory dir, String term) throws IOException {
       IndexWriterConfig indexWriterConfig = new IndexWriterConfig(LuceneSettings.LUCENE_VERSION, LuceneSettings.analyzer);
@@ -220,12 +221,12 @@ public abstract class CacheTestSupport {
       IndexSearcher searcher = new IndexSearcher(reader);
       Query query = new TermQuery(new Term("body", term));
       TopDocs docs = searcher.search(query, null, expectedResults + 1);
-      assert docs.totalHits == expectedResults;
+      AssertJUnit.assertEquals(expectedResults, docs.totalHits);
       for (ScoreDoc scoreDoc : docs.scoreDocs) {
          int docId = scoreDoc.doc;
          Document document = searcher.doc(docId);
          String idString = document.get("id");
-         assert idString != null;
+         AssertJUnit.assertNotNull(idString);
          Integer idFoundElement = Integer.valueOf(idString);
          assert expectedDocumendIds.contains(idFoundElement);
       }

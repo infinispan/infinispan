@@ -288,7 +288,7 @@ public class CacheLoaderAPITest extends SingleCacheManagerTest {
       TestHelper.createIndex(rootDir, indexName, elementCount, true);
 
       LuceneCacheLoader cacheLoader = (LuceneCacheLoader) TestingUtil.extractComponent(cacheManager.getCache(),
-                                                                    CacheLoaderManager.class).getCacheLoader();
+                                                                                       CacheLoaderManager.class).getCacheLoader();
       Set keySet = cacheLoader.loadAllKeys(null);
       int initialCount = keySet.size();
 
