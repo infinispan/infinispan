@@ -186,7 +186,7 @@
       <version.maven.bundle>2.3.7</version.maven.bundle>
       <version.maven.source>2.2.1</version.maven.source>
       <version.maven.scala>2.15.2</version.maven.scala>
-      <version.maven.surefire>2.12.4</version.maven.surefire>
+      <version.maven.surefire>2.14</version.maven.surefire>
       <version.maven.invoker>1.8</version.maven.invoker>
       <version.jacoco>0.5.10.201208310627</version.jacoco>
       <version.asm>3.3.1</version.asm>
@@ -1418,7 +1418,8 @@
             <configuration>
                <parallel>tests</parallel>
                <threadCount>${infinispan.test.parallel.threads}</threadCount>
-               <forkMode>none</forkMode>
+               <forkCount>1</forkCount>
+               <reuseForks>true</reuseForks>
                <groups>${defaultTestGroup}</groups>
                <systemProperties>
                   <property>
@@ -1665,8 +1666,9 @@
                   <artifactId>maven-surefire-plugin</artifactId>
                   <configuration>
                      <parallel>tests</parallel>
+                     <forkCount>1</forkCount>
+                     <reuseForks>true</reuseForks>
                      <threadCount>${infinispan.test.parallel.threads}</threadCount>
-                     <forkMode>none</forkMode>
                      <groups>${defaultTestGroup}</groups>
                      <systemProperties>
                         <property>
