@@ -50,9 +50,9 @@ public class TableManipulation implements Cloneable {
 
    public static final int DEFAULT_BATCH_SIZE = 100;
 
+   private String identifierQuoteString;
    private String idColumnName;
    private String idColumnType;
-   private String tableName;
    private String tableNamePrefix;
    private String cacheName;
    private String dataColumnName;
@@ -84,7 +84,8 @@ public class TableManipulation implements Cloneable {
    public DatabaseType databaseType;
    private String loadAllKeysBinarySql;
    private String loadAllKeysStringSql;
-   private String identifierQuoteString;
+
+   private TableName tableName;
 
    public TableManipulation(String idColumnName, String idColumnType, String tableNamePrefix, String dataColumnName,
                             String dataColumnType, String timestampColumnName, String timestampColumnType) {
@@ -100,20 +101,33 @@ public class TableManipulation implements Cloneable {
    public TableManipulation() {
    }
 
-   public boolean tableExists(Connection connection, String tableName) throws CacheLoaderException {
-     assertNotNull(tableName, "table name is mandatory");
-     ResultSet rs = null;
-     try {
-        DatabaseMetaData metaData = connection.getMetaData();
-        rs = metaData.getTables(null, null, tableName, new String[] {"TABLE"});
-        return rs.next();
-     } catch (SQLException e) {
-        if (log.isTraceEnabled())
-           log.tracef(e, "SQLException occurs while checking the table %s", tableName);
-        return false;
-     } finally {
-        JdbcUtil.safeClose(rs);
-     }
+   public boolean tableExists(Connection connection, TableName tableName) throws CacheLoaderException {
+      if(tableName == null){
+         throw new NullPointerException("table name is mandatory");
+      }
+      ResultSet rs = null;
+      try {
+         // we need to make sure, that (even if the user has extended permissions) only the tables in current schema are checked
+         // explicit set of the schema to the current user one to make sure only tables of the current users are requested
+         DatabaseMetaData metaData = connection.getMetaData();
+         String schemaPattern = tableName.getSchema();
+         if(schemaPattern == null){
+            switch (getDatabaseType()) {
+               case ORACLE:
+                  schemaPattern = metaData.getUserName();
+                  break;
+               default:
+            }
+         }
+         rs = metaData.getTables(null, schemaPattern, tableName.getName(), new String[] {"TABLE"});
+         return rs.next();
+      } catch (SQLException e) {
+         if (log.isTraceEnabled())
+            log.tracef(e, "SQLException occurs while checking the table %s", tableName);
+         return false;
+      } finally {
+         JdbcUtil.safeClose(rs);
+      }
    }
 
    public void createTable(Connection conn) throws CacheLoaderException {
@@ -227,7 +241,7 @@ public class TableManipulation implements Cloneable {
          Connection conn = null;
          try {
             conn = this.connectionFactory.getConnection();
-            if (!tableExists(conn, getUnquotedTableName())) {
+            if (!tableExists(conn, getTableName())) {
                createTable(conn);
             }
          } finally {
@@ -368,32 +382,11 @@ public class TableManipulation implements Cloneable {
       }
    }
 
-   public String getTableName() {
+   public TableName getTableName() {
       if (tableName == null) {
-         tableName = getIdentifierQuoteString() + getUnquotedTableName() + getIdentifierQuoteString();
+         tableName = new TableName(getIdentifierQuoteString(), tableNamePrefix, cacheName);
       }
       return tableName;
-   }
-
-   public String getUnquotedTableName() {
-      if (tableNamePrefix == null || cacheName == null) {
-         throw new IllegalStateException("Both tableNamePrefix and cacheName must be non null at this point!");
-      }
-      return (tableNamePrefix + "_" + cacheName).replaceAll("[^\\p{Alnum}]", "_");
-   }
-
-   public String getIdentifierQuoteString() {
-      if (identifierQuoteString == null) {
-         switch (getDatabaseType()) {
-         case MYSQL:
-            identifierQuoteString = "`";
-            break;
-         default:
-            identifierQuoteString = "\"";
-            break;
-         }
-      }
-      return identifierQuoteString;
    }
 
    public String getTableNamePrefix() {
@@ -401,7 +394,7 @@ public class TableManipulation implements Cloneable {
    }
 
    public boolean tableExists(Connection connection) throws CacheLoaderException {
-      return tableExists(connection, getUnquotedTableName());
+      return tableExists(connection, getTableName());
    }
 
    public String getIdColumnName() {
@@ -590,5 +583,20 @@ public class TableManipulation implements Cloneable {
       }
       return type;
    }
+
+   public String getIdentifierQuoteString() {
+      if(identifierQuoteString == null){
+         switch (getDatabaseType()) {
+            case MYSQL:
+               identifierQuoteString = "`";
+               break;
+            default:
+               identifierQuoteString = "\"";
+               break;
+         }
+      }
+      return identifierQuoteString;
+   }
+
 }
 

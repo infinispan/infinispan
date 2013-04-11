@@ -36,6 +36,7 @@ import java.util.regex.Pattern;
 import org.infinispan.loaders.jdbc.DatabaseType;
 import org.infinispan.loaders.jdbc.JdbcUtil;
 import org.infinispan.loaders.jdbc.TableManipulation;
+import org.infinispan.loaders.jdbc.TableName;
 import org.infinispan.loaders.jdbc.connectionfactory.ConnectionFactory;
 import org.infinispan.loaders.jdbc.connectionfactory.ConnectionFactoryConfig;
 import org.infinispan.loaders.jdbc.connectionfactory.PooledConnectionFactory;
@@ -168,7 +169,7 @@ public class UnitTestDatabaseManager {
     * Counts the number of rows in the given table.
     */
 
-   public static int rowCount(ConnectionFactory connectionFactory, String tableName) {
+   public static int rowCount(ConnectionFactory connectionFactory, TableName tableName) {
 
       Connection conn = null;
       PreparedStatement statement = null;

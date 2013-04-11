@@ -34,10 +34,9 @@ import org.infinispan.container.entries.InternalCacheEntry;
 import org.infinispan.loaders.CacheLoaderException;
 import org.infinispan.loaders.CacheStore;
 import org.infinispan.loaders.jdbc.TableManipulation;
+import org.infinispan.loaders.jdbc.TableName;
 import org.infinispan.loaders.jdbc.connectionfactory.ConnectionFactory;
 import org.infinispan.loaders.jdbc.connectionfactory.ConnectionFactoryConfig;
-import org.infinispan.loaders.keymappers.DefaultTwoWayKey2StringMapper;
-import org.infinispan.loaders.keymappers.TwoWayKey2StringMapper;
 import org.infinispan.loaders.keymappers.UnsupportedKeyTypeException;
 import org.infinispan.marshall.StreamingMarshaller;
 import org.infinispan.marshall.TestObjectStreamMarshaller;
@@ -157,7 +156,7 @@ public class JdbcStringBasedCacheStoreAltMapperTest {
 
    private int rowCount() {
       ConnectionFactory connectionFactory = getConnection();
-      String tableName = tableManipulation.getTableName();
+      TableName tableName = tableManipulation.getTableName();
       return UnitTestDatabaseManager.rowCount(connectionFactory, tableName);
    }
 
