@@ -97,14 +97,17 @@ public class ClusteredCacheTest extends MultipleCacheManagersTest {
       person1 = new Person();
       person1.setName("Navin Surtani");
       person1.setBlurb("Likes playing WoW");
+      person1.setAge(30);
 
       person2 = new Person();
       person2.setName("BigGoat");
       person2.setBlurb("Eats grass");
+      person2.setAge(22);
 
       person3 = new Person();
       person3.setName("MiniGoat");
       person3.setBlurb("Eats cheese");
+      person3.setAge(15);
    }
 
    protected void prepareTestData() throws Exception {
@@ -304,6 +307,40 @@ public class ClusteredCacheTest extends MultipleCacheManagersTest {
       //Disabling the fullTextFilter.
       query.disableFullTextFilter("personFilter");
       AssertJUnit.assertEquals(2, query.getResultSize());
+   }
+
+   public void testCombinationOfFilters() throws Exception {
+      prepareTestData();
+
+      person4 = new Person();
+      person4.setName("ExtraGoat");
+      person4.setBlurb("Eats grass and is retired");
+      person4.setAge(70);
+      cache1.put("ExtraGoat", person4);
+
+      queryParser = createQueryParser("blurb");
+      Query luceneQuery = queryParser.parse("eats");
+
+      CacheQuery query = Search.getSearchManager(cache1).getQuery(luceneQuery);
+      FullTextFilter filter = query.enableFullTextFilter("personFilter");
+      filter.setParameter("blurbText", "grass");
+
+      AssertJUnit.assertEquals(2, query.getResultSize());
+
+      FullTextFilter ageFilter = query.enableFullTextFilter("personAgeFilter");
+      ageFilter.setParameter("age", 70);
+
+      AssertJUnit.assertEquals(1, query.getResultSize());
+      List result = query.list();
+
+      Person person = (Person) result.get(0);
+      AssertJUnit.assertEquals("ExtraGoat", person.getName());
+      AssertJUnit.assertEquals(70, person.getAge());
+
+      //Disabling the fullTextFilter.
+      query.disableFullTextFilter("personFilter");
+      query.disableFullTextFilter("personAgeFilter");
+      AssertJUnit.assertEquals(3, query.getResultSize());
    }
 
    public void testSearchKeyTransformer() throws Exception {

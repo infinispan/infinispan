@@ -1,6 +1,6 @@
 /*
  * JBoss, Home of Professional Open Source
- * Copyright 2009 Red Hat Inc. and/or its affiliates and other
+ * Copyright 2013 Red Hat Inc. and/or its affiliates and other
  * contributors as indicated by the @author tags. All rights reserved.
  * See the copyright.txt in the distribution for a full listing of
  * individual contributors.
@@ -34,27 +34,30 @@ import org.hibernate.search.filter.FilterKey;
 import org.hibernate.search.filter.StandardFilterKey;
 
 /**
- * Filter for using in full text search. Filters persons by the age.
+ * A filter factory producing a filter for Person. Filters by age.
  *
- * @author Anna Manukyan
+ * The main purpose of this filter is to work together with other filters and test
+ * applying more than one filter.
+ *
+ * @author Martin Gencur
  */
-public class PersonFilter {
-   private String blurbText;
+public class PersonAgeFilterFactory {
+   private Integer age;
 
    @Key
    public FilterKey getKey() {
       StandardFilterKey key = new StandardFilterKey();
-      key.addParameter(blurbText);
+      key.addParameter(age);
       return key;
    }
 
-   public void setBlurbText(String blurbText) {
-      this.blurbText = blurbText;
+   public void setAge(Integer age) {
+      this.age = age;
    }
 
    @Factory
    public Filter getFilter() {
-      Query query = new TermQuery( new Term("blurb", blurbText) );
-      return new CachingWrapperFilter( new QueryWrapperFilter(query) );
+      Query query = new TermQuery(new Term("age", age.toString()));
+      return new CachingWrapperFilter(new QueryWrapperFilter(query));
    }
 }

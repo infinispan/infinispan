@@ -187,7 +187,7 @@ public class QueryPhrasesTest extends SingleCacheManagerTest {
       assert found.get(2).equals(person1);
    }
 
-   public void testFuzzyAndField() {
+   public void testFuzzyOnFieldsAndField() {
       loadTestingData();
 
       Query query = Search.getSearchManager(cache).buildQueryBuilderForClass(Person.class).get().keyword().fuzzy().
@@ -215,7 +215,40 @@ public class QueryPhrasesTest extends SingleCacheManagerTest {
       assert found.contains(person2);
       assert found.contains(person3);
       assert found.contains(person4);
+
+      query = Search.getSearchManager(cache).buildQueryBuilderForClass(Person.class).get().keyword().fuzzy().
+            onFields("name", "blurb").matching("goat").createQuery();
+      List<Object> foundOnFields = Search.getSearchManager(cache).getQuery(query).list();
+
+      AssertJUnit.assertEquals(3, found.size());
+      assert found.contains(person2);
+      assert found.contains(person3);
+      assert found.contains(person4);
    }
+
+   public void testFuzzyWithThresholdWithPrefixLength() {
+      person1 = new Person("yyGiantHorse", "Eat anything", 10);
+      person2 = new Person("yySmallHorse", "Eat anything", 10);
+      cache.put(key1, person1);
+      cache.put(key2, person2);
+
+      //Ignore "yy" at the beginning (prefix==2), the difference between the remaining parts of two terms
+      //must be no more than length(term)*0.4 == 4 chars -> return only 1 person
+      Query query = Search.getSearchManager(cache).buildQueryBuilderForClass(Person.class).get().keyword()
+            .fuzzy().withThreshold(.6f).withPrefixLength(2).onField("name").matching("yyGreatHorse").createQuery();
+      List<Object> found = Search.getSearchManager(cache).getQuery(query).list();
+      AssertJUnit.assertEquals(1, found.size());
+      AssertJUnit.assertTrue(found.contains(person1));
+
+      //return all as the threshold is too low
+      Query queryReturnAll = Search.getSearchManager(cache).buildQueryBuilderForClass(Person.class).get().keyword()
+            .fuzzy().withThreshold(.5f).withPrefixLength(2).onField("name").matching("yyGreatHorse").createQuery();
+      List<Object> foundWithLowerThreshold = Search.getSearchManager(cache).getQuery(queryReturnAll).list();
+      AssertJUnit.assertEquals(2, foundWithLowerThreshold.size());
+      AssertJUnit.assertTrue(foundWithLowerThreshold.contains(person1));
+      AssertJUnit.assertTrue(foundWithLowerThreshold.contains(person2));
+   }
+
 
    public void testQueryingRangeWithAnd() {
       NumericType type1 = new NumericType(10, 20);

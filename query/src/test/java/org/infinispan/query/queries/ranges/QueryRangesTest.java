@@ -35,7 +35,10 @@ import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.testng.AssertJUnit;
 import org.testng.annotations.Test;
 
+import java.text.SimpleDateFormat;
+import java.util.Date;
 import java.util.List;
+import java.util.Locale;
 
 /**
  * Tests verifying that query ranges work properly.
@@ -339,24 +342,86 @@ public class QueryRangesTest extends SingleCacheManagerTest {
       assert found.contains(person4);
    }
 
+   public void testQueryingRangeForDatesWithLimitsAndExclusions() throws ParseException {
+      loadTestingData();
+
+      Query query = Search.getSearchManager(cache).buildQueryBuilderForClass(Person.class).get()
+            .range().onField("dateOfGraduation").from(formatDate("May 5, 2002")).excludeLimit().to(formatDate("June 30, 2012"))
+            .createQuery();
+
+      CacheQuery cacheQuery = Search.getSearchManager(cache).getQuery(query);
+      List<Object> found = cacheQuery.list();
+
+      AssertJUnit.assertEquals(2, found.size());
+      assert found.contains(person1);
+      assert found.contains(person2);
+
+      person4 = new Person("Mighty Goat", "Mighty Goat also eats grass", 28, formatDate("June 15, 2007")); //date in ranges
+      cache.put("mighty", person4);
+
+      cacheQuery = Search.getSearchManager(cache).getQuery(query);
+      found = cacheQuery.list();
+
+      Assert.assertEquals(3, found.size());
+      assert found.contains(person1);
+      assert found.contains(person2);
+      assert found.contains(person4) : "This should now contain object person4";
+
+      Person person5 = new Person("Another Goat", "Some other goat should eat grass.", 31, formatDate("July 5, 2012")); //date out of ranges
+      cache.put("anotherGoat", person5);
+
+      cacheQuery = Search.getSearchManager(cache).getQuery(query);
+      found = cacheQuery.list();
+
+      Assert.assertEquals(3, found.size());
+      assert found.contains(person1);
+      assert found.contains(person2);
+      assert found.contains(person4);
+
+      query = Search.getSearchManager(cache).buildQueryBuilderForClass(Person.class).get()
+            .range().onField("dateOfGraduation").from(formatDate("May 5, 2002")).to(formatDate("June 10, 2012")).excludeLimit()
+            .createQuery();
+
+      cacheQuery = Search.getSearchManager(cache).getQuery(query);
+      found = cacheQuery.list();
+
+      Assert.assertEquals(3, found.size());
+      assert found.contains(person2);
+      assert found.contains(person3);
+      assert found.contains(person4);
+   }
+
    protected void loadTestingData() {
       person1 = new Person();
       person1.setName("Navin Surtani");
       person1.setBlurb("Likes playing WoW");
       person1.setAge(20);
+      person1.setDateOfGraduation(formatDate("June 10, 2012"));
 
       person2 = new Person();
       person2.setName("Big Goat");
       person2.setBlurb("Eats grass");
       person2.setAge(30);
+      person2.setDateOfGraduation(formatDate("July 5, 2002"));
 
       person3 = new Person();
       person3.setName("Mini Goat");
       person3.setBlurb("Eats cheese");
       person3.setAge(25);
+      person3.setDateOfGraduation(formatDate("May 5, 2002"));
 
       cache.put(key1, person1);
       cache.put(key2, person2);
       cache.put(key3, person3);
+   }
+
+   protected Date formatDate(String dateString) {
+      Date date = null;
+      try {
+         date = new SimpleDateFormat("MMMM d, yyyy", Locale.ENGLISH).parse(dateString);
+      } catch (java.text.ParseException e) {
+         throw new IllegalArgumentException("Unable to parse date.", e);
+      }
+      return date;
    }
 }

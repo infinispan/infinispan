@@ -24,7 +24,6 @@ import org.apache.solr.analysis.LengthFilterFactory;
 import org.apache.solr.analysis.LowerCaseFilterFactory;
 import org.apache.solr.analysis.MappingCharFilterFactory;
 import org.apache.solr.analysis.PatternTokenizerFactory;
-import org.apache.solr.analysis.PhoneticFilterFactory;
 import org.apache.solr.analysis.PorterStemFilterFactory;
 import org.apache.solr.analysis.ShingleFilterFactory;
 import org.apache.solr.analysis.SnowballPorterFilterFactory;
