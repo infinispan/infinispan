@@ -320,7 +320,7 @@ public class MarshalledValueInterceptor extends CommandInterceptor {
       mv.compact(false, false);
    }
 
-   private Object processRetVal(Object retVal, InvocationContext ctx) {
+   protected Object processRetVal(Object retVal, InvocationContext ctx) {
       if (retVal instanceof MarshalledValue) {
          if (ctx.isOriginLocal()) {
             if (trace) log.tracef("Return is a marshall value, so extract instance from: %s", retVal);

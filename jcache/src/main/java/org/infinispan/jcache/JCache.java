@@ -18,6 +18,7 @@
  */
 package org.infinispan.jcache;
 
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Iterator;
@@ -41,6 +42,7 @@ import javax.cache.event.CacheEntryListenerRegistration;
 import org.infinispan.AdvancedCache;
 import org.infinispan.context.Flag;
 import org.infinispan.jcache.logging.Log;
+import org.infinispan.marshall.StreamingMarshaller;
 import org.infinispan.util.InfinispanCollections;
 import org.infinispan.util.concurrent.locks.containers.LockContainer;
 import org.infinispan.util.concurrent.locks.containers.ReentrantPerEntryLockContainer;
@@ -303,8 +305,16 @@ public class JCache<K, V> implements Cache<K, V> {
             // Get old value skipping any listeners to impacting
             // listener invocation expectations set by the TCK.
             V oldValue = skipListenerCache.get(key);
+            V safeOldValue = oldValue;
+            if (configuration.isStoreByValue()) {
+               // Make a copy because the entry processor could make changes
+               // directly in the value, and we wanna keep a safe old value
+               // around for when calling the atomic replace() call.
+               safeOldValue = safeCopy(oldValue);
+            }
+
             MutableJCacheEntry<K, V> mutable =
-                  new MutableJCacheEntry<K, V>(cache, key, oldValue);
+                  new MutableJCacheEntry<K, V>(cache, key, safeOldValue);
             T ret = entryProcessor.process(mutable);
 
             if (mutable.isRemoved()) {
@@ -324,6 +334,19 @@ public class JCache<K, V> implements Cache<K, V> {
             return ret;
          }
       });
+   }
+
+   @SuppressWarnings("unchecked")
+   private V safeCopy(V original) {
+      try {
+         StreamingMarshaller marshaller = skipListenerCache.getComponentRegistry().getCacheMarshaller();
+         byte[] bytes = marshaller.objectToByteBuffer(original);
+         Object o = marshaller.objectFromByteBuffer(bytes);
+         return (V) o;
+      } catch (Exception e) {
+         throw new CacheException(
+               "Unexpected error making a copy of entry " + original, e);
+      }
    }
 
    private boolean lockRequired(K key) {
@@ -773,16 +796,16 @@ public class JCache<K, V> implements Cache<K, V> {
    }
 
    private class WithProcessorLock<V> {
-      public V call(K key, Callable<V> callabale) {
+      public V call(K key, Callable<V> callable) {
          try {
             acquiredProcessorLock(key);
-            return callabale.call();
+            return callable.call();
          } catch (InterruptedException e) {
             // restore interrupted status
             Thread.currentThread().interrupt();
             return null;
          } catch (Exception e) {
-            throw new RuntimeException(e);
+            throw new CacheException(e);
          } finally {
             releaseProcessorLock(key);
          }
