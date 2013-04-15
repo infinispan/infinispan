@@ -34,11 +34,11 @@ import org.hibernate.search.filter.FilterKey;
 import org.hibernate.search.filter.StandardFilterKey;
 
 /**
- * Filter for using in full text search. Filters persons by the age.
+ * Filter for using in full text search. Filters persons by the blurb.
  *
  * @author Anna Manukyan
  */
-public class PersonFilter {
+public class PersonBlurbFilterFactory {
    private String blurbText;
 
    @Key
