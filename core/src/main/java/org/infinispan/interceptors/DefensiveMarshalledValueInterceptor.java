@@ -23,6 +23,7 @@
 
 package org.infinispan.interceptors;
 
+import org.infinispan.context.InvocationContext;
 import org.infinispan.marshall.MarshalledValue;
 
 /**
@@ -41,6 +42,18 @@ public class DefensiveMarshalledValueInterceptor extends MarshalledValueIntercep
       // Force marshalled version to be stored
       if (mv != null)
          mv.compact(true, true);
+   }
+
+   @Override
+   protected Object processRetVal(Object retVal, InvocationContext ctx) {
+      Object ret = retVal;
+      if (retVal instanceof MarshalledValue) {
+         // Calculate return
+         ret = super.processRetVal(ret, ctx);
+         // Re-compact in case deserialization happened
+         ((MarshalledValue) retVal).compact(true, true);
+      }
+      return ret;
    }
 
 }
