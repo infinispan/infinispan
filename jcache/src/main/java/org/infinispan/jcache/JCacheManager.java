@@ -26,15 +26,7 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Set;
 
-import javax.cache.Cache;
-import javax.cache.CacheException;
-import javax.cache.CacheLoader;
-import javax.cache.CacheManager;
-import javax.cache.CacheWriter;
-import javax.cache.Caching;
-import javax.cache.Configuration;
-import javax.cache.OptionalFeature;
-import javax.cache.Status;
+import javax.cache.*;
 import javax.cache.transaction.IsolationLevel;
 import javax.cache.transaction.Mode;
 import javax.transaction.UserTransaction;
@@ -100,18 +92,32 @@ public class JCacheManager implements CacheManager {
             .globalJmxStatistics().cacheManagerName(cacheManagerName);
 
       cm = new DefaultCacheManager(cbh, true);
-      
+      registerPredefinedCaches();
+      status = Status.STARTED;
+   }
+
+   // For testing ...
+   JCacheManager(String name, EmbeddedCacheManager cacheManager) {
+      // Track allocation time
+      this.allocationStackTrace = Thread.currentThread().getStackTrace();
+      this.name = name;
+      this.cm = cacheManager;
+      registerPredefinedCaches();
+      status = Status.STARTED;
+   }
+
+   private void registerPredefinedCaches() {
       // TODO get predefined caches and register them
       // TODO galderz find a better way to do this as spec allows predefined caches to be
       // loaded (config file), instantiated and registered with CacheManager
       Set<String> cacheNames = cm.getCacheNames();
       for (String cacheName : cacheNames) {
+         // With pre-defined caches, obey only pre-defined configuration
          caches.put(cacheName, new JCache<Object, Object>(
                cm.getCache(cacheName).getAdvancedCache(),
-               this, new JCacheNotifier<Object, Object>(), null));
+               this, new JCacheNotifier<Object, Object>(),
+               new SimpleConfiguration<Object, Object>()));
       }
-      
-      status = Status.STARTED;
    }
 
    private ConfigurationBuilderHolder getConfigurationBuilderHolder(
