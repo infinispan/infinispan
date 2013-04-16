@@ -1381,7 +1381,7 @@
             </xs:documentation>
         </xs:annotation>
         <xs:restriction base="xs:string">
-            <xs:enumeration value="TWO_PHASE_COMMIT" />
+            <xs:enumeration value="DEFAULT" />
             <xs:enumeration value="TOTAL_ORDER" />
         </xs:restriction>
     </xs:simpleType>
