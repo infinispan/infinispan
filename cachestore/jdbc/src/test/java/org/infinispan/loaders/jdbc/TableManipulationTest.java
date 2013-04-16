@@ -160,7 +160,11 @@ public class TableManipulationTest {
    @Test(dependsOnMethods = "testCreateTable")
    public void testExists() throws CacheLoaderException {
       assert tableManipulation.tableExists(connection);
-      assert !tableManipulation.tableExists(connection, "does_not_exist");
+      assert !tableManipulation.tableExists(connection, new TableName("\"", "", "does_not_exist"));
+   }
+
+   public void testExistsWithSchema() throws CacheLoaderException {
+     // todo
    }
 
    @Test(dependsOnMethods = "testExists")
@@ -185,7 +189,7 @@ public class TableManipulationTest {
       assert existsTable(connection, tableManipulation.getTableName());
    }
 
-   static boolean existsTable(Connection connection, String tableName) throws Exception {
+   static boolean existsTable(Connection connection, TableName tableName) throws Exception {
       Statement st = connection.createStatement();
       ResultSet rs = null;
       try {

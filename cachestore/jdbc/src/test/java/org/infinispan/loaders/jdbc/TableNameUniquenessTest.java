@@ -65,8 +65,7 @@ public class TableNameUniquenessTest extends AbstractInfinispanTest {
          JdbcStringBasedCacheStore firstCs = (JdbcStringBasedCacheStore) TestingUtil.extractComponent(first, CacheLoaderManager.class).getCacheLoader();
          JdbcStringBasedCacheStore secondCs = (JdbcStringBasedCacheStore) TestingUtil.extractComponent(second, CacheLoaderManager.class).getCacheLoader();
 
-         String quote = firstCs.getTableManipulation().getIdentifierQuoteString();
-         assertTableExistence(firstCs.getConnectionFactory().getConnection(), quote, "ISPN_STRING_TABLE_second", "ISPN_STRING_TABLE_first", "ISPN_STRING_TABLE");
+         assertTableExistence(firstCs.getConnectionFactory().getConnection(), firstCs.getTableManipulation().getIdentifierQuoteString(), "second", "first", "ISPN_STRING_TABLE");
 
          assertNoOverlapingState(first, second, firstCs, secondCs);
       } finally {
@@ -84,8 +83,7 @@ public class TableNameUniquenessTest extends AbstractInfinispanTest {
          JdbcBinaryCacheStore firstCs = (JdbcBinaryCacheStore) TestingUtil.extractComponent(first, CacheLoaderManager.class).getCacheLoader();
          JdbcBinaryCacheStore secondCs = (JdbcBinaryCacheStore) TestingUtil.extractComponent(second, CacheLoaderManager.class).getCacheLoader();
 
-         String quote = firstCs.getTableManipulation().getIdentifierQuoteString();
-         assertTableExistence(firstCs.getConnectionFactory().getConnection(), quote, "ISPN_BUCKET_TABLE_second", "ISPN_BUCKET_TABLE_first", "IISPN_BUCKET_TABLE");
+         assertTableExistence(firstCs.getConnectionFactory().getConnection(), firstCs.getTableManipulation().getIdentifierQuoteString(), "second", "first", "ISPN_BUCKET_TABLE");
 
          assertNoOverlapingState(first, second, firstCs, secondCs);
       } finally {
@@ -105,9 +103,8 @@ public class TableNameUniquenessTest extends AbstractInfinispanTest {
          JdbcMixedCacheStore firstCs = (JdbcMixedCacheStore) TestingUtil.extractComponent(first, CacheLoaderManager.class).getCacheLoader();
          JdbcMixedCacheStore secondCs = (JdbcMixedCacheStore) TestingUtil.extractComponent(second, CacheLoaderManager.class).getCacheLoader();
 
-         String quote = firstCs.getStringBasedCacheStore().getTableManipulation().getIdentifierQuoteString();
-         assertTableExistence(firstCs.getConnectionFactory().getConnection(), quote, "ISPN_MIXED_STR_TABLE_second", "ISPN_MIXED_STR_TABLE_first", "ISPN_MIXED_STR_TABLE");
-         assertTableExistence(firstCs.getConnectionFactory().getConnection(), quote, "ISPN_MIXED_BINARY_TABLE_second", "ISPN_MIXED_BINARY_TABLE_first", "ISPN_MIXED_BINARY_TABLE");
+         assertTableExistence(firstCs.getConnectionFactory().getConnection(), firstCs.getBinaryCacheStore().getTableManipulation().getIdentifierQuoteString(), "second", "first", "ISPN_MIXED_STR_TABLE");
+         assertTableExistence(firstCs.getConnectionFactory().getConnection(), firstCs.getBinaryCacheStore().getTableManipulation().getIdentifierQuoteString(), "second", "first", "ISPN_MIXED_BINARY_TABLE");
 
          assertNoOverlapingState(first, second, firstCs, secondCs);
 
@@ -162,10 +159,10 @@ public class TableNameUniquenessTest extends AbstractInfinispanTest {
       }
    }
 
-   private void assertTableExistence(Connection connection, String quote, String secondTable, String firstTable, String tablePrefix) throws Exception {
-      assert !TableManipulationTest.existsTable(connection, quoteTableName(quote, tablePrefix)) : "this table should not exist!";
-      assert TableManipulationTest.existsTable(connection, quoteTableName(quote, firstTable));
-      assert TableManipulationTest.existsTable(connection, quoteTableName(quote, secondTable));
+   private void assertTableExistence(Connection connection, String identifierQuote, String secondTable, String firstTable, String tablePrefix) throws Exception {
+      assert !TableManipulationTest.existsTable(connection, new TableName(identifierQuote, tablePrefix, "")) : "this table should not exist!";
+      assert TableManipulationTest.existsTable(connection, new TableName(identifierQuote, tablePrefix, firstTable));
+      assert TableManipulationTest.existsTable(connection, new TableName(identifierQuote, tablePrefix, secondTable));
       connection.close();
    }
 

@@ -35,6 +35,7 @@ import org.infinispan.io.UnclosableObjectOutputStream;
 import org.infinispan.loaders.CacheLoaderException;
 import org.infinispan.loaders.CacheStore;
 import org.infinispan.loaders.jdbc.TableManipulation;
+import org.infinispan.loaders.jdbc.TableName;
 import org.infinispan.loaders.jdbc.connectionfactory.ConnectionFactory;
 import org.infinispan.loaders.jdbc.connectionfactory.ConnectionFactoryConfig;
 import org.infinispan.loaders.jdbc.stringbased.Person;
@@ -208,7 +209,7 @@ public class JdbcMixedCacheStoreTest {
    private void assertStringsRowCount(int rowCount) {
       JdbcMixedCacheStore store = (JdbcMixedCacheStore) cacheStore;
       ConnectionFactory connectionFactory = store.getConnectionFactory();
-      String tableName = stringsTm.getTableName();
+      TableName tableName = stringsTm.getTableName();
       int value = UnitTestDatabaseManager.rowCount(connectionFactory, tableName);
       assert value == rowCount : "Expected " + rowCount + " rows, actual value is " + value;
    }
@@ -216,7 +217,7 @@ public class JdbcMixedCacheStoreTest {
    private void assertBinaryRowCount(int rowCount) {
       JdbcMixedCacheStore store = (JdbcMixedCacheStore) cacheStore;
       ConnectionFactory connectionFactory = store.getConnectionFactory();
-      String tableName = binaryTm.getTableName();
+      TableName tableName = binaryTm.getTableName();
       int value = UnitTestDatabaseManager.rowCount(connectionFactory, tableName);
       assert value == rowCount : "Expected " + rowCount + " rows, actual value is " + value;
    }
