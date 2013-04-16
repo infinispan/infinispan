@@ -74,7 +74,7 @@
    </issueManagement>
    <ciManagement>
       <system>TeamCity</system>
-      <url>http://ci.infinispan.org/</url>
+      <url>http://ci.infinispan.org</url>
       <notifiers>
          <notifier>
             <type>mail</type>
@@ -186,7 +186,7 @@
       <version.maven.bundle>2.3.7</version.maven.bundle>
       <version.maven.source>2.2.1</version.maven.source>
       <version.maven.scala>2.15.2</version.maven.scala>
-      <version.maven.surefire>2.12.4</version.maven.surefire>
+      <version.maven.surefire>2.14</version.maven.surefire>
       <version.maven.invoker>1.8</version.maven.invoker>
       <version.jacoco>0.5.10.201208310627</version.jacoco>
       <version.asm>3.3.1</version.asm>
@@ -1418,7 +1418,8 @@
             <configuration>
                <parallel>tests</parallel>
                <threadCount>${infinispan.test.parallel.threads}</threadCount>
-               <forkMode>none</forkMode>
+               <forkCount>1</forkCount>
+               <reuseForks>true</reuseForks>
                <groups>${defaultTestGroup}</groups>
                <systemProperties>
                   <property>
@@ -1664,43 +1665,38 @@
                   <groupId>org.apache.maven.plugins</groupId>
                   <artifactId>maven-surefire-plugin</artifactId>
                   <configuration>
-                     <parallel>tests</parallel>
-                     <threadCount>${infinispan.test.parallel.threads}</threadCount>
-                     <forkMode>none</forkMode>
-                     <groups>${defaultTestGroup}</groups>
                      <systemProperties>
-                        <property>
-                           <name>infinispan.test.jgroups.protocol</name>
-                           <value>${infinispan.test.jgroups.protocol}</value>
-                        </property>
-                        <property>
-                           <name>jgroups.bind_addr</name>
-                           <value>127.0.0.1</value>
-                        </property>
-                        <property>
-                           <name>java.net.preferIPv4Stack</name>
-                           <value>true</value>
-                        </property>
                         <property>
                            <name>log4j.configuration</name>
                            <value>log4j-trace.xml</value>
                         </property>
                      </systemProperties>
-                     <trimStackTrace>false</trimStackTrace>
-                     <properties>
-                        <property>
-                           <name>listener</name>
-                           <value>${testNGListener}</value>
-                        </property>
-                     </properties>
-                     <argLine>-Xmx1024m -XX:MaxPermSize=1024m</argLine>
                   </configuration>
                </plugin>
             </plugins>
          </build>
-         <properties>
-            <infinispan.test.jgroups.protocol>tcp</infinispan.test.jgroups.protocol>
-         </properties>
+      </profile>
+      <profile>
+         <id>customLog4j</id>
+         <activation>
+            <activeByDefault>false</activeByDefault>
+         </activation>
+         <build>
+            <plugins>
+               <plugin>
+                  <groupId>org.apache.maven.plugins</groupId>
+                  <artifactId>maven-surefire-plugin</artifactId>
+                  <configuration>
+                     <systemProperties>
+                        <property>
+                           <name>log4j.configuration</name>
+                           <value>${infinispan.log4j}</value>
+                        </property>
+                     </systemProperties>
+                  </configuration>
+               </plugin>
+            </plugins>
+         </build>
       </profile>
 
       <profile>
