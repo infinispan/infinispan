@@ -22,6 +22,8 @@ package org.infinispan.util.logging.log4j;
 import org.apache.log4j.FileAppender;
 import org.apache.log4j.LogManager;
 
+import java.io.File;
+import java.io.FilenameFilter;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.io.OutputStreamWriter;
@@ -29,12 +31,13 @@ import java.util.zip.GZIPOutputStream;
 
 /**
  * Appender that writes to a file and compresses the output using gzip.
- *
+ * <p/>
  * Based on <code>org.apache.log4j.FileAppender</code>
  */
 public class CompressedFileAppender extends FileAppender {
 
    GZIPOutputStream gzos;
+   private boolean perModuleFileName;
 
    static {
       final Thread shutdownThread = new Thread(new Runnable() {
@@ -49,12 +52,56 @@ public class CompressedFileAppender extends FileAppender {
    @Override
    protected OutputStreamWriter createWriter(OutputStream os) {
       try {
+         if (!bufferedIO) {
+            System.err.println("INFO: \"bufferedIO\"=true is recommended for the compressed appender");
+         }
+         int bufferedSize = 1024 * 1024;
+         if (bufferSize < bufferedSize) {
+            System.err.println("INFO: \"bufferSize\"=" + bufferedSize
+                                     + " (at least) is recommended for the compressed appender");
+         }
          gzos = new GZIPOutputStream(os, bufferSize);
          gzos.flush();
          return super.createWriter(gzos);
       } catch (IOException e) {
          throw new RuntimeException("Unable to create gzipped output stream");
       }
+   }
+
+   @Override
+   public void setFile(String file) {
+      boolean perModuleFileName1 = isPerModuleFileName();
+      if (perModuleFileName1) {
+         File currentDir = new File(new File(".").getAbsolutePath());
+         if (!currentDir.isDirectory()) throw new IllegalStateException();
+         String perModuleFileName = getModuleName(currentDir, "") + file;
+         super.setFile(perModuleFileName);
+      } else {
+         super.setFile(file);
+      }
+   }
+
+   private String getModuleName(File currentDir, String moduleStr) {
+      if (currentDir.list(new FilenameFilter() {
+         @Override
+         public boolean accept(File dir, String name) {
+            //if contains these 3 entries chances are this is the root of the project
+            return name.equals("core") || name.equals("bin") || name.equals("api");
+         }
+      }).length == 3) {
+         return moduleStr;
+      } else {
+         String newModStr = currentDir.getName().equals(".") ? moduleStr : currentDir.getName() + "-" + moduleStr;
+         return getModuleName(currentDir.getParentFile(), newModStr);
+      }
+   }
+
+   public boolean isPerModuleFileName() {
+      return perModuleFileName;
+   }
+
+   public void setPerModuleFileName(boolean perModuleFileName) {
+      this.perModuleFileName = perModuleFileName;
    }
 
    @Override
