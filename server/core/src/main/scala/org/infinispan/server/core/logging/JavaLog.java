@@ -78,4 +78,15 @@ public interface JavaLog extends org.infinispan.util.logging.Log {
    @Message(value = "Unexpected error before any request parameters read", id = 5009)
    void errorBeforeReadingRequest(@Cause Throwable t);
 
+   @Message(value = "Illegal number of workerThreads: %d", id = 5010)
+   IllegalArgumentException illegalWorkerThreads(int workerThreads);
+
+   @Message(value = "Idle timeout can't be lower than -1: %d", id = 5011)
+   IllegalArgumentException illegalIdleTimeout(int idleTimeout);
+
+   @Message(value = "Receive Buffer Size can't be lower than 0: %d", id = 5012)
+   IllegalArgumentException illegalReceiveBufferSize(int recvBufSize);
+
+   @Message(value = "Send Buffer Size can't be lower than 0: %d", id = 5013)
+   IllegalArgumentException illegalSendBufferSize(int sendBufSize);
 }

@@ -26,6 +26,7 @@ import org.infinispan.manager.EmbeddedCacheManager
 import java.util.Properties
 import org.jboss.netty.handler.codec.oneone.OneToOneEncoder
 import org.jboss.netty.channel.ChannelHandler
+import org.infinispan.server.core.configuration.ProtocolServerConfiguration
 
 /**
  * Represents a protocol compliant server.
@@ -34,19 +35,20 @@ import org.jboss.netty.channel.ChannelHandler
  * @since 4.1
  */
 trait ProtocolServer {
+   type SuitableConfiguration <: ProtocolServerConfiguration
+
+   /**
+    * Starts the server backed by the given cache manager and with the corresponding configuration.
+    */
+   def start(configuration: SuitableConfiguration, cacheManager: EmbeddedCacheManager)
 
    /**
     * Starts the server backed by the given cache manager and with the corresponding properties. If properties object
     * is either null or empty, default values depending on the server type are assumed. Note that properties mandate
     * String keys and values. Accepted property keys and default values are listed in {@link Main} class.
     */
-   def start(properties: Properties, cacheManager: EmbeddedCacheManager)
-
-   /**
-    * Overloaded method that starts the server by using a properties file. This is particularly useful if trying to
-    * start the cache through a beans.xml file or similar.
-    */
-   def start(propertiesFileName: String, cacheManager: EmbeddedCacheManager)
+   @Deprecated
+   def startWithProperties(properties: Properties, cacheManager: EmbeddedCacheManager)
 
    /**
     *  Stops the server
@@ -65,4 +67,9 @@ trait ProtocolServer {
     * This method cannot return null.
     */
    def getDecoder: ChannelHandler
+
+   /**
+    * Returns the configuration used to start this server
+    */
+   def getConfiguration: SuitableConfiguration
 }

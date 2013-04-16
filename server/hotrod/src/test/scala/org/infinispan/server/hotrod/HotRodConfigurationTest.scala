@@ -33,6 +33,8 @@ import org.testng.annotations.Test
 import org.infinispan.loaders.cluster.{ClusterCacheLoaderConfig, ClusterCacheLoader}
 import org.infinispan.server.core.test.Stoppable
 import org.infinispan.configuration.cache.{LegacyLoaderConfiguration, Configuration}
+import org.infinispan.server.hotrod.configuration.HotRodServerConfigurationBuilder
+import org.infinispan.configuration.cache.ClusterCacheLoaderConfiguration
 
 /**
  * Test to verify that configuration changes are reflected in backend caches.
@@ -46,10 +48,9 @@ class HotRodConfigurationTest {
    import HotRodServer.ADDRESS_CACHE_NAME
 
    def testUserDefinedTimeouts {
-      val props = new Properties
-      props.setProperty(PROP_KEY_TOPOLOGY_LOCK_TIMEOUT, "26000")
-      props.setProperty(PROP_KEY_TOPOLOGY_REPL_TIMEOUT, "31000")
-      withClusteredServer(props) { (cfg, distSyncTimeout) =>
+      val builder = new HotRodServerConfigurationBuilder
+      builder.topologyLockTimeout(26000).topologyReplTimeout(31000)
+      withClusteredServer(builder) { (cfg, distSyncTimeout) =>
          assertEquals(cfg.locking().lockAcquisitionTimeout(), 26000)
          assertEquals(cfg.clustering().sync().replTimeout(), 31000)
          assertTrue(cfg.clustering().stateTransfer().fetchInMemoryState())
@@ -59,22 +60,20 @@ class HotRodConfigurationTest {
    }
 
    def testLazyLoadTopology {
-      val props = new Properties
-      props.setProperty(PROP_KEY_TOPOLOGY_STATE_TRANSFER, "false")
-      props.setProperty(PROP_KEY_TOPOLOGY_REPL_TIMEOUT, "43000")
-      withClusteredServer(props) { (cfg, distSyncTimeout) =>
+      val builder = new HotRodServerConfigurationBuilder
+      builder.topologyStateTransfer(false).topologyReplTimeout(43000);
+      withClusteredServer(builder) { (cfg, distSyncTimeout) =>
          assertEquals(cfg.clustering().sync().replTimeout(), 43000)
          assertTrue(cfg.clustering().stateTransfer().fetchInMemoryState())
-         val clcfg = cfg.loaders().cacheLoaders().get(0).asInstanceOf[LegacyLoaderConfiguration]
+         val clcfg = cfg.loaders().cacheLoaders().get(0).asInstanceOf[ClusterCacheLoaderConfiguration]
          assertNotNull(clcfg)
-         assertEquals(clcfg.cacheLoader().getClass.getName, classOf[ClusterCacheLoader].getName)
-         assertEquals(clcfg.properties().get("remoteCallTimeout"), "43000")
+         assertEquals(clcfg.remoteCallTimeout(), 43000)
       }
    }
 
-   private def withClusteredServer(props: Properties) (assert: (Configuration, Long) => Unit) {
+   private def withClusteredServer(builder: HotRodServerConfigurationBuilder) (assert: (Configuration, Long) => Unit) {
       Stoppable.useCacheManager(TestCacheManagerFactory.createClusteredCacheManager) { cm =>
-         Stoppable.useServer(startHotRodServer(cm, UniquePortThreadLocal.get.intValue, props)) { server =>
+         Stoppable.useServer(startHotRodServer(cm, UniquePortThreadLocal.get.intValue, builder)) { server =>
             val cfg = cm.getCache(ADDRESS_CACHE_NAME).getCacheConfiguration
             assert(cfg, cm.getCacheManagerConfiguration.transport().distributedSyncTimeout())
          }

@@ -41,6 +41,9 @@ import org.infinispan.commands.write.PutKeyValueCommand
 import org.infinispan.interceptors.base.BaseCustomInterceptor
 import org.infinispan.interceptors.EntryWrappingInterceptor
 import org.infinispan.upgrade.RollingUpgradeManager
+import org.infinispan.server.hotrod.configuration.HotRodServerConfiguration
+import org.infinispan.server.hotrod.configuration.HotRodServerConfiguration
+import org.infinispan.server.hotrod.configuration.HotRodServerConfigurationBuilder
 
 /**
  * Hot Rod server, in charge of defining its encoder/decoder and, if clustered, update the topology information
@@ -48,7 +51,6 @@ import org.infinispan.upgrade.RollingUpgradeManager
  *
  * TODO: It's too late for 5.1.1 series. In 5.2, split class into: local and cluster hot rod servers
  * This should safe some memory for the local case and the code should be cleaner
- * TODO: In 5.2, convert the clustered hot rod server to new configuration too
  *
  * @author Galder Zamarreño
  * @since 4.1
@@ -57,11 +59,12 @@ class HotRodServer extends AbstractProtocolServer("HotRod") with Log {
 
    import HotRodServer._
 
+   type SuitableConfiguration = HotRodServerConfiguration
+
    private var isClustered: Boolean = _
    private var clusterAddress: Address = _
    private var address: ServerAddress = _
    private var addressCache: Cache[Address, ServerAddress] = _
-   private var topologyUpdateTimeout: Long = _
    private val knownCaches : java.util.Map[String, Cache[ByteArrayKey, CacheValue]] = ConcurrentMapFactory.makeConcurrentMap(4, 0.9f, 16)
    private val isTrace = isTraceEnabled
 
@@ -75,37 +78,33 @@ class HotRodServer extends AbstractProtocolServer("HotRod") with Log {
       hotRodDecoder
    }
 
-   override def start(p: Properties, cacheManager: EmbeddedCacheManager) {
-      val properties = if (p == null) new Properties else p
-      val defaultPort = 11222
+   override def start(configuration: HotRodServerConfiguration, cacheManager: EmbeddedCacheManager) {
+      this.configuration = configuration
 
       // 1. Start default cache and the endpoint before adding self to
       // topology in order to avoid topology updates being used before
       // endpoint is available.
-      super.start(properties, cacheManager, defaultPort)
+      super.start(configuration, cacheManager)
 
       isClustered = cacheManager.getCacheManagerConfiguration.transport().transport() != null
       if (isClustered) {
-         val typedProps = TypedProperties.toTypedProperties(properties)
-         defineTopologyCacheConfig(cacheManager, typedProps)
-         // Retrieve host and port early on to populate topology cache
-         val externalHost = typedProps.getProperty(PROP_KEY_PROXY_HOST,
-               typedProps.getProperty(PROP_KEY_HOST, HOST_DEFAULT, true))
-         val externalPort = typedProps.getIntProperty(PROP_KEY_PROXY_PORT,
-               typedProps.getIntProperty(PROP_KEY_PORT, defaultPort, true))
+         defineTopologyCacheConfig(cacheManager)
          if (isDebugEnabled)
-            debug("Externally facing address is %s:%d", externalHost, externalPort)
+            debug("Externally facing address is %s:%d", configuration.proxyHost, configuration.proxyPort)
 
-         addSelfToTopologyView(externalHost, externalPort, cacheManager)
+         addSelfToTopologyView(cacheManager)
       }
    }
 
-   override def startTransport(idleTimeout: Int, tcpNoDelay: Boolean,
-         sendBufSize: Int, recvBufSize: Int, typedProps: TypedProperties) {
+   override def startWithProperties(properties: Properties, cacheManager: EmbeddedCacheManager) {
+      this.start(new HotRodServerConfigurationBuilder().withProperties(properties).build(), cacheManager)
+   }
+
+   override def startTransport() {
       // Start predefined caches
       preStartCaches()
 
-      super.startTransport(idleTimeout, tcpNoDelay, sendBufSize, recvBufSize, typedProps)
+      super.startTransport()
    }
 
    override def startDefaultCache = {
@@ -121,10 +120,10 @@ class HotRodServer extends AbstractProtocolServer("HotRod") with Log {
       }
    }
 
-   private def addSelfToTopologyView(host: String, port: Int, cacheManager: EmbeddedCacheManager) {
+   private def addSelfToTopologyView(cacheManager: EmbeddedCacheManager) {
       addressCache = cacheManager.getCache(HotRodServer.ADDRESS_CACHE_NAME)
       clusterAddress = cacheManager.getAddress
-      address = new ServerAddress(host, port)
+      address = new ServerAddress(configuration.proxyHost, configuration.proxyPort)
       cacheManager.addListener(new CrashedMemberDetectorListener(addressCache, this))
       // Map cluster address to server endpoint address
       debug("Map %s cluster address with %s server endpoint in address cache", clusterAddress, address)
@@ -135,32 +134,23 @@ class HotRodServer extends AbstractProtocolServer("HotRod") with Log {
               .put(clusterAddress, address)
    }
 
-   private def defineTopologyCacheConfig(cacheManager: EmbeddedCacheManager, typedProps: TypedProperties) {
+   private def defineTopologyCacheConfig(cacheManager: EmbeddedCacheManager) {
       cacheManager.defineConfiguration(HotRodServer.ADDRESS_CACHE_NAME,
-         createTopologyCacheConfig(typedProps,
-            cacheManager.getCacheManagerConfiguration.transport().distributedSyncTimeout()).build())
+         createTopologyCacheConfig(cacheManager.getCacheManagerConfiguration.transport().distributedSyncTimeout()).build())
    }
 
-   protected def createTopologyCacheConfig(typedProps: TypedProperties, distSyncTimeout: Long): ConfigurationBuilder = {
-      val lockTimeout = typedProps.getLongProperty(PROP_KEY_TOPOLOGY_LOCK_TIMEOUT, TOPO_LOCK_TIMEOUT_DEFAULT, true)
-      val replTimeout = typedProps.getLongProperty(PROP_KEY_TOPOLOGY_REPL_TIMEOUT, TOPO_REPL_TIMEOUT_DEFAULT, true)
-      val doStateTransfer = typedProps.getBooleanProperty(PROP_KEY_TOPOLOGY_STATE_TRANSFER, TOPO_STATE_TRANSFER_DEFAULT, true)
-      topologyUpdateTimeout = typedProps.getLongProperty(PROP_KEY_TOPOLOGY_UPDATE_TIMEOUT, TOPO_UPDATE_TIMEOUT_DEFAULT, true)
-
+   protected def createTopologyCacheConfig(distSyncTimeout: Long): ConfigurationBuilder = {
       val builder = new ConfigurationBuilder
-      builder.clustering().cacheMode(CacheMode.REPL_SYNC).sync().replTimeout(replTimeout)
-             .locking().lockAcquisitionTimeout(lockTimeout)
+      builder.clustering().cacheMode(CacheMode.REPL_SYNC).sync().replTimeout(configuration.topologyReplTimeout)
+             .locking().lockAcquisitionTimeout(configuration.topologyLockTimeout)
              .eviction().strategy(EvictionStrategy.NONE)
              .expiration().lifespan(-1).maxIdle(-1)
 
-      if (doStateTransfer) {
+      if (configuration.topologyStateTransfer) {
          builder.clustering().stateTransfer().fetchInMemoryState(true)
-                 .timeout(distSyncTimeout + replTimeout)
+                 .timeout(distSyncTimeout + configuration.topologyReplTimeout)
       } else {
-         val loaderProps = new Properties()
-         loaderProps.setProperty("remoteCallTimeout", replTimeout.toString)
-         builder.loaders().addLoader().cacheLoader(new ClusterCacheLoader)
-                 .withProperties(loaderProps)
+         builder.loaders().addClusterCacheLoader().remoteCallTimeout(configuration.topologyReplTimeout)
       }
 
       builder

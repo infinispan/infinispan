@@ -42,6 +42,7 @@ import java.util
 import org.infinispan.jmx.JmxUtil
 import javax.management.ObjectName
 import util.concurrent.{TimeUnit, Executors}
+import org.infinispan.server.core.configuration.ProtocolServerConfiguration
 
 /**
  * A Netty based transport.
@@ -50,16 +51,14 @@ import util.concurrent.{TimeUnit, Executors}
  * @since 4.1
  */
 class NettyTransport(server: ProtocolServer, encoder: ChannelDownstreamHandler,
-                     address: InetSocketAddress, workerThreads: Int,
-                     idleTimeout: Int, threadNamePrefix: String, tcpNoDelay: Boolean,
-                     sendBufSize: Int, recvBufSize: Int, cacheManager: EmbeddedCacheManager)
+                     address: InetSocketAddress, configuration: ProtocolServerConfiguration, threadNamePrefix: String, cacheManager: EmbeddedCacheManager)
         extends Transport with Log {
 
    private val serverChannels = new DefaultChannelGroup(threadNamePrefix + "-Channels")
    val acceptedChannels = new DefaultChannelGroup(threadNamePrefix + "-Accepted")
    private val pipeline =
-      if (idleTimeout > 0)
-         new TimeoutEnabledChannelPipelineFactory(server, encoder, this, idleTimeout)
+      if (configuration.idleTimeout > 0)
+         new TimeoutEnabledChannelPipelineFactory(server, encoder, this, configuration.idleTimeout)
       else // Idle timeout logic is disabled with -1 or 0 values
          new NettyChannelPipelineFactory(server, encoder, this)
 
@@ -75,7 +74,7 @@ class NettyTransport(server: ProtocolServer, encoder: ChannelDownstreamHandler,
        name
      }
    })
-   private val workerPool = new NioWorkerPool(Executors.newCachedThreadPool, workerThreads, new ThreadNameDeterminer {
+   private val workerPool = new NioWorkerPool(Executors.newCachedThreadPool, configuration.workerThreads, new ThreadNameDeterminer {
      override def determineThreadName(currentThreadName: String, proposedThreadName: String): String = {
        val index = proposedThreadName.indexWhere(_ == '#')
        val typeInFix = "ServerWorker-"
@@ -101,11 +100,11 @@ class NettyTransport(server: ProtocolServer, encoder: ChannelDownstreamHandler,
 
       val bootstrap = new ServerBootstrap(factory)
       bootstrap.setPipelineFactory(pipeline)
-      bootstrap.setOption("child.tcpNoDelay", tcpNoDelay) // Sets server side tcpNoDelay
-      if (sendBufSize > 0)
-         bootstrap.setOption("child.sendBufferSize", sendBufSize) // Sets server side send buffer
-      if (recvBufSize > 0)
-         bootstrap.setOption("child.receiveBufferSize", recvBufSize) // Sets server side receive buffer
+      bootstrap.setOption("child.tcpNoDelay", configuration.tcpNoDelay) // Sets server side tcpNoDelay
+      if (configuration.sendBufSize > 0)
+         bootstrap.setOption("child.sendBufferSize", configuration.sendBufSize) // Sets server side send buffer
+      if (configuration.recvBufSize > 0)
+         bootstrap.setOption("child.receiveBufferSize", configuration.recvBufSize) // Sets server side receive buffer
 
       val ch = bootstrap.bind(address)
       serverChannels.add(ch)
@@ -158,15 +157,15 @@ class NettyTransport(server: ProtocolServer, encoder: ChannelDownstreamHandler,
 
    override def getPort = address.getPort.toString
 
-   override def getNumberWorkerThreads = workerThreads.toString
+   override def getNumberWorkerThreads = configuration.workerThreads.toString
 
-   override def getIdleTimeout = idleTimeout.toString
+   override def getIdleTimeout = configuration.idleTimeout.toString
 
-   override def getTcpNoDelay = tcpNoDelay.toString
+   override def getTcpNoDelay = configuration.tcpNoDelay.toString
 
-   override def getSendBufferSize = sendBufSize.toString
+   override def getSendBufferSize = configuration.sendBufSize.toString
 
-   override def getReceiveBufferSize = recvBufSize.toString
+   override def getReceiveBufferSize = configuration.recvBufSize.toString
 
    override def getNumberOfLocalConnections: java.lang.Integer =
       Integer.valueOf(acceptedChannels.size())

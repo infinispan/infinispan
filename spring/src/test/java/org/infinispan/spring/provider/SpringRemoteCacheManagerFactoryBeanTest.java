@@ -33,6 +33,7 @@ import static org.infinispan.client.hotrod.impl.ConfigurationProperties.SERVER_L
 import static org.infinispan.client.hotrod.impl.ConfigurationProperties.TCP_NO_DELAY;
 import static org.infinispan.client.hotrod.impl.ConfigurationProperties.TRANSPORT_FACTORY;
 import static org.infinispan.client.hotrod.impl.ConfigurationProperties.VALUE_SIZE_ESTIMATE;
+import static org.infinispan.spring.AssertionUtils.assertPropertiesSubset;
 import static org.testng.AssertJUnit.assertEquals;
 import static org.testng.AssertJUnit.assertFalse;
 import static org.testng.AssertJUnit.assertTrue;
@@ -45,6 +46,7 @@ import java.util.Collection;
 import java.util.Properties;
 
 import org.infinispan.client.hotrod.RemoteCacheManager;
+
 import org.infinispan.spring.mock.MockExecutorFatory;
 import org.infinispan.spring.mock.MockMarshaller;
 import org.infinispan.spring.mock.MockRequestBalancingStrategy;
@@ -57,9 +59,9 @@ import org.testng.annotations.Test;
  * <p>
  * Test {@link SpringRemoteCacheManagerFactoryBean}.
  * </p>
- * 
+ *
  * @author <a href="mailto:olaf DOT bergner AT gmx DOT de">Olaf Bergner</a>
- * 
+ *
  */
 @Test(testName = "spring.provider.SpringRemoteCacheManagerFactoryBeanTest", groups = "unit")
 public class SpringRemoteCacheManagerFactoryBeanTest {
@@ -71,7 +73,7 @@ public class SpringRemoteCacheManagerFactoryBeanTest {
     * Test method for
     * {@link org.infinispan.spring.provider.SpringRemoteCacheManagerFactoryBean#afterPropertiesSet()}
     * .
-    * 
+    *
     * @throws Exception
     */
    @Test(expectedExceptions = IllegalStateException.class)
@@ -89,7 +91,7 @@ public class SpringRemoteCacheManagerFactoryBeanTest {
     * Test method for
     * {@link org.infinispan.spring.provider.SpringRemoteCacheManagerFactoryBean#afterPropertiesSet()}
     * .
-    * 
+    *
     * @throws Exception
     */
    @Test(expectedExceptions = IllegalStateException.class)
@@ -105,7 +107,7 @@ public class SpringRemoteCacheManagerFactoryBeanTest {
    /**
     * Test method for
     * {@link org.infinispan.spring.provider.SpringRemoteCacheManagerFactoryBean#getObjectType()}.
-    * 
+    *
     * @throws Exception
     */
    @Test
@@ -124,7 +126,7 @@ public class SpringRemoteCacheManagerFactoryBeanTest {
    /**
     * Test method for
     * {@link org.infinispan.spring.provider.SpringRemoteCacheManagerFactoryBean#getObject()}.
-    * 
+    *
     * @throws Exception
     */
    @Test
@@ -135,7 +137,7 @@ public class SpringRemoteCacheManagerFactoryBeanTest {
       objectUnderTest.afterPropertiesSet();
 
       final SpringRemoteCacheManager remoteCacheManager = objectUnderTest.getObject();
-      assertEquals(
+      assertPropertiesSubset(
                "The configuration properties used by the SpringRemoteCacheManager returned von getObject() should be equal "
                         + "to SpringRemoteCacheManager's default settings since neither property 'configurationProperties' "
                         + "nor property 'configurationPropertiesFileLocation' has been set. However, those two are not equal.",
@@ -161,7 +163,7 @@ public class SpringRemoteCacheManagerFactoryBeanTest {
    /**
     * Test method for
     * {@link org.infinispan.spring.provider.SpringRemoteCacheManagerFactoryBean#destroy()}.
-    * 
+    *
     * @throws Exception
     */
    @Test
@@ -182,7 +184,7 @@ public class SpringRemoteCacheManagerFactoryBeanTest {
     * Test method for
     * {@link org.infinispan.spring.provider.SpringRemoteCacheManagerFactoryBean#setConfigurationProperties(java.util.Properties)}
     * .
-    * 
+    *
     * @throws Exception
     */
    @Test
@@ -194,7 +196,7 @@ public class SpringRemoteCacheManagerFactoryBeanTest {
       objectUnderTest.afterPropertiesSet();
 
       final SpringRemoteCacheManager remoteCacheManager = objectUnderTest.getObject();
-      assertEquals(
+      assertPropertiesSubset(
                "The configuration properties used by the SpringRemoteCacheManager returned von getObject() should be equal "
                         + "to those passed into SpringRemoteCacheManagerFactoryBean via setConfigurationProperties(props). "
                         + "However, those two are not equal.", configurationProperties,
@@ -231,7 +233,7 @@ public class SpringRemoteCacheManagerFactoryBeanTest {
       objectUnderTest.afterPropertiesSet();
 
       final SpringRemoteCacheManager remoteCacheManager = objectUnderTest.getObject();
-      assertEquals(
+      assertPropertiesSubset(
                "The configuration properties used by the SpringRemoteCacheManager returned von getObject() should be equal "
                         + "to those passed into SpringRemoteCacheManagerFactoryBean via setConfigurationPropertiesFileLocation(propsFileLocation). "
                         + "However, those two are not equal.",
@@ -244,7 +246,7 @@ public class SpringRemoteCacheManagerFactoryBeanTest {
     * Test method for
     * {@link org.infinispan.spring.provider.SpringRemoteCacheManagerFactoryBean#setStartAutomatically(boolean)}
     * .
-    * 
+    *
     * @throws Exception
     */
    @Test
@@ -267,7 +269,7 @@ public class SpringRemoteCacheManagerFactoryBeanTest {
     * Test method for
     * {@link org.infinispan.spring.provider.SpringRemoteCacheManagerFactoryBean#setTransportFactory(java.lang.String)}
     * .
-    * 
+    *
     * @throws Exception
     */
    @Test
@@ -292,7 +294,7 @@ public class SpringRemoteCacheManagerFactoryBeanTest {
     * Test method for
     * {@link org.infinispan.spring.provider.SpringRemoteCacheManagerFactoryBean#setServerList(java.util.Collection)}
     * .
-    * 
+    *
     * @throws Exception
     */
    @Test
@@ -317,7 +319,7 @@ public class SpringRemoteCacheManagerFactoryBeanTest {
     * Test method for
     * {@link org.infinispan.spring.provider.SpringRemoteCacheManagerFactoryBean#setMarshaller(java.lang.String)}
     * .
-    * 
+    *
     * @throws Exception
     */
    @Test
@@ -341,7 +343,7 @@ public class SpringRemoteCacheManagerFactoryBeanTest {
     * Test method for
     * {@link org.infinispan.spring.provider.SpringRemoteCacheManagerFactoryBean#setAsyncExecutorFactory(java.lang.String)}
     * .
-    * 
+    *
     * @throws Exception
     */
    @Test
@@ -366,7 +368,7 @@ public class SpringRemoteCacheManagerFactoryBeanTest {
     * Test method for
     * {@link org.infinispan.spring.provider.SpringRemoteCacheManagerFactoryBean#setTcpNoDelay(boolean)}
     * .
-    * 
+    *
     * @throws Exception
     */
    @Test
@@ -389,7 +391,7 @@ public class SpringRemoteCacheManagerFactoryBeanTest {
     * Test method for
     * {@link org.infinispan.spring.provider.SpringRemoteCacheManagerFactoryBean#setPingOnStartup(boolean)}
     * .
-    * 
+    *
     * @throws Exception
     */
    @Test
@@ -412,7 +414,7 @@ public class SpringRemoteCacheManagerFactoryBeanTest {
     * Test method for
     * {@link org.infinispan.spring.provider.SpringRemoteCacheManagerFactoryBean#setRequestBalancingStrategy(java.lang.String)}
     * .
-    * 
+    *
     * @throws Exception
     */
    @Test
@@ -439,7 +441,7 @@ public class SpringRemoteCacheManagerFactoryBeanTest {
     * Test method for
     * {@link org.infinispan.spring.provider.SpringRemoteCacheManagerFactoryBean#setKeySizeEstimate(int)}
     * .
-    * 
+    *
     * @throws Exception
     */
    @Test
@@ -462,7 +464,7 @@ public class SpringRemoteCacheManagerFactoryBeanTest {
     * Test method for
     * {@link org.infinispan.spring.provider.SpringRemoteCacheManagerFactoryBean#setValueSizeEstimate(int)}
     * .
-    * 
+    *
     * @throws Exception
     */
    @Test
@@ -485,7 +487,7 @@ public class SpringRemoteCacheManagerFactoryBeanTest {
     * Test method for
     * {@link org.infinispan.spring.provider.SpringRemoteCacheManagerFactoryBean#setForceReturnValues(boolean)}
     * .
-    * 
+    *
     * @throws Exception
     */
    @Test
