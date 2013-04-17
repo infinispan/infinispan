@@ -222,10 +222,10 @@ public class ClusteredCacheTest extends MultipleCacheManagersTest {
 
       cache1.remove(key3);
 
-      queryParser = createQueryParser("blurb");
-      luceneQuery = queryParser.parse("eats");
-      cacheQuery = Search.getSearchManager(cache2).getQuery(luceneQuery);
       found = cacheQuery.list();
+      assert found.size() == 1;
+      assert found.contains(person2);
+      assert !found.contains(person3) : "This should not contain object person3 anymore";
    }
 
    public void testGetResultSize() throws Exception {
