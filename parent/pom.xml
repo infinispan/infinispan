@@ -187,7 +187,7 @@
       <version.maven.bundle>2.3.7</version.maven.bundle>
       <version.maven.source>2.2.1</version.maven.source>
       <version.maven.scala>2.15.2</version.maven.scala>
-      <version.maven.surefire>2.14</version.maven.surefire>
+      <version.maven.surefire>2.14.1</version.maven.surefire>
       <version.maven.invoker>1.8</version.maven.invoker>
       <version.jacoco>0.5.10.201208310627</version.jacoco>
       <version.asm>3.3.1</version.asm>
@@ -1428,28 +1428,13 @@
                <forkCount>1</forkCount>
                <reuseForks>true</reuseForks>
                <groups>${defaultTestGroup}</groups>
-               <systemProperties>
-                  <property>
-                     <name>infinispan.test.jgroups.protocol</name>
-                     <value>${infinispan.test.jgroups.protocol}</value>
-                  </property>
-                  <property>
-                     <name>jgroups.bind_addr</name>
-                     <value>127.0.0.1</value>
-                  </property>
-                  <property>
-                     <name>java.net.preferIPv4Stack</name>
-                     <value>true</value>
-                  </property>
-                  <property>
-                     <name>infinispan.unsafe.allow_jdk8_chm</name>
-                     <value>true</value>
-                  </property>
-                  <property>
-                     <name>log4j.configuration</name>
-                     <value>${log4j.configuration}</value>
-                  </property>
-               </systemProperties>
+               <systemPropertyVariables>
+                  <infinispan.test.jgroups.protocol>${infinispan.test.jgroups.protocol}</infinispan.test.jgroups.protocol>
+                  <jgroups.bind_addr>127.0.0.1</jgroups.bind_addr>
+                  <java.net.preferIPv4Stack>true</java.net.preferIPv4Stack>
+                  <infinispan.unsafe.allow_jdk8_chm>true</infinispan.unsafe.allow_jdk8_chm>
+                  <log4j.configuration>${log4j.configuration}</log4j.configuration>
+               </systemPropertyVariables>
                <trimStackTrace>false</trimStackTrace>
                <properties>
                   <property>
@@ -1457,7 +1442,7 @@
                      <value>${testNGListener}</value>
                   </property>
                </properties>
-               <argLine>-Xmx1024m -XX:MaxPermSize=1024m</argLine>
+               <argLine>-Xmx1024m -XX:MaxPermSize=256m</argLine>
             </configuration>
          </plugin>
          <!-- Scan module for components and persist these into a data file, for use at runtime -->
@@ -1619,13 +1604,10 @@
                   <groupId>org.apache.maven.plugins</groupId>
                   <artifactId>maven-surefire-plugin</artifactId>
                   <configuration>
-                     <systemProperties>
-                        <property>
+                     <systemPropertyVariables>
                            <!-- this is picked up in the log4j xml which prepends it to each module's log file-->
-                           <name>infinispan.module-name</name>
-                           <value>${project.artifactId}</value>
-                        </property>
-                     </systemProperties>
+                           <infinispan.module-name>${project.artifactId}</infinispan.module-name>
+                     </systemPropertyVariables>
                   </configuration>
                </plugin>
             </plugins>
@@ -1704,12 +1686,9 @@
                   <groupId>org.apache.maven.plugins</groupId>
                   <artifactId>maven-surefire-plugin</artifactId>
                   <configuration>
-                     <systemProperties>
-                        <property>
-                           <name>log4j.configuration</name>
-                           <value>log4j-trace.xml</value>
-                        </property>
-                     </systemProperties>
+                     <systemPropertyVariables>
+                        <log4j.configuration>log4j-trace.xml</log4j.configuration>
+                     </systemPropertyVariables>
                   </configuration>
                </plugin>
             </plugins>
@@ -1796,24 +1775,12 @@
                      <parallel combine.self="override">tests</parallel>
                      <threadCount combine.self="override">${infinispan.test.parallel.threads}</threadCount>
                      <groups combine.self="override">${defaultTestGroup}</groups>
-                     <systemProperties combine.self="override">
-                        <property>
-                           <name>infinispan.test.jgroups.protocol</name>
-                           <value>${infinispan.test.jgroups.protocol}</value>
-                        </property>
-                        <property>
-                           <name>jgroups.bind_addr</name>
-                           <value>127.0.0.1</value>
-                        </property>
-                        <property>
-                           <name>java.net.preferIPv4Stack</name>
-                           <value>true</value>
-                        </property>
-                        <property>
-                           <name>infinispan.unsafe.allow_jdk8_chm</name>
-                           <value>true</value>
-                        </property>
-                     </systemProperties>
+                     <systemPropertyVariables combine.self="override">
+                           <infinispan.test.jgroups.protocol>${infinispan.test.jgroups.protocol}</infinispan.test.jgroups.protocol>
+                           <jgroups.bind_addr>127.0.0.1</jgroups.bind_addr>
+                           <java.net.preferIPv4Stack>true</java.net.preferIPv4Stack>
+                           <infinispan.unsafe.allow_jdk8_chm>true</infinispan.unsafe.allow_jdk8_chm>
+                     </systemPropertyVariables>
                      <trimStackTrace combine.self="override">false</trimStackTrace>
                      <properties combine.self="override">
                         <property>

@@ -77,20 +77,11 @@
                <reuseForks>true</reuseForks>
                <forkCount>1</forkCount>
                <parallel>false</parallel>
-               <systemProperties>
-                  <property>
-                     <name>infinispan.test.jclouds.username</name>
-                     <value>${infinispan.test.jclouds.username}</value>
-                  </property>
-                  <property>
-                     <name>infinispan.test.jclouds.password</name>
-                     <value>${infinispan.test.jclouds.password}</value>
-                  </property>
-                  <property>
-                     <name>infinispan.test.jclouds.service</name>
-                     <value>${infinispan.test.jclouds.service}</value>
-                  </property>
-               </systemProperties>
+               <systemPropertyVariables>
+                  <infinispan.test.jclouds.username>${infinispan.test.jclouds.username}</infinispan.test.jclouds.username>
+                  <infinispan.test.jclouds.password>${infinispan.test.jclouds.password}</infinispan.test.jclouds.password>
+                  <infinispan.test.jclouds.service>${infinispan.test.jclouds.service}</infinispan.test.jclouds.service>
+               </systemPropertyVariables>
             </configuration>
          </plugin>
          <plugin>
