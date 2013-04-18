@@ -28,7 +28,7 @@ import org.testng.annotations.Test;
  * @author Michal Linhard (mlinhard@redhat.com)
  */
 @Test(groups = { "functional" }, testName = "rest.TwoServerTest")
-public class TwoServerTest extends RESTServerTestBase {
+public class TwoServerTest extends RestServerTestBase {
 
    private static final String PATH1 = "http://localhost:8890/rest/___defaultcache/";
    private static final String PATH2 = "http://localhost:8891/rest/___defaultcache/";
