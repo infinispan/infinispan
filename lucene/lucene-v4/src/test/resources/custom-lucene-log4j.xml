@@ -25,7 +25,7 @@
 <log4j:configuration xmlns:log4j="http://jakarta.apache.org/log4j/" debug="false">
 
    <appender name="FILE" class="org.apache.log4j.DailyRollingFileAppender">
-      <param name="File" value="lucene-infinispan-output.log"/>
+      <param name="File" value="infinispan-lucene-v4.log"/>
       <param name="Append" value="false"/>
       <layout class="org.apache.log4j.PatternLayout">
          <param name="ConversionPattern" value="[%c] (%t) %m%n"/>

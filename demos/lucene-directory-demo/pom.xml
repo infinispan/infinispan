@@ -84,16 +84,6 @@
                <parallel>false</parallel>
                <threadCount>1</threadCount>
                <forkMode>never</forkMode>
-               <systemPropertyVariables>
-                  <property>
-                     <name>jgroups.bind_addr</name>
-                     <value>127.0.0.1</value>
-                  </property>
-                  <property>
-                     <name>java.net.preferIPv4Stack</name>
-                     <value>true</value>
-                  </property>
-               </systemPropertyVariables>
                <trimStackTrace>false</trimStackTrace>
             </configuration>
          </plugin>
