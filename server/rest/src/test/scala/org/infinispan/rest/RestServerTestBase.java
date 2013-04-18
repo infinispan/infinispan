@@ -24,7 +24,7 @@ import org.testng.AssertJUnit;
  * @author Michal Linhard (mlinhard@redhat.com)
  *
  */
-class RESTServerTestBase {
+public class RestServerTestBase {
    private Map<String, Context> servers = new HashMap<String, Context>();
    private HttpClient client;
 
@@ -37,11 +37,11 @@ class RESTServerTestBase {
       client = null;
    }
 
-   protected void addServer(String name, int port, EmbeddedCacheManager cacheManager) {
+   public void addServer(String name, int port, EmbeddedCacheManager cacheManager) {
       servers.put(name, createRESTEndpoint(port, cacheManager, new RestServerConfigurationBuilder().build()));
    }
 
-   protected void addServer(String name, int port, EmbeddedCacheManager cacheManager, RestServerConfiguration configuration) {
+   public void addServer(String name, int port, EmbeddedCacheManager cacheManager, RestServerConfiguration configuration) {
       servers.put(name, createRESTEndpoint(port, cacheManager, configuration));
    }
 
@@ -89,7 +89,7 @@ class RESTServerTestBase {
       }
    }
 
-   protected void startServers() throws Exception {
+   public void startServers() throws Exception {
       if (!servers.isEmpty()) {
          for (Context s : servers.values()) {
             EmbeddedCacheManager manager = ServerBootstrap.getCacheManager(s.getServletContext());
@@ -105,7 +105,7 @@ class RESTServerTestBase {
       }
    }
 
-   protected void stopServers() throws Exception {
+   public void stopServers() throws Exception {
       if (!servers.isEmpty()) {
          for (Context s : servers.values()) {
             EmbeddedCacheManager manager = ServerBootstrap.getCacheManager(s.getServletContext());
@@ -122,5 +122,4 @@ class RESTServerTestBase {
       client.executeMethod(method);
       return method;
    }
-
 }

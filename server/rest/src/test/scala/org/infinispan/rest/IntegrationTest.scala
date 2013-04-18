@@ -36,7 +36,7 @@ import org.infinispan.metadata.Metadata
  * @since 4.0
  */
 @Test(groups = Array("functional"), testName = "rest.IntegrationTest")
-class IntegrationTest extends RESTServerTestBase {
+class IntegrationTest extends RestServerTestBase {
 
    private lazy val log: JavaLog = LogFactory.getLog(getClass, classOf[JavaLog])
 

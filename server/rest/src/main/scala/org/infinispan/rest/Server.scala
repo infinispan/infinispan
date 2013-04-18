@@ -42,8 +42,10 @@ import org.jboss.resteasy.util.HttpHeaderNames
 @Path("/rest")
 class Server(@Context request: Request, @Context servletContext: ServletContext, @HeaderParam("performAsync") useAsync: Boolean) {
 
-   val ApplicationXJavaSerializedObjectType = new MediaType("application" , "x-java-serialized-object");
-   val ApplicationXJavaSerializedObject = ApplicationXJavaSerializedObjectType.toString;
+   val ApplicationXJavaSerializedObjectType = new MediaType("application" , "x-java-serialized-object")
+   val ApplicationXJavaSerializedObject = ApplicationXJavaSerializedObjectType.toString
+   val TIME_TO_LIVE_HEADER = "timeToLiveSeconds"
+   val MAX_IDLE_TIME_HEADER = "maxIdleTimeSeconds"
    /**For dealing with binary entries in the cache */
    lazy val variantList = Variant.VariantListBuilder.newInstance.mediaTypes(MediaType.APPLICATION_XML_TYPE, MediaType.APPLICATION_JSON_TYPE, ApplicationXJavaSerializedObjectType).build
    lazy val collectionVariantList = Variant.VariantListBuilder.newInstance.mediaTypes(
@@ -110,8 +112,8 @@ class Server(@Context request: Request, @Context servletContext: ServletContext,
                ice.getMetadata match {
                   case meta: MimeMetadata =>
                      getMimeEntry(ice, meta, lastMod, expires, cacheName, extended)
-                  case _ =>
-                     getAnyEntry(ice, lastMod, expires, cacheName, extended)
+                  case meta: Metadata =>
+                     getAnyEntry(ice, meta, lastMod, expires, cacheName, extended)
                }
             }
             case _ => Response.status(Status.NOT_FOUND).build
@@ -135,25 +137,28 @@ class Server(@Context request: Request, @Context servletContext: ServletContext,
                  .header(HttpHeaderNames.LAST_MODIFIED, formatDate(lastMod))
                   //workaround for https://issues.jboss.org/browse/RESTEASY-887
                  .header(HttpHeaderNames.EXPIRES, formatDate(expires))
+                 .mortality(meta)
                  .tag(calcETAG(ice, meta))
                  .extended(cacheName, key, wantExtendedHeaders(extended)).build
       }
    }
 
-   private def getAnyEntry(ice: InternalCacheEntry, lastMod: Date, expires: Date,
-           cacheName: String, extended: String): Response = {
+   private def getAnyEntry(ice: InternalCacheEntry, meta: Metadata,
+         lastMod: Date, expires: Date, cacheName: String, extended: String): Response = {
       val key = ice.getKey.asInstanceOf[String]
       ice.getValue match {
 
          case s: String => Response.ok(s, MediaType.TEXT_PLAIN)
-                           .header(HttpHeaderNames.EXPIRES, formatDate(expires))
                            .header(HttpHeaderNames.LAST_MODIFIED, formatDate(lastMod))
+                           .header(HttpHeaderNames.EXPIRES, formatDate(expires))
+                           .mortality(meta)
                            .build
 
          case ba: Array[Byte] => Response.ok
                                  .`type`(MediaType.APPLICATION_OCTET_STREAM)
                                  .header(HttpHeaderNames.LAST_MODIFIED, formatDate(lastMod))
                                  .header(HttpHeaderNames.EXPIRES, formatDate(expires))
+                                 .mortality(meta)
                                  .extended(cacheName, key, wantExtendedHeaders(extended))
                                  .entity(streamIt(_.write(ba)))
                                  .build
@@ -168,6 +173,7 @@ class Server(@Context request: Request, @Context servletContext: ServletContext,
                        .`type`(selectedMediaType)
                        .header(HttpHeaderNames.LAST_MODIFIED, formatDate(lastMod))
                        .header(HttpHeaderNames.EXPIRES, formatDate(expires))
+                       .mortality(meta)
                        .extended(cacheName, key, wantExtendedHeaders(extended))
                        .entity(streamIt(jsonMapper.writeValue(_, obj)))
                        .build
@@ -175,6 +181,7 @@ class Server(@Context request: Request, @Context servletContext: ServletContext,
                        .`type`(selectedMediaType)
                        .header(HttpHeaderNames.LAST_MODIFIED, formatDate(lastMod))
                        .header(HttpHeaderNames.EXPIRES, formatDate(expires))
+                       .mortality(meta)
                        .extended(cacheName, key, wantExtendedHeaders(extended))
                        .entity(streamIt(xstream.toXML(obj, _)))
                        .build
@@ -184,6 +191,7 @@ class Server(@Context request: Request, @Context servletContext: ServletContext,
                              .`type`(selectedMediaType)
                              .header(HttpHeaderNames.LAST_MODIFIED, formatDate(lastMod))
                              .header(HttpHeaderNames.EXPIRES, formatDate(expires))
+                             .mortality(meta)
                              .extended(cacheName, key, wantExtendedHeaders(extended))
                              .entity(streamIt(new ObjectOutputStream(_).writeObject(ser)))
                              .build
@@ -203,6 +211,13 @@ class Server(@Context request: Request, @Context servletContext: ServletContext,
     * so as not to interrupt the chain of invocations
     */
    implicit private class ResponseBuilderExtender(val bld: Response.ResponseBuilder) {
+      def mortality(meta: Metadata) = {
+         if (meta.lifespan() > -1)
+            bld.header(TIME_TO_LIVE_HEADER, MILLIS.toSeconds(meta.lifespan()))
+         if (meta.maxIdle() > -1)
+            bld.header(MAX_IDLE_TIME_HEADER, MILLIS.toSeconds(meta.maxIdle()))
+         bld
+      }
       def extended(cacheName: String, key: String, b: Boolean) = {
          if (b) {
             bld
@@ -251,13 +266,15 @@ class Server(@Context request: Request, @Context servletContext: ServletContext,
                                 .`type`(meta.contentType)
                                 .header(HttpHeaderNames.LAST_MODIFIED, formatDate(lastMod))
                                 .header(HttpHeaderNames.EXPIRES, formatDate(expires))
+                                .mortality(meta)
                                 .tag(calcETAG(ice, meta))
                                 .extended(cacheName, key, wantExtendedHeaders(extended))
                                 .build
                      }
-                  case _ => Response.ok
+                  case meta: Metadata => Response.ok
                           .header(HttpHeaderNames.LAST_MODIFIED, formatDate(lastMod))
                           .header(HttpHeaderNames.EXPIRES, formatDate(expires))
+                          .mortality(meta)
                           .extended(cacheName, key, wantExtendedHeaders(extended))
                           .build
                }
@@ -384,7 +401,7 @@ class Server(@Context request: Request, @Context servletContext: ServletContext,
 
             }
          }
-         case null => Response.ok.build
+         case null => Response.status(Status.NOT_FOUND).build
       }
    }
 
