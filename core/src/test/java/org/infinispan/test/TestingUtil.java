@@ -557,7 +557,7 @@ public class TestingUtil {
 
    public static void recursiveFileRemove(File file) {
       if (file.exists()) {
-         System.out.println("Deleting file " + file);
+         log.tracef("Deleting file %s", file);
          recursiveDelete(file);
       }
    }
