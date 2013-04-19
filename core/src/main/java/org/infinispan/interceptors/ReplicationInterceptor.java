@@ -132,7 +132,7 @@ public class ReplicationInterceptor extends ClusteringInterceptor {
             if (needsRemoteGet(ctx, command)) {
                returnValue = remoteGet(ctx, command.getKey(), command, false);
             }
-            if (returnValue == null) {
+            if (returnValue == null && !ctx.isEntryRemovedInContext(command.getKey())) {
                returnValue = localGet(ctx, command.getKey(), false, command);
             }
          }

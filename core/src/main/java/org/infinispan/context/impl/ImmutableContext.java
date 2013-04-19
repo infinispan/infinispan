@@ -131,21 +131,26 @@ public final class ImmutableContext implements InvocationContext {
     * @return an exception to state this context is read only
     */
    private static CacheException newUnsupportedMethod() {
-      return new CacheException("This context is immutable");
+      throw newUnsupportedMethod();
    }
 
    @Override
    public void addLockedKey(Object key) {
-      throw new CacheException("This context is immutable");
+      throw newUnsupportedMethod();
    }
 
    @Override
    public void clearLockedKeys() {
-      throw new CacheException("This context is immutable");
+      throw newUnsupportedMethod();
    }
 
    @Override
    public boolean replaceValue(Object key, InternalCacheEntry cacheEntry) {
-      throw new CacheException("This context is immutable");
+      throw newUnsupportedMethod();
+   }
+
+   @Override
+   public boolean isEntryRemovedInContext(Object key) {
+      return false;
    }
 }

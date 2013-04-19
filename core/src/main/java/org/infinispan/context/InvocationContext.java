@@ -123,4 +123,6 @@ public interface InvocationContext extends EntryLookup, Cloneable {
     * @return true if the context already contained a wrapped entry for which this value was changed, false otherwise.
     */
    boolean replaceValue(Object key, InternalCacheEntry cacheEntry);
+
+   boolean isEntryRemovedInContext(Object key);
 }

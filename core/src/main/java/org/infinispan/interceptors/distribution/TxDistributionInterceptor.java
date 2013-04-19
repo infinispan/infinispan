@@ -160,12 +160,12 @@ public class TxDistributionInterceptor extends BaseDistributionInterceptor {
          // need to check in the context as well since a null retval is not necessarily an indication of the entry not being
          // available.  It could just have been removed in the same tx beforehand.  Also don't bother with a remote get if
          // the entry is mapped to the local node.
-         if (returnValue == null) {
+         if (returnValue == null && ctx.isOriginLocal()) {
             Object key = command.getKey();
             if (needsRemoteGet(ctx, command)) {
                returnValue = remoteGetAndStoreInL1(ctx, key, false, command);
             }
-            if (returnValue == null) {
+            if (returnValue == null && !ctx.isEntryRemovedInContext(command.getKey())) {
                returnValue = localGet(ctx, key, false, command);
             }
          }
