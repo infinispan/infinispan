@@ -146,7 +146,7 @@ public class LockManagerImpl implements LockManager {
 
    @Override
    public final boolean possiblyLocked(CacheEntry entry) {
-      return entry == null || entry.isChanged() || entry.isNull() || entry.isLockPlaceholder();
+      return entry == null || entry.isChanged() || entry.isNull();
    }
 
    @ManagedAttribute(description = "The concurrency level that the MVCC Lock Manager has been configured with.", displayName = "Concurrency level", dataType = DataType.TRAIT)

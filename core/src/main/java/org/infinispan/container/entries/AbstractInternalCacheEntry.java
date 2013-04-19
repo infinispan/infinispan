@@ -123,11 +123,6 @@ public abstract class AbstractInternalCacheEntry implements InternalCacheEntry {
    }
 
    @Override
-   public final boolean isLockPlaceholder() {
-      return false;
-   }
-
-   @Override
    public void setMaxIdle(long maxIdle) {
    }
 
