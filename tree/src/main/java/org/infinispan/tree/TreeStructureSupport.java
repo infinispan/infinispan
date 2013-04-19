@@ -58,29 +58,10 @@ public class TreeStructureSupport extends AutoBatchSupport {
    }
 
    /**
-    * @param fqn
-    * @return true if created, false if this was not necessary
+    * @return true if created, false if this was not necessary.
     */
    boolean createNodeInCache(Fqn fqn) {
-      startAtomic();
-      try {
-         NodeKey dataKey = new NodeKey(fqn, NodeKey.Type.DATA);
-         NodeKey structureKey = new NodeKey(fqn, NodeKey.Type.STRUCTURE);
-         if (cache.containsKey(dataKey) && cache.containsKey(structureKey)) return false;
-         Fqn parent = fqn.getParent();
-         if (!fqn.isRoot()) {
-            if (!exists(parent)) createNodeInCache(parent);
-            AtomicMap<Object, Fqn> parentStructure = getStructure(parent);
-            parentStructure.put(fqn.getLastElement(), fqn);
-         }
-         getAtomicMap(structureKey);
-         getAtomicMap(dataKey);
-         if (log.isTraceEnabled()) log.tracef("Created node %s", fqn);
-         return true;
-      }
-      finally {
-         endAtomic();
-      }
+      return createNodeInCache(cache, fqn);
    }
 
    protected boolean createNodeInCache(AdvancedCache<?, ?> cache, Fqn fqn) {
@@ -105,14 +86,9 @@ public class TreeStructureSupport extends AutoBatchSupport {
       }
    }
 
-   AtomicMap<Object, Fqn> getStructure(Fqn fqn) {
-      return getAtomicMap(new NodeKey(fqn, NodeKey.Type.STRUCTURE));
-   }
-
    private AtomicMap<Object, Fqn> getStructure(AdvancedCache<?, ?> cache, Fqn fqn) {
       return getAtomicMap(cache, new NodeKey(fqn, NodeKey.Type.STRUCTURE));
    }
-
 
    public static boolean isLocked(LockManager lockManager, Fqn fqn) {
       return ((lockManager.isLocked(new NodeKey(fqn, NodeKey.Type.STRUCTURE)) &&
@@ -120,10 +96,7 @@ public class TreeStructureSupport extends AutoBatchSupport {
    }
 
    /**
-    * Visual representation of a tree
-    *
-    * @param cache cache to dump
-    * @return String rep
+    * Returns a String representation of a tree cache.
     */
    public static String printTree(TreeCache<?, ?> cache, boolean details) {
       StringBuilder sb = new StringBuilder();
