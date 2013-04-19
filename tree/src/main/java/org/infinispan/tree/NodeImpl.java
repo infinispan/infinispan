@@ -524,10 +524,6 @@ public class NodeImpl<K, V> extends TreeStructureSupport implements Node<K, V> {
       }
    }
 
-   AtomicMap<K, V> getDataInternal() {
-      return getAtomicMap(dataKey);
-   }
-
    AtomicMap<K, V> getDataInternal(AdvancedCache<?, ?> cache) {
       return getAtomicMap(cache, dataKey);
    }
