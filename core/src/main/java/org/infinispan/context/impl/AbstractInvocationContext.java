@@ -157,4 +157,10 @@ public abstract class AbstractInvocationContext implements InvocationContext {
       }
       return true;
    }
+
+   @Override
+   public boolean isEntryRemovedInContext(Object key) {
+      CacheEntry ce = lookupEntry(key);
+      return ce != null && ce.isRemoved() && ce.isChanged();
+   }
 }
