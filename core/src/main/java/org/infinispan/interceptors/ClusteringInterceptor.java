@@ -83,7 +83,7 @@ public abstract class ClusteringInterceptor extends BaseRpcInterceptor {
       }
       boolean shouldFetchFromRemote = false;
       CacheEntry entry = ctx.lookupEntry(command.getKey());
-      if (entry == null || entry.isNull() || entry.isLockPlaceholder()) {
+      if (entry == null || entry.isNull()) {
          Object key = command.getKey();
          ConsistentHash ch = stateTransferManager.getCacheTopology().getReadConsistentHash();
          shouldFetchFromRemote = ctx.isOriginLocal() && !ch.isKeyLocalToNode(rpcManager.getAddress(), key) && !dataContainer.containsKey(key);

@@ -644,11 +644,6 @@ public class Immutables {
       }
 
       @Override
-      public boolean isLockPlaceholder() {
-         return entry.isLockPlaceholder();
-      }
-
-      @Override
       public EntryVersion getVersion() {
          return entry.getVersion();
       }

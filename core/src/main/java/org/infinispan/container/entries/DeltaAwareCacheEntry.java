@@ -96,9 +96,8 @@ public class DeltaAwareCacheEntry implements CacheEntry, StateChangingEntry {
       CREATED(1 << 1),
       REMOVED(1 << 2),
       VALID(1 << 3),
-      LOCK_PLACEHOLDER(1 << 4),
-      EVICTED(1 << 5),
-      LOADED(1 << 6);
+      EVICTED(1 << 4),
+      LOADED(1 << 5);
 
       final byte mask;
 
@@ -235,15 +234,6 @@ public class DeltaAwareCacheEntry implements CacheEntry, StateChangingEntry {
    @Override
    public final void setValid(boolean valid) {
       setFlag(valid, VALID);
-   }
-
-   @Override
-   public boolean isLockPlaceholder() {
-      if (wrappedEntry != null) {
-         return wrappedEntry.isLockPlaceholder();
-      } else {
-         return isFlagSet(LOCK_PLACEHOLDER);
-      }
    }
 
    @Override

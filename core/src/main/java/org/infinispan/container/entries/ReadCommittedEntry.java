@@ -76,9 +76,8 @@ public class ReadCommittedEntry implements MVCCEntry {
       CREATED(1 << 1),
       REMOVED(1 << 2),
       VALID(1 << 3),
-      LOCK_PLACEHOLDER(1 << 4),
-      EVICTED(1 << 5),
-      LOADED(1 << 6);
+      EVICTED(1 << 4),
+      LOADED(1 << 5);
 
       final byte mask;
 
@@ -169,11 +168,6 @@ public class ReadCommittedEntry implements MVCCEntry {
    }
 
    @Override
-   public void setLockPlaceholder(boolean placeholder) {   //todo [anistor] why is this method never used?
-      setFlag(placeholder, LOCK_PLACEHOLDER);
-   }
-
-   @Override
    public final void commit(DataContainer container, EntryVersion newVersion) {
       // TODO: No tombstones for now!!  I'll only need them for an eventually consistent cache
 
@@ -235,11 +229,6 @@ public class ReadCommittedEntry implements MVCCEntry {
    @Override
    public final void setValid(boolean valid) {
       setFlag(valid, VALID);
-   }
-
-   @Override
-   public boolean isLockPlaceholder() {
-      return isFlagSet(LOCK_PLACEHOLDER);
    }
 
    @Override
