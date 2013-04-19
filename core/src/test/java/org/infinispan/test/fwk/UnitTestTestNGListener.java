@@ -197,7 +197,7 @@ public class UnitTestTestNGListener implements ITestListener, IInvokedMethodList
 
             StringBuilder sb = new StringBuilder();
             sb.append("Thread: name=").append(thread.getName())
-                  .append(", group=").append(thread.getThreadGroup().getName())
+                  .append(", group=").append(thread.getThreadGroup() == null? null : thread.getThreadGroup().getName())
                   .append(", isDaemon=").append(thread.isDaemon())
                   .append(", isInterrupted=").append(thread.isInterrupted())
                   .append(", Stack trace:\n");
