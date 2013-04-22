@@ -1184,7 +1184,18 @@ public class Parser53 implements ConfigurationParser<ConfigurationBuilderHolder>
          }
       }
 
-      ParseUtils.requireNoContent(reader);
+      while (reader.hasNext() && (reader.nextTag() != XMLStreamConstants.END_ELEMENT)) {
+         Element element = Element.forName(reader.getLocalName());
+         switch (element) {
+            case PROPERTIES: {
+               interceptorBuilder.withProperties(parseProperties(reader));
+               break;
+            }
+            default: {
+               throw ParseUtils.unexpectedElement(reader);
+            }
+         }
+      }
    }
 
    private void parseClustering(final XMLExtendedStreamReader reader, final ConfigurationBuilderHolder holder) throws XMLStreamException {

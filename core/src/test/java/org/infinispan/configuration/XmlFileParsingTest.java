@@ -43,12 +43,14 @@ import org.infinispan.configuration.cache.ClusterCacheLoaderConfiguration;
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.configuration.cache.FileCacheStoreConfiguration;
 import org.infinispan.configuration.cache.FileCacheStoreConfigurationBuilder;
+import org.infinispan.configuration.cache.InterceptorConfiguration;
 import org.infinispan.configuration.global.GlobalConfiguration;
 import org.infinispan.configuration.global.ShutdownHookBehavior;
 import org.infinispan.eviction.EvictionStrategy;
 import org.infinispan.eviction.EvictionThreadPolicy;
 import org.infinispan.executors.DefaultExecutorFactory;
 import org.infinispan.executors.DefaultScheduledExecutorFactory;
+import org.infinispan.interceptors.FooInterceptor;
 import org.infinispan.jmx.PerThreadMBeanServerLookup;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.marshall.AdvancedExternalizer;
@@ -486,7 +488,12 @@ public class XmlFileParsingTest extends AbstractInfinispanTest {
 
       c = cm.getCacheConfiguration("cacheWithCustomInterceptors");
       assert !c.customInterceptors().interceptors().isEmpty();
-      assert c.customInterceptors().interceptors().size() == 5;
+      assert c.customInterceptors().interceptors().size() == 6;
+      for(InterceptorConfiguration i : c.customInterceptors().interceptors()) {
+         if (i.interceptor() instanceof FooInterceptor) {
+            assert "bar".equals(i.properties().getProperty("foo"));
+         }
+      }
 
       c = cm.getCacheConfiguration("evictionCache");
       assert c.eviction().maxEntries() == 5000;
