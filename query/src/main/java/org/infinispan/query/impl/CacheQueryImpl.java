@@ -165,13 +165,17 @@ public class CacheQueryImpl implements CacheQuery {
       if (fetchOptions.getFetchMode() == FetchOptions.FetchMode.EAGER) {
          hSearchQuery.getTimeoutManager().start();
          List<EntityInfo> entityInfos = hSearchQuery.queryEntityInfos();
-         return new EagerIterator(entityInfos, getResultLoader(), fetchOptions.getFetchSize() );
+         return filterNulls(new EagerIterator(entityInfos, getResultLoader(), fetchOptions.getFetchSize()));
       } else if (fetchOptions.getFetchMode() == FetchOptions.FetchMode.LAZY) {
          DocumentExtractor extractor = hSearchQuery.queryDocumentExtractor();   //triggers actual Lucene search
-         return new LazyIterator(extractor, getResultLoader(), fetchOptions.getFetchSize());
+         return filterNulls(new LazyIterator(extractor, getResultLoader(), fetchOptions.getFetchSize()));
       } else {
          throw new IllegalArgumentException("Unknown FetchMode " + fetchOptions.getFetchMode());
       }
+   }
+
+   private ResultIterator filterNulls(ResultIterator iterator) {
+      return new NullFilteringResultIterator(iterator);
    }
 
    @Override
