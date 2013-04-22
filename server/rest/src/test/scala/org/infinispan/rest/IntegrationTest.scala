@@ -48,6 +48,8 @@ import org.infinispan.util.logging.LogFactory
 import org.infinispan.manager.DefaultCacheManager
 import org.infinispan.test.fwk.TestCacheManagerFactory
 import org.infinispan.configuration.cache.Configuration
+import org.infinispan.AdvancedCache
+import org.infinispan.AbstractDelegatingAdvancedCache
 
 /**
  * This tests using the Apache HTTP commons client library - but you could use anything
@@ -590,9 +592,9 @@ class IntegrationTest extends RESTServerTestBase {
 
       val obj = new MySer
       obj.name = "mic"
-      getManager("single").getCache(BasicCacheContainer.DEFAULT_CACHE_NAME).put(m.getName, obj)
-      getManager("single").getCache(BasicCacheContainer.DEFAULT_CACHE_NAME).put(m.getName + "2", "hola")
-      getManager("single").getCache(BasicCacheContainer.DEFAULT_CACHE_NAME).put(m.getName + "3", new MyNonSer)
+      getCacheManager("single").getCache(BasicCacheContainer.DEFAULT_CACHE_NAME).put(m.getName, obj)
+      getCacheManager("single").getCache(BasicCacheContainer.DEFAULT_CACHE_NAME).put(m.getName + "2", "hola")
+      getCacheManager("single").getCache(BasicCacheContainer.DEFAULT_CACHE_NAME).put(m.getName + "3", new MyNonSer)
 
       //check we can get it back as an object...
       val get = new GetMethod(fullPathKey)
@@ -633,7 +635,7 @@ class IntegrationTest extends RESTServerTestBase {
       val bout = new ByteArrayOutputStream
       new ObjectOutputStream(bout).writeObject(new MySer)
       put(m, bout.toByteArray, "application/x-java-serialized-object")
-      getManager("single").getCache(BasicCacheContainer.DEFAULT_CACHE_NAME)
+      getCacheManager("single").getCache(BasicCacheContainer.DEFAULT_CACHE_NAME)
               .get(m.getName).asInstanceOf[Array[Byte]]
    }
 
@@ -701,10 +703,11 @@ class IntegrationTest extends RESTServerTestBase {
       val v2PutLatch = new CountDownLatch(1)
       val v3PutLatch = new CountDownLatch(1)
       val v2FinishLatch = new CountDownLatch(1)
-      val mockCacheManager = new ControlledCacheManager(
-         getManager("single").getInstance, v2PutLatch, v3PutLatch, v2FinishLatch)
+      val origCacheManager = getCacheManager("single")
+      val mockCacheManager = new ControlledCacheManager(origCacheManager, v2PutLatch, v3PutLatch, v2FinishLatch)
+      val knownCaches = getManagerInstance("single").knownCaches
       try {
-         getManager("single").knownCaches.put(
+         knownCaches.put(
             BasicCacheContainer.DEFAULT_CACHE_NAME,
             mockCacheManager.getCache[String, Any]())
 
@@ -736,9 +739,9 @@ class IntegrationTest extends RESTServerTestBase {
          // Final data should be v2
          assertEquals("data2", get(m).getResponseBodyAsString)
       } finally {
-         getManager("single").knownCaches.put(
+         knownCaches.put(
             BasicCacheContainer.DEFAULT_CACHE_NAME,
-            getManager("single").getInstance.getCache[String, Any]())
+            origCacheManager.getCache[String, Any]().getAdvancedCache)
       }
 
    }
@@ -772,7 +775,9 @@ class IntegrationTest extends RESTServerTestBase {
       call(post)
       // Sleep way beyond the default in the config
       Thread.sleep(5000)
-      assertEquals("data", call(new GetMethod(fullPathKey)).getResponseBodyAsString)
+      var get = call(new GetMethod(fullPathKey))
+      assertEquals("data", get.getResponseBodyAsString)
+      assertNull(get.getResponseHeader("Expires"))
 
       var startTime = System.currentTimeMillis
       var lifespan = 3000
@@ -785,11 +790,13 @@ class IntegrationTest extends RESTServerTestBase {
       post.setRequestEntity(new StringRequestEntity("data2", "text/plain", "UTF-8"))
       call(post)
       while (System.currentTimeMillis < startTime + lifespan) {
-         val response = call(new GetMethod(fullPathKey)).getResponseBodyAsString
+         get = call(new GetMethod(fullPathKey))
+         val response = get.getResponseBodyAsString
          // The entry could have expired before our request got to the server
          // Scala doesn't support break, so we need to test the current time twice
          if (System.currentTimeMillis < startTime + lifespan) {
             assertEquals("data2", response)
+            assertNotNull(get.getResponseHeader("Expires"))
             Thread.sleep(100)
          }
       }
@@ -919,7 +926,7 @@ class IntegrationTest extends RESTServerTestBase {
            extends AbstractDelegatingEmbeddedCacheManager(cm) {
 
       // DO NOT REMOVE PARENTHESES!
-      override def getCache[K, V](): Cache[K, V] =
+      override def getCache[K, V](): AdvancedCache[K, V] =
          new ControlledCache[K, V](super.getCache[K, V],
             v2PutLatch, v3PutLatch, v2FinishLatch)
    }
@@ -927,7 +934,7 @@ class IntegrationTest extends RESTServerTestBase {
    class ControlledCache[String, Any](cache: Cache[String, Any],
            v2PutLatch: CountDownLatch, v3PutLatch: CountDownLatch,
            v2FinishLatch: CountDownLatch)
-           extends AbstractDelegatingCache(cache) {
+           extends AbstractDelegatingAdvancedCache(cache.getAdvancedCache) {
       override def replace(key: String, oldValue: Any, value: Any,
               lifespan: Long, lifespanUnit: TimeUnit, maxIdleTime: Long,
               maxIdleTimeUnit: TimeUnit): Boolean = {

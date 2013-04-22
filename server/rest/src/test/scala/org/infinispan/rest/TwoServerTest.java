@@ -1,4 +1,4 @@
-/* 
+/*
  * JBoss, Home of Professional Open Source
  * Copyright 2013 Red Hat Inc. and/or its affiliates and other contributors
  * as indicated by the @author tags. All rights reserved.
@@ -18,16 +18,20 @@
  */
 package org.infinispan.rest;
 
-import static org.testng.Assert.assertEquals;
+import static org.testng.Assert.*;
 
 import javax.servlet.http.HttpServletResponse;
 
+import org.apache.commons.httpclient.Header;
 import org.apache.commons.httpclient.methods.GetMethod;
 import org.apache.commons.httpclient.methods.PutMethod;
 import org.apache.commons.httpclient.methods.StringRequestEntity;
 import org.infinispan.api.BasicCacheContainer;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
+import org.infinispan.remoting.transport.Address;
+import org.infinispan.remoting.transport.jgroups.JGroupsTransport;
+import org.infinispan.rest.configuration.RestServerConfigurationBuilder;
 import org.infinispan.test.AbstractCacheTest;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
@@ -54,11 +58,12 @@ public class TwoServerTest extends RESTServerTestBase {
       cfgBuilder.clustering().hash().numOwners(2);
       cfgBuilder.clustering().stateTransfer().fetchInMemoryState(true);
       cfgBuilder.clustering().stateTransfer().timeout(20000);
-      addServer("1", 8890, TestCacheManagerFactory.createClusteredCacheManager(cfgBuilder));
-      addServer("2", 8891, TestCacheManagerFactory.createClusteredCacheManager(cfgBuilder));
+      RestServerConfigurationBuilder restCfgBuilder = new RestServerConfigurationBuilder();
+      addServer("1", 8890, TestCacheManagerFactory.createClusteredCacheManager(cfgBuilder), restCfgBuilder.build());
+      addServer("2", 8891, TestCacheManagerFactory.createClusteredCacheManager(cfgBuilder), restCfgBuilder.build());
       startServers();
-      TestingUtil.blockUntilViewsReceived(10000, getManager("1").getCache(BasicCacheContainer.DEFAULT_CACHE_NAME),
-            getManager("2").getCache(BasicCacheContainer.DEFAULT_CACHE_NAME));
+      TestingUtil.blockUntilViewsReceived(10000, getCacheManager("1").getCache(BasicCacheContainer.DEFAULT_CACHE_NAME),
+            getCacheManager("2").getCache(BasicCacheContainer.DEFAULT_CACHE_NAME));
       createClient();
    }
 
@@ -100,6 +105,29 @@ public class TwoServerTest extends RESTServerTestBase {
       call(get);
       assertEquals(get.getStatusCode(), HttpServletResponse.SC_OK);
       assertEquals("data2", get.getResponseBodyAsString());
+      get.releaseConnection();
+   }
+
+   public void testExtendedHeaders() throws Exception {
+      PutMethod put = new PutMethod(PATH1 + "testExtendedHeaders");
+      put.setRequestEntity(new StringRequestEntity("data", "application/text", null));
+      call(put);
+      assertEquals(put.getStatusCode(), HttpServletResponse.SC_OK);
+      put.releaseConnection();
+      GetMethod get = new GetMethod(PATH2 + "testExtendedHeaders?extended");
+      call(get);
+      assertEquals(get.getStatusCode(), HttpServletResponse.SC_OK);
+      Header po = get.getResponseHeader("Cluster-Primary-Owner");
+      assertNotNull(po);
+      Address primaryLocation = getCacheManager("1").getCache(BasicCacheContainer.DEFAULT_CACHE_NAME).getAdvancedCache().getDistributionManager().getPrimaryLocation("testExtendedHeaders");
+      assertEquals(primaryLocation.toString(), po.getValue());
+      Header sa = get.getResponseHeader("Cluster-Server-Address");
+      assertNotNull(sa);
+      JGroupsTransport transport = (JGroupsTransport)getCacheManager("2").getTransport();
+      assertEquals(transport.getPhysicalAddresses().toString(), sa.getValue());
+      Header nn = get.getResponseHeader("Cluster-Node-Name");
+      assertNotNull(nn);
+      assertEquals(transport.getAddress().toString(), nn.getValue());
       get.releaseConnection();
    }
 }

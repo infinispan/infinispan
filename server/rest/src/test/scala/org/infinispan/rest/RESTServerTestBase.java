@@ -26,10 +26,14 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 
+import javax.servlet.ServletContext;
+
 import org.apache.commons.httpclient.HttpClient;
 import org.apache.commons.httpclient.HttpMethodBase;
 import org.apache.commons.httpclient.SimpleHttpConnectionManager;
 import org.infinispan.manager.EmbeddedCacheManager;
+import org.infinispan.rest.configuration.RestServerConfiguration;
+import org.infinispan.rest.configuration.RestServerConfigurationBuilder;
 import org.jboss.resteasy.plugins.server.servlet.HttpServletDispatcher;
 import org.jboss.resteasy.plugins.server.servlet.ResteasyBootstrap;
 import org.mortbay.jetty.servlet.Context;
@@ -56,27 +60,41 @@ class RESTServerTestBase {
    }
 
    protected void addServer(String name, int port, EmbeddedCacheManager cacheManager) {
-      servers.put(name, createRESTEndpoint(port, cacheManager));
+      servers.put(name, createRESTEndpoint(port, cacheManager, new RestServerConfigurationBuilder().build()));
+   }
+
+   protected void addServer(String name, int port, EmbeddedCacheManager cacheManager, RestServerConfiguration configuration) {
+      servers.put(name, createRESTEndpoint(port, cacheManager, configuration));
    }
 
    protected void removeServers() {
       servers.clear();
    }
 
-   protected ManagerInstance getManager(String name) {
+   protected EmbeddedCacheManager getCacheManager(String name) {
       Context ctx = servers.get(name);
       if (ctx == null) {
          return null;
       }
-      return (ManagerInstance) ctx.getAttribute(ServerBootstrap.MANAGER);
+      return ServerBootstrap.getCacheManager(ctx.getServletContext());
    }
 
-   protected Context createRESTEndpoint(int port, EmbeddedCacheManager cacheManager) {
+   protected ManagerInstance getManagerInstance(String name) {
+      Context ctx = servers.get(name);
+      if (ctx == null) {
+         return null;
+      }
+      return ServerBootstrap.getManagerInstance(ctx.getServletContext());
+   }
+
+   protected Context createRESTEndpoint(int port, EmbeddedCacheManager cacheManager, RestServerConfiguration configuration) {
       Context ctx = new Context(new org.mortbay.jetty.Server(port), "/", Context.SESSIONS);
       ctx.setInitParams(Collections.singletonMap("resteasy.resources", "org.infinispan.rest.Server"));
       ctx.addEventListener(new ResteasyBootstrap());
       ctx.addServlet(HttpServletDispatcher.class, "/rest/*");
-      ctx.setAttribute(ServerBootstrap.MANAGER, new ManagerInstance(cacheManager));
+      ServletContext servletContext = ctx.getServletContext();
+      ServerBootstrap.setCacheManager(servletContext, cacheManager);
+      ServerBootstrap.setConfiguration(servletContext, configuration);
       return ctx;
    }
 
@@ -96,7 +114,7 @@ class RESTServerTestBase {
    protected void startServers() throws Exception {
       if (!servers.isEmpty()) {
          for (Context s : servers.values()) {
-            EmbeddedCacheManager manager = ((ManagerInstance) s.getAttribute(ServerBootstrap.MANAGER)).getInstance();
+            EmbeddedCacheManager manager = ServerBootstrap.getCacheManager(s.getServletContext());
             manager.start();
             for (String cacheName : manager.getCacheNames()) {
                manager.getCache(cacheName);
@@ -112,7 +130,7 @@ class RESTServerTestBase {
    protected void stopServers() throws Exception {
       if (!servers.isEmpty()) {
          for (Context s : servers.values()) {
-            EmbeddedCacheManager manager = ((ManagerInstance) s.getAttribute(ServerBootstrap.MANAGER)).getInstance();
+            EmbeddedCacheManager manager = ServerBootstrap.getCacheManager(s.getServletContext());
             s.getServer().stop();
             manager.stop();
          }
