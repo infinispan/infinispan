@@ -126,6 +126,8 @@ public final class ChunkCacheKey implements Serializable, IndexScopedKey {
          return false;
       if (!fileName.equals(other.fileName))
          return false;
+      if (bufferSize != other.bufferSize)
+         return false;
       return indexName.equals(other.indexName);
    }
 

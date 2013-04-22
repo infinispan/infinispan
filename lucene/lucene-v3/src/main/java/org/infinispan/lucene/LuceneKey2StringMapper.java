@@ -100,7 +100,7 @@ public class LuceneKey2StringMapper implements TwoWayKey2StringMapper {
                if (split.length != 4) throw log.keyMappperUnexpectedStringFormat(key);
                try {
                   int chunkId = Integer.parseInt(split[1]);
-                  int bufferSize = Integer.parseInt(split[1]);
+                  int bufferSize = Integer.parseInt(split[2]);
                   return new ChunkCacheKey(split[3], split[0], chunkId, bufferSize);
                } catch (NumberFormatException nfe) {
                   throw log.keyMappperUnexpectedStringFormat(key);
