@@ -148,7 +148,7 @@ public class RecoveryManagerImpl implements RecoveryManager {
       //todo make sure this gets broad casted or at least flushed
       if (rpcManager != null) {
          TxCompletionNotificationCommand ftc = commandFactory.buildTxCompletionNotificationCommand(xid, gtx);
-         rpcManager.invokeRemotely(lockOwners, ftc, sync, true, false);
+         rpcManager.invokeRemotely(lockOwners, ftc, rpcManager.getDefaultRpcOptions(sync, false));
       }
       removeRecoveryInformation(xid);
    }
@@ -157,7 +157,7 @@ public class RecoveryManagerImpl implements RecoveryManager {
    public void removeRecoveryInformationFromCluster(Collection<Address> where, long internalId, boolean sync) {
       if (rpcManager != null) {
          TxCompletionNotificationCommand ftc = commandFactory.buildTxCompletionNotificationCommand(internalId);
-         rpcManager.invokeRemotely(where, ftc, sync, true, false);
+         rpcManager.invokeRemotely(where, ftc, rpcManager.getDefaultRpcOptions(sync, false));
       }
       removeRecoveryInformation(internalId);
    }
@@ -230,7 +230,8 @@ public class RecoveryManagerImpl implements RecoveryManager {
       Map<Xid, InDoubtTxInfoImpl> result = new HashMap<Xid, InDoubtTxInfoImpl>();
       if (rpcManager != null) {
          GetInDoubtTxInfoCommand inDoubtTxInfoCommand = commandFactory.buildGetInDoubtTxInfoCommand();
-         Map<Address, Response> addressResponseMap = rpcManager.invokeRemotely(null, inDoubtTxInfoCommand, true, false, false);
+         Map<Address, Response> addressResponseMap = rpcManager.invokeRemotely(null, inDoubtTxInfoCommand,
+                                                                               rpcManager.getDefaultRpcOptions(true));
          for (Map.Entry<Address, Response> re : addressResponseMap.entrySet()) {
             Response r = re.getValue();
             if (!isSuccessful(r)) {
@@ -328,7 +329,7 @@ public class RecoveryManagerImpl implements RecoveryManager {
    @Override
    public String forceTransactionCompletionFromCluster(Xid xid, Address where, boolean commit) {
       CompleteTransactionCommand ctc = commandFactory.buildCompleteTransactionCommand(xid, commit);
-      Map<Address, Response> responseMap = rpcManager.invokeRemotely(Collections.singleton(where), ctc, true, false, false);
+      Map<Address, Response> responseMap = rpcManager.invokeRemotely(Collections.singleton(where), ctc, rpcManager.getDefaultRpcOptions(true));
       if (responseMap.size() != 1 || responseMap.get(where) == null) {
          log.expectedJustOneResponse(responseMap);
          throw new CacheException("Expected response size is 1, received " + responseMap);
@@ -357,7 +358,7 @@ public class RecoveryManagerImpl implements RecoveryManager {
 
    private Map<Address, Response> getAllPreparedTxFromCluster() {
       GetInDoubtTransactionsCommand command = commandFactory.buildGetInDoubtTransactionsCommand();
-      Map<Address, Response> addressResponseMap = rpcManager.invokeRemotely(null, command, true, false, false);
+      Map<Address, Response> addressResponseMap = rpcManager.invokeRemotely(null, command, rpcManager.getDefaultRpcOptions(true));
       if (log.isTraceEnabled()) log.tracef("getAllPreparedTxFromCluster received from cluster: %s", addressResponseMap);
       return addressResponseMap;
    }

@@ -121,7 +121,7 @@ public class InvalidationInterceptor extends BaseRpcInterceptor {
       Object retval = invokeNextInterceptor(ctx, command);
       if (!isLocalModeForced(command)) {
          // just broadcast the clear command - this is simplest!
-         if (ctx.isOriginLocal()) rpcManager.broadcastRpcCommand(command, defaultSynchronous, false);
+         if (ctx.isOriginLocal()) rpcManager.invokeRemotely(null, command, rpcManager.getDefaultRpcOptions(defaultSynchronous));
       }
       return retval;
    }
@@ -155,7 +155,7 @@ public class InvalidationInterceptor extends BaseRpcInterceptor {
          //unlock will happen async as it is a best effort
          boolean sync = !command.isUnlock();
          ((LocalTxInvocationContext) ctx).remoteLocksAcquired(rpcManager.getTransport().getMembers());
-         rpcManager.broadcastRpcCommand(command, sync, false);
+         rpcManager.invokeRemotely(null, command, rpcManager.getDefaultRpcOptions(sync));
       }
       return retVal;
    }
@@ -241,7 +241,7 @@ public class InvalidationInterceptor extends BaseRpcInterceptor {
       if (log.isDebugEnabled())
          log.debug("Cache [" + rpcManager.getTransport().getAddress() + "] replicating " + command);
       // voila, invalidated!
-      rpcManager.broadcastRpcCommand(command, synchronous, false);
+      rpcManager.invokeRemotely(null, command, rpcManager.getDefaultRpcOptions(synchronous));
    }
 
    private void incrementInvalidations() {

@@ -31,6 +31,7 @@ import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Future;
+import java.util.concurrent.TimeUnit;
 
 import org.hibernate.search.SearchException;
 import org.infinispan.Cache;
@@ -38,6 +39,7 @@ import org.infinispan.remoting.responses.Response;
 import org.infinispan.remoting.responses.SuccessfulResponse;
 import org.infinispan.remoting.rpc.ResponseMode;
 import org.infinispan.remoting.rpc.RpcManager;
+import org.infinispan.remoting.rpc.RpcOptions;
 import org.infinispan.remoting.transport.Address;
 
 /**
@@ -57,12 +59,16 @@ public class ClusteredQueryInvoker {
 
    private ExecutorService asyncExecutor;
 
+   private final RpcOptions rpcOptions;
+
    ClusteredQueryInvoker(Cache<?, ?> localCacheInstance, ExecutorService asyncExecutor) {
       this.asyncExecutor = asyncExecutor;
       this.rpcManager = localCacheInstance.getAdvancedCache().getComponentRegistry()
                .getLocalComponent(RpcManager.class);
       this.localCacheInstance = localCacheInstance;
       this.myAddress = localCacheInstance.getAdvancedCache().getRpcManager().getAddress();
+      rpcOptions = rpcManager.getRpcOptionsBuilder(ResponseMode.SYNCHRONOUS).timeout(10000, TimeUnit.MILLISECONDS).build();
+
    }
 
    /**
@@ -93,8 +99,7 @@ public class ClusteredQueryInvoker {
          List<Address> addresss = new ArrayList<Address>(1);
          addresss.add(address);
 
-         Map<Address, Response> responses = rpcManager.invokeRemotely(addresss, clusteredQuery,
-                  ResponseMode.SYNCHRONOUS, 10000, false);
+         Map<Address, Response> responses = rpcManager.invokeRemotely(addresss, clusteredQuery, rpcOptions);
          List<QueryResponse> objects = cast(responses);
          return objects.get(0).getFetchedValue();
       }
@@ -110,8 +115,7 @@ public class ClusteredQueryInvoker {
    public List<QueryResponse> broadcast(ClusteredQueryCommand clusteredQuery) {
       // invoke on own node
       Future<QueryResponse> localResponse = localInvoke(clusteredQuery);
-      Map<Address, Response> responses = rpcManager.invokeRemotely(null, clusteredQuery,
-               ResponseMode.SYNCHRONOUS, 10000, false);
+      Map<Address, Response> responses = rpcManager.invokeRemotely(null, clusteredQuery, rpcOptions);
 
       List<QueryResponse> objects = cast(responses);
       final QueryResponse localReturnValue;

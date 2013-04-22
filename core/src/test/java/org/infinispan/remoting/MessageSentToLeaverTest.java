@@ -72,14 +72,14 @@ public class MessageSentToLeaverTest extends AbstractInfinispanTest {
          CommandsFactory cf = TestingUtil.extractCommandsFactory(c1);
          PutKeyValueCommand cmd = cf.buildPutKeyValueCommand("k", "v2", -1, -1, null);
 
-         Map<Address,Response> responseMap = rpcManager.invokeRemotely(addresses, cmd, true, true, false);
+         Map<Address,Response> responseMap = rpcManager.invokeRemotely(addresses, cmd, rpcManager.getDefaultRpcOptions(true, false));
          assert responseMap.size() == 2;
          
          TestingUtil.killCacheManagers(cm2);
          TestingUtil.blockUntilViewsReceived(30000, false, c1, c3);
          
          try {
-            responseMap = rpcManager.invokeRemotely(addresses, cmd, true, true, false);
+            responseMap = rpcManager.invokeRemotely(addresses, cmd, rpcManager.getDefaultRpcOptions(true, false));
             assert false: "invokeRemotely should have thrown an exception";
          } catch (SuspectException e) {
             // expected

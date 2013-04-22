@@ -40,7 +40,10 @@ import org.infinispan.distribution.ch.DefaultConsistentHashFactory;
 import org.infinispan.loaders.CacheLoaderManager;
 import org.infinispan.notifications.cachelistener.CacheNotifier;
 import org.infinispan.remoting.responses.Response;
+import org.infinispan.remoting.rpc.ResponseMode;
 import org.infinispan.remoting.rpc.RpcManager;
+import org.infinispan.remoting.rpc.RpcOptions;
+import org.infinispan.remoting.rpc.RpcOptionsBuilder;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.topology.CacheTopology;
@@ -169,6 +172,12 @@ public class StateProviderTest {
       });
 
       when(rpcManager.getAddress()).thenReturn(A);
+      when(rpcManager.getRpcOptionsBuilder(any(ResponseMode.class))).thenAnswer(new Answer<RpcOptionsBuilder>() {
+         public RpcOptionsBuilder answer(InvocationOnMock invocation) {
+            Object[] args = invocation.getArguments();
+            return new RpcOptionsBuilder(10000, TimeUnit.MILLISECONDS, (ResponseMode) args[0], true);
+         }
+      });
 
       // create state provider
       StateProviderImpl stateProvider = new StateProviderImpl();
@@ -266,7 +275,15 @@ public class StateProviderTest {
             }
             return Collections.emptyMap();
          }
-      }).when(rpcManager).invokeRemotelyInFuture(any(Collection.class), any(ReplicableCommand.class), anyBoolean(), any(NotifyingNotifiableFuture.class), anyLong());
+      }).when(rpcManager).invokeRemotelyInFuture(any(Collection.class), any(ReplicableCommand.class), any(RpcOptions.class),
+                                                 any(NotifyingNotifiableFuture.class));
+
+      when(rpcManager.getRpcOptionsBuilder(any(ResponseMode.class))).thenAnswer(new Answer<RpcOptionsBuilder>() {
+         public RpcOptionsBuilder answer(InvocationOnMock invocation) {
+            Object[] args = invocation.getArguments();
+            return new RpcOptionsBuilder(10000, TimeUnit.MILLISECONDS, (ResponseMode) args[0], true);
+         }
+      });
 
 
       // create state provider

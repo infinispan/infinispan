@@ -40,6 +40,7 @@ import org.infinispan.remoting.responses.SuccessfulResponse;
 import org.infinispan.remoting.rpc.ResponseFilter;
 import org.infinispan.remoting.rpc.ResponseMode;
 import org.infinispan.remoting.rpc.RpcManager;
+import org.infinispan.remoting.rpc.RpcOptions;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.util.InfinispanCollections;
 import org.infinispan.util.logging.Log;
@@ -48,6 +49,7 @@ import org.infinispan.util.logging.LogFactory;
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.Set;
+import java.util.concurrent.TimeUnit;
 
 /**
  * Cache loader that consults other members in the cluster for values. A <code>remoteCallTimeout</code> property is
@@ -135,7 +137,9 @@ public class ClusterCacheLoader extends AbstractCacheLoader {
       Address self = rpcManager.getTransport().getAddress();
       ResponseFilter filter = new ClusteredGetResponseValidityFilter(members, self);
       try {
-         return rpcManager.invokeRemotely(null, clusteredGetCommand, ResponseMode.WAIT_FOR_VALID_RESPONSE, config.getRemoteCallTimeout(), false, filter, false).values();
+         RpcOptions options = rpcManager.getRpcOptionsBuilder(ResponseMode.WAIT_FOR_VALID_RESPONSE)
+               .timeout(config.getRemoteCallTimeout(), TimeUnit.MILLISECONDS).responseFilter(filter).build();
+         return rpcManager.invokeRemotely(null, clusteredGetCommand, options).values();
       } catch (Exception e) {
          log.errorDoingRemoteCall(e);
          throw new CacheLoaderException(e);

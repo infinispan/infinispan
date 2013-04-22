@@ -32,6 +32,7 @@ import org.infinispan.context.impl.TxInvocationContext;
 import org.infinispan.interceptors.base.CommandInterceptor;
 import org.infinispan.remoting.responses.Response;
 import org.infinispan.remoting.rpc.RpcManager;
+import org.infinispan.remoting.rpc.RpcOptions;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.test.MultipleCacheManagersTest;
 import org.infinispan.test.TestingUtil;
@@ -143,12 +144,13 @@ public abstract class AbstractCrashTest extends MultipleCacheManagersTest {
    protected void prepareCache(final CountDownLatch releaseLocksLatch) {
       RpcManager rpcManager = new ControlledRpcManager(advancedCache(1).getRpcManager()) {
          @Override
-         public Map<Address, Response> invokeRemotely(Collection<Address> recipients, ReplicableCommand rpcCommand, boolean sync, boolean usePriorityQueue, boolean totalOrder) {
-            if (rpcCommand instanceof TxCompletionNotificationCommand) {
+         public Map<Address, Response> invokeRemotely(Collection<Address> recipients, ReplicableCommand rpc,
+                                                      RpcOptions options) {
+            if (rpc instanceof TxCompletionNotificationCommand) {
                releaseLocksLatch.countDown();
                return null;
             } else {
-               return realOne.invokeRemotely(recipients, rpcCommand, sync, usePriorityQueue, totalOrder);
+               return realOne.invokeRemotely(recipients, rpc, options);
             }
          }
       };

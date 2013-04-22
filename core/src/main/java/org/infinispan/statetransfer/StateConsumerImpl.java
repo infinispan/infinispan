@@ -50,6 +50,7 @@ import org.infinispan.remoting.responses.Response;
 import org.infinispan.remoting.responses.SuccessfulResponse;
 import org.infinispan.remoting.rpc.ResponseMode;
 import org.infinispan.remoting.rpc.RpcManager;
+import org.infinispan.remoting.rpc.RpcOptions;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.topology.CacheTopology;
 import org.infinispan.transaction.RemoteTransaction;
@@ -153,6 +154,8 @@ public class StateConsumerImpl implements StateConsumer {
    private boolean isTransferThreadRunning;
 
    private volatile boolean ownsData = false;
+
+   private RpcOptions rpcOptions;
 
    public StateConsumerImpl() {
    }
@@ -572,6 +575,9 @@ public class StateConsumerImpl implements StateConsumer {
    @Start(priority = 20)
    public void start() {
       isFetchEnabled = configuration.clustering().stateTransfer().fetchInMemoryState() || cacheLoaderManager.isFetchPersistentState();
+      //rpc options does not changes in runtime. we can use always the same instance.
+      rpcOptions = rpcManager.getRpcOptionsBuilder(ResponseMode.SYNCHRONOUS_IGNORE_LEAVERS)
+            .timeout(timeout, TimeUnit.MILLISECONDS).build();
    }
 
    @Stop(priority = 20)
@@ -699,7 +705,7 @@ public class StateConsumerImpl implements StateConsumer {
       // get transactions and locks
       try {
          StateRequestCommand cmd = commandsFactory.buildStateRequestCommand(StateRequestCommand.Type.GET_TRANSACTIONS, rpcManager.getAddress(), topologyId, segments);
-         Map<Address, Response> responses = rpcManager.invokeRemotely(Collections.singleton(source), cmd, ResponseMode.SYNCHRONOUS_IGNORE_LEAVERS, timeout, false);
+         Map<Address, Response> responses = rpcManager.invokeRemotely(Collections.singleton(source), cmd, rpcOptions);
          Response response = responses.get(source);
          if (response instanceof SuccessfulResponse) {
             return (List<TransactionInfo>) ((SuccessfulResponse) response).getResponseValue();

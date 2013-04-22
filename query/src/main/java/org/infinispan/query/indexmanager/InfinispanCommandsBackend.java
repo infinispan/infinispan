@@ -114,7 +114,7 @@ public class InfinispanCommandsBackend implements BackendQueueProcessor {
    private void sendCommand(ReplicableCommand command, List<LuceneWork> workList) {
       Address primaryNodeAddress = getPrimaryNodeAddress();
       Collection<Address> recipients = Collections.singleton(primaryNodeAddress);
-      rpcManager.invokeRemotely(recipients, command, true, false);
+      rpcManager.invokeRemotely(recipients, command, rpcManager.getDefaultRpcOptions(true));
       log.workListRemotedTo(workList, primaryNodeAddress);
    }
 
