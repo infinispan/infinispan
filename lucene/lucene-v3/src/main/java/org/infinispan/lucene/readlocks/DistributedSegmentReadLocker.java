@@ -179,8 +179,8 @@ public class DistributedSegmentReadLocker implements SegmentReadLocker {
       final FileCacheKey key = new FileCacheKey(indexName, filename);
       if (trace) log.tracef("deleting metadata: %s", key);
       final FileMetadata file = (FileMetadata) metadataCache.remove(key);
-      final int bufferSize = file.getBufferSize();
       if (file != null) { //during optimization of index a same file could be deleted twice, so you could see a null here
+         final int bufferSize = file.getBufferSize();
          for (int i = 0; i < file.getNumberOfChunks(); i++) {
             ChunkCacheKey chunkKey = new ChunkCacheKey(indexName, filename, i, bufferSize);
             if (trace) log.tracef("deleting chunk: %s", chunkKey);
