@@ -37,6 +37,7 @@ import javax.transaction.TransactionSynchronizationRegistry;
 import org.hibernate.search.backend.TransactionContext;
 import org.hibernate.search.backend.spi.Work;
 import org.hibernate.search.backend.spi.WorkType;
+import org.hibernate.search.backend.spi.Worker;
 import org.hibernate.search.engine.spi.EntityIndexBinder;
 import org.hibernate.search.spi.SearchFactoryIntegrator;
 import org.infinispan.commands.FlagAffectedCommand;
@@ -58,6 +59,7 @@ import org.infinispan.factories.annotations.Inject;
 import org.infinispan.interceptors.base.CommandInterceptor;
 import org.infinispan.marshall.MarshalledValue;
 import org.infinispan.query.Transformer;
+import org.infinispan.query.impl.DefaultSearchWorkCreator;
 import org.infinispan.query.logging.Log;
 import org.infinispan.util.concurrent.ConcurrentMapFactory;
 import org.infinispan.util.logging.LogFactory;
@@ -80,6 +82,7 @@ public class QueryInterceptor extends CommandInterceptor {
    private final ConcurrentMap<Class<?>,Boolean> knownClasses = ConcurrentMapFactory.makeConcurrentMap();
    private final Lock mutating = new ReentrantLock();
    private final KeyTransformationHandler keyTransformationHandler = new KeyTransformationHandler();
+   private SearchWorkCreator searchWorkCreator = new DefaultSearchWorkCreator();
 
    private DataContainer dataContainer;
    protected TransactionManager transactionManager;
@@ -186,7 +189,10 @@ public class QueryInterceptor extends CommandInterceptor {
 
    private void performSearchWork(Object value, Serializable id, WorkType workType, TransactionContext transactionContext) {
       if (value == null) throw new NullPointerException("Cannot handle a null value!");
-      searchFactory.getWorker().performWork(new Work<Object>(value, id, workType), transactionContext);
+      Worker worker = searchFactory.getWorker();
+      for (Work<Object> work : searchWorkCreator.createWorks(value, id, workType)) {
+         worker.performWork(work, transactionContext);
+      }
    }
 
    private boolean isIndexed(Class c) {
@@ -274,6 +280,14 @@ public class QueryInterceptor extends CommandInterceptor {
 
    public SearchFactoryIntegrator getSearchFactory() {
       return searchFactory;
+   }
+
+   public void setSearchWorkCreator(SearchWorkCreator searchWorkCreator) {
+      this.searchWorkCreator = searchWorkCreator;
+   }
+
+   public SearchWorkCreator getSearchWorkCreator() {
+      return searchWorkCreator;
    }
 
    /**
