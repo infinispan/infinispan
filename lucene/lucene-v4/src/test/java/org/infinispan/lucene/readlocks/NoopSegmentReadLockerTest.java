@@ -103,7 +103,7 @@ public class NoopSegmentReadLockerTest extends DistributedSegmentReadLockerTest 
       int chunkNumbers = (int)(totalFileSize / CHUNK_SIZE);
 
       for(int i = 0; i < chunkNumbers; i++) {
-         AssertJUnit.assertNotNull(cache.get(new ChunkCacheKey(INDEX_NAME, filename, CHUNK_SIZE, 0)));
+         AssertJUnit.assertNotNull(cache.get(new ChunkCacheKey(INDEX_NAME, filename, i, CHUNK_SIZE)));
       }
 
       boolean fileNameExistsInCache = false;
