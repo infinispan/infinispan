@@ -1438,6 +1438,10 @@
                      <name>infinispan.unsafe.allow_jdk8_chm</name>
                      <value>true</value>
                   </property>
+                  <property>
+                     <name>log4j.configuration</name>
+                     <value>${log4j.configuration}</value>
+                  </property>
                </systemProperties>
                <trimStackTrace>false</trimStackTrace>
                <properties>
