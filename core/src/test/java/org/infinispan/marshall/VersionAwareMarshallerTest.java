@@ -470,7 +470,6 @@ public class VersionAwareMarshallerTest extends AbstractInfinispanTest {
       MIMECacheEntry rEntry = (MIMECacheEntry) marshaller.objectFromByteBuffer(bytes);
       assert Arrays.equals(rEntry.data, entry.data);
       assert rEntry.contentType.equals(entry.contentType);
-      assert rEntry.lastModified == entry.lastModified;
    }
 
    public void testNestedNonSerializable() throws Exception {
@@ -586,6 +585,7 @@ public class VersionAwareMarshallerTest extends AbstractInfinispanTest {
       static int serializationCount, deserializationCount;
       private static final long serialVersionUID = 9032309454840083326L;
 
+      @Override
       public boolean equals(Object o) {
          if (this == o) {
             return true;
@@ -606,6 +606,7 @@ public class VersionAwareMarshallerTest extends AbstractInfinispanTest {
          return true;
       }
 
+      @Override
       public int hashCode() {
          int result;
          result = i;
@@ -613,12 +614,14 @@ public class VersionAwareMarshallerTest extends AbstractInfinispanTest {
          return result;
       }
 
+      @Override
       public void writeExternal(ObjectOutput out) throws IOException {
          out.writeInt(i);
          out.writeBoolean(b);
          serializationCount++;
       }
 
+      @Override
       public void readExternal(ObjectInput in) throws IOException, ClassNotFoundException {
          i = in.readInt();
          b = in.readBoolean();

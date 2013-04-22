@@ -48,18 +48,11 @@ public class MIMECacheEntry implements Serializable {
      */
     public byte[] data;
 
-
-    /**
-     * The date the entry was created...
-     */
-    public long lastModified;
-
     public MIMECacheEntry() {}
 
     public MIMECacheEntry(String contentType, byte[] data) {
         this.contentType = contentType;
         this.data = data;
-        lastModified = System.currentTimeMillis() / 1000 * 1000;
     }
 
    @Override
