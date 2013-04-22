@@ -24,6 +24,7 @@ package org.infinispan.query.backend;
 
 import java.io.Serializable;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentMap;
@@ -37,6 +38,7 @@ import javax.transaction.TransactionSynchronizationRegistry;
 import org.hibernate.search.backend.TransactionContext;
 import org.hibernate.search.backend.spi.Work;
 import org.hibernate.search.backend.spi.WorkType;
+import org.hibernate.search.backend.spi.Worker;
 import org.hibernate.search.engine.spi.EntityIndexBinder;
 import org.hibernate.search.spi.SearchFactoryIntegrator;
 import org.infinispan.commands.FlagAffectedCommand;
@@ -58,6 +60,7 @@ import org.infinispan.factories.annotations.Inject;
 import org.infinispan.interceptors.base.CommandInterceptor;
 import org.infinispan.marshall.MarshalledValue;
 import org.infinispan.query.Transformer;
+import org.infinispan.query.impl.DefaultSearchWorkCreator;
 import org.infinispan.query.logging.Log;
 import org.infinispan.util.concurrent.ConcurrentMapFactory;
 import org.infinispan.util.logging.LogFactory;
@@ -80,6 +83,7 @@ public class QueryInterceptor extends CommandInterceptor {
    private final ConcurrentMap<Class<?>,Boolean> knownClasses = ConcurrentMapFactory.makeConcurrentMap();
    private final Lock mutating = new ReentrantLock();
    private final KeyTransformationHandler keyTransformationHandler = new KeyTransformationHandler();
+   private SearchWorkCreator<Object> searchWorkCreator = new DefaultSearchWorkCreator<Object>();
 
    private DataContainer dataContainer;
    protected TransactionManager transactionManager;
@@ -170,7 +174,8 @@ public class QueryInterceptor extends CommandInterceptor {
       transactionContext = transactionContext == null ? makeTransactionalEventContext() : transactionContext;
       for (Class c : this.knownClasses.keySet()) {
          if (isIndexed(c)) {
-            performSearchWork(c, null, WorkType.PURGE_ALL, transactionContext);
+            //noinspection unchecked
+            performSearchWorks(searchWorkCreator.createPerEntityTypeWorks(c, WorkType.PURGE_ALL), transactionContext);
          }
       }
    }
@@ -186,10 +191,18 @@ public class QueryInterceptor extends CommandInterceptor {
 
    private void performSearchWork(Object value, Serializable id, WorkType workType, TransactionContext transactionContext) {
       if (value == null) throw new NullPointerException("Cannot handle a null value!");
-      searchFactory.getWorker().performWork(new Work<Object>(value, id, workType), transactionContext);
+      Collection<Work<Object>> works = searchWorkCreator.createPerEntityWorks(value, id, workType);
+      performSearchWorks(works, transactionContext);
    }
 
-   private boolean isIndexed(Class c) {
+   private <T> void performSearchWorks(Collection<Work<T>> works, TransactionContext transactionContext) {
+      Worker worker = searchFactory.getWorker();
+      for (Work<T> work : works) {
+         worker.performWork(work, transactionContext);
+      }
+   }
+
+   private boolean isIndexed(Class<?> c) {
       EntityIndexBinder binder = this.searchFactory.getIndexBindingForEntity(c);
       return binder != null;
    }
@@ -274,6 +287,14 @@ public class QueryInterceptor extends CommandInterceptor {
 
    public SearchFactoryIntegrator getSearchFactory() {
       return searchFactory;
+   }
+
+   public void setSearchWorkCreator(SearchWorkCreator<Object> searchWorkCreator) {
+      this.searchWorkCreator = searchWorkCreator;
+   }
+
+   public SearchWorkCreator<Object> getSearchWorkCreator() {
+      return searchWorkCreator;
    }
 
    /**
