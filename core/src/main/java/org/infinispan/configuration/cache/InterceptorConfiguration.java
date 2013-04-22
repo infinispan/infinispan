@@ -18,12 +18,14 @@
  */
 package org.infinispan.configuration.cache;
 
+import org.infinispan.configuration.AbstractTypedPropertiesConfiguration;
 import org.infinispan.interceptors.base.CommandInterceptor;
+import org.infinispan.util.TypedProperties;
 
 /**
  * Describes a custom interceptor
  */
-public class InterceptorConfiguration {
+public class InterceptorConfiguration extends AbstractTypedPropertiesConfiguration {
 
    /**
     * Positional placing of a new custom interceptor
@@ -43,22 +45,23 @@ public class InterceptorConfiguration {
        */
       OTHER_THAN_FIRST_OR_LAST
    }
-   
+
    private final Class<? extends CommandInterceptor> after;
    private final Class<? extends CommandInterceptor> before;
    private final CommandInterceptor interceptor;
    private final int index;
    private final Position position;
-   
+
    InterceptorConfiguration(Class<? extends CommandInterceptor> after, Class<? extends CommandInterceptor> before,
-         CommandInterceptor interceptor, int index, Position position) {
+         CommandInterceptor interceptor, int index, Position position, TypedProperties properties) {
+      super(properties);
       this.after = after;
       this.before = before;
       this.interceptor = interceptor;
       this.index = index;
       this.position = position;
    }
-   
+
    public Class<? extends CommandInterceptor> after() {
       return after;
    }
@@ -78,7 +81,7 @@ public class InterceptorConfiguration {
    public Position position() {
       return position;
    }
-   
+
    public boolean first() {
       return position() == Position.FIRST;
    }
@@ -89,13 +92,8 @@ public class InterceptorConfiguration {
 
    @Override
    public String toString() {
-      return "InterceptorConfiguration{" +
-            "after=" + after +
-            ", before=" + before +
-            ", interceptor=" + interceptor +
-            ", index=" + index +
-            ", position=" + position +
-            '}';
+      return "InterceptorConfiguration [after=" + after + ", before=" + before + ", interceptor=" + interceptor + ", index=" + index + ", position=" + position + ", properties="
+            + properties() + "]";
    }
 
    @Override

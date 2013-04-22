@@ -296,5 +296,4 @@ public class ConfigurationUnitTest {
          }
       });
    }
-
 }

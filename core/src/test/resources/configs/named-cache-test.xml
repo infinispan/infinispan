@@ -301,6 +301,11 @@
          <interceptor index="3" class="org.infinispan.interceptors.CallInterceptor"/>
          <interceptor before="org.infinispan.interceptors.CallInterceptor" class="org.infinispan.interceptors.CallInterceptor"/>
          <interceptor after="org.infinispan.interceptors.CallInterceptor" class="org.infinispan.interceptors.CallInterceptor"/>
+         <interceptor position="FIRST" class="org.infinispan.interceptors.FooInterceptor">
+            <properties>
+               <property name="foo" value="bar" />
+            </properties>
+         </interceptor>
       </customInterceptors>
    </namedCache>
 

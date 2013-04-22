@@ -35,6 +35,8 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Map.Entry;
+import java.util.Properties;
 
 /**
  * Basic reflection utilities to enhance what the JDK provides.
@@ -309,7 +311,7 @@ public class ReflectionUtil {
    public static <T extends Annotation> T getAnnotation(Class<?> clazz, Class<T> ann) {
       while (true) {
          // first check class
-         T a = (T) clazz.getAnnotation(ann);
+         T a = clazz.getAnnotation(ann);
          if (a != null) return a;
 
          // check interfaces
@@ -379,6 +381,12 @@ public class ReflectionUtil {
          } else {
             return null;
          }
+      }
+   }
+
+   public static void applyProperties(Object o, Properties p) {
+      for(Entry<Object, Object> entry : p.entrySet()) {
+         setValue(o, (String) entry.getKey(), entry.getValue());
       }
    }
 }

@@ -25,6 +25,7 @@ package org.infinispan.util.logging;
 import org.infinispan.CacheException;
 import org.infinispan.commands.ReplicableCommand;
 import org.infinispan.commands.tx.PrepareCommand;
+import org.infinispan.config.ConfigurationException;
 import org.infinispan.loaders.CacheLoaderException;
 import org.infinispan.loaders.bucket.Bucket;
 import org.infinispan.loaders.decorators.SingletonStore;
@@ -859,5 +860,18 @@ public interface Log extends BasicLogger {
    @LogMessage(level = WARN)
    @Message(value = "Unknown response value [%s]. Expected [%s]", id = 221)
    void unexpectedResponse(String actual, String expected);
+
+   @Message(value = "Custom interceptor missing class", id = 222)
+   ConfigurationException customInterceptorMissingClass();
+
+   @LogMessage(level = WARN)
+   @Message(value = "Custom interceptor '%s' does not extend BaseCustomInterceptor, which is recommended", id = 223)
+   void suggestCustomInterceptorInheritance(String customInterceptorClassName);
+
+   @Message(value = "Custom interceptor '%s' specifies more than one position", id = 224)
+   ConfigurationException multipleCustomInterceptorPositions(String customInterceptorClassName);
+
+   @Message(value = "Custom interceptor '%s' doesn't specify a position", id = 225)
+   ConfigurationException missingCustomInterceptorPosition(String customInterceptorClassName);
 }
 

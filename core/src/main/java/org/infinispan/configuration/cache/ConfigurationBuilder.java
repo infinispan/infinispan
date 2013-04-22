@@ -182,7 +182,7 @@ public class ConfigurationBuilder implements ConfigurationChildBuilder {
    @SuppressWarnings("unchecked")
    public void validate() {
       for (Builder<?> validatable:
-            asList(clustering, dataContainer, deadlockDetection, eviction, expiration, indexing,
+            asList(clustering, customInterceptors, dataContainer, deadlockDetection, eviction, expiration, indexing,
                    invocationBatching, jmxStatistics, loaders, locking, storeAsBinary, transaction,
                    versioning, unsafe, sites)) {
          validatable.validate();

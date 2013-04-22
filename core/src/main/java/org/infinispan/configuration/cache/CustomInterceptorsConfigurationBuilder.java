@@ -49,7 +49,7 @@ public class CustomInterceptorsConfigurationBuilder extends AbstractConfiguratio
 
    @Override
    public void validate() {
-      // Nothing to validate
+      for (InterceptorConfigurationBuilder builder : interceptorBuilders) builder.validate();
    }
 
    @Override

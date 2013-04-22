@@ -18,21 +18,29 @@
  */
 package org.infinispan.configuration.cache;
 
+import java.util.Properties;
+
 import org.infinispan.config.ConfigurationException;
 import org.infinispan.configuration.Builder;
 import org.infinispan.configuration.cache.InterceptorConfiguration.Position;
+import org.infinispan.interceptors.base.BaseCustomInterceptor;
 import org.infinispan.interceptors.base.CommandInterceptor;
+import org.infinispan.util.TypedProperties;
+import org.infinispan.util.logging.Log;
+import org.infinispan.util.logging.LogFactory;
 
 /**
  * This builder defines details of a specific custom interceptor.
  */
 public class InterceptorConfigurationBuilder extends AbstractCustomInterceptorsConfigurationChildBuilder implements Builder<InterceptorConfiguration> {
+   private static final Log log = LogFactory.getLog(InterceptorConfigurationBuilder.class);
 
    private Class<? extends CommandInterceptor> after;
    private Class<? extends CommandInterceptor> before;
    private CommandInterceptor interceptor;
    private int index = -1;
-   private Position position = null;
+   private Position position = Position.OTHER_THAN_FIRST_OR_LAST;
+   private Properties properties = new Properties();
 
    InterceptorConfigurationBuilder(CustomInterceptorsConfigurationBuilder builder) {
       super(builder);
@@ -94,6 +102,37 @@ public class InterceptorConfigurationBuilder extends AbstractCustomInterceptorsC
       return this;
    }
 
+   /**
+    * Sets interceptor properties
+    *
+    * @param properties
+    * @return this InterceptorConfigurationBuilder
+    */
+   public InterceptorConfigurationBuilder withProperties(Properties properties) {
+      this.properties = properties;
+      return this;
+   }
+
+   /**
+    * Clears the interceptor properties
+    *
+    * @return this InterceptorConfigurationBuilder
+    */
+   public InterceptorConfigurationBuilder clearProperties() {
+      this.properties = new Properties();
+      return this;
+   }
+
+   public InterceptorConfigurationBuilder addProperty(String key, String value) {
+      this.properties.put(key, value);
+      return this;
+   }
+
+   public InterceptorConfigurationBuilder removeProperty(String key) {
+      this.properties.remove(key);
+      return this;
+   }
+
    @Override
    public void validate() {
       // Make sure more than one 'position' isn't picked.
@@ -101,23 +140,28 @@ public class InterceptorConfigurationBuilder extends AbstractCustomInterceptorsC
 
       if (before != null) positions++;
       if (after != null) positions++;
-      if (position != null) positions++;
       if (index > -1) positions++;
+      if (!position.equals(Position.OTHER_THAN_FIRST_OR_LAST)) positions++;
 
       switch (positions) {
          case 0:
-            position = Position.OTHER_THAN_FIRST_OR_LAST;
-            break;
+            throw log.missingCustomInterceptorPosition(interceptor.getClass().getName());
          case 1:
             break;
          default:
-            throw new ConfigurationException("You can only specify the position of a custom interceptor once.");
+            throw log.multipleCustomInterceptorPositions(interceptor.getClass().getName());
+      }
+      if (interceptor == null) {
+         throw log.customInterceptorMissingClass();
+      }
+      if (!(interceptor instanceof BaseCustomInterceptor)) {
+         log.suggestCustomInterceptorInheritance(interceptor.getClass().getName());
       }
    }
 
    @Override
    public InterceptorConfiguration create() {
-      return new InterceptorConfiguration(after, before, interceptor, index, position);
+      return new InterceptorConfiguration(after, before, interceptor, index, position, TypedProperties.toTypedProperties(properties));
    }
 
    @Override
@@ -127,19 +171,16 @@ public class InterceptorConfigurationBuilder extends AbstractCustomInterceptorsC
       this.index = template.index();
       this.interceptor = template.interceptor();
       this.position = template.position();
+      this.properties = new Properties();
+      this.properties.putAll(template.properties());
 
       return this;
    }
 
    @Override
    public String toString() {
-      return "InterceptorConfigurationBuilder{" +
-            "after=" + after +
-            ", before=" + before +
-            ", interceptor=" + interceptor +
-            ", index=" + index +
-            ", position=" + position +
-            '}';
+      return "InterceptorConfigurationBuilder [after=" + after + ", before=" + before + ", interceptor=" + interceptor + ", index=" + index + ", position=" + position
+            + ", properties=" + properties + "]";
    }
 
 }
