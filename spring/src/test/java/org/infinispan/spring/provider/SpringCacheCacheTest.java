@@ -100,12 +100,32 @@ public class SpringCacheCacheTest extends SingleCacheManagerTest {
    }
 
    @Test
+   public void testCachePutSupportsNullValue() throws Exception {
+      final Object key = "enescu";
+      final Object value = null;
+      
+      assertNull(this.cache.get(key));
+      this.cache.put(key, value);
+      assertNull(this.cache.get(key).get());
+   }
+
+   @Test
    public void testCacheContains() throws Exception {
       final Object key = "enescu";
       final Object value = "george";
 
       this.cache.put(key, value);
 
+      assertTrue(this.cache.get(key) != null);
+   }
+
+   @Test
+   public void testCacheContainsSupportsNullValue() throws Exception {
+      final Object key = "enescu";
+      final Object value = null;
+      
+      this.cache.put(key, value);
+      
       assertTrue(this.cache.get(key) != null);
    }
 
