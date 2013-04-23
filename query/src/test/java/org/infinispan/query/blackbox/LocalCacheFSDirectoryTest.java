@@ -61,9 +61,15 @@ public class LocalCacheFSDirectoryTest extends LocalCacheTest {
       new File(TMP_DIR).mkdirs();
    }
 
+   @Override
    @AfterMethod(alwaysRun = true)
-   protected void clearTempDir() {
-      //delete the index otherwise it will mess up the index for next tests
-      TestingUtil.recursiveFileRemove(TMP_DIR);
+   protected void destroyAfterMethod() {
+      try {
+         //first stop cache managers, then clear the index
+         super.destroyAfterMethod();
+      } finally {
+         //delete the index otherwise it will mess up the index for next tests
+         TestingUtil.recursiveFileRemove(TMP_DIR);
+      }
    }
 }

@@ -73,9 +73,15 @@ public class ClusteredCacheFSDirectoryTest extends ClusteredCacheTest {
       new File(TMP_DIR).mkdirs();
    }
 
+   @Override
    @AfterMethod(alwaysRun = true)
-   protected void clearTempDir() {
-      //delete the index otherwise it will mess up the index for next tests
-      TestingUtil.recursiveFileRemove(TMP_DIR);
+   protected void clearContent() throws Throwable {
+      try {
+         //first stop cache managers, then clear the index
+         super.clearContent();
+      } finally {
+         //delete the index otherwise it will mess up the index for next tests
+         TestingUtil.recursiveFileRemove(TMP_DIR);
+      }
    }
 }
