@@ -152,6 +152,65 @@ class IntegrationTest extends RESTServerTestBase {
       )
    }
 
+   def testGetCollection() {
+      val post_a = new PostMethod(s"$fullPath/a")
+      post_a.setRequestEntity(new StringRequestEntity("data", "application/text", null))
+      call(post_a)
+      val post_b = new PostMethod(s"$fullPath/b")
+      post_b.setRequestEntity(new StringRequestEntity("data", "application/text", null))
+      call(post_b)
+
+      val html = getCollection("text/html")
+      assertTrue(html.contains("<a href=\"a\">a</a>"))
+      assertTrue(html.contains("<a href=\"b\">b</a>"))
+
+      val xml = getCollection("application/xml")
+      assertTrue(xml.contains("<key>a</key>"))
+      assertTrue(xml.contains("<key>b</key>"))
+
+      val plain = getCollection("text/plain")
+      assertTrue(plain.contains("a\n"))
+      assertTrue(plain.contains("b\n"))
+
+      val json = getCollection("application/json")
+      assertTrue(json.contains("\"a\""))
+      assertTrue(json.contains("\"b\""))
+   }
+
+   def testGetCollectionEscape() {
+      val post_a = new PostMethod(s"$fullPath/%22a%22")
+      post_a.setRequestEntity(new StringRequestEntity("data", "application/text", null))
+      call(post_a)
+      val post_b = new PostMethod(s"$fullPath/b%3E")
+      post_b.setRequestEntity(new StringRequestEntity("data", "application/text", null))
+      call(post_b)
+
+      val html = getCollection("text/html")
+      assertTrue(html.contains("<a href=\"&quot;a&quot;\">&quot;a&quot;</a>"))
+      assertTrue(html.contains("<a href=\"b&gt;\">b&gt;</a>"))
+
+      val xml = getCollection("application/xml")
+      assertTrue(xml.contains("<key>&quot;a&quot;</key>"))
+      assertTrue(xml.contains("<key>b&gt;</key>"))
+
+      val plain = getCollection("text/plain")
+      assertTrue(plain.contains("\"a\"\n"))
+      assertTrue(plain.contains("b>\n"))
+
+      val json = getCollection("application/json")
+      assertTrue(json.contains("\\\"a\\\""))
+      assertTrue(json.contains("\"b>\""))
+   }
+
+   private def getCollection(variant: String): String = {
+      val get = new GetMethod(fullPath)
+      get.addRequestHeader("Accept", variant)
+      val coll = call(get)
+      assertEquals(HttpServletResponse.SC_OK, coll.getStatusCode)
+      assertEquals(variant, coll.getResponseHeader("Content-Type").getValue)
+      coll.getResponseBodyAsString
+   }
+
    def testGet(m: Method) {
       val fullPathKey = fullPath + "/" + m.getName
       val post = new PostMethod(fullPathKey)

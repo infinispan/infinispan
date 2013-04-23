@@ -39,6 +39,9 @@ import org.infinispan.util.concurrent.ConcurrentMapFactory
 import javax.ws.rs._
 import javax.servlet.http.HttpServletResponse
 import javax.servlet.ServletContext
+import scala.collection.JavaConverters._
+import scala.xml.Utility
+import org.infinispan.tasks.GlobalKeySetTask
 
 /**
  * Integration server linking REST requests with Infinispan calls.
@@ -52,9 +55,49 @@ class Server(@Context request: Request, @Context servletContext: ServletContext,
 
    /**For dealing with binary entries in the cache */
    lazy val variantList = Variant.VariantListBuilder.newInstance.mediaTypes(MediaType.APPLICATION_XML_TYPE, MediaType.APPLICATION_JSON_TYPE).build
+   lazy val collectionVariantList = Variant.VariantListBuilder.newInstance.mediaTypes(MediaType.TEXT_HTML_TYPE, MediaType.APPLICATION_XML_TYPE, MediaType.APPLICATION_JSON_TYPE, MediaType.TEXT_PLAIN_TYPE).build
    lazy val jsonMapper = new ObjectMapper
    lazy val xstream = new XStream
    val manager = servletContext.getAttribute(ServerBootstrap.MANAGER).asInstanceOf[ManagerInstance]
+
+   @GET
+   @Path("/{cacheName}")
+   def getKeys(@PathParam("cacheName") cacheName: String, @QueryParam("global") globalKeySet: String): Response = {
+      protectCacheNotFound(request, useAsync) { (request, useAsync) => {
+         val cache = manager.getCache(cacheName)
+         val keys = (if (globalKeySet !=null) GlobalKeySetTask.getGlobalKeySet(cache) else cache.keySet()).asScala
+         val variant = request.selectVariant(collectionVariantList)
+         val selectedMediaType = if (variant != null) variant.getMediaType.toString else null
+         selectedMediaType match {
+            case MediaType.TEXT_HTML => Response.ok.`type`(MediaType.TEXT_HTML).entity(printIt( pw => {
+               pw.print("<html><body>")
+               keys.foreach(key => {
+                  val hkey = Escaper.escapeHtml(key)
+                  pw.printf("<a href=\"%s\">%s</a><br/>", hkey, hkey)
+               })
+               pw.print("</body></html>")
+            })).build
+            case MediaType.APPLICATION_XML => Response.ok.`type`(MediaType.APPLICATION_XML).entity(printIt( pw => {
+               pw.print("<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n\n<keys>")
+               keys.foreach(key => pw.printf("<key>%s</key>", Escaper.escapeXml(key)))
+               pw.print("</keys>")
+            })).build
+            case MediaType.APPLICATION_JSON => Response.ok.`type`(MediaType.APPLICATION_JSON).entity(printIt( pw => {
+               pw.print("keys=[")
+               val it = keys.iterator
+               while (it.hasNext) {
+                  pw.printf("\"%s\"", Escaper.escapeJson(it.next))
+                  if (it.hasNext) pw.print(",")
+
+               }
+               pw.print("]")
+            })).build
+            case MediaType.TEXT_PLAIN => Response.ok.`type`(MediaType.TEXT_PLAIN).entity(printIt( pw => keys.foreach(pw.println(_)) )).build
+            case null => Response.notAcceptable(collectionVariantList).build
+         }
+      }
+      }
+   }
 
    @GET
    @Path("/{cacheName}/{cacheKey}")
@@ -92,7 +135,20 @@ class Server(@Context request: Request, @Context servletContext: ServletContext,
    }
 
    /**create a JAX-RS streaming output */
-   def streamIt(action: (OutputStream) => Unit) = new StreamingOutput {def write(o: OutputStream) {action(o)}}
+   def streamIt(action: (OutputStream) => Unit) = new StreamingOutput {
+      def write(o: OutputStream) { action(o) }
+   }
+
+   def printIt(action: (PrintWriter) => Unit) = new StreamingOutput {
+      def write(o: OutputStream) {
+         val pw = new PrintWriter(o);
+         try {
+            action(pw);
+         } finally {
+            pw.flush();
+         }
+      }
+   }
 
    @HEAD
    @Path("/{cacheName}/{cacheKey}")
@@ -299,3 +355,16 @@ class ManagerInstance(instance: EmbeddedCacheManager) {
 
 class CacheNotFoundException(msg: String) extends CacheException(msg)
 
+object Escaper {
+   def escapeHtml(html: String): String = {
+      Utility.escape(html)
+   }
+
+   def escapeXml(xml: String): String = {
+      Utility.escape(xml)
+   }
+
+   def escapeJson(json: String): String = {
+      json.replaceAll("\"", "\\\\\"");
+   }
+}
