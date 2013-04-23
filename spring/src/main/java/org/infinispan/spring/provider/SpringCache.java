@@ -72,7 +72,13 @@ public class SpringCache implements Cache {
    @Override
    public ValueWrapper get(final Object key) {
       Object v = nativeCache.get(key);
-	  return (v != null ? new SimpleValueWrapper(v) : null);
+      if (v == null) {
+         return null;
+      }
+      if (v == NullValue.NULL) {
+         return NullValue.NULL;
+      }
+      return new SimpleValueWrapper(v);
    }
 
    /**
@@ -80,7 +86,7 @@ public class SpringCache implements Cache {
     */
    @Override
    public void put(final Object key, final Object value) {
-      this.nativeCache.put(key, value);
+      this.nativeCache.put(key, value != null ? value : NullValue.NULL);
    }
 
    /**
