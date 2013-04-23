@@ -32,6 +32,8 @@ import org.infinispan.jmx.{JmxUtil, ResourceDMBean}
 import javax.management.{ObjectName, MBeanServer}
 import java.util.Properties
 import org.infinispan.server.core.configuration.ProtocolServerConfiguration
+import javax.net.ssl.KeyManager
+import javax.net.ssl.TrustManager
 
 /**
  * A common protocol server dealing with common property parameter validation and assignment and transport lifecycle.
@@ -64,7 +66,6 @@ abstract class AbstractProtocolServer(threadNamePrefix: String) extends Protocol
          cacheManager, cacheManager.getTransport)
 
       startTransport()
-
    }
 
    def startTransport() {

@@ -61,14 +61,17 @@ public class ConfigurationBuilder implements ConfigurationChildBuilder, Builder<
    private String protocolVersion = ConfigurationProperties.DEFAULT_PROTOCOL_VERSION;
    private List<ServerConfigurationBuilder> servers = new ArrayList<ServerConfigurationBuilder>();
    private int socketTimeout = ConfigurationProperties.DEFAULT_SO_TIMEOUT;
+   private final SslConfigurationBuilder ssl;
    private boolean tcpNoDelay = true;
    private Class<? extends TransportFactory> transportFactory = TcpTransportFactory.class;
    private int valueSizeEstimate = ConfigurationProperties.DEFAULT_VALUE_SIZE;
+
 
    public ConfigurationBuilder() {
       this.classLoader = new WeakReference<ClassLoader>(Thread.currentThread().getContextClassLoader());
       this.connectionPool = new ConnectionPoolConfigurationBuilder(this);
       this.asyncExecutorFactory = new ExecutorFactoryConfigurationBuilder(this);
+      this.ssl = new SslConfigurationBuilder(this);
    }
 
    @Override
@@ -190,6 +193,11 @@ public class ConfigurationBuilder implements ConfigurationChildBuilder, Builder<
    }
 
    @Override
+   public SslConfigurationBuilder ssl() {
+      return ssl;
+   }
+
+   @Override
    public ConfigurationBuilder tcpNoDelay(boolean tcpNoDelay) {
       this.tcpNoDelay = tcpNoDelay;
       return this;
@@ -249,7 +257,7 @@ public class ConfigurationBuilder implements ConfigurationChildBuilder, Builder<
    public void validate() {
       connectionPool.validate();
       asyncExecutorFactory.validate();
-
+      ssl.validate();
    }
 
    @Override
@@ -264,11 +272,11 @@ public class ConfigurationBuilder implements ConfigurationChildBuilder, Builder<
       }
       if (marshaller == null) {
          return new Configuration(asyncExecutorFactory.create(), balancingStrategy, classLoader == null ? null : classLoader.get(), connectionPool.create(), connectionTimeout,
-               consistentHashImpl, forceReturnValues, keySizeEstimate, marshallerClass, pingOnStartup, protocolVersion, servers, socketTimeout, tcpNoDelay, transportFactory,
+               consistentHashImpl, forceReturnValues, keySizeEstimate, marshallerClass, pingOnStartup, protocolVersion, servers, socketTimeout, ssl.create(), tcpNoDelay, transportFactory,
                valueSizeEstimate);
       } else {
          return new Configuration(asyncExecutorFactory.create(), balancingStrategy, classLoader == null ? null : classLoader.get(), connectionPool.create(), connectionTimeout,
-               consistentHashImpl, forceReturnValues, keySizeEstimate, marshaller, pingOnStartup, protocolVersion, servers, socketTimeout, tcpNoDelay, transportFactory,
+               consistentHashImpl, forceReturnValues, keySizeEstimate, marshaller, pingOnStartup, protocolVersion, servers, socketTimeout, ssl.create(), tcpNoDelay, transportFactory,
                valueSizeEstimate);
       }
    }
@@ -306,6 +314,7 @@ public class ConfigurationBuilder implements ConfigurationChildBuilder, Builder<
          this.addServer().host(server.host()).port(server.port());
       }
       this.socketTimeout = template.socketTimeout();
+      this.ssl.read(template.ssl());
       this.tcpNoDelay = template.tcpNoDelay();
       this.transportFactory = template.transportFactory();
       this.valueSizeEstimate = template.valueSizeEstimate();

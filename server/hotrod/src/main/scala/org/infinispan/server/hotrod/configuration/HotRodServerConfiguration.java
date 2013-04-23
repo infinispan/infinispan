@@ -20,6 +20,7 @@ package org.infinispan.server.hotrod.configuration;
 
 import org.infinispan.configuration.BuiltBy;
 import org.infinispan.server.core.configuration.ProtocolServerConfiguration;
+import org.infinispan.server.core.configuration.SslConfiguration;
 
 @BuiltBy(HotRodServerConfigurationBuilder.class)
 public class HotRodServerConfiguration extends ProtocolServerConfiguration {
@@ -31,8 +32,8 @@ public class HotRodServerConfiguration extends ProtocolServerConfiguration {
    private final long topologyUpdateTimeout;
 
    HotRodServerConfiguration(String proxyHost, int proxyPort, long topologyLockTimeout, long topologyReplTimeout, boolean topologyStateTransfer, long topologyUpdateTimeout,
-         String host, int port, int idleTimeout, int recvBufSize, int sendBufSize, boolean tcpNoDelay, int workerThreads) {
-      super(host, port, idleTimeout, recvBufSize, sendBufSize, tcpNoDelay, workerThreads);
+         String host, int port, int idleTimeout, int recvBufSize, int sendBufSize, SslConfiguration ssl, boolean tcpNoDelay, int workerThreads) {
+      super(host, port, idleTimeout, recvBufSize, sendBufSize, ssl, tcpNoDelay, workerThreads);
       this.proxyHost = proxyHost;
       this.proxyPort = proxyPort;
       this.topologyLockTimeout = topologyLockTimeout;

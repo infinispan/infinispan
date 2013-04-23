@@ -29,6 +29,8 @@ import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicInteger;
 
+import javax.net.ssl.SSLContext;
+
 import org.infinispan.client.hotrod.configuration.Configuration;
 import org.infinispan.client.hotrod.impl.consistenthash.ConsistentHashFactory;
 import org.infinispan.client.hotrod.impl.protocol.Codec;
@@ -96,6 +98,11 @@ public final class MockTransportFactory implements TransportFactory {
 
    @Override
    public ConsistentHashFactory getConsistentHashFactory() {
+      return null;
+   }
+
+   @Override
+   public SSLContext getSSLContext() {
       return null;
    }
 }

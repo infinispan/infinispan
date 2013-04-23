@@ -116,6 +116,8 @@ public class StringPropertyReplacer {
     *         there are no valid references the input string will be returned.
     */
    public static String replaceProperties(final String string, final Properties props) {
+      if (string == null)
+         return null;
       final char[] chars = string.toCharArray();
       StringBuilder buffer = new StringBuilder();
       boolean properties = false;

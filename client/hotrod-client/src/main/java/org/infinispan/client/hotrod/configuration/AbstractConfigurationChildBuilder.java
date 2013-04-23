@@ -129,6 +129,11 @@ public abstract class AbstractConfigurationChildBuilder implements Configuration
    }
 
    @Override
+   public SslConfigurationBuilder ssl() {
+      return builder.ssl();
+   }
+
+   @Override
    public ConfigurationBuilder tcpNoDelay(boolean tcpNoDelay) {
       return builder.tcpNoDelay(tcpNoDelay);
    }

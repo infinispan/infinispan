@@ -23,6 +23,8 @@ import org.jboss.netty.util.HashedWheelTimer
 import org.jboss.netty.handler.timeout.IdleStateHandler
 import org.infinispan.server.core.ProtocolServer
 import org.jboss.netty.channel.{ChannelDownstreamHandler, Channels, ChannelPipeline}
+import org.jboss.netty.handler.ssl.SslHandler
+import org.infinispan.server.core.configuration.SslConfiguration
 
 /**
  * A channel pipeline factory for environments where idle timeout is enabled.
@@ -33,13 +35,17 @@ import org.jboss.netty.channel.{ChannelDownstreamHandler, Channels, ChannelPipel
 class TimeoutEnabledChannelPipelineFactory(server: ProtocolServer,
                                            encoder: ChannelDownstreamHandler,
                                            transport: NettyTransport,
-                                           idleTimeout: Int)
-      extends NettyChannelPipelineFactory(server, encoder, transport) {
+                                           ssl: SslConfiguration,
+                                           idleTimeout: Int
+                                           )
+      extends NettyChannelPipelineFactory(server, encoder, transport, ssl) {
 
    import TimeoutEnabledChannelPipelineFactory._
 
    override def getPipeline: ChannelPipeline = {
       val pipeline = Channels.pipeline
+      if (ssl.enabled())
+         pipeline.addLast("ssl", new SslHandler(createSslEngine(ssl)))
       pipeline.addLast("decoder", server.getDecoder)
       if (encoder != null)
          pipeline.addLast("encoder", encoder)

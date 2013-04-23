@@ -57,6 +57,11 @@ public class ConfigurationProperties {
    public static final String SO_TIMEOUT = "infinispan.client.hotrod.socket_timeout";
    public static final String CONNECT_TIMEOUT = "infinispan.client.hotrod.connect_timeout";
    public static final String PROTOCOL_VERSION = "infinispan.client.hotrod.protocol_version";
+   public static final String USE_SSL = "infinispan.client.hotrod.use_ssl";
+   public static final String KEY_STORE_FILE_NAME = "infinispan.client.hotrod.key_store_file_name";
+   public static final String KEY_STORE_PASSWORD = "infinispan.client.hotrod.key_store_password";
+   public static final String TRUST_STORE_FILE_NAME = "infinispan.client.hotrod.trust_store_file_name";
+   public static final String TRUST_STORE_PASSWORD = "infinispan.client.hotrod.trust_store_password";
 
    // defaults
 
@@ -160,6 +165,26 @@ public class ConfigurationProperties {
 
    public int getConnectTimeout() {
       return props.getIntProperty(CONNECT_TIMEOUT, DEFAULT_CONNECT_TIMEOUT);
+   }
+
+   public boolean getUseSSL() {
+      return props.getBooleanProperty(USE_SSL, false);
+   }
+
+   public String getKeyStoreFileName() {
+      return props.getProperty(KEY_STORE_FILE_NAME, null);
+   }
+
+   public String getKeyStorePassword() {
+      return props.getProperty(KEY_STORE_PASSWORD, null);
+   }
+
+   public String getTrustStoreFileName() {
+      return props.getProperty(TRUST_STORE_FILE_NAME, null);
+   }
+
+   public String getTrustStorePassword() {
+      return props.getProperty(TRUST_STORE_PASSWORD, null);
    }
 
 }

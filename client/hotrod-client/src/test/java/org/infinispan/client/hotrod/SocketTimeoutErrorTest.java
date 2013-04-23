@@ -90,7 +90,6 @@ public class SocketTimeoutErrorTest extends SingleCacheManagerTest {
       props.setProperty("maxActive", "1");
       props.setProperty("maxTotal", "1");
       props.setProperty("maxIdle", "1");
-      props.setProperty("maxIdle", "1");
       return props;
    }
 

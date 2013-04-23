@@ -34,11 +34,13 @@ public abstract class ProtocolServerConfigurationBuilder<T extends ProtocolServe
    protected int idleTimeout = -1;
    protected int recvBufSize = 0;
    protected int sendBufSize = 0;
+   protected final SslConfigurationBuilder ssl;
    protected boolean tcpNoDelay = true;
    protected int workerThreads = 2 * Runtime.getRuntime().availableProcessors();
 
    protected ProtocolServerConfigurationBuilder(int port) {
       this.port = port;
+      this.ssl = new SslConfigurationBuilder();
    }
 
    @Override
@@ -78,6 +80,11 @@ public abstract class ProtocolServerConfigurationBuilder<T extends ProtocolServe
    }
 
    @Override
+   public SslConfigurationBuilder ssl() {
+      return ssl;
+   }
+
+   @Override
    public S withProperties(Properties properties) {
       TypedProperties typed = TypedProperties.toTypedProperties(properties);
 
@@ -102,6 +109,7 @@ public abstract class ProtocolServerConfigurationBuilder<T extends ProtocolServe
 
    @Override
    public void validate() {
+      ssl.validate();
       if (idleTimeout < -1) {
          throw log.illegalIdleTimeout(idleTimeout);
       }
@@ -125,6 +133,7 @@ public abstract class ProtocolServerConfigurationBuilder<T extends ProtocolServe
       this.sendBufSize = template.sendBufSize();
       this.tcpNoDelay = template.tcpNoDelay();
       this.workerThreads = template.workerThreads();
+      this.ssl.read(template.ssl());
       return this;
    }
 }

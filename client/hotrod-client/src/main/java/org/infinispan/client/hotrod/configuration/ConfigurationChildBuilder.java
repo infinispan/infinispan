@@ -138,6 +138,11 @@ public interface ConfigurationChildBuilder {
    ConfigurationBuilder socketTimeout(int socketTimeout);
 
    /**
+    * SSL Configuration
+    */
+   SslConfigurationBuilder ssl();
+
+   /**
     * Affects TCP NODELAY on the TCP stack. Defaults to enabled
     */
    ConfigurationBuilder tcpNoDelay(boolean tcpNoDelay);

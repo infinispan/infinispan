@@ -46,6 +46,8 @@ import org.jboss.netty.handler.codec.replay.{VoidEnum, ReplayingDecoder}
 import org.infinispan.server.hotrod._
 import java.lang.IllegalStateException
 import java.lang.StringBuilder
+import javax.net.ssl.SSLEngine
+import org.jboss.netty.handler.ssl.SslHandler
 
 /**
  * A very simply Hot Rod client for testing purpouses. It's a quick and dirty client implementation done for testing
@@ -56,15 +58,16 @@ import java.lang.StringBuilder
  *   http://thread.gmane.org/gmane.comp.lang.scala.user/24317
  *
  * @author Galder Zamarreño
+ * @author Tristan Tarrant
  * @since 4.1
  */
-class HotRodClient(host: String, port: Int, defaultCacheName: String, rspTimeoutSeconds: Int, protocolVersion: Byte) extends Log {
+class HotRodClient(host: String, port: Int, defaultCacheName: String, rspTimeoutSeconds: Int, protocolVersion: Byte, sslEngine: SSLEngine = null) extends Log {
    val idToOp = new ConcurrentHashMap[Long, Op]
 
    private lazy val ch: Channel = {
       val factory = new NioClientSocketChannelFactory(Executors.newCachedThreadPool, Executors.newCachedThreadPool)
       val bootstrap: ClientBootstrap = new ClientBootstrap(factory)
-      bootstrap.setPipelineFactory(new ClientPipelineFactory(this, rspTimeoutSeconds))
+      bootstrap.setPipelineFactory(new ClientPipelineFactory(this, rspTimeoutSeconds, sslEngine))
       bootstrap.setOption("tcpNoDelay", true)
       bootstrap.setOption("keepAlive", true)
       // Make a new connection.
@@ -233,14 +236,14 @@ class HotRodClient(host: String, port: Int, defaultCacheName: String, rspTimeout
       val handler = ch.getPipeline.getLast.asInstanceOf[ClientHandler]
       handler.getResponse(op.id).asInstanceOf[TestBulkGetResponse]
    }
-   
+
    def bulkGetKeys: TestBulkGetKeysResponse = {
    	  val op = new BulkGetKeysOp(0xA0, protocolVersion, 0x1D, defaultCacheName, 1, 0, 0)
       val writeFuture = writeOp(op)
       val handler = ch.getPipeline.getLast.asInstanceOf[ClientHandler]
       handler.getResponse(op.id).asInstanceOf[TestBulkGetKeysResponse]
    }
-   
+
    def bulkGetKeys(scope: Int): TestBulkGetKeysResponse = {
    	  val op = new BulkGetKeysOp(0xA0, protocolVersion, 0x1D, defaultCacheName, 1, 0, scope)
       val writeFuture = writeOp(op)
@@ -249,10 +252,12 @@ class HotRodClient(host: String, port: Int, defaultCacheName: String, rspTimeout
    }
 }
 
-private class ClientPipelineFactory(client: HotRodClient, rspTimeoutSeconds: Int) extends ChannelPipelineFactory {
+private class ClientPipelineFactory(client: HotRodClient, rspTimeoutSeconds: Int, sslEngine: SSLEngine) extends ChannelPipelineFactory {
 
    override def getPipeline = {
       val pipeline = Channels.pipeline
+      if (sslEngine != null)
+         pipeline.addLast("ssl", new SslHandler(sslEngine));
       pipeline.addLast("decoder", new Decoder(client))
       pipeline.addLast("encoder", new Encoder)
       pipeline.addLast("handler", new ClientHandler(rspTimeoutSeconds))
@@ -629,7 +634,7 @@ class BulkGetOp(override val magic: Int,
               val count: Int)
      extends Op(magic, version, code, cacheName, null, 0, 0, null, 0, 0,
                 clientIntel, topologyId)
-                
+
 class BulkGetKeysOp(override val magic: Int,
               override val version: Byte,
               override val code: Byte,

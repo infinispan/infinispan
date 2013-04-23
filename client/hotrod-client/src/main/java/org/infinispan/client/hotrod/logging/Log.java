@@ -24,6 +24,7 @@ package org.infinispan.client.hotrod.logging;
 
 import org.infinispan.client.hotrod.exceptions.HotRodClientException;
 import org.infinispan.client.hotrod.impl.transport.tcp.TcpTransport;
+import org.infinispan.config.ConfigurationException;
 import org.jboss.logging.BasicLogger;
 import org.jboss.logging.Cause;
 import org.jboss.logging.LogMessage;
@@ -31,7 +32,6 @@ import org.jboss.logging.Message;
 import org.jboss.logging.MessageLogger;
 
 import java.io.IOException;
-import java.net.InetSocketAddress;
 import java.net.SocketAddress;
 import java.util.Set;
 
@@ -75,7 +75,7 @@ public interface Log extends BasicLogger {
    @Message(value = "Exception encountered. Retry %d out of %d", id = 4007)
    void exceptionAndNoRetriesLeft(int retry, int maxRetries, @Cause HotRodClientException te);
 
-//  id = 4008 is now logged to TRACE(ISPN-1794)
+   //  id = 4008 is now logged to TRACE(ISPN-1794)
 
    @LogMessage(level = WARN)
    @Message(value = "Issues closing socket for %s: %s", id = 4009)
@@ -112,7 +112,7 @@ public interface Log extends BasicLogger {
    @LogMessage(level = ERROR)
    @Message(value = "Could not fetch transport", id = 4017)
    void couldNotFetchTransport(@Cause Exception e);
-   
+
    @LogMessage(level = WARN)
    @Message(value = "Unable to convert string property [%s] to an int! Using default value of %d", id = 4018)
    void unableToConvertStringPropertyToInt(String value, int defaultValue);
@@ -133,4 +133,21 @@ public interface Log extends BasicLogger {
    @Message(value = "Unable to invalidate transport for server: %s", id = 4022)
    void unableToInvalidateTransport(SocketAddress serverAddress);
 
+   @Message(value = "SSL Enabled but no KeyStore or KeyManagers specified", id = 4023)
+   ConfigurationException noSSLKeyManagerConfiguration();
+
+   @Message(value = "SSL Enabled but no TrustStore or TrustManagers specified", id = 4024)
+   ConfigurationException noSSLTrustManagerConfiguration();
+
+   @Message(value = "A password is required to open the KeyStore '%s'", id = 4025)
+   ConfigurationException missingKeyStorePassword(String keyStore);
+
+   @Message(value = "A password is required to open the TrustStore '%s'", id = 4026)
+   ConfigurationException missingTrustStorePassword(String trustStore);
+
+   @Message(value = "Cannot configure both keyStoreFileName and keyManagers at the same time", id = 4027)
+   ConfigurationException xorKeyStoreConfiguration();
+
+   @Message(value = "Cannot configure both trustStoreFileName and trustManagers at the same time", id = 4028)
+   ConfigurationException xorTrustStoreConfiguration();
 }

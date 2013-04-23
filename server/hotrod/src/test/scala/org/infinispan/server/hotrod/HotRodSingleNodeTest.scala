@@ -42,11 +42,11 @@ import org.testng.annotations.{Test, AfterClass}
  */
 abstract class HotRodSingleNodeTest extends SingleCacheManagerTest {
    val cacheName = "HotRodCache"
-   private var hotRodServer: HotRodServer = _
+   protected var hotRodServer: HotRodServer = _
    private var hotRodClient: HotRodClient = _
    private var advancedCache: AdvancedCache[ByteArrayKey, CacheValue] = _
    private var hotRodJmxDomain = getClass.getSimpleName
-   
+
    override def createCacheManager: EmbeddedCacheManager = {
       val cacheManager = createTestCacheManager
       cacheManager.defineConfiguration(cacheName, cacheManager.getDefaultConfiguration)
