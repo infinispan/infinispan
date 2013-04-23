@@ -124,6 +124,7 @@
                <properties>
                   <!-- Skip tests parent's tests are skipped -->
                   <maven.test.skip.exec>${maven.test.skip.exec}</maven.test.skip.exec>
+                  <skipTests>${skipTests}</skipTests>
                   <!-- If logging enabled by client, pass it on -->
                   <log4j.configuration>${log4j.configuration}</log4j.configuration>
                </properties>
