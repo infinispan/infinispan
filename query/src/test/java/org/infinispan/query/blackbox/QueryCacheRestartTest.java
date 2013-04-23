@@ -28,6 +28,7 @@ import org.hibernate.search.query.dsl.QueryBuilder;
 import org.infinispan.Cache;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.cache.InterceptorConfiguration;
+import org.infinispan.configuration.cache.InterceptorConfiguration.Position;
 import org.infinispan.interceptors.base.CommandInterceptor;
 import org.infinispan.query.CacheQuery;
 import org.infinispan.query.Search;
@@ -65,7 +66,7 @@ public class QueryCacheRestartTest extends AbstractInfinispanTest {
             .addProperty("default.directory_provider", "ram")
             .addProperty("lucene_version", "LUCENE_CURRENT");
       final NoOpInterceptor noOpInterceptor = new NoOpInterceptor();
-      builder.customInterceptors().addInterceptor().interceptor(noOpInterceptor);
+      builder.customInterceptors().addInterceptor().interceptor(noOpInterceptor).position(Position.FIRST);
 
       withCacheManager(new CacheManagerCallable(TestCacheManagerFactory.createCacheManager(builder)) {
          @Override
