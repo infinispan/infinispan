@@ -37,6 +37,7 @@ import org.infinispan.distexec.{DistributedCallable, DefaultExecutorService}
 import java.nio.charset.Charset
 import org.infinispan.marshall.jboss.GenericJBossMarshaller
 import org.infinispan.upgrade.SourceMigrator
+import org.infinispan.tasks.GlobalKeySetTask
 
 class HotRodSourceMigrator(cache: Cache[ByteArrayKey, CacheValue]) extends SourceMigrator {
    val KNOWN_KEY = "___MigrationManager_HotRod_KnownKeys___"
@@ -57,22 +58,7 @@ class HotRodSourceMigrator(cache: Cache[ByteArrayKey, CacheValue]) extends Sourc
       val bak = new ByteArrayKey(MARSHALLER.objectToByteBuffer(keyToRecordKnownKeySet))
 
       val cm = cache.getCacheConfiguration().clustering().cacheMode()
-      var keys: java.util.HashSet[ByteArrayKey] = null
-      if (cm.isReplicated() || !cm.isClustered()) {
-         // If cache mode is LOCAL or REPL, dump local keyset.
-         // Defensive copy to serialize and transmit across a network
-         keys = new java.util.HashSet[ByteArrayKey](cache.keySet())
-      } else {
-         // If cache mode is DIST, use a map/reduce task
-         val des = new DefaultExecutorService(cache)
-         val keysets = des.submitEverywhere(new GlobalKeysetTask(cache))
-         val combinedKeyset = new java.util.HashSet[ByteArrayKey]()
-
-         for (future <- new IteratorWrapper(keysets.iterator())) {
-            combinedKeyset addAll future.get()
-         }
-         keys = combinedKeyset
-      }
+      val keys = GlobalKeySetTask.getGlobalKeySet(cache)
 
       // Remove KNOWN_KEY from the key set - just in case it is there from a previous run.
       keys remove KNOWN_KEY
@@ -80,28 +66,5 @@ class HotRodSourceMigrator(cache: Cache[ByteArrayKey, CacheValue]) extends Sourc
       // we cannot store the Set as it is; it will break if attempting to be read via Hot Rod.  This should be wrapped
       // in a CacheValue.
       cache.put(bak, new CacheValue(MARSHALLER.objectToByteBuffer(keys), 1))
-   }
-}
-
-class IteratorWrapper[A](iter:java.util.Iterator[A]) {
-   // TODO: should probably be in some generic scala helper module to allow scala-style iteration over java collections
-   def foreach(f: A => Unit): Unit = {
-      while(iter.hasNext){
-         f(iter.next)
-      }
-   }
-}
-
-class GlobalKeysetTask(var cache: Cache[ByteArrayKey, CacheValue]) extends DistributedCallable[ByteArrayKey, CacheValue, java.util.Set[ByteArrayKey]] {
-   // TODO this could possibly be moved elsewhere and reused
-   @Override
-   def call(): java.util.Set[ByteArrayKey] = {
-      // Defensive copy to serialize and transmit across a network
-      new java.util.HashSet(cache.keySet())
-   }
-
-   @Override
-   def setEnvironment(cache: Cache[ByteArrayKey, CacheValue], inputKeys: java.util.Set[ByteArrayKey]) {
-      this.cache = cache
    }
 }
