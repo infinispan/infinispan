@@ -13,7 +13,7 @@
             <property name="executionType">REMOTE</property>
         </protocol>
         <configuration>
-            <property name="jbossHome">${basedir}/target/jboss-as-${version.jboss.as}</property>
+            <property name="jbossHome">${basedir}/target/jboss-eap-6.1</property>
             <!-- Needed for JMS tests -->
             <property name="serverConfig">standalone-test.xml</property>
             <!-- To debug the Arquillian managed application server: -->

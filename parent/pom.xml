@@ -112,6 +112,7 @@
       <version.antlr>3.4</version.antlr>
       <version.apacheds.jdbm>1.5.7</version.apacheds.jdbm>
       <version.arquillian>1.0.3.Final</version.arquillian>
+      <version.arquillian.container.managed>7.2.0.Final</version.arquillian.container.managed>
       <version.arquillian.container.weld>1.0.0.CR3</version.arquillian.container.weld>
       <version.avro>1.3.3</version.avro>
       <version.bdbje>5.0.34</version.bdbje>
@@ -142,7 +143,7 @@
       <version.javax.persistence>1.0</version.javax.persistence>
       <version.javax.servlet>2.5</version.javax.servlet>
       <version.jboss.marshalling>1.3.15.GA</version.jboss.marshalling>
-      <version.jboss.as>7.1.1.Final</version.jboss.as>
+      <version.jboss.as>7.2.0.Alpha1-redhat-4</version.jboss.as>
       <version.jbossjta>4.16.3.Final</version.jbossjta>
       <version.osgi>4.3.0</version.osgi>
       <version.jboss.logging>3.1.1.GA</version.jboss.logging>
@@ -598,6 +599,12 @@
             <version>${version.arquillian}</version>
             <type>pom</type>
             <scope>import</scope>
+         </dependency>
+         <dependency>
+            <groupId>org.jboss.as</groupId>
+            <artifactId>jboss-as-arquillian-container-managed</artifactId>
+            <version>${version.arquillian.container.managed}</version>
+            <scope>test</scope>
          </dependency>
          <dependency>
             <groupId>org.jboss.arquillian.container</groupId>
