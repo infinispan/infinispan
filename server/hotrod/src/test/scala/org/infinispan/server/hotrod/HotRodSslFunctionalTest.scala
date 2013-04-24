@@ -61,7 +61,7 @@ class HotRodSslFunctionalTest extends HotRodFunctionalTest {
 
    override protected def connectClient: HotRodClient = {
       val ssl = hotRodServer.getConfiguration.ssl
-      val sslContext = SslContextFactory.getContext(null, ssl.keyStoreFileName, ssl.keyStorePassword, null, ssl.trustStoreFileName, ssl.trustStorePassword)
+      val sslContext = SslContextFactory.getContext(ssl.keyStoreFileName, ssl.keyStorePassword, ssl.trustStoreFileName, ssl.trustStorePassword)
       val sslEngine = SslContextFactory.getEngine(sslContext, true, false)
       new HotRodClient(host, hotRodServer.getPort, cacheName, 60, 10, sslEngine)
    }

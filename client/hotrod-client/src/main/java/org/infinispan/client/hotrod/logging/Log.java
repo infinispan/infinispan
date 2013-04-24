@@ -133,10 +133,10 @@ public interface Log extends BasicLogger {
    @Message(value = "Unable to invalidate transport for server: %s", id = 4022)
    void unableToInvalidateTransport(SocketAddress serverAddress);
 
-   @Message(value = "SSL Enabled but no KeyStore or KeyManagers specified", id = 4023)
+   @Message(value = "SSL Enabled but no KeyStore specified", id = 4023)
    ConfigurationException noSSLKeyManagerConfiguration();
 
-   @Message(value = "SSL Enabled but no TrustStore or TrustManagers specified", id = 4024)
+   @Message(value = "SSL Enabled but no TrustStore specified", id = 4024)
    ConfigurationException noSSLTrustManagerConfiguration();
 
    @Message(value = "A password is required to open the KeyStore '%s'", id = 4025)
@@ -145,9 +145,6 @@ public interface Log extends BasicLogger {
    @Message(value = "A password is required to open the TrustStore '%s'", id = 4026)
    ConfigurationException missingTrustStorePassword(String trustStore);
 
-   @Message(value = "Cannot configure both keyStoreFileName and keyManagers at the same time", id = 4027)
-   ConfigurationException xorKeyStoreConfiguration();
-
-   @Message(value = "Cannot configure both trustStoreFileName and trustManagers at the same time", id = 4028)
-   ConfigurationException xorTrustStoreConfiguration();
+   @Message(value = "Cannot configure custom KeyStore and/or TrustStore when specifying a SSLContext", id = 4027)
+   ConfigurationException xorSSLContext();
 }

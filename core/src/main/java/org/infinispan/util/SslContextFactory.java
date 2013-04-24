@@ -44,27 +44,26 @@ import org.infinispan.util.logging.LogFactory;
 public class SslContextFactory {
    private static final Log log = LogFactory.getLog(SslContextFactory.class);
 
-   public static SSLContext getContext(KeyManager[] keyManagers, String keyStoreFileName, char[] keyStorePassword, TrustManager[] trustManagers, String trustStoreFileName, char[] trustStorePassword) {
+   public static SSLContext getContext(String keyStoreFileName, char[] keyStorePassword, String trustStoreFileName, char[] trustStorePassword) {
       try {
-         if (keyManagers == null) {
-            if (keyStoreFileName != null) {
-               KeyStore ks = KeyStore.getInstance("JKS");
-               loadKeyStore(ks, keyStoreFileName, keyStorePassword);
-               KeyManagerFactory kmf = KeyManagerFactory.getInstance(KeyManagerFactory.getDefaultAlgorithm());
-               kmf.init(ks, keyStorePassword);
-               keyManagers = kmf.getKeyManagers();
-            }
+         KeyManager[] keyManagers = null;
+         if (keyStoreFileName != null) {
+            KeyStore ks = KeyStore.getInstance("JKS");
+            loadKeyStore(ks, keyStoreFileName, keyStorePassword);
+            KeyManagerFactory kmf = KeyManagerFactory.getInstance(KeyManagerFactory.getDefaultAlgorithm());
+            kmf.init(ks, keyStorePassword);
+            keyManagers = kmf.getKeyManagers();
          }
 
-         if (trustManagers == null) {
-            if (trustStoreFileName != null) {
-               KeyStore ks = KeyStore.getInstance("JKS");
-               loadKeyStore(ks, trustStoreFileName, trustStorePassword);
-               TrustManagerFactory tmf = TrustManagerFactory.getInstance(KeyManagerFactory.getDefaultAlgorithm());
-               tmf.init(ks);
-               trustManagers = tmf.getTrustManagers();
-            }
+         TrustManager[] trustManagers = null;
+         if (trustStoreFileName != null) {
+            KeyStore ks = KeyStore.getInstance("JKS");
+            loadKeyStore(ks, trustStoreFileName, trustStorePassword);
+            TrustManagerFactory tmf = TrustManagerFactory.getInstance(KeyManagerFactory.getDefaultAlgorithm());
+            tmf.init(ks);
+            trustManagers = tmf.getTrustManagers();
          }
+
          SSLContext sslContext = SSLContext.getInstance("TLS");
          sslContext.init(keyManagers, trustManagers, null);
          return sslContext;

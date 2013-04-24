@@ -97,7 +97,11 @@ public class TcpTransportFactory implements TransportFactory {
 
          if (configuration.ssl().enabled()) {
             SslConfiguration ssl = configuration.ssl();
-            sslContext = SslContextFactory.getContext(ssl.keyManagers(), ssl.keyStoreFileName(), ssl.keyStorePassword(), ssl.trustManagers(), ssl.trustStoreFileName(), ssl.trustStorePassword());
+            if (ssl.sslContext() != null) {
+               sslContext = ssl.sslContext();
+            } else {
+               sslContext = SslContextFactory.getContext(ssl.keyStoreFileName(), ssl.keyStorePassword(), ssl.trustStoreFileName(), ssl.trustStorePassword());
+            }
          }
 
          if (log.isDebugEnabled()) {
