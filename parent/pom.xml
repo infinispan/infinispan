@@ -1773,12 +1773,12 @@
                <plugin>
                   <groupId>org.apache.maven.plugins</groupId>
                   <artifactId>maven-surefire-plugin</artifactId>
-                  <configuration combine.self="override">
-                     <argLine>-Xmx1024m -XX:MaxPermSize=1024m ${jacocoAgent}</argLine>
-                     <parallel>tests</parallel>
-                     <threadCount>${infinispan.test.parallel.threads}</threadCount>
-                     <groups>${defaultTestGroup}</groups>
-                     <systemProperties>
+                  <configuration>
+                     <argLine combine.self="override">-Xmx1024m -XX:MaxPermSize=1024m ${jacocoAgent}</argLine>
+                     <parallel combine.self="override">tests</parallel>
+                     <threadCount combine.self="override">${infinispan.test.parallel.threads}</threadCount>
+                     <groups combine.self="override">${defaultTestGroup}</groups>
+                     <systemProperties combine.self="override">
                         <property>
                            <name>infinispan.test.jgroups.protocol</name>
                            <value>${infinispan.test.jgroups.protocol}</value>
@@ -1796,8 +1796,8 @@
                            <value>true</value>
                         </property>
                      </systemProperties>
-                     <trimStackTrace>false</trimStackTrace>
-                     <properties>
+                     <trimStackTrace combine.self="override">false</trimStackTrace>
+                     <properties combine.self="override">
                         <property>
                            <name>listener</name>
                            <value>${testNGListener}</value>
@@ -1824,8 +1824,8 @@
                         <goals>
                            <goal>run</goal>
                         </goals>
-                        <configuration combine.self="override">
-                           <target>
+                        <configuration>
+                           <target combine.self="override">
                               <!-- Execute an ant task within maven -->
                               <taskdef name="report" classname="org.jacoco.ant.ReportTask">
                                  <classpath path="${basedir}/target/jacoco-jars/org.jacoco.ant.jar" />
