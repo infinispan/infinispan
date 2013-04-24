@@ -13,6 +13,10 @@
    <artifactId>infinispan-as-module-integrationtests</artifactId>
    <name>Integration tests: AS Module Integration Tests</name>
    <description>Integration tests: AS Module Integration Tests</description>
+   
+   <properties>
+      <eap.dir></eap.dir>
+   </properties>
 
    <dependencies>
       <dependency>
@@ -59,7 +63,6 @@
       <dependency>
          <groupId>org.jboss.as</groupId>
          <artifactId>jboss-as-arquillian-container-managed</artifactId>
-         <version>${version.jboss.as}</version>
          <scope>test</scope>
       </dependency>
    </dependencies>
@@ -127,7 +130,7 @@
                            <version>${project.version}</version>
                            <type>zip</type>
                            <overWrite>false</overWrite>
-                           <outputDirectory>${project.build.directory}/jboss-as-${version.jboss.as}</outputDirectory>
+                           <outputDirectory>${project.build.directory}/jboss-eap-6.1/modules</outputDirectory>
                         </artifactItem>
                      </artifactItems>
                   </configuration>
@@ -147,7 +150,7 @@
                      <goal>copy-resources</goal>
                   </goals>
                   <configuration>
-                     <outputDirectory>${basedir}/target/jboss-as-${version.jboss.as}</outputDirectory>
+                     <outputDirectory>${project.build.directory}/jboss-eap-6.1</outputDirectory>
                      <overwrite>true</overwrite>
                      <resources>
                         <resource>
