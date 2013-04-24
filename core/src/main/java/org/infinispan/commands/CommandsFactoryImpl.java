@@ -64,8 +64,6 @@ import org.infinispan.commands.write.ReplaceCommand;
 import org.infinispan.commands.write.VersionedPutKeyValueCommand;
 import org.infinispan.commands.write.WriteCommand;
 import org.infinispan.commands.write.*;
-import org.infinispan.compat.ToStringConverter;
-import org.infinispan.compat.TypeConverter;
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.container.DataContainer;
 import org.infinispan.container.InternalEntryFactory;
@@ -147,9 +145,6 @@ public class CommandsFactoryImpl implements CommandsFactory {
    private CancellationService cancellationService;
 
    private Map<Byte, ModuleCommandInitializer> moduleCommandInitializers;
-
-//   // TODO: Temporary, configurable...
-//   private TypeConverter typeConverter = new ToStringConverter();
 
    @Inject
    public void setupDependencies(DataContainer container, CacheNotifier notifier, Cache<Object, Object> cache,
@@ -260,7 +255,6 @@ public class CommandsFactoryImpl implements CommandsFactory {
 
    @Override
    public GetKeyValueCommand buildGetKeyValueCommand(Object key, Set<Flag> flags) {
-//      return new GetKeyValueCommand(typeConverter.convert(key), flags);
       return new GetKeyValueCommand(key, flags);
    }
 

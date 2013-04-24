@@ -24,13 +24,56 @@
 package org.infinispan.compat;
 
 /**
- * // TODO: Document this
+ * A type converter for cached keys and values. Given a key and value type,
+ * implementations of this interface convert instances of those types into
+ * target key and value type instances respectively.
  *
- * @author Galder Zamarreño
- * @since // TODO
+ * @param <K>
+ * @param <V>
+ * @param <KT>
+ * @param <VT>
  */
-public interface TypeConverter<T, R> {
+public interface TypeConverter<K, V, KT, VT> {
 
-   R convert(T source);
+   // The reason this interface takes both key and value types into account
+   // is because given a key type, implementations can make clever decisions
+   // on how to convert value types into target value types, as seen in
+   // boxValue and unboxValue method definitions.
+
+   /**
+    * Covert a instance of cached key type into an instance of target key type.
+    *
+    * @param key cached key instance to convert
+    * @return a converted key instance into target key type
+    */
+   KT boxKey(K key);
+
+   /**
+    * Covert a instance of cached key type into an instance of target key type.
+    *
+    * @param key cached key associated with the value
+    * @param value cached value instance to convert
+    * @return a converted value instance into target value type
+    */
+   VT boxValue(K key, V value);
+
+   /**
+    * Convert back an instance of the target key type into an instance of the
+    * cached key type.
+    *
+    * @param target target key type instance to convert back
+    * @return an instance of the cached key type
+    */
+   K unboxKey(KT target);
+
+   /**
+    * Convert back an instance of the target value type into an instance of
+    * the cached value type.
+    *
+    * @param key cached key associated with the value
+    * @param target target value type instance to convert back
+    * @return an instance of the cached value type
+    */
+   V unboxValue(K key, VT target);
 
 }

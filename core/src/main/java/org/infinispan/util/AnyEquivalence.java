@@ -29,7 +29,7 @@ package org.infinispan.util;
  * @author Galder Zamarreño
  * @since 5.3
  */
-public class AnyEquivalence<T> implements Equivalence<T> {
+public final class AnyEquivalence<T> implements Equivalence<T> {
 
    public static AnyEquivalence<Object> OBJECT = new AnyEquivalence<Object>();
 

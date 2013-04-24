@@ -62,7 +62,7 @@ public class TotalOrderVersionedEntryWrappingInterceptor extends VersionedEntryW
          ctx.getCacheTransaction().setUpdatedEntryVersions(EMPTY_VERSION_MAP);
          Object retVal = invokeNextInterceptor(ctx, command);
          if (shouldCommitDuringPrepare(command, ctx)) {
-            commitContextEntries(ctx, null);
+            commitContextEntries(ctx, null, null);
          }
          return retVal;
       }
@@ -77,7 +77,7 @@ public class TotalOrderVersionedEntryWrappingInterceptor extends VersionedEntryW
                                                                                 (VersionedPrepareCommand) command);
 
       if (command.isOnePhaseCommit()) {
-         commitContextEntries(ctx, null);
+         commitContextEntries(ctx, null, null);
       } else {
          if (trace)
             log.tracef("Transaction %s will be committed in the 2nd phase", ctx.getGlobalTransaction().globalId());
@@ -91,12 +91,12 @@ public class TotalOrderVersionedEntryWrappingInterceptor extends VersionedEntryW
       try {
          return invokeNextInterceptor(ctx, command);
       } finally {
-         commitContextEntries(ctx, null);
+         commitContextEntries(ctx, null, null);
       }
    }
 
    @Override
-   protected void commitContextEntry(CacheEntry entry, InvocationContext ctx, FlagAffectedCommand command) {
+   protected void commitContextEntry(CacheEntry entry, InvocationContext ctx, FlagAffectedCommand command, EntryVersion userProvidedVersion) {
       if (ctx.isInTxScope() && !isFromStateTransfer(ctx)) {
          ClusteredRepeatableReadEntry clusterMvccEntry = (ClusteredRepeatableReadEntry) entry;
          EntryVersion existingVersion = clusterMvccEntry.getVersion();

@@ -46,12 +46,9 @@ import org.jboss.netty.handler.codec.replay.{VoidEnum, ReplayingDecoder}
 import org.infinispan.server.hotrod._
 import java.lang.IllegalStateException
 import java.lang.StringBuilder
-<<<<<<< HEAD
 import javax.net.ssl.SSLEngine
 import org.jboss.netty.handler.ssl.SslHandler
-=======
 import java.util
->>>>>>> ISPN-2281 Hot Rod uses byte[] as raw key type instead of ByteArrayKey
 
 /**
  * A very simply Hot Rod client for testing purpouses. It's a quick and dirty client implementation done for testing

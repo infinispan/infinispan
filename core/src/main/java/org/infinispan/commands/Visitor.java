@@ -69,6 +69,8 @@ public interface Visitor {
 
    Object visitGetKeyValueCommand(InvocationContext ctx, GetKeyValueCommand command) throws Throwable;
 
+   Object visitGetCacheEntryCommand(InvocationContext ctx, GetKeyValueCommand command) throws Throwable;
+
    Object visitKeySetCommand(InvocationContext ctx, KeySetCommand command) throws Throwable;
 
    Object visitValuesCommand(InvocationContext ctx, ValuesCommand command) throws Throwable;

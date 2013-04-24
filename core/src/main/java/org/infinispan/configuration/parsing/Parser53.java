@@ -19,6 +19,7 @@
 package org.infinispan.configuration.parsing;
 
 import org.infinispan.commons.hash.Hash;
+import org.infinispan.compat.TypeConverter;
 import org.infinispan.config.ConfigurationException;
 import org.infinispan.configuration.cache.*;
 import org.infinispan.configuration.cache.FileCacheStoreConfigurationBuilder.FsyncMode;
@@ -1124,11 +1125,14 @@ public class Parser53 implements ConfigurationParser<ConfigurationBuilderHolder>
             case CLASS:
                builder.dataContainer().dataContainer(Util.<DataContainer>getInstance(value, holder.getClassLoader()));
                break;
-            case COMPARING_KEY:
+            case KEY_EQUIVALENCE:
                builder.dataContainer().keyEquivalence(Util.<Equivalence>getInstance(value, holder.getClassLoader()));
                break;
-            case COMPARING_VALUE:
+            case VALUE_EQUIVALENCE:
                builder.dataContainer().valueEquivalence(Util.<Equivalence>getInstance(value, holder.getClassLoader()));
+               break;
+            case TYPE_CONVERTER:
+               builder.dataContainer().typeConverter(Util.<TypeConverter>getInstance(value, holder.getClassLoader()));
                break;
             default:
                throw ParseUtils.unexpectedAttribute(reader, i);

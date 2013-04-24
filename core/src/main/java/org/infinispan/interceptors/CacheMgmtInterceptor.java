@@ -133,10 +133,10 @@ public class CacheMgmtInterceptor extends JmxStatsCommandInterceptor {
       return retval;
    }
 
-   @Override
-   public Object visitVersionedPutKeyValueCommand(InvocationContext ctx, VersionedPutKeyValueCommand command) throws Throwable {
-      return visitPutKeyValueCommand(ctx, command);
-   }
+//   @Override
+//   public Object visitVersionedPutKeyValueCommand(InvocationContext ctx, VersionedPutKeyValueCommand command) throws Throwable {
+//      return visitPutKeyValueCommand(ctx, command);
+//   }
 
    @Override
    public Object visitRemoveCommand(InvocationContext ctx, RemoveCommand command) throws Throwable {

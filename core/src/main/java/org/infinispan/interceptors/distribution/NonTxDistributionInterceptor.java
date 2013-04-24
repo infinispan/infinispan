@@ -25,7 +25,6 @@ import org.infinispan.commands.read.GetCacheEntryCommand;
 import org.infinispan.commands.read.GetKeyValueCommand;
 import org.infinispan.commands.write.ClearCommand;
 import org.infinispan.commands.write.PutKeyValueCommand;
-import org.infinispan.commands.write.VersionedPutKeyValueCommand;
 import org.infinispan.commands.write.WriteCommand;
 import org.infinispan.container.entries.InternalCacheEntry;
 import org.infinispan.context.Flag;
@@ -67,10 +66,30 @@ public class NonTxDistributionInterceptor extends BaseDistributionInterceptor {
          if (returnValue == null) {
             Object key = command.getKey();
             if (needsRemoteGet(ctx, command)) {
-               returnValue = remoteGet(ctx, key, command);
+               returnValue = remoteGetCacheEntry(ctx, key, command).getValue();
             }
             if (returnValue == null) {
-               returnValue = localGet(ctx, key, false, command);
+               returnValue = localGetCacheEntry(ctx, key, false, command).getValue();
+            }
+         }
+         return returnValue;
+      } catch (SuspectException e) {
+         // retry
+         return visitGetKeyValueCommand(ctx, command);
+      }
+   }
+
+   @Override
+   public Object visitGetCacheEntryCommand(InvocationContext ctx, GetKeyValueCommand command) throws Throwable {
+      try {
+         Object returnValue = invokeNextInterceptor(ctx, command);
+         if (returnValue == null) {
+            Object key = command.getKey();
+            if (needsRemoteGet(ctx, command)) {
+               returnValue = remoteGetCacheEntry(ctx, key, command);
+            }
+            if (returnValue == null) {
+               returnValue = localGetCacheEntry(ctx, key, false, command);
             }
          }
          return returnValue;
@@ -126,7 +145,7 @@ public class NonTxDistributionInterceptor extends BaseDistributionInterceptor {
                // We either did not go remotely (because the value should be local now) or we did but the remote value is null.
                // Then it makes sense to try a local get and wrap again. This will compensate the fact the the entry was not local
                // earlier when the EntryWrappingInterceptor executed during current invocation context but it should be now.
-               localGet(ctx, k, true, command);
+               localGetCacheEntry(ctx, k, true, command);
             }
          }
       }
@@ -154,7 +173,7 @@ public class NonTxDistributionInterceptor extends BaseDistributionInterceptor {
       return null;
    }
 
-   private Object localGet(InvocationContext ctx, Object key, boolean isWrite, FlagAffectedCommand command) throws Throwable {
+   private InternalCacheEntry localGetCacheEntry(InvocationContext ctx, Object key, boolean isWrite, FlagAffectedCommand command) throws Throwable {
       InternalCacheEntry ice = dataContainer.get(key);
       if (ice != null) {
          if (!ctx.replaceValue(key, ice))  {
@@ -163,8 +182,7 @@ public class NonTxDistributionInterceptor extends BaseDistributionInterceptor {
             else
                ctx.putLookedUpEntry(key, ice);
          }
-         // TODO: This return statement is hacky, GetCacheEntryCommand should have its own visit visitGetCacheEntryCommand() callback
-         return command instanceof GetCacheEntryCommand ? ice : ice.getValue();
+         return ice;
       }
       return null;
    }
@@ -190,14 +208,13 @@ public class NonTxDistributionInterceptor extends BaseDistributionInterceptor {
 
    protected void handleRemoteWrite(InvocationContext ctx, WriteCommand command, RecipientGenerator recipientGenerator, boolean skipL1Invalidation, boolean sync) throws Throwable {}
 
-   private Object remoteGet(InvocationContext ctx, Object key, GetKeyValueCommand command) throws Throwable {
+   private InternalCacheEntry remoteGetCacheEntry(InvocationContext ctx, Object key, GetKeyValueCommand command) throws Throwable {
       if (trace) log.tracef("Doing a remote get for key %s", key);
       InternalCacheEntry ice = retrieveFromRemoteSource(key, ctx, false, command);
       command.setRemotelyFetchedValue(ice);
-      if (ice != null) {
-         // TODO: This return statement is hacky, GetCacheEntryCommand should have its own visit visitGetCacheEntryCommand() callback
-         return command instanceof GetCacheEntryCommand ? ice : ice.getValue();
-      }
+      if (ice != null)
+         return ice;
+
       return null;
    }
 

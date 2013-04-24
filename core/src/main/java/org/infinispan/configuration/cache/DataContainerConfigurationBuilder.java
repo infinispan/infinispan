@@ -20,6 +20,7 @@ package org.infinispan.configuration.cache;
 
 import java.util.Properties;
 
+import org.infinispan.compat.TypeConverter;
 import org.infinispan.configuration.Builder;
 import org.infinispan.container.DataContainer;
 import org.infinispan.util.AnyEquivalence;
@@ -40,6 +41,7 @@ public class DataContainerConfigurationBuilder extends AbstractConfigurationChil
    private Equivalence valueEquivalence = AnyEquivalence.OBJECT;
    // TODO: What are properties used for? Is it just legacy?
    private Properties properties = new Properties();
+   private TypeConverter typeConverter;
 
    DataContainerConfigurationBuilder(ConfigurationBuilder builder) {
       super(builder);
@@ -108,6 +110,20 @@ public class DataContainerConfigurationBuilder extends AbstractConfigurationChil
       return this;
    }
 
+   /**
+    * Set the {@link TypeConverter} instance to use to convert cached key and
+    * value instances into target key and value type instances. Type
+    * converters are used to provide compatibility between the different
+    * Infinispan endpoints (i.e. embedded, hot rod, ...etc).
+    *
+    * @param typeConverter instance of {@link TypeConverter} used to convert instances
+    * @return this configuration builder
+    */
+   public DataContainerConfigurationBuilder typeConverter(TypeConverter typeConverter) {
+      this.typeConverter = typeConverter;
+      return this;
+   }
+
    @Override
    public void validate() {
    }
@@ -115,7 +131,8 @@ public class DataContainerConfigurationBuilder extends AbstractConfigurationChil
    @Override
    public DataContainerConfiguration create() {
       return new DataContainerConfiguration(dataContainer,
-            TypedProperties.toTypedProperties(properties), keyEquivalence, valueEquivalence);
+            TypedProperties.toTypedProperties(properties), keyEquivalence,
+            valueEquivalence, typeConverter);
    }
 
    @Override
@@ -124,6 +141,7 @@ public class DataContainerConfigurationBuilder extends AbstractConfigurationChil
       this.properties = template.properties();
       this.keyEquivalence = template.keyEquivalence();
       this.valueEquivalence = template.valueEquivalence();
+      this.typeConverter = template.typeConverter();
 
       return this;
    }
@@ -133,8 +151,9 @@ public class DataContainerConfigurationBuilder extends AbstractConfigurationChil
       return "DataContainerConfigurationBuilder{" +
             "dataContainer=" + dataContainer +
             ", properties=" + properties +
-            ", comparingKey=" + keyEquivalence +
-            ", comparingKey=" + valueEquivalence +
+            ", keyEquivalence=" + keyEquivalence +
+            ", valueEquivalence=" + valueEquivalence +
+            ", typeConverter=" + typeConverter +
             '}';
    }
 
