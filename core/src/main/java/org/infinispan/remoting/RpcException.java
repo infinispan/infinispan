@@ -25,7 +25,7 @@ package org.infinispan.remoting;
 import org.infinispan.CacheException;
 
 /**
- * Thrown when an RPC problem occurred
+ * Thrown when an RPC problem occurred on the caller.
  *
  * @author (various)
  * @since 4.0
@@ -48,10 +48,5 @@ public class RpcException extends CacheException {
 
    public RpcException(String msg, Throwable cause) {
       super(msg, cause);
-   }
-
-   @Override
-   public String toString() {
-      return super.toString();
    }
 }
