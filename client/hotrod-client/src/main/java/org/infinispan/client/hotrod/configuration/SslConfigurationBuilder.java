@@ -36,12 +36,11 @@ import org.infinispan.client.hotrod.logging.Log;
 public class SslConfigurationBuilder extends AbstractConfigurationChildBuilder implements Builder<SslConfiguration> {
    private static final Log log = LogFactory.getLog(SslConfigurationBuilder.class);
    private boolean enabled = false;
-   private KeyManager[] keyManagers;
-   private TrustManager[] trustManagers;
    private String keyStoreFileName;
    private char[] keyStorePassword;
    private String trustStoreFileName;
    private char[] trustStorePassword;
+   private SSLContext sslContext;
 
    protected SslConfigurationBuilder(ConfigurationBuilder builder) {
       super(builder);
@@ -72,24 +71,6 @@ public class SslConfigurationBuilder extends AbstractConfigurationChildBuilder i
    }
 
    /**
-    * Sets the {@link KeyManager}s to use to create the {@link SSLContext}. Alternatively specify a
-    * keyStoreFileName and keyStorePassword
-    */
-   public SslConfigurationBuilder keyManagers(KeyManager[] keyManagers) {
-      this.keyManagers = keyManagers;
-      return this;
-   }
-
-   /**
-    * Sets the {@link TrustManager}s to use to create the {@link SSLContext} Alternatively specify a
-    * trustStoreFileName and trustStorePassword
-    */
-   public SslConfigurationBuilder trustManagers(TrustManager[] trustManagers) {
-      this.trustManagers = trustManagers;
-      return this;
-   }
-
-   /**
     * Specifies the filename of a keystore to use to create the {@link SSLContext} You also need to
     * specify a {@link #keyStorePassword(char[])}. Alternatively specify an array of
     * {@link #keyManagers(KeyManager[])}
@@ -106,6 +87,11 @@ public class SslConfigurationBuilder extends AbstractConfigurationChildBuilder i
     */
    public SslConfigurationBuilder keyStorePassword(char[] keyStorePassword) {
       this.keyStorePassword = keyStorePassword;
+      return this;
+   }
+
+   public SslConfigurationBuilder sslContext(SSLContext sslContext) {
+      this.sslContext = sslContext;
       return this;
    }
 
@@ -132,39 +118,38 @@ public class SslConfigurationBuilder extends AbstractConfigurationChildBuilder i
    @Override
    public void validate() {
       if (enabled) {
-         if (keyManagers == null && keyStoreFileName == null) {
-            throw log.noSSLKeyManagerConfiguration();
-         }
-         if (keyStoreFileName != null && keyStorePassword == null) {
-            throw log.missingKeyStorePassword(keyStoreFileName);
-         }
-         if (keyManagers != null && keyStoreFileName != null) {
-            throw log.xorKeyStoreConfiguration();
-         }
-         if (trustManagers == null && trustStoreFileName == null) {
-            throw log.noSSLTrustManagerConfiguration();
-         }
-         if (trustStoreFileName != null && trustStorePassword == null) {
-            throw log.missingTrustStorePassword(trustStoreFileName);
-         }
-         if (trustManagers != null && trustStoreFileName != null) {
-            throw log.xorTrustStoreConfiguration();
+         if (sslContext == null) {
+            if (keyStoreFileName == null) {
+               throw log.noSSLKeyManagerConfiguration();
+            }
+            if (keyStoreFileName != null && keyStorePassword == null) {
+               throw log.missingKeyStorePassword(keyStoreFileName);
+            }
+            if (trustStoreFileName == null) {
+               throw log.noSSLTrustManagerConfiguration();
+            }
+            if (trustStoreFileName != null && trustStorePassword == null) {
+               throw log.missingTrustStorePassword(trustStoreFileName);
+            }
+         } else {
+            if (keyStoreFileName != null || trustStoreFileName != null) {
+               throw log.xorSSLContext();
+            }
          }
       }
    }
 
    @Override
    public SslConfiguration create() {
-      return new SslConfiguration(enabled, keyManagers, keyStoreFileName, keyStorePassword, trustManagers, trustStoreFileName, trustStorePassword);
+      return new SslConfiguration(enabled, keyStoreFileName, keyStorePassword, sslContext, trustStoreFileName, trustStorePassword);
    }
 
    @Override
    public SslConfigurationBuilder read(SslConfiguration template) {
       this.enabled = template.enabled();
-      this.keyManagers = template.keyManagers();
       this.keyStoreFileName = template.keyStoreFileName();
       this.keyStorePassword = template.keyStorePassword();
-      this.trustManagers = template.trustManagers();
+      this.sslContext = template.sslContext();
       this.trustStoreFileName = template.trustStoreFileName();
       this.trustStorePassword = template.trustStorePassword();
       return this;

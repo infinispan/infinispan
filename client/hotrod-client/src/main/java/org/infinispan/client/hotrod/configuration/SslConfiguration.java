@@ -21,6 +21,7 @@ package org.infinispan.client.hotrod.configuration;
 import java.util.Arrays;
 
 import javax.net.ssl.KeyManager;
+import javax.net.ssl.SSLContext;
 import javax.net.ssl.TrustManager;
 
 /**
@@ -31,20 +32,18 @@ import javax.net.ssl.TrustManager;
  */
 public class SslConfiguration {
    private final boolean enabled;
-   private final KeyManager[] keyManagers;
-   private final TrustManager[] trustManagers;
    private final String keyStoreFileName;
    private final char[] keyStorePassword;
+   private final SSLContext sslContext;
    private final String trustStoreFileName;
    private final char[] trustStorePassword;
 
-   SslConfiguration(boolean enabled, KeyManager[] keyManagers, String keyStoreFileName, char[] keyStorePassword, TrustManager[] trustManagers, String trustStoreFileName,
+   SslConfiguration(boolean enabled, String keyStoreFileName, char[] keyStorePassword, SSLContext sslContext, String trustStoreFileName,
          char[] trustStorePassword) {
       this.enabled = enabled;
-      this.keyManagers = keyManagers;
       this.keyStoreFileName = keyStoreFileName;
       this.keyStorePassword = keyStorePassword;
-      this.trustManagers = trustManagers;
+      this.sslContext = sslContext;
       this.trustStoreFileName = trustStoreFileName;
       this.trustStorePassword = trustStorePassword;
    }
@@ -53,20 +52,16 @@ public class SslConfiguration {
       return enabled;
    }
 
-   public KeyManager[] keyManagers() {
-      return keyManagers;
-   }
-
-   public TrustManager[] trustManagers() {
-      return trustManagers;
-   }
-
    public String keyStoreFileName() {
       return keyStoreFileName;
    }
 
    public char[] keyStorePassword() {
       return keyStorePassword;
+   }
+
+   public SSLContext sslContext() {
+      return sslContext;
    }
 
    public String trustStoreFileName() {
@@ -79,7 +74,7 @@ public class SslConfiguration {
 
    @Override
    public String toString() {
-      return "SSLConfiguration [enabled=" + enabled + ", keyManagers=" + Arrays.toString(keyManagers) + ", trustManagers=" + Arrays.toString(trustManagers) + ", keyStoreFileName="
-            + keyStoreFileName + ", trustStoreFileName=" + trustStoreFileName + "]";
+      return "SslConfiguration [enabled=" + enabled + ", keyStoreFileName="
+            + keyStoreFileName + ", sslContext=" + sslContext + ", trustStoreFileName=" + trustStoreFileName + "]";
    }
 }

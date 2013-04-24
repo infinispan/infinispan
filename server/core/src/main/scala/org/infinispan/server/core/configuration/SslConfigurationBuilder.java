@@ -36,11 +36,10 @@ import org.infinispan.util.logging.LogFactory;
 public class SslConfigurationBuilder implements Builder<SslConfiguration> {
    private static final JavaLog log = LogFactory.getLog(SslConfigurationBuilder.class, JavaLog.class);
    private boolean enabled = false;
-   private boolean needClientAuth = false;
-   private KeyManager[] keyManagers;
-   private TrustManager[] trustManagers;
+   private boolean requireClientAuth = false;
    private String keyStoreFileName;
    private char[] keyStorePassword;
+   private SSLContext sslContext;
    private String trustStoreFileName;
    private char[] trustStorePassword;
 
@@ -71,20 +70,18 @@ public class SslConfigurationBuilder implements Builder<SslConfiguration> {
    }
 
    /**
-    * Sets the {@link KeyManager}s to use to create the {@link SSLContext}. Alternatively specify a
-    * keyStoreFileName and keyStorePassword
+    * Enables client certificate authentication
     */
-   public SslConfigurationBuilder keyManagers(KeyManager[] keyManagers) {
-      this.keyManagers = keyManagers;
+   public SslConfigurationBuilder requireClientAuth(boolean requireClientAuth) {
+      this.requireClientAuth = requireClientAuth;
       return this;
    }
 
    /**
-    * Sets the {@link TrustManager}s to use to create the {@link SSLContext} Alternatively specify a
-    * trustStoreFileName and trustStorePassword
+    * Sets the {@link SSLContext} to use for setting up SSL connections.
     */
-   public SslConfigurationBuilder trustManagers(TrustManager[] trustManagers) {
-      this.trustManagers = trustManagers;
+   public SslConfigurationBuilder sslContext(SSLContext sslContext) {
+      this.sslContext = sslContext;
       return this;
    }
 
@@ -131,40 +128,39 @@ public class SslConfigurationBuilder implements Builder<SslConfiguration> {
    @Override
    public void validate() {
       if (enabled) {
-         if (keyManagers == null && keyStoreFileName == null) {
-            throw log.noSSLKeyManagerConfiguration();
-         }
-         if (keyStoreFileName != null && keyStorePassword == null) {
-            throw log.missingKeyStorePassword(keyStoreFileName);
-         }
-         if (keyManagers != null && keyStoreFileName != null) {
-            throw log.xorKeyStoreConfiguration();
-         }
-         if (trustManagers == null && trustStoreFileName == null) {
-            throw log.noSSLTrustManagerConfiguration();
-         }
-         if (trustStoreFileName != null && trustStorePassword == null) {
-            throw log.missingTrustStorePassword(trustStoreFileName);
-         }
-         if (trustManagers != null && trustStoreFileName != null) {
-            throw log.xorTrustStoreConfiguration();
+         if (sslContext == null) {
+            if (keyStoreFileName == null) {
+               throw log.noSSLKeyManagerConfiguration();
+            }
+            if (keyStoreFileName != null && keyStorePassword == null) {
+               throw log.missingKeyStorePassword(keyStoreFileName);
+            }
+            if (trustStoreFileName == null) {
+               throw log.noSSLTrustManagerConfiguration();
+            }
+            if (trustStoreFileName != null && trustStorePassword == null) {
+               throw log.missingTrustStorePassword(trustStoreFileName);
+            }
+         } else {
+            if (keyStoreFileName != null || trustStoreFileName != null) {
+               throw log.xorSSLContext();
+            }
          }
       }
    }
 
    @Override
    public SslConfiguration create() {
-      return new SslConfiguration(enabled, needClientAuth, keyManagers, keyStoreFileName, keyStorePassword, trustManagers, trustStoreFileName, trustStorePassword);
+      return new SslConfiguration(enabled, requireClientAuth, keyStoreFileName, keyStorePassword, sslContext, trustStoreFileName, trustStorePassword);
    }
 
    @Override
    public SslConfigurationBuilder read(SslConfiguration template) {
       this.enabled = template.enabled();
-      this.needClientAuth = template.needClientAuth();
-      this.keyManagers = template.keyManagers();
+      this.requireClientAuth = template.requireClientAuth();
       this.keyStoreFileName = template.keyStoreFileName();
       this.keyStorePassword = template.keyStorePassword();
-      this.trustManagers = template.trustManagers();
+      this.sslContext = template.sslContext();
       this.trustStoreFileName = template.trustStoreFileName();
       this.trustStorePassword = template.trustStorePassword();
       return this;

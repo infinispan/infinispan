@@ -59,8 +59,11 @@ class NettyChannelPipelineFactory(server: ProtocolServer,
    }
 
    def createSslEngine(ssl: SslConfiguration): SSLEngine = {
-         val sslContext = SslContextFactory.getContext(ssl.keyManagers(), ssl.keyStoreFileName(), ssl.keyStorePassword(), ssl.trustManagers(), ssl.trustStoreFileName(), ssl.trustStorePassword())
-         SslContextFactory.getEngine(sslContext, false, ssl.needClientAuth())
+      val sslContext = if (ssl.sslContext != null) {
+         ssl.sslContext
+      } else {
+         SslContextFactory.getContext(ssl.keyStoreFileName, ssl.keyStorePassword, ssl.trustStoreFileName, ssl.trustStorePassword)
+      }
+      SslContextFactory.getEngine(sslContext, false, ssl.requireClientAuth)
    }
-
 }

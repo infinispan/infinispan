@@ -18,29 +18,30 @@
  */
 package org.infinispan.server.core.configuration;
 
-import java.util.Arrays;
+import javax.net.ssl.SSLContext;
 
-import javax.net.ssl.KeyManager;
-import javax.net.ssl.TrustManager;
-
+/**
+ * SslConfiguration.
+ *
+ * @author Tristan Tarrant
+ * @since 5.3
+ */
 public class SslConfiguration {
    private final boolean enabled;
-   private final boolean needClientAuth;
-   private final KeyManager[] keyManagers;
-   private final TrustManager[] trustManagers;
+   private final boolean requireClientAuth;
    private final String keyStoreFileName;
    private final char[] keyStorePassword;
+   private final SSLContext sslContext;
    private final String trustStoreFileName;
    private final char[] trustStorePassword;
 
-   SslConfiguration(boolean enabled, boolean needClientAuth, KeyManager[] keyManagers, String keyStoreFileName, char[] keyStorePassword, TrustManager[] trustManagers, String trustStoreFileName,
+   SslConfiguration(boolean enabled, boolean requireClientAuth, String keyStoreFileName, char[] keyStorePassword, SSLContext sslContext, String trustStoreFileName,
          char[] trustStorePassword) {
       this.enabled = enabled;
-      this.needClientAuth = needClientAuth;
-      this.keyManagers = keyManagers;
+      this.requireClientAuth = requireClientAuth;
       this.keyStoreFileName = keyStoreFileName;
       this.keyStorePassword = keyStorePassword;
-      this.trustManagers = trustManagers;
+      this.sslContext = sslContext;
       this.trustStoreFileName = trustStoreFileName;
       this.trustStorePassword = trustStorePassword;
    }
@@ -49,16 +50,8 @@ public class SslConfiguration {
       return enabled;
    }
 
-   public boolean needClientAuth() {
-      return needClientAuth;
-   }
-
-   public KeyManager[] keyManagers() {
-      return keyManagers;
-   }
-
-   public TrustManager[] trustManagers() {
-      return trustManagers;
+   public boolean requireClientAuth() {
+      return requireClientAuth;
    }
 
    public String keyStoreFileName() {
@@ -67,6 +60,10 @@ public class SslConfiguration {
 
    public char[] keyStorePassword() {
       return keyStorePassword;
+   }
+
+   public SSLContext sslContext() {
+      return sslContext;
    }
 
    public String trustStoreFileName() {
@@ -79,7 +76,7 @@ public class SslConfiguration {
 
    @Override
    public String toString() {
-      return "SslConfiguration [enabled=" + enabled + ", needClientAuth=" + needClientAuth + ", keyManagers=" + Arrays.toString(keyManagers) + ", trustManagers="
-            + Arrays.toString(trustManagers) + ", keyStoreFileName=" + keyStoreFileName + ", trustStoreFileName=" + trustStoreFileName + "]";
+      return "SslConfiguration [enabled=" + enabled + ", requireClientAuth=" + requireClientAuth + ", keyStoreFileName=" + keyStoreFileName + ", sslContext=" + sslContext
+            + ", trustStoreFileName=" + trustStoreFileName + "]";
    }
 }
