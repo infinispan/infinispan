@@ -40,7 +40,6 @@ import org.infinispan.commands.write.PutKeyValueCommand;
 import org.infinispan.commands.write.PutMapCommand;
 import org.infinispan.commands.write.RemoveCommand;
 import org.infinispan.commands.write.ReplaceCommand;
-import org.infinispan.compat.ToStringConverter;
 import org.infinispan.compat.TypeConverter;
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.configuration.cache.DataContainerConfiguration;

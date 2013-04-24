@@ -151,8 +151,9 @@ public enum Attribute {
     REAPER_WAKE_UP_INTERVAL("reaperWakeUpInterval"),
     COMPLETED_TX_TIMEOUT("completedTxTimeout"),
     TRANSACTION_PROTOCOL("transactionProtocol"),
-    COMPARING_KEY("comparingKey"),
-    COMPARING_VALUE("comparingValue");
+    KEY_EQUIVALENCE("keyEquivalence"),
+    VALUE_EQUIVALENCE("valueEquivalence"),
+    TYPE_CONVERTER("typeConverter");
 
     private final String name;
 

@@ -47,18 +47,10 @@ class HotRodConfigurationTest {
 
    import HotRodServer.ADDRESS_CACHE_NAME
 
-<<<<<<< HEAD
-   def testUserDefinedTimeouts {
+   def testUserDefinedTimeouts() {
       val builder = new HotRodServerConfigurationBuilder
       builder.topologyLockTimeout(26000).topologyReplTimeout(31000)
       withClusteredServer(builder) { (cfg, distSyncTimeout) =>
-=======
-   def testUserDefinedTimeouts() {
-      val props = new Properties
-      props.setProperty(PROP_KEY_TOPOLOGY_LOCK_TIMEOUT, "26000")
-      props.setProperty(PROP_KEY_TOPOLOGY_REPL_TIMEOUT, "31000")
-      withClusteredServer(props) { (cfg, distSyncTimeout) =>
->>>>>>> ISPN-2281 Hot Rod uses byte[] as raw key type instead of ByteArrayKey
          assertEquals(cfg.locking().lockAcquisitionTimeout(), 26000)
          assertEquals(cfg.clustering().sync().replTimeout(), 31000)
          assertTrue(cfg.clustering().stateTransfer().fetchInMemoryState())
@@ -67,18 +59,10 @@ class HotRodConfigurationTest {
       }
    }
 
-<<<<<<< HEAD
-   def testLazyLoadTopology {
+   def testLazyLoadTopology() {
       val builder = new HotRodServerConfigurationBuilder
       builder.topologyStateTransfer(false).topologyReplTimeout(43000);
       withClusteredServer(builder) { (cfg, distSyncTimeout) =>
-=======
-   def testLazyLoadTopology() {
-      val props = new Properties
-      props.setProperty(PROP_KEY_TOPOLOGY_STATE_TRANSFER, "false")
-      props.setProperty(PROP_KEY_TOPOLOGY_REPL_TIMEOUT, "43000")
-      withClusteredServer(props) { (cfg, distSyncTimeout) =>
->>>>>>> ISPN-2281 Hot Rod uses byte[] as raw key type instead of ByteArrayKey
          assertEquals(cfg.clustering().sync().replTimeout(), 43000)
          assertTrue(cfg.clustering().stateTransfer().fetchInMemoryState())
          val clcfg = cfg.loaders().cacheLoaders().get(0).asInstanceOf[ClusterCacheLoaderConfiguration]
@@ -87,15 +71,9 @@ class HotRodConfigurationTest {
       }
    }
 
-<<<<<<< HEAD
    private def withClusteredServer(builder: HotRodServerConfigurationBuilder) (assert: (Configuration, Long) => Unit) {
-      Stoppable.useCacheManager(TestCacheManagerFactory.createClusteredCacheManager) { cm =>
-         Stoppable.useServer(startHotRodServer(cm, UniquePortThreadLocal.get.intValue, builder)) { server =>
-=======
-   private def withClusteredServer(props: Properties) (assert: (Configuration, Long) => Unit) {
       Stoppable.useCacheManager(TestCacheManagerFactory.createClusteredCacheManager(hotRodCacheConfiguration())) { cm =>
-         Stoppable.useServer(startHotRodServer(cm, UniquePortThreadLocal.get.intValue, props)) { server =>
->>>>>>> ISPN-2281 Hot Rod uses byte[] as raw key type instead of ByteArrayKey
+         Stoppable.useServer(startHotRodServer(cm, UniquePortThreadLocal.get.intValue, builder)) { server =>
             val cfg = cm.getCache(ADDRESS_CACHE_NAME).getCacheConfiguration
             assert(cfg, cm.getCacheManagerConfiguration.transport().distributedSyncTimeout())
          }

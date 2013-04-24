@@ -18,6 +18,7 @@
  */
 package org.infinispan.configuration.cache;
 
+import org.infinispan.compat.TypeConverter;
 import org.infinispan.configuration.AbstractTypedPropertiesConfiguration;
 import org.infinispan.container.DataContainer;
 import org.infinispan.util.AnyEquivalence;
@@ -35,13 +36,16 @@ public class DataContainerConfiguration extends AbstractTypedPropertiesConfigura
    private final DataContainer dataContainer;
    private final Equivalence keyEquivalence;
    private final Equivalence valueEquivalence;
+   private final TypeConverter typeConverter;
 
    DataContainerConfiguration(DataContainer dataContainer,
-         TypedProperties properties, Equivalence keyEquivalence, Equivalence valueEquivalence) {
+         TypedProperties properties, Equivalence keyEquivalence,
+         Equivalence valueEquivalence, TypeConverter typeConverter) {
       super(properties);
       this.dataContainer = dataContainer;
       this.keyEquivalence = keyEquivalence;
       this.valueEquivalence = valueEquivalence;
+      this.typeConverter = typeConverter;
    }
    
    /**
@@ -60,17 +64,17 @@ public class DataContainerConfiguration extends AbstractTypedPropertiesConfigura
       return valueEquivalence;
    }
 
-   public boolean isEquivalentContainer() {
-      return keyEquivalence != AnyEquivalence.OBJECT
-            || valueEquivalence != AnyEquivalence.OBJECT;
+   public TypeConverter typeConverter() {
+      return typeConverter;
    }
 
    @Override
    public String toString() {
       return "DataContainerConfiguration{" +
             "dataContainer=" + dataContainer +
-            ", comparingKey=" + keyEquivalence +
-            ", comparingValue=" + valueEquivalence +
+            ", keyEquivalence=" + keyEquivalence +
+            ", valueEquivalence=" + valueEquivalence +
+            ", typeConverter=" + typeConverter +
             '}';
    }
 
@@ -88,6 +92,8 @@ public class DataContainerConfiguration extends AbstractTypedPropertiesConfigura
          return false;
       if (valueEquivalence != null ? !valueEquivalence.equals(that.valueEquivalence) : that.valueEquivalence != null)
          return false;
+      if (typeConverter != null ? !typeConverter.equals(that.typeConverter) : that.typeConverter != null)
+         return false;
 
       return true;
    }
@@ -98,6 +104,7 @@ public class DataContainerConfiguration extends AbstractTypedPropertiesConfigura
       result = 31 * result + (dataContainer != null ? dataContainer.hashCode() : 0);
       result = 31 * result + (keyEquivalence != null ? keyEquivalence.hashCode() : 0);
       result = 31 * result + (valueEquivalence != null ? valueEquivalence.hashCode() : 0);
+      result = 31 * result + (typeConverter != null ? typeConverter.hashCode() : 0);
       return result;
    }
 

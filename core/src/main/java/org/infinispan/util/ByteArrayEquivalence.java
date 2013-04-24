@@ -28,8 +28,6 @@ import java.util.Arrays;
 /**
  * A compare function for byte arrays.
  *
- * NOTE: This could be extended to support any primitive array types.
- *
  * @author Galder Zamarreño
  * @since 5.3
  */
@@ -47,7 +45,7 @@ public enum ByteArrayEquivalence implements Equivalence<byte[]> {
       if (obj == otherObj) return true;
       if (obj == null || byte[].class != obj.getClass()) return false;
       if (otherObj == null || byte[].class != otherObj.getClass()) return false;
-      byte[] byteArray = (byte[]) obj;
+      byte[] byteArray = obj;
       byte[] otherByteArray = (byte[]) otherObj;
       return Arrays.equals(byteArray, otherByteArray);
    }

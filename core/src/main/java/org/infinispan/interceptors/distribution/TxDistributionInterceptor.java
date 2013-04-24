@@ -151,11 +151,22 @@ public class TxDistributionInterceptor extends BaseDistributionInterceptor {
 
    @Override
    public Object visitGetKeyValueCommand(InvocationContext ctx, GetKeyValueCommand command) throws Throwable {
+      return visitGetCommand(ctx, command, false);
+   }
+
+   @Override
+   public Object visitGetCacheEntryCommand(InvocationContext ctx, GetKeyValueCommand command) throws Throwable {
+      return visitGetCommand(ctx, command, true);
+   }
+
+   private Object visitGetCommand(InvocationContext ctx, GetKeyValueCommand command,
+         boolean isGetCacheEntry) throws Throwable {
       try {
          Object returnValue = invokeNextInterceptor(ctx, command);
          // If L1 caching is enabled, this is a remote command, and we found a value in our cache
          // we store it so that we can later invalidate it
-         if (returnValue != null && isL1CacheEnabled && !ctx.isOriginLocal()) l1Manager.addRequestor(command.getKey(), ctx.getOrigin());
+         if (returnValue != null && isL1CacheEnabled && !ctx.isOriginLocal())
+            l1Manager.addRequestor(command.getKey(), ctx.getOrigin());
 
          // need to check in the context as well since a null retval is not necessarily an indication of the entry not being
          // available.  It could just have been removed in the same tx beforehand.  Also don't bother with a remote get if
@@ -166,7 +177,7 @@ public class TxDistributionInterceptor extends BaseDistributionInterceptor {
                returnValue = remoteGetAndStoreInL1(ctx, key, false, command);
             }
             if (returnValue == null && !ctx.isEntryRemovedInContext(command.getKey())) {
-               returnValue = localGet(ctx, key, false, command);
+               returnValue = localGet(ctx, key, false, command, isGetCacheEntry);
             }
          }
          return returnValue;
@@ -293,7 +304,8 @@ public class TxDistributionInterceptor extends BaseDistributionInterceptor {
       return invokeNextInterceptor(ctx, command);
    }
 
-   private Object localGet(InvocationContext ctx, Object key, boolean isWrite, FlagAffectedCommand command) throws Throwable {
+   private Object localGet(InvocationContext ctx, Object key, boolean isWrite,
+         FlagAffectedCommand command, boolean isGetCacheEntry) throws Throwable {
       InternalCacheEntry ice = dataContainer.get(key);
       if (ice != null) {
          if (isWrite && isPessimisticCache && ctx.isInTxScope()) {
@@ -305,7 +317,7 @@ public class TxDistributionInterceptor extends BaseDistributionInterceptor {
             else
                ctx.putLookedUpEntry(key, ice);
          }
-         return command instanceof GetCacheEntryCommand ? ice : ice.getValue();
+         return isGetCacheEntry ? ice : ice.getValue();
       }
       return null;
    }
@@ -318,7 +330,7 @@ public class TxDistributionInterceptor extends BaseDistributionInterceptor {
          for (Object k : keygen.getKeys()) {
             Object returnValue = remoteGetAndStoreInL1(ctx, k, true, command);
             if (returnValue == null) {
-               localGet(ctx, k, true, command);
+               localGet(ctx, k, true, command, false);
             }
          }
       }

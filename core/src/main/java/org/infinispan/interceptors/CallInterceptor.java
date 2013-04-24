@@ -93,17 +93,26 @@ public class CallInterceptor extends CommandInterceptor {
    public Object visitGetKeyValueCommand(InvocationContext ctx, GetKeyValueCommand command) throws Throwable {
       if (trace) log.trace("Executing command: " + command + ".");
       Object ret = command.perform(ctx);
-      if (ret != null) {
-         Object key = command.getKey();
-         // TODO: Create a visitGetCacheEntryCommand method ?
-         Object value = command instanceof GetCacheEntryCommand ?
-               ((CacheEntry) ret).getValue() : ret;
-
-         notifier.notifyCacheEntryVisited(key, value, true, ctx, command);
-         notifier.notifyCacheEntryVisited(key, value, false, ctx, command);
-      }
+      if (ret != null)
+         notifyCacheEntryVisit(ctx, command, ret);
 
       return ret;
+   }
+
+   @Override
+   public Object visitGetCacheEntryCommand(InvocationContext ctx, GetKeyValueCommand command) throws Throwable {
+      if (trace) log.trace("Executing command: " + command + ".");
+      Object ret = command.perform(ctx);
+      if (ret != null)
+         notifyCacheEntryVisit(ctx, command, ((CacheEntry) ret).getValue());
+
+      return ret;
+   }
+
+   private void notifyCacheEntryVisit(InvocationContext ctx, GetKeyValueCommand command, Object value) {
+      Object key = command.getKey();
+      notifier.notifyCacheEntryVisited(key, value, true, ctx, command);
+      notifier.notifyCacheEntryVisited(key, value, false, ctx, command);
    }
 
    @Override

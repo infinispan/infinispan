@@ -23,6 +23,7 @@
 
 package org.infinispan.commands.read;
 
+import org.infinispan.commands.Visitor;
 import org.infinispan.context.Flag;
 import org.infinispan.context.InvocationContext;
 
@@ -47,6 +48,11 @@ public class GetCacheEntryCommand extends GetKeyValueCommand {
 
    public GetCacheEntryCommand(Object key, Set<Flag> flags) {
       super(key, flags);
+   }
+
+   @Override
+   public Object acceptVisitor(InvocationContext ctx, Visitor visitor) throws Throwable {
+      return visitor.visitGetCacheEntryCommand(ctx, this);
    }
 
    @Override

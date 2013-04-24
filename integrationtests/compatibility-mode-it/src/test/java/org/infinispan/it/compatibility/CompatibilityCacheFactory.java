@@ -27,14 +27,17 @@ import org.infinispan.Cache;
 import org.infinispan.api.BasicCache;
 import org.infinispan.client.hotrod.RemoteCache;
 import org.infinispan.client.hotrod.RemoteCacheManager;
+import org.infinispan.client.hotrod.configuration.ConfigurationBuilder;
+import org.infinispan.compat.MarshalledTypeConverter;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.server.hotrod.HotRodServer;
+import org.infinispan.test.fwk.TestCacheManagerFactory;
 
 import static org.infinispan.client.hotrod.TestHelper.startHotRodServer;
 import static org.infinispan.client.hotrod.test.HotRodClientTestingUtil.killRemoteCacheManager;
 import static org.infinispan.client.hotrod.test.HotRodClientTestingUtil.killServers;
+import static org.infinispan.server.hotrod.test.HotRodTestingUtil.hotRodCacheConfiguration;
 import static org.infinispan.test.TestingUtil.killCacheManagers;
-import static org.infinispan.test.fwk.TestCacheManagerFactory.createLocalCacheManager;
 
 /**
  * // TODO: Document this
@@ -42,21 +45,24 @@ import static org.infinispan.test.fwk.TestCacheManagerFactory.createLocalCacheMa
  * @author Galder Zamarreño
  * @since // TODO
  */
-public class CompatibilityCacheFactory {
+public class CompatibilityCacheFactory<K, V> {
 
    private EmbeddedCacheManager cacheManager;
    private HotRodServer hotrod;
    private RemoteCacheManager hotrodClient;
 
-   private Cache<Object, Object> embeddedCache;
-   private RemoteCache<Object,Object> hotrodCache;
+   private Cache<K, V> embeddedCache;
+   private RemoteCache<K, V> hotrodCache;
 
    void setup() {
-      cacheManager = createLocalCacheManager(false);
+      org.infinispan.configuration.cache.ConfigurationBuilder builder =
+            new org.infinispan.configuration.cache.ConfigurationBuilder();
+      builder.dataContainer().typeConverter(new MarshalledTypeConverter());
+      cacheManager = TestCacheManagerFactory.createCacheManager(builder);
       embeddedCache = cacheManager.getCache();
       hotrod = startHotRodServer(cacheManager);
-      hotrodClient = new RemoteCacheManager(
-            "localhost:" + hotrod.getPort(), true);
+      hotrodClient = new RemoteCacheManager(new ConfigurationBuilder()
+            .addServers("localhost:" + hotrod.getPort()).build());
       hotrodCache = hotrodClient.getCache();
    }
 
@@ -66,11 +72,11 @@ public class CompatibilityCacheFactory {
       killCacheManagers(cacheManager);
    }
 
-   BasicCache<Object, Object> getEmbeddedCache() {
+   Cache<K, V> getEmbeddedCache() {
       return embeddedCache;
    }
 
-   BasicCache<Object, Object> getHotRodCache() {
+   RemoteCache<K, V> getHotRodCache() {
       return hotrodCache;
    }
 

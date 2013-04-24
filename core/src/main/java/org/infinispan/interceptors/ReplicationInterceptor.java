@@ -25,7 +25,6 @@ package org.infinispan.interceptors;
 import org.infinispan.commands.FlagAffectedCommand;
 import org.infinispan.commands.control.LockControlCommand;
 import org.infinispan.commands.read.AbstractDataCommand;
-import org.infinispan.commands.read.GetCacheEntryCommand;
 import org.infinispan.commands.read.GetKeyValueCommand;
 import org.infinispan.commands.remote.ClusteredGetCommand;
 import org.infinispan.commands.tx.CommitCommand;
@@ -124,6 +123,10 @@ public class ReplicationInterceptor extends ClusteringInterceptor {
 
    @Override
    public Object visitGetKeyValueCommand(InvocationContext ctx, GetKeyValueCommand command) throws Throwable {
+      return visitGetCommand(ctx, command, false);
+   }
+
+   private Object visitGetCommand(InvocationContext ctx, GetKeyValueCommand command, boolean isGetCacheEntry) throws Throwable {
       try {
          Object returnValue = invokeNextInterceptor(ctx, command);
 
@@ -135,7 +138,8 @@ public class ReplicationInterceptor extends ClusteringInterceptor {
                returnValue = remoteGet(ctx, command.getKey(), command, false);
             }
             if (returnValue == null && !ctx.isEntryRemovedInContext(command.getKey())) {
-               returnValue = localGet(ctx, command.getKey(), false, command);
+               returnValue = localGet(
+                     ctx, command.getKey(), false, command, isGetCacheEntry);
             }
          }
          return returnValue;
@@ -144,7 +148,12 @@ public class ReplicationInterceptor extends ClusteringInterceptor {
          return visitGetKeyValueCommand(ctx, command);
       }
    }
-   
+
+   @Override
+   public Object visitGetCacheEntryCommand(InvocationContext ctx, GetKeyValueCommand command) throws Throwable {
+      return visitGetCommand(ctx, command, true);
+   }
+
    @Override
    public Object visitLockControlCommand(TxInvocationContext ctx, LockControlCommand command) throws Throwable {
       Object retVal = invokeNextInterceptor(ctx, command);
@@ -226,7 +235,14 @@ public class ReplicationInterceptor extends ClusteringInterceptor {
       return null;
    }
 
-   private Object localGet(InvocationContext ctx, Object key, boolean isWrite, FlagAffectedCommand command) throws Throwable {
+   private Object localGet(InvocationContext ctx, Object key, boolean isWrite,
+         FlagAffectedCommand command, boolean isGetCacheEntry) throws Throwable {
+      InternalCacheEntry entry = localGetEntry(ctx, key, isWrite, command);
+      return isGetCacheEntry ? entry : entry.getValue();
+   }
+
+   private InternalCacheEntry localGetEntry(InvocationContext ctx, Object key,
+         boolean isWrite, FlagAffectedCommand command) throws Throwable {
       InternalCacheEntry ice = dataContainer.get(key);
       if (ice != null) {
          if (!ctx.replaceValue(key, ice)) {
@@ -235,7 +251,7 @@ public class ReplicationInterceptor extends ClusteringInterceptor {
             else
                ctx.putLookedUpEntry(key, ice);
          }
-         return command instanceof GetCacheEntryCommand ? ice : ice.getValue();
+         return ice;
       }
       return null;
    }
@@ -254,10 +270,10 @@ public class ReplicationInterceptor extends ClusteringInterceptor {
       return handleCrudMethod(ctx, command, !ctx.isOriginLocal());
    }
 
-   @Override
-   public Object visitVersionedPutKeyValueCommand(InvocationContext ctx, VersionedPutKeyValueCommand command) throws Throwable {
-      return handleCrudMethod(ctx, command, !ctx.isOriginLocal());
-   }
+//   @Override
+//   public Object visitVersionedPutKeyValueCommand(InvocationContext ctx, VersionedPutKeyValueCommand command) throws Throwable {
+//      return handleCrudMethod(ctx, command, !ctx.isOriginLocal());
+//   }
 
    @Override
    public Object visitPutMapCommand(InvocationContext ctx, PutMapCommand command) throws Throwable {
@@ -320,7 +336,7 @@ public class ReplicationInterceptor extends ClusteringInterceptor {
             returnValue = remoteGet(ctx, singleKeyCommand.getKey(), singleKeyCommand, true);
          }
          if (returnValue == null) {
-            localGet(ctx, singleKeyCommand.getKey(), true, command);
+            localGet(ctx, singleKeyCommand.getKey(), true, command, false);
          }
       }
    }

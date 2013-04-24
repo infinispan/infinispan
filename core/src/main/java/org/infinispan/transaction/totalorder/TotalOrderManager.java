@@ -23,8 +23,8 @@ import org.infinispan.factories.KnownComponentNames;
 import org.infinispan.factories.annotations.ComponentName;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.transaction.TotalOrderRemoteTransactionState;
+import org.infinispan.util.CollectionFactory;
 import org.infinispan.util.concurrent.BlockingTaskAwareExecutorService;
-import org.infinispan.util.concurrent.ConcurrentMapFactory;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
@@ -67,7 +67,7 @@ public class TotalOrderManager {
    private BlockingTaskAwareExecutorService totalOrderExecutor;
 
    public TotalOrderManager() {
-      keysLocked = ConcurrentMapFactory.makeConcurrentMap();
+      keysLocked = CollectionFactory.makeConcurrentMap();
       clear = new AtomicReference<TotalOrderLatch>(null);
       stateTransferInProgress = new AtomicReference<TotalOrderLatch>(null);
    }

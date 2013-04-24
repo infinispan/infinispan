@@ -24,6 +24,7 @@ package org.infinispan.factories;
 
 
 import org.infinispan.CacheException;
+import org.infinispan.compat.TypeConverter;
 import org.infinispan.config.ConfigurationException;
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.configuration.cache.Configurations;
@@ -34,6 +35,7 @@ import org.infinispan.configuration.cache.CacheStoreConfiguration;
 import org.infinispan.factories.annotations.DefaultFactoryFor;
 import org.infinispan.interceptors.*;
 import org.infinispan.interceptors.base.CommandInterceptor;
+import org.infinispan.interceptors.compat.TypeConverterInterceptor;
 import org.infinispan.interceptors.distribution.L1NonTxInterceptor;
 import org.infinispan.interceptors.distribution.NonTxConcurrentDistributionInterceptor;
 import org.infinispan.interceptors.distribution.NonTxDistributionInterceptor;
@@ -113,11 +115,18 @@ public class InterceptorChainFactory extends AbstractNamedCacheComponentFactory 
 
       boolean invocationBatching = configuration.invocationBatching().enabled();
       boolean isTotalOrder = configuration.transaction().transactionProtocol().isTotalOrder();
+
       // load the icInterceptor first
       if (invocationBatching) {
          interceptorChain.setFirstInChain(createInterceptor(new BatchingInterceptor(), BatchingInterceptor.class));
       } else {
          interceptorChain.setFirstInChain(createInterceptor(new InvocationContextInterceptor(), InvocationContextInterceptor.class));
+      }
+
+      TypeConverter typeConverter = configuration.dataContainer().typeConverter();
+      if (typeConverter != null) {
+         interceptorChain.appendInterceptor(createInterceptor(
+               new TypeConverterInterceptor(typeConverter), TypeConverterInterceptor.class), false);
       }
 
       // add marshallable check interceptor for situations where we want to figure out before marshalling

@@ -127,10 +127,10 @@ public abstract class BaseDistributionInterceptor extends ClusteringInterceptor 
                                 new SingleKeyRecipientGenerator(command.getKey()), false, false);
    }
 
-   @Override
-   public Object visitVersionedPutKeyValueCommand(InvocationContext ctx, VersionedPutKeyValueCommand command) throws Throwable {
-      return visitPutKeyValueCommand(ctx, command);
-   }
+//   @Override
+//   public Object visitVersionedPutKeyValueCommand(InvocationContext ctx, VersionedPutKeyValueCommand command) throws Throwable {
+//      return visitPutKeyValueCommand(ctx, command);
+//   }
 
    protected abstract Object handleWriteCommand(InvocationContext ctx, WriteCommand command, RecipientGenerator recipientGenerator, boolean skipRemoteGet, boolean skipL1Invalidation) throws Throwable;
 

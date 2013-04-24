@@ -42,7 +42,7 @@ import java.io.{ByteArrayOutputStream, IOException, EOFException, StreamCorrupte
 import org.jboss.netty.channel.Channel
 import org.infinispan.server.memcached.TextProtocolUtil._
 import scala.Predef._
-import org.infinispan.container.versioning.EntryVersion
+import org.infinispan.container.entries.CacheEntry
 
 /**
  * A Memcached protocol specific decoder
@@ -117,8 +117,7 @@ class MemcachedDecoder(memcachedCache: AdvancedCache[String, MemcachedValue], sc
       } else {
          val key = checkKeyLength(keys(0), endOfOp = true, buffer)
          val entry = cache.getCacheEntry(key)
-         createGetResponse(key, entry.getValue.asInstanceOf[MemcachedValue],
-            entry.getVersion.asInstanceOf[ServerEntryVersion])
+         createGetResponse(key, entry)
       }
    }
 
@@ -411,7 +410,8 @@ class MemcachedDecoder(memcachedCache: AdvancedCache[String, MemcachedValue], sc
          null
    }
 
-   override def createGetResponse(k: String, v: MemcachedValue, entryVersion: EntryVersion): AnyRef = {
+   override def createGetResponse(k: String, entry: CacheEntry): AnyRef = {
+      val v = entry.getValue.asInstanceOf[MemcachedValue]
       if (v != null) {
          header.op match {
             case GetRequest => buildSingleGetResponse(k, v)

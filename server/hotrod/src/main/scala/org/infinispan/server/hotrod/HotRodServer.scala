@@ -120,10 +120,13 @@ class HotRodServer extends AbstractProtocolServer("HotRod") with Log {
    private def assertKeyEquivalence(cfg: Configuration, cacheName: String) {
       if (cfg != null) {
          val keyEquivalence = cfg.dataContainer().keyEquivalence()
-         if (keyEquivalence != ByteArrayEquivalence.INSTANCE)
-            throw new ConfigurationException(
-               "Hot Rod server expects key equivalence configuration for cache '"
-                       + cacheName + "' to be ByteArrayEquivalence")
+
+         // TODO: Check whether any type converter has been configured
+
+//         if (keyEquivalence != ByteArrayEquivalence.INSTANCE)
+//            throw new ConfigurationException(
+//               "Hot Rod server expects key equivalence configuration for cache '"
+//                       + cacheName + "' to be ByteArrayEquivalence")
       }
    }
 
