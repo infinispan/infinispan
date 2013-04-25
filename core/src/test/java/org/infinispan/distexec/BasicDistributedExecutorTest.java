@@ -218,7 +218,7 @@ public class BasicDistributedExecutorTest extends AbstractCacheTest {
             AssertJUnit.assertEquals(new Integer(1), f.get());
          }
       } finally {
-         des.shutdownNow();
+         if (des != null) des.shutdownNow();
          TestingUtil.killCacheManagers(cacheManager);
       }
    }
@@ -247,7 +247,7 @@ public class BasicDistributedExecutorTest extends AbstractCacheTest {
          Boolean r = future.get();
          assert r;
       } finally {
-         des.shutdownNow();
+         if (des != null) des.shutdownNow();
          TestingUtil.killCacheManagers(cacheManager);
       }
    }
@@ -284,7 +284,7 @@ public class BasicDistributedExecutorTest extends AbstractCacheTest {
          Future<Integer> val = des.submit(task, new String[] { "key1" });
          AssertJUnit.assertEquals(new Integer(1), val.get());
       } finally {
-         des.shutdownNow();
+         if (des != null) des.shutdownNow();
          TestingUtil.killCacheManagers(cacheManager);
       }
    }
@@ -338,7 +338,7 @@ public class BasicDistributedExecutorTest extends AbstractCacheTest {
          Future<Boolean> val = des.submit(task, new String[] { "key1", "key5" });
          AssertJUnit.assertEquals(new Boolean(true), val.get());
       } finally {
-         des.shutdownNow();
+         if (des != null) des.shutdownNow();
          TestingUtil.killCacheManagers(cacheManager1);
          TestingUtil.killCacheManagers(cacheManager2);
       }
@@ -368,7 +368,7 @@ public class BasicDistributedExecutorTest extends AbstractCacheTest {
          // Verify that the distributed executor didn't wrap the exception in too many extra exceptions.
          AssertJUnit.assertTrue("Wrong exception: " + e, e.getCause() instanceof ArithmeticException);
       } finally {
-         des.shutdownNow();
+         if (des != null) des.shutdownNow();
          TestingUtil.killCacheManagers(cacheManager);
       }
    }
@@ -404,7 +404,7 @@ public class BasicDistributedExecutorTest extends AbstractCacheTest {
          AssertJUnit.assertTrue("Wrong exception: " + e, e.getCause() instanceof IllegalStateException);
       }
       finally {
-         des.shutdownNow();
+         if (des != null) des.shutdownNow();
          TestingUtil.killCacheManagers(cacheManager);
       }
    }
@@ -443,7 +443,7 @@ public class BasicDistributedExecutorTest extends AbstractCacheTest {
          AssertJUnit.assertEquals(false, duplicateEEInChain);
       }
       finally {
-         des.shutdownNow();
+         if (des != null) des.shutdownNow();
          TestingUtil.killCacheManagers(cacheManager, cacheManager1);
       }
    }
@@ -547,7 +547,7 @@ public class BasicDistributedExecutorTest extends AbstractCacheTest {
          AssertJUnit.assertEquals(false, duplicateEEInChain);
       }
       finally {
-         des.shutdownNow();
+         if (des != null) des.shutdownNow();
          TestingUtil.killCacheManagers(cacheManager);
       }
    }

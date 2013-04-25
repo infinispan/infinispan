@@ -22,9 +22,10 @@
  */
 package org.infinispan.util.concurrent.locks.containers;
 
+import org.infinispan.util.AnyEquivalence;
 import org.infinispan.util.ByRef;
 import org.infinispan.util.Util;
-import org.infinispan.util.concurrent.jdk8backported.ConcurrentHashMapV8;
+import org.infinispan.util.concurrent.jdk8backported.EquivalentConcurrentHashMapV8;
 import org.infinispan.util.concurrent.locks.RefCountingLock;
 import org.infinispan.util.logging.Log;
 
@@ -41,10 +42,11 @@ import static org.infinispan.util.Util.toStr;
 public abstract class AbstractPerEntryLockContainer<L extends RefCountingLock> extends AbstractLockContainer<L> {
 
    // We specifically need a CHMV8, to be able to use methods like computeIfAbsent, computeIfPresent and compute
-   protected final ConcurrentHashMapV8<Object, L> locks;
+   protected final EquivalentConcurrentHashMapV8<Object, L> locks;
 
    protected AbstractPerEntryLockContainer(int concurrencyLevel) {
-      locks = new ConcurrentHashMapV8<Object, L>(16, concurrencyLevel);
+      locks = new EquivalentConcurrentHashMapV8<Object, L>(
+            16, concurrencyLevel, AnyEquivalence.OBJECT, new AnyEquivalence<L>());
    }
 
    protected abstract L newLock();
@@ -67,7 +69,7 @@ public abstract class AbstractPerEntryLockContainer<L extends RefCountingLock> e
    @Override
    public L acquireLock(final Object lockOwner, final Object key, final long timeout, final TimeUnit unit) throws InterruptedException {
       final ByRef<Boolean> lockAcquired = ByRef.create(Boolean.FALSE);
-      L lock = locks.compute(key, new ConcurrentHashMapV8.BiFun<Object, L, L>() {
+      L lock = locks.compute(key, new EquivalentConcurrentHashMapV8.BiFun<Object, L, L>() {
          @Override
          public L apply(Object key, L lock) {
             // This happens atomically in the CHM
@@ -106,7 +108,7 @@ public abstract class AbstractPerEntryLockContainer<L extends RefCountingLock> e
          // We may need to delete the entry if the owner thread released it just after we timed out.
          // We use an atomic operation here as another thread might be trying to increment the ref count
          // at the same time (otherwise it would make the acquire function at the beginning more complicated).
-         locks.computeIfPresent(key, new ConcurrentHashMapV8.BiFun<Object, L, L>() {
+         locks.computeIfPresent(key, new EquivalentConcurrentHashMapV8.BiFun<Object, L, L>() {
             @Override
             public L apply(Object key, L lock) {
                // This will happen atomically in the CHM
@@ -121,7 +123,7 @@ public abstract class AbstractPerEntryLockContainer<L extends RefCountingLock> e
 
    @Override
    public void releaseLock(final Object lockOwner, Object key) {
-      locks.computeIfPresent(key, new ConcurrentHashMapV8.BiFun<Object, L, L>() {
+      locks.computeIfPresent(key, new EquivalentConcurrentHashMapV8.BiFun<Object, L, L>() {
          @Override
          public L apply(Object key, L lock) {
             // This will happen atomically in the CHM

@@ -662,8 +662,8 @@ public class EquivalentConcurrentHashMapV8<K,V>
    /** For serialization compatibility. Null unless serialized; see below */
    private Segment<K,V>[] segments;
 
-   private transient final Equivalence<K> keyEquivalence;
-   private transient final Equivalence<V> valueEquivalence;
+   private Equivalence<K> keyEquivalence;
+   private Equivalence<V> valueEquivalence;
 
     /* ---------------- Table element access -------------- */
 
@@ -3273,6 +3273,8 @@ public class EquivalentConcurrentHashMapV8<K,V>
       }
       s.writeObject(null);
       s.writeObject(null);
+      s.writeObject(keyEquivalence); // EQUIVALENCE_MOD
+      s.writeObject(valueEquivalence); // EQUIVALENCE_MOD
       segments = null; // throw away
    }
 
@@ -3356,6 +3358,8 @@ public class EquivalentConcurrentHashMapV8<K,V>
             }
          }
       }
+      keyEquivalence = (Equivalence<K>) s.readObject();
+      valueEquivalence = (Equivalence<V>) s.readObject();
    }
 
    // -------------------------------------------------------

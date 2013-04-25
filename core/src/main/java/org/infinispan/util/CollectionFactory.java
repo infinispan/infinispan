@@ -19,8 +19,6 @@
 
 package org.infinispan.util;
 
-import org.infinispan.container.entries.InternalCacheEntry;
-import org.infinispan.util.concurrent.jdk8backported.ConcurrentHashMapV8;
 import org.infinispan.util.concurrent.jdk8backported.EquivalentConcurrentHashMapV8;
 
 import java.util.HashMap;
@@ -75,22 +73,26 @@ public class CollectionFactory {
 
       @Override
       public <K, V> ConcurrentMap<K, V> createConcurrentMap() {
-         return new ConcurrentHashMapV8<K, V>();
+         return new EquivalentConcurrentHashMapV8<K, V>(
+               new AnyEquivalence<K>(), new AnyEquivalence<V>());
       }
 
       @Override
       public <K, V> ConcurrentMap<K, V> createConcurrentMap(int initialCapacity) {
-         return new ConcurrentHashMapV8<K, V>(initialCapacity);
+         return new EquivalentConcurrentHashMapV8<K, V>(initialCapacity,
+               new AnyEquivalence<K>(), new AnyEquivalence<V>());
       }
 
       @Override
       public <K, V> ConcurrentMap<K, V> createConcurrentMap(int initialCapacity, int concurrencyLevel) {
-         return new ConcurrentHashMapV8<K, V>(initialCapacity, 0.75f, concurrencyLevel);
+         return new EquivalentConcurrentHashMapV8<K, V>(initialCapacity, 0.75f,
+               concurrencyLevel, new AnyEquivalence<K>(), new AnyEquivalence<V>());
       }
 
       @Override
       public <K, V> ConcurrentMap<K, V> createConcurrentMap(int initialCapacity, float loadFactor, int concurrencyLevel) {
-         return new ConcurrentHashMapV8<K, V>(initialCapacity, loadFactor, concurrencyLevel);
+         return new EquivalentConcurrentHashMapV8<K, V>(initialCapacity, loadFactor,
+               concurrencyLevel, new AnyEquivalence<K>(), new AnyEquivalence<V>());
       }
    }
    

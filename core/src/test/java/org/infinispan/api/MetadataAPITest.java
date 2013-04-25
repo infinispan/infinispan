@@ -57,21 +57,32 @@ public class MetadataAPITest extends SingleCacheManagerTest {
    }
 
    public void testPutWithVersion() {
+      final Integer key = 1;
       NumericVersion version = new NumericVersion(1);
-      advCache.put(1, "v1", withVersion(version));
-      CacheEntry cacheEntry = advCache.getCacheEntry(1);
+      advCache.put(key, "v1", withVersion(version));
+      CacheEntry cacheEntry = advCache.getCacheEntry(key);
       assertEquals(InequalVersionComparisonResult.EQUAL,
             version.compareTo(cacheEntry.getVersion()));
    }
 
-   public void testReplaceWithVersion() {
+   public void testConditionalReplaceWithVersion() {
+      final Integer key = 2;
       NumericVersion version = new NumericVersion(1);
-      advCache.put(1, "v1", new EmbeddedMetadata.Builder().version(version).build());
+      advCache.put(key, "v1", new EmbeddedMetadata.Builder().version(version).build());
       NumericVersion newVersion = new NumericVersion(2);
-      advCache.replace(1, "v1", "v2", withVersion(newVersion));
-      CacheEntry cacheEntry = advCache.getCacheEntry(1);
+      advCache.replace(key, "v1", "v2", withVersion(newVersion));
+      CacheEntry cacheEntry = advCache.getCacheEntry(key);
       assertEquals(InequalVersionComparisonResult.EQUAL,
             newVersion.compareTo(cacheEntry.getVersion()));
+   }
+
+   public void testPutIfAbsentWithVersion() {
+      final Integer key = 3;
+      NumericVersion version = new NumericVersion(1);
+      assertEquals(null, advCache.putIfAbsent(key, "v1", withVersion(version)));
+      CacheEntry cacheEntry = advCache.getCacheEntry(key);
+      assertEquals(InequalVersionComparisonResult.EQUAL,
+            version.compareTo(cacheEntry.getVersion()));
    }
 
    private Metadata withVersion(EntryVersion version) {

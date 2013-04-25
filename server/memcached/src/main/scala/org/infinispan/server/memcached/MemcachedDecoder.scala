@@ -411,11 +411,13 @@ class MemcachedDecoder(memcachedCache: AdvancedCache[String, MemcachedValue], sc
    }
 
    override def createGetResponse(k: String, entry: CacheEntry): AnyRef = {
-      val v = entry.getValue.asInstanceOf[MemcachedValue]
-      if (v != null) {
+      if (entry != null) {
+
          header.op match {
-            case GetRequest => buildSingleGetResponse(k, v)
-            case GetWithVersionRequest => buildSingleGetWithVersionResponse(k,v)
+            case GetRequest =>
+               buildSingleGetResponse(k, entry.getValue.asInstanceOf[MemcachedValue])
+            case GetWithVersionRequest =>
+               buildSingleGetWithVersionResponse(k, entry)
          }
       }
       else
@@ -587,8 +589,10 @@ class MemcachedDecoder(memcachedCache: AdvancedCache[String, MemcachedValue], sc
       buf
    }
 
-   private def buildSingleGetWithVersionResponse(k: String, v: MemcachedValue): ChannelBuffer = {
-      val version = v.version.toString.getBytes
+   private def buildSingleGetWithVersionResponse(k: String, entry: CacheEntry): ChannelBuffer = {
+      val v = entry.getValue.asInstanceOf[MemcachedValue]
+      // TODO: Would be nice for EntryVersion to allow retrieving the version itself...
+      val version = entry.getVersion.asInstanceOf[ServerEntryVersion].version.toString.getBytes
       val buf = buildGetHeaderBegin(k, v, version.length + 1 + END_SIZE)
       buf.writeByte(SP) // 1
       buf.writeBytes(version) // version.length

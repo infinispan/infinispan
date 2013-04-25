@@ -94,12 +94,8 @@ public class LockManagerImpl implements LockManager {
 
    @Override
    public void unlock(Collection<Object> lockedKeys, Object lockOwner) {
-      for (Object k : lockedKeys) {
-         if (trace)
-            log.tracef("Attempting to unlock key %s", toStr(k));
-
-         lockContainer.releaseLock(lockOwner, k);
-      }
+      log.tracef("Attempting to unlock keys %s", lockedKeys);
+      for (Object k : lockedKeys) lockContainer.releaseLock(lockOwner, k);
    }
 
    @Override

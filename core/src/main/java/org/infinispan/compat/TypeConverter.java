@@ -28,10 +28,10 @@ package org.infinispan.compat;
  * implementations of this interface convert instances of those types into
  * target key and value type instances respectively.
  *
- * @param <K>
- * @param <V>
- * @param <KT>
- * @param <VT>
+ * @param <K> cached key type
+ * @param <V> cached value type
+ * @param <KT> target key type
+ * @param <VT> target value type
  */
 public interface TypeConverter<K, V, KT, VT> {
 

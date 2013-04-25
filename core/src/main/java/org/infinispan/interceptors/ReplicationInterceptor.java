@@ -238,7 +238,7 @@ public class ReplicationInterceptor extends ClusteringInterceptor {
    private Object localGet(InvocationContext ctx, Object key, boolean isWrite,
          FlagAffectedCommand command, boolean isGetCacheEntry) throws Throwable {
       InternalCacheEntry entry = localGetEntry(ctx, key, isWrite, command);
-      return isGetCacheEntry ? entry : entry.getValue();
+      return isGetCacheEntry || entry == null ? entry : entry.getValue();
    }
 
    private InternalCacheEntry localGetEntry(InvocationContext ctx, Object key,
@@ -269,11 +269,6 @@ public class ReplicationInterceptor extends ClusteringInterceptor {
    public Object visitPutKeyValueCommand(InvocationContext ctx, PutKeyValueCommand command) throws Throwable {
       return handleCrudMethod(ctx, command, !ctx.isOriginLocal());
    }
-
-//   @Override
-//   public Object visitVersionedPutKeyValueCommand(InvocationContext ctx, VersionedPutKeyValueCommand command) throws Throwable {
-//      return handleCrudMethod(ctx, command, !ctx.isOriginLocal());
-//   }
 
    @Override
    public Object visitPutMapCommand(InvocationContext ctx, PutMapCommand command) throws Throwable {

@@ -126,7 +126,7 @@ public class SocketTimeoutErrorTest extends SingleCacheManagerTest {
 
       private String unmarshall(Object key) throws Exception {
          Marshaller marshaller = new JBossMarshaller();
-         return (String) marshaller.objectFromByteBuffer(((ByteArrayKey) key).getData());
+         return (String) marshaller.objectFromByteBuffer((byte[]) key);
       }
    }
 

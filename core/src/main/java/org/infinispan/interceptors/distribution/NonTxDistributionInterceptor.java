@@ -21,7 +21,6 @@ package org.infinispan.interceptors.distribution;
 
 import org.infinispan.CacheException;
 import org.infinispan.commands.FlagAffectedCommand;
-import org.infinispan.commands.read.GetCacheEntryCommand;
 import org.infinispan.commands.read.GetKeyValueCommand;
 import org.infinispan.commands.write.ClearCommand;
 import org.infinispan.commands.write.PutKeyValueCommand;
@@ -66,10 +65,14 @@ public class NonTxDistributionInterceptor extends BaseDistributionInterceptor {
          if (returnValue == null) {
             Object key = command.getKey();
             if (needsRemoteGet(ctx, command)) {
-               returnValue = remoteGetCacheEntry(ctx, key, command).getValue();
+               InternalCacheEntry remoteEntry = remoteGetCacheEntry(ctx, key, command);
+               if (remoteEntry != null)
+                  returnValue = remoteEntry.getValue();
             }
             if (returnValue == null) {
-               returnValue = localGetCacheEntry(ctx, key, false, command).getValue();
+               InternalCacheEntry localEntry = localGetCacheEntry(ctx, key, false, command);
+               if (localEntry != null)
+                  returnValue = localEntry.getValue();
             }
          }
          return returnValue;

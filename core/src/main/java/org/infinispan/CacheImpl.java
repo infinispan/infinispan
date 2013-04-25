@@ -807,10 +807,21 @@ public class CacheImpl<K, V> extends CacheSupport<K, V> implements AdvancedCache
    }
 
    @SuppressWarnings("unchecked")
-   final V putIfAbsent(K key, V value, long lifespan, TimeUnit lifespanUnit, long maxIdleTime, TimeUnit idleTimeUnit, EnumSet<Flag> explicitFlags, ClassLoader explicitClassLoader) {
+   final V putIfAbsent(K key, V value, long lifespan, TimeUnit lifespanUnit,
+         long maxIdleTime, TimeUnit idleTimeUnit,
+         EnumSet<Flag> explicitFlags, ClassLoader explicitClassLoader) {
+      return putIfAbsent(key, value, lifespan, lifespanUnit,
+            maxIdleTime, idleTimeUnit, explicitFlags, explicitClassLoader, null);
+   }
+
+   @SuppressWarnings("unchecked")
+   final V putIfAbsent(K key, V value, long lifespan, TimeUnit lifespanUnit,
+         long maxIdleTime, TimeUnit idleTimeUnit,
+         EnumSet<Flag> explicitFlags, ClassLoader explicitClassLoader,
+         EntryVersion version) {
       InvocationContext ctx = getInvocationContextWithImplicitTransaction(isPutForExternalRead(explicitFlags), explicitClassLoader, 1);
       return putIfAbsentInternal(key, value, lifespan, lifespanUnit,
-            maxIdleTime, idleTimeUnit, explicitFlags, ctx, null);
+            maxIdleTime, idleTimeUnit, explicitFlags, ctx, version);
    }
 
    @SuppressWarnings("unchecked")
@@ -1341,7 +1352,36 @@ public class CacheImpl<K, V> extends CacheSupport<K, V> implements AdvancedCache
          else
             return replace(key, oldValue, value, defaultLifespan, MILLISECONDS,
                   defaultMaxIdleTime, MILLISECONDS, null, null, version);
-      }   }
+      }
+   }
+
+   @Override
+   public V putIfAbsent(K key, V value, Metadata metadata) {
+      // TODO: This is temporary, as it gets refined, entire metadata object will be passed down the stack
+      TimeUnit lifespanUnit = metadata.lifespanUnit();
+      TimeUnit maxIdleUnit = metadata.maxIdleUnit();
+      long lifespan = metadata.lifespan();
+      long maxIdleTime = metadata.maxIdle();
+      EntryVersion version = metadata.version();
+      if (version == null) {
+         if (lifespanUnit != null && maxIdleUnit != null)
+            return putIfAbsent(key, value, lifespan, lifespanUnit, maxIdleTime, maxIdleUnit);
+         else if (lifespanUnit != null)
+            return putIfAbsent(key, value, lifespan, lifespanUnit);
+         else
+            return putIfAbsent(key, value);
+      } else {
+         if (lifespanUnit != null && maxIdleUnit != null)
+            return putIfAbsent(key, value, lifespan, lifespanUnit,
+                  maxIdleTime, maxIdleUnit, null, null, version);
+         else if (lifespanUnit != null)
+            return putIfAbsent(key, value, lifespan, lifespanUnit,
+                  defaultMaxIdleTime, MILLISECONDS, null, null, version);
+         else
+            return putIfAbsent(key, value, defaultLifespan, MILLISECONDS,
+                  defaultMaxIdleTime, MILLISECONDS, null, null, version);
+      }
+   }
 
    @Override
    protected void set(K key, V value) {

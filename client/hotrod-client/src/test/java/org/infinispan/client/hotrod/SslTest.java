@@ -18,9 +18,6 @@
  */
 package org.infinispan.client.hotrod;
 
-import static org.testng.AssertJUnit.assertTrue;
-import static org.testng.AssertJUnit.fail;
-
 import java.net.SocketTimeoutException;
 
 import javax.net.ssl.SSLException;
@@ -37,6 +34,10 @@ import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 import org.testng.annotations.AfterMethod;
 import org.testng.annotations.Test;
+
+import static org.infinispan.server.hotrod.test.HotRodTestingUtil.hotRodCacheConfiguration;
+import static org.testng.AssertJUnit.assertTrue;
+import static org.testng.AssertJUnit.fail;
 
 /**
  * @author Adrian Brock
@@ -56,7 +57,7 @@ public class SslTest extends SingleCacheManagerTest {
 
    @Override
    protected EmbeddedCacheManager createCacheManager() throws Exception {
-      cacheManager = TestCacheManagerFactory.createLocalCacheManager(false);
+      cacheManager = TestCacheManagerFactory.createCacheManager(hotRodCacheConfiguration());
       cacheManager.getCache();
 
       return cacheManager;

@@ -4,8 +4,6 @@ import org.infinispan.commands.read.GetKeyValueCommand;
 import org.infinispan.commands.write.PutKeyValueCommand;
 import org.infinispan.commands.write.RemoveCommand;
 import org.infinispan.commands.write.ReplaceCommand;
-import org.infinispan.commands.write.VersionedPutKeyValueCommand;
-import org.infinispan.compat.MarshalledTypeConverter;
 import org.infinispan.compat.TypeConverter;
 import org.infinispan.container.InternalEntryFactory;
 import org.infinispan.container.entries.InternalCacheEntry;
@@ -14,10 +12,10 @@ import org.infinispan.factories.annotations.Inject;
 import org.infinispan.interceptors.base.CommandInterceptor;
 
 /**
- * // TODO: Document this
+ * An interceptor that applies type conversion to the data stored in the cache.
  *
  * @author Galder Zamarreño
- * @since // TODO
+ * @since 5.3
  */
 public class TypeConverterInterceptor extends CommandInterceptor {
 

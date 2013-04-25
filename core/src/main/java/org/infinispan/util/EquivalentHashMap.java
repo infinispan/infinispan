@@ -47,6 +47,7 @@ import java.util.Set;
  *
  * @author Galder Zamarreño
  * @since 5.3
+ * @see java.util.HashMap
  */
 public class EquivalentHashMap<K, V> extends AbstractMap<K, V> {
 
