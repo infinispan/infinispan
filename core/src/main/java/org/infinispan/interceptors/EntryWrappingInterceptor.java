@@ -322,6 +322,19 @@ public class EntryWrappingInterceptor extends CommandInterceptor {
       }
 
       @Override
+      public Object visitInvalidateCommand(InvocationContext ctx, InvalidateCommand command) throws Throwable {
+         if (command.getKeys() != null) {
+            for (Object key : command.getKeys()) {
+               if (cdl.localNodeIsOwner(key)) {
+                  entryFactory.wrapEntryForRemove(ctx, key);
+                  invokeNextInterceptor(ctx, command);
+               }
+            }
+         }
+         return null;
+      }
+
+      @Override
       public Object visitRemoveCommand(InvocationContext ctx, RemoveCommand command) throws Throwable {
          if (cdl.localNodeIsOwner(command.getKey())) {
             entryFactory.wrapEntryForRemove(ctx, command.getKey());
