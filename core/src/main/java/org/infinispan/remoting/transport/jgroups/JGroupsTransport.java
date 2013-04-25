@@ -22,6 +22,25 @@
  */
 package org.infinispan.remoting.transport.jgroups;
 
+import static org.infinispan.factories.KnownComponentNames.ASYNC_TRANSPORT_EXECUTOR;
+import static org.infinispan.factories.KnownComponentNames.GLOBAL_MARSHALLER;
+
+import java.io.FileNotFoundException;
+import java.net.URL;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Future;
+
+import javax.management.MBeanServer;
+import javax.management.ObjectName;
+
 import org.infinispan.CacheConfigurationException;
 import org.infinispan.CacheException;
 import org.infinispan.commands.ReplicableCommand;
@@ -66,39 +85,23 @@ import org.jgroups.util.Rsp;
 import org.jgroups.util.RspList;
 import org.jgroups.util.TopologyUUID;
 
-import javax.management.MBeanServer;
-import javax.management.ObjectName;
-
-import java.io.FileNotFoundException;
-import java.net.URL;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Future;
-
-import static org.infinispan.factories.KnownComponentNames.ASYNC_TRANSPORT_EXECUTOR;
-import static org.infinispan.factories.KnownComponentNames.GLOBAL_MARSHALLER;
-
 /**
- * An encapsulation of a JGroups transport. JGroups transports can be configured using a variety of
- * methods, usually by passing in one of the following properties:
+ * An encapsulation of a JGroups transport. JGroups transports can be configured
+ * using a variety of methods, usually by passing in one of the following
+ * properties:
  * <ul>
  * <li><tt>configurationString</tt> - a JGroups configuration String</li>
  * <li><tt>configurationXml</tt> - JGroups configuration XML as a String</li>
- * <li><tt>configurationFile</tt> - String pointing to a JGroups XML configuration file</li>
+ * <li><tt>configurationFile</tt> - String pointing to a JGroups XML
+ * configuration file</li>
  * <li><tt>channelLookup</tt> - Fully qualified class name of a
- * {@link org.infinispan.remoting.transport.jgroups.JGroupsChannelLookup} instance</li>
+ * {@link org.infinispan.remoting.transport.jgroups.JGroupsChannelLookup}
+ * instance</li>
  * </ul>
  * These are normally passed in as Properties in
- * {@link org.infinispan.config.GlobalConfiguration#setTransportProperties(java.util.Properties)} or
- * in the Infinispan XML configuration file.
- *
+ * {@link org.infinispan.config.GlobalConfiguration#setTransportProperties(java.util.Properties)}
+ * or in the Infinispan XML configuration file.
+ * 
  * @author Manik Surtani
  * @author Galder Zamarreño
  * @since 4.0
@@ -552,16 +555,16 @@ public class JGroupsTransport extends AbstractTransport implements MembershipLis
    @Override
    public BackupResponse backupRemotely(Collection<XSiteBackup> backups, ReplicableCommand rpcCommand) throws Exception {
       log.tracef("About to send to backups %s, command %s", backups, rpcCommand);
-      Buffer buf = dispatcher.marshallCall(dispatcher.getMarshaller(), rpcCommand);
+      Buffer buf = CommandAwareRpcDispatcher.marshallCall(dispatcher.getMarshaller(), rpcCommand);
       Map<XSiteBackup, Future<Object>> syncBackupCalls = new HashMap<XSiteBackup, Future<Object>>(backups.size());
       for (XSiteBackup xsb : backups) {
          SiteMaster recipient = new SiteMaster(xsb.getSiteName());
          if (xsb.isSync()) {
             RequestOptions sync = new RequestOptions(org.jgroups.blocks.ResponseMode.GET_ALL, xsb.getTimeout());
-            syncBackupCalls.put(xsb, dispatcher.sendMessageWithFuture(dispatcher.constructMessage(buf, recipient, false, org.jgroups.blocks.ResponseMode.GET_ALL, false), sync));
+            syncBackupCalls.put(xsb, dispatcher.sendMessageWithFuture(CommandAwareRpcDispatcher.constructMessage(buf, recipient, true, org.jgroups.blocks.ResponseMode.GET_ALL, false), sync));
          } else {
             RequestOptions async = new RequestOptions(org.jgroups.blocks.ResponseMode.GET_NONE, xsb.getTimeout());
-            dispatcher.sendMessage(dispatcher.constructMessage(buf, recipient, false, org.jgroups.blocks.ResponseMode.GET_NONE, false), async);
+            dispatcher.sendMessage(CommandAwareRpcDispatcher.constructMessage(buf, recipient, false, org.jgroups.blocks.ResponseMode.GET_NONE, false), async);
          }
       }
       return new JGroupsBackupResponse(syncBackupCalls);
