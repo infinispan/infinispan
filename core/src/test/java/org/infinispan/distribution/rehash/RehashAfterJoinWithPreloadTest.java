@@ -24,6 +24,7 @@ import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.cache.FileCacheStoreConfigurationBuilder;
+import org.infinispan.distribution.DistributionManager;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.test.MultipleCacheManagersTest;
 import org.infinispan.test.TestingUtil;
@@ -32,6 +33,10 @@ import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.Test;
+
+import java.util.Set;
+
+import static org.junit.Assert.assertTrue;
 
 /**
  * Test with a distributed cache (numOwners=1), a shared cache store and 'preload' enabled
@@ -47,10 +52,11 @@ public class RehashAfterJoinWithPreloadTest extends MultipleCacheManagersTest {
    private final String testCacheName = "testCache" + getClass().getSimpleName();
 
    private final String fileCacheStoreTmpDir = TestingUtil.tmpDirectory(this);
+
    protected boolean supportsConcurrentUpdates = true;
 
    @Override
-   protected void createCacheManagers() throws Throwable {
+   protected void createCacheManagers() {
       // cacheManagers started one after another in test()
    }
 
@@ -58,7 +64,7 @@ public class RehashAfterJoinWithPreloadTest extends MultipleCacheManagersTest {
       EmbeddedCacheManager cacheManager = addClusterEnabledCacheManager(getDefaultClusteredCacheConfig(
             CacheMode.DIST_SYNC, false));
       cacheManager.defineConfiguration(testCacheName, buildCfg(true));
-      log.debug("\n\nstarted CacheManager #" + (getCacheManagers().size() - 1));
+      log.debugf("\n\nstarted CacheManager #%d", getCacheManagers().size() - 1);
       waitForClusterToForm(testCacheName);
    }
 
@@ -92,12 +98,10 @@ public class RehashAfterJoinWithPreloadTest extends MultipleCacheManagersTest {
       // add 1st member
       addNewCacheManagerAndWaitForRehash();
       printCacheContents();
-//      assertEvenDistribution();
 
       // add 2nd member
       addNewCacheManagerAndWaitForRehash();
       printCacheContents();
-//      assertEvenDistribution();
 
       // add 3rd member
       addNewCacheManagerAndWaitForRehash();
@@ -108,40 +112,44 @@ public class RehashAfterJoinWithPreloadTest extends MultipleCacheManagersTest {
    private void assertEvenDistribution() {
       for (int i = 0; i < getCacheManagers().size(); i++) {
          Cache<String, String> testCache = manager(i).getCache(testCacheName);
+         DistributionManager dm = testCache.getAdvancedCache().getDistributionManager();
          for (String key : testCache.keySet()) {
             // each key must only occur once (numOwners is one)
-            assert testCache.getAdvancedCache().getDistributionManager().getLocality(key).isLocal()
-                  : "Key '" + key + "' is not owned by node " + address(i) + " but it still appears there";
+            assertTrue("Key '" + key + "' is not owned by node " + address(i) + " but it still appears there",
+                  dm.getLocality(key).isLocal());
          }
       }
    }
 
    private void putTestDataInCacheStore() {
-      log.debug("Using cache store dir " + fileCacheStoreTmpDir);
+      final int numKeys = 20;
+      log.debugf("Using cache store dir %s", fileCacheStoreTmpDir);
       EmbeddedCacheManager cmForCacheStoreInit = TestCacheManagerFactory.createCacheManager(TestCacheManagerFactory
             .getDefaultConfiguration(true));
       try {
          cmForCacheStoreInit.defineConfiguration(testCacheName, buildCfg(false));
 
          Cache<String, String> cache = cmForCacheStoreInit.getCache(testCacheName);
-         cache.put("key1", "one");
-         cache.put("key2", "two");
-         cache.put("key3", "three");
+         for (int i = 0; i < numKeys; i++) {
+            cache.put("key" + i, Integer.toString(i));
+         }
 
-         log.debug("added 3 entries to test cache");
+         log.debugf("added %d entries to test cache", numKeys);
       } finally {
          TestingUtil.killCacheManagers(cmForCacheStoreInit);
       }
    }
 
    private void printCacheContents() {
-      log.debug("----------------------------------------------------");
+      log.debugf("%d cache manager(s)", getCacheManagers().size());
       for (int i = 0; i < getCacheManagers().size(); i++) {
-         log.debug(" Content of Cache with CacheManager #" + i + " (" + address(i) + ", all members: "
-               + manager(i).getMembers() + ")");
          Cache<String, String> testCache = manager(i).getCache(testCacheName);
-         for (String key : testCache.keySet()) {
-            log.debug("  key: " + key + "  value: " + testCache.get(key));
+         log.debugf(" Contents of Cache with CacheManager #%d (%s, all members: %s)", i, address(i),
+               testCache.getAdvancedCache().getRpcManager().getMembers());
+         Set<String> keySet = testCache.keySet();
+         log.debugf(" keySet = %s", keySet);
+         for (String key : keySet) {
+            log.debugf("  key: %s  value: %s", key, testCache.get(key));
          }
       }
    }

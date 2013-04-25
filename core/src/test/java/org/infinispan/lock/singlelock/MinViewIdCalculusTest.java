@@ -65,32 +65,33 @@ public class MinViewIdCalculusTest extends MultipleCacheManagersTest {
       final TransactionTable tt1 = TestingUtil.getTransactionTable(cache(1));
 
       StateTransferManager stateTransferManager0 = TestingUtil.extractComponent(cache(0), StateTransferManager.class);
-      final int viewId = stateTransferManager0.getCacheTopology().getTopologyId();
+      final int topologyId = stateTransferManager0.getCacheTopology().getTopologyId();
 
-      assertEquals(tt0.getMinTopologyId(), viewId);
-      assertEquals(tt1.getMinTopologyId(), viewId);
+      assertEquals(tt0.getMinTopologyId(), topologyId);
+      assertEquals(tt1.getMinTopologyId(), topologyId);
 
       //add a new cache and check that min view is updated
+      log.trace("Adding new node ..");
       addClusterEnabledCacheManager(c);
       waitForClusterToForm();
+      log.trace("New node added.");
 
-      final int viewId2 = stateTransferManager0.getCacheTopology().getTopologyId();
-      assertTrue(viewId2 > viewId);
+      final int topologyId2 = stateTransferManager0.getCacheTopology().getTopologyId();
+      assertTrue(topologyId2 > topologyId);
 
-      assertEquals(tt0.getMinTopologyId(), viewId2);
-      assertEquals(tt1.getMinTopologyId(), viewId2);
+      assertEquals(tt0.getMinTopologyId(), topologyId2);
+      assertEquals(tt1.getMinTopologyId(), topologyId2);
 
       final TransactionTable tt2 = TestingUtil.getTransactionTable(cache(1));
-      assertEquals(tt2.getMinTopologyId(), viewId2);
+      assertEquals(tt2.getMinTopologyId(), topologyId2);
    }
 
    public void testMinViewId2() throws Exception {
-
       final TransactionTable tt0 = TestingUtil.getTransactionTable(cache(0));
       final TransactionTable tt1 = TestingUtil.getTransactionTable(cache(1));
 
       StateTransferManager stateTransferManager0 = TestingUtil.extractComponent(cache(0), StateTransferManager.class);
-      final int viewId = stateTransferManager0.getCacheTopology().getTopologyId();
+      final int topologyId = stateTransferManager0.getCacheTopology().getTopologyId();
 
       tm(1).begin();
       cache(1).put(getKeyForCache(0),"v");
@@ -105,25 +106,25 @@ public class MinViewIdCalculusTest extends MultipleCacheManagersTest {
          }
       });
 
-      log.trace("Here is the topology change..");
+      log.trace("Adding new node ..");
       //add a new cache and check that min view is updated
       addClusterEnabledCacheManager(c);
       waitForClusterToForm();
+      log.trace("New node added.");
 
-      final int viewId2 = stateTransferManager0.getCacheTopology().getTopologyId();
-      assertTrue(viewId2 > viewId);
+      final int topologyId2 = stateTransferManager0.getCacheTopology().getTopologyId();
+      assertTrue(topologyId2 > topologyId);
 
-      assertEquals(tt0.getMinTopologyId(), viewId);
-      assertEquals(tt1.getMinTopologyId(), viewId);
+      assertEquals(tt0.getMinTopologyId(), topologyId);
+      assertEquals(tt1.getMinTopologyId(), topologyId);
 
       tm(1).resume(t);
       t.runCommitTx();
 
-
       eventually(new Condition() {
          @Override
          public boolean isSatisfied() throws Exception {
-            return tt0.getMinTopologyId() == viewId2 && tt1.getMinTopologyId() == viewId2;
+            return tt0.getMinTopologyId() == topologyId2 && tt1.getMinTopologyId() == topologyId2;
          }
       });
    }

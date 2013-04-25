@@ -252,7 +252,7 @@ public class ResourceDMBean implements DynamicMBean {
             setNamedAttribute(attr);
             results.add(attr);
          } catch (Exception e) {
-            log.failedToUpdateAtribute(attr.getName(), attr.getValue());
+            log.failedToUpdateAttribute(attr.getName(), attr.getValue());
          }
       }
       return results;
@@ -307,9 +307,9 @@ public class ResourceDMBean implements DynamicMBean {
          if (i != null) {
             try {
                result = new Attribute(name, i.invoke(null));
-               if (log.isDebugEnabled())
-                  log.debugf("Attribute %s has r=%b,w=%b,is=%b and value %s",
-                             name, i.getMBeanAttributeInfo().isReadable(), i.getMBeanAttributeInfo().isWritable(), i.getMBeanAttributeInfo().isIs(), result.getValue());
+               if (trace)
+                  log.tracef("Attribute %s has r=%b,w=%b,is=%b and value %s",
+                        name, i.getMBeanAttributeInfo().isReadable(), i.getMBeanAttributeInfo().isWritable(), i.getMBeanAttributeInfo().isIs(), result.getValue());
             } catch (Exception e) {
                log.debugf("Exception while reading value of attribute %s: %s", name, e);
             }

@@ -201,11 +201,6 @@ public class CommandsFactoryImpl implements CommandsFactory {
    }
 
    @Override
-   public InvalidateCommand buildInvalidateFromL1Command(boolean forRehash, Set<Flag> flags, Object... keys) {
-      return new InvalidateL1Command(forRehash, dataContainer, configuration, distributionManager, notifier, flags, keys);
-   }
-
-   @Override
    public InvalidateCommand buildInvalidateFromL1Command(boolean forRehash, Set<Flag> flags, Collection<Object> keys) {
       return new InvalidateL1Command(forRehash, dataContainer, configuration, distributionManager, notifier, flags, keys);
    }
