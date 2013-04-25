@@ -211,6 +211,11 @@ public class AbstractDelegatingAdvancedCache<K, V> extends AbstractDelegatingCac
       return cache.replace(key, oldValue, value, metadata);
    }
 
+   @Override
+   public V putIfAbsent(K key, V value, Metadata metadata) {
+      return cache.putIfAbsent(key, value, metadata);
+   }
+
    protected final void putForExternalRead(K key, V value, EnumSet<Flag> flags, ClassLoader classLoader) {
       ((CacheImpl<K, V>) cache).putForExternalRead(key, value, flags, classLoader);
    }

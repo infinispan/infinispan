@@ -43,12 +43,13 @@ import java.lang.StringBuilder
  * @since 4.1
  */
 @serializable
+// TODO: Create a Metadata extension for Memcached value and add flags, removing this class
 class MemcachedValue(override val data: Array[Byte], override val version: Long, val flags: Long)
       extends CacheValue(data, version) {
 
    override def toString = {
       new StringBuilder().append("MemcachedValue").append("{")
-         .append("data=").append(Util.printArray(data, false))
+         .append("data=").append(Util.toStr(data))
          .append(", version=").append(version)
          .append(", flags=").append(flags)
          .append("}").toString

@@ -23,19 +23,23 @@
 
 package org.infinispan.util;
 
+import java.io.Serializable;
+
 /**
- * An interface that allows custom implementations for objects are comparable
- * based on equality, hash code calculations, or according to
+ * An interface that allows custom implementations for objects that are
+ * comparable based on equality, hash code calculations, or according to
  * {@link Comparable} rules, but where the behaviour provided by the JDK, or
  * external libraries, cannot be modified, for example: arrays.
  *
- * This interface is not typed because a lot of the uses of these methods
- * rely on Object type references.
+ * The interface is marked to be {@link Serializable} because multiple
+ * collection extensions within the Infinispan code base contain references
+ * to them, and since these are potentially {@link Serializable}, they might
+ * be persisted somehow.
  *
  * @author Galder Zamarreño
  * @since 5.3
  */
-public interface Equivalence<T> {
+public interface Equivalence<T> extends Serializable {
 
    /**
     * Returns a hash code value for the object passed.

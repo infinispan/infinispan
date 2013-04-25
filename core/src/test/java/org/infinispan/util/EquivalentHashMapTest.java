@@ -34,10 +34,10 @@ import java.util.Set;
 import static org.testng.AssertJUnit.*;
 
 /**
- * // TODO: Document this
+ * Tests that {@link EquivalentHashMap} is functionally correct.
  *
  * @author Galder Zamarreño
- * @since // TODO
+ * @since 5.3
  */
 @Test(groups = "functional", testName = "util.EquivalentHashMapTest")
 public class EquivalentHashMapTest {
@@ -49,10 +49,7 @@ public class EquivalentHashMapTest {
       byteArrayGet(createStandardConcurrentMap(), false);
       byteArrayContainsKey(createStandardConcurrentMap(), false);
       byteArrayRemove(createStandardConcurrentMap(), false);
-//      byteArrayConditionalRemove(createStandardConcurrentMap(), false);
-//      byteArrayReplace(createStandardConcurrentMap(), false);
       byteArrayPutSameValueTwice(createStandardConcurrentMap(), false);
-//      byteArrayPutIfAbsentFail(createStandardConcurrentMap(), false);
       byteArrayPutAll(createStandardConcurrentMap(), 3);
       byteArrayContainsValue(createStandardConcurrentMap(), false);
       byteArrayEquals(createStandardConcurrentMap(), createStandardConcurrentMap(), false);
@@ -75,21 +72,9 @@ public class EquivalentHashMapTest {
       byteArrayRemove(createComparingConcurrentMap(), true);
    }
 
-//   public void testByteArrayConditionalRemove() {
-//      byteArrayConditionalRemove(createComparingConcurrentMap(), true);
-//   }
-//
-//   public void testByteArrayReplace() {
-//      byteArrayReplace(createComparingConcurrentMap(), true);
-//   }
-
    public void testByteArrayPutSameValueTwice() {
       byteArrayPutSameValueTwice(createComparingConcurrentMap(), true);
    }
-
-//   public void testByteArrayPutIfAbsentFail() {
-//      byteArrayPutIfAbsentFail(createComparingConcurrentMap(), true);
-//   }
 
    public void testByteArrayPutAll() {
       byteArrayPutAll(createComparingConcurrentMap(), 2);
@@ -173,38 +158,6 @@ public class EquivalentHashMapTest {
          assertNull(map.get(removeKey));
    }
 
-//   protected void byteArrayConditionalRemove(
-//         Map<byte[], byte[]> map, boolean expectRemove) {
-//      byte[] key = {1, 2, 3};
-//      byte[] value = {4, 5, 6};
-//      map.put(key, value);
-//      byte[] removeKey = {1, 2, 3}; // on purpose, different instance required
-//      byte[] removeValue = {4, 5, 6}; // on purpose, different instance required
-//      if (expectRemove)
-//         assertTrue(String.format(
-//               "Expected key=%s to be removed", str(removeKey)),
-//               map.remove(removeKey, removeValue));
-//      else
-//         assertNull(map.get(removeKey));
-//   }
-
-//   protected void byteArrayReplace(
-//         ConcurrentMap<byte[], byte[]> map, boolean expectReplaced) {
-//      byte[] key = {1, 2, 3};
-//      byte[] value = {4, 5, 6};
-//      map.put(key, value);
-//      byte[] lookupKey = {1, 2, 3};
-//      byte[] oldValue = {4, 5, 6}; // on purpose, different instance required
-//      byte[] newValue = {7, 8, 9}; // on purpose, different instance required
-//      boolean replaced = map.replace(lookupKey, oldValue, newValue);
-//      if (expectReplaced)
-//         assertTrue(String.format(
-//               "Expected key=%s replace of oldValue=%s with newValue=%s to work",
-//               str(lookupKey), str(oldValue), str(newValue)), replaced);
-//      else
-//         assertFalse(replaced);
-//   }
-
    protected void byteArrayPutSameValueTwice(
          Map<byte[], byte[]> map, boolean expectFound) {
       byte[] key = {1, 2, 3};
@@ -220,22 +173,6 @@ public class EquivalentHashMapTest {
       else
          assertNull(map.put(putKey, sameValue));
    }
-
-//   protected void byteArrayPutIfAbsentFail(
-//         ConcurrentMap<byte[], byte[]> map, boolean expectFail) {
-//      byte[] key = {1, 2, 3};
-//      byte[] value = {4, 5, 6};
-//      map.put(key, value);
-//      byte[] putKey = {1, 2, 3}; // on purpose, different instance required
-//      byte[] newValue = {7, 8, 9};
-//      byte[] previous = map.putIfAbsent(putKey, newValue);
-//      if (expectFail)
-//         assertTrue(String.format(
-//               "Expected putIfAbsent for key=%s to fail", str(putKey)),
-//               Arrays.equals(value, previous));
-//      else
-//         assertNull(previous);
-//   }
 
    protected void byteArrayPutAll(
          Map<byte[], byte[]> map, int expectCount) {

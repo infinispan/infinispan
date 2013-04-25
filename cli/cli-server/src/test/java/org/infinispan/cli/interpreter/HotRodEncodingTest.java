@@ -18,9 +18,6 @@
  */
 package org.infinispan.cli.interpreter;
 
-import static org.testng.AssertJUnit.assertEquals;
-import static org.testng.AssertJUnit.assertTrue;
-
 import java.util.Map;
 
 import org.infinispan.Cache;
@@ -34,15 +31,17 @@ import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.factories.GlobalComponentRegistry;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.marshall.jboss.GenericJBossMarshaller;
-import org.infinispan.server.core.CacheValue;
 import org.infinispan.server.hotrod.HotRodServer;
 import org.infinispan.test.SingleCacheManagerTest;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.CleanupAfterMethod;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
-import org.infinispan.util.ByteArrayKey;
 import org.testng.annotations.AfterTest;
 import org.testng.annotations.Test;
+
+import static org.infinispan.server.hotrod.test.HotRodTestingUtil.hotRodCacheConfiguration;
+import static org.testng.AssertJUnit.assertEquals;
+import static org.testng.AssertJUnit.assertTrue;
 
 /**
  * EncodingTest.
@@ -61,7 +60,8 @@ public class HotRodEncodingTest extends SingleCacheManagerTest {
 
    @Override
    protected EmbeddedCacheManager createCacheManager() throws Exception {
-      ConfigurationBuilder c = getDefaultStandaloneCacheConfig(false);
+      ConfigurationBuilder c = hotRodCacheConfiguration(
+            getDefaultStandaloneCacheConfig(false));
       c.jmxStatistics().enable();
       return TestCacheManagerFactory.createCacheManager(c);
    }
@@ -71,7 +71,9 @@ public class HotRodEncodingTest extends SingleCacheManagerTest {
       super.setup();
       hotrodServer = TestHelper.startHotRodServer(cacheManager);
       port = hotrodServer.getPort();
-      remoteCacheManager = new RemoteCacheManager("localhost", hotrodServer.getPort());
+      remoteCacheManager = new RemoteCacheManager(
+            new org.infinispan.client.hotrod.configuration.ConfigurationBuilder()
+                  .addServers("localhost:" + hotrodServer.getPort()).build());
       remoteCacheManager.start();
       GlobalComponentRegistry gcr = TestingUtil.extractGlobalComponentRegistry(cacheManager);
       interpreter = gcr.getComponent(Interpreter.class);
@@ -89,11 +91,11 @@ public class HotRodEncodingTest extends SingleCacheManagerTest {
    }
 
    public void testHotRodCodec() throws Exception {
-      Cache<ByteArrayKey, CacheValue> cache = cacheManager.getCache();
+      Cache<byte[], byte[]> cache = cacheManager.getCache();
       RemoteCache<String, String> remoteCache = remoteCacheManager.getCache();
       remoteCache.put("k1", "v1");
       GenericJBossMarshaller marshaller = new GenericJBossMarshaller();
-      ByteArrayKey k1 = new ByteArrayKey(marshaller.objectToByteBuffer("k1"));
+      byte[] k1 = marshaller.objectToByteBuffer("k1");
       assertTrue(cache.containsKey(k1));
 
       String sessionId = interpreter.createSessionId(BasicCacheContainer.DEFAULT_CACHE_NAME);
@@ -106,11 +108,11 @@ public class HotRodEncodingTest extends SingleCacheManagerTest {
    }
 
    public void testHotRodEncoding() throws Exception {
-      Cache<ByteArrayKey, CacheValue> cache = cacheManager.getCache();
+      Cache<byte[], byte[]> cache = cacheManager.getCache();
       RemoteCache<String, String> remoteCache = remoteCacheManager.getCache();
       remoteCache.put("k1", "v1");
       GenericJBossMarshaller marshaller = new GenericJBossMarshaller();
-      ByteArrayKey k1 = new ByteArrayKey(marshaller.objectToByteBuffer("k1"));
+      byte[] k1 = marshaller.objectToByteBuffer("k1");
       assertTrue(cache.containsKey(k1));
 
       String sessionId = interpreter.createSessionId(BasicCacheContainer.DEFAULT_CACHE_NAME);

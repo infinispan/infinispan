@@ -176,13 +176,17 @@ public class ClusteredGetCommand extends BaseRpcCommand implements FlagAffectedC
 
       ClusteredGetCommand that = (ClusteredGetCommand) o;
 
-      return !(key != null ? !keyEquivalence.equals(key, that.key) : that.key != null);
+      return !(key != null ?
+         !(keyEquivalence != null ? keyEquivalence.equals(key, that.key) : key.equals(that.key))
+         : that.key != null);
    }
 
    @Override
    public int hashCode() {
       int result;
-      result = (key != null ? keyEquivalence.hashCode(key) : 0);
+      result = (key != null
+          ? (keyEquivalence != null ? keyEquivalence.hashCode(key) : key.hashCode())
+          : 0);
       return result;
    }
 

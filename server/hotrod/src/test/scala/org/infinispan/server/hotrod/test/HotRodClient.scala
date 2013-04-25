@@ -37,7 +37,7 @@ import collection.immutable
 import java.lang.reflect.Method
 import HotRodTestingUtil._
 import java.util.concurrent.{ConcurrentHashMap, Executors}
-import java.util.concurrent.atomic.{AtomicLong}
+import java.util.concurrent.atomic.AtomicLong
 import mutable.ListBuffer
 import org.infinispan.test.TestingUtil
 import org.infinispan.util.Util

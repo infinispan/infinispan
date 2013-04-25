@@ -27,10 +27,17 @@ import java.util.AbstractSet;
 import java.util.Iterator;
 
 /**
- * // TODO: Document this
+ * Custom hash-based set which accepts no null values, where
+ * equality and hash code calculations are done based on passed
+ * {@link org.infinispan.util.Equivalence} function implementations for values,
+ * as opposed to relying on their own equals/hashCode/toString implementations.
+ * This is handy when using key/values whose mentioned methods cannot be
+ * overriden, i.e. arrays, and in situations where users want to avoid using
+ * wrapper objects.
  *
  * @author Galder Zamarreño
- * @since // TODO
+ * @since 5.3
+ * @see java.util.HashSet
  */
 public class EquivalentHashSet<E> extends AbstractSet<E> {
 

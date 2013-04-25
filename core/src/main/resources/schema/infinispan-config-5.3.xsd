@@ -666,13 +666,41 @@
               </xs:annotation>
             </xs:element>
           </xs:sequence>
-          <xs:attribute name="class" type="xs:string">
-            <xs:annotation>
-              <xs:documentation>
-                Fully qualified class name of the data container to use
-              </xs:documentation>
-            </xs:annotation>
-          </xs:attribute>
+           <xs:attribute name="class" type="xs:string">
+              <xs:annotation>
+                 <xs:documentation>
+                    Fully qualified class name of the data container to use
+                 </xs:documentation>
+              </xs:annotation>
+           </xs:attribute>
+           <xs:attribute name="keyEquivalence" type="xs:string">
+              <xs:annotation>
+                 <xs:documentation>
+                    Fully qualified class name of the Equivalence class to use
+                    for keys stored in the cache, which provides with custom
+                    ways to compare cached keys
+                 </xs:documentation>
+              </xs:annotation>
+           </xs:attribute>
+           <xs:attribute name="valueEquivalence" type="xs:string">
+              <xs:annotation>
+                 <xs:documentation>
+                    Fully qualified class name of the Equivalence class to use
+                    for values stored in the cache, which provides with custom
+                    ways to compare cached values
+                 </xs:documentation>
+              </xs:annotation>
+           </xs:attribute>
+           <xs:attribute name="typeConverter" type="xs:string">
+              <xs:annotation>
+                 <xs:documentation>
+                    Fully qualified class name of the TypeConverter interface
+                    which transforms keys and values into other types,
+                    enabling Infinispan embedded and endpoints to run in
+                    compatibility mode
+                 </xs:documentation>
+              </xs:annotation>
+           </xs:attribute>
         </xs:complexType>
       </xs:element>
       <xs:element name="eviction" minOccurs="0">

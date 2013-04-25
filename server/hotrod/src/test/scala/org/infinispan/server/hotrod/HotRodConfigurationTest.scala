@@ -25,14 +25,11 @@ package org.infinispan.server.hotrod
 
 import test.UniquePortThreadLocal
 import test.HotRodTestingUtil._
-import java.util.Properties
-import org.infinispan.server.core.Main._
 import org.infinispan.test.fwk.TestCacheManagerFactory
 import org.testng.Assert._
 import org.testng.annotations.Test
-import org.infinispan.loaders.cluster.ClusterCacheLoader
 import org.infinispan.server.core.test.Stoppable
-import org.infinispan.configuration.cache.{LegacyLoaderConfiguration, Configuration}
+import org.infinispan.configuration.cache.Configuration
 import org.infinispan.server.hotrod.configuration.HotRodServerConfigurationBuilder
 import org.infinispan.configuration.cache.ClusterCacheLoaderConfiguration
 
@@ -61,7 +58,7 @@ class HotRodConfigurationTest {
 
    def testLazyLoadTopology() {
       val builder = new HotRodServerConfigurationBuilder
-      builder.topologyStateTransfer(false).topologyReplTimeout(43000);
+      builder.topologyStateTransfer(false).topologyReplTimeout(43000)
       withClusteredServer(builder) { (cfg, distSyncTimeout) =>
          assertEquals(cfg.clustering().sync().replTimeout(), 43000)
          assertTrue(cfg.clustering().stateTransfer().fetchInMemoryState())

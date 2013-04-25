@@ -28,23 +28,58 @@ import org.infinispan.container.versioning.EntryVersion;
 import java.util.concurrent.TimeUnit;
 
 /**
- * // TODO: Document this
+ * This interface encapsulates metadata information that can be stored
+ * alongside values in the cache.
  *
  * @author Galder Zamarreño
- * @since // TODO
+ * @since 5.3
  */
 public interface Metadata {
 
+   /**
+    * Returns the lifespan of the cache entry with which this metadata object
+    * is associated.  Negative values are interpreted as unlimited lifespan.
+    *
+    * @return lifespan of the entry
+    */
    long lifespan();
 
+   /**
+    * Returns the lifespan time unit of the cache entry with which this
+    * metadata object is associated.
+    *
+    * @return lifespan time unit
+    */
    TimeUnit lifespanUnit();
 
+   /**
+    * Returns the the maximum amount of time that the cache entry associated
+    * with this metadata object is allowed to be idle for before it is
+    * considered as expired.
+    *
+    * @return maximum idle time of the entry
+    */
    long maxIdle();
 
+   /**
+    * Returns the maximum idle time unit of the cache entry with which this
+    * metadata object is associated.
+    *
+    * @return maximum idle time unit
+    */
    TimeUnit maxIdleUnit();
 
+   /**
+    * Returns the version of the cache entry with which this metadata object
+    * is associated.
+    *
+    * @return version of the entry
+    */
    EntryVersion version();
 
+   /**
+    * Metadata builder
+    */
    public interface Builder {
 
       Builder lifespan(long time, TimeUnit unit);

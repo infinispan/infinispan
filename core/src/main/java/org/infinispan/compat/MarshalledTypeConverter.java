@@ -1,15 +1,16 @@
 package org.infinispan.compat;
 
 import org.infinispan.CacheException;
-import org.infinispan.compat.TypeConverter;
 import org.infinispan.marshall.StreamingMarshaller;
 import org.infinispan.marshall.jboss.GenericJBossMarshaller;
 
 /**
- * // TODO: Document this
+ * Type converter for marshalled types which box keys into their
+ * deserialized form, and unbox deserialized forms into their
+ * serialized form.
  *
  * @author Galder Zamarreño
- * @since // TODO
+ * @since 5.3
  */
 public final class MarshalledTypeConverter
       implements TypeConverter<Object, Object, Object, Object> {

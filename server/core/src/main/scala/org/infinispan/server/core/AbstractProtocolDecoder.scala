@@ -222,14 +222,8 @@ abstract class AbstractProtocolDecoder[K, V](transport: NettyTransport)
    private def putIfAbsent: AnyRef = {
       var prev = cache.get(key)
       if (prev == null) { // Generate new version only if key not present
-         val v = createValue(generateVersion(cache))
-         prev = (params.lifespan, params.maxIdle) match {
-            case (EXPIRATION_DEFAULT, EXPIRATION_DEFAULT) => getOptimizedCache(cache).putIfAbsent(key, v)
-            case (_, EXPIRATION_DEFAULT) => getOptimizedCache(cache).putIfAbsent(key, v, toMillis(params.lifespan), DefaultTimeUnit)
-            case (_, _) => getOptimizedCache(cache).putIfAbsent(key, v,
-                  toMillis(params.lifespan), DefaultTimeUnit,
-                  toMillis(params.maxIdle), DefaultTimeUnit)
-         }
+         val v = createValue(Integer.MIN_VALUE) // Version parameter unused, send anything
+         prev = getOptimizedCache(cache).putIfAbsent(key, v, buildMetadata())
       }
       if (prev == null)
          createSuccessResponse(prev)

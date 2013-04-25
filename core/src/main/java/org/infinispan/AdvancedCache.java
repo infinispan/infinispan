@@ -26,7 +26,6 @@ import org.infinispan.atomic.Delta;
 import org.infinispan.batch.BatchContainer;
 import org.infinispan.container.DataContainer;
 import org.infinispan.container.entries.CacheEntry;
-import org.infinispan.container.versioning.EntryVersion;
 import org.infinispan.context.Flag;
 import org.infinispan.context.InvocationContextContainer;
 import org.infinispan.distribution.DistributionManager;
@@ -308,18 +307,59 @@ public interface AdvancedCache<K, V> extends Cache<K, V> {
    @Deprecated
    CacheEntry getCacheEntry(Object key, EnumSet<Flag> explicitFlags, ClassLoader explicitClassLoader);
 
-//   AdvancedCache<K, V> withMetadata(Metadata metadata);
-
+   /**
+    * An overloaded form of {@link #put(K, V)}, which takes in an instance of
+    * {@link Metadata} which can be used to provide metadata information for
+    * the entry being stored, such as lifespan, version of value...etc.
+    *
+    * @param key key to use
+    * @param value value to store
+    * @param metadata information to store alongside the value
+    * @return the previous value associated with <tt>key</tt>, or
+    *         <tt>null</tt> if there was no mapping for <tt>key</tt>.
+    *
+    * @since 5.3
+    */
    V put(K key, V value, Metadata metadata);
 
-   boolean replace(K key, V oldValue, V value, Metadata metadata);
+   /**
+    * An overloaded form of {@link #replace(K, V, V)}, which takes in an
+    * instance of {@link Metadata} which can be used to provide metadata
+    * information for the entry being stored, such as lifespan, version
+    * of value...etc. The {@link Metadata} is only stored in the call is
+    * successful.
+    *
+    * @param key key with which the specified value is associated
+    * @param oldValue value expected to be associated with the specified key
+    * @param newValue value to be associated with the specified key
+    * @param metadata information to store alongside the new value
+    * @return <tt>true</tt> if the value was replaced
+    *
+    * @since 5.3
+    */
+   boolean replace(K key, V oldValue, V newValue, Metadata metadata);
 
-//   V putIfAbsent(K key, V value, Metadata metadata);
-//
-//   void putAll(Map<? extends K, ? extends V> map, Metadata metadata);
-//
-//   V replace(K key, V value, Metadata metadata);
-//
+   /**
+    * An overloaded form of {@link #putIfAbsent(K, V)}, which takes in an
+    * instance of {@link Metadata} which can be used to provide metadata
+    * information for the entry being stored, such as lifespan, version
+    * of value...etc. The {@link Metadata} is only stored in the call is
+    * successful.
+    *
+    * @param key key with which the specified value is to be associated
+    * @param value value to be associated with the specified key
+    * @param metadata information to store alongside the new value
+    * @return the previous value associated with the specified key, or
+    *         <tt>null</tt> if there was no mapping for the key.
+    *
+    * @since 5.3
+    */
+   V putIfAbsent(K key, V value, Metadata metadata);
+
+   // TODO:
+   //   void putAll(Map<? extends K, ? extends V> map, Metadata metadata);
+   //
+   //   V replace(K key, V value, Metadata metadata);
 
    // TODO: You could have replace calls that compare not only value, but also version internally?
 

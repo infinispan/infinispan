@@ -18,9 +18,6 @@
  */
 package org.infinispan.cli.interpreter;
 
-import static org.testng.AssertJUnit.assertEquals;
-import static org.testng.AssertJUnit.assertFalse;
-
 import java.util.Map;
 
 import org.infinispan.Cache;
@@ -34,26 +31,28 @@ import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.factories.GlobalComponentRegistry;
 import org.infinispan.loaders.remote.configuration.RemoteCacheStoreConfigurationBuilder;
 import org.infinispan.manager.EmbeddedCacheManager;
-import org.infinispan.server.core.CacheValue;
 import org.infinispan.server.hotrod.HotRodServer;
 import org.infinispan.test.AbstractInfinispanTest;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
-import org.infinispan.util.ByteArrayKey;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
-@Test(testName = "loaders.remote.RemoteCacheStoreMixedAccessTest", groups = "functional")
+import static org.infinispan.server.hotrod.test.HotRodTestingUtil.hotRodCacheConfiguration;
+import static org.testng.AssertJUnit.assertEquals;
+import static org.testng.AssertJUnit.assertFalse;
+
+@Test(testName = "cli.interpreter.UpgradeTest", groups = "functional")
 public class UpgradeTest extends AbstractInfinispanTest {
 
    private HotRodServer sourceServer;
    private HotRodServer targetServer;
    private EmbeddedCacheManager sourceContainer;
-   private Cache<ByteArrayKey, CacheValue> sourceServerCache;
+   private Cache<byte[], byte[]> sourceServerCache;
    private EmbeddedCacheManager targetContainer;
-   private Cache<ByteArrayKey, CacheValue> targetServerCache;
+   private Cache<byte[], byte[]> targetServerCache;
    private RemoteCacheManager sourceRemoteCacheManager;
    private RemoteCache<String, String> sourceRemoteCache;
    private RemoteCacheManager targetRemoteCacheManager;
@@ -61,23 +60,29 @@ public class UpgradeTest extends AbstractInfinispanTest {
 
    @BeforeClass
    public void setup() throws Exception {
-      ConfigurationBuilder serverBuilder = TestCacheManagerFactory.getDefaultCacheConfiguration(true);
+      ConfigurationBuilder serverBuilder = hotRodCacheConfiguration(
+            TestCacheManagerFactory.getDefaultCacheConfiguration(false));
       sourceContainer = TestCacheManagerFactory.createCacheManager(serverBuilder);
       sourceServerCache = sourceContainer.getCache();
       sourceServer = TestHelper.startHotRodServer(sourceContainer);
 
-      ConfigurationBuilder targetConfigurationBuilder = TestCacheManagerFactory.getDefaultCacheConfiguration(false);
+      ConfigurationBuilder targetConfigurationBuilder = hotRodCacheConfiguration(
+            TestCacheManagerFactory.getDefaultCacheConfiguration(false));
       targetConfigurationBuilder.loaders().addStore(RemoteCacheStoreConfigurationBuilder.class).hotRodWrapping(true).addServer().host("localhost").port(sourceServer.getPort());
 
       targetContainer = TestCacheManagerFactory.createCacheManager(targetConfigurationBuilder);
       targetServerCache = targetContainer.getCache();
       targetServer = TestHelper.startHotRodServer(targetContainer);
 
-      sourceRemoteCacheManager = new RemoteCacheManager("localhost", sourceServer.getPort());
+      sourceRemoteCacheManager = new RemoteCacheManager(
+            new org.infinispan.client.hotrod.configuration.ConfigurationBuilder()
+                  .addServers("localhost:" + sourceServer.getPort()).build());
       sourceRemoteCacheManager.start();
       sourceRemoteCache = sourceRemoteCacheManager.getCache();
 
-      targetRemoteCacheManager = new RemoteCacheManager("localhost", targetServer.getPort());
+      targetRemoteCacheManager = new RemoteCacheManager(
+            new org.infinispan.client.hotrod.configuration.ConfigurationBuilder()
+                  .addServers("localhost:" + sourceServer.getPort()).build());
       targetRemoteCacheManager.start();
       targetRemoteCache = targetRemoteCacheManager.getCache();
    }

@@ -28,10 +28,10 @@ import org.infinispan.container.versioning.EntryVersion;
 import java.util.concurrent.TimeUnit;
 
 /**
- * // TODO: Document this
+ * Metadata class for embedded caches.
  *
  * @author Galder Zamarreño
- * @since // TODO
+ * @since 5.3
  */
 public final class EmbeddedMetadata implements Metadata {
 

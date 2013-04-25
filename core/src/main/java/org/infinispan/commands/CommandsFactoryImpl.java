@@ -337,6 +337,9 @@ public class CommandsFactoryImpl implements CommandsFactory {
          case ReplaceCommand.COMMAND_ID:
             ((ReplaceCommand) c).init(notifier);
             break;
+         case VersionedReplaceCommand.COMMAND_ID:
+            ((VersionedReplaceCommand) c).init(notifier);
+            break;
          case PutMapCommand.COMMAND_ID:
             ((PutMapCommand) c).init(notifier);
             break;

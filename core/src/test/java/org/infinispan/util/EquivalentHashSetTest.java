@@ -35,10 +35,10 @@ import static org.testng.AssertJUnit.assertTrue;
 import static org.testng.AssertJUnit.assertEquals;
 
 /**
- * // TODO: Document this
+ * Tests that {@link EquivalentHashSet} is functionally correct.
  *
  * @author Galder Zamarreño
- * @since // TODO
+ * @since 5.3
  */
 @Test(groups = "functional", testName = "util.EquivalentHashSetTest")
 public class EquivalentHashSetTest {

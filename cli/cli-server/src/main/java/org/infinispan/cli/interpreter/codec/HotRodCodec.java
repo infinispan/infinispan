@@ -21,8 +21,6 @@ package org.infinispan.cli.interpreter.codec;
 import org.infinispan.cli.interpreter.logging.Log;
 import org.infinispan.marshall.Marshaller;
 import org.infinispan.marshall.jboss.GenericJBossMarshaller;
-import org.infinispan.server.core.CacheValue;
-import org.infinispan.util.ByteArrayKey;
 import org.infinispan.util.logging.LogFactory;
 
 /**
@@ -44,7 +42,7 @@ public class HotRodCodec implements Codec {
    public Object encodeKey(Object key) throws CodecException {
       if (key != null) {
          try {
-            return new ByteArrayKey(marshaller.objectToByteBuffer(key));
+            return marshaller.objectToByteBuffer(key);
          } catch (Exception e) {
             throw log.keyEncodingFailed(e, this.getName());
          }
@@ -57,7 +55,7 @@ public class HotRodCodec implements Codec {
    public Object encodeValue(Object value) throws CodecException {
       if (value != null) {
          try {
-            return new CacheValue(marshaller.objectToByteBuffer(value), 1);
+            return marshaller.objectToByteBuffer(value);
          } catch (Exception e) {
             throw log.valueEncodingFailed(e, this.getName());
          }
@@ -70,8 +68,7 @@ public class HotRodCodec implements Codec {
    public Object decodeKey(Object key) throws CodecException {
       if (key != null) {
          try {
-            ByteArrayKey byteKey = (ByteArrayKey) key;
-            return marshaller.objectFromByteBuffer(byteKey.getData());
+            return marshaller.objectFromByteBuffer((byte[]) key);
          } catch (Exception e) {
             throw log.keyDecodingFailed(e, this.getName());
          }
@@ -84,8 +81,7 @@ public class HotRodCodec implements Codec {
    public Object decodeValue(Object value) throws CodecException {
       if (value != null) {
          try {
-            CacheValue cv = (CacheValue) value;
-            return marshaller.objectFromByteBuffer(cv.data());
+            return marshaller.objectFromByteBuffer((byte[]) value);
          } catch (Exception e) {
             throw log.valueDecodingFailed(e, this.getName());
          }

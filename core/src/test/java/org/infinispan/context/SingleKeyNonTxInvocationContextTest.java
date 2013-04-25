@@ -9,7 +9,9 @@ import org.infinispan.interceptors.base.CommandInterceptor;
 import org.infinispan.test.MultipleCacheManagersTest;
 import org.testng.annotations.Test;
 
-/**                                                                                                              SingleKeyNonTxInvocationContextTest
+/**
+ * SingleKeyNonTxInvocationContextTest
+ *
  * @author Mircea Markus
  * @since 5.1
  */

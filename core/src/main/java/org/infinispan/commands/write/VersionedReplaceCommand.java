@@ -35,18 +35,16 @@ import java.util.Set;
 import static org.infinispan.util.Util.toStr;
 
 /**
- * // TODO: Document this
- *
  * // TODO: This is a temporary command which will go away in other 5.3 releases
  * // That is because commands should take entire metadata objects rather than individual bits (lifespan, maxIdle, version...)
  * // This is needed to support extra metadata from servers, i.e. MIME for Rest...etc
  *
  * @author Galder Zamarreño
- * @since // TODO
+ * @since 5.3
  */
 public class VersionedReplaceCommand extends ReplaceCommand {
 
-   public static final byte COMMAND_ID = 35;
+   public static final byte COMMAND_ID = 40;
 
    private EntryVersion version;
 

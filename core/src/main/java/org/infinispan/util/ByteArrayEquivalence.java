@@ -43,11 +43,10 @@ public enum ByteArrayEquivalence implements Equivalence<byte[]> {
    @Override
    public boolean equals(byte[] obj, Object otherObj) {
       if (obj == otherObj) return true;
-      if (obj == null || byte[].class != obj.getClass()) return false;
+      if (obj == null) return false;
       if (otherObj == null || byte[].class != otherObj.getClass()) return false;
-      byte[] byteArray = obj;
       byte[] otherByteArray = (byte[]) otherObj;
-      return Arrays.equals(byteArray, otherByteArray);
+      return Arrays.equals(obj, otherByteArray);
    }
 
    @Override

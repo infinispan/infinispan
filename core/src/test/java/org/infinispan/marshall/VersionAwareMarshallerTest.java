@@ -74,6 +74,7 @@ import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.infinispan.test.fwk.TestInternalCacheEntryFactory;
 import org.infinispan.transaction.xa.GlobalTransaction;
 import org.infinispan.transaction.xa.TransactionFactory;
+import org.infinispan.util.AnyEquivalence;
 import org.infinispan.util.ByteArrayKey;
 import org.infinispan.util.FastCopyHashMap;
 import org.infinispan.util.Immutables;
@@ -224,7 +225,8 @@ public class VersionAwareMarshallerTest extends AbstractInfinispanTest {
 
    public void testReplicableCommandsMarshalling() throws Exception {
       String cacheName = EmbeddedCacheManager.DEFAULT_CACHE_NAME;
-      ClusteredGetCommand c2 = new ClusteredGetCommand("key", cacheName, Collections.<Flag>emptySet(), false, null, null);
+      ClusteredGetCommand c2 = new ClusteredGetCommand("key", cacheName,
+            Collections.<Flag>emptySet(), false, null, AnyEquivalence.OBJECT);
       marshallAndAssertEquality(c2);
 
       // SizeCommand does not have an empty constructor, so doesn't look to be one that is marshallable.
@@ -335,7 +337,8 @@ public class VersionAwareMarshallerTest extends AbstractInfinispanTest {
 
    public void testMultiRpcCommand() throws Exception {
       String cacheName = EmbeddedCacheManager.DEFAULT_CACHE_NAME;
-      ClusteredGetCommand c2 = new ClusteredGetCommand("key", cacheName, Collections.<Flag>emptySet(), false, null, null);
+      ClusteredGetCommand c2 = new ClusteredGetCommand("key", cacheName,
+            Collections.<Flag>emptySet(), false, null, AnyEquivalence.OBJECT);
       PutKeyValueCommand c5 = new PutKeyValueCommand("k", "v", false, null, 0, 0, Collections.<Flag>emptySet());
       MultipleRpcCommand c99 = new MultipleRpcCommand(Arrays.<ReplicableCommand>asList(c2, c5), cacheName);
       marshallAndAssertEquality(c99);
