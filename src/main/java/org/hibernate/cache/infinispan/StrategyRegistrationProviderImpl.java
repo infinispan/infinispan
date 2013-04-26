@@ -26,9 +26,9 @@ package org.hibernate.cache.infinispan;
 import java.util.ArrayList;
 import java.util.List;
 
-import org.hibernate.boot.registry.selector.Availability;
-import org.hibernate.boot.registry.selector.AvailabilityAnnouncer;
-import org.hibernate.boot.registry.selector.SimpleAvailabilityImpl;
+import org.hibernate.boot.registry.selector.StrategyRegistration;
+import org.hibernate.boot.registry.selector.StrategyRegistrationProvider;
+import org.hibernate.boot.registry.selector.SimpleStrategyRegistrationImpl;
 import org.hibernate.cache.spi.RegionFactory;
 
 /**
@@ -37,13 +37,13 @@ import org.hibernate.cache.spi.RegionFactory;
  *
  * @author Steve Ebersole
  */
-public class AvailabilityAnnouncerImpl implements AvailabilityAnnouncer {
+public class StrategyRegistrationProviderImpl implements StrategyRegistrationProvider {
 	@Override
-	public Iterable<Availability> getAvailabilities() {
-		final List<Availability> availabilities = new ArrayList<Availability>();
+	public Iterable<StrategyRegistration> getStrategyRegistrations() {
+		final List<StrategyRegistration> strategyRegistrations = new ArrayList<StrategyRegistration>();
 
-		availabilities.add(
-				new SimpleAvailabilityImpl(
+		strategyRegistrations.add(
+				new SimpleStrategyRegistrationImpl(
 						RegionFactory.class,
 						InfinispanRegionFactory.class,
 						"infinispan",
@@ -51,8 +51,8 @@ public class AvailabilityAnnouncerImpl implements AvailabilityAnnouncer {
 				)
 		);
 
-		availabilities.add(
-				new SimpleAvailabilityImpl(
+		strategyRegistrations.add(
+				new SimpleStrategyRegistrationImpl(
 						RegionFactory.class,
 						JndiInfinispanRegionFactory.class,
 						"infinispan-jndi",
@@ -60,6 +60,6 @@ public class AvailabilityAnnouncerImpl implements AvailabilityAnnouncer {
 				)
 		);
 
-		return availabilities;
+		return strategyRegistrations;
 	}
 }
