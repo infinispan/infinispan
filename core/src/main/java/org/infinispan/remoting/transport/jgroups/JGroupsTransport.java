@@ -558,7 +558,7 @@ public class JGroupsTransport extends AbstractTransport implements MembershipLis
          SiteMaster recipient = new SiteMaster(xsb.getSiteName());
          if (xsb.isSync()) {
             RequestOptions sync = new RequestOptions(org.jgroups.blocks.ResponseMode.GET_ALL, xsb.getTimeout());
-            syncBackupCalls.put(xsb, dispatcher.sendMessageWithFuture(dispatcher.constructMessage(buf, recipient, false, org.jgroups.blocks.ResponseMode.GET_ALL, false), sync));
+            syncBackupCalls.put(xsb, dispatcher.sendMessageWithFuture(dispatcher.constructMessage(buf, recipient, true, org.jgroups.blocks.ResponseMode.GET_ALL, false), sync));
          } else {
             RequestOptions async = new RequestOptions(org.jgroups.blocks.ResponseMode.GET_NONE, xsb.getTimeout());
             dispatcher.sendMessage(dispatcher.constructMessage(buf, recipient, false, org.jgroups.blocks.ResponseMode.GET_NONE, false), async);
