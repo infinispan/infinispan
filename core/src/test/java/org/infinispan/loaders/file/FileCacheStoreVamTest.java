@@ -50,7 +50,7 @@ public class FileCacheStoreVamTest extends FileCacheStoreTest {
 
    @AfterTest(alwaysRun = true)
    public void destroy() {
-      cm.stop();
+      if (cm != null) cm.stop();
    }
 
 }

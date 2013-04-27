@@ -83,7 +83,7 @@ public class MultiPojoVersionMarshallTest extends AbstractInfinispanTest {
 
    @AfterTest(alwaysRun = true)
    public void tearDown() {
-      cm.stop();
+      if (cm != null) cm.stop();
    }
 
    public void testAddIntFieldDiffIspnExternalizer() throws Exception {

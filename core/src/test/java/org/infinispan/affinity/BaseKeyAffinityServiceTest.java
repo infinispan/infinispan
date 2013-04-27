@@ -58,8 +58,8 @@ public abstract class BaseKeyAffinityServiceTest extends BaseDistFunctionalTest 
 
    @AfterTest(alwaysRun = true)
    public void stopExecutorService() throws InterruptedException {
-      keyAffinityService.stop();
-      executor.shutdown();
+      if (keyAffinityService != null) keyAffinityService.stop();
+      if (executor != null) executor.shutdown();
       boolean terminatedGracefully = executor.awaitTermination(100, TimeUnit.MILLISECONDS);
       if (!terminatedGracefully) {
          executor.shutdownNow();

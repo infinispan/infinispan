@@ -82,10 +82,12 @@ public class ConcurrentStartupTest extends AbstractCacheTest {
 
    @AfterTest(alwaysRun = true)
    protected void tearDown() throws Exception {
-      ex1.shutdownNow();
-      ex2.shutdownNow();
-      keyAffinityService1.stop();
-      keyAffinityService2.stop();
+      if (ex1 != null)
+         ex1.shutdownNow();
+      if (ex2 != null)
+         ex2.shutdownNow();
+      if (keyAffinityService1 != null)  keyAffinityService1.stop();
+      if (keyAffinityService2 != null) keyAffinityService2.stop();
       TestingUtil.killCacheManagers(manager1, manager2);
    }
 

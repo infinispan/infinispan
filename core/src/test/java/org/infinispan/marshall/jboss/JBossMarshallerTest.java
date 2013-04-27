@@ -67,7 +67,7 @@ public class JBossMarshallerTest extends AbstractInfinispanTest {
 
    @AfterTest(alwaysRun = true)
    public void tearDown() {
-      cm.stop();
+      if (cm != null) cm.stop();
    }
    
    public void testInternalDuplicateExternalizerId() throws Exception {
