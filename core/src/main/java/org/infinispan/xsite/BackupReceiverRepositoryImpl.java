@@ -138,6 +138,29 @@ public class BackupReceiverRepositoryImpl implements BackupReceiverRepository {
       public final String remoteCache;
       public String localCacheName;
 
+      /**
+       * Important: do not include the localCacheName field in the equals and hash code comparison. This is mainly used
+       * as a key in a map and the localCacheName field might change causing troubles.
+       */
+      @Override
+      public boolean equals(Object o) {
+         if (this == o) return true;
+         if (!(o instanceof SiteCachePair)) return false;
+
+         SiteCachePair that = (SiteCachePair) o;
+
+         if (remoteCache != null ? !remoteCache.equals(that.remoteCache) : that.remoteCache != null) return false;
+         if (remoteSite != null ? !remoteSite.equals(that.remoteSite) : that.remoteSite != null) return false;
+
+         return true;
+      }
+
+      @Override
+      public int hashCode() {
+         int result = remoteSite != null ? remoteSite.hashCode() : 0;
+         result = 31 * result + (remoteCache != null ? remoteCache.hashCode() : 0);
+         return result;
+      }
 
       SiteCachePair(String remoteCache, String remoteSite) {
          this.remoteCache = remoteCache;
