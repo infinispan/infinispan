@@ -22,6 +22,7 @@ import java.io.IOException;
 
 import org.fusesource.jansi.Ansi;
 import org.jboss.aesh.console.Console;
+import org.jboss.aesh.console.Prompt;
 
 public class ConsoleIOAdapter implements IOAdapter {
    private final Console console;
@@ -42,7 +43,7 @@ public class ConsoleIOAdapter implements IOAdapter {
 
    @Override
    public String secureReadln(String prompt) throws IOException {
-      return console.read(prompt, (char) 0).getBuffer();
+      return console.read(new Prompt(prompt), (char) 0).getBuffer();
    }
 
    @Override
@@ -60,7 +61,7 @@ public class ConsoleIOAdapter implements IOAdapter {
 
    @Override
    public int getWidth() {
-      return console.getTerminalWidth();
+      return console.getTerminalSize().getWidth();
    }
 
    @Override
