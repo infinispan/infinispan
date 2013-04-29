@@ -29,6 +29,8 @@ import org.infinispan.eviction.EvictionStrategy;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.infinispan.util.concurrent.BoundedConcurrentHashMap;
+import org.infinispan.util.logging.Log;
+import org.infinispan.util.logging.LogFactory;
 import org.testng.annotations.*;
 
 import java.util.*;
@@ -47,6 +49,8 @@ import static java.lang.Math.sqrt;
  */
 @Test(testName = "stress.MapStressTest", groups = "stress", enabled = false, description = "Disabled by default, designed to be run manually.")
 public class MapStressTest {
+   private static Log log = LogFactory.getLog(MapStressTest.class);
+
    static final float MAP_LOAD_FACTOR = 0.75f;
    static final int LOOP_FACTOR = 10;
    static final long RUNNING_TIME = Integer.getInteger("time", 1) * 60 * 1000;
@@ -58,8 +62,8 @@ public class MapStressTest {
    private List<String> keys = new ArrayList<String>();
 
    public MapStressTest() {
-      System.out.printf("\nMapStressTest configuration: capacity %d, test running time %d seconds\n",
-            CAPACITY, RUNNING_TIME/1000);
+      log.tracef("\nMapStressTest configuration: capacity %d, test running time %d seconds\n",
+                        CAPACITY, RUNNING_TIME / 1000);
    }
 
 

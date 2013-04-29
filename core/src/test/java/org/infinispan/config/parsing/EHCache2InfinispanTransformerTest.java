@@ -74,8 +74,6 @@ public class EHCache2InfinispanTransformerTest extends AbstractInfinispanTest {
          ByteArrayOutputStream baos = new ByteArrayOutputStream();
          convertor.parse(fileName, baos, ConfigFilesConvertor.TRANSFORMATIONS.get(ConfigFilesConvertor.EHCACHE_CACHE1X), Thread.currentThread().getContextClassLoader());
 
-         //System.out.println("Output file is:\n" + baos.toString());
-
          dcm = (DefaultCacheManager) TestCacheManagerFactory.fromStream(new ByteArrayInputStream(baos.toByteArray()));
          Cache<Object,Object> defaultCache = dcm.getCache();
          defaultCache.put("key", "value");

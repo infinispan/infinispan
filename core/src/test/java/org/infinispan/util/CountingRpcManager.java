@@ -71,7 +71,6 @@ public class CountingRpcManager implements RpcManager {
    }
 
    protected void aboutToInvokeRpc(ReplicableCommand rpcCommand) {
-      System.out.println("rpcCommand = " + rpcCommand);
       if (rpcCommand instanceof LockControlCommand) {
          lockCount++;
       } else if (rpcCommand instanceof ClusteredGetCommand) {

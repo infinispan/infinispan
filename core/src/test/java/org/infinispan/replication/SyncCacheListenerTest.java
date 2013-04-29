@@ -155,7 +155,7 @@ public class SyncCacheListenerTest extends MultipleCacheManagersTest {
       tm.commit();
       assertNotNull("age on cache1 must be not be null", cache1.get("age"));
 
-      System.out.println("  ********************** ");
+      log.trace("  ********************** ");
       // value on cache2 must be 38
       age = (Integer) cache2.get("age");
       assertNotNull("\"age\" obtained from cache2 must be non-null ", age);
@@ -217,7 +217,7 @@ public class SyncCacheListenerTest extends MultipleCacheManagersTest {
       @CacheEntryRemoved
       @CacheEntryModified
       public void callback(TransactionalEvent e) {
-         System.out.println("Callback got event " + e);
+         log.trace("Callback got event " + e);
          log.debug("Callback got event " + e);
          assertFalse("entry was removed on remote cache so isLocal should be false", e.isOriginLocal());
       }

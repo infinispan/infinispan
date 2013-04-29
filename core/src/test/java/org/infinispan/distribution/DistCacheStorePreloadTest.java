@@ -55,7 +55,7 @@ public class DistCacheStorePreloadTest extends BaseDistCacheStoreTest {
    @AfterMethod(alwaysRun = true)
    public void clearStats() {
       for (Cache<?, ?> c: caches) {
-         System.out.println("Clearing stats for cache store on cache "+ c);
+         log.trace("Clearing stats for cache store on cache "+ c);
          DummyInMemoryCacheStore cs = (DummyInMemoryCacheStore) TestingUtil.extractComponent(c, CacheLoaderManager.class).getCacheStore();
          cs.clear();
          cs.clearStats();

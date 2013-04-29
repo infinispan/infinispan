@@ -116,7 +116,7 @@ public class StaleLockAfterTxAbortTest extends SingleCacheManagerTest {
             // Now start a new tx.
             tm.begin();
             tx = tm.getTransaction();
-            System.out.println("Started transaction " + tx);
+            log.trace("Started transaction " + tx);
             txStartedLatch.countDown();
             cache.put(k, "v2"); // this should block.
          } catch (Exception e) {

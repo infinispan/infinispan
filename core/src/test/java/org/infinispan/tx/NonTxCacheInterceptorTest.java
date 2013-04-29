@@ -46,7 +46,7 @@ public class NonTxCacheInterceptorTest extends SingleCacheManagerTest {
 
    public void testNoTxInterceptor() {
       final List<CommandInterceptor> interceptorChain = cache.getAdvancedCache().getInterceptorChain();
-      System.out.println(interceptorChain);
+      log.trace(interceptorChain);
       for (CommandInterceptor ci : interceptorChain) {
          assert !ci.getClass().equals(TxInterceptor.class);
       }

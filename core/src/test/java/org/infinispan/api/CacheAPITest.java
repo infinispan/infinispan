@@ -207,7 +207,7 @@ public abstract class CacheAPITest extends APINonTxTest {
       assert cache.get(key2).equals(value2);
       assert cache.keySet().contains(key2);
       size = 2;
-      System.out.println(cache.size());
+      log.trace(cache.size());
       assert size == cache.size();
       assert size == cache.keySet().size();
       assert size == cache.values().size();
