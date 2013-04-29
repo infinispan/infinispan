@@ -139,12 +139,12 @@ public class DeltaAwareCacheEntry implements CacheEntry, StateChangingEntry {
 
    @Override
    public final long getLifespan() {
-      return 0;
+      return -1;  // forever
    }
 
    @Override
    public final long getMaxIdle() {
-      return 0;
+      return -1;  // forever
    }
 
    @Override
