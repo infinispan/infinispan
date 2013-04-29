@@ -22,8 +22,6 @@
  */
 package org.infinispan.executors;
 
-import org.infinispan.configuration.global.GlobalConfiguration;
-import org.infinispan.factories.annotations.Inject;
 import org.infinispan.util.TypedProperties;
 
 import java.util.Properties;
