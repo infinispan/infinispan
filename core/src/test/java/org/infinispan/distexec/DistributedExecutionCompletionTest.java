@@ -25,6 +25,8 @@ package org.infinispan.distexec;
 import org.infinispan.Cache;
 import org.infinispan.distribution.BaseDistFunctionalTest;
 import org.infinispan.util.concurrent.NotifyingFuture;
+import org.infinispan.util.logging.Log;
+import org.infinispan.util.logging.LogFactory;
 import org.testng.AssertJUnit;
 import org.testng.annotations.Test;
 
@@ -44,6 +46,8 @@ import java.util.concurrent.TimeUnit;
  */
 @Test(groups = "functional", testName = "distexec.DistributedExecutionCompletionTest")
 public class DistributedExecutionCompletionTest extends BaseDistFunctionalTest {
+
+   private static Log log = LogFactory.getLog(DistributedExecutionCompletionTest.class);
 
    public DistributedExecutionCompletionTest() {
    }
@@ -297,7 +301,7 @@ public class DistributedExecutionCompletionTest extends BaseDistFunctionalTest {
 
       @Override
       public void run() {
-         System.out.println("This is a runnable!");
+         log.trace("This is a runnable!");
       }
    }
 }

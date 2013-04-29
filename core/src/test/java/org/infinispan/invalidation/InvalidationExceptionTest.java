@@ -82,7 +82,7 @@ public class InvalidationExceptionTest extends MultipleCacheManagersTest {
          if (runtime instanceof NotSerializableException
                   || t instanceof NotSerializableException
                   || t.getCause() instanceof NotSerializableException) {
-            System.out.println("received NotSerializableException - as expected");
+            log.trace("received NotSerializableException - as expected");
          } else {
             throw runtime;
          }

@@ -67,14 +67,14 @@ public class ConcurrentStartupTest extends AbstractCacheTest {
       cache1 = manager1.getCache("test").getAdvancedCache();
       ex1 = Executors.newSingleThreadExecutor();
       keyAffinityService1 = KeyAffinityServiceFactory.newLocalKeyAffinityService(cache1, new RndKeyGenerator(), ex1, KEY_QUEUE_SIZE);
-      System.out.println("Address for manager1: " + manager1.getAddress());
+      log.trace("Address for manager1: " + manager1.getAddress());
 
       manager2 = TestCacheManagerFactory.createClusteredCacheManager(configurationBuilder);
       manager2.defineConfiguration("test", configurationBuilder.build());
       cache2 = manager2.getCache("test").getAdvancedCache();
       ex2 = Executors.newSingleThreadExecutor();
       keyAffinityService2 = KeyAffinityServiceFactory.newLocalKeyAffinityService(cache2, new RndKeyGenerator(), ex2, KEY_QUEUE_SIZE);
-      System.out.println("Address for manager2: " + manager2.getAddress());
+      log.trace("Address for manager2: " + manager2.getAddress());
 
       TestingUtil.blockUntilViewsReceived(60000, cache1, cache2);
       Thread.sleep(5000);
@@ -92,12 +92,12 @@ public class ConcurrentStartupTest extends AbstractCacheTest {
    }
 
    public void testKeyAffinityServiceFails() {
-      System.out.println("Test keys for cache2.");
+      log.trace("Test keys for cache2.");
       for (int i = 0; i < KEY_QUEUE_SIZE; i++) {
          Object keyForAddress = keyAffinityService2.getKeyForAddress(manager2.getAddress());
          assertTrue(cache1.getDistributionManager().locate(keyForAddress).contains(manager2.getAddress()));
       }
-      System.out.println("Test keys for cache1.");
+      log.trace("Test keys for cache1.");
       for (int i = 0; i < KEY_QUEUE_SIZE; i++) {
          Object keyForAddress = keyAffinityService1.getKeyForAddress(manager1.getAddress());
          List<Address> locate = cache1.getDistributionManager().locate(keyForAddress);

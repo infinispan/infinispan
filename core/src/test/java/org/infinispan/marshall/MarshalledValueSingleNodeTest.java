@@ -49,7 +49,7 @@ public class MarshalledValueSingleNodeTest extends SingleCacheManagerTest {
          assert false : "Should have failed";
       }
       catch (CacheException expected) {
-         System.out.println("");
+         log.trace("");
       }
 
       try {

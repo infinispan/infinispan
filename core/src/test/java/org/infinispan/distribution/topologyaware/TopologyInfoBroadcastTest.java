@@ -83,7 +83,7 @@ public class TopologyInfoBroadcastTest extends MultipleCacheManagersTest {
 //      assert advancedCache(2).getDistributionManager().getConsistentHash() instanceof TopologyAwareConsistentHash;
 
       DistributionManagerImpl dmi = (DistributionManagerImpl) advancedCache(0).getDistributionManager();
-      System.out.println("distributionManager.ConsistentHash() = " + dmi.getConsistentHash());
+      log.trace("distributionManager.ConsistentHash() = " + dmi.getConsistentHash());
       assertTopologyInfo3Nodes(dmi.getConsistentHash().getMembers());
       dmi = (DistributionManagerImpl) advancedCache(1).getDistributionManager();
       assertTopologyInfo3Nodes(dmi.getConsistentHash().getMembers());

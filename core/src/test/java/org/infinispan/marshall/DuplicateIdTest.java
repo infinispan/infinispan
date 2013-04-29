@@ -53,6 +53,6 @@ public class DuplicateIdTest extends AbstractInfinispanTest {
          largest = Math.max(largest, e.getKey());
       }
 
-      System.out.println("Next available ID is " + (largest + 1));
+      log.trace("Next available ID is " + (largest + 1));
    }
 }

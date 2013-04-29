@@ -234,7 +234,6 @@ public class SimpleTwoNodesMapReduceTest extends BaseWordCountMapReduceTest {
 
       Pattern p = Pattern.compile("MapReduceTask \\[mapper=\\S+, reducer=\\S+, combiner=\\S*, keys=\\S*, taskId=\\S+\\]");
       Matcher m = p.matcher(task1.toString());
-      System.out.println(task1.toString());
       assert m.find();
    }
 

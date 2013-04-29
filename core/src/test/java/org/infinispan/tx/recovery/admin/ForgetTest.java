@@ -76,8 +76,7 @@ public class ForgetTest extends AbstractRecoveryTest {
 
    public void testInternalIdOnSameNode() throws Exception {
       Xid xid = tx.getXid();
-      String result = recoveryOps(0).forget(xid.getFormatId(), xid.getGlobalTransactionId(), xid.getBranchQualifier());
-      System.out.println("result = " + result);
+      recoveryOps(0).forget(xid.getFormatId(), xid.getGlobalTransactionId(), xid.getBranchQualifier());
       assertEquals(tt(1).getRemoteTxCount(), 0);//make sure tx has been removed
    }
 

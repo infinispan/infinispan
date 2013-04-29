@@ -113,7 +113,6 @@ public class RecoveryWithDefaultCacheDistTest extends MultipleCacheManagersTest 
          @Override
          public boolean isSatisfied() throws Exception {
             final Set<RecoveryManager.InDoubtTxInfo> inDoubt = rm(cache(0)).getInDoubtTransactionInfo();
-            System.out.println("inDoubt = " + inDoubt);
             return inDoubt.size() == 0;
          }
       });

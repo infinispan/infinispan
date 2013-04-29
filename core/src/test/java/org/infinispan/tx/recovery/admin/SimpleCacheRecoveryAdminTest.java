@@ -138,7 +138,6 @@ public class SimpleCacheRecoveryAdminTest extends AbstractRecoveryTest {
       log.tracef("test:: invoke rollback for %s", ids);
       String result = invokeForceWithId("forceRollback", 0, ids.get(0));
 
-      System.out.println("result = " + result);
       checkResponse(result, 0);
 
       assert invokeForceWithId("forceRollback", 0, ids.get(0)).contains("Transaction not found");
@@ -146,7 +145,6 @@ public class SimpleCacheRecoveryAdminTest extends AbstractRecoveryTest {
 
    public void testForceRollbackXid() {
       String s = invokeForceWithXid("forceRollback", 0, tx1.getXid());
-      System.out.println("s = " + s);
       checkResponse(s, 0);
 
       //try again

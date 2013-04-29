@@ -108,7 +108,6 @@ public class CommitFailsTest extends AbstractRecoveryTest {
 
    public void testForceCommitNonTxParticipant() {
       int where = getTxParticipant(false);
-      System.out.println("where = " + where);
       runTest(where);
    }
 

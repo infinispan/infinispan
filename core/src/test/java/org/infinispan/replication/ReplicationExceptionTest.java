@@ -130,7 +130,7 @@ public class ReplicationExceptionTest extends MultipleCacheManagersTest {
          if (runtime instanceof NotSerializableException
                   || t instanceof NotSerializableException
                   || t.getCause() instanceof NotSerializableException) {
-            System.out.println("received NotSerializableException - as expected");
+            log.trace("received NotSerializableException - as expected");
          } else {
             throw runtime;
          }
@@ -150,7 +150,7 @@ public class ReplicationExceptionTest extends MultipleCacheManagersTest {
          // We should not come here.
          assertNotNull("NonSerializableData should not be null on cache2", cache2.get("test"));
       } catch (RollbackException rollback) {
-         System.out.println("received RollbackException - as expected");
+         log.trace("received RollbackException - as expected");
       } catch (Exception e) {
          // We should also examine that it is indeed throwing a NonSerilaizable exception.
          fail(e.toString());

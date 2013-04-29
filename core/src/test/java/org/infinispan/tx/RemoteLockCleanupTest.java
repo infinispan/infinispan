@@ -118,11 +118,7 @@ public class RemoteLockCleanupTest extends MultipleCacheManagersTest {
 
       @Override
       public Object visitRollbackCommand(TxInvocationContext ctx, RollbackCommand command) throws Throwable {
-         try {
-            return super.visitRollbackCommand(ctx, command);
-         } finally {
-            System.out.println("RemoteLockCleanupTest$DelayInterceptor.visitRollbackCommand");
-         }
+         return super.visitRollbackCommand(ctx, command);
       }
    }
 }

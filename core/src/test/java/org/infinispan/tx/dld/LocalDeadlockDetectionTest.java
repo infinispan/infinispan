@@ -113,11 +113,11 @@ public class LocalDeadlockDetectionTest extends SingleCacheManagerTest {
       testLocalVsLocalTxDeadlock(PerCacheExecutorThread.Operations.REMOVE_KEY,
                                  PerCacheExecutorThread.Operations.PUT_KEY_VALUE);
       if (response1 instanceof Exception) {
-         System.out.println("t1 failure");
+         log.trace("t1 failure");
          assertEquals(cache.get("k1"), "value_1_t2");
          assertEquals(cache.get("k2"), null);
       } else {
-         System.out.println("t2 failure");
+         log.trace("t2 failure");
          assertEquals(cache.get("k1"), null);
          assertEquals(cache.get("k2"), "value_2_t1");
       }
@@ -127,11 +127,11 @@ public class LocalDeadlockDetectionTest extends SingleCacheManagerTest {
       testLocalVsLocalTxDeadlock(PerCacheExecutorThread.Operations.REMOVE_KEY,
                                  PerCacheExecutorThread.Operations.REMOVE_KEY);
       if (response1 instanceof Exception) {
-         System.out.println("t1 failure");
+         log.tracef("t1 failure");
          assertEquals(cache.get("k1"), null);
          assertEquals(cache.get("k2"), null);
       } else {
-         System.out.println("t2 failure");
+         log.tracef("t2 failure");
          assertEquals(cache.get("k1"), null);
          assertEquals(cache.get("k2"), null);
       }
@@ -145,11 +145,11 @@ public class LocalDeadlockDetectionTest extends SingleCacheManagerTest {
       testLocalVsLocalTxDeadlock(PerCacheExecutorThread.Operations.PUT_KEY_VALUE,
                                  PerCacheExecutorThread.Operations.REPLACE_KEY_VALUE);
       if (response1 instanceof Exception) {
-         System.out.println("t1 failure");
+         log.tracef("t1 failure");
          assertEquals(cache.get("k1"), "value_1_t2");
          assertEquals(cache.get("k2"), "value_2_t2");
       } else {
-         System.out.println("t2 failure");
+         log.tracef("t2 failure");
          assertEquals(cache.get("k1"), "value_1_t1");
          assertEquals(cache.get("k2"), "value_2_t1");
       }
@@ -163,11 +163,11 @@ public class LocalDeadlockDetectionTest extends SingleCacheManagerTest {
       testLocalVsLocalTxDeadlock(PerCacheExecutorThread.Operations.REPLACE_KEY_VALUE,
                                  PerCacheExecutorThread.Operations.PUT_KEY_VALUE);
       if (response1 instanceof Exception) {
-         System.out.println("t1 failure");
+         log.tracef("t1 failure");
          assertEquals(cache.get("k1"), "value_1_t2");
          assertEquals(cache.get("k2"), "value_2_t2");
       } else {
-         System.out.println("t2 failure");
+         log.tracef("t2 failure");
          assertEquals(cache.get("k1"), "value_1_t1");
          assertEquals(cache.get("k2"), "value_2_t1");
       }

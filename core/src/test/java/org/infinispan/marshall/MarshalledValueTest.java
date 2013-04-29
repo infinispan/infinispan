@@ -166,7 +166,7 @@ public class MarshalledValueTest extends MultipleCacheManagersTest {
       
       assert cache1.isEmpty();
       Pojo value = new Pojo();
-      System.out.println(TestingUtil.extractComponent(cache1, InterceptorChain.class).toString());
+      log.trace(TestingUtil.extractComponent(cache1, InterceptorChain.class).toString());
       cache1.put("key", value);
       assert cache1.containsKey("key");
       assertSerializationCounts(1, 0);
