@@ -28,7 +28,10 @@ import org.infinispan.commands.CancellationService;
 import org.infinispan.commands.CommandsFactory;
 import org.infinispan.commands.remote.CacheRpcCommand;
 import org.infinispan.commands.tx.PrepareCommand;
+import org.infinispan.commands.tx.totalorder.TotalOrderCommitCommand;
 import org.infinispan.commands.tx.totalorder.TotalOrderPrepareCommand;
+import org.infinispan.commands.tx.totalorder.TotalOrderRollbackCommand;
+import org.infinispan.commands.tx.totalorder.TotalOrderVersionedCommitCommand;
 import org.infinispan.configuration.global.GlobalConfiguration;
 import org.infinispan.factories.ComponentRegistry;
 import org.infinispan.factories.GlobalComponentRegistry;
@@ -173,11 +176,12 @@ public class InboundInvocationHandlerImpl implements InboundInvocationHandler {
                   log.exceptionHandlingCommand(cmd, throwable);
                   resp = new ExceptionResponse(new CacheException("Problems invoking command.", throwable));
                }
+               //the ResponseGenerated is null in this case because the return value is a Response
+               reply(response, resp);
                if (resp instanceof ExceptionResponse) {
                   totalOrderManager.release(state);
                }
-               //the ResponseGenerated is null in this case because the return value is a Response
-               reply(response, resp);
+               afterResponseSent(cmd, resp);
             }
          });
          return;
@@ -193,6 +197,7 @@ public class InboundInvocationHandlerImpl implements InboundInvocationHandler {
                   resp = new ExceptionResponse(new CacheException("Problems invoking command.", throwable));
                }
                reply(response, resp);
+               afterResponseSent(cmd, resp);
             }
          });
          return;
@@ -205,11 +210,28 @@ public class InboundInvocationHandlerImpl implements InboundInvocationHandler {
          log.tracef("Unable to execute command, got invalid response %s", resp);
       }
       reply(response, resp);
+      afterResponseSent(cmd, resp);
    }
    
    private void reply(org.jgroups.blocks.Response response, Object retVal) {
       if (response != null) {
          response.send(retVal, false);
+      }
+   }
+
+   /**
+    * invoked after the {@link Response} is sent back to the originator.
+    *
+    * @param command the remote command
+    * @param resp    the response sent
+    */
+   private void afterResponseSent(CacheRpcCommand command, Response resp) {
+      if (command instanceof TotalOrderCommitCommand ||
+            command instanceof TotalOrderVersionedCommitCommand ||
+            command instanceof TotalOrderRollbackCommand ||
+            (command instanceof TotalOrderPrepareCommand &&
+                   (((PrepareCommand) command).isOnePhaseCommit() || resp instanceof ExceptionResponse))) {
+         totalOrderExecutorService.checkForReadyTasks();
       }
    }
 

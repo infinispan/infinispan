@@ -153,7 +153,6 @@ public class TotalOrderManager {
                     lockedKeys == null ? "[ClearCommand]" : lockedKeys);
       }
       state.reset();
-      totalOrderExecutor.checkForReadyTasks();
    }
 
    /**
