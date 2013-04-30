@@ -101,4 +101,12 @@ public class AggregateBackupResponse implements BackupResponse {
    public int hashCode() {
       return responses != null ? responses.hashCode() : 0;
    }
+
+   @Override
+   public boolean isEmpty() {
+      for (BackupResponse br : responses) {
+         if (!br.isEmpty()) return false;
+      }
+      return true;
+   }
 }

@@ -44,4 +44,6 @@ public interface BackupResponse {
     * Return the time in millis when this operation was initiated.
     */
    long getSendTimeMillis();
+
+   boolean isEmpty();
 }
