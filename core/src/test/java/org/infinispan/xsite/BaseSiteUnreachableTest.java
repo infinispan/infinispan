@@ -43,13 +43,13 @@ public abstract class BaseSiteUnreachableTest extends AbstractXSiteTest {
             .site().localSite("LON");
       ConfigurationBuilder lon = getLonActiveConfig();
       lon.sites().addBackup()
-            .site("NYC")
-            .backupFailurePolicy(lonBackupFailurePolicy)
-            .replicationTimeout(100) //keep it small so that the test doesn't take long to run
-            .takeOffline().afterFailures(failures).
+               .site("NYC")
+               .backupFailurePolicy(lonBackupFailurePolicy)
+               .replicationTimeout(100) //keep it small so that the test doesn't take long to run
+               .takeOffline().afterFailures(failures).
             backup()
-            .strategy(lonBackupStrategy)
-            .failurePolicyClass(lonCustomFailurePolicyClass);
+               .strategy(lonBackupStrategy)
+               .failurePolicyClass(lonCustomFailurePolicyClass);
       lon.sites().addInUseBackupSite("NYC");
 
       createSite("LON", 2, lonGc, lon);

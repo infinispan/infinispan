@@ -104,8 +104,6 @@ public abstract class BaseDldPessimisticLockingTest extends MultipleCacheManager
 
       Object txOutcome1 = ex0.execute(PerCacheExecutorThread.Operations.COMMIT_TX);
       Object txOutcome2 = ex1.execute(PerCacheExecutorThread.Operations.COMMIT_TX);
-      System.out.println("txOutcome2 = " + txOutcome1);
-      System.out.println("txOutcome2 = " + txOutcome2);
       assert xor(txOutcome1 == PerCacheExecutorThread.OperationsResult.COMMIT_TX_OK, txOutcome2 == PerCacheExecutorThread.OperationsResult.COMMIT_TX_OK);
       assert xor(txOutcome1 instanceof RollbackException, txOutcome2 instanceof RollbackException);
 

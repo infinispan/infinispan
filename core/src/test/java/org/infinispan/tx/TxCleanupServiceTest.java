@@ -123,7 +123,6 @@ public class TxCleanupServiceTest extends MultipleCacheManagersTest {
       }
 
       log.tracef("Number of migrated tx is %s", migratedTx.size());
-//      System.out.println("Number of migrated tx is " + migratedTx.size());
       if (migratedTx.size() == 0) return;
 
       eventually(new Condition() {

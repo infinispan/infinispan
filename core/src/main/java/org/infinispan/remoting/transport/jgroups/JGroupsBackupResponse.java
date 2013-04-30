@@ -124,6 +124,11 @@ public class JGroupsBackupResponse implements BackupResponse {
    }
 
    @Override
+   public boolean isEmpty() {
+      return syncBackupCalls == null || syncBackupCalls.isEmpty();
+   }
+
+   @Override
    public Map<String, Throwable> getFailedBackups() {
       return errors;
    }

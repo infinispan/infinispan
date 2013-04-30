@@ -49,7 +49,6 @@ public class PessimisticReplTxTest extends AbstractClusteredTxTest {
       final ConfigurationBuilder conf = buildConfiguration();
       createCluster(conf, 2);
       waitForClusterToForm();
-      System.out.println("PessimisticReplTxTest.createCacheManagers");
    }
 
    protected ConfigurationBuilder buildConfiguration() {

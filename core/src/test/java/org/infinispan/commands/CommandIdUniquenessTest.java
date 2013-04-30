@@ -58,15 +58,5 @@ public class CommandIdUniquenessTest extends AbstractInfinispanTest {
             cmdIds.put(b, c.getSimpleName());
          }
       }
-
-      // TODO Move the command ids to a single file so we can see gaps without actually enforcing it
-      // check for gaps.  First ID should be 1.
-//      int i = 0;
-//      for (Map.Entry<Byte, String> e : cmdIds.entrySet()) {
-//         i++;
-//         assert e.getKey() == i : "Expected ID " + i + " for command " + e.getValue() + " but was " + e.getKey();
-//      }
-//
-//      System.out.println("Next available ID is " + (i + 1));
    }
 }

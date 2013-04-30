@@ -159,7 +159,7 @@ public class LocalDistributedExecutorTest extends MultipleCacheManagersTest {
       des.execute(new Runnable() {
          @Override
          public void run() {
-            System.out.println("Non Serializable Runnable");
+            log.trace("Non Serializable Runnable");
          }
       });
    }
@@ -631,8 +631,6 @@ public class LocalDistributedExecutorTest extends MultipleCacheManagersTest {
 
       @Override
       public void run() {
-         System.out.println("I am a boring runnable!" );
-
          if(uuid != null) {
             AtomicInteger counter = counterMap.get(uuid);
             if(counter == null) {

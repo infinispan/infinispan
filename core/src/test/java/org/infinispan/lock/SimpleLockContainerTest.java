@@ -55,7 +55,7 @@ public class SimpleLockContainerTest extends AbstractInfinispanTest {
             for (int i =0; i < 10; i++) {
                try {
                   final OwnableReentrantLock ownableReentrantLock = lc.acquireLock(otherOwner, k2, 500, TimeUnit.MILLISECONDS);
-                  System.out.println("ownableReentrantLock = " + ownableReentrantLock);
+                  log.trace("ownableReentrantLock = " + ownableReentrantLock);
                   if (ownableReentrantLock != null) return;
                } catch (InterruptedException e) {
                   e.printStackTrace();
