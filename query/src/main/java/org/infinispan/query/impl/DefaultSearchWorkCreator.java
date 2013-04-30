@@ -29,16 +29,17 @@ import java.util.Collections;
 /**
  * @author Marko Luksa
  */
-public class DefaultSearchWorkCreator implements SearchWorkCreator {
+public class DefaultSearchWorkCreator<T> implements SearchWorkCreator<T> {
 
    @Override
-   public Collection<Work<Object>> createWorks(Object value, Serializable id, WorkType workType) {
-      Work<Object> work;
-      if (workType == WorkType.PURGE_ALL) {
-         work = new Work<Object>((Class<Object>) value, id, workType);
-      } else {
-         work = new Work<Object>(value, id, workType);
-      }
+   public Collection<Work<T>> createPerEntityTypeWorks(Class<T> entityType, WorkType workType) {
+      Work<T> work = new Work<T>(entityType, null, workType);
+      return Collections.singleton(work);
+   }
+
+   @Override
+   public Collection<Work<T>> createPerEntityWorks(T entity, Serializable id, WorkType workType) {
+      Work<T> work = new Work<T>(entity, id, workType);
       return Collections.singleton(work);
    }
 }

@@ -25,11 +25,27 @@ import java.io.Serializable;
 import java.util.Collection;
 
 /**
- * Creates Hibernate-Search Work instances.
+ * Creates collections of Work instances that should be performed by Hibernate-Search.
  *
  * @author Marko Luksa
  */
-public interface SearchWorkCreator {
+public interface SearchWorkCreator<T> {
 
-   Collection<Work<Object>> createWorks(Object value, Serializable id, WorkType workType);
+   /**
+    * Creates a collection of Work instances that Hibernate-Search should perform for all the entities of the given
+    * entity type.
+    * @param entityType the entity type that these Works should be created for
+    * @param workType the type of work to be done
+    * @return collection of Work instances
+    */
+   Collection<Work<T>> createPerEntityTypeWorks(Class<T> entityType, WorkType workType);
+
+   /**
+    * Creates a collection of Work instances that Hibernate-Search should perform for the given entity
+    * @param entity the entity that these Works should be created for
+    * @param id the id of the document
+    * @param workType the type of work to be done
+    * @return collection of Work instances
+    */
+   Collection<Work<T>> createPerEntityWorks(T entity, Serializable id, WorkType workType);
 }

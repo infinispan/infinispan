@@ -24,6 +24,7 @@ package org.infinispan.query.backend;
 
 import java.io.Serializable;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentMap;
@@ -82,7 +83,7 @@ public class QueryInterceptor extends CommandInterceptor {
    private final ConcurrentMap<Class<?>,Boolean> knownClasses = ConcurrentMapFactory.makeConcurrentMap();
    private final Lock mutating = new ReentrantLock();
    private final KeyTransformationHandler keyTransformationHandler = new KeyTransformationHandler();
-   private SearchWorkCreator searchWorkCreator = new DefaultSearchWorkCreator();
+   private SearchWorkCreator<Object> searchWorkCreator = new DefaultSearchWorkCreator<Object>();
 
    private DataContainer dataContainer;
    protected TransactionManager transactionManager;
@@ -173,7 +174,8 @@ public class QueryInterceptor extends CommandInterceptor {
       transactionContext = transactionContext == null ? makeTransactionalEventContext() : transactionContext;
       for (Class c : this.knownClasses.keySet()) {
          if (isIndexed(c)) {
-            performSearchWork(c, null, WorkType.PURGE_ALL, transactionContext);
+            //noinspection unchecked
+            performSearchWorks(searchWorkCreator.createPerEntityTypeWorks(c, WorkType.PURGE_ALL), transactionContext);
          }
       }
    }
@@ -189,13 +191,18 @@ public class QueryInterceptor extends CommandInterceptor {
 
    private void performSearchWork(Object value, Serializable id, WorkType workType, TransactionContext transactionContext) {
       if (value == null) throw new NullPointerException("Cannot handle a null value!");
+      Collection<Work<Object>> works = searchWorkCreator.createPerEntityWorks(value, id, workType);
+      performSearchWorks(works, transactionContext);
+   }
+
+   private <T> void performSearchWorks(Collection<Work<T>> works, TransactionContext transactionContext) {
       Worker worker = searchFactory.getWorker();
-      for (Work<Object> work : searchWorkCreator.createWorks(value, id, workType)) {
+      for (Work<T> work : works) {
          worker.performWork(work, transactionContext);
       }
    }
 
-   private boolean isIndexed(Class c) {
+   private boolean isIndexed(Class<?> c) {
       EntityIndexBinder binder = this.searchFactory.getIndexBindingForEntity(c);
       return binder != null;
    }
@@ -282,11 +289,11 @@ public class QueryInterceptor extends CommandInterceptor {
       return searchFactory;
    }
 
-   public void setSearchWorkCreator(SearchWorkCreator searchWorkCreator) {
+   public void setSearchWorkCreator(SearchWorkCreator<Object> searchWorkCreator) {
       this.searchWorkCreator = searchWorkCreator;
    }
 
-   public SearchWorkCreator getSearchWorkCreator() {
+   public SearchWorkCreator<Object> getSearchWorkCreator() {
       return searchWorkCreator;
    }
 
