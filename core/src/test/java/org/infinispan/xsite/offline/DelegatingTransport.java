@@ -83,6 +83,11 @@ public class DelegatingTransport implements Transport {
          public long getSendTimeMillis() {
             return creationTime;
          }
+
+         @Override
+         public boolean isEmpty() {
+            return false;
+         }
       };
    }
 

@@ -134,7 +134,7 @@ public class BackupSenderImpl implements BackupSender {
    }
 
    private void updateOfflineSites(BackupResponse backupResponse) {
-      if (offlineStatus.isEmpty()) return;
+      if (offlineStatus.isEmpty() || backupResponse.isEmpty()) return;
       Set<String> communicationErrors = backupResponse.getCommunicationErrors();
       for (Map.Entry<String, OfflineStatus> statusEntry : offlineStatus.entrySet()) {
          OfflineStatus status = statusEntry.getValue();
@@ -244,7 +244,7 @@ public class BackupSenderImpl implements BackupSender {
          }
          
          if (backupFilter == BackupFilter.KEEP_2PC_ONLY) {
-            if (!isSync || ( isSync && !bc.isTwoPhaseCommit() ) ) 
+            if (!isSync || (!bc.isTwoPhaseCommit() ) )
                continue;
          }
          

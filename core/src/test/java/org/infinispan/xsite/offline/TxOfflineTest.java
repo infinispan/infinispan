@@ -27,11 +27,13 @@ import org.testng.annotations.Test;
 public class TxOfflineTest extends NonTxOfflineTest {
 
    public TxOfflineTest() {
-      this.nrRpcPerPut = 2; //there are a prepare and a rollback that fail
+      this.nrRpcPerPut = 1; //It's only the commit that fails (no prepare as by default we only replicate during commit)
    }
 
    @Override
    protected ConfigurationBuilder getLonActiveConfig() {
-      return getDefaultClusteredCacheConfig(CacheMode.DIST_SYNC, true);
+      ConfigurationBuilder dccc = getDefaultClusteredCacheConfig(CacheMode.DIST_SYNC, true);
+      dccc.transaction().useSynchronization(false).recovery().disable();
+      return dccc;
    }
 }
