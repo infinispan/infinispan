@@ -21,8 +21,13 @@
  */
 package org.hibernate.cache.infinispan.tm;
 <<<<<<< HEAD
+<<<<<<< HEAD
 import java.util.Properties;
+=======
+
+>>>>>>> HHH-8159 - Apply fixups indicated by analysis tools
 import javax.transaction.TransactionManager;
+import java.util.Properties;
 
 import org.hibernate.cfg.Settings;
 <<<<<<< HEAD
@@ -41,7 +46,7 @@ import java.util.Properties;
 
 /**
  * HibernateTransactionManagerLookup.
- * 
+ *
  * @author Galder Zamarreño
  * @since 3.5
  */
@@ -51,9 +56,10 @@ public class HibernateTransactionManagerLookup implements org.infinispan.transac
 	public HibernateTransactionManagerLookup(Settings settings, Properties properties) {
 		this.jtaPlatform = settings != null ? settings.getJtaPlatform() : null;
 	}
+
 	@Override
 	public TransactionManager getTransactionManager() throws Exception {
 		return jtaPlatform == null ? null : jtaPlatform.retrieveTransactionManager();
 	}
-   
+
 }
