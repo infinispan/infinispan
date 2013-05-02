@@ -59,10 +59,6 @@ public class MortalCacheEntry extends AbstractInternalCacheEntry {
       return cacheValue.setValue(value);
    }
 
-   public MortalCacheEntry(Object key, Object value, long lifespan) {
-      this(key, value, lifespan, System.currentTimeMillis());
-   }
-
    public MortalCacheEntry(Object key, Object value, long lifespan, long created) {
       super(key);
       cacheValue = new MortalCacheValue(value, created, lifespan);
@@ -70,12 +66,12 @@ public class MortalCacheEntry extends AbstractInternalCacheEntry {
 
    @Override
    public final boolean isExpired(long now) {
-      return ExpiryHelper.isExpiredMortal(cacheValue.lifespan, cacheValue.created, now);
+      return cacheValue.isExpired(now);
    }
 
    @Override
    public final boolean isExpired() {
-      return ExpiryHelper.isExpiredMortal(cacheValue.lifespan, cacheValue.created);
+      return cacheValue.isExpired();
    }
 
    @Override
@@ -124,7 +120,12 @@ public class MortalCacheEntry extends AbstractInternalCacheEntry {
 
    @Override
    public final void reincarnate() {
-      cacheValue.created = System.currentTimeMillis();
+      reincarnate(System.currentTimeMillis());
+   }
+
+   @Override
+   public void reincarnate(long now) {
+      cacheValue.setCreated(now);
    }
 
    @Override

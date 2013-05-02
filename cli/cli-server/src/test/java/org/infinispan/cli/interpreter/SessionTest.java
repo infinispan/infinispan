@@ -30,7 +30,7 @@ public class SessionTest extends SingleCacheManagerTest {
 
    public void testSessionExpiration() throws Exception {
       Interpreter interpreter = new Interpreter();
-      interpreter.initialize(this.cacheManager);
+      interpreter.initialize(this.cacheManager, TIME_SERVICE);
       interpreter.setSessionTimeout(500);
       interpreter.setSessionReaperWakeupInterval(1000);
       interpreter.start();

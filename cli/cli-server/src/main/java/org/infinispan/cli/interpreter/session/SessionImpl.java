@@ -35,6 +35,7 @@ import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.remoting.rpc.RpcManager;
+import org.infinispan.util.TimeService;
 import org.infinispan.util.logging.LogFactory;
 
 public class SessionImpl implements Session {
@@ -42,16 +43,22 @@ public class SessionImpl implements Session {
    private final EmbeddedCacheManager cacheManager;
    private final CodecRegistry codecRegistry;
    private final String id;
+   private final TimeService timeService;
    private Cache<?, ?> cache = null;
    private String cacheName = null;
    private long timestamp;
    private Codec codec;
 
-   public SessionImpl(final CodecRegistry codecRegistry, final EmbeddedCacheManager cacheManager, final String id) {
+   public SessionImpl(final CodecRegistry codecRegistry, final EmbeddedCacheManager cacheManager, final String id,
+                      TimeService timeService) {
+      if (timeService == null) {
+         throw new IllegalArgumentException("TimeService cannot be null");
+      }
       this.codecRegistry = codecRegistry;
       this.cacheManager = cacheManager;
+      this.timeService = timeService;
       this.id = id;
-      timestamp = System.nanoTime();
+      timestamp = timeService.time();
       codec = this.codecRegistry.getCodec("none");
    }
 
@@ -138,7 +145,7 @@ public class SessionImpl implements Session {
       for (String cacheName : cacheManager.getCacheNames()) {
          resetCache(cacheManager.getCache(cacheName));
       }
-      timestamp = System.nanoTime();
+      timestamp = timeService.time();
    }
 
    private void resetCache(final Cache<Object, Object> cache) {

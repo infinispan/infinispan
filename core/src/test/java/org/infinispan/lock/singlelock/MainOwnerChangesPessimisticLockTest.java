@@ -32,6 +32,8 @@ import org.infinispan.test.fwk.CleanupAfterMethod;
 import org.infinispan.transaction.LockingMode;
 import org.infinispan.transaction.lookup.DummyTransactionManagerLookup;
 import org.infinispan.transaction.tm.DummyTransaction;
+import org.infinispan.util.DefaultTimeService;
+import org.infinispan.util.TimeService;
 import org.testng.annotations.Test;
 
 import javax.transaction.Transaction;
@@ -168,15 +170,15 @@ public class MainOwnerChangesPessimisticLockTest extends MultipleCacheManagersTe
          InternalCacheEntry d1 = advancedCache(1).getDataContainer().get(key);
          InternalCacheEntry d2 = advancedCache(2).getDataContainer().get(key);
          int c = 0;
-         if (d0 != null && !d0.isExpired()) {
+         if (d0 != null && !d0.isExpired(TIME_SERVICE.wallClockTime())) {
             assertEquals(expectedValue, d0.getValue());
             c++;
          }
-         if (d1 != null && !d1.isExpired()) {
+         if (d1 != null && !d1.isExpired(TIME_SERVICE.wallClockTime())) {
             assertEquals(expectedValue, d1.getValue());
             c++;
          }
-         if (d2 != null && !d2.isExpired()) {
+         if (d2 != null && !d2.isExpired(TIME_SERVICE.wallClockTime())) {
             assertEquals(expectedValue, d2.getValue());
             c++;
          }

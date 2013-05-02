@@ -29,6 +29,7 @@ import org.infinispan.container.InternalEntryFactory;
 import org.infinispan.container.entries.CacheEntry;
 import org.infinispan.container.entries.InternalCacheEntry;
 import org.infinispan.context.InvocationContext;
+import org.infinispan.util.TimeService;
 
 import java.util.AbstractSet;
 import java.util.Collection;
@@ -49,10 +50,12 @@ import static org.infinispan.util.Immutables.immutableInternalCacheEntry;
 public class EntrySetCommand extends AbstractLocalCommand implements VisitableCommand {
    private final DataContainer container;
    private final InternalEntryFactory entryFactory;
+   private final TimeService timeService;
 
-   public EntrySetCommand(DataContainer container, InternalEntryFactory internalEntryFactory) {
+   public EntrySetCommand(DataContainer container, InternalEntryFactory internalEntryFactory, TimeService timeService) {
       this.container = container;
       this.entryFactory = internalEntryFactory;
+      this.timeService = timeService;
    }
 
    @Override
@@ -64,10 +67,10 @@ public class EntrySetCommand extends AbstractLocalCommand implements VisitableCo
    public Set<InternalCacheEntry> perform(InvocationContext ctx) throws Throwable {
       Set<InternalCacheEntry> entries = container.entrySet();
       if (noTxModifications(ctx)) {
-         return new ExpiredFilteredEntrySet(entries);
+         return new ExpiredFilteredEntrySet(entries, timeService);
       }
 
-      return new FilteredEntrySet(entries, ctx.getLookedUpEntries());
+      return new FilteredEntrySet(entries, ctx.getLookedUpEntries(), timeService);
    }
 
    @Override
@@ -80,10 +83,12 @@ public class EntrySetCommand extends AbstractLocalCommand implements VisitableCo
    private class FilteredEntrySet extends AbstractSet<InternalCacheEntry> {
       final Set<InternalCacheEntry> entrySet;
       final Map<Object, CacheEntry> lookedUpEntries;
+      final TimeService timeService;
 
-      FilteredEntrySet(Set<InternalCacheEntry> entrySet, Map<Object, CacheEntry> lookedUpEntries) {
+      FilteredEntrySet(Set<InternalCacheEntry> entrySet, Map<Object, CacheEntry> lookedUpEntries, TimeService timeService) {
          this.entrySet = entrySet;
          this.lookedUpEntries = lookedUpEntries;
+         this.timeService = timeService;
       }
 
       @Override
@@ -94,7 +99,7 @@ public class EntrySetCommand extends AbstractLocalCommand implements VisitableCo
          for (InternalCacheEntry e: entrySet) {
             if (e.canExpire()) {
                if (currentTimeMillis == 0)
-                  currentTimeMillis = System.currentTimeMillis();
+                  currentTimeMillis = timeService.wallClockTime();
                if (e.isExpired(currentTimeMillis))
                   size--;
             }
@@ -254,9 +259,11 @@ public class EntrySetCommand extends AbstractLocalCommand implements VisitableCo
    private static class ExpiredFilteredEntrySet extends AbstractSet<InternalCacheEntry> {
 
       final Set<InternalCacheEntry> entrySet;
+      final TimeService timeService;
 
-      public ExpiredFilteredEntrySet(Set<InternalCacheEntry> entrySet) {
+      public ExpiredFilteredEntrySet(Set<InternalCacheEntry> entrySet, TimeService timeService) {
          this.entrySet = entrySet;
+         this.timeService = timeService;
       }
 
       @Override
@@ -273,7 +280,7 @@ public class EntrySetCommand extends AbstractLocalCommand implements VisitableCo
          for (InternalCacheEntry e: entrySet) {
             if (e.canExpire()) {
                if (currentTimeMillis == 0)
-                  currentTimeMillis = System.currentTimeMillis();
+                  currentTimeMillis = timeService.wallClockTime();
                if (e.isExpired(currentTimeMillis))
                   s--;
             }
@@ -325,7 +332,7 @@ public class EntrySetCommand extends AbstractLocalCommand implements VisitableCo
             while (it.hasNext()) {
                InternalCacheEntry e = it.next();
                if (e.canExpire()) {
-                  if (currentTimeMillis == -1) currentTimeMillis = System.currentTimeMillis();
+                  if (currentTimeMillis == -1) currentTimeMillis = timeService.wallClockTime();
                   if (! e.isExpired(currentTimeMillis)) {
                      next = e;
                      return;

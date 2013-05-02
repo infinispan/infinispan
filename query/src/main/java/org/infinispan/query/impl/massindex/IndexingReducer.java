@@ -27,6 +27,7 @@ import org.infinispan.Cache;
 import org.infinispan.distexec.mapreduce.Reducer;
 import org.infinispan.query.backend.QueryInterceptor;
 import org.infinispan.query.impl.ComponentRegistryUtils;
+import org.infinispan.util.TimeService;
 
 /**
  * This Reduce doesn't really index the entries but forwards them to the
@@ -43,7 +44,8 @@ public final class IndexingReducer implements Reducer<Object, LuceneWork> {
    public void initialize(Cache<?, ?> inputCache) {
       QueryInterceptor queryInterceptor = ComponentRegistryUtils.getQueryInterceptor(inputCache);
       SearchFactoryIntegrator searchFactory = queryInterceptor.getSearchFactory();
-      this.progressMonitor = new DefaultMassIndexerProgressMonitor();
+      this.progressMonitor = new DefaultMassIndexerProgressMonitor(inputCache.getAdvancedCache().getComponentRegistry()
+                                                                         .getTimeService());
       this.defaultBatchBackend = new DefaultBatchBackend(searchFactory, progressMonitor);
    }
 

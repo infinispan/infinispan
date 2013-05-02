@@ -78,6 +78,7 @@ import org.infinispan.remoting.rpc.RpcManager;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.remoting.transport.TopologyAwareAddress;
 import org.infinispan.util.InfinispanCollections;
+import org.infinispan.util.TimeService;
 import org.infinispan.util.Util;
 import org.infinispan.util.concurrent.FutureListener;
 import org.infinispan.util.concurrent.NotifyingFuture;
@@ -154,6 +155,7 @@ public class DefaultExecutorService extends AbstractExecutorService implements D
    protected final ExecutorService localExecutorService;
    protected final CancellationService cancellationService;
    protected final boolean takeExecutorOwnership;
+   private final TimeService timeService;
 
    /**
     * Creates a new DefaultExecutorService given a master cache node for local task execution. All
@@ -225,6 +227,7 @@ public class DefaultExecutorService extends AbstractExecutorService implements D
       this.cancellationService = registry.getComponent(CancellationService.class);
       this.localExecutorService = localExecutorService;
       this.takeExecutorOwnership = takeExecutorOwnership;
+      this.timeService = registry.getTimeService();
    }
 
    @Override
@@ -350,7 +353,7 @@ public class DefaultExecutorService extends AbstractExecutorService implements D
          // Record exceptions so that if we fail to obtain any
          // result, we can throw the last exception we got.
          ExecutionException ee = null;
-         long lastTime = (timed) ? System.nanoTime() : 0;
+         long lastTime = (timed) ? timeService.time() : 0;
          Iterator<? extends Callable<T>> it = tasks.iterator();
 
          // Start one task for sure; the rest incrementally
@@ -371,8 +374,8 @@ public class DefaultExecutorService extends AbstractExecutorService implements D
                   f = ecs.poll(nanos, TimeUnit.NANOSECONDS);
                   if (f == null)
                      throw new TimeoutException();
-                  long now = System.nanoTime();
-                  nanos -= now - lastTime;
+                  long now = timeService.time();
+                  nanos -= timeService.timeDuration(lastTime, now, TimeUnit.NANOSECONDS);
                   lastTime = now;
                } else
                   f = ecs.take();
@@ -938,7 +941,7 @@ public class DefaultExecutorService extends AbstractExecutorService implements D
             throw new CancellationException("Task already cancelled");
 
          long timeoutNanos = computeTimeoutNanos(timeout, unit);
-         long endNanos = System.nanoTime() + timeoutNanos;
+         long endNanos = timeService.expectedEndTime(timeoutNanos, TimeUnit.NANOSECONDS);
          V response;
          try {
             if (timeoutNanos > 0) {
@@ -951,7 +954,7 @@ public class DefaultExecutorService extends AbstractExecutorService implements D
          } catch (Exception e) {
             // The RPC could have finished with a org.infinispan.util.concurrent.TimeoutException right before
             // the Future.get timeout expired. If that's the case, we want to throw a TimeoutException.
-            long remainingNanos = timeoutNanos > 0 ? endNanos - System.nanoTime() : timeoutNanos;
+            long remainingNanos = timeoutNanos > 0 ? timeService.remainingTime(endNanos, TimeUnit.NANOSECONDS) : timeoutNanos;
             if (timeoutNanos > 0 && remainingNanos <= 0) {
                if (trace) log.tracef("Distributed task timed out, throwing a TimeoutException and ignoring exception", e);
                throw new TimeoutException();

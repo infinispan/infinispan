@@ -23,9 +23,11 @@
 package org.infinispan.loaders.bucket;
 
 import org.infinispan.container.entries.InternalCacheEntry;
+import org.infinispan.factories.GlobalComponentRegistry;
 import org.infinispan.io.UnsignedNumeric;
 import org.infinispan.marshall.AbstractExternalizer;
 import org.infinispan.marshall.Ids;
+import org.infinispan.util.TimeService;
 import org.infinispan.util.Util;
 
 import java.io.IOException;
@@ -44,6 +46,11 @@ public final class Bucket {
    final Map<Object, InternalCacheEntry> entries = new HashMap<Object, InternalCacheEntry>(32);
    private transient Integer bucketId;
    private transient String bucketIdStr;
+   private final TimeService timeService;
+
+   public Bucket(TimeService timeService) {
+      this.timeService = timeService;
+   }
 
    public final void addEntry(InternalCacheEntry se) {
       entries.put(se.getKey(), se);
@@ -92,7 +99,7 @@ public final class Bucket {
          final InternalCacheEntry value = entry.getValue();
          if (value.canExpire()) {
             if (currentTimeMillis == 0)
-               currentTimeMillis = System.currentTimeMillis();
+               currentTimeMillis = timeService.wallClockTime();
             if (entry.getValue().isExpired(currentTimeMillis)) {
                entryIterator.remove();
                result = true;
@@ -140,6 +147,12 @@ public final class Bucket {
 
       private static final long serialVersionUID = -5291318076267612501L;
 
+      private final GlobalComponentRegistry globalComponentRegistry;
+
+      public Externalizer(GlobalComponentRegistry globalComponentRegistry) {
+         this.globalComponentRegistry = globalComponentRegistry;
+      }
+
       @Override
       public void writeObject(ObjectOutput output, Bucket b) throws IOException {
          Map<Object, InternalCacheEntry> entries = b.entries;
@@ -151,7 +164,7 @@ public final class Bucket {
 
       @Override
       public Bucket readObject(ObjectInput input) throws IOException, ClassNotFoundException {
-         Bucket b = new Bucket();
+         Bucket b = new Bucket(globalComponentRegistry.getTimeService());
          int numEntries = UnsignedNumeric.readUnsignedInt(input);
          for (int i = 0; i < numEntries; i++) {
             b.addEntry((InternalCacheEntry) input.readObject());

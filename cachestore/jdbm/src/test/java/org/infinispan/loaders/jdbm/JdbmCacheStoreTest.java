@@ -35,8 +35,6 @@ import org.infinispan.loaders.CacheStore;
 import org.infinispan.test.TestingUtil;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
-import org.testng.annotations.Optional;
-import org.testng.annotations.Parameters;
 import org.testng.annotations.Test;
 
 @Test(groups = "unit", testName = "loaders.jdbm.JdbmCacheStoreTest")
@@ -113,16 +111,16 @@ public class JdbmCacheStoreTest extends BaseCacheStoreTest {
       cs.purgeExpired();
       cs.stop();
       cs.start();
-      assert se1.isExpired();
+      assert se1.isExpired(TIME_SERVICE.wallClockTime());
       assert cs.load("k1") == null;
       assert !cs.containsKey("k1");
       assert cs.load("k2") != null;
       assert cs.containsKey("k2");
       assert cs.load("k2").getValue().equals("v2");
-      assert se3.isExpired();
+      assert se3.isExpired(TIME_SERVICE.wallClockTime());
       assert cs.load("k3") == null;
       assert !cs.containsKey("k3");
-      assert se3.isExpired();
+      assert se3.isExpired(TIME_SERVICE.wallClockTime());
       assert cs.load("k3") == null;
       assert !cs.containsKey("k3");
    }

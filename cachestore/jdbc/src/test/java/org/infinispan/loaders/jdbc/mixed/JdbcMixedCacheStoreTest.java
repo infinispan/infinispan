@@ -28,10 +28,10 @@ import java.io.ObjectInput;
 import java.io.ObjectOutput;
 import java.util.Set;
 
-import org.infinispan.CacheImpl;
 import org.infinispan.container.entries.InternalCacheEntry;
 import org.infinispan.io.UnclosableObjectInputStream;
 import org.infinispan.io.UnclosableObjectOutputStream;
+import org.infinispan.loaders.AbstractCacheStoreTest;
 import org.infinispan.loaders.CacheLoaderException;
 import org.infinispan.loaders.CacheStore;
 import org.infinispan.loaders.jdbc.TableManipulation;
@@ -73,10 +73,9 @@ public class JdbcMixedCacheStoreTest {
       cfc = UnitTestDatabaseManager.getUniqueConnectionFactoryConfig();
       JdbcMixedCacheStoreConfig cacheStoreConfig = new JdbcMixedCacheStoreConfig(cfc, binaryTm, stringsTm);
       cacheStoreConfig.setPurgeSynchronously(true);
-
       cacheStoreConfig.setKey2StringMapperClass(DefaultTwoWayKey2StringMapper.class.getName());
       cacheStore = new JdbcMixedCacheStore();
-      cacheStore.init(cacheStoreConfig, new CacheImpl("aName"), getMarshaller());
+      cacheStore.init(cacheStoreConfig, AbstractCacheStoreTest.mockCache(getClass().getName()), getMarshaller());
       cacheStore.start();
    }
 

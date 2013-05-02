@@ -68,7 +68,7 @@ public class CloudCacheStoreTest extends BaseCacheStoreTest {
       // TODO remove compress = false once ISPN-409 is closed.
       cfg.setCompress(false);
       cfg.setPurgeSynchronously(true); // for more accurate unit testing
-      cs.init(cfg, new CacheImpl("aName"), getMarshaller());
+      cs.init(cfg, getCache(), getMarshaller());
       return cs;
    }
 

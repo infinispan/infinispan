@@ -50,9 +50,7 @@ public class JdbcMixedCacheStore2Test extends BaseCacheStoreTest {
       jdbcCacheStoreConfig.setPurgeSynchronously(true);
 
       JdbcMixedCacheStore cacheStore = new JdbcMixedCacheStore();
-      Cache<?, ?> mockCache = mock(Cache.class);
-      when(mockCache.getName()).thenReturn(getClass().getName());
-      cacheStore.init(jdbcCacheStoreConfig, mockCache, getMarshaller());
+      cacheStore.init(jdbcCacheStoreConfig, getCache(), getMarshaller());
       cacheStore.start();
       return cacheStore;
    }

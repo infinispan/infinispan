@@ -281,7 +281,7 @@ public class ExternalizerTable implements ObjectTable {
 
       addInternalExternalizer(new ApplyDeltaCommand.DeltaCompositeKeyExternalizer());
       addInternalExternalizer(new AtomicHashMap.Externalizer());
-      addInternalExternalizer(new Bucket.Externalizer());
+      addInternalExternalizer(new Bucket.Externalizer(gcr));
       addInternalExternalizer(new AtomicHashMapDelta.Externalizer());
       addInternalExternalizer(new PutOperation.Externalizer());
       addInternalExternalizer(new RemoveOperation.Externalizer());

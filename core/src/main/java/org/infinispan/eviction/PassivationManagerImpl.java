@@ -34,6 +34,7 @@ import org.infinispan.loaders.CacheLoaderException;
 import org.infinispan.loaders.CacheLoaderManager;
 import org.infinispan.loaders.CacheStore;
 import org.infinispan.notifications.cachelistener.CacheNotifier;
+import org.infinispan.util.TimeService;
 import org.infinispan.util.Util;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
@@ -53,14 +54,17 @@ public class PassivationManagerImpl implements PassivationManager {
    private static final Log log = LogFactory.getLog(PassivationManagerImpl.class);
    private final AtomicLong passivations = new AtomicLong(0);
    private DataContainer container;
+   private TimeService timeService;
    private static final boolean trace = log.isTraceEnabled();
 
    @Inject
-   public void inject(CacheLoaderManager cacheLoaderManager, CacheNotifier notifier, Configuration cfg, DataContainer container) {
+   public void inject(CacheLoaderManager cacheLoaderManager, CacheNotifier notifier, Configuration cfg, DataContainer container,
+                      TimeService timeService) {
       this.cacheLoaderManager = cacheLoaderManager;
       this.notifier = notifier;
       this.cfg = cfg;
       this.container = container;
+      this.timeService = timeService;
    }
 
    @Start(priority = 11)
@@ -105,13 +109,14 @@ public class PassivationManagerImpl implements PassivationManager {
    @Stop(priority = 9)
    public void passivateAll() throws CacheLoaderException {
       if (enabled) {
-         long start = System.nanoTime();
+         long start = timeService.time();
          log.passivatingAllEntries();
          for (InternalCacheEntry e : container) {
             if (trace) log.tracef("Passivating %s", e.getKey());
             cacheStore.store(e);
          }
-         log.passivatedEntries(container.size(), Util.prettyPrintTime(System.nanoTime() - start, TimeUnit.NANOSECONDS));
+         log.passivatedEntries(container.size(),
+                               Util.prettyPrintTime(timeService.timeDuration(start, TimeUnit.MILLISECONDS)));
       }
    }
 

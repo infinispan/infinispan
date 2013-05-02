@@ -274,7 +274,7 @@ public class CloudCacheStore extends BucketBasedCacheStore {
    }
 
    void purge() {
-      long currentTime = System.currentTimeMillis();
+      long currentTime = timeService.wallClockTime();
       PageSet<? extends StorageMetadata> ps = blobStore.list(containerName);
 
       // TODO do we need to scroll through the PageSet?

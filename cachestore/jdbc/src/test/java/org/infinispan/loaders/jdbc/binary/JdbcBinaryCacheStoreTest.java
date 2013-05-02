@@ -53,7 +53,7 @@ public class JdbcBinaryCacheStoreTest extends BaseCacheStoreTest {
       JdbcBinaryCacheStoreConfig config = new JdbcBinaryCacheStoreConfig(connectionFactoryConfig, tm);
       config.setPurgeSynchronously(true);
       JdbcBinaryCacheStore jdbcBucketCacheStore = new JdbcBinaryCacheStore();
-      jdbcBucketCacheStore.init(config, new CacheImpl("aName"), getMarshaller());
+      jdbcBucketCacheStore.init(config, getCache(), getMarshaller());
       jdbcBucketCacheStore.start();
       assert jdbcBucketCacheStore.getConnectionFactory() != null;
       return jdbcBucketCacheStore;
@@ -63,7 +63,7 @@ public class JdbcBinaryCacheStoreTest extends BaseCacheStoreTest {
       JdbcBinaryCacheStore jdbcBucketCacheStore = new JdbcBinaryCacheStore();
       JdbcBinaryCacheStoreConfig config = new JdbcBinaryCacheStoreConfig(false);
       config.setCreateTableOnStart(false);
-      jdbcBucketCacheStore.init(config, new CacheImpl("aName"), new TestObjectStreamMarshaller());
+      jdbcBucketCacheStore.init(config, getCache(), new TestObjectStreamMarshaller());
       jdbcBucketCacheStore.start();
       assert jdbcBucketCacheStore.getConnectionFactory() == null;
 

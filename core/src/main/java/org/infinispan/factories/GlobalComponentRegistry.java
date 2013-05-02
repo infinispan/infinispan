@@ -45,6 +45,7 @@ import org.infinispan.topology.ClusterTopologyManager;
 import org.infinispan.topology.LocalTopologyManager;
 import org.infinispan.util.InfinispanCollections;
 import org.infinispan.util.ModuleProperties;
+import org.infinispan.util.TimeService;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
@@ -161,6 +162,11 @@ public class GlobalComponentRegistry extends AbstractComponentRegistry {
    protected synchronized void removeShutdownHook() {
       // if this is called from a source other than the shutdown hook, de-register the shutdown hook.
       if (!invokedFromShutdownHook && shutdownHook != null) Runtime.getRuntime().removeShutdownHook(shutdownHook);
+   }
+
+   @Override
+   public TimeService getTimeService() {
+      return getOrCreateComponent(TimeService.class);
    }
 
    @Override

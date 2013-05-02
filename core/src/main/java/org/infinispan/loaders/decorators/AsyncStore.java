@@ -39,6 +39,7 @@ import org.infinispan.marshall.StreamingMarshaller;
 import org.infinispan.transaction.xa.GlobalTransaction;
 import org.infinispan.transaction.xa.TransactionFactory;
 import org.infinispan.util.CollectionFactory;
+import org.infinispan.util.TimeService;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
@@ -96,6 +97,7 @@ public class AsyncStore extends AbstractDelegatingStore {
    private int concurrencyLevel;
    private long shutdownTimeout;
    private String cacheName;
+   private TimeService timeService;
 
    private BufferLock stateLock;
    @GuardedBy("stateLock")
@@ -127,6 +129,7 @@ public class AsyncStore extends AbstractDelegatingStore {
       }
 
       transactions = CollectionFactory.makeConcurrentMap(64, concurrencyLevel);
+      this.timeService = cache.getAdvancedCache().getComponentRegistry().getTimeService();
    }
 
    private State newState(boolean clear, State next) {
@@ -156,7 +159,7 @@ public class AsyncStore extends AbstractDelegatingStore {
                return null;
             case STORE:
                InternalCacheEntry ice = ((Store) mod).getStoredEntry();
-               if (ice.isExpired())
+               if (ice.isExpired(timeService.wallClockTime()))
                   return null;
                return ice;
          }

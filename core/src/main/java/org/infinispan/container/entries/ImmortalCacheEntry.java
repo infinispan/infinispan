@@ -110,6 +110,11 @@ public class ImmortalCacheEntry extends AbstractInternalCacheEntry {
    }
 
    @Override
+   public void reincarnate(long now) {
+      // no-op
+   }
+
+   @Override
    public InternalCacheValue toInternalCacheValue() {
       return cacheValue;
    }

@@ -188,7 +188,7 @@ public class HBaseCacheStore extends AbstractCacheStore {
             Map<String, Map<String, byte[]>> expCfMap = Collections.singletonMap(
                      expirationColumnFamily, expValMap);
 
-            String expKey = "ts_" + String.valueOf(System.currentTimeMillis());
+            String expKey = "ts_" + String.valueOf(timeService.wallClockTime());
             String hashedExpKey = hashKey(this.expirationKeyPrefix, expKey);
             hbf.addRow(this.expirationTable, hashedExpKey, expCfMap);
          }
@@ -326,7 +326,7 @@ public class HBaseCacheStore extends AbstractCacheStore {
          byte[] val = resultMap.get(entryColumnFamily).get(entryValueField);
 
          InternalCacheEntry ice = unmarshall(val, key);
-         if (ice != null && ice.isExpired()) {
+         if (ice != null && ice.isExpired(timeService.wallClockTime())) {
             remove(key);
             return null;
          }
@@ -438,7 +438,7 @@ public class HBaseCacheStore extends AbstractCacheStore {
 
       try {
          // query the expiration table to find out the entries that have been expired
-         long ts = System.currentTimeMillis();
+         long ts = timeService.wallClockTime();
          Map<String, Map<String, Map<String, byte[]>>> rowsToPurge = hbf.readRows(
                   this.expirationTable, this.expirationKeyPrefix, ts, this.expirationColumnFamily,
                   this.expirationValueField);

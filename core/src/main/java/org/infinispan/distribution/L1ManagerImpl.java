@@ -39,6 +39,7 @@ import org.infinispan.remoting.rpc.RpcOptions;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.util.CollectionFactory;
 import org.infinispan.util.InfinispanCollections;
+import org.infinispan.util.TimeService;
 import org.infinispan.util.concurrent.AggregatingNotifyingFutureImpl;
 import org.infinispan.util.concurrent.NoOpFuture;
 import org.infinispan.util.concurrent.NotifyingFutureImpl;
@@ -76,6 +77,7 @@ public class L1ManagerImpl implements L1Manager {
    private final ConcurrentMap<Object, ConcurrentMap<Address, Long>> requestors;
    private ScheduledExecutorService scheduledExecutor;
    private ScheduledFuture<?> scheduledRequestorsCleanupTask;
+   private TimeService timeService;
 
    private RpcOptions syncRpcOptions;
    private RpcOptions syncIgnoreLeaversRpcOptions;
@@ -87,12 +89,14 @@ public class L1ManagerImpl implements L1Manager {
    @Inject
    public void init(Configuration configuration, RpcManager rpcManager, CommandsFactory commandsFactory,
                     @ComponentName(ASYNC_TRANSPORT_EXECUTOR) ExecutorService asyncTransportExecutor,
-                    @ComponentName(KnownComponentNames.EVICTION_SCHEDULED_EXECUTOR) ScheduledExecutorService scheduledExecutor) {
+                    @ComponentName(KnownComponentNames.EVICTION_SCHEDULED_EXECUTOR) ScheduledExecutorService scheduledExecutor,
+                    TimeService timeService) {
       this.rpcManager = rpcManager;
       this.commandsFactory = commandsFactory;
       this.configuration = configuration;
       this.asyncTransportExecutor = asyncTransportExecutor;
       this.scheduledExecutor = scheduledExecutor;
+      this.timeService = timeService;
    }
    
    @Start (priority = 3)
@@ -121,7 +125,7 @@ public class L1ManagerImpl implements L1Manager {
    }
 
    private void cleanUpRequestors() {
-      long expiryTime = System.currentTimeMillis() - l1Lifespan;
+      long expiryTime = timeService.wallClockTime() - l1Lifespan;
       for (Map.Entry<Object, ConcurrentMap<Address, Long>> entry: requestors.entrySet()) {
          Object key = entry.getKey();
          ConcurrentMap<Address, Long> reqs = entry.getValue();
@@ -141,7 +145,7 @@ public class L1ManagerImpl implements L1Manager {
       //we do a plain get first as that's likely to be enough
       ConcurrentMap<Address, Long> as = requestors.get(key);
       log.tracef("Registering requestor %s for key '%s'", origin, key);
-      long now = System.currentTimeMillis();
+      long now = timeService.wallClockTime();
       if (as == null) {
          // only if needed we create a new HashSet, but make sure we don't replace another one being created
          as = CollectionFactory.makeConcurrentMap();

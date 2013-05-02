@@ -55,7 +55,9 @@ public interface InternalCacheValue {
 
    /**
     * @return true if the entry has expired; false otherwise
+    * @deprecated use {@link #isExpired(long)}
     */
+   @Deprecated
    boolean isExpired();
 
    /**

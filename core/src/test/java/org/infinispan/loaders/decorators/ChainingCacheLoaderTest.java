@@ -65,7 +65,7 @@ public class ChainingCacheLoaderTest extends BaseCacheStoreTest {
          .purgeOnStartup(false)
          .fetchPersistentState(false);
       store1 = new DummyInMemoryCacheStore();
-      store1.init(cfg, null, new TestObjectStreamMarshaller());
+      store1.init(cfg, getCache(), new TestObjectStreamMarshaller());
 
       ConfigurationBuilder builder = new ConfigurationBuilder();
       LegacyConfigurationAdaptor.adapt(Thread.currentThread().getContextClassLoader(), builder, cfg);
@@ -77,7 +77,7 @@ public class ChainingCacheLoaderTest extends BaseCacheStoreTest {
          .storeName("ChainingCacheLoaderTest_instance2")
          .purgeOnStartup(false)
          .fetchPersistentState(true);
-      store2.init(cfg, null, new TestObjectStreamMarshaller());
+      store2.init(cfg, getCache(), new TestObjectStreamMarshaller());
 
       builder = new ConfigurationBuilder();
       LegacyConfigurationAdaptor.adapt(Thread.currentThread().getContextClassLoader(), builder, cfg);

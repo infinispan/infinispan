@@ -41,6 +41,8 @@ import org.infinispan.container.entries.metadata.MetadataTransientCacheValue;
 import org.infinispan.container.entries.metadata.MetadataTransientMortalCacheEntry;
 import org.infinispan.container.entries.metadata.MetadataTransientMortalCacheValue;
 import org.infinispan.container.versioning.EntryVersion;
+import org.infinispan.factories.annotations.Inject;
+import org.infinispan.util.TimeService;
 
 import java.util.concurrent.TimeUnit;
 
@@ -52,20 +54,27 @@ import java.util.concurrent.TimeUnit;
  */
 public class InternalEntryFactoryImpl implements InternalEntryFactory {
 
+   private TimeService timeService;
+
+   @Inject
+   public void injectTimeService(TimeService timeService) {
+      this.timeService = timeService;
+   }
+
    @Override
    public InternalCacheEntry create(Object key, Object value, Metadata metadata) {
       long lifespan = metadata.lifespan();
       long maxIdle = metadata.maxIdle();
       if (!isStoreMetadata(metadata)) {
          if (lifespan < 0 && maxIdle < 0) return new ImmortalCacheEntry(key, value);
-         if (lifespan > -1 && maxIdle < 0) return new MortalCacheEntry(key, value, lifespan);
-         if (lifespan < 0 && maxIdle > -1) return new TransientCacheEntry(key, value, maxIdle);
-         return new TransientMortalCacheEntry(key, value, maxIdle, lifespan);
+         if (lifespan > -1 && maxIdle < 0) return new MortalCacheEntry(key, value, lifespan, timeService.wallClockTime());
+         if (lifespan < 0 && maxIdle > -1) return new TransientCacheEntry(key, value, maxIdle, timeService.wallClockTime());
+         return new TransientMortalCacheEntry(key, value, maxIdle, lifespan, timeService.wallClockTime());
       } else {
          if (lifespan < 0 && maxIdle < 0) return new MetadataImmortalCacheEntry(key, value, metadata);
-         if (lifespan > -1 && maxIdle < 0) return new MetadataMortalCacheEntry(key, value, metadata);
-         if (lifespan < 0 && maxIdle > -1) return new MetadataTransientCacheEntry(key, value, metadata);
-         return new MetadataTransientMortalCacheEntry(key, value, metadata);
+         if (lifespan > -1 && maxIdle < 0) return new MetadataMortalCacheEntry(key, value, metadata, timeService.wallClockTime());
+         if (lifespan < 0 && maxIdle > -1) return new MetadataTransientCacheEntry(key, value, metadata, timeService.wallClockTime());
+         return new MetadataTransientMortalCacheEntry(key, value, metadata, timeService.wallClockTime());
       }
    }
 
@@ -140,17 +149,17 @@ public class InternalEntryFactoryImpl implements InternalEntryFactory {
    public InternalCacheEntry create(Object key, Object value, Metadata metadata, long lifespan, long maxIdle) {
       if (!isStoreMetadata(metadata)) {
          if (lifespan < 0 && maxIdle < 0) return new ImmortalCacheEntry(key, value);
-         if (lifespan > -1 && maxIdle < 0) return new MortalCacheEntry(key, value, lifespan);
-         if (lifespan < 0 && maxIdle > -1) return new TransientCacheEntry(key, value, maxIdle);
-         return new TransientMortalCacheEntry(key, value, maxIdle, lifespan);
+         if (lifespan > -1 && maxIdle < 0) return new MortalCacheEntry(key, value, lifespan, timeService.wallClockTime());
+         if (lifespan < 0 && maxIdle > -1) return new TransientCacheEntry(key, value, maxIdle, timeService.wallClockTime());
+         return new TransientMortalCacheEntry(key, value, maxIdle, lifespan, timeService.wallClockTime());
       } else {
          // Metadata to store, take lifespan and maxIdle settings from it
          long metaLifespan = metadata.lifespan();
          long metaMaxIdle = metadata.maxIdle();
          if (metaLifespan < 0 && metaMaxIdle < 0) return new MetadataImmortalCacheEntry(key, value, metadata);
-         if (metaLifespan > -1 && metaMaxIdle < 0) return new MetadataMortalCacheEntry(key, value, metadata);
-         if (metaLifespan < 0 && metaMaxIdle > -1) return new MetadataTransientCacheEntry(key, value, metadata);
-         return new MetadataTransientMortalCacheEntry(key, value, metadata);
+         if (metaLifespan > -1 && metaMaxIdle < 0) return new MetadataMortalCacheEntry(key, value, metadata, timeService.wallClockTime());
+         if (metaLifespan < 0 && metaMaxIdle > -1) return new MetadataTransientCacheEntry(key, value, metadata, timeService.wallClockTime());
+         return new MetadataTransientMortalCacheEntry(key, value, metadata, timeService.wallClockTime());
       }
    }
 
@@ -169,13 +178,13 @@ public class InternalEntryFactoryImpl implements InternalEntryFactory {
             if (maxIdle < 0) {
                return ice;
             } else {
-               return new TransientCacheEntry(ice.getKey(), ice.getValue(), maxIdle);
+               return new TransientCacheEntry(ice.getKey(), ice.getValue(), maxIdle, timeService.wallClockTime());
             }
          } else {
             if (maxIdle < 0) {
-               return new MortalCacheEntry(ice.getKey(), ice.getValue(), lifespan);
+               return new MortalCacheEntry(ice.getKey(), ice.getValue(), lifespan, timeService.wallClockTime());
             } else {
-               long ctm = System.currentTimeMillis();
+               long ctm = timeService.wallClockTime();
                return new TransientMortalCacheEntry(ice.getKey(), ice.getValue(), maxIdle, lifespan, ctm, ctm);
             }
          }
@@ -184,14 +193,14 @@ public class InternalEntryFactoryImpl implements InternalEntryFactory {
             if (maxIdle < 0) {
                return new ImmortalCacheEntry(ice.getKey(), ice.getValue());
             } else {
-               return new TransientCacheEntry(ice.getKey(), ice.getValue(), maxIdle);
+               return new TransientCacheEntry(ice.getKey(), ice.getValue(), maxIdle, timeService.wallClockTime());
             }
          } else {
             if (maxIdle < 0) {
                ((MortalCacheEntry) ice).setLifespan(lifespan);
                return ice;
             } else {
-               long ctm = System.currentTimeMillis();
+               long ctm = timeService.wallClockTime();
                return new TransientMortalCacheEntry(ice.getKey(), ice.getValue(), maxIdle, lifespan, ctm, ctm);
             }
          }
@@ -205,9 +214,9 @@ public class InternalEntryFactoryImpl implements InternalEntryFactory {
             }
          } else {
             if (maxIdle < 0) {
-               return new MortalCacheEntry(ice.getKey(), ice.getValue(), lifespan);
+               return new MortalCacheEntry(ice.getKey(), ice.getValue(), lifespan, timeService.wallClockTime());
             } else {
-               long ctm = System.currentTimeMillis();
+               long ctm = timeService.wallClockTime();
                return new TransientMortalCacheEntry(ice.getKey(), ice.getValue(), maxIdle, lifespan, ctm, ctm);
             }
          }
@@ -216,11 +225,11 @@ public class InternalEntryFactoryImpl implements InternalEntryFactory {
             if (maxIdle < 0) {
                return new ImmortalCacheEntry(ice.getKey(), ice.getValue());
             } else {
-               return new TransientCacheEntry(ice.getKey(), ice.getValue(), maxIdle);
+               return new TransientCacheEntry(ice.getKey(), ice.getValue(), maxIdle, timeService.wallClockTime());
             }
          } else {
             if (maxIdle < 0) {
-               return new MortalCacheEntry(ice.getKey(), ice.getValue(), lifespan);
+               return new MortalCacheEntry(ice.getKey(), ice.getValue(), lifespan, timeService.wallClockTime());
             } else {
                TransientMortalCacheEntry transientMortalEntry = (TransientMortalCacheEntry) ice;
                transientMortalEntry.setLifespan(lifespan);
@@ -241,13 +250,13 @@ public class InternalEntryFactoryImpl implements InternalEntryFactory {
                ice.setMetadata(metadata);
                return ice;
             } else {
-               return new MetadataTransientCacheEntry(ice.getKey(), ice.getValue(), metadata);
+               return new MetadataTransientCacheEntry(ice.getKey(), ice.getValue(), metadata, timeService.wallClockTime());
             }
          } else {
             if (maxIdle < 0) {
-               return new MetadataMortalCacheEntry(ice.getKey(), ice.getValue(), metadata);
+               return new MetadataMortalCacheEntry(ice.getKey(), ice.getValue(), metadata, timeService.wallClockTime());
             } else {
-               long ctm = System.currentTimeMillis();
+               long ctm = timeService.wallClockTime();
                return new MetadataTransientMortalCacheEntry(ice.getKey(), ice.getValue(), metadata, ctm, ctm);
             }
          }
@@ -256,14 +265,14 @@ public class InternalEntryFactoryImpl implements InternalEntryFactory {
             if (maxIdle < 0) {
                return new MetadataImmortalCacheEntry(ice.getKey(), ice.getValue(), metadata);
             } else {
-               return new MetadataTransientCacheEntry(ice.getKey(), ice.getValue(), metadata);
+               return new MetadataTransientCacheEntry(ice.getKey(), ice.getValue(), metadata, timeService.wallClockTime());
             }
          } else {
             if (maxIdle < 0) {
                ice.setMetadata(metadata);
                return ice;
             } else {
-               long ctm = System.currentTimeMillis();
+               long ctm = timeService.wallClockTime();
                return new MetadataTransientMortalCacheEntry(ice.getKey(), ice.getValue(), metadata, ctm, ctm);
             }
          }
@@ -277,9 +286,9 @@ public class InternalEntryFactoryImpl implements InternalEntryFactory {
             }
          } else {
             if (maxIdle < 0) {
-               return new MetadataMortalCacheEntry(ice.getKey(), ice.getValue(), metadata);
+               return new MetadataMortalCacheEntry(ice.getKey(), ice.getValue(), metadata, timeService.wallClockTime());
             } else {
-               long ctm = System.currentTimeMillis();
+               long ctm = timeService.wallClockTime();
                return new MetadataTransientMortalCacheEntry(ice.getKey(), ice.getValue(), metadata, ctm, ctm);
             }
          }

@@ -89,6 +89,7 @@ import org.infinispan.transaction.TransactionTable;
 import org.infinispan.transaction.xa.DldGlobalTransaction;
 import org.infinispan.transaction.xa.GlobalTransaction;
 import org.infinispan.transaction.xa.recovery.RecoveryManager;
+import org.infinispan.util.TimeService;
 import org.infinispan.util.concurrent.locks.LockManager;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
@@ -140,6 +141,7 @@ public class CommandsFactoryImpl implements CommandsFactory {
    private StateTransferManager stateTransferManager;
    private BackupSender backupSender;
    private CancellationService cancellationService;
+   private TimeService timeService;
 
    private Map<Byte, ModuleCommandInitializer> moduleCommandInitializers;
 
@@ -150,7 +152,8 @@ public class CommandsFactoryImpl implements CommandsFactory {
                                  @ComponentName(KnownComponentNames.MODULE_COMMAND_INITIALIZERS) Map<Byte, ModuleCommandInitializer> moduleCommandInitializers,
                                  RecoveryManager recoveryManager, StateProvider stateProvider, StateConsumer stateConsumer,
                                  LockManager lockManager, InternalEntryFactory entryFactory, MapReduceManager mapReduceManager, 
-                                 StateTransferManager stm, BackupSender backupSender, CancellationService cancellationService) {
+                                 StateTransferManager stm, BackupSender backupSender, CancellationService cancellationService,
+                                 TimeService timeService) {
       this.dataContainer = container;
       this.notifier = notifier;
       this.cache = cache;
@@ -169,6 +172,7 @@ public class CommandsFactoryImpl implements CommandsFactory {
       this.stateTransferManager = stm;
       this.backupSender = backupSender;
       this.cancellationService = cancellationService;
+      this.timeService = timeService;
    }
 
    @Start(priority = 1)
@@ -227,7 +231,7 @@ public class CommandsFactoryImpl implements CommandsFactory {
    @Override
    public ValuesCommand buildValuesCommand() {
       if (cachedValuesCommand == null) {
-         cachedValuesCommand = new ValuesCommand(dataContainer);
+         cachedValuesCommand = new ValuesCommand(dataContainer, timeService);
       }
       return cachedValuesCommand;
    }
@@ -235,7 +239,7 @@ public class CommandsFactoryImpl implements CommandsFactory {
    @Override
    public EntrySetCommand buildEntrySetCommand() {
       if (cachedEntrySetCommand == null) {
-         cachedEntrySetCommand = new EntrySetCommand(dataContainer, entryFactory);
+         cachedEntrySetCommand = new EntrySetCommand(dataContainer, entryFactory, timeService);
       }
       return cachedEntrySetCommand;
    }

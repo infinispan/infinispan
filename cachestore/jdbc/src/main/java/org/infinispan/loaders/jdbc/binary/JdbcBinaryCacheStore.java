@@ -101,7 +101,7 @@ public class JdbcBinaryCacheStore extends BucketBasedCacheStore {
          factory.start(config.getConnectionFactoryConfig(), config.getClassLoader());
          doConnectionFactoryInitialization(factory);
       }
-      dmHelper = new DataManipulationHelper(connectionFactory, tableManipulation, marshaller) {
+      dmHelper = new DataManipulationHelper(connectionFactory, tableManipulation, marshaller, timeService) {
          @Override
          protected String getLoadAllKeysSql() {
             return tableManipulation.getLoadAllKeysBinarySql();
@@ -111,7 +111,7 @@ public class JdbcBinaryCacheStore extends BucketBasedCacheStore {
          public void loadAllProcess(ResultSet rs, Set<InternalCacheEntry> result) throws SQLException, CacheLoaderException {
             InputStream binaryStream = rs.getBinaryStream(1);
             Bucket bucket = (Bucket) JdbcUtil.unmarshall(getMarshaller(), binaryStream);
-            long currentTimeMillis = System.currentTimeMillis();
+            long currentTimeMillis = timeService.wallClockTime();
             for (InternalCacheEntry ice: bucket.getStoredEntries()) {
                if (!ice.isExpired(currentTimeMillis)) {
                   result.add(ice);
@@ -123,7 +123,7 @@ public class JdbcBinaryCacheStore extends BucketBasedCacheStore {
          public void loadAllProcess(ResultSet rs, Set<InternalCacheEntry> result, int maxEntries) throws SQLException, CacheLoaderException {
             InputStream binaryStream = rs.getBinaryStream(1);
             Bucket bucket = (Bucket) JdbcUtil.unmarshall(getMarshaller(), binaryStream);
-            long currentTimeMillis = System.currentTimeMillis();
+            long currentTimeMillis = timeService.wallClockTime();
             for (InternalCacheEntry ice: bucket.getStoredEntries()) {
                if (!ice.isExpired(currentTimeMillis))
                   result.add(ice);
@@ -137,7 +137,7 @@ public class JdbcBinaryCacheStore extends BucketBasedCacheStore {
          public void loadAllKeysProcess(ResultSet rs, Set<Object> keys, Set<Object> keysToExclude) throws SQLException, CacheLoaderException {
             InputStream binaryStream = rs.getBinaryStream(1);
             Bucket bucket = (Bucket) JdbcUtil.unmarshall(getMarshaller(), binaryStream);
-            long currentTimeMillis = System.currentTimeMillis();
+            long currentTimeMillis = timeService.wallClockTime();
             for (InternalCacheEntry ice: bucket.getStoredEntries()) {
                if (!ice.isExpired(currentTimeMillis) && includeKey(ice.getKey(), keysToExclude)) {
                   keys.add(ice.getKey());
@@ -345,7 +345,7 @@ public class JdbcBinaryCacheStore extends BucketBasedCacheStore {
             String sql = tableManipulation.getSelectExpiredRowsSql();
             conn = connectionFactory.getConnection();
             ps = conn.prepareStatement(sql);
-            ps.setLong(1, System.currentTimeMillis());
+            ps.setLong(1, timeService.wallClockTime());
             rs = ps.executeQuery();
             while (rs.next()) {
                Integer key = rs.getInt(2);

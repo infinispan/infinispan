@@ -53,8 +53,6 @@ import org.testng.annotations.AfterMethod;
 import org.testng.annotations.AfterTest;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.BeforeTest;
-import org.testng.annotations.Optional;
-import org.testng.annotations.Parameters;
 import org.testng.annotations.Test;
 
 import javax.transaction.Transaction;
@@ -180,7 +178,7 @@ public class BdbjeLearningTest extends AbstractInfinispanTest {
       InternalCacheEntry s = cacheMap.get(key);
       if (s == null)
          return null;
-      if (!s.isExpired())
+      if (!s.isExpired(TIME_SERVICE.wallClockTime()))
          return s;
       else
          cacheMap.remove(key);
@@ -194,7 +192,7 @@ public class BdbjeLearningTest extends AbstractInfinispanTest {
    private void purgeExpired() {
       Iterator<Map.Entry<Object, InternalCacheEntry>> i = cacheMap.entrySet().iterator();
       while (i.hasNext()) {
-         if (i.next().getValue().isExpired())
+         if (i.next().getValue().isExpired(TIME_SERVICE.wallClockTime()))
             i.remove();
       }
    }
@@ -406,7 +404,7 @@ public class BdbjeLearningTest extends AbstractInfinispanTest {
 
       assert load("k").getValue().equals("v");
       assert load("k").getLifespan() == -1;
-      assert !load("k").isExpired();
+      assert !load("k").isExpired(TIME_SERVICE.wallClockTime());
       assert cacheMap.containsKey("k");
 
       long lifespan = 120000;
@@ -415,14 +413,14 @@ public class BdbjeLearningTest extends AbstractInfinispanTest {
 
       assert load("k").getValue().equals("v");
       assert load("k").getLifespan() == lifespan;
-      assert !load("k").isExpired();
+      assert !load("k").isExpired(TIME_SERVICE.wallClockTime());
       assert cacheMap.containsKey("k");
 
       lifespan = 1;
       se = TestInternalCacheEntryFactory.create("k", "v", lifespan);
       store(se);
       Thread.sleep(100);
-      assert se.isExpired();
+      assert se.isExpired(TIME_SERVICE.wallClockTime());
       assert load("k") == null;
       assert !cacheMap.containsKey("k");
    }

@@ -22,12 +22,12 @@ package org.infinispan.remoting.transport.jgroups;
 import org.infinispan.remoting.responses.ExceptionResponse;
 import org.infinispan.remoting.transport.BackupResponse;
 import org.infinispan.util.InfinispanCollections;
+import org.infinispan.util.TimeService;
 import org.infinispan.util.concurrent.TimeoutException;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 import org.infinispan.xsite.XSiteBackup;
 
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
@@ -50,19 +50,21 @@ public class JGroupsBackupResponse implements BackupResponse {
    private final Map<XSiteBackup, Future<Object>> syncBackupCalls;
    private Map<String, Throwable> errors;
    private Set<String> communicationErrors;
+   private final TimeService timeService;
 
    //there might be an significant difference in time between when the message is sent and when the actual wait
    // happens. Track that and adjust the timeouts accordingly.
    private long sendTimeNanos;
 
-   public JGroupsBackupResponse(Map<XSiteBackup, Future<Object>> syncBackupCalls) {
+   public JGroupsBackupResponse(Map<XSiteBackup, Future<Object>> syncBackupCalls, TimeService timeService) {
       this.syncBackupCalls = syncBackupCalls;
-      sendTimeNanos = System.nanoTime();
+      this.timeService = timeService;
+      sendTimeNanos = timeService.time();
    }
 
    @Override
    public void waitForBackupToFinish() throws Exception {
-      long deductFromTimeout = NANOSECONDS.toMillis(System.nanoTime() - sendTimeNanos);
+      long deductFromTimeout = timeService.timeDuration(sendTimeNanos, MILLISECONDS);
       errors = new HashMap<String, Throwable>(syncBackupCalls.size());
       long elapsedTime = 0;
       for (Map.Entry<XSiteBackup, Future<Object>> entry : syncBackupCalls.entrySet()) {
@@ -81,7 +83,7 @@ public class JGroupsBackupResponse implements BackupResponse {
             }
          }
 
-         long startNanos = System.nanoTime();
+         long startNanos = timeService.time();
          Object value = null;
          try {
             value = entry.getValue().get(timeout, MILLISECONDS);
@@ -93,7 +95,7 @@ public class JGroupsBackupResponse implements BackupResponse {
             errors.put(siteName, ue.getCause());
             addCommunicationError(siteName);
          } finally {
-            elapsedTime += NANOSECONDS.toMillis(System.nanoTime() - startNanos);
+            elapsedTime += timeService.timeDuration(startNanos, MILLISECONDS);
          }
 
          if (value instanceof ExceptionResponse) {

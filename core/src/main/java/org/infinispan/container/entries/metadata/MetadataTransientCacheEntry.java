@@ -48,10 +48,6 @@ public class MetadataTransientCacheEntry extends AbstractInternalCacheEntry impl
       this.cacheValue = value;
    }
 
-   public MetadataTransientCacheEntry(Object key, Object value, Metadata metadata) {
-      this(key, value, metadata, System.currentTimeMillis());
-   }
-
    public MetadataTransientCacheEntry(Object key, Object value, Metadata metadata, long lastUsed) {
       super(key);
       cacheValue = new MetadataTransientCacheValue(value, metadata, lastUsed);
@@ -69,7 +65,7 @@ public class MetadataTransientCacheEntry extends AbstractInternalCacheEntry impl
 
    @Override
    public final void touch() {
-      cacheValue.lastUsed = System.currentTimeMillis();
+      touch(System.currentTimeMillis());
    }
 
    @Override
@@ -81,6 +77,11 @@ public class MetadataTransientCacheEntry extends AbstractInternalCacheEntry impl
    @Override
    public final void reincarnate() {
       // no-op
+   }
+
+   @Override
+   public void reincarnate(long now) {
+      //no-op
    }
 
    @Override

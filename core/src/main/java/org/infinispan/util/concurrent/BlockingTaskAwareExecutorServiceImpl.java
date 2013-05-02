@@ -19,6 +19,7 @@
 
 package org.infinispan.util.concurrent;
 
+import org.infinispan.util.TimeService;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
@@ -46,11 +47,13 @@ public class BlockingTaskAwareExecutorServiceImpl extends AbstractExecutorServic
    private static final Log log = LogFactory.getLog(BlockingTaskAwareExecutorServiceImpl.class);
    private final BlockingQueue<BlockingRunnable> blockedTasks;
    private final ExecutorService executorService;
+   private final TimeService timeService;
    private volatile boolean shutdown;
 
-   public BlockingTaskAwareExecutorServiceImpl(ExecutorService executorService) {
+   public BlockingTaskAwareExecutorServiceImpl(ExecutorService executorService, TimeService timeService) {
       this.blockedTasks = new LinkedBlockingQueue<BlockingRunnable>();
       this.executorService = executorService;
+      this.timeService = timeService;
       this.shutdown = false;
    }
 
@@ -95,9 +98,9 @@ public class BlockingTaskAwareExecutorServiceImpl extends AbstractExecutorServic
 
    @Override
    public boolean awaitTermination(long timeout, TimeUnit unit) throws InterruptedException {
-      long realTimeout = System.nanoTime() + unit.toNanos(timeout);
+      final long endTime = timeService.expectedEndTime(timeout, unit);
       synchronized (blockedTasks) {
-         long waitTime = System.nanoTime() - realTimeout;
+         long waitTime = timeService.remainingTime(endTime, TimeUnit.MILLISECONDS);
          while (!blockedTasks.isEmpty() && waitTime > 0) {
             wait(waitTime);
          }

@@ -22,15 +22,12 @@
  */
 package org.infinispan.loaders.jdbc.stringbased;
 
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.when;
-
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.Set;
 
-import org.infinispan.Cache;
 import org.infinispan.container.entries.InternalCacheEntry;
+import org.infinispan.loaders.AbstractCacheStoreTest;
 import org.infinispan.loaders.CacheLoaderException;
 import org.infinispan.loaders.CacheStore;
 import org.infinispan.loaders.jdbc.TableManipulation;
@@ -69,9 +66,7 @@ public class JdbcStringBasedCacheStoreAltMapperTest {
       config.setKey2StringMapperClass(PersonKey2StringMapper.class.getName());
       config.setPurgeSynchronously(true);
       cacheStore = new JdbcStringBasedCacheStore();
-      Cache<?, ?> mockCache = mock(Cache.class);
-      when(mockCache.getName()).thenReturn(getClass().getName());
-      cacheStore.init(config, mockCache, getMarshaller());
+      cacheStore.init(config, AbstractCacheStoreTest.mockCache(getClass().getName()), getMarshaller());
       cacheStore.start();
    }
 

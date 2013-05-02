@@ -27,12 +27,14 @@ import org.infinispan.factories.scopes.Scopes;
 import org.infinispan.jmx.annotations.MBean;
 import org.infinispan.jmx.annotations.ManagedOperation;
 import org.infinispan.jmx.annotations.Parameter;
+import org.infinispan.util.TimeService;
 import org.infinispan.util.Util;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 import java.util.HashSet;
 import java.util.ServiceLoader;
 import java.util.Set;
+import java.util.concurrent.TimeUnit;
 
 /**
  * This component handles the control hooks to handle migrating from one version of Infinispan to
@@ -49,10 +51,12 @@ public class RollingUpgradeManager {
    private static final Log log = LogFactory.getLog(RollingUpgradeManager.class);
    private final Set<SourceMigrator> sourceMigrators = new HashSet<SourceMigrator>(2);
    private Cache<Object, Object> cache;
+   private TimeService timeService;
 
    @Inject
-   public void initialize(final Cache<Object, Object> cache) {
+   public void initialize(final Cache<Object, Object> cache, TimeService timeService) {
       this.cache = cache;
+      this.timeService = timeService;
    }
 
    @ManagedOperation(
@@ -70,9 +74,9 @@ public class RollingUpgradeManager {
    )
    public long synchronizeData(@Parameter(name="migratorName", description="The name of the migrator to use") String migratorName) throws Exception {
       TargetMigrator migrator = getMigrator(migratorName);
-      long start = System.currentTimeMillis();
+      long start = timeService.time();
       long count = migrator.synchronizeData(cache);
-      log.entriesMigrated(count, cache.getName(), Util.prettyPrintTime(System.currentTimeMillis() - start));
+      log.entriesMigrated(count, cache.getName(), Util.prettyPrintTime(timeService.timeDuration(start, TimeUnit.MILLISECONDS)));
       return count;
 
    }

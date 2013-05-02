@@ -75,10 +75,10 @@ public class ExpiryTest extends AbstractInfinispanTest {
       assert se.getValue().equals("v");
       assert se.getLifespan() == lifespan;
       assert se.getMaxIdle() == -1;
-      assert !se.isExpired();
+      assert !se.isExpired(TIME_SERVICE.wallClockTime());
       assert cache.get("k").equals("v");
       Thread.sleep(lifespan + 100);
-      assert se.isExpired();
+      assert se.isExpired(TIME_SERVICE.wallClockTime());
       assert cache.get("k") == null;
    }
 
@@ -93,10 +93,10 @@ public class ExpiryTest extends AbstractInfinispanTest {
       assert se.getValue().equals("v");
       assert se.getLifespan() == -1;
       assert se.getMaxIdle() == idleTime;
-      assert !se.isExpired();
+      assert !se.isExpired(TIME_SERVICE.wallClockTime());
       assert cache.get("k").equals("v");
       Thread.sleep(idleTime + 100);
-      assert se.isExpired();
+      assert se.isExpired(TIME_SERVICE.wallClockTime());
       assert cache.get("k") == null;
    }
 

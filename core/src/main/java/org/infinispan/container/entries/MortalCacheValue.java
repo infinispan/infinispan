@@ -74,7 +74,7 @@ public class MortalCacheValue extends ImmortalCacheValue {
 
    @Override
    public boolean isExpired() {
-      return ExpiryHelper.isExpiredMortal(lifespan, created);
+      return isExpired(System.currentTimeMillis());
    }
 
    @Override

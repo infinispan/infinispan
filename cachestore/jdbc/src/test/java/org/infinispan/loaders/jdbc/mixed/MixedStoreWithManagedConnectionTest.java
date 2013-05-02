@@ -56,7 +56,7 @@ public class MixedStoreWithManagedConnectionTest extends ManagedConnectionFactor
       JdbcMixedCacheStoreConfig cacheStoreConfig = new JdbcMixedCacheStoreConfig(connectionFactoryConfig, binaryTm, stringsTm);
       cacheStoreConfig.setPurgeSynchronously(true);
       JdbcMixedCacheStore store = new JdbcMixedCacheStore();
-      store.init(cacheStoreConfig, new CacheImpl("aName"), getMarshaller());
+      store.init(cacheStoreConfig, getCache(), getMarshaller());
       store.start();
       assert store.getConnectionFactory() instanceof ManagedConnectionFactory;
       return store;

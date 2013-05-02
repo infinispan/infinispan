@@ -91,7 +91,7 @@ public class MetadataMortalCacheValue extends ImmortalCacheValue implements Meta
 
    @Override
    public boolean isExpired() {
-      return ExpiryHelper.isExpiredMortal(metadata.lifespan(), created);
+      return isExpired(System.currentTimeMillis());
    }
 
    @Override

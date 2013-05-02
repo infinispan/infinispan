@@ -38,10 +38,12 @@ import org.infinispan.transaction.LocalTransaction;
 import org.infinispan.transaction.TransactionTable;
 import org.infinispan.transaction.xa.CacheTransaction;
 import org.infinispan.transaction.xa.GlobalTransaction;
+import org.infinispan.util.TimeService;
 import org.infinispan.util.concurrent.TimeoutException;
 import org.infinispan.util.logging.Log;
 
 import java.util.Collection;
+import java.util.concurrent.TimeUnit;
 
 import static org.infinispan.util.Util.toStr;
 
@@ -56,13 +58,15 @@ public abstract class AbstractTxLockingInterceptor extends AbstractLockingInterc
    protected TransactionTable txTable;
    protected RpcManager rpcManager;
    private boolean clustered;
+   private TimeService timeService;
 
    @Inject
    @SuppressWarnings("unused")
-   public void setDependencies(TransactionTable txTable, RpcManager rpcManager) {
+   public void setDependencies(TransactionTable txTable, RpcManager rpcManager, TimeService timeService) {
       this.txTable = txTable;
       this.rpcManager = rpcManager;
       clustered = rpcManager != null;
+      this.timeService = timeService;
    }
 
    @Override
@@ -172,7 +176,8 @@ public abstract class AbstractTxLockingInterceptor extends AbstractLockingInterc
          if (trace)
             log.tracef("Checking for pending locks and then locking key %s", toStr(key));
 
-         final long expectedEndTime = nowMillis() + cacheConfiguration.locking().lockAcquisitionTimeout();
+         final long expectedEndTime = timeService.expectedEndTime(cacheConfiguration.locking().lockAcquisitionTimeout(),
+                                                                  TimeUnit.MILLISECONDS);
 
          // Check local transactions first
          waitForTransactionsToComplete(txContext, txTable.getLocalTransactions(), key, transactionTopologyId, expectedEndTime);
@@ -181,7 +186,7 @@ public abstract class AbstractTxLockingInterceptor extends AbstractLockingInterc
          waitForTransactionsToComplete(txContext, txTable.getRemoteTransactions(), key, transactionTopologyId, expectedEndTime);
 
          // Then try to acquire a lock
-         final long remaining = expectedEndTime - nowMillis();
+         final long remaining = timeService.remainingTime(expectedEndTime, TimeUnit.MILLISECONDS);
          if (remaining <= 0) {
             throw newTimeoutException(key, txContext);
          } else {
@@ -210,7 +215,7 @@ public abstract class AbstractTxLockingInterceptor extends AbstractLockingInterc
             boolean txCompleted = false;
 
             long remaining;
-            while ((remaining = expectedEndTime - nowMillis()) > 0) {
+            while ((remaining = timeService.remainingTime(expectedEndTime, TimeUnit.MILLISECONDS)) > 0) {
                if (tx.waitForLockRelease(key, remaining)) {
                   txCompleted = true;
                   break;
@@ -231,10 +236,5 @@ public abstract class AbstractTxLockingInterceptor extends AbstractLockingInterc
 
    private boolean releaseLockOnTxCompletion(TxInvocationContext ctx) {
       return ctx.isOriginLocal() || Configurations.isSecondPhaseAsync(cacheConfiguration);
-   }
-
-   private long nowMillis() {
-      //use nanos as is more precise and less expensive.
-      return System.nanoTime() / 1000000;
    }
 }

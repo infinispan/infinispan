@@ -193,7 +193,7 @@ public abstract class LockSupportCacheStore<L> extends AbstractCacheStore {
       if (ed == null) {
         return;
       }
-      if (ed.canExpire() && ed.isExpired(System.currentTimeMillis())) {
+      if (ed.canExpire() && ed.isExpired(timeService.wallClockTime())) {
          if (containsKey(ed.getKey())) {
             if (trace) {
                log.tracef("Entry %s is expired!  Removing!", ed);

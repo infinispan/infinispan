@@ -35,6 +35,7 @@ import org.infinispan.factories.scopes.Scopes;
 import org.infinispan.lifecycle.ComponentStatus;
 import org.infinispan.lifecycle.Lifecycle;
 import org.infinispan.util.ReflectionUtil;
+import org.infinispan.util.TimeService;
 import org.infinispan.util.Util;
 import org.infinispan.util.logging.Log;
 
@@ -745,11 +746,11 @@ public abstract class AbstractComponentRegistry implements Lifecycle, Cloneable 
     */
    private void blockUntilCacheStarts() throws InterruptedException, IllegalStateException {
       int pollFrequencyMS = 20;
+      TimeService timeService = getTimeService();
       final long startupWaitTime = getConfiguration().getStateRetrievalTimeout();
-      final long startupWaitTimeNanos = TimeUnit.NANOSECONDS.convert(startupWaitTime, TimeUnit.MILLISECONDS);
-      final long giveUpTime = System.nanoTime() + startupWaitTimeNanos;
+      final long giveUpTime = timeService.expectedEndTime(startupWaitTime, TimeUnit.MILLISECONDS);
 
-      while (System.nanoTime() < giveUpTime) {
+      while (!timeService.isTimeExpired(giveUpTime)) {
          if (state.allowInvocations()) break;
          Thread.sleep(pollFrequencyMS);
       }
@@ -775,6 +776,8 @@ public abstract class AbstractComponentRegistry implements Lifecycle, Cloneable 
       dolly.state = ComponentStatus.INSTANTIATED;
       return dolly;
    }
+
+   public abstract TimeService getTimeService();
 
    /**
     * A wrapper representing a component in the registry

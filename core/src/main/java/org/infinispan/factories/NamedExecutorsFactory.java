@@ -173,7 +173,7 @@ public class NamedExecutorsFactory extends NamedComponentFactory implements Auto
       setDefaultThreads(KnownComponentNames.getDefaultThreads(componentName), props);
       setDefaultThreadPrio(KnownComponentNames.getDefaultThreadPrio(componentName), props);
       setDefaultQueueSize(KnownComponentNames.getDefaultQueueSize(componentName), props);
-      return new LazyInitializingBlockingTaskAwareExecutorService(f, props);
+      return new LazyInitializingBlockingTaskAwareExecutorService(f, props, globalComponentRegistry.getTimeService());
    }
 
    private void setThreadSuffix(String nodeName, Properties props) {

@@ -52,7 +52,7 @@ public class BinaryStoreWithManagedConnectionTest extends ManagedConnectionFacto
       JdbcBinaryCacheStoreConfig config = new JdbcBinaryCacheStoreConfig(connectionFactoryConfig, tm);
       config.setPurgeSynchronously(true);
       JdbcBinaryCacheStore jdbcBinaryCacheStore = new JdbcBinaryCacheStore();
-      jdbcBinaryCacheStore.init(config, new CacheImpl("aName"), getMarshaller());
+      jdbcBinaryCacheStore.init(config, getCache(), getMarshaller());
       jdbcBinaryCacheStore.start();
       assert jdbcBinaryCacheStore.getConnectionFactory() instanceof ManagedConnectionFactory;
       return jdbcBinaryCacheStore;

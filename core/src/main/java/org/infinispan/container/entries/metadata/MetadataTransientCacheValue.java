@@ -74,7 +74,7 @@ public class MetadataTransientCacheValue extends ImmortalCacheValue implements M
 
    @Override
    public final boolean isExpired() {
-      return ExpiryHelper.isExpiredTransient(metadata.maxIdle(), lastUsed);
+      return isExpired(System.currentTimeMillis());
    }
 
    @Override

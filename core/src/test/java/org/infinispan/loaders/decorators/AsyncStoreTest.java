@@ -25,6 +25,7 @@ package org.infinispan.loaders.decorators;
 import org.infinispan.Cache;
 import org.infinispan.CacheException;
 import org.infinispan.container.entries.InternalCacheEntry;
+import org.infinispan.loaders.AbstractCacheStoreTest;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.infinispan.test.fwk.TestInternalCacheEntryFactory;
 import org.infinispan.loaders.CacheLoaderConfig;
@@ -45,7 +46,6 @@ import org.infinispan.transaction.xa.TransactionFactory;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 import org.testng.annotations.AfterMethod;
-import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
 import java.lang.reflect.Method;
@@ -55,7 +55,6 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.CyclicBarrier;
-import java.util.concurrent.ExecutorService;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -74,7 +73,7 @@ public class AsyncStoreTest extends AbstractInfinispanTest {
       AsyncStoreConfig asyncConfig = new AsyncStoreConfig().threadPoolSize(10);
       store = new AsyncStore(underlying, asyncConfig);
       DummyInMemoryCacheStore.Cfg dummyCfg = new DummyInMemoryCacheStore.Cfg().storeName(AsyncStoreTest.class.getName());
-      store.init(dummyCfg, null, null);
+      store.init(dummyCfg, getCache(), null);
       store.start();
    }
 
@@ -159,7 +158,7 @@ public class AsyncStoreTest extends AbstractInfinispanTest {
          store = new MockAsyncStore(key, v1Latch, v2Latch, endLatch, underlying, asyncConfig);
          DummyInMemoryCacheStore.Cfg dummyCfg = new DummyInMemoryCacheStore.Cfg();
          dummyCfg.storeName(m.getName());
-         store.init(dummyCfg, null, null);
+         store.init(dummyCfg, getCache(), null);
          store.start();
 
          store.store(TestInternalCacheEntryFactory.create(key, "v1"));
@@ -215,7 +214,7 @@ public class AsyncStoreTest extends AbstractInfinispanTest {
          };
          DummyInMemoryCacheStore.Cfg dummyCfg = new DummyInMemoryCacheStore.Cfg();
          dummyCfg.storeName(m.getName());
-         store.init(dummyCfg, null, null);
+         store.init(dummyCfg, getCache(), null);
          store.start();
 
          List<Modification> mods = new ArrayList<Modification>();
@@ -292,7 +291,7 @@ public class AsyncStoreTest extends AbstractInfinispanTest {
          };
          DummyInMemoryCacheStore.Cfg dummyCfg = new DummyInMemoryCacheStore.Cfg();
          dummyCfg.storeName(m.getName());
-         store.init(dummyCfg, null, null);
+         store.init(dummyCfg, getCache(), null);
          store.start();
 
          List<Modification> mods = new ArrayList<Modification>();
@@ -563,7 +562,7 @@ public class AsyncStoreTest extends AbstractInfinispanTest {
       AsyncStoreConfig asyncConfig = new AsyncStoreConfig().threadPoolSize(10);
       asyncConfig.modificationQueueSize(10);
       store = new AsyncStore(underlying, asyncConfig);
-      store.init(new LockableCacheStoreConfig(), null, null);
+      store.init(new LockableCacheStoreConfig(), getCache(), null);
       store.start();
       try {
          final CountDownLatch done = new CountDownLatch(1);
@@ -674,5 +673,9 @@ public class AsyncStoreTest extends AbstractInfinispanTest {
             }
          }
       });
+   }
+
+   private Cache getCache() {
+      return AbstractCacheStoreTest.mockCache(getClass().getName());
    }
 }

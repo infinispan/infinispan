@@ -39,6 +39,7 @@ import org.infinispan.remoting.responses.ResponseGenerator;
 import org.infinispan.statetransfer.StateTransferManager;
 import org.infinispan.transaction.totalorder.TotalOrderManager;
 import org.infinispan.util.InfinispanCollections;
+import org.infinispan.util.TimeService;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
@@ -53,7 +54,7 @@ import static org.infinispan.factories.KnownComponentNames.MODULE_COMMAND_INITIA
  * @author Manik Surtani
  * @since 4.0
  */
-public final class ComponentRegistry extends AbstractComponentRegistry {
+public class ComponentRegistry extends AbstractComponentRegistry {
 
    private final GlobalComponentRegistry globalComponents;
    private final String cacheName;
@@ -249,6 +250,11 @@ public final class ComponentRegistry extends AbstractComponentRegistry {
          }
          cacheManagerNotifier.notifyCacheStopped(cacheName);
       }
+   }
+
+   @Override
+   public TimeService getTimeService() {
+      return globalComponents.getTimeService();
    }
 
    public String getCacheName() {

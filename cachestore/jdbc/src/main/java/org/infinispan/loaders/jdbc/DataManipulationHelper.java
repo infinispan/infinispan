@@ -38,6 +38,7 @@ import org.infinispan.loaders.CacheLoaderException;
 import org.infinispan.loaders.jdbc.connectionfactory.ConnectionFactory;
 import org.infinispan.marshall.StreamingMarshaller;
 import org.infinispan.loaders.jdbc.logging.Log;
+import org.infinispan.util.TimeService;
 import org.infinispan.util.logging.LogFactory;
 
 /**
@@ -53,12 +54,15 @@ public abstract class DataManipulationHelper {
    private final ConnectionFactory connectionFactory;
    private final TableManipulation tableManipulation;
    protected StreamingMarshaller marshaller;
+   private final TimeService timeService;
 
 
-   public DataManipulationHelper(ConnectionFactory connectionFactory, TableManipulation tableManipulation, StreamingMarshaller marshaller) {
+   public DataManipulationHelper(ConnectionFactory connectionFactory, TableManipulation tableManipulation, StreamingMarshaller marshaller,
+                                 TimeService timeService) {
       this.connectionFactory = connectionFactory;
       this.tableManipulation = tableManipulation;
       this.marshaller = marshaller;
+      this.timeService = timeService;
    }
 
    public void clear() throws CacheLoaderException {
@@ -143,7 +147,7 @@ public abstract class DataManipulationHelper {
          connection = connectionFactory.getConnection();
          ps = connection.prepareStatement(sql);
          if (filterExpired) {
-            ps.setLong(1, System.currentTimeMillis());
+            ps.setLong(1, timeService.wallClockTime());
          }
          rs = ps.executeQuery();
          rs.setFetchSize(tableManipulation.getFetchSize());
@@ -178,7 +182,7 @@ public abstract class DataManipulationHelper {
          conn = connectionFactory.getConnection();
          ps = conn.prepareStatement(sql);
          if (filterExpired) {
-            ps.setLong(1, System.currentTimeMillis());
+            ps.setLong(1, timeService.wallClockTime());
          }
          rs = ps.executeQuery();
          rs.setFetchSize(tableManipulation.getFetchSize());

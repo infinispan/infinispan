@@ -22,6 +22,8 @@
  */
 package org.infinispan.test;
 
+import org.infinispan.util.DefaultTimeService;
+import org.infinispan.util.TimeService;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 import org.testng.annotations.AfterTest;
@@ -49,6 +51,7 @@ public class AbstractInfinispanTest {
 
    private Set<Thread> spawnedThreads = new HashSet<Thread>();
    private final AtomicInteger spawnedThreadsCounter = new AtomicInteger(0);
+   public static final TimeService TIME_SERVICE = new DefaultTimeService();
 
    @AfterTest(alwaysRun = true)
    protected void killSpawnedThreads() {

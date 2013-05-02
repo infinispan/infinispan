@@ -24,6 +24,7 @@ package org.infinispan.loaders;
 
 import org.infinispan.Cache;
 import org.infinispan.marshall.StreamingMarshaller;
+import org.infinispan.util.TimeService;
 
 /**
  * An abstract {@link org.infinispan.loaders.CacheLoader} that holds common implementations for some methods
@@ -36,6 +37,7 @@ public abstract class AbstractCacheLoader implements CacheLoader {
 
    protected volatile StreamingMarshaller marshaller;
    protected volatile Cache<Object, Object> cache;
+   protected TimeService timeService;
 
    /**
     * {@inheritDoc} This implementation delegates to {@link CacheLoader#load(Object)}, to ensure that a response is
@@ -51,5 +53,6 @@ public abstract class AbstractCacheLoader implements CacheLoader {
       this.marshaller = m;
       if (config == null) throw new IllegalStateException("Null config!!!");
       this.cache = (Cache<Object, Object>) cache;
+      this.timeService = cache.getAdvancedCache().getComponentRegistry().getTimeService();
    }
 }

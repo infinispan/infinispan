@@ -55,7 +55,7 @@ public class StringStoreWithManagedConnectionTest extends ManagedConnectionFacto
       JdbcStringBasedCacheStoreConfig config = new JdbcStringBasedCacheStoreConfig(connectionFactoryConfig, tm);
       config.setPurgeSynchronously(true);
       JdbcStringBasedCacheStore stringBasedCacheStore = new JdbcStringBasedCacheStore();
-      stringBasedCacheStore.init(config, new CacheImpl("aName"), getMarshaller());
+      stringBasedCacheStore.init(config, getCache(), getMarshaller());
       stringBasedCacheStore.start();
       return stringBasedCacheStore;
    }
