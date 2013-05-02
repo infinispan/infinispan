@@ -24,6 +24,7 @@ import java.util.concurrent.atomic.AtomicLong;
 import org.hibernate.search.batchindexing.MassIndexerProgressMonitor;
 import org.hibernate.search.util.logging.impl.Log;
 import org.hibernate.search.util.logging.impl.LoggerFactory;
+import org.infinispan.util.TimeService;
 
 /**
  * @author Sanne Grinovero <sanne@hibernate.org> (C) 2012 Red Hat Inc.
@@ -34,12 +35,13 @@ public class DefaultMassIndexerProgressMonitor implements MassIndexerProgressMon
    private final AtomicLong documentsDoneCounter = new AtomicLong();
    private volatile long startTime;
    private final int logAfterNumberOfDocuments;
+   private final TimeService timeService;
 
    /**
     * Logs progress of indexing job every 50 documents written.
     */
-   public DefaultMassIndexerProgressMonitor() {
-      this(50);
+   public DefaultMassIndexerProgressMonitor(TimeService timeService) {
+      this(50, timeService);
    }
 
    /**
@@ -49,8 +51,9 @@ public class DefaultMassIndexerProgressMonitor implements MassIndexerProgressMon
     * @param logAfterNumberOfDocuments
     *           log each time the specified number of documents has been added
     */
-   public DefaultMassIndexerProgressMonitor(int logAfterNumberOfDocuments) {
+   public DefaultMassIndexerProgressMonitor(int logAfterNumberOfDocuments, TimeService timeService) {
       this.logAfterNumberOfDocuments = logAfterNumberOfDocuments;
+      this.timeService = timeService;
    }
 
    public void entitiesLoaded(int size) {
@@ -60,7 +63,7 @@ public class DefaultMassIndexerProgressMonitor implements MassIndexerProgressMon
    public void documentsAdded(long increment) {
       long current = documentsDoneCounter.addAndGet(increment);
       if (current == increment) {
-         startTime = System.nanoTime();
+         startTime = timeService.time();
       }
       if (current % getStatusMessagePeriod() == 0) {
          printStatusMessage(startTime, current);
@@ -84,8 +87,7 @@ public class DefaultMassIndexerProgressMonitor implements MassIndexerProgressMon
    }
 
    protected void printStatusMessage(long startTime, long doneCount) {
-      long elapsedMs = TimeUnit.NANOSECONDS.toMillis(System.nanoTime() - startTime);
-      log.indexingDocumentsCompleted(doneCount, elapsedMs);
+      log.indexingDocumentsCompleted(doneCount, timeService.timeDuration(startTime, TimeUnit.MILLISECONDS));
    }
 
 }

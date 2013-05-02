@@ -45,11 +45,8 @@ public class MetadataTransientMortalCacheEntry extends AbstractInternalCacheEntr
 
    protected MetadataTransientMortalCacheValue cacheValue;
 
-   public MetadataTransientMortalCacheEntry(Object key, Object value, Metadata metadata) {
-      super(key);
-      final long currentTimeMillis = System.currentTimeMillis();
-      cacheValue = new MetadataTransientMortalCacheValue(value, metadata, currentTimeMillis);
-      touch(currentTimeMillis);
+   public MetadataTransientMortalCacheEntry(Object key, Object value, Metadata metadata, long now) {
+      this(key, value, metadata, now, now);
    }
 
    public MetadataTransientMortalCacheEntry(Object key, Object value, Metadata metadata, long lastUsed, long created) {
@@ -125,7 +122,12 @@ public class MetadataTransientMortalCacheEntry extends AbstractInternalCacheEntr
 
    @Override
    public final void reincarnate() {
-      cacheValue.created = System.currentTimeMillis();
+      reincarnate(System.currentTimeMillis());
+   }
+
+   @Override
+   public void reincarnate(long now) {
+      cacheValue.created = now;
    }
 
    @Override

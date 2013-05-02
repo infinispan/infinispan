@@ -29,6 +29,7 @@ import org.infinispan.container.entries.InternalCacheEntry;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.interceptors.base.CommandInterceptor;
 import org.infinispan.jcache.JCacheNotifier;
+import org.infinispan.util.TimeService;
 
 import javax.cache.Cache;
 
@@ -53,11 +54,13 @@ public class ExpirationTrackingInterceptor extends CommandInterceptor {
    private final DataContainer container;
    private final Cache<Object, Object> cache;
    private final JCacheNotifier<Object, Object> notifier;
+   private final TimeService timeService;
 
    @SuppressWarnings("unchecked")
    public ExpirationTrackingInterceptor(DataContainer container,
-         Cache<?, ?> cache, JCacheNotifier<?, ?> notifier) {
+         Cache<?, ?> cache, JCacheNotifier<?, ?> notifier, TimeService timeService) {
       this.container = container;
+      this.timeService = timeService;
       this.cache = (Cache<Object, Object>) cache;
       this.notifier = (JCacheNotifier<Object, Object>) notifier;
    }
@@ -67,7 +70,7 @@ public class ExpirationTrackingInterceptor extends CommandInterceptor {
          (InvocationContext ctx, GetKeyValueCommand command) throws Throwable {
       Object key = command.getKey();
       InternalCacheEntry entry = container.peek(key);
-      if (entry != null && entry.canExpire() && entry.isExpired())
+      if (entry != null && entry.canExpire() && entry.isExpired(timeService.wallClockTime()))
          notifier.notifyEntryExpired(cache, key, entry.getValue());
 
       return super.visitGetKeyValueCommand(ctx, command);

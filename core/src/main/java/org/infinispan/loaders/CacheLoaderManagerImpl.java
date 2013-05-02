@@ -28,7 +28,6 @@ import static org.infinispan.factories.KnownComponentNames.CACHE_MARSHALLER;
 import static org.infinispan.loaders.decorators.AbstractDelegatingStore.undelegateCacheLoader;
 
 import java.util.*;
-import java.util.concurrent.TimeUnit;
 
 import javax.transaction.Transaction;
 import javax.transaction.TransactionManager;
@@ -58,6 +57,7 @@ import org.infinispan.loaders.decorators.SingletonStore;
 import org.infinispan.loaders.decorators.SingletonStoreConfig;
 import org.infinispan.marshall.StreamingMarshaller;
 import org.infinispan.util.InfinispanCollections;
+import org.infinispan.util.TimeService;
 import org.infinispan.util.Util;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
@@ -71,17 +71,20 @@ public class CacheLoaderManagerImpl implements CacheLoaderManager {
    CacheLoader loader;
    InvocationContextContainer icc;
    TransactionManager transactionManager;
+   private TimeService timeService;
    private static final Log log = LogFactory.getLog(CacheLoaderManagerImpl.class);
 
    @Inject
    public void inject(AdvancedCache<Object, Object> cache,
                       @ComponentName(CACHE_MARSHALLER) StreamingMarshaller marshaller,
-                      Configuration configuration, InvocationContextContainer icc, TransactionManager transactionManager) {
+                      Configuration configuration, InvocationContextContainer icc, TransactionManager transactionManager,
+                      TimeService timeService) {
       this.cache = cache;
       this.m = marshaller;
       this.configuration = configuration;
       this.icc = icc;
       this.transactionManager = transactionManager;
+      this.timeService = timeService;
    }
 
    @Override
@@ -230,7 +233,7 @@ public class CacheLoaderManagerImpl implements CacheLoaderManager {
             long start = 0;
             boolean debugTiming = log.isDebugEnabled();
             if (debugTiming) {
-               start = System.nanoTime();
+               start = timeService.time();
                log.debugf("Preloading transient state from cache loader %s", loader);
             }
             Set<InternalCacheEntry> state;
@@ -259,8 +262,8 @@ public class CacheLoaderManagerImpl implements CacheLoaderManager {
                      e.getLifespan(), MILLISECONDS, e.getMaxIdle(), MILLISECONDS);
 
             if (debugTiming) {
-               final long stop = System.nanoTime();
-               log.debugf("Preloaded %s keys in %s", state.size(), Util.prettyPrintTime(stop - start, TimeUnit.NANOSECONDS));
+               log.debugf("Preloaded %s keys in %s", state.size(),
+                          Util.prettyPrintTime(timeService.timeDuration(start, MILLISECONDS)));
             }
          }
       }

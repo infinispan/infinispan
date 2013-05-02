@@ -52,10 +52,6 @@ public class TransientMortalCacheValue extends MortalCacheValue {
       this.maxIdle = maxIdle;
    }
 
-   public TransientMortalCacheValue(Object value, long created) {
-      super(value, created, -1);
-   }
-
    @Override
    public long getMaxIdle() {
       return maxIdle;
@@ -81,7 +77,7 @@ public class TransientMortalCacheValue extends MortalCacheValue {
 
    @Override
    public boolean isExpired() {
-      return ExpiryHelper.isExpiredTransientMortal(maxIdle, lastUsed, lifespan, created);
+      return isExpired(System.currentTimeMillis());
    }
 
    @Override

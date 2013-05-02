@@ -32,7 +32,8 @@ package org.infinispan.container.entries;
 public interface InternalCacheEntry extends CacheEntry, Cloneable {
 
    /**
-    * @param the current time as defined by {@link System#currentTimeMillis()}
+    * @param now the current time as defined by {@link System#currentTimeMillis()} or {@link
+    *            org.infinispan.util.TimeService#wallClockTime()}
     * @return true if the entry has expired; false otherwise
     * @since 5.1
     */
@@ -40,7 +41,9 @@ public interface InternalCacheEntry extends CacheEntry, Cloneable {
 
    /**
     * @return true if the entry has expired; false otherwise
+    * @deprecated use {@link #isExpired(long)}
     */
+   @Deprecated
    boolean isExpired();
 
    /**
@@ -67,19 +70,31 @@ public interface InternalCacheEntry extends CacheEntry, Cloneable {
 
    /**
     * Updates access timestamps on this instance
+    * @deprecated use {@link #touch(long)}
     */
+   @Deprecated
    void touch();
 
    /**
     * Updates access timestamps on this instance to a specified time
-    * @param currentTimeMillis
+    * @param currentTimeMillis the current time as defined by {@link System#currentTimeMillis()} or {@link
+    *                          org.infinispan.util.TimeService#wallClockTime()}
     */
    void touch(long currentTimeMillis);
 
    /**
     * "Reincarnates" an entry.  Essentially, resets the 'created' timestamp of the entry to the current time.
+    * @deprecated use {@link #reincarnate(long)}
     */
+   @Deprecated
    void reincarnate();
+
+   /**
+    * "Reincarnates" an entry.  Essentially, resets the 'created' timestamp of the entry to the current time.
+    * @param now the current time as defined by {@link System#currentTimeMillis()} or {@link
+    *            org.infinispan.util.TimeService#wallClockTime()}
+    */
+   void reincarnate(long now);
 
    /**
     * Creates a representation of this entry as an {@link org.infinispan.container.entries.InternalCacheValue}. The main

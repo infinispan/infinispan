@@ -63,7 +63,7 @@ public abstract class BucketBasedCacheStore extends LockSupportCacheStore<Intege
       }
       InternalCacheEntry se = bucket.getEntry(key);
 
-      if (se != null && se.canExpire() && se.isExpired(System.currentTimeMillis())) {
+      if (se != null && se.canExpire() && se.isExpired(timeService.wallClockTime())) {
          // We do not actually remove expired items from the store here.  We leave that up to the implementation,
          // since it may be a costly thing (remote connection, row locking on a JDBC store for example) for a
          // supposedly quick load operation.
@@ -88,7 +88,7 @@ public abstract class BucketBasedCacheStore extends LockSupportCacheStore<Intege
          bucket.addEntry(entry);
          updateBucket(bucket);
       } else {
-         bucket = new Bucket();
+         bucket = new Bucket(timeService);
          bucket.setBucketId(lockingKey);
          bucket.addEntry(entry);
          insertBucket(bucket);

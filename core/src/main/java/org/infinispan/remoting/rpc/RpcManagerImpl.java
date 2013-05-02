@@ -48,6 +48,7 @@ import org.infinispan.remoting.transport.Address;
 import org.infinispan.remoting.transport.Transport;
 import org.infinispan.topology.CacheTopology;
 import org.infinispan.topology.LocalTopologyManager;
+import org.infinispan.util.TimeService;
 import org.infinispan.util.concurrent.NotifyingNotifiableFuture;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
@@ -94,12 +95,13 @@ public class RpcManagerImpl implements RpcManager {
    private LocalTopologyManager localTopologyManager;
    private StateTransferManager stateTransferManager;
    private String cacheName;
+   private TimeService timeService;
 
    @Inject
    public void injectDependencies(Transport t, Cache cache, Configuration cfg,
             ReplicationQueue replicationQueue, CommandsFactory cf,
             @ComponentName(ASYNC_TRANSPORT_EXECUTOR) ExecutorService e,
-            LocalTopologyManager localTopologyManager, StateTransferManager stateTransferManager) {
+            LocalTopologyManager localTopologyManager, StateTransferManager stateTransferManager, TimeService timeService) {
       this.t = t;
       this.configuration = cfg;
       this.cacheName = cache.getName();
@@ -108,6 +110,7 @@ public class RpcManagerImpl implements RpcManager {
       this.cf = cf;
       this.localTopologyManager = localTopologyManager;
       this.stateTransferManager = stateTransferManager;
+      this.timeService = timeService;
    }
 
    @Start(priority = 9)
@@ -270,7 +273,7 @@ public class RpcManagerImpl implements RpcManager {
          rpc = cf.buildSingleRpcCommand(rpc);
       }
       long startTimeNanos = 0;
-      if (statisticsEnabled) startTimeNanos = System.nanoTime();
+      if (statisticsEnabled) startTimeNanos = timeService.time();
       try {
          // TODO Re-enable the filter (and test MirrsingRpcDispatcherTest) after we find a way to update the cache members list before state transfer has started
          // add a response filter that will ensure we don't wait for replies from non-members
@@ -315,7 +318,7 @@ public class RpcManagerImpl implements RpcManager {
          throw new CacheException(th);
       } finally {
          if (statisticsEnabled) {
-            long timeTaken = TimeUnit.MILLISECONDS.convert(System.nanoTime() - startTimeNanos, TimeUnit.NANOSECONDS);
+            long timeTaken = timeService.timeDuration(startTimeNanos, TimeUnit.MILLISECONDS);
             totalReplicationTime.getAndAdd(timeTaken);
          }
       }

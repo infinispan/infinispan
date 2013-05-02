@@ -47,6 +47,7 @@ import org.infinispan.remoting.transport.BackupResponse;
 import org.infinispan.remoting.transport.Transport;
 import org.infinispan.transaction.LocalTransaction;
 import org.infinispan.transaction.TransactionTable;
+import org.infinispan.util.TimeService;
 import org.infinispan.util.Util;
 import org.infinispan.util.CollectionFactory;
 import org.infinispan.util.logging.Log;
@@ -72,6 +73,7 @@ public class BackupSenderImpl implements BackupSender {
    private Transport transport;
    private Configuration config;
    private TransactionTable txTable;
+   private TimeService timeService;
    private final Map<String, CustomFailurePolicy> siteFailurePolicy = new HashMap<String, CustomFailurePolicy>();
    private final ConcurrentMap<String, OfflineStatus> offlineStatus = CollectionFactory.makeConcurrentMap();
 
@@ -87,11 +89,12 @@ public class BackupSenderImpl implements BackupSender {
    }
 
    @Inject
-   public void init(Cache cache, Transport transport, TransactionTable txTable, GlobalConfiguration gc) {
+   public void init(Cache cache, Transport transport, TransactionTable txTable, GlobalConfiguration gc, TimeService timeService) {
       this.cache = cache;
       this.transport = transport;
       this.txTable = txTable;
       this.globalConfig = gc;
+      this.timeService = timeService;
    }
 
    @Start
@@ -107,7 +110,7 @@ public class BackupSenderImpl implements BackupSender {
             CustomFailurePolicy instance = Util.getInstance(backupPolicy, globalConfig.classLoader());
             siteFailurePolicy.put(bc.site(), instance);
          }
-         OfflineStatus offline = new OfflineStatus(bc.takeOffline());
+         OfflineStatus offline = new OfflineStatus(bc.takeOffline(), timeService);
          offlineStatus.put(bc.site(), offline);
       }
    }

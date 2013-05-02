@@ -34,6 +34,7 @@ import com.sleepycat.je.Environment;
 import com.sleepycat.util.RuntimeExceptionWrapper;
 import org.infinispan.Cache;
 import org.infinispan.container.entries.InternalCacheEntry;
+import org.infinispan.loaders.AbstractCacheStoreTest;
 import org.infinispan.test.fwk.TestInternalCacheEntryFactory;
 import org.infinispan.loaders.CacheLoaderException;
 import org.infinispan.loaders.modifications.Store;
@@ -130,7 +131,7 @@ public class BdbjeCacheStoreTest {
    public void setUp() throws Exception {
       cfg = new BdbjeCacheStoreConfig();
       factory = new MockBdbjeResourceFactory(cfg);
-      cache = mock(Cache.class);
+      cache = AbstractCacheStoreTest.mockCache(getClass().getName());
       cs = new BdbjeCacheStore();
       env = mock(Environment.class);
       cacheDb = mock(Database.class);

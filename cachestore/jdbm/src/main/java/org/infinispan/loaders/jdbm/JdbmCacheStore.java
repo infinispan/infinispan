@@ -156,7 +156,7 @@ public class JdbmCacheStore extends AbstractCacheStore {
    public InternalCacheEntry load(Object key) throws CacheLoaderException {
       try {
          InternalCacheEntry ice = unmarshall(tree.get(key), key);
-         if (ice != null && ice.isExpired(System.currentTimeMillis())) {
+         if (ice != null && ice.isExpired(timeService.wallClockTime())) {
             remove(key);
             return null;
          }
@@ -335,7 +335,7 @@ public class JdbmCacheStore extends AbstractCacheStore {
       if (entry.getMaxIdle() > 0) {
          // Coding getExpiryTime() for transient entries has the risk of being a moving target
          // which could lead to unexpected results, hence, InternalCacheEntry calls are required
-         expiry = entry.getMaxIdle() + System.currentTimeMillis();
+         expiry = entry.getMaxIdle() + timeService.wallClockTime();
       }
       Long at = expiry;
       Object key = entry.getKey();
@@ -440,7 +440,7 @@ public class JdbmCacheStore extends AbstractCacheStore {
       List<Object> keys = new ArrayList<Object>();
       while (browse.getNext(tuple)) {
          Long time = (Long) tuple.getKey();
-         if (time > System.currentTimeMillis())
+         if (time > timeService.wallClockTime())
             break;
          times.add(time);
          Object key = tuple.getValue();
@@ -456,7 +456,7 @@ public class JdbmCacheStore extends AbstractCacheStore {
       if (!keys.isEmpty())
          log.debugf("purge (up to) %d entries", keys.size());
       int count = 0;
-      long currentTimeMillis = System.currentTimeMillis();
+      long currentTimeMillis = timeService.wallClockTime();
       for (Object key : keys) {
          byte[] b = (byte[]) tree.get(key);
          if (b == null)

@@ -38,6 +38,8 @@ import org.infinispan.topology.DefaultRebalancePolicy;
 import org.infinispan.topology.LocalTopologyManager;
 import org.infinispan.topology.LocalTopologyManagerImpl;
 import org.infinispan.topology.RebalancePolicy;
+import org.infinispan.util.DefaultTimeService;
+import org.infinispan.util.TimeService;
 import org.infinispan.xsite.BackupReceiverRepository;
 import org.infinispan.xsite.BackupReceiverRepositoryImpl;
 
@@ -50,7 +52,8 @@ import org.infinispan.xsite.BackupReceiverRepositoryImpl;
  */
 
 @DefaultFactoryFor(classes = {InboundInvocationHandler.class, RemoteCommandsFactory.class, ExternalizerTable.class,
-                              RebalancePolicy.class, BackupReceiverRepository.class, CancellationService.class })
+                              RebalancePolicy.class, BackupReceiverRepository.class, CancellationService.class,
+                              TimeService.class})
 @Scope(Scopes.GLOBAL)
 public class EmptyConstructorFactory extends AbstractComponentFactory implements AutoInstantiableFactory {
 
@@ -73,6 +76,9 @@ public class EmptyConstructorFactory extends AbstractComponentFactory implements
          return (T) new BackupReceiverRepositoryImpl();
       else if (componentType.equals(CancellationService.class))
          return (T) new CancellationServiceImpl();
+      else if (componentType.equals(TimeService.class)) {
+         return (T) new DefaultTimeService();
+      }
 
       throw new ConfigurationException("Don't know how to create a " + componentType.getName());
    }

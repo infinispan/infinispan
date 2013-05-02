@@ -61,6 +61,7 @@ public class DeadlockDetectingLockManagerTest extends AbstractInfinispanTest {
    public void setUp() {
       lc = mock(LockContainer.class);
       lockManager = new DeadlockDetectingLockManagerMock(SPIN_DURATION, true, lc, config);
+      lockManager.injectTimeService(TIME_SERVICE);
       lockOwner = (DldGlobalTransaction) TransactionFactory.TxFactoryEnum.DLD_NORECOVERY_XA.newGlobalTransaction();
    }
 

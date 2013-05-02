@@ -37,6 +37,7 @@ import org.infinispan.factories.annotations.Stop;
 import org.infinispan.loaders.CacheLoaderManager;
 import org.infinispan.loaders.CacheStore;
 import org.infinispan.notifications.cachelistener.CacheNotifier;
+import org.infinispan.util.TimeService;
 import org.infinispan.util.Util;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
@@ -59,26 +60,28 @@ public class EvictionManagerImpl implements EvictionManager {
    private DataContainer dataContainer;
    private CacheStore cacheStore;
    private CacheNotifier cacheNotifier;
+   private TimeService timeService;
    private boolean enabled;
    private String cacheName;
 
    @Inject
    public void initialize(@ComponentName(KnownComponentNames.EVICTION_SCHEDULED_EXECUTOR)
          ScheduledExecutorService executor, Cache cache, Configuration cfg, DataContainer dataContainer,
-         CacheLoaderManager cacheLoaderManager, CacheNotifier cacheNotifier) {
+         CacheLoaderManager cacheLoaderManager, CacheNotifier cacheNotifier, TimeService timeService) {
       initialize(executor, cache.getName(), cfg, dataContainer,
-            cacheLoaderManager, cacheNotifier);
+            cacheLoaderManager, cacheNotifier, timeService);
    }
 
    void initialize(ScheduledExecutorService executor,
             String cacheName, Configuration cfg, DataContainer dataContainer,
-            CacheLoaderManager cacheLoaderManager, CacheNotifier cacheNotifier) {
+            CacheLoaderManager cacheLoaderManager, CacheNotifier cacheNotifier, TimeService timeService) {
       this.executor = executor;
       this.configuration = cfg;
       this.cacheName = cacheName;
       this.dataContainer = dataContainer;
       this.cacheLoaderManager = cacheLoaderManager;
       this.cacheNotifier = cacheNotifier;
+      this.timeService = timeService;
    }
 
 
@@ -109,11 +112,12 @@ public class EvictionManagerImpl implements EvictionManager {
          try {
             if (trace) {
                log.trace("Purging data container of expired entries");
-               start = System.nanoTime();
+               start = timeService.time();
             }
             dataContainer.purgeExpired();
             if (trace) {
-               log.tracef("Purging data container completed in %s", Util.prettyPrintTime(System.nanoTime() - start, TimeUnit.NANOSECONDS));
+               log.tracef("Purging data container completed in %s",
+                          Util.prettyPrintTime(timeService.timeDuration(start, TimeUnit.MILLISECONDS)));
             }
          } catch (Exception e) {
             log.exceptionPurgingDataContainer(e);
@@ -125,11 +129,12 @@ public class EvictionManagerImpl implements EvictionManager {
             try {
                if (trace) {
                   log.trace("Purging cache store of expired entries");
-                  start = System.nanoTime();
+                  start = timeService.time();
                }
                cacheStore.purgeExpired();
                if (trace) {
-                  log.tracef("Purging cache store completed in %s", Util.prettyPrintTime(System.nanoTime() - start, TimeUnit.NANOSECONDS));
+                  log.tracef("Purging cache store completed in %s",
+                             Util.prettyPrintTime(timeService.timeDuration(start, TimeUnit.MILLISECONDS)));
                }
             } catch (Exception e) {
                log.exceptionPurgingDataContainer(e);

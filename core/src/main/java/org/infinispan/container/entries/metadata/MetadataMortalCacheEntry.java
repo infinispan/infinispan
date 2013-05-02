@@ -48,11 +48,6 @@ public class MetadataMortalCacheEntry extends AbstractInternalCacheEntry impleme
       cacheValue = new MetadataMortalCacheValue(value, metadata, created);
    }
 
-   public MetadataMortalCacheEntry(Object key, Object value, Metadata metadata) {
-      super(key);
-      cacheValue = new MetadataMortalCacheValue(value, metadata, System.currentTimeMillis());
-   }
-
    MetadataMortalCacheEntry(Object key, MetadataMortalCacheValue cacheValue) {
       super(key);
       this.cacheValue = cacheValue;
@@ -76,8 +71,7 @@ public class MetadataMortalCacheEntry extends AbstractInternalCacheEntry impleme
 
    @Override
    public final boolean isExpired() {
-      return ExpiryHelper.isExpiredMortal(
-            cacheValue.metadata.lifespan(), cacheValue.created);
+      return isExpired(System.currentTimeMillis());
    }
 
    @Override
@@ -123,7 +117,12 @@ public class MetadataMortalCacheEntry extends AbstractInternalCacheEntry impleme
 
    @Override
    public final void reincarnate() {
-      cacheValue.created = System.currentTimeMillis();
+      reincarnate(System.currentTimeMillis());
+   }
+
+   @Override
+   public void reincarnate(long now) {
+      cacheValue.setCreated(now);
    }
 
    @Override

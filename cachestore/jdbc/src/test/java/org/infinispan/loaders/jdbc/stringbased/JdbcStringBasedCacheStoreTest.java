@@ -51,8 +51,7 @@ public class JdbcStringBasedCacheStoreTest extends BaseCacheStoreTest {
       JdbcStringBasedCacheStoreConfig config = new JdbcStringBasedCacheStoreConfig(connectionFactoryConfig, tm);
       config.setPurgeSynchronously(true);
       JdbcStringBasedCacheStore stringBasedCacheStore = new JdbcStringBasedCacheStore();
-      CacheImpl cache = new CacheImpl("aName");
-      stringBasedCacheStore.init(config, cache, getMarshaller());
+      stringBasedCacheStore.init(config, getCache(), getMarshaller());
       stringBasedCacheStore.start();
       return stringBasedCacheStore;
    }
@@ -61,7 +60,7 @@ public class JdbcStringBasedCacheStoreTest extends BaseCacheStoreTest {
       JdbcStringBasedCacheStore stringBasedCacheStore = new JdbcStringBasedCacheStore();
       JdbcStringBasedCacheStoreConfig config = new JdbcStringBasedCacheStoreConfig(false);
       config.setCreateTableOnStart(false);
-      stringBasedCacheStore.init(config, new CacheImpl("otherName"), getMarshaller());
+      stringBasedCacheStore.init(config, getCache(), getMarshaller());
       stringBasedCacheStore.start();
       assert stringBasedCacheStore.getConnectionFactory() == null;
 

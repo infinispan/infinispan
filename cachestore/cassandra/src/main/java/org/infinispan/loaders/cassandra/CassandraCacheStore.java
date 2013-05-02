@@ -203,7 +203,7 @@ public class CassandraCacheStore extends AbstractCacheStore {
          ColumnOrSuperColumn column = cassandraClient.get(ByteBufferUtil.bytes(hashKey),
                   entryColumnPath, readConsistencyLevel);
          InternalCacheEntry ice = unmarshall(column.getColumn().getValue(), key);
-         if (ice != null && ice.isExpired(System.currentTimeMillis())) {
+         if (ice != null && ice.isExpired(timeService.wallClockTime())) {
             remove(key);
             return null;
          }
@@ -523,7 +523,7 @@ public class CassandraCacheStore extends AbstractCacheStore {
          // now, in SLICE_SIZE chunks
          SlicePredicate predicate = new SlicePredicate();
          predicate.setSlice_range(new SliceRange(ByteBufferUtil.EMPTY_BYTE_BUFFER, ByteBufferUtil
-                  .bytes(System.currentTimeMillis()), false, SLICE_SIZE));
+                  .bytes(timeService.wallClockTime()), false, SLICE_SIZE));
 
          for (boolean complete = false; !complete;) {
             Map<ByteBuffer, Map<String, List<Mutation>>> mutationMap = new HashMap<ByteBuffer, Map<String, List<Mutation>>>(SLICE_SIZE);

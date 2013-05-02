@@ -37,6 +37,8 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.util.Collection;
 
+import static org.infinispan.test.AbstractInfinispanTest.TIME_SERVICE;
+
 @Test(testName = "config.DataContainerTest", groups = "functional")
 public class DataContainerTest {
 
@@ -78,7 +80,7 @@ public class DataContainerTest {
          AdvancedCache<Object, Object> cache = cm.getCache().getAdvancedCache();
 
          DataContainer ddc = DefaultDataContainer.unBoundedDataContainer(cache.getConfiguration().getConcurrencyLevel());
-         ((DefaultDataContainer) ddc).initialize(null, null,new InternalEntryFactoryImpl(), null, null);
+         ((DefaultDataContainer) ddc).initialize(null, null,new InternalEntryFactoryImpl(), null, null, TIME_SERVICE);
          QueryableDataContainer.setDelegate(ddc);
 
          // Verify that the default is correctly established
@@ -111,7 +113,7 @@ public class DataContainerTest {
          AdvancedCache<Object, Object> cache = cm.getCache().getAdvancedCache();
 
          DataContainer ddc = DefaultDataContainer.unBoundedDataContainer(cache.getConfiguration().getConcurrencyLevel());
-         ((DefaultDataContainer) ddc).initialize(null, null,new InternalEntryFactoryImpl(), null, null);
+         ((DefaultDataContainer) ddc).initialize(null, null,new InternalEntryFactoryImpl(), null, null, TIME_SERVICE);
          QueryableDataContainer.setDelegate(ddc);
 
          // Verify that the config is correct

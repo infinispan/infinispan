@@ -74,8 +74,7 @@ public class MetadataTransientMortalCacheValue extends MetadataMortalCacheValue 
 
    @Override
    public boolean isExpired() {
-      return ExpiryHelper.isExpiredTransientMortal(
-            metadata.maxIdle(), lastUsed, metadata.lifespan(), created);
+      return isExpired(System.currentTimeMillis());
    }
 
    public static class Externalizer extends AbstractExternalizer<MetadataTransientMortalCacheValue> {

@@ -47,17 +47,9 @@ public class TransientMortalCacheEntry extends AbstractInternalCacheEntry {
 
    protected TransientMortalCacheValue cacheValue;
 
-   public TransientMortalCacheEntry(Object key, Object value, long maxIdle, long lifespan) {
+   public TransientMortalCacheEntry(Object key, Object value, long maxIdle, long lifespan, long currentTimeMillis) {
       super(key);
-      final long currentTimeMillis = System.currentTimeMillis();
       cacheValue = new TransientMortalCacheValue(value, currentTimeMillis, lifespan, maxIdle);
-      touch(currentTimeMillis);
-   }
-
-   protected TransientMortalCacheEntry(Object key, Object value) {
-      super(key);
-      final long currentTimeMillis = System.currentTimeMillis();
-      cacheValue = new TransientMortalCacheValue(value, currentTimeMillis);
       touch(currentTimeMillis);
    }
 
@@ -130,7 +122,7 @@ public class TransientMortalCacheEntry extends AbstractInternalCacheEntry {
 
    @Override
    public final void touch() {
-      cacheValue.lastUsed = System.currentTimeMillis();
+      touch(System.currentTimeMillis());
    }
 
    @Override
@@ -140,7 +132,12 @@ public class TransientMortalCacheEntry extends AbstractInternalCacheEntry {
 
    @Override
    public final void reincarnate() {
-      cacheValue.created = System.currentTimeMillis();
+      reincarnate(System.currentTimeMillis());
+   }
+
+   @Override
+   public void reincarnate(long now) {
+      cacheValue.created = now;
    }
 
    @Override

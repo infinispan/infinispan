@@ -130,7 +130,7 @@ public class JdbcStringBasedCacheStore extends LockSupportCacheStore<String> {
       if (isDistributed()) {
          enforceTwoWayMapper("distribution/rehashing");
       }
-      dmHelper = new DataManipulationHelper(connectionFactory, tableManipulation, marshaller) {
+      dmHelper = new DataManipulationHelper(connectionFactory, tableManipulation, marshaller, timeService) {
 
          @Override
          protected String getLoadAllKeysSql() {
@@ -324,7 +324,7 @@ public class JdbcStringBasedCacheStore extends LockSupportCacheStore<String> {
          String sql = tableManipulation.getDeleteExpiredRowsSql();
          conn = connectionFactory.getConnection();
          ps = conn.prepareStatement(sql);
-         ps.setLong(1, System.currentTimeMillis());
+         ps.setLong(1, timeService.wallClockTime());
          int result = ps.executeUpdate();
          if (log.isTraceEnabled()) {
             log.tracef("Successfully purged %d rows.", result);
@@ -341,7 +341,7 @@ public class JdbcStringBasedCacheStore extends LockSupportCacheStore<String> {
    @Override
    protected InternalCacheEntry loadLockSafe(Object key, String lockingKey) throws CacheLoaderException {
       InternalCacheEntry storedEntry = readStoredEntry(key, lockingKey);
-      if (storedEntry != null && storedEntry.isExpired(System.currentTimeMillis())) {
+      if (storedEntry != null && storedEntry.isExpired(timeService.wallClockTime())) {
          if (log.isTraceEnabled()) {
             log.tracef("Not returning '%s' as it is expired. It will be removed from DB by purging thread!", storedEntry);
          }

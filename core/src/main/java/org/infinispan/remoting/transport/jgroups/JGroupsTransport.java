@@ -44,6 +44,7 @@ import org.infinispan.remoting.transport.Address;
 import org.infinispan.remoting.transport.BackupResponse;
 import org.infinispan.util.FileLookupFactory;
 import org.infinispan.util.InfinispanCollections;
+import org.infinispan.util.TimeService;
 import org.infinispan.util.TypedProperties;
 import org.infinispan.util.Util;
 import org.infinispan.util.concurrent.TimeoutException;
@@ -127,6 +128,7 @@ public class JGroupsTransport extends AbstractTransport implements MembershipLis
    protected CacheManagerNotifier notifier;
    private GlobalComponentRegistry gcr;
    private BackupReceiverRepository backupReceiverRepository;
+   private TimeService timeService;
 
    private boolean globalStatsEnabled;
    private MBeanServer mbeanServer;
@@ -184,7 +186,8 @@ public class JGroupsTransport extends AbstractTransport implements MembershipLis
                           @ComponentName(ASYNC_TRANSPORT_EXECUTOR) ExecutorService asyncExecutor,
                           @ComponentName(REMOTE_COMMAND_EXECUTOR) ExecutorService remoteCommandsExecutor,
                           InboundInvocationHandler inboundInvocationHandler, CacheManagerNotifier notifier,
-                          GlobalComponentRegistry gcr, BackupReceiverRepository backupReceiverRepository) {
+                          GlobalComponentRegistry gcr, BackupReceiverRepository backupReceiverRepository,
+                          TimeService timeService) {
       this.marshaller = marshaller;
       this.asyncExecutor = asyncExecutor;
       this.remoteCommandsExecutor = remoteCommandsExecutor;
@@ -192,6 +195,7 @@ public class JGroupsTransport extends AbstractTransport implements MembershipLis
       this.notifier = notifier;
       this.gcr = gcr;
       this.backupReceiverRepository = backupReceiverRepository;
+      this.timeService = timeService;
    }
 
    @Override
@@ -577,7 +581,7 @@ public class JGroupsTransport extends AbstractTransport implements MembershipLis
             dispatcher.sendMessage(CommandAwareRpcDispatcher.constructMessage(buf, recipient, false, false, false), async);
          }
       }
-      return new JGroupsBackupResponse(syncBackupCalls);
+      return new JGroupsBackupResponse(syncBackupCalls, timeService);
    }
 
    private static org.jgroups.blocks.ResponseMode toJGroupsMode(ResponseMode mode) {

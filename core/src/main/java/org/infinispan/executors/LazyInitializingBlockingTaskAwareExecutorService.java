@@ -20,6 +20,7 @@
 package org.infinispan.executors;
 
 import org.infinispan.util.InfinispanCollections;
+import org.infinispan.util.TimeService;
 import org.infinispan.util.concurrent.BlockingRunnable;
 import org.infinispan.util.concurrent.BlockingTaskAwareExecutorService;
 import org.infinispan.util.concurrent.BlockingTaskAwareExecutorServiceImpl;
@@ -43,11 +44,14 @@ public final class LazyInitializingBlockingTaskAwareExecutorService implements B
 
    private final ExecutorFactory factory;
    private final Properties executorProperties;
+   private final TimeService timeService;
    private volatile BlockingTaskAwareExecutorService delegate;
 
-   public LazyInitializingBlockingTaskAwareExecutorService(ExecutorFactory factory, Properties executorProperties) {
+   public LazyInitializingBlockingTaskAwareExecutorService(ExecutorFactory factory, Properties executorProperties,
+                                                           TimeService timeService) {
       this.factory = factory;
       this.executorProperties = executorProperties;
+      this.timeService = timeService;
    }
 
    @Override
@@ -146,7 +150,7 @@ public final class LazyInitializingBlockingTaskAwareExecutorService implements B
       if (delegate == null) {
          synchronized (this) {
             if (delegate == null) {
-               delegate = new BlockingTaskAwareExecutorServiceImpl(factory.getExecutor(executorProperties));
+               delegate = new BlockingTaskAwareExecutorServiceImpl(factory.getExecutor(executorProperties), timeService);
             }
          }
       }

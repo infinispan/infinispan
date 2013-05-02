@@ -52,7 +52,7 @@ public class EvictionManagerTest extends AbstractInfinispanTest {
       Configuration cfg = getCfg().expiration().wakeUpInterval(0L).build();
 
       ScheduledExecutorService mockService = mock(ScheduledExecutorService.class);
-      em.initialize(mockService, "", cfg, null, null, null);
+      em.initialize(mockService, "", cfg, null, null, null, null);
       em.start();
 
       assert em.evictionTask == null : "Eviction task is not null!  Should not have scheduled anything!";
@@ -63,7 +63,7 @@ public class EvictionManagerTest extends AbstractInfinispanTest {
       Configuration cfg = getCfg().expiration().wakeUpInterval(789L).build();
 
       ScheduledExecutorService mockService = mock(ScheduledExecutorService.class);
-      em.initialize(mockService, "", cfg, null, null, null);
+      em.initialize(mockService, "", cfg, null, null, null, null);
 
       ScheduledFuture mockFuture = mock(ScheduledFuture.class);
       when(mockService.scheduleWithFixedDelay(isA(EvictionManagerImpl.ScheduledTask.class), eq(789l),

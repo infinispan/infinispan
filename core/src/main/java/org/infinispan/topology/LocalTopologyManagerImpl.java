@@ -42,6 +42,7 @@ import org.infinispan.remoting.rpc.ResponseMode;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.remoting.transport.Transport;
 import org.infinispan.util.CollectionFactory;
+import org.infinispan.util.TimeService;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
@@ -60,6 +61,7 @@ public class LocalTopologyManagerImpl implements LocalTopologyManager {
    private Transport transport;
    private ExecutorService asyncTransportExecutor;
    private GlobalComponentRegistry gcr;
+   private TimeService timeService;
 
    private final ConcurrentMap<String, LocalCacheStatus> runningCaches = CollectionFactory.makeConcurrentMap();
    private volatile boolean running;
@@ -67,10 +69,11 @@ public class LocalTopologyManagerImpl implements LocalTopologyManager {
    @Inject
    public void inject(Transport transport,
                       @ComponentName(ASYNC_TRANSPORT_EXECUTOR) ExecutorService asyncTransportExecutor,
-                      GlobalComponentRegistry gcr) {
+                      GlobalComponentRegistry gcr, TimeService timeService) {
       this.transport = transport;
       this.asyncTransportExecutor = asyncTransportExecutor;
       this.gcr = gcr;
+      this.timeService = timeService;
    }
 
    // Arbitrary value, only need to start after JGroupsTransport
@@ -96,7 +99,7 @@ public class LocalTopologyManagerImpl implements LocalTopologyManager {
       ReplicableCommand command = new CacheTopologyControlCommand(cacheName,
             CacheTopologyControlCommand.Type.JOIN, transport.getAddress(), joinInfo, viewId);
       long timeout = joinInfo.getTimeout();
-      long endTime = System.nanoTime() + TimeUnit.MILLISECONDS.toNanos(timeout);
+      long endTime = timeService.expectedEndTime(timeout, TimeUnit.MILLISECONDS);
       while (true) {
          try {
             CacheTopology initialTopology = (CacheTopology) executeOnCoordinator(command, timeout);
@@ -107,7 +110,7 @@ public class LocalTopologyManagerImpl implements LocalTopologyManager {
             }
          } catch (Exception e) {
             log.debugf(e, "Error sending join request for cache %s to coordinator", cacheName);
-            if (endTime <= System.nanoTime()) {
+            if (timeService.isTimeExpired(endTime)) {
                throw e;
             }
             // TODO Add some configuration for this, or use a fraction of state transfer timeout

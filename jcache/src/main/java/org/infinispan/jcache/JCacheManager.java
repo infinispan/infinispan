@@ -205,7 +205,7 @@ public class JCacheManager implements CacheManager {
             cache = new JCache<K, V>(ispnCache, this, notifier, c);
 
             ispnCache.addInterceptorBefore(new ExpirationTrackingInterceptor(
-                  ispnCache.getDataContainer(), cache, notifier),
+                  ispnCache.getDataContainer(), cache, notifier, ispnCache.getAdvancedCache().getComponentRegistry().getTimeService()),
                   EntryWrappingInterceptor.class);
 
             cache.start();

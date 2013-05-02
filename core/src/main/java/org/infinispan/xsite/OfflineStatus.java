@@ -21,10 +21,11 @@ package org.infinispan.xsite;
 
 import net.jcip.annotations.ThreadSafe;
 import org.infinispan.configuration.cache.TakeOfflineConfiguration;
+import org.infinispan.util.TimeService;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
-import java.util.concurrent.TimeUnit;
+import static java.util.concurrent.TimeUnit.MILLISECONDS;
 
 /**
  * Keeps state needed for knowing when a site needs to be taken offline.
@@ -43,14 +44,16 @@ public class OfflineStatus {
 
    private static Log log = LogFactory.getLog(OfflineStatus.class);
 
+   private final TimeService timeService;
    private volatile TakeOfflineConfiguration takeOffline;
    private boolean recordingOfflineStatus = false;
    private long firstFailureTime;
    private int failureCount;
    private volatile boolean forceOffline = false;
 
-   public OfflineStatus(TakeOfflineConfiguration takeOfflineConfiguration) {
+   public OfflineStatus(TakeOfflineConfiguration takeOfflineConfiguration, TimeService timeService) {
       this.takeOffline = takeOfflineConfiguration;
+      this.timeService = timeService;
    }
 
    public synchronized void updateOnCommunicationFailure(long sendTimeMillis) {
@@ -97,7 +100,7 @@ public class OfflineStatus {
    }
 
    public synchronized long millisSinceFirstFailure() {
-      return TimeUnit.NANOSECONDS.toMillis(System.nanoTime()) - firstFailureTime;
+      return timeService.timeDuration(MILLISECONDS.toNanos(firstFailureTime), MILLISECONDS);
    }
 
    public synchronized boolean bringOnline() {

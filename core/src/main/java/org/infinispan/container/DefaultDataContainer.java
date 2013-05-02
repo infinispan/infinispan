@@ -38,6 +38,7 @@ import org.infinispan.loaders.CacheStore;
 import org.infinispan.util.CollectionFactory;
 import org.infinispan.util.Equivalence;
 import org.infinispan.util.Immutables;
+import org.infinispan.util.TimeService;
 import org.infinispan.util.concurrent.BoundedConcurrentHashMap;
 import org.infinispan.util.concurrent.BoundedConcurrentHashMap.Eviction;
 import org.infinispan.util.concurrent.BoundedConcurrentHashMap.EvictionListener;
@@ -72,6 +73,7 @@ public class DefaultDataContainer implements DataContainer {
    private PassivationManager passivator;
    private ActivationManager activator;
    private CacheLoaderManager clm;
+   private TimeService timeService;
 
    public DefaultDataContainer(int concurrencyLevel) {
       // If no comparing implementations passed, could fallback on JDK CHM
@@ -120,12 +122,13 @@ public class DefaultDataContainer implements DataContainer {
 
    @Inject
    public void initialize(EvictionManager evictionManager, PassivationManager passivator,
-         InternalEntryFactory entryFactory, ActivationManager activator, CacheLoaderManager clm) {
+         InternalEntryFactory entryFactory, ActivationManager activator, CacheLoaderManager clm, TimeService timeService) {
       this.evictionManager = evictionManager;
       this.passivator = passivator;
       this.entryFactory = entryFactory;
       this.activator = activator;
       this.clm = clm;
+      this.timeService = timeService;
    }
 
    public static DataContainer boundedDataContainer(int concurrencyLevel, int maxEntries,
@@ -153,7 +156,7 @@ public class DefaultDataContainer implements DataContainer {
    public InternalCacheEntry get(Object k) {
       InternalCacheEntry e = peek(k);
       if (e != null && e.canExpire()) {
-         long currentTimeMillis = System.currentTimeMillis();
+         long currentTimeMillis = timeService.wallClockTime();
          if (e.isExpired(currentTimeMillis)) {
             entries.remove(k);
             e = null;
@@ -173,7 +176,7 @@ public class DefaultDataContainer implements DataContainer {
          e = entryFactory.update(e, metadata);
          // we have the same instance. So we need to reincarnate.
          if (original == e) {
-            e.reincarnate();
+            e.reincarnate(timeService.wallClockTime());
          }
       } else {
          // this is a brand-new entry
@@ -185,7 +188,7 @@ public class DefaultDataContainer implements DataContainer {
    @Override
    public boolean containsKey(Object k) {
       InternalCacheEntry ice = peek(k);
-      if (ice != null && ice.canExpire() && ice.isExpired(System.currentTimeMillis())) {
+      if (ice != null && ice.canExpire() && ice.isExpired(timeService.wallClockTime())) {
          entries.remove(k);
          ice = null;
       }
@@ -195,7 +198,7 @@ public class DefaultDataContainer implements DataContainer {
    @Override
    public InternalCacheEntry remove(Object k) {
       InternalCacheEntry e = entries.remove(k);
-      return e == null || (e.canExpire() && e.isExpired(System.currentTimeMillis())) ? null : e;
+      return e == null || (e.canExpire() && e.isExpired(timeService.wallClockTime())) ? null : e;
    }
 
    @Override
@@ -225,7 +228,7 @@ public class DefaultDataContainer implements DataContainer {
 
    @Override
    public void purgeExpired() {
-      long currentTimeMillis = System.currentTimeMillis();
+      long currentTimeMillis = timeService.wallClockTime();
       for (Iterator<InternalCacheEntry> purgeCandidates = entries.values().iterator(); purgeCandidates.hasNext();) {
          InternalCacheEntry e = purgeCandidates.next();
          if (e.isExpired(currentTimeMillis)) {

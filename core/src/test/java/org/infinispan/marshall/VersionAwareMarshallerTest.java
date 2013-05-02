@@ -77,6 +77,7 @@ import org.infinispan.transaction.xa.GlobalTransaction;
 import org.infinispan.transaction.xa.TransactionFactory;
 import org.infinispan.util.AnyEquivalence;
 import org.infinispan.util.ByteArrayKey;
+import org.infinispan.util.DefaultTimeService;
 import org.infinispan.util.FastCopyHashMap;
 import org.infinispan.util.Immutables;
 import org.infinispan.util.concurrent.TimeoutException;
@@ -389,7 +390,7 @@ public class VersionAwareMarshallerTest extends AbstractInfinispanTest {
       MortalCacheEntry entry2 = (MortalCacheEntry) TestInternalCacheEntryFactory.create("key", "value", System.currentTimeMillis() - 1000, 200000, System.currentTimeMillis(), -1);
       TransientCacheEntry entry3 = (TransientCacheEntry) TestInternalCacheEntryFactory.create("key", "value", System.currentTimeMillis() - 1000, -1, System.currentTimeMillis(), 4000000);
       TransientMortalCacheEntry entry4 = (TransientMortalCacheEntry) TestInternalCacheEntryFactory.create("key", "value", System.currentTimeMillis() - 1000, 200000, System.currentTimeMillis(), 4000000);
-      Bucket b = new Bucket();
+      Bucket b = new Bucket(TIME_SERVICE);
       b.setBucketId(0);
       b.addEntry(entry1);
       b.addEntry(entry2);

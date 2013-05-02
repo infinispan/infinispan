@@ -55,6 +55,7 @@ import org.infinispan.jmx.annotations.ManagedAttribute;
 import org.infinispan.jmx.annotations.ManagedOperation;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.util.SysPropertyActions;
+import org.infinispan.util.TimeService;
 import org.infinispan.util.logging.LogFactory;
 
 @Scope(Scopes.GLOBAL)
@@ -69,6 +70,7 @@ public class Interpreter {
    private long sessionReaperWakeupInterval = DEFAULT_SESSION_REAPER_WAKEUP_INTERVAL;
    private long sessionTimeout = DEFAULT_SESSION_TIMEOUT;
    private CodecRegistry codecRegistry;
+   private TimeService timeService;
 
    private final Map<String, Session> sessions = new ConcurrentHashMap<String, Session>();
    private ScheduledFuture<?> sessionReaperTask;
@@ -77,9 +79,10 @@ public class Interpreter {
    }
 
    @Inject
-   public void initialize(final EmbeddedCacheManager cacheManager) {
+   public void initialize(final EmbeddedCacheManager cacheManager, TimeService timeService) {
       this.cacheManager = cacheManager;
       this.codecRegistry = new CodecRegistry(cacheManager.getCacheManagerConfiguration().classLoader());
+      this.timeService = timeService;
    }
 
    @Start
@@ -104,7 +107,7 @@ public class Interpreter {
    @ManagedOperation(description = "Creates a new interpreter session")
    public String createSessionId(String cacheName) {
       String sessionId = UUID.randomUUID().toString();
-      SessionImpl session = new SessionImpl(codecRegistry, cacheManager, sessionId);
+      SessionImpl session = new SessionImpl(codecRegistry, cacheManager, sessionId, timeService);
       sessions.put(sessionId, session);
       if (cacheName != null) {
          session.setCurrentCache(cacheName);
@@ -129,7 +132,7 @@ public class Interpreter {
    }
 
    void expireSessions() {
-      long timeBoundary = System.nanoTime() - sessionTimeout * 1000000l;
+      long timeBoundary = timeService.time() - sessionTimeout * 1000000l;
       for (Iterator<Session> i = sessions.values().iterator(); i.hasNext();) {
          Session session = i.next();
          if (session.getTimestamp() < timeBoundary) {
@@ -190,7 +193,7 @@ public class Interpreter {
 
    private Session validateSession(final String sessionId) {
       if (sessionId == null) {
-         Session session = new SessionImpl(codecRegistry, cacheManager, null);
+         Session session = new SessionImpl(codecRegistry, cacheManager, null, timeService);
          session.setCurrentCache(BasicCacheContainer.DEFAULT_CACHE_NAME);
          return session;
       }

@@ -71,7 +71,7 @@ public class MongoDBCacheStore extends AbstractCacheStore {
    @Override
    protected void purgeInternal() throws CacheLoaderException {
       BasicDBObject searchObject = new BasicDBObject();
-      searchObject.put(TIMESTAMP_FIELD, new BasicDBObject("$gt", 0).append("$lt", System.currentTimeMillis()));
+      searchObject.put(TIMESTAMP_FIELD, new BasicDBObject("$gt", 0).append("$lt", timeService.wallClockTime()));
       this.collection.remove(searchObject);
    }
 
@@ -190,7 +190,7 @@ public class MongoDBCacheStore extends AbstractCacheStore {
       byte[] id = objectToByteBuffer(key);
       BasicDBObject dbObject = this.createDBObject(id);
       DBObject[] orArray = new BasicDBObject[2];
-      orArray[0] = new BasicDBObject(TIMESTAMP_FIELD, new BasicDBObject("$gte", System.currentTimeMillis()));
+      orArray[0] = new BasicDBObject(TIMESTAMP_FIELD, new BasicDBObject("$gte", timeService.wallClockTime()));
       orArray[1] = new BasicDBObject(TIMESTAMP_FIELD, -1);
       dbObject.append("$or", orArray);
       DBObject rawResult = this.collection.findOne(dbObject);

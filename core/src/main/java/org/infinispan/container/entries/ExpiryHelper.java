@@ -43,30 +43,4 @@ public class ExpiryHelper {
       return isExpiredTransient(maxIdle, lastUsed, now) || isExpiredMortal(lifespan, created, now);
    }
 
-   /**
-    * Make sure this is not invoked in a loop, if so use {@link #isExpiredMortal(long, long, long)} instead
-    * and reuse the result of {@link System#currentTimeMillis()} multiple times
-    */
-   @Deprecated
-   public static boolean isExpiredMortal(long lifespan, long created) {
-      return lifespan > -1 && created > -1 && System.currentTimeMillis() > created + lifespan;
-   }
-
-   /**
-    * Make sure this is not invoked in a loop, if so use {@link #isExpiredTransient(long, long, long)} instead
-    * and reuse the result of {@link System#currentTimeMillis()} multiple times
-    */
-   @Deprecated
-   public static boolean isExpiredTransient(long maxIdle, long lastUsed) {
-      return maxIdle > -1 && lastUsed > -1 && System.currentTimeMillis() > maxIdle + lastUsed;
-   }
-
-   /**
-    * Make sure this is not invoked in a loop, if so use {@link #isExpiredTransientMortal(long, long, long, long, long)} instead
-    * and reuse the result of {@link System#currentTimeMillis()} multiple times
-    */
-   @Deprecated
-   public static boolean isExpiredTransientMortal(long maxIdle, long lastUsed, long lifespan, long created) {
-      return isExpiredTransient(maxIdle, lastUsed) || isExpiredMortal(lifespan, created);
-   }
 }

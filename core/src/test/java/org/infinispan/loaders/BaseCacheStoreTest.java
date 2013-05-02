@@ -23,8 +23,6 @@
 package org.infinispan.loaders;
 
 import static java.util.Collections.emptySet;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.when;
 import static org.testng.AssertJUnit.assertEquals;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
@@ -120,9 +118,7 @@ public abstract class BaseCacheStoreTest extends AbstractInfinispanTest {
     * @return a mock cache for use with the cache store impls
     */
    protected Cache getCache() {
-      Cache c = mock(Cache.class);
-      when(c.getName()).thenReturn("mockCache-" + getClass().getName());
-      return c;
+      return AbstractCacheStoreTest.mockCache("mockCache-" + getClass().getName());
    }
 
    /**

@@ -52,6 +52,7 @@ import org.infinispan.transaction.xa.GlobalTransaction;
 import org.infinispan.transaction.xa.TransactionFactory;
 import org.infinispan.util.CollectionFactory;
 import org.infinispan.util.InfinispanCollections;
+import org.infinispan.util.TimeService;
 import org.infinispan.util.Util;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
@@ -66,8 +67,6 @@ import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
-
-import static org.infinispan.util.Util.currentMillisFromNanotime;
 
 /**
  * Repository for {@link RemoteTransaction} and {@link org.infinispan.transaction.xa.TransactionXaAdapter}s (locally
@@ -109,13 +108,15 @@ public class TransactionTable {
    private volatile int minTxTopologyId = CACHE_STOPPED_TOPOLOGY_ID;
    private volatile int currentTopologyId = CACHE_STOPPED_TOPOLOGY_ID;
    private String cacheName;
+   private TimeService timeService;
 
    @Inject
    public void initialize(RpcManager rpcManager, Configuration configuration,
                           InvocationContextContainer icc, InterceptorChain invoker, CacheNotifier notifier,
                           TransactionFactory gtf, TransactionCoordinator txCoordinator,
                           TransactionSynchronizationRegistry transactionSynchronizationRegistry,
-                          CommandsFactory commandsFactory, ClusteringDependentLogic clusteringDependentLogic, Cache cache) {
+                          CommandsFactory commandsFactory, ClusteringDependentLogic clusteringDependentLogic, Cache cache,
+                          TimeService timeService) {
       this.rpcManager = rpcManager;
       this.configuration = configuration;
       this.icc = icc;
@@ -127,6 +128,7 @@ public class TransactionTable {
       this.commandsFactory = commandsFactory;
       this.clusteringLogic = clusteringDependentLogic;
       this.cacheName = cache.getName();
+      this.timeService = timeService;
    }
 
    @Start(priority = 9) // Start before cache loader manager
@@ -500,9 +502,9 @@ public class TransactionTable {
    private void shutDownGracefully() {
       if (log.isDebugEnabled())
          log.debugf("Wait for on-going transactions to finish for %s.", Util.prettyPrintTime(configuration.transaction().cacheStopTimeout(), TimeUnit.MILLISECONDS));
-      long failTime = currentMillisFromNanotime() + configuration.transaction().cacheStopTimeout();
+      long failTime = timeService.expectedEndTime(configuration.transaction().cacheStopTimeout(), TimeUnit.MILLISECONDS);
       boolean txsOnGoing = areTxsOnGoing();
-      while (txsOnGoing && currentMillisFromNanotime() < failTime) {
+      while (txsOnGoing && !timeService.isTimeExpired(failTime)) {
          try {
             Thread.sleep(30);
             txsOnGoing = areTxsOnGoing();
@@ -530,7 +532,7 @@ public class TransactionTable {
     * Once marked as completed (because of commit or rollback) any further prepare received on that transaction are discarded.
     */
    public void markTransactionCompleted(GlobalTransaction globalTx) {
-      completedTransactions.put(globalTx, System.nanoTime());
+      completedTransactions.put(globalTx, timeService.time());
    }
 
    /**
@@ -549,19 +551,19 @@ public class TransactionTable {
             long timeout = configuration.transaction().completedTxTimeout();
 
             int removedEntries = 0;
-            long beginning = System.nanoTime();
+            long beginning = timeService.time();
             while (iterator.hasNext()) {
                Map.Entry<GlobalTransaction, Long> e = iterator.next();
-               long ageNanos = System.nanoTime() - e.getValue();
-               if (TimeUnit.NANOSECONDS.toMillis(ageNanos) >= timeout) {
+               long ageMillis = timeService.timeDuration(e.getValue(), TimeUnit.MILLISECONDS);
+               if (ageMillis >= timeout) {
                   iterator.remove();
                   removedEntries++;
                }
             }
-            long duration = System.nanoTime() - beginning;
+            long duration = timeService.timeDuration(beginning, TimeUnit.MILLISECONDS);
 
             log.tracef("Finished cleaning up completed transactions. %d transactions were removed, total duration was %d millis, " +
-                  "current number of completed transactions is %d", removedEntries, TimeUnit.NANOSECONDS.toMillis(duration),
+                  "current number of completed transactions is %d", removedEntries, duration,
                   completedTransactions.size());
          } catch (Exception e) {
             log.errorf(e, "Failed to cleanup completed transactions: %s", e.getMessage());

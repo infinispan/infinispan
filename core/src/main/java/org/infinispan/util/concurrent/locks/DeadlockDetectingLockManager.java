@@ -23,16 +23,17 @@
 package org.infinispan.util.concurrent.locks;
 
 import org.infinispan.context.InvocationContext;
+import org.infinispan.factories.annotations.Inject;
 import org.infinispan.factories.annotations.Start;
 import org.infinispan.jmx.annotations.MBean;
 import org.infinispan.jmx.annotations.ManagedAttribute;
 import org.infinispan.jmx.annotations.ManagedOperation;
 import org.infinispan.jmx.annotations.MeasurementType;
 import org.infinispan.transaction.xa.DldGlobalTransaction;
+import org.infinispan.util.TimeService;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
-import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicLong;
 
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
@@ -67,10 +68,17 @@ public class DeadlockDetectingLockManager extends LockManagerImpl {
 
    private AtomicLong cannotRunDld = new AtomicLong(0);
 
+   private TimeService timeService;
+
    @Start
    public void init() {
       spinDuration = configuration.deadlockDetection().spinDuration();
       exposeJmxStats = configuration.jmxStatistics().enabled();
+   }
+
+   @Inject
+   public void injectTimeService(TimeService timeService) {
+      this.timeService = timeService;
    }
 
    @Override
@@ -78,13 +86,12 @@ public class DeadlockDetectingLockManager extends LockManagerImpl {
       if (trace) log.tracef("Attempting to lock %s with acquisition timeout of %s millis", key, lockTimeout);
 
       if (ctx.isInTxScope()) {
-         final long startNanos = System.nanoTime();
-         final long timeoutNanoTime = TimeUnit.NANOSECONDS.convert(lockTimeout, MILLISECONDS) + startNanos;
+         final long timeoutNanoTime = timeService.expectedEndTime(lockTimeout, MILLISECONDS);
          DldGlobalTransaction thisTx = (DldGlobalTransaction) ctx.getLockOwner();
          thisTx.setLockIntention(key);
          if (trace) log.tracef("Setting lock intention to %s for %s (%s)", key, thisTx, System.identityHashCode(thisTx));
 
-         while (System.nanoTime() < timeoutNanoTime) {
+         while (!timeService.isTimeExpired(timeoutNanoTime)) {
             if (lockContainer.acquireLock(ctx.getLockOwner(), key, spinDuration, MILLISECONDS) != null) {
                thisTx.setLockIntention(null); //clear lock intention
                if (trace) log.tracef("Successfully acquired lock on %s on behalf of %s.", key, ctx.getLockOwner());

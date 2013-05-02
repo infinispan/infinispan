@@ -551,6 +551,11 @@ public class Immutables {
       }
 
       @Override
+      public void reincarnate(long now) {
+         throw new UnsupportedOperationException();
+      }
+
+      @Override
       public void setMetadata(Metadata metadata) {
          throw new UnsupportedOperationException();
       }

@@ -49,10 +49,6 @@ public class TransientCacheEntry extends AbstractInternalCacheEntry {
       this.cacheValue = value;
    }
 
-   public TransientCacheEntry(Object key, Object value, long maxIdle) {
-      this(key, value, maxIdle, System.currentTimeMillis());
-   }
-
    public TransientCacheEntry(Object key, Object value, long maxIdle, long lastUsed) {
       super(key);
       cacheValue = new TransientCacheValue(value, maxIdle, lastUsed);
@@ -70,7 +66,7 @@ public class TransientCacheEntry extends AbstractInternalCacheEntry {
 
    @Override
    public final void touch() {
-      cacheValue.lastUsed = System.currentTimeMillis();
+      touch(System.currentTimeMillis());
    }
 
    @Override
@@ -81,6 +77,11 @@ public class TransientCacheEntry extends AbstractInternalCacheEntry {
 
    @Override
    public final void reincarnate() {
+      // no-op
+   }
+
+   @Override
+   public void reincarnate(long now) {
       // no-op
    }
 
