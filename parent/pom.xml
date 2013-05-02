@@ -1433,7 +1433,6 @@
                   <jgroups.bind_addr>127.0.0.1</jgroups.bind_addr>
                   <java.net.preferIPv4Stack>true</java.net.preferIPv4Stack>
                   <infinispan.unsafe.allow_jdk8_chm>true</infinispan.unsafe.allow_jdk8_chm>
-                  <log4j.configuration>${log4j.configuration}</log4j.configuration>
                </systemPropertyVariables>
                <trimStackTrace>false</trimStackTrace>
                <properties>
@@ -1442,7 +1441,8 @@
                      <value>${testNGListener}</value>
                   </property>
                </properties>
-               <argLine>-Xmx1024m -XX:MaxPermSize=256m</argLine>
+               <!-- -Dsun.nio.ch.bugLevel needed because of http://bugs.sun.com/view_bug.do?bug_id=6427854 -->
+               <argLine>-Xmx1024m -XX:MaxPermSize=256m -Dsun.nio.ch.bugLevel</argLine>
             </configuration>
          </plugin>
          <!-- Scan module for components and persist these into a data file, for use at runtime -->
