@@ -159,7 +159,7 @@ public class EntryFactoryImpl implements EntryFactory {
          // A putForExternalRead is putIfAbsent, so if key present, do nothing
          if (ice != null && cmd.hasFlag(Flag.PUT_FOR_EXTERNAL_READ)) {
             // make sure we record this! Null value since this is a forced lock on the key
-            ctx.putLookedUpEntry(key, null);
+            ctx.putLookedUpEntry(key, ice);
             return null;
          }
 
