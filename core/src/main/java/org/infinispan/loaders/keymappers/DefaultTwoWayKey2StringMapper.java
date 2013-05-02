@@ -48,6 +48,7 @@ public class DefaultTwoWayKey2StringMapper implements TwoWayKey2StringMapper {
    private static final char FLOAT_IDENTIFIER = '6';
    private static final char BOOLEAN_IDENTIFIER = '7';
    private static final char BYTEARRAYKEY_IDENTIFIER = '8';
+   private static final char NATIVE_BYTEARRAYKEY_IDENTIFIER = '9';
 
    @Override
    public String getStringMapping(Object key) {
@@ -70,6 +71,8 @@ public class DefaultTwoWayKey2StringMapper implements TwoWayKey2StringMapper {
          identifier = BOOLEAN_IDENTIFIER;
       } else if (key.getClass().equals(ByteArrayKey.class)) {
          return generateString(BYTEARRAYKEY_IDENTIFIER, Base64.encodeBytes(((ByteArrayKey)key).getData()));
+      } else if (key.getClass().equals(byte[].class)) {
+         return generateString(NATIVE_BYTEARRAYKEY_IDENTIFIER, Base64.encodeBytes((byte[])key));
       } else {
          throw new IllegalArgumentException("Unsupported key type: " + key.getClass().getName());
       }
@@ -99,6 +102,8 @@ public class DefaultTwoWayKey2StringMapper implements TwoWayKey2StringMapper {
                return Boolean.parseBoolean(value);
             case BYTEARRAYKEY_IDENTIFIER:
                return new ByteArrayKey(Base64.decode(value));
+            case NATIVE_BYTEARRAYKEY_IDENTIFIER:
+               return Base64.decode(value);
             default:
                throw new IllegalArgumentException("Unsupported type code: " + type);
          }
@@ -117,6 +122,6 @@ public class DefaultTwoWayKey2StringMapper implements TwoWayKey2StringMapper {
    }
 
    static boolean isPrimitive(Class<?> key) {
-      return key == String.class || key == Short.class || key == Byte.class || key == Long.class || key == Integer.class || key == Double.class || key == Float.class || key == Boolean.class || key == ByteArrayKey.class;
+      return key == String.class || key == Short.class || key == Byte.class || key == Long.class || key == Integer.class || key == Double.class || key == Float.class || key == Boolean.class || key == ByteArrayKey.class || key == byte[].class;
    }
 }
