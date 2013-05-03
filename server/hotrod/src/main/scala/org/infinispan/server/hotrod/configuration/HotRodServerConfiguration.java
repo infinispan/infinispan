@@ -24,22 +24,23 @@ import org.infinispan.server.core.configuration.SslConfiguration;
 
 @BuiltBy(HotRodServerConfigurationBuilder.class)
 public class HotRodServerConfiguration extends ProtocolServerConfiguration {
+   public static final String TOPOLOGY_CACHE_NAME_PREFIX = "___hotRodTopologyCache";
    private final String proxyHost;
    private final int proxyPort;
+   private final String topologyCacheName;
    private final long topologyLockTimeout;
    private final long topologyReplTimeout;
    private final boolean topologyStateTransfer;
-   private final long topologyUpdateTimeout;
 
-   HotRodServerConfiguration(String proxyHost, int proxyPort, long topologyLockTimeout, long topologyReplTimeout, boolean topologyStateTransfer, long topologyUpdateTimeout,
-         String host, int port, int idleTimeout, int recvBufSize, int sendBufSize, SslConfiguration ssl, boolean tcpNoDelay, int workerThreads) {
-      super(host, port, idleTimeout, recvBufSize, sendBufSize, ssl, tcpNoDelay, workerThreads);
+   HotRodServerConfiguration(String proxyHost, int proxyPort, long topologyLockTimeout, long topologyReplTimeout, boolean topologyStateTransfer,
+         String name, String host, int port, int idleTimeout, int recvBufSize, int sendBufSize, SslConfiguration ssl, boolean tcpNoDelay, int workerThreads) {
+      super(name, host, port, idleTimeout, recvBufSize, sendBufSize, ssl, tcpNoDelay, workerThreads);
       this.proxyHost = proxyHost;
       this.proxyPort = proxyPort;
+      this.topologyCacheName = TOPOLOGY_CACHE_NAME_PREFIX + (name.length() > 0 ? "_" + name : name);
       this.topologyLockTimeout = topologyLockTimeout;
       this.topologyReplTimeout = topologyReplTimeout;
       this.topologyStateTransfer = topologyStateTransfer;
-      this.topologyUpdateTimeout = topologyUpdateTimeout;
    }
 
    public String proxyHost() {
@@ -48,6 +49,10 @@ public class HotRodServerConfiguration extends ProtocolServerConfiguration {
 
    public int proxyPort() {
       return proxyPort;
+   }
+
+   public String topologyCacheName() {
+      return topologyCacheName;
    }
 
    public long topologyLockTimeout() {
@@ -62,13 +67,9 @@ public class HotRodServerConfiguration extends ProtocolServerConfiguration {
       return topologyStateTransfer;
    }
 
-   public long topologyUpdateTimeout() {
-      return topologyUpdateTimeout;
-   }
    @Override
    public String toString() {
-      return "HotRodServerConfiguration [proxyHost=" + proxyHost + ", proxyPort=" + proxyPort + ", topologyLockTimeout=" + topologyLockTimeout + ", topologyReplTimeout="
-            + topologyReplTimeout + ", topologyStateTransfer=" + topologyStateTransfer + ", topologyUpdateTimeout=" + topologyUpdateTimeout + ", " + super.toString()
-            + "]";
+      return "HotRodServerConfiguration [proxyHost=" + proxyHost + ", proxyPort=" + proxyPort + ", topologyLockTimeout="
+            + topologyLockTimeout + ", topologyReplTimeout=" + topologyReplTimeout + ", topologyStateTransfer=" + topologyStateTransfer + ", " + super.toString() + "]";
    }
 }

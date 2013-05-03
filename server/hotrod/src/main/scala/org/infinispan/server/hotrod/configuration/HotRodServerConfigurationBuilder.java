@@ -21,9 +21,14 @@ package org.infinispan.server.hotrod.configuration;
 import java.util.Properties;
 
 import org.infinispan.configuration.Builder;
+import org.infinispan.configuration.cache.LockingConfigurationBuilder;
+import org.infinispan.configuration.cache.SyncConfigurationBuilder;
+import org.infinispan.loaders.cluster.ClusterCacheLoader;
 import org.infinispan.server.core.Main;
 import org.infinispan.server.core.configuration.ProtocolServerConfigurationBuilder;
+import org.infinispan.server.hotrod.logging.JavaLog;
 import org.infinispan.util.TypedProperties;
+import org.infinispan.util.logging.LogFactory;
 
 /**
  * HotRodServerConfigurationBuilder.
@@ -33,12 +38,12 @@ import org.infinispan.util.TypedProperties;
  */
 public class HotRodServerConfigurationBuilder extends ProtocolServerConfigurationBuilder<HotRodServerConfiguration, HotRodServerConfigurationBuilder> implements
       Builder<HotRodServerConfiguration> {
+   private static final JavaLog log = LogFactory.getLog(HotRodServerConfigurationBuilder.class, JavaLog.class);
    private String proxyHost;
    private int proxyPort = -1;
    private long topologyLockTimeout = 10000L;
    private long topologyReplTimeout = 10000L;
    private boolean topologyStateTransfer = true;
-   private long topologyUpdateTimeout = 30000L;
 
    public HotRodServerConfigurationBuilder() {
       super(11222);
@@ -49,33 +54,44 @@ public class HotRodServerConfigurationBuilder extends ProtocolServerConfiguratio
       return this;
    }
 
+   /**
+    * Sets the external address of this node, i.e. the address which clients will connect to
+    */
    public HotRodServerConfigurationBuilder proxyHost(String proxyHost) {
       this.proxyHost = proxyHost;
       return this;
    }
 
+   /**
+    * Sets the external port of this node, i.e. the port which clients will connect to
+    */
    public HotRodServerConfigurationBuilder proxyPort(int proxyPort) {
       this.proxyPort = proxyPort;
       return this;
    }
 
+   /**
+    * Configures the lock acquisition timeout for the topology cache. See {@link LockingConfigurationBuilder#lockAcquisitionTimeout(long)}. Defaults to 10 seconds
+    */
    public HotRodServerConfigurationBuilder topologyLockTimeout(long topologyLockTimeout) {
       this.topologyLockTimeout = topologyLockTimeout;
       return this;
    }
 
+   /**
+    * Configures the replication timeout for the topology cache. See {@link SyncConfigurationBuilder#replTimeout(long)}. Defaults to 10 seconds
+    */
    public HotRodServerConfigurationBuilder topologyReplTimeout(long topologyReplTimeout) {
       this.topologyReplTimeout = topologyReplTimeout;
       return this;
    }
 
+   /**
+    * Configures whether to enable state transfer for the topology cache. If disabled, a {@link ClusterCacheLoader} will be used to lazily retrieve topology information from the other nodes.
+    * Defaults to true.
+    */
    public HotRodServerConfigurationBuilder topologyStateTransfer(boolean topologyStateTransfer) {
       this.topologyStateTransfer = topologyStateTransfer;
-      return this;
-   }
-
-   public HotRodServerConfigurationBuilder topologyUpdateTimeout(long topologyUpdateTimeout) {
-      this.topologyUpdateTimeout = topologyUpdateTimeout;
       return this;
    }
 
@@ -92,7 +108,9 @@ public class HotRodServerConfigurationBuilder extends ProtocolServerConfiguratio
          this.topologyLockTimeout(typed.getLongProperty(Main.PROP_KEY_TOPOLOGY_LOCK_TIMEOUT(), topologyLockTimeout, true));
          this.topologyReplTimeout(typed.getLongProperty(Main.PROP_KEY_TOPOLOGY_LOCK_TIMEOUT(), topologyReplTimeout, true));
          this.topologyStateTransfer(typed.getBooleanProperty(Main.PROP_KEY_TOPOLOGY_STATE_TRANSFER(), topologyStateTransfer, true));
-         this.topologyUpdateTimeout(typed.getLongProperty(Main.PROP_KEY_TOPOLOGY_UPDATE_TIMEOUT(), topologyUpdateTimeout, true));
+         if (typed.containsKey(Main.PROP_KEY_TOPOLOGY_UPDATE_TIMEOUT())) {
+            log.topologyUpdateTimeoutIgnored();
+         }
       }
 
       return this;
@@ -100,7 +118,7 @@ public class HotRodServerConfigurationBuilder extends ProtocolServerConfiguratio
 
    @Override
    public HotRodServerConfiguration create() {
-      return new HotRodServerConfiguration(proxyHost, proxyPort, topologyLockTimeout, topologyReplTimeout, topologyStateTransfer, topologyUpdateTimeout, host, port, idleTimeout,
+      return new HotRodServerConfiguration(proxyHost, proxyPort, topologyLockTimeout, topologyReplTimeout, topologyStateTransfer, name, host, port, idleTimeout,
             recvBufSize, sendBufSize, ssl.create(), tcpNoDelay, workerThreads);
    }
 
@@ -112,7 +130,6 @@ public class HotRodServerConfigurationBuilder extends ProtocolServerConfiguratio
       this.topologyLockTimeout = template.topologyLockTimeout();
       this.topologyReplTimeout = template.topologyReplTimeout();
       this.topologyStateTransfer = template.topologyStateTransfer();
-      this.topologyUpdateTimeout = template.topologyUpdateTimeout();
       return this;
    }
 

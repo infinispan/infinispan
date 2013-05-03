@@ -22,6 +22,7 @@
 
 package org.infinispan.server.hotrod.logging;
 
+import org.infinispan.config.ConfigurationException;
 import org.jboss.logging.Cause;
 import org.jboss.logging.LogMessage;
 import org.jboss.logging.Message;
@@ -51,4 +52,10 @@ public interface JavaLog extends org.infinispan.util.logging.Log {
    @Message(value = "Error detecting crashed member", id = 6002)
    void errorDetectingCrashedMember(@Cause Throwable t);
 
+   @Message(value = "A topology cache named '%s' has already been defined", id = 6003)
+   ConfigurationException invalidTopologyCache(String topologyCacheName);
+
+   @LogMessage(level = WARN)
+   @Message(value = "The topology update timeout configuration is ignored", id = 6004)
+   void topologyUpdateTimeoutIgnored();
 }

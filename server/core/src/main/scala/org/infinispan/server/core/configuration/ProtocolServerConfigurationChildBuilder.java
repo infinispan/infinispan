@@ -24,6 +24,11 @@ import org.infinispan.configuration.Self;
 
 public interface ProtocolServerConfigurationChildBuilder<T extends ProtocolServerConfiguration, S extends ProtocolServerConfigurationChildBuilder<T,S>> extends Self<S> {
    /**
+    * Specifies a custom name for this server in order to easily distinguish it from other servers, e.g. via JMX. Defaults to the empty string.
+    */
+   S name(String name);
+
+   /**
     * Specifies the host or IP address on which this server will listen
     */
    S host(String host);

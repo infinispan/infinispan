@@ -33,6 +33,8 @@ import org.infinispan.test.TestingUtil.generateRandomString
 import org.infinispan.config.Configuration
 import java.util.concurrent.TimeUnit
 import org.infinispan.server.core.test.Stoppable
+import org.infinispan.server.hotrod.configuration.HotRodServerConfigurationBuilder
+import org.infinispan.server.hotrod.configuration.HotRodServerConfiguration
 
 /**
  * Hot Rod server functional test.
@@ -42,8 +44,6 @@ import org.infinispan.server.core.test.Stoppable
  */
 @Test(groups = Array("functional"), testName = "server.hotrod.HotRodFunctionalTest")
 class HotRodFunctionalTest extends HotRodSingleNodeTest {
-
-   import HotRodServer.ADDRESS_CACHE_NAME
 
    def testUnknownCommand(m: Method) {
       val status = client.execute(0xA0, 0x77, cacheName, k(m) , 0, 0, v(m), 0, 1, 0).status
@@ -78,7 +78,7 @@ class HotRodFunctionalTest extends HotRodSingleNodeTest {
    }
 
    def testPutOnTopologyCache(m: Method) {
-      val resp = client.execute(0xA0, 0x01, ADDRESS_CACHE_NAME, k(m), 0, 0, v(m), 0, 1, 0).asInstanceOf[TestErrorResponse]
+      val resp = client.execute(0xA0, 0x01, HotRodServerConfiguration.TOPOLOGY_CACHE_NAME_PREFIX, k(m), 0, 0, v(m), 0, 1, 0).asInstanceOf[TestErrorResponse]
       assertTrue(resp.msg.contains("Remote requests are not allowed to topology cache."))
       assertEquals(resp.status, ParseError, "Status should have been 'ParseError' but instead was: " + resp.status)
       client.assertPut(m)
@@ -447,7 +447,7 @@ class HotRodFunctionalTest extends HotRodSingleNodeTest {
          }
       }
    }
-   
+
    def testBulkGetKeys(m: Method) {
       var size = 100
       for (i <- 0 until size) {
@@ -462,7 +462,7 @@ class HotRodFunctionalTest extends HotRodSingleNodeTest {
          val filtered = bulkData.filter(java.util.Arrays.equals(_, k(m, i + "k-")))
          assertEquals(1, filtered.size)
       }
-      
+
       resp = client.bulkGetKeys(1)
       assertStatus(resp, Success)
       bulkData = resp.bulkData
@@ -471,7 +471,7 @@ class HotRodFunctionalTest extends HotRodSingleNodeTest {
          val filtered = bulkData.filter(java.util.Arrays.equals(_, k(m, i + "k-")))
          assertEquals(1, filtered.size)
       }
-      
+
       resp = client.bulkGetKeys(2)
       assertStatus(resp, Success)
       bulkData = resp.bulkData
