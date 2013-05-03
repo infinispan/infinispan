@@ -22,6 +22,7 @@
 
 package org.infinispan.server.hotrod.logging;
 
+import org.infinispan.config.ConfigurationException;
 import org.jboss.logging.Cause;
 import org.jboss.logging.LogMessage;
 import org.jboss.logging.Message;
@@ -51,4 +52,6 @@ public interface JavaLog extends org.infinispan.util.logging.Log {
    @Message(value = "Error detecting crashed member", id = 6002)
    void errorDetectingCrashedMember(@Cause Throwable t);
 
+   @Message(value = "Existing topology cache state transfer mode is incompatible with the configuration", id = 6003)
+   ConfigurationException invalidTopologyStateTransfer();
 }
