@@ -41,7 +41,7 @@ import javax.net.ssl.TrustManager
  * @author Galder Zamarreño
  * @since 4.1
  */
-abstract class AbstractProtocolServer(threadNamePrefix: String) extends ProtocolServer with Log {
+abstract class AbstractProtocolServer(protocolName: String) extends ProtocolServer with Log {
    protected var transport: NettyTransport = _
    protected var cacheManager: EmbeddedCacheManager = _
    protected var configuration: SuitableConfiguration = null.asInstanceOf[SuitableConfiguration]
@@ -70,7 +70,7 @@ abstract class AbstractProtocolServer(threadNamePrefix: String) extends Protocol
 
    def startTransport() {
       val address = new InetSocketAddress(configuration.host, configuration.port)
-      transport = new NettyTransport(this, getEncoder, address, configuration, threadNamePrefix, cacheManager)
+      transport = new NettyTransport(this, getEncoder, address, configuration, getQualifiedName, cacheManager)
 
       // Register transport MBean regardless
       registerTransportMBean()
@@ -81,7 +81,7 @@ abstract class AbstractProtocolServer(threadNamePrefix: String) extends Protocol
    private def registerTransportMBean() {
       val globalCfg = cacheManager.getCacheManagerConfiguration
       mbeanServer = JmxUtil.lookupMBeanServer(globalCfg)
-      val groupName = "type=Server,name=%s".format(threadNamePrefix)
+      val groupName = "type=Server,name=%s".format(getQualifiedName)
       val jmxDomain = JmxUtil.buildJmxDomain(globalCfg, mbeanServer, groupName)
 
       // Pick up metadata from the component metadata repository
@@ -93,6 +93,10 @@ abstract class AbstractProtocolServer(threadNamePrefix: String) extends Protocol
       transportObjName = new ObjectName(
          "%s:%s,component=%s".format(jmxDomain, groupName, meta.getJmxObjectName))
       JmxUtil.registerMBean(dynamicMBean, transportObjName, mbeanServer)
+   }
+
+   private def getQualifiedName(): String = {
+      protocolName + (if (configuration.name.length > 0) "-" else "") + configuration.name
    }
 
    override def stop {

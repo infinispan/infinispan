@@ -25,6 +25,7 @@ package org.infinispan.server.core.configuration;
  * @since 5.3
  */
 public abstract class ProtocolServerConfiguration {
+   private final String name;
    private final String host;
    private final int port;
    private final int idleTimeout;
@@ -34,7 +35,8 @@ public abstract class ProtocolServerConfiguration {
    private final boolean tcpNoDelay;
    private final int workerThreads;
 
-   protected ProtocolServerConfiguration(String host, int port, int idleTimeout, int recvBufSize, int sendBufSize, SslConfiguration ssl, boolean tcpNoDelay, int workerThreads) {
+   protected ProtocolServerConfiguration(String name, String host, int port, int idleTimeout, int recvBufSize, int sendBufSize, SslConfiguration ssl, boolean tcpNoDelay, int workerThreads) {
+      this.name = name;
       this.host = host;
       this.port = port;
       this.idleTimeout = idleTimeout;
@@ -43,6 +45,10 @@ public abstract class ProtocolServerConfiguration {
       this.ssl = ssl;
       this.tcpNoDelay = tcpNoDelay;
       this.workerThreads = workerThreads;
+   }
+
+   public String name() {
+      return name;
    }
 
    public String host() {
@@ -79,8 +85,8 @@ public abstract class ProtocolServerConfiguration {
 
    @Override
    public String toString() {
-      return "ProtocolServerConfiguration [host=" + host + ", port=" + port + ", idleTimeout=" + idleTimeout + ", recvBufSize=" + recvBufSize + ", sendBufSize=" + sendBufSize
-            + ", ssl=" + ssl + ", tcpNoDelay=" + tcpNoDelay + ", workerThreads=" + workerThreads + "]";
+      return "ProtocolServerConfiguration [name=" + name + ", host=" + host + ", port=" + port + ", idleTimeout=" + idleTimeout + ", recvBufSize=" + recvBufSize + ", sendBufSize="
+            + sendBufSize + ", ssl=" + ssl + ", tcpNoDelay=" + tcpNoDelay + ", workerThreads=" + workerThreads + "]";
    }
 
 }

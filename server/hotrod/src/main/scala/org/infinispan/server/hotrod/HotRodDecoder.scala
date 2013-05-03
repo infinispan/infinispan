@@ -37,6 +37,7 @@ import org.jboss.netty.channel.Channel
 import java.lang.StringBuilder
 import org.infinispan.container.versioning.EntryVersion
 import org.infinispan.container.entries.CacheEntry
+import org.infinispan.server.hotrod.configuration.HotRodServerConfiguration
 
 /**
  * Top level Hot Rod decoder that after figuring out the version, delegates the rest of the reading to the
@@ -104,9 +105,9 @@ class HotRodDecoder(cacheManager: EmbeddedCacheManager, transport: NettyTranspor
       val cacheName = header.cacheName
       // Talking to the wrong cache are really request parsing errors
       // and hence should be treated as client errors
-      if (cacheName == HotRodServer.ADDRESS_CACHE_NAME)
+      if (cacheName.startsWith(HotRodServerConfiguration.TOPOLOGY_CACHE_NAME_PREFIX))
          throw new RequestParsingException(
-            "Remote requests are not allowed to topology cache. Do no send remote requests to cache '%s'".format(HotRodServer.ADDRESS_CACHE_NAME),
+            "Remote requests are not allowed to topology cache. Do no send remote requests to cache '%s'".format(cacheName),
             header.version, header.messageId)
 
       var seenForFirstTime = false

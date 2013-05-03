@@ -32,6 +32,7 @@ import org.infinispan.server.core.test.Stoppable
 import org.infinispan.configuration.cache.Configuration
 import org.infinispan.server.hotrod.configuration.HotRodServerConfigurationBuilder
 import org.infinispan.configuration.cache.ClusterCacheLoaderConfiguration
+import org.infinispan.server.hotrod.configuration.HotRodServerConfiguration
 
 /**
  * Test to verify that configuration changes are reflected in backend caches.
@@ -41,8 +42,6 @@ import org.infinispan.configuration.cache.ClusterCacheLoaderConfiguration
  */
 @Test(groups = Array("functional"), testName = "server.hotrod.HotRodConfigurationTest")
 class HotRodConfigurationTest {
-
-   import HotRodServer.ADDRESS_CACHE_NAME
 
    def testUserDefinedTimeouts() {
       val builder = new HotRodServerConfigurationBuilder
@@ -71,7 +70,7 @@ class HotRodConfigurationTest {
    private def withClusteredServer(builder: HotRodServerConfigurationBuilder) (assert: (Configuration, Long) => Unit) {
       Stoppable.useCacheManager(TestCacheManagerFactory.createClusteredCacheManager(hotRodCacheConfiguration())) { cm =>
          Stoppable.useServer(startHotRodServer(cm, UniquePortThreadLocal.get.intValue, builder)) { server =>
-            val cfg = cm.getCache(ADDRESS_CACHE_NAME).getCacheConfiguration
+            val cfg = cm.getCache(HotRodServerConfiguration.TOPOLOGY_CACHE_NAME_PREFIX).getCacheConfiguration
             assert(cfg, cm.getCacheManagerConfiguration.transport().distributedSyncTimeout())
          }
       }

@@ -29,6 +29,7 @@ import org.infinispan.util.logging.LogFactory;
 public abstract class ProtocolServerConfigurationBuilder<T extends ProtocolServerConfiguration, S extends ProtocolServerConfigurationChildBuilder<T, S>> implements
       ProtocolServerConfigurationChildBuilder<T, S>, Builder<T> {
    private static final JavaLog log = LogFactory.getLog(ProtocolServerConfigurationBuilder.class, JavaLog.class);
+   protected String name = "";
    protected String host = "127.0.0.1";
    protected int port = -1;
    protected int idleTimeout = -1;
@@ -41,6 +42,12 @@ public abstract class ProtocolServerConfigurationBuilder<T extends ProtocolServe
    protected ProtocolServerConfigurationBuilder(int port) {
       this.port = port;
       this.ssl = new SslConfigurationBuilder();
+   }
+
+   @Override
+   public S name(String name) {
+      this.name = name;
+      return this.self();
    }
 
    @Override
@@ -126,6 +133,7 @@ public abstract class ProtocolServerConfigurationBuilder<T extends ProtocolServe
 
    @Override
    public Builder<?> read(T template) {
+      this.name = template.name();
       this.host = template.host();
       this.port = template.port();
       this.idleTimeout = template.idleTimeout();

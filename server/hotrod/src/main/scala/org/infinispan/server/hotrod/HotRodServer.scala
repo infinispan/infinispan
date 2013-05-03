@@ -110,7 +110,7 @@ class HotRodServer extends AbstractProtocolServer("HotRod") with Log {
    private def preStartCaches() {
       // Start defined caches to avoid issues with lazily started caches
       for (cacheName <- asScalaIterator(cacheManager.getCacheNames.iterator)) {
-         if (cacheName != HotRodServer.ADDRESS_CACHE_NAME) {
+         if (!cacheName.startsWith(HotRodServerConfiguration.TOPOLOGY_CACHE_NAME_PREFIX)) {
             assertKeyEquivalence(cacheManager.getCacheConfiguration(cacheName), cacheName)
             cacheManager.getCache(cacheName)
          }
@@ -131,7 +131,7 @@ class HotRodServer extends AbstractProtocolServer("HotRod") with Log {
    }
 
    private def addSelfToTopologyView(cacheManager: EmbeddedCacheManager) {
-      addressCache = cacheManager.getCache(HotRodServer.ADDRESS_CACHE_NAME)
+      addressCache = cacheManager.getCache(configuration.topologyCacheName)
       clusterAddress = cacheManager.getAddress
       address = new ServerAddress(configuration.proxyHost, configuration.proxyPort)
       cacheManager.addListener(new CrashedMemberDetectorListener(addressCache, this))
@@ -145,7 +145,11 @@ class HotRodServer extends AbstractProtocolServer("HotRod") with Log {
    }
 
    private def defineTopologyCacheConfig(cacheManager: EmbeddedCacheManager) {
-      cacheManager.defineConfiguration(HotRodServer.ADDRESS_CACHE_NAME,
+      val topoCfg = cacheManager.getCacheConfiguration(configuration.topologyCacheName)
+      if (topoCfg != null) {
+         throw log.invalidTopologyCache(configuration.topologyCacheName)
+      }
+      cacheManager.defineConfiguration(configuration.topologyCacheName,
          createTopologyCacheConfig(cacheManager.getCacheManagerConfiguration.transport().distributedSyncTimeout()).build())
    }
 
@@ -203,8 +207,5 @@ class HotRodServer extends AbstractProtocolServer("HotRod") with Log {
 }
 
 object HotRodServer {
-
-   val ADDRESS_CACHE_NAME = "___hotRodTopologyCache"
    val DEFAULT_TOPOLOGY_ID = -1
-
 }

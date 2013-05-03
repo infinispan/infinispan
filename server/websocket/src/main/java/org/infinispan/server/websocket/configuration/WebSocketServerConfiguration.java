@@ -31,7 +31,7 @@ import org.infinispan.server.core.configuration.SslConfiguration;
 @BuiltBy(WebSocketServerConfigurationBuilder.class)
 public class WebSocketServerConfiguration extends ProtocolServerConfiguration {
 
-   WebSocketServerConfiguration(String host, int port, int idleTimeout, int recvBufSize, int sendBufSize, SslConfiguration ssl, boolean tcpNoDelay, int workerThreads) {
-      super(host, port, idleTimeout, recvBufSize, sendBufSize, ssl, tcpNoDelay, workerThreads);
+   WebSocketServerConfiguration(String name, String host, int port, int idleTimeout, int recvBufSize, int sendBufSize, SslConfiguration ssl, boolean tcpNoDelay, int workerThreads) {
+      super(name, host, port, idleTimeout, recvBufSize, sendBufSize, ssl, tcpNoDelay, workerThreads);
    }
 }

@@ -43,7 +43,7 @@ class HotRodEncoder(cacheManager: EmbeddedCacheManager, server: HotRodServer)
 
    private lazy val isClustered: Boolean = cacheManager.getGlobalConfiguration.getTransportClass != null
    private lazy val addressCache: Cache[Address, ServerAddress] =
-      if (isClustered) cacheManager.getCache(HotRodServer.ADDRESS_CACHE_NAME) else null
+      if (isClustered) cacheManager.getCache(server.getConfiguration.topologyCacheName) else null
    private val isTrace = isTraceEnabled
 
    override def encode(ctx: ChannelHandlerContext, ch: Channel, msg: AnyRef): AnyRef = {
