@@ -93,7 +93,7 @@
                 <property name="default.indexwriter.ram_buffer_size" value="220" />
 
                 <!-- Make sure to use native locking -->
-                <property name="default.​locking_strategy" value="native" />
+                <property name="default.locking_strategy" value="native" />
 
                 <!-- Enable sharding on writers -->
                 <property name="default.sharding_strategy.nbr_of_shards" value="6" />
