@@ -142,6 +142,10 @@ public class OptimisticLockingInterceptor extends AbstractTxLockingInterceptor {
          return invokeNextInterceptor(ctx, command);
       } catch (Throwable te) {
          throw cleanLocksAndRethrow(ctx, te);
+      } finally {
+         //with putForExternalRead the value might be put into L1 without a transaction
+         //we need to release any locks for these cases
+         if (!ctx.isInTxScope()) lockManager.unlockAll(ctx);
       }
    }
    
