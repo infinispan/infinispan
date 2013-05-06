@@ -20,6 +20,7 @@
 package org.infinispan.context;
 
 import org.infinispan.CacheException;
+import org.infinispan.batch.BatchContainer;
 import org.infinispan.configuration.cache.ClusterCacheLoaderConfiguration;
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.configuration.cache.CacheLoaderConfiguration;
@@ -49,13 +50,17 @@ public class TransactionalInvocationContextContainer extends AbstractInvocationC
    private TransactionManager tm;
    private TransactionTable transactionTable;
    private boolean isThreadLocalRequired;
+   private BatchContainer batchContainer;
+   private boolean batchingEnabled;
 
    @Inject
    public void init(TransactionManager tm,
-         TransactionTable transactionTable, Configuration config) {
+         TransactionTable transactionTable, Configuration config, BatchContainer batchContainer) {
       super.init(config);
       this.tm = tm;
       this.transactionTable = transactionTable;
+      this.batchContainer = batchContainer;
+      this.batchingEnabled = config.invocationBatching().enabled();
    }
 
    @Start
@@ -145,7 +150,14 @@ public class TransactionalInvocationContextContainer extends AbstractInvocationC
 
    private Transaction getRunningTx() {
       try {
-         return tm.getTransaction();
+         Transaction transaction = null;
+         if (batchingEnabled) {
+            transaction = batchContainer.getBatchTransaction();
+         }
+         if (transaction == null) {
+            transaction = tm.getTransaction();
+         }
+         return transaction;
       } catch (SystemException e) {
          throw new CacheException(e);
       }
