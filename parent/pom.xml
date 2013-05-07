@@ -154,7 +154,7 @@
       <version.jclouds>1.4.1</version.jclouds>
       <version.jetty>6.1.25</version.jetty>
       <version.jgoodies.forms>1.0.5</version.jgoodies.forms>
-      <version.jgroups>3.3.0.CR2</version.jgroups>
+      <version.jgroups>3.3.0.Final</version.jgroups>
       <version.jsap>2.1</version.jsap>
       <version.json>20090211</version.json>
       <version.jstl>1.2</version.jstl>
