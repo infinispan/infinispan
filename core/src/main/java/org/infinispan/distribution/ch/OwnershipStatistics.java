@@ -47,7 +47,7 @@ public class OwnershipStatistics {
       this.owned = new int[nodes.size()];
    }
 
-   public OwnershipStatistics(DefaultConsistentHash ch, List<Address> nodes) {
+   public OwnershipStatistics(ConsistentHash ch, List<Address> nodes) {
       this(nodes);
 
       for (int i = 0; i < ch.getNumSegments(); i++) {
