@@ -19,7 +19,6 @@
 
 package org.infinispan.distribution.ch;
 
-import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
 import java.util.ArrayList;
@@ -278,12 +277,12 @@ public class SyncConsistentHashFactory implements ConsistentHashFactory<DefaultC
    public static class Externalizer extends AbstractExternalizer<SyncConsistentHashFactory> {
 
       @Override
-      public void writeObject(ObjectOutput output, SyncConsistentHashFactory chf) throws IOException {
+      public void writeObject(ObjectOutput output, SyncConsistentHashFactory chf) {
       }
 
       @Override
       @SuppressWarnings("unchecked")
-      public SyncConsistentHashFactory readObject(ObjectInput unmarshaller) throws IOException, ClassNotFoundException {
+      public SyncConsistentHashFactory readObject(ObjectInput unmarshaller) {
          return new SyncConsistentHashFactory();
       }
 

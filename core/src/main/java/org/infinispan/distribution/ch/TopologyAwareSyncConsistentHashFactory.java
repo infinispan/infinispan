@@ -19,7 +19,6 @@
 
 package org.infinispan.distribution.ch;
 
-import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
 import java.util.Collections;
@@ -152,12 +151,12 @@ public class TopologyAwareSyncConsistentHashFactory extends SyncConsistentHashFa
    public static class Externalizer extends AbstractExternalizer<TopologyAwareSyncConsistentHashFactory> {
 
       @Override
-      public void writeObject(ObjectOutput output, TopologyAwareSyncConsistentHashFactory chf) throws IOException {
+      public void writeObject(ObjectOutput output, TopologyAwareSyncConsistentHashFactory chf) {
       }
 
       @Override
       @SuppressWarnings("unchecked")
-      public TopologyAwareSyncConsistentHashFactory readObject(ObjectInput unmarshaller) throws IOException, ClassNotFoundException {
+      public TopologyAwareSyncConsistentHashFactory readObject(ObjectInput unmarshaller) {
          return new TopologyAwareSyncConsistentHashFactory();
       }
 

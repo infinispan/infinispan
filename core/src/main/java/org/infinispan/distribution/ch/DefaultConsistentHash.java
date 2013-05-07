@@ -79,7 +79,6 @@ public class DefaultConsistentHash implements ConsistentHash {
          }
          this.segmentOwners[i] = Immutables.immutableListCopy(segmentOwners[i]);
       }
-      // this
       this.segmentSize = (int)Math.ceil((double)Integer.MAX_VALUE / numSegments);
    }
 
@@ -269,9 +268,9 @@ public class DefaultConsistentHash implements ConsistentHash {
     * @param src List of elements to add - this is never modified
     */
    private void mergeLists(List<Address> dest, List<Address> src) {
-      for (Address a2 : src) {
-         if (!dest.contains(a2)) {
-            dest.add(a2);
+      for (Address node : src) {
+         if (!dest.contains(node)) {
+            dest.add(node);
          }
       }
    }

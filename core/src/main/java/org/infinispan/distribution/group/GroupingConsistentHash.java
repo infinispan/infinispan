@@ -38,8 +38,8 @@ import java.util.Set;
  * @since 5.2
  */
 public class GroupingConsistentHash implements ConsistentHash {
-   private ConsistentHash ch;
-   private GroupManager groupManager;
+   private final ConsistentHash ch;
+   private final GroupManager groupManager;
 
    public GroupingConsistentHash(ConsistentHash ch, GroupManager groupManager) {
       this.ch = ch;

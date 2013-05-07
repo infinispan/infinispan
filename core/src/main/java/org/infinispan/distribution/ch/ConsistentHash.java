@@ -126,7 +126,7 @@ public interface ConsistentHash {
    int getSegment(Object key);
 
    /**
-    * @return All the nodes that own a given hash space segment. The returned list is unmodifiable.
+    * @return All the nodes that own a given hash space segment, first address is the primary owner. The returned list is unmodifiable.
     */
    List<Address> locateOwnersForSegment(int segmentId);
 
