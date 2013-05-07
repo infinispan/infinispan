@@ -41,3 +41,5 @@ rhq-plugin.xml
 IspnQLLexer.java
 IspnQLParser.java
 IspnQL.tokens
+# OS X generated file
+.DS_Store
