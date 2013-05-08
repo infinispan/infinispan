@@ -40,10 +40,12 @@ public class MixedModeTest extends MultipleCacheManagersTest {
 
       createClusteredCaches(2, "replSync", replSync);
       defineConfigurationOnAllManagers("replAsync", replAsync);
+      waitForClusterToForm("replAsync");
       defineConfigurationOnAllManagers("invalSync", invalSync);
+      waitForClusterToForm("invalSync");
       defineConfigurationOnAllManagers("invalAsync", invalAsync);
+      waitForClusterToForm("invalAsync");
       defineConfigurationOnAllManagers("local", local);
-
    }
 
    public void testMixedMode() {
