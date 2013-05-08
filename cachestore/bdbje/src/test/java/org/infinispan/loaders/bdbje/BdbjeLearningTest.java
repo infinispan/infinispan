@@ -103,7 +103,7 @@ public class BdbjeLearningTest extends AbstractInfinispanTest {
       tmpDirectory = TestingUtil.tmpDirectory(this);
    }
 
-   @AfterTest(alwaysRun = true)
+   @AfterTest
    protected void clearTempDir() {
       TestingUtil.recursiveFileRemove(tmpDirectory);
       new File(tmpDirectory).mkdirs();
@@ -161,7 +161,7 @@ public class BdbjeLearningTest extends AbstractInfinispanTest {
    }
 
 
-   @AfterMethod(alwaysRun = true)
+   @AfterMethod
    public void tearDown() throws Exception {
       storedEntriesDb.close();
       javaCatalog.close();

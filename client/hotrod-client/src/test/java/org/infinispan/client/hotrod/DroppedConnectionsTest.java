@@ -68,7 +68,7 @@ public class DroppedConnectionsTest extends SingleCacheManagerTest {
       return cacheManager;
    }
 
-   @AfterClass(alwaysRun=true)
+   @AfterClass
    @Override
    protected void teardown() {
       super.teardown();

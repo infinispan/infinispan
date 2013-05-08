@@ -22,7 +22,7 @@
  */
 package org.infinispan.server.core
 
-import org.testng.annotations.{AfterClass, BeforeTest}
+import org.testng.annotations.{AfterTest, BeforeTest}
 import java.util.Random
 import java.io.{ObjectOutputStream, ByteArrayOutputStream}
 import org.infinispan.test.TestingUtil
@@ -50,8 +50,10 @@ abstract class AbstractMarshallingTest {
       marshaller = TestingUtil.extractCacheMarshaller(cm.getCache())
    }
 
-   @AfterClass(alwaysRun=true)
-   def tearDown = cm.stop()
+   @AfterTest(alwaysRun=true)
+   def tearDown {
+     if (cm != null) cm.stop()
+   }
 
    protected def getBigByteArray: Array[Byte] = {
       val value = new String(randomByteArray(1000))

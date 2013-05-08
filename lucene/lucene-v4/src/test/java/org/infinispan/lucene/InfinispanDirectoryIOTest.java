@@ -68,12 +68,12 @@ public class InfinispanDirectoryIOTest {
       cacheManager = CacheTestSupport.createTestCacheManager();
    }
 
-   @AfterTest(alwaysRun=true)
+   @AfterTest
    public void killCacheManager() {
       TestingUtil.killCacheManagers(cacheManager);
    }
 
-   @AfterMethod(alwaysRun=true)
+   @AfterMethod
    public void clearCache() {
       cacheManager.getCache().clear();
       TestingUtil.recursiveFileRemove(indexDir);

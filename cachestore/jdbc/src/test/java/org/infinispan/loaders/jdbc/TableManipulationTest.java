@@ -58,7 +58,7 @@ public class TableManipulationTest {
       tableManipulation.setCacheName("aName");
    }
 
-   @AfterTest(alwaysRun = true)
+   @AfterTest
    public void closeConnection() throws SQLException {
       connection.close();
    }

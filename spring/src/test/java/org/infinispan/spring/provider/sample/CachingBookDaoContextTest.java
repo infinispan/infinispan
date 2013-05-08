@@ -50,7 +50,7 @@ public class CachingBookDaoContextTest extends AbstractTestNGSpringContextTests 
       booksCache().addListener(this.new LoggingListener());
    }
 
-   @AfterMethod(alwaysRun = true)
+   @AfterMethod
    public void clearBookCache() {
       booksCache().clear();
    }

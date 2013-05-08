@@ -51,7 +51,7 @@ import static org.testng.Assert.assertEquals;
 public class CacheManagerXmlConfigurationTest extends AbstractInfinispanTest {
    EmbeddedCacheManager cm;
 
-   @AfterMethod(alwaysRun = true)
+   @AfterMethod
    public void tearDown() {
       if (cm != null) cm.stop();
       cm =null;

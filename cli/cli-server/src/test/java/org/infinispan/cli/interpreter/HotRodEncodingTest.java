@@ -79,7 +79,7 @@ public class HotRodEncodingTest extends SingleCacheManagerTest {
       interpreter = gcr.getComponent(Interpreter.class);
    }
 
-   @AfterTest(alwaysRun = true)
+   @AfterTest
    public void release() {
       try {
          HotRodClientTestingUtil.killRemoteCacheManager(remoteCacheManager);

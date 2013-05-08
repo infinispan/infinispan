@@ -32,7 +32,7 @@ public class StoreAsBinaryConfigTest extends AbstractInfinispanTest {
 
    EmbeddedCacheManager ecm;
 
-   @AfterMethod(alwaysRun = true)
+   @AfterMethod
    public void cleanup() {
       TestingUtil.killCacheManagers(ecm);
       ecm = null;

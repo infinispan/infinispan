@@ -60,7 +60,7 @@ public class ConcurrentCacheManagerTest extends AbstractCacheTest {
       cacheManager = manager;
    }
 
-   @AfterMethod(alwaysRun = true)
+   @AfterMethod
    protected void teardown() {
       TestingUtil.killCacheManagers(cacheManager);
    }

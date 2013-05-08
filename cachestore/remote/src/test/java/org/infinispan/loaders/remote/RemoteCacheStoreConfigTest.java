@@ -91,7 +91,7 @@ public class RemoteCacheStoreConfigTest {
       });
    }
 
-   @AfterTest(alwaysRun = true)
+   @AfterTest
    public void tearDown() {
       HotRodClientTestingUtil.killServers(hotRodServer);
       TestingUtil.killCacheManagers(cacheManager);

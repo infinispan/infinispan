@@ -62,7 +62,7 @@ public class LocalCacheFSDirectoryTest extends LocalCacheTest {
    }
 
    @Override
-   @AfterMethod(alwaysRun = true)
+   @AfterMethod
    protected void destroyAfterMethod() {
       try {
          //first stop cache managers, then clear the index

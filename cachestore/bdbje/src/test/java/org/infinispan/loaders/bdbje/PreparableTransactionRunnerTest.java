@@ -64,7 +64,7 @@ public class PreparableTransactionRunnerTest {
       worker = mock(TransactionWorker.class);
    }
 
-   @AfterMethod(alwaysRun = true)
+   @AfterMethod
    public void tearDown() throws CacheLoaderException {
       runner = null;
       env = null;

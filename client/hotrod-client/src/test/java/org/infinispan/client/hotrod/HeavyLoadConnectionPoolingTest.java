@@ -56,7 +56,7 @@ public class HeavyLoadConnectionPoolingTest extends SingleCacheManagerTest {
    private RemoteCache<Object, Object> remoteCache;
    private GenericKeyedObjectPool<?,?> connectionPool;
 
-   @AfterMethod(alwaysRun=true)
+   @AfterMethod
    @Override
    protected void clearContent() {
    }
@@ -86,7 +86,7 @@ public class HeavyLoadConnectionPoolingTest extends SingleCacheManagerTest {
       return cacheManager;
    }
 
-   @AfterClass(alwaysRun=true)
+   @AfterClass
    @Override
    protected void destroyAfterClass() {
       super.destroyAfterClass();

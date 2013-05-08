@@ -74,7 +74,7 @@ public class CacheNotifierTest extends AbstractInfinispanTest {
    private CacheContainer cm;
    private AdvancedCache<Object, Object> skipListenerCache;
 
-   @BeforeMethod(alwaysRun = true)
+   @BeforeMethod
    public void setUp() throws Exception {
       Configuration c = new Configuration();
       c.fluent().transaction().transactionMode(TransactionMode.NON_TRANSACTIONAL);
@@ -88,14 +88,14 @@ public class CacheNotifierTest extends AbstractInfinispanTest {
       origNotifier = TestingUtil.replaceComponent(cache, CacheNotifier.class, mockNotifier, true);
    }
 
-   @AfterMethod(alwaysRun = true)
+   @AfterMethod
    public void tearDown() throws Exception {
       TestingUtil.replaceComponent(cache, CacheNotifier.class, origNotifier, true);
       TestingUtil.killCaches(cache);
       cm.stop();
    }
 
-   @AfterClass(alwaysRun = true)
+   @AfterClass
    public void destroyManager() {
       TestingUtil.killCacheManagers(cache.getCacheManager());
    }

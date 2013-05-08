@@ -66,7 +66,7 @@ public class CollectionsIndexingTest extends SingleCacheManagerTest {
       qf = Search.getSearchManager(cache);
    }
    
-   @AfterMethod(alwaysRun = true)
+   @AfterMethod
    public void cleanupData() {
       cache.clear();
    }

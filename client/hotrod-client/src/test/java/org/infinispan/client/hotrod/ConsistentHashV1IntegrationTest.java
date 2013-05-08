@@ -112,12 +112,12 @@ public class ConsistentHashV1IntegrationTest extends MultipleCacheManagersTest {
       return hotRodCacheConfiguration(builder);
    }
 
-   @AfterMethod(alwaysRun = true)
+   @AfterMethod
    @Override
    protected void clearContent() throws Throwable {
    }
 
-   @AfterTest(alwaysRun = true)
+   @AfterTest
    public void cleanUp() {
       ex.shutdownNow();
       kas.stop();

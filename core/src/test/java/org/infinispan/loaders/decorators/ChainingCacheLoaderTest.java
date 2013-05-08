@@ -90,7 +90,7 @@ public class ChainingCacheLoaderTest extends BaseCacheStoreTest {
       return store;
    }
 
-   @AfterMethod(alwaysRun = true)
+   @AfterMethod
    public void afterMethod() {
       if (store1 != null)
          store1.clear();

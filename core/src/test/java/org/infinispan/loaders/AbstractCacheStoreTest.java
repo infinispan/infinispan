@@ -45,14 +45,14 @@ public class AbstractCacheStoreTest extends AbstractInfinispanTest {
    private AbstractCacheStore cs;
    private AbstractCacheStoreConfig cfg;
 
-   @BeforeMethod(alwaysRun = true)
+   @BeforeMethod
    public void setUp() throws NoSuchMethodException, CacheLoaderException {
       cs = mock(AbstractCacheStore.class, Mockito.CALLS_REAL_METHODS);
       cfg = new AbstractCacheStoreConfig();
       cs.init(cfg, null, null);
    }
 
-   @AfterMethod(alwaysRun = true)
+   @AfterMethod
    public void tearDown() throws CacheLoaderException {
       cs.stop();
       cs = null;

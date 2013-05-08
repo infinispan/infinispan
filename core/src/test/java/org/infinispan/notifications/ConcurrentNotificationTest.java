@@ -58,7 +58,7 @@ public class ConcurrentNotificationTest extends AbstractInfinispanTest {
       cache.addListener(listener);
    }
 
-   @AfterMethod(alwaysRun = true)
+   @AfterMethod
    public void tearDown() {
       TestingUtil.killCacheManagers(cm);
       cm = null;

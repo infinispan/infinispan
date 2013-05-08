@@ -58,7 +58,7 @@ public class CacheManagerStoppedTest extends SingleCacheManagerTest {
       return cacheManager;
    }
 
-   @AfterTest(alwaysRun = true)
+   @AfterTest
    public void release() {
       killRemoteCacheManager(remoteCacheManager);
       killCacheManagers(cacheManager);

@@ -108,12 +108,12 @@ public class MarshalledValueTest extends MultipleCacheManagersTest {
       chain.addInterceptorAfter(mvli, MarshalledValueInterceptor.class);
    }
    
-   @AfterClass(alwaysRun=true)
+   @AfterClass
    protected void destroy() {
       super.destroy();
    }
 
-   @AfterMethod(alwaysRun = true)
+   @AfterMethod
    public void tearDown() {
       Pojo.serializationCount = 0;
       Pojo.deserializationCount = 0;

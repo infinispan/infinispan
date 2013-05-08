@@ -41,7 +41,7 @@ public class ConfigurationOverrideTest extends AbstractInfinispanTest {
 
    private EmbeddedCacheManager cm;
 
-   @AfterMethod(alwaysRun = true)
+   @AfterMethod
    public void stopCacheManager() {
       cm.stop();
    }

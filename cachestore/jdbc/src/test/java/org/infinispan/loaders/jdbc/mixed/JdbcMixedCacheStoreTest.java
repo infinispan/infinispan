@@ -80,7 +80,7 @@ public class JdbcMixedCacheStoreTest {
       cacheStore.start();
    }
 
-   @AfterMethod(alwaysRun = true)
+   @AfterMethod
    public void destroyStore() throws Exception {
       cacheStore.clear();
       assertBinaryRowCount(0);

@@ -83,7 +83,7 @@ public class InfinispanNamedEmbeddedCacheFactoryBeanTest {
       PRECONFIGURED_DEFAULT_CACHE_MANAGER.start();
    }
 
-   @AfterClass(alwaysRun = true)
+   @AfterClass
    public static void stopCacheManagers() {
       PRECONFIGURED_DEFAULT_CACHE_MANAGER.stop();
       DEFAULT_CACHE_MANAGER.stop();

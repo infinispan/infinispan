@@ -52,7 +52,7 @@ public class DistCacheStorePreloadTest extends BaseDistCacheStoreTest {
       preload = true;
    }
 
-   @AfterMethod(alwaysRun = true)
+   @AfterMethod
    public void clearStats() {
       for (Cache<?, ?> c: caches) {
          log.trace("Clearing stats for cache store on cache "+ c);

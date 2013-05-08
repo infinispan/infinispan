@@ -66,7 +66,7 @@ public class RemoteCacheManagerTest extends SingleCacheManagerTest {
       remoteCacheManager = null;
    }
 
-   @AfterTest(alwaysRun = true)
+   @AfterTest
    public void release() {
       try {
          TestingUtil.killCacheManagers(cacheManager);

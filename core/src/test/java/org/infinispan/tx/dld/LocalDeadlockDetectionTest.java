@@ -79,7 +79,7 @@ public class LocalDeadlockDetectionTest extends SingleCacheManagerTest {
    }
 
 
-   @AfterMethod(alwaysRun = true)
+   @AfterMethod
    public void stopExecutors() {
       t1.stopThread();
       t2.stopThread();

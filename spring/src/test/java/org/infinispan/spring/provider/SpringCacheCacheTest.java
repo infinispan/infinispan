@@ -73,7 +73,7 @@ public class SpringCacheCacheTest extends SingleCacheManagerTest {
       this.cache = createCache(this.nativeCache);
    }
 
-   @AfterMethod(alwaysRun = true)
+   @AfterMethod
    public void tearDown() throws Exception {
       this.nativeCache = null;
       this.cache = null;

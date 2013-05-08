@@ -60,7 +60,7 @@ public abstract class BaseCacheStoreFunctionalTest extends AbstractInfinispanTes
    protected CacheStoreConfig csConfig;
    protected Set<String> cacheNames = new HashSet<String>();
 
-   @BeforeMethod(alwaysRun = true)
+   @BeforeMethod
    public void setUp() throws Exception {
       try {
          csConfig = createCacheStoreConfig();

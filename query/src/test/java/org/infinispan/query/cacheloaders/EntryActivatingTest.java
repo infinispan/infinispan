@@ -64,7 +64,7 @@ public class EntryActivatingTest extends AbstractInfinispanTest {
       recreateCacheManager();
    }
 
-   @AfterTest(alwaysRun = true)
+   @AfterTest
    public void tearDown() {
       TestingUtil.killCacheManagers(cm);
    }

@@ -70,7 +70,7 @@ public class DefaultExpirationTest extends SingleCacheManagerTest {
    }
 
 
-   @AfterClass(alwaysRun = true)
+   @AfterClass
    public void testDestroyRemoteCacheFactory() {
       HotRodClientTestingUtil.killRemoteCacheManager(remoteCacheManager);
       HotRodClientTestingUtil.killServers(hotrodServer);

@@ -69,7 +69,7 @@ public class MemcachedEncodingTest extends SingleCacheManagerTest {
       return cacheManager;
    }
 
-   @AfterMethod(alwaysRun = true)
+   @AfterMethod
    public void release() {
       try {
          memcachedServer.stop();

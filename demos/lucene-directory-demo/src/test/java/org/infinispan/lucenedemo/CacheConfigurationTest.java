@@ -65,7 +65,7 @@ public class CacheConfigurationTest {
       directoryNodeTwo = new InfinispanDirectory(cache2);
    }
    
-   @AfterTest(alwaysRun = true)
+   @AfterTest
    public void cleanup() {
       directoryNodeOne.close();
       directoryNodeTwo.close();

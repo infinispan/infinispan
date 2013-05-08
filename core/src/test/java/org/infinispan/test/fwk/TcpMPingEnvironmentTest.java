@@ -60,7 +60,7 @@ public class TcpMPingEnvironmentTest {
    private boolean success = false;
    private static final String IP_ADDRESS = "228.10.10.5";
 
-   @AfterMethod(alwaysRun = true)
+   @AfterMethod
    public void destroyCaches() {
       for (JChannel ch : openedChannles) {
          ch.disconnect();

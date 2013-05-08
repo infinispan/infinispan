@@ -86,7 +86,7 @@ public class WriteSkewTest extends AbstractInfinispanTest {
       cacheManager.defineConfiguration("writeSkew", configurationBuilder.build());
    }
 
-   @AfterTest(alwaysRun = true)
+   @AfterTest
    public void tearDown() {
       TestingUtil.killCacheManagers(cacheManager);
       cacheManager = null;

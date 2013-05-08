@@ -51,7 +51,7 @@ public class ForceReturnValuesTest extends SingleCacheManagerTest {
       return cacheManager;
    }
 
-   @AfterMethod(alwaysRun = true)
+   @AfterMethod
    void shutdown() {
       HotRodClientTestingUtil.killRemoteCacheManager(remoteCacheManager);
       HotRodClientTestingUtil.killServers(hotRodServer);

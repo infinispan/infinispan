@@ -65,12 +65,12 @@ public class ReplTopologyChangeTest extends MultipleCacheManagersTest {
    protected void assertSupportedConfig() {
    }
 
-   @AfterMethod(alwaysRun = true)
+   @AfterMethod
    @Override
    protected void clearContent() throws Throwable {
    }
 
-   @AfterClass(alwaysRun = true)
+   @AfterClass
    @Override
    protected void destroy() {
       super.destroy();
@@ -88,7 +88,7 @@ public class ReplTopologyChangeTest extends MultipleCacheManagersTest {
       waitForClusterToForm();
    }
 
-   @BeforeClass(alwaysRun = true)
+   @BeforeClass
    @Override
    public void createBeforeClass() throws Throwable {
       super.createBeforeClass(); // Create cache managers

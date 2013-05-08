@@ -42,7 +42,7 @@ public class AbstractCacheStoreConfigTest extends AbstractInfinispanTest {
       config = new AbstractCacheStoreConfig();
    }
 
-   @AfterMethod(alwaysRun = true)
+   @AfterMethod
    public void tearDown() throws CacheLoaderException {
       config = null;
    }

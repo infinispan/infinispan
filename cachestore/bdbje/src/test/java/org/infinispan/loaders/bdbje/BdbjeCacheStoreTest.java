@@ -149,7 +149,7 @@ public class BdbjeCacheStoreTest {
       runner = mock(PreparableTransactionRunner.class);
    }
 
-   @AfterMethod(alwaysRun = true)
+   @AfterMethod
    public void tearDown() throws CacheLoaderException {
       runner = null;
       currentTransaction = null;

@@ -60,7 +60,7 @@ public class JmxStatsFunctionalTest extends AbstractInfinispanTest {
    private EmbeddedCacheManager cm, cm2, cm3;
 
 
-   @AfterMethod(alwaysRun = true)
+   @AfterMethod
    public void destroyCacheManager() {
       TestingUtil.killCacheManagers(cm, cm2, cm3);
       cm = null;

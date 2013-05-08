@@ -50,7 +50,7 @@ public class JdbmCacheStoreTest extends BaseCacheStoreTest {
       tmpDirectory = TestingUtil.tmpDirectory(this);
    }
 
-   @AfterClass(alwaysRun = true)
+   @AfterClass
    protected void clearTempDir() {
       TestingUtil.recursiveFileRemove(tmpDirectory);
       new File(tmpDirectory).mkdirs();

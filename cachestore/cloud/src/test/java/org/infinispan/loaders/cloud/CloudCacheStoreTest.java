@@ -99,7 +99,7 @@ public class CloudCacheStoreTest extends BaseCacheStoreTest {
    }
 
 
-   @AfterMethod(alwaysRun = true)
+   @AfterMethod
    @Override
    public void tearDown() throws CacheLoaderException {
       for (CacheStore cacheStore : Arrays.asList(cs, cs2)) {

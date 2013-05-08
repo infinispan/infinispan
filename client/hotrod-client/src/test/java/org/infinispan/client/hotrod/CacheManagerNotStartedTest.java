@@ -65,7 +65,7 @@ public class CacheManagerNotStartedTest extends SingleCacheManagerTest {
             "127.0.0.1:" + hotrodServer.getPort(), false);
    }
 
-   @AfterClass(alwaysRun = true)
+   @AfterClass
    @Override
    protected void destroyAfterClass() {
       super.destroyAfterClass();

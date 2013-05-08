@@ -39,7 +39,7 @@ import java.util.concurrent.locks.Lock;
 public class LockContainerHashingTest extends AbstractInfinispanTest {
    private AbstractStripedLockContainer stripedLock;
 
-   @BeforeMethod(alwaysRun = true)
+   @BeforeMethod
    public void setUp() {
       stripedLock = new ReentrantStripedLockContainer(500);
    }

@@ -71,7 +71,7 @@ public abstract class BaseBulkGetKeysTest extends MultipleCacheManagersTest {
 		remoteCache = remoteCacheManager.getCache();
 	};
 
-	@AfterClass(alwaysRun = true)
+	@AfterClass
 	public void release() {
 		killRemoteCacheManager(remoteCacheManager);
 		killServers(hotrodServers);

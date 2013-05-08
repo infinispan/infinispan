@@ -86,7 +86,7 @@ public class AsynchronousInvocationTest extends AbstractInfinispanTest {
    private ReplicableCommand blockingMultipleRpcCommand2;
    private ReplicableCommand nonBlockingMultipleRpcCommand;
 
-   @BeforeClass(alwaysRun = true)
+   @BeforeClass
    public void setUp() {
       GlobalConfigurationBuilder globalConfigurationBuilder = GlobalConfigurationBuilder.defaultClusteredBuilder();
       ConfigurationBuilder configurationBuilder = new ConfigurationBuilder();
