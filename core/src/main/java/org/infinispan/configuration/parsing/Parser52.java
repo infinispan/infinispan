@@ -441,7 +441,7 @@ public class Parser52 implements ConfigurationParser<ConfigurationBuilderHolder>
    }
 
    private void parseRecovery(final XMLExtendedStreamReader reader, final ConfigurationBuilderHolder holder) throws XMLStreamException {
-      ConfigurationBuilder builder = holder.getCurrentConfigurationBuilder();
+      RecoveryConfigurationBuilder recovery = holder.getCurrentConfigurationBuilder().transaction().recovery();
       for (int i = 0; i < reader.getAttributeCount(); i++) {
          ParseUtils.requireNoNamespaceAttribute(reader, i);
          String value = replaceProperties(reader.getAttributeValue(i));
@@ -449,13 +449,13 @@ public class Parser52 implements ConfigurationParser<ConfigurationBuilderHolder>
          switch (attribute) {
             case ENABLED:
                if (Boolean.parseBoolean(value)) {
-                  builder.transaction().recovery().enable();
+                  recovery.enable();
                } else {
-                  builder.transaction().recovery().disable();
+                  recovery.disable();
                }
                break;
             case RECOVERY_INFO_CACHE_NAME:
-               builder.transaction().recovery().recoveryInfoCacheName(value);
+               recovery.recoveryInfoCacheName(value);
                break;
             default:
                throw ParseUtils.unexpectedAttribute(reader, i);

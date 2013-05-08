@@ -33,17 +33,8 @@ import javax.xml.stream.XMLStreamException;
 import javax.xml.stream.XMLStreamReader;
 
 import org.infinispan.config.ConfigurationException;
-import org.infinispan.configuration.cache.ConfigurationBuilder;
-import org.infinispan.configuration.cache.FileCacheStoreConfigurationBuilder;
-import org.infinispan.configuration.cache.IndexingConfigurationBuilder;
+import org.infinispan.configuration.cache.*;
 import org.infinispan.configuration.cache.InterceptorConfiguration.Position;
-import org.infinispan.configuration.cache.ClusterCacheLoaderConfigurationBuilder;
-import org.infinispan.configuration.cache.InterceptorConfigurationBuilder;
-import org.infinispan.configuration.cache.LegacyLoaderConfigurationBuilder;
-import org.infinispan.configuration.cache.LegacyStoreConfigurationBuilder;
-import org.infinispan.configuration.cache.CacheLoaderConfigurationBuilder;
-import org.infinispan.configuration.cache.CacheStoreConfigurationBuilder;
-import org.infinispan.configuration.cache.VersioningScheme;
 import org.infinispan.configuration.global.GlobalConfigurationBuilder;
 import org.infinispan.configuration.global.ShutdownHookBehavior;
 import org.infinispan.container.DataContainer;
@@ -294,6 +285,7 @@ public class Parser51 implements ConfigurationParser<ConfigurationBuilderHolder>
    }
 
    private void parseRecovery(XMLStreamReader reader, ConfigurationBuilder builder) throws XMLStreamException {
+      RecoveryConfigurationBuilder recovery = builder.transaction().recovery();
       for (int i = 0; i < reader.getAttributeCount(); i++) {
          ParseUtils.requireNoNamespaceAttribute(reader, i);
          String value = replaceProperties(reader.getAttributeValue(i));
@@ -301,12 +293,12 @@ public class Parser51 implements ConfigurationParser<ConfigurationBuilderHolder>
          switch (attribute) {
             case ENABLED:
                if (Boolean.parseBoolean(value))
-                  builder.transaction().recovery().enable();
+                  recovery.enable();
                else
-                  builder.transaction().recovery().disable();
+                  recovery.disable();
                break;
             case RECOVERY_INFO_CACHE_NAME:
-               builder.transaction().recovery().recoveryInfoCacheName(value);
+               recovery.recoveryInfoCacheName(value);
                break;
             default:
                throw ParseUtils.unexpectedAttribute(reader, i);
