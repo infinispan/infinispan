@@ -143,6 +143,15 @@ public class TransactionConfigurationBuilder extends AbstractConfigurationChildB
    }
 
    /**
+    * See {@link #syncCommitPhase(boolean)}
+    *
+    * @return {@code true} if sync commit phase is enabled
+    */
+   public boolean syncCommitPhase() {
+      return syncCommitPhase;
+   }
+
+   /**
     * If true, the cluster-wide rollback phase in two-phase commit (2PC) transactions will be
     * synchronous, so Infinispan will wait for responses from all nodes to which the rollback was
     * sent. Otherwise, the rollback phase will be asynchronous. Keeping it as false improves
@@ -206,6 +215,15 @@ public class TransactionConfigurationBuilder extends AbstractConfigurationChildB
    public TransactionConfigurationBuilder useSynchronization(boolean b) {
       this.useSynchronization = b;
       return this;
+   }
+
+   /**
+    * See {@link #useSynchronization(boolean)}
+    *
+    * @return {@code true} if synchronization enlistment is enabled
+    */
+   public boolean useSynchronization() {
+      return useSynchronization;
    }
 
    /**
@@ -277,6 +295,7 @@ public class TransactionConfigurationBuilder extends AbstractConfigurationChildB
             throw new ConfigurationException("Total Order based protocol not available with " + lockingMode);
          }
       }
+      recovery.validate();
    }
 
    @Override
