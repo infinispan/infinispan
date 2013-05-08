@@ -144,8 +144,10 @@
             <groupId>org.apache.maven.plugins</groupId>
             <artifactId>maven-surefire-plugin</artifactId>
             <configuration>
-               <groups>functional,unit,arquillian</groups>
-               <parallel>none</parallel>
+               <reuseForks>true</reuseForks>
+               <forkCount>1</forkCount>
+               <parallel>false</parallel>
+               <groups>${defaultTestGroup}</groups>
             </configuration>
          </plugin>
          <plugin>
