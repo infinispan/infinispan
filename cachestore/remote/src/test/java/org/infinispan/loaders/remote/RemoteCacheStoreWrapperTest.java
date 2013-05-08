@@ -93,13 +93,13 @@ public class RemoteCacheStoreWrapperTest extends AbstractInfinispanTest {
       assertEquals("v2", v2);
    }
 
-   @BeforeMethod(alwaysRun=true)
+   @BeforeMethod
    public void cleanup() {
       serverCache.clear();
       targetCache.clear();
    }
 
-   @AfterClass(alwaysRun=true)
+   @AfterClass
    public void tearDown() {
       HotRodClientTestingUtil.killRemoteCacheManagers(remoteSourceCacheManager, remoteTargetCacheManager);
       HotRodClientTestingUtil.killServers(sourceServer, targetServer);

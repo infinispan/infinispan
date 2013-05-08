@@ -44,7 +44,7 @@ public class PassivatePersistentTest extends AbstractInfinispanTest {
    Configuration cfg;
    CacheContainer cm;
 
-   @BeforeMethod(alwaysRun = true)
+   @BeforeMethod
    public void setUp() {
       cfg = new Configuration().fluent()
          .loaders()
@@ -59,7 +59,7 @@ public class PassivatePersistentTest extends AbstractInfinispanTest {
       tm = TestingUtil.getTransactionManager(cache);
    }
 
-   @AfterMethod(alwaysRun = true)
+   @AfterMethod
    public void tearDown() throws CacheLoaderException {
       store.clear();
       TestingUtil.killCacheManagers(cm);

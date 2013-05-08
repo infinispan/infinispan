@@ -65,7 +65,7 @@ public class HotRodStatisticsTest {
       remoteCache = rcm.getCache();
    }
 
-   @AfterMethod(alwaysRun = true)
+   @AfterMethod
    void tearDown() {
       TestingUtil.killCacheManagers(cacheContainer);
       killRemoteCacheManager(rcm);

@@ -84,7 +84,7 @@ public class RemoteCacheStoreRawValuesTest extends BaseCacheStoreTest {
    }
 
    @Override
-   @AfterMethod(alwaysRun = true)
+   @AfterMethod
    public void tearDown() {
       HotRodClientTestingUtil.killServers(hrServer);
       TestingUtil.killCacheManagers(localCacheManager);

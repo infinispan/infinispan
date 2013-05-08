@@ -99,7 +99,7 @@ public abstract class AbstractRetryTest extends HitsAwareCacheManagersTest {
       assert super.cacheManagers.size() == 3;
    }
 
-   @AfterMethod(alwaysRun = true)
+   @AfterMethod
    @Override
    protected void clearContent() throws Throwable {
       // Since cleanup happens after method,

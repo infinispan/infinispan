@@ -119,13 +119,13 @@ public class UpgradeTest extends AbstractInfinispanTest {
       assertFalse(result.containsKey(ResultKeys.ERROR.toString()));
    }
 
-   @BeforeMethod(alwaysRun = true)
+   @BeforeMethod
    public void cleanup() {
       sourceServerCache.clear();
       targetServerCache.clear();
    }
 
-   @AfterClass(alwaysRun = true)
+   @AfterClass
    public void tearDown() {
       HotRodClientTestingUtil.killRemoteCacheManagers(sourceRemoteCacheManager, targetRemoteCacheManager);
       HotRodClientTestingUtil.killServers(sourceServer, targetServer);

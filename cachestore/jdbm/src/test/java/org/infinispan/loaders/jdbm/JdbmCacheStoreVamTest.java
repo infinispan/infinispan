@@ -45,13 +45,13 @@ public class JdbmCacheStoreVamTest extends JdbmCacheStoreTest {
    EmbeddedCacheManager cm;
    StreamingMarshaller marshaller;
 
-   @BeforeClass(alwaysRun = true)
+   @BeforeClass
    public void setUpClass() {
       cm = TestCacheManagerFactory.createLocalCacheManager(false);
       marshaller = extractCacheMarshaller(cm.getCache());
    }
 
-   @AfterClass(alwaysRun = true)
+   @AfterClass
    public void tearDownClass() throws CacheLoaderException {
       cm.stop();
    }

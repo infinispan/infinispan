@@ -55,7 +55,7 @@ public class DirectoryOnMultipleCachesTest {
    private Cache chunkCache;
    private Cache lockCache;
 
-   @BeforeClass(alwaysRun = true)
+   @BeforeClass
    public void createBeforeClass() {
       cacheManager = CacheTestSupport.createLocalCacheManager();
       metadataCache = cacheManager.getCache("metadata");
@@ -122,7 +122,7 @@ public class DirectoryOnMultipleCachesTest {
       assert metadata != 0;
    }
    
-   @AfterClass(alwaysRun = true)
+   @AfterClass
    public void afterClass() {
       TestingUtil.killCacheManagers(cacheManager);
    }

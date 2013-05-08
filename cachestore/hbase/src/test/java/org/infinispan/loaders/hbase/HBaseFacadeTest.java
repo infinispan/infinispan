@@ -101,7 +101,7 @@ public class HBaseFacadeTest {
 
    private HBaseCluster hBaseCluster;
 
-   @BeforeClass(alwaysRun = true)
+   @BeforeClass
    public void beforeClass() throws Exception {
       if (USE_EMBEDDED)
          hBaseCluster = new HBaseCluster();
@@ -140,7 +140,7 @@ public class HBaseFacadeTest {
 
    }
 
-   @AfterClass(alwaysRun = true)
+   @AfterClass
    public void afterClass() throws Exception {
       HBF.deleteTable(TABLE_MESSAGE);
 

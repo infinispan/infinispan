@@ -139,7 +139,7 @@ public class CloudCacheStoreIntegrationTest extends BaseCacheStoreTest {
    }
 
 
-   @AfterMethod(alwaysRun = true)
+   @AfterMethod
    @Override
    public void tearDown() throws CacheLoaderException {
       if (cs != null) {

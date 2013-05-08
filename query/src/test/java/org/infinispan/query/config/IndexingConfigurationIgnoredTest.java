@@ -45,7 +45,7 @@ public class IndexingConfigurationIgnoredTest {
       manager = TestCacheManagerFactory.fromXml("configuration-parsing-test.xml");
    }
 
-   @AfterMethod(alwaysRun = true)
+   @AfterMethod
    public void destroy() throws Exception {
       TestingUtil.killCacheManagers(manager);
    }

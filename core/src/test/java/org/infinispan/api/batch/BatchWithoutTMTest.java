@@ -49,7 +49,7 @@ public class BatchWithoutTMTest extends AbstractBatchTest {
       cm = TestCacheManagerFactory.createCacheManager(defaultConfiguration);
    }
 
-   @AfterClass(alwaysRun = true)
+   @AfterClass
    public void destroyCacheManager() {
       TestingUtil.killCacheManagers(cm);
       cm = null;

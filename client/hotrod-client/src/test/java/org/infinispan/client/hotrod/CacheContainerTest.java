@@ -59,7 +59,7 @@ public class CacheContainerTest extends SingleCacheManagerTest {
       return cacheManager;
    }
 
-   @AfterTest(alwaysRun = true)
+   @AfterTest
    public void release() {
       killCacheManagers(cacheManager);
       killRemoteCacheManager(remoteCacheManager);

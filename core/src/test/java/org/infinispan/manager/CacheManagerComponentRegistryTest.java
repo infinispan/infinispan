@@ -49,7 +49,7 @@ import javax.transaction.TransactionManager;
 public class CacheManagerComponentRegistryTest extends AbstractInfinispanTest {
    EmbeddedCacheManager cm;
 
-   @AfterMethod(alwaysRun = true)
+   @AfterMethod
    public void tearDown() {
       TestingUtil.killCacheManagers(cm);
       cm = null;

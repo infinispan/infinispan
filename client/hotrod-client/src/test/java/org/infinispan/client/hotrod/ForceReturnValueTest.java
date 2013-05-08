@@ -62,7 +62,7 @@ public class ForceReturnValueTest extends SingleCacheManagerTest {
       remoteCache = remoteCacheManager.getCache();
    }
 
-   @AfterClass(alwaysRun = true)
+   @AfterClass
    public void destroy() {
       killRemoteCacheManager(remoteCacheManager);
       killServers(hotrodServer);

@@ -55,14 +55,14 @@ public class APITest extends AbstractInfinispanTest {
       tm = TestingUtil.getTransactionManager(cache);
    }
 
-   @AfterTest(alwaysRun = true)
+   @AfterTest
    public void tearDown() {
       TestingUtil.killCacheManagers(cacheContainer);
       cache =null;
       tm = null;
    }
 
-   @AfterMethod(alwaysRun = true)
+   @AfterMethod
    public void clearUp() throws SystemException {
       if (tm.getTransaction() != null) {
          try {

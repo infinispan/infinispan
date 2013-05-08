@@ -188,7 +188,7 @@ public class InconsistentIndexesAfterRestartTest extends AbstractInfinispanTest 
        new File(TMP_DIR).mkdirs();
     }
 
-    @AfterClass(alwaysRun = true)
+    @AfterClass
     protected void clearTempDir() {
        TestingUtil.recursiveFileRemove(TMP_DIR);
     }

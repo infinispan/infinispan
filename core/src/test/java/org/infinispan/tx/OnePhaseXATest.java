@@ -71,7 +71,7 @@ public class OnePhaseXATest extends AbstractInfinispanTest {
       for (int i = 0; i < CACHES_NUM; i++) caches.add(getCache());
    }
 
-   @AfterTest(alwaysRun = true)
+   @AfterTest
    public void tearDown() {
       if (caches != null) TestingUtil.killCacheManagers(cacheContainers);
    }

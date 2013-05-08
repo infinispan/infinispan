@@ -58,7 +58,7 @@ public class ExpiryTest extends AbstractInfinispanTest {
       cm = TestCacheManagerFactory.createLocalCacheManager(false);
    }
 
-   @AfterMethod(alwaysRun = true)
+   @AfterMethod
    public void tearDown() {
       TestingUtil.killCacheManagers(cm);
       cm = null;

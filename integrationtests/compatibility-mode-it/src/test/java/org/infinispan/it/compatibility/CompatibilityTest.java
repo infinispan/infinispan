@@ -55,13 +55,13 @@ public class CompatibilityTest extends AbstractInfinispanTest {
 
    CompatibilityCacheFactory<Integer, String> cacheFactory;
 
-   @BeforeClass(alwaysRun = true)
+   @BeforeClass
    protected void setup() throws Exception {
       cacheFactory = new CompatibilityCacheFactory<Integer, String>();
       cacheFactory.setup();
    }
 
-   @AfterClass(alwaysRun = true)
+   @AfterClass
    protected void teardown() {
       cacheFactory.teardown();
    }

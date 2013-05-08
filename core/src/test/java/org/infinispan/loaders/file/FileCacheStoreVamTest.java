@@ -48,7 +48,7 @@ public class FileCacheStoreVamTest extends FileCacheStoreTest {
       return extractCacheMarshaller(cm.getCache());
    }
 
-   @AfterTest(alwaysRun = true)
+   @AfterTest
    public void destroy() {
       if (cm != null) cm.stop();
    }

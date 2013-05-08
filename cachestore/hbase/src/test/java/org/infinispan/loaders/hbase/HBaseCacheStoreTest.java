@@ -34,12 +34,12 @@ public class HBaseCacheStoreTest extends BaseCacheStoreTest {
 
    HBaseCluster hBaseCluster;
 
-   @BeforeClass(alwaysRun = true)
+   @BeforeClass
    public void beforeClass() throws Exception {
       hBaseCluster = new HBaseCluster();
    }
 
-   @AfterClass(alwaysRun = true)
+   @AfterClass
    public void afterClass() throws CacheLoaderException {
       HBaseCluster.shutdown(hBaseCluster);
    }

@@ -66,7 +66,7 @@ public class SampleConfigFilesCorrectnessTest {
             + "release" + File.separator + "etc" + File.separator + configFolder;
    }
 
-   @AfterMethod(alwaysRun = true)
+   @AfterMethod
    public void tearDownTest() {
       Logger log4jLogger = Logger.getRootLogger();
       log4jLogger.setLevel(oldLevel);

@@ -128,7 +128,7 @@ public class ClientConnectionPoolingTest extends MultipleCacheManagersTest {
       hrServ2Addr = new InetSocketAddress("localhost", hotRodServer2.getPort());
    }
 
-   @AfterMethod(alwaysRun = true)
+   @AfterMethod
    public void tearDown() throws ExecutionException, InterruptedException {
       killServers(hotRodServer1, hotRodServer2);
 

@@ -53,7 +53,7 @@ public class CassandraCacheStoreTest extends BaseCacheStoreTest {
       embedded.setup();
    }
 
-   @AfterClass(alwaysRun = true)
+   @AfterClass
    public static void cleanup() throws IOException {
       EmbeddedServerHelper.teardown();
       embedded = null;

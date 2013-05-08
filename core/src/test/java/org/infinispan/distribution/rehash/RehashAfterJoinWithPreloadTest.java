@@ -154,7 +154,7 @@ public class RehashAfterJoinWithPreloadTest extends MultipleCacheManagersTest {
       }
    }
 
-   @AfterClass(alwaysRun = true)
+   @AfterClass
    protected void clearTempDir() {
       TestingUtil.recursiveFileRemove(fileCacheStoreTmpDir);
    }

@@ -87,7 +87,7 @@ public class LocalModePassivationTest extends SingleCacheManagerTest {
       return TestCacheManagerFactory.createCacheManager(builder);
    }
 
-   @AfterClass(alwaysRun = true)
+   @AfterClass
    protected void clearTempDir() {
       TestingUtil.recursiveFileRemove(cacheStoreDir);
    }

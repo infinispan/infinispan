@@ -81,7 +81,7 @@ public abstract class BaseCacheStoreTest extends AbstractInfinispanTest {
       gtf.init(false, false, true, false);
    }
 
-   @BeforeMethod(alwaysRun = true)
+   @BeforeMethod
    public void setUp() throws Exception {
       try {
          cs = createCacheStore();
@@ -93,7 +93,7 @@ public abstract class BaseCacheStoreTest extends AbstractInfinispanTest {
       }
    }
 
-   @AfterMethod(alwaysRun = true)
+   @AfterMethod
    public void tearDown() throws CacheLoaderException {
       try {
          if (cs != null) {

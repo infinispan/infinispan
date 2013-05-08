@@ -47,7 +47,7 @@ public class CacheManagerNotifierTest extends AbstractInfinispanTest {
    EmbeddedCacheManager cm1;
    EmbeddedCacheManager cm2;
 
-   @AfterMethod(alwaysRun = true)
+   @AfterMethod
    public void tearDown() {
       TestingUtil.killCacheManagers(cm1, cm2);
    }

@@ -71,7 +71,7 @@ public class CSAIntegrationTest extends HitsAwareCacheManagersTest {
 
    private static final Log log = LogFactory.getLog(CSAIntegrationTest.class);
 
-   @AfterMethod(alwaysRun = true)
+   @AfterMethod
    @Override
    protected void clearContent() throws Throwable {
    }
@@ -117,7 +117,7 @@ public class CSAIntegrationTest extends HitsAwareCacheManagersTest {
       // No-op, use default Hot Rod protocol version
    }
 
-   @AfterClass(alwaysRun = true)
+   @AfterClass
    @Override
    protected void destroy() {
       killRemoteCacheManager(remoteCacheManager);

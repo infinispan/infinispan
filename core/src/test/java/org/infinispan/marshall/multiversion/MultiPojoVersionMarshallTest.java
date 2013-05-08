@@ -81,7 +81,7 @@ public class MultiPojoVersionMarshallTest extends AbstractInfinispanTest {
       marshaller = extractCacheMarshaller(cm.getCache());
    }
 
-   @AfterTest(alwaysRun = true)
+   @AfterTest
    public void tearDown() {
       if (cm != null) cm.stop();
    }

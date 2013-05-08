@@ -54,7 +54,7 @@ public class ClusterFileCacheStoreFunctionalTest extends MultipleCacheManagersTe
 
    private Cache cache1, cache2;
 
-   @AfterClass(alwaysRun = true)
+   @AfterClass
    protected void clearTempDir() {
       TestingUtil.recursiveFileRemove(tmpDirectory);
       new File(tmpDirectory).mkdirs();

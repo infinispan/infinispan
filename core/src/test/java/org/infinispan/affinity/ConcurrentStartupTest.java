@@ -80,7 +80,7 @@ public class ConcurrentStartupTest extends AbstractCacheTest {
       Thread.sleep(5000);
    }
 
-   @AfterTest(alwaysRun = true)
+   @AfterTest
    protected void tearDown() throws Exception {
       if (ex1 != null)
          ex1.shutdownNow();

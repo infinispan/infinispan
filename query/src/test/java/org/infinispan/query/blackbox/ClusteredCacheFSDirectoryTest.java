@@ -72,7 +72,7 @@ public class ClusteredCacheFSDirectoryTest extends ClusteredCacheTest {
    }
 
    @Override
-   @AfterMethod(alwaysRun = true)
+   @AfterMethod
    protected void clearContent() throws Throwable {
       try {
          //first stop cache managers, then clear the index

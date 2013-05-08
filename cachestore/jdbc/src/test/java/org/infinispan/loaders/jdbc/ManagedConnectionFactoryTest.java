@@ -49,7 +49,7 @@ public abstract class ManagedConnectionFactoryTest extends BaseCacheStoreTest {
 
    private DummyDataSource ds;
 
-   @BeforeClass (alwaysRun = true)
+   @BeforeClass
    public void bindDatasourceInJndi() throws Exception {
       System.setProperty(Context.INITIAL_CONTEXT_FACTORY, DummyContextFactory.class.getName());
       ds = new DummyDataSource();
@@ -61,7 +61,7 @@ public abstract class ManagedConnectionFactoryTest extends BaseCacheStoreTest {
 
    public abstract String getDatasourceLocation();
 
-   @AfterClass (alwaysRun = true)
+   @AfterClass
    public void destroyDatasourceAndUnbind() throws NamingException {
       InitialContext ic = new InitialContext();
       ic.unbind(getDatasourceLocation());

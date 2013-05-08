@@ -51,7 +51,7 @@ public class IndexCacheLoaderTest {
    protected final String parentDir = ".";
    protected File rootDir = null;
 
-   @BeforeMethod(alwaysRun = true)
+   @BeforeMethod
    public void setUp() {
       rootDir = TestHelper.createRootDir(parentDir, getIndexPathName());
    }
@@ -63,7 +63,7 @@ public class IndexCacheLoaderTest {
       return this.getClass().getSimpleName();
    }
 
-   @AfterMethod(alwaysRun = true)
+   @AfterMethod
    public void tearDown() {
       if(rootDir != null) {
          TestingUtil.recursiveFileRemove(rootDir);

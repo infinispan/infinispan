@@ -64,7 +64,7 @@ public class JBossMarshallingTest extends AbstractInfinispanTest {
       unmarshaller = factory.createUnmarshaller(configuration);
    }
 
-   @AfterTest(alwaysRun = true)
+   @AfterTest
    public void tearDown() {
    }
    

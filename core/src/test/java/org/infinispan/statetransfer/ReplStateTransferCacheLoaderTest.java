@@ -85,7 +85,7 @@ public class ReplStateTransferCacheLoaderTest extends MultipleCacheManagersTest 
       waitForClusterToForm();
    }
 
-   @AfterClass(alwaysRun = true)
+   @AfterClass
    protected void clearTempDir() {
       TestingUtil.recursiveFileRemove(tmpDir);
    }

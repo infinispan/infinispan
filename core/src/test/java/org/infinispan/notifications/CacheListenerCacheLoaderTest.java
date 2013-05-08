@@ -64,7 +64,7 @@ public class CacheListenerCacheLoaderTest extends AbstractInfinispanTest {
       cm.defineConfiguration("passivation", c);
    }
 
-   @AfterMethod(alwaysRun = true)
+   @AfterMethod
    public void tearDown() {
       TestingUtil.killCacheManagers(cm);
       cm = null;

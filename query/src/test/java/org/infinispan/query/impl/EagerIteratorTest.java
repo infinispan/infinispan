@@ -92,7 +92,7 @@ public class EagerIteratorTest {
       return 1;
    }
 
-   @AfterMethod (alwaysRun = true)
+   @AfterMethod
    public void tearDown() {
       iterator.close();
 

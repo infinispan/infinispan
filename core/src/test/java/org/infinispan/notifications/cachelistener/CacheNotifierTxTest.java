@@ -60,7 +60,7 @@ public class CacheNotifierTxTest extends AbstractInfinispanTest {
    private CacheNotifier origNotifier;
    private CacheContainer cm;
 
-   @BeforeMethod(alwaysRun = true)
+   @BeforeMethod
    public void setUp() throws Exception {
       ConfigurationBuilder builder = TestCacheManagerFactory.getDefaultCacheConfiguration(true);
       builder.transaction().autoCommit(false)
@@ -75,14 +75,14 @@ public class CacheNotifierTxTest extends AbstractInfinispanTest {
       origNotifier = TestingUtil.replaceComponent(cache, CacheNotifier.class, mockNotifier, true);
    }
 
-   @AfterMethod(alwaysRun = true)
+   @AfterMethod
    public void tearDown() throws Exception {
       TestingUtil.replaceComponent(cache, CacheNotifier.class, origNotifier, true);
       TestingUtil.killCaches(cache);
       cm.stop();
    }
 
-   @AfterClass(alwaysRun = true)
+   @AfterClass
    public void destroyManager() {
       TestingUtil.killCacheManagers(cache.getCacheManager());
    }

@@ -69,7 +69,7 @@ public class ServerRestartTest extends SingleCacheManagerTest {
       defaultRemote = remoteCacheManager.getCache();
    }
 
-   @AfterClass(alwaysRun = true)
+   @AfterClass
    public void testDestroyRemoteCacheFactory() {
       killRemoteCacheManager(remoteCacheManager);
       killServers(hotrodServer);

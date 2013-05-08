@@ -99,7 +99,7 @@ public class SslTest extends SingleCacheManagerTest {
       defaultRemote = remoteCacheManager.getCache();
    }
 
-   @AfterMethod(alwaysRun=true)
+   @AfterMethod
    public void testDestroyRemoteCacheFactory() {
       HotRodClientTestingUtil.killRemoteCacheManager(remoteCacheManager);
       HotRodClientTestingUtil.killServers(hotrodServer);

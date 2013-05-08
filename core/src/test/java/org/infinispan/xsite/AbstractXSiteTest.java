@@ -52,17 +52,17 @@ public abstract class AbstractXSiteTest extends AbstractCacheTest {
    List<TestSite> sites = new ArrayList<TestSite>();
    private Map<String, Integer> siteName2index = new HashMap<String, Integer>();
 
-   @BeforeMethod(alwaysRun = true)
+   @BeforeMethod
    public void createBeforeMethod() throws Throwable {
       if (isCleanupAfterMethod()) createSites();
    }
 
-   @BeforeClass(alwaysRun = true)
+   @BeforeClass
    public void createBeforeClass() throws Throwable {
       if (!isCleanupAfterMethod()) createSites();
    }
 
-   @AfterMethod(alwaysRun=true)
+   @AfterMethod
    protected void clearContent() throws Throwable {
       if (!isCleanupAfterMethod()) {
          for (TestSite ts : sites) {
@@ -73,7 +73,7 @@ public abstract class AbstractXSiteTest extends AbstractCacheTest {
       }
    }
 
-   @AfterClass(alwaysRun = true)
+   @AfterClass
    protected void destroy() {
       if (cleanupAfterTest())  {
          killSites();

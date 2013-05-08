@@ -49,7 +49,7 @@ public class UnknownCacheStartTest extends AbstractInfinispanTest {
       configuration = getDefaultClusteredConfig(Configuration.CacheMode.DIST_SYNC);
    }
 
-   @AfterTest(alwaysRun = true)
+   @AfterTest
    public void tearDown() {
       killCacheManagers(cm1, cm2);
    }

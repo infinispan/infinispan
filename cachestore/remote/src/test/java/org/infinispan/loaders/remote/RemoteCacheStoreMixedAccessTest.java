@@ -111,13 +111,13 @@ public class RemoteCacheStoreMixedAccessTest extends AbstractInfinispanTest {
       assertEquals(30000, ice1.getMaxIdle());
    }
 
-   @BeforeMethod(alwaysRun=true)
+   @BeforeMethod
    public void cleanup() {
       serverCache.clear();
       clientCache.clear();
    }
 
-   @AfterClass(alwaysRun=true)
+   @AfterClass
    public void tearDown() {
       HotRodClientTestingUtil.killRemoteCacheManager(remoteCacheManager);
       HotRodClientTestingUtil.killServers(hrServer);

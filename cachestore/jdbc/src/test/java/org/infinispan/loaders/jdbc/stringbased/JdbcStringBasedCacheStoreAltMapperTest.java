@@ -75,13 +75,13 @@ public class JdbcStringBasedCacheStoreAltMapperTest {
       cacheStore.start();
    }
 
-   @AfterMethod(alwaysRun = true)
+   @AfterMethod
    public void clearStore() throws Exception {
       cacheStore.clear();
       assert rowCount() == 0;
    }
 
-   @AfterTest(alwaysRun = true)
+   @AfterTest
    public void destroyStore() throws CacheLoaderException {
       cacheStore.stop();
    }

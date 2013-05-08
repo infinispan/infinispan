@@ -75,7 +75,7 @@ public class SimpleFacetingTest extends SingleCacheManagerTest {
       cache.put( "500_Superfast", new Car( "Ferrari 500_Superfast", "Rosso corsa", 4000 ) );
    }
    
-   @AfterMethod(alwaysRun = true)
+   @AfterMethod
    public void cleanupData() {
       cache.clear();
    }

@@ -49,7 +49,7 @@ public class CacheListenerRemovalTest extends AbstractInfinispanTest {
       cache = cm.getCache();
    }
 
-   @AfterMethod(alwaysRun = true)
+   @AfterMethod
    public void tearDown() {
       TestingUtil.killCacheManagers(cm);
       cm = null;

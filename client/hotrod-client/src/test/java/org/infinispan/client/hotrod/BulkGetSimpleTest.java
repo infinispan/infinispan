@@ -66,7 +66,7 @@ public class BulkGetSimpleTest extends SingleCacheManagerTest {
       return cacheManager;
    }
 
-   @AfterTest(alwaysRun = true)
+   @AfterTest
    public void release() {
       killRemoteCacheManager(remoteCacheManager);
       killServers(hotRodServer);

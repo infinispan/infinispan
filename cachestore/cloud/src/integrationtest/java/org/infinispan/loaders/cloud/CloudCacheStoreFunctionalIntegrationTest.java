@@ -68,7 +68,7 @@ public class CloudCacheStoreFunctionalIntegrationTest extends BaseCacheStoreFunc
       System.out.printf("accessKey: %1$s, bucket: %2$s%n", accessKey, csBucket);
    }
 
-   @AfterTest(alwaysRun = true)
+   @AfterTest
    private void nukeBuckets() throws Exception {
       for (String name: cacheNames) {
          // use JClouds to nuke the buckets

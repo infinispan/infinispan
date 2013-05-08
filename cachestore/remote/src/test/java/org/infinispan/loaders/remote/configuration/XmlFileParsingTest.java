@@ -40,7 +40,7 @@ public class XmlFileParsingTest extends AbstractInfinispanTest {
 
    private EmbeddedCacheManager cacheManager;
 
-   @AfterMethod(alwaysRun = true)
+   @AfterMethod
    public void cleanup() {
       TestingUtil.killCacheManagers(cacheManager);
    }

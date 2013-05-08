@@ -79,7 +79,7 @@ public class StateTransferFileCacheLoaderFunctionalTest extends MultipleCacheMan
       tmpDirectory4 = basedir + "4";
    }
 
-   @AfterMethod(alwaysRun = true)
+   @AfterMethod
    protected void clearTempDir() {
       TestingUtil.recursiveFileRemove(tmpDirectory1);
       new File(tmpDirectory1).mkdirs();

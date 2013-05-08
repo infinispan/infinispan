@@ -153,12 +153,12 @@ public class FlagsReplicationTest extends BaseDistFunctionalTest {
       }
    }
    
-   @BeforeClass(alwaysRun = true)
+   @BeforeClass
    protected void startThreadPool() {
       threadPool = Executors.newFixedThreadPool(1);
    }
    
-   @AfterClass(alwaysRun = true)
+   @AfterClass
    protected void stopThreadPool() {
       threadPool.shutdownNow();
    }

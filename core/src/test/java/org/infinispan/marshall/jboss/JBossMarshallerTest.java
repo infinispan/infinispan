@@ -65,7 +65,7 @@ public class JBossMarshallerTest extends AbstractInfinispanTest {
       cm = TestCacheManagerFactory.createLocalCacheManager(false);
    }
 
-   @AfterTest(alwaysRun = true)
+   @AfterTest
    public void tearDown() {
       if (cm != null) cm.stop();
    }
