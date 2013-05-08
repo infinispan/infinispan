@@ -25,6 +25,8 @@ import org.infinispan.interceptors.base.CommandInterceptor;
 import org.infinispan.transaction.LocalTransaction;
 import org.infinispan.transaction.TransactionTable;
 import org.infinispan.transaction.xa.GlobalTransaction;
+import org.infinispan.util.logging.Log;
+import org.infinispan.util.logging.LogFactory;
 import org.infinispan.xsite.BackupSender;
 
 /**
@@ -36,6 +38,8 @@ public class BaseBackupInterceptor extends CommandInterceptor {
    protected BackupSender backupSender;
    protected TransactionTable txTable;
 
+   private static final Log log = LogFactory.getLog(BaseBackupInterceptor.class);
+   
    @Inject
    void init(BackupSender sender, TransactionTable txTable) {
       this.backupSender = sender;
@@ -52,5 +56,10 @@ public class BaseBackupInterceptor extends CommandInterceptor {
       boolean shouldBackupRemotely = ctx.isOriginLocal() && ctx.hasModifications();
       getLog().tracef("Should backup remotely? %s", shouldBackupRemotely);
       return shouldBackupRemotely;
+   }
+   
+   @Override
+   protected Log getLog() {
+      return log;
    }
 }

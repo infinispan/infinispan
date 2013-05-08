@@ -71,8 +71,10 @@ public abstract class CommandInterceptor extends AbstractVisitor {
 
    protected Configuration cacheConfiguration;
 
+   private static final Log log = LogFactory.getLog(CommandInterceptor.class);
+   
    protected Log getLog() {
-      return LogFactory.getLog(CommandInterceptor.class);
+      return log;
    }
 
    @Inject
