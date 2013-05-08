@@ -373,11 +373,8 @@ public class AsyncAPITest extends SingleCacheManagerTest {
          long waitTime = Util.currentMillisFromNanotime() - startTime;
          assertNull(c.get(key));
 
-         // these are very generous limits and should be satisfied even if the clock is not very accurate or system load is very high
          long lowerBound = expectedLifetime - expectedLifetime / 4;
-         long upperBound = expectedLifetime * 3;
-         assertTrue("Wait time (" + waitTime + ") not within expected bounds [" + lowerBound + ", " + upperBound + "]",
-               lowerBound <= waitTime && waitTime <= upperBound);
+         assertTrue("Entry evicted too soon!", lowerBound <= waitTime);
       } finally {
          startTime = -1;
       }
