@@ -18,7 +18,10 @@
  */
 package org.infinispan.configuration.cache;
 
+import org.infinispan.config.ConfigurationException;
 import org.infinispan.configuration.Builder;
+
+import static org.infinispan.configuration.cache.RecoveryConfiguration.DEFAULT_RECOVERY_INFO_CACHE;
 
 /**
  * Defines recovery configuration for the cache.
@@ -29,7 +32,7 @@ import org.infinispan.configuration.Builder;
 public class RecoveryConfigurationBuilder extends AbstractTransportConfigurationChildBuilder implements Builder<RecoveryConfiguration> {
 
    private boolean enabled = true;
-   private String recoveryInfoCacheName = "__recoveryInfoCacheName__";
+   private String recoveryInfoCacheName = DEFAULT_RECOVERY_INFO_CACHE;
 
    RecoveryConfigurationBuilder(TransactionConfigurationBuilder builder) {
       super(builder);
@@ -70,6 +73,19 @@ public class RecoveryConfigurationBuilder extends AbstractTransportConfiguration
 
    @Override
    public void validate() {
+      if (!enabled || transaction().useSynchronization()) {
+         return;
+      }
+      if (!clustering().cacheMode().isSynchronous()) {
+         throw new ConfigurationException("Recovery not supported with Asynchronous " +
+                                                clustering().cacheMode().friendlyCacheModeString() + " cache mode.");
+      }
+      if (!transaction().syncCommitPhase()) {
+         //configuration not supported because the Transaction Manager would not retain any transaction log information to
+         //allow it to perform useful recovery anyhow. Usually you just log it in the hope a human notices and sorts
+         //out the mess. Of course properly paranoid humans don't use async commit in the first place.
+         throw new ConfigurationException("Recovery not supported with asynchronous commit phase.");
+      }
    }
 
    @Override

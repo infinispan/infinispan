@@ -81,10 +81,11 @@
    <default>
       <locking concurrencyLevel="100" lockAcquisitionTimeout="1000"/>
       <jmxStatistics enabled="false"/>
+      <transaction useSynchronization="false" />
    </default>
 
    <namedCache name="noRecovery">
-      <transaction useEagerLocking="true" eagerLockSingleNode="true" transactionManagerLookupClass="org.infinispan.transaction.lookup.GenericTransactionManagerLookup">
+      <transaction useEagerLocking="true" eagerLockSingleNode="true" transactionManagerLookupClass="org.infinispan.transaction.lookup.GenericTransactionManagerLookup" transactionMode="NON_TRANSACTIONAL">
          <recovery enabled="false" recoveryInfoCacheName="someName"/>
       </transaction>
    </namedCache>
@@ -101,16 +102,5 @@
       </transaction>
    </namedCache>
 
-   <namedCache name="withRecoveryAndAsync">
-
-      <clustering mode="repl">
-         <stateTransfer fetchInMemoryState="false"/>
-         <async asyncMarshalling="false"/>
-      </clustering>
-
-      <transaction useEagerLocking="true" eagerLockSingleNode="true">
-         <recovery enabled="true" recoveryInfoCacheName="noRecovery"/>
-      </transaction>
-   </namedCache>
 
 </infinispan>
