@@ -50,13 +50,13 @@ public abstract class MultiHotRodServersTest extends MultipleCacheManagersTest {
       }
    }
 
-   @AfterMethod
+   @AfterMethod(alwaysRun = true)
    protected void clearContent() throws Throwable {
       // Do not clear content to allow servers
       // to stop gracefully and catch any issues there.
    }
 
-   @AfterClass
+   @AfterClass(alwaysRun = true)
    @Override
    protected void destroy() {
       // Correct order is to stop servers first
