@@ -1255,4 +1255,18 @@ public class TestingUtil {
       }
    }
 
+
+   /**
+    * Returns true if at least "duration" millis elapsed since the specified "start" time (millis).
+    */
+   public static boolean moreThanDurationElapsed(long start, long duration) {
+      return now() - duration >= start;
+   }
+
+   /**
+    * Returns current CPU time in millis.
+    */
+   public static long now() {
+      return TimeUnit.NANOSECONDS.toMillis(System.nanoTime());
+   }
 }

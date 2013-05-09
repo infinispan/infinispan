@@ -44,7 +44,8 @@ import java.io.ObjectInput;
 import java.io.ObjectOutput;
 import java.util.HashSet;
 import java.util.Set;
-import java.util.concurrent.TimeUnit;
+
+import static org.infinispan.test.TestingUtil.*;
 
 @Test(groups = "unit", testName = "loaders.file.FileCacheStoreTest")
 public class FileCacheStoreTest extends BaseCacheStoreTest {
@@ -59,7 +60,7 @@ public class FileCacheStoreTest extends BaseCacheStoreTest {
 
    @AfterClass
    protected void clearTempDir() {
-      TestingUtil.recursiveFileRemove(tmpDirectory);
+      recursiveFileRemove(tmpDirectory);
    }
 
    @Override
@@ -93,9 +94,9 @@ public class FileCacheStoreTest extends BaseCacheStoreTest {
       cs.store(TestInternalCacheEntryFactory.create("k1", "v1", lifespan));
       cs.store(TestInternalCacheEntryFactory.create("k2", "v2", lifespan));
       cs.store(TestInternalCacheEntryFactory.create("k3", "v3", lifespan));
-      assert cs.containsKey("k1") || moreThanLifespanElapsed(start, lifespan);
-      assert cs.containsKey("k2") || moreThanLifespanElapsed(start, lifespan);
-      assert cs.containsKey("k3") || moreThanLifespanElapsed(start, lifespan);
+      assert cs.containsKey("k1") || moreThanDurationElapsed(start, lifespan);
+      assert cs.containsKey("k2") || moreThanDurationElapsed(start, lifespan);
+      assert cs.containsKey("k3") || moreThanDurationElapsed(start, lifespan);
       createUnrelatedFile();
       Thread.sleep(lifespan + 100);
       cs.purgeExpired();
@@ -103,14 +104,6 @@ public class FileCacheStoreTest extends BaseCacheStoreTest {
       assert fcs.load("k1") == null;
       assert fcs.load("k2") == null;
       assert fcs.load("k3") == null;
-   }
-
-   private boolean moreThanLifespanElapsed(long start, long lifespan) {
-      return now() - lifespan >= start;
-   }
-
-   private long now() {
-      return TimeUnit.NANOSECONDS.toMillis(System.nanoTime());
    }
 
    private void createUnrelatedFile() throws IOException {
