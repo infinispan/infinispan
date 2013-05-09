@@ -26,8 +26,8 @@ import org.infinispan.configuration.cache.VersioningScheme;
 import org.infinispan.interceptors.InterceptorChain;
 import org.infinispan.interceptors.locking.OptimisticLockingInterceptor;
 import org.infinispan.interceptors.locking.PessimisticLockingInterceptor;
+import org.infinispan.interceptors.totalorder.TotalOrderDistributionInterceptor;
 import org.infinispan.interceptors.totalorder.TotalOrderInterceptor;
-import org.infinispan.interceptors.totalorder.TotalOrderReplicationInterceptor;
 import org.infinispan.test.MultipleCacheManagersTest;
 import org.infinispan.transaction.TransactionProtocol;
 import org.infinispan.util.concurrent.IsolationLevel;
@@ -76,7 +76,7 @@ public class FullAsyncTotalOrderTest extends MultipleCacheManagersTest {
    public void testInterceptorChain() {
       InterceptorChain ic = advancedCache(0).getComponentRegistry().getComponent(InterceptorChain.class);
       assertTrue(ic.containsInterceptorType(TotalOrderInterceptor.class));
-      assertTrue(ic.containsInterceptorType(TotalOrderReplicationInterceptor.class));
+      assertTrue(ic.containsInterceptorType(TotalOrderDistributionInterceptor.class));
       assertFalse(ic.containsInterceptorType(OptimisticLockingInterceptor.class));
       assertFalse(ic.containsInterceptorType(PessimisticLockingInterceptor.class));
    }

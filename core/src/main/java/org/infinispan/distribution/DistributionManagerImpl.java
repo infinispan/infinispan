@@ -32,8 +32,6 @@ import org.infinispan.statetransfer.StateTransferManager;
 import org.infinispan.remoting.rpc.RpcManager;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.topology.CacheTopology;
-import org.infinispan.util.Immutables;
-import org.infinispan.util.InfinispanCollections;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 import java.util.*;
@@ -164,17 +162,6 @@ public class DistributionManagerImpl implements DistributionManager {
    @Override
    public boolean isJoinComplete() {
       return stateTransferManager.isJoinComplete();
-   }
-
-   @Override
-   public Collection<Address> getAffectedNodes(Collection<Object> affectedKeys) {
-      if (affectedKeys == null || affectedKeys.isEmpty()) {
-         if (trace) log.trace("affected keys are empty");
-         return InfinispanCollections.emptyList();
-      }
-
-      Set<Address> an = locateAll(affectedKeys);
-      return Immutables.immutableListConvert(an);
    }
 
    @ManagedOperation(

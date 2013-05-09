@@ -24,13 +24,10 @@ import org.infinispan.marshall.AbstractExternalizer;
 import org.infinispan.marshall.Ids;
 import org.infinispan.remoting.transport.Address;
 
-import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
-import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
@@ -38,12 +35,25 @@ import java.util.Set;
  * Factory for ReplicatedConsistentHash.
  *
  * @author Dan Berindei
+ * @author anistor@redhat.com
  * @since 5.2
  */
 public class ReplicatedConsistentHashFactory implements ConsistentHashFactory<ReplicatedConsistentHash> {
+
+   /**
+    * @param hashFunction The hash function to use on top of the keys' own {@code hashCode()} implementation.
+    * @param numOwners    this implementation ignores this parameter.
+    * @param numSegments  number of hash-space segments.
+    * @param members      the list of cache members.
+    * @see ConsistentHashFactory#create(org.infinispan.commons.hash.Hash, int, int, java.util.List)
+    */
    @Override
    public ReplicatedConsistentHash create(Hash hashFunction, int numOwners, int numSegments, List<Address> members) {
-      return new ReplicatedConsistentHash(members);
+      int[] primaryOwners = new int[numSegments];
+      for (int i = 0; i < numSegments; i++) {
+         primaryOwners[i] = i % members.size();
+      }
+      return new ReplicatedConsistentHash(hashFunction, members, primaryOwners);
    }
 
    @Override
@@ -51,7 +61,75 @@ public class ReplicatedConsistentHashFactory implements ConsistentHashFactory<Re
       if (newMembers.equals(baseCH.getMembers()))
          return baseCH;
 
-      return new ReplicatedConsistentHash(newMembers);
+      // recompute primary ownership based on the new list of members (removes leavers)
+      int numSegments = baseCH.getNumSegments();
+      int[] primaryOwners = new int[numSegments];
+      int[] nodeUsage = new int[newMembers.size()];
+      boolean foundOrphanSegments = false;
+      for (int segmentId = 0; segmentId < numSegments; segmentId++) {
+         Address primaryOwner = baseCH.locatePrimaryOwnerForSegment(segmentId);
+         int primaryOwnerIndex = newMembers.indexOf(primaryOwner);
+         primaryOwners[segmentId] = primaryOwnerIndex;
+         if (primaryOwnerIndex == -1) {
+            foundOrphanSegments = true;
+         } else {
+            nodeUsage[primaryOwnerIndex]++;
+         }
+      }
+
+      // ensure leavers are replaced with existing members so no segments are orphan
+      if (foundOrphanSegments) {
+         for (int i = 0; i < numSegments; i++) {
+            if (primaryOwners[i] == -1) {
+               int leastUsed = findLeastUsedNode(nodeUsage);
+               primaryOwners[i] = leastUsed;
+               nodeUsage[leastUsed]++;
+            }
+         }
+      }
+
+      // ensure even spread of ownership
+      int minSegmentsPerPrimaryOwner = numSegments / newMembers.size();
+      for (int node = 0; node < nodeUsage.length; node++) {
+         if (nodeUsage[node] < minSegmentsPerPrimaryOwner) {
+            int mostUsed = findMostUsedNode(nodeUsage);
+            if (Math.abs(nodeUsage[node] - nodeUsage[mostUsed]) > 1) {
+               transferOwnership(mostUsed, node, primaryOwners, nodeUsage);
+            }
+         }
+      }
+
+      return new ReplicatedConsistentHash(baseCH.getHashFunction(), newMembers, primaryOwners);
+   }
+
+   private void transferOwnership(int oldOwner, int newOwner, int[] primaryOwners, int[] nodeUsage) {
+      for (int segmentId = 0; segmentId < primaryOwners.length; segmentId++) {
+         if (primaryOwners[segmentId] == oldOwner) {
+            primaryOwners[segmentId] = newOwner;
+            nodeUsage[oldOwner]--;
+            nodeUsage[newOwner]++;
+         }
+      }
+   }
+
+   private int findLeastUsedNode(int[] nodeUsage) {
+      int res = 0;
+      for (int node = 1; node < nodeUsage.length; node++) {
+         if (nodeUsage[node] < nodeUsage[res]) {
+            res = node;
+         }
+      }
+      return res;
+   }
+
+   private int findMostUsedNode(int[] nodeUsage) {
+      int res = 0;
+      for (int node = 1; node < nodeUsage.length; node++) {
+         if (nodeUsage[node] > nodeUsage[res]) {
+            res = node;
+         }
+      }
+      return res;
    }
 
    @Override
@@ -61,21 +139,39 @@ public class ReplicatedConsistentHashFactory implements ConsistentHashFactory<Re
 
    @Override
    public ReplicatedConsistentHash union(ReplicatedConsistentHash ch1, ReplicatedConsistentHash ch2) {
-      Set<Address> membersUnion = new HashSet<Address>(ch1.getMembers().size() + ch2.getMembers().size());
-      membersUnion.addAll(ch1.getMembers());
-      membersUnion.addAll(ch2.getMembers());
-      return new ReplicatedConsistentHash(new ArrayList<Address>(membersUnion));
+      if (!ch1.getHashFunction().equals(ch2.getHashFunction())) {
+         throw new IllegalArgumentException("The consistent hash objects must have the same hash function");
+      }
+      if (ch1.getNumSegments() != ch2.getNumSegments()) {
+         throw new IllegalArgumentException("The consistent hash objects must have the same number of segments");
+      }
+
+      List<Address> unionMembers = new ArrayList<Address>(ch1.getMembers());
+      for (Address member : ch2.getMembers()) {
+         if (!unionMembers.contains(member)) {
+            unionMembers.add(member);
+         }
+      }
+
+      int[] primaryOwners = new int[ch1.getNumSegments()];
+      for (int segmentId = 0; segmentId < primaryOwners.length; segmentId++) {
+         Address primaryOwner = ch1.locatePrimaryOwnerForSegment(segmentId);
+         int primaryOwnerIndex = unionMembers.indexOf(primaryOwner);
+         primaryOwners[segmentId] = primaryOwnerIndex;
+      }
+
+      return new ReplicatedConsistentHash(ch1.getHashFunction(), unionMembers, primaryOwners);
    }
 
    public static class Externalizer extends AbstractExternalizer<ReplicatedConsistentHashFactory> {
 
       @Override
-      public void writeObject(ObjectOutput output, ReplicatedConsistentHashFactory chf) throws IOException {
+      public void writeObject(ObjectOutput output, ReplicatedConsistentHashFactory chf) {
       }
 
       @Override
       @SuppressWarnings("unchecked")
-      public ReplicatedConsistentHashFactory readObject(ObjectInput unmarshaller) throws IOException, ClassNotFoundException {
+      public ReplicatedConsistentHashFactory readObject(ObjectInput unmarshaller) {
          return new ReplicatedConsistentHashFactory();
       }
 

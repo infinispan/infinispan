@@ -44,7 +44,6 @@ import org.infinispan.remoting.rpc.ResponseMode;
 import org.infinispan.remoting.rpc.RpcOptions;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.transaction.xa.GlobalTransaction;
-import org.infinispan.util.Immutables;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
@@ -193,7 +192,9 @@ public abstract class BaseDistributionInterceptor extends ClusteringInterceptor 
 
       @Override
       public List<Address> generateRecipients() {
-         if (recipients == null) recipients = dm.locate(key);
+         if (recipients == null) {
+            recipients = cdl.getOwners(key);
+         }
          return recipients;
       }
 
@@ -215,8 +216,7 @@ public abstract class BaseDistributionInterceptor extends ClusteringInterceptor 
       @Override
       public List<Address> generateRecipients() {
          if (recipients == null) {
-            Set<Address> addresses = dm.locateAll(keys);
-            recipients = Immutables.immutableListConvert(addresses);
+            recipients = cdl.getOwners(keys);
          }
          return recipients;
       }

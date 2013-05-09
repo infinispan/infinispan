@@ -45,7 +45,7 @@ public class PutMapCommandTest extends MultipleCacheManagersTest {
       waitForClusterToForm();
    }
 
-   public void testPutOnNonOwner() {
+   public void testPutOnNonOwner() {  //todo [anistor] this does not test putAll !
       MagicKey mk = new MagicKey("key", cache(0));
       cache(3).getAdvancedCache().withFlags(Flag.SKIP_REMOTE_LOOKUP).put(mk, "value");
 

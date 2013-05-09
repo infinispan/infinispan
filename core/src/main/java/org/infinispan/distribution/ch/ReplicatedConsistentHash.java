@@ -19,9 +19,9 @@
 
 package org.infinispan.distribution.ch;
 
+import org.infinispan.commons.hash.Hash;
 import org.infinispan.marshall.AbstractExternalizer;
 import org.infinispan.marshall.Ids;
-import org.infinispan.commons.hash.Hash;
 import org.infinispan.remoting.transport.Address;
 
 import java.io.IOException;
@@ -30,27 +30,37 @@ import java.io.ObjectOutput;
 import java.util.*;
 
 /**
- * Special implementation of {@link ConsistentHash} for replicated caches.
- * The hash-space has only one segment owned by all members.
+ * Special implementation of {@link org.infinispan.distribution.ch.ConsistentHash} for replicated caches.
+ * The hash-space has several segments owned by all members and the primary ownership of each segment is evenly
+ * spread between members.
  *
  * @author Dan Berindei
+ * @author anistor@redhat.com
  * @since 5.2
  */
 public class ReplicatedConsistentHash implements ConsistentHash {
 
+   private final Hash hashFunction;
+   private final int[] primaryOwners;
    private final List<Address> members;
    private final Set<Address> membersSet;
+   private final Set<Integer> segments;
 
-   private static final Set<Integer> theSegment = Collections.singleton(0);
-
-   public ReplicatedConsistentHash(List<Address> members) {
+   public ReplicatedConsistentHash(Hash hashFunction, List<Address> members, int[] primaryOwners) {
+      this.hashFunction = hashFunction;
       this.members = Collections.unmodifiableList(new ArrayList<Address>(members));
       this.membersSet = Collections.unmodifiableSet(new HashSet<Address>(members));
+      this.primaryOwners = primaryOwners;
+      Set<Integer> segmentIds = new HashSet<Integer>(primaryOwners.length);
+      for (int i = 0; i < primaryOwners.length; i++) {
+         segmentIds.add(i);
+      }
+      segments = Collections.unmodifiableSet(segmentIds);
    }
 
    @Override
    public int getNumSegments() {
-      return 1;
+      return primaryOwners.length;
    }
 
    @Override
@@ -65,28 +75,31 @@ public class ReplicatedConsistentHash implements ConsistentHash {
 
    @Override
    public Hash getHashFunction() {
-      return null;
+      return hashFunction;
    }
 
    @Override
    public int getSegment(Object key) {
-      return 0;
+      // The result must always be positive, so we make sure the dividend is positive first
+      return (hashFunction.hash(key) & Integer.MAX_VALUE) % primaryOwners.length;
    }
 
    @Override
    public List<Address> locateOwnersForSegment(int segmentId) {
-      if (segmentId != 0) {
-         throw new IllegalArgumentException("Unknown segment id : " + segmentId);
+      Address primaryOwner = locatePrimaryOwner(segmentId);
+      List<Address> owners = new ArrayList<Address>(members.size());
+      owners.add(primaryOwner);
+      for (Address member : members) {
+         if (!member.equals(primaryOwner)) {
+            owners.add(member);
+         }
       }
-      return members;
+      return owners;
    }
 
    @Override
    public Address locatePrimaryOwnerForSegment(int segmentId) {
-      if (segmentId != 0) {
-         throw new IllegalArgumentException("Unknown segment id : " + segmentId);
-      }
-      return members.get(0);
+      return members.get(primaryOwners[segmentId]);
    }
 
    @Override
@@ -97,22 +110,22 @@ public class ReplicatedConsistentHash implements ConsistentHash {
       if (!membersSet.contains(owner)) {
          throw new IllegalArgumentException("The node is not a member : " + owner);
       }
-      return theSegment;
+      return segments;
    }
 
    @Override
    public String getRoutingTableAsString() {
-      return "(replicated cache)";
+      return Arrays.toString(primaryOwners);
    }
 
    @Override
    public Address locatePrimaryOwner(Object key) {
-      return members.get(0);
+      return locatePrimaryOwnerForSegment(getSegment(key));
    }
 
    @Override
    public List<Address> locateOwners(Object key) {
-      return members;
+      return locateOwnersForSegment(getSegment(key));
    }
 
    @Override
@@ -127,23 +140,30 @@ public class ReplicatedConsistentHash implements ConsistentHash {
 
    @Override
    public String toString() {
-      return "ReplicatedConsistentHash{" +
-            "members=" + members +
-            '}';
+      StringBuilder sb = new StringBuilder("ReplicatedConsistentHash{");
+      sb.append("members=").append(members);
+      sb.append(", numSegments=").append(primaryOwners.length);
+      sb.append(", primaryOwners=").append(Arrays.toString(primaryOwners));
+      sb.append('}');
+      return sb.toString();
    }
 
    public static class Externalizer extends AbstractExternalizer<ReplicatedConsistentHash> {
 
       @Override
       public void writeObject(ObjectOutput output, ReplicatedConsistentHash ch) throws IOException {
+         output.writeObject(ch.hashFunction);
          output.writeObject(ch.members);
+         output.writeObject(ch.primaryOwners);
       }
 
       @Override
       @SuppressWarnings("unchecked")
       public ReplicatedConsistentHash readObject(ObjectInput unmarshaller) throws IOException, ClassNotFoundException {
+         Hash hashFunction = (Hash) unmarshaller.readObject();
          List<Address> members = (List<Address>) unmarshaller.readObject();
-         return new ReplicatedConsistentHash(members);
+         int[] primaryOwners = (int[]) unmarshaller.readObject();
+         return new ReplicatedConsistentHash(hashFunction, members, primaryOwners);
       }
 
       @Override

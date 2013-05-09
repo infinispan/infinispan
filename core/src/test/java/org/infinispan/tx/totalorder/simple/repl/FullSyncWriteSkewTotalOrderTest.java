@@ -24,8 +24,8 @@ import org.infinispan.interceptors.InterceptorChain;
 import org.infinispan.interceptors.locking.OptimisticLockingInterceptor;
 import org.infinispan.interceptors.locking.PessimisticLockingInterceptor;
 import org.infinispan.interceptors.totalorder.TotalOrderInterceptor;
+import org.infinispan.interceptors.totalorder.TotalOrderVersionedDistributionInterceptor;
 import org.infinispan.interceptors.totalorder.TotalOrderVersionedEntryWrappingInterceptor;
-import org.infinispan.interceptors.totalorder.TotalOrderVersionedReplicationInterceptor;
 import org.testng.annotations.Test;
 
 import static junit.framework.Assert.assertTrue;
@@ -55,7 +55,7 @@ public class FullSyncWriteSkewTotalOrderTest extends FullAsyncTotalOrderTest {
    public void testInterceptorChain() {
       InterceptorChain ic = advancedCache(0).getComponentRegistry().getComponent(InterceptorChain.class);
       assertTrue(ic.containsInterceptorType(TotalOrderInterceptor.class));
-      assertTrue(ic.containsInterceptorType(TotalOrderVersionedReplicationInterceptor.class));
+      assertTrue(ic.containsInterceptorType(TotalOrderVersionedDistributionInterceptor.class));
       assertTrue(ic.containsInterceptorType(TotalOrderVersionedEntryWrappingInterceptor.class));
       assertFalse(ic.containsInterceptorType(OptimisticLockingInterceptor.class));
       assertFalse(ic.containsInterceptorType(PessimisticLockingInterceptor.class));
