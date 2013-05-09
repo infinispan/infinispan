@@ -47,9 +47,11 @@ import org.infinispan.statetransfer.StateTransferLock;
 import org.infinispan.statetransfer.StateTransferManager;
 import org.infinispan.transaction.WriteSkewHelper;
 import org.infinispan.transaction.xa.CacheTransaction;
+import org.infinispan.util.Immutables;
+import org.infinispan.util.InfinispanCollections;
 
 import java.util.Collection;
-import java.util.concurrent.TimeUnit;
+import java.util.List;
 
 import static org.infinispan.transaction.WriteSkewHelper.performTotalOrderWriteSkewCheckAndReturnNewVersions;
 import static org.infinispan.transaction.WriteSkewHelper.performWriteSkewCheckAndReturnNewVersions;
@@ -74,7 +76,9 @@ public interface ClusteringDependentLogic {
 
    void commitEntry(CacheEntry entry, Metadata metadata, FlagAffectedCommand command, InvocationContext ctx);
 
-   Collection<Address> getOwners(Collection<Object> keys);
+   List<Address> getOwners(Collection<Object> keys);
+
+   List<Address> getOwners(Object key);
 
    EntryVersionsMap createNewVersionsAndCheckForWriteSkews(VersionGenerator versionGenerator, TxInvocationContext context, VersionedPrepareCommand prepareCommand);
    
@@ -171,7 +175,12 @@ public interface ClusteringDependentLogic {
       }
 
       @Override
-      public Collection<Address> getOwners(Collection<Object> keys) {
+      public List<Address> getOwners(Collection<Object> keys) {
+         return null;
+      }
+
+      @Override
+      public List<Address> getOwners(Object key) {
          return null;
       }
 
@@ -252,8 +261,13 @@ public interface ClusteringDependentLogic {
       }
 
       @Override
-      public Collection<Address> getOwners(Collection<Object> keys) {
+      public List<Address> getOwners(Collection<Object> keys) {
          return null;    //todo [anistor] should I actually return this based on current CH?
+      }
+
+      @Override
+      public List<Address> getOwners(Object key) {
+         return null;
       }
       
       @Override
@@ -412,8 +426,16 @@ public interface ClusteringDependentLogic {
       }
 
       @Override
-      public Collection<Address> getOwners(Collection<Object> keys) {
-         return dm.getAffectedNodes(keys);
+      public List<Address> getOwners(Collection<Object> affectedKeys) {
+         if (affectedKeys.isEmpty()) {
+            return InfinispanCollections.emptyList();
+         }
+         return Immutables.immutableListConvert(dm.locateAll(affectedKeys));
+      }
+
+      @Override
+      public List<Address> getOwners(Object key) {
+         return Immutables.immutableListConvert(dm.locate(key));
       }
 
       @Override

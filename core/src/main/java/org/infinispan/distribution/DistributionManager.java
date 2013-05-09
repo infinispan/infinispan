@@ -85,9 +85,8 @@ public interface DistributionManager {
     * of the keys if a rehash happens to be in progress or is pending, so when querying these servers, invalid responses
     * should be checked for and the next address checked accordingly.
     *
-    *
-    * @param keys list of keys to test
-    * @return a list of addresses where the key may reside
+    * @param keys list of keys to locate
+    * @return a list of addresses where the keys reside
     */
    Set<Address> locateAll(Collection<Object> keys); //todo [anistor] this has to take an additional parameter that specifies if the lookup is for read or write
 
@@ -123,14 +122,5 @@ public interface DistributionManager {
     * @return true if join is in progress, false otherwise
     */
    boolean isJoinComplete();
-
-   /**
-    * A helper method that retrieves a list of nodes affected by operations on a set of keys.  This helper will in turn
-    * call {@link #locateAll(java.util.Collection)} and then combine the result addresses.
-    *
-    * @param affectedKeys keys to locate
-    * @return a list of addresses which represent a combined set of all addresses affected by the set of keys.
-    */
-   Collection<Address> getAffectedNodes(Collection<Object> affectedKeys);
 }
 

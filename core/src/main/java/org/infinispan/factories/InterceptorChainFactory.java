@@ -45,11 +45,9 @@ import org.infinispan.interceptors.locking.OptimisticLockingInterceptor;
 import org.infinispan.interceptors.locking.PessimisticLockingInterceptor;
 import org.infinispan.interceptors.totalorder.TotalOrderDistributionInterceptor;
 import org.infinispan.interceptors.totalorder.TotalOrderInterceptor;
-import org.infinispan.interceptors.totalorder.TotalOrderReplicationInterceptor;
 import org.infinispan.interceptors.totalorder.TotalOrderStateTransferInterceptor;
 import org.infinispan.interceptors.totalorder.TotalOrderVersionedDistributionInterceptor;
 import org.infinispan.interceptors.totalorder.TotalOrderVersionedEntryWrappingInterceptor;
-import org.infinispan.interceptors.totalorder.TotalOrderVersionedReplicationInterceptor;
 import org.infinispan.interceptors.xsite.NonTransactionalBackupInterceptor;
 import org.infinispan.interceptors.xsite.OptimisticBackupInterceptor;
 import org.infinispan.interceptors.xsite.PessimisticBackupInterceptor;
@@ -253,29 +251,12 @@ public class InterceptorChainFactory extends AbstractNamedCacheComponentFactory 
       }
 
       switch (configuration.clustering().cacheMode()) {
-         case REPL_SYNC:
-            if (needsVersionAwareComponents) {
-               //added custom interceptor to replace the original
-               if (isTotalOrder) {
-                  interceptorChain.appendInterceptor(createInterceptor(new TotalOrderVersionedReplicationInterceptor(),
-                                                                       TotalOrderVersionedReplicationInterceptor.class), false);
-               } else {
-                  interceptorChain.appendInterceptor(createInterceptor(new VersionedReplicationInterceptor(), VersionedReplicationInterceptor.class), false);
-               }
-               break;
-            }
-         case REPL_ASYNC:
-            if (isTotalOrder) {
-               interceptorChain.appendInterceptor(createInterceptor(new TotalOrderReplicationInterceptor(), TotalOrderReplicationInterceptor.class), false);
-            } else {
-               interceptorChain.appendInterceptor(createInterceptor(new ReplicationInterceptor(), ReplicationInterceptor.class), false);
-            }
-            break;
          case INVALIDATION_SYNC:
          case INVALIDATION_ASYNC:
             interceptorChain.appendInterceptor(createInterceptor(new InvalidationInterceptor(), InvalidationInterceptor.class), false);
             break;
          case DIST_SYNC:
+         case REPL_SYNC:
             if (needsVersionAwareComponents) {
                if (isTotalOrder) {
                   interceptorChain.appendInterceptor(createInterceptor(new TotalOrderVersionedDistributionInterceptor(),
@@ -286,6 +267,7 @@ public class InterceptorChainFactory extends AbstractNamedCacheComponentFactory 
                break;
             }
          case DIST_ASYNC:
+         case REPL_ASYNC:
             if (configuration.transaction().transactionMode().isTransactional()) {
                if (isTotalOrder) {
                   interceptorChain.appendInterceptor(createInterceptor(new TotalOrderDistributionInterceptor(), TotalOrderDistributionInterceptor.class), false);

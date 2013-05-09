@@ -113,7 +113,7 @@ public class NonTxDistributionInterceptor extends BaseDistributionInterceptor {
             }
          }
          Collection<Address> backupOwners = cdl.getOwners(keysIOwn);
-         if (!backupOwners.isEmpty()) {
+         if (backupOwners == null || !backupOwners.isEmpty()) {
             command.setFlags(Flag.SKIP_LOCKING);
             command.setForwarded(true);
             rpcManager.invokeRemotely(backupOwners, command, rpcManager.getDefaultRpcOptions(isSynchronous(command)));

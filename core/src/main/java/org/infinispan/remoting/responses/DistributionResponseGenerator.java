@@ -32,8 +32,6 @@ import org.infinispan.commands.remote.SingleRpcCommand;
 import org.infinispan.commands.write.WriteCommand;
 import org.infinispan.distribution.DistributionManager;
 import org.infinispan.factories.annotations.Inject;
-import org.infinispan.util.logging.Log;
-import org.infinispan.util.logging.LogFactory;
 
 /**
  * A response generator for the DIST cache mode

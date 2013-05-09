@@ -119,7 +119,7 @@ public abstract class BaseReplicatedAPITest extends MultipleCacheManagersTest {
       waitForRpc(cache2);
 
       assertEquals("value", cache1.get("key"));
-      assertEquals("valueOld", cache2.get("key"));
+      assertEquals("value", cache2.get("key"));
 
       cache2.withFlags(CACHE_MODE_LOCAL).put("key", "value3");
 
