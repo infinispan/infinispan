@@ -21,7 +21,6 @@ package org.infinispan.interceptors.distribution;
 
 import org.infinispan.commands.FlagAffectedCommand;
 import org.infinispan.commands.control.LockControlCommand;
-import org.infinispan.commands.read.GetCacheEntryCommand;
 import org.infinispan.commands.read.GetKeyValueCommand;
 import org.infinispan.commands.tx.CommitCommand;
 import org.infinispan.commands.tx.PrepareCommand;
@@ -255,8 +254,12 @@ public class TxDistributionInterceptor extends BaseDistributionInterceptor {
    }
 
    protected void prepareOnAffectedNodes(TxInvocationContext ctx, PrepareCommand command, Collection<Address> recipients, boolean sync) {
-      // this method will return immediately if we're the only member (because exclude_self=true)
-      rpcManager.invokeRemotely(recipients, command, rpcManager.getDefaultRpcOptions(sync));
+      try {
+         // this method will return immediately if we're the only member (because exclude_self=true)
+         rpcManager.invokeRemotely(recipients, command, rpcManager.getDefaultRpcOptions(sync));
+      } finally {
+         transactionRemotelyPrepared(ctx);
+      }
    }
 
    @Override

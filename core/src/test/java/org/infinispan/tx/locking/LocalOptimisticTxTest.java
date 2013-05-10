@@ -48,6 +48,13 @@ public class LocalOptimisticTxTest extends AbstractLocalTest {
       return TestCacheManagerFactory.createCacheManager(config);
    }
 
+   @Override
+   protected void assertLockingOnRollback() {
+      assertFalse(lockManager().isLocked("k"));
+      rollback();
+      assertFalse(lockManager().isLocked("k"));
+   }
+
    protected void assertLocking() {
       assertFalse(lockManager().isLocked("k"));
       prepare();

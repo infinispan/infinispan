@@ -33,9 +33,7 @@ import org.infinispan.transaction.lookup.DummyTransactionManagerLookup;
 import org.infinispan.util.concurrent.TimeoutException;
 import org.testng.annotations.Test;
 
-import static org.testng.Assert.assertEquals;
-import static org.testng.Assert.assertFalse;
-import static org.testng.Assert.assertTrue;
+import static org.testng.Assert.*;
 
 /**
  * @author Mircea Markus
@@ -83,6 +81,31 @@ public class PessimisticReplTxTest extends AbstractClusteredTxTest {
 
    public void testTxInProgress4() throws Exception {
       test(1, 0);
+   }
+
+   public void testLockingInterfaceOnPrimaryOwner() throws Exception {
+      testLockingWithRollback(0);
+   }
+
+   public void testLockingInterfaceOnBackupOwner() throws Exception {
+      testLockingWithRollback(1);
+   }
+
+   private void testLockingWithRollback(int executeOn) throws Exception {
+      tm(executeOn).begin();
+      advancedCache(executeOn).lock(k);
+      assertLockingOnRollback();
+      assertNoTransactions();
+      assertNull(cache(0).get(k));
+      assertNull(cache(1).get(k));
+
+      tm(executeOn).begin();
+      advancedCache(executeOn).lock(k);
+      cache(executeOn).put(k, "v");
+      assertLockingOnRollback();
+      assertNoTransactions();
+      assertNull(cache(0).get(k));
+      assertNull(cache(1).get(k));
    }
 
    // check that two transactions can progress in parallel on the same node
@@ -144,6 +167,15 @@ public class PessimisticReplTxTest extends AbstractClusteredTxTest {
       assertTrue(lockManager(0).isLocked(k));
       assertFalse(lockManager(1).isLocked(k));
       commit();
+      assertFalse(lockManager(0).isLocked(k));
+      assertFalse(lockManager(1).isLocked(k));
+   }
+
+   @Override
+   protected void assertLockingOnRollback() {
+      assertTrue(lockManager(0).isLocked(k));
+      assertFalse(lockManager(1).isLocked(k));
+      rollback();
       assertFalse(lockManager(0).isLocked(k));
       assertFalse(lockManager(1).isLocked(k));
    }

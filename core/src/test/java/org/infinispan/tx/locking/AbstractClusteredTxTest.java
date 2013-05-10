@@ -32,8 +32,8 @@ import org.infinispan.test.MultipleCacheManagersTest;
 import org.infinispan.transaction.tm.DummyTransactionManager;
 import org.testng.annotations.Test;
 
-import static org.testng.Assert.assertFalse;
-import static org.testng.Assert.assertTrue;
+import static org.testng.Assert.assertEquals;
+import static org.testng.Assert.assertNull;
 
 /**
  * @author Mircea Markus
@@ -83,6 +83,23 @@ public abstract class AbstractClusteredTxTest extends MultipleCacheManagersTest 
       assertLocking();
    }
 
+   public void testRollbackOnPrimaryOwner() throws Exception {
+      testRollback(0);
+   }
+
+   public void testRollbackOnBackupOwner() throws Exception {
+      testRollback(1);
+   }
+
+   private void testRollback(int executeOn) throws Exception {
+      tm(executeOn).begin();
+      cache(executeOn).put(k, "v");
+      assertLockingOnRollback();
+      assertNoTransactions();
+      assertNull(cache(0).get(k));
+      assertNull(cache(1).get(k));
+   }
+
    protected void commit() {
       DummyTransactionManager dtm = (DummyTransactionManager) tm(0);
       try {
@@ -101,7 +118,18 @@ public abstract class AbstractClusteredTxTest extends MultipleCacheManagersTest 
       }
    }
 
+   protected void rollback() {
+      DummyTransactionManager dtm = (DummyTransactionManager) tm(0);
+      try {
+         dtm.getTransaction().rollback();
+      } catch (SystemException e) {
+         throw new RuntimeException(e);
+      }
+   }
+
    protected abstract void assertLocking();
 
    protected abstract void assertLockingNoChanges();
+
+   protected abstract void assertLockingOnRollback();
 }

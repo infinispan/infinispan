@@ -106,7 +106,7 @@ public abstract class BaseRpcInterceptor extends CommandInterceptor {
       return shouldInvokeRemotely;
    }
 
-   protected static void totalOrderTxPrepare(TxInvocationContext ctx) {
+   protected static void transactionRemotelyPrepared(TxInvocationContext ctx) {
       if (ctx.isOriginLocal()) {
          ((LocalTransaction)ctx.getCacheTransaction()).markPrepareSent();
       }

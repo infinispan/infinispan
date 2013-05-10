@@ -47,6 +47,7 @@ import org.infinispan.remoting.rpc.ResponseMode;
 import org.infinispan.remoting.rpc.RpcOptions;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.remoting.transport.jgroups.SuspectException;
+import org.infinispan.transaction.LocalTransaction;
 import org.infinispan.transaction.LockingMode;
 import org.infinispan.transaction.xa.GlobalTransaction;
 import org.infinispan.util.logging.Log;
@@ -108,13 +109,21 @@ public class ReplicationInterceptor extends ClusteringInterceptor {
    }
 
    protected void broadcastPrepare(TxInvocationContext context, PrepareCommand command) {
-      boolean async = cacheConfiguration.clustering().cacheMode() == CacheMode.REPL_ASYNC;
-      rpcManager.invokeRemotely(null, command, rpcManager.getDefaultRpcOptions(!async));
+      try {
+         boolean sync = cacheConfiguration.clustering().cacheMode().isSynchronous();
+         rpcManager.invokeRemotely(null, command, rpcManager.getDefaultRpcOptions(sync));
+      } finally {
+         transactionRemotelyPrepared(context);
+      }
    }
 
    @Override
    public Object visitRollbackCommand(TxInvocationContext ctx, RollbackCommand command) throws Throwable {
-      if (shouldInvokeRemoteTxCommand(ctx) && !Configurations.isOnePhaseCommit(cacheConfiguration)) {
+      boolean prepareSent = ctx.isOriginLocal() && ((LocalTransaction) ctx.getCacheTransaction()).isPrepareSent();
+      //If we are using onePhaseCommit, the PrepareCommand cleanups everything related to the transaction (release
+      //locks, remove the transaction from transaction table, etc...). So we don't need to waste resource to send the
+      //command that is ignored in the other nodes.
+      if (shouldInvokeRemoteTxCommand(ctx) && !(prepareSent && Configurations.isOnePhaseCommit(cacheConfiguration))) {
          rpcManager.invokeRemotely(null, command, rpcManager.getDefaultRpcOptions(
                cacheConfiguration.transaction().syncRollbackPhase(), false));
       }

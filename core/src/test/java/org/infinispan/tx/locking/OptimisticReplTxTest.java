@@ -101,4 +101,13 @@ public class OptimisticReplTxTest extends AbstractClusteredTxTest {
       assertFalse(lockManager(0).isLocked(k));
       assertFalse(lockManager(1).isLocked(k));
    }
+
+   @Override
+   protected void assertLockingOnRollback() {
+      assertFalse(lockManager(0).isLocked(k));
+      assertFalse(lockManager(1).isLocked(k));
+      rollback();
+      assertFalse(lockManager(0).isLocked(k));
+      assertFalse(lockManager(1).isLocked(k));
+   }
 }
