@@ -22,8 +22,8 @@
  */
 package org.infinispan.container.entries;
 
+import org.infinispan.Metadata;
 import org.infinispan.container.DataContainer;
-import org.infinispan.container.versioning.EntryVersion;
 
 /**
  * An abstract internal cache entry that is typically stored in the data container
@@ -43,7 +43,7 @@ public abstract class AbstractInternalCacheEntry implements InternalCacheEntry {
    }
 
    @Override
-   public final void commit(DataContainer container, EntryVersion newVersion) {
+   public final void commit(DataContainer container, Metadata metadata) {
       // no-op
    }
 
@@ -123,20 +123,12 @@ public abstract class AbstractInternalCacheEntry implements InternalCacheEntry {
    }
 
    @Override
-   public void setMaxIdle(long maxIdle) {
-   }
-
-   @Override
-   public void setLifespan(long lifespan) {
-   }
-
-   @Override
-   public EntryVersion getVersion() {
+   public Metadata getMetadata() {
       return null;
    }
 
    @Override
-   public void setVersion(EntryVersion version) {
+   public void setMetadata(Metadata metadata) {
       // no-op
    }
 

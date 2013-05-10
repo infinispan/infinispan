@@ -29,7 +29,6 @@ import org.infinispan.commands.CommandsFactory;
 import org.infinispan.commands.write.InvalidateCommand;
 import org.infinispan.commands.write.PutKeyValueCommand;
 import org.infinispan.configuration.cache.Configuration;
-import org.infinispan.configuration.cache.Configurations;
 import org.infinispan.container.DataContainer;
 import org.infinispan.container.entries.InternalCacheEntry;
 import org.infinispan.context.Flag;
@@ -100,7 +99,6 @@ public class StateConsumerImpl implements StateConsumer {
    private CacheNotifier cacheNotifier;
    private TotalOrderManager totalOrderManager;
    private long timeout;
-   private boolean useVersionedPut;
    private boolean isFetchEnabled;
    private boolean isTransactional;
    private boolean isInvalidationMode;
@@ -230,11 +228,6 @@ public class StateConsumerImpl implements StateConsumer {
 
       isTransactional = configuration.transaction().transactionMode().isTransactional();
       isTotalOrder = configuration.transaction().transactionProtocol().isTotalOrder();
-
-      // we need to use a special form of PutKeyValueCommand that can apply versions too
-      useVersionedPut = isTransactional &&
-            Configurations.isVersioningEnabled(configuration) &&
-            configuration.clustering().cacheMode().isClustered();
 
       timeout = configuration.clustering().stateTransfer().timeout();
    }
@@ -499,9 +492,8 @@ public class StateConsumerImpl implements StateConsumer {
                ctx = icc.createSingleKeyNonTxInvocationContext();
             }
 
-            PutKeyValueCommand put = useVersionedPut ?
-                  commandsFactory.buildVersionedPutKeyValueCommand(e.getKey(), e.getValue(), e.getLifespan(), e.getMaxIdle(), e.getVersion(), flags)
-                  : commandsFactory.buildPutKeyValueCommand(e.getKey(), e.getValue(), e.getLifespan(), e.getMaxIdle(), flags);
+            PutKeyValueCommand put = commandsFactory.buildPutKeyValueCommand(
+                  e.getKey(), e.getValue(), e.getMetadata(), flags);
 
             boolean success = false;
             try {

@@ -41,7 +41,6 @@ import org.infinispan.lifecycle.ComponentStatus;
 import org.infinispan.transaction.TransactionTable;
 import org.infinispan.transaction.xa.GlobalTransaction;
 import org.infinispan.util.Equivalence;
-import org.infinispan.util.InfinispanCollections;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
@@ -124,7 +123,7 @@ public class ClusteredGetCommand extends BaseRpcCommand implements FlagAffectedC
       // as our caller is already calling the ClusteredGetCommand on all the relevant nodes
       Set<Flag> commandFlags = EnumSet.of(Flag.SKIP_REMOTE_LOOKUP, Flag.CACHE_MODE_LOCAL);
       if (this.flags != null) commandFlags.addAll(this.flags);
-      GetKeyValueCommand command = commandsFactory.buildGetCacheEntryCommand(key, commandFlags);
+      GetKeyValueCommand command = commandsFactory.buildGetKeyValueCommand(key, commandFlags, true);
       InvocationContext invocationContext = icc.createRemoteInvocationContextForCommand(command, getOrigin());
       CacheEntry cacheEntry = (CacheEntry) invoker.invoke(invocationContext, command);
       if (cacheEntry == null) {

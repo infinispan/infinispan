@@ -22,6 +22,7 @@
  */
 package org.infinispan.util;
 
+import org.infinispan.Metadata;
 import org.infinispan.container.DataContainer;
 import org.infinispan.container.entries.InternalCacheEntry;
 import org.infinispan.container.entries.InternalCacheValue;
@@ -474,7 +475,7 @@ public class Immutables {
       }
 
       @Override
-      public void commit(DataContainer container, EntryVersion newVersion) {
+      public void commit(DataContainer container, Metadata metadata) {
          throw new UnsupportedOperationException();
       }
 
@@ -526,16 +527,6 @@ public class Immutables {
       }
 
       @Override
-      public void setLifespan(long lifespan) {
-         throw new UnsupportedOperationException();
-      }
-
-      @Override
-      public void setMaxIdle(long maxIdle) {
-         throw new UnsupportedOperationException();
-      }
-
-      @Override
       public InternalCacheValue toInternalCacheValue() {
          return new ImmutableInternalCacheValue(this);
       }
@@ -561,7 +552,7 @@ public class Immutables {
       }
 
       @Override
-      public void setVersion(EntryVersion version) {
+      public void setMetadata(Metadata metadata) {
          throw new UnsupportedOperationException();
       }
 
@@ -646,8 +637,8 @@ public class Immutables {
       }
 
       @Override
-      public EntryVersion getVersion() {
-         return entry.getVersion();
+      public Metadata getMetadata() {
+         return entry.getMetadata();
       }
 
       @Override

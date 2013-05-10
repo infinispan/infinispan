@@ -22,6 +22,7 @@
  */
 package org.infinispan.container;
 
+import org.infinispan.EmbeddedMetadata;
 import org.infinispan.container.entries.ImmortalCacheEntry;
 import org.infinispan.container.entries.InternalCacheEntry;
 import org.infinispan.container.entries.MortalCacheEntry;
@@ -37,6 +38,7 @@ import org.testng.annotations.Test;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.TimeUnit;
 
 import static org.testng.AssertJUnit.assertEquals;
 
@@ -61,7 +63,7 @@ public class SimpleDataContainerTest extends AbstractInfinispanTest {
    }
 
    public void testExpiredData() throws InterruptedException {
-      dc.put("k", "v", null, -1, 6000000);
+      dc.put("k", "v", new EmbeddedMetadata.Builder().maxIdle(100, TimeUnit.MINUTES).build());
       Thread.sleep(100);
 
       InternalCacheEntry entry = dc.get("k");
@@ -71,10 +73,10 @@ public class SimpleDataContainerTest extends AbstractInfinispanTest {
       Thread.sleep(100);
       entry = dc.get("k");
       assert entry.getLastUsed() > entryLastUsed;
-      dc.put("k", "v", null, -1, 0);
+      dc.put("k", "v", new EmbeddedMetadata.Builder().maxIdle(0, TimeUnit.MINUTES).build());
       dc.purgeExpired();
 
-      dc.put("k", "v", null, 6000000, -1);
+      dc.put("k", "v", new EmbeddedMetadata.Builder().lifespan(100, TimeUnit.MINUTES).build());
       Thread.sleep(100);
       assert dc.size() == 1;
 
@@ -83,12 +85,12 @@ public class SimpleDataContainerTest extends AbstractInfinispanTest {
       assert entry.getClass().equals(mortaltype()) : "Expected "+mortaltype()+", was " + entry.getClass().getSimpleName();
       assert entry.getCreated() <= System.currentTimeMillis();
 
-      dc.put("k", "v", null, 0, -1);
+      dc.put("k", "v", new EmbeddedMetadata.Builder().lifespan(0, TimeUnit.MINUTES).build());
       Thread.sleep(10);
       assert dc.get("k") == null;
       assert dc.size() == 0;
 
-      dc.put("k", "v", null, 0, -1);
+      dc.put("k", "v", new EmbeddedMetadata.Builder().lifespan(0, TimeUnit.MINUTES).build());
       Thread.sleep(100);
       assert dc.size() == 1;
       dc.purgeExpired();
@@ -97,24 +99,24 @@ public class SimpleDataContainerTest extends AbstractInfinispanTest {
    
    public void testResetOfCreationTime() throws Exception {
       long now = System.currentTimeMillis();
-      dc.put("k", "v", null, 1000000, -1);
+      dc.put("k", "v", new EmbeddedMetadata.Builder().lifespan(1000, TimeUnit.SECONDS).build());
       long created1 = dc.get("k").getCreated();
       assert created1 >= now;
       Thread.sleep(100);
-      dc.put("k", "v", null, 1000000, -1);
+      dc.put("k", "v", new EmbeddedMetadata.Builder().lifespan(1000, TimeUnit.SECONDS).build());
       long created2 = dc.get("k").getCreated();
       assert created2 > created1 : "Expected " + created2 + " to be greater than " + created1;
    }
 
    public void testUpdatingLastUsed() throws Exception {
       long idle = 600000;
-      dc.put("k", "v", null, -1, -1);
+      dc.put("k", "v", new EmbeddedMetadata.Builder().build());
       InternalCacheEntry ice = dc.get("k");
       assert ice.getClass().equals(immortaltype());
       assert ice.getExpiryTime() == -1;
       assert ice.getMaxIdle() == -1;
       assert ice.getLifespan() == -1;
-      dc.put("k", "v", null, -1, idle);
+      dc.put("k", "v", new EmbeddedMetadata.Builder().maxIdle(idle, TimeUnit.MILLISECONDS).build());
       long oldTime = System.currentTimeMillis();
       Thread.sleep(100); // for time calc granularity
       ice = dc.get("k");
@@ -155,27 +157,29 @@ public class SimpleDataContainerTest extends AbstractInfinispanTest {
 
    public void testExpirableToImmortalAndBack() {
       String value = "v";
-      dc.put("k", value, null, 6000000, -1);
+      dc.put("k", value, new EmbeddedMetadata.Builder().lifespan(100, TimeUnit.MINUTES).build());
       assertContainerEntry(mortaltype(), value);
 
       value = "v2";
-      dc.put("k", value, null, -1, -1);
+      dc.put("k", value, new EmbeddedMetadata.Builder().build());
       assertContainerEntry(immortaltype(), value);
 
       value = "v3";
-      dc.put("k", value, null, -1, 6000000);
+      dc.put("k", value, new EmbeddedMetadata.Builder().maxIdle(100, TimeUnit.MINUTES).build());
       assertContainerEntry(transienttype(), value);
 
       value = "v4";
-      dc.put("k", value, null, 6000000, 6000000);
+      dc.put("k", value, new EmbeddedMetadata.Builder()
+            .lifespan(100, TimeUnit.MINUTES).maxIdle(100, TimeUnit.MINUTES).build());
       assertContainerEntry(transientmortaltype(), value);
 
       value = "v41";
-      dc.put("k", value, null, 6000000, 6000000);
+      dc.put("k", value, new EmbeddedMetadata.Builder()
+            .lifespan(100, TimeUnit.MINUTES).maxIdle(100, TimeUnit.MINUTES).build());
       assertContainerEntry(transientmortaltype(), value);
 
       value = "v5";
-      dc.put("k", value, null, 6000000, -1);
+      dc.put("k", value, new EmbeddedMetadata.Builder().lifespan(100, TimeUnit.MINUTES).build());
       assertContainerEntry(mortaltype(), value);
    }
 
@@ -188,10 +192,11 @@ public class SimpleDataContainerTest extends AbstractInfinispanTest {
    }
 
    public void testKeySet() {
-      dc.put("k1", "v", null, 6000000, -1);
-      dc.put("k2", "v", null, -1, -1);
-      dc.put("k3", "v", null, -1, 6000000);
-      dc.put("k4", "v", null, 6000000, 6000000);
+      dc.put("k1", "v", new EmbeddedMetadata.Builder().lifespan(100, TimeUnit.MINUTES).build());
+      dc.put("k2", "v", new EmbeddedMetadata.Builder().build());
+      dc.put("k3", "v", new EmbeddedMetadata.Builder().maxIdle(100, TimeUnit.MINUTES).build());
+      dc.put("k4", "v", new EmbeddedMetadata.Builder()
+            .maxIdle(100, TimeUnit.MINUTES).lifespan(100, TimeUnit.MINUTES).build());
 
       Set expected = new HashSet();
       expected.add("k1");
@@ -205,10 +210,11 @@ public class SimpleDataContainerTest extends AbstractInfinispanTest {
    }
 
    public void testContainerIteration() {
-      dc.put("k1", "v", null, 6000000, -1);
-      dc.put("k2", "v", null, -1, -1);
-      dc.put("k3", "v", null, -1, 6000000);
-      dc.put("k4", "v", null, 6000000, 6000000);
+      dc.put("k1", "v", new EmbeddedMetadata.Builder().lifespan(100, TimeUnit.MINUTES).build());
+      dc.put("k2", "v", new EmbeddedMetadata.Builder().build());
+      dc.put("k3", "v", new EmbeddedMetadata.Builder().maxIdle(100, TimeUnit.MINUTES).build());
+      dc.put("k4", "v", new EmbeddedMetadata.Builder()
+            .maxIdle(100, TimeUnit.MINUTES).lifespan(100, TimeUnit.MINUTES).build());
 
       Set expected = new HashSet();
       expected.add("k1");
@@ -224,10 +230,11 @@ public class SimpleDataContainerTest extends AbstractInfinispanTest {
    }
    
    public void testKeys() {
-      dc.put("k1", "v1", null, 6000000, -1);
-      dc.put("k2", "v2", null, -1, -1);
-      dc.put("k3", "v3", null, -1, 6000000);
-      dc.put("k4", "v4", null, 6000000, 6000000);
+      dc.put("k1", "v1", new EmbeddedMetadata.Builder().lifespan(100, TimeUnit.MINUTES).build());
+      dc.put("k2", "v2", new EmbeddedMetadata.Builder().build());
+      dc.put("k3", "v3", new EmbeddedMetadata.Builder().maxIdle(100, TimeUnit.MINUTES).build());
+      dc.put("k4", "v4", new EmbeddedMetadata.Builder()
+            .maxIdle(100, TimeUnit.MINUTES).lifespan(100, TimeUnit.MINUTES).build());
 
       Set expected = new HashSet();
       expected.add("k1");
@@ -241,10 +248,11 @@ public class SimpleDataContainerTest extends AbstractInfinispanTest {
    }
 
    public void testValues() {
-      dc.put("k1", "v1", null, 6000000, -1);
-      dc.put("k2", "v2", null, -1, -1);
-      dc.put("k3", "v3", null, -1, 6000000);
-      dc.put("k4", "v4", null, 6000000, 6000000);
+      dc.put("k1", "v1", new EmbeddedMetadata.Builder().lifespan(100, TimeUnit.MINUTES).build());
+      dc.put("k2", "v2", new EmbeddedMetadata.Builder().build());
+      dc.put("k3", "v3", new EmbeddedMetadata.Builder().maxIdle(100, TimeUnit.MINUTES).build());
+      dc.put("k4", "v4", new EmbeddedMetadata.Builder()
+            .maxIdle(100, TimeUnit.MINUTES).lifespan(100, TimeUnit.MINUTES).build());
 
       Set expected = new HashSet();
       expected.add("v1");
@@ -258,10 +266,11 @@ public class SimpleDataContainerTest extends AbstractInfinispanTest {
    }
 
    public void testEntrySet() {
-      dc.put("k1", "v1", null, 6000000, -1);
-      dc.put("k2", "v2", null, -1, -1);
-      dc.put("k3", "v3", null, -1, 6000000);
-      dc.put("k4", "v4", null, 6000000, 6000000);
+      dc.put("k1", "v1", new EmbeddedMetadata.Builder().lifespan(100, TimeUnit.MINUTES).build());
+      dc.put("k2", "v2", new EmbeddedMetadata.Builder().build());
+      dc.put("k3", "v3", new EmbeddedMetadata.Builder().maxIdle(100, TimeUnit.MINUTES).build());
+      dc.put("k4", "v4", new EmbeddedMetadata.Builder()
+            .maxIdle(100, TimeUnit.MINUTES).lifespan(100, TimeUnit.MINUTES).build());
 
       Set expected = new HashSet();
       expected.add(Immutables.immutableInternalCacheEntry(dc.get("k1")));
@@ -276,7 +285,7 @@ public class SimpleDataContainerTest extends AbstractInfinispanTest {
    }
 
    public void testGetDuringKeySetLoop() {
-      for (int i = 0; i < 10; i++) dc.put(i, "value", null, -1, -1);
+      for (int i = 0; i < 10; i++) dc.put(i, "value", new EmbeddedMetadata.Builder().build());
 
       int i = 0;
       for (Object key : dc.keySet()) {

@@ -22,11 +22,11 @@
  */
 package org.infinispan.commands;
 
+import org.infinispan.Metadata;
 import org.infinispan.atomic.Delta;
 import org.infinispan.commands.control.LockControlCommand;
 import org.infinispan.commands.read.DistributedExecuteCommand;
 import org.infinispan.commands.read.EntrySetCommand;
-import org.infinispan.commands.read.GetCacheEntryCommand;
 import org.infinispan.commands.read.GetKeyValueCommand;
 import org.infinispan.commands.read.KeySetCommand;
 import org.infinispan.commands.read.MapCombineCommand;
@@ -46,7 +46,6 @@ import org.infinispan.commands.tx.RollbackCommand;
 import org.infinispan.commands.tx.VersionedCommitCommand;
 import org.infinispan.commands.tx.VersionedPrepareCommand;
 import org.infinispan.commands.write.*;
-import org.infinispan.container.versioning.EntryVersion;
 import org.infinispan.context.Flag;
 import org.infinispan.distexec.mapreduce.Mapper;
 import org.infinispan.distexec.mapreduce.Reducer;
@@ -83,22 +82,10 @@ public interface CommandsFactory {
     * Builds a PutKeyValueCommand
     * @param key key to put
     * @param value value to put
-    * @param lifespanMillis lifespan in milliseconds.  -1 if lifespan is not used.
-    * @param maxIdleTimeMillis max idle time in milliseconds.  -1 if maxIdle is not used.
+    * @param metadata metadata of entry
     * @return a PutKeyValueCommand
     */
-   PutKeyValueCommand buildPutKeyValueCommand(Object key, Object value, long lifespanMillis, long maxIdleTimeMillis, Set<Flag> flags);
-
-   /**
-    * Builds a special form of {@link PutKeyValueCommand} that also holds a reference to a version to be applied.
-    * @param key key to put
-    * @param value value to put
-    * @param lifespanMillis lifespan in milliseconds.  -1 if lifespan is not used.
-    * @param maxIdleTimeMillis max idle time in milliseconds.  -1 if maxIdle is not used.
-    * @param version version to apply with this put
-    * @return a PutKeyValueCommand
-    */
-   VersionedPutKeyValueCommand buildVersionedPutKeyValueCommand(Object key, Object value, long lifespanMillis, long maxIdleTimeMillis, EntryVersion version, Set<Flag> flags);
+   PutKeyValueCommand buildPutKeyValueCommand(Object key, Object value, Metadata metadata, Set<Flag> flags);
 
    /**
     * Builds a RemoveCommand
@@ -133,13 +120,10 @@ public interface CommandsFactory {
     * @param key key to replace
     * @param oldValue existing value to check for if conditional, null if unconditional.
     * @param newValue value to replace with
-    * @param lifespanMillis lifespan in milliseconds.  -1 if lifespan is not used.
-    * @param maxIdleTimeMillis max idle time in milliseconds.  -1 if maxIdle is not used.
+    * @param metadata metadata of entry
     * @return a ReplaceCommand
     */
-   ReplaceCommand buildReplaceCommand(Object key, Object oldValue, Object newValue, long lifespanMillis, long maxIdleTimeMillis, Set<Flag> flags);
-
-   VersionedReplaceCommand buildVersionedReplaceCommand(Object key, Object oldValue, Object newValue, long lifespanMillis, long maxIdleTimeMillis, EntryVersion version, Set<Flag> flags);
+   ReplaceCommand buildReplaceCommand(Object key, Object oldValue, Object newValue, Metadata metadata, Set<Flag> flags);
 
    /**
     * Builds a SizeCommand
@@ -150,16 +134,11 @@ public interface CommandsFactory {
    /**
     * Builds a GetKeyValueCommand
     * @param key key to get
+    * @param returnEntry boolean indicating whether entire cache entry is
+    *                    returned, otherwise return just the value part
     * @return a GetKeyValueCommand
     */
-   GetKeyValueCommand buildGetKeyValueCommand(Object key, Set<Flag> flags);
-
-   /**
-    * Builds a GetKeyValueCommand
-    * @param key key to get
-    * @return a GetKeyValueCommand
-    */
-   GetCacheEntryCommand buildGetCacheEntryCommand(Object key, Set<Flag> flags);
+   GetKeyValueCommand buildGetKeyValueCommand(Object key, Set<Flag> flags, boolean returnEntry);
 
    /**
     * Builds a KeySetCommand
@@ -182,11 +161,10 @@ public interface CommandsFactory {
    /**
     * Builds a PutMapCommand
     * @param map map containing key/value entries to put
-    * @param lifespanMillis lifespan in milliseconds.  -1 if lifespan is not used.
-    * @param maxIdleTimeMillis max idle time in milliseconds.  -1 if maxIdle is not used.
+    * @param metadata metadata of entry
     * @return a PutMapCommand
     */
-   PutMapCommand buildPutMapCommand(Map<?, ?> map, long lifespanMillis, long maxIdleTimeMillis, Set<Flag> flags);
+   PutMapCommand buildPutMapCommand(Map<?, ?> map, Metadata metadata, Set<Flag> flags);
 
    /**
     * Builds a ClearCommand

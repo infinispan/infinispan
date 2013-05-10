@@ -19,6 +19,7 @@
 
 package org.infinispan.interceptors.distribution;
 
+import org.infinispan.Metadata;
 import org.infinispan.commands.CommandsFactory;
 import org.infinispan.commands.FlagAffectedCommand;
 import org.infinispan.commands.read.GetKeyValueCommand;
@@ -44,6 +45,7 @@ import java.util.HashSet;
 import java.util.Set;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
+import java.util.concurrent.TimeUnit;
 
 /**
  * Interceptor that handles L1 logic for non-transactional caches.
@@ -81,7 +83,13 @@ public class L1NonTxInterceptor extends BaseRpcInterceptor {
          try {
             long l1Lifespan = cacheConfiguration.clustering().l1().lifespan();
             long lifespan = ice.getLifespan() < 0 ? l1Lifespan : Math.min(ice.getLifespan(), l1Lifespan);
-            PutKeyValueCommand put = cf.buildPutKeyValueCommand(ice.getKey(), ice.getValue(), lifespan, -1, Collections.singleton(Flag.CACHE_MODE_LOCAL));
+            // Make a copy of the metadata stored internally, adjust
+            // lifespan/maxIdle settings and send them a modification
+            Metadata newMetadata = ice.getMetadata().builder()
+                  .lifespan(lifespan, TimeUnit.MILLISECONDS)
+                  .maxIdle(-1, TimeUnit.MILLISECONDS).build();
+            PutKeyValueCommand put = cf.buildPutKeyValueCommand(ice.getKey(), ice.getValue(),
+                  newMetadata, Collections.singleton(Flag.CACHE_MODE_LOCAL));
             lockAndWrap(ctx, command.getKey(), ice, command);
             invokeNextInterceptor(ctx, put);
          } catch (Exception e) {

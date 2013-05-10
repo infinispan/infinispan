@@ -36,13 +36,12 @@ import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.testng.annotations.Test;
 
 import static org.testng.AssertJUnit.assertEquals;
-import static org.testng.AssertJUnit.assertSame;
 
 /**
- * // TODO: Document this
+ * Tests cache API methods that take {@link Metadata} as parameter.
  *
  * @author Galder Zamarreño
- * @since // TODO
+ * @since 5.3
  */
 @Test(groups = "functional", testName = "api.MetadataAPITest")
 public class MetadataAPITest extends SingleCacheManagerTest {
@@ -62,7 +61,7 @@ public class MetadataAPITest extends SingleCacheManagerTest {
       advCache.put(key, "v1", withVersion(version));
       CacheEntry cacheEntry = advCache.getCacheEntry(key);
       assertEquals(InequalVersionComparisonResult.EQUAL,
-            version.compareTo(cacheEntry.getVersion()));
+            version.compareTo(cacheEntry.getMetadata().version()));
    }
 
    public void testConditionalReplaceWithVersion() {
@@ -73,7 +72,7 @@ public class MetadataAPITest extends SingleCacheManagerTest {
       advCache.replace(key, "v1", "v2", withVersion(newVersion));
       CacheEntry cacheEntry = advCache.getCacheEntry(key);
       assertEquals(InequalVersionComparisonResult.EQUAL,
-            newVersion.compareTo(cacheEntry.getVersion()));
+            newVersion.compareTo(cacheEntry.getMetadata().version()));
    }
 
    public void testPutIfAbsentWithVersion() {
@@ -82,7 +81,7 @@ public class MetadataAPITest extends SingleCacheManagerTest {
       assertEquals(null, advCache.putIfAbsent(key, "v1", withVersion(version)));
       CacheEntry cacheEntry = advCache.getCacheEntry(key);
       assertEquals(InequalVersionComparisonResult.EQUAL,
-            version.compareTo(cacheEntry.getVersion()));
+            version.compareTo(cacheEntry.getMetadata().version()));
    }
 
    private Metadata withVersion(EntryVersion version) {

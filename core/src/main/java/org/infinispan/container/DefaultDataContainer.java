@@ -24,8 +24,8 @@ package org.infinispan.container;
 
 import net.jcip.annotations.ThreadSafe;
 import org.infinispan.CacheException;
+import org.infinispan.Metadata;
 import org.infinispan.container.entries.InternalCacheEntry;
-import org.infinispan.container.versioning.EntryVersion;
 import org.infinispan.eviction.ActivationManager;
 import org.infinispan.eviction.EvictionManager;
 import org.infinispan.eviction.EvictionStrategy;
@@ -41,7 +41,6 @@ import org.infinispan.util.Immutables;
 import org.infinispan.util.concurrent.BoundedConcurrentHashMap;
 import org.infinispan.util.concurrent.BoundedConcurrentHashMap.Eviction;
 import org.infinispan.util.concurrent.BoundedConcurrentHashMap.EvictionListener;
-import org.infinispan.util.concurrent.jdk8backported.EquivalentConcurrentHashMapV8;
 
 import java.util.AbstractCollection;
 import java.util.AbstractSet;
@@ -166,20 +165,19 @@ public class DefaultDataContainer implements DataContainer {
    }
 
    @Override
-   public void put(Object k, Object v, EntryVersion version, long lifespan, long maxIdle) {
+   public void put(Object k, Object v, Metadata metadata) {
       InternalCacheEntry e = entries.get(k);
       if (e != null) {
          e.setValue(v);
          InternalCacheEntry original = e;
-         e.setVersion(version);
-         e = entryFactory.update(e, lifespan, maxIdle);
+         e = entryFactory.update(e, metadata);
          // we have the same instance. So we need to reincarnate.
-         if(original == e) {
+         if (original == e) {
             e.reincarnate();
          }
       } else {
          // this is a brand-new entry
-         e = entryFactory.create(k, v, version, lifespan, maxIdle);
+         e = entryFactory.create(k, v, metadata);
       }
       entries.put(k, e);
    }

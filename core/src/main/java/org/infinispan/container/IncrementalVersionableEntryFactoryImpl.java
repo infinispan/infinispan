@@ -19,11 +19,12 @@
 
 package org.infinispan.container;
 
+import org.infinispan.Metadata;
+import org.infinispan.container.entries.CacheEntry;
 import org.infinispan.container.entries.ClusteredRepeatableReadEntry;
 import org.infinispan.container.entries.MVCCEntry;
 import org.infinispan.container.entries.NullMarkerEntry;
 import org.infinispan.container.entries.NullMarkerEntryForRemoval;
-import org.infinispan.container.versioning.EntryVersion;
 import org.infinispan.factories.annotations.Start;
 
 /**
@@ -42,9 +43,29 @@ public class IncrementalVersionableEntryFactoryImpl extends EntryFactoryImpl {
    }
 
    @Override
-   protected MVCCEntry createWrappedEntry(Object key, Object value, EntryVersion version, boolean isForInsert, boolean forRemoval, long lifespan) {
-      if (value == null && !isForInsert) return forRemoval ? new NullMarkerEntryForRemoval(key, version) : NullMarkerEntry.getInstance();
+   protected MVCCEntry createWrappedEntry(Object key, CacheEntry cacheEntry,
+         Metadata providedMetadata, boolean isForInsert, boolean forRemoval) {
+      Metadata metadata;
+      Object value;
+      if (cacheEntry != null) {
+         value = cacheEntry.getValue();
+         Metadata entryMetadata = cacheEntry.getMetadata();
+         if (providedMetadata != null && entryMetadata != null) {
+            metadata = providedMetadata.builder().read(entryMetadata).build();
+         } else if (providedMetadata == null) {
+            metadata = entryMetadata; // take the metadata in memory
+         } else {
+            metadata = providedMetadata;
+         }
+      } else {
+         value = null;
+         metadata = providedMetadata;
+      }
 
-      return new ClusteredRepeatableReadEntry(key, value, version, lifespan);
+      if (value == null && !isForInsert)
+         return forRemoval ? new NullMarkerEntryForRemoval(key, metadata)
+               : NullMarkerEntry.getInstance();
+
+      return new ClusteredRepeatableReadEntry(key, value, metadata);
    }
 }

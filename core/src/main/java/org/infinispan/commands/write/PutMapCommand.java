@@ -22,7 +22,9 @@
  */
 package org.infinispan.commands.write;
 
+import org.infinispan.Metadata;
 import org.infinispan.commands.AbstractFlagAffectedCommand;
+import org.infinispan.commands.MetadataAwareCommand;
 import org.infinispan.commands.Visitor;
 import org.infinispan.container.entries.MVCCEntry;
 import org.infinispan.context.Flag;
@@ -39,23 +41,21 @@ import java.util.Set;
  * @author Mircea.Markus@jboss.com
  * @since 4.0
  */
-public class PutMapCommand extends AbstractFlagAffectedCommand implements WriteCommand {
+public class PutMapCommand extends AbstractFlagAffectedCommand implements WriteCommand, MetadataAwareCommand {
    public static final byte COMMAND_ID = 9;
 
    Map<Object, Object> map;
    CacheNotifier notifier;
-   long lifespanMillis = -1;
-   long maxIdleTimeMillis = -1;
+   Metadata metadata;
    boolean isForwarded = false;
 
    public PutMapCommand() {
    }
 
-   public PutMapCommand(Map<?, ?> map, CacheNotifier notifier, long lifespanMillis, long maxIdleTimeMillis, Set<Flag> flags) {
+   public PutMapCommand(Map<?, ?> map, CacheNotifier notifier, Metadata metadata, Set<Flag> flags) {
       this.map = (Map<Object, Object>) map;
       this.notifier = notifier;
-      this.lifespanMillis = lifespanMillis;
-      this.maxIdleTimeMillis = maxIdleTimeMillis;
+      this.metadata = metadata;
       this.flags = flags;
    }
 
@@ -82,8 +82,6 @@ public class PutMapCommand extends AbstractFlagAffectedCommand implements WriteC
             notifier.notifyCacheEntryModified(
                   key, value, value == null, true, ctx, this);
             me.setValue(e.getValue());
-            me.setLifespan(lifespanMillis);
-            me.setMaxIdle(maxIdleTimeMillis);
          }
       }
       return null;
@@ -104,17 +102,16 @@ public class PutMapCommand extends AbstractFlagAffectedCommand implements WriteC
 
    @Override
    public Object[] getParameters() {
-      return new Object[]{map, lifespanMillis, maxIdleTimeMillis, isForwarded, Flag.copyWithoutRemotableFlags(flags)};
+      return new Object[]{map, metadata, isForwarded, Flag.copyWithoutRemotableFlags(flags)};
    }
 
    @Override
    public void setParameters(int commandId, Object[] parameters) {
       map = (Map<Object, Object>) parameters[0];
-      lifespanMillis = (Long) parameters[1];
-      maxIdleTimeMillis = (Long) parameters[2];
-      isForwarded = (Boolean) parameters[3];
-      if (parameters.length > 4) {
-         this.flags = (Set<Flag>) parameters[4];
+      metadata = (Metadata) parameters[1];
+      isForwarded = (Boolean) parameters[2];
+      if (parameters.length > 3) {
+         this.flags = (Set<Flag>) parameters[3];
       }
    }
 
@@ -125,8 +122,7 @@ public class PutMapCommand extends AbstractFlagAffectedCommand implements WriteC
 
       PutMapCommand that = (PutMapCommand) o;
 
-      if (lifespanMillis != that.lifespanMillis) return false;
-      if (maxIdleTimeMillis != that.maxIdleTimeMillis) return false;
+      if (metadata != null ? !metadata.equals(that.metadata) : that.metadata != null) return false;
       if (map != null ? !map.equals(that.map) : that.map != null) return false;
 
       return true;
@@ -135,8 +131,7 @@ public class PutMapCommand extends AbstractFlagAffectedCommand implements WriteC
    @Override
    public int hashCode() {
       int result = map != null ? map.hashCode() : 0;
-      result = 31 * result + (int) (lifespanMillis ^ (lifespanMillis >>> 32));
-      result = 31 * result + (int) (maxIdleTimeMillis ^ (maxIdleTimeMillis >>> 32));
+      result = 31 * result + (metadata != null ? metadata.hashCode() : 0);
       return result;
    }
 
@@ -162,8 +157,7 @@ public class PutMapCommand extends AbstractFlagAffectedCommand implements WriteC
          }
       }
       sb.append("}, flags=").append(flags)
-         .append(", lifespanMillis=").append(lifespanMillis)
-         .append(", maxIdleTimeMillis=").append(maxIdleTimeMillis)
+         .append(", metadata=").append(metadata)
          .append(", isForwarded=").append(isForwarded)
          .append("}");
       return sb.toString();
@@ -204,19 +198,15 @@ public class PutMapCommand extends AbstractFlagAffectedCommand implements WriteC
       return true;
    }
 
-   public long getLifespanMillis() {
-      return lifespanMillis;
-   }
-
-   public long getMaxIdleTimeMillis() {
-      return maxIdleTimeMillis;
-   }
-
    @Override
    public boolean ignoreCommandOnStatus(ComponentStatus status) {
       return false;
    }
 
+   @Override
+   public Metadata getMetadata() {
+      return metadata;
+   }
 
    /**
     * For non transactional caches that support concurrent writes (default), the commands are forwarded between nodes,

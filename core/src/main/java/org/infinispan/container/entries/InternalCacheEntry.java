@@ -49,22 +49,6 @@ public interface InternalCacheEntry extends CacheEntry, Cloneable {
    boolean canExpire();
 
    /**
-    * Sets the maximum idle time of the entry.
-    *
-    * @param maxIdle maxIdle to set
-    */
-   @Override
-   void setMaxIdle(long maxIdle);
-
-   /**
-    * Sets the lifespan of the entry.
-    *
-    * @param lifespan lifespan to set
-    */
-   @Override
-   void setLifespan(long lifespan);
-
-   /**
     * @return timestamp when the entry was created
     */
    long getCreated();

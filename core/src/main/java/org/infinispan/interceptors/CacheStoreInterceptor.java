@@ -344,7 +344,7 @@ public class CacheStoreInterceptor extends JmxStatsCommandInterceptor {
                ice = (InternalCacheEntry) entry;
             } else if (entry instanceof DeltaAwareCacheEntry) {
                AtomicHashMap<?,?> uncommittedChanges = ((DeltaAwareCacheEntry) entry).getUncommittedChages();
-               ice = entryFactory.create(entry.getKey(), uncommittedChanges, entry.getVersion(), entry.getLifespan(), entry.getMaxIdle());
+               ice = entryFactory.create(entry.getKey(), uncommittedChanges, entry.getMetadata(), entry.getLifespan(), entry.getMaxIdle());
             } else {
                ice = entryFactory.create(entry);
             }

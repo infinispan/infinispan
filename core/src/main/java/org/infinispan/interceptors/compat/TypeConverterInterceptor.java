@@ -45,27 +45,22 @@ public class TypeConverterInterceptor extends CommandInterceptor {
    public Object visitGetKeyValueCommand(InvocationContext ctx, GetKeyValueCommand command) throws Throwable {
       Object key = command.getKey();
       command.setKey(typeConverter.boxKey(key));
-      Object ret = super.visitGetKeyValueCommand(ctx, command);
-      return typeConverter.unboxValue(key, ret);
-   }
-
-   @Override
-   public Object visitGetCacheEntryCommand(InvocationContext ctx, GetKeyValueCommand command) throws Throwable {
-      Object key = command.getKey();
-      command.setKey(typeConverter.boxKey(key));
       Object ret = invokeNextInterceptor(ctx, command);
       if (ret != null) {
-         InternalCacheEntry entry = (InternalCacheEntry) ret;
-         Object returnValue = typeConverter.unboxValue(key, entry.getValue());
-         // Create a copy of the entry to avoid modifying the internal entry
-         return entryFactory.create(
-               entry.getKey(), returnValue, entry.getVersion(),
-               entry.getLifespan(), entry.getMaxIdle());
+         if (command.isReturnEntry()) {
+            InternalCacheEntry entry = (InternalCacheEntry) ret;
+            Object returnValue = typeConverter.unboxValue(key, entry.getValue());
+            // Create a copy of the entry to avoid modifying the internal entry
+            return entryFactory.create(
+                  entry.getKey(), returnValue, entry.getMetadata(),
+                  entry.getLifespan(), entry.getMaxIdle());
+         }
+
+         return typeConverter.unboxValue(key, ret);
       }
 
       return null;
    }
-
 
    @Override
    public Object visitReplaceCommand(InvocationContext ctx, ReplaceCommand command) throws Throwable {

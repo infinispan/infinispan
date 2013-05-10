@@ -23,12 +23,12 @@
 package org.infinispan.commands;
 
 import org.infinispan.Cache;
+import org.infinispan.Metadata;
 import org.infinispan.atomic.Delta;
 import org.infinispan.commands.control.LockControlCommand;
 import org.infinispan.commands.module.ModuleCommandInitializer;
 import org.infinispan.commands.read.DistributedExecuteCommand;
 import org.infinispan.commands.read.EntrySetCommand;
-import org.infinispan.commands.read.GetCacheEntryCommand;
 import org.infinispan.commands.read.GetKeyValueCommand;
 import org.infinispan.commands.read.KeySetCommand;
 import org.infinispan.commands.read.MapCombineCommand;
@@ -61,13 +61,10 @@ import org.infinispan.commands.write.PutKeyValueCommand;
 import org.infinispan.commands.write.PutMapCommand;
 import org.infinispan.commands.write.RemoveCommand;
 import org.infinispan.commands.write.ReplaceCommand;
-import org.infinispan.commands.write.VersionedPutKeyValueCommand;
 import org.infinispan.commands.write.WriteCommand;
-import org.infinispan.commands.write.*;
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.container.DataContainer;
 import org.infinispan.container.InternalEntryFactory;
-import org.infinispan.container.versioning.EntryVersion;
 import org.infinispan.context.Flag;
 import org.infinispan.context.InvocationContextContainer;
 import org.infinispan.distexec.mapreduce.MapReduceManager;
@@ -182,13 +179,8 @@ public class CommandsFactoryImpl implements CommandsFactory {
    }
 
    @Override
-   public PutKeyValueCommand buildPutKeyValueCommand(Object key, Object value, long lifespanMillis, long maxIdleTimeMillis, Set<Flag> flags) {
-      return new PutKeyValueCommand(key, value, false, notifier, lifespanMillis, maxIdleTimeMillis, flags);
-   }
-
-   @Override
-   public VersionedPutKeyValueCommand buildVersionedPutKeyValueCommand(Object key, Object value, long lifespanMillis, long maxIdleTimeMillis, EntryVersion version, Set<Flag> flags) {
-      return new VersionedPutKeyValueCommand(key, value, false, notifier, lifespanMillis, maxIdleTimeMillis, flags, version);
+   public PutKeyValueCommand buildPutKeyValueCommand(Object key, Object value, Metadata metadata, Set<Flag> flags) {
+      return new PutKeyValueCommand(key, value, false, notifier, metadata, flags);
    }
 
    @Override
@@ -212,13 +204,8 @@ public class CommandsFactoryImpl implements CommandsFactory {
    }
 
    @Override
-   public ReplaceCommand buildReplaceCommand(Object key, Object oldValue, Object newValue, long lifespan, long maxIdleTimeMillis, Set<Flag> flags) {
-      return new ReplaceCommand(key, oldValue, newValue, notifier, lifespan, maxIdleTimeMillis, flags);
-   }
-
-   @Override
-   public VersionedReplaceCommand buildVersionedReplaceCommand(Object key, Object oldValue, Object newValue, long lifespanMillis, long maxIdleTimeMillis, EntryVersion version, Set<Flag> flags) {
-      return new VersionedReplaceCommand(key, oldValue, newValue, notifier, lifespanMillis, maxIdleTimeMillis, version, flags);
+   public ReplaceCommand buildReplaceCommand(Object key, Object oldValue, Object newValue, Metadata metadata, Set<Flag> flags) {
+      return new ReplaceCommand(key, oldValue, newValue, notifier, metadata, flags);
    }
 
    @Override
@@ -254,18 +241,13 @@ public class CommandsFactoryImpl implements CommandsFactory {
    }
 
    @Override
-   public GetKeyValueCommand buildGetKeyValueCommand(Object key, Set<Flag> flags) {
-      return new GetKeyValueCommand(key, flags);
+   public GetKeyValueCommand buildGetKeyValueCommand(Object key, Set<Flag> flags, boolean returnEntry) {
+      return new GetKeyValueCommand(key, flags, returnEntry);
    }
 
    @Override
-   public GetCacheEntryCommand buildGetCacheEntryCommand(Object key, Set<Flag> flags) {
-      return new GetCacheEntryCommand(key, flags);
-   }
-
-   @Override
-   public PutMapCommand buildPutMapCommand(Map<?, ?> map, long lifespan, long maxIdleTimeMillis, Set<Flag> flags) {
-      return new PutMapCommand(map, notifier, lifespan, maxIdleTimeMillis, flags);
+   public PutMapCommand buildPutMapCommand(Map<?, ?> map, Metadata metadata, Set<Flag> flags) {
+      return new PutMapCommand(map, notifier, metadata, flags);
    }
 
    @Override
@@ -331,14 +313,10 @@ public class CommandsFactoryImpl implements CommandsFactory {
       if (c == null) return;
       switch (c.getCommandId()) {
          case PutKeyValueCommand.COMMAND_ID:
-         case VersionedPutKeyValueCommand.COMMAND_ID:
             ((PutKeyValueCommand) c).init(notifier);
             break;
          case ReplaceCommand.COMMAND_ID:
             ((ReplaceCommand) c).init(notifier);
-            break;
-         case VersionedReplaceCommand.COMMAND_ID:
-            ((VersionedReplaceCommand) c).init(notifier);
             break;
          case PutMapCommand.COMMAND_ID:
             ((PutMapCommand) c).init(notifier);

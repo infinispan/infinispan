@@ -22,6 +22,8 @@
  */
 package org.infinispan.container.entries;
 
+import org.infinispan.EmbeddedMetadata;
+import org.infinispan.Metadata;
 import org.infinispan.io.UnsignedNumeric;
 import org.infinispan.marshall.AbstractExternalizer;
 import org.infinispan.marshall.Ids;
@@ -31,6 +33,7 @@ import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
 import java.util.Set;
+import java.util.concurrent.TimeUnit;
 
 /**
  * A cache entry that is transient, i.e., it can be considered expired after a period of not being used.
@@ -96,7 +99,6 @@ public class TransientCacheEntry extends AbstractInternalCacheEntry {
       return cacheValue.isExpired();
    }
 
-   @Override
    public void setMaxIdle(long maxIdle) {
       cacheValue.maxIdle = maxIdle;
    }
@@ -129,6 +131,18 @@ public class TransientCacheEntry extends AbstractInternalCacheEntry {
    @Override
    public InternalCacheValue toInternalCacheValue() {
       return cacheValue;
+   }
+
+   @Override
+   public Metadata getMetadata() {
+      return new EmbeddedMetadata.Builder()
+            .maxIdle(cacheValue.getMaxIdle(), TimeUnit.MILLISECONDS).build();
+   }
+
+   @Override
+   public void setMetadata(Metadata metadata) {
+      throw new IllegalStateException(
+            "Metadata cannot be set on mortal entries. They need to be recreated via the entry factory.");
    }
 
    @Override

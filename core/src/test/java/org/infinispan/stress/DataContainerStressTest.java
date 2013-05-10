@@ -22,6 +22,7 @@
  */
 package org.infinispan.stress;
 
+import org.infinispan.EmbeddedMetadata;
 import org.infinispan.container.*;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
@@ -93,7 +94,7 @@ public class DataContainerStressTest {
             while (use_time && run.get() || runs < actual_num_loops) {
                if (runs % 100000 == 0) log.info("PUT run # " + runs);
 //               TestingUtil.sleepThread(10);
-               dc.put(key + R.nextInt(NUM_KEYS), "value", null, -1, -1);
+               dc.put(key + R.nextInt(NUM_KEYS), "value", new EmbeddedMetadata.Builder().build());
                runs++;
             }
             perf.put("PUT", opsPerMS(System.nanoTime() - start, runs));

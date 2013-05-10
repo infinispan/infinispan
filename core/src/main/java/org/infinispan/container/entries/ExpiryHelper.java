@@ -29,17 +29,17 @@ package org.infinispan.container.entries;
  * @author Sanne Grinovero
  * @since 4.0
  */
-class ExpiryHelper {
+public class ExpiryHelper {
 
-   static boolean isExpiredMortal(long lifespan, long created, long now) {
+   public static boolean isExpiredMortal(long lifespan, long created, long now) {
       return lifespan > -1 && created > -1 && now > created + lifespan;
    }
 
-   static boolean isExpiredTransient(long maxIdle, long lastUsed, long now) {
+   public static boolean isExpiredTransient(long maxIdle, long lastUsed, long now) {
       return maxIdle > -1 && lastUsed > -1 && now > maxIdle + lastUsed;
    }
 
-   static boolean isExpiredTransientMortal(long maxIdle, long lastUsed, long lifespan, long created, long now) {
+   public static boolean isExpiredTransientMortal(long maxIdle, long lastUsed, long lifespan, long created, long now) {
       return isExpiredTransient(maxIdle, lastUsed, now) || isExpiredMortal(lifespan, created, now);
    }
 
@@ -48,7 +48,7 @@ class ExpiryHelper {
     * and reuse the result of {@link System#currentTimeMillis()} multiple times
     */
    @Deprecated
-   static boolean isExpiredMortal(long lifespan, long created) {
+   public static boolean isExpiredMortal(long lifespan, long created) {
       return lifespan > -1 && created > -1 && System.currentTimeMillis() > created + lifespan;
    }
 
@@ -57,7 +57,7 @@ class ExpiryHelper {
     * and reuse the result of {@link System#currentTimeMillis()} multiple times
     */
    @Deprecated
-   static boolean isExpiredTransient(long maxIdle, long lastUsed) {
+   public static boolean isExpiredTransient(long maxIdle, long lastUsed) {
       return maxIdle > -1 && lastUsed > -1 && System.currentTimeMillis() > maxIdle + lastUsed;
    }
 
@@ -66,7 +66,7 @@ class ExpiryHelper {
     * and reuse the result of {@link System#currentTimeMillis()} multiple times
     */
    @Deprecated
-   static boolean isExpiredTransientMortal(long maxIdle, long lastUsed, long lifespan, long created) {
+   public static boolean isExpiredTransientMortal(long maxIdle, long lastUsed, long lifespan, long created) {
       return isExpiredTransient(maxIdle, lastUsed) || isExpiredMortal(lifespan, created);
    }
 }

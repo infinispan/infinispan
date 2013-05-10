@@ -111,9 +111,6 @@ public class RemoteCommandsFactory {
             case PutKeyValueCommand.COMMAND_ID:
                command = new PutKeyValueCommand();
                break;
-            case VersionedPutKeyValueCommand.COMMAND_ID:
-               command = new VersionedPutKeyValueCommand();
-               break;
             case PutMapCommand.COMMAND_ID:
                command = new PutMapCommand();
                break;
@@ -122,9 +119,6 @@ public class RemoteCommandsFactory {
                break;
             case ReplaceCommand.COMMAND_ID:
                command = new ReplaceCommand();
-               break;
-            case VersionedReplaceCommand.COMMAND_ID:
-               command = new VersionedReplaceCommand();
                break;
             case GetKeyValueCommand.COMMAND_ID:
                command = new GetKeyValueCommand();

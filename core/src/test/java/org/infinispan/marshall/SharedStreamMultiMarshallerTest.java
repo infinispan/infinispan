@@ -19,6 +19,7 @@
 
 package org.infinispan.marshall;
 
+import org.infinispan.EmbeddedMetadata;
 import org.infinispan.commands.write.PutKeyValueCommand;
 import org.infinispan.context.Flag;
 import org.infinispan.io.ExposedByteArrayOutputStream;
@@ -53,7 +54,7 @@ public class SharedStreamMultiMarshallerTest {
       cm.getCache(); // Start cache so that global marshaller is resolved
       JGroupsAddress address = new JGroupsAddress(new IpAddress(12345));
       PutKeyValueCommand cmd = new PutKeyValueCommand(
-            "k", "v", false, null, 0, 0, Collections.<Flag>emptySet());
+            "k", "v", false, null, new EmbeddedMetadata.Builder().build(), Collections.<Flag>emptySet());
       try {
          // Write
          StreamingMarshaller globalMarshal = extractGlobalMarshaller(cm);
@@ -114,8 +115,6 @@ public class SharedStreamMultiMarshallerTest {
       EmbeddedCacheManager cm = TestCacheManagerFactory.createClusteredCacheManager();
       cm.getCache(); // Start cache so that global marshaller is resolved
       JGroupsAddress address = new JGroupsAddress(new IpAddress(12345));
-      PutKeyValueCommand cmd = new PutKeyValueCommand(
-            "k", "v", false, null, 0, 0, Collections.<Flag>emptySet());
       try {
          // Write
          StreamingMarshaller globalMarshal = extractGlobalMarshaller(cm);

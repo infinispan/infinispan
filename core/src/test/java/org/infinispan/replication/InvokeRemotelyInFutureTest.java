@@ -26,7 +26,9 @@ import java.util.concurrent.Future;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 import org.infinispan.Cache;
+import org.infinispan.EmbeddedMetadata;
 import org.infinispan.commands.CommandsFactory;
+import org.infinispan.commands.write.PutKeyValueCommand;
 import org.infinispan.config.Configuration;
 import org.infinispan.test.MultipleCacheManagersTest;
 import org.infinispan.test.TestingUtil;
@@ -63,8 +65,10 @@ public class InvokeRemotelyInFutureTest extends MultipleCacheManagersTest {
          }
       });
       CommandsFactory cf = cache1.getAdvancedCache().getComponentRegistry().getComponent(CommandsFactory.class);
-      cache1.getAdvancedCache().getRpcManager().invokeRemotelyInFuture(null, cf.buildPutKeyValueCommand("k","v", -1, -1, null),
-                                                                       cache1.getAdvancedCache().getRpcManager().getDefaultRpcOptions(true), f);
+      PutKeyValueCommand put = cf.buildPutKeyValueCommand("k", "v",
+            new EmbeddedMetadata.Builder().build(), null);
+      cache1.getAdvancedCache().getRpcManager().invokeRemotelyInFuture(null,
+            put, cache1.getAdvancedCache().getRpcManager().getDefaultRpcOptions(true), f);
       TestingUtil.sleepThread(2000);
       assert futureDoneOk.get();   
    }

@@ -24,6 +24,7 @@ package org.infinispan.container;
 
 import org.infinispan.atomic.Delta;
 import org.infinispan.commands.FlagAffectedCommand;
+import org.infinispan.commands.write.ReplaceCommand;
 import org.infinispan.container.entries.CacheEntry;
 import org.infinispan.container.entries.InternalCacheEntry;
 import org.infinispan.container.entries.MVCCEntry;
@@ -63,7 +64,7 @@ public interface EntryFactory {
     * Used for wrapping a cache entry for replacement. The wrapped entry is added to the
     * supplied InvocationContext.
     */
-   MVCCEntry wrapEntryForReplace(InvocationContext ctx, Object key) throws InterruptedException;
+   MVCCEntry wrapEntryForReplace(InvocationContext ctx, ReplaceCommand cmd) throws InterruptedException;
 
    /**
     * Used for wrapping a cache entry for removal. The wrapped entry is added to the

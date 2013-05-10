@@ -37,7 +37,6 @@ import java.lang.StringBuilder
 import org.jboss.netty.handler.codec.replay.ReplayingDecoder
 import org.jboss.netty.buffer.ChannelBuffers
 import org.jboss.netty.util.CharsetUtil
-import org.infinispan.container.versioning.EntryVersion
 import org.infinispan.container.entries.CacheEntry
 
 /**
@@ -255,7 +254,7 @@ abstract class AbstractProtocolDecoder[K, V](transport: NettyTransport)
          // Hacky, but CacheEntry has not been generified
          val prev: V = entry.getValue.asInstanceOf[V]
          val streamVersion = new ServerEntryVersion(params.streamVersion)
-         if (entry.getVersion == streamVersion) {
+         if (entry.getMetadata.version() == streamVersion) {
             val v = createValue(Integer.MIN_VALUE) // Version unused within method
             // Generate new version only if key present and version has not changed, otherwise it's wasteful
             val replaced = cache.replace(key, prev, v, buildMetadata())

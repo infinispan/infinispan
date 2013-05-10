@@ -18,6 +18,8 @@
 
 package org.infinispan.interceptors.totalorder;
 
+import org.infinispan.EmbeddedMetadata;
+import org.infinispan.Metadata;
 import org.infinispan.commands.FlagAffectedCommand;
 import org.infinispan.commands.tx.CommitCommand;
 import org.infinispan.commands.tx.PrepareCommand;
@@ -96,21 +98,28 @@ public class TotalOrderVersionedEntryWrappingInterceptor extends VersionedEntryW
    }
 
    @Override
-   protected void commitContextEntry(CacheEntry entry, InvocationContext ctx, FlagAffectedCommand command, EntryVersion userProvidedVersion) {
+   protected void commitContextEntry(CacheEntry entry, InvocationContext ctx, FlagAffectedCommand command, Metadata metadata) {
       if (ctx.isInTxScope() && !isFromStateTransfer(ctx)) {
+         Metadata commitMetadata;
+         // If user provided version, use it, otherwise generate/increment accordingly
          ClusteredRepeatableReadEntry clusterMvccEntry = (ClusteredRepeatableReadEntry) entry;
-         EntryVersion existingVersion = clusterMvccEntry.getVersion();
-
+         EntryVersion existingVersion = clusterMvccEntry.getMetadata().version();
          EntryVersion newVersion;
          if (existingVersion == null) {
             newVersion = versionGenerator.generateNew();
          } else {
             newVersion = versionGenerator.increment((IncrementableEntryVersion) existingVersion);
          }
-         cdl.commitEntry(entry, newVersion, command, ctx);
+
+         if (metadata == null)
+            commitMetadata = new EmbeddedMetadata.Builder().version(newVersion).build();
+         else
+            commitMetadata = metadata.builder().version(newVersion).build();
+
+         cdl.commitEntry(entry, commitMetadata, command, ctx);
       } else {
          // This could be a state transfer call!
-         cdl.commitEntry(entry, entry.getVersion(), command, ctx);
+         cdl.commitEntry(entry, entry.getMetadata(), command, ctx);
       }
    }
 }

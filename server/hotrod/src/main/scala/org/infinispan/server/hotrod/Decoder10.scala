@@ -26,7 +26,7 @@ import logging.Log
 import org.infinispan.server.core.Operation._
 import HotRodOperation._
 import OperationStatus._
-import org.infinispan.{AdvancedCache, Cache}
+import org.infinispan.AdvancedCache
 import org.infinispan.stats.Stats
 import org.infinispan.server.core._
 import collection.mutable
@@ -38,7 +38,6 @@ import org.jboss.netty.buffer.ChannelBuffer
 import org.infinispan.server.core.transport.ExtendedChannelBuffer._
 import transport.NettyTransport
 import org.infinispan.container.entries.{CacheEntry, InternalCacheEntry}
-import org.infinispan.container.versioning.EntryVersion
 
 /**
  * HotRod protocol decoder specific for specification version 1.0.
@@ -162,7 +161,7 @@ object Decoder10 extends AbstractVersionedDecoder with ServerConstants with Log 
                GetResponse, Success, h.topologyId,
                Some(entry.getValue.asInstanceOf[Array[Byte]]))
       else if (entry != null && op == GetWithVersionRequest) {
-         val version = entry.getVersion.asInstanceOf[ServerEntryVersion].version
+         val version = entry.getMetadata.version().asInstanceOf[ServerEntryVersion].version
          new GetWithVersionResponse(h.version, h.messageId, h.cacheName,
             h.clientIntel, GetWithVersionResponse, Success, h.topologyId,
             Some(entry.getValue.asInstanceOf[Array[Byte]]), version)
@@ -200,7 +199,7 @@ object Decoder10 extends AbstractVersionedDecoder with ServerConstants with Log 
                // Hacky, but CacheEntry has not been generified
                val prev = entry.getValue.asInstanceOf[Array[Byte]]
                val streamVersion = new ServerEntryVersion(params.streamVersion)
-               if (entry.getVersion == streamVersion) {
+               if (entry.getMetadata.version() == streamVersion) {
                   val removed = cache.remove(k, prev)
                   if (removed)
                      createResponse(h, RemoveIfUnmodifiedResponse, Success, prev)
@@ -246,7 +245,7 @@ object Decoder10 extends AbstractVersionedDecoder with ServerConstants with Log 
       val ce = cache.getAdvancedCache.getCacheEntry(k)
       if (ce != null) {
          val ice = ce.asInstanceOf[InternalCacheEntry]
-         val entryVersion = ice.getVersion.asInstanceOf[ServerEntryVersion]
+         val entryVersion = ice.getMetadata.version().asInstanceOf[ServerEntryVersion]
          val v = ce.getValue.asInstanceOf[Array[Byte]]
          val lifespan = if (ice.getLifespan < 0) -1 else (ice.getLifespan / 1000).toInt
          val maxIdle = if (ice.getMaxIdle < 0) -1 else (ice.getMaxIdle / 1000).toInt

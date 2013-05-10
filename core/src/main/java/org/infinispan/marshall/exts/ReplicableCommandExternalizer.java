@@ -135,13 +135,13 @@ public class ReplicableCommandExternalizer extends AbstractExternalizer<Replicab
 
    @Override
    public Set<Class<? extends ReplicableCommand>> getTypeClasses() {
-       Set<Class<? extends ReplicableCommand>> coreCommands = Util.<Class<? extends ReplicableCommand>>asSet(
+       Set<Class<? extends ReplicableCommand>> coreCommands = Util.asSet(
             CacheTopologyControlCommand.class, DistributedExecuteCommand.class, GetKeyValueCommand.class,
             ClearCommand.class, EvictCommand.class, ApplyDeltaCommand.class,
             InvalidateCommand.class, InvalidateL1Command.class,
-            PutKeyValueCommand.class, VersionedPutKeyValueCommand.class,
+            PutKeyValueCommand.class,
             PutMapCommand.class, RemoveCommand.class,
-            ReplaceCommand.class, VersionedReplaceCommand.class);
+            ReplaceCommand.class);
       // Search only those commands that replicable and not cache specific replicable commands
       Collection<Class<? extends ReplicableCommand>> moduleCommands = globalComponentRegistry.getModuleProperties().moduleOnlyReplicableCommands();
       if (moduleCommands != null && !moduleCommands.isEmpty()) coreCommands.addAll(moduleCommands);

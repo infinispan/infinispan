@@ -68,13 +68,11 @@ public class NonTxDistributionInterceptor extends BaseDistributionInterceptor {
             Object key = command.getKey();
             if (needsRemoteGet(ctx, command)) {
                InternalCacheEntry remoteEntry = remoteGetCacheEntry(ctx, key, command);
-               if (remoteEntry != null)
-                  returnValue = remoteEntry.getValue();
+               returnValue = computeGetReturn(remoteEntry, command);
             }
             if (returnValue == null) {
                InternalCacheEntry localEntry = localGetCacheEntry(ctx, key, false, command);
-               if (localEntry != null)
-                  returnValue = localEntry.getValue();
+               returnValue = computeGetReturn(localEntry, command);
             }
          }
          return returnValue;
@@ -84,24 +82,11 @@ public class NonTxDistributionInterceptor extends BaseDistributionInterceptor {
       }
    }
 
-   @Override
-   public Object visitGetCacheEntryCommand(InvocationContext ctx, GetKeyValueCommand command) throws Throwable {
-      try {
-         Object returnValue = invokeNextInterceptor(ctx, command);
-         if (returnValue == null) {
-            Object key = command.getKey();
-            if (needsRemoteGet(ctx, command)) {
-               returnValue = remoteGetCacheEntry(ctx, key, command);
-            }
-            if (returnValue == null) {
-               returnValue = localGetCacheEntry(ctx, key, false, command);
-            }
-         }
-         return returnValue;
-      } catch (SuspectException e) {
-         // retry
-         return visitGetKeyValueCommand(ctx, command);
-      }
+   private Object computeGetReturn(InternalCacheEntry entry, GetKeyValueCommand command) {
+      if (!command.isReturnEntry() && entry != null)
+         return entry.getValue();
+
+      return entry;
    }
 
    @Override

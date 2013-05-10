@@ -22,9 +22,9 @@
  */
 package org.infinispan.container.entries;
 
+import org.infinispan.Metadata;
 import org.infinispan.atomic.AtomicHashMap;
 import org.infinispan.container.DataContainer;
-import org.infinispan.container.versioning.EntryVersion;
 import org.infinispan.util.Util;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
@@ -45,18 +45,13 @@ public class ReadCommittedEntry implements MVCCEntry {
 
    protected Object key, value, oldValue;
    protected byte flags = 0;
-   private long lifespan = -1;
-   private long maxIdle = -1;
+   protected Metadata metadata;
 
-   protected ReadCommittedEntry() {
-      setValid(true);
-   }
-
-   public ReadCommittedEntry(Object key, Object value, EntryVersion version, long lifespan) {
+   public ReadCommittedEntry(Object key, Object value, Metadata metadata) {
       setValid(true);
       this.key = key;
       this.value = value;
-      this.lifespan = lifespan;
+      this.metadata = metadata;
    }
 
    @Override
@@ -118,22 +113,12 @@ public class ReadCommittedEntry implements MVCCEntry {
 
    @Override
    public final long getLifespan() {
-      return lifespan;
+      return metadata.lifespan();
    }
 
    @Override
    public final long getMaxIdle() {
-      return maxIdle;
-   }
-
-   @Override
-   public final void setMaxIdle(long maxIdle) {
-      this.maxIdle = maxIdle;
-   }
-
-   @Override
-   public final void setLifespan(long lifespan) {
-      this.lifespan = lifespan;
+      return metadata.maxIdle();
    }
 
    @Override
@@ -169,7 +154,7 @@ public class ReadCommittedEntry implements MVCCEntry {
    }
 
    @Override
-   public final void commit(DataContainer container, EntryVersion newVersion) {
+   public final void commit(DataContainer container, Metadata providedMetadata) {
       // TODO: No tombstones for now!!  I'll only need them for an eventually consistent cache
 
       // only do stuff if there are changes.
@@ -192,7 +177,11 @@ public class ReadCommittedEntry implements MVCCEntry {
          if (isRemoved()) {
             container.remove(key);
          } else if (value != null) {
-            container.put(key, value, newVersion, lifespan, maxIdle);
+            // Can't just rely on the entry's metadata because it could have
+            // been modified by the interceptor chain (i.e. new version
+            // generated if none provided by the user)
+            container.put(key, value,
+                  providedMetadata == null ? metadata : providedMetadata);
          }
          reset();
       }
@@ -233,12 +222,13 @@ public class ReadCommittedEntry implements MVCCEntry {
    }
 
    @Override
-   public EntryVersion getVersion() {
-      return null;
+   public Metadata getMetadata() {
+      return metadata;
    }
 
    @Override
-   public void setVersion(EntryVersion version) {
+   public void setMetadata(Metadata metadata) {
+      this.metadata = metadata;
    }
 
    @Override

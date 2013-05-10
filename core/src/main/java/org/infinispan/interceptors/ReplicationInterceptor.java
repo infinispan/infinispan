@@ -159,11 +159,6 @@ public class ReplicationInterceptor extends ClusteringInterceptor {
    }
 
    @Override
-   public Object visitGetCacheEntryCommand(InvocationContext ctx, GetKeyValueCommand command) throws Throwable {
-      return visitGetCommand(ctx, command, true);
-   }
-
-   @Override
    public Object visitLockControlCommand(TxInvocationContext ctx, LockControlCommand command) throws Throwable {
       Object retVal = invokeNextInterceptor(ctx, command);
       if (ctx.isOriginLocal()) {

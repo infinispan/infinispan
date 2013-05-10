@@ -181,7 +181,7 @@ public class EntrySetCommand extends AbstractLocalCommand implements VisitableCo
                while (it1.hasNext()) {
                   CacheEntry e = it1.next();
                   if (e.isCreated()) {
-                     next = immutableInternalCacheEntry(entryFactory.create(e.getKey(), e.getValue(), e.getVersion()));
+                     next = immutableInternalCacheEntry(entryFactory.create(e.getKey(), e.getValue(), e.getMetadata()));
                      found = true;
                      break;
                   }
@@ -204,7 +204,7 @@ public class EntrySetCommand extends AbstractLocalCommand implements VisitableCo
                      break;
                   }
                   if (e.isChanged()) {
-                     next = immutableInternalCacheEntry(entryFactory.create(key, e.getValue(), e.getVersion()));
+                     next = immutableInternalCacheEntry(entryFactory.create(key, e.getValue(), e.getMetadata()));
                      found = true;
                      break;
                   }

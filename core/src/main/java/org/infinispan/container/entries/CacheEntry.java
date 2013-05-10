@@ -22,9 +22,9 @@
  */
 package org.infinispan.container.entries;
 
+import org.infinispan.Metadata;
 import org.infinispan.container.DataContainer;
-import org.infinispan.container.entries.versioned.Versioned;
-import org.infinispan.container.versioning.EntryVersion;
+import org.infinispan.container.entries.metadata.MetadataAware;
 
 import java.util.Map;
 
@@ -35,7 +35,7 @@ import java.util.Map;
  * @author Galder Zamarreño
  * @since 4.0
  */
-public interface CacheEntry extends Map.Entry<Object, Object>, Versioned {
+public interface CacheEntry extends Map.Entry<Object, Object>, MetadataAware {
 
    /**
     * Tests whether the entry represents a null value, typically used for repeatable read.
@@ -102,20 +102,6 @@ public interface CacheEntry extends Map.Entry<Object, Object>, Versioned {
    long getMaxIdle();
 
    /**
-    * Sets the maximum idle time of the entry.
-    *
-    * @param maxIdle maxIdle to set
-    */
-   void setMaxIdle(long maxIdle);
-
-   /**
-    * Sets the lifespan of the entry.
-    *
-    * @param lifespan lifespan to set
-    */
-   void setLifespan(long lifespan);
-
-   /**
     * Sets the value of the entry, returning the previous value
     *
     * @param value value to set
@@ -129,7 +115,7 @@ public interface CacheEntry extends Map.Entry<Object, Object>, Versioned {
     *
     * @param container data container to commit to
     */
-   void commit(DataContainer container, EntryVersion newVersion);
+   void commit(DataContainer container, Metadata metadata);
 
    /**
     * Rolls back changes

@@ -25,13 +25,11 @@ package org.infinispan.interceptors;
 
 import org.infinispan.commands.VisitableCommand;
 import org.infinispan.commands.control.LockControlCommand;
-import org.infinispan.commands.read.GetCacheEntryCommand;
 import org.infinispan.commands.read.GetKeyValueCommand;
 import org.infinispan.commands.tx.CommitCommand;
 import org.infinispan.commands.tx.PrepareCommand;
 import org.infinispan.commands.tx.RollbackCommand;
 import org.infinispan.container.entries.CacheEntry;
-import org.infinispan.context.Flag;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.context.impl.TxInvocationContext;
 import org.infinispan.factories.annotations.Inject;
@@ -93,18 +91,12 @@ public class CallInterceptor extends CommandInterceptor {
    public Object visitGetKeyValueCommand(InvocationContext ctx, GetKeyValueCommand command) throws Throwable {
       if (trace) log.trace("Executing command: " + command + ".");
       Object ret = command.perform(ctx);
-      if (ret != null)
-         notifyCacheEntryVisit(ctx, command, ret);
-
-      return ret;
-   }
-
-   @Override
-   public Object visitGetCacheEntryCommand(InvocationContext ctx, GetKeyValueCommand command) throws Throwable {
-      if (trace) log.trace("Executing command: " + command + ".");
-      Object ret = command.perform(ctx);
-      if (ret != null)
-         notifyCacheEntryVisit(ctx, command, ((CacheEntry) ret).getValue());
+      if (ret != null) {
+         if (command.isReturnEntry())
+            notifyCacheEntryVisit(ctx, command, ((CacheEntry) ret).getValue());
+         else
+            notifyCacheEntryVisit(ctx, command, ret);
+      }
 
       return ret;
    }

@@ -1,6 +1,6 @@
 /*
  * JBoss, Home of Professional Open Source
- * Copyright 2009 Red Hat Inc. and/or its affiliates and other
+ * Copyright 2013 Red Hat Inc. and/or its affiliates and other
  * contributors as indicated by the @author tags. All rights reserved.
  * See the copyright.txt in the distribution for a full listing of
  * individual contributors.
@@ -20,46 +20,24 @@
  * Software Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
  * 02110-1301 USA, or see the FSF site: http://www.fsf.org.
  */
-package org.infinispan.container.entries;
+
+package org.infinispan.commands;
 
 import org.infinispan.Metadata;
 
 /**
- * A null entry that is read in for removal
+ * A command that contains metadata information.
  *
- * @author Manik Surtani
- * @since 4.0
+ * @author Galder Zamarreño
+ * @since 5.3
  */
-public class NullMarkerEntryForRemoval extends RepeatableReadEntry {
-
-   public NullMarkerEntryForRemoval(Object key, Metadata metadata) {
-      super(key, null, metadata);
-   }
+public interface MetadataAwareCommand {
 
    /**
-    * @return always returns true
+    * Get metadata of this command.
+    *
+    * @return an instance of Metadata
     */
-   @Override
-   public final boolean isNull() {
-      return true;
-   }
-
-   /**
-    * @return always returns true so that any get commands, upon getting this entry, will ignore the entry as though it
-    *         were removed.
-    */
-   @Override
-   public final boolean isRemoved() {
-      return true;
-   }
-
-   /**
-    * @return always returns true so that any get commands, upon getting this entry, will ignore the entry as though it
-    *         were invalid.
-    */
-   @Override
-   public final boolean isValid() {
-      return false;
-   }
+   Metadata getMetadata();
 
 }

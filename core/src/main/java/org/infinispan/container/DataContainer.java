@@ -25,8 +25,8 @@ package org.infinispan.container;
 import java.util.Collection;
 import java.util.Set;
 
+import org.infinispan.Metadata;
 import org.infinispan.container.entries.InternalCacheEntry;
-import org.infinispan.container.versioning.EntryVersion;
 import org.infinispan.factories.annotations.Stop;
 import org.infinispan.factories.scopes.Scope;
 import org.infinispan.factories.scopes.Scopes;
@@ -68,10 +68,9 @@ public interface DataContainer extends Iterable<InternalCacheEntry> {
     * Puts an entry in the cache along with a lifespan and a maxIdle time
     * @param k key under which to store entry
     * @param v value to store
-    * @param lifespan lifespan in milliseconds.  -1 means immortal.
-    * @param maxIdle max idle time for which to store entry.  -1 means forever.
+    * @param metadata metadata of the entry
     */
-   void put(Object k, Object v, EntryVersion version, long lifespan, long maxIdle);
+   void put(Object k, Object v, Metadata metadata);
 
    /**
     * Tests whether an entry exists in the container

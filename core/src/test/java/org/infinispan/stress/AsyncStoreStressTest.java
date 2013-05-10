@@ -23,10 +23,10 @@
 
 package org.infinispan.stress;
 
+import org.infinispan.EmbeddedMetadata;
 import org.infinispan.container.InternalEntryFactory;
 import org.infinispan.container.InternalEntryFactoryImpl;
 import org.infinispan.container.entries.InternalCacheEntry;
-import org.infinispan.container.versioning.EntryVersion;
 import org.infinispan.loaders.CacheLoaderException;
 import org.infinispan.loaders.decorators.AbstractDelegatingStore;
 import org.infinispan.loaders.decorators.AsyncStore;
@@ -259,7 +259,7 @@ public class AsyncStoreStressTest {
          public boolean call(final String key, long run) {
             final int value = (int) run;
             final InternalCacheEntry entry =
-                  entryFactory.create(key, value, (EntryVersion) null);
+                  entryFactory.create(key, value, new EmbeddedMetadata.Builder().build());
             // Store acquiring locks and catching exceptions
             boolean result = withStore(key, new Callable<Boolean>() {
                @Override

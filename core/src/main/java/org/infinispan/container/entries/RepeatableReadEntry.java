@@ -22,11 +22,11 @@
  */
 package org.infinispan.container.entries;
 
+import org.infinispan.Metadata;
 import org.infinispan.container.DataContainer;
 import org.infinispan.transaction.WriteSkewException;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
-import org.infinispan.container.versioning.EntryVersion;
 
 /**
  * An extension of {@link ReadCommittedEntry} that provides Repeatable Read semantics
@@ -37,8 +37,8 @@ import org.infinispan.container.versioning.EntryVersion;
 public class RepeatableReadEntry extends ReadCommittedEntry {
    private static final Log log = LogFactory.getLog(RepeatableReadEntry.class);
 
-   public RepeatableReadEntry(Object key, Object value, EntryVersion version, long lifespan) {
-      super(key, value, version, lifespan);
+   public RepeatableReadEntry(Object key, Object value, Metadata metadata) {
+      super(key, value, metadata);
    }
 
    @Override

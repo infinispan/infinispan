@@ -22,6 +22,7 @@ package org.infinispan.xsite;
 import org.infinispan.AdvancedCache;
 import org.infinispan.Cache;
 import org.infinispan.CacheException;
+import org.infinispan.Metadata;
 import org.infinispan.commands.AbstractVisitor;
 import org.infinispan.commands.VisitableCommand;
 import org.infinispan.commands.tx.CommitCommand;
@@ -46,7 +47,6 @@ import org.infinispan.util.logging.LogFactory;
 import javax.transaction.TransactionManager;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
-import java.util.concurrent.TimeUnit;
 
 /**
  * @author Mircea Markus
@@ -93,13 +93,9 @@ public class BackupReceiverImpl implements BackupReceiver {
       public Object visitPutKeyValueCommand(InvocationContext ctx, PutKeyValueCommand command) throws Throwable {
          log.tracef("Processing a remote put %s", command);
          if (command.isConditional()) {
-            return backupCache.putIfAbsent(command.getKey(), command.getValue(),
-                                           command.getLifespanMillis(), TimeUnit.MILLISECONDS,
-                                           command.getMaxIdleTimeMillis(), TimeUnit.MILLISECONDS);
+            return backupCache.putIfAbsent(command.getKey(), command.getValue(), command.getMetadata());
          }
-         return backupCache.put(command.getKey(), command.getValue(),
-                                                                     command.getLifespanMillis(), TimeUnit.MILLISECONDS,
-                                                                     command.getMaxIdleTimeMillis(), TimeUnit.MILLISECONDS);
+         return backupCache.put(command.getKey(), command.getValue(), command.getMetadata());
       }
 
       @Override
@@ -114,18 +110,18 @@ public class BackupReceiverImpl implements BackupReceiver {
       public Object visitReplaceCommand(InvocationContext ctx, ReplaceCommand command) throws Throwable {
          if (command.isConditional() && command.getOldValue() != null) {
             return backupCache.replace(command.getKey(), command.getOldValue(), command.getNewValue(),
-                                       command.getLifespanMillis(), TimeUnit.MILLISECONDS,
-                                       command.getMaxIdleTimeMillis(), TimeUnit.MILLISECONDS);
+                                       command.getMetadata());
          }
          return backupCache.replace(command.getKey(), command.getNewValue(),
-                                    command.getLifespanMillis(), TimeUnit.MILLISECONDS,
-                                    command.getMaxIdleTimeMillis(), TimeUnit.MILLISECONDS);
+                                    command.getMetadata());
       }
 
       @Override
       public Object visitPutMapCommand(InvocationContext ctx, PutMapCommand command) throws Throwable {
-         backupCache.putAll(command.getMap(), command.getLifespanMillis(), TimeUnit.MILLISECONDS,
-                                   command.getMaxIdleTimeMillis(), TimeUnit.MILLISECONDS );
+         Metadata metadata = command.getMetadata();
+         backupCache.putAll(command.getMap(),
+               metadata.lifespan(), metadata.lifespanUnit(),
+               metadata.maxIdle(), metadata.maxIdleUnit());
          return null;
       }
 

@@ -22,8 +22,10 @@
  */
 package org.infinispan.commands.write;
 
+import org.infinispan.Metadata;
 import org.infinispan.atomic.Delta;
 import org.infinispan.atomic.DeltaAware;
+import org.infinispan.commands.MetadataAwareCommand;
 import org.infinispan.commands.Visitor;
 import org.infinispan.container.entries.MVCCEntry;
 import org.infinispan.context.Flag;
@@ -40,26 +42,25 @@ import static org.infinispan.util.Util.toStr;
  * @author Mircea.Markus@jboss.com
  * @since 4.0
  */
-public class PutKeyValueCommand extends AbstractDataWriteCommand {
+public class PutKeyValueCommand extends AbstractDataWriteCommand implements MetadataAwareCommand {
    public static final byte COMMAND_ID = 8;
 
    Object value;
    boolean putIfAbsent;
    CacheNotifier notifier;
    boolean successful = true;
-   long lifespanMillis = -1;
-   long maxIdleTimeMillis = -1;
+   Metadata metadata;
 
    public PutKeyValueCommand() {
    }
 
-   public PutKeyValueCommand(Object key, Object value, boolean putIfAbsent, CacheNotifier notifier, long lifespanMillis, long maxIdleTimeMillis, Set<Flag> flags) {
+   public PutKeyValueCommand(Object key, Object value, boolean putIfAbsent,
+         CacheNotifier notifier, Metadata metadata, Set<Flag> flags) {
       super(key, flags);
       setValue(value);
       this.putIfAbsent = putIfAbsent;
       this.notifier = notifier;
-      this.lifespanMillis = lifespanMillis;
-      this.maxIdleTimeMillis = maxIdleTimeMillis;
+      this.metadata = metadata;
    }
 
    public void init(CacheNotifier notifier) {
@@ -110,8 +111,7 @@ public class PutKeyValueCommand extends AbstractDataWriteCommand {
             if (entryValue instanceof DeltaAware) toMergeWith = (DeltaAware) entryValue;
             e.setValue(dv.merge(toMergeWith));
             o = entryValue;
-            e.setLifespan(lifespanMillis);
-            e.setMaxIdle(maxIdleTimeMillis);
+            e.setMetadata(metadata);
          } else {
             o = e.setValue(value);
             if (e.isRemoved()) {
@@ -119,8 +119,6 @@ public class PutKeyValueCommand extends AbstractDataWriteCommand {
                e.setValid(true);
                o = null;
             }
-            e.setLifespan(lifespanMillis);
-            e.setMaxIdle(maxIdleTimeMillis);
          }
       }
       return o;
@@ -133,7 +131,7 @@ public class PutKeyValueCommand extends AbstractDataWriteCommand {
 
    @Override
    public Object[] getParameters() {
-      return new Object[]{key, value, lifespanMillis, maxIdleTimeMillis, putIfAbsent, Flag.copyWithoutRemotableFlags(flags), previousRead};
+      return new Object[]{key, value, metadata, putIfAbsent, Flag.copyWithoutRemotableFlags(flags), previousRead};
    }
 
    @Override
@@ -142,11 +140,15 @@ public class PutKeyValueCommand extends AbstractDataWriteCommand {
       if (commandId != COMMAND_ID) throw new IllegalStateException("Invalid method id");
       key = parameters[0];
       value = parameters[1];
-      lifespanMillis = (Long) parameters[2];
-      maxIdleTimeMillis = (Long) parameters[3];
-      putIfAbsent = (Boolean) parameters[4];
-      flags = (Set<Flag>) parameters[5];
-      previousRead = (Boolean) parameters[6];
+      metadata = (Metadata) parameters[2];
+      putIfAbsent = (Boolean) parameters[3];
+      flags = (Set<Flag>) parameters[4];
+      previousRead = (Boolean) parameters[5];
+   }
+
+   @Override
+   public Metadata getMetadata() {
+      return metadata;
    }
 
    public boolean isPutIfAbsent() {
@@ -157,14 +159,6 @@ public class PutKeyValueCommand extends AbstractDataWriteCommand {
       this.putIfAbsent = putIfAbsent;
    }
 
-   public long getLifespanMillis() {
-      return lifespanMillis;
-   }
-
-   public long getMaxIdleTimeMillis() {
-      return maxIdleTimeMillis;
-   }
-
    @Override
    public boolean equals(Object o) {
       if (this == o) return true;
@@ -173,10 +167,9 @@ public class PutKeyValueCommand extends AbstractDataWriteCommand {
 
       PutKeyValueCommand that = (PutKeyValueCommand) o;
 
-      if (lifespanMillis != that.lifespanMillis) return false;
-      if (maxIdleTimeMillis != that.maxIdleTimeMillis) return false;
       if (putIfAbsent != that.putIfAbsent) return false;
       if (value != null ? !value.equals(that.value) : that.value != null) return false;
+      if (metadata != null ? !metadata.equals(that.metadata) : that.metadata != null) return false;
 
       return true;
    }
@@ -186,8 +179,7 @@ public class PutKeyValueCommand extends AbstractDataWriteCommand {
       int result = super.hashCode();
       result = 31 * result + (value != null ? value.hashCode() : 0);
       result = 31 * result + (putIfAbsent ? 1 : 0);
-      result = 31 * result + (int) (lifespanMillis ^ (lifespanMillis >>> 32));
-      result = 31 * result + (int) (maxIdleTimeMillis ^ (maxIdleTimeMillis >>> 32));
+      result = 31 * result + (metadata != null ? metadata.hashCode() : 0);
       return result;
    }
 
@@ -199,8 +191,7 @@ public class PutKeyValueCommand extends AbstractDataWriteCommand {
             .append(", value=").append(value)
             .append(", flags=").append(flags)
             .append(", putIfAbsent=").append(putIfAbsent)
-            .append(", lifespanMillis=").append(lifespanMillis)
-            .append(", maxIdleTimeMillis=").append(maxIdleTimeMillis)
+            .append(", metadata=").append(metadata)
             .append(", successful=").append(successful)
             .append("}")
             .toString();

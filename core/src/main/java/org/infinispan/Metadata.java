@@ -36,6 +36,10 @@ import java.util.concurrent.TimeUnit;
  */
 public interface Metadata {
 
+   // Concrete, immutable class chosen instead of interface in order to enable
+   // injection of internally generated versions in the absence of user
+   // provided version.
+
    /**
     * Returns the lifespan of the cache entry with which this metadata object
     * is associated.  Negative values are interpreted as unlimited lifespan.
@@ -78,16 +82,58 @@ public interface Metadata {
    EntryVersion version();
 
    /**
+    * Returns an instance of {@link Builder} which can be used to build
+    * new instances of {@link Metadata} instance which are full copies of
+    * this {@link Metadata}.
+    *
+    * @return instance of {@link Builder}
+    */
+   Builder builder();
+
+   /**
     * Metadata builder
     */
    public interface Builder {
 
+      /**
+       * Set lifespan.
+       *
+       * @param time of lifespan
+       * @param unit of lifespan time
+       * @return a builder instance
+       */
       Builder lifespan(long time, TimeUnit unit);
 
+      /**
+       * Set max idle time.
+       *
+       * @param time of max idle
+       * @param unit of max idle time
+       * @return a builder instance
+       */
       Builder maxIdle(long time, TimeUnit unit);
 
+      /**
+       * Set version.
+       *
+       * @param version of the metadata
+       * @return a builder instance
+       */
       Builder version(EntryVersion version);
 
+      /**
+       * Reads the metadata and apply its data.
+       *
+       * @param template metadata
+       * @return a builder instance
+       */
+      Builder read(Metadata template);
+
+      /**
+       * Build a metadata instance.
+       *
+       * @return an instance of metadata
+       */
       Metadata build();
 
    }

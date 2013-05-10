@@ -24,6 +24,7 @@
 package org.infinispan.marshall.jboss;
 
 import org.infinispan.CacheException;
+import org.infinispan.EmbeddedMetadata;
 import org.infinispan.atomic.AtomicHashMap;
 import org.infinispan.atomic.AtomicHashMapDelta;
 import org.infinispan.atomic.ClearOperation;
@@ -44,14 +45,14 @@ import org.infinispan.container.entries.TransientCacheEntry;
 import org.infinispan.container.entries.TransientCacheValue;
 import org.infinispan.container.entries.TransientMortalCacheEntry;
 import org.infinispan.container.entries.TransientMortalCacheValue;
-import org.infinispan.container.entries.versioned.VersionedImmortalCacheEntry;
-import org.infinispan.container.entries.versioned.VersionedImmortalCacheValue;
-import org.infinispan.container.entries.versioned.VersionedMortalCacheEntry;
-import org.infinispan.container.entries.versioned.VersionedMortalCacheValue;
-import org.infinispan.container.entries.versioned.VersionedTransientCacheEntry;
-import org.infinispan.container.entries.versioned.VersionedTransientCacheValue;
-import org.infinispan.container.entries.versioned.VersionedTransientMortalCacheEntry;
-import org.infinispan.container.entries.versioned.VersionedTransientMortalCacheValue;
+import org.infinispan.container.entries.metadata.MetadataImmortalCacheEntry;
+import org.infinispan.container.entries.metadata.MetadataImmortalCacheValue;
+import org.infinispan.container.entries.metadata.MetadataMortalCacheEntry;
+import org.infinispan.container.entries.metadata.MetadataMortalCacheValue;
+import org.infinispan.container.entries.metadata.MetadataTransientCacheEntry;
+import org.infinispan.container.entries.metadata.MetadataTransientCacheValue;
+import org.infinispan.container.entries.metadata.MetadataTransientMortalCacheEntry;
+import org.infinispan.container.entries.metadata.MetadataTransientMortalCacheValue;
 import org.infinispan.container.versioning.SimpleClusteredVersion;
 import org.infinispan.context.Flag;
 import org.infinispan.distribution.ch.DefaultConsistentHash;
@@ -269,14 +270,14 @@ public class ExternalizerTable implements ObjectTable {
       addInternalExternalizer(new TransientMortalCacheValue.Externalizer());
 
       addInternalExternalizer(new SimpleClusteredVersion.Externalizer());
-      addInternalExternalizer(new VersionedImmortalCacheEntry.Externalizer());
-      addInternalExternalizer(new VersionedMortalCacheEntry.Externalizer());
-      addInternalExternalizer(new VersionedTransientCacheEntry.Externalizer());
-      addInternalExternalizer(new VersionedTransientMortalCacheEntry.Externalizer());
-      addInternalExternalizer(new VersionedImmortalCacheValue.Externalizer());
-      addInternalExternalizer(new VersionedMortalCacheValue.Externalizer());
-      addInternalExternalizer(new VersionedTransientCacheValue.Externalizer());
-      addInternalExternalizer(new VersionedTransientMortalCacheValue.Externalizer());
+      addInternalExternalizer(new MetadataImmortalCacheEntry.Externalizer());
+      addInternalExternalizer(new MetadataMortalCacheEntry.Externalizer());
+      addInternalExternalizer(new MetadataTransientCacheEntry.Externalizer());
+      addInternalExternalizer(new MetadataTransientMortalCacheEntry.Externalizer());
+      addInternalExternalizer(new MetadataImmortalCacheValue.Externalizer());
+      addInternalExternalizer(new MetadataMortalCacheValue.Externalizer());
+      addInternalExternalizer(new MetadataTransientCacheValue.Externalizer());
+      addInternalExternalizer(new MetadataTransientMortalCacheValue.Externalizer());
 
       addInternalExternalizer(new ApplyDeltaCommand.DeltaCompositeKeyExternalizer());
       addInternalExternalizer(new AtomicHashMap.Externalizer());
@@ -312,6 +313,8 @@ public class ExternalizerTable implements ObjectTable {
       addInternalExternalizer(new InfinispanCollections.EmptySet.EmptySetExternalizer());
       addInternalExternalizer(new InfinispanCollections.EmptyMap.EmptyMapExternalizer());
       addInternalExternalizer(new InfinispanCollections.EmptyList.EmptyListExternalizer());
+
+      addInternalExternalizer(new EmbeddedMetadata.Externalizer());
    }
 
    void addInternalExternalizer(AdvancedExternalizer<?> ext) {
