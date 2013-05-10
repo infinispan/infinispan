@@ -66,23 +66,25 @@ public class NonTxConcurrentDistributionInterceptor extends NonTxDistributionInt
          if (!primaryOwners.isEmpty()) {
             rpcManager.invokeRemotely(primaryOwners, command, rpcManager.getDefaultRpcOptions(isSynchronous(command)));
          }
-      } else {
-         if (!command.isForwarded()) {
-            //I need to forward this to all the nodes that are secondary owners
-            Set<Object> keysIOwn = new HashSet<Object>(command.getAffectedKeys());
-            for (Object k : command.getAffectedKeys())
-               if (cdl.localNodeIsPrimaryOwner(k)) {
-                  keysIOwn.add(k);
-               }
-            Collection<Address> backupOwners = cdl.getOwners(keysIOwn);
-            if (!backupOwners.isEmpty()) {
-               command.setFlags(Flag.SKIP_LOCKING);
-               command.setForwarded(true);
-               rpcManager.invokeRemotely(backupOwners, command, rpcManager.getDefaultRpcOptions(isSynchronous(command)));
-               command.setForwarded(false);
+      }
+
+      if (!command.isForwarded()) {
+         //I need to forward this to all the nodes that are secondary owners
+         Set<Object> keysIOwn = new HashSet<Object>(command.getAffectedKeys().size());
+         for (Object k : command.getAffectedKeys()) {
+            if (cdl.localNodeIsPrimaryOwner(k)) {
+               keysIOwn.add(k);
             }
          }
+         Collection<Address> backupOwners = cdl.getOwners(keysIOwn);
+         if (!backupOwners.isEmpty()) {
+            command.setFlags(Flag.SKIP_LOCKING);
+            command.setForwarded(true);
+            rpcManager.invokeRemotely(backupOwners, command, rpcManager.getDefaultRpcOptions(isSynchronous(command)));
+            command.setForwarded(false);
+         }
       }
+
       return invokeNextInterceptor(ctx, command);
    }
 
