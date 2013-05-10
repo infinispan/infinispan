@@ -89,7 +89,7 @@ public class TotalOrderDistributionInterceptor extends TxDistributionInterceptor
       try {
          totalOrderAnycastPrepare(recipients, command, isSyncCommitPhase() ? null : getSelfDeliverFilter());
       } finally {
-         totalOrderTxPrepare(ctx);
+         transactionRemotelyPrepared(ctx);
       }
    }
 

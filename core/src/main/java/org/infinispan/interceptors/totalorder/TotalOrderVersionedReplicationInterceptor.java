@@ -74,7 +74,7 @@ public class TotalOrderVersionedReplicationInterceptor extends VersionedReplicat
       try {
          totalOrderBroadcastPrepare(command, isSyncCommitPhase() ? null : getSelfDeliverFilter());
       } finally {
-         totalOrderTxPrepare(context);
+         transactionRemotelyPrepared(context);
       }
    }
 }

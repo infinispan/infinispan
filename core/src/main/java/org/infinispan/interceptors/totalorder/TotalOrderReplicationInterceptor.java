@@ -62,7 +62,7 @@ public class TotalOrderReplicationInterceptor extends ReplicationInterceptor {
       try {
          totalOrderBroadcastPrepare(command, isSyncCommitPhase() ? null : getSelfDeliverFilter());
       } finally {
-         totalOrderTxPrepare(context);
+         transactionRemotelyPrepared(context);
       }
    }
 }

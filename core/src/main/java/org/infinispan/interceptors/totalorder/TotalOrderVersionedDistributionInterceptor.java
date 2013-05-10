@@ -107,7 +107,7 @@ public class TotalOrderVersionedDistributionInterceptor extends VersionedDistrib
             throw new CacheException("Not all keys were validated. Possible member has left the cluster");
          }
       } finally {
-         totalOrderTxPrepare(ctx);
+         transactionRemotelyPrepared(ctx);
       }
    }
 

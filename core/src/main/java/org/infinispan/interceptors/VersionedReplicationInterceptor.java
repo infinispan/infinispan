@@ -57,9 +57,13 @@ public class VersionedReplicationInterceptor extends ReplicationInterceptor {
       Address primaryOwner = getPrimaryOwner();
       if (!primaryOwner.equals(rpcManager.getAddress())) {
          setVersionsSeenOnPrepareCommand((VersionedPrepareCommand) command, context);
-         Map<Address, Response> resps = rpcManager.invokeRemotely(null, command, rpcManager.getDefaultRpcOptions(true, false));
-         Response r = resps.get(primaryOwner);  // We only really care about the coordinator's response.
-         readVersionsFromResponse(r, context.getCacheTransaction());
+         try {
+            Map<Address, Response> resps = rpcManager.invokeRemotely(null, command, rpcManager.getDefaultRpcOptions(true, false));
+            Response r = resps.get(primaryOwner);  // We only really care about the coordinator's response.
+            readVersionsFromResponse(r, context.getCacheTransaction());
+         } finally {
+            transactionRemotelyPrepared(context);
+         }
       } else {
          super.broadcastPrepare(context, command);
       }
