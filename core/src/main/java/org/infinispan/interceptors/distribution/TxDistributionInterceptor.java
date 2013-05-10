@@ -19,6 +19,7 @@
 
 package org.infinispan.interceptors.distribution;
 
+import org.infinispan.Metadata;
 import org.infinispan.commands.FlagAffectedCommand;
 import org.infinispan.commands.control.LockControlCommand;
 import org.infinispan.commands.read.GetKeyValueCommand;
@@ -49,6 +50,7 @@ import org.infinispan.util.logging.LogFactory;
 import java.util.Collection;
 import java.util.List;
 import java.util.concurrent.Future;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
 /**
@@ -151,11 +153,6 @@ public class TxDistributionInterceptor extends BaseDistributionInterceptor {
    @Override
    public Object visitGetKeyValueCommand(InvocationContext ctx, GetKeyValueCommand command) throws Throwable {
       return visitGetCommand(ctx, command, false);
-   }
-
-   @Override
-   public Object visitGetCacheEntryCommand(InvocationContext ctx, GetKeyValueCommand command) throws Throwable {
-      return visitGetCommand(ctx, command, true);
    }
 
    private Object visitGetCommand(InvocationContext ctx, GetKeyValueCommand command,
@@ -363,7 +360,7 @@ public class TxDistributionInterceptor extends BaseDistributionInterceptor {
 
          if (ice != null) {
             if (useClusteredWriteSkewCheck && ctx.isInTxScope()) {
-               ((TxInvocationContext)ctx).getCacheTransaction().putLookedUpRemoteVersion(key, ice.getVersion());
+               ((TxInvocationContext)ctx).getCacheTransaction().putLookedUpRemoteVersion(key, ice.getMetadata().version());
             }
 
             if (isL1CacheEnabled) {
@@ -380,7 +377,13 @@ public class TxDistributionInterceptor extends BaseDistributionInterceptor {
                try {
                   long l1Lifespan = cacheConfiguration.clustering().l1().lifespan();
                   long lifespan = ice.getLifespan() < 0 ? l1Lifespan : Math.min(ice.getLifespan(), l1Lifespan);
-                  PutKeyValueCommand put = cf.buildPutKeyValueCommand(ice.getKey(), ice.getValue(), lifespan, -1, command.getFlags());
+                  // Make a copy of the metadata stored internally, adjust
+                  // lifespan/maxIdle settings and send them a modification
+                  Metadata newMetadata = ice.getMetadata().builder()
+                        .lifespan(lifespan, TimeUnit.MILLISECONDS)
+                        .maxIdle(-1, TimeUnit.MILLISECONDS).build();
+                  PutKeyValueCommand put = cf.buildPutKeyValueCommand(
+                        ice.getKey(), ice.getValue(), newMetadata, command.getFlags());
                   lockAndWrap(ctx, key, ice, command);
                   invokeNextInterceptor(ctx, put);
                } catch (Exception e) {

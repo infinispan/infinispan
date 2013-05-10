@@ -22,6 +22,7 @@
  */
 package org.infinispan.test.fwk;
 
+import org.infinispan.EmbeddedMetadata;
 import org.infinispan.container.InternalEntryFactory;
 import org.infinispan.container.InternalEntryFactoryImpl;
 import org.infinispan.container.entries.ImmortalCacheEntry;
@@ -53,7 +54,8 @@ public class TestInternalCacheEntryFactory {
    }
 
    public static InternalCacheEntry create(Object key, Object value, long created, long lifespan, long lastUsed, long maxIdle) {
-      return FACTORY.create(key, value, null, created, lifespan, lastUsed, maxIdle);
+      return FACTORY.create(key, value, new EmbeddedMetadata.Builder().build(),
+            created, lifespan, lastUsed, maxIdle);
    }
 
    public static InternalCacheValue createValue(Object v, long created, long lifespan, long lastUsed, long maxIdle) {

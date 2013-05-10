@@ -20,6 +20,7 @@
 package org.infinispan.util.mocks;
 
 import org.infinispan.Cache;
+import org.infinispan.Metadata;
 import org.infinispan.atomic.Delta;
 import org.infinispan.commands.CancelCommand;
 import org.infinispan.commands.CommandsFactory;
@@ -28,7 +29,6 @@ import org.infinispan.commands.ReplicableCommand;
 import org.infinispan.commands.control.LockControlCommand;
 import org.infinispan.commands.read.DistributedExecuteCommand;
 import org.infinispan.commands.read.EntrySetCommand;
-import org.infinispan.commands.read.GetCacheEntryCommand;
 import org.infinispan.commands.read.GetKeyValueCommand;
 import org.infinispan.commands.read.KeySetCommand;
 import org.infinispan.commands.read.MapCombineCommand;
@@ -48,7 +48,6 @@ import org.infinispan.commands.tx.RollbackCommand;
 import org.infinispan.commands.tx.VersionedCommitCommand;
 import org.infinispan.commands.tx.VersionedPrepareCommand;
 import org.infinispan.commands.write.*;
-import org.infinispan.container.versioning.EntryVersion;
 import org.infinispan.context.Flag;
 import org.infinispan.distexec.mapreduce.Mapper;
 import org.infinispan.distexec.mapreduce.Reducer;
@@ -136,13 +135,8 @@ public class ControlledCommandFactory implements CommandsFactory {
    }
 
    @Override
-   public PutKeyValueCommand buildPutKeyValueCommand(Object key, Object value, long lifespanMillis, long maxIdleTimeMillis, Set<Flag> flags) {
-      return actual.buildPutKeyValueCommand(key, value, lifespanMillis, maxIdleTimeMillis, flags);
-   }
-
-   @Override
-   public VersionedPutKeyValueCommand buildVersionedPutKeyValueCommand(Object key, Object value, long lifespanMillis, long maxIdleTimeMillis, EntryVersion version, Set<Flag> flags) {
-      return actual.buildVersionedPutKeyValueCommand(key, value, lifespanMillis, maxIdleTimeMillis, version, flags);
+   public PutKeyValueCommand buildPutKeyValueCommand(Object key, Object value, Metadata metadata, Set<Flag> flags) {
+      return actual.buildPutKeyValueCommand(key, value, metadata, flags);
    }
 
    @Override
@@ -166,13 +160,8 @@ public class ControlledCommandFactory implements CommandsFactory {
    }
 
    @Override
-   public ReplaceCommand buildReplaceCommand(Object key, Object oldValue, Object newValue, long lifespanMillis, long maxIdleTimeMillis, Set<Flag> flags) {
-      return actual.buildReplaceCommand(key, oldValue, newValue, lifespanMillis, maxIdleTimeMillis, flags);
-   }
-
-   @Override
-   public VersionedReplaceCommand buildVersionedReplaceCommand(Object key, Object oldValue, Object newValue, long lifespanMillis, long maxIdleTimeMillis, EntryVersion version, Set<Flag> flags) {
-      return actual.buildVersionedReplaceCommand(key, oldValue, newValue, lifespanMillis, maxIdleTimeMillis, version, flags);
+   public ReplaceCommand buildReplaceCommand(Object key, Object oldValue, Object newValue, Metadata metadata, Set<Flag> flags) {
+      return actual.buildReplaceCommand(key, oldValue, newValue, metadata, flags);
    }
 
    @Override
@@ -181,13 +170,8 @@ public class ControlledCommandFactory implements CommandsFactory {
    }
 
    @Override
-   public GetKeyValueCommand buildGetKeyValueCommand(Object key, Set<Flag> flags) {
-      return actual.buildGetKeyValueCommand(key, flags);
-   }
-
-   @Override
-   public GetCacheEntryCommand buildGetCacheEntryCommand(Object key, Set<Flag> flags) {
-      return actual.buildGetCacheEntryCommand(key, flags);
+   public GetKeyValueCommand buildGetKeyValueCommand(Object key, Set<Flag> flags, boolean returnEntry) {
+      return actual.buildGetKeyValueCommand(key, flags, returnEntry);
    }
 
    @Override
@@ -206,8 +190,8 @@ public class ControlledCommandFactory implements CommandsFactory {
    }
 
    @Override
-   public PutMapCommand buildPutMapCommand(Map<?, ?> map, long lifespanMillis, long maxIdleTimeMillis, Set<Flag> flags) {
-      return actual.buildPutMapCommand(map, lifespanMillis, maxIdleTimeMillis, flags);
+   public PutMapCommand buildPutMapCommand(Map<?, ?> map, Metadata metadata, Set<Flag> flags) {
+      return actual.buildPutMapCommand(map, metadata, flags);
    }
 
    @Override

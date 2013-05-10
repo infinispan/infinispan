@@ -83,6 +83,7 @@
       <module>as-modules</module>
       <module>integrationtests/luceneintegration</module>
       <module>integrationtests/as-integration</module>
+      <module>integrationtests/compatibility-mode-it</module>
       <module>jcache</module>
    </modules>
 

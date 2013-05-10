@@ -592,7 +592,7 @@ class MemcachedDecoder(memcachedCache: AdvancedCache[String, MemcachedValue], sc
    private def buildSingleGetWithVersionResponse(k: String, entry: CacheEntry): ChannelBuffer = {
       val v = entry.getValue.asInstanceOf[MemcachedValue]
       // TODO: Would be nice for EntryVersion to allow retrieving the version itself...
-      val version = entry.getVersion.asInstanceOf[ServerEntryVersion].version.toString.getBytes
+      val version = entry.getMetadata.version().asInstanceOf[ServerEntryVersion].version.toString.getBytes
       val buf = buildGetHeaderBegin(k, v, version.length + 1 + END_SIZE)
       buf.writeByte(SP) // 1
       buf.writeBytes(version) // version.length

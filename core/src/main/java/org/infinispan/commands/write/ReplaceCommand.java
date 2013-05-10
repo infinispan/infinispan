@@ -22,6 +22,8 @@
  */
 package org.infinispan.commands.write;
 
+import org.infinispan.Metadata;
+import org.infinispan.commands.MetadataAwareCommand;
 import org.infinispan.commands.Visitor;
 import org.infinispan.container.entries.MVCCEntry;
 import org.infinispan.context.Flag;
@@ -37,13 +39,12 @@ import static org.infinispan.util.Util.toStr;
  * @author Galder Zamarreño
  * @since 4.0
  */
-public class ReplaceCommand extends AbstractDataWriteCommand {
+public class ReplaceCommand extends AbstractDataWriteCommand implements MetadataAwareCommand {
    public static final byte COMMAND_ID = 11;
 
    Object oldValue;
    Object newValue;
-   long lifespanMillis = -1;
-   long maxIdleTimeMillis = -1;
+   Metadata metadata;
    private CacheNotifier notifier;
    boolean successful = true;
 
@@ -52,13 +53,12 @@ public class ReplaceCommand extends AbstractDataWriteCommand {
    public ReplaceCommand() {
    }
 
-   public ReplaceCommand(Object key, Object oldValue, Object newValue, CacheNotifier notifier, long lifespanMillis, long maxIdleTimeMillis, Set<Flag> flags) {
+   public ReplaceCommand(Object key, Object oldValue, Object newValue, CacheNotifier notifier, Metadata metadata, Set<Flag> flags) {
       super(key, flags);
       this.oldValue = oldValue;
       this.newValue = newValue;
       this.notifier = notifier;
-      this.lifespanMillis = lifespanMillis;
-      this.maxIdleTimeMillis = maxIdleTimeMillis;
+      this.metadata = metadata;
    }
    
    public void init(CacheNotifier notifier) {
@@ -86,8 +86,6 @@ public class ReplaceCommand extends AbstractDataWriteCommand {
          if (oldValue == null || oldValue.equals(e.getValue()) || ignorePreviousValue) {
             e.setChanged(true);
             Object old = e.setValue(newValue);
-            e.setLifespan(lifespanMillis);
-            e.setMaxIdle(maxIdleTimeMillis);
             return returnValue(old, true, ctx);
          }
          // Revert assumption that new value is to be committed
@@ -122,7 +120,7 @@ public class ReplaceCommand extends AbstractDataWriteCommand {
 
    @Override
    public Object[] getParameters() {
-      return new Object[]{key, oldValue, newValue, lifespanMillis, maxIdleTimeMillis, ignorePreviousValue,
+      return new Object[]{key, oldValue, newValue, metadata, ignorePreviousValue,
                           Flag.copyWithoutRemotableFlags(flags),previousRead};
    }
 
@@ -133,11 +131,10 @@ public class ReplaceCommand extends AbstractDataWriteCommand {
       key = parameters[0];
       oldValue = parameters[1];
       newValue = parameters[2];
-      lifespanMillis = (Long) parameters[3];
-      maxIdleTimeMillis = (Long) parameters[4];
-      ignorePreviousValue = (Boolean) parameters[5];
-      flags = (Set<Flag>) parameters[6];
-      previousRead = (Boolean) parameters[7];
+      metadata = (Metadata) parameters[3];
+      ignorePreviousValue = (Boolean) parameters[4];
+      flags = (Set<Flag>) parameters[5];
+      previousRead = (Boolean) parameters[6];
    }
 
    @Override
@@ -148,8 +145,7 @@ public class ReplaceCommand extends AbstractDataWriteCommand {
 
       ReplaceCommand that = (ReplaceCommand) o;
 
-      if (lifespanMillis != that.lifespanMillis) return false;
-      if (maxIdleTimeMillis != that.maxIdleTimeMillis) return false;
+      if (metadata != null ? !metadata.equals(that.metadata) : that.metadata != null) return false;
       if (newValue != null ? !newValue.equals(that.newValue) : that.newValue != null) return false;
       if (oldValue != null ? !oldValue.equals(that.oldValue) : that.oldValue != null) return false;
 
@@ -161,8 +157,7 @@ public class ReplaceCommand extends AbstractDataWriteCommand {
       int result = super.hashCode();
       result = 31 * result + (oldValue != null ? oldValue.hashCode() : 0);
       result = 31 * result + (newValue != null ? newValue.hashCode() : 0);
-      result = 31 * result + (int) (lifespanMillis ^ (lifespanMillis >>> 32));
-      result = 31 * result + (int) (maxIdleTimeMillis ^ (maxIdleTimeMillis >>> 32));
+      result = 31 * result + (metadata != null ? metadata.hashCode() : 0);
       return result;
    }
 
@@ -176,12 +171,9 @@ public class ReplaceCommand extends AbstractDataWriteCommand {
       return !ignorePreviousValue;
    }
 
-   public long getLifespanMillis() {
-      return lifespanMillis;
-   }
-
-   public long getMaxIdleTimeMillis() {
-      return maxIdleTimeMillis;
+   @Override
+   public Metadata getMetadata() {
+      return metadata;
    }
 
    public Object getOldValue() {
@@ -214,8 +206,7 @@ public class ReplaceCommand extends AbstractDataWriteCommand {
             "key=" + toStr(key) +
             ", oldValue=" + toStr(oldValue) +
             ", newValue=" + toStr(newValue) +
-            ", lifespanMillis=" + lifespanMillis +
-            ", maxIdleTimeMillis=" + maxIdleTimeMillis +
+            ", metadata=" + metadata +
             ", flags=" + flags +
             ", successful=" + successful +
             ", ignorePreviousValue=" + ignorePreviousValue +

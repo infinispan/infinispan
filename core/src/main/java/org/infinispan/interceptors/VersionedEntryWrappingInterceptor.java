@@ -19,6 +19,8 @@
 
 package org.infinispan.interceptors;
 
+import org.infinispan.EmbeddedMetadata;
+import org.infinispan.Metadata;
 import org.infinispan.commands.VisitableCommand;
 import org.infinispan.commands.read.GetKeyValueCommand;
 import org.infinispan.commands.FlagAffectedCommand;
@@ -27,7 +29,6 @@ import org.infinispan.commands.tx.PrepareCommand;
 import org.infinispan.commands.tx.VersionedCommitCommand;
 import org.infinispan.commands.tx.VersionedPrepareCommand;
 import org.infinispan.commands.write.AbstractDataWriteCommand;
-import org.infinispan.commands.write.WriteCommand;
 import org.infinispan.container.entries.CacheEntry;
 import org.infinispan.container.versioning.EntryVersion;
 import org.infinispan.container.versioning.EntryVersionsMap;
@@ -92,15 +93,20 @@ public class VersionedEntryWrappingInterceptor extends EntryWrappingInterceptor 
    }
 
    @Override
-   protected void commitContextEntry(CacheEntry entry, InvocationContext ctx, FlagAffectedCommand command, EntryVersion userProvidedVersion) {
+   protected void commitContextEntry(CacheEntry entry, InvocationContext ctx, FlagAffectedCommand command, Metadata metadata) {
       if (ctx.isInTxScope() && !isFromStateTransfer(ctx)) {
-         EntryVersion version = userProvidedVersion == null
-               ? ((TxInvocationContext) ctx).getCacheTransaction().getUpdatedEntryVersions().get(entry.getKey())
-               : userProvidedVersion;
-         cdl.commitEntry(entry, version, command, ctx);
+         EntryVersion updatedEntryVersion = ((TxInvocationContext) ctx)
+               .getCacheTransaction().getUpdatedEntryVersions().get(entry.getKey());
+         Metadata commitMetadata;
+         if (metadata == null)
+            commitMetadata = new EmbeddedMetadata.Builder().version(updatedEntryVersion).build();
+         else
+            commitMetadata = metadata.builder().version(updatedEntryVersion).build();
+
+         cdl.commitEntry(entry, commitMetadata, command, ctx);
       } else {
          // This could be a state transfer call!
-         cdl.commitEntry(entry, entry.getVersion(), command, ctx);
+         cdl.commitEntry(entry, entry.getMetadata(), command, ctx);
       }
    }
 

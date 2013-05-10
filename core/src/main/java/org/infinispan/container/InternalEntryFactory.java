@@ -19,6 +19,7 @@
 
 package org.infinispan.container;
 
+import org.infinispan.Metadata;
 import org.infinispan.container.entries.CacheEntry;
 import org.infinispan.container.entries.InternalCacheEntry;
 import org.infinispan.container.entries.InternalCacheValue;
@@ -58,47 +59,62 @@ public interface InternalEntryFactory {
     * Creates a new {@link InternalCacheEntry} instance
     * @param key key to use
     * @param value value to use           
-    * @param version version to use
+    * @param metadata metadata for entry
     * @return a new InternalCacheEntry
     */
-   InternalCacheEntry create(Object key, Object value, EntryVersion version);
+   InternalCacheEntry create(Object key, Object value, Metadata metadata);
 
    /**
-    * Creates a new {@link InternalCacheEntry} instance 
+    * Creates a new {@link InternalCacheEntry} instance
     * @param key key to use
     * @param value value to use
-    * @param version version to use
+    * @param metadata metadata for entry
     * @param lifespan lifespan to use
     * @param maxIdle maxIdle to use
     * @return a new InternalCacheEntry
     */
-   InternalCacheEntry create(Object key, Object value, EntryVersion version, long lifespan, long maxIdle);
+   InternalCacheEntry create(Object key, Object value, Metadata metadata, long lifespan, long maxIdle);
 
    /**
-    * Creates a new {@link InternalCacheEntry} instance 
+    * Creates a new {@link InternalCacheEntry} instance
     * @param key key to use
     * @param value value to use
-    * @param version version to use
-    * @param created creation timestamp to use              
+    * @param metadata metadata for entry
+    * @param created creation timestamp to use
     * @param lifespan lifespan to use
-    * @param lastUsed lastUsed timestamp to use                
+    * @param lastUsed lastUsed timestamp to use
     * @param maxIdle maxIdle to use
     * @return a new InternalCacheEntry
     */
+   InternalCacheEntry create(Object key, Object value, Metadata metadata, long created, long lifespan, long lastUsed, long maxIdle);
+
+   /**
+    * Creates a new {@link InternalCacheEntry} instance
+    * @param key key to use
+    * @param value value to use
+    * @param version version to use
+    * @param created creation timestamp to use
+    * @param lifespan lifespan to use
+    * @param lastUsed lastUsed timestamp to use
+    * @param maxIdle maxIdle to use
+    * @return a new InternalCacheEntry
+    */
+   // To be deprecated, once metadata object can be retrieved remotely...
    InternalCacheEntry create(Object key, Object value, EntryVersion version, long created, long lifespan, long lastUsed, long maxIdle);
 
    /**
-    * Updates an existing {@link InternalCacheEntry} with new lifespan and maxIdle values.  This may result in a new 
+    * TODO: Adjust javadoc
+    *
+    * Updates an existing {@link InternalCacheEntry} with new metadata.  This may result in a new
     * {@link InternalCacheEntry} instance being created, as a different {@link InternalCacheEntry} implementation
-    * may be more appropriate to suit the new lifespan and maxIdle values.  As such, one should consider the {@link InternalCacheEntry}
+    * may be more appropriate to suit the new metadata values.  As such, one should consider the {@link InternalCacheEntry}
     * passed in as a parameter as passed by value and not by reference.
     * 
     * @param cacheEntry original internal cache entry
-    * @param lifespan new lifespan to use
-    * @param maxIdle new maxIdle to use
+    * @param metadata new metadata
     * @return a new InternalCacheEntry instance
     */
-   InternalCacheEntry update(InternalCacheEntry cacheEntry, long lifespan, long maxIdle);
+   InternalCacheEntry update(InternalCacheEntry cacheEntry, Metadata metadata);
 
    /**
     * Creates an {@link InternalCacheValue} based on the {@link InternalCacheEntry} passed in.

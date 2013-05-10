@@ -1,6 +1,6 @@
 /*
  * JBoss, Home of Professional Open Source
- * Copyright 2009 Red Hat Inc. and/or its affiliates and other
+ * Copyright 2013 Red Hat Inc. and/or its affiliates and other
  * contributors as indicated by the @author tags. All rights reserved.
  * See the copyright.txt in the distribution for a full listing of
  * individual contributors.
@@ -20,46 +20,22 @@
  * Software Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
  * 02110-1301 USA, or see the FSF site: http://www.fsf.org.
  */
-package org.infinispan.container.entries;
 
-import org.infinispan.Metadata;
+package org.infinispan.rest
+
+import org.infinispan.Metadata
+import org.infinispan.container.versioning.EntryVersion
+import java.util.concurrent.TimeUnit
+import org.infinispan.Metadata.Builder
 
 /**
- * A null entry that is read in for removal
+ * Metadata for MIME data stored in REST servers.
  *
- * @author Manik Surtani
- * @since 4.0
+ * @author Galder Zamarreño
+ * @since 5.3
  */
-public class NullMarkerEntryForRemoval extends RepeatableReadEntry {
-
-   public NullMarkerEntryForRemoval(Object key, Metadata metadata) {
-      super(key, null, metadata);
-   }
-
-   /**
-    * @return always returns true
-    */
-   @Override
-   public final boolean isNull() {
-      return true;
-   }
-
-   /**
-    * @return always returns true so that any get commands, upon getting this entry, will ignore the entry as though it
-    *         were removed.
-    */
-   @Override
-   public final boolean isRemoved() {
-      return true;
-   }
-
-   /**
-    * @return always returns true so that any get commands, upon getting this entry, will ignore the entry as though it
-    *         were invalid.
-    */
-   @Override
-   public final boolean isValid() {
-      return false;
-   }
-
-}
+case class MimeMetadata(
+        lifespan: Long, lifespanUnit: TimeUnit,
+        maxIdle: Long, maxIdleUnit: TimeUnit,
+        version: EntryVersion, builder: Builder,
+        contentType: String) extends Metadata

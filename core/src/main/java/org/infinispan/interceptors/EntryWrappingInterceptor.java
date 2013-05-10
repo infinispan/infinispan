@@ -19,6 +19,7 @@
 
 package org.infinispan.interceptors;
 
+import org.infinispan.Metadata;
 import org.infinispan.commands.AbstractVisitor;
 import org.infinispan.commands.CommandsFactory;
 import org.infinispan.commands.FlagAffectedCommand;
@@ -31,7 +32,6 @@ import org.infinispan.container.DataContainer;
 import org.infinispan.container.EntryFactory;
 import org.infinispan.container.entries.CacheEntry;
 import org.infinispan.container.entries.InternalCacheEntry;
-import org.infinispan.container.versioning.EntryVersion;
 import org.infinispan.context.Flag;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.context.SingleKeyNonTxInvocationContext;
@@ -154,13 +154,7 @@ public class EntryWrappingInterceptor extends CommandInterceptor {
    @Override
    public final Object visitPutKeyValueCommand(InvocationContext ctx, PutKeyValueCommand command) throws Throwable {
       wrapEntryForPutIfNeeded(ctx, command);
-      return invokeNextAndApplyChanges(ctx, command, null);
-   }
-
-   @Override
-   public Object visitVersionedPutKeyValueCommand(InvocationContext ctx, VersionedPutKeyValueCommand command) throws Throwable {
-      wrapEntryForPutIfNeeded(ctx, command);
-      return invokeNextAndApplyChanges(ctx, command, command.getVersion());
+      return invokeNextAndApplyChanges(ctx, command, command.getMetadata());
    }
 
    private void wrapEntryForPutIfNeeded(InvocationContext ctx, PutKeyValueCommand command) throws Throwable {
@@ -212,18 +206,12 @@ public class EntryWrappingInterceptor extends CommandInterceptor {
    @Override
    public final Object visitReplaceCommand(InvocationContext ctx, ReplaceCommand command) throws Throwable {
       wrapEntryForReplaceIfNeeded(ctx, command);
-      return invokeNextAndApplyChanges(ctx, command, null);
-   }
-
-   @Override
-   public Object visitVersionedReplaceCommand(InvocationContext ctx, VersionedReplaceCommand command) throws Throwable {
-      wrapEntryForReplaceIfNeeded(ctx, command);
-      return invokeNextAndApplyChanges(ctx, command, command.getVersion());
+      return invokeNextAndApplyChanges(ctx, command, command.getMetadata());
    }
 
    private void wrapEntryForReplaceIfNeeded(InvocationContext ctx, ReplaceCommand command) throws InterruptedException {
       if (shouldWrap(command.getKey(), ctx, command)) {
-         entryFactory.wrapEntryForReplace(ctx, command.getKey());
+         entryFactory.wrapEntryForReplace(ctx, command);
       }
       checkIfKeyRead(ctx, command.getKey(), command);
    }
@@ -235,7 +223,7 @@ public class EntryWrappingInterceptor extends CommandInterceptor {
             entryFactory.wrapEntryForPut(ctx, key, null, true, command);
          }
       }
-      return invokeNextAndApplyChanges(ctx, command, null);
+      return invokeNextAndApplyChanges(ctx, command, command.getMetadata());
    }
 
    @Override
@@ -257,7 +245,7 @@ public class EntryWrappingInterceptor extends CommandInterceptor {
       return command.hasFlag(Flag.PUT_FOR_STATE_TRANSFER);
    }
 
-   protected final void commitContextEntries(InvocationContext ctx, FlagAffectedCommand command, EntryVersion version) {
+   protected final void commitContextEntries(InvocationContext ctx, FlagAffectedCommand command, Metadata metadata) {
       boolean isPutForStateTransfer = command == null
             ? isFromStateTransfer(ctx)
             : isFromStateTransfer(command);
@@ -273,7 +261,7 @@ public class EntryWrappingInterceptor extends CommandInterceptor {
       if (ctx instanceof SingleKeyNonTxInvocationContext) {
          SingleKeyNonTxInvocationContext singleKeyCtx = (SingleKeyNonTxInvocationContext) ctx;
          commitEntryIfNeeded(ctx, command, singleKeyCtx.getKey(),
-               singleKeyCtx.getCacheEntry(), isPutForStateTransfer, version);
+               singleKeyCtx.getCacheEntry(), isPutForStateTransfer, metadata);
       } else {
          Set<Map.Entry<Object, CacheEntry>> entries = ctx.getLookedUpEntries().entrySet();
          Iterator<Map.Entry<Object, CacheEntry>> it = entries.iterator();
@@ -281,7 +269,7 @@ public class EntryWrappingInterceptor extends CommandInterceptor {
          while (it.hasNext()) {
             Map.Entry<Object, CacheEntry> e = it.next();
             CacheEntry entry = e.getValue();
-            if (!commitEntryIfNeeded(ctx, command, e.getKey(), entry, isPutForStateTransfer, version)) {
+            if (!commitEntryIfNeeded(ctx, command, e.getKey(), entry, isPutForStateTransfer, metadata)) {
                if (trace) {
                   if (entry == null)
                      log.tracef("Entry for key %s is null : not calling commitUpdate", e.getKey());
@@ -294,14 +282,14 @@ public class EntryWrappingInterceptor extends CommandInterceptor {
    }
 
    protected void commitContextEntry(CacheEntry entry, InvocationContext ctx,
-            FlagAffectedCommand command, EntryVersion version) {
-      cdl.commitEntry(entry, version, command, ctx);
+            FlagAffectedCommand command, Metadata metadata) {
+      cdl.commitEntry(entry, metadata, command, ctx);
    }
 
-   private Object invokeNextAndApplyChanges(InvocationContext ctx, FlagAffectedCommand command, EntryVersion version) throws Throwable {
+   private Object invokeNextAndApplyChanges(InvocationContext ctx, FlagAffectedCommand command, Metadata metadata) throws Throwable {
       final Object result = invokeNextInterceptor(ctx, command);
       if (!ctx.isInTxScope())
-         commitContextEntries(ctx, command, version);
+         commitContextEntries(ctx, command, metadata);
 
       log.tracef("The return value is %s", result);
       return result;
@@ -337,7 +325,8 @@ public class EntryWrappingInterceptor extends CommandInterceptor {
             }
          }
          if (newMap.size() > 0) {
-            PutMapCommand clonedCommand = commandFactory.buildPutMapCommand(newMap, command.getLifespanMillis(), command.getMaxIdleTimeMillis(), command.getFlags());
+            PutMapCommand clonedCommand = commandFactory.buildPutMapCommand(newMap,
+                  command.getMetadata(), command.getFlags());
             invokeNextInterceptor(ctx, clonedCommand);
          }
          return null;
@@ -391,7 +380,7 @@ public class EntryWrappingInterceptor extends CommandInterceptor {
                // but we still need to apply the new value.
                entryFactory.wrapEntryForPut(ctx, command.getKey(), null, false, command);
             } else  {
-               entryFactory.wrapEntryForReplace(ctx, command.getKey());
+               entryFactory.wrapEntryForReplace(ctx, command);
             }
             invokeNextInterceptor(ctx, command);
          }
@@ -412,7 +401,7 @@ public class EntryWrappingInterceptor extends CommandInterceptor {
    }
 
    private boolean commitEntryIfNeeded(InvocationContext ctx, FlagAffectedCommand command,
-         Object key, CacheEntry entry, boolean isPutForStateTransfer, EntryVersion version) {
+         Object key, CacheEntry entry, boolean isPutForStateTransfer, Metadata metadata) {
       if (entry == null) {
          if (key != null && !isPutForStateTransfer && stateConsumer != null) {
             // this key is not yet stored locally
@@ -430,7 +419,7 @@ public class EntryWrappingInterceptor extends CommandInterceptor {
 
       if (entry.isChanged() || entry.isLoaded()) {
          log.tracef("About to commit entry %s", entry);
-         commitContextEntry(entry, ctx, command, version);
+         commitContextEntry(entry, ctx, command, metadata);
 
          if (!isPutForStateTransfer && stateConsumer != null) {
             stateConsumer.addUpdatedKey(key);

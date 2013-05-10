@@ -22,9 +22,9 @@
  */
 package org.infinispan.config;
 
+import org.infinispan.Metadata;
 import org.infinispan.container.DataContainer;
 import org.infinispan.container.entries.InternalCacheEntry;
-import org.infinispan.container.versioning.EntryVersion;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -70,9 +70,9 @@ public class QueryableDataContainer implements DataContainer {
 	}
 
 	@Override
-	public void put(Object k, Object v, EntryVersion ev, long lifespan, long maxIdle) {
-		loggedOperations.add("put(" + k + ", " + v + ", " + lifespan + ", " + maxIdle + ")");
-		delegate.put(k, v, ev, lifespan, maxIdle);
+	public void put(Object k, Object v, Metadata metadata) {
+		loggedOperations.add("put(" + k + ", " + v + ", " + metadata + ")");
+		delegate.put(k, v, metadata);
 	}
 
 	@Override

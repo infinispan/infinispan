@@ -55,11 +55,6 @@ public abstract class AbstractVisitor implements Visitor {
    }
 
    @Override
-   public Object visitVersionedPutKeyValueCommand(InvocationContext ctx, VersionedPutKeyValueCommand command) throws Throwable {
-      return visitPutKeyValueCommand(ctx, command);
-   }
-
-   @Override
    public Object visitRemoveCommand(InvocationContext ctx, RemoveCommand command) throws Throwable {
       return handleDefault(ctx, command);
    }
@@ -67,11 +62,6 @@ public abstract class AbstractVisitor implements Visitor {
    @Override
    public Object visitReplaceCommand(InvocationContext ctx, ReplaceCommand command) throws Throwable {
       return handleDefault(ctx, command);
-   }
-
-   @Override
-   public Object visitVersionedReplaceCommand(InvocationContext ctx, VersionedReplaceCommand command) throws Throwable {
-      return visitReplaceCommand(ctx, command);
    }
 
    @Override
@@ -104,11 +94,6 @@ public abstract class AbstractVisitor implements Visitor {
    @Override
    public Object visitGetKeyValueCommand(InvocationContext ctx, GetKeyValueCommand command) throws Throwable {
       return handleDefault(ctx, command);
-   }
-
-   @Override
-   public Object visitGetCacheEntryCommand(InvocationContext ctx, GetKeyValueCommand command) throws Throwable {
-      return visitGetKeyValueCommand(ctx, command);
    }
 
    @Override

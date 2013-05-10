@@ -47,13 +47,9 @@ public interface Visitor {
 
    Object visitPutKeyValueCommand(InvocationContext ctx, PutKeyValueCommand command) throws Throwable;
 
-   Object visitVersionedPutKeyValueCommand(InvocationContext ctx, VersionedPutKeyValueCommand command) throws Throwable;
-
    Object visitRemoveCommand(InvocationContext ctx, RemoveCommand command) throws Throwable;
 
    Object visitReplaceCommand(InvocationContext ctx, ReplaceCommand command) throws Throwable;
-
-   Object visitVersionedReplaceCommand(InvocationContext ctx, VersionedReplaceCommand command) throws Throwable;
 
    Object visitClearCommand(InvocationContext ctx, ClearCommand command) throws Throwable;
 
@@ -68,8 +64,6 @@ public interface Visitor {
    Object visitSizeCommand(InvocationContext ctx, SizeCommand command) throws Throwable;
 
    Object visitGetKeyValueCommand(InvocationContext ctx, GetKeyValueCommand command) throws Throwable;
-
-   Object visitGetCacheEntryCommand(InvocationContext ctx, GetKeyValueCommand command) throws Throwable;
 
    Object visitKeySetCommand(InvocationContext ctx, KeySetCommand command) throws Throwable;
 

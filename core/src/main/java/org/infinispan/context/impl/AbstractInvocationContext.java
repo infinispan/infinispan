@@ -150,7 +150,7 @@ public abstract class AbstractInvocationContext implements InvocationContext {
       if (ce == null || ce.isNull() || ce.getValue() == null) {
          if (ce != null && ce.isChanged()) {
             ce.setValue(cacheEntry.getValue());
-            ce.setVersion(cacheEntry.getVersion());
+            ce.setMetadata(cacheEntry.getMetadata());
          } else {
             return false;
          }

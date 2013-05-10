@@ -20,6 +20,7 @@
 package org.infinispan.remoting;
 
 import org.infinispan.Cache;
+import org.infinispan.EmbeddedMetadata;
 import org.infinispan.commands.CommandsFactory;
 import org.infinispan.commands.ReplicableCommand;
 import org.infinispan.commands.read.GetKeyValueCommand;
@@ -109,15 +110,18 @@ public class AsynchronousInvocationTest extends AbstractInfinispanTest {
       commandsFactory = extractCommandsFactory(cache);
       executorService = factory.getExecutorService();
 
-      GetKeyValueCommand getKeyValueCommand = new GetKeyValueCommand("key", InfinispanCollections.<Flag>emptySet());
-      PutKeyValueCommand putKeyValueCommand = new PutKeyValueCommand("key", "value", false, null, -1, -1, InfinispanCollections.<Flag>emptySet());
+      GetKeyValueCommand getKeyValueCommand =
+            new GetKeyValueCommand("key", InfinispanCollections.<Flag>emptySet(), false);
+      PutKeyValueCommand putKeyValueCommand =
+            new PutKeyValueCommand("key", "value", false, null,
+                  new EmbeddedMetadata.Builder().build(), InfinispanCollections.<Flag>emptySet());
 
       //populate commands
       blockingCacheRpcCommand = new ReduceCommand<Object, Object>(cacheName);
       nonBlockingCacheRpcCommand = new ClusteredGetCommand(cacheName);
       blockingNonCacheRpcCommand = new CacheTopologyControlCommand();
       //the GetKeyValueCommand is not replicated, but I only need a command that returns false in canBlock()
-      nonBlockingNonCacheRpcCommand = new GetKeyValueCommand("key", InfinispanCollections.<Flag>emptySet());
+      nonBlockingNonCacheRpcCommand = new GetKeyValueCommand("key", InfinispanCollections.<Flag>emptySet(), false);
       blockingSingleRpcCommand = new SingleRpcCommand(cacheName, putKeyValueCommand);
       nonBlockingSingleRpcCommand = new SingleRpcCommand(cacheName, getKeyValueCommand);
       blockingMultipleRpcCommand = new MultipleRpcCommand(Arrays.<ReplicableCommand>asList(putKeyValueCommand, putKeyValueCommand), cacheName);

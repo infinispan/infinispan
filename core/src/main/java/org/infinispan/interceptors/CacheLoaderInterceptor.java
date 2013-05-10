@@ -22,7 +22,9 @@
  */
 package org.infinispan.interceptors;
 
+import org.infinispan.Metadata;
 import org.infinispan.commands.FlagAffectedCommand;
+import org.infinispan.commands.MetadataAwareCommand;
 import org.infinispan.commands.read.GetKeyValueCommand;
 import org.infinispan.commands.write.*;
 import org.infinispan.configuration.cache.CacheStoreConfiguration;
@@ -234,8 +236,15 @@ public class CacheLoaderInterceptor extends JmxStatsCommandInterceptor {
          // FIXME: There's no point to trigger the entryLoaded/Activated event twice.
          sendNotification(key, value, true, ctx, cmd);
          entry.setValue(value);
-         entry.setLifespan(loadedEntry.getLifespan());
-         entry.setMaxIdle(loadedEntry.getMaxIdle());
+
+         Metadata metadata = extractMetadata(cmd);
+         Metadata loadedMetadata = loadedEntry.getMetadata();
+         if (metadata != null && loadedMetadata != null)
+            metadata = metadata.builder().read(loadedMetadata).build();
+         else if (metadata == null)
+            metadata = loadedMetadata;
+
+         entry.setMetadata(metadata);
          // TODO shouldn't we also be setting last used and created timestamps?
          entry.setValid(true);
          entry.setLoaded(true); // mark the entry as loaded from the store
@@ -325,4 +334,10 @@ public class CacheLoaderInterceptor extends JmxStatsCommandInterceptor {
    public void disableInterceptor() {
       enabled = false;
    }
+
+   private Metadata extractMetadata(FlagAffectedCommand cmd) {
+      return cmd instanceof MetadataAwareCommand
+            ? ((MetadataAwareCommand) cmd).getMetadata() : null;
+   }
+
 }

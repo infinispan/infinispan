@@ -17,11 +17,11 @@
  * 02110-1301 USA
  */
 
-package org.infinispan.container.entries.versioned;
+package org.infinispan.container.entries.metadata;
 
+import org.infinispan.Metadata;
 import org.infinispan.container.entries.ImmortalCacheValue;
 import org.infinispan.container.entries.InternalCacheEntry;
-import org.infinispan.container.versioning.EntryVersion;
 import org.infinispan.marshall.AbstractExternalizer;
 import org.infinispan.marshall.Ids;
 import org.infinispan.util.Util;
@@ -34,65 +34,66 @@ import java.util.Set;
 import static org.infinispan.util.Util.toStr;
 
 /**
- * A form of {@link ImmortalCacheValue} that is {@link Versioned}
+ * A form of {@link org.infinispan.container.entries.ImmortalCacheValue} that
+ * is {@link org.infinispan.container.entries.metadata.MetadataAware}
  *
- * @author Manik Surtani
- * @since 5.1
+ * @author Galder Zamarreño
+ * @since 5.3
  */
-public class VersionedImmortalCacheValue extends ImmortalCacheValue implements Versioned {
+public class MetadataImmortalCacheValue extends ImmortalCacheValue implements MetadataAware {
 
-   EntryVersion version;
+   Metadata metadata;
 
-   public VersionedImmortalCacheValue(Object value, EntryVersion version) {
+   public MetadataImmortalCacheValue(Object value, Metadata metadata) {
       super(value);
-      this.version = version;
+      this.metadata = metadata;
    }
 
    @Override
    public InternalCacheEntry toInternalCacheEntry(Object key) {
-      return new VersionedImmortalCacheEntry(key, this);
+      return new MetadataImmortalCacheEntry(key, this);
    }
 
    @Override
-   public EntryVersion getVersion() {
-      return version;
+   public Metadata getMetadata() {
+      return metadata;
    }
 
    @Override
-   public void setVersion(EntryVersion version) {
-      this.version = version;
+   public void setMetadata(Metadata metadata) {
+      this.metadata = metadata;
    }
 
    @Override
    public String toString() {
       return getClass().getSimpleName() + " {" +
             "value=" + toStr(value) +
-            ", version=" + version +
+            ", metadata=" + metadata +
             '}';
    }
 
-   public static class Externalizer extends AbstractExternalizer<VersionedImmortalCacheValue> {
+   public static class Externalizer extends AbstractExternalizer<MetadataImmortalCacheValue> {
       @Override
-      public void writeObject(ObjectOutput output, VersionedImmortalCacheValue icv) throws IOException {
+      public void writeObject(ObjectOutput output, MetadataImmortalCacheValue icv) throws IOException {
          output.writeObject(icv.value);
-         output.writeObject(icv.version);
+         output.writeObject(icv.metadata);
       }
 
       @Override
-      public VersionedImmortalCacheValue readObject(ObjectInput input) throws IOException, ClassNotFoundException {
+      public MetadataImmortalCacheValue readObject(ObjectInput input) throws IOException, ClassNotFoundException {
          Object v = input.readObject();
-         EntryVersion version = (EntryVersion) input.readObject();
-         return new VersionedImmortalCacheValue(v, version);
+         Metadata metadata = (Metadata) input.readObject();
+         return new MetadataImmortalCacheValue(v, metadata);
       }
 
       @Override
       public Integer getId() {
-         return Ids.VERSIONED_IMMORTAL_VALUE;
+         return Ids.METADATA_IMMORTAL_VALUE;
       }
 
       @Override
-      public Set<Class<? extends VersionedImmortalCacheValue>> getTypeClasses() {
-         return Util.<Class<? extends VersionedImmortalCacheValue>>asSet(VersionedImmortalCacheValue.class);
+      public Set<Class<? extends MetadataImmortalCacheValue>> getTypeClasses() {
+         return Util.<Class<? extends MetadataImmortalCacheValue>>asSet(MetadataImmortalCacheValue.class);
       }
    }
 

@@ -48,7 +48,7 @@ public class WriteSkewHelper {
             CacheEntry entry = context.lookupEntry(k);
             // the entry might be null if an attempt to lock the key was done and the actual value for this key is missing from the data container
             if (entry != null) {
-               vs.put(k, (IncrementableEntryVersion) entry.getVersion());
+               vs.put(k, (IncrementableEntryVersion) entry.getMetadata().version());
             }
          }
       }
@@ -83,11 +83,16 @@ public class WriteSkewHelper {
                if (!context.isOriginLocal()) {
                   // What version did the transaction originator see??
                   EntryVersion versionSeen = prepareCommand.getVersionsSeen().get(k);
-                  if (versionSeen != null) entry.setVersion(versionSeen);
+
+                  if (versionSeen != null) {
+                     entry.setVersion(versionSeen);
+                  }
                }
 
                if (entry.performWriteSkewCheck(dataContainer, context, c.wasPreviousRead())) {
-                  IncrementableEntryVersion newVersion = entry.isCreated() ? versionGenerator.generateNew() : versionGenerator.increment((IncrementableEntryVersion) entry.getVersion());
+                  IncrementableEntryVersion newVersion = entry.isCreated()
+                        ? versionGenerator.generateNew()
+                        : versionGenerator.increment((IncrementableEntryVersion) entry.getMetadata().version());
                   uv.put(k, newVersion);
                } else {
                   // Write skew check detected!
@@ -116,7 +121,6 @@ public class WriteSkewHelper {
                // What version did the transaction originator see??
                EntryVersion versionSeen = prepareCommand.getVersionsSeen().get(k);
                entry.setVersion(versionSeen);
-
 
                if (entry.performWriteSkewCheck(dataContainer, context, c.wasPreviousRead())) {
                   //in total order, it does not care about the version returned. It just need the keys validated

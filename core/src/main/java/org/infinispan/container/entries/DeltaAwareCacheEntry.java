@@ -22,11 +22,11 @@
  */
 package org.infinispan.container.entries;
 
+import org.infinispan.Metadata;
 import org.infinispan.atomic.AtomicHashMap;
 import org.infinispan.atomic.Delta;
 import org.infinispan.atomic.DeltaAware;
 import org.infinispan.container.DataContainer;
-import org.infinispan.container.versioning.EntryVersion;
 import org.infinispan.util.Util;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
@@ -148,16 +148,6 @@ public class DeltaAwareCacheEntry implements CacheEntry, StateChangingEntry {
    }
 
    @Override
-   public final void setMaxIdle(long maxIdle) {
-      // irrelevant
-   }
-
-   @Override
-   public final void setLifespan(long lifespan) {
-      // irrelevant
-   }
-
-   @Override
    public final Object getKey() {
       return key;
    }
@@ -180,7 +170,7 @@ public class DeltaAwareCacheEntry implements CacheEntry, StateChangingEntry {
    }
 
    @Override
-   public final void commit(DataContainer container, EntryVersion version) {
+   public final void commit(DataContainer container, Metadata metadata) {
       if (value != null && !deltas.isEmpty()) {
          for (Delta delta : deltas) {
             delta.merge(value);
@@ -193,7 +183,7 @@ public class DeltaAwareCacheEntry implements CacheEntry, StateChangingEntry {
       reset();
       // only do stuff if there are changes.
       if (wrappedEntry != null) {
-         wrappedEntry.commit(container, version);
+         wrappedEntry.commit(container, metadata);
       }
    }
 
@@ -320,12 +310,13 @@ public class DeltaAwareCacheEntry implements CacheEntry, StateChangingEntry {
    }
 
    @Override
-   public EntryVersion getVersion() {
-      return null;  // DeltaAware are always unversioned!  Since concurrent version updates are possible with the FineGrainedAtomicMap
+   public Metadata getMetadata() {
+      return null;  // DeltaAware are always metadata unaware
    }
 
    @Override
-   public void setVersion(EntryVersion version) {
-      // TODO: DeltaAware are always unversioned!  Since concurrent version updates are possible with the FineGrainedAtomicMap
+   public void setMetadata(Metadata metadata) {
+      // DeltaAware are always metadata unaware
    }
+
 }

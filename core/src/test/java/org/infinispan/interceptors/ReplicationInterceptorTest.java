@@ -157,7 +157,7 @@ public class ReplicationInterceptorTest {
       when(ctx.isOriginLocal()).thenReturn(true);
       when(ctx.isInTxScope()).thenReturn(false);
 
-      GetKeyValueCommand getKeyValueCommand = new GetKeyValueCommand("theKey", null);
+      GetKeyValueCommand getKeyValueCommand = new GetKeyValueCommand("theKey", null, false);
 
       Object retVal = replInterceptor.visitGetKeyValueCommand(ctx, getKeyValueCommand);
       assertEquals("theValue", retVal);

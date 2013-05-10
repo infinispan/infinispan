@@ -22,6 +22,8 @@
  */
 package org.infinispan.container.entries;
 
+import org.infinispan.EmbeddedMetadata;
+import org.infinispan.Metadata;
 import org.infinispan.marshall.AbstractExternalizer;
 import org.infinispan.marshall.Ids;
 import org.infinispan.util.Util;
@@ -123,6 +125,17 @@ public class ImmortalCacheEntry extends AbstractInternalCacheEntry {
    }
 
    @Override
+   public Metadata getMetadata() {
+      return new EmbeddedMetadata.Builder().build();
+   }
+
+   @Override
+   public void setMetadata(Metadata metadata) {
+      throw new IllegalStateException(
+            "Metadata cannot be set on immortal entries. They need to be recreated via the entry factory.");
+   }
+
+   @Override
    public boolean equals(Object o) {
       if (this == o) return true;
       if (o == null || getClass() != o.getClass()) return false;
@@ -181,4 +194,5 @@ public class ImmortalCacheEntry extends AbstractInternalCacheEntry {
             ", value=" + cacheValue +
             "}";
    }
+
 }

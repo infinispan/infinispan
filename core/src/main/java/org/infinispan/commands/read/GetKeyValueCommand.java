@@ -46,10 +46,12 @@ public class GetKeyValueCommand extends AbstractDataCommand {
    private static final Log log = LogFactory.getLog(GetKeyValueCommand.class);
    private static final boolean trace = log.isTraceEnabled();
    private InternalCacheEntry remotelyFetchedValue;
+   private boolean returnEntry;
 
-   public GetKeyValueCommand(Object key, Set<Flag> flags) {
+   public GetKeyValueCommand(Object key, Set<Flag> flags, boolean returnEntry) {
       this.key = key;
       this.flags = flags;
+      this.returnEntry = returnEntry;
    }
 
    public GetKeyValueCommand() {
@@ -75,6 +77,15 @@ public class GetKeyValueCommand extends AbstractDataCommand {
          }
          return null;
       }
+
+      // Get cache entry instead of value
+      if (returnEntry) {
+         if (trace)
+            log.tracef("Found entry %s", entry);
+
+         return entry;
+      }
+
       final Object value = entry.getValue();
       if (trace) {
          log.tracef("Found value %s", toStr(value));
@@ -93,11 +104,12 @@ public class GetKeyValueCommand extends AbstractDataCommand {
       if (commandId != COMMAND_ID) throw new IllegalStateException("Invalid method id");
       key = parameters[0];
       flags = (Set<Flag>) parameters[1];
+      returnEntry = (Boolean) parameters[2];
    }
 
    @Override
    public Object[] getParameters() {
-      return new Object[]{key, Flag.copyWithoutRemotableFlags(flags)};
+      return new Object[]{key, Flag.copyWithoutRemotableFlags(flags), returnEntry};
    }
 
    /**
@@ -114,4 +126,9 @@ public class GetKeyValueCommand extends AbstractDataCommand {
    public InternalCacheEntry getRemotelyFetchedValue() {
       return remotelyFetchedValue;
    }
+
+   public boolean isReturnEntry() {
+      return returnEntry;
+   }
+
 }

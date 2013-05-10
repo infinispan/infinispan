@@ -23,6 +23,7 @@
 
 package org.infinispan.interceptors.locking;
 
+import org.infinispan.Metadata;
 import org.infinispan.commands.FlagAffectedCommand;
 import org.infinispan.commands.tx.VersionedPrepareCommand;
 import org.infinispan.commands.tx.totalorder.TotalOrderPrepareCommand;
@@ -30,7 +31,6 @@ import org.infinispan.commands.write.WriteCommand;
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.container.DataContainer;
 import org.infinispan.container.entries.CacheEntry;
-import org.infinispan.container.versioning.EntryVersion;
 import org.infinispan.container.versioning.EntryVersionsMap;
 import org.infinispan.container.versioning.VersionGenerator;
 import org.infinispan.context.Flag;
@@ -49,6 +49,7 @@ import org.infinispan.transaction.WriteSkewHelper;
 import org.infinispan.transaction.xa.CacheTransaction;
 
 import java.util.Collection;
+import java.util.concurrent.TimeUnit;
 
 import static org.infinispan.transaction.WriteSkewHelper.performTotalOrderWriteSkewCheckAndReturnNewVersions;
 import static org.infinispan.transaction.WriteSkewHelper.performWriteSkewCheckAndReturnNewVersions;
@@ -71,7 +72,7 @@ public interface ClusteringDependentLogic {
 
    Address getPrimaryOwner(Object key);
 
-   void commitEntry(CacheEntry entry, EntryVersion newVersion, FlagAffectedCommand command, InvocationContext ctx);
+   void commitEntry(CacheEntry entry, Metadata metadata, FlagAffectedCommand command, InvocationContext ctx);
 
    Collection<Address> getOwners(Collection<Object> keys);
 
@@ -180,14 +181,14 @@ public interface ClusteringDependentLogic {
       }
 
       @Override
-      public void commitEntry(CacheEntry entry, EntryVersion newVersion, FlagAffectedCommand command, InvocationContext ctx) {
+      public void commitEntry(CacheEntry entry, Metadata metadata, FlagAffectedCommand command, InvocationContext ctx) {
          // Cache flags before they're reset
          // TODO: Can the reset be done after notification instead?
          boolean created = entry.isCreated();
          boolean removed = entry.isRemoved();
          boolean evicted = entry.isEvicted();
 
-         entry.commit(dataContainer, newVersion);
+         entry.commit(dataContainer, metadata);
 
          // Notify after events if necessary
          notifyCommitEntry(created, removed, evicted, entry, ctx, command);
@@ -236,7 +237,7 @@ public interface ClusteringDependentLogic {
       }
 
       @Override
-      public void commitEntry(CacheEntry entry, EntryVersion newVersion,
+      public void commitEntry(CacheEntry entry, Metadata metadata,
             FlagAffectedCommand command, InvocationContext ctx) {
          // Cache flags before they're reset
          // TODO: Can the reset be done after notification instead?
@@ -244,7 +245,7 @@ public interface ClusteringDependentLogic {
          boolean removed = entry.isRemoved();
          boolean evicted = entry.isEvicted();
 
-         entry.commit(dataContainer, newVersion);
+         entry.commit(dataContainer, metadata);
 
          // Notify after events if necessary
          notifyCommitEntry(created, removed, evicted, entry, ctx, command);
@@ -296,10 +297,10 @@ public interface ClusteringDependentLogic {
       }
 
       @Override
-      public void commitEntry(CacheEntry entry, EntryVersion newVersion, FlagAffectedCommand command, InvocationContext ctx) {
+      public void commitEntry(CacheEntry entry, Metadata metadata, FlagAffectedCommand command, InvocationContext ctx) {
          stateTransferLock.acquireSharedTopologyLock();
          try {
-            super.commitEntry(entry, newVersion, command, ctx);
+            super.commitEntry(entry, metadata, command, ctx);
          } finally {
             stateTransferLock.releaseSharedTopologyLock();
          }
@@ -363,7 +364,7 @@ public interface ClusteringDependentLogic {
       }
 
       @Override
-      public void commitEntry(CacheEntry entry, EntryVersion newVersion, FlagAffectedCommand command, InvocationContext ctx) {
+      public void commitEntry(CacheEntry entry, Metadata metadata, FlagAffectedCommand command, InvocationContext ctx) {
          // Don't allow the CH to change (and state transfer to invalidate entries)
          // between the ownership check and the commit
          stateTransferLock.acquireSharedTopologyLock();
@@ -377,8 +378,13 @@ public interface ClusteringDependentLogic {
             if (isForeignOwned && !entry.isRemoved()) {
                if (configuration.clustering().l1().enabled()) {
                   // transform for L1
-                  if (entry.getLifespan() < 0 || entry.getLifespan() > configuration.clustering().l1().lifespan())
-                     entry.setLifespan(configuration.clustering().l1().lifespan());
+                  if (entry.getLifespan() < 0 || entry.getLifespan() > configuration.clustering().l1().lifespan()) {
+                     Metadata newMetadata = entry.getMetadata().builder()
+                           .lifespan(configuration.clustering().l1().lifespan(),
+                                 TimeUnit.MILLISECONDS)
+                           .build();
+                     entry.setMetadata(newMetadata);
+                  }
                } else {
                   doCommit = false;
                }
@@ -394,7 +400,7 @@ public interface ClusteringDependentLogic {
             }
 
             if (doCommit)
-               entry.commit(dataContainer, newVersion);
+               entry.commit(dataContainer, metadata);
             else
                entry.rollback();
 

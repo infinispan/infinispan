@@ -20,6 +20,7 @@
 package org.infinispan.remoting;
 
 import org.infinispan.Cache;
+import org.infinispan.EmbeddedMetadata;
 import org.infinispan.commands.CommandsFactory;
 import org.infinispan.commands.write.PutKeyValueCommand;
 import org.infinispan.config.Configuration;
@@ -70,7 +71,8 @@ public class MessageSentToLeaverTest extends AbstractInfinispanTest {
          Collection<Address>  addresses = cm1.getMembers();
 
          CommandsFactory cf = TestingUtil.extractCommandsFactory(c1);
-         PutKeyValueCommand cmd = cf.buildPutKeyValueCommand("k", "v2", -1, -1, null);
+         PutKeyValueCommand cmd = cf.buildPutKeyValueCommand("k", "v2",
+               new EmbeddedMetadata.Builder().build(), null);
 
          Map<Address,Response> responseMap = rpcManager.invokeRemotely(addresses, cmd, rpcManager.getDefaultRpcOptions(true, false));
          assert responseMap.size() == 2;

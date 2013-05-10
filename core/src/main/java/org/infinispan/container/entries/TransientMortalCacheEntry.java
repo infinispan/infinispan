@@ -22,6 +22,8 @@
  */
 package org.infinispan.container.entries;
 
+import org.infinispan.EmbeddedMetadata;
+import org.infinispan.Metadata;
 import org.infinispan.io.UnsignedNumeric;
 import org.infinispan.marshall.AbstractExternalizer;
 import org.infinispan.marshall.Ids;
@@ -31,6 +33,7 @@ import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
 import java.util.Set;
+import java.util.concurrent.TimeUnit;
 
 import static java.lang.Math.min;
 
@@ -68,12 +71,10 @@ public class TransientMortalCacheEntry extends AbstractInternalCacheEntry {
       this.cacheValue = new TransientMortalCacheValue(value, created, lifespan, maxIdle, lastUsed);
    }
 
-   @Override
    public void setLifespan(long lifespan) {
       this.cacheValue.lifespan = lifespan;
    }
 
-   @Override
    public void setMaxIdle(long maxIdle) {
       this.cacheValue.maxIdle = maxIdle;
    }
@@ -150,6 +151,19 @@ public class TransientMortalCacheEntry extends AbstractInternalCacheEntry {
    @Override
    public Object setValue(Object value) {
       return cacheValue.setValue(value);
+   }
+
+   @Override
+   public Metadata getMetadata() {
+      return new EmbeddedMetadata.Builder()
+            .lifespan(cacheValue.getLifespan(), TimeUnit.MILLISECONDS)
+            .maxIdle(cacheValue.getMaxIdle(), TimeUnit.MILLISECONDS).build();
+   }
+
+   @Override
+   public void setMetadata(Metadata metadata) {
+      throw new IllegalStateException(
+            "Metadata cannot be set on mortal entries. They need to be recreated via the entry factory.");
    }
 
    @Override
