@@ -42,36 +42,21 @@ public interface Metadata {
 
    /**
     * Returns the lifespan of the cache entry with which this metadata object
-    * is associated.  Negative values are interpreted as unlimited lifespan.
+    * is associated, in milliseconds.  Negative values are interpreted as
+    * unlimited lifespan.
     *
-    * @return lifespan of the entry
+    * @return lifespan of the entry in number of milliseconds
     */
    long lifespan();
 
    /**
-    * Returns the lifespan time unit of the cache entry with which this
-    * metadata object is associated.
-    *
-    * @return lifespan time unit
-    */
-   TimeUnit lifespanUnit();
-
-   /**
     * Returns the the maximum amount of time that the cache entry associated
     * with this metadata object is allowed to be idle for before it is
-    * considered as expired.
+    * considered as expired, in milliseconds.
     *
-    * @return maximum idle time of the entry
+    * @return maximum idle time of the entry in number of milliseconds
     */
    long maxIdle();
-
-   /**
-    * Returns the maximum idle time unit of the cache entry with which this
-    * metadata object is associated.
-    *
-    * @return maximum idle time unit
-    */
-   TimeUnit maxIdleUnit();
 
    /**
     * Returns the version of the cache entry with which this metadata object

@@ -34,6 +34,7 @@ import org.infinispan.factories.ComponentRegistry;
 import org.infinispan.interceptors.base.CommandInterceptor;
 import org.infinispan.remoting.rpc.RpcManager;
 import org.infinispan.stats.Stats;
+import org.infinispan.util.concurrent.NotifyingFuture;
 import org.infinispan.util.concurrent.locks.LockManager;
 
 import javax.transaction.TransactionManager;
@@ -296,13 +297,7 @@ public interface AdvancedCache<K, V> extends Cache<K, V> {
    AdvancedCache<K, V> with(ClassLoader classLoader);
 
    /**
-    * Retrieves a CacheEntry corresponding to a specific key
-    *
-    * @param key
-    * @param explicitFlags
-    * @param explicitClassLoader
-    * @return
-    * @deprecated
+    * @deprecated Use {@link #getCacheEntry(Object)}
     */
    @Deprecated
    CacheEntry getCacheEntry(Object key, EnumSet<Flag> explicitFlags, ClassLoader explicitClassLoader);
@@ -356,13 +351,36 @@ public interface AdvancedCache<K, V> extends Cache<K, V> {
     */
    V putIfAbsent(K key, V value, Metadata metadata);
 
-   // TODO:
+   /**
+    * Asynchronous version of {@link #put(Object, Object)} which stores
+    * metadata alongside the value.  This method does not block on remote calls,
+    * even if your cache mode is synchronous.  Has no benefit over
+    * {@link #put(Object, Object, Metadata)} if used in LOCAL mode.
+    * <p/>
+    *
+    * @param key   key to use
+    * @param value value to store
+    * @param metadata information to store alongside the new value
+    * @return a future containing the old value replaced.
+    */
+   NotifyingFuture<V> putAsync(K key, V value, Metadata metadata);
+
+   // TODO: Do we need these?
+   //
    //   void putAll(Map<? extends K, ? extends V> map, Metadata metadata);
    //
    //   V replace(K key, V value, Metadata metadata);
 
-   // TODO: You could have replace calls that compare not only value, but also version internally?
+   // TODO: Even better: add replace/remove calls that apply the changes if a given function is successful
+   // That way, you could do comparison not only on the cache value, but also based on version...etc
 
+   /**
+    * Retrieves a CacheEntry corresponding to a specific key.
+    *
+    * @param key the key whose associated cache entry is to be returned
+    * @return the cache entry to which the specified key is mapped, or
+    *         {@code null} if this map contains no mapping for the key
+    */
    CacheEntry getCacheEntry(K key);
 
 }

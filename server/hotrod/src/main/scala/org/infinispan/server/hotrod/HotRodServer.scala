@@ -102,8 +102,6 @@ class HotRodServer extends AbstractProtocolServer("HotRod") with Log {
    }
 
    override def startDefaultCache = {
-      assertKeyEquivalence(cacheManager.getDefaultCacheConfiguration,
-         BasicCacheContainer.DEFAULT_CACHE_NAME)
       cacheManager.getCache()
    }
 
@@ -111,22 +109,8 @@ class HotRodServer extends AbstractProtocolServer("HotRod") with Log {
       // Start defined caches to avoid issues with lazily started caches
       for (cacheName <- asScalaIterator(cacheManager.getCacheNames.iterator)) {
          if (!cacheName.startsWith(HotRodServerConfiguration.TOPOLOGY_CACHE_NAME_PREFIX)) {
-            assertKeyEquivalence(cacheManager.getCacheConfiguration(cacheName), cacheName)
             cacheManager.getCache(cacheName)
          }
-      }
-   }
-
-   private def assertKeyEquivalence(cfg: Configuration, cacheName: String) {
-      if (cfg != null) {
-         val keyEquivalence = cfg.dataContainer().keyEquivalence()
-
-         // TODO: Check whether any type converter has been configured
-
-//         if (keyEquivalence != ByteArrayEquivalence.INSTANCE)
-//            throw new ConfigurationException(
-//               "Hot Rod server expects key equivalence configuration for cache '"
-//                       + cacheName + "' to be ByteArrayEquivalence")
       }
    }
 

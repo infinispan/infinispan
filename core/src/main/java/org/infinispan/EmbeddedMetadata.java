@@ -60,18 +60,8 @@ public final class EmbeddedMetadata implements Metadata {
    }
 
    @Override
-   public TimeUnit lifespanUnit() {
-      return TimeUnit.MILLISECONDS;
-   }
-
-   @Override
    public long maxIdle() {
       return maxIdle;
-   }
-
-   @Override
-   public TimeUnit maxIdleUnit() {
-      return TimeUnit.MILLISECONDS;
    }
 
    @Override
