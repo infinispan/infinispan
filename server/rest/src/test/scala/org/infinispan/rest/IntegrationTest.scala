@@ -22,8 +22,6 @@
  */
 package org.infinispan.rest
 
-
-import logging.Log
 import org.apache.commons.httpclient.methods._
 import javax.servlet.http.HttpServletResponse
 import javax.servlet.http.HttpServletResponse._
@@ -37,19 +35,16 @@ import org.infinispan.test.TestingUtil
 import java.text.SimpleDateFormat
 import org.apache.commons.httpclient.{HttpMethodBase, Header, HttpClient}
 import org.apache.commons.httpclient.HttpMethod
-import java.util.{Arrays, Calendar, Locale}
+import java.util.{Calendar, Locale}
 import org.testng.AssertJUnit._
 import org.infinispan.manager.{EmbeddedCacheManager, AbstractDelegatingEmbeddedCacheManager}
-import org.infinispan.{AbstractDelegatingCache, Cache}
+import org.infinispan.{Metadata, Cache, AdvancedCache, AbstractDelegatingAdvancedCache}
 import java.util.concurrent.{TimeUnit, CountDownLatch}
 import scala.concurrent.ops._
 import org.infinispan.server.core.logging.JavaLog
 import org.infinispan.util.logging.LogFactory
-import org.infinispan.manager.DefaultCacheManager
 import org.infinispan.test.fwk.TestCacheManagerFactory
-import org.infinispan.configuration.cache.Configuration
-import org.infinispan.AdvancedCache
-import org.infinispan.AbstractDelegatingAdvancedCache
+import java.util
 
 /**
  * This tests using the Apache HTTP commons client library - but you could use anything
@@ -75,15 +70,15 @@ class IntegrationTest extends RESTServerTestBase {
 
    @BeforeClass
    def setUp() {
-      addServer("single", 8888, TestCacheManagerFactory.fromXml("test-config.xml"));
-      startServers
-      createClient
+      addServer("single", 8888, TestCacheManagerFactory.fromXml("test-config.xml"))
+      startServers()
+      createClient()
    }
 
    @AfterClass(alwaysRun = true)
    def tearDown() {
-      stopServers
-      destroyClient
+      stopServers()
+      destroyClient()
    }
 
    def testBasicOperation(m: Method) {
@@ -663,7 +658,7 @@ class IntegrationTest extends RESTServerTestBase {
    }
 
    private def sendByteArrayAs(m: Method, contentType: String) {
-      val serializedOnClient: Array[Byte] = Array(0x65, 0x66, 0x67)
+      val serializedOnClient = Array[Byte](0x65, 0x66, 0x67)
       put(m, serializedOnClient, contentType)
       val dataRead = new BufferedInputStream(
          get(m, None, Some(contentType)).getResponseBodyAsStream)
@@ -709,7 +704,7 @@ class IntegrationTest extends RESTServerTestBase {
       try {
          knownCaches.put(
             BasicCacheContainer.DEFAULT_CACHE_NAME,
-            mockCacheManager.getCache[String, Any]())
+            mockCacheManager.getCache[String, Array[Byte]]())
 
          val replaceFuture = future {
             // Put again, with a different client (separate thread)
@@ -741,7 +736,7 @@ class IntegrationTest extends RESTServerTestBase {
       } finally {
          knownCaches.put(
             BasicCacheContainer.DEFAULT_CACHE_NAME,
-            origCacheManager.getCache[String, Any]().getAdvancedCache)
+            origCacheManager.getCache[String, Array[Byte]]().getAdvancedCache)
       }
 
    }
@@ -758,11 +753,11 @@ class IntegrationTest extends RESTServerTestBase {
       put(m, bytes, "application/x-java-serialized-object")
 
       val bytesRead = get(m, None, Some("application/x-java-serialized-object")).getResponseBody
-      assertTrue(Arrays.equals(bytes, bytesRead))
+      assertTrue(util.Arrays.equals(bytes, bytesRead))
 
       val oin = new ObjectInputStream(new ByteArrayInputStream(bytesRead))
       val dataBack = oin.readObject().asInstanceOf[Array[Byte]]
-      assertTrue(Arrays.equals(data, dataBack))
+      assertTrue(util.Arrays.equals(data, dataBack))
    }
 
    def testDefaultConfiguredExpiryValues(m: Method) {
@@ -829,10 +824,7 @@ class IntegrationTest extends RESTServerTestBase {
    def testPutByteArrayTwice(m: Method) {
       val fullPathKey = fullPath + "/" + m.getName
       val put = new PutMethod(fullPathKey)
-      val data = new Array[Byte](3);
-      data(0) = 42
-      data(1) = 42
-      data(2) = 42
+      val data = Array[Byte](42, 42, 42)
 
       put.setRequestEntity(new ByteArrayRequestEntity(data, "application/x-java-serialized-object"))
       assertEquals(HttpServletResponse.SC_OK, call(put).getStatusCode)
@@ -848,10 +840,7 @@ class IntegrationTest extends RESTServerTestBase {
    def testDeleteSerializedObject(m: Method) {
       val fullPathKey = fullPath + "/" + m.getName
       val put = new PutMethod(fullPathKey)
-      val data = new Array[Byte](3);
-      data(0) = 42
-      data(1) = 42
-      data(2) = 42
+      val data = Array[Byte](42, 42, 42)
 
       put.setRequestEntity(new ByteArrayRequestEntity(data, "application/x-java-serialized-object"))
       assertEquals(HttpServletResponse.SC_OK, call(put).getStatusCode)
@@ -935,14 +924,12 @@ class IntegrationTest extends RESTServerTestBase {
            v2PutLatch: CountDownLatch, v3PutLatch: CountDownLatch,
            v2FinishLatch: CountDownLatch)
            extends AbstractDelegatingAdvancedCache(cache.getAdvancedCache) {
-      override def replace(key: String, oldValue: Any, value: Any,
-              lifespan: Long, lifespanUnit: TimeUnit, maxIdleTime: Long,
-              maxIdleTimeUnit: TimeUnit): Boolean = {
-         val newMime = value.asInstanceOf[MIMECacheEntry]
-         val oldMime = oldValue.asInstanceOf[MIMECacheEntry]
-         val oldMimeAsString = new java.lang.String(oldMime.data)
-         val newMimeAsString = new java.lang.String(newMime.data)
-         if (Arrays.equals(newMime.data, "data2".getBytes)) {
+      override def replace(key: String, oldValue: Any, value: Any, metadata: Metadata): Boolean = {
+         val newByteArray = value.asInstanceOf[Array[Byte]]
+         val oldByteArray = oldValue.asInstanceOf[Array[Byte]]
+         val oldAsString = new java.lang.String(oldByteArray)
+         val newAsString = new java.lang.String(newByteArray)
+         if (util.Arrays.equals(newByteArray, "data2".getBytes)) {
             log.debug("Let v3 apply...")
             v3PutLatch.countDown() // 2. Let the v3 put come in
             log.debug("Wait until v2 can be stored")
@@ -950,18 +937,17 @@ class IntegrationTest extends RESTServerTestBase {
             val continue = v2PutLatch.await(10, TimeUnit.SECONDS)
             if (!continue)
                fail("Timed out waiting for v2 to be allowed")
-         } else if (Arrays.equals(newMime.data, "data3".getBytes)) {
+         } else if (util.Arrays.equals(newByteArray, "data3".getBytes)) {
             log.debugf("About to store v3, let v2 apply, oldValue(for v3)=%s",
-               oldMimeAsString)
+               oldAsString)
             // 4. Let data2 apply
             v2PutLatch.countDown()
             v2FinishLatch.await(10, TimeUnit.SECONDS) // Wait for data2 apply
          }
          log.debugf("Replace key=%s, oldValue=%s, value=%s",
-            key, oldMimeAsString, newMimeAsString)
+            key, oldAsString, newAsString)
 
-         super.replace(key, oldValue, value,
-            lifespan, lifespanUnit, maxIdleTime, maxIdleTimeUnit)
+         super.replace(key, oldValue, value, metadata)
       }
    }
 

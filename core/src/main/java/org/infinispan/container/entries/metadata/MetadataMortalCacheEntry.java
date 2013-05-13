@@ -131,6 +131,11 @@ public class MetadataMortalCacheEntry extends AbstractInternalCacheEntry impleme
       return cacheValue;
    }
 
+   @Override
+   public Metadata getMetadata() {
+      return cacheValue.getMetadata();
+   }
+
    public static class Externalizer extends AbstractExternalizer<MetadataMortalCacheEntry> {
       @Override
       public void writeObject(ObjectOutput output, MetadataMortalCacheEntry ice) throws IOException {

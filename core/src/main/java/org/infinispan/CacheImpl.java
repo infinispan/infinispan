@@ -1296,6 +1296,11 @@ public class CacheImpl<K, V> extends CacheSupport<K, V> implements AdvancedCache
    }
 
    @Override
+   public NotifyingFuture<V> putAsync(K key, V value, Metadata metadata) {
+      return putAsync(key, value, metadata, null, null);
+   }
+
+   @Override
    protected void set(K key, V value) {
       withFlags(Flag.IGNORE_RETURN_VALUES)
             .put(key, value, defaultLifespan, MILLISECONDS, defaultMaxIdleTime, MILLISECONDS);

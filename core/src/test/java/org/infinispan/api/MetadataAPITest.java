@@ -28,14 +28,17 @@ import org.infinispan.EmbeddedMetadata;
 import org.infinispan.Metadata;
 import org.infinispan.container.entries.CacheEntry;
 import org.infinispan.container.versioning.EntryVersion;
-import org.infinispan.container.versioning.InequalVersionComparisonResult;
 import org.infinispan.container.versioning.NumericVersion;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.test.SingleCacheManagerTest;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.testng.annotations.Test;
 
-import static org.testng.AssertJUnit.assertEquals;
+import java.util.concurrent.Future;
+import java.util.concurrent.TimeUnit;
+
+import static org.testng.AssertJUnit.*;
+import static org.infinispan.container.versioning.InequalVersionComparisonResult.*;
 
 /**
  * Tests cache API methods that take {@link Metadata} as parameter.
@@ -60,8 +63,7 @@ public class MetadataAPITest extends SingleCacheManagerTest {
       NumericVersion version = new NumericVersion(1);
       advCache.put(key, "v1", withVersion(version));
       CacheEntry cacheEntry = advCache.getCacheEntry(key);
-      assertEquals(InequalVersionComparisonResult.EQUAL,
-            version.compareTo(cacheEntry.getMetadata().version()));
+      assertEquals(EQUAL, version.compareTo(cacheEntry.getMetadata().version()));
    }
 
    public void testConditionalReplaceWithVersion() {
@@ -71,8 +73,7 @@ public class MetadataAPITest extends SingleCacheManagerTest {
       NumericVersion newVersion = new NumericVersion(2);
       advCache.replace(key, "v1", "v2", withVersion(newVersion));
       CacheEntry cacheEntry = advCache.getCacheEntry(key);
-      assertEquals(InequalVersionComparisonResult.EQUAL,
-            newVersion.compareTo(cacheEntry.getMetadata().version()));
+      assertEquals(EQUAL, newVersion.compareTo(cacheEntry.getMetadata().version()));
    }
 
    public void testPutIfAbsentWithVersion() {
@@ -80,12 +81,109 @@ public class MetadataAPITest extends SingleCacheManagerTest {
       NumericVersion version = new NumericVersion(1);
       assertEquals(null, advCache.putIfAbsent(key, "v1", withVersion(version)));
       CacheEntry cacheEntry = advCache.getCacheEntry(key);
-      assertEquals(InequalVersionComparisonResult.EQUAL,
-            version.compareTo(cacheEntry.getMetadata().version()));
+      assertEquals(EQUAL, version.compareTo(cacheEntry.getMetadata().version()));
+   }
+
+   public void testPutAsyncWithVersion() throws Exception {
+      final Integer key = 4;
+      NumericVersion version = new NumericVersion(1);
+      Future<String> f = advCache.putAsync(key, "v1", withVersion(version));
+      assertNotNull(f);
+      assertFalse(f.isCancelled());
+      assertNull(f.get());
+      assertTrue(f.isDone());
+      CacheEntry entry = advCache.getCacheEntry(key);
+      assertEquals("v1", entry.getValue());
+      assertEquals(EQUAL, version.compareTo(entry.getMetadata().version()));
+   }
+
+   public void testGetCustomMetadataForMortalEntries() throws Exception {
+      final Integer key = 5;
+      Metadata meta = new CustomMetadata(3000, -1);
+      advCache.put(key, "v1", meta);
+      CacheEntry entry = advCache.getCacheEntry(key);
+      assertEquals(meta, entry.getMetadata());
+   }
+
+   public void testGetCustomMetadataForTransientEntries() throws Exception {
+      final Integer key = 6;
+      Metadata meta = new CustomMetadata(-1, 3000);
+      advCache.put(key, "v1", meta);
+      CacheEntry entry = advCache.getCacheEntry(key);
+      assertEquals(meta, entry.getMetadata());
+   }
+
+   public void testGetCustomMetadataForTransientMortalEntries() throws Exception {
+      final Integer key = 6;
+      Metadata meta = new CustomMetadata(3000, 3000);
+      advCache.put(key, "v1", meta);
+      CacheEntry entry = advCache.getCacheEntry(key);
+      assertEquals(meta, entry.getMetadata());
    }
 
    private Metadata withVersion(EntryVersion version) {
       return new EmbeddedMetadata.Builder().version(version).build();
+   }
+
+   private class CustomMetadata implements Metadata, Metadata.Builder {
+
+      private final long lifespan;
+      private final long maxIdle;
+
+      private CustomMetadata(long lifespan, long maxIdle) {
+         this.lifespan = lifespan;
+         this.maxIdle = maxIdle;
+      }
+
+      private CustomMetadata(Metadata template) {
+         this.lifespan = template.lifespan();
+         this.maxIdle = template.maxIdle();
+      }
+
+      @Override
+      public long lifespan() {
+         return lifespan;
+      }
+
+      @Override
+      public long maxIdle() {
+         return maxIdle;
+      }
+
+      @Override
+      public EntryVersion version() {
+         return null; // ignore
+      }
+
+      @Override
+      public Builder builder() {
+         return this; // ignore
+      }
+
+      @Override
+      public Builder lifespan(long time, TimeUnit unit) {
+         return new CustomMetadata(unit.toMillis(time), maxIdle);
+      }
+
+      @Override
+      public Builder maxIdle(long time, TimeUnit unit) {
+         return new CustomMetadata(lifespan, unit.toMillis(time));
+      }
+
+      @Override
+      public Builder version(EntryVersion version) {
+         return this;
+      }
+
+      @Override
+      public Builder read(Metadata template) {
+         return new CustomMetadata(template);
+      }
+
+      @Override
+      public Metadata build() {
+         return this;
+      }
    }
 
 }

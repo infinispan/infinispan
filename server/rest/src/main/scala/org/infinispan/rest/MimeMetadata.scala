@@ -27,6 +27,7 @@ import org.infinispan.Metadata
 import org.infinispan.container.versioning.EntryVersion
 import java.util.concurrent.TimeUnit
 import org.infinispan.Metadata.Builder
+import TimeUnit._
 
 /**
  * Metadata for MIME data stored in REST servers.
@@ -35,7 +36,12 @@ import org.infinispan.Metadata.Builder
  * @since 5.3
  */
 case class MimeMetadata(
-        lifespan: Long, lifespanUnit: TimeUnit,
-        maxIdle: Long, maxIdleUnit: TimeUnit,
-        version: EntryVersion, builder: Builder,
-        contentType: String) extends Metadata
+        contentType: String,
+        l: Long = -1, lifespanUnit: TimeUnit = SECONDS,
+        m: Long = -1, maxIdleUnit: TimeUnit = SECONDS,
+        version: EntryVersion = null, builder: Builder = null) extends Metadata {
+
+   override val lifespan = lifespanUnit.toMillis(l)
+   override val maxIdle = maxIdleUnit.toMillis(m)
+
+}

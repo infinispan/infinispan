@@ -25,15 +25,15 @@ package org.infinispan.rest
 import com.thoughtworks.xstream.XStream
 import java.io._
 import java.util.Date
+import java.util.concurrent.TimeUnit.{MILLISECONDS => MILLIS}
 import java.util.concurrent.TimeUnit.{SECONDS => SECS}
 import javax.ws.rs._
 import core._
 import core.Response.{ResponseBuilder, Status}
 import org.infinispan.api.BasicCacheContainer
-import org.infinispan.remoting.MIMECacheEntry
 import org.infinispan.manager._
 import org.codehaus.jackson.map.ObjectMapper
-import org.infinispan.{CacheException, Cache}
+import org.infinispan.{Metadata, CacheException, AdvancedCache}
 import org.infinispan.commons.hash.MurmurHash3
 import javax.ws.rs._
 import javax.servlet.http.HttpServletResponse
@@ -43,15 +43,12 @@ import scala.xml.Utility
 import org.infinispan.tasks.GlobalKeySetTask
 import org.infinispan.util.CollectionFactory
 import org.infinispan.container.entries.CacheEntry
-import org.infinispan.rest.configuration.RestServerConfiguration
-import org.infinispan.container.entries.MortalCacheEntry
-import org.infinispan.container.entries.ImmortalCacheEntry
 import org.infinispan.container.entries.InternalCacheEntry
-import org.infinispan.AdvancedCache
-import scala.xml.MetaData
 import org.infinispan.rest.configuration.ExtendedHeaders
 import org.infinispan.remoting.transport.jgroups.JGroupsTransport
 import org.infinispan.distribution.DistributionManager
+import org.infinispan.remoting.transport.Address
+import org.infinispan.configuration.cache.Configuration
 
 /**
  * Integration server linking REST requests with Infinispan calls.
@@ -102,7 +99,7 @@ class Server(@Context request: Request, @Context servletContext: ServletContext,
                pw.print("keys=[")
                val it = keys.iterator
                while (it.hasNext) {
-                  pw.printf("\"%s\"", Escaper.escapeJson(it.next))
+                  pw.printf("\"%s\"", Escaper.escapeJson(it.next()))
                   if (it.hasNext) pw.print(",")
 
                }
@@ -122,60 +119,77 @@ class Server(@Context request: Request, @Context servletContext: ServletContext,
          manager.getInternalEntry(cacheName, key) match {
             case ice: InternalCacheEntry => {
                val lastMod = lastModified(ice)
-               val expires = if (ice.canExpire) new Date(ice.getExpiryTime()) else null
-               ice.getValue() match {
-                  case b: MIMECacheEntry => {
-                     request.evaluatePreconditions(lastMod, calcETAG(b)) match {
-                        case bldr: ResponseBuilder => bldr.build
-                        case null => Response.ok(b.data, b.contentType)
-                           .lastModified(lastMod)
-                           .expires(expires)
-                           .tag(calcETAG(b))
-                           .extended(cacheName, key, wantExtendedHeaders(extended)).build
-                     }
-                  }
-                  case s: String => Response.ok(s, "text/plain").build
-                  case obj: Any => {
-                     val variant = request.selectVariant(variantList)
-                     val selectedMediaType = if (variant != null) variant.getMediaType.toString else "application/x-java-serialized-object"
-                     selectedMediaType match {
-                        case MediaType.APPLICATION_JSON => Response.ok
-                              .`type`(selectedMediaType)
-                              .lastModified(lastMod)
-                              .expires(expires)
-                              .extended(cacheName, key, wantExtendedHeaders(extended))
-                              .entity(streamIt(jsonMapper.writeValue(_, obj)))
-                              .build
-                        case MediaType.APPLICATION_XML => Response.ok
-                           .`type`(selectedMediaType)
-                           .lastModified(lastMod)
-                           .expires(expires)
-                           .extended(cacheName, key, wantExtendedHeaders(extended))
-                           .entity(streamIt(xstream.toXML(obj, _)))
-                           .build
-                        case _ =>
-                           obj match {
-                              case ba: Array[Byte] => Response.ok
-                                 .`type`("application/x-java-serialized-object")
-                                 .lastModified(lastMod)
-                                 .expires(expires)
-                                 .extended(cacheName, key, wantExtendedHeaders(extended))
-                                 .entity(streamIt(_.write(ba)))
-                                 .build
-                              case ser: Serializable => Response.ok
-                                 .`type`("application/x-java-serialized-object")
-                                 .lastModified(lastMod)
-                                 .expires(expires)
-                                 .extended(cacheName, key, wantExtendedHeaders(extended))
-                                 .entity(streamIt(new ObjectOutputStream(_).writeObject(ser)))
-                                 .build
-                              case _ => Response.notAcceptable(variantList).build
-                           }
-                     }
-                  }
+               val expires = if (ice.canExpire) new Date(ice.getExpiryTime) else null
+               ice.getMetadata match {
+                  case meta: MimeMetadata =>
+                     getMimeEntry(ice, meta, lastMod, expires, cacheName, extended)
+                  case _ =>
+                     getAnyEntry(ice, lastMod, expires, cacheName, extended)
                }
             }
-            case null => Response.status(Status.NOT_FOUND).build
+            case _ => Response.status(Status.NOT_FOUND).build
+         }
+      }
+   }
+
+   private def getMimeEntry(ice: InternalCacheEntry, meta: MimeMetadata,
+           lastMod: Date, expires: Date, cacheName: String, extended: String): Response = {
+      val key = ice.getKey.asInstanceOf[String]
+      request.evaluatePreconditions(lastMod, calcETAG(ice, meta)) match {
+         case bldr: ResponseBuilder => bldr.build
+         case null => Response.ok(ice.getValue, meta.contentType)
+                 .lastModified(lastMod)
+                 .expires(expires)
+                 .tag(calcETAG(ice, meta))
+                 .extended(cacheName, key, wantExtendedHeaders(extended)).build
+      }
+   }
+
+   private def getAnyEntry(ice: InternalCacheEntry, lastMod: Date, expires: Date,
+           cacheName: String, extended: String): Response = {
+      val key = ice.getKey.asInstanceOf[String]
+      ice.getValue match {
+         case s: String => Response.ok(s, "text/plain").build
+         case obj: Any => {
+            val variant = request.selectVariant(variantList)
+            val selectedMediaType =
+               if (variant != null) variant.getMediaType.toString
+               else "application/x-java-serialized-object"
+
+            selectedMediaType match {
+               case MediaType.APPLICATION_JSON => Response.ok
+                       .`type`(selectedMediaType)
+                       .lastModified(lastMod)
+                       .expires(expires)
+                       .extended(cacheName, key, wantExtendedHeaders(extended))
+                       .entity(streamIt(jsonMapper.writeValue(_, obj)))
+                       .build
+               case MediaType.APPLICATION_XML => Response.ok
+                       .`type`(selectedMediaType)
+                       .lastModified(lastMod)
+                       .expires(expires)
+                       .extended(cacheName, key, wantExtendedHeaders(extended))
+                       .entity(streamIt(xstream.toXML(obj, _)))
+                       .build
+               case _ =>
+                  obj match {
+                     case ba: Array[Byte] => Response.ok
+                             .`type`("application/x-java-serialized-object")
+                             .lastModified(lastMod)
+                             .expires(expires)
+                             .extended(cacheName, key, wantExtendedHeaders(extended))
+                             .entity(streamIt(_.write(ba)))
+                             .build
+                     case ser: Serializable => Response.ok
+                             .`type`("application/x-java-serialized-object")
+                             .lastModified(lastMod)
+                             .expires(expires)
+                             .extended(cacheName, key, wantExtendedHeaders(extended))
+                             .entity(streamIt(new ObjectOutputStream(_).writeObject(ser)))
+                             .build
+                     case _ => Response.notAcceptable(variantList).build
+                  }
+            }
          }
       }
    }
@@ -208,11 +222,11 @@ class Server(@Context request: Request, @Context servletContext: ServletContext,
 
    def printIt(action: (PrintWriter) => Unit) = new StreamingOutput {
       def write(o: OutputStream) {
-         val pw = new PrintWriter(o);
+         val pw = new PrintWriter(o)
          try {
-            action(pw);
+            action(pw)
          } finally {
-            pw.flush();
+            pw.flush()
          }
       }
    }
@@ -224,28 +238,27 @@ class Server(@Context request: Request, @Context servletContext: ServletContext,
          manager.getInternalEntry(cacheName, key) match {
             case ice: InternalCacheEntry => {
                val lastMod = lastModified(ice)
-               val expires = if (ice.canExpire) new Date(ice.getExpiryTime()) else null
-               ice.getValue  match {
-                  case b: MIMECacheEntry => {
-                     request.evaluatePreconditions(lastMod, calcETAG(b)) match {
+               val expires = if (ice.canExpire) new Date(ice.getExpiryTime) else null
+               ice.getMetadata match {
+                  case meta: MimeMetadata =>
+                     request.evaluatePreconditions(lastMod, calcETAG(ice, meta)) match {
                         case bldr: ResponseBuilder => bldr.build
                         case null => Response.ok
-                           .`type`(b.contentType)
-                           .lastModified(lastMod)
-                           .expires(expires)
-                           .tag(calcETAG(b))
-                           .extended(cacheName, key, wantExtendedHeaders(extended))
-                           .build
+                                .`type`(meta.contentType)
+                                .lastModified(lastMod)
+                                .expires(expires)
+                                .tag(calcETAG(ice, meta))
+                                .extended(cacheName, key, wantExtendedHeaders(extended))
+                                .build
                      }
-                  }
-                  case x: Any => Response.ok
-                        .lastModified(lastMod)
-                        .expires(expires)
-                        .extended(cacheName, key, wantExtendedHeaders(extended))
-                        .build
+                  case _ => Response.ok
+                          .lastModified(lastMod)
+                          .expires(expires)
+                          .extended(cacheName, key, wantExtendedHeaders(extended))
+                          .build
                }
             }
-            case null => Response.status(Status.NOT_FOUND).build
+            case _ => Response.status(Status.NOT_FOUND).build
          }
       }
    }
@@ -265,70 +278,68 @@ class Server(@Context request: Request, @Context servletContext: ServletContext,
             manager.getInternalEntry(cacheName, key) match {
                case ice: InternalCacheEntry => {
                   val lastMod = lastModified(ice)
-                  ice.getValue match {
-                     case mime: MIMECacheEntry => {
+                  ice.getMetadata match {
+                     case mime: MimeMetadata =>
                         // The item already exists in the cache, evaluate preconditions based on its attributes and the headers
-                        request.evaluatePreconditions(lastMod, calcETAG(mime)) match {
+                        val etag = calcETAG(ice, mime)
+                        request.evaluatePreconditions(lastMod, etag) match {
                            // One of the preconditions failed, build a response
                            case bldr: ResponseBuilder => bldr.build
                            // Preconditions passed
-                           case null => putInCache(cache, key,
-                              toCacheEntry(data, mediaType), ttl, idleTime, Some(mime))
+                           case null => putInCache(cache, key, data, mediaType,
+                              ttl, idleTime, Some(ice.getValue.asInstanceOf[Array[Byte]]))
                         }
-                     }
-                     case binary: Array[Byte] =>
-                        putInCache(cache, key,
-                           toCacheEntry(data, mediaType), ttl, idleTime, None)
+                     case _ =>
+                        putInCache(cache, key, data, mediaType, ttl, idleTime, None)
                   }
                }
-               case null =>
-                  putInCache(cache, key,
-                     toCacheEntry(data, mediaType), ttl, idleTime, None)
+               case _ =>
+                  putInCache(cache, key, data, mediaType, ttl, idleTime, None)
             }
          }
       }
    }
 
-   private def toCacheEntry(data: Array[Byte], mediaType: String): AnyRef =
-      if (isBinaryType(mediaType)) data else new MIMECacheEntry(mediaType, data)
-
-   private def putInCache(cache: Cache[String, Any],
-           key: String, obj: AnyRef, ttl: Long, idleTime: Long,
-           prevCond: Option[AnyRef]): Response = {
+   private def putInCache(cache: AdvancedCache[String, Array[Byte]], key: String,
+           data: Array[Byte], dataType: String, ttl: Long, idleTime: Long,
+           prevCond: Option[Array[Byte]]): Response = {
       if (useAsync)
-         asyncPutInCache(cache, key, obj, ttl, idleTime)
+         asyncPutInCache(cache, key, data, dataType, ttl, idleTime)
       else
-         putOrReplace(cache, key, obj, ttl, idleTime, prevCond)
+         putOrReplace(cache, key, data, dataType, ttl, idleTime, prevCond)
    }
 
-   def asyncPutInCache(cache: Cache[String, Any],
-           key: String, obj: AnyRef, ttl: Long, idleTime: Long): Response = {
-      (ttl, idleTime) match {
-         case (0, 0) => cache.putAsync(key, obj)
-         case (x, 0) => cache.putAsync(key, obj, ttl, SECS)
-         case (x, y) => cache.putAsync(key, obj, ttl, SECS, idleTime, SECS)
-      }
+   def asyncPutInCache(cache: AdvancedCache[String, Array[Byte]],
+           key: String, data: Array[Byte], dataType: String,
+           ttl: Long, idleTime: Long): Response = {
+      val metadata = createMetadata(cache.getCacheConfiguration, dataType, ttl, idleTime)
+      cache.putAsync(key, data, metadata)
       Response.ok.build
    }
 
-   private def putOrReplace(cache: Cache[String, Any],
-           key: String, obj: AnyRef, ttl: Long, idleTime: Long,
-           prevCond: Option[AnyRef]): Response = {
+   def createMetadata(cfg: Configuration, dataType: String, ttl: Long, idleTime: Long): Metadata = {
+      (ttl, idleTime) match {
+         case (0, 0) => MimeMetadata(dataType,
+            cfg.expiration().lifespan(), MILLIS,
+            cfg.expiration().maxIdle(), MILLIS)
+         case (lifespan, 0) =>
+            MimeMetadata(dataType, lifespan, SECS, cfg.expiration().maxIdle(), MILLIS)
+         case (lifespan, maxIdle) =>
+            MimeMetadata(dataType, lifespan, SECS, maxIdle, SECS)
+      }
+   }
+
+   private def putOrReplace(cache: AdvancedCache[String, Array[Byte]],
+           key: String, data: Array[Byte], dataType: String,
+           ttl: Long, idleTime: Long,
+           prevCond: Option[Array[Byte]]): Response = {
+      val metadata = createMetadata(cache.getCacheConfiguration, dataType, ttl, idleTime)
       prevCond match {
          case None =>
-            (ttl, idleTime) match {
-               case (0, 0) => cache.put(key, obj)
-               case (x, 0) => cache.put(key, obj, ttl, SECS)
-               case (x, y) => cache.put(key, obj, ttl, SECS, idleTime, SECS)
-            }
+            cache.put(key, data, metadata)
             Response.ok.build
          case Some(prev) =>
-            val replaced = (ttl, idleTime) match {
-               case (0, 0) => cache.replace(key, prev, obj)
-               case (x, 0) => cache.replace(key, prev, obj, ttl, SECS)
-               case (x, y) =>
-                  cache.replace(key, prev, obj, ttl, SECS, idleTime, SECS)
-            }
+            val replaced = cache.replace(key, prev, data, metadata)
             // If not replaced, simply send back that the precondition failed
             if (replaced) Response.ok.build
             else Response.status(
@@ -342,14 +353,15 @@ class Server(@Context request: Request, @Context servletContext: ServletContext,
       manager.getInternalEntry(cacheName, key) match {
          case ice: InternalCacheEntry => {
             val lastMod = lastModified(ice)
-            ice.getValue match {
-               case b: MIMECacheEntry => {
+            ice.getMetadata match {
+               case meta: MimeMetadata =>
                   // The item exists in the cache, evaluate preconditions based on its attributes and the headers
-                 request.evaluatePreconditions(lastMod, calcETAG(b)) match {
+                  val etag = calcETAG(ice, meta)
+                  request.evaluatePreconditions(lastMod, etag) match {
                      // One of the preconditions failed, build a response
                      case bldr: ResponseBuilder => bldr.build
                      // Preconditions passed
-                     case null => {
+                     case _ => {
                         if (useAsync) {
                            manager.getCache(cacheName).removeAsync(key)
                         } else {
@@ -358,15 +370,14 @@ class Server(@Context request: Request, @Context servletContext: ServletContext,
                         Response.ok.build
                      }
                   }
-               }
-               case obj: Any => {
+               case _ =>
                   if (useAsync) {
                      manager.getCache(cacheName).removeAsync(key)
                   } else {
                      manager.getCache(cacheName).remove(key)
                   }
                   Response.ok.build
-               }
+
             }
          }
          case null => Response.ok.build
@@ -395,9 +406,10 @@ class Server(@Context request: Request, @Context servletContext: ServletContext,
 
    val hashFunc = new MurmurHash3()
 
-   private def calcETAG(entry: MIMECacheEntry) = new EntityTag(entry.contentType + hashFunc.hash(entry.data))
+   private def calcETAG(entry: InternalCacheEntry, meta: MimeMetadata): EntityTag =
+      new EntityTag(meta.contentType + hashFunc.hash(entry.getValue))
 
-   private def lastModified(ice: InternalCacheEntry): Date = { new Date(ice.getCreated() / 1000 * 1000) }
+   private def lastModified(ice: InternalCacheEntry): Date = { new Date(ice.getCreated / 1000 * 1000) }
 
    private def protectCacheNotFound(request: Request, useAsync: Boolean) (op: (Request, Boolean) => Response): Response = {
       try {
@@ -408,19 +420,16 @@ class Server(@Context request: Request, @Context servletContext: ServletContext,
       }
    }
 
-   private def isBinaryType(mediaType: String) =
-      mediaType == "application/x-java-serialized-object"
-
 }
 
 /**
  * Just wrap a single instance of the Infinispan cache manager.
  */
 class ManagerInstance(instance: EmbeddedCacheManager) {
-   private[rest] val knownCaches : java.util.Map[String, AdvancedCache[String, Any]] =
+   private[rest] val knownCaches : java.util.Map[String, AdvancedCache[String, Array[Byte]]] =
       CollectionFactory.makeConcurrentMap(4, 0.9f, 16)
 
-   def getCache(name: String): AdvancedCache[String, Any] = {
+   def getCache(name: String): AdvancedCache[String, Array[Byte]] = {
       val isKnownCache = knownCaches.containsKey(name)
       if (name != BasicCacheContainer.DEFAULT_CACHE_NAME && !isKnownCache && !instance.getCacheNames.contains(name))
          throw new CacheNotFoundException("Cache with name '" + name + "' not found amongst the configured caches")
@@ -430,22 +439,22 @@ class ManagerInstance(instance: EmbeddedCacheManager) {
       } else {
          val rv =
             if (name == BasicCacheContainer.DEFAULT_CACHE_NAME)
-               instance.getCache[String, Any]().getAdvancedCache()
+               instance.getCache[String, Array[Byte]]().getAdvancedCache
             else
-               instance.getCache[String, Any](name).getAdvancedCache()
+               instance.getCache[String, Array[Byte]](name).getAdvancedCache
 
          knownCaches.put(name, rv)
          rv
       }
    }
 
-   def getEntry(cacheName: String, key: String): Any = getCache(cacheName).get(key)
+   def getEntry(cacheName: String, key: String): Array[Byte] = getCache(cacheName).get(key)
 
-   def getInternalEntry(cacheName: String, key: String): CacheEntry = getCache(cacheName).getCacheEntry(key, null, null)
+   def getInternalEntry(cacheName: String, key: String): CacheEntry = getCache(cacheName).getCacheEntry(key)
 
-   def getNodeName(): Any = instance.getAddress
+   def getNodeName: Address = instance.getAddress
 
-   def getServerAddress(): String =
+   def getServerAddress: String =
       instance.getTransport match {
          case trns: JGroupsTransport => trns.getPhysicalAddresses.toString
          case null => null
@@ -473,6 +482,6 @@ object Escaper {
    }
 
    def escapeJson(json: String): String = {
-      json.replaceAll("\"", "\\\\\"");
+      json.replaceAll("\"", "\\\\\"")
    }
 }

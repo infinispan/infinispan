@@ -63,8 +63,8 @@ public class InternalEntryFactoryImpl implements InternalEntryFactory {
          return new TransientMortalCacheEntry(key, value, maxIdle, lifespan);
       } else {
          if (lifespan < 0 && maxIdle < 0) return new MetadataImmortalCacheEntry(key, value, metadata);
-         if (lifespan > -1 && maxIdle < 0) new MetadataMortalCacheEntry(key, value, metadata);
-         if (lifespan < 0 && maxIdle > -1) new MetadataTransientCacheEntry(key, value, metadata);
+         if (lifespan > -1 && maxIdle < 0) return new MetadataMortalCacheEntry(key, value, metadata);
+         if (lifespan < 0 && maxIdle > -1) return new MetadataTransientCacheEntry(key, value, metadata);
          return new MetadataTransientMortalCacheEntry(key, value, metadata);
       }
    }
@@ -150,8 +150,8 @@ public class InternalEntryFactoryImpl implements InternalEntryFactory {
          long metaLifespan = metadata.lifespan();
          long metaMaxIdle = metadata.maxIdle();
          if (metaLifespan < 0 && metaMaxIdle < 0) return new MetadataImmortalCacheEntry(key, value, metadata);
-         if (metaLifespan > -1 && metaMaxIdle < 0) new MetadataMortalCacheEntry(key, value, metadata);
-         if (metaLifespan < 0 && metaMaxIdle > -1) new MetadataTransientCacheEntry(key, value, metadata);
+         if (metaLifespan > -1 && metaMaxIdle < 0) return new MetadataMortalCacheEntry(key, value, metadata);
+         if (metaLifespan < 0 && metaMaxIdle > -1) return new MetadataTransientCacheEntry(key, value, metadata);
          return new MetadataTransientMortalCacheEntry(key, value, metadata);
       }
    }

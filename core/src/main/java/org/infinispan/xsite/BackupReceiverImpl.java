@@ -47,6 +47,7 @@ import org.infinispan.util.logging.LogFactory;
 import javax.transaction.TransactionManager;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
+import java.util.concurrent.TimeUnit;
 
 /**
  * @author Mircea Markus
@@ -120,8 +121,8 @@ public class BackupReceiverImpl implements BackupReceiver {
       public Object visitPutMapCommand(InvocationContext ctx, PutMapCommand command) throws Throwable {
          Metadata metadata = command.getMetadata();
          backupCache.putAll(command.getMap(),
-               metadata.lifespan(), metadata.lifespanUnit(),
-               metadata.maxIdle(), metadata.maxIdleUnit());
+               metadata.lifespan(), TimeUnit.MILLISECONDS,
+               metadata.maxIdle(), TimeUnit.MILLISECONDS);
          return null;
       }
 
