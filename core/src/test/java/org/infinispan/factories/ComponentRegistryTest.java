@@ -47,10 +47,10 @@ import static org.testng.Assert.assertNull;
  */
 @Test(groups = "unit", testName = "factories.ComponentRegistryTest")
 public class ComponentRegistryTest extends AbstractInfinispanTest {
-
    private GlobalComponentRegistry gcr;
    private ComponentRegistry cr1;
    private ComponentRegistry cr2;
+   private TestDelayFactory.Control control;
 
    @BeforeMethod
    public void setUp() throws InterruptedException, ExecutionException {
@@ -63,9 +63,14 @@ public class ComponentRegistryTest extends AbstractInfinispanTest {
       gcr = new GlobalComponentRegistry(gc, cm, cachesSet);
       cr1 = new ComponentRegistry("cache", c, cache, gcr, ComponentRegistryTest.class.getClassLoader());
       cr2 = new ComponentRegistry("cache", c, cache, gcr, ComponentRegistryTest.class.getClassLoader());
+
+      control = new TestDelayFactory.Control();
+      gcr.registerComponent(control, TestDelayFactory.Control.class);
    }
 
    public void testSingleThreadLookup() throws InterruptedException, ExecutionException {
+      control.unblock();
+
       TestDelayFactory.Component c1 = cr1.getOrCreateComponent(TestDelayFactory.Component.class);
       assertNotNull(c1);
 
@@ -82,11 +87,12 @@ public class ComponentRegistryTest extends AbstractInfinispanTest {
          }
       });
 
-      Thread.sleep(500);
-
       // getComponent doesn't wait for the getOrCreateComponent call on the forked thread to finish
       // It returns null instead, but that's ok because getComponent doesn't guarantee anything
+      Thread.sleep(500);
       assertNull(cr1.getComponent(TestDelayFactory.Component.class));
+
+      control.unblock();
       assertNotNull(future.get());
       // now that getOrCreateComponent has finished, getComponent works as well
       assertNotNull(cr1.getComponent(TestDelayFactory.Component.class));
@@ -102,8 +108,9 @@ public class ComponentRegistryTest extends AbstractInfinispanTest {
       });
 
       Thread.sleep(500);
-
       assertNotNull(cr2.getOrCreateComponent(TestDelayFactory.Component.class));
+
+      control.unblock();
       assertNotNull(future.get());
    }
 }
