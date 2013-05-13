@@ -19,6 +19,9 @@
 
 package org.infinispan.factories;
 
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.TimeUnit;
+
 import org.infinispan.configuration.global.GlobalConfiguration;
 import org.infinispan.factories.annotations.DefaultFactoryFor;
 import org.infinispan.factories.annotations.Inject;
@@ -38,10 +41,12 @@ import org.infinispan.factories.scopes.Scopes;
 @DefaultFactoryFor(classes = TestDelayFactory.Component.class)
 public class TestDelayFactory extends AbstractComponentFactory implements AutoInstantiableFactory {
    private boolean injectionDone = false;
+   private Control control;
 
    @Inject
-   public void inject(GlobalConfiguration gc) throws InterruptedException {
-      Thread.sleep(1000);
+   public void inject(Control control) throws InterruptedException {
+      this.control = control;
+      control.await();
       injectionDone = true;
    }
 
@@ -54,5 +59,18 @@ public class TestDelayFactory extends AbstractComponentFactory implements AutoIn
 
    @Scope(Scopes.NAMED_CACHE)
    public static class Component {
+   }
+
+   @Scope(Scopes.GLOBAL)
+   public static class Control {
+      private final CountDownLatch latch = new CountDownLatch(1);
+
+      public void await() throws InterruptedException {
+         latch.await(10, TimeUnit.SECONDS);
+      }
+
+      public void unblock() {
+         latch.countDown();
+      }
    }
 }
