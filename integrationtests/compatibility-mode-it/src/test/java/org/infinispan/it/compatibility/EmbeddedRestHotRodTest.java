@@ -68,8 +68,8 @@ public class EmbeddedRestHotRodTest {
             "<hey>ho</hey>".getBytes(), "application/octet-stream"));
       HttpClient restClient = cacheFactory.getRestClient();
       restClient.executeMethod(put);
-      assertEquals("", put.getResponseBodyAsString().trim());
       assertEquals(HttpServletResponse.SC_OK, put.getStatusCode());
+      assertEquals("", put.getResponseBodyAsString().trim());
 
       assertArrayEquals("<hey>ho</hey>".getBytes(), cacheFactory.getEmbeddedCache().get("1"));
       assertArrayEquals("<hey>ho</hey>".getBytes(), cacheFactory.getHotRodCache().get("1"));

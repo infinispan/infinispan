@@ -318,6 +318,23 @@ public interface AdvancedCache<K, V> extends Cache<K, V> {
    V put(K key, V value, Metadata metadata);
 
    /**
+    * An overloaded form of {@link #replace(K, V)}, which takes in an
+    * instance of {@link Metadata} which can be used to provide metadata
+    * information for the entry being stored, such as lifespan, version
+    * of value...etc. The {@link Metadata} is only stored in the call is
+    * successful.
+    *
+    * @param key key with which the specified value is associated
+    * @param value value to be associated with the specified key
+    * @param metadata information to store alongside the new value
+    * @return the previous value associated with the specified key, or
+    *         <tt>null</tt> if there was no mapping for the key.
+    *
+    * @since 5.3
+    */
+   V replace(K key, V value, Metadata metadata);
+
+   /**
     * An overloaded form of {@link #replace(K, V, V)}, which takes in an
     * instance of {@link Metadata} which can be used to provide metadata
     * information for the entry being stored, such as lifespan, version
@@ -362,14 +379,10 @@ public interface AdvancedCache<K, V> extends Cache<K, V> {
     * @param value value to store
     * @param metadata information to store alongside the new value
     * @return a future containing the old value replaced.
+    *
+    * @since 5.3
     */
    NotifyingFuture<V> putAsync(K key, V value, Metadata metadata);
-
-   // TODO: Do we need these?
-   //
-   //   void putAll(Map<? extends K, ? extends V> map, Metadata metadata);
-   //
-   //   V replace(K key, V value, Metadata metadata);
 
    // TODO: Even better: add replace/remove calls that apply the changes if a given function is successful
    // That way, you could do comparison not only on the cache value, but also based on version...etc
@@ -380,6 +393,8 @@ public interface AdvancedCache<K, V> extends Cache<K, V> {
     * @param key the key whose associated cache entry is to be returned
     * @return the cache entry to which the specified key is mapped, or
     *         {@code null} if this map contains no mapping for the key
+    *
+    * @since 5.3
     */
    CacheEntry getCacheEntry(K key);
 

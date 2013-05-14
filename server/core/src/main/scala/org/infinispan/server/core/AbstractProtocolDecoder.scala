@@ -196,13 +196,12 @@ abstract class AbstractProtocolDecoder[K, V](transport: NettyTransport)
    }
 
    private def put: AnyRef = {
-      val v = createValue(Integer.MIN_VALUE) // Version parameter unused, send anything
       // Get an optimised cache in case we can make the operation more efficient
-      val prev = getOptimizedCache(cache).put(key, v, buildMetadata())
+      val prev = getOptimizedCache(cache).put(key, createValue(), buildMetadata())
       createSuccessResponse(prev)
    }
 
-   private def buildMetadata(): Metadata = {
+   protected def buildMetadata(): Metadata = {
       val metadata = new EmbeddedMetadata.Builder
       metadata.version(new ServerEntryVersion(generateVersion(cache)))
       (params.lifespan, params.maxIdle) match {
@@ -221,8 +220,7 @@ abstract class AbstractProtocolDecoder[K, V](transport: NettyTransport)
    private def putIfAbsent: AnyRef = {
       var prev = cache.get(key)
       if (prev == null) { // Generate new version only if key not present
-         val v = createValue(Integer.MIN_VALUE) // Version parameter unused, send anything
-         prev = getOptimizedCache(cache).putIfAbsent(key, v, buildMetadata())
+         prev = getOptimizedCache(cache).putIfAbsent(key, createValue(), buildMetadata())
       }
       if (prev == null)
          createSuccessResponse(prev)
@@ -233,14 +231,7 @@ abstract class AbstractProtocolDecoder[K, V](transport: NettyTransport)
    private def replace: AnyRef = {
       var prev = cache.get(key)
       if (prev != null) { // Generate new version only if key present
-         val v = createValue(generateVersion(cache))
-         prev = (params.lifespan, params.maxIdle) match {
-            case (EXPIRATION_DEFAULT, EXPIRATION_DEFAULT) => cache.replace(key, v)
-            case (_, EXPIRATION_DEFAULT) => cache.replace(key, v, toMillis(params.lifespan), DefaultTimeUnit)
-            case (_, _) => cache.replace(key, v,
-                  toMillis(params.lifespan), DefaultTimeUnit,
-                  toMillis(params.maxIdle), DefaultTimeUnit)
-         }
+         prev = cache.replace(key, createValue(), buildMetadata())
       }
       if (prev != null)
          createSuccessResponse(prev)
@@ -255,7 +246,7 @@ abstract class AbstractProtocolDecoder[K, V](transport: NettyTransport)
          val prev: V = entry.getValue.asInstanceOf[V]
          val streamVersion = new ServerEntryVersion(params.streamVersion)
          if (entry.getMetadata.version() == streamVersion) {
-            val v = createValue(Integer.MIN_VALUE) // Version unused within method
+            val v = createValue()
             // Generate new version only if key present and version has not changed, otherwise it's wasteful
             val replaced = cache.replace(key, prev, v, buildMetadata())
             if (replaced)
@@ -326,7 +317,7 @@ abstract class AbstractProtocolDecoder[K, V](transport: NettyTransport)
 
    protected def readValue(b: ChannelBuffer)
 
-   protected def createValue(nextVersion: Long): V
+   protected def createValue(): V
 
    protected def createSuccessResponse(prev: V): AnyRef
 
@@ -336,7 +327,7 @@ abstract class AbstractProtocolDecoder[K, V](transport: NettyTransport)
 
    protected def createGetResponse(k: K, entry: CacheEntry): AnyRef
 
-   protected def createMultiGetResponse(pairs: Map[K, V]): AnyRef
+   protected def createMultiGetResponse(pairs: Map[K, CacheEntry]): AnyRef
 
    protected def createErrorResponse(t: Throwable): AnyRef
 

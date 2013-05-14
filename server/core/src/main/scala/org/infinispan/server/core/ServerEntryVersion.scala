@@ -24,13 +24,18 @@
 package org.infinispan.server.core
 
 import org.infinispan.container.versioning.{InequalVersionComparisonResult, EntryVersion}
+import org.infinispan.marshall.AbstractExternalizer
+import java.util
+import java.io.{ObjectInput, ObjectOutput}
+import scala.collection.JavaConversions.setAsJavaSet
 
 /**
- * // TODO: Document this
+ * Server-endpoint version
+ *
  * @author Galder Zamarreño
- * @since // TODO
+ * @since 5.3
  */
-case class ServerEntryVersion(val version: Long) extends EntryVersion {
+case class ServerEntryVersion(version: Long) extends EntryVersion {
 
    def compareTo(other: EntryVersion): InequalVersionComparisonResult = {
       other match {
@@ -45,6 +50,23 @@ case class ServerEntryVersion(val version: Long) extends EntryVersion {
             throw new IllegalArgumentException(
                   s"Unable to compare other types: $className")
       }
+   }
+
+}
+
+object ServerEntryVersion {
+
+   class Externalizer extends AbstractExternalizer[ServerEntryVersion] {
+
+      override def readObject(input: ObjectInput): ServerEntryVersion =
+         ServerEntryVersion(input.readLong())
+
+      override def writeObject(output: ObjectOutput, entryVersion: ServerEntryVersion) {
+         output.writeLong(entryVersion.version)
+      }
+
+      def getTypeClasses: util.Set[Class[_ <: ServerEntryVersion]] =
+         setAsJavaSet(Set[java.lang.Class[_ <: ServerEntryVersion]](classOf[ServerEntryVersion]))
    }
 
 }

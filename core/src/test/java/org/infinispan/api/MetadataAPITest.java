@@ -121,6 +121,16 @@ public class MetadataAPITest extends SingleCacheManagerTest {
       assertEquals(meta, entry.getMetadata());
    }
 
+   public void testReplaceWithVersion() {
+      final Integer key = 7;
+      NumericVersion version = new NumericVersion(1);
+      advCache.put(key, "v1", new EmbeddedMetadata.Builder().version(version).build());
+      NumericVersion newVersion = new NumericVersion(2);
+      advCache.replace(key, "v2", withVersion(newVersion));
+      CacheEntry cacheEntry = advCache.getCacheEntry(key);
+      assertEquals(EQUAL, newVersion.compareTo(cacheEntry.getMetadata().version()));
+   }
+
    private Metadata withVersion(EntryVersion version) {
       return new EmbeddedMetadata.Builder().version(version).build();
    }
