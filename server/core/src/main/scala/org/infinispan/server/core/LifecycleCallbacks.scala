@@ -49,7 +49,7 @@ class LifecycleCallbacks extends AbstractModuleLifecycle {
 
    private[core] def addExternalizer(globalCfg : GlobalConfiguration) =
       globalCfg.serialization().advancedExternalizers().put(
-         SERVER_CACHE_VALUE, new CacheValue.Externalizer)
+         SERVER_ENTRY_VERSION, new ServerEntryVersion.Externalizer)
 
 }
 

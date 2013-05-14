@@ -208,6 +208,11 @@ public class AbstractDelegatingAdvancedCache<K, V> extends AbstractDelegatingCac
    }
 
    @Override
+   public V replace(K key, V value, Metadata metadata) {
+      return cache.replace(key, value, metadata);
+   }
+
+   @Override
    public boolean replace(K key, V oldValue, V value, Metadata metadata) {
       return cache.replace(key, oldValue, value, metadata);
    }

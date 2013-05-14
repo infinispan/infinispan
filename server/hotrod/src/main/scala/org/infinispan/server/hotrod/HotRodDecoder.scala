@@ -28,14 +28,11 @@ import OperationStatus._
 import org.infinispan.manager.EmbeddedCacheManager
 import org.infinispan.server.core.transport.ExtendedChannelBuffer._
 import java.nio.channels.ClosedChannelException
-import org.infinispan.Cache
 import org.infinispan.{AdvancedCache, Cache}
-import org.infinispan.util.ByteArrayKey
 import java.io.{IOException, StreamCorruptedException}
 import org.jboss.netty.buffer.ChannelBuffer
 import org.jboss.netty.channel.Channel
 import java.lang.StringBuilder
-import org.infinispan.container.versioning.EntryVersion
 import org.infinispan.container.entries.CacheEntry
 import org.infinispan.server.hotrod.configuration.HotRodServerConfiguration
 
@@ -139,7 +136,7 @@ class HotRodDecoder(cacheManager: EmbeddedCacheManager, transport: NettyTranspor
       b.readBytes(rawValue)
    }
 
-   override def createValue(nextVersion: Long): Array[Byte] = rawValue
+   override def createValue(): Array[Byte] = rawValue
 
    override def createSuccessResponse(prev: Array[Byte]): AnyRef =
       header.decoder.createSuccessResponse(header, prev)
@@ -153,7 +150,7 @@ class HotRodDecoder(cacheManager: EmbeddedCacheManager, transport: NettyTranspor
    override def createGetResponse(k: Array[Byte], entry: CacheEntry): AnyRef =
       header.decoder.createGetResponse(header, entry)
 
-   override def createMultiGetResponse(pairs: Map[Array[Byte], Array[Byte]]): AnyRef =
+   override def createMultiGetResponse(pairs: Map[Array[Byte], CacheEntry]): AnyRef =
       null // Unsupported
 
    override protected def customDecodeHeader(ch: Channel, buffer: ChannelBuffer): AnyRef =
@@ -251,7 +248,7 @@ class HotRodHeader extends RequestHeader {
          .append(", flag=").append(flag)
          .append(", clientIntelligence=").append(clientIntel)
          .append(", topologyId=").append(topologyId)
-         .append("}").toString()
+         .append("}").toString
    }
 }
 

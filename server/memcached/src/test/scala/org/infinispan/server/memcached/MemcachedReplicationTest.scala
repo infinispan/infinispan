@@ -31,6 +31,7 @@ import net.spy.memcached.CASResponse
 import org.infinispan.manager.EmbeddedCacheManager
 import org.infinispan.test.fwk.TestCacheManagerFactory
 import org.infinispan.configuration.cache.{CacheMode, ConfigurationBuilder}
+import org.infinispan.util.ByteArrayEquivalence
 
 /**
  * Tests replicated Infinispan Memcached servers.
@@ -43,7 +44,13 @@ class MemcachedReplicationTest extends MemcachedMultiNodeTest {
 
    protected def createCacheManager(index: Int): EmbeddedCacheManager = {
       val builder = new ConfigurationBuilder
+      // When replicating data, old append/prepend byte[] value in the cache
+      // is a different instance (but maybe same contents) to the one shipped
+      // by the replace command itself, hence for those tests to work, value
+      // equivalence needs to be configured to compare byte array contents
+      // and not instance reference pointers.
       builder.clustering().cacheMode(CacheMode.REPL_SYNC)
+             .dataContainer().valueEquivalence(ByteArrayEquivalence.INSTANCE)
       TestCacheManagerFactory.createClusteredCacheManager(builder)
    }
 

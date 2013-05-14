@@ -205,7 +205,7 @@ public class CommandsFactoryImpl implements CommandsFactory {
 
    @Override
    public ReplaceCommand buildReplaceCommand(Object key, Object oldValue, Object newValue, Metadata metadata, Set<Flag> flags) {
-      return new ReplaceCommand(key, oldValue, newValue, notifier, metadata, flags);
+      return new ReplaceCommand(key, oldValue, newValue, notifier, metadata, flags, configuration.dataContainer().valueEquivalence());
    }
 
    @Override
@@ -316,7 +316,7 @@ public class CommandsFactoryImpl implements CommandsFactory {
             ((PutKeyValueCommand) c).init(notifier);
             break;
          case ReplaceCommand.COMMAND_ID:
-            ((ReplaceCommand) c).init(notifier);
+            ((ReplaceCommand) c).init(notifier, configuration);
             break;
          case PutMapCommand.COMMAND_ID:
             ((PutMapCommand) c).init(notifier);

@@ -261,7 +261,7 @@ public class VersionAwareMarshallerTest extends AbstractInfinispanTest {
       assert Arrays.equals(rc71.getParameters(), c71.getParameters()) : "Writen[" + c71.getParameters() + "] and read[" + rc71.getParameters() + "] objects should be the same";
 
       ReplaceCommand c8 = new ReplaceCommand("key", "oldvalue", "newvalue",
-            null, new EmbeddedMetadata.Builder().build(), Collections.EMPTY_SET);
+            null, new EmbeddedMetadata.Builder().build(), Collections.EMPTY_SET, AnyEquivalence.OBJECT);
       marshallAndAssertEquality(c8);
 
       ClearCommand c9 = new ClearCommand();

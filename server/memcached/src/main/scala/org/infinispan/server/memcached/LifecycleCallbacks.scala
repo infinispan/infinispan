@@ -39,6 +39,6 @@ class LifecycleCallbacks extends AbstractModuleLifecycle {
 
    override def cacheManagerStarting(gcr: GlobalComponentRegistry, globalCfg: GlobalConfiguration) =
       globalCfg.serialization().advancedExternalizers().put(
-         MEMCACHED_CACHE_VALUE, new MemcachedValue.Externalizer)
+         MEMCACHED_METADATA, new MemcachedMetadata.Externalizer)
 
 }

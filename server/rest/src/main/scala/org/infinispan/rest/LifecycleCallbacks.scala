@@ -1,6 +1,6 @@
 /*
  * JBoss, Home of Professional Open Source
- * Copyright 2010 Red Hat Inc. and/or its affiliates and other
+ * Copyright 2013 Red Hat Inc. and/or its affiliates and other
  * contributors as indicated by the @author tags. All rights reserved.
  * See the copyright.txt in the distribution for a full listing of
  * individual contributors.
@@ -21,23 +21,24 @@
  * 02110-1301 USA, or see the FSF site: http://www.fsf.org.
  */
 
-package org.infinispan.server.core
+package org.infinispan.rest
+
+import org.infinispan.lifecycle.AbstractModuleLifecycle
+import org.infinispan.factories.GlobalComponentRegistry
+import org.infinispan.server.core.ExternalizerIds._
+import org.infinispan.configuration.global.GlobalConfiguration
 
 /**
- * Externalizer ids used by Server module {@link AdvancedExternalizer} implementations.
- *
- * Information about the valid id range can be found <a href="http://community.jboss.org/docs/DOC-16198">here</a>
+ * Module lifecycle callbacks implementation that enables module specific
+ * {@link org.infinispan.marshall.AdvancedExternalizer} implementations to be registered.
  *
  * @author Galder Zamarreño
- * @since 5.0
+ * @since 5.3
  */
-object ExternalizerIds {
+class LifecycleCallbacks extends AbstractModuleLifecycle {
 
-   val SERVER_ENTRY_VERSION = 1100
-   val MEMCACHED_METADATA = 1101
-   val TOPOLOGY_ADDRESS = 1102
-   val TOPOLOGY_VIEW = 1103
-   val SERVER_ADDRESS = 1104
-   val MIME_METADATA = 1105
+   override def cacheManagerStarting(gcr: GlobalComponentRegistry, globalCfg: GlobalConfiguration) =
+      globalCfg.serialization().advancedExternalizers().put(
+         MIME_METADATA, new MimeMetadata.Externalizer)
 
 }

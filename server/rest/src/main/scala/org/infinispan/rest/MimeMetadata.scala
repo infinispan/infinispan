@@ -25,9 +25,13 @@ package org.infinispan.rest
 
 import org.infinispan.Metadata
 import org.infinispan.container.versioning.EntryVersion
+import java.util.concurrent.TimeUnit.{MILLISECONDS => MILLIS}
 import java.util.concurrent.TimeUnit
 import org.infinispan.Metadata.Builder
-import TimeUnit._
+import org.infinispan.marshall.AbstractExternalizer
+import java.util
+import java.io.{ObjectInput, ObjectOutput}
+import scala.collection.JavaConversions.setAsJavaSet
 
 /**
  * Metadata for MIME data stored in REST servers.
@@ -37,11 +41,35 @@ import TimeUnit._
  */
 case class MimeMetadata(
         contentType: String,
-        l: Long = -1, lifespanUnit: TimeUnit = SECONDS,
-        m: Long = -1, maxIdleUnit: TimeUnit = SECONDS,
+        lifespanParam: Long, lifespanUnit: TimeUnit,
+        memcachedParam: Long, maxIdleUnit: TimeUnit,
         version: EntryVersion = null, builder: Builder = null) extends Metadata {
 
-   override val lifespan = lifespanUnit.toMillis(l)
-   override val maxIdle = maxIdleUnit.toMillis(m)
+   override val lifespan = lifespanUnit.toMillis(lifespanParam)
+   override val maxIdle = maxIdleUnit.toMillis(memcachedParam)
+
+}
+
+object MimeMetadata {
+
+   class Externalizer extends AbstractExternalizer[MimeMetadata] {
+
+      def readObject(input: ObjectInput): MimeMetadata = {
+         val contentType = input.readUTF()
+         val lifespan = input.readLong()
+         val maxIdle = input.readLong()
+         MimeMetadata(contentType, lifespan, MILLIS, maxIdle, MILLIS)
+      }
+
+      def writeObject(output: ObjectOutput, meta: MimeMetadata) {
+         output.writeUTF(meta.contentType)
+         output.writeLong(meta.lifespan)
+         output.writeLong(meta.maxIdle)
+      }
+
+      def getTypeClasses: util.Set[Class[_ <: MimeMetadata]] =
+         setAsJavaSet(Set[java.lang.Class[_ <: MimeMetadata]](classOf[MimeMetadata]))
+
+   }
 
 }

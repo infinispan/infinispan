@@ -25,9 +25,8 @@ package org.infinispan.server.memcached.test
 import net.spy.memcached.{DefaultConnectionFactory, MemcachedClient}
 import java.net.InetSocketAddress
 import java.util.concurrent.atomic.AtomicInteger
-import org.infinispan.server.memcached.{MemcachedDecoder, MemcachedValue, MemcachedServer}
+import org.infinispan.server.memcached.{MemcachedDecoder, MemcachedServer}
 import org.infinispan.manager.EmbeddedCacheManager
-import java.util.Properties
 import org.infinispan.server.core.Main._
 import java.util
 import org.infinispan.server.memcached.configuration.MemcachedServerConfigurationBuilder
@@ -67,7 +66,7 @@ object MemcachedTestingUtil {
 
          override def getDecoder: MemcachedDecoder = {
             val memcachedDecoder = new MemcachedDecoder(
-               getCacheManager.getCache[String, MemcachedValue](cacheName).getAdvancedCache, scheduler, transport)
+               getCacheManager.getCache[String, Array[Byte]](cacheName).getAdvancedCache, scheduler, transport)
             memcachedDecoder.versionGenerator = this.versionGenerator
             memcachedDecoder
          }

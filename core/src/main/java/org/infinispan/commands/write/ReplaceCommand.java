@@ -25,10 +25,12 @@ package org.infinispan.commands.write;
 import org.infinispan.Metadata;
 import org.infinispan.commands.MetadataAwareCommand;
 import org.infinispan.commands.Visitor;
+import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.container.entries.MVCCEntry;
 import org.infinispan.context.Flag;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.notifications.cachelistener.CacheNotifier;
+import org.infinispan.util.Equivalence;
 
 import java.util.Set;
 
@@ -49,20 +51,24 @@ public class ReplaceCommand extends AbstractDataWriteCommand implements Metadata
    boolean successful = true;
 
    boolean ignorePreviousValue;
+   private Equivalence valueEquivalence;
 
    public ReplaceCommand() {
    }
 
-   public ReplaceCommand(Object key, Object oldValue, Object newValue, CacheNotifier notifier, Metadata metadata, Set<Flag> flags) {
+   public ReplaceCommand(Object key, Object oldValue, Object newValue,
+         CacheNotifier notifier, Metadata metadata, Set<Flag> flags, Equivalence valueEquivalence) {
       super(key, flags);
       this.oldValue = oldValue;
       this.newValue = newValue;
       this.notifier = notifier;
       this.metadata = metadata;
+      this.valueEquivalence = valueEquivalence;
    }
    
-   public void init(CacheNotifier notifier) {
+   public void init(CacheNotifier notifier, Configuration cfg) {
       this.notifier = notifier;
+      this.valueEquivalence = cfg.dataContainer().valueEquivalence();
    }
 
    @Override
@@ -83,7 +89,7 @@ public class ReplaceCommand extends AbstractDataWriteCommand implements Metadata
             }
          }
 
-         if (oldValue == null || oldValue.equals(e.getValue()) || ignorePreviousValue) {
+         if (oldValue == null || isValueEquals(oldValue, e.getValue()) || ignorePreviousValue) {
             e.setChanged(true);
             Object old = e.setValue(newValue);
             return returnValue(old, true, ctx);
@@ -93,6 +99,14 @@ public class ReplaceCommand extends AbstractDataWriteCommand implements Metadata
       }
 
       return returnValue(null, false, ctx);
+   }
+
+   @SuppressWarnings("unchecked")
+   private boolean isValueEquals(Object oldValue, Object newValue) {
+      if (valueEquivalence != null)
+         return valueEquivalence.equals(oldValue, newValue);
+
+      return oldValue.equals(newValue);
    }
 
    private Object returnValue(Object beingReplaced, boolean successful, 

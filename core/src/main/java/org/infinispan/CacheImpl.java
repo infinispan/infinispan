@@ -1286,6 +1286,11 @@ public class CacheImpl<K, V> extends CacheSupport<K, V> implements AdvancedCache
    }
 
    @Override
+   public V replace(K key, V value, Metadata metadata) {
+      return replace(key, value, metadata, null, null);
+   }
+
+   @Override
    public boolean replace(K key, V oldValue, V value, Metadata metadata) {
       return replace(key, oldValue, value, metadata, null, null);
    }

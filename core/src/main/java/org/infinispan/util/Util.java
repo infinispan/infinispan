@@ -399,7 +399,9 @@ public final class Util {
          } else {
             // Pick the first 8 characters and convert that part
             sb.append(toHexString(array, 8));
-            sb.append("..");
+            sb.append("..(");
+            sb.append(array.length);
+            sb.append(')');
          }
          return sb.toString();
       } else if (o == null) {
