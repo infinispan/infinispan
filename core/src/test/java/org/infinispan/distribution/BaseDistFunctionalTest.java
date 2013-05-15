@@ -68,7 +68,6 @@ public abstract class BaseDistFunctionalTest extends MultipleCacheManagersTest {
    protected boolean groupsEnabled = false;
    protected List<Grouper<?>> groupers;
    protected LockingMode lockingMode;
-   protected boolean supportConcurrentWrites = true;
 
    protected void createCacheManagers() throws Throwable {
       cacheName = "dist";
@@ -113,7 +112,6 @@ public abstract class BaseDistFunctionalTest extends MultipleCacheManagersTest {
           configuration.clustering().hash().groups().withGroupers(groupers);
       }
       if (l1CacheEnabled) configuration.clustering().l1().onRehash(l1OnRehash).invalidationThreshold(l1Threshold);
-      configuration.locking().supportsConcurrentUpdates(supportConcurrentWrites);
       return configuration;
    }
 

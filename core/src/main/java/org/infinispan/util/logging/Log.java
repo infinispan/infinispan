@@ -876,5 +876,9 @@ public interface Log extends BasicLogger {
 
    @Message(value = "Error while initializing SSL context", id = 226)
    ConfigurationException sslInitializationException(@Cause Throwable e);
+
+   @LogMessage(level = WARN)
+   @Message(value = "Support for concurrent updates can no longer be configured (it is always enabled by default)", id = 227)
+   void warnConcurrentUpdateSupportCannotBeConfigured();
 }
 

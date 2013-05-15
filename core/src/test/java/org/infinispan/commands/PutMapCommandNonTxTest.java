@@ -39,7 +39,6 @@ public class PutMapCommandNonTxTest extends MultipleCacheManagersTest {
    @Override
    protected void createCacheManagers() {
       ConfigurationBuilder dcc = getDefaultClusteredCacheConfig(CacheMode.DIST_SYNC, false);
-      dcc.locking().supportsConcurrentUpdates(true);
       dcc.clustering().hash().numOwners(3).l1().disable();
 
       createCluster(dcc, 3);

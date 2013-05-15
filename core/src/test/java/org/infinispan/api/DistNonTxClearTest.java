@@ -33,6 +33,6 @@ import org.testng.annotations.Test;
 public class DistNonTxClearTest extends BaseDistClearTest {
 
    public DistNonTxClearTest() {
-      super(false, false, true);
+      super(false, false);
    }
 }

@@ -50,7 +50,6 @@ public class IllegalMonitorTest extends BaseDistFunctionalTest {
       tx = false;
       testRetVals = true;
       l1CacheEnabled = true;
-      supportConcurrentWrites = true;
    }
 
    /**

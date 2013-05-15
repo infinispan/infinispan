@@ -62,10 +62,6 @@ public class DistSyncCacheStoreSharedTest extends BaseDistCacheStoreTest {
       }
    }
 
-   public void testExpectedConfig() {
-      assert c1.getCacheConfiguration().locking().supportsConcurrentUpdates();
-   }
-
    public void testPutFromNonOwner() throws Exception {
       String key = "k4", value = "value4";
       for (Cache<Object, String> c : caches) assert c.isEmpty();

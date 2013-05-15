@@ -31,8 +31,4 @@ public class DistSyncUnsafeFuncTest extends DistSyncFuncTest {
       tx = false;
       testRetVals = false;
    }
-
-   public void testExpectedConfig() {
-      assert c1.getCacheConfiguration().locking().supportsConcurrentUpdates();
-   }
 }

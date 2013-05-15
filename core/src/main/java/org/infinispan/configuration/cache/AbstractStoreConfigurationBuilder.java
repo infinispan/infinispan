@@ -29,7 +29,7 @@ import org.infinispan.util.logging.LogFactory;
 public abstract class AbstractStoreConfigurationBuilder<T extends CacheStoreConfiguration, S extends AbstractStoreConfigurationBuilder<T, S>> extends
       AbstractLoaderConfigurationBuilder<T, S> implements CacheStoreConfigurationBuilder<T, S> {
 
-   private static final Log log = LogFactory.getLog(LegacyStoreConfigurationBuilder.class);
+   private static final Log log = LogFactory.getLog(AbstractStoreConfigurationBuilder.class);
 
    protected final AsyncStoreConfigurationBuilder<S> async;
    protected final SingletonStoreConfigurationBuilder<S> singletonStore;

@@ -22,6 +22,8 @@ import org.infinispan.config.ConfigurationException;
 import org.infinispan.configuration.Builder;
 import org.infinispan.transaction.LockingMode;
 import org.infinispan.util.concurrent.IsolationLevel;
+import org.infinispan.util.logging.Log;
+import org.infinispan.util.logging.LogFactory;
 
 import java.util.concurrent.TimeUnit;
 
@@ -33,12 +35,13 @@ import java.util.concurrent.TimeUnit;
  */
 public class LockingConfigurationBuilder extends AbstractConfigurationChildBuilder implements Builder<LockingConfiguration> {
 
+   private static final Log log = LogFactory.getLog(LockingConfigurationBuilder.class);
+
    private int concurrencyLevel = 32;
-   IsolationLevel isolationLevel = IsolationLevel.READ_COMMITTED;
+   private IsolationLevel isolationLevel = IsolationLevel.READ_COMMITTED;
    private long lockAcquisitionTimeout = TimeUnit.SECONDS.toMillis(10);
    private boolean useLockStriping = false;
-   boolean writeSkewCheck = false;
-   boolean supportsConcurrentUpdates = true;
+   private boolean writeSkewCheck = false;
 
    protected LockingConfigurationBuilder(ConfigurationBuilder builder) {
       super(builder);
@@ -67,9 +70,12 @@ public class LockingConfigurationBuilder extends AbstractConfigurationChildBuild
 
    /**
     * @see org.infinispan.configuration.cache.LockingConfiguration#supportsConcurrentUpdates()
+    * @deprecated
     */
    public LockingConfigurationBuilder supportsConcurrentUpdates(boolean itDoes) {
-      this.supportsConcurrentUpdates = itDoes;
+      if (!itDoes) {
+         log.warnConcurrentUpdateSupportCannotBeConfigured();
+      }
       return this;
    }
 
@@ -137,7 +143,7 @@ public class LockingConfigurationBuilder extends AbstractConfigurationChildBuild
 
    @Override
    public LockingConfiguration create() {
-      return new LockingConfiguration(concurrencyLevel, isolationLevel, lockAcquisitionTimeout, useLockStriping, writeSkewCheck, supportsConcurrentUpdates);
+      return new LockingConfiguration(concurrencyLevel, isolationLevel, lockAcquisitionTimeout, useLockStriping, writeSkewCheck);
    }
 
    @Override
@@ -147,7 +153,6 @@ public class LockingConfigurationBuilder extends AbstractConfigurationChildBuild
       lockAcquisitionTimeout = template.lockAcquisitionTimeout();
       useLockStriping = template.useLockStriping();
       writeSkewCheck = template.writeSkewCheck();
-      supportsConcurrentUpdates = template.supportsConcurrentUpdates();
 
       return this;
    }
@@ -160,7 +165,6 @@ public class LockingConfigurationBuilder extends AbstractConfigurationChildBuild
             ", lockAcquisitionTimeout=" + lockAcquisitionTimeout +
             ", useLockStriping=" + useLockStriping +
             ", writeSkewCheck=" + writeSkewCheck +
-            ", supportsConcurrentUpdates=" + supportsConcurrentUpdates +
             '}';
    }
 

@@ -73,18 +73,14 @@ public abstract class BaseOperationsDuringStateTransferTest extends MultipleCach
 
    private final boolean isOptimistic;
 
-   private final boolean supportsConcurrentUpdates;
-
    private ConfigurationBuilder cacheConfigBuilder;
 
    private ReclosableLatch rebalanceGate;
 
-   protected BaseOperationsDuringStateTransferTest(CacheMode cacheMode, boolean isTransactional,
-                                                   boolean isOptimistic, boolean supportsConcurrentUpdates) {
+   protected BaseOperationsDuringStateTransferTest(CacheMode cacheMode, boolean isTransactional, boolean isOptimistic) {
       this.cacheMode = cacheMode;
       this.isTransactional = isTransactional;
       this.isOptimistic = isOptimistic;
-      this.supportsConcurrentUpdates = supportsConcurrentUpdates;
    }
 
    @Override
@@ -106,7 +102,6 @@ public abstract class BaseOperationsDuringStateTransferTest extends MultipleCach
       cacheConfigBuilder.clustering().hash().numSegments(10).numOwners(2)
             .l1().disable().onRehash(false)
             .locking().lockAcquisitionTimeout(1000l);
-      cacheConfigBuilder.locking().supportsConcurrentUpdates(supportsConcurrentUpdates);
       cacheConfigBuilder.clustering().stateTransfer().fetchInMemoryState(true).awaitInitialTransfer(false);
 
       rebalanceGate = new ReclosableLatch(true);

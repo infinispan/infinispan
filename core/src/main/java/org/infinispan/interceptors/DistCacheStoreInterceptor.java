@@ -62,14 +62,13 @@ import java.util.Map;
  * @since 4.0
  */
 public class DistCacheStoreInterceptor extends CacheStoreInterceptor {
-   DistributionManager dm;
-   Transport transport;
-   Address address;
+   private DistributionManager dm;
+   private Transport transport;
+   private Address address;
 
    private static final Log log = LogFactory.getLog(DistCacheStoreInterceptor.class);
    private boolean isUsingLockDelegation;
-   ClusteringDependentLogic cdl;
-
+   private ClusteringDependentLogic cdl;
 
    @Override
    protected Log getLog() {
@@ -87,9 +86,7 @@ public class DistCacheStoreInterceptor extends CacheStoreInterceptor {
    @SuppressWarnings("unused")
    private void setAddress() {
       this.address = transport.getAddress();
-      this.isUsingLockDelegation = cacheConfiguration.locking().supportsConcurrentUpdates() &&
-            !cacheConfiguration.transaction().transactionMode().isTransactional();
-
+      this.isUsingLockDelegation = !cacheConfiguration.transaction().transactionMode().isTransactional();
    }
 
    // ---- WRITE commands

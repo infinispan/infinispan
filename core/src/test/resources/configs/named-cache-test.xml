@@ -280,7 +280,7 @@
            <singletonStore enabled="true" pushStateWhenCoordinator="true" pushStateTimeout="20000"/> 
        </loader>
      </loaders>
-     <locking supportsConcurrentUpdates="false"/>
+     <locking supportsConcurrentUpdates="true"/>
    </namedCache>
 
    <namedCache name="withReplicationQueue">
