@@ -35,6 +35,6 @@ import org.testng.annotations.Test;
 public class ReplPessimisticOperationsDuringStateTransferTest extends BaseOperationsDuringStateTransferTest {
 
    public ReplPessimisticOperationsDuringStateTransferTest() {
-      super(CacheMode.REPL_SYNC, true, false, false);
+      super(CacheMode.REPL_SYNC, true, false);
    }
 }

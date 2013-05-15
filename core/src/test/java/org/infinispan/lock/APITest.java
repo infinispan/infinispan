@@ -28,6 +28,7 @@ import org.infinispan.config.Configuration;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.context.Flag;
 import org.infinispan.interceptors.locking.AbstractLockingInterceptor;
+import org.infinispan.interceptors.locking.NonTransactionalLockingInterceptor;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.test.CacheManagerCallable;
 import org.infinispan.test.MultipleCacheManagersTest;
@@ -35,9 +36,6 @@ import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.CleanupAfterMethod;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.infinispan.transaction.LockingMode;
-import org.infinispan.transaction.lookup.DummyTransactionManagerLookup;
-import org.infinispan.transaction.tm.DummyTransaction;
-import org.infinispan.util.concurrent.IsolationLevel;
 import org.infinispan.util.concurrent.TimeoutException;
 import org.testng.annotations.Test;
 
@@ -55,8 +53,7 @@ import java.util.concurrent.Future;
 
 import static org.infinispan.context.Flag.FAIL_SILENTLY;
 import static org.infinispan.test.TestingUtil.withCacheManager;
-import static org.testng.Assert.assertEquals;
-import static org.testng.Assert.assertNull;
+import static org.testng.Assert.assertTrue;
 
 
 @Test(testName = "lock.APITest", groups = "functional")
@@ -227,16 +224,15 @@ public class APITest extends MultipleCacheManagersTest {
       });
    }
 
-   public void testNoLockingInterceptorWithoutConcurrentAccess() {
+   public void testLockingInterceptorType() {
       ConfigurationBuilder builder = new ConfigurationBuilder();
-      builder.locking().supportsConcurrentUpdates(false);
       withCacheManager(new CacheManagerCallable(
             TestCacheManagerFactory.createCacheManager(builder)) {
          @Override
          public void call() {
-            AbstractLockingInterceptor locking = TestingUtil.findInterceptor(
+            AbstractLockingInterceptor lockingInterceptor = TestingUtil.findInterceptor(
                   cm.getCache(), AbstractLockingInterceptor.class);
-            assertNull(locking);
+            assertTrue(lockingInterceptor instanceof NonTransactionalLockingInterceptor);
          }
       });
    }

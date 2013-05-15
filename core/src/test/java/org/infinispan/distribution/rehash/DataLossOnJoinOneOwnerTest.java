@@ -20,7 +20,6 @@ package org.infinispan.distribution.rehash;
 
 import org.infinispan.Cache;
 import org.infinispan.configuration.cache.CacheMode;
-import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.test.AbstractInfinispanTest;
@@ -42,7 +41,6 @@ public class DataLossOnJoinOneOwnerTest extends AbstractInfinispanTest {
 
    EmbeddedCacheManager cm1;
    EmbeddedCacheManager cm2;
-   protected boolean supportsConcurrentUpdates = true;
 
    /**
     * It seems that sometimes when a new node joins, existing data is lost.
@@ -74,7 +72,7 @@ public class DataLossOnJoinOneOwnerTest extends AbstractInfinispanTest {
       ConfigurationBuilder c = new ConfigurationBuilder();
       c.clustering().cacheMode(CacheMode.DIST_SYNC)
                .hash().numOwners(1)
-            .clustering().l1().disable().locking().supportsConcurrentUpdates(supportsConcurrentUpdates);
+            .clustering().l1().disable();
       return TestCacheManagerFactory.createClusteredCacheManager(c);
    }
 }

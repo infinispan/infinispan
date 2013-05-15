@@ -20,15 +20,16 @@
 package org.infinispan.interceptors.distribution;
 
 import org.infinispan.CacheException;
+import org.infinispan.commands.DataCommand;
 import org.infinispan.commands.FlagAffectedCommand;
 import org.infinispan.commands.read.GetKeyValueCommand;
 import org.infinispan.commands.write.ClearCommand;
 import org.infinispan.commands.write.PutKeyValueCommand;
+import org.infinispan.commands.write.PutMapCommand;
 import org.infinispan.commands.write.WriteCommand;
 import org.infinispan.container.entries.InternalCacheEntry;
 import org.infinispan.context.Flag;
 import org.infinispan.context.InvocationContext;
-import org.infinispan.factories.annotations.Start;
 import org.infinispan.remoting.responses.ExceptionResponse;
 import org.infinispan.remoting.responses.Response;
 import org.infinispan.remoting.responses.SuccessfulResponse;
@@ -37,11 +38,19 @@ import org.infinispan.remoting.transport.jgroups.SuspectException;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 /**
- * Handles the distribution of the non-transactional caches.
+ * Non-transactional interceptor used by distributed caches that support concurrent writes.
+ * It is implemented based on lock forwarding. E.g.
+ * - 'k' is written on node A, owners(k)={B,C}
+ * - A forwards the given command to B
+ * - B acquires a lock on 'k' then it forwards it to the remaining owners: C
+ * - C applies the change and returns to B (no lock acquisition is needed)
+ * - B applies the result as well, releases the lock and returns the result of the operation to A.
+ * <p/>
+ * Note that even though this introduces an additional RPC (the forwarding), it behaves very well in conjunction with
+ * consistent-hash aware hotrod clients which connect directly to the lock owner.
  *
  * @author Mircea Markus
  * @since 5.2
@@ -50,13 +59,6 @@ public class NonTxDistributionInterceptor extends BaseDistributionInterceptor {
 
    private static Log log = LogFactory.getLog(NonTxDistributionInterceptor.class);
    private static final boolean trace = log.isTraceEnabled();
-
-   private boolean useLockForwarding;
-
-   @Start
-   public void start() {
-      useLockForwarding = cacheConfiguration.locking().supportsConcurrentUpdates();
-   }
 
    @Override
    public Object visitGetKeyValueCommand(InvocationContext ctx, GetKeyValueCommand command) throws Throwable {
@@ -108,6 +110,39 @@ public class NonTxDistributionInterceptor extends BaseDistributionInterceptor {
       return handleWriteCommand(ctx, command, skrg, command.hasFlag(Flag.PUT_FOR_STATE_TRANSFER), false);
    }
 
+   @Override
+   public Object visitPutMapCommand(InvocationContext ctx, PutMapCommand command) throws Throwable {
+      if (ctx.isOriginLocal()) {
+         Set<Address> primaryOwners = new HashSet<Address>(command.getAffectedKeys().size());
+         for (Object k : command.getAffectedKeys()) {
+            primaryOwners.add(cdl.getPrimaryOwner(k));
+         }
+         primaryOwners.remove(rpcManager.getAddress());
+         if (!primaryOwners.isEmpty()) {
+            rpcManager.invokeRemotely(primaryOwners, command, rpcManager.getDefaultRpcOptions(isSynchronous(command)));
+         }
+      }
+
+      if (!command.isForwarded()) {
+         //I need to forward this to all the nodes that are secondary owners
+         Set<Object> keysIOwn = new HashSet<Object>(command.getAffectedKeys().size());
+         for (Object k : command.getAffectedKeys()) {
+            if (cdl.localNodeIsPrimaryOwner(k)) {
+               keysIOwn.add(k);
+            }
+         }
+         Collection<Address> backupOwners = cdl.getOwners(keysIOwn);
+         if (!backupOwners.isEmpty()) {
+            command.setFlags(Flag.SKIP_LOCKING);
+            command.setForwarded(true);
+            rpcManager.invokeRemotely(backupOwners, command, rpcManager.getDefaultRpcOptions(isSynchronous(command)));
+            command.setForwarded(false);
+         }
+      }
+
+      return invokeNextInterceptor(ctx, command);
+   }
+
    /**
     * Don't forward in the case of clear commands, just acquire local locks and broadcast.
     */
@@ -144,7 +179,7 @@ public class NonTxDistributionInterceptor extends BaseDistributionInterceptor {
       if (isNeedReliableReturnValues(command) || command.isConditional()) {
          for (Object k : keygen.getKeys()) {
             Object returnValue = remoteGetBeforeWrite(ctx, k, command);
-            if (returnValue == null && (!useLockForwarding || cdl.localNodeIsPrimaryOwner(k))) {
+            if (returnValue == null && cdl.localNodeIsPrimaryOwner(k)) {
                // We either did not go remotely (because the value should be local now) or we did but the remote value is null.
                // Then it makes sense to try a local get and wrap again. This will compensate the fact the the entry was not local
                // earlier when the EntryWrappingInterceptor executed during current invocation context but it should be now.
@@ -190,26 +225,39 @@ public class NonTxDistributionInterceptor extends BaseDistributionInterceptor {
       return null;
    }
 
-   protected Object handleLocalWrite(InvocationContext ctx, WriteCommand command, RecipientGenerator rg, boolean skipL1Invalidation, boolean sync) throws Throwable {
-      Object returnValue = invokeNextInterceptor(ctx, command);
-      if (!isSingleOwnerAndLocal(rg)) {
+   private Object handleLocalWrite(InvocationContext ctx, WriteCommand command, RecipientGenerator rg, boolean skipL1Invalidation, boolean sync) throws Throwable {
+      Object key = ((DataCommand) command).getKey();
+      Address primaryOwner = cdl.getPrimaryOwner(key);
+      if (primaryOwner.equals(rpcManager.getAddress())) {
          List<Address> recipients = rg.generateRecipients();
-         if (!command.isSuccessful() && recipients.contains(rpcManager.getAddress())) {
-            log.tracef("Skipping remote invocation as the command hasn't executed correctly on owner %s", rpcManager.getAddress());
-         } else {
-            Map<Address, Response> responseMap = rpcManager.invokeRemotely(recipients, command, rpcManager.getDefaultRpcOptions(sync));
-            if (sync && !recipients.isEmpty()) {
-               Address primaryOwner = recipients.get(0);
-               if (!primaryOwner.equals(rpcManager.getAddress())) {
-                  returnValue = getResponseFromPrimaryOwner(primaryOwner, responseMap);
-               }
-            }
+         log.tracef("I'm the primary owner, sending the command to all (%s) the recipients in order to be applied.", recipients);
+         Object result = invokeNextInterceptor(ctx, command);
+         if (!isSingleOwnerAndLocal(rg)) {
+            rpcManager.invokeRemotely(recipients, command, rpcManager.getDefaultRpcOptions(sync));
          }
+         return result;
+      } else {
+         log.tracef("I'm not the primary owner, so sending the command to the primary owner(%s) in order to be forwarded", primaryOwner);
+         Object localResult = invokeNextInterceptor(ctx, command);
+         Map<Address, Response> addressResponseMap = rpcManager.invokeRemotely(Collections.singletonList(primaryOwner), command,
+               rpcManager.getDefaultRpcOptions(sync));
+         //the remote node always returns the correct result, but if we're async, then our best option is the local
+         //node. That might be incorrect though.
+         if (!sync) return localResult;
+
+         return getResponseFromPrimaryOwner(primaryOwner, addressResponseMap);
       }
-      return returnValue;
    }
 
-   protected void handleRemoteWrite(InvocationContext ctx, WriteCommand command, RecipientGenerator recipientGenerator, boolean skipL1Invalidation, boolean sync) throws Throwable {}
+   private void handleRemoteWrite(InvocationContext ctx, WriteCommand command, RecipientGenerator recipientGenerator, boolean skipL1Invalidation, boolean sync) throws Throwable {
+      if (command instanceof DataCommand) {
+         DataCommand dataCommand = (DataCommand) command;
+         Address primaryOwner = cdl.getPrimaryOwner(dataCommand.getKey());
+         if (primaryOwner.equals(rpcManager.getAddress())) {
+            rpcManager.invokeRemotely(recipientGenerator.generateRecipients(), command, rpcManager.getDefaultRpcOptions(sync));
+         }
+      }
+   }
 
    private InternalCacheEntry remoteGetCacheEntry(InvocationContext ctx, Object key, GetKeyValueCommand command) throws Throwable {
       if (trace) log.tracef("Doing a remote get for key %s", key);

@@ -366,6 +366,7 @@
           <xs:attribute name="supportsConcurrentUpdates" type="xs:boolean" default="true">
             <xs:annotation>
               <xs:documentation>
+                  This option was deprecated in version 5.3 and can no longer be configured. It is now assumed to be always true.
                   For non-transactional caches only: if set to true(default value) the cache keeps data consistent in the case of concurrent updates. For clustered caches this comes at the cost of an additional RPC, so if you don't expect your application to write data concurrently, disabling this flag increases performance.
               </xs:documentation>
             </xs:annotation>

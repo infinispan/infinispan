@@ -35,6 +35,6 @@ import org.testng.annotations.Test;
 public class DistNonTxOperationsDuringStateTransferTest extends BaseOperationsDuringStateTransferTest {
 
    public DistNonTxOperationsDuringStateTransferTest() {
-      super(CacheMode.DIST_SYNC, false, false, false);
+      super(CacheMode.DIST_SYNC, false, false);
    }
 }

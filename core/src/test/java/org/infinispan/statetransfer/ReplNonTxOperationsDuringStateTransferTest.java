@@ -35,6 +35,6 @@ import org.testng.annotations.Test;
 public class ReplNonTxOperationsDuringStateTransferTest extends BaseOperationsDuringStateTransferTest {
 
    public ReplNonTxOperationsDuringStateTransferTest() {
-      super(CacheMode.REPL_SYNC, false, false, false);
+      super(CacheMode.REPL_SYNC, false, false);
    }
 }

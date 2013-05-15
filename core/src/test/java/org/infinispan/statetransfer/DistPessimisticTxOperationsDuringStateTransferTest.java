@@ -35,6 +35,6 @@ import org.testng.annotations.Test;
 public class DistPessimisticTxOperationsDuringStateTransferTest extends BaseOperationsDuringStateTransferTest {
 
    public DistPessimisticTxOperationsDuringStateTransferTest() {
-      super(CacheMode.DIST_SYNC, true, false, false);
+      super(CacheMode.DIST_SYNC, true, false);
    }
 }

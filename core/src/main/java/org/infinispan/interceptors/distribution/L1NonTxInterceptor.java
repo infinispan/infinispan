@@ -33,7 +33,6 @@ import org.infinispan.context.Flag;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.distribution.L1Manager;
 import org.infinispan.factories.annotations.Inject;
-import org.infinispan.factories.annotations.Start;
 import org.infinispan.interceptors.base.BaseRpcInterceptor;
 import org.infinispan.interceptors.locking.ClusteringDependentLogic;
 import org.infinispan.util.concurrent.locks.LockManager;
@@ -59,7 +58,6 @@ public class L1NonTxInterceptor extends BaseRpcInterceptor {
    private L1Manager l1Manager;
    private ClusteringDependentLogic cdl;
    private CommandsFactory cf;
-   private boolean useLockForwarding;
    private LockManager lockManager;
    private EntryFactory entryFactory;
 
@@ -71,11 +69,6 @@ public class L1NonTxInterceptor extends BaseRpcInterceptor {
       this.lockManager = lockManager;
       this.entryFactory = entryFactory;
       this.cf = cf;
-   }
-
-   @Start
-   public void start() {
-      useLockForwarding = cacheConfiguration.locking().supportsConcurrentUpdates();
    }
 
    @Override
@@ -156,14 +149,10 @@ public class L1NonTxInterceptor extends BaseRpcInterceptor {
    }
 
    private void removeFromLocalL1(InvocationContext ctx, DataWriteCommand command) throws InterruptedException {
-      if (useLockForwarding) {
-         if (ctx.isOriginLocal() && !cdl.localNodeIsOwner(command.getKey())) {
-            removeFromL1(ctx, command.getKey());
-         } else {
-            log.tracef("Allowing entry to commit as local node is owner");
-         }
-      } else if (!cdl.localNodeIsOwner(command.getKey())) {
+      if (ctx.isOriginLocal() && !cdl.localNodeIsOwner(command.getKey())) {
          removeFromL1(ctx, command.getKey());
+      } else {
+         log.trace("Allowing entry to commit as local node is owner");
       }
    }
 
@@ -194,7 +183,7 @@ public class L1NonTxInterceptor extends BaseRpcInterceptor {
    private void lockAndWrap(InvocationContext ctx, Object key, InternalCacheEntry ice, FlagAffectedCommand command) throws InterruptedException {
       boolean skipLocking = hasSkipLocking(command);
       long lockTimeout = getLockAcquisitionTimeout(command, skipLocking);
-      if (useLockForwarding) lockManager.acquireLock(ctx, key, lockTimeout, skipLocking);
+      lockManager.acquireLock(ctx, key, lockTimeout, skipLocking);
       entryFactory.wrapEntryForPut(ctx, key, ice, false, command);
    }
 }

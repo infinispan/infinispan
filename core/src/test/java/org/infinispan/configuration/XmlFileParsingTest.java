@@ -513,10 +513,8 @@ public class XmlFileParsingTest extends AbstractInfinispanTest {
       assert c.storeAsBinary().storeKeysAsBinary();
       assert !c.storeAsBinary().storeValuesAsBinary();
 
-      if (!deprecated) {
-         Configuration withJDBCLoader = cm.getCacheConfiguration("withJDBCLoader");
-         assert !withJDBCLoader.locking().supportsConcurrentUpdates();
-      }
+      Configuration withJDBCLoader = cm.getCacheConfiguration("withJDBCLoader");
+      assert withJDBCLoader.locking().supportsConcurrentUpdates();
    }
 
    private void assertReaperAndTimeoutInfo(Configuration defaultCfg) {

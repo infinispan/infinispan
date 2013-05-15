@@ -30,8 +30,4 @@ public class DistSkipRemoteLookupWithoutL1Test extends DistSkipRemoteLookupTest 
    public DistSkipRemoteLookupWithoutL1Test() {
       l1CacheEnabled = false;
    }
-
-   public void testExpectedConfig() {
-      assert c1.getCacheConfiguration().locking().supportsConcurrentUpdates();
-   }
 }
