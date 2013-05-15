@@ -27,6 +27,9 @@ import static org.infinispan.lucene.CacheTestSupport.writeTextToIndex;
 import static org.infinispan.lucene.CacheTestSupport.optimizeIndex;
 
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.Iterator;
+import java.util.List;
 
 import org.apache.lucene.store.Directory;
 import org.infinispan.Cache;
@@ -49,7 +52,11 @@ import org.testng.annotations.Test;
 @SuppressWarnings("unchecked")
 @Test(groups = "functional", testName = "lucene.DirectoryOnMultipleCachesTest")
 public class DirectoryOnMultipleCachesTest {
-   
+
+   //timeout for test verifyIntendedLockCachesUsage()
+   private static final long SLEEP = 60; //60 msecs
+   private static final int MAX_ITERATIONS = 1000; //max timeout: SLEEP * MAX_ITERATIONS msecs (-+ 60 seconds)
+
    private CacheContainer cacheManager;
    private Cache metadataCache;
    private Cache chunkCache;
@@ -93,11 +100,35 @@ public class DirectoryOnMultipleCachesTest {
    
    @Test(dependsOnMethods="testRunningOnMultipleCaches")
    public void verifyIntendedLockCachesUsage() {
+      final List<Object> keysThatShouldBeRemoved = new ArrayList<Object>();
       //all locks should be cleared now, so if any value is left it should be equal to one.
       for (Object key : lockCache.keySet()) {
          AssertJUnit.assertEquals(FileReadLockKey.class, key.getClass());
-         AssertJUnit.assertEquals(1, lockCache.get(key));
+         int value = (Integer) lockCache.get(key);
+         if (value == 0) {
+            //zero means that key is removed. However the remove operation is done asynchronously so it can take some
+            // time to be really removed from the lockCache.
+            keysThatShouldBeRemoved.add(key);
+            continue;
+         }
+         AssertJUnit.assertEquals(1, value);
       }
+      for (int i = 0; i < MAX_ITERATIONS && !keysThatShouldBeRemoved.isEmpty(); ++i) {
+         try {
+            Thread.sleep(SLEEP);
+         } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+            break;
+         }
+         for (Iterator<Object> iterator = keysThatShouldBeRemoved.iterator(); iterator.hasNext(); ) {
+            if (!lockCache.containsKey(iterator.next())) {
+               //this key has been removed as expected
+               iterator.remove();
+            }
+         }
+      }
+      AssertJUnit.assertTrue("The following keys " + keysThatShouldBeRemoved + " are supposed to be removed from lockCache",
+                             keysThatShouldBeRemoved.isEmpty());
    }
    
    @Test(dependsOnMethods="testRunningOnMultipleCaches")
