@@ -43,7 +43,8 @@ public class Configuration {
    private final VersioningConfiguration versioningConfiguration;
    private final UnsafeConfiguration unsafeConfiguration;
    private final Map<Class<?>, ?> moduleConfiguration;
-   private final SitesConfiguration sites;
+   private final SitesConfiguration sitesConfiguration;
+   private final CompatibilityModeConfiguration compatibilityConfiguration;
 
    Configuration(ClusteringConfiguration clusteringConfiguration,
                  CustomInterceptorsConfiguration customInterceptorsConfiguration,
@@ -54,7 +55,9 @@ public class Configuration {
                  LoadersConfiguration loadersConfiguration,
                  LockingConfiguration lockingConfiguration, StoreAsBinaryConfiguration storeAsBinaryConfiguration,
                  TransactionConfiguration transactionConfiguration, UnsafeConfiguration unsafeConfiguration,
-                 VersioningConfiguration versioningConfiguration, List<?> modules, SitesConfiguration sites, ClassLoader cl) {
+                 VersioningConfiguration versioningConfiguration, SitesConfiguration sitesConfiguration,
+                 CompatibilityModeConfiguration compatibilityConfiguration,
+                 List<?> modules, ClassLoader cl) {
       this.clusteringConfiguration = clusteringConfiguration;
       this.customInterceptorsConfiguration = customInterceptorsConfiguration;
       this.dataContainerConfiguration = dataContainerConfiguration;
@@ -70,12 +73,13 @@ public class Configuration {
       this.transactionConfiguration = transactionConfiguration;
       this.unsafeConfiguration = unsafeConfiguration;
       this.versioningConfiguration = versioningConfiguration;
+      this.sitesConfiguration = sitesConfiguration;
+      this.compatibilityConfiguration = compatibilityConfiguration;
       Map<Class<?>, Object> modulesMap = new HashMap<Class<?>, Object>();
       for(Object module : modules) {
          modulesMap.put(module.getClass(), module);
       }
       this.moduleConfiguration = Collections.unmodifiableMap(modulesMap);
-      this.sites = sites;
       this.classLoader = new WeakReference<ClassLoader>(cl);
    }
 
@@ -153,11 +157,15 @@ public class Configuration {
    }
 
    public SitesConfiguration sites() {
-      return sites;
+      return sitesConfiguration;
    }
 
    public VersioningConfiguration versioning() {
       return versioningConfiguration;
+   }
+
+   public CompatibilityModeConfiguration compatibility() {
+      return compatibilityConfiguration;
    }
 
    @Override
@@ -180,7 +188,8 @@ public class Configuration {
             ", transaction=" + transactionConfiguration +
             ", versioning=" + versioningConfiguration +
             ", unsafe=" + unsafeConfiguration +
-            ", sites=" + sites +
+            ", sites=" + sitesConfiguration +
+            ", compatibility=" + compatibilityConfiguration +
             '}';
    }
 
@@ -223,9 +232,11 @@ public class Configuration {
          return false;
       if (unsafeConfiguration != null ? !unsafeConfiguration.equals(that.unsafeConfiguration) : that.unsafeConfiguration != null)
          return false;
-      if (sites != null ? !sites.equals(that.sites) : that.sites != null)
+      if (sitesConfiguration != null ? !sitesConfiguration.equals(that.sitesConfiguration) : that.sitesConfiguration != null)
          return false;
       if (versioningConfiguration != null ? !versioningConfiguration.equals(that.versioningConfiguration) : that.versioningConfiguration != null)
+         return false;
+      if (compatibilityConfiguration != null ? !compatibilityConfiguration.equals(that.compatibilityConfiguration) : that.compatibilityConfiguration != null)
          return false;
 
       return true;
@@ -250,7 +261,8 @@ public class Configuration {
       result = 31 * result + (transactionConfiguration != null ? transactionConfiguration.hashCode() : 0);
       result = 31 * result + (versioningConfiguration != null ? versioningConfiguration.hashCode() : 0);
       result = 31 * result + (unsafeConfiguration != null ? unsafeConfiguration.hashCode() : 0);
-      result = 31 * result + (sites != null ? sites.hashCode() : 0);
+      result = 31 * result + (sitesConfiguration != null ? sitesConfiguration.hashCode() : 0);
+      result = 31 * result + (compatibilityConfiguration != null ? compatibilityConfiguration.hashCode() : 0);
       return result;
    }
 }

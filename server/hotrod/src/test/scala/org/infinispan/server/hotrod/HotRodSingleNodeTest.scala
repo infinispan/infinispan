@@ -23,7 +23,6 @@
 package org.infinispan.server.hotrod
 
 import org.infinispan.test.SingleCacheManagerTest
-import org.infinispan.server.core.CacheValue
 import test.HotRodClient
 import org.infinispan.AdvancedCache
 import test.HotRodTestingUtil._
@@ -43,12 +42,12 @@ abstract class HotRodSingleNodeTest extends SingleCacheManagerTest {
    val cacheName = "HotRodCache"
    protected var hotRodServer: HotRodServer = _
    private var hotRodClient: HotRodClient = _
-   private var advancedCache: AdvancedCache[Array[Byte], CacheValue] = _
-   private var hotRodJmxDomain = getClass.getSimpleName
+   private var advancedCache: AdvancedCache[Array[Byte], Array[Byte]] = _
+   private val hotRodJmxDomain = getClass.getSimpleName
    
    override def createCacheManager: EmbeddedCacheManager = {
       val cacheManager = createTestCacheManager
-      advancedCache = cacheManager.getCache[Array[Byte], CacheValue](cacheName).getAdvancedCache
+      advancedCache = cacheManager.getCache[Array[Byte], Array[Byte]](cacheName).getAdvancedCache
       cacheManager
    }
 

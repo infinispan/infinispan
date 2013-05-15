@@ -23,18 +23,8 @@
 package org.infinispan.server.hotrod
 
 import org.testng.annotations.Test
-import java.lang.reflect.Method
 import test.HotRodTestingUtil._
-import org.testng.Assert._
-import java.util.Arrays
-import org.infinispan.server.core.CacheValue
-import org.infinispan.server.hotrod.OperationStatus._
 import org.infinispan.server.hotrod.test._
-import org.infinispan.util.ByteArrayKey
-import org.infinispan.test.TestingUtil.generateRandomString
-import org.infinispan.config.Configuration
-import java.util.concurrent.TimeUnit
-import org.infinispan.server.core.test.Stoppable
 import org.infinispan.manager.EmbeddedCacheManager
 import org.infinispan.server.hotrod.configuration.HotRodServerConfigurationBuilder
 import org.infinispan.util.SslContextFactory
@@ -48,9 +38,9 @@ import org.infinispan.util.SslContextFactory
 @Test(groups = Array("functional"), testName = "server.hotrod.HotRodSslFunctionalTest")
 class HotRodSslFunctionalTest extends HotRodFunctionalTest {
 
-   private val tccl = Thread.currentThread().getContextClassLoader();
-   private val keyStoreFileName = tccl.getResource("keystore.jks").getPath();
-   private val trustStoreFileName = tccl.getResource("truststore.jks").getPath();
+   private val tccl = Thread.currentThread().getContextClassLoader
+   private val keyStoreFileName = tccl.getResource("keystore.jks").getPath
+   private val trustStoreFileName = tccl.getResource("truststore.jks").getPath
 
    override protected def createStartHotRodServer(cacheManager: EmbeddedCacheManager) = {
       val builder = new HotRodServerConfigurationBuilder

@@ -44,7 +44,6 @@ import scala.collection.JavaConversions._
 import org.infinispan.test.TestingUtil
 import org.infinispan.statetransfer.StateTransferManager
 import org.infinispan.server.hotrod.configuration.HotRodServerConfigurationBuilder
-import org.infinispan.server.core.CacheValue
 import org.infinispan.marshall.jboss.JBossMarshaller
 import org.testng.AssertJUnit.assertEquals
 import org.infinispan.container.entries.InternalCacheEntry

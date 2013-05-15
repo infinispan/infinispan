@@ -30,6 +30,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
 
+import org.infinispan.container.entries.CacheEntry;
 import org.infinispan.context.Flag;
 import org.infinispan.notifications.ClassLoaderAwareListenable;
 import org.infinispan.util.concurrent.NotifyingFuture;
@@ -529,4 +530,35 @@ public class DecoratedCache<K, V> extends AbstractDelegatingAdvancedCache<K, V> 
          throw new IllegalStateException("The CacheNotifier does not implement the ClassLoaderAwareListenable interface");
       }
    }
+
+   @Override
+   public V put(K key, V value, Metadata metadata) {
+      return cacheImplementation.put(key, value, metadata, flags, classLoader.get());
+   }
+
+   @Override
+   public NotifyingFuture<V> putAsync(K key, V value, Metadata metadata) {
+      return cacheImplementation.putAsync(key, value, metadata, flags, classLoader.get());
+   }
+
+   @Override
+   public V putIfAbsent(K key, V value, Metadata metadata) {
+      return cacheImplementation.putIfAbsent(key, value, metadata, flags, classLoader.get());
+   }
+
+   @Override
+   public boolean replace(K key, V oldValue, V value, Metadata metadata) {
+      return cacheImplementation.replace(key, oldValue, value, metadata, flags, classLoader.get());
+   }
+
+   @Override
+   public V replace(K key, V value, Metadata metadata) {
+      return cacheImplementation.replace(key, value, metadata, flags, classLoader.get());
+   }
+
+   @Override
+   public CacheEntry getCacheEntry(K key) {
+      return cacheImplementation.getCacheEntry(key, flags, classLoader.get());
+   }
+
 }

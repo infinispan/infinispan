@@ -131,6 +131,50 @@ public class MetadataAPITest extends SingleCacheManagerTest {
       assertEquals(EQUAL, newVersion.compareTo(cacheEntry.getMetadata().version()));
    }
 
+   public void testOverrideImmortalCustomMetadata() {
+      final Integer key = 8;
+      Metadata meta = new CustomMetadata(-1, -1);
+      advCache.put(key, "v1", meta);
+      CacheEntry entry = advCache.getCacheEntry(key);
+      assertEquals(meta, entry.getMetadata());
+      Metadata newMeta = new CustomMetadata(120000, 60000);
+      advCache.put(key, "v2", newMeta);
+      assertEquals(newMeta, advCache.getCacheEntry(key).getMetadata());
+   }
+
+   public void testOverrideMortalCustomMetadata() {
+      final Integer key = 9;
+      Metadata meta = new CustomMetadata(120000, -1);
+      advCache.put(key, "v1", meta);
+      CacheEntry entry = advCache.getCacheEntry(key);
+      assertEquals(meta, entry.getMetadata());
+      Metadata newMeta = new CustomMetadata(240000, -1);
+      advCache.put(key, "v2", newMeta);
+      assertEquals(newMeta, advCache.getCacheEntry(key).getMetadata());
+   }
+
+   public void testOverrideTransientCustomMetadata() {
+      final Integer key = 10;
+      Metadata meta = new CustomMetadata(-1, 120000);
+      advCache.put(key, "v1", meta);
+      CacheEntry entry = advCache.getCacheEntry(key);
+      assertEquals(meta, entry.getMetadata());
+      Metadata newMeta = new CustomMetadata(-1, 240000);
+      advCache.put(key, "v2", newMeta);
+      assertEquals(newMeta, advCache.getCacheEntry(key).getMetadata());
+   }
+
+   public void testOverrideTransientMortalCustomMetadata() {
+      final Integer key = 10;
+      Metadata meta = new CustomMetadata(60000, 120000);
+      advCache.put(key, "v1", meta);
+      CacheEntry entry = advCache.getCacheEntry(key);
+      assertEquals(meta, entry.getMetadata());
+      Metadata newMeta = new CustomMetadata(120000, 240000);
+      advCache.put(key, "v2", newMeta);
+      assertEquals(newMeta, advCache.getCacheEntry(key).getMetadata());
+   }
+
    private Metadata withVersion(EntryVersion version) {
       return new EmbeddedMetadata.Builder().version(version).build();
    }
@@ -193,6 +237,34 @@ public class MetadataAPITest extends SingleCacheManagerTest {
       @Override
       public Metadata build() {
          return this;
+      }
+
+      @Override
+      public boolean equals(Object o) {
+         if (this == o) return true;
+         if (o == null || getClass() != o.getClass()) return false;
+
+         CustomMetadata that = (CustomMetadata) o;
+
+         if (lifespan != that.lifespan) return false;
+         if (maxIdle != that.maxIdle) return false;
+
+         return true;
+      }
+
+      @Override
+      public int hashCode() {
+         int result = (int) (lifespan ^ (lifespan >>> 32));
+         result = 31 * result + (int) (maxIdle ^ (maxIdle >>> 32));
+         return result;
+      }
+
+      @Override
+      public String toString() {
+         return "CustomMetadata{" +
+               "lifespan=" + lifespan +
+               ", maxIdle=" + maxIdle +
+               '}';
       }
    }
 

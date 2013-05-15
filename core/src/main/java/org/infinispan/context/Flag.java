@@ -234,6 +234,16 @@ public enum Flag {
     */
    SKIP_LISTENER_NOTIFICATION,
 
+   /**
+    * Flag to identify cache operations coming from the Hot Rod server.
+    */
+   OPERATION_HOTROD,
+
+   /**
+    * Flag to identify cache operations coming from the Memcached server.
+    */
+   OPERATION_MEMCACHED,
+
    ;
 
    /**

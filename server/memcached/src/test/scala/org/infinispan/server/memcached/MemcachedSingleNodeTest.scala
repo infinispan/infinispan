@@ -60,7 +60,7 @@ abstract class MemcachedSingleNodeTest extends SingleCacheManagerTest {
       super.destroyAfterClass()
       log.debug("Test finished, close memcached server")
       shutdownClient()
-      memcachedServer.stop
+      killMemcachedServer(memcachedServer)
    }
 
    protected def client: MemcachedClient = memcachedClient

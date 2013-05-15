@@ -19,7 +19,6 @@
 package org.infinispan.configuration.parsing;
 
 import org.infinispan.commons.hash.Hash;
-import org.infinispan.compat.TypeConverter;
 import org.infinispan.config.ConfigurationException;
 import org.infinispan.configuration.cache.*;
 import org.infinispan.configuration.cache.FileCacheStoreConfigurationBuilder.FsyncMode;
@@ -197,6 +196,9 @@ public class Parser53 implements ConfigurationParser<ConfigurationBuilderHolder>
                break;
             case SITES:
                parseLocalSites(reader, holder);
+               break;
+            case COMPATIBILITY:
+               parseCompatibility(reader, holder);
                break;
             default:
                throw ParseUtils.unexpectedElement(reader);
@@ -1131,9 +1133,6 @@ public class Parser53 implements ConfigurationParser<ConfigurationBuilderHolder>
             case VALUE_EQUIVALENCE:
                builder.dataContainer().valueEquivalence(Util.<Equivalence>getInstance(value, holder.getClassLoader()));
                break;
-            case TYPE_CONVERTER:
-               builder.dataContainer().typeConverter(Util.<TypeConverter>getInstance(value, holder.getClassLoader()));
-               break;
             default:
                throw ParseUtils.unexpectedAttribute(reader, i);
          }
@@ -1898,6 +1897,31 @@ public class Parser53 implements ConfigurationParser<ConfigurationBuilderHolder>
          }
       }
       return p;
+   }
+
+   private void parseCompatibility(XMLExtendedStreamReader reader, ConfigurationBuilderHolder holder) throws XMLStreamException {
+      ConfigurationBuilder builder = holder.getCurrentConfigurationBuilder();
+      for (int i = 0; i < reader.getAttributeCount(); i++) {
+         ParseUtils.requireNoNamespaceAttribute(reader, i);
+         String value = replaceProperties(reader.getAttributeValue(i));
+         Attribute attribute = Attribute.forName(reader.getAttributeLocalName(i));
+         switch (attribute) {
+            case ENABLED:
+               if (Boolean.parseBoolean(value)) {
+                  builder.compatibility().enable();
+               } else {
+                  builder.compatibility().disable();
+               }
+               break;
+            case MARSHALLER_CLASS:
+               builder.compatibility().marshaller(Util.<Marshaller>getInstance(value, holder.getClassLoader()));
+               break;
+            default:
+               throw ParseUtils.unexpectedAttribute(reader, i);
+         }
+      }
+
+      ParseUtils.requireNoContent(reader);
    }
 
 }

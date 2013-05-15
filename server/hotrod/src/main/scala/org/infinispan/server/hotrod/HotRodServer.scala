@@ -28,16 +28,14 @@ import org.infinispan.manager.EmbeddedCacheManager
 import java.util.Properties
 import org.infinispan.server.core.AbstractProtocolServer
 import org.infinispan.eviction.EvictionStrategy
-import org.infinispan.util.{CollectionFactory, ByteArrayEquivalence, AnyEquivalence}
+import org.infinispan.util.{CollectionFactory, AnyEquivalence}
 import org.infinispan.Cache
 import org.infinispan.remoting.transport.Address
-import org.infinispan.configuration.cache.{Configuration, CacheMode, ConfigurationBuilder}
+import org.infinispan.configuration.cache.{CacheMode, ConfigurationBuilder}
 import org.infinispan.context.Flag
 import org.infinispan.upgrade.RollingUpgradeManager
 import org.infinispan.server.hotrod.configuration.HotRodServerConfiguration
 import org.infinispan.server.hotrod.configuration.HotRodServerConfigurationBuilder
-import org.infinispan.config.ConfigurationException
-import org.infinispan.api.BasicCacheContainer
 
 /**
  * Hot Rod server, in charge of defining its encoder/decoder and, if clustered, update the topology information
@@ -168,9 +166,11 @@ class HotRodServer extends AbstractProtocolServer("HotRod") with Log {
 
       if (cache == null) {
          if (cacheName.isEmpty)
-            cache = cacheManager.getCache[Array[Byte], Array[Byte]]
+            cache = cacheManager.getCache[Array[Byte], Array[Byte]]()
+                    .getAdvancedCache.withFlags(Flag.OPERATION_HOTROD)
          else
-            cache = cacheManager.getCache(cacheName)
+            cache = cacheManager.getCache[Array[Byte], Array[Byte]](cacheName)
+                    .getAdvancedCache.withFlags(Flag.OPERATION_HOTROD)
 
          knownCaches.put(cacheName, cache)
          // make sure we register a Migrator for this cache!

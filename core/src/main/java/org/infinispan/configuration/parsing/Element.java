@@ -43,6 +43,7 @@ public enum Element {
     REMOTE_COMMNAND_EXECUTOR("remoteCommandsExecutor"),
     CLUSTERING("clustering"),
     CLUSTER_LOADER("clusterLoader"),
+    COMPATIBILITY("compatibility"),
     CUSTOM_INTERCEPTORS("customInterceptors"),
     DATA_CONTAINER("dataContainer"),
     DEADLOCK_DETECTION("deadlockDetection"),

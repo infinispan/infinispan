@@ -52,5 +52,7 @@ public interface ConfigurationChildBuilder {
 
    SitesConfigurationBuilder sites();
 
+   CompatibilityModeConfigurationBuilder compatibility();
+
    Configuration build();
 }

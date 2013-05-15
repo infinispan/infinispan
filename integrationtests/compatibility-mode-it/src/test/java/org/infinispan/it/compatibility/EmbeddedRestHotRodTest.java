@@ -27,8 +27,10 @@ import org.apache.commons.httpclient.HttpClient;
 import org.apache.commons.httpclient.HttpMethod;
 import org.apache.commons.httpclient.methods.ByteArrayRequestEntity;
 import org.apache.commons.httpclient.methods.EntityEnclosingMethod;
+import org.apache.commons.httpclient.methods.GetMethod;
 import org.apache.commons.httpclient.methods.PutMethod;
-import org.infinispan.api.BasicCacheContainer;
+import org.infinispan.client.hotrod.Flag;
+import org.infinispan.client.hotrod.RemoteCache;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
@@ -38,32 +40,32 @@ import javax.servlet.http.HttpServletResponse;
 import static org.testng.AssertJUnit.*;
 
 /**
- * // TODO: Document this
+ * Test compatibility between embedded caches, Hot Rod, and REST endpoints.
  *
  * @author Galder Zamarreño
- * @since // TODO
+ * @since 5.3
  */
 @Test(groups = "functional", testName = "it.compatibility.EmbeddedRestHotRodTest")
 public class EmbeddedRestHotRodTest {
 
-   static String REST_ROOT_PATH =
-         "http://localhost:8989/rest/" + BasicCacheContainer.DEFAULT_CACHE_NAME;
+   CompatibilityCacheFactory<String, Object> cacheFactory;
 
-   CompatibilityCacheFactory<String, byte[]> cacheFactory;
-
-   @BeforeClass(alwaysRun = true)
+   @BeforeClass
    protected void setup() throws Exception {
-      cacheFactory = new CompatibilityCacheFactory<String, byte[]>();
+      cacheFactory = new CompatibilityCacheFactory<String, Object>();
       cacheFactory.setup();
    }
 
-   @AfterClass(alwaysRun = true)
+   @AfterClass
    protected void teardown() {
       cacheFactory.teardown();
    }
 
    public void testRestPutEmbeddedHotRodGet() throws Exception {
-      EntityEnclosingMethod put = new PutMethod(REST_ROOT_PATH + "/1");
+      final String key = "1";
+
+      // 1. Put with REST
+      EntityEnclosingMethod put = new PutMethod(cacheFactory.getRestUrl() + "/" + key);
       put.setRequestEntity(new ByteArrayRequestEntity(
             "<hey>ho</hey>".getBytes(), "application/octet-stream"));
       HttpClient restClient = cacheFactory.getRestClient();
@@ -71,8 +73,46 @@ public class EmbeddedRestHotRodTest {
       assertEquals(HttpServletResponse.SC_OK, put.getStatusCode());
       assertEquals("", put.getResponseBodyAsString().trim());
 
-      assertArrayEquals("<hey>ho</hey>".getBytes(), cacheFactory.getEmbeddedCache().get("1"));
-      assertArrayEquals("<hey>ho</hey>".getBytes(), cacheFactory.getHotRodCache().get("1"));
+      // 2. Get with Embedded
+      assertArrayEquals("<hey>ho</hey>".getBytes(), (byte[])
+            cacheFactory.getEmbeddedCache().get(key));
+
+      // 3. Get with Hot Rod
+      assertArrayEquals("<hey>ho</hey>".getBytes(), (byte[])
+            cacheFactory.getHotRodCache().get(key));
+   }
+
+   public void testEmbeddedPutRestHotRodGet() throws Exception {
+      final String key = "2";
+
+      // 1. Put with Embedded
+      assertEquals(null, cacheFactory.getEmbeddedCache().put(key, "v1"));
+
+      // 2. Get with Hot Rod
+      assertEquals("v1", cacheFactory.getHotRodCache().get(key));
+
+      // 3. Get with REST
+      HttpMethod get = new GetMethod(cacheFactory.getRestUrl() + "/" + key);
+      cacheFactory.getRestClient().executeMethod(get);
+      assertEquals(HttpServletResponse.SC_OK, get.getStatusCode());
+      assertEquals("v1", get.getResponseBodyAsString());
+   }
+
+   public void testHotRodPutEmbeddedRestGet() throws Exception {
+      final String key = "3";
+
+      // 1. Put with Hot Rod
+      RemoteCache<String, Object> remote = cacheFactory.getHotRodCache();
+      assertEquals(null, remote.withFlags(Flag.FORCE_RETURN_VALUE).put(key, "v1"));
+
+      // 2. Get with Embedded
+      assertEquals("v1", cacheFactory.getEmbeddedCache().get(key));
+
+      // 3. Get with REST
+      HttpMethod get = new GetMethod(cacheFactory.getRestUrl() + "/" + key);
+      cacheFactory.getRestClient().executeMethod(get);
+      assertEquals(HttpServletResponse.SC_OK, get.getStatusCode());
+      assertEquals("v1", get.getResponseBodyAsString());
    }
 
 }

@@ -35,13 +35,13 @@ import org.testng.annotations.Test;
 import static org.testng.AssertJUnit.*;
 
 /**
- * // TODO: Document this
+ * Test compatibility between embedded caches and Hot Rod endpoints.
  *
  * @author Galder Zamarreño
- * @since // TODO
+ * @since 5.3
  */
 @Test(groups = "functional", testName = "it.compatibility.CompatibilityTest")
-public class CompatibilityTest extends AbstractInfinispanTest {
+public class EmbeddedHotRodTest extends AbstractInfinispanTest {
 
    CompatibilityCacheFactory<Integer, String> cacheFactory;
 
