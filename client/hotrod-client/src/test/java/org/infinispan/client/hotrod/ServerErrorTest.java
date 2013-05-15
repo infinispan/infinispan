@@ -29,7 +29,6 @@ import org.infinispan.notifications.Listener;
 import org.infinispan.notifications.cachelistener.annotation.CacheEntryCreated;
 import org.infinispan.notifications.cachelistener.event.CacheEntryEvent;
 import org.infinispan.remoting.transport.jgroups.SuspectException;
-import org.infinispan.server.core.CacheValue;
 import org.infinispan.server.hotrod.HotRodServer;
 import org.infinispan.test.SingleCacheManagerTest;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
@@ -109,7 +108,7 @@ public class ServerErrorTest extends SingleCacheManagerTest {
    public static class ErrorInducingListener {
       @CacheEntryCreated
       @SuppressWarnings("unused")
-      public void entryCreated(CacheEntryEvent<byte[], CacheValue> event) throws Exception {
+      public void entryCreated(CacheEntryEvent<byte[], byte[]> event) throws Exception {
          if (event.isPre() && unmarshall(event.getKey()) == "FailFailFail") {
             throw new SuspectException("Simulated suspicion");
          }

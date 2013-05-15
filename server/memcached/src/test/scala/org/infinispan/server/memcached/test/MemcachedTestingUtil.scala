@@ -77,7 +77,7 @@ object MemcachedTestingUtil {
       server
    }
 
-   def killClient(client: MemcachedClient) {
+   def killMemcachedClient(client: MemcachedClient) {
       try {
          if (client != null) client.shutdown()
       }
@@ -86,6 +86,10 @@ object MemcachedTestingUtil {
             error("Error stopping client", t)
          }
       }
+   }
+
+   def killMemcachedServer(server: MemcachedServer) {
+      if (server != null) server.stop
    }
 
 }

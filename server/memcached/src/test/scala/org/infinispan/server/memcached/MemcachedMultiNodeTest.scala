@@ -60,7 +60,7 @@ abstract class MemcachedMultiNodeTest extends MultipleCacheManagersTest {
    override def destroy() {
       super.destroy()
       log.debug("Test finished, close Hot Rod server")
-      clients.foreach(killClient(_))
+      clients.foreach(killMemcachedClient(_))
       servers.foreach(ServerTestingUtil.killServer(_))
    }
 

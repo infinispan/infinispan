@@ -106,6 +106,11 @@ abstract class AbstractConfigurationChildBuilder implements ConfigurationChildBu
       return builder.sites();
    }
 
+   @Override
+   public CompatibilityModeConfigurationBuilder compatibility() {
+      return builder.compatibility();
+   }
+
    protected ConfigurationBuilder getBuilder() {
       return builder;
    }

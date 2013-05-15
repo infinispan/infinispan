@@ -95,6 +95,17 @@
          <artifactId>infinispan-server-memcached</artifactId>
          <scope>test</scope>
       </dependency>
+      <dependency>
+         <groupId>${project.groupId}</groupId>
+         <artifactId>infinispan-server-memcached</artifactId>
+         <scope>test</scope>
+         <type>test-jar</type>
+      </dependency>
+      <dependency>
+         <groupId>spy</groupId>
+         <artifactId>memcached</artifactId>
+         <scope>test</scope>
+      </dependency>
    </dependencies>
 
 </project>

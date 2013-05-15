@@ -24,8 +24,8 @@ package org.infinispan.factories;
 
 
 import org.infinispan.CacheException;
-import org.infinispan.compat.TypeConverter;
 import org.infinispan.config.ConfigurationException;
+import org.infinispan.configuration.cache.CompatibilityModeConfiguration;
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.configuration.cache.Configurations;
 import org.infinispan.configuration.cache.CustomInterceptorsConfiguration;
@@ -122,10 +122,11 @@ public class InterceptorChainFactory extends AbstractNamedCacheComponentFactory 
          interceptorChain.setFirstInChain(createInterceptor(new InvocationContextInterceptor(), InvocationContextInterceptor.class));
       }
 
-      TypeConverter typeConverter = configuration.dataContainer().typeConverter();
-      if (typeConverter != null) {
+
+      CompatibilityModeConfiguration compatibility = configuration.compatibility();
+      if (compatibility.enabled()) {
          interceptorChain.appendInterceptor(createInterceptor(
-               new TypeConverterInterceptor(typeConverter), TypeConverterInterceptor.class), false);
+               new TypeConverterInterceptor(compatibility.marshaller()), TypeConverterInterceptor.class), false);
       }
 
       // add marshallable check interceptor for situations where we want to figure out before marshalling

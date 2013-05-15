@@ -23,6 +23,9 @@
 
 package org.infinispan.compat;
 
+import org.infinispan.context.Flag;
+import org.infinispan.marshall.Marshaller;
+
 /**
  * A type converter for cached keys and values. Given a key and value type,
  * implementations of this interface convert instances of those types into
@@ -51,29 +54,35 @@ public interface TypeConverter<K, V, KT, VT> {
    /**
     * Covert a instance of cached key type into an instance of target key type.
     *
-    * @param key cached key associated with the value
     * @param value cached value instance to convert
     * @return a converted value instance into target value type
     */
-   VT boxValue(K key, V value);
-
-   /**
-    * Convert back an instance of the target key type into an instance of the
-    * cached key type.
-    *
-    * @param target target key type instance to convert back
-    * @return an instance of the cached key type
-    */
-   K unboxKey(KT target);
+   VT boxValue(V value);
 
    /**
     * Convert back an instance of the target value type into an instance of
     * the cached value type.
     *
-    * @param key cached key associated with the value
     * @param target target value type instance to convert back
     * @return an instance of the cached value type
     */
-   V unboxValue(K key, VT target);
+   V unboxValue(VT target);
+
+   /**
+    * Indicates whether this type converter supports a particular type of
+    * operation. This is used to route type conversion according to the origin
+    * of the invocation
+    *
+    * @return true if operations with this flag should be routed to this type
+    * converter, false otherwise
+    */
+   boolean supportsInvocation(Flag flag);
+
+   /**
+    * Marshaller to be used by the type converter to marshall/unmarshall contents.
+    *
+    * @param marshaller marshaller instance to be used.
+    */
+   void setMarshaller(Marshaller marshaller);
 
 }

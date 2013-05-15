@@ -61,6 +61,8 @@ abstract class AbstractProtocolDecoder[K, V](transport: NettyTransport)
    protected var key: K = null.asInstanceOf[K]
    protected var rawValue: Array[Byte] = null.asInstanceOf[Array[Byte]]
    protected var cache: AdvancedCache[K, V] = null
+   protected var defaultLifespanTime: Long = _
+   protected var defaultMaxIdleTime: Long = _
 
    override def decode(ctx: ChannelHandlerContext, ch: Channel, buffer: ChannelBuffer, state: DecoderState): AnyRef = {
       val ch = ctx.getChannel
@@ -100,6 +102,8 @@ abstract class AbstractProtocolDecoder[K, V](transport: NettyTransport)
       }
 
       cache = getCache.getAdvancedCache
+      defaultLifespanTime = cache.getCacheConfiguration.expiration().lifespan()
+      defaultMaxIdleTime = cache.getCacheConfiguration.expiration().maxIdle()
       if (endOfOp.get) {
          header.op match {
             case StatsRequest => writeResponse(ch, createStatsResponse)
@@ -205,9 +209,12 @@ abstract class AbstractProtocolDecoder[K, V](transport: NettyTransport)
       val metadata = new EmbeddedMetadata.Builder
       metadata.version(new ServerEntryVersion(generateVersion(cache)))
       (params.lifespan, params.maxIdle) match {
-         case (EXPIRATION_DEFAULT, EXPIRATION_DEFAULT) => // Don't add to metadata
+         case (EXPIRATION_DEFAULT, EXPIRATION_DEFAULT) =>
+            metadata.lifespan(defaultLifespanTime, DefaultTimeUnit)
+                    .maxIdle(defaultMaxIdleTime, DefaultTimeUnit)
          case (_, EXPIRATION_DEFAULT) =>
             metadata.lifespan(toMillis(params.lifespan), DefaultTimeUnit)
+                    .maxIdle(defaultMaxIdleTime, DefaultTimeUnit)
          case (_, _) =>
             metadata.lifespan(toMillis(params.lifespan), DefaultTimeUnit)
                     .maxIdle(toMillis(params.maxIdle), DefaultTimeUnit)

@@ -36,10 +36,6 @@ import java.util.concurrent.TimeUnit;
  */
 public interface Metadata {
 
-   // Concrete, immutable class chosen instead of interface in order to enable
-   // injection of internally generated versions in the absence of user
-   // provided version.
-
    /**
     * Returns the lifespan of the cache entry with which this metadata object
     * is associated, in milliseconds.  Negative values are interpreted as

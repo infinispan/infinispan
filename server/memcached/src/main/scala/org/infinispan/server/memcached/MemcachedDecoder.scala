@@ -55,7 +55,7 @@ import org.infinispan.server.core.ServerEntryVersion
 class MemcachedDecoder(memcachedCache: AdvancedCache[String, Array[Byte]], scheduler: ScheduledExecutorService, transport: NettyTransport)
       extends AbstractProtocolDecoder[String, Array[Byte]](transport) {
 
-   cache = memcachedCache
+   cache = memcachedCache.getAdvancedCache.withFlags(Flag.OPERATION_MEMCACHED)
 
    import RequestResolver._
 
@@ -73,7 +73,6 @@ class MemcachedDecoder(memcachedCache: AdvancedCache[String, Array[Byte]], sched
    private final val replaceIfUnmodifiedBadval = new AtomicLong(0)
    private val isTrace = isTraceEnabled
    private val byteBuffer = new ByteArrayOutputStream()
-   private final val defaultMaxIdleTime = cache.getCacheConfiguration.expiration().maxIdle()
 
    override def createHeader: RequestHeader = new RequestHeader
 
@@ -560,13 +559,14 @@ class MemcachedDecoder(memcachedCache: AdvancedCache[String, Array[Byte]], sched
    private def buildGetHeaderBegin(k: String, entry: CacheEntry,
            extraSpace: Int): ChannelBuffer = {
       val data = entry.getValue.asInstanceOf[Array[Byte]]
-      val meta = entry.getMetadata.asInstanceOf[MemcachedMetadata]
       val dataSize = Integer.valueOf(data.length).toString.getBytes
       val key = k.getBytes
-      val flags =
-         if (meta.flags != 0)
+
+      val flags = entry.getMetadata match {
+         case meta: MemcachedMetadata if meta.flags != 0 =>
             java.lang.Long.valueOf(meta.flags).toString.getBytes
-         else ZERO
+         case _ => ZERO
+      }
 
       val flagsSize = flags.length
       val buf = buffer(VALUE_SIZE + key.length + data.length + flagsSize

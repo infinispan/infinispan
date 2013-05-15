@@ -29,10 +29,8 @@ import org.infinispan.notifications.cachelistener.annotation.CacheEntryModified;
 import org.infinispan.notifications.cachelistener.annotation.CacheEntryRemoved;
 import org.infinispan.notifications.cachelistener.event.CacheEntryEvent;
 import org.infinispan.notifications.cachelistener.event.CacheEntryModifiedEvent;
-import org.infinispan.server.core.CacheValue;
 import org.infinispan.server.core.Main;
 import org.infinispan.server.core.ProtocolServer;
-import org.infinispan.util.ByteArrayKey;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
@@ -106,7 +104,7 @@ public class MessagingHotRodDemo {
 
       @CacheEntryModified
       public void invalidateModifiedEntry(
-            CacheEntryModifiedEvent<ByteArrayKey, CacheValue> e) throws JMSException {
+            CacheEntryModifiedEvent<byte[], byte[]> e) throws JMSException {
          if (e.isPre() && e.getValue() != null) {
             log.infof("Entry modified");
             invalidate(e);
@@ -115,15 +113,15 @@ public class MessagingHotRodDemo {
 
       @CacheEntryRemoved
       public void invalidateRemovedEntry(
-            CacheEntryEvent<ByteArrayKey, CacheValue> e) throws JMSException {
+            CacheEntryEvent<byte[], byte[]> e) throws JMSException {
          if (e.isPre()) {
             log.infof("Entry removed");
             invalidate(e);
          }
       }
 
-      private void invalidate(CacheEntryEvent<ByteArrayKey, CacheValue> e) throws JMSException {
-         byte[] keyBytes = e.getKey().getData();
+      private void invalidate(CacheEntryEvent<byte[], byte[]> e) throws JMSException {
+         byte[] keyBytes = e.getKey();
          // Hot Rod keys are byte[], so send them as they are in a BytesMessage
          BytesMessage msg = s.createBytesMessage();
          // Create a message with the key that's been modified or removed

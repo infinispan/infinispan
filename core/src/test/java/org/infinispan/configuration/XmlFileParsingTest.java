@@ -56,6 +56,7 @@ import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.marshall.AdvancedExternalizer;
 import org.infinispan.marshall.AdvancedExternalizerTest;
 import org.infinispan.marshall.VersionAwareMarshaller;
+import org.infinispan.marshall.jboss.GenericJBossMarshaller;
 import org.infinispan.remoting.transport.jgroups.JGroupsTransport;
 import org.infinispan.test.AbstractInfinispanTest;
 import org.infinispan.test.CacheManagerCallable;
@@ -108,7 +109,7 @@ public class XmlFileParsingTest extends AbstractInfinispanTest {
 
    @Test(expectedExceptions=FileNotFoundException.class)
    public void testFailOnUnexpectedConfigurationFile() throws IOException {
-      TestCacheManagerFactory.fromXml( "does-not-exist.xml");
+      TestCacheManagerFactory.fromXml("does-not-exist.xml");
    }
 
    public void testDeprecatedNonsenseMode() throws Exception {
@@ -287,6 +288,57 @@ public class XmlFileParsingTest extends AbstractInfinispanTest {
             assert !cfg.storeAsBinary().defensive();
          }
       });
+   }
+
+   public void testCompatibility() throws Exception {
+      String config = INFINISPAN_START_TAG +
+            "   <default>\n" +
+            "      <compatibility enabled=\"false\"/>\n" +
+            "   </default>\n" +
+            TestingUtil.INFINISPAN_END_TAG;
+
+      InputStream is = new ByteArrayInputStream(config.getBytes());
+      withCacheManager(new CacheManagerCallable(TestCacheManagerFactory.fromStream(is)) {
+         @Override
+         public void call() {
+            Configuration cfg = cm.getDefaultCacheConfiguration();
+            Assert.assertFalse(cfg.compatibility().enabled());
+            Assert.assertNull(cfg.compatibility().marshaller());
+         }
+      });
+
+      config = INFINISPAN_START_TAG +
+            "   <default>\n" +
+            "      <compatibility enabled=\"true\"/>\n" +
+            "   </default>\n" +
+            TestingUtil.INFINISPAN_END_TAG;
+
+      is = new ByteArrayInputStream(config.getBytes());
+      withCacheManager(new CacheManagerCallable(TestCacheManagerFactory.fromStream(is)) {
+         @Override
+         public void call() {
+            Configuration cfg = cm.getDefaultCacheConfiguration();
+            Assert.assertTrue(cfg.compatibility().enabled());
+            Assert.assertNull(cfg.compatibility().marshaller());
+         }
+      });
+
+      config = INFINISPAN_START_TAG +
+            "   <default>\n" +
+            "      <compatibility enabled=\"true\" marshallerClass=\"org.infinispan.marshall.jboss.GenericJBossMarshaller\"/>\n" +
+            "   </default>\n" +
+            TestingUtil.INFINISPAN_END_TAG;
+
+      is = new ByteArrayInputStream(config.getBytes());
+      withCacheManager(new CacheManagerCallable(TestCacheManagerFactory.fromStream(is)) {
+         @Override
+         public void call() {
+            Configuration cfg = cm.getDefaultCacheConfiguration();
+            Assert.assertTrue(cfg.compatibility().enabled());
+            Assert.assertTrue(cfg.compatibility().marshaller() instanceof GenericJBossMarshaller);
+         }
+      });
+
    }
 
    private void assertNamedCacheFile(EmbeddedCacheManager cm, boolean deprecated) {

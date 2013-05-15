@@ -23,7 +23,8 @@
 package org.infinispan.server.core
 
 import org.testng.annotations.Test
-import org.testng.Assert._
+import org.testng.AssertJUnit._
+import java.util
 
 /**
  * Marshalling test for server core classes.
@@ -35,10 +36,10 @@ import org.testng.Assert._
 class MarshallingTest extends AbstractMarshallingTest {
 
    def testMarshallingBigByteArrayValue {
-      val cacheValue = new CacheValue(getBigByteArray, 9)
+      val cacheValue = getBigByteArray
       val bytes = marshaller.objectToByteBuffer(cacheValue)
-      val readValue = marshaller.objectFromByteBuffer(bytes).asInstanceOf[CacheValue]
-      assertEquals(readValue, cacheValue)
+      val readValue = marshaller.objectFromByteBuffer(bytes).asInstanceOf[Array[Byte]]
+      assertTrue(util.Arrays.equals(readValue, cacheValue))
    }
 
 }
