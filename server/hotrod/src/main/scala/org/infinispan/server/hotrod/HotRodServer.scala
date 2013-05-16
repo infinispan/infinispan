@@ -145,8 +145,18 @@ class HotRodServer extends AbstractProtocolServer("HotRod") with Log {
    }
 
    private def defineTopologyCacheConfig(cacheManager: EmbeddedCacheManager) {
+      val topoCfg = cacheManager.getCacheConfiguration(HotRodServer.ADDRESS_CACHE_NAME)
+      if (topoCfg != null) {
+         assertTopologyCacheConfig(topoCfg)
+      }
       cacheManager.defineConfiguration(HotRodServer.ADDRESS_CACHE_NAME,
          createTopologyCacheConfig(cacheManager.getCacheManagerConfiguration.transport().distributedSyncTimeout()).build())
+   }
+
+   private def assertTopologyCacheConfig(cfg: Configuration) {
+      // Only check if the state transfer mode is compatible as timeouts can be changed at runtime
+      if (configuration.topologyStateTransfer != cfg.clustering.stateTransfer.fetchInMemoryState)
+         throw log.invalidTopologyStateTransfer;
    }
 
    protected def createTopologyCacheConfig(distSyncTimeout: Long): ConfigurationBuilder = {
