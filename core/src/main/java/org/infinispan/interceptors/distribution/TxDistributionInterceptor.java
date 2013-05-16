@@ -28,6 +28,7 @@ import org.infinispan.commands.tx.PrepareCommand;
 import org.infinispan.commands.tx.RollbackCommand;
 import org.infinispan.commands.write.ClearCommand;
 import org.infinispan.commands.write.PutKeyValueCommand;
+import org.infinispan.commands.write.PutMapCommand;
 import org.infinispan.commands.write.RemoveCommand;
 import org.infinispan.commands.write.ReplaceCommand;
 import org.infinispan.commands.write.WriteCommand;
@@ -83,14 +84,14 @@ public class TxDistributionInterceptor extends BaseDistributionInterceptor {
    };
 
    @Inject
-   public void init (L1Manager l1Manager) {
+   public void injectDependencies(L1Manager l1Manager) {
       this.l1Manager = l1Manager;
    }
 
    @Override
    public Object visitReplaceCommand(InvocationContext ctx, ReplaceCommand command) throws Throwable {
       try {
-         return super.visitReplaceCommand(ctx, command);
+         return handleTxWriteCommand(ctx, command, new SingleKeyRecipientGenerator(command.getKey()), false);
       } finally {
          boolean ignorePreviousValues = ignorePreviousValueOnBackup(command, ctx);
          command.setIgnorePreviousValue(ignorePreviousValues);
@@ -100,7 +101,7 @@ public class TxDistributionInterceptor extends BaseDistributionInterceptor {
    @Override
    public Object visitRemoveCommand(InvocationContext ctx, RemoveCommand command) throws Throwable {
       try {
-         return super.visitRemoveCommand(ctx, command);
+         return handleTxWriteCommand(ctx, command, new SingleKeyRecipientGenerator(command.getKey()), false);
       } finally {
          boolean ignorePreviousValues = ignorePreviousValueOnBackup(command, ctx);
          command.setIgnorePreviousValue(ignorePreviousValues);
@@ -119,7 +120,7 @@ public class TxDistributionInterceptor extends BaseDistributionInterceptor {
     */
    protected boolean ignorePreviousValueOnBackup(WriteCommand command, InvocationContext ctx) {
       return super.ignorePreviousValueOnBackup(command, ctx)
-          && cacheConfiguration.transaction().lockingMode() == LockingMode.OPTIMISTIC && !useClusteredWriteSkewCheck;
+            && cacheConfiguration.transaction().lockingMode() == LockingMode.OPTIMISTIC && !useClusteredWriteSkewCheck;
    }
 
    @Start
@@ -132,8 +133,12 @@ public class TxDistributionInterceptor extends BaseDistributionInterceptor {
 
    @Override
    public Object visitPutKeyValueCommand(InvocationContext ctx, PutKeyValueCommand command) throws Throwable {
+      if (command.hasFlag(Flag.PUT_FOR_EXTERNAL_READ)) {
+         return handleNonTxWriteCommand(ctx, command);
+      }
+
       SingleKeyRecipientGenerator skrg = new SingleKeyRecipientGenerator(command.getKey());
-      Object returnValue = handleWriteCommand(ctx, command, skrg, command.hasFlag(Flag.PUT_FOR_STATE_TRANSFER), false);
+      Object returnValue = handleTxWriteCommand(ctx, command, skrg, command.hasFlag(Flag.PUT_FOR_STATE_TRANSFER));
       if (ignorePreviousValueOnBackup(command, ctx)) {
          command.setPutIfAbsent(false);
       }
@@ -145,10 +150,15 @@ public class TxDistributionInterceptor extends BaseDistributionInterceptor {
    }
 
    @Override
-   public Object visitClearCommand(InvocationContext ctx, ClearCommand command) throws Throwable {
-      return handleWriteCommand(ctx, command, CLEAR_COMMAND_GENERATOR, false, true);
+   public Object visitPutMapCommand(InvocationContext ctx, PutMapCommand command) throws Throwable {
+      // don't bother with a remote get for the PutMapCommand!
+      return handleTxWriteCommand(ctx, command, new MultipleKeysRecipientGenerator(command.getMap().keySet()), true);
    }
 
+   @Override
+   public Object visitClearCommand(InvocationContext ctx, ClearCommand command) throws Throwable {
+      return handleTxWriteCommand(ctx, command, CLEAR_COMMAND_GENERATOR, false);
+   }
 
    @Override
    public Object visitGetKeyValueCommand(InvocationContext ctx, GetKeyValueCommand command) throws Throwable {
@@ -276,7 +286,7 @@ public class TxDistributionInterceptor extends BaseDistributionInterceptor {
       return localTx.getCommitNodes(affectedNodes, rpcManager.getTopologyId(), members);
    }
 
-   protected void sendCommitCommand(TxInvocationContext ctx, CommitCommand command) throws TimeoutException, InterruptedException {
+   private void sendCommitCommand(TxInvocationContext ctx, CommitCommand command) throws TimeoutException, InterruptedException {
       Collection<Address> recipients = getCommitNodes(ctx);
       boolean syncCommitPhase = cacheConfiguration.transaction().syncCommitPhase();
       rpcManager.invokeRemotely(recipients, command, rpcManager.getDefaultRpcOptions(syncCommitPhase, false));
@@ -295,7 +305,7 @@ public class TxDistributionInterceptor extends BaseDistributionInterceptor {
     * If we are within one transaction we won't do any replication as replication would only be performed at commit
     * time. If the operation didn't originate locally we won't do any replication either.
     */
-   protected Object handleWriteCommand(InvocationContext ctx, WriteCommand command, RecipientGenerator recipientGenerator, boolean skipRemoteGet, boolean skipL1Invalidation) throws Throwable {
+   private Object handleTxWriteCommand(InvocationContext ctx, WriteCommand command, RecipientGenerator recipientGenerator, boolean skipRemoteGet) throws Throwable {
       // see if we need to load values from remote sources first
       if (ctx.isOriginLocal() && !skipRemoteGet || command.isConditional() || shouldFetchRemoteValuesForWriteSkewCheck(ctx, command))
          remoteGetBeforeWrite(ctx, command, recipientGenerator);
@@ -322,7 +332,7 @@ public class TxDistributionInterceptor extends BaseDistributionInterceptor {
       return null;
    }
 
-   private void remoteGetBeforeWrite(InvocationContext ctx, WriteCommand command, KeyGenerator keygen) throws Throwable {
+   protected void remoteGetBeforeWrite(InvocationContext ctx, WriteCommand command, RecipientGenerator keygen) throws Throwable {
       // this should only happen if:
       //   a) unsafeUnreliableReturnValues is false
       //   b) unsafeUnreliableReturnValues is true, we are in a TX and the command is conditional
@@ -407,7 +417,7 @@ public class TxDistributionInterceptor extends BaseDistributionInterceptor {
       return null;
    }
 
-   protected Future<?> flushL1Caches(InvocationContext ctx) {
+   private Future<?> flushL1Caches(InvocationContext ctx) {
       // TODO how do we tell the L1 manager which keys are removed and which keys may still exist in remote L1?
       return isL1CacheEnabled ? l1Manager.flushCacheWithSimpleFuture(ctx.getLockedKeys(), null, ctx.getOrigin(), true) : null;
    }

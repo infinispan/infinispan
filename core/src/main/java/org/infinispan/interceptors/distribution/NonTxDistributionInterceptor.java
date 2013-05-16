@@ -19,20 +19,17 @@
 
 package org.infinispan.interceptors.distribution;
 
-import org.infinispan.CacheException;
-import org.infinispan.commands.DataCommand;
 import org.infinispan.commands.FlagAffectedCommand;
 import org.infinispan.commands.read.GetKeyValueCommand;
 import org.infinispan.commands.write.ClearCommand;
 import org.infinispan.commands.write.PutKeyValueCommand;
 import org.infinispan.commands.write.PutMapCommand;
+import org.infinispan.commands.write.RemoveCommand;
+import org.infinispan.commands.write.ReplaceCommand;
 import org.infinispan.commands.write.WriteCommand;
 import org.infinispan.container.entries.InternalCacheEntry;
 import org.infinispan.context.Flag;
 import org.infinispan.context.InvocationContext;
-import org.infinispan.remoting.responses.ExceptionResponse;
-import org.infinispan.remoting.responses.Response;
-import org.infinispan.remoting.responses.SuccessfulResponse;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.remoting.transport.jgroups.SuspectException;
 import org.infinispan.util.logging.Log;
@@ -91,8 +88,7 @@ public class NonTxDistributionInterceptor extends BaseDistributionInterceptor {
 
    @Override
    public Object visitPutKeyValueCommand(InvocationContext ctx, PutKeyValueCommand command) throws Throwable {
-      SingleKeyRecipientGenerator skrg = new SingleKeyRecipientGenerator(command.getKey());
-      return handleWriteCommand(ctx, command, skrg, command.hasFlag(Flag.PUT_FOR_STATE_TRANSFER), false);
+      return handleNonTxWriteCommand(ctx, command);
    }
 
    @Override
@@ -128,6 +124,16 @@ public class NonTxDistributionInterceptor extends BaseDistributionInterceptor {
       return invokeNextInterceptor(ctx, command);
    }
 
+   @Override
+   public Object visitRemoveCommand(InvocationContext ctx, RemoveCommand command) throws Throwable {
+      return handleNonTxWriteCommand(ctx, command);
+   }
+
+   @Override
+   public Object visitReplaceCommand(InvocationContext ctx, ReplaceCommand command) throws Throwable {
+      return handleNonTxWriteCommand(ctx, command);
+   }
+
    /**
     * Don't forward in the case of clear commands, just acquire local locks and broadcast.
     */
@@ -139,31 +145,13 @@ public class NonTxDistributionInterceptor extends BaseDistributionInterceptor {
       return invokeNextInterceptor(ctx, command);
    }
 
-   protected Object handleWriteCommand(InvocationContext ctx, WriteCommand command, RecipientGenerator recipientGenerator, boolean skipRemoteGet, boolean skipL1Invalidation) throws Throwable {
-      // see if we need to load values from remote sources first
-      remoteGetBeforeWrite(ctx, command, recipientGenerator);
-
-      // if this is local mode then skip distributing
-      if (isLocalModeForced(command)) {
-         return invokeNextInterceptor(ctx, command);
-      }
-
-      if (!ctx.isOriginLocal()) {
-         Object returnValue = invokeNextInterceptor(ctx, command);
-         handleRemoteWrite(ctx, command, recipientGenerator, skipL1Invalidation, isSynchronous(command));
-         return returnValue;
-      } else {
-         return handleLocalWrite(ctx, command, recipientGenerator, skipL1Invalidation, isSynchronous(command));
-      }
-   }
-
-   private void remoteGetBeforeWrite(InvocationContext ctx, WriteCommand command, KeyGenerator keygen) throws Throwable {
+   protected void remoteGetBeforeWrite(InvocationContext ctx, WriteCommand command, RecipientGenerator keygen) throws Throwable {
       // this should only happen if:
       //   a) unsafeUnreliableReturnValues is false
       //   b) unsafeUnreliableReturnValues is true, the command is conditional
       if (isNeedReliableReturnValues(command) || command.isConditional()) {
          for (Object k : keygen.getKeys()) {
-            Object returnValue = remoteGetBeforeWrite(ctx, k, command);
+            Object returnValue = remoteGetBeforeWrite(ctx, command, k);
             if (returnValue == null && cdl.localNodeIsPrimaryOwner(k)) {
                // We either did not go remotely (because the value should be local now) or we did but the remote value is null.
                // Then it makes sense to try a local get and wrap again. This will compensate the fact the the entry was not local
@@ -174,7 +162,7 @@ public class NonTxDistributionInterceptor extends BaseDistributionInterceptor {
       }
    }
 
-   private Object remoteGetBeforeWrite(InvocationContext ctx, Object key, FlagAffectedCommand command) throws Throwable {
+   private Object remoteGetBeforeWrite(InvocationContext ctx, WriteCommand command, Object key) throws Throwable {
       // During state transfer it is possible for an entry to map to the local node, but not have been brought locally yet
       // (not present in data container yet). In that case we fetch the value remotely first. If the value exists remotely (non-null)
       // then we use it. Otherwise if remote value is null it's possible that the state transfer finished in between
@@ -210,40 +198,6 @@ public class NonTxDistributionInterceptor extends BaseDistributionInterceptor {
       return null;
    }
 
-   private Object handleLocalWrite(InvocationContext ctx, WriteCommand command, RecipientGenerator rg, boolean skipL1Invalidation, boolean sync) throws Throwable {
-      Object key = ((DataCommand) command).getKey();
-      Address primaryOwner = cdl.getPrimaryOwner(key);
-      if (primaryOwner.equals(rpcManager.getAddress())) {
-         List<Address> recipients = rg.generateRecipients();
-         log.tracef("I'm the primary owner, sending the command to all (%s) the recipients in order to be applied.", recipients);
-         Object result = invokeNextInterceptor(ctx, command);
-         if (!isSingleOwnerAndLocal(rg)) {
-            rpcManager.invokeRemotely(recipients, command, rpcManager.getDefaultRpcOptions(sync));
-         }
-         return result;
-      } else {
-         log.tracef("I'm not the primary owner, so sending the command to the primary owner(%s) in order to be forwarded", primaryOwner);
-         Object localResult = invokeNextInterceptor(ctx, command);
-         Map<Address, Response> addressResponseMap = rpcManager.invokeRemotely(Collections.singletonList(primaryOwner), command,
-               rpcManager.getDefaultRpcOptions(sync));
-         //the remote node always returns the correct result, but if we're async, then our best option is the local
-         //node. That might be incorrect though.
-         if (!sync) return localResult;
-
-         return getResponseFromPrimaryOwner(primaryOwner, addressResponseMap);
-      }
-   }
-
-   private void handleRemoteWrite(InvocationContext ctx, WriteCommand command, RecipientGenerator recipientGenerator, boolean skipL1Invalidation, boolean sync) throws Throwable {
-      if (command instanceof DataCommand) {
-         DataCommand dataCommand = (DataCommand) command;
-         Address primaryOwner = cdl.getPrimaryOwner(dataCommand.getKey());
-         if (primaryOwner.equals(rpcManager.getAddress())) {
-            rpcManager.invokeRemotely(recipientGenerator.generateRecipients(), command, rpcManager.getDefaultRpcOptions(sync));
-         }
-      }
-   }
-
    private InternalCacheEntry remoteGetCacheEntry(InvocationContext ctx, Object key, GetKeyValueCommand command) throws Throwable {
       if (trace) log.tracef("Doing a remote get for key %s", key);
       InternalCacheEntry ice = retrieveFromRemoteSource(key, ctx, false, command);
@@ -252,19 +206,5 @@ public class NonTxDistributionInterceptor extends BaseDistributionInterceptor {
          return ice;
 
       return null;
-   }
-
-   protected Object getResponseFromPrimaryOwner(Address primaryOwner, Map<Address, Response> addressResponseMap) {
-      Response fromPrimaryOwner = addressResponseMap.get(primaryOwner);
-      if (fromPrimaryOwner == null) {
-         log.tracef("Primary owner %s returned null", primaryOwner);
-         return null;
-      }
-      if (!fromPrimaryOwner.isSuccessful()) {
-         Throwable cause = fromPrimaryOwner instanceof ExceptionResponse ? ((ExceptionResponse)fromPrimaryOwner).getException() : null;
-         throw new CacheException("Got unsuccessful response from primary owner: " + fromPrimaryOwner, cause);
-      } else {
-         return ((SuccessfulResponse) fromPrimaryOwner).getResponseValue();
-      }
    }
 }

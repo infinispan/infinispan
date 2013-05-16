@@ -61,7 +61,7 @@ public class ReplListener {
    private Log log = LogFactory.getLog(ReplListener.class);
 
    /**
-    * This listener atatches itself to a cache and when {@link #expect(Class[])} is invoked, will start checking for
+    * This listener attaches itself to a cache and when {@link #expect(Class[])} is invoked, will start checking for
     * invocations of the command on the cache, waiting for all expected commands to be received in {@link
     * #waitForRpc()}.
     *
@@ -123,7 +123,7 @@ public class ReplListener {
       cmdsToExpect.add(PrepareCommand.class);
       if (commands != null) cmdsToExpect.addAll(Arrays.asList(commands));
       //this is because for async replication we have an 1pc transaction
-      if (c.getConfiguration().getCacheMode().isSynchronous()) cmdsToExpect.add(CommitCommand.class);
+      if (c.getCacheConfiguration().clustering().cacheMode().isSynchronous()) cmdsToExpect.add(CommitCommand.class);
 
       expect(cmdsToExpect.toArray(new Class[cmdsToExpect.size()]));
    }
@@ -137,7 +137,7 @@ public class ReplListener {
       List<Class<? extends VisitableCommand>> cmdsToExpect = new ArrayList<Class<? extends VisitableCommand>>(2);
       cmdsToExpect.add(PrepareCommand.class);
       //this is because for async replication we have an 1pc transaction
-      if (c.getConfiguration().getCacheMode().isSynchronous()) cmdsToExpect.add(CommitCommand.class);
+      if (c.getCacheConfiguration().clustering().cacheMode().isSynchronous()) cmdsToExpect.add(CommitCommand.class);
 
       expect(cmdsToExpect.toArray(new Class[cmdsToExpect.size()]));
    }
