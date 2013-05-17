@@ -37,64 +37,136 @@ import java.util.Iterator;
  *
  * @author Galder Zamarreño
  * @since 5.3
- * @see java.util.HashSet
  */
 public class EquivalentHashSet<E> extends AbstractSet<E> {
 
-   // Dummy value to associate with an Object in the backing Map
-   private static final Object PRESENT = new Object();
-
+   /**
+    * Equivalence function for the entries of this hash set, providing
+    * functionality to check equality, calculate hash codes...etc of the
+    * stored entries.
+    */
    private final Equivalence<E> entryEq;
 
-   private final EquivalentHashMap<E,Object> map;
+   /**
+    * The underlying map. Uses Boolean.TRUE as value for each element.
+    */
+   private final EquivalentHashMap<E, Boolean> m;
 
+   /**
+    * Constructs a new, empty set, with a given equivalence function
+    *
+    * @param entryEq the Equivalence function to be used to compare entries
+    *                in this set.
+    */
    public EquivalentHashSet(Equivalence<E> entryEq) {
       this.entryEq = entryEq;
-      map = new EquivalentHashMap<E, Object>(
-            entryEq, AnyEquivalence.OBJECT);
+      m = new EquivalentHashMap<E, Boolean>(entryEq, AnyEquivalence.BOOLEAN);
    }
 
+   /**
+    * Constructs a new, empty set, with a given initial capacity and a
+    * particular equivalence function to compare entries.
+    *
+    * @param initialCapacity this set's initial capacity
+    * @param entryEq the Equivalence function to be used to compare entries
+    *                in this set.
+    */
    public EquivalentHashSet(int initialCapacity, Equivalence<E> entryEq) {
       this.entryEq = entryEq;
-      map = new EquivalentHashMap<E, Object>(
-            initialCapacity, entryEq, AnyEquivalence.OBJECT);
+      m = new EquivalentHashMap<E, Boolean>(
+            initialCapacity, entryEq, AnyEquivalence.BOOLEAN);
    }
 
+   /**
+    * Returns an iterator over the elements in this set.
+    *
+    * @return an iterator over the elements in this set
+    */
    @Override
    public Iterator<E> iterator() {
-      return map.keySet().iterator();
+      return m.keySet().iterator();
    }
 
+   /**
+    * Returns the number of elements in this set.  If this set
+    * contains more than {@code Integer.MAX_VALUE} elements, it
+    * returns {@code Integer.MAX_VALUE}.
+    *
+    * @return  the number of elements in this set
+    */
    @Override
    public int size() {
-      return map.size();
+      return m.size();
    }
 
+   /**
+    * Returns {@code true} if this set contains no elements.
+    *
+    * @return {@code true} if this set contains no elements
+    */
    @Override
    public boolean isEmpty() {
-      return map.isEmpty();
+      return m.isEmpty();
    }
 
+   /**
+    * Returns {@code true} if this set contains the specified element.
+    *
+    * @param o the object to be checked for containment in this set
+    * @return {@code true} if this set contains the specified element
+    */
    @Override
    public boolean contains(Object o) {
-      return map.containsKey(o);
+      return m.containsKey(o);
    }
 
+   /**
+    * Adds the specified element to this set if it is not already present.
+    *
+    * @param o element to be added to this set
+    * @return {@code true} if the set did not already contain the specified
+    *         element
+    */
    @Override
-   public boolean add(E e) {
-      return map.put(e, PRESENT) == null;
+   public boolean add(E o) {
+      return m.put(o, Boolean.TRUE) == null;
    }
 
+   /**
+    * Removes the specified element from this set if it is present.
+    *
+    * @param o object to be removed from this set, if present
+    * @return {@code true} if the set contained the specified element
+    */
    @Override
    public boolean remove(Object o) {
-      return map.remove(o) == PRESENT;
+      return m.remove(o) != null;
    }
 
+   /**
+    * Removes all of the elements from this set.
+    */
    @Override
    public void clear() {
-      map.clear();
+      m.clear();
    }
 
+   /**
+    * Returns the hash code value for this set using the {@link Equivalence}
+    * function associated with it.  The hash code of a set is defined to be
+    * the sum of the hash codes of the elements in the set, where the hash
+    * code of a <tt>null</tt> element is defined to be zero. This ensures that
+    * {@link Equivalence#equals(Object s1, Object s2)} implies that
+    * {@link Equivalence#hashCode(Object s1)}=={@link Equivalence#hashCode(Object s2)}
+    * for any two sets <tt>s1</tt> and <tt>s2</tt>, as required by the general
+    * contract of {@link Object#hashCode}.
+    *
+    * <p>This implementation iterates over the set, calling the
+    * <tt>hashCode</tt> method on each element in the set, and adding up
+    * the results.
+    *
+    * @return the hash code value for this set
+    */
    @Override
    public int hashCode() {
       int h = 0;

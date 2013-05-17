@@ -36,7 +36,7 @@ public final class CompatibilityModeConfiguration {
    private final boolean enabled;
    private final Marshaller marshaller;
 
-   public CompatibilityModeConfiguration(boolean enabled, Marshaller marshaller) {
+   CompatibilityModeConfiguration(boolean enabled, Marshaller marshaller) {
       this.enabled = enabled;
       this.marshaller = marshaller;
    }

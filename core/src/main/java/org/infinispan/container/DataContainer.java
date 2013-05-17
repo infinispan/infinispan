@@ -65,7 +65,9 @@ public interface DataContainer extends Iterable<InternalCacheEntry> {
    InternalCacheEntry peek(Object k);
 
    /**
-    * Puts an entry in the cache along with a lifespan and a maxIdle time
+    * Puts an entry in the cache along with metadata adding information such
+    * lifespan of entry, max idle time, version information...etc.
+    *
     * @param k key under which to store entry
     * @param v value to store
     * @param metadata metadata of the entry

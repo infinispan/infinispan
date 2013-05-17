@@ -321,7 +321,7 @@ public interface AdvancedCache<K, V> extends Cache<K, V> {
     * An overloaded form of {@link #replace(K, V)}, which takes in an
     * instance of {@link Metadata} which can be used to provide metadata
     * information for the entry being stored, such as lifespan, version
-    * of value...etc. The {@link Metadata} is only stored in the call is
+    * of value...etc. The {@link Metadata} is only stored if the call is
     * successful.
     *
     * @param key key with which the specified value is associated
@@ -338,7 +338,7 @@ public interface AdvancedCache<K, V> extends Cache<K, V> {
     * An overloaded form of {@link #replace(K, V, V)}, which takes in an
     * instance of {@link Metadata} which can be used to provide metadata
     * information for the entry being stored, such as lifespan, version
-    * of value...etc. The {@link Metadata} is only stored in the call is
+    * of value...etc. The {@link Metadata} is only stored if the call is
     * successful.
     *
     * @param key key with which the specified value is associated
@@ -355,7 +355,7 @@ public interface AdvancedCache<K, V> extends Cache<K, V> {
     * An overloaded form of {@link #putIfAbsent(K, V)}, which takes in an
     * instance of {@link Metadata} which can be used to provide metadata
     * information for the entry being stored, such as lifespan, version
-    * of value...etc. The {@link Metadata} is only stored in the call is
+    * of value...etc. The {@link Metadata} is only stored if the call is
     * successful.
     *
     * @param key key with which the specified value is to be associated
@@ -369,7 +369,7 @@ public interface AdvancedCache<K, V> extends Cache<K, V> {
    V putIfAbsent(K key, V value, Metadata metadata);
 
    /**
-    * Asynchronous version of {@link #put(Object, Object)} which stores
+    * Asynchronous version of {@link #put(Object, Object, Metadata)} which stores
     * metadata alongside the value.  This method does not block on remote calls,
     * even if your cache mode is synchronous.  Has no benefit over
     * {@link #put(Object, Object, Metadata)} if used in LOCAL mode.
