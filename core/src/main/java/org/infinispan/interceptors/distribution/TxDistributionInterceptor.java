@@ -119,8 +119,7 @@ public class TxDistributionInterceptor extends BaseDistributionInterceptor {
     * </pre>
     */
    protected boolean ignorePreviousValueOnBackup(WriteCommand command, InvocationContext ctx) {
-      return super.ignorePreviousValueOnBackup(command, ctx)
-            && cacheConfiguration.transaction().lockingMode() == LockingMode.OPTIMISTIC && !useClusteredWriteSkewCheck;
+      return super.ignorePreviousValueOnBackup(command, ctx) && !useClusteredWriteSkewCheck;
    }
 
    @Start
