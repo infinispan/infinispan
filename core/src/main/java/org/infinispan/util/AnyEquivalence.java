@@ -47,6 +47,8 @@ public final class AnyEquivalence<T> implements Equivalence<T> {
 
    public static AnyEquivalence<Float> FLOAT = new AnyEquivalence<Float>();
 
+   public static AnyEquivalence<Boolean> BOOLEAN = new AnyEquivalence<Boolean>();
+
    @Override
    public int hashCode(Object obj) {
       return obj.hashCode();

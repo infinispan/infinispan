@@ -138,7 +138,7 @@ public final class EmbeddedMetadata implements Metadata {
       }
 
       public Metadata.Builder read(Metadata template) {
-         // Use lifespan and maxIdle set in the metadat, but if not version
+         // Use lifespan and maxIdle set in the metadata, but if not version
          // given, use the one from the template
          if (version == null && template.version() != null)
             version = template.version();
