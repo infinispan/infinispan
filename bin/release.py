@@ -240,19 +240,6 @@ def upload_schema(base_dir, version):
   uploader.upload_rsync('.', "infinispan@filemgmt.jboss.org:/schema_htdocs/infinispan/")
   os.chdir(base_dir)
 
-def upload_configdocs(base_dir, version):
-  """Javadocs get rsync'ed to filemgmt.jboss.org, in the docs_htdocs/infinispan directory"""
-  version_short = get_version_major_minor(version)
-
-  os.chdir("%s/target/distribution/infinispan-%s-all/doc" % (base_dir, version))
-  ## "Fix" the docs to use the appropriate analytics tracker ID
-  subprocess.check_call(["%s/bin/updateTracker.sh" % base_dir])
-  os.rename("configdocs", "%s/configdocs" % version_short)
-
-  ## rsync this stuff to filemgmt.jboss.org
-  uploader.upload_rsync(version_short, "infinispan@filemgmt.jboss.org:/docs_htdocs/infinispan")    
-  os.chdir(base_dir)
-
 def do_task(target, args, async_processes):
   if settings['multi_threaded']:
     async_processes.append(Process(target = target, args = args))  
@@ -354,10 +341,6 @@ def release():
       do_task(upload_schema, [base_dir, version], async_processes)
       prettyprint("Step 7: Complete", Levels.INFO)
 
-      prettyprint("Step 8: Uploading to configuration documentation", Levels.INFO)
-      do_task(upload_configdocs, [base_dir, version], async_processes)
-      prettyprint("Step 8: Complete", Levels.INFO)
-
       ## Wait for processes to finish
       for p in async_processes:
         p.start()
@@ -368,7 +351,7 @@ def release():
   ## Tag the release
   git.tag_for_release()
 
-  step_no=9
+  step_no=8
   if mvn_only:
     step_no=4
   
