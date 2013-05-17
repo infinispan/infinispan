@@ -139,7 +139,7 @@ public class NonTxAsyncBackupTest extends AbstractTwoSitesTest {
       eventually(new Condition() {
          @Override
          public boolean isSatisfied() throws Exception {
-            return "v".equals(backup("LON").get("k"));
+            return "v2".equals(backup("LON").get("k"));
          }
       });
    }
