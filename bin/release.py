@@ -298,6 +298,9 @@ def release():
     if not proceed.upper().startswith('Y'):
       prettyprint("... User Abort!", Levels.WARNING)
       sys.exit(1)
+
+  ## Make sure we don't include un-needed content in the release
+  git.clean_release_directory()
       
   ## Release order:
   # Step 1: Tag in Git
