@@ -26,7 +26,6 @@ import org.infinispan.remoting.RemoteException;
 import org.infinispan.statetransfer.StateTransferManager;
 import org.infinispan.topology.CacheTopology;
 import org.infinispan.transaction.RemoteTransaction;
-import org.infinispan.transaction.TransactionTable;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
@@ -42,7 +41,7 @@ public class TotalOrderStateTransferInterceptor extends CommandInterceptor {
    private StateTransferManager stateTransferManager;
 
    @Inject
-   public void inject(TransactionTable transactionTable, StateTransferManager stateTransferManager) {
+   public void inject(StateTransferManager stateTransferManager) {
       this.stateTransferManager = stateTransferManager;
    }
 

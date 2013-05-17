@@ -29,7 +29,6 @@ import org.infinispan.commands.ReplicableCommand;
 import org.infinispan.commands.TopologyAffectedCommand;
 import org.infinispan.commands.remote.CacheRpcCommand;
 import org.infinispan.configuration.cache.Configuration;
-import org.infinispan.configuration.global.GlobalConfiguration;
 import org.infinispan.factories.annotations.ComponentName;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.factories.annotations.Start;
@@ -89,7 +88,6 @@ public class RpcManagerImpl implements RpcManager {
 
    private boolean statisticsEnabled = false; // by default, don't gather statistics.
    private Configuration configuration;
-   private GlobalConfiguration globalCfg;
    private ReplicationQueue replicationQueue;
    private ExecutorService asyncExecutor;
    private CommandsFactory cf;
@@ -101,12 +99,10 @@ public class RpcManagerImpl implements RpcManager {
    public void injectDependencies(Transport t, Cache cache, Configuration cfg,
             ReplicationQueue replicationQueue, CommandsFactory cf,
             @ComponentName(ASYNC_TRANSPORT_EXECUTOR) ExecutorService e,
-            LocalTopologyManager localTopologyManager, StateTransferManager stateTransferManager,
-            GlobalConfiguration globalCfg) {
+            LocalTopologyManager localTopologyManager, StateTransferManager stateTransferManager) {
       this.t = t;
       this.configuration = cfg;
       this.cacheName = cache.getName();
-      this.globalCfg = globalCfg;
       this.replicationQueue = replicationQueue;
       this.asyncExecutor = e;
       this.cf = cf;
