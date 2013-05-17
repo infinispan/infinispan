@@ -300,23 +300,26 @@ def release():
       sys.exit(1)
 
   ## Make sure we don't include un-needed content in the release
+
+  prettyprint("Step 1: Cleaning up working directory (un-tracked and modified files)", Levels.INFO)
   git.clean_release_directory()
+  prettyprint("Step 1: Complete", Levels.INFO)
       
   ## Release order:
   # Step 1: Tag in Git
-  prettyprint("Step 1: Tagging %s in git as %s" % (branch, version), Levels.INFO)
+  prettyprint("Step 2: Tagging %s in git as %s" % (branch, version), Levels.INFO)
   tag_release(version, branch)
-  prettyprint("Step 1: Complete", Levels.INFO)
-  
-  # Step 2: Update version in tagged files
-  prettyprint("Step 2: Updating version number in source files", Levels.INFO)
-  version_next = update_versions(base_dir, version)
   prettyprint("Step 2: Complete", Levels.INFO)
   
-  # Step 3: Build and test in Maven2
-  prettyprint("Step 3: Build and test in Maven2", Levels.INFO)
-  maven_build_distribution(version)
+  # Step 2: Update version in tagged files
+  prettyprint("Step 3: Updating version number in source files", Levels.INFO)
+  version_next = update_versions(base_dir, version)
   prettyprint("Step 3: Complete", Levels.INFO)
+  
+  # Step 3: Build and test in Maven2
+  prettyprint("Step 4: Build and test in Maven2", Levels.INFO)
+  maven_build_distribution(version)
+  prettyprint("Step 4: Complete", Levels.INFO)
 
   if not mvn_only:
 
@@ -326,23 +329,23 @@ def release():
       unzip_archive(version)
 
       # Step 4: Update javadoc Google Analytics tracker
-      prettyprint("Step 4: Update Google Analytics tracker", Levels.INFO)
+      prettyprint("Step 5: Update Google Analytics tracker", Levels.INFO)
       update_javadoc_tracker(base_dir, version)
-      prettyprint("Step 4: Complete", Levels.INFO)
-
-      # Step 5: Upload javadocs to FTP
-      prettyprint("Step 5: Uploading Javadocs", Levels.INFO)
-      do_task(upload_javadocs, [base_dir, version], async_processes)
       prettyprint("Step 5: Complete", Levels.INFO)
 
-      prettyprint("Step 6: Uploading Artifacts", Levels.INFO)
-      do_task(upload_artifacts, [base_dir, version], async_processes)
-      do_task(upload_artifacts, [base_dir + "/as-modules", version], async_processes)
+      # Step 5: Upload javadocs to FTP
+      prettyprint("Step 6: Uploading Javadocs", Levels.INFO)
+      do_task(upload_javadocs, [base_dir, version], async_processes)
       prettyprint("Step 6: Complete", Levels.INFO)
 
-      prettyprint("Step 7: Uploading to configuration XML schema", Levels.INFO)
-      do_task(upload_schema, [base_dir, version], async_processes)
+      prettyprint("Step 7: Uploading Artifacts", Levels.INFO)
+      do_task(upload_artifacts, [base_dir, version], async_processes)
+      do_task(upload_artifacts, [base_dir + "/as-modules", version], async_processes)
       prettyprint("Step 7: Complete", Levels.INFO)
+
+      prettyprint("Step 8: Uploading to configuration XML schema", Levels.INFO)
+      do_task(upload_schema, [base_dir, version], async_processes)
+      prettyprint("Step 8: Complete", Levels.INFO)
 
       ## Wait for processes to finish
       for p in async_processes:
@@ -354,9 +357,9 @@ def release():
   ## Tag the release
   git.tag_for_release()
 
-  step_no=8
+  step_no=9
   if mvn_only:
-    step_no=4
+    step_no=5
   
   # Switch back to the branch being released
   git.switch_to_branch()
