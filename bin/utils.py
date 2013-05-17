@@ -324,7 +324,8 @@ class Git(object):
 
   def clean_release_directory(self):
     '''Makes sure that no files exist in the working directory that might affect the content of the distribution'''
-    self.run_git("git clean -d -x -f")
+    self.run_git("clean -d -x -f")
+    self.run_git("reset --hard HEAD")
 
 class DryRun(object):
   location_root = "%s/%s" % (os.getenv("HOME"), "infinispan_release_dry_run")
