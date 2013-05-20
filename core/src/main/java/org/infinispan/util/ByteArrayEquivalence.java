@@ -31,9 +31,9 @@ import java.util.Arrays;
  * @author Galder Zamarreño
  * @since 5.3
  */
-public enum ByteArrayEquivalence implements Equivalence<byte[]> {
+public class ByteArrayEquivalence implements Equivalence<byte[]> {
 
-   INSTANCE;
+   public static final Equivalence<byte[]> INSTANCE = new ByteArrayEquivalence();
 
    @Override
    public int hashCode(Object obj) {

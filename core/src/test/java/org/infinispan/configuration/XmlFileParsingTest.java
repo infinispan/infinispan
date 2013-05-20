@@ -66,6 +66,8 @@ import org.infinispan.test.tx.TestLookup;
 import org.infinispan.transaction.LockingMode;
 import org.infinispan.transaction.TransactionProtocol;
 import org.infinispan.transaction.lookup.GenericTransactionManagerLookup;
+import org.infinispan.util.AnyEquivalence;
+import org.infinispan.util.ByteArrayEquivalence;
 import org.infinispan.util.concurrent.IsolationLevel;
 import org.testng.Assert;
 import org.testng.annotations.Test;
@@ -339,6 +341,39 @@ public class XmlFileParsingTest extends AbstractInfinispanTest {
          }
       });
 
+   }
+
+   public void testKeyValueEquivalence() throws Exception {
+      String config = INFINISPAN_START_TAG_NO_SCHEMA +
+            "<default>\n" +
+            "<dataContainer keyEquivalence=\"org.infinispan.util.ByteArrayEquivalence\"/>\n" +
+            "</default>\n" +
+            INFINISPAN_END_TAG;
+      InputStream is = new ByteArrayInputStream(config.getBytes());
+      withCacheManager(new CacheManagerCallable(TestCacheManagerFactory.fromStream(is)) {
+         @Override
+         public void call() {
+            Configuration cfg = cm.getDefaultCacheConfiguration();
+            assert cfg.dataContainer().keyEquivalence() instanceof ByteArrayEquivalence;
+            assert cfg.dataContainer().valueEquivalence() instanceof AnyEquivalence;
+         }
+      });
+
+      config = INFINISPAN_START_TAG_NO_SCHEMA +
+            "<default>\n" +
+            "<dataContainer keyEquivalence=\"org.infinispan.util.ByteArrayEquivalence\" " +
+                            "valueEquivalence=\"org.infinispan.util.ByteArrayEquivalence\" />\n" +
+            "</default>\n" +
+            INFINISPAN_END_TAG;
+      is = new ByteArrayInputStream(config.getBytes());
+      withCacheManager(new CacheManagerCallable(TestCacheManagerFactory.fromStream(is)) {
+         @Override
+         public void call() {
+            Configuration cfg = cm.getDefaultCacheConfiguration();
+            assert cfg.dataContainer().keyEquivalence() instanceof ByteArrayEquivalence;
+            assert cfg.dataContainer().valueEquivalence() instanceof ByteArrayEquivalence;
+         }
+      });
    }
 
    private void assertNamedCacheFile(EmbeddedCacheManager cm, boolean deprecated) {
