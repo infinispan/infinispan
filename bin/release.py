@@ -238,6 +238,13 @@ def upload_schema(base_dir, version):
   ## rsync this stuff to filemgmt.jboss.org, we put it in the orginal location (docs/infinispan/schemas) and the new location (schema/infinispan)
   uploader.upload_rsync('.', "infinispan@filemgmt.jboss.org:/docs_htdocs/infinispan/schemas")
   uploader.upload_rsync('.', "infinispan@filemgmt.jboss.org:/schema_htdocs/infinispan/")
+
+  
+  ## now the schema docs
+  version_short = get_version_major_minor(version)
+  os.chdir("%s/target/site" % base_dir)
+  os.rename("configdocs", "%s/configdocs" % version_short)
+  uploader.upload_rsync(version_short, "infinispan@filemgmt.jboss.org:/docs_htdocs/infinispan")
   os.chdir(base_dir)
 
 def do_task(target, args, async_processes):

@@ -304,7 +304,7 @@
         <xs:element name="default" type="tns:configuration" minOccurs="0">
           <xs:annotation>
             <xs:documentation>
-              Specifies the default behvaior for all named caches belonging to this cache manager.
+              Specifies the default behavior for all named caches belonging to this cache manager.
             </xs:documentation>
           </xs:annotation>
         </xs:element>
@@ -338,7 +338,7 @@
           <xs:attribute name="isolationLevel" type="tns:isolationLevel" default="READ_COMMITTED">
             <xs:annotation>
               <xs:documentation>
-                Cache isolation level. Infinispan only supports READ_COMMITTED or REPEATABLE_READ isolation levels. See http://en.wikipedia.org/wiki/Isolation_level'>http://en.wikipedia.org/wiki/Isolation_level for a discussion on isolation levels. Defaults to READ_COMMITTED
+                Cache isolation level. Infinispan only supports READ_COMMITTED or REPEATABLE_READ isolation levels. See http://en.wikipedia.org/wiki/Isolation_level for a discussion on isolation levels. Defaults to READ_COMMITTED
               </xs:documentation>
             </xs:annotation>
           </xs:attribute>
@@ -981,11 +981,23 @@
                       <xs:sequence>
                         <xs:element name="grouper" minOccurs="0" maxOccurs="unbounded">
                           <xs:complexType>
-                            <xs:attribute name="class" type="xs:string"/>
+                            <xs:attribute name="class" type="xs:string">
+                              <xs:annotation>
+                                <xs:documentation>
+                                   The class to use to group keys. Must implement org.infinispan.distribution.group.Grouper.
+                                </xs:documentation>
+                              </xs:annotation>
+                            </xs:attribute>
                           </xs:complexType>
                         </xs:element>
                       </xs:sequence>
-                      <xs:attribute name="enabled" type="xs:boolean"/>
+                      <xs:attribute name="enabled" type="xs:boolean">
+                        <xs:annotation>
+                          <xs:documentation>
+                             Enables or disables grouping.
+                          </xs:documentation>
+                        </xs:annotation>
+                      </xs:attribute>
                     </xs:complexType>
                   </xs:element>
                 </xs:sequence>
@@ -1032,7 +1044,7 @@
       <xs:element name="jmxStatistics" minOccurs="0">
         <xs:annotation>
           <xs:documentation>
-            Determines whether statistics are gather and reported.
+            Determines whether statistics are gathered and reported.
           </xs:documentation>
         </xs:annotation>
         <xs:complexType>
@@ -1172,7 +1184,7 @@
       <xs:element name="properties" type="tns:properties" minOccurs="0">
         <xs:annotation>
           <xs:documentation>
-            Add key/value property pair to this factory configuration. Example properties include "maxThreads" which sets the maximum number of threads for this executor (default values can be found at https://docs.jboss.org/author/display/ISPN/Default+Values+For+Property+Based+Attribute). Another example is "threadNamePrefix" which sets the thread name prefix for threads created by this executor (default values can be found at https://docs.jboss.org/author/display/ISPN/Default+Values+For+Property+Based+Attributes).
+            Add key/value property pair to this factory configuration. Example properties include "maxThreads" which sets the maximum number of threads for this executor and "threadNamePrefix" which sets the thread name prefix for threads created by this executor ( default values can be found at https://docs.jboss.org/author/display/ISPN/Default+Values+For+Property+Based+Attributes ).
           </xs:documentation>
         </xs:annotation>
       </xs:element>
@@ -1214,7 +1226,7 @@
        <xs:element name="properties" type="tns:properties" minOccurs="0">
          <xs:annotation>
             <xs:documentation>
-               Add key/value property pair to this factory configuration. Example properties include "maxThreads" which sets the maximum number of threads for this executor (default values can be found at https://docs.jboss.org/author/display/ISPN/Default+Values+For+Property+Based+Attribute). Another example is "threadNamePrefix" which sets the thread name prefix for threads created by this executor (default values can be found at https://docs.jboss.org/author/display/ISPN/Default+Values+For+Property+Based+Attributes).
+               Add key/value property pair to this factory configuration. Example properties include "maxThreads" which sets the maximum number of threads for this executor and "threadNamePrefix" which sets the thread name prefix for threads created by this executor ( default values can be found at https://docs.jboss.org/author/display/ISPN/Default+Values+For+Property+Based+Attributes ).
             </xs:documentation>
          </xs:annotation>
        </xs:element>
@@ -1345,37 +1357,96 @@
 
   <xs:simpleType name="shutdownHookBehavior">
     <xs:restriction base="xs:string">
-      <xs:enumeration value="DEFAULT"/>
-      <xs:enumeration value="REGISTER"/>
-      <xs:enumeration value="DONT_REGISTER"/>
+      <xs:enumeration value="DEFAULT">
+         <xs:annotation>
+            <xs:documentation>Use the default shutdown hook behaviour (REGISTER)</xs:documentation>
+         </xs:annotation>
+      </xs:enumeration>
+      <xs:enumeration value="REGISTER">
+         <xs:annotation>
+            <xs:documentation>Register a shutdown hook</xs:documentation>
+         </xs:annotation>
+      </xs:enumeration>
+      <xs:enumeration value="DONT_REGISTER">
+         <xs:annotation>
+            <xs:documentation>Don't register a shutdown hook</xs:documentation>
+         </xs:annotation>
+      </xs:enumeration>
     </xs:restriction>
   </xs:simpleType>
 
   <xs:simpleType name="isolationLevel">
     <xs:restriction base="xs:string">
-      <xs:enumeration value="NONE"/>
-      <xs:enumeration value="SERIALIZABLE"/>
-      <xs:enumeration value="REPEATABLE_READ"/>
-      <xs:enumeration value="READ_COMMITTED"/>
-      <xs:enumeration value="READ_UNCOMMITTED"/>
+      <xs:enumeration value="NONE">
+         <xs:annotation>
+            <xs:documentation>Use the default shutdown hook behaviour (REGISTER)</xs:documentation>
+         </xs:annotation>
+      </xs:enumeration>
+      <xs:enumeration value="SERIALIZABLE">
+         <xs:annotation>
+            <xs:documentation>SERIALIZABLE isolation level</xs:documentation>
+         </xs:annotation>
+      </xs:enumeration>
+      <xs:enumeration value="REPEATABLE_READ">
+         <xs:annotation>
+            <xs:documentation>REPEATABLE_READ isolation level</xs:documentation>
+         </xs:annotation>
+      </xs:enumeration>
+      <xs:enumeration value="READ_COMMITTED">
+         <xs:annotation>
+            <xs:documentation>READ_COMMITTED isolation level</xs:documentation>
+         </xs:annotation>
+      </xs:enumeration>
+      <xs:enumeration value="READ_UNCOMMITTED">
+         <xs:annotation>
+            <xs:documentation>READ_UNCOMMITTED isolation level</xs:documentation>
+         </xs:annotation>
+      </xs:enumeration>
     </xs:restriction>
   </xs:simpleType>
 
   <xs:simpleType name="evictionStrategy">
     <xs:restriction base="xs:string">
-      <xs:enumeration value="NONE"/>
-      <xs:enumeration value="UNORDERED"/>
-      <xs:enumeration value="FIFO"/>
-      <xs:enumeration value="LRU"/>
-      <xs:enumeration value="LRU_OLD"/>
-      <xs:enumeration value="LIRS"/>
+      <xs:enumeration value="NONE">
+         <xs:annotation>
+            <xs:documentation>Do not enable eviction</xs:documentation>
+         </xs:annotation>
+      </xs:enumeration>
+      <xs:enumeration value="UNORDERED">
+         <xs:annotation>
+            <xs:documentation>Alias for LRU</xs:documentation>
+         </xs:annotation>
+      </xs:enumeration>
+      <xs:enumeration value="FIFO">
+         <xs:annotation>
+            <xs:documentation>Alias for LRU</xs:documentation>
+         </xs:annotation>
+      </xs:enumeration>
+      <xs:enumeration value="LRU">
+         <xs:annotation>
+            <xs:documentation>Least-recently used eviction strategy</xs:documentation>
+         </xs:annotation>
+      </xs:enumeration>
+      <xs:enumeration value="LIRS">
+         <xs:annotation>
+            <xs:documentation>Low inter-reference recency set eviction strategy</xs:documentation>
+         </xs:annotation>
+      </xs:enumeration>
     </xs:restriction>
   </xs:simpleType>
 
   <xs:simpleType name="evictionThreadPolicy">
     <xs:restriction base="xs:string">
-      <xs:enumeration value="PIGGYBACK"/>
-      <xs:enumeration value="DEFAULT"/>
+      <xs:enumeration value="PIGGYBACK">
+         <xs:annotation>
+            <xs:documentation>Fires the eviction events from the same thread which is performing the eviction </xs:documentation>
+         </xs:annotation>
+      </xs:enumeration>
+      <xs:enumeration value="DEFAULT">
+         <xs:annotation>
+            <xs:documentation>Use the default eviction listener thread policy (PIGGYBACK)</xs:documentation>
+         </xs:annotation>
+      </xs:enumeration>
     </xs:restriction>
   </xs:simpleType>
   
@@ -1386,8 +1457,16 @@
       </xs:documentation>
     </xs:annotation>
     <xs:restriction base="xs:string">
-      <xs:enumeration value="OPTIMISTIC" />
-      <xs:enumeration value="PESSIMISTIC" />
+      <xs:enumeration value="OPTIMISTIC">
+         <xs:annotation>
+            <xs:documentation>Use optimistic locking</xs:documentation>
+         </xs:annotation>
+      </xs:enumeration>
+      <xs:enumeration value="PESSIMISTIC">
+         <xs:annotation>
+            <xs:documentation>Use pessimistic locking</xs:documentation>
+         </xs:annotation>
+      </xs:enumeration>
     </xs:restriction>
   </xs:simpleType>
   
@@ -1398,8 +1477,16 @@
       </xs:documentation>
     </xs:annotation>
     <xs:restriction base="xs:string">
-      <xs:enumeration value="NON_TRANSACTIONAL" />
-      <xs:enumeration value="TRANSACTIONAL" />
+      <xs:enumeration value="NON_TRANSACTIONAL">
+         <xs:annotation>
+            <xs:documentation>Define the cache to be non-transactional</xs:documentation>
+         </xs:annotation>
+      </xs:enumeration>
+      <xs:enumeration value="TRANSACTIONAL">
+         <xs:annotation>
+            <xs:documentation>Define the cache to be transactional</xs:documentation>
+         </xs:annotation>
+      </xs:enumeration>
     </xs:restriction>
   </xs:simpleType>
 
@@ -1606,7 +1693,7 @@
   <xs:complexType name="clusterLoader">
     <xs:complexContent>
       <xs:extension base="tns:loader">
-        <xs:attribute name="remoteCallTimeout" default="0">
+        <xs:attribute name="remoteCallTimeout" type="xs:long" default="0">
           <xs:annotation>
             <xs:documentation>
               How long to wait for results from other members in the cluster before returning a null. Defaults to 0 (no timeout).
