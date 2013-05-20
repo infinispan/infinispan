@@ -45,16 +45,16 @@ public class NonTxInvocationContext extends AbstractInvocationContext {
 
    protected Set<Object> lockedKeys;
 
-   private final Equivalence keyEq;
+   private final Equivalence<Object> keyEq;
 
-   public NonTxInvocationContext(int numEntries, boolean local, Equivalence keyEq) {
-      lookedUpEntries = CollectionFactory.makeMap(numEntries, keyEq, AnyEquivalence.OBJECT);
+   public NonTxInvocationContext(int numEntries, boolean local, Equivalence<Object> keyEq) {
+      lookedUpEntries = CollectionFactory.makeMap(numEntries, keyEq, AnyEquivalence.<CacheEntry>getInstance());
       setOriginLocal(local);
       this.keyEq = keyEq;
    }
 
-   public NonTxInvocationContext(Equivalence keyEq) {
-      lookedUpEntries = CollectionFactory.makeMap(INITIAL_CAPACITY, keyEq, AnyEquivalence.OBJECT);
+   public NonTxInvocationContext(Equivalence<Object> keyEq) {
+      lookedUpEntries = CollectionFactory.makeMap(INITIAL_CAPACITY, keyEq, AnyEquivalence.<CacheEntry>getInstance());
       this.keyEq = keyEq;
    }
 

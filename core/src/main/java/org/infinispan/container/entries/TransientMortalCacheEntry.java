@@ -156,8 +156,8 @@ public class TransientMortalCacheEntry extends AbstractInternalCacheEntry {
    @Override
    public Metadata getMetadata() {
       return new EmbeddedMetadata.Builder()
-            .lifespan(cacheValue.getLifespan(), TimeUnit.MILLISECONDS)
-            .maxIdle(cacheValue.getMaxIdle(), TimeUnit.MILLISECONDS).build();
+            .lifespan(cacheValue.getLifespan())
+            .maxIdle(cacheValue.getMaxIdle()).build();
    }
 
    @Override

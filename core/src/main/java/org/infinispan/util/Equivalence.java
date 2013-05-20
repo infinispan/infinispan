@@ -97,6 +97,6 @@ public interface Equivalence<T> extends Serializable {
     *         first object is less than, equal to, or greater than the
     *         second object
     */
-   int compare(Object obj, Object otherObj); // For future support for objects that are not comparable, i.e. arrays
+   int compare(T obj, T otherObj); // For future support for objects that are not comparable, i.e. arrays
 
 }

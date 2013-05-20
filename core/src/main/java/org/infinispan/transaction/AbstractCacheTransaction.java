@@ -39,6 +39,8 @@ import org.infinispan.container.versioning.EntryVersionsMap;
 import org.infinispan.context.Flag;
 import org.infinispan.transaction.xa.CacheTransaction;
 import org.infinispan.transaction.xa.GlobalTransaction;
+import org.infinispan.util.CollectionFactory;
+import org.infinispan.util.Equivalence;
 import org.infinispan.util.InfinispanCollections;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
@@ -64,11 +66,7 @@ public abstract class AbstractCacheTransaction implements CacheTransaction {
    protected volatile boolean hasLocalOnlyModifications;
    protected volatile List<WriteCommand> modifications;
 
-   // TODO: Use EquivalentHashSet for lookedUpEntries to support array keys...
-
-   protected HashMap<Object, CacheEntry> lookedUpEntries;
-
-   // TODO: Use EquivalentHashSet for affected and lockedKeys to support array keys...
+   protected Map<Object, CacheEntry> lookedUpEntries;
 
    /** Holds all the locked keys that were acquired by the transaction allover the cluster. */
    protected Set<Object> affectedKeys = null;
@@ -96,6 +94,13 @@ public abstract class AbstractCacheTransaction implements CacheTransaction {
     */
    private final Object lockReleaseNotifier = new Object();
 
+   /**
+    * Equivalence function to compare keys that are stored in temporary
+    * collections used in the cache transaction to keep track of locked keys,
+    * looked up keys...etc.
+    */
+   protected final Equivalence<Object> keyEquivalence;
+
    public final boolean isMarkedForRollback() {
       return isMarkedForRollback;
    }
@@ -104,9 +109,10 @@ public abstract class AbstractCacheTransaction implements CacheTransaction {
       isMarkedForRollback = markForRollback;
    }
 
-   public AbstractCacheTransaction(GlobalTransaction tx, int topologyId) {
+   public AbstractCacheTransaction(GlobalTransaction tx, int topologyId, Equivalence<Object> keyEquivalence) {
       this.tx = tx;
       this.topologyId = topologyId;
+      this.keyEquivalence = keyEquivalence;
    }
 
    @Override
@@ -236,7 +242,7 @@ public abstract class AbstractCacheTransaction implements CacheTransaction {
 
    public void registerLockedKey(Object key) {
       // we need to synchronize this collection to be able to get a valid snapshot from another thread during state transfer
-      if (lockedKeys == null) lockedKeys = Collections.synchronizedSet(new HashSet<Object>(INITIAL_LOCK_CAPACITY));
+      if (lockedKeys == null) lockedKeys = Collections.synchronizedSet(CollectionFactory.makeSet(INITIAL_LOCK_CAPACITY, keyEquivalence));
       if (trace) log.tracef("Registering locked key: %s", toStr(key));
       lockedKeys.add(key);
    }
@@ -280,7 +286,7 @@ public abstract class AbstractCacheTransaction implements CacheTransaction {
    }
 
    private void initAffectedKeys() {
-      if (affectedKeys == null) affectedKeys = new HashSet<Object>(INITIAL_LOCK_CAPACITY);
+      if (affectedKeys == null) affectedKeys = CollectionFactory.makeSet(INITIAL_LOCK_CAPACITY, keyEquivalence);
    }
 
    @Override

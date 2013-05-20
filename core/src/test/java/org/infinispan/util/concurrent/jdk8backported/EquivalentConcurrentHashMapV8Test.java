@@ -23,6 +23,8 @@
 
 package org.infinispan.util.concurrent.jdk8backported;
 
+import org.infinispan.util.ByteArrayEquivalence;
+import org.infinispan.util.Equivalence;
 import org.infinispan.util.concurrent.BoundedConcurrentHashMapTest;
 import org.testng.annotations.Test;
 
@@ -42,7 +44,7 @@ import static org.testng.AssertJUnit.*;
  * @author Galder Zamarreño
  * @since 5.3
  */
-@Test(groups = "functional", testName = "util.concurrent.jdk8backported.ComparingConcurrentHashMapV8Test")
+@Test(groups = "functional", testName = "util.concurrent.jdk8backported.EquivalentConcurrentHashMapV8Test")
 public class EquivalentConcurrentHashMapV8Test extends BoundedConcurrentHashMapTest {
 
    public void testByteArrayComputeIfAbsent() {
@@ -57,23 +59,32 @@ public class EquivalentConcurrentHashMapV8Test extends BoundedConcurrentHashMapT
       byteArrayMerge(createComparingConcurrentMap());
    }
 
-//
-//   TODO: Enable test when Comparing.compare() function for a byte[] has been created, and hence tree based hash bins can be used.
-//
-//   public void testByteArrayOperationsWithTreeHashBins() {
-//      // This test forces all entries to be stored under the same hash bin,
-//      // kicking off different logic for comparing keys.
-//      ComparingConcurrentHashMapV8<byte[], byte[]> map =
-//            createComparingTreeHashBinsForceChm();
-//      for (byte b = 0; b < 10; b++)
-//         map.put(new byte[]{b}, new byte[]{0});
-//
-//      byte[] key = new byte[]{10};
-//      byte[] value =  new byte[]{0};
-//      assertTrue(String.format(
-//            "Expected key=%s to return value=%s", str(key), str(value)),
-//            Arrays.equals(value, map.get(key)));
-//   }
+
+   public void testByteArrayOperationsWithTreeHashBins() {
+      // This test forces all entries to be stored under the same hash bin,
+      // kicking off different logic for comparing keys.
+      EquivalentConcurrentHashMapV8<byte[], byte[]> map =
+            createComparingTreeHashBinsForceChm();
+      for (byte b = 0; b < 10; b++)
+         map.put(new byte[]{b}, new byte[]{0});
+
+      // The bin should become a tree bin
+      EquivalentConcurrentHashMapV8.Node<byte[]> tab =
+            EquivalentConcurrentHashMapV8.tabAt(map.table, 1);
+      assertNotNull(tab);
+      assertTrue(tab.key instanceof EquivalentConcurrentHashMapV8.TreeBin);
+
+      EquivalentConcurrentHashMapV8.TreeBin treeBin = (EquivalentConcurrentHashMapV8.TreeBin) tab.key;
+
+      for (byte b = 0; b < 10; b++) {
+         byte[] key = {b};
+         byte[] value = (byte[]) treeBin.getValue(1, key, map.keyEq);
+         byte[] expected = {0};
+         assertTrue(String.format(
+               "Expected key=%s to return value=%s, instead returned %s", str(key), str(expected), str(value)),
+               Arrays.equals(expected, value));
+      }
+   }
 
    private void byteArrayComputeIfAbsent(
          EquivalentConcurrentHashMapV8<byte[], byte[]> map) {
@@ -155,28 +166,38 @@ public class EquivalentConcurrentHashMapV8Test extends BoundedConcurrentHashMapT
             EQUIVALENCE, EQUIVALENCE);
    }
 
-//
-//   TODO: Enable test when Comparing.compare() function for a byte[] has been created and tree hash bins can be used
-//
-//   private ComparingConcurrentHashMapV8<byte[], byte[]> createComparingTreeHashBinsForceChm() {
-//      return new ComparingConcurrentHashMapV8<byte[], byte[]>(2, new SameHashByteArray(), COMPARING);
-//   }
+   private EquivalentConcurrentHashMapV8<byte[], byte[]> createComparingTreeHashBinsForceChm() {
+      return new EquivalentConcurrentHashMapV8<byte[], byte[]>(
+            2, new SameHashByteArray(), ByteArrayEquivalence.INSTANCE);
+   }
 
-//   private String str(byte[] array) {
-//      // Ignore IDE warning about hashCode() call!!
-//      return array != null
-//            ? Arrays.toString(array) + "@" + Integer.toHexString(array.hashCode())
-//            : "null";
-//   }
+   private static class SameHashByteArray implements Equivalence<byte[]> {
 
-//
-//   TODO: Enable test when Comparing.compare() function for a byte[] has been created and tree hash bins can be used
-//
-//   private static class SameHashByteArray extends DebugComparingByteArray {
-//      @Override
-//      public int hashCode(Object obj) {
-//         return 1;
-//      }
-//   }
+      @Override
+      public int hashCode(Object obj) {
+         return 1;
+      }
+
+      @Override
+      public boolean equals(byte[] obj, Object otherObj) {
+         return ByteArrayEquivalence.INSTANCE.equals(obj, otherObj);
+      }
+
+      @Override
+      public String toString(Object obj) {
+         return ByteArrayEquivalence.INSTANCE.toString(obj);
+      }
+
+      @Override
+      public boolean isComparable(Object obj) {
+         return ByteArrayEquivalence.INSTANCE.isComparable(obj);
+      }
+
+      @Override
+      public int compare(byte[] obj, byte[] otherObj) {
+         return ByteArrayEquivalence.INSTANCE.compare(obj, otherObj);
+      }
+
+   }
 
 }

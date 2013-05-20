@@ -24,6 +24,7 @@ package org.infinispan.transaction.xa.recovery;
 
 import org.infinispan.transaction.xa.GlobalTransaction;
 import org.infinispan.transaction.xa.LocalXaTransaction;
+import org.infinispan.util.Equivalence;
 
 import javax.transaction.Transaction;
 
@@ -39,8 +40,9 @@ public class RecoveryAwareLocalTransaction extends LocalXaTransaction implements
 
    private boolean completionFailed;
 
-   public RecoveryAwareLocalTransaction(Transaction transaction, GlobalTransaction tx, boolean implicitTransaction, int topologyId) {
-      super(transaction, tx, implicitTransaction, topologyId);
+   public RecoveryAwareLocalTransaction(Transaction transaction, GlobalTransaction tx,
+         boolean implicitTransaction, int topologyId, Equivalence<Object> keyEquivalence) {
+      super(transaction, tx, implicitTransaction, topologyId, keyEquivalence);
    }
 
    @Override

@@ -22,6 +22,7 @@
  */
 package org.infinispan.commands.control;
 
+import org.infinispan.Metadata;
 import org.infinispan.commands.FlagAffectedCommand;
 import org.infinispan.commands.Visitor;
 import org.infinispan.commands.tx.AbstractTransactionBoundaryCommand;
@@ -242,6 +243,11 @@ public class LockControlCommand extends AbstractTransactionBoundaryCommand imple
          this.flags = EnumSet.copyOf(Arrays.asList(flags));
       else
          this.flags.addAll(Arrays.asList(flags));
+   }
+
+   @Override
+   public Metadata getMetadata() {
+      return null;
    }
 
 }

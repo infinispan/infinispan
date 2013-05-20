@@ -52,11 +52,13 @@ public class DataContainerConfiguration extends AbstractTypedPropertiesConfigura
       return dataContainer;
    }
 
-   public Equivalence keyEquivalence() {
+   @SuppressWarnings("unchecked")
+   public <K> Equivalence<K> keyEquivalence() {
       return keyEquivalence;
    }
 
-   public Equivalence valueEquivalence() {
+   @SuppressWarnings("unchecked")
+   public <V> Equivalence<V> valueEquivalence() {
       return valueEquivalence;
    }
 

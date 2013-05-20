@@ -134,8 +134,7 @@ public class MortalCacheEntry extends AbstractInternalCacheEntry {
 
    @Override
    public Metadata getMetadata() {
-      return new EmbeddedMetadata.Builder()
-            .lifespan(cacheValue.getLifespan(), TimeUnit.MILLISECONDS).build();
+      return new EmbeddedMetadata.Builder().lifespan(cacheValue.getLifespan()).build();
    }
 
    @Override

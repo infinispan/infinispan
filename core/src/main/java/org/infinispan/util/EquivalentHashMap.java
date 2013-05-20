@@ -91,6 +91,35 @@ public class EquivalentHashMap<K, V> extends AbstractMap<K, V> {
       this.valueEq = valueEq;
    }
 
+   @SuppressWarnings("unchecked")
+   public EquivalentHashMap(
+         Map<? extends K, ? extends V> map, Equivalence<K> keyEq, Equivalence<V> valueEq) {
+      if (map instanceof EquivalentHashMap) {
+         EquivalentHashMap<? extends K, ? extends V> equivalentMap =
+               (EquivalentHashMap<? extends K, ? extends V>) map;
+         this.table = (Node<K, V>[]) equivalentMap.table.clone();
+         this.loadFactor = equivalentMap.loadFactor;
+         this.size = equivalentMap.size;
+         this.threshold = equivalentMap.threshold;
+      } else {
+         this.loadFactor = DEFAULT_LOAD_FACTOR;
+         init(map.size(), this.loadFactor);
+         putAll(map);
+      }
+      this.keyEq = keyEq;
+      this.valueEq = valueEq;
+   }
+
+   @SuppressWarnings("unchecked")
+   private void init(int initialCapacity, float loadFactor) {
+      int c = 1;
+      for (; c < initialCapacity; c <<= 1) ;
+
+      this.table = new Node[c];
+
+      threshold = (int) (c * loadFactor);
+   }
+
    @Override
    public int size() {
       return size;

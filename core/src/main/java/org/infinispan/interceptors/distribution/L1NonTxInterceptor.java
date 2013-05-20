@@ -86,8 +86,7 @@ public class L1NonTxInterceptor extends BaseRpcInterceptor {
             // Make a copy of the metadata stored internally, adjust
             // lifespan/maxIdle settings and send them a modification
             Metadata newMetadata = ice.getMetadata().builder()
-                  .lifespan(lifespan, TimeUnit.MILLISECONDS)
-                  .maxIdle(-1, TimeUnit.MILLISECONDS).build();
+                  .lifespan(lifespan).maxIdle(-1).build();
             PutKeyValueCommand put = cf.buildPutKeyValueCommand(ice.getKey(), ice.getValue(),
                   newMetadata, Collections.singleton(Flag.CACHE_MODE_LOCAL));
             lockAndWrap(ctx, command.getKey(), ice, command);

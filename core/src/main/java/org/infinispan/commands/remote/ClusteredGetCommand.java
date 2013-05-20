@@ -22,6 +22,7 @@
  */
 package org.infinispan.commands.remote;
 
+import org.infinispan.Metadata;
 import org.infinispan.commands.CommandsFactory;
 import org.infinispan.commands.FlagAffectedCommand;
 import org.infinispan.commands.Visitor;
@@ -256,4 +257,10 @@ public class ClusteredGetCommand extends BaseRpcCommand implements FlagAffectedC
    public boolean ignoreCommandOnStatus(ComponentStatus status) {
       return false;
    }
+
+   @Override
+   public Metadata getMetadata() {
+      return null;
+   }
+
 }

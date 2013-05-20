@@ -55,7 +55,7 @@ public class CacheNotifierImplTest extends AbstractInfinispanTest {
       cl = new CacheListener();
       n.start();
       n.addListener(cl);
-      ctx = new NonTxInvocationContext(AnyEquivalence.OBJECT);
+      ctx = new NonTxInvocationContext(AnyEquivalence.getInstance());
    }
 
    public void testNotifyCacheEntryCreated() {
@@ -262,7 +262,7 @@ public class CacheNotifierImplTest extends AbstractInfinispanTest {
    }
 
    public void testNotifyTransactionRegistered() {
-      InvocationContext ctx = new NonTxInvocationContext(AnyEquivalence.OBJECT);
+      InvocationContext ctx = new NonTxInvocationContext(AnyEquivalence.getInstance());
       GlobalTransaction tx = mock(GlobalTransaction.class);
       n.notifyTransactionRegistered(tx, ctx);
       n.notifyTransactionRegistered(tx, ctx);

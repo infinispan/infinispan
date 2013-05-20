@@ -24,7 +24,6 @@ package org.infinispan.interceptors;
 
 import org.infinispan.Metadata;
 import org.infinispan.commands.FlagAffectedCommand;
-import org.infinispan.commands.MetadataAwareCommand;
 import org.infinispan.commands.read.GetKeyValueCommand;
 import org.infinispan.commands.write.*;
 import org.infinispan.configuration.cache.CacheStoreConfiguration;
@@ -86,6 +85,7 @@ public class CacheLoaderInterceptor extends JmxStatsCommandInterceptor {
    }
 
    @Start(priority = 15)
+   @SuppressWarnings("unused")
    protected void startInterceptor() {
       loader = clm.getCacheLoader();
    }
@@ -237,7 +237,7 @@ public class CacheLoaderInterceptor extends JmxStatsCommandInterceptor {
          sendNotification(key, value, true, ctx, cmd);
          entry.setValue(value);
 
-         Metadata metadata = extractMetadata(cmd);
+         Metadata metadata = cmd.getMetadata();
          Metadata loadedMetadata = loadedEntry.getMetadata();
          if (metadata != null && loadedMetadata != null)
             metadata = metadata.builder().read(loadedMetadata).build();
@@ -270,6 +270,7 @@ public class CacheLoaderInterceptor extends JmxStatsCommandInterceptor {
          displayName = "Number of cache store loads",
          measurementType = MeasurementType.TRENDSUP
    )
+   @SuppressWarnings("unused")
    public long getCacheLoaderLoads() {
       return cacheLoads.get();
    }
@@ -279,6 +280,7 @@ public class CacheLoaderInterceptor extends JmxStatsCommandInterceptor {
          displayName = "Number of cache store load misses",
          measurementType = MeasurementType.TRENDSUP
    )
+   @SuppressWarnings("unused")
    public long getCacheLoaderMisses() {
       return cacheMisses.get();
    }
@@ -315,10 +317,12 @@ public class CacheLoaderInterceptor extends JmxStatsCommandInterceptor {
          return InfinispanCollections.emptySet();
       }
    }
+
    @ManagedOperation(
          description = "Disable all cache loaders of a given type, where type is a fully qualified class name of the cache loader to disable",
          displayName = "Disable all cache loaders of a given type"
    )
+   @SuppressWarnings("unused")
    /**
     * Disables a cache loader of a given type, where type is the fully qualified class name of a {@link CacheLoader} implementation.
     *
@@ -333,11 +337,6 @@ public class CacheLoaderInterceptor extends JmxStatsCommandInterceptor {
 
    public void disableInterceptor() {
       enabled = false;
-   }
-
-   private Metadata extractMetadata(FlagAffectedCommand cmd) {
-      return cmd instanceof MetadataAwareCommand
-            ? ((MetadataAwareCommand) cmd).getMetadata() : null;
    }
 
 }

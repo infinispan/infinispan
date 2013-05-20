@@ -30,6 +30,9 @@ import org.infinispan.container.entries.CacheEntry;
 import org.infinispan.context.Flag;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.transaction.xa.GlobalTransaction;
+import org.infinispan.util.AnyEquivalence;
+import org.infinispan.util.CollectionFactory;
+import org.infinispan.util.Equivalence;
 import org.infinispan.util.InfinispanCollections;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
@@ -37,7 +40,6 @@ import org.infinispan.util.logging.LogFactory;
 import javax.transaction.Transaction;
 import java.util.Collection;
 import java.util.Collections;
-import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.Map;
@@ -69,8 +71,9 @@ public abstract class LocalTransaction extends AbstractCacheTransaction {
    private boolean prepareSent;
    private boolean commitOrRollbackSent;
 
-   public LocalTransaction(Transaction transaction, GlobalTransaction tx, boolean implicitTransaction, int topologyId) {
-      super(tx, topologyId);
+   public LocalTransaction(Transaction transaction, GlobalTransaction tx,
+         boolean implicitTransaction, int topologyId, Equivalence<Object> keyEquivalence) {
+      super(tx, topologyId, keyEquivalence);
       this.transaction = transaction;
       this.implicitTransaction = implicitTransaction;
    }
@@ -122,7 +125,9 @@ public abstract class LocalTransaction extends AbstractCacheTransaction {
       if (isMarkedForRollback()) {
          throw new CacheException("This transaction is marked for rollback and cannot acquire locks!");
       }
-      if (lookedUpEntries == null) lookedUpEntries = new HashMap<Object, CacheEntry>(4);
+      if (lookedUpEntries == null)
+         lookedUpEntries = CollectionFactory.makeMap(4, keyEquivalence, AnyEquivalence.<CacheEntry>getInstance());
+
       lookedUpEntries.put(key, e);
    }
 
@@ -132,7 +137,7 @@ public abstract class LocalTransaction extends AbstractCacheTransaction {
          throw new CacheException("This transaction is marked for rollback and cannot acquire locks!");
       }
       if (lookedUpEntries == null) {
-         lookedUpEntries = new HashMap<Object, CacheEntry>(entries);
+         lookedUpEntries = CollectionFactory.makeMap(entries, keyEquivalence, AnyEquivalence.<CacheEntry>getInstance());
       } else {
          lookedUpEntries.putAll(entries);
       }

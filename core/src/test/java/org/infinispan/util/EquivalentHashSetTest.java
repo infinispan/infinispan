@@ -217,7 +217,7 @@ public class EquivalentHashSetTest {
       }
 
       @Override
-      public int compare(Object obj, Object otherObj) {
+      public int compare(byte[] obj, byte[] otherObj) {
          return delegate.compare(obj, otherObj);
       }
 

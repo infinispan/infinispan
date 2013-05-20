@@ -24,6 +24,7 @@ package org.infinispan.transaction.synchronization;
 
 import org.infinispan.transaction.LocalTransaction;
 import org.infinispan.transaction.xa.GlobalTransaction;
+import org.infinispan.util.Equivalence;
 
 import javax.transaction.Transaction;
 
@@ -35,8 +36,9 @@ import javax.transaction.Transaction;
  */
 public class SyncLocalTransaction extends LocalTransaction {
 
-   public SyncLocalTransaction(Transaction transaction, GlobalTransaction tx, boolean implicitTransaction, int topologyId) {
-      super(transaction, tx, implicitTransaction, topologyId);
+   public SyncLocalTransaction(Transaction transaction, GlobalTransaction tx,
+         boolean implicitTransaction, int topologyId, Equivalence<Object> keyEquivalence) {
+      super(transaction, tx, implicitTransaction, topologyId, keyEquivalence);
    }
 
    private boolean enlisted;

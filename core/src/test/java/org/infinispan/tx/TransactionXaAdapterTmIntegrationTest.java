@@ -34,6 +34,7 @@ import org.infinispan.transaction.xa.LocalXaTransaction;
 import org.infinispan.transaction.xa.TransactionFactory;
 import org.infinispan.transaction.xa.TransactionXaAdapter;
 import org.infinispan.transaction.xa.XaTransactionTable;
+import org.infinispan.util.AnyEquivalence;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
@@ -62,7 +63,7 @@ public class TransactionXaAdapterTmIntegrationTest {
       TransactionFactory gtf = new TransactionFactory();
       gtf.init(false, false, true, false);
       globalTransaction = gtf.newGlobalTransaction(null, false);
-      localTx = new LocalXaTransaction(new DummyTransaction(null), globalTransaction, false, 1);
+      localTx = new LocalXaTransaction(new DummyTransaction(null), globalTransaction, false, 1, AnyEquivalence.getInstance());
       xid = new DummyXid(uuid);
       localTx.setXid(xid);
       txTable.addLocalTransactionMapping(localTx);      

@@ -39,6 +39,7 @@ import org.infinispan.transaction.xa.recovery.RecoveryAwareGlobalTransaction;
 import org.infinispan.transaction.xa.recovery.RecoveryAwareLocalTransaction;
 import org.infinispan.transaction.xa.recovery.RecoveryAwareRemoteTransaction;
 import org.infinispan.util.ClusterIdGenerator;
+import org.infinispan.util.Equivalence;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
@@ -61,13 +62,15 @@ public class TransactionFactory {
    private ClusterIdGenerator clusterIdGenerator;
    private boolean isClustered;
    private RpcManager rpcManager;
+   private Equivalence<Object> keyEquivalence;
 
    public enum TxFactoryEnum {
 
       DLD_RECOVERY_XA {
          @Override
-         public LocalTransaction newLocalTransaction(Transaction tx, GlobalTransaction gtx, boolean implicitTransaction, int topologyId) {
-            return new RecoveryAwareLocalTransaction(tx, gtx, implicitTransaction, topologyId);
+         public LocalTransaction newLocalTransaction(Transaction tx, GlobalTransaction gtx, boolean implicitTransaction, int topologyId,
+               Equivalence<Object> keyEquivalence) {
+            return new RecoveryAwareLocalTransaction(tx, gtx, implicitTransaction, topologyId, keyEquivalence);
          }
 
          @Override
@@ -83,20 +86,21 @@ public class TransactionFactory {
          }
 
          @Override
-         public RemoteTransaction newRemoteTransaction(WriteCommand[] modifications, GlobalTransaction tx, int topologyId) {
-            return new RecoveryAwareRemoteTransaction(modifications, tx, topologyId);
+         public RemoteTransaction newRemoteTransaction(WriteCommand[] modifications, GlobalTransaction tx, int topologyId, Equivalence<Object> keyEquivalence) {
+            return new RecoveryAwareRemoteTransaction(modifications, tx, topologyId, keyEquivalence);
          }
 
          @Override
-         public RemoteTransaction newRemoteTransaction(GlobalTransaction tx, int topologyId) {
-            return new RecoveryAwareRemoteTransaction(tx, topologyId);
+         public RemoteTransaction newRemoteTransaction(GlobalTransaction tx, int topologyId, Equivalence<Object> keyEquivalence) {
+            return new RecoveryAwareRemoteTransaction(tx, topologyId, keyEquivalence);
          }
       },
 
       DLD_NORECOVERY_XA {
          @Override
-         public LocalTransaction newLocalTransaction(Transaction tx, GlobalTransaction gtx, boolean implicitTransaction, int topologyId) {
-            return new LocalXaTransaction(tx, gtx, implicitTransaction, topologyId);
+         public LocalTransaction newLocalTransaction(Transaction tx, GlobalTransaction gtx, boolean implicitTransaction, int topologyId,
+               Equivalence<Object> keyEquivalence) {
+            return new LocalXaTransaction(tx, gtx, implicitTransaction, topologyId, keyEquivalence);
          }
 
          @Override
@@ -110,20 +114,21 @@ public class TransactionFactory {
          }
 
          @Override
-         public RemoteTransaction newRemoteTransaction(WriteCommand[] modifications, GlobalTransaction tx, int topologyId) {
-            return new RemoteTransaction(modifications, tx, topologyId);
+         public RemoteTransaction newRemoteTransaction(WriteCommand[] modifications, GlobalTransaction tx, int topologyId, Equivalence<Object> keyEquivalence) {
+            return new RemoteTransaction(modifications, tx, topologyId, keyEquivalence);
          }
 
          @Override
-         public RemoteTransaction newRemoteTransaction(GlobalTransaction tx, int topologyId) {
-            return new RemoteTransaction(tx, topologyId);
+         public RemoteTransaction newRemoteTransaction(GlobalTransaction tx, int topologyId, Equivalence<Object> keyEquivalence) {
+            return new RemoteTransaction(tx, topologyId, keyEquivalence);
          }
       },
 
       DLD_NORECOVERY_NOXA {
          @Override
-         public LocalTransaction newLocalTransaction(Transaction tx, GlobalTransaction gtx, boolean implicitTransaction, int topologyId) {
-            return new SyncLocalTransaction(tx, gtx, implicitTransaction, topologyId);
+         public LocalTransaction newLocalTransaction(Transaction tx, GlobalTransaction gtx, boolean implicitTransaction, int topologyId,
+               Equivalence<Object> keyEquivalence) {
+            return new SyncLocalTransaction(tx, gtx, implicitTransaction, topologyId, keyEquivalence);
          }
 
          @Override
@@ -137,19 +142,19 @@ public class TransactionFactory {
          }
 
          @Override
-         public RemoteTransaction newRemoteTransaction(WriteCommand[] modifications, GlobalTransaction tx, int topologyId) {
-            return new RemoteTransaction(modifications, tx, topologyId);
+         public RemoteTransaction newRemoteTransaction(WriteCommand[] modifications, GlobalTransaction tx, int topologyId, Equivalence<Object> keyEquivalence) {
+            return new RemoteTransaction(modifications, tx, topologyId, keyEquivalence);
          }
 
          @Override
-         public RemoteTransaction newRemoteTransaction(GlobalTransaction tx, int topologyId) {
-            return new RemoteTransaction(tx, topologyId);
+         public RemoteTransaction newRemoteTransaction(GlobalTransaction tx, int topologyId, Equivalence<Object> keyEquivalence) {
+            return new RemoteTransaction(tx, topologyId, keyEquivalence);
          }
       },
       NODLD_RECOVERY_XA {
          @Override
-         public LocalTransaction newLocalTransaction(Transaction tx, GlobalTransaction gtx, boolean implicitTransaction, int topologyId) {
-            return new RecoveryAwareLocalTransaction(tx, gtx, implicitTransaction, topologyId);
+         public LocalTransaction newLocalTransaction(Transaction tx, GlobalTransaction gtx, boolean implicitTransaction, int topologyId, Equivalence<Object> keyEquivalence) {
+            return new RecoveryAwareLocalTransaction(tx, gtx, implicitTransaction, topologyId, keyEquivalence);
          }
 
          @Override
@@ -165,19 +170,20 @@ public class TransactionFactory {
          }
 
          @Override
-         public RemoteTransaction newRemoteTransaction(WriteCommand[] modifications, GlobalTransaction tx, int topologyId) {
-            return new RecoveryAwareRemoteTransaction(modifications, tx, topologyId);
+         public RemoteTransaction newRemoteTransaction(WriteCommand[] modifications, GlobalTransaction tx, int topologyId, Equivalence<Object> keyEquivalence) {
+            return new RecoveryAwareRemoteTransaction(modifications, tx, topologyId, keyEquivalence);
          }
 
          @Override
-         public RemoteTransaction newRemoteTransaction(GlobalTransaction tx, int topologyId) {
-            return new RecoveryAwareRemoteTransaction(tx, topologyId);
+         public RemoteTransaction newRemoteTransaction(GlobalTransaction tx, int topologyId, Equivalence<Object> keyEquivalence) {
+            return new RecoveryAwareRemoteTransaction(tx, topologyId, keyEquivalence);
          }
       },
       NODLD_NORECOVERY_XA {
          @Override
-         public LocalTransaction newLocalTransaction(Transaction tx, GlobalTransaction gtx, boolean implicitTransaction, int topologyId) {
-            return new LocalXaTransaction(tx, gtx, implicitTransaction, topologyId);
+         public LocalTransaction newLocalTransaction(Transaction tx, GlobalTransaction gtx, boolean implicitTransaction, int topologyId,
+               Equivalence<Object> keyEquivalence) {
+            return new LocalXaTransaction(tx, gtx, implicitTransaction, topologyId, keyEquivalence);
          }
 
          @Override
@@ -191,19 +197,20 @@ public class TransactionFactory {
          }
 
          @Override
-         public RemoteTransaction newRemoteTransaction(WriteCommand[] modifications, GlobalTransaction tx, int topologyId) {
-            return new RemoteTransaction(modifications, tx, topologyId);
+         public RemoteTransaction newRemoteTransaction(WriteCommand[] modifications, GlobalTransaction tx, int topologyId, Equivalence<Object> keyEquivalence) {
+            return new RemoteTransaction(modifications, tx, topologyId, keyEquivalence);
          }
 
          @Override
-         public RemoteTransaction newRemoteTransaction(GlobalTransaction tx, int topologyId) {
-            return new RemoteTransaction(tx, topologyId);
+         public RemoteTransaction newRemoteTransaction(GlobalTransaction tx, int topologyId, Equivalence<Object> keyEquivalence) {
+            return new RemoteTransaction(tx, topologyId, keyEquivalence);
          }
       },
       NODLD_NORECOVERY_NOXA {
          @Override
-         public LocalTransaction newLocalTransaction(Transaction tx, GlobalTransaction gtx, boolean implicitTransaction, int topologyId) {
-            return new SyncLocalTransaction(tx, gtx, implicitTransaction, topologyId);
+         public LocalTransaction newLocalTransaction(Transaction tx, GlobalTransaction gtx, boolean implicitTransaction, int topologyId,
+               Equivalence<Object> keyEquivalence) {
+            return new SyncLocalTransaction(tx, gtx, implicitTransaction, topologyId, keyEquivalence);
          }
 
          @Override
@@ -217,18 +224,19 @@ public class TransactionFactory {
          }
 
          @Override
-         public RemoteTransaction newRemoteTransaction(WriteCommand[] modifications, GlobalTransaction tx, int topologyId) {
-            return new RemoteTransaction(modifications, tx, topologyId);
+         public RemoteTransaction newRemoteTransaction(WriteCommand[] modifications, GlobalTransaction tx, int topologyId, Equivalence<Object> keyEquivalence) {
+            return new RemoteTransaction(modifications, tx, topologyId, keyEquivalence);
          }
 
          @Override
-         public RemoteTransaction newRemoteTransaction(GlobalTransaction tx, int topologyId) {
-            return new RemoteTransaction(tx, topologyId);
+         public RemoteTransaction newRemoteTransaction(GlobalTransaction tx, int topologyId, Equivalence<Object> keyEquivalence) {
+            return new RemoteTransaction(tx, topologyId, keyEquivalence);
          }
       };
 
 
-      public abstract LocalTransaction newLocalTransaction(Transaction tx, GlobalTransaction gtx, boolean implicitTransaction, int topologyId);
+      public abstract LocalTransaction newLocalTransaction(Transaction tx, GlobalTransaction gtx, boolean implicitTransaction, int topologyId,
+            Equivalence<Object> keyEquivalence);
       public abstract GlobalTransaction newGlobalTransaction(Address addr, boolean remote, ClusterIdGenerator clusterIdGenerator, boolean clustered);
       public abstract GlobalTransaction newGlobalTransaction();
 
@@ -246,9 +254,9 @@ public class TransactionFactory {
        */
       private final Random rnd = new Random();
 
-      public abstract RemoteTransaction newRemoteTransaction(WriteCommand[] modifications, GlobalTransaction tx, int topologyId);
+      public abstract RemoteTransaction newRemoteTransaction(WriteCommand[] modifications, GlobalTransaction tx, int topologyId, Equivalence<Object> keyEquivalence);
 
-      public abstract RemoteTransaction newRemoteTransaction(GlobalTransaction tx, int topologyId);
+      public abstract RemoteTransaction newRemoteTransaction(GlobalTransaction tx, int topologyId, Equivalence<Object> keyEquivalence);
    }
 
 
@@ -261,15 +269,15 @@ public class TransactionFactory {
    }
 
    public LocalTransaction newLocalTransaction(Transaction tx, GlobalTransaction gtx, boolean implicitTransaction, int topologyId) {
-      return txFactoryEnum.newLocalTransaction(tx, gtx, implicitTransaction, topologyId);
+      return txFactoryEnum.newLocalTransaction(tx, gtx, implicitTransaction, topologyId, keyEquivalence);
    }
 
    public RemoteTransaction newRemoteTransaction(WriteCommand[] modifications, GlobalTransaction tx, int topologyId) {
-      return txFactoryEnum.newRemoteTransaction(modifications, tx, topologyId);
+      return txFactoryEnum.newRemoteTransaction(modifications, tx, topologyId, keyEquivalence);
    }
 
    public RemoteTransaction newRemoteTransaction(GlobalTransaction tx, int topologyId) {
-      return txFactoryEnum.newRemoteTransaction(tx, topologyId);
+      return txFactoryEnum.newRemoteTransaction(tx, topologyId, keyEquivalence);
    }
 
    @Inject
@@ -291,6 +299,7 @@ public class TransactionFactory {
          Transport transport = rpcManager != null ? rpcManager.getTransport() : null;
          clusterIdGenerator = new ClusterIdGenerator(cm, transport);
       }
+      keyEquivalence = configuration.dataContainer().keyEquivalence();
    }
 
    public void init(boolean dldEnabled, boolean recoveryEnabled, boolean xa, boolean batchingEnabled) {

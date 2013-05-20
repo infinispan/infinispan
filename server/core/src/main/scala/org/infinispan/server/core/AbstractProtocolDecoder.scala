@@ -210,14 +210,14 @@ abstract class AbstractProtocolDecoder[K, V](transport: NettyTransport)
       metadata.version(new ServerEntryVersion(generateVersion(cache)))
       (params.lifespan, params.maxIdle) match {
          case (EXPIRATION_DEFAULT, EXPIRATION_DEFAULT) =>
-            metadata.lifespan(defaultLifespanTime, DefaultTimeUnit)
-                    .maxIdle(defaultMaxIdleTime, DefaultTimeUnit)
+            metadata.lifespan(defaultLifespanTime)
+                    .maxIdle(defaultMaxIdleTime)
          case (_, EXPIRATION_DEFAULT) =>
-            metadata.lifespan(toMillis(params.lifespan), DefaultTimeUnit)
-                    .maxIdle(defaultMaxIdleTime, DefaultTimeUnit)
+            metadata.lifespan(toMillis(params.lifespan))
+                    .maxIdle(defaultMaxIdleTime)
          case (_, _) =>
-            metadata.lifespan(toMillis(params.lifespan), DefaultTimeUnit)
-                    .maxIdle(toMillis(params.maxIdle), DefaultTimeUnit)
+            metadata.lifespan(toMillis(params.lifespan))
+                    .maxIdle(toMillis(params.maxIdle))
       }
       metadata.build()
    }

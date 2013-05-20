@@ -662,8 +662,8 @@ public class EquivalentConcurrentHashMapV8<K,V>
    /** For serialization compatibility. Null unless serialized; see below */
    private Segment<K,V>[] segments;
 
-   private Equivalence<K> keyEquivalence;
-   private Equivalence<V> valueEquivalence;
+   Equivalence<K> keyEq;
+   Equivalence<V> valueEq;
 
     /* ---------------- Table element access -------------- */
 
@@ -853,21 +853,21 @@ public class EquivalentConcurrentHashMapV8<K,V>
        * starting at given root.
        */
       @SuppressWarnings("unchecked") final TreeNode<V> getTreeNode
-      (int h, Object k, TreeNode<V> p) {
+      (int h, Object k, TreeNode<V> p, Equivalence<Object> keyEq) { // EQUIVALENCE_MOD
          Class<?> c = k.getClass();
          while (p != null) {
             int dir, ph;  Object pk; Class<?> pc;
             if ((ph = p.hash) == h) {
-               if ((pk = p.key) == k || k.equals(pk))
+               if ((pk = p.key) == k || keyEq.equals(k, pk)) // EQUIVALENCE_MOD
                   return p;
                if (c != (pc = pk.getClass()) ||
-                     !(k instanceof Comparable) ||
-                     (dir = ((Comparable)k).compareTo((Comparable)pk)) == 0) {
+                     !(keyEq.isComparable(k)) || // EQUIVALENCE_MOD
+                     (dir = keyEq.compare(k, pk)) == 0) { // EQUIVALENCE_MOD
                   if ((dir = (c == pc) ? 0 :
                         c.getName().compareTo(pc.getName())) == 0) {
                      TreeNode<V> r = null, pl, pr; // check both sides
                      if ((pr = p.right) != null && h >= pr.hash &&
-                           (r = getTreeNode(h, k, pr)) != null)
+                           (r = getTreeNode(h, k, pr, keyEq)) != null)
                         return r;
                      else if ((pl = p.left) != null && h <= pl.hash)
                         dir = -1;
@@ -888,13 +888,13 @@ public class EquivalentConcurrentHashMapV8<K,V>
        * read-lock to call getTreeNode, but during failure to get
        * lock, searches along next links.
        */
-      final V getValue(int h, Object k) {
+      final V getValue(int h, Object k, Equivalence<Object> keyEq) {
          Node<V> r = null;
          int c = getState(); // Must read lock state first
          for (Node<V> e = first; e != null; e = e.next) {
             if (c <= 0 && compareAndSetState(c, c - 1)) {
                try {
-                  r = getTreeNode(h, k, root);
+                  r = getTreeNode(h, k, root, keyEq);
                } finally {
                   releaseShared(0);
                }
@@ -915,7 +915,7 @@ public class EquivalentConcurrentHashMapV8<K,V>
        * @return null if added
        */
       @SuppressWarnings("unchecked") final TreeNode<V> putTreeNode
-      (int h, Object k, V v) {
+      (int h, Object k, V v, Equivalence<Object> keyEq) { // EQUIVALENCE_MOD
          Class<?> c = k.getClass();
          TreeNode<V> pp = root, p = null;
          int dir = 0;
@@ -923,23 +923,23 @@ public class EquivalentConcurrentHashMapV8<K,V>
             int ph;  Object pk; Class<?> pc;
             p = pp;
             if ((ph = p.hash) == h) {
-               if ((pk = p.key) == k || k.equals(pk))
+               if ((pk = p.key) == k || keyEq.equals(k, pk)) // EQUIVALENCE_MOD
                   return p;
                if (c != (pc = pk.getClass()) ||
-                     !(k instanceof Comparable) ||
-                     (dir = ((Comparable)k).compareTo((Comparable)pk)) == 0) {
+                     !(keyEq.isComparable(k)) || // EQUIVALENCE_MOD
+                     (dir = keyEq.compare(k, pk)) == 0) { // EQUIVALENCE_MOD
                   TreeNode<V> s = null, r = null, pr;
                   if ((dir = (c == pc) ? 0 :
                         c.getName().compareTo(pc.getName())) == 0) {
                      if ((pr = p.right) != null && h >= pr.hash &&
-                           (r = getTreeNode(h, k, pr)) != null)
+                           (r = getTreeNode(h, k, pr, keyEq)) != null) // EQUIVALENCE_MOD
                         return r;
                      else // continue left
                         dir = -1;
                   }
                   else if ((pr = p.right) != null && h >= pr.hash)
                      s = pr;
-                  if (s != null && (r = getTreeNode(h, k, s)) != null)
+                  if (s != null && (r = getTreeNode(h, k, s, keyEq)) != null) // EQUIVALENCE_MOD
                      return r;
                }
             }
@@ -1214,10 +1214,10 @@ public class EquivalentConcurrentHashMapV8<K,V>
     * only when locked.
     */
    private final void replaceWithTreeBin(Node<V>[] tab, int index, Object key) {
-      if (key instanceof Comparable) {
+      if (keyEq.isComparable(key)) { // EQUIVALENCE_MOD
          TreeBin<V> t = new TreeBin<V>();
          for (Node<V> e = tabAt(tab, index); e != null; e = e.next)
-            t.putTreeNode(e.hash, e.key, e.val);
+            t.putTreeNode(e.hash, e.key, e.val, (Equivalence<Object>) keyEq); // EQUIVALENCE_MOD
          setTabAt(tab, index, new Node<V>(MOVED, t, null, null));
       }
    }
@@ -1226,20 +1226,20 @@ public class EquivalentConcurrentHashMapV8<K,V>
 
    /** Implementation for get and containsKey */
    @SuppressWarnings("unchecked") private final V internalGet(Object k) {
-      int h = spread(keyEquivalence.hashCode(k)); // EQUIVALENCE_MOD
+      int h = spread(keyEq.hashCode(k)); // EQUIVALENCE_MOD
       retry: for (Node<V>[] tab = table; tab != null;) {
          Node<V> e; Object ek; V ev; int eh; // locals to read fields once
          for (e = tabAt(tab, (tab.length - 1) & h); e != null; e = e.next) {
             if ((eh = e.hash) < 0) {
                if ((ek = e.key) instanceof TreeBin)  // search TreeBin
-                  return ((TreeBin<V>)ek).getValue(h, k);
+                  return ((TreeBin<V>)ek).getValue(h, k, (Equivalence<Object>) keyEq); // EQUIVALENCE_MOD
                else {                      // restart with new table
                   tab = (Node<V>[])ek;
                   continue retry;
                }
             }
             else if (eh == h && (ev = e.val) != null &&
-                  ((ek = e.key) == k || keyEquivalence.equals((K) ek, k))) // EQUIVALENCE_MOD
+                  ((ek = e.key) == k || keyEq.equals((K) ek, k))) // EQUIVALENCE_MOD
                return ev;
          }
          break;
@@ -1254,7 +1254,7 @@ public class EquivalentConcurrentHashMapV8<K,V>
     */
    @SuppressWarnings("unchecked") private final V internalReplace
    (Object k, V v, Object cv) {
-      int h = spread(keyEquivalence.hashCode(k)); // EQUIVALENCE_MOD
+      int h = spread(keyEq.hashCode(k)); // EQUIVALENCE_MOD
       V oldVal = null;
       for (Node<V>[] tab = table;;) {
          Node<V> f; int i, fh; Object fk;
@@ -1270,10 +1270,10 @@ public class EquivalentConcurrentHashMapV8<K,V>
                try {
                   if (tabAt(tab, i) == f) {
                      validated = true;
-                     TreeNode<V> p = t.getTreeNode(h, k, t.root);
+                     TreeNode<V> p = t.getTreeNode(h, k, t.root, (Equivalence<Object>) keyEq); // EQUIVALENCE_MOD
                      if (p != null) {
                         V pv = p.val;
-                        if (cv == null || cv == pv || valueEquivalence.equals(pv, cv)) { // EQUIVALENCE_MOD
+                        if (cv == null || cv == pv || valueEq.equals(pv, cv)) { // EQUIVALENCE_MOD
                            oldVal = pv;
                            if ((p.val = v) == null) {
                               deleted = true;
@@ -1306,8 +1306,8 @@ public class EquivalentConcurrentHashMapV8<K,V>
                      Object ek; V ev;
                      if (e.hash == h &&
                            ((ev = e.val) != null) &&
-                           ((ek = e.key) == k || keyEquivalence.equals((K) ek, k))) { // EQUIVALENCE_MOD
-                        if (cv == null || cv == ev || valueEquivalence.equals(ev, cv)) { // EQUIVALENCE_MOD
+                           ((ek = e.key) == k || keyEq.equals((K) ek, k))) { // EQUIVALENCE_MOD
+                        if (cv == null || cv == ev || valueEq.equals(ev, cv)) { // EQUIVALENCE_MOD
                            oldVal = ev;
                            if ((e.val = v) == null) {
                               deleted = true;
@@ -1358,7 +1358,7 @@ public class EquivalentConcurrentHashMapV8<K,V>
    @SuppressWarnings("unchecked") private final V internalPut
    (K k, V v, boolean onlyIfAbsent) {
       if (k == null || v == null) throw new NullPointerException();
-      int h = spread(keyEquivalence.hashCode(k)); // EQUIVALENCE_MOD
+      int h = spread(keyEq.hashCode(k)); // EQUIVALENCE_MOD
       int len = 0;
       for (Node<V>[] tab = table;;) {
          int i, fh; Node<V> f; Object fk; V fv;
@@ -1376,7 +1376,7 @@ public class EquivalentConcurrentHashMapV8<K,V>
                try {
                   if (tabAt(tab, i) == f) {
                      len = 2;
-                     TreeNode<V> p = t.putTreeNode(h, k, v);
+                     TreeNode<V> p = t.putTreeNode(h, k, v, (Equivalence<Object>) keyEq); // EQUIVALENCE_MOD
                      if (p != null) {
                         oldVal = p.val;
                         if (!onlyIfAbsent)
@@ -1396,7 +1396,7 @@ public class EquivalentConcurrentHashMapV8<K,V>
                tab = (Node<V>[])fk;
          }
          else if (onlyIfAbsent && fh == h && (fv = f.val) != null &&
-               ((fk = f.key) == k || keyEquivalence.equals(k, fk))) // peek while nearby // EQUIVALENCE_MOD
+               ((fk = f.key) == k || keyEq.equals(k, fk))) // peek while nearby // EQUIVALENCE_MOD
             return fv;
          else {
             V oldVal = null;
@@ -1407,7 +1407,7 @@ public class EquivalentConcurrentHashMapV8<K,V>
                      Object ek; V ev;
                      if (e.hash == h &&
                            (ev = e.val) != null &&
-                           ((ek = e.key) == k || keyEquivalence.equals(k, ek))) { // EQUIVALENCE_MOD
+                           ((ek = e.key) == k || keyEq.equals(k, ek))) { // EQUIVALENCE_MOD
                         oldVal = ev;
                         if (!onlyIfAbsent)
                            e.val = v;
@@ -1439,7 +1439,7 @@ public class EquivalentConcurrentHashMapV8<K,V>
    (K k, Fun<? super K, ? extends V> mf) {
       if (k == null || mf == null)
          throw new NullPointerException();
-      int h = spread(keyEquivalence.hashCode(k)); // EQUIVALENCE_MOD
+      int h = spread(keyEq.hashCode(k)); // EQUIVALENCE_MOD
       V val = null;
       int len = 0;
       for (Node<V>[] tab = table;;) {
@@ -1471,13 +1471,13 @@ public class EquivalentConcurrentHashMapV8<K,V>
                try {
                   if (tabAt(tab, i) == f) {
                      len = 1;
-                     TreeNode<V> p = t.getTreeNode(h, k, t.root);
+                     TreeNode<V> p = t.getTreeNode(h, k, t.root, (Equivalence<Object>) keyEq); // EQUIVALENCE_MOD
                      if (p != null)
                         val = p.val;
                      else if ((val = mf.apply(k)) != null) {
                         added = true;
                         len = 2;
-                        t.putTreeNode(h, k, val);
+                        t.putTreeNode(h, k, val, (Equivalence<Object>) keyEq); // EQUIVALENCE_MOD
                      }
                   }
                } finally {
@@ -1496,7 +1496,7 @@ public class EquivalentConcurrentHashMapV8<K,V>
             for (Node<V> e = f; e != null; e = e.next) { // prescan
                Object ek; V ev;
                if (e.hash == h && (ev = e.val) != null &&
-                     ((ek = e.key) == k || keyEquivalence.equals(k, ek))) // EQUIVALENCE_MOD
+                     ((ek = e.key) == k || keyEq.equals(k, ek))) // EQUIVALENCE_MOD
                   return ev;
             }
             boolean added = false;
@@ -1507,7 +1507,7 @@ public class EquivalentConcurrentHashMapV8<K,V>
                      Object ek; V ev;
                      if (e.hash == h &&
                            (ev = e.val) != null &&
-                           ((ek = e.key) == k || keyEquivalence.equals(k, ek))) { // EQUIVALENCE_MOD
+                           ((ek = e.key) == k || keyEq.equals(k, ek))) { // EQUIVALENCE_MOD
                         val = ev;
                         break;
                      }
@@ -1542,7 +1542,7 @@ public class EquivalentConcurrentHashMapV8<K,V>
          BiFun<? super K, ? super V, ? extends V> mf) {
       if (k == null || mf == null)
          throw new NullPointerException();
-      int h = spread(keyEquivalence.hashCode(k)); // EQUIVALENCE_MOD
+      int h = spread(keyEq.hashCode(k)); // EQUIVALENCE_MOD
       V val = null;
       int delta = 0;
       int len = 0;
@@ -1578,7 +1578,7 @@ public class EquivalentConcurrentHashMapV8<K,V>
                try {
                   if (tabAt(tab, i) == f) {
                      len = 1;
-                     TreeNode<V> p = t.getTreeNode(h, k, t.root);
+                     TreeNode<V> p = t.getTreeNode(h, k, t.root, (Equivalence<Object>) keyEq); // EQUIVALENCE_MOD
                      if (p == null && onlyIfPresent)
                         break;
                      V pv = (p == null) ? null : p.val;
@@ -1588,7 +1588,7 @@ public class EquivalentConcurrentHashMapV8<K,V>
                         else {
                            len = 2;
                            delta = 1;
-                           t.putTreeNode(h, k, val);
+                           t.putTreeNode(h, k, val, (Equivalence<Object>) keyEq);  // EQUIVALENCE_MOD
                         }
                      }
                      else if (p != null) {
@@ -1613,7 +1613,7 @@ public class EquivalentConcurrentHashMapV8<K,V>
                      Object ek; V ev;
                      if (e.hash == h &&
                            (ev = e.val) != null &&
-                           ((ek = e.key) == k || keyEquivalence.equals(k, ek))) { // EQUIVALENCE_MOD
+                           ((ek = e.key) == k || keyEq.equals(k, ek))) { // EQUIVALENCE_MOD
                         val = mf.apply(k, ev);
                         if (val != null)
                            e.val = val;
@@ -1655,7 +1655,7 @@ public class EquivalentConcurrentHashMapV8<K,V>
    (K k, V v, BiFun<? super V, ? super V, ? extends V> mf) {
       if (k == null || v == null || mf == null)
          throw new NullPointerException();
-      int h = spread(keyEquivalence.hashCode(k)); // EQUIVALENCE_MOD
+      int h = spread(keyEq.hashCode(k)); // EQUIVALENCE_MOD
       V val = null;
       int delta = 0;
       int len = 0;
@@ -1677,7 +1677,7 @@ public class EquivalentConcurrentHashMapV8<K,V>
                try {
                   if (tabAt(tab, i) == f) {
                      len = 1;
-                     TreeNode<V> p = t.getTreeNode(h, k, t.root);
+                     TreeNode<V> p = t.getTreeNode(h, k, t.root, (Equivalence<Object>) keyEq); // EQUIVALENCE_MOD
                      val = (p == null) ? v : mf.apply(p.val, v);
                      if (val != null) {
                         if (p != null)
@@ -1685,7 +1685,7 @@ public class EquivalentConcurrentHashMapV8<K,V>
                         else {
                            len = 2;
                            delta = 1;
-                           t.putTreeNode(h, k, val);
+                           t.putTreeNode(h, k, val, (Equivalence<Object>) keyEq); // EQUIVALENCE_MOD
                         }
                      }
                      else if (p != null) {
@@ -1710,7 +1710,7 @@ public class EquivalentConcurrentHashMapV8<K,V>
                      Object ek; V ev;
                      if (e.hash == h &&
                            (ev = e.val) != null &&
-                           ((ek = e.key) == k || keyEquivalence.equals(k, ek))) { // EQUIVALENCE_MOD
+                           ((ek = e.key) == k || keyEq.equals(k, ek))) { // EQUIVALENCE_MOD
                         val = mf.apply(ev, v);
                         if (val != null)
                            e.val = val;
@@ -1759,7 +1759,7 @@ public class EquivalentConcurrentHashMapV8<K,V>
                npe = true;
                break;
             }
-            int h = spread(keyEquivalence.hashCode(k)); // EQUIVALENCE_MOD
+            int h = spread(keyEq.hashCode(k)); // EQUIVALENCE_MOD
             for (Node<V>[] tab = table;;) {
                int i; Node<V> f; int fh; Object fk;
                if (tab == null)
@@ -1778,11 +1778,11 @@ public class EquivalentConcurrentHashMapV8<K,V>
                      try {
                         if (tabAt(tab, i) == f) {
                            validated = true;
-                           TreeNode<V> p = t.getTreeNode(h, k, t.root);
+                           TreeNode<V> p = t.getTreeNode(h, k, t.root, (Equivalence<Object>) keyEq);  // EQUIVALENCE_MOD
                            if (p != null)
                               p.val = v;
                            else {
-                              t.putTreeNode(h, k, v);
+                              t.putTreeNode(h, k, v, (Equivalence<Object>) keyEq);  // EQUIVALENCE_MOD
                               ++delta;
                            }
                         }
@@ -1804,7 +1804,7 @@ public class EquivalentConcurrentHashMapV8<K,V>
                            Object ek; V ev;
                            if (e.hash == h &&
                                  (ev = e.val) != null &&
-                                 ((ek = e.key) == k || keyEquivalence.equals((K) ek, k))) { // EQUIVALENCE_MOD
+                                 ((ek = e.key) == k || keyEq.equals((K) ek, k))) { // EQUIVALENCE_MOD
                               e.val = v;
                               break;
                            }
@@ -2126,11 +2126,11 @@ public class EquivalentConcurrentHashMapV8<K,V>
                      Object k = e.key; V v = e.val;
                      if ((h & n) == 0) {
                         ++lc;
-                        lt.putTreeNode(h, k, v);
+                        lt.putTreeNode(h, k, v, (Equivalence<Object>) keyEq); // EQUIVALENCE_MOD
                      }
                      else {
                         ++hc;
-                        ht.putTreeNode(h, k, v);
+                        ht.putTreeNode(h, k, v, (Equivalence<Object>) keyEq); // EQUIVALENCE_MOD
                      }
                   }
                   Node<V> ln, hn; // throw away trees if too small
@@ -2439,8 +2439,8 @@ public class EquivalentConcurrentHashMapV8<K,V>
     */
    public EquivalentConcurrentHashMapV8(
          Equivalence<K> keyEquivalence, Equivalence<V> valueEquivalence) {
-      this.keyEquivalence = keyEquivalence;
-      this.valueEquivalence = valueEquivalence;
+      this.keyEq = keyEquivalence;
+      this.valueEq = valueEquivalence;
    }
 
    /**
@@ -2538,7 +2538,7 @@ public class EquivalentConcurrentHashMapV8<K,V>
          Equivalence<K> keyEquivalence) {
       return new KeySetView<K,Boolean>(
             new EquivalentConcurrentHashMapV8<K,Boolean>(keyEquivalence,
-                  new AnyEquivalence<Boolean>()), Boolean.TRUE);
+                  AnyEquivalence.BOOLEAN), Boolean.TRUE);
    }
 
    /**
@@ -2554,7 +2554,7 @@ public class EquivalentConcurrentHashMapV8<K,V>
    public static <K> KeySetView<K,Boolean> newKeySet(int initialCapacity,
          Equivalence<K> keyEquivalence) {
       return new KeySetView<K,Boolean>(new EquivalentConcurrentHashMapV8<K,Boolean>(
-            initialCapacity, keyEquivalence, new AnyEquivalence<Boolean>()), Boolean.TRUE);
+            initialCapacity, keyEquivalence, AnyEquivalence.BOOLEAN), Boolean.TRUE);
    }
 
    /**
@@ -2647,7 +2647,7 @@ public class EquivalentConcurrentHashMapV8<K,V>
       V v;
       Traverser<K,V,Object> it = new Traverser<K,V,Object>(this);
       while ((v = it.advance()) != null) {
-         if (v == value || valueEquivalence.equals(v, value)) // EQUIVALENCE_MOD
+         if (v == value || valueEq.equals(v, value)) // EQUIVALENCE_MOD
             return true;
       }
       return false;
@@ -3042,7 +3042,7 @@ public class EquivalentConcurrentHashMapV8<K,V>
       Traverser<K,V,Object> it = new Traverser<K,V,Object>(this);
       V v;
       while ((v = it.advance()) != null) {
-         h += keyEquivalence.hashCode(it.nextKey) ^ valueEquivalence.hashCode(v); // EQUIVALENCE_MOD
+         h += keyEq.hashCode(it.nextKey) ^ valueEq.hashCode(v); // EQUIVALENCE_MOD
       }
       return h;
    }
@@ -3066,9 +3066,9 @@ public class EquivalentConcurrentHashMapV8<K,V>
       if ((v = it.advance()) != null) {
          for (;;) {
             Object k = it.nextKey;
-            sb.append(k == this ? "(this Map)" : keyEquivalence.toString(k)); // EQUIVALENCE_MOD
+            sb.append(k == this ? "(this Map)" : keyEq.toString(k)); // EQUIVALENCE_MOD
             sb.append('=');
-            sb.append(v == this ? "(this Map)" : valueEquivalence.toString(v)); // EQUIVALENCE_MOD
+            sb.append(v == this ? "(this Map)" : valueEq.toString(v)); // EQUIVALENCE_MOD
             if ((v = it.advance()) == null)
                break;
             sb.append(',').append(' ');
@@ -3096,7 +3096,7 @@ public class EquivalentConcurrentHashMapV8<K,V>
          V val;
          while ((val = it.advance()) != null) {
             Object v = m.get(it.nextKey);
-            if (v == null || (v != val && !valueEquivalence.equals(val, v))) // EQUIVALENCE_MOD
+            if (v == null || (v != val && !valueEq.equals(val, v))) // EQUIVALENCE_MOD
                return false;
          }
          for (Entry<?,?> e : m.entrySet()) {
@@ -3104,7 +3104,7 @@ public class EquivalentConcurrentHashMapV8<K,V>
             if ((mk = e.getKey()) == null ||
                   (mv = e.getValue()) == null ||
                   (v = internalGet(mk)) == null ||
-                  (mv != v && !valueEquivalence.equals(v, mv))) // EQUIVALENCE_MOD
+                  (mv != v && !valueEq.equals(v, mv))) // EQUIVALENCE_MOD
                return false;
          }
       }
@@ -3197,16 +3197,16 @@ public class EquivalentConcurrentHashMapV8<K,V>
       }
       public final K getKey()       { return key; }
       public final V getValue()     { return val; }
-      public final int hashCode()   { return map.keyEquivalence.hashCode(key) ^ map.valueEquivalence.hashCode(val); } // EQUIVALENCE_MOD
-      public final String toString(){ return map.keyEquivalence.toString(key) + "=" + map.valueEquivalence.toString(val); } // EQUIVALENCE_MOD
+      public final int hashCode()   { return map.keyEq.hashCode(key) ^ map.valueEq.hashCode(val); } // EQUIVALENCE_MOD
+      public final String toString(){ return map.keyEq.toString(key) + "=" + map.valueEq.toString(val); } // EQUIVALENCE_MOD
 
       public final boolean equals(Object o) {
          Object k, v; Entry<?,?> e;
          return ((o instanceof Entry) &&
                        (k = (e = (Entry<?,?>)o).getKey()) != null &&
                        (v = e.getValue()) != null &&
-                       (k == key || map.keyEquivalence.equals(key, k)) && // EQUIVALENCE_MOD
-                       (v == val || map.valueEquivalence.equals(val, v))); // EQUIVALENCE_MOD
+                       (k == key || map.keyEq.equals(key, k)) && // EQUIVALENCE_MOD
+                       (v == val || map.valueEq.equals(val, v))); // EQUIVALENCE_MOD
       }
 
       /**
@@ -3273,8 +3273,8 @@ public class EquivalentConcurrentHashMapV8<K,V>
       }
       s.writeObject(null);
       s.writeObject(null);
-      s.writeObject(keyEquivalence); // EQUIVALENCE_MOD
-      s.writeObject(valueEquivalence); // EQUIVALENCE_MOD
+      s.writeObject(keyEq); // EQUIVALENCE_MOD
+      s.writeObject(valueEq); // EQUIVALENCE_MOD
       segments = null; // throw away
    }
 
@@ -3358,8 +3358,8 @@ public class EquivalentConcurrentHashMapV8<K,V>
             }
          }
       }
-      keyEquivalence = (Equivalence<K>) s.readObject();
-      valueEquivalence = (Equivalence<V>) s.readObject();
+      keyEq = (Equivalence<K>) s.readObject();
+      valueEq = (Equivalence<V>) s.readObject();
    }
 
    // -------------------------------------------------------
@@ -4720,9 +4720,9 @@ public class EquivalentConcurrentHashMapV8<K,V>
             for (;;) {
                Object e = it.next();
                String eStr = this instanceof KeySetView
-                     ? map.keyEquivalence.toString(e)
+                     ? map.keyEq.toString(e)
                      : this instanceof ValuesView
-                        ? map.valueEquivalence.toString(e)
+                        ? map.valueEq.toString(e)
                         : e.toString();
 
                sb.append(e == this ? "(this Collection)" : eStr); // EQUIVALENCE_MOD
@@ -4854,7 +4854,7 @@ public class EquivalentConcurrentHashMapV8<K,V>
          if (o != null) {
             Iterator<V> it = new ValueIterator<K,V>(map);
             while (it.hasNext()) {
-               if (map.valueEquivalence.equals(it.next(), o)) { // EQUIVALENCE_MOD
+               if (map.valueEq.equals(it.next(), o)) { // EQUIVALENCE_MOD
                   it.remove();
                   return true;
                }
@@ -4899,7 +4899,7 @@ public class EquivalentConcurrentHashMapV8<K,V>
                        (k = (e = (Entry<?,V>)o).getKey()) != null && // EQUIVALENCE_MOD
                        (r = map.get(k)) != null &&
                        (v = e.getValue()) != null &&
-                       (v == r || map.valueEquivalence.equals(v, r))); // EQUIVALENCE_MOD
+                       (v == r || map.valueEq.equals(v, r))); // EQUIVALENCE_MOD
       }
       public final boolean remove(Object o) {
          Object k, v; Entry<?,?> e;
