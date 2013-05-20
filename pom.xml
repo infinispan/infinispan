@@ -264,6 +264,52 @@ pageTracker._trackPageview();
                      </execution>
                   </executions>
                </plugin>
+               <plugin>
+                  <groupId>org.apache.maven.plugins</groupId>
+                  <artifactId>maven-antrun-plugin</artifactId>
+                  <executions>
+                     <execution>
+                        <id>xsdocgen</id>
+                        <phase>package</phase>
+                        <goals>
+                           <goal>run</goal>
+                        </goals>
+                        <configuration>
+                           <target>
+                              <property name="plugin_classpath" refid="maven.plugin.classpath"/>
+                              <path id="xsd.fileset.path">
+                                 <fileset dir="${basedir}" casesensitive="yes">
+                                    <include name="core/src/main/resources/schema/*.xsd" /> <!-- make sure core comes first -->
+                                    <include name="cachestore/*/src/main/resources/schema/*.xsd" />
+                                 </fileset>
+                              </path>
+                              <pathconvert property="xsd.fileset" refid="xsd.fileset.path" pathsep=" "/>
+                              <echo message="xsds ${xsd.fileset}" />
+                              <java classname="org.infinispan.tools.xsd.XSDoc">
+                                 <arg value="-o" />
+                                 <arg value="${project.build.directory}/site/configdocs" />
+                                 <arg line="${xsd.fileset}" />
+                                 <classpath>
+                                    <pathelement path="${plugin_classpath}" />
+	                             </classpath>
+                              </java>
+                           </target>
+                        </configuration>
+                     </execution>
+                  </executions>
+                  <dependencies>
+                     <dependency>
+                        <groupId>org.infinispan</groupId>
+                        <artifactId>infinispan-tools</artifactId>
+                        <version>${project.version}</version>
+                     </dependency>
+                     <dependency>
+                        <groupId>gnu-getopt</groupId>
+                        <artifactId>getopt</artifactId>
+                        <version>${version.gnu.getopt}</version>
+                     </dependency>
+                  </dependencies>
+               </plugin>
             </plugins>
          </build>
       </profile>
