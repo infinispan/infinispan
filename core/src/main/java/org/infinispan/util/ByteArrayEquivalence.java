@@ -26,7 +26,7 @@ package org.infinispan.util;
 import java.util.Arrays;
 
 /**
- * A compare function for byte arrays.
+ * A compare function for unsigned byte arrays.
  *
  * @author Galder Zamarreño
  * @since 5.3
@@ -56,12 +56,19 @@ public class ByteArrayEquivalence implements Equivalence<byte[]> {
 
    @Override
    public boolean isComparable(Object obj) {
-      return false;
+      return true;
    }
 
    @Override
-   public int compare(Object obj, Object otherObj) {
-      return 0; // irrelevant
+   public int compare(byte[] obj, byte[] otherObj) {
+      // Assumes unsigned byte arrays
+      int minLength = Math.min(obj.length, otherObj.length);
+      for (int i = 0; i < minLength; i++) {
+         int compareResult = obj[i] - otherObj[i];
+         if (compareResult != 0)
+            return compareResult;
+      }
+      return obj.length - otherObj.length;
    }
 
 }

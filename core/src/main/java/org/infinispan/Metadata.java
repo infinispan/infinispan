@@ -77,28 +77,44 @@ public interface Metadata {
    public interface Builder {
 
       /**
-       * Set lifespan.
+       * Set lifespan time with a given time unit.
        *
        * @param time of lifespan
-       * @param unit of lifespan time
-       * @return a builder instance
+       * @param unit unit of time for lifespan time
+       * @return a builder instance with the lifespan time applied
        */
       Builder lifespan(long time, TimeUnit unit);
 
       /**
-       * Set max idle time.
+       * Set lifespan time assuming that the time unit is milliseconds.
+       *
+       * @param time of lifespan, in milliseconds
+       * @return a builder instance with the lifespan time applied
+       */
+      Builder lifespan(long time);
+
+      /**
+       * Set max idle time with a given time unit.
        *
        * @param time of max idle
        * @param unit of max idle time
-       * @return a builder instance
+       * @return a builder instance with the max idle time applied
        */
       Builder maxIdle(long time, TimeUnit unit);
+
+      /**
+       * Set max idle time assuming that the time unit is milliseconds.
+       *
+       * @param time of max idle, in milliseconds
+       * @return a builder instance with the max idle time applied
+       */
+      Builder maxIdle(long time);
 
       /**
        * Set version.
        *
        * @param version of the metadata
-       * @return a builder instance
+       * @return a builder instance with the version applied
        */
       Builder version(EntryVersion version);
 

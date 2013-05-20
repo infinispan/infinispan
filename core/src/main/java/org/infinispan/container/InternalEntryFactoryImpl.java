@@ -91,9 +91,7 @@ public class InternalEntryFactoryImpl implements InternalEntryFactory {
       } else {
          // If no metadata passed, assumed embedded metadata
          Metadata metadata = new EmbeddedMetadata.Builder()
-               .lifespan(lifespan, TimeUnit.MILLISECONDS)
-               .maxIdle(maxIdle, TimeUnit.MILLISECONDS)
-               .version(version).build();
+               .lifespan(lifespan).maxIdle(maxIdle).version(version).build();
          if (lifespan < 0 && maxIdle < 0) return new MetadataImmortalCacheEntry(key, value, metadata);
          if (lifespan > -1 && maxIdle < 0) return new MetadataMortalCacheEntry(key, value, metadata, created);
          if (lifespan < 0 && maxIdle > -1) return new MetadataTransientCacheEntry(key, value, metadata, lastUsed);

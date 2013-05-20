@@ -19,6 +19,7 @@
 
 package org.infinispan.commands;
 
+import org.infinispan.Metadata;
 import org.infinispan.context.Flag;
 
 import java.util.Arrays;
@@ -70,4 +71,10 @@ public abstract class AbstractFlagAffectedCommand implements FlagAffectedCommand
    public void setTopologyId(int topologyId) {
       this.topologyId = topologyId;
    }
+
+   @Override
+   public Metadata getMetadata() {
+      return null;
+   }
+
 }

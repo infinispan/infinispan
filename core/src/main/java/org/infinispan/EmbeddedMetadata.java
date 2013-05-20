@@ -72,10 +72,7 @@ public final class EmbeddedMetadata implements Metadata {
    @Override
    public Metadata.Builder builder() {
       // This method will be called rarely, so don't keep a reference!
-      return new Builder()
-            .lifespan(lifespan, TimeUnit.MILLISECONDS)
-            .maxIdle(lifespan, TimeUnit.MILLISECONDS)
-            .version(version);
+      return new Builder().lifespan(lifespan).maxIdle(lifespan).version(version);
    }
 
    @Override
@@ -125,10 +122,20 @@ public final class EmbeddedMetadata implements Metadata {
       }
 
       @Override
+      public Metadata.Builder lifespan(long time) {
+         return lifespan(time, TimeUnit.MILLISECONDS);
+      }
+
+      @Override
       public Metadata.Builder maxIdle(long time, TimeUnit unit) {
          maxIdle = time;
          maxIdleUnit = unit;
          return this;
+      }
+
+      @Override
+      public Metadata.Builder maxIdle(long time) {
+         return maxIdle(time, TimeUnit.MILLISECONDS);
       }
 
       @Override

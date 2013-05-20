@@ -143,8 +143,8 @@ class HotRodServer extends AbstractProtocolServer("HotRod") with Log {
              .expiration().lifespan(-1).maxIdle(-1)
              // Topology cache uses Object based equals/hashCodes
              .dataContainer()
-                .keyEquivalence(AnyEquivalence.OBJECT)
-                .valueEquivalence(AnyEquivalence.OBJECT)
+                .keyEquivalence(AnyEquivalence.getInstance())
+                .valueEquivalence(AnyEquivalence.getInstance())
 
       if (configuration.topologyStateTransfer) {
          builder.clustering().stateTransfer().fetchInMemoryState(true)

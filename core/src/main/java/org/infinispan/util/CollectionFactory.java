@@ -74,25 +74,25 @@ public class CollectionFactory {
       @Override
       public <K, V> ConcurrentMap<K, V> createConcurrentMap() {
          return new EquivalentConcurrentHashMapV8<K, V>(
-               new AnyEquivalence<K>(), new AnyEquivalence<V>());
+               AnyEquivalence.<K>getInstance(), AnyEquivalence.<V>getInstance());
       }
 
       @Override
       public <K, V> ConcurrentMap<K, V> createConcurrentMap(int initialCapacity) {
          return new EquivalentConcurrentHashMapV8<K, V>(initialCapacity,
-               new AnyEquivalence<K>(), new AnyEquivalence<V>());
+               AnyEquivalence.<K>getInstance(), AnyEquivalence.<V>getInstance());
       }
 
       @Override
       public <K, V> ConcurrentMap<K, V> createConcurrentMap(int initialCapacity, int concurrencyLevel) {
          return new EquivalentConcurrentHashMapV8<K, V>(initialCapacity, 0.75f,
-               concurrencyLevel, new AnyEquivalence<K>(), new AnyEquivalence<V>());
+               concurrencyLevel, AnyEquivalence.<K>getInstance(), AnyEquivalence.<V>getInstance());
       }
 
       @Override
       public <K, V> ConcurrentMap<K, V> createConcurrentMap(int initialCapacity, float loadFactor, int concurrencyLevel) {
          return new EquivalentConcurrentHashMapV8<K, V>(initialCapacity, loadFactor,
-               concurrencyLevel, new AnyEquivalence<K>(), new AnyEquivalence<V>());
+               concurrencyLevel, AnyEquivalence.<K>getInstance(), AnyEquivalence.<V>getInstance());
       }
    }
    
@@ -188,6 +188,14 @@ public class CollectionFactory {
          return new HashMap<K, V>(initialCapacity);
    }
 
+   public static <K, V> Map<K, V> makeMap(
+         Map<? extends K, ? extends V> entries, Equivalence<K> keyEq, Equivalence<V> valueEq) {
+      if (requiresEquivalent(keyEq, valueEq))
+         return new EquivalentHashMap<K, V>(entries, keyEq, valueEq);
+      else
+         return new HashMap<K, V>(entries);
+   }
+
    public static <T> Set<T> makeSet(Equivalence<T> entryEq) {
       if (requiresEquivalent(entryEq))
          return new EquivalentHashSet<T>(entryEq);
@@ -204,11 +212,12 @@ public class CollectionFactory {
 
    private static <K, V> boolean requiresEquivalent(
          Equivalence<K> keyEq, Equivalence<V> valueEq) {
-      return keyEq != AnyEquivalence.OBJECT || valueEq != AnyEquivalence.OBJECT;
+      AnyEquivalence<Object> instance = AnyEquivalence.getInstance();
+      return keyEq != instance || valueEq != instance;
    }
 
    private static <T> boolean requiresEquivalent(Equivalence<T> typeEq) {
-      return typeEq != AnyEquivalence.OBJECT;
+      return typeEq != AnyEquivalence.getInstance();
    }
 
 }

@@ -115,7 +115,7 @@ import static org.infinispan.factories.KnownComponentNames.*;
  */
 @SurvivesRestarts
 @MBean(objectName = CacheImpl.OBJECT_NAME, description = "Component that represents an individual cache instance.")
-public class CacheImpl<K, V> extends CacheSupport<K, V> implements AdvancedCache<K, V> {
+public class CacheImpl<K, V> implements AdvancedCache<K, V> {
    public static final String OBJECT_NAME = "Cache";
    protected InvocationContextContainer icc;
    protected CommandsFactory commandsFactory;
@@ -127,6 +127,7 @@ public class CacheImpl<K, V> extends CacheSupport<K, V> implements AdvancedCache
    protected TransactionManager transactionManager;
    protected RpcManager rpcManager;
    protected StreamingMarshaller marshaller;
+   protected Metadata defaultMetadata;
    private final String name;
    private EvictionManager evictionManager;
    private DataContainer dataContainer;
@@ -214,6 +215,111 @@ public class CacheImpl<K, V> extends CacheSupport<K, V> implements AdvancedCache
             throw new NullPointerException("Null keys are not supported!");
          }
       }
+   }
+
+   // CacheSupport does not extend AdvancedCache, so it cannot really call up
+   // to the cache methods that take Metadata parameter. Since CacheSupport
+   // methods are declared final, the easiest is for CacheImpl to stop
+   // extending CacheSupport and implement the base methods directly.
+
+   @Override
+   public final V put(K key, V value) {
+      return put(key, value, defaultMetadata);
+   }
+
+   @Override
+   public final V put(K key, V value, long lifespan, TimeUnit unit) {
+      return put(key, value, lifespan, unit, defaultMetadata.maxIdle(), MILLISECONDS);
+   }
+
+   @Override
+   public final V putIfAbsent(K key, V value, long lifespan, TimeUnit unit) {
+      return putIfAbsent(key, value, lifespan, unit, defaultMetadata.maxIdle(), MILLISECONDS);
+   }
+
+   @Override
+   public final void putAll(Map<? extends K, ? extends V> map, long lifespan, TimeUnit unit) {
+      putAll(map, lifespan, unit, defaultMetadata.maxIdle(), MILLISECONDS);
+   }
+
+   @Override
+   public final V replace(K key, V value, long lifespan, TimeUnit unit) {
+      return replace(key, value, lifespan, unit, defaultMetadata.maxIdle(), MILLISECONDS);
+   }
+
+   @Override
+   public final boolean replace(K key, V oldValue, V value, long lifespan, TimeUnit unit) {
+      return replace(key, oldValue, value, lifespan, unit, defaultMetadata.maxIdle(), MILLISECONDS);
+   }
+
+   @Override
+   public final V putIfAbsent(K key, V value) {
+      return putIfAbsent(key, value, defaultMetadata);
+   }
+
+   @Override
+   public final boolean replace(K key, V oldValue, V newValue) {
+      return replace(key, oldValue, newValue, defaultMetadata);
+   }
+
+   @Override
+   public final V replace(K key, V value) {
+      return replace(key, value, defaultMetadata);
+   }
+
+   @Override
+   public final NotifyingFuture<V> putAsync(K key, V value) {
+      return putAsync(key, value, defaultMetadata);
+   }
+
+   @Override
+   public final NotifyingFuture<V> putAsync(K key, V value, long lifespan, TimeUnit unit) {
+      return putAsync(key, value, lifespan, unit, defaultMetadata.maxIdle(), MILLISECONDS);
+   }
+
+   @Override
+   public final NotifyingFuture<Void> putAllAsync(Map<? extends K, ? extends V> data) {
+      return putAllAsync(data, defaultMetadata, null, null);
+   }
+
+   @Override
+   public final NotifyingFuture<Void> putAllAsync(Map<? extends K, ? extends V> data, long lifespan, TimeUnit unit) {
+      return putAllAsync(data, lifespan, MILLISECONDS, defaultMetadata.maxIdle(), MILLISECONDS);
+   }
+
+   @Override
+   public final NotifyingFuture<V> putIfAbsentAsync(K key, V value) {
+      return putIfAbsentAsync(key, value, defaultMetadata, null, null);
+   }
+
+   @Override
+   public final NotifyingFuture<V> putIfAbsentAsync(K key, V value, long lifespan, TimeUnit unit) {
+      return putIfAbsentAsync(key, value, lifespan, unit, defaultMetadata.maxIdle(), MILLISECONDS);
+   }
+
+   @Override
+   public final NotifyingFuture<V> replaceAsync(K key, V value) {
+      return replaceAsync(key, value, defaultMetadata, null, null);
+   }
+
+   @Override
+   public final NotifyingFuture<V> replaceAsync(K key, V value, long lifespan, TimeUnit unit) {
+      return replaceAsync(key, value, lifespan, unit, defaultMetadata.maxIdle(), MILLISECONDS);
+   }
+
+   @Override
+   public final NotifyingFuture<Boolean> replaceAsync(K key, V oldValue, V newValue) {
+      return replaceAsync(key, oldValue, newValue, defaultMetadata, null, null);
+   }
+
+   @Override
+   public final NotifyingFuture<Boolean> replaceAsync(K key, V oldValue, V newValue, long lifespan, TimeUnit unit) {
+      return replaceAsync(key, oldValue, newValue, lifespan, unit, defaultMetadata.maxIdle(), MILLISECONDS);
+   }
+
+   @Override
+   public final void putAll(Map<? extends K, ? extends V> m) {
+      putAll(m, defaultMetadata, null, null);
    }
 
    @Override
@@ -404,10 +510,7 @@ public class CacheImpl<K, V> extends CacheSupport<K, V> implements AdvancedCache
          }
 
          // if the entry exists then this should be a no-op.
-         Metadata metadata = new EmbeddedMetadata.Builder()
-               .lifespan(defaultLifespan, TimeUnit.MILLISECONDS)
-               .maxIdle(defaultMaxIdleTime, TimeUnit.MILLISECONDS).build();
-         putIfAbsent(key, value, metadata, flags, explicitClassLoader);
+         putIfAbsent(key, value, defaultMetadata, flags, explicitClassLoader);
       } catch (Exception e) {
          if (log.isDebugEnabled()) log.debug("Caught exception while doing putForExternalRead()", e);
       }
@@ -584,8 +687,8 @@ public class CacheImpl<K, V> extends CacheSupport<K, V> implements AdvancedCache
    )
    public void start() {
       componentRegistry.start();
-      defaultLifespan = config.expiration().lifespan();
-      defaultMaxIdleTime = config.expiration().maxIdle();
+      defaultMetadata = new EmbeddedMetadata.Builder()
+            .lifespan(config.expiration().lifespan()).maxIdle(config.expiration().maxIdle()).build();
       // Context only needs to ship ClassLoader if marshalling will be required
       isClassLoaderInContext = config.clustering().cacheMode().isClustered()
             || config.loaders().usingCacheLoaders()
@@ -1303,12 +1406,6 @@ public class CacheImpl<K, V> extends CacheSupport<K, V> implements AdvancedCache
    @Override
    public NotifyingFuture<V> putAsync(K key, V value, Metadata metadata) {
       return putAsync(key, value, metadata, null, null);
-   }
-
-   @Override
-   protected void set(K key, V value) {
-      withFlags(Flag.IGNORE_RETURN_VALUES)
-            .put(key, value, defaultLifespan, MILLISECONDS, defaultMaxIdleTime, MILLISECONDS);
    }
 
    private void associateImplicitTransactionWithCurrentThread(InvocationContext ctx) throws InvalidTransactionException, SystemException {

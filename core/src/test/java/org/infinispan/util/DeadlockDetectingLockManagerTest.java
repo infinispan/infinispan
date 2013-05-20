@@ -66,7 +66,7 @@ public class DeadlockDetectingLockManagerTest extends AbstractInfinispanTest {
 
 
    public void testNoTransaction() throws Exception {
-      InvocationContext nonTx = new NonTxInvocationContext(AnyEquivalence.OBJECT);
+      InvocationContext nonTx = new NonTxInvocationContext(AnyEquivalence.getInstance());
 
       Lock mockLock = mock(Lock.class);
       when(lc.acquireLock(nonTx.getLockOwner(), "k", config.locking().lockAcquisitionTimeout(), TimeUnit.MILLISECONDS)).thenReturn(mockLock).thenReturn(null);
@@ -115,7 +115,7 @@ public class DeadlockDetectingLockManagerTest extends AbstractInfinispanTest {
    }
 
    private InvocationContext buildLocalTxIc(final DldGlobalTransaction ddgt) {
-      InvocationContext localTxContext = new LocalTxInvocationContext(AnyEquivalence.OBJECT) {
+      InvocationContext localTxContext = new LocalTxInvocationContext(AnyEquivalence.getInstance()) {
          @Override
          public Object getLockOwner() {
             return ddgt;

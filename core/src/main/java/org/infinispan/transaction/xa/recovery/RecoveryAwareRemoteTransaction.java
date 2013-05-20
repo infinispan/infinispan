@@ -26,6 +26,7 @@ import org.infinispan.commands.write.WriteCommand;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.transaction.xa.GlobalTransaction;
 import org.infinispan.transaction.RemoteTransaction;
+import org.infinispan.util.Equivalence;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
@@ -48,12 +49,12 @@ public class RecoveryAwareRemoteTransaction extends RemoteTransaction implements
 
    private Integer status;
 
-   public RecoveryAwareRemoteTransaction(WriteCommand[] modifications, GlobalTransaction tx, int topologyId) {
-      super(modifications, tx, topologyId);
+   public RecoveryAwareRemoteTransaction(WriteCommand[] modifications, GlobalTransaction tx, int topologyId, Equivalence<Object> keyEquivalence) {
+      super(modifications, tx, topologyId, keyEquivalence);
    }
 
-   public RecoveryAwareRemoteTransaction(GlobalTransaction tx, int topologyId) {
-      super(tx, topologyId);
+   public RecoveryAwareRemoteTransaction(GlobalTransaction tx, int topologyId, Equivalence<Object> keyEquivalence) {
+      super(tx, topologyId, keyEquivalence);
    }
 
    /**

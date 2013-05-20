@@ -389,8 +389,7 @@ public class TxDistributionInterceptor extends BaseDistributionInterceptor {
                   // Make a copy of the metadata stored internally, adjust
                   // lifespan/maxIdle settings and send them a modification
                   Metadata newMetadata = ice.getMetadata().builder()
-                        .lifespan(lifespan, TimeUnit.MILLISECONDS)
-                        .maxIdle(-1, TimeUnit.MILLISECONDS).build();
+                        .lifespan(lifespan).maxIdle(-1).build();
                   PutKeyValueCommand put = cf.buildPutKeyValueCommand(
                         ice.getKey(), ice.getValue(), newMetadata, command.getFlags());
                   lockAndWrap(ctx, key, ice, command);

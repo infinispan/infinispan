@@ -36,7 +36,7 @@ import org.infinispan.context.Flag;
  * @author Sanne Grinovero <sanne@hibernate.org> (C) 2011 Red Hat Inc.
  * @since 5.0
  */
-public interface FlagAffectedCommand extends VisitableCommand, TopologyAffectedCommand {
+public interface FlagAffectedCommand extends VisitableCommand, TopologyAffectedCommand, MetadataAwareCommand {
    
    /**
     * @return the Flags which where set in the context - only valid to invoke after {@link #setFlags(Set)}

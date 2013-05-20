@@ -27,7 +27,6 @@ import org.infinispan.Metadata;
 import org.infinispan.atomic.Delta;
 import org.infinispan.atomic.DeltaAware;
 import org.infinispan.commands.FlagAffectedCommand;
-import org.infinispan.commands.MetadataAwareCommand;
 import org.infinispan.commands.write.ReplaceCommand;
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.container.entries.CacheEntry;
@@ -114,7 +113,7 @@ public class EntryFactoryImpl implements EntryFactory {
    @Override
    public final  MVCCEntry wrapEntryForReplace(InvocationContext ctx, ReplaceCommand cmd) throws InterruptedException {
       Object key = cmd.getKey();
-      MVCCEntry mvccEntry = wrapEntry(ctx, key, extractMetadata(cmd));
+      MVCCEntry mvccEntry = wrapEntry(ctx, key, cmd.getMetadata());
       if (mvccEntry == null) {
          // make sure we record this! Null value since this is a forced lock on the key
          ctx.putLookedUpEntry(key, null);
@@ -154,7 +153,7 @@ public class EntryFactoryImpl implements EntryFactory {
       CacheEntry cacheEntry = getFromContext(ctx, key);
       MVCCEntry mvccEntry;
       if (cacheEntry != null && cacheEntry.isNull()) cacheEntry = null;
-      Metadata providedMetadata = extractMetadata(cmd);
+      Metadata providedMetadata = cmd.getMetadata();
       if (cacheEntry != null) {
          mvccEntry = wrapMvccEntryForPut(ctx, key, cacheEntry, providedMetadata);
          mvccEntry.undelete(undeleteIfNeeded);
@@ -298,11 +297,6 @@ public class EntryFactoryImpl implements EntryFactory {
    
    private DeltaAwareCacheEntry createWrappedDeltaEntry(Object key, DeltaAware deltaAware, CacheEntry entry) {
       return new DeltaAwareCacheEntry(key,deltaAware, entry);
-   }
-
-   private Metadata extractMetadata(FlagAffectedCommand cmd) {
-      return cmd instanceof MetadataAwareCommand
-            ? ((MetadataAwareCommand) cmd).getMetadata() : null;
    }
 
 }

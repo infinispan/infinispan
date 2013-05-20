@@ -36,8 +36,8 @@ public class DataContainerConfigurationBuilder extends AbstractConfigurationChil
 
    // No default here. DataContainerFactory figures out default.
    private DataContainer dataContainer;
-   private Equivalence keyEquivalence = AnyEquivalence.OBJECT;
-   private Equivalence valueEquivalence = AnyEquivalence.OBJECT;
+   private Equivalence keyEquivalence = AnyEquivalence.getInstance();
+   private Equivalence valueEquivalence = AnyEquivalence.getInstance();
    // TODO: What are properties used for? Is it just legacy?
    private Properties properties = new Properties();
 
@@ -88,7 +88,7 @@ public class DataContainerConfigurationBuilder extends AbstractConfigurationChil
     *                     key types.
     * @return this configuration builder
     */
-   public DataContainerConfigurationBuilder keyEquivalence(Equivalence keyEquivalence) {
+   public <K> DataContainerConfigurationBuilder keyEquivalence(Equivalence<K> keyEquivalence) {
       this.keyEquivalence = keyEquivalence;
       return this;
    }
@@ -103,7 +103,7 @@ public class DataContainerConfigurationBuilder extends AbstractConfigurationChil
     *                       value types.
     * @return this configuration builder
     */
-   public DataContainerConfigurationBuilder valueEquivalence(Equivalence valueEquivalence) {
+   public <V> DataContainerConfigurationBuilder valueEquivalence(Equivalence<V> valueEquivalence) {
       this.valueEquivalence = valueEquivalence;
       return this;
    }

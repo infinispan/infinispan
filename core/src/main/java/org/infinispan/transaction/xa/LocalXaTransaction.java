@@ -24,6 +24,7 @@ package org.infinispan.transaction.xa;
 
 import org.infinispan.transaction.LocalTransaction;
 import org.infinispan.transaction.xa.recovery.RecoverableTransactionIdentifier;
+import org.infinispan.util.Equivalence;
 
 import javax.transaction.Transaction;
 import javax.transaction.xa.Xid;
@@ -38,8 +39,9 @@ public class LocalXaTransaction extends LocalTransaction {
 
    private Xid xid;
 
-   public LocalXaTransaction(Transaction transaction, GlobalTransaction tx, boolean implicitTransaction, int topologyId) {
-      super(transaction, tx, implicitTransaction, topologyId);
+   public LocalXaTransaction(Transaction transaction, GlobalTransaction tx,
+         boolean implicitTransaction, int topologyId, Equivalence<Object> keyEquivalence) {
+      super(transaction, tx, implicitTransaction, topologyId, keyEquivalence);
    }
 
    public void setXid(Xid xid) {

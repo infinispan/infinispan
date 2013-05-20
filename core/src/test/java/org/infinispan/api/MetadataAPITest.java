@@ -220,8 +220,18 @@ public class MetadataAPITest extends SingleCacheManagerTest {
       }
 
       @Override
+      public Builder lifespan(long time) {
+         return lifespan(time, TimeUnit.MILLISECONDS);
+      }
+
+      @Override
       public Builder maxIdle(long time, TimeUnit unit) {
          return new CustomMetadata(lifespan, unit.toMillis(time));
+      }
+
+      @Override
+      public Builder maxIdle(long time) {
+         return maxIdle(time, TimeUnit.MILLISECONDS);
       }
 
       @Override

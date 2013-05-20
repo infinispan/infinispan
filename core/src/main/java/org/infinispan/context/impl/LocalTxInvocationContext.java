@@ -50,12 +50,12 @@ import java.util.Set;
  */
 public class LocalTxInvocationContext extends AbstractTxInvocationContext {
 
-   public final Map<Object,CacheEntry> emptyEntryMap;
+   public final Map<Object, CacheEntry> emptyEntryMap;
 
    private LocalTransaction localTransaction;
 
-   public LocalTxInvocationContext(Equivalence keyEq) {
-      emptyEntryMap = CollectionFactory.makeMap(0, keyEq, AnyEquivalence.OBJECT);
+   public LocalTxInvocationContext(Equivalence<Object> keyEq) {
+      emptyEntryMap = CollectionFactory.makeMap(0, keyEq, AnyEquivalence.<CacheEntry>getInstance());
    }
 
    @Override

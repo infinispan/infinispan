@@ -26,13 +26,15 @@ import org.infinispan.commands.write.WriteCommand;
 import org.infinispan.container.entries.CacheEntry;
 import org.infinispan.transaction.xa.GlobalTransaction;
 import org.infinispan.transaction.xa.InvalidTransactionException;
+import org.infinispan.util.AnyEquivalence;
+import org.infinispan.util.CollectionFactory;
+import org.infinispan.util.Equivalence;
 import org.infinispan.util.InfinispanCollections;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.Map;
 
@@ -57,18 +59,19 @@ public class RemoteTransaction extends AbstractCacheTransaction implements Clone
    private volatile TotalOrderRemoteTransactionState transactionState;
    private final Object transactionStateLock = new Object();
 
-   public RemoteTransaction(WriteCommand[] modifications, GlobalTransaction tx, int topologyId) {
-      super(tx, topologyId);
+   public RemoteTransaction(WriteCommand[] modifications, GlobalTransaction tx, int topologyId, Equivalence<Object> keyEquivalence) {
+      super(tx, topologyId, keyEquivalence);
       this.modifications = modifications == null || modifications.length == 0
             ? InfinispanCollections.<WriteCommand>emptyList()
             : Arrays.asList(modifications);
-      lookedUpEntries = new HashMap<Object, CacheEntry>(this.modifications.size());
+      lookedUpEntries = CollectionFactory.makeMap(
+            this.modifications.size(), keyEquivalence, AnyEquivalence.<CacheEntry>getInstance());
    }
 
-   public RemoteTransaction(GlobalTransaction tx, int topologyId) {
-      super(tx, topologyId);
+   public RemoteTransaction(GlobalTransaction tx, int topologyId, Equivalence<Object> keyEquivalence) {
+      super(tx, topologyId, keyEquivalence);
       this.modifications = new LinkedList<WriteCommand>();
-      lookedUpEntries = new HashMap<Object, CacheEntry>(2);
+      lookedUpEntries = CollectionFactory.makeMap(2, keyEquivalence, AnyEquivalence.<CacheEntry>getInstance());
    }
 
    @Override
@@ -103,12 +106,12 @@ public class RemoteTransaction extends AbstractCacheTransaction implements Clone
    }
 
    @Override
-   @SuppressWarnings("unchecked")
    public Object clone() {
       try {
          RemoteTransaction dolly = (RemoteTransaction) super.clone();
          dolly.modifications = new ArrayList<WriteCommand>(modifications);
-         dolly.lookedUpEntries = new HashMap<Object, CacheEntry>(lookedUpEntries);
+         dolly.lookedUpEntries = CollectionFactory.makeMap(
+               lookedUpEntries, keyEquivalence, AnyEquivalence.<CacheEntry>getInstance());
          return dolly;
       } catch (CloneNotSupportedException e) {
          throw new IllegalStateException("Impossible!!");

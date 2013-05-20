@@ -380,8 +380,7 @@ public interface ClusteringDependentLogic {
                   // transform for L1
                   if (entry.getLifespan() < 0 || entry.getLifespan() > configuration.clustering().l1().lifespan()) {
                      Metadata newMetadata = entry.getMetadata().builder()
-                           .lifespan(configuration.clustering().l1().lifespan(),
-                                 TimeUnit.MILLISECONDS)
+                           .lifespan(configuration.clustering().l1().lifespan())
                            .build();
                      entry.setMetadata(newMetadata);
                   }

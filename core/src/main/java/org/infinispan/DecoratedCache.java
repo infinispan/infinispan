@@ -156,7 +156,7 @@ public class DecoratedCache<K, V> extends AbstractDelegatingAdvancedCache<K, V> 
    public V put(K key, V value, long lifespan, TimeUnit unit) {
       Metadata metadata = new EmbeddedMetadata.Builder()
             .lifespan(lifespan, unit)
-            .maxIdle(cacheImplementation.defaultMaxIdleTime, MILLISECONDS)
+            .maxIdle(cacheImplementation.defaultMetadata.maxIdle(), MILLISECONDS)
             .build();
 
       return cacheImplementation.put(key, value, metadata, flags, classLoader.get());
@@ -166,7 +166,7 @@ public class DecoratedCache<K, V> extends AbstractDelegatingAdvancedCache<K, V> 
    public V putIfAbsent(K key, V value, long lifespan, TimeUnit unit) {
       Metadata metadata = new EmbeddedMetadata.Builder()
             .lifespan(lifespan, unit)
-            .maxIdle(cacheImplementation.defaultMaxIdleTime, MILLISECONDS)
+            .maxIdle(cacheImplementation.defaultMetadata.maxIdle(), MILLISECONDS)
             .build();
 
       return cacheImplementation.putIfAbsent(key, value, metadata, flags, classLoader.get());
@@ -176,7 +176,7 @@ public class DecoratedCache<K, V> extends AbstractDelegatingAdvancedCache<K, V> 
    public void putAll(Map<? extends K, ? extends V> map, long lifespan, TimeUnit unit) {
       Metadata metadata = new EmbeddedMetadata.Builder()
             .lifespan(lifespan, unit)
-            .maxIdle(cacheImplementation.defaultMaxIdleTime, MILLISECONDS)
+            .maxIdle(cacheImplementation.defaultMetadata.maxIdle(), MILLISECONDS)
             .build();
       cacheImplementation.putAll(map, metadata, flags, classLoader.get());
    }
@@ -185,7 +185,7 @@ public class DecoratedCache<K, V> extends AbstractDelegatingAdvancedCache<K, V> 
    public V replace(K key, V value, long lifespan, TimeUnit unit) {
       Metadata metadata = new EmbeddedMetadata.Builder()
             .lifespan(lifespan, unit)
-            .maxIdle(cacheImplementation.defaultMaxIdleTime, MILLISECONDS)
+            .maxIdle(cacheImplementation.defaultMetadata.maxIdle(), MILLISECONDS)
             .build();
 
       return cacheImplementation.replace(key, value, metadata, flags, classLoader.get());
@@ -195,7 +195,7 @@ public class DecoratedCache<K, V> extends AbstractDelegatingAdvancedCache<K, V> 
    public boolean replace(K key, V oldValue, V value, long lifespan, TimeUnit unit) {
       Metadata metadata = new EmbeddedMetadata.Builder()
             .lifespan(lifespan, unit)
-            .maxIdle(cacheImplementation.defaultMaxIdleTime, MILLISECONDS)
+            .maxIdle(cacheImplementation.defaultMetadata.maxIdle(), MILLISECONDS)
             .build();
 
       return cacheImplementation.replace(key, oldValue, value, metadata, flags, classLoader.get());
@@ -252,19 +252,14 @@ public class DecoratedCache<K, V> extends AbstractDelegatingAdvancedCache<K, V> 
 
    @Override
    public NotifyingFuture<V> putAsync(K key, V value) {
-      Metadata metadata = new EmbeddedMetadata.Builder()
-            .lifespan(cacheImplementation.defaultLifespan, MILLISECONDS)
-            .maxIdle(cacheImplementation.defaultMaxIdleTime, MILLISECONDS)
-            .build();
-
-      return cacheImplementation.putAsync(key, value, metadata, flags, classLoader.get());
+      return cacheImplementation.putAsync(key, value, cacheImplementation.defaultMetadata, flags, classLoader.get());
    }
 
    @Override
    public NotifyingFuture<V> putAsync(K key, V value, long lifespan, TimeUnit unit) {
       Metadata metadata = new EmbeddedMetadata.Builder()
             .lifespan(lifespan, unit)
-            .maxIdle(cacheImplementation.defaultMaxIdleTime, MILLISECONDS)
+            .maxIdle(cacheImplementation.defaultMetadata.maxIdle(), MILLISECONDS)
             .build();
 
       return cacheImplementation.putAsync(key, value, metadata, flags, classLoader.get());
@@ -282,18 +277,14 @@ public class DecoratedCache<K, V> extends AbstractDelegatingAdvancedCache<K, V> 
 
    @Override
    public NotifyingFuture<Void> putAllAsync(Map<? extends K, ? extends V> data) {
-      Metadata metadata = new EmbeddedMetadata.Builder()
-            .lifespan(cacheImplementation.defaultLifespan, MILLISECONDS)
-            .maxIdle(cacheImplementation.defaultMaxIdleTime, MILLISECONDS)
-            .build();
-      return cacheImplementation.putAllAsync(data, metadata, flags, classLoader.get());
+      return cacheImplementation.putAllAsync(data, cacheImplementation.defaultMetadata, flags, classLoader.get());
    }
 
    @Override
    public NotifyingFuture<Void> putAllAsync(Map<? extends K, ? extends V> data, long lifespan, TimeUnit unit) {
       Metadata metadata = new EmbeddedMetadata.Builder()
             .lifespan(lifespan, unit)
-            .maxIdle(cacheImplementation.defaultMaxIdleTime, MILLISECONDS)
+            .maxIdle(cacheImplementation.defaultMetadata.maxIdle(), MILLISECONDS)
             .build();
       return cacheImplementation.putAllAsync(data, metadata, flags, classLoader.get());
    }
@@ -314,19 +305,14 @@ public class DecoratedCache<K, V> extends AbstractDelegatingAdvancedCache<K, V> 
 
    @Override
    public NotifyingFuture<V> putIfAbsentAsync(K key, V value) {
-      Metadata metadata = new EmbeddedMetadata.Builder()
-            .lifespan(cacheImplementation.defaultLifespan, MILLISECONDS)
-            .maxIdle(cacheImplementation.defaultMaxIdleTime, MILLISECONDS)
-            .build();
-
-      return cacheImplementation.putIfAbsentAsync(key, value, metadata, flags, classLoader.get());
+      return cacheImplementation.putIfAbsentAsync(key, value, cacheImplementation.defaultMetadata, flags, classLoader.get());
    }
 
    @Override
    public NotifyingFuture<V> putIfAbsentAsync(K key, V value, long lifespan, TimeUnit unit) {
       Metadata metadata = new EmbeddedMetadata.Builder()
             .lifespan(lifespan, unit)
-            .maxIdle(cacheImplementation.defaultMaxIdleTime, MILLISECONDS)
+            .maxIdle(cacheImplementation.defaultMetadata.maxIdle(), MILLISECONDS)
             .build();
 
       return cacheImplementation.putIfAbsentAsync(key, value, metadata, flags, classLoader.get());
@@ -354,19 +340,14 @@ public class DecoratedCache<K, V> extends AbstractDelegatingAdvancedCache<K, V> 
 
    @Override
    public NotifyingFuture<V> replaceAsync(K key, V value) {
-      Metadata metadata = new EmbeddedMetadata.Builder()
-            .lifespan(cacheImplementation.defaultLifespan, MILLISECONDS)
-            .maxIdle(cacheImplementation.defaultMaxIdleTime, MILLISECONDS)
-            .build();
-
-      return cacheImplementation.replaceAsync(key, value, metadata, flags, classLoader.get());
+      return cacheImplementation.replaceAsync(key, value, cacheImplementation.defaultMetadata, flags, classLoader.get());
    }
 
    @Override
    public NotifyingFuture<V> replaceAsync(K key, V value, long lifespan, TimeUnit unit) {
       Metadata metadata = new EmbeddedMetadata.Builder()
             .lifespan(lifespan, unit)
-            .maxIdle(cacheImplementation.defaultMaxIdleTime, MILLISECONDS)
+            .maxIdle(cacheImplementation.defaultMetadata.maxIdle(), MILLISECONDS)
             .build();
 
       return cacheImplementation.replaceAsync(key, value, metadata, flags, classLoader.get());
@@ -384,19 +365,14 @@ public class DecoratedCache<K, V> extends AbstractDelegatingAdvancedCache<K, V> 
 
    @Override
    public NotifyingFuture<Boolean> replaceAsync(K key, V oldValue, V newValue) {
-      Metadata metadata = new EmbeddedMetadata.Builder()
-            .lifespan(cacheImplementation.defaultLifespan, MILLISECONDS)
-            .maxIdle(cacheImplementation.defaultMaxIdleTime, MILLISECONDS)
-            .build();
-
-      return cacheImplementation.replaceAsync(key, oldValue, newValue, metadata, flags, classLoader.get());
+      return cacheImplementation.replaceAsync(key, oldValue, newValue, cacheImplementation.defaultMetadata, flags, classLoader.get());
    }
 
    @Override
    public NotifyingFuture<Boolean> replaceAsync(K key, V oldValue, V newValue, long lifespan, TimeUnit unit) {
       Metadata metadata = new EmbeddedMetadata.Builder()
             .lifespan(lifespan, unit)
-            .maxIdle(cacheImplementation.defaultMaxIdleTime, MILLISECONDS)
+            .maxIdle(cacheImplementation.defaultMetadata.maxIdle(), MILLISECONDS)
             .build();
 
       return cacheImplementation.replaceAsync(key, oldValue, newValue, metadata, flags, classLoader.get());
@@ -439,12 +415,7 @@ public class DecoratedCache<K, V> extends AbstractDelegatingAdvancedCache<K, V> 
 
    @Override
    public V put(K key, V value) {
-      Metadata metadata = new EmbeddedMetadata.Builder()
-            .lifespan(cacheImplementation.defaultLifespan, MILLISECONDS)
-            .maxIdle(cacheImplementation.defaultMaxIdleTime, MILLISECONDS)
-            .build();
-
-      return cacheImplementation.put(key, value, metadata, flags, classLoader.get());
+      return cacheImplementation.put(key, value, cacheImplementation.defaultMetadata, flags, classLoader.get());
    }
 
    @Override
@@ -454,12 +425,7 @@ public class DecoratedCache<K, V> extends AbstractDelegatingAdvancedCache<K, V> 
 
    @Override
    public void putAll(Map<? extends K, ? extends V> m) {
-      Metadata metadata = new EmbeddedMetadata.Builder()
-            .lifespan(cacheImplementation.defaultLifespan, MILLISECONDS)
-            .maxIdle(cacheImplementation.defaultMaxIdleTime, MILLISECONDS)
-            .build();
-
-      cacheImplementation.putAll(m, metadata, flags, classLoader.get());
+      cacheImplementation.putAll(m, cacheImplementation.defaultMetadata, flags, classLoader.get());
    }
 
    @Override
@@ -484,12 +450,7 @@ public class DecoratedCache<K, V> extends AbstractDelegatingAdvancedCache<K, V> 
 
    @Override
    public V putIfAbsent(K key, V value) {
-      Metadata metadata = new EmbeddedMetadata.Builder()
-            .lifespan(cacheImplementation.defaultLifespan, MILLISECONDS)
-            .maxIdle(cacheImplementation.defaultMaxIdleTime, MILLISECONDS)
-            .build();
-
-      return cacheImplementation.putIfAbsent(key, value, metadata, flags, classLoader.get());
+      return cacheImplementation.putIfAbsent(key, value, cacheImplementation.defaultMetadata, flags, classLoader.get());
    }
 
    @Override
@@ -499,22 +460,12 @@ public class DecoratedCache<K, V> extends AbstractDelegatingAdvancedCache<K, V> 
 
    @Override
    public boolean replace(K key, V oldValue, V newValue) {
-      Metadata metadata = new EmbeddedMetadata.Builder()
-            .lifespan(cacheImplementation.defaultLifespan, MILLISECONDS)
-            .maxIdle(cacheImplementation.defaultMaxIdleTime, MILLISECONDS)
-            .build();
-
-      return cacheImplementation.replace(key, oldValue, newValue, metadata, flags, classLoader.get());
+      return cacheImplementation.replace(key, oldValue, newValue, cacheImplementation.defaultMetadata, flags, classLoader.get());
    }
 
    @Override
    public V replace(K key, V value) {
-      Metadata metadata = new EmbeddedMetadata.Builder()
-            .lifespan(cacheImplementation.defaultLifespan, MILLISECONDS)
-            .maxIdle(cacheImplementation.defaultMaxIdleTime, MILLISECONDS)
-            .build();
-
-      return cacheImplementation.replace(key, value, metadata, flags, classLoader.get());
+      return cacheImplementation.replace(key, value, cacheImplementation.defaultMetadata, flags, classLoader.get());
    }
 
    //Not exposed on interface

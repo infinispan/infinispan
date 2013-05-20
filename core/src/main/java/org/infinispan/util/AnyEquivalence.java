@@ -31,7 +31,7 @@ package org.infinispan.util;
  */
 public final class AnyEquivalence<T> implements Equivalence<T> {
 
-   public static AnyEquivalence<Object> OBJECT = new AnyEquivalence<Object>();
+   private static AnyEquivalence<Object> OBJECT = new AnyEquivalence<Object>();
 
    public static AnyEquivalence<String> STRING = new AnyEquivalence<String>();
 
@@ -48,6 +48,10 @@ public final class AnyEquivalence<T> implements Equivalence<T> {
    public static AnyEquivalence<Float> FLOAT = new AnyEquivalence<Float>();
 
    public static AnyEquivalence<Boolean> BOOLEAN = new AnyEquivalence<Boolean>();
+
+   // To avoid instantiation
+   private AnyEquivalence() {
+   }
 
    @Override
    public int hashCode(Object obj) {
@@ -71,8 +75,13 @@ public final class AnyEquivalence<T> implements Equivalence<T> {
 
    @Override
    @SuppressWarnings("unchecked")
-   public int compare(Object obj, Object otherObj) {
-      return ((Comparable<Object>) obj).compareTo(otherObj);
+   public int compare(T obj, T otherObj) {
+      return ((Comparable<T>) obj).compareTo(otherObj);
+   }
+
+   @SuppressWarnings("unchecked")
+   public static <T> AnyEquivalence<T> getInstance() {
+      return (AnyEquivalence<T>) OBJECT;
    }
 
 }

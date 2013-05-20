@@ -228,7 +228,7 @@ public class VersionAwareMarshallerTest extends AbstractInfinispanTest {
    public void testReplicableCommandsMarshalling() throws Exception {
       String cacheName = EmbeddedCacheManager.DEFAULT_CACHE_NAME;
       ClusteredGetCommand c2 = new ClusteredGetCommand("key", cacheName,
-            Collections.<Flag>emptySet(), false, null, AnyEquivalence.OBJECT);
+            Collections.<Flag>emptySet(), false, null, AnyEquivalence.getInstance());
       marshallAndAssertEquality(c2);
 
       // SizeCommand does not have an empty constructor, so doesn't look to be one that is marshallable.
@@ -261,7 +261,7 @@ public class VersionAwareMarshallerTest extends AbstractInfinispanTest {
       assert Arrays.equals(rc71.getParameters(), c71.getParameters()) : "Writen[" + c71.getParameters() + "] and read[" + rc71.getParameters() + "] objects should be the same";
 
       ReplaceCommand c8 = new ReplaceCommand("key", "oldvalue", "newvalue",
-            null, new EmbeddedMetadata.Builder().build(), Collections.EMPTY_SET, AnyEquivalence.OBJECT);
+            null, new EmbeddedMetadata.Builder().build(), Collections.EMPTY_SET, AnyEquivalence.getInstance());
       marshallAndAssertEquality(c8);
 
       ClearCommand c9 = new ClearCommand();
@@ -342,7 +342,7 @@ public class VersionAwareMarshallerTest extends AbstractInfinispanTest {
    public void testMultiRpcCommand() throws Exception {
       String cacheName = EmbeddedCacheManager.DEFAULT_CACHE_NAME;
       ClusteredGetCommand c2 = new ClusteredGetCommand("key", cacheName,
-            Collections.<Flag>emptySet(), false, null, AnyEquivalence.OBJECT);
+            Collections.<Flag>emptySet(), false, null, AnyEquivalence.getInstance());
       PutKeyValueCommand c5 = new PutKeyValueCommand(
             "k", "v", false, null, new EmbeddedMetadata.Builder().build(), Collections.<Flag>emptySet());
       MultipleRpcCommand c99 = new MultipleRpcCommand(Arrays.<ReplicableCommand>asList(c2, c5), cacheName);
