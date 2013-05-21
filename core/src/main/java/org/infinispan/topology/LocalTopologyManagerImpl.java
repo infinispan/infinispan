@@ -260,6 +260,7 @@ public class LocalTopologyManagerImpl implements LocalTopologyManager {
       Response response;
       if (transport.isCoordinator()) {
          try {
+            if (log.isTraceEnabled()) log.tracef("Attempting to execute command on self: %s", command);
             gcr.wireDependencies(command);
             response = (Response) command.perform(null);
          } catch (Throwable t) {
@@ -286,6 +287,7 @@ public class LocalTopologyManagerImpl implements LocalTopologyManager {
          asyncTransportExecutor.submit(new Callable<Object>() {
             @Override
             public Object call() throws Exception {
+               if (log.isTraceEnabled()) log.tracef("Attempting to execute command on self: %s", command);
                gcr.wireDependencies(command);
                try {
                   return command.perform(null);
