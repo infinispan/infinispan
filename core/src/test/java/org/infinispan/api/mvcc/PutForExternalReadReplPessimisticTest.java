@@ -1,6 +1,6 @@
 /*
  * JBoss, Home of Professional Open Source
- * Copyright 2012 Red Hat Inc. and/or its affiliates and other
+ * Copyright 2013 Red Hat Inc. and/or its affiliates and other
  * contributors as indicated by the @author tags. All rights reserved.
  * See the copyright.txt in the distribution for a full listing of
  * individual contributors.
@@ -20,22 +20,23 @@
  * Software Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
  * 02110-1301 USA, or see the FSF site: http://www.fsf.org.
  */
-package org.infinispan.statetransfer;
+package org.infinispan.api.mvcc;
 
+import org.infinispan.configuration.cache.CacheMode;
+import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.test.fwk.CleanupAfterMethod;
+import org.infinispan.transaction.LockingMode;
 import org.testng.annotations.Test;
 
-/**
- * Test ISPN-2362 and ISPN-2502 on replicated, optimistic cluster, with write-skew check.
- *
- * @author anistor@redhat.com
- * @since 5.2
- */
-@Test(groups = "functional", testName = "statetransfer.ReplStateTransferConsistencyOptimisticTest")
+@Test(groups = "functional", testName = "api.mvcc.PutForExternalReadReplPessimisticTest")
 @CleanupAfterMethod
-public class ReplStateTransferConsistencyOptimisticTest extends BaseReplStateTransferConsistencyTest {
+public class PutForExternalReadReplPessimisticTest extends PutForExternalReadTest {
 
-   protected ReplStateTransferConsistencyOptimisticTest() {
-      super(true);
+   @Override
+   protected ConfigurationBuilder createCacheConfigBuilder() {
+      ConfigurationBuilder c = getDefaultClusteredCacheConfig(CacheMode.REPL_SYNC, true);
+      c.transaction().lockingMode(LockingMode.PESSIMISTIC).useSynchronization(false)
+            .recovery().disable().locking().useLockStriping(false);
+      return c;
    }
 }

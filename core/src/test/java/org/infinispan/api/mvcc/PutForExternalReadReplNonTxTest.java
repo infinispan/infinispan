@@ -1,6 +1,6 @@
 /*
  * JBoss, Home of Professional Open Source
- * Copyright 2012 Red Hat Inc. and/or its affiliates and other
+ * Copyright 2013 Red Hat Inc. and/or its affiliates and other
  * contributors as indicated by the @author tags. All rights reserved.
  * See the copyright.txt in the distribution for a full listing of
  * individual contributors.
@@ -20,22 +20,36 @@
  * Software Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
  * 02110-1301 USA, or see the FSF site: http://www.fsf.org.
  */
-package org.infinispan.statetransfer;
+package org.infinispan.api.mvcc;
 
+import org.infinispan.configuration.cache.CacheMode;
+import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.test.fwk.CleanupAfterMethod;
 import org.testng.annotations.Test;
 
-/**
- * Test ISPN-2362 and ISPN-2502 on distributed, optimistic cluster, with write-skew check.
- *
- * @author anistor@redhat.com
- * @since 5.2
- */
-@Test(groups = "functional", testName = "statetransfer.DistStateTransferConsistencyOptimisticTest")
-@CleanupAfterMethod
-public class DistStateTransferConsistencyOptimisticTest extends BaseDistStateTransferConsistencyTest {
+import java.lang.reflect.Method;
 
-   public DistStateTransferConsistencyOptimisticTest() {
-      super(true);
+@Test(groups = "functional", testName = "api.mvcc.PutForExternalReadReplNonTxTest")
+@CleanupAfterMethod
+public class PutForExternalReadReplNonTxTest extends PutForExternalReadTest {
+
+   @Override
+   protected ConfigurationBuilder createCacheConfigBuilder() {
+      return getDefaultClusteredCacheConfig(CacheMode.REPL_SYNC, false);
+   }
+
+   @Override
+   public void testCacheModeLocalInTx(Method m) {
+      // not applicable in non-tx mode
+   }
+
+   @Override
+   public void testMemLeakOnSuspendedTransactions() {
+      // not applicable in non-tx mode
+   }
+
+   @Override
+   public void testTxSuspension() {
+      // not applicable in non-tx mode
    }
 }

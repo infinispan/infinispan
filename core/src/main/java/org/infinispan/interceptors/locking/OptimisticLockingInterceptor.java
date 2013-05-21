@@ -38,13 +38,11 @@ import org.infinispan.commands.write.RemoveCommand;
 import org.infinispan.commands.write.ReplaceCommand;
 import org.infinispan.commands.write.WriteCommand;
 import org.infinispan.configuration.cache.CacheMode;
-import org.infinispan.container.EntryFactory;
 import org.infinispan.container.entries.CacheEntry;
 import org.infinispan.container.entries.RepeatableReadEntry;
 import org.infinispan.context.Flag;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.context.impl.TxInvocationContext;
-import org.infinispan.factories.annotations.Inject;
 import org.infinispan.factories.annotations.Start;
 import org.infinispan.util.concurrent.IsolationLevel;
 import org.infinispan.util.logging.Log;
@@ -63,8 +61,6 @@ public class OptimisticLockingInterceptor extends AbstractTxLockingInterceptor {
    private LockAcquisitionVisitor lockAcquisitionVisitor;
    private boolean needToMarkReads;
 
-   EntryFactory entryFactory;
-
    private static final Log log = LogFactory.getLog(OptimisticLockingInterceptor.class);
 
    @Override
@@ -72,12 +68,6 @@ public class OptimisticLockingInterceptor extends AbstractTxLockingInterceptor {
       return log;
    }
 
-   @Inject
-   @SuppressWarnings("unused")
-   public void setDependencies(EntryFactory entryFactory) {
-      this.entryFactory = entryFactory;
-   }
-   
    @Start
    public void start() {
       if (cacheConfiguration.clustering().cacheMode() == CacheMode.LOCAL &&
@@ -93,10 +83,9 @@ public class OptimisticLockingInterceptor extends AbstractTxLockingInterceptor {
    }
 
    private void markKeyAsRead(InvocationContext ctx, AbstractDataCommand command) {
-      Object key = command.getKey();
       if (needToMarkReads && !command.hasFlag(Flag.IGNORE_RETURN_VALUES) && ctx.isInTxScope()) {
          TxInvocationContext tctx = (TxInvocationContext) ctx;
-         tctx.getCacheTransaction().addReadKey(key);
+         tctx.getCacheTransaction().addReadKey(command.getKey());
       }
    }
    
@@ -122,6 +111,11 @@ public class OptimisticLockingInterceptor extends AbstractTxLockingInterceptor {
 
    @Override
    public Object visitPutKeyValueCommand(InvocationContext ctx, PutKeyValueCommand command) throws Throwable {
+      if (command.hasFlag(Flag.PUT_FOR_EXTERNAL_READ)) {
+         // Cache.putForExternalRead() is non-transactional
+         return super.visitPutKeyValueCommand(ctx, command);
+      }
+
       try {
          if (command.isConditional()) markKeyAsRead(ctx, command);
          return invokeNextInterceptor(ctx, command);

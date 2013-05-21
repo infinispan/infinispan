@@ -22,11 +22,10 @@
  */
 package org.infinispan.interceptors.distribution;
 
+import org.infinispan.CacheException;
 import org.infinispan.commands.FlagAffectedCommand;
 import org.infinispan.commands.remote.ClusteredGetCommand;
-import org.infinispan.commands.write.PutMapCommand;
-import org.infinispan.commands.write.RemoveCommand;
-import org.infinispan.commands.write.ReplaceCommand;
+import org.infinispan.commands.write.DataWriteCommand;
 import org.infinispan.commands.write.WriteCommand;
 import org.infinispan.container.entries.InternalCacheEntry;
 import org.infinispan.container.entries.InternalCacheValue;
@@ -37,6 +36,7 @@ import org.infinispan.factories.annotations.Inject;
 import org.infinispan.interceptors.ClusteringInterceptor;
 import org.infinispan.interceptors.locking.ClusteringDependentLogic;
 import org.infinispan.remoting.responses.ClusteredGetResponseValidityFilter;
+import org.infinispan.remoting.responses.ExceptionResponse;
 import org.infinispan.remoting.responses.Response;
 import org.infinispan.remoting.responses.SuccessfulResponse;
 import org.infinispan.remoting.rpc.ResponseFilter;
@@ -79,7 +79,7 @@ public abstract class BaseDistributionInterceptor extends ClusteringInterceptor 
    }
 
    @Override
-   protected InternalCacheEntry retrieveFromRemoteSource(Object key, InvocationContext ctx, boolean acquireRemoteLock, FlagAffectedCommand command) throws Exception {
+   protected final InternalCacheEntry retrieveFromRemoteSource(Object key, InvocationContext ctx, boolean acquireRemoteLock, FlagAffectedCommand command) throws Exception {
       GlobalTransaction gtx = acquireRemoteLock ? ((TxInvocationContext)ctx).getGlobalTransaction() : null;
       ClusteredGetCommand get = cf.buildClusteredGetCommand(key, command.getFlags(), acquireRemoteLock, gtx);
 
@@ -106,44 +106,78 @@ public abstract class BaseDistributionInterceptor extends ClusteringInterceptor 
       return null;
    }
 
-   @Override
-   public Object visitPutMapCommand(InvocationContext ctx, PutMapCommand command) throws Throwable {
-      // don't bother with a remote get for the PutMapCommand!
-      return handleWriteCommand(ctx, command,
-                                new MultipleKeysRecipientGenerator(command.getMap().keySet()), true, false);
+   protected final Object handleNonTxWriteCommand(InvocationContext ctx, DataWriteCommand command) throws Throwable {
+      if (ctx.isInTxScope()) {
+         throw new CacheException("Attempted execution of non-transactional write command in a transactional invocation context");
+      }
+
+      RecipientGenerator recipientGenerator = new SingleKeyRecipientGenerator(command.getKey());
+
+      // see if we need to load values from remote sources first
+      remoteGetBeforeWrite(ctx, command, recipientGenerator);
+
+      // if this is local mode then skip distributing
+      if (isLocalModeForced(command)) {
+         return invokeNextInterceptor(ctx, command);
+      }
+
+      boolean isSync = isSynchronous(command);
+      if (!ctx.isOriginLocal()) {
+         Object returnValue = invokeNextInterceptor(ctx, command);
+         Address primaryOwner = cdl.getPrimaryOwner(command.getKey());
+         if (primaryOwner.equals(rpcManager.getAddress())) {
+            rpcManager.invokeRemotely(recipientGenerator.generateRecipients(), command, rpcManager.getDefaultRpcOptions(isSync));
+         }
+         return returnValue;
+      } else {
+         Address primaryOwner = cdl.getPrimaryOwner(command.getKey());
+         if (primaryOwner.equals(rpcManager.getAddress())) {
+            List<Address> recipients = recipientGenerator.generateRecipients();
+            log.tracef("I'm the primary owner, sending the command to all (%s) the recipients in order to be applied.", recipients);
+            Object result = invokeNextInterceptor(ctx, command);
+            // check if a single owner has been configured and the target for the key is the local address
+            boolean isSingleOwnerAndLocal = cacheConfiguration.clustering().hash().numOwners() == 1
+                  && recipients != null
+                  && recipients.size() == 1
+                  && recipients.get(0).equals(rpcManager.getTransport().getAddress());
+            if (!isSingleOwnerAndLocal) {
+               rpcManager.invokeRemotely(recipients, command, rpcManager.getDefaultRpcOptions(isSync));
+            }
+            return result;
+         } else {
+            log.tracef("I'm not the primary owner, so sending the command to the primary owner(%s) in order to be forwarded", primaryOwner);
+            Object localResult = invokeNextInterceptor(ctx, command);
+            Map<Address, Response> addressResponseMap = rpcManager.invokeRemotely(Collections.singletonList(primaryOwner), command,
+                  rpcManager.getDefaultRpcOptions(isSync));
+            //the remote node always returns the correct result, but if we're async, then our best option is the local
+            //node. That might be incorrect though.
+            if (!isSync) return localResult;
+
+            return getResponseFromPrimaryOwner(primaryOwner, addressResponseMap);
+         }
+      }
    }
 
-   @Override
-   public Object visitRemoveCommand(InvocationContext ctx, RemoveCommand command) throws Throwable {
-
-      return handleWriteCommand(ctx, command,
-                                new SingleKeyRecipientGenerator(command.getKey()), false, false);
+   private Object getResponseFromPrimaryOwner(Address primaryOwner, Map<Address, Response> addressResponseMap) {
+      Response fromPrimaryOwner = addressResponseMap.get(primaryOwner);
+      if (fromPrimaryOwner == null) {
+         log.tracef("Primary owner %s returned null", primaryOwner);
+         return null;
+      }
+      if (!fromPrimaryOwner.isSuccessful()) {
+         Throwable cause = fromPrimaryOwner instanceof ExceptionResponse ? ((ExceptionResponse)fromPrimaryOwner).getException() : null;
+         throw new CacheException("Got unsuccessful response from primary owner: " + fromPrimaryOwner, cause);
+      } else {
+         return ((SuccessfulResponse) fromPrimaryOwner).getResponseValue();
+      }
    }
 
-   @Override
-   public Object visitReplaceCommand(InvocationContext ctx, ReplaceCommand command) throws Throwable {
-      return handleWriteCommand(ctx, command,
-                                new SingleKeyRecipientGenerator(command.getKey()), false, false);
-   }
+   protected abstract void remoteGetBeforeWrite(InvocationContext ctx, WriteCommand command, RecipientGenerator keygen) throws Throwable;
 
-   protected abstract Object handleWriteCommand(InvocationContext ctx, WriteCommand command, RecipientGenerator recipientGenerator, boolean skipRemoteGet, boolean skipL1Invalidation) throws Throwable;
+   interface RecipientGenerator {
 
-   /**
-    * If a single owner has been configured and the target for the key is the local address, it returns true.
-    */
-   protected boolean isSingleOwnerAndLocal(RecipientGenerator recipientGenerator) {
-      List<Address> recipients;
-      return cacheConfiguration.clustering().hash().numOwners() == 1
-            && (recipients = recipientGenerator.generateRecipients()) != null
-            && recipients.size() == 1
-            && recipients.get(0).equals(rpcManager.getTransport().getAddress());
-   }
-
-   interface KeyGenerator {
       Collection<Object> getKeys();
-   }
 
-   interface RecipientGenerator extends KeyGenerator {
       List<Address> generateRecipients();
    }
 
@@ -192,5 +226,4 @@ public abstract class BaseDistributionInterceptor extends ClusteringInterceptor 
          return keys;
       }
    }
-
 }

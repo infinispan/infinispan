@@ -24,12 +24,9 @@
 package org.infinispan.interceptors.locking;
 
 import org.infinispan.InvalidCacheUsageException;
-import org.infinispan.commands.FlagAffectedCommand;
 import org.infinispan.commands.read.GetKeyValueCommand;
 import org.infinispan.commands.write.ClearCommand;
-import org.infinispan.commands.write.DataWriteCommand;
 import org.infinispan.commands.write.EvictCommand;
-import org.infinispan.commands.write.PutKeyValueCommand;
 import org.infinispan.commands.write.PutMapCommand;
 import org.infinispan.commands.write.RemoveCommand;
 import org.infinispan.commands.write.ReplaceCommand;
@@ -64,23 +61,8 @@ public class NonTransactionalLockingInterceptor extends AbstractLockingIntercept
    }
 
    @Override
-   public Object visitPutKeyValueCommand(InvocationContext ctx, PutKeyValueCommand command) throws Throwable {
-      assertNonTransactional(ctx);
-      try {
-         if (!shouldLock(command.getKey(), command))
-            return invokeNextInterceptor(ctx, command);
-         lockKey(ctx, command);
-         return invokeNextInterceptor(ctx, command);
-      } catch (Throwable te) {
-         throw cleanLocksAndRethrow(ctx, te);
-      }
-      finally {
-         lockManager.unlockAll(ctx);
-      }
-   }
-
-   @Override
    public Object visitClearCommand(InvocationContext ctx, ClearCommand command) throws Throwable {
+      assertNonTransactional(ctx);
       boolean skipLocking = hasSkipLocking(command);
       long lockTimeout = getLockAcquisitionTimeout(command, skipLocking);
       for (Object key: dataContainer.keySet()) {
@@ -99,9 +81,9 @@ public class NonTransactionalLockingInterceptor extends AbstractLockingIntercept
    public Object visitPutMapCommand(InvocationContext ctx, PutMapCommand command) throws Throwable {
       assertNonTransactional(ctx);
       try {
-         boolean skipLocking = hasSkipLocking(command);
-         long lockTimeout = getLockAcquisitionTimeout(command, skipLocking);
          if (!command.isForwarded()) {
+            boolean skipLocking = hasSkipLocking(command);
+            long lockTimeout = getLockAcquisitionTimeout(command, skipLocking);
             for (Object key : command.getMap().keySet()) {
                if (shouldLock(key, command))
                   lockKey(ctx, key, lockTimeout, skipLocking);
@@ -160,21 +142,5 @@ public class NonTransactionalLockingInterceptor extends AbstractLockingIntercept
          throw new InvalidCacheUsageException(
                "This is a non-transactional cache and cannot be accessed with a transactional InvocationContext.");
       }
-   }
-
-   private boolean shouldLock(Object key, FlagAffectedCommand command) {
-      if (hasSkipLocking(command))
-         return false;
-      if (!cacheConfiguration.clustering().cacheMode().isClustered())
-         return true;
-      boolean shouldLock = cdl.localNodeIsPrimaryOwner(key);
-      log.tracef("Are (%s) we the lock owners for key '%s'? %s", cdl.getAddress(), key, shouldLock);
-      return shouldLock;
-   }
-
-   private void lockKey(InvocationContext ctx, DataWriteCommand command) throws InterruptedException {
-      boolean skipLocking = hasSkipLocking(command);
-      long lockTimeout = getLockAcquisitionTimeout(command, skipLocking);
-      lockKey(ctx, command.getKey(), lockTimeout, skipLocking);
    }
 }

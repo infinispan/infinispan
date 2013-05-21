@@ -106,6 +106,11 @@ public class PessimisticLockingInterceptor extends AbstractTxLockingInterceptor 
 
    @Override
    public Object visitPutKeyValueCommand(InvocationContext ctx, PutKeyValueCommand command) throws Throwable {
+      if (command.hasFlag(Flag.PUT_FOR_EXTERNAL_READ)) {
+         // Cache.putForExternalRead() is non-transactional
+         return super.visitPutKeyValueCommand(ctx, command);
+      }
+
       // needed by the stat transfer.
       if (command.hasFlag(Flag.SKIP_LOCKING))
          return invokeNextInterceptor(ctx, command);
@@ -170,9 +175,9 @@ public class PessimisticLockingInterceptor extends AbstractTxLockingInterceptor 
       try {
          HashSet<Object> keysToLock = new HashSet<Object>(Arrays.asList(compositeKeys));
          acquireRemoteIfNeeded(ctx, keysToLock, command);
-         boolean skipLocking = hasSkipLocking(command);
-         long lockTimeout = getLockAcquisitionTimeout(command, skipLocking);
          if (cdl.localNodeIsOwner(command.getKey())) {
+            boolean skipLocking = hasSkipLocking(command);
+            long lockTimeout = getLockAcquisitionTimeout(command, skipLocking);
             for (Object key : compositeKeys) {
                lockKey(ctx, key, lockTimeout, skipLocking);
             }      
@@ -300,7 +305,7 @@ public class PessimisticLockingInterceptor extends AbstractTxLockingInterceptor 
       }
    }
 
-   protected final void lockAndRegisterBackupLock(TxInvocationContext ctx,
+   private void lockAndRegisterBackupLock(TxInvocationContext ctx,
          Object key, boolean isLockOwner, long lockTimeout, boolean skipLocking) throws InterruptedException {
       if (isLockOwner) {
          lockKeyAndCheckOwnership(ctx, key, lockTimeout, skipLocking);

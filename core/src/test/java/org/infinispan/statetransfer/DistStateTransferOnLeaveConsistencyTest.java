@@ -28,10 +28,9 @@ import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.cache.VersioningScheme;
 import org.infinispan.container.DataContainer;
-import org.infinispan.container.entries.InternalCacheEntry;
 import org.infinispan.context.Flag;
 import org.infinispan.context.InvocationContext;
-import org.infinispan.interceptors.InvocationContextInterceptor;
+import org.infinispan.distribution.ch.ConsistentHash;
 import org.infinispan.interceptors.base.CommandInterceptor;
 import org.infinispan.test.MultipleCacheManagersTest;
 import org.infinispan.test.TestingUtil;
@@ -53,78 +52,101 @@ import java.util.concurrent.TimeoutException;
 import static org.junit.Assert.*;
 
 /**
- * Base test class for issues ISPN-2362 and ISPN-2502 in replicated mode. Uses a cluster which initially has two nodes
- * and then a third is added to test consistency of state transfer.
+ * Test for ISPN-2362 and ISPN-2502 in distributed mode. Uses a cluster which initially has 3 nodes and
+ * the second node is killed in order to cause a state transfer and then test consistency.
+ * Tests several operations both in an optimistic tx cluster (with write-skew check enabled) and in a pessimistic tx one.
  *
  * @author anistor@redhat.com
  * @since 5.2
  */
-@Test(groups = "functional")
+@Test(groups = "functional", testName = "statetransfer.DistStateTransferOnLeaveConsistencyTest")
 @CleanupAfterMethod
-public abstract class BaseReplStateTransferConsistencyTest extends MultipleCacheManagersTest {
+public class DistStateTransferOnLeaveConsistencyTest extends MultipleCacheManagersTest {
 
-   private static final Log log = LogFactory.getLog(BaseReplStateTransferConsistencyTest.class);
+   private static final Log log = LogFactory.getLog(DistStateTransferOnLeaveConsistencyTest.class);
 
    private enum Operation {
       REMOVE, CLEAR, PUT, PUT_MAP, PUT_IF_ABSENT, REPLACE
    }
 
-   private ConfigurationBuilder cacheConfigBuilder;
-
-   private final boolean isOptimistic;
-
-   protected BaseReplStateTransferConsistencyTest(boolean isOptimistic) {
-      this.isOptimistic = isOptimistic;
+   @Override
+   protected final void createCacheManagers() {
+      // cache managers will be created by each test
    }
 
-   @Override
-   protected void createCacheManagers() {
-      cacheConfigBuilder = getDefaultClusteredCacheConfig(CacheMode.REPL_SYNC, true, true);
-      cacheConfigBuilder.transaction().transactionMode(TransactionMode.TRANSACTIONAL)
+   protected ConfigurationBuilder createConfigurationBuilder(boolean isOptimistic) {
+      ConfigurationBuilder builder = getDefaultClusteredCacheConfig(CacheMode.DIST_SYNC, true, true);
+      builder.transaction().transactionMode(TransactionMode.TRANSACTIONAL)
             .transactionManagerLookup(new DummyTransactionManagerLookup())
             .syncCommitPhase(true).syncRollbackPhase(true);
 
       if (isOptimistic) {
-         cacheConfigBuilder.transaction().lockingMode(LockingMode.OPTIMISTIC)
+         builder.transaction().lockingMode(LockingMode.OPTIMISTIC)
                .locking().writeSkewCheck(true).isolationLevel(IsolationLevel.REPEATABLE_READ)
                .versioning().enable().scheme(VersioningScheme.SIMPLE);
       } else {
-         cacheConfigBuilder.transaction().lockingMode(LockingMode.PESSIMISTIC);
+         builder.transaction().lockingMode(LockingMode.PESSIMISTIC);
       }
 
-      cacheConfigBuilder.clustering().l1().disable().onRehash(false).locking().lockAcquisitionTimeout(1000l);
-      cacheConfigBuilder.clustering().hash().numSegments(10)
-            .stateTransfer().fetchInMemoryState(true).awaitInitialTransfer(false);
+      builder.clustering().hash().numSegments(10).numOwners(2).l1().disable().onRehash(false).locking().lockAcquisitionTimeout(1000l);
+      builder.clustering().stateTransfer().fetchInMemoryState(true).awaitInitialTransfer(false);
+      return builder;
+   }
 
-      createCluster(cacheConfigBuilder, 2);
+   public void testRemoveOptimistic() throws Exception {
+      testOperationDuringLeave(Operation.REMOVE, true);
+   }
+
+   public void testRemovePessimistic() throws Exception {
+      testOperationDuringLeave(Operation.REMOVE, false);
+   }
+
+   public void testClearOptimistic() throws Exception {
+      testOperationDuringLeave(Operation.CLEAR, true);
+   }
+
+   public void testClearPessimistic() throws Exception {
+      testOperationDuringLeave(Operation.CLEAR, false);
+   }
+
+   public void testPutOptimistic() throws Exception {
+      testOperationDuringLeave(Operation.PUT, true);
+   }
+
+   public void testPutPessimistic() throws Exception {
+      testOperationDuringLeave(Operation.PUT, false);
+   }
+
+   public void testPutMapOptimistic() throws Exception {
+      testOperationDuringLeave(Operation.PUT_MAP, true);
+   }
+
+   public void testPutMapPessimistic() throws Exception {
+      testOperationDuringLeave(Operation.PUT_MAP, false);
+   }
+
+   public void testPutIfAbsentOptimistic() throws Exception {
+      testOperationDuringLeave(Operation.PUT_IF_ABSENT, true);
+   }
+
+   public void testPutIfAbsentPessimistic() throws Exception {
+      testOperationDuringLeave(Operation.PUT_IF_ABSENT, false);
+   }
+
+   public void testReplaceOptimistic() throws Exception {
+      testOperationDuringLeave(Operation.REPLACE, true);
+   }
+
+   public void testReplacePessimistic() throws Exception {
+      testOperationDuringLeave(Operation.REPLACE, false);
+   }
+
+   private void testOperationDuringLeave(Operation op, boolean isOptimistic) throws Exception {
+      ConfigurationBuilder builder = createConfigurationBuilder(isOptimistic);
+
+      createCluster(builder, 3);
       waitForClusterToForm();
-   }
 
-   public void testRemove() throws Exception {
-      testStateTransferConsistency(Operation.REMOVE);
-   }
-
-   public void testClear() throws Exception {
-      testStateTransferConsistency(Operation.CLEAR);
-   }
-
-   public void testPut() throws Exception {
-      testStateTransferConsistency(Operation.PUT);
-   }
-
-   public void testPutMap() throws Exception {
-      testStateTransferConsistency(Operation.PUT_MAP);
-   }
-
-   public void testPutIfAbsent() throws Exception {
-      testStateTransferConsistency(Operation.PUT_IF_ABSENT);
-   }
-
-   public void testReplace() throws Exception {
-      testStateTransferConsistency(Operation.REPLACE);
-   }
-
-   private void testStateTransferConsistency(Operation op) throws Exception {
       final int numKeys = 5;
       log.infof("Putting %d keys into cache ..", numKeys);
       for (int i = 0; i < numKeys; i++) {
@@ -133,21 +155,21 @@ public abstract class BaseReplStateTransferConsistencyTest extends MultipleCache
       log.info("Finished putting keys");
 
       for (int i = 0; i < numKeys; i++) {
-         String expected = "before_st_" + i;
-         assertValue(0, i, expected);
-         assertValue(1, i, expected);
+         assertEquals("before_st_" + i, cache(0).get(i));
+         assertEquals("before_st_" + i, cache(1).get(i));
+         assertEquals("before_st_" + i, cache(2).get(i));
       }
 
       final CountDownLatch applyStateProceedLatch = new CountDownLatch(1);
-      final CountDownLatch applyStateStartedLatch = new CountDownLatch(1);
-      cacheConfigBuilder.customInterceptors().addInterceptor().before(InvocationContextInterceptor.class).interceptor(new CommandInterceptor() {
+      final CountDownLatch applyStateStartedLatch1 = new CountDownLatch(1);
+      advancedCache(0).addInterceptor(new CommandInterceptor() {
          @Override
          protected Object handleDefault(InvocationContext ctx, VisitableCommand cmd) throws Throwable {
             // if this 'put' command is caused by state transfer we delay it to ensure other cache operations
             // are performed first and create opportunity for inconsistencies
             if (cmd instanceof PutKeyValueCommand && ((PutKeyValueCommand) cmd).hasFlag(Flag.PUT_FOR_STATE_TRANSFER)) {
                // signal we encounter a state transfer PUT
-               applyStateStartedLatch.countDown();
+               applyStateStartedLatch1.countDown();
                // wait until it is ok to apply state
                if (!applyStateProceedLatch.await(15, TimeUnit.SECONDS)) {
                   throw new TimeoutException();
@@ -155,18 +177,38 @@ public abstract class BaseReplStateTransferConsistencyTest extends MultipleCache
             }
             return super.handleDefault(ctx, cmd);
          }
-      });
+      }, 0);
 
-      log.info("Adding a new node ..");
-      addClusterEnabledCacheManager(cacheConfigBuilder);
-      log.info("Added a new node");
+      final CountDownLatch applyStateStartedLatch2 = new CountDownLatch(1);
+      advancedCache(2).addInterceptor(new CommandInterceptor() {
+         @Override
+         protected Object handleDefault(InvocationContext ctx, VisitableCommand cmd) throws Throwable {
+            // if this 'put' command is caused by state transfer we delay it to ensure other cache operations
+            // are performed first and create opportunity for inconsistencies
+            if (cmd instanceof PutKeyValueCommand && ((PutKeyValueCommand) cmd).hasFlag(Flag.PUT_FOR_STATE_TRANSFER)) {
+               // signal we encounter a state transfer PUT
+               applyStateStartedLatch2.countDown();
+               // wait until it is ok to apply state
+               if (!applyStateProceedLatch.await(15, TimeUnit.SECONDS)) {
+                  throw new TimeoutException();
+               }
+            }
+            return super.handleDefault(ctx, cmd);
+         }
+      }, 0);
+
+      log.info("Killing node 1 ..");
+      TestingUtil.killCacheManagers(manager(1));
+      log.info("Node 1 killed");
 
       DataContainer dc0 = advancedCache(0).getDataContainer();
-      DataContainer dc1 = advancedCache(1).getDataContainer();
       DataContainer dc2 = advancedCache(2).getDataContainer();
 
-      // wait for state transfer on node C to progress to the point where data segments are about to be applied
-      if (!applyStateStartedLatch.await(15, TimeUnit.SECONDS)) {
+      // wait for state transfer on nodes A and C to progress to the point where data segments are about to be applied
+      if (!applyStateStartedLatch1.await(15, TimeUnit.SECONDS)) {
+         throw new TimeoutException();
+      }
+      if (!applyStateStartedLatch2.await(15, TimeUnit.SECONDS)) {
          throw new TimeoutException();
       }
 
@@ -176,7 +218,7 @@ public abstract class BaseReplStateTransferConsistencyTest extends MultipleCache
          log.info("Finished clearing cache");
 
          assertEquals(0, dc0.size());
-         assertEquals(0, dc1.size());
+         assertEquals(0, dc2.size());
       } else if (op == Operation.REMOVE) {
          log.info("Removing all keys one by one ..");
          for (int i = 0; i < numKeys; i++) {
@@ -185,7 +227,7 @@ public abstract class BaseReplStateTransferConsistencyTest extends MultipleCache
          log.info("Finished removing keys");
 
          assertEquals(0, dc0.size());
-         assertEquals(0, dc1.size());
+         assertEquals(0, dc2.size());
       } else if (op == Operation.PUT || op == Operation.PUT_MAP || op == Operation.REPLACE || op == Operation.PUT_IF_ABSENT) {
          log.info("Updating all keys ..");
          if (op == Operation.PUT) {
@@ -218,43 +260,54 @@ public abstract class BaseReplStateTransferConsistencyTest extends MultipleCache
       applyStateProceedLatch.countDown();
 
       // wait for apply state to end
-      TestingUtil.waitForRehashToComplete(cache(0), cache(1), cache(2));
+      TestingUtil.waitForRehashToComplete(cache(0), cache(2));
 
       // at this point state transfer is fully done
       log.infof("Data container of NodeA has %d keys: %s", dc0.size(), dc0.entrySet());
-      log.infof("Data container of NodeB has %d keys: %s", dc1.size(), dc1.entrySet());
       log.infof("Data container of NodeC has %d keys: %s", dc2.size(), dc2.entrySet());
 
       if (op == Operation.CLEAR || op == Operation.REMOVE) {
          // caches should be empty. check that no keys were revived by an inconsistent state transfer
          for (int i = 0; i < numKeys; i++) {
             assertNull(dc0.get(i));
-            assertNull(dc1.get(i));
             assertNull(dc2.get(i));
          }
       } else if (op == Operation.PUT || op == Operation.PUT_MAP || op == Operation.REPLACE) {
-         // check that all values are the ones expected after state transfer and were not overwritten with old values carried by state transfer
+         ConsistentHash ch = advancedCache(0).getComponentRegistry().getStateTransferManager().getCacheTopology().getReadConsistentHash();
+         // check that all values are the ones expected after state transfer
          for (int i = 0; i < numKeys; i++) {
-            String expectedValue = "after_st_" + i;
-            assertValue(0, i, expectedValue);
-            assertValue(1, i, expectedValue);
-            assertValue(2, i, expectedValue);
+            // check number of owners
+            int owners = 0;
+            if (dc0.get(i) != null) {
+               owners++;
+            }
+            if (dc2.get(i) != null) {
+               owners++;
+            }
+            assertEquals("Wrong number of owners", ch.locateOwners(i).size(), owners);
+
+            // check values were not overwritten with old values carried by state transfer
+            String expected = "after_st_" + i;
+            assertEquals(expected, cache(0).get(i));
+            assertEquals("after_st_" + i, cache(2).get(i));
          }
       } else { // PUT_IF_ABSENT
-         // check that all values are the ones before state transfer
+         ConsistentHash ch = advancedCache(0).getComponentRegistry().getStateTransferManager().getCacheTopology().getReadConsistentHash();
          for (int i = 0; i < numKeys; i++) {
-            String expectedValue = "before_st_" + i;
-            assertValue(0, i, expectedValue);
-            assertValue(1, i, expectedValue);
-            assertValue(2, i, expectedValue);
+            // check number of owners
+            int owners = 0;
+            if (dc0.get(i) != null) {
+               owners++;
+            }
+            if (dc2.get(i) != null) {
+               owners++;
+            }
+            assertEquals("Wrong number of owners", ch.locateOwners(i).size(), owners);
+
+            String expected = "before_st_" + i;
+            assertEquals(expected, cache(0).get(i));
+            assertEquals(expected, cache(2).get(i));
          }
       }
-   }
-
-   private void assertValue(int cacheIndex, int key, String expectedValue) {
-      InternalCacheEntry ice = cache(cacheIndex).getAdvancedCache().getDataContainer().get(key);
-      assertNotNull("Found null on cache " + cacheIndex,  ice);
-      assertEquals("Did not find the expected value on cache " + cacheIndex, expectedValue, ice.getValue());
-      assertEquals("Did not find the expected value on cache " + cacheIndex, expectedValue, cache(cacheIndex).get(key));
    }
 }

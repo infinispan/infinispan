@@ -23,8 +23,12 @@
 
 package org.infinispan.interceptors.locking;
 
+import org.infinispan.commands.FlagAffectedCommand;
+import org.infinispan.commands.write.DataWriteCommand;
 import org.infinispan.commands.write.InvalidateCommand;
 import org.infinispan.commands.write.InvalidateL1Command;
+import org.infinispan.commands.write.PutKeyValueCommand;
+import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.container.DataContainer;
 import org.infinispan.container.EntryFactory;
 import org.infinispan.context.InvocationContext;
@@ -44,17 +48,32 @@ import java.util.Arrays;
  */
 public abstract class AbstractLockingInterceptor extends CommandInterceptor {
 
-   LockManager lockManager;
-   DataContainer dataContainer;
-   EntryFactory entryFactory;
-   ClusteringDependentLogic cdl;
+   protected LockManager lockManager;
+   protected DataContainer dataContainer;
+   protected EntryFactory entryFactory;
+   protected ClusteringDependentLogic cdl;
 
    @Inject
-   public void setDependencies(LockManager lockManager, DataContainer dataContainer, EntryFactory entryFactory, ClusteringDependentLogic cll) {
+   public void setDependencies(LockManager lockManager, DataContainer dataContainer, EntryFactory entryFactory, ClusteringDependentLogic cdl) {
       this.lockManager = lockManager;
       this.dataContainer = dataContainer;
       this.entryFactory = entryFactory;
-      this.cdl = cll;
+      this.cdl = cdl;
+   }
+
+   @Override
+   public Object visitPutKeyValueCommand(InvocationContext ctx, PutKeyValueCommand command) throws Throwable {
+      try {
+         if (!shouldLock(command.getKey(), command))
+            return invokeNextInterceptor(ctx, command);
+         lockKey(ctx, command);
+         return invokeNextInterceptor(ctx, command);
+      } catch (Throwable te) {
+         throw cleanLocksAndRethrow(ctx, te);
+      }
+      finally {
+         lockManager.unlockAll(ctx);
+      }
    }
 
    @Override
@@ -78,12 +97,12 @@ public abstract class AbstractLockingInterceptor extends CommandInterceptor {
          return null;
       }
 
-      Object keys [] = command.getKeys();
+      Object[] keys = command.getKeys();
       try {
          if (keys != null && keys.length >= 1) {
             ArrayList<Object> keysCopy = new ArrayList<Object>(Arrays.asList(keys));
+            boolean skipLocking = hasSkipLocking(command);
             for (Object key : command.getKeys()) {
-               boolean skipLocking = hasSkipLocking(command);
                try {
                   lockKey(ctx, key, 0, skipLocking);
                } catch (TimeoutException te) {
@@ -108,6 +127,22 @@ public abstract class AbstractLockingInterceptor extends CommandInterceptor {
    protected final Throwable cleanLocksAndRethrow(InvocationContext ctx, Throwable te) {
       lockManager.unlockAll(ctx);
       return te;
+   }
+
+   protected final boolean shouldLock(Object key, FlagAffectedCommand command) {
+      if (hasSkipLocking(command))
+         return false;
+      if (cacheConfiguration.clustering().cacheMode() == CacheMode.LOCAL)
+         return true;
+      boolean shouldLock = cdl.localNodeIsPrimaryOwner(key);
+      getLog().tracef("Are (%s) we the lock owners for key '%s'? %s", cdl.getAddress(), key, shouldLock);
+      return shouldLock;
+   }
+
+   protected final void lockKey(InvocationContext ctx, DataWriteCommand command) throws InterruptedException {
+      boolean skipLocking = hasSkipLocking(command);
+      long lockTimeout = getLockAcquisitionTimeout(command, skipLocking);
+      lockKey(ctx, command.getKey(), lockTimeout, skipLocking);
    }
 
    protected final void lockKey(InvocationContext ctx, Object key, long timeoutMillis, boolean skipLocking) throws InterruptedException {
