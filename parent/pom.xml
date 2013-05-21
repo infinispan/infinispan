@@ -166,6 +166,7 @@
       <version.mc4j>1.2.6</version.mc4j>
       <version.milyn.smooks>1.2.2</version.milyn.smooks>
       <version.mockito>1.8.5</version.mockito>
+      <version.mongodb.driver>2.10.1</version.mongodb.driver>
       <version.mysql.driver>5.1.19</version.mysql.driver>
       <version.netty>3.6.5.Final</version.netty>
       <version.org.jboss.naming>5.0.6.CR1</version.org.jboss.naming>
@@ -516,6 +517,11 @@
             <groupId>org.apache.cassandra</groupId>
             <artifactId>cassandra-all</artifactId>
             <version>${version.cassandra}</version>
+         </dependency>
+         <dependency>
+             <groupId>org.mongodb</groupId>
+             <artifactId>mongo-java-driver</artifactId>
+             <version>${version.mongodb.driver}</version>
          </dependency>
          <dependency>
             <groupId>org.apache.commons</groupId>

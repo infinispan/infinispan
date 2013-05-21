@@ -267,5 +267,33 @@ pageTracker._trackPageview();
             </plugins>
          </build>
       </profile>
+      <profile>
+         <id>mongodb</id>
+         <!--
+            To activate and use the mongodb profile you need to define the
+            two environment properties:
+            MONGODB_HOSTNAME
+            MONGODB_PORT
+         -->
+         <activation>
+            <property>
+                <name>env.MONGODB_HOSTNAME</name>
+            </property>
+         </activation>
+         <modules>
+            <module>cachestore/mongodb</module>
+         </modules>
+         <build>
+            <plugins>
+                <plugin>
+                    <groupId>org.apache.maven.plugins</groupId>
+                    <artifactId>maven-surefire-plugin</artifactId>
+                    <configuration>
+                        <groups>mongodb</groups>
+                    </configuration>
+                </plugin>
+            </plugins>
+         </build>
+      </profile>
    </profiles>
 </project>
