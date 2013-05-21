@@ -231,7 +231,7 @@ public class StateConsumerTest {
       assertFalse(stateConsumer.hasActiveTransfers());
 
       stateConsumer.onTopologyUpdate(new CacheTopology(1, ch2, null), false);
-      assertTrue(stateConsumer.hasActiveTransfers());
+      assertFalse(stateConsumer.hasActiveTransfers());
 
       stateConsumer.onTopologyUpdate(new CacheTopology(2, ch2, ch3), true);
       assertTrue(stateConsumer.hasActiveTransfers());

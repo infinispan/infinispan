@@ -565,6 +565,7 @@ public class ClusterTopologyManagerImpl implements ClusterTopologyManager {
       gcr.wireDependencies(command);
       Response localResponse;
       try {
+         if (log.isTraceEnabled()) log.tracef("Attempting to execute command on self: %s", command);
          localResponse = (Response) command.perform(null);
       } catch (Throwable throwable) {
          throw new Exception(throwable);
@@ -602,6 +603,7 @@ public class ClusterTopologyManagerImpl implements ClusterTopologyManager {
             public void run() {
                gcr.wireDependencies(command);
                try {
+                  if (log.isTraceEnabled()) log.tracef("Attempting to execute command on self: %s", command);
                   command.perform(null);
                } catch (Throwable throwable) {
                   // The command already logs any exception in perform()
