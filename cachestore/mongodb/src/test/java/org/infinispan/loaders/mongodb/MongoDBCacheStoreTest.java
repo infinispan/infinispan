@@ -57,7 +57,7 @@ public class MongoDBCacheStoreTest extends BaseCacheStoreTest {
       }
       log.runningTest(hostname, port);
 
-      MongoDBCacheStoreConfig config = new MongoDBCacheStoreConfig(hostname, port, 2000, "", "", "infinispan_test_database", "infinispan_indexes", -1);
+      MongoDBCacheStoreConfig config = new MongoDBCacheStoreConfig(hostname, port, 2000, "", "", java.util.UUID.randomUUID().toString(), "infinispan_indexes", -1);
       config.setPurgeSynchronously(true);
 
       cacheStore = new MongoDBCacheStore();
