@@ -23,7 +23,8 @@
 
 package org.infinispan.tx.recovery.admin;
 
-import org.infinispan.config.Configuration;
+import org.infinispan.configuration.cache.CacheMode;
+import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.testng.annotations.Test;
 
 /**
@@ -33,16 +34,15 @@ import org.testng.annotations.Test;
 @Test(groups = "functional", testName = "tx.recovery.admin.CommitFailsReplicatedTest")
 public class CommitFailsReplicatedTest extends CommitFailsTest {
 
-
    @Override
    protected Object getKey() {
       return "aKey";
    }
 
    @Override
-   protected Configuration defaultRecoveryConfig() {
-      Configuration configuration = super.defaultRecoveryConfig();
-      configuration.fluent().mode(Configuration.CacheMode.REPL_SYNC);
+   protected ConfigurationBuilder defaultRecoveryConfig() {
+      ConfigurationBuilder configuration = super.defaultRecoveryConfig();
+      configuration.clustering().cacheMode(CacheMode.REPL_SYNC);
       return configuration;
    }
 

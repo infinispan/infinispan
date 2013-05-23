@@ -27,7 +27,8 @@ import org.infinispan.commands.ReplicableCommand;
 import org.infinispan.commands.remote.recovery.TxCompletionNotificationCommand;
 import org.infinispan.commands.tx.CommitCommand;
 import org.infinispan.commands.tx.PrepareCommand;
-import org.infinispan.config.Configuration;
+import org.infinispan.configuration.cache.CacheMode;
+import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.context.impl.TxInvocationContext;
 import org.infinispan.interceptors.base.CommandInterceptor;
 import org.infinispan.remoting.responses.Response;
@@ -52,37 +53,35 @@ import java.util.concurrent.CountDownLatch;
  */
 public abstract class AbstractCrashTest extends MultipleCacheManagersTest {
 
-   protected Configuration.CacheMode cacheMode;
+   protected CacheMode cacheMode;
    protected LockingMode lockingMode;
    protected Boolean useSynchronization;
 
-   protected AbstractCrashTest(Configuration.CacheMode cacheMode, LockingMode lockingMode, Boolean useSynchronization) {
+   protected AbstractCrashTest(CacheMode cacheMode, LockingMode lockingMode, Boolean useSynchronization) {
       this.cacheMode = cacheMode;
       this.lockingMode = lockingMode;
       this.useSynchronization = useSynchronization;
    }
 
-
    @Override
-   protected void createCacheManagers() throws Throwable {
-      final Configuration c = buildConfiguration();
+   protected void createCacheManagers() {
+      ConfigurationBuilder c = buildConfiguration();
       createCluster(c, 3);
       waitForClusterToForm();
    }
 
-   protected Configuration buildConfiguration() {
-      final Configuration c = getDefaultClusteredConfig(cacheMode);
-      c.fluent().
-            transaction().transactionManagerLookup(new DummyTransactionManagerLookup())
+   protected ConfigurationBuilder buildConfiguration() {
+      ConfigurationBuilder c = getDefaultClusteredCacheConfig(cacheMode, true);
+      c.transaction().transactionManagerLookup(new DummyTransactionManagerLookup())
             .useSynchronization(useSynchronization)
-            .lockingMode(lockingMode);
-      c.fluent().hash()
-            .rehashEnabled(false)
-            .numOwners(3);
-      c.fluent().clustering().l1().disable();
+            .lockingMode(lockingMode)
+            .recovery().disable()
+            .clustering()
+            .l1().disable()
+            .hash().numOwners(3)
+            .stateTransfer().fetchInMemoryState(false);
       return c;
    }
-
 
    protected Object beginAndPrepareTx(final Object k, final int cacheIndex) {
       fork(new Runnable() {

@@ -23,10 +23,9 @@
 package org.infinispan.statetransfer;
 
 import org.infinispan.Cache;
-import org.infinispan.config.CacheLoaderManagerConfig;
-import org.infinispan.config.Configuration;
-import org.infinispan.loaders.CacheStoreConfig;
-import org.infinispan.loaders.dummy.DummyInMemoryCacheStore;
+import org.infinispan.configuration.cache.CacheMode;
+import org.infinispan.configuration.cache.ConfigurationBuilder;
+import org.infinispan.loaders.dummy.DummyInMemoryCacheStoreConfigurationBuilder;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.test.MultipleCacheManagersTest;
 import org.testng.annotations.Test;
@@ -43,37 +42,40 @@ import java.lang.reflect.Method;
 public class StateTransferFetchOnlyPersistentStateTest extends MultipleCacheManagersTest {
 
    @Override
-   protected void createCacheManagers() throws Throwable {
-      Configuration cfg = createConfiguration(1);
+   protected void createCacheManagers() {
+      ConfigurationBuilder cfg = createConfiguration(1);
       EmbeddedCacheManager cm = addClusterEnabledCacheManager();
-      cm.defineConfiguration("onlyFetchPersistent", cfg);
+      cm.defineConfiguration("onlyFetchPersistent", cfg.build());
    }
 
-   private Configuration createConfiguration(int id) {
-      Configuration cfg = getDefaultClusteredConfig(Configuration.CacheMode.REPL_SYNC, true);
-      cfg.fluent().clustering().stateRetrieval().fetchInMemoryState(false);
-      CacheLoaderManagerConfig clmc = new CacheLoaderManagerConfig();
-      CacheStoreConfig clc = new DummyInMemoryCacheStore.Cfg("store id: " + id);
-      clmc.addCacheLoaderConfig(clc);
-      clc.setFetchPersistentState(true);
-      clmc.setShared(false);
-      cfg.setCacheLoaderManagerConfig(clmc);
+   private ConfigurationBuilder createConfiguration(int id) {
+      ConfigurationBuilder cfg = getDefaultClusteredCacheConfig(CacheMode.REPL_SYNC, true);
+      cfg.clustering().stateTransfer().fetchInMemoryState(false);
+
+      DummyInMemoryCacheStoreConfigurationBuilder dimcs = new DummyInMemoryCacheStoreConfigurationBuilder(cfg.loaders());
+      dimcs.storeName("store id: " + id);
+      dimcs.fetchPersistentState(true);
+      cfg.loaders().shared(false).addLoader(dimcs);
+
       return cfg;
    }
 
    public void test000(Method m) {
-      Cache cache1 = cache(0, "onlyFetchPersistent");
-      assert !cache1.getConfiguration().isFetchInMemoryState();
-      cache1.put("k-" + m.getName(), "v-" + m.getName());
+      final String theKey = "k-" + m.getName();
+      final String theValue = "v-" + m.getName();
 
-      Configuration cfg2 = createConfiguration(2);
+      Cache cache1 = cache(0, "onlyFetchPersistent");
+      assert !cache1.getCacheConfiguration().clustering().stateTransfer().fetchInMemoryState();
+      cache1.put(theKey, theValue);
+
+      ConfigurationBuilder cfg2 = createConfiguration(2);
       EmbeddedCacheManager cm2 = addClusterEnabledCacheManager();
-      cm2.defineConfiguration("onlyFetchPersistent", cfg2);
+      cm2.defineConfiguration("onlyFetchPersistent", cfg2.build());
 
       Cache cache2 = cache(1, "onlyFetchPersistent");
-      assert !cache2.getConfiguration().isFetchInMemoryState();
-      assert cache2.containsKey("k-" + m.getName());
-      assert cache2.get("k-" + m.getName()).equals("v-" + m.getName());
+      assert !cache2.getCacheConfiguration().clustering().stateTransfer().fetchInMemoryState();
+      assert cache2.containsKey(theKey);
+      assert cache2.get(theKey).equals(theValue);
    }
 
 }

@@ -23,17 +23,14 @@
 
 package org.infinispan.distribution;
 
-import org.infinispan.commands.write.WriteCommand;
 import org.infinispan.test.ReplListener;
 import org.testng.annotations.Test;
 
-import java.util.concurrent.TimeUnit;
-
-@Test (groups = "functional", testName = "distribution.AsyncAPINonTxAsyncDistTest")
+@Test(groups = "functional", testName = "distribution.AsyncAPINonTxAsyncDistTest")
 public class AsyncAPINonTxAsyncDistTest extends AsyncAPINonTxSyncDistTest {
 
-   ReplListener rl;
-   ReplListener rlNoTx;
+   private ReplListener rl;
+   private ReplListener rlNoTx;
 
    @Override
    protected void createCacheManagers() throws Throwable {

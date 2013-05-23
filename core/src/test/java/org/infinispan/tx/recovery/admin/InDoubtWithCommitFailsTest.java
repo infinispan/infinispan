@@ -26,13 +26,13 @@ package org.infinispan.tx.recovery.admin;
 import org.infinispan.CacheException;
 import org.infinispan.commands.tx.CommitCommand;
 import org.infinispan.commands.tx.RollbackCommand;
-import org.infinispan.config.Configuration;
+import org.infinispan.configuration.cache.CacheMode;
+import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.context.impl.TxInvocationContext;
 import org.infinispan.interceptors.InvocationContextInterceptor;
 import org.infinispan.interceptors.base.CommandInterceptor;
 import org.infinispan.test.fwk.CleanupAfterMethod;
 import org.infinispan.transaction.TransactionTable;
-import org.infinispan.transaction.lookup.DummyTransactionManagerLookup;
 import org.infinispan.transaction.tm.DummyTransaction;
 import org.infinispan.tx.recovery.RecoveryDummyTransactionManagerLookup;
 import org.testng.annotations.Test;
@@ -52,12 +52,13 @@ public class InDoubtWithCommitFailsTest extends AbstractRecoveryTest {
 
    @Override
    protected void createCacheManagers() throws Throwable {
-      Configuration configuration = getDefaultClusteredConfig(Configuration.CacheMode.DIST_SYNC, true).fluent()
-            .transaction().transactionManagerLookupClass(RecoveryDummyTransactionManagerLookup.class).recovery()
+      ConfigurationBuilder configuration = getDefaultClusteredCacheConfig(CacheMode.DIST_SYNC, true);
+      configuration.transaction().transactionManagerLookup(new RecoveryDummyTransactionManagerLookup())
+            .useSynchronization(false)
+            .recovery().enable()
             .locking().useLockStriping(false)
             .clustering().hash().numOwners(2)
-            .clustering().l1().disable().stateRetrieval().fetchInMemoryState(false)
-            .build();
+            .clustering().l1().disable().stateTransfer().fetchInMemoryState(false);
       createCluster(configuration, 2);
       waitForClusterToForm();
       advancedCache(1).addInterceptorBefore(new ForceFailureInterceptor(), InvocationContextInterceptor.class);

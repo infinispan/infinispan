@@ -22,16 +22,16 @@
  */
 package org.infinispan.tx.recovery;
 
-import org.infinispan.config.Configuration;
+import org.infinispan.configuration.cache.CacheMode;
+import org.infinispan.configuration.cache.ConfigurationBuilder;
+import org.infinispan.configuration.cache.RecoveryConfiguration;
 import org.infinispan.test.MultipleCacheManagersTest;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.CleanupAfterMethod;
 import org.infinispan.transaction.TransactionMode;
-import org.infinispan.transaction.lookup.DummyTransactionManagerLookup;
 import org.infinispan.transaction.tm.DummyTransaction;
 import org.infinispan.transaction.xa.recovery.RecoveryManager;
 import org.infinispan.transaction.xa.recovery.SerializableXid;
-import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
 import javax.transaction.xa.Xid;
@@ -49,7 +49,7 @@ import static org.testng.Assert.assertEquals;
 @CleanupAfterMethod
 public class RecoveryWithDefaultCacheDistTest extends MultipleCacheManagersTest {
 
-   Configuration configuration;
+   protected ConfigurationBuilder configuration;
 
    @Override
    protected void createCacheManagers() throws Throwable {
@@ -62,13 +62,13 @@ public class RecoveryWithDefaultCacheDistTest extends MultipleCacheManagersTest 
       manager(1).getCacheNames().contains(getRecoveryCacheName());
    }
 
-   protected Configuration  configure() {
-      Configuration configuration = getDefaultClusteredConfig(Configuration.CacheMode.DIST_SYNC, true);
-      configuration.fluent().locking().useLockStriping(false);
-      configuration.fluent().transaction()
-         .transactionManagerLookupClass(RecoveryDummyTransactionManagerLookup.class)
-         .recovery();
-      configuration.fluent().clustering().hash().rehashEnabled(false);
+   protected ConfigurationBuilder configure() {
+      ConfigurationBuilder configuration = getDefaultClusteredCacheConfig(CacheMode.DIST_SYNC, true);
+      configuration.locking().useLockStriping(false)
+            .transaction().transactionManagerLookup(new RecoveryDummyTransactionManagerLookup())
+            .useSynchronization(false)
+            .recovery().enable()
+            .clustering().stateTransfer().fetchInMemoryState(false);
       return configuration;
    }
 
@@ -143,7 +143,7 @@ public class RecoveryWithDefaultCacheDistTest extends MultipleCacheManagersTest 
       assert inDoubtTransactions.contains(new SerializableXid(t1_2.getXid()));
       assert inDoubtTransactions.contains(new SerializableXid(t1_3.getXid()));
 
-      configuration.fluent().transaction().transactionMode(TransactionMode.TRANSACTIONAL);
+      configuration.transaction().transactionMode(TransactionMode.TRANSACTIONAL);
       addClusterEnabledCacheManager(configuration);
       defineRecoveryCache(1);
       TestingUtil.blockUntilViewsReceived(60000, cache(0), cache(1));
@@ -194,6 +194,6 @@ public class RecoveryWithDefaultCacheDistTest extends MultipleCacheManagersTest 
    }
 
    protected String getRecoveryCacheName() {
-      return Configuration.RecoveryType.DEFAULT_RECOVERY_INFO_CACHE;
+      return RecoveryConfiguration.DEFAULT_RECOVERY_INFO_CACHE;
    }
 }

@@ -23,7 +23,7 @@
 
 package org.infinispan.lock.singlelock.replicated.optimistic;
 
-import org.infinispan.config.Configuration;
+import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.lock.singlelock.AbstractCrashTest;
 import org.infinispan.test.fwk.CleanupAfterMethod;
 import org.infinispan.transaction.LockingMode;
@@ -39,12 +39,11 @@ import java.util.concurrent.CountDownLatch;
 @CleanupAfterMethod
 public class InitiatorCrashOptimisticReplTest extends AbstractCrashTest {
 
-
    public InitiatorCrashOptimisticReplTest() {
-      super(Configuration.CacheMode.REPL_SYNC, LockingMode.OPTIMISTIC, false);
+      super(CacheMode.REPL_SYNC, LockingMode.OPTIMISTIC, false);
    }
 
-   public InitiatorCrashOptimisticReplTest(Configuration.CacheMode mode, LockingMode locking, boolean useSync) {
+   public InitiatorCrashOptimisticReplTest(CacheMode mode, LockingMode locking, boolean useSync) {
       super(mode, locking, useSync);
    }
 

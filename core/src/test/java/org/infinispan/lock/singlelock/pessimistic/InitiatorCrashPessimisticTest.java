@@ -23,7 +23,7 @@
 
 package org.infinispan.lock.singlelock.pessimistic;
 
-import org.infinispan.config.Configuration;
+import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.lock.singlelock.AbstractInitiatorCrashTest;
 import org.infinispan.test.AbstractInfinispanTest;
 import org.infinispan.test.fwk.CleanupAfterMethod;
@@ -39,7 +39,7 @@ import org.testng.annotations.Test;
 public class InitiatorCrashPessimisticTest extends AbstractInitiatorCrashTest {
 
    public InitiatorCrashPessimisticTest() {
-      super(Configuration.CacheMode.DIST_SYNC, LockingMode.PESSIMISTIC, false);
+      super(CacheMode.DIST_SYNC, LockingMode.PESSIMISTIC, false);
    }
 
  public void testInitiatorNodeCrashesBeforePrepare2() throws Exception {

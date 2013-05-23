@@ -127,6 +127,11 @@ public class AbstractCacheTest extends AbstractInfinispanTest {
       else
          builder.clustering().async();
 
+      if (mode.isReplicated()) {
+         // only one segment is supported for REPL tests now because some old tests still expect a single primary owner
+         builder.clustering().hash().numSegments(1);
+      }
+
       return builder;
    }
 

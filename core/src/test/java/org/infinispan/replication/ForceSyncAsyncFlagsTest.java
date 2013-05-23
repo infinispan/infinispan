@@ -24,7 +24,8 @@ package org.infinispan.replication;
 
 import org.infinispan.AdvancedCache;
 import org.infinispan.commands.remote.CacheRpcCommand;
-import org.infinispan.config.Configuration;
+import org.infinispan.configuration.cache.CacheMode;
+import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.context.Flag;
 import org.infinispan.remoting.responses.Response;
 import org.infinispan.remoting.rpc.ResponseFilter;
@@ -59,8 +60,8 @@ import static org.mockito.Mockito.*;
 public class ForceSyncAsyncFlagsTest extends MultipleCacheManagersTest {
 
    @Override
-   protected void createCacheManagers() throws Throwable {
-      Configuration replSync = getDefaultClusteredConfig(Configuration.CacheMode.REPL_SYNC);
+   protected void createCacheManagers() {
+      ConfigurationBuilder replSync = getDefaultClusteredCacheConfig(CacheMode.REPL_SYNC, false);
       createClusteredCaches(2, "replSync", replSync);
    }
 
@@ -75,8 +76,8 @@ public class ForceSyncAsyncFlagsTest extends MultipleCacheManagersTest {
       RpcManagerImpl asyncRpcManager = null;
       Map<Address, Response> emptyResponses = Collections.emptyMap();
       try {
-         Configuration asyncCache = getDefaultClusteredConfig(Configuration.CacheMode.REPL_ASYNC);
-         asyncCache.setUseAsyncMarshalling(true);
+         ConfigurationBuilder asyncCache = getDefaultClusteredCacheConfig(CacheMode.REPL_ASYNC, false);
+         asyncCache.clustering().async().asyncMarshalling(true);
          defineConfigurationOnAllManagers("asyncCache", asyncCache);
          AdvancedCache asyncCache1 = manager(0).getCache("asyncCache").getAdvancedCache();
          AdvancedCache asyncCache2 = manager(1).getCache("asyncCache").getAdvancedCache();

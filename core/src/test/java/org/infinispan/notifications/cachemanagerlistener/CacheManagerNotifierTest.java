@@ -23,7 +23,8 @@
 package org.infinispan.notifications.cachemanagerlistener;
 
 import org.infinispan.Cache;
-import org.infinispan.config.Configuration;
+import org.infinispan.configuration.cache.CacheMode;
+import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.manager.CacheContainer;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.notifications.Listener;
@@ -44,8 +45,8 @@ import static org.testng.Assert.assertEquals;
 
 @Test(groups = "unit", testName = "notifications.cachemanagerlistener.CacheManagerNotifierTest")
 public class CacheManagerNotifierTest extends AbstractInfinispanTest {
-   EmbeddedCacheManager cm1;
-   EmbeddedCacheManager cm2;
+   private EmbeddedCacheManager cm1;
+   private EmbeddedCacheManager cm2;
 
    @AfterMethod
    public void tearDown() {
@@ -55,11 +56,11 @@ public class CacheManagerNotifierTest extends AbstractInfinispanTest {
    public void testMockViewChange() {
       cm1 = TestCacheManagerFactory.createClusteredCacheManager();
       cm2 = TestCacheManagerFactory.createClusteredCacheManager();
-      Configuration c = new Configuration();
-      c.setCacheMode(Configuration.CacheMode.REPL_SYNC);
-      c.setFetchInMemoryState(false);
-      cm1.defineConfiguration("cache", c);
-      cm2.defineConfiguration("cache", c);
+      ConfigurationBuilder c = new ConfigurationBuilder();
+      c.clustering().cacheMode(CacheMode.REPL_SYNC)
+            .stateTransfer().fetchInMemoryState(false);
+      cm1.defineConfiguration("cache", c.build());
+      cm2.defineConfiguration("cache", c.build());
 
       cm1.getCache("cache");
 

@@ -26,7 +26,6 @@ import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.container.entries.InternalCacheEntry;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.test.MultipleCacheManagersTest;
-import org.infinispan.util.concurrent.TimeoutException;
 import org.testng.annotations.Test;
 
 import java.util.ArrayList;

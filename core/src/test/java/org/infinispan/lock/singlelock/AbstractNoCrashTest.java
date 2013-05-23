@@ -23,15 +23,15 @@
 
 package org.infinispan.lock.singlelock;
 
-import org.infinispan.config.Configuration;
+import org.infinispan.configuration.cache.CacheMode;
+import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.test.MultipleCacheManagersTest;
 import org.infinispan.transaction.LockingMode;
 import org.infinispan.transaction.TransactionMode;
-import org.infinispan.transaction.lookup.DummyTransactionManagerLookup;
 import org.infinispan.transaction.tm.DummyTransaction;
+import org.infinispan.tx.recovery.RecoveryDummyTransactionManagerLookup;
 import org.testng.annotations.Test;
 
-import javax.transaction.Status;
 import java.util.Collections;
 
 import static org.testng.Assert.assertEquals;
@@ -43,26 +43,27 @@ import static org.testng.Assert.assertEquals;
 @Test(groups = "functional")
 public abstract class AbstractNoCrashTest extends MultipleCacheManagersTest {
 
-   protected Configuration.CacheMode cacheMode;
+   protected CacheMode cacheMode;
    protected LockingMode lockingMode;
    protected Boolean useSynchronization;
 
-   protected AbstractNoCrashTest(Configuration.CacheMode cacheMode, LockingMode lockingMode, Boolean useSynchronization) {
+   protected AbstractNoCrashTest(CacheMode cacheMode, LockingMode lockingMode, Boolean useSynchronization) {
       this.cacheMode = cacheMode;
       this.lockingMode = lockingMode;
       this.useSynchronization = useSynchronization;
    }
 
    @Override
-   protected final void createCacheManagers() throws Throwable {
+   protected final void createCacheManagers() {
       assert cacheMode != null && lockingMode != null && useSynchronization != null;
-      final Configuration config = getDefaultClusteredConfig(cacheMode, true);
-      config.fluent().transaction()
+      ConfigurationBuilder config = getDefaultClusteredCacheConfig(cacheMode, true);
+      config.transaction()
             .transactionMode(TransactionMode.TRANSACTIONAL)
-            .transactionManagerLookup(new DummyTransactionManagerLookup())
+            .transactionManagerLookup(new RecoveryDummyTransactionManagerLookup())
             .lockingMode(lockingMode)
             .useSynchronization(useSynchronization);
-      config.fluent().hash().numOwners(3).locking().lockAcquisitionTimeout(2000L);
+      config.clustering().hash().numOwners(3)
+            .locking().lockAcquisitionTimeout(2000L);
       createCluster(config, 3);
       waitForClusterToForm();
    }

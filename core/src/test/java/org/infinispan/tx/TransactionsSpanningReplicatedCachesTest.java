@@ -23,7 +23,8 @@
 package org.infinispan.tx;
 
 import org.infinispan.Cache;
-import org.infinispan.config.Configuration;
+import org.infinispan.configuration.cache.CacheMode;
+import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.manager.CacheContainer;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.remoting.rpc.RpcManagerImpl;
@@ -41,14 +42,14 @@ import static org.testng.AssertJUnit.assertFalse;
 @Test(groups = "functional", testName = "tx.TransactionsSpanningReplicatedCachesTest")
 public class TransactionsSpanningReplicatedCachesTest extends MultipleCacheManagersTest {
 
-   EmbeddedCacheManager cm1, cm2;
+   private EmbeddedCacheManager cm1, cm2;
 
    public TransactionsSpanningReplicatedCachesTest() {
       cleanup = CleanupPhase.AFTER_METHOD;
    }
 
    protected void createCacheManagers() throws Exception {
-      Configuration c = getConfiguration();
+      ConfigurationBuilder c = getConfiguration();
       cm1 = addClusterEnabledCacheManager(c);
       cm2 = addClusterEnabledCacheManager(c);
 
@@ -72,9 +73,9 @@ public class TransactionsSpanningReplicatedCachesTest extends MultipleCacheManag
       waitForClusterToForm(c1);
    }
 
-   protected Configuration getConfiguration() {
-      Configuration c = getDefaultClusteredConfig(Configuration.CacheMode.REPL_SYNC, true);
-      c.setExposeJmxStatistics(true);
+   protected ConfigurationBuilder getConfiguration() {
+      ConfigurationBuilder c = getDefaultClusteredCacheConfig(CacheMode.REPL_SYNC, true);
+      c.jmxStatistics().enable();
       return c;
    }
 

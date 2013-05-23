@@ -23,7 +23,7 @@
 
 package org.infinispan.lock.singlelock.optimistic;
 
-import org.infinispan.config.Configuration;
+import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.lock.singlelock.AbstractNoCrashTest;
 import org.infinispan.transaction.LockingMode;
 import org.infinispan.transaction.tm.DummyTransaction;
@@ -41,7 +41,7 @@ import static org.testng.Assert.assertEquals;
 public class BasicSingleLockOptimisticTest extends AbstractNoCrashTest {
 
    public BasicSingleLockOptimisticTest() {
-      super(Configuration.CacheMode.DIST_SYNC, LockingMode.OPTIMISTIC, false);
+      super(CacheMode.DIST_SYNC, LockingMode.OPTIMISTIC, false);
    }
 
     protected void testTxAndLockOnDifferentNodes(Operation operation, boolean addFirst, boolean removed) throws Exception {

@@ -35,9 +35,7 @@ import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.context.Flag;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.context.impl.TxInvocationContext;
-import org.infinispan.factories.annotations.Inject;
 import org.infinispan.interceptors.base.BaseCustomInterceptor;
-import org.infinispan.interceptors.base.CommandInterceptor;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.test.MultipleCacheManagersTest;
 import org.infinispan.test.fwk.CleanupAfterMethod;
@@ -49,7 +47,6 @@ import static org.infinispan.test.TestingUtil.extractComponent;
 import static org.infinispan.test.TestingUtil.findInterceptor;
 import static org.infinispan.test.TestingUtil.waitForRehashToComplete;
 import static org.testng.Assert.assertEquals;
-import static org.testng.Assert.assertNotNull;
 import static org.testng.Assert.assertTrue;
 
 /**
@@ -63,7 +60,7 @@ import static org.testng.Assert.assertTrue;
 public class ReplCommandForwardingTest extends MultipleCacheManagersTest {
 
    @Override
-   protected void createCacheManagers() throws Throwable {
+   protected void createCacheManagers() {
       // do nothing, each test will create its own cache managers
    }
 
@@ -75,6 +72,8 @@ public class ReplCommandForwardingTest extends MultipleCacheManagersTest {
       return configurationBuilder;
    }
 
+   @Test(enabled = false, description = "Disabled because the new forwarding scheme in new non-tx REPL mode " +
+         "no longer matches the expectations. See https://issues.jboss.org/browse/ISPN-3147")
    public void testForwardToJoinerNonTransactional() throws Exception {
       EmbeddedCacheManager cm1 = addClusterEnabledCacheManager(buildConfig(false));
       final Cache<Object, Object> c1 = cm1.getCache();
@@ -256,8 +255,7 @@ public class ReplCommandForwardingTest extends MultipleCacheManagersTest {
       public void unblock(int count) throws InterruptedException, TimeoutException, BrokenBarrierException {
          log.tracef("Unblocking command on cache %s", cache);
          boolean offerResult = barrier.offer(count, 5, TimeUnit.SECONDS);
-         assertTrue(offerResult,
-               String.format("There is no DelayInterceptor waiting to be unblocked on cache %s", cache));
+         assertTrue(offerResult, String.format("DelayInterceptor of cache %s is not waiting to be unblocked", cache));
       }
 
       @Override
@@ -265,7 +263,7 @@ public class ReplCommandForwardingTest extends MultipleCacheManagersTest {
          Object result = super.visitPutKeyValueCommand(ctx, command);
 
          if (!ctx.isInTxScope() && !command.hasFlag(Flag.PUT_FOR_STATE_TRANSFER)) {
-            log.tracef("Delaying command %s", command);
+            log.tracef("Delaying command %s originating from %s", command, ctx.getOrigin());
             Integer myCount = counter.incrementAndGet();
             Object pollResult = barrier.poll(15, TimeUnit.SECONDS);
             assertEquals(pollResult, myCount,
@@ -279,7 +277,7 @@ public class ReplCommandForwardingTest extends MultipleCacheManagersTest {
       public Object visitPrepareCommand(TxInvocationContext ctx, PrepareCommand command) throws Throwable {
          Object result = super.visitPrepareCommand(ctx, command);
          if (!ctx.isOriginLocal() || !((LocalTransaction)ctx.getCacheTransaction()).isFromStateTransfer()) {
-            log.tracef("Delaying command %s", command);
+            log.tracef("Delaying command %s originating from %s", command, ctx.getOrigin());
             Integer myCount = counter.incrementAndGet();
             Object pollResult = barrier.poll(15, TimeUnit.SECONDS);
             assertEquals(pollResult, myCount,

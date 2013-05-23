@@ -23,13 +23,13 @@
 package org.infinispan.tx;
 
 import org.infinispan.Cache;
-import org.infinispan.config.Configuration;
+import org.infinispan.configuration.cache.CacheMode;
+import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.test.MultipleCacheManagersTest;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.CleanupAfterMethod;
-import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.infinispan.transaction.xa.GlobalTransaction;
 import org.infinispan.util.concurrent.locks.LockManager;
 import org.infinispan.util.logging.Log;
@@ -47,14 +47,14 @@ public class RemoteLockCleanupStressTest extends MultipleCacheManagersTest {
 
    private static final Log log = LogFactory.getLog(RemoteLockCleanupStressTest.class);
 
-   EmbeddedCacheManager cm1, cm2;
-   String key = "locked-counter";
+   private EmbeddedCacheManager cm1, cm2;
+   private String key = "locked-counter";
 
    @Override
    protected void createCacheManagers() throws Throwable {
-      Configuration c = TestCacheManagerFactory.getDefaultConfiguration(true,Configuration.CacheMode.REPL_SYNC);
-      c.setFetchInMemoryState(true);
-      c.setLockAcquisitionTimeout(1500);
+      ConfigurationBuilder c = getDefaultClusteredCacheConfig(CacheMode.REPL_SYNC, true);
+      c.clustering().stateTransfer().fetchInMemoryState(true)
+            .locking().lockAcquisitionTimeout(1500);
 
       cm1 = addClusterEnabledCacheManager(c);
       cm2 = addClusterEnabledCacheManager(c);

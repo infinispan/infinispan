@@ -23,7 +23,7 @@
 
 package org.infinispan.lock.singlelock.replicated.optimistic;
 
-import org.infinispan.config.Configuration;
+import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.lock.singlelock.AbstractNoCrashTest;
 import org.infinispan.transaction.LockingMode;
 import org.infinispan.transaction.tm.DummyTransaction;
@@ -37,7 +37,7 @@ import org.testng.annotations.Test;
 public class BasicSingleLockReplOptTest extends AbstractNoCrashTest {
 
    public BasicSingleLockReplOptTest() {
-      super(Configuration.CacheMode.REPL_SYNC, LockingMode.OPTIMISTIC, false);
+      super(CacheMode.REPL_SYNC, LockingMode.OPTIMISTIC, false);
    }
 
    protected void testTxAndLockOnDifferentNodes(Operation operation, boolean addFirst, boolean removed) throws Exception {

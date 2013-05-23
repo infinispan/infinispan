@@ -29,7 +29,8 @@ import java.util.ArrayList;
 import java.util.List;
 
 import org.infinispan.Cache;
-import org.infinispan.config.Configuration;
+import org.infinispan.configuration.cache.CacheMode;
+import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.remoting.rpc.RpcManager;
 import org.infinispan.remoting.rpc.RpcManagerImpl;
 import org.infinispan.remoting.transport.Address;
@@ -40,13 +41,12 @@ import org.testng.annotations.Test;
 
 @Test(groups = "functional", testName = "remoting.SingleClusterMemberTransportInvokeTest")
 public class SingleClusterMemberTransportInvokeTest extends MultipleCacheManagersTest {
-   final String key = "k", value = "v", value2 = "v2";
+   private final String key = "k", value = "v", value2 = "v2";
 
    @Override
    protected void createCacheManagers() throws Throwable {
-      Configuration c = getDefaultClusteredConfig(Configuration.CacheMode.REPL_SYNC);
+      ConfigurationBuilder c = getDefaultClusteredCacheConfig(CacheMode.REPL_SYNC, false);
       createClusteredCaches(1, "replSync", c);
-
    }
 
    public void testInvokeRemotelyWhenSingleMember() throws Exception {

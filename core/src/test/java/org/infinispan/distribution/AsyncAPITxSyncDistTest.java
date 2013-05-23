@@ -23,7 +23,8 @@
 package org.infinispan.distribution;
 
 import org.infinispan.Cache;
-import org.infinispan.config.Configuration;
+import org.infinispan.configuration.cache.CacheMode;
+import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.replication.AsyncAPITxSyncReplTest;
 import org.infinispan.test.data.Key;
 import org.infinispan.util.Util;
@@ -34,10 +35,10 @@ import static org.infinispan.context.Flag.SKIP_REMOTE_LOOKUP;
 @Test(groups = "functional", testName = "distribution.AsyncAPITxSyncDistTest")
 public class AsyncAPITxSyncDistTest extends AsyncAPITxSyncReplTest {
 
-   protected Configuration getConfig(boolean txEnabled) {
-      return getDefaultClusteredConfig(sync() ? Configuration.CacheMode.DIST_SYNC : Configuration.CacheMode.DIST_ASYNC, txEnabled);
+   @Override
+   protected ConfigurationBuilder getConfig() {
+      return getDefaultClusteredCacheConfig(sync() ? CacheMode.DIST_SYNC : CacheMode.DIST_ASYNC, true);
    }
-
 
    @Override
    protected void assertOnAllCaches(Key k, String v, Cache c1, Cache c2) {

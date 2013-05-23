@@ -23,7 +23,7 @@
 
 package org.infinispan.lock.singlelock.optimistic;
 
-import org.infinispan.config.Configuration;
+import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.lock.singlelock.AbstractLockOwnerCrashTest;
 import org.infinispan.test.fwk.CleanupAfterMethod;
 import org.infinispan.transaction.LockingMode;
@@ -42,10 +42,10 @@ import static org.testng.Assert.fail;
 public class LockOwnerCrashOptimisticTest extends AbstractLockOwnerCrashTest {
 
    public LockOwnerCrashOptimisticTest() {
-      super(Configuration.CacheMode.DIST_SYNC, LockingMode.OPTIMISTIC, false);
+      super(CacheMode.DIST_SYNC, LockingMode.OPTIMISTIC, false);
    }
 
-   DummyTransaction transaction;
+   private DummyTransaction transaction;
 
    public void testLockOwnerCrashesBeforePrepare() throws Exception {
       final Object k = getKeyForCache(2);

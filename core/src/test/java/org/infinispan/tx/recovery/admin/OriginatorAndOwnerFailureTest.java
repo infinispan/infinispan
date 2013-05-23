@@ -23,17 +23,13 @@
 
 package org.infinispan.tx.recovery.admin;
 
-import org.infinispan.affinity.KeyAffinityService;
-import org.infinispan.affinity.KeyAffinityServiceFactory;
-import org.infinispan.affinity.RndKeyGenerator;
-import org.infinispan.config.Configuration;
+import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.distribution.MagicKey;
 import org.infinispan.test.fwk.CleanupAfterMethod;
 import org.infinispan.transaction.tm.DummyTransaction;
 import org.testng.annotations.Test;
 
 import java.util.List;
-import java.util.concurrent.Executors;
 
 import static org.infinispan.tx.recovery.RecoveryTestUtil.prepareTransaction;
 import static org.testng.Assert.assertEquals;
@@ -52,8 +48,8 @@ public class OriginatorAndOwnerFailureTest extends AbstractRecoveryTest {
 
    @Override
    protected void createCacheManagers() throws Throwable {
-      Configuration configuration = defaultRecoveryConfig();
-      assert configuration.isTransactionalCache();
+      ConfigurationBuilder configuration = defaultRecoveryConfig();
+      assert configuration.build().transaction().transactionMode().isTransactional();
       createCluster(configuration, 3);
       waitForClusterToForm();
 

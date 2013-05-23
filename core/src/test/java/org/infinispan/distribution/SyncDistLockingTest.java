@@ -22,7 +22,7 @@
  */
 package org.infinispan.distribution;
 
-import org.infinispan.config.Configuration;
+import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.replication.SyncReplLockingTest;
 import org.testng.annotations.Test;
 
@@ -38,7 +38,7 @@ import org.testng.annotations.Test;
 public class SyncDistLockingTest extends SyncReplLockingTest {
 
    @Override
-   protected Configuration.CacheMode getCacheMode() {
-      return Configuration.CacheMode.DIST_SYNC;
+   protected CacheMode getCacheMode() {
+      return CacheMode.DIST_SYNC;
    }
 }

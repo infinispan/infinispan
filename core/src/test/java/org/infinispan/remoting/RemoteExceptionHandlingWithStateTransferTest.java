@@ -19,9 +19,9 @@
 
 package org.infinispan.remoting;
 
+import org.infinispan.configuration.cache.CacheMode;
+import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.testng.annotations.Test;
-
-import static org.infinispan.config.Configuration.CacheMode.REPL_SYNC;
 
 /**
  * Verifies remote exception handling when state transfer is enabled.
@@ -35,9 +35,8 @@ public class RemoteExceptionHandlingWithStateTransferTest
 
    @Override
    protected void createCacheManagers() throws Throwable {
-      createClusteredCaches(2, "replSync", getDefaultClusteredConfig(REPL_SYNC)
-         .fluent().stateRetrieval().fetchInMemoryState(true)
-         .build());
+      ConfigurationBuilder config = getDefaultClusteredCacheConfig(CacheMode.REPL_SYNC, false);
+      config.clustering().stateTransfer().fetchInMemoryState(true);
+      createClusteredCaches(2, "replSync", config);
    }
-
 }

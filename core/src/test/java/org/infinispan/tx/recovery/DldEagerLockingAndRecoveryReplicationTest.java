@@ -22,7 +22,7 @@
  */
 package org.infinispan.tx.recovery;
 
-import org.infinispan.config.Configuration;
+import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.tx.dld.DldPessimisticLockingReplicationTest;
 import org.testng.annotations.Test;
 
@@ -32,7 +32,9 @@ import org.testng.annotations.Test;
 @Test (groups = "functional", testName = "tx.recovery.DldEagerLockingAndRecoveryReplicationTest")
 public class DldEagerLockingAndRecoveryReplicationTest extends DldPessimisticLockingReplicationTest {
 
-   protected Configuration getConfiguration() throws Exception {
-      return super.getConfiguration().fluent().transaction().recovery().build();
+   protected ConfigurationBuilder getConfigurationBuilder() {
+      ConfigurationBuilder configurationBuilder = super.getConfigurationBuilder();
+      configurationBuilder.transaction().recovery().enable();
+      return configurationBuilder;
    }
 }

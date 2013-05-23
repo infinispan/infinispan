@@ -23,7 +23,8 @@
 package org.infinispan.tx;
 
 import org.infinispan.Cache;
-import org.infinispan.config.Configuration;
+import org.infinispan.configuration.cache.CacheMode;
+import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.remoting.RemoteException;
 import org.infinispan.test.MultipleCacheManagersTest;
@@ -45,13 +46,13 @@ import java.util.List;
  */
 @Test(groups = "functional", testName = "tx.StaleLockRecoveryTest")
 public class StaleLockRecoveryTest extends MultipleCacheManagersTest {
-   Cache<String, String> c1, c2;
+   private Cache<String, String> c1, c2;
 
    @Override
    protected void createCacheManagers() throws Throwable {
-      Configuration c = getDefaultClusteredConfig(Configuration.CacheMode.REPL_SYNC, true);
-      c.fluent().transaction().lockingMode(LockingMode.PESSIMISTIC);
-      c.setLockAcquisitionTimeout(500);
+      ConfigurationBuilder c = getDefaultClusteredCacheConfig(CacheMode.REPL_SYNC, true);
+      c.transaction().lockingMode(LockingMode.PESSIMISTIC)
+            .locking().lockAcquisitionTimeout(500);
       List<Cache<String, String>> caches = createClusteredCaches(2, "tx", c);
       c1 = caches.get(0);
       c2 = caches.get(1);

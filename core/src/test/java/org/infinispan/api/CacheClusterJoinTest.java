@@ -22,9 +22,8 @@
  */
 package org.infinispan.api;
 
-import org.infinispan.Cache;
-import org.infinispan.config.Configuration;
-import org.infinispan.config.Configuration.CacheMode;
+import org.infinispan.configuration.cache.CacheMode;
+import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.test.MultipleCacheManagersTest;
 import org.infinispan.test.TestingUtil;
@@ -34,9 +33,9 @@ import java.util.List;
 
 @Test(groups = "functional", testName = "api.CacheClusterJoinTest")
 public class CacheClusterJoinTest extends MultipleCacheManagersTest {
-   Cache cache1, cache2;
-   EmbeddedCacheManager cm1, cm2;
-   Configuration cfg;
+
+   private EmbeddedCacheManager cm1, cm2;
+   private ConfigurationBuilder cfg;
 
    public CacheClusterJoinTest() {
       cleanup = CleanupPhase.AFTER_METHOD;
@@ -44,10 +43,10 @@ public class CacheClusterJoinTest extends MultipleCacheManagersTest {
 
    protected void createCacheManagers() throws Throwable {
       cm1 = addClusterEnabledCacheManager();
-      cfg = new Configuration();
-      cfg.setCacheMode(CacheMode.REPL_SYNC);
-      cfg.setFetchInMemoryState(false);
-      cm1.defineConfiguration("cache", cfg);
+      cfg = new ConfigurationBuilder();
+      cfg.clustering().cacheMode(CacheMode.REPL_SYNC)
+            .stateTransfer().fetchInMemoryState(false);
+      cm1.defineConfiguration("cache", cfg.build());
    }
 
    public void testGetMembers() throws Exception {
@@ -58,7 +57,7 @@ public class CacheClusterJoinTest extends MultipleCacheManagersTest {
       Object coord = memb1.get(0);
 
       cm2 = addClusterEnabledCacheManager();
-      cm2.defineConfiguration("cache", cfg.clone());
+      cm2.defineConfiguration("cache", cfg.build());
       cm2.getCache("cache"); // this will make sure any lazy components are started.
       TestingUtil.blockUntilViewsReceived(50000, true, cm1, cm2);
       memb1 = cm1.getMembers();
@@ -78,7 +77,7 @@ public class CacheClusterJoinTest extends MultipleCacheManagersTest {
       assert cm1.isCoordinator() : "Should be coordinator!";
 
       cm2 = addClusterEnabledCacheManager();
-      cm2.defineConfiguration("cache", cfg.clone());
+      cm2.defineConfiguration("cache", cfg.build());
       cm2.getCache("cache"); // this will make sure any lazy components are started.
       assert cm1.isCoordinator();
       assert !cm2.isCoordinator();

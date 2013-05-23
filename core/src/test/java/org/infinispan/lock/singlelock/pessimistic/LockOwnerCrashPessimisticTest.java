@@ -23,7 +23,7 @@
 
 package org.infinispan.lock.singlelock.pessimistic;
 
-import org.infinispan.config.Configuration;
+import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.lock.singlelock.AbstractLockOwnerCrashTest;
 import org.infinispan.test.AbstractInfinispanTest;
 import org.infinispan.test.fwk.CleanupAfterMethod;
@@ -49,7 +49,7 @@ import static org.testng.Assert.assertEquals;
 public class LockOwnerCrashPessimisticTest extends AbstractLockOwnerCrashTest {
 
    public LockOwnerCrashPessimisticTest() {
-      super(Configuration.CacheMode.DIST_SYNC, LockingMode.PESSIMISTIC, false);
+      super(CacheMode.DIST_SYNC, LockingMode.PESSIMISTIC, false);
    }
 
    public void testLockOwnerCrashesBeforePrepare() throws Exception {

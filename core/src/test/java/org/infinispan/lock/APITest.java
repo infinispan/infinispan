@@ -24,7 +24,7 @@ package org.infinispan.lock;
 
 import org.infinispan.AdvancedCache;
 import org.infinispan.Cache;
-import org.infinispan.config.Configuration;
+import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.context.Flag;
 import org.infinispan.interceptors.locking.AbstractLockingInterceptor;
@@ -39,9 +39,7 @@ import org.infinispan.transaction.LockingMode;
 import org.infinispan.util.concurrent.TimeoutException;
 import org.testng.annotations.Test;
 
-import javax.transaction.NotSupportedException;
 import javax.transaction.Status;
-import javax.transaction.SystemException;
 import javax.transaction.Transaction;
 import javax.transaction.TransactionManager;
 import java.util.Arrays;
@@ -59,14 +57,15 @@ import static org.testng.Assert.assertTrue;
 @Test(testName = "lock.APITest", groups = "functional")
 @CleanupAfterMethod
 public class APITest extends MultipleCacheManagersTest {
-   EmbeddedCacheManager cm1, cm2;
+   private EmbeddedCacheManager cm1, cm2;
 
    @Override
    protected void createCacheManagers() throws Throwable {
-      Configuration cfg = getDefaultClusteredConfig(Configuration.CacheMode.REPL_SYNC, true);
-      cfg.fluent().transaction().lockingMode(LockingMode.PESSIMISTIC).cacheStopTimeout(0);
+      ConfigurationBuilder cfg = getDefaultClusteredCacheConfig(CacheMode.REPL_SYNC, true);
+      cfg.transaction().lockingMode(LockingMode.PESSIMISTIC)
+            .cacheStopTimeout(0)
+            .locking().lockAcquisitionTimeout(100);
 
-      cfg.setLockAcquisitionTimeout(100);
       cm1 = TestCacheManagerFactory.createClusteredCacheManager(cfg);
       cm2 = TestCacheManagerFactory.createClusteredCacheManager(cfg);
       registerCacheManager(cm1, cm2);
@@ -74,7 +73,7 @@ public class APITest extends MultipleCacheManagersTest {
       cm2.getCache();
    }
 
-   public void testLockSuccess() throws SystemException, NotSupportedException {
+   public void testLockSuccess() throws Exception {
       Cache<String, String> cache1 = cache(0);
 
       cache1.put("k", "v");
@@ -84,7 +83,7 @@ public class APITest extends MultipleCacheManagersTest {
    }
 
    @Test (expectedExceptions = TimeoutException.class)
-   public void testLockFailure() throws SystemException, NotSupportedException {
+   public void testLockFailure() throws Exception {
       Cache<String, String> cache1 = cache(0), cache2 = cache(1);
 
       cache1.put("k", "v");
@@ -97,7 +96,7 @@ public class APITest extends MultipleCacheManagersTest {
       tm(0).rollback();
    }
 
-   public void testSilentLockFailure() throws SystemException, NotSupportedException {
+   public void testSilentLockFailure() throws Exception {
       Cache<String, String> cache1 = cache(0), cache2 = cache(1);
 
       cache1.put("k", "v");
@@ -168,7 +167,7 @@ public class APITest extends MultipleCacheManagersTest {
       f2.get();      
    }
 
-   public void testMultiLockSuccess() throws SystemException, NotSupportedException {
+   public void testMultiLockSuccess() throws Exception {
       Cache<String, String> cache1 = cache(0);
 
       cache1.put("k1", "v");
@@ -181,7 +180,7 @@ public class APITest extends MultipleCacheManagersTest {
    }
 
    @Test (expectedExceptions = TimeoutException.class)   
-   public void testMultiLockFailure() throws SystemException, NotSupportedException {
+   public void testMultiLockFailure() throws Exception {
       Cache<String, String> cache1 = cache(0), cache2 = cache(1);
 
       cache1.put("k1", "v");
@@ -197,7 +196,7 @@ public class APITest extends MultipleCacheManagersTest {
       tm(0).rollback();
    }
 
-   public void testSilentMultiLockFailure() throws SystemException, NotSupportedException {
+   public void testSilentMultiLockFailure() throws Exception {
       Cache<String, String> cache1 = cache(0), cache2 = cache(1);
 
       cache1.put("k1", "v");

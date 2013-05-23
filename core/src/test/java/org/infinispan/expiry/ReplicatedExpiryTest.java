@@ -23,7 +23,8 @@
 package org.infinispan.expiry;
 
 import org.infinispan.Cache;
-import org.infinispan.config.Configuration;
+import org.infinispan.configuration.cache.CacheMode;
+import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.container.entries.InternalCacheEntry;
 import org.infinispan.container.entries.MortalCacheEntry;
 import org.infinispan.container.entries.TransientCacheEntry;
@@ -37,8 +38,8 @@ import static java.util.concurrent.TimeUnit.MILLISECONDS;
 public class ReplicatedExpiryTest extends MultipleCacheManagersTest {
 
    protected void createCacheManagers() throws Throwable {
-      Configuration cfg = getDefaultClusteredConfig(Configuration.CacheMode.REPL_SYNC);
-      createClusteredCaches(2, "cache", cfg);      
+      ConfigurationBuilder builder = getDefaultClusteredCacheConfig(CacheMode.REPL_SYNC, false);
+      createClusteredCaches(2, "cache", builder);
    }
 
    public void testLifespanExpiryReplicates() {

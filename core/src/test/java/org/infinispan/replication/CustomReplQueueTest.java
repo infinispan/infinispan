@@ -22,8 +22,8 @@
  */
 package org.infinispan.replication;
 
-import org.infinispan.config.Configuration;
-import org.infinispan.config.GlobalConfiguration;
+import org.infinispan.configuration.cache.CacheMode;
+import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.remoting.ReplicationQueue;
 import org.infinispan.remoting.ReplicationQueueImpl;
@@ -34,14 +34,13 @@ import org.testng.annotations.Test;
 
 @Test(groups = "functional", testName = "replication.CustomReplQueueTest")
 public class CustomReplQueueTest extends SingleCacheManagerTest {
+
    @Override
    protected EmbeddedCacheManager createCacheManager() throws Exception {
-      Configuration cfg = new Configuration();
-      cfg.setCacheMode(Configuration.CacheMode.REPL_ASYNC);
-      cfg.setUseReplQueue(true);
-      cfg.setReplQueueClass(TestReplQueueClass.class.getName());
-      EmbeddedCacheManager ecm = TestCacheManagerFactory.createCacheManager(GlobalConfiguration.getClusteredDefault(), cfg);
-      return ecm;
+      ConfigurationBuilder cfg = new ConfigurationBuilder();
+      cfg.clustering().cacheMode(CacheMode.REPL_ASYNC)
+            .async().useReplQueue(true).replQueue(new TestReplQueueClass());
+      return TestCacheManagerFactory.createClusteredCacheManager(cfg);
    }
 
    public void testReplQueueImplType() {

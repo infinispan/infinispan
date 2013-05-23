@@ -23,7 +23,8 @@
 package org.infinispan.replication;
 
 import org.infinispan.Cache;
-import org.infinispan.config.Configuration;
+import org.infinispan.configuration.cache.CacheMode;
+import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.test.MultipleCacheManagersTest;
 import org.infinispan.test.TestingUtil;
 
@@ -49,20 +50,21 @@ import java.util.concurrent.TimeUnit;
  */
 @Test(groups = "functional", testName = "replication.SyncReplLockingTest")
 public class SyncReplLockingTest extends MultipleCacheManagersTest {
-   String k = "key", v = "value";
+   private String k = "key", v = "value";
 
    public SyncReplLockingTest() {
       cleanup = CleanupPhase.AFTER_METHOD;
    }
 
-   protected Configuration.CacheMode getCacheMode() {
-      return Configuration.CacheMode.REPL_SYNC;
+   protected CacheMode getCacheMode() {
+      return CacheMode.REPL_SYNC;
    }
 
    protected void createCacheManagers() throws Throwable {
-      Configuration cfg = getDefaultClusteredConfig(getCacheMode(), true);
-      cfg.fluent().transactionManagerLookup(new DummyTransactionManagerLookup()).lockingMode(LockingMode.PESSIMISTIC);
-      cfg.setLockAcquisitionTimeout(500);
+      ConfigurationBuilder cfg = getDefaultClusteredCacheConfig(getCacheMode(), true);
+      cfg.transaction().transactionManagerLookup(new DummyTransactionManagerLookup())
+            .lockingMode(LockingMode.PESSIMISTIC)
+            .locking().lockAcquisitionTimeout(500);
       createClusteredCaches(2, "testcache", cfg);
       waitForClusterToForm("testcache");
    }
@@ -83,7 +85,6 @@ public class SyncReplLockingTest extends MultipleCacheManagersTest {
       concurrentLockingHelper(false, true);
       concurrentLockingHelper(true, true);
    }
-
 
    public void testLocksReleasedWithNoMods() throws Exception {
       Cache cache1 = cache(0, "testcache");

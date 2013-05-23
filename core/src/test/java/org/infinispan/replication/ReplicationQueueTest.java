@@ -25,8 +25,10 @@ package org.infinispan.replication;
 import org.infinispan.Cache;
 import org.infinispan.atomic.AtomicMap;
 import org.infinispan.atomic.AtomicMapLookup;
-import org.infinispan.config.Configuration;
-import org.infinispan.config.GlobalConfiguration;
+import org.infinispan.configuration.cache.CacheMode;
+import org.infinispan.configuration.cache.Configuration;
+import org.infinispan.configuration.cache.ConfigurationBuilder;
+import org.infinispan.configuration.global.GlobalConfigurationBuilder;
 import org.infinispan.executors.ScheduledExecutorFactory;
 import org.infinispan.factories.KnownComponentNames;
 import org.infinispan.manager.CacheContainer;
@@ -57,26 +59,32 @@ public class ReplicationQueueTest extends MultipleCacheManagersTest {
 
    private static final int REPL_QUEUE_INTERVAL = 5000;
    private static final int REPL_QUEUE_MAX_ELEMENTS = 10;
-   long creationTime;
 
    protected void createCacheManagers() throws Throwable {
-      GlobalConfiguration globalConfiguration = GlobalConfiguration.getClusteredDefault();
-      globalConfiguration.setReplicationQueueScheduledExecutorFactoryClass(ReplQueueTestScheduledExecutorFactory.class.getName());
-      globalConfiguration.setReplicationQueueScheduledExecutorProperties(ReplQueueTestScheduledExecutorFactory.myProps);
-      CacheContainer first = TestCacheManagerFactory.createCacheManager(globalConfiguration);
-      CacheContainer second = TestCacheManagerFactory.createCacheManager(globalConfiguration);
+      CacheContainer first = TestCacheManagerFactory.createClusteredCacheManager(createGlobalConfigurationBuilder(), new ConfigurationBuilder());
+      CacheContainer second = TestCacheManagerFactory.createClusteredCacheManager(createGlobalConfigurationBuilder(), new ConfigurationBuilder());
       registerCacheManager(first, second);
 
-      Configuration config = getDefaultClusteredConfig(Configuration.CacheMode.REPL_ASYNC, true);
-      config.setUseReplQueue(true);
-      config.setReplQueueInterval(REPL_QUEUE_INTERVAL);
-      config.setReplQueueMaxElements(REPL_QUEUE_MAX_ELEMENTS);
-      creationTime = System.currentTimeMillis();
-      manager(0).defineConfiguration("replQueue", config);
+      manager(0).defineConfiguration("replQueue", createCacheConfig(true));
+      manager(1).defineConfiguration("replQueue", createCacheConfig(false));
+   }
 
-      Configuration conf2 = config.clone();
-      conf2.setUseReplQueue(false);
-      manager(1).defineConfiguration("replQueue", conf2);
+   private GlobalConfigurationBuilder createGlobalConfigurationBuilder() {
+      GlobalConfigurationBuilder globalConfiguration = GlobalConfigurationBuilder.defaultClusteredBuilder();
+      globalConfiguration.replicationQueueScheduledExecutor()
+            .factory(new ReplQueueTestScheduledExecutorFactory())
+            .withProperties(ReplQueueTestScheduledExecutorFactory.myProps);
+
+      return globalConfiguration;
+   }
+
+   private Configuration createCacheConfig(boolean useReplQueue) {
+      ConfigurationBuilder config = getDefaultClusteredCacheConfig(CacheMode.REPL_ASYNC, true);
+      config.clustering()
+            .async().useReplQueue(useReplQueue)
+            .replQueueInterval(REPL_QUEUE_INTERVAL)
+            .replQueueMaxElements(REPL_QUEUE_MAX_ELEMENTS);
+      return config.build();
    }
 
    /**
@@ -96,7 +104,7 @@ public class ReplicationQueueTest extends MultipleCacheManagersTest {
     * Make sure that replication will occur even if <tt>replQueueMaxElements</tt> are not reached, but the
     * <tt>replQueueInterval</tt> is reached.
     */
-   public void testReplicationBasedOnTime() throws InterruptedException {
+   public void testReplicationBasedOnTime() throws Exception {
       
       Cache cache1 = cache(0, "replQueue");
       Cache cache2 = cache(1, "replQueue");

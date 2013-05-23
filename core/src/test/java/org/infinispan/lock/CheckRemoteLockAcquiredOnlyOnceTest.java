@@ -24,7 +24,8 @@
 package org.infinispan.lock;
 
 import org.infinispan.commands.control.LockControlCommand;
-import org.infinispan.config.Configuration;
+import org.infinispan.configuration.cache.CacheMode;
+import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.context.impl.TxInvocationContext;
 import org.infinispan.interceptors.base.CommandInterceptor;
 import org.infinispan.test.MultipleCacheManagersTest;
@@ -47,12 +48,12 @@ public class CheckRemoteLockAcquiredOnlyOnceTest extends MultipleCacheManagersTe
 
    protected ControlInterceptor controlInterceptor;
    protected Object key;
-   protected Configuration.CacheMode mode = Configuration.CacheMode.REPL_SYNC;
+   protected CacheMode mode = CacheMode.REPL_SYNC;
 
    @Override
    protected void createCacheManagers() throws Throwable {
-      final Configuration c = getDefaultClusteredConfig(mode, true);
-      c.fluent().transaction().lockingMode(LockingMode.PESSIMISTIC);
+      final ConfigurationBuilder c = getDefaultClusteredCacheConfig(mode, true);
+      c.transaction().lockingMode(LockingMode.PESSIMISTIC);
       createCluster(c, 2);
       waitForClusterToForm();
       controlInterceptor = new ControlInterceptor();

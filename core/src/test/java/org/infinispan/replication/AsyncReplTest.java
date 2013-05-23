@@ -33,7 +33,8 @@ package org.infinispan.replication;
 
 import org.infinispan.Cache;
 import org.infinispan.commands.write.PutKeyValueCommand;
-import org.infinispan.config.Configuration;
+import org.infinispan.configuration.cache.CacheMode;
+import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.test.MultipleCacheManagersTest;
 import org.infinispan.test.TestingUtil;
 import org.testng.annotations.Test;
@@ -45,9 +46,8 @@ import static org.testng.AssertJUnit.assertEquals;
 @Test(groups = "functional", testName = "replication.AsyncReplTest")
 public class AsyncReplTest extends MultipleCacheManagersTest {
 
-
    protected void createCacheManagers() throws Throwable {
-      Configuration asyncConfiguration = getDefaultClusteredConfig(Configuration.CacheMode.REPL_ASYNC, true);
+      ConfigurationBuilder asyncConfiguration = getDefaultClusteredCacheConfig(CacheMode.REPL_ASYNC, true);
       createClusteredCaches(2, "asyncRepl", asyncConfiguration);   
    }
 

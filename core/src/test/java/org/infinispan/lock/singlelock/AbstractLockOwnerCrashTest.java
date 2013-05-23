@@ -23,7 +23,7 @@
 
 package org.infinispan.lock.singlelock;
 
-import org.infinispan.config.Configuration;
+import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.test.AbstractInfinispanTest;
 import org.infinispan.transaction.LockingMode;
 import org.infinispan.transaction.tm.DummyTransaction;
@@ -39,8 +39,7 @@ import javax.transaction.Transaction;
 @Test(groups = "functional")
 public abstract class AbstractLockOwnerCrashTest extends AbstractCrashTest {
 
-   public AbstractLockOwnerCrashTest(Configuration.CacheMode cacheMode, LockingMode lockingMode,
-                                     Boolean useSynchronization) {
+   public AbstractLockOwnerCrashTest(CacheMode cacheMode, LockingMode lockingMode, Boolean useSynchronization) {
       super(cacheMode, lockingMode, useSynchronization);
    }
 
