@@ -20,7 +20,7 @@
 package org.infinispan.remoting;
 
 import org.infinispan.Cache;
-import org.infinispan.EmbeddedMetadata;
+import org.infinispan.metadata.EmbeddedMetadata;
 import org.infinispan.commands.CommandsFactory;
 import org.infinispan.commands.ReplicableCommand;
 import org.infinispan.commands.read.GetKeyValueCommand;

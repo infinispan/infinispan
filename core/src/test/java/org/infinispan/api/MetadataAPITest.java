@@ -24,8 +24,8 @@
 package org.infinispan.api;
 
 import org.infinispan.AdvancedCache;
-import org.infinispan.EmbeddedMetadata;
-import org.infinispan.Metadata;
+import org.infinispan.metadata.EmbeddedMetadata;
+import org.infinispan.metadata.Metadata;
 import org.infinispan.container.entries.CacheEntry;
 import org.infinispan.container.versioning.EntryVersion;
 import org.infinispan.container.versioning.NumericVersion;
@@ -227,11 +227,6 @@ public class MetadataAPITest extends SingleCacheManagerTest {
       @Override
       public Builder version(EntryVersion version) {
          return this;
-      }
-
-      @Override
-      public Builder read(Metadata template) {
-         return new CustomMetadata(template);
       }
 
       @Override

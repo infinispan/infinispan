@@ -19,8 +19,8 @@
 
 package org.infinispan.interceptors;
 
-import org.infinispan.EmbeddedMetadata;
-import org.infinispan.Metadata;
+import org.infinispan.metadata.EmbeddedMetadata;
+import org.infinispan.metadata.Metadata;
 import org.infinispan.commands.VisitableCommand;
 import org.infinispan.commands.read.GetKeyValueCommand;
 import org.infinispan.commands.FlagAffectedCommand;

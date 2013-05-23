@@ -19,7 +19,7 @@
 
 package org.infinispan.marshall;
 
-import org.infinispan.EmbeddedMetadata;
+import org.infinispan.metadata.EmbeddedMetadata;
 import org.infinispan.commands.write.PutKeyValueCommand;
 import org.infinispan.context.Flag;
 import org.infinispan.io.ExposedByteArrayOutputStream;

@@ -22,7 +22,7 @@
  */
 package org.infinispan.container.entries;
 
-import org.infinispan.Metadata;
+import org.infinispan.metadata.Metadata;
 
 /**
  * A null entry that is read in for removal

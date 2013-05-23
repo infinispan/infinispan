@@ -25,7 +25,7 @@ package org.infinispan.container;
 import java.util.Collection;
 import java.util.Set;
 
-import org.infinispan.Metadata;
+import org.infinispan.metadata.Metadata;
 import org.infinispan.container.entries.InternalCacheEntry;
 import org.infinispan.factories.annotations.Stop;
 import org.infinispan.factories.scopes.Scope;

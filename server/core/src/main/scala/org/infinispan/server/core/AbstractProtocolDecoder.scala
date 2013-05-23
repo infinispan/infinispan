@@ -22,7 +22,7 @@
  */
 package org.infinispan.server.core
 
-import org.infinispan.{Metadata, EmbeddedMetadata, AdvancedCache, Cache}
+import org.infinispan.{AdvancedCache, Cache}
 import Operation._
 import java.util.concurrent.TimeUnit
 import transport._
@@ -38,6 +38,7 @@ import org.jboss.netty.handler.codec.replay.ReplayingDecoder
 import org.jboss.netty.buffer.ChannelBuffers
 import org.jboss.netty.util.CharsetUtil
 import org.infinispan.container.entries.CacheEntry
+import org.infinispan.metadata.{Metadata, EmbeddedMetadata}
 
 /**
  * Common abstract decoder for Memcached and Hot Rod protocols.

@@ -23,7 +23,7 @@
 
 package org.infinispan.container;
 
-import org.infinispan.Metadata;
+import org.infinispan.metadata.Metadata;
 import org.infinispan.atomic.Delta;
 import org.infinispan.atomic.DeltaAware;
 import org.infinispan.commands.FlagAffectedCommand;

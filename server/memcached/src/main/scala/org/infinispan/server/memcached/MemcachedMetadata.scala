@@ -23,13 +23,14 @@
 
 package org.infinispan.server.memcached
 
-import org.infinispan.Metadata
 import org.infinispan.container.versioning.EntryVersion
-import org.infinispan.Metadata.Builder
+import org.infinispan.metadata.Metadata
+import Metadata.Builder
 import org.infinispan.marshall.AbstractExternalizer
 import java.util
 import java.io.{ObjectInput, ObjectOutput}
 import scala.collection.JavaConversions.setAsJavaSet
+import org.infinispan.metadata.Metadata
 
 /**
  * Memcached metadata information.
