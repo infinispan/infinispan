@@ -234,10 +234,14 @@ public class ClusterTopologyManagerImpl implements ClusterTopologyManager {
             try {
                Map<String, List<CacheTopology>> clusterCacheMap = recoverClusterStatus(newViewId);
 
-               for (Map.Entry<String, List<CacheTopology>> e : clusterCacheMap.entrySet()) {
-                  String cacheName = e.getKey();
-                  List<CacheTopology> topologyList = e.getValue();
-                  updateCacheStatusAfterMerge(cacheName, transport.getMembers(), topologyList);
+               for (Map.Entry<String, List<CacheTopology>> entry : clusterCacheMap.entrySet()) {
+                  String cacheName = entry.getKey();
+                  List<CacheTopology> topologyList = entry.getValue();
+                  try {
+                     updateCacheStatusAfterMerge(cacheName, transport.getMembers(), topologyList);
+                  } catch (Exception e) {
+                     log.failedToRecoverCacheState(cacheName, e);
+                  }
                }
             } catch (InterruptedException e) {
                log.tracef("Cluster state recovery interrupted because the coordinator is shutting down");
@@ -247,6 +251,7 @@ public class ClusterTopologyManagerImpl implements ClusterTopologyManager {
                // TODO Retry?
                log.failedToRecoverClusterState(e);
             }
+
          } else if (isCoordinator) {
             try {
                updateClusterMembers(transport.getMembers());
