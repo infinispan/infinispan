@@ -843,5 +843,9 @@ public interface Log extends BasicLogger {
    @Message(value = "Received exception from %s, see cause for remote stack trace", id = 217)
    RemoteException remoteException(Address sender, @Cause Exception e);
 
+   @LogMessage(level = ERROR)
+   @Message(value = "Failed to recover cache %s state after the current node became the coordinator", id = 218)
+   void failedToRecoverCacheState(String cacheName, @Cause Throwable cause);
+
 }
 
