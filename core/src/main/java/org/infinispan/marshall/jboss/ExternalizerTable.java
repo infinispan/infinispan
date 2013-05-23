@@ -24,7 +24,7 @@
 package org.infinispan.marshall.jboss;
 
 import org.infinispan.CacheException;
-import org.infinispan.EmbeddedMetadata;
+import org.infinispan.metadata.EmbeddedMetadata;
 import org.infinispan.atomic.AtomicHashMap;
 import org.infinispan.atomic.AtomicHashMapDelta;
 import org.infinispan.atomic.ClearOperation;

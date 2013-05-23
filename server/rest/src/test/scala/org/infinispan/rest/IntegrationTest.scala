@@ -38,13 +38,14 @@ import org.apache.commons.httpclient.HttpMethod
 import java.util.{Calendar, Locale}
 import org.testng.AssertJUnit._
 import org.infinispan.manager.{EmbeddedCacheManager, AbstractDelegatingEmbeddedCacheManager}
-import org.infinispan.{Metadata, Cache, AdvancedCache, AbstractDelegatingAdvancedCache}
+import org.infinispan.{Cache, AdvancedCache, AbstractDelegatingAdvancedCache}
 import java.util.concurrent.{TimeUnit, CountDownLatch}
 import scala.concurrent.ops._
 import org.infinispan.server.core.logging.JavaLog
 import org.infinispan.util.logging.LogFactory
 import org.infinispan.test.fwk.TestCacheManagerFactory
 import java.util
+import org.infinispan.metadata.Metadata
 
 /**
  * This tests using the Apache HTTP commons client library - but you could use anything

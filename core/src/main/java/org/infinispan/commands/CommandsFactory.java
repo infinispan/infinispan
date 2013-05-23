@@ -22,7 +22,7 @@
  */
 package org.infinispan.commands;
 
-import org.infinispan.Metadata;
+import org.infinispan.metadata.Metadata;
 import org.infinispan.atomic.Delta;
 import org.infinispan.commands.control.LockControlCommand;
 import org.infinispan.commands.read.DistributedExecuteCommand;

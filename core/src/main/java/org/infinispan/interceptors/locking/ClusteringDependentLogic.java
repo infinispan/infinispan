@@ -23,7 +23,7 @@
 
 package org.infinispan.interceptors.locking;
 
-import org.infinispan.Metadata;
+import org.infinispan.metadata.Metadata;
 import org.infinispan.commands.FlagAffectedCommand;
 import org.infinispan.commands.tx.VersionedPrepareCommand;
 import org.infinispan.commands.tx.totalorder.TotalOrderPrepareCommand;

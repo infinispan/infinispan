@@ -23,7 +23,7 @@
 
 package org.infinispan.commands;
 
-import org.infinispan.Metadata;
+import org.infinispan.metadata.Metadata;
 
 /**
  * A command that contains metadata information.

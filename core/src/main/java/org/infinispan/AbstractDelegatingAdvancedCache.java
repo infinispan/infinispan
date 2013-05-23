@@ -32,6 +32,7 @@ import org.infinispan.distribution.DistributionManager;
 import org.infinispan.eviction.EvictionManager;
 import org.infinispan.factories.ComponentRegistry;
 import org.infinispan.interceptors.base.CommandInterceptor;
+import org.infinispan.metadata.Metadata;
 import org.infinispan.remoting.rpc.RpcManager;
 import org.infinispan.util.concurrent.NotifyingFuture;
 import org.infinispan.util.concurrent.locks.LockManager;

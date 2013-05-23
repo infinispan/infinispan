@@ -22,7 +22,7 @@
  */
 package org.infinispan.commands.write;
 
-import org.infinispan.Metadata;
+import org.infinispan.metadata.Metadata;
 import org.infinispan.commands.MetadataAwareCommand;
 import org.infinispan.commands.Visitor;
 import org.infinispan.configuration.cache.Configuration;

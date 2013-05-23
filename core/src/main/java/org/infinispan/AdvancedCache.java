@@ -32,6 +32,7 @@ import org.infinispan.distribution.DistributionManager;
 import org.infinispan.eviction.EvictionManager;
 import org.infinispan.factories.ComponentRegistry;
 import org.infinispan.interceptors.base.CommandInterceptor;
+import org.infinispan.metadata.Metadata;
 import org.infinispan.remoting.rpc.RpcManager;
 import org.infinispan.stats.Stats;
 import org.infinispan.util.concurrent.NotifyingFuture;
@@ -304,7 +305,7 @@ public interface AdvancedCache<K, V> extends Cache<K, V> {
 
    /**
     * An overloaded form of {@link #put(K, V)}, which takes in an instance of
-    * {@link Metadata} which can be used to provide metadata information for
+    * {@link org.infinispan.metadata.Metadata} which can be used to provide metadata information for
     * the entry being stored, such as lifespan, version of value...etc.
     *
     * @param key key to use

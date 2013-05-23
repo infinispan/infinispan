@@ -19,13 +19,14 @@
 
 package org.infinispan.container;
 
-import org.infinispan.Metadata;
+import org.infinispan.metadata.Metadata;
 import org.infinispan.container.entries.CacheEntry;
 import org.infinispan.container.entries.ClusteredRepeatableReadEntry;
 import org.infinispan.container.entries.MVCCEntry;
 import org.infinispan.container.entries.NullMarkerEntry;
 import org.infinispan.container.entries.NullMarkerEntryForRemoval;
 import org.infinispan.factories.annotations.Start;
+import org.infinispan.metadata.Metadatas;
 
 /**
  * An entry factory that is capable of dealing with SimpleClusteredVersions.  This should <i>only</i> be used with
@@ -51,7 +52,7 @@ public class IncrementalVersionableEntryFactoryImpl extends EntryFactoryImpl {
          value = cacheEntry.getValue();
          Metadata entryMetadata = cacheEntry.getMetadata();
          if (providedMetadata != null && entryMetadata != null) {
-            metadata = providedMetadata.builder().read(entryMetadata).build();
+            metadata = Metadatas.applyVersion(entryMetadata, providedMetadata);
          } else if (providedMetadata == null) {
             metadata = entryMetadata; // take the metadata in memory
          } else {
@@ -68,4 +69,5 @@ public class IncrementalVersionableEntryFactoryImpl extends EntryFactoryImpl {
 
       return new ClusteredRepeatableReadEntry(key, value, metadata);
    }
+
 }

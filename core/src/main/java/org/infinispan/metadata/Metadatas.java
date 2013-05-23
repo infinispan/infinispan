@@ -21,30 +21,37 @@
  * 02110-1301 USA, or see the FSF site: http://www.fsf.org.
  */
 
-package org.infinispan.container.entries.metadata;
-
-import org.infinispan.metadata.Metadata;
+package org.infinispan.metadata;
 
 /**
- * Metdata aware cache entry.
+ * Utility method for Metadata classes.
  *
  * @author Galder Zamarreño
  * @since 5.3
  */
-public interface MetadataAware {
+public class Metadatas {
+
+   private Metadatas() {
+   }
 
    /**
-    * Get metadata of this cache entry.
+    * Applies version in source metadata to target metadata, if no version
+    * in target metadata. This method can be useful in scenarios where source
+    * version information must be kept around, i.e. write skew, or when
+    * reading metadata from cache store.
     *
-    * @return a Metadata instance
+    * @param source Metadata object which is source, whose version might be
+    *               is of interest for the target metadata
+    * @param target Metadata object on which version might be applied
+    * @return either, the target Metadata instance as it was when it was
+    * called, or a brand new target Metadata instance with version from source
+    * metadata applied.
     */
-   Metadata getMetadata();
+   public static Metadata applyVersion(Metadata source, Metadata target) {
+      if (target.version() == null && source.version() != null)
+         return target.builder().version(source.version()).build();
 
-   /**
-    * Set the metadata in the cache entry.
-    *
-    * @param metadata to apply to the cache entry
-    */
-   void setMetadata(Metadata metadata);
+      return target;
+   }
 
 }

@@ -22,11 +22,10 @@
  */
 package org.infinispan.util;
 
-import org.infinispan.Metadata;
+import org.infinispan.metadata.Metadata;
 import org.infinispan.container.DataContainer;
 import org.infinispan.container.entries.InternalCacheEntry;
 import org.infinispan.container.entries.InternalCacheValue;
-import org.infinispan.container.versioning.EntryVersion;
 import org.infinispan.marshall.AbstractExternalizer;
 import org.infinispan.marshall.Ids;
 import org.infinispan.marshall.MarshallUtil;

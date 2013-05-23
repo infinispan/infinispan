@@ -22,7 +22,7 @@
  */
 package org.infinispan.stress;
 
-import org.infinispan.EmbeddedMetadata;
+import org.infinispan.metadata.EmbeddedMetadata;
 import org.infinispan.container.*;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;

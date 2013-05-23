@@ -24,7 +24,7 @@ package org.infinispan.container;
 
 import net.jcip.annotations.ThreadSafe;
 import org.infinispan.CacheException;
-import org.infinispan.Metadata;
+import org.infinispan.metadata.Metadata;
 import org.infinispan.container.entries.InternalCacheEntry;
 import org.infinispan.eviction.ActivationManager;
 import org.infinispan.eviction.EvictionManager;

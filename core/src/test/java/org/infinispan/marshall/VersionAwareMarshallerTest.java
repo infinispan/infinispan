@@ -23,7 +23,7 @@
 package org.infinispan.marshall;
 
 import org.infinispan.Cache;
-import org.infinispan.EmbeddedMetadata;
+import org.infinispan.metadata.EmbeddedMetadata;
 import org.infinispan.atomic.AtomicHashMap;
 import org.infinispan.commands.ReplicableCommand;
 import org.infinispan.commands.read.GetKeyValueCommand;
@@ -98,7 +98,6 @@ import java.io.Serializable;
 import java.lang.reflect.Method;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.TimeUnit;
 
 import static org.infinispan.test.TestingUtil.extractCacheMarshaller;
 import static org.infinispan.test.TestingUtil.k;

@@ -18,8 +18,8 @@
 
 package org.infinispan.interceptors.totalorder;
 
-import org.infinispan.EmbeddedMetadata;
-import org.infinispan.Metadata;
+import org.infinispan.metadata.EmbeddedMetadata;
+import org.infinispan.metadata.Metadata;
 import org.infinispan.commands.FlagAffectedCommand;
 import org.infinispan.commands.tx.CommitCommand;
 import org.infinispan.commands.tx.PrepareCommand;
