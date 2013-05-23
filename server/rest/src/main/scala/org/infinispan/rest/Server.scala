@@ -33,7 +33,7 @@ import core.Response.{ResponseBuilder, Status}
 import org.infinispan.api.BasicCacheContainer
 import org.infinispan.manager._
 import org.codehaus.jackson.map.ObjectMapper
-import org.infinispan.{Metadata, CacheException, AdvancedCache}
+import org.infinispan.{CacheException, AdvancedCache}
 import org.infinispan.commons.hash.MurmurHash3
 import javax.ws.rs._
 import javax.servlet.http.HttpServletResponse
@@ -49,6 +49,7 @@ import org.infinispan.remoting.transport.jgroups.JGroupsTransport
 import org.infinispan.distribution.DistributionManager
 import org.infinispan.remoting.transport.Address
 import org.infinispan.configuration.cache.Configuration
+import org.infinispan.metadata.Metadata
 
 /**
  * Integration server linking REST requests with Infinispan calls.

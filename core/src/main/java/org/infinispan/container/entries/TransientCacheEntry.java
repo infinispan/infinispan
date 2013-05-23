@@ -22,8 +22,8 @@
  */
 package org.infinispan.container.entries;
 
-import org.infinispan.EmbeddedMetadata;
-import org.infinispan.Metadata;
+import org.infinispan.metadata.EmbeddedMetadata;
+import org.infinispan.metadata.Metadata;
 import org.infinispan.io.UnsignedNumeric;
 import org.infinispan.marshall.AbstractExternalizer;
 import org.infinispan.marshall.Ids;

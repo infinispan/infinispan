@@ -22,7 +22,7 @@
  */
 package org.infinispan.interceptors;
 
-import org.infinispan.Metadata;
+import org.infinispan.metadata.Metadata;
 import org.infinispan.commands.FlagAffectedCommand;
 import org.infinispan.commands.read.GetKeyValueCommand;
 import org.infinispan.commands.write.*;
@@ -45,6 +45,7 @@ import org.infinispan.loaders.CacheLoader;
 import org.infinispan.loaders.CacheLoaderManager;
 import org.infinispan.loaders.CacheStore;
 import org.infinispan.loaders.decorators.ChainingCacheStore;
+import org.infinispan.metadata.Metadatas;
 import org.infinispan.notifications.cachelistener.CacheNotifier;
 import org.infinispan.util.InfinispanCollections;
 import org.infinispan.util.logging.Log;
@@ -240,7 +241,7 @@ public class CacheLoaderInterceptor extends JmxStatsCommandInterceptor {
          Metadata metadata = cmd.getMetadata();
          Metadata loadedMetadata = loadedEntry.getMetadata();
          if (metadata != null && loadedMetadata != null)
-            metadata = metadata.builder().read(loadedMetadata).build();
+            metadata = Metadatas.applyVersion(loadedMetadata, metadata);
          else if (metadata == null)
             metadata = loadedMetadata;
 

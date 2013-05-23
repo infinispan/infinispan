@@ -21,7 +21,7 @@
  * 02110-1301 USA, or see the FSF site: http://www.fsf.org.
  */
 
-package org.infinispan;
+package org.infinispan.metadata;
 
 import org.infinispan.container.versioning.EntryVersion;
 
@@ -117,14 +117,6 @@ public interface Metadata {
        * @return a builder instance with the version applied
        */
       Builder version(EntryVersion version);
-
-      /**
-       * Reads the metadata and apply its data.
-       *
-       * @param template metadata
-       * @return a builder instance
-       */
-      Builder read(Metadata template);
 
       /**
        * Build a metadata instance.

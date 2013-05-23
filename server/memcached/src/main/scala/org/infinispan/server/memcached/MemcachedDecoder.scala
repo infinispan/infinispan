@@ -45,6 +45,7 @@ import scala.Predef._
 import org.infinispan.container.entries.CacheEntry
 import scala.Some
 import org.infinispan.server.core.ServerEntryVersion
+import org.infinispan.metadata.Metadata
 
 /**
  * A Memcached protocol specific decoder

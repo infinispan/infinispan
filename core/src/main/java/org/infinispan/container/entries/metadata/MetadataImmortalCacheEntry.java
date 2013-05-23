@@ -19,7 +19,7 @@
 
 package org.infinispan.container.entries.metadata;
 
-import org.infinispan.Metadata;
+import org.infinispan.metadata.Metadata;
 import org.infinispan.container.entries.ImmortalCacheEntry;
 import org.infinispan.marshall.AbstractExternalizer;
 import org.infinispan.marshall.Ids;

@@ -21,7 +21,7 @@
  * 02110-1301 USA, or see the FSF site: http://www.fsf.org.
  */
 
-package org.infinispan;
+package org.infinispan.metadata;
 
 import org.infinispan.container.versioning.EntryVersion;
 import org.infinispan.marshall.AbstractExternalizer;
@@ -143,16 +143,6 @@ public final class EmbeddedMetadata implements Metadata {
          this.version = version;
          return this;
       }
-
-      public Metadata.Builder read(Metadata template) {
-         // Use lifespan and maxIdle set in the metadata, but if not version
-         // given, use the one from the template
-         if (version == null && template.version() != null)
-            version = template.version();
-
-         return this;
-      }
-
 
       @Override
       public Metadata build() {

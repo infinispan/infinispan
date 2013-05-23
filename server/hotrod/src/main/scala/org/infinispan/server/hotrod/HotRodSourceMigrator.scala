@@ -31,7 +31,8 @@ import org.infinispan.distexec.{DistributedCallable, DefaultExecutorService}
 import org.infinispan.marshall.jboss.GenericJBossMarshaller
 import org.infinispan.upgrade.SourceMigrator
 import org.infinispan.tasks.GlobalKeySetTask
-import org.infinispan.EmbeddedMetadata.Builder
+import org.infinispan.metadata.EmbeddedMetadata
+import EmbeddedMetadata.Builder
 import org.infinispan.container.versioning.NumericVersion
 
 class HotRodSourceMigrator(cache: Cache[Array[Byte], Array[Byte]]) extends SourceMigrator {

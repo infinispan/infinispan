@@ -19,8 +19,8 @@
 
 package org.infinispan.container;
 
-import org.infinispan.EmbeddedMetadata;
-import org.infinispan.Metadata;
+import org.infinispan.metadata.EmbeddedMetadata;
+import org.infinispan.metadata.Metadata;
 import org.infinispan.container.entries.CacheEntry;
 import org.infinispan.container.entries.ImmortalCacheEntry;
 import org.infinispan.container.entries.ImmortalCacheValue;

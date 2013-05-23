@@ -22,7 +22,7 @@ package org.infinispan.xsite;
 import org.infinispan.AdvancedCache;
 import org.infinispan.Cache;
 import org.infinispan.CacheException;
-import org.infinispan.Metadata;
+import org.infinispan.metadata.Metadata;
 import org.infinispan.commands.AbstractVisitor;
 import org.infinispan.commands.VisitableCommand;
 import org.infinispan.commands.tx.CommitCommand;

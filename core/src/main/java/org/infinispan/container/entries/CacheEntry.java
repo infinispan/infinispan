@@ -22,7 +22,7 @@
  */
 package org.infinispan.container.entries;
 
-import org.infinispan.Metadata;
+import org.infinispan.metadata.Metadata;
 import org.infinispan.container.DataContainer;
 import org.infinispan.container.entries.metadata.MetadataAware;
 
