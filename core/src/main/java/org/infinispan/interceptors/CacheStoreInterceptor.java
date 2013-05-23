@@ -34,6 +34,8 @@ import org.infinispan.container.InternalEntryFactory;
 import org.infinispan.container.entries.CacheEntry;
 import org.infinispan.container.entries.DeltaAwareCacheEntry;
 import org.infinispan.container.entries.InternalCacheEntry;
+import org.infinispan.container.versioning.EntryVersion;
+import org.infinispan.container.versioning.EntryVersionsMap;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.context.impl.TxInvocationContext;
 import org.infinispan.factories.annotations.Inject;
@@ -50,6 +52,8 @@ import org.infinispan.loaders.modifications.Clear;
 import org.infinispan.loaders.modifications.Modification;
 import org.infinispan.loaders.modifications.Remove;
 import org.infinispan.loaders.modifications.Store;
+import org.infinispan.metadata.EmbeddedMetadata;
+import org.infinispan.metadata.Metadata;
 import org.infinispan.transaction.xa.GlobalTransaction;
 import org.infinispan.util.CollectionFactory;
 import org.infinispan.util.logging.Log;
@@ -417,6 +421,27 @@ public class CacheStoreInterceptor extends JmxStatsCommandInterceptor {
       if (entry instanceof InternalCacheEntry) {
          return (InternalCacheEntry) entry;
       } else {
+         if (ctx.isInTxScope()) {
+            EntryVersionsMap updatedVersions =
+                  ((TxInvocationContext) ctx).getCacheTransaction().getUpdatedEntryVersions();
+            if (updatedVersions != null) {
+               EntryVersion version = updatedVersions.get(entry.getKey());
+               if (version != null) {
+                  Metadata metadata = entry.getMetadata();
+                  if (metadata == null) {
+                     // If no metadata passed, assumed embedded metadata
+                     metadata = new EmbeddedMetadata.Builder()
+                           .lifespan(entry.getLifespan()).maxIdle(entry.getMaxIdle())
+                           .version(version).build();
+                     return entryFactory.create(entry.getKey(), entry.getValue(), metadata);
+                  } else {
+                     metadata = metadata.builder().version(version).build();
+                     return entryFactory.create(entry.getKey(), entry.getValue(), metadata);
+                  }
+               }
+            }
+         }
+
          return entryFactory.create(entry);
       }
    }

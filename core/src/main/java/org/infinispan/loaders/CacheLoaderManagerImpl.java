@@ -258,8 +258,7 @@ public class CacheLoaderManagerImpl implements CacheLoaderManager {
                   .withFlags(flags.toArray(new Flag[flags.size()]));
 
             for (InternalCacheEntry e : state)
-               flaggedCache.put(e.getKey(), e.getValue(),
-                     e.getLifespan(), MILLISECONDS, e.getMaxIdle(), MILLISECONDS);
+               flaggedCache.put(e.getKey(), e.getValue(), e.getMetadata());
 
             if (debugTiming) {
                log.debugf("Preloaded %s keys in %s", state.size(),

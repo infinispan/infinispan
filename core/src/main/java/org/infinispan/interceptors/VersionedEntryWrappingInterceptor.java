@@ -98,10 +98,16 @@ public class VersionedEntryWrappingInterceptor extends EntryWrappingInterceptor 
          EntryVersion updatedEntryVersion = ((TxInvocationContext) ctx)
                .getCacheTransaction().getUpdatedEntryVersions().get(entry.getKey());
          Metadata commitMetadata;
-         if (metadata == null)
-            commitMetadata = new EmbeddedMetadata.Builder().version(updatedEntryVersion).build();
-         else
-            commitMetadata = metadata.builder().version(updatedEntryVersion).build();
+         if (updatedEntryVersion != null) {
+            if (metadata == null && entry.getMetadata() == null)
+               commitMetadata = new EmbeddedMetadata.Builder().version(updatedEntryVersion).build();
+            else if (metadata != null)
+               commitMetadata = metadata.builder().version(updatedEntryVersion).build();
+            else
+               commitMetadata = entry.getMetadata().builder().version(updatedEntryVersion).build();
+         } else {
+            commitMetadata = metadata != null ? metadata : entry.getMetadata();
+         }
 
          cdl.commitEntry(entry, commitMetadata, command, ctx);
       } else {
