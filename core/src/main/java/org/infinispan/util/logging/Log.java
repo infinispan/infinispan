@@ -880,5 +880,10 @@ public interface Log extends BasicLogger {
    @LogMessage(level = WARN)
    @Message(value = "Support for concurrent updates can no longer be configured (it is always enabled by default)", id = 227)
    void warnConcurrentUpdateSupportCannotBeConfigured();
+
+   @LogMessage(level = ERROR)
+   @Message(value = "Failed to recover cache %s state after the current node became the coordinator", id = 228)
+   void failedToRecoverCacheState(String cacheName, @Cause Throwable cause);
+
 }
 
