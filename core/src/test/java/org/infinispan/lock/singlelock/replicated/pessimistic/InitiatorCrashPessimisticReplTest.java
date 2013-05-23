@@ -23,7 +23,7 @@
 
 package org.infinispan.lock.singlelock.replicated.pessimistic;
 
-import org.infinispan.config.Configuration;
+import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.lock.singlelock.replicated.optimistic.InitiatorCrashOptimisticReplTest;
 import org.infinispan.test.fwk.CleanupAfterMethod;
 import org.infinispan.transaction.LockingMode;
@@ -40,7 +40,7 @@ import java.util.concurrent.CountDownLatch;
 public class InitiatorCrashPessimisticReplTest extends InitiatorCrashOptimisticReplTest {
 
    public InitiatorCrashPessimisticReplTest() {
-      super(Configuration.CacheMode.REPL_SYNC, LockingMode.PESSIMISTIC, false);
+      super(CacheMode.REPL_SYNC, LockingMode.PESSIMISTIC, false);
    }
 
    public void testInitiatorNodeCrashesBeforeCommit() throws Exception {

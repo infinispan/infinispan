@@ -26,7 +26,7 @@ import org.infinispan.Cache;
 import org.infinispan.CacheException;
 import org.infinispan.commands.remote.SingleRpcCommand;
 import org.infinispan.commands.write.PutKeyValueCommand;
-import org.infinispan.config.Configuration;
+import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.interceptors.base.CommandInterceptor;
 import org.infinispan.interceptors.locking.NonTransactionalLockingInterceptor;
@@ -49,12 +49,12 @@ import static org.mockito.Mockito.*;
 
 @Test(groups = "functional", testName = "remoting.TransportSenderExceptionHandlingTest")
 public class TransportSenderExceptionHandlingTest extends MultipleCacheManagersTest {
-   final String key = "k-illyria", value = "v-illyria", value2 = "v2-illyria";
+   private final String key = "k-illyria", value = "v-illyria", value2 = "v2-illyria";
 
    @Override
    protected void createCacheManagers() throws Throwable {
       createClusteredCaches(2, "replSync",
-            getDefaultClusteredConfig(Configuration.CacheMode.REPL_SYNC));
+            getDefaultClusteredCacheConfig(CacheMode.REPL_SYNC, false));
    }
 
    public void testInvokeAndExceptionWhileUnmarshalling() throws Exception {

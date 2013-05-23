@@ -29,13 +29,13 @@ import org.testng.annotations.Test;
 @Test (groups = "functional", testName = "replication.AsyncAPINonTxAsyncReplTest")
 public class AsyncAPINonTxAsyncReplTest extends AsyncAPINonTxSyncReplTest {
 
+   private ReplListener rl;
+   private ReplListener rlNoTx;
+
    @Override
    protected boolean sync() {
       return false;
    }
-
-   ReplListener rl;
-   ReplListener rlNoTx;
 
    @Override
    protected void createCacheManagers() throws Throwable {
@@ -43,7 +43,6 @@ public class AsyncAPINonTxAsyncReplTest extends AsyncAPINonTxSyncReplTest {
       rl = new ReplListener(cache(1), true);
       rlNoTx = new ReplListener(cache(1, "noTx"), true);
    }
-
 
    @Override
    protected void resetListeners() {

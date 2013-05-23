@@ -24,8 +24,10 @@ package org.infinispan.invalidation;
 
 import org.infinispan.Cache;
 import org.infinispan.commands.write.WriteCommand;
-import org.infinispan.config.Configuration;
 import static org.infinispan.context.Flag.CACHE_MODE_LOCAL;
+
+import org.infinispan.configuration.cache.CacheMode;
+import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.test.MultipleCacheManagersTest;
 import org.infinispan.test.data.Key;
 import org.infinispan.util.Util;
@@ -38,11 +40,8 @@ import java.util.concurrent.Future;
 @Test(groups = "functional", testName = "invalidation.AsyncAPISyncInvalTest")
 public class AsyncAPISyncInvalTest extends MultipleCacheManagersTest {   
 
-   @SuppressWarnings("unchecked")
    protected void createCacheManagers() throws Throwable {
-      Configuration c = getDefaultClusteredConfig(
-               sync() ? Configuration.CacheMode.INVALIDATION_SYNC
-                        : Configuration.CacheMode.INVALIDATION_ASYNC, false);
+      ConfigurationBuilder c = getDefaultClusteredCacheConfig(sync() ? CacheMode.INVALIDATION_SYNC : CacheMode.INVALIDATION_ASYNC, false);
       createClusteredCaches(2, getClass().getSimpleName(), c);
    }
 

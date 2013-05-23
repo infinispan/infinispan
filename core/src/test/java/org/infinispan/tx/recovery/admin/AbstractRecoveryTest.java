@@ -23,37 +23,40 @@
 
 package org.infinispan.tx.recovery.admin;
 
-import org.infinispan.config.Configuration;
+import org.infinispan.configuration.cache.CacheMode;
+import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.test.MultipleCacheManagersTest;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.transaction.TransactionTable;
-import org.infinispan.transaction.lookup.DummyTransactionManagerLookup;
 import org.infinispan.transaction.xa.recovery.RecoveryAdminOperations;
 import org.infinispan.transaction.xa.recovery.RecoveryAwareTransactionTable;
 import org.infinispan.transaction.xa.recovery.RecoveryManager;
 import org.infinispan.transaction.xa.recovery.RecoveryManagerImpl;
 import org.infinispan.tx.recovery.RecoveryDummyTransactionManagerLookup;
+import org.testng.annotations.Test;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-import static org.testng.Assert.assertEquals;
-
 /**
  * @author Mircea Markus
  * @since 5.0
  */
+@Test(groups = "functional")
 public abstract class AbstractRecoveryTest extends MultipleCacheManagersTest {
 
-   protected Configuration defaultRecoveryConfig() {
-      return getDefaultClusteredConfig(Configuration.CacheMode.DIST_SYNC, true).fluent()
-            .transaction().transactionManagerLookupClass(RecoveryDummyTransactionManagerLookup.class).recovery()
+   protected ConfigurationBuilder defaultRecoveryConfig() {
+      ConfigurationBuilder builder = getDefaultClusteredCacheConfig(CacheMode.DIST_SYNC, true);
+      builder.transaction().transactionManagerLookup(new RecoveryDummyTransactionManagerLookup())
+            .useSynchronization(false)
+            .recovery().enable()
             .locking().useLockStriping(false)
-            .clustering().hash().numOwners(2).rehashEnabled(false)
-            .clustering().l1().disable().stateRetrieval().fetchInMemoryState(false)
-            .build();
+            .clustering().hash().numOwners(2)
+            .l1().disable()
+            .stateTransfer().fetchInMemoryState(false);
+      return builder;
    }
 
    protected int countInDoubtTx(String inDoubt) {

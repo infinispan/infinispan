@@ -23,7 +23,7 @@
 
 package org.infinispan.tx.synchronisation;
 
-import org.infinispan.config.Configuration;
+import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.tx.dld.DldPessimisticLockingReplicationTest;
 import org.testng.annotations.Test;
 
@@ -33,10 +33,11 @@ import org.testng.annotations.Test;
  */
 @Test (groups = "functional", testName = "tx.synchronisation.DldEagerLockingReplicationWithSyncTest")
 public class DldEagerLockingReplicationWithSyncTest extends DldPessimisticLockingReplicationTest {
+
    @Override
-   protected Configuration getConfiguration() throws Exception {
-      Configuration config = super.getConfiguration();
-      config.fluent().transaction().useSynchronization(true);
+   protected ConfigurationBuilder getConfigurationBuilder() {
+      ConfigurationBuilder config = super.getConfigurationBuilder();
+      config.transaction().useSynchronization(true);
       return config;
    }
 }

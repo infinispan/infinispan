@@ -23,8 +23,10 @@
 package org.infinispan.api;
 
 import org.infinispan.AdvancedCache;
-import org.infinispan.config.Configuration;
 import static org.infinispan.context.Flag.CACHE_MODE_LOCAL;
+
+import org.infinispan.configuration.cache.CacheMode;
+import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.test.MultipleCacheManagersTest;
 import org.testng.annotations.Test;
 
@@ -32,11 +34,11 @@ import org.testng.annotations.Test;
 public class MixedModeTest extends MultipleCacheManagersTest {
 
    protected void createCacheManagers() throws Throwable {
-      Configuration replSync = getDefaultClusteredConfig(Configuration.CacheMode.REPL_SYNC);
-      Configuration replAsync = getDefaultClusteredConfig(Configuration.CacheMode.REPL_ASYNC);
-      Configuration invalSync = getDefaultClusteredConfig(Configuration.CacheMode.INVALIDATION_SYNC);
-      Configuration invalAsync = getDefaultClusteredConfig(Configuration.CacheMode.INVALIDATION_ASYNC);
-      Configuration local = getDefaultClusteredConfig(Configuration.CacheMode.LOCAL);
+      ConfigurationBuilder replSync = getDefaultClusteredCacheConfig(CacheMode.REPL_SYNC, false);
+      ConfigurationBuilder replAsync = getDefaultClusteredCacheConfig(CacheMode.REPL_ASYNC, false);
+      ConfigurationBuilder invalSync = getDefaultClusteredCacheConfig(CacheMode.INVALIDATION_SYNC, false);
+      ConfigurationBuilder invalAsync = getDefaultClusteredCacheConfig(CacheMode.INVALIDATION_ASYNC, false);
+      ConfigurationBuilder local = getDefaultClusteredCacheConfig(CacheMode.LOCAL, false);
 
       createClusteredCaches(2, "replSync", replSync);
       defineConfigurationOnAllManagers("replAsync", replAsync);
@@ -49,7 +51,6 @@ public class MixedModeTest extends MultipleCacheManagersTest {
    }
 
    public void testMixedMode() {
-
       AdvancedCache replSyncCache1, replSyncCache2;
       AdvancedCache replAsyncCache1, replAsyncCache2;
       AdvancedCache invalAsyncCache1, invalAsyncCache2;

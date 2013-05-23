@@ -1,12 +1,14 @@
 package org.infinispan.tx;
 
 import org.infinispan.Cache;
-import org.infinispan.config.Configuration;
+import org.infinispan.configuration.cache.CacheMode;
+import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.context.Flag;
 import org.infinispan.test.MultipleCacheManagersTest;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.infinispan.transaction.LockingMode;
+import org.infinispan.transaction.TransactionMode;
 import org.infinispan.transaction.TransactionTable;
 import org.infinispan.tx.recovery.RecoveryDummyTransactionManagerLookup;
 import org.infinispan.util.concurrent.IsolationLevel;
@@ -18,17 +20,20 @@ import javax.transaction.Transaction;
 public class TransactionCleanupWithRecoveryTest extends MultipleCacheManagersTest {
 
    @Override
-   protected void createCacheManagers() throws Throwable {
-      Configuration cfg = new Configuration().fluent()
-            .clustering().mode(Configuration.CacheMode.REPL_SYNC)
+   protected void createCacheManagers() {
+      ConfigurationBuilder cfg = new ConfigurationBuilder();
+      cfg.clustering().cacheMode(CacheMode.REPL_SYNC)
             .locking()
-            .concurrencyLevel(10000).isolationLevel(IsolationLevel.REPEATABLE_READ)
-            .lockAcquisitionTimeout(100L).useLockStriping(false).writeSkewCheck(false)
+            .concurrencyLevel(10000)
+            .isolationLevel(IsolationLevel.REPEATABLE_READ)
+            .lockAcquisitionTimeout(100L)
+            .useLockStriping(false)
+            .writeSkewCheck(false)
             .transaction()
+            .transactionMode(TransactionMode.TRANSACTIONAL)
             .lockingMode(LockingMode.PESSIMISTIC)
-            .recovery()
             .transactionManagerLookup(new RecoveryDummyTransactionManagerLookup())
-            .build();
+            .recovery().enable();
 
       registerCacheManager(TestCacheManagerFactory.createClusteredCacheManager(cfg),
                            TestCacheManagerFactory.createClusteredCacheManager(cfg));

@@ -23,8 +23,8 @@
 package org.infinispan.distribution;
 
 import org.infinispan.Cache;
-import org.infinispan.config.Configuration;
-import org.infinispan.config.GlobalConfiguration;
+import org.infinispan.configuration.cache.CacheMode;
+import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.manager.CacheContainer;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.test.AbstractInfinispanTest;
@@ -48,15 +48,15 @@ import java.util.concurrent.Future;
 @Test(testName = "distribution.ConcurrentStartWithReplTest", groups = "functional")
 public class ConcurrentStartWithReplTest extends AbstractInfinispanTest {
 
-   Configuration replCfg, distCfg;
+   private ConfigurationBuilder replCfg, distCfg;
 
    @BeforeTest
    public void setUp() {
-      replCfg = MultipleCacheManagersTest.getDefaultClusteredConfig(Configuration.CacheMode.REPL_SYNC);
-      replCfg.setFetchInMemoryState(true);
+      replCfg = MultipleCacheManagersTest.getDefaultClusteredCacheConfig(CacheMode.REPL_SYNC, false);
+      replCfg.clustering().stateTransfer().fetchInMemoryState(true);
 
-      distCfg = MultipleCacheManagersTest.getDefaultClusteredConfig(Configuration.CacheMode.DIST_SYNC);
-      distCfg.setRehashEnabled(true);
+      distCfg = MultipleCacheManagersTest.getDefaultClusteredCacheConfig(CacheMode.DIST_SYNC, false);
+      distCfg.clustering().stateTransfer().fetchInMemoryState(true);
    }
 
    @Test(timeOut = 60000)
@@ -135,13 +135,13 @@ public class ConcurrentStartWithReplTest extends AbstractInfinispanTest {
    }
 
    private void doTest(boolean inOrder, boolean nonBlockingStartupForDist) throws ExecutionException, InterruptedException {
-      EmbeddedCacheManager cm1 = TestCacheManagerFactory.createCacheManager(GlobalConfiguration.getClusteredDefault());
-      EmbeddedCacheManager cm2 = TestCacheManagerFactory.createCacheManager(GlobalConfiguration.getClusteredDefault());
+      EmbeddedCacheManager cm1 = TestCacheManagerFactory.createClusteredCacheManager(new ConfigurationBuilder());
+      EmbeddedCacheManager cm2 = TestCacheManagerFactory.createClusteredCacheManager(new ConfigurationBuilder());
       try {
-         cm1.defineConfiguration("r", replCfg);
-         cm1.defineConfiguration("d", distCfg);
-         cm2.defineConfiguration("r", replCfg);
-         cm2.defineConfiguration("d", distCfg);
+         cm1.defineConfiguration("r", replCfg.build());
+         cm1.defineConfiguration("d", distCfg.build());
+         cm2.defineConfiguration("r", replCfg.build());
+         cm2.defineConfiguration("d", distCfg.build());
 
          // first start the repl caches
          Cache<String, String> c1r = startCache(cm1, "r", false).get();

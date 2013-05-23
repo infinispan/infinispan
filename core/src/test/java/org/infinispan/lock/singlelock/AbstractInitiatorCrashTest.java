@@ -23,7 +23,7 @@
 
 package org.infinispan.lock.singlelock;
 
-import org.infinispan.config.Configuration;
+import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.transaction.LockingMode;
 import org.infinispan.transaction.tm.DummyTransaction;
 import org.testng.annotations.Test;
@@ -37,7 +37,7 @@ import java.util.concurrent.CountDownLatch;
 @Test(groups = "functional")
 public abstract class AbstractInitiatorCrashTest extends AbstractCrashTest {
 
-   public AbstractInitiatorCrashTest(Configuration.CacheMode cacheMode, LockingMode lockingMode, Boolean useSynchronization) {
+   public AbstractInitiatorCrashTest(CacheMode cacheMode, LockingMode lockingMode, Boolean useSynchronization) {
       super(cacheMode, lockingMode, useSynchronization);
    }
 

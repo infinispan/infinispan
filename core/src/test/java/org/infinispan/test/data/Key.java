@@ -32,9 +32,9 @@ import java.util.concurrent.TimeUnit;
 
 public class Key implements Externalizable {
 
-   String value;
-   final ReclosableLatch latch = new ReclosableLatch(false);
-   final boolean lockable;
+   private String value;
+   private final ReclosableLatch latch = new ReclosableLatch(false);
+   private final boolean lockable;
    private static final long serialVersionUID = 4745232904453872125L;
 
    public Key() {
@@ -67,7 +67,7 @@ public class Key implements Externalizable {
       out.writeObject(value);
       if (lockable) {
          try {
-            if (!latch.await(5, TimeUnit.MINUTES)) throw new RuntimeException("Cannot serialize!!");
+            if (!latch.await(1, TimeUnit.MINUTES)) throw new RuntimeException("Cannot serialize!!");
          } catch (InterruptedException e) {
             e.printStackTrace();
          }

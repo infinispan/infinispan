@@ -91,7 +91,6 @@ public class MergeViewTest extends MultipleCacheManagersTest {
       @Merged
       public void viewMerged(MergeEvent vce) {
          log.info("vce = " + vce);
-         log.trace("vce = " + vce);
          isMerged = true;
       }
    }

@@ -23,7 +23,8 @@
 
 package org.infinispan.tx;
 
-import org.infinispan.config.Configuration;
+import org.infinispan.configuration.cache.CacheMode;
+import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.test.MultipleCacheManagersTest;
 import org.infinispan.test.TestingUtil;
 import org.testng.annotations.Test;
@@ -37,14 +38,14 @@ public class TransactionCleanupWithAsync2ndPhaseTest extends MultipleCacheManage
 
    @Override
    protected void createCacheManagers() throws Throwable {
-      final Configuration dcc = getConfiguration();
+      ConfigurationBuilder dcc = getConfiguration();
       createCluster(dcc, 2);
       waitForClusterToForm();
    }
 
-   protected Configuration getConfiguration() {
-      final Configuration dcc = getDefaultClusteredConfig(Configuration.CacheMode.REPL_SYNC, true);
-      dcc.fluent().transaction().syncCommitPhase(false).syncRollbackPhase(true);
+   protected ConfigurationBuilder getConfiguration() {
+      ConfigurationBuilder dcc = getDefaultClusteredCacheConfig(CacheMode.REPL_SYNC, true);
+      dcc.transaction().syncCommitPhase(false).syncRollbackPhase(true);
       return dcc;
    }
 

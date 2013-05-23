@@ -23,7 +23,8 @@
 
 package org.infinispan.lock;
 
-import org.infinispan.config.Configuration;
+import org.infinispan.configuration.cache.CacheMode;
+import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.test.MultipleCacheManagersTest;
 import org.infinispan.transaction.LockingMode;
 import org.testng.annotations.Test;
@@ -40,19 +41,18 @@ import static org.testng.Assert.assertEquals;
 public class CheckNoRemoteCallForLocalKeyTest extends MultipleCacheManagersTest {
 
    protected CheckRemoteLockAcquiredOnlyOnceTest.ControlInterceptor controlInterceptor;
-   protected Configuration.CacheMode mode = Configuration.CacheMode.REPL_SYNC;
+   protected CacheMode mode = CacheMode.REPL_SYNC;
    protected Object key = "k";
 
    @Override
    protected void createCacheManagers() throws Throwable {
-      final Configuration c = getDefaultClusteredConfig(mode, true);
-      c.fluent().transaction().lockingMode(LockingMode.PESSIMISTIC);
+      ConfigurationBuilder c = getDefaultClusteredCacheConfig(mode, true);
+      c.transaction().lockingMode(LockingMode.PESSIMISTIC);
       createCluster(c, 2);
       waitForClusterToForm();
       controlInterceptor = new CheckRemoteLockAcquiredOnlyOnceTest.ControlInterceptor();
       cache(1).getAdvancedCache().addInterceptor(controlInterceptor, 1);
    }
-
 
    public void testLocalPut() throws Exception {
       testLocalOperation(new CheckRemoteLockAcquiredOnlyOnceTest.CacheOperation() {

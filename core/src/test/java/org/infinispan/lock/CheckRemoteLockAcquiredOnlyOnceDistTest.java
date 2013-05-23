@@ -23,7 +23,7 @@
 
 package org.infinispan.lock;
 
-import org.infinispan.config.Configuration;
+import org.infinispan.configuration.cache.CacheMode;
 import org.testng.annotations.Test;
 
 /**
@@ -34,7 +34,7 @@ import org.testng.annotations.Test;
 public class CheckRemoteLockAcquiredOnlyOnceDistTest extends CheckRemoteLockAcquiredOnlyOnceTest{
 
    public CheckRemoteLockAcquiredOnlyOnceDistTest() {
-      super.mode = Configuration.CacheMode.DIST_SYNC;
+      mode = CacheMode.DIST_SYNC;
    }
 
    @Override

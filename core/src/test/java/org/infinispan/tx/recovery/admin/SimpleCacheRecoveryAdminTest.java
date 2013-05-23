@@ -23,15 +23,16 @@
 
 package org.infinispan.tx.recovery.admin;
 
-import org.infinispan.config.Configuration;
-import org.infinispan.config.GlobalConfiguration;
+import org.infinispan.configuration.cache.CacheMode;
+import org.infinispan.configuration.cache.ConfigurationBuilder;
+import org.infinispan.configuration.global.GlobalConfigurationBuilder;
 import org.infinispan.jmx.PerThreadMBeanServerLookup;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.CleanupAfterMethod;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
+import org.infinispan.test.fwk.TransportFlags;
 import org.infinispan.transaction.TransactionTable;
-import org.infinispan.transaction.lookup.DummyTransactionManagerLookup;
 import org.infinispan.transaction.tm.DummyTransaction;
 import org.infinispan.transaction.xa.recovery.RecoveryManager;
 import org.infinispan.tx.recovery.RecoveryDummyTransactionManagerLookup;
@@ -62,24 +63,18 @@ public class SimpleCacheRecoveryAdminTest extends AbstractRecoveryTest {
 
    @Override
    protected void createCacheManagers() throws Throwable {
-      GlobalConfiguration globalConfiguration = GlobalConfiguration.getClusteredDefault();
-      globalConfiguration.fluent()
-            .globalJmxStatistics()
-            .mBeanServerLookup(new PerThreadMBeanServerLookup())
-            .jmxDomain(JMX_DOMAIN).allowDuplicateDomains(true);
-      Configuration configuration = getDefaultClusteredConfig(Configuration.CacheMode.DIST_SYNC, true).fluent()
-            .transaction().transactionManagerLookupClass(RecoveryDummyTransactionManagerLookup.class).recovery()
-            .jmxStatistics()
+      ConfigurationBuilder configuration = getDefaultClusteredCacheConfig(CacheMode.DIST_SYNC, true);
+      configuration.transaction().transactionManagerLookup(new RecoveryDummyTransactionManagerLookup())
+            .useSynchronization(false)
+            .recovery().enable()
+            .jmxStatistics().enable()
             .locking().useLockStriping(false)
             .clustering().hash().numOwners(3)
-            .clustering().l1().disable()
-            .build();
-      EmbeddedCacheManager cm1 = TestCacheManagerFactory.createCacheManager(globalConfiguration, configuration, true);
-      EmbeddedCacheManager cm2 = TestCacheManagerFactory.createCacheManager(globalConfiguration, configuration, true);
-      EmbeddedCacheManager cm3 = TestCacheManagerFactory.createCacheManager(globalConfiguration, configuration, true);
-      registerCacheManager(cm1);
-      registerCacheManager(cm2);
-      registerCacheManager(cm3);
+            .l1().disable();
+      EmbeddedCacheManager cm1 = TestCacheManagerFactory.createClusteredCacheManager(createGlobalConfigurationBuilder(), configuration, new TransportFlags(), true);
+      EmbeddedCacheManager cm2 = TestCacheManagerFactory.createClusteredCacheManager(createGlobalConfigurationBuilder(), configuration, new TransportFlags(), true);
+      EmbeddedCacheManager cm3 = TestCacheManagerFactory.createClusteredCacheManager(createGlobalConfigurationBuilder(), configuration, new TransportFlags(), true);
+      registerCacheManager(cm1, cm2, cm3);
       cache(0, "test");
       cache(1, "test");
       cache(2, "test");
@@ -99,7 +94,14 @@ public class SimpleCacheRecoveryAdminTest extends AbstractRecoveryTest {
 
       TestingUtil.killCacheManagers(manager(2));
       TestingUtil.blockUntilViewsReceived(90000, false, cache(0, "test"), cache(1, "test"));
+   }
 
+   private GlobalConfigurationBuilder createGlobalConfigurationBuilder() {
+      GlobalConfigurationBuilder globalConfiguration = GlobalConfigurationBuilder.defaultClusteredBuilder();
+      globalConfiguration.globalJmxStatistics().enable()
+            .mBeanServerLookup(new PerThreadMBeanServerLookup())
+            .jmxDomain(JMX_DOMAIN).allowDuplicateDomains(true);
+      return globalConfiguration;
    }
 
    public void testJmxOperationMetadata() throws Exception {

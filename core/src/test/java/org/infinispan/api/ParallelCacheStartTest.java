@@ -18,9 +18,8 @@
  */
 package org.infinispan.api;
 
-import org.infinispan.Cache;
-import org.infinispan.config.Configuration;
-import org.infinispan.config.Configuration.CacheMode;
+import org.infinispan.configuration.cache.CacheMode;
+import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.test.MultipleCacheManagersTest;
 import org.infinispan.test.TestingUtil;
@@ -30,9 +29,9 @@ import java.util.List;
 
 @Test(groups = "functional", testName = "api.ParallelCacheStartTest")
 public class ParallelCacheStartTest extends MultipleCacheManagersTest {
-   Cache cache1, cache2;
-   EmbeddedCacheManager cm1, cm2;
-   Configuration cfg;
+
+   private EmbeddedCacheManager cm1, cm2;
+   private ConfigurationBuilder cfg;
 
    public ParallelCacheStartTest() {
       cleanup = CleanupPhase.AFTER_METHOD;
@@ -40,11 +39,11 @@ public class ParallelCacheStartTest extends MultipleCacheManagersTest {
 
    protected void createCacheManagers() throws Throwable {
       cm1 = addClusterEnabledCacheManager();
-      cfg = new Configuration();
-      cfg.setCacheMode(CacheMode.REPL_SYNC);
-      cfg.setFetchInMemoryState(false);
-      cm1.defineConfiguration("cache1", cfg);
-      cm1.defineConfiguration("cache2", cfg);
+      cfg = new ConfigurationBuilder();
+      cfg.clustering().cacheMode(CacheMode.REPL_SYNC)
+            .stateTransfer().fetchInMemoryState(false);
+      cm1.defineConfiguration("cache1", cfg.build());
+      cm1.defineConfiguration("cache2", cfg.build());
    }
 
    public void testParallelStartup() throws Exception {
@@ -56,8 +55,8 @@ public class ParallelCacheStartTest extends MultipleCacheManagersTest {
       Object coord = memb1.get(0);
 
       cm2 = addClusterEnabledCacheManager();
-      cm2.defineConfiguration("cache1", cfg);
-      cm2.defineConfiguration("cache2", cfg);
+      cm2.defineConfiguration("cache1", cfg.build());
+      cm2.defineConfiguration("cache2", cfg.build());
 
       // again start both caches in parallel
       cm2.startCaches("cache1", "cache2");

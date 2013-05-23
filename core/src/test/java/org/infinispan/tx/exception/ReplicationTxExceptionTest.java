@@ -24,7 +24,8 @@ package org.infinispan.tx.exception;
 
 import org.infinispan.Cache;
 import org.infinispan.commands.tx.PrepareCommand;
-import org.infinispan.config.Configuration;
+import org.infinispan.configuration.cache.CacheMode;
+import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.remoting.rpc.RpcManager;
 import org.infinispan.test.MultipleCacheManagersTest;
 import org.infinispan.test.TestingUtil;
@@ -45,9 +46,9 @@ public class ReplicationTxExceptionTest extends MultipleCacheManagersTest {
 
    @Override
    protected void createCacheManagers() throws Throwable {
-      Configuration config = getDefaultClusteredConfig(Configuration.CacheMode.REPL_SYNC, true);
-      registerCacheManager(TestCacheManagerFactory.createCacheManager(config));
-      registerCacheManager(TestCacheManagerFactory.createCacheManager(config));
+      ConfigurationBuilder config = getDefaultClusteredCacheConfig(CacheMode.REPL_SYNC, true);
+      registerCacheManager(TestCacheManagerFactory.createClusteredCacheManager(config));
+      registerCacheManager(TestCacheManagerFactory.createClusteredCacheManager(config));
       TestingUtil.blockUntilViewsReceived(10000, cache(0), cache(1));
       Cache<?, ?> cache = cache(0);
       RpcManager rpcManager = TestingUtil.extractComponent(cache, RpcManager.class);

@@ -22,10 +22,12 @@
  */
 package org.infinispan.tx.dld;
 
-import org.infinispan.config.Configuration;
+import org.infinispan.configuration.cache.CacheMode;
+import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.context.Flag;
 import org.infinispan.test.PerCacheExecutorThread;
 import org.infinispan.test.TestingUtil;
+import org.infinispan.transaction.LockingMode;
 import org.infinispan.util.concurrent.TimeoutException;
 import org.testng.annotations.Test;
 
@@ -37,17 +39,17 @@ import org.testng.annotations.Test;
 public class DldPessimisticLockingReplicationTest extends BaseDldPessimisticLockingTest {
 
    @Override
-   protected void createCacheManagers() throws Throwable {
-      Configuration configuration = getConfiguration();
+   protected void createCacheManagers() {
+      ConfigurationBuilder configuration = getConfigurationBuilder();
       createClusteredCaches(2, configuration);
       TestingUtil.blockUntilViewsReceived(1000, cache(0), cache(1));
    }
 
-   protected Configuration getConfiguration() throws Exception {
-      Configuration configuration = getDefaultClusteredConfig(Configuration.CacheMode.REPL_SYNC, true);
-      configuration.setUseEagerLocking(true);
-      configuration.setEnableDeadlockDetection(true);
-      configuration.setUseLockStriping(false);
+   protected ConfigurationBuilder getConfigurationBuilder() {
+      ConfigurationBuilder configuration = getDefaultClusteredCacheConfig(CacheMode.REPL_SYNC, true);
+      configuration.transaction().lockingMode(LockingMode.PESSIMISTIC)
+            .locking().useLockStriping(false)
+            .deadlockDetection().enable();
       return configuration;
    }
 

@@ -29,8 +29,8 @@ import org.testng.annotations.Test;
 @Test(groups = "functional", testName = "replication.AsyncAPITxAsyncReplTest")
 public class AsyncAPITxAsyncReplTest extends AsyncAPITxSyncReplTest {
 
-   ReplListener rl;
-   ReplListener rlNoTx;
+   private ReplListener rl;
+   private ReplListener rlNoTx;
 
    @Override
    protected void createCacheManagers() throws Throwable {

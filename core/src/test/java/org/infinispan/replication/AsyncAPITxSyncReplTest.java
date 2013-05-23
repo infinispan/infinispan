@@ -28,7 +28,8 @@ import org.infinispan.commands.write.PutMapCommand;
 import org.infinispan.commands.write.RemoveCommand;
 import org.infinispan.commands.write.ReplaceCommand;
 import org.infinispan.commands.write.WriteCommand;
-import org.infinispan.config.Configuration;
+import org.infinispan.configuration.cache.CacheMode;
+import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.test.MultipleCacheManagersTest;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.test.data.Key;
@@ -43,16 +44,15 @@ import java.util.concurrent.Future;
 @Test(groups = "functional", testName = "replication.AsyncAPITxSyncReplTest")
 public class AsyncAPITxSyncReplTest extends MultipleCacheManagersTest {
 
-
    @SuppressWarnings("unchecked")
    protected void createCacheManagers() throws Throwable {
-      Configuration c = getConfig();
-      c.fluent().transaction().autoCommit(false);
+      ConfigurationBuilder c = getConfig();
+      c.transaction().autoCommit(false);
       createClusteredCaches(2, c);
    }
 
-   protected Configuration getConfig() {
-      return getDefaultClusteredConfig(sync() ? Configuration.CacheMode.REPL_SYNC : Configuration.CacheMode.REPL_ASYNC, true);
+   protected ConfigurationBuilder getConfig() {
+      return getDefaultClusteredCacheConfig(sync() ? CacheMode.REPL_SYNC : CacheMode.REPL_ASYNC, true);
    }
 
    protected boolean sync() {

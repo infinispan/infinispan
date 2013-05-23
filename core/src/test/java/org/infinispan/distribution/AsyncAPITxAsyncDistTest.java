@@ -31,8 +31,8 @@ import java.util.concurrent.TimeUnit;
 @Test(groups = "functional", testName = "distribution.AsyncAPITxAsyncDistTest")
 public class AsyncAPITxAsyncDistTest extends AsyncAPITxSyncDistTest {
 
-   ReplListener rl;
-   ReplListener rlNoTx;
+   private ReplListener rl;
+   private ReplListener rlNoTx;
 
    @Override
    protected void createCacheManagers() throws Throwable {

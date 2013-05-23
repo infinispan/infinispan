@@ -22,7 +22,8 @@
  */
 package org.infinispan.tx.recovery;
 
-import org.infinispan.config.Configuration;
+import org.infinispan.configuration.cache.CacheMode;
+import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.manager.CacheContainer;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.testng.annotations.Test;
@@ -35,22 +36,22 @@ public class RecoveryWithCustomCacheDistTest extends RecoveryWithDefaultCacheDis
 
    private static final String CUSTOM_CACHE = "customCache";
 
-   private Configuration recoveryCache;
+   private ConfigurationBuilder recoveryCache;
 
    @Override
    protected void createCacheManagers() throws Throwable {
       configuration = super.configure();
-      configuration.fluent().transaction().recovery().recoveryInfoCacheName(CUSTOM_CACHE);
+      configuration.transaction().recovery().recoveryInfoCacheName(CUSTOM_CACHE);
 
       registerCacheManager(TestCacheManagerFactory.createClusteredCacheManager(configuration));
       registerCacheManager(TestCacheManagerFactory.createClusteredCacheManager(configuration));
 
-      recoveryCache = getDefaultClusteredConfig(Configuration.CacheMode.LOCAL);
-      recoveryCache.fluent().transaction().transactionManagerLookupClass(null);
+      recoveryCache = getDefaultClusteredCacheConfig(CacheMode.LOCAL, false);
+      recoveryCache.transaction().transactionManagerLookup(null);
       // Explicitly disable recovery in recovery cache per se.
-      recoveryCache.fluent().transaction().recovery().disable();
-      manager(0).defineConfiguration(CUSTOM_CACHE, recoveryCache);
-      manager(1).defineConfiguration(CUSTOM_CACHE, recoveryCache);
+      recoveryCache.transaction().recovery().disable();
+      manager(0).defineConfiguration(CUSTOM_CACHE, recoveryCache.build());
+      manager(1).defineConfiguration(CUSTOM_CACHE, recoveryCache.build());
 
       manager(0).startCaches(CacheContainer.DEFAULT_CACHE_NAME, CUSTOM_CACHE);
       manager(1).startCaches(CacheContainer.DEFAULT_CACHE_NAME, CUSTOM_CACHE);
@@ -67,6 +68,6 @@ public class RecoveryWithCustomCacheDistTest extends RecoveryWithDefaultCacheDis
 
    @Override
    protected void defineRecoveryCache(int cacheManagerIndex) {
-      manager(1).defineConfiguration(CUSTOM_CACHE, recoveryCache);
+      manager(1).defineConfiguration(CUSTOM_CACHE, recoveryCache.build());
    }
 }

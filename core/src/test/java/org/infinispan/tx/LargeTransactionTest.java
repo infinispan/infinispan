@@ -23,7 +23,8 @@
 package org.infinispan.tx;
 
 import org.infinispan.Cache;
-import org.infinispan.config.Configuration;
+import org.infinispan.configuration.cache.CacheMode;
+import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.manager.CacheContainer;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.test.MultipleCacheManagersTest;
@@ -46,23 +47,20 @@ public class LargeTransactionTest extends MultipleCacheManagersTest {
    private static final Log log = LogFactory.getLog(LargeTransactionTest.class);
 
    protected void createCacheManagers() throws Throwable {
-
-      Configuration c = new Configuration();
-      c.setInvocationBatchingEnabled(true);
-      c.setCacheMode(Configuration.CacheMode.REPL_SYNC);
-      c.setSyncReplTimeout(30000);
-      c.setLockAcquisitionTimeout(60000);
-      c.setSyncCommitPhase(true);
-      c.setSyncRollbackPhase(true);
-      c.setUseLockStriping(false);
-      c.fluent().transaction().transactionMode(TransactionMode.TRANSACTIONAL);
+      ConfigurationBuilder c = new ConfigurationBuilder();
+      c.clustering().cacheMode(CacheMode.REPL_SYNC)
+            .sync().replTimeout(30000)
+            .transaction().transactionMode(TransactionMode.TRANSACTIONAL)
+            .syncCommitPhase(true).syncRollbackPhase(true)
+            .invocationBatching().enable()
+            .locking().lockAcquisitionTimeout(60000).useLockStriping(false);
 
       EmbeddedCacheManager container = TestCacheManagerFactory.createClusteredCacheManager(c);
       container.start();
       registerCacheManager(container);
       container.startCaches(CacheContainer.DEFAULT_CACHE_NAME, "TestCache");
       Cache cache1 = container.getCache("TestCache");
-      assert cache1.getConfiguration().getCacheMode().equals(Configuration.CacheMode.REPL_SYNC);
+      assert cache1.getCacheConfiguration().clustering().cacheMode().equals(CacheMode.REPL_SYNC);
       cache1.start();
 
       container = TestCacheManagerFactory.createClusteredCacheManager(c);
@@ -70,7 +68,7 @@ public class LargeTransactionTest extends MultipleCacheManagersTest {
       registerCacheManager(container);
       container.startCaches(CacheContainer.DEFAULT_CACHE_NAME, "TestCache");
       Cache cache2 = container.getCache("TestCache");
-      assert cache2.getConfiguration().getCacheMode().equals(Configuration.CacheMode.REPL_SYNC);
+      assert cache2.getCacheConfiguration().clustering().cacheMode().equals(CacheMode.REPL_SYNC);
    }
 
    public void testLargeTx() throws Exception {

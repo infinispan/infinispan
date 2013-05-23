@@ -24,10 +24,7 @@
 package org.infinispan.tx.recovery.admin;
 
 import org.infinispan.Cache;
-import org.infinispan.affinity.KeyAffinityService;
-import org.infinispan.affinity.KeyAffinityServiceFactory;
-import org.infinispan.affinity.RndKeyGenerator;
-import org.infinispan.config.Configuration;
+import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.distribution.MagicKey;
 import org.infinispan.interceptors.InvocationContextInterceptor;
 import org.infinispan.test.TestingUtil;
@@ -37,7 +34,6 @@ import org.testng.annotations.Test;
 
 import javax.transaction.xa.XAException;
 import java.util.List;
-import java.util.concurrent.Executors;
 
 import static org.infinispan.tx.recovery.RecoveryTestUtil.commitTransaction;
 import static org.infinispan.tx.recovery.RecoveryTestUtil.prepareTransaction;
@@ -58,8 +54,8 @@ public class CommitFailsTest extends AbstractRecoveryTest {
 
    @Override
    protected void createCacheManagers() throws Throwable {
-      Configuration configuration = defaultRecoveryConfig();
-      configuration.fluent().transaction().autoCommit(false);
+      ConfigurationBuilder configuration = defaultRecoveryConfig();
+      configuration.transaction().autoCommit(false);
       createCluster(configuration, 3);
       waitForClusterToForm();
 
@@ -70,7 +66,6 @@ public class CommitFailsTest extends AbstractRecoveryTest {
       advancedCache(0).addInterceptorAfter(failureInterceptor0, InvocationContextInterceptor.class);
       advancedCache(1).addInterceptorAfter(failureInterceptor1, InvocationContextInterceptor.class);
    }
-
 
    @BeforeMethod
    protected void setUpTx() throws Exception {

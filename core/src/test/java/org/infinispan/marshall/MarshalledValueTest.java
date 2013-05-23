@@ -25,16 +25,15 @@ package org.infinispan.marshall;
 import org.infinispan.Cache;
 import org.infinispan.CacheException;
 import org.infinispan.commands.write.PutKeyValueCommand;
-import org.infinispan.config.CacheLoaderManagerConfig;
-import org.infinispan.config.Configuration;
+import org.infinispan.configuration.cache.CacheMode;
+import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.container.DataContainer;
 import org.infinispan.container.entries.InternalCacheEntry;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.interceptors.InterceptorChain;
 import org.infinispan.interceptors.MarshalledValueInterceptor;
 import org.infinispan.interceptors.base.CommandInterceptor;
-import org.infinispan.loaders.CacheLoaderConfig;
-import org.infinispan.loaders.dummy.DummyInMemoryCacheStore;
+import org.infinispan.loaders.dummy.DummyInMemoryCacheStoreConfigurationBuilder;
 import org.infinispan.notifications.Listener;
 import org.infinispan.notifications.cachelistener.annotation.CacheEntryModified;
 import org.infinispan.notifications.cachelistener.event.CacheEntryModifiedEvent;
@@ -57,7 +56,6 @@ import java.io.Serializable;
 import java.nio.charset.Charset;
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -77,16 +75,15 @@ import static org.testng.AssertJUnit.assertEquals;
 public class MarshalledValueTest extends MultipleCacheManagersTest {   
    private static final Log log = LogFactory.getLog(MarshalledValueTest.class);
    private MarshalledValueListenerInterceptor mvli;
-   String k = "key", v = "value";
 
    protected void createCacheManagers() throws Throwable {
-      Cache cache1, cache2;
-      Configuration replSync = getDefaultClusteredConfig(Configuration.CacheMode.REPL_SYNC).fluent().storeAsBinary().build();
+      ConfigurationBuilder replSync = getDefaultClusteredCacheConfig(CacheMode.REPL_SYNC, false);
+      replSync.dataContainer().storeAsBinary().enable();
 
       createClusteredCaches(2, "replSync", replSync);
 
-      cache1 = cache(0, "replSync");
-      cache2 = cache(1, "replSync");
+      Cache cache1 = cache(0, "replSync");
+      Cache cache2 = cache(1, "replSync");
 
       assertMarshalledValueInterceptorPresent(cache1);
       assertMarshalledValueInterceptorPresent(cache2);
@@ -372,13 +369,11 @@ public class MarshalledValueTest extends MultipleCacheManagersTest {
       Cache cache2 = cache(1, "replSync");
       tearDown();
 
-      Configuration cacheCofig = getDefaultClusteredConfig(Configuration.CacheMode.REPL_SYNC);
-      cacheCofig.setUseLazyDeserialization(true);
-      CacheLoaderManagerConfig clmc = new CacheLoaderManagerConfig();
-      DummyInMemoryCacheStore.Cfg clc = new DummyInMemoryCacheStore.Cfg();
-      clc.setStoreName(getClass().getSimpleName());
-      clmc.setCacheLoaderConfigs(Collections.singletonList((CacheLoaderConfig) clc));
-      cacheCofig.setCacheLoaderManagerConfig(clmc);
+      ConfigurationBuilder cacheCofig = getDefaultClusteredCacheConfig(CacheMode.REPL_SYNC, false);
+      cacheCofig.dataContainer().storeAsBinary().enable();
+      DummyInMemoryCacheStoreConfigurationBuilder dimcs = new DummyInMemoryCacheStoreConfigurationBuilder(cacheCofig.loaders());
+      dimcs.storeName(getClass().getSimpleName());
+      cacheCofig.loaders().addLoader(dimcs);
 
       defineConfigurationOnAllManagers("replSync2", cacheCofig);
       waitForClusterToForm("replSync2");

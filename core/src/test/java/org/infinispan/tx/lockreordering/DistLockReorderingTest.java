@@ -1,7 +1,8 @@
 package org.infinispan.tx.lockreordering;
 
 import org.infinispan.commons.hash.MurmurHash3;
-import org.infinispan.config.Configuration;
+import org.infinispan.configuration.cache.CacheMode;
+import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.test.MultipleCacheManagersTest;
 import org.testng.annotations.Test;
 
@@ -18,14 +19,14 @@ import static org.infinispan.tx.lockreordering.LocalLockReorderingTest.runTest;
 @Test (groups = "functional", testName = "tx.lockreordering.DistLockReorderingTest")
 public class DistLockReorderingTest extends MultipleCacheManagersTest {
 
-   List keys;
-   protected Configuration.CacheMode cacheMode = Configuration.CacheMode.DIST_SYNC;
+   protected List keys;
+   protected CacheMode cacheMode = CacheMode.DIST_SYNC;
 
    @Override
    protected void createCacheManagers() throws Throwable {
-      final Configuration c = getDefaultClusteredConfig(cacheMode, true);
-      c.fluent().transaction().cacheStopTimeout(1);
-      c.fluent().transaction().locking().lockAcquisitionTimeout(30000L);//timeouts are possible otherwise
+      ConfigurationBuilder c = getDefaultClusteredCacheConfig(cacheMode, true);
+      c.transaction().cacheStopTimeout(1)
+            .locking().lockAcquisitionTimeout(30000L);//timeouts are possible otherwise
       createCluster(c, 2);
       waitForClusterToForm();
       buildKeys();
@@ -47,7 +48,6 @@ public class DistLockReorderingTest extends MultipleCacheManagersTest {
 
    public void testWithPut(Method m) throws Exception {
       runTest(StresserThread.PUT_PERFORMER, cache(0), cache(1), keys, getThreadPrefix(m));
-
    }
 
    public void testWithRemove(Method m) throws InterruptedException {

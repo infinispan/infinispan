@@ -23,7 +23,7 @@
 
 package org.infinispan.tx.lockreordering;
 
-import org.infinispan.config.Configuration;
+import org.infinispan.configuration.cache.CacheMode;
 import org.testng.annotations.Test;
 
 import static org.infinispan.tx.lockreordering.LocalLockReorderingTest.generateKeys;
@@ -36,7 +36,7 @@ import static org.infinispan.tx.lockreordering.LocalLockReorderingTest.generateK
 public class ReplicatedLockReorderingTest extends DistLockReorderingTest {
 
    public ReplicatedLockReorderingTest() {
-      cacheMode = Configuration.CacheMode.REPL_SYNC;
+      cacheMode = CacheMode.REPL_SYNC;
    }
 
    @Override

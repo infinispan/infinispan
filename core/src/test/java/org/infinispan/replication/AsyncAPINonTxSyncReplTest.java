@@ -24,45 +24,46 @@
 package org.infinispan.replication;
 
 import org.infinispan.Cache;
-import org.infinispan.config.Configuration;
+import org.infinispan.configuration.cache.CacheMode;
+import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.test.MultipleCacheManagersTest;
 import org.infinispan.test.data.Key;
 import org.infinispan.util.Util;
 import org.testng.annotations.Test;
 
 import java.util.Collections;
-import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 
 @Test(groups="functional", testName = "replication.AsyncAPINonTxSyncReplTest")
 public class AsyncAPINonTxSyncReplTest extends MultipleCacheManagersTest {
+
    @Override
    protected void createCacheManagers() throws Throwable {
-      Configuration c = getConfig();
-      c.fluent().transaction().autoCommit(false);
+      ConfigurationBuilder c = getConfig();
+      c.transaction().autoCommit(false);
       createClusteredCaches(2, c);
    }
 
-   protected Configuration getConfig() {
-      return getDefaultClusteredConfig(sync() ? Configuration.CacheMode.REPL_SYNC : Configuration.CacheMode.REPL_ASYNC, false);
+   protected ConfigurationBuilder getConfig() {
+      return getDefaultClusteredCacheConfig(sync() ? CacheMode.REPL_SYNC : CacheMode.REPL_ASYNC, false);
    }
 
    protected boolean sync() {
       return true;
    }
 
-   public void testAsyncMethods() throws ExecutionException, InterruptedException {
+   public void testAsyncMethods() throws Exception {
       final Cache c1 = cache(0);
       final Cache c2 = cache(1);
 
 
       final String v = "v";
-      String v2 = "v2";
-      String v3 = "v3";
-      String v4 = "v4";
-      String v5 = "v5";
-      String v6 = "v6";
-      String v_null = "v_nonexistent";
+      final String v2 = "v2";
+      final String v3 = "v3";
+      final String v4 = "v4";
+      final String v5 = "v5";
+      final String v6 = "v6";
+      final String v_null = "v_nonexistent";
       final Key key = new Key("k", true);
 
       // put
@@ -121,9 +122,6 @@ public class AsyncAPINonTxSyncReplTest extends MultipleCacheManagersTest {
       assert f.get().equals(v3);
       assert f.isDone();
       assertOnAllCaches(key, null, c1, c2);
-
-
-
 
       log.trace("Before putIfAbsentAsync");
       f = c1.putIfAbsentAsync(key, v4);

@@ -24,7 +24,8 @@
 package org.infinispan.distribution;
 
 import org.infinispan.Cache;
-import org.infinispan.config.Configuration;
+import org.infinispan.configuration.cache.CacheMode;
+import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.replication.AsyncAPINonTxSyncReplTest;
 import org.infinispan.test.data.Key;
 import org.infinispan.util.Util;
@@ -32,13 +33,13 @@ import org.testng.annotations.Test;
 
 import static org.infinispan.context.Flag.SKIP_REMOTE_LOOKUP;
 
-@Test (groups = "functional", testName = "distribution.AsyncAPINonTxSyncDistTest")
+@Test(groups = "functional", testName = "distribution.AsyncAPINonTxSyncDistTest")
 public class AsyncAPINonTxSyncDistTest extends AsyncAPINonTxSyncReplTest {
 
-   protected Configuration getConfig(boolean txEnabled) {
-      return getDefaultClusteredConfig(sync() ? Configuration.CacheMode.DIST_SYNC : Configuration.CacheMode.DIST_ASYNC, txEnabled);
+   @Override
+   protected ConfigurationBuilder getConfig() {
+      return getDefaultClusteredCacheConfig(sync() ? CacheMode.DIST_SYNC : CacheMode.DIST_ASYNC, false);
    }
-
 
    @Override
    protected void assertOnAllCaches(final Key k, final String v, final Cache c1, final Cache c2) {
@@ -55,5 +56,11 @@ public class AsyncAPINonTxSyncDistTest extends AsyncAPINonTxSyncReplTest {
          assert Util.safeEquals((real = c1.getAdvancedCache().withFlags(SKIP_REMOTE_LOOKUP).get(k)), v) : "Error on cache 1.  Expected " + v + " and got " + real;
          assert Util.safeEquals((real = c2.getAdvancedCache().withFlags(SKIP_REMOTE_LOOKUP).get(k)), v) : "Error on cache 2.  Expected " + v + " and got " + real;
       }
+   }
+
+   @Test(enabled = false, description = "Disabled due to https://issues.jboss.org/browse/ISPN-3133")
+   @Override
+   public void testAsyncMethods() throws Exception {
+      super.testAsyncMethods();
    }
 }

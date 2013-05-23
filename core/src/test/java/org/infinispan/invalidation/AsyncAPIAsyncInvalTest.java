@@ -30,7 +30,8 @@ import org.testng.annotations.Test;
 
 @Test(groups = "functional", testName = "invalidation.AsyncAPIAsyncInvalTest")
 public class AsyncAPIAsyncInvalTest extends AsyncAPISyncInvalTest {
-   ReplListener rl;
+
+   private ReplListener rl;
 
    public AsyncAPIAsyncInvalTest() {
       cleanup = AbstractCacheTest.CleanupPhase.AFTER_METHOD;

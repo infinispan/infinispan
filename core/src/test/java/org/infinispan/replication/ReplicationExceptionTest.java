@@ -26,7 +26,8 @@ package org.infinispan.replication;
 import org.infinispan.AdvancedCache;
 import org.infinispan.CacheException;
 import org.infinispan.commands.VisitableCommand;
-import org.infinispan.config.Configuration;
+import org.infinispan.configuration.cache.CacheMode;
+import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.interceptors.base.CommandInterceptor;
 import org.infinispan.marshall.NotSerializableException;
@@ -35,7 +36,6 @@ import org.infinispan.test.TestingUtil;
 import org.infinispan.transaction.lookup.DummyTransactionManagerLookup;
 import org.infinispan.transaction.tm.DummyTransactionManager;
 import org.infinispan.util.concurrent.IsolationLevel;
-import org.infinispan.util.concurrent.TimeoutException;
 import org.testng.annotations.Test;
 
 import javax.transaction.NotSupportedException;
@@ -50,47 +50,38 @@ import static org.testng.AssertJUnit.fail;
 @Test(groups = "functional", testName = "replication.ReplicationExceptionTest")
 public class ReplicationExceptionTest extends MultipleCacheManagersTest {
 
-   protected void createCacheManagers() throws Throwable {
-      Configuration configuration = getDefaultClusteredConfig(Configuration.CacheMode.REPL_SYNC,true)
-            .fluent()
-               .locking()
-                  .isolationLevel(IsolationLevel.REPEATABLE_READ)
-                  .lockAcquisitionTimeout(60000l)
-               .transaction().transactionManagerLookup(new DummyTransactionManagerLookup())
-            .build();
+   protected void createCacheManagers() {
+      ConfigurationBuilder configuration = getDefaultClusteredCacheConfig(CacheMode.REPL_SYNC, true);
+      configuration.locking()
+            .isolationLevel(IsolationLevel.REPEATABLE_READ)
+            .lockAcquisitionTimeout(60000l)
+            .transaction().transactionManagerLookup(new DummyTransactionManagerLookup());
       createClusteredCaches(2, "syncReplCache", configuration);
       waitForClusterToForm("syncReplCache");
 
-      Configuration noTx = getDefaultClusteredConfig(Configuration.CacheMode.REPL_SYNC,false)
-            .fluent()
-               .locking()
-                  .isolationLevel(IsolationLevel.REPEATABLE_READ)
-                  .lockAcquisitionTimeout(60000l).build();
-
+      ConfigurationBuilder noTx = getDefaultClusteredCacheConfig(CacheMode.REPL_SYNC, false);
+      noTx.locking()
+            .isolationLevel(IsolationLevel.REPEATABLE_READ)
+            .lockAcquisitionTimeout(60000l);
       defineConfigurationOnAllManagers("syncReplCacheNoTx", noTx);
 
-      Configuration replAsync = getDefaultClusteredConfig(Configuration.CacheMode.REPL_ASYNC,true);
+      ConfigurationBuilder replAsync = getDefaultClusteredCacheConfig(CacheMode.REPL_ASYNC, true);
       defineConfigurationOnAllManagers("asyncReplCache", replAsync);
 
-      Configuration replAsyncNoTx = getDefaultClusteredConfig(Configuration.CacheMode.REPL_ASYNC,false);
+      ConfigurationBuilder replAsyncNoTx = getDefaultClusteredCacheConfig(CacheMode.REPL_ASYNC, false);
       defineConfigurationOnAllManagers("asyncReplCacheNoTx", replAsyncNoTx);
 
-      Configuration replQueue = getDefaultClusteredConfig(Configuration.CacheMode.REPL_ASYNC,true)
-            .fluent()
-               .clustering()
-                  .async()
-                     .useReplQueue(true)
-               .transaction().transactionManagerLookup(new DummyTransactionManagerLookup())
-            .build();
+      ConfigurationBuilder replQueue = getDefaultClusteredCacheConfig(CacheMode.REPL_ASYNC, true);
+      replQueue.clustering()
+            .async()
+            .useReplQueue(true)
+            .transaction().transactionManagerLookup(new DummyTransactionManagerLookup());
       defineConfigurationOnAllManagers("replQueueCache", replQueue);
 
-      Configuration asyncMarshall = getDefaultClusteredConfig(Configuration.CacheMode.REPL_ASYNC,true)
-            .fluent()
-               .clustering()
-                  .async()
-                     .asyncMarshalling(true)
-               .transaction().transactionManagerLookup(new DummyTransactionManagerLookup())
-            .build();
+      ConfigurationBuilder asyncMarshall = getDefaultClusteredCacheConfig(CacheMode.REPL_ASYNC, true);
+      asyncMarshall.clustering()
+            .async().asyncMarshalling(true)
+            .transaction().transactionManagerLookup(new DummyTransactionManagerLookup());
       defineConfigurationOnAllManagers("asyncMarshallCache", asyncMarshall);
    }
 
@@ -182,8 +173,8 @@ public class ReplicationExceptionTest extends MultipleCacheManagersTest {
    public void testLockAcquisitionTimeout() throws Exception {
       AdvancedCache cache1 = cache(0, "syncReplCache").getAdvancedCache();
       AdvancedCache cache2 = cache(1, "syncReplCache").getAdvancedCache();
-      cache1.getConfiguration().setLockAcquisitionTimeout(10);
-      cache2.getConfiguration().setLockAcquisitionTimeout(10);
+      cache1.getCacheConfiguration().locking().lockAcquisitionTimeout(10);
+      cache2.getCacheConfiguration().locking().lockAcquisitionTimeout(10);
       TestingUtil.blockUntilViewsReceived(10000, cache1, cache2);
 
       // get a lock on cache 2 and hold on to it.

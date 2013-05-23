@@ -23,10 +23,9 @@
 
 package org.infinispan.tx.recovery.admin;
 
-import org.infinispan.config.Configuration;
+import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.transaction.RemoteTransaction;
 import org.infinispan.transaction.tm.DummyTransaction;
-import org.infinispan.transaction.tm.DummyXid;
 import org.infinispan.transaction.xa.XaTransactionTable;
 import org.infinispan.transaction.xa.recovery.RecoverableTransactionIdentifier;
 import org.infinispan.tx.recovery.PostCommitRecoveryStateTest;
@@ -51,7 +50,7 @@ public class ForgetTest extends AbstractRecoveryTest {
 
    @Override
    protected void createCacheManagers() throws Throwable {
-      Configuration configuration = defaultRecoveryConfig();
+      ConfigurationBuilder configuration = defaultRecoveryConfig();
       createCluster(configuration, 2);
       waitForClusterToForm();
 
