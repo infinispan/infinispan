@@ -19,8 +19,8 @@
 
 package org.infinispan.commands;
 
-import org.infinispan.Metadata;
 import org.infinispan.context.Flag;
+import org.infinispan.metadata.Metadata;
 
 import java.util.Arrays;
 import java.util.EnumSet;
