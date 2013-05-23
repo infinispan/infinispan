@@ -58,6 +58,7 @@ import java.util.concurrent.TimeUnit;
 
 import static org.infinispan.test.TestingUtil.extractComponent;
 import static org.infinispan.test.TestingUtil.replaceComponent;
+import static org.infinispan.test.TestingUtil.replaceField;
 
 /**
  * This tests the following scenario:
@@ -83,16 +84,7 @@ public class OngoingTransactionsAndJoinTest extends MultipleCacheManagersTest {
       replaceComponent(ecm, InboundInvocationHandler.class, lh, true);
       JGroupsTransport t = (JGroupsTransport) extractComponent(cache(0), Transport.class);
       CommandAwareRpcDispatcher card = t.getCommandAwareRpcDispatcher();
-      Field f = null;
-      try {
-         f = card.getClass().getDeclaredField("inboundInvocationHandler");
-         f.setAccessible(true);
-         f.set(card, lh);
-      } catch (NoSuchFieldException e) {
-         e.printStackTrace();
-      } catch (IllegalAccessException e) {
-         e.printStackTrace();
-      }
+      replaceField(lh, "inboundInvocationHandler", card, CommandAwareRpcDispatcher.class);
    }
 
    public void testRehashOnJoin() throws InterruptedException {

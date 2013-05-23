@@ -59,7 +59,7 @@ public abstract class RehashTestBase extends BaseDistFunctionalTest {
     * This is overridden by subclasses.  Could typically be a JOIN or LEAVE event.
     * @param offline
     */
-   abstract void performRehashEvent(boolean offline);
+   abstract void performRehashEvent(boolean offline) throws Throwable;
 
    /**
     * Blocks until a rehash completes.
@@ -92,7 +92,7 @@ public abstract class RehashTestBase extends BaseDistFunctionalTest {
     * Simple test.  Put some state, trigger event, test results
     */
    @Test
-   public void testNonTransactional() {
+   public void testNonTransactional() throws Throwable {
       List<MagicKey> keys = init();
 
       log.info("Invoking rehash event");
@@ -111,7 +111,7 @@ public abstract class RehashTestBase extends BaseDistFunctionalTest {
     * and test results.
     */
    @Test
-   public void testTransactional() throws Exception {
+   public void testTransactional() throws Throwable {
       final List<MagicKey> keys = init();
       final CountDownLatch l = new CountDownLatch(1);
       final AtomicBoolean rollback = new AtomicBoolean(false);
@@ -176,7 +176,7 @@ public abstract class RehashTestBase extends BaseDistFunctionalTest {
     * A stress test.  One node is constantly modified while a rehash occurs.
     */
    @Test(enabled = false, description = "Enable after releasing Beta1")
-   public void testNonTransactionalStress() throws Exception {
+   public void testNonTransactionalStress() throws Throwable {
       stressTest(false);
    }
 
@@ -184,11 +184,11 @@ public abstract class RehashTestBase extends BaseDistFunctionalTest {
     * A stress test.  One node is constantly modified using transactions while a rehash occurs.
     */
    @Test(enabled = false, description = "Enable after releasing Beta1")
-   public void testTransactionalStress() throws Exception {
+   public void testTransactionalStress() throws Throwable {
       stressTest(true);
    }
 
-   private void stressTest(boolean tx) throws Exception {
+   private void stressTest(boolean tx) throws Throwable {
       final List<MagicKey> keys = init();
       final CountDownLatch latch = new CountDownLatch(1);
       List<Updater> updaters = new ArrayList<Updater>(keys.size());

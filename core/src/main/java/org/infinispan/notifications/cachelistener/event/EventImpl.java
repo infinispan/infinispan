@@ -194,15 +194,27 @@ public class EventImpl<K, V> implements CacheEntryActivatedEvent, CacheEntryCrea
 
    @Override
    public String toString() {
+      if (type == Type.TOPOLOGY_CHANGED || type == Type.DATA_REHASHED)
+         return "EventImpl{" +
+               "type=" + type +
+               ", pre=" + pre +
+               ", cache=" + cache +
+               ", consistentHashAtStart=" + consistentHashAtStart +
+               ", consistentHashAtEnd=" + consistentHashAtEnd +
+               ", newTopologyId=" + newTopologyId +
+               '}';
       return "EventImpl{" +
-            "pre=" + pre +
+            "type=" + type +
+            ", pre=" + pre +
+            ", cache=" + cache +
             ", key=" + key +
-            ", cache=" + cache.getName() +
+            ", value=" + value +
             ", transaction=" + transaction +
             ", originLocal=" + originLocal +
             ", transactionSuccessful=" + transactionSuccessful +
             ", type=" + type +
             ", value=" + value +
+            ", entries=" + entries +
             '}';
    }
 

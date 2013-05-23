@@ -154,6 +154,7 @@ public class StateConsumerImpl implements StateConsumer {
     */
    @Override
    public void stopApplyingState() {
+      if (trace) log.tracef("Stop keeping track of changed keys for state transfer");
       updatedKeys = null;
    }
 
@@ -268,7 +269,6 @@ public class StateConsumerImpl implements StateConsumer {
 
       if (isRebalance) {
          rebalanceInProgress.set(true);
-         waitingForState.set(true);
          cacheNotifier.notifyDataRehashed(cacheTopology.getCurrentCH(), cacheTopology.getPendingCH(),
                cacheTopology.getTopologyId(), true);
       }
@@ -279,6 +279,7 @@ public class StateConsumerImpl implements StateConsumer {
       stateTransferLock.acquireExclusiveTopologyLock();
       this.cacheTopology = cacheTopology;
       if (isRebalance) {
+         if (trace) log.tracef("Start keeping track of keys for rebalance");
          updatedKeys = new ConcurrentHashSet<Object>();
       }
       stateTransferLock.releaseExclusiveTopologyLock();
@@ -350,6 +351,11 @@ public class StateConsumerImpl implements StateConsumer {
       } finally {
          stateTransferLock.notifyTransactionDataReceived(cacheTopology.getTopologyId());
 
+         // Only set the flag here, after all the transfers have been added to the transfersBySource map
+         if (isRebalance) {
+            waitingForState.set(true);
+         }
+
          notifyEndOfRebalanceIfNeeded(cacheTopology.getTopologyId());
 
          // Remove the transactions whose originators have left the cache.
@@ -362,7 +368,7 @@ public class StateConsumerImpl implements StateConsumer {
    }
 
    private void notifyEndOfRebalanceIfNeeded(int topologyId) {
-      if (!hasActiveTransfers()) {
+      if (waitingForState.get() && !hasActiveTransfers()) {
          if (waitingForState.compareAndSet(true, false)) {
             log.debugf("Finished receiving of segments for cache %s for topology %d.", cacheName, topologyId);
             stopApplyingState();
@@ -576,14 +582,13 @@ public class StateConsumerImpl implements StateConsumer {
 
    private Address findSource(int segmentId, Set<Address> excludedSources) {
       List<Address> owners = cacheTopology.getReadConsistentHash().locateOwnersForSegment(segmentId);
-      if (owners.size() == 1 && owners.get(0).equals(rpcManager.getAddress())) {
-         return null;
-      }
-
-      for (int i = owners.size() - 1; i >= 0; i--) {   // iterate backwards because we prefer to fetch from newer nodes
-         Address o = owners.get(i);
-         if (!o.equals(rpcManager.getAddress()) && !excludedSources.contains(o)) {
-            return o;
+      if (!owners.contains(rpcManager.getAddress())) {
+         // iterate backwards because we prefer to fetch from newer nodes
+         for (int i = owners.size() - 1; i >= 0; i--) {
+            Address o = owners.get(i);
+            if (!o.equals(rpcManager.getAddress()) && !excludedSources.contains(o)) {
+               return o;
+            }
          }
       }
       log.noLiveOwnersFoundForSegment(segmentId, cacheName, owners, excludedSources);
