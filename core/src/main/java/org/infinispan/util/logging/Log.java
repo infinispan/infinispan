@@ -841,8 +841,8 @@ public interface Log extends BasicLogger {
    @Message(value = "%d entries migrated to cache %s in %s", id = 216)
    void entriesMigrated(long count, String name, String prettyTime);
 
-   @Message(value = "Received exception from %s, see cause for remote stack trace", id = 217)
-   RemoteException remoteException(Address sender, @Cause Exception e);
+   @Message(value = "Received %s exception from %s, see cause for remote stack trace", id = 217)
+   RemoteException remoteException(String cause, Address sender, @Cause Exception e);
 
    @LogMessage(level = INFO)
    @Message(value = "Timeout while waiting for the transaction validation. The command will not be processed. " +
