@@ -137,7 +137,7 @@
       <version.hbase>0.94.1</version.hbase>
       <version.hibernate.annotations>3.4.0.GA</version.hibernate.annotations>
       <version.hibernate.core>3.3.1.GA</version.hibernate.core>
-      <version.hibernate.search>4.3.0.Alpha1</version.hibernate.search>
+      <version.hibernate.search>4.3.0.Beta1</version.hibernate.search>
       <version.jackson>1.9.2</version.jackson>
       <version.javax.cache>0.6</version.javax.cache>
       <version.javax.persistence>1.0</version.javax.persistence>
