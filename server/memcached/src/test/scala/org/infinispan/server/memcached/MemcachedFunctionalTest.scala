@@ -36,6 +36,7 @@ import org.infinispan.test.fwk.TestCacheManagerFactory
 import org.infinispan.config.Configuration
 import org.infinispan.Version
 import test.MemcachedTestingUtil._
+import org.infinispan.server.memcached.configuration.MemcachedServerConfigurationBuilder
 
 /**
  * Tests Memcached protocol functionality against Infinispan Memcached server.
@@ -553,11 +554,11 @@ class MemcachedFunctionalTest extends MemcachedSingleNodeTest {
    def testStoreAsBinaryOverride {
       val cm = TestCacheManagerFactory.createLocalCacheManager(false)
       val cfg = new Configuration().fluent.storeAsBinary.build
-      cm.defineConfiguration(MemcachedServer.cacheName, cfg)
+      cm.defineConfiguration(new MemcachedServerConfigurationBuilder().build.cache, cfg)
       assertTrue(cfg.isStoreAsBinary)
       val testServer = startMemcachedTextServer(cm, server.getPort + 33)
       try {
-         val memcachedCache = cm.getCache(MemcachedServer.cacheName)
+         val memcachedCache = cm.getCache(testServer.getConfiguration.cache)
          assertFalse(memcachedCache.getConfiguration.isStoreAsBinary)
       } finally {
          cm.stop
