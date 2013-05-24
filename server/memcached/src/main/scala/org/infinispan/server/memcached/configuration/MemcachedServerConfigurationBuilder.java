@@ -29,6 +29,7 @@ import org.infinispan.server.core.configuration.ProtocolServerConfigurationBuild
  */
 public class MemcachedServerConfigurationBuilder extends ProtocolServerConfigurationBuilder<MemcachedServerConfiguration, MemcachedServerConfigurationBuilder> implements
       Builder<MemcachedServerConfiguration> {
+   private String cache = "memcachedCache";
 
    public MemcachedServerConfigurationBuilder() {
       super(11211);
@@ -39,9 +40,14 @@ public class MemcachedServerConfigurationBuilder extends ProtocolServerConfigura
       return this;
    }
 
+   public MemcachedServerConfigurationBuilder cache(String cache) {
+      this.cache = cache;
+      return this;
+   }
+
    @Override
    public MemcachedServerConfiguration create() {
-      return new MemcachedServerConfiguration(name, host, port, idleTimeout, recvBufSize, sendBufSize, ssl.create(), tcpNoDelay, workerThreads);
+      return new MemcachedServerConfiguration(cache, name, host, port, idleTimeout, recvBufSize, sendBufSize, ssl.create(), tcpNoDelay, workerThreads);
    }
 
    public MemcachedServerConfiguration build(boolean validate) {
@@ -56,4 +62,10 @@ public class MemcachedServerConfigurationBuilder extends ProtocolServerConfigura
       return build(true);
    }
 
+   @Override
+   public Builder<?> read(MemcachedServerConfiguration template) {
+      super.read(template);
+      this.cache = template.cache();
+      return this;
+   }
 }

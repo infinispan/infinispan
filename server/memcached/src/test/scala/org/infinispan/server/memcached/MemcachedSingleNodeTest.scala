@@ -36,7 +36,7 @@ import java.lang.StringBuilder
 
 /**
  * Base class for single node tests.
- * 
+ *
  * @author Galder Zamarreño
  * @since 4.1
  */
@@ -49,7 +49,7 @@ abstract class MemcachedSingleNodeTest extends SingleCacheManagerTest {
       cacheManager = createTestCacheManager
       memcachedServer = startMemcachedTextServer(cacheManager)
       memcachedClient = createMemcachedClient(60000, server.getPort)
-      cache = cacheManager.getCache[AnyRef, AnyRef](MemcachedServer.cacheName)
+      cache = cacheManager.getCache[AnyRef, AnyRef](memcachedServer.getConfiguration.cache)
       cacheManager
    }
 
