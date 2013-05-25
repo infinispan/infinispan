@@ -57,10 +57,4 @@ public class AsyncAPINonTxSyncDistTest extends AsyncAPINonTxSyncReplTest {
          assert Util.safeEquals((real = c2.getAdvancedCache().withFlags(SKIP_REMOTE_LOOKUP).get(k)), v) : "Error on cache 2.  Expected " + v + " and got " + real;
       }
    }
-
-   @Test(enabled = false, description = "Disabled due to https://issues.jboss.org/browse/ISPN-3133")
-   @Override
-   public void testAsyncMethods() throws Exception {
-      super.testAsyncMethods();
-   }
 }

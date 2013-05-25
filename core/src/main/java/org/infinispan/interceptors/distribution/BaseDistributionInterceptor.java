@@ -125,15 +125,23 @@ public abstract class BaseDistributionInterceptor extends ClusteringInterceptor 
          Object returnValue = invokeNextInterceptor(ctx, command);
          Address primaryOwner = cdl.getPrimaryOwner(command.getKey());
          if (primaryOwner.equals(rpcManager.getAddress())) {
+            if (command.isConditional() && !command.isSuccessful()) {
+               log.tracef("Skipping the replication of the conditional command as it did not succeed on primary owner (%s).", command);
+               return returnValue;
+            }
             rpcManager.invokeRemotely(recipientGenerator.generateRecipients(), command, rpcManager.getDefaultRpcOptions(isSync));
          }
          return returnValue;
       } else {
          Address primaryOwner = cdl.getPrimaryOwner(command.getKey());
          if (primaryOwner.equals(rpcManager.getAddress())) {
+            Object result = invokeNextInterceptor(ctx, command);
+            if (command.isConditional() && !command.isSuccessful()) {
+               log.tracef("Skipping the replication of the conditional command as it did not succeed on primary owner (%s).", command);
+               return result;
+            }
             List<Address> recipients = recipientGenerator.generateRecipients();
             log.tracef("I'm the primary owner, sending the command to all (%s) the recipients in order to be applied.", recipients);
-            Object result = invokeNextInterceptor(ctx, command);
             // check if a single owner has been configured and the target for the key is the local address
             boolean isSingleOwnerAndLocal = cacheConfiguration.clustering().hash().numOwners() == 1
                   && recipients != null
@@ -146,11 +154,10 @@ public abstract class BaseDistributionInterceptor extends ClusteringInterceptor 
          } else {
             log.tracef("I'm not the primary owner, so sending the command to the primary owner(%s) in order to be forwarded", primaryOwner);
             Object localResult = invokeNextInterceptor(ctx, command);
+            boolean isSyncForwarding = isSync || isNeedReliableReturnValues(command);
             Map<Address, Response> addressResponseMap = rpcManager.invokeRemotely(Collections.singletonList(primaryOwner), command,
-                  rpcManager.getDefaultRpcOptions(isSync));
-            //the remote node always returns the correct result, but if we're async, then our best option is the local
-            //node. That might be incorrect though.
-            if (!isSync) return localResult;
+                  rpcManager.getDefaultRpcOptions(isSyncForwarding));
+            if (!isSyncForwarding) return localResult;
 
             return getResponseFromPrimaryOwner(primaryOwner, addressResponseMap);
          }
