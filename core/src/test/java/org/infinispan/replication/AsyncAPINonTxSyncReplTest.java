@@ -23,15 +23,18 @@
 
 package org.infinispan.replication;
 
+import org.infinispan.AdvancedCache;
 import org.infinispan.Cache;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
+import org.infinispan.remoting.transport.Address;
 import org.infinispan.test.MultipleCacheManagersTest;
 import org.infinispan.test.data.Key;
 import org.infinispan.util.Util;
 import org.testng.annotations.Test;
 
 import java.util.Collections;
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 
 @Test(groups="functional", testName = "replication.AsyncAPINonTxSyncReplTest")
@@ -66,7 +69,6 @@ public class AsyncAPINonTxSyncReplTest extends MultipleCacheManagersTest {
       final String v_null = "v_nonexistent";
       final Key key = new Key("k", true);
 
-      // put
       log.trace("Before put");
       Future<String> f = c1.putAsync(key, v);
       assert f != null;
@@ -77,7 +79,7 @@ public class AsyncAPINonTxSyncReplTest extends MultipleCacheManagersTest {
       log.info("*** Finished allowing serialization on key, checking future if cancelled");
       assert !f.isCancelled();
       log.info("*** Future not cancelled, checking future.get()");
-      assert f.get() == null;
+      assertFutureValue(f, null);
       assert f.isDone();
       assertOnAllCaches(key, v, c1, c2);
 
@@ -88,7 +90,7 @@ public class AsyncAPINonTxSyncReplTest extends MultipleCacheManagersTest {
       assert c2.get(key).equals(v);
       key.allowSerialization();
       assert !f.isCancelled();
-      assert f.get().equals(v);
+      assertFutureValue(f, v);
       assert f.isDone();
       assertOnAllCaches(key, v2, c1, c2);
 
@@ -107,8 +109,10 @@ public class AsyncAPINonTxSyncReplTest extends MultipleCacheManagersTest {
       f = c1.putIfAbsentAsync(key, v4);
       assert f != null;
       assert c2.get(key).equals(v3);
+      if (!isLockOwner(c1, key))
+         key.allowSerialization();
       assert !f.isCancelled();
-      assert f.get().equals(v3);
+      assertFutureValue(f, v3);
       assert f.isDone();
       assertOnAllCaches(key, v3, c1, c2);
 
@@ -119,7 +123,7 @@ public class AsyncAPINonTxSyncReplTest extends MultipleCacheManagersTest {
       assert c2.get(key).equals(v3);
       key.allowSerialization();
       assert !f.isCancelled();
-      assert f.get().equals(v3);
+      assertFutureValue(f, v3);
       assert f.isDone();
       assertOnAllCaches(key, null, c1, c2);
 
@@ -129,26 +133,28 @@ public class AsyncAPINonTxSyncReplTest extends MultipleCacheManagersTest {
       assert !f.isDone();
       key.allowSerialization();
       assert !f.isCancelled();
-      assert f.get() == null;
+      assertFutureValue(f, null);
       assert f.isDone();
       assertOnAllCaches(key, v4, c1, c2);
 
-      log.trace("Before removeAsync");
+      log.trace("Before conditional removeAsync");
       Future<Boolean> f3 = c1.removeAsync(key, v_null);
       assert f3 != null;
       assert !f3.isCancelled();
-      assert f3.get().equals(false);
+      if (!isLockOwner(c1, key))
+         key.allowSerialization();
+      assertFutureValue(f3, Boolean.FALSE);
       assert f3.isDone();
       assertOnAllCaches(key, v4, c1, c2);
 
-      log.trace("Before removeAsync2");
+      log.trace("Before conditional removeAsync2");
       f3 = c1.removeAsync(key, v4);
       assert f3 != null;
       assert !f3.isDone();
       assert c2.get(key).equals(v4);
       key.allowSerialization();
       assert !f3.isCancelled();
-      assert f3.get().equals(true);
+      assertFutureValue(f3, true);
       assert f3.isDone();
       assertOnAllCaches(key, null, c1, c2);
 
@@ -156,7 +162,9 @@ public class AsyncAPINonTxSyncReplTest extends MultipleCacheManagersTest {
       f = c1.replaceAsync(key, v5);
       assert f != null;
       assert !f.isCancelled();
-      assert f.get() == null;
+      if (!isLockOwner(c1, key))
+         key.allowSerialization();
+      assertFutureValue(f, null);
       assert f.isDone();
       assertOnAllCaches(key, null, c1, c2);
 
@@ -180,7 +188,7 @@ public class AsyncAPINonTxSyncReplTest extends MultipleCacheManagersTest {
       assert c2.get(key).equals(v);
       key.allowSerialization();
       assert !f.isCancelled();
-      assert f.get().equals(v);
+      assertFutureValue(f, v);
       assert f.isDone();
       assertOnAllCaches(key, v5, c1, c2);
 
@@ -188,7 +196,9 @@ public class AsyncAPINonTxSyncReplTest extends MultipleCacheManagersTest {
       f3 = c1.replaceAsync(key, v_null, v6);
       assert f3 != null;
       assert !f3.isCancelled();
-      assert f3.get().equals(false);
+      if (!isLockOwner(c1, key))
+         key.allowSerialization();
+      assertFutureValue(f3, false);
       assert f3.isDone();
       assertOnAllCaches(key, v5, c1, c2);
 
@@ -199,11 +209,14 @@ public class AsyncAPINonTxSyncReplTest extends MultipleCacheManagersTest {
       assert c2.get(key).equals(v5);
       key.allowSerialization();
       assert !f3.isCancelled();
-      assert f3.get().equals(true);
+      assertFutureValue(f3, true);
       assert f3.isDone();
       assertOnAllCaches(key, v6, c1, c2);
    }
 
+   protected void assertFutureValue(Future f, Object value) throws ExecutionException, InterruptedException {
+      assert Util.safeEquals(f.get(), value);
+   }
 
    protected void assertOnAllCaches(final Key k, final String v, final Cache c1, final Cache c2) {
       if (sync()) {
@@ -223,4 +236,12 @@ public class AsyncAPINonTxSyncReplTest extends MultipleCacheManagersTest {
    protected void resetListeners() {
    }
 
+   private boolean isLockOwner(Cache cache, Object key) {
+      AdvancedCache advancedCache = cache.getAdvancedCache();
+      Address primaryLocation = advancedCache.getDistributionManager().getPrimaryLocation(key);
+      Address localAddress = advancedCache.getRpcManager().getAddress();
+      boolean isOwner = primaryLocation.equals(localAddress);
+      log.tracef("Is %s lock owner? %s", localAddress, isOwner);
+      return isOwner;
+   }
 }
