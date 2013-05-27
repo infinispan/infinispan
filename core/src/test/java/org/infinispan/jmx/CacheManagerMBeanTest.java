@@ -22,11 +22,13 @@
  */
 package org.infinispan.jmx;
 
+import static org.testng.AssertJUnit.assertTrue;
 import static org.testng.AssertJUnit.assertFalse;
 import java.lang.reflect.Method;
 import java.util.regex.Pattern;
 
-import org.infinispan.config.Configuration;
+import org.infinispan.Cache;
+import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.manager.CacheContainer;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.test.SingleCacheManagerTest;
@@ -34,11 +36,9 @@ import static org.infinispan.test.TestingUtil.*;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.testng.annotations.Test;
 
+
 import javax.management.InstanceNotFoundException;
 import javax.management.MBeanException;
-import javax.management.MBeanInfo;
-import javax.management.MBeanOperationInfo;
-import javax.management.MBeanParameterInfo;
 import javax.management.MBeanServer;
 import javax.management.ObjectName;
 import javax.management.ServiceNotFoundException;
@@ -74,9 +74,9 @@ public class CacheManagerMBeanTest extends SingleCacheManagerTest {
       assert server.getAttribute(name, "RunningCacheCount").equals("1");
 
       //now define some new caches
-      cacheManager.defineConfiguration("a", new Configuration());
-      cacheManager.defineConfiguration("b", new Configuration());
-      cacheManager.defineConfiguration("c", new Configuration());
+      cacheManager.defineConfiguration("a", new ConfigurationBuilder().build());
+      cacheManager.defineConfiguration("b", new ConfigurationBuilder().build());
+      cacheManager.defineConfiguration("c", new ConfigurationBuilder().build());
       assert server.getAttribute(name, "CreatedCacheCount").equals("1");
       assert server.getAttribute(name, "DefinedCacheCount").equals("3");
       assert server.getAttribute(name, "RunningCacheCount").equals("1");
@@ -144,6 +144,16 @@ public class CacheManagerMBeanTest extends SingleCacheManagerTest {
       assert server.getAttribute(name, "ClusterMembers").equals("local");
       assert server.getAttribute(name, "PhysicalAddresses").equals("local");
       assert server.getAttribute(name, "ClusterSize").equals(1);
+   }
+
+   @Test(dependsOnMethods="testJmxOperations")
+   public void testCacheMBeanUnregisterOnRemove() throws Exception {
+      Cache<Object, Object> testCache = cacheManager.getCache("test");
+      ObjectName cacheMBean = getCacheObjectName(JMX_DOMAIN, "test(local)");
+      assertTrue(existsObject(cacheMBean));
+      cacheManager.removeCache("test");
+      assertFalse(existsObject(cacheMBean));
+      cacheManager.getCache("test");
    }
 
 }

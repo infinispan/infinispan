@@ -23,9 +23,11 @@
 
 package org.infinispan.commands;
 
+import org.infinispan.Cache;
 import org.infinispan.commands.remote.BaseRpcCommand;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.factories.GlobalComponentRegistry;
+import org.infinispan.jmx.CacheJmxRegistration;
 import org.infinispan.loaders.CacheLoaderManager;
 import org.infinispan.loaders.CacheStore;
 import org.infinispan.manager.EmbeddedCacheManager;
@@ -63,11 +65,18 @@ public class RemoveCacheCommand extends BaseRpcCommand {
       // To avoid reliance of a thread local flag, get a reference for the
       // cache store to be able to clear it after cache has stopped.
       CacheStore store = cacheLoaderManager.getCacheStore();
-      cacheManager.getCache(cacheName).stop();
+      Cache<Object, Object> cache = cacheManager.getCache(cacheName);
+      CacheJmxRegistration jmx = cache.getAdvancedCache().getComponentRegistry().getComponent(CacheJmxRegistration.class);
+      cache.stop();
 
       // After stopping the cache, clear it
       if (store != null)
          store.clear();
+
+      // And see if we need to remove it from JMX
+      if (jmx != null) {
+         jmx.unregisterCacheMBean();
+      }
 
       registry.removeCache(cacheName);
       return null;

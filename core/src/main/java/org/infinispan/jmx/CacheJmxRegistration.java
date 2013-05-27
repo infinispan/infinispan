@@ -93,14 +93,13 @@ public class CacheJmxRegistration extends AbstractJmxRegistration {
    }
 
    /**
-    * Unregister when the cache is being stoped.
+    * Unregister when the cache is being stopped.
     */
    @Stop
    public void stop() {
       // This method might get called several times.
       // After the first call the cache will become null, so we guard this
       if (cache == null) return;
-      Configuration config = cache.getCacheConfiguration();
       if (needToUnregister) {
          // Only unregister the non cache MBean so that it can be restarted
          try {
@@ -116,7 +115,8 @@ public class CacheJmxRegistration extends AbstractJmxRegistration {
 
    public void unregisterCacheMBean() {
       if (mBeanServer != null) {
-         String pattern = jmxDomain + ":" + CACHE_JMX_GROUP + ",*";
+         String groupName = CACHE_JMX_GROUP + "," + getCacheJmxName() + ",manager=" + ObjectName.quote(globalConfig.globalJmxStatistics().cacheManagerName());
+         String pattern = jmxDomain + ":" + groupName + ",*";
          try {
             Set<ObjectName> names = mBeanServer.queryNames(new ObjectName(pattern), null);
             for (ObjectName name : names) {
@@ -137,13 +137,15 @@ public class CacheJmxRegistration extends AbstractJmxRegistration {
    @Override
    protected ComponentsJmxRegistration buildRegistrar(Set<AbstractComponentRegistry.Component> components) {
       // Quote group name, to handle invalid ObjectName characters
-      String groupName = CACHE_JMX_GROUP
-            + "," + ComponentsJmxRegistration.NAME_KEY + "="
-            + ObjectName.quote(cache.getName() + "(" + cache.getConfiguration().getCacheModeString().toLowerCase() + ")")
-            + ",manager=" + ObjectName.quote(globalConfig.globalJmxStatistics().cacheManagerName());
+      String groupName = CACHE_JMX_GROUP + "," + getCacheJmxName() + ",manager=" + ObjectName.quote(globalConfig.globalJmxStatistics().cacheManagerName());
       ComponentsJmxRegistration registrar = new ComponentsJmxRegistration(mBeanServer, components, groupName);
       updateDomain(registrar, cache.getComponentRegistry().getGlobalComponentRegistry(), mBeanServer, groupName);
       return registrar;
+   }
+
+   private String getCacheJmxName() {
+      return ComponentsJmxRegistration.NAME_KEY + "="
+                  + ObjectName.quote(cache.getName() + "(" + cache.getCacheConfiguration().clustering().cacheModeString().toLowerCase() + ")");
    }
 
    protected void updateDomain(ComponentsJmxRegistration registrar, GlobalComponentRegistry componentRegistry,
@@ -157,16 +159,16 @@ public class CacheJmxRegistration extends AbstractJmxRegistration {
                   log.cacheManagerAlreadyRegistered(globalConfig.globalJmxStatistics().domain());
                   throw new JmxDomainConflictException(String.format("Domain already registered %s", globalConfig.globalJmxStatistics().domain()));
                }
-               // Set manager component's jmx domain so that other caches under same manager 
+               // Set manager component's jmx domain so that other caches under same manager
                // can see it, particularly important when jmx is only enabled at the cache level
                managerJmxReg.jmxDomain = tmpJmxDomain;
             }
-            // So that all caches share the same domain, regardless of whether dups are 
+            // So that all caches share the same domain, regardless of whether dups are
             // allowed or not, simply assign the manager's calculated jmxDomain
             jmxDomain = managerJmxReg.jmxDomain;
          }
       } else {
-         // If global stats were enabled, manager's jmxDomain would have been populated 
+         // If global stats were enabled, manager's jmxDomain would have been populated
          // when cache manager was started, so no need for synchronization here.
          jmxDomain = managerJmxReg.jmxDomain == null ? globalConfig.globalJmxStatistics().domain() : managerJmxReg.jmxDomain;
       }
