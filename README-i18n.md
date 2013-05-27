@@ -29,3 +29,7 @@ Infinispan logs fully support internationalization. The following is a list of m
     17001 - 18000    cdi integration
     18001 - 19000    hbase
     21001 - 22000    mongodb cachestore
+    22001 - 23000    jpa cache store
+    23001 - 24000    leveldb cache store
+    24001 - 25000    couchbase cache store
+    25001 - 26000    extended statistics

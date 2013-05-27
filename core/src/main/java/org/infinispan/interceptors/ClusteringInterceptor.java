@@ -94,7 +94,8 @@ public abstract class ClusteringInterceptor extends BaseRpcInterceptor {
     * rehash in progress, involving nodes that the key maps to.
     *
     * @param key key to look up
+    * @param isWrite {@code true} if this is triggered by a write operation
     * @return an internal cache entry, or null if it cannot be located
     */
-   protected abstract InternalCacheEntry retrieveFromRemoteSource(Object key, InvocationContext ctx, boolean acquireRemoteLock, FlagAffectedCommand command) throws Exception;
+   protected abstract InternalCacheEntry retrieveFromRemoteSource(Object key, InvocationContext ctx, boolean acquireRemoteLock, FlagAffectedCommand command, boolean isWrite) throws Exception;
 }

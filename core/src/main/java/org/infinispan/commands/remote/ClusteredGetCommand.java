@@ -55,6 +55,8 @@ public class ClusteredGetCommand extends BaseRpcCommand implements FlagAffectedC
    private InternalEntryFactory entryFactory;
    private int topologyId;
    private Equivalence keyEquivalence;
+   //only used by extended statistics. this boolean is local.
+   private boolean isWrite;
 
    private ClusteredGetCommand() {
       super(null); // For command id uniqueness test
@@ -72,6 +74,7 @@ public class ClusteredGetCommand extends BaseRpcCommand implements FlagAffectedC
       this.acquireRemoteLock = acquireRemoteLock;
       this.gtx = gtx;
       this.keyEquivalence = keyEquivalence;
+      this.isWrite = false;
       if (acquireRemoteLock && (gtx == null))
          throw new IllegalArgumentException("Cannot have null tx if we need to acquire locks");
    }
@@ -120,6 +123,10 @@ public class ClusteredGetCommand extends BaseRpcCommand implements FlagAffectedC
       }
    }
 
+   public GlobalTransaction getGlobalTransaction() {
+      return gtx;
+   }
+
    private void acquireLocksIfNeeded() throws Throwable {
       if (acquireRemoteLock) {
          LockControlCommand lockControlCommand = commandsFactory.buildLockControlCommand(key, flags, gtx);
@@ -135,7 +142,7 @@ public class ClusteredGetCommand extends BaseRpcCommand implements FlagAffectedC
 
    @Override
    public Object[] getParameters() {
-      return new Object[]{key, flags, acquireRemoteLock, gtx};
+      return new Object[]{key, flags, acquireRemoteLock, acquireRemoteLock ? gtx : null};
    }
 
    @Override
@@ -176,6 +183,14 @@ public class ClusteredGetCommand extends BaseRpcCommand implements FlagAffectedC
          .append(", flags=").append(flags)
          .append("}")
          .toString();
+   }
+
+   public boolean isWrite() {
+      return isWrite;
+   }
+
+   public void setWrite(boolean write) {
+      isWrite = write;
    }
 
    public Object getKey() {
