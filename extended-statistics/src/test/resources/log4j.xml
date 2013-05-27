@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE log4j:configuration SYSTEM "log4j.dtd">
+
+<!--
+   For more configuration infromation and examples see the Apache Log4j website: http://logging.apache.org/log4j/
+ -->
+<log4j:configuration xmlns:log4j="http://jakarta.apache.org/log4j/" debug="false">
+
+   <!-- A time/date based rolling appender -->
+   <appender name="FILE" class="org.apache.log4j.FileAppender">
+      <param name="File" value="extended-stats.log"/>
+      <param name="Append" value="false"/>
+      <param name="Threshold" value="TRACE"/>
+
+      <layout class="org.apache.log4j.PatternLayout">
+         <!-- The default pattern: Date Priority (Thread) [Category] Message\n -->
+         <param name="ConversionPattern" value="%d %-5p (%t) [%c] %m%n"/>
+
+         <!-- The full pattern: Date MS Priority [Category] (Thread:NDC) Message\n
+        <param name="ConversionPattern" value="%d %-5r %-5p [%c] (%t:%x) %m%n"/>
+         -->
+      </layout>
+   </appender>
+
+
+   <!-- ================ -->
+   <!-- Limit categories -->
+   <!-- ================ -->
+
+   <category name="org.infinispan">
+      <priority value="DEBUG"/>
+   </category>
+
+   <category name="org.infinispan.stats">
+      <priority value="TRACE"/>
+   </category>
+
+   <!-- ======================= -->
+   <!-- Setup the Root category -->
+   <!-- ======================= -->
+
+   <root>
+      <priority value="INFO"/>
+      <appender-ref ref="FILE"/>
+   </root>
+
+</log4j:configuration>
