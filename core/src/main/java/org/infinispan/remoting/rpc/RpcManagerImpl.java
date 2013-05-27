@@ -118,7 +118,8 @@ public class RpcManagerImpl implements RpcManager {
       statisticsEnabled = configuration.jmxStatistics().enabled();
 
       if (configuration.transaction().transactionProtocol().isTotalOrder())
-         t.checkTotalOrderSupported(configuration.clustering().cacheMode().isDistributed());
+         t.checkTotalOrderSupported(configuration.clustering().cacheMode().isDistributed()
+               || configuration.clustering().cacheMode().isReplicated());
    }
 
    @ManagedAttribute(description = "Retrieves the committed view.", displayName = "Committed view", dataType = DataType.TRAIT)

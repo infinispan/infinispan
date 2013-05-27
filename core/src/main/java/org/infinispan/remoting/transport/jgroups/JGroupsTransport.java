@@ -61,7 +61,6 @@ import org.jgroups.View;
 import org.jgroups.blocks.RequestOptions;
 import org.jgroups.blocks.RspFilter;
 import org.jgroups.jmx.JmxConfigurator;
-import org.jgroups.protocols.SEQUENCER;
 import org.jgroups.protocols.relay.SiteMaster;
 import org.jgroups.protocols.tom.TOA;
 import org.jgroups.stack.AddressGenerator;
@@ -745,10 +744,7 @@ public class JGroupsTransport extends AbstractTransport implements MembershipLis
 
    @Override
    public final void checkTotalOrderSupported(boolean anycast) {
-      if (!anycast && channel.getProtocolStack().findProtocol(SEQUENCER.class) == null)  {
-         throw new ConfigurationException("In order to support total order based transaction, the SEQUENCER protocol " +
-                                                "must be present in the JGroups's config.");
-      } else if (anycast && channel.getProtocolStack().findProtocol(TOA.class) == null) {
+      if (anycast && channel.getProtocolStack().findProtocol(TOA.class) == null) {
          throw new ConfigurationException("In order to support total order based transaction, the TOA protocol " +
                                                 "must be present in the JGroups's config.");
       }
