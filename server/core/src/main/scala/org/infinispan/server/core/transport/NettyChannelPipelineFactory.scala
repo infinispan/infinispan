@@ -38,13 +38,12 @@ import org.infinispan.util.SslContextFactory
  * @since 4.1
  */
 class NettyChannelPipelineFactory(server: ProtocolServer,
-                                  encoder: ChannelDownstreamHandler,
-                                  transport: NettyTransport,
-                                  ssl: SslConfiguration)
-      extends ChannelPipelineFactory {
+                                  encoder: ChannelDownstreamHandler)
+      extends LifecycleChannelPipelineFactory {
 
    override def getPipeline: ChannelPipeline = {
       val pipeline = Channels.pipeline
+      val ssl = server.getConfiguration.ssl
       if (ssl.enabled())
          pipeline.addLast("ssl", new SslHandler(createSslEngine(ssl)))
       pipeline.addLast("decoder", server.getDecoder)
@@ -54,7 +53,7 @@ class NettyChannelPipelineFactory(server: ProtocolServer,
       return pipeline;
    }
 
-   def stop {
+   override def stop {
       // No-op
    }
 

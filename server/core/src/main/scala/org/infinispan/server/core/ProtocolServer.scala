@@ -27,6 +27,7 @@ import java.util.Properties
 import org.jboss.netty.handler.codec.oneone.OneToOneEncoder
 import org.jboss.netty.channel.ChannelHandler
 import org.infinispan.server.core.configuration.ProtocolServerConfiguration
+import org.infinispan.server.core.transport.LifecycleChannelPipelineFactory
 
 /**
  * Represents a protocol compliant server.
@@ -72,4 +73,9 @@ trait ProtocolServer {
     * Returns the configuration used to start this server
     */
    def getConfiguration: SuitableConfiguration
+
+   /**
+    * Returns a pipeline factory
+    */
+   def getPipeline: LifecycleChannelPipelineFactory
 }

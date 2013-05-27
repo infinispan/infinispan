@@ -33,24 +33,15 @@ import org.infinispan.server.core.configuration.SslConfiguration
  * @since 5.1
  */
 class TimeoutEnabledChannelPipelineFactory(server: ProtocolServer,
-                                           encoder: ChannelDownstreamHandler,
-                                           transport: NettyTransport,
-                                           ssl: SslConfiguration,
-                                           idleTimeout: Int
-                                           )
-      extends NettyChannelPipelineFactory(server, encoder, transport, ssl) {
+                                           encoder: ChannelDownstreamHandler)
+      extends NettyChannelPipelineFactory(server, encoder) {
 
    import TimeoutEnabledChannelPipelineFactory._
 
    override def getPipeline: ChannelPipeline = {
-      val pipeline = Channels.pipeline
-      if (ssl.enabled())
-         pipeline.addLast("ssl", new SslHandler(createSslEngine(ssl)))
-      pipeline.addLast("decoder", server.getDecoder)
-      if (encoder != null)
-         pipeline.addLast("encoder", encoder)
+      val pipeline = super.getPipeline
 
-      pipeline.addLast("idleHandler", new IdleStateHandler(timer, idleTimeout, 0, 0))
+      pipeline.addLast("idleHandler", new IdleStateHandler(timer, server.getConfiguration.idleTimeout, 0, 0))
       pipeline.addLast("idleHandlerProvider", new IdleStateHandlerProvider)
       return pipeline;
    }

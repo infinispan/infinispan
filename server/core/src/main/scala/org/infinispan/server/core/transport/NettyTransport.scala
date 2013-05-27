@@ -43,6 +43,7 @@ import org.infinispan.jmx.JmxUtil
 import javax.management.ObjectName
 import util.concurrent.{TimeUnit, Executors}
 import org.infinispan.server.core.configuration.ProtocolServerConfiguration
+import org.jboss.netty.channel.ChannelPipelineFactory
 
 /**
  * A Netty based transport.
@@ -50,17 +51,12 @@ import org.infinispan.server.core.configuration.ProtocolServerConfiguration
  * @author Galder Zamarreño
  * @since 4.1
  */
-class NettyTransport(server: ProtocolServer, encoder: ChannelDownstreamHandler,
+class NettyTransport(server: ProtocolServer, pipeline: LifecycleChannelPipelineFactory,
                      address: InetSocketAddress, configuration: ProtocolServerConfiguration, threadNamePrefix: String, cacheManager: EmbeddedCacheManager)
         extends Transport with Log {
 
    private val serverChannels = new DefaultChannelGroup(threadNamePrefix + "-Channels")
    val acceptedChannels = new DefaultChannelGroup(threadNamePrefix + "-Accepted")
-   private val pipeline =
-      if (configuration.idleTimeout > 0)
-         new TimeoutEnabledChannelPipelineFactory(server, encoder, this, configuration.ssl, configuration.idleTimeout)
-      else // Idle timeout logic is disabled with -1 or 0 values
-         new NettyChannelPipelineFactory(server, encoder, this, configuration.ssl)
 
    private val masterPool = new NioServerBossPool(Executors.newCachedThreadPool, 1, new ThreadNameDeterminer {
      override def determineThreadName(currentThreadName: String, proposedThreadName: String): String = {
