@@ -98,7 +98,6 @@
              conn_expiry_timeout="0"/>
    <pbcast.STABLE stability_delay="500" desired_avg_gossip="5000" max_bytes="1m"/>
    <pbcast.GMS print_local_addr="false" join_timeout="3000" view_bundling="true"/>
-   <SEQUENCER/> <!-- the SEQUENCER is only needed for total order transactions-->
    <tom.TOA/> <!-- the TOA is only needed for total order transactions-->
    <UFC max_credits="200k" min_threshold="0.20"/>
    <MFC max_credits="200k" min_threshold="0.20"/>
