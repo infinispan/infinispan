@@ -34,6 +34,9 @@ import java.util.Properties
 import org.infinispan.server.core.configuration.ProtocolServerConfiguration
 import javax.net.ssl.KeyManager
 import javax.net.ssl.TrustManager
+import org.infinispan.server.core.transport.LifecycleChannelPipelineFactory
+import org.infinispan.server.core.transport.TimeoutEnabledChannelPipelineFactory
+import org.infinispan.server.core.transport.NettyChannelPipelineFactory
 
 /**
  * A common protocol server dealing with common property parameter validation and assignment and transport lifecycle.
@@ -70,7 +73,7 @@ abstract class AbstractProtocolServer(protocolName: String) extends ProtocolServ
 
    def startTransport() {
       val address = new InetSocketAddress(configuration.host, configuration.port)
-      transport = new NettyTransport(this, getEncoder, address, configuration, getQualifiedName, cacheManager)
+      transport = new NettyTransport(this, getPipeline, address, configuration, getQualifiedName, cacheManager)
 
       // Register transport MBean regardless
       registerTransportMBean()
@@ -78,7 +81,14 @@ abstract class AbstractProtocolServer(protocolName: String) extends ProtocolServ
       transport.start()
    }
 
-   private def registerTransportMBean() {
+   override def getPipeline: LifecycleChannelPipelineFactory = {
+      if (configuration.idleTimeout > 0)
+         new TimeoutEnabledChannelPipelineFactory(this, getEncoder)
+      else // Idle timeout logic is disabled with -1 or 0 values
+         new NettyChannelPipelineFactory(this, getEncoder)
+   }
+
+   protected def registerTransportMBean() {
       val globalCfg = cacheManager.getCacheManagerConfiguration
       mbeanServer = JmxUtil.lookupMBeanServer(globalCfg)
       val groupName = "type=Server,name=%s".format(getQualifiedName)
@@ -95,6 +105,13 @@ abstract class AbstractProtocolServer(protocolName: String) extends ProtocolServ
       JmxUtil.registerMBean(dynamicMBean, transportObjName, mbeanServer)
    }
 
+   protected def unregisterTransportMBean() {
+      if (mbeanServer != null && transportObjName != null) {
+         // Unregister mbean(s)
+         JmxUtil.unregisterMBean(transportObjName, mbeanServer)
+      }
+   }
+
    private def getQualifiedName(): String = {
       protocolName + (if (configuration.name.length > 0) "-" else "") + configuration.name
    }
@@ -107,10 +124,7 @@ abstract class AbstractProtocolServer(protocolName: String) extends ProtocolServ
       if (transport != null)
          transport.stop()
 
-      if (mbeanServer != null && transportObjName != null) {
-         // Unregister mbean(s)
-         JmxUtil.unregisterMBean(transportObjName, mbeanServer)
-      }
+      unregisterTransportMBean()
 
       if (isDebug)
          debug("Server stopped")
