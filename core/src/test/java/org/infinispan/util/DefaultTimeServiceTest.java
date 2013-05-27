@@ -35,11 +35,9 @@ public class DefaultTimeServiceTest {
 
    public void testMonotonicIncrement() {
       TimeService timeService = TIME_SERVICE;
-      assertTrue(timeService.time() < timeService.time());
+      //less or equals in all the cases because the system may not have enough precision and the methods may return
+      // the same value.
       assertTrue(timeService.time() <= timeService.time());
-
-      //<= in all the cases because the operation duration is less the 1 millisecond
-      assertTrue(timeService.wallClockTime() <= timeService.wallClockTime());
       assertTrue(timeService.wallClockTime() <= timeService.wallClockTime());
    }
 
