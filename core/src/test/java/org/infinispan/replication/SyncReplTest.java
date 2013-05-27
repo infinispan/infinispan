@@ -37,17 +37,13 @@ import static org.mockito.Mockito.*;
 import static org.testng.AssertJUnit.assertEquals;
 import static org.testng.AssertJUnit.assertNull;
 
-import java.util.Collections;
-import java.util.LinkedList;
 import java.util.List;
-import java.util.Map;
 
 import org.infinispan.Cache;
 import org.infinispan.CacheException;
 import org.infinispan.commands.remote.CacheRpcCommand;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
-import org.infinispan.remoting.responses.Response;
 import org.infinispan.remoting.rpc.ResponseFilter;
 import org.infinispan.remoting.rpc.ResponseMode;
 import org.infinispan.remoting.rpc.RpcManager;
@@ -170,7 +166,6 @@ public class SyncReplTest extends MultipleCacheManagersTest {
       Transport originalTransport = null;
       RpcManagerImpl rpcManager = null;
       RpcManagerImpl asyncRpcManager = null;
-      Map<Address, Response> emptyResponses = Collections.emptyMap();
       try {
          ConfigurationBuilder asyncCache = getDefaultClusteredCacheConfig(CacheMode.REPL_ASYNC, false);
          asyncCache.clustering().async().asyncMarshalling(true);
@@ -179,26 +174,13 @@ public class SyncReplTest extends MultipleCacheManagersTest {
          Cache asyncCache2 = manager(1).getCache("asyncCache");
          waitForClusterToForm("asyncCache");
 
-         // replace the transport with a mock object
-         Transport mockTransport = mock(Transport.class);
-         Address mockAddressOne = mock(Address.class);
-         Address mockAddressTwo = mock(Address.class);
-
-         List<Address> addresses = new LinkedList<Address>();
-         addresses.add(mockAddressOne);
-         addresses.add(mockAddressTwo);
-         when(mockTransport.getAddress()).thenReturn(mockAddressOne);
-         when(mockTransport.getMembers()).thenReturn(addresses);
-
          // this is shared by all caches managed by the cache manager
          originalTransport = TestingUtil.extractGlobalComponent(cache1.getCacheManager(), Transport.class);
+         Transport mockTransport = spy(originalTransport);
+
+         // replace the transport with a mock object
          rpcManager = (RpcManagerImpl) TestingUtil.extractComponent(cache1, RpcManager.class);
          rpcManager.setTransport(mockTransport);
-
-         when(
-               mockTransport.invokeRemotely((List<Address>) anyObject(),
-                     (CacheRpcCommand) anyObject(), eq(ResponseMode.SYNCHRONOUS), anyLong(),
-                     anyBoolean(), (ResponseFilter) anyObject(), anyBoolean(), anyBoolean())).thenReturn(emptyResponses);
 
          // check that the replication call was sync
          cache1.put("k", "v");
@@ -211,12 +193,6 @@ public class SyncReplTest extends MultipleCacheManagersTest {
          asyncRpcManager.setTransport(mockTransport);
 
          reset(mockTransport);
-         when(mockTransport.getAddress()).thenReturn(mockAddressOne);
-         when(mockTransport.getMembers()).thenReturn(addresses);
-         when(
-                  mockTransport.invokeRemotely((List<Address>) anyObject(),
-                           (CacheRpcCommand) anyObject(), eq(ResponseMode.ASYNCHRONOUS), anyLong(),
-                           anyBoolean(), (ResponseFilter) anyObject(), anyBoolean(), anyBoolean())).thenReturn(emptyResponses);
 
          asyncCache1.put("k", "v");
          verify(mockTransport).invokeRemotely((List<Address>) anyObject(),
