@@ -794,12 +794,14 @@ public class StateConsumerImpl implements StateConsumer {
          List<Integer> segmentsToCancel = new ArrayList<Integer>(removedSegments);
          while (!segmentsToCancel.isEmpty()) {
             int segmentId = segmentsToCancel.remove(0);
-            InboundTransferTask inboundTransfer = transfersBySegment.remove(segmentId);
+            InboundTransferTask inboundTransfer = transfersBySegment.get(segmentId);
             if (inboundTransfer != null) { // we need to check the transfer was not already completed
                Set<Integer> cancelledSegments = new HashSet<Integer>(removedSegments);
                cancelledSegments.retainAll(inboundTransfer.getSegments());
                segmentsToCancel.removeAll(cancelledSegments);
-               inboundTransfer.cancelSegments(cancelledSegments);   //this will also remove it from transfersBySource if the entire task gets cancelled
+               transfersBySegment.keySet().removeAll(cancelledSegments);
+               //this will also remove it from transfersBySource if the entire task gets cancelled
+               inboundTransfer.cancelSegments(cancelledSegments);
             }
          }
       }
