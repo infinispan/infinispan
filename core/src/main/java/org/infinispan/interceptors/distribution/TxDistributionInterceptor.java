@@ -362,7 +362,7 @@ public class TxDistributionInterceptor extends BaseDistributionInterceptor {
             acquireRemoteLock = isWrite && isPessimisticCache && !txContext.getAffectedKeys().contains(key);
          }
          // attempt a remote lookup
-         InternalCacheEntry ice = retrieveFromRemoteSource(key, ctx, acquireRemoteLock, command);
+         InternalCacheEntry ice = retrieveFromRemoteSource(key, ctx, acquireRemoteLock, command, isWrite);
 
          if (acquireRemoteLock) {
             ((TxInvocationContext) ctx).addAffectedKey(key);

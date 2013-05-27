@@ -28,18 +28,29 @@ import org.infinispan.CacheException;
  * @since 5.1
  */
 public class WriteSkewException extends CacheException {
+
+   private final Object key;
+
    public WriteSkewException() {
+      this.key = null;
    }
 
-   public WriteSkewException(Throwable cause) {
+   public WriteSkewException(Throwable cause, Object key) {
       super(cause);
+      this.key = key;
    }
 
-   public WriteSkewException(String msg) {
+   public WriteSkewException(String msg, Object key) {
       super(msg);
+      this.key = key;
    }
 
-   public WriteSkewException(String msg, Throwable cause) {
+   public WriteSkewException(String msg, Throwable cause, Object key) {
       super(msg, cause);
+      this.key = key;
+   }
+
+   public final Object getKey() {
+      return key;
    }
 }

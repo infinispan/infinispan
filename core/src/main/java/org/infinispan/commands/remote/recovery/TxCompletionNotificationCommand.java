@@ -119,6 +119,10 @@ public class TxCompletionNotificationCommand  extends RecoveryCommand implements
       return null;
    }
 
+   public GlobalTransaction getGlobalTransaction() {
+      return gtx;
+   }
+
    /**
     * This only happens during state transfer.
     */
