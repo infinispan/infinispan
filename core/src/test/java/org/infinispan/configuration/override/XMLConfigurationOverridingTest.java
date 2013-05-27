@@ -127,33 +127,6 @@ public class XMLConfigurationOverridingTest extends AbstractInfinispanTest imple
             Assert.assertEquals(5000, cm.getCacheConfiguration(localCacheWithEviction).expiration().lifespan());
             Assert.assertEquals(2000, cm.getCacheConfiguration(localCacheWithEviction).expiration().maxIdle());
             Assert.assertEquals(1000, cm.getCacheConfiguration(localCacheWithEviction).expiration().wakeUpInterval());
-
-            for(int i = 0; i < 10; i++) {
-               cm.getCache(localCacheWithEviction).put("test" + i, "value" + i);
-            }
-
-            //Verifying the expiration in case of idle time exceed.
-            long startTime = System.currentTimeMillis();
-            while ((System.currentTimeMillis() - startTime) <= 2000) {
-               for(int i = 0; i < 5; i++) {
-                  cm.getCache(localCacheWithEviction).get("test" + i);
-               }
-            }
-
-            eventually(new Condition() {
-               @Override
-               public boolean isSatisfied() throws Exception {
-                  return cm.getCache(localCacheWithEviction).size() == 5;
-               }
-            }, 1000);
-
-            //Verifying the expiration of entries in case of exceeding lifspan time.
-            eventually(new Condition() {
-               @Override
-               public boolean isSatisfied() throws Exception {
-                  return cm.getCache(localCacheWithEviction).isEmpty();
-               }
-            }, 3000);
          }
       });
    }
