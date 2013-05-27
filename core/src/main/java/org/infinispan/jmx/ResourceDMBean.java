@@ -101,7 +101,7 @@ public class ResourceDMBean implements DynamicMBean {
          InvokableMBeanAttributeInfo info = toJmxInfo(attributeMetadata);
          if (atts.containsKey(attributeName)) {
             throw new IllegalArgumentException("Component " + mBeanMetadata.getName()
-                  + " metadata has a duplicate attribute: " + attributeName);
+                                                     + " metadata has a duplicate attribute: " + attributeName);
          }
          atts.put(attributeName, info);
          attInfos[i++] = info.getMBeanAttributeInfo();
@@ -184,7 +184,7 @@ public class ResourceDMBean implements DynamicMBean {
    private IspnMBeanOperationInfo toJmxInfo(JmxOperationMetadata operationMetadata) throws ClassNotFoundException {
       JmxOperationParameter[] parameters = operationMetadata.getMethodParameters();
       MBeanParameterInfo[] params = new MBeanParameterInfo[parameters.length];
-      for(int i=0; i< parameters.length; i++) {
+      for (int i = 0; i < parameters.length; i++) {
          params[i] = new MBeanParameterInfo(parameters[i].getName(), parameters[i].getType(), parameters[i].getDescription());
       }
       return new IspnMBeanOperationInfo(operationMetadata.getMethodName(), operationMetadata.getDescription(), params, operationMetadata.getReturnType(), MBeanOperationInfo.UNKNOWN,
@@ -278,6 +278,20 @@ public class ResourceDMBean implements DynamicMBean {
          throw new MBeanException(new ServiceNotFoundException(msg), msg);
       }
 
+      // Argument type transformation according to signatures
+      for (int i = 0; i < args.length; i++) {
+         // arguments are taken from RHQ like java.lang.String but we need some fields to be numbers
+         if (log.isDebugEnabled())
+            log.debugf("Argument value before transformation: %s and its class: %s. " +
+                             "For method.invoke we need it to be class: %s", args[i], args[i].getClass(), sig[i]);
+         if (sig[i].equals(int.class.getCanonicalName())) {
+            args[i] = Integer.parseInt((String) args[i]);
+         }
+         if (sig[i].equals(long.class.getCanonicalName())) {
+            args[i] = Long.parseLong((String) args[i]);
+         }
+      }
+
       try {
          Class<?>[] classes = new Class[sig.length];
          for (int i = 0; i < classes.length; i++) {
@@ -309,7 +323,7 @@ public class ResourceDMBean implements DynamicMBean {
                result = new Attribute(name, i.invoke(null));
                if (trace)
                   log.tracef("Attribute %s has r=%b,w=%b,is=%b and value %s",
-                        name, i.getMBeanAttributeInfo().isReadable(), i.getMBeanAttributeInfo().isWritable(), i.getMBeanAttributeInfo().isIs(), result.getValue());
+                             name, i.getMBeanAttributeInfo().isReadable(), i.getMBeanAttributeInfo().isWritable(), i.getMBeanAttributeInfo().isIs(), result.getValue());
             } catch (Exception e) {
                log.debugf("Exception while reading value of attribute %s: %s", name, e);
             }

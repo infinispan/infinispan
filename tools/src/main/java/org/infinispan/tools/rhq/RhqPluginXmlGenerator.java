@@ -186,6 +186,8 @@ public class RhqPluginXmlGenerator {
                         name += "|" + param.name();
                         prop.setAttribute("name", param.name());
                         prop.setAttribute("description", param.description());
+                        // default type from RHQ is String but sometimes we need (numbers) integer or long
+                        if (!param.type().equals("")) prop.setAttribute("type", param.type());
                         parameters.appendChild(prop);
                         annotatedParameter = true;
                      }

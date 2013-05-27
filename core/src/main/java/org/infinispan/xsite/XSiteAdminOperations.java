@@ -185,22 +185,23 @@ public class XSiteAdminOperations {
    @ManagedOperation(description = "Amends the values for 'afterFailures' for the 'TakeOffline' functionality on all the nodes in the cluster.", displayName = "Amends the values for 'TakeOffline.afterFailures' on all the nodes in the cluster.")
    public String setTakeOfflineAfterFailures(
          @Parameter(name = "site", description = "The name of the backup site") String site,
-         @Parameter(name = "afterFailures", description = "The number of failures after which the site will be taken offline") int afterFailures) {
+         @Parameter(name = "afterFailures", description = "The number of failures after which the site will be taken offline",
+                    type = "integer") int afterFailures) {
       return takeOffline(site, afterFailures, null);
    }
 
    @ManagedOperation(description = "Amends the values for 'minTimeToWait' for the 'TakeOffline' functionality on all the nodes in the cluster.", displayName = "Amends the values for 'TakeOffline.minTimeToWait' on all the nodes in the cluster.")
    public String setTakeOfflineMinTimeToWait(
          @Parameter(name = "site", description = "The name of the backup site") String site,
-         @Parameter(name = "minTimeToWait", description = "The minimum amount of time in milliseconds to wait before taking a site offline") long minTimeToWait) {
-      return takeOffline(site, null, minTimeToWait);
+         @Parameter(name = "minTimeToWait", description = "The minimum amount of time in milliseconds to wait before taking a site offline", type = "long") long minTimeToWait) {
+      return takeOffline(site, null,  minTimeToWait);
    }
 
    @ManagedOperation(description = "Amends the values for 'TakeOffline' functionality on all the nodes in the cluster.", displayName = "Amends the values for 'TakeOffline' functionality on all the nodes in the cluster.")
    public String amendTakeOffline(
          @Parameter(name = "site", description = "The name of the backup site") String site,
-         @Parameter(name = "afterFailures", description = "The number of failures after which the site will be taken offline") int afterFailures,
-         @Parameter(name = "minTimeToWait", description = "The minimum amount of time in milliseconds to wait before taking a site offline") long minTimeToWait) {
+         @Parameter(name = "afterFailures", description = "The number of failures after which the site will be taken offline", type = "integer") int afterFailures,
+         @Parameter(name = "minTimeToWait", description = "The minimum amount of time in milliseconds to wait before taking a site offline", type = "long") long minTimeToWait) {
       return takeOffline(site, afterFailures, minTimeToWait);
    }
 
