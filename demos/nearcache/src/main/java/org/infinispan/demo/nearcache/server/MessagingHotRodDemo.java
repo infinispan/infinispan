@@ -23,14 +23,16 @@ import org.hornetq.integration.bootstrap.HornetQBootstrapServer;
 
 import java.io.InputStream;
 
+import org.infinispan.manager.DefaultCacheManager;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.notifications.Listener;
 import org.infinispan.notifications.cachelistener.annotation.CacheEntryModified;
 import org.infinispan.notifications.cachelistener.annotation.CacheEntryRemoved;
 import org.infinispan.notifications.cachelistener.event.CacheEntryEvent;
 import org.infinispan.notifications.cachelistener.event.CacheEntryModifiedEvent;
-import org.infinispan.server.core.Main;
 import org.infinispan.server.core.ProtocolServer;
+import org.infinispan.server.hotrod.HotRodServer;
+import org.infinispan.server.hotrod.configuration.HotRodServerConfigurationBuilder;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
@@ -60,10 +62,11 @@ public class MessagingHotRodDemo {
       // Start HornetQ server
       HornetQBootstrapServer.main(new String[]{"hornetq-beans.xml"});
       // Start Infinispan remote data grid, listening on localhost:11222
-      Main.main(new String[]{"-r", "hotrod"});
+      HotRodServerConfigurationBuilder builder = new HotRodServerConfigurationBuilder();
+      HotRodServer server = new HotRodServer();
+      EmbeddedCacheManager cm = new DefaultCacheManager();
+      server.start(builder.build(), cm);
 
-      ProtocolServer server = Main.getServer();
-      EmbeddedCacheManager cm = Main.getCacheManager();
       Context ctx = new InitialContext();
       Connection con = null;
       try {
