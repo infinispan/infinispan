@@ -35,7 +35,6 @@ import org.infinispan.configuration.cache.{CacheMode, ConfigurationBuilder}
 import org.infinispan.context.Flag
 import org.infinispan.upgrade.RollingUpgradeManager
 import org.infinispan.server.hotrod.configuration.HotRodServerConfiguration
-import org.infinispan.server.hotrod.configuration.HotRodServerConfigurationBuilder
 
 /**
  * Hot Rod server, in charge of defining its encoder/decoder and, if clustered, update the topology information
@@ -86,10 +85,6 @@ class HotRodServer extends AbstractProtocolServer("HotRod") with Log {
 
          addSelfToTopologyView(cacheManager)
       }
-   }
-
-   override def startWithProperties(properties: Properties, cacheManager: EmbeddedCacheManager) {
-      this.start(new HotRodServerConfigurationBuilder().withProperties(properties).build(), cacheManager)
    }
 
    override def startTransport() {

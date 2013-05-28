@@ -27,9 +27,9 @@ import java.net.InetSocketAddress
 import java.util.concurrent.atomic.AtomicInteger
 import org.infinispan.server.memcached.{MemcachedDecoder, MemcachedServer}
 import org.infinispan.manager.EmbeddedCacheManager
-import org.infinispan.server.core.Main._
 import java.util
 import org.infinispan.server.memcached.configuration.MemcachedServerConfigurationBuilder
+import org.infinispan.server.memcached.logging.Log
 
 /**
  * Utils for Memcached tests.
@@ -37,7 +37,7 @@ import org.infinispan.server.memcached.configuration.MemcachedServerConfiguratio
  * @author Galder Zamarreño
  * @since 4.1
  */
-object MemcachedTestingUtil {
+object MemcachedTestingUtil extends Log {
 
    def host = "127.0.0.1"
 

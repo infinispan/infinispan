@@ -44,14 +44,6 @@ trait ProtocolServer {
    def start(configuration: SuitableConfiguration, cacheManager: EmbeddedCacheManager)
 
    /**
-    * Starts the server backed by the given cache manager and with the corresponding properties. If properties object
-    * is either null or empty, default values depending on the server type are assumed. Note that properties mandate
-    * String keys and values. Accepted property keys and default values are listed in {@link Main} class.
-    */
-   @Deprecated
-   def startWithProperties(properties: Properties, cacheManager: EmbeddedCacheManager)
-
-   /**
     *  Stops the server
     */
    def stop
