@@ -19,6 +19,7 @@
 
 package org.infinispan.interceptors.distribution;
 
+import org.infinispan.atomic.DeltaCompositeKey;
 import org.infinispan.metadata.Metadata;
 import org.infinispan.commands.FlagAffectedCommand;
 import org.infinispan.commands.control.LockControlCommand;
@@ -48,10 +49,10 @@ import org.infinispan.util.InfinispanCollections;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 import java.util.concurrent.Future;
-import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
 /**
@@ -202,7 +203,16 @@ public class TxDistributionInterceptor extends BaseDistributionInterceptor {
    @Override
    public Object visitLockControlCommand(TxInvocationContext ctx, LockControlCommand command) throws Throwable {
       if (ctx.isOriginLocal()) {
-         final Collection<Address> affectedNodes = cdl.getOwners(command.getKeys());
+         //In Pessimistic mode, the delta composite keys were sent to the wrong owner and never locked.
+         ArrayList<Object> keyToCheckOwners = new ArrayList<Object>(command.getKeys().size());
+         for (Object key : command.getKeys()) {
+            if (key instanceof DeltaCompositeKey) {
+               keyToCheckOwners.add(((DeltaCompositeKey) key).getDeltaAwareValueKey());
+            } else {
+               keyToCheckOwners.add(key);
+            }
+         }
+         final Collection<Address> affectedNodes = cdl.getOwners(keyToCheckOwners);
          ((LocalTxInvocationContext) ctx).remoteLocksAcquired(affectedNodes == null ? dm.getConsistentHash().getMembers() : affectedNodes);
          log.tracef("Registered remote locks acquired %s", affectedNodes);
          rpcManager.invokeRemotely(affectedNodes, command, rpcManager.getDefaultRpcOptions(true, false));

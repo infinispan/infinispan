@@ -23,6 +23,7 @@
 
 package org.infinispan.interceptors.locking;
 
+import org.infinispan.atomic.DeltaCompositeKey;
 import org.infinispan.commands.read.GetKeyValueCommand;
 import org.infinispan.commands.tx.CommitCommand;
 import org.infinispan.commands.tx.PrepareCommand;
@@ -127,9 +128,13 @@ public abstract class AbstractTxLockingInterceptor extends AbstractLockingInterc
     * the originator leaving the cluster (if recovery is disabled).
     */
    protected final void lockAndRegisterBackupLock(TxInvocationContext ctx, Object key, long lockTimeout, boolean skipLocking) throws InterruptedException {
-      if (cdl.localNodeIsPrimaryOwner(key)) {
+      //with DeltaCompositeKey, the locks should be acquired in the owner of the delta aware key.
+      Object keyToCheck = key instanceof DeltaCompositeKey ?
+            ((DeltaCompositeKey) key).getDeltaAwareValueKey() :
+            key;
+      if (cdl.localNodeIsPrimaryOwner(keyToCheck)) {
          lockKeyAndCheckOwnership(ctx, key, lockTimeout, skipLocking);
-      } else if (cdl.localNodeIsOwner(key)) {
+      } else if (cdl.localNodeIsOwner(keyToCheck)) {
          ctx.getCacheTransaction().addBackupLockForKey(key);
       }
    }
