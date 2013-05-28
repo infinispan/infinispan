@@ -206,4 +206,9 @@ public class RemoveCommand extends AbstractDataWriteCommand {
       this.value = value;
    }
 
+   @Override
+   public final boolean isReturnValueExpected() {
+      //SKIP_RETURN_VALUE ignored for conditional remove
+      return super.isReturnValueExpected() || isConditional();
+   }
 }

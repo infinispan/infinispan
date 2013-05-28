@@ -179,7 +179,11 @@ public enum Flag {
     * operations whose return value might be ignored include
     * {@link java.util.Map#put(Object, Object)} whose return value indicates
     * previous value. So, a user might decide to the put something in the
-    * cache but might not be interested in the return value.
+    * cache but might not be interested in the return value. This flag is ignored
+    * with the conditional remove ({@link java.util.concurrent.ConcurrentMap#remove(Object, Object)})
+    * and conditional replace ({@link java.util.concurrent.ConcurrentMap#replace(Object, Object, Object)})
+    * operations which return a boolean result: this has a minimal serialization payload and is
+    * generally relevant in order to determine whether the operation was successful or not.
     *
     * Not requiring return values makes the cache behave more efficiently by
     * applying flags such as {@link Flag#SKIP_REMOTE_LOOKUP} or
