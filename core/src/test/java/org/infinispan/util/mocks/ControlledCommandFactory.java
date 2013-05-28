@@ -146,8 +146,8 @@ public class ControlledCommandFactory implements CommandsFactory {
    }
 
    @Override
-   public SizeCommand buildSizeCommand() {
-      return actual.buildSizeCommand();
+   public SizeCommand buildSizeCommand(Set<Flag> flags) {
+      return actual.buildSizeCommand(flags);
    }
 
    @Override
@@ -156,18 +156,18 @@ public class ControlledCommandFactory implements CommandsFactory {
    }
 
    @Override
-   public KeySetCommand buildKeySetCommand() {
-      return actual.buildKeySetCommand();
+   public KeySetCommand buildKeySetCommand(Set<Flag> flags) {
+      return actual.buildKeySetCommand(flags);
    }
 
    @Override
-   public ValuesCommand buildValuesCommand() {
-      return actual.buildValuesCommand();
+   public ValuesCommand buildValuesCommand(Set<Flag> flags) {
+      return actual.buildValuesCommand(flags);
    }
 
    @Override
-   public EntrySetCommand buildEntrySetCommand() {
-      return actual.buildEntrySetCommand();
+   public EntrySetCommand buildEntrySetCommand(Set<Flag> flags) {
+      return actual.buildEntrySetCommand(flags);
    }
 
    @Override

@@ -170,16 +170,35 @@ public interface Cache<K, V> extends BasicCache<K, V>, Listenable {
    ComponentStatus getStatus();
 
    /**
-    * Returns a set view of the keys contained in this cache. This set is immutable, so it cannot be modified 
-    * and changes to the cache won't be reflected in the set. When this method is called on a cache configured with 
-    * distribution mode, the set returned only contains the keys locally available in the cache instance. To avoid 
-    * memory issues, there will be not attempt to bring keys from other nodes.
+    * Returns a count of all elements in this cache and cache loader.  To avoid performance issues, there will be no
+    * attempt to count keys from other nodes.
+    * <p/>
+    * If there are memory concerns then the {@link org.infinispan.context.Flag.SKIP_CACHE_LOAD} flag should be used to
+    * avoid hitting the cache store as all local keys will be loaded into memory at once.
+    * <p/>
+    * This method should only be used for debugging purposes such as to verify that the cache contains all the keys
+    * entered. Any other use involving execution of this method on a production system is not recommended.
+    * <p/>
+    *
+    * @return the number of key-value mappings in this cache and cache loader
+    */
+   @Override
+   int size();
+
+   /**
+    * Returns a set view of the keys contained in this cache and cache loader. This set is immutable, so it cannot be
+    * modified and changes to the cache won't be reflected in the set. When this method is called on a cache configured
+    * with distribution mode, the set returned only contains the keys locally available in the cache instance including
+    * the cache loader if provided. To avoid memory issues, there will be not attempt to bring keys from other nodes.
+    * <p/>
+    * If there are memory concerns then the {@link org.infinispan.context.Flag.SKIP_CACHE_LOAD} flag should be used to
+    * avoid hitting the cache store as all local keys will be in memory at once.
     * <p/>
     * This method should only be used for debugging purposes such as to verify that the cache contains all the keys 
     * entered. Any other use involving execution of this method on a production system is not recommended.
     * <p/>
     * 
-    * @return a set view of the keys contained in this cache.
+    * @return a set view of the keys contained in this cache and cache loader.
     */
    @Override
    Set<K> keySet();
@@ -187,30 +206,36 @@ public interface Cache<K, V> extends BasicCache<K, V>, Listenable {
    /**
     * Returns a collection view of the values contained in this cache. This collection is immutable, so it cannot be modified 
     * and changes to the cache won't be reflected in the set. When this method is called on a cache configured with 
-    * distribution mode, the collection returned only contains the values locally available in the cache instance. To avoid 
-    * memory issues, there is not attempt to bring values from other nodes.
+    * distribution mode, the collection returned only contains the values locally available in the cache instance
+    * including the cache loader if provided. To avoid memory issues, there is no attempt to bring values from other nodes.
+    * <p/>
+    * If there are memory concerns then the {@link org.infinispan.context.Flag.SKIP_CACHE_LOAD} flag should be used to
+    * avoid hitting the cache store as all local values will be in memory at once.
     * <p/>
     * This method should only be used for testing or debugging purposes such as to verify that the cache contains all the 
     * values entered. Any other use involving execution of this method on a production system is not recommended.
     * <p/>
     * 
-    * @return a collection view of the values contained in this map.
+    * @return a collection view of the values contained in this cache and cache loader.
     */
    @Override
    Collection<V> values();
    
    /**
-    * Returns a set view of the mappings contained in this cache. This set is immutable, so it cannot be modified 
-    * and changes to the cache won't be reflected in the set. Besides, each element in the returned set is an immutable 
-    * {@link Map.Entry}. When this method is called on a cache configured with distribution mode, the set returned only 
-    * contains the mappings locally available in the cache instance. To avoid memory issues, there will be not attempt 
-    * to bring mappings from other nodes.
+    * Returns a set view of the mappings contained in this cache and cache loader. This set is immutable, so it cannot
+    * be modified and changes to the cache won't be reflected in the set. Besides, each element in the returned set is
+    * an immutable {@link Map.Entry}. When this method is called on a cache configured with distribution mode, the set
+    * returned only contains the mappings locally available in the cache instance. To avoid memory issues, there will
+    * be not attempt to bring mappings from other nodes.
+    * <p/>
+    * If there are memory concerns then the {@link org.infinispan.context.Flag.SKIP_CACHE_LOAD} flag should be used to
+    * avoid hitting the cache store as all local entries will be in memory at once.
     * <p/>
     * This method should only be used for debugging purposes such as to verify that the cache contains all the mappings 
     * entered. Any other use involving execution of this method on a production system is not recommended.
     * <p/>
     * 
-    * @return a set view of the mappings contained in this cache.
+    * @return a set view of the mappings contained in this cache and cache loader
     */
    @Override
    Set<Map.Entry<K, V>> entrySet();

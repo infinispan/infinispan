@@ -100,11 +100,6 @@ public class CommandsFactoryImpl implements CommandsFactory {
    private String cacheName;
    private boolean totalOrderProtocol;
 
-   // some stateless commands can be reused so that they aren't constructed again all the time.
-   private SizeCommand cachedSizeCommand;
-   private KeySetCommand cachedKeySetCommand;
-   private ValuesCommand cachedValuesCommand;
-   private EntrySetCommand cachedEntrySetCommand;
    private InterceptorChain interceptorChain;
    private DistributionManager distributionManager;
    private InvocationContextContainer icc;
@@ -191,35 +186,23 @@ public class CommandsFactoryImpl implements CommandsFactory {
    }
 
    @Override
-   public SizeCommand buildSizeCommand() {
-      if (cachedSizeCommand == null) {
-         cachedSizeCommand = new SizeCommand(dataContainer);
-      }
-      return cachedSizeCommand;
+   public SizeCommand buildSizeCommand(Set<Flag> flags) {
+      return new SizeCommand(dataContainer, flags);
    }
 
    @Override
-   public KeySetCommand buildKeySetCommand() {
-      if (cachedKeySetCommand == null) {
-         cachedKeySetCommand = new KeySetCommand(dataContainer);
-      }
-      return cachedKeySetCommand;
+   public KeySetCommand buildKeySetCommand(Set<Flag> flags) {
+      return new KeySetCommand(dataContainer, flags);
    }
 
    @Override
-   public ValuesCommand buildValuesCommand() {
-      if (cachedValuesCommand == null) {
-         cachedValuesCommand = new ValuesCommand(dataContainer, timeService);
-      }
-      return cachedValuesCommand;
+   public ValuesCommand buildValuesCommand(Set<Flag> flags) {
+      return new ValuesCommand(dataContainer, timeService, flags);
    }
 
    @Override
-   public EntrySetCommand buildEntrySetCommand() {
-      if (cachedEntrySetCommand == null) {
-         cachedEntrySetCommand = new EntrySetCommand(dataContainer, entryFactory, timeService);
-      }
-      return cachedEntrySetCommand;
+   public EntrySetCommand buildEntrySetCommand(Set<Flag> flags) {
+      return new EntrySetCommand(dataContainer, entryFactory, timeService, flags);
    }
 
    @Override

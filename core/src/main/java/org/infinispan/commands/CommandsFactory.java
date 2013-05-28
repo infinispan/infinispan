@@ -61,6 +61,7 @@ public interface CommandsFactory {
     * @param key key to put
     * @param value value to put
     * @param metadata metadata of entry
+    * @param flags Command flags provided by cache
     * @return a PutKeyValueCommand
     */
    PutKeyValueCommand buildPutKeyValueCommand(Object key, Object value, Metadata metadata, Set<Flag> flags);
@@ -69,12 +70,14 @@ public interface CommandsFactory {
     * Builds a RemoveCommand
     * @param key key to remove
     * @param value value to check for ina  conditional remove, or null for an unconditional remove.
+    * @param flags Command flags provided by cache
     * @return a RemoveCommand
     */
    RemoveCommand buildRemoveCommand(Object key, Object value, Set<Flag> flags);
 
    /**
     * Builds an InvalidateCommand
+    * @param flags Command flags provided by cache
     * @param keys keys to invalidate
     * @return an InvalidateCommand
     */
@@ -99,19 +102,22 @@ public interface CommandsFactory {
     * @param oldValue existing value to check for if conditional, null if unconditional.
     * @param newValue value to replace with
     * @param metadata metadata of entry
+    * @param flags Command flags provided by cache
     * @return a ReplaceCommand
     */
    ReplaceCommand buildReplaceCommand(Object key, Object oldValue, Object newValue, Metadata metadata, Set<Flag> flags);
 
    /**
     * Builds a SizeCommand
+    * @param flags Command flags provided by cache
     * @return a SizeCommand
     */
-   SizeCommand buildSizeCommand();
+   SizeCommand buildSizeCommand(Set<Flag> flags);
 
    /**
     * Builds a GetKeyValueCommand
     * @param key key to get
+    * @param flags Command flags provided by cache
     * @param returnEntry boolean indicating whether entire cache entry is
     *                    returned, otherwise return just the value part
     * @return a GetKeyValueCommand
@@ -120,32 +126,37 @@ public interface CommandsFactory {
 
    /**
     * Builds a KeySetCommand
+    * @param flags Command flags provided by cache
     * @return a KeySetCommand
     */
-   KeySetCommand buildKeySetCommand();
+   KeySetCommand buildKeySetCommand(Set<Flag> flags);
 
    /**
     * Builds a ValuesCommand
+    * @param flags Command flags provided by cache
     * @return a ValuesCommand
     */
-   ValuesCommand buildValuesCommand();
+   ValuesCommand buildValuesCommand(Set<Flag> flags);
 
    /**
     * Builds a EntrySetCommand
+    * @param flags Command flags provided by cache
     * @return a EntrySetCommand
     */
-   EntrySetCommand buildEntrySetCommand();
+   EntrySetCommand buildEntrySetCommand(Set<Flag> flags);
 
    /**
     * Builds a PutMapCommand
     * @param map map containing key/value entries to put
     * @param metadata metadata of entry
+    * @param flags Command flags provided by cache
     * @return a PutMapCommand
     */
    PutMapCommand buildPutMapCommand(Map<?, ?> map, Metadata metadata, Set<Flag> flags);
 
    /**
     * Builds a ClearCommand
+    * @param flags Command flags provided by cache
     * @return a ClearCommand
     */
    ClearCommand buildClearCommand(Set<Flag> flags);
@@ -153,6 +164,7 @@ public interface CommandsFactory {
    /**
     * Builds an EvictCommand
     * @param key key to evict
+    * @param flags Command flags provided by cache
     * @return an EvictCommand
     */
    EvictCommand buildEvictCommand(Object key, Set<Flag> flags);
@@ -336,7 +348,7 @@ public interface CommandsFactory {
    ApplyDeltaCommand buildApplyDeltaCommand(Object deltaAwareValueKey, Delta delta, Collection keys);
 
    /**
-    * Same as {@link #buildCreateCacheCommand(String, String, false)}.
+    * Same as {@link #buildCreateCacheCommand(String, String, false, 0)}.
     */
    CreateCacheCommand buildCreateCacheCommand(String cacheName, String cacheConfigurationName);
 

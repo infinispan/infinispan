@@ -2,6 +2,7 @@ package org.infinispan.lucene;
 
 import java.io.IOException;
 import java.util.HashMap;
+import java.util.Map;
 
 import static org.infinispan.lucene.CacheTestSupport.assertTextIsFoundInIds;
 import static org.infinispan.lucene.CacheTestSupport.removeByTerm;
@@ -10,6 +11,7 @@ import static org.infinispan.lucene.CacheTestSupport.writeTextToIndex;
 import org.apache.lucene.store.Directory;
 import org.infinispan.commons.util.Util;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
+import org.infinispan.context.Flag;
 import org.infinispan.loaders.jdbc.configuration.JdbcStringBasedCacheStoreConfigurationBuilder;
 import org.infinispan.lucene.directory.DirectoryBuilder;
 import org.infinispan.manager.EmbeddedCacheManager;
@@ -74,7 +76,9 @@ public class DatabaseStoredIndexTest extends SingleCacheManagerTest {
       removeByTerm(dir, "and");
       assertTextIsFoundInIds(dir, "index", 1);
       dir.close();
-      cacheCopy.putAll(cache);
+      for (Map.Entry me : cache.getAdvancedCache().withFlags(Flag.SKIP_CACHE_LOAD).entrySet()) {
+         cacheCopy.put(me.getKey(), me.getValue());
+      }
       cache.stop();
       cacheManager.stop();
    }
@@ -82,7 +86,7 @@ public class DatabaseStoredIndexTest extends SingleCacheManagerTest {
    @Test(dependsOnMethods="testIndexUsage")
    public void indexWasStored() throws IOException {
       cache = cacheManager.getCache();
-      AssertJUnit.assertTrue(cache.isEmpty());
+      AssertJUnit.assertEquals(0, cache.getAdvancedCache().getDataContainer().size());
       boolean failed = false;
       for (Object key : cacheCopy.keySet()) {
          if (key instanceof FileReadLockKey) {

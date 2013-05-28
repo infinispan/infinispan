@@ -29,6 +29,7 @@ import static java.util.concurrent.TimeUnit.MILLISECONDS;
 import static org.infinispan.api.mvcc.LockAssert.assertNoLocks;
 import static org.infinispan.test.TestingUtil.k;
 import static org.infinispan.test.TestingUtil.v;
+import static org.testng.AssertJUnit.assertEquals;
 
 /**
  * Tests the interceptor chain and surrounding logic
@@ -257,7 +258,7 @@ public class CacheLoaderFunctionalTest extends AbstractInfinispanTest {
       // make sure we have no stale locks!!
       assertNoLocks(cache);
 
-      assert cache.isEmpty(); // cache size ops will not trigger a load
+      assertEquals(0, cache.getAdvancedCache().getDataContainer().size()); // cache size ops will not trigger a load
 
       cache.clear(); // this should propagate to the loader though
       assertNotInCacheAndStore("k1", "k2", "k3", "k4");

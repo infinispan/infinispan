@@ -16,6 +16,9 @@ import org.infinispan.test.fwk.TestCacheManagerFactory;
 
 import org.testng.annotations.Test;
 
+import static org.testng.AssertJUnit.assertEquals;
+import static org.testng.AssertJUnit.assertFalse;
+
 @Test(groups = "unit", testName = "loaders.decorators.AsyncStoreEvictionTest")
 public class AsyncStoreEvictionTest {
 
@@ -217,7 +220,7 @@ public class AsyncStoreEvictionTest {
             cache.put("k1", "v1");
             cache.put("k2", "v2");
 
-            assert cache.size() == 1 : "cache size must be 1, was: " + cache.size();
+            assertEquals("cache size must be 1", 1, cache.getAdvancedCache().getDataContainer().size());
          }
       });
    }
@@ -230,7 +233,7 @@ public class AsyncStoreEvictionTest {
             cache.put("k2", "v2");
             TestingUtil.sleepThread(200);
 
-            assert !(cache.size() == 2) : "expiry doesn't work even after expiration";
+            assertFalse("expiry doesn't work even after expiration", 2 == cache.getAdvancedCache().getDataContainer().size());
          }
       });
    }
@@ -242,7 +245,7 @@ public class AsyncStoreEvictionTest {
             cache.put("k1", "v1");
             cache.evict("k1");
 
-            assert cache.size() == 0 : "cache size must be 0, was: " + cache.size();
+            assertEquals("cache size must be 0", 0, cache.getAdvancedCache().getDataContainer().size());
          }
       });
    }
@@ -254,7 +257,7 @@ public class AsyncStoreEvictionTest {
             cache.put("k1", "v1");
             cache.remove("k1");
 
-            assert cache.size() == 0 : "cache size must be 0, was: " + cache.size();
+            assertEquals("cache size must be 0", 0, cache.getAdvancedCache().getDataContainer().size());
          }
       });
    }
@@ -268,7 +271,7 @@ public class AsyncStoreEvictionTest {
             int size = cache.size();
             TestingUtil.sleepThread(200);
 
-            assert !(size == 1 && cache.size() == 0) : "remove only works after expiration";
+            assertFalse("remove only works after expiration", size == 1 && cache.size() == 0);
          }
       });
    }

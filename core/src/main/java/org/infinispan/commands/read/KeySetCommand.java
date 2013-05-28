@@ -4,6 +4,7 @@ import org.infinispan.commands.VisitableCommand;
 import org.infinispan.commands.Visitor;
 import org.infinispan.container.DataContainer;
 import org.infinispan.container.entries.CacheEntry;
+import org.infinispan.context.Flag;
 import org.infinispan.context.InvocationContext;
 
 import java.util.AbstractSet;
@@ -24,7 +25,8 @@ import java.util.Set;
 public class KeySetCommand extends AbstractLocalCommand implements VisitableCommand {
    private final DataContainer container;
 
-   public KeySetCommand(DataContainer container) {
+   public KeySetCommand(DataContainer container, Set<Flag> flags) {
+      setFlags(flags);
       this.container = container;
    }
 

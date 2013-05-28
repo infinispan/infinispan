@@ -81,7 +81,7 @@ public class BatchAsyncCacheStoreTest extends SingleCacheManagerTest {
    @Test(dependsOnMethods = "sequantialOvewritingInBatches")
    public void indexWasStored() {
       cache = cacheManager.getCache();
-      Assert.assertTrue(cache.isEmpty());
+      Assert.assertEquals(0, cache.getAdvancedCache().getDataContainer().size());
       boolean failed = false;
       for (Object key : cacheCopy.keySet()) {
          Object expected = cacheCopy.get(key);

@@ -1,9 +1,17 @@
 package org.infinispan.interceptors;
 
-import org.infinispan.metadata.Metadata;
 import org.infinispan.commands.FlagAffectedCommand;
+import org.infinispan.commands.LocalFlagAffectedCommand;
+import org.infinispan.commands.read.EntrySetCommand;
 import org.infinispan.commands.read.GetKeyValueCommand;
-import org.infinispan.commands.write.*;
+import org.infinispan.commands.read.KeySetCommand;
+import org.infinispan.commands.read.SizeCommand;
+import org.infinispan.commands.read.ValuesCommand;
+import org.infinispan.commands.write.ApplyDeltaCommand;
+import org.infinispan.commands.write.InvalidateCommand;
+import org.infinispan.commands.write.PutKeyValueCommand;
+import org.infinispan.commands.write.RemoveCommand;
+import org.infinispan.commands.write.ReplaceCommand;
 import org.infinispan.commons.util.InfinispanCollections;
 import org.infinispan.configuration.cache.CacheStoreConfiguration;
 import org.infinispan.container.EntryFactory;
@@ -24,15 +32,18 @@ import org.infinispan.loaders.CacheLoader;
 import org.infinispan.loaders.CacheLoaderManager;
 import org.infinispan.loaders.CacheStore;
 import org.infinispan.loaders.decorators.ChainingCacheStore;
+import org.infinispan.metadata.Metadata;
 import org.infinispan.metadata.Metadatas;
 import org.infinispan.notifications.cachelistener.CacheNotifier;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicLong;
 
@@ -138,6 +149,65 @@ public class CacheLoaderInterceptor extends JmxStatsCommandInterceptor {
       return invokeNextInterceptor(ctx, command);
    }
 
+   @Override
+   public Object visitSizeCommand(InvocationContext ctx, SizeCommand command) throws Throwable {
+      int totalSize = 0;
+      if (enabled && !shouldSkipCacheLoader(command)) {
+         // TODO: maybe we should add a size method to the loader so it can do additional optimizations?  It seems
+         // awfully expensive to resurrect all keys just to count how many there are.
+         totalSize = loader.loadAllKeys(Collections.emptySet()).size();
+      }
+      // Passivation stores evicted entries so we want to add those or if the loader didn't have anything or was skipped
+      // we should at least return the in memory size
+      // This assumes that when passivation is not enabled that the cache store holds a superset of the data container
+      if (cacheConfiguration.loaders().passivation() || totalSize == 0) {
+         totalSize += (Integer)super.visitSizeCommand(ctx, command);
+
+      }
+      return totalSize;
+   }
+
+   @Override
+   public Object visitKeySetCommand(InvocationContext ctx, KeySetCommand command) throws Throwable {
+      Object keys = super.visitKeySetCommand(ctx, command);
+      if (enabled && !shouldSkipCacheLoader(command)) {
+         Set<Object> union = new HashSet<Object>((Set<Object>)keys);
+         // Exclude the keys in memory as we don't want to deserialize those again
+         union.addAll(loader.loadAllKeys(union));
+         return Collections.unmodifiableSet(union);
+      }
+      return keys;
+   }
+
+   @Override
+   public Object visitEntrySetCommand(InvocationContext ctx, EntrySetCommand command) throws Throwable {
+      Object entrySet = super.visitEntrySetCommand(ctx, command);
+      if (enabled && !shouldSkipCacheLoader(command)) {
+         Set<InternalCacheEntry> set = loader.loadAll();
+         Set<InternalCacheEntry> union = new HashSet<InternalCacheEntry>(set);
+         union.addAll((Set<InternalCacheEntry>)entrySet);
+         return Collections.unmodifiableSet(union);
+      }
+      return entrySet;
+   }
+
+   @Override
+   public Object visitValuesCommand(InvocationContext ctx, ValuesCommand command) throws Throwable {
+      Object values = super.visitValuesCommand(ctx, command);
+      if (enabled && !shouldSkipCacheLoader(command)) {
+         Set<InternalCacheEntry> set = loader.loadAll();
+         Collection<Object> valueCollection = (Collection<Object>)values;
+         List<Object> valueList = new ArrayList<Object>(set.size() + valueCollection.size());
+
+         valueList.addAll(valueCollection);
+         for (InternalCacheEntry ice : set) {
+            valueList.add(ice.getValue());
+         }
+         return Collections.unmodifiableList(valueList);
+      }
+      return values;
+   }
+
    protected boolean forceLoad(Object key, Set<Flag> flags) {
       return false;
    }
@@ -151,9 +221,12 @@ public class CacheLoaderInterceptor extends JmxStatsCommandInterceptor {
       return flags != null && flags.contains(Flag.DELTA_WRITE);
    }
 
+   private boolean shouldSkipCacheLoader(LocalFlagAffectedCommand cmd) {
+      return cmd.hasFlag(Flag.SKIP_CACHE_STORE) || cmd.hasFlag(Flag.SKIP_CACHE_LOAD);
+   }
+
    private boolean loadIfNeeded(InvocationContext ctx, Object key, boolean isRetrieval, FlagAffectedCommand cmd) throws Throwable {
-      if (cmd.hasFlag(Flag.SKIP_CACHE_STORE) || cmd.hasFlag(Flag.SKIP_CACHE_LOAD)
-            || cmd.hasFlag(Flag.IGNORE_RETURN_VALUES)) {
+      if (shouldSkipCacheLoader(cmd) || cmd.hasFlag(Flag.IGNORE_RETURN_VALUES)) {
          return false; //skip operation
       }
 

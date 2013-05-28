@@ -1,7 +1,11 @@
 package org.infinispan.loaders;
 
+import org.infinispan.AdvancedCache;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
+import org.infinispan.container.DataContainer;
+import org.infinispan.container.entries.InternalCacheEntry;
+import org.infinispan.context.Flag;
 import org.infinispan.eviction.EvictionStrategy;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.test.SingleCacheManagerTest;
@@ -16,8 +20,13 @@ import org.testng.annotations.AfterClass;
 import org.testng.annotations.Test;
 
 import java.io.File;
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Set;
 
 import static org.testng.AssertJUnit.assertEquals;
+import static org.testng.AssertJUnit.assertFalse;
 import static org.testng.AssertJUnit.assertTrue;
 
 /**
@@ -98,6 +107,128 @@ public class LocalModePassivationTest extends SingleCacheManagerTest {
 
       for (int i = 0; i < numKeys; i++) {
          assertEquals(i, cache().get(i));
+      }
+   }
+
+   public void testSizeWithEvictedEntries() {
+      final int numKeys = 300;
+      for (int i = 0; i < numKeys; i++) {
+         cache.put(i, i);
+      }
+      assertFalse("Data Container should not have all keys", numKeys == cache.getAdvancedCache().getDataContainer().size());
+      assertEquals(numKeys, cache.size());
+   }
+
+   public void testSizeWithEvictedEntriesAndFlags() {
+      final int numKeys = 300;
+      for (int i = 0; i < numKeys; i++) {
+         cache.put(i, i);
+      }
+      assertFalse("Data Container should not have all keys", numKeys == cache.getAdvancedCache().getDataContainer().size());
+      assertEquals(cache.getAdvancedCache().getDataContainer().size(), cache.getAdvancedCache().withFlags(Flag.SKIP_CACHE_LOAD).size());
+      assertEquals(cache.getAdvancedCache().getDataContainer().size(), cache.getAdvancedCache().withFlags(Flag.SKIP_CACHE_STORE).size());
+   }
+
+   public void testKeySetWithEvictedEntries() {
+      final int numKeys = 300;
+      for (int i = 0; i < numKeys; i++) {
+         cache.put(i, i);
+      }
+
+      assertFalse("Data Container should not have all keys", numKeys == cache.getAdvancedCache().getDataContainer().size());
+      Set<Object> keySet = cache.keySet();
+      for (int i = 0; i < numKeys; i++) {
+         assertTrue("Key: " + i + " was not found!", keySet.contains(i));
+      }
+   }
+
+   public void testKeySetWithEvictedEntriesAndFlags() {
+      final int numKeys = 300;
+      for (int i = 0; i < numKeys; i++) {
+         cache.put(i, i);
+      }
+
+      AdvancedCache<Object, Object> flagCache = cache.getAdvancedCache().withFlags(Flag.SKIP_CACHE_LOAD);
+      DataContainer dc = flagCache.getDataContainer();
+      assertFalse("Data Container should not have all keys", numKeys == dc.size());
+      Set<Object> keySet = flagCache.keySet();
+      assertEquals(dc.size(), keySet.size());
+      for (Object key : dc.keySet()) {
+         assertTrue("Key: " + key + " was not found!", keySet.contains(key));
+      }
+   }
+
+   public void testEntrySetWithEvictedEntries() {
+      final int numKeys = 300;
+      for (int i = 0; i < numKeys; i++) {
+         cache.put(i, i);
+      }
+
+      assertFalse("Data Container should not have all keys", numKeys == cache.getAdvancedCache().getDataContainer().size());
+      Set<Map.Entry<Object, Object>> entrySet = cache.entrySet();
+      assertEquals(numKeys, entrySet.size());
+
+      Map<Object, Object> map = new HashMap<Object, Object>(entrySet.size());
+      for (Map.Entry<Object, Object> entry : entrySet) {
+         map.put(entry.getKey(), entry.getValue());
+      }
+
+      for (int i = 0; i < numKeys; i++) {
+         assertEquals("Key/Value mismatch!", i, map.get(i));
+      }
+   }
+
+   public void testEntrySetWithEvictedEntriesAndFlags() {
+      final int numKeys = 300;
+      for (int i = 0; i < numKeys; i++) {
+         cache.put(i, i);
+      }
+
+      AdvancedCache<Object, Object> flagCache = cache.getAdvancedCache().withFlags(Flag.SKIP_CACHE_LOAD);
+      DataContainer dc = flagCache.getDataContainer();
+      assertFalse("Data Container should not have all keys", numKeys == dc.size());
+      Set<Map.Entry<Object, Object>> entrySet = flagCache.entrySet();
+      assertEquals(dc.size(), entrySet.size());
+
+      Set<InternalCacheEntry> entries = dc.entrySet();
+      Map<Object, Object> map = new HashMap<Object, Object>(entrySet.size());
+      for (Map.Entry<Object, Object> entry : entrySet) {
+         map.put(entry.getKey(), entry.getValue());
+      }
+
+      for (InternalCacheEntry entry : entries) {
+         assertEquals("Key/Value mismatch!", entry.getValue(), map.get(entry.getKey()));
+      }
+   }
+
+   public void testValuesWithEvictedEntries() {
+      final int numKeys = 300;
+      for (int i = 0; i < numKeys; i++) {
+         cache.put(i, i);
+      }
+
+      assertFalse("Data Container should not have all keys", numKeys == cache.getAdvancedCache().getDataContainer().size());
+      Collection<Object> values = cache.values();
+      for (int i = 0; i < numKeys; i++) {
+         assertTrue("Value: " + i + " was not found!", values.contains(i));
+      }
+   }
+
+   public void testValuesWithEvictedEntriesAndFlags() {
+      final int numKeys = 300;
+      for (int i = 0; i < numKeys; i++) {
+         cache.put(i, i);
+      }
+
+      AdvancedCache<Object, Object> flagCache = cache.getAdvancedCache().withFlags(Flag.SKIP_CACHE_LOAD);
+      DataContainer dc = flagCache.getDataContainer();
+      assertFalse("Data Container should not have all keys", numKeys == dc.size());
+      Collection<Object> values = flagCache.values();
+      assertEquals(dc.size(), values.size());
+
+      Collection<Object> dcValues = dc.values();
+      for (Object dcValue : dcValues) {
+         assertTrue("Value: " + dcValue + " was not found!", values.contains(dcValue));
       }
    }
 }

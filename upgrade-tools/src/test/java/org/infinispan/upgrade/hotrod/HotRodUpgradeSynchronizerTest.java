@@ -6,6 +6,7 @@ import org.infinispan.client.hotrod.RemoteCacheManager;
 import org.infinispan.client.hotrod.TestHelper;
 import org.infinispan.client.hotrod.test.HotRodClientTestingUtil;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
+import org.infinispan.context.Flag;
 import org.infinispan.loaders.CacheLoaderManager;
 import org.infinispan.loaders.remote.configuration.RemoteCacheStoreConfigurationBuilder;
 import org.infinispan.manager.EmbeddedCacheManager;
@@ -75,7 +76,7 @@ public class HotRodUpgradeSynchronizerTest extends AbstractInfinispanTest {
       RollingUpgradeManager targetUpgradeManager = targetServerCache.getAdvancedCache().getComponentRegistry().getComponent(RollingUpgradeManager.class);
       targetUpgradeManager.synchronizeData("hotrod");
       // The server contains one extra key: MIGRATION_MANAGER_HOT_ROD_KNOWN_KEYS
-      assertEquals(sourceServerCache.size() - 1, targetServerCache.size());
+      assertEquals(sourceServerCache.getAdvancedCache().withFlags(Flag.SKIP_CACHE_STORE).size() - 1, targetServerCache.getAdvancedCache().withFlags(Flag.SKIP_CACHE_STORE).size());
 
       targetUpgradeManager.disconnectSource("hotrod");
       CacheLoaderManager loaderManager = targetServerCache.getAdvancedCache().getComponentRegistry().getComponent(CacheLoaderManager.class);
