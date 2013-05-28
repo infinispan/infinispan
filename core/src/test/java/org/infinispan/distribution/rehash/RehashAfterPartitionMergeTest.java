@@ -32,7 +32,8 @@ import org.testng.annotations.Test;
 
 import java.util.List;
 
-@Test(groups = "functional", testName =  "distribution.rehash.RehashAfterPartitionMergeTest")
+@Test(groups = "functional", testName =  "distribution.rehash.RehashAfterPartitionMergeTest",
+      enabled = false, description = "https://issues.jboss.org/browse/ISPN-3142")
 public class RehashAfterPartitionMergeTest extends MultipleCacheManagersTest {
 
    Cache<Object, Object> c1, c2;
