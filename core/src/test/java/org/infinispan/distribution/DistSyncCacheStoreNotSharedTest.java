@@ -2,6 +2,7 @@ package org.infinispan.distribution;
 
 import org.infinispan.AdvancedCache;
 import org.infinispan.Cache;
+import org.infinispan.container.DataContainer;
 import org.infinispan.context.Flag;
 import org.infinispan.loaders.CacheLoaderException;
 import org.infinispan.loaders.CacheLoaderManager;
@@ -46,11 +47,11 @@ public class DistSyncCacheStoreNotSharedTest extends BaseDistCacheStoreTest {
       Cache<Object, String> owner = getFirstOwner(key);
       CacheStore nonOwnerStore = TestingUtil.extractComponent(nonOwner, CacheLoaderManager.class).getCacheStore();
       CacheStore ownerStore = TestingUtil.extractComponent(owner, CacheLoaderManager.class).getCacheStore();
-      assert !nonOwnerStore.containsKey(key);
-      assert !ownerStore.containsKey(key);
+      assertFalse(nonOwnerStore.containsKey(key));
+      assertFalse(ownerStore.containsKey(key));
       Object retval = nonOwner.put(key, value);
-      assert !nonOwnerStore.containsKey(key);
-      assert ownerStore.containsKey(key);
+      assertFalse(nonOwnerStore.containsKey(key));
+      assertTrue(ownerStore.containsKey(key));
       if (testRetVals) assert retval == null;
       assertOnAllCachesAndOwnership(key, value);
    }
@@ -61,12 +62,12 @@ public class DistSyncCacheStoreNotSharedTest extends BaseDistCacheStoreTest {
       Cache<Object, String> owner = getFirstOwner(key);
       CacheStore ownerStore = TestingUtil.extractComponent(owner, CacheLoaderManager.class).getCacheStore();
       owner.put(key, value);
-      assert value.equals(ownerStore.load(key).getValue());
+      assertEquals(value, ownerStore.load(key).getValue());
       owner.getAdvancedCache().withFlags(Flag.SKIP_CACHE_STORE).clear();
-      assert value.equals(ownerStore.load(key).getValue());
-      assert owner.getAdvancedCache().withFlags(Flag.SKIP_CACHE_STORE).get(key) == null;
-      assert nonOwner.getAdvancedCache().withFlags(Flag.SKIP_CACHE_STORE).get(key) == null;
-      assert value.equals(nonOwner.get(key));
+      assertEquals(value, ownerStore.load(key).getValue());
+      assertNull(owner.getAdvancedCache().withFlags(Flag.SKIP_CACHE_STORE).get(key));
+      assertNull(nonOwner.getAdvancedCache().withFlags(Flag.SKIP_CACHE_STORE).get(key));
+      assertEquals(value, nonOwner.get(key));
       // need to do the get() on all the owners first to load the values, otherwise assertOwnershipAndNonOwnership might fail
       assertOnAllCaches(key, value);
       assertOwnershipAndNonOwnership(key, true);
@@ -82,13 +83,13 @@ public class DistSyncCacheStoreNotSharedTest extends BaseDistCacheStoreTest {
       owner.getAdvancedCache().withFlags(Flag.SKIP_CACHE_STORE).clear();
 
       Future<String> async = nonOwner.getAdvancedCache().withFlags(Flag.SKIP_CACHE_STORE).getAsync(key);
-      assert async != null;
-      assert async.get() == null;
+      assertNotNull(async);
+      assertNull(async.get());
 
       async = nonOwner.getAdvancedCache().getAsync(key);
-      assert async != null;
+      assertNotNull(async);
       String returnedValue = async.get();
-      assert value.equals(returnedValue);
+      assertEquals(value, returnedValue);
    }
 
    public void testPutFromNonOwnerWithFlags(Method m) throws Exception {
@@ -97,11 +98,11 @@ public class DistSyncCacheStoreNotSharedTest extends BaseDistCacheStoreTest {
       Cache<Object, String> owner = getFirstOwner(key);
       CacheStore nonOwnerStore = TestingUtil.extractComponent(nonOwner, CacheLoaderManager.class).getCacheStore();
       CacheStore ownerStore = TestingUtil.extractComponent(owner, CacheLoaderManager.class).getCacheStore();
-      assert !nonOwnerStore.containsKey(key);
-      assert !ownerStore.containsKey(key);
+      assertFalse(nonOwnerStore.containsKey(key));
+      assertFalse(ownerStore.containsKey(key));
       Object retval = nonOwner.getAdvancedCache().withFlags(Flag.SKIP_CACHE_STORE).put(key, value);
-      assert !nonOwnerStore.containsKey(key);
-      assert !ownerStore.containsKey(key);
+      assertFalse(nonOwnerStore.containsKey(key));
+      assertFalse(ownerStore.containsKey(key));
       if (testRetVals) assert retval == null;
       assertOnAllCachesAndOwnership(key, value);
    }
@@ -113,10 +114,10 @@ public class DistSyncCacheStoreNotSharedTest extends BaseDistCacheStoreTest {
          CacheStore store = TestingUtil.extractComponent(c, CacheLoaderManager.class).getCacheStore();
          if (isOwner(c, key)) {
             assertIsInContainerImmortal(c, key);
-            assert store.containsKey(key);
+            assertTrue(store.containsKey(key));
          } else {
             assertIsNotInL1(c, key);
-            assert !store.containsKey(key);
+            assertFalse(store.containsKey(key));
          }
       }
    }
@@ -142,9 +143,9 @@ public class DistSyncCacheStoreNotSharedTest extends BaseDistCacheStoreTest {
          for (String key : keys) {
             if (isOwner(c, key)) {
                assertIsInContainerImmortal(c, key);
-               assert store.containsKey(key);
+               assertTrue(store.containsKey(key));
             } else {
-               assert !store.containsKey(key);
+               assertFalse(store.containsKey(key));
             }
          }
       }
@@ -157,7 +158,7 @@ public class DistSyncCacheStoreNotSharedTest extends BaseDistCacheStoreTest {
       for (Cache<Object, String> c : caches) {
          CacheStore store = TestingUtil.extractComponent(c, CacheLoaderManager.class).getCacheStore();
          for (String key : keys) {
-            assert !store.containsKey(key);
+            assertFalse(store.containsKey(key));
             if (isOwner(c, key)) {
                assertIsInContainerImmortal(c, key);
             }
@@ -173,9 +174,9 @@ public class DistSyncCacheStoreNotSharedTest extends BaseDistCacheStoreTest {
          CacheStore store = TestingUtil.extractComponent(c, CacheLoaderManager.class).getCacheStore();
          if (isOwner(c, key)) {
             assertIsInContainerImmortal(c, key);
-            assert store.load(key).getValue().equals(value);
+            assertEquals(value, store.load(key).getValue());
          } else {
-            assert !store.containsKey(key);
+            assertFalse(store.containsKey(key));
          }
       }
 
@@ -183,7 +184,7 @@ public class DistSyncCacheStoreNotSharedTest extends BaseDistCacheStoreTest {
       if (testRetVals) assert "value".equals(retval);
       for (Cache<Object, String> c : caches) {
          CacheStore store = TestingUtil.extractComponent(c, CacheLoaderManager.class).getCacheStore();
-         assert !store.containsKey(key);
+         assertFalse(store.containsKey(key));
       }
    }
    
@@ -195,7 +196,7 @@ public class DistSyncCacheStoreNotSharedTest extends BaseDistCacheStoreTest {
       for (Cache<Object, String> c : caches) {
          if (isOwner(c, key)) {
             CacheStore store = TestingUtil.extractComponent(c, CacheLoaderManager.class).getCacheStore();
-            assert store.containsKey(key);
+            assertTrue(store.containsKey(key));
          }
       }
    }
@@ -208,9 +209,9 @@ public class DistSyncCacheStoreNotSharedTest extends BaseDistCacheStoreTest {
          CacheStore store = TestingUtil.extractComponent(c, CacheLoaderManager.class).getCacheStore();
          if (isOwner(c, key)) {
             assertIsInContainerImmortal(c, key);
-            assert store.load(key).getValue().equals(value);
+            assertEquals(value, store.load(key).getValue());
          } else {
-            assert !store.containsKey(key);
+            assertFalse(store.containsKey(key));
          }
       }
 
@@ -220,10 +221,10 @@ public class DistSyncCacheStoreNotSharedTest extends BaseDistCacheStoreTest {
          CacheStore store = TestingUtil.extractComponent(c, CacheLoaderManager.class).getCacheStore();
          if (isOwner(c, key)) {
             assertIsInContainerImmortal(c, key);
-            assert c.get(key).equals(value2);
-            assert store.load(key).getValue().equals(value2);
+            assertEquals(value2, c.get(key));
+            assertEquals(value2, store.load(key).getValue());
          } else {
-            assert !store.containsKey(key);
+            assertFalse(store.containsKey(key));
          }
       }
    }
@@ -237,10 +238,10 @@ public class DistSyncCacheStoreNotSharedTest extends BaseDistCacheStoreTest {
          CacheStore store = TestingUtil.extractComponent(c, CacheLoaderManager.class).getCacheStore();
          if (isOwner(c, key)) {
             assertIsInContainerImmortal(c, key);
-            assert c.get(key).equals(value2);
-            assert store.load(key).getValue().equals(value);
+            assertEquals(value2, c.get(key));
+            assertEquals(value, store.load(key).getValue());
          } else {
-            assert !store.containsKey(key);
+            assertFalse(store.containsKey(key));
          }
       }
    }
@@ -317,7 +318,7 @@ public class DistSyncCacheStoreNotSharedTest extends BaseDistCacheStoreTest {
          String key = "k" + i;
          for (Cache<Object, String> c : caches) {
             CacheStore store = TestingUtil.extractComponent(c, CacheLoaderManager.class).getCacheStore();
-            assert !store.containsKey(key);
+            assertFalse(store.containsKey(key));
          }
       }
    }
@@ -326,12 +327,14 @@ public class DistSyncCacheStoreNotSharedTest extends BaseDistCacheStoreTest {
       prepareClearTest();
       c1.getAdvancedCache().withFlags(Flag.SKIP_CACHE_STORE).clear();
       for (Cache<Object, String> c : caches) {
-         assert c.isEmpty() : "Data container " + c + " should be empty, instead it contains keys " + c.keySet();
+         DataContainer dc = c.getAdvancedCache().getDataContainer();
+         assertEquals("Data container " + c + " should be empty, instead it contains keys " +
+                            dc.keySet(), 0, dc.size());
          CacheStore store = TestingUtil.extractComponent(c, CacheLoaderManager.class).getCacheStore();
          for (int i = 0; i < 5; i++) {
             String key = "k" + i;
             if (isOwner(c, key)) {
-               assert store.containsKey(key);
+               assertTrue(store.containsKey(key));
             }
          }
       }
@@ -356,12 +359,12 @@ public class DistSyncCacheStoreNotSharedTest extends BaseDistCacheStoreTest {
       // this will fill up L1 as well
       for (int i = 0; i < 5; i++) assertOnAllCachesAndOwnership("k" + i, "value" + i);
       for (Cache<Object, String> c : caches) {
-         assert !c.isEmpty();
+         assertFalse(c.isEmpty());
          CacheStore store = TestingUtil.extractComponent(c, CacheLoaderManager.class).getCacheStore();
          for (int i = 0; i < 5; i++) {
             String key = "k" + i;
             if (isOwner(c, key)) {
-               assert store.containsKey(key) : "Cache store " + c + " does not contain key " + key;
+               assertTrue("Cache store " + c + " does not contain key " + key, store.containsKey(key));
             }
          }
       }

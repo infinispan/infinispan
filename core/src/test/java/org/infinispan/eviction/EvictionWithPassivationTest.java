@@ -84,9 +84,9 @@ public class EvictionWithPassivationTest extends SingleCacheManagerTest {
       testCache.put("Z", "4569");
 
       if (!s.equals(EvictionStrategy.NONE)) {
-         assert EVICTION_MAX_ENTRIES == testCache.size() : "Cache size should be " + EVICTION_MAX_ENTRIES;
+         assert EVICTION_MAX_ENTRIES == testCache.getAdvancedCache().getDataContainer().size() : "Cache size should be " + EVICTION_MAX_ENTRIES;
          testCache.get("X");
-         assert EVICTION_MAX_ENTRIES == testCache.size() : "Cache size should be " + EVICTION_MAX_ENTRIES;
+         assert EVICTION_MAX_ENTRIES == testCache.getAdvancedCache().getDataContainer().size() : "Cache size should be " + EVICTION_MAX_ENTRIES;
       }
 
       assert "4567".equals(testCache.get("X")) : "Failure on test " + name;

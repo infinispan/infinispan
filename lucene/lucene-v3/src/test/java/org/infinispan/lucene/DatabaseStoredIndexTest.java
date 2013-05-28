@@ -82,7 +82,7 @@ public class DatabaseStoredIndexTest extends SingleCacheManagerTest {
    @Test(dependsOnMethods="testIndexUsage")
    public void indexWasStored() throws IOException {
       cache = cacheManager.getCache();
-      AssertJUnit.assertTrue(cache.isEmpty());
+      AssertJUnit.assertEquals(0, cache.getAdvancedCache().getDataContainer().size());
       boolean failed = false;
       for (Object key : cacheCopy.keySet()) {
          if (key instanceof FileReadLockKey) {

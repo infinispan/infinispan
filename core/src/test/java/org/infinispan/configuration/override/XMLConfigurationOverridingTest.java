@@ -216,7 +216,7 @@ public class XMLConfigurationOverridingTest extends AbstractInfinispanTest imple
                cache.put("key" + i, "value" + i);
             }
 
-            Assert.assertTrue(cache.size() <= 5);
+            Assert.assertTrue(cache.getAdvancedCache().getDataContainer().size() <= 5);
             for (int i = 0; i < 10; i++) {
                Assert.assertNotNull(cache.get("key" + i));
             }

@@ -325,7 +325,7 @@ public class CacheImpl<K, V> implements AdvancedCache<K, V> {
    }
 
    final int size(EnumSet<Flag> explicitFlags, ClassLoader explicitClassLoader) {
-      SizeCommand command = commandsFactory.buildSizeCommand();
+      SizeCommand command = commandsFactory.buildSizeCommand(explicitFlags);
       return (Integer) invoker.invoke(getInvocationContextForRead(
             null, explicitClassLoader, UNBOUNDED), command);
    }
@@ -445,7 +445,7 @@ public class CacheImpl<K, V> implements AdvancedCache<K, V> {
    @SuppressWarnings("unchecked")
    Set<K> keySet(EnumSet<Flag> explicitFlags, ClassLoader explicitClassLoader) {
       InvocationContext ctx = getInvocationContextForRead(null, explicitClassLoader, UNBOUNDED);
-      KeySetCommand command = commandsFactory.buildKeySetCommand();
+      KeySetCommand command = commandsFactory.buildKeySetCommand(explicitFlags);
       return (Set<K>) invoker.invoke(ctx, command);
    }
 
@@ -457,7 +457,7 @@ public class CacheImpl<K, V> implements AdvancedCache<K, V> {
    @SuppressWarnings("unchecked")
    Collection<V> values(EnumSet<Flag> explicitFlags, ClassLoader explicitClassLoader) {
       InvocationContext ctx = getInvocationContextForRead(null, explicitClassLoader, UNBOUNDED);
-      ValuesCommand command = commandsFactory.buildValuesCommand();
+      ValuesCommand command = commandsFactory.buildValuesCommand(explicitFlags);
       return (Collection<V>) invoker.invoke(ctx, command);
    }
 
@@ -469,7 +469,7 @@ public class CacheImpl<K, V> implements AdvancedCache<K, V> {
    @SuppressWarnings("unchecked")
    Set<Map.Entry<K, V>> entrySet(EnumSet<Flag> explicitFlags, ClassLoader explicitClassLoader) {
       InvocationContext ctx = getInvocationContextForRead(null, explicitClassLoader, UNBOUNDED);
-      EntrySetCommand command = commandsFactory.buildEntrySetCommand();
+      EntrySetCommand command = commandsFactory.buildEntrySetCommand(explicitFlags);
       return (Set<Map.Entry<K, V>>) invoker.invoke(ctx, command);
    }
 

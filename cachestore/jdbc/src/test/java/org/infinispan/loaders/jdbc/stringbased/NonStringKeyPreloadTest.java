@@ -102,7 +102,7 @@ public class NonStringKeyPreloadTest extends AbstractInfinispanTest {
          @Override
          public void call() {
             AdvancedCache<Object, Object> cache = cm.getCache().getAdvancedCache();
-            assertEquals(3, cache.size());
+            assertEquals(3, cache.getDataContainer().size());
             int found = 0;
             for (int i = 0; i < 10; i++) {
                Person p = new Person("name" + i, "surname" + i, 30);

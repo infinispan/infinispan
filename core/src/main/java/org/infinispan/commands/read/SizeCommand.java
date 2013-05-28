@@ -4,7 +4,10 @@ import org.infinispan.commands.VisitableCommand;
 import org.infinispan.commands.Visitor;
 import org.infinispan.container.DataContainer;
 import org.infinispan.container.entries.CacheEntry;
+import org.infinispan.context.Flag;
 import org.infinispan.context.InvocationContext;
+
+import java.util.Set;
 
 /**
  * Command to calculate the size of the cache
@@ -17,7 +20,8 @@ import org.infinispan.context.InvocationContext;
 public class SizeCommand extends AbstractLocalCommand implements VisitableCommand {
    private final DataContainer container;
 
-   public SizeCommand(DataContainer container) {
+   public SizeCommand(DataContainer container, Set<Flag> flags) {
+      setFlags(flags);
       this.container = container;
    }
 

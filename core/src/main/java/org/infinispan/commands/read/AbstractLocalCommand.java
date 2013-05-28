@@ -1,5 +1,6 @@
 package org.infinispan.commands.read;
 
+import org.infinispan.commands.AbstractLocalFlagAffectedCommand;
 import org.infinispan.commands.LocalCommand;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.context.impl.TxInvocationContext;
@@ -12,7 +13,7 @@ import org.infinispan.lifecycle.ComponentStatus;
  * @author Mircea.Markus@jboss.com
  * @since 4.1
  */
-public class AbstractLocalCommand implements LocalCommand {
+public abstract class AbstractLocalCommand extends AbstractLocalFlagAffectedCommand implements LocalCommand {
    private static final Object[] EMPTY_ARRAY = new Object[0];
 
    public byte getCommandId() {

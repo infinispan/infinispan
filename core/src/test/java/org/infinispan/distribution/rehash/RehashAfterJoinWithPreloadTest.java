@@ -91,7 +91,8 @@ public class RehashAfterJoinWithPreloadTest extends MultipleCacheManagersTest {
       for (int i = 0; i < getCacheManagers().size(); i++) {
          Cache<String, String> testCache = manager(i).getCache(testCacheName);
          DistributionManager dm = testCache.getAdvancedCache().getDistributionManager();
-         for (String key : testCache.keySet()) {
+         // Note there is stale data in the cache store that this owner no longer owns
+         for (Object key : testCache.getAdvancedCache().getDataContainer().keySet()) {
             // each key must only occur once (numOwners is one)
             assertTrue("Key '" + key + "' is not owned by node " + address(i) + " but it still appears there",
                   dm.getLocality(key).isLocal());

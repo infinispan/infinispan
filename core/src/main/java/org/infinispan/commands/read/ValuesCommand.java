@@ -5,6 +5,7 @@ import org.infinispan.commands.Visitor;
 import org.infinispan.container.DataContainer;
 import org.infinispan.container.entries.CacheEntry;
 import org.infinispan.container.entries.InternalCacheEntry;
+import org.infinispan.context.Flag;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.util.TimeService;
 
@@ -27,7 +28,8 @@ public class ValuesCommand extends AbstractLocalCommand implements VisitableComm
    private final DataContainer container;
    private final TimeService timeService;
 
-   public ValuesCommand(DataContainer container, TimeService timeService) {
+   public ValuesCommand(DataContainer container, TimeService timeService, Set<Flag> flags) {
+      setFlags(flags);
       this.container = container;
       this.timeService = timeService;
    }

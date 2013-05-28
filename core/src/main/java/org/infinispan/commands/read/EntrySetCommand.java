@@ -6,6 +6,7 @@ import org.infinispan.container.DataContainer;
 import org.infinispan.container.InternalEntryFactory;
 import org.infinispan.container.entries.CacheEntry;
 import org.infinispan.container.entries.InternalCacheEntry;
+import org.infinispan.context.Flag;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.util.TimeService;
 import static org.infinispan.util.CoreImmutables.immutableInternalCacheEntry;
@@ -29,7 +30,8 @@ public class EntrySetCommand extends AbstractLocalCommand implements VisitableCo
    private final InternalEntryFactory entryFactory;
    private final TimeService timeService;
 
-   public EntrySetCommand(DataContainer container, InternalEntryFactory internalEntryFactory, TimeService timeService) {
+   public EntrySetCommand(DataContainer container, InternalEntryFactory internalEntryFactory, TimeService timeService, Set<Flag> flags) {
+      setFlags(flags);
       this.container = container;
       this.entryFactory = internalEntryFactory;
       this.timeService = timeService;
