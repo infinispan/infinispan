@@ -38,6 +38,7 @@ import org.infinispan.remoting.RpcException;
 import org.infinispan.remoting.responses.ExceptionResponse;
 import org.infinispan.remoting.responses.Response;
 import org.infinispan.topology.CacheTopologyControlCommand;
+import org.infinispan.util.TimeService;
 import org.infinispan.util.Util;
 import org.infinispan.util.concurrent.TimeoutException;
 import org.infinispan.util.logging.Log;
@@ -432,7 +433,7 @@ public class CommandAwareRpcDispatcher extends RpcDispatcher {
             // This is possibly a remote GET.
             // These UNICASTs happen in parallel using sendMessageWithFuture.  Each future has a listener attached
             // (see FutureCollator) and the first successful response is used.
-            FutureCollator futureCollator = new FutureCollator(filter, dests.size(), timeout);
+            FutureCollator futureCollator = new FutureCollator(filter, dests.size(), timeout, card.gcr.getTimeService());
             for (Address a : dests) {
                NotifyingFuture<Object> f = card.sendMessageWithFuture(constructMessage(buf, a, oob, rsvp, false), opts);
                futureCollator.watchFuture(f, a);
@@ -517,11 +518,13 @@ public class CommandAwareRpcDispatcher extends RpcDispatcher {
       private Exception exception;
       @GuardedBy("this")
       private int expectedResponses;
+      private final TimeService timeService;
 
-      FutureCollator(RspFilter filter, int expectedResponses, long timeout) {
+      FutureCollator(RspFilter filter, int expectedResponses, long timeout, TimeService timeService) {
          this.filter = filter;
          this.expectedResponses = expectedResponses;
          this.timeout = timeout;
+         this.timeService = timeService;
       }
 
       public void watchFuture(NotifyingFuture<Object> f, Address address) {
@@ -530,9 +533,12 @@ public class CommandAwareRpcDispatcher extends RpcDispatcher {
       }
 
       public synchronized RspList<Object> getResponseList() throws Exception {
-         while (expectedResponses > 0 && retval == null) {
+         long expectedEndTime = timeService.expectedEndTime(timeout, MILLISECONDS);
+         long waitingTime;
+         while (expectedResponses > 0 && retval == null &&
+               (waitingTime = timeService.remainingTime(expectedEndTime, MILLISECONDS)) > 0) {
             try {
-               this.wait(timeout);
+               this.wait(waitingTime);
             } catch (InterruptedException e) {
                // reset interruption flag
                Thread.currentThread().interrupt();

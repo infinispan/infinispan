@@ -42,6 +42,7 @@ public class TestModuleCommandExtensions implements ModuleCommandExtensions {
             Map<Byte, Class<? extends ReplicableCommand>> map = new HashMap<Byte, Class<? extends ReplicableCommand>>(2);
             map.put(CustomReplicableCommand.COMMAND_ID, CustomReplicableCommand.class);
             map.put(CustomCacheRpcCommand.COMMAND_ID, CustomCacheRpcCommand.class);
+            map.put(SleepingCacheRpcCommand.COMMAND_ID, SleepingCacheRpcCommand.class);
             return map;
          }
 
@@ -65,6 +66,9 @@ public class TestModuleCommandExtensions implements ModuleCommandExtensions {
             switch (commandId) {
                case CustomCacheRpcCommand.COMMAND_ID:
                   c = new CustomCacheRpcCommand(cacheName);
+                  break;
+               case SleepingCacheRpcCommand.COMMAND_ID:
+                  c = new SleepingCacheRpcCommand(cacheName);
                   break;
                default:
                   throw new IllegalArgumentException("Not registered to handle command id " + commandId);
