@@ -18,12 +18,8 @@
  */
 package org.infinispan.server.core.configuration;
 
-import java.util.Properties;
-
 import org.infinispan.configuration.Builder;
-import org.infinispan.server.core.Main;
 import org.infinispan.server.core.logging.JavaLog;
-import org.infinispan.util.TypedProperties;
 import org.infinispan.util.logging.LogFactory;
 
 public abstract class ProtocolServerConfigurationBuilder<T extends ProtocolServerConfiguration, S extends ProtocolServerConfigurationChildBuilder<T, S>> implements
@@ -89,23 +85,6 @@ public abstract class ProtocolServerConfigurationBuilder<T extends ProtocolServe
    @Override
    public SslConfigurationBuilder ssl() {
       return ssl;
-   }
-
-   @Override
-   public S withProperties(Properties properties) {
-      TypedProperties typed = TypedProperties.toTypedProperties(properties);
-
-      if (typed != null) {
-         this.host(typed.getProperty(Main.PROP_KEY_HOST(), host, true));
-         this.port(typed.getIntProperty(Main.PROP_KEY_PORT(), port, true));
-         this.idleTimeout(typed.getIntProperty(Main.PROP_KEY_IDLE_TIMEOUT(), idleTimeout, true));
-         this.recvBufSize(typed.getIntProperty(Main.PROP_KEY_RECV_BUF_SIZE(), recvBufSize, true));
-         this.sendBufSize(typed.getIntProperty(Main.PROP_KEY_SEND_BUF_SIZE(), sendBufSize, true));
-         this.tcpNoDelay(typed.getBooleanProperty(Main.PROP_KEY_TCP_NO_DELAY(), tcpNoDelay, true));
-         this.workerThreads(typed.getIntProperty(Main.PROP_KEY_WORKER_THREADS(), workerThreads, true));
-      }
-
-      return this.self();
    }
 
    @Override

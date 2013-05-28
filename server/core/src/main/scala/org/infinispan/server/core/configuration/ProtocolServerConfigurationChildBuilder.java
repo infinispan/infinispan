@@ -18,10 +18,14 @@
  */
 package org.infinispan.server.core.configuration;
 
-import java.util.Properties;
-
 import org.infinispan.configuration.Self;
 
+/**
+ * ProtocolServerConfigurationChildBuilder.
+ *
+ * @author Tristan Tarrant
+ * @since 5.3
+ */
 public interface ProtocolServerConfigurationChildBuilder<T extends ProtocolServerConfiguration, S extends ProtocolServerConfigurationChildBuilder<T,S>> extends Self<S> {
    /**
     * Specifies a custom name for this server in order to easily distinguish it from other servers, e.g. via JMX. Defaults to the empty string.
@@ -62,11 +66,6 @@ public interface ProtocolServerConfigurationChildBuilder<T extends ProtocolServe
     * Configures SSL
     */
    SslConfigurationBuilder ssl();
-
-   /**
-    * Configures this builder using the specified properties
-    */
-   S withProperties(Properties properties);
 
    /**
     * Sets the number of worker threads

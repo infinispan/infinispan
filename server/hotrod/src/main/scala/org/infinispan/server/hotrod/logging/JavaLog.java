@@ -54,8 +54,4 @@ public interface JavaLog extends org.infinispan.util.logging.Log {
 
    @Message(value = "A topology cache named '%s' has already been defined", id = 6003)
    ConfigurationException invalidTopologyCache(String topologyCacheName);
-
-   @LogMessage(level = WARN)
-   @Message(value = "The topology update timeout configuration is ignored", id = 6004)
-   void topologyUpdateTimeoutIgnored();
 }

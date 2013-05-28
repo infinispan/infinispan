@@ -27,7 +27,6 @@ import java.util.concurrent.Executors
 import org.infinispan.manager.EmbeddedCacheManager
 import java.util.Properties
 import org.infinispan.server.memcached.configuration.MemcachedServerConfiguration
-import org.infinispan.server.memcached.configuration.MemcachedServerConfigurationBuilder
 import org.infinispan.AdvancedCache
 import org.infinispan.configuration.cache.ConfigurationBuilder
 
@@ -50,10 +49,6 @@ class MemcachedServer extends AbstractProtocolServer("Memcached") {
          new ConfigurationBuilder().read(cacheManager.getDefaultCacheConfiguration).build())
       memcachedCache = cacheManager.getCache[String, Array[Byte]](configuration.cache).getAdvancedCache
       super.start(configuration, cacheManager)
-   }
-
-   override def startWithProperties(properties: Properties, cacheManager: EmbeddedCacheManager) {
-      this.start(new MemcachedServerConfigurationBuilder().withProperties(properties).build(), cacheManager)
    }
 
    override def getEncoder = null
