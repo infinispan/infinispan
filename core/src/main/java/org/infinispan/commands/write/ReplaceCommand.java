@@ -215,6 +215,12 @@ public class ReplaceCommand extends AbstractDataWriteCommand implements Metadata
    }
 
    @Override
+   public final boolean isReturnValueExpected() {
+     //SKIP_RETURN_VALUE ignored for conditional replace
+     return super.isReturnValueExpected() || isConditional();
+   }
+
+   @Override
    public String toString() {
       return "ReplaceCommand{" +
             "key=" + toStr(key) +
