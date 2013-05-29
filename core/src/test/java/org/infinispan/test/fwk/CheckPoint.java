@@ -19,6 +19,7 @@
 
 package org.infinispan.test.fwk;
 
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
@@ -29,7 +30,6 @@ import java.util.concurrent.locks.ReentrantLock;
 
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
-import org.jboss.logging.Logger;
 
 /**
  * Behaves more or less like a map of {@link java.util.concurrent.Semaphore}s.
@@ -45,7 +45,7 @@ public class CheckPoint {
    public static final int INFINITE = 999999999;
    private final Lock lock = new ReentrantLock();
    private final Condition unblockCondition = lock.newCondition();
-   private final Map<String, Integer> events = new HashMap<String, Integer>();
+   private final Map<String, EventStatus> events = new HashMap<String, EventStatus>();
 
    public void awaitStrict(String event, long timeout, TimeUnit unit)
          throws InterruptedException, TimeoutException {
@@ -67,24 +67,65 @@ public class CheckPoint {
       log.tracef("Waiting for event %s * %d", event, count);
       lock.lock();
       try {
+         EventStatus status = null;
          long waitNanos = unit.toNanos(timeout);
          while (waitNanos > 0) {
-            Integer currentCount = events.get(event);
-            if (currentCount != null && currentCount >= count) {
-               events.put(event, currentCount - count);
+            status = events.get(event);
+            if (status == null) {
+               status = new EventStatus();
+               events.put(event, status);
+            }
+            if (status.available >= count) {
+               status.available -= count;
                break;
             }
             waitNanos = unblockCondition.awaitNanos(waitNanos);
          }
 
          if (waitNanos <= 0) {
-            log.tracef("Timed out waiting for event %s * %d", event, count);
+            log.errorf("Timed out waiting for event %s * %d (available = %d, total = %d", event, count,
+                  status.available, status.total);
             // let the triggering thread know that we timed out
-            events.put(event, -1);
+            status.available = -1;
             return false;
          }
 
+         log.tracef("Received event %s * %d (available = %d, total = %d)", event, count,
+               status.available, status.total);
          return true;
+      } finally {
+         lock.unlock();
+      }
+   }
+
+   public String peek(long timeout, TimeUnit unit, String... expectedEvents) throws InterruptedException {
+      log.tracef("Waiting for any one of event %s * %d", Arrays.toString(expectedEvents));
+      String found = null;
+      lock.lock();
+      try {
+         long waitNanos = unit.toNanos(timeout);
+         while (waitNanos > 0) {
+            for (String event : expectedEvents) {
+               EventStatus status = events.get(event);
+               if (status != null && status.available >= 1) {
+                  found = event;
+                  break;
+               }
+            }
+            if (found != null)
+               break;
+
+            waitNanos = unblockCondition.awaitNanos(waitNanos);
+         }
+
+         if (waitNanos <= 0) {
+            log.tracef("Timed out waiting for events %s", Arrays.toString(expectedEvents));
+            return null;
+         }
+
+         EventStatus status = events.get(found);
+         log.tracef("Received event %s (available = %d, total = %d)", found, status.available, status.total);
+         return found;
       } finally {
          lock.unlock();
       }
@@ -101,20 +142,37 @@ public class CheckPoint {
    public void trigger(String event, int count) {
       lock.lock();
       try {
-         Integer currentCount = events.get(event);
-         if (currentCount == null) {
-            currentCount = 0;
-         } else if (currentCount < 0) {
+         EventStatus status = events.get(event);
+         if (status == null) {
+            status = new EventStatus();
+            events.put(event, status);
+         } else if (status.available < 0) {
             throw new IllegalStateException("Thread already timed out waiting for event " + event);
          }
 
          // If triggerForever is called more than once, it will cause an overflow and the waiters will fail.
-         int newCount = count != INFINITE ? currentCount + count : INFINITE;
-         log.tracef("Triggering event %s * %d, new count is %d", event, count, newCount);
-         events.put(event, newCount);
+         status.available = count != INFINITE ? status.available + count : INFINITE;
+         status.total = count != INFINITE ? status.total + count : INFINITE;
+         log.tracef("Triggering event %s * %d (available = %d, total = %d)", event, count,
+               status.available, status.total);
          unblockCondition.signalAll();
       } finally {
          lock.unlock();
+      }
+   }
+
+   @Override
+   public String toString() {
+      return "CheckPoint" + events;
+   }
+
+   private class EventStatus {
+      int available;
+      int total;
+
+      @Override
+      public String toString() {
+         return "" + available + "/" + total;
       }
    }
 }
