@@ -67,7 +67,7 @@ public abstract class AbstractTransport implements Transport {
             Exception e = exceptionResponse.getException();
             // if we have any application-level exceptions make sure we throw them!!
             if (shouldThrowException(e)) {
-               throw log.remoteException(sender, e);
+               throw log.remoteException(e.getClass().getSimpleName(), sender, e);
             } else {
                if (log.isDebugEnabled())
                   log.debug("Received exception from " + sender, e);
@@ -81,8 +81,8 @@ public abstract class AbstractTransport implements Transport {
          throw new CacheException(String.format("Unexpected response object type from %s: %s", sender, responseClass));
       }
       return false;
-   } 
-   
+   }
+
    protected final boolean parseResponseAndAddToResponseList(Object responseObject, Throwable exception, Map<Address, Response> responseListToAddTo, boolean wasSuspected,
                                                        boolean wasReceived, Address sender, boolean usedResponseFilter, boolean ignoreLeavers)
            throws Exception
@@ -95,7 +95,7 @@ public abstract class AbstractTransport implements Transport {
             log.tracef(exception, "Unexpected exception from %s", sender);
             throw new CacheException("Remote (" + sender + ") failed unexpectedly", exception);
          }
-         
+
          if (checkResponse(responseObject, sender)) responseListToAddTo.put(sender, (Response) responseObject);
       } else if (wasSuspected) {
          if (!ignoreLeavers) {
