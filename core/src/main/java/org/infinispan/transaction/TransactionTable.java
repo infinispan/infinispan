@@ -407,6 +407,10 @@ public class TransactionTable {
       return globalToLocalTransactions.get(txId);
    }
 
+   public boolean containsLocalTx(GlobalTransaction globalTransaction) {
+      return globalToLocalTransactions.containsKey(globalTransaction);
+   }
+
    public LocalTransaction getLocalTransaction(Transaction tx) {
       return localTransactions.get(tx);
    }
