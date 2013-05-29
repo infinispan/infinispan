@@ -279,16 +279,18 @@ public class ResourceDMBean implements DynamicMBean {
       }
 
       // Argument type transformation according to signatures
-      for (int i = 0; i < args.length; i++) {
+      for (int i = 0; i < sig.length; i++) {
          // arguments are taken from RHQ like java.lang.String but we need some fields to be numbers
          if (log.isDebugEnabled())
             log.debugf("Argument value before transformation: %s and its class: %s. " +
                              "For method.invoke we need it to be class: %s", args[i], args[i].getClass(), sig[i]);
-         if (sig[i].equals(int.class.getCanonicalName())) {
-            args[i] = Integer.parseInt((String) args[i]);
+         if (sig[i].equals(int.class.getCanonicalName()) || sig[i].equals(Integer.class.getCanonicalName())) {
+            if ((args[i].getClass() != Integer.class) && (args[i].getClass() != int.class))
+               args[i] = Integer.parseInt((String) args[i]);
          }
-         if (sig[i].equals(long.class.getCanonicalName())) {
-            args[i] = Long.parseLong((String) args[i]);
+         if (sig[i].equals(Long.class.getCanonicalName()) || sig[i].equals(long.class.getCanonicalName())) {
+            if ((args[i].getClass() != Long.class) && (args[i].getClass() != long.class))
+               args[i] = Long.parseLong((String) args[i]);
          }
       }
 
