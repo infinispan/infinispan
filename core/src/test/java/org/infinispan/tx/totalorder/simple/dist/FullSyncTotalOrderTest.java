@@ -18,7 +18,10 @@
 
 package org.infinispan.tx.totalorder.simple.dist;
 
+import org.infinispan.Cache;
 import org.infinispan.configuration.cache.CacheMode;
+import org.infinispan.distribution.DistributionTestHelper;
+import org.infinispan.tx.totalorder.simple.BaseSimpleTotalOrderTest;
 import org.testng.annotations.Test;
 
 /**
@@ -26,13 +29,18 @@ import org.testng.annotations.Test;
  * @since 5.3
  */
 @Test(groups = "functional", testName = "tx.totalorder.simple.dist.FullSyncTotalOrderTest")
-public class FullSyncTotalOrderTest extends FullAsyncTotalOrderTest {
+public class FullSyncTotalOrderTest extends BaseSimpleTotalOrderTest {
 
    public FullSyncTotalOrderTest() {
-      this(4);
+      this(3);
    }
 
-   public FullSyncTotalOrderTest(int clusterSize) {
+   protected FullSyncTotalOrderTest(int clusterSize) {
       super(clusterSize, CacheMode.DIST_SYNC, true, false, false);
+   }
+
+   @Override
+   protected final boolean isOwner(Cache cache, Object key) {
+      return DistributionTestHelper.isOwner(cache, key);
    }
 }

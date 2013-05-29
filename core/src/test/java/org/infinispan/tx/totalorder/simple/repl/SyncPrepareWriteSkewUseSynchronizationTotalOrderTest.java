@@ -18,17 +18,12 @@
 
 package org.infinispan.tx.totalorder.simple.repl;
 
+import org.infinispan.Cache;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.Configurations;
-import org.infinispan.interceptors.InterceptorChain;
-import org.infinispan.interceptors.locking.OptimisticLockingInterceptor;
-import org.infinispan.interceptors.locking.PessimisticLockingInterceptor;
-import org.infinispan.interceptors.totalorder.TotalOrderInterceptor;
-import org.infinispan.interceptors.totalorder.TotalOrderVersionedDistributionInterceptor;
-import org.infinispan.interceptors.totalorder.TotalOrderVersionedEntryWrappingInterceptor;
+import org.infinispan.tx.totalorder.simple.BaseSimpleTotalOrderTest;
 import org.testng.annotations.Test;
 
-import static junit.framework.Assert.assertTrue;
 import static org.testng.Assert.assertFalse;
 
 /**
@@ -36,24 +31,23 @@ import static org.testng.Assert.assertFalse;
  * @since 5.3
  */
 @Test(groups = "functional", testName = "tx.totalorder.simple.repl.SyncPrepareWriteSkewUseSynchronizationTotalOrderTest")
-public class SyncPrepareWriteSkewUseSynchronizationTotalOrderTest extends FullAsyncTotalOrderTest {
+public class SyncPrepareWriteSkewUseSynchronizationTotalOrderTest extends BaseSimpleTotalOrderTest {
 
    public SyncPrepareWriteSkewUseSynchronizationTotalOrderTest() {
-      super(3, CacheMode.REPL_SYNC, false, true, true);
+      this(3);
+   }
+
+   protected SyncPrepareWriteSkewUseSynchronizationTotalOrderTest(int clusterSize) {
+      super(clusterSize, CacheMode.REPL_SYNC, false, true, true);
    }
 
    @Override
-   public void testInterceptorChain() {
-      InterceptorChain ic = advancedCache(0).getComponentRegistry().getComponent(InterceptorChain.class);
-      assertTrue(ic.containsInterceptorType(TotalOrderInterceptor.class));
-      assertTrue(ic.containsInterceptorType(TotalOrderVersionedDistributionInterceptor.class));
-      assertTrue(ic.containsInterceptorType(TotalOrderVersionedEntryWrappingInterceptor.class));
-      assertFalse(ic.containsInterceptorType(OptimisticLockingInterceptor.class));
-      assertFalse(ic.containsInterceptorType(PessimisticLockingInterceptor.class));
-   }
-
-   @Override
-   public void testSinglePhaseTotalOrder() {
+   public final void testSinglePhaseTotalOrder() {
       assertFalse(Configurations.isOnePhaseTotalOrderCommit(cache(0).getCacheConfiguration()));
+   }
+
+   @Override
+   protected final boolean isOwner(Cache cache, Object key) {
+      return true;
    }
 }
