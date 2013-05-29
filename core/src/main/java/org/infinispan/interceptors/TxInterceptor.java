@@ -132,7 +132,8 @@ public class TxInterceptor extends CommandInterceptor {
          //It is possible to receive a prepare or lock control command from a node that crashed. If that's the case rollback
          //the transaction forcefully in order to cleanup resources.
          boolean originatorMissing = !ctx.isOriginLocal() && !rpcManager.getTransport().getMembers().contains(command.getOrigin());
-         boolean alreadyCompleted = !ctx.isOriginLocal() && txTable.isTransactionCompleted(command.getGlobalTransaction());
+         boolean alreadyCompleted = !ctx.isOriginLocal() && txTable.isTransactionCompleted(command.getGlobalTransaction()) &&
+               !cacheConfiguration.transaction().transactionProtocol().isTotalOrder();
          log.tracef("invokeNextInterceptorAndVerifyTransaction :: originatorMissing=%s, alreadyCompleted=%s", originatorMissing, alreadyCompleted);
          if (alreadyCompleted || originatorMissing) {
             log.tracef("Rolling back remote transaction %s because either already completed(%s) or originator no longer in the cluster(%s).",
