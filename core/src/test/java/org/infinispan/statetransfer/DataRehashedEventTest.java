@@ -69,6 +69,7 @@ public class DataRehashedEventTest extends MultipleCacheManagersTest {
       TestingUtil.waitForRehashToComplete(cache(0), cache(1));
 
       ConsistentHash ch2Nodes = advancedCache(0).getDistributionManager().getReadConsistentHash();
+      rehashListener.waitForEvents(2);
       List<DataRehashedEvent<Object, Object>> events = rehashListener.removeEvents();
       assertEquals(events.size(), 2);
       DataRehashedEvent<Object, Object> pre = events.get(0);
@@ -90,6 +91,7 @@ public class DataRehashedEventTest extends MultipleCacheManagersTest {
       TestingUtil.waitForRehashToComplete(cache(0), cache(1), cache(2));
 
       ConsistentHash ch3Nodes = advancedCache(0).getDistributionManager().getReadConsistentHash();
+      rehashListener.waitForEvents(2);
       events = rehashListener.removeEvents();
       assertEquals(events.size(), 2);
       pre = events.get(0);
@@ -110,6 +112,7 @@ public class DataRehashedEventTest extends MultipleCacheManagersTest {
 
       // this CH might be different than the CH before the 3rd node joined
       ConsistentHash chAfterLeave = advancedCache(0).getDistributionManager().getReadConsistentHash();
+      rehashListener.waitForEvents(2);
       events = rehashListener.removeEvents();
       assertEquals(events.size(), 2);
       pre = events.get(0);
@@ -135,7 +138,6 @@ public class DataRehashedEventTest extends MultipleCacheManagersTest {
 
    @Listener
    public class DataRehashedListener {
-
       private volatile List<DataRehashedEvent<Object, Object>> events = new CopyOnWriteArrayList<DataRehashedEvent<Object, Object>>();
 
       @DataRehashed
@@ -148,6 +150,15 @@ public class DataRehashedEventTest extends MultipleCacheManagersTest {
          List<DataRehashedEvent<Object, Object>> oldEvents = events;
          events = new CopyOnWriteArrayList<DataRehashedEvent<Object, Object>>();
          return oldEvents;
+      }
+
+      void waitForEvents(final int count) {
+         eventually(new Condition() {
+            @Override
+            public boolean isSatisfied() throws Exception {
+               return events.size() >= count;
+            }
+         });
       }
    }
 }
