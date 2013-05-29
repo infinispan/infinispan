@@ -28,7 +28,6 @@ import org.infinispan.server.hotrod.OperationStatus._
 import org.infinispan.server.hotrod._
 import logging.Log
 import org.infinispan.manager.EmbeddedCacheManager
-import org.infinispan.server.core.Main._
 import java.util.Arrays
 import org.infinispan.util.{ByteArrayEquivalence, Util}
 import org.testng.Assert._
@@ -374,9 +373,9 @@ object UniquePortThreadLocal extends ThreadLocal[Int] {
    private val uniqueAddr = new AtomicInteger(12311)
 
    override def initialValue: Int = {
-      debug("Before incrementing, server port is: %d", uniqueAddr.get())
+      HotRodTestingUtil.debug("Before incrementing, server port is: %d", uniqueAddr.get())
       val port = uniqueAddr.getAndAdd(100)
-      debug("For next thread, server port will be: %d", uniqueAddr.get())
+      HotRodTestingUtil.debug("For next thread, server port will be: %d", uniqueAddr.get())
       port
    }
 

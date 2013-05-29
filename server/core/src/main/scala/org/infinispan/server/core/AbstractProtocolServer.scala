@@ -24,7 +24,6 @@ package org.infinispan.server.core
 
 import java.net.InetSocketAddress
 import org.infinispan.manager.EmbeddedCacheManager
-import org.infinispan.server.core.Main._
 import transport.NettyTransport
 import org.infinispan.util.{ClusterIdGenerator, TypedProperties, FileLookupFactory}
 import logging.Log

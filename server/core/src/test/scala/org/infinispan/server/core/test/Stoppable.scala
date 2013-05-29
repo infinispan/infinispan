@@ -24,9 +24,8 @@ import org.infinispan.test.TestingUtil
 import org.infinispan.server.core.AbstractProtocolServer
 
 /**
- * // TODO: Document this
+ * Stoppable implements simple wrappers for objects which need to be stopped in certain way after being used
  * @author Galder Zamarreño
- * @since // TODO
  */
 class Stoppable {
    // Empty - do not delete!
@@ -34,8 +33,8 @@ class Stoppable {
 
 object Stoppable {
 
-   def useCacheManager[T <: EmbeddedCacheManager](stoppable: EmbeddedCacheManager)
-           (block: EmbeddedCacheManager => Unit) {
+   def useCacheManager[T <: EmbeddedCacheManager](stoppable: T)
+           (block: T => Unit) {
       try {
          block(stoppable)
       } finally {
@@ -43,8 +42,8 @@ object Stoppable {
       }
    }
 
-   def useServer[T <: AbstractProtocolServer](stoppable: AbstractProtocolServer)
-           (block: AbstractProtocolServer => Unit) {
+   def useServer[T <: AbstractProtocolServer](stoppable: T)
+           (block: T => Unit) {
       try {
          block(stoppable)
       } finally {
