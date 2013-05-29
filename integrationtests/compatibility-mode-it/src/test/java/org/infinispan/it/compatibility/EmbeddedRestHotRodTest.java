@@ -28,6 +28,7 @@ import org.apache.commons.httpclient.HttpMethod;
 import org.apache.commons.httpclient.methods.ByteArrayRequestEntity;
 import org.apache.commons.httpclient.methods.EntityEnclosingMethod;
 import org.apache.commons.httpclient.methods.GetMethod;
+import org.apache.commons.httpclient.methods.HeadMethod;
 import org.apache.commons.httpclient.methods.PutMethod;
 import org.infinispan.client.hotrod.Flag;
 import org.infinispan.client.hotrod.RemoteCache;
@@ -39,6 +40,7 @@ import javax.servlet.http.HttpServletResponse;
 
 import java.io.ObjectInputStream;
 import java.io.Serializable;
+import java.util.concurrent.TimeUnit;
 
 import static org.testng.AssertJUnit.*;
 
@@ -141,6 +143,7 @@ public class EmbeddedRestHotRodTest {
    public void testCustomObjectEmbeddedPutHotRodRestGet() throws Exception{
       final String key = "5";
       Person p = new Person("Galder");
+
       // 1. Put with Embedded
       assertEquals(null, cacheFactory.getEmbeddedCache().put(key, p));
 
@@ -156,12 +159,88 @@ public class EmbeddedRestHotRodTest {
       assertEquals(p, new ObjectInputStream(get.getResponseBodyAsStream()).readObject());
    }
 
+   public void testCustomObjectEmbeddedPutRestGetAcceptJSONAndXML() throws Exception{
+      final String key = "6";
+      final Person p = new Person("Anna");
+
+      // 1. Put with Embedded
+      assertEquals(null, cacheFactory.getEmbeddedCache().put(key, p));
+
+      // 2. Get with REST (accept application/json)
+      HttpMethod getJson = new GetMethod(cacheFactory.getRestUrl() + "/" + key);
+      getJson.setRequestHeader("Accept", "application/json");
+      cacheFactory.getRestClient().executeMethod(getJson);
+      assertEquals(getJson.getStatusText(), HttpServletResponse.SC_OK, getJson.getStatusCode());
+      assertEquals("{\"name\":\"Anna\"}", getJson.getResponseBodyAsString());
+
+      // 3. Get with REST (accept application/xml)
+      HttpMethod getXml = new GetMethod(cacheFactory.getRestUrl() + "/" + key);
+      getXml.setRequestHeader("Accept", "application/xml");
+      cacheFactory.getRestClient().executeMethod(getXml);
+      assertEquals(getXml.getStatusText(), HttpServletResponse.SC_OK, getXml.getStatusCode());
+      assertTrue(getXml.getResponseBodyAsString().contains("<name>Anna</name>"));
+   }
+
+   public void testCustomObjectHotRodPutRestGetAcceptJSONAndXML() throws Exception{
+      final String key = "7";
+      final Person p = new Person("Jakub");
+
+      // 1. Put with HotRod
+      RemoteCache<String, Object> remote = cacheFactory.getHotRodCache();
+      assertEquals(null, remote.withFlags(Flag.FORCE_RETURN_VALUE).put(key, p));
+
+      // 2. Get with REST (accept application/json)
+      HttpMethod getJson = new GetMethod(cacheFactory.getRestUrl() + "/" + key);
+      getJson.setRequestHeader("Accept", "application/json");
+      cacheFactory.getRestClient().executeMethod(getJson);
+      assertEquals(getJson.getStatusText(), HttpServletResponse.SC_OK, getJson.getStatusCode());
+      assertEquals("{\"name\":\"Jakub\"}", getJson.getResponseBodyAsString());
+
+      // 3. Get with REST (accept application/xml)
+      HttpMethod getXml = new GetMethod(cacheFactory.getRestUrl() + "/" + key);
+      getXml.setRequestHeader("Accept", "application/xml");
+      cacheFactory.getRestClient().executeMethod(getXml);
+      assertEquals(getXml.getStatusText(), HttpServletResponse.SC_OK, getXml.getStatusCode());
+      assertTrue(getXml.getResponseBodyAsString().contains("<name>Jakub</name>"));
+   }
+
+   public void testHotRodEmbeddedPutRestHeadExpiry() throws Exception {
+      final String key1 = "8";
+      final String key2 = "9";
+
+      // 1. Put with HotRod
+      assertEquals(null, cacheFactory.getHotRodCache().put(key1, "v1", 5, TimeUnit.SECONDS));
+
+      // 2. Put with Embedded
+      assertEquals(null, cacheFactory.getEmbeddedCache().put(key2, "v2", 5, TimeUnit.SECONDS));
+
+      // 3. HEAD with REST key1
+      HttpMethod headKey1 = new HeadMethod(cacheFactory.getRestUrl() + "/" + key1);
+      cacheFactory.getRestClient().executeMethod(headKey1);
+      assertEquals(HttpServletResponse.SC_OK, headKey1.getStatusCode());
+      assertNotNull(headKey1.getResponseHeader("Expires"));
+
+      // 4. HEAD with REST key2
+      HttpMethod headKey2 = new HeadMethod(cacheFactory.getRestUrl() + "/" + key2);
+      cacheFactory.getRestClient().executeMethod(headKey2);
+      assertEquals(HttpServletResponse.SC_OK, headKey2.getStatusCode());
+      assertNotNull(headKey2.getResponseHeader("Expires"));
+   }
+
+   /**
+    * The class needs a getter for the attribute "name" so that it can be converted to JSON format
+    * internally by the REST server.
+    */
    static class Person implements Serializable {
 
       final String name;
 
       public Person(String name) {
          this.name = name;
+      }
+
+      public String getName() {
+         return name;
       }
 
       @Override
