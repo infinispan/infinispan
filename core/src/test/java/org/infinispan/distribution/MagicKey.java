@@ -46,6 +46,7 @@ public class MagicKey implements Serializable {
    private static final long serialVersionUID = -835275755945753954L;
    String name = null;
    int hashcode;
+   int segment;
    String address;
 
    public MagicKey(Cache<?, ?> primaryOwner) {
@@ -61,6 +62,7 @@ public class MagicKey implements Serializable {
 
       // we have found a hashcode that works!
       hashcode = dummy.hashCode();
+      segment = primaryOwner.getAdvancedCache().getDistributionManager().getReadConsistentHash().getSegment(this);
    }
 
    public MagicKey(Cache<?, ?> primaryOwner, Cache<?, ?>... backupOwners) {
@@ -82,6 +84,7 @@ public class MagicKey implements Serializable {
       }
       // we have found a hashcode that works!
       hashcode = dummy.hashCode();
+      segment = primaryOwner.getAdvancedCache().getDistributionManager().getReadConsistentHash().getSegment(this);
    }
 
    public MagicKey(String name, Cache<?, ?> primaryOwner) {
@@ -114,6 +117,6 @@ public class MagicKey implements Serializable {
 
    @Override
    public String toString() {
-      return "MagicKey#" + name + '{' + Integer.toHexString(hashcode) + '@' + address + '}';
+      return "MagicKey#" + name + '{' + Integer.toHexString(hashcode) + '@' + address + '/' + segment + '}';
    }
 }
