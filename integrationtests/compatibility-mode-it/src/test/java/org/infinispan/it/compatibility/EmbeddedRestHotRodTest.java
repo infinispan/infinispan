@@ -37,6 +37,9 @@ import org.testng.annotations.Test;
 
 import javax.servlet.http.HttpServletResponse;
 
+import java.io.ObjectInputStream;
+import java.io.Serializable;
+
 import static org.testng.AssertJUnit.*;
 
 /**
@@ -113,6 +116,70 @@ public class EmbeddedRestHotRodTest {
       cacheFactory.getRestClient().executeMethod(get);
       assertEquals(HttpServletResponse.SC_OK, get.getStatusCode());
       assertEquals("v1", get.getResponseBodyAsString());
+   }
+
+   public void testCustomObjectHotRodPutEmbeddedRestGet() throws Exception{
+      final String key = "4";
+      Person p = new Person("Martin");
+
+      // 1. Put with Hot Rod
+      RemoteCache<String, Object> remote = cacheFactory.getHotRodCache();
+      assertEquals(null, remote.withFlags(Flag.FORCE_RETURN_VALUE).put(key, p));
+
+      // 2. Get with Embedded
+      assertEquals(p, cacheFactory.getEmbeddedCache().get(key));
+
+      // 3. Get with REST
+      HttpMethod get = new GetMethod(cacheFactory.getRestUrl() + "/" + key);
+      get.setRequestHeader("Accept", "application/x-java-serialized-object");
+      cacheFactory.getRestClient().executeMethod(get);
+      assertEquals(get.getStatusText(), HttpServletResponse.SC_OK, get.getStatusCode());
+      // REST finds the Java POJO in-memory and returns the Java serialized version
+      assertEquals(p, new ObjectInputStream(get.getResponseBodyAsStream()).readObject());
+   }
+
+   public void testCustomObjectEmbeddedPutHotRodRestGet() throws Exception{
+      final String key = "5";
+      Person p = new Person("Galder");
+      // 1. Put with Embedded
+      assertEquals(null, cacheFactory.getEmbeddedCache().put(key, p));
+
+      // 2. Get with Hot Rod
+      assertEquals(p, cacheFactory.getHotRodCache().get(key));
+
+      // 3. Get with REST
+      HttpMethod get = new GetMethod(cacheFactory.getRestUrl() + "/" + key);
+      get.setRequestHeader("Accept", "application/x-java-serialized-object");
+      cacheFactory.getRestClient().executeMethod(get);
+      assertEquals(get.getStatusText(), HttpServletResponse.SC_OK, get.getStatusCode());
+      // REST finds the Java POJO in-memory and returns the Java serialized version
+      assertEquals(p, new ObjectInputStream(get.getResponseBodyAsStream()).readObject());
+   }
+
+   static class Person implements Serializable {
+
+      final String name;
+
+      public Person(String name) {
+         this.name = name;
+      }
+
+      @Override
+      public boolean equals(Object o) {
+         if (this == o) return true;
+         if (o == null || getClass() != o.getClass()) return false;
+
+         Person person = (Person) o;
+
+         if (!name.equals(person.name)) return false;
+
+         return true;
+      }
+
+      @Override
+      public int hashCode() {
+         return name.hashCode();
+      }
    }
 
 }

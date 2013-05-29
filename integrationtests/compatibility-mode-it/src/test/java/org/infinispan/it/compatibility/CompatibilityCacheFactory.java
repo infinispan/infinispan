@@ -26,7 +26,6 @@ package org.infinispan.it.compatibility;
 import net.spy.memcached.MemcachedClient;
 import org.apache.commons.httpclient.HttpClient;
 import org.infinispan.Cache;
-import org.infinispan.api.BasicCache;
 import org.infinispan.api.BasicCacheContainer;
 import org.infinispan.client.hotrod.RemoteCache;
 import org.infinispan.client.hotrod.RemoteCacheManager;
@@ -121,6 +120,7 @@ public class CompatibilityCacheFactory<K, V> {
       Context ctx = new Context(rest, "/", Context.SESSIONS);
       ctx.setInitParams(Collections.singletonMap("resteasy.resources", "org.infinispan.rest.Server"));
       ctx.addEventListener(new ResteasyBootstrap());
+      ctx.addEventListener(new ServerBootstrap());
       ctx.addServlet(HttpServletDispatcher.class, "/rest/*");
       ServletContext servletContext = ctx.getServletContext();
       ServerBootstrap.setCacheManager(servletContext, cacheManager);
