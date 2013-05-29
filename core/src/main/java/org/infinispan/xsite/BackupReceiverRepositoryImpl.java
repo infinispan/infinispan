@@ -123,6 +123,7 @@ public class BackupReceiverRepositoryImpl implements BackupReceiverRepository {
 
       Cache<Object, Object> cache = cacheManager.getCache(remoteCache);
       backupReceivers.putIfAbsent(toLookFor, new BackupReceiverImpl(cache));
+      toLookFor.setLocalCacheName(cache.getName());
       return backupReceivers.get(toLookFor);
    }
 

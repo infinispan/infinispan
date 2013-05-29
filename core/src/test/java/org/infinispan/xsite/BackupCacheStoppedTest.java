@@ -44,7 +44,6 @@ public class BackupCacheStoppedTest extends AbstractTwoSitesTest {
       Cache<Object,Object> backup = backup(site);
       final GlobalComponentRegistry gcr = backup.getAdvancedCache().getComponentRegistry().getGlobalComponentRegistry();
 
-      assertTrue(backup.getName().contains("lonBackup"));
       assertEquals(backup.get(key), val);
       assertTrue(backup.getStatus().allowInvocations());
 
