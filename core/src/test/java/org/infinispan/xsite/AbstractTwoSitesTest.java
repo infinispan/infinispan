@@ -42,6 +42,12 @@ public abstract class AbstractTwoSitesTest extends AbstractXSiteTest {
    protected String lonCustomFailurePolicyClass = null;
    protected boolean use2Pc = false;
 
+   /**
+    * If true, the caches from one site will backup to a cache having the same name remotely (mirror)
+    * and the backupFor config element won't be used.
+    */
+   boolean implicitBackupCache = false;
+
    @Override
    protected void createSites() {
 
@@ -56,8 +62,6 @@ public abstract class AbstractTwoSitesTest extends AbstractXSiteTest {
             .failurePolicyClass(lonCustomFailurePolicyClass)
             .useTwoPhaseCommit(use2Pc)
             .sites().addInUseBackupSite("NYC");
-      ConfigurationBuilder nycBackup = getDefaultClusteredCacheConfig(CacheMode.DIST_SYNC, false);
-      nycBackup.sites().backupFor().remoteSite("NYC").defaultRemoteCache();
 
       GlobalConfigurationBuilder nycGc = GlobalConfigurationBuilder.defaultClusteredBuilder();
       nycGc
@@ -67,23 +71,25 @@ public abstract class AbstractTwoSitesTest extends AbstractXSiteTest {
             .site("LON")
             .strategy(BackupConfiguration.BackupStrategy.SYNC)
             .sites().addInUseBackupSite("LON");
-      ConfigurationBuilder lonBackup = getDefaultClusteredCacheConfig(CacheMode.DIST_SYNC, isLonBackupTransactional);
-      lonBackup.sites().backupFor().remoteSite("LON").defaultRemoteCache();
-
 
       createSite("LON", 2, lonGc, lon);
       createSite("NYC", 2, nycGc, nyc);
 
-      startCache("LON", "nycBackup", nycBackup);
-      startCache("NYC", "lonBackup", lonBackup);
-
-      Configuration lonBackupConfig = cache("NYC", "lonBackup", 0).getCacheConfiguration();
-      assertTrue(lonBackupConfig.sites().backupFor().isBackupFor("LON", CacheContainer.DEFAULT_CACHE_NAME));
+      if (!implicitBackupCache) {
+         ConfigurationBuilder nycBackup = getDefaultClusteredCacheConfig(CacheMode.DIST_SYNC, false);
+         nycBackup.sites().backupFor().remoteSite("NYC").defaultRemoteCache();
+         startCache("LON", "nycBackup", nycBackup);
+         ConfigurationBuilder lonBackup = getDefaultClusteredCacheConfig(CacheMode.DIST_SYNC, isLonBackupTransactional);
+         lonBackup.sites().backupFor().remoteSite("LON").defaultRemoteCache();
+         startCache("NYC", "lonBackup", lonBackup);
+         Configuration lonBackupConfig = cache("NYC", "lonBackup", 0).getCacheConfiguration();
+         assertTrue(lonBackupConfig.sites().backupFor().isBackupFor("LON", CacheContainer.DEFAULT_CACHE_NAME));
+      }
    }
 
    protected Cache<Object, Object> backup(String site) {
-      if (site.equals("LON")) return cache("NYC", "lonBackup", 0);
-      if (site.equals("NYC")) return cache("LON", "nycBackup", 0);
+      if (site.equals("LON")) return implicitBackupCache ? cache("NYC", 0) : cache("NYC", "lonBackup", 0);
+      if (site.equals("NYC")) return implicitBackupCache ? cache("LON", 0) : cache("LON", "nycBackup", 0);
       throw new IllegalArgumentException("No such site: " + site);
    }
 
