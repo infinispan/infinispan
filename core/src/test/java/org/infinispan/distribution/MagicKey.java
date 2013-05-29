@@ -44,12 +44,17 @@ public class MagicKey implements Serializable {
     * The serialVersionUID
     */
    private static final long serialVersionUID = -835275755945753954L;
-   String name = null;
-   int hashcode;
-   int segment;
-   String address;
 
-   public MagicKey(Cache<?, ?> primaryOwner) {
+   /**
+    * The name is used only for easier debugging and may be null. It is not part of equals()/hashCode().
+    */
+   private final String name;
+   private final int hashcode;
+   private final int segment;
+   private final String address;
+
+   public MagicKey(String name, Cache<?, ?> primaryOwner) {
+      this.name = name;
       address = addressOf(primaryOwner).toString();
       Random r = new Random();
       Object dummy;
@@ -65,7 +70,8 @@ public class MagicKey implements Serializable {
       segment = primaryOwner.getAdvancedCache().getDistributionManager().getReadConsistentHash().getSegment(this);
    }
 
-   public MagicKey(Cache<?, ?> primaryOwner, Cache<?, ?>... backupOwners) {
+   public MagicKey(String name, Cache<?, ?> primaryOwner, Cache<?, ?>... backupOwners) {
+      this.name = name;
       address = addressOf(primaryOwner).toString();
       Random r = new Random();
       Object dummy;
@@ -87,14 +93,12 @@ public class MagicKey implements Serializable {
       segment = primaryOwner.getAdvancedCache().getDistributionManager().getReadConsistentHash().getSegment(this);
    }
 
-   public MagicKey(String name, Cache<?, ?> primaryOwner) {
-      this(primaryOwner);
-      this.name = name;
+   public MagicKey(Cache<?, ?> primaryOwner) {
+      this(null, primaryOwner);
    }
 
-   public MagicKey(String name, Cache<?, ?> primaryOwner, Cache<?, ?>... backupOwners) {
-      this(primaryOwner, backupOwners);
-      this.name = name;
+   public MagicKey(Cache<?, ?> primaryOwner, Cache<?, ?>... backupOwners) {
+      this(null, primaryOwner, backupOwners);
    }
 
    @Override
@@ -109,10 +113,7 @@ public class MagicKey implements Serializable {
 
       MagicKey magicKey = (MagicKey) o;
 
-      if (hashcode != magicKey.hashcode) return false;
-      if (address != null ? !address.equals(magicKey.address) : magicKey.address != null) return false;
-
-      return true;
+      return hashcode == magicKey.hashcode && address.equals(magicKey.address);
    }
 
    @Override
