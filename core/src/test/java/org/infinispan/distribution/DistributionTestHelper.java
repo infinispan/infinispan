@@ -105,7 +105,7 @@ public class DistributionTestHelper {
       if (!addressOf(primaryOwner).equals(ownerAddresses.get(0)))
          return false;
       for (int i = 0; i < backupOwners.length; i++) {
-         if (!addressOf(backupOwners[i]).equals(ownerAddresses.get(i+1)))
+         if (!ownerAddresses.contains(addressOf(backupOwners[i])))
             return false;
       }
       return true;

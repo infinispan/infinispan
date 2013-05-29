@@ -310,6 +310,11 @@ public class StateConsumerImpl implements StateConsumer {
             ownsData = true;
          }
       }
+
+      // Make sure we don't send a REBALANCE_CONFIRM command before we've added all the transfer tasks
+      // even if some of the tasks are removed and re-added
+      waitingForState.set(false);
+
       final ConsistentHash previousReadCh = this.cacheTopology != null ? this.cacheTopology.getReadConsistentHash() : null;
       final ConsistentHash previousWriteCh = this.cacheTopology != null ? this.cacheTopology.getWriteConsistentHash() : null;
       // Ensures writes to the data container use the right consistent hash
@@ -396,7 +401,7 @@ public class StateConsumerImpl implements StateConsumer {
          stateTransferLock.notifyTransactionDataReceived(cacheTopology.getTopologyId());
 
          // Only set the flag here, after all the transfers have been added to the transfersBySource map
-         if (isRebalance) {
+         if (rebalanceInProgress.get()) {
             waitingForState.set(true);
          }
 
@@ -635,8 +640,8 @@ public class StateConsumerImpl implements StateConsumer {
                return o;
             }
          }
+         log.noLiveOwnersFoundForSegment(segmentId, cacheName, owners, excludedSources);
       }
-      log.noLiveOwnersFoundForSegment(segmentId, cacheName, owners, excludedSources);
       return null;
    }
 
@@ -938,6 +943,7 @@ public class StateConsumerImpl implements StateConsumer {
 
    private InboundTransferTask addTransfer(Address source, Set<Integer> segmentsFromSource) {
       synchronized (this) {
+         log.tracef("Adding transfer from %s for segments %s", source, segmentsFromSource);
          segmentsFromSource.removeAll(transfersBySegment.keySet());  // already in progress segments are excluded
          if (!segmentsFromSource.isEmpty()) {
             InboundTransferTask inboundTransfer = new InboundTransferTask(segmentsFromSource, source,
@@ -961,6 +967,8 @@ public class StateConsumerImpl implements StateConsumer {
 
    private boolean removeTransfer(InboundTransferTask inboundTransfer) {
       synchronized (this) {
+         log.tracef("Removing inbound transfers for segments %s from source %s for cache %s",
+               inboundTransfer.getSegments(), inboundTransfer.getSource(), cacheName);
          taskQueue.remove(inboundTransfer);
          List<InboundTransferTask> transfers = transfersBySource.get(inboundTransfer.getSource());
          if (transfers != null) {

@@ -188,8 +188,7 @@ public class InboundTransferTask {
          isCancelled = true;
       }
 
-      StateRequestCommand cmd = commandsFactory.buildStateRequestCommand(StateRequestCommand.Type.CANCEL_STATE_TRANSFER, rpcManager.getAddress(), topologyId, cancelledSegments);
-      rpcManager.invokeRemotely(Collections.singleton(source), cmd, rpcOptions);
+      sendCancelCommand(cancelledSegments);
 
       if (isCancelled) {
          notifyCompletion();
@@ -204,11 +203,17 @@ public class InboundTransferTask {
             log.tracef("Cancelling inbound state transfer of segments %s of cache %s", segments, cacheName);
          }
 
-         StateRequestCommand cmd = commandsFactory.buildStateRequestCommand(StateRequestCommand.Type.CANCEL_STATE_TRANSFER, rpcManager.getAddress(), topologyId, segments);
-         rpcManager.invokeRemotely(Collections.singleton(source), cmd, rpcOptions);
+         sendCancelCommand(segments);
 
          notifyCompletion();
       }
+   }
+
+   private void sendCancelCommand(Set<Integer> cancelledSegments) {
+      StateRequestCommand cmd = commandsFactory.buildStateRequestCommand(
+            StateRequestCommand.Type.CANCEL_STATE_TRANSFER, rpcManager.getAddress(), topologyId,
+            cancelledSegments);
+      rpcManager.invokeRemotely(Collections.singleton(source), cmd, rpcManager.getDefaultRpcOptions(false));
    }
 
    public void onStateReceived(int segmentId, boolean isLastChunk) {
