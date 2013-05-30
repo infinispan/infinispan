@@ -237,6 +237,7 @@ public class LoadersConfigurationBuilder extends AbstractConfigurationChildBuild
    @SuppressWarnings("unchecked")
    @Override
    public LoadersConfigurationBuilder read(LoadersConfiguration template) {
+      clearCacheLoaders();
       for (CacheLoaderConfiguration c : template.cacheLoaders()) {
          Class<? extends CacheLoaderConfigurationBuilder<?, ?>> builderClass = (Class<? extends CacheLoaderConfigurationBuilder<?, ?>>) ConfigurationUtils.builderFor(c);
          Builder<Object> builder = (Builder<Object>) this.addLoader(builderClass);

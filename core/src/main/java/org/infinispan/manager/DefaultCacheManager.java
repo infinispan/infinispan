@@ -418,8 +418,7 @@ public class DefaultCacheManager implements EmbeddedCacheManager, CacheManager {
 
    @Override
    public Configuration defineConfiguration(String cacheName, Configuration configuration) {
-      defineConfiguration(cacheName, configuration, defaultConfiguration, true);
-      return configuration;
+      return defineConfiguration(cacheName, configuration, defaultConfiguration, true);
    }
 
    /**
