@@ -22,7 +22,12 @@
  */
 package org.infinispan.distexec.mapreduce;
 
-import static org.infinispan.test.TestingUtil.withCacheManager;
+import org.infinispan.Cache;
+import org.infinispan.CacheException;
+import org.infinispan.configuration.cache.CacheMode;
+import org.infinispan.test.MultipleCacheManagersTest;
+import org.testng.AssertJUnit;
+import org.testng.annotations.Test;
 
 import java.util.HashMap;
 import java.util.Iterator;
@@ -31,15 +36,8 @@ import java.util.Map.Entry;
 import java.util.StringTokenizer;
 import java.util.concurrent.Future;
 
-import org.infinispan.Cache;
-import org.infinispan.CacheException;
-import org.infinispan.configuration.cache.CacheMode;
-import org.infinispan.configuration.cache.ConfigurationBuilder;
-import org.infinispan.test.CacheManagerCallable;
-import org.infinispan.test.MultipleCacheManagersTest;
-import org.infinispan.test.fwk.TestCacheManagerFactory;
-import org.testng.AssertJUnit;
-import org.testng.annotations.Test;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
 
 /**
  * BaseTest for MapReduceTask
@@ -171,25 +169,7 @@ public abstract class BaseWordCountMapReduceTest extends MultipleCacheManagersTe
    public MapReduceTask<String, String, String, Integer> invokeMapReduce(String keys[], boolean useCombiner) throws Exception{
       return invokeMapReduce(keys,new WordCountMapper(), new WordCountReducer(), useCombiner);
    }
-   
-   @Test(expectedExceptions={IllegalStateException.class})
-   public void testImproperCacheStateForMapReduceTask() {
 
-      ConfigurationBuilder builder = TestCacheManagerFactory.getDefaultCacheConfiguration(true);
-
-      withCacheManager(new CacheManagerCallable(TestCacheManagerFactory.createCacheManager(builder)){
-         
-         @SuppressWarnings("unused")
-         @Override
-         public void call() {
-            Cache<Object, Object> cache = cm.getCache();
-            MapReduceTask<Object, Object, String, Integer> task = new MapReduceTask<Object, Object, String, Integer>(
-                  cache);
-         }
-      });
-   }
-
-   
    public void testinvokeMapReduceOnAllKeys() throws Exception {
       MapReduceTask<String,String,String,Integer> task = invokeMapReduce(null);
       Map<String, Integer> mapReduce = task.execute();
@@ -250,11 +230,12 @@ public abstract class BaseWordCountMapReduceTest extends MultipleCacheManagersTe
       assertWordCount(countWords(mapReduce), 13); 
    }
    
-   protected void verifyResults(Map <String,Integer> result, Map <String,Integer> verifyAgainst){      
+   protected void verifyResults(Map <String,Integer> result, Map <String,Integer> verifyAgainst) {
+      assertTrue("Results should have at least 1 answer", result.size() > 0);
       for (Entry<String, Integer> e : result.entrySet()) {
          String key = e.getKey();
          Integer count = verifyAgainst.get(key);
-         assert count.equals(e.getValue()): "key " + e.getKey() + " does not have count " + count + " but " + e.getValue();                    
+         assertTrue("key " + e.getKey() + " does not have count " + count + " but " + e.getValue(), count.equals(e.getValue()));
       }      
    }
    
@@ -345,7 +326,7 @@ public abstract class BaseWordCountMapReduceTest extends MultipleCacheManagersTe
   }
   
   protected void assertWordCount(int actualWordCount, int expectedWordCount){
-     assert actualWordCount == expectedWordCount: " word count of " + actualWordCount + " incorrect , expected " + expectedWordCount; 
+     assertTrue(" word count of " + actualWordCount + " incorrect , expected " + expectedWordCount, actualWordCount == expectedWordCount);
   }
   
    protected int countWords(Map<String, Integer> result) {
@@ -397,7 +378,7 @@ public abstract class BaseWordCountMapReduceTest extends MultipleCacheManagersTe
       
       @Override
       public void map(String key, String value, Collector<String, Integer> collector) {
-         assert count == 0;                
+         assertEquals(0, count);
          count++;
       }
    }
@@ -409,7 +390,7 @@ public abstract class BaseWordCountMapReduceTest extends MultipleCacheManagersTe
 
       @Override
       public Integer reduce(String key, Iterator<Integer> iter) {
-         assert count == 0;
+         assertEquals(0, count);
          count++;
          return count;
       }

@@ -891,5 +891,11 @@ public interface Log extends BasicLogger {
    @LogMessage(level = ERROR)
    @Message(value = "Failed to start rebalance for cache %s", id = 230)
    void rebalanceStartError(String cacheName, @Cause Throwable cause);
+
+   @Message(value="Cache mode should be DIST or REPL, rather than %s", id = 231)
+   IllegalStateException requireDistOrReplCache(String cacheType);
+
+   @Message(value="Cache is in an invalid state: %s", id = 232)
+   IllegalStateException invalidCacheState(String cacheState);
 }
 

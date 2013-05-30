@@ -68,6 +68,7 @@ import org.infinispan.distexec.spi.DistributedTaskLifecycleService;
 import org.infinispan.distribution.DistributionManager;
 import org.infinispan.factories.ComponentRegistry;
 import org.infinispan.interceptors.InterceptorChain;
+import org.infinispan.interceptors.locking.ClusteringDependentLogic;
 import org.infinispan.lifecycle.ComponentStatus;
 import org.infinispan.marshall.Marshaller;
 import org.infinispan.marshall.StreamingMarshaller;
@@ -133,14 +134,6 @@ public class DefaultExecutorService extends AbstractExecutorService implements D
       };
    };
    
-   public static final Address LOCAL_MODE_ADDRESS = new Address() {
-      
-      @Override
-      public int compareTo(Address o) {
-         return 0;
-      }
-   };
-   
    public static final DistributedTaskFailoverPolicy NO_FAILOVER = new NoTaskFailoverPolicy();
    public static final DistributedTaskFailoverPolicy RANDOM_NODE_FAILOVER = new RandomNodeTaskFailoverPolicy();
 
@@ -154,6 +147,7 @@ public class DefaultExecutorService extends AbstractExecutorService implements D
    protected final Marshaller marshaller;
    protected final ExecutorService localExecutorService;
    protected final CancellationService cancellationService;
+   protected final ClusteringDependentLogic clusterDependentLogic;
    protected final boolean takeExecutorOwnership;
    private final TimeService timeService;
 
@@ -228,6 +222,7 @@ public class DefaultExecutorService extends AbstractExecutorService implements D
       this.localExecutorService = localExecutorService;
       this.takeExecutorOwnership = takeExecutorOwnership;
       this.timeService = registry.getTimeService();
+      this.clusterDependentLogic = registry.getComponent(ClusteringDependentLogic.class);
    }
 
    @Override
@@ -266,11 +261,7 @@ public class DefaultExecutorService extends AbstractExecutorService implements D
    }
 
    private Address getAddress() {
-      if (rpc != null) {
-         return rpc.getAddress();
-      } else {
-         return LOCAL_MODE_ADDRESS;
-      }
+      return clusterDependentLogic.getAddress();
    }
 
    private List<Runnable> realShutdown(boolean interrupt) {

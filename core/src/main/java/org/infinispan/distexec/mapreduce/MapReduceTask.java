@@ -31,9 +31,12 @@ import org.infinispan.commands.CommandsFactory;
 import org.infinispan.commands.CreateCacheCommand;
 import org.infinispan.commands.read.MapCombineCommand;
 import org.infinispan.commands.read.ReduceCommand;
+import org.infinispan.distexec.DefaultExecutorService;
+import org.infinispan.distexec.DistributedExecutorService;
 import org.infinispan.distexec.mapreduce.spi.MapReduceTaskLifecycleService;
 import org.infinispan.distribution.DistributionManager;
 import org.infinispan.factories.ComponentRegistry;
+import org.infinispan.interceptors.locking.ClusteringDependentLogic;
 import org.infinispan.lifecycle.ComponentStatus;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.marshall.Marshaller;
@@ -173,6 +176,8 @@ public class MapReduceTask<KIn, VIn, KOut, VOut> {
    protected final CancellationService cancellationService;
    protected final List<CancellableTaskPart> cancellableTasks;
    protected final UUID taskId;
+   protected final ClusteringDependentLogic clusteringDependentLogic;
+   protected final boolean isLocalOnly;
 
    /**
     * Create a new MapReduceTask given a master cache node. All distributed task executions will be
@@ -233,6 +238,8 @@ public class MapReduceTask<KIn, VIn, KOut, VOut> {
       this.distributeReducePhase = distributeReducePhase;  
       this.useIntermediateSharedCache = useIntermediateSharedCache;
       this.cancellableTasks = Collections.synchronizedList(new ArrayList<CancellableTaskPart>());
+      this.clusteringDependentLogic = cache.getComponentRegistry().getComponent(ClusteringDependentLogic.class);
+      this.isLocalOnly = cache.getRpcManager() == null;
    }
 
    /**
@@ -318,7 +325,7 @@ public class MapReduceTask<KIn, VIn, KOut, VOut> {
          throw new NullPointerException("A valid reference of Reducer is not set " + reducer);
       
       
-      if(distributeReducePhase()){
+      if(!isLocalOnly && distributeReducePhase()){
          boolean useCompositeKeys = useIntermediateSharedCache();
          String intermediateCacheName = DEFAULT_TMP_CACHE_CONFIGURATION_NAME;
          if (useIntermediatePerTaskCache()) {
@@ -410,10 +417,10 @@ public class MapReduceTask<KIn, VIn, KOut, VOut> {
             futures.add(part);
          }
       } else {
-         Map<Address, List<KIn>> keysToNodes = mapKeysToNodes(keys);
-         for (Entry<Address, List<KIn>> e : keysToNodes.entrySet()) {
+         Map<Address, ? extends Collection<KIn>> keysToNodes = mapKeysToNodes(keys);
+         for (Entry<Address, ? extends Collection<KIn>> e : keysToNodes.entrySet()) {
             Address address = e.getKey();
-            List<KIn> keys = e.getValue();
+            Collection<KIn> keys = e.getValue();
             if (address.equals(rpc.getAddress())) {
                cmd = buildMapCombineCommand(taskId.toString(), clone(mapper), clone(combiner),
                         keys, true, useCompositeKeys);
@@ -442,9 +449,16 @@ public class MapReduceTask<KIn, VIn, KOut, VOut> {
       MapCombineCommand<KIn, VIn, KOut, VOut> cmd = null;
       Map<KOut, List<VOut>> mapPhasesResult = new HashMap<KOut, List<VOut>>();
       List<MapTaskPart<Map<KOut, List<VOut>>>> futures = new ArrayList<MapTaskPart<Map<KOut, List<VOut>>>>();
+      Address localAddress = clusteringDependentLogic.getAddress();
       if (inputTaskKeysEmpty()) {
-         for (Address target : rpc.getMembers()) {
-            if (target.equals(rpc.getAddress())) {
+         List<Address> targets;
+         if (isLocalOnly) {
+            targets = Collections.singletonList(localAddress);
+         } else {
+            targets = rpc.getMembers();
+         }
+         for (Address target : targets) {
+            if (target.equals(localAddress)) {
                cmd = buildMapCombineCommand(taskId.toString(), clone(mapper), clone(combiner),
                         null, false, false);
             } else {
@@ -455,11 +469,11 @@ public class MapReduceTask<KIn, VIn, KOut, VOut> {
             futures.add(part);
          }
       } else {
-         Map<Address, List<KIn>> keysToNodes = mapKeysToNodes(keys);
-         for (Entry<Address, List<KIn>> e : keysToNodes.entrySet()) {
+         Map<Address, ? extends Collection<KIn>> keysToNodes = mapKeysToNodes(keys);
+         for (Entry<Address, ? extends Collection<KIn>> e : keysToNodes.entrySet()) {
             Address address = e.getKey();
-            List<KIn> keys = e.getValue();
-            if (address.equals(rpc.getAddress())) {
+            Collection<KIn> keys = e.getValue();
+            if (address.equals(localAddress)) {
                cmd = buildMapCombineCommand(taskId.toString(), clone(mapper), clone(combiner),
                         keys, false, false);
             } else {
@@ -513,14 +527,14 @@ public class MapReduceTask<KIn, VIn, KOut, VOut> {
          destCache = taskId.toString();
       }
       Cache<Object, Object> dstCache = cache.getCacheManager().getCache(destCache);
-      Map<Address, List<KOut>> keysToNodes = mapKeysToNodes(dstCache.getAdvancedCache()
+      Map<Address, ? extends Collection<KOut>> keysToNodes = mapKeysToNodes(dstCache.getAdvancedCache()
                .getDistributionManager(), allMapPhasesResponses, useCompositeKeys);
       Map<KOut, VOut> reduceResult = new HashMap<KOut, VOut>();
       List<ReduceTaskPart<Map<KOut, VOut>>> reduceTasks = new ArrayList<ReduceTaskPart<Map<KOut, VOut>>>();
       ReduceCommand<KOut, VOut> reduceCommand = null;
-      for (Entry<Address, List<KOut>> e : keysToNodes.entrySet()) {
+      for (Entry<Address, ? extends Collection<KOut>> e : keysToNodes.entrySet()) {
          Address address = e.getKey();
-         List<KOut> keys = e.getValue();
+         Collection<KOut> keys = e.getValue();
          if (address.equals(rpc.getAddress())) {
             reduceCommand = buildReduceCommand(taskId.toString(), destCache, clone(reducer), keys,
                      useCompositeKeys);
@@ -652,15 +666,19 @@ public class MapReduceTask<KIn, VIn, KOut, VOut> {
       }
    }
 
-   protected <T> Map<Address, List<T>> mapKeysToNodes(DistributionManager dm, Collection<T> keysToMap, boolean useIntermediateCompositeKey) {
-      return mapReduceManager.mapKeysToNodes(dm, taskId.toString(), keysToMap, useIntermediateCompositeKey);
+   protected <T> Map<Address, ? extends Collection<T>> mapKeysToNodes(DistributionManager dm, Collection<T> keysToMap, boolean useIntermediateCompositeKey) {
+      if (isLocalOnly) {
+         return Collections.singletonMap(clusteringDependentLogic.getAddress(), keysToMap);
+      } else {
+         return mapReduceManager.mapKeysToNodes(dm, taskId.toString(), keysToMap, useIntermediateCompositeKey);
+      }
    }
    
-   protected <T> Map<Address, List<T>> mapKeysToNodes(Collection<T> keysToMap, boolean useIntermediateCompositeKey) {
-      return mapReduceManager.mapKeysToNodes(cache.getDistributionManager(), taskId.toString(), keysToMap, useIntermediateCompositeKey);
+   protected <T> Map<Address, ? extends Collection<T>> mapKeysToNodes(Collection<T> keysToMap, boolean useIntermediateCompositeKey) {
+      return mapKeysToNodes(cache.getDistributionManager(), keysToMap, useIntermediateCompositeKey);
    }
    
-   protected <T> Map<Address, List<T>> mapKeysToNodes(Collection<T> keysToMap) {
+   protected <T> Map<Address, ? extends Collection<T>> mapKeysToNodes(Collection<T> keysToMap) {
       return mapKeysToNodes(keysToMap, false);
    }
    
@@ -674,16 +692,11 @@ public class MapReduceTask<KIn, VIn, KOut, VOut> {
    
    private void ensureProperCacheState(AdvancedCache<KIn, VIn> cache) throws NullPointerException,
             IllegalStateException {
-      
-      if (cache.getRpcManager() == null)
-         throw new IllegalStateException("Can not use non-clustered cache for MapReduceTask");
-
       if (cache.getStatus() != ComponentStatus.RUNNING)
-         throw new IllegalStateException("Invalid cache state " + cache.getStatus());
+         throw log.invalidCacheState(cache.getStats().toString());
 
-      if (cache.getDistributionManager() == null) {
-         throw new IllegalStateException("Cache mode should be DIST, rather than "
-                           + cache.getCacheConfiguration().clustering().cacheModeString());
+      if (cache.getRpcManager() != null && cache.getDistributionManager() == null) {
+         throw log.requireDistOrReplCache(cache.getCacheConfiguration().clustering().cacheModeString());
       }
    }
 
@@ -832,7 +845,7 @@ public class MapReduceTask<KIn, VIn, KOut, VOut> {
       }
 
       protected Address getAddress() {
-         return cache.getRpcManager().getAddress();
+         return clusteringDependentLogic.getAddress();
       }
 
       protected boolean locallyExecuted(){
