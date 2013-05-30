@@ -22,6 +22,16 @@
  */
 package org.infinispan.distexec.mapreduce;
 
+import org.infinispan.Cache;
+import org.infinispan.CacheException;
+import org.infinispan.configuration.cache.CacheMode;
+import org.infinispan.configuration.cache.ConfigurationBuilder;
+import org.infinispan.manager.EmbeddedCacheManager;
+import org.infinispan.test.CacheManagerCallable;
+import org.infinispan.test.TestingUtil;
+import org.infinispan.test.fwk.TestCacheManagerFactory;
+import org.testng.annotations.Test;
+
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
@@ -35,17 +45,11 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-import org.infinispan.Cache;
-import org.infinispan.CacheException;
-import org.infinispan.configuration.cache.CacheMode;
-import org.infinispan.configuration.cache.ConfigurationBuilder;
-import org.infinispan.manager.EmbeddedCacheManager;
-import org.infinispan.test.CacheManagerCallable;
-import org.infinispan.test.TestingUtil;
-import org.infinispan.test.fwk.TestCacheManagerFactory;
-import org.testng.annotations.Test;
-
 import static org.infinispan.test.TestingUtil.withCacheManager;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertTrue;
 
 /**
  * SimpleTwoNodesMapReduceTest tests Map/Reduce functionality using two Infinispan nodes and local
@@ -107,13 +111,13 @@ public class SimpleTwoNodesMapReduceTest extends BaseWordCountMapReduceTest {
          }         
          mapperCancelled = root.getClass().equals(RuntimeException.class);         
       }
-      assert mapperCancelled : "Mapper not cancelled, root cause " + root;
-      assert cancelled.get();
-      assert future.isDone();
+      assertTrue("Mapper not cancelled, root cause " + root, mapperCancelled);
+      assertTrue(cancelled.get());
+      assertTrue(future.isDone());
 
       //Cancelling again - should return false
       boolean canceled = future.cancel(true);
-      assert !canceled;
+      assertFalse(canceled);
       //now call get() again and it should throw CancellationException
       future.get();
    }
@@ -223,18 +227,18 @@ public class SimpleTwoNodesMapReduceTest extends BaseWordCountMapReduceTest {
       taskMap.put(task1, 2);
 
 
-      assert taskMap.get(task) != null;
-      assert taskMap.get(task1) != null;
-      assert taskMap.get(task2) == null;
+      assertNotNull(taskMap.get(task));
+      assertNotNull(taskMap.get(task1));
+      assertNull(taskMap.get(task2));
 
-      assert !task1.equals(task2);
-      assert !task1.equals(task3);
-      assert !task1.equals(objectForCompare);
-      assert task1.equals(task4);
+      assertFalse(task1.equals(task2));
+      assertFalse(task1.equals(task3));
+      assertFalse(task1.equals(objectForCompare));
+      assertTrue(task1.equals(task4));
 
       Pattern p = Pattern.compile("MapReduceTask \\[mapper=\\S+, reducer=\\S+, combiner=\\S*, keys=\\S*, taskId=\\S+\\]");
       Matcher m = p.matcher(task1.toString());
-      assert m.find();
+      assertTrue(m.find());
    }
 
    @Test(expectedExceptions = ExecutionException.class)
@@ -270,7 +274,8 @@ public class SimpleTwoNodesMapReduceTest extends BaseWordCountMapReduceTest {
       try {
          MapReduceTask<String, String, String, Integer> task = createMapReduceTask(cache);
       } catch(IllegalStateException ex) {
-         assert ex.getMessage() != null && ex.getMessage().contains("Invalid cache state");
+         assertNotNull(ex.getMessage());
+         assertTrue(ex.getMessage().contains("Cache is in an invalid state:"));
          throw ex;
       } finally {
          TestingUtil.killCacheManagers(cacheManager);
@@ -318,18 +323,18 @@ public class SimpleTwoNodesMapReduceTest extends BaseWordCountMapReduceTest {
       MapReduceManagerImpl.IntermediateCompositeKey key7 = new MapReduceManagerImpl.IntermediateCompositeKey(null, null);
       MapReduceManagerImpl.IntermediateCompositeKey key8 = new MapReduceManagerImpl.IntermediateCompositeKey(null, null);
 
-      assert !key.equals(key1);
-      assert key.equals(key2);
-      assert !key.equals(null);
-      assert !key.equals(new String());
+      assertFalse(key.equals(key1));
+      assertTrue(key.equals(key2));
+      assertFalse(key.equals(null));
+      assertFalse(key.equals(new String()));
 
-      assert !key3.equals(key4);
-      assert !key5.equals(key6);
+      assertFalse(key3.equals(key4));
+      assertFalse(key5.equals(key6));
 
-      assert key7.equals(key8);
+      assertTrue(key7.equals(key8));
 
-      assert !key3.equals(key);
-      assert !key5.equals(key);
+      assertFalse(key3.equals(key));
+      assertFalse(key5.equals(key));
 
    }
 

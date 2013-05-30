@@ -23,6 +23,7 @@
 
 package org.infinispan.interceptors.locking;
 
+import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.metadata.Metadata;
 import org.infinispan.commands.FlagAffectedCommand;
 import org.infinispan.commands.tx.VersionedPrepareCommand;
@@ -161,6 +162,13 @@ public interface ClusteringDependentLogic {
     */
    public static class LocalLogic extends AbstractClusteringDependentLogic {
 
+      private EmbeddedCacheManager cacheManager;
+
+      @Inject
+      public void init(EmbeddedCacheManager cacheManager) {
+         this.cacheManager = cacheManager;
+      }
+
       @Override
       public boolean localNodeIsOwner(Object key) {
          return true;
@@ -188,7 +196,11 @@ public interface ClusteringDependentLogic {
 
       @Override
       public Address getAddress() {
-         return null;
+         Address address = cacheManager.getAddress();
+         if (address == null) {
+            address = LOCAL_MODE_ADDRESS;
+         }
+         return address;
       }
 
       @Override
@@ -210,6 +222,18 @@ public interface ClusteringDependentLogic {
          throw new IllegalStateException("Cannot invoke this method for local caches");
       }
    }
+
+   static final Address LOCAL_MODE_ADDRESS = new Address() {
+      @Override
+      public String toString() {
+         return "Local Address";
+      }
+
+      @Override
+      public int compareTo(Address o) {
+         return 0;
+      }
+   };
 
    /**
     * This logic is used in invalidation mode caches.

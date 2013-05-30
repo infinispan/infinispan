@@ -45,6 +45,7 @@ import org.infinispan.distexec.mapreduce.spi.MapReduceTaskLifecycleService;
 import org.infinispan.distribution.DistributionManager;
 import org.infinispan.factories.annotations.ComponentName;
 import org.infinispan.factories.annotations.Inject;
+import org.infinispan.interceptors.locking.ClusteringDependentLogic;
 import org.infinispan.loaders.CacheLoader;
 import org.infinispan.loaders.CacheLoaderException;
 import org.infinispan.loaders.CacheLoaderManager;
@@ -69,7 +70,7 @@ public class MapReduceManagerImpl implements MapReduceManager {
 
    private static final Log log = LogFactory.getLog(MapReduceManagerImpl.class);
    private static final int CANCELLATION_CHECK_FREQUENCY = 20;
-   private Address localAddress;
+   private ClusteringDependentLogic cdl;
    private EmbeddedCacheManager cacheManager;
    private CacheLoaderManager cacheLoaderManager;
    private ExecutorService executorService;
@@ -79,10 +80,11 @@ public class MapReduceManagerImpl implements MapReduceManager {
    
    @Inject
    public void init(EmbeddedCacheManager cacheManager, CacheLoaderManager cacheLoaderManager,
-            @ComponentName(ASYNC_TRANSPORT_EXECUTOR) ExecutorService asyncTransportExecutor) {
+            @ComponentName(ASYNC_TRANSPORT_EXECUTOR) ExecutorService asyncTransportExecutor,
+            ClusteringDependentLogic cdl) {
       this.cacheManager = cacheManager;
       this.cacheLoaderManager = cacheLoaderManager;
-      this.localAddress = cacheManager.getAddress();
+      this.cdl = cdl;
       this.executorService = asyncTransportExecutor;
    }
    
@@ -123,11 +125,11 @@ public class MapReduceManagerImpl implements MapReduceManager {
       if (noInputKeys) {         
          //illegal state, raise exception
          throw new IllegalStateException("Reduce phase of MapReduceTask " + taskId + " on node "
-                  + localAddress + " executed with empty input keys");
+                  + cdl.getAddress() + " executed with empty input keys");
       } else{
          //first hook into lifecycle
          MapReduceTaskLifecycleService taskLifecycleService = MapReduceTaskLifecycleService.getInstance();
-         log.tracef("For m/r task %s invoking %s at %s",  taskId, reduceCommand, localAddress);
+         log.tracef("For m/r task %s invoking %s at %s",  taskId, reduceCommand, cdl.getAddress());
          int interruptCount = 0;
          try {
             taskLifecycleService.onPreExecute(reducer, cache);
@@ -145,7 +147,7 @@ public class MapReduceManagerImpl implements MapReduceManager {
                // and reduce it
                VOut reduced = reducer.reduce(key, value.iterator());
                result.put(key, reduced);
-               log.tracef("For m/r task %s reduced %s to %s at %s ", taskId, key, reduced, localAddress);     
+               log.tracef("For m/r task %s reduced %s to %s at %s ", taskId, key, reduced, cdl.getAddress());     
             }
          } finally {
             taskLifecycleService.onPostExecute(reducer);
@@ -225,13 +227,13 @@ public class MapReduceManagerImpl implements MapReduceManager {
       }
       if (tmpCache == null) {
          throw new IllegalStateException("Temporary cache for MapReduceTask " + taskId
-                  + " not found on " + localAddress);
+                  + " not found on " + cdl.getAddress());
       }
       DistributionManager dm = tmpCache.getAdvancedCache().getDistributionManager();
 
       if (combiner != null) {
          Cache<?, ?> cache = cacheManager.getCache(mcc.getCacheName());
-         log.tracef("For m/r task %s invoking combiner %s at %s",  taskId, mcc, localAddress);
+         log.tracef("For m/r task %s invoking combiner %s at %s",  taskId, mcc, cdl.getAddress());
          MapReduceTaskLifecycleService taskLifecycleService = MapReduceTaskLifecycleService.getInstance();
          Map<KOut, VOut> combinedMap = new ConcurrentHashMap<KOut, VOut>();
          try {
@@ -247,7 +249,7 @@ public class MapReduceManagerImpl implements MapReduceManager {
                   combined = list.get(0);
                   combinedMap.put(e.getKey(), combined);
                }               
-               log.tracef("For m/r task %s combined %s to %s at %s" , taskId, e.getKey(), combined, localAddress);               
+               log.tracef("For m/r task %s combined %s to %s at %s" , taskId, e.getKey(), combined, cdl.getAddress());               
             }
          } finally {
             taskLifecycleService.onPostExecute(combiner);
@@ -312,7 +314,7 @@ public class MapReduceManagerImpl implements MapReduceManager {
 
       if (combiner != null) {
          result = new HashMap<KOut, List<VOut>>();   
-         log.tracef("For m/r task %s invoking combiner %s at %s",  taskId, mcc, localAddress);
+         log.tracef("For m/r task %s invoking combiner %s at %s",  taskId, mcc, cdl.getAddress());
          MapReduceTaskLifecycleService taskLifecycleService = MapReduceTaskLifecycleService.getInstance();
          try {
             Cache<?, ?> cache = cacheManager.getCache(mcc.getCacheName());
@@ -329,7 +331,7 @@ public class MapReduceManagerImpl implements MapReduceManager {
                }                              
                l.add(combined);
                result.put(e.getKey(), l);
-               log.tracef("For m/r task %s combined %s to %s at %s" , taskId, e.getKey(), combined, localAddress);               
+               log.tracef("For m/r task %s combined %s to %s at %s" , taskId, e.getKey(), combined, cdl.getAddress());               
             }
          } finally {
             taskLifecycleService.onPostExecute(combiner);
@@ -412,8 +414,8 @@ public class MapReduceManagerImpl implements MapReduceManager {
    protected <KIn> Set<KIn> filterLocalPrimaryOwner(Set<KIn> nodeLocalKeys, DistributionManager dm) {    
       Set<KIn> selectedKeys = new HashSet<KIn>();
       for (KIn key : nodeLocalKeys) {
-         Address primaryLocation = dm.getPrimaryLocation(key);
-         if (primaryLocation != null && primaryLocation.equals(localAddress)) {
+         Address primaryLocation = dm != null ? dm.getPrimaryLocation(key) : cdl.getAddress();
+         if (primaryLocation != null && primaryLocation.equals(cdl.getAddress())) {
             selectedKeys.add(key);
          }
       }
