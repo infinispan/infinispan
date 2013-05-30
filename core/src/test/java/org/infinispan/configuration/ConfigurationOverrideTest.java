@@ -26,6 +26,9 @@ import org.infinispan.Cache;
 import org.infinispan.configuration.cache.ClusteringConfiguration;
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
+import org.infinispan.configuration.global.GlobalConfigurationBuilder;
+import org.infinispan.loaders.dummy.DummyInMemoryCacheStoreConfigurationBuilder;
+import org.infinispan.manager.DefaultCacheManager;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.test.AbstractInfinispanTest;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
@@ -62,7 +65,7 @@ public class ConfigurationOverrideTest extends AbstractInfinispanTest {
    }
 
    public void testOldConfigurationOverride() throws Exception {
-      org.infinispan.config.Configuration defaultConfiguration = 
+      org.infinispan.config.Configuration defaultConfiguration =
             new org.infinispan.config.Configuration().fluent()
             .eviction().maxEntries(200).strategy(LIRS)
             .build();
@@ -92,7 +95,7 @@ public class ConfigurationOverrideTest extends AbstractInfinispanTest {
       assertEquals(3, clusteringCfg.hash().numOwners());
       assertEquals(51, clusteringCfg.hash().numSegments());
    }
-   
+
    public void testSimpleDistributedClusterModeNamedCache() throws Exception {
       final String cacheName = "my-cache";
       final Configuration config = new ConfigurationBuilder()
@@ -107,6 +110,17 @@ public class ConfigurationOverrideTest extends AbstractInfinispanTest {
       assertEquals(DIST_SYNC, clusteringCfg.cacheMode());
       assertEquals(3, clusteringCfg.hash().numOwners());
       assertEquals(51, clusteringCfg.hash().numSegments());
+   }
+
+   public void testOverrideWithStore() {
+      final ConfigurationBuilder builder1 = new ConfigurationBuilder();
+      builder1.loaders().addStore(DummyInMemoryCacheStoreConfigurationBuilder.class);
+      cm = new DefaultCacheManager(new GlobalConfigurationBuilder().build(), builder1.build());
+      ConfigurationBuilder builder2 = new ConfigurationBuilder();
+      builder2.read(cm.getDefaultCacheConfiguration());
+      builder2.eviction().maxEntries(1000);
+      Configuration configuration = cm.defineConfiguration("named", builder2.build());
+      assertEquals(1, configuration.loaders().cacheLoaders().size());
    }
 
 }
