@@ -53,7 +53,7 @@ public class MetadataMortalCacheValue extends ImmortalCacheValue implements Meta
 
    @Override
    public InternalCacheEntry toInternalCacheEntry(Object key) {
-      return new MetadataMortalCacheEntry(key, this);
+      return new MetadataMortalCacheEntry(key, value, metadata, created);
    }
 
    @Override
@@ -71,17 +71,9 @@ public class MetadataMortalCacheValue extends ImmortalCacheValue implements Meta
       return created;
    }
 
-   public final void setCreated(long created) {
-      this.created = created;
-   }
-
    @Override
    public final long getLifespan() {
       return metadata.lifespan();
-   }
-
-   public final void setLifespan(long lifespan) {
-      throw new IllegalStateException("Not allowed, use setMetadata instead!");
    }
 
    @Override

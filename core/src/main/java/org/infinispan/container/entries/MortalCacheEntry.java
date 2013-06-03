@@ -33,7 +33,8 @@ import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
 import java.util.Set;
-import java.util.concurrent.TimeUnit;
+
+import static org.infinispan.util.Util.toStr;
 
 /**
  * A cache entry that is mortal.  I.e., has a lifespan.
@@ -42,36 +43,36 @@ import java.util.concurrent.TimeUnit;
  * @since 4.0
  */
 public class MortalCacheEntry extends AbstractInternalCacheEntry {
-   protected MortalCacheValue cacheValue;
 
-   protected MortalCacheEntry(Object key, MortalCacheValue cacheValue) {
+   protected Object value;
+   protected long lifespan = -1;
+   protected long created;
+
+   public MortalCacheEntry(Object key, Object value, long lifespan, long created) {
       super(key);
-      this.cacheValue = cacheValue;
+      this.value = value;
+      this.lifespan = lifespan;
+      this.created = created;
    }
 
    @Override
    public Object getValue() {
-      return cacheValue.value;
+      return value;
    }
 
    @Override
    public Object setValue(Object value) {
-      return cacheValue.setValue(value);
-   }
-
-   public MortalCacheEntry(Object key, Object value, long lifespan, long created) {
-      super(key);
-      cacheValue = new MortalCacheValue(value, created, lifespan);
+      return this.value = value;
    }
 
    @Override
    public final boolean isExpired(long now) {
-      return cacheValue.isExpired(now);
+      return ExpiryHelper.isExpiredMortal(lifespan, created, now);
    }
 
    @Override
    public final boolean isExpired() {
-      return cacheValue.isExpired();
+      return isExpired(System.currentTimeMillis());
    }
 
    @Override
@@ -80,12 +81,12 @@ public class MortalCacheEntry extends AbstractInternalCacheEntry {
    }
 
    public void setLifespan(long lifespan) {
-      cacheValue.setLifespan(lifespan);
+      this.lifespan = lifespan;
    }
 
    @Override
    public final long getCreated() {
-      return cacheValue.created;
+      return created;
    }
 
    @Override
@@ -95,7 +96,7 @@ public class MortalCacheEntry extends AbstractInternalCacheEntry {
 
    @Override
    public final long getLifespan() {
-      return cacheValue.lifespan;
+      return lifespan;
    }
 
    @Override
@@ -105,7 +106,7 @@ public class MortalCacheEntry extends AbstractInternalCacheEntry {
 
    @Override
    public final long getExpiryTime() {
-      return cacheValue.lifespan > -1 ? cacheValue.created + cacheValue.lifespan : -1;
+      return lifespan > -1 ? created + lifespan : -1;
    }
 
    @Override
@@ -125,17 +126,17 @@ public class MortalCacheEntry extends AbstractInternalCacheEntry {
 
    @Override
    public void reincarnate(long now) {
-      cacheValue.setCreated(now);
+      this.created = now;
    }
 
    @Override
    public InternalCacheValue toInternalCacheValue() {
-      return cacheValue;
+      return new MortalCacheValue(value, created, lifespan);
    }
 
    @Override
    public Metadata getMetadata() {
-      return new EmbeddedMetadata.Builder().lifespan(cacheValue.getLifespan()).build();
+      return new EmbeddedMetadata.Builder().lifespan(lifespan).build();
    }
 
    @Override
@@ -152,35 +153,33 @@ public class MortalCacheEntry extends AbstractInternalCacheEntry {
       MortalCacheEntry that = (MortalCacheEntry) o;
 
       if (key != null ? !key.equals(that.key) : that.key != null) return false;
-      if (cacheValue.value != null ? !cacheValue.value.equals(that.cacheValue.value) : that.cacheValue.value != null)
+      if (value != null ? !value.equals(that.value) : that.value != null)
          return false;
-      if (cacheValue.created != that.cacheValue.created) return false;
-      return cacheValue.lifespan == that.cacheValue.lifespan;
+      if (created != that.created) return false;
+      return lifespan == that.lifespan;
    }
 
    @Override
    public int hashCode() {
       int result = key != null ? key.hashCode() : 0;
-      result = 31 * result + (cacheValue.value != null ? cacheValue.value.hashCode() : 0);
-      result = 31 * result + (int) (cacheValue.created ^ (cacheValue.created >>> 32));
-      result = 31 * result + (int) (cacheValue.lifespan ^ (cacheValue.lifespan >>> 32));
+      result = 31 * result + (value != null ? value.hashCode() : 0);
+      result = 31 * result + (int) (created ^ (created >>> 32));
+      result = 31 * result + (int) (lifespan ^ (lifespan >>> 32));
       return result;
    }
 
    @Override
    public MortalCacheEntry clone() {
-      MortalCacheEntry clone = (MortalCacheEntry) super.clone();
-      clone.cacheValue = cacheValue.clone();
-      return clone;
+      return (MortalCacheEntry) super.clone();
    }
 
    public static class Externalizer extends AbstractExternalizer<MortalCacheEntry> {
       @Override
       public void writeObject(ObjectOutput output, MortalCacheEntry mce) throws IOException {
          output.writeObject(mce.key);
-         output.writeObject(mce.cacheValue.value);
-         UnsignedNumeric.writeUnsignedLong(output, mce.cacheValue.created);
-         output.writeLong(mce.cacheValue.lifespan); // could be negative so should not use unsigned longs
+         output.writeObject(mce.value);
+         UnsignedNumeric.writeUnsignedLong(output, mce.created);
+         output.writeLong(mce.lifespan); // could be negative so should not use unsigned longs
       }
 
       @Override
@@ -206,8 +205,8 @@ public class MortalCacheEntry extends AbstractInternalCacheEntry {
    @Override
    public String toString() {
       return "MortalCacheEntry{" +
-            "key=" + key +
-            ", value=" + cacheValue +
+            "key=" + toStr(key) +
+            ", value=" + toStr(value) +
             "}";
    }
 }

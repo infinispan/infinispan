@@ -19,6 +19,7 @@
 
 package org.infinispan.container.entries.metadata;
 
+import org.infinispan.container.entries.InternalCacheValue;
 import org.infinispan.metadata.Metadata;
 import org.infinispan.container.entries.ImmortalCacheEntry;
 import org.infinispan.marshall.AbstractExternalizer;
@@ -39,30 +40,34 @@ import java.util.Set;
  */
 public class MetadataImmortalCacheEntry extends ImmortalCacheEntry implements MetadataAware {
 
-   public MetadataImmortalCacheEntry(Object key, Object value, Metadata metadata) {
-      super(key, new MetadataImmortalCacheValue(value, metadata));
-   }
+   protected Metadata metadata;
 
-   MetadataImmortalCacheEntry(Object key, MetadataImmortalCacheValue cacheValue) {
-      super(key, cacheValue);
+   public MetadataImmortalCacheEntry(Object key, Object value, Metadata metadata) {
+      super(key, value);
+      this.metadata = metadata;
    }
 
    @Override
    public Metadata getMetadata() {
-      return ((MetadataAware) cacheValue).getMetadata();
+      return metadata;
    }
 
    @Override
    public void setMetadata(Metadata metadata) {
-      ((MetadataAware) cacheValue).setMetadata(metadata);
+      this.metadata = metadata;
+   }
+
+   @Override
+   public InternalCacheValue toInternalCacheValue() {
+      return new MetadataImmortalCacheValue(value, metadata);
    }
 
    public static class Externalizer extends AbstractExternalizer<MetadataImmortalCacheEntry> {
       @Override
       public void writeObject(ObjectOutput output, MetadataImmortalCacheEntry ice) throws IOException {
          output.writeObject(ice.key);
-         output.writeObject(ice.cacheValue.value);
-         output.writeObject(((MetadataAware) ice.cacheValue).getMetadata());
+         output.writeObject(ice.value);
+         output.writeObject(ice.metadata);
       }
 
       @Override

@@ -42,16 +42,12 @@ import static org.infinispan.util.Util.toStr;
  * @since 4.0
  */
 public class ImmortalCacheEntry extends AbstractInternalCacheEntry {
-   protected ImmortalCacheValue cacheValue;
 
-   protected ImmortalCacheEntry(Object key, ImmortalCacheValue value) {
-      super(key);
-      this.cacheValue = value;
-   }
+   public Object value;
 
    public ImmortalCacheEntry(Object key, Object value) {
       super(key);
-      this.cacheValue = new ImmortalCacheValue(value);
+      this.value = value;
    }
 
    @Override
@@ -116,17 +112,17 @@ public class ImmortalCacheEntry extends AbstractInternalCacheEntry {
 
    @Override
    public InternalCacheValue toInternalCacheValue() {
-      return cacheValue;
+      return new ImmortalCacheValue(value);
    }
 
    @Override
    public Object getValue() {
-      return cacheValue.value;
+      return value;
    }
 
    @Override
    public Object setValue(Object value) {
-      return this.cacheValue.setValue(value);
+      return this.value = value;
    }
 
    @Override
@@ -148,7 +144,7 @@ public class ImmortalCacheEntry extends AbstractInternalCacheEntry {
       ImmortalCacheEntry that = (ImmortalCacheEntry) o;
 
       if (key != null ? !key.equals(that.key) : that.key != null) return false;
-      if (cacheValue != null ? !cacheValue.equals(that.cacheValue) : that.cacheValue != null) return false;
+      if (value != null ? !value.equals(that.value) : that.value != null) return false;
 
       return true;
    }
@@ -156,22 +152,20 @@ public class ImmortalCacheEntry extends AbstractInternalCacheEntry {
    @Override
    public int hashCode() {
       int result = key != null ? key.hashCode() : 0;
-      result = 31 * result + (cacheValue != null ? cacheValue.hashCode() : 0);
+      result = 31 * result + (value != null ? value.hashCode() : 0);
       return result;
    }
 
    @Override
    public ImmortalCacheEntry clone() {
-      ImmortalCacheEntry clone = (ImmortalCacheEntry) super.clone();
-      clone.cacheValue = cacheValue.clone();
-      return clone;
+      return (ImmortalCacheEntry) super.clone();
    }
 
    public static class Externalizer extends AbstractExternalizer<ImmortalCacheEntry> {
       @Override
       public void writeObject(ObjectOutput output, ImmortalCacheEntry ice) throws IOException {
          output.writeObject(ice.key);
-         output.writeObject(ice.cacheValue.value);
+         output.writeObject(ice.value);
       }
 
       @Override
@@ -196,7 +190,7 @@ public class ImmortalCacheEntry extends AbstractInternalCacheEntry {
    public String toString() {
       return "ImmortalCacheEntry{" +
             "key=" + toStr(key) +
-            ", value=" + cacheValue +
+            ", value=" + toStr(value) +
             "}";
    }
 

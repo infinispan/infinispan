@@ -19,6 +19,7 @@
 
 package org.infinispan.container.entries.metadata;
 
+import org.infinispan.container.entries.ExpiryHelper;
 import org.infinispan.metadata.Metadata;
 import org.infinispan.container.entries.AbstractInternalCacheEntry;
 import org.infinispan.container.entries.InternalCacheValue;
@@ -41,26 +42,25 @@ import java.util.Set;
  */
 public class MetadataTransientCacheEntry extends AbstractInternalCacheEntry implements MetadataAware {
 
-   protected MetadataTransientCacheValue cacheValue;
-
-   public MetadataTransientCacheEntry(Object key, MetadataTransientCacheValue value) {
-      super(key);
-      this.cacheValue = value;
-   }
+   protected Object value;
+   protected Metadata metadata;
+   protected long lastUsed;
 
    public MetadataTransientCacheEntry(Object key, Object value, Metadata metadata, long lastUsed) {
       super(key);
-      cacheValue = new MetadataTransientCacheValue(value, metadata, lastUsed);
+      this.value = value;
+      this.metadata = metadata;
+      this.lastUsed = lastUsed;
    }
 
    @Override
    public Object getValue() {
-      return cacheValue.value;
+      return value;
    }
 
    @Override
    public Object setValue(Object value) {
-      return cacheValue.setValue(value);
+      return this.value = value;
    }
 
    @Override
@@ -70,7 +70,7 @@ public class MetadataTransientCacheEntry extends AbstractInternalCacheEntry impl
 
    @Override
    public final void touch(long currentTimeMillis) {
-      cacheValue.lastUsed = currentTimeMillis;
+      lastUsed = currentTimeMillis;
    }
 
 
@@ -91,12 +91,12 @@ public class MetadataTransientCacheEntry extends AbstractInternalCacheEntry impl
 
    @Override
    public boolean isExpired(long now) {
-      return cacheValue.isExpired(now);
+      return ExpiryHelper.isExpiredTransient(metadata.maxIdle(), lastUsed, now);
    }
 
    @Override
    public boolean isExpired() {
-      return cacheValue.isExpired();
+      return isExpired(System.currentTimeMillis());
    }
 
    @Override
@@ -106,7 +106,7 @@ public class MetadataTransientCacheEntry extends AbstractInternalCacheEntry impl
 
    @Override
    public final long getLastUsed() {
-      return cacheValue.lastUsed;
+      return lastUsed;
    }
 
    @Override
@@ -116,37 +116,37 @@ public class MetadataTransientCacheEntry extends AbstractInternalCacheEntry impl
 
    @Override
    public long getExpiryTime() {
-      long maxIdle = cacheValue.metadata.maxIdle();
-      return maxIdle > -1 ? cacheValue.lastUsed + maxIdle : -1;
+      long maxIdle = metadata.maxIdle();
+      return maxIdle > -1 ? lastUsed + maxIdle : -1;
    }
 
    @Override
    public final long getMaxIdle() {
-      return cacheValue.metadata.maxIdle();
+      return metadata.maxIdle();
    }
 
    @Override
    public InternalCacheValue toInternalCacheValue() {
-      return cacheValue;
+      return new MetadataTransientCacheValue(value, metadata, lastUsed);
    }
 
    @Override
    public Metadata getMetadata() {
-      return cacheValue.getMetadata();
+      return metadata;
    }
 
    @Override
    public void setMetadata(Metadata metadata) {
-      cacheValue.setMetadata(metadata);
+      this.metadata = metadata;
    }
 
    public static class Externalizer extends AbstractExternalizer<MetadataTransientCacheEntry> {
       @Override
       public void writeObject(ObjectOutput output, MetadataTransientCacheEntry ice) throws IOException {
          output.writeObject(ice.key);
-         output.writeObject(ice.cacheValue.value);
-         output.writeObject(ice.cacheValue.getMetadata());
-         UnsignedNumeric.writeUnsignedLong(output, ice.cacheValue.getLastUsed());
+         output.writeObject(ice.value);
+         output.writeObject(ice.metadata);
+         UnsignedNumeric.writeUnsignedLong(output, ice.lastUsed);
       }
 
       @Override

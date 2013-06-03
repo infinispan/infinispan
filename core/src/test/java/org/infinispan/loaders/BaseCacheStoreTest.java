@@ -41,6 +41,7 @@ import java.util.Set;
 
 import org.infinispan.Cache;
 import org.infinispan.container.entries.InternalCacheEntry;
+import org.infinispan.container.entries.InternalCacheValue;
 import org.infinispan.io.UnclosableObjectInputStream;
 import org.infinispan.io.UnclosableObjectOutputStream;
 import org.infinispan.loaders.modifications.Clear;
@@ -216,6 +217,9 @@ public abstract class BaseCacheStoreTest extends AbstractInfinispanTest {
       long lifespan = 200000;
       long idle = 120000;
       InternalCacheEntry se = TestInternalCacheEntryFactory.create("k", "v", lifespan, idle);
+      InternalCacheValue icv = se.toInternalCacheValue();
+      assertEquals(se.getCreated(), icv.getCreated());
+      assertEquals(se.getLastUsed(), icv.getLastUsed());
       cs.store(se);
 
       assert cs.containsKey("k");

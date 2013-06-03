@@ -54,7 +54,7 @@ public class MetadataTransientCacheValue extends ImmortalCacheValue implements M
 
    @Override
    public InternalCacheEntry toInternalCacheEntry(Object key) {
-      return new MetadataTransientCacheEntry(key, this);
+      return new MetadataTransientCacheEntry(key, value, metadata, lastUsed);
    }
 
    @Override
