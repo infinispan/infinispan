@@ -117,6 +117,7 @@
                   <pomInclude>*/pom.xml</pomInclude>
                </pomIncludes>
                <postBuildHookScript>verify</postBuildHookScript>
+               <streamLogs>true</streamLogs>
                <goals>
                   <goal>clean</goal>
                   <goal>package</goal>
