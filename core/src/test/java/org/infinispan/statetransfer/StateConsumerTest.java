@@ -78,6 +78,7 @@ import java.util.Set;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ConcurrentSkipListSet;
 import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Future;
 import java.util.concurrent.LinkedBlockingDeque;
 import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.ThreadPoolExecutor;
@@ -249,7 +250,7 @@ public class StateConsumerTest extends AbstractInfinispanTest {
       assertEquals(flatRequestedSegments, newSegments);
 
       // simulate a cluster state recovery and return to ch2
-      fork(new Callable<Object>() {
+      Future<Object> future = fork(new Callable<Object>() {
          @Override
          public Object call() throws Exception {
             stateConsumer.onTopologyUpdate(new CacheTopology(3, ch2, null), false);
@@ -257,6 +258,7 @@ public class StateConsumerTest extends AbstractInfinispanTest {
          }
       });
       stateConsumer.onTopologyUpdate(new CacheTopology(3, ch2, null), false);
+      future.get();
       assertFalse(stateConsumer.hasActiveTransfers());
 
 
