@@ -37,6 +37,7 @@ import org.infinispan.context.Flag;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.context.impl.TxInvocationContext;
 import org.infinispan.distribution.DistributionManager;
+import org.infinispan.distribution.ch.ConsistentHash;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.factories.scopes.Scope;
 import org.infinispan.factories.scopes.Scopes;
@@ -45,6 +46,7 @@ import org.infinispan.remoting.rpc.RpcManager;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.statetransfer.StateTransferLock;
 import org.infinispan.statetransfer.StateTransferManager;
+import org.infinispan.topology.CacheTopology;
 import org.infinispan.transaction.WriteSkewHelper;
 import org.infinispan.transaction.xa.CacheTransaction;
 import org.infinispan.util.Immutables;
@@ -278,19 +280,24 @@ public interface ClusteringDependentLogic {
       @Override
       public EntryVersionsMap createNewVersionsAndCheckForWriteSkews(VersionGenerator versionGenerator, TxInvocationContext context, VersionedPrepareCommand prepareCommand) {
          // In REPL mode, this happens if we are the coordinator.
-         if (stateTransferManager.getCacheTopology().getReadConsistentHash().getMembers().get(0).equals(rpcManager.getAddress())) {
-            // Perform a write skew check on each entry.
-            EntryVersionsMap uv = performWriteSkewCheckAndReturnNewVersions(prepareCommand, dataContainer,
-                                                                            versionGenerator, context,
-                                                                            keySpecificLogic);
-            context.getCacheTransaction().setUpdatedEntryVersions(uv);
-            return uv;
-         } else if (prepareCommand.getModifications().length == 0) {
+         CacheTopology cacheTopology = stateTransferManager.getCacheTopology();
+         if (prepareCommand.getModifications().length == 0) {
             // For situations when there's a local-only put in the prepare,
             // simply add an empty entry version map. This works because when
             // a local-only put is executed, this is not added to the prepare
             // modification list.
             context.getCacheTransaction().setUpdatedEntryVersions(new EntryVersionsMap());
+         } else {
+            ConsistentHash readConsistentHash = cacheTopology.getReadConsistentHash();
+            List<Address> members = readConsistentHash.getMembers();
+            if (members.get(0).equals(rpcManager.getAddress())) {
+               // Perform a write skew check on each entry.
+               EntryVersionsMap uv = performWriteSkewCheckAndReturnNewVersions(
+                     prepareCommand, dataContainer, versionGenerator, context,
+                     keySpecificLogic);
+               context.getCacheTransaction().setUpdatedEntryVersions(uv);
+               return uv;
+            }
          }
          return null;
       }
