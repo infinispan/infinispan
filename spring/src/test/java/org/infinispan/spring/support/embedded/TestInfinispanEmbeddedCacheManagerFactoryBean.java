@@ -41,7 +41,7 @@ public class TestInfinispanEmbeddedCacheManagerFactoryBean extends InfinispanEmb
 
    @Override
    protected EmbeddedCacheManager createCacheManager(GlobalConfigurationBuilder globalBuilder, ConfigurationBuilder builder) {
-      return TestCacheManagerFactory.createCacheManager(globalBuilder, builder);
+      return TestCacheManagerFactory.createClusteredCacheManager(globalBuilder, builder);
    }
 
    @Override
