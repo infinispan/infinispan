@@ -51,7 +51,7 @@ public class MetadataImmortalCacheValue extends ImmortalCacheValue implements Me
 
    @Override
    public InternalCacheEntry toInternalCacheEntry(Object key) {
-      return new MetadataImmortalCacheEntry(key, this);
+      return new MetadataImmortalCacheEntry(key, value, metadata);
    }
 
    @Override

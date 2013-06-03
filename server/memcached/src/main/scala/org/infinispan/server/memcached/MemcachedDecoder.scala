@@ -27,6 +27,7 @@ import org.infinispan.server.core.Operation._
 import org.infinispan.server.memcached.MemcachedOperation._
 import org.infinispan.context.Flag
 import java.util.concurrent.{TimeUnit, ScheduledExecutorService}
+import java.util.concurrent.TimeUnit.{MILLISECONDS => MILLIS}
 import java.nio.channels.ClosedChannelException
 import java.util.concurrent.atomic.AtomicLong
 import org.infinispan.server.core._
@@ -355,7 +356,7 @@ class MemcachedDecoder(memcachedCache: AdvancedCache[String, Array[Byte]], sched
       if (flushDelay == 0)
          flushFunction(cache)
       else
-         scheduler.schedule(new DelayedFlushAll(cache, flushFunction), toMillis(flushDelay), TimeUnit.MILLISECONDS)
+         scheduler.schedule(new DelayedFlushAll(cache, flushFunction), toMillis(flushDelay), MILLIS)
       val ret = if (params == null || !params.noReply) OK else null
       writeResponse(ch, ret)
    }
@@ -473,7 +474,8 @@ class MemcachedDecoder(memcachedCache: AdvancedCache[String, Array[Byte]], sched
 
    override protected def buildMetadata(): Metadata = {
       val version = generateVersion(cache)
-      MemcachedMetadata(params.flags, toMillis(params.lifespan), defaultMaxIdleTime, version)
+      MemcachedMetadata(params.flags, version,
+         toMillis(params.lifespan), MILLIS, defaultMaxIdleTime, MILLIS)
    }
 
    private def logAndCreateErrorMessage(sb: StringBuilder, m: MemcachedException): StringBuilder = {
@@ -501,7 +503,7 @@ class MemcachedDecoder(memcachedCache: AdvancedCache[String, Array[Byte]], sched
          buildStat("pid", 0, sb),
          buildStat("uptime", stats.getTimeSinceStart, sb),
          buildStat("uptime", stats.getTimeSinceStart, sb),
-         buildStat("time", TimeUnit.MILLISECONDS.toSeconds(System.currentTimeMillis), sb),
+         buildStat("time", MILLIS.toSeconds(System.currentTimeMillis), sb),
          buildStat("version", cache.getVersion, sb),
          buildStat("pointer_size", 0, sb), // Unsupported
          buildStat("rusage_user", 0, sb), // Unsupported

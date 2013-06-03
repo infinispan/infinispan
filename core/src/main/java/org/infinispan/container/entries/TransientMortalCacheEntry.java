@@ -33,9 +33,9 @@ import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
 import java.util.Set;
-import java.util.concurrent.TimeUnit;
 
 import static java.lang.Math.min;
+import static org.infinispan.util.Util.toStr;
 
 /**
  * A cache entry that is both transient and mortal.
@@ -45,40 +45,41 @@ import static java.lang.Math.min;
  */
 public class TransientMortalCacheEntry extends AbstractInternalCacheEntry {
 
-   protected TransientMortalCacheValue cacheValue;
+   protected Object value;
+   protected long maxIdle = -1;
+   protected long lastUsed;
+   protected long lifespan = -1;
+   protected long created;
 
    public TransientMortalCacheEntry(Object key, Object value, long maxIdle, long lifespan, long currentTimeMillis) {
-      super(key);
-      cacheValue = new TransientMortalCacheValue(value, currentTimeMillis, lifespan, maxIdle);
-      touch(currentTimeMillis);
-   }
-
-   protected TransientMortalCacheEntry(Object key, TransientMortalCacheValue value) {
-      super(key);
-      this.cacheValue = value;
+      this(key, value, maxIdle, lifespan, currentTimeMillis, currentTimeMillis);
    }
 
    public TransientMortalCacheEntry(Object key, Object value, long maxIdle, long lifespan, long lastUsed, long created) {
       super(key);
-      this.cacheValue = new TransientMortalCacheValue(value, created, lifespan, maxIdle, lastUsed);
+      this.value = value;
+      this.maxIdle = maxIdle;
+      this.lifespan = lifespan;
+      this.created = created;
+      this.lastUsed = lastUsed;
    }
 
    public void setLifespan(long lifespan) {
-      this.cacheValue.lifespan = lifespan;
+      this.lifespan = lifespan;
    }
 
    public void setMaxIdle(long maxIdle) {
-      this.cacheValue.maxIdle = maxIdle;
+      this.maxIdle = maxIdle;
    }
 
    @Override
    public Object getValue() {
-      return cacheValue.value;
+      return value;
    }
 
    @Override
    public long getLifespan() {
-      return cacheValue.lifespan;
+      return lifespan;
    }
 
    @Override
@@ -88,23 +89,23 @@ public class TransientMortalCacheEntry extends AbstractInternalCacheEntry {
 
    @Override
    public long getCreated() {
-      return cacheValue.created;
+      return created;
    }
 
    @Override
    public boolean isExpired(long now) {
-      return cacheValue.isExpired(now);
+      return ExpiryHelper.isExpiredTransientMortal(maxIdle, lastUsed, lifespan, created, now);
    }
 
    @Override
    public boolean isExpired() {
-      return cacheValue.isExpired();
+      return isExpired(System.currentTimeMillis());
    }
 
    @Override
    public final long getExpiryTime() {
-      long lset = cacheValue.lifespan > -1 ? cacheValue.created + cacheValue.lifespan : -1;
-      long muet = cacheValue.maxIdle > -1 ? cacheValue.lastUsed + cacheValue.maxIdle : -1;
+      long lset = lifespan > -1 ? created + lifespan : -1;
+      long muet = maxIdle > -1 ? lastUsed + maxIdle : -1;
       if (lset == -1) return muet;
       if (muet == -1) return lset;
       return min(lset, muet);
@@ -113,12 +114,12 @@ public class TransientMortalCacheEntry extends AbstractInternalCacheEntry {
 
    @Override
    public InternalCacheValue toInternalCacheValue() {
-      return cacheValue;
+      return new TransientMortalCacheValue(value, created, lifespan, maxIdle, lastUsed);
    }
 
    @Override
    public long getLastUsed() {
-      return cacheValue.lastUsed;
+      return lastUsed;
    }
 
    @Override
@@ -128,7 +129,7 @@ public class TransientMortalCacheEntry extends AbstractInternalCacheEntry {
 
    @Override
    public final void touch(long currentTimeMillis) {
-      cacheValue.lastUsed = currentTimeMillis;
+      this.lastUsed = currentTimeMillis;
    }
 
    @Override
@@ -138,24 +139,24 @@ public class TransientMortalCacheEntry extends AbstractInternalCacheEntry {
 
    @Override
    public void reincarnate(long now) {
-      cacheValue.created = now;
+      this.created = now;
    }
 
    @Override
    public long getMaxIdle() {
-      return cacheValue.maxIdle;
+      return maxIdle;
    }
 
    @Override
    public Object setValue(Object value) {
-      return cacheValue.setValue(value);
+      return this.value = value;
    }
 
    @Override
    public Metadata getMetadata() {
       return new EmbeddedMetadata.Builder()
-            .lifespan(cacheValue.getLifespan())
-            .maxIdle(cacheValue.getMaxIdle()).build();
+            .lifespan(lifespan)
+            .maxIdle(maxIdle).build();
    }
 
    @Override
@@ -171,8 +172,8 @@ public class TransientMortalCacheEntry extends AbstractInternalCacheEntry {
 
       TransientMortalCacheEntry that = (TransientMortalCacheEntry) o;
 
-      if (cacheValue.created != that.cacheValue.created) return false;
-      if (cacheValue.lifespan != that.cacheValue.lifespan) return false;
+      if (created != that.created) return false;
+      if (lifespan != that.lifespan) return false;
 
       return true;
    }
@@ -180,23 +181,21 @@ public class TransientMortalCacheEntry extends AbstractInternalCacheEntry {
    @Override
    public int hashCode() {
       int result = super.hashCode();
-      result = 31 * result + (int) (cacheValue.created ^ (cacheValue.created >>> 32));
-      result = 31 * result + (int) (cacheValue.lifespan ^ (cacheValue.lifespan >>> 32));
+      result = 31 * result + (int) (created ^ (created >>> 32));
+      result = 31 * result + (int) (lifespan ^ (lifespan >>> 32));
       return result;
    }
 
    @Override
    public TransientMortalCacheEntry clone() {
-      TransientMortalCacheEntry clone = (TransientMortalCacheEntry) super.clone();
-      clone.cacheValue = cacheValue.clone();
-      return clone;
+      return (TransientMortalCacheEntry) super.clone();
    }
 
    @Override
    public String toString() {
       return getClass().getSimpleName() + "{" +
-            "key=" + key +
-            ", value=" + cacheValue +
+            "key=" + toStr(key) +
+            ", value=" + toStr(value) +
             "}";
    }
 
@@ -204,11 +203,11 @@ public class TransientMortalCacheEntry extends AbstractInternalCacheEntry {
       @Override
       public void writeObject(ObjectOutput output, TransientMortalCacheEntry entry) throws IOException {
          output.writeObject(entry.key);
-         output.writeObject(entry.cacheValue.value);
-         UnsignedNumeric.writeUnsignedLong(output, entry.cacheValue.created);
-         output.writeLong(entry.cacheValue.lifespan); // could be negative so should not use unsigned longs
-         UnsignedNumeric.writeUnsignedLong(output, entry.cacheValue.lastUsed);
-         output.writeLong(entry.cacheValue.maxIdle); // could be negative so should not use unsigned longs
+         output.writeObject(entry.value);
+         UnsignedNumeric.writeUnsignedLong(output, entry.created);
+         output.writeLong(entry.lifespan); // could be negative so should not use unsigned longs
+         UnsignedNumeric.writeUnsignedLong(output, entry.lastUsed);
+         output.writeLong(entry.maxIdle); // could be negative so should not use unsigned longs
       }
 
       @Override

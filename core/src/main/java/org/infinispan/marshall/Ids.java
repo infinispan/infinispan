@@ -97,7 +97,7 @@ public interface Ids {
 
    int CACHE_TOPOLOGY = 75;
 
-   // Versioned entries and values
+   // Metadata entries and values
    int METADATA_IMMORTAL_ENTRY = 76;
    int METADATA_MORTAL_ENTRY = 77;
    int METADATA_TRANSIENT_ENTRY = 78;
@@ -129,4 +129,5 @@ public interface Ids {
    int EMBEDDED_METADATA = 98;
 
    int NUMERIC_VERSION = 99;
+
 }

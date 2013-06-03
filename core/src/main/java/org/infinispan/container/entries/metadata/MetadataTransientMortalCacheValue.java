@@ -42,10 +42,6 @@ public class MetadataTransientMortalCacheValue extends MetadataMortalCacheValue 
 
    long lastUsed;
 
-   public MetadataTransientMortalCacheValue(Object value, Metadata metadata, long created) {
-      super(value, metadata, created);
-   }
-
    public MetadataTransientMortalCacheValue(Object v, Metadata metadata, long created, long lastUsed) {
       super(v, metadata, created);
       this.lastUsed = lastUsed;
@@ -53,7 +49,7 @@ public class MetadataTransientMortalCacheValue extends MetadataMortalCacheValue 
 
    @Override
    public InternalCacheEntry toInternalCacheEntry(Object key) {
-      return new MetadataTransientMortalCacheEntry(key, this);
+      return new MetadataTransientMortalCacheEntry(key, value, metadata, lastUsed, created);
    }
 
    @Override

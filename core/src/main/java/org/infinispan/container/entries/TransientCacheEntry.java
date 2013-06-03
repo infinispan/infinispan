@@ -35,6 +35,8 @@ import java.io.ObjectOutput;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
 
+import static org.infinispan.util.Util.toStr;
+
 /**
  * A cache entry that is transient, i.e., it can be considered expired after a period of not being used.
  *
@@ -42,26 +44,26 @@ import java.util.concurrent.TimeUnit;
  * @since 4.0
  */
 public class TransientCacheEntry extends AbstractInternalCacheEntry {
-   protected TransientCacheValue cacheValue;
 
-   protected TransientCacheEntry(Object key, TransientCacheValue value) {
-      super(key);
-      this.cacheValue = value;
-   }
+   protected Object value;
+   protected long maxIdle = -1;
+   protected long lastUsed;
 
    public TransientCacheEntry(Object key, Object value, long maxIdle, long lastUsed) {
       super(key);
-      cacheValue = new TransientCacheValue(value, maxIdle, lastUsed);
+      this.value = value;
+      this.maxIdle = maxIdle;
+      this.lastUsed = lastUsed;
    }
 
    @Override
    public Object getValue() {
-      return cacheValue.value;
+      return value;
    }
 
    @Override
    public Object setValue(Object value) {
-      return cacheValue.setValue(value);
+      return this.value = value;
    }
 
    @Override
@@ -71,7 +73,7 @@ public class TransientCacheEntry extends AbstractInternalCacheEntry {
 
    @Override
    public final void touch(long currentTimeMillis) {
-      cacheValue.lastUsed = currentTimeMillis;
+      this.lastUsed = currentTimeMillis;
    }
 
 
@@ -92,16 +94,16 @@ public class TransientCacheEntry extends AbstractInternalCacheEntry {
 
    @Override
    public boolean isExpired(long now) {
-      return cacheValue.isExpired(now);
+      return ExpiryHelper.isExpiredTransient(maxIdle, lastUsed, now);
    }
 
    @Override
    public boolean isExpired() {
-      return cacheValue.isExpired();
+      return isExpired(System.currentTimeMillis());
    }
 
    public void setMaxIdle(long maxIdle) {
-      cacheValue.maxIdle = maxIdle;
+      this.maxIdle = maxIdle;
    }
 
    @Override
@@ -111,7 +113,7 @@ public class TransientCacheEntry extends AbstractInternalCacheEntry {
 
    @Override
    public final long getLastUsed() {
-      return cacheValue.lastUsed;
+      return lastUsed;
    }
 
    @Override
@@ -121,23 +123,23 @@ public class TransientCacheEntry extends AbstractInternalCacheEntry {
 
    @Override
    public long getExpiryTime() {
-      return cacheValue.maxIdle > -1 ? cacheValue.lastUsed + cacheValue.maxIdle : -1;
+      return maxIdle > -1 ? lastUsed + maxIdle : -1;
    }
 
    @Override
    public final long getMaxIdle() {
-      return cacheValue.maxIdle;
+      return maxIdle;
    }
 
    @Override
    public InternalCacheValue toInternalCacheValue() {
-      return cacheValue;
+      return new TransientCacheValue(value, maxIdle, lastUsed);
    }
 
    @Override
    public Metadata getMetadata() {
       return new EmbeddedMetadata.Builder()
-            .maxIdle(cacheValue.getMaxIdle(), TimeUnit.MILLISECONDS).build();
+            .maxIdle(maxIdle, TimeUnit.MILLISECONDS).build();
    }
 
    @Override
@@ -154,10 +156,10 @@ public class TransientCacheEntry extends AbstractInternalCacheEntry {
       TransientCacheEntry that = (TransientCacheEntry) o;
 
       if (key != null ? !key.equals(that.key) : that.key != null) return false;
-      if (cacheValue.value != null ? !cacheValue.value.equals(that.cacheValue.value) : that.cacheValue.value != null)
+      if (value != null ? !value.equals(that.value) : that.value != null)
          return false;
-      if (cacheValue.lastUsed != that.cacheValue.lastUsed) return false;
-      if (cacheValue.maxIdle != that.cacheValue.maxIdle) return false;
+      if (lastUsed != that.lastUsed) return false;
+      if (maxIdle != that.maxIdle) return false;
 
       return true;
    }
@@ -165,26 +167,24 @@ public class TransientCacheEntry extends AbstractInternalCacheEntry {
    @Override
    public int hashCode() {
       int result = key != null ? key.hashCode() : 0;
-      result = 31 * result + (cacheValue.value != null ? cacheValue.value.hashCode() : 0);
-      result = 31 * result + (int) (cacheValue.lastUsed ^ (cacheValue.lastUsed >>> 32));
-      result = 31 * result + (int) (cacheValue.maxIdle ^ (cacheValue.maxIdle >>> 32));
+      result = 31 * result + (value != null ? value.hashCode() : 0);
+      result = 31 * result + (int) (lastUsed ^ (lastUsed >>> 32));
+      result = 31 * result + (int) (maxIdle ^ (maxIdle >>> 32));
       return result;
    }
 
    @Override
    public TransientCacheEntry clone() {
-      TransientCacheEntry clone = (TransientCacheEntry) super.clone();
-      clone.cacheValue = cacheValue.clone();
-      return clone;
+      return (TransientCacheEntry) super.clone();
    }
 
    public static class Externalizer extends AbstractExternalizer<TransientCacheEntry> {
       @Override
       public void writeObject(ObjectOutput output, TransientCacheEntry tce) throws IOException {
          output.writeObject(tce.key);
-         output.writeObject(tce.cacheValue.value);
-         UnsignedNumeric.writeUnsignedLong(output, tce.cacheValue.lastUsed);
-         output.writeLong(tce.cacheValue.maxIdle); // could be negative so should not use unsigned longs
+         output.writeObject(tce.value);
+         UnsignedNumeric.writeUnsignedLong(output, tce.lastUsed);
+         output.writeLong(tce.maxIdle); // could be negative so should not use unsigned longs
       }
 
       @Override
@@ -210,8 +210,8 @@ public class TransientCacheEntry extends AbstractInternalCacheEntry {
    @Override
    public String toString() {
       return "TransientCacheEntry{" +
-            "key=" + key +
-            ", value=" + cacheValue +
+            "key=" + toStr(key) +
+            ", value=" + toStr(value) +
             "}";
    }
 }

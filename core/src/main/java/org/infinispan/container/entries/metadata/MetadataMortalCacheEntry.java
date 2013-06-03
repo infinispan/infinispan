@@ -41,32 +41,30 @@ import java.util.Set;
  */
 public class MetadataMortalCacheEntry extends AbstractInternalCacheEntry implements MetadataAware {
 
-   protected MetadataMortalCacheValue cacheValue;
+   protected Object value;
+   protected Metadata metadata;
+   protected long created;
 
    public MetadataMortalCacheEntry(Object key, Object value, Metadata metadata, long created) {
       super(key);
-      cacheValue = new MetadataMortalCacheValue(value, metadata, created);
-   }
-
-   MetadataMortalCacheEntry(Object key, MetadataMortalCacheValue cacheValue) {
-      super(key);
-      this.cacheValue = cacheValue;
+      this.value = value;
+      this.metadata = metadata;
+      this.created = created;
    }
 
    @Override
    public Object getValue() {
-      return cacheValue.value;
+      return value;
    }
 
    @Override
    public Object setValue(Object value) {
-      return cacheValue.setValue(value);
+      return this.value = value;
    }
 
    @Override
    public final boolean isExpired(long now) {
-      return ExpiryHelper.isExpiredMortal(
-            cacheValue.metadata.lifespan(), cacheValue.created, now);
+      return ExpiryHelper.isExpiredMortal(metadata.lifespan(), created, now);
    }
 
    @Override
@@ -81,7 +79,7 @@ public class MetadataMortalCacheEntry extends AbstractInternalCacheEntry impleme
 
    @Override
    public final long getCreated() {
-      return cacheValue.created;
+      return created;
    }
 
    @Override
@@ -91,7 +89,7 @@ public class MetadataMortalCacheEntry extends AbstractInternalCacheEntry impleme
 
    @Override
    public final long getLifespan() {
-      return cacheValue.metadata.lifespan();
+      return metadata.lifespan();
    }
 
    @Override
@@ -101,8 +99,8 @@ public class MetadataMortalCacheEntry extends AbstractInternalCacheEntry impleme
 
    @Override
    public final long getExpiryTime() {
-      long lifespan = cacheValue.metadata.lifespan();
-      return lifespan > -1 ? cacheValue.created + lifespan : -1;
+      long lifespan = metadata.lifespan();
+      return lifespan > -1 ? created + lifespan : -1;
    }
 
    @Override
@@ -122,31 +120,31 @@ public class MetadataMortalCacheEntry extends AbstractInternalCacheEntry impleme
 
    @Override
    public void reincarnate(long now) {
-      cacheValue.setCreated(now);
+      this.created = now;
    }
 
    @Override
    public InternalCacheValue toInternalCacheValue() {
-      return cacheValue;
+      return new MetadataMortalCacheValue(value, metadata, created);
    }
 
    @Override
    public Metadata getMetadata() {
-      return cacheValue.getMetadata();
+      return metadata;
    }
 
    @Override
    public void setMetadata(Metadata metadata) {
-      cacheValue.setMetadata(metadata);
+      this.metadata = metadata;
    }
 
    public static class Externalizer extends AbstractExternalizer<MetadataMortalCacheEntry> {
       @Override
       public void writeObject(ObjectOutput output, MetadataMortalCacheEntry ice) throws IOException {
          output.writeObject(ice.key);
-         output.writeObject(ice.cacheValue.value);
-         output.writeObject(ice.cacheValue.getMetadata());
-         UnsignedNumeric.writeUnsignedLong(output, ice.cacheValue.getCreated());
+         output.writeObject(ice.value);
+         output.writeObject(ice.metadata);
+         UnsignedNumeric.writeUnsignedLong(output, ice.created);
       }
 
       @Override

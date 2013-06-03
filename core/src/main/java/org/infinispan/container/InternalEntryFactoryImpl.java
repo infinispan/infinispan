@@ -44,8 +44,6 @@ import org.infinispan.container.versioning.EntryVersion;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.util.TimeService;
 
-import java.util.concurrent.TimeUnit;
-
 /**
  * An implementation that generates non-versioned entries
  *
