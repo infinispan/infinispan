@@ -35,6 +35,7 @@ import org.infinispan.marshall.Marshaller;
 import org.infinispan.marshall.jboss.GenericJBossMarshaller;
 import org.infinispan.upgrade.TargetMigrator;
 import org.infinispan.upgrade.logging.Log;
+import org.infinispan.util.Util;
 import org.infinispan.util.logging.LogFactory;
 
 public class HotRodTargetMigrator implements TargetMigrator {
@@ -93,7 +94,7 @@ public class HotRodTargetMigrator implements TargetMigrator {
                         if (log.isDebugEnabled() && i % 100 == 0)
                            log.debugf(">>    Moved %s keys\n", i);
                      } catch (Exception e) {
-
+                        log.keyMigrationFailed(Util.toStr(key), e);
                      }
                   }
                });

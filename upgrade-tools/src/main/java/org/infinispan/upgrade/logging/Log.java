@@ -19,9 +19,11 @@
 package org.infinispan.upgrade.logging;
 
 import static org.jboss.logging.Logger.Level.ERROR;
+import static org.jboss.logging.Logger.Level.WARN;
 
 import org.infinispan.CacheException;
 import org.jboss.logging.LogMessage;
+import org.jboss.logging.Cause;
 import org.jboss.logging.Message;
 import org.jboss.logging.MessageLogger;
 
@@ -45,6 +47,10 @@ public interface Log extends org.infinispan.util.logging.Log {
    @Message(value = "The RemoteCacheStore for cache %s should be configured with hotRodWrapping enabled", id = 20003)
    CacheException remoteStoreNoHotRodWrapping(String cacheName);
 
-   @Message(value = "Could not find migration data in cache %s")
+   @Message(value = "Could not find migration data in cache %s", id = 20004)
    CacheException missingMigrationData(String name);
+
+   @LogMessage(level = WARN)
+   @Message(value = "Could not migrate key %s", id = 20005)
+   void keyMigrationFailed(String key, @Cause Throwable cause);
 }
