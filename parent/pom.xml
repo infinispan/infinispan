@@ -146,7 +146,7 @@
       <version.javax.servlet>2.5</version.javax.servlet>
       <version.jboss.marshalling>1.3.15.GA</version.jboss.marshalling>
       <version.jboss.as>7.2.0.Alpha1-redhat-4</version.jboss.as>
-      <version.jbossjta>4.16.3.Final</version.jbossjta>
+      <version.jbossjta>4.17.4.Final</version.jbossjta>
       <version.osgi>4.3.0</version.osgi>
       <version.jboss.logging>3.1.1.GA</version.jboss.logging>
       <version.jboss.logging.processor>1.0.3.Final</version.jboss.logging.processor>
@@ -882,8 +882,8 @@
          <scope>test</scope>
       </dependency>
       <dependency>
-         <groupId>org.jboss.jbossts</groupId>
-         <artifactId>jbossjta</artifactId>
+         <groupId>org.jboss.jbossts.jta</groupId>
+         <artifactId>narayana-jta</artifactId>
          <version>${version.jbossjta}</version>
          <scope>test</scope>
          <exclusions>
