@@ -298,10 +298,16 @@ public class TestCacheManagerFactory {
    }
 
    public static EmbeddedCacheManager createCacheManager(GlobalConfigurationBuilder globalBuilder, ConfigurationBuilder builder) {
+      if (globalBuilder.transport().build().transport().transport() != null) {
+         throw new IllegalArgumentException("Use TestCacheManagerFactory.createClusteredCacheManager(...) for clustered cache managers");
+      }
       return newDefaultCacheManager(true, globalBuilder, builder, false);
    }
 
    public static EmbeddedCacheManager createCacheManager(GlobalConfigurationBuilder globalBuilder, ConfigurationBuilder builder, boolean keepJmxDomain) {
+      if (globalBuilder.transport().build().transport().transport() != null) {
+         throw new IllegalArgumentException("Use TestCacheManagerFactory.createClusteredCacheManager(...) for clustered cache managers");
+      }
       return newDefaultCacheManager(true, globalBuilder, builder, keepJmxDomain);
    }
 
@@ -419,7 +425,7 @@ public class TestCacheManagerFactory {
             .jmxDomain(jmxDomain)
             .mBeanServerLookup(mBeanServerLookup)
             .enabled(exposeGlobalJmx);
-      return createCacheManager(globalBuilder, builder, true);
+      return createClusteredCacheManager(globalBuilder, builder, new TransportFlags(), true);
    }
 
    /**
