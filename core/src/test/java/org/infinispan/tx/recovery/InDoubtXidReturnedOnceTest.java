@@ -26,15 +26,14 @@ package org.infinispan.tx.recovery;
 import org.infinispan.config.Configuration;
 import org.infinispan.test.MultipleCacheManagersTest;
 import org.infinispan.test.TestingUtil;
-import org.infinispan.transaction.lookup.DummyTransactionManagerLookup;
 import org.infinispan.transaction.tm.DummyTransaction;
 import org.testng.annotations.Test;
 
 import javax.transaction.xa.XAResource;
 import javax.transaction.xa.Xid;
 
-import static junit.framework.Assert.assertEquals;
 import static org.infinispan.tx.recovery.RecoveryTestUtil.*;
+import static org.testng.AssertJUnit.assertEquals;
 
 /**
  * @author Mircea Markus
@@ -63,6 +62,7 @@ public class InDoubtXidReturnedOnceTest extends MultipleCacheManagersTest {
       prepareTransaction(dummyTransaction1);
       manager(3).stop();
       TestingUtil.blockUntilViewsReceived(60000, false, cache(0), cache(1), cache(2));
+      TestingUtil.waitForRehashToComplete(cache(0), cache(1), cache(2));
 
 
       DummyTransaction dummyTransaction = beginAndSuspendTx(this.cache(0));
