@@ -150,7 +150,10 @@ class Server(@Context request: Request, @Context servletContext: ServletContext,
            cacheName: String, extended: String): Response = {
       val key = ice.getKey.asInstanceOf[String]
       ice.getValue match {
-         case s: String => Response.ok(s, "text/plain").build
+         case s: String => Response.ok(s, "text/plain")
+                 .expires(expires)
+                 .lastModified(lastMod)
+                 .build
          case obj: Any => {
             val variant = request.selectVariant(variantList)
             val selectedMediaType =
