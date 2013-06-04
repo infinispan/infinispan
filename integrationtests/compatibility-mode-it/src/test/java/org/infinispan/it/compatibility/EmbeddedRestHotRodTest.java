@@ -23,6 +23,7 @@
 
 package org.infinispan.it.compatibility;
 
+import org.apache.commons.httpclient.Header;
 import org.apache.commons.httpclient.HttpClient;
 import org.apache.commons.httpclient.HttpMethod;
 import org.apache.commons.httpclient.methods.ByteArrayRequestEntity;
@@ -40,6 +41,11 @@ import javax.servlet.http.HttpServletResponse;
 
 import java.io.ObjectInputStream;
 import java.io.Serializable;
+import java.text.DateFormat;
+import java.text.SimpleDateFormat;
+import java.util.Calendar;
+import java.util.Date;
+import java.util.GregorianCalendar;
 import java.util.concurrent.TimeUnit;
 
 import static org.testng.AssertJUnit.*;
@@ -52,6 +58,8 @@ import static org.testng.AssertJUnit.*;
  */
 @Test(groups = "functional", testName = "it.compatibility.EmbeddedRestHotRodTest")
 public class EmbeddedRestHotRodTest {
+
+   private static final DateFormat dateFormat = new SimpleDateFormat("EEE, dd MMM yyyy HH:mm:ss z");
 
    CompatibilityCacheFactory<String, Object> cacheFactory;
 
@@ -218,13 +226,69 @@ public class EmbeddedRestHotRodTest {
       HttpMethod headKey1 = new HeadMethod(cacheFactory.getRestUrl() + "/" + key1);
       cacheFactory.getRestClient().executeMethod(headKey1);
       assertEquals(HttpServletResponse.SC_OK, headKey1.getStatusCode());
-      assertNotNull(headKey1.getResponseHeader("Expires"));
+      Header expires = headKey1.getResponseHeader("Expires");
+      assertNotNull(expires);
+      assertTrue(dateFormat.parse(expires.getValue()).after(new GregorianCalendar(2013, 1, 1).getTime()));
 
       // 4. HEAD with REST key2
       HttpMethod headKey2 = new HeadMethod(cacheFactory.getRestUrl() + "/" + key2);
       cacheFactory.getRestClient().executeMethod(headKey2);
       assertEquals(HttpServletResponse.SC_OK, headKey2.getStatusCode());
       assertNotNull(headKey2.getResponseHeader("Expires"));
+   }
+
+   public void testHotRodEmbeddedPutRestGetExpiry() throws Exception {
+      final String key = "10";
+      final String key2 = "11";
+
+      // 1. Put with HotRod
+      assertEquals(null, cacheFactory.getHotRodCache().put(key, "v1", 5, TimeUnit.SECONDS));
+
+      // 2. Put with Embedded
+      assertEquals(null, cacheFactory.getEmbeddedCache().put(key2, "v2", 5, TimeUnit.SECONDS));
+
+      // 3. Get with REST key
+      HttpMethod get1 = new GetMethod(cacheFactory.getRestUrl() + "/" + key);
+      cacheFactory.getRestClient().executeMethod(get1);
+      assertEquals(HttpServletResponse.SC_OK, get1.getStatusCode());
+      assertDate(get1, "Expires");
+
+      // 4. Get with REST key2
+      HttpMethod get2 = new GetMethod(cacheFactory.getRestUrl() + "/" + key2);
+      cacheFactory.getRestClient().executeMethod(get2);
+      assertEquals(HttpServletResponse.SC_OK, get2.getStatusCode());
+      assertDate(get2, "Expires");
+   }
+
+   public void testHotRodEmbeddedPutRestGetLastModified() throws Exception {
+      final String key = "12";
+      final String key2 = "13";
+
+      // 1. Put with HotRod
+      assertEquals(null, cacheFactory.getHotRodCache().put(key, "v1", 5, TimeUnit.SECONDS));
+
+      // 2. Put with Embedded
+      assertEquals(null, cacheFactory.getEmbeddedCache().put(key2, "v2", 5, TimeUnit.SECONDS));
+
+      // 3. Get with REST key
+      HttpMethod get1 = new GetMethod(cacheFactory.getRestUrl() + "/" + key);
+      cacheFactory.getRestClient().executeMethod(get1);
+      assertEquals(HttpServletResponse.SC_OK, get1.getStatusCode());
+      assertDate(get1, "Last-Modified");
+
+      // 4. Get with REST key2
+      HttpMethod get2 = new GetMethod(cacheFactory.getRestUrl() + "/" + key2);
+      cacheFactory.getRestClient().executeMethod(get2);
+      assertEquals(HttpServletResponse.SC_OK, get2.getStatusCode());
+      assertDate(get2, "Last-Modified");
+   }
+
+   private static void assertDate(HttpMethod method, String header) throws Exception {
+      Header dateHeader = method.getResponseHeader(header);
+      assertNotNull(dateHeader);
+      Date parsedDate = dateFormat.parse(dateHeader.getValue());
+      assertTrue("Parsed date is before this code was written: " + parsedDate,
+            parsedDate.after(new GregorianCalendar(2013, 1, 1).getTime()));
    }
 
    /**
