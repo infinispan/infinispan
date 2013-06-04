@@ -200,7 +200,7 @@ public class AbstractDelegatingAdvancedCache<K, V> extends AbstractDelegatingCac
 
    @Override
    public CacheEntry getCacheEntry(K key) {
-      return cache.getCacheEntry(key, null, null);
+      return cache.getCacheEntry(key);
    }
 
    @Override
