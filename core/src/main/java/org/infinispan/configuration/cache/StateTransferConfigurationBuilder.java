@@ -130,7 +130,7 @@ public class StateTransferConfigurationBuilder extends
       boolean _awaitInitialTransfer;
       if (awaitInitialTransfer != null) {
          _awaitInitialTransfer = awaitInitialTransfer;
-      } else if (cacheMode.isReplicated() || cacheMode.isDistributed()) {
+      } else if (cacheMode.isClustered()) {
          log.trace("Cache is distributed or replicated but awaitInitialTransfer was not defined, enabling it by default");
          _awaitInitialTransfer = true;
       } else {

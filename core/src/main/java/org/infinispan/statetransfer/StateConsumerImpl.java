@@ -175,6 +175,7 @@ public class StateConsumerImpl implements StateConsumer {
       final Set<Object> localUpdatedKeys = updatedKeys;
       if (localUpdatedKeys != null) {
          if (cacheTopology.getWriteConsistentHash().isKeyLocalToNode(rpcManager.getAddress(), key)) {
+            if (trace) log.tracef("Key %s modified by a regular tx, state transfer will ignore it", key);
             localUpdatedKeys.add(key);
          }
       }
