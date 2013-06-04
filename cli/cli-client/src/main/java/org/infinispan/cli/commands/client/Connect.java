@@ -18,8 +18,11 @@
  */
 package org.infinispan.cli.commands.client;
 
+import java.util.List;
+
 import org.infinispan.cli.Context;
 import org.infinispan.cli.commands.AbstractCommand;
+import org.infinispan.cli.commands.Argument;
 import org.infinispan.cli.commands.ProcessedCommand;
 import org.infinispan.cli.connection.Connection;
 import org.infinispan.cli.connection.ConnectionFactory;
@@ -43,7 +46,8 @@ public class Connect extends AbstractCommand {
       }
 
       try {
-         String connectionString = commandLine.getArguments().get(0).getValue();
+         List<Argument> arguments = commandLine.getArguments();
+         String connectionString = arguments.size() > 0 ? arguments.get(0).getValue() : "";
          Connection connection = ConnectionFactory.getConnection(connectionString);
          String password = null;
          if (connection.needsCredentials()) {

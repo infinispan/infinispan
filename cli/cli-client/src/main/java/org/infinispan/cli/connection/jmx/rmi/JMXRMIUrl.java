@@ -26,7 +26,7 @@ import java.util.regex.Pattern;
 import org.infinispan.cli.connection.jmx.AbstractJMXUrl;
 
 public class JMXRMIUrl extends AbstractJMXUrl {
-   private static final Pattern JMX_URL = Pattern.compile("^(?:(?![^:@]+:[^:@/]*@)(jmx):)?(?://)?((?:(([^:@]*):?([^:@]*))?@)?([^:/?#]*)(?::(\\d*))?)(?:/([^/]*)(?:/(.*))?)?");
+   private static final Pattern JMX_URL = Pattern.compile("^(?:(?![^:@]+:[^:@/]*@)(jmx):)?(?://)?((?:(([^:@]*):?([^:@]*))?@)?(\\[[0-9A-Fa-f:]+\\]|[^:/?#]*)(?::(\\d*))?)(?:/([^/]*)(?:/(.*))?)?");
 
    public JMXRMIUrl(String connectionString) {
       Matcher matcher = JMX_URL.matcher(connectionString);

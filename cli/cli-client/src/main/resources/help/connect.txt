@@ -26,7 +26,8 @@ and the
 .I jmx
 protocol should be used to connect to directly over the standard JMX protocol, whereas the
 .I remoting
-protocol should be used to connect to an Infinispan instance managed within an AS/EAP/JDG-style container.
+protocol should be used to connect to an Infinispan instance managed within an AS/EAP/JDG-style container. If the command is invoked 
+without specifying an argument, the CLI will default to remoting://localhost:9999.
 .IP user (optional)
 The username to use when connecting if the server requires credentials
 .IP password (optional)
