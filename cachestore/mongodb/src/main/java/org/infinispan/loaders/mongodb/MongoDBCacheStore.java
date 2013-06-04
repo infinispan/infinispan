@@ -142,6 +142,10 @@ public class MongoDBCacheStore extends AbstractCacheStore {
       this.collection.drop();
    }
 
+   public void drop() {
+      this.mongoDb.dropDatabase();
+   }
+
    private DBObject findById(byte[] id) throws CacheLoaderException {
       try {
          return this.collection.findOne(new BasicDBObject(ID_FIELD, id));
