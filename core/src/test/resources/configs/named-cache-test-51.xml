@@ -94,9 +94,16 @@
                    autoCommit="false" />
    </namedCache>
 
-   <namedCache name="testCache1">
+   <namedCache name="syncInval">
       <locking lockAcquisitionTimeout="20000"/>
       <clustering mode="invalidation">
+      </clustering>
+   </namedCache>
+
+   <namedCache name="asyncInval">
+      <locking lockAcquisitionTimeout="20000"/>
+      <clustering mode="invalidation">
+         <stateTransfer fetchInMemoryState="false"/>
          <async useReplQueue="false" asyncMarshalling="false"/>
       </clustering>
    </namedCache>

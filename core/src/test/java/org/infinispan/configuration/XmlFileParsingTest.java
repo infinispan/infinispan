@@ -466,10 +466,25 @@ public class XmlFileParsingTest extends AbstractInfinispanTest {
          Assert.assertEquals(c.transaction().transactionProtocol(), TransactionProtocol.TOTAL_ORDER);
       }
 
+      c = cm.getCacheConfiguration("syncInval");
+
+      assert c.clustering().cacheMode() == CacheMode.INVALIDATION_SYNC;
+      assert !c.clustering().stateTransfer().fetchInMemoryState();
+      assert c.clustering().stateTransfer().awaitInitialTransfer();
+      assert c.clustering().sync().replTimeout() == 15000;
+
+      c = cm.getCacheConfiguration("asyncInval");
+
+      assert c.clustering().cacheMode() == CacheMode.INVALIDATION_ASYNC;
+      assert !c.clustering().stateTransfer().fetchInMemoryState();
+      if (!deprecated) assert !c.clustering().stateTransfer().awaitInitialTransfer();
+      assert c.clustering().sync().replTimeout() == 15000;
+
       c = cm.getCacheConfiguration("syncRepl");
 
       assert c.clustering().cacheMode() == CacheMode.REPL_SYNC;
       assert !c.clustering().stateTransfer().fetchInMemoryState();
+      assert c.clustering().stateTransfer().awaitInitialTransfer();
       assert c.clustering().sync().replTimeout() == 15000;
 
       c = cm.getCacheConfiguration("asyncRepl");
@@ -478,6 +493,7 @@ public class XmlFileParsingTest extends AbstractInfinispanTest {
       assert !c.clustering().async().useReplQueue();
       assert !c.clustering().async().asyncMarshalling();
       assert !c.clustering().stateTransfer().fetchInMemoryState();
+      assert c.clustering().stateTransfer().awaitInitialTransfer();
 
       c = cm.getCacheConfiguration("asyncReplQueue");
 
@@ -485,12 +501,14 @@ public class XmlFileParsingTest extends AbstractInfinispanTest {
       assert c.clustering().async().useReplQueue();
       assert !c.clustering().async().asyncMarshalling();
       assert !c.clustering().stateTransfer().fetchInMemoryState();
+      assert c.clustering().stateTransfer().awaitInitialTransfer();
 
       c = cm.getCacheConfiguration("txSyncRepl");
 
       assert c.transaction().transactionManagerLookup() instanceof GenericTransactionManagerLookup;
       assert c.clustering().cacheMode() == CacheMode.REPL_SYNC;
       assert !c.clustering().stateTransfer().fetchInMemoryState();
+      assert c.clustering().stateTransfer().awaitInitialTransfer();
       assert c.clustering().sync().replTimeout() == 15000;
 
       c = cm.getCacheConfiguration("overriding");
