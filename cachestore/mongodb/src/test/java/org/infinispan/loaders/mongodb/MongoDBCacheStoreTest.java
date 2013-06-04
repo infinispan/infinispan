@@ -69,6 +69,6 @@ public class MongoDBCacheStoreTest extends BaseCacheStoreTest {
    @Override
    @AfterMethod(alwaysRun = true)
    public void tearDown() {
-      cacheStore.clear();
+      cacheStore.drop();
    }
 }
