@@ -28,9 +28,10 @@ import org.infinispan.configuration.cache.LoadersConfigurationBuilder;
 import org.infinispan.configuration.parsing.ConfigurationBuilderHolder;
 import org.infinispan.configuration.parsing.ConfigurationParser;
 import org.infinispan.configuration.parsing.Namespace;
+import org.infinispan.configuration.parsing.Namespaces;
 import org.infinispan.configuration.parsing.ParseUtils;
 import org.infinispan.configuration.parsing.Parser52;
-import org.jboss.staxmapper.XMLExtendedStreamReader;
+import org.infinispan.configuration.parsing.XMLExtendedStreamReader;
 
 /**
  *
@@ -39,20 +40,14 @@ import org.jboss.staxmapper.XMLExtendedStreamReader;
  * @author Tristan Tarrant
  * @since 5.2
  */
-public class JdbcCacheStoreConfigurationParser52 implements ConfigurationParser<ConfigurationBuilderHolder> {
-
-   private static final Namespace NAMESPACES[] = {
-         new Namespace(Namespace.INFINISPAN_NS_BASE_URI, "jdbc", Element.STRING_KEYED_JDBC_STORE.getLocalName(), 5, 2),
-         new Namespace(Namespace.INFINISPAN_NS_BASE_URI, "jdbc", Element.BINARY_KEYED_JDBC_STORE.getLocalName(), 5, 2),
-         new Namespace(Namespace.INFINISPAN_NS_BASE_URI, "jdbc", Element.MIXED_KEYED_JDBC_STORE.getLocalName(), 5, 2),
-         };
+@Namespaces({
+   @Namespace(uri = "urn:infinispan:config:jdbc:5.2", root = "stringKeyedJdbcStore"),
+   @Namespace(uri = "urn:infinispan:config:jdbc:5.2", root = "binaryKeyedJdbcStore"),
+   @Namespace(uri = "urn:infinispan:config:jdbc:5.2", root = "mixedKeyedJdbcStore"),
+})
+public class JdbcCacheStoreConfigurationParser52 implements ConfigurationParser {
 
    public JdbcCacheStoreConfigurationParser52() {
-   }
-
-   @Override
-   public Namespace[] getSupportedNamespaces() {
-      return NAMESPACES;
    }
 
    @Override

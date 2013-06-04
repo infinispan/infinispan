@@ -25,6 +25,7 @@ import static org.infinispan.configuration.cache.CacheMode.INVALIDATION_SYNC;
 import static org.infinispan.configuration.cache.CacheMode.LOCAL;
 import static org.infinispan.configuration.cache.CacheMode.REPL_ASYNC;
 import static org.infinispan.configuration.cache.CacheMode.REPL_SYNC;
+import static org.infinispan.util.StringPropertyReplacer.replaceProperties;
 
 import java.util.Properties;
 
@@ -33,9 +34,24 @@ import javax.xml.stream.XMLStreamException;
 
 import org.infinispan.commons.hash.Hash;
 import org.infinispan.config.ConfigurationException;
-import org.infinispan.configuration.cache.*;
+import org.infinispan.configuration.cache.BackupConfiguration;
+import org.infinispan.configuration.cache.BackupConfigurationBuilder;
+import org.infinispan.configuration.cache.BackupFailurePolicy;
+import org.infinispan.configuration.cache.BackupForBuilder;
+import org.infinispan.configuration.cache.CacheLoaderConfigurationBuilder;
+import org.infinispan.configuration.cache.CacheStoreConfigurationBuilder;
+import org.infinispan.configuration.cache.ClusterCacheLoaderConfigurationBuilder;
+import org.infinispan.configuration.cache.ConfigurationBuilder;
+import org.infinispan.configuration.cache.FileCacheStoreConfigurationBuilder;
 import org.infinispan.configuration.cache.FileCacheStoreConfigurationBuilder.FsyncMode;
+import org.infinispan.configuration.cache.IndexingConfigurationBuilder;
 import org.infinispan.configuration.cache.InterceptorConfiguration.Position;
+import org.infinispan.configuration.cache.InterceptorConfigurationBuilder;
+import org.infinispan.configuration.cache.LegacyLoaderConfigurationBuilder;
+import org.infinispan.configuration.cache.LegacyStoreConfigurationBuilder;
+import org.infinispan.configuration.cache.LockSupportStoreConfigurationBuilder;
+import org.infinispan.configuration.cache.RecoveryConfigurationBuilder;
+import org.infinispan.configuration.cache.VersioningScheme;
 import org.infinispan.configuration.global.GlobalConfigurationBuilder;
 import org.infinispan.configuration.global.ShutdownHookBehavior;
 import org.infinispan.container.DataContainer;
@@ -62,9 +78,6 @@ import org.infinispan.util.Util;
 import org.infinispan.util.concurrent.IsolationLevel;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
-import org.jboss.staxmapper.XMLExtendedStreamReader;
-
-import static org.infinispan.util.StringPropertyReplacer.replaceProperties;
 
 /**
  * This class implements the parser for 5.2 schema files
@@ -72,20 +85,13 @@ import static org.infinispan.util.StringPropertyReplacer.replaceProperties;
  * @author Tristan Tarrant
  * @since 5.2
  */
-public class Parser52 implements ConfigurationParser<ConfigurationBuilderHolder> {
+
+@Namespace(uri = "urn:infinispan:config:5.2", root = "infinispan")
+public class Parser52 implements ConfigurationParser {
 
    private static final Log log = LogFactory.getLog(Parser52.class);
 
-   private static final Namespace NAMESPACES[] = {
-      new Namespace(Namespace.INFINISPAN_NS_BASE_URI, Element.ROOT.getLocalName(), 5, 2),
-   };
-
    public Parser52() {}
-
-   @Override
-   public Namespace[] getSupportedNamespaces() {
-      return NAMESPACES;
-   }
 
    @Override
    public void readElement(final XMLExtendedStreamReader reader, final ConfigurationBuilderHolder holder) throws XMLStreamException {

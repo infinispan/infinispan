@@ -23,12 +23,13 @@ import org.infinispan.configuration.cache.LoadersConfigurationBuilder;
 import org.infinispan.configuration.parsing.ConfigurationBuilderHolder;
 import org.infinispan.configuration.parsing.ConfigurationParser;
 import org.infinispan.configuration.parsing.Namespace;
+import org.infinispan.configuration.parsing.Namespaces;
 import org.infinispan.configuration.parsing.ParseUtils;
 import org.infinispan.configuration.parsing.Parser52;
+import org.infinispan.configuration.parsing.XMLExtendedStreamReader;
 import org.infinispan.executors.ExecutorFactory;
 import org.infinispan.loaders.remote.wrapper.EntryWrapper;
 import org.infinispan.util.Util;
-import org.jboss.staxmapper.XMLExtendedStreamReader;
 
 import javax.xml.stream.XMLStreamConstants;
 import javax.xml.stream.XMLStreamException;
@@ -37,23 +38,18 @@ import static org.infinispan.util.StringPropertyReplacer.replaceProperties;
 
 /**
  *
- * JdbcCacheStoreConfigurationParser52.
+ * JdbcCacheStoreConfigurationParser53.
  *
  * @author Tristan Tarrant
- * @since 5.2
+ * @since 5.3
  */
-public class RemoteCacheStoreConfigurationParser53 implements ConfigurationParser<ConfigurationBuilderHolder> {
-
-   private static final Namespace NAMESPACES[] = {
-         new Namespace(Namespace.INFINISPAN_NS_BASE_URI, "remote", Element.REMOTE_STORE.getLocalName(), 5, 3),
-         new Namespace("", Element.REMOTE_STORE.getLocalName(), 0, 0) };
+@Namespaces({
+   @Namespace(uri = "urn:infinispan:config:remote:5.3", root = "remoteStore"),
+   @Namespace(root = "remoteStore"),
+})
+public class RemoteCacheStoreConfigurationParser53 implements ConfigurationParser {
 
    public RemoteCacheStoreConfigurationParser53() {
-   }
-
-   @Override
-   public Namespace[] getSupportedNamespaces() {
-      return NAMESPACES;
    }
 
    @Override

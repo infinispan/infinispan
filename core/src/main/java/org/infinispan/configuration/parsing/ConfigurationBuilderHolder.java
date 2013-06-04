@@ -31,7 +31,7 @@ public class ConfigurationBuilderHolder {
    private final ConfigurationBuilder defaultConfigurationBuilder;
    private final Map<String, ConfigurationBuilder> namedConfigurationBuilders;
    private ConfigurationBuilder currentConfigurationBuilder;
-   private final Map<Class<? extends ConfigurationParser<?>>, ParserContext> parserContexts;
+   private final Map<Class<? extends ConfigurationParser>, ParserContext> parserContexts;
    private final WeakReference<ClassLoader> classLoader;
 
    public ConfigurationBuilderHolder() {
@@ -43,7 +43,7 @@ public class ConfigurationBuilderHolder {
       this.defaultConfigurationBuilder = new ConfigurationBuilder();
       this.namedConfigurationBuilders = new HashMap<String, ConfigurationBuilder>();
       this.currentConfigurationBuilder = defaultConfigurationBuilder;
-      this.parserContexts = new HashMap<Class<? extends ConfigurationParser<?>>, ParserContext>();
+      this.parserContexts = new HashMap<Class<? extends ConfigurationParser>, ParserContext>();
       this.classLoader = new WeakReference<ClassLoader>(classLoader);
    }
 
@@ -74,11 +74,11 @@ public class ConfigurationBuilderHolder {
    }
 
    @SuppressWarnings("unchecked")
-   public <T extends ParserContext> T getParserContext(Class<? extends ConfigurationParser<?>> parserClass) {
+   public <T extends ParserContext> T getParserContext(Class<? extends ConfigurationParser> parserClass) {
       return (T) parserContexts.get(parserClass);
    }
 
-   public void setParserContext(Class<? extends ConfigurationParser<?>> parserClass, ParserContext context) {
+   public void setParserContext(Class<? extends ConfigurationParser> parserClass, ParserContext context) {
       parserContexts.put(parserClass, context);
    }
 
@@ -86,7 +86,7 @@ public class ConfigurationBuilderHolder {
       return classLoader.get();
    }
 
-   Map<Class<? extends ConfigurationParser<?>>, ParserContext> getParserContexts() {
+   Map<Class<? extends ConfigurationParser>, ParserContext> getParserContexts() {
       return parserContexts;
    }
 

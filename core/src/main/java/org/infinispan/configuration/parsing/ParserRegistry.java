@@ -1,22 +1,8 @@
-/*
- * JBoss, Home of Professional Open Source
- * Copyright 2012 Red Hat Inc. and/or its affiliates and other contributors
- * as indicated by the @author tags. All rights reserved.
- * See the copyright.txt in the distribution for a
- * full listing of individual contributors.
- *
- * This copyrighted material is made available to anyone wishing to use,
- * modify, copy, or redistribute it subject to the terms and conditions
- * of the GNU Lesser General Public License, v. 2.1.
- * This program is distributed in the hope that it will be useful, but WITHOUT A
- * WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A
- * PARTICULAR PURPOSE.  See the GNU Lesser General Public License for more details.
- * You should have received a copy of the GNU Lesser General Public License,
- * v.2.1 along with this distribution; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston,
- * MA  02110-1301, USA.
- */
 package org.infinispan.configuration.parsing;
+
+import static javax.xml.stream.XMLStreamConstants.END_DOCUMENT;
+import static javax.xml.stream.XMLStreamConstants.START_DOCUMENT;
+import static javax.xml.stream.XMLStreamConstants.START_ELEMENT;
 
 import java.io.BufferedInputStream;
 import java.io.FileNotFoundException;
@@ -24,35 +10,59 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.lang.ref.WeakReference;
 import java.util.ServiceLoader;
+import java.util.concurrent.ConcurrentMap;
 
 import javax.xml.namespace.QName;
 import javax.xml.stream.XMLInputFactory;
+import javax.xml.stream.XMLStreamException;
 import javax.xml.stream.XMLStreamReader;
 
 import org.infinispan.config.ConfigurationException;
+import org.infinispan.util.CollectionFactory;
 import org.infinispan.util.FileLookup;
 import org.infinispan.util.FileLookupFactory;
 import org.infinispan.util.Util;
-import org.jboss.staxmapper.XMLMapper;
+import org.infinispan.util.logging.Log;
+import org.infinispan.util.logging.LogFactory;
 
 /**
- *
- * ParserRegistry.
+ * ParserRegistry is a namespace-mapping-aware meta-parser which provides a way to delegate the
+ * parsing of multi-namespace XML files to appropriate parsers, defined by the
+ * {@link ConfigurationParser} interface. A registry of available parsers is built using the
+ * {@link ServiceLoader} system. Implementations of {@link ConfigurationParser} should include a
+ * META-INF/services/org.infinispan.configuration.parsing.ConfigurationParser file containing a list
+ * of available parsers.
  *
  * @author Tristan Tarrant
  * @since 5.2
  */
-public class ParserRegistry {
-   private final XMLMapper xmlMapper;
+public class ParserRegistry implements NamespaceMappingParser {
+   private static final Log log = LogFactory.getLog(ParserRegistry.class);
    private final WeakReference<ClassLoader> cl;
+   private final ConcurrentMap<QName, ConfigurationParser> parserMappings;
 
    public ParserRegistry(ClassLoader classLoader) {
-      xmlMapper = XMLMapper.Factory.create();
+      this.parserMappings = CollectionFactory.makeConcurrentMap();
       this.cl = new WeakReference<ClassLoader>(classLoader);
       ServiceLoader<ConfigurationParser> parsers = ServiceLoader.load(ConfigurationParser.class, cl.get());
-      for (ConfigurationParser<?> parser : parsers) {
-         for (Namespace ns : parser.getSupportedNamespaces()) {
-            xmlMapper.registerRootElement(new QName(ns.getUri(), ns.getRootElement()), parser);
+      for (ConfigurationParser parser : parsers) {
+         Namespaces namespacesAnnotation = parser.getClass().getAnnotation(Namespaces.class);
+         Namespace[] namespaces;
+         if (namespacesAnnotation != null) {
+            namespaces = namespacesAnnotation.value();
+         } else {
+            Namespace namespaceAnnotation = parser.getClass().getAnnotation(Namespace.class);
+            if (namespaceAnnotation != null) {
+               namespaces = new Namespace[] { namespaceAnnotation };
+            } else {
+               throw log.parserDoesNotDeclareNamespaces(parser.getClass().getName());
+            }
+         }
+         for (Namespace ns : namespaces) {
+            QName qName = new QName(ns.uri(), ns.root());
+            if (parserMappings.putIfAbsent(qName, parser) != null) {
+               throw log.parserRootElementAlreadyRegistered(qName);
+            }
          }
       }
    }
@@ -60,7 +70,7 @@ public class ParserRegistry {
    public ConfigurationBuilderHolder parseFile(String filename) throws IOException {
       FileLookup fileLookup = FileLookupFactory.newInstance();
       InputStream is = fileLookup.lookupFile(filename, cl.get());
-      if(is==null) {
+      if (is == null) {
          throw new FileNotFoundException(filename);
       }
       try {
@@ -72,20 +82,51 @@ public class ParserRegistry {
 
    public ConfigurationBuilderHolder parse(InputStream is) {
       try {
-         BufferedInputStream input = new BufferedInputStream(is);
-         XMLStreamReader streamReader = XMLInputFactory.newInstance().createXMLStreamReader(input);
          ConfigurationBuilderHolder holder = new ConfigurationBuilderHolder(cl.get());
-         xmlMapper.parseDocument(holder, streamReader);
-         streamReader.close();
-         // Fire all parsingComplete events if any
-         for(ParserContext parserContext : holder.getParserContexts().values()) {
-            parserContext.fireParsingComplete();
-         }
+         parse(is, holder);
          return holder;
       } catch (ConfigurationException e) {
          throw e;
       } catch (Exception e) {
          throw new ConfigurationException(e);
       }
+   }
+
+   public void parse(InputStream is, ConfigurationBuilderHolder holder) throws XMLStreamException {
+      BufferedInputStream input = new BufferedInputStream(is);
+      XMLStreamReader subReader = XMLInputFactory.newInstance().createXMLStreamReader(input);
+      XMLExtendedStreamReader reader = new XMLExtendedStreamReaderImpl(this, subReader);
+      parse(reader, holder);
+      subReader.close();
+      // Fire all parsingComplete events if any
+      for (ParserContext parserContext : holder.getParserContexts().values()) {
+         parserContext.fireParsingComplete();
+      }
+   }
+
+   public void parse(XMLExtendedStreamReader reader, ConfigurationBuilderHolder holder) throws XMLStreamException {
+      try {
+         reader.require(START_DOCUMENT, null, null);
+         reader.nextTag();
+         reader.require(START_ELEMENT, null, null);
+         parseElement(reader, holder);
+         for (; reader.next() != END_DOCUMENT;)
+            ;
+      } finally {
+         try {
+            reader.close();
+         } catch (Exception e) {
+         }
+      }
+   }
+
+   @Override
+   public void parseElement(XMLExtendedStreamReader reader, ConfigurationBuilderHolder holder) throws XMLStreamException {
+      QName name = reader.getName();
+      ConfigurationParser parser = parserMappings.get(name);
+      if (parser == null) {
+         throw new XMLStreamException("Unexpected element '" + name + "'", reader.getLocation());
+      }
+      parser.readElement(reader, holder);
    }
 }

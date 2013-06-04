@@ -66,7 +66,6 @@ import org.infinispan.util.LegacyKeySupportSystemProperties;
 import org.infinispan.util.Util;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
-import org.jboss.staxmapper.XMLMapper;
 
 /**
  * CacheManagers in unit tests should be created with this factory, in order to avoid resource clashes. See
@@ -731,22 +730,11 @@ public class TestCacheManagerFactory {
    public static ConfigurationBuilderHolder buildAggregateHolder(String... xmls)
          throws XMLStreamException, FactoryConfigurationError {
       ClassLoader cl = Thread.currentThread().getContextClassLoader();
-      // Configure the xml mapper
-      XMLMapper xmlMapper = XMLMapper.Factory.create();
-      @SuppressWarnings("rawtypes")
-      ServiceLoader<ConfigurationParser> parsers = ServiceLoader.load(ConfigurationParser.class, cl);
-      for (ConfigurationParser<?> parser : parsers) {
-         for (Namespace ns : parser.getSupportedNamespaces()) {
-            xmlMapper.registerRootElement(new QName(ns.getUri(), ns.getRootElement()), parser);
-         }
-      }
+      ParserRegistry registry = new ParserRegistry(cl);
 
       ConfigurationBuilderHolder holder = new ConfigurationBuilderHolder(cl);
       for (int i = 0; i < xmls.length; ++i) {
-         BufferedInputStream input = new BufferedInputStream(
-               new ByteArrayInputStream(xmls[i].getBytes()));
-         XMLStreamReader streamReader = XMLInputFactory.newInstance().createXMLStreamReader(input);
-         xmlMapper.parseDocument(holder, streamReader);
+         registry.parse(new ByteArrayInputStream(xmls[i].getBytes()), holder);
       }
 
       return holder;

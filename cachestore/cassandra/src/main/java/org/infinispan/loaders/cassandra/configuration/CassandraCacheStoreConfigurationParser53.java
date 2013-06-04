@@ -18,20 +18,21 @@
  */
 package org.infinispan.loaders.cassandra.configuration;
 
+import static org.infinispan.util.StringPropertyReplacer.replaceProperties;
+
+import javax.xml.stream.XMLStreamConstants;
+import javax.xml.stream.XMLStreamException;
+
 import org.apache.cassandra.thrift.ConsistencyLevel;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.cache.LoadersConfigurationBuilder;
 import org.infinispan.configuration.parsing.ConfigurationBuilderHolder;
 import org.infinispan.configuration.parsing.ConfigurationParser;
 import org.infinispan.configuration.parsing.Namespace;
+import org.infinispan.configuration.parsing.Namespaces;
 import org.infinispan.configuration.parsing.ParseUtils;
 import org.infinispan.configuration.parsing.Parser52;
-import org.jboss.staxmapper.XMLExtendedStreamReader;
-
-import javax.xml.stream.XMLStreamConstants;
-import javax.xml.stream.XMLStreamException;
-
-import static org.infinispan.util.StringPropertyReplacer.replaceProperties;
+import org.infinispan.configuration.parsing.XMLExtendedStreamReader;
 
 /**
  *
@@ -40,18 +41,13 @@ import static org.infinispan.util.StringPropertyReplacer.replaceProperties;
  * @author Tristan Tarrant
  * @since 5.2
  */
-public class CassandraCacheStoreConfigurationParser53 implements ConfigurationParser<ConfigurationBuilderHolder> {
-
-   private static final Namespace NAMESPACES[] = {
-         new Namespace(Namespace.INFINISPAN_NS_BASE_URI, "cassandra", Element.CASSANDRA_STORE.getLocalName(), 5, 3),
-         new Namespace("", Element.CASSANDRA_STORE.getLocalName(), 0, 0) };
+@Namespaces({
+   @Namespace(uri = "urn:infinispan:config:cassandra:5.3", root = "cassandraStore"),
+   @Namespace(root = "cassandraStore"),
+})
+public class CassandraCacheStoreConfigurationParser53 implements ConfigurationParser {
 
    public CassandraCacheStoreConfigurationParser53() {
-   }
-
-   @Override
-   public Namespace[] getSupportedNamespaces() {
-      return NAMESPACES;
    }
 
    @Override

@@ -30,7 +30,7 @@ import org.infinispan.configuration.parsing.ConfigurationParser;
 import org.infinispan.configuration.parsing.Namespace;
 import org.infinispan.configuration.parsing.ParseUtils;
 import org.infinispan.configuration.parsing.Parser52;
-import org.jboss.staxmapper.XMLExtendedStreamReader;
+import org.infinispan.configuration.parsing.XMLExtendedStreamReader;
 
 /**
  *
@@ -39,17 +39,10 @@ import org.jboss.staxmapper.XMLExtendedStreamReader;
  * @author Tristan Tarrant
  * @since 5.2
  */
-public class HBaseCacheStoreConfigurationParser52 implements ConfigurationParser<ConfigurationBuilderHolder> {
-
-   private static final Namespace NAMESPACES[] = { new Namespace(Namespace.INFINISPAN_NS_BASE_URI, "hbase", Element.HBASE_STORE.getLocalName(), 5, 2),
-         };
+@Namespace(uri = "urn:infinispan:config:hbase:5.2", root = "hbaseStore")
+public class HBaseCacheStoreConfigurationParser52 implements ConfigurationParser {
 
    public HBaseCacheStoreConfigurationParser52() {
-   }
-
-   @Override
-   public Namespace[] getSupportedNamespaces() {
-      return NAMESPACES;
    }
 
    @Override

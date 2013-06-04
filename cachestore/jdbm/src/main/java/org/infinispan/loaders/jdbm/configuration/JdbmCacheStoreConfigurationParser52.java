@@ -30,7 +30,7 @@ import org.infinispan.configuration.parsing.ConfigurationParser;
 import org.infinispan.configuration.parsing.Namespace;
 import org.infinispan.configuration.parsing.ParseUtils;
 import org.infinispan.configuration.parsing.Parser52;
-import org.jboss.staxmapper.XMLExtendedStreamReader;
+import org.infinispan.configuration.parsing.XMLExtendedStreamReader;
 
 /**
  *
@@ -39,19 +39,12 @@ import org.jboss.staxmapper.XMLExtendedStreamReader;
  * @author Tristan Tarrant
  * @since 5.2
  */
-public class JdbmCacheStoreConfigurationParser52 implements ConfigurationParser<ConfigurationBuilderHolder> {
-
-   private static final Namespace NAMESPACES[] = {
-         new Namespace(Namespace.INFINISPAN_NS_BASE_URI, "jdbm", Element.JDBM_STORE.getLocalName(), 5, 2),
-         };
+@Namespace(uri = "urn:infinispan:config:jdbm:5.2", root = "jdbmStore")
+public class JdbmCacheStoreConfigurationParser52 implements ConfigurationParser {
 
    public JdbmCacheStoreConfigurationParser52() {
    }
 
-   @Override
-   public Namespace[] getSupportedNamespaces() {
-      return NAMESPACES;
-   }
 
    @Override
    public void readElement(final XMLExtendedStreamReader reader, final ConfigurationBuilderHolder holder)

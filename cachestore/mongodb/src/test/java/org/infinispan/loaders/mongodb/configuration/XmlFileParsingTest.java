@@ -50,7 +50,7 @@ public class XmlFileParsingTest extends AbstractInfinispanTest {
       TestingUtil.killCacheManagers(cacheManager);
    }
 
-   public void testRemoteCacheStore() throws Exception {
+   public void testMongoDBCacheStore() throws Exception {
       String config = INFINISPAN_START_TAG_NO_SCHEMA + "\n" +
             "   <default>\n" +
             "     <loaders>\n" +

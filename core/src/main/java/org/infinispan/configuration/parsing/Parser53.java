@@ -53,7 +53,6 @@ import org.infinispan.util.Util;
 import org.infinispan.util.concurrent.IsolationLevel;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
-import org.jboss.staxmapper.XMLExtendedStreamReader;
 
 import javax.xml.stream.XMLStreamConstants;
 import javax.xml.stream.XMLStreamException;
@@ -68,21 +67,15 @@ import static org.infinispan.util.StringPropertyReplacer.replaceProperties;
  * @author Galder Zamarreño
  * @since 5.3
  */
-public class Parser53 implements ConfigurationParser<ConfigurationBuilderHolder> {
+@Namespaces({
+   @Namespace(uri = "urn:infinispan:config:5.3", root = "infinispan"),
+   @Namespace(root = "infinispan")
+})
+public class Parser53 implements ConfigurationParser {
 
    private static final Log log = LogFactory.getLog(Parser53.class);
 
-   private static final Namespace NAMESPACES[] = {
-      new Namespace(Namespace.INFINISPAN_NS_BASE_URI, Element.ROOT.getLocalName(), 5, 3),
-      new Namespace("", Element.ROOT.getLocalName(), 0, 0)
-   };
-
    public Parser53() {}
-
-   @Override
-   public Namespace[] getSupportedNamespaces() {
-      return NAMESPACES;
-   }
 
    @Override
    public void readElement(final XMLExtendedStreamReader reader, final ConfigurationBuilderHolder holder) throws XMLStreamException {

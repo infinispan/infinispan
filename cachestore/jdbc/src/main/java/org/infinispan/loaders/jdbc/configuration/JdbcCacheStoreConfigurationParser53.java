@@ -18,43 +18,39 @@
  */
 package org.infinispan.loaders.jdbc.configuration;
 
+import static org.infinispan.util.StringPropertyReplacer.replaceProperties;
+
+import javax.xml.stream.XMLStreamConstants;
+import javax.xml.stream.XMLStreamException;
+
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.cache.LoadersConfigurationBuilder;
 import org.infinispan.configuration.parsing.ConfigurationBuilderHolder;
 import org.infinispan.configuration.parsing.ConfigurationParser;
 import org.infinispan.configuration.parsing.Namespace;
+import org.infinispan.configuration.parsing.Namespaces;
 import org.infinispan.configuration.parsing.ParseUtils;
 import org.infinispan.configuration.parsing.Parser52;
-import org.jboss.staxmapper.XMLExtendedStreamReader;
-
-import javax.xml.stream.XMLStreamConstants;
-import javax.xml.stream.XMLStreamException;
-
-import static org.infinispan.util.StringPropertyReplacer.replaceProperties;
+import org.infinispan.configuration.parsing.XMLExtendedStreamReader;
 
 /**
  *
- * JdbcCacheStoreConfigurationParser52.
+ * JdbcCacheStoreConfigurationParser53.
  *
  * @author Tristan Tarrant
- * @since 5.2
+ * @since 5.3
  */
-public class JdbcCacheStoreConfigurationParser53 implements ConfigurationParser<ConfigurationBuilderHolder> {
-
-   private static final Namespace NAMESPACES[] = {
-         new Namespace(Namespace.INFINISPAN_NS_BASE_URI, "jdbc", Element.STRING_KEYED_JDBC_STORE.getLocalName(), 5, 3),
-         new Namespace("", Element.STRING_KEYED_JDBC_STORE.getLocalName(), 0, 0),
-         new Namespace(Namespace.INFINISPAN_NS_BASE_URI, "jdbc", Element.BINARY_KEYED_JDBC_STORE.getLocalName(), 5, 3),
-         new Namespace("", Element.BINARY_KEYED_JDBC_STORE.getLocalName(), 0, 0),
-         new Namespace(Namespace.INFINISPAN_NS_BASE_URI, "jdbc", Element.MIXED_KEYED_JDBC_STORE.getLocalName(), 5, 3),
-         new Namespace("", Element.MIXED_KEYED_JDBC_STORE.getLocalName(), 0, 0) };
+@Namespaces({
+   @Namespace(uri = "urn:infinispan:config:jdbc:5.3", root = "stringKeyedJdbcStore"),
+   @Namespace(root = "stringKeyedJdbcStore"),
+   @Namespace(uri = "urn:infinispan:config:jdbc:5.3", root = "binaryKeyedJdbcStore"),
+   @Namespace(root = "binaryKeyedJdbcStore"),
+   @Namespace(uri = "urn:infinispan:config:jdbc:5.3", root = "mixedKeyedJdbcStore"),
+   @Namespace(root = "mixedKeyedJdbcStore"),
+})
+public class JdbcCacheStoreConfigurationParser53 implements ConfigurationParser {
 
    public JdbcCacheStoreConfigurationParser53() {
-   }
-
-   @Override
-   public Namespace[] getSupportedNamespaces() {
-      return NAMESPACES;
    }
 
    @Override

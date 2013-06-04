@@ -52,6 +52,8 @@ import javax.naming.NamingException;
 import javax.transaction.Synchronization;
 import javax.transaction.TransactionManager;
 import javax.transaction.xa.XAException;
+import javax.xml.namespace.QName;
+
 import java.io.File;
 import java.io.IOException;
 import java.lang.reflect.Method;
@@ -903,5 +905,10 @@ public interface Log extends BasicLogger {
    @Message(value="Waiting on work threads latch failed: %s", id = 233)
    TimeoutException waitingForWorkerThreadsFailed(CountDownLatch latch);
 
+   @Message(value = "Root element for %s already registered in ParserRegistry", id = 234)
+   IllegalArgumentException parserRootElementAlreadyRegistered(QName qName);
+
+   @Message(value = "Configuration parser %s does not declare any Namespace annotations", id = 235)
+   ConfigurationException parserDoesNotDeclareNamespaces(String name);
 }
 

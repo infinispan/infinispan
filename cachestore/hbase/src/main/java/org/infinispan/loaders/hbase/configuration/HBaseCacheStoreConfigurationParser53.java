@@ -18,39 +18,37 @@
  */
 package org.infinispan.loaders.hbase.configuration;
 
+import static org.infinispan.util.StringPropertyReplacer.replaceProperties;
+
+import javax.xml.stream.XMLStreamConstants;
+import javax.xml.stream.XMLStreamException;
+
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.cache.LoadersConfigurationBuilder;
 import org.infinispan.configuration.parsing.ConfigurationBuilderHolder;
 import org.infinispan.configuration.parsing.ConfigurationParser;
 import org.infinispan.configuration.parsing.Namespace;
+import org.infinispan.configuration.parsing.Namespaces;
 import org.infinispan.configuration.parsing.ParseUtils;
 import org.infinispan.configuration.parsing.Parser52;
-import org.jboss.staxmapper.XMLExtendedStreamReader;
-
-import javax.xml.stream.XMLStreamConstants;
-import javax.xml.stream.XMLStreamException;
-
-import static org.infinispan.util.StringPropertyReplacer.replaceProperties;
+import org.infinispan.configuration.parsing.XMLExtendedStreamReader;
 
 /**
  *
- * HBaseCacheStoreConfigurationParser52.
+ * HBaseCacheStoreConfigurationParser53.
  *
  * @author Tristan Tarrant
- * @since 5.2
+ * @since 5.3
  */
-public class HBaseCacheStoreConfigurationParser53 implements ConfigurationParser<ConfigurationBuilderHolder> {
-
-   private static final Namespace NAMESPACES[] = { new Namespace(Namespace.INFINISPAN_NS_BASE_URI, "hbase", Element.HBASE_STORE.getLocalName(), 5, 3),
-         new Namespace("", Element.HBASE_STORE.getLocalName(), 0, 0) };
+@Namespaces({
+   @Namespace(uri = "urn:infinispan:config:hbase:5.3", root = "hbaseStore"),
+   @Namespace(root = "hbaseStore"),
+})
+public class HBaseCacheStoreConfigurationParser53 implements ConfigurationParser {
 
    public HBaseCacheStoreConfigurationParser53() {
    }
 
-   @Override
-   public Namespace[] getSupportedNamespaces() {
-      return NAMESPACES;
-   }
 
    @Override
    public void readElement(final XMLExtendedStreamReader reader, final ConfigurationBuilderHolder holder) throws XMLStreamException {

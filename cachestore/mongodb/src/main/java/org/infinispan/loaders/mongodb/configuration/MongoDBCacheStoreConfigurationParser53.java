@@ -23,29 +23,31 @@
 
 package org.infinispan.loaders.mongodb.configuration;
 
+import static org.infinispan.util.StringPropertyReplacer.replaceProperties;
+
+import javax.xml.stream.XMLStreamConstants;
+import javax.xml.stream.XMLStreamException;
+
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.cache.LoadersConfigurationBuilder;
 import org.infinispan.configuration.parsing.ConfigurationBuilderHolder;
 import org.infinispan.configuration.parsing.ConfigurationParser;
 import org.infinispan.configuration.parsing.Namespace;
+import org.infinispan.configuration.parsing.Namespaces;
 import org.infinispan.configuration.parsing.ParseUtils;
-import org.jboss.staxmapper.XMLExtendedStreamReader;
-
-import javax.xml.stream.XMLStreamConstants;
-import javax.xml.stream.XMLStreamException;
-
-import static org.infinispan.util.StringPropertyReplacer.replaceProperties;
+import org.infinispan.configuration.parsing.XMLExtendedStreamReader;
 
 /**
  * Parses the configuration from the XML. For valid elements and attributes refer to {@link Element} and {@link Attribute}
+ * @since 5.3
  *
  * @author Guillaume Scheibel <guillaume.scheibel@gmail.com>
  */
-public class MongoDBCacheStoreConfigurationParser implements ConfigurationParser<ConfigurationBuilderHolder> {
-
-   private static final Namespace NAMESPACES[] = {
-         new Namespace(Namespace.INFINISPAN_NS_BASE_URI, "mongodb", Element.MONGODB_STORE.getName(), 5, 3),
-         new Namespace("", Element.MONGODB_STORE.getName(), 0, 0)};
+@Namespaces({
+   @Namespace(uri = "urn:infinispan:config:mongodb:5.3", root = "mongodbStore"),
+   @Namespace(root = "mongodbStore")
+})
+public class MongoDBCacheStoreConfigurationParser53 implements ConfigurationParser {
 
    @Override
    public void readElement(XMLExtendedStreamReader xmlExtendedStreamReader, ConfigurationBuilderHolder configurationBuilderHolder)
@@ -87,6 +89,9 @@ public class MongoDBCacheStoreConfigurationParser implements ConfigurationParser
                this.parseStorage(reader, builder);
                break;
             }
+            default: {
+               throw ParseUtils.unexpectedElement(reader);
+            }
          }
       }
       loadersBuilder.addStore(builder);
@@ -103,9 +108,13 @@ public class MongoDBCacheStoreConfigurationParser implements ConfigurationParser
                builder.database(value);
                break;
             }
-            case COLLECTION:
+            case COLLECTION: {
                builder.collection(value);
                break;
+            }
+            default: {
+               throw ParseUtils.unexpectedElement(reader);
+            }
          }
       }
       ParseUtils.requireNoContent(reader);
@@ -118,16 +127,25 @@ public class MongoDBCacheStoreConfigurationParser implements ConfigurationParser
          String value = replaceProperties(reader.getAttributeValue(i));
          Attribute attribute = Attribute.forName(reader.getAttributeLocalName(i));
          switch (attribute) {
-            case HOST:
+            case HOST: {
                builder.host(value);
                break;
-            case PORT:
+            }
+            case PORT: {
                builder.port(Integer.valueOf(value));
                break;
-            case TIMEOUT:
+            }
+            case TIMEOUT: {
                builder.timeout(Integer.valueOf(value));
-            case ACKNOWLEDGMENT:
+               break;
+            }
+            case ACKNOWLEDGMENT: {
                builder.acknowledgment(Integer.valueOf(value));
+               break;
+            }
+            default: {
+               throw ParseUtils.unexpectedAttribute(reader, i);
+            }
          }
       }
       ParseUtils.requireNoContent(reader);
@@ -144,16 +162,16 @@ public class MongoDBCacheStoreConfigurationParser implements ConfigurationParser
                builder.username(value);
                break;
             }
-            case PASSWORD:
+            case PASSWORD: {
                builder.password(value);
                break;
+            }
+            default: {
+               throw ParseUtils.unexpectedAttribute(reader, i);
+            }
          }
       }
       ParseUtils.requireNoContent(reader);
    }
 
-   @Override
-   public Namespace[] getSupportedNamespaces() {
-      return NAMESPACES;
-   }
 }

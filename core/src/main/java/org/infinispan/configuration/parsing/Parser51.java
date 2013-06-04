@@ -25,6 +25,7 @@ import static org.infinispan.configuration.cache.CacheMode.INVALIDATION_SYNC;
 import static org.infinispan.configuration.cache.CacheMode.LOCAL;
 import static org.infinispan.configuration.cache.CacheMode.REPL_ASYNC;
 import static org.infinispan.configuration.cache.CacheMode.REPL_SYNC;
+import static org.infinispan.util.StringPropertyReplacer.replaceProperties;
 
 import java.util.Properties;
 
@@ -33,8 +34,18 @@ import javax.xml.stream.XMLStreamException;
 import javax.xml.stream.XMLStreamReader;
 
 import org.infinispan.config.ConfigurationException;
-import org.infinispan.configuration.cache.*;
+import org.infinispan.configuration.cache.CacheLoaderConfigurationBuilder;
+import org.infinispan.configuration.cache.CacheStoreConfigurationBuilder;
+import org.infinispan.configuration.cache.ClusterCacheLoaderConfigurationBuilder;
+import org.infinispan.configuration.cache.ConfigurationBuilder;
+import org.infinispan.configuration.cache.FileCacheStoreConfigurationBuilder;
+import org.infinispan.configuration.cache.IndexingConfigurationBuilder;
 import org.infinispan.configuration.cache.InterceptorConfiguration.Position;
+import org.infinispan.configuration.cache.InterceptorConfigurationBuilder;
+import org.infinispan.configuration.cache.LegacyLoaderConfigurationBuilder;
+import org.infinispan.configuration.cache.LegacyStoreConfigurationBuilder;
+import org.infinispan.configuration.cache.RecoveryConfigurationBuilder;
+import org.infinispan.configuration.cache.VersioningScheme;
 import org.infinispan.configuration.global.GlobalConfigurationBuilder;
 import org.infinispan.configuration.global.ShutdownHookBehavior;
 import org.infinispan.container.DataContainer;
@@ -61,9 +72,6 @@ import org.infinispan.util.Util;
 import org.infinispan.util.concurrent.IsolationLevel;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
-import org.jboss.staxmapper.XMLExtendedStreamReader;
-
-import static org.infinispan.util.StringPropertyReplacer.replaceProperties;
 
 /**
  * This class implements the parser for 5.1 schema files
@@ -72,21 +80,15 @@ import static org.infinispan.util.StringPropertyReplacer.replaceProperties;
  * @author Tristan Tarrant
  * @since 5.1
  */
-public class Parser51 implements ConfigurationParser<ConfigurationBuilderHolder> {
+@Namespaces({
+   @Namespace(uri = "urn:infinispan:config:5.0", root = "infinispan"),
+   @Namespace(uri = "urn:infinispan:config:5.1", root = "infinispan"),
+})
+public class Parser51 implements ConfigurationParser {
 
    private static final Log log = LogFactory.getLog(Parser51.class);
 
-   private static final Namespace NAMESPACES[] = {
-      new Namespace(Namespace.INFINISPAN_NS_BASE_URI, Element.ROOT.getLocalName(), 5, 0),
-      new Namespace(Namespace.INFINISPAN_NS_BASE_URI, Element.ROOT.getLocalName(), 5, 1)
-   };
-
    public Parser51() {}
-
-   @Override
-   public Namespace[] getSupportedNamespaces() {
-      return NAMESPACES;
-   }
 
    @Override
    public void readElement(XMLExtendedStreamReader reader, ConfigurationBuilderHolder holder) throws XMLStreamException {
