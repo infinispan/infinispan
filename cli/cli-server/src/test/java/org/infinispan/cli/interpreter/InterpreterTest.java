@@ -18,13 +18,17 @@
  */
 package org.infinispan.cli.interpreter;
 
-import java.util.Map;
+import static org.testng.AssertJUnit.assertEquals;
+import static org.testng.AssertJUnit.assertFalse;
+import static org.testng.AssertJUnit.assertNotNull;
+import static org.testng.AssertJUnit.assertNull;
+import static org.testng.AssertJUnit.assertTrue;
+import static org.testng.AssertJUnit.fail;
 
-import static org.testng.AssertJUnit.*;
+import java.util.Map;
 
 import org.infinispan.Cache;
 import org.infinispan.api.BasicCacheContainer;
-import org.infinispan.cli.interpreter.Interpreter;
 import org.infinispan.cli.interpreter.logging.Log;
 import org.infinispan.cli.interpreter.result.ResultKeys;
 import org.infinispan.cli.interpreter.statement.CacheStatement;
@@ -53,26 +57,37 @@ public class InterpreterTest extends SingleCacheManagerTest {
       return interpreter;
    }
 
+   private Map<String, String> execute(Interpreter interpreter, String sessionId, String commands) throws Exception {
+      Map<String, String> result = interpreter.execute(sessionId, commands);
+      if (result.containsKey(ResultKeys.ERROR.toString())) {
+         fail(String.format("%s\n%s", result.get(ResultKeys.ERROR.toString()), result.get(ResultKeys.STACKTRACE.toString())));
+      }
+
+      return result;
+   }
+
    public void testSimple() throws Exception {
       Interpreter interpreter = getInterpreter();
       String sessionId = interpreter.createSessionId(BasicCacheContainer.DEFAULT_CACHE_NAME);
-      interpreter.execute(sessionId, "put 'a' 'b'; get 'a';");
-      interpreter
-            .execute(sessionId, "put 'c' {\"org.infinispan.cli.interpreter.MyClass\":{\"i\":5,\"x\":null,\"b\":true}};");
+      execute(interpreter, sessionId, "put 'a' 'b'; get 'a';");
+      execute(interpreter, sessionId, "put 'c' {\"org.infinispan.cli.interpreter.MyClass\":{\"i\":5,\"x\":null,\"b\":true}};");
       Object o = cache.get("c");
-      assert o != null;
-      assert o instanceof MyClass;
-      assert ((MyClass) o).i == 5;
-      assert ((MyClass) o).b;
-      interpreter.execute(sessionId, "put 'f' 0.5;");
+      assertNotNull(o);
+      assertEquals(MyClass.class, o.getClass());
+      assertEquals(5, ((MyClass) o).i);
+      assertTrue(((MyClass) o).b);
+      execute(interpreter, sessionId, "put 'f' 0.5;");
       Double f = (Double) cache.get("f");
-      assert f == 0.5;
+      assertEquals(0.5, f.doubleValue());
+      execute(interpreter, sessionId, "put 'l' 1000l;");
+      Long l = (Long) cache.get("l");
+      assertEquals(1000l, l.longValue());
    }
 
    public void testPutIfAbsent() throws Exception {
       Interpreter interpreter = getInterpreter();
       String sessionId = interpreter.createSessionId(BasicCacheContainer.DEFAULT_CACHE_NAME);
-      interpreter.execute(sessionId, "put 'a' 'a'; put --ifabsent 'a' 'b';");
+      execute(interpreter, sessionId, "put 'a' 'a'; put --ifabsent 'a' 'b';");
       assertEquals("a", (String)cache.get("a"));
    }
 
@@ -80,44 +95,44 @@ public class InterpreterTest extends SingleCacheManagerTest {
       Interpreter interpreter = getInterpreter();
       String sessionId = interpreter.createSessionId(BasicCacheContainer.DEFAULT_CACHE_NAME);
       Cache<Object, Object> otherCache = cacheManager.getCache("otherCache");
-      interpreter.execute(sessionId, "put 'a' 'a'; put 'otherCache'.'b' 'b'; cache 'otherCache'; put 'c' 'c';");
+      execute(interpreter, sessionId, "put 'a' 'a'; put 'otherCache'.'b' 'b'; cache 'otherCache'; put 'c' 'c';");
       Object a = cache.get("a");
-      assert a.equals("a");
+      assertEquals("a", a);
       Object b = otherCache.get("b");
-      assert b.equals("b");
+      assertEquals("b", b);
       Object c = otherCache.get("c");
-      assert c.equals("c");
+      assertEquals("c", c);
    }
 
    public void testBatching() throws Exception {
       Interpreter interpreter = getInterpreter();
       String sessionId = interpreter.createSessionId(BasicCacheContainer.DEFAULT_CACHE_NAME);
-      interpreter.execute(sessionId, "start; put 'a' 'a'; put 'b' 'b'; end;");
+      execute(interpreter, sessionId, "start; put 'a' 'a'; put 'b' 'b'; end;");
       Object a = cache.get("a");
-      assert a.equals("a");
+      assertEquals("a", a);
       Object b = cache.get("b");
-      assert b.equals("b");
+      assertEquals("b", b);
    }
 
    public void testTx() throws Exception {
       Interpreter interpreter = getInterpreter();
       String sessionId = interpreter.createSessionId(BasicCacheContainer.DEFAULT_CACHE_NAME);
-      interpreter.execute(sessionId, "begin; put 'a' 'a'; commit;");
+      execute(interpreter, sessionId, "begin; put 'a' 'a'; commit;");
       Object a = cache.get("a");
-      assert a.equals("a");
-      interpreter.execute(sessionId, "begin; put 'b' 'b'; rollback;");
-      assert !cache.containsKey("b");
+      assertEquals("a", a);
+      execute(interpreter, sessionId, "begin; put 'b' 'b'; rollback;");
+      assertFalse(cache.containsKey("b"));
    }
 
    public void testDangling() throws Exception {
       Interpreter interpreter = getInterpreter();
       String sessionId = interpreter.createSessionId(BasicCacheContainer.DEFAULT_CACHE_NAME);
       interpreter.execute(sessionId, "begin; put 'a' 'a';");
-      assert cache.getAdvancedCache().getTransactionManager().getTransaction() == null;
-      assert !cache.containsKey("a");
+      assertNull(cache.getAdvancedCache().getTransactionManager().getTransaction());
+      assertFalse(cache.containsKey("a"));
       interpreter.execute(sessionId, "start; put 'a' 'a';");
-      assert cache.getAdvancedCache().getBatchContainer().getBatchTransaction() == null;
-      assert !cache.containsKey("a");
+      assertNull(cache.getAdvancedCache().getBatchContainer().getBatchTransaction());
+      assertFalse(cache.containsKey("a"));
    }
 
    public void testRemove() throws Exception {
@@ -125,14 +140,14 @@ public class InterpreterTest extends SingleCacheManagerTest {
       String sessionId = interpreter.createSessionId(BasicCacheContainer.DEFAULT_CACHE_NAME);
       interpreter.execute(sessionId, "put 'a' 'a';");
       Object a = cache.get("a");
-      assert a.equals("a");
+      assertEquals("a", a);
       interpreter.execute(sessionId, "remove 'a';");
-      assert !cache.containsKey("a");
+      assertFalse(cache.containsKey("a"));
       interpreter.execute(sessionId, "put 'b' 'b';");
       Object b = cache.get("b");
-      assert b.equals("b");
+      assertEquals("b", b);
       interpreter.execute(sessionId, "remove 'b' 'c';");
-      assert cache.containsKey("b");
+      assertTrue(cache.containsKey("b"));
    }
 
    public void testReplace() throws Exception {
@@ -140,25 +155,25 @@ public class InterpreterTest extends SingleCacheManagerTest {
       String sessionId = interpreter.createSessionId(BasicCacheContainer.DEFAULT_CACHE_NAME);
       interpreter.execute(sessionId, "put 'a' 'a';");
       Object a = cache.get("a");
-      assert a.equals("a");
+      assertEquals("a", a);
       interpreter.execute(sessionId, "replace 'a' 'b';");
       a = cache.get("a");
-      assert a.equals("b");
+      assertEquals("b", a);
       interpreter.execute(sessionId, "replace 'a' 'b' 'c';");
       a = cache.get("a");
-      assert a.equals("c");
+      assertEquals("c", a);
       interpreter.execute(sessionId, "replace 'a' 'b' 'd';");
       a = cache.get("a");
-      assert a.equals("c");
+      assertEquals("c", a);
    }
 
    public void testCreateLocal() throws Exception {
       Interpreter interpreter = getInterpreter();
       String sessionId = interpreter.createSessionId(BasicCacheContainer.DEFAULT_CACHE_NAME);
       interpreter.execute(sessionId, "create newcache;");
-      assert cacheManager.cacheExists("newcache");
+      assertTrue(cacheManager.cacheExists("newcache"));
       interpreter.execute(sessionId, "create anothercache like newcache;");
-      assert cacheManager.cacheExists("anothercache");
+      assertTrue(cacheManager.cacheExists("anothercache"));
    }
 
    public void testUpgrade() throws Exception {
@@ -171,25 +186,25 @@ public class InterpreterTest extends SingleCacheManagerTest {
       Interpreter interpreter = getInterpreter();
       String sessionId = "123";
       Map<String, String> response = interpreter.execute(sessionId, "put 'a' 'a';");
-      assert response.containsKey(ResultKeys.ERROR.toString());
+      assertTrue(response.containsKey(ResultKeys.ERROR.toString()));
    }
 
    public void testCacheNotYetSelected() throws Exception {
       Interpreter interpreter = getInterpreter();
       String sessionId = interpreter.createSessionId(null);
       Map<String, String> response = interpreter.execute(sessionId, "cache;");
-      assert response.containsKey(ResultKeys.ERROR.toString());
+      assertTrue(response.containsKey(ResultKeys.ERROR.toString()));
       String errorMsg = LogFactory.getLog(CacheStatement.class, Log.class).noCacheSelectedYet().getMessage();
-      assert response.get(ResultKeys.ERROR.toString()).contains(errorMsg);
+      assertTrue(response.get(ResultKeys.ERROR.toString()).contains(errorMsg));
    }
 
    public void testStats() throws Exception {
       Interpreter interpreter = getInterpreter();
       String sessionId = interpreter.createSessionId(BasicCacheContainer.DEFAULT_CACHE_NAME);
       Map<String, String> response = interpreter.execute(sessionId, "stats;");
-      assert !response.containsKey(ResultKeys.ERROR.toString());
+      assertFalse(response.containsKey(ResultKeys.ERROR.toString()));
       response = interpreter.execute(sessionId, "stats --container;");
-      assert !response.containsKey(ResultKeys.ERROR.toString());
+      assertFalse(response.containsKey(ResultKeys.ERROR.toString()));
    }
 
    public void testParserErrors() throws Exception {
