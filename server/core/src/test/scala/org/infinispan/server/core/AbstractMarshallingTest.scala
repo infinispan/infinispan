@@ -29,7 +29,6 @@ import org.infinispan.test.TestingUtil
 import org.infinispan.marshall.AbstractDelegatingMarshaller
 import org.infinispan.manager.EmbeddedCacheManager
 import org.infinispan.test.fwk.TestCacheManagerFactory
-import org.infinispan.configuration.global.GlobalConfigurationBuilder
 
 /**
  * Abstract class to help marshalling tests in different server modules.
@@ -43,15 +42,14 @@ abstract class AbstractMarshallingTest {
    var cm : EmbeddedCacheManager = _
 
    @BeforeTest(alwaysRun=true)
-   def setUp {
+   def setUp() {
       // Manual addition of externalizers to replication what happens in fully functional tests
-      new LifecycleCallbacks().addExternalizer(new GlobalConfigurationBuilder().build())
       cm = TestCacheManagerFactory.createLocalCacheManager(false)
       marshaller = TestingUtil.extractCacheMarshaller(cm.getCache())
    }
 
    @AfterTest(alwaysRun=true)
-   def tearDown {
+   def tearDown() {
      if (cm != null) cm.stop()
    }
 

@@ -41,15 +41,11 @@ class LifecycleCallbacks extends AbstractModuleLifecycle {
 
    override def cacheManagerStarting(gcr: GlobalComponentRegistry, globalCfg: GlobalConfiguration) {
       LifecycleCallbacks.componentMetadataRepo = gcr.getComponentMetadataRepo
-      addExternalizer(globalCfg)
    }
 
-   override def cacheStarting(cr: ComponentRegistry, cfg: Configuration, cacheName: String) =
+   override def cacheStarting(cr: ComponentRegistry, cfg: Configuration, cacheName: String) {
       cfg.storeAsBinary().enabled(false)
-
-   private[core] def addExternalizer(globalCfg : GlobalConfiguration) =
-      globalCfg.serialization().advancedExternalizers().put(
-         SERVER_ENTRY_VERSION, new ServerEntryVersion.Externalizer)
+   }
 
 }
 

@@ -44,8 +44,8 @@ import org.infinispan.server.memcached.TextProtocolUtil._
 import scala.Predef._
 import org.infinispan.container.entries.CacheEntry
 import scala.Some
-import org.infinispan.server.core.ServerEntryVersion
 import org.infinispan.metadata.Metadata
+import org.infinispan.container.versioning.NumericVersion
 
 /**
  * A Memcached protocol specific decoder
@@ -472,7 +472,7 @@ class MemcachedDecoder(memcachedCache: AdvancedCache[String, Array[Byte]], sched
    }
 
    override protected def buildMetadata(): Metadata = {
-      val version = new ServerEntryVersion(generateVersion(cache))
+      val version = generateVersion(cache)
       MemcachedMetadata(params.flags, toMillis(params.lifespan), defaultMaxIdleTime, version)
    }
 
@@ -596,7 +596,7 @@ class MemcachedDecoder(memcachedCache: AdvancedCache[String, Array[Byte]], sched
    private def buildSingleGetWithVersionResponse(k: String, entry: CacheEntry): ChannelBuffer = {
       val v = entry.getValue.asInstanceOf[Array[Byte]]
       // TODO: Would be nice for EntryVersion to allow retrieving the version itself...
-      val version = entry.getMetadata.version().asInstanceOf[ServerEntryVersion].version.toString.getBytes
+      val version = entry.getMetadata.version().asInstanceOf[NumericVersion].getVersion.toString.getBytes
       val buf = buildGetHeaderBegin(k, entry, version.length + 1 + END_SIZE)
       buf.writeByte(SP) // 1
       buf.writeBytes(version) // version.length

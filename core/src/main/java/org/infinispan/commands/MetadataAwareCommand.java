@@ -40,4 +40,9 @@ public interface MetadataAwareCommand {
     */
    Metadata getMetadata();
 
+   /**
+    * Sets metadata for this command.
+    */
+   void setMetadata(Metadata metadata);
+
 }

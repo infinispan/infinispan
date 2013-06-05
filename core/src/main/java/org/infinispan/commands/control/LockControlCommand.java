@@ -250,4 +250,9 @@ public class LockControlCommand extends AbstractTransactionBoundaryCommand imple
       return null;
    }
 
+   @Override
+   public void setMetadata(Metadata metadata) {
+      // no-op
+   }
+
 }

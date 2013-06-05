@@ -21,7 +21,7 @@
  * 02110-1301 USA, or see the FSF site: http://www.fsf.org.
  */
 
-package org.infinispan.util;
+package org.infinispan.container.versioning;
 
 import org.infinispan.remoting.transport.Address;
 import org.testng.annotations.Test;
@@ -31,11 +31,14 @@ import java.util.List;
 
 import static org.testng.AssertJUnit.assertEquals;
 
-@Test(groups = "functional", testName = "util.ClusterIdGeneratorTest")
-public class ClusterIdGeneratorTest {
+/**
+ * Test numeric version generator logic
+ */
+@Test(groups = "functional", testName = "container.versioning.NumericVersionGeneratorTest")
+public class NumericVersionGeneratorTest {
 
    public void testGenerateVersion() {
-      ClusterIdGenerator vg = new ClusterIdGenerator(null, null);
+      NumericVersionGenerator vg = new NumericVersionGenerator().clustered(true);
       vg.resetCounter();
       TestAddress addr1 = new TestAddress(1);
       TestAddress addr2 = new TestAddress(2);
@@ -44,42 +47,43 @@ public class ClusterIdGeneratorTest {
       vg.calculateRank(addr2, members, 1);
 
 
-      assertEquals(vg.newVersion(true), (Object)0x1000200000001L);
-      assertEquals(vg.newVersion(true), (Object)0x1000200000002L);
-      assertEquals(vg.newVersion(true), (Object)0x1000200000003L);
-   }
-}
-
-class TestAddress implements Address {
-   int addressNum;
-
-   TestAddress(int addressNum) {
-      this.addressNum = addressNum;
+      assertEquals(new NumericVersion(0x1000200000001L), vg.generateNew());
+      assertEquals(new NumericVersion(0x1000200000002L), vg.generateNew());
+      assertEquals(new NumericVersion(0x1000200000003L), vg.generateNew());
    }
 
-   @Override
-   public boolean equals(Object o) {
-      if (this == o) return true;
-      if (o == null || getClass() != o.getClass()) return false;
-      if (!super.equals(o)) return false;
+   class TestAddress implements Address {
+      int addressNum;
 
-      TestAddress that = (TestAddress) o;
+      TestAddress(int addressNum) {
+         this.addressNum = addressNum;
+      }
 
-      if (addressNum != that.addressNum) return false;
+      @Override
+      public boolean equals(Object o) {
+         if (this == o) return true;
+         if (o == null || getClass() != o.getClass()) return false;
+         if (!super.equals(o)) return false;
 
-      return true;
+         TestAddress that = (TestAddress) o;
+
+         if (addressNum != that.addressNum) return false;
+
+         return true;
+      }
+
+      @Override
+      public int hashCode() {
+         int result = super.hashCode();
+         result = 31 * result + addressNum;
+         return result;
+      }
+
+      @Override
+      public int compareTo(Address o) {
+         TestAddress oa = (TestAddress) o;
+         return addressNum - oa.addressNum;
+      }
    }
 
-   @Override
-   public int hashCode() {
-      int result = super.hashCode();
-      result = 31 * result + addressNum;
-      return result;
-   }
-
-   @Override
-   public int compareTo(Address o) {
-      TestAddress oa = (TestAddress) o;
-      return addressNum - oa.addressNum;
-   }
 }

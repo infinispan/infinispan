@@ -127,4 +127,6 @@ public interface Ids {
    int DELTA_COMPOSITE_KEY = 97;
 
    int EMBEDDED_METADATA = 98;
+
+   int NUMERIC_VERSION = 99;
 }

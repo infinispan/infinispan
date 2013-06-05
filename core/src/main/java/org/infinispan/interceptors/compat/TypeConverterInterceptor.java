@@ -1,6 +1,7 @@
 package org.infinispan.interceptors.compat;
 
 import org.infinispan.CacheException;
+import org.infinispan.commands.MetadataAwareCommand;
 import org.infinispan.commands.read.GetKeyValueCommand;
 import org.infinispan.commands.write.PutKeyValueCommand;
 import org.infinispan.commands.write.RemoveCommand;
@@ -8,11 +9,13 @@ import org.infinispan.commands.write.ReplaceCommand;
 import org.infinispan.compat.TypeConverter;
 import org.infinispan.container.InternalEntryFactory;
 import org.infinispan.container.entries.InternalCacheEntry;
+import org.infinispan.container.versioning.VersionGenerator;
 import org.infinispan.context.Flag;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.interceptors.base.CommandInterceptor;
 import org.infinispan.marshall.Marshaller;
+import org.infinispan.metadata.Metadata;
 
 import java.util.ServiceLoader;
 import java.util.Set;
@@ -32,6 +35,7 @@ public class TypeConverterInterceptor extends CommandInterceptor {
    private TypeConverter<Object, Object, Object, Object> memcachedConverter;
    private TypeConverter<Object, Object, Object, Object> embeddedConverter;
    private InternalEntryFactory entryFactory;
+   private VersionGenerator versionGenerator;
 
    @SuppressWarnings("unchecked")
    public TypeConverterInterceptor(Marshaller marshaller) {
@@ -54,8 +58,9 @@ public class TypeConverterInterceptor extends CommandInterceptor {
    }
 
    @Inject
-   public void init(InternalEntryFactory entryFactory) {
+   public void init(InternalEntryFactory entryFactory, VersionGenerator versionGenerator) {
       this.entryFactory = entryFactory;
+      this.versionGenerator = versionGenerator;
    }
 
    @Override
@@ -112,6 +117,7 @@ public class TypeConverterInterceptor extends CommandInterceptor {
       Object oldValue = command.getOldValue();
       command.setOldValue(converter.boxValue(oldValue));
       command.setNewValue(converter.boxValue(command.getNewValue()));
+      addVersionIfNeeded(command);
       Object ret = invokeNextInterceptor(ctx, command);
 
       // Return of conditional replace is not the value type, but boolean, so
@@ -121,6 +127,16 @@ public class TypeConverterInterceptor extends CommandInterceptor {
          return ret;
 
       return converter.unboxValue(ret);
+   }
+
+   private void addVersionIfNeeded(MetadataAwareCommand cmd) {
+      Metadata metadata = cmd.getMetadata();
+      if (metadata.version() == null) {
+         Metadata newMetadata = metadata.builder()
+               .version(versionGenerator.generateNew())
+               .build();
+         cmd.setMetadata(newMetadata);
+      }
    }
 
    @Override

@@ -885,5 +885,8 @@ public interface Log extends BasicLogger {
    @Message(value = "Failed to recover cache %s state after the current node became the coordinator", id = 228)
    void failedToRecoverCacheState(String cacheName, @Cause Throwable cause);
 
+   @Message(value = "Unexpected initial version type (only NumericVersion instances supported): %s", id = 229)
+   IllegalArgumentException unexpectedInitialVersion(String className);
+
 }
 

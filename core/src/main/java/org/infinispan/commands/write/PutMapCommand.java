@@ -208,6 +208,11 @@ public class PutMapCommand extends AbstractFlagAffectedCommand implements WriteC
       return metadata;
    }
 
+   @Override
+   public void setMetadata(Metadata metadata) {
+      this.metadata = metadata;
+   }
+
    /**
     * For non transactional caches that support concurrent writes (default), the commands are forwarded between nodes,
     * e.g.:
