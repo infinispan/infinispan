@@ -6,5 +6,5 @@
 Starts a transaction
 .SH ARGUMENTS
 .IP cachename
-(optional) the name of the cache on which to start the transaction. The currently selected cache will be used if this argument is missing
+(optional) the name of the cache on which to start the transaction. The currently selected cache will be used if this argument is missing.
 The cache must be transactional for this command to work

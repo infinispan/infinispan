@@ -105,6 +105,8 @@ public class Man2Ansi {
          }
       }
       format(text, attributes);
+      if (text.charAt(text.length()-1) != ' ')
+         format(" ", attributes);
       pos += text.length();
       blankLine = false;
    }
