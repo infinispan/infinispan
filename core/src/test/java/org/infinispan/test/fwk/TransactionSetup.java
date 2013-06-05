@@ -24,6 +24,7 @@ package org.infinispan.test.fwk;
 
 import org.infinispan.transaction.lookup.DummyTransactionManagerLookup;
 import org.infinispan.transaction.lookup.JBossStandaloneJTAManagerLookup;
+import org.infinispan.transaction.lookup.TransactionManagerLookup;
 import org.infinispan.util.LegacyKeySupportSystemProperties;
 
 import javax.transaction.TransactionManager;
@@ -46,6 +47,8 @@ public class TransactionSetup {
       UserTransaction getUserTransaction();
 
       String getLookup();
+
+      TransactionManagerLookup lookup();
 
       void cleanup();
 
@@ -70,6 +73,7 @@ public class TransactionSetup {
          final String lookup = JBossStandaloneJTAManagerLookup.class.getName();
          final JBossStandaloneJTAManagerLookup instance = new JBossStandaloneJTAManagerLookup();
          operations = new Operations() {
+            @Override
             public UserTransaction getUserTransaction() {
                try {
                   return instance.getUserTransaction();
@@ -79,13 +83,22 @@ public class TransactionSetup {
                }
             }
 
+            @Override
             public void cleanup() {
             }
 
+            @Override
             public String getLookup() {
                return lookup;
             }
 
+
+            @Override
+            public TransactionManagerLookup lookup() {
+               return instance;
+            }
+
+            @Override
             public TransactionManager getManager() {
                try {
                   return instance.getTransactionManager();
@@ -94,24 +107,34 @@ public class TransactionSetup {
                   throw new RuntimeException(e);
                }
             }
+
          };
       } else {
          System.out.println("Transaction manager used: Dummy");
          final String lookup = DummyTransactionManagerLookup.class.getName();
          final DummyTransactionManagerLookup instance = new DummyTransactionManagerLookup();
          operations = new Operations() {
+            @Override
             public UserTransaction getUserTransaction() {
                return instance.getUserTransaction();
             }
 
+            @Override
             public void cleanup() {
                instance.cleanup();
             }
 
+            @Override
             public String getLookup() {
                return lookup;
             }
 
+            @Override
+            public TransactionManagerLookup lookup() {
+               return instance;
+            }
+
+            @Override
             public TransactionManager getManager() {
                try {
                   return instance.getTransactionManager();
@@ -131,6 +154,10 @@ public class TransactionSetup {
 
    public static String getManagerLookup() {
       return operations.getLookup();
+   }
+
+   public static TransactionManagerLookup lookup() {
+      return operations.lookup();
    }
 
    public static UserTransaction getUserTransaction() {

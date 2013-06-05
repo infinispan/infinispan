@@ -52,22 +52,19 @@ public class TransactionManagerFactory extends AbstractNamedCacheComponentFactor
       // See if we had a TransactionManager injected into our config
       TransactionManager transactionManager = null;
 
-      if (configuration.invocationBatching().enabled()) {
-         log.usingBatchModeTransactionManager();
-         transactionManager = BatchModeTransactionManager.getInstance();
+      TransactionManagerLookup lookup = configuration.transaction().transactionManagerLookup();
+      try {
+         if (lookup != null) {
+            componentRegistry.wireDependencies(lookup);
+            transactionManager = lookup.getTransactionManager();
+         }
+      } catch (Exception e) {
+         log.couldNotInstantiateTransactionManager(e);
       }
 
-      if (transactionManager == null) {
-         TransactionManagerLookup lookup = configuration.transaction().transactionManagerLookup();
-         try {
-            if (lookup != null) {
-               componentRegistry.wireDependencies(lookup);
-               transactionManager = lookup.getTransactionManager();
-            }
-         }
-         catch (Exception e) {
-            log.couldNotInstantiateTransactionManager(e);
-         }
+      if (transactionManager == null && configuration.invocationBatching().enabled()) {
+         log.usingBatchModeTransactionManager();
+         transactionManager = BatchModeTransactionManager.getInstance();
       }
 
       if (transactionManager == null) {
