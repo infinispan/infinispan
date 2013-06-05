@@ -1,9 +1,11 @@
 package org.infinispan.tx;
 
+import static org.testng.Assert.assertEquals;
+
+import javax.transaction.TransactionManager;
+
 import org.infinispan.batch.BatchContainer;
-import org.infinispan.config.Configuration;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
-import org.infinispan.manager.DefaultCacheManager;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.test.SingleCacheManagerTest;
 import org.infinispan.test.TestingUtil;
@@ -12,10 +14,6 @@ import org.infinispan.transaction.TransactionTable;
 import org.infinispan.transaction.tm.BatchModeTransactionManager;
 import org.infinispan.transaction.tm.DummyTransaction;
 import org.testng.annotations.Test;
-
-import javax.transaction.TransactionManager;
-
-import static org.testng.Assert.assertEquals;
 
 /**
  * @author Mircea Markus <mircea.markus@jboss.com> (C) 2011 Red Hat Inc.
@@ -28,6 +26,7 @@ public class BatchingAndEnlistmentTest extends SingleCacheManagerTest {
    protected EmbeddedCacheManager createCacheManager() throws Exception {
       ConfigurationBuilder cb = new ConfigurationBuilder();
       cb.invocationBatching().enable();
+      cb.transaction().transactionManagerLookup(null);
       return TestCacheManagerFactory.createCacheManager(cb);
    }
 
