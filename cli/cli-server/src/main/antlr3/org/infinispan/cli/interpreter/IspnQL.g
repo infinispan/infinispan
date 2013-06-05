@@ -252,7 +252,7 @@ statementOption returns [Option option]
 
 literal returns [Object o]
    : INTLITERAL { $o = Integer.valueOf($INTLITERAL.text); }
-   | LONGLITERAL { $o = Long.valueOf($LONGLITERAL.text); }
+   | LONGLITERAL { $o = Long.valueOf($LONGLITERAL.text.substring(0, $LONGLITERAL.text.length()-1)); }
    | FLOATLITERAL { $o = Float.valueOf($FLOATLITERAL.text); }
    | DOUBLELITERAL { $o = Double.valueOf($DOUBLELITERAL.text); }
    | NULL { $o = null; }
