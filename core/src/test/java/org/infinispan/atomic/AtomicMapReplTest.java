@@ -32,8 +32,8 @@ import static org.infinispan.atomic.AtomicHashMapTestAssertions.*;
 
 import java.lang.reflect.Method;
 
-@Test(groups = "functional", testName = "atomic.ClusteredAPITest")
-public class ClusteredAPITest extends MultipleCacheManagersTest {
+@Test(groups = "functional", testName = "atomic.AtomicMapReplTest")
+public class AtomicMapReplTest extends MultipleCacheManagersTest {
 
    protected void createCacheManagers() throws Throwable {
       ConfigurationBuilder c = getDefaultClusteredCacheConfig(CacheMode.REPL_SYNC, true);
@@ -106,7 +106,6 @@ public class ClusteredAPITest extends MultipleCacheManagersTest {
       assert AtomicMapLookup.getAtomicMap(cache2, "map").get(newKey).equals(newValue);
       assert AtomicMapLookup.getAtomicMap(cache2, "map").containsKey(newKey);
    }
-   
 
    public void testReplicationCommitCreateMapInTransaction(Method m) throws Exception {
       Cache<String, Object> cache1 = cache(0, "atomic");

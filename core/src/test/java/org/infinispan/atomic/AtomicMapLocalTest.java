@@ -39,8 +39,8 @@ import javax.transaction.SystemException;
 import javax.transaction.Transaction;
 import javax.transaction.TransactionManager;
 
-@Test(groups = "functional", testName = "atomic.APITest")
-public class APITest extends AbstractInfinispanTest {
+@Test(groups = "functional", testName = "atomic.AtomicMapLocalTest")
+public class AtomicMapLocalTest extends AbstractInfinispanTest {
 
    Cache<String, Object> cache;
    TransactionManager tm;

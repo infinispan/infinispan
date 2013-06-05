@@ -30,6 +30,7 @@ import java.util.Set;
  *
  * @author Manik Surtani
  * @since 4.0
+ * @deprecated No longer used since 5.2.0
  */
 public interface FlagContainer {
 
