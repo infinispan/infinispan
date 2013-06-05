@@ -54,7 +54,7 @@ public class BackupForConfigTest extends SingleCacheManagerTest {
 
       // Remember to not do nothing else other than
       // creating the cache manager in order to avoid leaks
-      return TestCacheManagerFactory.createCacheManager(lonGc, lon);
+      return TestCacheManagerFactory.createClusteredCacheManager(lonGc, lon);
    }
 
    public void testBackupForIsCorrect() {
