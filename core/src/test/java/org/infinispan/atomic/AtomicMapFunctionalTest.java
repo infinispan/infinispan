@@ -22,18 +22,8 @@
  */
 package org.infinispan.atomic;
 
-import org.infinispan.Cache;
-import org.infinispan.config.Configuration;
-import org.infinispan.manager.EmbeddedCacheManager;
-import org.infinispan.test.AbstractInfinispanTest;
-import org.infinispan.test.TestingUtil;
-import org.infinispan.test.fwk.TestCacheManagerFactory;
-import org.infinispan.util.logging.Log;
-import org.infinispan.util.logging.LogFactory;
-import org.testng.annotations.AfterMethod;
-import org.testng.annotations.BeforeMethod;
-import org.testng.annotations.Test;
-
+import java.util.HashSet;
+import java.util.concurrent.Callable;
 import javax.transaction.HeuristicMixedException;
 import javax.transaction.HeuristicRollbackException;
 import javax.transaction.NotSupportedException;
@@ -42,29 +32,31 @@ import javax.transaction.SystemException;
 import javax.transaction.Transaction;
 import javax.transaction.TransactionManager;
 
-@Test(groups = "functional", testName = "atomic.AtomicMapFunctionalTest")
-public class AtomicMapFunctionalTest extends AbstractInfinispanTest {
-   private static final Log log = LogFactory.getLog(AtomicMapFunctionalTest.class);
-   Cache<String, Object> cache;
-   TransactionManager tm;
-   private EmbeddedCacheManager cm;
+import org.infinispan.configuration.cache.ConfigurationBuilder;
+import org.infinispan.manager.EmbeddedCacheManager;
+import org.infinispan.test.SingleCacheManagerTest;
+import org.infinispan.test.fwk.TestCacheManagerFactory;
+import org.infinispan.transaction.LockingMode;
+import org.infinispan.util.logging.Log;
+import org.infinispan.util.logging.LogFactory;
+import org.testng.Assert;
+import org.testng.annotations.Test;
 
-   @BeforeMethod
-   @SuppressWarnings("unchecked")
-   public void setUp() {
-      Configuration c = new Configuration();
-      // these 2 need to be set to use the AtomicMapCache
-      c.setInvocationBatchingEnabled(true);
-      cm = TestCacheManagerFactory.createCacheManager(c);
-      cache = cm.getCache();
-      tm = TestingUtil.getTransactionManager(cache);
+@Test(groups = "functional", testName = "atomic.AtomicMapFunctionalTest")
+public class AtomicMapFunctionalTest extends SingleCacheManagerTest {
+   private static final Log log = LogFactory.getLog(AtomicMapFunctionalTest.class);
+
+   @Override
+   protected EmbeddedCacheManager createCacheManager() throws Exception {
+      ConfigurationBuilder builder = buildConfiguration();
+      return TestCacheManagerFactory.createCacheManager(builder);
    }
 
-   @AfterMethod
-   public void tearDown() {
-      TestingUtil.killCacheManagers(cm);
-      cache = null;
-      tm = null;
+   protected ConfigurationBuilder buildConfiguration() {
+      ConfigurationBuilder builder = TestCacheManagerFactory.getDefaultCacheConfiguration(true);
+      builder.invocationBatching().enable();
+      builder.transaction().lockingMode(LockingMode.OPTIMISTIC);
+      return builder;
    }
 
    public void testChangesOnAtomicMap() {
@@ -79,16 +71,16 @@ public class AtomicMapFunctionalTest extends AbstractInfinispanTest {
 
    public void testTxChangesOnAtomicMap() throws Exception {
       AtomicMap<String, String> map = AtomicMapLookup.getAtomicMap(cache, "key");
-      tm.begin();
+      tm().begin();
       assert map.isEmpty();
       map.put("a", "b");
       assert map.get("a").equals("b");
-      Transaction t = tm.suspend();
+      Transaction t = tm().suspend();
 
       assert AtomicMapLookup.getAtomicMap(cache, "key").get("a") == null;
 
-      tm.resume(t);
-      tm.commit();
+      tm().resume(t);
+      tm().commit();
 
       // now re-retrieve the map and make sure we see the diffs
       assert AtomicMapLookup.getAtomicMap(cache, "key").get("a").equals("b");
@@ -112,17 +104,17 @@ public class AtomicMapFunctionalTest extends AbstractInfinispanTest {
 
    public void testTxChangesOnAtomicMapNoLocks() throws Exception {
       AtomicMap<String, String> map = AtomicMapLookup.getAtomicMap(cache, "key");
-      tm.begin();
+      tm().begin();
       assert map.isEmpty();
 //      TestingUtil.extractComponent(cache, InvocationContextContainer.class).createInvocationContext(true, -1).setFlags(SKIP_LOCKING);
       map.put("a", "b");
       assert map.get("a").equals("b");
-      Transaction t = tm.suspend();
+      Transaction t = tm().suspend();
 
       assert AtomicMapLookup.getAtomicMap(cache, "key").get("a") == null;
 
-      tm.resume(t);
-      tm.commit();
+      tm().resume(t);
+      tm().commit();
 
       // now re-retrieve the map and make sure we see the diffs
       assert AtomicMapLookup.getAtomicMap(cache, "key").get("a").equals("b");
@@ -157,6 +149,5 @@ public class AtomicMapFunctionalTest extends AbstractInfinispanTest {
       AtomicMapLookup.removeAtomicMap(cache, "key");
       map.size();
       tm.commit();
-
    }
 }

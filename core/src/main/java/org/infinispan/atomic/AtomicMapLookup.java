@@ -86,7 +86,7 @@ public class AtomicMapLookup {
     * @return an AtomicMap, or null if one did not exist.
     */
    public static <MK, K, V> AtomicMap<K, V> getAtomicMap(Cache<MK, ?> cache, MK key, boolean createIfAbsent) {
-      return (AtomicMap<K, V>) getMap(cache, key, createIfAbsent, false, null);
+      return (AtomicMap<K, V>) getMap(cache, key, createIfAbsent, false);
    }
 
    /**
@@ -104,7 +104,7 @@ public class AtomicMapLookup {
     */
    @Deprecated
    public static <MK, K, V> AtomicMap<K, V> getAtomicMap(Cache<MK, ?> cache, MK key, FlagContainer flagContainer) {
-      return (AtomicMap<K, V>) getMap(cache, key, true, false, flagContainer);
+      return getAtomicMap(cache, key);
    }
 
    /**
@@ -120,7 +120,7 @@ public class AtomicMapLookup {
     * @return an AtomicMap, or null if one did not exist.
     */
    public static <MK, K, V> FineGrainedAtomicMap<K, V> getFineGrainedAtomicMap(Cache<MK, ?> cache, MK key, boolean createIfAbsent) {
-      return (FineGrainedAtomicMap<K, V>) getMap(cache, key, createIfAbsent, true, null);
+      return (FineGrainedAtomicMap<K, V>) getMap(cache, key, createIfAbsent, true);
    }
 
    /**
@@ -132,11 +132,10 @@ public class AtomicMapLookup {
     * @param createIfAbsent if true, a new atomic map is created if one doesn't exist; otherwise null is returned if the
     *                       map didn't exist.
     * @param fineGrained    if true, and createIfAbsent is true then created atomic map will be fine grained.
-    * @param flagContainer
     * @return an AtomicMap, or null if one did not exist.
     */
    @SuppressWarnings("unchecked")
-   private static <MK, K, V> Map<K, V> getMap(Cache<MK, ?> cache, MK key, boolean createIfAbsent, boolean fineGrained, FlagContainer flagContainer) {
+   private static <MK, K, V> Map<K, V> getMap(Cache<MK, ?> cache, MK key, boolean createIfAbsent, boolean fineGrained) {
       Object value = cache.get(key);
       if (value == null) {
          if (createIfAbsent)
@@ -145,7 +144,7 @@ public class AtomicMapLookup {
       }
       AtomicHashMap<K, V> castValue = (AtomicHashMap<K, V>) value;
       AtomicHashMapProxy<K, V> proxy =
-            castValue.getProxy((AdvancedCache<Object,Object>) cache.getAdvancedCache(), key, fineGrained, flagContainer);
+            castValue.getProxy((AdvancedCache<Object,Object>) cache.getAdvancedCache(), key, fineGrained);
       boolean typeSwitchAttempt = proxy instanceof FineGrainedAtomicHashMapProxy != fineGrained;
       if (typeSwitchAttempt) {
          throw new IllegalArgumentException("Cannot switch type of previously used " + value

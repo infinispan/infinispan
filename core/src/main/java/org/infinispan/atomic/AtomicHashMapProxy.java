@@ -26,9 +26,9 @@ import org.infinispan.AdvancedCache;
 import org.infinispan.batch.AutoBatchSupport;
 import org.infinispan.container.entries.CacheEntry;
 import org.infinispan.context.Flag;
-import org.infinispan.context.FlagContainer;
 import org.infinispan.marshall.MarshalledValue;
 import org.infinispan.transaction.LocalTransaction;
+import org.infinispan.transaction.LockingMode;
 import org.infinispan.transaction.TransactionTable;
 import org.infinispan.util.InfinispanCollections;
 import org.infinispan.util.logging.Log;
@@ -48,15 +48,15 @@ import java.util.Set;
  * reader MVCC model used in the {@link org.infinispan.container.entries.MVCCEntry} implementations for the core data
  * container, which closely follow software transactional memory approaches to dealing with concurrency.
  * <br /><br />
- * Implementations of this class are rarely created on their own; {@link AtomicHashMap#getProxy(org.infinispan.AdvancedCache, Object, boolean, org.infinispan.context.FlagContainer)}}
+ * Implementations of this class are rarely created on their own; {@link AtomicHashMap#getProxy(org.infinispan.AdvancedCache, Object, boolean)}}
  * should be used to retrieve an instance of this proxy.
  * <br /><br />
  * Typically proxies are only created by the {@link AtomicMapLookup} helper, and would not be created by end-user code
  * directly.
  *
- * @author Manik Surtani
  * @param <K> the type of keys maintained by this map
  * @param <V> the type of mapped values
+ * @author Manik Surtani
  * @see AtomicHashMap
  * @since 4.0
  */
@@ -67,42 +67,26 @@ public class AtomicHashMapProxy<K, V> extends AutoBatchSupport implements Atomic
    protected final AdvancedCache<Object, AtomicMap<K, V>> cache;
    protected final AdvancedCache<Object, AtomicMap<K, V>> cacheForWriting;
    protected volatile boolean startedReadingMap = false;
-   protected final FlagContainer flagContainer;
    protected TransactionTable transactionTable;
    protected TransactionManager transactionManager;
 
-   AtomicHashMapProxy(AdvancedCache<Object, AtomicMap<K, V>> cache, Object deltaMapKey) {
-      this(cache, deltaMapKey, null);
-   }
-
-   AtomicHashMapProxy(AdvancedCache<?, ?> cache, Object deltaMapKey, FlagContainer flagContainer) {
+   AtomicHashMapProxy(AdvancedCache<?, ?> cache, Object deltaMapKey) {
       this.cache = (AdvancedCache<Object, AtomicMap<K, V>>) cache;
-
-      Flag[] flags = new Flag[2];
-      flags[0] = Flag.SKIP_REMOTE_LOOKUP;
-      // When passivation is enabled, cache loader needs to attempt to load
-      // the previous value in order to merge it if necessary, so mark atomic
-      // hash map writes as delta writes
-      if (cache.getCacheConfiguration().loaders().passivation() || cache.getCacheConfiguration().eviction().strategy().isEnabled())
-         flags[1] = Flag.DELTA_WRITE;
-      else
-         flags[1] = Flag.SKIP_CACHE_LOAD;
-
-      this.cacheForWriting = this.cache.withFlags(flags);
+      Flag[] writeFlags = new Flag[]{Flag.DELTA_WRITE};
+      this.cacheForWriting = this.cache.withFlags(writeFlags);
       this.deltaMapKey = deltaMapKey;
       this.batchContainer = cache.getBatchContainer();
-      this.flagContainer = flagContainer;
       transactionTable = cache.getComponentRegistry().getComponent(TransactionTable.class);
       transactionManager = cache.getTransactionManager();
    }
 
+   // internal helper, reduces lots of casts.
    @SuppressWarnings("unchecked")
    protected AtomicHashMap<K, V> toMap(Object object) {
       Object map = (object instanceof MarshalledValue) ? ((MarshalledValue) object).get() : object;
       return (AtomicHashMap<K, V>) map;
    }
 
-   // internal helper, reduces lots of casts.
    protected AtomicHashMap<K, V> getDeltaMapForRead() {
       AtomicHashMap<K, V> ahm = toMap(cache.get(deltaMapKey));
       if (ahm != null && !startedReadingMap) startedReadingMap = true;
@@ -113,6 +97,7 @@ public class AtomicHashMapProxy<K, V> extends AutoBatchSupport implements Atomic
    /**
     * Looks up the CacheEntry stored in transactional context corresponding to this AtomicMap.  If this AtomicMap
     * has yet to be touched by the current transaction, this method will return a null.
+    *
     * @return
     */
    protected CacheEntry lookupEntryFromCurrentTransaction() {
@@ -141,25 +126,18 @@ public class AtomicHashMapProxy<K, V> extends AutoBatchSupport implements Atomic
       if (lockedAndCopied) {
          return getDeltaMapForRead();
       } else {
-         // acquire WL
-         boolean suppressLocks = flagContainer != null && flagContainer.hasFlag(Flag.SKIP_LOCKING);
-         if (!suppressLocks && flagContainer != null) flagContainer.setFlags(Flag.FORCE_WRITE_LOCK);
-
-         if (trace) {
-            if (suppressLocks)
-               log.trace("Skip locking flag used.  Skipping locking.");
-            else
-               log.trace("Forcing write lock even for reads");
+         AdvancedCache<Object, AtomicMap<K, V>> cacheForRead = cache;
+         if (cache.getCacheConfiguration().transaction().lockingMode() == LockingMode.PESSIMISTIC) {
+            cacheForRead = cache.withFlags(Flag.FORCE_WRITE_LOCK);
          }
+         // acquire WL
+         AtomicHashMap<K, V> map = toMap(cacheForRead.get(deltaMapKey));
+         if (map != null && !startedReadingMap) startedReadingMap = true;
+         assertValid(map);
 
-         // reinstate the flag
-         if (suppressLocks) flagContainer.setFlags(Flag.SKIP_LOCKING);
-         
-         AtomicHashMap<K, V> map = getDeltaMapForRead();
-         
          // copy for write
-         AtomicHashMap<K, V> copy = map == null ? new AtomicHashMap<K, V>(true) : map.copy();          
-         copy.initForWriting();                 
+         AtomicHashMap<K, V> copy = map == null ? new AtomicHashMap<K, V>(true) : map.copy();
+         copy.initForWriting();
          cacheForWriting.put(deltaMapKey, copy);
          return copy;
       }
@@ -168,7 +146,8 @@ public class AtomicHashMapProxy<K, V> extends AutoBatchSupport implements Atomic
    // readers
 
    protected void assertValid(AtomicHashMap<?, ?> map) {
-      if (startedReadingMap && (map == null || map.removed)) throw new IllegalStateException("AtomicMap stored under key " + deltaMapKey + " has been concurrently removed!");
+      if (startedReadingMap && (map == null || map.removed))
+         throw new IllegalStateException("AtomicMap stored under key " + deltaMapKey + " has been concurrently removed!");
    }
 
    @Override
@@ -186,7 +165,7 @@ public class AtomicHashMapProxy<K, V> extends AutoBatchSupport implements Atomic
    @Override
    public Set<Entry<K, V>> entrySet() {
       AtomicHashMap<K, V> map = getDeltaMapForRead();
-      return map == null ? InfinispanCollections.<Entry<K,V>>emptySet() :
+      return map == null ? InfinispanCollections.<Entry<K, V>>emptySet() :
             map.entrySet();
    }
 
@@ -228,8 +207,7 @@ public class AtomicHashMapProxy<K, V> extends AutoBatchSupport implements Atomic
          startAtomic();
          deltaMapForWrite = getDeltaMapForWrite();
          return deltaMapForWrite.put(key, value);
-      }
-      finally {         
+      } finally {
          endAtomic();
       }
    }
@@ -241,8 +219,7 @@ public class AtomicHashMapProxy<K, V> extends AutoBatchSupport implements Atomic
          startAtomic();
          deltaMapForWrite = getDeltaMapForWrite();
          return deltaMapForWrite.remove(key);
-      }
-      finally {         
+      } finally {
          endAtomic();
       }
    }
@@ -254,8 +231,7 @@ public class AtomicHashMapProxy<K, V> extends AutoBatchSupport implements Atomic
          startAtomic();
          deltaMapForWrite = getDeltaMapForWrite();
          deltaMapForWrite.putAll(m);
-      }
-      finally {        
+      } finally {
          endAtomic();
       }
    }
@@ -267,7 +243,7 @@ public class AtomicHashMapProxy<K, V> extends AutoBatchSupport implements Atomic
          startAtomic();
          deltaMapForWrite = getDeltaMapForWrite();
          deltaMapForWrite.clear();
-      } finally {         
+      } finally {
          endAtomic();
       }
    }
