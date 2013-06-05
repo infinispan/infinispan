@@ -38,6 +38,7 @@ import org.jboss.netty.buffer.ChannelBuffer
 import org.infinispan.server.core.transport.ExtendedChannelBuffer._
 import transport.NettyTransport
 import org.infinispan.container.entries.{CacheEntry, InternalCacheEntry}
+import org.infinispan.container.versioning.NumericVersion
 
 /**
  * HotRod protocol decoder specific for specification version 1.0.
@@ -161,7 +162,7 @@ object Decoder10 extends AbstractVersionedDecoder with ServerConstants with Log 
                GetResponse, Success, h.topologyId,
                Some(entry.getValue.asInstanceOf[Array[Byte]]))
       else if (entry != null && op == GetWithVersionRequest) {
-         val version = entry.getMetadata.version().asInstanceOf[ServerEntryVersion].version
+         val version = entry.getMetadata.version().asInstanceOf[NumericVersion].getVersion
          new GetWithVersionResponse(h.version, h.messageId, h.cacheName,
             h.clientIntel, GetWithVersionResponse, Success, h.topologyId,
             Some(entry.getValue.asInstanceOf[Array[Byte]]), version)
@@ -198,7 +199,7 @@ object Decoder10 extends AbstractVersionedDecoder with ServerConstants with Log 
             if (entry != null) {
                // Hacky, but CacheEntry has not been generified
                val prev = entry.getValue.asInstanceOf[Array[Byte]]
-               val streamVersion = new ServerEntryVersion(params.streamVersion)
+               val streamVersion = new NumericVersion(params.streamVersion)
                if (entry.getMetadata.version() == streamVersion) {
                   val removed = cache.remove(k, prev)
                   if (removed)
@@ -245,13 +246,13 @@ object Decoder10 extends AbstractVersionedDecoder with ServerConstants with Log 
       val ce = cache.getAdvancedCache.getCacheEntry(k)
       if (ce != null) {
          val ice = ce.asInstanceOf[InternalCacheEntry]
-         val entryVersion = ice.getMetadata.version().asInstanceOf[ServerEntryVersion]
+         val entryVersion = ice.getMetadata.version().asInstanceOf[NumericVersion]
          val v = ce.getValue.asInstanceOf[Array[Byte]]
          val lifespan = if (ice.getLifespan < 0) -1 else (ice.getLifespan / 1000).toInt
          val maxIdle = if (ice.getMaxIdle < 0) -1 else (ice.getMaxIdle / 1000).toInt
          new GetWithMetadataResponse(h.version, h.messageId, h.cacheName,
                   h.clientIntel, GetWithMetadataResponse, Success, h.topologyId,
-                  Some(v), entryVersion.version, ice.getCreated, lifespan, ice.getLastUsed, maxIdle)
+                  Some(v), entryVersion.getVersion, ice.getCreated, lifespan, ice.getLastUsed, maxIdle)
       } else {
          new GetWithMetadataResponse(h.version, h.messageId, h.cacheName,
                   h.clientIntel, GetWithMetadataResponse, KeyDoesNotExist, h.topologyId,

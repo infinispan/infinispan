@@ -77,4 +77,9 @@ public abstract class AbstractFlagAffectedCommand implements FlagAffectedCommand
       return null;
    }
 
+   @Override
+   public void setMetadata(Metadata metadata) {
+      // no-op
+   }
+
 }

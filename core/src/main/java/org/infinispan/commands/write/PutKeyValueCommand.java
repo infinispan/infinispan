@@ -151,6 +151,11 @@ public class PutKeyValueCommand extends AbstractDataWriteCommand implements Meta
       return metadata;
    }
 
+   @Override
+   public void setMetadata(Metadata metadata) {
+      this.metadata = metadata;
+   }
+
    public boolean isPutIfAbsent() {
       return putIfAbsent;
    }

@@ -64,12 +64,8 @@ object MemcachedTestingUtil extends Log {
    def startMemcachedTextServer(cacheManager: EmbeddedCacheManager, port: Int, cacheName: String): MemcachedServer = {
       val server = new MemcachedServer {
 
-         override def getDecoder: MemcachedDecoder = {
-            val memcachedDecoder = new MemcachedDecoder(
-               getCacheManager.getCache[String, Array[Byte]](cacheName).getAdvancedCache, scheduler, transport)
-            memcachedDecoder.versionGenerator = this.versionGenerator
-            memcachedDecoder
-         }
+         override def getDecoder: MemcachedDecoder =
+            new MemcachedDecoder(getCacheManager.getCache[String, Array[Byte]](cacheName).getAdvancedCache, scheduler, transport)
 
          override def startDefaultCache = getCacheManager.getCache(cacheName)
       }

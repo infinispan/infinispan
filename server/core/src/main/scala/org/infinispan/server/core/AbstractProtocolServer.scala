@@ -25,14 +25,9 @@ package org.infinispan.server.core
 import java.net.InetSocketAddress
 import org.infinispan.manager.EmbeddedCacheManager
 import transport.NettyTransport
-import org.infinispan.util.{ClusterIdGenerator, TypedProperties, FileLookupFactory}
 import logging.Log
 import org.infinispan.jmx.{JmxUtil, ResourceDMBean}
 import javax.management.{ObjectName, MBeanServer}
-import java.util.Properties
-import org.infinispan.server.core.configuration.ProtocolServerConfiguration
-import javax.net.ssl.KeyManager
-import javax.net.ssl.TrustManager
 import org.infinispan.server.core.transport.LifecycleChannelPipelineFactory
 import org.infinispan.server.core.transport.TimeoutEnabledChannelPipelineFactory
 import org.infinispan.server.core.transport.NettyChannelPipelineFactory
@@ -47,7 +42,6 @@ abstract class AbstractProtocolServer(protocolName: String) extends ProtocolServ
    protected var transport: NettyTransport = _
    protected var cacheManager: EmbeddedCacheManager = _
    protected var configuration: SuitableConfiguration = null.asInstanceOf[SuitableConfiguration]
-   protected var versionGenerator: ClusterIdGenerator = _
    private var transportObjName: ObjectName = _
    private var mbeanServer: MBeanServer = _
    private var isGlobalStatsEnabled: Boolean = _
@@ -64,15 +58,12 @@ abstract class AbstractProtocolServer(protocolName: String) extends ProtocolServ
       // Start default cache
       startDefaultCache
 
-      this.versionGenerator = new ClusterIdGenerator(
-         cacheManager, cacheManager.getTransport)
-
       startTransport()
    }
 
    def startTransport() {
       val address = new InetSocketAddress(configuration.host, configuration.port)
-      transport = new NettyTransport(this, getPipeline, address, configuration, getQualifiedName, cacheManager)
+      transport = new NettyTransport(this, getPipeline, address, configuration, getQualifiedName(), cacheManager)
 
       // Register transport MBean regardless
       registerTransportMBean()
@@ -90,7 +81,7 @@ abstract class AbstractProtocolServer(protocolName: String) extends ProtocolServ
    protected def registerTransportMBean() {
       val globalCfg = cacheManager.getCacheManagerConfiguration
       mbeanServer = JmxUtil.lookupMBeanServer(globalCfg)
-      val groupName = "type=Server,name=%s".format(getQualifiedName)
+      val groupName = "type=Server,name=%s".format(getQualifiedName())
       val jmxDomain = JmxUtil.buildJmxDomain(globalCfg, mbeanServer, groupName)
 
       // Pick up metadata from the component metadata repository

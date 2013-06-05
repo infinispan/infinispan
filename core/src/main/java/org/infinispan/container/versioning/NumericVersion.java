@@ -23,18 +23,31 @@
 
 package org.infinispan.container.versioning;
 
+import org.infinispan.marshall.AbstractExternalizer;
+import org.infinispan.marshall.Ids;
+
+import java.io.IOException;
+import java.io.ObjectInput;
+import java.io.ObjectOutput;
+import java.util.Collections;
+import java.util.Set;
+
 /**
- * // TODO: Document this
+ * Numeric version
  *
  * @author Galder Zamarreño
- * @since // TODO
+ * @since 5.3
  */
-public class NumericVersion implements EntryVersion {
+public class NumericVersion implements IncrementableEntryVersion {
 
-   final long version;
+   private final long version;
 
    public NumericVersion(long version) {
       this.version = version;
+   }
+
+   public long getVersion() {
+      return version;
    }
 
    @Override
@@ -51,6 +64,54 @@ public class NumericVersion implements EntryVersion {
 
       throw new IllegalArgumentException(
             "Unable to compare other types: " + other.getClass().getName());
+   }
+
+   @Override
+   public boolean equals(Object o) {
+      if (this == o) return true;
+      if (o == null || getClass() != o.getClass()) return false;
+
+      NumericVersion that = (NumericVersion) o;
+
+      if (version != that.version) return false;
+
+      return true;
+   }
+
+   @Override
+   public int hashCode() {
+      return (int) (version ^ (version >>> 32));
+   }
+
+   @Override
+   public String toString() {
+      return "NumericVersion{" +
+            "version=" + version +
+            '}';
+   }
+
+   public static class Externalizer extends AbstractExternalizer<NumericVersion> {
+
+      @Override
+      public Set<Class<? extends NumericVersion>> getTypeClasses() {
+         return Collections.<Class<? extends NumericVersion>>singleton(NumericVersion.class);
+      }
+
+      @Override
+      public void writeObject(ObjectOutput output, NumericVersion object) throws IOException {
+         output.writeLong(object.version);
+      }
+
+      @Override
+      public NumericVersion readObject(ObjectInput input) throws IOException {
+         return new NumericVersion(input.readLong());
+      }
+
+      @Override
+      public Integer getId() {
+         return Ids.NUMERIC_VERSION;
+      }
+
    }
 
 }

@@ -25,7 +25,6 @@ package org.infinispan.server.memcached
 import org.infinispan.server.core.AbstractProtocolServer
 import java.util.concurrent.Executors
 import org.infinispan.manager.EmbeddedCacheManager
-import java.util.Properties
 import org.infinispan.server.memcached.configuration.MemcachedServerConfiguration
 import org.infinispan.AdvancedCache
 import org.infinispan.configuration.cache.ConfigurationBuilder
@@ -53,11 +52,8 @@ class MemcachedServer extends AbstractProtocolServer("Memcached") {
 
    override def getEncoder = null
 
-   override def getDecoder: MemcachedDecoder = {
-      val dec = new MemcachedDecoder(memcachedCache, scheduler, transport)
-      dec.versionGenerator = this.versionGenerator
-      dec
-   }
+   override def getDecoder: MemcachedDecoder =
+      new MemcachedDecoder(memcachedCache, scheduler, transport)
 
    override def stop {
       super.stop

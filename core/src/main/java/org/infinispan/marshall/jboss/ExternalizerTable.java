@@ -25,6 +25,7 @@ package org.infinispan.marshall.jboss;
 
 import org.infinispan.CacheException;
 import org.infinispan.atomic.DeltaCompositeKey;
+import org.infinispan.container.versioning.NumericVersion;
 import org.infinispan.metadata.EmbeddedMetadata;
 import org.infinispan.atomic.AtomicHashMap;
 import org.infinispan.atomic.AtomicHashMapDelta;
@@ -315,6 +316,8 @@ public class ExternalizerTable implements ObjectTable {
       addInternalExternalizer(new InfinispanCollections.EmptyList.EmptyListExternalizer());
 
       addInternalExternalizer(new EmbeddedMetadata.Externalizer());
+
+      addInternalExternalizer(new NumericVersion.Externalizer());
    }
 
    void addInternalExternalizer(AdvancedExternalizer<?> ext) {

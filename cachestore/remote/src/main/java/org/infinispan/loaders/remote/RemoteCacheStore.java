@@ -32,16 +32,15 @@ import org.infinispan.client.hotrod.RemoteCacheManager;
 import org.infinispan.client.hotrod.impl.ConfigurationProperties;
 import org.infinispan.container.InternalEntryFactory;
 import org.infinispan.container.entries.InternalCacheEntry;
+import org.infinispan.container.versioning.NumericVersion;
 import org.infinispan.loaders.AbstractCacheStore;
 import org.infinispan.loaders.CacheLoaderConfig;
 import org.infinispan.loaders.CacheLoaderException;
 import org.infinispan.loaders.CacheLoaderMetadata;
 import org.infinispan.loaders.remote.logging.Log;
-import org.infinispan.loaders.remote.wrapper.EntryWrapper;
 import org.infinispan.marshall.Marshaller;
 import org.infinispan.marshall.StreamingMarshaller;
 import org.infinispan.marshall.jboss.GenericJBossMarshaller;
-import org.infinispan.server.core.ServerEntryVersion;
 import org.infinispan.util.logging.LogFactory;
 
 import java.io.IOException;
@@ -86,7 +85,7 @@ public class RemoteCacheStore extends AbstractCacheStore {
       if (config.isRawValues()) {
          MetadataValue<?> value = remoteCache.getWithMetadata(key);
          if (value != null)
-            return iceFactory.create(key, value.getValue(), new ServerEntryVersion(value.getVersion()),
+            return iceFactory.create(key, value.getValue(), new NumericVersion(value.getVersion()),
                   value.getCreated(), TimeUnit.SECONDS.toMillis(value.getLifespan()),
                   value.getLastUsed(), TimeUnit.SECONDS.toMillis(value.getMaxIdle()));
          else

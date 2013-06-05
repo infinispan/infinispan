@@ -25,12 +25,13 @@ package org.infinispan.transaction.xa;
 
 import org.infinispan.commands.write.WriteCommand;
 import org.infinispan.configuration.cache.Configuration;
+import org.infinispan.container.versioning.NumericVersion;
+import org.infinispan.container.versioning.VersionGenerator;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.factories.annotations.Start;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.remoting.rpc.RpcManager;
 import org.infinispan.remoting.transport.Address;
-import org.infinispan.remoting.transport.Transport;
 import org.infinispan.transaction.LocalTransaction;
 import org.infinispan.transaction.RemoteTransaction;
 import org.infinispan.transaction.synchronization.SyncLocalTransaction;
@@ -38,7 +39,6 @@ import org.infinispan.transaction.xa.recovery.RecoveryAwareDldGlobalTransaction;
 import org.infinispan.transaction.xa.recovery.RecoveryAwareGlobalTransaction;
 import org.infinispan.transaction.xa.recovery.RecoveryAwareLocalTransaction;
 import org.infinispan.transaction.xa.recovery.RecoveryAwareRemoteTransaction;
-import org.infinispan.util.ClusterIdGenerator;
 import org.infinispan.util.Equivalence;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
@@ -57,11 +57,9 @@ public class TransactionFactory {
 
    private TxFactoryEnum txFactoryEnum;
 
-   private EmbeddedCacheManager cm;
    private Configuration configuration;
-   private ClusterIdGenerator clusterIdGenerator;
+   private VersionGenerator clusterIdGenerator;
    private boolean isClustered;
-   private RpcManager rpcManager;
    private Equivalence<Object> keyEquivalence;
 
    public enum TxFactoryEnum {
@@ -74,9 +72,10 @@ public class TransactionFactory {
          }
 
          @Override
-         public GlobalTransaction newGlobalTransaction(Address addr, boolean remote, ClusterIdGenerator clusterIdGenerator, boolean clustered) {
+         public GlobalTransaction newGlobalTransaction(Address addr, boolean remote, VersionGenerator clusterIdGenerator, boolean clustered) {
             RecoveryAwareDldGlobalTransaction dldGlobalTransaction = new RecoveryAwareDldGlobalTransaction(addr, remote);
-            dldGlobalTransaction.setInternalId(clusterIdGenerator.newVersion(clustered));
+            // TODO: Not ideal... but causes no issues so far. Could the internal id be an Object instead of a long?
+            dldGlobalTransaction.setInternalId(((NumericVersion) clusterIdGenerator.generateNew()).getVersion());
             return addCoinToss(dldGlobalTransaction);
          }
 
@@ -104,7 +103,7 @@ public class TransactionFactory {
          }
 
          @Override
-         public GlobalTransaction newGlobalTransaction(Address addr, boolean remote, ClusterIdGenerator clusterIdGenerator, boolean clustered) {
+         public GlobalTransaction newGlobalTransaction(Address addr, boolean remote, VersionGenerator clusterIdGenerator, boolean clustered) {
             return addCoinToss(new DldGlobalTransaction(addr, remote));
          }
 
@@ -132,7 +131,7 @@ public class TransactionFactory {
          }
 
          @Override
-         public GlobalTransaction newGlobalTransaction(Address addr, boolean remote, ClusterIdGenerator clusterIdGenerator, boolean clustered) {
+         public GlobalTransaction newGlobalTransaction(Address addr, boolean remote, VersionGenerator clusterIdGenerator, boolean clustered) {
             return addCoinToss(new DldGlobalTransaction(addr, remote));
          }
 
@@ -158,9 +157,10 @@ public class TransactionFactory {
          }
 
          @Override
-         public GlobalTransaction newGlobalTransaction(Address addr, boolean remote, ClusterIdGenerator clusterIdGenerator, boolean clustered) {
+         public GlobalTransaction newGlobalTransaction(Address addr, boolean remote, VersionGenerator clusterIdGenerator, boolean clustered) {
             RecoveryAwareGlobalTransaction recoveryAwareGlobalTransaction = new RecoveryAwareGlobalTransaction(addr, remote);
-            recoveryAwareGlobalTransaction.setInternalId(clusterIdGenerator.newVersion(clustered));
+            // TODO: Not ideal... but causes no issues so far. Could the internal id be an Object instead of a long?
+            recoveryAwareGlobalTransaction.setInternalId(((NumericVersion) clusterIdGenerator.generateNew()).getVersion());
             return recoveryAwareGlobalTransaction;
          }
 
@@ -187,7 +187,7 @@ public class TransactionFactory {
          }
 
          @Override
-         public GlobalTransaction newGlobalTransaction(Address addr, boolean remote, ClusterIdGenerator clusterIdGenerator, boolean clustered) {
+         public GlobalTransaction newGlobalTransaction(Address addr, boolean remote, VersionGenerator clusterIdGenerator, boolean clustered) {
             return new GlobalTransaction(addr, remote);
          }
 
@@ -214,7 +214,7 @@ public class TransactionFactory {
          }
 
          @Override
-         public GlobalTransaction newGlobalTransaction(Address addr, boolean remote, ClusterIdGenerator clusterIdGenerator, boolean clustered) {
+         public GlobalTransaction newGlobalTransaction(Address addr, boolean remote, VersionGenerator clusterIdGenerator, boolean clustered) {
             return new GlobalTransaction(addr, remote);
          }
 
@@ -237,7 +237,7 @@ public class TransactionFactory {
 
       public abstract LocalTransaction newLocalTransaction(Transaction tx, GlobalTransaction gtx, boolean implicitTransaction, int topologyId,
             Equivalence<Object> keyEquivalence);
-      public abstract GlobalTransaction newGlobalTransaction(Address addr, boolean remote, ClusterIdGenerator clusterIdGenerator, boolean clustered);
+      public abstract GlobalTransaction newGlobalTransaction(Address addr, boolean remote, VersionGenerator clusterIdGenerator, boolean clustered);
       public abstract GlobalTransaction newGlobalTransaction();
 
       protected long generateRandomId() {
@@ -281,10 +281,9 @@ public class TransactionFactory {
    }
 
    @Inject
-   public void init(Configuration configuration, EmbeddedCacheManager cm, RpcManager rpcManager) {
-      this.cm = cm;
+   public void init(Configuration configuration, VersionGenerator clusterIdGenerator) {
       this.configuration = configuration;
-      this.rpcManager = rpcManager;
+      this.clusterIdGenerator = clusterIdGenerator;
    }
 
    @Start
@@ -295,10 +294,6 @@ public class TransactionFactory {
       boolean batchingEnabled = configuration.invocationBatching().enabled();
       init(dldEnabled, recoveryEnabled, xa, batchingEnabled);
       isClustered = configuration.clustering().cacheMode().isClustered();
-      if (recoveryEnabled) {
-         Transport transport = rpcManager != null ? rpcManager.getTransport() : null;
-         clusterIdGenerator = new ClusterIdGenerator(cm, transport);
-      }
       keyEquivalence = configuration.dataContainer().keyEquivalence();
    }
 

@@ -25,7 +25,6 @@ package org.infinispan.server.hotrod
 import logging.Log
 import scala.collection.JavaConversions._
 import org.infinispan.manager.EmbeddedCacheManager
-import java.util.Properties
 import org.infinispan.server.core.AbstractProtocolServer
 import org.infinispan.eviction.EvictionStrategy
 import org.infinispan.util.{CollectionFactory, AnyEquivalence}
@@ -48,8 +47,6 @@ import org.infinispan.server.hotrod.configuration.HotRodServerConfiguration
  */
 class HotRodServer extends AbstractProtocolServer("HotRod") with Log {
 
-   import HotRodServer._
-
    type SuitableConfiguration = HotRodServerConfiguration
 
    private var isClustered: Boolean = _
@@ -63,11 +60,8 @@ class HotRodServer extends AbstractProtocolServer("HotRod") with Log {
 
    override def getEncoder = new HotRodEncoder(getCacheManager, this)
 
-   override def getDecoder : HotRodDecoder = {
-      val hotRodDecoder = new HotRodDecoder(getCacheManager, transport, this)
-      hotRodDecoder.versionGenerator = this.versionGenerator
-      hotRodDecoder
-   }
+   override def getDecoder : HotRodDecoder =
+      new HotRodDecoder(getCacheManager, transport, this)
 
    override def start(configuration: HotRodServerConfiguration, cacheManager: EmbeddedCacheManager) {
       this.configuration = configuration

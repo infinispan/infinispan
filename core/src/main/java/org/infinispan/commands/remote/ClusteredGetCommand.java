@@ -263,4 +263,9 @@ public class ClusteredGetCommand extends BaseRpcCommand implements FlagAffectedC
       return null;
    }
 
+   @Override
+   public void setMetadata(Metadata metadata) {
+      // no-op
+   }
+
 }

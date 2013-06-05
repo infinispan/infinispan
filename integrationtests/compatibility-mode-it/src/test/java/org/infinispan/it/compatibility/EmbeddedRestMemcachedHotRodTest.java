@@ -23,6 +23,7 @@
 
 package org.infinispan.it.compatibility;
 
+import net.spy.memcached.CASValue;
 import net.spy.memcached.CachedData;
 import net.spy.memcached.transcoders.SerializingTranscoder;
 import net.spy.memcached.transcoders.Transcoder;
@@ -34,6 +35,7 @@ import org.apache.commons.httpclient.methods.GetMethod;
 import org.apache.commons.httpclient.methods.PutMethod;
 import org.infinispan.client.hotrod.Flag;
 import org.infinispan.client.hotrod.RemoteCache;
+import org.infinispan.client.hotrod.VersionedValue;
 import org.infinispan.io.ByteBuffer;
 import org.infinispan.marshall.AbstractMarshaller;
 import org.testng.annotations.AfterClass;
@@ -156,6 +158,64 @@ public class EmbeddedRestMemcachedHotRodTest {
       cacheFactory.getRestClient().executeMethod(get);
       assertEquals(HttpServletResponse.SC_OK, get.getStatusCode());
       assertEquals("v1", get.getResponseBodyAsString());
+   }
+
+   public void testEmbeddedReplaceMemcachedCASTest() throws Exception {
+      final String key1 = "5";
+
+      // 1. Put with Memcached
+      Future<Boolean> f = cacheFactory.getMemcachedClient().set(key1, 0, "v1");
+      assertTrue(f.get(60, TimeUnit.SECONDS));
+      CASValue oldValue = cacheFactory.getMemcachedClient().gets(key1);
+
+      // 2. Replace with Embedded
+      assertTrue(cacheFactory.getEmbeddedCache().replace(key1, "v1", "v2"));
+
+      // 4. Get with Memcached and verify value/CAS
+      CASValue newValue = cacheFactory.getMemcachedClient().gets(key1);
+      assertEquals("v2", newValue.getValue());
+      assertNotSame("The version (CAS) should have changed, " +
+            "oldCase=" + oldValue.getCas() + ", newCas=" + newValue.getCas(),
+            oldValue.getCas(), newValue.getCas());
+   }
+
+   public void testHotRodReplaceMemcachedCASTest() throws Exception {
+      final String key1 = "6";
+
+      // 1. Put with Memcached
+      Future<Boolean> f = cacheFactory.getMemcachedClient().set(key1, 0, "v1");
+      assertTrue(f.get(60, TimeUnit.SECONDS));
+      CASValue oldValue = cacheFactory.getMemcachedClient().gets(key1);
+
+      // 2. Replace with Hot Rod
+      VersionedValue versioned = cacheFactory.getHotRodCache().getVersioned(key1);
+      assertTrue(cacheFactory.getHotRodCache().replaceWithVersion(key1, "v2", versioned.getVersion()));
+
+      // 4. Get with Memcached and verify value/CAS
+      CASValue newValue = cacheFactory.getMemcachedClient().gets(key1);
+      assertEquals("v2", newValue.getValue());
+      assertTrue("The version (CAS) should have changed", oldValue.getCas() != newValue.getCas());
+   }
+
+   public void testEmbeddedHotRodReplaceMemcachedCASTest() throws Exception {
+      final String key1 = "7";
+
+      // 1. Put with Memcached
+      Future<Boolean> f = cacheFactory.getMemcachedClient().set(key1, 0, "v1");
+      assertTrue(f.get(60, TimeUnit.SECONDS));
+      CASValue oldValue = cacheFactory.getMemcachedClient().gets(key1);
+
+      // 2. Replace with Hot Rod
+      VersionedValue versioned = cacheFactory.getHotRodCache().getVersioned(key1);
+      assertTrue(cacheFactory.getHotRodCache().replaceWithVersion(key1, "v2", versioned.getVersion()));
+
+      // 3. Replace with Embedded
+      assertTrue(cacheFactory.getEmbeddedCache().replace(key1, "v2", "v3"));
+
+      // 4. Get with Memcached and verify value/CAS
+      CASValue newValue = cacheFactory.getMemcachedClient().gets(key1);
+      assertEquals("v3", newValue.getValue());
+      assertTrue("The version (CAS) should have changed", oldValue.getCas() != newValue.getCas());
    }
 
    private class SpyMemcachedCompatibleMarshaller extends AbstractMarshaller {

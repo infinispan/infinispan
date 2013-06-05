@@ -190,6 +190,11 @@ public class ReplaceCommand extends AbstractDataWriteCommand implements Metadata
       return metadata;
    }
 
+   @Override
+   public void setMetadata(Metadata metadata) {
+      this.metadata = metadata;
+   }
+
    public Object getOldValue() {
       return oldValue;
    }

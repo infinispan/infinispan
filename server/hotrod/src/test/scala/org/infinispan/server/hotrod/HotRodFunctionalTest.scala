@@ -33,7 +33,6 @@ import org.infinispan.test.TestingUtil.generateRandomString
 import org.infinispan.config.Configuration
 import java.util.concurrent.TimeUnit
 import org.infinispan.server.core.test.Stoppable
-import org.infinispan.server.hotrod.configuration.HotRodServerConfigurationBuilder
 import org.infinispan.server.hotrod.configuration.HotRodServerConfiguration
 
 /**

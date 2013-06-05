@@ -31,7 +31,6 @@ import transport.ExtendedChannelBuffer._
 import org.jboss.netty.buffer.ChannelBuffer
 import org.jboss.netty.channel._
 import DecoderState._
-import org.infinispan.util.ClusterIdGenerator
 import logging.Log
 import java.lang.StringBuilder
 import org.jboss.netty.handler.codec.replay.ReplayingDecoder
@@ -39,6 +38,7 @@ import org.jboss.netty.buffer.ChannelBuffers
 import org.jboss.netty.util.CharsetUtil
 import org.infinispan.container.entries.CacheEntry
 import org.infinispan.metadata.{Metadata, EmbeddedMetadata}
+import org.infinispan.container.versioning.{NumericVersionGenerator, EntryVersion, VersionGenerator, NumericVersion}
 
 /**
  * Common abstract decoder for Memcached and Hot Rod protocols.
@@ -52,8 +52,6 @@ abstract class AbstractProtocolDecoder[K, V](transport: NettyTransport)
 
    type SuitableParameters <: RequestParameters
    type SuitableHeader <: RequestHeader
-
-   var versionGenerator: ClusterIdGenerator = _
 
    private val isTrace = isTraceEnabled
 
@@ -208,7 +206,7 @@ abstract class AbstractProtocolDecoder[K, V](transport: NettyTransport)
 
    protected def buildMetadata(): Metadata = {
       val metadata = new EmbeddedMetadata.Builder
-      metadata.version(new ServerEntryVersion(generateVersion(cache)))
+      metadata.version(generateVersion(cache))
       (params.lifespan, params.maxIdle) match {
          case (EXPIRATION_DEFAULT, EXPIRATION_DEFAULT) =>
             metadata.lifespan(defaultLifespanTime)
@@ -252,7 +250,7 @@ abstract class AbstractProtocolDecoder[K, V](transport: NettyTransport)
       if (entry != null) {
          // Hacky, but CacheEntry has not been generified
          val prev: V = entry.getValue.asInstanceOf[V]
-         val streamVersion = new ServerEntryVersion(params.streamVersion)
+         val streamVersion = new NumericVersion(params.streamVersion)
          if (entry.getMetadata.version() == streamVersion) {
             val v = createValue()
             // Generate new version only if key present and version has not changed, otherwise it's wasteful
@@ -349,9 +347,20 @@ abstract class AbstractProtocolDecoder[K, V](transport: NettyTransport)
 
    protected def createServerException(e: Exception, b: ChannelBuffer): (Exception, Boolean)
 
-   protected def generateVersion(cache: Cache[K, V]): Long = {
-      val rpcManager = cache.getAdvancedCache.getRpcManager
-      versionGenerator.newVersion(rpcManager != null)
+   protected def generateVersion(cache: Cache[K, V]): EntryVersion = {
+      val registry = cache.getAdvancedCache.getComponentRegistry
+      val cacheVersionGenerator = registry.getComponent(classOf[VersionGenerator])
+      if (cacheVersionGenerator == null) {
+         // It could be null, for example when not running in compatibility mode.
+         // The reason for that is that if no other component depends on the
+         // version generator, the factory does not get invoked.
+         val newVersionGenerator = new NumericVersionGenerator()
+                 .clustered(cache.getAdvancedCache.getRpcManager != null)
+         registry.registerComponent(newVersionGenerator, classOf[VersionGenerator])
+         newVersionGenerator.generateNew()
+      } else {
+         cacheVersionGenerator.generateNew()
+      }
    }
 
    /**
