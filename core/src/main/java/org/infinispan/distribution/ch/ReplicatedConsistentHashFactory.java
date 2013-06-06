@@ -26,9 +26,11 @@ import org.infinispan.remoting.transport.Address;
 
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
+import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.Queue;
 import java.util.Set;
 
 /**
@@ -89,27 +91,32 @@ public class ReplicatedConsistentHashFactory implements ConsistentHashFactory<Re
       }
 
       // ensure even spread of ownership
-      int minSegmentsPerPrimaryOwner = numSegments / newMembers.size();
+      int minSegmentsPerNode = numSegments / newMembers.size();
+      Queue<Integer>[] segmentsByNode = new Queue[newMembers.size()];
+      for (int segmentId = 0; segmentId < primaryOwners.length; ++segmentId) {
+         int owner = primaryOwners[segmentId];
+         Queue<Integer> segments = segmentsByNode[owner];
+         if (segments == null) {
+            segmentsByNode[owner] = segments = new ArrayDeque<Integer>(minSegmentsPerNode);
+         }
+         segments.add(segmentId);
+      }
+      int mostUsedNode = 0;
       for (int node = 0; node < nodeUsage.length; node++) {
-         if (nodeUsage[node] < minSegmentsPerPrimaryOwner) {
-            int mostUsed = findMostUsedNode(nodeUsage);
-            if (Math.abs(nodeUsage[node] - nodeUsage[mostUsed]) > 1) {
-               transferOwnership(mostUsed, node, primaryOwners, nodeUsage);
+         while (nodeUsage[node] < minSegmentsPerNode) {
+            // we can take segment from any node that has > minSegmentsPerNode + 1, not only the most used
+            if (nodeUsage[mostUsedNode] <= minSegmentsPerNode + 1) {
+               mostUsedNode = findMostUsedNode(nodeUsage);
             }
+            int segmentId = segmentsByNode[mostUsedNode].poll();
+            // we don't have to add the segmentId to the new owner's queue
+            primaryOwners[segmentId] = node;
+            nodeUsage[mostUsedNode]--;
+            nodeUsage[node]++;
          }
       }
 
       return new ReplicatedConsistentHash(baseCH.getHashFunction(), newMembers, primaryOwners);
-   }
-
-   private void transferOwnership(int oldOwner, int newOwner, int[] primaryOwners, int[] nodeUsage) {
-      for (int segmentId = 0; segmentId < primaryOwners.length; segmentId++) {
-         if (primaryOwners[segmentId] == oldOwner) {
-            primaryOwners[segmentId] = newOwner;
-            nodeUsage[oldOwner]--;
-            nodeUsage[newOwner]++;
-         }
-      }
    }
 
    private int findLeastUsedNode(int[] nodeUsage) {

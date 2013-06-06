@@ -86,7 +86,7 @@ public class ReplicatedConsistentHash implements ConsistentHash {
 
    @Override
    public List<Address> locateOwnersForSegment(int segmentId) {
-      Address primaryOwner = locatePrimaryOwner(segmentId);
+      Address primaryOwner = locatePrimaryOwnerForSegment(segmentId);
       List<Address> owners = new ArrayList<Address>(members.size());
       owners.add(primaryOwner);
       for (Address member : members) {
