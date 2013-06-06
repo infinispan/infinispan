@@ -76,6 +76,15 @@ public class RpcOptionsBuilder {
    }
 
    /**
+    * See {@link #timeout(long, java.util.concurrent.TimeUnit)}
+    *
+    * @return the timeout in {@link TimeUnit}.
+    */
+   public long timeout(TimeUnit outputTimeUnit) {
+      return outputTimeUnit.convert(timeout, unit);
+   }
+
+   /**
     * Note: this option may be set to {@code false} if by the current {@link org.infinispan.remoting.transport.Transport}
     * if the {@link org.infinispan.remoting.rpc.ResponseMode#isSynchronous()} returns {@code true}.
     *
