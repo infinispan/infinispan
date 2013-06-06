@@ -31,8 +31,6 @@ import org.infinispan.commands.CommandsFactory;
 import org.infinispan.commands.CreateCacheCommand;
 import org.infinispan.commands.read.MapCombineCommand;
 import org.infinispan.commands.read.ReduceCommand;
-import org.infinispan.distexec.DefaultExecutorService;
-import org.infinispan.distexec.DistributedExecutorService;
 import org.infinispan.distexec.mapreduce.spi.MapReduceTaskLifecycleService;
 import org.infinispan.distribution.DistributionManager;
 import org.infinispan.factories.ComponentRegistry;
@@ -44,6 +42,7 @@ import org.infinispan.marshall.StreamingMarshaller;
 import org.infinispan.remoting.responses.Response;
 import org.infinispan.remoting.responses.SuccessfulResponse;
 import org.infinispan.remoting.rpc.RpcManager;
+import org.infinispan.remoting.rpc.RpcOptionsBuilder;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.util.Util;
 import org.infinispan.util.concurrent.AbstractInProcessFuture;
@@ -178,6 +177,7 @@ public class MapReduceTask<KIn, VIn, KOut, VOut> {
    protected final UUID taskId;
    protected final ClusteringDependentLogic clusteringDependentLogic;
    protected final boolean isLocalOnly;
+   protected RpcOptionsBuilder rpcOptionsBuilder;
 
    /**
     * Create a new MapReduceTask given a master cache node. All distributed task executions will be
@@ -240,6 +240,7 @@ public class MapReduceTask<KIn, VIn, KOut, VOut> {
       this.cancellableTasks = Collections.synchronizedList(new ArrayList<CancellableTaskPart>());
       this.clusteringDependentLogic = cache.getComponentRegistry().getComponent(ClusteringDependentLogic.class);
       this.isLocalOnly = cache.getRpcManager() == null;
+      this.rpcOptionsBuilder = isLocalOnly ? null : new RpcOptionsBuilder(cache.getRpcManager().getDefaultRpcOptions(true));
    }
 
    /**
@@ -310,6 +311,28 @@ public class MapReduceTask<KIn, VIn, KOut, VOut> {
          throw new IllegalArgumentException("A valid reference of Reducer/Combiner is needed");
       this.combiner = combiner;
       return this;
+   }
+
+   /**
+    * See {@link #timeout(TimeUnit)}.
+    *
+    * Note: the timeout value will be converted to milliseconds and a value less or equal than zero means wait forever.
+    *
+    * @param timeout
+    * @param unit
+    * @return this MapReduceTask itself
+    */
+   public final MapReduceTask<KIn, VIn, KOut, VOut> timeout(long timeout, TimeUnit unit) {
+      rpcOptionsBuilder.timeout(timeout, unit);
+      return this;
+   }
+
+   /**
+    * @return the timeout value in {@link TimeUnit} to wait for the remote map/reduce task to finish. The default value
+    *         given by {@link org.infinispan.configuration.cache.SyncConfiguration#replTimeout()}
+    */
+   public final long timeout(TimeUnit outputTimeUnit) {
+      return rpcOptionsBuilder.timeout(outputTimeUnit);
    }
 
    /**
@@ -394,7 +417,7 @@ public class MapReduceTask<KIn, VIn, KOut, VOut> {
             }
          }
       });
-      rpc.invokeRemotely(cache.getRpcManager().getMembers(), ccc, rpc.getDefaultRpcOptions(true));
+      rpc.invokeRemotely(cache.getRpcManager().getMembers(), ccc, rpcOptionsBuilder.build());
    }
 
    protected Set<KOut> executeMapPhase(boolean useCompositeKeys) throws InterruptedException,
@@ -781,7 +804,7 @@ public class MapReduceTask<KIn, VIn, KOut, VOut> {
                         log.couldNotExecuteCancellationLocally(e.getLocalizedMessage());
                      }
                   } else {
-                     rpc.invokeRemotely(Collections.singletonList(task.getExecutionTarget()), cc, rpc.getDefaultRpcOptions(true));
+                     rpc.invokeRemotely(Collections.singletonList(task.getExecutionTarget()), cc, rpcOptionsBuilder.build());
                   }
                   cancelled = true;
                   done = true;
@@ -935,7 +958,7 @@ public class MapReduceTask<KIn, VIn, KOut, VOut> {
             RpcManager rpc = cache.getRpcManager();
             try {
                log.debugf("Invoking %s on %s", mcc, getExecutionTarget());
-               rpc.invokeRemotelyInFuture(Collections.singleton(getExecutionTarget()), mcc, rpc.getDefaultRpcOptions(true),
+               rpc.invokeRemotelyInFuture(Collections.singleton(getExecutionTarget()), mcc, rpcOptionsBuilder.build(),
                         (NotifyingNotifiableFuture<Object>) this);
                log.debugf("Invoked %s on %s ", mcc, getExecutionTarget());
             } catch (Exception ex) {
@@ -1008,7 +1031,7 @@ public class MapReduceTask<KIn, VIn, KOut, VOut> {
             RpcManager rpc = cache.getRpcManager();
             try {
                log.debugf("Invoking %s on %s", rc, getExecutionTarget());
-               rpc.invokeRemotelyInFuture(Collections.singleton(getExecutionTarget()), rc, rpc.getDefaultRpcOptions(true),
+               rpc.invokeRemotelyInFuture(Collections.singleton(getExecutionTarget()), rc, rpcOptionsBuilder.build(),
                         (NotifyingNotifiableFuture<Object>) this);
                log.debugf("Invoked %s on %s ", rc, getExecutionTarget());
             } catch (Exception ex) {
