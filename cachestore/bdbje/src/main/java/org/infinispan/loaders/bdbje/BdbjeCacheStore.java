@@ -310,7 +310,15 @@ public class BdbjeCacheStore extends AbstractCacheStore {
          Transaction txn = currentTransaction.getTransaction();
          if (trace) log.tracef("transaction %s == sleepycat transaction %s", tx, txn);
          txnMap.put(tx, txn);
-         ((ThreadLocal)ReflectionUtil.getValue(currentTransaction, "localTrans")).remove();
+         try {
+            // Very messy way to clean up a BDBJE thread local.
+            ThreadLocal<Object> tl = (ThreadLocal<Object>) ReflectionUtil.getValue(currentTransaction, "localTrans");
+            tl.remove();
+         } catch (Exception e) {
+            // Unable to remove thread local.
+            log.warn("Unable to clean up BDBJE transaction thread locals.");
+            throw convertToCacheLoaderException("Unable to clean up BDBJE transaction", e);
+         }
       } catch (Exception e) {
          throw convertToCacheLoaderException("Problem preparing transaction", e);
       }
