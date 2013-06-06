@@ -61,8 +61,10 @@ import org.infinispan.metadata.Metadata
 @Path("/rest")
 class Server(@Context request: Request, @Context servletContext: ServletContext, @HeaderParam("performAsync") useAsync: Boolean) {
 
+   val APPLICATION_X_JAVA_SERIALIZED_OBJECT_TYPE = new MediaType("application" , "x-java-serialized-object");
+   val APPLICATION_X_JAVA_SERIALIZED_OBJECT = APPLICATION_X_JAVA_SERIALIZED_OBJECT_TYPE.toString;
    /**For dealing with binary entries in the cache */
-   lazy val variantList = Variant.VariantListBuilder.newInstance.mediaTypes(MediaType.APPLICATION_XML_TYPE, MediaType.APPLICATION_JSON_TYPE).build
+   lazy val variantList = Variant.VariantListBuilder.newInstance.mediaTypes(MediaType.APPLICATION_XML_TYPE, MediaType.APPLICATION_JSON_TYPE, APPLICATION_X_JAVA_SERIALIZED_OBJECT_TYPE).build
    lazy val collectionVariantList = Variant.VariantListBuilder.newInstance.mediaTypes(
             MediaType.TEXT_HTML_TYPE,
             MediaType.APPLICATION_XML_TYPE,
@@ -150,16 +152,23 @@ class Server(@Context request: Request, @Context servletContext: ServletContext,
            cacheName: String, extended: String): Response = {
       val key = ice.getKey.asInstanceOf[String]
       ice.getValue match {
-         case s: String => Response.ok(s, "text/plain")
-                 .expires(expires)
-                 .lastModified(lastMod)
-                 .build
+         case s: String => Response.ok(s, MediaType.TEXT_PLAIN)
+                           .expires(expires)
+                           .lastModified(lastMod)
+                           .build
+         case ba: Array[Byte] => Response.ok
+                                 .`type`(MediaType.APPLICATION_OCTET_STREAM)
+                                 .lastModified(lastMod)
+                                 .expires(expires)
+                                 .extended(cacheName, key, wantExtendedHeaders(extended))
+                                 .entity(streamIt(_.write(ba)))
+                                 .build
          case obj: Any => {
             val variant = request.selectVariant(variantList)
-            val selectedMediaType =
-               if (variant != null) variant.getMediaType.toString
-               else "application/x-java-serialized-object"
+            val selectedMediaType = if (variant != null) variant.getMediaType.toString
+                                    else null
 
+            // For objects other than String or byte arrays, accept only JSON, XML and X_JAVA_SERIALIZABLE_OBJECT
             selectedMediaType match {
                case MediaType.APPLICATION_JSON => Response.ok
                        .`type`(selectedMediaType)
@@ -175,17 +184,10 @@ class Server(@Context request: Request, @Context servletContext: ServletContext,
                        .extended(cacheName, key, wantExtendedHeaders(extended))
                        .entity(streamIt(xstream.toXML(obj, _)))
                        .build
-               case _ =>
+               case APPLICATION_X_JAVA_SERIALIZED_OBJECT =>
                   obj match {
-                     case ba: Array[Byte] => Response.ok
-                             .`type`("application/x-java-serialized-object")
-                             .lastModified(lastMod)
-                             .expires(expires)
-                             .extended(cacheName, key, wantExtendedHeaders(extended))
-                             .entity(streamIt(_.write(ba)))
-                             .build
                      case ser: Serializable => Response.ok
-                             .`type`("application/x-java-serialized-object")
+                             .`type`(selectedMediaType)
                              .lastModified(lastMod)
                              .expires(expires)
                              .extended(cacheName, key, wantExtendedHeaders(extended))
@@ -193,6 +195,10 @@ class Server(@Context request: Request, @Context servletContext: ServletContext,
                              .build
                      case _ => Response.notAcceptable(variantList).build
                   }
+               case _ => {
+                 Response.notAcceptable(variantList).build
+               }
+
             }
          }
       }

@@ -160,8 +160,10 @@ public class EmbeddedRestHotRodTest {
 
       // 3. Get with REST
       HttpMethod get = new GetMethod(cacheFactory.getRestUrl() + "/" + key);
-      get.setRequestHeader("Accept", "application/x-java-serialized-object");
+      get.setRequestHeader("Accept", "application/x-java-serialized-object;level=1, application/json;q=0.3");
+
       cacheFactory.getRestClient().executeMethod(get);
+      assertEquals("application/x-java-serialized-object", get.getResponseHeader("Content-Type").getValue());
       assertEquals(get.getStatusText(), HttpServletResponse.SC_OK, get.getStatusCode());
       // REST finds the Java POJO in-memory and returns the Java serialized version
       assertEquals(p, new ObjectInputStream(get.getResponseBodyAsStream()).readObject());
@@ -289,6 +291,55 @@ public class EmbeddedRestHotRodTest {
       Date parsedDate = dateFormat.parse(dateHeader.getValue());
       assertTrue("Parsed date is before this code was written: " + parsedDate,
             parsedDate.after(new GregorianCalendar(2013, 1, 1).getTime()));
+   }
+
+   public void testByteArrayHotRodEmbeddedPutRestGet() throws Exception{
+      final String key1 = "14";
+      final String key2 = "15";
+
+      // 1. Put with Hot Rod
+      RemoteCache<String, Object> remote = cacheFactory.getHotRodCache();
+      assertEquals(null, remote.withFlags(Flag.FORCE_RETURN_VALUE).put(key1, "v1".getBytes()));
+
+      // 2. Put with Embedded
+      assertEquals(null, cacheFactory.getEmbeddedCache().put(key2, "v2".getBytes()));
+
+      // 3. Get with REST key1
+      HttpMethod getHotRodValue = new GetMethod(cacheFactory.getRestUrl() + "/" + key1);
+      cacheFactory.getRestClient().executeMethod(getHotRodValue);
+      assertEquals(getHotRodValue.getStatusText(), HttpServletResponse.SC_OK, getHotRodValue.getStatusCode());
+      assertEquals("application/octet-stream", getHotRodValue.getResponseHeader("Content-Type").getValue());
+      assertArrayEquals("v1".getBytes(), getHotRodValue.getResponseBody());
+
+      // 4. Get with REST key2
+      HttpMethod getEmbeddedValue = new GetMethod(cacheFactory.getRestUrl() + "/" + key2);
+      cacheFactory.getRestClient().executeMethod(getEmbeddedValue);
+      assertEquals(getEmbeddedValue.getStatusText(), HttpServletResponse.SC_OK, getEmbeddedValue.getStatusCode());
+      assertEquals("application/octet-stream", getEmbeddedValue.getResponseHeader("Content-Type").getValue());
+      assertArrayEquals("v2".getBytes(), getEmbeddedValue.getResponseBody());
+   }
+
+   public void testHotRodEmbeddedPutRestGetWrongAccept() throws Exception {
+      final String key1 = "16";
+      final String key2 = "17";
+
+      // 1. Put with HotRod
+      assertEquals(null, cacheFactory.getHotRodCache().put(key1, "v1"));
+
+      // 2. Put with Embedded
+      assertEquals(null, cacheFactory.getEmbeddedCache().put(key2, "v2"));
+
+      // 3. GET with REST key1
+      HttpMethod getKey1 = new HeadMethod(cacheFactory.getRestUrl() + "/" + key1);
+      getKey1.setRequestHeader("Accept", "unknown-media-type");
+      cacheFactory.getRestClient().executeMethod(getKey1);
+      assertEquals(getKey1.getStatusText(), HttpServletResponse.SC_BAD_REQUEST, getKey1.getStatusCode());
+
+      // 4. GET with REST key2
+      HttpMethod getKey2 = new HeadMethod(cacheFactory.getRestUrl() + "/" + key2);
+      getKey2.setRequestHeader("Accept", "unknown-media-type");
+      cacheFactory.getRestClient().executeMethod(getKey2);
+      assertEquals(getKey2.getStatusText(), HttpServletResponse.SC_BAD_REQUEST, getKey2.getStatusCode());
    }
 
    /**
