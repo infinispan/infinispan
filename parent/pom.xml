@@ -115,7 +115,7 @@
       <version.arquillian.container.managed>7.2.0.Final</version.arquillian.container.managed>
       <version.arquillian.container.weld>1.0.0.CR3</version.arquillian.container.weld>
       <version.avro>1.3.3</version.avro>
-      <version.bdbje>5.0.34</version.bdbje>
+      <version.bdbje>5.0.73</version.bdbje>
       <version.c3p0>0.9.1.2</version.c3p0>
       <version.cassandra>1.0.2</version.cassandra>
       <version.cassandra.pool>1.0.0.CR1</version.cassandra.pool>
