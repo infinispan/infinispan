@@ -35,6 +35,9 @@ import org.infinispan.factories.annotations.ComponentName;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.factories.annotations.Start;
 import org.infinispan.factories.annotations.Stop;
+import org.infinispan.jmx.annotations.DataType;
+import org.infinispan.jmx.annotations.MBean;
+import org.infinispan.jmx.annotations.ManagedAttribute;
 import org.infinispan.remoting.responses.ExceptionResponse;
 import org.infinispan.remoting.responses.Response;
 import org.infinispan.remoting.responses.SuccessfulResponse;
@@ -54,6 +57,7 @@ import static org.infinispan.factories.KnownComponentNames.ASYNC_TRANSPORT_EXECU
  * @author Dan Berindei
  * @since 5.2
  */
+@MBean(objectName = "LocalTopologyManager", description = "Controls the cache membership and state transfer")
 public class LocalTopologyManagerImpl implements LocalTopologyManager {
    private static Log log = LogFactory.getLog(LocalTopologyManagerImpl.class);
    private static final boolean trace = log.isTraceEnabled();
@@ -259,6 +263,22 @@ public class LocalTopologyManagerImpl implements LocalTopologyManager {
       }
    }
 
+   @ManagedAttribute(description = "Rebalancing enabled", displayName = "Rebalancing enabled",
+         dataType = DataType.TRAIT, writable = true)
+   public boolean isRebalancingEnabled() throws Exception {
+      ReplicableCommand command = new CacheTopologyControlCommand(null,
+            CacheTopologyControlCommand.Type.POLICY_GET_STATUS, transport.getAddress(), transport.getViewId());
+      return (Boolean) executeOnCoordinator(command, getGlobalTimeout());
+   }
+
+   public void setRebalancingEnabled(boolean enabled) throws Exception {
+      CacheTopologyControlCommand.Type type = enabled ? CacheTopologyControlCommand.Type.POLICY_ENABLE
+            : CacheTopologyControlCommand.Type.POLICY_DISABLE;
+      ReplicableCommand command = new CacheTopologyControlCommand(null, type, transport.getAddress(),
+            transport.getViewId());
+      executeOnCoordinator(command, getGlobalTimeout());
+   }
+
    private Object executeOnCoordinator(ReplicableCommand command, long timeout) throws Exception {
       Response response;
       if (transport.isCoordinator()) {
@@ -307,6 +327,10 @@ public class LocalTopologyManagerImpl implements LocalTopologyManager {
       }
    }
 
+   private int getGlobalTimeout() {
+      // TODO Rename setting to something like globalRpcTimeout
+      return (int) gcr.getGlobalConfiguration().transport().distributedSyncTimeout();
+   }
 }
 
 class LocalCacheStatus {

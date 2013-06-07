@@ -70,6 +70,7 @@ import org.infinispan.loaders.CacheLoader;
 import org.infinispan.loaders.CacheLoaderManager;
 import org.infinispan.loaders.CacheStore;
 import org.infinispan.manager.CacheContainer;
+import org.infinispan.manager.CacheManager;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.marshall.AbstractDelegatingMarshaller;
 import org.infinispan.marshall.StreamingMarshaller;
@@ -1127,8 +1128,12 @@ public class TestingUtil {
    }
 
    public static ObjectName getCacheManagerObjectName(String jmxDomain, String cacheManagerName) {
+      return getCacheManagerObjectName(jmxDomain, cacheManagerName, "CacheManager");
+   }
+
+   public static ObjectName getCacheManagerObjectName(String jmxDomain, String cacheManagerName, String component) {
       try {
-         return new ObjectName(jmxDomain + ":type=CacheManager,name=" + ObjectName.quote(cacheManagerName) + ",component=CacheManager");
+         return new ObjectName(jmxDomain + ":type=CacheManager,name=" + ObjectName.quote(cacheManagerName) + ",component=" + component);
       } catch (Exception e) {
          throw new RuntimeException(e);
       }

@@ -122,7 +122,7 @@ public class ClusterTopologyManagerImpl implements ClusterTopologyManager {
    }
 
    @Override
-   public void triggerRebalance(final String cacheName) throws Exception {
+   public void triggerRebalance(final String cacheName) {
       asyncTransportExecutor.submit(new Callable<Object>() {
          @Override
          public Object call() throws Exception {
@@ -130,7 +130,7 @@ public class ClusterTopologyManagerImpl implements ClusterTopologyManager {
                startRebalance(cacheName);
                return null;
             } catch (Throwable t) {
-               log.errorf(t, "Failed to start rebalance: %s", t.getMessage());
+               log.rebalanceStartError(cacheName, t);
                throw new Exception(t);
             }
          }
