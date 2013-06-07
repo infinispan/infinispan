@@ -26,6 +26,7 @@
 	<xs:import namespace="urn:infinispan:config:5.3"
 		schemaLocation="http://www.infinispan.org/schemas/infinispan-config-5.3.xsd" />
 
+	<xs:element name="jpaStore" type="tns:jpaStoreType"/>
 	<xs:complexType name="jpaStoreType">
 		<xs:complexContent>
 			<xs:extension base="config:lockSupportStore">

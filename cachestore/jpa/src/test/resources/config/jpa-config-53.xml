@@ -64,7 +64,10 @@
 	
 	<namedCache name="vehicleCache">
 		<loaders passivation="false" shared="true" preload="true">
-			<jpaStore persistenceUnitName="org.infinispan.loaders.jpa.configurationTest" entityClassName="org.infinispan.loaders.jpa.entity.Vehicle" batchSize="1">
+			<jpaStore xmlns="urn:infinispan:config:jpa:5.3"
+				persistenceUnitName="org.infinispan.loaders.jpa.configurationTest"
+				entityClassName="org.infinispan.loaders.jpa.entity.Vehicle"
+				batchSize="1">
 			</jpaStore>
 		</loaders>
 	</namedCache>

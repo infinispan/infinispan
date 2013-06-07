@@ -18,6 +18,7 @@
  */
 package org.infinispan.loaders.jpa.configuration;
 
+import javax.xml.stream.XMLStreamConstants;
 import javax.xml.stream.XMLStreamException;
 
 import org.infinispan.configuration.cache.ConfigurationBuilder;
@@ -25,7 +26,7 @@ import org.infinispan.configuration.parsing.ConfigurationBuilderHolder;
 import org.infinispan.configuration.parsing.ConfigurationParser;
 import org.infinispan.configuration.parsing.Namespace;
 import org.infinispan.configuration.parsing.ParseUtils;
-import org.infinispan.configuration.parsing.Parser52;
+import org.infinispan.configuration.parsing.Parser53;
 import org.infinispan.util.StringPropertyReplacer;
 import org.jboss.staxmapper.XMLExtendedStreamReader;
 
@@ -44,7 +45,7 @@ public class JpaCacheStoreConfigurationParser53 implements
 	public Namespace[] getSupportedNamespaces() {
 		return new Namespace[] {
 				new Namespace(Namespace.INFINISPAN_NS_BASE_URI, "jpa",
-						Element.JPA_STORE.getLocalName(), 5, 2),
+						Element.JPA_STORE.getLocalName(), 5, 3),
 				new Namespace("", Element.JPA_STORE.getLocalName(), 0, 0) };
 	}
 
@@ -98,9 +99,13 @@ public class JpaCacheStoreConfigurationParser53 implements
 				break;
 			}
 			default: {
-				Parser52.parseCommonStoreAttributes(reader, i, builder);
+			   Parser53.parseCommonStoreAttributes(reader, i, builder);
 			}
 			}
 		}
+		
+		if (reader.hasNext() && (reader.nextTag() != XMLStreamConstants.END_ELEMENT)) {
+         ParseUtils.unexpectedElement(reader);
+      }
 	}
 }
