@@ -101,6 +101,7 @@ public class TransactionTable {
    private Lock minTopologyRecalculationLock;
    private final ConcurrentMap<GlobalTransaction, Long> completedTransactions = ConcurrentMapFactory.makeConcurrentMap();
 
+   private final List<Thread> threads = new ArrayList<Thread>(1);
    private ScheduledExecutorService executorService;
 
    /**
@@ -142,15 +143,18 @@ public class TransactionTable {
          notifier.addListener(this);
          clustered = true;
       }
-      
+
       // Periodically run a task to cleanup the transaction table from completed transactions.
       ThreadFactory tf = new ThreadFactory() {
          @Override
          public Thread newThread(Runnable r) {
             String address = rpcManager != null ? rpcManager.getTransport().getAddress().toString() : "local";
-            Thread th = new Thread(r, "TxCleanupService," + cacheName + "," + address);
-            th.setDaemon(true);
-            return th;
+            final Thread thread = new Thread(r, "TxCleanupService," + cacheName + "," + address);
+            thread.setDaemon(true);
+            synchronized (threads) {
+               threads.add(thread);
+            }
+            return thread;
          }
       };
 
@@ -169,10 +173,15 @@ public class TransactionTable {
    @Stop
    @SuppressWarnings("unused")
    private void stop() {
-      
-      if (executorService != null)
+
+      if (executorService != null) {
          executorService.shutdownNow();
-      
+      }
+      for (final Thread thread : threads) {
+         thread.setContextClassLoader(null);
+      }
+      threads.clear();
+
       if (clustered) {
          notifier.removeListener(this);
          currentTopologyId = CACHE_STOPPED_TOPOLOGY_ID; // indicate that the cache has stopped
@@ -567,5 +576,5 @@ public class TransactionTable {
             log.errorf(e, "Failed to cleanup completed transactions: %s", e.getMessage());
          }
       }
-   }   
+   }
 }
