@@ -888,5 +888,8 @@ public interface Log extends BasicLogger {
    @Message(value = "Unexpected initial version type (only NumericVersion instances supported): %s", id = 229)
    IllegalArgumentException unexpectedInitialVersion(String className);
 
+   @LogMessage(level = ERROR)
+   @Message(value = "Failed to start rebalance for cache %s", id = 230)
+   void rebalanceStartError(String cacheName, @Cause Throwable cause);
 }
 

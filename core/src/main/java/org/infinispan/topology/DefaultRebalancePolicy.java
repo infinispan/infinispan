@@ -21,8 +21,13 @@ package org.infinispan.topology;
 
 import org.infinispan.distribution.ch.ConsistentHash;
 import org.infinispan.factories.annotations.Inject;
+import org.infinispan.jmx.annotations.DataType;
+import org.infinispan.jmx.annotations.ManagedAttribute;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
+
+import java.util.HashSet;
+import java.util.Set;
 
 /**
  * Default implementation of {@link RebalancePolicy}
@@ -34,6 +39,8 @@ public class DefaultRebalancePolicy implements RebalancePolicy {
    private static Log log = LogFactory.getLog(DefaultRebalancePolicy.class);
 
    private ClusterTopologyManager clusterTopologyManager;
+   private Set<String> cachesPendingRebalance = null;
+   private final Object lock = new Object();
 
    @Inject
    public void inject(ClusterTopologyManager clusterTopologyManager) {
@@ -65,6 +72,14 @@ public class DefaultRebalancePolicy implements RebalancePolicy {
          return;
       }
 
+      synchronized (lock) {
+         if (!isRebalancingEnabled()) {
+            log.tracef("Rebalancing is disabled, queueing rebalance for cache %s", cacheName);
+            cachesPendingRebalance.add(cacheName);
+            return;
+         }
+      }
+
       log.tracef("Triggering rebalance for cache %s", cacheName);
       clusterTopologyManager.triggerRebalance(cacheName);
    }
@@ -80,4 +95,38 @@ public class DefaultRebalancePolicy implements RebalancePolicy {
       return true;
    }
 
+   @ManagedAttribute(description = "Rebalancing enabled", displayName = "Rebalancing enabled",
+         dataType = DataType.TRAIT, writable = true)
+   @Override
+   public boolean isRebalancingEnabled() {
+      synchronized (lock) {
+         return cachesPendingRebalance == null;
+      }
+   }
+
+   @Override
+   public void setRebalancingEnabled(boolean enabled) {
+      Set<String> caches;
+      synchronized (lock) {
+         caches = cachesPendingRebalance;
+         if (enabled) {
+            cachesPendingRebalance = null;
+         } else {
+            cachesPendingRebalance = new HashSet<String>();
+         }
+      }
+
+      if (enabled && caches != null) {
+         log.debugf("Rebalancing re-enabled, triggering rebalancing for caches %s", caches);
+         for (String cacheName : caches) {
+            try {
+               clusterTopologyManager.triggerRebalance(cacheName);
+            } catch (Exception e) {
+               log.rebalanceStartError(cacheName, e);
+            }
+         }
+      } else {
+         log.debugf("Rebalancing suspended");
+      }
+   }
 }

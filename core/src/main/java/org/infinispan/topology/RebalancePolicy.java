@@ -48,4 +48,17 @@ public interface RebalancePolicy {
     * Called when the status of a cache changes. It could be a node joining or leaving, or a merge, or a
     */
    void updateCacheStatus(String cacheName, ClusterCacheStatus cacheStatus) throws Exception;
+
+   /**
+    * @return {@code true} if rebalancing is allowed, {@code false} if rebalancing is suspended.
+    * @since 5.3
+    */
+   boolean isRebalancingEnabled();
+
+   /**
+    * @param enabled {@code true} to start rebalancing (immediately starting the rebalance if necessary),
+    *                {@code false} to suspend it.
+    * @since 5.3
+    */
+   void setRebalancingEnabled(boolean enabled);
 }
