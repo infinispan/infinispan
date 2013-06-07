@@ -58,7 +58,6 @@ import static org.testng.AssertJUnit.assertEquals;
 @Test(groups = "functional", testName = "it.compatibility.EmbeddedRestMemcachedHotRodTest")
 public class EmbeddedRestMemcachedHotRodTest {
 
-   // Memcached cache name cannot be changed right now
    final static String CACHE_NAME = "memcachedCache";
 
    CompatibilityCacheFactory<String, Object> cacheFactory;

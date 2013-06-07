@@ -25,7 +25,7 @@ package org.infinispan.server.memcached
 
 import org.infinispan.compat.TypeConverter
 import org.infinispan.context.Flag
-import org.infinispan.marshall.Marshaller
+import org.infinispan.marshall.{JavaSerializationMarshaller, Marshaller}
 
 /**
  * Type converter that transforms Memcached data so that it can be accessible
@@ -36,7 +36,14 @@ import org.infinispan.marshall.Marshaller
  */
 class MemcachedTypeConverter extends TypeConverter[String, Array[Byte], String, AnyRef] {
 
-   private var marshaller: Marshaller = _
+   // Default marshaller needed in case no custom marshaller is set
+   // (e.g. not using Spy Memcached client). This is because in compatibility
+   // mode, data is stored unmarshalled, so when returning data to Memcached
+   // clients, it needs to be marshalled to fulfill the Memcached protocol.
+   //
+   // A generic marshaller using Java Serialization is used by default, since
+   // that's the safest bet to support alternative Java Memcached clients
+   private var marshaller: Marshaller = new JavaSerializationMarshaller
 
    override def boxKey(key: String): String = key
 
