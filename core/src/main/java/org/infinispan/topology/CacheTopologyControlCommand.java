@@ -60,7 +60,13 @@ public class CacheTopologyControlCommand implements ReplicableCommand {
       // The coordinator is starting a rebalance operation.
       REBALANCE_START,
       // The coordinator is requesting information about the running caches.
-      GET_STATUS
+      GET_STATUS,
+
+      // Member to coordinator:
+      // Enable/disable rebalancing, check whether rebalancing is enabled
+      POLICY_DISABLE,
+      POLICY_ENABLE,
+      POLICY_GET_STATUS,
    }
 
    private static final Log log = LogFactory.getLog(CacheTopologyControlCommand.class);
@@ -69,6 +75,7 @@ public class CacheTopologyControlCommand implements ReplicableCommand {
 
    private transient LocalTopologyManager localTopologyManager;
    private transient ClusterTopologyManager clusterTopologyManager;
+   private transient RebalancePolicy rebalancePolicy;
 
    private String cacheName;
    private Type type;
@@ -124,9 +131,11 @@ public class CacheTopologyControlCommand implements ReplicableCommand {
    }
 
    @Inject
-   public void init(LocalTopologyManager localTopologyManager, ClusterTopologyManager clusterTopologyManager) {
+   public void init(LocalTopologyManager localTopologyManager, ClusterTopologyManager clusterTopologyManager,
+         RebalancePolicy rebalancePolicy) {
       this.localTopologyManager = localTopologyManager;
       this.clusterTopologyManager = clusterTopologyManager;
+      this.rebalancePolicy = rebalancePolicy;
    }
 
    @Override
@@ -155,7 +164,7 @@ public class CacheTopologyControlCommand implements ReplicableCommand {
             return clusterTopologyManager.handleJoin(cacheName, sender, joinInfo, viewId);
          case LEAVE:
             clusterTopologyManager.handleLeave(cacheName, sender, viewId);
-           return null;
+            return null;
          case REBALANCE_CONFIRM:
             clusterTopologyManager.handleRebalanceCompleted(cacheName, sender, topologyId, throwable, viewId);
             return null;
@@ -169,6 +178,16 @@ public class CacheTopologyControlCommand implements ReplicableCommand {
             return null;
          case GET_STATUS:
             return localTopologyManager.handleStatusRequest(viewId);
+
+         // rebalance policy control
+         case POLICY_GET_STATUS:
+            return rebalancePolicy.isRebalancingEnabled();
+         case POLICY_ENABLE:
+            rebalancePolicy.setRebalancingEnabled(true);
+            return true;
+         case POLICY_DISABLE:
+            rebalancePolicy.setRebalancingEnabled(false);
+            return true;
          default:
             throw new CacheException("Unknown cache topology control command type " + type);
       }

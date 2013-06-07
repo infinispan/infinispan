@@ -41,7 +41,7 @@ import static org.testng.AssertJUnit.assertTrue;
 @Test (groups = "functional", testName = "jmx.CacheClearTest")
 public class CacheClearTest extends SingleCacheManagerTest {
 
-   public static final String JMX_DOMAIN = CacheMBeanTest.class.getSimpleName();
+   public static final String JMX_DOMAIN = CacheClearTest.class.getSimpleName();
    private MBeanServer server;
 
    @Override

@@ -847,5 +847,8 @@ public interface Log extends BasicLogger {
    @Message(value = "Failed to recover cache %s state after the current node became the coordinator", id = 218)
    void failedToRecoverCacheState(String cacheName, @Cause Throwable cause);
 
+   @LogMessage(level = ERROR)
+   @Message(value = "Failed to start rebalance for cache %s", id = 230)
+   void rebalanceStartError(String cacheName, @Cause Throwable cause);
 }
 
