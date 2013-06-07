@@ -171,7 +171,7 @@ public class NonTxDistributionInterceptor extends BaseDistributionInterceptor {
          if (trace) log.tracef("Doing a remote get for key %s", key);
 
          // attempt a remote lookup
-         InternalCacheEntry ice = retrieveFromRemoteSource(key, ctx, false, command);
+         InternalCacheEntry ice = retrieveFromRemoteSource(key, ctx, false, command, true);
          if (ice != null) {
             if (!ctx.replaceValue(key, ice)) {
                entryFactory.wrapEntryForPut(ctx, key, ice, false, command);
@@ -200,7 +200,7 @@ public class NonTxDistributionInterceptor extends BaseDistributionInterceptor {
 
    private InternalCacheEntry remoteGetCacheEntry(InvocationContext ctx, Object key, GetKeyValueCommand command) throws Throwable {
       if (trace) log.tracef("Doing a remote get for key %s", key);
-      InternalCacheEntry ice = retrieveFromRemoteSource(key, ctx, false, command);
+      InternalCacheEntry ice = retrieveFromRemoteSource(key, ctx, false, command, false);
       command.setRemotelyFetchedValue(ice);
       if (ice != null)
          return ice;
