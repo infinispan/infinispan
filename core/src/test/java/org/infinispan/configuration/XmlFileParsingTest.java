@@ -28,6 +28,8 @@ import static org.infinispan.test.TestingUtil.INFINISPAN_START_TAG_40;
 import static org.infinispan.test.TestingUtil.INFINISPAN_START_TAG_NO_SCHEMA;
 import static org.infinispan.test.TestingUtil.withCacheManager;
 import static org.testng.AssertJUnit.assertEquals;
+import static org.testng.AssertJUnit.assertFalse;
+import static org.testng.AssertJUnit.assertNull;
 import static org.testng.AssertJUnit.assertTrue;
 
 import java.io.ByteArrayInputStream;
@@ -69,7 +71,6 @@ import org.infinispan.transaction.lookup.GenericTransactionManagerLookup;
 import org.infinispan.util.AnyEquivalence;
 import org.infinispan.util.ByteArrayEquivalence;
 import org.infinispan.util.concurrent.IsolationLevel;
-import org.testng.Assert;
 import org.testng.annotations.Test;
 
 @Test(groups = "unit", testName = "configuration.XmlFileParsingTest")
@@ -92,7 +93,7 @@ public class XmlFileParsingTest extends AbstractInfinispanTest {
 
          @Override
          public void call() {
-            Assert.assertEquals(cm.getDefaultCacheConfiguration().clustering().cacheMode(), CacheMode.REPL_SYNC);
+            assertEquals(CacheMode.REPL_SYNC, cm.getDefaultCacheConfiguration().clustering().cacheMode());
          }
       });
 
@@ -163,11 +164,11 @@ public class XmlFileParsingTest extends AbstractInfinispanTest {
          public void call() {
             GlobalConfiguration globalCfg = cm.getCacheManagerConfiguration();
 
-            assert globalCfg.transport().transport() instanceof JGroupsTransport;
-            assert globalCfg.transport().clusterName().equals("demoCluster");
+            assertTrue(globalCfg.transport().transport() instanceof JGroupsTransport);
+            assertEquals("demoCluster", globalCfg.transport().clusterName());
 
             Configuration cfg = cm.getDefaultCacheConfiguration();
-            assert cfg.clustering().cacheMode() == CacheMode.REPL_SYNC;
+            assertEquals(CacheMode.REPL_SYNC, cfg.clustering().cacheMode());
          }
 
       });
@@ -205,8 +206,8 @@ public class XmlFileParsingTest extends AbstractInfinispanTest {
          @Override
          public void call() {
             Configuration cfg = cm.getDefaultCacheConfiguration();
-            assert cfg.locking().concurrencyLevel() == 10000;
-            assert cfg.locking().isolationLevel() == IsolationLevel.REPEATABLE_READ;
+            assertEquals(10000, cfg.locking().concurrencyLevel());
+            assertEquals(IsolationLevel.REPEATABLE_READ, cfg.locking().isolationLevel());
          }
 
       });
@@ -271,8 +272,8 @@ public class XmlFileParsingTest extends AbstractInfinispanTest {
          @Override
          public void call() {
             Configuration cfg = cm.getDefaultCacheConfiguration();
-            assert cfg.storeAsBinary().enabled();
-            assert cfg.storeAsBinary().defensive();
+            assertTrue(cfg.storeAsBinary().enabled());
+            assertTrue(cfg.storeAsBinary().defensive());
          }
       });
 
@@ -286,8 +287,8 @@ public class XmlFileParsingTest extends AbstractInfinispanTest {
          @Override
          public void call() {
             Configuration cfg = cm.getDefaultCacheConfiguration();
-            assert cfg.storeAsBinary().enabled();
-            assert !cfg.storeAsBinary().defensive();
+            assertTrue(cfg.storeAsBinary().enabled());
+            assertTrue(!cfg.storeAsBinary().defensive());
          }
       });
    }
@@ -304,8 +305,8 @@ public class XmlFileParsingTest extends AbstractInfinispanTest {
          @Override
          public void call() {
             Configuration cfg = cm.getDefaultCacheConfiguration();
-            Assert.assertFalse(cfg.compatibility().enabled());
-            Assert.assertNull(cfg.compatibility().marshaller());
+            assertFalse(cfg.compatibility().enabled());
+            assertNull(cfg.compatibility().marshaller());
          }
       });
 
@@ -320,8 +321,8 @@ public class XmlFileParsingTest extends AbstractInfinispanTest {
          @Override
          public void call() {
             Configuration cfg = cm.getDefaultCacheConfiguration();
-            Assert.assertTrue(cfg.compatibility().enabled());
-            Assert.assertNull(cfg.compatibility().marshaller());
+            assertTrue(cfg.compatibility().enabled());
+            assertNull(cfg.compatibility().marshaller());
          }
       });
 
@@ -336,8 +337,8 @@ public class XmlFileParsingTest extends AbstractInfinispanTest {
          @Override
          public void call() {
             Configuration cfg = cm.getDefaultCacheConfiguration();
-            Assert.assertTrue(cfg.compatibility().enabled());
-            Assert.assertTrue(cfg.compatibility().marshaller() instanceof GenericJBossMarshaller);
+            assertTrue(cfg.compatibility().enabled());
+            assertTrue(cfg.compatibility().marshaller() instanceof GenericJBossMarshaller);
          }
       });
 
@@ -354,8 +355,8 @@ public class XmlFileParsingTest extends AbstractInfinispanTest {
          @Override
          public void call() {
             Configuration cfg = cm.getDefaultCacheConfiguration();
-            assert cfg.dataContainer().<byte[]>keyEquivalence() instanceof ByteArrayEquivalence;
-            assert cfg.dataContainer().valueEquivalence() instanceof AnyEquivalence;
+            assertTrue(cfg.dataContainer().<byte[]>keyEquivalence() instanceof ByteArrayEquivalence);
+            assertTrue(cfg.dataContainer().valueEquivalence() instanceof AnyEquivalence);
          }
       });
 
@@ -370,8 +371,8 @@ public class XmlFileParsingTest extends AbstractInfinispanTest {
          @Override
          public void call() {
             Configuration cfg = cm.getDefaultCacheConfiguration();
-            assert cfg.dataContainer().<byte[]>keyEquivalence() instanceof ByteArrayEquivalence;
-            assert cfg.dataContainer().<byte[]>valueEquivalence() instanceof ByteArrayEquivalence;
+            assertTrue(cfg.dataContainer().<byte[]>keyEquivalence() instanceof ByteArrayEquivalence);
+            assertTrue(cfg.dataContainer().<byte[]>valueEquivalence() instanceof ByteArrayEquivalence);
          }
       });
    }
@@ -379,20 +380,20 @@ public class XmlFileParsingTest extends AbstractInfinispanTest {
    private void assertNamedCacheFile(EmbeddedCacheManager cm, boolean deprecated) {
       final GlobalConfiguration gc = cm.getCacheManagerConfiguration();
 
-      assert gc.asyncListenerExecutor().factory() instanceof DefaultExecutorFactory;
-      assert gc.asyncListenerExecutor().properties().getProperty("maxThreads").equals("5");
+      assertTrue(gc.asyncListenerExecutor().factory() instanceof DefaultExecutorFactory);
+      assertEquals("5", gc.asyncListenerExecutor().properties().getProperty("maxThreads"));
       if (!deprecated) {
          assertEquals("10000", gc.asyncListenerExecutor().properties().getProperty("queueSize"));
       }
-      assert gc.asyncListenerExecutor().properties().getProperty("threadNamePrefix").equals("AsyncListenerThread");
+      assertEquals("AsyncListenerThread", gc.asyncListenerExecutor().properties().getProperty("threadNamePrefix"));
 
-      assert gc.asyncTransportExecutor().factory() instanceof DefaultExecutorFactory;
+      assertTrue(gc.asyncTransportExecutor().factory() instanceof DefaultExecutorFactory);
       // Should be 25, but it's overriden by the test cache manager factory
       assertEquals(String.valueOf(TestCacheManagerFactory.MAX_ASYNC_EXEC_THREADS), gc.asyncTransportExecutor().properties().getProperty("maxThreads"));
       if (!deprecated) {
          assertEquals(String.valueOf(TestCacheManagerFactory.ASYNC_EXEC_QUEUE_SIZE), gc.asyncTransportExecutor().properties().getProperty("queueSize"));
       }
-      assert gc.asyncTransportExecutor().properties().getProperty("threadNamePrefix").equals("AsyncSerializationThread");
+      assertEquals("AsyncSerializationThread", gc.asyncTransportExecutor().properties().getProperty("threadNamePrefix"));
 
       if (!deprecated) {
          assertTrue(gc.remoteCommandsExecutor().factory() instanceof DefaultExecutorFactory);
@@ -412,214 +413,214 @@ public class XmlFileParsingTest extends AbstractInfinispanTest {
          assertEquals("0", gc.totalOrderExecutor().properties().getProperty("queueSize"));
       }
 
-      assert gc.evictionScheduledExecutor().factory() instanceof DefaultScheduledExecutorFactory;
-      assert gc.evictionScheduledExecutor().properties().getProperty("threadNamePrefix").equals("EvictionThread");
+      assertTrue(gc.evictionScheduledExecutor().factory() instanceof DefaultScheduledExecutorFactory);
+      assertEquals("EvictionThread", gc.evictionScheduledExecutor().properties().getProperty("threadNamePrefix"));
 
-      assert gc.replicationQueueScheduledExecutor().factory() instanceof DefaultScheduledExecutorFactory;
-      assert gc.replicationQueueScheduledExecutor().properties().getProperty("threadNamePrefix").equals("ReplicationQueueThread");
+      assertTrue(gc.replicationQueueScheduledExecutor().factory() instanceof DefaultScheduledExecutorFactory);
+      assertEquals("ReplicationQueueThread", gc.replicationQueueScheduledExecutor().properties().getProperty("threadNamePrefix"));
 
-      assert gc.transport().transport() instanceof JGroupsTransport;
-      assert gc.transport().clusterName().equals("infinispan-cluster");
+      assertTrue(gc.transport().transport() instanceof JGroupsTransport);
+      assertEquals("infinispan-cluster", gc.transport().clusterName());
       // Should be "Jalapeno" but it's overriden by the test cache manager factory
-      assert gc.transport().nodeName().contains("Node");
-      assert gc.transport().distributedSyncTimeout() == 50000;
+      assertTrue(gc.transport().nodeName().contains("Node"));
+      assertEquals(50000, gc.transport().distributedSyncTimeout());
 
-      assert gc.shutdown().hookBehavior().equals(ShutdownHookBehavior.REGISTER);
+      assertEquals(ShutdownHookBehavior.REGISTER, gc.shutdown().hookBehavior());
 
-      assert gc.serialization().marshaller() instanceof VersionAwareMarshaller;
-      assert gc.serialization().version() == Version.getVersionShort("1.0");
+      assertTrue(gc.serialization().marshaller() instanceof VersionAwareMarshaller);
+      assertEquals(Version.getVersionShort("1.0"), gc.serialization().version());
       final Map<Integer, AdvancedExternalizer<?>> externalizers = gc.serialization().advancedExternalizers();
-      assert externalizers.size() == 3;
-      assert externalizers.get(1234) instanceof AdvancedExternalizerTest.IdViaConfigObj.Externalizer;
-      assert externalizers.get(5678) instanceof AdvancedExternalizerTest.IdViaAnnotationObj.Externalizer;
-      assert externalizers.get(3456) instanceof AdvancedExternalizerTest.IdViaBothObj.Externalizer;
+      assertEquals(3, externalizers.size());
+      assertTrue(externalizers.get(1234) instanceof AdvancedExternalizerTest.IdViaConfigObj.Externalizer);
+      assertTrue(externalizers.get(5678) instanceof AdvancedExternalizerTest.IdViaAnnotationObj.Externalizer);
+      assertTrue(externalizers.get(3456) instanceof AdvancedExternalizerTest.IdViaBothObj.Externalizer);
 
       Configuration defaultCfg = cm.getDefaultCacheConfiguration();
 
-      assert defaultCfg.locking().lockAcquisitionTimeout() == 1000;
-      assert defaultCfg.locking().concurrencyLevel() == 100;
-      assert defaultCfg.locking().isolationLevel() == IsolationLevel.READ_COMMITTED;
+      assertEquals(1000, defaultCfg.locking().lockAcquisitionTimeout());
+      assertEquals(100, defaultCfg.locking().concurrencyLevel());
+      assertEquals(IsolationLevel.READ_COMMITTED, defaultCfg.locking().isolationLevel());
       if (!deprecated) {
          assertReaperAndTimeoutInfo(defaultCfg);
       }
 
 
       Configuration c = cm.getCacheConfiguration("transactional");
-      assert !c.clustering().cacheMode().isClustered();
-      assert c.transaction().transactionManagerLookup() instanceof GenericTransactionManagerLookup;
-      assert c.transaction().useEagerLocking();
-      assert c.transaction().eagerLockingSingleNode();
-      assert !c.transaction().syncRollbackPhase();
+      assertTrue(!c.clustering().cacheMode().isClustered());
+      assertTrue(c.transaction().transactionManagerLookup() instanceof GenericTransactionManagerLookup);
+      assertTrue(c.transaction().useEagerLocking());
+      assertTrue(c.transaction().eagerLockingSingleNode());
+      assertTrue(!c.transaction().syncRollbackPhase());
       if (!deprecated) {
          assertReaperAndTimeoutInfo(defaultCfg);
       }
 
       c = cm.getCacheConfiguration("transactional2");
-      assert c.transaction().transactionManagerLookup() instanceof TestLookup;
-      assert c.transaction().cacheStopTimeout() == 10000;
-      assert c.transaction().lockingMode().equals(LockingMode.PESSIMISTIC);
-      assert !c.transaction().autoCommit();
+      assertTrue(c.transaction().transactionManagerLookup() instanceof TestLookup);
+      assertEquals(10000, c.transaction().cacheStopTimeout());
+      assertEquals(LockingMode.PESSIMISTIC, c.transaction().lockingMode());
+      assertTrue(!c.transaction().autoCommit());
 
       c = cm.getCacheConfiguration("transactional3");
 
       if (!deprecated) {
-         Assert.assertEquals(c.transaction().transactionProtocol(), TransactionProtocol.TOTAL_ORDER);
+         assertEquals(TransactionProtocol.TOTAL_ORDER, c.transaction().transactionProtocol());
       }
 
       c = cm.getCacheConfiguration("syncInval");
 
-      assert c.clustering().cacheMode() == CacheMode.INVALIDATION_SYNC;
-      assert !c.clustering().stateTransfer().fetchInMemoryState();
-      assert c.clustering().stateTransfer().awaitInitialTransfer();
-      assert c.clustering().sync().replTimeout() == 15000;
+      assertEquals(CacheMode.INVALIDATION_SYNC, c.clustering().cacheMode());
+      assertTrue(!c.clustering().stateTransfer().fetchInMemoryState());
+      assertTrue(c.clustering().stateTransfer().awaitInitialTransfer());
+      assertEquals(15000, c.clustering().sync().replTimeout());
 
       c = cm.getCacheConfiguration("asyncInval");
 
-      assert c.clustering().cacheMode() == CacheMode.INVALIDATION_ASYNC;
-      assert !c.clustering().stateTransfer().fetchInMemoryState();
-      if (!deprecated) assert !c.clustering().stateTransfer().awaitInitialTransfer();
-      assert c.clustering().sync().replTimeout() == 15000;
+      assertEquals(CacheMode.INVALIDATION_ASYNC, c.clustering().cacheMode());
+      assertTrue(!c.clustering().stateTransfer().fetchInMemoryState());
+      if (!deprecated) assertTrue(!c.clustering().stateTransfer().awaitInitialTransfer());
+      assertEquals(15000, c.clustering().sync().replTimeout());
 
       c = cm.getCacheConfiguration("syncRepl");
 
-      assert c.clustering().cacheMode() == CacheMode.REPL_SYNC;
-      assert !c.clustering().stateTransfer().fetchInMemoryState();
-      assert c.clustering().stateTransfer().awaitInitialTransfer();
-      assert c.clustering().sync().replTimeout() == 15000;
+      assertEquals(CacheMode.REPL_SYNC, c.clustering().cacheMode());
+      assertTrue(!c.clustering().stateTransfer().fetchInMemoryState());
+      assertTrue(c.clustering().stateTransfer().awaitInitialTransfer());
+      assertEquals(15000, c.clustering().sync().replTimeout());
 
       c = cm.getCacheConfiguration("asyncRepl");
 
-      assert c.clustering().cacheMode() == CacheMode.REPL_ASYNC;
-      assert !c.clustering().async().useReplQueue();
-      assert !c.clustering().async().asyncMarshalling();
-      assert !c.clustering().stateTransfer().fetchInMemoryState();
-      assert c.clustering().stateTransfer().awaitInitialTransfer();
+      assertEquals(CacheMode.REPL_ASYNC, c.clustering().cacheMode());
+      assertTrue(!c.clustering().async().useReplQueue());
+      assertTrue(!c.clustering().async().asyncMarshalling());
+      assertTrue(!c.clustering().stateTransfer().fetchInMemoryState());
+      assertTrue(c.clustering().stateTransfer().awaitInitialTransfer());
 
       c = cm.getCacheConfiguration("asyncReplQueue");
 
-      assert c.clustering().cacheMode() == CacheMode.REPL_ASYNC;
-      assert c.clustering().async().useReplQueue();
-      assert !c.clustering().async().asyncMarshalling();
-      assert !c.clustering().stateTransfer().fetchInMemoryState();
-      assert c.clustering().stateTransfer().awaitInitialTransfer();
+      assertEquals(CacheMode.REPL_ASYNC, c.clustering().cacheMode());
+      assertTrue(c.clustering().async().useReplQueue());
+      assertTrue(!c.clustering().async().asyncMarshalling());
+      assertTrue(!c.clustering().stateTransfer().fetchInMemoryState());
+      assertTrue(c.clustering().stateTransfer().awaitInitialTransfer());
 
       c = cm.getCacheConfiguration("txSyncRepl");
 
-      assert c.transaction().transactionManagerLookup() instanceof GenericTransactionManagerLookup;
-      assert c.clustering().cacheMode() == CacheMode.REPL_SYNC;
-      assert !c.clustering().stateTransfer().fetchInMemoryState();
-      assert c.clustering().stateTransfer().awaitInitialTransfer();
-      assert c.clustering().sync().replTimeout() == 15000;
+      assertTrue(c.transaction().transactionManagerLookup() instanceof GenericTransactionManagerLookup);
+      assertEquals(CacheMode.REPL_SYNC, c.clustering().cacheMode());
+      assertTrue(!c.clustering().stateTransfer().fetchInMemoryState());
+      assertTrue(c.clustering().stateTransfer().awaitInitialTransfer());
+      assertEquals(15000, c.clustering().sync().replTimeout());
 
       c = cm.getCacheConfiguration("overriding");
 
-      assert c.clustering().cacheMode() == CacheMode.LOCAL;
-      assert c.locking().lockAcquisitionTimeout() == 20000;
-      assert c.locking().concurrencyLevel() == 1000;
-      assert c.locking().isolationLevel() == IsolationLevel.REPEATABLE_READ;
-      assert !c.storeAsBinary().enabled();
+      assertEquals(CacheMode.LOCAL, c.clustering().cacheMode());
+      assertEquals(20000, c.locking().lockAcquisitionTimeout());
+      assertEquals(1000, c.locking().concurrencyLevel());
+      assertEquals(IsolationLevel.REPEATABLE_READ, c.locking().isolationLevel());
+      assertTrue(!c.storeAsBinary().enabled());
 
       c = cm.getCacheConfiguration("storeAsBinary");
-      assert c.storeAsBinary().enabled();
+      assertTrue(c.storeAsBinary().enabled());
 
       c = cm.getCacheConfiguration("withFileStore");
-      assert c.loaders().preload();
-      assert !c.loaders().passivation();
-      assert !c.loaders().shared();
-      assert c.loaders().cacheLoaders().size() == 1;
+      assertTrue(c.loaders().preload());
+      assertTrue(!c.loaders().passivation());
+      assertTrue(!c.loaders().shared());
+      assertEquals(1, c.loaders().cacheLoaders().size());
 
       FileCacheStoreConfiguration loaderCfg = (FileCacheStoreConfiguration) c.loaders().cacheLoaders().get(0);
 
-      assert loaderCfg.fetchPersistentState();
-      assert loaderCfg.ignoreModifications();
-      assert loaderCfg.purgeOnStartup();
+      assertTrue(loaderCfg.fetchPersistentState());
+      assertTrue(loaderCfg.ignoreModifications());
+      assertTrue(loaderCfg.purgeOnStartup());
       assertEquals("/tmp/FileCacheStore-Location", loaderCfg.location());
-      assert loaderCfg.fsyncMode() == FileCacheStoreConfigurationBuilder.FsyncMode.PERIODIC;
-      assert loaderCfg.fsyncInterval() == 2000;
-      assert loaderCfg.singletonStore().pushStateTimeout() == 20000;
-      assert loaderCfg.singletonStore().pushStateWhenCoordinator();
-      assert loaderCfg.async().threadPoolSize() == 5;
-      assert loaderCfg.async().flushLockTimeout() == 15000;
-      assert loaderCfg.async().enabled();
-      assert loaderCfg.async().modificationQueueSize() == 700;
+      assertEquals(FileCacheStoreConfigurationBuilder.FsyncMode.PERIODIC, loaderCfg.fsyncMode());
+      assertEquals(2000, loaderCfg.fsyncInterval());
+      assertEquals(20000, loaderCfg.singletonStore().pushStateTimeout());
+      assertTrue(loaderCfg.singletonStore().pushStateWhenCoordinator());
+      assertEquals(5, loaderCfg.async().threadPoolSize());
+      assertEquals(15000, loaderCfg.async().flushLockTimeout());
+      assertTrue(loaderCfg.async().enabled());
+      assertEquals(700, loaderCfg.async().modificationQueueSize());
 
       c = cm.getCacheConfiguration("withClusterLoader");
-      assert c.loaders().cacheLoaders().size() == 1;
+      assertEquals(1, c.loaders().cacheLoaders().size());
       ClusterCacheLoaderConfiguration clusterLoaderCfg = (ClusterCacheLoaderConfiguration) c.loaders().cacheLoaders().get(0);
-      assert clusterLoaderCfg.remoteCallTimeout() == 15000;
+      assertEquals(15000, clusterLoaderCfg.remoteCallTimeout());
 
       c = cm.getCacheConfiguration("withLoaderDefaults");
       loaderCfg = (FileCacheStoreConfiguration) c.loaders().cacheLoaders().get(0);
-      assert loaderCfg.location().equals("/tmp/Another-FileCacheStore-Location");
-      assert loaderCfg.fsyncMode() == FileCacheStoreConfigurationBuilder.FsyncMode.DEFAULT;
+      assertEquals("/tmp/Another-FileCacheStore-Location", loaderCfg.location());
+      assertEquals(FileCacheStoreConfigurationBuilder.FsyncMode.DEFAULT, loaderCfg.fsyncMode());
 
       c = cm.getCacheConfiguration("withouthJmxEnabled");
-      assert !c.jmxStatistics().enabled();
-      assert gc.globalJmxStatistics().enabled();
-      assert gc.globalJmxStatistics().allowDuplicateDomains();
+      assertTrue(!c.jmxStatistics().enabled());
+      assertTrue(gc.globalJmxStatistics().enabled());
+      assertTrue(gc.globalJmxStatistics().allowDuplicateDomains());
       assertEquals("funky_domain", gc.globalJmxStatistics().domain());
-      assert gc.globalJmxStatistics().mbeanServerLookup() instanceof PerThreadMBeanServerLookup;
+      assertTrue(gc.globalJmxStatistics().mbeanServerLookup() instanceof PerThreadMBeanServerLookup);
 
       c = cm.getCacheConfiguration("dist");
-      assert c.clustering().cacheMode() == CacheMode.DIST_SYNC;
-      assert c.clustering().l1().lifespan() == 600000;
-      assert !deprecated || c.clustering().hash().rehashRpcTimeout() == 120000;
-      assert c.clustering().stateTransfer().timeout() == 120000;
-      assert c.clustering().l1().cleanupTaskFrequency() == 1200;
-      assert c.clustering().hash().consistentHash() == null; // this is just an override.
-      assert c.clustering().hash().numOwners() == 3;
-      assert c.clustering().l1().enabled();
+      assertEquals(CacheMode.DIST_SYNC, c.clustering().cacheMode());
+      assertEquals(600000, c.clustering().l1().lifespan());
+      if (deprecated) assertEquals(120000, c.clustering().hash().rehashRpcTimeout());
+      assertEquals(120000, c.clustering().stateTransfer().timeout());
+      assertEquals(1200, c.clustering().l1().cleanupTaskFrequency());
+      assertEquals(null, c.clustering().hash().consistentHash()); // this is just an override.
+      assertEquals(3, c.clustering().hash().numOwners());
+      assertTrue(c.clustering().l1().enabled());
 
       c = cm.getCacheConfiguration("dist_with_vnodes");
-      assert c.clustering().cacheMode() == CacheMode.DIST_SYNC;
-      assert c.clustering().l1().lifespan() == 600000;
-      assert !deprecated || c.clustering().hash().rehashRpcTimeout() == 120000;
-      assert c.clustering().stateTransfer().timeout() == 120000;
-      assert c.clustering().hash().consistentHash() == null; // this is just an override.
-      assert c.clustering().hash().numOwners() == 3;
-      assert c.clustering().l1().enabled();
-      assert c.clustering().hash().numVirtualNodes() == 1;
-      if (!deprecated) assert c.clustering().hash().numSegments() == 1000;
+      assertEquals(CacheMode.DIST_SYNC, c.clustering().cacheMode());
+      assertEquals(600000, c.clustering().l1().lifespan());
+      if (deprecated) assertEquals(120000, c.clustering().hash().rehashRpcTimeout());
+      assertEquals(120000, c.clustering().stateTransfer().timeout());
+      assertEquals(null, c.clustering().hash().consistentHash()); // this is just an override.
+      assertEquals(3, c.clustering().hash().numOwners());
+      assertTrue(c.clustering().l1().enabled());
+      assertEquals(1, c.clustering().hash().numVirtualNodes());
+      if (!deprecated) assertEquals(1000, c.clustering().hash().numSegments());
 
       c = cm.getCacheConfiguration("groups");
-      assert c.clustering().hash().groups().enabled();
-      assert c.clustering().hash().groups().groupers().size() == 1;
-      assert c.clustering().hash().groups().groupers().get(0).getKeyType().equals(String.class);
+      assertTrue(c.clustering().hash().groups().enabled());
+      assertEquals(1, c.clustering().hash().groups().groupers().size());
+      assertEquals(String.class, c.clustering().hash().groups().groupers().get(0).getKeyType());
 
       c = cm.getCacheConfiguration("chunkSize");
-      assert c.clustering().stateTransfer().fetchInMemoryState();
-      assert c.clustering().stateTransfer().timeout() == 120000;
-      assert c.clustering().stateTransfer().chunkSize() == 1000;
+      assertTrue(c.clustering().stateTransfer().fetchInMemoryState());
+      assertEquals(120000, c.clustering().stateTransfer().timeout());
+      assertEquals(1000, c.clustering().stateTransfer().chunkSize());
 
       c = cm.getCacheConfiguration("cacheWithCustomInterceptors");
-      assert !c.customInterceptors().interceptors().isEmpty();
-      assert c.customInterceptors().interceptors().size() == 6;
+      assertTrue(!c.customInterceptors().interceptors().isEmpty());
+      assertEquals(6, c.customInterceptors().interceptors().size());
       for(InterceptorConfiguration i : c.customInterceptors().interceptors()) {
          if (i.interceptor() instanceof FooInterceptor) {
-            assert "bar".equals(i.properties().getProperty("foo"));
+            assertEquals(i.properties().getProperty("foo"), "bar");
          }
       }
 
       c = cm.getCacheConfiguration("evictionCache");
-      assert c.eviction().maxEntries() == 5000;
-      assert c.eviction().strategy().equals(EvictionStrategy.LRU);
-      assert c.expiration().lifespan() == 60000;
-      assert c.expiration().maxIdle() == 1000;
-      assert c.eviction().threadPolicy() == EvictionThreadPolicy.PIGGYBACK;
-      assert c.expiration().wakeUpInterval() == 500;
+      assertEquals(5000, c.eviction().maxEntries());
+      assertEquals(EvictionStrategy.LRU, c.eviction().strategy());
+      assertEquals(60000, c.expiration().lifespan());
+      assertEquals(1000, c.expiration().maxIdle());
+      assertEquals(EvictionThreadPolicy.PIGGYBACK, c.eviction().threadPolicy());
+      assertEquals(500, c.expiration().wakeUpInterval());
 
       c = cm.getCacheConfiguration("withDeadlockDetection");
-      assert c.deadlockDetection().enabled();
-      assert c.deadlockDetection().spinDuration() == 1221;
-      assert c.clustering().cacheMode() == CacheMode.DIST_SYNC;
+      assertTrue(c.deadlockDetection().enabled());
+      assertEquals(1221, c.deadlockDetection().spinDuration());
+      assertEquals(CacheMode.DIST_SYNC, c.clustering().cacheMode());
 
       c = cm.getCacheConfiguration("storeKeyValueBinary");
-      assert c.storeAsBinary().enabled();
-      assert c.storeAsBinary().storeKeysAsBinary();
-      assert !c.storeAsBinary().storeValuesAsBinary();
+      assertTrue(c.storeAsBinary().enabled());
+      assertTrue(c.storeAsBinary().storeKeysAsBinary());
+      assertTrue(!c.storeAsBinary().storeValuesAsBinary());
 
       Configuration withJDBCLoader = cm.getCacheConfiguration("withJDBCLoader");
-      assert withJDBCLoader.locking().supportsConcurrentUpdates();
+      assertTrue(withJDBCLoader.locking().supportsConcurrentUpdates());
    }
 
    private void assertReaperAndTimeoutInfo(Configuration defaultCfg) {
