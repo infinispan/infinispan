@@ -168,6 +168,10 @@ public class CompatibilityCacheFactory<K, V> {
       return memcachedClient;
    }
 
+   int getMemcachedPort() {
+      return memcached.getPort();
+   }
+
    String getRestUrl() {
       String restCacheName = cacheName.isEmpty() ? BasicCacheContainer.DEFAULT_CACHE_NAME : cacheName;
       return String.format("http://localhost:%s/rest/%s", restPort, restCacheName);
