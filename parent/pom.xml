@@ -138,7 +138,7 @@
       <version.hibernate.core>3.5.6-Final</version.hibernate.core>
       <version.hibernate.annotations>${version.hibernate.core}</version.hibernate.annotations>
       <version.hibernate.entitymanager>${version.hibernate.core}</version.hibernate.entitymanager>
-      <version.hibernate.search>4.3.0.Beta1</version.hibernate.search>
+      <version.hibernate.search>4.3.0.Final</version.hibernate.search>
       <version.hibernate.javax.persistence>1.0.1.Final</version.hibernate.javax.persistence>
       <version.jackson>1.9.2</version.jackson>
       <version.javax.cache>0.6</version.javax.cache>
