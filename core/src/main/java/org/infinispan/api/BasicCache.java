@@ -72,7 +72,7 @@ import java.util.concurrent.TimeUnit;
  * NotifyingFuture is still returned though for API consistency. 
  * <p/>
  * Please see the <a href="http://www.jboss.org/infinispan/docs">Infinispan documentation</a> and/or the <a
- * href="http://www.jboss.org/community/wiki/5minutetutorialonInfinispan">5 Minute Usage Tutorial</a> for more details.
+ * href="https://docs.jboss.org/author/display/ISPN/Getting+Started+Guide#GettingStartedGuide-5minutetutorial">5 Minute Usage Tutorial</a> for more details.
  * <p/>
  *
  * @author Mircea.Markus@jboss.com
