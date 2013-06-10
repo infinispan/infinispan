@@ -43,9 +43,10 @@ import java.io.ObjectInputStream;
 import java.io.Serializable;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
-import java.util.Calendar;
 import java.util.Date;
 import java.util.GregorianCalendar;
+import java.util.Locale;
+import java.util.TimeZone;
 import java.util.concurrent.TimeUnit;
 
 import static org.testng.AssertJUnit.*;
@@ -59,7 +60,7 @@ import static org.testng.AssertJUnit.*;
 @Test(groups = "functional", testName = "it.compatibility.EmbeddedRestHotRodTest")
 public class EmbeddedRestHotRodTest {
 
-   private static final DateFormat dateFormat = new SimpleDateFormat("EEE, dd MMM yyyy HH:mm:ss z");
+   private static final DateFormat dateFormat = new SimpleDateFormat("EEE, dd MMM yyyy HH:mm:ss zzz", Locale.US);
 
    CompatibilityCacheFactory<String, Object> cacheFactory;
 
@@ -67,6 +68,7 @@ public class EmbeddedRestHotRodTest {
    protected void setup() throws Exception {
       cacheFactory = new CompatibilityCacheFactory<String, Object>();
       cacheFactory.setup();
+      dateFormat.setTimeZone(TimeZone.getTimeZone("GMT"));
    }
 
    @AfterClass
