@@ -40,6 +40,7 @@
    <packaging>pom</packaging>
 
    <modules>
+      <module>bom</module>
       <module>parent</module>
       <module>core</module>
       <module>tools</module>
