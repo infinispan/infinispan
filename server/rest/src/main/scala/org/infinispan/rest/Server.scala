@@ -24,7 +24,7 @@ package org.infinispan.rest
 
 import com.thoughtworks.xstream.XStream
 import java.io._
-import java.util.Date
+import java.util.{TimeZone, Locale, Date}
 import java.util.concurrent.TimeUnit.{MILLISECONDS => MILLIS}
 import java.util.concurrent.TimeUnit.{SECONDS => SECS}
 import javax.ws.rs._
@@ -50,6 +50,8 @@ import org.infinispan.distribution.DistributionManager
 import org.infinispan.remoting.transport.Address
 import org.infinispan.configuration.cache.Configuration
 import org.infinispan.metadata.Metadata
+import java.text.SimpleDateFormat
+import org.jboss.resteasy.util.HttpHeaderNames
 
 /**
  * Integration server linking REST requests with Infinispan calls.
@@ -61,10 +63,10 @@ import org.infinispan.metadata.Metadata
 @Path("/rest")
 class Server(@Context request: Request, @Context servletContext: ServletContext, @HeaderParam("performAsync") useAsync: Boolean) {
 
-   val APPLICATION_X_JAVA_SERIALIZED_OBJECT_TYPE = new MediaType("application" , "x-java-serialized-object");
-   val APPLICATION_X_JAVA_SERIALIZED_OBJECT = APPLICATION_X_JAVA_SERIALIZED_OBJECT_TYPE.toString;
+   val ApplicationXJavaSerializedObjectType = new MediaType("application" , "x-java-serialized-object");
+   val ApplicationXJavaSerializedObject = ApplicationXJavaSerializedObjectType.toString;
    /**For dealing with binary entries in the cache */
-   lazy val variantList = Variant.VariantListBuilder.newInstance.mediaTypes(MediaType.APPLICATION_XML_TYPE, MediaType.APPLICATION_JSON_TYPE, APPLICATION_X_JAVA_SERIALIZED_OBJECT_TYPE).build
+   lazy val variantList = Variant.VariantListBuilder.newInstance.mediaTypes(MediaType.APPLICATION_XML_TYPE, MediaType.APPLICATION_JSON_TYPE, ApplicationXJavaSerializedObjectType).build
    lazy val collectionVariantList = Variant.VariantListBuilder.newInstance.mediaTypes(
             MediaType.TEXT_HTML_TYPE,
             MediaType.APPLICATION_XML_TYPE,
@@ -75,6 +77,9 @@ class Server(@Context request: Request, @Context servletContext: ServletContext,
    lazy val xstream = new XStream
    val manager = ServerBootstrap.getManagerInstance(servletContext)
    val configuration = ServerBootstrap.getConfiguration(servletContext)
+   val datePatternRfc1123LocaleUS = new SimpleDateFormat("EEE, dd MMM yyyy HH:mm:ss zzz", Locale.US)
+
+   datePatternRfc1123LocaleUS.setTimeZone(TimeZone.getTimeZone("GMT"))
 
    @GET
    @Path("/{cacheName}")
@@ -135,14 +140,22 @@ class Server(@Context request: Request, @Context servletContext: ServletContext,
       }
    }
 
+   private def formatDate(date: Date): String = {
+      if (date == null)
+         null
+      else
+         datePatternRfc1123LocaleUS.format(date)
+   }
+
    private def getMimeEntry(ice: InternalCacheEntry, meta: MimeMetadata,
            lastMod: Date, expires: Date, cacheName: String, extended: String): Response = {
       val key = ice.getKey.asInstanceOf[String]
       request.evaluatePreconditions(lastMod, calcETAG(ice, meta)) match {
          case bldr: ResponseBuilder => bldr.build
          case null => Response.ok(ice.getValue, meta.contentType)
-                 .lastModified(lastMod)
-                 .expires(expires)
+                 .header(HttpHeaderNames.LAST_MODIFIED, formatDate(lastMod))
+                  //workaround for https://issues.jboss.org/browse/RESTEASY-887
+                 .header(HttpHeaderNames.EXPIRES, formatDate(expires))
                  .tag(calcETAG(ice, meta))
                  .extended(cacheName, key, wantExtendedHeaders(extended)).build
       }
@@ -152,14 +165,16 @@ class Server(@Context request: Request, @Context servletContext: ServletContext,
            cacheName: String, extended: String): Response = {
       val key = ice.getKey.asInstanceOf[String]
       ice.getValue match {
+
          case s: String => Response.ok(s, MediaType.TEXT_PLAIN)
-                           .expires(expires)
-                           .lastModified(lastMod)
+                           .header(HttpHeaderNames.EXPIRES, formatDate(expires))
+                           .header(HttpHeaderNames.LAST_MODIFIED, formatDate(lastMod))
                            .build
+
          case ba: Array[Byte] => Response.ok
                                  .`type`(MediaType.APPLICATION_OCTET_STREAM)
-                                 .lastModified(lastMod)
-                                 .expires(expires)
+                                 .header(HttpHeaderNames.LAST_MODIFIED, formatDate(lastMod))
+                                 .header(HttpHeaderNames.EXPIRES, formatDate(expires))
                                  .extended(cacheName, key, wantExtendedHeaders(extended))
                                  .entity(streamIt(_.write(ba)))
                                  .build
@@ -172,24 +187,24 @@ class Server(@Context request: Request, @Context servletContext: ServletContext,
             selectedMediaType match {
                case MediaType.APPLICATION_JSON => Response.ok
                        .`type`(selectedMediaType)
-                       .lastModified(lastMod)
-                       .expires(expires)
+                       .header(HttpHeaderNames.LAST_MODIFIED, formatDate(lastMod))
+                       .header(HttpHeaderNames.EXPIRES, formatDate(expires))
                        .extended(cacheName, key, wantExtendedHeaders(extended))
                        .entity(streamIt(jsonMapper.writeValue(_, obj)))
                        .build
                case MediaType.APPLICATION_XML => Response.ok
                        .`type`(selectedMediaType)
-                       .lastModified(lastMod)
-                       .expires(expires)
+                       .header(HttpHeaderNames.LAST_MODIFIED, formatDate(lastMod))
+                       .header(HttpHeaderNames.EXPIRES, formatDate(expires))
                        .extended(cacheName, key, wantExtendedHeaders(extended))
                        .entity(streamIt(xstream.toXML(obj, _)))
                        .build
-               case APPLICATION_X_JAVA_SERIALIZED_OBJECT =>
+               case ApplicationXJavaSerializedObject =>
                   obj match {
                      case ser: Serializable => Response.ok
                              .`type`(selectedMediaType)
-                             .lastModified(lastMod)
-                             .expires(expires)
+                             .header(HttpHeaderNames.LAST_MODIFIED, formatDate(lastMod))
+                             .header(HttpHeaderNames.EXPIRES, formatDate(expires))
                              .extended(cacheName, key, wantExtendedHeaders(extended))
                              .entity(streamIt(new ObjectOutputStream(_).writeObject(ser)))
                              .build
@@ -255,15 +270,15 @@ class Server(@Context request: Request, @Context servletContext: ServletContext,
                         case bldr: ResponseBuilder => bldr.build
                         case null => Response.ok
                                 .`type`(meta.contentType)
-                                .lastModified(lastMod)
-                                .expires(expires)
+                                .header(HttpHeaderNames.LAST_MODIFIED, formatDate(lastMod))
+                                .header(HttpHeaderNames.EXPIRES, formatDate(expires))
                                 .tag(calcETAG(ice, meta))
                                 .extended(cacheName, key, wantExtendedHeaders(extended))
                                 .build
                      }
                   case _ => Response.ok
-                          .lastModified(lastMod)
-                          .expires(expires)
+                          .header(HttpHeaderNames.LAST_MODIFIED, formatDate(lastMod))
+                          .header(HttpHeaderNames.EXPIRES, formatDate(expires))
                           .extended(cacheName, key, wantExtendedHeaders(extended))
                           .build
                }
