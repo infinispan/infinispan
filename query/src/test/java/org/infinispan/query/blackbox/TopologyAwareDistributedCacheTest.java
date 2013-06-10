@@ -27,7 +27,7 @@ import org.infinispan.configuration.cache.CacheMode;
 import org.testng.annotations.Test;
 
 /**
- * Testing query functionality on InfinispanIndexManager enabled Topology aware nodes.
+ * Testing query functionality on RAM directory for DIST_SYNC cache mode with enabled Topology aware nodes.
  *
  * @author Anna Manukyan
  */
@@ -38,15 +38,4 @@ public class TopologyAwareDistributedCacheTest extends TopologyAwareClusteredCac
    public CacheMode getCacheMode() {
       return CacheMode.DIST_SYNC;
    }
-
-   @Override
-   public boolean isIndexLocalOnly() {
-      return true;
-   }
-
-   @Override
-   public boolean isRamDirectory() {
-      return false;
-   }
-
 }
