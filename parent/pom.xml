@@ -204,6 +204,13 @@
       <dependencies>
          <dependency>
             <groupId>${project.groupId}</groupId>
+            <artifactId>infinispan-bom</artifactId>
+            <version>${project.version}</version>
+            <type>pom</type>
+            <scope>import</scope>
+         </dependency>
+         <dependency>
+            <groupId>${project.groupId}</groupId>
             <artifactId>infinispan-cachestore-jdbc</artifactId>
             <version>${project.version}</version>
          </dependency>
