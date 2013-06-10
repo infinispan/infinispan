@@ -278,6 +278,9 @@ public class AsyncStore extends AbstractDelegatingStore {
    }
 
    private void enqueueModificationsList(List<? extends Modification> mods) {
+      if (mods == null || mods.isEmpty()) {
+         return;
+      }
       // scan backwards to find the last CLEAR (anything before that can be discarded)
       int i = mods.size() - 1;
       for (; i >= 0; i--)
