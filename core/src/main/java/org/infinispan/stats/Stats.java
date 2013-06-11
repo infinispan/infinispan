@@ -85,4 +85,32 @@ public interface Stats {
     * @return Number of cache eviction.
     */   
    long getEvictions();
+
+   /**
+    * @return Average number of milliseconds for a cache get on the cache
+    */
+   long getAverageReadTime();
+
+   /**
+    * @return Average number of milliseconds for a cache put on the cache
+    */
+   long getAverageWriteTime();
+
+   /**
+    * @return Average number of milliseconds for a cache put on the cache
+    */
+   long getAverageRemoveTime();
+
+   /**
+    * Reset statistics
+    */
+   void reset();
+
+   /**
+    * Enables or disables statistics at runtime.
+    *
+    * @param enabled boolean indicating whether statistics should be enable or not
+    */
+   void setStatisticsEnabled(boolean enabled);
+
 }

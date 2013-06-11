@@ -239,6 +239,13 @@ public enum Flag {
    SKIP_LISTENER_NOTIFICATION,
 
    /**
+    * This flag skips statistics updates as a result of a cache operation.
+    * For example, if this flag is passed as a result of a {@link Cache#get(Object)}
+    * call, no cache hits or cache miss counters will be updated.
+    */
+   SKIP_STATISTICS,
+
+   /**
     * Flag to identify cache operations coming from the Hot Rod server.
     */
    OPERATION_HOTROD,

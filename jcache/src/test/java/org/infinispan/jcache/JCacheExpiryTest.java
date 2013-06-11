@@ -23,6 +23,7 @@
 
 package org.infinispan.jcache;
 
+import org.infinispan.jcache.util.JCacheRunnable;
 import org.testng.annotations.Test;
 
 import javax.cache.Cache;
@@ -30,9 +31,12 @@ import javax.cache.CacheManager;
 import javax.cache.Caching;
 import javax.cache.Configuration;
 import javax.cache.ExpiryPolicy;
-import javax.cache.SimpleConfiguration;
+import javax.cache.Factory;
+import javax.cache.MutableConfiguration;
+import javax.cache.spi.CachingProvider;
 import java.lang.reflect.Method;
 
+import static org.infinispan.jcache.util.JCacheTestingUtil.withCachingProvider;
 import static org.testng.AssertJUnit.*;
 
 /**
@@ -45,46 +49,52 @@ import static org.testng.AssertJUnit.*;
 public class JCacheExpiryTest {
 
    public void testGetAndReplace(Method m) {
-      SimpleConfiguration<Integer, String>
-            cfg = new SimpleConfiguration<Integer, String>();
+      final MutableConfiguration<Integer, String>
+            cfg = new MutableConfiguration<Integer, String>();
 
-      cfg.setExpiryPolicy(new ExpiryPolicy<Integer, String>() {
+      cfg.setExpiryPolicyFactory(new Factory<ExpiryPolicy<? super Integer, ? super String>>() {
          @Override
-         public Configuration.Duration getTTLForCreatedEntry(
-               Cache.Entry<? extends Integer, ? extends String> entry) {
-            return Configuration.Duration.ETERNAL;
-         }
+         public ExpiryPolicy<? super Integer, ? super String> create() {
+            return new ExpiryPolicy<Integer, String>() {
+               @Override
+               public Configuration.Duration getTTLForCreatedEntry(
+                     Cache.Entry<? extends Integer, ? extends String> entry) {
+                  return Configuration.Duration.ETERNAL;
+               }
 
-         @Override
-         public Configuration.Duration getTTLForAccessedEntry(
-               Cache.Entry<? extends Integer, ? extends String> entry,
-               Configuration.Duration duration) {
-            return null;
-         }
+               @Override
+               public Configuration.Duration getTTLForAccessedEntry(
+                     Cache.Entry<? extends Integer, ? extends String> entry,
+                     Configuration.Duration duration) {
+                  return null;
+               }
 
-         @Override
-         public Configuration.Duration getTTLForModifiedEntry(
-               Cache.Entry<? extends Integer, ? extends String> entry,
-               Configuration.Duration duration) {
-            return Configuration.Duration.ZERO;
+               @Override
+               public Configuration.Duration getTTLForModifiedEntry(
+                     Cache.Entry<? extends Integer, ? extends String> entry,
+                     Configuration.Duration duration) {
+                  return Configuration.Duration.ZERO;
+               }
+            };
          }
       });
 
-      String name = getName(m);
-      CacheManager cm = Caching.getCacheManager(name);
-      try {
-         Cache<Integer, String> cache = cm.configureCache(name, cfg);
+      final String name = getName(m);
+      withCachingProvider(new JCacheRunnable() {
+         @Override
+         public void run(CachingProvider provider) {
+            CacheManager cm = provider.getCacheManager();
+            Cache<Integer, String> cache = cm.configureCache(name, cfg);
 
-         cache.put(1, "v1");
-         assertTrue(cache.containsKey(1));
-         assertEquals("v1", cache.get(1));
+            cache.put(1, "v1");
+            assertTrue(cache.containsKey(1));
+            assertEquals("v1", cache.get(1));
 
-         cache.getAndReplace(1, "v2");
-         assertFalse(cache.containsKey(1));
-         assertNull(cache.get(1));
-      } finally {
-         cm.shutdown();
-      }
+            cache.getAndReplace(1, "v2");
+            assertFalse(cache.containsKey(1));
+            assertNull(cache.get(1));
+         }
+      });
    }
 
    private String getName(Method m) {

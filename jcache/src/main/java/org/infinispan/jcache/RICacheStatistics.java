@@ -17,284 +17,194 @@
 
 package org.infinispan.jcache;
 
-import javax.cache.Cache;
+import org.infinispan.AdvancedCache;
+import org.infinispan.stats.Stats;
+
 import javax.cache.CacheStatisticsMXBean;
 import java.io.Serializable;
 import java.util.Date;
-import java.util.concurrent.atomic.AtomicLong;
-
+import java.util.concurrent.TimeUnit;
 
 /**
  * The reference implementation of {@link CacheStatisticsMXBean}.
  */
 public class RICacheStatistics implements CacheStatisticsMXBean, Serializable {
 
-    private static final long serialVersionUID = -5589437411679003894L;
-    private static final long NANOSECONDS_IN_A_MILLISECOND = 1000000L;
+   private static final long serialVersionUID = -5589437411679003894L;
 
+   private final AdvancedCache<?, ?> cache;
 
-    private transient Cache<?, ?> cache;
+   // TODO: Replace with getTimeSinceReset?
+   private Date lastCollectionStartDate = new Date();
 
-    private final AtomicLong cacheRemovals = new AtomicLong();
-    private final AtomicLong cacheExpiries = new AtomicLong();
-    private final AtomicLong cachePuts = new AtomicLong();
-    private final AtomicLong cacheHits = new AtomicLong();
-    private final AtomicLong cacheMisses = new AtomicLong();
-    private final AtomicLong cacheEvictions = new AtomicLong();
-    private final AtomicLong cachePutTimeTakenNanos = new AtomicLong();
-    private final AtomicLong cacheGetTimeTakenNanos = new AtomicLong();
-    private final AtomicLong cacheRemoveTimeTakenNanos = new AtomicLong();
+   /**
+    * Constructs a cache statistics object
+    *
+    * @param cache the associated cache
+    */
+   public RICacheStatistics(AdvancedCache<?, ?> cache) {
+      this.cache = cache;
+   }
 
-    private Date lastCollectionStartDate = new Date();
+   /**
+    * {@inheritDoc}
+    * <p/>
+    * Statistics will also automatically be cleared if internal counters
+    * overflow.
+    */
+   @Override
+   public void clear() {
+      cache.getStats().reset();
+      lastCollectionStartDate = new Date();
+   }
 
-    /**
-     * Constructs a cache statistics object
-     *
-     * @param cache the associated cache
-     */
-    public RICacheStatistics(Cache<?, ?> cache) {
-        this.cache = cache;
-    }
+   /**
+    * The date from which statistics have been accumulated. Because statistics
+    * can be cleared, this is not necessarily since the cache was started.
+    *
+    * @return the date statistics started being accumulated
+    */
+   @Override
+   public Date getStartAccumulationDate() {
+      return lastCollectionStartDate;
+   }
 
-    /**
-     * {@inheritDoc}
-     * <p/>
-     * Statistics will also automatically be cleared if internal counters overflow.
-     */
-    @Override
-    public void clear() {
-        cachePuts.set(0);
-        cacheMisses.set(0);
-        cacheRemovals.set(0);
-        cacheExpiries.set(0);
-        cacheHits.set(0);
-        cacheEvictions.set(0);
-        cacheGetTimeTakenNanos.set(0);
-        cachePutTimeTakenNanos.set(0);
-        cacheRemoveTimeTakenNanos.set(0);
-        lastCollectionStartDate = new Date();
-    }
+   /**
+    * @return the number of hits
+    */
+   @Override
+   public long getCacheHits() {
+      return mapToSpecValidStat(cache.getStats().getHits());
+   }
 
-    /**
-     * The date from which statistics have been accumulated. Because statistics can be cleared, this is not necessarily
-     * since the cache was started.
-     *
-     * @return the date statistics started being accumulated
-     */
-    @Override
-    public Date getStartAccumulationDate() {
-        return lastCollectionStartDate;
-    }
+   /**
+    * Returns cache hits as a percentage of total gets.
+    *
+    * @return the percentage of successful hits, as a decimal
+    */
+   @Override
+   public float getCacheHitPercentage() {
+      long hits = getCacheHits();
+      if (hits == 0)
+         return 0;
 
-    /**
-     * @return the entry count
-     */
-    public long getEntryCount() {
-        return ((JCache<?, ?>) cache).size();
-    }
+      return hits / getCacheGets();
+   }
 
-    /**
-     * @return the number of hits
-     */
-    @Override
-    public long getCacheHits() {
-        return cacheHits.longValue();
-    }
+   /**
+    * @return the number of misses
+    */
+   @Override
+   public long getCacheMisses() {
+      return mapToSpecValidStat(cache.getStats().getMisses());
+   }
 
-    /**
-     * Returns cache hits as a percentage of total gets.
-     *
-     * @return the percentage of successful hits, as a decimal
-     */
-    @Override
-    public float getCacheHitPercentage() {
-        return getCacheHits() / getCacheGets();
-    }
+   /**
+    * Returns cache misses as a percentage of total gets.
+    *
+    * @return the percentage of accesses that failed to find anything
+    */
+   @Override
+   public float getCacheMissPercentage() {
+      long misses = getCacheMisses();
+      if (misses == 0)
+         return 0;
 
-    /**
-     * @return the number of misses
-     */
-    @Override
-    public long getCacheMisses() {
-        return cacheMisses.longValue();
-    }
+      return misses / getCacheGets();
+   }
 
-    /**
-     * Returns cache misses as a percentage of total gets.
-     *
-     * @return the percentage of accesses that failed to find anything
-     */
-    @Override
-    public float getCacheMissPercentage() {
-        return getCacheMisses() / getCacheGets();
-    }
+   /**
+    * The total number of requests to the cache. This will be equal to the sum
+    * of the hits and misses.
+    * <p/>
+    * A "get" is an operation that returns the current or previous value.
+    *
+    * @return the number of hits
+    */
+   @Override
+   public long getCacheGets() {
+      Stats stats = cache.getStats();
+      return stats.getHits() + stats.getMisses();
+   }
 
-    /**
-     * The total number of requests to the cache. This will be equal to the sum of the hits and misses.
-     * <p/>
-     * A "get" is an operation that returns the current or previous value.
-     *
-     * @return the number of hits
-     */
-    @Override
-    public long getCacheGets() {
-        return getCacheHits() + getCacheMisses();
-    }
+   /**
+    * The total number of puts to the cache.
+    * <p/>
+    * A put is counted even if it is immediately evicted. A replace includes a
+    * put and remove.
+    *
+    * @return the number of hits
+    */
+   @Override
+   public long getCachePuts() {
+      return mapToSpecValidStat(cache.getStats().getStores());
+   }
 
-    /**
-     * The total number of puts to the cache.
-     * <p/>
-     * A put is counted even if it is immediately evicted. A replace includes a put and remove.
-     *
-     * @return the number of hits
-     */
-    @Override
-    public long getCachePuts() {
-        return cachePuts.longValue();
-    }
+   /**
+    * The total number of removals from the cache. This does not include
+    * evictions, where the cache itself initiates the removal to make space.
+    * <p/>
+    *
+    * @return the number of removals
+    */
+   @Override
+   public long getCacheRemovals() {
+      Stats stats = cache.getStats();
+      return mapToSpecValidStat(stats.getRemoveHits() + stats.getRemoveMisses());
+   }
 
-    /**
-     * The total number of removals from the cache. This does not include evictions, where the cache itself
-     * initiates the removal to make space.
-     * <p/>
-     * A replace invcludes a put and remove.
-     *
-     * @return the number of hits
-     */
-    @Override
-    public long getCacheRemovals() {
-        return cacheRemovals.longValue();
-    }
+   /**
+    * @return the number of evictions from the cache
+    */
+   @Override
+   public long getCacheEvictions() {
+      return mapToSpecValidStat(cache.getStats().getEvictions());
+   }
 
-    /**
-     * @return the number of evictions from the cache
-     */
-    @Override
-    public long getCacheEvictions() {
-        return cacheEvictions.longValue();
-    }
+   /**
+    * The mean time to execute gets.
+    * <p/>
+    * In a read-through cache the time taken to load an entry on miss is not included in get time.
+    *
+    * @return the time in µs
+    */
+   @Override
+   public float getAverageGetTime() {
+      return TimeUnit.MILLISECONDS.toMicros(
+            mapToSpecValidStat(cache.getStats().getAverageReadTime()));
+   }
 
-    /**
-     * The mean time to execute gets.
-     *
-     * @return the time in milliseconds
-     */
-    @Override
-    public float getAverageGetMillis() {
-        return (cacheGetTimeTakenNanos.longValue() / getCacheGets()) / NANOSECONDS_IN_A_MILLISECOND;
-    }
+   /**
+    * The mean time to execute puts.
+    *
+    * @return the time in µs
+    */
+   @Override
+   public float getAveragePutTime() {
+      return TimeUnit.MILLISECONDS.toMicros(
+            mapToSpecValidStat(cache.getStats().getAverageWriteTime()));
+   }
 
-    /**
-     * The mean time to execute puts.
-     *
-     * @return the time in milliseconds
-     */
-    @Override
-    public float getAveragePutMillis() {
-        return (cachePutTimeTakenNanos.longValue() / getCacheGets()) / NANOSECONDS_IN_A_MILLISECOND;
-    }
+   /**
+    * The mean time to execute removes.
+    *
+    * @return the time in µs
+    */
+   @Override
+   public float getAverageRemoveTime() {
+      return TimeUnit.MILLISECONDS.toMicros(
+            mapToSpecValidStat(cache.getStats().getAverageRemoveTime()));
+   }
 
-    /**
-     * The mean time to execute removes.
-     *
-     * @return the time in milliseconds
-     */
-    @Override
-    public float getAverageRemoveMillis() {
-        return (cacheRemoveTimeTakenNanos.longValue() / getCacheGets()) / NANOSECONDS_IN_A_MILLISECOND;
-    }
-
-    //package local incrementers
-
-    /**
-     * Increases the counter by the number specified.
-     * @param number the number to increase the counter by
-     */
-    void increaseCacheRemovals(long number) {
-        cacheRemovals.getAndAdd(number);
-    }
-
-    /**
-     * Increases the counter by the number specified.
-     * @param number the number to increase the counter by
-     */
-    void increaseCacheExpiries(long number) {
-        cacheExpiries.getAndAdd(number);
-    }
-
-    /**
-     * Increases the counter by the number specified.
-     * @param number the number to increase the counter by
-     */
-    void increaseCachePuts(long number) {
-        cachePuts.getAndAdd(number);
-    }
-
-    /**
-     * Increases the counter by the number specified.
-     * @param number the number to increase the counter by
-     */
-    void increaseCacheHits(long number) {
-        cacheHits.getAndAdd(number);
-    }
-
-    /**
-     * Increases the counter by the number specified.
-     * @param number the number to increase the counter by
-     */
-    void increaseCacheMisses(long number) {
-        cacheMisses.getAndAdd(number);
-    }
-
-    /**
-     * Increases the counter by the number specified.
-     * @param number the number to increase the counter by
-     */
-    void increaseCacheEvictions(long number) {
-        cacheEvictions.getAndAdd(number);
-    }
-
-    /**
-     * Increments the get time accumulator
-     * @param duration the time taken in nanoseconds
-     */
-    public void addGetTimeNano(long duration) {
-        if (cacheGetTimeTakenNanos.get() <= Long.MAX_VALUE - duration) {
-            cacheGetTimeTakenNanos.addAndGet(duration);
-        } else {
-            //counter full. Just reset.
-            clear();
-            cacheGetTimeTakenNanos.set(duration);
-        }
-    }
-
-
-    /**
-     * Increments the put time accumulator
-     * @param duration the time taken in nanoseconds
-     */
-    public void addPutTimeNano(long duration) {
-        if (cachePutTimeTakenNanos.get() <= Long.MAX_VALUE - duration) {
-            cachePutTimeTakenNanos.addAndGet(duration);
-        } else {
-            //counter full. Just reset.
-            clear();
-            cachePutTimeTakenNanos.set(duration);
-        }
-    }
-
-    /**
-     * Increments the remove time accumulator
-     * @param duration the time taken in nanoseconds
-     */
-    public void addRemoveTimeNano(long duration) {
-        if (cacheRemoveTimeTakenNanos.get() <= Long.MAX_VALUE - duration) {
-            cacheRemoveTimeTakenNanos.addAndGet(duration);
-        } else {
-            //counter full. Just reset.
-            clear();
-            cacheRemoveTimeTakenNanos.set(duration);
-        }
-    }
+   /**
+    * Maps an Infinispan statistic to a value that's
+    * accepted by the JCache specification.
+    *
+    * @param stat original Infinispan statistic
+    * @return a JCache specification valid statistic
+    */
+   private long mapToSpecValidStat(long stat) {
+      return stat < 0 ? 0 : stat;
+   }
 
 }

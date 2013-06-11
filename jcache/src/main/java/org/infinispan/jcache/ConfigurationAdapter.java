@@ -23,6 +23,7 @@ import org.infinispan.transaction.TransactionMode;
 
 import javax.cache.CacheLoader;
 import javax.cache.CacheWriter;
+import javax.cache.Factory;
 
 /**
  * ConfigurationAdapter takes {@link javax.cache.Configuration} and creates
@@ -81,20 +82,21 @@ public class ConfigurationAdapter<K, V> {
             break;
       }
 
-      CacheLoader<K,? extends V> cacheLoader = c.getCacheLoader();
-      if (cacheLoader != null) {
+      Factory<CacheLoader<K,V>> cacheLoaderFactory = c.getCacheLoaderFactory();
+      if (cacheLoaderFactory != null) {
          // User-defined cache loader will be plugged once cache has started
          cb.loaders().addStore().cacheStore(new JCacheLoaderAdapter());
       }
 
-      CacheWriter<? super K,? super V> cacheWriter = c.getCacheWriter();
-      if (cacheWriter != null) {
+      Factory<CacheWriter<? super K, ? super V>> cacheWriterFactory = c.getCacheWriterFactory();
+      if (cacheWriterFactory != null) {
          // User-defined cache writer will be plugged once cache has started
          cb.loaders().addStore().cacheStore(new JCacheWriterAdapter());
       }
 
-      //TODO
-      //whatever else is needed
+      if (c.isStatisticsEnabled())
+         cb.jmxStatistics().enable();
+
       return cb.build();
    }
 }
