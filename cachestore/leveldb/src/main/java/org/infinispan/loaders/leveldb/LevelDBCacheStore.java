@@ -23,8 +23,8 @@ import org.infinispan.loaders.CacheLoaderConfig;
 import org.infinispan.loaders.CacheLoaderException;
 import org.infinispan.loaders.CacheLoaderMetadata;
 import org.infinispan.loaders.LockSupportCacheStore;
+import org.infinispan.loaders.leveldb.logging.Log;
 import org.infinispan.marshall.StreamingMarshaller;
-import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 import org.iq80.leveldb.DB;
 import org.iq80.leveldb.DBException;
@@ -36,8 +36,7 @@ import org.iq80.leveldb.impl.Iq80DBFactory;
 @ThreadSafe
 @CacheLoaderMetadata(configurationClass = LevelDBCacheStoreConfig.class)
 public class LevelDBCacheStore extends LockSupportCacheStore<Integer> {
-	private static final Log log = LogFactory.getLog(LevelDBCacheStore.class,
-			Log.class);
+	private static final Log log = LogFactory.getLog(LevelDBCacheStore.class, Log.class);
 
 	private LevelDBCacheStoreConfig config;
 	private BlockingQueue<ExpiryEntry> expiryEntryQueue;
@@ -107,13 +106,13 @@ public class LevelDBCacheStore extends LockSupportCacheStore<Integer> {
 	   try {
 	      db.close();
 	   } catch (IOException e) {
-	      log.warn("unable to close db", e);
+	      log.warnUnableToCloseDb(e);
 	   }
 	   
 	   try {
          expiredDb.close();
       } catch (IOException e) {
-         log.warn("unable to close expiredDb", e);
+         log.warnUnableToCloseExpiredDb(e);
       }
 
 		super.stop();
@@ -141,7 +140,7 @@ public class LevelDBCacheStore extends LockSupportCacheStore<Integer> {
 				try {
                it.close();
             } catch (IOException e) {
-               log.warn("unable to close iterator", e);
+               log.warnUnableToCloseDbIterator(e);
             }
 			}
 		} else {
@@ -174,7 +173,7 @@ public class LevelDBCacheStore extends LockSupportCacheStore<Integer> {
 			try {
             it.close();
          } catch (IOException e) {
-            log.warn("unable to close iterator", e);
+            log.warnUnableToCloseDbIterator(e);
          }
 		}
 
@@ -202,7 +201,7 @@ public class LevelDBCacheStore extends LockSupportCacheStore<Integer> {
 			try {
             it.close();
          } catch (IOException e) {
-            log.warn("unable to close iterator", e);
+            log.warnUnableToCloseDbIterator(e);
          }
 		}
 
@@ -231,7 +230,7 @@ public class LevelDBCacheStore extends LockSupportCacheStore<Integer> {
 			try {
             it.close();
          } catch (IOException e) {
-            log.warn("unable to close iterator", e);
+            log.warnUnableToCloseDbIterator(e);
          }
 		}
 	}
@@ -254,7 +253,7 @@ public class LevelDBCacheStore extends LockSupportCacheStore<Integer> {
 			try {
             it.close();
          } catch (IOException e) {
-            log.warn("unable to close iterator", e);
+            log.warnUnableToCloseDbIterator(e);
          }
 		}
 	}
@@ -311,7 +310,7 @@ public class LevelDBCacheStore extends LockSupportCacheStore<Integer> {
 	protected InternalCacheEntry loadLockSafe(Object key, Integer lockingKey)
 			throws CacheLoaderException {
 		try {
-			InternalCacheEntry ice = (InternalCacheEntry) unmarshall(
+			InternalCacheEntry ice = unmarshall(
 					db.get(marshall(key)), key);
 			if (ice != null && ice.isExpired(System.currentTimeMillis())) {
 				removeLockSafe(key, lockingKey);
@@ -387,7 +386,7 @@ public class LevelDBCacheStore extends LockSupportCacheStore<Integer> {
 				for (Object key : keys) {
 					byte[] keyBytes = marshall(key);
 					
-					byte[] b = (byte[]) db.get(keyBytes);
+					byte[] b = db.get(keyBytes);
 					if (b == null)
 						continue;
 					InternalCacheValue ice = (InternalCacheValue) getMarshaller()
@@ -406,7 +405,7 @@ public class LevelDBCacheStore extends LockSupportCacheStore<Integer> {
 			   try {
 			      it.close();
 			   } catch (IOException e) {
-			      log.warn("unable to close iterator", e);
+			      log.warnUnableToCloseDbIterator(e);
 			   }
 			}
 		} catch (Exception e) {
@@ -416,7 +415,7 @@ public class LevelDBCacheStore extends LockSupportCacheStore<Integer> {
 
 	private byte[] marshall(InternalCacheEntry entry) throws IOException,
 			InterruptedException {
-		return marshall((Object) entry.toInternalCacheValue());
+		return marshall(entry.toInternalCacheValue());
 	}
 
 	private byte[] marshall(Object entry) throws IOException,
