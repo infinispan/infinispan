@@ -693,7 +693,7 @@ public class MapReduceTask<KIn, VIn, KOut, VOut> {
    private void ensureProperCacheState(AdvancedCache<KIn, VIn> cache) throws NullPointerException,
             IllegalStateException {
       if (cache.getStatus() != ComponentStatus.RUNNING)
-         throw log.invalidCacheState(cache.getStats().toString());
+         throw log.invalidCacheState(cache.getStatus().toString());
 
       if (cache.getRpcManager() != null && cache.getDistributionManager() == null) {
          throw log.requireDistOrReplCache(cache.getCacheConfiguration().clustering().cacheModeString());
