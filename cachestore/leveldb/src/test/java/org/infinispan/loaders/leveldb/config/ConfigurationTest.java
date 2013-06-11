@@ -135,17 +135,17 @@ public class ConfigurationTest extends AbstractInfinispanTest {
       TestingUtil.recursiveFileRemove("/tmp/leveldb/legacy");
 	}
 	
-	public void testXmlConfig53() throws IOException {
+	public void testXmlConfig52() throws IOException {
 		EmbeddedCacheManager cacheManager = new DefaultCacheManager(
-				"config/leveldb-config-53.xml");
+            "config/leveldb-config-52.xml");
 		
 		Cache<String, String> cache = cacheManager.getCache("testCache");
 		
-		cache.put("hello", "there 53 xml");
+		cache.put("hello", "there 52 xml");
       cache.stop();
 		cacheManager.stop();
 		
-		TestingUtil.recursiveFileRemove("/tmp/leveldb/53");
+		TestingUtil.recursiveFileRemove("/tmp/leveldb/52");
 	}
 	
 }

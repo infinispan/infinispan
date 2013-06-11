@@ -18,35 +18,34 @@
  */
 package org.infinispan.loaders.leveldb.configuration;
 
-import javax.xml.stream.XMLStreamConstants;
-import javax.xml.stream.XMLStreamException;
-
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.parsing.ConfigurationBuilderHolder;
 import org.infinispan.configuration.parsing.ConfigurationParser;
 import org.infinispan.configuration.parsing.Namespace;
 import org.infinispan.configuration.parsing.ParseUtils;
-import org.infinispan.configuration.parsing.Parser53;
+import org.infinispan.configuration.parsing.Parser52;
 import org.infinispan.util.StringPropertyReplacer;
 import org.iq80.leveldb.CompressionType;
 import org.jboss.staxmapper.XMLExtendedStreamReader;
+
+import javax.xml.stream.XMLStreamConstants;
+import javax.xml.stream.XMLStreamException;
 
 /**
  * 
  * @author <a href="mailto:rtsang@redhat.com">Ray Tsang</a>
  * 
  */
-public class LevelDBCacheStoreConfigurationParser53 implements
-		ConfigurationParser<ConfigurationBuilderHolder> {
+public class LevelDBCacheStoreConfigurationParser52 implements ConfigurationParser<ConfigurationBuilderHolder> {
 
-	public LevelDBCacheStoreConfigurationParser53() {
+	public LevelDBCacheStoreConfigurationParser52() {
 	}
 
 	@Override
 	public Namespace[] getSupportedNamespaces() {
 		return new Namespace[] {
 				new Namespace(Namespace.INFINISPAN_NS_BASE_URI, "leveldb",
-						Element.LEVELDB_STORE.getLocalName(), 5, 3),
+						Element.LEVELDB_STORE.getLocalName(), 5, 2),
 				new Namespace("", Element.LEVELDB_STORE.getLocalName(), 0, 0) };
 	}
 
@@ -79,39 +78,39 @@ public class LevelDBCacheStoreConfigurationParser53 implements
 			Attribute attribute = Attribute.forName(reader
 					.getAttributeLocalName(i));
 
-			switch (attribute) {
-			case LOCATION: {
-				builder.location(value);
-				break;
-			}
-			case EXPIRED_LOCATION: {
-            builder.expiredLocation(value);
-            break;
+         switch (attribute) {
+            case LOCATION: {
+               builder.location(value);
+               break;
+            }
+            case EXPIRED_LOCATION: {
+               builder.expiredLocation(value);
+               break;
+            }
+            case CLEAR_THRESHOLD: {
+               builder.clearThreshold(Integer.valueOf(value));
+               break;
+            }
+            case EXPIRY_QUEUE_SIZE: {
+               builder.expiryQueueSize(Integer.valueOf(value));
+            }
+            case BLOCK_SIZE: {
+               builder.blockSize(Integer.valueOf(value));
+               break;
+            }
+            case CACHE_SIZE: {
+               builder.cacheSize(Long.valueOf(value));
+               break;
+            }
+            case COMPRESSION_TYPE: {
+               builder.compressionType(CompressionType.valueOf(value));
+               break;
+            }
+            default: {
+               Parser52.parseCommonStoreAttributes(reader, i, builder);
+            }
          }
-			case CLEAR_THRESHOLD: {
-            builder.clearThreshold(Integer.valueOf(value));
-            break;
-         }
-			case EXPIRY_QUEUE_SIZE: {
-			   builder.expiryQueueSize(Integer.valueOf(value));
-			}
-			case BLOCK_SIZE: {
-            builder.blockSize(Integer.valueOf(value));
-            break;
-         }
-			case CACHE_SIZE: {
-            builder.cacheSize(Long.valueOf(value));
-            break;
-         }
-			case COMPRESSION_TYPE: {
-			   builder.compressionType(CompressionType.valueOf(value));
-			   break;
-			}
-			default: {
-				Parser53.parseCommonStoreAttributes(reader, i, builder);
-			}
-			}
-		}
+      }
 		
 		if (reader.hasNext() && (reader.nextTag() != XMLStreamConstants.END_ELEMENT)) {
          ParseUtils.unexpectedElement(reader);

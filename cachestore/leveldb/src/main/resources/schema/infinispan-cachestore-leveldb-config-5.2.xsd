@@ -20,11 +20,11 @@
   -->
 
 <xs:schema attributeFormDefault="unqualified"
-	elementFormDefault="qualified" version="1.0" targetNamespace="urn:infinispan:config:leveldb:5.3"
-	xmlns:tns="urn:infinispan:config:leveldb:5.3" xmlns:config="urn:infinispan:config:5.3"
+	elementFormDefault="qualified" version="1.0" targetNamespace="urn:infinispan:config:leveldb:5.2"
+	xmlns:tns="urn:infinispan:config:leveldb:5.2" xmlns:config="urn:infinispan:config:5.2"
 	xmlns:xs="http://www.w3.org/2001/XMLSchema">
-	<xs:import namespace="urn:infinispan:config:5.3"
-		schemaLocation="http://www.infinispan.org/schemas/infinispan-config-5.3.xsd" />
+	<xs:import namespace="urn:infinispan:config:5.2"
+		schemaLocation="http://www.infinispan.org/schemas/infinispan-config-5.2.xsd" />
 
 	<xs:element name="leveldbStore" type="tns:leveldbStoreType"/>
 	
