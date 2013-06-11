@@ -48,11 +48,15 @@ public class StatsImpl implements Stats {
    final long removeHits;
    final long removeMisses;
    final long evictions;
-   
+   final long averageReadTime;
+   final long averageWriteTime;
+   final long averageRemoveTime;
+   final CacheMgmtInterceptor mgmtInterceptor;
+
    public StatsImpl(InterceptorChain chain) {
       List<CommandInterceptor> interceptors = chain.getInterceptorsWhichExtend(CacheMgmtInterceptor.class);
       if (!interceptors.isEmpty()) {
-         CacheMgmtInterceptor mgmtInterceptor = (CacheMgmtInterceptor) interceptors.get(0);
+         mgmtInterceptor = (CacheMgmtInterceptor) interceptors.get(0);
          timeSinceStart = mgmtInterceptor.getElapsedTime();
          currentNumberOfEntries = mgmtInterceptor.getNumberOfEntries();
          totalNumberOfEntries = mgmtInterceptor.getStores();
@@ -63,7 +67,11 @@ public class StatsImpl implements Stats {
          removeHits = mgmtInterceptor.getRemoveHits();
          removeMisses = mgmtInterceptor.getRemoveMisses();
          evictions = mgmtInterceptor.getEvictions();
+         averageReadTime = mgmtInterceptor.getAverageReadTime();
+         averageWriteTime = mgmtInterceptor.getAverageWriteTime();
+         averageRemoveTime = mgmtInterceptor.getAverageRemoveTime();
       } else {
+         mgmtInterceptor = null;
          timeSinceStart = -1;
          currentNumberOfEntries = -1;
          totalNumberOfEntries = -1;
@@ -74,6 +82,9 @@ public class StatsImpl implements Stats {
          removeHits = -1;
          removeMisses = -1;
          evictions = -1;
+         averageReadTime = -1;
+         averageWriteTime = -1;
+         averageRemoveTime = -1;
       }
    }
 
@@ -125,6 +136,32 @@ public class StatsImpl implements Stats {
    @Override
    public long getEvictions() {
       return evictions;
+   }
+
+   @Override
+   public long getAverageReadTime() {
+      return averageReadTime;
+   }
+
+   @Override
+   public long getAverageWriteTime() {
+      return averageWriteTime;
+   }
+
+   @Override
+   public long getAverageRemoveTime() {
+      return averageRemoveTime;
+   }
+
+   @Override
+   public void reset() {
+      if (mgmtInterceptor != null)
+         mgmtInterceptor.resetStatistics();
+   }
+
+   @Override
+   public void setStatisticsEnabled(boolean enabled) {
+      mgmtInterceptor.setStatisticsEnabled(enabled);
    }
 
 }

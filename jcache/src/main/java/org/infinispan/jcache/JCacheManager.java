@@ -20,13 +20,16 @@ package org.infinispan.jcache;
 
 import java.io.FileNotFoundException;
 import java.io.InputStream;
+import java.net.URI;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Properties;
 import java.util.Set;
 
 import javax.cache.*;
+import javax.cache.spi.CachingProvider;
 import javax.cache.transaction.IsolationLevel;
 import javax.cache.transaction.Mode;
 import javax.transaction.UserTransaction;
@@ -41,6 +44,7 @@ import org.infinispan.jcache.logging.Log;
 import org.infinispan.loaders.CacheLoaderManager;
 import org.infinispan.manager.DefaultCacheManager;
 import org.infinispan.manager.EmbeddedCacheManager;
+import org.infinispan.util.FileLookup;
 import org.infinispan.util.FileLookupFactory;
 import org.infinispan.util.logging.LogFactory;
 
@@ -56,9 +60,10 @@ public class JCacheManager implements CacheManager {
    private static final Log log =
          LogFactory.getLog(JCacheManager.class, Log.class);
 
-   private final HashMap<String, Cache<?, ?>> caches = new HashMap<String, Cache<?, ?>>();
-   private final String name;
+   private final HashMap<String, JCache<?, ?>> caches = new HashMap<String, JCache<?, ?>>();
+   private final URI uri;
    private final EmbeddedCacheManager cm;
+   private final CachingProvider provider;
    private volatile Status status = Status.UNINITIALISED;
    private final StackTraceElement[] allocationStackTrace;
 
@@ -66,27 +71,33 @@ public class JCacheManager implements CacheManager {
     * Create a new InfinispanCacheManager given a cache name and a {@link ClassLoader}. Cache name
     * might refer to a file on classpath containing Infinispan configuration file.
     * 
-    * @param name
+    * @param uri
     * @param classLoader
     */
-   public JCacheManager(String name, ClassLoader classLoader) {
+   public JCacheManager(URI uri, ClassLoader classLoader, CachingProvider provider) {
       // Track allocation time
       this.allocationStackTrace = Thread.currentThread().getStackTrace();
 
       if (classLoader == null) {
          throw new IllegalArgumentException("Classloader cannot be null");
       }
-      if (name == null || name.length() == 0) {
-         throw new IllegalArgumentException("Invalid CacheManager name " + name);
+      if (uri == null) {
+         throw new IllegalArgumentException("Invalid CacheManager URI " + uri);
       }
 
-      this.name = name;
+      this.uri = uri;
+      this.provider = provider;
 
       ConfigurationBuilderHolder cbh = getConfigurationBuilderHolder(classLoader);
       GlobalConfigurationBuilder globalBuilder = cbh.getGlobalConfigurationBuilder();
-      // The cache manager name has to contain both name and class loader
-      // information in order to guarantee JMX naming uniqueness
-      String cacheManagerName = name + "/classloader=" + classLoader.toString();
+      // The cache manager name has to contain all uri, class loader and
+      // provider information in order to guarantee JMX naming uniqueness.
+      // This is tested by the TCK to make sure caching provider loaded
+      // with different classloaders, even if the default classloader for
+      // the cache manager is the same, are really different cache managers.
+      String cacheManagerName = "uri=" + uri
+            + "/classloader=" + classLoader.toString()
+            + "/provider=" + provider.toString();
       // Set cache manager class loader and apply name to cache manager MBean
       globalBuilder.classLoader(classLoader)
             .globalJmxStatistics().cacheManagerName(cacheManagerName);
@@ -97,10 +108,11 @@ public class JCacheManager implements CacheManager {
    }
 
    // For testing ...
-   JCacheManager(String name, EmbeddedCacheManager cacheManager) {
+   JCacheManager(URI uri, EmbeddedCacheManager cacheManager, CachingProvider provider) {
       // Track allocation time
       this.allocationStackTrace = Thread.currentThread().getStackTrace();
-      this.name = name;
+      this.uri = uri;
+      this.provider = provider;
       this.cm = cacheManager;
       registerPredefinedCaches();
       status = Status.STARTED;
@@ -115,16 +127,17 @@ public class JCacheManager implements CacheManager {
          // With pre-defined caches, obey only pre-defined configuration
          caches.put(cacheName, new JCache<Object, Object>(
                cm.getCache(cacheName).getAdvancedCache(),
-               this, new JCacheNotifier<Object, Object>(),
-               new SimpleConfiguration<Object, Object>()));
+               this, new MutableConfiguration<Object, Object>()));
       }
    }
 
    private ConfigurationBuilderHolder getConfigurationBuilderHolder(
          ClassLoader classLoader) {
       try {
-         InputStream configurationStream = FileLookupFactory
-               .newInstance().lookupFileStrict(name, classLoader);
+         FileLookup fileLookup = FileLookupFactory.newInstance();
+         InputStream configurationStream = uri.isAbsolute()
+               ? fileLookup.lookupFileStrict(uri, classLoader)
+               : fileLookup.lookupFileStrict(uri.toString(), classLoader);
          return new ParserRegistry(classLoader).parse(configurationStream);
       } catch (FileNotFoundException e) {
          // No such file, lets use default CBH
@@ -133,8 +146,18 @@ public class JCacheManager implements CacheManager {
    }
 
    @Override
-   public String getName() {
-      return name;
+   public CachingProvider getCachingProvider() {
+      return provider;
+   }
+
+   @Override
+   public URI getURI() {
+      return uri;
+   }
+
+   @Override
+   public Properties getProperties() {
+      return null;
    }
 
    @Override
@@ -169,7 +192,7 @@ public class JCacheManager implements CacheManager {
       }
 
       synchronized (caches) {
-         Cache<?, ?> cache = caches.get(cacheName);
+         JCache<?, ?> cache = caches.get(cacheName);
 
          if (cache == null) {
             ConfigurationAdapter<K, V> adapter = new ConfigurationAdapter<K, V>(c);
@@ -181,32 +204,7 @@ public class JCacheManager implements CacheManager {
             if (!ispnCache.getStatus().allowInvocations())
                ispnCache.start();
 
-            // Plug user-defined cache loader into adaptor
-            CacheLoader<K,? extends V> cacheLoader = c.getCacheLoader();
-            if (cacheLoader != null) {
-               CacheLoaderManager loaderManager =
-                     ispnCache.getComponentRegistry().getComponent(CacheLoaderManager.class);
-               JCacheLoaderAdapter ispnCacheLoader =
-                     (JCacheLoaderAdapter) loaderManager.getCacheLoader();
-               ispnCacheLoader.setCacheLoader(cacheLoader);
-            }
-
-            // Plug user-defined cache writer into adaptor
-            CacheWriter<? super K,? super V> cacheWriter = c.getCacheWriter();
-            if (cacheWriter != null) {
-               CacheLoaderManager loaderManager =
-                     ispnCache.getComponentRegistry().getComponent(CacheLoaderManager.class);
-               JCacheWriterAdapter ispnCacheStore =
-                     (JCacheWriterAdapter) loaderManager.getCacheStore();
-               ispnCacheStore.setCacheWriter(cacheWriter);
-            }
-
-            JCacheNotifier<K, V> notifier = new JCacheNotifier<K, V>();
-            cache = new JCache<K, V>(ispnCache, this, notifier, c);
-
-            ispnCache.addInterceptorBefore(new ExpirationTrackingInterceptor(
-                  ispnCache.getDataContainer(), cache, notifier, ispnCache.getAdvancedCache().getComponentRegistry().getTimeService()),
-                  EntryWrappingInterceptor.class);
+            cache = new JCache<K, V>(ispnCache, this, c);
 
             cache.start();
             caches.put(cache.getName(), cache);
@@ -268,11 +266,21 @@ public class JCacheManager implements CacheManager {
 
    @Override
    public boolean isSupported(OptionalFeature optionalFeature) {
-      return Caching.isSupported(optionalFeature);
+      return provider.isSupported(optionalFeature);
    }
 
    @Override
-   public void shutdown() {
+   public void enableManagement(String cacheName, boolean enabled) {
+      caches.get(cacheName).setManagementEnabled(enabled);
+   }
+
+   @Override
+   public void enableStatistics(String cacheName, boolean enabled) {
+      caches.get(cacheName).setStatisticsEnabled(enabled);
+   }
+
+   @Override
+   public void close() {
       checkStartedStatus();
       ArrayList<Cache<?, ?>> cacheList;
       synchronized (caches) {
@@ -298,10 +306,6 @@ public class JCacheManager implements CacheManager {
 
       throw new IllegalArgumentException("Unwapping to " + cls
                + " is not a supported by this implementation");
-   }
-
-   ClassLoader getClassLoader() {
-      return cm.getCacheManagerConfiguration().classLoader();
    }
 
    /**

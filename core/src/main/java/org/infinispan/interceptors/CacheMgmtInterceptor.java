@@ -22,12 +22,15 @@
  */
 package org.infinispan.interceptors;
 
+import org.infinispan.commands.FlagAffectedCommand;
 import org.infinispan.commands.read.GetKeyValueCommand;
 import org.infinispan.commands.write.EvictCommand;
 import org.infinispan.commands.write.PutKeyValueCommand;
 import org.infinispan.commands.write.PutMapCommand;
 import org.infinispan.commands.write.RemoveCommand;
+import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.container.DataContainer;
+import org.infinispan.context.Flag;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.factories.annotations.Start;
@@ -57,6 +60,7 @@ public class CacheMgmtInterceptor extends JmxStatsCommandInterceptor {
    private final AtomicLong hitTimes = new AtomicLong(0);
    private final AtomicLong missTimes = new AtomicLong(0);
    private final AtomicLong storeTimes = new AtomicLong(0);
+   private final AtomicLong removeTimes = new AtomicLong(0);
    private final AtomicLong hits = new AtomicLong(0);
    private final AtomicLong misses = new AtomicLong(0);
    private final AtomicLong stores = new AtomicLong(0);
@@ -68,6 +72,7 @@ public class CacheMgmtInterceptor extends JmxStatsCommandInterceptor {
 
    private DataContainer dataContainer;
    private TimeService timeService;
+   private Configuration configuration;
 
    private static final Log log = LogFactory.getLog(CacheMgmtInterceptor.class);
 
@@ -92,63 +97,96 @@ public class CacheMgmtInterceptor extends JmxStatsCommandInterceptor {
    @Override
    public Object visitEvictCommand(InvocationContext ctx, EvictCommand command) throws Throwable {
       Object returnValue = invokeNextInterceptor(ctx, command);
-      evictions.incrementAndGet();
+      if (getStatisticsEnabled(command))
+         evictions.incrementAndGet();
+
       return returnValue;
    }
 
    @Override
    public Object visitGetKeyValueCommand(InvocationContext ctx, GetKeyValueCommand command) throws Throwable {
-      long start = timeService.time();
+      long start = 0;
+      boolean statisticsEnabled = getStatisticsEnabled(command);
+      if (statisticsEnabled)
+         start = timeService.time();
+
       Object retval = invokeNextInterceptor(ctx, command);
-      long intervalMilliseconds = timeService.timeDuration(start, TimeUnit.MILLISECONDS);
-      if (ctx.isOriginLocal()) {
-         if (retval == null) {
-            missTimes.getAndAdd(intervalMilliseconds);
-            misses.incrementAndGet();
-         } else {
-            hitTimes.getAndAdd(intervalMilliseconds);
-            hits.incrementAndGet();
+
+      if (statisticsEnabled) {
+         long intervalMilliseconds = timeService.timeDuration(start, TimeUnit.MILLISECONDS);
+         if (ctx.isOriginLocal()) {
+            if (retval == null) {
+               missTimes.getAndAdd(intervalMilliseconds);
+               misses.incrementAndGet();
+            } else {
+               hitTimes.getAndAdd(intervalMilliseconds);
+               hits.incrementAndGet();
+            }
          }
       }
+
       return retval;
    }
 
    @Override
    public Object visitPutMapCommand(InvocationContext ctx, PutMapCommand command) throws Throwable {
-      final Map<Object, Object> data = command.getMap();
-      final long start = timeService.time();
+      long start = 0;
+      boolean statisticsEnabled = getStatisticsEnabled(command);
+      if (statisticsEnabled)
+         start = timeService.time();
+
       final Object retval = invokeNextInterceptor(ctx, command);
-      final long intervalMilliseconds = timeService.timeDuration(start, TimeUnit.MILLISECONDS);
-      if (data != null && ctx.isOriginLocal() && !data.isEmpty()) {
-         storeTimes.getAndAdd(intervalMilliseconds);
-         stores.getAndAdd(data.size());
+
+      if (statisticsEnabled) {
+         final long intervalMilliseconds = timeService.timeDuration(start, TimeUnit.MILLISECONDS);
+         final Map<Object, Object> data = command.getMap();
+         if (data != null && ctx.isOriginLocal() && !data.isEmpty()) {
+            storeTimes.getAndAdd(intervalMilliseconds);
+            stores.getAndAdd(data.size());
+         }
       }
+
       return retval;
    }
 
    @Override
    //Map.put(key,value) :: oldValue
    public Object visitPutKeyValueCommand(InvocationContext ctx, PutKeyValueCommand command) throws Throwable {
-      long start = timeService.time();
+      long start = 0;
+      boolean statisticsEnabled = getStatisticsEnabled(command);
+      if (statisticsEnabled)
+         start = timeService.time();
+
       Object retval = invokeNextInterceptor(ctx, command);
-      if (ctx.isOriginLocal() && command.isSuccessful()) {
+
+      if (statisticsEnabled && ctx.isOriginLocal() && command.isSuccessful()) {
          long intervalMilliseconds = timeService.timeDuration(start, TimeUnit.MILLISECONDS);
          storeTimes.getAndAdd(intervalMilliseconds);
          stores.incrementAndGet();
       }
+
       return retval;
    }
 
    @Override
    public Object visitRemoveCommand(InvocationContext ctx, RemoveCommand command) throws Throwable {
+      long start = 0;
+      boolean statisticsEnabled = getStatisticsEnabled(command);
+      if (statisticsEnabled)
+         start = timeService.time();
+
       Object retval = invokeNextInterceptor(ctx, command);
-      if (ctx.isOriginLocal()) {
+
+      if (statisticsEnabled && ctx.isOriginLocal()) {
          if (retval == null) {
             removeMisses.incrementAndGet();
          } else {
+            long intervalMilliseconds = timeService.timeDuration(start, TimeUnit.MILLISECONDS);
+            removeTimes.getAndAdd(intervalMilliseconds);
             removeHits.incrementAndGet();
          }
       }
+
       return retval;
    }
 
@@ -269,6 +307,20 @@ public class CacheMgmtInterceptor extends JmxStatsCommandInterceptor {
    }
 
    @ManagedAttribute(
+         description = "Average number of milliseconds for a remove operation in the cache",
+         displayName = "Average remove time",
+         units = Units.MILLISECONDS,
+         displayType = DisplayType.SUMMARY
+   )
+   @SuppressWarnings("unused")
+   public long getAverageRemoveTime() {
+      long removes = getRemoveHits();
+      if (removes == 0)
+         return 0;
+      return (removeTimes.get()) / removes;
+   }
+
+   @ManagedAttribute(
          description = "Number of entries currently in the cache",
          displayName = "Number of current cache entries",
          displayType = DisplayType.SUMMARY
@@ -316,5 +368,10 @@ public class CacheMgmtInterceptor extends JmxStatsCommandInterceptor {
       removeMisses.set(0);
       resetNanoseconds.set(timeService.time());
    }
+
+   private boolean getStatisticsEnabled(FlagAffectedCommand cmd) {
+      return super.getStatisticsEnabled() && !cmd.hasFlag(Flag.SKIP_STATISTICS);
+   }
+
 }
 

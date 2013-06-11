@@ -33,7 +33,6 @@ import javax.cache.event.CacheEntryEventFilter;
 import javax.cache.event.CacheEntryExpiredListener;
 import javax.cache.event.CacheEntryListener;
 import javax.cache.event.CacheEntryListenerRegistration;
-import javax.cache.event.CacheEntryReadListener;
 import javax.cache.event.CacheEntryRemovedListener;
 import javax.cache.event.CacheEntryUpdatedListener;
 import java.util.Collections;
@@ -67,9 +66,6 @@ public class JCacheNotifier<K, V> {
    private final List<CacheEntryListenerRegistration<? super K, ? super V>> removedListeners =
          new CopyOnWriteArrayList<CacheEntryListenerRegistration<? super K, ? super V>>();
 
-   private final List<CacheEntryListenerRegistration<? super K, ? super V>> readListeners =
-         new CopyOnWriteArrayList<CacheEntryListenerRegistration<? super K, ? super V>>();
-
    private final List<CacheEntryListenerRegistration<? super K, ? super V>> expiredListeners =
          new CopyOnWriteArrayList<CacheEntryListenerRegistration<? super K, ? super V>>();
 
@@ -91,9 +87,6 @@ public class JCacheNotifier<K, V> {
 
       if (listener instanceof CacheEntryRemovedListener)
          removed = removeListener(listener, removedListeners);
-
-      if (listener instanceof CacheEntryReadListener)
-         removed = removeListener(listener, readListeners);
 
       if (listener instanceof CacheEntryExpiredListener)
          removed = removeListener(listener, expiredListeners);
@@ -139,18 +132,6 @@ public class JCacheNotifier<K, V> {
    }
 
    @SuppressWarnings("unchecked")
-   public void notifyEntryRead(Cache<K, V> cache, K key, V value) {
-      if (!readListeners.isEmpty()) {
-         List<CacheEntryEvent<? extends K, ? extends V>> events =
-               createEvent(cache, key, value);
-         for (CacheEntryListenerRegistration<? super K, ? super V> reg : readListeners) {
-            ((CacheEntryReadListener<K, V>) reg.getCacheEntryListener())
-                  .onRead(getEntryIterable(events, reg));
-         }
-      }
-   }
-
-   @SuppressWarnings("unchecked")
    public void notifyEntryExpired(Cache<K, V> cache, K key, V value) {
       if (!expiredListeners.isEmpty()) {
          List<CacheEntryEvent<? extends K, ? extends V>> events =
@@ -184,10 +165,6 @@ public class JCacheNotifier<K, V> {
 
       if (listener instanceof CacheEntryRemovedListener) {
          added = addListener(addIfAbsent, reg, listener, removedListeners);
-      }
-
-      if (listener instanceof CacheEntryReadListener) {
-         added = addListener(addIfAbsent, reg, listener, readListeners);
       }
 
       if (listener instanceof CacheEntryExpiredListener) {

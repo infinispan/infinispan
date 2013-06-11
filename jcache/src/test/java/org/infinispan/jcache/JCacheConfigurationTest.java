@@ -5,6 +5,8 @@ import org.infinispan.test.CacheManagerCallable;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.testng.annotations.Test;
 
+import java.net.URI;
+
 import static org.infinispan.test.TestingUtil.withCacheManager;
 import static org.testng.AssertJUnit.assertTrue;
 
@@ -23,7 +25,7 @@ public class JCacheConfigurationTest {
          @Override
          public void call() {
             cm.defineConfiguration("oneCache", new ConfigurationBuilder().build());
-            JCacheManager jCacheManager = new JCacheManager("oneCacheManager", cm);
+            JCacheManager jCacheManager = new JCacheManager(URI.create("oneCacheManager"), cm, null);
             assertTrue(null != jCacheManager.getCache("oneCache"));
          }
       });

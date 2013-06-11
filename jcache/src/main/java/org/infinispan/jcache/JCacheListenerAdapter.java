@@ -79,12 +79,4 @@ public class JCacheListenerAdapter<K, V> {
          notifier.notifyEntryRemoved(cache, e.getKey(), e.getOldValue());
    }
 
-   @CacheEntryVisited
-   @SuppressWarnings("unused")
-   public void handleCacheEntryVisitedEvent(CacheEntryVisitedEvent<K, V> e) {
-      // JCache listeners notified only once, so do it after the event
-      if (!e.isPre())
-         notifier.notifyEntryRead(cache, e.getKey(), e.getValue());
-   }
-
 }
