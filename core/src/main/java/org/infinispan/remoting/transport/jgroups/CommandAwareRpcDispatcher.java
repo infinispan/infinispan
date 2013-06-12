@@ -328,11 +328,13 @@ public class CommandAwareRpcDispatcher extends RpcDispatcher {
       }
    }
 
-   protected static Message constructMessage(Buffer buf, Address recipient, boolean oob, boolean rsvp,
+   protected static Message constructMessage(Buffer buf, Address recipient, boolean oob, ResponseMode mode, boolean rsvp,
                                              boolean totalOrder) {
       Message msg = new Message();
       msg.setBuffer(buf);
       if (oob) msg.setFlag(Message.Flag.OOB);
+      //some issues with the new bundler. put back the DONT_BUNDLE flag.
+      if (oob || mode != ResponseMode.GET_NONE) msg.setFlag(Message.Flag.DONT_BUNDLE);
       if (rsvp) msg.setFlag(Message.Flag.RSVP);
 
       //In total order protocol, the sequencer is in the protocol stack so we need to bypass the protocol
@@ -370,7 +372,7 @@ public class CommandAwareRpcDispatcher extends RpcDispatcher {
       Response retval;
       Buffer buf;
       buf = marshallCall(marshaller, command);
-      retval = card.sendMessage(constructMessage(buf, destination, oob, rsvp, false),
+      retval = card.sendMessage(constructMessage(buf, destination, oob, mode, rsvp, false),
                                 new RequestOptions(mode, timeout));
 
       // we only bother parsing responses if we are not in ASYNC mode.
@@ -402,7 +404,7 @@ public class CommandAwareRpcDispatcher extends RpcDispatcher {
       Buffer buf;
       if (totalOrder && distribution) {
          buf = marshallCall(marshaller, command);
-         Message message = constructMessage(buf, null, oob, rsvp, totalOrder);
+         Message message = constructMessage(buf, null, oob, mode, rsvp, totalOrder);
 
          AnycastAddress address = new AnycastAddress(dests);
          message.setDest(address);
@@ -418,7 +420,7 @@ public class CommandAwareRpcDispatcher extends RpcDispatcher {
             opts.setExclusionList(card.getChannel().getAddress());
          }
 
-         retval = card.castMessage(dests, constructMessage(buf, null, oob, rsvp, totalOrder),opts);
+         retval = card.castMessage(dests, constructMessage(buf, null, oob, mode, rsvp, totalOrder),opts);
       } else {
          RequestOptions opts = new RequestOptions(mode, timeout);
 
@@ -435,7 +437,7 @@ public class CommandAwareRpcDispatcher extends RpcDispatcher {
             // (see FutureCollator) and the first successful response is used.
             FutureCollator futureCollator = new FutureCollator(filter, dests.size(), timeout, card.gcr.getTimeService());
             for (Address a : dests) {
-               NotifyingFuture<Object> f = card.sendMessageWithFuture(constructMessage(buf, a, oob, rsvp, false), opts);
+               NotifyingFuture<Object> f = card.sendMessageWithFuture(constructMessage(buf, a, oob, mode, rsvp, false), opts);
                futureCollator.watchFuture(f, a);
             }
             retval = futureCollator.getResponseList();
@@ -444,7 +446,7 @@ public class CommandAwareRpcDispatcher extends RpcDispatcher {
             Map<Address, Future<Object>> futures = new HashMap<Address, Future<Object>>(dests.size());
 
             for (Address dest : dests)
-               futures.put(dest, card.sendMessageWithFuture(constructMessage(buf, dest, oob, rsvp, false), opts));
+               futures.put(dest, card.sendMessageWithFuture(constructMessage(buf, dest, oob, mode, rsvp, false), opts));
 
             retval = new RspList<Object>();
 
@@ -466,7 +468,7 @@ public class CommandAwareRpcDispatcher extends RpcDispatcher {
             }
          } else if (mode == ResponseMode.GET_NONE) {
             // An ASYNC call.  We don't care about responses.
-            for (Address dest : dests) card.sendMessage(constructMessage(buf, dest, oob, rsvp, false), opts);
+            for (Address dest : dests) card.sendMessage(constructMessage(buf, dest, oob, mode, rsvp, false), opts);
          }
       }
 
