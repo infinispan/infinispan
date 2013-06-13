@@ -34,15 +34,15 @@ import org.infinispan.marshall.Marshaller
  * @author Galder Zamarreño
  * @since 5.3
  */
-class HotRodTypeConverter extends TypeConverter[Array[Byte], Array[Byte], AnyRef, AnyRef] {
+class HotRodTypeConverter extends TypeConverter[AnyRef, AnyRef, AnyRef, AnyRef] {
 
    // Default marshaller is the one used by the Hot Rod client,
    // but can be configured for compatibility use cases
    private var marshaller: Marshaller = new GenericJBossMarshaller
 
-   override def boxKey(key: Array[Byte]): AnyRef = unmarshall(key)
+   override def boxKey(key: AnyRef): AnyRef = unmarshall(key)
 
-   override def boxValue(value: Array[Byte]): AnyRef = unmarshall(value)
+   override def boxValue(value: AnyRef): AnyRef = unmarshall(value)
 
    override def unboxValue(target: AnyRef): Array[Byte] = marshall(target)
 
@@ -53,8 +53,13 @@ class HotRodTypeConverter extends TypeConverter[Array[Byte], Array[Byte], AnyRef
       this.marshaller = marshaller
    }
 
-   private def unmarshall(source: Array[Byte]): AnyRef =
-      if (source != null) marshaller.objectFromByteBuffer(source) else source
+   private def unmarshall(source: AnyRef): AnyRef = {
+      source match {
+         case bytes: Array[Byte] =>
+            marshaller.objectFromByteBuffer(bytes)
+         case _ => source
+      }
+   }
 
    private def marshall(source: AnyRef): Array[Byte] =
       if (source != null) marshaller.objectToByteBuffer(source) else null

@@ -36,6 +36,7 @@ import org.apache.commons.httpclient.methods.PutMethod;
 import org.infinispan.client.hotrod.Flag;
 import org.infinispan.client.hotrod.RemoteCache;
 import org.infinispan.client.hotrod.VersionedValue;
+import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.io.ByteBuffer;
 import org.infinispan.marshall.AbstractMarshaller;
 import org.testng.annotations.AfterClass;
@@ -65,13 +66,12 @@ public class EmbeddedRestMemcachedHotRodTest {
    @BeforeClass
    protected void setup() throws Exception {
       cacheFactory = new CompatibilityCacheFactory<String, Object>(
-            CACHE_NAME, new SpyMemcachedCompatibleMarshaller());
-      cacheFactory.setup();
+            CACHE_NAME, new SpyMemcachedCompatibleMarshaller(), CacheMode.LOCAL).setup();
    }
 
    @AfterClass
    protected void teardown() {
-      cacheFactory.teardown();
+      CompatibilityCacheFactory.killCacheFactories(cacheFactory);
    }
 
    public void testMemcachedPutEmbeddedRestHotRodGetTest() throws Exception {

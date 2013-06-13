@@ -25,6 +25,7 @@ package org.infinispan.it.compatibility;
 
 import org.infinispan.client.hotrod.Flag;
 import org.infinispan.client.hotrod.RemoteCache;
+import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.io.ByteBuffer;
 import org.infinispan.marshall.AbstractMarshaller;
 import org.infinispan.test.AbstractInfinispanTest;
@@ -59,13 +60,13 @@ public class CustomMemcachedHotRodTest extends AbstractInfinispanTest {
 
    @BeforeClass
    protected void setup() throws Exception {
-      cacheFactory = new CompatibilityCacheFactory<String, String>(CACHE_NAME, new StringMarshaller());
-      cacheFactory.setup();
+      cacheFactory = new CompatibilityCacheFactory<String, String>(
+            CACHE_NAME, new StringMarshaller(), CacheMode.LOCAL).setup();
    }
 
    @AfterClass
    protected void teardown() {
-      cacheFactory.teardown();
+      CompatibilityCacheFactory.killCacheFactories(cacheFactory);
    }
 
    public void testHotRodPutMemcachedGet() throws IOException {
