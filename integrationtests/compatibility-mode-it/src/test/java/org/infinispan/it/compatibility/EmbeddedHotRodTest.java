@@ -27,6 +27,7 @@ import org.infinispan.Cache;
 import org.infinispan.client.hotrod.Flag;
 import org.infinispan.client.hotrod.RemoteCache;
 import org.infinispan.client.hotrod.VersionedValue;
+import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.test.AbstractInfinispanTest;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
@@ -47,13 +48,12 @@ public class EmbeddedHotRodTest extends AbstractInfinispanTest {
 
    @BeforeClass
    protected void setup() throws Exception {
-      cacheFactory = new CompatibilityCacheFactory<Integer, String>();
-      cacheFactory.setup();
+      cacheFactory = new CompatibilityCacheFactory<Integer, String>(CacheMode.LOCAL).setup();
    }
 
    @AfterClass
    protected void teardown() {
-      cacheFactory.teardown();
+      CompatibilityCacheFactory.killCacheFactories(cacheFactory);
    }
 
    public void testEmbeddedPutHotRodGet() {

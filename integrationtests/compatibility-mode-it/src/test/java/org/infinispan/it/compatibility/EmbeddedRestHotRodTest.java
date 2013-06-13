@@ -33,6 +33,7 @@ import org.apache.commons.httpclient.methods.HeadMethod;
 import org.apache.commons.httpclient.methods.PutMethod;
 import org.infinispan.client.hotrod.Flag;
 import org.infinispan.client.hotrod.RemoteCache;
+import org.infinispan.configuration.cache.CacheMode;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
@@ -66,14 +67,13 @@ public class EmbeddedRestHotRodTest {
 
    @BeforeClass
    protected void setup() throws Exception {
-      cacheFactory = new CompatibilityCacheFactory<String, Object>();
-      cacheFactory.setup();
+      cacheFactory = new CompatibilityCacheFactory<String, Object>(CacheMode.LOCAL).setup();
       dateFormat.setTimeZone(TimeZone.getTimeZone("GMT"));
    }
 
    @AfterClass
    protected void teardown() {
-      cacheFactory.teardown();
+      CompatibilityCacheFactory.killCacheFactories(cacheFactory);
    }
 
    public void testRestPutEmbeddedHotRodGet() throws Exception {
