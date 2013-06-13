@@ -41,6 +41,9 @@ import org.infinispan.context.impl.TxInvocationContext;
 import org.infinispan.distribution.L1Manager;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.factories.annotations.Start;
+import org.infinispan.remoting.rpc.ResponseMode;
+import org.infinispan.remoting.rpc.RpcOptions;
+import org.infinispan.remoting.rpc.RpcOptionsBuilder;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.remoting.transport.jgroups.SuspectException;
 import org.infinispan.transaction.LocalTransaction;
@@ -273,7 +276,13 @@ public class TxDistributionInterceptor extends BaseDistributionInterceptor {
    protected void prepareOnAffectedNodes(TxInvocationContext ctx, PrepareCommand command, Collection<Address> recipients, boolean sync) {
       try {
          // this method will return immediately if we're the only member (because exclude_self=true)
-         rpcManager.invokeRemotely(recipients, command, rpcManager.getDefaultRpcOptions(sync));
+         RpcOptions rpcOptions;
+         if (sync && command.isOnePhaseCommit()) {
+            rpcOptions = rpcManager.getRpcOptionsBuilder(ResponseMode.SYNCHRONOUS_IGNORE_LEAVERS, false).build();
+         } else {
+            rpcOptions = rpcManager.getDefaultRpcOptions(sync);
+         }
+         rpcManager.invokeRemotely(recipients, command, rpcOptions);
       } finally {
          transactionRemotelyPrepared(ctx);
       }
@@ -299,7 +308,13 @@ public class TxDistributionInterceptor extends BaseDistributionInterceptor {
    private void sendCommitCommand(TxInvocationContext ctx, CommitCommand command) throws TimeoutException, InterruptedException {
       Collection<Address> recipients = getCommitNodes(ctx);
       boolean syncCommitPhase = cacheConfiguration.transaction().syncCommitPhase();
-      rpcManager.invokeRemotely(recipients, command, rpcManager.getDefaultRpcOptions(syncCommitPhase, false));
+      RpcOptions rpcOptions;
+      if (syncCommitPhase) {
+         rpcOptions = rpcManager.getRpcOptionsBuilder(ResponseMode.SYNCHRONOUS_IGNORE_LEAVERS, false  ).build();
+      } else {
+         rpcOptions = rpcManager.getDefaultRpcOptions(false, false);
+      }
+      rpcManager.invokeRemotely(recipients, command, rpcOptions);
    }
 
    private boolean shouldFetchRemoteValuesForWriteSkewCheck(InvocationContext ctx, WriteCommand cmd) {

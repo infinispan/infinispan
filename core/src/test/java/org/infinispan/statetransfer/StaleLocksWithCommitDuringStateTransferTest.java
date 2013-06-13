@@ -29,6 +29,8 @@ import org.infinispan.Cache;
 import org.infinispan.commands.VisitableCommand;
 import org.infinispan.commands.tx.CommitCommand;
 import org.infinispan.config.Configuration;
+import org.infinispan.configuration.cache.CacheMode;
+import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.distribution.MagicKey;
 import org.infinispan.interceptors.InterceptorChain;
@@ -40,11 +42,11 @@ import org.infinispan.test.fwk.CleanupAfterMethod;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.infinispan.transaction.LocalTransaction;
 import org.infinispan.transaction.TransactionCoordinator;
+import org.infinispan.transaction.TransactionMode;
 import org.infinispan.transaction.TransactionTable;
 import org.testng.annotations.Test;
 
-@Test(testName = "statetransfer.StaleLocksWithCommitDuringStateTransferTest", groups = "functional",
-      enabled = false, description = "This test relies on implementation details of the old state algorithm")
+@Test(testName = "statetransfer.StaleLocksWithCommitDuringStateTransferTest", groups = "functional")
 @CleanupAfterMethod
 public class StaleLocksWithCommitDuringStateTransferTest extends MultipleCacheManagersTest {
 
@@ -52,11 +54,12 @@ public class StaleLocksWithCommitDuringStateTransferTest extends MultipleCacheMa
 
    @Override
    protected void createCacheManagers() throws Throwable {
-      Configuration cfg = TestCacheManagerFactory.getDefaultConfiguration(true, Configuration.CacheMode.DIST_SYNC);
-      cfg.setSyncReplTimeout(100);
-      cfg.setCacheStopTimeout(100);
-      EmbeddedCacheManager cm1 = TestCacheManagerFactory.createClusteredCacheManager(cfg);
-      EmbeddedCacheManager cm2 = TestCacheManagerFactory.createClusteredCacheManager(cfg);
+      ConfigurationBuilder cb = new ConfigurationBuilder();
+      cb.clustering().cacheMode(CacheMode.DIST_SYNC)
+            .sync().replTimeout(5000)
+            .transaction().transactionMode(TransactionMode.TRANSACTIONAL).cacheStopTimeout(100);
+      EmbeddedCacheManager cm1 = TestCacheManagerFactory.createClusteredCacheManager(cb);
+      EmbeddedCacheManager cm2 = TestCacheManagerFactory.createClusteredCacheManager(cb);
       registerCacheManager(cm1, cm2);
       c1 = cm1.getCache();
       c2 = cm2.getCache();
