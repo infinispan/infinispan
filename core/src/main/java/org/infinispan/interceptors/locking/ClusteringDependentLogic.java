@@ -352,6 +352,11 @@ public interface ClusteringDependentLogic {
       }
 
       @Override
+      public boolean localNodeIsOwner(Object key) {
+         return true;
+      }
+
+      @Override
       public EntryVersionsMap createNewVersionsAndCheckForWriteSkews(VersionGenerator versionGenerator, TxInvocationContext context, VersionedPrepareCommand prepareCommand) {
          if (configuration.transaction().transactionProtocol().isTotalOrder()) {
             return totalOrderCreateNewVersionsAndCheckForWriteSkews(context, prepareCommand, keySpecificLogic);

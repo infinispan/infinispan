@@ -112,19 +112,26 @@ public abstract class BaseDistributionInterceptor extends ClusteringInterceptor 
 
       RecipientGenerator recipientGenerator = new SingleKeyRecipientGenerator(command.getKey());
 
-      // see if we need to load values from remote sources first
-      remoteGetBeforeWrite(ctx, command, recipientGenerator);
 
       // if this is local mode then skip distributing
       if (isLocalModeForced(command)) {
          return invokeNextInterceptor(ctx, command);
       }
 
+
+      Address primaryOwner = cdl.getPrimaryOwner(command.getKey());
+      boolean isLocalNodePrimaryOwner = primaryOwner.equals(rpcManager.getAddress());
+
+
+      if (isLocalNodePrimaryOwner) {
+         // see if we need to load values from remote sources first
+         remoteGetBeforeWrite(ctx, command, recipientGenerator);
+      }
+
       boolean isSync = isSynchronous(command);
       if (!ctx.isOriginLocal()) {
          Object returnValue = invokeNextInterceptor(ctx, command);
-         Address primaryOwner = cdl.getPrimaryOwner(command.getKey());
-         if (primaryOwner.equals(rpcManager.getAddress())) {
+         if (isLocalNodePrimaryOwner) {
             if (command.isConditional() && !command.isSuccessful()) {
                log.tracef("Skipping the replication of the conditional command as it did not succeed on primary owner (%s).", command);
                return returnValue;
@@ -133,8 +140,7 @@ public abstract class BaseDistributionInterceptor extends ClusteringInterceptor 
          }
          return returnValue;
       } else {
-         Address primaryOwner = cdl.getPrimaryOwner(command.getKey());
-         if (primaryOwner.equals(rpcManager.getAddress())) {
+         if (isLocalNodePrimaryOwner) {
             Object result = invokeNextInterceptor(ctx, command);
             if (command.isConditional() && !command.isSuccessful()) {
                log.tracef("Skipping the replication of the conditional command as it did not succeed on primary owner (%s).", command);
