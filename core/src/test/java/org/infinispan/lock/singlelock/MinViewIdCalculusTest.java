@@ -79,11 +79,15 @@ public class MinViewIdCalculusTest extends MultipleCacheManagersTest {
       final int topologyId2 = stateTransferManager0.getCacheTopology().getTopologyId();
       assertTrue(topologyId2 > topologyId);
 
-      assertEquals(tt0.getMinTopologyId(), topologyId2);
-      assertEquals(tt1.getMinTopologyId(), topologyId2);
-
-      final TransactionTable tt2 = TestingUtil.getTransactionTable(cache(1));
-      assertEquals(tt2.getMinTopologyId(), topologyId2);
+      final TransactionTable tt2 = TestingUtil.getTransactionTable(cache(2));
+      eventually(new Condition() {
+         @Override
+         public boolean isSatisfied() throws Exception {
+            return tt0.getMinTopologyId() == topologyId2
+                  && tt1.getMinTopologyId() == topologyId2
+                  && tt2.getMinTopologyId() == topologyId2;
+         }
+      });
    }
 
    public void testMinViewId2() throws Exception {
