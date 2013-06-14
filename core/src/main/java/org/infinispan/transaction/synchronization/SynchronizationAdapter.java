@@ -28,15 +28,13 @@ public class SynchronizationAdapter extends AbstractEnlistmentAdapter implements
    private static final Log log = LogFactory.getLog(SynchronizationAdapter.class);
 
    private final LocalTransaction localTransaction;
-   private final TransactionCoordinator txCoordinator;
 
    public SynchronizationAdapter(LocalTransaction localTransaction, TransactionCoordinator txCoordinator,
                                  CommandsFactory commandsFactory, RpcManager rpcManager,
                                  TransactionTable transactionTable, ClusteringDependentLogic clusteringLogic,
                                  Configuration configuration) {
-      super(localTransaction, commandsFactory, rpcManager, transactionTable, clusteringLogic, configuration);
+      super(localTransaction, commandsFactory, rpcManager, transactionTable, clusteringLogic, configuration, txCoordinator);
       this.localTransaction = localTransaction;
-      this.txCoordinator = txCoordinator;
    }
 
    @Override
@@ -54,13 +52,14 @@ public class SynchronizationAdapter extends AbstractEnlistmentAdapter implements
       if (log.isTraceEnabled()) {
          log.tracef("afterCompletion(%s) called for %s.", status, localTransaction);
       }
+      boolean isOnePhase;
       if (status == Status.STATUS_COMMITTED) {
          try {
-            txCoordinator.commit(localTransaction, false);
+            isOnePhase = txCoordinator.commit(localTransaction, false);
          } catch (XAException e) {
             throw new CacheException("Could not commit.", e);
          }
-         releaseLocksForCompletedTransaction(localTransaction);
+         releaseLocksForCompletedTransaction(localTransaction, isOnePhase);
       } else if (status == Status.STATUS_ROLLEDBACK) {
          try {
             txCoordinator.rollback(localTransaction);

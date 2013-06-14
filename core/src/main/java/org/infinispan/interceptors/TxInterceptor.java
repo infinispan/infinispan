@@ -70,6 +70,7 @@ public class TxInterceptor extends CommandInterceptor {
    private static final Log log = LogFactory.getLog(TxInterceptor.class);
    private RecoveryManager recoveryManager;
    private boolean isTotalOrder;
+   private boolean useOnePhaseForAutoCommitTx;
 
    @Override
    protected Log getLog() {
@@ -86,6 +87,7 @@ public class TxInterceptor extends CommandInterceptor {
       this.recoveryManager = recoveryManager;
       setStatisticsEnabled(cacheConfiguration.jmxStatistics().enabled());
       this.isTotalOrder = c.transaction().transactionProtocol().isTotalOrder();
+      useOnePhaseForAutoCommitTx = cacheConfiguration.transaction().use1PcForAutoCommitTransactions();
    }
 
    @Override
@@ -95,7 +97,7 @@ public class TxInterceptor extends CommandInterceptor {
       Object result = invokeNextInterceptorAndVerifyTransaction(ctx, command);
       if (!ctx.isOriginLocal()) {
          if (command.isOnePhaseCommit()) {
-            txTable.remoteTransactionCommitted(command.getGlobalTransaction());
+            txTable.remoteTransactionCommitted(command.getGlobalTransaction(), true);
          } else {
             txTable.remoteTransactionPrepared(command.getGlobalTransaction());
          }
@@ -133,7 +135,7 @@ public class TxInterceptor extends CommandInterceptor {
       if (this.statisticsEnabled) commits.incrementAndGet();
       Object result = invokeNextInterceptor(ctx, command);
       if (!ctx.isOriginLocal() || isTotalOrder) {
-         txTable.remoteTransactionCommitted(ctx.getGlobalTransaction());
+         txTable.remoteTransactionCommitted(ctx.getGlobalTransaction(), false);
       }
       return result;
    }
@@ -229,6 +231,11 @@ public class TxInterceptor extends CommandInterceptor {
          if (command.hasFlag(Flag.PUT_FOR_STATE_TRANSFER)) {
             // mark the transaction as originating from state transfer as early as possible
             localTransaction.setFromStateTransfer(true);
+         }
+         boolean implicitWith1Pc = useOnePhaseForAutoCommitTx && localTransaction.isImplicitTransaction();
+         if (implicitWith1Pc) {
+            //in this situation we don't support concurrent updates so skip locking entirely
+            command.setFlags(Flag.SKIP_LOCKING);
          }
       }
       Object rv;

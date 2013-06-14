@@ -7,6 +7,7 @@ import org.infinispan.commands.tx.RollbackCommand;
 import org.infinispan.commands.write.WriteCommand;
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.configuration.cache.Configurations;
+import org.infinispan.context.Flag;
 import org.infinispan.context.InvocationContextContainer;
 import org.infinispan.context.impl.LocalTxInvocationContext;
 import org.infinispan.factories.annotations.Inject;
@@ -104,8 +105,7 @@ public class TransactionCoordinator {
    public final int prepare(LocalTransaction localTransaction, boolean replayEntryWrapping) throws XAException {
       validateNotMarkedForRollback(localTransaction);
 
-      if (Configurations.isOnePhaseCommit(configuration) || is1PcForAutoCommitTransaction(localTransaction) ||
-            Configurations.isOnePhaseTotalOrderCommit(configuration)) {
+      if (isOnePhaseCommit(localTransaction)) {
          if (trace) log.tracef("Received prepare for tx: %s. Skipping call as 1PC will be used.", localTransaction);
          return XA_OK;
       }
@@ -141,21 +141,22 @@ public class TransactionCoordinator {
       }
    }
 
-   public void commit(LocalTransaction localTransaction, boolean isOnePhase) throws XAException {
+   public boolean commit(LocalTransaction localTransaction, boolean isOnePhase) throws XAException {
       if (trace) log.tracef("Committing transaction %s", localTransaction.getGlobalTransaction());
       LocalTxInvocationContext ctx = icc.createTxInvocationContext();
       ctx.setLocalTransaction(localTransaction);
-      if (Configurations.isOnePhaseCommit(configuration) || isOnePhase || is1PcForAutoCommitTransaction(localTransaction) ||
-            Configurations.isOnePhaseTotalOrderCommit(configuration)) {
+      if (isOnePhaseCommit(localTransaction) || isOnePhase) {
          validateNotMarkedForRollback(localTransaction);
 
          if (trace) log.trace("Doing an 1PC prepare call on the interceptor chain");
-         PrepareCommand command = commandCreator.createPrepareCommand(localTransaction.getGlobalTransaction(), localTransaction.getModifications(), true);
+         List<WriteCommand> modifications = localTransaction.getModifications();
+         PrepareCommand command = commandCreator.createPrepareCommand(localTransaction.getGlobalTransaction(), modifications, true);
          try {
             invoker.invoke(ctx, command);
          } catch (Throwable e) {
             handleCommitFailure(e, localTransaction, true);
          }
+         return true;
       } else {
          CommitCommand commitCommand = commandCreator.createCommitCommand(localTransaction.getGlobalTransaction());
          try {
@@ -164,6 +165,7 @@ public class TransactionCoordinator {
          } catch (Throwable e) {
             handleCommitFailure(e, localTransaction, false);
          }
+         return false;
       }
    }
 
@@ -226,12 +228,17 @@ public class TransactionCoordinator {
       }
    }
 
-   private boolean is1PcForAutoCommitTransaction(LocalTransaction localTransaction) {
+   public boolean is1PcForAutoCommitTransaction(LocalTransaction localTransaction) {
       return configuration.transaction().use1PcForAutoCommitTransactions() && localTransaction.isImplicitTransaction();
    }
 
    private static interface CommandCreator {
       CommitCommand createCommitCommand(GlobalTransaction gtx);
       PrepareCommand createPrepareCommand(GlobalTransaction gtx, List<WriteCommand> modifications, boolean onePhaseCommit);
+   }
+
+   private boolean isOnePhaseCommit(LocalTransaction localTransaction) {
+      return Configurations.isOnePhaseCommit(configuration) || is1PcForAutoCommitTransaction(localTransaction) ||
+            Configurations.isOnePhaseTotalOrderCommit(configuration);
    }
 }

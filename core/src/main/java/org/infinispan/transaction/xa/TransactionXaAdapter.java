@@ -38,7 +38,6 @@ public class TransactionXaAdapter extends AbstractEnlistmentAdapter implements X
 
    private final XaTransactionTable txTable;
 
-   private final TransactionCoordinator txCoordinator;
 
    /**
     * XAResource is associated with a transaction between enlistment (XAResource.start()) XAResource.end(). It's only the
@@ -57,11 +56,10 @@ public class TransactionXaAdapter extends AbstractEnlistmentAdapter implements X
                                CommandsFactory commandsFactory, RpcManager rpcManager,
                                ClusteringDependentLogic clusteringDependentLogic,
                                Configuration configuration, String cacheName) {
-      super(localTransaction, commandsFactory, rpcManager, txTable, clusteringDependentLogic, configuration);
+      super(localTransaction, commandsFactory, rpcManager, txTable, clusteringDependentLogic, configuration, txCoordinator);
       this.localTransaction = localTransaction;
       this.txTable = (XaTransactionTable) txTable;
       this.recoveryManager = rm;
-      this.txCoordinator = txCoordinator;
       this.cacheName = cacheName;
       recoveryEnabled = configuration.transaction().recovery().enabled();
       //in distributed mode with write skew check, we only allow 2 phases!!
@@ -73,11 +71,10 @@ public class TransactionXaAdapter extends AbstractEnlistmentAdapter implements X
                                CommandsFactory commandsFactory, RpcManager rpcManager,
                                ClusteringDependentLogic clusteringDependentLogic,
                                Configuration configuration, String cacheName) {
-      super(commandsFactory, rpcManager, txTable, clusteringDependentLogic, configuration);
+      super(commandsFactory, rpcManager, txTable, clusteringDependentLogic, configuration, txCoordinator);
       localTransaction = null;
       this.txTable = (XaTransactionTable) txTable;
       this.recoveryManager = rm;
-      this.txCoordinator = txCoordinator;
       this.cacheName = cacheName;
       recoveryEnabled = configuration.transaction().recovery().enabled();
       //in distributed mode, we only allow 2 phases!!
@@ -102,18 +99,19 @@ public class TransactionXaAdapter extends AbstractEnlistmentAdapter implements X
    public void commit(Xid externalXid, boolean isOnePhase) throws XAException {
       Xid xid = convertXid(externalXid);
       LocalXaTransaction localTransaction = getLocalTransactionAndValidate(xid);
+      boolean committedInOnePhase;
       if (isOnePhase && onePhaseTotalOrder) {
-         txCoordinator.commit(localTransaction, true);
+         committedInOnePhase = txCoordinator.commit(localTransaction, true);
       } else if (isOnePhase) {
          //isOnePhase being true means that we're the only participant in the distributed transaction and TM does the
          //1PC optimization. We run a 2PC though, as running only 1PC has a high chance of leaving the cluster in
          //inconsistent state.
          txCoordinator.prepare(localTransaction);
-         txCoordinator.commit(localTransaction, false);
+         committedInOnePhase = txCoordinator.commit(localTransaction, false);
       } else {
-         txCoordinator.commit(localTransaction, false);
+         committedInOnePhase = txCoordinator.commit(localTransaction, false);
       }
-      forgetSuccessfullyCompletedTransaction(recoveryManager, xid, localTransaction);
+      forgetSuccessfullyCompletedTransaction(recoveryManager, xid, localTransaction, committedInOnePhase);
    }
 
    /**
@@ -218,13 +216,13 @@ public class TransactionXaAdapter extends AbstractEnlistmentAdapter implements X
             '}';
    }
 
-   private void forgetSuccessfullyCompletedTransaction(RecoveryManager recoveryManager, Xid xid, LocalXaTransaction localTransaction) {
+   private void forgetSuccessfullyCompletedTransaction(RecoveryManager recoveryManager, Xid xid, LocalXaTransaction localTransaction, boolean committedInOnePhase) {
       final GlobalTransaction gtx = localTransaction.getGlobalTransaction();
       if (recoveryEnabled) {
          recoveryManager.removeRecoveryInformationFromCluster(localTransaction.getRemoteLocksAcquired(), xid, false, gtx);
          txTable.removeLocalTransaction(localTransaction);
       } else {
-         releaseLocksForCompletedTransaction(localTransaction);
+         releaseLocksForCompletedTransaction(localTransaction, committedInOnePhase);
       }
    }
 
