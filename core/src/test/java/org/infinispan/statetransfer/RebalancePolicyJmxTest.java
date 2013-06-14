@@ -93,8 +93,11 @@ public class RebalancePolicyJmxTest extends MultipleCacheManagersTest {
       assertFalse((Boolean) mBeanServer.getAttribute(ltmName0, "RebalancingEnabled"));
 
       // Add 2 nodes
+      log.debugf("Starting 2 new nodes");
       addClusterEnabledCacheManager(getGlobalConfigurationBuilder("r2"), getConfigurationBuilder());
       addClusterEnabledCacheManager(getGlobalConfigurationBuilder("r2"), getConfigurationBuilder());
+      cache(2);
+      cache(3);
 
       // Check that no rebalance happened after 1 second
       Thread.sleep(1000);
@@ -103,6 +106,7 @@ public class RebalancePolicyJmxTest extends MultipleCacheManagersTest {
       assertEquals(Arrays.asList(address(0), address(1)), stm0.getCacheTopology().getCurrentCH().getMembers());
 
       // Re-enable rebalancing
+      log.debugf("Rebalancing with nodes %s %s %s %s", address(0), address(1), address(2), address(3));
       mBeanServer.setAttribute(ltmName0, new Attribute("RebalancingEnabled", true));
       assertTrue((Boolean) mBeanServer.getAttribute(ltmName0, "RebalancingEnabled"));
       // Duplicate request to enable rebalancing - should be ignored
@@ -119,33 +123,42 @@ public class RebalancePolicyJmxTest extends MultipleCacheManagersTest {
 
       // Suspend rebalancing again
       mBeanServer.setAttribute(ltmName1, new Attribute("RebalancingEnabled", false));
+      assertFalse((Boolean) mBeanServer.getAttribute(ltmName0, "RebalancingEnabled"));
       assertFalse((Boolean) mBeanServer.getAttribute(ltmName1, "RebalancingEnabled"));
       // Duplicate request to enable rebalancing - should be ignored
       mBeanServer.setAttribute(ltmName1, new Attribute("RebalancingEnabled", false));
 
-      // Kill the previously added 2 nodes
-      killCacheManagers(manager(2), manager(3));
+      // Kill the first 2 nodes
+      log.debugf("Stopping nodes %s %s", address(0), address(1));
+      killCacheManagers(manager(0), manager(1));
 
       // Check that the nodes are no longer in the CH, but every segment only has one copy
       // Implicitly, this also checks that no data has been lost - if both a segment's owners had left,
       // the CH factory would have assigned 2 owners.
       Thread.sleep(1000);
-      assertNull(stm0.getCacheTopology().getPendingCH());
-      ch = stm0.getCacheTopology().getCurrentCH();
-      assertEquals(Arrays.asList(address(0), address(1)), ch.getMembers());
+      StateTransferManager stm2 = TestingUtil.extractComponent(cache(2), StateTransferManager.class);
+      assertNull(stm2.getCacheTopology().getPendingCH());
+      ch = stm2.getCacheTopology().getCurrentCH();
+      assertEquals(Arrays.asList(address(2), address(3)), ch.getMembers());
       for (int i = 0; i < ch.getNumSegments(); i++) {
          assertEquals(1, ch.locateOwnersForSegment(i).size());
       }
 
       // Enable rebalancing again
-      mBeanServer.setAttribute(ltmName1, new Attribute("RebalancingEnabled", true));
-      assertTrue((Boolean) mBeanServer.getAttribute(ltmName1, "RebalancingEnabled"));
+      log.debugf("Rebalancing with nodes %s %s", address(2), address(3));
+      String domain2 = manager(2).getCacheManagerConfiguration().globalJmxStatistics().domain();
+      ObjectName ltmName2 = TestingUtil.getCacheManagerObjectName(domain2, "DefaultCacheManager", "LocalTopologyManager");
+      String domain3 = manager(2).getCacheManagerConfiguration().globalJmxStatistics().domain();
+      ObjectName ltmName3 = TestingUtil.getCacheManagerObjectName(domain3, "DefaultCacheManager", "LocalTopologyManager");
+      mBeanServer.setAttribute(ltmName2, new Attribute("RebalancingEnabled", true));
+      assertTrue((Boolean) mBeanServer.getAttribute(ltmName2, "RebalancingEnabled"));
+      assertTrue((Boolean) mBeanServer.getAttribute(ltmName3, "RebalancingEnabled"));
 
       // Check that the CH is now balanced (and every segment has 2 copies)
-      TestingUtil.waitForRehashToComplete(cache(0), cache(1));
-      assertNull(stm0.getCacheTopology().getPendingCH());
-      ch = stm0.getCacheTopology().getCurrentCH();
-      assertEquals(Arrays.asList(address(0), address(1)), ch.getMembers());
+      TestingUtil.waitForRehashToComplete(cache(2), cache(3));
+      assertNull(stm2.getCacheTopology().getPendingCH());
+      ch = stm2.getCacheTopology().getCurrentCH();
+      assertEquals(Arrays.asList(address(2), address(3)), ch.getMembers());
       for (int i = 0; i < ch.getNumSegments(); i++) {
          assertEquals(2, ch.locateOwnersForSegment(i).size());
       }

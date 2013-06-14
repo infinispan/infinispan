@@ -95,8 +95,6 @@ public class DefaultRebalancePolicy implements RebalancePolicy {
       return true;
    }
 
-   @ManagedAttribute(description = "Rebalancing enabled", displayName = "Rebalancing enabled",
-         dataType = DataType.TRAIT, writable = true)
    @Override
    public boolean isRebalancingEnabled() {
       synchronized (lock) {
@@ -110,14 +108,20 @@ public class DefaultRebalancePolicy implements RebalancePolicy {
       synchronized (lock) {
          caches = cachesPendingRebalance;
          if (enabled) {
-            cachesPendingRebalance = null;
+            if (cachesPendingRebalance != null) {
+               log.debugf("Rebalancing enabled");
+               cachesPendingRebalance = null;
+            }
          } else {
-            cachesPendingRebalance = new HashSet<String>();
+            if (cachesPendingRebalance == null) {
+               log.debugf("Rebalancing suspended");
+               cachesPendingRebalance = new HashSet<String>();
+            }
          }
       }
 
       if (enabled && caches != null) {
-         log.debugf("Rebalancing re-enabled, triggering rebalancing for caches %s", caches);
+         log.tracef("Rebalancing enabled, triggering rebalancing for caches %s", caches);
          for (String cacheName : caches) {
             try {
                clusterTopologyManager.triggerRebalance(cacheName);
@@ -125,8 +129,6 @@ public class DefaultRebalancePolicy implements RebalancePolicy {
                log.rebalanceStartError(cacheName, e);
             }
          }
-      } else {
-         log.debugf("Rebalancing suspended");
       }
    }
 }
