@@ -22,13 +22,14 @@
  */
 package org.infinispan.cdi.test.interceptor.service;
 
-import javax.cache.annotation.CacheKey;
+import javax.cache.annotation.GeneratedCacheKey;
 import java.lang.reflect.Method;
 
 /**
  * @author Kevin Pollet <kevin.pollet@serli.com> (C) 2011 SERLI
+ * @author Galder Zamarreño
  */
-public class CustomCacheKey implements CacheKey {
+public class CustomCacheKey implements GeneratedCacheKey {
 
    private static final long serialVersionUID = -2393683631229917970L;
 

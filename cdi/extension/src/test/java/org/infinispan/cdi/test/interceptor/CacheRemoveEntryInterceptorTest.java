@@ -23,12 +23,12 @@
 package org.infinispan.cdi.test.interceptor;
 
 import org.infinispan.Cache;
-import org.infinispan.cdi.interceptor.DefaultCacheKey;
 import org.infinispan.cdi.test.DefaultTestEmbeddedCacheManagerProducer;
 import org.infinispan.cdi.test.interceptor.config.Config;
 import org.infinispan.cdi.test.interceptor.config.Custom;
 import org.infinispan.cdi.test.interceptor.service.CacheRemoveEntryService;
 import org.infinispan.cdi.test.interceptor.service.CustomCacheKey;
+import org.infinispan.jcache.annotation.DefaultCacheKey;
 import org.jboss.arquillian.container.test.api.Deployment;
 import org.jboss.arquillian.testng.Arquillian;
 import org.jboss.shrinkwrap.api.Archive;
@@ -36,7 +36,7 @@ import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
 import javax.cache.CacheException;
-import javax.cache.annotation.CacheKey;
+import javax.cache.annotation.GeneratedCacheKey;
 import javax.inject.Inject;
 import java.lang.reflect.Method;
 
@@ -65,7 +65,7 @@ public class CacheRemoveEntryInterceptorTest extends Arquillian {
 
    @Inject
    @Custom
-   private Cache<CacheKey, String> customCache;
+   private Cache<GeneratedCacheKey, String> customCache;
 
    @BeforeMethod
    public void beforeMethod() {
@@ -79,7 +79,7 @@ public class CacheRemoveEntryInterceptorTest extends Arquillian {
    }
 
    public void testCacheRemoveEntryWithCacheName() {
-      final CacheKey cacheKey = new DefaultCacheKey(new Object[]{"Kevin"});
+      final GeneratedCacheKey cacheKey = new DefaultCacheKey(new Object[]{"Kevin"});
 
       customCache.put(cacheKey, "Hello Kevin");
 
@@ -92,7 +92,7 @@ public class CacheRemoveEntryInterceptorTest extends Arquillian {
    }
 
    public void testCacheRemoveEntryWithCacheKeyParam() {
-      final CacheKey cacheKey = new DefaultCacheKey(new Object[]{"Kevin"});
+      final GeneratedCacheKey cacheKey = new DefaultCacheKey(new Object[]{"Kevin"});
 
       customCache.put(cacheKey, "Hello Kevin");
 
@@ -105,7 +105,7 @@ public class CacheRemoveEntryInterceptorTest extends Arquillian {
    }
 
    public void testCacheRemoveEntryAfterInvocationWithException() {
-      final CacheKey cacheKey = new DefaultCacheKey(new Object[]{"Kevin"});
+      final GeneratedCacheKey cacheKey = new DefaultCacheKey(new Object[]{"Kevin"});
 
       customCache.put(cacheKey, "Hello Kevin");
 
@@ -123,7 +123,7 @@ public class CacheRemoveEntryInterceptorTest extends Arquillian {
 
    public void testCacheRemoveEntryWithCacheKeyGenerator() throws NoSuchMethodException {
       final Method method = CacheRemoveEntryService.class.getMethod("removeEntryWithCacheKeyGenerator", String.class);
-      final CacheKey cacheKey = new CustomCacheKey(method, "Kevin");
+      final GeneratedCacheKey cacheKey = new CustomCacheKey(method, "Kevin");
 
       customCache.put(cacheKey, "Hello Kevin");
 
@@ -136,7 +136,7 @@ public class CacheRemoveEntryInterceptorTest extends Arquillian {
    }
 
    public void testCacheRemoveEntryBeforeInvocationWithException() {
-      final CacheKey cacheKey = new DefaultCacheKey(new Object[]{"Kevin"});
+      final GeneratedCacheKey cacheKey = new DefaultCacheKey(new Object[]{"Kevin"});
 
       customCache.put(cacheKey, "Hello Kevin");
 

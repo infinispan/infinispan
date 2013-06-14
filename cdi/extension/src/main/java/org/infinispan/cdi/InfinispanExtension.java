@@ -33,10 +33,6 @@ import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 
-import javax.cache.annotation.CachePut;
-import javax.cache.annotation.CacheRemoveAll;
-import javax.cache.annotation.CacheRemoveEntry;
-import javax.cache.annotation.CacheResult;
 import javax.enterprise.context.spi.CreationalContext;
 import javax.enterprise.event.Observes;
 import javax.enterprise.inject.Default;
@@ -45,12 +41,10 @@ import javax.enterprise.inject.spi.AfterBeanDiscovery;
 import javax.enterprise.inject.spi.Annotated;
 import javax.enterprise.inject.spi.Bean;
 import javax.enterprise.inject.spi.BeanManager;
-import javax.enterprise.inject.spi.BeforeBeanDiscovery;
 import javax.enterprise.inject.spi.BeforeShutdown;
 import javax.enterprise.inject.spi.Extension;
 import javax.enterprise.inject.spi.InjectionPoint;
 import javax.enterprise.inject.spi.InjectionTarget;
-import javax.enterprise.inject.spi.ProcessAnnotatedType;
 import javax.enterprise.inject.spi.ProcessInjectionTarget;
 import javax.enterprise.inject.spi.ProcessProducer;
 import javax.enterprise.inject.spi.Producer;
@@ -59,15 +53,6 @@ import javax.enterprise.util.TypeLiteral;
 
 import org.infinispan.Cache;
 import org.infinispan.cdi.event.cachemanager.CacheManagerEventBridge;
-import org.infinispan.cdi.interceptor.CachePutInterceptor;
-import org.infinispan.cdi.interceptor.CacheRemoveAllInterceptor;
-import org.infinispan.cdi.interceptor.CacheRemoveEntryInterceptor;
-import org.infinispan.cdi.interceptor.CacheResultInterceptor;
-import org.infinispan.cdi.interceptor.literal.CachePutLiteral;
-import org.infinispan.cdi.interceptor.literal.CacheRemoveAllLiteral;
-import org.infinispan.cdi.interceptor.literal.CacheRemoveEntryLiteral;
-import org.infinispan.cdi.interceptor.literal.CacheResultLiteral;
-import org.infinispan.cdi.util.Version;
 import org.infinispan.cdi.util.logging.Log;
 import org.infinispan.client.hotrod.RemoteCache;
 import org.infinispan.configuration.cache.Configuration;
@@ -76,7 +61,6 @@ import org.infinispan.util.logging.LogFactory;
 import org.jboss.solder.bean.BeanBuilder;
 import org.jboss.solder.bean.ContextualLifecycle;
 import org.jboss.solder.beanManager.BeanManagerAware;
-import org.jboss.solder.reflection.annotated.AnnotatedTypeBuilder;
 
 /**
  * The Infinispan CDI extension class.
@@ -99,43 +83,6 @@ public class InfinispanExtension extends BeanManagerAware implements Extension {
    public InfinispanExtension() {
       this.configurations = new HashSet<InfinispanExtension.ConfigurationHolder>();
       this.remoteCacheInjectionPoints = new HashMap<Type, Set<Annotation>>();
-   }
-
-   void registerInterceptorBindings(@Observes BeforeBeanDiscovery event) {
-      log.version(Version.getVersion());
-
-      event.addInterceptorBinding(CacheResult.class);
-      event.addInterceptorBinding(CachePut.class);
-      event.addInterceptorBinding(CacheRemoveEntry.class);
-      event.addInterceptorBinding(CacheRemoveAll.class);
-   }
-
-   void registerCacheResultInterceptor(@Observes ProcessAnnotatedType<CacheResultInterceptor> event) {
-      event.setAnnotatedType(new AnnotatedTypeBuilder<CacheResultInterceptor>()
-                                   .readFromType(event.getAnnotatedType())
-                                   .addToClass(CacheResultLiteral.INSTANCE)
-                                   .create());
-   }
-
-   void registerCachePutInterceptor(@Observes ProcessAnnotatedType<CachePutInterceptor> event) {
-      event.setAnnotatedType(new AnnotatedTypeBuilder<CachePutInterceptor>()
-                                   .readFromType(event.getAnnotatedType())
-                                   .addToClass(CachePutLiteral.INSTANCE)
-                                   .create());
-   }
-
-   void registerCacheRemoveEntryInterceptor(@Observes ProcessAnnotatedType<CacheRemoveEntryInterceptor> event) {
-      event.setAnnotatedType(new AnnotatedTypeBuilder<CacheRemoveEntryInterceptor>()
-                                   .readFromType(event.getAnnotatedType())
-                                   .addToClass(CacheRemoveEntryLiteral.INSTANCE)
-                                   .create());
-   }
-
-   void registerCacheRemoveAllInterceptor(@Observes ProcessAnnotatedType<CacheRemoveAllInterceptor> event) {
-      event.setAnnotatedType(new AnnotatedTypeBuilder<CacheRemoveAllInterceptor>()
-                                   .readFromType(event.getAnnotatedType())
-                                   .addToClass(CacheRemoveAllLiteral.INSTANCE)
-                                   .create());
    }
 
    void saveRemoteCacheProducer(@Observes ProcessProducer<RemoteCacheProducer, RemoteCache<?, ?>> event) {

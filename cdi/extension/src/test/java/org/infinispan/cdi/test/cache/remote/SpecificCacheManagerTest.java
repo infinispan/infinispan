@@ -38,7 +38,6 @@ import org.testng.annotations.Test;
 import javax.enterprise.context.ApplicationScoped;
 import javax.enterprise.inject.Produces;
 import javax.inject.Inject;
-import java.util.Properties;
 
 import static org.infinispan.cdi.test.testutil.Deployments.baseDeployment;
 import static org.infinispan.client.hotrod.TestHelper.startHotRodServer;

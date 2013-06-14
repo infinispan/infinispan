@@ -26,10 +26,7 @@ import org.infinispan.cdi.ConfigureCache;
 import org.infinispan.cdi.event.AbstractEventBridge;
 import org.infinispan.cdi.event.cache.CacheEventBridge;
 import org.infinispan.cdi.event.cachemanager.CacheManagerEventBridge;
-import org.infinispan.cdi.interceptor.CacheResultInterceptor;
-import org.infinispan.cdi.interceptor.context.CacheKeyInvocationContextFactory;
-import org.infinispan.cdi.interceptor.context.metadata.MethodMetaData;
-import org.infinispan.cdi.util.CacheLookupHelper;
+import org.infinispan.jcache.annotation.CachePutInterceptor;
 import org.jboss.shrinkwrap.api.ShrinkWrap;
 import org.jboss.shrinkwrap.api.spec.JavaArchive;
 import org.jboss.shrinkwrap.api.spec.WebArchive;
@@ -60,10 +57,7 @@ public final class Deployments {
                         .addPackage(AbstractEventBridge.class.getPackage())
                         .addPackage(CacheEventBridge.class.getPackage())
                         .addPackage(CacheManagerEventBridge.class.getPackage())
-                        .addPackage(CacheResultInterceptor.class.getPackage())
-                        .addPackage(CacheLookupHelper.class.getPackage())
-                        .addPackage(CacheKeyInvocationContextFactory.class.getPackage())
-                        .addPackage(MethodMetaData.class.getPackage())
+                        .addPackage(CachePutInterceptor.class.getPackage())
                         .addAsManifestResource(ConfigureCache.class.getResource("/META-INF/beans.xml"), "beans.xml")
                         .addAsManifestResource(ConfigureCache.class.getResource("/META-INF/services/javax.enterprise.inject.spi.Extension"), "services/javax.enterprise.inject.spi.Extension")
             )

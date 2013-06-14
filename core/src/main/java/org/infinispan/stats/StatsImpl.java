@@ -55,7 +55,7 @@ public class StatsImpl implements Stats {
 
    public StatsImpl(InterceptorChain chain) {
       List<CommandInterceptor> interceptors = chain.getInterceptorsWhichExtend(CacheMgmtInterceptor.class);
-      if (!interceptors.isEmpty()) {
+      if (!interceptors.isEmpty() && ((CacheMgmtInterceptor) interceptors.get(0)).getStatisticsEnabled()) {
          mgmtInterceptor = (CacheMgmtInterceptor) interceptors.get(0);
          timeSinceStart = mgmtInterceptor.getElapsedTime();
          currentNumberOfEntries = mgmtInterceptor.getNumberOfEntries();

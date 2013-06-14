@@ -38,10 +38,7 @@ import org.infinispan.AdvancedCache;
 import org.infinispan.configuration.global.GlobalConfigurationBuilder;
 import org.infinispan.configuration.parsing.ConfigurationBuilderHolder;
 import org.infinispan.configuration.parsing.ParserRegistry;
-import org.infinispan.interceptors.EntryWrappingInterceptor;
-import org.infinispan.jcache.interceptor.ExpirationTrackingInterceptor;
 import org.infinispan.jcache.logging.Log;
-import org.infinispan.loaders.CacheLoaderManager;
 import org.infinispan.manager.DefaultCacheManager;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.util.FileLookup;
@@ -71,8 +68,8 @@ public class JCacheManager implements CacheManager {
     * Create a new InfinispanCacheManager given a cache name and a {@link ClassLoader}. Cache name
     * might refer to a file on classpath containing Infinispan configuration file.
     * 
-    * @param uri
-    * @param classLoader
+    * @param uri identifies the cache manager
+    * @param classLoader used to load classes stored in this cache manager
     */
    public JCacheManager(URI uri, ClassLoader classLoader, CachingProvider provider) {
       // Track allocation time
@@ -107,8 +104,7 @@ public class JCacheManager implements CacheManager {
       status = Status.STARTED;
    }
 
-   // For testing ...
-   JCacheManager(URI uri, EmbeddedCacheManager cacheManager, CachingProvider provider) {
+   public JCacheManager(URI uri, EmbeddedCacheManager cacheManager, CachingProvider provider) {
       // Track allocation time
       this.allocationStackTrace = Thread.currentThread().getStackTrace();
       this.uri = uri;
@@ -217,6 +213,17 @@ public class JCacheManager implements CacheManager {
             }
          }
 
+         return (Cache<K, V>) cache;
+      }
+   }
+
+   public <K, V> Cache<K, V> configureCache(String cacheName, AdvancedCache<K, V> ispnCache) {
+      synchronized (caches) {
+         JCache<?, ?> cache = caches.get(cacheName);
+         if (cache == null) {
+            cache = new JCache<K, V>(ispnCache, this, new MutableConfiguration<K, V>());
+            caches.put(cacheName, cache);
+         }
          return (Cache<K, V>) cache;
       }
    }

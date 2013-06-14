@@ -42,9 +42,9 @@
       <domain-lib-dir>${project.build.directory}/domainlib</domain-lib-dir>
       <domain-jar>domain.jar</domain-jar>
 
-      <CacheManagerImpl>org.infinispan.jcache.InfinispanCacheManager</CacheManagerImpl>
-      <CacheImpl>org.infinispan.jcache.InfinispanCache</CacheImpl>
-      <CacheInvocationContextImpl>org.infinispan.cdi.interceptor.context.CacheKeyInvocationContextImpl</CacheInvocationContextImpl>
+      <CacheManagerImpl>org.infinispan.jcache.JCacheManager</CacheManagerImpl>
+      <CacheImpl>org.infinispan.jcache.JCache</CacheImpl>
+      <CacheInvocationContextImpl>org.infinispan.jcache.annotation.CacheKeyInvocationContextImpl</CacheInvocationContextImpl>
    </properties>
 
    <dependencies>
@@ -53,17 +53,11 @@
          <artifactId>infinispan-jcache</artifactId>
          <scope>test</scope>
       </dependency>
-      <!--<dependency>-->
-         <!--<groupId>${project.groupId}</groupId>-->
-         <!--<artifactId>infinispan-cdi</artifactId>-->
-         <!--<scope>test</scope>-->
-      <!--</dependency>-->
 
       <!--
          Order is important here! hamcrest-library needs to be defined before cache-tests:
          http://stackoverflow.com/questions/7869711/getting-nosuchmethoderror-org-hamcrest-matcher-describemismatch-when-running
       -->
-
       <dependency>
          <groupId>org.hamcrest</groupId>
          <artifactId>hamcrest-library</artifactId>
@@ -77,11 +71,11 @@
          <classifier>tests</classifier>
          <scope>test</scope>
       </dependency>
-      <!--<dependency>-->
-         <!--<groupId>javax.cache</groupId>-->
-         <!--<artifactId>cdi-weld-annotations-test-harness</artifactId>-->
-         <!--<scope>test</scope>-->
-      <!--</dependency>-->
+      <dependency>
+         <groupId>org.jboss.weld.se</groupId>
+         <artifactId>weld-se</artifactId>
+         <scope>test</scope>
+      </dependency>
 
    </dependencies>
 
