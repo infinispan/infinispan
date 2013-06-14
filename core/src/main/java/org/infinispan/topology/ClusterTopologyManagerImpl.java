@@ -332,7 +332,7 @@ public class ClusterTopologyManagerImpl implements ClusterTopologyManager {
       broadcastConsistentHashUpdate(cacheName, cacheStatus);
 
       // Trigger another rebalance in case the CH is not balanced
-      triggerRebalance(cacheName);
+      rebalancePolicy.updateCacheStatus(cacheName, cacheStatus);
    }
 
    private void broadcastConsistentHashUpdate(String cacheName, ClusterCacheStatus cacheStatus) throws Exception {
@@ -447,6 +447,14 @@ public class ClusterTopologyManagerImpl implements ClusterTopologyManager {
             // but didn't get a response back yet
             if (cacheTopology != null) {
                topologyList.add(cacheTopology);
+            }
+
+            // Add all the members of the topology that have sent responses first
+            // If we only added the sender, we could end up with a different member order
+            for (Address member : cacheTopology.getMembers()) {
+               if (statusResponses.containsKey(member)) {
+                  cacheStatusMap.get(cacheName).addMember(member);
+               }
             }
 
             // This node may have joined, and still not be in the current or pending CH
