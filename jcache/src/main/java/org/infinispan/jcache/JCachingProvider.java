@@ -38,6 +38,7 @@ import java.util.WeakHashMap;
  * Infinispan's SPI hook up to {@link javax.cache.spi.CachingProvider}.
  * 
  * @author Vladimir Blagojevic
+ * @author Galder Zamarreño
  * @since 5.3
  */
 public class JCachingProvider implements CachingProvider {
@@ -200,10 +201,6 @@ public class JCachingProvider implements CachingProvider {
    private JCacheManager createCacheManager(
          ClassLoader classLoader, URI uri) {
       return new JCacheManager(uri, classLoader, this);
-   }
-
-   private JCacheManager createCacheManager() {
-      return new JCacheManager(DEFAULT_URI, new DefaultCacheManager(), this);
    }
 
 }

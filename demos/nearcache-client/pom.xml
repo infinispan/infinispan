@@ -60,7 +60,6 @@
       <dependency>
          <groupId>javax.cache</groupId>
          <artifactId>cache-api</artifactId>
-         <version>0.3</version>
       </dependency>
       <dependency>
          <groupId>javax.enterprise</groupId>

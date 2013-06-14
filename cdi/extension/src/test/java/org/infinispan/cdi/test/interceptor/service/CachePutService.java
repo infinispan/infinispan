@@ -22,7 +22,7 @@
  */
 package org.infinispan.cdi.test.interceptor.service;
 
-import javax.cache.annotation.CacheKeyParam;
+import javax.cache.annotation.CacheKey;
 import javax.cache.annotation.CachePut;
 import javax.cache.annotation.CacheValue;
 
@@ -40,7 +40,7 @@ public class CachePutService {
    }
 
    @CachePut(cacheName = "custom")
-   public void putWithCacheKeyParam(@CacheKeyParam long id, long id2, @CacheValue String name) {
+   public void putWithCacheKeyParam(@CacheKey long id, long id2, @CacheValue String name) {
    }
 
    @CachePut(cacheName = "custom", afterInvocation = false)

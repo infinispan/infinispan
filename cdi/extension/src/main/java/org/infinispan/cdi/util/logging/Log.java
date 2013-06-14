@@ -29,8 +29,6 @@ import org.jboss.logging.LogMessage;
 import org.jboss.logging.Message;
 import org.jboss.logging.MessageLogger;
 
-import javax.cache.CacheException;
-
 import static org.jboss.logging.Logger.Level.INFO;
 
 /**
@@ -50,24 +48,4 @@ public interface Log extends BasicLogger {
    @Message(value = "Configuration for cache '%s' has been defined in cache manager '%s'", id = 17002)
    void cacheConfigurationDefined(String cacheName, EmbeddedCacheManager cacheManager);
 
-   @Message(value = "Method named '%s' is not annotated with CacheResult, CachePut, CacheRemoveEntry or CacheRemoveAll", id = 17003)
-   IllegalArgumentException methodWithoutCacheAnnotation(String methodName);
-
-   @Message(value = "Method named '%s' must have at least one parameter annotated with @CacheValue", id = 17004)
-   CacheException cachePutMethodWithoutCacheValueParameter(String methodName);
-
-   @Message(value = "Method named '%s' must have only one parameter annotated with @CacheValue", id = 17005)
-   CacheException cachePutMethodWithMoreThanOneCacheValueParameter(String methodName);
-
-   @Message(value = "Method named '%s' is annotated with CacheRemoveEntry but doesn't specify a cache name", id = 17006)
-   CacheException cacheRemoveEntryMethodWithoutCacheName(String methodName);
-
-   @Message(value = "Method named '%s' is annotated with CacheRemoveAll but doesn't specify a cache name", id = 17007)
-   CacheException cacheRemoveAllMethodWithoutCacheName(String methodName);
-
-   @Message(value = "Unable to instantiate CacheKeyGenerator with type '%s'", id = 17008)
-   CacheException unableToInstantiateCacheKeyGenerator(Class<?> type, @Cause Throwable cause);
-
-   @Message(value = "The provider implementation cannot be unwrapped to '%s'", id = 17009)
-   IllegalArgumentException unableToUnwrapProviderImplementation(Class<?> type);
 }

@@ -54,15 +54,15 @@
       </developer>
    </developers>
 
-   <properties>
-      <!-- Version 0.6 version has this issue:
-      https://github.com/jsr107/jsr107spec/pull/59
+   <!--<properties>-->
+      <!--&lt;!&ndash; Version 0.6 version has this issue:-->
+      <!--https://github.com/jsr107/jsr107spec/pull/59-->
 
-      Upgrade to 0.6 once that issue has been fixed
-      See https://issues.jboss.org/browse/ISPN-2855
-      -->
-      <version.javax.cache>0.4</version.javax.cache>
-   </properties>
+      <!--Upgrade to 0.6 once that issue has been fixed-->
+      <!--See https://issues.jboss.org/browse/ISPN-2855-->
+      <!--&ndash;&gt;-->
+      <!--<version.javax.cache>0.4</version.javax.cache>-->
+   <!--</properties>-->
 
    <dependencies>
       <dependency>
@@ -84,6 +84,10 @@
       <dependency>
          <groupId>org.infinispan</groupId>
          <artifactId>infinispan-client-hotrod</artifactId>
+      </dependency>
+      <dependency>
+         <groupId>org.infinispan</groupId>
+         <artifactId>infinispan-jcache</artifactId>
       </dependency>
 
       <!-- Logging dependency -->

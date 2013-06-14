@@ -141,8 +141,9 @@ public class JmxStatsFunctionalTest extends AbstractInfinispanTest {
 
       assert existsObject(getCacheManagerObjectName(jmxDomain));
 
-      assert !existsObject(getCacheObjectName(jmxDomain, "local_cache(local)", "Statistics"));
-      assert !existsObject(getCacheObjectName(jmxDomain, "remote1(repl_sync)", "Statistics"));
+      // Statistics MBean is always enabled now
+      assert existsObject(getCacheObjectName(jmxDomain, "local_cache(local)", "Statistics"));
+      assert existsObject(getCacheObjectName(jmxDomain, "remote1(repl_sync)", "Statistics"));
 
       // Since ISPN-2290
       assert existsObject(getCacheObjectName(jmxDomain, "remote1(repl_sync)", "LockManager"));

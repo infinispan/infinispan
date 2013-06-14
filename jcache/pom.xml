@@ -40,8 +40,7 @@
    <!-- This module declares components that either has lifecycle (@Start or
       @Stop) or uses @Inject to retrieve dependencies -->
    <properties>
-      <module.skipComponentMetaDataProcessing>false
-      </module.skipComponentMetaDataProcessing>
+      <module.skipComponentMetaDataProcessing>false</module.skipComponentMetaDataProcessing>
    </properties>
 
    <dependencies>
@@ -61,15 +60,14 @@
       </dependency>
 
       <dependency>
-         <groupId>org.jboss</groupId>
-         <artifactId>jboss-common-core</artifactId>
-         <version>2.2.20.GA</version>
-      </dependency>
-
-      <dependency>
          <groupId>${project.groupId}</groupId>
          <artifactId>infinispan-core</artifactId>
          <type>test-jar</type>
+         <scope>test</scope>
+      </dependency>
+      <dependency>
+         <groupId>org.jboss.arquillian.testng</groupId>
+         <artifactId>arquillian-testng-container</artifactId>
          <scope>test</scope>
       </dependency>
 
@@ -101,6 +99,16 @@
                      ${project.groupId}.jcache.*;version=${project.version};-split-package:=error
                   </Export-Package>
                </instructions>
+            </configuration>
+         </plugin>
+
+         <!-- Disable parallel execution of tests ARQ-127 -->
+         <plugin>
+            <groupId>org.apache.maven.plugins</groupId>
+            <artifactId>maven-surefire-plugin</artifactId>
+            <configuration>
+               <parallel>false</parallel>
+               <groups>${defaultTestGroup}</groups>
             </configuration>
          </plugin>
 
@@ -143,4 +151,42 @@
 
       </plugins>
    </build>
+
+   <profiles>
+      <profile>
+         <id>default</id>
+         <activation>
+            <activeByDefault>true</activeByDefault>
+         </activation>
+         <dependencies>
+            <dependency>
+               <groupId>org.jboss.arquillian.container</groupId>
+               <artifactId>arquillian-weld-ee-embedded-1.1</artifactId>
+               <scope>test</scope>
+            </dependency>
+            <dependency>
+               <groupId>org.jboss.weld</groupId>
+               <artifactId>weld-core</artifactId>
+               <scope>test</scope>
+            </dependency>
+            <dependency>
+               <groupId>org.jboss.spec</groupId>
+               <artifactId>jboss-javaee-6.0</artifactId>
+               <type>pom</type>
+               <scope>test</scope>
+            </dependency>
+            <dependency>
+               <groupId>org.jboss.logmanager</groupId>
+               <artifactId>jboss-logmanager</artifactId>
+               <scope>test</scope>
+            </dependency>
+            <dependency>
+               <groupId>org.slf4j</groupId>
+               <artifactId>slf4j-jdk14</artifactId>
+               <scope>test</scope>
+            </dependency>
+         </dependencies>
+      </profile>
+   </profiles>
+
 </project>

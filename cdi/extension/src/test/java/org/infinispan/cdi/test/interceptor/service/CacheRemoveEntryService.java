@@ -22,7 +22,7 @@
  */
 package org.infinispan.cdi.test.interceptor.service;
 
-import javax.cache.annotation.CacheKeyParam;
+import javax.cache.annotation.CacheKey;
 import javax.cache.annotation.CacheRemoveEntry;
 
 import static org.infinispan.cdi.util.Contracts.assertNotNull;
@@ -43,7 +43,7 @@ public class CacheRemoveEntryService {
    }
 
    @CacheRemoveEntry(cacheName = "custom")
-   public void removeEntryWithCacheKeyParam(@CacheKeyParam String login, String unused) {
+   public void removeEntryWithCacheKeyParam(@CacheKey String login, String unused) {
       assertNotNull(login, "login parameter must not be null");
    }
 

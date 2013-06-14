@@ -23,12 +23,12 @@
 package org.infinispan.cdi.test.interceptor;
 
 import org.infinispan.Cache;
-import org.infinispan.cdi.interceptor.DefaultCacheKey;
 import org.infinispan.cdi.test.DefaultTestEmbeddedCacheManagerProducer;
 import org.infinispan.cdi.test.interceptor.config.Config;
 import org.infinispan.cdi.test.interceptor.config.Custom;
 import org.infinispan.cdi.test.interceptor.service.CachePutService;
 import org.infinispan.cdi.test.interceptor.service.CustomCacheKey;
+import org.infinispan.jcache.annotation.DefaultCacheKey;
 import org.infinispan.manager.CacheContainer;
 import org.jboss.arquillian.container.test.api.Deployment;
 import org.jboss.arquillian.testng.Arquillian;

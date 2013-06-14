@@ -81,7 +81,6 @@
       <module>demos/nearcache</module>
       <module>demos/nearcache-client</module>
       <module>cdi/extension</module>
-      <module>cdi/tck-runner</module>
       <module>as-modules</module>
       <module>integrationtests/luceneintegration</module>
       <module>integrationtests/as-integration</module>

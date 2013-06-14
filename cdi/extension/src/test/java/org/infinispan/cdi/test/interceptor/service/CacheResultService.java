@@ -22,7 +22,7 @@
  */
 package org.infinispan.cdi.test.interceptor.service;
 
-import javax.cache.annotation.CacheKeyParam;
+import javax.cache.annotation.CacheKey;
 import javax.cache.annotation.CacheResult;
 
 /**
@@ -49,7 +49,7 @@ public class CacheResultService {
    }
 
    @CacheResult(cacheName = "custom")
-   public String cacheResultWithCacheKeyParam(@CacheKeyParam String user, String unused) {
+   public String cacheResultWithCacheKeyParam(@CacheKey String user, String unused) {
       nbCall++;
       return "Hola " + user;
    }
