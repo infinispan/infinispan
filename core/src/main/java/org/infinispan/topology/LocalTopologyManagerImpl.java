@@ -25,6 +25,7 @@ import java.util.Map;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 
 import org.infinispan.CacheException;
@@ -276,7 +277,7 @@ public class LocalTopologyManagerImpl implements LocalTopologyManager {
             : CacheTopologyControlCommand.Type.POLICY_DISABLE;
       ReplicableCommand command = new CacheTopologyControlCommand(null, type, transport.getAddress(),
             transport.getViewId());
-      executeOnCoordinator(command, getGlobalTimeout());
+      executeOnClusterSync(command, getGlobalTimeout(), false, false);
    }
 
    private Object executeOnCoordinator(ReplicableCommand command, long timeout) throws Exception {
@@ -325,6 +326,69 @@ public class LocalTopologyManagerImpl implements LocalTopologyManager {
          // ignore the responses
          transport.invokeRemotely(Collections.singleton(coordinator), command, ResponseMode.ASYNCHRONOUS_WITH_SYNC_MARSHALLING, 0, true, null, false, false);
       }
+   }
+
+   private Map<Address, Object> executeOnClusterSync(final ReplicableCommand command, final int timeout,
+                                                     boolean totalOrder, boolean distributed)
+         throws Exception {
+      // first invoke remotely
+
+      if (totalOrder) {
+         Map<Address, Response> responseMap = transport.invokeRemotely(null, command,
+               ResponseMode.SYNCHRONOUS_IGNORE_LEAVERS,
+               timeout, false, null, totalOrder, distributed);
+         Map<Address, Object> responseValues = new HashMap<Address, Object>(transport.getMembers().size());
+         for (Map.Entry<Address, Response> entry : responseMap.entrySet()) {
+            Address address = entry.getKey();
+            Response response = entry.getValue();
+            if (!response.isSuccessful()) {
+               Throwable cause = response instanceof ExceptionResponse ? ((ExceptionResponse) response).getException() : null;
+               throw new CacheException("Unsuccessful response received from node " + address + ": " + response, cause);
+            }
+            responseValues.put(address, ((SuccessfulResponse) response).getResponseValue());
+         }
+         return responseValues;
+      }
+
+      Future<Map<Address, Response>> remoteFuture = asyncTransportExecutor.submit(new Callable<Map<Address, Response>>() {
+         @Override
+         public Map<Address, Response> call() throws Exception {
+            return transport.invokeRemotely(null, command,
+                  ResponseMode.SYNCHRONOUS_IGNORE_LEAVERS, timeout, true, null, false, false);
+         }
+      });
+
+      // invoke the command on the local node
+      gcr.wireDependencies(command);
+      Response localResponse;
+      try {
+         if (log.isTraceEnabled()) log.tracef("Attempting to execute command on self: %s", command);
+         localResponse = (Response) command.perform(null);
+      } catch (Throwable throwable) {
+         throw new Exception(throwable);
+      }
+      if (!localResponse.isSuccessful()) {
+         throw new CacheException("Unsuccessful local response");
+      }
+
+      // wait for the remote commands to finish
+      Map<Address, Response> responseMap = remoteFuture.get(timeout, TimeUnit.MILLISECONDS);
+
+      // parse the responses
+      Map<Address, Object> responseValues = new HashMap<Address, Object>(transport.getMembers().size());
+      for (Map.Entry<Address, Response> entry : responseMap.entrySet()) {
+         Address address = entry.getKey();
+         Response response = entry.getValue();
+         if (!response.isSuccessful()) {
+            Throwable cause = response instanceof ExceptionResponse ? ((ExceptionResponse) response).getException() : null;
+            throw new CacheException("Unsuccessful response received from node " + address + ": " + response, cause);
+         }
+         responseValues.put(address, ((SuccessfulResponse) response).getResponseValue());
+      }
+
+      responseValues.put(transport.getAddress(), ((SuccessfulResponse) localResponse).getResponseValue());
+
+      return responseValues;
    }
 
    private int getGlobalTimeout() {
