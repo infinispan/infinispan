@@ -260,6 +260,10 @@ public class TransactionConfiguration {
     * that has been started by Infinispan as a result of enabling autoCommit,
     * to commit in a single phase. So only 1 RPC instead of 2RPCs as in the
     * case of a full 2 Phase Commit (2PC).
+    * <p/>
+    * <b>N.B.</b> this option should NOT be used when modifying the
+    * same key from multiple transactions as 1PC does not offer any consistency
+    * guarantees under concurrent access.
     */
    public boolean use1PcForAutoCommitTransactions() {
       return use1PcForAutoCommitTransactions;

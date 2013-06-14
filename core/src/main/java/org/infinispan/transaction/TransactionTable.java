@@ -354,8 +354,9 @@ public class TransactionTable {
    /**
     * Removes the {@link RemoteTransaction} corresponding to the given tx.
     */
-   public void remoteTransactionCommitted(GlobalTransaction gtx) {
-      if (Configurations.isSecondPhaseAsync(configuration) || configuration.transaction().transactionProtocol().isTotalOrder()) {
+   public void remoteTransactionCommitted(GlobalTransaction gtx, boolean onePc) {
+      boolean optimisticWih1Pc = onePc && (configuration.transaction().lockingMode() == LockingMode.OPTIMISTIC);
+      if (Configurations.isSecondPhaseAsync(configuration) || configuration.transaction().transactionProtocol().isTotalOrder() || optimisticWih1Pc) {
          removeRemoteTransaction(gtx);
       }
    }

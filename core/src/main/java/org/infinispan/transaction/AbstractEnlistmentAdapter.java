@@ -32,11 +32,12 @@ public abstract class AbstractEnlistmentAdapter {
    private final boolean isSecondPhaseAsync;
    private final boolean isPessimisticLocking;
    private final boolean isTotalOrder;
+   protected final TransactionCoordinator txCoordinator;
 
    public AbstractEnlistmentAdapter(CacheTransaction cacheTransaction,
             CommandsFactory commandsFactory, RpcManager rpcManager,
             TransactionTable txTable, ClusteringDependentLogic clusteringLogic,
-            Configuration configuration) {
+            Configuration configuration, TransactionCoordinator txCoordinator) {
       this.commandsFactory = commandsFactory;
       this.rpcManager = rpcManager;
       this.txTable = txTable;
@@ -45,11 +46,12 @@ public abstract class AbstractEnlistmentAdapter {
       this.isPessimisticLocking = configuration.transaction().lockingMode() == LockingMode.PESSIMISTIC;
       this.isTotalOrder = configuration.transaction().transactionProtocol().isTotalOrder();
       hashCode = preComputeHashCode(cacheTransaction);
+      this.txCoordinator = txCoordinator;
    }
 
    public AbstractEnlistmentAdapter(CommandsFactory commandsFactory,
             RpcManager rpcManager, TransactionTable txTable,
-            ClusteringDependentLogic clusteringLogic, Configuration configuration) {
+            ClusteringDependentLogic clusteringLogic, Configuration configuration, TransactionCoordinator txCoordinator) {
       this.commandsFactory = commandsFactory;
       this.rpcManager = rpcManager;
       this.txTable = txTable;
@@ -58,11 +60,15 @@ public abstract class AbstractEnlistmentAdapter {
       this.isPessimisticLocking = configuration.transaction().lockingMode() == LockingMode.PESSIMISTIC;
       this.isTotalOrder = configuration.transaction().transactionProtocol().isTotalOrder();
       hashCode = 31;
+      this.txCoordinator = txCoordinator;
    }
 
-   protected final void releaseLocksForCompletedTransaction(LocalTransaction localTransaction) {
+   protected final void releaseLocksForCompletedTransaction(LocalTransaction localTransaction, boolean committedInOnePhase) {
       final GlobalTransaction gtx = localTransaction.getGlobalTransaction();
       txTable.removeLocalTransaction(localTransaction);
+      log.tracef("Committed in onePhase? %s isOptimistic? %s", committedInOnePhase, isOptimisticCache());
+      if (committedInOnePhase && isOptimisticCache())
+         return;
       if (isClustered()) {
          removeTransactionInfoRemotely(localTransaction, gtx);
       }
@@ -99,5 +105,10 @@ public abstract class AbstractEnlistmentAdapter {
 
    private boolean isClustered() {
       return rpcManager != null;
+   }
+
+   private boolean isOptimisticCache() {
+      //a transactional cache that is neither total order nor pessimistic must be optimistic.
+      return !isPessimisticLocking && !isTotalOrder;
    }
 }

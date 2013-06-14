@@ -141,7 +141,7 @@ public class TotalOrderInterceptor extends CommandInterceptor {
          if (state != null && state.isFinished()) {
             totalOrderManager.release(state);
             if (commit) {
-               transactionTable.remoteTransactionCommitted(command.getGlobalTransaction());
+               transactionTable.remoteTransactionCommitted(command.getGlobalTransaction(), false);
             } else {
                transactionTable.remoteTransactionRollback(command.getGlobalTransaction());
             }
