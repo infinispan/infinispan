@@ -23,12 +23,16 @@
 
 package org.infinispan.util.concurrent.jdk8backported;
 
+import org.infinispan.util.AnyEquivalence;
 import org.infinispan.util.ByteArrayEquivalence;
 import org.infinispan.util.Equivalence;
 import org.infinispan.util.concurrent.BoundedConcurrentHashMapTest;
+import org.infinispan.util.logging.Log;
+import org.infinispan.util.logging.LogFactory;
 import org.testng.annotations.Test;
 
 import java.util.Arrays;
+import java.util.Random;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 
@@ -46,6 +50,8 @@ import static org.testng.AssertJUnit.*;
  */
 @Test(groups = "functional", testName = "util.concurrent.jdk8backported.EquivalentConcurrentHashMapV8Test")
 public class EquivalentConcurrentHashMapV8Test extends BoundedConcurrentHashMapTest {
+
+   private static final Log log = LogFactory.getLog(EquivalentConcurrentHashMapV8Test.class);
 
    public void testByteArrayComputeIfAbsent() {
       byteArrayComputeIfAbsent(createComparingConcurrentMap());
@@ -84,6 +90,50 @@ public class EquivalentConcurrentHashMapV8Test extends BoundedConcurrentHashMapT
                "Expected key=%s to return value=%s, instead returned %s", str(key), str(expected), str(value)),
                Arrays.equals(expected, value));
       }
+   }
+
+   public void testTreeHashBinNotLost() {
+      EquivalentConcurrentHashMapV8<Object, KeyHolder<?>> map =
+            new EquivalentConcurrentHashMapV8<Object, KeyHolder<?>>(
+                  new EvilKeyEquivalence(), AnyEquivalence.<KeyHolder<?>>getInstance());
+
+      final long seed = 1370014958369218000L;
+      System.out.println("SEED: " + seed);
+      final Random random = new Random(seed);
+
+      final int ENTRIES = 10000;
+      final EvilKey evilKey = new EvilKey("6137");
+      for(int i = 0; i < ENTRIES; i++) {
+         final Object o;
+         switch(i % 4) {
+            case 0:
+               final int hashCode = random.nextInt();
+               o = new Object() {
+                  @Override
+                  public int hashCode() {
+                     return hashCode;
+                  }
+               };
+               break;
+            case 1:
+               o = new EvilKey(Integer.toString(i));
+               break;
+            default:
+               o = new EvilComparableKey(Integer.toString(i));
+
+         }
+         map.put(o, new KeyHolder<Object>(o));
+      }
+
+      log.info(map.get(evilKey));
+      int lost = 0;
+      for (Object o : map.keySet()) {
+         final boolean b = map.get(o) == null;
+         if(b) ++lost;
+         assert !b : o;
+         assert map.containsKey(o) : o;
+      }
+      log.info("Lost " + lost + " entries");
    }
 
    private void byteArrayComputeIfAbsent(
@@ -196,6 +246,81 @@ public class EquivalentConcurrentHashMapV8Test extends BoundedConcurrentHashMapT
       @Override
       public int compare(byte[] obj, byte[] otherObj) {
          return ByteArrayEquivalence.INSTANCE.compare(obj, otherObj);
+      }
+
+   }
+
+   private static class KeyHolder<K> {
+      final K key;
+
+      KeyHolder(final K key) {
+         this.key = key;
+      }
+   }
+
+   private static class EvilKey {
+      final String value;
+
+      EvilKey(final String value) {
+         this.value = value;
+      }
+
+      @Override
+      public int hashCode() {
+         return this.value.hashCode() & 1;
+      }
+
+      @Override
+      public boolean equals(final Object obj) {
+         return obj != null && obj.getClass() == this.getClass() && ((EvilKey)obj).value.equals(value);
+      }
+
+      @Override
+      public String toString() {
+         return this.getClass().getSimpleName() + " ( \"" + value + "\" )";
+      }
+
+   }
+
+   private static class EvilComparableKey extends EvilKey implements Comparable<EvilComparableKey> {
+
+      EvilComparableKey(final String value) {
+         super(value);
+      }
+
+      @Override
+      public int compareTo(final EvilComparableKey o) {
+         return value.compareTo(o != null ? o.value : null);
+      }
+
+   }
+
+   private static class EvilKeyEquivalence implements Equivalence<Object> {
+
+      @Override
+      public int hashCode(Object obj) {
+         return obj != null ? obj.hashCode() : 0;
+      }
+
+      @Override
+      public boolean equals(Object obj, Object otherObj) {
+         return obj != null && obj.equals(otherObj);
+      }
+
+      @Override
+      public String toString(Object obj) {
+         return obj.toString();
+      }
+
+      @Override
+      public boolean isComparable(Object obj) {
+         return obj instanceof EvilComparableKey;
+      }
+
+      @Override
+      public int compare(Object obj, Object otherObj) {
+         return obj instanceof EvilComparableKey && otherObj instanceof EvilComparableKey
+               ? ((EvilComparableKey) obj).compareTo((EvilComparableKey) otherObj) : 0;
       }
 
    }
