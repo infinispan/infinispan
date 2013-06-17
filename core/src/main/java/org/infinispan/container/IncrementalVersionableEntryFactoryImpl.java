@@ -1,11 +1,14 @@
 package org.infinispan.container;
 
+import org.infinispan.container.versioning.VersionGenerator;
+import org.infinispan.context.InvocationContext;
+import org.infinispan.context.impl.TxInvocationContext;
+import org.infinispan.factories.annotations.Inject;
+import org.infinispan.metadata.EmbeddedMetadata;
 import org.infinispan.metadata.Metadata;
 import org.infinispan.container.entries.CacheEntry;
 import org.infinispan.container.entries.ClusteredRepeatableReadEntry;
 import org.infinispan.container.entries.MVCCEntry;
-import org.infinispan.container.entries.NullMarkerEntry;
-import org.infinispan.container.entries.NullMarkerEntryForRemoval;
 import org.infinispan.factories.annotations.Start;
 import org.infinispan.metadata.Metadatas;
 
@@ -18,15 +21,22 @@ import org.infinispan.metadata.Metadatas;
  */
 public class IncrementalVersionableEntryFactoryImpl extends EntryFactoryImpl {
 
+   private VersionGenerator versionGenerator;
+
    @Start (priority = 9)
    public void setWriteSkewCheckFlag() {
       localModeWriteSkewCheck = false;
       useRepeatableRead = true;
    }
 
+   @Inject
+   public void injectVersionGenerator(VersionGenerator versionGenerator) {
+      this.versionGenerator = versionGenerator;
+   }
+
    @Override
-   protected MVCCEntry createWrappedEntry(Object key, CacheEntry cacheEntry,
-         Metadata providedMetadata, boolean isForInsert, boolean forRemoval) {
+   protected MVCCEntry createWrappedEntry(Object key, CacheEntry cacheEntry, InvocationContext context,
+                                          Metadata providedMetadata, boolean isForInsert, boolean forRemoval, boolean skipRead) {
       Metadata metadata;
       Object value;
       if (cacheEntry != null) {
@@ -39,16 +49,23 @@ public class IncrementalVersionableEntryFactoryImpl extends EntryFactoryImpl {
          } else {
             metadata = providedMetadata;
          }
+         if (context.isOriginLocal() && context.isInTxScope()) {
+            ((TxInvocationContext) context).getCacheTransaction().addVersionRead(key, skipRead ? null : metadata.version());
+         }
       } else {
          value = null;
-         metadata = providedMetadata;
+         metadata = providedMetadata == null ? new EmbeddedMetadata.Builder().version(versionGenerator.nonExistingVersion()).build()
+               : providedMetadata;
+         if (context.isOriginLocal() && context.isInTxScope()) {
+            ((TxInvocationContext) context).getCacheTransaction().addVersionRead(key, skipRead ? null : versionGenerator.nonExistingVersion());
+         }
       }
 
-      if (value == null && !isForInsert)
-         return forRemoval ? new NullMarkerEntryForRemoval(key, metadata)
-               : NullMarkerEntry.getInstance();
-
-      return new ClusteredRepeatableReadEntry(key, value, metadata);
+      MVCCEntry entry = new ClusteredRepeatableReadEntry(key, value, metadata);
+      if (forRemoval) {
+         entry.setRemoved(true);
+      }
+      return entry;
    }
 
 }

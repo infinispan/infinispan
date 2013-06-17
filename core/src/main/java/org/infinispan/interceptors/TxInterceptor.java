@@ -22,6 +22,7 @@ import org.infinispan.commands.write.RemoveCommand;
 import org.infinispan.commands.write.ReplaceCommand;
 import org.infinispan.commands.write.WriteCommand;
 import org.infinispan.configuration.cache.Configuration;
+import org.infinispan.configuration.cache.VersioningScheme;
 import org.infinispan.context.Flag;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.context.impl.LocalTxInvocationContext;
@@ -43,6 +44,7 @@ import org.infinispan.transaction.TransactionTable;
 import org.infinispan.transaction.xa.GlobalTransaction;
 import org.infinispan.transaction.xa.recovery.RecoverableTransactionIdentifier;
 import org.infinispan.transaction.xa.recovery.RecoveryManager;
+import org.infinispan.util.concurrent.IsolationLevel;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
@@ -71,6 +73,7 @@ public class TxInterceptor extends CommandInterceptor {
    private RecoveryManager recoveryManager;
    private boolean isTotalOrder;
    private boolean useOnePhaseForAutoCommitTx;
+   private boolean useWriteSkew;
 
    @Override
    protected Log getLog() {
@@ -88,6 +91,8 @@ public class TxInterceptor extends CommandInterceptor {
       setStatisticsEnabled(cacheConfiguration.jmxStatistics().enabled());
       this.isTotalOrder = c.transaction().transactionProtocol().isTotalOrder();
       useOnePhaseForAutoCommitTx = cacheConfiguration.transaction().use1PcForAutoCommitTransactions();
+      this.useWriteSkew = c.locking().isolationLevel() == IsolationLevel.REPEATABLE_READ && c.versioning().enabled() &&
+            c.versioning().scheme() == VersioningScheme.SIMPLE;
    }
 
    @Override
@@ -249,7 +254,10 @@ public class TxInterceptor extends CommandInterceptor {
          }
          throw throwable;
       }
-      if (command.isSuccessful() && localTransaction != null) localTransaction.addModification(command);
+      //for Repeatable Read + Write Skew, all modifications should be add in order to perform a correct write skew validation
+      if (localTransaction != null && (command.isSuccessful() || useWriteSkew)) {
+         localTransaction.addModification(command);
+      }
       return rv;
    }
 

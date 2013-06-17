@@ -105,4 +105,6 @@ public interface Ids extends org.infinispan.commons.marshall.Ids {
    int NUMERIC_VERSION = 99;
    int SCOPED_KEY = 100;
 
+   int NON_EXISTING_VERSION = 101;
+
 }

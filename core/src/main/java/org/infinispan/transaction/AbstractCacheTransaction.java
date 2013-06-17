@@ -16,6 +16,7 @@ import org.infinispan.commons.util.InfinispanCollections;
 import org.infinispan.container.entries.CacheEntry;
 import org.infinispan.container.versioning.EntryVersion;
 import org.infinispan.container.versioning.EntryVersionsMap;
+import org.infinispan.container.versioning.IncrementableEntryVersion;
 import org.infinispan.context.Flag;
 import org.infinispan.transaction.xa.CacheTransaction;
 import org.infinispan.transaction.xa.GlobalTransaction;
@@ -59,6 +60,7 @@ public abstract class AbstractCacheTransaction implements CacheTransaction {
    protected final int topologyId;
 
    private EntryVersionsMap updatedEntryVersions;
+   private EntryVersionsMap versionsSeenMap;
 
    private Map<Object, EntryVersion> lookedUpRemoteVersions;
 
@@ -297,5 +299,41 @@ public abstract class AbstractCacheTransaction implements CacheTransaction {
    @Override
    public boolean keyRead(Object key) {
       return false;
+   }
+
+   @Override
+   public void addVersionRead(Object key, EntryVersion version) {
+      if (version == null) {
+         return;
+      }
+      if (versionsSeenMap == null) {
+         versionsSeenMap = new EntryVersionsMap();
+      }
+      if (!versionsSeenMap.containsKey(key)) {
+         if (log.isTraceEnabled()) {
+            log.tracef("Transaction %s read %s with version %s", getGlobalTransaction().globalId(), key, version);
+         }
+         versionsSeenMap.put(key, (IncrementableEntryVersion) version);
+      }
+   }
+
+   @Override
+   public void replaceVersionRead(Object key, EntryVersion version) {
+      if (version == null) {
+         return;
+      }
+      if (versionsSeenMap == null) {
+         versionsSeenMap = new EntryVersionsMap();
+      }
+      EntryVersion oldVersion = versionsSeenMap.put(key, (IncrementableEntryVersion) version);
+      if (log.isTraceEnabled()) {
+         log.tracef("Transaction %s replaced version for key %s. old=%s, new=%s", getGlobalTransaction().globalId(), key,
+                    oldVersion, version);
+      }
+   }
+
+   @Override
+   public EntryVersionsMap getVersionsRead() {
+      return versionsSeenMap == null ? new EntryVersionsMap() : versionsSeenMap;
    }
 }

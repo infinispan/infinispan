@@ -8,8 +8,7 @@ import org.testng.annotations.Test;
  * @author Mircea Markus
  * @since 5.2
  */
-@Test (groups = "functional", testName = "api.ConditionalOperationsConcurrentWriteSkewTest", enabled = false,
-       description = "https://issues.jboss.org/browse/ISPN-2840")
+@Test (groups = "functional", testName = "api.ConditionalOperationsConcurrentWriteSkewTest")
 public class ConditionalOperationsConcurrentWriteSkewTest extends ConditionalOperationsConcurrentTest {
 
    public ConditionalOperationsConcurrentWriteSkewTest() {
