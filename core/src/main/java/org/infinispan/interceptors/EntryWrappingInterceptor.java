@@ -23,7 +23,6 @@ import org.infinispan.metadata.Metadata;
 import org.infinispan.commands.AbstractVisitor;
 import org.infinispan.commands.CommandsFactory;
 import org.infinispan.commands.FlagAffectedCommand;
-import org.infinispan.commands.VisitableCommand;
 import org.infinispan.commands.read.GetKeyValueCommand;
 import org.infinispan.commands.tx.CommitCommand;
 import org.infinispan.commands.tx.PrepareCommand;
@@ -114,7 +113,6 @@ public class EntryWrappingInterceptor extends CommandInterceptor {
    @Override
    public final Object visitGetKeyValueCommand(InvocationContext ctx, GetKeyValueCommand command) throws Throwable {
       try {
-         checkIfKeyRead(ctx, command.getKey(), command);
          entryFactory.wrapEntryForReading(ctx, command.getKey());
          return invokeNextInterceptor(ctx, command);
       } finally {
@@ -128,7 +126,7 @@ public class EntryWrappingInterceptor extends CommandInterceptor {
    public final Object visitInvalidateCommand(InvocationContext ctx, InvalidateCommand command) throws Throwable {
       if (command.getKeys() != null) {
          for (Object key : command.getKeys()) {
-            entryFactory.wrapEntryForRemove(ctx, key);
+            entryFactory.wrapEntryForRemove(ctx, key, false);
          }
       }
       return invokeNextAndApplyChanges(ctx, command, null);
@@ -144,7 +142,7 @@ public class EntryWrappingInterceptor extends CommandInterceptor {
    @Override
    public Object visitInvalidateL1Command(InvocationContext ctx, InvalidateL1Command command) throws Throwable {
       for (Object key : command.getKeys()) {
-        entryFactory.wrapEntryForRemove(ctx, key);
+        entryFactory.wrapEntryForRemove(ctx, key, false);
         if (trace)
            log.tracef("Entry to be removed: %s", ctx.getLookedUpEntries());
       }
@@ -159,9 +157,9 @@ public class EntryWrappingInterceptor extends CommandInterceptor {
 
    private void wrapEntryForPutIfNeeded(InvocationContext ctx, PutKeyValueCommand command) throws Throwable {
       if (shouldWrap(command.getKey(), ctx, command)) {
-         entryFactory.wrapEntryForPut(ctx, command.getKey(), null, !command.isPutIfAbsent(), command);
+         entryFactory.wrapEntryForPut(ctx, command.getKey(), null, !command.isPutIfAbsent(), command,
+                                      command.hasFlag(Flag.IGNORE_RETURN_VALUES) && !command.isConditional());
       }
-      checkIfKeyRead(ctx, command.getKey(), command);
    }
 
    private boolean shouldWrap(Object key, InvocationContext ctx, FlagAffectedCommand command) {
@@ -197,9 +195,9 @@ public class EntryWrappingInterceptor extends CommandInterceptor {
    @Override
    public final Object visitRemoveCommand(InvocationContext ctx, RemoveCommand command) throws Throwable {
       if (shouldWrap(command.getKey(), ctx, command)) {
-         entryFactory.wrapEntryForRemove(ctx, command.getKey());
+         entryFactory.wrapEntryForRemove(ctx, command.getKey(),
+                                         command.hasFlag(Flag.IGNORE_RETURN_VALUES) && !command.isConditional());
       }
-      checkIfKeyRead(ctx, command.getKey(), command);
       return invokeNextAndApplyChanges(ctx, command, null);
    }
 
@@ -213,14 +211,14 @@ public class EntryWrappingInterceptor extends CommandInterceptor {
       if (shouldWrap(command.getKey(), ctx, command)) {
          entryFactory.wrapEntryForReplace(ctx, command);
       }
-      checkIfKeyRead(ctx, command.getKey(), command);
    }
 
    @Override
    public Object visitPutMapCommand(InvocationContext ctx, PutMapCommand command) throws Throwable {
       for (Object key : command.getMap().keySet()) {
          if (shouldWrap(key, ctx, command)) {
-            entryFactory.wrapEntryForPut(ctx, key, null, true, command);
+            //the put map never reads the keys
+            entryFactory.wrapEntryForPut(ctx, key, null, true, command, true);
          }
       }
       return invokeNextAndApplyChanges(ctx, command, command.getMetadata());
@@ -320,7 +318,7 @@ public class EntryWrappingInterceptor extends CommandInterceptor {
          for (Map.Entry<Object, Object> e : command.getMap().entrySet()) {
             Object key = e.getKey();
             if (cdl.localNodeIsOwner(key)) {
-               entryFactory.wrapEntryForPut(ctx, key, null, true, command);
+               entryFactory.wrapEntryForPut(ctx, key, null, true, command, false);
                newMap.put(key, e.getValue());
             }
          }
@@ -337,7 +335,7 @@ public class EntryWrappingInterceptor extends CommandInterceptor {
          if (command.getKeys() != null) {
             for (Object key : command.getKeys()) {
                if (cdl.localNodeIsOwner(key)) {
-                  entryFactory.wrapEntryForRemove(ctx, key);
+                  entryFactory.wrapEntryForRemove(ctx, key, false);
                   invokeNextInterceptor(ctx, command);
                }
             }
@@ -348,7 +346,7 @@ public class EntryWrappingInterceptor extends CommandInterceptor {
       @Override
       public Object visitRemoveCommand(InvocationContext ctx, RemoveCommand command) throws Throwable {
          if (cdl.localNodeIsOwner(command.getKey())) {
-            entryFactory.wrapEntryForRemove(ctx, command.getKey());
+            entryFactory.wrapEntryForRemove(ctx, command.getKey(), false);
             invokeNextInterceptor(ctx, command);
          }
          return null;
@@ -357,7 +355,7 @@ public class EntryWrappingInterceptor extends CommandInterceptor {
       @Override
       public Object visitPutKeyValueCommand(InvocationContext ctx, PutKeyValueCommand command) throws Throwable {
          if (cdl.localNodeIsOwner(command.getKey())) {
-            entryFactory.wrapEntryForPut(ctx, command.getKey(), null, !command.isPutIfAbsent(), command);
+            entryFactory.wrapEntryForPut(ctx, command.getKey(), null, !command.isPutIfAbsent(), command, false);
             invokeNextInterceptor(ctx, command);
          }
          return null;
@@ -378,7 +376,7 @@ public class EntryWrappingInterceptor extends CommandInterceptor {
             if (command.isIgnorePreviousValue()) {
                //wrap it for put, as the previous value might not be present by now (e.g. might have been deleted)
                // but we still need to apply the new value.
-               entryFactory.wrapEntryForPut(ctx, command.getKey(), null, false, command);
+               entryFactory.wrapEntryForPut(ctx, command.getKey(), null, false, command, false);
             } else  {
                entryFactory.wrapEntryForReplace(ctx, command);
             }
@@ -386,18 +384,6 @@ public class EntryWrappingInterceptor extends CommandInterceptor {
          }
          return null;
       }
-   }
-
-   /**
-    * invoked when a command that may return a value to the application, it has the logic of keep track of the keys read
-    * by the transaction. This information is later used to perform the write skew check.
-    * 
-    * @param context the invocation context
-    * @param key     the key accessed
-    * @param command the visitable command (can be a read or write command)
-    */
-   protected void checkIfKeyRead(InvocationContext context, Object key, VisitableCommand command) {
-      //no-op, it is only needed to check the write skew
    }
 
    private boolean commitEntryIfNeeded(InvocationContext ctx, FlagAffectedCommand command,

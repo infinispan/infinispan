@@ -22,9 +22,7 @@ package org.infinispan.transaction;
 import org.infinispan.commands.tx.VersionedPrepareCommand;
 import org.infinispan.commands.write.WriteCommand;
 import org.infinispan.container.DataContainer;
-import org.infinispan.container.entries.CacheEntry;
 import org.infinispan.container.entries.ClusteredRepeatableReadEntry;
-import org.infinispan.container.versioning.EntryVersion;
 import org.infinispan.container.versioning.EntryVersionsMap;
 import org.infinispan.container.versioning.IncrementableEntryVersion;
 import org.infinispan.container.versioning.VersionGenerator;
@@ -40,22 +38,6 @@ import org.infinispan.transaction.xa.CacheTransaction;
  * @since 5.1
  */
 public class WriteSkewHelper {
-   public static void setVersionsSeenOnPrepareCommand(VersionedPrepareCommand command, TxInvocationContext context) {
-      // Build a map of keys to versions as they were seen by the transaction originator's transaction context
-      EntryVersionsMap vs = new EntryVersionsMap();
-      for (WriteCommand wc : command.getModifications()) {
-         for (Object k : wc.getAffectedKeys()) {
-            CacheEntry entry = context.lookupEntry(k);
-            // the entry might be null if an attempt to lock the key was done and the actual value for this key is missing from the data container
-            if (entry != null) {
-               vs.put(k, (IncrementableEntryVersion) entry.getMetadata().version());
-            }
-         }
-      }
-
-      // Make sure this version map is attached to the prepare command so that lock owners can perform write skew checks
-      command.setVersionsSeen(vs);
-   }
 
    public static void readVersionsFromResponse(Response r, CacheTransaction ct) {
       if (r != null && r.isSuccessful()) {
@@ -76,20 +58,7 @@ public class WriteSkewHelper {
             if (ksl.performCheckOnKey(k)) {
                ClusteredRepeatableReadEntry entry = (ClusteredRepeatableReadEntry) context.lookupEntry(k);
 
-               if (entry == null) {
-                  continue;
-               }
-
-               if (!context.isOriginLocal()) {
-                  // What version did the transaction originator see??
-                  EntryVersion versionSeen = prepareCommand.getVersionsSeen().get(k);
-
-                  if (versionSeen != null) {
-                     entry.setVersion(versionSeen);
-                  }
-               }
-
-               if (entry.performWriteSkewCheck(dataContainer, context, c.wasPreviousRead())) {
+               if (entry.performWriteSkewCheck(dataContainer, context, prepareCommand.getVersionsSeen().get(k))) {
                   IncrementableEntryVersion newVersion = entry.isCreated()
                         ? versionGenerator.generateNew()
                         : versionGenerator.increment((IncrementableEntryVersion) entry.getMetadata().version());
@@ -114,15 +83,15 @@ public class WriteSkewHelper {
             if (ksl.performCheckOnKey(k)) {
                ClusteredRepeatableReadEntry entry = (ClusteredRepeatableReadEntry) context.lookupEntry(k);
 
-               if (entry == null) {
+               /*if (entry == null) {
                   continue;
                }
 
                // What version did the transaction originator see??
                EntryVersion versionSeen = prepareCommand.getVersionsSeen().get(k);
-               entry.setVersion(versionSeen);
+               entry.setVersion(versionSeen);*/
 
-               if (entry.performWriteSkewCheck(dataContainer, context, c.wasPreviousRead())) {
+               if (entry.performWriteSkewCheck(dataContainer, context, prepareCommand.getVersionsSeen().get(k))) {
                   //in total order, it does not care about the version returned. It just need the keys validated
                   uv.put(k, null);
                } else {

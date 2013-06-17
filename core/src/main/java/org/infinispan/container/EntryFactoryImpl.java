@@ -23,6 +23,7 @@
 
 package org.infinispan.container;
 
+import org.infinispan.configuration.cache.VersioningScheme;
 import org.infinispan.metadata.Metadata;
 import org.infinispan.atomic.Delta;
 import org.infinispan.atomic.DeltaAware;
@@ -61,6 +62,7 @@ public class EntryFactoryImpl implements EntryFactory {
    protected boolean useRepeatableRead;
    private DataContainer container;
    protected boolean localModeWriteSkewCheck;
+   protected boolean clusterModeWriteSkewCheck;
    private Configuration configuration;
    private CacheNotifier notifier;
 
@@ -75,6 +77,9 @@ public class EntryFactoryImpl implements EntryFactory {
    public void init() {
       useRepeatableRead = configuration.locking().isolationLevel() == IsolationLevel.REPEATABLE_READ;
       localModeWriteSkewCheck = configuration.locking().writeSkewCheck();
+      clusterModeWriteSkewCheck = useRepeatableRead && configuration.locking().writeSkewCheck() &&
+            configuration.clustering().cacheMode().isClustered() && configuration.versioning().scheme() == VersioningScheme.SIMPLE &&
+            configuration.versioning().enabled();
    }
 
    @Override
@@ -87,9 +92,9 @@ public class EntryFactoryImpl implements EntryFactory {
          if (useRepeatableRead) {
             MVCCEntry mvccEntry;
             if (cacheEntry == null) {
-               mvccEntry = createWrappedEntry(key, null, null, false, false);
+               mvccEntry = createWrappedEntry(key, null, ctx, null, false, false, false);
             } else {
-               mvccEntry = createWrappedEntry(key, cacheEntry, null, false, false);
+               mvccEntry = createWrappedEntry(key, cacheEntry, ctx, null, false, false, false);
                // If the original entry has changeable state, copy state flags to the new MVCC entry.
                if (cacheEntry instanceof StateChangingEntry && mvccEntry != null)
                   mvccEntry.copyStateFlagsFrom((StateChangingEntry) cacheEntry);
@@ -107,13 +112,13 @@ public class EntryFactoryImpl implements EntryFactory {
 
    @Override
    public final  MVCCEntry wrapEntryForClear(InvocationContext ctx, Object key) throws InterruptedException {
-      return wrapEntry(ctx, key, null);
+      return wrapEntry(ctx, key, null, true);
    }
 
    @Override
    public final  MVCCEntry wrapEntryForReplace(InvocationContext ctx, ReplaceCommand cmd) throws InterruptedException {
       Object key = cmd.getKey();
-      MVCCEntry mvccEntry = wrapEntry(ctx, key, cmd.getMetadata());
+      MVCCEntry mvccEntry = wrapEntry(ctx, key, cmd.getMetadata(), false);
       if (mvccEntry == null) {
          // make sure we record this! Null value since this is a forced lock on the key
          ctx.putLookedUpEntry(key, null);
@@ -122,19 +127,19 @@ public class EntryFactoryImpl implements EntryFactory {
    }
 
    @Override
-   public final  MVCCEntry wrapEntryForRemove(InvocationContext ctx, Object key) throws InterruptedException {
+   public final  MVCCEntry wrapEntryForRemove(InvocationContext ctx, Object key, boolean skipRead) throws InterruptedException {
       CacheEntry cacheEntry = getFromContext(ctx, key);
       MVCCEntry mvccEntry = null;
       if (cacheEntry != null) {
          if (cacheEntry instanceof MVCCEntry && !(cacheEntry instanceof NullMarkerEntry)) {
             mvccEntry = (MVCCEntry) cacheEntry;
          } else {
-            mvccEntry = wrapMvccEntryForRemove(ctx, key, cacheEntry);
+            mvccEntry = wrapMvccEntryForRemove(ctx, key, cacheEntry, true);
          }
       } else {
          InternalCacheEntry ice = getFromContainer(key);
-         if (ice != null) {
-            mvccEntry = wrapInternalCacheEntryForPut(ctx, key, ice, null);
+         if (ice != null || clusterModeWriteSkewCheck) {
+            mvccEntry = wrapInternalCacheEntryForPut(ctx, key, ice, null, skipRead);
             mvccEntry.setRemoved(true);
          }
       }
@@ -149,13 +154,13 @@ public class EntryFactoryImpl implements EntryFactory {
 
    @Override
    public final MVCCEntry wrapEntryForPut(InvocationContext ctx, Object key, InternalCacheEntry icEntry,
-         boolean undeleteIfNeeded, FlagAffectedCommand cmd) throws InterruptedException {
+         boolean undeleteIfNeeded, FlagAffectedCommand cmd, boolean skipRead) throws InterruptedException {
       CacheEntry cacheEntry = getFromContext(ctx, key);
       MVCCEntry mvccEntry;
       if (cacheEntry != null && cacheEntry.isNull()) cacheEntry = null;
       Metadata providedMetadata = cmd.getMetadata();
       if (cacheEntry != null) {
-         mvccEntry = wrapMvccEntryForPut(ctx, key, cacheEntry, providedMetadata);
+         mvccEntry = wrapMvccEntryForPut(ctx, key, cacheEntry, providedMetadata, true);
          mvccEntry.undelete(undeleteIfNeeded);
       } else {
          InternalCacheEntry ice = (icEntry == null ? getFromContainer(key) : icEntry);
@@ -167,8 +172,8 @@ public class EntryFactoryImpl implements EntryFactory {
          }
 
          mvccEntry = ice != null ?
-             wrapInternalCacheEntryForPut(ctx, key, ice, providedMetadata) :
-             newMvccEntryForPut(ctx, key, cmd, providedMetadata);
+             wrapInternalCacheEntryForPut(ctx, key, ice, providedMetadata, skipRead) :
+             newMvccEntryForPut(ctx, key, cmd, providedMetadata, skipRead);
       }
       mvccEntry.copyForUpdate(container, localModeWriteSkewCheck);
       return mvccEntry;
@@ -202,7 +207,7 @@ public class EntryFactoryImpl implements EntryFactory {
          e = createWrappedDeltaEntry(key, (DeltaAware) cacheEntry.getValue(), cacheEntry);
       }
       else if (cacheEntry instanceof InternalCacheEntry) {
-         cacheEntry = wrapInternalCacheEntryForPut(ctx, key, (InternalCacheEntry) cacheEntry, null);
+         cacheEntry = wrapInternalCacheEntryForPut(ctx, key, (InternalCacheEntry) cacheEntry, null, false);
          e = createWrappedDeltaEntry(key, (DeltaAware) cacheEntry.getValue(), cacheEntry);
       }
       else {
@@ -226,29 +231,29 @@ public class EntryFactoryImpl implements EntryFactory {
    }
 
    private MVCCEntry newMvccEntryForPut(
-         InvocationContext ctx, Object key, FlagAffectedCommand cmd, Metadata providedMetadata) {
+         InvocationContext ctx, Object key, FlagAffectedCommand cmd, Metadata providedMetadata, boolean skipRead) {
       MVCCEntry mvccEntry;
       if (trace) log.trace("Creating new entry.");
       notifier.notifyCacheEntryCreated(key, null, true, ctx, cmd);
-      mvccEntry = createWrappedEntry(key, null, providedMetadata, true, false);
+      mvccEntry = createWrappedEntry(key, null, ctx, providedMetadata, true, false, skipRead);
       mvccEntry.setCreated(true);
       ctx.putLookedUpEntry(key, mvccEntry);
       return mvccEntry;
    }
 
-   private MVCCEntry wrapMvccEntryForPut(InvocationContext ctx, Object key, CacheEntry cacheEntry, Metadata providedMetadata) {
+   private MVCCEntry wrapMvccEntryForPut(InvocationContext ctx, Object key, CacheEntry cacheEntry, Metadata providedMetadata, boolean skipRead) {
       if (cacheEntry instanceof MVCCEntry) return (MVCCEntry) cacheEntry;
-      return wrapInternalCacheEntryForPut(ctx, key, (InternalCacheEntry) cacheEntry, providedMetadata);
+      return wrapInternalCacheEntryForPut(ctx, key, (InternalCacheEntry) cacheEntry, providedMetadata, skipRead);
    }
 
-   private MVCCEntry wrapInternalCacheEntryForPut(InvocationContext ctx, Object key, InternalCacheEntry cacheEntry, Metadata providedMetadata) {
-      MVCCEntry mvccEntry = createWrappedEntry(key, cacheEntry, providedMetadata, false, false);
+   private MVCCEntry wrapInternalCacheEntryForPut(InvocationContext ctx, Object key, InternalCacheEntry cacheEntry, Metadata providedMetadata, boolean skipRead) {
+      MVCCEntry mvccEntry = createWrappedEntry(key, cacheEntry, ctx, providedMetadata, false, false, skipRead);
       ctx.putLookedUpEntry(key, mvccEntry);
       return mvccEntry;
    }
 
-   private MVCCEntry wrapMvccEntryForRemove(InvocationContext ctx, Object key, CacheEntry cacheEntry) {
-      MVCCEntry mvccEntry = createWrappedEntry(key, cacheEntry, null, false, true);
+   private MVCCEntry wrapMvccEntryForRemove(InvocationContext ctx, Object key, CacheEntry cacheEntry, boolean skipRead) {
+      MVCCEntry mvccEntry = createWrappedEntry(key, cacheEntry, ctx, null, false, true, skipRead);
       // If the original entry has changeable state, copy state flags to the new MVCC entry.
       if (cacheEntry instanceof StateChangingEntry)
          mvccEntry.copyStateFlagsFrom((StateChangingEntry) cacheEntry);
@@ -257,15 +262,16 @@ public class EntryFactoryImpl implements EntryFactory {
       return mvccEntry;
    }
 
-   private MVCCEntry wrapEntry(InvocationContext ctx, Object key, Metadata providedMetadata) {
+   private MVCCEntry wrapEntry(InvocationContext ctx, Object key, Metadata providedMetadata, boolean skipRead) {
       CacheEntry cacheEntry = getFromContext(ctx, key);
       MVCCEntry mvccEntry = null;
       if (cacheEntry != null) {
-         mvccEntry = wrapMvccEntryForPut(ctx, key, cacheEntry, providedMetadata);
+         //already wrapped. set skip read to true to avoid replace the current version.
+         mvccEntry = wrapMvccEntryForPut(ctx, key, cacheEntry, providedMetadata, true);
       } else {
          InternalCacheEntry ice = getFromContainer(key);
-         if (ice != null) {
-            mvccEntry = wrapInternalCacheEntryForPut(ctx, ice.getKey(), ice, providedMetadata);
+         if (ice != null || clusterModeWriteSkewCheck) {
+            mvccEntry = wrapInternalCacheEntryForPut(ctx, key, ice, providedMetadata, skipRead);
          }
       }
       if (mvccEntry != null)
@@ -273,8 +279,8 @@ public class EntryFactoryImpl implements EntryFactory {
       return mvccEntry;
    }
 
-   protected MVCCEntry createWrappedEntry(Object key, CacheEntry cacheEntry,
-         Metadata providedMetadata, boolean isForInsert, boolean forRemoval) {
+   protected MVCCEntry createWrappedEntry(Object key, CacheEntry cacheEntry, InvocationContext context,
+                                          Metadata providedMetadata, boolean isForInsert, boolean forRemoval, boolean skipRead) {
       Object value = cacheEntry != null ? cacheEntry.getValue() : null;
       Metadata metadata = providedMetadata != null
             ? providedMetadata

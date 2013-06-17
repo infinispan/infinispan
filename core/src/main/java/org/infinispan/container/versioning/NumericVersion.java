@@ -52,7 +52,9 @@ public class NumericVersion implements IncrementableEntryVersion {
 
    @Override
    public InequalVersionComparisonResult compareTo(EntryVersion other) {
-      if (other instanceof NumericVersion) {
+      if (other == NonExistingVersion.INSTANCE) {
+         return InequalVersionComparisonResult.AFTER;
+      } else if (other instanceof NumericVersion) {
          NumericVersion otherVersion = (NumericVersion) other;
          if (version < otherVersion.version)
             return InequalVersionComparisonResult.BEFORE;

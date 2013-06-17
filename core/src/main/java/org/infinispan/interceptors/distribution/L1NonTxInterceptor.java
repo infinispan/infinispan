@@ -45,7 +45,6 @@ import java.util.HashSet;
 import java.util.Set;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
-import java.util.concurrent.TimeUnit;
 
 /**
  * Interceptor that handles L1 logic for non-transactional caches.
@@ -166,7 +165,7 @@ public class L1NonTxInterceptor extends BaseRpcInterceptor {
    private void removeFromL1(InvocationContext ctx, Object key) throws InterruptedException {
       log.tracef("Removing entry from L1 for key %s", key);
       ctx.removeLookedUpEntry(key);
-      entryFactory.wrapEntryForRemove(ctx, key);
+      entryFactory.wrapEntryForRemove(ctx, key, true);
    }
 
    private void processInvalidationResult(InvocationContext ctx, FlagAffectedCommand command, Future<Object> l1InvalidationFuture) throws InterruptedException, ExecutionException {
@@ -191,6 +190,6 @@ public class L1NonTxInterceptor extends BaseRpcInterceptor {
       boolean skipLocking = hasSkipLocking(command);
       long lockTimeout = getLockAcquisitionTimeout(command, skipLocking);
       lockManager.acquireLock(ctx, key, lockTimeout, skipLocking);
-      entryFactory.wrapEntryForPut(ctx, key, ice, false, command);
+      entryFactory.wrapEntryForPut(ctx, key, ice, false, command, true);
    }
 }

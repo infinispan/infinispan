@@ -130,4 +130,6 @@ public interface Ids {
 
    int NUMERIC_VERSION = 99;
 
+   int NON_EXISTING_VERSION = 100;
+
 }

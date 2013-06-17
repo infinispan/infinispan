@@ -61,7 +61,9 @@ public class SimpleClusteredVersionGenerator implements VersionGenerator {
 
    @Override
    public IncrementableEntryVersion increment(IncrementableEntryVersion initialVersion) {
-      if (initialVersion instanceof SimpleClusteredVersion) {
+      if (initialVersion == NonExistingVersion.INSTANCE) {
+         return generateNew();
+      } else if (initialVersion instanceof SimpleClusteredVersion) {
          SimpleClusteredVersion old = (SimpleClusteredVersion) initialVersion;
          return new SimpleClusteredVersion(topologyId, old.version + 1);
       } else {

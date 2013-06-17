@@ -69,8 +69,10 @@ public interface EntryFactory {
    /**
     * Used for wrapping a cache entry for removal. The wrapped entry is added to the
     * supplied InvocationContext.
+    * @param skipRead if {@code true}, it assumes that the key was not read. Only used with Repeatable Read + Write Skew
+    *                 + Versioning + Cluster.
     */
-   MVCCEntry wrapEntryForRemove(InvocationContext ctx, Object key) throws InterruptedException;
+   MVCCEntry wrapEntryForRemove(InvocationContext ctx, Object key, boolean skipRead) throws InterruptedException;
    
    /**
     * Used for wrapping Delta entry to be applied to DeltaAware object stored in cache. The wrapped
@@ -81,7 +83,9 @@ public interface EntryFactory {
    /**
     * Used for wrapping a cache entry for addition to cache. The wrapped entry is added to the
     * supplied InvocationContext.
+    * @param skipRead if {@code true}, it assumes that the key was not read. Only used with Repeatable Read + Write Skew
+    *                 + Versioning + Cluster.
     */
    MVCCEntry wrapEntryForPut(InvocationContext ctx, Object key, InternalCacheEntry ice,
-         boolean undeleteIfNeeded, FlagAffectedCommand cmd) throws InterruptedException;
+         boolean undeleteIfNeeded, FlagAffectedCommand cmd, boolean skipRead) throws InterruptedException;
 }

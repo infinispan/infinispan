@@ -193,7 +193,7 @@ public class CacheLoaderInterceptor extends JmxStatsCommandInterceptor {
                ctx.putLookedUpEntry(key, loaded);
                wrappedEntry = entryFactory.wrapEntryForDelta(ctx, key, ((ApplyDeltaCommand)cmd).getDelta());
             } else {
-               wrappedEntry = entryFactory.wrapEntryForPut(ctx, key, loaded, false, cmd);
+               wrappedEntry = entryFactory.wrapEntryForPut(ctx, key, loaded, false, cmd, false);
             }
             recordLoadedEntry(ctx, key, wrappedEntry, loaded, cmd);
             return true;
