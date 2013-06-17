@@ -37,6 +37,7 @@ import org.infinispan.transaction.xa.GlobalTransaction;
 import org.infinispan.transaction.xa.recovery.RecoveryAwareRemoteTransaction;
 import org.infinispan.transaction.xa.recovery.RecoveryAwareTransaction;
 import org.infinispan.util.TypedProperties;
+import org.infinispan.util.concurrent.TimeoutException;
 import org.jboss.logging.BasicLogger;
 import org.jboss.logging.Cause;
 import org.jboss.logging.LogMessage;
@@ -60,6 +61,7 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
+import java.util.concurrent.CountDownLatch;
 
 import static org.jboss.logging.Logger.Level.*;
 
@@ -897,5 +899,9 @@ public interface Log extends BasicLogger {
 
    @Message(value="Cache is in an invalid state: %s", id = 232)
    IllegalStateException invalidCacheState(String cacheState);
+
+   @Message(value="Waiting on work threads latch failed: %s", id = 233)
+   TimeoutException waitingForWorkerThreadsFailed(CountDownLatch latch);
+
 }
 
