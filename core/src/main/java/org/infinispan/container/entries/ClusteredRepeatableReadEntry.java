@@ -1,5 +1,6 @@
 package org.infinispan.container.entries;
 
+import org.infinispan.container.versioning.VersionGenerator;
 import org.infinispan.metadata.Metadata;
 import org.infinispan.container.DataContainer;
 import org.infinispan.container.entries.versioned.Versioned;
@@ -23,16 +24,28 @@ public class ClusteredRepeatableReadEntry extends RepeatableReadEntry implements
       super(key, value, metadata);
    }
 
-   public boolean performWriteSkewCheck(DataContainer container, TxInvocationContext ctx, boolean previousRead) {
+   public boolean performWriteSkewCheck(DataContainer container, TxInvocationContext ctx, EntryVersion versionSeen,
+                                        VersionGenerator versionGenerator) {
+      if (versionSeen == null) {
+         if (log.isTraceEnabled()) {
+            log.tracef("Perform write skew check for key %s but the key was not read. Skipping check!", key);
+         }
+         //version seen is null when the entry was not read. In this case, the write skew is not needed.
+         return true;
+      }
       EntryVersion prevVersion;
       InternalCacheEntry ice = container.get(key);
-      EntryVersion version = metadata.version();
       if (ice == null) {
-         log.tracef("No entry for key %s found in data container" , key);
+         if (log.isTraceEnabled()) {
+            log.tracef("No entry for key %s found in data container" , key);
+         }
          prevVersion = ctx.getCacheTransaction().getLookedUpRemoteVersion(key);
          if (prevVersion == null) {
-            log.tracef("No looked up remote version for key %s found in context" , key);
-            return version == null;
+            if (log.isTraceEnabled()) {
+               log.tracef("No looked up remote version for key %s found in context" , key);
+            }
+            //in this case, the key does not exist. So, the only result possible is the version seen be the NonExistingVersion
+            return versionGenerator.nonExistingVersion().compareTo(versionSeen) == InequalVersionComparisonResult.EQUAL;
          }
       } else {
          prevVersion = ice.getMetadata().version();
@@ -40,12 +53,16 @@ public class ClusteredRepeatableReadEntry extends RepeatableReadEntry implements
             throw new IllegalStateException("Entries cannot have null versions!");
       }
       if (log.isTraceEnabled()) {
-         log.tracef("Is going to compare versions %s and %s for key %s. Was previously read? %s", prevVersion, version, key, previousRead);
+         log.tracef("Is going to compare versions %s and %s for key %s.", prevVersion, versionSeen, key);
       }
-      // Could be that we didn't do a remote get first ... so we haven't effectively read this entry yet.
-      if (version == null) return !previousRead;
-      log.tracef("Comparing versions %s and %s for key %s: %s", prevVersion, version, key, prevVersion.compareTo(version));
-      return InequalVersionComparisonResult.AFTER != prevVersion.compareTo(version);
+
+      //in this case, the transaction read some value and the data container has a value stored.
+      //version seen and previous version are not null. Simple version comparation.
+      InequalVersionComparisonResult result = prevVersion.compareTo(versionSeen);
+      if (log.isTraceEnabled()) {
+         log.tracef("Comparing versions %s and %s for key %s: %s", prevVersion, versionSeen, key, result);
+      }
+      return InequalVersionComparisonResult.AFTER != result;
    }
 
    // This entry is only used when versioning is enabled, and in these
@@ -63,4 +80,8 @@ public class ClusteredRepeatableReadEntry extends RepeatableReadEntry implements
       metadata = metadata.builder().version(version).build();
    }
 
+   @Override
+   public boolean isNull() {
+      return value == null;
+   }
 }

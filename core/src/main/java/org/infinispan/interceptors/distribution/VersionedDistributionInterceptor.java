@@ -1,7 +1,6 @@
 package org.infinispan.interceptors.distribution;
 
 import org.infinispan.commands.tx.PrepareCommand;
-import org.infinispan.commands.tx.VersionedPrepareCommand;
 import org.infinispan.context.impl.TxInvocationContext;
 import org.infinispan.remoting.responses.Response;
 import org.infinispan.remoting.transport.Address;
@@ -13,7 +12,6 @@ import java.util.Collection;
 import java.util.Map;
 
 import static org.infinispan.transaction.WriteSkewHelper.readVersionsFromResponse;
-import static org.infinispan.transaction.WriteSkewHelper.setVersionsSeenOnPrepareCommand;
 
 /**
  * A version of the {@link TxDistributionInterceptor} that adds logic to handling prepares when entries are versioned.
@@ -32,8 +30,6 @@ public class VersionedDistributionInterceptor extends TxDistributionInterceptor 
 
    @Override
    protected void prepareOnAffectedNodes(TxInvocationContext ctx, PrepareCommand command, Collection<Address> recipients, boolean ignored) {
-      setVersionsSeenOnPrepareCommand((VersionedPrepareCommand) command, ctx);
-
       // Perform the RPC
       try {
          Map<Address, Response> resps = rpcManager.invokeRemotely(recipients, command, rpcManager.getDefaultRpcOptions(true, false));

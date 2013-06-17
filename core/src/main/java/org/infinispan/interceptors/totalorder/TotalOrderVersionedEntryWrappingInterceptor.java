@@ -42,6 +42,7 @@ public class TotalOrderVersionedEntryWrappingInterceptor extends VersionedEntryW
    public final Object visitPrepareCommand(TxInvocationContext ctx, PrepareCommand command) throws Throwable {
 
       if (ctx.isOriginLocal()) {
+         ((VersionedPrepareCommand) command).setVersionsSeen(ctx.getCacheTransaction().getVersionsRead());
          //for local mode keys
          ctx.getCacheTransaction().setUpdatedEntryVersions(EMPTY_VERSION_MAP);
          Object retVal = invokeNextInterceptor(ctx, command);

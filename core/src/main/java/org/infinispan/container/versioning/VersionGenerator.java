@@ -14,4 +14,6 @@ public interface VersionGenerator {
    IncrementableEntryVersion generateNew();
 
    IncrementableEntryVersion increment(IncrementableEntryVersion initialVersion);
+
+   IncrementableEntryVersion nonExistingVersion();
 }

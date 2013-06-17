@@ -99,4 +99,28 @@ public interface CacheTransaction {
    boolean isMarkedForRollback();
 
    void markForRollback(boolean markForRollback);
+
+   /**
+    * Sets the version read for this key. The version is only set at the first time, i.e. multiple invocation of this
+    * method will not change the state.
+    * <p/>
+    * Note: used in Repeatable Read + Write Skew + Clustering + Versioning.
+    */
+   void addVersionRead(Object key, EntryVersion version);
+
+   /**
+    * Sets the version read fr this key, replacing the old version if it exists, i.e each invocation updates the version
+    * of the key. This method is used when a remote get is performed for the key.
+    * <p/>
+    * Note: used in Repeatable Read + Write Skew + Clustering + Versioning.
+    */
+   void replaceVersionRead(Object key, EntryVersion version);
+
+   /**
+    * Note: used in Repeatable Read + Write Skew + Clustering + Versioning.
+    *
+    * @return a non-null map between key and version. The map represents the version read for that key. If no version
+    *         exists, the key has not been read.
+    */
+   EntryVersionsMap getVersionsRead();
 }

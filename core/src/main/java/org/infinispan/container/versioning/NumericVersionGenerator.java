@@ -36,6 +36,7 @@ public class NumericVersionGenerator implements VersionGenerator {
    // TODO: Possibly seed version counter on capped System.currentTimeMillis, to avoid issues with clients holding to versions in between restarts
    final AtomicInteger versionCounter = new AtomicInteger();
    final AtomicLong versionPrefix = new AtomicLong();
+   private static final NumericVersion NON_EXISTING = new NumericVersion(0);
 
    private Cache<?, ?> cache;
    private boolean isClustered;
@@ -86,6 +87,11 @@ public class NumericVersionGenerator implements VersionGenerator {
       }
 
       throw log.unexpectedInitialVersion(initialVersion.getClass().getName());
+   }
+
+   @Override
+   public IncrementableEntryVersion nonExistingVersion() {
+      return NON_EXISTING;
    }
 
    long calculateRank(Address address, List<Address> members, long viewId) {

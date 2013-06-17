@@ -20,6 +20,8 @@ public class SimpleClusteredVersionGenerator implements VersionGenerator {
    // See SimpleClusteredVersion for more details.
    private volatile int topologyId = -1;
 
+   private static final SimpleClusteredVersion NON_EXISTING = new SimpleClusteredVersion(0, 0);
+
    private Cache<?, ?> cache;
 
    @Inject
@@ -48,6 +50,11 @@ public class SimpleClusteredVersionGenerator implements VersionGenerator {
       } else {
          throw new IllegalArgumentException("I only know how to deal with SimpleClusteredVersions, not " + initialVersion.getClass().getName());
       }
+   }
+
+   @Override
+   public IncrementableEntryVersion nonExistingVersion() {
+      return NON_EXISTING;
    }
 
    @Listener

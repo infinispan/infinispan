@@ -104,7 +104,7 @@ public interface ClusteringDependentLogic {
          }
       }
 
-      protected final EntryVersionsMap totalOrderCreateNewVersionsAndCheckForWriteSkews(TxInvocationContext context,
+      protected final EntryVersionsMap totalOrderCreateNewVersionsAndCheckForWriteSkews(VersionGenerator versionGenerator, TxInvocationContext context,
                                                                                         VersionedPrepareCommand prepareCommand,
                                                                                         WriteSkewHelper.KeySpecificLogic keySpecificLogic) {
          if (context.isOriginLocal()) {
@@ -115,7 +115,7 @@ public interface ClusteringDependentLogic {
 
          if (!((TotalOrderPrepareCommand) prepareCommand).skipWriteSkewCheck()) {
             updatedVersionMap = performTotalOrderWriteSkewCheckAndReturnNewVersions(prepareCommand, dataContainer,
-                                                                                    context, keySpecificLogic);
+                                                                                    versionGenerator, context, keySpecificLogic);
          }
 
          for (WriteCommand c : prepareCommand.getModifications()) {
@@ -331,7 +331,7 @@ public interface ClusteringDependentLogic {
       @Override
       public EntryVersionsMap createNewVersionsAndCheckForWriteSkews(VersionGenerator versionGenerator, TxInvocationContext context, VersionedPrepareCommand prepareCommand) {
          if (configuration.transaction().transactionProtocol().isTotalOrder()) {
-            return totalOrderCreateNewVersionsAndCheckForWriteSkews(context, prepareCommand, keySpecificLogic);
+            return totalOrderCreateNewVersionsAndCheckForWriteSkews(versionGenerator, context, prepareCommand, keySpecificLogic);
          } else {
             return super.createNewVersionsAndCheckForWriteSkews(versionGenerator, context, prepareCommand);
          }
@@ -449,7 +449,7 @@ public interface ClusteringDependentLogic {
       @Override
       public EntryVersionsMap createNewVersionsAndCheckForWriteSkews(VersionGenerator versionGenerator, TxInvocationContext context, VersionedPrepareCommand prepareCommand) {
          if (configuration.transaction().transactionProtocol().isTotalOrder()) {
-            return totalOrderCreateNewVersionsAndCheckForWriteSkews(context, prepareCommand, keySpecificLogic);
+            return totalOrderCreateNewVersionsAndCheckForWriteSkews(versionGenerator, context, prepareCommand, keySpecificLogic);
          }
          // Perform a write skew check on mapped entries.
          EntryVersionsMap uv = performWriteSkewCheckAndReturnNewVersions(prepareCommand, dataContainer,
