@@ -243,6 +243,7 @@ def upload_schema(base_dir, version):
   ## now the schema docs
   version_short = get_version_major_minor(version)
   os.chdir("%s/target/site" % base_dir)
+  os.mkdir(version_short)
   os.rename("configdocs", "%s/configdocs" % version_short)
   uploader.upload_rsync(version_short, "infinispan@filemgmt.jboss.org:/docs_htdocs/infinispan")
   os.chdir(base_dir)
