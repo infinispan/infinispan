@@ -35,14 +35,14 @@ import java.io.ByteArrayOutputStream;
 @Immutable
 public class Version {
 
-   private static final String MAJOR = "5";
-   private static final String MINOR = "3";
+   private static final String MAJOR = "6";
+   private static final String MINOR = "0";
    private static final String MICRO = "0";
    private static final String MODIFIER = "SNAPSHOT";
    private static final boolean SNAPSHOT = true;
 
    public static final String VERSION = String.format("%s.%s.%s%s%s", MAJOR, MINOR, MICRO, SNAPSHOT ? "-" : ".", MODIFIER);
-   public static final String CODENAME = "Tactical Nuclear Penguin";
+   public static final String CODENAME = "<TBD>";
    public static final String PROJECT_NAME = "Infinispan";
    public static final byte[] VERSION_ID = readVersionBytes();
    public static final String MAJOR_MINOR = MAJOR + "." + MINOR;
