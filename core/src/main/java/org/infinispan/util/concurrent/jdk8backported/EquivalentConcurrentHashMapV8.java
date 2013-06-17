@@ -22,6 +22,9 @@
  */
 
 // Revision 1.100
+// With added tree node walk up fixes in
+// http://gee.cs.oswego.edu/cgi-bin/viewcvs.cgi/jsr166/src/main/java/util/concurrent/ConcurrentHashMap.java?r1=1.216&r2=1.217
+// Updated revision of CHMv8 coming soon (http://cs.oswego.edu/pipermail/concurrency-interest/2013-June/011395.html)
 
 /*
  * Written by Doug Lea with assistance from members of JCP JSR-166
@@ -866,7 +869,7 @@ public class EquivalentConcurrentHashMapV8<K,V>
                   if ((dir = (c == pc) ? 0 :
                         c.getName().compareTo(pc.getName())) == 0) {
                      TreeNode<V> r = null, pl, pr; // check both sides
-                     if ((pr = p.right) != null && h >= pr.hash &&
+                     if ((pr = p.right) != null &&
                            (r = getTreeNode(h, k, pr, keyEq)) != null)
                         return r;
                      else if ((pl = p.left) != null && h <= pl.hash)
@@ -931,7 +934,7 @@ public class EquivalentConcurrentHashMapV8<K,V>
                   TreeNode<V> s = null, r = null, pr;
                   if ((dir = (c == pc) ? 0 :
                         c.getName().compareTo(pc.getName())) == 0) {
-                     if ((pr = p.right) != null && h >= pr.hash &&
+                     if ((pr = p.right) != null &&
                            (r = getTreeNode(h, k, pr, keyEq)) != null) // EQUIVALENCE_MOD
                         return r;
                      else // continue left
