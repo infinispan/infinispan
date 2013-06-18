@@ -21,6 +21,7 @@ import java.io.Serializable;
  * @author Kevin Pollet <kevin.pollet@serli.com> (C) 2011 SERLI
  */
 @Interceptor
+@CachePut
 public class CachePutInterceptor implements Serializable {
 
    private static final long serialVersionUID = 270924196162168618L;

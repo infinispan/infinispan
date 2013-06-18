@@ -29,6 +29,7 @@ import java.io.Serializable;
  * @author Galder Zamarreño
  */
 @Interceptor
+@CacheRemoveEntry
 public class CacheRemoveEntryInterceptor implements Serializable {
 
    private static final long serialVersionUID = -9079291622309963969L;
