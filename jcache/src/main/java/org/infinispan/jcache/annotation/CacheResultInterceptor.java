@@ -36,6 +36,7 @@ import java.io.Serializable;
  * @author Galder Zamarreño
  */
 @Interceptor
+@CacheResult
 public class CacheResultInterceptor implements Serializable {
 
    private static final long serialVersionUID = 5275055951121834315L;

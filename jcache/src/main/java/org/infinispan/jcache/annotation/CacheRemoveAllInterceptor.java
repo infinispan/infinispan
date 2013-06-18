@@ -26,6 +26,7 @@ import java.io.Serializable;
  * @author Kevin Pollet <kevin.pollet@serli.com> (C) 2011 SERLI
  */
 @Interceptor
+@CacheRemoveAll
 public class CacheRemoveAllInterceptor implements Serializable {
 
    private static final long serialVersionUID = -8763819640664021763L;
