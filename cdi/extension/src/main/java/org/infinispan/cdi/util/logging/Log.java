@@ -26,4 +26,7 @@ public interface Log extends BasicLogger {
    @Message(value = "Configuration for cache '%s' has been defined in cache manager '%s'", id = 17002)
    void cacheConfigurationDefined(String cacheName, EmbeddedCacheManager cacheManager);
 
+   @Message(value = "%s parameter must not be null", id = 17003)
+   IllegalArgumentException parameterMustNotBeNull(String parameterName);
+
 }

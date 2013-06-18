@@ -12,7 +12,7 @@ import javax.inject.Inject;
 import java.lang.annotation.Annotation;
 import java.util.Set;
 
-import static org.jboss.solder.reflection.AnnotationInspector.getMetaAnnotation;
+import static org.infinispan.cdi.util.Reflections.getMetaAnnotation;
 
 /**
  * The {@link RemoteCache} producer.
