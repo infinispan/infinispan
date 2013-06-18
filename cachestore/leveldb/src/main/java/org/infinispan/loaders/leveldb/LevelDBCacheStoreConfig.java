@@ -15,17 +15,23 @@ import org.iq80.leveldb.Options;
 public class LevelDBCacheStoreConfig extends LockSupportCacheStoreConfig {
 	private static final long serialVersionUID = -6138954929695571573L;
 	
+	public static enum ImplementationType {
+	   AUTO, JNI, JAVA
+	}
+	
 	public static final String DEFAULT_LOCATION = "leveldb/data";
 	public static final String DEFAULT_EXPIRED_LOCATION = "leveldb/expired";
 	public static final CompressionType DEFAULT_COMPRESSION_TYPE = CompressionType.NONE;
 	public static final int DEFAULT_EXPIRY_QUEUE_SIZE = 10000;
 	public static final int DEFAULT_CLEAR_THRESHOLD = 10000;
+	public static final ImplementationType DEFAULT_IMPLEMENTATION_TYPE = ImplementationType.AUTO;
 	
 	protected String location = DEFAULT_LOCATION;
 	protected String expiredLocation = DEFAULT_EXPIRED_LOCATION;
 	protected String compressionType = DEFAULT_COMPRESSION_TYPE.toString();
 	protected Integer blockSize;
 	protected Long cacheSize;
+	protected String implementationType = DEFAULT_IMPLEMENTATION_TYPE.toString();
 	
 	/**
      * @configRef desc="Whenever a new entry is stored, an expiry entry is created and added
@@ -95,6 +101,16 @@ public class LevelDBCacheStoreConfig extends LockSupportCacheStoreConfig {
 		setProperty(compressionType, "compressionType", properties);
 		this.compressionType = compressionType;
 	}
+	
+	public String getImplementationType() {
+      return implementationType;
+   }
+
+   public void setImplementationType(String implementationType) {
+      testImmutability("implementationType");
+      setProperty(implementationType, "implementationType", properties);
+      this.implementationType = implementationType;
+   }
 
 	public Integer getBlockSize() {
 		return blockSize;

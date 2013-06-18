@@ -25,6 +25,7 @@ import org.infinispan.configuration.cache.LegacyConfigurationAdaptor;
 import org.infinispan.configuration.cache.LegacyLoaderAdapter;
 import org.infinispan.configuration.cache.SingletonStoreConfiguration;
 import org.infinispan.loaders.leveldb.LevelDBCacheStoreConfig;
+import org.infinispan.loaders.leveldb.LevelDBCacheStoreConfig.ImplementationType;
 import org.infinispan.util.TypedProperties;
 import org.iq80.leveldb.CompressionType;
 
@@ -37,6 +38,7 @@ import org.iq80.leveldb.CompressionType;
 public class LevelDBCacheStoreConfiguration extends AbstractLockSupportStoreConfiguration implements LegacyLoaderAdapter<LevelDBCacheStoreConfig>{
    final private String location;
    final private String expiredLocation;
+   final private ImplementationType implementationType;
    final private CompressionType compressionType;
    final private Integer blockSize;
    final private Long cacheSize;
@@ -46,6 +48,7 @@ public class LevelDBCacheStoreConfiguration extends AbstractLockSupportStoreConf
 	protected LevelDBCacheStoreConfiguration(
 	      String location,
 	      String expiredLocation,
+	      ImplementationType implementationType,
 	      CompressionType compressionType,
 	      Integer blockSize,
 	      Long cacheSize,
@@ -63,6 +66,7 @@ public class LevelDBCacheStoreConfiguration extends AbstractLockSupportStoreConf
 		
 		this.location = location;
 		this.expiredLocation = expiredLocation;
+		this.implementationType = implementationType;
 		this.compressionType = compressionType;
 		this.blockSize = blockSize;
 		this.cacheSize = cacheSize;
@@ -78,6 +82,7 @@ public class LevelDBCacheStoreConfiguration extends AbstractLockSupportStoreConf
 		config.setLocation(location);
 		config.setExpiredLocation(expiredLocation);
 		config.setCompressionType(compressionType.toString());
+		config.setImplementationType(implementationType.toString());
 		config.setBlockSize(blockSize);
 		config.setCacheSize(cacheSize);
 		config.setExpiryQueueSize(expiryQueueSize);
@@ -92,6 +97,10 @@ public class LevelDBCacheStoreConfiguration extends AbstractLockSupportStoreConf
    
    public String expiredLocation() {
       return expiredLocation;
+   }
+   
+   public ImplementationType implementationType() {
+      return implementationType;
    }
    
    public CompressionType compressionType() {

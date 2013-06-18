@@ -162,7 +162,8 @@
       <version.jstl>1.2</version.jstl>
       <version.jta>1.0.0.Final</version.jta>
       <version.junit>4.10</version.junit>
-      <version.leveldb>0.6</version.leveldb>
+      <version.leveldb>0.5</version.leveldb>
+      <version.leveldbjni>1.7</version.leveldbjni>
       <version.log4j>1.2.16</version.log4j>
       <version.lucene.v3>3.6.2</version.lucene.v3>
       <version.lucene.v4>4.3.0</version.lucene.v4>
@@ -850,6 +851,11 @@
             <groupId>org.iq80.leveldb</groupId>
             <artifactId>leveldb</artifactId>
             <version>${version.leveldb}</version>
+         </dependency>
+         <dependency>
+            <groupId>org.fusesource.leveldbjni</groupId>
+            <artifactId>leveldbjni-all</artifactId>
+            <version>${version.leveldbjni}</version>
          </dependency>
       </dependencies>
    </dependencyManagement>

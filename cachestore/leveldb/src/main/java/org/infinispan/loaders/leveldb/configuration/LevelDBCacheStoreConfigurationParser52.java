@@ -24,6 +24,7 @@ import org.infinispan.configuration.parsing.ConfigurationParser;
 import org.infinispan.configuration.parsing.Namespace;
 import org.infinispan.configuration.parsing.ParseUtils;
 import org.infinispan.configuration.parsing.Parser52;
+import org.infinispan.loaders.leveldb.LevelDBCacheStoreConfig.ImplementationType;
 import org.infinispan.util.StringPropertyReplacer;
 import org.iq80.leveldb.CompressionType;
 import org.jboss.staxmapper.XMLExtendedStreamReader;
@@ -85,6 +86,10 @@ public class LevelDBCacheStoreConfigurationParser52 implements ConfigurationPars
             }
             case EXPIRED_LOCATION: {
                builder.expiredLocation(value);
+               break;
+            }
+            case IMPLEMENTATION_TYPE: {
+               builder.implementationType(ImplementationType.valueOf(value));
                break;
             }
             case CLEAR_THRESHOLD: {

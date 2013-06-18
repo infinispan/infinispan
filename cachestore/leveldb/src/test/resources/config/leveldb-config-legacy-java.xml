@@ -60,13 +60,21 @@
 		<locking isolationLevel="REPEATABLE_READ"
 			lockAcquisitionTimeout="20000" writeSkewCheck="false"
 			concurrencyLevel="500" useLockStriping="false" />
+
 	</default>
-	
+
+
 	<namedCache name="testCache">
 		<loaders passivation="false" shared="true" preload="true">
-			<leveldbStore
-				location="/tmp/leveldb/53/data" 
-				expiredLocation="/tmp/leveldb/53/expired"/>
+			<loader class="org.infinispan.loaders.leveldb.LevelDBCacheStore"
+				fetchPersistentState="false" ignoreModifications="false"
+				purgeOnStartup="false">
+				<properties>
+					<property name="location" value="/tmp/leveldb/legacy/data" />
+					<property name="expiredLocation" value="/tmp/leveldb/legacy/expired" />
+					<property name="implementationType" value="JAVA"/>
+				</properties>
+			</loader>
 		</loaders>
 	</namedCache>
 

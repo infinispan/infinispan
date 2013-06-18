@@ -5,6 +5,7 @@ import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
@@ -12,8 +13,6 @@ import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
-
-import javax.annotation.concurrent.ThreadSafe;
 
 import org.infinispan.Cache;
 import org.infinispan.config.ConfigurationException;
@@ -23,23 +22,29 @@ import org.infinispan.loaders.CacheLoaderConfig;
 import org.infinispan.loaders.CacheLoaderException;
 import org.infinispan.loaders.CacheLoaderMetadata;
 import org.infinispan.loaders.LockSupportCacheStore;
+import org.infinispan.loaders.leveldb.LevelDBCacheStoreConfig.ImplementationType;
 import org.infinispan.loaders.leveldb.logging.Log;
 import org.infinispan.marshall.StreamingMarshaller;
+import org.infinispan.util.Util;
 import org.infinispan.util.logging.LogFactory;
 import org.iq80.leveldb.DB;
 import org.iq80.leveldb.DBException;
+import org.iq80.leveldb.DBFactory;
 import org.iq80.leveldb.DBIterator;
 import org.iq80.leveldb.Options;
 import org.iq80.leveldb.ReadOptions;
-import org.iq80.leveldb.impl.Iq80DBFactory;
 
-@ThreadSafe
 @CacheLoaderMetadata(configurationClass = LevelDBCacheStoreConfig.class)
 public class LevelDBCacheStore extends LockSupportCacheStore<Integer> {
 	private static final Log log = LogFactory.getLog(LevelDBCacheStore.class, Log.class);
+	
+	private static final String JNI_DB_FACTORY_CLASS_NAME = "org.fusesource.leveldbjni.JniDBFactory";
+	private static final String JAVA_DB_FACTORY_CLASS_NAME = "org.iq80.leveldb.impl.Iq80DBFactory";
+	private static final String[] DB_FACTORY_CLASS_NAMES = new String[]{JNI_DB_FACTORY_CLASS_NAME, JAVA_DB_FACTORY_CLASS_NAME};
 
 	private LevelDBCacheStoreConfig config;
 	private BlockingQueue<ExpiryEntry> expiryEntryQueue;
+	private DBFactory dbFactory;
 	private DB db;
 	private DB expiredDb;
 
@@ -52,8 +57,45 @@ public class LevelDBCacheStore extends LockSupportCacheStore<Integer> {
 	public void init(CacheLoaderConfig config, Cache<?, ?> cache,
 			StreamingMarshaller m) throws CacheLoaderException {
 		super.init(config, cache, m);
-
+		
 		this.config = (LevelDBCacheStoreConfig) config;
+
+		this.dbFactory = newDbFactory();
+		
+		if (this.dbFactory == null) {
+		   throw log.cannotLoadlevelDBFactories(Arrays.toString(DB_FACTORY_CLASS_NAMES));
+		}
+		String dbFactoryClassName = this.dbFactory.getClass().getName();
+		if (dbFactoryClassName.equals("org.iq80.leveldb.impl.Iq80DBFactory")) {
+		   log.infoUsingJavaDbFactory(dbFactoryClassName);
+		} else {
+		   log.infoUsingJNIDbFactory(dbFactoryClassName);
+		}
+		
+	}
+	
+	protected DBFactory newDbFactory() {
+	   ImplementationType type = ImplementationType.valueOf(config.getImplementationType());
+	   
+	   switch (type) {
+	   case JNI: {
+	      return Util.<DBFactory>getInstance(JNI_DB_FACTORY_CLASS_NAME, config.getClassLoader());
+	   }
+	   case JAVA: {
+	      return Util.<DBFactory>getInstance(JAVA_DB_FACTORY_CLASS_NAME, config.getClassLoader());
+	   }
+	   default: {	      
+	      for (String className : DB_FACTORY_CLASS_NAMES) {
+	         try {
+	            return Util.<DBFactory>getInstance(className, config.getClassLoader());
+	         } catch (Throwable e) {
+	            if (log.isDebugEnabled()) log.debugUnableToInstantiateDbFactory(className, e);
+	         }
+	      }
+	   }
+	   }
+	   
+	   return null;
 	}
 
 	@Override
@@ -80,13 +122,16 @@ public class LevelDBCacheStore extends LockSupportCacheStore<Integer> {
 	 */
 	protected DB openDatabase(String location, Options options)
 			throws IOException {
-		return Iq80DBFactory.factory.open(new File(location), options);
+	   File dir = new File(location);
+	   
+	   // LevelDB JNI Option createIfMissing doesn't seem to work properly
+	   dir.mkdirs();
+		return dbFactory.open(dir, options);
 	}
 
 	protected void destroyDatabase(String location) throws IOException {
 		File dir = new File(location);
-
-		Iq80DBFactory.factory.destroy(dir, null);
+		dbFactory.destroy(dir, new Options());
 	}
 
 	protected DB reinitDatabase(String location, Options options)
@@ -96,6 +141,18 @@ public class LevelDBCacheStore extends LockSupportCacheStore<Integer> {
 	}
 
 	protected void reinitAllDatabases() throws IOException {
+	   // assuming this is only called from within clearLockSafe()
+	   // clear() acquires a global lock before calling clearLockSafe()
+	   try {
+         db.close();
+      } catch (IOException e) {
+         log.warnUnableToCloseDb(e);
+      }
+	   try {
+	      expiredDb.close();
+      } catch (IOException e) {
+         log.warnUnableToCloseExpiredDb(e);
+      }
 		db = reinitDatabase(config.getLocation(), config.getDataDbOptions());
 		expiredDb = reinitDatabase(config.getExpiredLocation(),
 				config.getExpiredDbOptions());
