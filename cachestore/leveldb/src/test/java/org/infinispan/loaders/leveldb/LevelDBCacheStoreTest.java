@@ -28,6 +28,7 @@ import org.infinispan.container.entries.InternalCacheEntry;
 import org.infinispan.loaders.BaseCacheStoreTest;
 import org.infinispan.loaders.CacheLoaderException;
 import org.infinispan.loaders.CacheStore;
+import org.infinispan.loaders.CacheStoreConfig;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.TestInternalCacheEntryFactory;
 import org.testng.annotations.AfterClass;
@@ -50,16 +51,22 @@ public class LevelDBCacheStoreTest extends BaseCacheStoreTest {
 		TestingUtil.recursiveFileRemove(tmpDirectory);
 		new File(tmpDirectory).mkdirs();
 	}
+	
+	protected LevelDBCacheStoreConfig createCacheStoreConfig()
+         throws CacheLoaderException {
+      LevelDBCacheStoreConfig cfg = new LevelDBCacheStoreConfig();
+      cfg.setLocation(tmpDirectory + "/data");
+      cfg.setExpiredLocation(tmpDirectory + "/expiry");
+      cfg.setClearThreshold(2);
+      cfg.setPurgeSynchronously(true); // for more accurate unit testing
+      return cfg;
+   }
 
 	@Override
 	protected CacheStore createCacheStore() throws CacheLoaderException {
 		clearTempDir();
 		fcs = new LevelDBCacheStore();
-		LevelDBCacheStoreConfig cfg = new LevelDBCacheStoreConfig();
-		cfg.setLocation(tmpDirectory + "/data");
-		cfg.setExpiredLocation(tmpDirectory + "/expiry");
-		cfg.setClearThreshold(2);
-		cfg.setPurgeSynchronously(true); // for more accurate unit testing
+		LevelDBCacheStoreConfig cfg = createCacheStoreConfig();		
 		fcs.init(cfg, getCache(), getMarshaller());
 		fcs.start();
 		return fcs;

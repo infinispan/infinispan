@@ -22,6 +22,7 @@ import org.infinispan.configuration.Builder;
 import org.infinispan.configuration.cache.AbstractLockSupportStoreConfigurationBuilder;
 import org.infinispan.configuration.cache.LoadersConfigurationBuilder;
 import org.infinispan.loaders.leveldb.LevelDBCacheStoreConfig;
+import org.infinispan.loaders.leveldb.LevelDBCacheStoreConfig.ImplementationType;
 import org.infinispan.util.TypedProperties;
 import org.iq80.leveldb.CompressionType;
 
@@ -37,6 +38,7 @@ public class LevelDBCacheStoreConfigurationBuilder
    protected String location = LevelDBCacheStoreConfig.DEFAULT_LOCATION;
    protected String expiredLocation = LevelDBCacheStoreConfig.DEFAULT_EXPIRED_LOCATION;
    protected CompressionType compressionType = LevelDBCacheStoreConfig.DEFAULT_COMPRESSION_TYPE;
+   protected ImplementationType implementationType = LevelDBCacheStoreConfig.DEFAULT_IMPLEMENTATION_TYPE;
    protected Integer blockSize;
    protected Long cacheSize;
    
@@ -54,6 +56,11 @@ public class LevelDBCacheStoreConfigurationBuilder
 	
 	public LevelDBCacheStoreConfigurationBuilder expiredLocation(String expiredLocation) {
       this.expiredLocation = expiredLocation;
+      return self();
+   }
+	
+	public LevelDBCacheStoreConfigurationBuilder implementationType(ImplementationType implementationType) {
+      this.implementationType = implementationType;
       return self();
    }
 	
@@ -90,8 +97,8 @@ public class LevelDBCacheStoreConfigurationBuilder
 
 	@Override
 	public LevelDBCacheStoreConfiguration create() {
-		return new LevelDBCacheStoreConfiguration(location, expiredLocation, compressionType, blockSize, 
-		      cacheSize, expiryQueueSize, clearThreshold,
+		return new LevelDBCacheStoreConfiguration(location, expiredLocation, implementationType, compressionType,
+		      blockSize, cacheSize, expiryQueueSize, clearThreshold,
 				lockAcquistionTimeout, lockConcurrencyLevel, purgeOnStartup,
 				purgeSynchronously, purgerThreads, fetchPersistentState,
 				ignoreModifications,
@@ -103,6 +110,8 @@ public class LevelDBCacheStoreConfigurationBuilder
 	public Builder<?> read(LevelDBCacheStoreConfiguration template) {
 	   location = template.location();
 	   expiredLocation = template.expiredLocation();
+	   implementationType = template.implementationType();
+	   
 	   compressionType = template.compressionType();
 	   blockSize = template.blockSize();
 	   cacheSize = template.cacheSize();
