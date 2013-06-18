@@ -32,6 +32,7 @@ public enum Attribute {
 
    LOCATION("location"),
    EXPIRED_LOCATION("expiredLocation"),
+   IMPLEMENTATION_TYPE("implementationType"),
    CLEAR_THRESHOLD("clearThreshold"),
    EXPIRY_QUEUE_SIZE("expiryQueueSize"),
    COMPRESSION_TYPE("compressionType"),

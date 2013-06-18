@@ -35,9 +35,13 @@
 
 	<dependencies>
 		<dependency>
-			<groupId>org.iq80.leveldb</groupId>
-			<artifactId>leveldb</artifactId>
+			<groupId>org.fusesource.leveldbjni</groupId>
+			<artifactId>leveldbjni-all</artifactId>
 		</dependency>
+		<dependency>
+            <groupId>org.iq80.leveldb</groupId>
+            <artifactId>leveldb</artifactId>
+         </dependency>
 	</dependencies>
 
 	<build>

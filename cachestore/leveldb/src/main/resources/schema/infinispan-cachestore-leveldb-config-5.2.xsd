@@ -46,6 +46,16 @@
 					</xs:annotation>
 				</xs:attribute>
 				
+				<xs:attribute name="implementationType" type="xs:string" default="AUTO" >
+					<xs:annotation>
+						<xs:documentation>
+							Configures LevelDB implementation type.  It can be AUTO, JNI, or JAVA.
+							When the type is AUTO, cache store will first try to detect if JNI implementation is
+							available - if not, AUTO will fallback to pure Java implementation.
+						</xs:documentation>
+					</xs:annotation>
+				</xs:attribute>
+				
 				<xs:attribute name="clearThreshold" type="xs:integer" default="10000">
 					<xs:annotation>
 						<xs:documentation>
