@@ -1,7 +1,4 @@
-package org.infinispan.jcache.annotation.solder;
-
-import org.infinispan.jcache.logging.Log;
-import org.infinispan.util.logging.LogFactory;
+package org.infinispan.cdi.util.annotatedtypebuilder;
 
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Constructor;
@@ -18,6 +15,10 @@ import javax.enterprise.inject.spi.AnnotatedField;
 import javax.enterprise.inject.spi.AnnotatedMethod;
 import javax.enterprise.inject.spi.AnnotatedParameter;
 import javax.enterprise.inject.spi.AnnotatedType;
+
+import org.infinispan.cdi.util.Reflections;
+import org.infinispan.cdi.util.logging.Log;
+import org.infinispan.util.logging.LogFactory;
 
 /**
  * <p> Class for constructing a new AnnotatedType. A new instance of builder

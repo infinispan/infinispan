@@ -1,11 +1,11 @@
 package org.infinispan.cdi;
 
+import org.infinispan.cdi.util.defaultbean.DefaultBean;
 import org.infinispan.cdi.util.logging.Log;
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.manager.DefaultCacheManager;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.util.logging.LogFactory;
-import org.jboss.solder.bean.defaultbean.DefaultBean;
 
 import javax.enterprise.context.ApplicationScoped;
 import javax.enterprise.inject.Disposes;

@@ -1,7 +1,6 @@
 package org.infinispan.cdi;
 
 import org.infinispan.configuration.cache.Configuration;
-import org.jboss.solder.bean.generic.GenericType;
 
 import java.lang.annotation.Retention;
 import java.lang.annotation.Target;
@@ -20,7 +19,6 @@ import static java.lang.annotation.RetentionPolicy.RUNTIME;
  */
 @Retention(RUNTIME)
 @Target({METHOD, FIELD, PARAMETER, TYPE})
-@GenericType(Configuration.class)
 public @interface ConfigureCache {
    /**
     * The name of the cache to configure. If no value is provided the configured cache is the default one.

@@ -6,7 +6,6 @@ import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
-import org.jboss.solder.resourceLoader.Resource;
 
 import javax.enterprise.context.ApplicationScoped;
 import javax.enterprise.inject.Disposes;
@@ -47,8 +46,8 @@ public class Config {
    @Produces
    @ApplicationScoped
    @SuppressWarnings("unused")
-   public EmbeddedCacheManager defaultCacheManager(@Resource("infinispan.xml") InputStream xml) throws IOException {
-      EmbeddedCacheManager externalCacheContainerManager = TestCacheManagerFactory.fromStream(xml);
+   public EmbeddedCacheManager defaultCacheManager() throws IOException {
+      EmbeddedCacheManager externalCacheContainerManager = TestCacheManagerFactory.fromXml("infinispan.xml");
 
       externalCacheContainerManager.defineConfiguration("quick-very-large", new ConfigurationBuilder()
             .read(externalCacheContainerManager.getDefaultCacheConfiguration())

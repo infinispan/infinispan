@@ -1,23 +1,22 @@
 package org.infinispan.cdi;
 
+import java.lang.annotation.Annotation;
+import java.util.Set;
+
+import javax.enterprise.context.ApplicationScoped;
+import javax.enterprise.inject.Any;
+import javax.enterprise.inject.Instance;
+import javax.enterprise.inject.Produces;
+import javax.enterprise.inject.spi.BeanManager;
+import javax.inject.Inject;
+
 import org.infinispan.AdvancedCache;
 import org.infinispan.Cache;
 import org.infinispan.cdi.event.cache.CacheEventBridge;
 import org.infinispan.cdi.event.cachemanager.CacheManagerEventBridge;
+import org.infinispan.cdi.util.Reflections;
 import org.infinispan.manager.CacheContainer;
 import org.infinispan.manager.EmbeddedCacheManager;
-import org.jboss.solder.bean.generic.ApplyScope;
-import org.jboss.solder.bean.generic.Generic;
-import org.jboss.solder.bean.generic.GenericConfiguration;
-
-import javax.enterprise.inject.Any;
-import javax.enterprise.inject.Instance;
-import javax.enterprise.inject.Produces;
-import javax.enterprise.inject.spi.AnnotatedMember;
-import javax.enterprise.inject.spi.BeanManager;
-import javax.inject.Inject;
-
-import static org.jboss.solder.bean.Beans.getQualifiers;
 
 /**
  * This class is responsible to produce the {@link Cache} and {@link AdvancedCache}. This class use the
@@ -27,31 +26,28 @@ import static org.jboss.solder.bean.Beans.getQualifiers;
  * @author Pete Muir
  * @author Kevin Pollet <kevin.pollet@serli.com> (C) 2011 SERLI
  */
-@GenericConfiguration(ConfigureCache.class)
 public class AdvancedCacheProducer {
 
    @Inject
    private CacheContainer defaultCacheContainer;
 
    @Inject
-   @Generic
-   private Instance<CacheContainer> cacheContainer;
-
-   @Inject
-   @Generic
-   private ConfigureCache configureCache;
-
-   @Inject
-   @Generic
-   private AnnotatedMember<?> annotatedMember;
-
-   @Inject
    private CacheEventBridge cacheEventBridge;
    
    @Inject
    private InfinispanExtension infinispanExtension;
+   
+   @Inject @Any 
+   private Instance<EmbeddedCacheManager> cacheManagers;
+   
+   @Inject
+   private BeanManager beanManager;
+   
+   @Inject
+   private CacheManagerEventBridge eventBridge; 
 
-   private CacheContainer getCacheContainer() {
+   private CacheContainer getCacheContainer(Set<Annotation> qualifiers) {
+      Instance<EmbeddedCacheManager> cacheContainer = cacheManagers.select(qualifiers.toArray(Reflections.EMPTY_ANNOTATION_ARRAY));
       if (cacheContainer.isUnsatisfied()) {
          return defaultCacheContainer;
       } else {
@@ -59,27 +55,31 @@ public class AdvancedCacheProducer {
       }
    }
 
-   @Produces
-   @ApplyScope
-   public <K, V> AdvancedCache<K, V> getAdvancedCache(BeanManager beanManager, CacheManagerEventBridge eventBridge, @Any Instance<EmbeddedCacheManager> cacheManagers) {
+   public <K, V> AdvancedCache<K, V> getAdvancedCache(String name, Set<Annotation> qualifiers) {
       
       // lazy register stuff
       infinispanExtension.registerCacheConfigurations(eventBridge, cacheManagers, beanManager);
        
-      final String name = configureCache.value();
       Cache<K, V> cache;
-
+      CacheContainer container = getCacheContainer(qualifiers);
       if (name.isEmpty()) {
-         cache = getCacheContainer().getCache();
+         cache = container.getCache();
       } else {
-         cache = getCacheContainer().getCache(name);
+         cache = container.getCache(name);
       }
 
       cacheEventBridge.registerObservers(
-            getQualifiers(beanManager, annotatedMember.getAnnotations()),
+            qualifiers,
             cache
       );
 
       return cache.getAdvancedCache();
+   }
+   
+   @Produces
+   <K, V> AdvancedCache<K, V> getDefaultAdvancedCache() {
+       // lazy register stuff
+       infinispanExtension.registerCacheConfigurations(eventBridge, cacheManagers, beanManager);
+       return defaultCacheContainer.<K, V>getCache().getAdvancedCache();
    }
 }

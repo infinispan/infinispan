@@ -1,7 +1,7 @@
 package org.infinispan.cdi;
 
+import org.infinispan.cdi.util.defaultbean.DefaultBean;
 import org.infinispan.client.hotrod.RemoteCacheManager;
-import org.jboss.solder.bean.defaultbean.DefaultBean;
 
 import javax.enterprise.context.ApplicationScoped;
 import javax.enterprise.inject.Produces;
