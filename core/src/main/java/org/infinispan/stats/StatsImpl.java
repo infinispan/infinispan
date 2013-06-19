@@ -161,7 +161,8 @@ public class StatsImpl implements Stats {
 
    @Override
    public void setStatisticsEnabled(boolean enabled) {
-      mgmtInterceptor.setStatisticsEnabled(enabled);
+      if (mgmtInterceptor != null)
+         mgmtInterceptor.setStatisticsEnabled(enabled);
    }
 
 }
