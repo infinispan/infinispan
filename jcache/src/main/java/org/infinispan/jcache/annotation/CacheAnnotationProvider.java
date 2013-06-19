@@ -9,6 +9,7 @@ import javax.cache.spi.AnnotationProvider;
  * @author Kevin Pollet <kevin.pollet@serli.com> (C) 2011 SERLI
  * @author Galder Zamarreño
  */
+@SuppressWarnings("unused")
 public class CacheAnnotationProvider implements AnnotationProvider {
 
    @Override
