@@ -22,6 +22,7 @@
  */
 package org.infinispan.distribution;
 
+import org.infinispan.AdvancedCache;
 import org.infinispan.Cache;
 import org.infinispan.context.Flag;
 import org.infinispan.loaders.CacheLoaderException;
@@ -38,6 +39,7 @@ import java.util.concurrent.Future;
 
 import static org.infinispan.test.TestingUtil.k;
 import static org.junit.Assert.*;
+import static org.junit.Assert.assertEquals;
 
 /**
  * DistSyncSharedTest.
@@ -139,6 +141,18 @@ public class DistSyncCacheStoreNotSharedTest extends BaseDistCacheStoreTest {
             assert !store.containsKey(key);
          }
       }
+   }
+
+   public void testPutForStateTransfer() throws Exception {
+      MagicKey k1 = new MagicKey(c1, c2);
+      CacheStore store2 = TestingUtil.extractComponent(c2, CacheLoaderManager.class).getCacheStore();
+
+      c2.put(k1, v1);
+      assertTrue(store2.containsKey(k1));
+      assertEquals(v1, store2.load(k1).getValue());
+
+      c2.getAdvancedCache().withFlags(Flag.CACHE_MODE_LOCAL).put(k1, v2);
+      assertEquals(v2, store2.load(k1).getValue());
    }
 
    public void testPutAll() throws Exception {
