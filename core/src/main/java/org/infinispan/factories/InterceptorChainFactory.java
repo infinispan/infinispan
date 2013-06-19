@@ -232,6 +232,8 @@ public class InterceptorChainFactory extends AbstractNamedCacheComponentFactory 
             switch (configuration.clustering().cacheMode()) {
                case DIST_SYNC:
                case DIST_ASYNC:
+               case REPL_SYNC:
+               case REPL_ASYNC:
                   interceptorChain.appendInterceptor(createInterceptor(new DistCacheStoreInterceptor(), DistCacheStoreInterceptor.class), false);
                   break;
                default:

@@ -36,6 +36,7 @@ import org.infinispan.container.entries.DeltaAwareCacheEntry;
 import org.infinispan.container.entries.InternalCacheEntry;
 import org.infinispan.container.versioning.EntryVersion;
 import org.infinispan.container.versioning.EntryVersionsMap;
+import org.infinispan.context.Flag;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.context.impl.TxInvocationContext;
 import org.infinispan.factories.annotations.Inject;
@@ -69,14 +70,14 @@ import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicLong;
 
-import static org.infinispan.context.Flag.SKIP_CACHE_STORE;
-import static org.infinispan.context.Flag.SKIP_SHARED_CACHE_STORE;
-
 /**
  * Writes modifications back to the store on the way out: stores modifications back through the CacheLoader, either
  * after each method call (no TXs), or at TX commit.
  *
+ * Only used for LOCAL and INVALIDATION caches.
+ *
  * @author Bela Ban
+ * @author Dan Berindei
  * @since 4.0
  */
 @MBean(objectName = "CacheStore", description = "Component that handles storing of entries to a CacheStore from memory.")
@@ -114,36 +115,9 @@ public class CacheStoreInterceptor extends JmxStatsCommandInterceptor {
       txStores = CollectionFactory.makeConcurrentMap(64, concurrencyLevel);
       preparingTxs = CollectionFactory.makeConcurrentMap(64, concurrencyLevel);
    }
-
-   /**
-    * if this is a shared cache loader and the call is of remote origin, pass up the chain
-    */
-   protected boolean skip(InvocationContext ctx, FlagAffectedCommand command) {
-      return skip(ctx, command.hasFlag(SKIP_CACHE_STORE), command.hasFlag(SKIP_SHARED_CACHE_STORE));
-   }
-
-   protected boolean skip(InvocationContext ctx) {
-      return skip(ctx, false, false);
-   }
-
-   private boolean skip(InvocationContext ctx, boolean skipCacheStore, boolean skipSharedCacheStore) {
-      if (store == null || !enabled) return true;  // could be because the cache loader does not implement cache store, or the store is disabled
-      if ((!ctx.isOriginLocal() && loaderConfig.shared()) || skipCacheStore) {
-         log.trace("Skipping cache store since the cache loader is shared and we are not the originator.");
-         return true;
-      }
-
-      if (loaderConfig.shared() && skipSharedCacheStore) {
-         log.trace("Explicitly requested to skip storage if cache store is shared - and it is.");
-         return true;
-      }
-
-      return false;
-   }
-
    @Override
    public Object visitCommitCommand(TxInvocationContext ctx, CommitCommand command) throws Throwable {
-      if (!skip(ctx))
+      if (isStoreEnabled())
          commitCommand(ctx);
 
       return invokeNextInterceptor(ctx, command);
@@ -186,7 +160,7 @@ public class CacheStoreInterceptor extends JmxStatsCommandInterceptor {
 
    @Override
    public Object visitRollbackCommand(TxInvocationContext ctx, RollbackCommand command) throws Throwable {
-      if (!skip(ctx)) {
+      if (isStoreEnabled()) {
          if (getLog().isTraceEnabled()) getLog().trace("Transactional so don't put stuff in the cache store yet.");
          if (!ctx.getCacheTransaction().getAllModifications().isEmpty()) {
             GlobalTransaction tx = ctx.getGlobalTransaction();
@@ -205,7 +179,7 @@ public class CacheStoreInterceptor extends JmxStatsCommandInterceptor {
 
    @Override
    public Object visitPrepareCommand(TxInvocationContext ctx, PrepareCommand command) throws Throwable {
-      if (!skip(ctx)) {
+      if (isStoreEnabled()) {
          if (getLog().isTraceEnabled()) getLog().trace("Transactional so don't put stuff in the cache store yet.");
          prepareCacheLoader(ctx, command.getGlobalTransaction(), ctx, command.isOnePhaseCommit());
       }
@@ -215,17 +189,18 @@ public class CacheStoreInterceptor extends JmxStatsCommandInterceptor {
    @Override
    public Object visitRemoveCommand(InvocationContext ctx, RemoveCommand command) throws Throwable {
       Object retval = invokeNextInterceptor(ctx, command);
-      if (!skip(ctx, command) && !ctx.isInTxScope() && command.isSuccessful()) {
-         Object key = command.getKey();
-         boolean resp = store.remove(key);
-         if (getLog().isTraceEnabled()) getLog().tracef("Removed entry under key %s and got response %s from CacheStore", key, resp);
-      }
+      if (!isStoreEnabled(command) || ctx.isInTxScope() || !command.isSuccessful()) return retval;
+      if (!isProperWriter(ctx, command, command.getKey())) return retval;
+
+      Object key = command.getKey();
+      boolean resp = store.remove(key);
+      if (getLog().isTraceEnabled()) getLog().tracef("Removed entry under key %s and got response %s from CacheStore", key, resp);
       return retval;
    }
 
    @Override
    public Object visitClearCommand(InvocationContext ctx, ClearCommand command) throws Throwable {
-      if (!skip(ctx, command) && !ctx.isInTxScope())
+      if (isStoreEnabled(command) && !ctx.isInTxScope() && isProperWriterForClear(ctx))
          clearCacheStore();
 
       return invokeNextInterceptor(ctx, command);
@@ -239,7 +214,8 @@ public class CacheStoreInterceptor extends JmxStatsCommandInterceptor {
    @Override
    public Object visitPutKeyValueCommand(InvocationContext ctx, PutKeyValueCommand command) throws Throwable {
       Object returnValue = invokeNextInterceptor(ctx, command);
-      if (skip(ctx, command) || ctx.isInTxScope() || !command.isSuccessful()) return returnValue;
+      if (!isStoreEnabled(command) || ctx.isInTxScope() || !command.isSuccessful()) return returnValue;
+      if (!isProperWriter(ctx, command, command.getKey())) return returnValue;
 
       Object key = command.getKey();
       InternalCacheEntry se = getStoredEntry(key, ctx);
@@ -253,7 +229,8 @@ public class CacheStoreInterceptor extends JmxStatsCommandInterceptor {
    @Override
    public Object visitReplaceCommand(InvocationContext ctx, ReplaceCommand command) throws Throwable {
       Object returnValue = invokeNextInterceptor(ctx, command);
-      if (skip(ctx, command) || ctx.isInTxScope() || !command.isSuccessful()) return returnValue;
+      if (!isStoreEnabled(command) || ctx.isInTxScope() || !command.isSuccessful()) return returnValue;
+      if (!isProperWriter(ctx, command, command.getKey())) return returnValue;
 
       Object key = command.getKey();
       InternalCacheEntry se = getStoredEntry(key, ctx);
@@ -267,13 +244,15 @@ public class CacheStoreInterceptor extends JmxStatsCommandInterceptor {
    @Override
    public Object visitPutMapCommand(InvocationContext ctx, PutMapCommand command) throws Throwable {
       Object returnValue = invokeNextInterceptor(ctx, command);
-      if (skip(ctx, command) || ctx.isInTxScope()) return returnValue;
+      if (!isStoreEnabled(command) || ctx.isInTxScope()) return returnValue;
 
       Map<Object, Object> map = command.getMap();
       for (Object key : map.keySet()) {
-         InternalCacheEntry se = getStoredEntry(key, ctx);
-         store.store(se);
-         if (getLog().isTraceEnabled()) getLog().tracef("Stored entry %s under key %s", se, key);
+         if (isProperWriter(ctx, command, key)) {
+            InternalCacheEntry se = getStoredEntry(key, ctx);
+            store.store(se);
+            if (getLog().isTraceEnabled()) getLog().tracef("Stored entry %s under key %s", se, key);
+         }
       }
       if (getStatisticsEnabled()) cacheStores.getAndAdd(map.size());
       return returnValue;
@@ -292,7 +271,7 @@ public class CacheStoreInterceptor extends JmxStatsCommandInterceptor {
       if (getLog().isTraceEnabled()) getLog().tracef("Cache loader modification list: %s", modifications);
       StoreModificationsBuilder modsBuilder = new StoreModificationsBuilder(getStatisticsEnabled(), modifications.size());
       for (WriteCommand cacheCommand : modifications) {
-         if (!skip(ctx, cacheCommand)) {
+         if (isStoreEnabled(cacheCommand)) {
             cacheCommand.acceptVisitor(ctx, modsBuilder);
          }
       }
@@ -316,8 +295,40 @@ public class CacheStoreInterceptor extends JmxStatsCommandInterceptor {
       }
    }
 
-   protected boolean skipKey(Object key) {
-      return false;
+   protected boolean isStoreEnabled() {
+      if (!enabled)
+         return false;
+
+      if (store == null) {
+         log.trace("Skipping cache store because the cache loader does not implement CacheStore");
+         return false;
+      }
+      return true;
+   }
+
+   protected boolean isStoreEnabled(FlagAffectedCommand command) {
+      if (!isStoreEnabled())
+         return false;
+
+      if (command.hasFlag(Flag.SKIP_CACHE_STORE)) {
+         log.trace("Skipping cache store since the call contain a skip cache store flag");
+         return false;
+      }
+      if (loaderConfig.shared() && command.hasFlag(Flag.SKIP_SHARED_CACHE_STORE)) {
+         log.trace("Skipping cache store since it is shared and the call contain a skip shared cache store flag");
+         return false;
+      }
+      return true;
+   }
+
+   protected boolean isProperWriter(InvocationContext ctx, FlagAffectedCommand command, Object key) {
+      // In invalidation mode we can have remote invalidation commands, and we don't want them to remove
+      // entries from a shared cache store.
+      return !loaderConfig.shared() || ctx.isOriginLocal();
+   }
+
+   protected boolean isProperWriterForClear(InvocationContext ctx) {
+      return true;
    }
 
    public class StoreModificationsBuilder extends AbstractVisitor {
@@ -335,12 +346,12 @@ public class CacheStoreInterceptor extends JmxStatsCommandInterceptor {
 
       @Override
       public Object visitPutKeyValueCommand(InvocationContext ctx, PutKeyValueCommand command) throws Throwable {
-         return visitSingleStore(ctx, command.getKey());
+         return visitSingleStore(ctx, command, command.getKey());
       }
 
       @Override
       public Object visitApplyDeltaCommand(InvocationContext ctx, ApplyDeltaCommand command) throws Throwable {
-         if (!skipKey(command.getKey())) {
+         if (isProperWriter(ctx, command, command.getKey())) {
             if (generateStatistics) putCount++;
             CacheEntry entry = ctx.lookupEntry(command.getKey());
             InternalCacheEntry ice;
@@ -361,21 +372,21 @@ public class CacheStoreInterceptor extends JmxStatsCommandInterceptor {
 
       @Override
       public Object visitReplaceCommand(InvocationContext ctx, ReplaceCommand command) throws Throwable {
-         return visitSingleStore(ctx, command.getKey());
+         return visitSingleStore(ctx, command, command.getKey());
       }
 
       @Override
       public Object visitPutMapCommand(InvocationContext ctx, PutMapCommand command) throws Throwable {
          Map<Object, Object> map = command.getMap();
          for (Object key : map.keySet())
-            visitSingleStore(ctx, key);
+            visitSingleStore(ctx, command, key);
          return null;
       }
 
       @Override
       public Object visitRemoveCommand(InvocationContext ctx, RemoveCommand command) throws Throwable {
          Object key = command.getKey();
-         if (!skipKey(key)) {
+         if (isProperWriter(ctx, command, key)) {
             modifications.add(new Remove(key));
             affectedKeys.add(command.getKey());
          }
@@ -384,12 +395,14 @@ public class CacheStoreInterceptor extends JmxStatsCommandInterceptor {
 
       @Override
       public Object visitClearCommand(InvocationContext ctx, ClearCommand command) throws Throwable {
-         modifications.add(new Clear());
+         if (isProperWriterForClear(ctx)) {
+            modifications.add(new Clear());
+         }
          return null;
       }
 
-      private Object visitSingleStore(InvocationContext ctx, Object key) throws Throwable {
-         if (!skipKey(key)) {
+      private Object visitSingleStore(InvocationContext ctx, FlagAffectedCommand command, Object key) throws Throwable {
+         if (isProperWriter(ctx, command, key)) {
             if (generateStatistics) putCount++;
             modifications.add(new Store(getStoredEntry(key, ctx)));
             affectedKeys.add(key);
