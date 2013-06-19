@@ -692,16 +692,6 @@
                  </xs:documentation>
               </xs:annotation>
            </xs:attribute>
-           <xs:attribute name="typeConverter" type="xs:string">
-              <xs:annotation>
-                 <xs:documentation>
-                    Fully qualified class name of the TypeConverter interface
-                    which transforms keys and values into other types,
-                    enabling Infinispan embedded and endpoints to run in
-                    compatibility mode
-                 </xs:documentation>
-              </xs:annotation>
-           </xs:attribute>
         </xs:complexType>
       </xs:element>
       <xs:element name="eviction" minOccurs="0">
@@ -1175,6 +1165,29 @@
           </xs:sequence>
         </xs:complexType>
       </xs:element>
+      <xs:element name="compatibility" minOccurs="0">
+        <xs:annotation>
+          <xs:documentation>
+            Configures compatibility mode to share cached data between embedded and remote endpoints.
+          </xs:documentation>
+        </xs:annotation>
+        <xs:complexType>
+          <xs:attribute name="enabled" type="xs:boolean" default="false">
+            <xs:annotation>
+              <xs:documentation>
+                Enable or disable compatibility mode. Disabled by default.
+              </xs:documentation>
+            </xs:annotation>
+          </xs:attribute>
+          <xs:attribute name="marshallerClass" type="xs:string">
+            <xs:annotation>
+              <xs:documentation>
+                Fully qualified name of the marshaller to use for compatibility mode. When running in compatibility mode, data is stored in deserialized form. This is achieved with the help of the marshaller. It must implement org.infinispan.marshall.Marshaller
+              </xs:documentation>
+            </xs:annotation>
+          </xs:attribute>
+        </xs:complexType>
+       </xs:element>
     </xs:all>
     <xs:attribute name="name" type="xs:string"/>
   </xs:complexType>
