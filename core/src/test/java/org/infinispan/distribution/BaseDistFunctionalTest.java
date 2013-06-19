@@ -11,6 +11,8 @@ import org.infinispan.container.entries.InternalCacheEntry;
 import org.infinispan.container.entries.MortalCacheEntry;
 import org.infinispan.distribution.group.Grouper;
 import org.infinispan.distribution.ch.ConsistentHash;
+import org.infinispan.interceptors.InterceptorChain;
+import org.infinispan.interceptors.base.CommandInterceptor;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.test.MultipleCacheManagersTest;
@@ -265,5 +267,12 @@ public abstract class BaseDistFunctionalTest extends MultipleCacheManagersTest {
 
    protected TransactionManager getTransactionManager(Cache<?, ?> cache) {
       return TestingUtil.getTransactionManager(cache);
+   }
+
+   protected static void removeAllBlockingInterceptorsFromCache(Cache<?, ?> cache) {
+      InterceptorChain chain = TestingUtil.extractComponent(cache, InterceptorChain.class);
+      for (CommandInterceptor interceptor : chain.getInterceptorsWhichExtend(BlockingInterceptor.class)) {
+         chain.removeInterceptor(interceptor.getClass());
+      }
    }
 }

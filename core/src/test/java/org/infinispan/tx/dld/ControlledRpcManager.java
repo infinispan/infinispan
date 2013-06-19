@@ -23,6 +23,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.TimeUnit;
 
 /**
  * @author Mircea.Markus@jboss.com
@@ -71,10 +72,15 @@ public class ControlledRpcManager implements RpcManager {
       blockBeforeFilter = Collections.emptySet();
       blockAfterFilter = Collections.emptySet();
       replicationLatch.open();
+      blockingLatch.open();
    }
 
    public void waitForCommandToBlock() throws InterruptedException {
       blockingLatch.await();
+   }
+
+   public boolean waitForCommandToBlock(long time, TimeUnit unit) throws InterruptedException {
+      return blockingLatch.await(time, unit);
    }
 
    protected void waitBefore(ReplicableCommand rpcCommand) {
@@ -92,7 +98,11 @@ public class ControlledRpcManager implements RpcManager {
       }
 
       try {
-         blockingLatch.open();
+         if (!blockingLatch.isOpened()) {
+            log.debugf("Replication trigger called, releasing any waiters for command to block.");
+            blockingLatch.open();
+         }
+
          log.debugf("Replication trigger called, waiting for latch to open.");
          replicationLatch.await();
          log.trace("Replication latch opened, continuing.");
