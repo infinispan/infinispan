@@ -28,6 +28,7 @@ import org.infinispan.manager.EmbeddedCacheManager
 import java.util.Properties
 import org.infinispan.config.Configuration
 import org.infinispan.Cache
+import org.infinispan.configuration.cache.ConfigurationBuilder
 
 /**
  * Memcached server defining its decoder/encoder settings. In fact, Memcached does not use an encoder since there's
@@ -44,8 +45,11 @@ class MemcachedServer extends AbstractProtocolServer("Memcached") {
 
    override def start(p: Properties, cacheManager: EmbeddedCacheManager) {
       val properties = if (p == null) new Properties else p
-      // Define the Memcached cache as clone of the default one
-      cacheManager.defineConfiguration(cacheName, new Configuration)
+      if (!cacheManager.cacheExists(cacheName)) {
+         // Define the Memcached cache as clone of the default one
+         cacheManager.defineConfiguration(cacheName,
+            new ConfigurationBuilder().read(cacheManager.getDefaultCacheConfiguration).build())
+      }
       memcachedCache = cacheManager.getCache(cacheName)
       super.start(properties, cacheManager, 11211)
    }
