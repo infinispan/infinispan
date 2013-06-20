@@ -96,6 +96,7 @@ public class TestCacheManagerFactory {
       }
    };
 
+   @Deprecated
    private static DefaultCacheManager newDefaultCacheManager(boolean start, GlobalConfiguration gc, Configuration c, boolean keepJmxDomain) {
       if (!keepJmxDomain) {
          gc.setJmxDomain("infinispan" + UUID.randomUUID());
@@ -128,6 +129,7 @@ public class TestCacheManagerFactory {
       return fromStream(is, keepJmxDomainName);
    }
 
+   @Deprecated
    public static EmbeddedCacheManager fromXml(String globalXmlFile, String defaultXmlFile, String namedXmlFile) throws IOException {
       return new DefaultCacheManager(globalXmlFile, defaultXmlFile, namedXmlFile, true);
    }
@@ -147,10 +149,12 @@ public class TestCacheManagerFactory {
     *
     * @param transactional if true, the cache manager will support transactions by default.
     */
+   @Deprecated
    public static EmbeddedCacheManager createLocalCacheManager(boolean transactional) {
       return createLocalCacheManager(transactional, -1);
    }
 
+   @Deprecated
    public static EmbeddedCacheManager createLocalCacheManager(boolean transactional, long lockAcquisitionTimeout) {
       GlobalConfiguration globalConfiguration = GlobalConfiguration.getNonClusteredDefault();
       globalConfiguration.setAllowDuplicateDomains(true);
@@ -226,11 +230,12 @@ public class TestCacheManagerFactory {
       return createClusteredCacheManager(new Configuration(), flags);
    }
 
-
+   @Deprecated
    public static EmbeddedCacheManager createClusteredCacheManager(Configuration defaultCacheConfig) {
       return createClusteredCacheManager(defaultCacheConfig, new TransportFlags());
    }
 
+   @Deprecated
    public static EmbeddedCacheManager createClusteredCacheManager(Configuration defaultCacheConfig, TransportFlags flags) {
       GlobalConfiguration globalConfiguration = GlobalConfiguration.getClusteredDefault();
       amendMarshaller(globalConfiguration);
@@ -315,10 +320,12 @@ public class TestCacheManagerFactory {
     * Creates a cache manager and amends the supplied configuration in order to avoid conflicts (e.g. jmx, jgroups)
     * during running tests in parallel.
     */
+   @Deprecated
    public static EmbeddedCacheManager createCacheManager(GlobalConfiguration configuration) {
       return internalCreateJmxDomain(true, configuration, false);
    }
 
+   @Deprecated
    public static EmbeddedCacheManager createCacheManager(boolean start, GlobalConfiguration configuration) {
       return internalCreateJmxDomain(start, configuration, false);
    }
@@ -329,10 +336,12 @@ public class TestCacheManagerFactory {
     * make sure that no domain name collision happens when the parallel suite executes. An approach to ensure this, is
     * to set the domain name to the name of the test class that instantiates the CacheManager.
     */
+   @Deprecated
    public static EmbeddedCacheManager createCacheManagerEnforceJmxDomain(GlobalConfiguration configuration) {
       return internalCreateJmxDomain(true, configuration, true);
    }
 
+   @Deprecated
    private static EmbeddedCacheManager internalCreateJmxDomain(boolean start, GlobalConfiguration configuration, boolean enforceJmxDomain) {
       amendMarshaller(configuration);
       minimizeThreads(configuration);
@@ -357,6 +366,7 @@ public class TestCacheManagerFactory {
       }
    }
 
+   @Deprecated
    public static EmbeddedCacheManager createCacheManager(Configuration defaultCacheConfig) {
       GlobalConfiguration globalConfiguration;
       if (defaultCacheConfig.getCacheMode().isClustered()) {
@@ -378,6 +388,7 @@ public class TestCacheManagerFactory {
       return newDefaultCacheManager(true, globalConfiguration, defaultCacheConfig, false);
    }
 
+   @Deprecated
    public static EmbeddedCacheManager createCacheManager(GlobalConfiguration configuration, Configuration defaultCfg) {
       minimizeThreads(configuration);
       amendMarshaller(configuration);
@@ -386,10 +397,12 @@ public class TestCacheManagerFactory {
       return newDefaultCacheManager(true, configuration, defaultCfg, false);
    }
 
+   @Deprecated
    public static EmbeddedCacheManager createCacheManager(GlobalConfiguration configuration, Configuration defaultCfg, boolean keepJmxDomainName) {
       return createCacheManager(configuration, defaultCfg, keepJmxDomainName, false);
    }
 
+   @Deprecated
    public static EmbeddedCacheManager createCacheManager(GlobalConfiguration configuration, Configuration defaultCfg, boolean keepJmxDomainName, boolean dontFixTransport) {
       minimizeThreads(configuration);
       amendMarshaller(configuration);
@@ -431,6 +444,7 @@ public class TestCacheManagerFactory {
    /**
     * @see #createCacheManagerEnforceJmxDomain(String)
     */
+   @Deprecated
    public static EmbeddedCacheManager createCacheManagerEnforceJmxDomain(String jmxDomain, boolean exposeGlobalJmx, boolean exposeCacheJmx) {
       return createCacheManagerEnforceJmxDomain(jmxDomain, null, exposeGlobalJmx, exposeCacheJmx);
    }
@@ -438,6 +452,7 @@ public class TestCacheManagerFactory {
    /**
     * @see #createCacheManagerEnforceJmxDomain(String)
     */
+   @Deprecated
    public static EmbeddedCacheManager createCacheManagerEnforceJmxDomain(String jmxDomain, String cacheManagerName, boolean exposeGlobalJmx, boolean exposeCacheJmx) {
       GlobalConfiguration globalConfiguration = GlobalConfiguration.getNonClusteredDefault();
       globalConfiguration.setJmxDomain(jmxDomain);
@@ -450,6 +465,7 @@ public class TestCacheManagerFactory {
       return createCacheManager(globalConfiguration, configuration, true);
    }
 
+   @Deprecated
    public static Configuration getDefaultConfiguration(boolean transactional) {
       Configuration c = new Configuration();
       markAsTransactional(transactional, c);
@@ -470,6 +486,7 @@ public class TestCacheManagerFactory {
    }
 
 
+   @Deprecated
    public static Configuration getDefaultConfiguration(boolean transactional, Configuration.CacheMode cacheMode) {
       Configuration c = new Configuration();
       markAsTransactional(transactional, c);
@@ -482,10 +499,12 @@ public class TestCacheManagerFactory {
       return c;
    }
 
+   @Deprecated
    public static void amendTransport(GlobalConfiguration cfg) {
       amendTransport(cfg, new TransportFlags());
    }
 
+   @Deprecated
    private static void amendTransport(GlobalConfiguration configuration, TransportFlags flags) {
       if (configuration.getTransportClass() != null) { //this is local
          Properties newTransportProps = new Properties();
@@ -540,6 +559,7 @@ public class TestCacheManagerFactory {
    }
 
 
+   @Deprecated
    public static void minimizeThreads(GlobalConfiguration gc) {
       Properties p = new Properties();
       p.setProperty("maxThreads", String.valueOf(MAX_ASYNC_EXEC_THREADS));
@@ -555,6 +575,7 @@ public class TestCacheManagerFactory {
             .addProperty("keepAliveTime", String.valueOf(KEEP_ALIVE));
    }
 
+   @Deprecated
    public static void amendMarshaller(GlobalConfiguration configuration) {
       if (MARSHALLER != null) {
          try {
@@ -582,6 +603,7 @@ public class TestCacheManagerFactory {
       }
    }
 
+   @Deprecated
    private static DefaultCacheManager newDefaultCacheManager(boolean start, GlobalConfiguration gc, Configuration c) {
       GlobalConfigurationBuilder builder = new GlobalConfigurationBuilder().read(LegacyGlobalConfigurationAdaptor.adapt(gc));
       minimizeThreads(builder);
