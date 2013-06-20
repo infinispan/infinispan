@@ -36,6 +36,7 @@ import java.util.List;
  * @see org.infinispan.manager.DefaultCacheManager
  * @since 4.0
  */
+@Deprecated
 public class ConfigurationException extends CacheException {
 
    private static final long serialVersionUID = -5576382839360927955L;

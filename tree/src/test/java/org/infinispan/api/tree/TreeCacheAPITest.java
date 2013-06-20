@@ -23,9 +23,9 @@
 package org.infinispan.api.tree;
 
 import org.infinispan.Cache;
+import org.infinispan.CacheConfigurationException;
 import org.infinispan.atomic.AtomicMap;
 import org.infinispan.atomic.AtomicMapLookup;
-import org.infinispan.config.ConfigurationException;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.test.CacheManagerCallable;
@@ -76,14 +76,14 @@ public class TreeCacheAPITest extends SingleCacheManagerTest {
    }
 
    public void testGetData() {
-      cache.put(Fqn.fromRelativeFqn(Fqn.fromString("STATUS"), Fqn.fromString("TRADE")),"key1","TRADE1");
-      cache.put(Fqn.fromRelativeFqn(Fqn.fromString("STATUS"), Fqn.fromString("TRADE")),"key2","TRADE2");
-      cache.put(Fqn.fromRelativeFqn(Fqn.fromString("STATUS"), Fqn.fromString("TRADE")),"key3","TRADE3");
-      cache.put(Fqn.fromRelativeFqn(Fqn.fromString("STATUS"), Fqn.fromString("TRADE")),"key4","TRADE4");
-      cache.put(Fqn.fromRelativeFqn(Fqn.fromString("STATUS"), Fqn.fromString("TRADE")),"key5","TRADE5");
-      cache.put(Fqn.fromRelativeFqn(Fqn.fromString("STATUS"), Fqn.fromString("TRADE")),"key6","TRADE6");
-      cache.put(Fqn.fromRelativeFqn(Fqn.fromString("STATUS"), Fqn.fromString("TRADE")),"key7","TRADE7");
-      Object object = cache.get(Fqn.fromRelativeFqn(Fqn.fromString("STATUS"), Fqn.fromString("TRADE")),"key7");
+      cache.put(Fqn.fromRelativeFqn(Fqn.fromString("STATUS"), Fqn.fromString("TRADE")), "key1", "TRADE1");
+      cache.put(Fqn.fromRelativeFqn(Fqn.fromString("STATUS"), Fqn.fromString("TRADE")), "key2", "TRADE2");
+      cache.put(Fqn.fromRelativeFqn(Fqn.fromString("STATUS"), Fqn.fromString("TRADE")), "key3", "TRADE3");
+      cache.put(Fqn.fromRelativeFqn(Fqn.fromString("STATUS"), Fqn.fromString("TRADE")), "key4", "TRADE4");
+      cache.put(Fqn.fromRelativeFqn(Fqn.fromString("STATUS"), Fqn.fromString("TRADE")), "key5", "TRADE5");
+      cache.put(Fqn.fromRelativeFqn(Fqn.fromString("STATUS"), Fqn.fromString("TRADE")), "key6", "TRADE6");
+      cache.put(Fqn.fromRelativeFqn(Fqn.fromString("STATUS"), Fqn.fromString("TRADE")), "key7", "TRADE7");
+      Object object = cache.get(Fqn.fromRelativeFqn(Fqn.fromString("STATUS"), Fqn.fromString("TRADE")), "key7");
       assertNotNull(object);
       Map<String, String> data = cache.getData(Fqn.fromRelativeFqn(Fqn.fromString("STATUS"), Fqn.fromString("TRADE")));
       assertNotNull(data);
@@ -124,13 +124,13 @@ public class TreeCacheAPITest extends SingleCacheManagerTest {
       assertFalse(cache.getRoot().hasChild(fqn));
       // remove should REALLY remove though and not just mark as deleted/invalid.
       Node n = cache.getNode(fqn);
-      assert n == null;
+      assertNull(n);
 
       assertEquals(false, cache.removeNode(fqn));
 
       // remove should REALLY remove though and not just mark as deleted/invalid.
       n = cache.getNode(fqn);
-      assert n == null;
+      assertNull(n);
 
       // Check that it's removed if it has a child
       Fqn child = Fqn.fromString("/test/fqn/child");
@@ -152,11 +152,14 @@ public class TreeCacheAPITest extends SingleCacheManagerTest {
          Fqn parent = fqn.getSubFqn(0, i);
          Object childName = fqn.get(i);
          // make sure a data key exists in the cache
-         assert c.containsKey(new NodeKey(parent, NodeKey.Type.DATA)) : "Node [" + parent + "] does not have a Data atomic map!";
-         assert c.containsKey(new NodeKey(parent, NodeKey.Type.STRUCTURE)) : "Node [" + parent + "] does not have a Structure atomic map!";
+         assertTrue("Node [" + parent + "] does not have a Data atomic map!", c.containsKey(new NodeKey(parent,
+               NodeKey.Type.DATA)));
+         assertTrue("Node [" + parent + "] does not have a Structure atomic map!", c.containsKey(new NodeKey(parent,
+               NodeKey.Type.STRUCTURE)));
          AtomicMap<Object, Fqn> am = AtomicMapLookup.getAtomicMap(c, new NodeKey(parent, NodeKey.Type.STRUCTURE));
          boolean hasChild = am.containsKey(childName);
-         assert hasChild : "Node [" + parent + "] does not have a child [" + childName + "] in its Structure atomic map!";
+         assertTrue("Node [" + parent + "] does not have a child [" + childName + "] in its Structure atomic " +
+               "map!", hasChild);
       }
    }
 
@@ -183,21 +186,21 @@ public class TreeCacheAPITest extends SingleCacheManagerTest {
    }
 
    public void testPhantomStructuralNodesOnRemove() {
-      assert cache.getNode(Fqn.fromString("/a/b/c")) == null;
-      assert !cache.removeNode("/a/b/c");
-      assert cache.getNode(Fqn.fromString("/a/b/c")) == null;
-      assert cache.getNode(Fqn.fromString("/a/b")) == null;
-      assert cache.getNode(Fqn.fromString("/a")) == null;
+      assertNull(cache.getNode("/a/b/c"));
+      assertFalse(cache.removeNode("/a/b/c"));
+      assertNull(cache.getNode("/a/b/c"));
+      assertNull(cache.getNode("/a/b"));
+      assertNull(cache.getNode("/a"));
    }
 
    public void testPhantomStructuralNodesOnRemoveTransactional() throws Exception {
-      assert cache.getNode(Fqn.fromString("/a/b/c")) == null;
+      assertNull(cache.getNode("/a/b/c"));
       tm.begin();
-      assert !cache.removeNode("/a/b/c");
+      assertFalse(cache.removeNode("/a/b/c"));
       tm.commit();
-      assert cache.getNode(Fqn.fromString("/a/b/c")) == null;
-      assert cache.getNode(Fqn.fromString("/a/b")) == null;
-      assert cache.getNode(Fqn.fromString("/a")) == null;
+      assertNull(cache.getNode("/a/b/c"));
+      assertNull(cache.getNode("/a/b"));
+      assertNull(cache.getNode("/a"));
    }
 
    public void testRpcManagerElements() {
@@ -218,7 +221,7 @@ public class TreeCacheAPITest extends SingleCacheManagerTest {
       });
    }
 
-   @Test(expectedExceptions=ConfigurationException.class)
+   @Test(expectedExceptions = CacheConfigurationException.class)
    public void testFactoryNoBatching() {
       ConfigurationBuilder builder = new ConfigurationBuilder();
       withCacheManager(new CacheManagerCallable(
