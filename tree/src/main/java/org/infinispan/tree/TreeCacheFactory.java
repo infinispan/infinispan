@@ -23,7 +23,7 @@
 package org.infinispan.tree;
 
 import org.infinispan.Cache;
-import org.infinispan.config.ConfigurationException;
+import org.infinispan.CacheConfigurationException;
 
 /**
  * Factory class that contains API for users to create instances of {@link org.infinispan.tree.TreeCache}
@@ -38,7 +38,7 @@ public class TreeCacheFactory {
     * @param cache
     * @return instance of a {@link TreeCache}
     * @throws NullPointerException   if the cache parameter is null
-    * @throws ConfigurationException if the invocation batching configuration is not enabled.
+    * @throws CacheConfigurationException if the invocation batching configuration is not enabled.
     */
 
    public <K, V> TreeCache<K, V> createTreeCache(Cache<K, V> cache) {
@@ -51,7 +51,7 @@ public class TreeCacheFactory {
 
       // If invocationBatching is not enabled, throw a new configuration exception.
       if (!cache.getCacheConfiguration().invocationBatching().enabled()) {
-         throw new ConfigurationException("invocationBatching is not enabled for cache '" +
+         throw new CacheConfigurationException("invocationBatching is not enabled for cache '" +
                cache.getName() + "'. Make sure this is enabled by" +
                " calling configurationBuilder.invocationBatching().enable()");
       }
