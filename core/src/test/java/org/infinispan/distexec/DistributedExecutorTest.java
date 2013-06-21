@@ -25,14 +25,14 @@ package org.infinispan.distexec;
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Set;
 import java.util.concurrent.Callable;
 import java.util.concurrent.CancellationException;
-import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.CyclicBarrier;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
-import java.util.concurrent.atomic.AtomicInteger;
 
 import org.infinispan.AdvancedCache;
 import org.infinispan.Cache;
@@ -50,8 +50,6 @@ import org.testng.annotations.Test;
  */
 @Test(groups = "functional", testName = "distexec.DistributedExecutorTest")
 public class DistributedExecutorTest extends LocalDistributedExecutorTest {
-
-   private static AtomicInteger counter = new AtomicInteger();
 
    public DistributedExecutorTest() {
       cleanup = CleanupPhase.AFTER_METHOD;
@@ -78,13 +76,15 @@ public class DistributedExecutorTest extends LocalDistributedExecutorTest {
    @Test(expectedExceptions = ExecutionException.class)
    public void testBasicTargetLocalDistributedCallableWithTimeout() throws Exception {
       Cache<Object, Object> cache1 = getCache();
+      Cache<Object, Object> cache2 = cache(1, cacheName());
+      CyclicBarrier barrier = new CyclicBarrier(2);
+      cache2.getAdvancedCache().getComponentRegistry().registerComponent(barrier, "barrier");
 
       // initiate task from cache1 and execute on same node
       DistributedExecutorService des = createDES(cache1);
-      Address target = cache1.getAdvancedCache().getRpcManager().getAddress();
+      Address target = address(0);
 
-      DistributedTaskBuilder builder = des
-               .createDistributedTaskBuilder(new SleepingSimpleCallable());
+      DistributedTaskBuilder builder = des.createDistributedTaskBuilder(new SleepingSimpleCallable());
       builder.timeout(1000, TimeUnit.MILLISECONDS);
 
       Future<Integer> future = des.submit(target, builder.build());
@@ -189,21 +189,17 @@ public class DistributedExecutorTest extends LocalDistributedExecutorTest {
    }
 
    public void testTaskCancellation() throws Exception {
+      CyclicBarrier barrier = new CyclicBarrier(2);
+      cache(1, cacheName()).getAdvancedCache().getComponentRegistry().registerComponent(barrier, "barrier");
+
       DistributedExecutorService des = createDES(getCache());
       List<Address> cacheMembers = getCache().getAdvancedCache().getRpcManager().getMembers();
-      List<Address> members = new ArrayList<Address>(cacheMembers);
-      AssertJUnit.assertEquals(caches(cacheName()).size(), members.size());
-      members.remove(getCache().getAdvancedCache().getRpcManager().getAddress());
-      
-      DistributedTaskBuilder<Integer> tb = des.createDistributedTaskBuilder( new LongRunningCallable());
-      final Future<Integer> future = des.submit(members.get(0),tb.build());
-      eventually(new Condition() {
-         
-         @Override
-         public boolean isSatisfied() throws Exception {
-           return counter.get() >= 1;
-         }
-      });
+      AssertJUnit.assertEquals(caches(cacheName()).size(), cacheMembers.size());
+
+      DistributedTaskBuilder<Integer> tb = des.createDistributedTaskBuilder(new LongRunningCallable());
+      final Future<Integer> future = des.submit(address(1), tb.build());
+      // Will unblock when LongRunningCallable starts running
+      barrier.await(10, TimeUnit.SECONDS);
       future.cancel(true);
       boolean taskCancelled = false;
       try {
@@ -212,7 +208,8 @@ public class DistributedExecutorTest extends LocalDistributedExecutorTest {
          taskCancelled = e instanceof CancellationException;
       }
       assert taskCancelled : "Dist task not cancelled ";
-      assert counter.get() >= 2;
+      // Will unblock when LongRunningCallable is interrupted
+      barrier.await(10, TimeUnit.SECONDS);
       assert future.isCancelled();      
       assert future.isDone(); 
 
@@ -345,21 +342,28 @@ public class DistributedExecutorTest extends LocalDistributedExecutorTest {
       }
    }
    
-   static class LongRunningCallable implements Callable<Integer>, Serializable {
+   static class LongRunningCallable implements DistributedCallable<Object, Object, Integer>, Serializable {
 
       /** The serialVersionUID */
       private static final long serialVersionUID = -6110011263261397071L;
+      private Cache<Object, Object> cache;
+
+      @Override
+      public void setEnvironment(Cache<Object, Object> cache, Set<Object> inputKeys) {
+         this.cache = cache;
+      }
 
       @Override
       public Integer call() throws Exception {
-         CountDownLatch latch = new CountDownLatch(1);
-         counter.incrementAndGet();
+         CyclicBarrier barrier = cache.getAdvancedCache().getComponentRegistry().getComponent("barrier");
+
+         barrier.await(10, TimeUnit.SECONDS);
          try {
-            latch.await(5000, TimeUnit.MILLISECONDS);            
+            TimeUnit.MILLISECONDS.sleep(5000);
          } catch (InterruptedException e) {
+            //interrupted successfully
+            barrier.await(10, TimeUnit.SECONDS);
             Thread.currentThread().interrupt();
-            //interrupted successfully, increase counter 
-            counter.incrementAndGet();
          }
          return 1;
       }
