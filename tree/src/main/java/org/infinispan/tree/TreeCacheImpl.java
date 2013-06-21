@@ -272,19 +272,23 @@ public class TreeCacheImpl<K, V> extends TreeStructureSupport implements TreeCac
       startAtomic();
       boolean success = false;
       try {
+         // Use the FORCE_WRITE_LOCK for the first read operation on the source, the source's parent,
+         // and the destination.
+         AdvancedCache<NodeKey, AtomicMap<?, ?>> cacheForWrite = cache.withFlags(Flag.FORCE_WRITE_LOCK);
+
          // check that parent's structure map contains the node to be moved. in case of optimistic locking this
          // ensures the write skew is properly detected if some other thread removes the child
-         Node<K, V> parent = getNode(cache, nodeToMoveFqn.getParent());
+         Node<K, V> parent = getNode(cacheForWrite, nodeToMoveFqn.getParent());
          if (!parent.hasChild(nodeToMoveFqn.getLastElement())) {
             if (trace) log.trace("The parent does not have the child that needs to be moved. Returning...");
             return;
          }
-         Node<K, V> nodeToMove = getNode(cache.withFlags(Flag.FORCE_WRITE_LOCK), nodeToMoveFqn);
+         Node<K, V> nodeToMove = getNode(cacheForWrite, nodeToMoveFqn);
          if (nodeToMove == null) {
             if (trace) log.trace("Did not find the node that needs to be moved. Returning...");
             return; // nothing to do here!
          }
-         if (!exists(cache, newParentFqn)) {
+         if (!exists(cacheForWrite, newParentFqn)) {
             // then we need to silently create the new parent
             createNodeInCache(cache, newParentFqn);
             if (trace) log.tracef("The new parent (%s) did not exists, was created", newParentFqn);
