@@ -84,8 +84,7 @@ public class NodeKey implements Serializable {
    }
 
    public String toString() {
-      return "NodeKey{" +
-            "contents=" + contents +
+      return "NodeKey{" + contents +
             ", fqn=" + fqn +
             '}';
    }

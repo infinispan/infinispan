@@ -46,7 +46,9 @@ import org.infinispan.util.logging.LogFactory;
 import org.testng.annotations.Test;
 
 import javax.transaction.*;
-import java.util.Random;
+import java.util.Collections;
+import java.util.Set;
+import java.util.concurrent.Callable;
 import java.util.concurrent.CountDownLatch;
 
 import static org.testng.AssertJUnit.*;
@@ -64,7 +66,6 @@ public abstract class BaseNodeMoveAPITest extends SingleCacheManagerTest {
    static final Fqn A_B = Fqn.fromRelativeFqn(A, B);
    static final Fqn A_B_C = Fqn.fromRelativeFqn(A_B, C);
    static final Fqn A_B_C_E = Fqn.fromRelativeFqn(A_B_C, E);
-   static final Fqn A_B_D = Fqn.fromRelativeFqn(A_B, D);
    static final Fqn C_E = Fqn.fromRelativeFqn(C, E);
    static final Fqn D_B = Fqn.fromRelativeFqn(D, B);
    static final Fqn D_B_C = Fqn.fromRelativeFqn(D_B, C);
@@ -75,7 +76,7 @@ public abstract class BaseNodeMoveAPITest extends SingleCacheManagerTest {
    DataContainer dc;
 
    protected EmbeddedCacheManager createCacheManager() throws Exception {
-      EmbeddedCacheManager cm = TestCacheManagerFactory.createLocalCacheManager(false);
+      EmbeddedCacheManager cm = TestCacheManagerFactory.createCacheManager();
       cm.defineConfiguration("test", createConfigurationBuilder().build());
       cache = cm.getCache("test");
       tm = TestingUtil.extractComponent(cache, TransactionManager.class);
@@ -191,8 +192,8 @@ public abstract class BaseNodeMoveAPITest extends SingleCacheManagerTest {
       // move
       log.info("move " + nodeC + " to " + nodeB);
       treeCache.move(nodeC.getFqn(), nodeB.getFqn());
-      //System.out.println("nodeB " + nodeB);
-      //System.out.println("nodeC " + nodeC);
+      //log.debugf("nodeB " + nodeB);
+      //log.debugf("nodeC " + nodeC);
 
       // child nodes will need refreshing, since existing pointers will be stale.
       nodeC = nodeB.getChild(C);
@@ -234,12 +235,12 @@ public abstract class BaseNodeMoveAPITest extends SingleCacheManagerTest {
       assertEquals(nodeB, nodeA.getChildren().iterator().next());
 
       tm.begin();
-      System.out.println("Before: " + TreeStructureSupport.printTree(treeCache, true));
+      log.debugf("Before: " + TreeStructureSupport.printTree(treeCache, true));
       // move node B up to hang off the root
       treeCache.move(nodeB.getFqn(), Fqn.ROOT);
-      System.out.println("After: " + TreeStructureSupport.printTree(treeCache, true));
+      log.debugf("After: " + TreeStructureSupport.printTree(treeCache, true));
       tm.commit();
-      System.out.println("Committed: " + TreeStructureSupport.printTree(treeCache, true));
+      log.debugf("Committed: " + TreeStructureSupport.printTree(treeCache, true));
       nodeB = rootNode.getChild(B);
 
       assertEquals(rootNode, nodeA.getParent());
@@ -265,11 +266,11 @@ public abstract class BaseNodeMoveAPITest extends SingleCacheManagerTest {
 
       tm.begin();
       // move node B up to hang off the root
-      System.out.println("Before: " + TreeStructureSupport.printTree(treeCache, true));
+      log.debugf("Before: " + TreeStructureSupport.printTree(treeCache, true));
       treeCache.move(nodeB.getFqn(), Fqn.ROOT);
-      System.out.println("After: " + TreeStructureSupport.printTree(treeCache, true));
+      log.debugf("After: " + TreeStructureSupport.printTree(treeCache, true));
       tm.rollback();
-      System.out.println("Rolled back: " + TreeStructureSupport.printTree(treeCache, true));
+      log.debugf("Rolled back: " + TreeStructureSupport.printTree(treeCache, true));
 
       nodeA = rootNode.getChild(A);
       nodeB = nodeA.getChild(B);
@@ -284,6 +285,7 @@ public abstract class BaseNodeMoveAPITest extends SingleCacheManagerTest {
    public void testLocksDeepMove() throws Exception {
       Node<Object, Object> rootNode = treeCache.getRoot();
 
+      // Initial setup: /a/b/d, /c/e
       Node<Object, Object> nodeA = rootNode.addChild(A);
       Node<Object, Object> nodeB = nodeA.addChild(B);
       Node<Object, Object> nodeD = nodeB.addChild(D);
@@ -292,9 +294,15 @@ public abstract class BaseNodeMoveAPITest extends SingleCacheManagerTest {
       assertNoLocks();
       tm.begin();
 
+      // Move /c -> /a/b, new setup: /a/b/d, /a/b/c/e
       treeCache.move(nodeC.getFqn(), nodeB.getFqn());
 
-      checkLocksDeep();
+      // /a/b, /c, /c/e, /a/b/c and /a/b/c/e should all be locked.
+      assertTrue(isNodeLocked(C, true));
+      assertTrue(isNodeLocked(C_E, true));
+      assertTrue(isNodeLocked(A_B, false));
+      assertTrue(isNodeLocked(A_B_C, true));
+      assertTrue(isNodeLocked(A_B_C_E, true));
 
       tm.commit();
 
@@ -304,204 +312,179 @@ public abstract class BaseNodeMoveAPITest extends SingleCacheManagerTest {
    public void testLocks() throws Exception {
       Node<Object, Object> rootNode = treeCache.getRoot();
 
+      // Initial setup: /a/b, /c
       Node<Object, Object> nodeA = rootNode.addChild(A);
       Node<Object, Object> nodeB = nodeA.addChild(B);
       Node<Object, Object> nodeC = rootNode.addChild(C);
       assertNoLocks();
       tm.begin();
 
+      // Move /c -> /a/b/c
       treeCache.move(nodeC.getFqn(), nodeB.getFqn());
 
-      checkLocks();
+      assertTrue(isNodeLocked(C, true));
+      assertTrue(isNodeLocked(A_B_C, true));
+      assertTrue(isNodeLocked(Fqn.ROOT, false));
+      assertTrue(isNodeLocked(A_B, false));
 
       tm.commit();
       assertNoLocks();
    }
 
-   public void testConcurrency() throws InterruptedException {
-      Node<Object, Object> rootNode = treeCache.getRoot();
-
-      final int N = 5;// number of threads
-      final int loops = 64;// number of loops
+   public void testConcurrentMoveSiblings() throws Exception {
       // tests a tree structure as such:
-      // /a
-      // /b
-      // /c
-      // /d
-      // /e
-      // /x
-      // /y
-
-      // N threads constantly move /x and /y around to hang off either /a ~ /e randomly.
-
-      final Fqn FQN_A = A, FQN_B = B, FQN_C = C, FQN_D = D, FQN_E = E, FQN_X = Fqn.fromString("/x"), FQN_Y = Fqn.fromString("/y");
+      // /a/x, a/y, /b, /c
+      // N threads try to move /a/x from /a to /b and /a/y from /a to /c
+      final int N = 5;
+      final Fqn X = Fqn.fromString("/x"), Y = Fqn.fromString("/y");
 
       // set up the initial structure.
-      final Node[] NODES = {
-            rootNode.addChild(FQN_A), rootNode.addChild(FQN_B),
-            rootNode.addChild(FQN_C), rootNode.addChild(FQN_D), rootNode.addChild(FQN_E)
-      };
+      Node<Object, Object> rootNode = treeCache.getRoot();
+      Node<Object, Object> nodeA = rootNode.addChild(A);
+      nodeA.addChild(X);
+      nodeA.addChild(Y);
+      Node<Object, Object> nodeB = rootNode.addChild(B);
+      Node<Object, Object> nodeC = rootNode.addChild(C);
 
-      final Node<Object, Object> NODE_X = genericize(NODES[0]).addChild(FQN_X);
-      final Node<Object, Object> NODE_Y = genericize(NODES[1]).addChild(FQN_Y);
-
-      Thread[] movers = new Thread[N];
-      final CountDownLatch latch = new CountDownLatch(1);
-      final Random rnd = new Random();
-
+      Callable<Object>[] movers = new Callable[N];
       for (int i = 0; i < N; i++) {
-         movers[i] = new Thread(getClass().getSimpleName() + ".Mover-" + i) {
-            public void run() {
+         final Fqn source = Fqn.fromRelativeFqn(A, i % 2 == 0 ? X : Y);
+         final Fqn dest = i % 2 == 0 ? B : C;
+         movers[i] = new Callable<Object>() {
+            public Object call() {
                try {
-                  latch.await();
+                  treeCache.move(source, dest);
+               } catch (Exception e) {
+                  // expected on some of the threads, in optimistic mode
                }
-               catch (InterruptedException e) {
-                  // ignore
-               }
-
-               for (int counter = 0; counter < loops; counter++) {
-                  treeCache.move(NODE_X.getFqn(), NODES[rnd.nextInt(NODES.length)].getFqn());
-                  TestingUtil.sleepRandom(250);
-                  treeCache.move(NODE_Y.getFqn(), NODES[rnd.nextInt(NODES.length)].getFqn());
-                  TestingUtil.sleepRandom(250);
-               }
+               return null;
             }
          };
-         movers[i].start();
       }
 
-      latch.countDown();
-
-      for (Thread t : movers) {
-         t.join();
-      }
-
-      assertNoLocks();
-      boolean found_x = false, found_x_again = false;
-      for (Node erased : NODES) {
-         Node<Object, Object> n = genericize(erased);
-         if (!found_x) {
-            found_x = n.hasChild(FQN_X);
-         } else {
-            found_x_again = found_x_again || n.hasChild(FQN_X);
-         }
-      }
-      boolean found_y = false, found_y_again = false;
-      for (Node erased : NODES) {
-         Node<Object, Object> n = genericize(erased);
-         if (!found_y) {
-            found_y = n.hasChild(FQN_Y);
-         } else {
-            found_y_again = found_y_again || n.hasChild(FQN_Y);
-         }
-      }
+      runConcurrently(movers);
 
       log.info("Tree: " + TreeStructureSupport.printTree(treeCache, true));
-
-      assertTrue("Should have found x", found_x);
-      assertTrue("Should have found y", found_y);
-      assertFalse("Should have only found x once", found_x_again);
-      assertFalse("Should have only found y once", found_y_again);
+      assertNoLocks();
+      // Any of the move operations may fail, so just check that each node exists in exactly one place
+      assertTrue(nodeA.getChildrenNames().contains("x") ^ nodeB.getChildrenNames().contains("x"));
+      assertTrue(nodeA.getChildrenNames().contains("y") ^ nodeC.getChildrenNames().contains("y"));
    }
 
-   public void testConcurrencySimple() throws InterruptedException {
+   public void testConcurrentMoveToSameDest() throws Exception {
+      // tests a tree structure as such:
+      // /a/x, /b/y, /c
+      // N threads try to move /a/x to /c and /b/y to /c at the same time
+      final int N = 5;
+      final Fqn X = Fqn.fromString("/x"), Y = Fqn.fromString("/y");
+
+      // set up the initial structure.
+      Node<Object, Object> rootNode = treeCache.getRoot();
+      Node<Object, Object> nodeA = rootNode.addChild(A);
+      nodeA.addChild(X);
+      Node<Object, Object> nodeB = rootNode.addChild(B);
+      nodeB.addChild(Y);
+      Node<Object, Object> nodeC = rootNode.addChild(C);
+
+      Callable<Object>[] movers = new Callable[N];
+      for (int i = 0; i < N; i++) {
+         final Fqn source = i % 2 == 0 ? Fqn.fromRelativeFqn(A, X) : Fqn.fromRelativeFqn(B, Y);
+         movers[i] = new Callable<Object>() {
+            public Object call() throws Exception {
+               try {
+                  treeCache.move(source, C);
+               } catch (Exception e) {
+                  // expected on some of the threads, in optimistic mode
+               }
+               return null;
+            }
+         };
+      }
+      runConcurrently(movers);
+
+      log.info("Tree: " + TreeStructureSupport.printTree(treeCache, true));
+      assertNoLocks();
+      // Any of the move operations may fail, so just check that each node exists in exactly one place
+      assertTrue(nodeA.getChildrenNames().contains("x") ^ nodeC.getChildrenNames().contains("x"));
+      assertTrue(nodeB.getChildrenNames().contains("y") ^ nodeC.getChildrenNames().contains("y"));
+   }
+
+   public void testConcurrentMoveSameNode() throws Exception {
       // set up the initial structure
-      // /a
-      // /b
-      // /c
+      // /a, /b, /c
+      // one thread tries to move /c under /a, another tries to move /c under /b
       Node<Object, Object> rootNode = treeCache.getRoot();
       final Fqn FQN_A = A, FQN_B = B, FQN_C = C;
       Node nodeA = rootNode.addChild(FQN_A);
       Node nodeB = rootNode.addChild(FQN_B);
-      rootNode.addChild(FQN_C);
+      Node nodeC = rootNode.addChild(FQN_C);
 
-      final CountDownLatch latch1 = new CountDownLatch(1);
-      final CountDownLatch latch2 = new CountDownLatch(1);
-      final CountDownLatch latch3 = new CountDownLatch(1);
+      final CountDownLatch nodeReadLatch = new CountDownLatch(1);
+      final CountDownLatch nodeMovedLatch = new CountDownLatch(1);
 
       // tries to move C under B right after another thread already moved C under A
-      Thread t1 = new Thread(new Runnable() {
-         public void run() {
+      Callable<Object> moveCtoB = new Callable<Object>() {
+         public Object call() throws Exception {
+            tm().begin();
             try {
-               latch1.await();
+               // ensure we already 'see' node C in this tx. this is what actually triggers the issue.
+               assertEquals(asSet("a", "b", "c"), treeCache.getRoot().getChildrenNames());
+               assertEquals(Collections.emptySet(), treeCache.getNode(FQN_C).getChildrenNames());
+               nodeReadLatch.countDown();
 
-               tm().begin();
-               try {
+               nodeMovedLatch.await();
+               treeCache.move(FQN_C, FQN_B);
+               tm().commit(); //this is expected to fail
+               fail("Transaction should have failed");
+            } catch (Exception e) {
+               if (tm().getTransaction() != null) {
+                  // the TX is most likely rolled back already, but we attempt a rollback just in case it isn't
                   try {
-                     // ensure we already 'see' node C in this tx. this is what actually triggers the issue.
-                     treeCache.getNode(FQN_C);
-                  } finally {
-                     latch2.countDown();
+                     tm().rollback();
+                  } catch (SystemException e1) {
+                     log.error("Failed to rollback", e1);
                   }
-                  latch3.await();
-                  treeCache.move(FQN_C, FQN_B);
-                  tm().commit(); //this is expected to fail
-               } catch (Exception e) {
-                  if (tm().getTransaction() != null) {
-                     // the TX is most likely rolled back already, but we attempt a rollback just in case it isn't
-                     try {
-                        tm().rollback();
-                     } catch (SystemException e1) {
-                        log.error("Failed to rollback", e1);
-                     }
-                  }
-                  throw e;
                }
-            } catch (Exception ex) {
-               log.error(ex);
             }
+            return null;
          }
-      }, getClass().getSimpleName() + ".Mover-1");
+      };
 
       // moves C under A successfully
-      Thread t2 = new Thread(new Runnable() {
-         public void run() {
+      Callable<Object> moveCtoA = new Callable<Object>() {
+         public Object call() throws Exception {
+            tm().begin();
             try {
-               latch2.await();
-
-               tm().begin();
                try {
-                  try {
-                     treeCache.move(FQN_C, FQN_A);
-                     tm().commit();
-                  } finally {
-                     latch3.countDown();
-                  }
-               } catch (Exception e) {
-                  if (tm().getTransaction() != null) {
-                     // the TX is most likely rolled back already, but we attempt a rollback just in case it isn't
-                     try {
-                        tm().rollback();
-                     } catch (SystemException e1) {
-                        log.error("Failed to rollback", e1);
-                     }
-                  }
-                  throw e;
+                  nodeReadLatch.await();
+                  treeCache.move(FQN_C, FQN_A);
+                  tm().commit();
+               } finally {
+                  nodeMovedLatch.countDown();
                }
-            } catch (Exception ex) {
-               log.error(ex);
+            } catch (Exception e) {
+               if (tm().getTransaction() != null) {
+                  // the TX is most likely rolled back already, but we attempt a rollback just in case it isn't
+                  try {
+                     tm().rollback();
+                  } catch (SystemException e1) {
+                     log.error("Failed to rollback", e1);
+                  }
+               }
+               throw e;
             }
+            return null;
          }
-      }, getClass().getSimpleName() + ".Mover-2");
+      };
 
-      t1.start();
-      t2.start();
-      latch1.countDown();
-      t1.join();
-      t2.join();
-
-      assertNoLocks();
-
-      int foundC = 0;
-      for (Node n : new Node[] {rootNode, nodeA, nodeB}) {
-         if (n.hasChild(FQN_C)) {
-            foundC++;
-         }
-      }
+      runConcurrently(moveCtoB, moveCtoA);
 
       log.trace("Tree: " + TreeStructureSupport.printTree(treeCache, true));
-
-      assertEquals("Should have found C only once", 1, foundC);
+      assertNoLocks();
+      assertFalse(nodeC.isValid());
+      assertEquals(asSet("a", "b"), rootNode.getChildrenNames());
+      assertEquals(asSet("c"), nodeA.getChildrenNames());
+      assertEquals(Collections.emptySet(), nodeB.getChildrenNames());
    }
 
    public void testMoveInSamePlace() {
@@ -512,15 +495,13 @@ public abstract class BaseNodeMoveAPITest extends SingleCacheManagerTest {
       Node xNode = aNode.addChild(FQN_X);
       assertEquals(aNode.getChildren().size(), 1);
 
-      System.out.println("Before: " + TreeStructureSupport.printTree(treeCache, true));
+      log.debugf("Before: " + TreeStructureSupport.printTree(treeCache, true));
 
       treeCache.move(xNode.getFqn(), aNode.getFqn());
 
-      System.out.println("After: " + TreeStructureSupport.printTree(treeCache, true));
-
-      assertEquals(aNode.getChildren().size(), 1);
-
+      log.debugf("After: " + TreeStructureSupport.printTree(treeCache, true));
       assertNoLocks();
+      assertEquals(aNode.getChildren().size(), 1);
    }
 
    /**
@@ -543,25 +524,12 @@ public abstract class BaseNodeMoveAPITest extends SingleCacheManagerTest {
       }
    }
 
-   protected boolean isNodeLocked(Fqn fqn) {
+   protected boolean isNodeLocked(Fqn fqn, boolean includeData) {
       TransactionManager tm = cache.getAdvancedCache().getTransactionManager();
       TransactionTable tt = cache.getAdvancedCache().getComponentRegistry().getComponent(TransactionTable.class);
       CacheEntry structure = lookupEntryFromCurrentTransaction(tt, tm, new NodeKey(fqn, NodeKey.Type.STRUCTURE));
       CacheEntry data = lookupEntryFromCurrentTransaction(tt, tm, new NodeKey(fqn, NodeKey.Type.DATA));
-      return structure != null && data != null && structure.isChanged() && data.isChanged();
-   }
-
-   protected void checkLocks() {
-      assert isNodeLocked(C) : "Node " + C + " is not locked!";
-      assert isNodeLocked(A_B_C) : "Node " + A_B_C + " is not locked!";
-   }
-
-   protected void checkLocksDeep() {
-      // /a/b, /c, /c/e, /a/b/c and /a/b/c/e should all be locked.
-      assert isNodeLocked(C);
-      assert isNodeLocked(C_E);
-      assert isNodeLocked(A_B_C);
-      assert isNodeLocked(A_B_C_E);
+      return structure != null && data != null && structure.isChanged() && (!includeData || data.isChanged());
    }
 
    protected void assertNoLocks() {
@@ -593,11 +561,11 @@ public abstract class BaseNodeMoveAPITest extends SingleCacheManagerTest {
       assert treeCache.getNode(A_B).getChildrenNames().contains(C.getLastElement());
       assert null == treeCache.getNode(D);
 
-      System.out.println(TreeStructureSupport.printTree(treeCache, true));
+      log.debugf(TreeStructureSupport.printTree(treeCache, true));
 
       treeCache.move(A_B, D);
 
-      System.out.println(TreeStructureSupport.printTree(treeCache, true));
+      log.debugf(TreeStructureSupport.printTree(treeCache, true));
 
       assert null == treeCache.getNode(A_B_C);
       assert null == treeCache.getNode(A_B);
@@ -605,5 +573,9 @@ public abstract class BaseNodeMoveAPITest extends SingleCacheManagerTest {
       assert null != treeCache.getNode(D_B);
       assert null != treeCache.getNode(D_B_C);
       assert "v".equals(treeCache.get(D_B_C, "k"));
+   }
+   
+   private Set<Object> asSet(Object... names) {
+      return Util.asSet(names);
    }
 }
