@@ -350,8 +350,7 @@ class MemcachedDecoder(memcachedCache: AdvancedCache[String, Array[Byte]], sched
 
    private def flushAll(b: ChannelBuffer, ch: Channel, isReadParams: Boolean): AnyRef = {
       if (isReadParams) readParameters(ch, b)
-      val flushFunction = (cache: AdvancedCache[String, Array[Byte]]) =>
-         cache.withFlags(Flag.CACHE_MODE_LOCAL, Flag.SKIP_CACHE_STORE).clear()
+      val flushFunction = (cache: AdvancedCache[String, Array[Byte]]) => cache.clear()
       val flushDelay = if (params == null) 0 else params.flushDelay
       if (flushDelay == 0)
          flushFunction(cache)
