@@ -101,6 +101,12 @@ public class EntryWrappingInterceptor extends CommandInterceptor {
          //needed because entries might be added in L1
          if (!ctx.isInTxScope())
             commitContextEntries(ctx, command, null);
+         else {
+            CacheEntry entry = ctx.lookupEntry(command.getKey());
+            if (entry != null) {
+               entry.setSkipRemoteGet(true);
+            }
+         }
       }
    }
 
@@ -111,14 +117,14 @@ public class EntryWrappingInterceptor extends CommandInterceptor {
             entryFactory.wrapEntryForRemove(ctx, key, false);
          }
       }
-      return invokeNextAndApplyChanges(ctx, command, null);
+      return setSkipRemoteGetsAndInvokeNextForDataCommand(ctx, command, null);
    }
 
    @Override
    public final Object visitClearCommand(InvocationContext ctx, ClearCommand command) throws Throwable {
       for (InternalCacheEntry entry : dataContainer.entrySet())
          entryFactory.wrapEntryForClear(ctx, entry.getKey());
-      return invokeNextAndApplyChanges(ctx, command, null);
+      return setSkipRemoteGetsAndInvokeNextForClear(ctx, command);
    }
 
    @Override
@@ -128,13 +134,13 @@ public class EntryWrappingInterceptor extends CommandInterceptor {
         if (trace)
            log.tracef("Entry to be removed: %s", ctx.getLookedUpEntries());
       }
-      return invokeNextAndApplyChanges(ctx, command, null);
+      return setSkipRemoteGetsAndInvokeNextForDataCommand(ctx, command, null);
    }
 
    @Override
    public final Object visitPutKeyValueCommand(InvocationContext ctx, PutKeyValueCommand command) throws Throwable {
       wrapEntryForPutIfNeeded(ctx, command);
-      return invokeNextAndApplyChanges(ctx, command, command.getMetadata());
+      return setSkipRemoteGetsAndInvokeNextForDataCommand(ctx, command, command.getMetadata());
    }
 
    private void wrapEntryForPutIfNeeded(InvocationContext ctx, PutKeyValueCommand command) throws Throwable {
@@ -182,13 +188,13 @@ public class EntryWrappingInterceptor extends CommandInterceptor {
          entryFactory.wrapEntryForRemove(ctx, command.getKey(),
                                          command.hasFlag(Flag.IGNORE_RETURN_VALUES) && !command.isConditional());
       }
-      return invokeNextAndApplyChanges(ctx, command, null);
+      return setSkipRemoteGetsAndInvokeNextForDataCommand(ctx, command, null);
    }
 
    @Override
    public final Object visitReplaceCommand(InvocationContext ctx, ReplaceCommand command) throws Throwable {
       wrapEntryForReplaceIfNeeded(ctx, command);
-      return invokeNextAndApplyChanges(ctx, command, command.getMetadata());
+      return setSkipRemoteGetsAndInvokeNextForDataCommand(ctx, command, command.getMetadata());
    }
 
    private void wrapEntryForReplaceIfNeeded(InvocationContext ctx, ReplaceCommand command) throws InterruptedException {
@@ -205,7 +211,7 @@ public class EntryWrappingInterceptor extends CommandInterceptor {
             entryFactory.wrapEntryForPut(ctx, key, null, true, command, true);
          }
       }
-      return invokeNextAndApplyChanges(ctx, command, command.getMetadata());
+      return setSkipRemoteGetsAndInvokeNextForPutMapCommand(ctx, command);
    }
 
    @Override
@@ -275,6 +281,60 @@ public class EntryWrappingInterceptor extends CommandInterceptor {
 
       log.tracef("The return value is %s", result);
       return result;
+   }
+
+   /**
+    * Locks the value for the keys accessed by the command to avoid being override from a remote get.
+    */
+   private Object setSkipRemoteGetsAndInvokeNextForClear(InvocationContext context, ClearCommand command) throws Throwable {
+      boolean txScope = context.isInTxScope();
+      if (txScope) {
+         for (CacheEntry entry : context.getLookedUpEntries().values()) {
+            if (entry != null) {
+               entry.setSkipRemoteGet(true);
+            }
+         }
+      }
+      Object retVal = invokeNextAndApplyChanges(context, command, command.getMetadata());
+      if (txScope) {
+         for (CacheEntry entry : context.getLookedUpEntries().values()) {
+            if (entry != null) {
+               entry.setSkipRemoteGet(true);
+            }
+         }
+      }
+      return retVal;
+   }
+
+   /**
+    * Locks the value for the keys accessed by the command to avoid being override from a remote get.
+    */
+   private Object setSkipRemoteGetsAndInvokeNextForPutMapCommand(InvocationContext context, PutMapCommand command) throws Throwable {
+      Object retVal = invokeNextAndApplyChanges(context, command, command.getMetadata());
+      if (context.isInTxScope()) {
+         for (Object key : command.getAffectedKeys()) {
+            CacheEntry entry = context.lookupEntry(key);
+            if (entry != null) {
+               entry.setSkipRemoteGet(true);
+            }
+         }
+      }
+      return retVal;
+   }
+
+   /**
+    * Locks the value for the keys accessed by the command to avoid being override from a remote get.
+    */
+   private Object setSkipRemoteGetsAndInvokeNextForDataCommand(InvocationContext context, DataWriteCommand command,
+                                                               Metadata metadata) throws Throwable {
+      Object retVal = invokeNextAndApplyChanges(context, command, metadata);
+      if (context.isInTxScope()) {
+         CacheEntry entry = context.lookupEntry(command.getKey());
+         if (entry != null) {
+            entry.setSkipRemoteGet(true);
+         }
+      }
+      return retVal;
    }
 
    private final class EntryWrappingVisitor extends AbstractVisitor {

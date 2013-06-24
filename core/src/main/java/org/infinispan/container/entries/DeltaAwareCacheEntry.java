@@ -75,7 +75,8 @@ public class DeltaAwareCacheEntry implements CacheEntry, StateChangingEntry {
       REMOVED(1 << 2),
       VALID(1 << 3),
       EVICTED(1 << 4),
-      LOADED(1 << 5);
+      LOADED(1 << 5),
+      SKIP_REMOTE_GET(1 << 6);
 
       final byte mask;
 
@@ -123,6 +124,11 @@ public class DeltaAwareCacheEntry implements CacheEntry, StateChangingEntry {
    @Override
    public final long getMaxIdle() {
       return -1;  // forever
+   }
+
+   @Override
+   public boolean skipRemoteGet() {
+      return isFlagSet(SKIP_REMOTE_GET);
    }
 
    @Override
@@ -258,6 +264,11 @@ public class DeltaAwareCacheEntry implements CacheEntry, StateChangingEntry {
    @Override
    public void setLoaded(boolean loaded) {
       setFlag(loaded, LOADED);
+   }
+
+   @Override
+   public void setSkipRemoteGet(boolean skipRemoteGet) {
+      setFlag(skipRemoteGet, SKIP_REMOTE_GET);
    }
 
    private void setFlag(boolean enable, Flags flag) {

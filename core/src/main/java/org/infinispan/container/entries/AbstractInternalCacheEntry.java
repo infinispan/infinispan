@@ -61,6 +61,11 @@ public abstract class AbstractInternalCacheEntry implements InternalCacheEntry {
    }
 
    @Override
+   public void setSkipRemoteGet(boolean skipRemoteGet) {
+      //no-op
+   }
+
+   @Override
    public final boolean isNull() {
       return false;
    }
@@ -92,6 +97,11 @@ public abstract class AbstractInternalCacheEntry implements InternalCacheEntry {
 
    @Override
    public boolean isLoaded() {
+      return false;
+   }
+
+   @Override
+   public boolean skipRemoteGet() {
       return false;
    }
 

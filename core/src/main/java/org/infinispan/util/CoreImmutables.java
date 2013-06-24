@@ -156,6 +156,11 @@ public class CoreImmutables extends Immutables {
       }
 
       @Override
+      public boolean skipRemoteGet() {
+         return false;
+      }
+
+      @Override
       public boolean isChanged() {
          return entry.isChanged();
       }
@@ -222,6 +227,11 @@ public class CoreImmutables extends Immutables {
 
       @Override
       public void setLoaded(boolean loaded) {
+         throw new UnsupportedOperationException();
+      }
+
+      @Override
+      public void setSkipRemoteGet(boolean skipRemoteGet) {
          throw new UnsupportedOperationException();
       }
 

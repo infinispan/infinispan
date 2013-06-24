@@ -1,6 +1,8 @@
 package org.infinispan.interceptors.distribution;
 
 import org.infinispan.atomic.DeltaCompositeKey;
+import org.infinispan.container.entries.CacheEntry;
+import org.infinispan.container.entries.MVCCEntry;
 import org.infinispan.metadata.Metadata;
 import org.infinispan.commands.FlagAffectedCommand;
 import org.infinispan.commands.control.LockControlCommand;
@@ -92,20 +94,6 @@ public class TxDistributionInterceptor extends BaseDistributionInterceptor {
       }
    }
 
-   /**
-    * For conditional operations (replace, remove, put if absent) Used only for optimistic transactional caches, to solve the following situation:
-    * <pre>
-    * - node A (owner, tx originator) does a successful replace
-    * - the actual value changes
-    * - tx commits. The value is applied on A (the check was performed at operation time) but is not applied on
-    *   B (check is performed at commit time).
-    * In such situations (optimistic caches) the remote conditional command should not re-check the old value.
-    * </pre>
-    */
-   protected boolean ignorePreviousValueOnBackup(WriteCommand command, InvocationContext ctx) {
-      return super.ignorePreviousValueOnBackup(command, ctx) && !useClusteredWriteSkewCheck;
-   }
-
    @Start
    public void start() {
       isPessimisticCache = cacheConfiguration.transaction().lockingMode() == LockingMode.PESSIMISTIC;
@@ -123,7 +111,10 @@ public class TxDistributionInterceptor extends BaseDistributionInterceptor {
       SingleKeyRecipientGenerator skrg = new SingleKeyRecipientGenerator(command.getKey());
       Object returnValue = handleTxWriteCommand(ctx, command, skrg, command.hasFlag(Flag.PUT_FOR_STATE_TRANSFER));
       if (ignorePreviousValueOnBackup(command, ctx)) {
+         command.setIgnorePreviousValue(true);
          command.setPutIfAbsent(false);
+      } else {
+         command.setIgnorePreviousValue(false);
       }
       // If this was a remote put record that which sent it
       if (isL1CacheEnabled && !ctx.isOriginLocal() && !skrg.generateRecipients().contains(ctx.getOrigin()))
@@ -157,10 +148,14 @@ public class TxDistributionInterceptor extends BaseDistributionInterceptor {
          if (returnValue != null && isL1CacheEnabled && !ctx.isOriginLocal())
             l1Manager.addRequestor(command.getKey(), ctx.getOrigin());
 
+         //if the cache entry has the value lock flag set, skip the remote get.
+         CacheEntry entry = ctx.lookupEntry(command.getKey());
+         boolean skipRemoteGet = entry != null && entry.skipRemoteGet();
+
          // need to check in the context as well since a null retval is not necessarily an indication of the entry not being
          // available.  It could just have been removed in the same tx beforehand.  Also don't bother with a remote get if
          // the entry is mapped to the local node.
-         if (returnValue == null && ctx.isOriginLocal()) {
+         if (!skipRemoteGet && returnValue == null && ctx.isOriginLocal()) {
             Object key = command.getKey();
             if (needsRemoteGet(ctx, command)) {
                returnValue = remoteGetAndStoreInL1(ctx, key, false, command);
@@ -343,6 +338,11 @@ public class TxDistributionInterceptor extends BaseDistributionInterceptor {
       //   b) unsafeUnreliableReturnValues is true, we are in a TX and the command is conditional
       if (isNeedReliableReturnValues(command) || command.isConditional() || shouldFetchRemoteValuesForWriteSkewCheck(ctx, command)) {
          for (Object k : keygen.getKeys()) {
+            CacheEntry entry = ctx.lookupEntry(k);
+            boolean skipRemoteGet =  entry != null && entry.skipRemoteGet();
+            if (skipRemoteGet) {
+               continue;
+            }
             Object returnValue = remoteGetAndStoreInL1(ctx, k, true, command);
             if (returnValue == null) {
                localGet(ctx, k, true, command, false);

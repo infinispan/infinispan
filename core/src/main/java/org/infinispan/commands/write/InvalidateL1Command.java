@@ -8,6 +8,7 @@ import java.util.concurrent.locks.LockSupport;
 import org.infinispan.commands.Visitor;
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.container.DataContainer;
+import org.infinispan.container.entries.CacheEntry;
 import org.infinispan.container.entries.InternalCacheEntry;
 import org.infinispan.context.Flag;
 import org.infinispan.context.InvocationContext;
@@ -97,6 +98,11 @@ public class InvalidateL1Command extends InvalidateCommand {
                if (forRehash && config.clustering().l1().onRehash()) {
                   if (trace) log.trace("Not removing, instead entry will be stored in L1");
                   // don't need to do anything here, DistLockingInterceptor.commitEntry() will put the entry in L1
+                  CacheEntry entry = ctx.lookupEntry(k);
+                  if (entry != null) {
+                     //set changed to true because the flag is no longer set in the EntryFactoryImpl.
+                     entry.setChanged(true);
+                  }
                } else {
                	if (trace) log.tracef("Invalidating key %s.", k);
                   invalidate(ctx, k);
