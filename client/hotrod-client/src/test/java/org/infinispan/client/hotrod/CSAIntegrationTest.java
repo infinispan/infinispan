@@ -34,12 +34,13 @@ import org.infinispan.lifecycle.ComponentStatus;
 import org.infinispan.manager.CacheContainer;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.server.hotrod.HotRodServer;
-import org.infinispan.util.ByteArrayKey;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.AfterMethod;
 import org.testng.annotations.Test;
+
+import com.sun.source.tree.AssertTree;
 
 import java.net.InetSocketAddress;
 import java.net.SocketAddress;
@@ -187,13 +188,6 @@ public class CSAIntegrationTest extends HitsAwareCacheManagersTest {
          assertOnlyServerHit(transport.getServerAddress());
          tcpConnectionFactory.releaseTransport(transport);
       }
-   }
-
-   private void assertCacheContainsKey(SocketAddress serverAddress, byte[] keyBytes) {
-      CacheContainer cacheContainer = hrServ2CacheManager.get(serverAddress);
-      Cache<Object, Object> cache = cacheContainer.getCache();
-      DataContainer dataContainer = cache.getAdvancedCache().getDataContainer();
-      assert dataContainer.keySet().contains(new ByteArrayKey(keyBytes));
    }
 
    private byte[] generateKey(int i) {

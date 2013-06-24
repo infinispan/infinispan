@@ -27,7 +27,6 @@ import net.jcip.annotations.Immutable;
 import net.jcip.annotations.ThreadSafe;
 import org.infinispan.marshall.Ids;
 import org.infinispan.marshall.exts.NoStateExternalizer;
-import org.infinispan.util.ByteArrayKey;
 import org.infinispan.util.Util;
 
 import java.io.ObjectInput;
@@ -66,14 +65,14 @@ public class MurmurHash3 implements Hash {
 
    static long getblock(byte[] key, int i) {
       return
-           (((long) key[i + 0] & 0x00000000000000FFL))
-         | (((long) key[i + 1] & 0x00000000000000FFL) << 8)
-         | (((long) key[i + 2] & 0x00000000000000FFL) << 16)
-         | (((long) key[i + 3] & 0x00000000000000FFL) << 24)
-         | (((long) key[i + 4] & 0x00000000000000FFL) << 32)
-         | (((long) key[i + 5] & 0x00000000000000FFL) << 40)
-         | (((long) key[i + 6] & 0x00000000000000FFL) << 48)
-         | (((long) key[i + 7] & 0x00000000000000FFL) << 56);
+           ((key[i + 0] & 0x00000000000000FFL))
+         | ((key[i + 1] & 0x00000000000000FFL) << 8)
+         | ((key[i + 2] & 0x00000000000000FFL) << 16)
+         | ((key[i + 3] & 0x00000000000000FFL) << 24)
+         | ((key[i + 4] & 0x00000000000000FFL) << 32)
+         | ((key[i + 5] & 0x00000000000000FFL) << 40)
+         | ((key[i + 6] & 0x00000000000000FFL) << 48)
+         | ((key[i + 7] & 0x00000000000000FFL) << 56);
    }
 
    static void bmix(State state) {
@@ -143,7 +142,7 @@ public class MurmurHash3 implements Hash {
          case 12: state.k2 ^= (long) key[tail + 11] << 24;
          case 11: state.k2 ^= (long) key[tail + 10] << 16;
          case 10: state.k2 ^= (long) key[tail + 9] << 8;
-         case 9:  state.k2 ^= (long) key[tail + 8];
+         case 9:  state.k2 ^= key[tail + 8];
 
          case 8:  state.k1 ^= (long) key[tail + 7] << 56;
          case 7:  state.k1 ^= (long) key[tail + 6] << 48;
@@ -152,7 +151,7 @@ public class MurmurHash3 implements Hash {
          case 4:  state.k1 ^= (long) key[tail + 3] << 24;
          case 3:  state.k1 ^= (long) key[tail + 2] << 16;
          case 2:  state.k1 ^= (long) key[tail + 1] << 8;
-         case 1:  state.k1 ^= (long) key[tail + 0];
+         case 1:  state.k1 ^= key[tail + 0];
             bmix(state);
       }
 
@@ -206,7 +205,7 @@ public class MurmurHash3 implements Hash {
          case 12: state.k2 ^= (long) key[tail + 11] << 24;
          case 11: state.k2 ^= (long) key[tail + 10] << 16;
          case 10: state.k2 ^= (long) key[tail + 9] << 8;
-         case 9:  state.k2 ^= (long) key[tail + 8];
+         case 9:  state.k2 ^= key[tail + 8];
 
          case 8:  state.k1 ^= (long) key[tail + 7] << 56;
          case 7:  state.k1 ^= (long) key[tail + 6] << 48;
@@ -215,7 +214,7 @@ public class MurmurHash3 implements Hash {
          case 4:  state.k1 ^= (long) key[tail + 3] << 24;
          case 3:  state.k1 ^= (long) key[tail + 2] << 16;
          case 2:  state.k1 ^= (long) key[tail + 1] << 8;
-         case 1:  state.k1 ^= (long) key[tail + 0];
+         case 1:  state.k1 ^= key[tail + 0];
             bmix(state);
       }
 
@@ -381,7 +380,7 @@ public class MurmurHash3 implements Hash {
       state.k1 ^= (long) b3 << 24;
       state.k1 ^= (long) b2 << 16;
       state.k1 ^= (long) b1 << 8;
-      state.k1 ^= (long) b0;
+      state.k1 ^= b0;
       bmix(state);
 
       state.h2 ^= 4;
@@ -406,8 +405,6 @@ public class MurmurHash3 implements Hash {
          return hash((long[]) o);
       else if (o instanceof String)
          return hash(((String) o).getBytes(UTF8));
-      else if (o instanceof ByteArrayKey)
-         return hash(((ByteArrayKey) o).getData());
       else
          return hash(o.hashCode());
    }
