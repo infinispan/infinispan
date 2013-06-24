@@ -19,11 +19,12 @@ import org.apache.lucene.search.TermQuery;
 import org.apache.lucene.search.TopDocs;
 import org.apache.lucene.store.Directory;
 import org.infinispan.Cache;
-import org.infinispan.config.Configuration;
-import org.infinispan.config.Configuration.CacheMode;
+import org.infinispan.configuration.cache.CacheMode;
+import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.lucene.directory.DirectoryBuilder;
 import org.infinispan.lucene.testutils.LuceneSettings;
 import org.infinispan.manager.EmbeddedCacheManager;
+import org.infinispan.test.AbstractCacheTest;
 import org.infinispan.test.MultipleCacheManagersTest;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.TransportFlags;
@@ -69,14 +70,13 @@ public class DynamicTopologyStressTest extends MultipleCacheManagersTest {
 
    @Override
    protected void createCacheManagers() throws Throwable {
-      Configuration defaultClusteredConfig = org.infinispan.test.AbstractCacheTest
-            .getDefaultClusteredConfig(CacheMode.DIST_SYNC, false);
-      defaultClusteredConfig.setInvocationBatchingEnabled(false);
+      ConfigurationBuilder cb = AbstractCacheTest.getDefaultClusteredCacheConfig(CacheMode.DIST_SYNC, false);
+      cb.invocationBatching().disable();
       TransportFlags transportFlags = new TransportFlags().withMerge(true);
 
-      writingNode = addClusterEnabledCacheManager(defaultClusteredConfig, transportFlags);
+      writingNode = addClusterEnabledCacheManager(cb, transportFlags);
       for (int i = 0; i < READERS; i++) {
-         readers[i] = addClusterEnabledCacheManager(defaultClusteredConfig, transportFlags);
+         readers[i] = addClusterEnabledCacheManager(cb, transportFlags);
          Cache<Object, Object> cache = readers[i].getCache();
          discardPerNode[i] = TestingUtil.getDiscardForCache(cache);
          TestingUtil.setDelayForCache(cache, 1, 1);
