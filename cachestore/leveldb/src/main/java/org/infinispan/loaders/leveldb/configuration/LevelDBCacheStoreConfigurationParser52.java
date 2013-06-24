@@ -33,9 +33,9 @@ import javax.xml.stream.XMLStreamConstants;
 import javax.xml.stream.XMLStreamException;
 
 /**
- * 
+ *
  * @author <a href="mailto:rtsang@redhat.com">Ray Tsang</a>
- * 
+ *
  */
 public class LevelDBCacheStoreConfigurationParser52 implements ConfigurationParser<ConfigurationBuilderHolder> {
 
@@ -46,8 +46,7 @@ public class LevelDBCacheStoreConfigurationParser52 implements ConfigurationPars
 	public Namespace[] getSupportedNamespaces() {
 		return new Namespace[] {
 				new Namespace(Namespace.INFINISPAN_NS_BASE_URI, "leveldb",
-						Element.LEVELDB_STORE.getLocalName(), 5, 2),
-				new Namespace("", Element.LEVELDB_STORE.getLocalName(), 0, 0) };
+						Element.LEVELDB_STORE.getLocalName(), 5, 2) };
 	}
 
 	@Override
@@ -116,7 +115,7 @@ public class LevelDBCacheStoreConfigurationParser52 implements ConfigurationPars
             }
          }
       }
-		
+
 		if (reader.hasNext() && (reader.nextTag() != XMLStreamConstants.END_ELEMENT)) {
          ParseUtils.unexpectedElement(reader);
       }
