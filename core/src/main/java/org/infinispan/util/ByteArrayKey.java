@@ -43,7 +43,9 @@ import java.util.Set;
  *
  * @author Galder Zamarreño
  * @since 4.1
+ * @deprecated This class will disappear in 6.0 with no direct replacement. Use the {@link ByteArrayEquivalence} in the context of the {@link Equivalence} API
  */
+@Deprecated
 public final class ByteArrayKey implements Serializable {
 
    private static final long serialVersionUID = 7305972805432411725L;
