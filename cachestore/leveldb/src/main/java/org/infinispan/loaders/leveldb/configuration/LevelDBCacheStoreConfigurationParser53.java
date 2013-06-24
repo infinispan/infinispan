@@ -27,7 +27,7 @@ import org.infinispan.configuration.parsing.ConfigurationParser;
 import org.infinispan.configuration.parsing.Namespace;
 import org.infinispan.configuration.parsing.Namespaces;
 import org.infinispan.configuration.parsing.ParseUtils;
-import org.infinispan.configuration.parsing.Parser52;
+import org.infinispan.configuration.parsing.Parser53;
 import org.infinispan.configuration.parsing.XMLExtendedStreamReader;
 import org.infinispan.loaders.leveldb.LevelDBCacheStoreConfig.ImplementationType;
 import org.infinispan.util.StringPropertyReplacer;
@@ -39,11 +39,12 @@ import org.iq80.leveldb.CompressionType;
  *
  */
 @Namespaces({
-   @Namespace(uri = "urn:infinispan:config:leveldb:5.2", root = "leveldbStore")
+   @Namespace(uri = "urn:infinispan:config:leveldb:5.3", root = "leveldbStore"),
+   @Namespace(root = "leveldbStore")
 })
-public class LevelDBCacheStoreConfigurationParser52 implements ConfigurationParser {
+public class LevelDBCacheStoreConfigurationParser53 implements ConfigurationParser {
 
-	public LevelDBCacheStoreConfigurationParser52() {
+	public LevelDBCacheStoreConfigurationParser53() {
 	}
 
 	@Override
@@ -108,7 +109,7 @@ public class LevelDBCacheStoreConfigurationParser52 implements ConfigurationPars
                break;
             }
             default: {
-               Parser52.parseCommonStoreAttributes(reader, i, builder);
+               Parser53.parseCommonStoreAttributes(reader, i, builder);
             }
          }
       }
