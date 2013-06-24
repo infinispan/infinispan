@@ -54,10 +54,14 @@ public class RemoveCommand extends AbstractDataWriteCommand {
    @Override
    public Object perform(InvocationContext ctx) throws Throwable {
       CacheEntry e = ctx.lookupEntry(key);
-      if (e == null || e.isNull()) {
+      if (e == null || e.isNull() || e.isRemoved()) {
          nonExistent = true;
          log.trace("Nothing to remove since the entry is null or we have a null entry");
          if (value == null) {
+            if (e != null) {
+               e.setChanged(true);
+               e.setRemoved(true);
+            }
             return null;
          } else {
             successful = false;
@@ -65,26 +69,27 @@ public class RemoveCommand extends AbstractDataWriteCommand {
          }
       }
 
+      if (isConditional() && ctx.isInTxScope() && !ctx.isOriginLocal() && !(this instanceof InvalidateCommand)) {
+         //in tx mode, this flag indicates if the command has or not succeed in the originator
+         if (ignorePreviousValue) {
+            return performRemove(e, ctx);
+         } else {
+            return value == null ? null : true;
+         }
+      }
+
       if (!(e instanceof MVCCEntry)) ctx.putLookedUpEntry(key, null);
 
       if (!ignorePreviousValue && value != null && e.getValue() != null && !e.getValue().equals(value)) {
          successful = false;
-         e.rollback();
          return false;
       }
-
-      final Object removedValue = e.getValue();
-      notify(ctx, removedValue, true);
-
-      e.setRemoved(true);
-      e.setValid(false);
-
 
       if (this instanceof EvictCommand) {
          e.setEvicted(true);
       }
 
-      return value == null ? removedValue : true;
+      return performRemove(e, ctx);
    }
 
    protected void notify(InvocationContext ctx, Object value, boolean isPre) {
@@ -187,5 +192,16 @@ public class RemoveCommand extends AbstractDataWriteCommand {
    public final boolean isReturnValueExpected() {
       //SKIP_RETURN_VALUE ignored for conditional remove
       return super.isReturnValueExpected() || isConditional();
+   }
+
+   private Object performRemove(CacheEntry e, InvocationContext ctx) {
+      final Object removedValue = e.getValue();
+      notify(ctx, removedValue, true);
+
+      e.setRemoved(true);
+      e.setValid(false);
+      e.setChanged(true);
+
+      return value == null ? removedValue : true;
    }
 }

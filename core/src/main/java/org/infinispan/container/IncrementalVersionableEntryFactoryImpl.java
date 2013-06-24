@@ -61,11 +61,8 @@ public class IncrementalVersionableEntryFactoryImpl extends EntryFactoryImpl {
          }
       }
 
-      MVCCEntry entry = new ClusteredRepeatableReadEntry(key, value, metadata);
-      if (forRemoval) {
-         entry.setRemoved(true);
-      }
-      return entry;
+      //only the ClusteredRepeatableReadEntry are used, even to represent the null values.
+      return new ClusteredRepeatableReadEntry(key, value, metadata);
    }
 
 }

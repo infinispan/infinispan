@@ -126,7 +126,7 @@ public abstract class AbstractInvocationContext implements InvocationContext {
    public boolean replaceValue(Object key, InternalCacheEntry cacheEntry) {
       CacheEntry ce = lookupEntry(key);
       if (ce == null || ce.isNull() || ce.getValue() == null) {
-         if (ce != null && ce.isChanged()) {
+         if (ce != null) {
             ce.setValue(cacheEntry.getValue());
             ce.setMetadata(cacheEntry.getMetadata());
             onEntryValueReplaced(key, cacheEntry);

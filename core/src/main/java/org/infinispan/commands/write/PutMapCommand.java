@@ -60,6 +60,7 @@ public class PutMapCommand extends AbstractFlagAffectedCommand implements WriteC
             notifier.notifyCacheEntryModified(
                   key, value, value == null, true, ctx, this);
             me.setValue(e.getValue());
+            me.setChanged(true);
          }
       }
       return null;
