@@ -8,11 +8,9 @@ import static org.infinispan.lucene.CacheTestSupport.removeByTerm;
 import static org.infinispan.lucene.CacheTestSupport.writeTextToIndex;
 
 import org.apache.lucene.store.Directory;
-import org.infinispan.config.CacheLoaderManagerConfig;
-import org.infinispan.config.Configuration;
-import org.infinispan.loaders.jdbc.TableManipulation;
+import org.infinispan.configuration.cache.ConfigurationBuilder;
+import org.infinispan.loaders.jdbc.configuration.JdbcStringBasedCacheStoreConfigurationBuilder;
 import org.infinispan.loaders.jdbc.connectionfactory.ConnectionFactoryConfig;
-import org.infinispan.loaders.jdbc.stringbased.JdbcStringBasedCacheStoreConfig;
 import org.infinispan.lucene.directory.DirectoryBuilder;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.test.SingleCacheManagerTest;
@@ -47,20 +45,25 @@ public class DatabaseStoredIndexTest extends SingleCacheManagerTest {
 
    @Override
    protected EmbeddedCacheManager createCacheManager() throws Exception {
-      Configuration configuration = CacheTestSupport.createLegacyTestConfiguration();
-      enableTestJdbcStorage(configuration);
-      return TestCacheManagerFactory.createClusteredCacheManager(configuration);
-   }
+      ConfigurationBuilder cb = TestCacheManagerFactory.getDefaultCacheConfiguration(false);
+      cb.loaders().preload(false)
+            .addStore(JdbcStringBasedCacheStoreConfigurationBuilder.class)
+            .key2StringMapper(LuceneKey2StringMapper.class)
+            .table()
+            .idColumnName("ID_COLUMN")
+            .idColumnType("VARCHAR(255)")
+            .tableNamePrefix("ISPN_JDBC")
+            .dataColumnName("DATA_COLUMN")
+            .dataColumnType("BLOB")
+            .timestampColumnName("TIMESTAMP_COLUMN")
+            .timestampColumnType("BIGINT")
+            .connectionPool()
+            .driverClass(org.h2.Driver.class)
+            .connectionUrl("jdbc:h2:mem:infinispan;DB_CLOSE_DELAY=1")
+            .username("sa");
 
-   private void enableTestJdbcStorage(Configuration configuration) {
-      TableManipulation tm = UnitTestDatabaseManager.buildStringTableManipulation();
-      JdbcStringBasedCacheStoreConfig jdbcStoreConfiguration = new JdbcStringBasedCacheStoreConfig(connectionFactoryConfig, tm);
-      jdbcStoreConfiguration.setKey2StringMapperClass(LuceneKey2StringMapper.class.getName());
-      CacheLoaderManagerConfig loaderManagerConfig = configuration.getCacheLoaderManagerConfig();
-      loaderManagerConfig.setPreload(Boolean.FALSE);
-      loaderManagerConfig.addCacheLoaderConfig(jdbcStoreConfiguration);
+      return TestCacheManagerFactory.createClusteredCacheManager(cb);
    }
-
    @Test
    public void testIndexUsage() throws IOException {
       cache = cacheManager.getCache();
