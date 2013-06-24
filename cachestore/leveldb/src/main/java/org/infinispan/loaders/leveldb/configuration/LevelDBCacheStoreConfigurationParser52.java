@@ -25,28 +25,33 @@ import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.parsing.ConfigurationBuilderHolder;
 import org.infinispan.configuration.parsing.ConfigurationParser;
 import org.infinispan.configuration.parsing.Namespace;
-import org.infinispan.configuration.parsing.Namespaces;
 import org.infinispan.configuration.parsing.ParseUtils;
 import org.infinispan.configuration.parsing.Parser52;
-import org.infinispan.configuration.parsing.XMLExtendedStreamReader;
 import org.infinispan.loaders.leveldb.LevelDBCacheStoreConfig.ImplementationType;
 import org.infinispan.util.StringPropertyReplacer;
 import org.iq80.leveldb.CompressionType;
+import org.jboss.staxmapper.XMLExtendedStreamReader;
 
 /**
  *
  * @author <a href="mailto:rtsang@redhat.com">Ray Tsang</a>
  *
  */
-@Namespaces({
-   @Namespace(uri = "urn:infinispan:config:leveldb:5.2", root = "leveldbStore")
-})
-public class LevelDBCacheStoreConfigurationParser52 implements ConfigurationParser {
+public class LevelDBCacheStoreConfigurationParser52 implements ConfigurationParser<ConfigurationBuilderHolder> {
+
+   private static final Namespace NAMESPACES[] = { new Namespace(Namespace.INFINISPAN_NS_BASE_URI, "leveldb", Element.LEVELDB_STORE.getLocalName(), 5, 2), };
 
 	public LevelDBCacheStoreConfigurationParser52() {
 	}
 
 	@Override
+   public Namespace[] getSupportedNamespaces() {
+      return NAMESPACES;
+   }
+
+
+
+   @Override
 	public void readElement(XMLExtendedStreamReader reader,
 			ConfigurationBuilderHolder holder) throws XMLStreamException {
 		ConfigurationBuilder builder = holder.getCurrentConfigurationBuilder();
