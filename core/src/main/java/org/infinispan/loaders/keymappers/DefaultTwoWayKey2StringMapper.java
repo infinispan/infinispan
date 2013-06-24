@@ -23,7 +23,6 @@
 package org.infinispan.loaders.keymappers;
 
 import org.infinispan.util.Base64;
-import org.infinispan.util.ByteArrayKey;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
@@ -47,7 +46,7 @@ public class DefaultTwoWayKey2StringMapper implements TwoWayKey2StringMapper {
    private static final char DOUBLE_IDENTIFIER = '5';
    private static final char FLOAT_IDENTIFIER = '6';
    private static final char BOOLEAN_IDENTIFIER = '7';
-   private static final char BYTEARRAYKEY_IDENTIFIER = '8';
+   // private static final char BYTEARRAYKEY_IDENTIFIER = '8';
    private static final char NATIVE_BYTEARRAYKEY_IDENTIFIER = '9';
 
    @Override
@@ -69,8 +68,6 @@ public class DefaultTwoWayKey2StringMapper implements TwoWayKey2StringMapper {
          identifier = FLOAT_IDENTIFIER;
       } else if (key.getClass().equals(Boolean.class)) {
          identifier = BOOLEAN_IDENTIFIER;
-      } else if (key.getClass().equals(ByteArrayKey.class)) {
-         return generateString(BYTEARRAYKEY_IDENTIFIER, Base64.encodeBytes(((ByteArrayKey)key).getData()));
       } else if (key.getClass().equals(byte[].class)) {
          return generateString(NATIVE_BYTEARRAYKEY_IDENTIFIER, Base64.encodeBytes((byte[])key));
       } else {
@@ -100,8 +97,6 @@ public class DefaultTwoWayKey2StringMapper implements TwoWayKey2StringMapper {
                return Float.parseFloat(value);
             case BOOLEAN_IDENTIFIER:
                return Boolean.parseBoolean(value);
-            case BYTEARRAYKEY_IDENTIFIER:
-               return new ByteArrayKey(Base64.decode(value));
             case NATIVE_BYTEARRAYKEY_IDENTIFIER:
                return Base64.decode(value);
             default:
@@ -122,6 +117,6 @@ public class DefaultTwoWayKey2StringMapper implements TwoWayKey2StringMapper {
    }
 
    static boolean isPrimitive(Class<?> key) {
-      return key == String.class || key == Short.class || key == Byte.class || key == Long.class || key == Integer.class || key == Double.class || key == Float.class || key == Boolean.class || key == ByteArrayKey.class || key == byte[].class;
+      return key == String.class || key == Short.class || key == Byte.class || key == Long.class || key == Integer.class || key == Double.class || key == Float.class || key == Boolean.class || key == byte[].class;
    }
 }

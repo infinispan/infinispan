@@ -22,8 +22,6 @@
  */
 package org.infinispan.loaders.jdbc.stringbased;
 
-import java.lang.reflect.Method;
-
 import org.infinispan.loaders.BaseCacheStoreFunctionalTest;
 import org.infinispan.loaders.CacheStoreConfig;
 import org.infinispan.loaders.jdbc.TableManipulation;
@@ -40,10 +38,5 @@ public class JdbcStringBasedCacheStoreFunctionalTest extends BaseCacheStoreFunct
       TableManipulation tm = UnitTestDatabaseManager.buildStringTableManipulation();
       JdbcStringBasedCacheStoreConfig config = new JdbcStringBasedCacheStoreConfig(connectionFactoryConfig, tm);
       return config;
-   }
-
-   @Override
-   @Test(enabled = false, description = "JdbcStringBasedCacheStore does not support ByteArrayKey yet")
-   public void testByteArrayKey(Method m) {
    }
 }

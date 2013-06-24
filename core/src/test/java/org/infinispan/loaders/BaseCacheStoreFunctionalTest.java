@@ -35,7 +35,6 @@ import org.infinispan.test.AbstractInfinispanTest;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.infinispan.transaction.TransactionMode;
-import org.infinispan.util.ByteArrayKey;
 import org.infinispan.util.Util;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
@@ -200,16 +199,6 @@ public abstract class BaseCacheStoreFunctionalTest extends AbstractInfinispanTes
 
          // now re-retrieve the map and make sure we see the diffs
          assert AtomicMapLookup.getAtomicMap(cache, m.getName()).get("a").equals("b");
-      } finally {
-         TestingUtil.killCacheManagers(localCacheContainer);
-      }
-   }
-
-   public void testByteArrayKey(Method m) {
-      CacheContainer localCacheContainer = getContainerWithCacheLoader();
-      try {
-         Cache<ByteArrayKey, Object> cache = localCacheContainer.getCache();
-         cache.put(new ByteArrayKey(m.getName().getBytes()), "hello");
       } finally {
          TestingUtil.killCacheManagers(localCacheContainer);
       }

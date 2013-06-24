@@ -23,7 +23,6 @@ import org.infinispan.Cache;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.test.MultipleCacheManagersTest;
-import org.infinispan.util.ByteArrayKey;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 import org.testng.annotations.Test;
@@ -109,10 +108,8 @@ public class ConcurrentMarshallerTest extends MultipleCacheManagersTest {
          try {
             for (int i = 0; i < 10; i ++) {
                String decimal = Integer.toString(i);
-               ByteArrayKey key = new ByteArrayKey(
-                     ("key-" + Thread.currentThread().getName() + decimal).getBytes());
-               ByteArrayKey value = new ByteArrayKey(
-                     ("value-" + Thread.currentThread().getName() + decimal).getBytes());
+               byte[] key = ("key-" + Thread.currentThread().getName() + decimal).getBytes();
+               byte[] value = ("value-" + Thread.currentThread().getName() + decimal).getBytes();
                cache.put(key, value);
             }
             return null;

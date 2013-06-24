@@ -26,7 +26,6 @@ import net.jcip.annotations.Immutable;
 import net.jcip.annotations.ThreadSafe;
 import org.infinispan.marshall.Ids;
 import org.infinispan.marshall.exts.NoStateExternalizer;
-import org.infinispan.util.ByteArrayKey;
 import org.infinispan.util.Util;
 
 import java.io.ObjectInput;
@@ -112,8 +111,6 @@ public class MurmurHash2Compat implements Hash {
          return hash((byte[]) o);
       else if (o instanceof String)
          return hash(((String) o).getBytes());
-      else if (o instanceof ByteArrayKey)
-         return hash(((ByteArrayKey) o).getData());
       else
          return hash(o.hashCode());
    }

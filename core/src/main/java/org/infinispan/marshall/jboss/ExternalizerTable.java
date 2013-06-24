@@ -99,7 +99,6 @@ import org.infinispan.transaction.xa.recovery.InDoubtTxInfoImpl;
 import org.infinispan.transaction.xa.recovery.RecoveryAwareDldGlobalTransaction;
 import org.infinispan.transaction.xa.recovery.RecoveryAwareGlobalTransaction;
 import org.infinispan.transaction.xa.recovery.SerializableXid;
-import org.infinispan.util.ByteArrayKey;
 import org.infinispan.util.Immutables;
 import org.infinispan.util.InfinispanCollections;
 import org.infinispan.util.logging.Log;
@@ -288,7 +287,6 @@ public class ExternalizerTable implements ObjectTable {
       addInternalExternalizer(new RemoveOperation.Externalizer());
       addInternalExternalizer(new ClearOperation.Externalizer());
       addInternalExternalizer(new JGroupsTopologyAwareAddress.Externalizer());
-      addInternalExternalizer(new ByteArrayKey.Externalizer());
 
       addInternalExternalizer(new SerializableXid.XidExternalizer());
       addInternalExternalizer(new InDoubtTxInfoImpl.Externalizer());

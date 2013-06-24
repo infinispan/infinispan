@@ -76,7 +76,6 @@ import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.infinispan.test.fwk.TestInternalCacheEntryFactory;
 import org.infinispan.transaction.xa.GlobalTransaction;
 import org.infinispan.transaction.xa.TransactionFactory;
-import org.infinispan.util.ByteArrayKey;
 import org.infinispan.util.DefaultTimeService;
 import org.infinispan.util.FastCopyHashMap;
 import org.infinispan.util.Immutables;
@@ -501,11 +500,6 @@ public class VersionAwareMarshallerTest extends AbstractInfinispanTest {
          TraceInformation inf = (TraceInformation) e.getCause();
          assert inf.toString().contains("in object java.lang.Object@");
       }
-   }
-
-   public void testByteArrayKey() throws Exception {
-      ByteArrayKey o = new ByteArrayKey("123".getBytes());
-      marshallAndAssertEquality(o);
    }
 
    public void testConcurrentHashMap() throws Exception {
