@@ -530,19 +530,28 @@ public class TableManipulation implements Cloneable {
    private DatabaseType getDatabaseType() {
       if (databaseType == null) {
          // need to guess from the database type!
+         Connection conn = null;
          try {
-            String dbProduct = connectionFactory.getConnection().getMetaData().getDatabaseProductName();
+            conn = connectionFactory.getConnection();
+            String dbProduct = conn.getMetaData().getDatabaseProductName();
             databaseType = guessDatabaseType(dbProduct);
          } catch (Exception e) {
             log.debug("Unable to guess database type from JDBC metadata.", e);
+         } finally {
+            connectionFactory.releaseConnection(conn);
          }
+         
          if (databaseType == null) {
             log.debug("Unable to detect database type using connection metadata.  Attempting to guess on driver name.");
+            conn = null;
             try {
-               String dbProduct = connectionFactory.getConnection().getMetaData().getDriverName();
+               conn = connectionFactory.getConnection();
+               String dbProduct = conn.getMetaData().getDriverName();
                databaseType = guessDatabaseType(dbProduct);
             } catch (Exception e) {
                log.debug("Unable to guess database type from JDBC driver name.", e);
+            } finally {
+               connectionFactory.releaseConnection(conn);
             }
          }
          if (databaseType == null) {
