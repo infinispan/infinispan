@@ -30,7 +30,7 @@ import org.infinispan.test.TestingUtil
 import org.infinispan.server.core.test.ServerTestingUtil
 import org.infinispan.configuration.cache.{CacheMode, ConfigurationBuilder}
 import org.infinispan.server.hotrod.Constants._
-import org.infinispan.util.ByteArrayEquivalence
+import org.infinispan.commons.equivalence.ByteArrayEquivalence
 
 /**
  * Tests Hot Rod distribution mode when some of the cache managers do not have HotRod servers running.

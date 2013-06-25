@@ -26,7 +26,7 @@ import org.infinispan.test.MultipleCacheManagersTest
 import org.testng.annotations.{AfterMethod, AfterClass, Test}
 import org.infinispan.test.fwk.TestCacheManagerFactory
 import org.infinispan.configuration.cache.CacheMode
-import org.infinispan.util.ByteArrayEquivalence
+import org.infinispan.commons.equivalence.ByteArrayEquivalence
 
 // Do not remove, otherwise getDefaultClusteredConfig is not found
 import org.infinispan.test.AbstractCacheTest._

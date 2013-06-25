@@ -29,7 +29,7 @@ import org.testng.annotations.Test
 import org.testng.Assert._
 import org.infinispan.test.AbstractCacheTest._
 import org.infinispan.configuration.cache.{CacheMode, ConfigurationBuilder}
-import org.infinispan.util.ByteArrayEquivalence
+import org.infinispan.commons.equivalence.ByteArrayEquivalence
 
 /**
  * Tests Hot Rod instances that are behind a proxy.

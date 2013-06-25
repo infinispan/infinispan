@@ -23,13 +23,13 @@
 package org.infinispan.container;
 
 import org.infinispan.metadata.EmbeddedMetadata;
+import org.infinispan.commons.equivalence.AnyEquivalence;
 import org.infinispan.container.entries.ImmortalCacheEntry;
 import org.infinispan.container.entries.InternalCacheEntry;
 import org.infinispan.container.entries.MortalCacheEntry;
 import org.infinispan.container.entries.TransientCacheEntry;
 import org.infinispan.container.entries.TransientMortalCacheEntry;
 import org.infinispan.test.AbstractInfinispanTest;
-import org.infinispan.util.AnyEquivalence;
 import org.infinispan.util.Immutables;
 import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeMethod;

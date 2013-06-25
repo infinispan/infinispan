@@ -22,6 +22,8 @@
  */
 package org.infinispan.util;
 
+import org.infinispan.commons.equivalence.ByteArrayEquivalence;
+import org.infinispan.commons.equivalence.Equivalence;
 import org.infinispan.marshall.AbstractExternalizer;
 import org.infinispan.marshall.Ids;
 
