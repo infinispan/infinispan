@@ -22,6 +22,7 @@
  */
 package org.infinispan.tx;
 
+import org.infinispan.commons.equivalence.AnyEquivalence;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
@@ -34,7 +35,6 @@ import org.infinispan.transaction.xa.LocalXaTransaction;
 import org.infinispan.transaction.xa.TransactionFactory;
 import org.infinispan.transaction.xa.TransactionXaAdapter;
 import org.infinispan.transaction.xa.XaTransactionTable;
-import org.infinispan.util.AnyEquivalence;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 

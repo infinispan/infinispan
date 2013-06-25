@@ -24,6 +24,7 @@
 package org.infinispan.transaction.xa;
 
 import org.infinispan.commands.write.WriteCommand;
+import org.infinispan.commons.equivalence.Equivalence;
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.container.versioning.NumericVersion;
 import org.infinispan.container.versioning.VersionGenerator;
@@ -39,7 +40,6 @@ import org.infinispan.transaction.xa.recovery.RecoveryAwareDldGlobalTransaction;
 import org.infinispan.transaction.xa.recovery.RecoveryAwareGlobalTransaction;
 import org.infinispan.transaction.xa.recovery.RecoveryAwareLocalTransaction;
 import org.infinispan.transaction.xa.recovery.RecoveryAwareRemoteTransaction;
-import org.infinispan.util.Equivalence;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 

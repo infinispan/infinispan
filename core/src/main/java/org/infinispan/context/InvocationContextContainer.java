@@ -23,6 +23,7 @@
 package org.infinispan.context;
 
 import org.infinispan.commands.VisitableCommand;
+import org.infinispan.commons.equivalence.Equivalence;
 import org.infinispan.context.impl.LocalTxInvocationContext;
 import org.infinispan.context.impl.NonTxInvocationContext;
 import org.infinispan.context.impl.RemoteTxInvocationContext;
@@ -31,7 +32,6 @@ import org.infinispan.factories.scopes.Scope;
 import org.infinispan.factories.scopes.Scopes;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.transaction.RemoteTransaction;
-import org.infinispan.util.Equivalence;
 
 import javax.transaction.Transaction;
 

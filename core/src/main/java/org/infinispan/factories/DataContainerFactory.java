@@ -22,14 +22,14 @@
  */
 package org.infinispan.factories;
 
+import org.infinispan.commons.equivalence.AnyEquivalence;
+import org.infinispan.commons.equivalence.Equivalence;
 import org.infinispan.config.ConfigurationException;
 import org.infinispan.container.DataContainer;
 import org.infinispan.container.DefaultDataContainer;
 import org.infinispan.eviction.EvictionStrategy;
 import org.infinispan.eviction.EvictionThreadPolicy;
 import org.infinispan.factories.annotations.DefaultFactoryFor;
-import org.infinispan.util.AnyEquivalence;
-import org.infinispan.util.Equivalence;
 
 /**
  * Constructs the data container

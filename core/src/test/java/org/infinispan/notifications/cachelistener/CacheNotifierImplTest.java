@@ -23,6 +23,7 @@
 package org.infinispan.notifications.cachelistener;
 
 import org.infinispan.Cache;
+import org.infinispan.commons.equivalence.AnyEquivalence;
 import org.infinispan.container.entries.InternalCacheEntry;
 import org.infinispan.test.fwk.TestInternalCacheEntryFactory;
 import org.infinispan.context.InvocationContext;
@@ -30,7 +31,6 @@ import org.infinispan.context.impl.NonTxInvocationContext;
 import org.infinispan.notifications.cachelistener.event.*;
 import org.infinispan.test.AbstractInfinispanTest;
 import org.infinispan.transaction.xa.GlobalTransaction;
-import org.infinispan.util.AnyEquivalence;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
