@@ -19,6 +19,10 @@
 
 package org.infinispan.util;
 
+import org.infinispan.commons.equivalence.AnyEquivalence;
+import org.infinispan.commons.equivalence.Equivalence;
+import org.infinispan.commons.equivalence.EquivalentHashMap;
+import org.infinispan.commons.equivalence.EquivalentHashSet;
 import org.infinispan.util.concurrent.jdk8backported.EquivalentConcurrentHashMapV8;
 
 import java.util.HashMap;

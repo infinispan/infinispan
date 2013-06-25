@@ -34,8 +34,8 @@
 
 package org.infinispan.util.concurrent.jdk8backported;
 
-import org.infinispan.util.AnyEquivalence;
-import org.infinispan.util.Equivalence;
+import org.infinispan.commons.equivalence.AnyEquivalence;
+import org.infinispan.commons.equivalence.Equivalence;
 
 import java.io.Serializable;
 import java.util.AbstractMap;
@@ -106,7 +106,7 @@ import java.util.concurrent.locks.AbstractQueuedSynchronizer;
  * hash table.
  *
  * <p>A {@link java.util.Set} projection of a ConcurrentHashMapV8 may be created
- * (using {@link #newKeySet(org.infinispan.util.Equivalence)} or {@link #newKeySet(int)}), or viewed
+ * (using {@link #newKeySet(org.infinispan.commons.equivalence.Equivalence)} or {@link #newKeySet(int)}), or viewed
  * (using {@link #keySet(Object)} when only keys are of interest, and the
  * mapped values are (perhaps transiently) not used or all take the
  * same mapping value.
@@ -233,7 +233,7 @@ import java.util.concurrent.locks.AbstractQueuedSynchronizer;
  * Java Collections Framework</a>.
  *
  * <b>NOTE</b>: This map has been tweaked so that equality and hash code
- * calculations are done based on a passed {@link org.infinispan.util.Equivalence} function
+ * calculations are done based on a passed {@link org.infinispan.commons.equivalence.Equivalence} function
  * implementation for keys and values, as opposed to relying on their own
  * equals/hashCode/toString implementations. This is handy when using
  * key/values whose mentioned methods cannot be overriden, i.e. arrays,
@@ -4776,7 +4776,7 @@ public class EquivalentConcurrentHashMapV8<K,V>
     * A view of a ConcurrentHashMapV8 as a {@link java.util.Set} of keys, in
     * which additions may optionally be enabled by mapping to a
     * common value.  This class cannot be directly instantiated. See
-    * {@link #keySet()}, {@link #keySet(Object)}, {@link #newKeySet(org.infinispan.util.Equivalence)},
+    * {@link #keySet()}, {@link #keySet(Object)}, {@link #newKeySet(org.infinispan.commons.equivalence.Equivalence)},
     * {@link #newKeySet(int)}.
     */
    public static class KeySetView<K,V> extends CHMView<K,V>

@@ -20,10 +20,10 @@ package org.infinispan.configuration.cache;
 
 import java.util.Properties;
 
+import org.infinispan.commons.equivalence.AnyEquivalence;
+import org.infinispan.commons.equivalence.Equivalence;
 import org.infinispan.configuration.Builder;
 import org.infinispan.container.DataContainer;
-import org.infinispan.util.AnyEquivalence;
-import org.infinispan.util.Equivalence;
 import org.infinispan.util.TypedProperties;
 
 /**
@@ -79,12 +79,12 @@ public class DataContainerConfigurationBuilder extends AbstractConfigurationChil
    }
 
    /**
-    * Set the {@link org.infinispan.util.Equivalence} instance to use to compare keys stored in
-    * data container. {@link org.infinispan.util.Equivalence} implementations allow for custom
+    * Set the {@link org.infinispan.commons.equivalence.Equivalence} instance to use to compare keys stored in
+    * data container. {@link org.infinispan.commons.equivalence.Equivalence} implementations allow for custom
     * comparisons to be provided when the JDK, or external libraries, do
     * not provide adequate comparison implementations, i.e. arrays.
     *
-    * @param keyEquivalence instance of {@link org.infinispan.util.Equivalence} used to compare
+    * @param keyEquivalence instance of {@link org.infinispan.commons.equivalence.Equivalence} used to compare
     *                     key types.
     * @return this configuration builder
     */
@@ -94,12 +94,12 @@ public class DataContainerConfigurationBuilder extends AbstractConfigurationChil
    }
 
    /**
-    * Set the {@link org.infinispan.util.Equivalence} instance to use to compare values stored in
-    * data container. {@link org.infinispan.util.Equivalence} implementations allow for custom
+    * Set the {@link org.infinispan.commons.equivalence.Equivalence} instance to use to compare values stored in
+    * data container. {@link org.infinispan.commons.equivalence.Equivalence} implementations allow for custom
     * comparisons to be provided when the JDK, or external libraries, do
     * not provide adequate comparison implementations, i.e. arrays.
     *
-    * @param valueEquivalence instance of {@link org.infinispan.util.Equivalence} used to compare
+    * @param valueEquivalence instance of {@link org.infinispan.commons.equivalence.Equivalence} used to compare
     *                       value types.
     * @return this configuration builder
     */

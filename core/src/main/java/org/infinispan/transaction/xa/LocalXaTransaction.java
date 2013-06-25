@@ -22,9 +22,9 @@
  */
 package org.infinispan.transaction.xa;
 
+import org.infinispan.commons.equivalence.Equivalence;
 import org.infinispan.transaction.LocalTransaction;
 import org.infinispan.transaction.xa.recovery.RecoverableTransactionIdentifier;
-import org.infinispan.util.Equivalence;
 
 import javax.transaction.Transaction;
 import javax.transaction.xa.Xid;

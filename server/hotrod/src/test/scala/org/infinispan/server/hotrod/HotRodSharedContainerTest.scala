@@ -32,7 +32,7 @@ import org.testng.annotations.{AfterClass, BeforeClass, AfterMethod, Test}
 import org.infinispan.server.core.test.ServerTestingUtil._
 import org.infinispan.test.fwk.TestCacheManagerFactory
 import org.infinispan.configuration.cache.CacheMode
-import org.infinispan.util.ByteArrayEquivalence
+import org.infinispan.commons.equivalence.ByteArrayEquivalence
 import org.infinispan.config.ConfigurationException
 import org.infinispan.server.hotrod.configuration.HotRodServerConfigurationBuilder
 import org.infinispan.configuration.global.GlobalConfigurationBuilder

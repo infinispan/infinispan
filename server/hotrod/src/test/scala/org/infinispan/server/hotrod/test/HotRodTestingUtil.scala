@@ -29,7 +29,8 @@ import org.infinispan.server.hotrod._
 import logging.Log
 import org.infinispan.manager.EmbeddedCacheManager
 import java.util.Arrays
-import org.infinispan.util.{ByteArrayEquivalence, Util}
+import org.infinispan.util.Util
+import org.infinispan.commons.equivalence.ByteArrayEquivalence
 import org.testng.Assert._
 import org.infinispan.notifications.Listener
 import org.infinispan.notifications.cachelistener.annotation.CacheEntryRemoved

@@ -31,7 +31,7 @@ import org.testng.Assert._
 import org.infinispan.configuration.cache.{CacheMode, ConfigurationBuilder}
 import org.infinispan.test.TestingUtil
 import test.AbstractTestTopologyAwareResponse
-import org.infinispan.util.ByteArrayEquivalence
+import org.infinispan.commons.equivalence.ByteArrayEquivalence
 
 /**
  * Tests Hot Rod instances configured with replication.

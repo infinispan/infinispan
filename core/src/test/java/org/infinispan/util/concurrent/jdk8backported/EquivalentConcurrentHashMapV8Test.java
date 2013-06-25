@@ -23,9 +23,9 @@
 
 package org.infinispan.util.concurrent.jdk8backported;
 
-import org.infinispan.util.AnyEquivalence;
-import org.infinispan.util.ByteArrayEquivalence;
-import org.infinispan.util.Equivalence;
+import org.infinispan.commons.equivalence.AnyEquivalence;
+import org.infinispan.commons.equivalence.ByteArrayEquivalence;
+import org.infinispan.commons.equivalence.Equivalence;
 import org.infinispan.util.concurrent.BoundedConcurrentHashMapTest;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;

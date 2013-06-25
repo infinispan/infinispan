@@ -19,12 +19,12 @@
 
 package org.infinispan.factories;
 
+import org.infinispan.commons.equivalence.AnyEquivalence;
+import org.infinispan.commons.equivalence.Equivalence;
 import org.infinispan.container.versioning.NumericVersionGenerator;
 import org.infinispan.container.versioning.SimpleClusteredVersionGenerator;
 import org.infinispan.container.versioning.VersionGenerator;
 import org.infinispan.factories.annotations.DefaultFactoryFor;
-import org.infinispan.util.AnyEquivalence;
-import org.infinispan.util.Equivalence;
 
 /**
  * Version generator component factory. Version generators are used for

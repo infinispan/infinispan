@@ -18,9 +18,9 @@
  */
 package org.infinispan.configuration.cache;
 
+import org.infinispan.commons.equivalence.Equivalence;
 import org.infinispan.configuration.AbstractTypedPropertiesConfiguration;
 import org.infinispan.container.DataContainer;
-import org.infinispan.util.Equivalence;
 import org.infinispan.util.TypedProperties;
 
 /**
