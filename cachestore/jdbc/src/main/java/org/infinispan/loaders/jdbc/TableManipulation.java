@@ -538,9 +538,7 @@ public class TableManipulation implements Cloneable {
          } catch (Exception e) {
             log.debug("Unable to guess database type from JDBC metadata.", e);
          } finally {
-            if (conn != null) {
-               connectionFactory.releaseConnection(conn);
-            }
+            connectionFactory.releaseConnection(conn);
          }
          
          if (databaseType == null) {
@@ -553,9 +551,7 @@ public class TableManipulation implements Cloneable {
             } catch (Exception e) {
                log.debug("Unable to guess database type from JDBC driver name.", e);
             } finally {
-               if (conn != null) {
-                  connectionFactory.releaseConnection(conn);
-               }
+               connectionFactory.releaseConnection(conn);
             }
          }
          if (databaseType == null) {
