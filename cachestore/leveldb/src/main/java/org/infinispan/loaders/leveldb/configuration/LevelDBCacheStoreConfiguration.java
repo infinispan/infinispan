@@ -42,6 +42,11 @@ public class LevelDBCacheStoreConfiguration extends AbstractLockSupportStoreConf
    final private CompressionType compressionType;
    final private Integer blockSize;
    final private Long cacheSize;
+   final private Integer writeBufferSize;
+   final private Integer maxOpenFiles;
+   final private Integer blockRestartInterval;
+   final private Boolean verifyChecksums;
+   final private Boolean paranoidChecks;
    final private int expiryQueueSize;
    final private int clearThreshold;
 	
@@ -52,6 +57,11 @@ public class LevelDBCacheStoreConfiguration extends AbstractLockSupportStoreConf
 	      CompressionType compressionType,
 	      Integer blockSize,
 	      Long cacheSize,
+          Integer writeBufferSize,
+          Integer maxOpenFiles,
+          Integer blockRestartInterval,
+          Boolean verifyChecksums,
+          Boolean paranoidChecks,
 	      int expiryQueueSize,
 	      int clearThreshold,
 			long lockAcquistionTimeout,
@@ -70,6 +80,11 @@ public class LevelDBCacheStoreConfiguration extends AbstractLockSupportStoreConf
 		this.compressionType = compressionType;
 		this.blockSize = blockSize;
 		this.cacheSize = cacheSize;
+        this.writeBufferSize = writeBufferSize;
+        this.maxOpenFiles = maxOpenFiles;
+        this.blockRestartInterval = blockRestartInterval;
+        this.verifyChecksums = verifyChecksums;
+        this.paranoidChecks = paranoidChecks;
 		this.expiryQueueSize = expiryQueueSize;
 		this.clearThreshold = clearThreshold;
 	}
@@ -85,6 +100,11 @@ public class LevelDBCacheStoreConfiguration extends AbstractLockSupportStoreConf
 		config.setImplementationType(implementationType.toString());
 		config.setBlockSize(blockSize);
 		config.setCacheSize(cacheSize);
+        config.setWriteBufferSize(writeBufferSize);
+        config.setMaxOpenFiles(maxOpenFiles);
+        config.setBlockRestartInterval(blockRestartInterval);
+        config.setVerifyChecksums(verifyChecksums);
+        config.setParanoidChecks(paranoidChecks);
 		config.setExpiryQueueSize(expiryQueueSize);
 		config.setClearThreshold(clearThreshold);
 		
@@ -113,6 +133,26 @@ public class LevelDBCacheStoreConfiguration extends AbstractLockSupportStoreConf
    
    public Long cacheSize() {
       return cacheSize;
+   }
+
+   public Integer writeBufferSize() {
+      return writeBufferSize;
+   }
+
+   public Integer maxOpenFiles() {
+      return maxOpenFiles;
+   }
+
+   public Integer blockRestartInterval() {
+      return blockRestartInterval;
+   }
+
+   public Boolean verifyChecksums() {
+      return verifyChecksums;
+   }
+
+   public Boolean paranoidChecks() {
+      return paranoidChecks;
    }
 
    public int expiryQueueSize() {

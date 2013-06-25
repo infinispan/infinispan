@@ -103,6 +103,26 @@ public class LevelDBCacheStoreConfigurationParser52 implements ConfigurationPars
                builder.cacheSize(Long.valueOf(value));
                break;
             }
+            case WRITE_BUFFER_SIZE: {
+               builder.writeBufferSize(Integer.valueOf(value));
+               break;
+            }
+            case MAX_OPEN_FILES: {
+               builder.maxOpenFiles(Integer.valueOf(value));
+               break;
+            }
+            case BLOCK_RESTART_INTERVAL: {
+               builder.blockRestartInterval(Integer.valueOf(value));
+               break;
+            }
+            case VERIFY_CHECKSUMS: {
+               builder.verifyChecksums(Boolean.valueOf(value));
+               break;
+            }
+            case PARANOID_CHECKS: {
+               builder.paranoidChecks(Boolean.valueOf(value));
+               break;
+            }
             case COMPRESSION_TYPE: {
                builder.compressionType(CompressionType.valueOf(value));
                break;
