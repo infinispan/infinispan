@@ -347,7 +347,7 @@ public class XmlFileParsingTest extends AbstractInfinispanTest {
    public void testKeyValueEquivalence() throws Exception {
       String config = INFINISPAN_START_TAG_NO_SCHEMA +
             "<default>\n" +
-            "<dataContainer keyEquivalence=\"org.infinispan.util.ByteArrayEquivalence\"/>\n" +
+            "<dataContainer keyEquivalence=\"org.infinispan.commons.equivalence.ByteArrayEquivalence\"/>\n" +
             "</default>\n" +
             INFINISPAN_END_TAG;
       InputStream is = new ByteArrayInputStream(config.getBytes());
@@ -362,8 +362,8 @@ public class XmlFileParsingTest extends AbstractInfinispanTest {
 
       config = INFINISPAN_START_TAG_NO_SCHEMA +
             "<default>\n" +
-            "<dataContainer keyEquivalence=\"org.infinispan.util.ByteArrayEquivalence\" " +
-                            "valueEquivalence=\"org.infinispan.util.ByteArrayEquivalence\" />\n" +
+            "<dataContainer keyEquivalence=\"org.infinispan.commons.equivalence.ByteArrayEquivalence\" " +
+                            "valueEquivalence=\"org.infinispan.commons.equivalence.ByteArrayEquivalence\" />\n" +
             "</default>\n" +
             INFINISPAN_END_TAG;
       is = new ByteArrayInputStream(config.getBytes());
