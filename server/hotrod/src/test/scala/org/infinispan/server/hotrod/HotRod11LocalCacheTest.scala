@@ -29,7 +29,7 @@ import org.testng.annotations.Test
 import org.infinispan.configuration.cache.{CacheMode, ConfigurationBuilder}
 import org.infinispan.server.hotrod.Constants._
 import org.infinispan.test.TestingUtil
-import org.infinispan.util.ByteArrayEquivalence
+import org.infinispan.commons.equivalence.ByteArrayEquivalence
 
 /**
  * Tests Hot Rod with a local (non-clustered) cache using Hot Rod's 1.1 protocol.

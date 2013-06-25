@@ -7,7 +7,7 @@ import java.lang.reflect.Method
 import test.HotRodTestingUtil._
 import org.infinispan.server.hotrod.OperationStatus._
 import org.infinispan.test.fwk.TestCacheManagerFactory
-import org.infinispan.util.ByteArrayEquivalence
+import org.infinispan.commons.equivalence.ByteArrayEquivalence
 
 /**
  * Tests behaviour of Hot Rod servers with asymmetric clusters

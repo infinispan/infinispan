@@ -22,7 +22,7 @@
  */
 package org.infinispan.util.concurrent.locks.containers;
 
-import org.infinispan.util.AnyEquivalence;
+import org.infinispan.commons.equivalence.AnyEquivalence;
 import org.infinispan.util.ByRef;
 import org.infinispan.util.Util;
 import org.infinispan.util.concurrent.jdk8backported.EquivalentConcurrentHashMapV8;

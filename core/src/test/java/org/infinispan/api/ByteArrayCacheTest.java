@@ -24,13 +24,13 @@
 package org.infinispan.api;
 
 import org.infinispan.Cache;
+import org.infinispan.commons.equivalence.ByteArrayEquivalence;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.test.CacheManagerCallable;
 import org.infinispan.test.SingleCacheManagerTest;
 import org.infinispan.test.fwk.CleanupAfterMethod;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
-import org.infinispan.util.ByteArrayEquivalence;
 import org.infinispan.util.Util;
 import org.testng.annotations.Test;
 

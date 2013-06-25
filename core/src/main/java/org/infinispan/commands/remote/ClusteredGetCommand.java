@@ -27,6 +27,7 @@ import org.infinispan.commands.FlagAffectedCommand;
 import org.infinispan.commands.Visitor;
 import org.infinispan.commands.control.LockControlCommand;
 import org.infinispan.commands.read.GetKeyValueCommand;
+import org.infinispan.commons.equivalence.Equivalence;
 import org.infinispan.container.InternalEntryFactory;
 import org.infinispan.container.entries.CacheEntry;
 import org.infinispan.container.entries.InternalCacheEntry;
@@ -41,7 +42,6 @@ import org.infinispan.lifecycle.ComponentStatus;
 import org.infinispan.metadata.Metadata;
 import org.infinispan.transaction.TransactionTable;
 import org.infinispan.transaction.xa.GlobalTransaction;
-import org.infinispan.util.Equivalence;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 

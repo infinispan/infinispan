@@ -32,7 +32,7 @@ import test.HotRodClient
 import org.infinispan.configuration.cache.{CacheMode, ConfigurationBuilder}
 import org.infinispan.server.hotrod.Constants._
 import org.infinispan.test.TestingUtil
-import org.infinispan.util.ByteArrayEquivalence
+import org.infinispan.commons.equivalence.ByteArrayEquivalence
 
 /**
  * Tests Hot Rod logic when interacting with distributed caches, particularly logic to do with

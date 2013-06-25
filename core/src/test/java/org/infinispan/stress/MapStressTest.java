@@ -23,12 +23,12 @@
 package org.infinispan.stress;
 
 import org.infinispan.Cache;
+import org.infinispan.commons.equivalence.AnyEquivalence;
 import org.infinispan.config.Configuration;
 import org.infinispan.config.GlobalConfiguration;
 import org.infinispan.eviction.EvictionStrategy;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
-import org.infinispan.util.AnyEquivalence;
 import org.infinispan.util.concurrent.BoundedConcurrentHashMap;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;

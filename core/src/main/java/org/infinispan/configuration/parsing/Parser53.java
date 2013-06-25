@@ -18,6 +18,7 @@
  */
 package org.infinispan.configuration.parsing;
 
+import org.infinispan.commons.equivalence.Equivalence;
 import org.infinispan.commons.hash.Hash;
 import org.infinispan.config.ConfigurationException;
 import org.infinispan.configuration.cache.*;
@@ -48,7 +49,6 @@ import org.infinispan.transaction.LockingMode;
 import org.infinispan.transaction.TransactionMode;
 import org.infinispan.transaction.TransactionProtocol;
 import org.infinispan.transaction.lookup.TransactionManagerLookup;
-import org.infinispan.util.Equivalence;
 import org.infinispan.util.Util;
 import org.infinispan.util.concurrent.IsolationLevel;
 import org.infinispan.util.logging.Log;

@@ -33,6 +33,7 @@ import java.util.Map;
 import java.util.Set;
 
 import org.infinispan.commands.write.WriteCommand;
+import org.infinispan.commons.equivalence.Equivalence;
 import org.infinispan.container.entries.CacheEntry;
 import org.infinispan.container.versioning.EntryVersion;
 import org.infinispan.container.versioning.EntryVersionsMap;
@@ -40,7 +41,6 @@ import org.infinispan.context.Flag;
 import org.infinispan.transaction.xa.CacheTransaction;
 import org.infinispan.transaction.xa.GlobalTransaction;
 import org.infinispan.util.CollectionFactory;
-import org.infinispan.util.Equivalence;
 import org.infinispan.util.InfinispanCollections;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;

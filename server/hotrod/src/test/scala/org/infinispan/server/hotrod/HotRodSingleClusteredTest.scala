@@ -32,7 +32,7 @@ import org.testng.annotations.{AfterClass, BeforeClass, Test}
 import org.infinispan.server.core.test.ServerTestingUtil._
 import org.infinispan.test.fwk.TestCacheManagerFactory
 import org.infinispan.configuration.cache.CacheMode
-import org.infinispan.util.ByteArrayEquivalence
+import org.infinispan.commons.equivalence.ByteArrayEquivalence
 
 @Test(groups = Array("functional"), testName = "server.hotrod.HotRodSingleClusteredTest")
 class HotRodSingleClusteredTest extends MultipleCacheManagersTest {
@@ -71,5 +71,5 @@ class HotRodSingleClusteredTest extends MultipleCacheManagersTest {
       assertSuccess(hotRodClient.get(k(m), 0), v(m))
    }
 
-   
+
 }

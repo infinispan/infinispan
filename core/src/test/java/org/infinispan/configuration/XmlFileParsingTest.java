@@ -39,6 +39,8 @@ import java.io.InputStream;
 import java.util.Map;
 
 import org.infinispan.Version;
+import org.infinispan.commons.equivalence.AnyEquivalence;
+import org.infinispan.commons.equivalence.ByteArrayEquivalence;
 import org.infinispan.config.ConfigurationException;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ClusterCacheLoaderConfiguration;
@@ -68,8 +70,6 @@ import org.infinispan.test.tx.TestLookup;
 import org.infinispan.transaction.LockingMode;
 import org.infinispan.transaction.TransactionProtocol;
 import org.infinispan.transaction.lookup.GenericTransactionManagerLookup;
-import org.infinispan.util.AnyEquivalence;
-import org.infinispan.util.ByteArrayEquivalence;
 import org.infinispan.util.concurrent.IsolationLevel;
 import org.testng.annotations.Test;
 
