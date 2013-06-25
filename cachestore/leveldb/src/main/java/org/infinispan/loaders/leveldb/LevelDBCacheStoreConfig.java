@@ -31,6 +31,11 @@ public class LevelDBCacheStoreConfig extends LockSupportCacheStoreConfig {
 	protected String compressionType = DEFAULT_COMPRESSION_TYPE.toString();
 	protected Integer blockSize;
 	protected Long cacheSize;
+    protected Integer writeBufferSize;
+    protected Integer maxOpenFiles;
+    protected Integer blockRestartInterval;
+    protected Boolean verifyChecksums;
+    protected Boolean paranoidChecks;
 	protected String implementationType = DEFAULT_IMPLEMENTATION_TYPE.toString();
 	
 	/**
@@ -130,20 +135,81 @@ public class LevelDBCacheStoreConfig extends LockSupportCacheStoreConfig {
 		setProperty(String.valueOf(cacheSize), "cacheSize", properties);
 		this.cacheSize = cacheSize;
 	}
-	
+
+    public Integer getWriteBufferSize() {
+        return writeBufferSize;
+    }
+
+    public void setWriteBufferSize(Integer writeBufferSize) {
+        testImmutability("writeBufferSize");
+        setProperty(String.valueOf(writeBufferSize), "writeBufferSize", properties);
+        this.writeBufferSize = writeBufferSize;
+    }
+
+    public Integer getMaxOpenFiles() {
+        return maxOpenFiles;
+    }
+
+    public void setMaxOpenFiles(Integer maxOpenFiles) {
+        testImmutability("maxOpenFiles");
+        setProperty(String.valueOf(maxOpenFiles), "maxOpenFiles", properties);
+        this.maxOpenFiles = maxOpenFiles;
+    }
+
+    public Integer getBlockRestartInterval() {
+        return blockRestartInterval;
+    }
+
+    public void setBlockRestartInterval(Integer blockRestartInterval) {
+        testImmutability("blockRestartInterval");
+        setProperty(String.valueOf(blockRestartInterval), "blockRestartInterval", properties);
+        this.blockRestartInterval = blockRestartInterval;
+    }
+
+    public Boolean getVerifyChecksums() {
+        return verifyChecksums;
+    }
+
+    public void setVerifyChecksums(Boolean verifyChecksums) {
+        testImmutability("verifyChecksums");
+        setProperty(String.valueOf(verifyChecksums), "verifyChecksums", properties);
+        this.verifyChecksums = verifyChecksums;
+    }
+
+    public Boolean getParanoidChecks() {
+        return paranoidChecks;
+    }
+
+    public void setParanoidChecks(Boolean paranoidChecks) {
+        testImmutability("paranoidChecks");
+        setProperty(String.valueOf(paranoidChecks), "paranoidChecks", properties);
+        this.paranoidChecks = paranoidChecks;
+    }
+
 	protected Options getDataDbOptions() {
 		Options options = new Options().createIfMissing(true);
-		
 		options.compressionType(CompressionType.valueOf(compressionType));
-		
 		if (blockSize != null) {
 			options.blockSize(blockSize);
 		}
-		
 		if (cacheSize != null) {
 			options.cacheSize(cacheSize);
 		}
-		
+        if (writeBufferSize != null) {
+            options.writeBufferSize(writeBufferSize);
+        }
+        if (maxOpenFiles != null) {
+            options.maxOpenFiles(maxOpenFiles);
+        }
+        if (blockRestartInterval != null) {
+            options.blockRestartInterval(blockRestartInterval);
+        }
+        if (verifyChecksums != null) {
+            options.verifyChecksums(verifyChecksums);
+        }
+        if (paranoidChecks != null) {
+            options.paranoidChecks(paranoidChecks);
+        }
 		return options;
 	}
 	

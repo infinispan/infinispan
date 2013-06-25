@@ -37,7 +37,12 @@ public enum Attribute {
    EXPIRY_QUEUE_SIZE("expiryQueueSize"),
    COMPRESSION_TYPE("compressionType"),
    BLOCK_SIZE("blockSize"),
-   CACHE_SIZE("cacheSize")
+   CACHE_SIZE("cacheSize"),
+   WRITE_BUFFER_SIZE("writeBufferSize"),
+   MAX_OPEN_FILES("maxOpenFiles"),
+   BLOCK_RESTART_INTERVAL("blockRestartInterval"),
+   VERIFY_CHECKSUMS("verifyChecksums"),
+   PARANOID_CHECKS("paranoidChecks")
    ;
 
    private final String name;

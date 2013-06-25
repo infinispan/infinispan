@@ -41,6 +41,11 @@ public class LevelDBCacheStoreConfigurationBuilder
    protected ImplementationType implementationType = LevelDBCacheStoreConfig.DEFAULT_IMPLEMENTATION_TYPE;
    protected Integer blockSize;
    protected Long cacheSize;
+   protected Integer writeBufferSize;
+   protected Integer maxOpenFiles;
+   protected Integer blockRestartInterval;
+   protected Boolean verifyChecksums;
+   protected Boolean paranoidChecks;
    
    protected int expiryQueueSize = LevelDBCacheStoreConfig.DEFAULT_EXPIRY_QUEUE_SIZE;
    protected int clearThreshold = LevelDBCacheStoreConfig.DEFAULT_CLEAR_THRESHOLD;
@@ -73,7 +78,32 @@ public class LevelDBCacheStoreConfigurationBuilder
       this.cacheSize = cacheSize;
       return self();
    }
-	
+
+	public LevelDBCacheStoreConfigurationBuilder writeBufferSize(int writeBufferSize) {
+        this.writeBufferSize = writeBufferSize;
+        return self();
+    }
+
+	public LevelDBCacheStoreConfigurationBuilder maxOpenFiles(int maxOpenFiles) {
+        this.maxOpenFiles = maxOpenFiles;
+        return self();
+    }
+
+	public LevelDBCacheStoreConfigurationBuilder blockRestartInterval(int blockRestartInterval) {
+        this.blockRestartInterval = blockRestartInterval;
+        return self();
+    }
+
+	public LevelDBCacheStoreConfigurationBuilder verifyChecksums(boolean verifyChecksums) {
+        this.verifyChecksums = verifyChecksums;
+        return self();
+    }
+
+	public LevelDBCacheStoreConfigurationBuilder paranoidChecks(boolean paranoidChecks) {
+        this.paranoidChecks = paranoidChecks;
+        return self();
+    }
+
 	public LevelDBCacheStoreConfigurationBuilder expiryQueueSize(int expiryQueueSize) {
       this.expiryQueueSize = expiryQueueSize;
       return self();
@@ -98,7 +128,9 @@ public class LevelDBCacheStoreConfigurationBuilder
 	@Override
 	public LevelDBCacheStoreConfiguration create() {
 		return new LevelDBCacheStoreConfiguration(location, expiredLocation, implementationType, compressionType,
-		      blockSize, cacheSize, expiryQueueSize, clearThreshold,
+				blockSize, cacheSize, writeBufferSize, maxOpenFiles,
+				blockRestartInterval, verifyChecksums, paranoidChecks,
+				expiryQueueSize, clearThreshold,
 				lockAcquistionTimeout, lockConcurrencyLevel, purgeOnStartup,
 				purgeSynchronously, purgerThreads, fetchPersistentState,
 				ignoreModifications,

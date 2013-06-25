@@ -87,6 +87,46 @@
                </xs:annotation>
             </xs:attribute>
             
+            <xs:attribute name="writeBufferSize" type="xs:integer">
+               <xs:annotation>
+                  <xs:documentation>
+                     Configures LevelDB write buffer size.  See LevelDB documentation.
+                  </xs:documentation>
+               </xs:annotation>
+            </xs:attribute>
+            
+            <xs:attribute name="maxOpenFiles" type="xs:integer">
+               <xs:annotation>
+                  <xs:documentation>
+                     Configures LevelDB max open files.  See LevelDB documentation.
+                  </xs:documentation>
+               </xs:annotation>
+            </xs:attribute>
+            
+            <xs:attribute name="blockRestartInterval" type="xs:integer">
+               <xs:annotation>
+                  <xs:documentation>
+                     Configures LevelDB block restart interval.  See LevelDB documentation.
+                  </xs:documentation>
+               </xs:annotation>
+            </xs:attribute>
+            
+            <xs:attribute name="verifyChecksums" type="xs:boolean">
+               <xs:annotation>
+                  <xs:documentation>
+                     Configures LevelDB verify checksums.  See LevelDB documentation.
+                  </xs:documentation>
+               </xs:annotation>
+            </xs:attribute>
+            
+            <xs:attribute name="paranoidChecks" type="xs:boolean">
+               <xs:annotation>
+                  <xs:documentation>
+                     Configures LevelDB paranoid checks.  See LevelDB documentation.
+                  </xs:documentation>
+               </xs:annotation>
+            </xs:attribute>
+
             <xs:attribute name="compressionType" type="xs:string" >
                <xs:annotation>
                   <xs:documentation>
