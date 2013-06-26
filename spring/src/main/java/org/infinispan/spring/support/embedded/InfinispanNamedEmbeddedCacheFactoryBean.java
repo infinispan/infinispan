@@ -24,10 +24,10 @@
 package org.infinispan.spring.support.embedded;
 
 import org.infinispan.Cache;
-import org.infinispan.config.*;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.eviction.EvictionStrategy;
 import org.infinispan.eviction.EvictionThreadPolicy;
+import org.infinispan.interceptors.base.CommandInterceptor;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.spring.ConfigurationOverrides;
 import org.infinispan.transaction.lookup.TransactionManagerLookup;
@@ -560,14 +560,6 @@ public class InfinispanNamedEmbeddedCacheFactoryBean<K, V> implements FactoryBea
    }
 
    /**
-    * @param cacheLoaderManagerConfig
-    * @see org.infinispan.spring.ConfigurationOverrides#setCacheLoaderManagerConfig(org.infinispan.config.CacheLoaderManagerConfig)
-    */
-   public void setCacheLoaderManagerConfig(final CacheLoaderManagerConfig cacheLoaderManagerConfig) {
-      this.configurationOverrides.setCacheLoaderManagerConfig(cacheLoaderManagerConfig);
-   }
-
-   /**
     * @param syncCommitPhase
     * @see org.infinispan.spring.ConfigurationOverrides#setSyncCommitPhase(java.lang.Boolean)
     */
@@ -717,14 +709,6 @@ public class InfinispanNamedEmbeddedCacheFactoryBean<K, V> implements FactoryBea
    }
 
    /**
-    * @param rehashWaitTime
-    * @see org.infinispan.spring.ConfigurationOverrides#setRehashWaitTime(java.lang.Long)
-    */
-   public void setRehashWaitTime(final Long rehashWaitTime) {
-      this.configurationOverrides.setRehashWaitTime(rehashWaitTime);
-   }
-
-   /**
     * @param useAsyncMarshalling
     * @see org.infinispan.spring.ConfigurationOverrides#setUseAsyncMarshalling(java.lang.Boolean)
     */
@@ -752,7 +736,8 @@ public class InfinispanNamedEmbeddedCacheFactoryBean<K, V> implements FactoryBea
     * @param customInterceptors
     * @see org.infinispan.spring.ConfigurationOverrides#setCustomInterceptors(java.util.List)
     */
-   public void setCustomInterceptors(final List<CustomInterceptorConfig> customInterceptors) {
+   public void setCustomInterceptors(final List<? extends CommandInterceptor>
+                                           customInterceptors) {
       this.configurationOverrides.setCustomInterceptors(customInterceptors);
    }
 }
