@@ -23,12 +23,12 @@
 
 package org.infinispan.spring;
 
-import org.infinispan.config.*;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.distribution.ch.ConsistentHash;
 import org.infinispan.eviction.EvictionStrategy;
 import org.infinispan.eviction.EvictionThreadPolicy;
+import org.infinispan.interceptors.base.CommandInterceptor;
 import org.infinispan.remoting.ReplicationQueue;
 import org.infinispan.transaction.LockingMode;
 import org.infinispan.transaction.lookup.TransactionManagerLookup;
@@ -106,8 +106,6 @@ public final class ConfigurationOverrides {
 
    private TransactionManagerLookup transactionManagerLookup;
 
-   private CacheLoaderManagerConfig cacheLoaderManagerConfig;
-
    private Boolean syncCommitPhase;
 
    private Boolean syncRollbackPhase;
@@ -142,15 +140,13 @@ public final class ConfigurationOverrides {
 
    private Boolean rehashEnabled;
 
-   private Long rehashWaitTime;
-
    private Boolean useAsyncMarshalling;
 
    private Boolean indexingEnabled;
 
    private Boolean indexLocalOnly;
 
-   private List<CustomInterceptorConfig> customInterceptors;
+   private List<? extends CommandInterceptor> customInterceptors;
 
    /**
     * @param eagerDeadlockSpinDuration
@@ -369,14 +365,6 @@ public final class ConfigurationOverrides {
    }
 
    /**
-    * @param cacheLoaderManagerConfig
-    *           the cacheLoaderManagerConfig to set
-    */
-   public void setCacheLoaderManagerConfig(final CacheLoaderManagerConfig cacheLoaderManagerConfig) {
-      this.cacheLoaderManagerConfig = cacheLoaderManagerConfig;
-   }
-
-   /**
     * @param syncCommitPhase
     *           the syncCommitPhase to set
     */
@@ -523,14 +511,6 @@ public final class ConfigurationOverrides {
    }
 
    /**
-    * @param rehashWaitTime
-    *           the rehashWaitTime to set
-    */
-   public void setRehashWaitTime(final Long rehashWaitTime) {
-      this.rehashWaitTime = rehashWaitTime;
-   }
-
-   /**
     * @param useAsyncMarshalling
     *           the useAsyncMarshalling to set
     */
@@ -558,7 +538,7 @@ public final class ConfigurationOverrides {
     * @param customInterceptors
     *           the customInterceptors to set
     */
-   public void setCustomInterceptors(final List<CustomInterceptorConfig> customInterceptors) {
+   public void setCustomInterceptors(final List<? extends CommandInterceptor> customInterceptors) {
       this.customInterceptors = customInterceptors;
    }
 
@@ -677,12 +657,6 @@ public final class ConfigurationOverrides {
          this.logger.debug("Overriding property [transactionManagerLookup] with value [" + this.transactionManagerLookup + "]");
          configurationToOverride.transaction().transactionManagerLookup(this.transactionManagerLookup);
       }
-      if (this.cacheLoaderManagerConfig != null) {
-         this.logger.debug("Overriding property [cacheLoaderManagerConfig] with value [" + this.cacheLoaderManagerConfig + "]");
-         //FIXME
-         //TOTALLY BROKEN
-         //configurationToOverride.loaders().setCacheLoaderManagerConfig(this.cacheLoaderManagerConfig);
-      }
       if (this.syncCommitPhase != null) {
          this.logger.debug("Overriding property [syncCommitPhase] with value [" + this.syncCommitPhase + "]");
          configurationToOverride.transaction().syncCommitPhase(this.syncCommitPhase);
@@ -753,11 +727,6 @@ public final class ConfigurationOverrides {
          this.logger.debug("Overriding property [rehashEnabled] with value [" + this.rehashEnabled + "]");
          configurationToOverride.clustering().stateTransfer().fetchInMemoryState(this.rehashEnabled);
       }
-      if (this.rehashWaitTime != null) {
-         this.logger.debug("Overriding property [rehashWaitTime] with value [" + this.rehashWaitTime + "]");
-         //FIXME
-         // no longer used
-      }
       if (this.useAsyncMarshalling != null) {
          this.logger.debug("Overriding property [useAsyncMarshalling] with value [" + this.useAsyncMarshalling + "]");
          configurationToOverride.clustering().async().asyncMarshalling(this.useAsyncMarshalling);
@@ -771,9 +740,12 @@ public final class ConfigurationOverrides {
          configurationToOverride.indexing().indexLocalOnly(this.indexLocalOnly);
       }
       if (this.customInterceptors != null) {
-         this.logger.debug("Overriding property [customInterceptors] with value [" + this.customInterceptors + "]");
-         //FIXME
-         //configurationToOverride.customInterceptors(). ..setCustomInterceptors(this.customInterceptors);
+         this.logger.debug("Looping over [customInterceptors] to add each one to local collection.");
+         for (CommandInterceptor interceptor : customInterceptors) {
+            this.logger.debug("Adding custom interceptor  [" + interceptor.getClass().getName() + "]");
+            configurationToOverride.customInterceptors().addInterceptor().interceptor(interceptor);
+         }
+
       }
 
       this.logger.debug("Finished applying configuration overrides to Configuration [" + configurationToOverride + "]");
