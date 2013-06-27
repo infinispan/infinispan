@@ -2,6 +2,7 @@ package org.infinispan.interceptors;
 
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.context.Flag;
+import org.infinispan.distribution.DistributionManager;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.factories.annotations.Start;
 import org.infinispan.interceptors.locking.ClusteringDependentLogic;
@@ -19,10 +20,12 @@ public class ClusteredCacheLoaderInterceptor extends CacheLoaderInterceptor {
 
    private boolean isWriteSkewConfigured;
    private ClusteringDependentLogic cdl;
+   private DistributionManager dm;
 
    @Inject
-   private void injectDependencies(ClusteringDependentLogic cdl) {
+   private void injectDependencies(ClusteringDependentLogic cdl, DistributionManager dm) {
       this.cdl = cdl;
+      this.dm = dm;
    }
    
    @Start(priority = 15)
@@ -38,5 +41,12 @@ public class ClusteredCacheLoaderInterceptor extends CacheLoaderInterceptor {
    @Override
    protected boolean forceLoad(Object key, Set<Flag> flags) {
       return isDeltaWrite(flags) || isWriteSkewConfigured && cdl.localNodeIsPrimaryOwner(key);
+   }
+
+   @Override
+   protected boolean canLoad(Object key) {
+      // Don't load the value if we are using distributed mode and aren't in the read CH
+      return !cacheConfiguration.clustering().cacheMode().isDistributed() ||
+            dm.getReadConsistentHash().isKeyLocalToNode(cdl.getAddress(), key);
    }
 }
