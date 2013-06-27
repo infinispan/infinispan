@@ -23,10 +23,10 @@ import org.infinispan.container.entries.ExpiryHelper;
 import org.infinispan.metadata.Metadata;
 import org.infinispan.container.entries.AbstractInternalCacheEntry;
 import org.infinispan.container.entries.InternalCacheValue;
-import org.infinispan.io.UnsignedNumeric;
-import org.infinispan.marshall.AbstractExternalizer;
-import org.infinispan.marshall.Ids;
-import org.infinispan.util.Util;
+import org.infinispan.commons.io.UnsignedNumeric;
+import org.infinispan.commons.marshall.AbstractExternalizer;
+import org.infinispan.commons.util.Util;
+import org.infinispan.marshall.core.Ids;
 
 import java.io.IOException;
 import java.io.ObjectInput;

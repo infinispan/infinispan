@@ -46,7 +46,7 @@ import org.infinispan.util.logging.Log;
 import java.util.Collection;
 import java.util.concurrent.TimeUnit;
 
-import static org.infinispan.util.Util.toStr;
+import static org.infinispan.commons.util.Util.toStr;
 
 /**
  * Base class for transaction based locking interceptors.

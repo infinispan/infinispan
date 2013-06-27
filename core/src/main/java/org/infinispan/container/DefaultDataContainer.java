@@ -23,9 +23,10 @@
 package org.infinispan.container;
 
 import net.jcip.annotations.ThreadSafe;
-import org.infinispan.CacheException;
 import org.infinispan.metadata.Metadata;
+import org.infinispan.commons.CacheException;
 import org.infinispan.commons.equivalence.Equivalence;
+import org.infinispan.commons.util.CollectionFactory;
 import org.infinispan.container.entries.InternalCacheEntry;
 import org.infinispan.eviction.ActivationManager;
 import org.infinispan.eviction.EvictionManager;
@@ -36,8 +37,7 @@ import org.infinispan.factories.annotations.Inject;
 import org.infinispan.loaders.CacheLoaderException;
 import org.infinispan.loaders.CacheLoaderManager;
 import org.infinispan.loaders.CacheStore;
-import org.infinispan.util.CollectionFactory;
-import org.infinispan.util.Immutables;
+import org.infinispan.util.CoreImmutables;
 import org.infinispan.util.TimeService;
 import org.infinispan.util.concurrent.BoundedConcurrentHashMap;
 import org.infinispan.util.concurrent.BoundedConcurrentHashMap.Eviction;
@@ -278,7 +278,7 @@ public class DefaultDataContainer implements DataContainer {
 
       @Override
       public InternalCacheEntry next() {
-         return Immutables.immutableInternalCacheEntry(super.next());
+         return CoreImmutables.immutableInternalCacheEntry(super.next());
       }
    }
 

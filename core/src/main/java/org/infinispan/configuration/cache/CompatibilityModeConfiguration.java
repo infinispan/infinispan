@@ -23,7 +23,7 @@
 
 package org.infinispan.configuration.cache;
 
-import org.infinispan.marshall.Marshaller;
+import org.infinispan.commons.marshall.Marshaller;
 
 /**
  * Compatibility mode configuration

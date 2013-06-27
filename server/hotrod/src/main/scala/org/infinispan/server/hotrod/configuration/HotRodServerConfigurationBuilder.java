@@ -18,7 +18,7 @@
  */
 package org.infinispan.server.hotrod.configuration;
 
-import org.infinispan.configuration.Builder;
+import org.infinispan.commons.configuration.Builder;
 import org.infinispan.configuration.cache.LockingConfigurationBuilder;
 import org.infinispan.configuration.cache.SyncConfigurationBuilder;
 import org.infinispan.loaders.cluster.ClusterCacheLoader;

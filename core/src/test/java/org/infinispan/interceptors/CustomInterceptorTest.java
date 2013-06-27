@@ -22,7 +22,7 @@ import static org.testng.AssertJUnit.*;
 import static org.infinispan.test.TestingUtil.withCacheManager;
 
 import org.infinispan.Cache;
-import org.infinispan.config.ConfigurationException;
+import org.infinispan.commons.CacheConfigurationException;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.cache.InterceptorConfiguration.Position;
 import org.infinispan.interceptors.base.CommandInterceptor;
@@ -49,7 +49,7 @@ public class CustomInterceptorTest extends AbstractInfinispanTest {
       });
    }
 
-   @Test(expectedExceptions=ConfigurationException.class)
+   @Test(expectedExceptions=CacheConfigurationException.class)
    public void testMissingPosition() {
       ConfigurationBuilder builder = new ConfigurationBuilder();
       builder.customInterceptors().addInterceptor().interceptor(new FooInterceptor());

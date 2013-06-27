@@ -23,7 +23,7 @@
 
 package org.infinispan.remoting;
 
-import org.infinispan.CacheException;
+import org.infinispan.commons.CacheException;
 
 /**
  * Represents an application-level exception originating in a remote node.

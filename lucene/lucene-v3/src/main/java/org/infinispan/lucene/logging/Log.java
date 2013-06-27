@@ -24,7 +24,7 @@ package org.infinispan.lucene.logging;
 
 import java.io.IOException;
 
-import org.infinispan.CacheException;
+import org.infinispan.commons.CacheException;
 import org.infinispan.loaders.CacheLoaderException;
 import org.jboss.logging.Cause;
 import org.jboss.logging.LogMessage;

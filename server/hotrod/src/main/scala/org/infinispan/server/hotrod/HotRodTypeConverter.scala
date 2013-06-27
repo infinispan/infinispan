@@ -24,9 +24,9 @@
 package org.infinispan.server.hotrod
 
 import org.infinispan.compat.TypeConverter
-import org.infinispan.marshall.jboss.GenericJBossMarshaller
+import org.infinispan.commons.marshall.jboss.GenericJBossMarshaller
 import org.infinispan.context.Flag
-import org.infinispan.marshall.Marshaller
+import org.infinispan.commons.marshall.Marshaller
 
 /**
  * Hot Rod type converter for compatibility mode.

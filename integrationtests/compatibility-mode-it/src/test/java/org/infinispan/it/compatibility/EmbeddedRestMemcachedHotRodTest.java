@@ -37,8 +37,8 @@ import org.infinispan.client.hotrod.Flag;
 import org.infinispan.client.hotrod.RemoteCache;
 import org.infinispan.client.hotrod.VersionedValue;
 import org.infinispan.configuration.cache.CacheMode;
-import org.infinispan.io.ByteBuffer;
-import org.infinispan.marshall.AbstractMarshaller;
+import org.infinispan.commons.io.ByteBuffer;
+import org.infinispan.commons.marshall.AbstractMarshaller;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
@@ -48,7 +48,6 @@ import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 
 import static org.testng.AssertJUnit.*;
-import static org.testng.AssertJUnit.assertEquals;
 
 /**
  * Test compatibility between embedded caches, Hot Rod, REST and Memcached endpoints.

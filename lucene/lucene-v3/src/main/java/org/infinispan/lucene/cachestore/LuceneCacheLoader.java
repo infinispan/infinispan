@@ -1,4 +1,4 @@
-/* 
+/*
  * JBoss, Home of Professional Open Source
  * Copyright 2012 Red Hat Inc. and/or its affiliates and other contributors
  * as indicated by the @author tags. All rights reserved.
@@ -35,18 +35,18 @@ import org.infinispan.loaders.CacheLoaderException;
 import org.infinispan.loaders.CacheLoaderMetadata;
 import org.infinispan.lucene.IndexScopedKey;
 import org.infinispan.lucene.logging.Log;
-import org.infinispan.marshall.StreamingMarshaller;
+import org.infinispan.commons.marshall.StreamingMarshaller;
 import org.infinispan.util.logging.LogFactory;
 
 /**
  * A CacheLoader meant to load Lucene index(es) from filesystem based Lucene index(es).
  * This is exclusively suitable for keys being used by the {@link Directory}, any other key
  * will be ignored.
- * 
+ *
  * The InfinispanDirectory requires indexes to be named; this CacheLoader needs to be configured
  * with the path of the root directory containing the indexes, and expects index names to match directory
  * names under this common root path.
- * 
+ *
  * @author Sanne Grinovero
  * @since 5.2
  */

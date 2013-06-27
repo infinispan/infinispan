@@ -23,7 +23,7 @@
 package org.infinispan.client.hotrod.impl.async;
 
 import org.infinispan.client.hotrod.impl.ConfigurationProperties;
-import org.infinispan.executors.ExecutorFactory;
+import org.infinispan.commons.executors.ExecutorFactory;
 
 import java.util.Properties;
 import java.util.concurrent.ExecutorService;

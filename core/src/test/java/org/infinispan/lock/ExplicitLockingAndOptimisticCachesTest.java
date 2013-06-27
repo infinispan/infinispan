@@ -23,7 +23,7 @@
 
 package org.infinispan.lock;
 
-import org.infinispan.CacheException;
+import org.infinispan.commons.CacheException;
 import org.infinispan.config.Configuration;
 import org.infinispan.context.Flag;
 import org.infinispan.manager.EmbeddedCacheManager;

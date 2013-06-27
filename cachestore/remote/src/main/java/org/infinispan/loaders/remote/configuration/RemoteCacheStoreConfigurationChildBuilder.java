@@ -24,7 +24,7 @@ import org.infinispan.configuration.cache.StoreConfigurationChildBuilder;
 import org.infinispan.container.entries.InternalCacheEntry;
 import org.infinispan.loaders.remote.RemoteCacheStore;
 import org.infinispan.loaders.remote.wrapper.EntryWrapper;
-import org.infinispan.marshall.Marshaller;
+import org.infinispan.commons.marshall.Marshaller;
 
 public interface RemoteCacheStoreConfigurationChildBuilder<S> extends StoreConfigurationChildBuilder<S> {
 

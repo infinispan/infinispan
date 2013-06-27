@@ -20,11 +20,11 @@ package org.infinispan.configuration.cache;
 
 import java.util.Properties;
 
+import org.infinispan.commons.configuration.Builder;
 import org.infinispan.commons.equivalence.AnyEquivalence;
 import org.infinispan.commons.equivalence.Equivalence;
-import org.infinispan.configuration.Builder;
+import org.infinispan.commons.util.TypedProperties;
 import org.infinispan.container.DataContainer;
-import org.infinispan.util.TypedProperties;
 
 /**
  * Controls the data container for the cache.

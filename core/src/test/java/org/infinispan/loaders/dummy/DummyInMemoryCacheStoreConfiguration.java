@@ -18,14 +18,14 @@
  */
 package org.infinispan.loaders.dummy;
 
-import org.infinispan.configuration.BuiltBy;
+import org.infinispan.commons.configuration.BuiltBy;
+import org.infinispan.commons.util.TypedProperties;
 import org.infinispan.configuration.cache.AbstractStoreConfiguration;
 import org.infinispan.configuration.cache.AsyncStoreConfiguration;
 import org.infinispan.configuration.cache.LegacyConfigurationAdaptor;
 import org.infinispan.configuration.cache.LegacyLoaderAdapter;
 import org.infinispan.configuration.cache.SingletonStoreConfiguration;
 import org.infinispan.loaders.dummy.DummyInMemoryCacheStore.Cfg;
-import org.infinispan.util.TypedProperties;
 
 @BuiltBy(DummyInMemoryCacheStoreConfigurationBuilder.class)
 public class DummyInMemoryCacheStoreConfiguration extends AbstractStoreConfiguration implements

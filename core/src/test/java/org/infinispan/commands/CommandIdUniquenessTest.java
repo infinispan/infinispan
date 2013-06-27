@@ -22,8 +22,8 @@
  */
 package org.infinispan.commands;
 
+import org.infinispan.commons.util.ClassFinder;
 import org.infinispan.test.AbstractInfinispanTest;
-import org.infinispan.util.ClassFinder;
 import org.testng.annotations.Test;
 
 import java.lang.reflect.Constructor;

@@ -20,7 +20,7 @@ package org.infinispan.cli.interpreter;
 
 import java.util.List;
 
-import org.infinispan.util.Util;
+import org.infinispan.commons.util.Util;
 
 public class ParseException extends Exception {
 

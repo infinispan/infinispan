@@ -26,7 +26,7 @@ import org.infinispan.Cache;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.infinispan.config.Configuration;
-import org.infinispan.config.ConfigurationException;
+import org.infinispan.commons.CacheConfigurationException;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
@@ -62,7 +62,7 @@ public class BatchWithoutTMTest extends AbstractBatchTest {
          cache.startBatch();
          assert false : "Should have failed";
       }
-      catch (ConfigurationException good) {
+      catch (CacheConfigurationException good) {
          // do nothing
       }
 
@@ -70,7 +70,7 @@ public class BatchWithoutTMTest extends AbstractBatchTest {
          cache.endBatch(true);
          assert false : "Should have failed";
       }
-      catch (ConfigurationException good) {
+      catch (CacheConfigurationException good) {
          // do nothing
       }
 
@@ -78,7 +78,7 @@ public class BatchWithoutTMTest extends AbstractBatchTest {
          cache.endBatch(false);
          assert false : "Should have failed";
       }
-      catch (ConfigurationException good) {
+      catch (CacheConfigurationException good) {
          // do nothing
       }
    }

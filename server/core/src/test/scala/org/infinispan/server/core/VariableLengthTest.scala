@@ -26,7 +26,7 @@ import org.testng.annotations.Test
 import org.jboss.netty.buffer.{ChannelBuffers}
 import org.testng.Assert._
 import transport.ExtendedChannelBuffer._
-import org.infinispan.util.Util
+import org.infinispan.commons.util.Util
 
 /**
  * Variable length number test.

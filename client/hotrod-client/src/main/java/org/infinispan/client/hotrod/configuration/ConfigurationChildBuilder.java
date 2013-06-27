@@ -25,7 +25,7 @@ import org.infinispan.client.hotrod.impl.consistenthash.ConsistentHashV1;
 import org.infinispan.client.hotrod.impl.consistenthash.ConsistentHashV2;
 import org.infinispan.client.hotrod.impl.transport.TransportFactory;
 import org.infinispan.client.hotrod.impl.transport.tcp.RequestBalancingStrategy;
-import org.infinispan.marshall.Marshaller;
+import org.infinispan.commons.marshall.Marshaller;
 
 /**
  * ConfigurationChildBuilder.

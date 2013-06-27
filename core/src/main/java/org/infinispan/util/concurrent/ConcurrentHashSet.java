@@ -22,7 +22,7 @@
  */
 package org.infinispan.util.concurrent;
 
-import org.infinispan.util.CollectionFactory;
+import org.infinispan.commons.util.CollectionFactory;
 
 import java.io.Serializable;
 import java.util.AbstractSet;

@@ -22,10 +22,10 @@
  */
 package org.infinispan.config;
 
+import org.infinispan.commons.util.Util;
 import org.infinispan.config.FluentConfiguration.LoadersConfig;
 import org.infinispan.loaders.CacheLoaderConfig;
 import org.infinispan.loaders.CacheStoreConfig;
-import org.infinispan.util.Util;
 
 import javax.xml.bind.annotation.XmlAccessType;
 import javax.xml.bind.annotation.XmlAccessorType;

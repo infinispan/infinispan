@@ -18,7 +18,7 @@
 
 package org.infinispan.interceptors.totalorder;
 
-import org.infinispan.CacheException;
+import org.infinispan.commons.CacheException;
 
 /**
  * Indicates the state transfer is running and the prepare should be retried.

@@ -18,7 +18,7 @@
  */
 package org.infinispan.server.memcached.configuration;
 
-import org.infinispan.configuration.Builder;
+import org.infinispan.commons.configuration.Builder;
 import org.infinispan.server.core.configuration.ProtocolServerConfigurationBuilder;
 
 /**

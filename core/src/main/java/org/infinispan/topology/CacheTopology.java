@@ -8,10 +8,10 @@ import java.util.List;
 import java.util.Set;
 
 import org.infinispan.distribution.ch.ConsistentHash;
-import org.infinispan.marshall.AbstractExternalizer;
-import org.infinispan.marshall.Ids;
+import org.infinispan.commons.marshall.AbstractExternalizer;
+import org.infinispan.commons.util.InfinispanCollections;
+import org.infinispan.marshall.core.Ids;
 import org.infinispan.remoting.transport.Address;
-import org.infinispan.util.InfinispanCollections;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 

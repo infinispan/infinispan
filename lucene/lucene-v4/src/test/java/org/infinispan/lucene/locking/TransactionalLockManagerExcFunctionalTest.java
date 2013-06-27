@@ -23,7 +23,7 @@
 package org.infinispan.lucene.locking;
 
 import org.infinispan.Cache;
-import org.infinispan.CacheException;
+import org.infinispan.commons.CacheException;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.transaction.TransactionMode;
 import org.testng.annotations.Test;

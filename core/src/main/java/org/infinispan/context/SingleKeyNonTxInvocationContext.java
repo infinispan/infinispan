@@ -24,9 +24,9 @@
 package org.infinispan.context;
 
 import org.infinispan.commons.equivalence.Equivalence;
+import org.infinispan.commons.util.InfinispanCollections;
 import org.infinispan.container.entries.CacheEntry;
 import org.infinispan.context.impl.AbstractInvocationContext;
-import org.infinispan.util.InfinispanCollections;
 
 import java.util.Collections;
 import java.util.Map;

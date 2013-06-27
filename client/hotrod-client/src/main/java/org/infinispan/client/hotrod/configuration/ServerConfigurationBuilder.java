@@ -18,7 +18,7 @@
  */
 package org.infinispan.client.hotrod.configuration;
 
-import org.infinispan.configuration.Builder;
+import org.infinispan.commons.configuration.Builder;
 
 /**
  * ServerConfigurationBuilder.

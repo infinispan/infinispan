@@ -22,13 +22,13 @@
  */
 package org.infinispan.factories;
 
-import org.infinispan.CacheException;
 import org.infinispan.factories.annotations.DefaultFactoryFor;
-import org.infinispan.marshall.CacheMarshaller;
-import org.infinispan.marshall.GlobalMarshaller;
-import org.infinispan.marshall.Marshaller;
-import org.infinispan.marshall.StreamingMarshaller;
-import org.infinispan.marshall.VersionAwareMarshaller;
+import org.infinispan.commons.CacheException;
+import org.infinispan.commons.marshall.Marshaller;
+import org.infinispan.commons.marshall.StreamingMarshaller;
+import org.infinispan.marshall.core.CacheMarshaller;
+import org.infinispan.marshall.core.GlobalMarshaller;
+import org.infinispan.marshall.core.VersionAwareMarshaller;
 
 import static org.infinispan.factories.KnownComponentNames.*;
 
@@ -39,7 +39,6 @@ import static org.infinispan.factories.KnownComponentNames.*;
  * @since 4.0
  */
 @DefaultFactoryFor(classes = {StreamingMarshaller.class, Marshaller.class})
-@SuppressWarnings("unused")
 public class MarshallerFactory extends NamedComponentFactory implements AutoInstantiableFactory {
 
    @Override

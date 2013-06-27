@@ -22,10 +22,11 @@
  */
 package org.infinispan.util.logging;
 
-import org.infinispan.CacheException;
 import org.infinispan.commands.ReplicableCommand;
 import org.infinispan.commands.tx.PrepareCommand;
-import org.infinispan.config.ConfigurationException;
+import org.infinispan.commons.CacheException;
+import org.infinispan.commons.util.TypedProperties;
+import org.infinispan.commons.CacheConfigurationException;
 import org.infinispan.loaders.CacheLoaderException;
 import org.infinispan.loaders.bucket.Bucket;
 import org.infinispan.loaders.decorators.SingletonStore;
@@ -36,7 +37,6 @@ import org.infinispan.transaction.LocalTransaction;
 import org.infinispan.transaction.xa.GlobalTransaction;
 import org.infinispan.transaction.xa.recovery.RecoveryAwareRemoteTransaction;
 import org.infinispan.transaction.xa.recovery.RecoveryAwareTransaction;
-import org.infinispan.util.TypedProperties;
 import org.infinispan.util.concurrent.TimeoutException;
 import org.jboss.logging.BasicLogger;
 import org.jboss.logging.Cause;
@@ -72,7 +72,7 @@ import static org.jboss.logging.Logger.Level.*;
  * <p/>
  * It contains explicit methods for all INFO or above levels so that they can
  * be internationalized. For the core module, message ids ranging from 0001
- * to 1000 inclusively have been reserved.
+ * to 0900 inclusively have been reserved.
  * <p/>
  * <code> Log log = LogFactory.getLog( getClass() ); </code> The above will get
  * you an instance of <tt>Log</tt>, which can be used to generate log messages
@@ -866,20 +866,20 @@ public interface Log extends BasicLogger {
    void unexpectedResponse(String actual, String expected);
 
    @Message(value = "Custom interceptor missing class", id = 222)
-   ConfigurationException customInterceptorMissingClass();
+   CacheConfigurationException customInterceptorMissingClass();
 
    @LogMessage(level = WARN)
    @Message(value = "Custom interceptor '%s' does not extend BaseCustomInterceptor, which is recommended", id = 223)
    void suggestCustomInterceptorInheritance(String customInterceptorClassName);
 
    @Message(value = "Custom interceptor '%s' specifies more than one position", id = 224)
-   ConfigurationException multipleCustomInterceptorPositions(String customInterceptorClassName);
+   CacheConfigurationException multipleCustomInterceptorPositions(String customInterceptorClassName);
 
    @Message(value = "Custom interceptor '%s' doesn't specify a position", id = 225)
-   ConfigurationException missingCustomInterceptorPosition(String customInterceptorClassName);
+   CacheConfigurationException missingCustomInterceptorPosition(String customInterceptorClassName);
 
    @Message(value = "Error while initializing SSL context", id = 226)
-   ConfigurationException sslInitializationException(@Cause Throwable e);
+   CacheConfigurationException sslInitializationException(@Cause Throwable e);
 
    @LogMessage(level = WARN)
    @Message(value = "Support for concurrent updates can no longer be configured (it is always enabled by default)", id = 227)
@@ -909,6 +909,6 @@ public interface Log extends BasicLogger {
    IllegalArgumentException parserRootElementAlreadyRegistered(QName qName);
 
    @Message(value = "Configuration parser %s does not declare any Namespace annotations", id = 235)
-   ConfigurationException parserDoesNotDeclareNamespaces(String name);
+   CacheConfigurationException parserDoesNotDeclareNamespaces(String name);
 }
 

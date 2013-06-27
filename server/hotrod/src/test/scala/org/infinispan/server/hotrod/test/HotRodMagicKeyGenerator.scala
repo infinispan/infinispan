@@ -25,7 +25,7 @@ package org.infinispan.server.hotrod.test
 
 import org.infinispan.Cache
 import java.util.Random
-import org.infinispan.marshall.jboss.JBossMarshaller
+import org.infinispan.marshall.core.JBossMarshaller
 
 /**
  * {@link org.infinispan.distribution.MagicKey} equivalent for HotRod

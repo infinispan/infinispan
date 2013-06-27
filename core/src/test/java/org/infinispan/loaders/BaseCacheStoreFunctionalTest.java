@@ -25,6 +25,7 @@ package org.infinispan.loaders;
 import org.infinispan.Cache;
 import org.infinispan.atomic.AtomicMap;
 import org.infinispan.atomic.AtomicMapLookup;
+import org.infinispan.commons.util.Util;
 import org.infinispan.config.CacheLoaderManagerConfig;
 import org.infinispan.config.Configuration;
 import org.infinispan.container.DataContainer;
@@ -35,7 +36,6 @@ import org.infinispan.test.AbstractInfinispanTest;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.infinispan.transaction.TransactionMode;
-import org.infinispan.util.Util;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 

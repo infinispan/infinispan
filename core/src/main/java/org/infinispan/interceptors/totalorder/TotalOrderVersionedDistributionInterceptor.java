@@ -18,13 +18,13 @@
 
 package org.infinispan.interceptors.totalorder;
 
-import org.infinispan.CacheException;
 import org.infinispan.commands.FlagAffectedCommand;
 import org.infinispan.commands.tx.CommitCommand;
 import org.infinispan.commands.tx.PrepareCommand;
 import org.infinispan.commands.tx.RollbackCommand;
 import org.infinispan.commands.tx.VersionedPrepareCommand;
 import org.infinispan.commands.write.ClearCommand;
+import org.infinispan.commons.CacheException;
 import org.infinispan.configuration.cache.Configurations;
 import org.infinispan.container.entries.InternalCacheEntry;
 import org.infinispan.context.InvocationContext;

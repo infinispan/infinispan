@@ -23,11 +23,12 @@
 package org.infinispan.remoting.transport.jgroups;
 
 import net.jcip.annotations.GuardedBy;
-import org.infinispan.CacheException;
 import org.infinispan.commands.FlagAffectedCommand;
 import org.infinispan.commands.ReplicableCommand;
 import org.infinispan.commands.remote.CacheRpcCommand;
 import org.infinispan.commands.remote.SingleRpcCommand;
+import org.infinispan.commons.CacheException;
+import org.infinispan.commons.util.Util;
 import org.infinispan.context.Flag;
 import org.infinispan.factories.GlobalComponentRegistry;
 import org.infinispan.remoting.responses.SuccessfulResponse;
@@ -39,7 +40,6 @@ import org.infinispan.remoting.responses.ExceptionResponse;
 import org.infinispan.remoting.responses.Response;
 import org.infinispan.topology.CacheTopologyControlCommand;
 import org.infinispan.util.TimeService;
-import org.infinispan.util.Util;
 import org.infinispan.util.concurrent.TimeoutException;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
@@ -74,8 +74,8 @@ import java.util.concurrent.Future;
 
 import static java.lang.String.format;
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
+import static org.infinispan.commons.util.Util.*;
 import static org.infinispan.remoting.transport.jgroups.JGroupsTransport.fromJGroupsAddress;
-import static org.infinispan.util.Util.*;
 
 /**
  * A JGroups RPC dispatcher that knows how to deal with {@link ReplicableCommand}s.

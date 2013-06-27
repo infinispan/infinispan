@@ -28,8 +28,8 @@ import org.infinispan.container.InternalEntryFactoryImpl;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.interceptors.MarshalledValueInterceptor;
 import org.infinispan.manager.EmbeddedCacheManager;
-import org.infinispan.marshall.MarshalledValue;
-import org.infinispan.marshall.StreamingMarshaller;
+import org.infinispan.marshall.core.MarshalledValue;
+import org.infinispan.commons.marshall.StreamingMarshaller;
 import org.infinispan.test.SingleCacheManagerTest;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
@@ -43,7 +43,7 @@ import java.io.ObjectOutput;
 
 @Test(groups = "functional", testName = "eviction.MarshalledValuesEvictionTest", enabled = false, description = "Is this test even valid?  Evictions don't go thru the marshalled value interceptor when initiated form the data container!")
 public class MarshalledValuesEvictionTest extends SingleCacheManagerTest {
-   
+
    private static final int CACHE_SIZE=128;
 
 
@@ -62,23 +62,23 @@ public class MarshalledValuesEvictionTest extends SingleCacheManagerTest {
       assert TestingUtil.replaceInterceptor(cache, interceptor, MarshalledValueInterceptor.class);
       return cm;
    }
-   
+
    public void testEvictCustomKeyValue() {
       for (int i = 0; i<CACHE_SIZE*2;i++) {
          EvictionPojo p1 = new EvictionPojo();
          p1.i = (int)Util.random(2000);
          EvictionPojo p2 = new EvictionPojo();
          p2.i = 24;
-         cache.put(p1, p2);         
-      }   
+         cache.put(p1, p2);
+      }
 
       // wait for the cache size to drop to CACHE_SIZE, up to a specified amount of time.
       long giveupTime = System.currentTimeMillis() + (1000 * 10); // 10 sec
       while (cache.getAdvancedCache().getDataContainer().size() > CACHE_SIZE && System.currentTimeMillis() < giveupTime) {
          TestingUtil.sleepThread(100);
       }
-      
-      assert cache.getAdvancedCache().getDataContainer().size() <= CACHE_SIZE : "Expected 1, was " + cache.size(); 
+
+      assert cache.getAdvancedCache().getDataContainer().size() <= CACHE_SIZE : "Expected 1, was " + cache.size();
 
       //let eviction manager kick in
       Util.sleep(3000);
@@ -92,7 +92,7 @@ public class MarshalledValuesEvictionTest extends SingleCacheManagerTest {
          p1.i = (int)Util.random(2000);
          EvictionPojo p2 = new EvictionPojo();
          p2.i = 24;
-         cache.put(p1, p2);         
+         cache.put(p1, p2);
       }
 
       // wait for the cache size to drop to CACHE_SIZE, up to a specified amount of time.
@@ -100,17 +100,17 @@ public class MarshalledValuesEvictionTest extends SingleCacheManagerTest {
       while (cache.getAdvancedCache().getDataContainer().size() > CACHE_SIZE && System.currentTimeMillis() < giveupTime) {
          TestingUtil.sleepThread(100);
       }
-      
-      assert cache.getAdvancedCache().getDataContainer().size() <= CACHE_SIZE : "Expected 1, was " + cache.size(); 
+
+      assert cache.getAdvancedCache().getDataContainer().size() <= CACHE_SIZE : "Expected 1, was " + cache.size();
       //let eviction manager kick in
-      Util.sleep(3000);      
+      Util.sleep(3000);
       MockMarshalledValueInterceptor interceptor = (MockMarshalledValueInterceptor) TestingUtil.findInterceptor(cache, MarshalledValueInterceptor.class);
       assert !interceptor.marshalledValueCreated;
    }
-   
+
    static class MockMarshalledValueInterceptor extends MarshalledValueInterceptor {
       boolean marshalledValueCreated;
-      
+
       MockMarshalledValueInterceptor(StreamingMarshaller marshaller) {
          injectMarshaller(marshaller, new InternalEntryFactoryImpl());
       }
@@ -132,6 +132,7 @@ public class MarshalledValuesEvictionTest extends SingleCacheManagerTest {
    static class EvictionPojo implements Externalizable {
       int i;
 
+      @Override
       public boolean equals(Object o) {
          if (this == o) return true;
          if (o == null || getClass() != o.getClass()) return false;
@@ -139,6 +140,7 @@ public class MarshalledValuesEvictionTest extends SingleCacheManagerTest {
          return i == pojo.i;
       }
 
+      @Override
       public int hashCode() {
          int result;
          result = i;

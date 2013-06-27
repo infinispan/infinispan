@@ -22,9 +22,9 @@
  */
 package org.infinispan.remoting.responses;
 
-import org.infinispan.marshall.AbstractExternalizer;
-import org.infinispan.marshall.Ids;
-import org.infinispan.util.Util;
+import org.infinispan.commons.marshall.AbstractExternalizer;
+import org.infinispan.commons.util.Util;
+import org.infinispan.marshall.core.Ids;
 
 import java.io.IOException;
 import java.io.ObjectInput;
@@ -64,7 +64,7 @@ public class UnsuccessfulResponse extends ValidResponse {
       public void writeObject(ObjectOutput output, UnsuccessfulResponse object) throws IOException {
          // no-op
       }
-      
+
       @Override
       public UnsuccessfulResponse readObject(ObjectInput input) throws IOException, ClassNotFoundException {
          return INSTANCE;

@@ -28,9 +28,9 @@ import java.io.ObjectOutput;
 import java.util.Map;
 import java.util.Set;
 
-import org.infinispan.marshall.AbstractExternalizer;
-import org.infinispan.marshall.Ids;
-import org.infinispan.util.Util;
+import org.infinispan.commons.marshall.AbstractExternalizer;
+import org.infinispan.commons.util.Util;
+import org.infinispan.marshall.core.Ids;
 
 /**
  * An atomic remove operation.
@@ -62,7 +62,7 @@ public class RemoveOperation<K, V> extends Operation<K, V> {
    public void replay(Map<K, V> delegate) {
       delegate.remove(key);
    }
-   
+
    @Override
    public K keyAffected() {
       return key;

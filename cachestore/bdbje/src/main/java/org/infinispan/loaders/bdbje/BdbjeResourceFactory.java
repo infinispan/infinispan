@@ -30,9 +30,9 @@ import com.sleepycat.collections.StoredMap;
 import com.sleepycat.collections.StoredSortedMap;
 import com.sleepycat.je.*;
 import com.sleepycat.util.ExceptionUnwrapper;
-import org.infinispan.CacheException;
 import org.infinispan.container.entries.InternalCacheEntry;
-import org.infinispan.marshall.StreamingMarshaller;
+import org.infinispan.commons.CacheException;
+import org.infinispan.commons.marshall.StreamingMarshaller;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 

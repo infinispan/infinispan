@@ -29,13 +29,13 @@ import org.apache.lucene.search.ScoreDoc;
 import org.apache.lucene.search.SortField;
 import org.apache.lucene.util.PriorityQueue;
 import org.hibernate.search.SearchException;
-import org.infinispan.util.ReflectionUtil;
+import org.infinispan.commons.util.ReflectionUtil;
 
 /**
  * ISPNPriorityQueueFactory.
- * 
+ *
  * Factory to construct a lucene PriotityQueue (unfortunately not public classes)
- * 
+ *
  * @author Israel Lacerra <israeldl@gmail.com>
  * @author Sanne Grinovero <sanne@hibernate.org> (C) 2011 Red Hat Inc.
  * @since 5.1
@@ -48,7 +48,7 @@ class ISPNPriorityQueueFactory {
    /**
     * Creates a org.apache.lucene.search.FieldDocSortedHitQueue instance and set the size and sort
     * fields
-    * 
+    *
     * @param size
     * @param sort
     * @return a PriorityQueue<FieldDoc> instance
@@ -59,7 +59,7 @@ class ISPNPriorityQueueFactory {
       Class<?>[] types = new Class[]{ int.class };
       PriorityQueue<ScoreDoc> queue = buildPriorityQueueSafe(className, types, constructorArgument);
       Method[] methods = queue.getClass().getDeclaredMethods();
-      
+
       for (Method method : methods) {
          if (method.getName().equals("setFields")) {
             Object[] parameters = new Object[1];
@@ -68,14 +68,14 @@ class ISPNPriorityQueueFactory {
             return queue;
          }
       }
-      
+
       //The setFields should have been found
       throw new SearchException( "Method org.apache.lucene.search.FieldDocSortedHitQueue.setFields not found. This version of Lucene is not compatible." );
    }
 
    /**
     * Creates a org.apache.lucene.search.HitQueue instance and set the size
-    * 
+    *
     * @param size
     * @param sort
     * @return a PriorityQueue<FieldDoc> instance
@@ -97,7 +97,7 @@ class ISPNPriorityQueueFactory {
       try {
          return buildPriorityQueue(className, types, constructorArgument);
       } catch (Exception e) {
-         throw new SearchException("Could not initialize required Lucene class: " + className + 
+         throw new SearchException("Could not initialize required Lucene class: " + className +
                ". Either the Lucene version is incompatible, or security is preventing me to access it.", e);
       }
    }

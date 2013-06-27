@@ -22,12 +22,12 @@ import java.util.ArrayList;
 import java.util.List;
 
 import org.apache.cassandra.thrift.ConsistencyLevel;
-import org.infinispan.config.ConfigurationException;
 import org.infinispan.configuration.cache.AbstractStoreConfigurationBuilder;
 import org.infinispan.configuration.cache.LoadersConfigurationBuilder;
 import org.infinispan.loaders.keymappers.DefaultTwoWayKey2StringMapper;
 import org.infinispan.loaders.keymappers.Key2StringMapper;
-import org.infinispan.util.TypedProperties;
+import org.infinispan.commons.CacheConfigurationException;
+import org.infinispan.commons.util.TypedProperties;
 
 /**
  * CassandraCacheStoreConfigurationBuilder. Configures a {@link CassandraCacheStore}
@@ -147,7 +147,7 @@ public class CassandraCacheStoreConfigurationBuilder extends
    public void validate() {
       super.validate();
       if (servers.isEmpty()) {
-         throw new ConfigurationException("No servers specified");
+         throw new CacheConfigurationException("No servers specified");
       }
    }
 

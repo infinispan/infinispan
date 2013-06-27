@@ -39,9 +39,9 @@ import java.io.InputStream;
 import java.util.Map;
 
 import org.infinispan.Version;
+import org.infinispan.commons.CacheConfigurationException;
 import org.infinispan.commons.equivalence.AnyEquivalence;
 import org.infinispan.commons.equivalence.ByteArrayEquivalence;
-import org.infinispan.config.ConfigurationException;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ClusterCacheLoaderConfiguration;
 import org.infinispan.configuration.cache.Configuration;
@@ -57,10 +57,10 @@ import org.infinispan.executors.DefaultScheduledExecutorFactory;
 import org.infinispan.interceptors.FooInterceptor;
 import org.infinispan.jmx.PerThreadMBeanServerLookup;
 import org.infinispan.manager.EmbeddedCacheManager;
-import org.infinispan.marshall.AdvancedExternalizer;
+import org.infinispan.commons.marshall.AdvancedExternalizer;
 import org.infinispan.marshall.AdvancedExternalizerTest;
-import org.infinispan.marshall.VersionAwareMarshaller;
-import org.infinispan.marshall.jboss.GenericJBossMarshaller;
+import org.infinispan.marshall.core.VersionAwareMarshaller;
+import org.infinispan.commons.marshall.jboss.GenericJBossMarshaller;
 import org.infinispan.remoting.transport.jgroups.JGroupsTransport;
 import org.infinispan.test.AbstractInfinispanTest;
 import org.infinispan.test.CacheManagerCallable;
@@ -175,7 +175,7 @@ public class XmlFileParsingTest extends AbstractInfinispanTest {
 
    }
 
-   @Test(expectedExceptions = ConfigurationException.class)
+   @Test(expectedExceptions = CacheConfigurationException.class)
    public void testBackwardCompatibleInputCacheConfiguration() throws Exception {
       // Read 4.0 configuration file against 4.1 schema
       String config = INFINISPAN_START_TAG_40 +
@@ -328,7 +328,7 @@ public class XmlFileParsingTest extends AbstractInfinispanTest {
 
       config = INFINISPAN_START_TAG +
             "   <default>\n" +
-            "      <compatibility enabled=\"true\" marshallerClass=\"org.infinispan.marshall.jboss.GenericJBossMarshaller\"/>\n" +
+            "      <compatibility enabled=\"true\" marshallerClass=\"org.infinispan.commons.marshall.jboss.GenericJBossMarshaller\"/>\n" +
             "   </default>\n" +
             TestingUtil.INFINISPAN_END_TAG;
 

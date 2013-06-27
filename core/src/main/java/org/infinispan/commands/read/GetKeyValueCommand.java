@@ -32,7 +32,7 @@ import org.infinispan.util.logging.LogFactory;
 
 import java.util.Set;
 
-import static org.infinispan.util.Util.toStr;
+import static org.infinispan.commons.util.Util.toStr;
 
 /**
  * Implements functionality defined by {@link org.infinispan.Cache#get(Object)} and

@@ -18,11 +18,11 @@
  */
 package org.infinispan.loaders.jdbc.configuration;
 
-import org.infinispan.configuration.Builder;
 import org.infinispan.configuration.cache.LoadersConfigurationBuilder;
 import org.infinispan.loaders.keymappers.DefaultTwoWayKey2StringMapper;
 import org.infinispan.loaders.keymappers.Key2StringMapper;
-import org.infinispan.util.TypedProperties;
+import org.infinispan.commons.configuration.Builder;
+import org.infinispan.commons.util.TypedProperties;
 
 /**
  *

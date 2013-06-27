@@ -19,12 +19,12 @@
 
 package org.infinispan.context.impl;
 
-import org.infinispan.CacheException;
+import org.infinispan.commons.CacheException;
+import org.infinispan.commons.util.InfinispanCollections;
 import org.infinispan.container.entries.CacheEntry;
 import org.infinispan.container.entries.InternalCacheEntry;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.remoting.transport.Address;
-import org.infinispan.util.InfinispanCollections;
 
 import java.util.Map;
 import java.util.Set;

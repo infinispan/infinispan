@@ -1,8 +1,8 @@
 package org.infinispan.config;
 
+import org.infinispan.commons.util.Util;
 import org.infinispan.config.FluentConfiguration.GroupsConfig;
 import org.infinispan.distribution.group.Grouper;
-import org.infinispan.util.Util;
 
 import javax.xml.bind.annotation.XmlAccessType;
 import javax.xml.bind.annotation.XmlAccessorType;

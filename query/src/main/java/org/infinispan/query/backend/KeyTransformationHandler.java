@@ -23,14 +23,14 @@
 package org.infinispan.query.backend;
 
 import org.infinispan.AdvancedCache;
-import org.infinispan.CacheException;
+import org.infinispan.commons.CacheException;
 import org.infinispan.query.DefaultTransformer;
 import org.infinispan.query.Transformable;
 import org.infinispan.query.Transformer;
 import org.infinispan.query.impl.ComponentRegistryUtils;
 import org.infinispan.query.logging.Log;
-import org.infinispan.util.Util;
-import org.infinispan.util.CollectionFactory;
+import org.infinispan.commons.util.Util;
+import org.infinispan.commons.util.CollectionFactory;
 import org.infinispan.util.logging.LogFactory;
 
 import java.util.Map;

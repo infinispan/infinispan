@@ -24,7 +24,7 @@
 package org.infinispan.tx.synchronisation;
 
 import org.infinispan.config.Configuration;
-import org.infinispan.config.ConfigurationException;
+import org.infinispan.commons.CacheConfigurationException;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.test.SingleCacheManagerTest;
 import org.infinispan.test.fwk.TestCacheManagerFactory;

@@ -19,9 +19,9 @@
 
 package org.infinispan.lock;
 
-import org.infinispan.CacheException;
 import org.infinispan.commands.ReplicableCommand;
 import org.infinispan.commands.VisitableCommand;
+import org.infinispan.commons.CacheException;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.interceptors.base.CommandInterceptor;
 

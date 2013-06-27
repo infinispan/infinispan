@@ -1,19 +1,19 @@
-/* 
- * JBoss, Home of Professional Open Source 
+/*
+ * JBoss, Home of Professional Open Source
  * Copyright 2012 Red Hat Inc. and/or its affiliates and other contributors
- * as indicated by the @author tag. All rights reserved. 
- * See the copyright.txt in the distribution for a 
+ * as indicated by the @author tag. All rights reserved.
+ * See the copyright.txt in the distribution for a
  * full listing of individual contributors.
  *
- * This copyrighted material is made available to anyone wishing to use, 
- * modify, copy, or redistribute it subject to the terms and conditions 
- * of the GNU Lesser General Public License, v. 2.1. 
- * This program is distributed in the hope that it will be useful, but WITHOUT A 
- * WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A 
- * PARTICULAR PURPOSE.  See the GNU Lesser General Public License for more details. 
- * You should have received a copy of the GNU Lesser General Public License, 
- * v.2.1 along with this distribution; if not, write to the Free Software 
- * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, 
+ * This copyrighted material is made available to anyone wishing to use,
+ * modify, copy, or redistribute it subject to the terms and conditions
+ * of the GNU Lesser General Public License, v. 2.1.
+ * This program is distributed in the hope that it will be useful, but WITHOUT A
+ * WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A
+ * PARTICULAR PURPOSE.  See the GNU Lesser General Public License for more details.
+ * You should have received a copy of the GNU Lesser General Public License,
+ * v.2.1 along with this distribution; if not, write to the Free Software
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston,
  * MA  02110-1301, USA.
  */
 package org.infinispan.distexec.mapreduce;
@@ -36,11 +36,13 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.TimeUnit;
 
 import org.infinispan.Cache;
-import org.infinispan.CacheException;
 import org.infinispan.atomic.Delta;
 import org.infinispan.atomic.DeltaAware;
 import org.infinispan.commands.read.MapCombineCommand;
 import org.infinispan.commands.read.ReduceCommand;
+import org.infinispan.commons.CacheException;
+import org.infinispan.commons.util.CollectionFactory;
+import org.infinispan.commons.util.InfinispanCollections;
 import org.infinispan.container.entries.InternalCacheEntry;
 import org.infinispan.distexec.mapreduce.spi.MapReduceTaskLifecycleService;
 import org.infinispan.distribution.DistributionManager;
@@ -51,10 +53,8 @@ import org.infinispan.loaders.CacheLoader;
 import org.infinispan.loaders.CacheLoaderException;
 import org.infinispan.loaders.CacheLoaderManager;
 import org.infinispan.manager.EmbeddedCacheManager;
-import org.infinispan.marshall.MarshalledValue;
+import org.infinispan.marshall.core.MarshalledValue;
 import org.infinispan.remoting.transport.Address;
-import org.infinispan.util.InfinispanCollections;
-import org.infinispan.util.CollectionFactory;
 import org.infinispan.util.TimeService;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
@@ -264,7 +264,7 @@ public class MapReduceManagerImpl implements MapReduceManager {
                   combined = list.get(0);
                   combinedMap.put(e.getKey(), combined);
                }
-               log.tracef("For m/r task %s combined %s to %s at %s" , taskId, e.getKey(), combined, cdl.getAddress());               
+               log.tracef("For m/r task %s combined %s to %s at %s" , taskId, e.getKey(), combined, cdl.getAddress());
             }
          } finally {
             if (log.isTraceEnabled()) {
@@ -380,7 +380,7 @@ public class MapReduceManagerImpl implements MapReduceManager {
             taskLifecycleService.onPostExecute(combiner);
          }
       } else {
-         // Combiner not specified     
+         // Combiner not specified
          result = collector.collectedValues();
       }
       return result;
@@ -434,6 +434,7 @@ public class MapReduceManagerImpl implements MapReduceManager {
       return cl;
    }
 
+   @Override
    public <T> Map<Address, List<T>> mapKeysToNodes(DistributionManager dm, String taskId,
             Collection<T> keysToMap, boolean useIntermediateCompositeKey) {
       Map<Address, List<T>> addressToKey = new HashMap<Address, List<T>>();
@@ -482,6 +483,7 @@ public class MapReduceManagerImpl implements MapReduceManager {
          list.add(value);
       }
 
+      @Override
       public Map<KOut, List<VOut>> collectedValues() {
          return store;
       }

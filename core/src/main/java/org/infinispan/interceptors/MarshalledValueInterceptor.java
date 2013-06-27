@@ -40,10 +40,11 @@ import org.infinispan.factories.annotations.ComponentName;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.factories.annotations.Start;
 import org.infinispan.interceptors.base.CommandInterceptor;
-import org.infinispan.marshall.MarshalledValue;
-import org.infinispan.marshall.StreamingMarshaller;
-import org.infinispan.util.Immutables;
-import org.infinispan.util.InfinispanCollections;
+import org.infinispan.marshall.core.MarshalledValue;
+import org.infinispan.commons.marshall.StreamingMarshaller;
+import org.infinispan.commons.util.Immutables;
+import org.infinispan.commons.util.InfinispanCollections;
+import org.infinispan.util.CoreImmutables;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
@@ -55,7 +56,7 @@ import java.util.Map;
 import java.util.Set;
 
 import static org.infinispan.factories.KnownComponentNames.CACHE_MARSHALLER;
-import static org.infinispan.marshall.MarshalledValue.isTypeExcluded;
+import static org.infinispan.marshall.core.MarshalledValue.isTypeExcluded;
 
 /**
  * Interceptor that handles the wrapping and unwrapping of cached data using {@link
@@ -255,7 +256,7 @@ public class MarshalledValueInterceptor extends CommandInterceptor {
          if (value instanceof MarshalledValue) {
             value = ((MarshalledValue) value).get();
          }
-         InternalCacheEntry newEntry = Immutables.immutableInternalCacheEntry(entryFactory.create(key, value, entry));
+         InternalCacheEntry newEntry = CoreImmutables.immutableInternalCacheEntry(entryFactory.create(key, value, entry));
          copy.add(newEntry);
       }
       return Immutables.immutableSetWrap(copy);

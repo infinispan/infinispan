@@ -22,10 +22,10 @@
  */
 package org.infinispan.factories;
 
-import org.infinispan.config.ConfigurationException;
+import org.infinispan.commons.executors.ExecutorFactory;
+import org.infinispan.commons.CacheConfigurationException;
 import org.infinispan.executors.LazyInitializingBlockingTaskAwareExecutorService;
 import org.infinispan.util.concurrent.BlockingTaskAwareExecutorService;
-import org.infinispan.executors.ExecutorFactory;
 import org.infinispan.executors.LazyInitializingExecutorService;
 import org.infinispan.executors.LazyInitializingScheduledExecutorService;
 import org.infinispan.executors.ScheduledExecutorFactory;
@@ -121,12 +121,12 @@ public class NamedExecutorsFactory extends NamedComponentFactory implements Auto
             }
             return (T) totalOrderExecutor;
          } else {
-            throw new ConfigurationException("Unknown named executor " + componentName);
+            throw new CacheConfigurationException("Unknown named executor " + componentName);
          }
-      } catch (ConfigurationException ce) {
+      } catch (CacheConfigurationException ce) {
          throw ce;
       } catch (Exception e) {
-         throw new ConfigurationException("Unable to instantiate ExecutorFactory for named component " + componentName, e);
+         throw new CacheConfigurationException("Unable to instantiate ExecutorFactory for named component " + componentName, e);
       }
    }
 

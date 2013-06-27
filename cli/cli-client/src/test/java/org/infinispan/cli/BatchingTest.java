@@ -25,7 +25,7 @@ import java.io.PrintStream;
 
 import org.infinispan.cli.shell.Shell;
 import org.infinispan.cli.shell.ShellImpl;
-import org.infinispan.util.Util;
+import org.infinispan.commons.util.Util;
 import org.testng.annotations.Test;
 
 @Test(groups="functional", testName="cli.BatchingTest")

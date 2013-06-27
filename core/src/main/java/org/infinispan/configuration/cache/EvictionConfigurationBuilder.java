@@ -18,8 +18,8 @@
  */
 package org.infinispan.configuration.cache;
 
-import org.infinispan.config.ConfigurationException;
-import org.infinispan.configuration.Builder;
+import org.infinispan.commons.configuration.Builder;
+import org.infinispan.commons.CacheConfigurationException;
 import org.infinispan.eviction.EvictionStrategy;
 import org.infinispan.eviction.EvictionThreadPolicy;
 import org.infinispan.util.logging.Log;
@@ -81,7 +81,7 @@ public class EvictionConfigurationBuilder extends AbstractConfigurationChildBuil
       if(strategy == EvictionStrategy.FIFO)
          log.warn("FIFO strategy is deprecated, LRU will be used instead");
       if (strategy.isEnabled() && maxEntries <= 0)
-         throw new ConfigurationException("Eviction maxEntries value cannot be less than or equal to zero if eviction is enabled");
+         throw new CacheConfigurationException("Eviction maxEntries value cannot be less than or equal to zero if eviction is enabled");
       if (maxEntries > 0 && !strategy.isEnabled()) {
          strategy = EvictionStrategy.LIRS;
          log.debugf("Max entries configured (%d) without eviction strategy. Eviction strategy overriden to %s", maxEntries, strategy);

@@ -27,9 +27,9 @@ import java.io.ObjectInput;
 import java.io.ObjectOutput;
 import java.util.Set;
 
-import org.infinispan.marshall.AbstractExternalizer;
-import org.infinispan.marshall.Ids;
-import org.infinispan.util.Util;
+import org.infinispan.commons.marshall.AbstractExternalizer;
+import org.infinispan.commons.util.Util;
+import org.infinispan.marshall.core.Ids;
 
 /**
  * A successful response
@@ -48,7 +48,7 @@ public class SuccessfulResponse extends ValidResponse {
 
    public static SuccessfulResponse create(Object responseValue) {
       return responseValue == null ? SUCCESSFUL_EMPTY_RESPONSE : new SuccessfulResponse(responseValue);
-   }    
+   }
 
    @Override
    public boolean isSuccessful() {

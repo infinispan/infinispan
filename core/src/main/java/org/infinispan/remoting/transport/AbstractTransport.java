@@ -22,7 +22,7 @@
  */
 package org.infinispan.remoting.transport;
 
-import org.infinispan.CacheException;
+import org.infinispan.commons.CacheException;
 import org.infinispan.configuration.global.GlobalConfiguration;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.manager.NamedCacheNotFoundException;

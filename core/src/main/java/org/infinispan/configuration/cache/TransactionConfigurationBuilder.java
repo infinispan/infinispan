@@ -18,9 +18,9 @@
  */
 package org.infinispan.configuration.cache;
 
-import org.infinispan.CacheConfigurationException;
-import org.infinispan.configuration.Builder;
-import org.infinispan.config.ConfigurationException;
+import org.infinispan.commons.CacheConfigurationException;
+import org.infinispan.commons.configuration.Builder;
+import org.infinispan.commons.CacheConfigurationException;
 import org.infinispan.transaction.LockingMode;
 import org.infinispan.transaction.TransactionMode;
 import org.infinispan.transaction.TransactionProtocol;
@@ -279,20 +279,20 @@ public class TransactionConfigurationBuilder extends AbstractConfigurationChildB
       if(transactionProtocol == TransactionProtocol.TOTAL_ORDER) {
          //total order only supports transactional caches
          if(transactionMode != TransactionMode.TRANSACTIONAL) {
-            throw new ConfigurationException("Total Order based protocol not available in " + transactionMode +" cache");
+            throw new CacheConfigurationException("Total Order based protocol not available in " + transactionMode +" cache");
          }
 
          //total order only supports replicated and distributed mode
          if(!clustering().cacheMode().isReplicated() && !clustering().cacheMode().isDistributed()) {
-            throw new ConfigurationException(clustering().cacheMode().friendlyCacheModeString() + " is not supported by Total Order based protocol");
+            throw new CacheConfigurationException(clustering().cacheMode().friendlyCacheModeString() + " is not supported by Total Order based protocol");
          }
 
          if (recovery.create().enabled()) {
-            throw new ConfigurationException("Total Order based protocol not available with recovery");
+            throw new CacheConfigurationException("Total Order based protocol not available with recovery");
          }
 
          if (lockingMode != LockingMode.OPTIMISTIC) {
-            throw new ConfigurationException("Total Order based protocol not available with " + lockingMode);
+            throw new CacheConfigurationException("Total Order based protocol not available with " + lockingMode);
          }
       }
       recovery.validate();

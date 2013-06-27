@@ -22,10 +22,10 @@
  */
 package org.infinispan.transaction.xa;
 
-import org.infinispan.marshall.Ids;
+import org.infinispan.commons.util.InfinispanCollections;
+import org.infinispan.commons.util.Util;
+import org.infinispan.marshall.core.Ids;
 import org.infinispan.remoting.transport.Address;
-import org.infinispan.util.InfinispanCollections;
-import org.infinispan.util.Util;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 

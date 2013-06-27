@@ -18,7 +18,7 @@
  */
 package org.infinispan.configuration.module;
 
-import static org.infinispan.util.StringPropertyReplacer.replaceProperties;
+import static org.infinispan.commons.util.StringPropertyReplacer.replaceProperties;
 
 import javax.xml.stream.XMLStreamException;
 

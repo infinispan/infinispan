@@ -1,4 +1,4 @@
-/* 
+/*
  * JBoss, Home of Professional Open Source
  * Copyright 2013 Red Hat Inc. and/or its affiliates and other contributors
  * as indicated by the @author tags. All rights reserved.
@@ -30,15 +30,15 @@ import org.infinispan.query.Search;
 import org.infinispan.query.SearchManager;
 import org.infinispan.query.test.Person;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
-import org.infinispan.util.Util;
+import org.infinispan.commons.util.Util;
 import org.testng.Assert;
 import org.testng.annotations.Test;
 
 /**
  * Starts writing a lot of data in a loop. Used to measure ingestion rate.
- * 
+ *
  * -server -XX:+UseConcMarkSweepGC -XX:+CMSIncrementalMode -XX:+UseParNewGC -Xss500k -Xmx12G -Xms12G -XX:MaxPermSize=200M -Dlog4j.configuration=file:/opt/infinispan-log4j.xml
- * 
+ *
  * @author Sanne Grinovero
  * @since 5.3
  */

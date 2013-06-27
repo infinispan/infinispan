@@ -24,7 +24,7 @@ package org.infinispan.client.hotrod.impl.consistenthash;
 
 
 import org.infinispan.client.hotrod.configuration.Configuration;
-import org.infinispan.util.Util;
+import org.infinispan.commons.util.Util;
 
 /**
  * Factory for {@link org.infinispan.client.hotrod.impl.consistenthash.ConsistentHash} function. It will try to look

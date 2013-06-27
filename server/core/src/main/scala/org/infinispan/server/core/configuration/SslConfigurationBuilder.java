@@ -22,7 +22,7 @@ import javax.net.ssl.KeyManager;
 import javax.net.ssl.SSLContext;
 import javax.net.ssl.TrustManager;
 
-import org.infinispan.configuration.Builder;
+import org.infinispan.commons.configuration.Builder;
 import org.infinispan.server.core.logging.JavaLog;
 import org.infinispan.util.logging.LogFactory;
 

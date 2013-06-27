@@ -19,7 +19,8 @@
 
 package org.infinispan.remoting.transport.jgroups;
 
-import org.infinispan.marshall.Ids;
+import org.infinispan.commons.marshall.AdvancedExternalizer;
+import org.infinispan.marshall.core.Ids;
 import org.infinispan.remoting.transport.TopologyAwareAddress;
 import org.jgroups.util.TopologyUUID;
 
@@ -80,7 +81,7 @@ public final class JGroupsTopologyAwareAddress extends JGroupsAddress implements
       return getMachineId() == null ? addr.getMachineId() == null : getMachineId().equals(addr.getMachineId());
    }
 
-   public static final class Externalizer implements org.infinispan.marshall.AdvancedExternalizer<JGroupsTopologyAwareAddress> {
+   public static final class Externalizer implements AdvancedExternalizer<JGroupsTopologyAwareAddress> {
       @Override
       public void writeObject(ObjectOutput output, JGroupsTopologyAwareAddress address) throws IOException {
          try {

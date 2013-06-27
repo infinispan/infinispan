@@ -46,12 +46,12 @@ import org.infinispan.client.hotrod.impl.protocol.CodecFactory;
 import org.infinispan.client.hotrod.impl.transport.TransportFactory;
 import org.infinispan.client.hotrod.logging.Log;
 import org.infinispan.client.hotrod.logging.LogFactory;
-import org.infinispan.executors.ExecutorFactory;
-import org.infinispan.marshall.Marshaller;
-import org.infinispan.util.FileLookupFactory;
-import org.infinispan.util.SysPropertyActions;
-import org.infinispan.util.TypedProperties;
-import org.infinispan.util.Util;
+import org.infinispan.commons.executors.ExecutorFactory;
+import org.infinispan.commons.marshall.Marshaller;
+import org.infinispan.commons.util.FileLookupFactory;
+import org.infinispan.commons.util.SysPropertyActions;
+import org.infinispan.commons.util.TypedProperties;
+import org.infinispan.commons.util.Util;
 
 /**
  * Factory for {@link org.infinispan.client.hotrod.RemoteCache}s. <p/> <p> <b>Lifecycle:</b> </p> In order to be able to

@@ -23,8 +23,8 @@
 
 package org.infinispan.container.versioning;
 
-import org.infinispan.marshall.AbstractExternalizer;
-import org.infinispan.marshall.Ids;
+import org.infinispan.commons.marshall.AbstractExternalizer;
+import org.infinispan.marshall.core.Ids;
 
 import java.io.IOException;
 import java.io.ObjectInput;

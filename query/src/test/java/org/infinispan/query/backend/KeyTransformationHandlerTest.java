@@ -24,7 +24,7 @@ package org.infinispan.query.backend;
 
 import java.util.UUID;
 
-import org.infinispan.CacheException;
+import org.infinispan.commons.CacheException;
 import org.infinispan.query.Transformer;
 import org.infinispan.query.test.CustomKey;
 import org.infinispan.query.test.CustomKey2;

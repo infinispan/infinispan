@@ -19,7 +19,7 @@
 
 package org.infinispan.client.hotrod.impl.protocol;
 
-import static org.infinispan.util.Util.hexDump;
+import static org.infinispan.commons.util.Util.hexDump;
 
 import java.net.InetSocketAddress;
 import java.net.SocketAddress;

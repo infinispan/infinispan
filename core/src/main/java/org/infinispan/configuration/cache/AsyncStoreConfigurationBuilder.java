@@ -20,7 +20,7 @@ package org.infinispan.configuration.cache;
 
 import java.util.concurrent.TimeUnit;
 
-import org.infinispan.configuration.Builder;
+import org.infinispan.commons.configuration.Builder;
 
 /**
  * Configuration for the async cache store. If enabled, this provides you with asynchronous writes

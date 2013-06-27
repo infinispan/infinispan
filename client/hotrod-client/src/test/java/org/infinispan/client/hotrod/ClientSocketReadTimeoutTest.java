@@ -24,8 +24,8 @@
 package org.infinispan.client.hotrod;
 
 import org.infinispan.Cache;
-import org.infinispan.CacheException;
 import org.infinispan.client.hotrod.exceptions.TransportException;
+import org.infinispan.commons.CacheException;
 import org.infinispan.manager.AbstractDelegatingEmbeddedCacheManager;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.server.hotrod.HotRodServer;

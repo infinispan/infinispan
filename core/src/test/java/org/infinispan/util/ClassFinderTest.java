@@ -19,6 +19,7 @@
 
 package org.infinispan.util;
 
+import org.infinispan.commons.util.ClassFinder;
 import org.testng.Assert;
 import org.testng.annotations.Test;
 

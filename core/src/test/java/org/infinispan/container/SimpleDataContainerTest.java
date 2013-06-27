@@ -30,7 +30,7 @@ import org.infinispan.container.entries.MortalCacheEntry;
 import org.infinispan.container.entries.TransientCacheEntry;
 import org.infinispan.container.entries.TransientMortalCacheEntry;
 import org.infinispan.test.AbstractInfinispanTest;
-import org.infinispan.util.Immutables;
+import org.infinispan.util.CoreImmutables;
 import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
@@ -275,10 +275,10 @@ public class SimpleDataContainerTest extends AbstractInfinispanTest {
             .maxIdle(100, TimeUnit.MINUTES).lifespan(100, TimeUnit.MINUTES).build());
 
       Set expected = new HashSet();
-      expected.add(Immutables.immutableInternalCacheEntry(dc.get("k1")));
-      expected.add(Immutables.immutableInternalCacheEntry(dc.get("k2")));
-      expected.add(Immutables.immutableInternalCacheEntry(dc.get("k3")));
-      expected.add(Immutables.immutableInternalCacheEntry(dc.get("k4")));
+      expected.add(CoreImmutables.immutableInternalCacheEntry(dc.get("k1")));
+      expected.add(CoreImmutables.immutableInternalCacheEntry(dc.get("k2")));
+      expected.add(CoreImmutables.immutableInternalCacheEntry(dc.get("k3")));
+      expected.add(CoreImmutables.immutableInternalCacheEntry(dc.get("k4")));
 
       Set actual = new HashSet();
       for (Map.Entry o : dc.entrySet()) actual.add(o);

@@ -24,7 +24,7 @@ package org.infinispan.loaders.jdbc;
 
 import org.infinispan.loaders.LockSupportCacheStoreConfig;
 import org.infinispan.loaders.jdbc.connectionfactory.ConnectionFactoryConfig;
-import org.infinispan.util.TypedProperties;
+import org.infinispan.commons.util.TypedProperties;
 
 import java.util.Properties;
 

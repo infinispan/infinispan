@@ -25,13 +25,13 @@ package org.infinispan.commands;
 
 import org.infinispan.Cache;
 import org.infinispan.commands.remote.BaseRpcCommand;
+import org.infinispan.commons.util.Util;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.factories.GlobalComponentRegistry;
 import org.infinispan.jmx.CacheJmxRegistration;
 import org.infinispan.loaders.CacheLoaderManager;
 import org.infinispan.loaders.CacheStore;
 import org.infinispan.manager.EmbeddedCacheManager;
-import org.infinispan.util.Util;
 
 /**
  * Command to stop a cache and remove all its contents from both

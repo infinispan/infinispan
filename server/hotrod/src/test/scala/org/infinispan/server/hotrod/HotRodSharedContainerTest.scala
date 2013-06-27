@@ -33,7 +33,7 @@ import org.infinispan.server.core.test.ServerTestingUtil._
 import org.infinispan.test.fwk.TestCacheManagerFactory
 import org.infinispan.configuration.cache.CacheMode
 import org.infinispan.commons.equivalence.ByteArrayEquivalence
-import org.infinispan.config.ConfigurationException
+import org.infinispan.commons.CacheConfigurationException
 import org.infinispan.server.hotrod.configuration.HotRodServerConfigurationBuilder
 import org.infinispan.configuration.global.GlobalConfigurationBuilder
 import org.infinispan.server.hotrod.test.UniquePortThreadLocal
@@ -58,7 +58,7 @@ class HotRodSharedContainerTest extends MultipleCacheManagersTest {
       cm.defineConfiguration(cacheName, builder.build())
    }
 
-   @Test(expectedExceptions= Array(classOf[ConfigurationException]))
+   @Test(expectedExceptions= Array(classOf[CacheConfigurationException]))
    def testTopologyConflict() {
       val basePort = UniquePortThreadLocal.get.intValue
       hotRodServer1 = startHotRodServer(cacheManagers.get(0), basePort, new HotRodServerConfigurationBuilder())

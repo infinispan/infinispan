@@ -24,7 +24,7 @@ package org.infinispan.client.hotrod.logging;
 
 import org.infinispan.client.hotrod.exceptions.HotRodClientException;
 import org.infinispan.client.hotrod.impl.transport.tcp.TcpTransport;
-import org.infinispan.config.ConfigurationException;
+import org.infinispan.commons.CacheConfigurationException;
 import org.jboss.logging.BasicLogger;
 import org.jboss.logging.Cause;
 import org.jboss.logging.LogMessage;
@@ -134,17 +134,17 @@ public interface Log extends BasicLogger {
    void unableToInvalidateTransport(SocketAddress serverAddress);
 
    @Message(value = "SSL Enabled but no KeyStore specified", id = 4023)
-   ConfigurationException noSSLKeyManagerConfiguration();
+   CacheConfigurationException noSSLKeyManagerConfiguration();
 
    @Message(value = "SSL Enabled but no TrustStore specified", id = 4024)
-   ConfigurationException noSSLTrustManagerConfiguration();
+   CacheConfigurationException noSSLTrustManagerConfiguration();
 
    @Message(value = "A password is required to open the KeyStore '%s'", id = 4025)
-   ConfigurationException missingKeyStorePassword(String keyStore);
+   CacheConfigurationException missingKeyStorePassword(String keyStore);
 
    @Message(value = "A password is required to open the TrustStore '%s'", id = 4026)
-   ConfigurationException missingTrustStorePassword(String trustStore);
+   CacheConfigurationException missingTrustStorePassword(String trustStore);
 
    @Message(value = "Cannot configure custom KeyStore and/or TrustStore when specifying a SSLContext", id = 4027)
-   ConfigurationException xorSSLContext();
+   CacheConfigurationException xorSSLContext();
 }

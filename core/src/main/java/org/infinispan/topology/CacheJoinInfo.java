@@ -27,8 +27,8 @@ import java.util.Set;
 
 import org.infinispan.commons.hash.Hash;
 import org.infinispan.distribution.ch.ConsistentHashFactory;
-import org.infinispan.marshall.AbstractExternalizer;
-import org.infinispan.marshall.Ids;
+import org.infinispan.commons.marshall.AbstractExternalizer;
+import org.infinispan.marshall.core.Ids;
 
 /**
  * This class contains the information that a cache needs to supply to the coordinator when starting up.

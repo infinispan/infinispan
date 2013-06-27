@@ -19,7 +19,7 @@
 
 package org.infinispan.transaction;
 
-import org.infinispan.CacheException;
+import org.infinispan.commons.CacheException;
 
 /**
  * Thrown when a write skew is detected

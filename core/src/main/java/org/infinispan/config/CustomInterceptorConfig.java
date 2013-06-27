@@ -22,8 +22,8 @@
  */
 package org.infinispan.config;
 
+import org.infinispan.commons.util.TypedProperties;
 import org.infinispan.interceptors.base.CommandInterceptor;
-import org.infinispan.util.TypedProperties;
 
 import javax.xml.bind.annotation.XmlAccessType;
 import javax.xml.bind.annotation.XmlAccessorType;

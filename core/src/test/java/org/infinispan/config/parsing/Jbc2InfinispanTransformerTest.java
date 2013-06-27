@@ -30,7 +30,7 @@ import org.infinispan.configuration.global.GlobalConfiguration;
 import org.infinispan.configuration.global.ShutdownHookBehavior;
 import org.infinispan.eviction.EvictionStrategy;
 import org.infinispan.loaders.dummy.DummyInMemoryCacheStore;
-import org.infinispan.marshall.VersionAwareMarshaller;
+import org.infinispan.marshall.core.VersionAwareMarshaller;
 import org.infinispan.test.AbstractInfinispanTest;
 import org.infinispan.test.CacheManagerCallable;
 import org.infinispan.test.fwk.TestCacheManagerFactory;

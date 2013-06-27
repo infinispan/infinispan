@@ -46,12 +46,12 @@ import org.infinispan.Cache;
 import org.infinispan.lucene.InfinispanDirectory;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.remoting.transport.Address;
-import org.infinispan.util.InfinispanCollections;
+import org.infinispan.commons.util.InfinispanCollections;
 
 /**
  * DemoActions does some basic operations on the Lucene index,
  * to be used by DemoDriver to show base operations on Lucene.
- * 
+ *
  * @author Sanne Grinovero
  * @since 4.0
  */
@@ -96,7 +96,7 @@ public class DemoActions {
 
    /**
     * Returns a list of the values of all stored fields
-    * @throws IOException 
+    * @throws IOException
     */
    public List<String> listAllDocuments() {
       MatchAllDocsQuery q = new MatchAllDocsQuery();
@@ -105,7 +105,7 @@ public class DemoActions {
 
    /**
     * Creates a new document having just one field containing a string
-    * 
+    *
     * @param line The text snippet to add
     * @throws IOException
     */
@@ -124,8 +124,8 @@ public class DemoActions {
 
    /**
     * Parses a query using the single field as default
-    * 
-    * @throws ParseException 
+    *
+    * @throws ParseException
     */
    public Query parseQuery(String queryLine) throws ParseException {
       QueryParser parser = new QueryParser(Version.LUCENE_33, MAIN_FIELD, analyzer);
@@ -133,7 +133,7 @@ public class DemoActions {
    }
 
    /**
-    * Returns a list of Addresses of all members in the cluster 
+    * Returns a list of Addresses of all members in the cluster
     */
    public List<Address> listAllMembers() {
       EmbeddedCacheManager cacheManager = cache.getCacheManager();

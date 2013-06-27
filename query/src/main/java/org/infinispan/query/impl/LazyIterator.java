@@ -28,7 +28,7 @@ import java.io.IOException;
 import net.jcip.annotations.NotThreadSafe;
 import org.hibernate.search.query.engine.spi.DocumentExtractor;
 import org.hibernate.search.query.engine.spi.EntityInfo;
-import org.infinispan.CacheException;
+import org.infinispan.commons.CacheException;
 
 /**
  * Implementation for {@link org.infinispan.query.ResultIterator}. This loads the results only when required
@@ -53,6 +53,7 @@ public class LazyIterator extends AbstractIterator {
       extractor.close();
    }
 
+   @Override
    protected EntityInfo loadEntityInfo(int index) {
       try {
          return extractor.extract(index);

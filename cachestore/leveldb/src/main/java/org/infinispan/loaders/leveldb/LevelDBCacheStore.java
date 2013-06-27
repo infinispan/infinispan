@@ -15,7 +15,6 @@ import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
 
 import org.infinispan.Cache;
-import org.infinispan.config.ConfigurationException;
 import org.infinispan.container.entries.InternalCacheEntry;
 import org.infinispan.container.entries.InternalCacheValue;
 import org.infinispan.loaders.CacheLoaderConfig;
@@ -24,8 +23,9 @@ import org.infinispan.loaders.CacheLoaderMetadata;
 import org.infinispan.loaders.LockSupportCacheStore;
 import org.infinispan.loaders.leveldb.LevelDBCacheStoreConfig.ImplementationType;
 import org.infinispan.loaders.leveldb.logging.Log;
-import org.infinispan.marshall.StreamingMarshaller;
-import org.infinispan.util.Util;
+import org.infinispan.commons.CacheConfigurationException;
+import org.infinispan.commons.marshall.StreamingMarshaller;
+import org.infinispan.commons.util.Util;
 import org.infinispan.util.logging.LogFactory;
 import org.iq80.leveldb.DB;
 import org.iq80.leveldb.DBException;
@@ -37,7 +37,7 @@ import org.iq80.leveldb.ReadOptions;
 @CacheLoaderMetadata(configurationClass = LevelDBCacheStoreConfig.class)
 public class LevelDBCacheStore extends LockSupportCacheStore<Integer> {
 	private static final Log log = LogFactory.getLog(LevelDBCacheStore.class, Log.class);
-	
+
 	private static final String JNI_DB_FACTORY_CLASS_NAME = "org.fusesource.leveldbjni.JniDBFactory";
 	private static final String JAVA_DB_FACTORY_CLASS_NAME = "org.iq80.leveldb.impl.Iq80DBFactory";
 	private static final String[] DB_FACTORY_CLASS_NAMES = new String[]{JNI_DB_FACTORY_CLASS_NAME, JAVA_DB_FACTORY_CLASS_NAME};
@@ -57,11 +57,11 @@ public class LevelDBCacheStore extends LockSupportCacheStore<Integer> {
 	public void init(CacheLoaderConfig config, Cache<?, ?> cache,
 			StreamingMarshaller m) throws CacheLoaderException {
 		super.init(config, cache, m);
-		
+
 		this.config = (LevelDBCacheStoreConfig) config;
 
 		this.dbFactory = newDbFactory();
-		
+
 		if (this.dbFactory == null) {
 		   throw log.cannotLoadlevelDBFactories(Arrays.toString(DB_FACTORY_CLASS_NAMES));
 		}
@@ -71,12 +71,12 @@ public class LevelDBCacheStore extends LockSupportCacheStore<Integer> {
 		} else {
 		   log.infoUsingJNIDbFactory(dbFactoryClassName);
 		}
-		
+
 	}
-	
+
 	protected DBFactory newDbFactory() {
 	   ImplementationType type = ImplementationType.valueOf(config.getImplementationType());
-	   
+
 	   switch (type) {
 	   case JNI: {
 	      return Util.<DBFactory>getInstance(JNI_DB_FACTORY_CLASS_NAME, config.getClassLoader());
@@ -84,7 +84,7 @@ public class LevelDBCacheStore extends LockSupportCacheStore<Integer> {
 	   case JAVA: {
 	      return Util.<DBFactory>getInstance(JAVA_DB_FACTORY_CLASS_NAME, config.getClassLoader());
 	   }
-	   default: {	      
+	   default: {
 	      for (String className : DB_FACTORY_CLASS_NAMES) {
 	         try {
 	            return Util.<DBFactory>getInstance(className, config.getClassLoader());
@@ -94,7 +94,7 @@ public class LevelDBCacheStore extends LockSupportCacheStore<Integer> {
 	      }
 	   }
 	   }
-	   
+
 	   return null;
 	}
 
@@ -108,7 +108,7 @@ public class LevelDBCacheStore extends LockSupportCacheStore<Integer> {
 			expiredDb = openDatabase(config.getExpiredLocation(),
 					config.getExpiredDbOptions());
 		} catch (IOException e) {
-			throw new ConfigurationException("Unable to open database", e);
+			throw new CacheConfigurationException("Unable to open database", e);
 		}
 
 		super.start();
@@ -116,14 +116,14 @@ public class LevelDBCacheStore extends LockSupportCacheStore<Integer> {
 
 	/**
 	 * Creates database if it doesn't exist.
-	 * 
+	 *
 	 * @return database at location
 	 * @throws IOException
 	 */
 	protected DB openDatabase(String location, Options options)
 			throws IOException {
 	   File dir = new File(location);
-	   
+
 	   // LevelDB JNI Option createIfMissing doesn't seem to work properly
 	   dir.mkdirs();
 		return dbFactory.open(dir, options);
@@ -165,7 +165,7 @@ public class LevelDBCacheStore extends LockSupportCacheStore<Integer> {
 	   } catch (IOException e) {
 	      log.warnUnableToCloseDb(e);
 	   }
-	   
+
 	   try {
          expiredDb.close();
       } catch (IOException e) {
@@ -442,7 +442,7 @@ public class LevelDBCacheStore extends LockSupportCacheStore<Integer> {
 				long currentTimeMillis = System.currentTimeMillis();
 				for (Object key : keys) {
 					byte[] keyBytes = marshall(key);
-					
+
 					byte[] b = db.get(keyBytes);
 					if (b == null)
 						continue;

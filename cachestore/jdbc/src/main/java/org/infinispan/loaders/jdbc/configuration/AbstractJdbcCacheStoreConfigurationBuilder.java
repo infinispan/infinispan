@@ -19,8 +19,9 @@
 package org.infinispan.loaders.jdbc.configuration;
 
 import java.lang.reflect.Constructor;
-import org.infinispan.config.ConfigurationException;
-import org.infinispan.configuration.ConfigurationUtils;
+
+import org.infinispan.commons.configuration.ConfigurationUtils;
+import org.infinispan.commons.CacheConfigurationException;
 import org.infinispan.configuration.cache.AbstractLockSupportStoreConfigurationBuilder;
 import org.infinispan.configuration.cache.LoadersConfigurationBuilder;
 import org.infinispan.loaders.jdbc.connectionfactory.ConnectionFactory;
@@ -62,7 +63,7 @@ public abstract class AbstractJdbcCacheStoreConfigurationBuilder<T extends Abstr
          this.connectionFactory = (ConnectionFactoryConfigurationBuilder<ConnectionFactoryConfiguration>) builder;
          return builder;
       } catch (Exception e) {
-         throw new ConfigurationException("Could not instantiate loader configuration builder '" + klass.getName() + "'", e);
+         throw new CacheConfigurationException("Could not instantiate loader configuration builder '" + klass.getName() + "'", e);
       }
    }
 
@@ -70,7 +71,7 @@ public abstract class AbstractJdbcCacheStoreConfigurationBuilder<T extends Abstr
    public void validate() {
       super.validate();
       if (connectionFactory == null) {
-         throw new ConfigurationException("A ConnectionFactory has not been specified for the Store");
+         throw new CacheConfigurationException("A ConnectionFactory has not been specified for the Store");
       }
    }
 

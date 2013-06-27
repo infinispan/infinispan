@@ -25,12 +25,12 @@ package org.infinispan.replication;
 
 import org.infinispan.AdvancedCache;
 import org.infinispan.Cache;
+import org.infinispan.commons.util.Util;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.test.MultipleCacheManagersTest;
 import org.infinispan.test.data.Key;
-import org.infinispan.util.Util;
 import org.testng.annotations.Test;
 
 import java.util.Collections;

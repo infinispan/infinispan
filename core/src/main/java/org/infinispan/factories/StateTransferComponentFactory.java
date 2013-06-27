@@ -22,7 +22,7 @@
  */
 package org.infinispan.factories;
 
-import org.infinispan.config.ConfigurationException;
+import org.infinispan.commons.CacheConfigurationException;
 import org.infinispan.factories.annotations.DefaultFactoryFor;
 import org.infinispan.statetransfer.*;
 
@@ -51,6 +51,6 @@ public class StateTransferComponentFactory extends AbstractNamedCacheComponentFa
          return componentType.cast(new StateConsumerImpl());
       }
 
-      throw new ConfigurationException("Don't know how to create a " + componentType.getName());
+      throw new CacheConfigurationException("Don't know how to create a " + componentType.getName());
    }
 }

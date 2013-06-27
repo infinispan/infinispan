@@ -22,7 +22,7 @@ import org.infinispan.configuration.cache.AbstractStoreConfigurationBuilder;
 import org.infinispan.configuration.cache.LoadersConfigurationBuilder;
 import org.infinispan.loaders.jdbm.JdbmCacheStore;
 import org.infinispan.loaders.jdbm.NaturalComparator;
-import org.infinispan.util.TypedProperties;
+import org.infinispan.commons.util.TypedProperties;
 
 /**
  * JdbmCacheStoreConfigurationBuilder. Configures a {@link JdbmCacheStore}

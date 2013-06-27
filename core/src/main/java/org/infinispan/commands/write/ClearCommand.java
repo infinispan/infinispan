@@ -24,13 +24,13 @@ package org.infinispan.commands.write;
 
 import org.infinispan.commands.AbstractFlagAffectedCommand;
 import org.infinispan.commands.Visitor;
+import org.infinispan.commons.util.InfinispanCollections;
 import org.infinispan.container.entries.CacheEntry;
 import org.infinispan.container.entries.MVCCEntry;
 import org.infinispan.context.Flag;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.lifecycle.ComponentStatus;
 import org.infinispan.notifications.cachelistener.CacheNotifier;
-import org.infinispan.util.InfinispanCollections;
 
 import java.util.Set;
 

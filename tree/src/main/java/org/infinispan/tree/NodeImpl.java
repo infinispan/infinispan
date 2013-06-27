@@ -27,8 +27,8 @@ import org.infinispan.atomic.AtomicHashMapProxy;
 import org.infinispan.atomic.AtomicMap;
 import org.infinispan.batch.BatchContainer;
 import org.infinispan.context.Flag;
-import org.infinispan.util.Immutables;
-import org.infinispan.util.Util;
+import org.infinispan.commons.util.Immutables;
+import org.infinispan.commons.util.Util;
 
 import java.util.Collections;
 import java.util.HashMap;

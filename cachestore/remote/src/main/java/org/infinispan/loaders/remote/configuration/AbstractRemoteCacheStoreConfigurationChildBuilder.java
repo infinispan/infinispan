@@ -21,7 +21,7 @@ package org.infinispan.loaders.remote.configuration;
 import org.infinispan.client.hotrod.impl.transport.TransportFactory;
 import org.infinispan.configuration.cache.AbstractStoreConfigurationChildBuilder;
 import org.infinispan.loaders.remote.wrapper.EntryWrapper;
-import org.infinispan.marshall.Marshaller;
+import org.infinispan.commons.marshall.Marshaller;
 
 /**
  * AbstractRemoteCacheStoreConfigurationChildBuilder.

@@ -19,8 +19,8 @@
 
 package org.infinispan.configuration.cache;
 
-import org.infinispan.config.ConfigurationException;
-import org.infinispan.configuration.Builder;
+import org.infinispan.commons.configuration.Builder;
+import org.infinispan.commons.CacheConfigurationException;
 
 /**
  * @author Mircea.Markus@jboss.com
@@ -153,9 +153,9 @@ public class BackupConfigurationBuilder extends AbstractConfigurationChildBuilde
    public void validate() {
       takeOfflineBuilder.validate();
       if (site == null)
-         throw new ConfigurationException("The 'site' must be specified!");
+         throw new CacheConfigurationException("The 'site' must be specified!");
       if (backupFailurePolicy == BackupFailurePolicy.CUSTOM && (failurePolicyClass == null)) {
-         throw new ConfigurationException("It is required to specify a 'failurePolicyClass' when using a " +
+         throw new CacheConfigurationException("It is required to specify a 'failurePolicyClass' when using a " +
                                                 "custom backup failure policy!");
       }
    }

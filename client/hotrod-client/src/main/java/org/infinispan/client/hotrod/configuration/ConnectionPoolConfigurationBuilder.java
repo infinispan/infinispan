@@ -22,7 +22,7 @@ import java.util.NoSuchElementException;
 import java.util.Properties;
 
 import org.infinispan.client.hotrod.impl.TypedProperties;
-import org.infinispan.configuration.Builder;
+import org.infinispan.commons.configuration.Builder;
 
 /**
  *

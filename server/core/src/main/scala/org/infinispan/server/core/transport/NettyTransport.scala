@@ -27,7 +27,7 @@ import org.jboss.netty.channel.socket.nio.{NioServerBossPool, NioWorkerPool, Nio
 import org.jboss.netty.bootstrap.ServerBootstrap
 import scala.collection.JavaConversions._
 import org.infinispan.server.core.ProtocolServer
-import org.infinispan.util.Util
+import org.infinispan.commons.util.Util
 import org.jboss.netty.util.ThreadNameDeterminer
 import org.jboss.netty.logging.{InternalLoggerFactory, Log4JLoggerFactory}
 import org.infinispan.server.core.logging.Log

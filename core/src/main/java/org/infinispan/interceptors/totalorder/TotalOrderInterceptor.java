@@ -18,13 +18,13 @@
 
 package org.infinispan.interceptors.totalorder;
 
-import org.infinispan.CacheException;
 import org.infinispan.commands.control.LockControlCommand;
 import org.infinispan.commands.tx.AbstractTransactionBoundaryCommand;
 import org.infinispan.commands.tx.CommitCommand;
 import org.infinispan.commands.tx.PrepareCommand;
 import org.infinispan.commands.tx.RollbackCommand;
 import org.infinispan.commands.tx.totalorder.TotalOrderPrepareCommand;
+import org.infinispan.commons.CacheException;
 import org.infinispan.context.impl.TxInvocationContext;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.interceptors.base.CommandInterceptor;

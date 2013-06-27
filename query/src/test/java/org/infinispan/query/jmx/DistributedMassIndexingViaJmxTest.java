@@ -24,7 +24,7 @@
 package org.infinispan.query.jmx;
 
 import org.infinispan.Cache;
-import org.infinispan.CacheException;
+import org.infinispan.commons.CacheException;
 import org.infinispan.api.BasicCacheContainer;
 import org.infinispan.configuration.parsing.ConfigurationBuilderHolder;
 import org.infinispan.configuration.parsing.ParserRegistry;
@@ -32,7 +32,7 @@ import org.infinispan.jmx.PerThreadMBeanServerLookup;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.query.distributed.DistributedMassIndexingTest;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
-import org.infinispan.util.FileLookupFactory;
+import org.infinispan.commons.util.FileLookupFactory;
 import org.testng.annotations.Test;
 
 import javax.management.MBeanServer;

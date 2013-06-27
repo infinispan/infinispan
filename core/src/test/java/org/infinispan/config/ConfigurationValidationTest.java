@@ -22,6 +22,7 @@
  */
 package org.infinispan.config;
 
+import org.infinispan.commons.CacheConfigurationException;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.test.AbstractInfinispanTest;
 import org.infinispan.test.TestingUtil;
@@ -39,7 +40,7 @@ import static org.infinispan.config.Configuration.CacheMode.*;
 @Test(groups = "functional", testName = "config.ConfigurationValidationTest")
 public class ConfigurationValidationTest extends AbstractInfinispanTest {
 
-   @Test(expectedExceptions = ConfigurationException.class)
+   @Test(expectedExceptions = CacheConfigurationException.class)
    public void testWrongCacheModeConfiguration() throws Exception {
       EmbeddedCacheManager cacheManager = null;
       try {
@@ -60,7 +61,7 @@ public class ConfigurationValidationTest extends AbstractInfinispanTest {
       }
    }
 
-   @Test (expectedExceptions = ConfigurationException.class)
+   @Test (expectedExceptions = CacheConfigurationException.class)
    public void testDistAndReplQueue() {
       EmbeddedCacheManager ecm = null;
       try {
@@ -74,7 +75,7 @@ public class ConfigurationValidationTest extends AbstractInfinispanTest {
       }
    }
 
-   @Test (expectedExceptions = ConfigurationException.class)
+   @Test (expectedExceptions = CacheConfigurationException.class)
    public void testEvictionOnButWithoutMaxEntries() {
       EmbeddedCacheManager ecm = null;
       try {

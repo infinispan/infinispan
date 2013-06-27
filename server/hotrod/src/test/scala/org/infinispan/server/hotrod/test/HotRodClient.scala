@@ -40,7 +40,7 @@ import java.util.concurrent.{ConcurrentHashMap, Executors}
 import java.util.concurrent.atomic.AtomicLong
 import mutable.ListBuffer
 import org.infinispan.test.TestingUtil
-import org.infinispan.util.Util
+import org.infinispan.commons.util.Util
 import org.infinispan.server.core.transport.ExtendedChannelBuffer._
 import org.jboss.netty.handler.codec.replay.{VoidEnum, ReplayingDecoder}
 import org.infinispan.server.hotrod._

@@ -18,8 +18,8 @@
  */
 package org.infinispan.loaders.jdbc.configuration;
 
-import org.infinispan.configuration.Builder;
-import org.infinispan.configuration.Self;
+import org.infinispan.commons.configuration.Builder;
+import org.infinispan.commons.configuration.Self;
 import org.infinispan.loaders.jdbc.DatabaseType;
 import org.infinispan.loaders.jdbc.TableManipulation;
 

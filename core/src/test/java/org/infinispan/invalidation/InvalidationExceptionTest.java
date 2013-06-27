@@ -25,7 +25,7 @@ package org.infinispan.invalidation;
 
 import org.infinispan.AdvancedCache;
 import org.infinispan.config.Configuration;
-import org.infinispan.marshall.NotSerializableException;
+import org.infinispan.commons.marshall.NotSerializableException;
 import org.infinispan.replication.ReplicationExceptionTest;
 import org.infinispan.test.MultipleCacheManagersTest;
 import org.testng.annotations.Test;

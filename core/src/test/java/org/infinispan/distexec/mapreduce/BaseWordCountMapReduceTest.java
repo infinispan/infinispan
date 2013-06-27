@@ -23,7 +23,7 @@
 package org.infinispan.distexec.mapreduce;
 
 import org.infinispan.Cache;
-import org.infinispan.CacheException;
+import org.infinispan.commons.CacheException;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.test.MultipleCacheManagersTest;
 import org.testng.AssertJUnit;

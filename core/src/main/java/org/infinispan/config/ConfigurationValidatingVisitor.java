@@ -22,6 +22,7 @@
  */
 package org.infinispan.config;
 
+import org.infinispan.commons.CacheConfigurationException;
 import org.infinispan.config.Configuration.EvictionType;
 import org.infinispan.config.GlobalConfiguration.TransportType;
 import org.infinispan.loaders.CacheLoaderConfig;
@@ -52,7 +53,7 @@ public class ConfigurationValidatingVisitor extends AbstractConfigurationBeanVis
 
    @Override
    public void visitSingletonStoreConfig(SingletonStoreConfig ssc) {
-      if (tt == null && ssc.isSingletonStoreEnabled()) throw new ConfigurationException("Singleton store configured without transport being configured");
+      if (tt == null && ssc.isSingletonStoreEnabled()) throw new CacheConfigurationException("Singleton store configured without transport being configured");
    }
 
    @Override
@@ -72,13 +73,13 @@ public class ConfigurationValidatingVisitor extends AbstractConfigurationBeanVis
       Configuration.StateRetrievalType state = clusteringType.stateRetrieval;
       // certain combinations are illegal, such as state transfer + invalidation
       if (mode.isInvalidation() && state.fetchInMemoryState)
-         throw new ConfigurationException("Cache cannot use INVALIDATION mode and have fetchInMemoryState set to true.");
+         throw new CacheConfigurationException("Cache cannot use INVALIDATION mode and have fetchInMemoryState set to true.");
 
       if (mode.isDistributed() && async.useReplQueue)
-         throw new ConfigurationException("Use of the replication queue is invalid when using DISTRIBUTED mode.");
+         throw new CacheConfigurationException("Use of the replication queue is invalid when using DISTRIBUTED mode.");
 
       if (mode.isSynchronous() && async.useReplQueue)
-         throw new ConfigurationException("Use of the replication queue is only allowed with an ASYNCHRONOUS cluster mode.");
+         throw new CacheConfigurationException("Use of the replication queue is only allowed with an ASYNCHRONOUS cluster mode.");
 
       // If replicated and fetch state transfer was not explicitly
       // disabled, then force enabling of state transfer
@@ -99,7 +100,7 @@ public class ConfigurationValidatingVisitor extends AbstractConfigurationBeanVis
       if (!l1Enabled && l1OnRehash) {
          Set<String> overridden = l1Type.overriddenConfigurationElements;
          if (overridden.contains("onRehash")) {
-            throw new ConfigurationException("Can only move entries to L1 on rehash when L1 is enabled");
+            throw new CacheConfigurationException("Can only move entries to L1 on rehash when L1 is enabled");
          } else {
             log.debug("L1 is disabled and L1OnRehash was not defined, disabling it");
             l1Type.onRehash(false);
@@ -135,7 +136,7 @@ public class ConfigurationValidatingVisitor extends AbstractConfigurationBeanVis
    public void visitEvictionType(EvictionType et) {
       evictionEnabled = et.strategy.isEnabled();
       if (et.strategy.isEnabled() && et.maxEntries <= 0)
-         throw new ConfigurationException("Eviction maxEntries value cannot be less than or equal to zero if eviction is enabled");
+         throw new CacheConfigurationException("Eviction maxEntries value cannot be less than or equal to zero if eviction is enabled");
    }
 
    @Override

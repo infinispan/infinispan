@@ -23,7 +23,7 @@
 package org.infinispan.loaders;
 
 import org.infinispan.Cache;
-import org.infinispan.marshall.StreamingMarshaller;
+import org.infinispan.commons.marshall.StreamingMarshaller;
 import org.infinispan.util.TimeService;
 
 /**

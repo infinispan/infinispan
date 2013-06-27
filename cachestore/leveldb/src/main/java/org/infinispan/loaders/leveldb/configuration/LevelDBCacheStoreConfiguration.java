@@ -18,7 +18,6 @@
  */
 package org.infinispan.loaders.leveldb.configuration;
 
-import org.infinispan.configuration.BuiltBy;
 import org.infinispan.configuration.cache.AbstractLockSupportStoreConfiguration;
 import org.infinispan.configuration.cache.AsyncStoreConfiguration;
 import org.infinispan.configuration.cache.LegacyConfigurationAdaptor;
@@ -26,11 +25,12 @@ import org.infinispan.configuration.cache.LegacyLoaderAdapter;
 import org.infinispan.configuration.cache.SingletonStoreConfiguration;
 import org.infinispan.loaders.leveldb.LevelDBCacheStoreConfig;
 import org.infinispan.loaders.leveldb.LevelDBCacheStoreConfig.ImplementationType;
-import org.infinispan.util.TypedProperties;
+import org.infinispan.commons.configuration.BuiltBy;
+import org.infinispan.commons.util.TypedProperties;
 import org.iq80.leveldb.CompressionType;
 
 /**
- * 
+ *
  * @author <a href="mailto:rtsang@redhat.com">Ray Tsang</a>
  *
  */
@@ -44,7 +44,7 @@ public class LevelDBCacheStoreConfiguration extends AbstractLockSupportStoreConf
    final private Long cacheSize;
    final private int expiryQueueSize;
    final private int clearThreshold;
-	
+
 	protected LevelDBCacheStoreConfiguration(
 	      String location,
 	      String expiredLocation,
@@ -63,7 +63,7 @@ public class LevelDBCacheStoreConfiguration extends AbstractLockSupportStoreConf
 		super(lockAcquistionTimeout, lockConcurrencyLevel, purgeOnStartup,
 				purgeSynchronously, purgerThreads, fetchPersistentState,
 				ignoreModifications, properties, async, singletonStore);
-		
+
 		this.location = location;
 		this.expiredLocation = expiredLocation;
 		this.implementationType = implementationType;
@@ -77,7 +77,7 @@ public class LevelDBCacheStoreConfiguration extends AbstractLockSupportStoreConf
 	@Override
 	public LevelDBCacheStoreConfig adapt() {
 	   LevelDBCacheStoreConfig config = new LevelDBCacheStoreConfig();
-		
+
 		LegacyConfigurationAdaptor.adapt(this, config);
 		config.setLocation(location);
 		config.setExpiredLocation(expiredLocation);
@@ -87,30 +87,30 @@ public class LevelDBCacheStoreConfiguration extends AbstractLockSupportStoreConf
 		config.setCacheSize(cacheSize);
 		config.setExpiryQueueSize(expiryQueueSize);
 		config.setClearThreshold(clearThreshold);
-		
+
 		return config;
 	}
-	
+
    public String location() {
       return location;
    }
-   
+
    public String expiredLocation() {
       return expiredLocation;
    }
-   
+
    public ImplementationType implementationType() {
       return implementationType;
    }
-   
+
    public CompressionType compressionType() {
       return compressionType;
    }
-   
+
    public Integer blockSize() {
       return blockSize;
    }
-   
+
    public Long cacheSize() {
       return cacheSize;
    }

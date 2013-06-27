@@ -27,7 +27,7 @@ import org.infinispan.loaders.jdbc.TableManipulation;
 import org.infinispan.loaders.jdbc.connectionfactory.ConnectionFactoryConfig;
 import org.infinispan.loaders.keymappers.DefaultTwoWayKey2StringMapper;
 import org.infinispan.loaders.keymappers.Key2StringMapper;
-import org.infinispan.util.Util;
+import org.infinispan.commons.util.Util;
 
 /**
  * Configuration for {@link org.infinispan.loaders.jdbc.stringbased.JdbcStringBasedCacheStore} cache store.

@@ -31,10 +31,10 @@ import java.util.Set;
 
 import net.jcip.annotations.Immutable;
 import org.infinispan.commons.hash.Hash;
-import org.infinispan.marshall.AbstractExternalizer;
-import org.infinispan.marshall.Ids;
+import org.infinispan.commons.marshall.AbstractExternalizer;
+import org.infinispan.commons.util.Immutables;
+import org.infinispan.marshall.core.Ids;
 import org.infinispan.remoting.transport.Address;
-import org.infinispan.util.Immutables;
 
 /**
  * Default {@link ConsistentHash} implementation. This object is immutable.
@@ -220,6 +220,7 @@ public class DefaultConsistentHash implements ConsistentHash {
       return sb.toString();
    }
 
+   @Override
    public String getRoutingTableAsString() {
       StringBuilder sb = new StringBuilder();
       for (int i = 0; i < numSegments; i++) {

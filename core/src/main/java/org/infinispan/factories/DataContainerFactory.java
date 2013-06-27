@@ -24,7 +24,7 @@ package org.infinispan.factories;
 
 import org.infinispan.commons.equivalence.AnyEquivalence;
 import org.infinispan.commons.equivalence.Equivalence;
-import org.infinispan.config.ConfigurationException;
+import org.infinispan.commons.CacheConfigurationException;
 import org.infinispan.container.DataContainer;
 import org.infinispan.container.DefaultDataContainer;
 import org.infinispan.eviction.EvictionStrategy;
@@ -73,7 +73,7 @@ public class DataContainerFactory extends AbstractNamedCacheComponentFactory imp
                return (T) DefaultDataContainer.boundedDataContainer(
                   level, maxEntries, st, policy, keyEquivalence, valueEquivalence);
             default:
-               throw new ConfigurationException("Unknown eviction strategy "
+               throw new CacheConfigurationException("Unknown eviction strategy "
                         + configuration.eviction().strategy());
          }
       }

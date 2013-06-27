@@ -22,9 +22,9 @@
  */
 package org.infinispan.config;
 
-import org.infinispan.CacheException;
+import org.infinispan.commons.CacheException;
+import org.infinispan.commons.util.ReflectionUtil;
 import org.infinispan.config.Configuration.*;
-import org.infinispan.util.ReflectionUtil;
 
 import java.util.HashMap;
 import java.util.Map;

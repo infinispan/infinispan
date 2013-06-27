@@ -23,9 +23,9 @@
 package org.infinispan.transaction.xa.recovery;
 
 import net.jcip.annotations.Immutable;
-import org.infinispan.marshall.AbstractExternalizer;
-import org.infinispan.marshall.Ids;
-import org.infinispan.util.Util;
+import org.infinispan.commons.marshall.AbstractExternalizer;
+import org.infinispan.commons.util.Util;
+import org.infinispan.marshall.core.Ids;
 
 import javax.transaction.xa.Xid;
 import java.io.IOException;

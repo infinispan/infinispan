@@ -25,10 +25,13 @@ package org.infinispan.transaction;
 
 import net.jcip.annotations.GuardedBy;
 import org.infinispan.Cache;
-import org.infinispan.CacheException;
 import org.infinispan.commands.CommandsFactory;
 import org.infinispan.commands.tx.RollbackCommand;
 import org.infinispan.commands.write.WriteCommand;
+import org.infinispan.commons.CacheException;
+import org.infinispan.commons.util.CollectionFactory;
+import org.infinispan.commons.util.InfinispanCollections;
+import org.infinispan.commons.util.Util;
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.configuration.cache.Configurations;
 import org.infinispan.context.InvocationContextContainer;
@@ -50,10 +53,7 @@ import org.infinispan.transaction.synchronization.SynchronizationAdapter;
 import org.infinispan.transaction.xa.CacheTransaction;
 import org.infinispan.transaction.xa.GlobalTransaction;
 import org.infinispan.transaction.xa.TransactionFactory;
-import org.infinispan.util.CollectionFactory;
-import org.infinispan.util.InfinispanCollections;
 import org.infinispan.util.TimeService;
-import org.infinispan.util.Util;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 

@@ -28,6 +28,7 @@ import org.infinispan.commands.module.ModuleCommandExtensions;
 import org.infinispan.commands.module.ModuleCommandFactory;
 import org.infinispan.commands.module.ModuleCommandInitializer;
 import org.infinispan.commands.remote.CacheRpcCommand;
+import org.infinispan.commons.util.InfinispanCollections;
 import org.infinispan.factories.components.ModuleMetadataFileFinder;
 import org.infinispan.lifecycle.ModuleLifecycle;
 import org.infinispan.util.logging.Log;

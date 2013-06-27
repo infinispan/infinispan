@@ -29,6 +29,7 @@ import java.util.concurrent.Callable;
 
 import org.infinispan.Cache;
 import org.infinispan.commands.ReplicableCommand;
+import org.infinispan.commons.util.InfinispanCollections;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.global.GlobalConfigurationBuilder;
@@ -42,7 +43,6 @@ import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.CleanupAfterMethod;
 import org.infinispan.test.fwk.TransportFlags;
 import org.infinispan.transaction.lookup.DummyTransactionManagerLookup;
-import org.infinispan.util.InfinispanCollections;
 import org.jgroups.protocols.DISCARD;
 import org.testng.annotations.Test;
 

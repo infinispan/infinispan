@@ -27,7 +27,7 @@ import scala.collection.JavaConversions._
 import org.infinispan.manager.EmbeddedCacheManager
 import org.infinispan.server.core.AbstractProtocolServer
 import org.infinispan.eviction.EvictionStrategy
-import org.infinispan.util.CollectionFactory
+import org.infinispan.commons.util.CollectionFactory
 import org.infinispan.commons.equivalence.AnyEquivalence
 import org.infinispan.Cache
 import org.infinispan.remoting.transport.Address

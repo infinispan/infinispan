@@ -19,8 +19,8 @@
 
 package org.infinispan.factories.components;
 
+import org.infinispan.commons.util.ReflectionUtil;
 import org.infinispan.jmx.annotations.ManagedAttribute;
-import org.infinispan.util.ReflectionUtil;
 
 import java.io.Serializable;
 import java.lang.reflect.Field;

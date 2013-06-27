@@ -19,7 +19,7 @@
 
 package org.infinispan.configuration.cache;
 
-import org.infinispan.util.TypedProperties;
+import org.infinispan.commons.util.TypedProperties;
 
 /**
  * Lock supporting cache store configuration.

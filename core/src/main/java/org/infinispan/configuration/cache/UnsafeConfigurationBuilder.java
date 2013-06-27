@@ -18,7 +18,7 @@
  */
 package org.infinispan.configuration.cache;
 
-import org.infinispan.configuration.Builder;
+import org.infinispan.commons.configuration.Builder;
 
 /**
  * Controls certain tuning parameters that may break some of Infinispan's public API contracts in exchange for better

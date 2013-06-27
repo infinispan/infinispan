@@ -32,9 +32,9 @@
 
 package org.infinispan.util.concurrent;
 import org.infinispan.commons.equivalence.Equivalence;
+import org.infinispan.commons.util.InfinispanCollections;
+import org.infinispan.commons.util.Util;
 import org.infinispan.container.entries.CacheEntry;
-import org.infinispan.util.InfinispanCollections;
-import org.infinispan.util.Util;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 

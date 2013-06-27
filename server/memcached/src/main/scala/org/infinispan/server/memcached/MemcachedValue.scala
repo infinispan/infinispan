@@ -23,9 +23,9 @@
 package org.infinispan.server.memcached
 
 import org.infinispan.server.core.CacheValue
-import org.infinispan.util.Util
+import org.infinispan.commons.util.Util
 import java.io.{ObjectOutput, ObjectInput}
-import org.infinispan.marshall.AbstractExternalizer
+import org.infinispan.commons.marshall.AbstractExternalizer
 import scala.collection.JavaConversions._
 import java.lang.StringBuilder
 

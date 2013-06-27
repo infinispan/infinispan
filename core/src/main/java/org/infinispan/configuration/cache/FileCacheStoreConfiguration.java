@@ -19,11 +19,11 @@
 
 package org.infinispan.configuration.cache;
 
+import org.infinispan.commons.configuration.BuiltBy;
+import org.infinispan.commons.util.TypedProperties;
 import org.infinispan.config.parsing.XmlConfigHelper;
-import org.infinispan.configuration.BuiltBy;
 import org.infinispan.configuration.cache.FileCacheStoreConfigurationBuilder.FsyncMode;
 import org.infinispan.loaders.file.FileCacheStoreConfig;
-import org.infinispan.util.TypedProperties;
 
 /**
  * File cache store configuration.

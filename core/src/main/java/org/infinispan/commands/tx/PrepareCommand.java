@@ -33,6 +33,8 @@ import org.infinispan.commands.write.ReplaceCommand;
 import org.infinispan.commands.write.WriteCommand;
 import org.infinispan.commons.hash.Hash;
 import org.infinispan.commons.hash.MurmurHash3;
+import org.infinispan.commons.util.InfinispanCollections;
+import org.infinispan.commons.util.TimSort;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.context.impl.RemoteTxInvocationContext;
 import org.infinispan.context.impl.TxInvocationContext;
@@ -40,8 +42,6 @@ import org.infinispan.notifications.cachelistener.CacheNotifier;
 import org.infinispan.transaction.RemoteTransaction;
 import org.infinispan.transaction.xa.GlobalTransaction;
 import org.infinispan.transaction.xa.recovery.RecoveryManager;
-import org.infinispan.util.InfinispanCollections;
-import org.infinispan.util.TimSort;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 

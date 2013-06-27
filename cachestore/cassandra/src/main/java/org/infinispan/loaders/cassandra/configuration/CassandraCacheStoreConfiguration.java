@@ -22,14 +22,14 @@ import java.util.Collections;
 import java.util.List;
 
 import org.apache.cassandra.thrift.ConsistencyLevel;
-import org.infinispan.configuration.BuiltBy;
 import org.infinispan.configuration.cache.AbstractStoreConfiguration;
 import org.infinispan.configuration.cache.AsyncStoreConfiguration;
 import org.infinispan.configuration.cache.LegacyConfigurationAdaptor;
 import org.infinispan.configuration.cache.LegacyLoaderAdapter;
 import org.infinispan.configuration.cache.SingletonStoreConfiguration;
 import org.infinispan.loaders.cassandra.CassandraCacheStoreConfig;
-import org.infinispan.util.TypedProperties;
+import org.infinispan.commons.configuration.BuiltBy;
+import org.infinispan.commons.util.TypedProperties;
 
 @BuiltBy(CassandraCacheStoreConfigurationBuilder.class)
 public class CassandraCacheStoreConfiguration extends AbstractStoreConfiguration implements

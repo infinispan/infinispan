@@ -26,7 +26,7 @@ package org.infinispan.server.memcached
 import org.infinispan.container.versioning.EntryVersion
 import org.infinispan.metadata.{EmbeddedMetadata, Metadata}
 import Metadata.Builder
-import org.infinispan.marshall.AbstractExternalizer
+import org.infinispan.commons.marshall.AbstractExternalizer
 import java.util
 import java.io.{ObjectInput, ObjectOutput}
 import scala.collection.JavaConversions.setAsJavaSet

@@ -22,8 +22,12 @@
  */
 package org.infinispan.config;
 
-import org.infinispan.CacheException;
 import org.infinispan.Version;
+import org.infinispan.commons.CacheConfigurationException;
+import org.infinispan.commons.CacheException;
+import org.infinispan.commons.executors.ExecutorFactory;
+import org.infinispan.commons.util.TypedProperties;
+import org.infinispan.commons.util.Util;
 import org.infinispan.config.FluentGlobalConfiguration.ExecutorFactoryConfig;
 import org.infinispan.config.FluentGlobalConfiguration.GlobalJmxStatisticsConfig;
 import org.infinispan.config.FluentGlobalConfiguration.SerializationConfig;
@@ -31,7 +35,6 @@ import org.infinispan.config.FluentGlobalConfiguration.ShutdownConfig;
 import org.infinispan.config.FluentGlobalConfiguration.TransportConfig;
 import org.infinispan.executors.DefaultExecutorFactory;
 import org.infinispan.executors.DefaultScheduledExecutorFactory;
-import org.infinispan.executors.ExecutorFactory;
 import org.infinispan.executors.ScheduledExecutorFactory;
 import org.infinispan.factories.GlobalComponentRegistry;
 import org.infinispan.factories.annotations.Inject;
@@ -43,11 +46,9 @@ import org.infinispan.jmx.PlatformMBeanServerLookup;
 import org.infinispan.lifecycle.ComponentStatus;
 import org.infinispan.marshall.AdvancedExternalizer;
 import org.infinispan.marshall.Marshaller;
-import org.infinispan.marshall.VersionAwareMarshaller;
+import org.infinispan.marshall.core.VersionAwareMarshaller;
 import org.infinispan.remoting.transport.Transport;
 import org.infinispan.remoting.transport.jgroups.JGroupsTransport;
-import org.infinispan.util.TypedProperties;
-import org.infinispan.util.Util;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 import org.jboss.marshalling.ClassResolver;
@@ -131,7 +132,7 @@ public class GlobalConfiguration extends AbstractConfigurationBean {
 
    @XmlTransient
    GlobalComponentRegistry gcr;
-   
+
    @XmlTransient
    private final ClassLoader cl;
 
@@ -139,17 +140,17 @@ public class GlobalConfiguration extends AbstractConfigurationBean {
     * Create a new GlobalConfiguration, using the Thread Context ClassLoader to load any
     * classes or resources required by this configuration. The TCCL will also be used as
     * default classloader for the CacheManager and any caches created.
-    * 
+    *
     */
    public GlobalConfiguration() {
       this(Thread.currentThread().getContextClassLoader());
    }
-   
+
    /**
     * Create a new GlobalConfiguration, specifying the classloader to use. This classloader will
     * be used to load resources or classes required by configuration, and used as the default
     * classloader for the CacheManager and any caches created.
-    * 
+    *
     * @param cl
     */
    public GlobalConfiguration(ClassLoader cl) {
@@ -570,7 +571,7 @@ public class GlobalConfiguration extends AbstractConfigurationBean {
    @Deprecated
    public void setShutdownHookBehavior(String shutdownHookBehavior) {
       if (shutdownHookBehavior == null)
-         throw new ConfigurationException("Shutdown hook behavior cannot be null", "ShutdownHookBehavior");
+         throw new CacheConfigurationException("Shutdown hook behavior cannot be null", "ShutdownHookBehavior");
       ShutdownHookBehavior temp = ShutdownHookBehavior.valueOf(uc(shutdownHookBehavior));
       if (temp == null) {
          log.warn("Unknown shutdown hook behavior '" + shutdownHookBehavior + "', using defaults.");
@@ -877,10 +878,10 @@ public class GlobalConfiguration extends AbstractConfigurationBean {
       gc.setTransportProperties((Properties) null);
       return gc;
    }
-   
+
    /**
     * Get the classloader in use by this configuration.
-    * 
+    *
     * @return
     */
    public ClassLoader getClassLoader() {

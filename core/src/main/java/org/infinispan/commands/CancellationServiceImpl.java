@@ -21,7 +21,7 @@ package org.infinispan.commands;
 import java.util.Map;
 import java.util.UUID;
 
-import org.infinispan.util.CollectionFactory;
+import org.infinispan.commons.util.CollectionFactory;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 

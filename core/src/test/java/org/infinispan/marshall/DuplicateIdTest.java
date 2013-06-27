@@ -22,6 +22,7 @@
  */
 package org.infinispan.marshall;
 
+import org.infinispan.marshall.core.Ids;
 import org.infinispan.test.AbstractInfinispanTest;
 import org.testng.annotations.Test;
 

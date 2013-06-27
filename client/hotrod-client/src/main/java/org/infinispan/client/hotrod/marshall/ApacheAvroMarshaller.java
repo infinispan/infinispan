@@ -31,10 +31,10 @@ import org.apache.avro.io.Decoder;
 import org.apache.avro.io.DecoderFactory;
 import org.apache.avro.io.Encoder;
 import org.apache.avro.util.Utf8;
-import org.infinispan.CacheException;
-import org.infinispan.io.ByteBuffer;
-import org.infinispan.io.ExposedByteArrayOutputStream;
-import org.infinispan.marshall.AbstractMarshaller;
+import org.infinispan.commons.CacheException;
+import org.infinispan.commons.io.ByteBuffer;
+import org.infinispan.commons.io.ExposedByteArrayOutputStream;
+import org.infinispan.commons.marshall.AbstractMarshaller;
 
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
@@ -94,7 +94,7 @@ public class ApacheAvroMarshaller extends AbstractMarshaller {
    private static final MarshallableType LONG_ARRAY_TYPE = new ArrayMarshallableType<Long>(LONG_ARRAY_SCHEMA, Long.class, 10);
    private static final MarshallableType DOUBLE_ARRAY_TYPE = new ArrayMarshallableType<Double>(DOUBLE_ARRAY_SCHEMA, Double.class, 11);
    private static final MarshallableType FLOAT_ARRAY_TYPE = new ArrayMarshallableType<Float>(FLOAT_ARRAY_SCHEMA, Float.class, 12);
-   private static final MarshallableType BOOLEAN_ARRAY_TYPE = new ArrayMarshallableType<Boolean>(BOOLEAN_ARRAY_SCHEMA, Boolean.class, 13);   
+   private static final MarshallableType BOOLEAN_ARRAY_TYPE = new ArrayMarshallableType<Boolean>(BOOLEAN_ARRAY_SCHEMA, Boolean.class, 13);
    private final MarshallableType listType = new ListMarshallableType(14, this);
    private final MarshallableType mapType = new MapMarshallableType(15, this);
    private final MarshallableType setType = new SetMarshallableType(16, this);
@@ -362,7 +362,7 @@ public class ApacheAvroMarshaller extends AbstractMarshaller {
          Map<Object, Object> map = (Map<Object, Object>) o;
          encoder.writeInt(id);
          encoder.setItemCount(map.size());
-         for (Map.Entry<Object, Object> entry : (Set<Map.Entry<Object, Object>>) map.entrySet()) {
+         for (Map.Entry<Object, Object> entry : map.entrySet()) {
             marshaller.objectToBuffer(entry.getKey(), encoder);
             marshaller.objectToBuffer(entry.getValue(), encoder);
          }

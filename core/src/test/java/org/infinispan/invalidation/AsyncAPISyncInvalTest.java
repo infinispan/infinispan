@@ -24,13 +24,14 @@ package org.infinispan.invalidation;
 
 import org.infinispan.Cache;
 import org.infinispan.commands.write.WriteCommand;
+import org.infinispan.commons.util.Util;
+
 import static org.infinispan.context.Flag.CACHE_MODE_LOCAL;
 
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.test.MultipleCacheManagersTest;
 import org.infinispan.test.data.Key;
-import org.infinispan.util.Util;
 import org.testng.annotations.Test;
 
 import java.util.Collections;

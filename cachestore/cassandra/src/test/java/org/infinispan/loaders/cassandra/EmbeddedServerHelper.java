@@ -15,19 +15,19 @@ import org.apache.cassandra.db.commitlog.CommitLog;
 import org.apache.cassandra.io.util.FileUtils;
 import org.apache.cassandra.thrift.CassandraDaemon;
 import org.apache.thrift.transport.TTransportException;
-import org.infinispan.util.SysPropertyActions;
+import org.infinispan.commons.util.SysPropertyActions;
 
 /**
  * Taken from Hector (MIT license).
- * 
+ *
  * Copyright (c) 2010 Ran Tavory
- * 
+ *
  * Permission is hereby granted, free of charge, to any person obtaining a copy of this software and
  * associated documentation files (the "Software"), to deal in the Software without restriction,
  * including without limitation the rights to use, copy, modify, merge, publish, distribute,
  * sublicense, and/or sell copies of the Software, and to permit persons to whom the Software is
  * furnished to do so, subject to the following conditions:
- * 
+ *
  * The above copyright notice and this permission notice shall be included in all copies or
  * substantial portions of the Software.
  */
@@ -49,7 +49,7 @@ public class EmbeddedServerHelper {
 
    /**
     * Set embedded cassandra up and spawn it in a new thread.
-    * 
+    *
     * @throws TTransportException
     * @throws IOException
     * @throws InterruptedException
@@ -91,7 +91,7 @@ public class EmbeddedServerHelper {
 
    /**
     * Copies a resource from within the jar to a directory.
-    * 
+    *
     * @param resource
     * @param directory
     * @throws IOException
@@ -113,7 +113,7 @@ public class EmbeddedServerHelper {
 
    /**
     * Creates a directory
-    * 
+    *
     * @param dir
     * @throws IOException
     */

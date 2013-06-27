@@ -18,9 +18,9 @@
  */
 package org.infinispan.configuration.cache;
 
-import org.infinispan.configuration.AbstractTypedPropertiesConfiguration;
+import org.infinispan.commons.configuration.AbstractTypedPropertiesConfiguration;
+import org.infinispan.commons.util.TypedProperties;
 import org.infinispan.interceptors.base.CommandInterceptor;
-import org.infinispan.util.TypedProperties;
 
 /**
  * Describes a custom interceptor

@@ -19,10 +19,10 @@
 
 package org.infinispan.factories.components;
 
+import org.infinispan.commons.util.InfinispanCollections;
 import org.infinispan.jmx.annotations.MBean;
 import org.infinispan.jmx.annotations.ManagedAttribute;
 import org.infinispan.jmx.annotations.ManagedOperation;
-import org.infinispan.util.InfinispanCollections;
 
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;

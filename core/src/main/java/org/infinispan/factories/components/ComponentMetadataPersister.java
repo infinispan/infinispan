@@ -19,6 +19,8 @@
 
 package org.infinispan.factories.components;
 
+import org.infinispan.commons.util.ReflectionUtil;
+import org.infinispan.commons.util.Util;
 import org.infinispan.factories.KnownComponentNames;
 import org.infinispan.factories.annotations.DefaultFactoryFor;
 import org.infinispan.factories.annotations.Inject;
@@ -31,8 +33,6 @@ import org.infinispan.factories.scopes.Scopes;
 import org.infinispan.jmx.annotations.MBean;
 import org.infinispan.jmx.annotations.ManagedAttribute;
 import org.infinispan.jmx.annotations.ManagedOperation;
-import org.infinispan.util.ReflectionUtil;
-import org.infinispan.util.Util;
 
 import java.io.BufferedOutputStream;
 import java.io.File;

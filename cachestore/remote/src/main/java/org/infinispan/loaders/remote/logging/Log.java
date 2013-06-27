@@ -22,7 +22,7 @@
 
 package org.infinispan.loaders.remote.logging;
 
-import org.infinispan.config.ConfigurationException;
+import org.infinispan.commons.CacheConfigurationException;
 import org.infinispan.loaders.CacheLoaderException;
 import org.jboss.logging.Cause;
 import org.jboss.logging.LogMessage;
@@ -49,8 +49,8 @@ public interface Log extends org.infinispan.util.logging.Log {
    CacheLoaderException unsupportedValueFormat(String name);
 
    @Message(value = "Cannot enable HotRod wrapping if a marshaller and/or an entryWrapper have already been set", id = 10005)
-   ConfigurationException cannotEnableHotRodWrapping();
+   CacheConfigurationException cannotEnableHotRodWrapping();
 
    @Message(value = "Cannot load the HotRodEntryWrapper class (make sure the infinispan-server-hotrod classes are available)", id = 10006)
-   ConfigurationException cannotLoadHotRodEntryWrapper(@Cause Exception e);
+   CacheConfigurationException cannotLoadHotRodEntryWrapper(@Cause Exception e);
 }

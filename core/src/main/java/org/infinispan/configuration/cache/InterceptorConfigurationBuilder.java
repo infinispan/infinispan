@@ -20,12 +20,12 @@ package org.infinispan.configuration.cache;
 
 import java.util.Properties;
 
-import org.infinispan.config.ConfigurationException;
-import org.infinispan.configuration.Builder;
+import org.infinispan.commons.configuration.Builder;
+import org.infinispan.commons.util.TypedProperties;
+import org.infinispan.commons.CacheConfigurationException;
 import org.infinispan.configuration.cache.InterceptorConfiguration.Position;
 import org.infinispan.interceptors.base.BaseCustomInterceptor;
 import org.infinispan.interceptors.base.CommandInterceptor;
-import org.infinispan.util.TypedProperties;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 

@@ -27,9 +27,9 @@ import org.infinispan.commands.write.ClearCommand;
 import org.infinispan.commands.write.PutKeyValueCommand;
 import org.infinispan.commands.write.RemoveCommand;
 import org.infinispan.commands.write.ReplaceCommand;
+import org.infinispan.commons.util.ObjectDuplicator;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.test.TestingUtil;
-import org.infinispan.util.ObjectDuplicator;
 import org.testng.annotations.Test;
 
 import java.util.ArrayList;

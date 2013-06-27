@@ -23,7 +23,7 @@ import org.infinispan.loaders.jdbc.DatabaseType;
 import org.infinispan.loaders.jdbc.TableManipulation;
 import org.infinispan.loaders.keymappers.DefaultTwoWayKey2StringMapper;
 import org.infinispan.loaders.keymappers.Key2StringMapper;
-import org.infinispan.util.TypedProperties;
+import org.infinispan.commons.util.TypedProperties;
 
 /**
  *

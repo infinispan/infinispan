@@ -26,7 +26,7 @@ package org.infinispan.factories;
 import org.infinispan.batch.BatchContainer;
 import org.infinispan.commands.CommandsFactory;
 import org.infinispan.commands.CommandsFactoryImpl;
-import org.infinispan.config.ConfigurationException;
+import org.infinispan.commons.CacheConfigurationException;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.context.InvocationContextContainer;
 import org.infinispan.context.NonTransactionalInvocationContextContainer;
@@ -59,7 +59,7 @@ import org.infinispan.util.concurrent.locks.containers.ReentrantStripedLockConta
 import org.infinispan.xsite.BackupSender;
 import org.infinispan.xsite.BackupSenderImpl;
 
-import static org.infinispan.util.Util.getInstance;
+import static org.infinispan.commons.util.Util.getInstance;
 
 /**
  * Simple factory that just uses reflection and an empty constructor of the component type.
@@ -138,7 +138,7 @@ public class EmptyConstructorNamedCacheFactory extends AbstractNamedCacheCompone
          }
       }
 
-      throw new ConfigurationException("Don't know how to create a " + componentType.getName());
+      throw new CacheConfigurationException("Don't know how to create a " + componentType.getName());
 
    }
 }

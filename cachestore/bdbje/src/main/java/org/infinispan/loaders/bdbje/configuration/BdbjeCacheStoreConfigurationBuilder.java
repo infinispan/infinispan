@@ -21,7 +21,7 @@ package org.infinispan.loaders.bdbje.configuration;
 import org.infinispan.configuration.cache.AbstractStoreConfigurationBuilder;
 import org.infinispan.configuration.cache.LoadersConfigurationBuilder;
 import org.infinispan.loaders.bdbje.BdbjeCacheStore;
-import org.infinispan.util.TypedProperties;
+import org.infinispan.commons.util.TypedProperties;
 
 /**
  * BdbjeCacheStoreConfigurationBuilder. Configures a {@link BdbjeCacheStore}

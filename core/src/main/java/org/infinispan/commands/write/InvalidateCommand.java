@@ -23,11 +23,11 @@
 package org.infinispan.commands.write;
 
 import org.infinispan.commands.Visitor;
+import org.infinispan.commons.util.Util;
 import org.infinispan.context.Flag;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.lifecycle.ComponentStatus;
 import org.infinispan.notifications.cachelistener.CacheNotifier;
-import org.infinispan.util.Util;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 

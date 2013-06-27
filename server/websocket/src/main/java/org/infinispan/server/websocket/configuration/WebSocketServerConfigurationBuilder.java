@@ -18,7 +18,7 @@
  */
 package org.infinispan.server.websocket.configuration;
 
-import org.infinispan.configuration.Builder;
+import org.infinispan.commons.configuration.Builder;
 import org.infinispan.server.core.configuration.ProtocolServerConfigurationBuilder;
 
 /**

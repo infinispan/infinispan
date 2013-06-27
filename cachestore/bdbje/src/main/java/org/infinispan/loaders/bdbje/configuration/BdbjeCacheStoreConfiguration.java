@@ -18,14 +18,14 @@
  */
 package org.infinispan.loaders.bdbje.configuration;
 
-import org.infinispan.configuration.BuiltBy;
 import org.infinispan.configuration.cache.AbstractStoreConfiguration;
 import org.infinispan.configuration.cache.AsyncStoreConfiguration;
 import org.infinispan.configuration.cache.LegacyConfigurationAdaptor;
 import org.infinispan.configuration.cache.LegacyLoaderAdapter;
 import org.infinispan.configuration.cache.SingletonStoreConfiguration;
 import org.infinispan.loaders.bdbje.BdbjeCacheStoreConfig;
-import org.infinispan.util.TypedProperties;
+import org.infinispan.commons.configuration.BuiltBy;
+import org.infinispan.commons.util.TypedProperties;
 
 @BuiltBy(BdbjeCacheStoreConfigurationBuilder.class)
 public class BdbjeCacheStoreConfiguration extends AbstractStoreConfiguration implements

@@ -23,8 +23,8 @@
 
 package org.infinispan.statetransfer;
 
-import org.infinispan.CacheException;
 import org.infinispan.commands.remote.BaseRpcCommand;
+import org.infinispan.commons.CacheException;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.util.logging.Log;

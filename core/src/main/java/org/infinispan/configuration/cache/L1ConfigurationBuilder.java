@@ -18,8 +18,8 @@
  */
 package org.infinispan.configuration.cache;
 
-import org.infinispan.config.ConfigurationException;
-import org.infinispan.configuration.Builder;
+import org.infinispan.commons.configuration.Builder;
+import org.infinispan.commons.CacheConfigurationException;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
@@ -146,16 +146,16 @@ public class L1ConfigurationBuilder extends AbstractClusteringConfigurationChild
    public void validate() {
       if (enabled) {
          if (!clustering().cacheMode().isDistributed())
-            throw new ConfigurationException("Enabling the L1 cache is only supported when using DISTRIBUTED as a cache mode.  Your cache mode is set to " + clustering().cacheMode().friendlyCacheModeString());
+            throw new CacheConfigurationException("Enabling the L1 cache is only supported when using DISTRIBUTED as a cache mode.  Your cache mode is set to " + clustering().cacheMode().friendlyCacheModeString());
 
          if (lifespan < 1)
-            throw new ConfigurationException("Using a L1 lifespan of 0 or a negative value is meaningless");
+            throw new CacheConfigurationException("Using a L1 lifespan of 0 or a negative value is meaningless");
 
       }
       else {
          // If L1 is disabled, L1ForRehash should also be disabled
          if (onRehash != null && onRehash)
-            throw new ConfigurationException("Can only move entries to L1 on rehash when L1 is enabled");
+            throw new CacheConfigurationException("Can only move entries to L1 on rehash when L1 is enabled");
       }
    }
 

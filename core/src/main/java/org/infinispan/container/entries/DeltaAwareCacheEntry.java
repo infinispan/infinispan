@@ -26,8 +26,8 @@ import org.infinispan.metadata.Metadata;
 import org.infinispan.atomic.AtomicHashMap;
 import org.infinispan.atomic.Delta;
 import org.infinispan.atomic.DeltaAware;
+import org.infinispan.commons.util.Util;
 import org.infinispan.container.DataContainer;
-import org.infinispan.util.Util;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 

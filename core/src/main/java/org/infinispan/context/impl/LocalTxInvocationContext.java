@@ -25,13 +25,13 @@ package org.infinispan.context.impl;
 import org.infinispan.commands.write.WriteCommand;
 import org.infinispan.commons.equivalence.AnyEquivalence;
 import org.infinispan.commons.equivalence.Equivalence;
+import org.infinispan.commons.util.CollectionFactory;
+import org.infinispan.commons.util.InfinispanCollections;
 import org.infinispan.container.entries.CacheEntry;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.transaction.AbstractCacheTransaction;
 import org.infinispan.transaction.LocalTransaction;
 import org.infinispan.transaction.xa.GlobalTransaction;
-import org.infinispan.util.CollectionFactory;
-import org.infinispan.util.InfinispanCollections;
 
 import javax.transaction.Status;
 import javax.transaction.SystemException;

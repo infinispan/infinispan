@@ -23,9 +23,9 @@
 package org.infinispan.api.tree;
 
 import org.infinispan.Cache;
-import org.infinispan.CacheConfigurationException;
 import org.infinispan.atomic.AtomicMap;
 import org.infinispan.atomic.AtomicMapLookup;
+import org.infinispan.commons.CacheConfigurationException;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.test.CacheManagerCallable;

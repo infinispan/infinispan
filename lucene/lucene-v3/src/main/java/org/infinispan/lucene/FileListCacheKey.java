@@ -28,12 +28,12 @@ import java.io.ObjectOutput;
 import java.io.Serializable;
 import java.util.Set;
 
-import org.infinispan.marshall.AbstractExternalizer;
-import org.infinispan.util.Util;
+import org.infinispan.commons.marshall.AbstractExternalizer;
+import org.infinispan.commons.util.Util;
 
 /**
  * Cache key for a list with current files in cache
- * 
+ *
  * @since 4.0
  * @author Lukasz Moren
  * @author Sanne Grinovero
@@ -42,7 +42,7 @@ public final class FileListCacheKey implements Serializable, IndexScopedKey {
 
    /** The serialVersionUID */
    private static final long serialVersionUID = 8965108175527988255L;
-   
+
    private final String indexName;
    private final int hashCode;
 
@@ -53,9 +53,10 @@ public final class FileListCacheKey implements Serializable, IndexScopedKey {
 
    /**
     * Get the indexName.
-    * 
+    *
     * @return the indexName.
     */
+   @Override
    public String getIndexName() {
       return indexName;
    }
@@ -85,7 +86,7 @@ public final class FileListCacheKey implements Serializable, IndexScopedKey {
       FileListCacheKey other = (FileListCacheKey) obj;
       return indexName.equals(other.indexName);
    }
-   
+
    /**
     * Changing the encoding could break backwards compatibility
     * @see LuceneKey2StringMapper#getKeyMapping(String)
@@ -94,7 +95,7 @@ public final class FileListCacheKey implements Serializable, IndexScopedKey {
    public String toString() {
       return "*|" + indexName;
    }
-   
+
    public static final class Externalizer extends AbstractExternalizer<FileListCacheKey> {
 
       @Override
@@ -119,5 +120,5 @@ public final class FileListCacheKey implements Serializable, IndexScopedKey {
       }
 
    }
-   
+
 }

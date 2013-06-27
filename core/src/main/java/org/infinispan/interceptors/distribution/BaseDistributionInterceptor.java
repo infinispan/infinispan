@@ -22,11 +22,11 @@
  */
 package org.infinispan.interceptors.distribution;
 
-import org.infinispan.CacheException;
 import org.infinispan.commands.FlagAffectedCommand;
 import org.infinispan.commands.remote.ClusteredGetCommand;
 import org.infinispan.commands.write.DataWriteCommand;
 import org.infinispan.commands.write.WriteCommand;
+import org.infinispan.commons.CacheException;
 import org.infinispan.container.entries.InternalCacheEntry;
 import org.infinispan.container.entries.InternalCacheValue;
 import org.infinispan.context.InvocationContext;

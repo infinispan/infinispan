@@ -18,7 +18,7 @@
  */
 package org.infinispan.loaders.remote.configuration;
 
-import org.infinispan.configuration.Builder;
+import org.infinispan.commons.configuration.Builder;
 
 /**
  *

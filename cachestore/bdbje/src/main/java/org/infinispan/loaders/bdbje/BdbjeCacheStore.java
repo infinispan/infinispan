@@ -44,10 +44,10 @@ import org.infinispan.loaders.CacheLoaderException;
 import org.infinispan.loaders.CacheLoaderMetadata;
 import org.infinispan.loaders.bdbje.logging.Log;
 import org.infinispan.loaders.modifications.Modification;
-import org.infinispan.marshall.StreamingMarshaller;
+import org.infinispan.commons.marshall.StreamingMarshaller;
 import org.infinispan.transaction.xa.GlobalTransaction;
-import org.infinispan.util.ReflectionUtil;
-import org.infinispan.util.CollectionFactory;
+import org.infinispan.commons.util.ReflectionUtil;
+import org.infinispan.commons.util.CollectionFactory;
 import org.infinispan.util.logging.LogFactory;
 
 import java.io.File;

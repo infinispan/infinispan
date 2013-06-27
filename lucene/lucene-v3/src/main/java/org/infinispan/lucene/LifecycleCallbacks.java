@@ -26,14 +26,14 @@ package org.infinispan.lucene;
 import org.infinispan.configuration.global.GlobalConfiguration;
 import org.infinispan.factories.GlobalComponentRegistry;
 import org.infinispan.lifecycle.AbstractModuleLifecycle;
-import org.infinispan.marshall.AdvancedExternalizer;
+import org.infinispan.commons.marshall.AdvancedExternalizer;
 
 import java.util.Map;
 
 /**
  * Module lifecycle callbacks implementation that enables module specific
  * {@link org.infinispan.marshall.AdvancedExternalizer} implementations to be registered.
- * 
+ *
  * @author Galder Zamarreño
  * @author Sanne Grinovero
  * @since 5.0

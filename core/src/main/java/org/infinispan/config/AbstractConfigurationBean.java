@@ -22,9 +22,10 @@
  */
 package org.infinispan.config;
 
+import org.infinispan.commons.CacheConfigurationException;
+import org.infinispan.commons.util.TypedProperties;
 import org.infinispan.factories.scopes.Scope;
 import org.infinispan.factories.scopes.Scopes;
-import org.infinispan.util.TypedProperties;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
@@ -52,7 +53,7 @@ public abstract class AbstractConfigurationBean implements CloneableConfiguratio
    protected Set<String> overriddenConfigurationElements = new HashSet<String>(4);
 
    protected AbstractConfigurationBean() {}
-   
+
 
    /**
     * Safely converts a String to upper case.
@@ -81,7 +82,7 @@ public abstract class AbstractConfigurationBean implements CloneableConfiguratio
          try {
             tp.load(stream);
          } catch (IOException e) {
-            throw new ConfigurationException("Unable to parse properties string " + s, e);
+            throw new CacheConfigurationException("Unable to parse properties string " + s, e);
          }
       }
       return tp;
@@ -102,7 +103,7 @@ public abstract class AbstractConfigurationBean implements CloneableConfiguratio
    protected void testImmutability(String fieldName) {
       try {
          if (!accessible && hasComponentStarted() && !getClass().getDeclaredField(fieldName).isAnnotationPresent(Dynamic.class)) {
-            throw new ConfigurationException("Attempted to modify a non-Dynamic configuration element [" + fieldName + "] after the component has started!");
+            throw new CacheConfigurationException("Attempted to modify a non-Dynamic configuration element [" + fieldName + "] after the component has started!");
          }
       }
       catch (NoSuchFieldException e) {

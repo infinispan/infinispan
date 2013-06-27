@@ -18,8 +18,8 @@
  */
 package org.infinispan.configuration.global;
 
+import org.infinispan.commons.util.TypedProperties;
 import org.infinispan.remoting.transport.Transport;
-import org.infinispan.util.TypedProperties;
 
 public class TransportConfiguration {
 

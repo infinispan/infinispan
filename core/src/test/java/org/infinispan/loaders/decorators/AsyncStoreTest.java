@@ -23,7 +23,7 @@
 package org.infinispan.loaders.decorators;
 
 import org.infinispan.Cache;
-import org.infinispan.CacheException;
+import org.infinispan.commons.CacheException;
 import org.infinispan.container.entries.InternalCacheEntry;
 import org.infinispan.loaders.AbstractCacheStoreTest;
 import org.infinispan.test.fwk.TestCacheManagerFactory;

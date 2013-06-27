@@ -20,8 +20,8 @@ package org.infinispan.configuration.cache;
 
 import java.util.concurrent.TimeUnit;
 
-import org.infinispan.config.ConfigurationException;
-import org.infinispan.configuration.Builder;
+import org.infinispan.commons.configuration.Builder;
+import org.infinispan.commons.CacheConfigurationException;
 import org.infinispan.remoting.ReplicationQueue;
 import org.infinispan.remoting.ReplicationQueueImpl;
 
@@ -120,10 +120,10 @@ public class AsyncConfigurationBuilder extends AbstractClusteringConfigurationCh
    public
    void validate() {
       if (useReplicationQueue && getClusteringBuilder().cacheMode().isDistributed())
-         throw new ConfigurationException("Use of the replication queue is invalid when using DISTRIBUTED mode.");
+         throw new CacheConfigurationException("Use of the replication queue is invalid when using DISTRIBUTED mode.");
 
       if (useReplicationQueue && getClusteringBuilder().cacheMode().isSynchronous())
-         throw new ConfigurationException("Use of the replication queue is only allowed with an ASYNCHRONOUS cluster mode.");
+         throw new CacheConfigurationException("Use of the replication queue is only allowed with an ASYNCHRONOUS cluster mode.");
    }
 
    @Override

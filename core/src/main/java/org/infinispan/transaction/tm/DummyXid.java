@@ -22,8 +22,8 @@
  */
 package org.infinispan.transaction.tm;
 
-import org.infinispan.io.UnsignedNumeric;
-import org.infinispan.util.Util;
+import org.infinispan.commons.io.UnsignedNumeric;
+import org.infinispan.commons.util.Util;
 
 import javax.transaction.xa.Xid;
 import java.util.Arrays;

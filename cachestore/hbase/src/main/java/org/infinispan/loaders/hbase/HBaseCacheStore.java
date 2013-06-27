@@ -36,7 +36,6 @@ import java.util.Set;
 import org.apache.hadoop.hbase.TableExistsException;
 import org.apache.hadoop.hbase.util.Bytes;
 import org.infinispan.Cache;
-import org.infinispan.config.ConfigurationException;
 import org.infinispan.container.entries.InternalCacheEntry;
 import org.infinispan.container.entries.InternalCacheValue;
 import org.infinispan.loaders.AbstractCacheStore;
@@ -46,8 +45,9 @@ import org.infinispan.loaders.CacheLoaderMetadata;
 import org.infinispan.loaders.keymappers.MarshallingTwoWayKey2StringMapper;
 import org.infinispan.loaders.keymappers.TwoWayKey2StringMapper;
 import org.infinispan.loaders.keymappers.UnsupportedKeyTypeException;
-import org.infinispan.marshall.StreamingMarshaller;
-import org.infinispan.util.Util;
+import org.infinispan.commons.CacheConfigurationException;
+import org.infinispan.commons.marshall.StreamingMarshaller;
+import org.infinispan.commons.util.Util;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
@@ -111,7 +111,7 @@ public class HBaseCacheStore extends AbstractCacheStore {
          props.put("hbase.zookeeper.property.clientPort", Integer.toString(config.hbaseZookeeperPropertyClientPort));
          hbf = new HBaseFacade(props);
       } catch (Exception e) {
-         throw new ConfigurationException(e);
+         throw new CacheConfigurationException(e);
       }
 
       // create the cache store table if necessary

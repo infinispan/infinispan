@@ -28,8 +28,8 @@ import java.util.Set;
 import java.util.SortedMap;
 
 import org.infinispan.distribution.topologyaware.TopologyLevel;
-import org.infinispan.marshall.AbstractExternalizer;
-import org.infinispan.marshall.Ids;
+import org.infinispan.commons.marshall.AbstractExternalizer;
+import org.infinispan.marshall.core.Ids;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.remoting.transport.TopologyAwareAddress;
 
@@ -147,7 +147,7 @@ public class TopologyAwareSyncConsistentHashFactory extends SyncConsistentHashFa
       }
       return locationAlreadyAdded;
    }
-   
+
    public static class Externalizer extends AbstractExternalizer<TopologyAwareSyncConsistentHashFactory> {
 
       @Override

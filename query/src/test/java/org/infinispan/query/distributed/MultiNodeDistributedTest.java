@@ -1,4 +1,4 @@
-/* 
+/*
  * JBoss, Home of Professional Open Source
  * Copyright 2012 Red Hat Inc. and/or its affiliates and other contributors
  * as indicated by the @author tags. All rights reserved.
@@ -35,7 +35,7 @@ import org.infinispan.query.test.Person;
 import org.infinispan.test.AbstractInfinispanTest;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
-import org.infinispan.util.FileLookupFactory;
+import org.infinispan.commons.util.FileLookupFactory;
 import org.testng.annotations.Test;
 
 import javax.transaction.TransactionManager;
@@ -49,7 +49,7 @@ import java.util.List;
  * Configures the Hibernate Search backend to use Infinispan custom commands as a backend
  * transport, and a consistent hash for Master election for each index.
  * The test changes the view several times while indexing and verifying index state.
- * 
+ *
  * @author Sanne Grinovero
  */
 @Test(groups = "functional", testName = "query.distributed.MultiNodeDistributedTest")

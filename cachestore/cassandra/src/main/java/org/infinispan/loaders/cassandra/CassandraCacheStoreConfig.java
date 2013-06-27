@@ -29,11 +29,11 @@ import java.util.Properties;
 import net.dataforte.cassandra.pool.PoolProperties;
 
 import org.apache.cassandra.thrift.ConsistencyLevel;
-import org.infinispan.config.ConfigurationException;
 import org.infinispan.loaders.AbstractCacheStoreConfig;
 import org.infinispan.loaders.keymappers.DefaultTwoWayKey2StringMapper;
-import org.infinispan.util.FileLookupFactory;
-import org.infinispan.util.Util;
+import org.infinispan.commons.CacheConfigurationException;
+import org.infinispan.commons.util.FileLookupFactory;
+import org.infinispan.commons.util.Util;
 
 /**
  * Configures {@link CassandraCacheStore}.
@@ -214,7 +214,7 @@ public class CassandraCacheStoreConfig extends AbstractCacheStoreConfig {
          try {
             p.load(i);
          } catch (IOException ioe) {
-            throw new ConfigurationException("Unable to read environment properties file " + configurationPropertiesFile,
+            throw new CacheConfigurationException("Unable to read environment properties file " + configurationPropertiesFile,
                   ioe);
          } finally {
             Util.close(i);

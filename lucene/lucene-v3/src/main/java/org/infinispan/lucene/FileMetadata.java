@@ -28,14 +28,14 @@ import java.io.ObjectOutput;
 import java.io.Serializable;
 import java.util.Set;
 
-import org.infinispan.io.UnsignedNumeric;
-import org.infinispan.marshall.AbstractExternalizer;
-import org.infinispan.util.Util;
+import org.infinispan.commons.io.UnsignedNumeric;
+import org.infinispan.commons.marshall.AbstractExternalizer;
+import org.infinispan.commons.util.Util;
 
 /**
  * Header for Lucene files. Store only basic info about file. File data is divided into byte[]
  * chunks and stored under {@link org.infinispan.lucene.ChunkCacheKey}
- * 
+ *
  * @since 4.0
  * @author Lukasz Moren
  * @see org.infinispan.lucene.FileCacheKey
@@ -44,7 +44,7 @@ public final class FileMetadata implements Serializable {
 
    /** The serialVersionUID */
    private static final long serialVersionUID = -7150923427362644166L;
-   
+
    private long lastModified = 0;
    private long size = 0;
    private final int bufferSize;
@@ -115,7 +115,7 @@ public final class FileMetadata implements Serializable {
    public String toString() {
       return "FileMetadata{" + "lastModified=" + lastModified + ", size=" + size + '}';
    }
-   
+
    public static final class Externalizer extends AbstractExternalizer<FileMetadata> {
 
       @Override
@@ -144,5 +144,5 @@ public final class FileMetadata implements Serializable {
       }
 
    }
-   
+
 }

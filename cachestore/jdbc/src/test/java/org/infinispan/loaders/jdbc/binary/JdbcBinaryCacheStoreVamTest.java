@@ -24,7 +24,7 @@ package org.infinispan.loaders.jdbc.binary;
 
 import org.infinispan.loaders.CacheLoaderException;
 import org.infinispan.manager.EmbeddedCacheManager;
-import org.infinispan.marshall.StreamingMarshaller;
+import org.infinispan.commons.marshall.StreamingMarshaller;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.AfterMethod;
@@ -35,12 +35,12 @@ import static org.infinispan.test.TestingUtil.extractCacheMarshaller;
 
 /**
  * JdbcBinaryCacheStoreTest using production level marshaller.
- * 
+ *
  * @author Galder Zamarreño
  * @since 4.0
  */
 @Test(groups = "functional", testName = "loaders.jdbc.binary.JdbcBinaryCacheStoreVamTest")
-public class JdbcBinaryCacheStoreVamTest extends JdbcBinaryCacheStoreTest {   
+public class JdbcBinaryCacheStoreVamTest extends JdbcBinaryCacheStoreTest {
 
    EmbeddedCacheManager cm;
    StreamingMarshaller marshaller;

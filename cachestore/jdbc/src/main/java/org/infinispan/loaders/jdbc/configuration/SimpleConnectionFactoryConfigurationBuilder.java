@@ -20,7 +20,7 @@ package org.infinispan.loaders.jdbc.configuration;
 
 import java.sql.Driver;
 
-import org.infinispan.config.ConfigurationException;
+import org.infinispan.commons.CacheConfigurationException;
 
 /**
  * SimpleConnectionFactoryBuilder.
@@ -68,7 +68,7 @@ public class SimpleConnectionFactoryConfigurationBuilder<S extends AbstractJdbcC
    @Override
    public void validate() {
       if (connectionUrl == null) {
-         throw new ConfigurationException("A connectionUrl has not been specified");
+         throw new CacheConfigurationException("A connectionUrl has not been specified");
       }
    }
 

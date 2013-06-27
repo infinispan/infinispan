@@ -32,7 +32,7 @@ import java.util.Set;
 import org.infinispan.client.hotrod.impl.async.DefaultAsyncExecutorFactory;
 import org.infinispan.client.hotrod.impl.transport.tcp.RoundRobinBalancingStrategy;
 import org.infinispan.client.hotrod.impl.transport.tcp.TcpTransportFactory;
-import org.infinispan.marshall.jboss.GenericJBossMarshaller;
+import org.infinispan.commons.marshall.jboss.GenericJBossMarshaller;
 
 /**
  * Encapsulate all config properties here

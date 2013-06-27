@@ -23,10 +23,11 @@
 package org.infinispan.factories;
 
 import net.jcip.annotations.ThreadSafe;
-import org.infinispan.CacheException;
 import org.infinispan.Version;
 import org.infinispan.commands.module.ModuleCommandFactory;
 import org.infinispan.commands.module.ModuleCommandInitializer;
+import org.infinispan.commons.CacheException;
+import org.infinispan.commons.util.InfinispanCollections;
 import org.infinispan.configuration.global.GlobalConfiguration;
 import org.infinispan.configuration.global.ShutdownHookBehavior;
 import org.infinispan.factories.annotations.SurvivesRestarts;
@@ -43,7 +44,6 @@ import org.infinispan.notifications.cachemanagerlistener.CacheManagerNotifierImp
 import org.infinispan.remoting.transport.Transport;
 import org.infinispan.topology.ClusterTopologyManager;
 import org.infinispan.topology.LocalTopologyManager;
-import org.infinispan.util.InfinispanCollections;
 import org.infinispan.util.ModuleProperties;
 import org.infinispan.util.TimeService;
 import org.infinispan.util.logging.Log;

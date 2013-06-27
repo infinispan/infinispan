@@ -28,7 +28,7 @@ package org.infinispan.server.hotrod
 
 import org.infinispan.Cache
 import org.infinispan.distexec.{DistributedCallable, DefaultExecutorService}
-import org.infinispan.marshall.jboss.GenericJBossMarshaller
+import org.infinispan.commons.marshall.jboss.GenericJBossMarshaller
 import org.infinispan.upgrade.SourceMigrator
 import org.infinispan.tasks.GlobalKeySetTask
 import org.infinispan.metadata.EmbeddedMetadata

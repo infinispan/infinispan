@@ -22,12 +22,12 @@
  */
 package org.infinispan.distribution;
 
+import org.infinispan.commons.util.Util;
 import org.infinispan.distribution.ch.ConsistentHash;
 import org.infinispan.distribution.ch.DefaultConsistentHashFactory;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.remoting.transport.jgroups.JGroupsAddress;
 import org.infinispan.test.AbstractInfinispanTest;
-import org.infinispan.util.Util;
 import org.testng.annotations.Test;
 
 import java.util.*;

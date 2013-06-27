@@ -27,14 +27,14 @@ import org.infinispan.configuration.parsing.Namespaces;
 import org.infinispan.configuration.parsing.ParseUtils;
 import org.infinispan.configuration.parsing.Parser52;
 import org.infinispan.configuration.parsing.XMLExtendedStreamReader;
-import org.infinispan.executors.ExecutorFactory;
+import org.infinispan.commons.executors.ExecutorFactory;
 import org.infinispan.loaders.remote.wrapper.EntryWrapper;
-import org.infinispan.util.Util;
+import org.infinispan.commons.util.Util;
 
 import javax.xml.stream.XMLStreamConstants;
 import javax.xml.stream.XMLStreamException;
 
-import static org.infinispan.util.StringPropertyReplacer.replaceProperties;
+import static org.infinispan.commons.util.StringPropertyReplacer.replaceProperties;
 
 /**
  *

@@ -23,7 +23,7 @@
 package org.infinispan.loaders.jdbc.connectionfactory;
 
 import org.infinispan.loaders.CacheLoaderException;
-import org.infinispan.util.Util;
+import org.infinispan.commons.util.Util;
 
 import java.sql.Connection;
 

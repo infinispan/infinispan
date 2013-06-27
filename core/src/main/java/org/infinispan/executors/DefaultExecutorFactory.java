@@ -22,7 +22,8 @@
  */
 package org.infinispan.executors;
 
-import org.infinispan.util.TypedProperties;
+import org.infinispan.commons.executors.ExecutorFactory;
+import org.infinispan.commons.util.TypedProperties;
 
 import java.util.Properties;
 import java.util.concurrent.BlockingQueue;

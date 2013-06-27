@@ -22,10 +22,10 @@
  */
 package org.infinispan.test.fwk;
 
+import org.infinispan.commons.util.LegacyKeySupportSystemProperties;
 import org.infinispan.transaction.lookup.DummyTransactionManagerLookup;
 import org.infinispan.transaction.lookup.JBossStandaloneJTAManagerLookup;
 import org.infinispan.transaction.lookup.TransactionManagerLookup;
-import org.infinispan.util.LegacyKeySupportSystemProperties;
 
 import javax.transaction.TransactionManager;
 import javax.transaction.UserTransaction;

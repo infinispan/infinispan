@@ -22,6 +22,7 @@
  */
 package org.infinispan.marshall;
 
+import org.infinispan.commons.marshall.MarshallableTypeHints;
 import org.infinispan.io.ByteBuffer;
 import org.infinispan.io.ExposedByteArrayOutputStream;
 
@@ -33,14 +34,16 @@ import java.io.InputStream;
  *
  * @author Galder Zamarreño
  * @since 4.1
+ * @deprecated use {@link org.infinispan.commons.marshall.AbstractMarshaller} instead
  */
+@Deprecated
 public abstract class AbstractMarshaller implements Marshaller {
 
    protected final MarshallableTypeHints marshallableTypeHints = new MarshallableTypeHints();
 
    @Override
    public BufferSizePredictor getBufferSizePredictor(Object o) {
-      return marshallableTypeHints.getBufferSizePredictor(o.getClass());
+      return new CommonsBufferSizePredictorAdapter(marshallableTypeHints.getBufferSizePredictor(o.getClass()));
    }
 
    /**
@@ -58,7 +61,7 @@ public abstract class AbstractMarshaller implements Marshaller {
    @Override
    public ByteBuffer objectToBuffer(Object obj) throws IOException, InterruptedException {
       if (obj != null) {
-         BufferSizePredictor sizePredictor = marshallableTypeHints
+         org.infinispan.commons.marshall.BufferSizePredictor sizePredictor = marshallableTypeHints
                .getBufferSizePredictor(obj.getClass());
          int estimatedSize = sizePredictor.nextSize(obj);
          ByteBuffer byteBuffer = objectToBuffer(obj, estimatedSize);
@@ -79,7 +82,7 @@ public abstract class AbstractMarshaller implements Marshaller {
    public byte[] objectToByteBuffer(Object o) throws IOException, InterruptedException {
       int estimatedSize = 0;
       if (o != null) {
-         BufferSizePredictor sizePredictor = marshallableTypeHints
+         org.infinispan.commons.marshall.BufferSizePredictor sizePredictor = marshallableTypeHints
                .getBufferSizePredictor(o.getClass());
          byte[] bytes = objectToByteBuffer(o, sizePredictor.nextSize(o));
          sizePredictor.recordSize(bytes.length);

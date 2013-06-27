@@ -32,7 +32,8 @@ import org.infinispan.client.hotrod.RemoteCacheManager;
 import org.infinispan.client.hotrod.configuration.ConfigurationBuilder;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.manager.EmbeddedCacheManager;
-import org.infinispan.marshall.Marshaller;
+import org.infinispan.marshall.LegacyMarshallerAdapter;
+import org.infinispan.commons.marshall.Marshaller;
 import org.infinispan.rest.ServerBootstrap;
 import org.infinispan.server.hotrod.HotRodServer;
 import org.infinispan.server.hotrod.test.HotRodTestingUtil;
@@ -81,12 +82,21 @@ public class CompatibilityCacheFactory<K, V> {
    private int restPort;
 
    CompatibilityCacheFactory(CacheMode cacheMode) {
-      this("", null, cacheMode);
+      this.cacheName = "";
+      this.marshaller = null;
+      this.cacheMode = cacheMode;
    }
 
    CompatibilityCacheFactory(String cacheName, Marshaller marshaller, CacheMode cacheMode) {
       this.cacheName = cacheName;
       this.marshaller = marshaller;
+      this.cacheMode = cacheMode;
+   }
+
+   @Deprecated
+   CompatibilityCacheFactory(String cacheName, org.infinispan.marshall.Marshaller marshaller, CacheMode cacheMode) {
+      this.cacheName = cacheName;
+      this.marshaller = new LegacyMarshallerAdapter(marshaller);
       this.cacheMode = cacheMode;
    }
 

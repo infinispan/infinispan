@@ -23,6 +23,7 @@
 
 package org.infinispan.util;
 
+import org.infinispan.commons.util.InfinispanCollections;
 import org.testng.annotations.Test;
 
 import java.util.Collections;

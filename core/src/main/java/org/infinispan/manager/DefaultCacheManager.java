@@ -23,10 +23,14 @@
 package org.infinispan.manager;
 
 import org.infinispan.Cache;
-import org.infinispan.CacheException;
 import org.infinispan.Version;
 import org.infinispan.commands.RemoveCacheCommand;
-import org.infinispan.config.ConfigurationException;
+import org.infinispan.commons.CacheException;
+import org.infinispan.commons.util.CollectionFactory;
+import org.infinispan.commons.util.FileLookupFactory;
+import org.infinispan.commons.util.Immutables;
+import org.infinispan.commons.util.InfinispanCollections;
+import org.infinispan.commons.CacheConfigurationException;
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.cache.LegacyConfigurationAdaptor;
@@ -56,10 +60,6 @@ import org.infinispan.notifications.cachemanagerlistener.CacheManagerNotifier;
 import org.infinispan.remoting.rpc.ResponseMode;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.remoting.transport.Transport;
-import org.infinispan.util.FileLookupFactory;
-import org.infinispan.util.Immutables;
-import org.infinispan.util.InfinispanCollections;
-import org.infinispan.util.CollectionFactory;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
@@ -371,10 +371,10 @@ public class DefaultCacheManager implements EmbeddedCacheManager, CacheManager {
          }
 
          globalComponentRegistry = new GlobalComponentRegistry(globalConfiguration, this, caches.keySet());
-      } catch (ConfigurationException ce) {
+      } catch (CacheConfigurationException ce) {
          throw ce;
       } catch (RuntimeException re) {
-         throw new ConfigurationException(re);
+         throw new CacheConfigurationException(re);
       }
       if (start)
          start();

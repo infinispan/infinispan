@@ -22,14 +22,16 @@
  */
 package org.infinispan.config;
 
+import org.infinispan.commons.CacheConfigurationException;
+
 /**
  * Thrown if a duplicate named cache is detected
  *
  * @author Manik Surtani
  * @since 4.0
  */
-public class DuplicateCacheNameException extends ConfigurationException {
-   
+public class DuplicateCacheNameException extends CacheConfigurationException {
+
    private static final long serialVersionUID = 3829520782638366878L;
 
    public DuplicateCacheNameException(Exception e) {

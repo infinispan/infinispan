@@ -24,13 +24,13 @@ package org.infinispan.container.entries;
 
 import org.infinispan.metadata.Metadata;
 import org.infinispan.atomic.AtomicHashMap;
+import org.infinispan.commons.util.Util;
 import org.infinispan.container.DataContainer;
-import org.infinispan.util.Util;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
+import static org.infinispan.commons.util.Util.toStr;
 import static org.infinispan.container.entries.ReadCommittedEntry.Flags.*;
-import static org.infinispan.util.Util.toStr;
 
 /**
  * A wrapper around a cached entry that encapsulates read committed semantics when writes are initiated, committed or

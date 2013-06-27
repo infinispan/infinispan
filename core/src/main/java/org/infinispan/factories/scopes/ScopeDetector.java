@@ -22,7 +22,7 @@
  */
 package org.infinispan.factories.scopes;
 
-import org.infinispan.util.ReflectionUtil;
+import org.infinispan.commons.util.ReflectionUtil;
 
 /**
  * Retrieves the declared scope of a component

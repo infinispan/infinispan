@@ -20,7 +20,7 @@
 package org.infinispan.upgrade;
 
 import org.infinispan.Cache;
-import org.infinispan.CacheException;
+import org.infinispan.commons.CacheException;
 
 /**
  * Performs migration operations on the target server or cluster of servers

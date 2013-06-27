@@ -63,7 +63,7 @@ import org.infinispan.client.hotrod.impl.operations.ReplaceOperation;
 import org.infinispan.client.hotrod.impl.operations.StatsOperation;
 import org.infinispan.client.hotrod.logging.Log;
 import org.infinispan.client.hotrod.logging.LogFactory;
-import org.infinispan.marshall.Marshaller;
+import org.infinispan.commons.marshall.Marshaller;
 import org.infinispan.util.concurrent.NotifyingFuture;
 
 /**
@@ -514,7 +514,7 @@ public class RemoteCacheImpl<K, V> extends RemoteCacheSupport<K, V> {
          operationsFactory.addFlags(Flag.DEFAULT_MAXIDLE);
       }
    }
-   
+
    @Override
    public Set<K> keySet() {
 	   assertRemoteCacheManagerIsStarted();

@@ -29,7 +29,7 @@ import javax.transaction.TransactionManager;
 
 import org.apache.lucene.store.Lock;
 import org.infinispan.Cache;
-import org.infinispan.CacheException;
+import org.infinispan.commons.CacheException;
 import org.infinispan.context.Flag;
 import org.infinispan.lucene.FileCacheKey;
 import org.infinispan.lucene.logging.Log;
@@ -39,7 +39,7 @@ import org.infinispan.util.logging.LogFactory;
  * Inter-IndexWriter Lucene index lock based on Infinispan.
  * There are pros and cons about using this implementation, please see javadoc on
  * the factory class <code>org.infinispan.lucene.locking.TransactionalLockFactory</code>
- * 
+ *
  * @since 4.0
  * @author Sanne Grinovero
  * @see org.infinispan.lucene.locking.TransactionalLockFactory
@@ -108,7 +108,7 @@ class TransactionalSharedLuceneLock extends Lock {
          log.tracef("Lock removed for index: %s", indexName);
       }
    }
-   
+
    @Override
    public boolean isLocked() {
       boolean locked = false;
@@ -132,12 +132,12 @@ class TransactionalSharedLuceneLock extends Lock {
       }
       return locked;
    }
-   
+
    /**
     * Starts a new transaction. Used to batch changes in LuceneDirectory:
     * a transaction is created at lock acquire, and closed on release.
     * It's also committed and started again at each IndexWriter.commit();
-    * 
+    *
     * @throws IOException wraps Infinispan exceptions to adapt to Lucene's API
     */
    private void startTransaction() throws IOException {
@@ -151,11 +151,11 @@ class TransactionalSharedLuceneLock extends Lock {
          log.tracef("Batch transaction started for index: %s", indexName);
       }
    }
-   
+
    /**
     * Commits the existing transaction.
     * It's illegal to call this if a transaction was not started.
-    * 
+    *
     * @throws IOException wraps Infinispan exceptions to adapt to Lucene's API
     */
    private void commitTransactions() throws IOException {

@@ -31,8 +31,8 @@ import org.infinispan.client.hotrod.impl.transport.tcp.TcpTransport;
 import org.infinispan.client.hotrod.impl.transport.tcp.TcpTransportFactory;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
-import org.infinispan.marshall.Marshaller;
-import org.infinispan.marshall.jboss.JBossMarshaller;
+import org.infinispan.commons.marshall.Marshaller;
+import org.infinispan.marshall.core.JBossMarshaller;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.test.TestingUtil;
 import org.testng.annotations.Test;
@@ -144,7 +144,7 @@ public class DistributionRetryTest extends AbstractRetryTest {
       } finally {
          tcpTp.releaseTransport(transport);
       }
-      
+
 
       log.info("About to stop Hot Rod server 2");
       hotRodServer2.stop();

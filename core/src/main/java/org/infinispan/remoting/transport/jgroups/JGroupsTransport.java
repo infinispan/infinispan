@@ -22,18 +22,21 @@
  */
 package org.infinispan.remoting.transport.jgroups;
 
-import org.infinispan.CacheConfigurationException;
-import org.infinispan.CacheException;
 import org.infinispan.commands.ReplicableCommand;
 import org.infinispan.commands.remote.ClusteredGetCommand;
-import org.infinispan.config.ConfigurationException;
 import org.infinispan.config.parsing.XmlConfigHelper;
 import org.infinispan.configuration.global.TransportConfiguration;
 import org.infinispan.factories.GlobalComponentRegistry;
 import org.infinispan.factories.annotations.ComponentName;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.jmx.JmxUtil;
-import org.infinispan.marshall.StreamingMarshaller;
+import org.infinispan.commons.CacheConfigurationException;
+import org.infinispan.commons.CacheException;
+import org.infinispan.commons.marshall.StreamingMarshaller;
+import org.infinispan.commons.util.FileLookupFactory;
+import org.infinispan.commons.util.InfinispanCollections;
+import org.infinispan.commons.util.TypedProperties;
+import org.infinispan.commons.util.Util;
 import org.infinispan.notifications.cachemanagerlistener.CacheManagerNotifier;
 import org.infinispan.remoting.InboundInvocationHandler;
 import org.infinispan.remoting.responses.Response;
@@ -42,11 +45,7 @@ import org.infinispan.remoting.rpc.ResponseMode;
 import org.infinispan.remoting.transport.AbstractTransport;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.remoting.transport.BackupResponse;
-import org.infinispan.util.FileLookupFactory;
-import org.infinispan.util.InfinispanCollections;
 import org.infinispan.util.TimeService;
-import org.infinispan.util.TypedProperties;
-import org.infinispan.util.Util;
 import org.infinispan.util.concurrent.TimeoutException;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
@@ -374,7 +373,7 @@ public class JGroupsTransport extends AbstractTransport implements MembershipLis
                         + " property specifies value " + cfg + " that could not be read!",
                         new FileNotFoundException(cfg));
             }
-            try {                              
+            try {
                channel = new JChannel(conf);
             } catch (Exception e) {
                log.errorCreatingChannelFromConfigFile(cfg);
@@ -514,7 +513,7 @@ public class JGroupsTransport extends AbstractTransport implements MembershipLis
          rsps = dispatcher.invokeRemoteCommands(jgAddressList, rpcCommand, toJGroupsMode(mode), timeout,
                                                 usePriorityQueue, toJGroupsFilter(responseFilter),
                                                 asyncMarshalling, ignoreLeavers, totalOrder, anycast);
-      } else {         
+      } else {
          if (jgAddressList == null || !jgAddressList.isEmpty()) {
             boolean singleRecipient = !ignoreLeavers && jgAddressList != null && jgAddressList.size() == 1;
             boolean skipRpc = false;
@@ -549,7 +548,7 @@ public class JGroupsTransport extends AbstractTransport implements MembershipLis
          } else {
             responses = Collections.singletonMap(fromJGroupsAddress(singleJGAddress), singleResponse);
          }
-      } else {      
+      } else {
          Map<Address, Response> retval = new HashMap<Address, Response>(rsps.size());
 
          boolean noValidResponses = true;
@@ -745,7 +744,7 @@ public class JGroupsTransport extends AbstractTransport implements MembershipLis
    @Override
    public final void checkTotalOrderSupported(boolean anycast) {
       if (anycast && channel.getProtocolStack().findProtocol(TOA.class) == null) {
-         throw new ConfigurationException("In order to support total order based transaction, the TOA protocol " +
+         throw new CacheConfigurationException("In order to support total order based transaction, the TOA protocol " +
                                                 "must be present in the JGroups's config.");
       }
    }

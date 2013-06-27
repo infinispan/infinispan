@@ -19,25 +19,25 @@
  * License along with this software; if not, write to the Free
  * Software Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
  * 02110-1301 USA, or see the FSF site: http://www.fsf.org.
- * 
+ *
  */
 package org.infinispan.loaders.jpa;
 
 import java.util.Properties;
 
 import org.infinispan.loaders.LockSupportCacheStoreConfig;
-import org.infinispan.util.TypedProperties;
+import org.infinispan.commons.util.TypedProperties;
 
 /**
- * 
+ *
  * @author <a href="mailto:rtsang@redhat.com">Ray Tsang</a>
  *
  */
 public class JpaCacheStoreConfig extends LockSupportCacheStoreConfig {
 	private static final long serialVersionUID = -8588748696540797858L;
-	
+
 	public static final long DEFAULT_BATCH_SIZE = 100L;
-	
+
 	private String persistenceUnitName;
    private String entityClassName;
    private Class<?> entityClass;

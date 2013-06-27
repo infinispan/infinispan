@@ -18,9 +18,9 @@
  */
 package org.infinispan.configuration.global;
 
-import org.infinispan.configuration.AbstractTypedPropertiesConfiguration;
+import org.infinispan.commons.configuration.AbstractTypedPropertiesConfiguration;
+import org.infinispan.commons.util.TypedProperties;
 import org.infinispan.executors.ScheduledExecutorFactory;
-import org.infinispan.util.TypedProperties;
 
 public class ScheduledExecutorFactoryConfiguration extends AbstractTypedPropertiesConfiguration {
 

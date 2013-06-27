@@ -24,11 +24,11 @@ package org.infinispan.marshall.exts;
 
 import net.jcip.annotations.Immutable;
 
-import org.infinispan.io.UnsignedNumeric;
-import org.infinispan.marshall.AbstractExternalizer;
-import org.infinispan.marshall.Ids;
-import org.infinispan.marshall.MarshallUtil;
-import org.infinispan.util.Util;
+import org.infinispan.commons.io.UnsignedNumeric;
+import org.infinispan.commons.marshall.AbstractExternalizer;
+import org.infinispan.commons.marshall.MarshallUtil;
+import org.infinispan.commons.util.Util;
+import org.infinispan.marshall.core.Ids;
 import org.jboss.marshalling.util.IdentityIntMap;
 
 import java.io.IOException;
@@ -50,7 +50,7 @@ public class SetExternalizer extends AbstractExternalizer<Set> {
    private static final int HASH_SET = 0;
    private static final int TREE_SET = 1;
    private final IdentityIntMap<Class<?>> numbers = new IdentityIntMap<Class<?>>(2);
-   
+
    public SetExternalizer() {
       numbers.put(HashSet.class, HASH_SET);
       numbers.put(TreeSet.class, TREE_SET);

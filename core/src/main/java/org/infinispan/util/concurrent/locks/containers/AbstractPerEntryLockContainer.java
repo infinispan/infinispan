@@ -23,15 +23,15 @@
 package org.infinispan.util.concurrent.locks.containers;
 
 import org.infinispan.commons.equivalence.AnyEquivalence;
-import org.infinispan.util.ByRef;
-import org.infinispan.util.Util;
-import org.infinispan.util.concurrent.jdk8backported.EquivalentConcurrentHashMapV8;
+import org.infinispan.commons.util.ByRef;
+import org.infinispan.commons.util.Util;
+import org.infinispan.commons.util.concurrent.jdk8backported.EquivalentConcurrentHashMapV8;
 import org.infinispan.util.concurrent.locks.RefCountingLock;
 import org.infinispan.util.logging.Log;
 
 import java.util.concurrent.TimeUnit;
 
-import static org.infinispan.util.Util.toStr;
+import static org.infinispan.commons.util.Util.toStr;
 
 /**
  * An abstract lock container that creates and maintains a new lock per entry

@@ -22,7 +22,7 @@
  */
 package org.infinispan.factories;
 
-import org.infinispan.config.ConfigurationException;
+import org.infinispan.commons.CacheConfigurationException;
 import org.infinispan.factories.annotations.DefaultFactoryFor;
 import org.infinispan.transaction.lookup.TransactionSynchronizationRegistryLookup;
 
@@ -47,7 +47,7 @@ public class TransactionSynchronizationRegistryFactory extends AbstractNamedCach
          }
       }
       catch (Exception e) {
-         throw new ConfigurationException("failed obtaining TransactionSynchronizationRegistry", e);
+         throw new CacheConfigurationException("failed obtaining TransactionSynchronizationRegistry", e);
       }
       return null;
    }

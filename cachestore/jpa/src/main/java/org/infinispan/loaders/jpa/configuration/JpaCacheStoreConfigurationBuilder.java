@@ -18,21 +18,21 @@
  */
 package org.infinispan.loaders.jpa.configuration;
 
-import org.infinispan.configuration.Builder;
 import org.infinispan.configuration.cache.AbstractLockSupportStoreConfigurationBuilder;
 import org.infinispan.configuration.cache.LoadersConfigurationBuilder;
 import org.infinispan.loaders.jpa.JpaCacheStoreConfig;
-import org.infinispan.util.TypedProperties;
+import org.infinispan.commons.configuration.Builder;
+import org.infinispan.commons.util.TypedProperties;
 
 /**
- * 
+ *
  * @author <a href="mailto:rtsang@redhat.com">Ray Tsang</a>
- * 
+ *
  */
 public class JpaCacheStoreConfigurationBuilder
 		extends
 		AbstractLockSupportStoreConfigurationBuilder<JpaCacheStoreConfiguration, JpaCacheStoreConfigurationBuilder> {
-   
+
 	private String persistenceUnitName;
 	private Class<?> entityClass;
 	private long batchSize = JpaCacheStoreConfig.DEFAULT_BATCH_SIZE;
@@ -40,17 +40,17 @@ public class JpaCacheStoreConfigurationBuilder
 	public JpaCacheStoreConfigurationBuilder(LoadersConfigurationBuilder builder) {
 		super(builder);
 	}
-	
+
 	public JpaCacheStoreConfigurationBuilder persistenceUnitName(String persistenceUnitName) {
 		this.persistenceUnitName = persistenceUnitName;
 		return self();
 	}
-	
+
 	public JpaCacheStoreConfigurationBuilder entityClass(Class<?> entityClass) {
 		this.entityClass = entityClass;
 		return self();
 	}
-	
+
 	public JpaCacheStoreConfigurationBuilder batchSize(long batchSize) {
 	   this.batchSize = batchSize;
 	   return self();
@@ -90,7 +90,7 @@ public class JpaCacheStoreConfigurationBuilder
 		purgeSynchronously = template.purgeSynchronously();
 		this.async.read(template.async());
 		this.singletonStore.read(template.singletonStore());
-		
+
 		return self();
 	}
 

@@ -22,6 +22,7 @@
  */
 package org.infinispan.util.concurrent.locks;
 
+import org.infinispan.commons.util.Util;
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.container.entries.CacheEntry;
 import org.infinispan.context.InvocationContext;
@@ -29,8 +30,7 @@ import org.infinispan.factories.annotations.Inject;
 import org.infinispan.jmx.annotations.DataType;
 import org.infinispan.jmx.annotations.MBean;
 import org.infinispan.jmx.annotations.ManagedAttribute;
-import org.infinispan.marshall.MarshalledValue;
-import org.infinispan.util.Util;
+import org.infinispan.marshall.core.MarshalledValue;
 import org.infinispan.util.concurrent.TimeoutException;
 import org.infinispan.util.concurrent.locks.containers.*;
 import org.infinispan.util.logging.Log;
@@ -44,7 +44,7 @@ import java.util.Set;
 import java.util.concurrent.locks.Lock;
 
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
-import static org.infinispan.util.Util.toStr;
+import static org.infinispan.commons.util.Util.toStr;
 
 /**
  * Handles locks for the MVCC based LockingInterceptor

@@ -25,7 +25,7 @@ import org.hibernate.search.query.engine.spi.DocumentExtractor;
 import org.infinispan.AdvancedCache;
 import org.infinispan.query.backend.KeyTransformationHandler;
 import org.infinispan.query.clustered.commandworkers.QueryExtractorUtil;
-import org.infinispan.util.CollectionFactory;
+import org.infinispan.commons.util.CollectionFactory;
 
 import java.util.LinkedList;
 import java.util.UUID;
@@ -35,13 +35,13 @@ import java.util.concurrent.ConcurrentMap;
  * Each node in the cluster has a QueryBox instance. The QueryBox keep the active lazy iterators
  * (actually it keeps the DocumentExtractor of the searches) on the cluster, so it can return values
  * for the queries in a "lazy" way.
- * 
+ *
  * When a DistributedLazyIterator is created, every nodes creates a DocumentExtractor and register
  * it in your own QueryBox. So, the LazyIterator can fetch the values in a lazy way.
- * 
+ *
  * EVICTION: Currently the QueryBox keeps the last BOX_LIMIT DocumentExtractor used... probably
  * there is a better way.
- * 
+ *
  * @author Israel Lacerra <israeldl@gmail.com>
  * @since 5.1
  */
@@ -66,7 +66,7 @@ public class QueryBox {
 
    /**
     * Get the "docIndex" value on the correct DocumentExtractor
-    * 
+    *
     * @param queryUuid
     *           The queryId, so we can get the correct DocumentExtractor
     * @param docIndex
@@ -95,7 +95,7 @@ public class QueryBox {
 
    /**
     * Kill the query (DocumentExtractor)
-    * 
+    *
     * @param id
     *           The id of the query
     */
@@ -108,7 +108,7 @@ public class QueryBox {
 
    /**
     * Register a query (DocumentExtractor), so we can lazily load the results.
-    * 
+    *
     * @param id
     *           The id of the query
     * @param extractor
@@ -127,7 +127,7 @@ public class QueryBox {
 
    /**
     * Id of this QueryBox
-    * 
+    *
     * @return
     */
    public UUID getMyId() {

@@ -28,7 +28,9 @@ package org.infinispan.marshall;
  *
  * @author Galder Zamarreño
  * @since 5.0
+ * @deprecated Use {@link org.infinispan.commons.marshall.BufferSizePredictor} instead
  */
+@Deprecated
 public interface BufferSizePredictor {
 
    /**

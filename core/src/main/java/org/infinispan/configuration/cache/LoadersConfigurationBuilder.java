@@ -23,9 +23,9 @@ import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.List;
 
-import org.infinispan.config.ConfigurationException;
-import org.infinispan.configuration.Builder;
-import org.infinispan.configuration.ConfigurationUtils;
+import org.infinispan.commons.configuration.Builder;
+import org.infinispan.commons.configuration.ConfigurationUtils;
+import org.infinispan.commons.CacheConfigurationException;
 
 /**
  * Configuration for cache loaders and stores.
@@ -128,7 +128,7 @@ public class LoadersConfigurationBuilder extends AbstractConfigurationChildBuild
          this.cacheLoaders.add(builder);
          return builder;
       } catch (Exception e) {
-         throw new ConfigurationException("Could not instantiate loader configuration builder '" + klass.getName()
+         throw new CacheConfigurationException("Could not instantiate loader configuration builder '" + klass.getName()
                + "'", e);
       }
    }
@@ -169,7 +169,7 @@ public class LoadersConfigurationBuilder extends AbstractConfigurationChildBuild
          this.cacheLoaders.add(builder);
          return builder;
       } catch (Exception e) {
-         throw new ConfigurationException("Could not instantiate store configuration builder '" + klass.getName()
+         throw new CacheConfigurationException("Could not instantiate store configuration builder '" + klass.getName()
                + "'", e);
       }
    }

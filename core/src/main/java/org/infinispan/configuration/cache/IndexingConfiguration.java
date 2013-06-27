@@ -18,8 +18,8 @@
  */
 package org.infinispan.configuration.cache;
 
-import org.infinispan.configuration.AbstractTypedPropertiesConfiguration;
-import org.infinispan.util.TypedProperties;
+import org.infinispan.commons.configuration.AbstractTypedPropertiesConfiguration;
+import org.infinispan.commons.util.TypedProperties;
 
 /**
  * Configures indexing of entries in the cache for searching.

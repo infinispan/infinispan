@@ -23,7 +23,7 @@
 package org.infinispan.tree;
 
 import org.infinispan.Cache;
-import org.infinispan.CacheConfigurationException;
+import org.infinispan.commons.CacheConfigurationException;
 
 /**
  * Factory class that contains API for users to create instances of {@link org.infinispan.tree.TreeCache}

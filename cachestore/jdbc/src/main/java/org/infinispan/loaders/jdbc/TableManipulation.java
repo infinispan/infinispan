@@ -22,7 +22,7 @@
  */
 package org.infinispan.loaders.jdbc;
 
-import org.infinispan.config.ConfigurationException;
+import org.infinispan.commons.CacheConfigurationException;
 import org.infinispan.loaders.CacheLoaderException;
 import org.infinispan.loaders.jdbc.connectionfactory.ConnectionFactory;
 import org.infinispan.loaders.jdbc.logging.Log;
@@ -540,7 +540,7 @@ public class TableManipulation implements Cloneable {
             }
          }
          if (databaseType == null) {
-            throw new ConfigurationException("Unable to detect database type from JDBC driver name or connection metadata.  Please provide this manually using the 'databaseType' property in your configuration.  Supported database type strings are " + Arrays.toString(DatabaseType.values()));
+            throw new CacheConfigurationException("Unable to detect database type from JDBC driver name or connection metadata.  Please provide this manually using the 'databaseType' property in your configuration.  Supported database type strings are " + Arrays.toString(DatabaseType.values()));
          } else {
             log.debugf("Guessing database type as '%s'.  If this is incorrect, please specify the correct type using the 'databaseType' property in your configuration.  Supported database type strings are %s", databaseType, Arrays.toString(DatabaseType.values()));
          }

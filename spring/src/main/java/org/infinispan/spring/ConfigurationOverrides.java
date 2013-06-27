@@ -32,7 +32,7 @@ import org.infinispan.interceptors.base.CommandInterceptor;
 import org.infinispan.remoting.ReplicationQueue;
 import org.infinispan.transaction.LockingMode;
 import org.infinispan.transaction.lookup.TransactionManagerLookup;
-import org.infinispan.util.Util;
+import org.infinispan.commons.util.Util;
 import org.infinispan.util.concurrent.IsolationLevel;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;

@@ -20,7 +20,7 @@ package org.infinispan.configuration.cache;
 
 import java.util.concurrent.TimeUnit;
 
-import org.infinispan.configuration.Builder;
+import org.infinispan.commons.configuration.Builder;
 
 /**
  * Configures deadlock detection.

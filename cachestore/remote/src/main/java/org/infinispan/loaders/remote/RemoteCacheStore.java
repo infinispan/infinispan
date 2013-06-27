@@ -38,9 +38,9 @@ import org.infinispan.loaders.CacheLoaderConfig;
 import org.infinispan.loaders.CacheLoaderException;
 import org.infinispan.loaders.CacheLoaderMetadata;
 import org.infinispan.loaders.remote.logging.Log;
-import org.infinispan.marshall.Marshaller;
-import org.infinispan.marshall.StreamingMarshaller;
-import org.infinispan.marshall.jboss.GenericJBossMarshaller;
+import org.infinispan.commons.marshall.Marshaller;
+import org.infinispan.commons.marshall.StreamingMarshaller;
+import org.infinispan.commons.marshall.jboss.GenericJBossMarshaller;
 import org.infinispan.util.logging.LogFactory;
 
 import java.io.IOException;

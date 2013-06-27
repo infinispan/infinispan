@@ -23,7 +23,7 @@
 package org.infinispan.config.parsing;
 
 import org.infinispan.config.Configuration;
-import org.infinispan.config.ConfigurationException;
+import org.infinispan.commons.CacheConfigurationException;
 import org.infinispan.config.GlobalConfiguration;
 
 import java.util.Map;
@@ -41,7 +41,7 @@ public interface XmlConfigurationParser {
     * @return a configuration instance representing the "default" block in the configuration file
     * @throws ConfigurationException if there is a problem parsing the configuration XML
     */
-   Configuration parseDefaultConfiguration() throws ConfigurationException;
+   Configuration parseDefaultConfiguration() throws CacheConfigurationException;
 
    /**
     * Parses and retrieves configuration overrides for named caches.
@@ -49,7 +49,7 @@ public interface XmlConfigurationParser {
     * @return a Map of Configuration overrides keyed on cache name
     * @throws ConfigurationException if there is a problem parsing the configuration XML
     */
-   Map<String, Configuration> parseNamedConfigurations() throws ConfigurationException;
+   Map<String, Configuration> parseNamedConfigurations() throws CacheConfigurationException;
 
    /**
     * GlobalConfiguration would also have a reference to the template default configuration, accessible via {@link

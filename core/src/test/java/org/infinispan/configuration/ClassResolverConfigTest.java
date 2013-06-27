@@ -21,7 +21,7 @@ package org.infinispan.configuration;
 
 import org.infinispan.api.WithClassLoaderTest;
 import org.infinispan.configuration.global.GlobalConfigurationBuilder;
-import org.infinispan.marshall.jboss.DefaultContextClassResolver;
+import org.infinispan.commons.marshall.jboss.DefaultContextClassResolver;
 import org.testng.annotations.Test;
 
 /**

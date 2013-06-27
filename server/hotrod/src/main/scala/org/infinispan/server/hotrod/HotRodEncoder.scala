@@ -30,7 +30,7 @@ import org.jboss.netty.handler.codec.oneone.OneToOneEncoder
 import org.jboss.netty.channel.Channel
 import org.infinispan.server.core.transport.ExtendedChannelBuffer._
 import org.infinispan.remoting.transport.Address
-import org.infinispan.util.Util
+import org.infinispan.commons.util.Util
 
 /**
  * Hot Rod specific encoder.

@@ -33,8 +33,6 @@ import javax.transaction.Transaction;
 import javax.transaction.TransactionManager;
 
 import org.infinispan.AdvancedCache;
-import org.infinispan.CacheException;
-import org.infinispan.config.ConfigurationException;
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.configuration.cache.LegacyConfigurationAdaptor;
 import org.infinispan.configuration.cache.CacheLoaderConfiguration;
@@ -55,10 +53,12 @@ import org.infinispan.loaders.decorators.ChainingCacheStore;
 import org.infinispan.loaders.decorators.ReadOnlyStore;
 import org.infinispan.loaders.decorators.SingletonStore;
 import org.infinispan.loaders.decorators.SingletonStoreConfig;
-import org.infinispan.marshall.StreamingMarshaller;
-import org.infinispan.util.InfinispanCollections;
+import org.infinispan.commons.CacheConfigurationException;
+import org.infinispan.commons.CacheException;
+import org.infinispan.commons.marshall.StreamingMarshaller;
+import org.infinispan.commons.util.InfinispanCollections;
+import org.infinispan.commons.util.Util;
 import org.infinispan.util.TimeService;
-import org.infinispan.util.Util;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
@@ -381,6 +381,6 @@ public class CacheLoaderManagerImpl implements CacheLoaderManager {
 
    void assertNotSingletonAndShared(CacheStoreConfiguration cfg) {
       if (cfg.singletonStore().enabled() && clmConfig.shared())
-         throw new ConfigurationException("Invalid cache loader configuration!!  If a cache loader is configured as a singleton, the cache loader cannot be shared in a cluster!");
+         throw new CacheConfigurationException("Invalid cache loader configuration!!  If a cache loader is configured as a singleton, the cache loader cannot be shared in a cluster!");
    }
 }

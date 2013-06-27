@@ -24,7 +24,7 @@
 package org.infinispan.interceptors;
 
 import org.infinispan.context.InvocationContext;
-import org.infinispan.marshall.MarshalledValue;
+import org.infinispan.marshall.core.MarshalledValue;
 
 /**
  * A marshalled value interceptor which forces defensive copies to be made

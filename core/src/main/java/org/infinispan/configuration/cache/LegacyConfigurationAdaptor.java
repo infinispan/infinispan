@@ -20,6 +20,7 @@ package org.infinispan.configuration.cache;
 
 import java.util.Properties;
 
+import org.infinispan.commons.util.Util;
 import org.infinispan.config.Configuration;
 import org.infinispan.config.Configuration.CacheMode;
 import org.infinispan.config.CustomInterceptorConfig;
@@ -42,7 +43,6 @@ import org.infinispan.loaders.cluster.ClusterCacheLoaderConfig;
 import org.infinispan.loaders.file.FileCacheStoreConfig;
 import org.infinispan.remoting.ReplicationQueue;
 import org.infinispan.transaction.lookup.TransactionManagerLookup;
-import org.infinispan.util.Util;
 
 @SuppressWarnings({"deprecation", "boxing"})
 public class LegacyConfigurationAdaptor {

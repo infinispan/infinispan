@@ -28,7 +28,7 @@ import org.infinispan.commands.remote.ClusteredGetCommand
 import org.infinispan.server.core.AbstractMarshallingTest
 import org.infinispan.api.BasicCacheContainer
 import org.infinispan.commons.equivalence.ByteArrayEquivalence
-import org.infinispan.util.InfinispanCollections
+import org.infinispan.commons.util.InfinispanCollections
 
 /**
  * Tests marshalling of Hot Rod classes.

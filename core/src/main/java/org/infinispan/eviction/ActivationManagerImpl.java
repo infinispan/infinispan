@@ -23,7 +23,7 @@
 
 package org.infinispan.eviction;
 
-import org.infinispan.config.ConfigurationException;
+import org.infinispan.commons.CacheConfigurationException;
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.factories.annotations.Start;
@@ -72,7 +72,7 @@ public class ActivationManagerImpl implements ActivationManager {
       if (enabled) {
          store = clm.getCacheStore();
          if (store == null)
-            throw new ConfigurationException(
+            throw new CacheConfigurationException(
                   "Passivation can only be used with a CacheLoader that implements CacheStore!");
 
          statisticsEnabled = cfg.jmxStatistics().enabled();

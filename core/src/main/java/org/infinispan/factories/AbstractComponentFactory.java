@@ -22,7 +22,7 @@
  */
 package org.infinispan.factories;
 
-import org.infinispan.config.ConfigurationException;
+import org.infinispan.commons.CacheConfigurationException;
 import org.infinispan.configuration.global.GlobalConfiguration;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.factories.scopes.Scope;
@@ -71,7 +71,7 @@ public abstract class AbstractComponentFactory {
       for (Class<?> c : ableToConstruct) {
          canConstruct = canConstruct || requestedType.isAssignableFrom(c);
       }
-      if (!canConstruct) throw new ConfigurationException("Don't know how to construct " + requestedType);
+      if (!canConstruct) throw new CacheConfigurationException("Don't know how to construct " + requestedType);
    }
 
 }

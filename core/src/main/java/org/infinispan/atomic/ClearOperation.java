@@ -22,10 +22,10 @@
  */
 package org.infinispan.atomic;
 
-import org.infinispan.marshall.AbstractExternalizer;
-import org.infinispan.marshall.Ids;
-import org.infinispan.util.FastCopyHashMap;
-import org.infinispan.util.Util;
+import org.infinispan.commons.marshall.AbstractExternalizer;
+import org.infinispan.commons.util.FastCopyHashMap;
+import org.infinispan.commons.util.Util;
+import org.infinispan.marshall.core.Ids;
 
 import java.io.IOException;
 import java.io.ObjectInput;
@@ -61,7 +61,7 @@ public class ClearOperation<K, V> extends Operation<K, V> {
    public void replay(Map<K, V> delegate) {
       delegate.clear();
    }
-   
+
    @Override
    public K keyAffected() {
       //null means all keys are affected

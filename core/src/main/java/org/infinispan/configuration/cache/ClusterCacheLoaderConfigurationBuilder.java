@@ -21,8 +21,8 @@ package org.infinispan.configuration.cache;
 import java.util.Properties;
 import java.util.concurrent.TimeUnit;
 
+import org.infinispan.commons.util.TypedProperties;
 import org.infinispan.config.parsing.XmlConfigHelper;
-import org.infinispan.util.TypedProperties;
 
 public class ClusterCacheLoaderConfigurationBuilder extends AbstractLoaderConfigurationBuilder<ClusterCacheLoaderConfiguration, ClusterCacheLoaderConfigurationBuilder> {
    private long remoteCallTimeout;

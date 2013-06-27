@@ -21,9 +21,9 @@ package org.infinispan.configuration.cache;
 import java.util.Map;
 import java.util.Properties;
 
-import org.infinispan.configuration.Builder;
-import org.infinispan.util.TypedProperties;
-import org.infinispan.util.Util;
+import org.infinispan.commons.configuration.Builder;
+import org.infinispan.commons.util.TypedProperties;
+import org.infinispan.commons.util.Util;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 

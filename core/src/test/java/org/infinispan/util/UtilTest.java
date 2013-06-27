@@ -19,6 +19,7 @@
 
 package org.infinispan.util;
 
+import org.infinispan.commons.util.Util;
 import org.testng.annotations.Test;
 
 import static org.testng.AssertJUnit.assertEquals;

@@ -22,7 +22,7 @@
  */
 package org.infinispan.transaction.xa.recovery;
 
-import org.infinispan.CacheException;
+import org.infinispan.commons.CacheException;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.topology.CacheTopology;
 import org.infinispan.transaction.LocalTransaction;

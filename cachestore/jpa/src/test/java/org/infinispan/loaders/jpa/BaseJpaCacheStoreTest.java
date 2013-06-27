@@ -52,14 +52,14 @@ import org.infinispan.loaders.modifications.Modification;
 import org.infinispan.loaders.modifications.Remove;
 import org.infinispan.loaders.modifications.Store;
 import org.infinispan.manager.EmbeddedCacheManager;
-import org.infinispan.marshall.StreamingMarshaller;
+import org.infinispan.commons.marshall.StreamingMarshaller;
 import org.infinispan.marshall.TestObjectStreamMarshaller;
 import org.infinispan.test.AbstractInfinispanTest;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.infinispan.test.fwk.TestInternalCacheEntryFactory;
 import org.infinispan.transaction.xa.GlobalTransaction;
 import org.infinispan.transaction.xa.TransactionFactory;
-import org.infinispan.util.Util;
+import org.infinispan.commons.util.Util;
 import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.BeforeTest;
@@ -69,7 +69,7 @@ import org.testng.annotations.Test;
  * This is a base class containing various unit tests for each and every different CacheStore implementations. If you
  * need to add Cache/CacheManager tests that need to be run for each cache store/loader implementation, then use
  * BaseCacheStoreFunctionalTest.
- * 
+ *
  * @author <a href="mailto:rtsang@redhat.com">Ray Tsang</a>
  *
  */
@@ -79,7 +79,7 @@ import org.testng.annotations.Test;
 public abstract class BaseJpaCacheStoreTest extends AbstractInfinispanTest {
 
    protected abstract CacheStore createCacheStore() throws Exception;
-   
+
    protected EmbeddedCacheManager cm;
 
    protected CacheStore cs;
@@ -89,11 +89,11 @@ public abstract class BaseJpaCacheStoreTest extends AbstractInfinispanTest {
    protected BaseJpaCacheStoreTest() {
       gtf.init(false, false, true, false);
    }
-   
+
    protected EmbeddedCacheManager createCacheManager() {
       return TestCacheManagerFactory.createLocalCacheManager(false);
    }
-   
+
    @BeforeTest
    public void clearData() throws Exception {
       cm = createCacheManager();
@@ -159,59 +159,59 @@ public abstract class BaseJpaCacheStoreTest extends AbstractInfinispanTest {
    protected StreamingMarshaller getMarshaller() {
       return new TestObjectStreamMarshaller(false);
    }
-   
+
    protected abstract TestObject createTestObject(String key);
-   
+
    public void testStoreNoJpa() throws CacheLoaderException {
 	   assert !cs.containsKey("k");
-	   
+
 	   boolean expectedExceptionCaught = false;
-	   
+
 	   InternalCacheEntry se = TestInternalCacheEntryFactory.create("k", "v");
-	   
+
 	   try {
 		   cs.store(se);
 	   } catch (JpaCacheLoaderException e) {
 		   expectedExceptionCaught = true;
 	   }
-	   
+
 	   assert expectedExceptionCaught;
-	   
+
    }
-   
+
    public void testStoreWithJpaBadKey() throws CacheLoaderException {
 	   assert !cs.containsKey("k");
-	   
+
 	   boolean expectedExceptionCaught = false;
-	   
+
 	   try {
 		   TestObject obj = createTestObject("1");
-		   
+
 		   InternalCacheEntry se = TestInternalCacheEntryFactory.create("k", obj.getValue());
-		   
+
 		   cs.store(se);
 	   } catch (JpaCacheLoaderException e) {
 		   expectedExceptionCaught = true;
 	   }
-	   
+
 	   assert expectedExceptionCaught;
    }
-   
+
    public void testStoreWithJpaGoodKey() throws CacheLoaderException {
 	   TestObject obj = createTestObject("testStoreWithJpaGoodKey");
-	   
+
 	   assert !cs.containsKey(obj.getKey());
-	   
+
 	   InternalCacheEntry se = TestInternalCacheEntryFactory.create(obj.getKey(), obj.getValue());
-	   
+
 	   cs.store(se);
    }
-   
+
 	public void testLoadAndStoreImmortal() throws CacheLoaderException {
 		TestObject obj = createTestObject("testLoadAndStoreImmortal");
-		
+
 		assert !cs.containsKey(obj.getKey());
-		
+
 		InternalCacheEntry se = TestInternalCacheEntryFactory.create(obj.getKey(), obj.getValue());
 		cs.store(se);
 
@@ -220,23 +220,23 @@ public abstract class BaseJpaCacheStoreTest extends AbstractInfinispanTest {
 		assert cs.load(obj.getKey()).getLifespan() == -1;
 		assert cs.load(obj.getKey()).getMaxIdle() == -1;
 		assert !cs.load(obj.getKey()).isExpired(System.currentTimeMillis());
-		
+
 
 		boolean removed = cs.remove("nonExistentKey");
 		assert !removed;
 	}
-	
+
 	public void testPreload() throws Exception {
 		TestObject obj1 = createTestObject("testPreload1");
 		TestObject obj2 = createTestObject("testPreload2");
 		TestObject obj3 = createTestObject("testPreload3");
-		
+
 		cs.store(TestInternalCacheEntryFactory.create(obj1.getKey(), obj1.getValue()));
 		cs.store(TestInternalCacheEntryFactory.create(obj2.getKey(), obj2.getValue()));
 		cs.store(TestInternalCacheEntryFactory.create(obj3.getKey(), obj3.getValue()));
 
 		Set<InternalCacheEntry> set = cs.loadAll();
-		
+
 		assert set.size() == 3;
 		Set expected = new HashSet();
 		expected.add(obj1.getKey());
@@ -247,20 +247,20 @@ public abstract class BaseJpaCacheStoreTest extends AbstractInfinispanTest {
 		}
 		assert expected.isEmpty();
 	}
-	
+
 	public void testPreloadWithMaxSize() throws Exception {
 		TestObject obj1 = createTestObject("testPreloadSome1");
 		TestObject obj2 = createTestObject("testPreloadSome2");
 		TestObject obj3 = createTestObject("testPreloadSome3");
 		TestObject obj4 = createTestObject("testPreloadSome4");
-		
+
 		cs.store(TestInternalCacheEntryFactory.create(obj1.getKey(), obj1.getValue()));
 		cs.store(TestInternalCacheEntryFactory.create(obj2.getKey(), obj2.getValue()));
 		cs.store(TestInternalCacheEntryFactory.create(obj3.getKey(), obj3.getValue()));
 		cs.store(TestInternalCacheEntryFactory.create(obj4.getKey(), obj4.getValue()));
 
 		Set<InternalCacheEntry> set = cs.load(3);
-		
+
 		assert set.size() == 3;
 		Set expected = new HashSet();
 		expected.add(obj1.getKey());
@@ -272,14 +272,14 @@ public abstract class BaseJpaCacheStoreTest extends AbstractInfinispanTest {
 		}
 		assert expected.size() == 1;
 	}
-	
+
 	public void testLoadKeys() throws CacheLoaderException {
 		TestObject obj1 = createTestObject("testLoadKeys1");
 		TestObject obj2 = createTestObject("testLoadKeys2");
 		TestObject obj3 = createTestObject("testLoadKeys3");
 		TestObject obj4 = createTestObject("testLoadKeys4");
 		TestObject obj5 = createTestObject("testLoadKeys5");
-		
+
 		cs.store(TestInternalCacheEntryFactory.create(obj1.getKey(), obj1.getValue()));
 		cs.store(TestInternalCacheEntryFactory.create(obj2.getKey(), obj2.getValue()));
 		cs.store(TestInternalCacheEntryFactory.create(obj3.getKey(), obj3.getValue()));
@@ -298,12 +298,12 @@ public abstract class BaseJpaCacheStoreTest extends AbstractInfinispanTest {
 
 		assert !s.contains(obj3.getKey());
 	}
-	
+
 	public void testStreamingAPI() throws IOException, CacheLoaderException {
 		TestObject obj1 = createTestObject("testStreamingAPI1");
 		TestObject obj2 = createTestObject("testStreamingAPI2");
 		TestObject obj3 = createTestObject("testStreamingAPI3");
-		
+
 		cs.store(TestInternalCacheEntryFactory.create(obj1.getKey(), obj1.getValue()));
 		cs.store(TestInternalCacheEntryFactory.create(obj2.getKey(), obj2.getValue()));
 		cs.store(TestInternalCacheEntryFactory.create(obj3.getKey(), obj3.getValue()));
@@ -338,18 +338,18 @@ public abstract class BaseJpaCacheStoreTest extends AbstractInfinispanTest {
 			assert expected.remove(se.getKey());
 		assert expected.isEmpty();
 	}
-	
+
 	public void testStreamingAPIReusingStreams() throws IOException,
 			CacheLoaderException {
-		
+
 		TestObject obj1 = createTestObject("testStreamingAPIReusingStreams1");
 		TestObject obj2 = createTestObject("testStreamingAPIReusingStreams2");
 		TestObject obj3 = createTestObject("testStreamingAPIReusingStreams3");
-		
+
 		cs.store(TestInternalCacheEntryFactory.create(obj1.getKey(), obj1.getValue()));
 		cs.store(TestInternalCacheEntryFactory.create(obj2.getKey(), obj2.getValue()));
 		cs.store(TestInternalCacheEntryFactory.create(obj3.getKey(), obj3.getValue()));
-	
+
 		StreamingMarshaller marshaller = getMarshaller();
 		ByteArrayOutputStream out = new ByteArrayOutputStream();
 		byte[] dummyStartBytes = { 1, 2, 3, 4, 5, 6, 7, 8 };
@@ -365,7 +365,7 @@ public abstract class BaseJpaCacheStoreTest extends AbstractInfinispanTest {
 			out.close();
 			cs.clear();
 		}
-	
+
 		// first pop the start bytes
 		byte[] dummy = new byte[8];
 		ByteArrayInputStream in = new ByteArrayInputStream(out.toByteArray());
@@ -384,7 +384,7 @@ public abstract class BaseJpaCacheStoreTest extends AbstractInfinispanTest {
 			marshaller.finishObjectInput(oi);
 			in.close();
 		}
-	
+
 		Set<InternalCacheEntry> set = cs.loadAll();
 		assert set.size() == 3;
 		Set expected = new HashSet();
@@ -400,7 +400,7 @@ public abstract class BaseJpaCacheStoreTest extends AbstractInfinispanTest {
 		TestObject obj1 = createTestObject("testOnePhaseCommit1");
 		TestObject obj2 = createTestObject("testOnePhaseCommit2");
 		TestObject obj3 = createTestObject("testOnePhaseCommit3");
-		
+
 		List<Modification> mods = new ArrayList<Modification>();
 		mods.add(new Store(TestInternalCacheEntryFactory.create(obj1.getKey(), obj1.getValue())));
 		mods.add(new Store(TestInternalCacheEntryFactory.create(obj2.getKey(), obj2.getValue())));
@@ -422,12 +422,12 @@ public abstract class BaseJpaCacheStoreTest extends AbstractInfinispanTest {
 		assert cs.containsKey(obj2.getKey());
 		assert cs.containsKey(obj3.getKey());
 	}
-	
+
 	public void testTwoPhaseCommit() throws CacheLoaderException {
 		TestObject obj1 = createTestObject("testTwoPhaseCommit1");
 		TestObject obj2 = createTestObject("testTwoPhaseCommit2");
 		TestObject obj3 = createTestObject("testTwoPhaseCommit3");
-		
+
 		List<Modification> mods = new ArrayList<Modification>();
 		mods.add(new Store(TestInternalCacheEntryFactory.create(obj1.getKey(), obj1.getValue())));
 		mods.add(new Store(TestInternalCacheEntryFactory.create(obj2.getKey(), obj2.getValue())));
@@ -462,7 +462,7 @@ public abstract class BaseJpaCacheStoreTest extends AbstractInfinispanTest {
 		assert cs.containsKey(obj1.getKey());
 		assert cs.containsKey(obj1.getKey());
 	}
-	
+
 	public void testRollback() throws CacheLoaderException {
 		TestObject old = createTestObject("testRollbackOld");
 		TestObject obj1 = createTestObject("testRollback1");
@@ -508,14 +508,14 @@ public abstract class BaseJpaCacheStoreTest extends AbstractInfinispanTest {
 		assert !cs.containsKey(obj3.getKey());
 		assert cs.containsKey(old.getKey());
 	}
-	
+
 	public void testRollbackFromADifferentThreadReusingTransactionKey()
 			throws CacheLoaderException, InterruptedException {
 		TestObject old = createTestObject("testRollbackOld");
 		TestObject obj1 = createTestObject("testRollback1");
 		TestObject obj2 = createTestObject("testRollback2");
 		TestObject obj3 = createTestObject("testRollback3");
-		
+
 		cs.store(TestInternalCacheEntryFactory.create(old.getKey(), old.getValue()));
 
 		List<Modification> mods = new ArrayList<Modification>();
@@ -566,7 +566,7 @@ public abstract class BaseJpaCacheStoreTest extends AbstractInfinispanTest {
 	public void testCommitAndRollbackWithoutPrepare()
 			throws CacheLoaderException {
 		TestObject old = createTestObject("testRollbackOld");
-		
+
 		cs.store(TestInternalCacheEntryFactory.create(old.getKey(), old.getValue()));
 		GlobalTransaction tx = gtf.newGlobalTransaction(null, false);
 		cs.commit(tx);
@@ -575,13 +575,13 @@ public abstract class BaseJpaCacheStoreTest extends AbstractInfinispanTest {
 
 		assert cs.containsKey(old.getKey());
 	}
-	
+
 	public void testStoreAndRemoveAll() throws CacheLoaderException {
 		TestObject obj1 = createTestObject("testStoreAndRemoveAll1");
 		TestObject obj2 = createTestObject("testStoreAndRemoveAll2");
 		TestObject obj3 = createTestObject("testStoreAndRemoveAll3");
 		TestObject obj4 = createTestObject("testStoreAndRemoveAll4");
-		
+
 		cs.store(TestInternalCacheEntryFactory.create(obj1.getKey(), obj1.getValue()));
 		cs.store(TestInternalCacheEntryFactory.create(obj2.getKey(), obj2.getValue()));
 		cs.store(TestInternalCacheEntryFactory.create(obj3.getKey(), obj3.getValue()));
@@ -610,7 +610,7 @@ public abstract class BaseJpaCacheStoreTest extends AbstractInfinispanTest {
 		set.remove(obj4.getKey());
 		assert expected.isEmpty();
 	}
-	
+
 	public void testConcurrency() throws Exception {
 		int numThreads = 3;
 		final int loops = 500;
@@ -687,7 +687,7 @@ public abstract class BaseJpaCacheStoreTest extends AbstractInfinispanTest {
 		if (!exceptions.isEmpty())
 			throw exceptions.get(0);
 	}
-	
+
 	public void testConfigFile() throws Exception {
 		Class<? extends CacheLoaderConfig> cfgClass = cs
 				.getConfigurationClass();
@@ -833,7 +833,7 @@ public abstract class BaseJpaCacheStoreTest extends AbstractInfinispanTest {
 
 
 
-   
+
 
    public void testPurgeExpired() throws Exception {
       // Increased lifespan and idle timeouts to accommodate slower cache stores
@@ -867,7 +867,7 @@ public abstract class BaseJpaCacheStoreTest extends AbstractInfinispanTest {
       assert clc.getCacheLoaderClassName().equals(cs.getClass().getName()) : "Cache loaders doesn't provide a proper configuration type that is capable of creating the loaders!";
    }
 
-   
+
 
    public void testReplaceExpiredEntry() throws Exception {
       final long startTime = System.currentTimeMillis();

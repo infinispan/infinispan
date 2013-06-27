@@ -25,9 +25,9 @@ import java.util.ServiceConfigurationError;
 
 import javax.transaction.SystemException;
 
-import org.infinispan.CacheException;
 import org.infinispan.cli.interpreter.codec.CodecException;
 import org.infinispan.cli.interpreter.result.StatementException;
+import org.infinispan.commons.CacheException;
 import org.jboss.logging.Cause;
 import org.jboss.logging.LogMessage;
 import org.jboss.logging.Message;

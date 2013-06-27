@@ -25,7 +25,7 @@ package org.infinispan.ec2demo;
 import com.martiansoftware.jsap.JSAPResult;
 import org.infinispan.Cache;
 import org.infinispan.remoting.transport.Address;
-import org.infinispan.util.LegacyKeySupportSystemProperties;
+import org.infinispan.commons.util.LegacyKeySupportSystemProperties;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 import org.xml.sax.SAXException;
@@ -37,7 +37,7 @@ import java.util.Random;
 
 /**
  * @author noconnor@redhat.com
- * 
+ *
  */
 public class InfluenzaDataLoader {
 	private CacheBuilder cbuilder;
@@ -50,10 +50,10 @@ public class InfluenzaDataLoader {
 	private static final Log log = LogFactory.getLog(InfluenzaDataLoader.class);
 
 	public void createCache(String configFile) throws IOException {
-		String cfgFileName = LegacyKeySupportSystemProperties.getProperty("infinispan.configuration", "infinispan.demo.cfg");		
+		String cfgFileName = LegacyKeySupportSystemProperties.getProperty("infinispan.configuration", "infinispan.demo.cfg");
 		if (cfgFileName == null)
 			cfgFileName = configFile;
-		
+
 		cbuilder = new CacheBuilder(cfgFileName);
 		influenzaCache = cbuilder.getCacheManager().getCache("InfluenzaCache");
 		proteinCache = cbuilder.getCacheManager().getCache("ProteinCache");

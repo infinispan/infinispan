@@ -24,13 +24,13 @@ package org.infinispan.atomic;
 
 import org.infinispan.AdvancedCache;
 import org.infinispan.Cache;
+import org.infinispan.commons.util.InfinispanCollections;
 import org.infinispan.context.Flag;
 import org.infinispan.context.FlagContainer;
-import org.infinispan.util.InfinispanCollections;
 
 import java.util.Map;
 
-import static org.infinispan.util.Immutables.immutableMapWrap;
+import static org.infinispan.commons.util.Immutables.immutableMapWrap;
 
 /**
  * A helper that locates or safely constructs and registers atomic maps with a given cache.  This should be the
