@@ -20,7 +20,7 @@ import org.infinispan.notifications.cachemanagerlistener.event.EventImpl
 class CrashedMemberDetectorTest extends SingleCacheManagerTest {
 
    protected def createCacheManager() =
-      TestCacheManagerFactory.createLocalCacheManager(false)
+      TestCacheManagerFactory.createCacheManager()
 
    def testDetectCrashedMembers() {
       val cache = cacheManager.getCache[Address, ServerAddress]()

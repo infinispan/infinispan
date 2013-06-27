@@ -2,15 +2,13 @@ package org.infinispan.server.hotrod
 
 import test.HotRodClient
 import java.lang.reflect.Method
-import org.infinispan.server.hotrod.OperationStatus._
 import org.infinispan.test.MultipleCacheManagersTest
 import test.HotRodTestingUtil._
 import org.infinispan.test.AbstractCacheTest._
-import org.testng.annotations.{AfterClass, BeforeClass, AfterMethod, Test}
+import org.testng.annotations.{AfterMethod, Test}
 import org.infinispan.server.core.test.ServerTestingUtil._
 import org.infinispan.test.fwk.TestCacheManagerFactory
 import org.infinispan.configuration.cache.CacheMode
-import org.infinispan.commons.equivalence.ByteArrayEquivalence
 import org.infinispan.commons.CacheConfigurationException
 import org.infinispan.server.hotrod.configuration.HotRodServerConfigurationBuilder
 import org.infinispan.configuration.global.GlobalConfigurationBuilder
