@@ -23,7 +23,8 @@ import java.util.List;
 import java.util.Properties;
 
 import org.infinispan.client.hotrod.impl.ConfigurationProperties;
-import org.infinispan.configuration.BuiltBy;
+import org.infinispan.commons.configuration.BuiltBy;
+import org.infinispan.commons.util.TypedProperties;
 import org.infinispan.configuration.cache.AbstractStoreConfiguration;
 import org.infinispan.configuration.cache.AsyncStoreConfiguration;
 import org.infinispan.configuration.cache.LegacyConfigurationAdaptor;
@@ -31,7 +32,6 @@ import org.infinispan.configuration.cache.LegacyLoaderAdapter;
 import org.infinispan.configuration.cache.SingletonStoreConfiguration;
 import org.infinispan.loaders.remote.RemoteCacheStoreConfig;
 import org.infinispan.loaders.remote.wrapper.EntryWrapper;
-import org.infinispan.util.TypedProperties;
 
 @BuiltBy(RemoteCacheStoreConfigurationBuilder.class)
 public class RemoteCacheStoreConfiguration extends AbstractStoreConfiguration implements

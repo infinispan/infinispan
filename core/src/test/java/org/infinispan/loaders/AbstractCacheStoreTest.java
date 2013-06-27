@@ -29,10 +29,10 @@ import java.util.concurrent.ExecutorService;
 
 import org.infinispan.AdvancedCache;
 import org.infinispan.Cache;
+import org.infinispan.commons.util.ReflectionUtil;
 import org.infinispan.factories.ComponentRegistry;
 import org.infinispan.test.AbstractInfinispanTest;
 import org.infinispan.util.DefaultTimeService;
-import org.infinispan.util.ReflectionUtil;
 import org.infinispan.util.concurrent.WithinThreadExecutor;
 import org.mockito.Mockito;
 import org.testng.annotations.AfterMethod;

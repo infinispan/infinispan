@@ -18,9 +18,9 @@
  */
 package org.infinispan.client.hotrod.configuration;
 
-import org.infinispan.configuration.AbstractTypedPropertiesConfiguration;
-import org.infinispan.executors.ExecutorFactory;
-import org.infinispan.util.TypedProperties;
+import org.infinispan.commons.configuration.AbstractTypedPropertiesConfiguration;
+import org.infinispan.commons.executors.ExecutorFactory;
+import org.infinispan.commons.util.TypedProperties;
 
 /**
  * ExecutorFactoryConfiguration.

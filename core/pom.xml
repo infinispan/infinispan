@@ -42,6 +42,11 @@
       <module.skipComponentMetaDataProcessing>false</module.skipComponentMetaDataProcessing>
    </properties>
    <dependencies>
+   
+      <dependency>
+         <groupId>org.infinispan</groupId>
+         <artifactId>infinispan-commons</artifactId>
+      </dependency>
 
       <dependency>
          <groupId>org.jgroups</groupId>
@@ -70,12 +75,6 @@
       <dependency>
          <groupId>org.jboss.logging</groupId>
          <artifactId>jboss-logging</artifactId>
-      </dependency>
-
-      <dependency>
-         <groupId>org.osgi</groupId>
-         <artifactId>org.osgi.core</artifactId>
-         <optional>true</optional>
       </dependency>
 
       <dependency>

@@ -23,7 +23,7 @@
 package org.infinispan.loaders.file;
 
 import org.infinispan.manager.EmbeddedCacheManager;
-import org.infinispan.marshall.StreamingMarshaller;
+import org.infinispan.commons.marshall.StreamingMarshaller;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.testng.annotations.AfterTest;
 import org.testng.annotations.Test;
@@ -32,7 +32,7 @@ import static org.infinispan.test.TestingUtil.extractCacheMarshaller;
 
 /**
  * FileCacheStoreTest using production level marshaller.
- * 
+ *
  * @author Galder Zamarreño
  * @since 4.0
  */

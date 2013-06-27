@@ -19,7 +19,7 @@
 
 package org.infinispan.configuration.cache;
 
-import org.infinispan.configuration.Builder;
+import org.infinispan.commons.configuration.Builder;
 
 /**
  * @author Mircea Markus

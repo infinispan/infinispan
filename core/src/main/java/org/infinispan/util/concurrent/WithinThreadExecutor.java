@@ -22,7 +22,7 @@
  */
 package org.infinispan.util.concurrent;
 
-import org.infinispan.util.InfinispanCollections;
+import org.infinispan.commons.util.InfinispanCollections;
 
 import java.util.Collections;
 import java.util.List;

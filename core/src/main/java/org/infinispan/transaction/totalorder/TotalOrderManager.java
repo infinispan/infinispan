@@ -19,11 +19,11 @@
 
 package org.infinispan.transaction.totalorder;
 
+import org.infinispan.commons.util.CollectionFactory;
 import org.infinispan.factories.KnownComponentNames;
 import org.infinispan.factories.annotations.ComponentName;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.transaction.TotalOrderRemoteTransactionState;
-import org.infinispan.util.CollectionFactory;
 import org.infinispan.util.concurrent.BlockingTaskAwareExecutorService;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;

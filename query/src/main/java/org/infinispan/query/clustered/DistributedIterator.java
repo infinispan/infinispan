@@ -27,7 +27,7 @@ import org.apache.lucene.search.SortField;
 import org.apache.lucene.util.PriorityQueue;
 import org.infinispan.AdvancedCache;
 import org.infinispan.query.ResultIterator;
-import org.infinispan.util.ReflectionUtil;
+import org.infinispan.commons.util.ReflectionUtil;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -36,9 +36,9 @@ import java.util.UUID;
 
 /**
  * DistributedIterator.
- * 
+ *
  * Iterates on a distributed query.
- * 
+ *
  * @author Israel Lacerra <israeldl@gmail.com>
  * @author <a href="mailto:mluksa@redhat.com">Marko Luksa</a>
  * @since 5.1
@@ -85,7 +85,7 @@ public class DistributedIterator implements ResultIterator {
 
    /**
     * As we don't know where (in what node) is the first result,
-    * we have to compare the results until we achieve the first result. 
+    * we have to compare the results until we achieve the first result.
     */
    private void goToFirstResult() {
       for (int i = 0; i < firstResult; i++) {

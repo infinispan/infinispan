@@ -29,7 +29,7 @@ import org.infinispan.configuration.parsing.Namespaces;
 import org.infinispan.configuration.parsing.ParseUtils;
 import org.infinispan.configuration.parsing.Parser53;
 import org.infinispan.configuration.parsing.XMLExtendedStreamReader;
-import org.infinispan.util.StringPropertyReplacer;
+import org.infinispan.commons.util.StringPropertyReplacer;
 
 /**
  *
@@ -46,7 +46,8 @@ public class JpaCacheStoreConfigurationParser53 implements
 	public JpaCacheStoreConfigurationParser53() {
 	}
 
-	public void readElement(XMLExtendedStreamReader reader,
+	@Override
+   public void readElement(XMLExtendedStreamReader reader,
 			ConfigurationBuilderHolder holder) throws XMLStreamException {
 		ConfigurationBuilder builder = holder.getCurrentConfigurationBuilder();
 		Element element = Element.forName(reader.getLocalName());
@@ -99,7 +100,7 @@ public class JpaCacheStoreConfigurationParser53 implements
 			}
 			}
 		}
-		
+
 		if (reader.hasNext() && (reader.nextTag() != XMLStreamConstants.END_ELEMENT)) {
          ParseUtils.unexpectedElement(reader);
       }

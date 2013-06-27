@@ -33,10 +33,10 @@ import org.infinispan.client.hotrod.impl.transport.TransportFactory;
 import org.infinispan.client.hotrod.impl.transport.tcp.RequestBalancingStrategy;
 import org.infinispan.client.hotrod.impl.transport.tcp.RoundRobinBalancingStrategy;
 import org.infinispan.client.hotrod.impl.transport.tcp.TcpTransportFactory;
-import org.infinispan.configuration.Builder;
-import org.infinispan.marshall.Marshaller;
-import org.infinispan.marshall.jboss.GenericJBossMarshaller;
-import org.infinispan.util.Util;
+import org.infinispan.commons.configuration.Builder;
+import org.infinispan.commons.marshall.Marshaller;
+import org.infinispan.commons.marshall.jboss.GenericJBossMarshaller;
+import org.infinispan.commons.util.Util;
 
 /**
  * ConfigurationBuilder used to generate immutable {@link Configuration} objects to pass to the

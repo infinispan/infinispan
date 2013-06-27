@@ -22,14 +22,14 @@
  */
 package org.infinispan.jmx;
 
+import org.infinispan.commons.util.CollectionFactory;
+import org.infinispan.commons.util.ReflectionUtil;
 import org.infinispan.factories.components.JmxAttributeMetadata;
 import org.infinispan.factories.components.JmxOperationMetadata;
 import org.infinispan.factories.components.JmxOperationParameter;
 import org.infinispan.factories.components.ManageableComponentMetadata;
 import org.infinispan.jmx.annotations.MBean;
 import org.infinispan.jmx.annotations.ManagedOperation;
-import org.infinispan.util.ReflectionUtil;
-import org.infinispan.util.CollectionFactory;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
@@ -51,7 +51,7 @@ import java.lang.reflect.Modifier;
 import java.util.HashMap;
 import java.util.Map;
 
-import static org.infinispan.util.ReflectionUtil.EMPTY_CLASS_ARRAY;
+import static org.infinispan.commons.util.ReflectionUtil.EMPTY_CLASS_ARRAY;
 
 /**
  * This class was entirely copied from JGroups 2.7 (same name there). Couldn't simply reuse it because JGroups does not

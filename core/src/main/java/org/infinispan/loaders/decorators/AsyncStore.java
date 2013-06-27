@@ -24,7 +24,6 @@ package org.infinispan.loaders.decorators;
 
 import net.jcip.annotations.GuardedBy;
 import org.infinispan.Cache;
-import org.infinispan.CacheException;
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.container.entries.InternalCacheEntry;
 import org.infinispan.loaders.CacheLoaderConfig;
@@ -35,10 +34,11 @@ import org.infinispan.loaders.modifications.Modification;
 import org.infinispan.loaders.modifications.ModificationsList;
 import org.infinispan.loaders.modifications.Remove;
 import org.infinispan.loaders.modifications.Store;
-import org.infinispan.marshall.StreamingMarshaller;
+import org.infinispan.commons.CacheException;
+import org.infinispan.commons.marshall.StreamingMarshaller;
+import org.infinispan.commons.util.CollectionFactory;
 import org.infinispan.transaction.xa.GlobalTransaction;
 import org.infinispan.transaction.xa.TransactionFactory;
-import org.infinispan.util.CollectionFactory;
 import org.infinispan.util.TimeService;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
@@ -459,6 +459,7 @@ public class AsyncStore extends AbstractDelegatingStore {
             }
          }
 
+         @Override
          protected int tryAcquireShared(int count) {
             for (;;) {
                int state = getState();
@@ -469,6 +470,7 @@ public class AsyncStore extends AbstractDelegatingStore {
             }
          }
 
+         @Override
          protected boolean tryReleaseShared(int state) {
             setState(state);
             return state < size;
@@ -482,10 +484,12 @@ public class AsyncStore extends AbstractDelegatingStore {
       private static class Available extends AbstractQueuedSynchronizer {
          private static final long serialVersionUID = 6464514100313353749L;
 
+         @Override
          protected int tryAcquireShared(int unused) {
             return getState() > 0 ? 1 : -1;
          }
 
+         @Override
          protected boolean tryReleaseShared(int state) {
             setState(state > 0 ? 1 : 0);
             return state > 0;
@@ -499,6 +503,7 @@ public class AsyncStore extends AbstractDelegatingStore {
       private static class Sync extends AbstractQueuedSynchronizer {
          private static final long serialVersionUID = 2983687000985096017L;
 
+         @Override
          protected boolean tryAcquire(int unused) {
             if (!compareAndSetState(0, -1))
                return false;
@@ -506,12 +511,14 @@ public class AsyncStore extends AbstractDelegatingStore {
             return true;
          }
 
+         @Override
          protected boolean tryRelease(int unused) {
             setExclusiveOwnerThread(null);
             setState(0);
             return true;
          }
 
+         @Override
          protected int tryAcquireShared(int unused) {
             for (;;) {
                int state = getState();
@@ -522,6 +529,7 @@ public class AsyncStore extends AbstractDelegatingStore {
             }
          }
 
+         @Override
          protected boolean tryReleaseShared(int unused) {
             for (;;) {
                int state = getState();

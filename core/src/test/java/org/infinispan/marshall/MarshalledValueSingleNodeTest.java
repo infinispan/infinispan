@@ -22,12 +22,13 @@
  */
 package org.infinispan.marshall;
 
-import org.infinispan.CacheException;
-import org.infinispan.config.Configuration;
+import org.infinispan.commons.CacheException;
+import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.test.SingleCacheManagerTest;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.testng.annotations.Test;
+import static org.testng.AssertJUnit.*;
 
 @Test(groups = "functional", testName = "marshall.MarshalledValueSingleNodeTest")
 public class MarshalledValueSingleNodeTest extends SingleCacheManagerTest {
@@ -35,9 +36,8 @@ public class MarshalledValueSingleNodeTest extends SingleCacheManagerTest {
    @Override
    protected EmbeddedCacheManager createCacheManager() throws Exception {
       // start a single cache instance
-      Configuration c = getDefaultStandaloneConfig(true);
-      c.setInvocationBatchingEnabled(true);
-      c.setUseLazyDeserialization(true);
+      ConfigurationBuilder c = getDefaultStandaloneCacheConfig(true);
+      c.invocationBatching().enable().storeAsBinary().enable();
       EmbeddedCacheManager cm = TestCacheManagerFactory.createCacheManager(c);
       cache = cm.getCache();
       return cm;
@@ -46,7 +46,7 @@ public class MarshalledValueSingleNodeTest extends SingleCacheManagerTest {
    public void testNonSerializable() {
       try {
          cache.put("Hello", new Object());
-         assert false : "Should have failed";
+         fail("Should have failed");
       }
       catch (CacheException expected) {
          log.trace("");
@@ -54,7 +54,7 @@ public class MarshalledValueSingleNodeTest extends SingleCacheManagerTest {
 
       try {
          cache.put(new Object(), "Hello");
-         assert false : "Should have failed";
+         fail("Should have failed");
       }
       catch (CacheException expected) {
 

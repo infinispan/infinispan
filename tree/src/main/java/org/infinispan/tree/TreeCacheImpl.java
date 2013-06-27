@@ -24,9 +24,9 @@ package org.infinispan.tree;
 
 import org.infinispan.AdvancedCache;
 import org.infinispan.Cache;
-import org.infinispan.CacheConfigurationException;
-import org.infinispan.CacheException;
 import org.infinispan.atomic.AtomicMap;
+import org.infinispan.commons.CacheConfigurationException;
+import org.infinispan.commons.CacheException;
 import org.infinispan.context.Flag;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;

@@ -28,13 +28,13 @@ import java.io.ObjectOutput;
 import java.io.Serializable;
 import java.util.Set;
 
-import org.infinispan.io.UnsignedNumeric;
-import org.infinispan.marshall.AbstractExternalizer;
-import org.infinispan.util.Util;
+import org.infinispan.commons.io.UnsignedNumeric;
+import org.infinispan.commons.marshall.AbstractExternalizer;
+import org.infinispan.commons.util.Util;
 
 /**
  * Used as a key to distinguish file chunk in cache.
- * 
+ *
  * @since 4.0
  * @author Lukasz Moren
  * @author Sanne Grinovero
@@ -62,7 +62,7 @@ public final class ChunkCacheKey implements Serializable, IndexScopedKey {
 
    /**
     * Get the chunkId.
-    * 
+    *
     * @return the chunkId.
     */
    public int getChunkId() {
@@ -71,7 +71,7 @@ public final class ChunkCacheKey implements Serializable, IndexScopedKey {
 
    /**
     * Get the bufferSize.
-    * 
+    *
     * @return the bufferSize.
     */
    public int getBufferSize() {
@@ -80,9 +80,10 @@ public final class ChunkCacheKey implements Serializable, IndexScopedKey {
 
    /**
     * Get the indexName.
-    * 
+    *
     * @return the indexName.
     */
+   @Override
    public String getIndexName() {
       return indexName;
    }
@@ -94,7 +95,7 @@ public final class ChunkCacheKey implements Serializable, IndexScopedKey {
 
    /**
     * Get the fileName.
-    * 
+    *
     * @return the fileName.
     */
    public String getFileName() {
@@ -133,7 +134,7 @@ public final class ChunkCacheKey implements Serializable, IndexScopedKey {
 
    /**
     * Changing the encoding could break backwards compatibility
-    * 
+    *
     * @see LuceneKey2StringMapper#getKeyMapping(String)
     */
    @Override

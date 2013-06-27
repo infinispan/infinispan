@@ -18,8 +18,8 @@
  */
 package org.infinispan.loaders.cassandra.configuration;
 
-import org.infinispan.config.ConfigurationException;
-import org.infinispan.configuration.Builder;
+import org.infinispan.commons.configuration.Builder;
+import org.infinispan.commons.CacheConfigurationException;
 
 /**
  *
@@ -50,7 +50,7 @@ public class CassandraServerConfigurationBuilder extends AbstractCassandraCacheS
    @Override
    public void validate() {
       if (host==null) {
-         throw new ConfigurationException("Missing host");
+         throw new CacheConfigurationException("Missing host");
       }
    }
 

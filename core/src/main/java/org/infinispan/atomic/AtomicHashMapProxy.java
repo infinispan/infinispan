@@ -24,13 +24,13 @@ package org.infinispan.atomic;
 
 import org.infinispan.AdvancedCache;
 import org.infinispan.batch.AutoBatchSupport;
+import org.infinispan.commons.util.InfinispanCollections;
 import org.infinispan.container.entries.CacheEntry;
 import org.infinispan.context.Flag;
-import org.infinispan.marshall.MarshalledValue;
+import org.infinispan.marshall.core.MarshalledValue;
 import org.infinispan.transaction.LocalTransaction;
 import org.infinispan.transaction.LockingMode;
 import org.infinispan.transaction.TransactionTable;
-import org.infinispan.util.InfinispanCollections;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
@@ -199,7 +199,7 @@ public class AtomicHashMapProxy<K, V> extends AutoBatchSupport implements Atomic
       return map == null ? null : map.get(key);
    }
 
-   //writers      
+   //writers
    @Override
    public V put(K key, V value) {
       AtomicHashMap<K, V> deltaMapForWrite;

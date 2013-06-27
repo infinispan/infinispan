@@ -23,7 +23,7 @@
 package org.infinispan.distribution;
 
 import org.infinispan.Cache;
-import org.infinispan.CacheException;
+import org.infinispan.commons.CacheException;
 import org.infinispan.config.Configuration;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.test.AbstractInfinispanTest;

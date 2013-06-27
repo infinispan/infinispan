@@ -20,10 +20,10 @@ package org.infinispan.configuration.cache;
 
 import java.util.Properties;
 
-import org.infinispan.CacheException;
+import org.infinispan.commons.CacheException;
+import org.infinispan.commons.util.TypedProperties;
 import org.infinispan.loaders.CacheLoader;
 import org.infinispan.loaders.CacheStore;
-import org.infinispan.util.TypedProperties;
 
 /**
  * Configuration a legacy cache loader, i.e. a loader which is still configured via properties and

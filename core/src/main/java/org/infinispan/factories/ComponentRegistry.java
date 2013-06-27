@@ -23,22 +23,22 @@
 package org.infinispan.factories;
 
 import org.infinispan.AdvancedCache;
-import org.infinispan.CacheException;
 import org.infinispan.commands.CommandsFactory;
 import org.infinispan.commands.module.ModuleCommandInitializer;
-import org.infinispan.config.ConfigurationException;
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.factories.components.ComponentMetadata;
 import org.infinispan.factories.components.ComponentMetadataRepo;
 import org.infinispan.lifecycle.ComponentStatus;
 import org.infinispan.lifecycle.ModuleLifecycle;
-import org.infinispan.marshall.StreamingMarshaller;
+import org.infinispan.commons.CacheConfigurationException;
+import org.infinispan.commons.CacheException;
+import org.infinispan.commons.marshall.StreamingMarshaller;
+import org.infinispan.commons.util.InfinispanCollections;
 import org.infinispan.notifications.cachemanagerlistener.CacheManagerNotifier;
 import org.infinispan.remoting.responses.ResponseGenerator;
 import org.infinispan.statetransfer.StateTransferManager;
 import org.infinispan.transaction.totalorder.TotalOrderManager;
-import org.infinispan.util.InfinispanCollections;
 import org.infinispan.util.TimeService;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
@@ -87,7 +87,7 @@ public class ComponentRegistry extends AbstractComponentRegistry {
       this.defaultClassLoader = new WeakReference<ClassLoader>(defaultClassLoader);
       try {
          this.cacheName = cacheName;
-         if (cacheName == null) throw new ConfigurationException("Cache name cannot be null!");
+         if (cacheName == null) throw new CacheConfigurationException("Cache name cannot be null!");
          if (globalComponents == null) throw new NullPointerException("GlobalComponentRegistry cannot be null!");
          this.globalComponents = globalComponents;
 

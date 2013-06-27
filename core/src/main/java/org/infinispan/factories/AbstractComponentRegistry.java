@@ -22,9 +22,11 @@
  */
 package org.infinispan.factories;
 
-import org.infinispan.CacheException;
+import org.infinispan.commons.CacheException;
+import org.infinispan.commons.util.ReflectionUtil;
+import org.infinispan.commons.util.Util;
 import org.infinispan.config.Configuration;
-import org.infinispan.config.ConfigurationException;
+import org.infinispan.commons.CacheConfigurationException;
 import org.infinispan.factories.annotations.DefaultFactoryFor;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.factories.annotations.SurvivesRestarts;
@@ -34,9 +36,7 @@ import org.infinispan.factories.scopes.Scope;
 import org.infinispan.factories.scopes.Scopes;
 import org.infinispan.lifecycle.ComponentStatus;
 import org.infinispan.lifecycle.Lifecycle;
-import org.infinispan.util.ReflectionUtil;
 import org.infinispan.util.TimeService;
-import org.infinispan.util.Util;
 import org.infinispan.util.logging.Log;
 
 import java.lang.reflect.InvocationTargetException;
@@ -131,7 +131,7 @@ public abstract class AbstractComponentRegistry implements Lifecycle, Cloneable 
     * @param target object to wire
     * @throws ConfigurationException if there is a problem wiring the instance
     */
-   public void wireDependencies(Object target) throws ConfigurationException {
+   public void wireDependencies(Object target) throws CacheConfigurationException {
       try {
          Class<?> targetClass = target.getClass();
          ComponentMetadata metadata = getComponentMetadataRepo().findComponentMetadata(targetClass);
@@ -153,7 +153,7 @@ public abstract class AbstractComponentRegistry implements Lifecycle, Cloneable 
             }
          }
       } catch (Exception e) {
-         throw new ConfigurationException("Unable to configure component (type: " + target.getClass() + ", instance " + target + ")", e);
+         throw new CacheConfigurationException("Unable to configure component (type: " + target.getClass() + ", instance " + target + ")", e);
       }
    }
 
@@ -364,10 +364,10 @@ public abstract class AbstractComponentRegistry implements Lifecycle, Cloneable 
             return (AbstractComponentFactory) factory.newInstance();
          } catch (Exception e) {
             // unable to get a hold of an instance!!
-            throw new ConfigurationException("Unable to instantiate factory " + factory + "  Debug stack: " + debugStack, e);
+            throw new CacheConfigurationException("Unable to instantiate factory " + factory + "  Debug stack: " + debugStack, e);
          }
       } else {
-         throw new ConfigurationException("Cannot auto-instantiate factory " + factory + " as it doesn't implement " + AutoInstantiableFactory.class.getSimpleName() + "!  Debug stack: " + debugStack);
+         throw new CacheConfigurationException("Cannot auto-instantiate factory " + factory + " as it doesn't implement " + AutoInstantiableFactory.class.getSimpleName() + "!  Debug stack: " + debugStack);
       }
    }
 
@@ -615,10 +615,10 @@ public abstract class AbstractComponentRegistry implements Lifecycle, Cloneable 
     */
    private void handleLifecycleTransitionFailure(Throwable t) {
       state = ComponentStatus.FAILED;
-      if (t.getCause() != null && t.getCause() instanceof ConfigurationException)
-         throw (ConfigurationException) t.getCause();
-      else if (t.getCause() != null && t.getCause() instanceof InvocationTargetException && t.getCause().getCause() != null && t.getCause().getCause() instanceof ConfigurationException)
-         throw (ConfigurationException) t.getCause().getCause();
+      if (t.getCause() != null && t.getCause() instanceof CacheConfigurationException)
+         throw (CacheConfigurationException) t.getCause();
+      else if (t.getCause() != null && t.getCause() instanceof InvocationTargetException && t.getCause().getCause() != null && t.getCause().getCause() instanceof CacheConfigurationException)
+         throw (CacheConfigurationException) t.getCause().getCause();
       else if (t instanceof CacheException)
          throw (CacheException) t;
       else if (t instanceof RuntimeException)
@@ -649,7 +649,7 @@ public abstract class AbstractComponentRegistry implements Lifecycle, Cloneable 
 
       state = ComponentStatus.RUNNING;
    }
-   
+
    private void invokeStartMethods(Collection<PrioritizedMethod> startMethods) {
       boolean traceEnabled = getLog().isTraceEnabled();
       for (PrioritizedMethod em : startMethods) {
@@ -901,9 +901,9 @@ public abstract class AbstractComponentRegistry implements Lifecycle, Cloneable 
 
    protected void throwStackAwareConfigurationException(String message) {
       if (debugStack == null) {
-         throw new ConfigurationException(message + ". To get more detail set the system property " + DEPENDENCIES_ENABLE_JVMOPTION + " to true");
+         throw new CacheConfigurationException(message + ". To get more detail set the system property " + DEPENDENCIES_ENABLE_JVMOPTION + " to true");
       } else {
-         throw new ConfigurationException(message + " Debug stack: " + debugStack);
+         throw new CacheConfigurationException(message + " Debug stack: " + debugStack);
       }
    }
 

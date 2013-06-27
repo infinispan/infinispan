@@ -26,9 +26,9 @@ import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.List;
 
-import org.infinispan.config.ConfigurationException;
-import org.infinispan.configuration.Builder;
-import org.infinispan.configuration.ConfigurationUtils;
+import org.infinispan.commons.configuration.Builder;
+import org.infinispan.commons.configuration.ConfigurationUtils;
+import org.infinispan.commons.CacheConfigurationException;
 
 public class ConfigurationBuilder implements ConfigurationChildBuilder {
 
@@ -182,7 +182,7 @@ public class ConfigurationBuilder implements ConfigurationChildBuilder {
          this.modules.add(builder);
          return builder;
       } catch (Exception e) {
-         throw new ConfigurationException("Could not instantiate module configuration builder '" + klass.getName() + "'", e);
+         throw new CacheConfigurationException("Could not instantiate module configuration builder '" + klass.getName() + "'", e);
       }
    }
 

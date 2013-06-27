@@ -24,7 +24,7 @@ package org.infinispan.loaders.jdbc.mixed;
 
 import org.infinispan.loaders.CacheLoaderException;
 import org.infinispan.manager.EmbeddedCacheManager;
-import org.infinispan.marshall.StreamingMarshaller;
+import org.infinispan.commons.marshall.StreamingMarshaller;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
@@ -34,7 +34,7 @@ import static org.infinispan.test.TestingUtil.extractCacheMarshaller;
 
 /**
  * JdbcMixedCacheStoreTest using production level marshaller.
- * 
+ *
  * @author Galder Zamarreño
  * @since 4.0
  */

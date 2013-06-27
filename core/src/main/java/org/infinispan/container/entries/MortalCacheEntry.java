@@ -24,17 +24,17 @@ package org.infinispan.container.entries;
 
 import org.infinispan.metadata.EmbeddedMetadata;
 import org.infinispan.metadata.Metadata;
-import org.infinispan.io.UnsignedNumeric;
-import org.infinispan.marshall.AbstractExternalizer;
-import org.infinispan.marshall.Ids;
-import org.infinispan.util.Util;
+import org.infinispan.commons.io.UnsignedNumeric;
+import org.infinispan.commons.marshall.AbstractExternalizer;
+import org.infinispan.commons.util.Util;
+import org.infinispan.marshall.core.Ids;
 
 import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
 import java.util.Set;
 
-import static org.infinispan.util.Util.toStr;
+import static org.infinispan.commons.util.Util.toStr;
 
 /**
  * A cache entry that is mortal.  I.e., has a lifespan.

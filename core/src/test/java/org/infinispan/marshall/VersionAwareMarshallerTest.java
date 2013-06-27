@@ -47,7 +47,13 @@ import org.infinispan.commands.write.ReplaceCommand;
 import org.infinispan.commands.write.WriteCommand;
 import org.infinispan.commons.equivalence.AnyEquivalence;
 import org.infinispan.commons.hash.MurmurHash3;
-import org.infinispan.config.Configuration;
+import org.infinispan.commons.marshall.NotSerializableException;
+import org.infinispan.commons.marshall.PojoWithJBossExternalize;
+import org.infinispan.commons.marshall.PojoWithSerializeWith;
+import org.infinispan.commons.util.FastCopyHashMap;
+import org.infinispan.commons.util.Immutables;
+import org.infinispan.configuration.cache.CacheMode;
+import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.container.entries.ImmortalCacheEntry;
 import org.infinispan.container.entries.ImmortalCacheValue;
 import org.infinispan.container.entries.InternalCacheEntry;
@@ -62,8 +68,9 @@ import org.infinispan.distribution.ch.DefaultConsistentHash;
 import org.infinispan.distribution.ch.DefaultConsistentHashFactory;
 import org.infinispan.loaders.bucket.Bucket;
 import org.infinispan.manager.EmbeddedCacheManager;
-import org.infinispan.marshall.jboss.JBossMarshallingTest.CustomReadObjectMethod;
-import org.infinispan.marshall.jboss.JBossMarshallingTest.ObjectThatContainsACustomReadObjectMethod;
+import org.infinispan.marshall.core.MarshalledValue;
+import org.infinispan.marshall.core.JBossMarshallingTest.CustomReadObjectMethod;
+import org.infinispan.marshall.core.JBossMarshallingTest.ObjectThatContainsACustomReadObjectMethod;
 import org.infinispan.statetransfer.StateRequestCommand;
 import org.infinispan.remoting.MIMECacheEntry;
 import org.infinispan.remoting.responses.ExceptionResponse;
@@ -76,9 +83,6 @@ import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.infinispan.test.fwk.TestInternalCacheEntryFactory;
 import org.infinispan.transaction.xa.GlobalTransaction;
 import org.infinispan.transaction.xa.TransactionFactory;
-import org.infinispan.util.DefaultTimeService;
-import org.infinispan.util.FastCopyHashMap;
-import org.infinispan.util.Immutables;
 import org.infinispan.util.concurrent.TimeoutException;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
@@ -108,7 +112,7 @@ import static org.testng.AssertJUnit.assertTrue;
 public class VersionAwareMarshallerTest extends AbstractInfinispanTest {
 
    private static final Log log = LogFactory.getLog(VersionAwareMarshallerTest.class);
-   private AbstractDelegatingMarshaller marshaller;
+   private org.infinispan.commons.marshall.AbstractDelegatingMarshaller marshaller;
    private EmbeddedCacheManager cm;
 
    private final TransactionFactory gtf = new TransactionFactory();
@@ -120,8 +124,9 @@ public class VersionAwareMarshallerTest extends AbstractInfinispanTest {
    @BeforeTest
    public void setUp() {
       // Use a clustered cache manager to be able to test global marshaller interaction too
-      cm = TestCacheManagerFactory.createClusteredCacheManager();
-      cm.getDefaultConfiguration().fluent().clustering().mode(Configuration.CacheMode.DIST_SYNC);
+      ConfigurationBuilder builder = new ConfigurationBuilder();
+      builder.clustering().cacheMode(CacheMode.DIST_SYNC);
+      cm = TestCacheManagerFactory.createClusteredCacheManager(builder);
       marshaller = extractCacheMarshaller(cm.getCache());
    }
 
@@ -155,9 +160,9 @@ public class VersionAwareMarshallerTest extends AbstractInfinispanTest {
    }
 
    public void testMapMarshalling() throws Exception {
-      Map m1 = new HashMap();
-      Map m2 = new TreeMap();
-      Map m3 = new HashMap();
+      Map<Integer, GlobalTransaction> m1 = new HashMap<Integer, GlobalTransaction>();
+      Map<Integer, GlobalTransaction> m2 = new TreeMap<Integer, GlobalTransaction>();
+      Map<Integer, GlobalTransaction> m3 = new HashMap<Integer, GlobalTransaction>();
       Map<Integer, GlobalTransaction> m4 = new FastCopyHashMap<Integer, GlobalTransaction>();
       for (int i = 0; i < 10; i++) {
          JGroupsAddress jGroupsAddress = new JGroupsAddress(new IpAddress(1000 * i));
@@ -179,8 +184,8 @@ public class VersionAwareMarshallerTest extends AbstractInfinispanTest {
    }
 
    public void testSetMarshalling() throws Exception {
-      Set s1 = new HashSet();
-      Set s2 = new TreeSet();
+      Set<Integer> s1 = new HashSet<Integer>();
+      Set<Integer> s2 = new TreeSet<Integer>();
       for (int i = 0; i < 10; i++) {
          Integer integ = 1000 * i;
          s1.add(integ);
@@ -191,7 +196,7 @@ public class VersionAwareMarshallerTest extends AbstractInfinispanTest {
    }
 
    public void testTreeSetWithComparator() throws Exception {
-      Set treeSet = new TreeSet(new HumanComparator());
+      Set<Human> treeSet = new TreeSet<Human>(new HumanComparator());
       for (int i = 0; i < 10; i++) {
          treeSet.add(new Human().age(i));
       }
@@ -216,7 +221,7 @@ public class VersionAwareMarshallerTest extends AbstractInfinispanTest {
 
    public void testSingletonListMarshalling() throws Exception {
       GlobalTransaction gtx = gtf.newGlobalTransaction(new JGroupsAddress(new IpAddress(12345)), false);
-      List l = Collections.singletonList(gtx);
+      List<GlobalTransaction> l = Collections.singletonList(gtx);
       marshallAndAssertEquality(l);
    }
 
@@ -269,7 +274,7 @@ public class VersionAwareMarshallerTest extends AbstractInfinispanTest {
       assert rc9.getCommandId() == c9.getCommandId() : "Writen[" + c9.getCommandId() + "] and read[" + rc9.getCommandId() + "] objects should be the same";
       assert Arrays.equals(rc9.getParameters(), c9.getParameters()) : "Writen[" + c9.getParameters() + "] and read[" + rc9.getParameters() + "] objects should be the same";
 
-      Map m1 = new HashMap();
+      Map<Integer, GlobalTransaction> m1 = new HashMap<Integer, GlobalTransaction>();
       for (int i = 0; i < 10; i++) {
          GlobalTransaction gtx = gtf.newGlobalTransaction(new JGroupsAddress(new IpAddress(1000 * i)), false);
          m1.put(1000 * i, gtx);

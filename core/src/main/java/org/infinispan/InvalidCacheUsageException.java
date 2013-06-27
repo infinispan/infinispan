@@ -19,6 +19,8 @@
 
 package org.infinispan;
 
+import org.infinispan.commons.CacheException;
+
 /**
  * Thrown when client makes cache usage errors. Situations like this include
  * when clients invoke operations on the cache that are not allowed.

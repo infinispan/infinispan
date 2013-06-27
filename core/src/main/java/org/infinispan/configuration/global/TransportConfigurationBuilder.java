@@ -18,10 +18,10 @@
  */
 package org.infinispan.configuration.global;
 
-import org.infinispan.config.ConfigurationException;
+import org.infinispan.commons.util.TypedProperties;
+import org.infinispan.commons.util.Util;
+import org.infinispan.commons.CacheConfigurationException;
 import org.infinispan.remoting.transport.Transport;
-import org.infinispan.util.TypedProperties;
-import org.infinispan.util.Util;
 
 import java.util.Properties;
 import java.util.concurrent.TimeUnit;
@@ -182,7 +182,7 @@ public class TransportConfigurationBuilder extends AbstractGlobalConfigurationBu
    @Override
    void validate() {
       if(clusterName == null){
-          throw new ConfigurationException("Transport clusterName cannot be null");
+          throw new CacheConfigurationException("Transport clusterName cannot be null");
       }
    }
 

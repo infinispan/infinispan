@@ -26,12 +26,12 @@ import java.util.Properties;
 
 import org.infinispan.client.hotrod.logging.Log;
 import org.infinispan.client.hotrod.logging.LogFactory;
-import org.infinispan.util.StringPropertyReplacer;
+import org.infinispan.commons.util.StringPropertyReplacer;
 
 /**
  * Type-aware properties.  Extends the JDK {@link Properties} class to provide accessors that convert values to certain
  * types, using default values if a conversion is not possible.
- * 
+ *
  *
  * @configRef name="Properties to add to the enclosing component."
  *

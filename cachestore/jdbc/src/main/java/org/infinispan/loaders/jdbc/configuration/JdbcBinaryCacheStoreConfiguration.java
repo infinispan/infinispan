@@ -18,13 +18,13 @@
  */
 package org.infinispan.loaders.jdbc.configuration;
 
-import org.infinispan.configuration.BuiltBy;
 import org.infinispan.configuration.cache.AsyncStoreConfiguration;
 import org.infinispan.configuration.cache.LegacyConfigurationAdaptor;
 import org.infinispan.configuration.cache.LegacyLoaderAdapter;
 import org.infinispan.configuration.cache.SingletonStoreConfiguration;
 import org.infinispan.loaders.jdbc.binary.JdbcBinaryCacheStoreConfig;
-import org.infinispan.util.TypedProperties;
+import org.infinispan.commons.configuration.BuiltBy;
+import org.infinispan.commons.util.TypedProperties;
 
 @BuiltBy(JdbcBinaryCacheStoreConfigurationBuilder.class)
 public class JdbcBinaryCacheStoreConfiguration extends AbstractJdbcCacheStoreConfiguration implements LegacyLoaderAdapter<JdbcBinaryCacheStoreConfig> {

@@ -36,7 +36,9 @@ import javax.xml.transform.stream.StreamSource;
 import javax.xml.validation.SchemaFactory;
 
 import org.infinispan.Cache;
-import org.infinispan.config.ConfigurationException;
+import org.infinispan.commons.util.FileLookup;
+import org.infinispan.commons.util.FileLookupFactory;
+import org.infinispan.commons.CacheConfigurationException;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
@@ -48,8 +50,6 @@ import org.infinispan.test.CacheManagerCallable;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.infinispan.test.fwk.TransportFlags;
 import org.infinispan.transaction.lookup.DummyTransactionManagerLookup;
-import org.infinispan.util.FileLookup;
-import org.infinispan.util.FileLookupFactory;
 import org.infinispan.util.concurrent.IsolationLevel;
 import org.testng.Assert;
 import org.testng.annotations.Test;
@@ -196,7 +196,7 @@ public class ConfigurationUnitTest {
       assertEquals(c.loaders().cacheLoaders().size(), 0);
    }
 
-   @Test(expectedExceptions = ConfigurationException.class)
+   @Test(expectedExceptions = CacheConfigurationException.class)
    public void testClusterNameNull() {
       GlobalConfigurationBuilder gc = new GlobalConfigurationBuilder();
       gc.transport().clusterName(null).build();

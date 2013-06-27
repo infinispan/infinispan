@@ -30,8 +30,8 @@ import org.infinispan.configuration.cache.LoadersConfigurationBuilder;
 import org.infinispan.loaders.remote.RemoteCacheStore;
 import org.infinispan.loaders.remote.logging.Log;
 import org.infinispan.loaders.remote.wrapper.EntryWrapper;
-import org.infinispan.marshall.Marshaller;
-import org.infinispan.util.TypedProperties;
+import org.infinispan.commons.marshall.Marshaller;
+import org.infinispan.commons.util.TypedProperties;
 import org.infinispan.util.logging.LogFactory;
 
 /**

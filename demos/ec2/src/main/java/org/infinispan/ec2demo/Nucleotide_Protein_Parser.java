@@ -22,7 +22,7 @@
  */
 package org.infinispan.ec2demo;
 
-import org.infinispan.util.Util;
+import org.infinispan.commons.util.Util;
 import org.milyn.Smooks;
 import org.milyn.payload.JavaResult;
 import org.xml.sax.SAXException;

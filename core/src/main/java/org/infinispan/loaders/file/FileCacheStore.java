@@ -23,16 +23,16 @@
 package org.infinispan.loaders.file;
 
 import org.infinispan.Cache;
-import org.infinispan.config.ConfigurationException;
-import org.infinispan.io.ExposedByteArrayOutputStream;
+import org.infinispan.commons.CacheConfigurationException;
+import org.infinispan.commons.io.ExposedByteArrayOutputStream;
 import org.infinispan.loaders.CacheLoaderConfig;
 import org.infinispan.loaders.CacheLoaderException;
 import org.infinispan.loaders.CacheLoaderMetadata;
 import org.infinispan.loaders.bucket.Bucket;
 import org.infinispan.loaders.bucket.BucketBasedCacheStore;
-import org.infinispan.marshall.StreamingMarshaller;
-import org.infinispan.util.CollectionFactory;
-import org.infinispan.util.Util;
+import org.infinispan.commons.marshall.StreamingMarshaller;
+import org.infinispan.commons.util.CollectionFactory;
+import org.infinispan.commons.util.Util;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
@@ -366,7 +366,7 @@ public class FileCacheStore extends BucketBasedCacheStore {
          }
       }
       if (!root.exists()) {
-         throw new ConfigurationException("Directory " + root.getAbsolutePath() + " does not exist and cannot be created!");
+         throw new CacheConfigurationException("Directory " + root.getAbsolutePath() + " does not exist and cannot be created!");
       }
       streamBufferSize = config.getStreamBufferSize();
 

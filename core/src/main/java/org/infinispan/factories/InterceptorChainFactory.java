@@ -23,8 +23,8 @@
 package org.infinispan.factories;
 
 
-import org.infinispan.CacheException;
-import org.infinispan.config.ConfigurationException;
+import org.infinispan.commons.CacheConfigurationException;
+import org.infinispan.commons.CacheException;
 import org.infinispan.configuration.cache.CompatibilityModeConfiguration;
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.configuration.cache.Configurations;
@@ -60,7 +60,7 @@ import org.infinispan.util.logging.LogFactory;
 
 import java.util.List;
 
-import static org.infinispan.util.ReflectionUtil.applyProperties;
+import static org.infinispan.commons.util.ReflectionUtil.applyProperties;
 
 /**
  * Factory class that builds an interceptor chain based on cache configuration.
@@ -306,14 +306,14 @@ public class InterceptorChainFactory extends AbstractNamedCacheComponentFactory 
          else if (config.after() != null) {
             List<CommandInterceptor> withClassName = interceptorChain.getInterceptorsWithClass(config.after());
             if (withClassName.isEmpty()) {
-               throw new ConfigurationException("Cannot add after class: " + config.after()
+               throw new CacheConfigurationException("Cannot add after class: " + config.after()
                                                       + " as no such interceptor exists in the default chain");
             }
             interceptorChain.addInterceptorAfter(customInterceptor, withClassName.get(0).getClass());
          } else if (config.before() != null) {
             List<CommandInterceptor> withClassName = interceptorChain.getInterceptorsWithClass(config.before());
             if (withClassName.isEmpty()) {
-               throw new ConfigurationException("Cannot add before class: " + config.after()
+               throw new CacheConfigurationException("Cannot add before class: " + config.after()
                                                       + " as no such interceptor exists in the default chain");
             }
             interceptorChain.addInterceptorBefore(customInterceptor, withClassName.get(0).getClass());
@@ -338,7 +338,7 @@ public class InterceptorChainFactory extends AbstractNamedCacheComponentFactory 
       } catch (CacheException ce) {
          throw ce;
       } catch (Exception e) {
-         throw new ConfigurationException("Unable to build interceptor chain", e);
+         throw new CacheConfigurationException("Unable to build interceptor chain", e);
       }
    }
 

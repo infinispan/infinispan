@@ -23,7 +23,7 @@ import javax.net.ssl.SSLContext;
 import javax.net.ssl.TrustManager;
 
 import org.infinispan.client.hotrod.logging.LogFactory;
-import org.infinispan.configuration.Builder;
+import org.infinispan.commons.configuration.Builder;
 import org.infinispan.client.hotrod.logging.Log;
 
 /**

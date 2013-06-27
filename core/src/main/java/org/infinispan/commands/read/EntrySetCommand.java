@@ -30,6 +30,7 @@ import org.infinispan.container.entries.CacheEntry;
 import org.infinispan.container.entries.InternalCacheEntry;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.util.TimeService;
+import static org.infinispan.util.CoreImmutables.immutableInternalCacheEntry;
 
 import java.util.AbstractSet;
 import java.util.Collection;
@@ -37,8 +38,6 @@ import java.util.Iterator;
 import java.util.Map;
 import java.util.NoSuchElementException;
 import java.util.Set;
-
-import static org.infinispan.util.Immutables.immutableInternalCacheEntry;
 
 /**
  * Command implementation for {@link java.util.Map#entrySet()} functionality.

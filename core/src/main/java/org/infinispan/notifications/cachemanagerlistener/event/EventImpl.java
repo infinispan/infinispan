@@ -22,10 +22,10 @@
  */
 package org.infinispan.notifications.cachemanagerlistener.event;
 
+import org.infinispan.commons.util.InfinispanCollections;
+import org.infinispan.commons.util.Util;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.remoting.transport.Address;
-import org.infinispan.util.InfinispanCollections;
-import org.infinispan.util.Util;
 
 import java.util.Collections;
 import java.util.List;

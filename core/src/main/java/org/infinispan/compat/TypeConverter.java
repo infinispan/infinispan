@@ -23,8 +23,8 @@
 
 package org.infinispan.compat;
 
+import org.infinispan.commons.marshall.Marshaller;
 import org.infinispan.context.Flag;
-import org.infinispan.marshall.Marshaller;
 
 /**
  * A type converter for cached keys and values. Given a key and value type,

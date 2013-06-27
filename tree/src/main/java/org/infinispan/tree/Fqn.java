@@ -24,9 +24,9 @@ package org.infinispan.tree;
 
 
 import net.jcip.annotations.Immutable;
-import org.infinispan.marshall.AbstractExternalizer;
-import org.infinispan.util.ReflectionUtil;
-import org.infinispan.util.Util;
+import org.infinispan.commons.marshall.AbstractExternalizer;
+import org.infinispan.commons.util.ReflectionUtil;
+import org.infinispan.commons.util.Util;
 
 import java.io.IOException;
 import java.io.ObjectInput;

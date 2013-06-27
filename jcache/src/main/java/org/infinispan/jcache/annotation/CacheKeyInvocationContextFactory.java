@@ -23,7 +23,7 @@
 package org.infinispan.jcache.annotation;
 
 import org.infinispan.jcache.logging.Log;
-import org.infinispan.util.CollectionFactory;
+import org.infinispan.commons.util.CollectionFactory;
 import org.infinispan.util.logging.LogFactory;
 
 import javax.cache.annotation.CacheDefaults;

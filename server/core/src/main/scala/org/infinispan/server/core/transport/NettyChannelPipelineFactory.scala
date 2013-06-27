@@ -27,7 +27,7 @@ import org.jboss.netty.handler.ssl.SslHandler
 import org.infinispan.server.core.ProtocolServer
 import org.infinispan.server.core.configuration.SslConfiguration
 import javax.net.ssl.SSLEngine
-import org.infinispan.util.SslContextFactory
+import org.infinispan.commons.util.SslContextFactory
 
 /**
  * Pipeline factory for Netty based channels. For each pipeline created, a new decoder is created which means that

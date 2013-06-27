@@ -27,7 +27,7 @@ import test.HotRodTestingUtil._
 import org.infinispan.server.hotrod.test._
 import org.infinispan.manager.EmbeddedCacheManager
 import org.infinispan.server.hotrod.configuration.HotRodServerConfigurationBuilder
-import org.infinispan.util.SslContextFactory
+import org.infinispan.commons.util.SslContextFactory
 
 /**
  * Hot Rod server functional test over SSL

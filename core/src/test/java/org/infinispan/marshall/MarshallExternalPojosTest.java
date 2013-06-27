@@ -24,6 +24,8 @@
 package org.infinispan.marshall;
 
 import org.infinispan.Cache;
+import org.infinispan.commons.marshall.PojoWithJBossExternalize;
+import org.infinispan.commons.marshall.PojoWithSerializeWith;
 import org.infinispan.config.Configuration;
 import org.infinispan.config.GlobalConfiguration;
 import org.infinispan.manager.CacheContainer;

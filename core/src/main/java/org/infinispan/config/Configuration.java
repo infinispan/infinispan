@@ -22,9 +22,13 @@
  */
 package org.infinispan.config;
 
-import org.infinispan.CacheException;
+import org.infinispan.commons.CacheConfigurationException;
+import org.infinispan.commons.CacheException;
 import org.infinispan.commons.hash.Hash;
 import org.infinispan.commons.hash.MurmurHash3;
+import org.infinispan.commons.util.InfinispanCollections;
+import org.infinispan.commons.util.TypedProperties;
+import org.infinispan.commons.util.Util;
 import org.infinispan.config.FluentConfiguration.*;
 import org.infinispan.configuration.cache.VersioningScheme;
 import org.infinispan.container.DataContainer;
@@ -46,9 +50,6 @@ import org.infinispan.transaction.TransactionMode;
 import org.infinispan.transaction.lookup.GenericTransactionManagerLookup;
 import org.infinispan.transaction.lookup.TransactionManagerLookup;
 import org.infinispan.transaction.lookup.TransactionSynchronizationRegistryLookup;
-import org.infinispan.util.InfinispanCollections;
-import org.infinispan.util.TypedProperties;
-import org.infinispan.util.Util;
 import org.infinispan.util.concurrent.IsolationLevel;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
@@ -537,7 +538,7 @@ public class Configuration extends AbstractNamedCacheConfigurationBean {
     */
    @Deprecated
    public void setCacheMode(String cacheMode) {
-      if (cacheMode == null) throw new ConfigurationException("Cache mode cannot be null", "CacheMode");
+      if (cacheMode == null) throw new CacheConfigurationException("Cache mode cannot be null", "CacheMode");
       clustering.setMode(CacheMode.valueOf(uc(cacheMode)));
       if (clustering.mode == null) {
          log.warn("Unknown cache mode '" + cacheMode + "', using defaults.");
@@ -971,7 +972,7 @@ public class Configuration extends AbstractNamedCacheConfigurationBean {
     */
    @Deprecated
    public void setIsolationLevel(String isolationLevel) {
-      if (isolationLevel == null) throw new ConfigurationException("Isolation level cannot be null", "IsolationLevel");
+      if (isolationLevel == null) throw new CacheConfigurationException("Isolation level cannot be null", "IsolationLevel");
       locking.setIsolationLevel(IsolationLevel.valueOf(uc(isolationLevel)));
       if (locking.isolationLevel == null) {
          log.warn("Unknown isolation level '" + isolationLevel + "', using defaults.");
@@ -1703,10 +1704,10 @@ public class Configuration extends AbstractNamedCacheConfigurationBean {
       this.customInterceptors.setCustomInterceptors(customInterceptors);
    }
 
-   public void assertValid() throws ConfigurationException {
+   public void assertValid() throws CacheConfigurationException {
       if (clustering.mode.isClustered() && (globalConfiguration != null
               && (globalConfiguration.getTransportClass() == null || globalConfiguration.getTransportClass().length() == 0)))
-         throw new ConfigurationException("Cache cannot use a clustered mode (" + clustering.mode + ") mode and not define a transport!");
+         throw new CacheConfigurationException("Cache cannot use a clustered mode (" + clustering.mode + ") mode and not define a transport!");
    }
 
    public boolean isOnePhaseCommit() {
@@ -2442,7 +2443,7 @@ public class Configuration extends AbstractNamedCacheConfigurationBean {
       @Override
       public AsyncConfig async() {
          if (configuredSync)
-            throw new ConfigurationException("Already configured as sync");
+            throw new CacheConfigurationException("Already configured as sync");
          configuredAsync = true;
          async.setConfiguration(config);
          return async;
@@ -2451,7 +2452,7 @@ public class Configuration extends AbstractNamedCacheConfigurationBean {
       @Override
       public SyncConfig sync() {
          if (configuredAsync)
-            throw new ConfigurationException("Already configured as async");
+            throw new CacheConfigurationException("Already configured as async");
          configuredSync = true;
          sync.setConfiguration(config);
          return sync;
@@ -2591,7 +2592,7 @@ public class Configuration extends AbstractNamedCacheConfigurationBean {
             } else if (mode.startsWith("l")) {
                ct.setMode(LOCAL);
             } else {
-               throw new ConfigurationException("Invalid clustering mode " + ct.stringMode);
+               throw new CacheConfigurationException("Invalid clustering mode " + ct.stringMode);
             }
          }
          return ct;
@@ -2790,7 +2791,7 @@ public class Configuration extends AbstractNamedCacheConfigurationBean {
       public void willUnmarshall(Object parent) {
          ClusteringType clustering = (ClusteringType) parent;
          if (clustering.sync.unmarshalledFromXml)
-            throw new ConfigurationException("Cannot have both <sync /> and <async /> tags in a <clustering /> tag!");
+            throw new CacheConfigurationException("Cannot have both <sync /> and <async /> tags in a <clustering /> tag!");
          unmarshalledFromXml = true;
       }
 
@@ -3489,7 +3490,7 @@ public class Configuration extends AbstractNamedCacheConfigurationBean {
       public void willUnmarshall(Object parent) {
          ClusteringType clustering = (ClusteringType) parent;
          if (clustering.async.unmarshalledFromXml)
-            throw new ConfigurationException("Cannot have both <sync /> and <async /> tags in a <clustering /> tag!");
+            throw new CacheConfigurationException("Cannot have both <sync /> and <async /> tags in a <clustering /> tag!");
          unmarshalledFromXml = true;
       }
    }

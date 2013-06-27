@@ -47,6 +47,7 @@ import org.infinispan.container.entries.CacheEntry
 import scala.Some
 import org.infinispan.metadata.Metadata
 import org.infinispan.container.versioning.NumericVersion
+import org.infinispan.commons.CacheException
 
 /**
  * A Memcached protocol specific decoder
@@ -248,7 +249,7 @@ class MemcachedDecoder(memcachedCache: AdvancedCache[String, Array[Byte]], sched
          else
             throw new StreamCorruptedException("Unable to parse noreply optional argument")
       }
-      else false      
+      else false
    }
 
    private def parseDelayedDeleteTime(args: Seq[String]): Int = {
@@ -557,7 +558,7 @@ class MemcachedDecoder(memcachedCache: AdvancedCache[String, Array[Byte]], sched
       writeGetHeaderData(entry.getValue.asInstanceOf[Array[Byte]], buf)
       writeGetHeaderEnd(buf)
    }
-   
+
    private def buildGetHeaderBegin(k: String, entry: CacheEntry,
            extraSpace: Int): ChannelBuffer = {
       val data = entry.getValue.asInstanceOf[Array[Byte]]
@@ -645,7 +646,7 @@ class MemcachedParameters(override val valueLength: Int, override val lifespan: 
          .append(", delta=").append(delta)
          .append(", flushDelay=").append(flushDelay)
          .append("}").toString
-   }   
+   }
 }
 
 private class DelayedFlushAll(cache: AdvancedCache[String, Array[Byte]],

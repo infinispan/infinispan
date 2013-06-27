@@ -21,10 +21,10 @@ package org.infinispan.client.hotrod.configuration;
 import java.util.Properties;
 
 import org.infinispan.client.hotrod.impl.async.DefaultAsyncExecutorFactory;
-import org.infinispan.configuration.Builder;
-import org.infinispan.executors.ExecutorFactory;
-import org.infinispan.util.TypedProperties;
-import org.infinispan.util.Util;
+import org.infinispan.commons.configuration.Builder;
+import org.infinispan.commons.executors.ExecutorFactory;
+import org.infinispan.commons.util.TypedProperties;
+import org.infinispan.commons.util.Util;
 
 /**
  * Configures executor factory.

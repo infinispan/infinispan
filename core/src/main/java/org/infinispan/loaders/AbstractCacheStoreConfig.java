@@ -22,13 +22,13 @@
  */
 package org.infinispan.loaders;
 
+import org.infinispan.commons.util.TypedProperties;
+import org.infinispan.commons.util.Util;
 import org.infinispan.config.ConfigurationBeanVisitor;
 import org.infinispan.config.ConfigurationDoc;
 import org.infinispan.config.ConfigurationDocRef;
 import org.infinispan.loaders.decorators.AsyncStoreConfig;
 import org.infinispan.loaders.decorators.SingletonStoreConfig;
-import org.infinispan.util.TypedProperties;
-import org.infinispan.util.Util;
 
 import javax.xml.bind.annotation.*;
 

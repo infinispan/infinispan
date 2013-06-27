@@ -1,19 +1,19 @@
-/* 
- * JBoss, Home of Professional Open Source 
+/*
+ * JBoss, Home of Professional Open Source
  * Copyright 2013 Red Hat Inc. and/or its affiliates and other contributors
- * as indicated by the @author tag. All rights reserved. 
- * See the copyright.txt in the distribution for a 
+ * as indicated by the @author tag. All rights reserved.
+ * See the copyright.txt in the distribution for a
  * full listing of individual contributors.
  *
- * This copyrighted material is made available to anyone wishing to use, 
- * modify, copy, or redistribute it subject to the terms and conditions 
- * of the GNU Lesser General Public License, v. 2.1. 
- * This program is distributed in the hope that it will be useful, but WITHOUT A 
- * WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A 
- * PARTICULAR PURPOSE.  See the GNU Lesser General Public License for more details. 
- * You should have received a copy of the GNU Lesser General Public License, 
- * v.2.1 along with this distribution; if not, write to the Free Software 
- * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, 
+ * This copyrighted material is made available to anyone wishing to use,
+ * modify, copy, or redistribute it subject to the terms and conditions
+ * of the GNU Lesser General Public License, v. 2.1.
+ * This program is distributed in the hope that it will be useful, but WITHOUT A
+ * WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A
+ * PARTICULAR PURPOSE.  See the GNU Lesser General Public License for more details.
+ * You should have received a copy of the GNU Lesser General Public License,
+ * v.2.1 along with this distribution; if not, write to the Free Software
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston,
  * MA  02110-1301, USA.
  */
 package org.infinispan.jcache;
@@ -40,15 +40,13 @@ import javax.management.MBeanServer;
 
 import org.infinispan.AdvancedCache;
 import org.infinispan.context.Flag;
-import org.infinispan.interceptors.CacheMgmtInterceptor;
 import org.infinispan.interceptors.EntryWrappingInterceptor;
-import org.infinispan.interceptors.InvocationContextInterceptor;
 import org.infinispan.jcache.interceptor.ExpirationTrackingInterceptor;
 import org.infinispan.jcache.logging.Log;
 import org.infinispan.jmx.JmxUtil;
 import org.infinispan.loaders.CacheLoaderManager;
-import org.infinispan.marshall.StreamingMarshaller;
-import org.infinispan.util.InfinispanCollections;
+import org.infinispan.commons.marshall.StreamingMarshaller;
+import org.infinispan.commons.util.InfinispanCollections;
 import org.infinispan.util.concurrent.NotifyingFuture;
 import org.infinispan.util.concurrent.locks.containers.LockContainer;
 import org.infinispan.util.concurrent.locks.containers.ReentrantPerEntryLockContainer;
@@ -59,7 +57,7 @@ import static org.infinispan.jcache.RIMBeanServerRegistrationUtility.ObjectNameT
 
 /**
  * Infinispan's implementation of {@link javax.cache.Cache} interface.
- * 
+ *
  * @author Vladimir Blagojevic
  * @author Galder Zamarreño
  * @since 5.3
@@ -166,7 +164,7 @@ public final class JCache<K, V> implements Cache<K, V> {
       // no op
       // TODO need to check state before start?
       cache.start();
-      
+
       // Add listener as they were wiped out on stop
       // TODO: Why not add listener only when a listener is actually registered?
       cache.addListener(new JCacheListenerAdapter<K, V>(this, notifier));
@@ -484,7 +482,7 @@ public final class JCache<K, V> implements Cache<K, V> {
       /**
        * TODO Similar to mentioned before, it'd be interesting to see if multiple putAsync() calls
        * could be executed in parallel to speed up.
-       * 
+       *
        */
       for (final Map.Entry<? extends K, ? extends V> e : inputMap.entrySet()) {
          final K key = e.getKey();

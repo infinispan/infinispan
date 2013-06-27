@@ -1,6 +1,5 @@
 package org.infinispan.interceptors.compat;
 
-import org.infinispan.CacheException;
 import org.infinispan.commands.MetadataAwareCommand;
 import org.infinispan.commands.read.GetKeyValueCommand;
 import org.infinispan.commands.write.PutKeyValueCommand;
@@ -14,7 +13,8 @@ import org.infinispan.context.Flag;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.interceptors.base.CommandInterceptor;
-import org.infinispan.marshall.Marshaller;
+import org.infinispan.commons.CacheException;
+import org.infinispan.commons.marshall.Marshaller;
 import org.infinispan.metadata.Metadata;
 
 import java.util.ServiceLoader;

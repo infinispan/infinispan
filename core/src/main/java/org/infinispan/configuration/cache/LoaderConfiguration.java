@@ -18,9 +18,9 @@
  */
 package org.infinispan.configuration.cache;
 
-import org.infinispan.configuration.BuiltBy;
+import org.infinispan.commons.configuration.BuiltBy;
+import org.infinispan.commons.util.TypedProperties;
 import org.infinispan.loaders.CacheLoader;
-import org.infinispan.util.TypedProperties;
 
 /**
  * Configuration a legacy cache store, i.e. one which doesn't provide its own configuration builder

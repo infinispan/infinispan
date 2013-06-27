@@ -18,8 +18,8 @@
  */
 package org.infinispan.configuration.global;
 
+import org.infinispan.commons.util.TypedProperties;
 import org.infinispan.jmx.MBeanServerLookup;
-import org.infinispan.util.TypedProperties;
 
 public class GlobalJmxStatisticsConfiguration {
 

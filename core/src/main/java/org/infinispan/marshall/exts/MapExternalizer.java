@@ -22,11 +22,11 @@
  */
 package org.infinispan.marshall.exts;
 
-import org.infinispan.marshall.AbstractExternalizer;
-import org.infinispan.marshall.MarshallUtil;
-import org.infinispan.marshall.Ids;
-import org.infinispan.util.FastCopyHashMap;
-import org.infinispan.util.Util;
+import org.infinispan.commons.marshall.AbstractExternalizer;
+import org.infinispan.commons.marshall.MarshallUtil;
+import org.infinispan.commons.util.FastCopyHashMap;
+import org.infinispan.commons.util.Util;
+import org.infinispan.marshall.core.Ids;
 import org.jboss.marshalling.util.IdentityIntMap;
 
 import java.io.IOException;
@@ -49,7 +49,7 @@ public class MapExternalizer extends AbstractExternalizer<Map> {
    private static final int TREEMAP = 1;
    private static final int FASTCOPYHASHMAP = 2;
    private final IdentityIntMap<Class<?>> numbers = new IdentityIntMap<Class<?>>(3);
-   
+
    public MapExternalizer() {
       numbers.put(HashMap.class, HASHMAP);
       numbers.put(TreeMap.class, TREEMAP);

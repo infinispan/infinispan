@@ -22,12 +22,12 @@
  */
 package org.infinispan.config.parsing;
 
-import org.infinispan.config.ConfigurationException;
-import org.infinispan.util.BeanUtils;
-import org.infinispan.util.TypedProperties;
+import org.infinispan.commons.util.BeanUtils;
+import org.infinispan.commons.util.StringPropertyReplacer;
+import org.infinispan.commons.util.TypedProperties;
+import org.infinispan.commons.CacheConfigurationException;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
-import org.infinispan.util.StringPropertyReplacer;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 import org.w3c.dom.Node;
@@ -286,7 +286,7 @@ public class XmlConfigHelper {
       }
       catch (IOException e) {
          log.errorReadingProperties(e);
-         throw new ConfigurationException("Exception occured while reading properties from XML document", e);
+         throw new CacheConfigurationException("Exception occured while reading properties from XML document", e);
       }
       return properties;
    }
@@ -433,7 +433,7 @@ public class XmlConfigHelper {
             //if (log.isWarnEnabled()) log.warn("Unrecognised attribute " + propName + ".  Please check your configuration.  Ignoring!!");
          }
          catch (Exception e) {
-            throw new ConfigurationException("Unable to invoke setter " + setter + " on " + objectClass, e);
+            throw new CacheConfigurationException("Unable to invoke setter " + setter + " on " + objectClass, e);
          }
 
          boolean setterFound = false;
@@ -449,7 +449,7 @@ public class XmlConfigHelper {
                Class<?> parameterType = paramTypes[0];
                PropertyEditor editor = PropertyEditorManager.findEditor(parameterType);
                if (editor == null) {
-                  throw new ConfigurationException("Couldn't find a property editor for parameter type " + parameterType);
+                  throw new CacheConfigurationException("Couldn't find a property editor for parameter type " + parameterType);
                }
 
                editor.setAsText((String) attribs.get(propName));
@@ -463,13 +463,13 @@ public class XmlConfigHelper {
                   break;
                }
                catch (Exception e) {
-                  throw new ConfigurationException("Unable to invoke setter " + setter + " on " + objectClass, e);
+                  throw new CacheConfigurationException("Unable to invoke setter " + setter + " on " + objectClass, e);
                }
             }
          }
          // Skip hot rod properties ...
          if (!setterFound && failOnMissingSetter && !propName.startsWith("infinispan.client.hotrod"))
-            throw new ConfigurationException("Couldn't find a setter named [" + setter + "] which takes a single parameter, for parameter " + propName + " on class [" + objectClass + "]");
+            throw new CacheConfigurationException("Couldn't find a setter named [" + setter + "] which takes a single parameter, for parameter " + propName + " on class [" + objectClass + "]");
       }
    }
 

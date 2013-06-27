@@ -18,14 +18,14 @@
  */
 package org.infinispan.loaders.remote.configuration;
 
-import org.infinispan.configuration.AbstractTypedPropertiesConfiguration;
-import org.infinispan.executors.ExecutorFactory;
-import org.infinispan.util.TypedProperties;
+import org.infinispan.commons.configuration.AbstractTypedPropertiesConfiguration;
+import org.infinispan.commons.executors.ExecutorFactory;
+import org.infinispan.commons.util.TypedProperties;
 
 public class ExecutorFactoryConfiguration extends AbstractTypedPropertiesConfiguration {
 
    private final ExecutorFactory factory;
-   
+
    ExecutorFactoryConfiguration(ExecutorFactory factory, TypedProperties properties) {
       super(properties);
       this.factory = factory;

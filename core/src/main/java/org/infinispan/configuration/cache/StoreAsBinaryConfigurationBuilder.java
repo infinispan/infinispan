@@ -18,7 +18,7 @@
  */
 package org.infinispan.configuration.cache;
 
-import org.infinispan.configuration.Builder;
+import org.infinispan.commons.configuration.Builder;
 
 /**
  * Controls whether when stored in memory, keys and values are stored as references to their original objects, or in

@@ -22,7 +22,7 @@
  */
 package org.infinispan.notifications;
 
-import org.infinispan.CacheException;
+import org.infinispan.commons.CacheException;
 
 /**
  * Thrown when an incorrectly annotated class is added as a cache listener using the {@link

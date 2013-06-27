@@ -22,7 +22,7 @@
  */
 package org.infinispan.test.fwk;
 
-import org.infinispan.util.LegacyKeySupportSystemProperties;
+import org.infinispan.commons.util.LegacyKeySupportSystemProperties;
 import org.jgroups.conf.ConfiguratorFactory;
 import org.jgroups.conf.ProtocolConfiguration;
 import org.jgroups.conf.ProtocolStackConfigurator;
@@ -34,8 +34,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicInteger;
 
+import static org.infinispan.commons.util.Immutables.immutableMapCopy;
 import static org.infinispan.test.fwk.JGroupsConfigBuilder.ProtocolType.*;
-import static org.infinispan.util.Immutables.immutableMapCopy;
 
 /**
  * This class owns the logic of associating network resources(i.e. ports) with threads, in order to make sure that there

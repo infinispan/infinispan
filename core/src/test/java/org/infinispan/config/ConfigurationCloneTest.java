@@ -23,6 +23,8 @@
 package org.infinispan.config;
 
 import java.lang.reflect.Method;
+
+import org.infinispan.commons.CacheConfigurationException;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.test.SingleCacheManagerTest;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
@@ -55,7 +57,7 @@ public class ConfigurationCloneTest extends SingleCacheManagerTest {
       cacheManager.defineConfiguration(name, clone);
       cacheManager.getCache(name);
    }
-   
+
    public void testDoubleCloning(Method method) {
       String name = method.getName();
       Configuration defaultConfig = cacheManager.defineConfiguration(name + "-default", new Configuration());
@@ -69,10 +71,10 @@ public class ConfigurationCloneTest extends SingleCacheManagerTest {
       Configuration otherClone = otherDefaultConfig.clone();
       assert otherClone.equals(otherDefaultConfig);
       otherClone.setEvictionMaxEntries(788);
-      
+
       try {
          cacheManager.defineConfiguration(name + "-new-default", otherClone);
-      } catch (ConfigurationException e) {
+      } catch (CacheConfigurationException e) {
          String message = e.getMessage();
          assert message.contains("[maxEntries]") : "Exception should indicate that it's Eviction maxEntries that we're trying to override but it says: " + message;
       }

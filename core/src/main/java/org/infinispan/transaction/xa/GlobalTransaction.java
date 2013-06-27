@@ -22,10 +22,10 @@
  */
 package org.infinispan.transaction.xa;
 
-import org.infinispan.marshall.AbstractExternalizer;
-import org.infinispan.marshall.Ids;
+import org.infinispan.commons.marshall.AbstractExternalizer;
+import org.infinispan.commons.util.Util;
+import org.infinispan.marshall.core.Ids;
 import org.infinispan.remoting.transport.Address;
-import org.infinispan.util.Util;
 
 import java.io.IOException;
 import java.io.ObjectInput;

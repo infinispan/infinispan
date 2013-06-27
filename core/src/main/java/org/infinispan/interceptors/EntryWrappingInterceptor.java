@@ -50,7 +50,7 @@ import java.util.Iterator;
 import java.util.Map;
 import java.util.Set;
 
-import static org.infinispan.util.Util.toStr;
+import static org.infinispan.commons.util.Util.toStr;
 
 /**
  * Interceptor in charge with wrapping entries and add them in caller's context.

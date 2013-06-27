@@ -21,9 +21,9 @@ package org.infinispan.demo;
 
 import org.infinispan.manager.DefaultCacheManager;
 import org.infinispan.manager.EmbeddedCacheManager;
-import org.infinispan.util.FileLookup;
-import org.infinispan.util.FileLookupFactory;
-import org.infinispan.util.Util;
+import org.infinispan.commons.util.FileLookup;
+import org.infinispan.commons.util.FileLookupFactory;
+import org.infinispan.commons.util.Util;
 
 import java.io.IOException;
 import java.io.InputStream;

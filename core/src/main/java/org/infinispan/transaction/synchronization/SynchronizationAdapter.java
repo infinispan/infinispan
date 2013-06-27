@@ -22,8 +22,8 @@
  */
 package org.infinispan.transaction.synchronization;
 
-import org.infinispan.CacheException;
 import org.infinispan.commands.CommandsFactory;
+import org.infinispan.commons.CacheException;
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.interceptors.locking.ClusteringDependentLogic;
 import org.infinispan.remoting.rpc.RpcManager;

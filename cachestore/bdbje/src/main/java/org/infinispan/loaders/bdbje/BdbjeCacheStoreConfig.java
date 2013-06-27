@@ -24,8 +24,8 @@ package org.infinispan.loaders.bdbje;
 
 import org.infinispan.loaders.AbstractCacheStoreConfig;
 import org.infinispan.loaders.CacheLoaderException;
-import org.infinispan.util.FileLookupFactory;
-import org.infinispan.util.Util;
+import org.infinispan.commons.util.FileLookupFactory;
+import org.infinispan.commons.util.Util;
 
 import java.io.IOException;
 import java.io.InputStream;

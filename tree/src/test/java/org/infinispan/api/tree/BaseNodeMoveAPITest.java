@@ -39,7 +39,7 @@ import org.infinispan.tree.Node;
 import org.infinispan.tree.NodeKey;
 import org.infinispan.tree.TreeCacheImpl;
 import org.infinispan.tree.TreeStructureSupport;
-import org.infinispan.util.Util;
+import org.infinispan.commons.util.Util;
 import org.infinispan.util.concurrent.locks.LockManager;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;

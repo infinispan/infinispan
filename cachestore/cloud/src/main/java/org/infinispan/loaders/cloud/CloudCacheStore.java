@@ -42,7 +42,6 @@ import java.util.concurrent.Future;
 import org.apache.commons.compress.compressors.bzip2.BZip2CompressorInputStream;
 import org.apache.commons.compress.compressors.bzip2.BZip2CompressorOutputStream;
 import org.infinispan.Cache;
-import org.infinispan.config.ConfigurationException;
 import org.infinispan.container.entries.InternalCacheEntry;
 import org.infinispan.loaders.CacheLoaderConfig;
 import org.infinispan.loaders.CacheLoaderException;
@@ -52,7 +51,8 @@ import org.infinispan.loaders.bucket.Bucket;
 import org.infinispan.loaders.bucket.BucketBasedCacheStore;
 import org.infinispan.loaders.cloud.logging.Log;
 import org.infinispan.loaders.modifications.Modification;
-import org.infinispan.marshall.StreamingMarshaller;
+import org.infinispan.commons.CacheConfigurationException;
+import org.infinispan.commons.marshall.StreamingMarshaller;
 import org.infinispan.util.logging.LogFactory;
 import org.infinispan.util.stream.Streams;
 import org.jclouds.blobstore.AsyncBlobStore;
@@ -145,17 +145,17 @@ public class CloudCacheStore extends BucketBasedCacheStore {
       super.start();
       if (constructInternalBlobstores) {
          if (cfg.getCloudService() == null) {
-            throw new ConfigurationException("CloudService must be set!");
+            throw new CacheConfigurationException("CloudService must be set!");
         }
          if (cfg.getIdentity() == null) {
-            throw new ConfigurationException("Identity must be set");
+            throw new CacheConfigurationException("Identity must be set");
         }
          if (cfg.getPassword() == null) {
-            throw new ConfigurationException("Password must be set");
+            throw new CacheConfigurationException("Password must be set");
         }
       }
       if (cfg.getBucketPrefix() == null) {
-        throw new ConfigurationException("CloudBucket must be set");
+        throw new CacheConfigurationException("CloudBucket must be set");
     }
       containerName = getThisContainerName();
       try {

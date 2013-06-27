@@ -29,6 +29,8 @@ import org.infinispan.commands.FlagAffectedCommand;
 import org.infinispan.commands.tx.VersionedPrepareCommand;
 import org.infinispan.commands.tx.totalorder.TotalOrderPrepareCommand;
 import org.infinispan.commands.write.WriteCommand;
+import org.infinispan.commons.util.Immutables;
+import org.infinispan.commons.util.InfinispanCollections;
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.container.DataContainer;
 import org.infinispan.container.entries.CacheEntry;
@@ -50,8 +52,6 @@ import org.infinispan.statetransfer.StateTransferManager;
 import org.infinispan.topology.CacheTopology;
 import org.infinispan.transaction.WriteSkewHelper;
 import org.infinispan.transaction.xa.CacheTransaction;
-import org.infinispan.util.Immutables;
-import org.infinispan.util.InfinispanCollections;
 
 import java.util.Collection;
 import java.util.List;

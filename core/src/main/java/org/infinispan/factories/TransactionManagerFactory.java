@@ -24,7 +24,7 @@ package org.infinispan.factories;
 
 import javax.transaction.TransactionManager;
 
-import org.infinispan.CacheException;
+import org.infinispan.commons.CacheException;
 import org.infinispan.factories.annotations.DefaultFactoryFor;
 import org.infinispan.transaction.lookup.TransactionManagerLookup;
 import org.infinispan.transaction.tm.BatchModeTransactionManager;

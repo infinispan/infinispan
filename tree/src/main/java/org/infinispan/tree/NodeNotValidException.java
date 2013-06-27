@@ -22,7 +22,7 @@
  */
 package org.infinispan.tree;
 
-import org.infinispan.CacheException;
+import org.infinispan.commons.CacheException;
 
 /**
  * Thrown whenever operations are attempted on a node that is no longer valid.  See {@link Node#isValid()} for details.

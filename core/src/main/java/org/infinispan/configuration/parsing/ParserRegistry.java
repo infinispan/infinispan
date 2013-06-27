@@ -17,11 +17,11 @@ import javax.xml.stream.XMLInputFactory;
 import javax.xml.stream.XMLStreamException;
 import javax.xml.stream.XMLStreamReader;
 
-import org.infinispan.config.ConfigurationException;
-import org.infinispan.util.CollectionFactory;
-import org.infinispan.util.FileLookup;
-import org.infinispan.util.FileLookupFactory;
-import org.infinispan.util.Util;
+import org.infinispan.commons.CacheConfigurationException;
+import org.infinispan.commons.util.CollectionFactory;
+import org.infinispan.commons.util.FileLookup;
+import org.infinispan.commons.util.FileLookupFactory;
+import org.infinispan.commons.util.Util;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
@@ -85,10 +85,10 @@ public class ParserRegistry implements NamespaceMappingParser {
          ConfigurationBuilderHolder holder = new ConfigurationBuilderHolder(cl.get());
          parse(is, holder);
          return holder;
-      } catch (ConfigurationException e) {
+      } catch (CacheConfigurationException e) {
          throw e;
       } catch (Exception e) {
-         throw new ConfigurationException(e);
+         throw new CacheConfigurationException(e);
       }
    }
 

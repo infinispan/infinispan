@@ -18,7 +18,7 @@
  */
 package org.infinispan.configuration.module;
 
-import org.infinispan.configuration.Builder;
+import org.infinispan.commons.configuration.Builder;
 import org.infinispan.configuration.cache.AbstractModuleConfigurationBuilder;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 

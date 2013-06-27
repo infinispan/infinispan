@@ -22,8 +22,8 @@
  */
 package org.infinispan.configuration.parsing;
 
-import org.infinispan.util.FileLookupFactory;
-import org.infinispan.util.Util;
+import org.infinispan.commons.util.FileLookupFactory;
+import org.infinispan.commons.util.Util;
 import org.w3c.dom.Document;
 import org.xml.sax.SAXException;
 

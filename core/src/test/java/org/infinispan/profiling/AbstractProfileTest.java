@@ -22,9 +22,9 @@
  */
 package org.infinispan.profiling;
 
+import org.infinispan.commons.executors.ExecutorFactory;
 import org.infinispan.config.Configuration;
 import org.infinispan.config.GlobalConfiguration;
-import org.infinispan.executors.ExecutorFactory;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.test.SingleCacheManagerTest;
 import org.infinispan.test.fwk.TestCacheManagerFactory;

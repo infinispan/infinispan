@@ -21,7 +21,7 @@ package org.infinispan.loaders.cloud.configuration;
 import org.infinispan.configuration.cache.AbstractStoreConfigurationBuilder;
 import org.infinispan.configuration.cache.LoadersConfigurationBuilder;
 import org.infinispan.loaders.cloud.CloudCacheStore;
-import org.infinispan.util.TypedProperties;
+import org.infinispan.commons.util.TypedProperties;
 
 /**
  * CloudCacheStoreConfigurationBuilder. Configures a {@link CloudCacheStore}

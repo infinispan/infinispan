@@ -27,7 +27,7 @@ import com.mchange.v2.c3p0.DataSources;
 import org.infinispan.loaders.CacheLoaderException;
 import org.infinispan.loaders.jdbc.JdbcUtil;
 import org.infinispan.loaders.jdbc.logging.Log;
-import org.infinispan.util.FileLookupFactory;
+import org.infinispan.commons.util.FileLookupFactory;
 import org.infinispan.util.logging.LogFactory;
 
 import java.beans.PropertyVetoException;

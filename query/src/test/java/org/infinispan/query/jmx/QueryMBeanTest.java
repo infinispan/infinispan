@@ -23,7 +23,7 @@
 
 package org.infinispan.query.jmx;
 
-import org.infinispan.CacheException;
+import org.infinispan.commons.CacheException;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.jmx.PerThreadMBeanServerLookup;
 import org.infinispan.manager.EmbeddedCacheManager;
@@ -49,6 +49,7 @@ public class QueryMBeanTest extends SingleCacheManagerTest {
    static final String CACHE_NAME = "queryable-cache";
    MBeanServer server;
 
+   @Override
    protected EmbeddedCacheManager createCacheManager() throws Exception {
       EmbeddedCacheManager cm =
             TestCacheManagerFactory.createCacheManagerEnforceJmxDomain(JMX_DOMAIN);

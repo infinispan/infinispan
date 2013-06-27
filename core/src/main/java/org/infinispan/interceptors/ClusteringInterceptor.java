@@ -39,7 +39,7 @@ import org.infinispan.interceptors.base.BaseRpcInterceptor;
 import org.infinispan.statetransfer.StateTransferManager;
 import org.infinispan.util.concurrent.locks.LockManager;
 
-import static org.infinispan.util.Util.toStr;
+import static org.infinispan.commons.util.Util.toStr;
 
 /**
  * Base class for replication and distribution interceptors.

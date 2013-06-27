@@ -18,7 +18,7 @@
  */
 package org.infinispan.server.hotrod.configuration;
 
-import org.infinispan.configuration.BuiltBy;
+import org.infinispan.commons.configuration.BuiltBy;
 import org.infinispan.server.core.configuration.ProtocolServerConfiguration;
 import org.infinispan.server.core.configuration.SslConfiguration;
 

@@ -20,9 +20,9 @@ package org.infinispan.configuration.global;
 
 import java.util.Properties;
 
+import org.infinispan.commons.util.TypedProperties;
 import org.infinispan.executors.DefaultScheduledExecutorFactory;
 import org.infinispan.executors.ScheduledExecutorFactory;
-import org.infinispan.util.TypedProperties;
 
 /**
  * Configures executor factory.

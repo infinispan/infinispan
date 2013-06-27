@@ -23,7 +23,7 @@
 package org.infinispan.remoting.jgroups;
 
 import org.infinispan.Cache;
-import org.infinispan.CacheException;
+import org.infinispan.commons.CacheException;
 import org.infinispan.config.Configuration;
 import org.infinispan.config.GlobalConfiguration;
 import org.infinispan.manager.EmbeddedCacheManager;

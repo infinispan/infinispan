@@ -26,7 +26,7 @@ import org.infinispan.config.Configuration;
 import org.infinispan.eviction.MarshalledValuesEvictionTest.MockMarshalledValueInterceptor;
 import org.infinispan.interceptors.MarshalledValueInterceptor;
 import org.infinispan.manager.EmbeddedCacheManager;
-import org.infinispan.marshall.StreamingMarshaller;
+import org.infinispan.commons.marshall.StreamingMarshaller;
 import org.infinispan.test.SingleCacheManagerTest;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
@@ -52,7 +52,7 @@ public class MarshalledValuesManualEvictionTest extends SingleCacheManagerTest {
       assert TestingUtil.replaceInterceptor(cache, interceptor, MarshalledValueInterceptor.class);
       return cm;
    }
-   
+
    public void testManualEvictCustomKeyValue() {
       ManualEvictionPojo p1 = new ManualEvictionPojo();
       p1.i = 64;
@@ -66,11 +66,11 @@ public class MarshalledValuesManualEvictionTest extends SingleCacheManagerTest {
       cache.put(p1, p2);
       cache.put(p3, p4);
       cache.evict(p1);
-      
+
       MockMarshalledValueInterceptor interceptor = (MockMarshalledValueInterceptor) TestingUtil.findInterceptor(cache, MarshalledValueInterceptor.class);
       assert interceptor.marshalledValueCreated;
    }
-   
+
    public void testEvictPrimitiveKeyCustomValue() {
       ManualEvictionPojo p1 = new ManualEvictionPojo();
       p1.i = 51;
@@ -88,6 +88,7 @@ public class MarshalledValuesManualEvictionTest extends SingleCacheManagerTest {
    static class ManualEvictionPojo implements Externalizable {
       int i;
 
+      @Override
       public boolean equals(Object o) {
          if (this == o) return true;
          if (o == null || getClass() != o.getClass()) return false;
@@ -96,6 +97,7 @@ public class MarshalledValuesManualEvictionTest extends SingleCacheManagerTest {
          return true;
       }
 
+      @Override
       public int hashCode() {
          int result;
          result = i;

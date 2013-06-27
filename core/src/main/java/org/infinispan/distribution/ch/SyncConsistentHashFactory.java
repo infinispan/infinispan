@@ -32,8 +32,8 @@ import java.util.SortedMap;
 import java.util.TreeMap;
 
 import org.infinispan.commons.hash.Hash;
-import org.infinispan.marshall.AbstractExternalizer;
-import org.infinispan.marshall.Ids;
+import org.infinispan.commons.marshall.AbstractExternalizer;
+import org.infinispan.marshall.core.Ids;
 import org.infinispan.remoting.transport.Address;
 
 /**
@@ -273,7 +273,7 @@ public class SyncConsistentHashFactory implements ConsistentHashFactory<DefaultC
          return result;
       }
    }
-   
+
    public static class Externalizer extends AbstractExternalizer<SyncConsistentHashFactory> {
 
       @Override

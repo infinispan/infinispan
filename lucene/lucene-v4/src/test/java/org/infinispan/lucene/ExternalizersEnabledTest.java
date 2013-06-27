@@ -27,7 +27,7 @@ import java.io.IOException;
 
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.manager.EmbeddedCacheManager;
-import org.infinispan.marshall.jboss.ExternalizerTable;
+import org.infinispan.marshall.core.ExternalizerTable;
 import org.infinispan.test.SingleCacheManagerTest;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
@@ -37,7 +37,7 @@ import org.testng.annotations.Test;
 
 /**
  * Verifies the externalizers of the lucene-directory module are registered automatically
- * 
+ *
  * @author Sanne Grinovero
  * @since 5.0
  */
@@ -86,7 +86,7 @@ public class ExternalizersEnabledTest extends SingleCacheManagerTest {
       Writer objectWriter = externalizerTable.getObjectWriter(keySampleType);
 
       AssertJUnit.assertEquals("Registered Externalizers should be wrapped by a ForeignExternalizerAdapter", objectWriter.getClass().toString(),
-                               "class org.infinispan.marshall.jboss.ExternalizerTable$ForeignExternalizerAdapter");
+                               "class org.infinispan.marshall.core.ExternalizerTable$ForeignExternalizerAdapter");
 
       AssertJUnit.assertEquals("Type of delegate used by the adapter doesn't match expected: " + expectedExcternalizerClass.getClass(),
             "class " + objectWriter.toString(),

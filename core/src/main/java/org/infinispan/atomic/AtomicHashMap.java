@@ -26,10 +26,10 @@ import net.jcip.annotations.NotThreadSafe;
 import org.infinispan.AdvancedCache;
 import org.infinispan.Cache;
 import org.infinispan.context.FlagContainer;
-import org.infinispan.marshall.AbstractExternalizer;
-import org.infinispan.marshall.Ids;
-import org.infinispan.util.FastCopyHashMap;
-import org.infinispan.util.Util;
+import org.infinispan.commons.marshall.AbstractExternalizer;
+import org.infinispan.commons.util.FastCopyHashMap;
+import org.infinispan.commons.util.Util;
+import org.infinispan.marshall.core.Ids;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 

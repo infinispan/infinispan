@@ -31,8 +31,6 @@ import jdbm.helper.TupleBrowser;
 import jdbm.htree.HTree;
 import net.jcip.annotations.ThreadSafe;
 import org.infinispan.Cache;
-import org.infinispan.CacheException;
-import org.infinispan.config.ConfigurationException;
 import org.infinispan.container.entries.InternalCacheEntry;
 import org.infinispan.container.entries.InternalCacheValue;
 import org.infinispan.loaders.AbstractCacheStore;
@@ -42,9 +40,11 @@ import org.infinispan.loaders.CacheLoaderMetadata;
 import org.infinispan.loaders.modifications.Modification;
 import org.infinispan.loaders.modifications.Remove;
 import org.infinispan.loaders.modifications.Store;
-import org.infinispan.marshall.StreamingMarshaller;
+import org.infinispan.commons.CacheConfigurationException;
+import org.infinispan.commons.CacheException;
+import org.infinispan.commons.marshall.StreamingMarshaller;
 import org.infinispan.loaders.jdbm.logging.Log;
-import org.infinispan.util.SysPropertyActions;
+import org.infinispan.commons.util.SysPropertyActions;
 import org.infinispan.util.logging.LogFactory;
 
 import java.io.File;
@@ -133,16 +133,16 @@ public class JdbmCacheStore extends AbstractCacheStore {
       if (!location.exists()) {
          boolean created = location.mkdirs();
          if (!created)
-            throw new ConfigurationException("Unable to create cache loader location " + location);
+            throw new CacheConfigurationException("Unable to create cache loader location " + location);
       }
       if (!location.isDirectory()) {
-         throw new ConfigurationException("Cache loader location [" + location + "] is not a directory!");
+         throw new CacheConfigurationException("Cache loader location [" + location + "] is not a directory!");
       }
 
       try {
          openDatabase(new File(location, cacheDbName));
       } catch (Exception e) {
-         throw new ConfigurationException(e);
+         throw new CacheConfigurationException(e);
       }
 
       log.debug("cleaning up expired entries...");
@@ -389,7 +389,7 @@ public class JdbmCacheStore extends AbstractCacheStore {
       } catch (ClassNotFoundException e) {
          throw new CacheLoaderException(e);
       } catch (InterruptedException ie) {
-         if (log.isTraceEnabled()) log.trace("Interrupted while reading from stream"); 
+         if (log.isTraceEnabled()) log.trace("Interrupted while reading from stream");
          Thread.currentThread().interrupt();
       }
    }

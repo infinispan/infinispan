@@ -23,7 +23,7 @@
 package org.infinispan.lucene.readlocks;
 
 import org.infinispan.Cache;
-import org.infinispan.util.CollectionFactory;
+import org.infinispan.commons.util.CollectionFactory;
 
 import java.util.concurrent.ConcurrentMap;
 
@@ -32,7 +32,7 @@ import java.util.concurrent.ConcurrentMap;
  * remote operations in case several IndexReaders are opened on the same Infinispan based {@link Directory}.
  * It keeps track of locks which where already acquired for a specific filename from another request on
  * the same node and merges the request so that the different clients share the same remote lock.
- * 
+ *
  * @author Sanne Grinovero
  * @since 4.1
  */
@@ -44,14 +44,14 @@ public class LocalLockMergingSegmentReadLocker implements SegmentReadLocker {
 
    /**
     * Create a new LocalLockMergingSegmentReadLocker for specified cache and index name.
-    * 
+    *
     * @param cache
     * @param indexName
     */
    public LocalLockMergingSegmentReadLocker(Cache<?, ?> cache, String indexName) {
       this.delegate = new DistributedSegmentReadLocker((Cache<Object, Integer>) cache, cache, cache, indexName);
    }
-   
+
    /**
     * Create a new LocalLockMergingSegmentReadLocker with special purpose caches
     * @param locksCache the cache to be used to store distributed locks
@@ -79,7 +79,7 @@ public class LocalLockMergingSegmentReadLocker implements SegmentReadLocker {
          return false;
       }
    }
-   
+
    private LocalReadLock getLocalLockByName(String name) {
       LocalReadLock localReadLock = localLocks.get(name);
       if (localReadLock == null) {
@@ -97,7 +97,7 @@ public class LocalLockMergingSegmentReadLocker implements SegmentReadLocker {
    public void deleteOrReleaseReadLock(String name) {
       getLocalLockByName(name).release();
    }
-   
+
    private class LocalReadLock {
       private final String name;
       private int value = 0;
@@ -128,7 +128,7 @@ public class LocalLockMergingSegmentReadLocker implements SegmentReadLocker {
             return true;
          }
       }
-      
+
       synchronized void release() {
          value--;
          if (value <= 0) {

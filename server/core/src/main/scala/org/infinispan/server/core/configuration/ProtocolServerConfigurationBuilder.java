@@ -18,7 +18,7 @@
  */
 package org.infinispan.server.core.configuration;
 
-import org.infinispan.configuration.Builder;
+import org.infinispan.commons.configuration.Builder;
 import org.infinispan.server.core.logging.JavaLog;
 import org.infinispan.util.logging.LogFactory;
 

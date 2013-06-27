@@ -22,7 +22,7 @@
  */
 package org.infinispan.jmx;
 
-import org.infinispan.CacheException;
+import org.infinispan.commons.CacheException;
 import org.infinispan.factories.AbstractComponentRegistry;
 import org.infinispan.factories.ComponentRegistry;
 import org.infinispan.factories.components.ComponentMetadata;

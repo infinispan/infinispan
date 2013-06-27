@@ -29,14 +29,13 @@ import java.util.EnumSet;
 import java.util.Set;
 
 import org.infinispan.Cache;
-import org.infinispan.config.Configuration;
 import org.infinispan.AdvancedCache;
 import org.infinispan.lifecycle.ComponentStatus;
 import org.infinispan.loaders.CacheStore;
-import org.infinispan.marshall.AbstractExternalizer;
-import org.infinispan.marshall.Ids;
-import org.infinispan.util.InfinispanCollections;
-import org.infinispan.util.Util;
+import org.infinispan.commons.marshall.AbstractExternalizer;
+import org.infinispan.commons.util.InfinispanCollections;
+import org.infinispan.commons.util.Util;
+import org.infinispan.marshall.core.Ids;
 
 /**
  * Available flags, which may be set on a per-invocation basis.  These are

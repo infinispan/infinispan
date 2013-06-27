@@ -22,8 +22,8 @@
  */
 package org.infinispan.transaction.lookup;
 
-import org.infinispan.config.ConfigurationException;
-import org.infinispan.util.Util;
+import org.infinispan.commons.util.Util;
+import org.infinispan.commons.CacheConfigurationException;
 
 import javax.naming.InitialContext;
 import javax.naming.NamingException;
@@ -54,7 +54,7 @@ public class JBossTransactionManagerLookup implements TransactionManagerLookup {
             // Check for JBoss AS 4 ~ 6
             return (TransactionManager) initialContext.lookup(legacyAsLocation);
          } catch (NamingException neAgain) {
-            throw new ConfigurationException("Unable to locate a transaction manager in JNDI, either in " + as7Location + " or " + legacyAsLocation);
+            throw new CacheConfigurationException("Unable to locate a transaction manager in JNDI, either in " + as7Location + " or " + legacyAsLocation);
          }
 
       } finally {

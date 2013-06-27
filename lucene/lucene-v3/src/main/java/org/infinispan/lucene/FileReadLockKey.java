@@ -28,15 +28,15 @@ import java.io.ObjectOutput;
 import java.io.Serializable;
 import java.util.Set;
 
-import org.infinispan.marshall.AbstractExternalizer;
-import org.infinispan.util.Util;
+import org.infinispan.commons.marshall.AbstractExternalizer;
+import org.infinispan.commons.util.Util;
 
 /**
  * Lucene's index segment files are chunked, for safe deletion of elements a read lock is
  * implemented so that all chunks are deleted only after the usage counter is decremented to zero.
  * FileReadLockKey is used as a key for the reference counters; a special purpose key was needed to
  * make atomic operation possible.
- * 
+ *
  * @author Sanne Grinovero
  * @since 4.0
  */
@@ -61,16 +61,17 @@ public final class FileReadLockKey implements Serializable, IndexScopedKey {
 
    /**
     * Get the indexName.
-    * 
+    *
     * @return the indexName.
     */
+   @Override
    public String getIndexName() {
       return indexName;
    }
 
    /**
     * Get the fileName.
-    * 
+    *
     * @return the fileName.
     */
    public String getFileName() {
@@ -111,7 +112,7 @@ public final class FileReadLockKey implements Serializable, IndexScopedKey {
    public String toString() {
       return fileName + "|RL|"+ indexName;
    }
-   
+
    public static final class Externalizer extends AbstractExternalizer<FileReadLockKey> {
 
       @Override

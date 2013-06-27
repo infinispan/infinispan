@@ -23,8 +23,8 @@ import java.beans.PropertyEditorSupport;
 import java.util.Properties;
 import java.util.concurrent.TimeUnit;
 
+import org.infinispan.commons.util.TypedProperties;
 import org.infinispan.config.parsing.XmlConfigHelper;
-import org.infinispan.util.TypedProperties;
 
 /**
  * File cache store configuration builder

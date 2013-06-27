@@ -18,8 +18,8 @@
  */
 package org.infinispan.loaders.jdbc.configuration;
 
-import org.infinispan.configuration.Builder;
-import org.infinispan.configuration.BuiltBy;
+import org.infinispan.commons.configuration.Builder;
+import org.infinispan.commons.configuration.BuiltBy;
 import org.infinispan.loaders.jdbc.AbstractJdbcCacheStoreConfig;
 import org.infinispan.loaders.jdbc.connectionfactory.ConnectionFactory;
 import org.infinispan.loaders.jdbc.connectionfactory.SimpleConnectionFactory;

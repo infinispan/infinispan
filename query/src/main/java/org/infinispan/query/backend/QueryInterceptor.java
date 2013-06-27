@@ -58,11 +58,11 @@ import org.infinispan.factories.KnownComponentNames;
 import org.infinispan.factories.annotations.ComponentName;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.interceptors.base.CommandInterceptor;
-import org.infinispan.marshall.MarshalledValue;
+import org.infinispan.marshall.core.MarshalledValue;
 import org.infinispan.query.Transformer;
 import org.infinispan.query.impl.DefaultSearchWorkCreator;
 import org.infinispan.query.logging.Log;
-import org.infinispan.util.CollectionFactory;
+import org.infinispan.commons.util.CollectionFactory;
 import org.infinispan.util.logging.LogFactory;
 
 /**

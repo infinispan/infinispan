@@ -19,7 +19,7 @@
 
 package org.infinispan.xsite;
 
-import org.infinispan.config.ConfigurationException;
+import org.infinispan.commons.CacheConfigurationException;
 import org.infinispan.configuration.cache.BackupConfiguration;
 import org.infinispan.configuration.cache.BackupConfigurationBuilder;
 import org.infinispan.configuration.cache.Configuration;
@@ -73,7 +73,7 @@ public class XSiteCacheConfigurationTest {
       assertEquals(b2.strategy(), BackupConfiguration.BackupStrategy.ASYNC);
    }
 
-   @Test (expectedExceptions = ConfigurationException.class)
+   @Test (expectedExceptions = CacheConfigurationException.class)
    public void testSameBackupDefinedMultipleTimes() {
       ConfigurationBuilder cb = new ConfigurationBuilder();
       cb.

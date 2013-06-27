@@ -24,9 +24,9 @@
 package org.infinispan.metadata;
 
 import org.infinispan.container.versioning.EntryVersion;
-import org.infinispan.marshall.AbstractExternalizer;
-import org.infinispan.marshall.Ids;
-import org.infinispan.util.Util;
+import org.infinispan.commons.marshall.AbstractExternalizer;
+import org.infinispan.commons.util.Util;
+import org.infinispan.marshall.core.Ids;
 import org.jboss.marshalling.util.IdentityIntMap;
 
 import java.io.IOException;

@@ -22,7 +22,7 @@
  */
 package org.infinispan.batch;
 
-import org.infinispan.CacheException;
+import org.infinispan.commons.CacheException;
 import org.infinispan.factories.annotations.Inject;
 
 import javax.transaction.Transaction;

@@ -23,7 +23,7 @@
 package org.infinispan.profiling;
 
 import org.infinispan.Cache;
-import org.infinispan.CacheException;
+import org.infinispan.commons.CacheException;
 import org.infinispan.config.Configuration;
 import org.infinispan.test.AbstractInfinispanTest;
 import org.infinispan.test.TestingUtil;

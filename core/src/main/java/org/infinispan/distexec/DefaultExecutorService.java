@@ -70,17 +70,17 @@ import org.infinispan.factories.ComponentRegistry;
 import org.infinispan.interceptors.InterceptorChain;
 import org.infinispan.interceptors.locking.ClusteringDependentLogic;
 import org.infinispan.lifecycle.ComponentStatus;
-import org.infinispan.marshall.Marshaller;
-import org.infinispan.marshall.StreamingMarshaller;
+import org.infinispan.commons.marshall.Marshaller;
+import org.infinispan.commons.marshall.StreamingMarshaller;
+import org.infinispan.commons.util.InfinispanCollections;
+import org.infinispan.commons.util.Util;
 import org.infinispan.remoting.responses.Response;
 import org.infinispan.remoting.responses.SuccessfulResponse;
 import org.infinispan.remoting.rpc.ResponseMode;
 import org.infinispan.remoting.rpc.RpcManager;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.remoting.transport.TopologyAwareAddress;
-import org.infinispan.util.InfinispanCollections;
 import org.infinispan.util.TimeService;
-import org.infinispan.util.Util;
 import org.infinispan.util.concurrent.FutureListener;
 import org.infinispan.util.concurrent.NotifyingFuture;
 import org.infinispan.util.concurrent.NotifyingNotifiableFuture;
@@ -133,7 +133,7 @@ public class DefaultExecutorService extends AbstractExecutorService implements D
          return true;
       };
    };
-   
+
    public static final DistributedTaskFailoverPolicy NO_FAILOVER = new NoTaskFailoverPolicy();
    public static final DistributedTaskFailoverPolicy RANDOM_NODE_FAILOVER = new RandomNodeTaskFailoverPolicy();
 
@@ -170,11 +170,11 @@ public class DefaultExecutorService extends AbstractExecutorService implements D
     * Note that DefaultExecutorService will not shutdown client supplied localExecutorService once
     * this DefaultExecutorService is shutdown. Lifecycle management of a supplied ExecutorService is
     * left to the client
-    * 
+    *
     * Also note that client supplied ExecutorService should not execute tasks in the caller's thread
     * ( i.e rejectionHandler of {@link ThreadPoolExecutor} configured with {link
     * {@link ThreadPoolExecutor.CallerRunsPolicy})
-    * 
+    *
     * @param masterCacheNode
     *           Cache node initiating distributed task
     * @param localExecutorService
@@ -183,12 +183,12 @@ public class DefaultExecutorService extends AbstractExecutorService implements D
    public DefaultExecutorService(Cache<?, ?> masterCacheNode, ExecutorService localExecutorService) {
       this(masterCacheNode, localExecutorService, false);
    }
-   
+
    /**
     * Creates a new DefaultExecutorService given a master cache node and an ExecutorService for
     * parallel execution of task ran on this node. All distributed task executions will be initiated
     * from this Infinispan cache node.
-    * 
+    *
     * @param masterCacheNode
     *           Cache node initiating distributed task
     * @param localExecutorService
@@ -197,7 +197,7 @@ public class DefaultExecutorService extends AbstractExecutorService implements D
     *           if true {@link DistributedExecutorService#shutdown()} and
     *           {@link DistributedExecutorService#shutdownNow()} method will shutdown
     *           localExecutorService as well
-    * 
+    *
     */
    public DefaultExecutorService(Cache<?, ?> masterCacheNode, ExecutorService localExecutorService,
             boolean takeExecutorOwnership) {
@@ -536,7 +536,7 @@ public class DefaultExecutorService extends AbstractExecutorService implements D
                c = factory.buildDistributedExecuteCommand(clone(task.getCallable()), me, e.getValue());
             } else {
                c = factory.buildDistributedExecuteCommand(task.getCallable(), me, e.getValue());
-            }            
+            }
             DistributedTaskPart<T> part = createDistributedTaskPart(task, c, e.getValue(), target, 0);
             futures.add(part);
             part.execute();
@@ -556,7 +556,7 @@ public class DefaultExecutorService extends AbstractExecutorService implements D
             int failoverCount) {
       return new DistributedTaskPart<T>(task, c, (List<Object>) inputKeys, target, failoverCount);
    }
-   
+
    protected <T, K> DistributedTaskPart<T> createDistributedTaskPart(DistributedTask<T> task,
             DistributedExecuteCommand<T> c, Address target, int failoverCount) {
       return createDistributedTaskPart(task, c, Collections.emptyList(), target, failoverCount);
@@ -703,7 +703,7 @@ public class DefaultExecutorService extends AbstractExecutorService implements D
          return 1;
       }
    }
-   
+
    private static class NoTaskFailoverPolicy implements DistributedTaskFailoverPolicy {
 
       public NoTaskFailoverPolicy() {
@@ -819,7 +819,7 @@ public class DefaultExecutorService extends AbstractExecutorService implements D
       private final Set<FutureListener<V>> listeners = new CopyOnWriteArraySet<FutureListener<V>>();
       private final ReadWriteLock listenerLock = new ReentrantReadWriteLock();
       private final Address executionTarget;
-      private final List<Object> inputKeys; 
+      private final List<Object> inputKeys;
       private final DistributedTask<V> owningTask;
       private int failedOverCount;
       private volatile boolean done;
@@ -828,7 +828,7 @@ public class DefaultExecutorService extends AbstractExecutorService implements D
 
       /**
        * Create a new DistributedTaskPart.
-       * 
+       *
        * @param task
        * @param command
        * @param executionTarget
@@ -869,14 +869,14 @@ public class DefaultExecutorService extends AbstractExecutorService implements D
       public boolean isDone() {
          return done;
       }
-      
+
       public boolean isLocalNodeExecutionTarget(){
          return getAddress().equals(getExecutionTarget());
       }
 
       @Override
       public boolean cancel(boolean mayInterruptIfRunning) {
-         if (!isCancelled()) {          
+         if (!isCancelled()) {
             CancelCommand ccc = factory.buildCancelCommandCommand(distCommand.getUUID());
             if (isLocalNodeExecutionTarget()) {
                ccc.init(cancellationService);
@@ -925,7 +925,7 @@ public class DefaultExecutorService extends AbstractExecutorService implements D
             done = true;
          }
       }
-      
+
       private V innerGet(long timeout, TimeUnit unit)
             throws ExecutionException, TimeoutException, InterruptedException {
          if (isCancelled())
@@ -937,7 +937,7 @@ public class DefaultExecutorService extends AbstractExecutorService implements D
          try {
             if (timeoutNanos > 0) {
                response = retrieveResult(f.get(timeoutNanos, TimeUnit.NANOSECONDS));
-            } else {               
+            } else {
                response = retrieveResult(f.get());
             }
          } catch (TimeoutException te) {
@@ -1052,10 +1052,10 @@ public class DefaultExecutorService extends AbstractExecutorService implements D
          if (response instanceof Exception) {
             throw ((Exception) response);
          }
-         //these two should never happen, mark them with IllegalStateException         
+         //these two should never happen, mark them with IllegalStateException
          if (response == null || !(response instanceof Map<?, ?>)) {
             throw new IllegalStateException("Invalid response received " + response);
-         }         
+         }
          Map<Address, Response> mapResult = (Map<Address, Response>) response;
          if (mapResult.size() == 1) {
             for (Entry<Address, Response> e : mapResult.entrySet()) {
@@ -1065,7 +1065,7 @@ public class DefaultExecutorService extends AbstractExecutorService implements D
                }
             }
          } else {
-            //should never happen as we send DistributedTaskPart to one node for 
+            //should never happen as we send DistributedTaskPart to one node for
             //execution only, therefore we should get only one response
             throw new IllegalStateException("Invalid response " + response);
          }

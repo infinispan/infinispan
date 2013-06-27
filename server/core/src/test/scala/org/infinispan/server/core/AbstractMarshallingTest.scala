@@ -26,7 +26,7 @@ import org.testng.annotations.{AfterTest, BeforeTest}
 import java.util.Random
 import java.io.{ObjectOutputStream, ByteArrayOutputStream}
 import org.infinispan.test.TestingUtil
-import org.infinispan.marshall.AbstractDelegatingMarshaller
+import org.infinispan.commons.marshall.AbstractDelegatingMarshaller
 import org.infinispan.manager.EmbeddedCacheManager
 import org.infinispan.test.fwk.TestCacheManagerFactory
 

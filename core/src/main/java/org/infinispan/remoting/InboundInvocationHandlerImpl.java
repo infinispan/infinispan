@@ -22,7 +22,6 @@
  */
 package org.infinispan.remoting;
 
-import org.infinispan.CacheException;
 import org.infinispan.commands.CancellableCommand;
 import org.infinispan.commands.CancellationService;
 import org.infinispan.commands.CommandsFactory;
@@ -32,6 +31,7 @@ import org.infinispan.commands.tx.totalorder.TotalOrderCommitCommand;
 import org.infinispan.commands.tx.totalorder.TotalOrderPrepareCommand;
 import org.infinispan.commands.tx.totalorder.TotalOrderRollbackCommand;
 import org.infinispan.commands.tx.totalorder.TotalOrderVersionedCommitCommand;
+import org.infinispan.commons.CacheException;
 import org.infinispan.configuration.global.GlobalConfiguration;
 import org.infinispan.factories.ComponentRegistry;
 import org.infinispan.factories.GlobalComponentRegistry;

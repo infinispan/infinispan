@@ -26,8 +26,8 @@ import java.util.List;
 import org.infinispan.client.hotrod.impl.consistenthash.ConsistentHash;
 import org.infinispan.client.hotrod.impl.transport.TransportFactory;
 import org.infinispan.client.hotrod.impl.transport.tcp.RequestBalancingStrategy;
-import org.infinispan.configuration.BuiltBy;
-import org.infinispan.marshall.Marshaller;
+import org.infinispan.commons.configuration.BuiltBy;
+import org.infinispan.commons.marshall.Marshaller;
 
 /**
  * Configuration.

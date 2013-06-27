@@ -21,7 +21,6 @@ package org.infinispan.xsite;
 
 import org.infinispan.AdvancedCache;
 import org.infinispan.Cache;
-import org.infinispan.CacheException;
 import org.infinispan.metadata.Metadata;
 import org.infinispan.commands.AbstractVisitor;
 import org.infinispan.commands.VisitableCommand;
@@ -34,6 +33,7 @@ import org.infinispan.commands.write.PutMapCommand;
 import org.infinispan.commands.write.RemoveCommand;
 import org.infinispan.commands.write.ReplaceCommand;
 import org.infinispan.commands.write.WriteCommand;
+import org.infinispan.commons.CacheException;
 import org.infinispan.context.Flag;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.context.impl.TxInvocationContext;

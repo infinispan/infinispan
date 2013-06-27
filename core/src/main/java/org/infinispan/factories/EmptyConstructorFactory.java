@@ -25,11 +25,11 @@ package org.infinispan.factories;
 import org.infinispan.commands.CancellationService;
 import org.infinispan.commands.CancellationServiceImpl;
 import org.infinispan.commands.RemoteCommandsFactory;
-import org.infinispan.config.ConfigurationException;
+import org.infinispan.commons.CacheConfigurationException;
 import org.infinispan.factories.annotations.DefaultFactoryFor;
 import org.infinispan.factories.scopes.Scope;
 import org.infinispan.factories.scopes.Scopes;
-import org.infinispan.marshall.jboss.ExternalizerTable;
+import org.infinispan.marshall.core.ExternalizerTable;
 import org.infinispan.remoting.InboundInvocationHandler;
 import org.infinispan.remoting.InboundInvocationHandlerImpl;
 import org.infinispan.topology.ClusterTopologyManager;
@@ -80,6 +80,6 @@ public class EmptyConstructorFactory extends AbstractComponentFactory implements
          return (T) new DefaultTimeService();
       }
 
-      throw new ConfigurationException("Don't know how to create a " + componentType.getName());
+      throw new CacheConfigurationException("Don't know how to create a " + componentType.getName());
    }
 }

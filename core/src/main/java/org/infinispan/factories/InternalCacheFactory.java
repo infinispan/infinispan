@@ -25,7 +25,7 @@ package org.infinispan.factories;
 import org.infinispan.AdvancedCache;
 import org.infinispan.Cache;
 import org.infinispan.CacheImpl;
-import org.infinispan.config.ConfigurationException;
+import org.infinispan.commons.CacheConfigurationException;
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.jmx.CacheJmxRegistration;
 import org.infinispan.manager.DefaultCacheManager;
@@ -61,11 +61,11 @@ public class InternalCacheFactory<K, V> extends AbstractNamedCacheComponentFacto
     */
    public Cache<K, V> createCache(Configuration configuration,
                                   GlobalComponentRegistry globalComponentRegistry,
-                                  String cacheName) throws ConfigurationException {
+                                  String cacheName) throws CacheConfigurationException {
       try {
          return createAndWire(configuration, globalComponentRegistry, cacheName);
       }
-      catch (ConfigurationException ce) {
+      catch (CacheConfigurationException ce) {
          throw ce;
       }
       catch (RuntimeException re) {

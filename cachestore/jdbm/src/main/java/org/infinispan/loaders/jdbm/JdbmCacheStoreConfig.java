@@ -26,7 +26,7 @@ import java.util.Comparator;
 
 import org.infinispan.config.Dynamic;
 import org.infinispan.loaders.LockSupportCacheStoreConfig;
-import org.infinispan.util.Util;
+import org.infinispan.commons.util.Util;
 
 /**
  * Configures {@link JdbmCacheStore}.

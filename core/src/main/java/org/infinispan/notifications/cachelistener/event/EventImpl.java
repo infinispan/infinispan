@@ -24,12 +24,12 @@ package org.infinispan.notifications.cachelistener.event;
 
 import net.jcip.annotations.NotThreadSafe;
 import org.infinispan.Cache;
+import org.infinispan.commons.util.InfinispanCollections;
+import org.infinispan.commons.util.Util;
 import org.infinispan.distribution.ch.ConsistentHash;
-import org.infinispan.marshall.MarshalledValue;
+import org.infinispan.marshall.core.MarshalledValue;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.transaction.xa.GlobalTransaction;
-import org.infinispan.util.InfinispanCollections;
-import org.infinispan.util.Util;
 
 import java.util.Collection;
 import java.util.Map;

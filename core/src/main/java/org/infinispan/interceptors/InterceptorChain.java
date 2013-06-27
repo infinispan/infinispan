@@ -22,9 +22,11 @@
  */
 package org.infinispan.interceptors;
 
-import org.infinispan.CacheException;
 import org.infinispan.commands.VisitableCommand;
-import org.infinispan.config.ConfigurationException;
+import org.infinispan.commons.CacheException;
+import org.infinispan.commons.util.InfinispanCollections;
+import org.infinispan.commons.util.ReflectionUtil;
+import org.infinispan.commons.CacheConfigurationException;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.factories.annotations.Start;
@@ -33,8 +35,6 @@ import org.infinispan.factories.components.ComponentMetadataRepo;
 import org.infinispan.factories.scopes.Scope;
 import org.infinispan.factories.scopes.Scopes;
 import org.infinispan.interceptors.base.CommandInterceptor;
-import org.infinispan.util.InfinispanCollections;
-import org.infinispan.util.ReflectionUtil;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
@@ -95,7 +95,7 @@ public class InterceptorChain {
     */
    private void assertNotAdded(Class<? extends CommandInterceptor> clazz) {
       if (containsInterceptorType(clazz))
-         throw new ConfigurationException("Detected interceptor of type [" + clazz.getName() + "] being added to the interceptor chain " + System.identityHashCode(this) + " more than once!");
+         throw new CacheConfigurationException("Detected interceptor of type [" + clazz.getName() + "] being added to the interceptor chain " + System.identityHashCode(this) + " more than once!");
    }
 
    /**

@@ -19,6 +19,7 @@
 
 package org.infinispan.executors;
 
+import org.infinispan.commons.executors.ExecutorFactory;
 import org.infinispan.util.concurrent.WithinThreadExecutor;
 
 import java.util.Properties;

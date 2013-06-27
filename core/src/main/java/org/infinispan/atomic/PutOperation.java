@@ -28,9 +28,9 @@ import java.io.ObjectOutput;
 import java.util.Map;
 import java.util.Set;
 
-import org.infinispan.marshall.AbstractExternalizer;
-import org.infinispan.marshall.Ids;
-import org.infinispan.util.Util;
+import org.infinispan.commons.marshall.AbstractExternalizer;
+import org.infinispan.commons.util.Util;
+import org.infinispan.marshall.core.Ids;
 
 /**
  * An atomic put operation.
@@ -67,7 +67,7 @@ public class PutOperation<K, V> extends Operation<K, V> {
    public void replay(Map<K, V> delegate) {
       delegate.put(key, newValue);
    }
-   
+
    @Override
    public K keyAffected() {
       return key;
@@ -115,7 +115,7 @@ public class PutOperation<K, V> extends Operation<K, V> {
       public PutOperation readObject(ObjectInput input) throws IOException, ClassNotFoundException {
          PutOperation<Object, Object> put = new PutOperation<Object, Object>();
          put.key = input.readObject();
-         put.newValue = input.readObject();         
+         put.newValue = input.readObject();
          return put;
       }
 

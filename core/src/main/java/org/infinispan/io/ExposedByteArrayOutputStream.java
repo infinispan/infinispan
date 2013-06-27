@@ -42,6 +42,7 @@ import org.jboss.marshalling.ByteOutput;
  * @since 4.0
  */
 @NotThreadSafe
+@Deprecated
 public final class ExposedByteArrayOutputStream extends ByteArrayOutputStream implements ByteOutput {
    /**
     * Default buffer size after which if more buffer capacity is needed the buffer will grow by 25% rather than 100%
@@ -132,7 +133,7 @@ public final class ExposedByteArrayOutputStream extends ByteArrayOutputStream im
       else
          return Math.max(curSize + (curSize >> 2), minNewSize);
    }
-   
+
    /**
     * Overriden only to avoid unneeded synchronization
     */

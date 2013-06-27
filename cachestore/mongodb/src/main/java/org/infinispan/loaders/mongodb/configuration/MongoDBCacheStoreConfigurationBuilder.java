@@ -25,7 +25,7 @@ package org.infinispan.loaders.mongodb.configuration;
 
 import org.infinispan.configuration.cache.AbstractStoreConfigurationBuilder;
 import org.infinispan.configuration.cache.LoadersConfigurationBuilder;
-import org.infinispan.util.TypedProperties;
+import org.infinispan.commons.util.TypedProperties;
 
 /**
  * MongoDBCacheStoreConfigurationBuilder. Configures a {@link MongoDBCacheStoreConfiguration}

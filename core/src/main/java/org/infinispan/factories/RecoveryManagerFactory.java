@@ -24,7 +24,7 @@
 package org.infinispan.factories;
 
 import org.infinispan.Cache;
-import org.infinispan.config.ConfigurationException;
+import org.infinispan.commons.CacheConfigurationException;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
@@ -70,7 +70,7 @@ public class RecoveryManagerFactory extends AbstractNamedCacheComponentFactory i
          if (!useDefaultCache) {
             // check to see that the cache is defined
             if (!cm.getCacheNames().contains(recoveryCacheName)) {
-               throw new ConfigurationException("Recovery cache (" + recoveryCacheName + ") does not exist!!");
+               throw new CacheConfigurationException("Recovery cache (" + recoveryCacheName + ") does not exist!!");
             }
           } else {
             //this might have already been defined by other caches
@@ -102,7 +102,7 @@ public class RecoveryManagerFactory extends AbstractNamedCacheComponentFactory i
       Cache<?, ?> recoveryCache = cm.getCache(recoveryCacheName);
       if (recoveryCache.getConfiguration().isTransactionalCache()) {
          //see comment in getDefaultRecoveryCacheConfig
-         throw new ConfigurationException("The recovery cache shouldn't be transactional.");
+         throw new CacheConfigurationException("The recovery cache shouldn't be transactional.");
       }
       log.tracef("Obtained a reference to the recovery cache: %s", recoveryCacheName);
       return new RecoveryManagerImpl((ConcurrentMap<RecoveryInfoKey, RecoveryAwareRemoteTransaction>) recoveryCache,  cacheName);

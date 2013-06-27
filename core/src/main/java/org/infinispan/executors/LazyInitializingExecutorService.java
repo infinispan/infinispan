@@ -19,7 +19,8 @@
 
 package org.infinispan.executors;
 
-import org.infinispan.util.InfinispanCollections;
+import org.infinispan.commons.executors.ExecutorFactory;
+import org.infinispan.commons.util.InfinispanCollections;
 
 import java.util.Collection;
 import java.util.Collections;

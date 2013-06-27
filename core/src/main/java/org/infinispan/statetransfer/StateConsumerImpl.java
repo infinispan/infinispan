@@ -24,10 +24,11 @@
 package org.infinispan.statetransfer;
 
 import org.infinispan.Cache;
-import org.infinispan.CacheException;
 import org.infinispan.commands.CommandsFactory;
 import org.infinispan.commands.write.InvalidateCommand;
 import org.infinispan.commands.write.PutKeyValueCommand;
+import org.infinispan.commons.CacheException;
+import org.infinispan.commons.util.InfinispanCollections;
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.container.DataContainer;
 import org.infinispan.container.entries.InternalCacheEntry;
@@ -57,7 +58,6 @@ import org.infinispan.transaction.TransactionTable;
 import org.infinispan.transaction.totalorder.TotalOrderLatch;
 import org.infinispan.transaction.totalorder.TotalOrderManager;
 import org.infinispan.transaction.xa.CacheTransaction;
-import org.infinispan.util.InfinispanCollections;
 import org.infinispan.util.ReadOnlyDataContainerBackedKeySet;
 import org.infinispan.util.concurrent.ConcurrentHashSet;
 import org.infinispan.util.logging.Log;

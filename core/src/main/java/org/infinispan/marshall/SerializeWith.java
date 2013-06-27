@@ -47,6 +47,7 @@ import java.lang.annotation.Target;
 @Target(ElementType.TYPE)
 @Inherited
 @Documented
+@Deprecated
 public @interface SerializeWith {
 
    /**

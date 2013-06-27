@@ -19,8 +19,8 @@
 
 package org.infinispan.configuration.cache;
 
-import org.infinispan.config.ConfigurationException;
-import org.infinispan.configuration.Builder;
+import org.infinispan.commons.configuration.Builder;
+import org.infinispan.commons.CacheConfigurationException;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
@@ -102,11 +102,11 @@ public class StateTransferConfigurationBuilder extends
    public void validate() {
       // certain combinations are illegal, such as state transfer + invalidation
       if (fetchInMemoryState != null && fetchInMemoryState && getClusteringBuilder().cacheMode().isInvalidation())
-         throw new ConfigurationException(
+         throw new CacheConfigurationException(
                "Cache cannot use INVALIDATION mode and have fetchInMemoryState set to true.");
       if (awaitInitialTransfer != null && awaitInitialTransfer
             && !getClusteringBuilder().cacheMode().isReplicated() && !getClusteringBuilder().cacheMode().isDistributed())
-         throw new ConfigurationException(
+         throw new CacheConfigurationException(
                "awaitInitialTransfer can be enabled only if cache mode is distributed or replicated.");
    }
 

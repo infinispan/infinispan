@@ -18,9 +18,9 @@
  */
 package org.infinispan.configuration.cache;
 
+import org.infinispan.commons.configuration.Builder;
 import org.infinispan.commons.hash.Hash;
 import org.infinispan.commons.hash.MurmurHash3;
-import org.infinispan.configuration.Builder;
 import org.infinispan.distribution.ch.ConsistentHash;
 import org.infinispan.distribution.ch.ConsistentHashFactory;
 import org.infinispan.util.logging.Log;

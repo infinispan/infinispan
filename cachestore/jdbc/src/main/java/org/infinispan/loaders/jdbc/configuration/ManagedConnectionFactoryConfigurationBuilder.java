@@ -18,7 +18,7 @@
  */
 package org.infinispan.loaders.jdbc.configuration;
 
-import org.infinispan.config.ConfigurationException;
+import org.infinispan.commons.CacheConfigurationException;
 
 /**
  * ManagedConnectionFactoryConfigurationBuilder.
@@ -41,7 +41,7 @@ public class ManagedConnectionFactoryConfigurationBuilder<S extends AbstractJdbc
 
    @Override
    public void validate() {
-      throw new ConfigurationException("The jndiUrl has not been specified");
+      throw new CacheConfigurationException("The jndiUrl has not been specified");
    }
 
    @Override

@@ -19,7 +19,7 @@
 
 package org.infinispan.factories.components;
 
-import org.infinispan.CacheException;
+import org.infinispan.commons.CacheException;
 import org.infinispan.factories.annotations.DefaultFactoryFor;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;

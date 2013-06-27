@@ -40,40 +40,40 @@ import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.test.SingleCacheManagerTest;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.infinispan.test.fwk.UnitTestDatabaseManager;
-import org.infinispan.util.Util;
+import org.infinispan.commons.util.Util;
 import org.testng.AssertJUnit;
 import org.testng.annotations.Test;
 
 /**
  * Test to verify that it's possible to use the index using a JdbcStringBasedCacheStore
- * 
+ *
  * @see org.infinispan.loaders.jdbc.stringbased.JdbcStringBasedCacheStore
- * 
+ *
  * @author Sanne Grinovero
  * @since 4.1
  */
 @SuppressWarnings("unchecked")
 @Test(groups = "functional", testName = "lucene.DatabaseStoredIndexTest")
 public class DatabaseStoredIndexTest extends SingleCacheManagerTest {
-   
+
    private final ConnectionFactoryConfig connectionFactoryConfig = UnitTestDatabaseManager.getUniqueConnectionFactoryConfig();
-   
+
    /** The INDEX_NAME */
    private static final String INDEX_NAME = "testing index";
-   
+
    private final HashMap cacheCopy = new HashMap();
-   
+
    public DatabaseStoredIndexTest() {
       cleanup = CleanupPhase.AFTER_METHOD;
    }
-   
+
    @Override
    protected EmbeddedCacheManager createCacheManager() throws Exception {
       Configuration configuration = CacheTestSupport.createLegacyTestConfiguration();
       enableTestJdbcStorage(configuration);
       return TestCacheManagerFactory.createClusteredCacheManager(configuration);
    }
-   
+
    private void enableTestJdbcStorage(Configuration configuration) {
       TableManipulation tm = UnitTestDatabaseManager.buildStringTableManipulation();
       JdbcStringBasedCacheStoreConfig jdbcStoreConfiguration = new JdbcStringBasedCacheStoreConfig(connectionFactoryConfig, tm);
@@ -100,7 +100,7 @@ public class DatabaseStoredIndexTest extends SingleCacheManagerTest {
       cache.stop();
       cacheManager.stop();
    }
-   
+
    @Test(dependsOnMethods="testIndexUsage")
    public void indexWasStored() throws IOException {
       cache = cacheManager.getCache();
@@ -132,5 +132,5 @@ public class DatabaseStoredIndexTest extends SingleCacheManagerTest {
       assertTextIsFoundInIds(dir, "index", 1);
       dir.close();
    }
-   
+
 }

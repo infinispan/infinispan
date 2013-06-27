@@ -23,10 +23,10 @@
 package org.infinispan.api.mvcc.repeatable_read;
 
 import org.infinispan.Cache;
-import org.infinispan.CacheException;
 import org.infinispan.api.mvcc.LockAssert;
 import org.infinispan.atomic.AtomicMapLookup;
 import org.infinispan.atomic.FineGrainedAtomicMap;
+import org.infinispan.commons.CacheException;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.cache.VersioningScheme;
 import org.infinispan.context.InvocationContextContainer;

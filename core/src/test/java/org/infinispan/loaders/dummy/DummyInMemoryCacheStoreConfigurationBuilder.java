@@ -18,9 +18,9 @@
  */
 package org.infinispan.loaders.dummy;
 
+import org.infinispan.commons.util.TypedProperties;
 import org.infinispan.configuration.cache.AbstractStoreConfigurationBuilder;
 import org.infinispan.configuration.cache.LoadersConfigurationBuilder;
-import org.infinispan.util.TypedProperties;
 
 public class DummyInMemoryCacheStoreConfigurationBuilder
       extends

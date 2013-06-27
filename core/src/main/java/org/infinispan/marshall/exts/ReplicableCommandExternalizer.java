@@ -31,11 +31,11 @@ import org.infinispan.commands.read.GetKeyValueCommand;
 import org.infinispan.commands.remote.CacheRpcCommand;
 import org.infinispan.commands.write.*;
 import org.infinispan.factories.GlobalComponentRegistry;
-import org.infinispan.io.UnsignedNumeric;
-import org.infinispan.marshall.AbstractExternalizer;
-import org.infinispan.marshall.Ids;
+import org.infinispan.commons.io.UnsignedNumeric;
+import org.infinispan.commons.marshall.AbstractExternalizer;
+import org.infinispan.commons.util.Util;
+import org.infinispan.marshall.core.Ids;
 import org.infinispan.topology.CacheTopologyControlCommand;
-import org.infinispan.util.Util;
 
 import java.io.IOException;
 import java.io.ObjectInput;
@@ -52,7 +52,7 @@ import java.util.Set;
 public class ReplicableCommandExternalizer extends AbstractExternalizer<ReplicableCommand> {
    private final RemoteCommandsFactory cmdFactory;
    private final GlobalComponentRegistry globalComponentRegistry;
-   
+
    public ReplicableCommandExternalizer(RemoteCommandsFactory cmdFactory, GlobalComponentRegistry globalComponentRegistry) {
       this.cmdFactory = cmdFactory;
       this.globalComponentRegistry = globalComponentRegistry;

@@ -33,7 +33,7 @@ import org.infinispan.loaders.jdbc.binary.JdbcBinaryCacheStore;
 import org.infinispan.loaders.jdbc.connectionfactory.ConnectionFactory;
 import org.infinispan.loaders.jdbc.connectionfactory.ConnectionFactoryConfig;
 import org.infinispan.loaders.jdbc.stringbased.JdbcStringBasedCacheStore;
-import org.infinispan.marshall.StreamingMarshaller;
+import org.infinispan.commons.marshall.StreamingMarshaller;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 

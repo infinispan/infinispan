@@ -23,9 +23,9 @@
 package org.infinispan.remoting;
 
 import org.infinispan.Cache;
-import org.infinispan.CacheException;
 import org.infinispan.commands.remote.SingleRpcCommand;
 import org.infinispan.commands.write.PutKeyValueCommand;
+import org.infinispan.commons.CacheException;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.interceptors.base.CommandInterceptor;

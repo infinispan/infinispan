@@ -24,7 +24,6 @@ package org.infinispan.distexec.mapreduce;
 
 import org.infinispan.AdvancedCache;
 import org.infinispan.Cache;
-import org.infinispan.CacheException;
 import org.infinispan.commands.CancelCommand;
 import org.infinispan.commands.CancellationService;
 import org.infinispan.commands.CommandsFactory;
@@ -37,14 +36,15 @@ import org.infinispan.factories.ComponentRegistry;
 import org.infinispan.interceptors.locking.ClusteringDependentLogic;
 import org.infinispan.lifecycle.ComponentStatus;
 import org.infinispan.manager.EmbeddedCacheManager;
-import org.infinispan.marshall.Marshaller;
-import org.infinispan.marshall.StreamingMarshaller;
+import org.infinispan.commons.CacheException;
+import org.infinispan.commons.marshall.Marshaller;
+import org.infinispan.commons.marshall.StreamingMarshaller;
+import org.infinispan.commons.util.Util;
 import org.infinispan.remoting.responses.Response;
 import org.infinispan.remoting.responses.SuccessfulResponse;
 import org.infinispan.remoting.rpc.RpcManager;
 import org.infinispan.remoting.rpc.RpcOptionsBuilder;
 import org.infinispan.remoting.transport.Address;
-import org.infinispan.util.Util;
 import org.infinispan.util.concurrent.AbstractInProcessFuture;
 import org.infinispan.util.concurrent.FutureListener;
 import org.infinispan.util.concurrent.NotifyingFuture;
@@ -77,43 +77,43 @@ import static org.infinispan.factories.KnownComponentNames.CACHE_MARSHALLER;
  * MapReduceTask is a distributed task allowing a large scale computation to be transparently
  * parallelized across Infinispan cluster nodes.
  * <p>
- * 
+ *
  * Users should instantiate MapReduceTask with a reference to a cache whose data is used as input for this
- * task. Infinispan execution environment will migrate and execute instances of provided {@link Mapper} 
+ * task. Infinispan execution environment will migrate and execute instances of provided {@link Mapper}
  * and {@link Reducer} seamlessly across Infinispan nodes.
  * <p>
- * 
- * Unless otherwise specified using {@link MapReduceTask#onKeys(Object...)} filter all available 
+ *
+ * Unless otherwise specified using {@link MapReduceTask#onKeys(Object...)} filter all available
  * key/value pairs of a specified cache will be used as input data for this task.
- * 
- * For example, MapReduceTask that counts number of word occurrences in a particular cache where 
+ *
+ * For example, MapReduceTask that counts number of word occurrences in a particular cache where
  * keys and values are String instances could be written as follows:
- *  
+ *
  * <pre>
  * MapReduceTask&lt;String, String, String, Integer&gt; task = new MapReduceTask&lt;String, String, String, Integer&gt;(cache);
  * task.mappedWith(new WordCountMapper()).reducedWith(new WordCountReducer());
  * Map&lt;String, Integer&gt; results = task.execute();
  * </pre>
- * 
+ *
  * The final result is a map where key is a word and value is a word count for that particular word.
  * <p>
- * 
- * Accompanying {@link Mapper} and {@link Reducer} are defined as follows: 
- * 
+ *
+ * Accompanying {@link Mapper} and {@link Reducer} are defined as follows:
+ *
  * <pre>
  *    private static class WordCountMapper implements Mapper&lt;String, String, String,Integer&gt; {
- *     
+ *
  *     public void map(String key, String value, Collector&lt;String, Integer&gt; collector) {
  *        StringTokenizer tokens = new StringTokenizer(value);
  *       while (tokens.hasMoreElements()) {
  *           String s = (String) tokens.nextElement();
  *           collector.emit(s, 1);
- *        }         
+ *        }
  *     }
  *  }
  *
  *   private static class WordCountReducer implements Reducer&lt;String, Integer&gt; {
- *     
+ *
  *      public Integer reduce(String key, Iterator&lt;Integer&gt; iter) {
  *         int sum = 0;
  *         while (iter.hasNext()) {
@@ -124,37 +124,37 @@ import static org.infinispan.factories.KnownComponentNames.CACHE_MARSHALLER;
  *      }
  *   }
  * </pre>
- * 
+ *
  * <p>
- * 
- * Finally, as of Infinispan 5.2 release, MapReduceTask can also specify a Combiner function. The Combiner 
- * is executed on each node after the Mapper and before the global reduce phase. The Combiner receives input from 
- * the Mapper's output and the output from the Combiner is then sent to the reducers. It is useful to think 
+ *
+ * Finally, as of Infinispan 5.2 release, MapReduceTask can also specify a Combiner function. The Combiner
+ * is executed on each node after the Mapper and before the global reduce phase. The Combiner receives input from
+ * the Mapper's output and the output from the Combiner is then sent to the reducers. It is useful to think
  * of the Combiner as a node local reduce phase before global reduce phase is executed.
  * <p>
- * 
- * Combiners are especially useful when reduce function is both commutative and associative! In such cases 
+ *
+ * Combiners are especially useful when reduce function is both commutative and associative! In such cases
  * we can use the Reducer itself as the Combiner; all one needs to do is to specify the Combiner:
  * <pre>
  * MapReduceTask&lt;String, String, String, Integer&gt; task = new MapReduceTask&lt;String, String, String, Integer&gt;(cache);
  * task.mappedWith(new WordCountMapper()).reducedWith(new WordCountReducer()).combineWith(new WordCountReducer());
  * Map&lt;String, Integer&gt; results = task.execute();
  * </pre>
- * 
- * Note that {@link Mapper} and {@link Reducer} should not be specified as inner classes. Inner classes 
- * declared in non-static contexts contain implicit non-transient references to enclosing class instances, 
+ *
+ * Note that {@link Mapper} and {@link Reducer} should not be specified as inner classes. Inner classes
+ * declared in non-static contexts contain implicit non-transient references to enclosing class instances,
  * serializing such an inner class instance will result in serialization of its associated outer class instance as well.
- * 
+ *
  * <p>
- * 
- * If you are not familiar with concept of map reduce distributed execution model 
+ *
+ * If you are not familiar with concept of map reduce distributed execution model
  * start with Google's MapReduce research <a href="http://labs.google.com/papers/mapreduce.html">paper</a>.
- * 
- * 
+ *
+ *
  * @author Manik Surtani
  * @author Vladimir Blagojevic
  * @author Sanne Grinovero
- * 
+ *
  * @since 5.0
  */
 public class MapReduceTask<KIn, VIn, KOut, VOut> {
@@ -184,36 +184,36 @@ public class MapReduceTask<KIn, VIn, KOut, VOut> {
     * initiated from this cache node. This task will by default only use distributed map phase while
     * reduction will be executed on task originating Infinispan node.
     * <p>
-    * 
+    *
     * Large and data intensive tasks whose reduction phase would exceed working memory of one
     * Infinispan node should use distributed reduce phase
-    * 
+    *
     * @param masterCacheNode
     *           cache node initiating map reduce task
     */
    public MapReduceTask(Cache<KIn, VIn> masterCacheNode) {
       this(masterCacheNode, false, false);
    }
-   
+
    /**
     * Create a new MapReduceTask given a master cache node. All distributed task executions will be
     * initiated from this cache node.
-    * 
+    *
     * @param masterCacheNode
     *           cache node initiating map reduce task
     * @param distributeReducePhase
     *           if true this task will use distributed reduce phase execution
-    * 
+    *
     */
    public MapReduceTask(Cache<KIn, VIn> masterCacheNode, boolean distributeReducePhase) {
       this(masterCacheNode, distributeReducePhase, true);
    }
 
-   
+
    /**
     * Create a new MapReduceTask given a master cache node. All distributed task executions will be
     * initiated from this cache node.
-    * 
+    *
     * @param masterCacheNode
     *           cache node initiating map reduce task
     * @param distributeReducePhase
@@ -222,20 +222,20 @@ public class MapReduceTask<KIn, VIn, KOut, VOut> {
     *           if true this tasks will share intermediate value cache with other executing
     *           MapReduceTasks on the grid. Otherwise, if false, this task will use its own
     *           dedicated cache for intermediate values
-    * 
+    *
     */
    public MapReduceTask(Cache<KIn, VIn> masterCacheNode, boolean distributeReducePhase, boolean useIntermediateSharedCache) {
       if (masterCacheNode == null)
          throw new IllegalArgumentException("Can not use null cache for MapReduceTask");
 
-      ensureProperCacheState(masterCacheNode.getAdvancedCache());      
+      ensureProperCacheState(masterCacheNode.getAdvancedCache());
       this.cache = masterCacheNode.getAdvancedCache();
       this.keys = new LinkedList<KIn>();
       this.marshaller = cache.getComponentRegistry().getComponent(StreamingMarshaller.class, CACHE_MARSHALLER);
       this.mapReduceManager = cache.getComponentRegistry().getComponent(MapReduceManager.class);
       this.cancellationService = cache.getComponentRegistry().getComponent(CancellationService.class);
       this.taskId = UUID.randomUUID();
-      this.distributeReducePhase = distributeReducePhase;  
+      this.distributeReducePhase = distributeReducePhase;
       this.useIntermediateSharedCache = useIntermediateSharedCache;
       this.cancellableTasks = Collections.synchronizedList(new ArrayList<CancellableTaskPart>());
       this.clusteringDependentLogic = cache.getComponentRegistry().getComponent(ClusteringDependentLogic.class);
@@ -246,7 +246,7 @@ public class MapReduceTask<KIn, VIn, KOut, VOut> {
    /**
     * Rather than use all available keys as input <code>onKeys</code> allows users to specify a
     * subset of keys as input to this task
-    * 
+    *
     * @param input
     *           input keys for this task
     * @return this task
@@ -263,7 +263,7 @@ public class MapReduceTask<KIn, VIn, KOut, VOut> {
     * non-static contexts contain implicit non-transient references to enclosing class instances,
     * serializing such an inner class instance will result in serialization of its associated outer
     * class instance as well.
-    * 
+    *
     * @param mapper used to execute map phase of MapReduceTask
     * @return this MapReduceTask itself
     */
@@ -276,13 +276,13 @@ public class MapReduceTask<KIn, VIn, KOut, VOut> {
 
    /**
     * Specifies Reducer to use for this MapReduceTask
-    * 
+    *
     * <p>
     * Note that {@link Reducer} should not be specified as inner class. Inner classes declared in
     * non-static contexts contain implicit non-transient references to enclosing class instances,
     * serializing such an inner class instance will result in serialization of its associated outer
     * class instance as well.
-    * 
+    *
     * @param reducer used to reduce results of map phase
     * @return this MapReduceTask itself
     */
@@ -292,17 +292,17 @@ public class MapReduceTask<KIn, VIn, KOut, VOut> {
       this.reducer = reducer;
       return this;
    }
-   
+
    /**
     * Specifies Combiner to use for this MapReduceTask
-    * 
+    *
     * <p>
     * Note that {@link Reducer} should not be specified as inner class. Inner classes declared in
     * non-static contexts contain implicit non-transient references to enclosing class instances,
     * serializing such an inner class instance will result in serialization of its associated outer
     * class instance as well.
-    * 
-    * @param combiner used to immediately combine results of map phase before reduce phase is invoked  
+    *
+    * @param combiner used to immediately combine results of map phase before reduce phase is invoked
     * @return this MapReduceTask itself
     * @since 5.2
     */
@@ -337,7 +337,7 @@ public class MapReduceTask<KIn, VIn, KOut, VOut> {
 
    /**
     * Executes this task across Infinispan cluster nodes.
-    * 
+    *
     * @return a Map where each key is an output key and value is reduced value for that output key
     */
    public Map<KOut, VOut> execute() throws CacheException {
@@ -346,8 +346,8 @@ public class MapReduceTask<KIn, VIn, KOut, VOut> {
 
       if (reducer == null)
          throw new NullPointerException("A valid reference of Reducer is not set " + reducer);
-      
-      
+
+
       if(!isLocalOnly && distributeReducePhase()){
          boolean useCompositeKeys = useIntermediateSharedCache();
          String intermediateCacheName = DEFAULT_TMP_CACHE_CONFIGURATION_NAME;
@@ -381,17 +381,17 @@ public class MapReduceTask<KIn, VIn, KOut, VOut> {
          } catch (Exception cause){
             throw new CacheException(cause);
          }
-      }     
+      }
    }
-   
+
    protected boolean distributeReducePhase(){
       return distributeReducePhase;
    }
-   
+
    protected boolean useIntermediateSharedCache() {
       return useIntermediateSharedCache;
    }
-   
+
    protected boolean useIntermediatePerTaskCache() {
       return !useIntermediateSharedCache();
    }
@@ -506,7 +506,7 @@ public class MapReduceTask<KIn, VIn, KOut, VOut> {
             part.execute();
             futures.add(part);
          }
-      }      
+      }
       Map<KOut, VOut> reducedResult = new HashMap<KOut, VOut>();
       try {
          for (MapTaskPart<Map<KOut, List<VOut>>> mapTaskPart : futures) {
@@ -629,7 +629,7 @@ public class MapReduceTask<KIn, VIn, KOut, VOut> {
 
    /**
     * Executes this task across Infinispan cluster nodes asynchronously.
-    * 
+    *
     * @return a Future wrapping a Map where each key is an output key and value is reduced value for
     *         that output key
     */
@@ -646,10 +646,10 @@ public class MapReduceTask<KIn, VIn, KOut, VOut> {
    /**
     * Executes this task across Infinispan cluster but the final result is collated using specified
     * {@link Collator}
-    * 
+    *
     * @param collator
     *           a Collator to use
-    *           
+    *
     * @return collated result
     */
    public <R> R execute(Collator<KOut, VOut, R> collator) {
@@ -660,10 +660,10 @@ public class MapReduceTask<KIn, VIn, KOut, VOut> {
    /**
     * Executes this task asynchronously across Infinispan cluster; final result is collated using
     * specified {@link Collator} and wrapped by Future
-    * 
+    *
     * @param collator
     *           a Collator to use
-    * 
+    *
     * @return collated result
     */
    public <R> Future<R> executeAsynchronously(final Collator<KOut, VOut, R> collator) {
@@ -696,23 +696,23 @@ public class MapReduceTask<KIn, VIn, KOut, VOut> {
          return mapReduceManager.mapKeysToNodes(dm, taskId.toString(), keysToMap, useIntermediateCompositeKey);
       }
    }
-   
+
    protected <T> Map<Address, ? extends Collection<T>> mapKeysToNodes(Collection<T> keysToMap, boolean useIntermediateCompositeKey) {
       return mapKeysToNodes(cache.getDistributionManager(), keysToMap, useIntermediateCompositeKey);
    }
-   
+
    protected <T> Map<Address, ? extends Collection<T>> mapKeysToNodes(Collection<T> keysToMap) {
       return mapKeysToNodes(keysToMap, false);
    }
-   
-   protected Mapper<KIn, VIn, KOut, VOut> clone(Mapper<KIn, VIn, KOut, VOut> mapper){      
+
+   protected Mapper<KIn, VIn, KOut, VOut> clone(Mapper<KIn, VIn, KOut, VOut> mapper){
       return Util.cloneWithMarshaller(marshaller, mapper);
    }
-   
-   protected Reducer<KOut, VOut> clone(Reducer<KOut, VOut> reducer){      
+
+   protected Reducer<KOut, VOut> clone(Reducer<KOut, VOut> reducer){
       return Util.cloneWithMarshaller(marshaller, reducer);
    }
-   
+
    private void ensureProperCacheState(AdvancedCache<KIn, VIn> cache) throws NullPointerException,
             IllegalStateException {
       if (cache.getStatus() != ComponentStatus.RUNNING)
@@ -812,7 +812,7 @@ public class MapReduceTask<KIn, VIn, KOut, VOut> {
             }
             return cancelled;
          } else {
-            //already cancelled 
+            //already cancelled
             return false;
          }
       }

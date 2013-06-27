@@ -22,9 +22,9 @@
  */
 package org.infinispan.remoting.responses;
 
-import org.infinispan.marshall.AbstractExternalizer;
-import org.infinispan.marshall.Ids;
-import org.infinispan.util.Util;
+import org.infinispan.commons.marshall.AbstractExternalizer;
+import org.infinispan.commons.util.Util;
+import org.infinispan.marshall.core.Ids;
 
 import java.io.ObjectOutput;
 import java.io.IOException;

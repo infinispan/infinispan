@@ -35,7 +35,7 @@ import java.security.Principal;
 import org.infinispan.Cache;
 import org.infinispan.io.GridFile;
 import org.infinispan.io.GridFilesystem;
-import org.infinispan.util.Util;
+import org.infinispan.commons.util.Util;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 

@@ -19,9 +19,9 @@
 
 package org.infinispan.remoting.transport.jgroups;
 
+import org.infinispan.commons.util.InfinispanCollections;
 import org.infinispan.remoting.responses.ExceptionResponse;
 import org.infinispan.remoting.transport.BackupResponse;
-import org.infinispan.util.InfinispanCollections;
 import org.infinispan.util.TimeService;
 import org.infinispan.util.concurrent.TimeoutException;
 import org.infinispan.util.logging.Log;
@@ -36,8 +36,8 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 
 import static java.util.concurrent.TimeUnit.*;
-import static org.infinispan.util.Util.formatString;
-import static org.infinispan.util.Util.prettyPrintTime;
+import static org.infinispan.commons.util.Util.formatString;
+import static org.infinispan.commons.util.Util.prettyPrintTime;
 
 /**
  * @author Mircea Markus

@@ -29,6 +29,7 @@ import org.infinispan.commands.tx.CommitCommand;
 import org.infinispan.commands.tx.PrepareCommand;
 import org.infinispan.commands.tx.RollbackCommand;
 import org.infinispan.commands.write.*;
+import org.infinispan.commons.util.CollectionFactory;
 import org.infinispan.configuration.cache.LoadersConfiguration;
 import org.infinispan.container.InternalEntryFactory;
 import org.infinispan.container.entries.CacheEntry;
@@ -56,7 +57,6 @@ import org.infinispan.loaders.modifications.Store;
 import org.infinispan.metadata.EmbeddedMetadata;
 import org.infinispan.metadata.Metadata;
 import org.infinispan.transaction.xa.GlobalTransaction;
-import org.infinispan.util.CollectionFactory;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 

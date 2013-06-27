@@ -25,7 +25,7 @@ package org.infinispan.server.memcached
 
 import org.infinispan.compat.TypeConverter
 import org.infinispan.context.Flag
-import org.infinispan.marshall.{JavaSerializationMarshaller, Marshaller}
+import org.infinispan.commons.marshall.{JavaSerializationMarshaller, Marshaller}
 
 /**
  * Type converter that transforms Memcached data so that it can be accessible

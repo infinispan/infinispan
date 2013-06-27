@@ -22,9 +22,9 @@
  */
 package org.infinispan.query;
 
-import org.infinispan.util.Base64;
-
 import java.io.Serializable;
+
+import org.infinispan.commons.util.Base64;
 
 /**
  * Warning, slow as a dog, uses serialization to get a byte representation of a class.  Implement your own!
@@ -34,7 +34,7 @@ import java.io.Serializable;
  * @author Navin Surtani
  */
 public class DefaultTransformer implements Transformer {
-   
+
    @Override
    public Object fromString(String s) {
       return Base64.decodeToObject(s);
@@ -48,5 +48,5 @@ public class DefaultTransformer implements Transformer {
          throw new IllegalArgumentException("Expected " + customType.getClass() + " to be Serializable!");
       }
    }
-   
+
 }

@@ -34,7 +34,7 @@ import org.infinispan.notifications.cachelistener.CacheNotifier;
 
 import java.util.Set;
 
-import static org.infinispan.util.Util.toStr;
+import static org.infinispan.commons.util.Util.toStr;
 
 /**
  * @author Mircea.Markus@jboss.com

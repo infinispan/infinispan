@@ -19,10 +19,11 @@
 package org.infinispan.configuration.global;
 
 import org.infinispan.Version;
-import org.infinispan.config.ConfigurationException;
-import org.infinispan.marshall.AdvancedExternalizer;
-import org.infinispan.marshall.Marshaller;
-import org.infinispan.marshall.VersionAwareMarshaller;
+import org.infinispan.commons.CacheConfigurationException;
+import org.infinispan.commons.marshall.AdvancedExternalizer;
+import org.infinispan.commons.marshall.Marshaller;
+import org.infinispan.marshall.LegacyAdvancedExternalizerAdapter;
+import org.infinispan.marshall.core.VersionAwareMarshaller;
 import org.jboss.marshalling.ClassResolver;
 
 import java.util.HashMap;
@@ -88,11 +89,29 @@ public class SerializationConfigurationBuilder extends AbstractGlobalConfigurati
    public <T> SerializationConfigurationBuilder addAdvancedExternalizer(int id, AdvancedExternalizer<T> advancedExternalizer) {
       AdvancedExternalizer<?> ext = advancedExternalizers.get(id);
       if (ext != null)
-         throw new ConfigurationException(String.format(
+         throw new CacheConfigurationException(String.format(
                "Duplicate externalizer id found! Externalizer id=%d for %s is shared by another externalizer (%s)",
                id, advancedExternalizer.getClass().getName(), ext.getClass().getName()));
 
       advancedExternalizers.put(id, advancedExternalizer);
+      return this;
+   }
+
+   /**
+    * This method provides compatibility with legacy {@link org.infinispan.marshall.AdvancedExternalizer}. Please migrate to {@link AdvancedExternalizer}
+    *
+    * @param id
+    * @param advancedExternalizer
+    */
+   @Deprecated
+   public <T> SerializationConfigurationBuilder addAdvancedExternalizer(int id, org.infinispan.marshall.AdvancedExternalizer<T> advancedExternalizer) {
+      AdvancedExternalizer<?> ext = advancedExternalizers.get(id);
+      if (ext != null)
+         throw new CacheConfigurationException(String.format(
+               "Duplicate externalizer id found! Externalizer id=%d for %s is shared by another externalizer (%s)",
+               id, advancedExternalizer.getClass().getName(), ext.getClass().getName()));
+
+      advancedExternalizers.put(id, new LegacyAdvancedExternalizerAdapter(advancedExternalizer));
       return this;
    }
 
@@ -106,7 +125,23 @@ public class SerializationConfigurationBuilder extends AbstractGlobalConfigurati
    public <T> SerializationConfigurationBuilder addAdvancedExternalizer(AdvancedExternalizer<T> advancedExternalizer) {
       Integer id = advancedExternalizer.getId();
       if (id == null)
-         throw new ConfigurationException(String.format(
+         throw new CacheConfigurationException(String.format(
+               "No advanced externalizer identifier set for externalizer %s",
+               advancedExternalizer.getClass().getName()));
+
+      this.addAdvancedExternalizer(id.intValue(), advancedExternalizer);
+      return this;
+   }
+
+   /**
+    * This method provides compatibility with legacy {@link org.infinispan.marshall.AdvancedExternalizer}. Please migrate to {@link AdvancedExternalizer}
+    *
+    * @param advancedExternalizer
+    */
+   public <T> SerializationConfigurationBuilder addAdvancedExternalizer(org.infinispan.marshall.AdvancedExternalizer<T> advancedExternalizer) {
+      Integer id = advancedExternalizer.getId();
+      if (id == null)
+         throw new CacheConfigurationException(String.format(
                "No advanced externalizer identifier set for externalizer %s",
                advancedExternalizer.getClass().getName()));
 
@@ -122,6 +157,18 @@ public class SerializationConfigurationBuilder extends AbstractGlobalConfigurati
     */
    public <T> SerializationConfigurationBuilder addAdvancedExternalizer(AdvancedExternalizer<T>... advancedExternalizers) {
       for (AdvancedExternalizer<T> advancedExternalizer : advancedExternalizers) {
+         this.addAdvancedExternalizer(advancedExternalizer);
+      }
+      return this;
+   }
+
+   /**
+    * This method provides compatibility with legacy {@link org.infinispan.marshall.AdvancedExternalizer}. Please migrate to {@link AdvancedExternalizer}
+    *
+    * @param advancedExternalizers
+    */
+   public <T> SerializationConfigurationBuilder addAdvancedExternalizer(org.infinispan.marshall.AdvancedExternalizer<T>... advancedExternalizers) {
+      for (org.infinispan.marshall.AdvancedExternalizer<T> advancedExternalizer : advancedExternalizers) {
          this.addAdvancedExternalizer(advancedExternalizer);
       }
       return this;

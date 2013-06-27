@@ -18,8 +18,8 @@
  */
 package org.infinispan.configuration.cache;
 
-import org.infinispan.configuration.Builder;
-import org.infinispan.configuration.Self;
+import org.infinispan.commons.configuration.Builder;
+import org.infinispan.commons.configuration.Self;
 
 /**
  * LoaderConfigurationBuilder is an interface which should be implemented by all cache loader builders

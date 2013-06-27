@@ -18,7 +18,7 @@
  */
 package org.infinispan.rest.configuration;
 
-import org.infinispan.configuration.BuiltBy;
+import org.infinispan.commons.configuration.BuiltBy;
 
 @BuiltBy(RestServerConfigurationBuilder.class)
 public class RestServerConfiguration {

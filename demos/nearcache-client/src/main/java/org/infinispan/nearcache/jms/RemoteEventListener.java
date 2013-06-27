@@ -20,8 +20,8 @@
 package org.infinispan.nearcache.jms;
 
 import org.infinispan.Cache;
-import org.infinispan.CacheException;
-import org.infinispan.marshall.StreamingMarshaller;
+import org.infinispan.commons.CacheException;
+import org.infinispan.commons.marshall.StreamingMarshaller;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 

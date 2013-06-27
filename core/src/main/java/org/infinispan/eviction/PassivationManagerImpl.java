@@ -22,7 +22,8 @@
  */
 package org.infinispan.eviction;
 
-import org.infinispan.config.ConfigurationException;
+import org.infinispan.commons.util.Util;
+import org.infinispan.commons.CacheConfigurationException;
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.container.DataContainer;
 import org.infinispan.container.entries.InternalCacheEntry;
@@ -35,7 +36,6 @@ import org.infinispan.loaders.CacheLoaderManager;
 import org.infinispan.loaders.CacheStore;
 import org.infinispan.notifications.cachelistener.CacheNotifier;
 import org.infinispan.util.TimeService;
-import org.infinispan.util.Util;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
@@ -73,7 +73,7 @@ public class PassivationManagerImpl implements PassivationManager {
       if (enabled) {
          cacheStore = cacheLoaderManager == null ? null : cacheLoaderManager.getCacheStore();
          if (cacheStore == null) {
-            throw new ConfigurationException("passivation can only be used with a CacheLoader that implements CacheStore!");
+            throw new CacheConfigurationException("passivation can only be used with a CacheLoader that implements CacheStore!");
          }
 
          enabled = cacheLoaderManager.isEnabled() && cacheLoaderManager.isUsingPassivation();

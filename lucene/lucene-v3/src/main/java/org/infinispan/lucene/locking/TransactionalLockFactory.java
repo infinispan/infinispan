@@ -25,7 +25,7 @@ package org.infinispan.lucene.locking;
 import org.apache.lucene.index.IndexWriter;
 import org.apache.lucene.store.LockFactory;
 import org.infinispan.Cache;
-import org.infinispan.CacheException;
+import org.infinispan.commons.CacheException;
 import org.infinispan.lifecycle.ComponentStatus;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
@@ -44,7 +44,7 @@ import javax.transaction.TransactionManager;
  * <p>Using a TransactionalSharedLuceneLock is not compatible with Lucene's
  * default MergeScheduler: use an in-thread implementation like SerialMergeScheduler
  * <code>indexWriter.setMergeScheduler( new SerialMergeScheduler() );</code></p>
- * 
+ *
  * @since 4.0
  * @author Sanne Grinovero
  * @author Lukasz Moren
@@ -117,5 +117,5 @@ public class TransactionalLockFactory extends LockFactory {
          log.tracef("Removed lock: %s for index %s", lockName, indexName);
       }
    }
-   
+
 }

@@ -36,7 +36,7 @@ import java.util.Set;
 import org.infinispan.container.entries.InternalCacheEntry;
 import org.infinispan.loaders.CacheLoaderException;
 import org.infinispan.loaders.jdbc.connectionfactory.ConnectionFactory;
-import org.infinispan.marshall.StreamingMarshaller;
+import org.infinispan.commons.marshall.StreamingMarshaller;
 import org.infinispan.loaders.jdbc.logging.Log;
 import org.infinispan.util.TimeService;
 import org.infinispan.util.logging.LogFactory;
@@ -125,7 +125,7 @@ public abstract class DataManipulationHelper {
          log.classNotFoundIntegratingState(e);
          throw new CacheLoaderException("Unexpected failure while integrating state into store", e);
       } catch (InterruptedException ie) {
-         if (log.isTraceEnabled()) log.trace("Interrupted while reading from stream"); 
+         if (log.isTraceEnabled()) log.trace("Interrupted while reading from stream");
          Thread.currentThread().interrupt();
       } finally {
          JdbcUtil.safeClose(ps);

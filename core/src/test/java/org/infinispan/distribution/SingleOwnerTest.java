@@ -24,8 +24,8 @@ package org.infinispan.distribution;
 
 
 import org.infinispan.Cache;
-import org.infinispan.CacheException;
-import org.infinispan.config.Configuration;
+import org.infinispan.commons.CacheException;
+import org.infinispan.commons.marshall.NotSerializableException;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.remoting.transport.Address;
@@ -38,16 +38,17 @@ import java.io.ObjectInput;
 import java.io.ObjectOutput;
 import java.util.ArrayList;
 import java.util.concurrent.TimeUnit;
+import static org.testng.AssertJUnit.*;
 
 /**
  * Test single owner distributed cache configurations.
- * 
+ *
  * @author Galder Zamarreño
  * @since 4.0
  */
 @Test(groups = "functional", testName = "distribution.SingleOwnerTest")
 public class SingleOwnerTest extends BaseDistFunctionalTest {
-   
+
    @Override
    protected void createCacheManagers() throws Throwable {
       cacheName = "dist";
@@ -99,8 +100,8 @@ public class SingleOwnerTest extends BaseDistFunctionalTest {
       ownerCache.put("yourkey", new Object());
       try {
          nonOwnerCache.get("yourkey");
-         assert false : "Should have failed with a org.infinispan.marshall.NotSerializableException";
-      } catch (org.infinispan.marshall.NotSerializableException e) {
+         fail("Should have failed with a org.infinispan.marshall.NotSerializableException");
+      } catch (NotSerializableException e) {
       }
    }
 
@@ -115,9 +116,11 @@ public class SingleOwnerTest extends BaseDistFunctionalTest {
       ownerCache.put("diffkey", new Externalizable() {
          private static final long serialVersionUID = -483939825697574242L;
 
+         @Override
          public void writeExternal(ObjectOutput out) throws IOException {
             throw new UnknownError();
          }
+         @Override
          public void readExternal(ObjectInput in) throws IOException, ClassNotFoundException {
          }
       });
@@ -126,7 +129,7 @@ public class SingleOwnerTest extends BaseDistFunctionalTest {
          assert false : "Should have failed with a CacheException that contains an UnknownError";
       } catch (CacheException e) {
          if (e.getCause() != null) {
-            assert e.getCause() instanceof UnknownError : e.getCause();
+            assertTrue(e.getCause() instanceof UnknownError);
          } else {
             throw e;
          }

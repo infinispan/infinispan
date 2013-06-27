@@ -30,7 +30,7 @@ import org.infinispan.configuration.parsing.ParseUtils;
 import org.infinispan.configuration.parsing.Parser52;
 import org.infinispan.configuration.parsing.XMLExtendedStreamReader;
 import org.infinispan.loaders.leveldb.LevelDBCacheStoreConfig.ImplementationType;
-import org.infinispan.util.StringPropertyReplacer;
+import org.infinispan.commons.util.StringPropertyReplacer;
 import org.iq80.leveldb.CompressionType;
 
 /**

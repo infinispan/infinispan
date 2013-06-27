@@ -33,8 +33,8 @@ import org.infinispan.notifications.cachelistener.event.Event;
 import org.infinispan.notifications.cachemanagerlistener.annotation.*;
 import org.infinispan.notifications.cachemanagerlistener.event.*;
 import org.infinispan.remoting.transport.Address;
-import org.infinispan.util.LegacyKeySupportSystemProperties;
-import org.infinispan.util.Util;
+import org.infinispan.commons.util.LegacyKeySupportSystemProperties;
+import org.infinispan.commons.util.Util;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 

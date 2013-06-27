@@ -23,6 +23,7 @@
 
 package org.infinispan.marshall;
 
+import org.infinispan.commons.marshall.AdvancedExternalizer;
 import org.infinispan.configuration.global.GlobalConfigurationBuilder;
 import org.testng.annotations.Test;
 

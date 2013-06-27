@@ -18,7 +18,7 @@
  */
 package org.infinispan.loaders.keymappers;
 
-import org.infinispan.marshall.StreamingMarshaller;
+import org.infinispan.commons.marshall.StreamingMarshaller;
 
 /**
  *

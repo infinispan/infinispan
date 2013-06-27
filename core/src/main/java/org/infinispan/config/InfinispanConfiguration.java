@@ -23,14 +23,15 @@
 package org.infinispan.config;
 
 import org.infinispan.Version;
+import org.infinispan.commons.CacheConfigurationException;
+import org.infinispan.commons.util.FileLookup;
+import org.infinispan.commons.util.FileLookupFactory;
+import org.infinispan.commons.util.StringPropertyReplacer;
+import org.infinispan.commons.util.SysPropertyActions;
+import org.infinispan.commons.util.Util;
 import org.infinispan.config.parsing.NamespaceFilter;
 import org.infinispan.config.parsing.XmlConfigurationParser;
 import org.infinispan.configuration.parsing.ParserRegistry;
-import org.infinispan.util.FileLookup;
-import org.infinispan.util.FileLookupFactory;
-import org.infinispan.util.StringPropertyReplacer;
-import org.infinispan.util.SysPropertyActions;
-import org.infinispan.util.Util;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 import org.xml.sax.InputSource;
@@ -259,7 +260,7 @@ public class InfinispanConfiguration implements XmlConfigurationParser, JAXBUnma
          InfinispanConfiguration ic = (InfinispanConfiguration) u.unmarshal(source);
          ic.accept(cbv);
          return ic;
-      } catch (ConfigurationException cex) {
+      } catch (CacheConfigurationException cex) {
          throw cex;
       } catch (NullPointerException npe) {
          throw npe;
@@ -444,7 +445,7 @@ public class InfinispanConfiguration implements XmlConfigurationParser, JAXBUnma
    }
 
    @Override
-   public Configuration parseDefaultConfiguration() throws ConfigurationException {
+   public Configuration parseDefaultConfiguration() throws CacheConfigurationException {
       return defaultConfiguration;
    }
 
@@ -454,7 +455,7 @@ public class InfinispanConfiguration implements XmlConfigurationParser, JAXBUnma
    }
 
    @Override
-   public Map<String, Configuration> parseNamedConfigurations() throws ConfigurationException {
+   public Map<String, Configuration> parseNamedConfigurations() throws CacheConfigurationException {
       Map<String, Configuration> map = new HashMap<String, Configuration>(7);
       for (Configuration conf : namedCaches) {
          map.put(conf.getName(), conf);

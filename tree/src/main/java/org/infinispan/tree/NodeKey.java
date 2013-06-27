@@ -32,8 +32,8 @@ import java.io.ObjectOutput;
 import java.io.Serializable;
 import java.util.Set;
 
-import org.infinispan.marshall.AbstractExternalizer;
-import org.infinispan.util.Util;
+import org.infinispan.commons.marshall.AbstractExternalizer;
+import org.infinispan.commons.util.Util;
 
 /**
  * A class that represents the key to a node

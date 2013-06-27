@@ -22,7 +22,7 @@
  */
 package org.infinispan.loaders.keymappers;
 
-import org.infinispan.util.Base64;
+import org.infinispan.commons.util.Base64;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 

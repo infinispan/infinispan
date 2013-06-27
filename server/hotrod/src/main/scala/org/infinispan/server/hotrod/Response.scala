@@ -24,7 +24,7 @@ package org.infinispan.server.hotrod
 
 import OperationStatus._
 import OperationResponse._
-import org.infinispan.util.Util
+import org.infinispan.commons.util.Util
 import org.infinispan.remoting.transport.Address
 import java.lang.StringBuilder
 

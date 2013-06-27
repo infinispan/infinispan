@@ -22,7 +22,7 @@
  */
 package org.infinispan.ec2demo;
 
-import org.infinispan.util.SysPropertyActions;
+import org.infinispan.commons.util.SysPropertyActions;
 
 import java.io.File;
 import java.io.FileNotFoundException;
@@ -33,7 +33,7 @@ import java.util.Scanner;
 
 /**
  * @author noconnor@redhat.com
- * 
+ *
  */
 public class Influenza_Parser {
 

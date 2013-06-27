@@ -23,7 +23,7 @@
 
 package org.infinispan.config;
 
-import org.infinispan.executors.ExecutorFactory;
+import org.infinispan.commons.executors.ExecutorFactory;
 import org.infinispan.executors.ScheduledExecutorFactory;
 import org.infinispan.factories.GlobalComponentRegistry;
 import org.infinispan.factories.annotations.Inject;

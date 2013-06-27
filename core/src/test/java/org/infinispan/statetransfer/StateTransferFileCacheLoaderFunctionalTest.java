@@ -34,7 +34,7 @@ import org.infinispan.configuration.cache.FileCacheStoreConfigurationBuilder;
 import org.infinispan.loaders.CacheLoader;
 import org.infinispan.manager.CacheContainer;
 import org.infinispan.manager.EmbeddedCacheManager;
-import org.infinispan.marshall.AdvancedExternalizer;
+import org.infinispan.commons.marshall.AdvancedExternalizer;
 import org.infinispan.test.MultipleCacheManagersTest;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.transaction.LockingMode;
@@ -49,7 +49,7 @@ import static org.testng.Assert.assertEquals;
 
 /**
  * StateTransferFileCacheStoreFunctionalTest.
- * 
+ *
  * @author Galder Zamarreño
  * @since 4.0
  */
@@ -59,6 +59,7 @@ public class StateTransferFileCacheLoaderFunctionalTest extends MultipleCacheMan
    static String cacheName = "nbst-with-file-loader";
    volatile int testCount = 0;
    ThreadLocal<Boolean> sharedCacheLoader = new ThreadLocal<Boolean>() {
+      @Override
       protected Boolean initialValue() {
          return false;
       }
@@ -193,6 +194,7 @@ public class StateTransferFileCacheLoaderFunctionalTest extends MultipleCacheMan
          cm30 = cm3;
 
          Future<Void> f1 = fork(new Callable<Void>() {
+            @Override
             public Void call() throws Exception {
                cm3.getCache(cacheName);
                return null;
@@ -239,6 +241,7 @@ public class StateTransferFileCacheLoaderFunctionalTest extends MultipleCacheMan
          cm40 = cm4;
 
          Future<Void> f1 = fork(new Callable<Void>() {
+            @Override
             public Void call() throws Exception {
                cm3.getCache(cacheName);
                return null;
@@ -246,6 +249,7 @@ public class StateTransferFileCacheLoaderFunctionalTest extends MultipleCacheMan
          });
 
          Future<Void> f2 = fork(new Callable<Void>() {
+            @Override
             public Void call() throws Exception {
                cm4.getCache(cacheName);
                return null;

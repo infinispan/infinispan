@@ -22,10 +22,10 @@
  */
 package org.infinispan.server.core
 
-import org.infinispan.util.Util
+import org.infinispan.commons.util.Util
 import java.io.{ObjectOutput, ObjectInput}
 import java.util.Arrays
-import org.infinispan.marshall.AbstractExternalizer
+import org.infinispan.commons.marshall.AbstractExternalizer
 import scala.collection.JavaConversions._
 import java.lang.StringBuilder
 
@@ -68,7 +68,7 @@ class CacheValue(val data: Array[Byte], val version: Long) {
    override def hashCode: Int = {
       41 + Arrays.hashCode(data)
    }
-   
+
 }
 
 object CacheValue {

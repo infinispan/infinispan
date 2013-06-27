@@ -23,7 +23,7 @@ import org.infinispan.configuration.cache.LoadersConfigurationBuilder;
 import org.infinispan.loaders.hbase.HBaseCacheStore;
 import org.infinispan.loaders.keymappers.MarshalledValueOrPrimitiveMapper;
 import org.infinispan.loaders.keymappers.TwoWayKey2StringMapper;
-import org.infinispan.util.TypedProperties;
+import org.infinispan.commons.util.TypedProperties;
 
 /**
  * HBaseCacheStoreConfigurationBuilder. Configures a {@link HBaseCacheStore}

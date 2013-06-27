@@ -41,7 +41,7 @@ import org.infinispan.commands.write.RemoveCommand;
 import org.infinispan.commands.write.ReplaceCommand;
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.configuration.cache.LegacyConfigurationAdaptor;
-import org.infinispan.config.ConfigurationException;
+import org.infinispan.commons.CacheConfigurationException;
 import org.infinispan.configuration.global.GlobalConfiguration;
 import org.infinispan.container.DataContainer;
 import org.infinispan.container.entries.CacheEntry;
@@ -66,8 +66,10 @@ import org.infinispan.jmx.annotations.ManagedOperation;
 import org.infinispan.lifecycle.ComponentStatus;
 import org.infinispan.manager.CacheContainer;
 import org.infinispan.manager.EmbeddedCacheManager;
-import org.infinispan.marshall.MarshalledValue;
-import org.infinispan.marshall.StreamingMarshaller;
+import org.infinispan.marshall.core.MarshalledValue;
+import org.infinispan.commons.CacheException;
+import org.infinispan.commons.marshall.StreamingMarshaller;
+import org.infinispan.commons.util.Util;
 import org.infinispan.metadata.EmbeddedMetadata;
 import org.infinispan.metadata.Metadata;
 import org.infinispan.notifications.cachelistener.CacheNotifier;
@@ -78,7 +80,6 @@ import org.infinispan.transaction.TransactionCoordinator;
 import org.infinispan.transaction.TransactionTable;
 import org.infinispan.transaction.xa.TransactionXaAdapter;
 import org.infinispan.transaction.xa.recovery.RecoveryManager;
-import org.infinispan.util.Util;
 import org.infinispan.util.concurrent.AbstractInProcessNotifyingFuture;
 import org.infinispan.util.concurrent.NotifyingFuture;
 import org.infinispan.util.concurrent.NotifyingFutureAdaptor;
@@ -780,7 +781,7 @@ public class CacheImpl<K, V> implements AdvancedCache<K, V> {
    @Override
    public boolean startBatch() {
       if (!config.invocationBatching().enabled()) {
-         throw new ConfigurationException("Invocation batching not enabled in current configuration! Please enable it.");
+         throw new CacheConfigurationException("Invocation batching not enabled in current configuration! Please enable it.");
       }
       return batchContainer.startBatch();
    }
@@ -788,7 +789,7 @@ public class CacheImpl<K, V> implements AdvancedCache<K, V> {
    @Override
    public void endBatch(boolean successful) {
       if (!config.invocationBatching().enabled()) {
-         throw new ConfigurationException("Invocation batching not enabled in current configuration! Please enable it.");
+         throw new CacheConfigurationException("Invocation batching not enabled in current configuration! Please enable it.");
       }
       batchContainer.endBatch(successful);
    }

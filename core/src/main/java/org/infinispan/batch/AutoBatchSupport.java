@@ -23,7 +23,7 @@
 package org.infinispan.batch;
 
 import net.jcip.annotations.NotThreadSafe;
-import org.infinispan.config.ConfigurationException;
+import org.infinispan.commons.CacheConfigurationException;
 import org.infinispan.configuration.cache.Configuration;
 
 /**
@@ -38,7 +38,7 @@ public abstract class AutoBatchSupport {
 
    protected static void assertBatchingSupported(Configuration c) {
       if (!c.invocationBatching().enabled())
-         throw new ConfigurationException("Invocation batching not enabled in current configuration! Please enable it.");
+         throw new CacheConfigurationException("Invocation batching not enabled in current configuration! Please enable it.");
    }
 
    protected void startAtomic() {

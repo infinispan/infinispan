@@ -23,8 +23,8 @@
 
 package org.infinispan.commands.remote.recovery;
 
+import org.infinispan.commons.util.Util;
 import org.infinispan.context.InvocationContext;
-import org.infinispan.util.Util;
 
 /**
  * Command used by the recovery tooling for obtaining the list of in-doubt transactions from a node.

@@ -36,15 +36,15 @@ import org.hibernate.search.SearchException;
 import org.hibernate.search.spi.SearchFactoryIntegrator;
 import org.infinispan.AdvancedCache;
 import org.infinispan.factories.KnownComponentNames;
-import org.infinispan.marshall.Marshaller;
-import org.infinispan.marshall.StreamingMarshaller;
+import org.infinispan.commons.marshall.Marshaller;
+import org.infinispan.commons.marshall.StreamingMarshaller;
 import org.infinispan.query.CacheQuery;
 import org.infinispan.query.FetchOptions;
 import org.infinispan.query.ResultIterator;
 import org.infinispan.query.backend.KeyTransformationHandler;
 import org.infinispan.query.impl.CacheQueryImpl;
 import org.infinispan.query.impl.ComponentRegistryUtils;
-import org.infinispan.util.Util;
+import org.infinispan.commons.util.Util;
 
 /**
  * A extension of CacheQueryImpl used for distributed queries.

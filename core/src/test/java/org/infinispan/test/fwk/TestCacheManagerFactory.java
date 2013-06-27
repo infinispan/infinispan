@@ -56,14 +56,14 @@ import org.infinispan.jmx.MBeanServerLookup;
 import org.infinispan.jmx.PerThreadMBeanServerLookup;
 import org.infinispan.manager.DefaultCacheManager;
 import org.infinispan.manager.EmbeddedCacheManager;
-import org.infinispan.marshall.Marshaller;
+import org.infinispan.commons.marshall.Marshaller;
+import org.infinispan.commons.util.FileLookupFactory;
+import org.infinispan.commons.util.LegacyKeySupportSystemProperties;
+import org.infinispan.commons.util.Util;
 import org.infinispan.remoting.transport.jgroups.JGroupsAddress;
 import org.infinispan.remoting.transport.jgroups.JGroupsTransport;
 import org.infinispan.transaction.TransactionMode;
 import org.infinispan.transaction.lookup.TransactionManagerLookup;
-import org.infinispan.util.FileLookupFactory;
-import org.infinispan.util.LegacyKeySupportSystemProperties;
-import org.infinispan.util.Util;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 

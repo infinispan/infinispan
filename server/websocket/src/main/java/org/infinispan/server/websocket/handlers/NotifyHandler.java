@@ -27,7 +27,7 @@ import org.infinispan.server.websocket.CacheListener;
 import org.infinispan.server.websocket.CacheListener.ChannelNotifyParams;
 import org.infinispan.server.websocket.ChannelUtils;
 import org.infinispan.server.websocket.OpHandler;
-import org.infinispan.util.CollectionFactory;
+import org.infinispan.commons.util.CollectionFactory;
 import org.jboss.netty.channel.ChannelHandlerContext;
 import org.json.JSONException;
 import org.json.JSONObject;

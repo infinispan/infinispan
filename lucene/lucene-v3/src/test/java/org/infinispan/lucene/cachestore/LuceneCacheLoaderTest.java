@@ -21,7 +21,7 @@ package org.infinispan.lucene.cachestore;
 
 import org.apache.lucene.store.Directory;
 import org.infinispan.Cache;
-import org.infinispan.CacheException;
+import org.infinispan.commons.CacheException;
 import org.infinispan.loaders.CacheLoaderManager;
 import org.infinispan.lucene.FileCacheKey;
 import org.infinispan.lucene.directory.DirectoryBuilder;
@@ -57,6 +57,7 @@ public class LuceneCacheLoaderTest extends IndexCacheLoaderTest {
 
          final EmbeddedCacheManager cacheManager = initializeInfinispan(file);
          TestingUtil.withCacheManager(new CacheManagerCallable(cacheManager) {
+            @Override
             public void call() {
                Directory directory = null;
                try {
@@ -83,6 +84,7 @@ public class LuceneCacheLoaderTest extends IndexCacheLoaderTest {
       if(isReadOff) {
          final EmbeddedCacheManager cacheManager = initializeInfinispan(rootDir);
          TestingUtil.withCacheManager(new CacheManagerCallable(cacheManager) {
+            @Override
             public void call() {
                try {
                   Cache cache = cacheManager.getCache();
@@ -104,6 +106,7 @@ public class LuceneCacheLoaderTest extends IndexCacheLoaderTest {
       final EmbeddedCacheManager cacheManager = initializeInfinispan(rootDir);
       try {
          TestingUtil.withCacheManager(new CacheManagerCallable(cacheManager) {
+            @Override
             public void call() {
                Cache cache = cacheManager.getCache();
                Directory directory = DirectoryBuilder.newDirectoryInstance(cache, cache, cache, indexName).create();

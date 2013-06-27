@@ -21,7 +21,7 @@ package org.infinispan.loaders.jdbc.configuration;
 import org.infinispan.configuration.cache.AbstractLockSupportStoreConfiguration;
 import org.infinispan.configuration.cache.AsyncStoreConfiguration;
 import org.infinispan.configuration.cache.SingletonStoreConfiguration;
-import org.infinispan.util.TypedProperties;
+import org.infinispan.commons.util.TypedProperties;
 
 public abstract class AbstractJdbcCacheStoreConfiguration extends AbstractLockSupportStoreConfiguration {
 

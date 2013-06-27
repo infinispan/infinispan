@@ -32,8 +32,8 @@ import org.infinispan.client.hotrod.impl.protocol.Codec;
 import org.infinispan.client.hotrod.impl.protocol.HeaderParams;
 import org.infinispan.client.hotrod.impl.transport.Transport;
 import org.infinispan.client.hotrod.impl.transport.TransportFactory;
-import org.infinispan.util.Util;
-import org.infinispan.util.logging.BasicLogFactory;
+import org.infinispan.commons.logging.BasicLogFactory;
+import org.infinispan.commons.util.Util;
 import org.jboss.logging.BasicLogger;
 
 /**

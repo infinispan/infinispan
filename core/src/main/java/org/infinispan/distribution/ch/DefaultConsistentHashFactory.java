@@ -25,8 +25,8 @@ import java.io.ObjectOutput;
 import java.util.*;
 
 import org.infinispan.commons.hash.Hash;
-import org.infinispan.marshall.AbstractExternalizer;
-import org.infinispan.marshall.Ids;
+import org.infinispan.commons.marshall.AbstractExternalizer;
+import org.infinispan.marshall.core.Ids;
 import org.infinispan.remoting.transport.Address;
 
 /**

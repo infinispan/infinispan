@@ -18,7 +18,7 @@
  */
 package org.infinispan.configuration.cache;
 
-import org.infinispan.configuration.Builder;
+import org.infinispan.commons.configuration.Builder;
 
 /**
  * Determines whether statistics are gather and reported.

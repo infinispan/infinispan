@@ -24,6 +24,8 @@
 package org.infinispan.statetransfer;
 
 import org.infinispan.commands.CommandsFactory;
+import org.infinispan.commons.util.CollectionFactory;
+import org.infinispan.commons.util.InfinispanCollections;
 import org.infinispan.container.DataContainer;
 import org.infinispan.container.entries.InternalCacheEntry;
 import org.infinispan.distribution.ch.ConsistentHash;
@@ -35,9 +37,7 @@ import org.infinispan.remoting.rpc.RpcManager;
 import org.infinispan.remoting.rpc.RpcOptions;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.remoting.transport.jgroups.SuspectException;
-import org.infinispan.util.InfinispanCollections;
 import org.infinispan.util.ReadOnlyDataContainerBackedKeySet;
-import org.infinispan.util.CollectionFactory;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 

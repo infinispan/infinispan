@@ -27,20 +27,20 @@ import java.io.InputStream;
 import java.util.Map;
 import java.util.Properties;
 
-import org.infinispan.CacheException;
 import org.infinispan.api.BasicCacheContainer;
 import org.infinispan.client.hotrod.impl.ConfigurationProperties;
-import org.infinispan.executors.ExecutorFactory;
+import org.infinispan.commons.CacheException;
+import org.infinispan.commons.executors.ExecutorFactory;
 import org.infinispan.loaders.AbstractCacheStoreConfig;
 import org.infinispan.loaders.remote.logging.Log;
 import org.infinispan.loaders.remote.wrapper.DefaultEntryWrapper;
 import org.infinispan.loaders.remote.wrapper.EntryWrapper;
 import org.infinispan.loaders.remote.wrapper.HotRodEntryMarshaller;
 import org.infinispan.manager.CacheContainer;
-import org.infinispan.util.FileLookup;
-import org.infinispan.util.FileLookupFactory;
-import org.infinispan.util.TypedProperties;
-import org.infinispan.util.Util;
+import org.infinispan.commons.util.FileLookup;
+import org.infinispan.commons.util.FileLookupFactory;
+import org.infinispan.commons.util.TypedProperties;
+import org.infinispan.commons.util.Util;
 import org.infinispan.util.logging.LogFactory;
 
 /**

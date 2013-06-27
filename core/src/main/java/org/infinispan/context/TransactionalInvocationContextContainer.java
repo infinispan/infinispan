@@ -19,8 +19,8 @@
 
 package org.infinispan.context;
 
-import org.infinispan.CacheException;
 import org.infinispan.batch.BatchContainer;
+import org.infinispan.commons.CacheException;
 import org.infinispan.configuration.cache.ClusterCacheLoaderConfiguration;
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.configuration.cache.CacheLoaderConfiguration;

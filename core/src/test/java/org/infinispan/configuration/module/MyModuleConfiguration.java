@@ -18,7 +18,7 @@
  */
 package org.infinispan.configuration.module;
 
-import org.infinispan.configuration.BuiltBy;
+import org.infinispan.commons.configuration.BuiltBy;
 
 @BuiltBy(MyModuleConfigurationBuilder.class)
 public class MyModuleConfiguration {

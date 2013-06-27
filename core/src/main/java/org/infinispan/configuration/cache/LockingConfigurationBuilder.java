@@ -18,8 +18,8 @@
  */
 package org.infinispan.configuration.cache;
 
-import org.infinispan.config.ConfigurationException;
-import org.infinispan.configuration.Builder;
+import org.infinispan.commons.configuration.Builder;
+import org.infinispan.commons.CacheConfigurationException;
 import org.infinispan.transaction.LockingMode;
 import org.infinispan.util.concurrent.IsolationLevel;
 import org.infinispan.util.logging.Log;
@@ -119,15 +119,15 @@ public class LockingConfigurationBuilder extends AbstractConfigurationChildBuild
    public void validate() {
       if (writeSkewCheck) {
          if (isolationLevel != IsolationLevel.REPEATABLE_READ)
-            throw new ConfigurationException("Write-skew checking only allowed with REPEATABLE_READ isolation level for cache");
+            throw new CacheConfigurationException("Write-skew checking only allowed with REPEATABLE_READ isolation level for cache");
          if (transaction().lockingMode != LockingMode.OPTIMISTIC)
-            throw new ConfigurationException("Write-skew checking only allowed with OPTIMISTIC transactions");
+            throw new CacheConfigurationException("Write-skew checking only allowed with OPTIMISTIC transactions");
          if (!versioning().enabled || versioning().scheme != VersioningScheme.SIMPLE)
-            throw new ConfigurationException(
+            throw new CacheConfigurationException(
                   "Write-skew checking requires versioning to be enabled and versioning scheme 'SIMPLE' to be configured");
          if (clustering().cacheMode() != CacheMode.DIST_SYNC && clustering().cacheMode() != CacheMode.REPL_SYNC
                && clustering().cacheMode() != CacheMode.LOCAL)
-            throw new ConfigurationException("Write-skew checking is only supported in REPL_SYNC, DIST_SYNC and LOCAL modes.  "
+            throw new CacheConfigurationException("Write-skew checking is only supported in REPL_SYNC, DIST_SYNC and LOCAL modes.  "
                   + clustering().cacheMode() + " cannot be used with write-skew checking");
       }
 

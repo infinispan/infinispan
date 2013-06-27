@@ -20,10 +20,10 @@ package org.infinispan.loaders.remote.configuration;
 
 import java.util.Properties;
 
-import org.infinispan.configuration.Builder;
 import org.infinispan.executors.DefaultExecutorFactory;
-import org.infinispan.executors.ExecutorFactory;
-import org.infinispan.util.TypedProperties;
+import org.infinispan.commons.configuration.Builder;
+import org.infinispan.commons.executors.ExecutorFactory;
+import org.infinispan.commons.util.TypedProperties;
 
 /**
  * Configures executor factory.

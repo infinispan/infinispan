@@ -23,7 +23,7 @@
 package org.infinispan.tx.recovery;
 
 import org.infinispan.Cache;
-import org.infinispan.config.ConfigurationException;
+import org.infinispan.commons.CacheConfigurationException;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
@@ -51,7 +51,7 @@ public class RecoveryConfigTest extends SingleCacheManagerTest {
       return TestCacheManagerFactory.fromXml("configs/recovery-enabled-config.xml");
    }
 
-   @Test(expectedExceptions = ConfigurationException.class)
+   @Test(expectedExceptions = CacheConfigurationException.class)
    public void testRecoveryAndAsyncCaches() {
       //Note: this configuration uses Xa Enlistment (see configs/recovery-enabled-config.xml).
       Configuration defaultConfig = cacheManager.getDefaultCacheConfiguration();
@@ -62,7 +62,7 @@ public class RecoveryConfigTest extends SingleCacheManagerTest {
       builder.build();
    }
 
-   @Test(expectedExceptions = ConfigurationException.class)
+   @Test(expectedExceptions = CacheConfigurationException.class)
    public void testRecoveryAndAsyncCommitPhaseCaches() {
       //Note: this configuration uses Xa Enlistment (see configs/recovery-enabled-config.xml).
       Configuration defaultConfig = cacheManager.getDefaultCacheConfiguration();

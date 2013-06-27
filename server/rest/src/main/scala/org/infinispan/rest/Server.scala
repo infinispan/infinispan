@@ -33,7 +33,8 @@ import core.Response.{ResponseBuilder, Status}
 import org.infinispan.api.BasicCacheContainer
 import org.infinispan.manager._
 import org.codehaus.jackson.map.ObjectMapper
-import org.infinispan.{CacheException, AdvancedCache}
+import org.infinispan.AdvancedCache
+import org.infinispan.commons.CacheException
 import org.infinispan.commons.hash.MurmurHash3
 import javax.ws.rs._
 import javax.servlet.http.HttpServletResponse
@@ -41,7 +42,7 @@ import javax.servlet.ServletContext
 import scala.collection.JavaConverters._
 import scala.xml.Utility
 import org.infinispan.tasks.GlobalKeySetTask
-import org.infinispan.util.CollectionFactory
+import org.infinispan.commons.util.CollectionFactory
 import org.infinispan.container.entries.CacheEntry
 import org.infinispan.container.entries.InternalCacheEntry
 import org.infinispan.rest.configuration.ExtendedHeaders

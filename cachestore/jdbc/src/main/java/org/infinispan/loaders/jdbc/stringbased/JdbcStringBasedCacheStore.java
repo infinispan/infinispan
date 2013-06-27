@@ -25,7 +25,7 @@ package org.infinispan.loaders.jdbc.stringbased;
 import org.infinispan.Cache;
 import org.infinispan.container.entries.InternalCacheEntry;
 import org.infinispan.container.entries.InternalCacheValue;
-import org.infinispan.io.ByteBuffer;
+import org.infinispan.commons.io.ByteBuffer;
 import org.infinispan.loaders.CacheLoaderConfig;
 import org.infinispan.loaders.CacheLoaderException;
 import org.infinispan.loaders.CacheLoaderMetadata;
@@ -38,7 +38,7 @@ import org.infinispan.loaders.jdbc.logging.Log;
 import org.infinispan.loaders.keymappers.Key2StringMapper;
 import org.infinispan.loaders.keymappers.TwoWayKey2StringMapper;
 import org.infinispan.loaders.keymappers.UnsupportedKeyTypeException;
-import org.infinispan.marshall.StreamingMarshaller;
+import org.infinispan.commons.marshall.StreamingMarshaller;
 import org.infinispan.util.logging.LogFactory;
 
 import java.io.IOException;

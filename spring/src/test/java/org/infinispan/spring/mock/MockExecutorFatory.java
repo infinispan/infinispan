@@ -26,7 +26,7 @@ package org.infinispan.spring.mock;
 import java.util.Properties;
 import java.util.concurrent.ExecutorService;
 
-import org.infinispan.executors.ExecutorFactory;
+import org.infinispan.commons.executors.ExecutorFactory;
 
 public final class MockExecutorFatory implements ExecutorFactory {
 

@@ -22,9 +22,9 @@
  */
 package org.infinispan.container.entries;
 
-import org.infinispan.marshall.AbstractExternalizer;
-import org.infinispan.marshall.Ids;
-import org.infinispan.util.Util;
+import org.infinispan.commons.marshall.AbstractExternalizer;
+import org.infinispan.commons.util.Util;
+import org.infinispan.marshall.core.Ids;
 
 import java.io.IOException;
 import java.io.ObjectInput;
@@ -33,7 +33,7 @@ import java.util.Set;
 
 /**
  * An immortal cache value, to correspond with {@link org.infinispan.container.entries.ImmortalCacheEntry}
- * 
+ *
  * @author Manik Surtani
  * @since 4.0
  */

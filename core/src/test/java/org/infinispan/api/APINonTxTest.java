@@ -23,12 +23,12 @@
 
 package org.infinispan.api;
 
+import org.infinispan.commons.util.ObjectDuplicator;
 import org.infinispan.config.Configuration;
 import org.infinispan.lifecycle.ComponentStatus;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.test.SingleCacheManagerTest;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
-import org.infinispan.util.ObjectDuplicator;
 import org.testng.annotations.Test;
 import static org.testng.AssertJUnit.*;
 

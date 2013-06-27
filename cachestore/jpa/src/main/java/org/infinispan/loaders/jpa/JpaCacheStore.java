@@ -19,7 +19,7 @@
  * License along with this software; if not, write to the Free
  * Software Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
  * 02110-1301 USA, or see the FSF site: http://www.fsf.org.
- * 
+ *
  */
 package org.infinispan.loaders.jpa;
 
@@ -54,15 +54,15 @@ import org.infinispan.AdvancedCache;
 import org.infinispan.Cache;
 import org.infinispan.container.entries.ImmortalCacheEntry;
 import org.infinispan.container.entries.InternalCacheEntry;
-   import org.infinispan.loaders.CacheLoaderConfig;
+import org.infinispan.loaders.CacheLoaderConfig;
 import org.infinispan.loaders.CacheLoaderException;
 import org.infinispan.loaders.CacheLoaderMetadata;
 import org.infinispan.loaders.LockSupportCacheStore;
-import org.infinispan.marshall.StreamingMarshaller;
-import org.infinispan.util.InfinispanCollections;
+import org.infinispan.commons.marshall.StreamingMarshaller;
+import org.infinispan.commons.util.InfinispanCollections;
 
 /**
- * 
+ *
  * @author <a href="mailto:rtsang@redhat.com">Ray Tsang</a>
  *
  */
@@ -83,26 +83,26 @@ public class JpaCacheStore extends LockSupportCacheStore<Integer> {
 		this.emfRegistry = this.cache.getComponentRegistry().getGlobalComponentRegistry().getComponent(EntityManagerFactoryRegistry.class);
 		this.config = (JpaCacheStoreConfig) config;
 	}
-	
+
 	@Override
 	public void start() throws CacheLoaderException {
 		super.start();
-		
+
 		try {
 			this.emf = this.emfRegistry.getEntityManagerFactory(config.getPersistenceUnitName());
 		} catch (PersistenceException e) {
 			throw new JpaCacheLoaderException("Persistence Unit [" + this.config.getPersistenceUnitName() + "] not found", e);
 		}
-		
+
 		ManagedType<?> mt;
-		
+
 		try {
 			mt = emf.getMetamodel()
 				.entity(this.config.getEntityClass());
 		} catch (IllegalArgumentException e) {
 			throw new JpaCacheLoaderException("Entity class [" + this.config.getEntityClassName() + " specified in configuration is not recognized by the EntityManagerFactory with Persistence Unit [" + this.config.getPersistenceUnitName() + "]", e);
 		}
-		
+
 		if (!(mt instanceof IdentifiableType)) {
 			throw new JpaCacheLoaderException(
 					"Entity class must have one and only one identifier (@Id or @EmbeddedId)");
@@ -142,7 +142,7 @@ public class JpaCacheStore extends LockSupportCacheStore<Integer> {
 	public Class<? extends CacheLoaderConfig> getConfigurationClass() {
 		return JpaCacheStoreConfig.class;
 	}
-	
+
 	protected boolean isValidKeyType(Object key) {
 		return emf.getMetamodel().entity(config.getEntityClass()).getIdType().getJavaType().isAssignableFrom(key.getClass());
 	}
@@ -170,7 +170,7 @@ public class JpaCacheStore extends LockSupportCacheStore<Integer> {
 		}
 
 	}
-	
+
 	@Override
 	protected Set<InternalCacheEntry> loadAllLockSafe()
 			throws CacheLoaderException {
@@ -181,7 +181,7 @@ public class JpaCacheStore extends LockSupportCacheStore<Integer> {
 	@Override
 	protected Set<InternalCacheEntry> loadLockSafe(int maxEntries)
 			throws CacheLoaderException {
-	   
+
 	   if (maxEntries == 0)
 	      return InfinispanCollections.emptySet();
 
@@ -329,7 +329,7 @@ public class JpaCacheStore extends LockSupportCacheStore<Integer> {
 		if (!isValidKeyType(key)) {
 			return false;
 		}
-		
+
 		EntityManager em = emf.createEntityManager();
 		try {
 			Object o = em.find(config.getEntityClass(), key);
@@ -358,7 +358,7 @@ public class JpaCacheStore extends LockSupportCacheStore<Integer> {
 	@Override
 	protected void storeLockSafe(InternalCacheEntry entry, Integer lockingKey)
 			throws CacheLoaderException {
-	   
+
 		EntityManager em = emf.createEntityManager();
 
 		Object o = entry.getValue();
@@ -401,7 +401,7 @@ public class JpaCacheStore extends LockSupportCacheStore<Integer> {
 		if (!isValidKeyType(key)) {
 			return null;
 		}
-		
+
 		EntityManager em = emf.createEntityManager();
 		try {
 			Object o = em.find(config.getEntityClass(), key);

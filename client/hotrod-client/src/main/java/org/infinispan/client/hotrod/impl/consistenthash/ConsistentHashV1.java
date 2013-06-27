@@ -33,8 +33,8 @@ import java.util.TreeMap;
 
 import org.infinispan.commons.hash.Hash;
 import org.infinispan.commons.hash.MurmurHash2;
-import org.infinispan.util.Util;
-import org.infinispan.util.logging.BasicLogFactory;
+import org.infinispan.commons.logging.BasicLogFactory;
+import org.infinispan.commons.util.Util;
 import org.jboss.logging.BasicLogger;
 
 /**

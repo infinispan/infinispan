@@ -41,7 +41,7 @@ package org.infinispan.server.hotrod
 import org.infinispan.remoting.transport.Address
 import java.nio.charset.Charset
 import java.util.Arrays
-import org.infinispan.marshall.AbstractExternalizer
+import org.infinispan.commons.marshall.AbstractExternalizer
 import java.io.{ObjectInput, ObjectOutput}
 import scala.collection.JavaConversions._
 

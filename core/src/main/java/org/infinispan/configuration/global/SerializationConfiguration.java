@@ -20,8 +20,8 @@ package org.infinispan.configuration.global;
 
 import java.util.Map;
 
-import org.infinispan.marshall.AdvancedExternalizer;
-import org.infinispan.marshall.Marshaller;
+import org.infinispan.commons.marshall.AdvancedExternalizer;
+import org.infinispan.commons.marshall.Marshaller;
 import org.jboss.marshalling.ClassResolver;
 
 public class SerializationConfiguration {
@@ -30,7 +30,7 @@ public class SerializationConfiguration {
    private final short version;
    private final Map<Integer, AdvancedExternalizer<?>> advancedExternalizers;
    private final ClassResolver classResolver;
-   
+
    SerializationConfiguration(Marshaller marshaller, short version,
          Map<Integer, AdvancedExternalizer<?>> advancedExternalizers,
          ClassResolver classResolver) {
@@ -47,7 +47,7 @@ public class SerializationConfiguration {
    public short version() {
       return version;
    }
-   
+
    public Map<Integer, AdvancedExternalizer<?>> advancedExternalizers() {
       return advancedExternalizers;
    }

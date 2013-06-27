@@ -38,9 +38,9 @@ import java.util.Set;
 import java.util.SortedMap;
 import java.util.TreeMap;
 
+import static org.infinispan.commons.util.Util.padString;
+import static org.infinispan.commons.util.Util.prettyPrintTime;
 import static org.infinispan.profiling.testinternals.Generator.*;
-import static org.infinispan.util.Util.padString;
-import static org.infinispan.util.Util.prettyPrintTime;
 
 /**
  * This test benchmarks different hash functions.

@@ -18,6 +18,7 @@
  */
 package org.infinispan.configuration.parsing;
 
+import static org.infinispan.commons.util.StringPropertyReplacer.replaceProperties;
 import static org.infinispan.configuration.cache.CacheMode.DIST_ASYNC;
 import static org.infinispan.configuration.cache.CacheMode.DIST_SYNC;
 import static org.infinispan.configuration.cache.CacheMode.INVALIDATION_ASYNC;
@@ -25,15 +26,15 @@ import static org.infinispan.configuration.cache.CacheMode.INVALIDATION_SYNC;
 import static org.infinispan.configuration.cache.CacheMode.LOCAL;
 import static org.infinispan.configuration.cache.CacheMode.REPL_ASYNC;
 import static org.infinispan.configuration.cache.CacheMode.REPL_SYNC;
-import static org.infinispan.util.StringPropertyReplacer.replaceProperties;
 
 import java.util.Properties;
 
 import javax.xml.stream.XMLStreamConstants;
 import javax.xml.stream.XMLStreamException;
 
+import org.infinispan.commons.CacheConfigurationException;
+import org.infinispan.commons.executors.ExecutorFactory;
 import org.infinispan.commons.hash.Hash;
-import org.infinispan.config.ConfigurationException;
 import org.infinispan.configuration.cache.BackupConfiguration;
 import org.infinispan.configuration.cache.BackupConfigurationBuilder;
 import org.infinispan.configuration.cache.BackupFailurePolicy;
@@ -59,7 +60,6 @@ import org.infinispan.distribution.ch.ConsistentHashFactory;
 import org.infinispan.distribution.group.Grouper;
 import org.infinispan.eviction.EvictionStrategy;
 import org.infinispan.eviction.EvictionThreadPolicy;
-import org.infinispan.executors.ExecutorFactory;
 import org.infinispan.executors.ScheduledExecutorFactory;
 import org.infinispan.interceptors.base.CommandInterceptor;
 import org.infinispan.jmx.MBeanServerLookup;
@@ -67,14 +67,14 @@ import org.infinispan.loaders.CacheLoader;
 import org.infinispan.loaders.CacheStore;
 import org.infinispan.loaders.cluster.ClusterCacheLoader;
 import org.infinispan.loaders.file.FileCacheStore;
-import org.infinispan.marshall.AdvancedExternalizer;
-import org.infinispan.marshall.Marshaller;
+import org.infinispan.commons.marshall.AdvancedExternalizer;
+import org.infinispan.commons.marshall.Marshaller;
+import org.infinispan.commons.util.Util;
 import org.infinispan.remoting.ReplicationQueue;
 import org.infinispan.remoting.transport.Transport;
 import org.infinispan.transaction.LockingMode;
 import org.infinispan.transaction.TransactionMode;
 import org.infinispan.transaction.lookup.TransactionManagerLookup;
-import org.infinispan.util.Util;
 import org.infinispan.util.concurrent.IsolationLevel;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
@@ -371,7 +371,7 @@ public class Parser52 implements ConfigurationParser {
          ParseUtils.requireNoContent(reader);
       }
       if (count > 1)
-         throw new ConfigurationException("Only one 'takeOffline' element allowed within a 'backup'");
+         throw new CacheConfigurationException("Only one 'takeOffline' element allowed within a 'backup'");
    }
 
    private void parseTransaction(final XMLExtendedStreamReader reader, final ConfigurationBuilderHolder holder) throws XMLStreamException {
@@ -1258,7 +1258,7 @@ public class Parser52 implements ConfigurationParser {
 
    private void setMode(final ConfigurationBuilder builder, final String clusteringMode, final boolean asynchronous, final boolean synchronous, final XMLExtendedStreamReader reader) {
       if (synchronous && asynchronous) {
-         throw new ConfigurationException("Cannot configure <sync> and <async> on the same cluster, " + reader.getLocation());
+         throw new CacheConfigurationException("Cannot configure <sync> and <async> on the same cluster, " + reader.getLocation());
       }
 
       if (clusteringMode != null) {
@@ -1284,7 +1284,7 @@ public class Parser52 implements ConfigurationParser {
          } else if (ParsedCacheMode.LOCAL.matches(mode)) {
             builder.clustering().cacheMode(LOCAL);
          } else {
-            throw new ConfigurationException("Invalid clustering mode " + clusteringMode + ", " + reader.getLocation());
+            throw new CacheConfigurationException("Invalid clustering mode " + clusteringMode + ", " + reader.getLocation());
          }
       } else {
          // If no cache mode is given but sync or async is specified, default to DIST

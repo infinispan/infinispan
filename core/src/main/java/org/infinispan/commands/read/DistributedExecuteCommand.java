@@ -34,11 +34,11 @@ import org.infinispan.commands.VisitableCommand;
 import org.infinispan.commands.Visitor;
 import org.infinispan.commands.CancellableCommand;
 import org.infinispan.commands.remote.BaseRpcCommand;
+import org.infinispan.commons.util.InfinispanCollections;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.distexec.DistributedCallable;
 import org.infinispan.distexec.spi.DistributedTaskLifecycleService;
 import org.infinispan.lifecycle.ComponentStatus;
-import org.infinispan.util.InfinispanCollections;
 
 /**
  * DistributedExecuteCommand is used to migrate Callable and execute it in remote JVM.

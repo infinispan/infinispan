@@ -22,7 +22,7 @@
 
 package org.infinispan.server.core.logging;
 
-import org.infinispan.config.ConfigurationException;
+import org.infinispan.commons.CacheConfigurationException;
 import org.jboss.logging.Cause;
 import org.jboss.logging.LogMessage;
 import org.jboss.logging.Message;
@@ -92,17 +92,17 @@ public interface JavaLog extends org.infinispan.util.logging.Log {
    IllegalArgumentException illegalSendBufferSize(int sendBufSize);
 
    @Message(value = "SSL Enabled but no KeyStore specified", id = 5014)
-   ConfigurationException noSSLKeyManagerConfiguration();
+   CacheConfigurationException noSSLKeyManagerConfiguration();
 
    @Message(value = "SSL Enabled but no TrustStore specified", id = 5015)
-   ConfigurationException noSSLTrustManagerConfiguration();
+   CacheConfigurationException noSSLTrustManagerConfiguration();
 
    @Message(value = "A password is required to open the KeyStore '%s'", id = 5016)
-   ConfigurationException missingKeyStorePassword(String keyStore);
+   CacheConfigurationException missingKeyStorePassword(String keyStore);
 
    @Message(value = "A password is required to open the TrustStore '%s'", id = 5017)
-   ConfigurationException missingTrustStorePassword(String trustStore);
+   CacheConfigurationException missingTrustStorePassword(String trustStore);
 
    @Message(value = "Cannot configure custom KeyStore and/or TrustStore when specifying a SSLContext", id = 5018)
-   ConfigurationException xorSSLContext();
+   CacheConfigurationException xorSSLContext();
 }

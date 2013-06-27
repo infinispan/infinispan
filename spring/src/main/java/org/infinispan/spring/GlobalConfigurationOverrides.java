@@ -25,12 +25,12 @@ package org.infinispan.spring;
 
 import org.infinispan.configuration.global.GlobalConfigurationBuilder;
 import org.infinispan.configuration.global.ShutdownHookBehavior;
-import org.infinispan.executors.ExecutorFactory;
+import org.infinispan.commons.executors.ExecutorFactory;
 import org.infinispan.executors.ScheduledExecutorFactory;
 import org.infinispan.jmx.MBeanServerLookup;
-import org.infinispan.marshall.Marshaller;
+import org.infinispan.commons.marshall.Marshaller;
 import org.infinispan.remoting.transport.Transport;
-import org.infinispan.util.Util;
+import org.infinispan.commons.util.Util;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 

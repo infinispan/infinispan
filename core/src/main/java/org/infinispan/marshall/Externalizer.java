@@ -98,7 +98,9 @@ import java.io.Serializable;
  *
  * @author Galder Zamarreño
  * @since 5.0
+ * @deprecated Use {@link org.infinispan.commons.marshall.Externalizer} instead
  */
+@Deprecated
 public interface Externalizer<T> extends Serializable {
 
    /**

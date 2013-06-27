@@ -31,13 +31,13 @@ import javax.xml.bind.annotation.XmlAccessorType;
 import javax.xml.bind.annotation.XmlAttribute;
 import javax.xml.bind.annotation.XmlTransient;
 
-import org.infinispan.CacheException;
+import org.infinispan.commons.CacheException;
+import org.infinispan.commons.util.TypedProperties;
 import org.infinispan.config.AbstractNamedCacheConfigurationBean;
 import org.infinispan.config.Configuration;
 import org.infinispan.config.ConfigurationBeanVisitor;
 import org.infinispan.config.ConfigurationDocRef;
 import org.infinispan.config.parsing.XmlConfigHelper;
-import org.infinispan.util.TypedProperties;
 
 /**
  * Abstract base class for CacheLoaderConfigs.

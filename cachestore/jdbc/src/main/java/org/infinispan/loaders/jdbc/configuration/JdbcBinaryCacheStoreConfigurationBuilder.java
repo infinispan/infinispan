@@ -19,7 +19,7 @@
 package org.infinispan.loaders.jdbc.configuration;
 
 import org.infinispan.configuration.cache.LoadersConfigurationBuilder;
-import org.infinispan.util.TypedProperties;
+import org.infinispan.commons.util.TypedProperties;
 
 public class JdbcBinaryCacheStoreConfigurationBuilder extends
       AbstractJdbcCacheStoreConfigurationBuilder<JdbcBinaryCacheStoreConfiguration, JdbcBinaryCacheStoreConfigurationBuilder> {

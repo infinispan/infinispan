@@ -29,7 +29,7 @@ import org.infinispan.server.hotrod._
 import logging.Log
 import org.infinispan.manager.EmbeddedCacheManager
 import java.util.Arrays
-import org.infinispan.util.Util
+import org.infinispan.commons.util.Util
 import org.infinispan.commons.equivalence.ByteArrayEquivalence
 import org.testng.Assert._
 import org.infinispan.notifications.Listener
@@ -44,7 +44,7 @@ import scala.collection.JavaConversions._
 import org.infinispan.test.TestingUtil
 import org.infinispan.statetransfer.StateTransferManager
 import org.infinispan.server.hotrod.configuration.HotRodServerConfigurationBuilder
-import org.infinispan.marshall.jboss.JBossMarshaller
+import org.infinispan.marshall.core.JBossMarshaller
 import org.testng.AssertJUnit.assertEquals
 import org.infinispan.container.entries.InternalCacheEntry
 import org.infinispan.Cache

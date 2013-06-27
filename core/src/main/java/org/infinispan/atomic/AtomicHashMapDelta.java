@@ -22,9 +22,9 @@
  */
 package org.infinispan.atomic;
 
-import org.infinispan.marshall.AbstractExternalizer;
-import org.infinispan.marshall.Ids;
-import org.infinispan.util.Util;
+import org.infinispan.commons.marshall.AbstractExternalizer;
+import org.infinispan.commons.util.Util;
+import org.infinispan.marshall.core.Ids;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
@@ -58,10 +58,10 @@ public class AtomicHashMapDelta implements Delta {
          other = new AtomicHashMap();
       if (changeLog != null) {
          for (Operation<Object, Object> o : changeLog) o.replay(other.delegate);
-      }      
+      }
       return other;
    }
-   
+
    public void addOperation(Operation<?, ?> o) {
       if (changeLog == null) {
          // lazy init
@@ -76,7 +76,7 @@ public class AtomicHashMapDelta implements Delta {
 
       changeLog.add((Operation<Object, Object>) o);
    }
-   
+
    public Collection<Object> getKeys() {
       List<Object> keys = new LinkedList<Object>();
       if (changeLog != null) {
@@ -87,7 +87,7 @@ public class AtomicHashMapDelta implements Delta {
       }
       return keys;
    }
-   
+
    public boolean hasClearOperation(){
       return hasClearOperation;
    }

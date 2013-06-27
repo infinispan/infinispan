@@ -18,7 +18,7 @@
  */
 package org.infinispan.server.core.configuration;
 
-import org.infinispan.configuration.Self;
+import org.infinispan.commons.configuration.Self;
 
 /**
  * ProtocolServerConfigurationChildBuilder.

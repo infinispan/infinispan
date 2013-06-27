@@ -18,10 +18,10 @@
  */
 package org.infinispan.configuration.cache;
 
+import org.infinispan.commons.configuration.AbstractTypedPropertiesConfiguration;
 import org.infinispan.commons.equivalence.Equivalence;
-import org.infinispan.configuration.AbstractTypedPropertiesConfiguration;
+import org.infinispan.commons.util.TypedProperties;
 import org.infinispan.container.DataContainer;
-import org.infinispan.util.TypedProperties;
 
 /**
  * Controls the data container for the cache.

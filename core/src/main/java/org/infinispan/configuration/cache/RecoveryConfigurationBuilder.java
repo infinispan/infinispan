@@ -18,8 +18,8 @@
  */
 package org.infinispan.configuration.cache;
 
-import org.infinispan.config.ConfigurationException;
-import org.infinispan.configuration.Builder;
+import org.infinispan.commons.configuration.Builder;
+import org.infinispan.commons.CacheConfigurationException;
 
 import static org.infinispan.configuration.cache.RecoveryConfiguration.DEFAULT_RECOVERY_INFO_CACHE;
 
@@ -77,14 +77,14 @@ public class RecoveryConfigurationBuilder extends AbstractTransportConfiguration
          return;
       }
       if (!clustering().cacheMode().isSynchronous()) {
-         throw new ConfigurationException("Recovery not supported with Asynchronous " +
+         throw new CacheConfigurationException("Recovery not supported with Asynchronous " +
                                                 clustering().cacheMode().friendlyCacheModeString() + " cache mode.");
       }
       if (!transaction().syncCommitPhase()) {
          //configuration not supported because the Transaction Manager would not retain any transaction log information to
          //allow it to perform useful recovery anyhow. Usually you just log it in the hope a human notices and sorts
          //out the mess. Of course properly paranoid humans don't use async commit in the first place.
-         throw new ConfigurationException("Recovery not supported with asynchronous commit phase.");
+         throw new CacheConfigurationException("Recovery not supported with asynchronous commit phase.");
       }
    }
 

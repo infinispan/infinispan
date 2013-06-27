@@ -23,11 +23,11 @@
 package org.infinispan.interceptors;
 
 
-import org.infinispan.CacheException;
 import org.infinispan.InvalidCacheUsageException;
 import org.infinispan.commands.FlagAffectedCommand;
 import org.infinispan.commands.VisitableCommand;
 import org.infinispan.commands.control.LockControlCommand;
+import org.infinispan.commons.CacheException;
 import org.infinispan.context.Flag;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.context.InvocationContextContainer;

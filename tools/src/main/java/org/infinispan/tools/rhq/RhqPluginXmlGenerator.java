@@ -51,7 +51,7 @@ import org.infinispan.jmx.annotations.MBean;
 import org.infinispan.jmx.annotations.ManagedAttribute;
 import org.infinispan.jmx.annotations.ManagedOperation;
 import org.infinispan.jmx.annotations.Parameter;
-import org.infinispan.util.ClassFinder;
+import org.infinispan.commons.util.ClassFinder;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 import com.sun.javadoc.DocErrorReporter;

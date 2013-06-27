@@ -19,8 +19,8 @@
 
 package org.infinispan.configuration.cache;
 
-import org.infinispan.config.ConfigurationException;
-import org.infinispan.configuration.Builder;
+import org.infinispan.commons.configuration.Builder;
+import org.infinispan.commons.CacheConfigurationException;
 
 import java.util.ArrayList;
 import java.util.HashSet;
@@ -71,7 +71,7 @@ public class SitesConfigurationBuilder extends AbstractConfigurationChildBuilder
 
       for (BackupConfigurationBuilder bcb : backups) {
          if (!backupNames.add(bcb.site())) {
-            throw new ConfigurationException("Multiple sites with name '" + bcb.site() + "' are configured. That is not allowed!");
+            throw new CacheConfigurationException("Multiple sites with name '" + bcb.site() + "' are configured. That is not allowed!");
          }
       }
 
@@ -81,7 +81,7 @@ public class SitesConfigurationBuilder extends AbstractConfigurationChildBuilder
             if (bcb.site().equals(site)) found = true;
          }
          if (!found) {
-            throw new ConfigurationException("The site '" + site + "' should be defined within the set of backups!");
+            throw new CacheConfigurationException("The site '" + site + "' should be defined within the set of backups!");
          }
       }
    }

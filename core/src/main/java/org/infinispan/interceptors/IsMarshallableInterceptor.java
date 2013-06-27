@@ -38,8 +38,8 @@ import org.infinispan.factories.annotations.ComponentName;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.factories.annotations.Start;
 import org.infinispan.interceptors.base.CommandInterceptor;
-import org.infinispan.marshall.NotSerializableException;
-import org.infinispan.marshall.StreamingMarshaller;
+import org.infinispan.commons.marshall.NotSerializableException;
+import org.infinispan.commons.marshall.StreamingMarshaller;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 

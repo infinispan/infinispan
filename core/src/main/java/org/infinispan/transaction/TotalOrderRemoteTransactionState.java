@@ -18,9 +18,9 @@
 
 package org.infinispan.transaction;
 
+import org.infinispan.commons.util.InfinispanCollections;
 import org.infinispan.transaction.totalorder.TotalOrderLatch;
 import org.infinispan.transaction.xa.GlobalTransaction;
-import org.infinispan.util.InfinispanCollections;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 

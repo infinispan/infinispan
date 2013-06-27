@@ -9,7 +9,7 @@ import org.infinispan.Cache;
 import org.infinispan.demo.Demo;
 import org.infinispan.distexec.DefaultExecutorService;
 import org.infinispan.distexec.DistributedExecutorService;
-import org.infinispan.util.Util;
+import org.infinispan.commons.util.Util;
 
 import java.io.Serializable;
 import java.util.List;

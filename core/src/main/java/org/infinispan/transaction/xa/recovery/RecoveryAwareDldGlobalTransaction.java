@@ -22,13 +22,13 @@
  */
 package org.infinispan.transaction.xa.recovery;
 
-import org.infinispan.marshall.Ids;
+import org.infinispan.commons.util.InfinispanCollections;
+import org.infinispan.commons.util.Util;
+import org.infinispan.marshall.core.Ids;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.transaction.xa.DldGlobalTransaction;
 import org.infinispan.transaction.xa.GlobalTransaction;
 import org.infinispan.transaction.xa.TransactionFactory;
-import org.infinispan.util.InfinispanCollections;
-import org.infinispan.util.Util;
 
 import javax.transaction.xa.Xid;
 import java.io.IOException;

@@ -23,6 +23,7 @@
 
 package org.infinispan.stress;
 
+import org.infinispan.marshall.TestObjectStreamMarshaller;
 import org.infinispan.metadata.EmbeddedMetadata;
 import org.infinispan.container.InternalEntryFactory;
 import org.infinispan.container.InternalEntryFactoryImpl;
@@ -32,7 +33,6 @@ import org.infinispan.loaders.decorators.AbstractDelegatingStore;
 import org.infinispan.loaders.decorators.AsyncStore;
 import org.infinispan.loaders.decorators.AsyncStoreConfig;
 import org.infinispan.loaders.dummy.DummyInMemoryCacheStore;
-import org.infinispan.marshall.TestObjectStreamMarshaller;
 import org.infinispan.util.concurrent.locks.containers.LockContainer;
 import org.infinispan.util.concurrent.locks.containers.ReentrantPerEntryLockContainer;
 import org.infinispan.util.logging.Log;

@@ -19,7 +19,7 @@
 
 package org.infinispan.container.versioning;
 
-import org.infinispan.CacheException;
+import org.infinispan.commons.CacheException;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.cache.VersioningScheme;
 import org.infinispan.manager.EmbeddedCacheManager;

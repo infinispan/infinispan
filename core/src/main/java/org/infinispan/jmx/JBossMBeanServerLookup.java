@@ -23,8 +23,8 @@
 
 package org.infinispan.jmx;
 
-import org.infinispan.CacheException;
-import org.infinispan.util.Util;
+import org.infinispan.commons.CacheException;
+import org.infinispan.commons.util.Util;
 
 import javax.management.MBeanServer;
 import java.util.Properties;

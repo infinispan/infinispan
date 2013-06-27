@@ -22,12 +22,12 @@
  */
 package org.infinispan.loaders;
 
+import org.infinispan.commons.util.Util;
 import org.infinispan.config.ConfigurationBeanVisitor;
-import org.infinispan.config.ConfigurationException;
+import org.infinispan.commons.CacheConfigurationException;
 import org.infinispan.config.parsing.XmlConfigHelper;
 import org.infinispan.loaders.decorators.AsyncStoreConfig;
 import org.infinispan.loaders.decorators.SingletonStoreConfig;
-import org.infinispan.util.Util;
 
 import javax.xml.bind.annotation.adapters.XmlAdapter;
 import javax.xml.bind.annotation.adapters.XmlJavaTypeAdapter;
@@ -87,13 +87,13 @@ class CacheLoaderConfigAdapter extends XmlAdapter<AbstractCacheStoreConfig, Cach
    public CacheLoaderConfig unmarshal(AbstractCacheStoreConfig storeConfig) throws Exception {
       String clClass = storeConfig.getCacheLoaderClassName();
       if (clClass == null || clClass.length()==0)
-         throw new ConfigurationException("Missing 'class'  attribute for cache loader configuration");
+         throw new CacheConfigurationException("Missing 'class'  attribute for cache loader configuration");
 
       CacheLoaderConfig clc;
       try {
          clc = instantiateCacheLoaderConfig(clClass, storeConfig.getClassLoader());
       } catch (Exception e) {
-         throw new ConfigurationException("Unable to instantiate cache loader or configuration", e);
+         throw new CacheConfigurationException("Unable to instantiate cache loader or configuration", e);
       }
       
       clc.setCacheLoaderClassName(clClass);

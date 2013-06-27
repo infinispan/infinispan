@@ -20,7 +20,7 @@ package org.infinispan.configuration.cache;
 
 import java.util.concurrent.TimeUnit;
 
-import org.infinispan.configuration.Builder;
+import org.infinispan.commons.configuration.Builder;
 
 /**
  * If configured all communications are synchronous, in that whenever a thread sends a message sent

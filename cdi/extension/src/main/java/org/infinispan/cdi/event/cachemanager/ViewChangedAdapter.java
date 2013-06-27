@@ -27,10 +27,9 @@ import org.infinispan.notifications.Listener;
 import org.infinispan.notifications.cachemanagerlistener.annotation.ViewChanged;
 import org.infinispan.notifications.cachemanagerlistener.event.ViewChangedEvent;
 import org.infinispan.remoting.transport.Address;
-import org.infinispan.util.InfinispanCollections;
+import org.infinispan.commons.util.InfinispanCollections;
 
 import javax.enterprise.event.Event;
-import java.util.Collections;
 import java.util.List;
 
 /**

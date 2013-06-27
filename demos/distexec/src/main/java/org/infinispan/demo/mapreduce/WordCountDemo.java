@@ -26,7 +26,7 @@ import com.martiansoftware.jsap.SimpleJSAP;
 import org.infinispan.Cache;
 import org.infinispan.demo.Demo;
 import org.infinispan.distexec.mapreduce.MapReduceTask;
-import org.infinispan.util.Util;
+import org.infinispan.commons.util.Util;
 
 import java.io.BufferedReader;
 import java.io.FileReader;

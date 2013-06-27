@@ -41,6 +41,7 @@ import java.io.IOException;
  * @version 4.1
  */
 @ThreadSafe
+@Deprecated
 public interface Marshaller {
 
    /**
@@ -104,7 +105,7 @@ public interface Marshaller {
 
    /**
     * A method that checks whether the given object is marshallable as per the rules of this marshaller.
-    * 
+    *
     * @param o object to verify whether it's marshallable or not
     * @return true if the object is marshallable, otherwise false
     * @throws Exception if while checking whether the object was serializable or not, an exception arose

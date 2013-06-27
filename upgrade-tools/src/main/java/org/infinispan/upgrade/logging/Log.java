@@ -21,7 +21,7 @@ package org.infinispan.upgrade.logging;
 import static org.jboss.logging.Logger.Level.ERROR;
 import static org.jboss.logging.Logger.Level.WARN;
 
-import org.infinispan.CacheException;
+import org.infinispan.commons.CacheException;
 import org.jboss.logging.LogMessage;
 import org.jboss.logging.Cause;
 import org.jboss.logging.Message;

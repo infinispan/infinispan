@@ -24,6 +24,7 @@ package org.infinispan.notifications.cachelistener;
 
 import org.infinispan.Cache;
 import org.infinispan.commands.FlagAffectedCommand;
+import org.infinispan.commons.util.InfinispanCollections;
 import org.infinispan.container.entries.InternalCacheEntry;
 import org.infinispan.context.Flag;
 import org.infinispan.context.InvocationContext;
@@ -35,7 +36,6 @@ import org.infinispan.notifications.ClassLoaderAwareListenable;
 import org.infinispan.notifications.cachelistener.annotation.*;
 import org.infinispan.notifications.cachelistener.event.*;
 import org.infinispan.transaction.xa.GlobalTransaction;
-import org.infinispan.util.InfinispanCollections;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
@@ -47,8 +47,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.CopyOnWriteArrayList;
 
+import static org.infinispan.commons.util.InfinispanCollections.transformCollectionToMap;
 import static org.infinispan.notifications.cachelistener.event.Event.Type.*;
-import static org.infinispan.util.InfinispanCollections.transformCollectionToMap;
 
 /**
  * Helper class that handles all notifications to registered listeners.

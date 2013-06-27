@@ -55,7 +55,6 @@ import org.apache.cassandra.thrift.SlicePredicate;
 import org.apache.cassandra.thrift.SliceRange;
 import org.apache.cassandra.thrift.SuperColumn;
 import org.infinispan.Cache;
-import org.infinispan.config.ConfigurationException;
 import org.infinispan.container.entries.InternalCacheEntry;
 import org.infinispan.container.entries.InternalCacheValue;
 import org.infinispan.loaders.AbstractCacheStore;
@@ -65,8 +64,9 @@ import org.infinispan.loaders.CacheLoaderMetadata;
 import org.infinispan.loaders.cassandra.logging.Log;
 import org.infinispan.loaders.keymappers.TwoWayKey2StringMapper;
 import org.infinispan.loaders.keymappers.UnsupportedKeyTypeException;
-import org.infinispan.marshall.StreamingMarshaller;
-import org.infinispan.util.Util;
+import org.infinispan.commons.CacheConfigurationException;
+import org.infinispan.commons.marshall.StreamingMarshaller;
+import org.infinispan.commons.util.Util;
 import org.infinispan.util.logging.LogFactory;
 
 /**
@@ -133,7 +133,7 @@ public class CassandraCacheStore extends AbstractCacheStore {
                   + (config.isSharedKeyspace() ? "_" + cacheName : ""));
          keyMapper = (TwoWayKey2StringMapper) Util.getInstance(config.getKeyMapper(), config.getClassLoader());
       } catch (Exception e) {
-         throw new ConfigurationException(e);
+         throw new CacheConfigurationException(e);
       }
 
       if (config.autoCreateKeyspace) {

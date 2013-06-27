@@ -63,9 +63,11 @@ import java.util.Set;
  *
  * @author Galder Zamarreño
  * @since 5.0
+ * @deprecated Use {@link org.infinispan.commons.marshall.AdvancedExternalizer} instead
  */
+@Deprecated
 public interface AdvancedExternalizer<T> extends Externalizer<T> {
-   
+
    /**
     * Returns a collection of Class instances representing the types that this
     * AdvancedExternalizer can marshall.  Clearly, empty sets are not allowed.

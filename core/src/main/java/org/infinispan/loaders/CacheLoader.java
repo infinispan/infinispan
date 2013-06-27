@@ -24,7 +24,7 @@ package org.infinispan.loaders;
 
 import org.infinispan.Cache;
 import org.infinispan.container.entries.InternalCacheEntry;
-import org.infinispan.marshall.StreamingMarshaller;
+import org.infinispan.commons.marshall.StreamingMarshaller;
 
 import java.util.Set;
 
@@ -78,7 +78,7 @@ public interface CacheLoader {
     * Loads a set of all keys, excluding a filter set.
     *
     * @param keysToExclude a set of keys to exclude.  An empty set or null will indicate that all keys should be returned.
-    * @return A set containing keys of entries stored.  An empty set is returned if the loader is empty.   
+    * @return A set containing keys of entries stored.  An empty set is returned if the loader is empty.
     * @throws CacheLoaderException
     */
    Set<Object> loadAllKeys(Set<Object> keysToExclude) throws CacheLoaderException;

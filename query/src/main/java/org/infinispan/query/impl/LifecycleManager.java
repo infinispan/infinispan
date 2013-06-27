@@ -33,7 +33,7 @@ import org.hibernate.search.spi.SearchFactoryIntegrator;
 import org.hibernate.search.stat.Statistics;
 import org.infinispan.AdvancedCache;
 import org.infinispan.Cache;
-import org.infinispan.CacheException;
+import org.infinispan.commons.CacheException;
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.cache.CustomInterceptorsConfigurationBuilder;
@@ -162,7 +162,7 @@ public class LifecycleManager extends AbstractModuleLifecycle {
       // we can t inject Cache and CacheManager with @inject in there
       Cache<?, ?> cache = cr.getComponent(Cache.class);
       CommandInitializer initializer = cr.getComponent(CommandInitializer.class);
-      EmbeddedCacheManager cacheManager = cr.getGlobalComponentRegistry().getComponent(EmbeddedCacheManager.class); 
+      EmbeddedCacheManager cacheManager = cr.getGlobalComponentRegistry().getComponent(EmbeddedCacheManager.class);
       initializer.setCache(cache, cacheManager);
 
       QueryBox queryBox = new QueryBox();

@@ -22,7 +22,7 @@
  */
 package org.infinispan.tree;
 
-import org.infinispan.CacheException;
+import org.infinispan.commons.CacheException;
 
 
 /**
