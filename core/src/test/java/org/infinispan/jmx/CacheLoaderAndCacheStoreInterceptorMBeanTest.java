@@ -3,6 +3,7 @@ package org.infinispan.jmx;
 import org.infinispan.config.CacheLoaderManagerConfig;
 import org.infinispan.config.Configuration;
 import org.infinispan.config.GlobalConfiguration;
+import org.infinispan.context.Flag;
 import org.infinispan.test.fwk.TestInternalCacheEntryFactory;
 import org.infinispan.loaders.CacheLoaderManager;
 import org.infinispan.loaders.CacheStore;
@@ -133,6 +134,14 @@ public class CacheLoaderAndCacheStoreInterceptorMBeanTest extends SingleCacheMan
 
       assert cache.replace("no_such_key", "c") == null;
       assertStoreAccess(1, 1, 3);
+   }
+
+   public void testFlagMissNotCounted() throws Exception {
+      assertStoreAccess(0, 0, 0);
+      cache.put("key", "value");
+      assertStoreAccess(0, 0, 1);
+      cache.getAdvancedCache().withFlags(Flag.SKIP_CACHE_LOAD).get("no_such_key");
+      assertStoreAccess(0, 0, 1);
    }
 
    private void assertStoreAccess(int loadsCount, int missesCount, int storeCount) throws Exception {

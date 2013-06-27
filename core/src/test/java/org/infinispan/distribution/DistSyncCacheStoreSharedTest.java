@@ -5,15 +5,19 @@ import org.infinispan.commands.write.ClearCommand;
 import org.infinispan.commands.write.PutKeyValueCommand;
 import org.infinispan.commands.write.RemoveCommand;
 import org.infinispan.commands.write.ReplaceCommand;
+import org.infinispan.loaders.CacheLoaderException;
 import org.infinispan.loaders.CacheLoaderManager;
 import org.infinispan.loaders.CacheStore;
 import org.infinispan.loaders.dummy.DummyInMemoryCacheStore;
 import org.infinispan.test.TestingUtil;
+import org.infinispan.test.fwk.TestInternalCacheEntryFactory;
 import org.testng.annotations.AfterMethod;
 import org.testng.annotations.Test;
 
 import java.util.HashMap;
 import java.util.Map;
+
+import static org.testng.AssertJUnit.assertEquals;
 
 /**
  * DistSyncCacheStoreSharedTest.
@@ -199,5 +203,20 @@ public class DistSyncCacheStoreSharedTest extends BaseDistCacheStoreTest {
          assert !store.containsKey(key);
          assertNumberOfInvocations(store, "clear", 1);
       }
+   }
+
+   public void testGetOnlyQueriesCacheOnOwners() throws CacheLoaderException {
+      // Make a key that own'ers is c1 and c2
+      final MagicKey k = new MagicKey("key1", c1, c2);
+      final String v1 = "real-data";
+      final String v2 = "stale-data";
+
+      // Simulate c3 was by itself and someone wrote a value that is now stale
+      CacheStore store = TestingUtil.extractComponent(c3, CacheLoaderManager.class).getCacheStore();
+      store.store(TestInternalCacheEntryFactory.create(k, v2));
+
+      c1.put(k, v1);
+
+      assertEquals(v1, c3.get(k));
    }
 }

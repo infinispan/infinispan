@@ -162,7 +162,6 @@ public class CacheLoaderInterceptor extends JmxStatsCommandInterceptor {
       // This assumes that when passivation is not enabled that the cache store holds a superset of the data container
       if (cacheConfiguration.loaders().passivation() || totalSize == 0) {
          totalSize += (Integer)super.visitSizeCommand(ctx, command);
-
       }
       return totalSize;
    }
@@ -225,14 +224,29 @@ public class CacheLoaderInterceptor extends JmxStatsCommandInterceptor {
       return cmd.hasFlag(Flag.SKIP_CACHE_STORE) || cmd.hasFlag(Flag.SKIP_CACHE_LOAD);
    }
 
-   private boolean loadIfNeeded(InvocationContext ctx, Object key, boolean isRetrieval, FlagAffectedCommand cmd) throws Throwable {
-      if (shouldSkipCacheLoader(cmd) || cmd.hasFlag(Flag.IGNORE_RETURN_VALUES)) {
-         return false; //skip operation
+   protected boolean canLoad(Object key) {
+      return true;
+   }
+
+   /**
+    * Loads from the cache loader the entry for the given key.  A found value is loaded into the current context.  The
+    * method returns whether the value was found or not, or even if the cache loader was checked.
+    * @param ctx The current invocation's context
+    * @param key The key for the entry to look up
+    * @param isRetrieval Whether or not this was called in the scope of a get
+    * @param cmd The command that was called that now wants to query the cache loader
+    * @return Whether or not the entry was found in the cache loader.  A value of null means the cache loader was never
+    *         queried for the value, so it was neither a hit or a miss.
+    * @throws Throwable
+    */
+   private Boolean loadIfNeeded(InvocationContext ctx, Object key, boolean isRetrieval, FlagAffectedCommand cmd) throws Throwable {
+      if (shouldSkipCacheLoader(cmd) || cmd.hasFlag(Flag.IGNORE_RETURN_VALUES) || !canLoad(key)) {
+         return null; //skip operation
       }
 
       // If this is a remote call, skip loading UNLESS we are the primary data owner of this key, and
       // are using eviction or write skew checking.
-      if (!isRetrieval && !ctx.isOriginLocal() && !forceLoad(key, cmd.getFlags())) return false;
+      if (!isRetrieval && !ctx.isOriginLocal() && !forceLoad(key, cmd.getFlags())) return null;
 
       // first check if the container contains the key we need.  Try and load this into the context.
       CacheEntry e = ctx.lookupEntry(key);
@@ -247,12 +261,12 @@ public class CacheLoaderInterceptor extends JmxStatsCommandInterceptor {
                wrappedEntry = entryFactory.wrapEntryForPut(ctx, key, loaded, false, cmd);
             }
             recordLoadedEntry(ctx, key, wrappedEntry, loaded, cmd);
-            return true;
+            return Boolean.TRUE;
          } else {
-            return false;
+            return Boolean.FALSE;
          }
       } else {
-         return true;
+         return null;
       }
    }
 
@@ -311,8 +325,8 @@ public class CacheLoaderInterceptor extends JmxStatsCommandInterceptor {
    }
 
    private void loadIfNeededAndUpdateStats(InvocationContext ctx, Object key, boolean isRetrieval, FlagAffectedCommand cmd) throws Throwable {
-      boolean found = loadIfNeeded(ctx, key, isRetrieval, cmd);
-      if (!found && getStatisticsEnabled()) {
+      Boolean found = loadIfNeeded(ctx, key, isRetrieval, cmd);
+      if (found == Boolean.FALSE && getStatisticsEnabled()) {
          cacheMisses.incrementAndGet();
       }
    }
