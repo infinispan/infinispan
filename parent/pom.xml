@@ -155,7 +155,7 @@
       <version.testng>6.8</version.testng>
       <version.testng.arquillian>6.5.2</version.testng.arquillian>
       <version.webdav.servlet>2.0.1</version.webdav.servlet>
-      <version.weld>1.1.8.Final</version.weld>
+      <version.weld>1.1.13.Final</version.weld>
       <version.xstream>1.4.1</version.xstream>
       <version.javassist>3.15.0-GA</version.javassist>
       <version.maven.animal.sniffer>1.9</version.maven.animal.sniffer>
