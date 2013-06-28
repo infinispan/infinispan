@@ -23,16 +23,16 @@
 
 package org.infinispan.spring;
 
-import java.util.Arrays;
+import java.util.ArrayList;
 import java.util.List;
 
-import org.infinispan.config.CacheLoaderManagerConfig;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.Configuration;
-import org.infinispan.config.CustomInterceptorConfig;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.eviction.EvictionStrategy;
 import org.infinispan.eviction.EvictionThreadPolicy;
+import org.infinispan.interceptors.base.CommandInterceptor;
+import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.infinispan.transaction.LockingMode;
 import org.infinispan.transaction.lookup.JBossTransactionManagerLookup;
 import org.infinispan.transaction.lookup.TransactionManagerLookup;
@@ -510,23 +510,6 @@ public class ConfigurationOverridesTest {
                   configuration.transaction().transactionManagerLookup());
    }
 
-   public final void configurationOverridesShouldOverrideCacheLoaderManagerConfigPropIfExplicitlySet()
-         throws Exception {
-      final CacheLoaderManagerConfig expectedCacheLoaderManagerConfig = new CacheLoaderManagerConfig();
-
-      final ConfigurationOverrides objectUnderTest = new ConfigurationOverrides();
-      objectUnderTest.setCacheLoaderManagerConfig(expectedCacheLoaderManagerConfig);
-      final ConfigurationBuilder defaultConfiguration = new ConfigurationBuilder();
-      objectUnderTest.applyOverridesTo(defaultConfiguration);
-      Configuration configuration = defaultConfiguration.build();
-
-      AssertJUnit
-            .assertSame(
-                  "ConfigurationOverrides should have overridden default value with explicitly set CacheLoaderManagerConfig property. However, it didn't.",
-                  expectedCacheLoaderManagerConfig,
-                  configuration.loaders().cacheLoaders());//FIXME
-   }
-
    public final void configurationOverridesShouldOverrideSyncCommitPhasePropIfExplicitlySet()
          throws Exception {
       final boolean expectedSyncCommitPhase = true;
@@ -775,22 +758,6 @@ public class ConfigurationOverridesTest {
                   expectedRehashEnabled, configuration.clustering().stateTransfer().fetchInMemoryState());
    }
 
-   public final void configurationOverridesShouldOverrideRehashWaitTimePropIfExplicitlySet()
-         throws Exception {
-      final long expectedRehashWaitTime = 1232778L;
-
-      final ConfigurationOverrides objectUnderTest = new ConfigurationOverrides();
-      objectUnderTest.setRehashWaitTime(expectedRehashWaitTime);
-      final ConfigurationBuilder defaultConfiguration = new ConfigurationBuilder();
-      objectUnderTest.applyOverridesTo(defaultConfiguration);
-      Configuration configuration = defaultConfiguration.build();
-
-      AssertJUnit
-            .assertEquals(
-                  "ConfigurationOverrides should have overridden default value with explicitly set RehashWaitTime property. However, it didn't.",
-                  expectedRehashWaitTime, configuration.clustering().stateTransfer().timeout());
-   }
-
    public final void configurationOverridesShouldOverrideUseAsyncMarshallingPropIfExplicitlySet()
          throws Exception {
       final boolean expectedUseAsyncMarshalling = true;
@@ -841,19 +808,28 @@ public class ConfigurationOverridesTest {
 
    public final void configurationOverridesShouldOverrideCustomInterceptorsPropIfExplicitlySet()
          throws Exception {
-      final CustomInterceptorConfig customInterceptor = new CustomInterceptorConfig();
-      final List<CustomInterceptorConfig> expectedCustomInterceptors = Arrays
-            .asList(customInterceptor);
 
+      DummyInterceptor dummyInterceptor = new DummyInterceptor();
+      final List<CommandInterceptor> expectedCustomInterceptors = new ArrayList<CommandInterceptor>();
+      expectedCustomInterceptors.add(dummyInterceptor);
       final ConfigurationOverrides objectUnderTest = new ConfigurationOverrides();
       objectUnderTest.setCustomInterceptors(expectedCustomInterceptors);
-      final ConfigurationBuilder defaultConfiguration = new ConfigurationBuilder();
+      final ConfigurationBuilder defaultConfiguration = TestCacheManagerFactory.getDefaultCacheConfiguration(false);
       objectUnderTest.applyOverridesTo(defaultConfiguration);
       Configuration configuration = defaultConfiguration.build();
+
+      final ConfigurationBuilder dummyBuilder = TestCacheManagerFactory.getDefaultCacheConfiguration(false);
+      dummyBuilder.customInterceptors()
+            .addInterceptor()
+            .interceptor(dummyInterceptor);
+      Configuration dummyConfiguration = dummyBuilder.build();
 
       AssertJUnit
             .assertEquals(
                   "ConfigurationOverrides should have overridden default value with explicitly set CustomInterceptors property. However, it didn't.",
-                  expectedCustomInterceptors, configuration.customInterceptors().interceptors());
+                  dummyConfiguration.customInterceptors().interceptors(), configuration.customInterceptors().interceptors());
+   }
+
+   private class DummyInterceptor extends CommandInterceptor {
    }
 }
