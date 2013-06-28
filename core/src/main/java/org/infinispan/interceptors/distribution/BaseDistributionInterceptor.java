@@ -107,7 +107,13 @@ public abstract class BaseDistributionInterceptor extends ClusteringInterceptor 
                log.tracef("Skipping the replication of the conditional command as it did not succeed on primary owner (%s).", command);
                return returnValue;
             }
+            // Make sure we can't have a loop with 2 nodes both thinking they are the primary owners
+            // See https://issues.jboss.org/browse/ISPN-3281
+            int oldTopologyId = command.getTopologyId();
+            command.setTopologyId(stateTransferManager.getCacheTopology().getTopologyId());
             rpcManager.invokeRemotely(recipientGenerator.generateRecipients(), command, rpcManager.getDefaultRpcOptions(isSync));
+            // We don't need a finally block, because unsuccessful commands are not forwarded anyway
+            command.setTopologyId(oldTopologyId);
          }
          return returnValue;
       } else {
@@ -121,10 +127,7 @@ public abstract class BaseDistributionInterceptor extends ClusteringInterceptor 
             List<Address> recipients = recipientGenerator.generateRecipients();
             log.tracef("I'm the primary owner, sending the command to all (%s) the recipients in order to be applied.", recipients);
             // check if a single owner has been configured and the target for the key is the local address
-            boolean isSingleOwnerAndLocal = cacheConfiguration.clustering().hash().numOwners() == 1
-                  && recipients != null
-                  && recipients.size() == 1
-                  && recipients.get(0).equals(rpcManager.getTransport().getAddress());
+            boolean isSingleOwnerAndLocal = cacheConfiguration.clustering().hash().numOwners() == 1;
             if (!isSingleOwnerAndLocal) {
                rpcManager.invokeRemotely(recipients, command, rpcManager.getDefaultRpcOptions(isSync));
             }
