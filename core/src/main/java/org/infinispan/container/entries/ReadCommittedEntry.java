@@ -160,8 +160,8 @@ public class ReadCommittedEntry implements MVCCEntry {
       // only do stuff if there are changes.
       if (isChanged() || isLoaded()) {
          if (trace)
-            log.tracef("Updating entry (key=%s removed=%s valid=%s changed=%s created=%s loaded=%s value=%s]",
-                  toStr(getKey()), isRemoved(), isValid(), isChanged(), isCreated(), isLoaded(), toStr(value));
+            log.tracef("Updating entry (key=%s removed=%s valid=%s changed=%s created=%s loaded=%s value=%s metadata=%s)",
+                  toStr(getKey()), isRemoved(), isValid(), isChanged(), isCreated(), isLoaded(), toStr(value), getMetadata());
 
          // Ugh!
          if (value instanceof AtomicHashMap) {
@@ -288,6 +288,7 @@ public class ReadCommittedEntry implements MVCCEntry {
             ", isChanged=" + isChanged() +
             ", isRemoved=" + isRemoved() +
             ", isValid=" + isValid() +
+            ", metadata=" + metadata +
             '}';
    }
 

@@ -43,7 +43,6 @@ import org.infinispan.factories.annotations.Inject;
 import org.infinispan.factories.annotations.Start;
 import org.infinispan.remoting.rpc.ResponseMode;
 import org.infinispan.remoting.rpc.RpcOptions;
-import org.infinispan.remoting.rpc.RpcOptionsBuilder;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.remoting.transport.jgroups.SuspectException;
 import org.infinispan.transaction.LocalTransaction;
@@ -200,7 +199,7 @@ public class TxDistributionInterceptor extends BaseDistributionInterceptor {
       boolean skipLocking = hasSkipLocking(command);
       long lockTimeout = getLockAcquisitionTimeout(command, skipLocking);
       lockManager.acquireLock(ctx, key, lockTimeout, skipLocking);
-      entryFactory.wrapEntryForPut(ctx, key, ice, false, command);
+      entryFactory.wrapEntryForPut(ctx, key, ice, false, command, false);
    }
 
    @Override
@@ -418,6 +417,7 @@ public class TxDistributionInterceptor extends BaseDistributionInterceptor {
                         .lifespan(lifespan).maxIdle(-1).build();
                   PutKeyValueCommand put = cf.buildPutKeyValueCommand(
                         ice.getKey(), ice.getValue(), newMetadata, command.getFlags());
+                  ctx.replaceValue(key, ice);
                   lockAndWrap(ctx, key, ice, command);
                   invokeNextInterceptor(ctx, put);
                } catch (Exception e) {
@@ -429,8 +429,12 @@ public class TxDistributionInterceptor extends BaseDistributionInterceptor {
                if (!ctx.replaceValue(key, ice)) {
                   if (isWrite)
                      lockAndWrap(ctx, key, ice, command);
-                  else
+                  else {
                      ctx.putLookedUpEntry(key, ice);
+                     if (ctx.isInTxScope()) {
+                        ((TxInvocationContext) ctx).getCacheTransaction().replaceVersionRead(key, ice.getMetadata().version());
+                     }
+                  }
                }
             }
             return ice.getValue();

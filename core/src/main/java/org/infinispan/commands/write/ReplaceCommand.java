@@ -135,7 +135,7 @@ public class ReplaceCommand extends AbstractDataWriteCommand implements Metadata
    @Override
    public Object[] getParameters() {
       return new Object[]{key, oldValue, newValue, metadata, ignorePreviousValue,
-                          Flag.copyWithoutRemotableFlags(flags),previousRead};
+                          Flag.copyWithoutRemotableFlags(flags)};
    }
 
    @Override
@@ -148,7 +148,6 @@ public class ReplaceCommand extends AbstractDataWriteCommand implements Metadata
       metadata = (Metadata) parameters[3];
       ignorePreviousValue = (Boolean) parameters[4];
       flags = (Set<Flag>) parameters[5];
-      previousRead = (Boolean) parameters[6];
    }
 
    @Override

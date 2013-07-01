@@ -174,7 +174,7 @@ public class NonTxDistributionInterceptor extends BaseDistributionInterceptor {
          InternalCacheEntry ice = retrieveFromRemoteSource(key, ctx, false, command);
          if (ice != null) {
             if (!ctx.replaceValue(key, ice)) {
-               entryFactory.wrapEntryForPut(ctx, key, ice, false, command);
+               entryFactory.wrapEntryForPut(ctx, key, ice, false, command, true);
             }
             return ice.getValue();
          }
@@ -189,7 +189,7 @@ public class NonTxDistributionInterceptor extends BaseDistributionInterceptor {
       if (ice != null) {
          if (!ctx.replaceValue(key, ice))  {
             if (isWrite)
-               entryFactory.wrapEntryForPut(ctx, key, ice, false, command);
+               entryFactory.wrapEntryForPut(ctx, key, ice, false, command, true);
             else
                ctx.putLookedUpEntry(key, ice);
          }

@@ -52,7 +52,9 @@ public class SimpleClusteredVersion implements IncrementableEntryVersion {
 
    @Override
    public InequalVersionComparisonResult compareTo(EntryVersion other) {
-      if (other instanceof SimpleClusteredVersion) {
+      if (other == NonExistingVersion.INSTANCE) {
+         return InequalVersionComparisonResult.AFTER;
+      } else if (other instanceof SimpleClusteredVersion) {
          SimpleClusteredVersion otherVersion = (SimpleClusteredVersion) other;
 
          if (topologyId > otherVersion.topologyId)

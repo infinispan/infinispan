@@ -150,7 +150,7 @@ public abstract class AbstractInvocationContext implements InvocationContext {
       if (ce == null || ce.isNull() || ce.getValue() == null) {
          if (ce != null && ce.isChanged()) {
             ce.setValue(cacheEntry.getValue());
-            ce.setMetadata(cacheEntry.getMetadata());
+            onEntryValueReplaced(key, cacheEntry);
          } else {
             return false;
          }
@@ -162,5 +162,9 @@ public abstract class AbstractInvocationContext implements InvocationContext {
    public boolean isEntryRemovedInContext(Object key) {
       CacheEntry ce = lookupEntry(key);
       return ce != null && ce.isRemoved() && ce.isChanged();
+   }
+
+   protected void onEntryValueReplaced(Object key, InternalCacheEntry cacheEntry) {
+      //no-op. used in tx mode with write skew check.
    }
 }

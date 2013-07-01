@@ -37,8 +37,6 @@ import org.infinispan.util.logging.LogFactory;
 
 import java.util.Collection;
 
-import static org.infinispan.transaction.WriteSkewHelper.setVersionsSeenOnPrepareCommand;
-
 /**
  * This interceptor is used in total order in distributed mode when the write skew check is enabled. After sending the
  * prepare through TOA (Total Order Anycast), it blocks the execution thread until the transaction outcome is known
@@ -100,7 +98,6 @@ public class TotalOrderVersionedDistributionInterceptor extends VersionedDistrib
          KeysValidateFilter responseFilter = ctx.getCacheTransaction().hasModification(ClearCommand.class) || isSyncCommitPhase() ?
                null : new KeysValidateFilter(rpcManager.getAddress(), ctx.getAffectedKeys());
 
-         setVersionsSeenOnPrepareCommand((VersionedPrepareCommand) command, ctx);
          totalOrderAnycastPrepare(recipients, command, responseFilter);
 
          if (responseFilter != null && !responseFilter.isAllKeysValidated()) {
@@ -113,6 +110,6 @@ public class TotalOrderVersionedDistributionInterceptor extends VersionedDistrib
 
    @Override
    protected void lockAndWrap(InvocationContext ctx, Object key, InternalCacheEntry ice, FlagAffectedCommand command) throws InterruptedException {
-      entryFactory.wrapEntryForPut(ctx, key, ice, false, command);
+      entryFactory.wrapEntryForPut(ctx, key, ice, false, command, true);
    }
 }

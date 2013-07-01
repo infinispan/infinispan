@@ -95,6 +95,6 @@ public class TotalOrderDistributionInterceptor extends TxDistributionInterceptor
 
    @Override
    protected void lockAndWrap(InvocationContext ctx, Object key, InternalCacheEntry ice, FlagAffectedCommand command) throws InterruptedException {
-      entryFactory.wrapEntryForPut(ctx, key, ice, false, command);
+      entryFactory.wrapEntryForPut(ctx, key, ice, false, command, true);
    }
 }

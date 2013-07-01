@@ -131,7 +131,7 @@ public class PutKeyValueCommand extends AbstractDataWriteCommand implements Meta
 
    @Override
    public Object[] getParameters() {
-      return new Object[]{key, value, metadata, putIfAbsent, Flag.copyWithoutRemotableFlags(flags), previousRead};
+      return new Object[]{key, value, metadata, putIfAbsent, Flag.copyWithoutRemotableFlags(flags)};
    }
 
    @Override
@@ -143,7 +143,6 @@ public class PutKeyValueCommand extends AbstractDataWriteCommand implements Meta
       metadata = (Metadata) parameters[2];
       putIfAbsent = (Boolean) parameters[3];
       flags = (Set<Flag>) parameters[4];
-      previousRead = (Boolean) parameters[5];
    }
 
    @Override

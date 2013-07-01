@@ -79,7 +79,9 @@ public class NumericVersionGenerator implements VersionGenerator {
 
    @Override
    public IncrementableEntryVersion increment(IncrementableEntryVersion initialVersion) {
-      if (initialVersion instanceof NumericVersion) {
+      if (initialVersion == NonExistingVersion.INSTANCE) {
+         return generateNew();
+      } else if (initialVersion instanceof NumericVersion) {
          NumericVersion old = (NumericVersion) initialVersion;
          long counter = old.getVersion() + 1;
          return createNumericVersion(counter);

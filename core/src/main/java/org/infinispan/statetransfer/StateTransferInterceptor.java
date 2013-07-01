@@ -107,7 +107,6 @@ public class StateTransferInterceptor extends CommandInterceptor {   //todo [ani
             PrepareCommand prepareCommand;
             if (useVersioning) {
                prepareCommand = commandFactory.buildVersionedPrepareCommand(ctx.getGlobalTransaction(), ctx.getModifications(), false);
-               WriteSkewHelper.setVersionsSeenOnPrepareCommand((VersionedPrepareCommand) prepareCommand, ctx);
             } else {
                prepareCommand = commandFactory.buildPrepareCommand(ctx.getGlobalTransaction(), ctx.getModifications(), false);
             }
