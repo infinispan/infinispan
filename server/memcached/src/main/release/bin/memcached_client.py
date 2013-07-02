@@ -37,7 +37,7 @@ with each invocation.  Please edit this script to edit the server endpoint list.
 __author__    = "Manik Surtani"
 __version__ = "Infinispan 4.1"
 __copyright__ = "Copyright (C) 2010 Red Hat Middleware LLC"
-__license__   = "LGPL"
+__license__   = "Apache License, 2.0"
 
 import memcache
 import math
