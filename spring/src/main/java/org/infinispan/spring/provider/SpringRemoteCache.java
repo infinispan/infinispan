@@ -1,5 +1,29 @@
+/**
+ * JBoss, Home of Professional Open Source
+ * Copyright 2009 Red Hat Inc. and/or its affiliates and other
+ * contributors as indicated by the @author tags. All rights reserved.
+ * See the copyright.txt in the distribution for a full listing of
+ * individual contributors.
+ *
+ * This is free software; you can redistribute it and/or modify it
+ * under the terms of the GNU Lesser General Public License as
+ * published by the Free Software Foundation; either version 2.1 of
+ * the License, or (at your option) any later version.
+ *   ~
+ * This software is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
+ * Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with this software; if not, write to the Free
+ * Software Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
+ * 02110-1301 USA, or see the FSF site: http://www.fsf.org.
+ */
+
 package org.infinispan.spring.provider;
 
+import org.infinispan.client.hotrod.RemoteCache;
 import org.springframework.cache.Cache;
 import org.springframework.cache.support.SimpleValueWrapper;
 import org.springframework.util.Assert;
@@ -7,7 +31,7 @@ import org.springframework.util.Assert;
 /**
  * <p>
  * A {@link org.springframework.cache.Cache <code>Cache</code>} implementation that delegates to a
- * {@link org.infinispan.Cache <code>org.infinispan.Cache</code>} instance supplied at construction
+ * {@link org.infinispan.client.hotrod.RemoteCache <code>org.infinispan.client.hotrod.RemoteCache</code>} instance supplied at construction
  * time.
  * </p>
  *
@@ -15,14 +39,14 @@ import org.springframework.util.Assert;
  * @author <a href="mailto:marius.bogoevici@gmail.com">Marius Bogoevici</a>
  *
  */
-public class SpringCache implements Cache {
+public class SpringRemoteCache implements Cache {
 
-   private final org.infinispan.api.BasicCache<Object, Object> nativeCache;
+   private final RemoteCache<Object, Object> nativeCache;
 
    /**
     * @param nativeCache
     */
-   public SpringCache(final org.infinispan.api.BasicCache<Object, Object> nativeCache) {
+   public SpringRemoteCache(final RemoteCache<Object, Object> nativeCache) {
       Assert.notNull(nativeCache, "A non-null Infinispan cache implementation is required");
       this.nativeCache = nativeCache;
    }
@@ -39,7 +63,7 @@ public class SpringCache implements Cache {
     * @see org.springframework.cache.Cache#getNativeCache()
     */
    @Override
-   public org.infinispan.api.BasicCache<?, ?> getNativeCache() {
+   public RemoteCache<?, ?> getNativeCache() {
       return this.nativeCache;
    }
 
