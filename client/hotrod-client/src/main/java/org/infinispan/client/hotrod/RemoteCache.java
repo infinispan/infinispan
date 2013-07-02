@@ -26,7 +26,6 @@ import java.util.Collection;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentMap;
-import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 
 import org.infinispan.commons.util.concurrent.NotifyingFuture;
@@ -84,6 +83,19 @@ import org.infinispan.commons.util.concurrent.NotifyingFuture;
  * @since 4.1
  */
 public interface RemoteCache<K, V> extends ConcurrentMap<K, V> {
+   /**
+    * Retrieves the name of the cache
+    *
+    * @return the name of the cache
+    */
+   String getName();
+
+   /**
+    * Retrieves the version of Infinispan
+    *
+    * @return a version string
+    */
+   String getVersion();
 
    /**
     * Removes the given entry only if its version matches the supplied version. A typical use case looks like this:

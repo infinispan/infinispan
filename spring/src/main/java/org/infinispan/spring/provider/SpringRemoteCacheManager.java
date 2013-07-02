@@ -35,10 +35,10 @@ import org.springframework.util.Assert;
  * backed by an {@link org.infinispan.client.hotrod.RemoteCacheManager
  * <code>Infinispan RemoteCacheManager</code>} instance.
  * </p>
- * 
+ *
  * @author <a href="mailto:olaf DOT bergner AT gmx DOT de">Olaf Bergner</a>
  * @author Marius Bogoevici
- * 
+ *
  */
 public class SpringRemoteCacheManager implements org.springframework.cache.CacheManager {
 
@@ -58,7 +58,7 @@ public class SpringRemoteCacheManager implements org.springframework.cache.Cache
     */
    @Override
    public Cache getCache(final String name) {
-      return new SpringCache(this.nativeCacheManager.getCache(name));
+      return new SpringRemoteCache(this.nativeCacheManager.getCache(name));
    }
 
    /**
@@ -68,7 +68,7 @@ public class SpringRemoteCacheManager implements org.springframework.cache.Cache
     * This restriction may be lifted in the future. Currently, this operation will always throw an
     * <code>UnsupportedOperationException</code>.
     * </p>
-    * 
+    *
     * @see org.springframework.cache.CacheManager#getCacheNames()
     */
    @Override
@@ -81,7 +81,7 @@ public class SpringRemoteCacheManager implements org.springframework.cache.Cache
     * Return the {@link org.infinispan.client.hotrod.RemoteCacheManager
     * <code>org.infinispan.client.hotrod.RemoteCacheManager</code>} that backs this
     * <code>SpringRemoteCacheManager</code>.
-    * 
+    *
     * @return The {@link org.infinispan.client.hotrod.RemoteCacheManager
     *         <code>org.infinispan.client.hotrod.RemoteCacheManager</code>} that backs this
     *         <code>SpringRemoteCacheManager</code>

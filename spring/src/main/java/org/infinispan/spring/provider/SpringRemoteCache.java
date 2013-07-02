@@ -23,6 +23,7 @@
 
 package org.infinispan.spring.provider;
 
+import org.infinispan.client.hotrod.RemoteCache;
 import org.springframework.cache.Cache;
 import org.springframework.cache.support.SimpleValueWrapper;
 import org.springframework.util.Assert;
@@ -30,7 +31,7 @@ import org.springframework.util.Assert;
 /**
  * <p>
  * A {@link org.springframework.cache.Cache <code>Cache</code>} implementation that delegates to a
- * {@link org.infinispan.Cache <code>org.infinispan.Cache</code>} instance supplied at construction
+ * {@link org.infinispan.client.hotrod.RemoteCache <code>org.infinispan.client.hotrod.RemoteCache</code>} instance supplied at construction
  * time.
  * </p>
  *
@@ -38,14 +39,14 @@ import org.springframework.util.Assert;
  * @author <a href="mailto:marius.bogoevici@gmail.com">Marius Bogoevici</a>
  *
  */
-public class SpringCache implements Cache {
+public class SpringRemoteCache implements Cache {
 
-   private final org.infinispan.api.BasicCache<Object, Object> nativeCache;
+   private final RemoteCache<Object, Object> nativeCache;
 
    /**
     * @param nativeCache
     */
-   public SpringCache(final org.infinispan.api.BasicCache<Object, Object> nativeCache) {
+   public SpringRemoteCache(final RemoteCache<Object, Object> nativeCache) {
       Assert.notNull(nativeCache, "A non-null Infinispan cache implementation is required");
       this.nativeCache = nativeCache;
    }
@@ -62,7 +63,7 @@ public class SpringCache implements Cache {
     * @see org.springframework.cache.Cache#getNativeCache()
     */
    @Override
-   public org.infinispan.api.BasicCache<?, ?> getNativeCache() {
+   public RemoteCache<?, ?> getNativeCache() {
       return this.nativeCache;
    }
 

@@ -408,10 +408,12 @@ public class RemoteCacheImpl<K, V> extends RemoteCacheSupport<K, V> {
       }
    }
 
+   @Override
    public String getName() {
       return name;
    }
 
+   @Override
    public String getVersion() {
       return Version.getProtocolVersion();
    }
