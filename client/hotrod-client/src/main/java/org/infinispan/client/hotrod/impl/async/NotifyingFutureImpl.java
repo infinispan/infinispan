@@ -22,8 +22,8 @@
  */
 package org.infinispan.client.hotrod.impl.async;
 
-import org.infinispan.util.concurrent.FutureListener;
-import org.infinispan.util.concurrent.NotifyingFuture;
+import org.infinispan.commons.util.concurrent.FutureListener;
+import org.infinispan.commons.util.concurrent.NotifyingFuture;
 
 import java.util.concurrent.CopyOnWriteArraySet;
 import java.util.concurrent.ExecutionException;
