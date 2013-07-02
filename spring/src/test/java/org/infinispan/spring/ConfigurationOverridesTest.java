@@ -34,7 +34,7 @@ import org.infinispan.eviction.EvictionThreadPolicy;
 import org.infinispan.interceptors.base.CommandInterceptor;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.infinispan.transaction.LockingMode;
-import org.infinispan.transaction.lookup.JBossTransactionManagerLookup;
+import org.infinispan.transaction.lookup.GenericTransactionManagerLookup;
 import org.infinispan.transaction.lookup.TransactionManagerLookup;
 import org.infinispan.util.concurrent.IsolationLevel;
 import org.testng.AssertJUnit;
@@ -495,7 +495,7 @@ public class ConfigurationOverridesTest {
 
    public final void configurationOverridesShouldOverrideTransactionManagerLookupPropIfExplicitlySet()
          throws Exception {
-      final TransactionManagerLookup expectedTransactionManagerLookup = new JBossTransactionManagerLookup();
+      final TransactionManagerLookup expectedTransactionManagerLookup = new GenericTransactionManagerLookup();
 
       final ConfigurationOverrides objectUnderTest = new ConfigurationOverrides();
       objectUnderTest.setTransactionManagerLookup(expectedTransactionManagerLookup);
