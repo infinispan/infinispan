@@ -64,7 +64,7 @@ import org.infinispan.client.hotrod.impl.operations.StatsOperation;
 import org.infinispan.client.hotrod.logging.Log;
 import org.infinispan.client.hotrod.logging.LogFactory;
 import org.infinispan.commons.marshall.Marshaller;
-import org.infinispan.util.concurrent.NotifyingFuture;
+import org.infinispan.commons.util.concurrent.NotifyingFuture;
 
 /**
  * @author Mircea.Markus@jboss.com
@@ -396,26 +396,22 @@ public class RemoteCacheImpl<K, V> extends RemoteCacheSupport<K, V> {
       op.execute();
    }
 
-   @Override
    public void start() {
       if (log.isDebugEnabled()) {
          log.debugf("Start called, nothing to do here(%s)", getName());
       }
    }
 
-   @Override
    public void stop() {
       if (log.isDebugEnabled()) {
          log.debugf("Stop called, nothing to do here(%s)", getName());
       }
    }
 
-   @Override
    public String getName() {
       return name;
    }
 
-   @Override
    public String getVersion() {
       return Version.getProtocolVersion();
    }
@@ -527,5 +523,5 @@ public class RemoteCacheImpl<K, V> extends RemoteCacheSupport<K, V> {
           toReturn.add(key);
        }
        return Collections.unmodifiableSet(toReturn);
-   };
+   }
 }

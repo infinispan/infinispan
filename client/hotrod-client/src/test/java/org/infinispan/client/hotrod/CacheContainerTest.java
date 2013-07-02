@@ -67,14 +67,14 @@ public class CacheContainerTest extends SingleCacheManagerTest {
    }
 
    public void testObtainingSameInstanceMultipleTimes() {
-      BasicCache<Object,Object> objectCache = remoteCacheManager.getCache();
-      BasicCache<Object,Object> objectCache2 = remoteCacheManager.getCache();
+      RemoteCache<Object, Object> objectCache = remoteCacheManager.getCache();
+      RemoteCache<Object, Object> objectCache2 = remoteCacheManager.getCache();
       assert objectCache == objectCache2;
    }
 
    public void testObtainingSameInstanceMultipleTimes2() {
-      BasicCache<Object,Object> objectCache = remoteCacheManager.getCache(CACHE_NAME);
-      BasicCache<Object,Object> objectCache2 = remoteCacheManager.getCache(CACHE_NAME);
+      RemoteCache<Object, Object> objectCache = remoteCacheManager.getCache(CACHE_NAME);
+      RemoteCache<Object, Object> objectCache2 = remoteCacheManager.getCache(CACHE_NAME);
       assert objectCache == objectCache2;
    }
 }

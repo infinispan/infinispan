@@ -32,7 +32,6 @@ import java.util.Properties;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.atomic.AtomicInteger;
 
-import org.infinispan.api.BasicCacheContainer;
 import org.infinispan.client.hotrod.configuration.Configuration;
 import org.infinispan.client.hotrod.configuration.ConfigurationBuilder;
 import org.infinispan.client.hotrod.configuration.ServerConfiguration;
@@ -150,11 +149,14 @@ import org.infinispan.commons.util.Util;
  * @author Mircea.Markus@jboss.com
  * @since 4.1
  */
-public class RemoteCacheManager implements BasicCacheContainer {
+public class RemoteCacheManager {
 
    private static final Log log = LogFactory.getLog(RemoteCacheManager.class);
 
+   public static final String DEFAULT_CACHE_NAME = "___defaultcache";
    public static final String HOTROD_CLIENT_PROPERTIES = "hotrod-client.properties";
+
+
    private volatile boolean started = false;
    private final Map<String, RemoteCacheHolder> cacheName2RemoteCache = new HashMap<String, RemoteCacheHolder>();
    // Use an invalid topologyID (-1) so we always get a topology update on connection.
@@ -534,7 +536,6 @@ public class RemoteCacheManager implements BasicCacheContainer {
     * @return a cache instance identified by cacheName or null if the cache
     *         name has not been defined
     */
-   @Override
    public <K, V> RemoteCache<K, V> getCache(String cacheName) {
       return getCache(cacheName, configuration.forceReturnValues());
    }
@@ -549,7 +550,6 @@ public class RemoteCacheManager implements BasicCacheContainer {
     * @return a remote cache instance that can be used to send requests to the
     *         default cache in the server
     */
-   @Override
    public <K, V> RemoteCache<K, V> getCache() {
       return getCache(configuration.forceReturnValues());
    }
@@ -559,7 +559,6 @@ public class RemoteCacheManager implements BasicCacheContainer {
       return createRemoteCache("", forceReturnValue);
    }
 
-   @Override
    public void start() {
       // Workaround for JDK6 NPE: http://bugs.sun.com/view_bug.do?bug_id=6427854
       SysPropertyActions.setProperty("sun.nio.ch.bugLevel", "\"\"");
@@ -591,12 +590,11 @@ public class RemoteCacheManager implements BasicCacheContainer {
       }
 
       // Print version to help figure client version run
-      log.version(org.infinispan.Version.printVersion());
+      log.version(RemoteCacheManager.class.getPackage().getImplementationVersion());
 
       started = true;
    }
 
-   @Override
    public void stop() {
       if (isStarted()) {
          transportFactory.destroy();
@@ -629,7 +627,7 @@ public class RemoteCacheManager implements BasicCacheContainer {
             if (configuration.pingOnStartup()) {
                // If ping not successful assume that the cache does not exist
                // Default cache is always started, so don't do for it
-               if (!cacheName.equals(BasicCacheContainer.DEFAULT_CACHE_NAME) &&
+               if (!cacheName.equals(RemoteCacheManager.DEFAULT_CACHE_NAME) &&
                      ping(result) == PingResult.CACHE_DOES_NOT_EXIST) {
                   return null;
                }

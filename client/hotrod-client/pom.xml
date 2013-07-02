@@ -40,7 +40,12 @@
    <dependencies>
       <dependency>
          <groupId>${project.groupId}</groupId>
-         <artifactId>infinispan-core</artifactId>
+         <artifactId>infinispan-commons</artifactId>
+      </dependency>
+      
+      <dependency>
+         <groupId>org.jboss.marshalling</groupId>
+         <artifactId>jboss-marshalling-river</artifactId>
       </dependency>
 
       <dependency>
@@ -54,7 +59,7 @@
          <scope>provided</scope>
       </dependency>
 
-     <dependency>
+      <dependency>
          <groupId>${project.groupId}</groupId>
          <artifactId>infinispan-core</artifactId>
          <type>test-jar</type>
