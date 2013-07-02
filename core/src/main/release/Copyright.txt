@@ -1,27 +1,16 @@
-Infinispan is Copyright 2008 - 2010, Red Hat Middleware LLC
-and individual contributors, and is licensed under the GNU LGPL.
+   Copyright 2009 - 2013, Red Hat Inc. and/or its affiliates.
 
-A summary of the individual contributors is given below.
-Any omission should be sent to msurtani@redhat.com.
+   All files in this repository or distribution are licensed under the
+   Apache License, Version 2.0 (the "License");
+   you may not use any files in this repository or distribution except
+   in compliance with the License.
 
-SVN Login(s)                                 Name
--------------------------------------------------------------------------------
-adriancole                                   Adrian Cole
-aamonten                                     Alejandro Montenegro
-bela, bela@jboss.com, belaban                Bela Ban
-bstansberry, bstansberry@jboss.com           Brian Stansberry
-dpospisi@redhat.com                          Dominik Pospisil
-gzamarreno, galder.zamarreno@jboss.com       Galder Zamarreno
-pilhuhn                                      Heiko W. Rupp
-jgreene, jason.greene@jboss.com              Jason T. Greene
-lmoren                                       Lukasz Moren
-msurtani, manik.surtani@jboss.com            Manik Surtani
-michael.neale@jboss.com                      Michael Neale
-mmarkus, mircea.markus                       Mircea Markus
-navssurtani                                  Navin Surtani
-noelo                                        Noel O'Connor
-pvdyck                                       Phillipe van Dyck
-sannegrinovero                               Sanne Grinovero
-tfenelly                                     Tom Fenelly
-vblagojevic, vblagojevic@jboss.com           Vladimir Blagojevic
--------------------------------------------------------------------------------
+   You may obtain a copy of the License at
+
+       http://www.apache.org/licenses/LICENSE-2.0
+
+   Unless required by applicable law or agreed to in writing, software
+   distributed under the License is distributed on an "AS IS" BASIS,
+   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+   See the License for the specific language governing permissions and
+   limitations under the License.

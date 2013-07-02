@@ -9,7 +9,7 @@
 __author__    = "Galder Zamarreno"
 __version__ = "Infinispan 4.1"
 __copyright__ = "Copyright (C) 2010 Red Hat Middleware LLC"
-__license__   = "LGPL"
+__license__   = "Apache License, 2.0"
 
 import memcache
 import time
