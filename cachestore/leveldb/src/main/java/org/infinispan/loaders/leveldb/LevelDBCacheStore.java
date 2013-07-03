@@ -413,7 +413,7 @@ public class LevelDBCacheStore extends LockSupportCacheStore<Integer> {
 						expiredDb.put(expiryBytes, marshall(al));
 					}
 				} else {
-					expiredDb.put(marshall(expiryBytes), keyBytes);
+					expiredDb.put(expiryBytes, keyBytes);
 				}
 			}
 
@@ -469,7 +469,9 @@ public class LevelDBCacheStore extends LockSupportCacheStore<Integer> {
 			      log.warnUnableToCloseDbIterator(e);
 			   }
 			}
-		} catch (Exception e) {
+		} catch (CacheLoaderException e) {
+         throw e;
+      } catch (Exception e) {
 			throw new CacheLoaderException(e);
 		}
 	}
