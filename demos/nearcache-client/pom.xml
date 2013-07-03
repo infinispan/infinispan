@@ -23,16 +23,13 @@
    </properties>
 
    <dependencies>
-
       <dependency>
          <groupId>${project.groupId}</groupId>
          <artifactId>infinispan-cdi</artifactId>
-         <version>${project.version}</version>
       </dependency>
       <dependency>
          <groupId>${project.groupId}</groupId>
          <artifactId>infinispan-cachestore-remote</artifactId>
-         <version>${project.version}</version>
       </dependency>
 
       <dependency>
@@ -74,7 +71,6 @@
       <dependency>
          <groupId>io.netty</groupId>
          <artifactId>netty</artifactId>
-         <version>${version.netty}</version>
       </dependency>
 
    </dependencies>
