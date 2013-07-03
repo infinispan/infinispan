@@ -16,9 +16,14 @@ import java.io.OutputStream;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.Callable;
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
 import java.util.concurrent.ThreadFactory;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicInteger;
 
 /**
@@ -82,16 +87,35 @@ public abstract class AbstractCacheStore extends AbstractCacheLoader implements 
    public void purgeExpired() throws CacheLoaderException {
       if (purgerService == null)
          throw new IllegalStateException("purgerService is null (did you call super.start() from cache loader implementation ?");
-      purgerService.execute(new Runnable() {
+
+      Future<Void> future = purgerService.submit(new Callable<Void>() {
          @Override
-         public void run() {
+         public Void call() throws Exception {
             try {
                purgeInternal();
+               return null;
             } catch (CacheLoaderException e) {
                log.problemPurgingExpired(e);
+               throw e;
             }
          }
       });
+
+      if (config.isPurgeSynchronously()) {
+         try {
+            future.get(60, TimeUnit.SECONDS);
+         } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+         } catch (ExecutionException e) {
+            if (e.getCause() instanceof CacheLoaderException)
+               throw (CacheLoaderException) e.getCause();
+            else
+               throw log.purgingExpiredEntriesFailed(e);
+         } catch (TimeoutException e) {
+            throw log.timedOutWaitingForExpiredEntriesToBePurged(e);
+         }
+      }
+
    }
 
    protected abstract void purgeInternal() throws CacheLoaderException;

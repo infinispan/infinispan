@@ -888,5 +888,12 @@ public interface Log extends BasicLogger {
 
    @Message(value = "Configuration parser %s does not declare any Namespace annotations", id = 235)
    CacheConfigurationException parserDoesNotDeclareNamespaces(String name);
+
+   @Message(value = "Purging expired entries failed", id = 236)
+   CacheLoaderException purgingExpiredEntriesFailed(@Cause Throwable cause);
+
+   @Message(value = "Waiting for expired entries to be purge timed out", id = 237)
+   CacheLoaderException timedOutWaitingForExpiredEntriesToBePurged(@Cause Throwable cause);
+
 }
 
