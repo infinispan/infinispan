@@ -25,8 +25,6 @@ import java.lang.ref.WeakReference;
  * @since 4.0
  */
 public class InternalCacheFactory<K, V> extends AbstractNamedCacheComponentFactory {
-   private WeakReference<ClassLoader> defaultClassLoader;
-
    /**
     * This implementation clones the configuration passed in before using it.
     *
@@ -69,8 +67,7 @@ public class InternalCacheFactory<K, V> extends AbstractNamedCacheComponentFacto
       this.configuration = configuration;
 
       // injection bootstrap stuff
-      componentRegistry = new ComponentRegistry(cacheName, configuration, cache, globalComponentRegistry,
-            defaultClassLoader == null ? null : defaultClassLoader.get());
+      componentRegistry = new ComponentRegistry(cacheName, configuration, cache, globalComponentRegistry, globalComponentRegistry.getClassLoader());
 
       /*
          --------------------------------------------------------------------------------------------------------------
@@ -89,15 +86,6 @@ public class InternalCacheFactory<K, V> extends AbstractNamedCacheComponentFacto
       }
       // The RollingUpgradeManager should always be added so it is registered in JMX.
       componentRegistry.registerComponent(new RollingUpgradeManager(), RollingUpgradeManager.class.getName(), true);
-   }
-
-   /**
-    * Allows users to specify a default class loader to use for both the construction and running of the cache.
-    *
-    * @param loader class loader to use as a default.
-    */
-   public void setDefaultClassLoader(ClassLoader loader) {
-      this.defaultClassLoader = new WeakReference<ClassLoader>(loader);
    }
 
    @Override
