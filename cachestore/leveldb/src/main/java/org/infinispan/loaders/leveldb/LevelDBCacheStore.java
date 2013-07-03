@@ -15,6 +15,7 @@ import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
 
 import org.infinispan.Cache;
+import org.infinispan.commons.util.InfinispanCollections;
 import org.infinispan.container.entries.InternalCacheEntry;
 import org.infinispan.container.entries.InternalCacheValue;
 import org.infinispan.loaders.CacheLoaderConfig;
@@ -241,7 +242,7 @@ public class LevelDBCacheStore extends LockSupportCacheStore<Integer> {
 	protected Set<InternalCacheEntry> loadLockSafe(int maxEntries)
 			throws CacheLoaderException {
 		if (maxEntries <= 0)
-			return Collections.emptySet();
+         return InfinispanCollections.emptySet();
 
 		Set<InternalCacheEntry> entries = new HashSet<InternalCacheEntry>();
 
@@ -268,6 +269,9 @@ public class LevelDBCacheStore extends LockSupportCacheStore<Integer> {
 	@Override
 	protected Set<Object> loadAllKeysLockSafe(Set<Object> keysToExclude)
 			throws CacheLoaderException {
+      if (!cache.getStatus().allowInvocations())
+         return InfinispanCollections.emptySet();
+
 		Set<Object> keys = new HashSet<Object>();
 
 		DBIterator it = db.iterator(new ReadOptions().fillCache(false));
