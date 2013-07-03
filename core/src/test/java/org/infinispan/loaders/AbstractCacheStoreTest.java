@@ -30,6 +30,7 @@ import java.util.concurrent.ExecutorService;
 import org.infinispan.AdvancedCache;
 import org.infinispan.Cache;
 import org.infinispan.factories.ComponentRegistry;
+import org.infinispan.lifecycle.ComponentStatus;
 import org.infinispan.test.AbstractInfinispanTest;
 import org.infinispan.util.DefaultTimeService;
 import org.infinispan.util.ReflectionUtil;
@@ -87,6 +88,7 @@ public class AbstractCacheStoreTest extends AbstractInfinispanTest {
       when(cache.getAdvancedCache()).thenReturn(cache);
       when(cache.getComponentRegistry()).thenReturn(registry);
       when(registry.getTimeService()).thenReturn(TIME_SERVICE);
+      when(cache.getStatus()).thenReturn(ComponentStatus.RUNNING);
       return cache;
    }
 }

@@ -6,7 +6,6 @@ import java.io.ObjectInput;
 import java.io.ObjectOutput;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -25,6 +24,7 @@ import org.infinispan.loaders.LockSupportCacheStore;
 import org.infinispan.loaders.leveldb.LevelDBCacheStoreConfig.ImplementationType;
 import org.infinispan.loaders.leveldb.logging.Log;
 import org.infinispan.marshall.StreamingMarshaller;
+import org.infinispan.util.InfinispanCollections;
 import org.infinispan.util.Util;
 import org.infinispan.util.logging.LogFactory;
 import org.iq80.leveldb.DB;
@@ -241,7 +241,7 @@ public class LevelDBCacheStore extends LockSupportCacheStore<Integer> {
 	protected Set<InternalCacheEntry> loadLockSafe(int maxEntries)
 			throws CacheLoaderException {
 		if (maxEntries <= 0)
-			return Collections.emptySet();
+         return InfinispanCollections.emptySet();
 
 		Set<InternalCacheEntry> entries = new HashSet<InternalCacheEntry>();
 
@@ -268,6 +268,9 @@ public class LevelDBCacheStore extends LockSupportCacheStore<Integer> {
 	@Override
 	protected Set<Object> loadAllKeysLockSafe(Set<Object> keysToExclude)
 			throws CacheLoaderException {
+      if (!cache.getStatus().allowInvocations())
+         return InfinispanCollections.emptySet();
+
 		Set<Object> keys = new HashSet<Object>();
 
 		DBIterator it = db.iterator(new ReadOptions().fillCache(false));
