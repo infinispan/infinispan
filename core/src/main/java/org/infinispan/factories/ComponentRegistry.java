@@ -89,6 +89,11 @@ public class ComponentRegistry extends AbstractComponentRegistry {
    }
 
    @Override
+   protected ClassLoader getClassLoader() {
+      return defaultClassLoader.get();
+   }
+
+   @Override
    protected Log getLog() {
       return log;
    }

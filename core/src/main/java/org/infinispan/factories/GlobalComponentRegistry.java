@@ -128,10 +128,16 @@ public class GlobalComponentRegistry extends AbstractComponentRegistry {
    }
 
    @Override
+   protected ClassLoader getClassLoader() {
+      return defaultClassLoader.get();
+   }
+
+   @Override
    protected Log getLog() {
       return log;
    }
 
+   @Override
    public ComponentMetadataRepo getComponentMetadataRepo() {
       return componentMetadataRepo;
    }

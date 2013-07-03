@@ -96,6 +96,8 @@ public abstract class AbstractComponentRegistry implements Lifecycle, Cloneable 
       return state;
    }
 
+   protected abstract ClassLoader getClassLoader();
+
    protected abstract Log getLog();
 
    public abstract ComponentMetadataRepo getComponentMetadataRepo();
@@ -118,7 +120,7 @@ public abstract class AbstractComponentRegistry implements Lifecycle, Cloneable 
             for (ComponentMetadata.InjectMetadata injectMetadata : metadata.getInjectMethods()) {
                Class<?>[] methodParameters = injectMetadata.getParameterClasses();
                if (methodParameters == null) {
-                  methodParameters = ReflectionUtil.toClassArray(injectMetadata.getParameters());
+                  methodParameters = ReflectionUtil.toClassArray(injectMetadata.getParameters(), getClassLoader());
                   injectMetadata.setParameterClasses(methodParameters);
                }
 
@@ -815,7 +817,7 @@ public abstract class AbstractComponentRegistry implements Lifecycle, Cloneable 
             for (ComponentMetadata.InjectMetadata meta: injectionMethods) {
                Class<?>[] parameterClasses = meta.getParameterClasses();
                if (parameterClasses == null) {
-                  parameterClasses = ReflectionUtil.toClassArray(meta.getParameters());
+                  parameterClasses = ReflectionUtil.toClassArray(meta.getParameters(), getClassLoader());
                   meta.setParameterClasses(parameterClasses);
                }
                Method m = meta.getMethod();
