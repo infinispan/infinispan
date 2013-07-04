@@ -1,6 +1,5 @@
 package org.infinispan.cdi.test.cache.remote;
 
-import org.infinispan.api.BasicCache;
 import org.infinispan.client.hotrod.RemoteCache;
 import org.infinispan.client.hotrod.RemoteCacheManager;
 import org.infinispan.manager.EmbeddedCacheManager;
@@ -44,11 +43,7 @@ public class SpecificCacheManagerTest extends Arquillian {
 
    @Inject
    @Small
-   private BasicCache<String, String> cache;
-
-   @Inject
-   @Small
-   private RemoteCache<String, String> remoteCache;
+   private RemoteCache<String, String> cache;
 
    @BeforeTest
    public void beforeMethod() {
@@ -72,10 +67,6 @@ public class SpecificCacheManagerTest extends Arquillian {
       assertEquals(cache.getName(), "small");
       assertEquals(cache.get("pete"), "British");
       assertEquals(cache.get("manik"), "Sri Lankan");
-
-      assertEquals(remoteCache.getName(), "small");
-      assertEquals(remoteCache.get("pete"), "British");
-      assertEquals(remoteCache.get("manik"), "Sri Lankan");
    }
 
    /**
