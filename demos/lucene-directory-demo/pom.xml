@@ -61,7 +61,6 @@
             <configuration>
                <parallel>false</parallel>
                <threadCount>1</threadCount>
-               <forkMode>never</forkMode>
                <trimStackTrace>false</trimStackTrace>
             </configuration>
          </plugin>

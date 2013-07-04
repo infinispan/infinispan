@@ -26,7 +26,7 @@
       <version.netty>3.6.5.Final</version.netty>
       <version.osgi>4.3.0</version.osgi>
       <version.rhq>4.2.0</version.rhq>
-      <version.scala>2.10.0</version.scala>
+      <version.scala>2.10.2</version.scala>
    </properties>
    
    <dependencyManagement>
