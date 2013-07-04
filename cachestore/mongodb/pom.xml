@@ -32,7 +32,6 @@
                         <MONGODB_HOSTNAME>${env.MONGODB_HOSTNAME}</MONGODB_HOSTNAME>
                         <MONGODB_PORT>${env.MONGODB_PORT}</MONGODB_PORT>
                     </environmentVariables>
-                    <forkMode>once</forkMode>
                 </configuration>
             </plugin>
         </plugins>

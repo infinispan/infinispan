@@ -75,27 +75,8 @@
       </dependency>
 
       <dependency>
-            <groupId>org.jboss.logging</groupId>
-            <artifactId>jboss-logging</artifactId>
-            <scope>provided</scope>
-      </dependency>
-
-      <!-- Crazy dependencies to solve the usual compiler bug with unavailable annotations -->
-      <dependency>
-         <groupId>javax.persistence</groupId>
-         <artifactId>persistence-api</artifactId>
-         <scope>provided</scope>
-      </dependency>
-      
-      <dependency>
-         <groupId>org.hibernate</groupId>
-         <artifactId>hibernate-core</artifactId>
-         <scope>provided</scope>
-      </dependency>
-      
-      <dependency>
-         <groupId>org.hibernate</groupId>
-         <artifactId>hibernate-annotations</artifactId>
+         <groupId>org.jboss.logging</groupId>
+         <artifactId>jboss-logging</artifactId>
          <scope>provided</scope>
       </dependency>
       
