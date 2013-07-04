@@ -6,6 +6,9 @@ import org.infinispan.test.fwk.CleanupAfterMethod;
 import org.infinispan.transaction.LockingMode;
 import org.testng.annotations.Test;
 
+import static org.testng.AssertJUnit.assertEquals;
+import static org.testng.AssertJUnit.assertTrue;
+
 /**
  * @author Mircea Markus
  * @since 5.1
@@ -28,13 +31,13 @@ public class InitiatorCrashOptimisticTest extends AbstractInitiatorCrashTest {
       beginAndPrepareTx(k, 1);
 
       txControlInterceptor.preparedReceived.await();
-      assert checkTxCount(0, 0, 1);
-      assert checkTxCount(1, 1, 0);
-      assert checkTxCount(2, 0, 1);
+      assertTrue("Wrong tx count for " + cache(0), checkTxCount(0, 0, 1));
+      assertTrue("Wrong tx count for " + cache(1), checkTxCount(1, 1, 0));
+      assertTrue("Wrong tx count for " + cache(2), checkTxCount(2, 0, 1));
 
       killMember(1);
 
-      assert caches().size() == 2;
+      assertEquals("Wrong number of caches", 2, caches().size());
       txControlInterceptor.prepareProgress.countDown();
 
       assertNotLocked(k);

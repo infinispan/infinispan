@@ -6,6 +6,9 @@ import org.infinispan.transaction.tm.DummyTransaction;
 import org.testng.annotations.Test;
 
 import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.Future;
+
+import static org.testng.AssertJUnit.assertTrue;
 
 /**
  * @author Mircea Markus
@@ -27,9 +30,9 @@ public abstract class AbstractInitiatorCrashTest extends AbstractCrashTest {
       beginAndCommitTx(k, 1);
       releaseLocksLatch.await();
 
-      assert checkTxCount(0, 0, 1);
-      assert checkTxCount(1, 0, 0);
-      assert checkTxCount(2, 0, 1);
+      assertTrue("Wrong tx count for " + cache(0), checkTxCount(0, 0, 1));
+      assertTrue("Wrong tx count for " + cache(1), checkTxCount(1, 0, 0));
+      assertTrue("Wrong tx count for " + cache(2), checkTxCount(2, 0, 1));
 
       assertNotLocked(cache(0), k);
       assertNotLocked(cache(1), k);
@@ -60,9 +63,9 @@ public abstract class AbstractInitiatorCrashTest extends AbstractCrashTest {
       assertNotLocked(cache(1), k);
       assertLocked(cache(2), k);
 
-      checkTxCount(0, 0, 1);
-      checkTxCount(1, 1, 0);
-      checkTxCount(2, 0, 1);
+      assertTrue("Wrong tx count for " + cache(0), checkTxCount(0, 0, 1));
+      assertTrue("Wrong tx count for " + cache(1), checkTxCount(1, 1, 0));
+      assertTrue("Wrong tx count for " + cache(2), checkTxCount(2, 0, 1));
 
       killMember(1);
 

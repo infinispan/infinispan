@@ -15,7 +15,8 @@ import javax.transaction.NotSupportedException;
 import javax.transaction.RollbackException;
 import javax.transaction.SystemException;
 
-import static org.testng.Assert.assertEquals;
+import static org.testng.AssertJUnit.assertEquals;
+import static org.testng.AssertJUnit.fail;
 
 /**
  * @author Mircea Markus
@@ -59,13 +60,13 @@ public class LockOwnerCrashPessimisticTest extends AbstractLockOwnerCrashTest {
       });
 
       killMember(2);
-      assert caches().size() == 2;
+      assertEquals("Wrong number of caches", 2, caches().size());
 
       tm(1).resume(transaction);
       tm(1).commit();
 
-      assertEquals(cache(0).get(k), "v");
-      assertEquals(cache(1).get(k), "v");
+      assertEquals("Wrong value for key 'k' in " + cache(0), "v", cache(0).get(k));
+      assertEquals("Wrong value for key 'k' in " + cache(1), "v", cache(1).get(k));
 
       assertNotLocked(k);
       eventually(new AbstractInfinispanTest.Condition() {
@@ -99,12 +100,12 @@ public class LockOwnerCrashPessimisticTest extends AbstractLockOwnerCrashTest {
       });
 
       killMember(2);
-      assert caches().size() == 2;
+      assertEquals("Wrong number of caches", 2, caches().size());
 
       tm(0).begin();
       try {
          cache(0).put(k, "v1");
-         assert false;
+         fail("Exception expected as lock cannot be acquired on k=" + k);
       } catch (Exception e) {
          tm(0).rollback();
       }
@@ -112,8 +113,8 @@ public class LockOwnerCrashPessimisticTest extends AbstractLockOwnerCrashTest {
       tm(1).resume(transaction);
       tm(1).commit();
 
-      assertEquals(cache(0).get(k), "v");
-      assertEquals(cache(1).get(k), "v");
+      assertEquals("Wrong value for key 'k' in " + cache(0), "v", cache(0).get(k));
+      assertEquals("Wrong value for key 'k' in " + cache(1), "v", cache(1).get(k));
 
       assertNotLocked(k);
       eventually(new AbstractInfinispanTest.Condition() {
@@ -167,13 +168,13 @@ public class LockOwnerCrashPessimisticTest extends AbstractLockOwnerCrashTest {
 
 
       killMember(2);
-      assert caches().size() == 2;
+      assertEquals("Wrong number of caches", 2, caches().size());
 
 
       tm(1).begin();
       try {
          cache(1).put(k, "v2");
-         assert false : "Exception expected as lock cannot be acquired on k=" + k;
+         fail("Exception expected as lock cannot be acquired on k=" + k);
       } catch (Exception e) {
          tm(1).rollback();
       }
@@ -181,7 +182,7 @@ public class LockOwnerCrashPessimisticTest extends AbstractLockOwnerCrashTest {
       tm(0).begin();
       try {
          cache(0).put(k, "v3");
-         assert false : "Exception expected as lock cannot be acquired on k=" + k;
+         fail("Exception expected as lock cannot be acquired on k=" + k);
       } catch (Exception e) {
          tm(0).rollback();
       }
@@ -193,8 +194,8 @@ public class LockOwnerCrashPessimisticTest extends AbstractLockOwnerCrashTest {
       } else {
          tm(1).commit();
       }
-      assert cache(0).get(k).equals("v");
-      assert cache(1).get(k).equals("v");
+      assertEquals("Wrong value for key 'k' in " + cache(0), "v", cache(0).get(k));
+      assertEquals("Wrong value for key 'k' in " + cache(1), "v", cache(1).get(k));
       assertNotLocked(k);
    }
 }
