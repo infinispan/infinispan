@@ -1,6 +1,5 @@
 package org.infinispan.cdi.test.cache.remote;
 
-import org.infinispan.api.BasicCache;
 import org.infinispan.cdi.Remote;
 import org.infinispan.client.hotrod.RemoteCache;
 import org.infinispan.client.hotrod.RemoteCacheManager;
@@ -46,7 +45,7 @@ public class DefaultCacheTest extends Arquillian {
 
    @Inject
    @Remote
-   private BasicCache<String, String> cache;
+   private RemoteCache<String, String> cache;
 
    @Inject
    private RemoteCache<String, String> remoteCache;

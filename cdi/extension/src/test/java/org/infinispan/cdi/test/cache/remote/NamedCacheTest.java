@@ -1,6 +1,5 @@
 package org.infinispan.cdi.test.cache.remote;
 
-import org.infinispan.api.BasicCache;
 import org.infinispan.cdi.Remote;
 import org.infinispan.client.hotrod.RemoteCache;
 import org.infinispan.client.hotrod.RemoteCacheManager;
@@ -45,19 +44,11 @@ public class NamedCacheTest extends Arquillian {
 
    @Inject
    @Remote("small")
-   private BasicCache<String, String> cache;
-
-   @Inject
-   @Remote("small")
-   private RemoteCache<String, String> remoteCache;
+   private RemoteCache<String, String> cache;
 
    @Inject
    @Small
-   private BasicCache<String, String> cacheWithQualifier;
-
-   @Inject
-   @Small
-   private RemoteCache<String, String> remoteCacheWithQualifier;
+   private RemoteCache<String, String> cacheWithQualifier;
 
    @BeforeTest
    public void beforeMethod() {
@@ -82,20 +73,12 @@ public class NamedCacheTest extends Arquillian {
       assertEquals(cache.get("pete"), "British");
       assertEquals(cache.get("manik"), "Sri Lankan");
 
-      assertEquals(remoteCache.getName(), "small");
-      assertEquals(remoteCache.get("pete"), "British");
-      assertEquals(remoteCache.get("manik"), "Sri Lankan");
-
       // here we check that the cache injection with the @Small qualifier works
       // like the injection with the @Remote qualifier
 
       assertEquals(cacheWithQualifier.getName(), "small");
       assertEquals(cacheWithQualifier.get("pete"), "British");
       assertEquals(cacheWithQualifier.get("manik"), "Sri Lankan");
-
-      assertEquals(remoteCacheWithQualifier.getName(), "small");
-      assertEquals(remoteCacheWithQualifier.get("pete"), "British");
-      assertEquals(remoteCacheWithQualifier.get("manik"), "Sri Lankan");
    }
 
    /**
