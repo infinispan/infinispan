@@ -111,7 +111,6 @@ public interface Transport extends Lifecycle {
    /**
     * check if the transport has configured with total order deliver properties (has the sequencer in JGroups
     * protocol stack.
-    * @param anycast   if true, check is Total Order protocol for distributed mode is in the protocol stack
     */
-   void checkTotalOrderSupported(boolean anycast);
+   void checkTotalOrderSupported();
 }
