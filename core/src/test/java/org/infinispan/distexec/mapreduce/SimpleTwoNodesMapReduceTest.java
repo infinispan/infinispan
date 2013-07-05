@@ -2,12 +2,13 @@ package org.infinispan.distexec.mapreduce;
 
 import org.infinispan.Cache;
 import org.infinispan.commons.CacheException;
+import org.infinispan.commons.util.CollectionFactory;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
-import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.test.CacheManagerCallable;
-import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
+import org.infinispan.util.logging.Log;
+import org.infinispan.util.logging.LogFactory;
 import org.testng.annotations.Test;
 
 import java.util.HashMap;
@@ -15,11 +16,10 @@ import java.util.Iterator;
 import java.util.Map;
 import java.util.concurrent.Callable;
 import java.util.concurrent.CancellationException;
-import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.CyclicBarrier;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicInteger;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -38,9 +38,9 @@ import static org.junit.Assert.assertTrue;
  */
 @Test(groups = "functional", testName = "distexec.mapreduce.SimpleTwoNodesMapReduceTest")
 public class SimpleTwoNodesMapReduceTest extends BaseWordCountMapReduceTest {
-   
-   
-   private static AtomicInteger counter = null;
+
+   private static final Log log = LogFactory.getLog(SimpleTwoNodesMapReduceTest.class);
+   protected static final Map<String, CyclicBarrier> barriers = CollectionFactory.makeConcurrentMap();
 
    @Override
    protected void createCacheManagers() throws Throwable {
@@ -48,32 +48,22 @@ public class SimpleTwoNodesMapReduceTest extends BaseWordCountMapReduceTest {
       createClusteredCaches(2, cacheName(), builder);
    }
    
-   /**
-    * This test is here intentionally as we can not share static counter variable among concurrently
-    * executing subclasses of BaseWordCountMapReduceTest in our testsuite
-    * 
-    */
    @Test(expectedExceptions={CancellationException.class})
    public void testInvokeMapperCancellation() throws Exception {
-      //Initializing the counter in test itself, so that when each time the test runs, the execution is correct
-      // and is not based on previous values.
-      counter = new AtomicInteger();
+      final CyclicBarrier barrier = new CyclicBarrier(nodeCount() + 1);
+      final String name = this.getClass().getSimpleName();
+      barriers.put(name, barrier);
 
       MapReduceTask<String, String, String, Integer> task = invokeMapReduce(null,
-               new LatchMapper(), new WordCountReducer());
+               new LatchMapper(name), new WordCountReducer());
       final Future<Map<String, Integer>> future = task.executeAsynchronously();
       Future<Boolean> cancelled = fork(new Callable<Boolean>() {
 
          @Override
          public Boolean call() throws Exception {
             //make sure that all nodes receive the command and...
-            eventually(new Condition() {
-               
-               @Override
-               public boolean isSatisfied() throws Exception {
-                  return counter.get() >= nodeCount();
-               }
-            });
+            barrier.await(10, TimeUnit.SECONDS);
+
             //...are ready to be canceled
             return future.cancel(true);
          }
@@ -82,12 +72,12 @@ public class SimpleTwoNodesMapReduceTest extends BaseWordCountMapReduceTest {
       Throwable root = null;
       try {
          future.get();
-      } catch (Exception e) { 
+      } catch (Exception e) {
          root = e;
          while(root.getCause() != null){
             root = root.getCause();
-         }         
-         mapperCancelled = root.getClass().equals(RuntimeException.class);         
+         }
+         mapperCancelled = root.getClass().equals(RuntimeException.class);
       }
       assertTrue("Mapper not cancelled, root cause " + root, mapperCancelled);
       assertTrue(cancelled.get());
@@ -99,29 +89,32 @@ public class SimpleTwoNodesMapReduceTest extends BaseWordCountMapReduceTest {
       //now call get() again and it should throw CancellationException
       future.get();
    }
-   
+
    static class LatchMapper implements Mapper<String, String, String, Integer> {
 
-      /** The serialVersionUID */
-      private static final long serialVersionUID = 2518908878377582179L;      
-      
+      private static final long serialVersionUID = 2518908878377582179L;
+      private final String name;
+
+      LatchMapper(String name) {
+         this.name = name;
+      }
+
       @Override
       public void map(String key, String value, Collector<String, Integer> collector) {
          boolean interrupted = false;
-         CountDownLatch latch = new CountDownLatch(1);
+         CyclicBarrier barrier = barriers.get(name);
+
          try {
-            if (!interrupted) {
-               counter.incrementAndGet();
-               latch.await(5000, TimeUnit.MILLISECONDS);
-            } else {
-               interrupted = true;// already interrupted
-            }
+            barrier.await(10, TimeUnit.SECONDS);
+            TimeUnit.MILLISECONDS.sleep(5000);
          } catch (InterruptedException e) {
             interrupted = true;
             Thread.currentThread().interrupt();
+         } catch (Exception e) {
+            log.error("Error in the mapping phase", e);
          }
-         //as we can not throw InterruptedException 
-         //throw a RuntimeException and check for it in the test...         
+         //as we can not throw InterruptedException
+         //throw a RuntimeException and check for it in the test...
          if (interrupted) throw new RuntimeException();
       }
    }
@@ -245,19 +238,22 @@ public class SimpleTwoNodesMapReduceTest extends BaseWordCountMapReduceTest {
    @Test(expectedExceptions = IllegalStateException.class)
    public void testEnsureProperCacheState() throws Exception {
       ConfigurationBuilder builder = getDefaultClusteredCacheConfig(CacheMode.DIST_SYNC, true);
-      EmbeddedCacheManager cacheManager = addClusterEnabledCacheManager(builder);
-      Cache cache = cacheManager.getCache();
-      cache.stop();
+      withCacheManager(new CacheManagerCallable(TestCacheManagerFactory.createClusteredCacheManager(builder)
+      ) {
+         @Override
+         public void call() {
+            try {
+               Cache cache = cm.getCache();
+               cache.stop();
 
-      try {
-         MapReduceTask<String, String, String, Integer> task = createMapReduceTask(cache);
-      } catch(IllegalStateException ex) {
-         assertNotNull(ex.getMessage());
-         assertTrue(ex.getMessage().contains("Cache is in an invalid state:"));
-         throw ex;
-      } finally {
-         TestingUtil.killCacheManagers(cacheManager);
-      }
+               MapReduceTask<String, String, String, Integer> task = createMapReduceTask(cache);
+            } catch(IllegalStateException ex) {
+               assertNotNull(ex.getMessage());
+               assertTrue(ex.getMessage().contains("Cache is in an invalid state:"));
+               throw ex;
+            }
+         }
+      });
    }
 
    @Test(expectedExceptions = IllegalStateException.class)
