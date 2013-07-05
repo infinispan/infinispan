@@ -1,20 +1,13 @@
 package org.infinispan.spring.support.embedded;
 
 import org.infinispan.Cache;
+import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
-import org.infinispan.eviction.EvictionStrategy;
-import org.infinispan.eviction.EvictionThreadPolicy;
-import org.infinispan.interceptors.base.CommandInterceptor;
 import org.infinispan.manager.EmbeddedCacheManager;
-import org.infinispan.spring.ConfigurationOverrides;
-import org.infinispan.transaction.lookup.TransactionManagerLookup;
-import org.infinispan.util.concurrent.IsolationLevel;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 import org.springframework.beans.factory.*;
 import org.springframework.util.StringUtils;
-
-import java.util.List;
 
 /**
  * <p>
@@ -41,29 +34,31 @@ import java.util.List;
  * <ul>
  * <li>
  * <code>NONE</code>: Configuration starts with a new <code>Configuration</code> instance.
- * Subsequently, its settings are overridden with those properties that have been explicitly set on
- * this <code>FactoryBean</code>. Note that this mode may only be used if no named configuration
- * having the same name as the <code>Cache</code> to be created already exists. It is therefore
- * illegal to use this mode to create a <code>Cache</code> named, say, &quot;cacheName&quot; if the
- * configuration file used to configure the <code>EmbeddedCacheManager</code> contains a
- * configuration section named &quot;cacheName&quot;.</li>
+ * Note that this mode may only be used if no named configuration having the same name as the <code>Cache</code>
+ * to be created already exists. It is therefore illegal to use this mode to create a <code>Cache</code> named, say,
+ * &quot;cacheName&quot; if the configuration file used to configure the
+ * <code>EmbeddedCacheManager</code> contains a configuration section named
+ * &quot;cacheName&quot;.</li>
  * <li>
  * <code>DEFAULT</code>: Configuration starts with the <code>EmbeddedCacheManager</code>'s
- * <em>default</em> <code>Configuration</code> instance, i.e. the configuration settings defined in
- * its configuration file's default section. Subsequently, its settings are overridden with those
- * properties that have been explicitly set on this <code>FactoryBean</code>. Note that this mode
- * may only be used if no named configuration having the same name as the <code>Cache</code> to be
- * created already exists. It is therefore illegal to use this mode to create a <code>Cache</code>
- * named, say, &quot;cacheName&quot; if the configuration file used to configure the
- * <code>EmbeddedCacheManager</code> contains a configuration section named &quot;cacheName&quot;.</li>
+ * <em>default</em> <code>Configuration</code> instance, i.e. the configuration settings defined
+ * in its configuration file's default section. Note that this mode may only be used if no named configuration
+ * having the same name as the <code>Cache</code> to be created already exists. It is therefore illegal to use
+ * this mode to create a <code>Cache</code> named, say, &quot;cacheName&quot; if the configuration file used
+ * to configure the <code>EmbeddedCacheManager</code> contains a configuration section named
+ * &quot;cacheName&quot;.</li>
+ * <li>
+ * <code>CUSTOM</code>: This is where a user will provide a custom-built <code>ConfigurationBuilder</code>
+ * object which will be used to configure a <code>Cache</code> instance. If a {@link #setCacheName(String)} has
+ * already been called, then that name will be used.
+ * </li>
  * <li>
  * <code>NAMED</code>: Configuration starts with the <code>EmbeddedCacheManager</code>'s
- * <code>Configuration</code> instance having the same name as the <code>Cache</code> to be created.
- * For a <code>Cache</code> named, say, &quot;cacheName&quot; this is the configuration section
- * named &quot;cacheName&quot; as defined in the <code>EmbeddedCacheManager</code>'s configuration
- * file. Subsequently, its settings are overridden with those properties that have been explicitly
- * set on this <code>FactoryBean</code>. Note that this mode is only useful if such a named
- * configuration section does indeed exist. Otherwise, it is equivalent to using
+ * <code>Configuration</code> instance having the same name as the <code>Cache</code> to be
+ * created. For a <code>Cache</code> named, say, &quot;cacheName&quot; this is the configuration
+ * section named &quot;cacheName&quot; as defined in the <code>EmbeddedCacheManager</code>'s
+ * configuration file. Note that this mode is only useful if such a named configuration section does indeed exist.
+ * Otherwise, it is equivalent to using
  * <code>DEFAULT</code>.</li>
  * </ul>
  * </p>
@@ -87,31 +82,31 @@ public class InfinispanNamedEmbeddedCacheFactoryBean<K, V> implements FactoryBea
     * <ul>
     * <li>
     * <code>NONE</code>: Configuration starts with a new <code>Configuration</code> instance.
-    * Subsequently, its settings are overridden with those properties that have been explicitly set
-    * on this <code>FactoryBean</code>. Note that this mode may only be used if no named
-    * configuration having the same name as the <code>Cache</code> to be created already exists. It
-    * is therefore illegal to use this mode to create a <code>Cache</code> named, say,
+    * Note that this mode may only be used if no named configuration having the same name as the <code>Cache</code>
+    * to be created already exists. It is therefore illegal to use this mode to create a <code>Cache</code> named, say,
     * &quot;cacheName&quot; if the configuration file used to configure the
     * <code>EmbeddedCacheManager</code> contains a configuration section named
     * &quot;cacheName&quot;.</li>
     * <li>
     * <code>DEFAULT</code>: Configuration starts with the <code>EmbeddedCacheManager</code>'s
     * <em>default</em> <code>Configuration</code> instance, i.e. the configuration settings defined
-    * in its configuration file's default section. Subsequently, its settings are overridden with
-    * those properties that have been explicitly set on this <code>FactoryBean</code>. Note that
-    * this mode may only be used if no named configuration having the same name as the
-    * <code>Cache</code> to be created already exists. It is therefore illegal to use this mode to
-    * create a <code>Cache</code> named, say, &quot;cacheName&quot; if the configuration file used
+    * in its configuration file's default section. Note that this mode may only be used if no named configuration
+    * having the same name as the <code>Cache</code> to be created already exists. It is therefore illegal to use
+    * this mode to create a <code>Cache</code> named, say, &quot;cacheName&quot; if the configuration file used
     * to configure the <code>EmbeddedCacheManager</code> contains a configuration section named
     * &quot;cacheName&quot;.</li>
+    * <li>
+    * <code>CUSTOM</code>: This is where a user will provide a custom-built <code>ConfigurationBuilder</code>
+    * object which will be used to configure a <code>Cache</code> instance. If a {@link #setCacheName(String)} has
+    * already been called, then that name will be used.
+    * </li>
     * <li>
     * <code>NAMED</code>: Configuration starts with the <code>EmbeddedCacheManager</code>'s
     * <code>Configuration</code> instance having the same name as the <code>Cache</code> to be
     * created. For a <code>Cache</code> named, say, &quot;cacheName&quot; this is the configuration
     * section named &quot;cacheName&quot; as defined in the <code>EmbeddedCacheManager</code>'s
-    * configuration file. Subsequently, its settings are overridden with those properties that have
-    * been explicitly set on this <code>FactoryBean</code>. Note that this mode is only useful if
-    * such a named configuration section does indeed exist. Otherwise, it is equivalent to using
+    * configuration file. Note that this mode is only useful if such a named configuration section does indeed exist.
+    * Otherwise, it is equivalent to using
     * <code>DEFAULT</code>.</li>
     * </ul>
     * </p>
@@ -125,9 +120,10 @@ public class InfinispanNamedEmbeddedCacheFactoryBean<K, V> implements FactoryBea
 
       DEFAULT,
 
+      CUSTOM,
+
       NAMED
    }
-
    private final Log logger = LogFactory.getLog(getClass());
 
    private EmbeddedCacheManager infinispanEmbeddedCacheManager;
@@ -138,9 +134,9 @@ public class InfinispanNamedEmbeddedCacheFactoryBean<K, V> implements FactoryBea
 
    private String beanName;
 
-   private final ConfigurationOverrides configurationOverrides = new ConfigurationOverrides();
-
    private Cache<K, V> infinispanCache;
+
+   private ConfigurationBuilder builder = null;
 
    // ------------------------------------------------------------------------
    // org.springframework.beans.factory.InitializingBean
@@ -163,28 +159,35 @@ public class InfinispanNamedEmbeddedCacheFactoryBean<K, V> implements FactoryBea
    private Cache<K, V> configureAndCreateNamedCache(final String cacheName) {
       switch (this.configurationTemplateMode) {
       case NONE:
-         this.logger.debug("ConfigurationTemplateMode is NONE: starting with a fresh Configuration");
+         this.logger.debug("ConfigurationTemplateMode is NONE: using a fresh Configuration");
          if (this.infinispanEmbeddedCacheManager.getCacheNames().contains(cacheName)) {
             throw new IllegalStateException("Cannot use ConfigurationTemplateMode NONE: a cache named [" + cacheName + "] has already been defined.");
          }
-         ConfigurationBuilder newConfiguration = new ConfigurationBuilder();
-         this.configurationOverrides.applyOverridesTo(newConfiguration);
-         this.infinispanEmbeddedCacheManager.defineConfiguration(cacheName, newConfiguration.build());
+         builder = new ConfigurationBuilder();
+         this.infinispanEmbeddedCacheManager.defineConfiguration(cacheName, builder.build());
          break;
       case NAMED:
-         this.logger.debug("ConfigurationTemplateMode is NAMED: starting with a named Configuration [" + cacheName + "]");
-         org.infinispan.configuration.cache.Configuration cacheConfiguration = infinispanEmbeddedCacheManager.getCacheConfiguration(cacheName);
+         this.logger.debug("ConfigurationTemplateMode is NAMED: using a named Configuration [" + cacheName + "]");
+         Configuration cacheConfiguration = infinispanEmbeddedCacheManager.getCacheConfiguration(cacheName);
          if (cacheConfiguration != null) {
-            ConfigurationBuilder newNamedConfig = new ConfigurationBuilder();
-            newNamedConfig.read(cacheConfiguration);
-            this.infinispanEmbeddedCacheManager.defineConfiguration(cacheName, newNamedConfig.build());
+            builder = new ConfigurationBuilder();
+            builder.read(cacheConfiguration);
+            this.infinispanEmbeddedCacheManager.defineConfiguration(cacheName, builder.build());
          }
          break;
       case DEFAULT:
-         this.logger.debug("ConfigurationTemplateMode is DEFAULT: starting with default Configuration");
+         this.logger.debug("ConfigurationTemplateMode is DEFAULT.");
          if (this.infinispanEmbeddedCacheManager.getCacheNames().contains(cacheName)) {
             throw new IllegalStateException("Cannot use ConfigurationTemplateMode DEFAULT: a cache named [" + cacheName + "] has already been defined.");
          }
+         break;
+      case CUSTOM:
+         this.logger.debug("ConfigurationTemplateMode is CUSTOM. Using the provided ConfigurationBuilder.");
+         if(this.builder == null) {
+            throw new IllegalStateException("There has not been a ConfigurationBuilder provided. There has to be one " +
+                  "provided for ConfigurationTemplateMode CUSTOM.");
+         }
+         this.infinispanEmbeddedCacheManager.defineConfiguration(cacheName, builder.build());
          break;
       default:
          throw new IllegalStateException("Unknown ConfigurationTemplateMode: " + this.configurationTemplateMode);
@@ -316,405 +319,14 @@ public class InfinispanNamedEmbeddedCacheFactoryBean<K, V> implements FactoryBea
       this.configurationTemplateMode = ConfigurationTemplateMode.valueOf(configurationTemplateMode);
    }
 
-   // ------------------------------------------------------------------------
-   // Setters for Configuration
-   // ------------------------------------------------------------------------
-
    /**
-    * @param eagerDeadlockSpinDuration
-    * @see org.infinispan.spring.ConfigurationOverrides#setDeadlockDetectionSpinDuration(java.lang.Long)
+    * API to introduce a customised {@link ConfigurationBuilder} that will override the default configurations
+    * which are already available on this class. This can <strong>only</strong> be used if {@link
+    * #setConfigurationTemplateMode(String)} has been set to <code>CUSTOM</code>.
+    *
+    * @param builder
     */
-   public void setDeadlockDetectionSpinDuration(final Long eagerDeadlockSpinDuration) {
-      this.configurationOverrides.setDeadlockDetectionSpinDuration(eagerDeadlockSpinDuration);
-   }
-
-   /**
-    * @param useEagerDeadlockDetection
-    * @see org.infinispan.spring.ConfigurationOverrides#setEnableDeadlockDetection(java.lang.Boolean)
-    */
-   public void setEnableDeadlockDetection(final Boolean useEagerDeadlockDetection) {
-      this.configurationOverrides.setEnableDeadlockDetection(useEagerDeadlockDetection);
-   }
-
-   /**
-    * @param useLockStriping
-    * @see org.infinispan.spring.ConfigurationOverrides#setUseLockStriping(java.lang.Boolean)
-    */
-   public void setUseLockStriping(final Boolean useLockStriping) {
-      this.configurationOverrides.setUseLockStriping(useLockStriping);
-   }
-
-   /**
-    * @param unsafeUnreliableReturnValues
-    * @see org.infinispan.spring.ConfigurationOverrides#setUnsafeUnreliableReturnValues(java.lang.Boolean)
-    */
-   public void setUnsafeUnreliableReturnValues(final Boolean unsafeUnreliableReturnValues) {
-      this.configurationOverrides.setUnsafeUnreliableReturnValues(unsafeUnreliableReturnValues);
-   }
-
-   /**
-    * @param rehashRpcTimeout
-    * @see org.infinispan.spring.ConfigurationOverrides#setRehashRpcTimeout(java.lang.Long)
-    */
-   public void setRehashRpcTimeout(final Long rehashRpcTimeout) {
-      this.configurationOverrides.setRehashRpcTimeout(rehashRpcTimeout);
-   }
-
-   /**
-    * @param writeSkewCheck
-    * @see org.infinispan.spring.ConfigurationOverrides#setWriteSkewCheck(java.lang.Boolean)
-    */
-   public void setWriteSkewCheck(final Boolean writeSkewCheck) {
-      this.configurationOverrides.setWriteSkewCheck(writeSkewCheck);
-   }
-
-   /**
-    * @param concurrencyLevel
-    * @see org.infinispan.spring.ConfigurationOverrides#setConcurrencyLevel(java.lang.Integer)
-    */
-   public void setConcurrencyLevel(final Integer concurrencyLevel) {
-      this.configurationOverrides.setConcurrencyLevel(concurrencyLevel);
-   }
-
-   /**
-    * @param replQueueMaxElements
-    * @see org.infinispan.spring.ConfigurationOverrides#setReplQueueMaxElements(java.lang.Integer)
-    */
-   public void setReplQueueMaxElements(final Integer replQueueMaxElements) {
-      this.configurationOverrides.setReplQueueMaxElements(replQueueMaxElements);
-   }
-
-   /**
-    * @param replQueueInterval
-    * @see org.infinispan.spring.ConfigurationOverrides#setReplQueueInterval(java.lang.Long)
-    */
-   public void setReplQueueInterval(final Long replQueueInterval) {
-      this.configurationOverrides.setReplQueueInterval(replQueueInterval);
-   }
-
-   /**
-    * @param replQueueClass
-    * @see org.infinispan.spring.ConfigurationOverrides#setReplQueueClass(java.lang.String)
-    */
-   public void setReplQueueClass(final String replQueueClass) {
-      this.configurationOverrides.setReplQueueClass(replQueueClass);
-   }
-
-   /**
-    * @param exposeJmxStatistics
-    * @see org.infinispan.spring.ConfigurationOverrides#setExposeJmxStatistics(java.lang.Boolean)
-    */
-   public void setExposeJmxStatistics(final Boolean exposeJmxStatistics) {
-      this.configurationOverrides.setExposeJmxStatistics(exposeJmxStatistics);
-   }
-
-   /**
-    * @param invocationBatchingEnabled
-    * @see org.infinispan.spring.ConfigurationOverrides#setInvocationBatchingEnabled(java.lang.Boolean)
-    */
-   public void setInvocationBatchingEnabled(final Boolean invocationBatchingEnabled) {
-      this.configurationOverrides.setInvocationBatchingEnabled(invocationBatchingEnabled);
-   }
-
-   /**
-    * @param fetchInMemoryState
-    * @see org.infinispan.spring.ConfigurationOverrides#setFetchInMemoryState(java.lang.Boolean)
-    */
-   public void setFetchInMemoryState(final Boolean fetchInMemoryState) {
-      this.configurationOverrides.setFetchInMemoryState(fetchInMemoryState);
-   }
-
-   /**
-    * @param alwaysProvideInMemoryState
-    * @see org.infinispan.spring.ConfigurationOverrides#setAlwaysProvideInMemoryState(java.lang.Boolean)
-    */
-   public void setAlwaysProvideInMemoryState(final Boolean alwaysProvideInMemoryState) {
-      this.configurationOverrides.setAlwaysProvideInMemoryState(alwaysProvideInMemoryState);
-   }
-
-   /**
-    * @param lockAcquisitionTimeout
-    * @see org.infinispan.spring.ConfigurationOverrides#setLockAcquisitionTimeout(java.lang.Long)
-    */
-   public void setLockAcquisitionTimeout(final Long lockAcquisitionTimeout) {
-      this.configurationOverrides.setLockAcquisitionTimeout(lockAcquisitionTimeout);
-   }
-
-   /**
-    * @param syncReplTimeout
-    * @see org.infinispan.spring.ConfigurationOverrides#setSyncReplTimeout(java.lang.Long)
-    */
-   public void setSyncReplTimeout(final Long syncReplTimeout) {
-      this.configurationOverrides.setSyncReplTimeout(syncReplTimeout);
-   }
-
-   /**
-    * @param cacheModeString
-    * @see org.infinispan.spring.ConfigurationOverrides#setCacheModeString(java.lang.String)
-    */
-   public void setCacheModeString(final String cacheModeString) {
-      this.configurationOverrides.setCacheModeString(cacheModeString);
-   }
-
-   /**
-    * @param expirationWakeUpInterval
-    * @see org.infinispan.spring.ConfigurationOverrides#setExpirationWakeUpInterval(Long)
-    */
-   public void setExpirationWakeUpInterval(final Long expirationWakeUpInterval) {
-      this.configurationOverrides.setExpirationWakeUpInterval(expirationWakeUpInterval);
-   }
-
-   /**
-    * @param evictionStrategy
-    * @see org.infinispan.spring.ConfigurationOverrides#setEvictionStrategy(org.infinispan.eviction.EvictionStrategy)
-    */
-   public void setEvictionStrategy(final EvictionStrategy evictionStrategy) {
-      this.configurationOverrides.setEvictionStrategy(evictionStrategy);
-   }
-
-   /**
-    * @param evictionStrategyClass
-    * @see org.infinispan.spring.ConfigurationOverrides#setEvictionStrategyClass(java.lang.String)
-    */
-   public void setEvictionStrategyClass(final String evictionStrategyClass) {
-      this.configurationOverrides.setEvictionStrategyClass(evictionStrategyClass);
-   }
-
-   /**
-    * @param evictionThreadPolicy
-    * @see org.infinispan.spring.ConfigurationOverrides#setEvictionThreadPolicy(org.infinispan.eviction.EvictionThreadPolicy)
-    */
-   public void setEvictionThreadPolicy(final EvictionThreadPolicy evictionThreadPolicy) {
-      this.configurationOverrides.setEvictionThreadPolicy(evictionThreadPolicy);
-   }
-
-   /**
-    * @param evictionThreadPolicyClass
-    * @see org.infinispan.spring.ConfigurationOverrides#setEvictionThreadPolicyClass(java.lang.String)
-    */
-   public void setEvictionThreadPolicyClass(final String evictionThreadPolicyClass) {
-      this.configurationOverrides.setEvictionThreadPolicyClass(evictionThreadPolicyClass);
-   }
-
-   /**
-    * @param evictionMaxEntries
-    * @see org.infinispan.spring.ConfigurationOverrides#setEvictionMaxEntries(java.lang.Integer)
-    */
-   public void setEvictionMaxEntries(final Integer evictionMaxEntries) {
-      this.configurationOverrides.setEvictionMaxEntries(evictionMaxEntries);
-   }
-
-   /**
-    * @param expirationLifespan
-    * @see org.infinispan.spring.ConfigurationOverrides#setExpirationLifespan(java.lang.Long)
-    */
-   public void setExpirationLifespan(final Long expirationLifespan) {
-      this.configurationOverrides.setExpirationLifespan(expirationLifespan);
-   }
-
-   /**
-    * @param expirationMaxIdle
-    * @see org.infinispan.spring.ConfigurationOverrides#setExpirationMaxIdle(java.lang.Long)
-    */
-   public void setExpirationMaxIdle(final Long expirationMaxIdle) {
-      this.configurationOverrides.setExpirationMaxIdle(expirationMaxIdle);
-   }
-
-   /**
-    * @param transactionManagerLookupClass
-    * @see org.infinispan.spring.ConfigurationOverrides#setTransactionManagerLookupClass(java.lang.String)
-    */
-   public void setTransactionManagerLookupClass(final String transactionManagerLookupClass) {
-      this.configurationOverrides.setTransactionManagerLookupClass(transactionManagerLookupClass);
-   }
-
-   /**
-    * @param transactionManagerLookup
-    * @see org.infinispan.spring.ConfigurationOverrides#setTransactionManagerLookup(org.infinispan.transaction.lookup.TransactionManagerLookup)
-    */
-   public void setTransactionManagerLookup(final TransactionManagerLookup transactionManagerLookup) {
-      this.configurationOverrides.setTransactionManagerLookup(transactionManagerLookup);
-   }
-
-   /**
-    * @param syncCommitPhase
-    * @see org.infinispan.spring.ConfigurationOverrides#setSyncCommitPhase(java.lang.Boolean)
-    */
-   public void setSyncCommitPhase(final Boolean syncCommitPhase) {
-      this.configurationOverrides.setSyncCommitPhase(syncCommitPhase);
-   }
-
-   /**
-    * @param syncRollbackPhase
-    * @see org.infinispan.spring.ConfigurationOverrides#setSyncRollbackPhase(java.lang.Boolean)
-    */
-   public void setSyncRollbackPhase(final Boolean syncRollbackPhase) {
-      this.configurationOverrides.setSyncRollbackPhase(syncRollbackPhase);
-   }
-
-   /**
-    * @param useEagerLocking
-    * @see org.infinispan.spring.ConfigurationOverrides#setUseEagerLocking(java.lang.Boolean)
-    */
-   public void setUseEagerLocking(final Boolean useEagerLocking) {
-      this.configurationOverrides.setUseEagerLocking(useEagerLocking);
-   }
-
-   /**
-    * @param eagerLockSingleNode
-    * @see org.infinispan.spring.ConfigurationOverrides#setEagerLockSingleNode(java.lang.Boolean)
-    */
-   @Deprecated
-   public void setEagerLockSingleNode(final Boolean eagerLockSingleNode) {
-   }
-
-   /**
-    * @param useReplQueue
-    * @see org.infinispan.spring.ConfigurationOverrides#setUseReplQueue(java.lang.Boolean)
-    */
-   public void setUseReplQueue(final Boolean useReplQueue) {
-      this.configurationOverrides.setUseReplQueue(useReplQueue);
-   }
-
-   /**
-    * @param isolationLevel
-    * @see org.infinispan.spring.ConfigurationOverrides#setIsolationLevel(org.infinispan.util.concurrent.IsolationLevel)
-    */
-   public void setIsolationLevel(final IsolationLevel isolationLevel) {
-      this.configurationOverrides.setIsolationLevel(isolationLevel);
-   }
-
-   /**
-    * @param stateRetrievalTimeout
-    * @see org.infinispan.spring.ConfigurationOverrides#setStateRetrievalTimeout(java.lang.Long)
-    */
-   public void setStateRetrievalTimeout(final Long stateRetrievalTimeout) {
-      this.configurationOverrides.setStateRetrievalTimeout(stateRetrievalTimeout);
-   }
-
-   /**
-    * @param stateRetrievalMaxNonProgressingLogWrites
-    * @see org.infinispan.spring.ConfigurationOverrides#setStateRetrievalMaxNonProgressingLogWrites(java.lang.Integer)
-    */
-   public void setStateRetrievalMaxNonProgressingLogWrites(
-         final Integer stateRetrievalMaxNonProgressingLogWrites) {
-      this.configurationOverrides
-            .setStateRetrievalMaxNonProgressingLogWrites(stateRetrievalMaxNonProgressingLogWrites);
-   }
-
-   /**
-    * @param stateRetrievalChunkSize
-    * @see org.infinispan.spring.ConfigurationOverrides#setStateRetrievalMaxNonProgressingLogWrites(java.lang.Integer)
-    */
-   public void setStateRetrievalChunkSize(
-         final Integer stateRetrievalChunkSize) {
-      this.configurationOverrides
-            .setStateRetrievalMaxNonProgressingLogWrites(stateRetrievalChunkSize);
-   }
-
-   /**
-    * @param stateRetrievalInitialRetryWaitTime
-    * @see org.infinispan.spring.ConfigurationOverrides#setStateRetrievalInitialRetryWaitTime(java.lang.Long)
-    */
-   public void setStateRetrievalInitialRetryWaitTime(final Long stateRetrievalInitialRetryWaitTime) {
-      this.configurationOverrides
-               .setStateRetrievalInitialRetryWaitTime(stateRetrievalInitialRetryWaitTime);
-   }
-
-   /**
-    * @param isolationLevelClass
-    * @see org.infinispan.spring.ConfigurationOverrides#setIsolationLevelClass(java.lang.String)
-    */
-   public void setIsolationLevelClass(final String isolationLevelClass) {
-      this.configurationOverrides.setIsolationLevelClass(isolationLevelClass);
-   }
-
-   /**
-    * @param useLazyDeserialization
-    * @see org.infinispan.spring.ConfigurationOverrides#setUseLazyDeserialization(java.lang.Boolean)
-    */
-   public void setUseLazyDeserialization(final Boolean useLazyDeserialization) {
-      this.configurationOverrides.setUseLazyDeserialization(useLazyDeserialization);
-   }
-
-   /**
-    * @param l1CacheEnabled
-    * @see org.infinispan.spring.ConfigurationOverrides#setL1CacheEnabled(java.lang.Boolean)
-    */
-   public void setL1CacheEnabled(final Boolean l1CacheEnabled) {
-      this.configurationOverrides.setL1CacheEnabled(l1CacheEnabled);
-   }
-
-   /**
-    * @param l1Lifespan
-    * @see org.infinispan.spring.ConfigurationOverrides#setL1Lifespan(java.lang.Long)
-    */
-   public void setL1Lifespan(final Long l1Lifespan) {
-      this.configurationOverrides.setL1Lifespan(l1Lifespan);
-   }
-
-   /**
-    * @param l1OnRehash
-    * @see org.infinispan.spring.ConfigurationOverrides#setL1OnRehash(java.lang.Boolean)
-    */
-   public void setL1OnRehash(final Boolean l1OnRehash) {
-      this.configurationOverrides.setL1OnRehash(l1OnRehash);
-   }
-
-   /**
-    * @param consistentHashClass
-    * @see org.infinispan.spring.ConfigurationOverrides#setConsistentHashClass(java.lang.String)
-    */
-   public void setConsistentHashClass(final String consistentHashClass) {
-      this.configurationOverrides.setConsistentHashClass(consistentHashClass);
-   }
-
-   /**
-    * @param numOwners
-    * @see org.infinispan.spring.ConfigurationOverrides#setNumOwners(java.lang.Integer)
-    */
-   public void setNumOwners(final Integer numOwners) {
-      this.configurationOverrides.setNumOwners(numOwners);
-   }
-
-   /**
-    * @param rehashEnabled
-    * @see org.infinispan.spring.ConfigurationOverrides#setRehashEnabled(java.lang.Boolean)
-    */
-   public void setRehashEnabled(final Boolean rehashEnabled) {
-      this.configurationOverrides.setRehashEnabled(rehashEnabled);
-   }
-
-   /**
-    * @param useAsyncMarshalling
-    * @see org.infinispan.spring.ConfigurationOverrides#setUseAsyncMarshalling(java.lang.Boolean)
-    */
-   public void setUseAsyncMarshalling(final Boolean useAsyncMarshalling) {
-      this.configurationOverrides.setUseAsyncMarshalling(useAsyncMarshalling);
-   }
-
-   /**
-    * @param indexingEnabled
-    * @see org.infinispan.spring.ConfigurationOverrides#setIndexingEnabled(java.lang.Boolean)
-    */
-   public void setIndexingEnabled(final Boolean indexingEnabled) {
-      this.configurationOverrides.setIndexingEnabled(indexingEnabled);
-   }
-
-   /**
-    * @param indexLocalOnly
-    * @see org.infinispan.spring.ConfigurationOverrides#setIndexLocalOnly(java.lang.Boolean)
-    */
-   public void setIndexLocalOnly(final Boolean indexLocalOnly) {
-      this.configurationOverrides.setIndexLocalOnly(indexLocalOnly);
-   }
-
-   /**
-    * @param customInterceptors
-    * @see org.infinispan.spring.ConfigurationOverrides#setCustomInterceptors(java.util.List)
-    */
-   public void setCustomInterceptors(final List<? extends CommandInterceptor>
-                                           customInterceptors) {
-      this.configurationOverrides.setCustomInterceptors(customInterceptors);
+   public void addCustomConfiguration(final ConfigurationBuilder builder) {
+      this.builder = builder;
    }
 }
