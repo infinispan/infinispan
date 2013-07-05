@@ -36,7 +36,7 @@ public class CacheLoaderAPITest extends SingleCacheManagerTest {
    private static final String rootDirectoryName = "CacheLoaderAPITest.indexesRootDirTmp";
    private static final String indexName = "index-A";
    private static final int elementCount = 10;
-   protected final String parentDir = ".";
+   protected final String parentDir = TestingUtil.tmpDirectory(this);
    private File rootDir;
 
    public CacheLoaderAPITest() {

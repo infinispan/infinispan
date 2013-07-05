@@ -36,7 +36,7 @@
     <entry key="CoordinatorEnvironmentBean.commitOnePhase">YES</entry>
 
     <!-- default is under user.home - must be writeable!) -->
-    <entry key="ObjectStoreEnvironmentBean.objectStoreDir">PutObjectStoreDirHere</entry>
+    <entry key="ObjectStoreEnvironmentBean.objectStoreDir">${build.directory:.}/PutObjectStoreDirHere</entry>
 
     <!-- (default is ON) -->
     <entry key="ObjectStoreEnvironmentBean.transactionSync">ON</entry>

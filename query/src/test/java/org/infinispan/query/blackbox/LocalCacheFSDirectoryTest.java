@@ -19,7 +19,7 @@ import java.io.File;
 @Test(groups = "functional", testName = "query.blackbox.LocalCacheFSDirectoryTest")
 public class LocalCacheFSDirectoryTest extends LocalCacheTest {
 
-   private String TMP_DIR;
+   private String TMP_DIR = TestingUtil.tmpDirectory(this);
 
    @Override
    protected EmbeddedCacheManager createCacheManager() throws Exception {
@@ -34,7 +34,6 @@ public class LocalCacheFSDirectoryTest extends LocalCacheTest {
 
    @BeforeMethod
    protected void setUpTempDir() {
-      TMP_DIR = TestingUtil.tmpDirectory(this);
       new File(TMP_DIR).mkdirs();
    }
 

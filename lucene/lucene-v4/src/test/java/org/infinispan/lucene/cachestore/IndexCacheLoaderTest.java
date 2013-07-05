@@ -30,7 +30,7 @@ import org.testng.annotations.Test;
 public class IndexCacheLoaderTest {
 
    private static final int SCALE = 600;
-   protected final String parentDir = ".";
+   protected final String parentDir = TestingUtil.tmpDirectory(this);
    protected File rootDir = null;
 
    @BeforeMethod
@@ -68,6 +68,7 @@ public class IndexCacheLoaderTest {
       final EmbeddedCacheManager cacheManager = initializeInfinispan(rootDir);
 
       TestingUtil.withCacheManager(new CacheManagerCallable(cacheManager) {
+         @Override
          public void call() {
             Cache<Object, Object> cache = cacheManager.getCache();
             Directory directory = DirectoryBuilder.newDirectoryInstance(cache, cache, cache, indexName).create();
