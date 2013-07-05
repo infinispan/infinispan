@@ -56,6 +56,11 @@
       </dependency>
 
       <dependency>
+         <groupId>org.javassist</groupId>
+         <artifactId>javassist</artifactId>
+      </dependency>
+
+      <dependency>
          <groupId>org.jboss.naming</groupId>
          <artifactId>jnp-client</artifactId>
          <scope>test</scope>
@@ -85,11 +90,6 @@
          <scope>test</scope>
       </dependency>
 
-      <dependency>
-         <groupId>org.javassist</groupId>
-         <artifactId>javassist</artifactId>
-         <scope>test</scope>
-      </dependency>
    </dependencies>
 
    <build>
