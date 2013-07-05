@@ -2,7 +2,7 @@ package org.infinispan.distexec;
 
 import org.infinispan.Cache;
 import org.infinispan.distribution.BaseDistFunctionalTest;
-import org.infinispan.util.concurrent.NotifyingFuture;
+import org.infinispan.commons.util.concurrent.NotifyingFuture;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 import org.testng.AssertJUnit;
@@ -18,7 +18,7 @@ import java.util.concurrent.TimeUnit;
 
 /**
  * Tests org.infinispan.distexec.DistributedExecutorService
- * 
+ *
  * @author Vladimir Blagojevic
  * @author Anna Manukyan
  */
@@ -30,6 +30,7 @@ public class DistributedExecutionCompletionTest extends BaseDistFunctionalTest {
    public DistributedExecutionCompletionTest() {
    }
 
+   @Override
    protected void createCacheManagers() throws Throwable {
       super.createCacheManagers();
    }

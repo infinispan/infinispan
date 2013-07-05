@@ -18,10 +18,10 @@ import org.infinispan.remoting.rpc.RpcManager;
 import org.infinispan.remoting.rpc.RpcOptions;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.util.TimeService;
-import org.infinispan.util.concurrent.AggregatingNotifyingFutureImpl;
-import org.infinispan.util.concurrent.NoOpFuture;
-import org.infinispan.util.concurrent.NotifyingFutureImpl;
-import org.infinispan.util.concurrent.NotifyingNotifiableFuture;
+import org.infinispan.commons.util.concurrent.AggregatingNotifyingFutureImpl;
+import org.infinispan.commons.util.concurrent.NoOpFuture;
+import org.infinispan.commons.util.concurrent.NotifyingFutureImpl;
+import org.infinispan.commons.util.concurrent.NotifyingNotifiableFuture;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
@@ -76,7 +76,7 @@ public class L1ManagerImpl implements L1Manager {
       this.scheduledExecutor = scheduledExecutor;
       this.timeService = timeService;
    }
-   
+
    @Start (priority = 3)
    public void start() {
       this.threshold = configuration.clustering().l1().invalidationThreshold();
@@ -111,13 +111,13 @@ public class L1ManagerImpl implements L1Manager {
          if (reqs.isEmpty()) requestors.remove(key);
       }
    }
-   
+
    private void prune(ConcurrentMap<Address, Long> reqs, long expiryTime) {
       for (Map.Entry<Address, Long> req: reqs.entrySet()) {
          if (req.getValue() < expiryTime) reqs.remove(req.getKey());
       }
    }
-   
+
    @Override
    public void addRequestor(Object key, Address origin) {
       //we do a plain get first as that's likely to be enough

@@ -1,7 +1,5 @@
 package org.infinispan.util.concurrent;
 
-import java.util.concurrent.Future;
-
 /**
  * A sub-interface of a Future, that allows for listeners to be attached so that observers can be notified of when the
  * future completes.
@@ -15,8 +13,10 @@ import java.util.concurrent.Future;
  *
  * @author Manik Surtani
  * @since 4.0
+ * @deprecated Use {@link org.infinispan.commons.util.concurrent.NotifyingFuture} instead
  */
-public interface NotifyingFuture<T> extends Future<T> {
+@Deprecated
+public interface NotifyingFuture<T> extends org.infinispan.commons.util.concurrent.NotifyingFuture<T> {
 
    /**
     * Attaches a listener and returns the same future instance, to allow for 'building'.

@@ -1,12 +1,12 @@
-package org.infinispan.util.concurrent;
-
-import org.infinispan.util.logging.Log;
-import org.infinispan.util.logging.LogFactory;
+package org.infinispan.commons.util.concurrent;
 
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
+
+import org.infinispan.commons.logging.Log;
+import org.infinispan.commons.logging.LogFactory;
 
 /**
  * Receives a {@link Future} and exposes it as an {@link NotifyingFuture}.
@@ -14,7 +14,7 @@ import java.util.concurrent.TimeoutException;
  * @author Mircea Markus
  * @since 5.2
  */
-public class NotifyingFutureAdaptor<T> extends BaseNotifyingFuture {
+public class NotifyingFutureAdaptor<T> extends BaseNotifyingFuture<T> {
 
    private static Log log = LogFactory.getLog(NotifyingFutureAdaptor.class);
 

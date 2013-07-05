@@ -1,21 +1,46 @@
-package org.infinispan.api;
+package org.infinispan.commons.api;
 
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
-import org.infinispan.util.concurrent.NotifyingFuture;
+import org.infinispan.commons.util.concurrent.NotifyingFuture;
 
 /**
+ * AsyncCache. This interface is implemented by caches which support asynchronous variants of the various
+ * put/get/remove/clear/replace/putAll methods
  *
- * BasicCache.
+ * Note that these methods only really make sense if you are using a clustered cache.  I.e., when used in LOCAL mode,
+ * these "async" operations offer no benefit whatsoever.  These methods, such as {@link #putAsync(Object, Object)}
+ * offer the best of both worlds between a fully synchronous and a fully asynchronous cache in that a
+ * {@link NotifyingFuture} is returned.  The <tt>NotifyingFuture</tt> can then be ignored or thrown away for typical
+ * asynchronous behaviour, or queried for synchronous behaviour, which would block until any remote calls complete.
+ * Note that all remote calls are, as far as the transport is concerned, synchronous.  This allows you the guarantees
+ * that remote calls succeed, while not blocking your application thread unnecessarily.  For example, usage such as
+ * the following could benefit from the async operations:
+ * <pre>
+ *   NotifyingFuture f1 = cache.putAsync("key1", "value1");
+ *   NotifyingFuture f2 = cache.putAsync("key2", "value2");
+ *   NotifyingFuture f3 = cache.putAsync("key3", "value3");
+ *   f1.get();
+ *   f2.get();
+ *   f3.get();
+ * </pre>
+ * The net result is behavior similar to synchronous RPC calls in that at the end, you have guarantees that all calls
+ * completed successfully, but you have the added benefit that the three calls could happen in parallel.  This is
+ * especially advantageous if the cache uses distribution and the three keys map to different cache instances in the
+ * cluster.
+ * <p/>
+ * Also, the use of async operations when within a transaction return your local value only, as expected.  A
+ * NotifyingFuture is still returned though for API consistency.
+ * <p/>
  *
+ * @author Mircea Markus
+ * @author Manik Surtani
+ * @author Galder Zamarreño
  * @author Tristan Tarrant
- * @since 5.1
- * @deprecated use {@link org.infinispan.commons.api.BasicCache} instead
+ * @since 6.0
  */
-@Deprecated
-public interface BasicCache<K, V> extends org.infinispan.commons.api.BasicCache<K, V> {
-
+public interface AsyncCache<K, V> {
    /**
     * Asynchronous version of {@link #put(Object, Object)}.  This method does not block on remote calls, even if your
     * cache mode is synchronous.  Has no benefit over {@link #put(Object, Object)} if used in LOCAL mode.
@@ -25,7 +50,6 @@ public interface BasicCache<K, V> extends org.infinispan.commons.api.BasicCache<
     * @param value value to store
     * @return a future containing the old value replaced.
     */
-   @Override
    NotifyingFuture<V> putAsync(K key, V value);
 
    /**
@@ -39,7 +63,6 @@ public interface BasicCache<K, V> extends org.infinispan.commons.api.BasicCache<
     * @param unit     time unit for lifespan
     * @return a future containing the old value replaced
     */
-   @Override
    NotifyingFuture<V> putAsync(K key, V value, long lifespan, TimeUnit unit);
 
    /**
@@ -56,7 +79,6 @@ public interface BasicCache<K, V> extends org.infinispan.commons.api.BasicCache<
     * @param maxIdleUnit  time unit for max idle time
     * @return a future containing the old value replaced
     */
-   @Override
    NotifyingFuture<V> putAsync(K key, V value, long lifespan, TimeUnit lifespanUnit, long maxIdle, TimeUnit maxIdleUnit);
 
    /**
@@ -66,7 +88,6 @@ public interface BasicCache<K, V> extends org.infinispan.commons.api.BasicCache<
     * @param data to store
     * @return a future containing a void return type
     */
-   @Override
    NotifyingFuture<Void> putAllAsync(Map<? extends K, ? extends V> data);
 
    /**
@@ -78,7 +99,6 @@ public interface BasicCache<K, V> extends org.infinispan.commons.api.BasicCache<
     * @param unit     time unit for lifespan
     * @return a future containing a void return type
     */
-   @Override
    NotifyingFuture<Void> putAllAsync(Map<? extends K, ? extends V> data, long lifespan, TimeUnit unit);
 
    /**
@@ -94,7 +114,6 @@ public interface BasicCache<K, V> extends org.infinispan.commons.api.BasicCache<
     * @param maxIdleUnit  time unit for max idle time
     * @return a future containing a void return type
     */
-   @Override
    NotifyingFuture<Void> putAllAsync(Map<? extends K, ? extends V> data, long lifespan, TimeUnit lifespanUnit, long maxIdle, TimeUnit maxIdleUnit);
 
    /**
@@ -103,7 +122,6 @@ public interface BasicCache<K, V> extends org.infinispan.commons.api.BasicCache<
     *
     * @return a future containing a void return type
     */
-   @Override
    NotifyingFuture<Void> clearAsync();
 
    /**
@@ -115,7 +133,6 @@ public interface BasicCache<K, V> extends org.infinispan.commons.api.BasicCache<
     * @param value value to store
     * @return a future containing the old value replaced.
     */
-   @Override
    NotifyingFuture<V> putIfAbsentAsync(K key, V value);
 
    /**
@@ -129,7 +146,6 @@ public interface BasicCache<K, V> extends org.infinispan.commons.api.BasicCache<
     * @param unit     time unit for lifespan
     * @return a future containing the old value replaced
     */
-   @Override
    NotifyingFuture<V> putIfAbsentAsync(K key, V value, long lifespan, TimeUnit unit);
 
    /**
@@ -146,7 +162,6 @@ public interface BasicCache<K, V> extends org.infinispan.commons.api.BasicCache<
     * @param maxIdleUnit  time unit for max idle time
     * @return a future containing the old value replaced
     */
-   @Override
    NotifyingFuture<V> putIfAbsentAsync(K key, V value, long lifespan, TimeUnit lifespanUnit, long maxIdle, TimeUnit maxIdleUnit);
 
    /**
@@ -156,7 +171,6 @@ public interface BasicCache<K, V> extends org.infinispan.commons.api.BasicCache<
     * @param key key to remove
     * @return a future containing the value removed
     */
-   @Override
    NotifyingFuture<V> removeAsync(Object key);
 
    /**
@@ -167,7 +181,6 @@ public interface BasicCache<K, V> extends org.infinispan.commons.api.BasicCache<
     * @param value value to match on
     * @return a future containing a boolean, indicating whether the entry was removed or not
     */
-   @Override
    NotifyingFuture<Boolean> removeAsync(Object key, Object value);
 
    /**
@@ -178,7 +191,6 @@ public interface BasicCache<K, V> extends org.infinispan.commons.api.BasicCache<
     * @param value value to store
     * @return a future containing the previous value overwritten
     */
-   @Override
    NotifyingFuture<V> replaceAsync(K key, V value);
 
    /**
@@ -192,7 +204,6 @@ public interface BasicCache<K, V> extends org.infinispan.commons.api.BasicCache<
     * @param unit     time unit for lifespan
     * @return a future containing the previous value overwritten
     */
-   @Override
    NotifyingFuture<V> replaceAsync(K key, V value, long lifespan, TimeUnit unit);
 
    /**
@@ -209,7 +220,6 @@ public interface BasicCache<K, V> extends org.infinispan.commons.api.BasicCache<
     * @param maxIdleUnit  time unit for max idle time
     * @return a future containing the previous value overwritten
     */
-   @Override
    NotifyingFuture<V> replaceAsync(K key, V value, long lifespan, TimeUnit lifespanUnit, long maxIdle, TimeUnit maxIdleUnit);
 
    /**
@@ -222,7 +232,6 @@ public interface BasicCache<K, V> extends org.infinispan.commons.api.BasicCache<
     * @param newValue value to store
     * @return a future containing a boolean, indicating whether the entry was replaced or not
     */
-   @Override
    NotifyingFuture<Boolean> replaceAsync(K key, V oldValue, V newValue);
 
    /**
@@ -237,7 +246,6 @@ public interface BasicCache<K, V> extends org.infinispan.commons.api.BasicCache<
     * @param unit     time unit for lifespan
     * @return a future containing a boolean, indicating whether the entry was replaced or not
     */
-   @Override
    NotifyingFuture<Boolean> replaceAsync(K key, V oldValue, V newValue, long lifespan, TimeUnit unit);
 
    /**
@@ -255,7 +263,6 @@ public interface BasicCache<K, V> extends org.infinispan.commons.api.BasicCache<
     * @param maxIdleUnit  time unit for max idle time
     * @return a future containing a boolean, indicating whether the entry was replaced or not
     */
-   @Override
    NotifyingFuture<Boolean> replaceAsync(K key, V oldValue, V newValue, long lifespan, TimeUnit lifespanUnit, long maxIdle, TimeUnit maxIdleUnit);
 
    /**
@@ -274,6 +281,5 @@ public interface BasicCache<K, V> extends org.infinispan.commons.api.BasicCache<
     * key when this is available. The actual value returned by the future
     * follows the same rules as {@link #get(Object)}
     */
-   @Override
    NotifyingFuture<V> getAsync(K key);
 }

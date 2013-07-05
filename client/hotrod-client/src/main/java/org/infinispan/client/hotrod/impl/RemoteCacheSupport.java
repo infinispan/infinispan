@@ -55,6 +55,11 @@ public abstract class RemoteCacheSupport<K,V> implements RemoteCache<K,V> {
    }
 
    @Override
+   public V putIfAbsent(K key, V value, long lifespan, TimeUnit unit) {
+      return putIfAbsent(key, value, lifespan, unit, defaultMaxIdleTime, MILLISECONDS);
+   }
+
+   @Override
    public boolean replace(K key, V oldValue, V newValue) {
       throw new UnsupportedOperationException();
    }
@@ -62,6 +67,11 @@ public abstract class RemoteCacheSupport<K,V> implements RemoteCache<K,V> {
    @Override
    public V replace(K key, V value) {
       return replace(key, value, defaultLifespan, MILLISECONDS, defaultMaxIdleTime, MILLISECONDS);
+   }
+
+   @Override
+   public final V replace(K key, V value, long lifespan, TimeUnit unit) {
+      return replace(key, value, lifespan, unit, defaultMaxIdleTime, MILLISECONDS);
    }
 
    @Override
@@ -82,6 +92,11 @@ public abstract class RemoteCacheSupport<K,V> implements RemoteCache<K,V> {
    @Override
    public final NotifyingFuture<V> putAsync(K key, V value) {
       return putAsync(key, value, defaultLifespan, MILLISECONDS, defaultMaxIdleTime, MILLISECONDS);
+   }
+
+   @Override
+   public NotifyingFuture<V> putAsync(K key, V value, long lifespan, TimeUnit unit) {
+      return putAsync(key, value, lifespan, unit, defaultMaxIdleTime, MILLISECONDS);
    }
 
    @Override
@@ -144,4 +159,40 @@ public abstract class RemoteCacheSupport<K,V> implements RemoteCache<K,V> {
    public boolean remove(Object key, Object value) {
       throw new UnsupportedOperationException();
    }
+
+   @Override
+   public NotifyingFuture<Boolean> removeAsync(Object key, Object value) {
+      throw new UnsupportedOperationException();
+   }
+
+   @Override
+   public NotifyingFuture<V> replaceAsync(K key, V value, long lifespan, TimeUnit unit) {
+      return replaceAsync(key, value, lifespan, unit, defaultMaxIdleTime, MILLISECONDS);
+   }
+
+   @Override
+   public NotifyingFuture<Boolean> replaceAsync(K key, V oldValue, V newValue) {
+      throw new UnsupportedOperationException();
+   }
+
+   @Override
+   public NotifyingFuture<Boolean> replaceAsync(K key, V oldValue, V newValue, long lifespan, TimeUnit unit) {
+      throw new UnsupportedOperationException();
+   }
+
+   @Override
+   public NotifyingFuture<Boolean> replaceAsync(K key, V oldValue, V newValue, long lifespan, TimeUnit lifespanUnit, long maxIdle, TimeUnit maxIdleUnit) {
+      throw new UnsupportedOperationException();
+   }
+
+   @Override
+   public boolean replace(K key, V oldValue, V value, long lifespan, TimeUnit unit) {
+      throw new UnsupportedOperationException();
+   }
+
+   @Override
+   public boolean replace(K key, V oldValue, V value, long lifespan, TimeUnit lifespanUnit, long maxIdleTime, TimeUnit maxIdleTimeUnit) {
+      throw new UnsupportedOperationException();
+   }
+
 }

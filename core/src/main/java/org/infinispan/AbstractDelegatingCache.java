@@ -42,7 +42,7 @@ public abstract class AbstractDelegatingCache<K, V> implements Cache<K, V> {
    public Configuration getConfiguration() {
       return cache.getConfiguration();
    }
-   
+
    @Override
    public org.infinispan.configuration.cache.Configuration getCacheConfiguration() {
       return cache.getCacheConfiguration();
@@ -345,7 +345,7 @@ public abstract class AbstractDelegatingCache<K, V> implements Cache<K, V> {
    public NotifyingFuture<V> getAsync(K key) {
       return cache.getAsync(key);
    }
-   
+
    @Override
    public String toString() {
       return cache.toString();

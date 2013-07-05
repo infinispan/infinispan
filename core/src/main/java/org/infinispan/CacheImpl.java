@@ -59,8 +59,9 @@ import org.infinispan.transaction.TransactionTable;
 import org.infinispan.transaction.xa.TransactionXaAdapter;
 import org.infinispan.transaction.xa.recovery.RecoveryManager;
 import org.infinispan.util.concurrent.AbstractInProcessNotifyingFuture;
+import org.infinispan.util.concurrent.LegacyNotifyingFutureAdaptor;
 import org.infinispan.util.concurrent.NotifyingFuture;
-import org.infinispan.util.concurrent.NotifyingFutureAdaptor;
+import org.infinispan.commons.util.concurrent.NotifyingFutureAdaptor;
 import org.infinispan.util.concurrent.locks.LockManager;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
@@ -1000,7 +1001,7 @@ public class CacheImpl<K, V> implements AdvancedCache<K, V> {
    }
 
    final NotifyingFuture<V> putAsync(final K key, final V value, final Metadata metadata, final EnumSet<Flag> explicitFlags, final ClassLoader explicitClassLoader) {
-      final NotifyingFutureAdaptor<V> result = new NotifyingFutureAdaptor<V>();
+      final LegacyNotifyingFutureAdaptor<V> result = new LegacyNotifyingFutureAdaptor<V>();
       final InvocationContext ctx = getInvocationContextWithImplicitTransactionForAsyncOps(false, explicitClassLoader, 1);
       Future<V> returnValue = asyncExecutor.submit(new Callable<V>() {
          @Override
@@ -1031,7 +1032,7 @@ public class CacheImpl<K, V> implements AdvancedCache<K, V> {
    }
 
    final NotifyingFuture<Void> putAllAsync(final Map<? extends K, ? extends V> data, final Metadata metadata, final EnumSet<Flag> explicitFlags, final ClassLoader explicitClassLoader) {
-      final NotifyingFutureAdaptor<Void> result = new NotifyingFutureAdaptor<Void>();
+      final LegacyNotifyingFutureAdaptor<Void> result = new LegacyNotifyingFutureAdaptor<Void>();
       final InvocationContext ctx = getInvocationContextWithImplicitTransactionForAsyncOps(false, explicitClassLoader, data.size());
       Future<Void> returnValue = asyncExecutor.submit(new Callable<Void>() {
          @Override
@@ -1055,7 +1056,7 @@ public class CacheImpl<K, V> implements AdvancedCache<K, V> {
    }
 
    final NotifyingFuture<Void> clearAsync(final EnumSet<Flag> explicitFlags, final ClassLoader explicitClassLoader) {
-      final NotifyingFutureAdaptor<Void> result = new NotifyingFutureAdaptor<Void>();
+      final LegacyNotifyingFutureAdaptor<Void> result = new LegacyNotifyingFutureAdaptor<Void>();
       final InvocationContext ctx = getInvocationContextWithImplicitTransactionForAsyncOps(false, explicitClassLoader, UNBOUNDED);
       Future<Void> returnValue = asyncExecutor.submit(new Callable<Void>() {
          @Override
@@ -1083,7 +1084,7 @@ public class CacheImpl<K, V> implements AdvancedCache<K, V> {
 
    final NotifyingFuture<V> putIfAbsentAsync(final K key, final V value, final Metadata metadata,
          final EnumSet<Flag> explicitFlags,final ClassLoader explicitClassLoader) {
-      final NotifyingFutureAdaptor<V> result = new NotifyingFutureAdaptor<V>();
+      final LegacyNotifyingFutureAdaptor<V> result = new LegacyNotifyingFutureAdaptor<V>();
       final InvocationContext ctx = getInvocationContextWithImplicitTransactionForAsyncOps(false, explicitClassLoader, 1);
       Future<V> returnValue = asyncExecutor.submit(new Callable<V>() {
          @Override
@@ -1106,7 +1107,7 @@ public class CacheImpl<K, V> implements AdvancedCache<K, V> {
    }
 
    final NotifyingFuture<V> removeAsync(final Object key, final EnumSet<Flag> explicitFlags, final ClassLoader explicitClassLoader) {
-      final NotifyingFutureAdaptor<V> result = new NotifyingFutureAdaptor<V>();
+      final LegacyNotifyingFutureAdaptor<V> result = new LegacyNotifyingFutureAdaptor<V>();
       final InvocationContext ctx = getInvocationContextWithImplicitTransactionForAsyncOps(false, explicitClassLoader, 1);
       Future<V> returnValue = asyncExecutor.submit(new Callable<V>() {
          @Override
@@ -1129,7 +1130,7 @@ public class CacheImpl<K, V> implements AdvancedCache<K, V> {
    }
 
    final NotifyingFuture<Boolean> removeAsync(final Object key, final Object value, final EnumSet<Flag> explicitFlags, final ClassLoader explicitClassLoader) {
-      final NotifyingFutureAdaptor<Boolean> result = new NotifyingFutureAdaptor<Boolean>();
+      final LegacyNotifyingFutureAdaptor<Boolean> result = new LegacyNotifyingFutureAdaptor<Boolean>();
       final InvocationContext ctx = getInvocationContextWithImplicitTransactionForAsyncOps(false, explicitClassLoader, 1);
       Future<Boolean> returnValue = asyncExecutor.submit(new Callable<Boolean>() {
          @Override
@@ -1156,7 +1157,7 @@ public class CacheImpl<K, V> implements AdvancedCache<K, V> {
 
    final NotifyingFuture<V> replaceAsync(final K key, final V value, final Metadata metadata,
          final EnumSet<Flag> explicitFlags, final ClassLoader explicitClassLoader) {
-      final NotifyingFutureAdaptor<V> result = new NotifyingFutureAdaptor<V>();
+      final LegacyNotifyingFutureAdaptor<V> result = new LegacyNotifyingFutureAdaptor<V>();
       final InvocationContext ctx = getInvocationContextWithImplicitTransactionForAsyncOps(false, explicitClassLoader, 1);
       Future<V> returnValue = asyncExecutor.submit(new Callable<V>() {
          @Override
@@ -1183,7 +1184,7 @@ public class CacheImpl<K, V> implements AdvancedCache<K, V> {
 
    final NotifyingFuture<Boolean> replaceAsync(final K key, final V oldValue, final V newValue,
          final Metadata metadata, final EnumSet<Flag> explicitFlags, final ClassLoader explicitClassLoader) {
-      final NotifyingFutureAdaptor<Boolean> result = new NotifyingFutureAdaptor<Boolean>();
+      final LegacyNotifyingFutureAdaptor<Boolean> result = new LegacyNotifyingFutureAdaptor<Boolean>();
       final InvocationContext ctx = getInvocationContextWithImplicitTransactionForAsyncOps(false, explicitClassLoader, 1);
       Future<Boolean> returnValue = asyncExecutor.submit(new Callable<Boolean>() {
          @Override
@@ -1219,7 +1220,7 @@ public class CacheImpl<K, V> implements AdvancedCache<K, V> {
             appliedFlags = explicitFlags.clone();
             explicitFlags.clear();
          }
-         final NotifyingFutureAdaptor<V> f = new NotifyingFutureAdaptor<V>();
+         final LegacyNotifyingFutureAdaptor<V> f = new LegacyNotifyingFutureAdaptor<V>();
 
          Callable<V> c = new Callable<V>() {
             @Override
