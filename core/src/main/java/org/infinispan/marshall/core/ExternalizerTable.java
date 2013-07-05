@@ -1,6 +1,7 @@
 package org.infinispan.marshall.core;
 
 import org.infinispan.atomic.DeltaCompositeKey;
+import org.infinispan.registry.ScopedKey;
 import org.infinispan.container.versioning.NumericVersion;
 import org.infinispan.metadata.EmbeddedMetadata;
 import org.infinispan.atomic.AtomicHashMap;
@@ -291,6 +292,7 @@ public class ExternalizerTable implements ObjectTable {
       addInternalExternalizer(new EmbeddedMetadata.Externalizer());
 
       addInternalExternalizer(new NumericVersion.Externalizer());
+      addInternalExternalizer(new ScopedKey.Externalizer());
    }
 
    void addInternalExternalizer(AdvancedExternalizer<?> ext) {

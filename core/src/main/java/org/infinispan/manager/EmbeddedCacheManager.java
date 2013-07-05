@@ -4,6 +4,7 @@ import org.infinispan.Cache;
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.global.GlobalConfiguration;
+import org.infinispan.factories.GlobalComponentRegistry;
 import org.infinispan.factories.annotations.SurvivesRestarts;
 import org.infinispan.factories.scopes.Scope;
 import org.infinispan.factories.scopes.Scopes;
@@ -275,4 +276,6 @@ public interface EmbeddedCacheManager extends CacheContainer, Listenable {
     * @since 5.1
     */
    Transport getTransport();
+
+   GlobalComponentRegistry getGlobalComponentRegistry();
 }

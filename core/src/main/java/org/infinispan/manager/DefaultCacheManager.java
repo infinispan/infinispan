@@ -919,6 +919,11 @@ public class DefaultCacheManager implements EmbeddedCacheManager, CacheManager {
       return globalComponentRegistry.getComponent(Transport.class);
    }
 
+   @Override
+   public GlobalComponentRegistry getGlobalComponentRegistry() {
+      return globalComponentRegistry;
+   }
+
 
    @Override
    public String toString() {
