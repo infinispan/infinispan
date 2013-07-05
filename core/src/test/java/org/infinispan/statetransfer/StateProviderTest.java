@@ -28,7 +28,7 @@ import org.infinispan.transaction.LocalTransaction;
 import org.infinispan.transaction.RemoteTransaction;
 import org.infinispan.transaction.TransactionTable;
 import org.infinispan.util.concurrent.IsolationLevel;
-import org.infinispan.util.concurrent.NotifyingNotifiableFuture;
+import org.infinispan.commons.util.concurrent.NotifyingNotifiableFuture;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 import org.mockito.invocation.InvocationOnMock;
@@ -150,6 +150,7 @@ public class StateProviderTest {
 
       when(rpcManager.getAddress()).thenReturn(A);
       when(rpcManager.getRpcOptionsBuilder(any(ResponseMode.class))).thenAnswer(new Answer<RpcOptionsBuilder>() {
+         @Override
          public RpcOptionsBuilder answer(InvocationOnMock invocation) {
             Object[] args = invocation.getArguments();
             return new RpcOptionsBuilder(10000, TimeUnit.MILLISECONDS, (ResponseMode) args[0], true);
@@ -256,6 +257,7 @@ public class StateProviderTest {
                                                  any(NotifyingNotifiableFuture.class));
 
       when(rpcManager.getRpcOptionsBuilder(any(ResponseMode.class))).thenAnswer(new Answer<RpcOptionsBuilder>() {
+         @Override
          public RpcOptionsBuilder answer(InvocationOnMock invocation) {
             Object[] args = invocation.getArguments();
             return new RpcOptionsBuilder(10000, TimeUnit.MILLISECONDS, (ResponseMode) args[0], true);

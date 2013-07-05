@@ -6,6 +6,7 @@ import java.util.Set;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.TimeUnit;
 
+import org.infinispan.commons.api.BasicCache;
 import org.infinispan.commons.util.concurrent.NotifyingFuture;
 
 /**
@@ -60,21 +61,7 @@ import org.infinispan.commons.util.concurrent.NotifyingFuture;
  * @author Mircea.Markus@jboss.com
  * @since 4.1
  */
-public interface RemoteCache<K, V> extends ConcurrentMap<K, V> {
-   /**
-    * Retrieves the name of the cache
-    *
-    * @return the name of the cache
-    */
-   String getName();
-
-   /**
-    * Retrieves the version of Infinispan
-    *
-    * @return a version string
-    */
-   String getVersion();
-
+public interface RemoteCache<K, V> extends BasicCache<K, V> {
    /**
     * Removes the given entry only if its version matches the supplied version. A typical use case looks like this:
     * <pre>
@@ -206,6 +193,7 @@ public interface RemoteCache<K, V> extends ConcurrentMap<K, V> {
     * operation not being atomic (if a failure happens after few puts it is not rolled back) and costly (for each key in
     * the parameter map a remote call is performed).
     */
+   @Override
    void putAll(Map<? extends K, ? extends V> map, long lifespan, TimeUnit unit);
 
    /**
@@ -213,6 +201,7 @@ public interface RemoteCache<K, V> extends ConcurrentMap<K, V> {
     *
     * @see #putAll(java.util.Map, long, java.util.concurrent.TimeUnit)
     */
+   @Override
    void putAll(Map<? extends K, ? extends V> map, long lifespan, TimeUnit lifespanUnit, long maxIdleTime, TimeUnit maxIdleTimeUnit);
 
    /**
@@ -220,6 +209,7 @@ public interface RemoteCache<K, V> extends ConcurrentMap<K, V> {
     *
     * @see #putAll(java.util.Map, long, java.util.concurrent.TimeUnit)
     */
+   @Override
    NotifyingFuture<Void> putAllAsync(Map<? extends K, ? extends V> data);
 
    /**
@@ -227,6 +217,7 @@ public interface RemoteCache<K, V> extends ConcurrentMap<K, V> {
     *
     * @see #putAll(java.util.Map, long, java.util.concurrent.TimeUnit)
     */
+   @Override
    NotifyingFuture<Void> putAllAsync(Map<? extends K, ? extends V> data, long lifespan, TimeUnit unit);
 
    /**
@@ -234,6 +225,7 @@ public interface RemoteCache<K, V> extends ConcurrentMap<K, V> {
     *
     * @see #putAll(java.util.Map, long, java.util.concurrent.TimeUnit)
     */
+   @Override
    NotifyingFuture<Void> putAllAsync(Map<? extends K, ? extends V> data, long lifespan, TimeUnit lifespanUnit, long maxIdle, TimeUnit maxIdleUnit);
 
    /**
@@ -278,146 +270,4 @@ public interface RemoteCache<K, V> extends ConcurrentMap<K, V> {
     * guarantee that "size" elements are returned( e.g. if the number of elements in the back-end server is smaller that "size")
     */
    Map<K, V> getBulk(int size);
-
-   /**
-    * An overloaded form of {@link #put(Object, Object)}, which takes in lifespan parameters.
-    *
-    * @param key             key to use
-    * @param value           value to store
-    * @param lifespan        lifespan of the entry.  Negative values are interpreted as unlimited lifespan.
-    * @param lifespanUnit    time unit for lifespan
-    * @param maxIdleTime     the maximum amount of time this key is allowed to be idle for before it is considered as
-    *                        expired
-    * @param maxIdleTimeUnit time unit for max idle time
-    * @return the value being replaced, or null if nothing is being replaced.
-    */
-   V put(K key, V value, long lifespan, TimeUnit lifespanUnit, long maxIdleTime, TimeUnit maxIdleTimeUnit);
-
-   /**
-    * An overloaded form of {@link #putIfAbsent(Object, Object)}, which takes in lifespan parameters.
-    *
-    * @param key             key to use
-    * @param value           value to store
-    * @param lifespan        lifespan of the entry.  Negative values are interpreted as unlimited lifespan.
-    * @param lifespanUnit    time unit for lifespan
-    * @param maxIdleTime     the maximum amount of time this key is allowed to be idle for before it is considered as
-    *                        expired
-    * @param maxIdleTimeUnit time unit for max idle time
-    * @return the value being replaced, or null if nothing is being replaced.
-    */
-   V putIfAbsent(K key, V value, long lifespan, TimeUnit lifespanUnit, long maxIdleTime, TimeUnit maxIdleTimeUnit);
-
-   /**
-    * An overloaded form of {@link #replace(Object, Object)}, which takes in lifespan parameters.
-    *
-    * @param key             key to use
-    * @param value           value to store
-    * @param lifespan        lifespan of the entry.  Negative values are interpreted as unlimited lifespan.
-    * @param lifespanUnit    time unit for lifespan
-    * @param maxIdleTime     the maximum amount of time this key is allowed to be idle for before it is considered as
-    *                        expired
-    * @param maxIdleTimeUnit time unit for max idle time
-    * @return the value being replaced, or null if nothing is being replaced.
-    */
-   V replace(K key, V value, long lifespan, TimeUnit lifespanUnit, long maxIdleTime, TimeUnit maxIdleTimeUnit);
-
-   /**
-    * Asynchronous version of {@link #put(Object, Object, long, TimeUnit, long, TimeUnit)}.  This method does not block
-    * on remote calls, even if your cache mode is synchronous.  Has no benefit over {@link #put(Object, Object, long,
-    * TimeUnit, long, TimeUnit)} if used in LOCAL mode.
-    *
-    * @param key          key to use
-    * @param value        value to store
-    * @param lifespan     lifespan of entry
-    * @param lifespanUnit time unit for lifespan
-    * @param maxIdle      the maximum amount of time this key is allowed to be idle for before it is considered as
-    *                     expired
-    * @param maxIdleUnit  time unit for max idle time
-    * @return a future containing the old value replaced
-    */
-   NotifyingFuture<V> putAsync(K key, V value, long lifespan, TimeUnit lifespanUnit, long maxIdle, TimeUnit maxIdleUnit);
-
-   /**
-    * Asynchronous version of {@link #clear()}.  This method does not block on remote calls, even if your cache mode is
-    * synchronous.  Has no benefit over {@link #clear()} if used in LOCAL mode.
-    *
-    * @return a future containing a void return type
-    */
-   NotifyingFuture<Void> clearAsync();
-
-   /**
-    * Asynchronous version of {@link #putIfAbsent(Object, Object, long, TimeUnit, long, TimeUnit)}.  This method does
-    * not block on remote calls, even if your cache mode is synchronous.  Has no benefit over {@link
-    * #putIfAbsent(Object, Object, long, TimeUnit, long, TimeUnit)} if used in LOCAL mode.
-    *
-    * @param key          key to use
-    * @param value        value to store
-    * @param lifespan     lifespan of entry
-    * @param lifespanUnit time unit for lifespan
-    * @param maxIdle      the maximum amount of time this key is allowed to be idle for before it is considered as
-    *                     expired
-    * @param maxIdleUnit  time unit for max idle time
-    * @return a future containing the old value replaced
-    */
-   NotifyingFuture<V> putIfAbsentAsync(K key, V value, long lifespan, TimeUnit lifespanUnit, long maxIdle, TimeUnit maxIdleUnit);
-
-   /**
-    * Asynchronous version of {@link #remove(Object)}.  This method does not block on remote calls, even if your cache
-    * mode is synchronous.  Has no benefit over {@link #remove(Object)} if used in LOCAL mode.
-    *
-    * @param key key to remove
-    * @return a future containing the value removed
-    */
-   NotifyingFuture<V> removeAsync(Object key);
-
-   NotifyingFuture<V> replaceAsync(K key, V value, long lifespan, TimeUnit lifespanUnit, long maxIdle, TimeUnit maxIdleUnit);
-
-   NotifyingFuture<V> getAsync(K key);
-
-   NotifyingFuture<V> putAsync(K key, V value);
-
-   /**
-    * Asynchronous version of {@link #replace(Object, Object)}.  This method does not block on remote calls, even if
-    * your cache mode is synchronous.  Has no benefit over {@link #replace(Object, Object)} if used in LOCAL mode.
-    *
-    * @param key   key to remove
-    * @param value value to store
-    * @return a future containing the previous value overwritten
-    */
-   NotifyingFuture<V> replaceAsync(K key, V value);
-
-   /**
-    * An overloaded form of {@link #put(Object, Object)}, which takes in lifespan parameters.
-    *
-    * @param key      key to use
-    * @param value    value to store
-    * @param lifespan lifespan of the entry.  Negative values are interpreted as unlimited lifespan.
-    * @param unit     unit of measurement for the lifespan
-    * @return the value being replaced, or null if nothing is being replaced.
-    */
-   V put(K key, V value, long lifespan, TimeUnit unit);
-
-   /**
-    * Asynchronous version of {@link #putIfAbsent(Object, Object, long, TimeUnit)} .  This method does not block on
-    * remote calls, even if your cache mode is synchronous.  Has no benefit over {@link #putIfAbsent(Object, Object,
-    * long, TimeUnit)} if used in LOCAL mode.
-    *
-    * @param key      key to use
-    * @param value    value to store
-    * @param lifespan lifespan of entry
-    * @param unit     time unit for lifespan
-    * @return a future containing the old value replaced
-    */
-   NotifyingFuture<V> putIfAbsentAsync(K key, V value, long lifespan, TimeUnit unit);
-
-   /**
-    * Asynchronous version of {@link #putIfAbsent(Object, Object)}.  This method does not block on remote calls, even if
-    * your cache mode is synchronous.  Has no benefit over {@link #putIfAbsent(Object, Object)} if used in LOCAL mode.
-    * <p/>
-    *
-    * @param key   key to use
-    * @param value value to store
-    * @return a future containing the old value replaced.
-    */
-   NotifyingFuture<V> putIfAbsentAsync(K key, V value);
 }

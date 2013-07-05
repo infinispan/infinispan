@@ -11,8 +11,8 @@ import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.PriorityBlockingQueue;
 import java.util.concurrent.TimeUnit;
 
-import org.infinispan.util.concurrent.FutureListener;
-import org.infinispan.util.concurrent.NotifyingFuture;
+import org.infinispan.commons.util.concurrent.FutureListener;
+import org.infinispan.commons.util.concurrent.NotifyingFuture;
 
 /**
  * A {@link CompletionService} that uses a supplied {@link DistributedExecutorService} to execute
@@ -23,7 +23,7 @@ import org.infinispan.util.concurrent.NotifyingFuture;
  * This class must be used instead of a {@link ExecutorCompletionService} provided from
  * java.util.concurrent package. The {@link ExecutorCompletionService} may not be used since it
  * requires the use of a non serializable RunnableFuture object.
- * 
+ *
  * @author William Burns
  * @author Vladimir Blagojevic
  */
@@ -31,7 +31,7 @@ public class DistributedExecutionCompletionService<V> implements CompletionServi
     protected final DistributedExecutorService executor;
     protected final BlockingQueue<NotifyingFuture<V>> completionQueue;
     protected final QueueingListener listener;
-    
+
     protected class QueueingListener implements FutureListener<V> {
         @Override
         public void futureDone(Future<V> future) {
@@ -39,13 +39,13 @@ public class DistributedExecutionCompletionService<V> implements CompletionServi
             // in this class
             completionQueue.add((NotifyingFuture<V>)future);
         }
-        
+
     }
 
    /**
     * Creates an ExecutorCompletionService using the supplied executor for base task execution and a
     * {@link LinkedBlockingQueue} as a completion queue.
-    * 
+    *
     * @param executor
     *           the executor to use
     * @throws NullPointerException
@@ -54,16 +54,16 @@ public class DistributedExecutionCompletionService<V> implements CompletionServi
     public DistributedExecutionCompletionService(DistributedExecutorService executor) {
         this(executor, null);
     }
-    
+
    /**
     * Creates an ExecutorCompletionService using the supplied executor for base task execution and
     * the supplied queue as its completion queue.
-    * 
+    *
     * Note: {@link PriorityBlockingQueue} for completionQueue can only be used with accompanying
     * {@link Comparator} as our internal implementation of {@link Future} for each subtask does not
     * implement Comparable interface. Note that we do not provide any guarantees about which
     * particular internal class implements Future interface and these APIs will remain internal.
-    * 
+    *
     * @param executor
     *           the executor to use
     * @param completionQueue
@@ -77,7 +77,7 @@ public class DistributedExecutionCompletionService<V> implements CompletionServi
         if (executor == null)
             throw new NullPointerException();
         this.executor = executor;
-        
+
         if (completionQueue == null) {
             this.completionQueue = new LinkedBlockingQueue<NotifyingFuture<V>>();
         }
@@ -150,7 +150,7 @@ public class DistributedExecutionCompletionService<V> implements CompletionServi
     public NotifyingFuture<V> poll(long timeout, TimeUnit unit) throws InterruptedException {
         return completionQueue.poll(timeout, unit);
     }
-    
+
     public <K> Future<V> submit(Callable<V> task, K... input) {
        NotifyingFuture<V> f = (NotifyingFuture<V>) executor.submit(task, input);
        f.attachListener(listener);

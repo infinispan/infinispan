@@ -11,7 +11,7 @@ import org.testng.annotations.Test;
 import javax.inject.Inject;
 
 import static org.infinispan.cdi.test.testutil.Deployments.baseDeployment;
-import static org.infinispan.manager.CacheContainer.DEFAULT_CACHE_NAME;
+import static org.infinispan.commons.api.BasicCacheContainer.DEFAULT_CACHE_NAME;
 import static org.testng.Assert.assertEquals;
 
 /**

@@ -11,16 +11,17 @@ import org.infinispan.commands.CommandsFactory;
 import org.infinispan.commands.write.PutKeyValueCommand;
 import org.infinispan.test.MultipleCacheManagersTest;
 import org.infinispan.test.TestingUtil;
-import org.infinispan.util.concurrent.FutureListener;
-import org.infinispan.util.concurrent.NotifyingFutureImpl;
+import org.infinispan.commons.util.concurrent.FutureListener;
+import org.infinispan.commons.util.concurrent.NotifyingFutureImpl;
 import org.testng.annotations.Test;
 
 @Test(groups = "functional", testName = "replication.InvokeRemotelyInFutureTest")
 public class InvokeRemotelyInFutureTest extends MultipleCacheManagersTest {
 
+   @Override
    protected void createCacheManagers() throws Throwable {
       ConfigurationBuilder c = getDefaultClusteredCacheConfig(CacheMode.REPL_SYNC, true);
-      createClusteredCaches(2, "futureRepl", c);   
+      createClusteredCaches(2, "futureRepl", c);
    }
 
    public void testInvokeRemotelyInFutureWithListener() throws Exception {
@@ -31,15 +32,15 @@ public class InvokeRemotelyInFutureTest extends MultipleCacheManagersTest {
       final AtomicBoolean futureDoneOk = new AtomicBoolean();
       NotifyingFutureImpl f = new NotifyingFutureImpl(new Integer(2));
       f.attachListener(new FutureListener<Object>() {
-         
+
          @Override
          public void futureDone(Future<Object> future) {
-            try {      
+            try {
                future.get();
                futureDoneOk.set(true);
-            } catch (Exception e) {       
+            } catch (Exception e) {
                e.printStackTrace();
-            }             
+            }
          }
       });
       CommandsFactory cf = cache1.getAdvancedCache().getComponentRegistry().getComponent(CommandsFactory.class);
@@ -48,6 +49,6 @@ public class InvokeRemotelyInFutureTest extends MultipleCacheManagersTest {
       cache1.getAdvancedCache().getRpcManager().invokeRemotelyInFuture(null,
             put, cache1.getAdvancedCache().getRpcManager().getDefaultRpcOptions(true), f);
       TestingUtil.sleepThread(2000);
-      assert futureDoneOk.get();   
+      assert futureDoneOk.get();
    }
 }

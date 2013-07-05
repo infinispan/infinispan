@@ -107,8 +107,6 @@
             <groupId>org.apache.maven.plugins</groupId>
             <artifactId>maven-surefire-plugin</artifactId>
             <configuration>
-               <!-- Currently TCK requires JDK 7 to run: https://github.com/jsr107/jsr107tck/issues/16 -->
-               <jvm>${env.JAVA_HOME_7}/bin/java</jvm>
                <systemPropertyVariables>
                   <domainJar>${domain-lib-dir}/${domain-jar}</domainJar>
                </systemPropertyVariables>

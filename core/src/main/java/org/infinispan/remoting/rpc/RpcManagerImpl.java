@@ -27,7 +27,7 @@ import org.infinispan.remoting.transport.Transport;
 import org.infinispan.topology.CacheTopology;
 import org.infinispan.topology.LocalTopologyManager;
 import org.infinispan.util.TimeService;
-import org.infinispan.util.concurrent.NotifyingNotifiableFuture;
+import org.infinispan.commons.util.concurrent.NotifyingNotifiableFuture;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 

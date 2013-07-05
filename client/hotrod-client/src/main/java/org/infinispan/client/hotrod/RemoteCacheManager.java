@@ -23,6 +23,7 @@ import org.infinispan.client.hotrod.impl.protocol.CodecFactory;
 import org.infinispan.client.hotrod.impl.transport.TransportFactory;
 import org.infinispan.client.hotrod.logging.Log;
 import org.infinispan.client.hotrod.logging.LogFactory;
+import org.infinispan.commons.api.BasicCacheContainer;
 import org.infinispan.commons.executors.ExecutorFactory;
 import org.infinispan.commons.marshall.Marshaller;
 import org.infinispan.commons.util.FileLookupFactory;
@@ -127,7 +128,7 @@ import org.infinispan.commons.util.Util;
  * @author Mircea.Markus@jboss.com
  * @since 4.1
  */
-public class RemoteCacheManager {
+public class RemoteCacheManager implements BasicCacheContainer {
 
    private static final Log log = LogFactory.getLog(RemoteCacheManager.class);
 
@@ -514,6 +515,7 @@ public class RemoteCacheManager {
     * @return a cache instance identified by cacheName or null if the cache
     *         name has not been defined
     */
+   @Override
    public <K, V> RemoteCache<K, V> getCache(String cacheName) {
       return getCache(cacheName, configuration.forceReturnValues());
    }
@@ -528,6 +530,7 @@ public class RemoteCacheManager {
     * @return a remote cache instance that can be used to send requests to the
     *         default cache in the server
     */
+   @Override
    public <K, V> RemoteCache<K, V> getCache() {
       return getCache(configuration.forceReturnValues());
    }
@@ -537,6 +540,7 @@ public class RemoteCacheManager {
       return createRemoteCache("", forceReturnValue);
    }
 
+   @Override
    public void start() {
       // Workaround for JDK6 NPE: http://bugs.sun.com/view_bug.do?bug_id=6427854
       SysPropertyActions.setProperty("sun.nio.ch.bugLevel", "\"\"");
@@ -573,6 +577,7 @@ public class RemoteCacheManager {
       started = true;
    }
 
+   @Override
    public void stop() {
       if (isStarted()) {
          transportFactory.destroy();

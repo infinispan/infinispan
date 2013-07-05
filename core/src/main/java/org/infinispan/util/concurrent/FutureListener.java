@@ -12,7 +12,8 @@ import java.util.concurrent.Future;
  *
  * @author Manik Surtani
  * @since 4.0
+ * @deprecated Use {@link org.infinispan.commons.util.concurrent.FutureListener} instead
  */
-public interface FutureListener<T> {
-   void futureDone(Future<T> future);
+@Deprecated
+public interface FutureListener<T> extends org.infinispan.commons.util.concurrent.FutureListener<T> {
 }

@@ -3,7 +3,6 @@ package org.infinispan.distribution;
 import org.infinispan.factories.scopes.Scope;
 import org.infinispan.factories.scopes.Scopes;
 import org.infinispan.remoting.transport.Address;
-import org.infinispan.util.concurrent.NotifyingNotifiableFuture;
 
 import java.util.Collection;
 import java.util.concurrent.Future;
@@ -12,9 +11,9 @@ import java.util.concurrent.Future;
  * Manages the L1 Cache, in particular recording anyone who is going to cache an
  * a command that a node responds to so that a unicast invalidation can be sent
  * later if needed.
- * 
+ *
  * @author Pete Muir
- * 
+ *
  */
 @Scope(Scopes.NAMED_CACHE)
 public interface L1Manager {

@@ -1,4 +1,4 @@
-package org.infinispan.util.concurrent;
+package org.infinispan.commons.util.concurrent;
 
 import java.util.ArrayList;
 import java.util.List;

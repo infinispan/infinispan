@@ -1,6 +1,7 @@
 package org.infinispan;
 
 import org.infinispan.api.BasicCache;
+import org.infinispan.commons.api.BatchingCache;
 import org.infinispan.config.Configuration;
 import org.infinispan.lifecycle.ComponentStatus;
 import org.infinispan.loaders.CacheStore;
@@ -27,7 +28,7 @@ import java.util.concurrent.ConcurrentMap;
  * For convenience, Cache extends {@link ConcurrentMap} and implements all methods accordingly, although methods like
  * {@link ConcurrentMap#keySet()}, {@link ConcurrentMap#values()} and {@link ConcurrentMap#entrySet()} are expensive
  * (prohibitively so when using a distributed cache) and frequent use of these methods is not recommended.
- * <p /> 
+ * <p />
  * {@link #size()} provides the size of the local, internal data container only.  This does not take into account
  * in-fly transactions, entries stored in a cache store, or remote entries.  It may also take into consideration
  * entries that have expired but haven't yet been removed from the internal container, as well as entries in the L1
@@ -85,7 +86,7 @@ import java.util.concurrent.ConcurrentMap;
  * @see <a href="http://www.jboss.org/community/wiki/5minutetutorialonInfinispan">5 Minute Usage Tutorial</a>
  * @since 4.0
  */
-public interface Cache<K, V> extends BasicCache<K, V>, Listenable {
+public interface Cache<K, V> extends BasicCache<K, V>, BatchingCache, Listenable {
    /**
     * Under special operating behavior, associates the value with the specified key. <ul> <li> Only goes through if the
     * key specified does not exist; no-op otherwise (similar to {@link ConcurrentMap#putIfAbsent(Object, Object)})</i>
@@ -120,7 +121,7 @@ public interface Cache<K, V> extends BasicCache<K, V>, Listenable {
     * a 0 lock acquisition timeout so it does not block in attempting to acquire locks.  It behaves as a no-op if the
     * lock on the entry cannot be acquired <i>immediately</i>.
     * <p/>
-    * Important: this method should not be called from within a transaction scope.  
+    * Important: this method should not be called from within a transaction scope.
     *
     * @param key key to evict
     */
@@ -128,26 +129,8 @@ public interface Cache<K, V> extends BasicCache<K, V>, Listenable {
 
    @Deprecated
    Configuration getConfiguration();
-   
+
    org.infinispan.configuration.cache.Configuration getCacheConfiguration();
-
-   /**
-    * Starts a batch.  All operations on the current client thread are performed as a part of this batch, with locks
-    * held for the duration of the batch and any remote calls delayed till the end of the batch.
-    * <p/>
-    *
-    * @return true if a batch was successfully started; false if one was available and already running.
-    */
-   boolean startBatch();
-
-   /**
-    * Completes a batch if one has been started using {@link #startBatch()}.  If no batch has been started, this is a
-    * no-op.
-    * <p/>
-    *
-    * @param successful if true, the batch completes, otherwise the batch is aborted and changes are not committed.
-    */
-   void endBatch(boolean successful);
 
    /**
     * Retrieves the cache manager responsible for creating this cache instance.
@@ -194,7 +177,7 @@ public interface Cache<K, V> extends BasicCache<K, V>, Listenable {
     * If there are memory concerns then the {@link org.infinispan.context.Flag.SKIP_CACHE_LOAD} flag should be used to
     * avoid hitting the cache store as all local keys will be in memory at once.
     * <p/>
-    * This method should only be used for debugging purposes such as to verify that the cache contains all the keys 
+    * This method should only be used for debugging purposes such as to verify that the cache contains all the keys
     * entered. Any other use involving execution of this method on a production system is not recommended.
     * <p/>
     * 
@@ -212,7 +195,7 @@ public interface Cache<K, V> extends BasicCache<K, V>, Listenable {
     * If there are memory concerns then the {@link org.infinispan.context.Flag.SKIP_CACHE_LOAD} flag should be used to
     * avoid hitting the cache store as all local values will be in memory at once.
     * <p/>
-    * This method should only be used for testing or debugging purposes such as to verify that the cache contains all the 
+    * This method should only be used for testing or debugging purposes such as to verify that the cache contains all the
     * values entered. Any other use involving execution of this method on a production system is not recommended.
     * <p/>
     * 
@@ -220,7 +203,7 @@ public interface Cache<K, V> extends BasicCache<K, V>, Listenable {
     */
    @Override
    Collection<V> values();
-   
+
    /**
     * Returns a set view of the mappings contained in this cache and cache loader. This set is immutable, so it cannot
     * be modified and changes to the cache won't be reflected in the set. Besides, each element in the returned set is
@@ -231,7 +214,7 @@ public interface Cache<K, V> extends BasicCache<K, V>, Listenable {
     * If there are memory concerns then the {@link org.infinispan.context.Flag.SKIP_CACHE_LOAD} flag should be used to
     * avoid hitting the cache store as all local entries will be in memory at once.
     * <p/>
-    * This method should only be used for debugging purposes such as to verify that the cache contains all the mappings 
+    * This method should only be used for debugging purposes such as to verify that the cache contains all the mappings
     * entered. Any other use involving execution of this method on a production system is not recommended.
     * <p/>
     * 
