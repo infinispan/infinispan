@@ -2,6 +2,8 @@ package org.infinispan.factories;
 
 import net.jcip.annotations.ThreadSafe;
 import org.infinispan.Version;
+import org.infinispan.registry.ClusterRegistry;
+import org.infinispan.registry.ClusterRegistryImpl;
 import org.infinispan.commands.module.ModuleCommandFactory;
 import org.infinispan.commands.module.ModuleCommandInitializer;
 import org.infinispan.commons.CacheException;
@@ -105,6 +107,7 @@ public class GlobalComponentRegistry extends AbstractComponentRegistry {
          registerComponent(cacheManager, EmbeddedCacheManager.class);
          registerComponent(new CacheManagerJmxRegistration(), CacheManagerJmxRegistration.class);
          registerComponent(new CacheManagerNotifierImpl(), CacheManagerNotifier.class);
+         registerComponent(new ClusterRegistryImpl(), ClusterRegistry.class);
 
          moduleProperties.loadModuleCommandHandlers(configuredClassLoader);
          Map<Byte, ModuleCommandFactory> factories = moduleProperties.moduleCommandFactories();

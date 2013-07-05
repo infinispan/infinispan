@@ -3,6 +3,7 @@ package org.infinispan.manager;
 import org.infinispan.Cache;
 import org.infinispan.config.Configuration;
 import org.infinispan.config.GlobalConfiguration;
+import org.infinispan.factories.GlobalComponentRegistry;
 import org.infinispan.lifecycle.ComponentStatus;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.remoting.transport.Transport;
@@ -161,6 +162,10 @@ public class AbstractDelegatingEmbeddedCacheManager implements EmbeddedCacheMana
    }
 
    @Override
+   public GlobalComponentRegistry getGlobalComponentRegistry() {
+      return cm.getGlobalComponentRegistry();
+   }
+
    public void addListener(Object listener) {
       cm.addListener(listener);
    }

@@ -103,5 +103,6 @@ public interface Ids extends org.infinispan.commons.marshall.Ids {
    int EMBEDDED_METADATA = 98;
 
    int NUMERIC_VERSION = 99;
+   int SCOPED_KEY = 100;
 
 }

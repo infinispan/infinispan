@@ -20,7 +20,7 @@ public class RpcManagerFactory extends EmptyConstructorNamedCacheFactory impleme
          return null;
 
       // only do this if we have a transport configured!
-      if (globalConfiguration.transport().transport() == null)
+      if (!globalConfiguration.isClustered())
          throw new CacheConfigurationException("Transport should be configured in order to use clustered caches");
 
       return componentType.cast(new RpcManagerImpl());

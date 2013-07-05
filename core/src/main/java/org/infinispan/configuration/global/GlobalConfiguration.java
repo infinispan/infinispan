@@ -154,4 +154,8 @@ public class GlobalConfiguration {
    public ExecutorFactoryConfiguration totalOrderExecutor() {
       return totalOrderExecutor;
    }
+
+   public boolean isClustered() {
+      return transport().transport() != null;
+   }
 }
