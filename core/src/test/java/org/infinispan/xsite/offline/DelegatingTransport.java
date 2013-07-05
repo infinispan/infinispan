@@ -128,7 +128,7 @@ public class DelegatingTransport implements Transport {
    }
 
    @Override
-   public void checkTotalOrderSupported(boolean anycast) {
-      actual.checkTotalOrderSupported(anycast);
+   public void checkTotalOrderSupported() {
+      actual.checkTotalOrderSupported();
    }
 }
