@@ -15,11 +15,9 @@ import org.apache.lucene.search.TopDocs;
 import org.apache.lucene.store.Directory;
 import org.apache.lucene.store.LockObtainFailedException;
 import org.infinispan.configuration.cache.CacheMode;
-import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.lucene.testutils.LuceneSettings;
 import org.infinispan.manager.CacheContainer;
-import org.infinispan.manager.DefaultCacheManager;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.infinispan.transaction.TransactionMode;
 import org.infinispan.util.logging.Log;
@@ -258,25 +256,6 @@ public abstract class CacheTestSupport {
       }
       sb.append("\n");
       System.out.println(sb.toString());
-   }
-
-   /**
-    * We should remove this very soon, but it's currently being needed by the JDBC
-    * CacheLoader as there is no new alternative for programmatic configuration.
-    */
-   @Deprecated
-   public static org.infinispan.config.Configuration createLegacyTestConfiguration() {
-      org.infinispan.config.Configuration c = new org.infinispan.config.Configuration();
-      c.setCacheMode(org.infinispan.config.Configuration.CacheMode.DIST_SYNC);
-      c.setSyncReplTimeout(10000);
-      c.setLockAcquisitionTimeout(10000);
-      c.setSyncCommitPhase(true);
-      c.setL1CacheEnabled(true);
-      c.setExposeJmxStatistics(false);
-      c.setSyncRollbackPhase(true);
-      c.setEnableDeadlockDetection(false);
-      c.setInvocationBatchingEnabled(false);
-      return c;
    }
 
 }
