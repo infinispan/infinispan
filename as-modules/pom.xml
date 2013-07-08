@@ -12,11 +12,6 @@
    <name>Infinispan AS/EAP modules</name>
    <packaging>pom</packaging>
 
-   <properties>
-      <infinispan.slot>5.3</infinispan.slot>
-      <jgroups.slot>3.2</jgroups.slot>
-   </properties>
-
    <dependencies>
       <dependency>
          <groupId>org.infinispan</groupId>
