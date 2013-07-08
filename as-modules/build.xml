@@ -3,6 +3,9 @@
    <property name="output.dir" value="${project.build.directory}/infinispan-as-modules" />
 
    <import file="lib.xml" />
+   
+   <major-minor version="${project.version}" property="infinispan.slot"/>
+   <major-minor artifact="${org.jgroups:jgroups:jar}" property="jgroups.slot"/> 
 
    <target name="clean">
       <delete dir="${output.dir}" />
@@ -35,6 +38,10 @@
 
       <module-def name="org.infinispan.cachestore.remote" slot="${infinispan.slot}">
          <maven-resource group="org.infinispan" artifact="infinispan-cachestore-remote" />
+      </module-def>
+      
+      <module-def name="org.infinispan.commons" slot="${infinispan.slot}">
+         <maven-resource group="org.infinispan" artifact="infinispan-commons" />
       </module-def>
 
       <module-def name="org.infinispan.tree" slot="${infinispan.slot}">
