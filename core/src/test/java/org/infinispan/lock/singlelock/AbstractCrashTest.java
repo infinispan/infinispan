@@ -60,7 +60,7 @@ public abstract class AbstractCrashTest extends MultipleCacheManagersTest {
       return c;
    }
 
-   protected Object beginAndPrepareTx(final Object k, final int cacheIndex) {
+   protected void beginAndPrepareTx(final Object k, final int cacheIndex) {
       fork(new Runnable() {
          @Override
          public void run() {
@@ -68,16 +68,16 @@ public abstract class AbstractCrashTest extends MultipleCacheManagersTest {
                tm(cacheIndex).begin();
                cache(cacheIndex).put(k,"v");
                final DummyTransaction transaction = (DummyTransaction) tm(cacheIndex).getTransaction();
+               transaction.notifyBeforeCompletion();
                transaction.runPrepare();
             } catch (Throwable e) {
-               e.printStackTrace();
+               log.errorf(e, "Error preparing transaction for key %s on cache %s", k, cache(cacheIndex));
             }
          }
       }, false);
-      return k;
    }
 
-   protected Object beginAndCommitTx(final Object k, final int cacheIndex) {
+   protected void beginAndCommitTx(final Object k, final int cacheIndex) {
       fork(new Runnable() {
          @Override
          public void run() {
@@ -90,7 +90,6 @@ public abstract class AbstractCrashTest extends MultipleCacheManagersTest {
             }
          }
       }, false);
-      return k;
    }
 
    public static class TxControlInterceptor extends CommandInterceptor {

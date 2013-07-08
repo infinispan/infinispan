@@ -7,8 +7,8 @@ import org.infinispan.transaction.LockingMode;
 import org.infinispan.transaction.tm.DummyTransaction;
 import org.testng.annotations.Test;
 
-import static org.testng.Assert.assertEquals;
 import static org.testng.Assert.fail;
+import static org.testng.AssertJUnit.assertEquals;
 
 /**
  * @author Mircea Markus
@@ -47,13 +47,13 @@ public class LockOwnerCrashOptimisticTest extends AbstractLockOwnerCrashTest {
       });
 
       killMember(2);
-      assert caches().size() == 2;
+      assertEquals("Wrong number of caches", 2, caches().size());
 
       tm(1).resume(transaction);
       tm(1).commit();
 
-      assertEquals(cache(0).get(k), "v");
-      assertEquals(cache(1).get(k), "v");
+      assertEquals("Wrong value for key 'k' in " + cache(0), "v", cache(0).get(k));
+      assertEquals("Wrong value for key 'k' in " + cache(1), "v", cache(1).get(k));
 
       assertNotLocked(k);
       eventually(new Condition() {
@@ -89,7 +89,7 @@ public class LockOwnerCrashOptimisticTest extends AbstractLockOwnerCrashTest {
       });
 
       killMember(2);
-      assert caches().size() == 2;
+      assertEquals("Wrong number of caches", 2, caches().size());
 
 
       tm(1).begin();

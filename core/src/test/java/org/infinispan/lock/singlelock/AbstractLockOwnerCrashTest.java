@@ -9,6 +9,8 @@ import org.testng.annotations.Test;
 import javax.transaction.Status;
 import javax.transaction.Transaction;
 
+import static org.testng.AssertJUnit.assertEquals;
+
 /**
  * @author Mircea Markus
  * @since 5.1
@@ -58,7 +60,7 @@ public abstract class AbstractLockOwnerCrashTest extends AbstractCrashTest {
       });
 
       killMember(2);
-      assert caches().size() == 2;
+      assertEquals("Wrong number of caches", 2, caches().size());
 
 
       tm(secondTxNode).begin();

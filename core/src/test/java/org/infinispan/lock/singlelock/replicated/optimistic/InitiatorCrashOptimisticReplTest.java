@@ -8,11 +8,14 @@ import org.testng.annotations.Test;
 
 import java.util.concurrent.CountDownLatch;
 
+import static org.testng.AssertJUnit.assertEquals;
+import static org.testng.AssertJUnit.assertTrue;
+
 /**
  * @author Mircea Markus
  * @since 5.1
  */
-@Test(groups = "functional", testName = "lock.singlelock.replicated.optimistic.InitiatorCrashOptimisticReplTest", enabled = false, description = "See ISPN-2161")
+@Test(groups = "functional", testName = "lock.singlelock.replicated.optimistic.InitiatorCrashOptimisticReplTest")
 @CleanupAfterMethod
 public class InitiatorCrashOptimisticReplTest extends AbstractCrashTest {
 
@@ -37,9 +40,9 @@ public class InitiatorCrashOptimisticReplTest extends AbstractCrashTest {
       assertNotLocked(cache(1), "k");
       assertNotLocked(cache(2), "k");
 
-      checkTxCount(0, 0, 1);
-      checkTxCount(1, 1, 0);
-      checkTxCount(2, 0, 1);
+      assertTrue("Wrong tx count for " + cache(0), checkTxCount(0, 0, 1));
+      assertTrue("Wrong tx count for " + cache(1), checkTxCount(1, 1, 0));
+      assertTrue("Wrong tx count for " + cache(2), checkTxCount(2, 0, 1));
 
       killMember(1);
 
@@ -60,9 +63,9 @@ public class InitiatorCrashOptimisticReplTest extends AbstractCrashTest {
       beginAndCommitTx("k", 1);
       releaseLocksLatch.await();
 
-      assert checkTxCount(0, 0, 1);
-      assert checkTxCount(1, 0, 0);
-      assert checkTxCount(2, 0, 1);
+      assertTrue("Wrong tx count for " + cache(0), checkTxCount(0, 0, 1));
+      assertTrue("Wrong tx count for " + cache(1), checkTxCount(1, 0, 0));
+      assertTrue("Wrong tx count for " + cache(2), checkTxCount(2, 0, 1));
 
       assertLocked(cache(0), "k");
       assertNotLocked(cache(1), "k");
@@ -77,8 +80,8 @@ public class InitiatorCrashOptimisticReplTest extends AbstractCrashTest {
          }
       });
       assertNotLocked("k");
-      assert cache(0).get("k").equals("v");
-      assert cache(1).get("k").equals("v");
+      assertEquals("Wrong value for key 'k' in " + cache(0), "v", cache(0).get("k"));
+      assertEquals("Wrong value for key 'k' in " + cache(1), "v", cache(1).get("k"));
    }
 
    public void testInitiatorNodeCrashesBeforePrepare() throws Exception {
@@ -90,13 +93,13 @@ public class InitiatorCrashOptimisticReplTest extends AbstractCrashTest {
       beginAndPrepareTx("k", 1);
 
       txControlInterceptor.preparedReceived.await();
-      assert checkTxCount(0, 0, 1);
-      assert checkTxCount(1, 1, 0);
-      assert checkTxCount(2, 0, 1);
+      assertTrue("Wrong tx count for " + cache(0), checkTxCount(0, 0, 1));
+      assertTrue("Wrong tx count for " + cache(1), checkTxCount(1, 1, 0));
+      assertTrue("Wrong tx count for " + cache(2), checkTxCount(2, 0, 1));
 
       killMember(1);
 
-      assert caches().size() == 2;
+      assertEquals("Wrong number of caches", 2, caches().size());
       txControlInterceptor.prepareProgress.countDown();
 
       assertNotLocked("k");

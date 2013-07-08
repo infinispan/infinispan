@@ -8,11 +8,14 @@ import org.testng.annotations.Test;
 
 import java.util.concurrent.CountDownLatch;
 
+import static org.testng.AssertJUnit.assertEquals;
+import static org.testng.AssertJUnit.assertTrue;
+
 /**
  * @author Mircea Markus
  * @since 5.1
  */
-@Test(groups = "functional", testName = "lock.singlelock.replicated.pessimistic.InitiatorCrashPessimisticReplTest", enabled = false, description = "See ISPN-2161")
+@Test(groups = "functional", testName = "lock.singlelock.replicated.pessimistic.InitiatorCrashPessimisticReplTest")
 @CleanupAfterMethod
 public class InitiatorCrashPessimisticReplTest extends InitiatorCrashOptimisticReplTest {
 
@@ -20,31 +23,14 @@ public class InitiatorCrashPessimisticReplTest extends InitiatorCrashOptimisticR
       super(CacheMode.REPL_SYNC, LockingMode.PESSIMISTIC, false);
    }
 
+   @Override
    public void testInitiatorNodeCrashesBeforeCommit() throws Exception {
-      TxControlInterceptor txControlInterceptor = new TxControlInterceptor();
-      txControlInterceptor.prepareProgress.countDown();
-      advancedCache(1).addInterceptor(txControlInterceptor, 1);
-
-      beginAndCommitTx("k", 1);
-      txControlInterceptor.preparedReceived.await();
-
-      assertLocked(cache(0), "k");
-      assertNotLocked(cache(1), "k");
-      assertNotLocked(cache(2), "k");
-
-      checkTxCount(0, 0, 1);
-      checkTxCount(1, 1, 0);
-      checkTxCount(2, 0, 1);
-
-      killMember(1);
-
-      assertNotLocked("k");
-      eventually(new Condition() {
-         @Override
-         public boolean isSatisfied() throws Exception {
-            return checkTxCount(0, 0, 0) && checkTxCount(1, 0, 0);
-         }
-      });
+      /*
+       In pessimist caches, we have only one phase (PrepareCommand with onePhaseCommit to true).
+       So we only have two scenarios:
+       1. initiator dies before prepare (covered in testInitiatorNodeCrashesBeforePrepare)
+       2. initiator dies after prepare (covered in testInitiatorCrashesBeforeReleasingLock)
+       */
    }
 
    public void testInitiatorCrashesBeforeReleasingLock() throws Exception {
@@ -55,9 +41,9 @@ public class InitiatorCrashPessimisticReplTest extends InitiatorCrashOptimisticR
       beginAndCommitTx("k", 1);
       releaseLocksLatch.await();
 
-      assert checkTxCount(0, 0, 1);
-      assert checkTxCount(1, 0, 0);
-      assert checkTxCount(2, 0, 1);
+      assertTrue("Wrong tx count for " + cache(0),  checkTxCount(0, 0, 1));
+      assertTrue("Wrong tx count for " + cache(0),  checkTxCount(1, 0, 0));
+      assertTrue("Wrong tx count for " + cache(0),  checkTxCount(2, 0, 1));
 
       assertLocked(cache(0), "k");
       assertNotLocked(cache(1), "k");
@@ -72,15 +58,15 @@ public class InitiatorCrashPessimisticReplTest extends InitiatorCrashOptimisticR
          }
       });
       assertNotLocked("k");
-      assert cache(0).get("k").equals("v");
-      assert cache(1).get("k").equals("v");
+      assertEquals("Wrong value for key 'k' in " + cache(0), "v", cache(0).get("k"));
+      assertEquals("Wrong value for key 'k' in " + cache(1), "v", cache(1).get("k"));
    }
 
    public void testInitiatorNodeCrashesBeforePrepare() throws Exception {
       cache(0).put("a", "b");
-      assert cache(0).get("a").equals("b");
-      assert cache(1).get("a").equals("b");
-      assert cache(2).get("a").equals("b");
+      assertEquals("Wrong value for key 'a' in " + cache(0), "b", cache(0).get("a"));
+      assertEquals("Wrong value for key 'a' in " + cache(1), "b", cache(1).get("a"));
+      assertEquals("Wrong value for key 'a' in " + cache(2), "b", cache(2).get("a"));
 
       TxControlInterceptor txControlInterceptor = new TxControlInterceptor();
       advancedCache(1).addInterceptor(txControlInterceptor, 1);
@@ -97,7 +83,7 @@ public class InitiatorCrashPessimisticReplTest extends InitiatorCrashOptimisticR
 
       killMember(1);
 
-      assert caches().size() == 2;
+      assertEquals("Wrong number of caches", 2, caches().size());
       txControlInterceptor.prepareProgress.countDown();
 
       assertNotLocked("k");

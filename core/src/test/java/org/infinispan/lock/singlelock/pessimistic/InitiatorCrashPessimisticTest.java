@@ -7,6 +7,9 @@ import org.infinispan.test.fwk.CleanupAfterMethod;
 import org.infinispan.transaction.LockingMode;
 import org.testng.annotations.Test;
 
+import static org.testng.AssertJUnit.assertEquals;
+import static org.testng.AssertJUnit.assertTrue;
+
 /**
  * @author Mircea Markus
  * @since 5.1
@@ -19,7 +22,7 @@ public class InitiatorCrashPessimisticTest extends AbstractInitiatorCrashTest {
       super(CacheMode.DIST_SYNC, LockingMode.PESSIMISTIC, false);
    }
 
- public void testInitiatorNodeCrashesBeforePrepare2() throws Exception {
+   public void testInitiatorNodeCrashesBeforePrepare2() throws Exception {
 
       Object k0 = getKeyForCache(0);
       Object k1 = getKeyForCache(1);
@@ -42,13 +45,13 @@ public class InitiatorCrashPessimisticTest extends AbstractInitiatorCrashTest {
       assertNotLocked(cache(1), k2);
       assertLocked(cache(2), k2);
 
-      assert checkTxCount(0, 0, 1);
-      assert checkTxCount(1, 1, 0);
-      assert checkTxCount(2, 0, 1);
+      assertTrue("Wrong tx count for " + cache(0), checkTxCount(0, 0, 1));
+      assertTrue("Wrong tx count for " + cache(1), checkTxCount(1, 1, 0));
+      assertTrue("Wrong tx count for " + cache(2), checkTxCount(2, 0, 1));
 
       killMember(1);
 
-      assert caches().size() == 2;
+      assertEquals("Wrong number of caches", 2, caches().size());
 
       assertNotLocked(k0);
       assertNotLocked(k1);
