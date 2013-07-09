@@ -9,6 +9,8 @@ import org.infinispan.Cache;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.global.GlobalConfigurationBuilder;
 import org.infinispan.lifecycle.ComponentStatus;
+import org.infinispan.manager.EmbeddedCacheManager;
+import org.infinispan.transaction.TransactionMode;
 import org.springframework.core.io.ClassPathResource;
 import org.springframework.core.io.Resource;
 import org.testng.annotations.Test;
@@ -45,9 +47,9 @@ public class SpringEmbeddedCacheManagerFactoryBeanTest {
       final SpringEmbeddedCacheManager springEmbeddedCacheManager = objectUnderTest.getObject();
 
       assertNotNull(
-               "getObject() should have returned a valid SpringEmbeddedCacheManager, even if no defaulConfigurationLocation "
-                        + "has been specified. However, it returned null.",
-               springEmbeddedCacheManager);
+            "getObject() should have returned a valid SpringEmbeddedCacheManager, even if no defaulConfigurationLocation "
+                  + "has been specified. However, it returned null.",
+            springEmbeddedCacheManager);
       springEmbeddedCacheManager.stop();
    }
 
@@ -119,7 +121,7 @@ public class SpringEmbeddedCacheManagerFactoryBeanTest {
       final SpringEmbeddedCacheManagerFactoryBean objectUnderTest = new SpringEmbeddedCacheManagerFactoryBean();
 
       assertTrue("isSingleton() should always return true. However, it returned false",
-               objectUnderTest.isSingleton());
+            objectUnderTest.isSingleton());
    }
 
    /**
@@ -149,27 +151,29 @@ public class SpringEmbeddedCacheManagerFactoryBeanTest {
 
    // Testing the addBuilder() methods
    @Test
-   public final void testAddGlobalConfiguration() throws Exception {
+   public final void testAddConfigurations() throws Exception {
       final SpringEmbeddedCacheManagerFactoryBean objectUnderTest = new SpringEmbeddedCacheManagerFactoryBean();
+
+      // Allow duplicate domains. A good little configuration modification to make. If this isn't enabled,
+      // JMXDomainConflicts occur which break the testsuite. This way we can also have a non-default configuration to
+      // check.
       GlobalConfigurationBuilder gcb = new GlobalConfigurationBuilder();
       gcb.globalJmxStatistics().allowDuplicateDomains(true);
-      objectUnderTest.addCustomGlobalConfiguration(gcb);
-      objectUnderTest.afterPropertiesSet();
-      final SpringEmbeddedCacheManager springEmbeddedCacheManager = objectUnderTest.getObject();
-      assertEquals("The provided Global builder is not the same produced by the cache manager",
-            gcb.build().globalJmxStatistics().allowDuplicateDomains(),
-            springEmbeddedCacheManager.getNativeCacheManager().getCacheManagerConfiguration().globalJmxStatistics().allowDuplicateDomains());
-   }
 
-   @Test
-   public final void testAddCacheConfiguration() throws Exception {
-      final SpringEmbeddedCacheManagerFactoryBean objectUnderTest = new SpringEmbeddedCacheManagerFactoryBean();
+      // Now prepare a cache configuration.
       ConfigurationBuilder builder = new ConfigurationBuilder();
+      builder.transaction().transactionMode(TransactionMode.NON_TRANSACTIONAL);
+
+      // Now add them to the object that we are testing.
+      objectUnderTest.addCustomGlobalConfiguration(gcb);
       objectUnderTest.addCustomCacheConfiguration(builder);
       objectUnderTest.afterPropertiesSet();
-      final SpringEmbeddedCacheManager springEmbeddedCacheManager = objectUnderTest.getObject();
-      assertEquals("The provided Global builder is not the same produced by the cache manager", builder.build(),
-            springEmbeddedCacheManager.getNativeCacheManager().getCache().getCacheConfiguration());
 
+      // Get the cache manager and make assertions.
+      final EmbeddedCacheManager infinispanEmbeddedCacheManager = objectUnderTest.getObject().getNativeCacheManager();
+      assertEquals(infinispanEmbeddedCacheManager.getCacheManagerConfiguration().globalJmxStatistics()
+            .allowDuplicateDomains(), gcb.build().globalJmxStatistics().allowDuplicateDomains());
+      assertEquals(infinispanEmbeddedCacheManager.getDefaultCacheConfiguration().transaction().transactionMode().isTransactional(),
+            builder.build().transaction().transactionMode().isTransactional());
    }
 }

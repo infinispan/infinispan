@@ -262,21 +262,21 @@ public class InfinispanNamedEmbeddedCacheFactoryBeanTest {
       objectUnderTest.afterPropertiesSet();
    }
 
-//   /**
-//    * Negative test case for {@link InfinispanNamedEmbeddedCacheFactoryBean#addCustomConfiguration(org.infinispan.configuration.cache.ConfigurationBuilder)}
-//    *
-//    * @throws Exception
-//    */
-//   @Test(expectedExceptions = IllegalStateException.class)
-//   public final void infinispanNamedEmbeddedCacheFactoryShouldRejectConfigurationTemplateModeCUSTOM() throws
-//            Exception {
-//      final InfinispanNamedEmbeddedCacheFactoryBean<Object, Object> objectUnderTest = new
-//            InfinispanNamedEmbeddedCacheFactoryBean<Object, Object>();
-//      objectUnderTest.setInfinispanEmbeddedCacheManager(DEFAULT_CACHE_MANAGER);
-//      objectUnderTest.setCacheName(CACHE_NAME_FROM_CONFIGURATION_FILE);
-//      objectUnderTest.setConfigurationTemplateMode("CUSTOM");
-//      objectUnderTest.afterPropertiesSet();
-//   }
+   /**
+    * Negative test case for {@link InfinispanNamedEmbeddedCacheFactoryBean#addCustomConfiguration(org.infinispan.configuration.cache.ConfigurationBuilder)}
+    *
+    * @throws Exception
+    */
+   @Test(expectedExceptions = IllegalStateException.class)
+   public final void infinispanNamedEmbeddedCacheFactoryShouldRejectConfigurationTemplateModeCUSTOM() throws
+            Exception {
+      final InfinispanNamedEmbeddedCacheFactoryBean<Object, Object> objectUnderTest = new
+            InfinispanNamedEmbeddedCacheFactoryBean<Object, Object>();
+      objectUnderTest.setInfinispanEmbeddedCacheManager(DEFAULT_CACHE_MANAGER);
+      objectUnderTest.setCacheName(CACHE_NAME_FROM_CONFIGURATION_FILE);
+      objectUnderTest.setConfigurationTemplateMode("CUSTOM");
+      objectUnderTest.afterPropertiesSet();
+   }
 
    @Test
    public final void infinispanNamedEmbeddedCacheFactoryShouldAcceptConfigurationTemplateModeCUSTOM() throws

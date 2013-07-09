@@ -15,6 +15,7 @@ import org.infinispan.lifecycle.ComponentStatus;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.spring.provider.SpringEmbeddedCacheManagerFactoryBean;
 import org.infinispan.test.CacheManagerCallable;
+import org.infinispan.transaction.TransactionMode;
 import org.springframework.core.io.ClassPathResource;
 import org.springframework.core.io.Resource;
 import org.testng.annotations.Test;
@@ -162,29 +163,30 @@ public class InfinispanEmbeddedCacheManagerFactoryBeanTest {
 
    // Testing the addBuilder() methods
    @Test
-   public final void testAddGlobalConfiguration() throws Exception {
+   public final void testAddConfigurations() throws Exception {
       final InfinispanEmbeddedCacheManagerFactoryBean objectUnderTest = new InfinispanEmbeddedCacheManagerFactoryBean();
+
+      // Allow duplicate domains. A good little configuration modification to make. If this isn't enabled,
+      // JMXDomainConflicts occur which break the testsuite. This way we can also have a non-default configuration to
+      // check.
       GlobalConfigurationBuilder gcb = new GlobalConfigurationBuilder();
       gcb.globalJmxStatistics().allowDuplicateDomains(true);
-      objectUnderTest.addCustomGlobalConfiguration(gcb);
-      objectUnderTest.afterPropertiesSet();
-      final EmbeddedCacheManager infinispanEmbeddedCacheManager = objectUnderTest.getObject();
 
-      assertEquals("The provided Global builder is not the same produced by the cache manager",
-            gcb.build().globalJmxStatistics().allowDuplicateDomains(),
-            infinispanEmbeddedCacheManager.getCacheManagerConfiguration().globalJmxStatistics().allowDuplicateDomains());
-   }
-
-   @Test
-   public final void testAddCacheConfiguration() throws Exception {
-      final InfinispanEmbeddedCacheManagerFactoryBean objectUnderTest = new InfinispanEmbeddedCacheManagerFactoryBean();
+      // Now prepare a cache configuration.
       ConfigurationBuilder builder = new ConfigurationBuilder();
+      builder.transaction().transactionMode(TransactionMode.NON_TRANSACTIONAL);
+
+      // Now add them to the object that we are testing.
+      objectUnderTest.addCustomGlobalConfiguration(gcb);
       objectUnderTest.addCustomCacheConfiguration(builder);
       objectUnderTest.afterPropertiesSet();
+
+      // Get the cache manager and make assertions.
       final EmbeddedCacheManager infinispanEmbeddedCacheManager = objectUnderTest.getObject();
-      assertEquals("The provided Global builder is not the same produced by the cache manager", builder.build(),
-            infinispanEmbeddedCacheManager.getCache().getCacheConfiguration());
-
+      assertEquals(infinispanEmbeddedCacheManager.getCacheManagerConfiguration().globalJmxStatistics()
+            .allowDuplicateDomains(), gcb.build().globalJmxStatistics().allowDuplicateDomains());
+      assertEquals(infinispanEmbeddedCacheManager.getDefaultCacheConfiguration().transaction()
+            .transactionMode().isTransactional(),
+            builder.build().transaction().transactionMode().isTransactional());
    }
-
 }
