@@ -13,7 +13,9 @@ public class PutForExternalReadReplNonTxTest extends PutForExternalReadTest {
 
    @Override
    protected ConfigurationBuilder createCacheConfigBuilder() {
-      return getDefaultClusteredCacheConfig(CacheMode.REPL_SYNC, false);
+      ConfigurationBuilder c = getDefaultClusteredCacheConfig(CacheMode.REPL_SYNC, true);
+      c.clustering().hash().numSegments(4);
+      return c;
    }
 
    @Override

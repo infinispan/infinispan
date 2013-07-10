@@ -14,6 +14,8 @@ import static org.testng.AssertJUnit.fail;
 
 import java.lang.reflect.Method;
 import java.util.List;
+import java.util.concurrent.CyclicBarrier;
+import java.util.concurrent.TimeUnit;
 
 import javax.transaction.Status;
 import javax.transaction.Transaction;
@@ -23,6 +25,9 @@ import org.infinispan.Cache;
 import org.infinispan.commands.remote.CacheRpcCommand;
 import org.infinispan.commands.write.PutKeyValueCommand;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
+import org.infinispan.context.InvocationContext;
+import org.infinispan.distribution.MagicKey;
+import org.infinispan.interceptors.base.BaseCustomInterceptor;
 import org.infinispan.remoting.rpc.ResponseFilter;
 import org.infinispan.remoting.rpc.ResponseMode;
 import org.infinispan.remoting.rpc.RpcManager;
@@ -42,7 +47,7 @@ public abstract class PutForExternalReadTest extends MultipleCacheManagersTest {
 
    protected static final String CACHE_NAME = "pferSync";
 
-   protected static final String key = "k", value = "v", value2 = "v2";
+   protected static final String key = "k", value = "v1", value2 = "v2";
 
    @Override
    protected void createCacheManagers() {
@@ -51,6 +56,42 @@ public abstract class PutForExternalReadTest extends MultipleCacheManagersTest {
    }
 
    protected abstract ConfigurationBuilder createCacheConfigBuilder();
+
+   public void testKeyOnlyWrittenOnceOnOriginator() throws Exception {
+      final Cache<MagicKey, String> cache1 = cache(0, CACHE_NAME);
+      final Cache<MagicKey, String> cache2 = cache(1, CACHE_NAME);
+
+      final CyclicBarrier barrier = new CyclicBarrier(2);
+      cache1.getAdvancedCache().addInterceptor(new BaseCustomInterceptor() {
+         @Override
+         public Object visitPutKeyValueCommand(InvocationContext ctx, PutKeyValueCommand command) throws Throwable {
+            if (!ctx.isOriginLocal()) {
+               // wait first before the check
+               barrier.await(10, TimeUnit.SECONDS);
+               // and once more after the check
+               barrier.await(10, TimeUnit.SECONDS);
+            }
+
+            return invokeNextInterceptor(ctx, command);
+         }
+      }, 0);
+
+      final MagicKey myKey = new MagicKey(cache2);
+      cache1.putForExternalRead(myKey, value);
+
+      // Verify that the key was not written on the origin by the time it was looped back
+      barrier.await(10, TimeUnit.SECONDS);
+      assertNull(cache1.get(myKey));
+
+      // Verify that the key is written on the origin afterwards
+      barrier.await(10, TimeUnit.SECONDS);
+      eventually(new Condition() {
+         @Override
+         public boolean isSatisfied() throws Exception {
+            return value.equals(cache1.get(myKey)) && value.equals(cache2.get(myKey));
+         }
+      });
+   }
 
    public void testNoOpWhenKeyPresent() {
       final Cache<String, String> cache1 = cache(0, CACHE_NAME);

@@ -1,5 +1,6 @@
 package org.infinispan.interceptors;
 
+import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.metadata.Metadata;
 import org.infinispan.commands.AbstractVisitor;
 import org.infinispan.commands.CommandsFactory;
@@ -153,10 +154,12 @@ public class EntryWrappingInterceptor extends CommandInterceptor {
          return true;
       }
       boolean result;
-      if (cacheConfiguration.transaction().transactionMode().isTransactional()) {
+      boolean isTransactional = cacheConfiguration.transaction().transactionMode().isTransactional();
+      boolean isPutForExternalRead = command.hasFlag(Flag.PUT_FOR_EXTERNAL_READ);
+      if (isTransactional && !isPutForExternalRead) {
          result = true;
       } else {
-         if (isUsingLockDelegation) {
+         if (isUsingLockDelegation || isTransactional) {
             result = cdl.localNodeIsPrimaryOwner(key) || (cdl.localNodeIsOwner(key) && !ctx.isOriginLocal());
          } else {
             result = cdl.localNodeIsOwner(key);
