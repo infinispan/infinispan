@@ -5,16 +5,16 @@ import java.io.ObjectOutput;
 import java.util.Collections;
 import java.util.Set;
 
-import javax.cache.CacheWriter;
-
 import org.infinispan.container.entries.InternalCacheEntry;
 import org.infinispan.loaders.AbstractCacheStore;
 import org.infinispan.loaders.CacheLoaderConfig;
 import org.infinispan.loaders.CacheLoaderException;
 
+import javax.cache.integration.CacheWriter;
+
 public class JCacheWriterAdapter<K, V> extends AbstractCacheStore {
 
-   private CacheWriter<K, V> delegate;
+   private CacheWriter<? super K, ? super V> delegate;
 
    public JCacheWriterAdapter() {
       // Empty constructor required so that it can be instantiated with
@@ -22,7 +22,7 @@ public class JCacheWriterAdapter<K, V> extends AbstractCacheStore {
       // loader configuration works.
    }
 
-   public void setCacheWriter(CacheWriter<K, V> delegate) {
+   public void setCacheWriter(CacheWriter<? super K, ? super V> delegate) {
       this.delegate = delegate;
    }
 

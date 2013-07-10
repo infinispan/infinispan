@@ -5,11 +5,10 @@ import org.testng.annotations.Test;
 
 import javax.cache.Cache;
 import javax.cache.CacheManager;
-import javax.cache.Caching;
-import javax.cache.Configuration;
-import javax.cache.ExpiryPolicy;
-import javax.cache.Factory;
-import javax.cache.MutableConfiguration;
+import javax.cache.configuration.Factory;
+import javax.cache.configuration.MutableConfiguration;
+import javax.cache.expiry.Duration;
+import javax.cache.expiry.ExpiryPolicy;
 import javax.cache.spi.CachingProvider;
 import java.lang.reflect.Method;
 
@@ -34,23 +33,21 @@ public class JCacheExpiryTest {
          public ExpiryPolicy<? super Integer, ? super String> create() {
             return new ExpiryPolicy<Integer, String>() {
                @Override
-               public Configuration.Duration getTTLForCreatedEntry(
+               public Duration getExpiryForCreatedEntry(
                      Cache.Entry<? extends Integer, ? extends String> entry) {
-                  return Configuration.Duration.ETERNAL;
+                  return Duration.ETERNAL;
                }
 
                @Override
-               public Configuration.Duration getTTLForAccessedEntry(
-                     Cache.Entry<? extends Integer, ? extends String> entry,
-                     Configuration.Duration duration) {
+               public Duration getExpiryForAccessedEntry(
+                     Cache.Entry<? extends Integer, ? extends String> entry) {
                   return null;
                }
 
                @Override
-               public Configuration.Duration getTTLForModifiedEntry(
-                     Cache.Entry<? extends Integer, ? extends String> entry,
-                     Configuration.Duration duration) {
-                  return Configuration.Duration.ZERO;
+               public Duration getExpiryForModifiedEntry(
+                     Cache.Entry<? extends Integer, ? extends String> entry) {
+                  return Duration.ZERO;
                }
             };
          }

@@ -6,6 +6,8 @@ import org.infinispan.commands.write.EvictCommand;
 import org.infinispan.commands.write.PutKeyValueCommand;
 import org.infinispan.commands.write.PutMapCommand;
 import org.infinispan.commands.write.RemoveCommand;
+import org.infinispan.commands.write.ReplaceCommand;
+import org.infinispan.commands.write.WriteCommand;
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.container.DataContainer;
 import org.infinispan.context.Flag;
@@ -50,7 +52,6 @@ public class CacheMgmtInterceptor extends JmxStatsCommandInterceptor {
 
    private DataContainer dataContainer;
    private TimeService timeService;
-   private Configuration configuration;
 
    private static final Log log = LogFactory.getLog(CacheMgmtInterceptor.class);
 
@@ -130,6 +131,15 @@ public class CacheMgmtInterceptor extends JmxStatsCommandInterceptor {
    @Override
    //Map.put(key,value) :: oldValue
    public Object visitPutKeyValueCommand(InvocationContext ctx, PutKeyValueCommand command) throws Throwable {
+      return updateStoreStatistics(ctx, command);
+   }
+
+   @Override
+   public Object visitReplaceCommand(InvocationContext ctx, ReplaceCommand command) throws Throwable {
+      return updateStoreStatistics(ctx, command);
+   }
+
+   private Object updateStoreStatistics(InvocationContext ctx, WriteCommand command) throws Throwable {
       long start = 0;
       boolean statisticsEnabled = getStatisticsEnabled(command);
       if (statisticsEnabled)

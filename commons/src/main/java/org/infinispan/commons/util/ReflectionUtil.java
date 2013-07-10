@@ -366,4 +366,12 @@ public class ReflectionUtil {
          setValue(o, (String) entry.getKey(), entry.getValue());
       }
    }
+
+   public static <T> T unwrap(Object obj, Class<T> clazz) {
+      if (clazz != null && clazz.isAssignableFrom(obj.getClass()))
+         return clazz.cast(obj);
+
+      throw log.unableToUnwrap(obj, clazz);
+   }
+
 }

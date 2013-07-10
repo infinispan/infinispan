@@ -91,7 +91,7 @@ public final class RIMBeanServerRegistrationUtility {
     * @throws javax.cache.CacheException - all exceptions are wrapped in
     *                                    CacheException
     */
-   static void unregisterCacheObject(JCache cache, ObjectNameType objectNameType) {
+   static <K, V> void unregisterCacheObject(JCache<K, V> cache, ObjectNameType objectNameType) {
       Set<ObjectName> registeredObjectNames;
       MBeanServer mBeanServer = cache.getMBeanServer();
 
@@ -112,7 +112,7 @@ public final class RIMBeanServerRegistrationUtility {
    /**
     * Creates an object name using the scheme "javax.cache:type=Cache&lt;Statistics|Configuration&gt;,CacheManager=&lt;cacheManagerName&gt;,name=&lt;cacheName&gt;"
     */
-   private static ObjectName calculateObjectName(Cache cache, ObjectNameType objectNameType) {
+   private static <K, V> ObjectName calculateObjectName(JCache<K, V> cache, ObjectNameType objectNameType) {
       String cacheManagerName = mbeanSafe(cache.getCacheManager().getURI().toString());
       String cacheName = mbeanSafe(cache.getName());
 

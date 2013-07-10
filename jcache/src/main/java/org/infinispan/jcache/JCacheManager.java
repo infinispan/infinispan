@@ -4,28 +4,35 @@ import java.io.FileNotFoundException;
 import java.io.InputStream;
 import java.net.URI;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.Properties;
 import java.util.Set;
 
 import javax.cache.*;
+import javax.cache.configuration.Configuration;
+import javax.cache.configuration.MutableConfiguration;
+import javax.cache.configuration.OptionalFeature;
 import javax.cache.spi.CachingProvider;
 import javax.cache.transaction.IsolationLevel;
 import javax.cache.transaction.Mode;
 import javax.transaction.UserTransaction;
 
 import org.infinispan.AdvancedCache;
+import org.infinispan.commons.util.InfinispanCollections;
+import org.infinispan.commons.util.ReflectionUtil;
 import org.infinispan.configuration.global.GlobalConfigurationBuilder;
 import org.infinispan.configuration.parsing.ConfigurationBuilderHolder;
 import org.infinispan.configuration.parsing.ParserRegistry;
 import org.infinispan.jcache.logging.Log;
+import org.infinispan.lifecycle.ComponentStatus;
 import org.infinispan.manager.DefaultCacheManager;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.commons.util.FileLookup;
 import org.infinispan.commons.util.FileLookupFactory;
 import org.infinispan.util.logging.LogFactory;
+
+import static org.infinispan.jcache.RIMBeanServerRegistrationUtility.ObjectNameType.CONFIGURATION;
+import static org.infinispan.jcache.RIMBeanServerRegistrationUtility.ObjectNameType.STATISTICS;
 
 /**
  * Infinispan's implementation of {@link javax.cache.CacheManager}.
@@ -43,8 +50,15 @@ public class JCacheManager implements CacheManager {
    private final URI uri;
    private final EmbeddedCacheManager cm;
    private final CachingProvider provider;
-   private volatile Status status = Status.UNINITIALISED;
    private final StackTraceElement[] allocationStackTrace;
+
+   /**
+    * A flag indicating whether the cache manager is closed or not.
+    * Cache manager's status does not fit well here because even if an
+    * trying to stop a cache manager whose status is {@link ComponentStatus#INSTANTIATED}
+    * does not change it to {@link ComponentStatus#TERMINATED}
+    */
+   private volatile boolean isClosed;
 
    /**
     * Create a new InfinispanCacheManager given a cache name and a {@link ClassLoader}. Cache name
@@ -83,7 +97,8 @@ public class JCacheManager implements CacheManager {
 
       cm = new DefaultCacheManager(cbh, true);
       registerPredefinedCaches();
-      status = Status.STARTED;
+
+      isClosed = false;
    }
 
    public JCacheManager(URI uri, EmbeddedCacheManager cacheManager, CachingProvider provider) {
@@ -93,7 +108,6 @@ public class JCacheManager implements CacheManager {
       this.provider = provider;
       this.cm = cacheManager;
       registerPredefinedCaches();
-      status = Status.STARTED;
    }
 
    private void registerPredefinedCaches() {
@@ -138,42 +152,36 @@ public class JCacheManager implements CacheManager {
       return null;
    }
 
-   @Override
-   public Status getStatus() {
-      return status;
-   }
-
    @SuppressWarnings("unchecked")
    @Override
-   public <K, V> Cache<K, V> configureCache(String cacheName, Configuration<K, V> c) {
-      checkStartedStatus();
+   public <K, V> Cache<K, V> configureCache(String cacheName, Configuration<K, V> configuration) {
+      checkNotClosed();
 
       // spec required
-      if (cacheName == null || cacheName.length() == 0) {
-         throw new NullPointerException("cacheName specified is invalid " + cacheName);
-      }
+      if (cacheName == null)
+         throw log.parameterMustNotBeNull("cacheName");
 
       // spec required
-      if (c == null) {
-         throw new NullPointerException("configuration specified is invalid " + c);
-      }
+      if (configuration == null)
+         throw log.parameterMustNotBeNull("configuration");
 
-      boolean noIsolationWithTx = c.getTransactionIsolationLevel() == IsolationLevel.NONE
-               && c.getTransactionMode() != Mode.NONE;
-      boolean isolationWithNoTx = c.getTransactionIsolationLevel() != IsolationLevel.NONE
-               && c.getTransactionMode() == Mode.NONE;
+      if ((!configuration.isStoreByValue()) && configuration.isTransactionsEnabled())
+         throw log.storeByReferenceAndTransactionsNotAllowed();
+
+      IsolationLevel isolationLevel = configuration.getTransactionIsolationLevel();
+      Mode txMode = configuration.getTransactionMode();
+      boolean noIsolationWithTx = isolationLevel == IsolationLevel.NONE && txMode != Mode.NONE;
+      boolean isolationWithNoTx = isolationLevel != IsolationLevel.NONE && txMode == Mode.NONE;
 
       // spec required
-      if (noIsolationWithTx || isolationWithNoTx) {
-         throw new IllegalArgumentException("Incompatible IsolationLevel "
-                  + c.getTransactionIsolationLevel() + " and tx mode " + c.getTransactionMode());
-      }
+      if (noIsolationWithTx || isolationWithNoTx)
+         throw log.incompatibleIsolationLevelAndTransactionMode(isolationLevel, txMode);
 
       synchronized (caches) {
          JCache<?, ?> cache = caches.get(cacheName);
 
          if (cache == null) {
-            ConfigurationAdapter<K, V> adapter = new ConfigurationAdapter<K, V>(c);
+            ConfigurationAdapter<K, V> adapter = new ConfigurationAdapter<K, V>(configuration);
             cm.defineConfiguration(cacheName, adapter.build());
             AdvancedCache<K, V> ispnCache =
                   cm.<K, V>getCache(cacheName).getAdvancedCache();
@@ -182,21 +190,50 @@ public class JCacheManager implements CacheManager {
             if (!ispnCache.getStatus().allowInvocations())
                ispnCache.start();
 
-            cache = new JCache<K, V>(ispnCache, this, c);
-
-            cache.start();
+            cache = new JCache<K, V>(ispnCache, this, configuration);
             caches.put(cache.getName(), cache);
-         } else {
+         }
+         else {
             // re-register attempt with different configuration
-            if (!cache.getConfiguration().equals(c)) {
-               throw new CacheException("Cache " + cacheName
-                        + " already registered with configuration " + cache.getConfiguration()
-                        + ", and can not be registered again with a new given configuration " + c);
-            }
+            if (!cache.getConfiguration().equals(configuration))
+               throw log.cacheAlreadyRegistered(cacheName, cache.getConfiguration(), configuration);
          }
 
          return (Cache<K, V>) cache;
       }
+   }
+
+   @Override
+   public <K, V> Cache<K, V> getCache(String cacheName, Class<K> keyType, Class<V> valueType) {
+      if (keyType == null)
+         throw new NullPointerException("keyType can not be null");
+
+      if (valueType == null)
+         throw new NullPointerException("valueType can not be null");
+
+      synchronized (caches) {
+         Cache<K, V> cache = (Cache<K, V>) caches.get(cacheName);
+         if (cache != null) {
+            Configuration<?, ?> configuration = cache.getConfiguration();
+
+            Class<?> cfgKeyType = configuration.getKeyType();
+            if (verifyType(keyType, cfgKeyType)) {
+               Class<?> cfgValueType = configuration.getValueType();
+               if (verifyType(valueType, cfgValueType))
+                  return cache;
+
+               throw log.incompatibleType(valueType, cfgValueType);
+            }
+
+            throw log.incompatibleType(keyType, cfgKeyType);
+         }
+
+         return null;
+      }
+   }
+
+   private <K> boolean verifyType(Class<K> type, Class<?> cfgType) {
+      return cfgType != null && cfgType.equals(type);
    }
 
    public <K, V> Cache<K, V> configureCache(String cacheName, AdvancedCache<K, V> ispnCache) {
@@ -212,38 +249,48 @@ public class JCacheManager implements CacheManager {
 
    @Override
    public <K, V> Cache<K, V> getCache(String cacheName) {
-      checkStartedStatus();
+      checkNotClosed();
       synchronized (caches) {
-         return (Cache<K, V>) caches.get(cacheName);
-      }
-   }
+         Cache<K, V> cache = (Cache<K, V>) caches.get(cacheName);
+         if (cache != null) {
+            Configuration<K, V> configuration = cache.getConfiguration();
+            Class<K> keyType = configuration.getKeyType();
+            Class<V> valueType = configuration.getValueType();
+            if (keyType == null && valueType == null)
+               return cache;
 
-   @Override
-   public Iterable<Cache<?, ?>> getCaches() {
-      synchronized (caches) {
-         HashSet<Cache<?, ?>> set = new HashSet<Cache<?, ?>>();
-         for (Cache<?, ?> cache : caches.values()) {
-            set.add(cache);
+            throw log.unsafeTypedCacheRequest(cacheName, keyType, valueType);
          }
-         return Collections.unmodifiableSet(set);
+
+         return null;
       }
    }
 
    @Override
-   public boolean removeCache(String cacheName) {
-      checkStartedStatus();
-      if (cacheName == null) {
-         throw new NullPointerException();
-      }
-      Cache<?, ?> oldCache;
+   public Iterable<String> getCacheNames() {
+      return isClosed ? InfinispanCollections.<String>emptyList() : cm.getCacheNames();
+   }
+
+   @Override
+   public void destroyCache(String cacheName) {
+      checkNotClosed();
+      if (cacheName == null)
+         throw new NullPointerException("cacheName cannot be null");
+
+      JCache<?, ?> destroyedCache;
       synchronized (caches) {
-         oldCache = caches.remove(cacheName);
-      }
-      if (oldCache != null) {
-         oldCache.stop();
+         destroyedCache = caches.remove(cacheName);
       }
 
-      return oldCache != null;
+      cm.removeCache(cacheName);
+      unregisterCacheMBeans(destroyedCache);
+   }
+
+   private void unregisterCacheMBeans(JCache<?, ?> cache) {
+      if (cache != null) {
+         RIMBeanServerRegistrationUtility.unregisterCacheObject(cache, STATISTICS);
+         RIMBeanServerRegistrationUtility.unregisterCacheObject(cache, CONFIGURATION);
+      }
    }
 
    @Override
@@ -270,31 +317,33 @@ public class JCacheManager implements CacheManager {
 
    @Override
    public void close() {
-      checkStartedStatus();
-      ArrayList<Cache<?, ?>> cacheList;
-      synchronized (caches) {
-         cacheList = new ArrayList<Cache<?, ?>>(caches.values());
-         caches.clear();
-      }
-      for (Cache<?, ?> cache : cacheList) {
-         try {
-            cache.stop();
-         } catch (Exception e) {
-            // log?
+      if (!isClosed()) {
+         ArrayList<JCache<?, ?>> cacheList;
+         synchronized (caches) {
+            cacheList = new ArrayList<JCache<?, ?>>(caches.values());
+            caches.clear();
          }
+         for (JCache<?, ?> cache : cacheList) {
+            try {
+               cache.close();
+               unregisterCacheMBeans(cache);
+            } catch (Exception e) {
+               // log?
+            }
+         }
+         cm.stop();
+         isClosed = true;
       }
-      cm.stop();
-      status = Status.STOPPED;
    }
 
    @Override
-   public <T> T unwrap(java.lang.Class<T> cls) {
-      if (cls.isAssignableFrom(this.getClass())) {
-         return cls.cast(this);
-      }
+   public boolean isClosed() {
+      return cm.getStatus().isTerminated() || isClosed;
+   }
 
-      throw new IllegalArgumentException("Unwapping to " + cls
-               + " is not a supported by this implementation");
+   @Override
+   public <T> T unwrap(Class<T> clazz) {
+      return ReflectionUtil.unwrap(this, clazz);
    }
 
    /**
@@ -304,7 +353,7 @@ public class JCacheManager implements CacheManager {
    @Override
    protected void finalize() throws Throwable {
       try {
-         if(status != Status.STOPPED) {
+         if(!isClosed) {
             // Create the leak description
             Throwable t = log.cacheManagerNotClosed();
             t.setStackTrace(allocationStackTrace);
@@ -317,9 +366,9 @@ public class JCacheManager implements CacheManager {
       }
    }
 
-   private void checkStartedStatus() {
-      if (status != Status.STARTED) {
-         throw new IllegalStateException();
-      }
+   private void checkNotClosed() {
+      if (isClosed())
+         throw new IllegalStateException("Cache manager is in " + cm.getStatus() + " status");
    }
+
 }
