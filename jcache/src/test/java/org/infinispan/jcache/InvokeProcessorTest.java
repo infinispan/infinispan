@@ -6,8 +6,7 @@ import org.testng.annotations.Test;
 import javax.cache.Cache;
 import javax.cache.CacheException;
 import javax.cache.CacheManager;
-import javax.cache.Caching;
-import javax.cache.MutableConfiguration;
+import javax.cache.configuration.MutableConfiguration;
 import javax.cache.spi.CachingProvider;
 import java.lang.reflect.Method;
 import java.util.ArrayList;
@@ -20,7 +19,7 @@ import static org.testng.AssertJUnit.fail;
 import static org.testng.AssertJUnit.assertTrue;
 
 /**
- * Add {@link Cache#invokeEntryProcessor(Object, javax.cache.Cache.EntryProcessor, Object...)}
+ * Add {@link Cache#invoke(Object, javax.cache.Cache.EntryProcessor, Object...)}
  * tests covering edge cases missing in the TCK.
  *
  * @author Galder Zamarreño
@@ -59,7 +58,7 @@ public class InvokeProcessorTest {
             final String query = "select * from x";
             cache.put(query, list);
             try {
-               cache.invokeEntryProcessor(query,
+               cache.invoke(query,
                      new Cache.EntryProcessor<String, List<Integer>, Object>() {
                         @Override
                         public Object process(Cache.MutableEntry<String, List<Integer>> entry, Object... arguments) {
@@ -88,7 +87,7 @@ public class InvokeProcessorTest {
             List<Integer> list = new ArrayList<Integer>(Arrays.asList(1, 2, 3));
             final String query = "select * from x";
             cache.put(query, list);
-            cache.invokeEntryProcessor(query,
+            cache.invoke(query,
                   new Cache.EntryProcessor<String, List<Integer>, Object>() {
                      @Override
                      public Object process(Cache.MutableEntry<String, List<Integer>> entry, Object... arguments) {

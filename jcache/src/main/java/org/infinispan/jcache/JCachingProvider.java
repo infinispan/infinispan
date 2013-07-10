@@ -1,17 +1,13 @@
 package org.infinispan.jcache;
 
-import org.infinispan.manager.DefaultCacheManager;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
 import javax.cache.CacheManager;
-import javax.cache.CachingShutdownException;
-import javax.cache.OptionalFeature;
-import javax.cache.Status;
+import javax.cache.configuration.OptionalFeature;
 import javax.cache.spi.CachingProvider;
 import java.net.URI;
 import java.util.HashMap;
-import java.util.IdentityHashMap;
 import java.util.Map;
 import java.util.Properties;
 import java.util.WeakHashMap;
@@ -23,6 +19,7 @@ import java.util.WeakHashMap;
  * @author Galder Zamarreño
  * @since 5.3
  */
+@SuppressWarnings("unused")
 public class JCachingProvider implements CachingProvider {
 
    private static final Log log = LogFactory.getLog(JCachingProvider.class);
@@ -72,7 +69,7 @@ public class JCachingProvider implements CachingProvider {
          }
 
          JCacheManager cacheManager= map.get(uri);
-         if (cacheManager == null || cacheManager.getStatus() == Status.STOPPED) {
+         if (cacheManager == null || cacheManager.isClosed()) {
             // Not found or stopped, create cache manager and add to collection
             cacheManager = createCacheManager(classLoader, uri);
             if (log.isTraceEnabled())
@@ -120,22 +117,12 @@ public class JCachingProvider implements CachingProvider {
    @Override
    public void close() {
       synchronized (cacheManagers) {
-         Map<CacheManager, Exception> failures =
-               new IdentityHashMap<CacheManager, Exception>();
-         for (Map<URI, JCacheManager> map : cacheManagers.values()) {
-            try {
-               close(map);
-            } catch (CachingShutdownException e) {
-               failures.putAll(e.getFailures());
-            }
-         }
+         for (Map<URI, JCacheManager> map : cacheManagers.values())
+            close(map);
+
          cacheManagers.clear();
          if (log.isTraceEnabled())
             log.tracef("All cache managers have been removed");
-
-         if (!failures.isEmpty()) {
-            throw new CachingShutdownException(failures);
-         }
       }
    }
 
@@ -149,12 +136,14 @@ public class JCachingProvider implements CachingProvider {
       synchronized (cacheManagers) {
          if (uri != null) {
             Map<URI, JCacheManager> map = cacheManagers.get(classLoader);
-            JCacheManager cacheManager = map.remove(uri);
-            if (map.isEmpty())
-               cacheManagers.remove(classLoader);
+            if (map != null) {
+               JCacheManager cacheManager = map.remove(uri);
+               if (map.isEmpty())
+                  cacheManagers.remove(classLoader);
 
-            if (cacheManager != null)
-               cacheManager.close();
+               if (cacheManager != null)
+                  cacheManager.close();
+            }
          } else {
             Map<URI, JCacheManager> cacheManagersToClose = cacheManagers.remove(classLoader);
             if (cacheManagersToClose != null)
@@ -163,20 +152,11 @@ public class JCachingProvider implements CachingProvider {
       }
    }
 
-   private void close(Map<URI, JCacheManager> map) throws CachingShutdownException {
-      IdentityHashMap<CacheManager, Exception> failures = new IdentityHashMap<CacheManager, Exception>();
+   private void close(Map<URI, JCacheManager> map) {
       for (CacheManager cacheManager : map.values()) {
-         try {
-            cacheManager.close();
-
-            if (log.isTraceEnabled())
-               log.tracef("Shutdown cache manager '%s'", cacheManager.getURI());
-         } catch (Exception e) {
-            failures.put(cacheManager, e);
-         }
-      }
-      if (!failures.isEmpty()) {
-         throw new CachingShutdownException(failures);
+         cacheManager.close();
+         if (log.isTraceEnabled())
+            log.tracef("Shutdown cache manager '%s'", cacheManager.getURI());
       }
    }
 

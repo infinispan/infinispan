@@ -1,5 +1,7 @@
 package org.infinispan.jcache;
 
+import org.infinispan.commons.util.ReflectionUtil;
+
 import javax.cache.Cache.Entry;
 
 /**
@@ -30,6 +32,11 @@ public final class JCacheEntry<K, V> implements Entry<K, V> {
    @Override
    public V getValue() {
       return value;
+   }
+
+   @Override
+   public <T> T unwrap(Class<T> clazz) {
+      return ReflectionUtil.unwrap(this, clazz);
    }
 
 }

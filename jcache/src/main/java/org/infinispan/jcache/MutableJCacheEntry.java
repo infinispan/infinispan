@@ -1,12 +1,13 @@
 package org.infinispan.jcache;
 
 import org.infinispan.AdvancedCache;
+import org.infinispan.commons.util.ReflectionUtil;
 
 import javax.cache.Cache;
 
 /**
- * Infinispan implementation of {@link Cache.MutableEntry<K, V>} designed to
- * be passed as parameter to {@link Cache.EntryProcessor#process(javax.cache.Cache.MutableEntry)}.
+ * Infinispan implementation of {@link Cache.MutableEntry} designed to
+ * be passed as parameter to {@link Cache.EntryProcessor#process(javax.cache.Cache.MutableEntry, Object...)}.
  *
  * @param <K> the type of key maintained by this cache entry
  * @param <V> the type of value maintained by this cache entry
@@ -75,6 +76,11 @@ public final class MutableJCacheEntry<K, V> implements Cache.MutableEntry<K, V> 
       }
 
       return null;
+   }
+
+   @Override
+   public <T> T unwrap(Class<T> clazz) {
+      return ReflectionUtil.unwrap(this, clazz);
    }
 
    V getNewValue() {

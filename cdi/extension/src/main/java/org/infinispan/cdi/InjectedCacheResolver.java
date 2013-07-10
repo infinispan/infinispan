@@ -82,15 +82,12 @@ public class InjectedCacheResolver implements CacheResolver {
          for (String name : cacheNames) {
             if (name.equals(cacheName)) {
                JCacheManager jcacheManager = jcacheManagers.get(cm);
-               Iterable<Cache<?, ?>> caches = jcacheManager.getCaches();
-               for (Cache<?, ?> c : caches) {
-                  if (c.getName().equals(cacheName))
-                     return (Cache<K, V>) c;
-               }
+               Cache<K, V> cache = jcacheManager.getCache(cacheName);
+               if (cache != null)
+                  return cache;
 
-               Cache<K, V> ret = (Cache<K, V>) jcacheManager.configureCache(
-                     cacheName, cm.getCache(cacheName).getAdvancedCache());
-               return ret;
+               return jcacheManager.configureCache(
+                     cacheName, cm.<K, V>getCache(cacheName).getAdvancedCache());
             }
          }
       }
@@ -102,14 +99,12 @@ public class InjectedCacheResolver implements CacheResolver {
    }
 
    private <K, V> Cache<K, V> getCacheFromDefaultCacheManager(String cacheName) {
-      Iterable<Cache<?, ?>> caches = defaultJCacheManager.getCaches();
-      for (Cache<?, ?> cache : caches) {
-         if (cache.getName().endsWith(cacheName))
-            return (Cache<K, V>) cache;
-      }
+      Cache<K, V> cache = defaultJCacheManager.getCache(cacheName);
+      if (cache != null)
+         return cache;
 
-      return (Cache<K, V>) defaultJCacheManager.configureCache(cacheName,
-            defaultCacheManager.getCache().getAdvancedCache());
+      return defaultJCacheManager.configureCache(cacheName,
+            defaultCacheManager.<K, V>getCache().getAdvancedCache());
    }
 
 }
