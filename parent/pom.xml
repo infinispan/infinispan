@@ -1916,11 +1916,6 @@
       
       <profile>
          <id>jdk6testsuite</id>
-         <activation>
-            <property>
-               <name>env.JAVA_HOME_16</name>
-            </property>
-         </activation>
          <build>
             <plugins>
                <plugin>
