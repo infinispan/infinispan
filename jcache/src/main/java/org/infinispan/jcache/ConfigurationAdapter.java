@@ -10,7 +10,7 @@ import javax.cache.integration.CacheWriter;
 /**
  * ConfigurationAdapter takes {@link javax.cache.configuration.Configuration} and creates
  * equivalent instance of {@link org.infinispan.configuration.cache.Configuration}
- * 
+ *
  * @author Vladimir Blagojevic
  * @author Galder Zamarreño
  * @since 5.3
@@ -67,13 +67,13 @@ public class ConfigurationAdapter<K, V> {
       Factory<CacheLoader<K,V>> cacheLoaderFactory = c.getCacheLoaderFactory();
       if (cacheLoaderFactory != null) {
          // User-defined cache loader will be plugged once cache has started
-         cb.loaders().addStore().cacheStore(new JCacheLoaderAdapter());
+         cb.loaders().addLoader(JCacheLoaderAdapterConfigurationBuilder.class);
       }
 
       Factory<CacheWriter<? super K, ? super V>> cacheWriterFactory = c.getCacheWriterFactory();
       if (cacheWriterFactory != null) {
          // User-defined cache writer will be plugged once cache has started
-         cb.loaders().addStore().cacheStore(new JCacheWriterAdapter());
+         cb.loaders().addStore(JCacheWriterAdapterConfigurationBuilder.class);
       }
 
       if (c.isStatisticsEnabled())

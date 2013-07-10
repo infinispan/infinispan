@@ -1,13 +1,11 @@
 package org.infinispan.loaders.dummy;
 
 import org.infinispan.Cache;
+import org.infinispan.configuration.cache.CacheLoaderConfiguration;
 import org.infinispan.container.entries.InternalCacheEntry;
-import org.infinispan.loaders.AbstractCacheStore;
-import org.infinispan.loaders.AbstractCacheStoreConfig;
-import org.infinispan.loaders.CacheLoaderConfig;
 import org.infinispan.loaders.CacheLoaderException;
-import org.infinispan.loaders.CacheLoaderMetadata;
-import org.infinispan.loaders.CacheStore;
+import org.infinispan.loaders.spi.AbstractCacheStore;
+import org.infinispan.loaders.spi.CacheStore;
 import org.infinispan.commons.CacheException;
 import org.infinispan.commons.marshall.StreamingMarshaller;
 import org.infinispan.commons.util.InfinispanCollections;
@@ -25,13 +23,11 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.Map;
-import java.util.Properties;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.atomic.AtomicInteger;
 
-@CacheLoaderMetadata(configurationClass = DummyInMemoryCacheStore.Cfg.class)
 public class DummyInMemoryCacheStore extends AbstractCacheStore {
    private static final Log log = LogFactory.getLog(DummyInMemoryCacheStore.class);
    private static final boolean trace = log.isTraceEnabled();
@@ -43,7 +39,8 @@ public class DummyInMemoryCacheStore extends AbstractCacheStore {
    Map<Object, byte[]> store;
    // When a store is 'shared', multiple nodes could be trying to update it concurrently.
    ConcurrentMap<String, AtomicInteger> stats;
-   Cfg config;
+
+   private DummyInMemoryCacheStoreConfiguration configuration;
 
    public DummyInMemoryCacheStore(String storeName) {
       this.storeName = storeName;
@@ -59,12 +56,12 @@ public class DummyInMemoryCacheStore extends AbstractCacheStore {
    @Override
    public void store(InternalCacheEntry ed) {
       record("store");
-      if (config.slow) {
+      if (configuration.slow()) {
          TestingUtil.sleepThread(100);
       }
       if (ed != null) {
          if (debug) log.debugf("Store %s in dummy map store@%s", ed, Util.hexIdHashCode(store));
-         config.failIfNeeded(ed.getKey());
+         configuration.failKey();
          store.put(ed.getKey(), serializeEntry(ed));
       }
    }
@@ -94,7 +91,6 @@ public class DummyInMemoryCacheStore extends AbstractCacheStore {
    }
 
    @Override
-   @SuppressWarnings("unchecked")
    public void fromStream(ObjectInput ois) throws CacheLoaderException {
       record("fromStream");
       try {
@@ -149,10 +145,11 @@ public class DummyInMemoryCacheStore extends AbstractCacheStore {
    }
 
    @Override
-   public void init(CacheLoaderConfig config, Cache cache, StreamingMarshaller m) throws CacheLoaderException {
-      super.init(config, cache, m);
-      this.config = (Cfg) config;
-      storeName = this.config.getStoreName();
+   public void init(CacheLoaderConfiguration configuration, Cache<?, ?> cache, StreamingMarshaller m) throws
+         CacheLoaderException {
+      super.init(configuration, cache, m);
+      this.configuration = (DummyInMemoryCacheStoreConfiguration) configuration;
+      storeName = this.configuration.storeName();
       if (marshaller == null) marshaller = new TestObjectStreamMarshaller();
    }
 
@@ -219,12 +216,6 @@ public class DummyInMemoryCacheStore extends AbstractCacheStore {
    }
 
    @Override
-   public Class<? extends CacheLoaderConfig> getConfigurationClass() {
-      record("getConfigurationClass");
-      return Cfg.class;
-   }
-
-   @Override
    public void start() throws CacheLoaderException {
       super.start();
 
@@ -269,8 +260,7 @@ public class DummyInMemoryCacheStore extends AbstractCacheStore {
       record("stop");
       super.stop();
 
-      if (config.isPurgeOnStartup()) {
-         String storeName = config.getStoreName();
+      if (configuration.purgeOnStartup()) {
          if (storeName != null) {
             stores.remove(storeName);
          }
@@ -327,119 +317,6 @@ public class DummyInMemoryCacheStore extends AbstractCacheStore {
          throw new RuntimeException(String.format(
                "Timed out waiting (%d ms) for cache store to be flushed. entries-not-stored=[%s], entries-not-removed=[%s]",
                timeout, notStored, notRemoved));
-      }
-   }
-
-   public static class Cfg extends AbstractCacheStoreConfig {
-
-      private static final long serialVersionUID = 4258914047690999424L;
-
-      boolean debug;
-      boolean slow;
-      String storeName = null;
-      private Object failKey;
-
-      public Cfg() {
-         this(null);
-      }
-
-      public Cfg(String name) {
-         setCacheLoaderClassName(DummyInMemoryCacheStore.class.getName());
-         storeName(name);
-      }
-
-      public boolean isDebug() {
-         return debug;
-      }
-
-      public Cfg debug(boolean debug) {
-         this.debug = debug;
-         return this;
-      }
-
-      public Cfg slow(boolean slow) {
-         this.slow = slow;
-         return this;
-      }
-
-      public String getStoreName() {
-         return storeName;
-      }
-
-      /**
-       * @deprecated use {@link #storeName(String)}
-       */
-      @Deprecated
-      public void setStoreName(String store) {
-         this.storeName = store;
-      }
-
-      public Cfg storeName(String store) {
-         setStoreName(store);
-         return this;
-      }
-
-      @Override
-      public Cfg clone() {
-         return (Cfg) super.clone();
-      }
-
-      /**
-       * @deprecated use {@link #failKey(Object)}
-       */
-      @Deprecated
-      public void setFailKey(Object failKey) {
-         this.failKey = failKey;
-      }
-
-      public Cfg failKey(Object failKey) {
-         setFailKey(failKey);
-         return this;
-      }
-
-      public void failIfNeeded(Object key) {
-         if(failKey != null && failKey.equals(key)) throw new RuntimeException("Induced failure on key:" + key);
-      }
-
-      @Override
-      public Cfg fetchPersistentState(Boolean fetchPersistentState) {
-         super.fetchPersistentState(fetchPersistentState);
-         return this;
-      }
-
-      @Override
-      public Cfg ignoreModifications(Boolean ignoreModifications) {
-         super.ignoreModifications(ignoreModifications);
-         return this;
-      }
-
-      @Override
-      public Cfg purgeOnStartup(Boolean purgeOnStartup) {
-         super.purgeOnStartup(purgeOnStartup);
-         return this;
-      }
-
-      @Override
-      public Cfg purgerThreads(Integer purgerThreads) {
-         super.purgerThreads(purgerThreads);
-         return this;
-      }
-
-      @Override
-      public Cfg purgeSynchronously(Boolean purgeSynchronously) {
-         super.purgeSynchronously(purgeSynchronously);
-         return this;
-      }
-
-      @Override
-      public Properties getProperties() {
-         Properties p = super.getProperties();
-         p.setProperty("debug", Boolean.toString(debug));
-         if (storeName != null)
-            p.setProperty("storeName", storeName);
-         if (failKey != null) // TODO: Find a better way...
-            p.setProperty("storeName", failKey.toString());
-         return p;
       }
    }
 }

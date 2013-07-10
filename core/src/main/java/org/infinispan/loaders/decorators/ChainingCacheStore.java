@@ -1,17 +1,15 @@
 package org.infinispan.loaders.decorators;
 
 import net.jcip.annotations.GuardedBy;
+
 import org.infinispan.Cache;
-import org.infinispan.configuration.cache.LegacyConfigurationAdaptor;
 import org.infinispan.configuration.cache.CacheLoaderConfiguration;
 import org.infinispan.configuration.cache.CacheStoreConfiguration;
 import org.infinispan.container.entries.InternalCacheEntry;
-import org.infinispan.loaders.CacheLoader;
-import org.infinispan.loaders.CacheLoaderConfig;
 import org.infinispan.loaders.CacheLoaderException;
-import org.infinispan.loaders.CacheStore;
-import org.infinispan.loaders.CacheStoreConfig;
 import org.infinispan.loaders.modifications.Modification;
+import org.infinispan.loaders.spi.CacheLoader;
+import org.infinispan.loaders.spi.CacheStore;
 import org.infinispan.commons.marshall.StreamingMarshaller;
 import org.infinispan.transaction.xa.GlobalTransaction;
 import org.infinispan.util.logging.Log;
@@ -170,11 +168,12 @@ public class ChainingCacheStore implements CacheStore {
    }
 
    @Override
-   public void init(CacheLoaderConfig config, Cache<?, ?> cache, StreamingMarshaller m) throws CacheLoaderException {
+   public void init(CacheLoaderConfiguration configuration, Cache<?, ?> cache, StreamingMarshaller m) throws
+         CacheLoaderException {
       loadersAndStoresMutex.readLock().lock();
       try {
          for (Map.Entry<CacheLoader, CacheLoaderConfiguration> e : loaders.entrySet()) {
-            e.getKey().init(LegacyConfigurationAdaptor.adapt(e.getValue()), cache, m);
+            e.getKey().init(e.getValue(), cache, m);
          }
       } finally {
          loadersAndStoresMutex.readLock().unlock();
@@ -252,11 +251,6 @@ public class ChainingCacheStore implements CacheStore {
    }
 
    @Override
-   public Class<? extends CacheLoaderConfig> getConfigurationClass() {
-      return null;
-   }
-
-   @Override
    public void start() throws CacheLoaderException {
       loadersAndStoresMutex.readLock().lock();
       try {
@@ -276,11 +270,16 @@ public class ChainingCacheStore implements CacheStore {
       }
    }
 
-   public void addCacheLoader(CacheLoader loader, CacheLoaderConfiguration config) {
+   @Override
+   public CacheStoreConfiguration getConfiguration() {
+      return null;
+   }
+
+   public void addCacheLoader(CacheLoader loader) {
       loadersAndStoresMutex.writeLock().lock();
       try {
-         loaders.put(loader, config);
-         if (loader instanceof CacheStore) stores.put((CacheStore) loader, (CacheStoreConfiguration) config);
+         loaders.put(loader, loader.getConfiguration());
+         if (loader instanceof CacheStore) stores.put((CacheStore) loader, (CacheStoreConfiguration) loader.getConfiguration());
       } finally {
          loadersAndStoresMutex.writeLock().unlock();
       }
@@ -306,11 +305,6 @@ public class ChainingCacheStore implements CacheStore {
       } finally {
          loadersAndStoresMutex.readLock().unlock();
       }
-   }
-
-   @Override
-   public CacheStoreConfig getCacheStoreConfig() {
-      return null;
    }
 
    public void removeCacheLoader(String loaderType) {

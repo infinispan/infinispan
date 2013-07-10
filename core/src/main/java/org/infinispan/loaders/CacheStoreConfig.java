@@ -9,6 +9,7 @@ import org.infinispan.loaders.decorators.SingletonStoreConfig;
  * @author Mircea.Markus@jboss.com
  * @author Vladimir Blagojevic
  */
+@Deprecated
 public interface CacheStoreConfig extends CacheLoaderConfig, Cloneable {
 
    Boolean isPurgeOnStartup();
@@ -26,7 +27,7 @@ public interface CacheStoreConfig extends CacheLoaderConfig, Cloneable {
     */
    @Deprecated
    void setIgnoreModifications(Boolean ignoreModifications);
-   
+
    CacheStoreConfig fetchPersistentState(Boolean fetchPersistentState);
 
    CacheStoreConfig ignoreModifications(Boolean ignoreModifications);
@@ -38,7 +39,7 @@ public interface CacheStoreConfig extends CacheLoaderConfig, Cloneable {
     */
    @Deprecated
    void setPurgeOnStartup(Boolean purgeOnStartup);
-   
+
    CacheStoreConfig purgeOnStartup(Boolean purgeOnStartup);
 
    SingletonStoreConfig getSingletonStoreConfig();
@@ -48,7 +49,7 @@ public interface CacheStoreConfig extends CacheLoaderConfig, Cloneable {
     */
    @Deprecated
    void setSingletonStoreConfig(SingletonStoreConfig singletonStoreConfig);
-   
+
    AsyncStoreConfig getAsyncStoreConfig();
 
    /**
@@ -56,7 +57,7 @@ public interface CacheStoreConfig extends CacheLoaderConfig, Cloneable {
     */
    @Deprecated
    void setAsyncStoreConfig(AsyncStoreConfig asyncStoreConfig);
-   
+
    Boolean isPurgeSynchronously();
 
    /**
@@ -64,7 +65,7 @@ public interface CacheStoreConfig extends CacheLoaderConfig, Cloneable {
     */
    @Deprecated
    void setPurgeSynchronously(Boolean purgeSynchronously);
-   
+
    CacheStoreConfig purgeSynchronously(Boolean purgeSynchronously);
 
    Integer getPurgerThreads();

@@ -11,11 +11,11 @@ import javax.xml.bind.annotation.XmlAttribute;
 /**
  * Configuration for the async cache loader. If enabled, this provides you with asynchronous writes
  * to the cache store, giving you 'write-behind' caching.
- * 
+ *
  * @author Manik Surtani
  * @author Vladimir Blagojevic
  * @since 4.0
- * 
+ *
  * @see <a href="../../../../config.html#ce_loader_async">Configuration reference</a>
  */
 @XmlAccessorType(XmlAccessType.PUBLIC_MEMBER)
@@ -50,7 +50,7 @@ public class AsyncStoreConfig extends AbstractDecoratorConfigurationBean {
 
    /**
     * If true, all modifications to this cache store happen asynchronously, on a separate thread.
-    * 
+    *
     * @param enabled
     * @deprecated The visibility of this method will be reduced in favour of more fluent writer method calls.
     */
@@ -59,7 +59,7 @@ public class AsyncStoreConfig extends AbstractDecoratorConfigurationBean {
       testImmutability("enabled");
       this.enabled = enabled;
    }
-   
+
    @XmlAttribute
    public Integer getThreadPoolSize() {
       return threadPoolSize;
@@ -67,19 +67,19 @@ public class AsyncStoreConfig extends AbstractDecoratorConfigurationBean {
 
    /**
     * Size of the thread pool whose threads are responsible for applying the modifications.
-    * 
+    *
     * @param threadPoolSize
     * @deprecated The visibility of this method will be reduced. Use {@link #threadPoolSize(Integer)} instead.
     */
    @Deprecated
    public void setThreadPoolSize(Integer threadPoolSize) {
       testImmutability("threadPoolSize");
-      this.threadPoolSize = threadPoolSize;      
+      this.threadPoolSize = threadPoolSize;
    }
-   
+
    /**
     * Size of the thread pool whose threads are responsible for applying the modifications.
-    * 
+    *
     * @param threadPoolSize
     */
    public AsyncStoreConfig threadPoolSize(Integer threadPoolSize) {
@@ -96,7 +96,7 @@ public class AsyncStoreConfig extends AbstractDecoratorConfigurationBean {
    /**
     * Timeout to acquire the lock which guards the state to be flushed to the cache store
     * periodically.
-    * 
+    *
     * @param stateLockTimeout
     * @deprecated The visibility of this method will be reduced. Use {@link #flushLockTimeout(Long)} instead.
     */
@@ -106,11 +106,11 @@ public class AsyncStoreConfig extends AbstractDecoratorConfigurationBean {
       this.flushLockTimeout = stateLockTimeout;
       return this;
    }
-   
+
    /**
     * Timeout to acquire the lock which guards the state to be flushed to the cache store
     * periodically.
-    * 
+    *
     * @param stateLockTimeout
     */
    public AsyncStoreConfig flushLockTimeout(Long stateLockTimeout) {
@@ -128,7 +128,7 @@ public class AsyncStoreConfig extends AbstractDecoratorConfigurationBean {
     * Timeout to stop the cache store. When the store is stopped it's possible that some
     * modifications still need to be applied; you likely want to set a very large timeout to make
     * sure to not loose data
-    * 
+    *
     * @param shutdownTimeout
     * @deprecated The visibility of this method will be reduced. Use {@link #shutdownTimeout(Long)} instead.
     */
@@ -137,12 +137,12 @@ public class AsyncStoreConfig extends AbstractDecoratorConfigurationBean {
       testImmutability("shutdownTimeout");
       this.shutdownTimeout = shutdownTimeout;
    }
-   
+
    /**
     * Timeout to stop the cache store. When the store is stopped it's possible that some
     * modifications still need to be applied; you likely want to set a very large timeout to make
     * sure to not loose data
-    * 
+    *
     * @param shutdownTimeout
     */
    public AsyncStoreConfig shutdownTimeout(Long shutdownTimeout) {
@@ -182,7 +182,7 @@ public class AsyncStoreConfig extends AbstractDecoratorConfigurationBean {
 
    @Override
    public void accept(ConfigurationBeanVisitor v) {
-      v.visitAsyncStoreConfig(this);
+      //v.visitAsyncStoreConfig(this);
    }
 
 }

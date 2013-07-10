@@ -3,7 +3,7 @@ package org.infinispan.loaders.remote.configuration;
 import java.util.ArrayList;
 import java.util.List;
 
-import org.infinispan.api.BasicCacheContainer;
+import org.infinispan.commons.api.BasicCacheContainer;
 import org.infinispan.client.hotrod.impl.ConfigurationProperties;
 import org.infinispan.client.hotrod.impl.transport.TransportFactory;
 import org.infinispan.client.hotrod.impl.transport.tcp.RoundRobinBalancingStrategy;
@@ -93,6 +93,7 @@ public class RemoteCacheStoreConfigurationBuilder extends
    @Override
    public RemoteCacheStoreConfigurationBuilder hotRodWrapping(boolean hotRodWrapping) {
       this.hotRodWrapping = hotRodWrapping;
+      this.rawValues(true);
       return this;
    }
 

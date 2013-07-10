@@ -2,11 +2,14 @@ package org.infinispan.loaders.file;
 
 import org.infinispan.Cache;
 import org.infinispan.commons.marshall.StreamingMarshaller;
+import org.infinispan.configuration.cache.SingleFileCacheStoreConfiguration;
+import org.infinispan.configuration.cache.SingleFileCacheStoreConfigurationBuilder;
 import org.infinispan.loaders.AbstractCacheStoreTest;
 import org.infinispan.loaders.CacheLoaderException;
 import org.infinispan.marshall.TestObjectStreamMarshaller;
 import org.infinispan.test.AbstractInfinispanTest;
 import org.infinispan.test.TestingUtil;
+import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.infinispan.test.fwk.TestInternalCacheEntryFactory;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.AfterMethod;
@@ -43,11 +46,15 @@ public class BoundedSingleFileCacheStoreTest extends AbstractInfinispanTest {
    public void setUp() throws Exception {
       clearTempDir();
       store = new SingleFileCacheStore();
-      SingleFileCacheStoreConfig cfg = new SingleFileCacheStoreConfig();
-      cfg.location(tmpDirectory);
-      cfg.maxEntries(1);
-      cfg.purgeSynchronously(true);
-      store.init(cfg, getCache(), getMarshaller());
+      SingleFileCacheStoreConfiguration fileStoreConfiguration = TestCacheManagerFactory
+            .getDefaultCacheConfiguration(false)
+            .loaders()
+               .addLoader(SingleFileCacheStoreConfigurationBuilder.class)
+                  .location(this.tmpDirectory)
+                  .maxEntries(1)
+                  .purgeSynchronously(true)
+                  .create();
+      store.init(fileStoreConfiguration, getCache(), getMarshaller());
       store.start();
    }
 

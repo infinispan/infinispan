@@ -3,15 +3,19 @@ package org.infinispan.loaders.jdbc.configuration;
 import java.lang.reflect.Constructor;
 
 import org.infinispan.commons.configuration.ConfigurationUtils;
+import org.infinispan.commons.logging.LogFactory;
 import org.infinispan.commons.CacheConfigurationException;
 import org.infinispan.configuration.cache.AbstractLockSupportStoreConfigurationBuilder;
 import org.infinispan.configuration.cache.LoadersConfigurationBuilder;
 import org.infinispan.loaders.jdbc.connectionfactory.ConnectionFactory;
+import org.infinispan.loaders.jdbc.logging.Log;
 
 public abstract class AbstractJdbcCacheStoreConfigurationBuilder<T extends AbstractJdbcCacheStoreConfiguration, S extends AbstractJdbcCacheStoreConfigurationBuilder<T, S>> extends
       AbstractLockSupportStoreConfigurationBuilder<T, S> implements JdbcCacheStoreConfigurationChildBuilder<S> {
 
+   private static final Log log = LogFactory.getLog(AbstractJdbcCacheStoreConfigurationBuilder.class, Log.class);
    protected ConnectionFactoryConfigurationBuilder<ConnectionFactoryConfiguration> connectionFactory;
+   protected boolean manageConnectionFactory = true;
 
    public AbstractJdbcCacheStoreConfigurationBuilder(LoadersConfigurationBuilder builder) {
       super(builder);
@@ -60,11 +64,18 @@ public abstract class AbstractJdbcCacheStoreConfigurationBuilder<T extends Abstr
       return builder;
    }
 
+   public S manageConnectionFactory(boolean manageConnectionFactory) {
+      this.manageConnectionFactory = manageConnectionFactory;
+      return self();
+   }
+
    @Override
    public void validate() {
       super.validate();
-      if (connectionFactory == null) {
-         throw new CacheConfigurationException("A ConnectionFactory has not been specified for the Store");
+      if (manageConnectionFactory && connectionFactory == null) {
+         throw log.missingConnectionFactory();
+      } else if (!manageConnectionFactory && connectionFactory != null) {
+         throw log.unmanagedConnectionFactory();
       }
    }
 
@@ -77,6 +88,7 @@ public abstract class AbstractJdbcCacheStoreConfigurationBuilder<T extends Abstr
       Class<? extends ConnectionFactoryConfigurationBuilder<?>> cfb = (Class<? extends ConnectionFactoryConfigurationBuilder<?>>) ConfigurationUtils.builderFor(template.connectionFactory());
       connectionFactory(cfb);
       connectionFactory.read(template.connectionFactory());
+      manageConnectionFactory = template.manageConnectionFactory();
 
       // LockSupportStore-specific configuration
       lockAcquistionTimeout = template.lockAcquistionTimeout();

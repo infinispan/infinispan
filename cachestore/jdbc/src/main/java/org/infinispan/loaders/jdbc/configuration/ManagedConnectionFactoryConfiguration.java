@@ -1,7 +1,6 @@
 package org.infinispan.loaders.jdbc.configuration;
 
 import org.infinispan.commons.configuration.BuiltBy;
-import org.infinispan.loaders.jdbc.AbstractJdbcCacheStoreConfig;
 import org.infinispan.loaders.jdbc.connectionfactory.ConnectionFactory;
 import org.infinispan.loaders.jdbc.connectionfactory.ManagedConnectionFactory;
 
@@ -12,7 +11,7 @@ import org.infinispan.loaders.jdbc.connectionfactory.ManagedConnectionFactory;
  * @since 5.2
  */
 @BuiltBy(ManagedConnectionFactoryConfigurationBuilder.class)
-public class ManagedConnectionFactoryConfiguration implements ConnectionFactoryConfiguration, LegacyConnectionFactoryAdaptor {
+public class ManagedConnectionFactoryConfiguration implements ConnectionFactoryConfiguration {
    private final String jndiUrl;
 
    ManagedConnectionFactoryConfiguration(String jndiUrl) {
@@ -26,12 +25,6 @@ public class ManagedConnectionFactoryConfiguration implements ConnectionFactoryC
    @Override
    public Class<? extends ConnectionFactory> connectionFactoryClass() {
       return ManagedConnectionFactory.class;
-   }
-
-   @Override
-   public void adapt(AbstractJdbcCacheStoreConfig config) {
-      config.setConnectionFactoryClass(connectionFactoryClass().getName());
-      config.setDatasourceJndiLocation(jndiUrl);
    }
 
    @Override

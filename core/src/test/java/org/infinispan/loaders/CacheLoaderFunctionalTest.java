@@ -9,6 +9,8 @@ import org.infinispan.test.fwk.TestInternalCacheEntryFactory;
 import org.infinispan.context.Flag;
 import org.infinispan.lifecycle.ComponentStatus;
 import org.infinispan.loaders.dummy.DummyInMemoryCacheStoreConfigurationBuilder;
+import org.infinispan.loaders.manager.CacheLoaderManager;
+import org.infinispan.loaders.spi.CacheStore;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.test.AbstractInfinispanTest;
 import org.infinispan.test.TestingUtil;
@@ -22,6 +24,7 @@ import org.testng.annotations.Test;
 
 import javax.transaction.Transaction;
 import javax.transaction.TransactionManager;
+
 import java.lang.reflect.Method;
 import java.util.Collections;
 
@@ -338,6 +341,7 @@ public class CacheLoaderFunctionalTest extends AbstractInfinispanTest {
       assert c.size() == 0;
 
       purgingCache.start();
+      purgingStore = TestingUtil.extractComponent(purgingCache, CacheLoaderManager.class).getCacheStore();
       c = purgingCache.getAdvancedCache().getDataContainer();
       assert c.size() == 0;
 

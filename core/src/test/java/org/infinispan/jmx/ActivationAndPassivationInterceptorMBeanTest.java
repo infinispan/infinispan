@@ -4,12 +4,14 @@ import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.global.GlobalConfigurationBuilder;
 import org.infinispan.eviction.EvictionStrategy;
 import org.infinispan.loaders.dummy.DummyInMemoryCacheStoreConfigurationBuilder;
+import org.infinispan.loaders.manager.CacheLoaderManager;
+import org.infinispan.loaders.spi.CacheStore;
 import org.infinispan.test.fwk.TestInternalCacheEntryFactory;
-import org.infinispan.loaders.CacheLoaderManager;
-import org.infinispan.loaders.CacheStore;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.test.SingleCacheManagerTest;
+
 import static org.infinispan.test.TestingUtil.*;
+
 import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.testng.annotations.AfterMethod;
@@ -18,6 +20,7 @@ import org.testng.annotations.Test;
 import javax.management.Attribute;
 import javax.management.MBeanServer;
 import javax.management.ObjectName;
+
 import java.lang.reflect.Method;
 import java.util.HashMap;
 import java.util.Map;

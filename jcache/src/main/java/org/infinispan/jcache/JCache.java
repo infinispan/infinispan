@@ -32,7 +32,7 @@ import org.infinispan.interceptors.EntryWrappingInterceptor;
 import org.infinispan.jcache.interceptor.ExpirationTrackingInterceptor;
 import org.infinispan.jcache.logging.Log;
 import org.infinispan.jmx.JmxUtil;
-import org.infinispan.loaders.CacheLoaderManager;
+import org.infinispan.loaders.manager.CacheLoaderManager;
 import org.infinispan.commons.marshall.StreamingMarshaller;
 import org.infinispan.commons.util.InfinispanCollections;
 import org.infinispan.util.concurrent.locks.containers.LockContainer;

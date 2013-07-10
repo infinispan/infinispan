@@ -12,10 +12,9 @@ import javax.cache.integration.CacheLoader;
 import org.infinispan.container.entries.ImmortalCacheEntry;
 import org.infinispan.container.entries.InternalCacheEntry;
 import org.infinispan.jcache.logging.Log;
-import org.infinispan.loaders.AbstractCacheStore;
-import org.infinispan.loaders.CacheLoaderConfig;
 import org.infinispan.loaders.CacheLoaderException;
 import org.infinispan.loaders.modifications.Modification;
+import org.infinispan.loaders.spi.AbstractCacheStore;
 import org.infinispan.transaction.xa.GlobalTransaction;
 import org.infinispan.util.logging.LogFactory;
 
@@ -66,11 +65,6 @@ public class JCacheLoaderAdapter<K, V> extends AbstractCacheStore {
    @Override
    public void stop() throws CacheLoaderException {
       // No-op
-   }
-
-   @Override
-   public Class<? extends CacheLoaderConfig> getConfigurationClass() {
-      return null;
    }
 
    @Override

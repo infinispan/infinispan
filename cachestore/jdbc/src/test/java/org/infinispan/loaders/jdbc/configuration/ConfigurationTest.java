@@ -4,9 +4,6 @@ import org.h2.Driver;
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.loaders.jdbc.DatabaseType;
-import org.infinispan.loaders.jdbc.binary.JdbcBinaryCacheStoreConfig;
-import org.infinispan.loaders.jdbc.mixed.JdbcMixedCacheStoreConfig;
-import org.infinispan.loaders.jdbc.stringbased.JdbcStringBasedCacheStoreConfig;
 import org.testng.annotations.Test;
 
 @Test(groups = "unit", testName = "loaders.jdbc.configuration.ConfigurationTest")
@@ -79,19 +76,6 @@ public class ConfigurationTest {
       assert store2.fetchPersistentState();
       assert store2.lockConcurrencyLevel() == 32;
       assert store2.async().enabled();
-
-      JdbcBinaryCacheStoreConfig legacy = store.adapt();
-      assert legacy.getConnectionFactoryConfig().getConnectionUrl().equals(JDBC_URL);
-      assert legacy.getTableManipulation().getTableNamePrefix().equals("BINARY_");
-      assert legacy.getTableManipulation().getIdColumnName().equals("id");
-      assert legacy.getTableManipulation().getIdColumnType().equals("VARCHAR");
-      assert legacy.getTableManipulation().getDataColumnName().equals("datum");
-      assert legacy.getTableManipulation().getDataColumnType().equals("BINARY");
-      assert legacy.getTableManipulation().getTimestampColumnName().equals("version");
-      assert legacy.getTableManipulation().getTimestampColumnType().equals("BIGINT");
-      assert legacy.isFetchPersistentState();
-      assert legacy.getLockConcurrencyLevel() == 32;
-      assert legacy.getAsyncStoreConfig().isEnabled();
    }
 
    public void testJdbcMixedCacheStoreConfigurationAdaptor() {
@@ -164,12 +148,6 @@ public class ConfigurationTest {
       assert store2.fetchPersistentState();
       assert store2.lockConcurrencyLevel() == 32;
       assert store2.async().enabled();
-
-      JdbcMixedCacheStoreConfig legacy = store.adapt();
-      assert legacy.getConnectionFactoryConfig().getConnectionUrl().equals(JDBC_URL);
-      assert legacy.isFetchPersistentState();
-      assert legacy.getLockConcurrencyLevel() == 32;
-      assert legacy.getAsyncStoreConfig().isEnabled();
    }
 
    public void testJdbcStringCacheStoreConfigurationAdaptor() {
@@ -216,18 +194,5 @@ public class ConfigurationTest {
       assert store2.fetchPersistentState();
       assert store2.lockConcurrencyLevel() == 32;
       assert store2.async().enabled();
-
-      JdbcStringBasedCacheStoreConfig legacy = store.adapt();
-      assert legacy.getConnectionFactoryConfig().getConnectionUrl().equals(JDBC_URL);
-      assert legacy.getTableManipulation().getTableNamePrefix().equals("STRINGS_");
-      assert legacy.getTableManipulation().getIdColumnName().equals("id");
-      assert legacy.getTableManipulation().getIdColumnType().equals("VARCHAR");
-      assert legacy.getTableManipulation().getDataColumnName().equals("datum");
-      assert legacy.getTableManipulation().getDataColumnType().equals("BINARY");
-      assert legacy.getTableManipulation().getTimestampColumnName().equals("version");
-      assert legacy.getTableManipulation().getTimestampColumnType().equals("BIGINT");
-      assert legacy.isFetchPersistentState();
-      assert legacy.getLockConcurrencyLevel() == 32;
-      assert legacy.getAsyncStoreConfig().isEnabled();
    }
 }

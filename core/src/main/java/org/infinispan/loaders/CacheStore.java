@@ -15,6 +15,7 @@ import java.util.Set;
  * @author Manik Surtani
  * @since 4.0
  */
+@Deprecated
 public interface CacheStore extends CacheLoader {
 
    /**

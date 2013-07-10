@@ -4,6 +4,8 @@ import org.infinispan.Cache;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.container.entries.InternalCacheEntry;
 import org.infinispan.loaders.dummy.DummyInMemoryCacheStoreConfigurationBuilder;
+import org.infinispan.loaders.manager.CacheLoaderManager;
+import org.infinispan.loaders.spi.CacheStore;
 import org.infinispan.manager.CacheContainer;
 import org.infinispan.test.AbstractInfinispanTest;
 import org.infinispan.test.TestingUtil;
@@ -15,8 +17,10 @@ import org.testng.annotations.Test;
 
 import javax.transaction.Transaction;
 import javax.transaction.TransactionManager;
+
 import java.util.HashMap;
 import java.util.Map;
+
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
 
 /**

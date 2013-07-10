@@ -4,8 +4,6 @@ import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.util.Properties;
 
-import javax.xml.bind.annotation.XmlAccessType;
-import javax.xml.bind.annotation.XmlAccessorType;
 import javax.xml.bind.annotation.XmlAttribute;
 import javax.xml.bind.annotation.XmlTransient;
 
@@ -19,14 +17,14 @@ import org.infinispan.config.parsing.XmlConfigHelper;
 
 /**
  * Abstract base class for CacheLoaderConfigs.
- * 
+ *
  *
  * @author Mircea.Markus@jboss.com
  * @author Vladimir Blagojevic
  * @since 4.0
- * 
+ *
  */
-@XmlAccessorType(XmlAccessType.FIELD)
+@Deprecated
 public class AbstractCacheLoaderConfig extends AbstractNamedCacheConfigurationBean implements CacheLoaderConfig {
 
    /** The serialVersionUID */
@@ -35,14 +33,14 @@ public class AbstractCacheLoaderConfig extends AbstractNamedCacheConfigurationBe
    @XmlAttribute(name="class")
    @ConfigurationDocRef(name="class", bean=AbstractCacheLoaderConfig.class,targetElement="setCacheLoaderClassName")
    protected String cacheLoaderClassName;
-     
+
    @XmlTransient
    protected TypedProperties properties = new TypedProperties();
 
    public Properties getProperties() {
       return properties;
    }
-   
+
    public void setProperties(Properties properties) {
       testImmutability("properties");
       this.properties = toTypedProperties(properties);
@@ -66,10 +64,10 @@ public class AbstractCacheLoaderConfig extends AbstractNamedCacheConfigurationBe
       return cacheLoaderClassName;
    }
 
-   /** 
-    * Fully qualified name of a cache loader class that must implement 
+   /**
+    * Fully qualified name of a cache loader class that must implement
     *             org.infinispan.loaders.CacheLoader interface
-    * 
+    *
     * @see org.infinispan.loaders.CacheLoaderConfig#setCacheLoaderClassName(java.lang.String)
     */
    @Override
@@ -87,7 +85,7 @@ public class AbstractCacheLoaderConfig extends AbstractNamedCacheConfigurationBe
          throw new CacheException(e);
       }
    }
-   
+
    @Override
    public ClassLoader getClassLoader() {
       // TODO This is a total mess, but requires config to be re-architected to fix

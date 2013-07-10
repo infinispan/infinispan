@@ -3,7 +3,7 @@ package org.infinispan.loaders.modifications;
 import org.infinispan.container.entries.InternalCacheEntry;
 
 /**
- * Modification representing {@link org.infinispan.loaders.CacheStore#store(org.infinispan.container.entries.InternalCacheEntry)}
+ * Modification representing {@link org.infinispan.loaders.spi.CacheStore#store(org.infinispan.container.entries.InternalCacheEntry)}
  *
  * @author Manik Surtani
  * @since 4.0

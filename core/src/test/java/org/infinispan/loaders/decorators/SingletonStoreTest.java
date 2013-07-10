@@ -5,9 +5,9 @@ import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.container.entries.InternalCacheEntry;
 import org.infinispan.loaders.CacheLoaderException;
-import org.infinispan.loaders.CacheLoaderManager;
-import org.infinispan.loaders.CacheStore;
 import org.infinispan.loaders.dummy.DummyInMemoryCacheStoreConfigurationBuilder;
+import org.infinispan.loaders.manager.CacheLoaderManager;
+import org.infinispan.loaders.spi.CacheStore;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.test.MultipleCacheManagersTest;
 import org.infinispan.test.TestingUtil;
@@ -202,7 +202,7 @@ public class SingletonStoreTest extends MultipleCacheManagersTest {
    public void testAvoidConcurrentStatePush() throws Exception {
       final CountDownLatch pushStateCanFinish = new CountDownLatch(1);
       final CountDownLatch secondActiveStatusChangerCanStart = new CountDownLatch(1);
-      final TestingSingletonStore mscl = new TestingSingletonStore(pushStateCanFinish, secondActiveStatusChangerCanStart, new SingletonStoreConfig());
+      final TestingSingletonStore mscl = new TestingSingletonStore(pushStateCanFinish, secondActiveStatusChangerCanStart);
 
       Future f1 = fork(createActiveStatusChanger(mscl));
       assert secondActiveStatusChangerCanStart.await(1000, TimeUnit.MILLISECONDS) : "Failed waiting on latch";
@@ -217,9 +217,8 @@ public class SingletonStoreTest extends MultipleCacheManagersTest {
 
    public void testPushStateTimedOut() throws Throwable {
       final CountDownLatch pushStateCanFinish = new CountDownLatch(1);
-      SingletonStoreConfig ssdc = new SingletonStoreConfig();
-      ssdc.setPushStateTimeout(100L);
-      final TestingSingletonStore mscl = new TestingSingletonStore(pushStateCanFinish, null, ssdc);
+
+      final TestingSingletonStore mscl = new TestingSingletonStore(pushStateCanFinish, null);
 
       Future f = fork(createActiveStatusChanger(mscl));
       pushStateCanFinish.await(200, TimeUnit.MILLISECONDS);
@@ -252,8 +251,8 @@ public class SingletonStoreTest extends MultipleCacheManagersTest {
       private CountDownLatch pushStateCanFinish;
       private CountDownLatch secondActiveStatusChangerCanStart;
 
-      public TestingSingletonStore(CountDownLatch pushStateCanFinish, CountDownLatch secondActiveStatusChangerCanStart, SingletonStoreConfig cfg) {
-         super(null, null, cfg);
+      public TestingSingletonStore(CountDownLatch pushStateCanFinish, CountDownLatch secondActiveStatusChangerCanStart) {
+         super(null, null);
          this.pushStateCanFinish = pushStateCanFinish;
          this.secondActiveStatusChangerCanStart = secondActiveStatusChangerCanStart;
       }

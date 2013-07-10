@@ -4,8 +4,8 @@ import java.util.Properties;
 
 import org.infinispan.commons.CacheException;
 import org.infinispan.commons.util.TypedProperties;
-import org.infinispan.loaders.CacheLoader;
-import org.infinispan.loaders.CacheStore;
+import org.infinispan.loaders.spi.CacheLoader;
+import org.infinispan.loaders.spi.CacheStore;
 
 /**
  * Configuration a legacy cache loader, i.e. a loader which is still configured via properties and

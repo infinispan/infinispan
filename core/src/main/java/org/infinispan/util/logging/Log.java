@@ -7,6 +7,7 @@ import org.infinispan.commons.marshall.AdvancedExternalizer;
 import org.infinispan.commons.util.TypedProperties;
 import org.infinispan.commons.CacheConfigurationException;
 import org.infinispan.lifecycle.ComponentStatus;
+import org.infinispan.configuration.cache.CacheLoaderConfiguration;
 import org.infinispan.loaders.CacheLoaderException;
 import org.infinispan.loaders.bucket.Bucket;
 import org.infinispan.loaders.decorators.SingletonStore;
@@ -927,5 +928,17 @@ public interface Log extends BasicLogger {
    @Message(value="Foreign %s externalizer is using a negative id(%d). Only positive id values are allowed.", id = 247)
    CacheConfigurationException foreignExternalizerUsingNegativeId(AdvancedExternalizer<?> ext, int externalizerId);
 
+   @Message(value =  "Invalid cache loader configuration!!  Only ONE cache loader may have fetchPersistentState set " +
+         "to true.  Cache will not start!", id = 248)
+   CacheConfigurationException multipleCacheStoresWithFetchPersistentState();
+
+   @Message(value =  "The cache loader configuration %s does not specify the loader class using @ConfigurationFor", id = 249)
+   CacheConfigurationException loaderConfigurationDoesNotSpecifyLoaderClass(String className);
+
+   @Message(value = "Invalid configuration, expecting '%s' got '%s' instead", id = 250)
+   CacheConfigurationException incompatibleLoaderConfiguration(String expected, String actual);
+
+   @Message(value = "Cache Loader configuration cannot be null", id = 251)
+   CacheConfigurationException cacheLoaderConfigurationCannotBeNull();
 }
 

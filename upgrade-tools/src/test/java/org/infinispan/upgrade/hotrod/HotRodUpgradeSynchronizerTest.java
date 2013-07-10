@@ -7,7 +7,7 @@ import org.infinispan.client.hotrod.TestHelper;
 import org.infinispan.client.hotrod.test.HotRodClientTestingUtil;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.context.Flag;
-import org.infinispan.loaders.CacheLoaderManager;
+import org.infinispan.loaders.manager.CacheLoaderManager;
 import org.infinispan.loaders.remote.configuration.RemoteCacheStoreConfigurationBuilder;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.server.hotrod.HotRodServer;

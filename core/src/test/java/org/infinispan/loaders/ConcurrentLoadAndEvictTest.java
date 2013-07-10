@@ -10,6 +10,7 @@ import org.infinispan.context.InvocationContext;
 import org.infinispan.interceptors.InvocationContextInterceptor;
 import org.infinispan.interceptors.base.CommandInterceptor;
 import org.infinispan.loaders.dummy.DummyInMemoryCacheStoreConfigurationBuilder;
+import org.infinispan.loaders.spi.CacheLoader;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.test.SingleCacheManagerTest;
 import org.infinispan.test.TestingUtil;

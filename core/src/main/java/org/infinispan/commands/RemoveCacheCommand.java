@@ -6,8 +6,8 @@ import org.infinispan.commons.util.Util;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.factories.GlobalComponentRegistry;
 import org.infinispan.jmx.CacheJmxRegistration;
-import org.infinispan.loaders.CacheLoaderManager;
-import org.infinispan.loaders.CacheStore;
+import org.infinispan.loaders.manager.CacheLoaderManager;
+import org.infinispan.loaders.spi.CacheStore;
 import org.infinispan.manager.EmbeddedCacheManager;
 
 /**

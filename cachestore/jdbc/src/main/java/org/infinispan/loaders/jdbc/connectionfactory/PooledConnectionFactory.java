@@ -4,6 +4,8 @@ import com.mchange.v2.c3p0.ComboPooledDataSource;
 import com.mchange.v2.c3p0.DataSources;
 import org.infinispan.loaders.CacheLoaderException;
 import org.infinispan.loaders.jdbc.JdbcUtil;
+import org.infinispan.loaders.jdbc.configuration.ConnectionFactoryConfiguration;
+import org.infinispan.loaders.jdbc.configuration.PooledConnectionFactoryConfiguration;
 import org.infinispan.loaders.jdbc.logging.Log;
 import org.infinispan.commons.util.FileLookupFactory;
 import org.infinispan.util.logging.LogFactory;
@@ -30,24 +32,32 @@ public class PooledConnectionFactory extends ConnectionFactory {
    private ComboPooledDataSource pooledDataSource;
 
    @Override
-   public void start(ConnectionFactoryConfig config, ClassLoader classLoader) throws CacheLoaderException {
+   public void start(ConnectionFactoryConfiguration config, ClassLoader classLoader) throws CacheLoaderException {
       logFileOverride(classLoader);
+      PooledConnectionFactoryConfiguration pooledConfiguration;
+      if (config instanceof PooledConnectionFactoryConfiguration) {
+         pooledConfiguration = (PooledConnectionFactoryConfiguration) config;
+      }
+      else {
+         throw new CacheLoaderException("ConnectionFactoryConfiguration passed in must be an instance of " +
+               "PooledConnectionFactoryConfiguration");
+      }
       pooledDataSource = new ComboPooledDataSource();
       pooledDataSource.setProperties(new Properties());
       try {
          /* Since c3p0 does not throw an exception when it fails to load a driver we attempt to do so here
           * Also, c3p0 does not allow specifying a custom classloader, so use c3p0's
           */
-         Class.forName(config.getDriverClass(), true, ComboPooledDataSource.class.getClassLoader());
-         pooledDataSource.setDriverClass(config.getDriverClass()); //loads the jdbc driver
+         Class.forName(pooledConfiguration.driverClass(), true, ComboPooledDataSource.class.getClassLoader());
+         pooledDataSource.setDriverClass(pooledConfiguration.driverClass()); //loads the jdbc driver
       } catch (Exception e) {
-         log.errorInstantiatingJdbcDriver(config.getDriverClass(), e);
+         log.errorInstantiatingJdbcDriver(pooledConfiguration.driverClass(), e);
          throw new CacheLoaderException(String.format(
-               "Error while instatianting JDBC driver: '%s'", config.getDriverClass()), e);
+               "Error while instatianting JDBC driver: '%s'", pooledConfiguration.driverClass()), e);
       }
-      pooledDataSource.setJdbcUrl(config.getConnectionUrl());
-      pooledDataSource.setUser(config.getUserName());
-      pooledDataSource.setPassword(config.getPassword());
+      pooledDataSource.setJdbcUrl(pooledConfiguration.connectionUrl());
+      pooledDataSource.setUser(pooledConfiguration.username());
+      pooledDataSource.setPassword(pooledConfiguration.password());
       if (log.isTraceEnabled()) {
          log.tracef("Started connection factory with config: %s", config);
       }

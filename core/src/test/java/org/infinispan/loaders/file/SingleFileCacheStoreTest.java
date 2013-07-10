@@ -1,9 +1,12 @@
 package org.infinispan.loaders.file;
 
+import org.infinispan.configuration.cache.SingleFileCacheStoreConfiguration;
+import org.infinispan.configuration.cache.SingleFileCacheStoreConfigurationBuilder;
 import org.infinispan.loaders.BaseCacheStoreTest;
 import org.infinispan.loaders.CacheLoaderException;
-import org.infinispan.loaders.CacheStore;
+import org.infinispan.loaders.spi.CacheStore;
 import org.infinispan.test.TestingUtil;
+import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
@@ -38,10 +41,14 @@ public class SingleFileCacheStoreTest extends BaseCacheStoreTest {
    protected CacheStore createCacheStore() throws Exception {
       clearTempDir();
       store = new SingleFileCacheStore();
-      SingleFileCacheStoreConfig cfg = new SingleFileCacheStoreConfig();
-      cfg.location(tmpDirectory);
-      cfg.purgeSynchronously(true);
-      store.init(cfg, getCache(), getMarshaller());
+      SingleFileCacheStoreConfiguration fileStoreConfiguration = TestCacheManagerFactory
+            .getDefaultCacheConfiguration(false)
+            .loaders()
+               .addLoader(SingleFileCacheStoreConfigurationBuilder.class)
+                  .location(this.tmpDirectory)
+                  .purgeSynchronously(true)
+                  .create();
+      store.init(fileStoreConfiguration, getCache(), getMarshaller());
       store.start();
       return store;
    }

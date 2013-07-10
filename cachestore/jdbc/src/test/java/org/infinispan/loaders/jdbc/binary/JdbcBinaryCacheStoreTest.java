@@ -4,14 +4,14 @@ import static org.mockito.Mockito.mock;
 
 import java.io.Serializable;
 
-import org.infinispan.CacheImpl;
 import org.infinispan.loaders.BaseCacheStoreTest;
-import org.infinispan.loaders.CacheStore;
 import org.infinispan.loaders.jdbc.TableManipulation;
+import org.infinispan.loaders.jdbc.configuration.JdbcBinaryCacheStoreConfigurationBuilder;
 import org.infinispan.loaders.jdbc.connectionfactory.ConnectionFactory;
-import org.infinispan.loaders.jdbc.connectionfactory.ConnectionFactoryConfig;
+import org.infinispan.loaders.spi.CacheStore;
 import org.infinispan.marshall.TestObjectStreamMarshaller;
 import org.infinispan.test.TestingUtil;
+import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.infinispan.test.fwk.TestInternalCacheEntryFactory;
 import org.infinispan.test.fwk.UnitTestDatabaseManager;
 import org.testng.annotations.Test;
@@ -26,29 +26,40 @@ public class JdbcBinaryCacheStoreTest extends BaseCacheStoreTest {
 
    @Override
    protected CacheStore createCacheStore() throws Exception {
-      ConnectionFactoryConfig connectionFactoryConfig = UnitTestDatabaseManager.getUniqueConnectionFactoryConfig();
-      TableManipulation tm = UnitTestDatabaseManager.buildBinaryTableManipulation();
-      JdbcBinaryCacheStoreConfig config = new JdbcBinaryCacheStoreConfig(connectionFactoryConfig, tm);
-      config.setPurgeSynchronously(true);
+      JdbcBinaryCacheStoreConfigurationBuilder storeBuilder = TestCacheManagerFactory
+            .getDefaultCacheConfiguration(false)
+            .loaders()
+               .addLoader(JdbcBinaryCacheStoreConfigurationBuilder.class)
+                  .purgeSynchronously(true);
+
+      UnitTestDatabaseManager.buildTableManipulation(storeBuilder.table(), true);
+      UnitTestDatabaseManager.configureUniqueConnectionFactory(storeBuilder);
+
       JdbcBinaryCacheStore jdbcBucketCacheStore = new JdbcBinaryCacheStore();
-      jdbcBucketCacheStore.init(config, getCache(), getMarshaller());
+      jdbcBucketCacheStore.init(storeBuilder.create(), getCache(), getMarshaller());
       jdbcBucketCacheStore.start();
       assert jdbcBucketCacheStore.getConnectionFactory() != null;
       return jdbcBucketCacheStore;
    }
 
    public void testNotCreateConnectionFactory() throws Exception {
+      JdbcBinaryCacheStoreConfigurationBuilder storeBuilder = TestCacheManagerFactory
+            .getDefaultCacheConfiguration(false)
+            .loaders()
+               .addLoader(JdbcBinaryCacheStoreConfigurationBuilder.class)
+                  .purgeSynchronously(true)
+                  .manageConnectionFactory(false);
+
+      storeBuilder.table().createOnStart(false);
+
       JdbcBinaryCacheStore jdbcBucketCacheStore = new JdbcBinaryCacheStore();
-      JdbcBinaryCacheStoreConfig config = new JdbcBinaryCacheStoreConfig(false);
-      config.setCreateTableOnStart(false);
-      jdbcBucketCacheStore.init(config, getCache(), new TestObjectStreamMarshaller());
+      jdbcBucketCacheStore.init(storeBuilder.create(), getCache(), new TestObjectStreamMarshaller());
       jdbcBucketCacheStore.start();
       assert jdbcBucketCacheStore.getConnectionFactory() == null;
 
       /* this will make sure that if a method like stop is called on the connection then it will barf an exception */
       ConnectionFactory connectionFactory = mock(ConnectionFactory.class);
       TableManipulation tableManipulation = mock(TableManipulation.class);
-      config.setTableManipulation(tableManipulation);
 
       tableManipulation.start(connectionFactory);
       tableManipulation.setCacheName("aName");

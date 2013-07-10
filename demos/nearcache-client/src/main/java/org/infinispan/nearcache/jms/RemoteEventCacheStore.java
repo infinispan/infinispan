@@ -1,9 +1,7 @@
 package org.infinispan.nearcache.jms;
 
 import org.infinispan.loaders.CacheLoaderException;
-import org.infinispan.loaders.CacheLoaderMetadata;
 import org.infinispan.loaders.remote.RemoteCacheStore;
-import org.infinispan.loaders.remote.RemoteCacheStoreConfig;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
@@ -24,7 +22,6 @@ import java.util.Properties;
  * @author Galder Zamarreño
  * @since 5.1
  */
-@CacheLoaderMetadata(configurationClass = RemoteEventCacheStore.RemoteEventCacheStoreConfig.class)
 public class RemoteEventCacheStore extends RemoteCacheStore {
 
    private static final Log log = LogFactory.getLog(RemoteEventCacheStore.class);
@@ -82,16 +79,6 @@ public class RemoteEventCacheStore extends RemoteCacheStore {
       p.setProperty("java.naming.factory.url.pkgs",
                     "org.jboss.naming:org.jnp.interfaces");
       return new InitialContext(p);
-   }
-
-   public static class RemoteEventCacheStoreConfig extends RemoteCacheStoreConfig {
-
-      public RemoteEventCacheStoreConfig() {
-         setCacheLoaderClassName(RemoteEventCacheStore.class.getName());
-         // For demo simplicity, even if it's a named cache, store in default cache
-         setUseDefaultRemoteCache(true);
-      }
-
    }
 
 }

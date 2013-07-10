@@ -8,9 +8,14 @@ import java.util.concurrent.ExecutorService;
 import org.infinispan.AdvancedCache;
 import org.infinispan.Cache;
 import org.infinispan.commons.util.ReflectionUtil;
+import org.infinispan.configuration.cache.CacheStoreConfiguration;
+import org.infinispan.configuration.cache.CacheStoreConfigurationBuilder;
 import org.infinispan.factories.ComponentRegistry;
 import org.infinispan.lifecycle.ComponentStatus;
+import org.infinispan.loaders.dummy.DummyInMemoryCacheStoreConfigurationBuilder;
+import org.infinispan.loaders.spi.AbstractCacheStore;
 import org.infinispan.test.AbstractInfinispanTest;
+import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.infinispan.util.DefaultTimeService;
 import org.infinispan.util.concurrent.WithinThreadExecutor;
 import org.mockito.Mockito;
@@ -27,25 +32,26 @@ import org.testng.annotations.Test;
 @Test(groups = "unit", testName = "loaders.AbstractCacheStoreTest")
 public class AbstractCacheStoreTest extends AbstractInfinispanTest {
    private AbstractCacheStore cs;
-   private AbstractCacheStoreConfig cfg;
 
    @BeforeMethod
    public void setUp() throws NoSuchMethodException, CacheLoaderException {
       cs = mock(AbstractCacheStore.class, Mockito.CALLS_REAL_METHODS);
-      cfg = new AbstractCacheStoreConfig();
-      cs.init(cfg, mockCache(getClass().getName()), null);
    }
 
    @AfterMethod
    public void tearDown() throws CacheLoaderException {
       cs.stop();
       cs = null;
-      cfg = null;
    }
 
    @Test
    void testSyncExecutorIsSetWhenCfgPurgeSyncIsTrueOnStart() throws Exception {
-      cfg.setPurgeSynchronously(true);
+      CacheStoreConfiguration storeConfiguration = TestCacheManagerFactory.getDefaultCacheConfiguration(false)
+            .loaders()
+            .addLoader(DummyInMemoryCacheStoreConfigurationBuilder.class)
+               .purgeSynchronously(true)
+            .create();
+      cs.init(storeConfiguration, mockCache(getClass().getName()), null);
       cs.start();
       ExecutorService service = (ExecutorService) ReflectionUtil.getValue(cs, "purgerService");
       assert service instanceof WithinThreadExecutor;
@@ -53,6 +59,11 @@ public class AbstractCacheStoreTest extends AbstractInfinispanTest {
 
    @Test
    void testAsyncExecutorIsDefaultOnStart() throws Exception {
+      CacheStoreConfiguration storeConfiguration = TestCacheManagerFactory.getDefaultCacheConfiguration(false)
+            .loaders()
+            .addLoader(DummyInMemoryCacheStoreConfigurationBuilder.class)
+            .create();
+      cs.init(storeConfiguration, mockCache(getClass().getName()), null);
       cs.start();
       ExecutorService service = (ExecutorService) ReflectionUtil.getValue(cs, "purgerService");
       assert !(service instanceof WithinThreadExecutor);

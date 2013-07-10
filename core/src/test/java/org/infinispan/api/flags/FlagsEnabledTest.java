@@ -14,10 +14,11 @@ import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.cache.VersioningScheme;
 import org.infinispan.context.Flag;
-import org.infinispan.loaders.CacheLoaderManager;
 import org.infinispan.loaders.UnnnecessaryLoadingTest.CountingCacheStore;
+import org.infinispan.loaders.UnnnecessaryLoadingTest.CountingCacheStoreConfigurationBuilder;
 import org.infinispan.loaders.decorators.ChainingCacheStore;
-import org.infinispan.loaders.dummy.DummyInMemoryCacheStore;
+import org.infinispan.loaders.dummy.DummyInMemoryCacheStoreConfigurationBuilder;
+import org.infinispan.loaders.manager.CacheLoaderManager;
 import org.infinispan.test.MultipleCacheManagersTest;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.CleanupAfterMethod;
@@ -40,8 +41,8 @@ public class FlagsEnabledTest extends MultipleCacheManagersTest {
       builder
             .locking().writeSkewCheck(true).isolationLevel(IsolationLevel.REPEATABLE_READ)
             .versioning().enable().scheme(VersioningScheme.SIMPLE)
-            .loaders().addStore().cacheStore(new CountingCacheStore())
-            .loaders().addStore().cacheStore(new DummyInMemoryCacheStore())
+            .loaders().addStore(CountingCacheStoreConfigurationBuilder.class)
+            .loaders().addStore(DummyInMemoryCacheStoreConfigurationBuilder.class)
             .transaction().syncCommitPhase(true);
       createClusteredCaches(2, "replication", builder);
    }

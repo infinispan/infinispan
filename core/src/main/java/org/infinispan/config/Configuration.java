@@ -12,7 +12,6 @@ import org.infinispan.configuration.cache.VersioningScheme;
 import org.infinispan.container.DataContainer;
 import org.infinispan.container.DefaultDataContainer;
 import org.infinispan.distribution.ch.ConsistentHash;
-import org.infinispan.distribution.ch.DefaultConsistentHash;
 import org.infinispan.distribution.group.Grouper;
 import org.infinispan.eviction.EvictionStrategy;
 import org.infinispan.eviction.EvictionThreadPolicy;
@@ -20,7 +19,6 @@ import org.infinispan.factories.ComponentRegistry;
 import org.infinispan.factories.annotations.Start;
 import org.infinispan.factories.annotations.SurvivesRestarts;
 import org.infinispan.interceptors.base.CommandInterceptor;
-import org.infinispan.loaders.CacheLoaderConfig;
 import org.infinispan.remoting.ReplicationQueue;
 import org.infinispan.remoting.ReplicationQueueImpl;
 import org.infinispan.transaction.LockingMode;
@@ -41,7 +39,6 @@ import javax.xml.bind.annotation.XmlTransient;
 import javax.xml.bind.annotation.XmlType;
 import javax.xml.bind.annotation.adapters.XmlAdapter;
 import javax.xml.bind.annotation.adapters.XmlJavaTypeAdapter;
-import java.util.Collections;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Properties;
@@ -162,16 +159,12 @@ public class Configuration extends AbstractNamedCacheConfigurationBean {
    }
 
    public void applyOverrides(Configuration overrides) {
-      OverrideConfigurationVisitor v1 = new OverrideConfigurationVisitor();
-      this.accept(v1);
-      OverrideConfigurationVisitor v2 = new OverrideConfigurationVisitor();
-      overrides.accept(v2);
-      v1.override(v2);
+      // No op.
    }
 
    @Override
    public void inject(ComponentRegistry cr) {
-      this.accept(new InjectComponentRegistryVisitor(cr));
+      // No op.
    }
 
    /**
@@ -227,10 +220,6 @@ public class Configuration extends AbstractNamedCacheConfigurationBean {
 
    public void setClassLoader(ClassLoader cl) {
       this.cl = cl;
-   }
-
-   public boolean isStateTransferEnabled() {
-      return clustering.stateRetrieval.fetchInMemoryState || (loaders != null && loaders.isFetchPersistentState());
    }
 
    public long getDeadlockDetectionSpinDuration() {
@@ -732,14 +721,6 @@ public class Configuration extends AbstractNamedCacheConfigurationBean {
    @Deprecated
    public void setTransactionManagerLookup(TransactionManagerLookup transactionManagerLookup) {
       this.transaction.transactionManagerLookup(transactionManagerLookup);
-   }
-
-   /**
-    * @deprecated Use {@link FluentConfiguration.LoadersConfig#addCacheLoader(org.infinispan.loaders.CacheLoaderConfig...)} instead
-    */
-   @Deprecated
-   public void setCacheLoaderManagerConfig(CacheLoaderManagerConfig cacheLoaderManagerConfig) {
-      this.loaders = cacheLoaderManagerConfig;
    }
 
    /**
@@ -1261,26 +1242,8 @@ public class Configuration extends AbstractNamedCacheConfigurationBean {
       return transaction.transactionSynchronizationRegistryLookup;
    }
 
-   /**
-    * @deprecated Use {@link #getCacheLoaders()}, {@link #isCacheLoaderShared()}
-    * {@link #isFetchPersistentState()}, {@link #isCacheLoaderPassivation()}
-    * and {@link #isCacheLoaderPreload()} instead
-    */
-   @Deprecated
-   public CacheLoaderManagerConfig getCacheLoaderManagerConfig() {
-      return loaders;
-   }
-
-   public List<CacheLoaderConfig> getCacheLoaders() {
-      return loaders.getCacheLoaderConfigs();
-   }
-
    public boolean isCacheLoaderShared() {
       return loaders.isShared();
-   }
-
-   public boolean isFetchPersistentState() {
-      return loaders.isFetchPersistentState();
    }
 
    public boolean isCacheLoaderPassivation() {
@@ -1475,26 +1438,6 @@ public class Configuration extends AbstractNamedCacheConfigurationBean {
    //   OVERRIDDEN METHODS
    // ------------------------------------------------------------------------------------------------------------
 
-   public void accept(ConfigurationBeanVisitor v) {
-      v.visitConfiguration(this);
-      clustering.accept(v);
-      customInterceptors.accept(v);
-      dataContainer.accept(v);
-      deadlockDetection.accept(v);
-      eviction.accept(v);
-      expiration.accept(v);
-      invocationBatching.accept(v);
-      jmxStatistics.accept(v);
-      storeAsBinary.accept(v);
-      lazyDeserialization.accept(v);
-      loaders.accept(v);
-      locking.accept(v);
-      transaction.accept(v);
-      unsafe.accept(v);
-      indexing.accept(v);
-      versioning.accept(v);
-   }
-
    /**
     * Also see {@link #equalsIgnoreName(Object)} for equality that does not consider the name of the configuration.
     */
@@ -1574,10 +1517,6 @@ public class Configuration extends AbstractNamedCacheConfigurationBean {
             dolly.locking = (LockingType) locking.clone();
             dolly.locking.setConfiguration(dolly);
          }
-         if (loaders != null) {
-            dolly.loaders = loaders.clone();
-            dolly.loaders.setConfiguration(dolly);
-         }
          if (transaction != null) {
             dolly.transaction = transaction.clone();
             dolly.transaction.setConfiguration(dolly);
@@ -1648,10 +1587,6 @@ public class Configuration extends AbstractNamedCacheConfigurationBean {
     */
    public String toXmlString() {
       return InfinispanConfiguration.toXmlString(this);
-   }
-
-   public boolean isUsingCacheLoaders() {
-      return getCacheLoaderManagerConfig() != null && !getCacheLoaderManagerConfig().getCacheLoaderConfigs().isEmpty();
    }
 
    /**

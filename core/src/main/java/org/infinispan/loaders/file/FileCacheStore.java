@@ -3,9 +3,10 @@ package org.infinispan.loaders.file;
 import org.infinispan.Cache;
 import org.infinispan.commons.CacheConfigurationException;
 import org.infinispan.commons.io.ExposedByteArrayOutputStream;
-import org.infinispan.loaders.CacheLoaderConfig;
+import org.infinispan.configuration.cache.CacheLoaderConfiguration;
+import org.infinispan.configuration.cache.FileCacheStoreConfiguration;
+import org.infinispan.configuration.cache.FileCacheStoreConfigurationBuilder;
 import org.infinispan.loaders.CacheLoaderException;
-import org.infinispan.loaders.CacheLoaderMetadata;
 import org.infinispan.loaders.bucket.Bucket;
 import org.infinispan.loaders.bucket.BucketBasedCacheStore;
 import org.infinispan.commons.marshall.StreamingMarshaller;
@@ -46,28 +47,29 @@ import java.util.concurrent.TimeUnit;
  * @author Sanne Grinovero
  * @since 4.0
  */
-@CacheLoaderMetadata(configurationClass = FileCacheStoreConfig.class)
 public class FileCacheStore extends BucketBasedCacheStore {
 
    static final Log log = LogFactory.getLog(FileCacheStore.class);
    private static final boolean trace = log.isTraceEnabled();
    private int streamBufferSize;
 
-   FileCacheStoreConfig config;
+   private FileCacheStoreConfiguration configuration;
+
    File root;
    FileSync fileSync;
 
    /**
-    * @return root directory where all files for this {@link org.infinispan.loaders.CacheStore CacheStore} are written.
+    * @return root directory where all files for this {@link org.infinispan.loaders.spi.CacheStore CacheStore} are written.
     */
    public File getRoot() {
       return root;
    }
 
    @Override
-   public void init(CacheLoaderConfig config, Cache<?, ?> cache, StreamingMarshaller m) throws CacheLoaderException {
-      super.init(config, cache, m);
-      this.config = (FileCacheStoreConfig) config;
+   public void init(CacheLoaderConfiguration configuration, Cache<?, ?> cache, StreamingMarshaller m) throws
+         CacheLoaderException {
+      this.configuration = validateConfigurationClass(configuration, FileCacheStoreConfiguration.class);
+      super.init(configuration, cache, m);
    }
 
    @Override
@@ -325,14 +327,9 @@ public class FileCacheStore extends BucketBasedCacheStore {
    }
 
    @Override
-   public Class<? extends CacheLoaderConfig> getConfigurationClass() {
-      return FileCacheStoreConfig.class;
-   }
-
-   @Override
    public void start() throws CacheLoaderException {
       super.start();
-      String location = config.getLocation();
+      String location = configuration.location();
       if (location == null || location.trim().length() == 0) {
          location = "Infinispan-FileCacheStore"; // use relative path!
       }
@@ -346,9 +343,9 @@ public class FileCacheStore extends BucketBasedCacheStore {
       if (!root.exists()) {
          throw new CacheConfigurationException("Directory " + root.getAbsolutePath() + " does not exist and cannot be created!");
       }
-      streamBufferSize = config.getStreamBufferSize();
+      streamBufferSize = configuration.streamBufferSize();
 
-      FileCacheStoreConfig.FsyncMode fsyncMode = config.getFsyncMode();
+      FileCacheStoreConfigurationBuilder.FsyncMode fsyncMode = configuration.fsyncMode();
       switch (fsyncMode) {
          case DEFAULT:
             fileSync = new BufferedFileSync();
@@ -357,7 +354,7 @@ public class FileCacheStore extends BucketBasedCacheStore {
             fileSync = new PerWriteFileSync();
             break;
          case PERIODIC:
-            fileSync = new PeriodicFileSync(config.getFsyncInterval());
+            fileSync = new PeriodicFileSync(configuration.fsyncInterval());
             break;
       }
 

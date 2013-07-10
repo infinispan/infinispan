@@ -59,8 +59,9 @@ public class JdbcStringBasedCacheStoreConfigurationBuilder extends
 
    @Override
    public JdbcStringBasedCacheStoreConfiguration create() {
-      return new JdbcStringBasedCacheStoreConfiguration(key2StringMapper, table.create(), connectionFactory.create(), lockAcquistionTimeout, lockConcurrencyLevel, purgeOnStartup,
-            purgeSynchronously, purgerThreads, fetchPersistentState, ignoreModifications, TypedProperties.toTypedProperties(properties), async.create(), singletonStore.create());
+      return new JdbcStringBasedCacheStoreConfiguration(key2StringMapper, table.create(), connectionFactory != null ? connectionFactory.create() : null, manageConnectionFactory,
+            lockAcquistionTimeout, lockConcurrencyLevel, purgeOnStartup, purgeSynchronously, purgerThreads, fetchPersistentState, ignoreModifications,
+            TypedProperties.toTypedProperties(properties), async.create(), singletonStore.create());
    }
 
    @Override

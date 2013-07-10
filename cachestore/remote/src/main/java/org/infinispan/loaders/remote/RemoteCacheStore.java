@@ -1,24 +1,30 @@
 package org.infinispan.loaders.remote;
 
 import net.jcip.annotations.ThreadSafe;
+
 import org.infinispan.Cache;
-import org.infinispan.api.BasicCacheContainer;
 import org.infinispan.client.hotrod.Flag;
 import org.infinispan.client.hotrod.MetadataValue;
 import org.infinispan.client.hotrod.RemoteCache;
 import org.infinispan.client.hotrod.RemoteCacheManager;
-import org.infinispan.client.hotrod.impl.ConfigurationProperties;
+import org.infinispan.client.hotrod.configuration.ConfigurationBuilder;
+import org.infinispan.client.hotrod.configuration.ExhaustedAction;
+import org.infinispan.configuration.cache.CacheLoaderConfiguration;
 import org.infinispan.container.InternalEntryFactory;
 import org.infinispan.container.entries.InternalCacheEntry;
 import org.infinispan.container.versioning.NumericVersion;
-import org.infinispan.loaders.AbstractCacheStore;
-import org.infinispan.loaders.CacheLoaderConfig;
 import org.infinispan.loaders.CacheLoaderException;
-import org.infinispan.loaders.CacheLoaderMetadata;
+import org.infinispan.loaders.remote.configuration.ConnectionPoolConfiguration;
+import org.infinispan.loaders.remote.configuration.RemoteCacheStoreConfiguration;
+import org.infinispan.loaders.remote.configuration.RemoteServerConfiguration;
 import org.infinispan.loaders.remote.logging.Log;
+import org.infinispan.loaders.remote.wrapper.HotRodEntryMarshaller;
+import org.infinispan.loaders.spi.AbstractCacheStore;
+import org.infinispan.commons.api.BasicCacheContainer;
 import org.infinispan.commons.marshall.Marshaller;
 import org.infinispan.commons.marshall.StreamingMarshaller;
 import org.infinispan.commons.marshall.jboss.GenericJBossMarshaller;
+import org.infinispan.commons.util.Util;
 import org.infinispan.util.logging.LogFactory;
 
 import java.io.IOException;
@@ -40,17 +46,17 @@ import java.util.concurrent.TimeUnit;
  * <p/>
  *
  * @author Mircea.Markus@jboss.com
- * @see org.infinispan.loaders.remote.RemoteCacheStoreConfig
+ * @see org.infinispan.loaders.remote.configuration.RemoteCacheStoreConfiguration
  * @see <a href="http://community.jboss.org/wiki/JavaHotRodclient">Hotrod Java Client</a>
  * @since 4.1
  */
 @ThreadSafe
-@CacheLoaderMetadata(configurationClass = RemoteCacheStoreConfig.class)
 public class RemoteCacheStore extends AbstractCacheStore {
 
    private static final Log log = LogFactory.getLog(RemoteCacheStore.class, Log.class);
 
-   private volatile RemoteCacheStoreConfig config;
+   private RemoteCacheStoreConfiguration configuration;
+
    private volatile RemoteCacheManager remoteCacheManager;
    private volatile RemoteCache<Object, Object> remoteCache;
 
@@ -60,7 +66,7 @@ public class RemoteCacheStore extends AbstractCacheStore {
 
    @Override
    public InternalCacheEntry load(Object key) throws CacheLoaderException {
-      if (config.isRawValues()) {
+      if (configuration.rawValues()) {
          MetadataValue<?> value = remoteCache.getWithMetadata(key);
          if (value != null)
             return iceFactory.create(key, value.getValue(), new NumericVersion(value.getVersion()),
@@ -90,7 +96,7 @@ public class RemoteCacheStore extends AbstractCacheStore {
       if (log.isTraceEnabled()) {
          log.tracef("Adding entry: %s", entry);
       }
-      remoteCache.put(entry.getKey(), config.isRawValues() ? entry.getValue() : entry, toSeconds(entry.getLifespan(), entry, LIFESPAN), TimeUnit.SECONDS, toSeconds(entry.getMaxIdle(), entry, MAXIDLE), TimeUnit.SECONDS);
+      remoteCache.put(entry.getKey(), configuration.rawValues() ? entry.getValue() : entry, toSeconds(entry.getLifespan(), entry, LIFESPAN), TimeUnit.SECONDS, toSeconds(entry.getMaxIdle(), entry, MAXIDLE), TimeUnit.SECONDS);
    }
 
    @Override
@@ -146,26 +152,38 @@ public class RemoteCacheStore extends AbstractCacheStore {
    }
 
    @Override
-   public void init(CacheLoaderConfig config, Cache<?, ?> cache, StreamingMarshaller m) throws CacheLoaderException {
-      super.init(config, cache, m);
-      this.config = (RemoteCacheStoreConfig) config;
+   public void init(CacheLoaderConfiguration configuration, Cache<?, ?> cache, StreamingMarshaller m) throws
+         CacheLoaderException {
+      if (configuration instanceof RemoteCacheStoreConfiguration) {
+         this.configuration = (RemoteCacheStoreConfiguration) configuration;
+      } else {
+         throw new CacheLoaderException("Incompatible configuration bean passed. Has to be an instance of " +
+               RemoteCacheStoreConfiguration.class.getName());
+      }
+      super.init(configuration, cache, m);
    }
 
    @Override
    public void start() throws CacheLoaderException {
       super.start();
-      if (config.getHotRodClientProperties().containsKey(ConfigurationProperties.MARSHALLER)) {
-         remoteCacheManager = new RemoteCacheManager(config.getHotRodClientProperties(), true, config.getClassLoader(), config.getAsyncExecutorFactory());
+      final Marshaller marshaller;
+      if (configuration.marshaller() != null) {
+         marshaller = Util.getInstance(configuration.marshaller(), cache.getCacheConfiguration().classLoader());
+      } else if (configuration.hotRodWrapping()) {
+         marshaller = new HotRodEntryMarshaller();
+      } else if (configuration.rawValues()) {
+         marshaller = new GenericJBossMarshaller();
       } else {
-         Marshaller marshaller = config.isRawValues() ? new GenericJBossMarshaller() : getMarshaller();
-         if (marshaller == null) {throw new IllegalStateException("Null marshaller not allowed!");}
-         remoteCacheManager = new RemoteCacheManager(marshaller, config.getHotRodClientProperties(), true, config.getClassLoader(), config.getAsyncExecutorFactory());
+         marshaller = getMarshaller();
       }
-      if (config.getRemoteCacheName().equals(BasicCacheContainer.DEFAULT_CACHE_NAME))
+      ConfigurationBuilder builder = buildRemoteConfiguration(configuration, marshaller);
+      remoteCacheManager = new RemoteCacheManager(builder.build());
+
+      if (configuration.remoteCacheName().equals(BasicCacheContainer.DEFAULT_CACHE_NAME))
          remoteCache = remoteCacheManager.getCache();
       else
-         remoteCache = remoteCacheManager.getCache(config.getRemoteCacheName());
-      if (config.isRawValues() && iceFactory == null) {
+         remoteCache = remoteCacheManager.getCache(configuration.remoteCacheName());
+      if (configuration.rawValues() && iceFactory == null) {
          iceFactory = cache.getAdvancedCache().getComponentRegistry().getComponent(InternalEntryFactory.class);
       }
    }
@@ -174,11 +192,6 @@ public class RemoteCacheStore extends AbstractCacheStore {
    public void stop() throws CacheLoaderException {
       super.stop();
       remoteCacheManager.stop();
-   }
-
-   @Override
-   public Class<? extends CacheLoaderConfig> getConfigurationClass() {
-      return RemoteCacheStoreConfig.class;
    }
 
    private long toSeconds(long millis, InternalCacheEntry entry, String desc) {
@@ -196,7 +209,7 @@ public class RemoteCacheStore extends AbstractCacheStore {
       Set<InternalCacheEntry> result = new HashSet<InternalCacheEntry>(map.size());
       Set<Map.Entry<Object, Object>> set = map.entrySet();
       for (Map.Entry<Object, Object> e : set) {
-         if (config.isRawValues()) {
+         if (configuration.rawValues()) {
             result.add(load(e.getKey())); // Inefficient: should probably have a getBulkWithMetadata
          } else {
             result.add((InternalCacheEntry) e.getValue());
@@ -214,5 +227,46 @@ public class RemoteCacheStore extends AbstractCacheStore {
 
    public RemoteCache<Object, Object> getRemoteCache() {
       return remoteCache;
+   }
+
+   private ConfigurationBuilder buildRemoteConfiguration(RemoteCacheStoreConfiguration configuration, Marshaller marshaller) {
+      ConfigurationBuilder builder = new ConfigurationBuilder();
+
+      for (RemoteServerConfiguration s : configuration.servers()) {
+         builder.addServer()
+               .host(s.host())
+               .port(s.port());
+      }
+
+      ConnectionPoolConfiguration poolConfiguration = configuration.connectionPool();
+      Long connectionTimeout = configuration.connectionTimeout();
+      Long socketTimeout = configuration.socketTimeout();
+
+      builder.balancingStrategy(configuration.balancingStrategy())
+            .connectionPool()
+            .exhaustedAction(ExhaustedAction.valueOf(poolConfiguration.exhaustedAction().toString()))
+            .maxActive(poolConfiguration.maxActive())
+            .maxIdle(poolConfiguration.maxIdle())
+            .maxTotal(poolConfiguration.maxTotal())
+            .minIdle(poolConfiguration.minIdle())
+            .minEvictableIdleTime(poolConfiguration.minEvictableIdleTime())
+            .testWhileIdle(poolConfiguration.testWhileIdle())
+            .timeBetweenEvictionRuns(poolConfiguration.timeBetweenEvictionRuns())
+            .connectionTimeout(connectionTimeout.intValue())
+            .forceReturnValues(configuration.forceReturnValues())
+            .keySizeEstimate(configuration.keySizeEstimate())
+            .marshaller(marshaller)
+            .asyncExecutorFactory().factoryClass(configuration.asyncExecutorFactory().factory().getClass())
+            .classLoader(configuration.getClass().getClassLoader())
+            .pingOnStartup(configuration.pingOnStartup())
+            .socketTimeout(socketTimeout.intValue())
+            .tcpNoDelay(configuration.tcpNoDelay())
+            .valueSizeEstimate(configuration.valueSizeEstimate());
+      if (configuration.protocolVersion() != null)
+         builder.protocolVersion(configuration.protocolVersion());
+      if (configuration.transportFactory() != null)
+         builder.transportFactory(configuration.transportFactory());
+
+      return builder;
    }
 }

@@ -3,7 +3,7 @@ package org.infinispan.loaders.remote;
 import org.infinispan.Cache;
 import org.infinispan.client.hotrod.TestHelper;
 import org.infinispan.client.hotrod.test.HotRodClientTestingUtil;
-import org.infinispan.loaders.CacheLoader;
+import org.infinispan.loaders.spi.CacheLoader;
 import org.infinispan.manager.CacheContainer;
 import org.infinispan.manager.DefaultCacheManager;
 import org.infinispan.manager.EmbeddedCacheManager;

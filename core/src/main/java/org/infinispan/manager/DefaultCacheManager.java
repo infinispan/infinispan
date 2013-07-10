@@ -33,7 +33,7 @@ import org.infinispan.jmx.annotations.ManagedOperation;
 import org.infinispan.jmx.annotations.Parameter;
 import org.infinispan.lifecycle.ComponentStatus;
 import org.infinispan.lifecycle.Lifecycle;
-import org.infinispan.loaders.CacheLoaderManager;
+import org.infinispan.loaders.manager.CacheLoaderManager;
 import org.infinispan.notifications.cachemanagerlistener.CacheManagerNotifier;
 import org.infinispan.remoting.rpc.ResponseMode;
 import org.infinispan.remoting.transport.Address;

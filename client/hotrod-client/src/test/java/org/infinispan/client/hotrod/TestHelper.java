@@ -1,5 +1,6 @@
 package org.infinispan.client.hotrod;
 
+import org.infinispan.client.hotrod.configuration.ConfigurationBuilder;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.server.hotrod.HotRodServer;
 import org.infinispan.server.hotrod.test.HotRodTestingUtil;
@@ -54,5 +55,14 @@ public class TestHelper {
          builder.append("localhost").append(':').append(server.getPort()).append(";");
       }
       return builder.toString();
+   }
+
+   public static RemoteCacheManager getRemoteCacheManager(HotRodServer server) {
+      ConfigurationBuilder builder = new ConfigurationBuilder();
+      builder.addServer()
+         .host(server.getHost())
+         .port(server.getPort());
+      return new RemoteCacheManager(builder.build());
+
    }
 }

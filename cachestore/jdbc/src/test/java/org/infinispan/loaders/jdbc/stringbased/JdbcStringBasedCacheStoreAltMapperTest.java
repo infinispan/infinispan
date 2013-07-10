@@ -7,14 +7,16 @@ import java.util.Set;
 import org.infinispan.container.entries.InternalCacheEntry;
 import org.infinispan.loaders.AbstractCacheStoreTest;
 import org.infinispan.loaders.CacheLoaderException;
-import org.infinispan.loaders.CacheStore;
 import org.infinispan.loaders.jdbc.TableManipulation;
 import org.infinispan.loaders.jdbc.TableName;
+import org.infinispan.loaders.jdbc.configuration.JdbcStringBasedCacheStoreConfigurationBuilder;
 import org.infinispan.loaders.jdbc.connectionfactory.ConnectionFactory;
-import org.infinispan.loaders.jdbc.connectionfactory.ConnectionFactoryConfig;
 import org.infinispan.loaders.keymappers.UnsupportedKeyTypeException;
+import org.infinispan.loaders.spi.CacheStore;
 import org.infinispan.commons.marshall.StreamingMarshaller;
+import org.infinispan.commons.util.ReflectionUtil;
 import org.infinispan.marshall.TestObjectStreamMarshaller;
+import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.infinispan.test.fwk.TestInternalCacheEntryFactory;
 import org.infinispan.test.fwk.UnitTestDatabaseManager;
 import org.testng.annotations.AfterMethod;
@@ -31,21 +33,25 @@ import org.testng.annotations.Test;
 public class JdbcStringBasedCacheStoreAltMapperTest {
 
    CacheStore cacheStore;
-   private ConnectionFactoryConfig cfc;
    private TableManipulation tableManipulation;
    private static final Person MIRCEA = new Person("Mircea", "Markus", 28);
    private static final Person MANIK = new Person("Manik", "Surtani", 18);
 
    @BeforeTest
    public void createCacheStore() throws CacheLoaderException {
-      tableManipulation = UnitTestDatabaseManager.buildStringTableManipulation();
-      cfc = UnitTestDatabaseManager.getUniqueConnectionFactoryConfig();
-      JdbcStringBasedCacheStoreConfig config = new JdbcStringBasedCacheStoreConfig(cfc, tableManipulation);
-      config.setKey2StringMapperClass(PersonKey2StringMapper.class.getName());
-      config.setPurgeSynchronously(true);
+      JdbcStringBasedCacheStoreConfigurationBuilder storeBuilder = TestCacheManagerFactory
+            .getDefaultCacheConfiguration(false)
+            .loaders()
+               .addLoader(JdbcStringBasedCacheStoreConfigurationBuilder.class)
+                  .purgeSynchronously(true)
+                  .key2StringMapper(PersonKey2StringMapper.class);
+
+      UnitTestDatabaseManager.buildTableManipulation(storeBuilder.table(), false);
+      UnitTestDatabaseManager.configureUniqueConnectionFactory(storeBuilder);
       cacheStore = new JdbcStringBasedCacheStore();
-      cacheStore.init(config, AbstractCacheStoreTest.mockCache(getClass().getName()), getMarshaller());
+      cacheStore.init(storeBuilder.create(), AbstractCacheStoreTest.mockCache(getClass().getName()), getMarshaller());
       cacheStore.start();
+      tableManipulation = (TableManipulation) ReflectionUtil.getValue(cacheStore, "tableManipulation");
    }
 
    @AfterMethod
@@ -134,7 +140,6 @@ public class JdbcStringBasedCacheStoreAltMapperTest {
    }
 
    private ConnectionFactory getConnection() {
-
       JdbcStringBasedCacheStore store = (JdbcStringBasedCacheStore) cacheStore;
       return store.getConnectionFactory();
    }

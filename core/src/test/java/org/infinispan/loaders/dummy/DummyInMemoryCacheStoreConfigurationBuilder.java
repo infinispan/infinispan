@@ -8,10 +8,10 @@ public class DummyInMemoryCacheStoreConfigurationBuilder
       extends
       AbstractStoreConfigurationBuilder<DummyInMemoryCacheStoreConfiguration, DummyInMemoryCacheStoreConfigurationBuilder> {
 
-   private boolean debug;
-   private boolean slow;
-   private String storeName;
-   private Object failKey;
+   protected boolean debug;
+   protected boolean slow;
+   protected String storeName;
+   protected Object failKey;
 
    public DummyInMemoryCacheStoreConfigurationBuilder(LoadersConfigurationBuilder builder) {
       super(builder);
