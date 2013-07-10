@@ -42,6 +42,8 @@ import java.util.Set;
 
 import static org.infinispan.test.TestingUtil.extractCacheMarshaller;
 import static org.testng.AssertJUnit.assertEquals;
+import static org.testng.AssertJUnit.assertTrue;
+import static org.testng.AssertJUnit.fail;
 
 /**
  * Tests implicit marshalled values
@@ -67,11 +69,18 @@ public class MarshalledValueTest extends MultipleCacheManagersTest {
 
       assertMarshalledValueInterceptorPresent(cache1);
       assertMarshalledValueInterceptorPresent(cache2);
+
+      // Prime the IsMarshallableInterceptor so that it doesn't trigger additional serialization during tests
+      Pojo key = new Pojo(-1);
+      cache1.get(key);
+      assertSerializationCounts(1, 0);
+      cache2.get(key);
+      assertSerializationCounts(2, 0);
    }
 
    private void assertMarshalledValueInterceptorPresent(Cache c) {
       InterceptorChain ic1 = TestingUtil.extractComponent(c, InterceptorChain.class);
-      assert ic1.containsInterceptorType(MarshalledValueInterceptor.class);
+      assertTrue(ic1.containsInterceptorType(MarshalledValueInterceptor.class));
    }
 
    @BeforeMethod
@@ -91,27 +100,28 @@ public class MarshalledValueTest extends MultipleCacheManagersTest {
       super.destroy();
    }
 
-   @AfterMethod
-   public void tearDown() {
+   @BeforeMethod
+   public void resetSerializationCounts() {
       Pojo.serializationCount = 0;
       Pojo.deserializationCount = 0;
    }
 
    private void assertOnlyOneRepresentationExists(MarshalledValue mv) {
-      assert (mv.instance != null && mv.raw == null) || (mv.instance == null && mv.raw != null) : "Only instance or raw representations should exist in a MarshalledValue; never both";
+      assertTrue("Only instance or raw representations should exist in a MarshalledValue; never both",
+            (mv.instance != null && mv.raw == null) || (mv.instance == null && mv.raw != null));
    }
 
    private void assertSerialized(MarshalledValue mv) {
-      assert mv.raw != null : "Should be serialized";
+      assertTrue("Should be serialized", mv.raw != null);
    }
 
    private void assertDeserialized(MarshalledValue mv) {
-      assert mv.instance != null : "Should be deserialized";
+      assertTrue("Should be deserialized", mv.instance != null);
    }
 
    private void assertSerializationCounts(int serializationCount, int deserializationCount) {
-      assert Pojo.serializationCount == serializationCount : "Serialization count: expected " + serializationCount + " but was " + Pojo.serializationCount;
-      assert Pojo.deserializationCount == deserializationCount : "Deserialization count: expected " + deserializationCount + " but was " + Pojo.deserializationCount;
+      assertEquals("Serialization count mismatch", serializationCount, Pojo.serializationCount);
+      assertEquals("Deserialization count mismatch", deserializationCount, Pojo.deserializationCount);
    }
 
    public void testNonSerializable() {
@@ -119,44 +129,44 @@ public class MarshalledValueTest extends MultipleCacheManagersTest {
       cache(1, "replSync");
       try {
          cache1.put("Hello", new Object());
-         assert false : "Should have failed";
+         fail("Should have failed");
       }
       catch (CacheException expected) {
 
       }
 
-      assert mvli.invocationCount == 0 : "Call should not have gone beyond the MarshalledValueInterceptor";
+      assertTrue("Call should not have gone beyond the MarshalledValueInterceptor", mvli.invocationCount == 0);
 
       try {
          cache1.put(new Object(), "Hello");
-         assert false : "Should have failed";
+         fail("Should have failed");
       }
       catch (CacheException expected) {
 
       }
 
-      assert mvli.invocationCount == 0 : "Call should not have gone beyond the MarshalledValueInterceptor";
+      assertTrue("Call should not have gone beyond the MarshalledValueInterceptor", mvli.invocationCount == 0);
    }
 
    public void testReleaseObjectValueReferences() {
       Cache cache1 = cache(0, "replSync");
       Cache cache2 = cache(1, "replSync");
 
-      assert cache1.isEmpty();
+      assertTrue(cache1.isEmpty());
       Pojo value = new Pojo();
       log.trace(TestingUtil.extractComponent(cache1, InterceptorChain.class).toString());
       cache1.put("key", value);
-      assert cache1.containsKey("key");
+      assertTrue(cache1.containsKey("key"));
       assertSerializationCounts(1, 0);
 
       DataContainer dc1 = TestingUtil.extractComponent(cache1, DataContainer.class);
 
       InternalCacheEntry ice = dc1.get("key");
       Object o = ice.getValue();
-      assert o instanceof MarshalledValue;
+      assertTrue(o instanceof MarshalledValue);
       MarshalledValue mv = (MarshalledValue) o;
       assertDeserialized(mv);
-      assert cache1.get("key").equals(value);
+      assertEquals(value, cache1.get("key"));
       assertDeserialized(mv);
       assertSerializationCounts(1, 0);
       cache1.compact();
@@ -168,11 +178,11 @@ public class MarshalledValueTest extends MultipleCacheManagersTest {
       DataContainer dc2 = TestingUtil.extractComponent(cache2, DataContainer.class);
       ice = dc2.get("key");
       o = ice.getValue();
-      assert o instanceof MarshalledValue;
+      assertTrue(o instanceof MarshalledValue);
       mv = (MarshalledValue) o;
       assertSerialized(mv); // this proves that unmarshalling on the recipient cache instance is lazy
 
-      assert cache2.get("key").equals(value);
+      assertEquals(value, cache2.get("key"));
       assertDeserialized(mv);
       assertSerializationCounts(2, 1);
       cache2.compact();
@@ -192,11 +202,11 @@ public class MarshalledValueTest extends MultipleCacheManagersTest {
       DataContainer dc1 = TestingUtil.extractComponent(cache1, DataContainer.class);
 
       Object o = dc1.keySet().iterator().next();
-      assert o instanceof MarshalledValue;
+      assertTrue(o instanceof MarshalledValue);
       MarshalledValue mv = (MarshalledValue) o;
       assertDeserialized(mv);
 
-      assert cache1.get(key).equals("value");
+      assertEquals("value", cache1.get(key));
       assertDeserialized(mv);
       assertSerializationCounts(1, 0);
 
@@ -209,10 +219,10 @@ public class MarshalledValueTest extends MultipleCacheManagersTest {
       // now on cache 2
       DataContainer dc2 = TestingUtil.extractComponent(cache2, DataContainer.class);
       o = dc2.keySet().iterator().next();
-      assert o instanceof MarshalledValue;
+      assertTrue(o instanceof MarshalledValue);
       mv = (MarshalledValue) o;
       assertSerialized(mv);
-      assert cache2.get(key).equals("value");
+      assertEquals("value", cache2.get(key));
       assertSerializationCounts(2, 1);
       assertDeserialized(mv);
       cache2.compact();
@@ -246,20 +256,20 @@ public class MarshalledValueTest extends MultipleCacheManagersTest {
       Set expValueEntries = ObjectDuplicator.duplicateSet(expValues);
 
       Set keys = cache2.keySet();
-      for (Object key : keys) assert expKeys.remove(key);
-      assert expKeys.isEmpty() : "Did not see keys " + expKeys + " in iterator!";
+      for (Object key : keys) assertTrue(expKeys.remove(key));
+      assertTrue("Did not see keys " + expKeys + " in iterator!", expKeys.isEmpty());
 
       Collection values = cache2.values();
-      for (Object key : values) assert expValues.remove(key);
-      assert expValues.isEmpty() : "Did not see keys " + expValues + " in iterator!";
+      for (Object key : values) assertTrue(expValues.remove(key));
+      assertTrue("Did not see keys " + expValues + " in iterator!", expValues.isEmpty());
 
       Set<Map.Entry> entries = cache2.entrySet();
       for (Map.Entry entry : entries) {
-         assert expKeyEntries.remove(entry.getKey());
-         assert expValueEntries.remove(entry.getValue());
+         assertTrue(expKeyEntries.remove(entry.getKey()));
+         assertTrue(expValueEntries.remove(entry.getValue()));
       }
-      assert expKeyEntries.isEmpty() : "Did not see keys " + expKeyEntries + " in iterator!";
-      assert expValueEntries.isEmpty() : "Did not see keys " + expValueEntries + " in iterator!";
+      assertTrue("Did not see keys " + expKeyEntries + " in iterator!", expKeyEntries.isEmpty());
+      assertTrue("Did not see keys " + expValueEntries + " in iterator!", expValueEntries.isEmpty());
 
       Collection[] collections = new Collection[]{keys, values, entries};
       Object newObj = new Object();
@@ -268,36 +278,36 @@ public class MarshalledValueTest extends MultipleCacheManagersTest {
       for (Collection col : collections) {
          try {
             col.add(newObj);
-            assert false : "Should have thrown a UnsupportedOperationException";
+            assertTrue("Should have thrown a UnsupportedOperationException", false);
          } catch (UnsupportedOperationException uoe) {
          }
          try {
             col.addAll(newObjCol);
-            assert false : "Should have thrown a UnsupportedOperationException";
+            assertTrue("Should have thrown a UnsupportedOperationException", false);
          } catch (UnsupportedOperationException uoe) {
          }
 
          try {
             col.clear();
-            assert false : "Should have thrown a UnsupportedOperationException";
+            assertTrue("Should have thrown a UnsupportedOperationException", false);
          } catch (UnsupportedOperationException uoe) {
          }
 
          try {
             col.remove(key1);
-            assert false : "Should have thrown a UnsupportedOperationException";
+            assertTrue("Should have thrown a UnsupportedOperationException", false);
          } catch (UnsupportedOperationException uoe) {
          }
 
          try {
             col.removeAll(newObjCol);
-            assert false : "Should have thrown a UnsupportedOperationException";
+            assertTrue("Should have thrown a UnsupportedOperationException", false);
          } catch (UnsupportedOperationException uoe) {
          }
 
          try {
             col.retainAll(newObjCol);
-            assert false : "Should have thrown a UnsupportedOperationException";
+            assertTrue("Should have thrown a UnsupportedOperationException", false);
          } catch (UnsupportedOperationException uoe) {
          }
       }
@@ -305,7 +315,7 @@ public class MarshalledValueTest extends MultipleCacheManagersTest {
       for (Map.Entry entry : entries) {
          try {
             entry.setValue(newObj);
-            assert false : "Should have thrown a UnsupportedOperationException";
+            assertTrue("Should have thrown a UnsupportedOperationException", false);
          } catch (UnsupportedOperationException uoe) {
          }
       }
@@ -319,14 +329,14 @@ public class MarshalledValueTest extends MultipleCacheManagersTest {
 
       mv.serialize();
       assertSerialized(mv);
-      assert oldHashCode == mv.hashCode();
+      assertTrue(oldHashCode == mv.hashCode());
 
       MarshalledValue mv2 = new MarshalledValue(pojo, true, extractCacheMarshaller(cache(0)));
       assertSerialized(mv);
       assertDeserialized(mv2);
 
-      assert mv2.hashCode() == oldHashCode;
-      assert mv.equals(mv2);
+      assertTrue(mv2.hashCode() == oldHashCode);
+      assertEquals(mv, mv2);
    }
 
    public void testMarshallValueWithCustomReadObjectMethod() {
@@ -334,22 +344,18 @@ public class MarshalledValueTest extends MultipleCacheManagersTest {
       Cache cache2 = cache(1, "replSync");
       CustomReadObjectMethod obj = new CustomReadObjectMethod();
       cache1.put("ab-key", obj);
-      assert cache2.get("ab-key").equals(obj);
+      assertEquals(obj, cache2.get("ab-key"));
 
       ObjectThatContainsACustomReadObjectMethod anotherObj = new ObjectThatContainsACustomReadObjectMethod();
       anotherObj.anObjectWithCustomReadObjectMethod = obj;
       cache1.put("cd-key", anotherObj);
-      assert cache2.get("cd-key").equals(anotherObj);
+      assertEquals(anotherObj, cache2.get("cd-key"));
    }
 
    /**
-    * Run this as last method as it creates and stops cache loaders, which might affect other tests.
+    * Run this on a separate cache as it creates and stops cache loaders, which might affect other tests.
     */
    public void testCacheLoaders() {
-      Cache cache1 = cache(0, "replSync");
-      Cache cache2 = cache(1, "replSync");
-      tearDown();
-
       ConfigurationBuilder cacheCofig = getDefaultClusteredCacheConfig(CacheMode.REPL_SYNC, false);
       cacheCofig.dataContainer().storeAsBinary().enable();
       DummyInMemoryCacheStoreConfigurationBuilder dimcs = new DummyInMemoryCacheStoreConfigurationBuilder(cacheCofig.loaders());
@@ -358,8 +364,8 @@ public class MarshalledValueTest extends MultipleCacheManagersTest {
 
       defineConfigurationOnAllManagers("replSync2", cacheCofig);
       waitForClusterToForm("replSync2");
-      cache1 = cache(0, "replSync2");
-      cache2 = cache(1, "replSync2");
+      Cache<Object, Object> cache1 = cache(0, "replSync2");
+      Cache<Object, Object> cache2 = cache(1, "replSync2");
 
       Pojo pojo = new Pojo();
       cache1.put("key", pojo);
@@ -381,9 +387,8 @@ public class MarshalledValueTest extends MultipleCacheManagersTest {
       try {
          Pojo pojo = new Pojo();
          cache1.put("key", pojo);
-         assert l.newValue instanceof Pojo : "recieved " + l.newValue.getClass().getName();
-         // +1 due to new marshallable checks
-         assertSerializationCounts(2, 0);
+         assertTrue("recieved " + l.newValue.getClass().getName(), l.newValue instanceof Pojo);
+         assertSerializationCounts(1, 0);
       } finally {
          cache1.removeListener(l);
       }
@@ -399,7 +404,7 @@ public class MarshalledValueTest extends MultipleCacheManagersTest {
          // Mock listener will force deserialization on transport thread. Ignore this by setting b to false.
          pojo.b = false;
          cache1.put("key", pojo);
-         assert l.newValue instanceof Pojo;
+         assertTrue(l.newValue instanceof Pojo);
          assertSerializationCounts(1, 1);
       } finally {
          cache2.removeListener(l);
@@ -412,23 +417,30 @@ public class MarshalledValueTest extends MultipleCacheManagersTest {
       Pojo pojo = new Pojo();
       cache1.put(pojo, pojo);
       cache1.evict(pojo);
-      assert !cache1.containsKey(pojo);
+      assertTrue(!cache1.containsKey(pojo));
    }
 
    public void testModificationsOnSameCustomKey() {
       Cache cache1 = cache(0, "replSync");
       Cache cache2 = cache(1, "replSync");
 
-      Pojo key = new Pojo();
+      Pojo key1 = new Pojo();
+      log.trace("First put");
+      cache1.put(key1, "1");
+      // 1 serialization on cache1 (the primary), when replicating the command to cache2 (the backup)
+      assertSerializationCounts(1, 0);
 
-      cache1.put(key, "1");
-      cache2.put(key, "2");
-
-      // Deserialization only occurs when the cache2.put occurs, not during transport thread execution.
-      // Serialized 4 times:
-      //    twice when put is invoked on cache1, one to check if the type can be serialized, 2nd to replicate.
-      //    twice when put is invoked on cache2, one to check if the type can be serialized, 2nd to replicate.
-      assertSerializationCounts(4, 1);
+      log.trace("Second put");
+      Pojo key2 = new Pojo();
+      cache2.put(key2, "2");
+      // 1 deserialization on cache2 for key1, because equalityPreferenceForInstance == true
+      // when EntryFactoryImpl.wrapEntryForPut reads the old value
+      // 1 serialization on cache2 for key2, when replicating the command to cache1 (the primary)
+      // 1 serialization on cache1 for key1, because equalityPreferenceForInstance == false
+      // when EntryFactoryImpl.wrapEntryForPut reads the old value
+      // no de/serialization on cache2 (when the command is forwarded back to the origin),
+      // because equalityPreferenceForInstance == false and key1/key2 are both serialized
+      assertSerializationCounts(3, 1);
    }
 
    public void testReturnValueDeserialization() {
@@ -438,7 +450,7 @@ public class MarshalledValueTest extends MultipleCacheManagersTest {
       Pojo v1 = new Pojo(1);
       cache1.put("1", v1);
       Pojo previous = (Pojo) cache1.put("1", new Pojo(2));
-      assert previous.equals(v1);
+      assertEquals(v1, previous);
    }
 
    public void testEquality() {
@@ -539,7 +551,7 @@ public class MarshalledValueTest extends MultipleCacheManagersTest {
          b = in.readBoolean();
          if (b) {
             // TODO: Find a better way to make sure a transport (JGroups) thread is not attempting to deserialize stuff
-            assert !Thread.currentThread().getName().startsWith("OOB") : "Transport (JGroups) thread is trying to deserialize stuff!!";
+            assertTrue("Transport (JGroups) thread is trying to deserialize stuff!!", !Thread.currentThread().getName().startsWith("OOB"));
          }
          int deserCount = updateDeserializationCount();
          log.trace("deserializationCount=" + deserCount);

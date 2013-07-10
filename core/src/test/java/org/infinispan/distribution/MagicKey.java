@@ -36,13 +36,18 @@ public class MagicKey implements Serializable {
       address = addressOf(primaryOwner).toString();
       Random r = new Random();
       Object dummy;
+      int attemptsLeft = 1000;
       do {
          // create a dummy object with this hashcode
          final int hc = r.nextInt();
          dummy = new Integer(hc);
+         attemptsLeft--;
 
-      } while (!isFirstOwner(primaryOwner, dummy));
+      } while (!isFirstOwner(primaryOwner, dummy) && attemptsLeft >= 0);
 
+      if (attemptsLeft < 0) {
+         throw new IllegalStateException("Could not find any key owned by " + primaryOwner);
+      }
       // we have found a hashcode that works!
       hashcode = dummy.hashCode();
       segment = primaryOwner.getAdvancedCache().getDistributionManager().getReadConsistentHash().getSegment(this);
