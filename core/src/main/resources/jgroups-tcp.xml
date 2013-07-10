@@ -47,25 +47,18 @@
       mcast_port="${jgroups.mping.mcast_port:43366}"
       ip_ttl="${jgroups.udp.ip_ttl:2}"
       num_initial_members="3"/>
-
    <MERGE2 max_interval="30000" min_interval="10000"/>
+
    <FD_SOCK/>
    <FD timeout="3000" max_tries="3"/>
    <VERIFY_SUSPECT timeout="1500"/>
+
    <pbcast.NAKACK2 use_mcast_xmit="false"
                    xmit_interval="1000"
                    xmit_table_num_rows="100"
                    xmit_table_msgs_per_row="10000"
                    xmit_table_max_compaction_time="10000"
                    max_msg_batch_size="100"/>
-   <!-- Commented when upgraded to 3.1.0.Alpha (remove eventually)  
-   <pbcast.NAKACK
-         use_mcast_xmit="false"
-         retransmit_timeout="300,600,1200,2400,4800"
-         discard_delivered_msgs="false"/>  -->
-         
-   <!-- Commented when upgraded to 3.1.0.Alpha (remove eventually) 
-   <UNICAST timeout="300,600,1200"/>  -->
    <UNICAST2 stable_interval="5000"
              xmit_interval="500"
              max_bytes="1m"
@@ -74,9 +67,11 @@
              xmit_table_max_compaction_time="10000"
              max_msg_batch_size="100"
              conn_expiry_timeout="0"/>
+
    <pbcast.STABLE stability_delay="500" desired_avg_gossip="5000" max_bytes="1m"/>
    <pbcast.GMS print_local_addr="false" join_timeout="3000" view_bundling="true"/>
    <tom.TOA/> <!-- the TOA is only needed for total order transactions-->
+
    <UFC max_credits="200k" min_threshold="0.20"/>
    <MFC max_credits="200k" min_threshold="0.20"/>
    <FRAG2 frag_size="60000"/>
