@@ -13,6 +13,7 @@ public class PutForExternalReadReplPessimisticTest extends PutForExternalReadTes
    @Override
    protected ConfigurationBuilder createCacheConfigBuilder() {
       ConfigurationBuilder c = getDefaultClusteredCacheConfig(CacheMode.REPL_SYNC, true);
+      c.clustering().hash().numSegments(4);
       c.transaction().lockingMode(LockingMode.PESSIMISTIC).useSynchronization(false)
             .recovery().disable().locking().useLockStriping(false);
       return c;

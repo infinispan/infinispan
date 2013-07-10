@@ -10,6 +10,8 @@ import org.testng.annotations.Test;
 public class PutForExternalReadReplOptimisticTest extends PutForExternalReadTest {
 
    protected ConfigurationBuilder createCacheConfigBuilder() {
-      return getDefaultClusteredCacheConfig(CacheMode.REPL_SYNC, true);
+      ConfigurationBuilder c = getDefaultClusteredCacheConfig(CacheMode.REPL_SYNC, true);
+      c.clustering().hash().numSegments(4);
+      return c;
    }
 }
