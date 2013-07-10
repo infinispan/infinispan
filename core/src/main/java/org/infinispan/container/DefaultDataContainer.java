@@ -1,6 +1,7 @@
 package org.infinispan.container;
 
 import net.jcip.annotations.ThreadSafe;
+
 import org.infinispan.metadata.Metadata;
 import org.infinispan.commons.CacheException;
 import org.infinispan.commons.equivalence.Equivalence;
@@ -13,8 +14,8 @@ import org.infinispan.eviction.EvictionThreadPolicy;
 import org.infinispan.eviction.PassivationManager;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.loaders.CacheLoaderException;
-import org.infinispan.loaders.CacheLoaderManager;
-import org.infinispan.loaders.CacheStore;
+import org.infinispan.loaders.manager.CacheLoaderManager;
+import org.infinispan.loaders.spi.CacheStore;
 import org.infinispan.util.CoreImmutables;
 import org.infinispan.util.TimeService;
 import org.infinispan.util.concurrent.BoundedConcurrentHashMap;

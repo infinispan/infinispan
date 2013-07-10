@@ -1,13 +1,9 @@
 package org.infinispan.loaders.jdbc.mixed;
 
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.when;
-
-import org.infinispan.Cache;
 import org.infinispan.loaders.BaseCacheStoreTest;
-import org.infinispan.loaders.CacheStore;
-import org.infinispan.loaders.jdbc.TableManipulation;
-import org.infinispan.loaders.jdbc.connectionfactory.ConnectionFactoryConfig;
+import org.infinispan.loaders.jdbc.configuration.JdbcMixedCacheStoreConfigurationBuilder;
+import org.infinispan.loaders.spi.CacheStore;
+import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.infinispan.test.fwk.UnitTestDatabaseManager;
 import org.testng.annotations.Test;
 
@@ -15,20 +11,18 @@ import org.testng.annotations.Test;
 public class JdbcMixedCacheStore2Test extends BaseCacheStoreTest {
    @Override
    protected CacheStore createCacheStore() throws Exception {
-      JdbcMixedCacheStoreConfig jdbcCacheStoreConfig = new JdbcMixedCacheStoreConfig();
-      TableManipulation stringsTm = UnitTestDatabaseManager.buildStringTableManipulation();
-      stringsTm.setTableNamePrefix("STRINGS_TABLE");
-      TableManipulation binaryTm = UnitTestDatabaseManager.buildBinaryTableManipulation();
-      binaryTm.setTableNamePrefix("BINARY_TABLE");
 
-      ConnectionFactoryConfig cfc = UnitTestDatabaseManager.getUniqueConnectionFactoryConfig();
-      jdbcCacheStoreConfig.setConnectionFactoryConfig(cfc);
-      jdbcCacheStoreConfig.setStringsTableManipulation(stringsTm);
-      jdbcCacheStoreConfig.setBinaryTableManipulation(binaryTm);
-      jdbcCacheStoreConfig.setPurgeSynchronously(true);
+      JdbcMixedCacheStoreConfigurationBuilder storeBuilder = TestCacheManagerFactory
+            .getDefaultCacheConfiguration(false)
+               .loaders()
+                  .addLoader(JdbcMixedCacheStoreConfigurationBuilder.class)
+                     .purgeSynchronously(true);
 
+      UnitTestDatabaseManager.configureUniqueConnectionFactory(storeBuilder);
+      UnitTestDatabaseManager.buildTableManipulation(storeBuilder.stringTable(), false);
+      UnitTestDatabaseManager.buildTableManipulation(storeBuilder.binaryTable(), true);
       JdbcMixedCacheStore cacheStore = new JdbcMixedCacheStore();
-      cacheStore.init(jdbcCacheStoreConfig, getCache(), getMarshaller());
+      cacheStore.init(storeBuilder.create(), getCache(), getMarshaller());
       cacheStore.start();
       return cacheStore;
    }

@@ -1,12 +1,12 @@
 package org.infinispan.loaders.file;
 
 import org.infinispan.Cache;
-import org.infinispan.commons.CacheConfigurationException;
 import org.infinispan.configuration.cache.LoadersConfigurationBuilder;
+import org.infinispan.configuration.cache.SingleFileCacheStoreConfiguration;
+import org.infinispan.configuration.cache.SingleFileCacheStoreConfigurationBuilder;
 import org.infinispan.loaders.BaseCacheStoreFunctionalTest;
-import org.infinispan.loaders.CacheLoaderManager;
-import org.infinispan.loaders.CacheStore;
-import org.infinispan.loaders.CacheStoreConfig;
+import org.infinispan.loaders.manager.CacheLoaderManager;
+import org.infinispan.loaders.spi.CacheStore;
 import org.infinispan.test.CacheManagerCallable;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
@@ -21,6 +21,7 @@ import java.io.InputStream;
 import static org.infinispan.test.TestingUtil.*;
 import static org.testng.AssertJUnit.assertEquals;
 import static org.testng.AssertJUnit.assertTrue;
+import static org.testng.AssertJUnit.fail;
 
 /**
  * Single file cache store functional test.
@@ -69,9 +70,15 @@ public class SingleFileCacheStoreFunctionalTest extends BaseCacheStoreFunctional
             assertEquals("v1", cache.get(1));
             CacheStore store = extractComponent(cache, CacheLoaderManager.class).getCacheStore();
             assertTrue(store instanceof SingleFileCacheStore);
-            SingleFileCacheStoreConfig cfg = (SingleFileCacheStoreConfig) store.getCacheStoreConfig();
-            assertEquals("Infinispan-SingleFileCacheStore", cfg.getLocation());
-            assertEquals(-1, cfg.getMaxEntries());
+            SingleFileCacheStoreConfiguration storeConfiguration = null;
+            if (store.getConfiguration() instanceof SingleFileCacheStoreConfiguration) {
+               storeConfiguration = (SingleFileCacheStoreConfiguration) store.getConfiguration();
+            } else {
+               fail("The Configuration bean for a SingleFileCacheStore has to be an instance of " +
+                     "SingleFileCacheStoreConfiguration");
+            }
+            assertEquals("Infinispan-SingleFileCacheStore", storeConfiguration.location());
+            assertEquals(-1, storeConfiguration.maxEntries());
          }
       });
    }
@@ -93,9 +100,15 @@ public class SingleFileCacheStoreFunctionalTest extends BaseCacheStoreFunctional
             assertEquals("v1", cache.get(1));
             CacheStore store = extractComponent(cache, CacheLoaderManager.class).getCacheStore();
             assertTrue(store instanceof SingleFileCacheStore);
-            SingleFileCacheStoreConfig cfg = (SingleFileCacheStoreConfig) store.getCacheStoreConfig();
-            assertEquals("other-location", cfg.getLocation());
-            assertEquals(100, cfg.getMaxEntries());
+            SingleFileCacheStoreConfiguration storeConfiguration = null;
+            if (store.getConfiguration() instanceof SingleFileCacheStoreConfiguration) {
+               storeConfiguration = (SingleFileCacheStoreConfiguration) store.getConfiguration();
+            } else {
+               fail("The Configuration bean for a SingleFileCacheStore has to be an instance of " +
+                     "SingleFileCacheStoreConfiguration");
+            }
+            assertEquals("other-location", storeConfiguration.location());
+            assertEquals(100, storeConfiguration.maxEntries());
          }
       });
    }

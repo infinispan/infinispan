@@ -1,8 +1,8 @@
 package org.infinispan.configuration.cache;
 
 import org.infinispan.commons.util.TypedProperties;
-import org.infinispan.loaders.CacheLoader;
-import org.infinispan.loaders.CacheStore;
+import org.infinispan.loaders.spi.CacheLoader;
+import org.infinispan.loaders.spi.CacheStore;
 
 /**
  * Configuration of a legacy cache store, i.e. a store which is still configured via properties and

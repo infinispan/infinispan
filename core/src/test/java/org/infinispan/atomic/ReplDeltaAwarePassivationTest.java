@@ -4,9 +4,10 @@ import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.container.DataContainer;
 import org.infinispan.eviction.EvictionStrategy;
-import org.infinispan.loaders.CacheLoaderManager;
-import org.infinispan.loaders.CacheStore;
 import org.infinispan.loaders.dummy.DummyInMemoryCacheStore;
+import org.infinispan.loaders.dummy.DummyInMemoryCacheStoreConfigurationBuilder;
+import org.infinispan.loaders.manager.CacheLoaderManager;
+import org.infinispan.loaders.spi.CacheStore;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.CleanupAfterMethod;
 import org.infinispan.transaction.LockingMode;
@@ -31,19 +32,20 @@ public class ReplDeltaAwarePassivationTest extends ReplDeltaAwareEvictionTest {
             .transactionManagerLookup(new JBossStandaloneJTAManagerLookup())
             .eviction().maxEntries(1).strategy(EvictionStrategy.LRU)
             .loaders().passivation(true)
-            .addStore().cacheStore(new DummyInMemoryCacheStore())
+            .addStore(DummyInMemoryCacheStoreConfigurationBuilder.class)
             .fetchPersistentState(false);
 
       addClusterEnabledCacheManager(builder);
 
       builder.loaders().clearCacheLoaders()
-            .addStore().cacheStore(new DummyInMemoryCacheStore()).fetchPersistentState(false);
+            .addStore(DummyInMemoryCacheStoreConfigurationBuilder.class).fetchPersistentState(false);
 
       addClusterEnabledCacheManager(builder);
 
       waitForClusterToForm();
    }
 
+   @Override
    protected void assertNumberOfEntries(int cacheIndex) throws Exception {
       CacheStore cacheStore = TestingUtil.extractComponent(cache(cacheIndex), CacheLoaderManager.class).getCacheStore();
       Assert.assertEquals(1, cacheStore.loadAllKeys(null).size()); // one entry in store

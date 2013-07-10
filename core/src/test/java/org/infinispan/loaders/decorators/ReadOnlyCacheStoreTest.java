@@ -7,7 +7,7 @@ import static org.mockito.Mockito.when;
 
 import org.infinispan.container.entries.InternalCacheEntry;
 import org.infinispan.loaders.CacheLoaderException;
-import org.infinispan.loaders.CacheStore;
+import org.infinispan.loaders.spi.CacheStore;
 import org.infinispan.test.AbstractInfinispanTest;
 import org.testng.annotations.Test;
 

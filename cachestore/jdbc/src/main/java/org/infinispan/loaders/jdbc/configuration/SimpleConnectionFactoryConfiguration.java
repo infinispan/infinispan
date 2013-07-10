@@ -1,8 +1,6 @@
 package org.infinispan.loaders.jdbc.configuration;
 
-import org.infinispan.commons.configuration.Builder;
 import org.infinispan.commons.configuration.BuiltBy;
-import org.infinispan.loaders.jdbc.AbstractJdbcCacheStoreConfig;
 import org.infinispan.loaders.jdbc.connectionfactory.ConnectionFactory;
 import org.infinispan.loaders.jdbc.connectionfactory.SimpleConnectionFactory;
 
@@ -13,7 +11,7 @@ import org.infinispan.loaders.jdbc.connectionfactory.SimpleConnectionFactory;
  * @since 5.2
  */
 @BuiltBy(SimpleConnectionFactoryConfigurationBuilder.class)
-public class SimpleConnectionFactoryConfiguration implements ConnectionFactoryConfiguration, LegacyConnectionFactoryAdaptor {
+public class SimpleConnectionFactoryConfiguration implements ConnectionFactoryConfiguration {
    private final String connectionUrl;
    private final String driverClass;
    private final String username;
@@ -45,15 +43,6 @@ public class SimpleConnectionFactoryConfiguration implements ConnectionFactoryCo
    @Override
    public Class<? extends ConnectionFactory> connectionFactoryClass() {
       return SimpleConnectionFactory.class;
-   }
-
-   @Override
-   public void adapt(AbstractJdbcCacheStoreConfig config) {
-      config.setConnectionFactoryClass(connectionFactoryClass().getName());
-      config.setConnectionUrl(connectionUrl);
-      config.setDriverClass(driverClass);
-      config.setUserName(username);
-      config.setPassword(password);
    }
 
    @Override

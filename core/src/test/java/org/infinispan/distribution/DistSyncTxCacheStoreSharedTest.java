@@ -1,8 +1,8 @@
 package org.infinispan.distribution;
 
 import org.infinispan.Cache;
-import org.infinispan.loaders.CacheLoaderManager;
-import org.infinispan.loaders.CacheStore;
+import org.infinispan.loaders.manager.CacheLoaderManager;
+import org.infinispan.loaders.spi.CacheStore;
 import org.infinispan.test.TestingUtil;
 import org.testng.annotations.Test;
 

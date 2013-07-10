@@ -22,10 +22,10 @@ import org.infinispan.eviction.EvictionThreadPolicy;
 import org.infinispan.executors.ScheduledExecutorFactory;
 import org.infinispan.interceptors.base.CommandInterceptor;
 import org.infinispan.jmx.MBeanServerLookup;
-import org.infinispan.loaders.CacheLoader;
-import org.infinispan.loaders.CacheStore;
 import org.infinispan.loaders.cluster.ClusterCacheLoader;
 import org.infinispan.loaders.file.FileCacheStore;
+import org.infinispan.loaders.spi.CacheLoader;
+import org.infinispan.loaders.spi.CacheStore;
 import org.infinispan.remoting.ReplicationQueue;
 import org.infinispan.remoting.transport.Transport;
 import org.infinispan.transaction.LockingMode;
@@ -38,6 +38,7 @@ import org.infinispan.util.logging.LogFactory;
 
 import javax.xml.stream.XMLStreamConstants;
 import javax.xml.stream.XMLStreamException;
+
 import java.util.Properties;
 
 import static org.infinispan.commons.util.StringPropertyReplacer.replaceProperties;

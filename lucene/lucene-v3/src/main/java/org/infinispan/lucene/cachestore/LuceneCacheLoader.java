@@ -9,20 +9,21 @@ import java.util.concurrent.ConcurrentHashMap;
 
 import org.apache.lucene.store.FSDirectory;
 import org.infinispan.Cache;
+import org.infinispan.configuration.cache.CacheLoaderConfiguration;
 import org.infinispan.container.entries.ImmortalCacheEntry;
 import org.infinispan.container.entries.InternalCacheEntry;
-import org.infinispan.loaders.CacheLoader;
-import org.infinispan.loaders.CacheLoaderConfig;
 import org.infinispan.loaders.CacheLoaderException;
-import org.infinispan.loaders.CacheLoaderMetadata;
+import org.infinispan.loaders.spi.AbstractCacheLoader;
+import org.infinispan.loaders.spi.CacheLoader;
 import org.infinispan.lucene.IndexScopedKey;
+import org.infinispan.lucene.cachestore.configuration.LuceneCacheLoaderConfiguration;
 import org.infinispan.lucene.logging.Log;
 import org.infinispan.commons.marshall.StreamingMarshaller;
 import org.infinispan.util.logging.LogFactory;
 
 /**
  * A CacheLoader meant to load Lucene index(es) from filesystem based Lucene index(es).
- * This is exclusively suitable for keys being used by the {@link Directory}, any other key
+ * This is exclusively suitable for keys being used by the Directory, any other key
  * will be ignored.
  *
  * The InfinispanDirectory requires indexes to be named; this CacheLoader needs to be configured
@@ -32,8 +33,7 @@ import org.infinispan.util.logging.LogFactory;
  * @author Sanne Grinovero
  * @since 5.2
  */
-@CacheLoaderMetadata(configurationClass = LuceneCacheLoaderConfig.class)
-public class LuceneCacheLoader implements CacheLoader {
+public class LuceneCacheLoader extends AbstractCacheLoader {
 
    private static final Log log = LogFactory.getLog(LuceneCacheLoader.class, Log.class);
 
@@ -42,11 +42,16 @@ public class LuceneCacheLoader implements CacheLoader {
    private File rootDirectory;
    private int autoChunkSize;
 
+   private LuceneCacheLoaderConfiguration configuration;
+
    @Override
-   public void init(final CacheLoaderConfig config, final Cache<?, ?> cache, final StreamingMarshaller m) throws CacheLoaderException {
-      LuceneCacheLoaderConfig cfg = (LuceneCacheLoaderConfig) config;
-      this.fileRoot = cfg.location;
-      this.autoChunkSize = cfg.autoChunkSize;
+   public void init(CacheLoaderConfiguration configuration, final Cache<?, ?> cache,
+                    final StreamingMarshaller m) throws CacheLoaderException {
+      this.configuration = validateConfigurationClass(configuration, LuceneCacheLoaderConfiguration.class);
+
+      super.init(configuration, cache, m);
+      this.fileRoot = this.configuration.location();
+      this.autoChunkSize = this.configuration.autoChunkSize();
    }
 
    @Override
@@ -151,11 +156,6 @@ public class LuceneCacheLoader implements CacheLoader {
          DirectoryLoaderAdaptor directory = entry.getValue();
          directory.close();
       }
-   }
-
-   @Override
-   public Class<? extends CacheLoaderConfig> getConfigurationClass() {
-      return LuceneCacheLoaderConfig.class;
    }
 
    private DirectoryLoaderAdaptor getDirectory(final IndexScopedKey indexKey) throws CacheLoaderException {

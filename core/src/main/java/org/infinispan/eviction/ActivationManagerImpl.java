@@ -9,10 +9,11 @@ import org.infinispan.jmx.annotations.ManagedAttribute;
 import org.infinispan.jmx.annotations.ManagedOperation;
 import org.infinispan.jmx.annotations.MeasurementType;
 import org.infinispan.loaders.CacheLoaderException;
-import org.infinispan.loaders.CacheLoaderManager;
-import org.infinispan.loaders.CacheStore;
+import org.infinispan.loaders.manager.CacheLoaderManager;
+import org.infinispan.loaders.spi.CacheStore;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
+
 import java.util.concurrent.atomic.AtomicLong;
 
 /**
@@ -43,7 +44,7 @@ public class ActivationManagerImpl implements ActivationManager {
       this.cfg = cfg;
    }
 
-   @Start(priority = 10) // Just before the passivation manager
+   @Start(priority = 11) // After the cache loader manager, before the passivation manager
    public void start() {
       enabled = clm.isUsingPassivation() && !clm.isShared();
       if (enabled) {

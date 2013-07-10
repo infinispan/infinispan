@@ -1,8 +1,11 @@
 package org.infinispan.loaders.jdbc;
 
 import org.infinispan.loaders.CacheLoaderException;
-import org.infinispan.loaders.jdbc.connectionfactory.ConnectionFactoryConfig;
+import org.infinispan.loaders.jdbc.configuration.ConnectionFactoryConfiguration;
+import org.infinispan.loaders.jdbc.configuration.ConnectionFactoryConfigurationBuilder;
+import org.infinispan.loaders.jdbc.configuration.JdbcStringBasedCacheStoreConfigurationBuilder;
 import org.infinispan.loaders.jdbc.connectionfactory.PooledConnectionFactory;
+import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.infinispan.test.fwk.UnitTestDatabaseManager;
 import org.testng.annotations.AfterMethod;
 import org.testng.annotations.Test;
@@ -21,6 +24,7 @@ import java.util.Set;
 public class PooledConnectionFactoryTest {
 
    private PooledConnectionFactory factory;
+   private ConnectionFactoryConfigurationBuilder<?> factoryBuilder;
 
    @AfterMethod
    public void destroyFacotry() {
@@ -29,9 +33,20 @@ public class PooledConnectionFactoryTest {
 
    @Test(enabled = false, description = "This test is disabled due to: http://sourceforge.net/tracker/index.php?func=detail&aid=1892195&group_id=25357&atid=383690")
    public void testValuesNoOverrides() throws Exception {
+
+      JdbcStringBasedCacheStoreConfigurationBuilder storeBuilder = TestCacheManagerFactory
+            .getDefaultCacheConfiguration(false)
+            .loaders()
+            .addLoader(JdbcStringBasedCacheStoreConfigurationBuilder.class);
+
+      factoryBuilder = storeBuilder
+            .connectionFactory(UnitTestDatabaseManager.configureUniqueConnectionFactory(storeBuilder));
+
       factory = new PooledConnectionFactory();
-      ConnectionFactoryConfig config = UnitTestDatabaseManager.getUniqueConnectionFactoryConfig();
-      factory.start(config, Thread.currentThread().getContextClassLoader());
+
+      ConnectionFactoryConfiguration factoryConfiguration = factoryBuilder.create();
+      factory.start(factoryConfiguration, Thread.currentThread().getContextClassLoader());
+
       int hadcodedMaxPoolSize = factory.getPooledDataSource().getMaxPoolSize();
       Set<Connection> connections = new HashSet<Connection>();
       for (int i = 0; i < hadcodedMaxPoolSize; i++) {
@@ -53,9 +68,18 @@ public class PooledConnectionFactoryTest {
 
    @Test(expectedExceptions = CacheLoaderException.class)
    public void testNoDriverClassFound() throws Exception {
+
+      JdbcStringBasedCacheStoreConfigurationBuilder storeBuilder = TestCacheManagerFactory
+            .getDefaultCacheConfiguration(false)
+            .loaders()
+            .addLoader(JdbcStringBasedCacheStoreConfigurationBuilder.class);
+
+      factoryBuilder = UnitTestDatabaseManager.configureBrokenConnectionFactory(storeBuilder);
+
       factory = new PooledConnectionFactory();
-      ConnectionFactoryConfig config = UnitTestDatabaseManager.getBrokenConnectionFactoryConfig();
-      factory.start(config, Thread.currentThread().getContextClassLoader());
+
+      ConnectionFactoryConfiguration factoryConfiguration = factoryBuilder.create();
+      factory.start(factoryConfiguration, Thread.currentThread().getContextClassLoader());
    }
 
 }

@@ -12,9 +12,10 @@ import org.infinispan.Cache;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.container.entries.InternalCacheEntry;
 import org.infinispan.loaders.CacheLoaderException;
-import org.infinispan.loaders.CacheLoaderManager;
-import org.infinispan.loaders.CacheStore;
 import org.infinispan.loaders.dummy.DummyInMemoryCacheStore;
+import org.infinispan.loaders.dummy.DummyInMemoryCacheStoreConfigurationBuilder;
+import org.infinispan.loaders.manager.CacheLoaderManager;
+import org.infinispan.loaders.spi.CacheStore;
 import org.infinispan.manager.CacheContainer;
 import org.infinispan.query.Search;
 import org.infinispan.query.SearchManager;
@@ -81,10 +82,10 @@ public class EntryActivatingTest extends AbstractInfinispanTest {
       cache.stop();
       assert ((SearchFactoryIntegrator)search.getSearchFactory()).isStopped();
       TestingUtil.killCacheManagers(cm);
-      
+
       // Now let's check the entry is not re-indexed during data preloading:
       recreateCacheManager();
-      
+
       // People should generally use a persistent index; we use RAMDirectory for
       // test cleanup, so for our configuration it needs now to contain zero
       // matches: on filesystem it would be exactly one as expected (two when ISPN-1179 was open)
@@ -96,8 +97,7 @@ public class EntryActivatingTest extends AbstractInfinispanTest {
       cfg.loaders()
             .preload(true)
             .passivation(true)
-            .addStore()
-            .cacheStore(new DummyInMemoryCacheStore())
+            .addStore(DummyInMemoryCacheStoreConfigurationBuilder.class)
             .purgeOnStartup(true)
          .indexing()
             .enable()

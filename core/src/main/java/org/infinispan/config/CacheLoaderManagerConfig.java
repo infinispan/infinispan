@@ -2,14 +2,10 @@ package org.infinispan.config;
 
 import org.infinispan.commons.util.Util;
 import org.infinispan.config.FluentConfiguration.LoadersConfig;
-import org.infinispan.loaders.CacheLoaderConfig;
-import org.infinispan.loaders.CacheStoreConfig;
 
 import javax.xml.bind.annotation.XmlAccessType;
 import javax.xml.bind.annotation.XmlAccessorType;
 import javax.xml.bind.annotation.XmlAttribute;
-import javax.xml.bind.annotation.XmlElement;
-import javax.xml.bind.annotation.XmlTransient;
 
 import java.util.LinkedList;
 import java.util.List;
@@ -17,7 +13,7 @@ import java.util.List;
 /**
  * Holds the configuration of the cache loader chain. All cache loaders should be defined using this
  * class, adding individual cache loaders to the chain by calling
- * {@link CacheLoaderManagerConfig#addCacheLoaderConfig}
+ *
  * 
  *
  * 
@@ -45,13 +41,7 @@ public class CacheLoaderManagerConfig extends AbstractFluentConfigurationBean im
    @ConfigurationDocRef(bean=CacheLoaderManagerConfig.class,targetElement="setShared")   
    protected Boolean shared = false;
   
-   protected List<CacheLoaderConfig> cacheLoaderConfigs = new LinkedList<CacheLoaderConfig>();
-
    public CacheLoaderManagerConfig() {
-   }
-
-   public CacheLoaderManagerConfig(CacheLoaderConfig clc) {
-      addCacheLoaderConfig(clc);
    }
 
    public Boolean isPreload() {
@@ -136,13 +126,6 @@ public class CacheLoaderManagerConfig extends AbstractFluentConfigurationBean im
       return this;
    }
 
-   @Override
-   public LoadersConfig addCacheLoader(CacheLoaderConfig... configs) {
-      for (CacheLoaderConfig config : configs)
-         addCacheLoaderConfig(config);
-      return this;
-   }
-
    /**
     * @deprecated The visibility of this method will be reduced. Use {@link #shared(Boolean)} instead.
     */
@@ -157,127 +140,10 @@ public class CacheLoaderManagerConfig extends AbstractFluentConfigurationBean im
       return shared;
    }
 
-   /**
-    *
-    * @param clc
-    * @return
-    * @deprecated use {@link #addCacheLoader(org.infinispan.loaders.CacheLoaderConfig...)} instead
-    */
-   @Deprecated
-   public LoadersConfig addCacheLoaderConfig(CacheLoaderConfig clc) {
-      testImmutability("cacheLoaderConfigs");
-      cacheLoaderConfigs.add(clc);
-      return this;
-   }
-   
-   public List<CacheLoaderConfig> getCacheLoaderConfigs() {
-      return cacheLoaderConfigs;
-   }
-
-   // JAXB method
-   private List<CacheLoaderConfig> getCacheLoaders() {
-      testImmutability("cacheLoaderConfigs");
-      return cacheLoaderConfigs;
-   }
-
-   // JAXB method
-   @XmlElement(name = "loader")
-   private LoadersConfig setCacheLoaders(List<CacheLoaderConfig> configs) {
-      testImmutability("cacheLoaderConfigs");
-      this.cacheLoaderConfigs = configs == null ? new LinkedList<CacheLoaderConfig>() : configs;
-      return this;
-   }
-
-   /**
-    * @deprecated The visibility of this method will be reduced and
-    * XMLElement definition is likely to move to the getCacheLoaderConfigs().
-    */
-   @Deprecated
-   @XmlTransient // Avoid JAXB finding this method
-   public LoadersConfig setCacheLoaderConfigs(List<CacheLoaderConfig> configs) {
-      testImmutability("cacheLoaderConfigs");
-      this.cacheLoaderConfigs = configs == null ? new LinkedList<CacheLoaderConfig>() : configs;
-      return this;
-   }
-
-   public CacheLoaderConfig getFirstCacheLoaderConfig() {
-      if (cacheLoaderConfigs.isEmpty())
-         return null;
-      return cacheLoaderConfigs.get(0);
-   }
-
-   /**
-    * Loops through all individual cache loader configs and checks if fetchPersistentState is set on
-    * any of them
-    */
-   public Boolean isFetchPersistentState() {
-      for (CacheLoaderConfig iclc : cacheLoaderConfigs) {
-         if (iclc instanceof CacheStoreConfig)
-            if (((CacheStoreConfig) iclc).isFetchPersistentState())
-               return true;
-      }
-      return false;
-   }
-
    @Override
    protected CacheLoaderManagerConfig setConfiguration(Configuration config) {
       super.setConfiguration(config);
       return this;
    }
 
-   public boolean usingChainingCacheLoader() {
-      return !isPassivation() && cacheLoaderConfigs.size() > 1;
-   }
-
-   @Override
-   public String toString() {
-      return new StringBuilder().append("CacheLoaderManagerConfig{").append("shared=").append(
-               shared).append(", passivation=").append(passivation).append(", preload='").append(
-               preload).append('\'').append(", cacheLoaderConfigs.size()=").append(
-               cacheLoaderConfigs.size()).append('}').toString();
-   }
-
-   @Override
-   public boolean equals(Object obj) {
-      if (this == obj)
-         return true;
-
-      if (obj instanceof CacheLoaderManagerConfig) {
-         CacheLoaderManagerConfig other = (CacheLoaderManagerConfig) obj;
-         return (this.passivation.equals(other.passivation)) && (this.shared.equals(other.shared))
-                  && Util.safeEquals(this.preload, other.preload)
-                  && Util.safeEquals(this.cacheLoaderConfigs, other.cacheLoaderConfigs);
-      }
-      return false;
-   }
-
-   public void accept(ConfigurationBeanVisitor v) {
-      for (CacheLoaderConfig clc : cacheLoaderConfigs) {
-         clc.accept(v);
-      }
-      v.visitCacheLoaderManagerConfig(this);
-   }
-
-   @Override
-   public int hashCode() {
-      int result = 19;
-      result = 51 * result + (passivation ? 0 : 1);
-      result = 51 * result + (shared ? 0 : 1);
-      result = 51 * result + (preload ? 0 : 1);
-      result = 51 * result + (cacheLoaderConfigs == null ? 0 : cacheLoaderConfigs.hashCode());
-      return result;
-   }
-
-   @Override
-   public CacheLoaderManagerConfig clone() throws CloneNotSupportedException {
-      CacheLoaderManagerConfig clone = (CacheLoaderManagerConfig) super.clone();
-      if (cacheLoaderConfigs != null) {
-         List<CacheLoaderConfig> clcs = new LinkedList<CacheLoaderConfig>();
-         for (CacheLoaderConfig clc : cacheLoaderConfigs) {
-            clcs.add(clc.clone());
-         }
-         clone.cacheLoaderConfigs = clcs;
-      }
-      return clone;
-   }
 }

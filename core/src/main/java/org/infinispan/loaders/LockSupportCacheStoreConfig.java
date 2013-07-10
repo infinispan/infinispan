@@ -1,15 +1,18 @@
 package org.infinispan.loaders;
 
+import org.infinispan.loaders.spi.LockSupportCacheStore;
+
 
 /**
  * Adds configuration support for {@link LockSupportCacheStore}.
  *
  * @author Mircea.Markus@jboss.com
  */
+@Deprecated
 public class LockSupportCacheStoreConfig extends AbstractCacheStoreConfig {
 
    private static final long serialVersionUID = 842757200078048889L;
-   
+
    public static final int DEFAULT_CONCURRENCY_LEVEL = 2048;
    public static final int DEFAULT_LOCK_ACQUISITION_TIMEOUT = 60000;
 

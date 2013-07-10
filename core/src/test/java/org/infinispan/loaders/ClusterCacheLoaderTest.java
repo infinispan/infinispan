@@ -5,7 +5,9 @@ import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.test.fwk.TestInternalCacheEntryFactory;
 import org.infinispan.loaders.decorators.ChainingCacheStore;
-import org.infinispan.loaders.dummy.DummyInMemoryCacheStore;
+import org.infinispan.loaders.dummy.DummyInMemoryCacheStoreConfigurationBuilder;
+import org.infinispan.loaders.manager.CacheLoaderManager;
+import org.infinispan.loaders.spi.CacheStore;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.test.MultipleCacheManagersTest;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
@@ -30,7 +32,7 @@ public class ClusterCacheLoaderTest extends MultipleCacheManagersTest {
 
       ConfigurationBuilder config2 = getDefaultClusteredCacheConfig(CacheMode.INVALIDATION_SYNC, false);
       config2.loaders().addClusterCacheLoader();
-      config2.loaders().addStore().cacheStore(new DummyInMemoryCacheStore());
+      config2.loaders().addStore(DummyInMemoryCacheStoreConfigurationBuilder.class);
 
       cacheManager1.defineConfiguration("clusteredCl", config1.build());
       cacheManager2.defineConfiguration("clusteredCl", config2.build());

@@ -1,17 +1,15 @@
 package org.infinispan.loaders.dummy;
 
 import org.infinispan.commons.configuration.BuiltBy;
+import org.infinispan.commons.configuration.ConfigurationFor;
 import org.infinispan.commons.util.TypedProperties;
 import org.infinispan.configuration.cache.AbstractStoreConfiguration;
 import org.infinispan.configuration.cache.AsyncStoreConfiguration;
-import org.infinispan.configuration.cache.LegacyConfigurationAdaptor;
-import org.infinispan.configuration.cache.LegacyLoaderAdapter;
 import org.infinispan.configuration.cache.SingletonStoreConfiguration;
-import org.infinispan.loaders.dummy.DummyInMemoryCacheStore.Cfg;
 
 @BuiltBy(DummyInMemoryCacheStoreConfigurationBuilder.class)
-public class DummyInMemoryCacheStoreConfiguration extends AbstractStoreConfiguration implements
-      LegacyLoaderAdapter<DummyInMemoryCacheStore.Cfg> {
+@ConfigurationFor(DummyInMemoryCacheStore.class)
+public class DummyInMemoryCacheStoreConfiguration extends AbstractStoreConfiguration {
 
    private final boolean debug;
    private final boolean slow;
@@ -45,19 +43,4 @@ public class DummyInMemoryCacheStoreConfiguration extends AbstractStoreConfigura
    public Object failKey() {
       return failKey;
    }
-
-   @Override
-   public Cfg adapt() {
-      Cfg config = new Cfg();
-
-      LegacyConfigurationAdaptor.adapt(this, config);
-
-      config.debug(debug);
-      config.slow(slow);
-      config.storeName(storeName);
-      config.failKey(failKey);
-
-      return config;
-   }
-
 }

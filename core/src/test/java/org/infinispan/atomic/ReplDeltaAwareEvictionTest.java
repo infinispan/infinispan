@@ -4,6 +4,7 @@ import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.eviction.EvictionStrategy;
 import org.infinispan.loaders.dummy.DummyInMemoryCacheStore;
+import org.infinispan.loaders.dummy.DummyInMemoryCacheStoreConfigurationBuilder;
 import org.infinispan.test.fwk.CleanupAfterMethod;
 import org.infinispan.transaction.LockingMode;
 import org.infinispan.transaction.TransactionMode;
@@ -30,19 +31,20 @@ public class ReplDeltaAwareEvictionTest extends LocalDeltaAwareEvictionTest {
             .transactionManagerLookup(new JBossStandaloneJTAManagerLookup())
             .eviction().maxEntries(1).strategy(EvictionStrategy.LRU)
             .loaders()
-            .addStore().cacheStore(new DummyInMemoryCacheStore())
+            .addStore(DummyInMemoryCacheStoreConfigurationBuilder.class)
             .fetchPersistentState(false);
 
       addClusterEnabledCacheManager(builder);
 
       builder.loaders().clearCacheLoaders()
-            .addStore().cacheStore(new DummyInMemoryCacheStore()).fetchPersistentState(false);
+            .addStore(DummyInMemoryCacheStoreConfigurationBuilder.class).fetchPersistentState(false);
 
       addClusterEnabledCacheManager(builder);
 
       waitForClusterToForm();
    }
 
+   @Override
    public void testDeltaAware() throws Exception {
       test(createDeltaAwareAccessor(), 0, 1);
    }
@@ -51,6 +53,7 @@ public class ReplDeltaAwareEvictionTest extends LocalDeltaAwareEvictionTest {
       test(createDeltaAwareAccessor(), 1, 0);
    }
 
+   @Override
    public void testAtomicMap() throws Exception {
       test(createAtomicMapAccessor(), 0, 1);
    }
@@ -59,6 +62,7 @@ public class ReplDeltaAwareEvictionTest extends LocalDeltaAwareEvictionTest {
       test(createAtomicMapAccessor(), 1, 0);
    }
 
+   @Override
    public void testFineGrainedAtomicMap() throws Exception {
       test(createFineGrainedAtomicMapAccessor(), 0, 1);
    }

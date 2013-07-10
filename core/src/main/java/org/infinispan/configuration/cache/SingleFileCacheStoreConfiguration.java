@@ -1,9 +1,9 @@
 package org.infinispan.configuration.cache;
 
 import org.infinispan.commons.configuration.BuiltBy;
+import org.infinispan.commons.configuration.ConfigurationFor;
 import org.infinispan.commons.util.TypedProperties;
-import org.infinispan.config.parsing.XmlConfigHelper;
-import org.infinispan.loaders.file.SingleFileCacheStoreConfig;
+import org.infinispan.loaders.file.SingleFileCacheStore;
 
 /**
  * Defines the configuration for the single file cache store.
@@ -12,7 +12,8 @@ import org.infinispan.loaders.file.SingleFileCacheStoreConfig;
  * @since 6.0
  */
 @BuiltBy(SingleFileCacheStoreConfigurationBuilder.class)
-public class SingleFileCacheStoreConfiguration extends AbstractStoreConfiguration implements LegacyLoaderAdapter<SingleFileCacheStoreConfig> {
+@ConfigurationFor(SingleFileCacheStore.class)
+public class SingleFileCacheStoreConfiguration extends AbstractStoreConfiguration {
 
    private final String location;
 
@@ -64,19 +65,6 @@ public class SingleFileCacheStoreConfiguration extends AbstractStoreConfiguratio
             "location='" + location + '\'' +
             ", maxEntries=" + maxEntries +
             '}';
-   }
-
-   @Override
-   public SingleFileCacheStoreConfig adapt() {
-      SingleFileCacheStoreConfig config = new SingleFileCacheStoreConfig();
-
-      LegacyConfigurationAdaptor.adapt(this, config);
-
-      config.location(location);
-      config.maxEntries(maxEntries);
-
-      XmlConfigHelper.setValues(config, properties(), false, true);
-      return config;
    }
 
 }

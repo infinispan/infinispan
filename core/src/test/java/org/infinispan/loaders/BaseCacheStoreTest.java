@@ -2,6 +2,8 @@ package org.infinispan.loaders;
 
 import static java.util.Collections.emptySet;
 import static org.testng.AssertJUnit.assertEquals;
+import static org.testng.AssertJUnit.fail;
+
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
@@ -17,7 +19,11 @@ import java.util.List;
 import java.util.Random;
 import java.util.Set;
 
+import junit.framework.Assert;
+
 import org.infinispan.Cache;
+import org.infinispan.configuration.cache.CacheLoaderConfiguration;
+import org.infinispan.configuration.cache.CacheStoreConfiguration;
 import org.infinispan.container.entries.InternalCacheEntry;
 import org.infinispan.container.entries.InternalCacheValue;
 import org.infinispan.io.UnclosableObjectInputStream;
@@ -26,6 +32,8 @@ import org.infinispan.loaders.modifications.Clear;
 import org.infinispan.loaders.modifications.Modification;
 import org.infinispan.loaders.modifications.Remove;
 import org.infinispan.loaders.modifications.Store;
+import org.infinispan.loaders.spi.CacheStore;
+import org.infinispan.loaders.spi.LockSupportCacheStore;
 import org.infinispan.marshall.TestObjectStreamMarshaller;
 import org.infinispan.marshall.core.MarshalledValue;
 import org.infinispan.commons.marshall.StreamingMarshaller;
@@ -62,7 +70,9 @@ public abstract class BaseCacheStoreTest extends AbstractInfinispanTest {
    public void setUp() throws Exception {
       try {
          cs = createCacheStore();
-         assert (cs.getCacheStoreConfig()==null || cs.getCacheStoreConfig().isPurgeSynchronously()) : "Cache store tests expect purgeSynchronously to be enabled";
+         CacheStoreConfiguration csc = (CacheStoreConfiguration) cs.getConfiguration();
+         Assert.assertTrue("Cache store tests expect purgeSynchronously to be enabled",
+               csc == null || csc.purgeSynchronously());
       } catch (Exception e) {
          //in IDEs this won't be printed which makes debugging harder
          e.printStackTrace();
@@ -608,9 +618,9 @@ public abstract class BaseCacheStoreTest extends AbstractInfinispanTest {
    }
 
    public void testConfigFile() throws Exception {
-      Class<? extends CacheLoaderConfig> cfgClass = cs.getConfigurationClass();
-      CacheLoaderConfig clc = Util.getInstance(cfgClass);
-      assert clc.getCacheLoaderClassName().equals(cs.getClass().getName()) : "Cache loaders doesn't provide a proper configuration type that is capable of creating the loaders!";
+      Object configuration = cs.getConfiguration();
+      Assert.assertTrue("Cache loaders doesn't provide a proper configuration type that is capable of creating the " +
+            "loaders!", configuration instanceof CacheLoaderConfiguration);
    }
 
    public void testConcurrency() throws Exception {

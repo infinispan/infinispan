@@ -1,8 +1,9 @@
 package org.infinispan.query.cacheloaders;
 
 import org.infinispan.configuration.cache.ConfigurationBuilder;
-import org.infinispan.loaders.CacheStore;
 import org.infinispan.loaders.dummy.DummyInMemoryCacheStore;
+import org.infinispan.loaders.dummy.DummyInMemoryCacheStoreConfigurationBuilder;
+import org.infinispan.loaders.spi.CacheStore;
 import org.infinispan.query.statetransfer.BaseReIndexingTest;
 import org.infinispan.query.test.Person;
 import org.infinispan.test.TestingUtil;
@@ -20,12 +21,13 @@ import org.testng.annotations.Test;
       description = "Temporary disabled: https://issues.jboss.org/browse/ISPN-2249 , https://issues.jboss.org/browse/ISPN-1586")
 public class SharedCacheLoaderQueryIndexTest extends BaseReIndexingTest {
 
+   @Override
    protected void configureCache(ConfigurationBuilder builder) {
       // To force a shared cache store, make sure storeName property
       // for dummy store is the same for all nodes
       builder.clustering().stateTransfer().fetchInMemoryState(false)
-         .loaders().shared(true).preload(true).addStore()
-            .cacheStore(new DummyInMemoryCacheStore()).addProperty("storeName", getClass().getName());
+         .loaders().shared(true).preload(true).addStore(DummyInMemoryCacheStoreConfigurationBuilder.class).
+            storeName(getClass().getName());
    }
 
    public void testPreloadIndexingAfterAddingNewNode() throws Exception {

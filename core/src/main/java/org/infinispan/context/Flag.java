@@ -9,7 +9,7 @@ import java.util.Set;
 import org.infinispan.Cache;
 import org.infinispan.AdvancedCache;
 import org.infinispan.lifecycle.ComponentStatus;
-import org.infinispan.loaders.CacheStore;
+import org.infinispan.loaders.spi.CacheStore;
 import org.infinispan.commons.marshall.AbstractExternalizer;
 import org.infinispan.commons.util.InfinispanCollections;
 import org.infinispan.commons.util.Util;

@@ -3,14 +3,15 @@ package org.infinispan.loaders.jdbc.stringbased;
 import org.infinispan.Cache;
 import org.infinispan.configuration.cache.CacheLoaderConfiguration;
 import org.infinispan.loaders.CacheLoaderException;
-import org.infinispan.loaders.CacheLoaderManager;
-import org.infinispan.loaders.CacheStore;
 import org.infinispan.loaders.jdbc.ManagedConnectionFactoryTest;
 import org.infinispan.loaders.jdbc.TableManipulation;
 import org.infinispan.loaders.jdbc.configuration.JdbcStringBasedCacheStoreConfiguration;
+import org.infinispan.loaders.jdbc.configuration.JdbcStringBasedCacheStoreConfigurationBuilder;
 import org.infinispan.loaders.jdbc.connectionfactory.ConnectionFactoryConfig;
 import org.infinispan.loaders.jdbc.connectionfactory.ManagedConnectionFactory;
 import org.infinispan.loaders.keymappers.UnsupportedKeyTypeException;
+import org.infinispan.loaders.manager.CacheLoaderManager;
+import org.infinispan.loaders.spi.CacheStore;
 import org.infinispan.manager.CacheContainer;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
@@ -25,14 +26,18 @@ public class StringStoreWithManagedConnectionTest extends ManagedConnectionFacto
 
    @Override
    protected CacheStore createCacheStore() throws Exception {
-      ConnectionFactoryConfig connectionFactoryConfig = new ConnectionFactoryConfig();
-      connectionFactoryConfig.setConnectionFactoryClass(ManagedConnectionFactory.class.getName());
-      connectionFactoryConfig.setDatasourceJndiLocation(getDatasourceLocation());
-      TableManipulation tm = UnitTestDatabaseManager.buildStringTableManipulation();
-      JdbcStringBasedCacheStoreConfig config = new JdbcStringBasedCacheStoreConfig(connectionFactoryConfig, tm);
-      config.setPurgeSynchronously(true);
+      JdbcStringBasedCacheStoreConfigurationBuilder storeBuilder = TestCacheManagerFactory
+            .getDefaultCacheConfiguration(false)
+            .loaders()
+               .addLoader(JdbcStringBasedCacheStoreConfigurationBuilder.class)
+               .purgeSynchronously(true);
+
+      storeBuilder.dataSource()
+            .jndiUrl(getDatasourceLocation());
+      UnitTestDatabaseManager.buildTableManipulation(storeBuilder.table(), false);
+
       JdbcStringBasedCacheStore stringBasedCacheStore = new JdbcStringBasedCacheStore();
-      stringBasedCacheStore.init(config, getCache(), getMarshaller());
+      stringBasedCacheStore.init(storeBuilder.create(), getCache(), getMarshaller());
       stringBasedCacheStore.start();
       return stringBasedCacheStore;
    }

@@ -1,18 +1,17 @@
 package org.infinispan.loaders.jdbc.configuration;
 
 import org.infinispan.commons.configuration.BuiltBy;
-import org.infinispan.loaders.jdbc.AbstractJdbcCacheStoreConfig;
 import org.infinispan.loaders.jdbc.connectionfactory.ConnectionFactory;
 import org.infinispan.loaders.jdbc.connectionfactory.PooledConnectionFactory;
 
 @BuiltBy(PooledConnectionFactoryConfigurationBuilder.class)
-public class PooledConnectionFactoryConfiguration implements ConnectionFactoryConfiguration, LegacyConnectionFactoryAdaptor {
+public class PooledConnectionFactoryConfiguration implements ConnectionFactoryConfiguration {
    private final String connectionUrl;
    private final String driverClass;
    private final String username;
    private final String password;
 
-   PooledConnectionFactoryConfiguration(String connectionUrl, String driverClass, String username, String password) {
+   protected PooledConnectionFactoryConfiguration(String connectionUrl, String driverClass, String username, String password) {
       this.connectionUrl = connectionUrl;
       this.driverClass = driverClass;
       this.username = username;
@@ -38,15 +37,6 @@ public class PooledConnectionFactoryConfiguration implements ConnectionFactoryCo
    @Override
    public Class<? extends ConnectionFactory> connectionFactoryClass() {
       return PooledConnectionFactory.class;
-   }
-
-   @Override
-   public void adapt(AbstractJdbcCacheStoreConfig config) {
-      config.setConnectionFactoryClass(connectionFactoryClass().getName());
-      config.setConnectionUrl(connectionUrl);
-      config.setDriverClass(driverClass);
-      config.setUserName(username);
-      config.setPassword(password);
    }
 
    @Override

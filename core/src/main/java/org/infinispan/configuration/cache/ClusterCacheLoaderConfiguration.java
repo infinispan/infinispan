@@ -1,9 +1,9 @@
 package org.infinispan.configuration.cache;
 
 import org.infinispan.commons.configuration.BuiltBy;
+import org.infinispan.commons.configuration.ConfigurationFor;
 import org.infinispan.commons.util.TypedProperties;
-import org.infinispan.config.parsing.XmlConfigHelper;
-import org.infinispan.loaders.cluster.ClusterCacheLoaderConfig;
+import org.infinispan.loaders.cluster.ClusterCacheLoader;
 
 /**
  * ClusterCacheLoaderConfiguration.
@@ -12,7 +12,8 @@ import org.infinispan.loaders.cluster.ClusterCacheLoaderConfig;
  * @since 5.2
  */
 @BuiltBy(ClusterCacheLoaderConfigurationBuilder.class)
-public class ClusterCacheLoaderConfiguration extends AbstractLoaderConfiguration implements LegacyLoaderAdapter<ClusterCacheLoaderConfig> {
+@ConfigurationFor(ClusterCacheLoader.class)
+public class ClusterCacheLoaderConfiguration extends AbstractLoaderConfiguration {
    private final long remoteCallTimeout;
 
    ClusterCacheLoaderConfiguration(long remoteCallTimeout, TypedProperties properties) {
@@ -28,14 +29,5 @@ public class ClusterCacheLoaderConfiguration extends AbstractLoaderConfiguration
    public String toString() {
       return "ClusterCacheLoaderConfiguration [remoteCallTimeout=" + remoteCallTimeout + "]";
    }
-
-   @Override
-   public ClusterCacheLoaderConfig adapt() {
-      ClusterCacheLoaderConfig config = new ClusterCacheLoaderConfig();
-      config.remoteCallTimeout(remoteCallTimeout);
-      XmlConfigHelper.setValues(config, properties(), false, true);
-      return config;
-   }
-
 
 }

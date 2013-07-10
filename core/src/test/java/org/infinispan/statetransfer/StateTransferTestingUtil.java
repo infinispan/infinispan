@@ -1,8 +1,8 @@
 package org.infinispan.statetransfer;
 
 import org.infinispan.Cache;
-import org.infinispan.loaders.CacheLoader;
-import org.infinispan.loaders.CacheLoaderManager;
+import org.infinispan.loaders.manager.CacheLoaderManager;
+import org.infinispan.loaders.spi.CacheLoader;
 import org.infinispan.test.TestingUtil;
 
 /**

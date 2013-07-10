@@ -1,5 +1,7 @@
 package org.infinispan.stress;
 
+import org.infinispan.loaders.dummy.DummyInMemoryCacheStoreConfiguration;
+import org.infinispan.loaders.dummy.DummyInMemoryCacheStoreConfigurationBuilder;
 import org.infinispan.marshall.TestObjectStreamMarshaller;
 import org.infinispan.metadata.EmbeddedMetadata;
 import org.infinispan.container.InternalEntryFactory;
@@ -8,8 +10,8 @@ import org.infinispan.container.entries.InternalCacheEntry;
 import org.infinispan.loaders.CacheLoaderException;
 import org.infinispan.loaders.decorators.AbstractDelegatingStore;
 import org.infinispan.loaders.decorators.AsyncStore;
-import org.infinispan.loaders.decorators.AsyncStoreConfig;
 import org.infinispan.loaders.dummy.DummyInMemoryCacheStore;
+import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.infinispan.util.concurrent.locks.containers.LockContainer;
 import org.infinispan.util.concurrent.locks.containers.ReentrantPerEntryLockContainer;
 import org.infinispan.util.logging.Log;
@@ -72,17 +74,21 @@ public class AsyncStoreStressTest {
 
    private AsyncStore createAsyncStore() throws CacheLoaderException {
       DummyInMemoryCacheStore backendStore = createBackendStore("async2");
-      AsyncStoreConfig asyncCfg = new AsyncStoreConfig();
-      asyncCfg.modificationQueueSize(0);
-      AsyncStore store = new AsyncStore(backendStore, asyncCfg);
-      store.init(backendStore.getCacheStoreConfig(), null, new TestObjectStreamMarshaller());
+      AsyncStore store = new AsyncStore(backendStore);
+      store.init(backendStore.getConfiguration(), null, new TestObjectStreamMarshaller());
       store.start();
       return store;
    }
 
    private DummyInMemoryCacheStore createBackendStore(String storeName) throws CacheLoaderException {
       DummyInMemoryCacheStore store = new DummyInMemoryCacheStore();
-      store.init(new DummyInMemoryCacheStore.Cfg(storeName), null, new TestObjectStreamMarshaller());
+      DummyInMemoryCacheStoreConfiguration dummyConfiguration = TestCacheManagerFactory
+            .getDefaultCacheConfiguration(false)
+            .loaders()
+               .addLoader(DummyInMemoryCacheStoreConfigurationBuilder.class)
+                  .storeName(storeName)
+                  .create();
+      store.init(dummyConfiguration, null, new TestObjectStreamMarshaller());
       store.start();
       return store;
    }

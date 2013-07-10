@@ -5,21 +5,15 @@ import static org.testng.Assert.assertEquals;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
-import java.util.Properties;
-import java.util.StringTokenizer;
 import java.util.concurrent.atomic.AtomicInteger;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
 import org.infinispan.loaders.jdbc.DatabaseType;
 import org.infinispan.loaders.jdbc.JdbcUtil;
-import org.infinispan.loaders.jdbc.TableManipulation;
 import org.infinispan.loaders.jdbc.TableName;
 import org.infinispan.loaders.jdbc.configuration.AbstractJdbcCacheStoreConfigurationBuilder;
 import org.infinispan.loaders.jdbc.configuration.ConnectionFactoryConfigurationBuilder;
 import org.infinispan.loaders.jdbc.configuration.TableManipulationConfigurationBuilder;
 import org.infinispan.loaders.jdbc.connectionfactory.ConnectionFactory;
-import org.infinispan.loaders.jdbc.connectionfactory.ConnectionFactoryConfig;
 import org.infinispan.loaders.jdbc.connectionfactory.PooledConnectionFactory;
 import org.infinispan.loaders.jdbc.connectionfactory.SimpleConnectionFactory;
 
@@ -32,8 +26,6 @@ import org.infinispan.loaders.jdbc.connectionfactory.SimpleConnectionFactory;
  */
 
 public class UnitTestDatabaseManager {
-   private static final ConnectionFactoryConfig realConfig = new ConnectionFactoryConfig();
-
    private static AtomicInteger userIndex = new AtomicInteger(0);
    private static final String DB_TYPE = System.getProperty("infinispan.test.jdbc.db", "H2");
    private static final String H2_DRIVER = org.h2.Driver.class.getName();
@@ -59,26 +51,6 @@ public class UnitTestDatabaseManager {
       } catch (ClassNotFoundException e) {
          throw new RuntimeException(e);
       }
-      realConfig.setDriverClass(driver);
-      switch (dt) {
-      case H2:
-         realConfig.setConnectionUrl("jdbc:h2:mem:infinispan;DB_CLOSE_DELAY=-1");
-         realConfig.setConnectionFactoryClass(PooledConnectionFactory.class.getName());
-         realConfig.setUserName("sa");
-         break;
-      case MYSQL:
-         realConfig.setConnectionUrl("jdbc:mysql://localhost/infinispan?user=ispn&password=ispn");
-         realConfig.setConnectionFactoryClass(SimpleConnectionFactory.class.getName());
-         realConfig.setUserName("ispn");
-         realConfig.setPassword("ispn");
-         break;
-      }
-   }
-
-   public static ConnectionFactoryConfig getUniqueConnectionFactoryConfig() {
-      synchronized (realConfig) {
-         return returnBasedOnDifferentInstance();
-      }
    }
 
    public static ConnectionFactoryConfigurationBuilder<?> configureUniqueConnectionFactory(AbstractJdbcCacheStoreConfigurationBuilder<?, ?> store) {
@@ -101,30 +73,18 @@ public class UnitTestDatabaseManager {
       }
    }
 
-   public static ConnectionFactoryConfig getBrokenConnectionFactoryConfig() {
-      ConnectionFactoryConfig brokenConfig = new ConnectionFactoryConfig();
-      brokenConfig.setDriverClass(NON_EXISTENT_DRIVER);
-      return brokenConfig;
+   public static ConnectionFactoryConfigurationBuilder<?> configureSimpleConnectionFactory(AbstractJdbcCacheStoreConfigurationBuilder<?, ?> store) {
+      return store
+            .simpleConnection()
+               .driverClass(org.h2.Driver.class)
+               .connectionUrl(String.format("jdbc:h2:mem:%s;DB_CLOSE_DELAY=-1", extractTestName() + userIndex.incrementAndGet()))
+               .username("sa");
    }
 
-   public static String getDatabaseName(Properties prop) {
-      StringTokenizer tokenizer = new StringTokenizer(prop.getProperty("cache.jdbc.url"), ":");
-      tokenizer.nextToken();
-      tokenizer.nextToken();
-      tokenizer.nextToken();
-      return tokenizer.nextToken();
-   }
-
-   private static ConnectionFactoryConfig returnBasedOnDifferentInstance() {
-      ConnectionFactoryConfig result = realConfig.clone();
-      String jdbcUrl = result.getConnectionUrl();
-      Pattern pattern = Pattern.compile("infinispan");
-      Matcher matcher = pattern.matcher(jdbcUrl);
-      boolean found = matcher.find();
-      assert found : String.format("%1s not found in %2s", pattern, jdbcUrl);
-      String newJdbcUrl = matcher.replaceFirst(extractTestName() + userIndex.incrementAndGet());
-      result.setConnectionUrl(newJdbcUrl);
-      return result;
+   public static ConnectionFactoryConfigurationBuilder<?> configureBrokenConnectionFactory
+         (AbstractJdbcCacheStoreConfigurationBuilder<?, ?> storeBuilder) {
+      return storeBuilder.connectionPool()
+                  .driverClass(NON_EXISTENT_DRIVER);
    }
 
    private static String extractTestName() {
@@ -140,12 +100,6 @@ public class UnitTestDatabaseManager {
       return null;
    }
 
-   @Deprecated
-   public static TableManipulation buildStringTableManipulation() {
-      TableManipulation tableManipulation = new TableManipulation("ID_COLUMN", "VARCHAR(255)", "ISPN_JDBC", "DATA_COLUMN", "BLOB", "TIMESTAMP_COLUMN", "BIGINT");
-      tableManipulation.databaseType = dt;
-      return tableManipulation;
-   }
 
    public static void buildTableManipulation(TableManipulationConfigurationBuilder<?, ?> table, boolean binary) {
       table
@@ -157,13 +111,6 @@ public class UnitTestDatabaseManager {
          .dataColumnType("BLOB")
          .timestampColumnName("TIMESTAMP_COLUMN")
          .timestampColumnType("BIGINT");
-   }
-
-   @Deprecated
-   public static TableManipulation buildBinaryTableManipulation() {
-      TableManipulation tableManipulation = new TableManipulation("ID_COLUMN", "INT", "ISPN_JDBC", "DATA_COLUMN", "BLOB", "TIMESTAMP_COLUMN", "BIGINT");
-      tableManipulation.databaseType = dt;
-      return tableManipulation;
    }
 
    /**

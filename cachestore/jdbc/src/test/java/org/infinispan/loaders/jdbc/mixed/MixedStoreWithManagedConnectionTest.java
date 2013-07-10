@@ -3,13 +3,15 @@ package org.infinispan.loaders.jdbc.mixed;
 import org.infinispan.Cache;
 import org.infinispan.CacheImpl;
 import org.infinispan.configuration.cache.CacheLoaderConfiguration;
-import org.infinispan.loaders.CacheLoaderManager;
-import org.infinispan.loaders.CacheStore;
 import org.infinispan.loaders.jdbc.ManagedConnectionFactoryTest;
 import org.infinispan.loaders.jdbc.TableManipulation;
 import org.infinispan.loaders.jdbc.configuration.JdbcMixedCacheStoreConfiguration;
+import org.infinispan.loaders.jdbc.configuration.JdbcMixedCacheStoreConfigurationBuilder;
+import org.infinispan.loaders.jdbc.configuration.ManagedConnectionFactoryConfigurationBuilder;
 import org.infinispan.loaders.jdbc.connectionfactory.ConnectionFactoryConfig;
 import org.infinispan.loaders.jdbc.connectionfactory.ManagedConnectionFactory;
+import org.infinispan.loaders.manager.CacheLoaderManager;
+import org.infinispan.loaders.spi.CacheStore;
 import org.infinispan.manager.CacheContainer;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
@@ -24,17 +26,23 @@ public class MixedStoreWithManagedConnectionTest extends ManagedConnectionFactor
 
    @Override
    protected CacheStore createCacheStore() throws Exception {
-      ConnectionFactoryConfig connectionFactoryConfig = new ConnectionFactoryConfig();
-      connectionFactoryConfig.setConnectionFactoryClass(ManagedConnectionFactory.class.getName());
-      connectionFactoryConfig.setDatasourceJndiLocation(getDatasourceLocation());
-      TableManipulation stringsTm = UnitTestDatabaseManager.buildStringTableManipulation();
-      stringsTm.setTableNamePrefix("STRINGS_TABLE");
-      TableManipulation binaryTm = UnitTestDatabaseManager.buildBinaryTableManipulation();
-      binaryTm.setTableNamePrefix("BINARY_TABLE");
-      JdbcMixedCacheStoreConfig cacheStoreConfig = new JdbcMixedCacheStoreConfig(connectionFactoryConfig, binaryTm, stringsTm);
-      cacheStoreConfig.setPurgeSynchronously(true);
+      JdbcMixedCacheStoreConfigurationBuilder storeBuilder = TestCacheManagerFactory
+            .getDefaultCacheConfiguration(false)
+            .loaders()
+               .addLoader(JdbcMixedCacheStoreConfigurationBuilder.class)
+                  .purgeSynchronously(true);
+      storeBuilder.dataSource().jndiUrl(getDatasourceLocation());
+      UnitTestDatabaseManager.buildTableManipulation(storeBuilder.stringTable(), false);
+      UnitTestDatabaseManager.buildTableManipulation(storeBuilder.binaryTable(), true);
+
+      storeBuilder
+            .binaryTable()
+               .tableNamePrefix("BINARY_TABLE")
+            .stringTable()
+               .tableNamePrefix("STRINGS_TABLE");
+
       JdbcMixedCacheStore store = new JdbcMixedCacheStore();
-      store.init(cacheStoreConfig, getCache(), getMarshaller());
+      store.init(storeBuilder.create(), getCache(), getMarshaller());
       store.start();
       assert store.getConnectionFactory() instanceof ManagedConnectionFactory;
       return store;

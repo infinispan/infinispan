@@ -236,7 +236,6 @@ public class InfinispanConfiguration implements XmlConfigurationParser, JAXBUnma
          });
 
          InfinispanConfiguration ic = (InfinispanConfiguration) u.unmarshal(source);
-         ic.accept(cbv);
          return ic;
       } catch (CacheConfigurationException cex) {
          throw cex;
@@ -398,17 +397,6 @@ public class InfinispanConfiguration implements XmlConfigurationParser, JAXBUnma
    }
 
    private InfinispanConfiguration() {
-   }
-
-   public void accept(ConfigurationBeanVisitor v) {
-      if (v != null) {
-         global.accept(v);
-         defaultConfiguration.accept(v);
-         for (Configuration c : namedCaches) {
-            c.accept(v);
-         }
-         v.visitInfinispanConfiguration(this);
-      }
    }
 
    private static InputStream findInputStream(String fileName, ClassLoader cl) throws FileNotFoundException {

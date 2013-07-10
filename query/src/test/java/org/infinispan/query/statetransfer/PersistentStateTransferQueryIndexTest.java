@@ -3,9 +3,10 @@ package org.infinispan.query.statetransfer;
 import org.infinispan.Cache;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.loaders.CacheLoaderException;
-import org.infinispan.loaders.CacheLoaderManager;
-import org.infinispan.loaders.CacheStore;
 import org.infinispan.loaders.dummy.DummyInMemoryCacheStore;
+import org.infinispan.loaders.dummy.DummyInMemoryCacheStoreConfigurationBuilder;
+import org.infinispan.loaders.manager.CacheLoaderManager;
+import org.infinispan.loaders.spi.CacheStore;
 import org.infinispan.query.test.Person;
 import org.infinispan.test.TestingUtil;
 import org.testng.annotations.Test;
@@ -28,8 +29,8 @@ public class PersistentStateTransferQueryIndexTest extends BaseReIndexingTest {
       // Explicitly disable fetching in-memory state in order
       // to fetch it from the persistence layer
       builder.clustering().stateTransfer().fetchInMemoryState(false)
-            .loaders().passivation(true).shared(false).addStore()
-            .cacheStore(new DummyInMemoryCacheStore())
+            .loaders().passivation(true).shared(false)
+            .addStore(DummyInMemoryCacheStoreConfigurationBuilder.class)
                   .fetchPersistentState(true);
    }
 

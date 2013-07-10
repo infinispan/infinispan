@@ -8,8 +8,9 @@ import org.infinispan.configuration.global.GlobalConfigurationBuilder;
 import org.infinispan.container.DataContainer;
 import org.infinispan.eviction.EvictionStrategy;
 import org.infinispan.lifecycle.ComponentStatus;
-import org.infinispan.loaders.CacheLoaderManager;
 import org.infinispan.loaders.dummy.DummyInMemoryCacheStore;
+import org.infinispan.loaders.dummy.DummyInMemoryCacheStoreConfigurationBuilder;
+import org.infinispan.loaders.manager.CacheLoaderManager;
 import org.infinispan.test.AbstractInfinispanTest;
 import org.infinispan.test.CacheManagerCallable;
 import org.infinispan.test.MultiCacheManagerCallable;
@@ -303,7 +304,7 @@ public class CacheManagerTest extends AbstractInfinispanTest {
       ConfigurationBuilder c = new ConfigurationBuilder();
       c
             .loaders()
-               .shared(isStoreShared).addStore().cacheStore(new DummyInMemoryCacheStore(storeName))
+               .shared(isStoreShared).addStore(DummyInMemoryCacheStoreConfigurationBuilder.class).storeName(storeName)
             .clustering()
                .cacheMode(isClustered ? CacheMode.REPL_SYNC : CacheMode.LOCAL);
 

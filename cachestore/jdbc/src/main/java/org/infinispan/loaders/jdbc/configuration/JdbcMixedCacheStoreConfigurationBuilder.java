@@ -1,6 +1,8 @@
 package org.infinispan.loaders.jdbc.configuration;
 
+import org.infinispan.commons.CacheConfigurationException;
 import org.infinispan.configuration.cache.LoadersConfigurationBuilder;
+import org.infinispan.loaders.CacheLoaderException;
 import org.infinispan.loaders.jdbc.DatabaseType;
 import org.infinispan.loaders.jdbc.TableManipulation;
 import org.infinispan.loaders.keymappers.DefaultTwoWayKey2StringMapper;
@@ -36,9 +38,9 @@ public class JdbcMixedCacheStoreConfigurationBuilder extends AbstractJdbcCacheSt
 
    /**
     * When doing repetitive DB inserts (e.g. on
-    * {@link org.infinispan.loaders.CacheStore#fromStream(java.io.ObjectInput)} this will be batched
+    * {@link org.infinispan.loaders.spi.CacheStore#fromStream(java.io.ObjectInput)} this will be batched
     * according to this parameter. This is an optional parameter, and if it is not specified it will
-    * be defaulted to {@link #DEFAULT_BATCH_SIZE}.
+    * be defaulted to {@link TableManipulation#DEFAULT_BATCH_SIZE}.
     */
    public JdbcMixedCacheStoreConfigurationBuilder batchSize(int batchSize) {
       this.batchSize = batchSize;
@@ -46,9 +48,9 @@ public class JdbcMixedCacheStoreConfigurationBuilder extends AbstractJdbcCacheSt
    }
 
    /**
-    * For DB queries (e.g. {@link org.infinispan.loaders.CacheStore#toStream(java.io.ObjectOutput)}
+    * For DB queries (e.g. {@link org.infinispan.loaders.spi.CacheStore#toStream(java.io.ObjectOutput)}
     * ) the fetch size will be set on {@link java.sql.ResultSet#setFetchSize(int)}. This is optional
-    * parameter, if not specified will be defaulted to {@link #DEFAULT_FETCH_SIZE}.
+    * parameter, if not specified will be defaulted to {@link TableManipulation#DEFAULT_FETCH_SIZE}.
     */
    public JdbcMixedCacheStoreConfigurationBuilder fetchSize(int fetchSize) {
       this.fetchSize = fetchSize;
@@ -104,12 +106,16 @@ public class JdbcMixedCacheStoreConfigurationBuilder extends AbstractJdbcCacheSt
 
    @Override
    public void validate() {
+      if (binaryTable.tableNamePrefix.equals(stringTable.tableNamePrefix))
+         throw new CacheConfigurationException("There cannot be the same tableNamePrefix on both the binary and " +
+               "String tables.");
+
    }
 
    @Override
    public JdbcMixedCacheStoreConfiguration create() {
-      return new JdbcMixedCacheStoreConfiguration(batchSize, fetchSize, databaseType, key2StringMapper, binaryTable.create(), stringTable.create(), connectionFactory.create(), lockAcquistionTimeout,
-            lockConcurrencyLevel, purgeOnStartup, purgeSynchronously, purgerThreads, fetchPersistentState, ignoreModifications, TypedProperties.toTypedProperties(properties),
+      return new JdbcMixedCacheStoreConfiguration(batchSize, fetchSize, databaseType, key2StringMapper, binaryTable.create(), stringTable.create(), connectionFactory.create(), manageConnectionFactory,
+            lockAcquistionTimeout, lockConcurrencyLevel, purgeOnStartup, purgeSynchronously, purgerThreads, fetchPersistentState, ignoreModifications, TypedProperties.toTypedProperties(properties),
             async.create(), singletonStore.create());
    }
 

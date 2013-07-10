@@ -7,9 +7,6 @@ import org.infinispan.config.GlobalConfiguration.GlobalJmxStatisticsType;
 import org.infinispan.config.GlobalConfiguration.SerializationType;
 import org.infinispan.config.GlobalConfiguration.ShutdownType;
 import org.infinispan.config.GlobalConfiguration.TransportType;
-import org.infinispan.loaders.CacheLoaderConfig;
-import org.infinispan.loaders.decorators.AsyncStoreConfig;
-import org.infinispan.loaders.decorators.SingletonStoreConfig;
 
 /**
  * ConfigurationBeanVisitor implementations are passed through InfinispanConfiguration object tree
@@ -78,15 +75,7 @@ public interface ConfigurationBeanVisitor {
    
    void visitUnsafeType(UnsafeType bean);
    
-   void visitCacheLoaderManagerConfig(CacheLoaderManagerConfig bean);
-   
-   void visitCacheLoaderConfig(CacheLoaderConfig bean);
-   
-   void visitSingletonStoreConfig(SingletonStoreConfig bean);
-   
-   void visitAsyncStoreConfig(AsyncStoreConfig bean);
-
-   void visitCustomInterceptorConfig(CustomInterceptorConfig customInterceptorConfig);  
+   void visitCustomInterceptorConfig(CustomInterceptorConfig customInterceptorConfig);
    
    void visitAdvancedExternalizersType(AdvancedExternalizersType bean);
    
