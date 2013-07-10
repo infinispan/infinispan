@@ -188,6 +188,7 @@ public class InfinispanNamedEmbeddedCacheFactoryBean<K, V> implements FactoryBea
                   "provided for ConfigurationTemplateMode CUSTOM.");
          }
          this.infinispanEmbeddedCacheManager.defineConfiguration(cacheName, builder.build());
+         break;
       default:
          throw new IllegalStateException("Unknown ConfigurationTemplateMode: " + this.configurationTemplateMode);
       }
