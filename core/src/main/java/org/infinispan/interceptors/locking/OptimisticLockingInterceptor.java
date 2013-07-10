@@ -59,8 +59,9 @@ public class OptimisticLockingInterceptor extends AbstractTxLockingInterceptor {
       }
    }
 
-   private void markKeyAsRead(InvocationContext ctx, AbstractDataCommand command) {
-      if (needToMarkReads && !command.hasFlag(Flag.IGNORE_RETURN_VALUES) && ctx.isInTxScope()) {
+   private void markKeyAsRead(InvocationContext ctx, AbstractDataCommand command, boolean forceRead) {
+      if (needToMarkReads && ctx.isInTxScope() &&
+            (forceRead || !command.hasFlag(Flag.IGNORE_RETURN_VALUES))) {
          TxInvocationContext tctx = (TxInvocationContext) ctx;
          tctx.getCacheTransaction().addReadKey(command.getKey());
       }
@@ -94,7 +95,7 @@ public class OptimisticLockingInterceptor extends AbstractTxLockingInterceptor {
       }
 
       try {
-         if (command.isConditional()) markKeyAsRead(ctx, command);
+         markKeyAsRead(ctx, command, command.isConditional());
          return invokeNextInterceptor(ctx, command);
       } catch (Throwable te) {
          throw cleanLocksAndRethrow(ctx, te);
@@ -103,7 +104,7 @@ public class OptimisticLockingInterceptor extends AbstractTxLockingInterceptor {
    
    @Override
    public Object visitGetKeyValueCommand(InvocationContext ctx, GetKeyValueCommand command) throws Throwable {
-      markKeyAsRead(ctx, command);
+      markKeyAsRead(ctx, command, true);
       return super.visitGetKeyValueCommand(ctx, command);
    }
    
@@ -130,7 +131,7 @@ public class OptimisticLockingInterceptor extends AbstractTxLockingInterceptor {
       try {
          // Regardless of whether is conditional so that
          // write skews can be detected in both cases.
-         markKeyAsRead(ctx, command);
+         markKeyAsRead(ctx, command, command.isConditional());
          return invokeNextInterceptor(ctx, command);
       } catch (Throwable te) {
          throw cleanLocksAndRethrow(ctx, te);
@@ -140,7 +141,7 @@ public class OptimisticLockingInterceptor extends AbstractTxLockingInterceptor {
    @Override
    public Object visitReplaceCommand(InvocationContext ctx, ReplaceCommand command) throws Throwable {
       try {
-         markKeyAsRead(ctx, command);
+         markKeyAsRead(ctx, command, command.isConditional());
          return invokeNextInterceptor(ctx, command);
       } catch (Throwable te) {
          throw cleanLocksAndRethrow(ctx, te);
@@ -244,7 +245,14 @@ public class OptimisticLockingInterceptor extends AbstractTxLockingInterceptor {
    private void performLocalWriteSkewCheck(TxInvocationContext ctx, Object key) {
       CacheEntry ce = ctx.lookupEntry(key);
       if (ce instanceof RepeatableReadEntry && ctx.getCacheTransaction().keyRead(key)) {
+         if (log.isTraceEnabled()) {
+            log.tracef("Performing local write skew check for key %s", key);
+         }
          ((RepeatableReadEntry) ce).performLocalWriteSkewCheck(dataContainer, true);
+      } else {
+         if (log.isTraceEnabled()) {
+            log.tracef("*Not* performing local write skew check for key %s", key);
+         }
       }
    }
 

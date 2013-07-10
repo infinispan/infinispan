@@ -41,6 +41,9 @@ public class RepeatableReadEntry extends ReadCommittedEntry {
 
       Object actualValue = ice == null ? null : ice.getValue();
       Object valueToCompare = alreadyCopied ? oldValue : value;
+      if (log.isTraceEnabled()) {
+         log.tracef("Performing local write skew check. actualValue=%s, transactionValue=%s", actualValue, valueToCompare);
+      }
       // Note that this identity-check is intentional.  We don't *want* to call actualValue.equals() since that defeats the purpose.
       // the implicit "versioning" we have in R_R creates a new wrapper "value" instance for every update.
       if (actualValue != null && actualValue != valueToCompare) {
