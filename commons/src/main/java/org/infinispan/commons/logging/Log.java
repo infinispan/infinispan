@@ -74,5 +74,9 @@ public interface Log extends BasicLogger {
    @LogMessage(level = WARN)
    @Message(value = "Unable to convert string property [%s] to a boolean! Using default value of %b", id = 908)
    void unableToConvertStringPropertyToBoolean(String value, boolean defaultValue);
+
+   @Message(value = "Unwrapping %s to a type of %s is not a supported", id = 909)
+   IllegalArgumentException unableToUnwrap(Object o, Class<?> clazz);
+
 }
 

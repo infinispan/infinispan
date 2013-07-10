@@ -577,6 +577,9 @@ public class DefaultCacheManager implements EmbeddedCacheManager, CacheManager {
             }
             // Once sent to the cluster, remove the local cache
             cmd.perform(null);
+
+            // Remove cache configuration and remove it from the computed cache name list
+            configurationOverrides.remove(cacheName);
          } catch (Throwable t) {
             throw new CacheException("Error removing cache", t);
          }

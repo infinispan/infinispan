@@ -1,5 +1,6 @@
 package org.infinispan.jcache.annotation;
 
+import org.infinispan.commons.util.ReflectionUtil;
 import org.infinispan.jcache.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
@@ -79,11 +80,8 @@ public class CacheKeyInvocationContextImpl<A extends Annotation> implements Cach
    }
 
    @Override
-   public <T> T unwrap(Class<T> cls) {
-      if (cls.isAssignableFrom(this.getClass())) {
-         return cls.cast(this);
-      }
-      throw log.unableToUnwrapProviderImplementation(cls);
+   public <T> T unwrap(Class<T> clazz) {
+      return ReflectionUtil.unwrap(this, clazz);
    }
 
    @Override

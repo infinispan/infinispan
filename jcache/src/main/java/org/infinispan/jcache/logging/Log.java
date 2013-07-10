@@ -6,10 +6,9 @@ import org.jboss.logging.Message;
 import org.jboss.logging.MessageLogger;
 
 import javax.cache.CacheException;
-
-import java.lang.annotation.Annotation;
-import java.lang.reflect.Field;
-import java.lang.reflect.Method;
+import javax.cache.configuration.Configuration;
+import javax.cache.transaction.IsolationLevel;
+import javax.cache.transaction.Mode;
 
 import static org.jboss.logging.Logger.Level.WARN;
 
@@ -51,7 +50,22 @@ public interface Log extends org.infinispan.util.logging.Log {
    IllegalArgumentException unableToUnwrapProviderImplementation(Class<?> type);
 
    @Message(value = "%s parameter must not be null", id = 21010)
-   IllegalArgumentException parameterMustNotBeNull(String parameterName);
+   NullPointerException parameterMustNotBeNull(String parameterName);
+
+   @Message(value = "Incompatible cache value types specified, expected %s but %s was specified", id = 21011)
+   ClassCastException incompatibleType(Class<?> type, Class<?> cfgType);
+
+   @Message(value = "Cache %s was defined with specific types Cache<%s, %s> in which case CacheManager.getCache(String, Class, Class) must be used", id = 21012)
+   IllegalArgumentException unsafeTypedCacheRequest(String cacheName, Class<?> keyType, Class<?> valueType);
+
+   @Message(value = "Can't use store-by-reference and transactions together", id = 21013)
+   IllegalArgumentException storeByReferenceAndTransactionsNotAllowed();
+
+   @Message(value = "Incompatible IsolationLevel %s and tx mode %s", id = 21014)
+   IllegalArgumentException incompatibleIsolationLevelAndTransactionMode(IsolationLevel level, Mode txMode);
+
+   @Message(value = "Cache %s already registered with configuration %s, and can not be registered again with a new given configuration %s", id = 21015)
+   CacheException cacheAlreadyRegistered(String cacheName, Configuration cacheCfg, Configuration newCfg);
 
    class LeakDescription extends Throwable {
 

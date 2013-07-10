@@ -1,7 +1,10 @@
 package org.infinispan.jcache;
 
+import org.infinispan.commons.util.ReflectionUtil;
+
 import javax.cache.Cache;
 import javax.cache.event.CacheEntryEvent;
+import javax.cache.event.EventType;
 
 /**
  * The reference implementation of the {@link CacheEntryEvent}.
@@ -29,29 +32,12 @@ public class RICacheEntryEvent<K, V> extends CacheEntryEvent<K, V> {
      * @param key    the key
      * @param value  the value
      */
-    public RICacheEntryEvent(Cache<K, V> source, K key, V value) {
-        super(source);
+    public RICacheEntryEvent(Cache<K, V> source, K key, V value, EventType eventType) {
+        super(source, eventType);
         this.key = key;
         this.value = value;
         this.oldValue = null;
         this.oldValueAvailable = false;
-    }
-    
-    /**
-     * Constructs a cache entry event from a given cache as source
-     * (with an old value)
-     *
-     * @param source   the cache that originated the event
-     * @param key      the key
-     * @param value    the value
-     * @param oldValue the oldValue
-     */
-    public RICacheEntryEvent(Cache<K, V> source, K key, V value, V oldValue) {
-        super(source);
-        this.key = key;
-        this.value = value;
-        this.oldValue = oldValue;
-        this.oldValueAvailable = true;
     }
 
     /**
@@ -74,7 +60,15 @@ public class RICacheEntryEvent<K, V> extends CacheEntryEvent<K, V> {
         return value;
     }
 
-    /**
+   /**
+    * {@inheritDoc}
+    */
+   @Override
+   public <T> T unwrap(Class<T> clazz) {
+      return ReflectionUtil.unwrap(this, clazz);
+   }
+
+   /**
      * Returns the value of the cache entry with the event
      *
      * @return the value

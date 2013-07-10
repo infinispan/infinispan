@@ -1,8 +1,6 @@
 package org.infinispan.jcache.util;
 
-import javax.cache.CacheManager;
 import javax.cache.Caching;
-import javax.cache.Status;
 import javax.cache.spi.CachingProvider;
 
 /**

@@ -3,9 +3,8 @@ package org.infinispan.jcache;
 import org.infinispan.AdvancedCache;
 import org.infinispan.stats.Stats;
 
-import javax.cache.CacheStatisticsMXBean;
+import javax.cache.management.CacheStatisticsMXBean;
 import java.io.Serializable;
-import java.util.Date;
 import java.util.concurrent.TimeUnit;
 
 /**
@@ -16,9 +15,6 @@ public class RICacheStatistics implements CacheStatisticsMXBean, Serializable {
    private static final long serialVersionUID = -5589437411679003894L;
 
    private final AdvancedCache<?, ?> cache;
-
-   // TODO: Replace with getTimeSinceReset?
-   private Date lastCollectionStartDate = new Date();
 
    /**
     * Constructs a cache statistics object
@@ -38,18 +34,6 @@ public class RICacheStatistics implements CacheStatisticsMXBean, Serializable {
    @Override
    public void clear() {
       cache.getStats().reset();
-      lastCollectionStartDate = new Date();
-   }
-
-   /**
-    * The date from which statistics have been accumulated. Because statistics
-    * can be cleared, this is not necessarily since the cache was started.
-    *
-    * @return the date statistics started being accumulated
-    */
-   @Override
-   public Date getStartAccumulationDate() {
-      return lastCollectionStartDate;
    }
 
    /**

@@ -1,7 +1,7 @@
 package org.infinispan.jcache;
 
 import javax.cache.Cache;
-import javax.cache.CacheMXBean;
+import javax.cache.management.CacheMXBean;
 import javax.cache.transaction.IsolationLevel;
 import javax.cache.transaction.Mode;
 

@@ -5,10 +5,11 @@
 # This is a dummy test that fails if not in the exclude list.
 org.jsr107.tck.CachingTest#dummyTest
 
-# Cache statistics TCK tests are still WIP, so excluding them
-# (see https://github.com/jsr107/jsr107tck/issues/19 and https://github.com/jsr107/jsr107tck/issues/12)
-org.jsr107.tck.CacheStatisticsTest#testCacheStatistics
-org.jsr107.tck.CacheStatisticsTest#testCacheStatisticsInvokeEntryProcessorGet
-org.jsr107.tck.CacheStatisticsTest#testCacheStatisticsInvokeEntryProcessorCreate
-org.jsr107.tck.CacheStatisticsTest#testCacheStatisticsInvokeEntryProcessorRemove
-org.jsr107.tck.CacheStatisticsTest#testIterateAndRemove
+# Disabled pending outcome of https://github.com/jsr107/jsr107tck/issues/30
+org.jsr107.tck.transaction.CacheManagerTransactionsTest#setIncorrectIsolationLevelForTransactionalCache
+
+# Disabled pending outcome of https://github.com/jsr107/jsr107tck/issues/19 and https://github.com/jsr107/jsr107tck/issues/12
+org.jsr107.tck.management.CacheStatisticsTest#testCacheStatistics
+
+# Disabled pending outcome of https://github.com/jsr107/jsr107tck/issues/31
+org.jsr107.tck.management.CacheStatisticsTest#testIterateAndRemove
