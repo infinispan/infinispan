@@ -7,6 +7,7 @@ import org.infinispan.atomic.FineGrainedAtomicMap;
 import org.infinispan.commons.CacheException;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.cache.VersioningScheme;
+import org.infinispan.context.Flag;
 import org.infinispan.context.InvocationContextContainer;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.test.AbstractInfinispanTest;
@@ -17,7 +18,6 @@ import org.infinispan.util.concurrent.IsolationLevel;
 import org.infinispan.util.concurrent.locks.LockManager;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
-import org.testng.Assert;
 import org.testng.annotations.AfterTest;
 import org.testng.annotations.BeforeTest;
 import org.testng.annotations.Test;
@@ -25,10 +25,12 @@ import org.testng.annotations.Test;
 import javax.transaction.RollbackException;
 import javax.transaction.Status;
 import javax.transaction.SystemException;
+import javax.transaction.Transaction;
 import javax.transaction.TransactionManager;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashSet;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Set;
 import java.util.concurrent.Callable;
@@ -39,6 +41,8 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.atomic.AtomicInteger;
+
+import static org.testng.AssertJUnit.*;
 
 @Test(groups = "functional", testName = "api.mvcc.repeatable_read.WriteSkewTest")
 public class WriteSkewTest extends AbstractInfinispanTest {
@@ -160,7 +164,7 @@ public class WriteSkewTest extends AbstractInfinispanTest {
                ex.printStackTrace();
             }
          }
-      }, "WriteSkewTest.Thread-1");
+      }, "Thread-1, WriteSkewTest");
 
       Thread t2 = new Thread(new Runnable() {
          public void run() {
@@ -197,7 +201,7 @@ public class WriteSkewTest extends AbstractInfinispanTest {
                ex.printStackTrace();
             }
          }
-      }, "WriteSkewTest.Thread-2");
+      }, "Thread-2, WriteSkewTest");
 
       t1.start();
       t2.start();
@@ -208,10 +212,10 @@ public class WriteSkewTest extends AbstractInfinispanTest {
       log.trace("successes= " + successes.get());
       log.trace("rollbacks= " + rollbacks.get());
 
-      Assert.assertTrue(cache.containsKey("k1"));
-      Assert.assertEquals("v2", cache.get("k1"));
-      Assert.assertEquals(1, successes.get());
-      Assert.assertEquals(1, rollbacks.get());
+      assertTrue("k1 is expected to be in cache.", cache.containsKey("k1"));
+      assertEquals("Wrong value for key k1.", "v2", cache.get("k1"));
+      assertEquals("Expects only one thread to succeed.", 1, successes.get());
+      assertEquals("Expects only one thread to fail", 1, rollbacks.get());
    }
 
    /**
@@ -221,13 +225,15 @@ public class WriteSkewTest extends AbstractInfinispanTest {
    public void testDontFailOnImmediateRemoval() throws Exception {
       setCacheWithWriteSkewCheck();
       postStart();
+      final String key = "testDontOnImmediateRemoval-Key";
+
       tm.begin();
-      cache.put("testDontOnImmediateRemoval-Key", "testDontOnImmediateRemoval-Value");
-      Assert.assertEquals(cache.get("testDontOnImmediateRemoval-Key"), "testDontOnImmediateRemoval-Value");
-      cache.put("testDontOnImmediateRemoval-Key", "testDontOnImmediateRemoval-Value-Second");
-      cache.remove("testDontOnImmediateRemoval-Key");
+      cache.put(key, "testDontOnImmediateRemoval-Value");
+      assertEquals("Wrong value for key " + key, "testDontOnImmediateRemoval-Value", cache.get(key));
+      cache.put(key, "testDontOnImmediateRemoval-Value-Second");
+      cache.remove(key);
       tm.commit();
-      Assert.assertFalse(cache.containsKey("testDontOnImmediateRemoval-Key"));
+      assertFalse("Key " + key + " was not removed as expected.", cache.containsKey(key));
    }
 
    /**
@@ -248,9 +254,107 @@ public class WriteSkewTest extends AbstractInfinispanTest {
       fineGrainedAtomicMap.put(subKey + 2, "v2");
       fineGrainedAtomicMap = AtomicMapLookup.getFineGrainedAtomicMap(cache, key);
       Object object = fineGrainedAtomicMap.get(subKey);
-      Assert.assertEquals( "v", object);
+      assertEquals("Wrong FGAM sub-key value.", "v", object);
       AtomicMapLookup.removeAtomicMap(cache, key);
       tm.commit();
+   }
+
+   public void testNoWriteSkew() throws Exception {
+      //simplified version of testWriteSkewWithOnlyPut
+      setCacheWithWriteSkewCheck();
+      postStart();
+
+      final String key = "k";
+      tm.begin();
+      try {
+         cache.put(key, "init");
+      } catch (Exception e) {
+         tm.setRollbackOnly();
+         throw e;
+      } finally {
+         if (tm.getStatus() == Status.STATUS_ACTIVE) {
+            tm.commit();
+         } else {
+            tm.rollback();
+         }
+      }
+      Cache<String, String> putCache = cache.getAdvancedCache().withFlags(Flag.IGNORE_RETURN_VALUES);
+
+      tm.begin();
+      putCache.put(key, "v1");
+      final Transaction tx1 = tm.suspend();
+
+      tm.begin();
+      putCache.put(key, "v2");
+      final Transaction tx2 = tm.suspend();
+
+      tm.begin();
+      putCache.put(key, "v3");
+      final Transaction tx3 = tm.suspend();
+
+      //the following commits should not fail the write skew check
+      tm.resume(tx1);
+      tm.commit();
+
+      tm.resume(tx2);
+      tm.commit();
+
+      tm.resume(tx3);
+      tm.commit();
+   }
+
+   public void testWriteSkew() throws Exception {
+      //simplified version of testWriteSkewWithOnlyPut
+      setCacheWithWriteSkewCheck();
+      postStart();
+
+      final String key = "k";
+      tm.begin();
+      try {
+         cache.put(key, "init");
+      } catch (Exception e) {
+         tm.setRollbackOnly();
+         throw e;
+      } finally {
+         if (tm.getStatus() == Status.STATUS_ACTIVE) {
+            tm.commit();
+         } else {
+            tm.rollback();
+         }
+      }
+
+      tm.begin();
+      cache.put(key, "v1");
+      final Transaction tx1 = tm.suspend();
+
+      tm.begin();
+      cache.put(key, "v2");
+      final Transaction tx2 = tm.suspend();
+
+      tm.begin();
+      cache.put(key, "v3");
+      final Transaction tx3 = tm.suspend();
+
+      //the first commit should succeed
+      tm.resume(tx1);
+      tm.commit();
+
+      //the remaining should fail
+      try {
+         tm.resume(tx2);
+         tm.commit();
+         fail("Transaction should fail!");
+      } catch (RollbackException e) {
+         //expected
+      }
+
+      try {
+         tm.resume(tx3);
+         tm.commit();
+         fail("Transaction should fail!");
+      } catch (RollbackException e) {
+         //expected
+      }
    }
 
    public void testWriteSkewWithOnlyPut() throws Exception {
@@ -298,12 +402,14 @@ public class WriteSkewTest extends AbstractInfinispanTest {
 
 
    private void doTest(final boolean allowWriteSkew) throws Exception {
-      cache.put("k", "v");
+      final String key = "k";
       final Set<Exception> w1exceptions = new HashSet<Exception>();
       final Set<Exception> w2exceptions = new HashSet<Exception>();
       final CountDownLatch w1Signal = new CountDownLatch(1);
       final CountDownLatch w2Signal = new CountDownLatch(1);
       final CountDownLatch threadSignal = new CountDownLatch(2);
+
+      cache.put(key, "v");
 
       Thread w1 = new Thread("Writer-1, WriteSkewTest") {
          @Override
@@ -311,11 +417,11 @@ public class WriteSkewTest extends AbstractInfinispanTest {
             boolean didCoundDown = false;
             try {
                tm.begin();
-               assert "v".equals(cache.get("k"));
+               assertEquals("Wrong value in Writer-1 for key " + key + ".", "v", cache.get(key));
                threadSignal.countDown();
                didCoundDown = true;
                w1Signal.await();
-               cache.put("k", "v2");
+               cache.put(key, "v2");
                tm.commit();
             }
             catch (Exception e) {
@@ -333,11 +439,11 @@ public class WriteSkewTest extends AbstractInfinispanTest {
             boolean didCoundDown = false;
             try {
                tm.begin();
-               assert "v".equals(cache.get("k"));
+               assertEquals("Wrong value in Writer-2 for key " + key + ".", "v", cache.get(key));
                threadSignal.countDown();
                didCoundDown = true;
                w2Signal.await();
-               cache.put("k", "v3");
+               cache.put(key, "v3");
                tm.commit();
             }
             catch (Exception e) {
@@ -372,24 +478,23 @@ public class WriteSkewTest extends AbstractInfinispanTest {
 
       if (allowWriteSkew) {
          // should have no exceptions!!
-         throwExceptions(w1exceptions, w2exceptions);
-         assert w2exceptions.isEmpty();
-         assert w1exceptions.isEmpty();
-         assert "v3".equals(cache.get("k")) : "W2 should have overwritten W1's work!";
-
+         throwExceptions(w1exceptions);
+         throwExceptions(w2exceptions);
+         assertEquals("W2 should have overwritten W1's work!", "v3", cache.get(key));
          assertNoLocks();
       } else {
          Collection<Exception> combined = new HashSet<Exception>(w1exceptions);
          combined.addAll(w2exceptions);
-         assert !combined.isEmpty();
-         assert combined.size() == 1;
-         assert combined.iterator().next() instanceof CacheException;
+         assertFalse("Exceptions are expected!", combined.isEmpty());
+         assertEquals("Expects one exception.", 1, combined.size());
+         assertTrue("Wrong exception type.", combined.iterator().next() instanceof CacheException);
       }
    }
 
-   private void throwExceptions(Collection<Exception>... exceptions) throws Exception {
-      for (Collection<Exception> ce : exceptions) {
-         for (Exception e : ce) throw e;
+   private void throwExceptions(Collection<Exception> exceptions) throws Exception {
+      Iterator<Exception> iterator = exceptions.iterator();
+      if (iterator.hasNext()) {
+         throw iterator.next();
       }
    }
 
@@ -408,7 +513,7 @@ public class WriteSkewTest extends AbstractInfinispanTest {
 
             tm.begin();
             try {
-               cache.put("k", "_lockthisplease_");
+               cache.getAdvancedCache().withFlags(Flag.IGNORE_RETURN_VALUES).put("k", "_lockthisplease_");
             } catch (Exception e) {
                log.error("Unexpected", e);
                tm.setRollbackOnly();
