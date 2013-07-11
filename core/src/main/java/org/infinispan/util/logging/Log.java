@@ -895,5 +895,8 @@ public interface Log extends BasicLogger {
    @Message(value = "Waiting for expired entries to be purge timed out", id = 237)
    CacheLoaderException timedOutWaitingForExpiredEntriesToBePurged(@Cause Throwable cause);
 
+   @Message(value = "Directory %s does not exist and cannot be created!", id = 238)
+   CacheConfigurationException directoryCannotBeCreated(String path);
+
 }
 

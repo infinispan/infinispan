@@ -390,6 +390,13 @@
                 </xs:documentation>
               </xs:annotation>
             </xs:element>
+             <xs:element name="singleFileStore" minOccurs="0" maxOccurs="unbounded" type="tns:singleFileStore">
+                <xs:annotation>
+                   <xs:documentation>
+                      Configuration of a FileCacheStore
+                   </xs:documentation>
+                </xs:annotation>
+             </xs:element>
             <xs:any namespace="##other" minOccurs="0" maxOccurs="unbounded" />
           </xs:sequence>
           <xs:attribute name="passivation" type="xs:boolean" default="false">
@@ -1739,6 +1746,27 @@
       </xs:extension>
     </xs:complexContent>
   </xs:complexType>
+
+  <xs:complexType name="singleFileStore">
+      <xs:complexContent>
+         <xs:extension base="tns:loader">
+            <xs:attribute name="location" type="xs:string" default="Infinispan-SingleFileCacheStore">
+               <xs:annotation>
+                  <xs:documentation>
+                     A location on disk where the store can write.  This defaults to Infinispan-SingleFileCacheStore in the current working directory.
+                  </xs:documentation>
+               </xs:annotation>
+            </xs:attribute>
+            <xs:attribute name="maxKeysInMemory" type="xs:int" default="-1">
+               <xs:annotation>
+                  <xs:documentation>
+                     To speed up data lookup, the single file store keeps an index of keys and their positions in the file. By default, this index is unbounded, but it's size can be limited setting this attribute to a positive number. To avoid data becoming unreachable, a positive value cannot be used if the cache is configured with eviction or passivation.
+                  </xs:documentation>
+               </xs:annotation>
+            </xs:attribute>
+         </xs:extension>
+      </xs:complexContent>
+  </xs:complexType>
   
   <xs:simpleType name="fsyncMode">
     <xs:restriction base="xs:string">
@@ -1765,6 +1793,8 @@
       </xs:enumeration>
     </xs:restriction>
   </xs:simpleType>
+
+
   
   <xs:simpleType name="versioningScheme">
     <xs:restriction base="xs:string">

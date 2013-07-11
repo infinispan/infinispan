@@ -1,25 +1,3 @@
-/*
- * JBoss, Home of Professional Open Source
- * Copyright 2009 Red Hat Inc. and/or its affiliates and other
- * contributors as indicated by the @author tags. All rights reserved.
- * See the copyright.txt in the distribution for a full listing of
- * individual contributors.
- *
- * This is free software; you can redistribute it and/or modify it
- * under the terms of the GNU Lesser General Public License as
- * published by the Free Software Foundation; either version 2.1 of
- * the License, or (at your option) any later version.
- *
- * This software is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
- * Lesser General Public License for more details.
- *
- * You should have received a copy of the GNU Lesser General Public
- * License along with this software; if not, write to the Free
- * Software Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
- * 02110-1301 USA, or see the FSF site: http://www.fsf.org.
- */
 package org.infinispan.loaders.file;
 
 import java.io.File;
@@ -41,7 +19,6 @@ import java.util.SortedSet;
 import java.util.TreeSet;
 
 import org.infinispan.Cache;
-import org.infinispan.config.ConfigurationException;
 import org.infinispan.container.entries.InternalCacheEntry;
 import org.infinispan.container.entries.InternalCacheValue;
 import org.infinispan.loaders.AbstractCacheStore;
@@ -49,32 +26,51 @@ import org.infinispan.loaders.CacheLoaderConfig;
 import org.infinispan.loaders.CacheLoaderException;
 import org.infinispan.loaders.CacheLoaderMetadata;
 import org.infinispan.loaders.CacheStore;
-import org.infinispan.marshall.StreamingMarshaller;
+import org.infinispan.commons.marshall.StreamingMarshaller;
+import org.infinispan.util.logging.Log;
+import org.infinispan.util.logging.LogFactory;
 
 /**
- * A filesystem-based implementation of a {@link CacheStore}. This file store stores cache values in
- * a single file <tt>&lt;location&gt;/&lt;cache name&gt;.dat</tt>, keys and file positions are kept
- * in memory.
+ * A filesystem-based implementation of a {@link CacheStore}. This file store
+ * stores cache values in a single file <tt>&lt;location&gt;/&lt;cache name&gt;.dat</tt>,
+ * keys and file positions are kept in memory.
  * <p/>
- * Note: this CacheStore implementation keeps keys and file positions in memory! The current
- * implementation needs about 100 bytes per cache entry, plus the memory for the key objects. Use
- * the maxEntries parameter or cache entries that can expire (with purge) to prevent the cache store
- * from growing indefinitely and causing OutOfMemoryExceptions.
+ * Note: this CacheStore implementation keeps keys and file positions in memory!
+ * The current implementation needs about 100 bytes per cache entry, plus the
+ * memory for the key objects.
  * <p/>
- * This class is fully thread safe, yet allows for concurrent load / store of individual cache
- * entries.
+ * So, the space taken by this cache store is both the space in the file
+ * itself plus the in-memory index with the keys and their file positions.
+ * With this in mind and to avoid the cache store leading to
+ * OutOfMemoryExceptions, you can optionally configure the maximum number
+ * of entries to maintain in this cache store, which affects both the size
+ * of the file and the size of the in-memory index. However, setting this
+ * maximum limit results in older entries in the cache store to be eliminated,
+ * and hence, it only makes sense configuring a maximum limit if Infinispan
+ * is used as a cache where loss of data in the cache store does not lead to
+ * data loss, and data can be recomputed or re-queried from the original data
+ * source.
+ * <p/>
+ * This class is fully thread safe, yet allows for concurrent load / store
+ * of individual cache entries.
  * 
  * @author Karsten Blees
+ * @since 6.0
  */
-@CacheLoaderMetadata(configurationClass = KarstenFileCacheStoreConfig.class)
-public class KarstenFileCacheStore extends AbstractCacheStore {
+@CacheLoaderMetadata(configurationClass = SingleFileCacheStoreConfig.class)
+public class SingleFileCacheStore extends AbstractCacheStore {
+
+   private static final Log log = LogFactory.getLog(SingleFileCacheStore.class);
+
    private static final byte[] MAGIC = new byte[] { 'F', 'C', 'S', '1' };
+
+   private static final byte[] ZERO_INT = { 0, 0, 0, 0 };
 
    private static final int KEYLEN_POS = 4;
 
    private static final int KEY_POS = 4 + 4 + 4 + 8;
 
-   private KarstenFileCacheStoreConfig config;
+   private SingleFileCacheStoreConfig config;
 
    private FileChannel file;
 
@@ -87,14 +83,14 @@ public class KarstenFileCacheStore extends AbstractCacheStore {
    /** {@inheritDoc} */
    @Override
    public Class<? extends CacheLoaderConfig> getConfigurationClass() {
-      return KarstenFileCacheStoreConfig.class;
+      return SingleFileCacheStoreConfig.class;
    }
 
    /** {@inheritDoc} */
    @Override
    public void init(CacheLoaderConfig config, Cache<?, ?> cache, StreamingMarshaller m) throws CacheLoaderException {
       super.init(config, cache, m);
-      this.config = (KarstenFileCacheStoreConfig) config;
+      this.config = (SingleFileCacheStoreConfig) config;
    }
 
    /** {@inheritDoc} */
@@ -105,11 +101,10 @@ public class KarstenFileCacheStore extends AbstractCacheStore {
          // open the data file
          String location = config.getLocation();
          if (location == null || location.trim().length() == 0)
-            location = "Infinispan-FileCacheStore";
+            location = "Infinispan-SingleFileCacheStore";
          File dir = new File(location);
          if (!dir.exists() && !dir.mkdirs())
-            throw new ConfigurationException("Directory " + dir.getAbsolutePath()
-                  + " does not exist and cannot be created!");
+            throw log.directoryCannotBeCreated(dir.getAbsolutePath());
 
          File f = new File(location, cache.getName() + ".dat");
          file = new RandomAccessFile(f, "rw").getChannel();
@@ -126,12 +121,10 @@ public class KarstenFileCacheStore extends AbstractCacheStore {
 
          // check file format and read persistent state if enabled for the cache
          byte[] header = new byte[MAGIC.length];
-         if (file.read(ByteBuffer.wrap(header), 0) == MAGIC.length && Arrays.equals(MAGIC, header)
-               && cache.getCacheConfiguration().loaders().preload())
-            preload();
+         if (file.read(ByteBuffer.wrap(header), 0) == MAGIC.length && Arrays.equals(MAGIC, header))
+            rebuildIndex();
          else
-            // otherwise (unknown file format or no preload) just reset the file
-            clear();
+            clear(); // otherwise (unknown file format or no preload) just reset the file
       } catch (Exception e) {
          throw new CacheLoaderException(e);
       }
@@ -158,7 +151,7 @@ public class KarstenFileCacheStore extends AbstractCacheStore {
    /**
     * Rebuilds the in-memory index from file.
     */
-   private void preload() throws Exception {
+   private void rebuildIndex() throws Exception {
       ByteBuffer buf = ByteBuffer.allocate(KEY_POS);
       for (;;) {
          // read FileEntry fields from file (size, keyLen etc.)
@@ -211,8 +204,7 @@ public class KarstenFileCacheStore extends AbstractCacheStore {
    /**
     * Allocates the requested space in the file.
     *
-    * @param len
-    *           requested space
+    * @param len requested space
     * @return allocated file position and length as FileEntry object
     */
    private FileEntry allocate(int len) {
@@ -236,8 +228,6 @@ public class KarstenFileCacheStore extends AbstractCacheStore {
          return fe;
       }
    }
-
-   private static final byte[] ZERO_INT = { 0, 0, 0, 0 };
 
    /**
     * Frees the space of the specified file entry (for reuse by allocate).
@@ -411,7 +401,7 @@ public class KarstenFileCacheStore extends AbstractCacheStore {
          InternalCacheEntry ice = load(key);
          if (ice != null) {
             result.add(ice);
-            if (result.size() > numEntries)
+            if (result.size() >= numEntries)
                return result;
          }
       }
@@ -459,6 +449,14 @@ public class KarstenFileCacheStore extends AbstractCacheStore {
    public void toStream(ObjectOutput outputStream) throws CacheLoaderException {
       // seems that this is never called by Infinispan (except by decorators)
       throw new UnsupportedOperationException();
+   }
+
+   Map<Object, FileEntry> getEntries() {
+      return entries;
+   }
+
+   SortedSet<FileEntry> getFreeList() {
+      return freeList;
    }
 
    /**
@@ -529,7 +527,7 @@ public class KarstenFileCacheStore extends AbstractCacheStore {
             try {
                wait();
             } catch (InterruptedException e) {
-               // ignore, we don't expect anyone to interrupt us
+               Thread.currentThread().interrupt();
             }
          }
       }
@@ -540,11 +538,9 @@ public class KarstenFileCacheStore extends AbstractCacheStore {
 
       /** {@inheritDoc} */
       public int compareTo(Object o) {
-         if (!(o instanceof FileEntry))
-            throw new ClassCastException();
-         if (this == o)
-            return 0;
          FileEntry fe = (FileEntry) o;
+         if (this == fe)
+            return 0;
          int diff = size - fe.size;
          return (diff != 0) ? diff : offset > fe.offset ? 1 : -1;
       }

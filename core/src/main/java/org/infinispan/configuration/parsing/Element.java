@@ -30,6 +30,7 @@ public enum Element {
     EVICTION_SCHEDULED_EXECUTOR("evictionScheduledExecutor"),
     EXPIRATION("expiration"),
     FILE_STORE("fileStore"),
+    SINGLE_FILE_STORE("singleFileStore"),
     GROUPS("groups"),
     GROUPER("grouper"),
     GLOBAL("global"),
