@@ -792,8 +792,6 @@ public class DefaultExecutorService extends AbstractExecutorService implements D
 
       private final DistributedExecuteCommand<V> distCommand;
       private volatile Future<V> f;
-      //TODO revisit if volatile needed
-      private volatile boolean callCompleted = false;
       private final Set<FutureListener<V>> listeners = new CopyOnWriteArraySet<FutureListener<V>>();
       private final ReadWriteLock listenerLock = new ReentrantReadWriteLock();
       private final Address executionTarget;
@@ -875,9 +873,6 @@ public class DefaultExecutorService extends AbstractExecutorService implements D
          }
       }
 
-      /**
-       *
-       */
       @Override
       public V get() throws InterruptedException, ExecutionException {
          V result = null;
@@ -885,23 +880,14 @@ public class DefaultExecutorService extends AbstractExecutorService implements D
             result = innerGet(0, TimeUnit.MILLISECONDS);
          } catch (TimeoutException e) {
             throw new ExecutionException(e);
-         } finally {
-            done = true;
          }
          return result;
       }
 
-      /**
-       *
-       */
       @Override
       public V get(long timeout, TimeUnit unit)
             throws InterruptedException, ExecutionException, TimeoutException {
-         try {
-            return innerGet(timeout, unit);
-         } finally {
-            done = true;
-         }
+         return innerGet(timeout, unit);
       }
 
       private V innerGet(long timeout, TimeUnit unit)
@@ -999,7 +985,7 @@ public class DefaultExecutorService extends AbstractExecutorService implements D
       public void notifyDone() {
          listenerLock.writeLock().lock();
          try {
-            callCompleted = true;
+            done = true;
             for (FutureListener<V> l : listeners) l.futureDone(this);
          } finally {
             listenerLock.writeLock().unlock();
@@ -1010,8 +996,8 @@ public class DefaultExecutorService extends AbstractExecutorService implements D
       public NotifyingFuture<V> attachListener(FutureListener<V> listener) {
          listenerLock.readLock().lock();
          try {
-            if (!callCompleted) listeners.add(listener);
-            if (callCompleted) listener.futureDone(this);
+            if (!done) listeners.add(listener);
+            if (done) listener.futureDone(this);
             return this;
          } finally {
             listenerLock.readLock().unlock();
@@ -1108,7 +1094,6 @@ public class DefaultExecutorService extends AbstractExecutorService implements D
          final int prime = 31;
          int result = 1;
          result = prime * result + getOuterType().hashCode();
-         result = prime * result + (callCompleted ? 1231 : 1237);
          result = prime * result + ((distCommand == null) ? 0 : distCommand.hashCode());
          return result;
       }
@@ -1126,9 +1111,6 @@ public class DefaultExecutorService extends AbstractExecutorService implements D
          }
          DistributedTaskPart other = (DistributedTaskPart) obj;
          if (!getOuterType().equals(other.getOuterType())) {
-            return false;
-         }
-         if (callCompleted != other.callCompleted) {
             return false;
          }
          if (distCommand == null) {
