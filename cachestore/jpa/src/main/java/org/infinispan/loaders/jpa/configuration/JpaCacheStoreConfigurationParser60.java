@@ -22,10 +22,10 @@ import org.infinispan.commons.util.StringPropertyReplacer;
    @Namespace(uri = "urn:infinispan:config:jpa:6.0", root = "jpaStore"),
    @Namespace(root = "jpaStore")
 })
-public class JpaCacheStoreConfigurationParser53 implements
+public class JpaCacheStoreConfigurationParser60 implements
 		ConfigurationParser {
 
-	public JpaCacheStoreConfigurationParser53() {
+	public JpaCacheStoreConfigurationParser60() {
 	}
 
 	@Override
