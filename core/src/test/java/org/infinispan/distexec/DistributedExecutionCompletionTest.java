@@ -180,14 +180,15 @@ public class DistributedExecutionCompletionTest extends BaseDistFunctionalTest {
       DistributedExecutorService des = new DefaultExecutorService(c1);
       DistributedExecutionCompletionService<Integer> decs = new DistributedExecutionCompletionService<Integer>(des);
       try {
+         long start = System.currentTimeMillis();
          decs.submit(new SimpleCallable(true, sleepTime));
 
-         long start = System.currentTimeMillis();
-         NotifyingFuture<Integer> callable = decs.take();
+         NotifyingFuture<Integer> future = decs.take();
          long end = System.currentTimeMillis();
 
-         assert (end - start) >= sleepTime;
-         AssertJUnit.assertEquals((Integer) 1, callable.get());
+         AssertJUnit.assertTrue("take() returned too soon", (end - start) >= sleepTime);
+         AssertJUnit.assertTrue("take() returned, but future is not done yet", future.isDone());
+         AssertJUnit.assertEquals((Integer) 1, future.get());
       } finally {
          des.shutdownNow();
       }
