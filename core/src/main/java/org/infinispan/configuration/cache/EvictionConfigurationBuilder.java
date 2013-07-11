@@ -34,6 +34,10 @@ public class EvictionConfigurationBuilder extends AbstractConfigurationChildBuil
       return this;
    }
 
+   EvictionStrategy strategy() {
+      return strategy;
+   }
+
    /**
     * Threading policy for eviction.
     *

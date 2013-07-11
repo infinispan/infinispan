@@ -558,6 +558,9 @@ public class Parser60 implements ConfigurationParser {
             case FILE_STORE:
                parseFileStore(reader, holder);
                break;
+            case SINGLE_FILE_STORE:
+               parseSingleFileStore(reader, holder);
+               break;
             case LOADER:
                parseLoader(reader, holder);
                break;
@@ -568,6 +571,28 @@ public class Parser60 implements ConfigurationParser {
                reader.handleAny(holder);
          }
       }
+   }
+
+   private void parseSingleFileStore(XMLExtendedStreamReader reader, ConfigurationBuilderHolder holder) throws XMLStreamException {
+      ConfigurationBuilder builder = holder.getCurrentConfigurationBuilder();
+      SingleFileCacheStoreConfigurationBuilder storeBuilder = builder.loaders().addSingleFileCacheStore();
+      for (int i = 0; i < reader.getAttributeCount(); i++) {
+         ParseUtils.requireNoNamespaceAttribute(reader, i);
+         String value = replaceProperties(reader.getAttributeValue(i));
+         Attribute attribute = Attribute.forName(reader.getAttributeLocalName(i));
+         switch (attribute) {
+            case LOCATION:
+               storeBuilder.location(value);
+               break;
+            case MAX_ENTRIES:
+               storeBuilder.maxEntries(Integer.parseInt(value));
+               break;
+            default:
+               parseCommonLoaderAttributes(reader, i, storeBuilder);
+               break;
+         }
+      }
+      parseStoreChildren(reader, storeBuilder);
    }
 
    private void parseClusterLoader(XMLExtendedStreamReader reader, ConfigurationBuilderHolder holder) throws XMLStreamException {
