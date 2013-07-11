@@ -24,7 +24,6 @@ import org.infinispan.configuration.parsing.XMLExtendedStreamReader;
  */
 @Namespaces({
    @Namespace(uri = "urn:infinispan:config:jdbm:5.3", root = "jdbmStore"),
-   @Namespace(root = "jdbmStore"),
 })
 public class JdbmCacheStoreConfigurationParser53 implements ConfigurationParser {
 

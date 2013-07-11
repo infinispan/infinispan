@@ -19,7 +19,7 @@ import org.infinispan.configuration.parsing.XMLExtendedStreamReader;
  * @since 5.2
  */
 @Namespaces({
-   @Namespace(uri = "urn:infinispan:config:mymodule:5.3", root = "sample-element"),
+   @Namespace(uri = "urn:infinispan:config:mymodule:6.0", root = "sample-element"),
    @Namespace(root = "sample-element")
 })
 public class MyParserExtension implements ConfigurationParser {

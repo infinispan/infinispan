@@ -1,2 +1,3 @@
 org.infinispan.loaders.cloud.configuration.CloudCacheStoreConfigurationParser52
 org.infinispan.loaders.cloud.configuration.CloudCacheStoreConfigurationParser53
+org.infinispan.loaders.cloud.configuration.CloudCacheStoreConfigurationParser60

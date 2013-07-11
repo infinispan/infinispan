@@ -23,8 +23,7 @@ import org.infinispan.configuration.parsing.XMLExtendedStreamReader;
  * @since 5.3
  */
 @Namespaces({
-   @Namespace(uri = "urn:infinispan:config:bdbje:5.3", root = "bdbjeStore"),
-   @Namespace(root = "remoteStore"),
+   @Namespace(uri = "urn:infinispan:config:bdbje:5.3", root = "bdbjeStore")
 })
 public class BdbjeCacheStoreConfigurationParser53 implements ConfigurationParser {
    public BdbjeCacheStoreConfigurationParser53() {

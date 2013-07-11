@@ -28,7 +28,7 @@ public class XmlFileParsingTest extends AbstractInfinispanTest {
       String config = INFINISPAN_START_TAG +
             "   <default>\n" +
             "     <loaders>\n" +
-            "       <cassandraStore xmlns=\"urn:infinispan:config:cassandra:5.3\" autoCreateKeyspace=\"false\" fetchPersistentState=\"true\" readConsistencyLevel=\"EACH_QUORUM\" writeConsistencyLevel=\"ANY\">\n" +
+            "       <cassandraStore xmlns=\"urn:infinispan:config:cassandra:6.0\" autoCreateKeyspace=\"false\" fetchPersistentState=\"true\" readConsistencyLevel=\"EACH_QUORUM\" writeConsistencyLevel=\"ANY\">\n" +
             "         <servers>\n" +
             "           <server host=\"one\" />\n" +
             "           <server host=\"two\" />\n" +

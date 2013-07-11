@@ -22,7 +22,6 @@ import org.iq80.leveldb.CompressionType;
  */
 @Namespaces({
    @Namespace(uri = "urn:infinispan:config:leveldb:5.3", root = "leveldbStore"),
-   @Namespace(root = "leveldbStore")
 })
 public class LevelDBCacheStoreConfigurationParser53 implements ConfigurationParser {
 

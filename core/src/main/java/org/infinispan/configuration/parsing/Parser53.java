@@ -50,8 +50,7 @@ import static org.infinispan.configuration.cache.CacheMode.*;
  * @since 5.3
  */
 @Namespaces({
-   @Namespace(uri = "urn:infinispan:config:5.3", root = "infinispan"),
-   @Namespace(root = "infinispan")
+   @Namespace(uri = "urn:infinispan:config:5.3", root = "infinispan")
 })
 public class Parser53 implements ConfigurationParser {
 

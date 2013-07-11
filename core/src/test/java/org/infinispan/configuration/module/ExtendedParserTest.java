@@ -28,7 +28,7 @@ public class ExtendedParserTest {
       String config = INFINISPAN_START_TAG +
             "   <default>\n" +
             "     <modules>\n" +
-            "       <sample-element xmlns=\"urn:infinispan:config:mymodule:5.3\" sample-attribute=\"test-value\" />\n" +
+            "       <sample-element xmlns=\"urn:infinispan:config:mymodule:6.0\" sample-attribute=\"test-value\" />\n" +
             "     </modules>\n" +
             "   </default>\n" +
             INFINISPAN_END_TAG;

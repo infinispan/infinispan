@@ -27,7 +27,6 @@ import static org.infinispan.commons.util.StringPropertyReplacer.replaceProperti
  */
 @Namespaces({
    @Namespace(uri = "urn:infinispan:config:remote:5.3", root = "remoteStore"),
-   @Namespace(root = "remoteStore"),
 })
 public class RemoteCacheStoreConfigurationParser53 implements ConfigurationParser {
 

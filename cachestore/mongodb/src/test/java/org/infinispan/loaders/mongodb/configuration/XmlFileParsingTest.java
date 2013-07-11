@@ -31,7 +31,7 @@ public class XmlFileParsingTest extends AbstractInfinispanTest {
       String config = INFINISPAN_START_TAG_NO_SCHEMA + "\n" +
             "   <default>\n" +
             "     <loaders>\n" +
-            "       <mongodbStore xmlns=\"urn:infinispan:config:mongodb:5.3\" >\n" +
+            "       <mongodbStore xmlns=\"urn:infinispan:config:mongodb:6.0\" >\n" +
             "         <connection host=\"localhost\" port=\"27017\" timeout=\"2000\" acknowledgment=\"0\"/>\n" +
             "		  <authentication username=\"mongoUser\" password=\"mongoPass\" />\n" +
             "		  <storage database=\"infinispan_test_database\" collection=\"infispan_cachestore\" />\n" +

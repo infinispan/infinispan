@@ -18,14 +18,13 @@ import org.infinispan.configuration.parsing.XMLExtendedStreamReader;
 
 /**
  *
- * CassandraCacheStoreConfigurationParser52.
+ * CassandraCacheStoreConfigurationParser53.
  *
  * @author Tristan Tarrant
- * @since 5.2
+ * @since 5.3
  */
 @Namespaces({
    @Namespace(uri = "urn:infinispan:config:cassandra:5.3", root = "cassandraStore"),
-   @Namespace(root = "cassandraStore"),
 })
 public class CassandraCacheStoreConfigurationParser53 implements ConfigurationParser {
 

@@ -24,7 +24,6 @@ import org.infinispan.configuration.parsing.XMLExtendedStreamReader;
  */
 @Namespaces({
    @Namespace(uri = "urn:infinispan:config:cloud:5.3", root = "cloudStore"),
-   @Namespace(root = "cloudStore"),
 })
 public class CloudCacheStoreConfigurationParser53 implements ConfigurationParser {
 
