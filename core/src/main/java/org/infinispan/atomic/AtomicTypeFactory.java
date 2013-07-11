@@ -7,29 +7,30 @@ import javassist.util.proxy.MethodHandler;
 import javassist.util.proxy.ProxyFactory;
 import javassist.util.proxy.ProxyObject;
 import org.infinispan.Cache;
+import org.infinispan.InvalidCacheUsageException;
 import org.infinispan.notifications.Listener;
 import org.infinispan.notifications.cachelistener.annotation.CacheEntryModified;
 import org.infinispan.notifications.cachelistener.event.CacheEntryModifiedEvent;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
-import java.io.*;
-import java.lang.reflect.InvocationTargetException;
+import javax.transaction.TransactionManager;
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
+import java.io.ObjectInputStream;
+import java.io.ObjectOutputStream;
 import java.lang.reflect.Method;
 import java.nio.ByteBuffer;
 import java.util.Map;
 import java.util.concurrent.*;
+import java.util.concurrent.atomic.AtomicInteger;
 
 /**
- * One solution: the proxy is a cache listener and we use the local instance of the object to push operations
- * inside ABCast; once the proxy receives the call it pushes last (allows sync and async calls), it returns the value.
  *
- * Another solution: the proxy delegates all calls to an instance located at some replica, 
- * and which is created if a certain magic string is inserted.
- *
- *
- * TODO: It should be considered if we use the cache, or we create a new one., in particular, because creating the cache is typed, and we need storing information with a priori not the right type.
+ * TODO: It should be considered if we use the cache, or we create a new one.
  * TODO Implement a disposal system to prune an object from the cache.
+ * TODO; The total order property of the underlying communication system is mandatory for atomicity.
+ * @author otrack
  * T
  */
 @Listener
@@ -43,22 +44,50 @@ public class AtomicTypeFactory{
 	};
 
 	private Cache<Object,Object> cache;
-	
+
 	private Map<Integer,FutureCall> registeredCalls;
 	
 	private Map<Object,Object> registeredObjects;
 
     private Log log;
-	
+
+    private int hash = 0;
+
+    private AtomicInteger callCounter;
+
+    /**
+     *
+     * Return an AtomicTypeFactory object.
+     *
+     * @param c a cache; it must be synchronous.and transactional (with autoCommit set to true (default value).
+     */
 	public AtomicTypeFactory(Cache<Object,Object> c){
+        if( ! c.getCacheConfiguration().clustering().cacheMode().isSynchronous()
+            || c.getAdvancedCache().getTransactionManager() == null )
+            throw new InvalidCacheUsageException("The cache must be synchronous.and transactional.");
 		cache = c;
 		registeredCalls = new ConcurrentHashMap<Integer, FutureCall>();
 		registeredObjects = new ConcurrentHashMap<Object,Object>();
 		cache.addListener(this);
         log = LogFactory.getLog(this.getClass());
+        callCounter = new AtomicInteger(0);
 	}
 
-	public Object newInstanceOf(Class<?> clazz, final Object key) throws NotFoundException, CannotCompileException, InstantiationException, IllegalAccessException{
+    /**
+     *
+     * Returns an atomic object of the type <i>clazz</i>.
+     * The class of this object must be initially serializable, as well as all the parameters of its methods.
+     *
+     * @param clazz a class object
+     * @param key the key to use in order to store the object.
+     * @return
+     * @throws NotFoundException
+     * @throws CannotCompileException
+     * @throws InstantiationException
+     * @throws IllegalAccessException
+     */
+	public Object newInstanceOf(Class<?> clazz, final Object key)
+            throws NotFoundException, CannotCompileException, InstantiationException, IllegalAccessException{
 
 		Object rObject = clazz.newInstance();
 		registeredObjects.put(key, rObject);
@@ -73,7 +102,7 @@ public class AtomicTypeFactory{
 
 				ByteArrayOutputStream baos = new ByteArrayOutputStream();
 				ObjectOutputStream oos = new ObjectOutputStream(baos);
-				int callId = m.hashCode()+Thread.currentThread().hashCode();
+				int callId = m.hashCode()+Thread.currentThread().hashCode()+cache.getCacheManager().getAddress().hashCode()+callCounter.incrementAndGet();
 				
 				oos.writeInt(callId);
 				oos.writeObject(m.getName());
@@ -84,10 +113,11 @@ public class AtomicTypeFactory{
 				bb.flip();
 								
 				FutureCall future = new FutureCall();
-				registeredCalls.put(callId,future);
-				cache.put(key, bb);
-				
-				Object ret = future.get();
+				registeredCalls.put(callId, future);
+
+				cache.put(key, bb.array());
+
+                Object ret = future.get();
 				registeredCalls.remove(callId);
 
                 log.debug("Call "+m.getName()+"() : :"+ret);
@@ -101,27 +131,39 @@ public class AtomicTypeFactory{
 		return pinst;
 
 	}
-	
-	
+
+
+    /**
+     * Internal use of the listener API.
+     * @param event of type CacheEntryModifiedEvent
+     */
 	@SuppressWarnings({ "rawtypes", "unchecked" })
 	@CacheEntryModified
-	public void onCacheModification(CacheEntryModifiedEvent<Object,Object> event){
-				
-		if(event.isPre())
+    @Deprecated
+	public synchronized void onCacheModification(CacheEntryModifiedEvent<Object,Object> event){
+
+        if(event.isPre())
 			return;
-				
-		if(!registeredObjects.containsKey(event.getKey()))
+
+        if(!registeredObjects.containsKey(event.getKey()))
 			return;
-		
-		try {
+
+        try {
 			Object rObject = registeredObjects.get(event.getKey());
-			ByteArrayInputStream bais = new ByteArrayInputStream(( (ByteBuffer)event.getValue()).array());
+            byte[] bb = (byte[]) event.getValue();
+			ByteArrayInputStream bais = new ByteArrayInputStream(bb);
 			ObjectInputStream ois = new ObjectInputStream(bais);
 			int callId = ois.readInt();
 			String method = (String)ois.readObject();
-			
-			Object ret = null;
-			Object[] args = (Object[])ois.readObject();			
+
+            if(registeredCalls.containsKey(callId) && !event.isOriginLocal())     // to deal with the fact that an event can be received twice. when it is local
+               return;
+
+            log.debug(event.toString()+" "+registeredObjects.toString());
+
+            Object ret = null;
+			Object[] args = (Object[])ois.readObject();
+            boolean isFound = false;
 			for (Method m : rObject.getClass().getMethods()) { // only public methods (inherited and not)
 	            if (method.equals(m.getName())) {
 	            	boolean isAssignable = true;
@@ -136,13 +178,18 @@ public class AtomicTypeFactory{
 	            	}
 	            	if(!isAssignable)
 	            		continue;
-	            	ret = m.invoke(rObject, args);
+
+                    log.debug("Received call with ID=" + callId + " from " + event.getCache().toString());
+                    hash+=callId;
+
+                    ret = m.invoke(rObject, args);
+                    isFound = true;
 	            	break;
 	            }
 	        }	        
 	        
-	        if(ret == null)
-	        	throw new IllegalStateException("Method not found.");
+	        if(!isFound)
+	        	throw new IllegalStateException("Method "+method+" not found.");
 	        
 			if(registeredCalls.containsKey(callId)){
 				registeredCalls.get(callId).setReturnValue(ret);
@@ -150,9 +197,17 @@ public class AtomicTypeFactory{
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
-		
-		
+
 	}
+
+    /**
+     * Interrnal use.
+     * @return a hash of the order in whch the call to the objects where done.
+     */
+    @Deprecated
+    public int getHash(){
+        return hash;
+    }
 	
 	//
 	// Inner Classes
