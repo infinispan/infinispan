@@ -27,7 +27,7 @@ public class XmlFileParsingTest extends AbstractInfinispanTest {
       String config = INFINISPAN_START_TAG +
             "   <default>\n" +
             "     <loaders>\n" +
-            "       <remoteStore xmlns=\"urn:infinispan:config:remote:5.3\" >\n" +
+            "       <remoteStore xmlns=\"urn:infinispan:config:remote:6.0\" >\n" +
             "         <servers>\n" +
             "           <server host=\"one\" />\n" +
             "           <server host=\"two\" />\n" +

@@ -22,7 +22,6 @@ import org.infinispan.configuration.parsing.XMLExtendedStreamReader;
  */
 @Namespaces({
    @Namespace(uri = "urn:infinispan:config:mongodb:5.3", root = "mongodbStore"),
-   @Namespace(root = "mongodbStore")
 })
 public class MongoDBCacheStoreConfigurationParser53 implements ConfigurationParser {
 

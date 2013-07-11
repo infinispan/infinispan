@@ -27,7 +27,7 @@ public class XmlFileParsingTest extends AbstractInfinispanTest {
       String config = INFINISPAN_START_TAG +
             "   <default>\n" +
             "     <loaders>\n" +
-            "       <hbaseStore xmlns=\"urn:infinispan:config:hbase:5.3\" fetchPersistentState=\"true\" autoCreateTable=\"false\" entryColumnFamily=\"ECF\" entryTable=\"ET\" " +
+            "       <hbaseStore xmlns=\"urn:infinispan:config:hbase:6.0\" fetchPersistentState=\"true\" autoCreateTable=\"false\" entryColumnFamily=\"ECF\" entryTable=\"ET\" " +
             "         entryValueField=\"EVF\" expirationColumnFamily=\"XCF\" expirationTable=\"XT\" expirationValueField=\"XVF\" hbaseZookeeperQuorumHost=\"myhost\" hbaseZookeeperClientPort=\"4321\" sharedTable=\"true\">\n" +
             "         <async enabled=\"true\" />\n" +
             "       </hbaseStore>\n" +

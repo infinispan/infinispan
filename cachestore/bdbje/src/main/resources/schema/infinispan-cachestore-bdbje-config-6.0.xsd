@@ -1,0 +1,68 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<xs:schema attributeFormDefault="unqualified" elementFormDefault="qualified" version="1.0"
+           targetNamespace="urn:infinispan:config:bdbje:6.0"
+           xmlns:tns="urn:infinispan:config:bdbje:6.0"
+           xmlns:config="urn:infinispan:config:6.0" xmlns:xs="http://www.w3.org/2001/XMLSchema">
+  <xs:import namespace="urn:infinispan:config:6.0"
+             schemaLocation="http://www.infinispan.org/schemas/infinispan-config-6.0.xsd" />
+
+  <xs:element name="bdbjeStore">
+    <xs:complexType>
+      <xs:complexContent>
+        <xs:extension base="config:store">
+          <xs:sequence>
+          </xs:sequence>
+          <xs:attribute name="location" type="xs:string" default="Infinispan-BdbjeCacheStore">
+            <xs:annotation>
+              <xs:documentation>
+                Location on disk where the store can write internal files.
+              </xs:documentation>
+            </xs:annotation>
+          </xs:attribute>
+          <xs:attribute name="lockAcquistionTimeout" type="xs:int" default="60000">
+            <xs:annotation>
+              <xs:documentation>
+                The length of time, in milliseconds, to wait for locks before timing out and throwing an exception.  By default, this is set to 60000
+              </xs:documentation>
+            </xs:annotation>
+          </xs:attribute>
+          <xs:attribute name="maxTxRetries" type="xs:int" default="5">
+            <xs:annotation>
+              <xs:documentation>
+                The number of times transaction prepares will attempt to resolve a deadlock before throwing an exception.  By default, this is set to 5
+              </xs:documentation>
+            </xs:annotation>
+          </xs:attribute>
+          <xs:attribute name="cacheDbNamePrefix" type="xs:string">
+            <xs:annotation>
+              <xs:documentation>
+                The name of the SleepyCat database persisting this store.  This defaults to {cache_name}
+              </xs:documentation>
+            </xs:annotation>
+          </xs:attribute>
+          <xs:attribute name="catalogDbName" type="xs:string">
+            <xs:annotation>
+              <xs:documentation>
+                The name of the SleepyCat database persisting the class information for objects in this store.  This defaults to {cache_name}_class_catalog
+              </xs:documentation>
+            </xs:annotation>
+          </xs:attribute>
+          <xs:attribute name="expiryDbPrefix" type="xs:string">
+            <xs:annotation>
+              <xs:documentation>
+                The prefix of the SleepyCat database persisting the expiration data for objects in this store. If unset the name of the database will be {cache_name}_expiry
+              </xs:documentation>
+             </xs:annotation>
+          </xs:attribute>
+          <xs:attribute name="environmentPropertiesFile" type="xs:string">
+            <xs:annotation>
+              <xs:documentation>
+                The name of the SleepyCat properties file containing je.* properties to initialize the JE environment. Defaults to null, no properties are passed in to the JE engine if this is null or empty. The file specified needs to be available on the classpath, or must be an absolute path to a valid properties file. Refer to SleepyCat JE Environment configuration documentation for details.
+              </xs:documentation>
+            </xs:annotation>
+          </xs:attribute>
+        </xs:extension>
+      </xs:complexContent>
+    </xs:complexType>
+  </xs:element>
+</xs:schema>

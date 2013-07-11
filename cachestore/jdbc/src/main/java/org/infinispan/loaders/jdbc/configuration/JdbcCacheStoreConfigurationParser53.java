@@ -24,11 +24,8 @@ import org.infinispan.configuration.parsing.XMLExtendedStreamReader;
  */
 @Namespaces({
    @Namespace(uri = "urn:infinispan:config:jdbc:5.3", root = "stringKeyedJdbcStore"),
-   @Namespace(root = "stringKeyedJdbcStore"),
    @Namespace(uri = "urn:infinispan:config:jdbc:5.3", root = "binaryKeyedJdbcStore"),
-   @Namespace(root = "binaryKeyedJdbcStore"),
    @Namespace(uri = "urn:infinispan:config:jdbc:5.3", root = "mixedKeyedJdbcStore"),
-   @Namespace(root = "mixedKeyedJdbcStore"),
 })
 public class JdbcCacheStoreConfigurationParser53 implements ConfigurationParser {
 

@@ -28,7 +28,7 @@ public class XmlFileParsingTest extends AbstractInfinispanTest {
       String config = INFINISPAN_START_TAG +
             "   <default>\n" +
             "     <loaders>\n" +
-            "       <stringKeyedJdbcStore xmlns=\"urn:infinispan:config:jdbc:5.3\" key2StringMapper=\"org.infinispan.loaders.jdbc.configuration.DummyKey2StringMapper\">\n" +
+            "       <stringKeyedJdbcStore xmlns=\"urn:infinispan:config:jdbc:6.0\" key2StringMapper=\"org.infinispan.loaders.jdbc.configuration.DummyKey2StringMapper\">\n" +
             "         <connectionPool connectionUrl=\"jdbc:h2:mem:infinispan;DB_CLOSE_DELAY=-1\" username=\"dbuser\" password=\"dbpass\" driverClass=\"org.h2.Driver\"/>\n" +
             "         <stringKeyedTable prefix=\"entry\" fetchSize=\"34\" batchSize=\"99\" >\n" +
             "           <idColumn name=\"id\" type=\"VARCHAR\" />\n" +
@@ -59,7 +59,7 @@ public class XmlFileParsingTest extends AbstractInfinispanTest {
       String config = INFINISPAN_START_TAG +
             "   <default>\n" +
             "     <loaders>\n" +
-            "       <binaryKeyedJdbcStore xmlns=\"urn:infinispan:config:jdbc:5.2\" ignoreModifications=\"true\">\n" +
+            "       <binaryKeyedJdbcStore xmlns=\"urn:infinispan:config:jdbc:6.0\" ignoreModifications=\"true\">\n" +
             "         <simpleConnection connectionUrl=\"jdbc:h2:mem:infinispan;DB_CLOSE_DELAY=-1\" username=\"dbuser\" password=\"dbpass\" driverClass=\"org.h2.Driver\"/>\n" +
             "         <binaryKeyedTable prefix=\"bucket\" fetchSize=\"34\" batchSize=\"99\">\n" +
             "           <idColumn name=\"id\" type=\"BINARY\" />\n" +
@@ -91,7 +91,7 @@ public class XmlFileParsingTest extends AbstractInfinispanTest {
       String config = INFINISPAN_START_TAG +
             "   <default>\n" +
             "     <loaders>\n" +
-            "       <mixedKeyedJdbcStore xmlns=\"urn:infinispan:config:jdbc:5.2\" key2StringMapper=\"org.infinispan.loaders.jdbc.configuration.DummyKey2StringMapper\">\n" +
+            "       <mixedKeyedJdbcStore xmlns=\"urn:infinispan:config:jdbc:6.0\" key2StringMapper=\"org.infinispan.loaders.jdbc.configuration.DummyKey2StringMapper\">\n" +
             "         <dataSource jndiUrl=\"java:MyDataSource\" />\n" +
             "         <stringKeyedTable prefix=\"entry\" fetchSize=\"34\" batchSize=\"99\">\n" +
             "           <idColumn name=\"id\" type=\"VARCHAR\" />\n" +

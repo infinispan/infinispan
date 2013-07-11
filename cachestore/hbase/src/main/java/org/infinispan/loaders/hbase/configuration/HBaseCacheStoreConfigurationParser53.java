@@ -24,7 +24,6 @@ import org.infinispan.configuration.parsing.XMLExtendedStreamReader;
  */
 @Namespaces({
    @Namespace(uri = "urn:infinispan:config:hbase:5.3", root = "hbaseStore"),
-   @Namespace(root = "hbaseStore"),
 })
 public class HBaseCacheStoreConfigurationParser53 implements ConfigurationParser {
 
