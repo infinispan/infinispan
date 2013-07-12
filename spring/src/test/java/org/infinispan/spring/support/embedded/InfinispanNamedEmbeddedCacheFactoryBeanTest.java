@@ -8,6 +8,7 @@ import java.io.IOException;
 import java.io.InputStream;
 
 import org.infinispan.Cache;
+import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.lifecycle.ComponentStatus;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
@@ -258,6 +259,35 @@ public class InfinispanNamedEmbeddedCacheFactoryBeanTest {
       objectUnderTest.setCacheName(CACHE_NAME_FROM_CONFIGURATION_FILE);
       objectUnderTest.setBeanName(CACHE_NAME_FROM_CONFIGURATION_FILE);
       objectUnderTest.setConfigurationTemplateMode("DEFAULT");
+      objectUnderTest.afterPropertiesSet();
+   }
+
+   /**
+    * Negative test case for {@link InfinispanNamedEmbeddedCacheFactoryBean#addCustomConfiguration(org.infinispan.configuration.cache.ConfigurationBuilder)}
+    *
+    * @throws Exception
+    */
+   @Test(expectedExceptions = IllegalStateException.class)
+   public final void infinispanNamedEmbeddedCacheFactoryShouldRejectConfigurationTemplateModeCUSTOM() throws
+            Exception {
+      final InfinispanNamedEmbeddedCacheFactoryBean<Object, Object> objectUnderTest = new
+            InfinispanNamedEmbeddedCacheFactoryBean<Object, Object>();
+      objectUnderTest.setInfinispanEmbeddedCacheManager(DEFAULT_CACHE_MANAGER);
+      objectUnderTest.setCacheName(CACHE_NAME_FROM_CONFIGURATION_FILE);
+      objectUnderTest.setConfigurationTemplateMode("CUSTOM");
+      objectUnderTest.afterPropertiesSet();
+   }
+
+   @Test
+   public final void infinispanNamedEmbeddedCacheFactoryShouldAcceptConfigurationTemplateModeCUSTOM() throws
+            Exception {
+      final InfinispanNamedEmbeddedCacheFactoryBean<Object, Object> objectUnderTest = new
+            InfinispanNamedEmbeddedCacheFactoryBean<Object, Object>();
+      objectUnderTest.setInfinispanEmbeddedCacheManager(DEFAULT_CACHE_MANAGER);
+      objectUnderTest.setCacheName(CACHE_NAME_FROM_CONFIGURATION_FILE);
+      objectUnderTest.setConfigurationTemplateMode("CUSTOM");
+      ConfigurationBuilder custom = TestCacheManagerFactory.getDefaultCacheConfiguration(false);
+      objectUnderTest.addCustomConfiguration(custom);
       objectUnderTest.afterPropertiesSet();
    }
 }
