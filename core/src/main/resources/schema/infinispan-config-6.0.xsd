@@ -1056,6 +1056,13 @@
               </xs:documentation>
             </xs:annotation>
           </xs:attribute>
+           <xs:attribute name="defensive" type="xs:boolean" default="false">
+              <xs:annotation>
+                 <xs:documentation>
+                    Specify whether defensive copying of keys and values should be enabled. Defensive copying means that once an object is stored, the client can no longer use the reference to the object to make changes to the object stored in the cache, since they're different instances. By default this is disabled, which means that clients keep references to the same objects stored in the cache. Although this has some risks, it provides better overall performance.
+                 </xs:documentation>
+              </xs:annotation>
+           </xs:attribute>
         </xs:complexType>
       </xs:element>
       <xs:element name="lazyDeserialization" minOccurs="0">
