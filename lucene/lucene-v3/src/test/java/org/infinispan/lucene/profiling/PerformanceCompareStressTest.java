@@ -29,10 +29,10 @@ import org.testng.annotations.Test;
  * DURATION_MS and a number of threads similar to the use case you're interested in: results might
  * vary on the number of threads because of the lock differences. This is not meant as a benchmark
  * but used to detect regressions.
- * 
+ *
  * This requires Lucene > 2.9.1 or Lucene > 3.0.0 because of
  * https://issues.apache.org/jira/browse/LUCENE-2095
- * 
+ *
  * @author Sanne Grinovero
  * @since 4.0
  */
@@ -49,7 +49,7 @@ public class PerformanceCompareStressTest {
    /** Concurrent Threads in tests */
    private static final int READER_THREADS = 5;
    private static final int WRITER_THREADS = 1;
-   
+
    private static final int CHUNK_SIZE = 512 * 1024;
 
    private static final String indexName = "tempIndexName";
@@ -68,13 +68,13 @@ public class PerformanceCompareStressTest {
 
    @Test
    public void profileTestFSDirectory() throws InterruptedException, IOException {
-      File indexDir = new File(new File("."), indexName);
+      File indexDir = new File(new File(TestingUtil.tmpDirectory(this)), indexName);
       boolean directoriesCreated = indexDir.mkdirs();
       assert directoriesCreated : "couldn't create directory for FSDirectory test";
       FSDirectory dir = FSDirectory.open(indexDir);
       stressTestDirectory(dir, "FSDirectory");
    }
-   
+
    @Test
    public void profileTestInfinispanDirectoryWithNetworkDelayZero() throws InterruptedException, IOException {
       // TestingUtil.setDelayForCache(cache, 0, 0);
@@ -150,7 +150,7 @@ public class PerformanceCompareStressTest {
       TestingUtil.killCacheManagers(cacheFactory);
       TestingUtil.recursiveFileRemove(indexName);
    }
-   
+
    private void verifyDirectoryState() {
       DirectoryIntegrityCheck.verifyDirectoryStructure(cache, indexName, true);
    }
@@ -158,7 +158,7 @@ public class PerformanceCompareStressTest {
    /**
     * It's much better to compare performance out of the scope of TestNG by
     * running this directly as TestNG enables assertions.
-    * 
+    *
     * Suggested test switches:
     * -Xmx2G -Xms2G -XX:MaxPermSize=128M -XX:+HeapDumpOnOutOfMemoryError -Xss512k -XX:HeapDumpPath=/tmp/java_heap -Djava.net.preferIPv4Stack=true -Djgroups.bind_addr=127.0.0.1 -Xbatch -server -XX:+UseCompressedOops -XX:+UseLargePages -XX:LargePageSizeInBytes=2m -XX:+AlwaysPreTouch
     */

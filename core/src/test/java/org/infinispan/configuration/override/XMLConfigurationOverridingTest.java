@@ -3,6 +3,7 @@ package org.infinispan.configuration.override;
 import junit.framework.Assert;
 import org.infinispan.Cache;
 import org.infinispan.commands.write.PutKeyValueCommand;
+import org.infinispan.commons.util.SysPropertyActions;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
@@ -203,7 +204,7 @@ public class XMLConfigurationOverridingTest extends AbstractInfinispanTest imple
 
             Configuration conf = new ConfigurationBuilder().eviction().maxEntries(5).strategy(EvictionStrategy.LRU)
                   .loaders().passivation(true).addFileCacheStore().fsyncInterval(10000)
-                  .fsyncMode(FileCacheStoreConfigurationBuilder.FsyncMode.DEFAULT).location(".").build();
+                  .fsyncMode(FileCacheStoreConfigurationBuilder.FsyncMode.DEFAULT).location(TestingUtil.tmpDirectory(XMLConfigurationOverridingTest.this)).build();
 
             cm.defineConfiguration(simpleCacheName, conf);
 
