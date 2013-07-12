@@ -21,7 +21,7 @@ public class JCacheConfigurationTest {
 
    public void testNamedCacheConfiguration() {
       withCacheManager(new CacheManagerCallable(
-            TestCacheManagerFactory.createLocalCacheManager(false)) {
+            TestCacheManagerFactory.createCacheManager(false)) {
          @Override
          public void call() {
             cm.defineConfiguration("oneCache", new ConfigurationBuilder().build());

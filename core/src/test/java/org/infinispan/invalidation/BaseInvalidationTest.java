@@ -22,7 +22,6 @@ import org.infinispan.api.mvcc.LockAssert;
 import org.infinispan.commands.remote.CacheRpcCommand;
 import org.infinispan.commands.write.ClearCommand;
 import org.infinispan.commands.write.InvalidateCommand;
-import org.infinispan.config.Configuration;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.remoting.rpc.ResponseFilter;
@@ -46,15 +45,14 @@ public abstract class BaseInvalidationTest extends MultipleCacheManagersTest {
 
    @Override
    protected void createCacheManagers() throws Throwable {
-      ConfigurationBuilder cb = getDefaultClusteredCacheConfig(isSync ? CacheMode.INVALIDATION_SYNC : CacheMode.INVALIDATION_ASYNC, false);
-      cb.clustering().stateTransfer().timeout(10000);
-      cb.locking().lockAcquisitionTimeout(500);
-      createClusteredCaches(2, "invalidation", cb);
+      ConfigurationBuilder c = getDefaultClusteredCacheConfig(isSync ? CacheMode.INVALIDATION_SYNC : CacheMode.INVALIDATION_ASYNC, false);
+      c.clustering().stateTransfer().timeout(10000).locking().lockAcquisitionTimeout(500);
+      createClusteredCaches(2, "invalidation", c);
 
-      cb = getDefaultClusteredCacheConfig(isSync ? CacheMode.INVALIDATION_SYNC : CacheMode.INVALIDATION_ASYNC, true);
-      cb.clustering().stateTransfer().timeout(10000);
-      cb.locking().lockAcquisitionTimeout(500);
-      defineConfigurationOnAllManagers("invalidationTx", cb);
+      c = getDefaultClusteredCacheConfig(isSync ? CacheMode.INVALIDATION_SYNC : CacheMode.INVALIDATION_ASYNC, true);
+      c.clustering().stateTransfer().timeout(10000).locking().lockAcquisitionTimeout(500);
+      defineConfigurationOnAllManagers("invalidationTx", c);
+
       waitForClusterToForm("invalidationTx");
 
    }

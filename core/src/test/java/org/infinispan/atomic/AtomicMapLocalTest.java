@@ -3,7 +3,7 @@ package org.infinispan.atomic;
 import org.infinispan.Cache;
 import static org.infinispan.atomic.AtomicHashMapTestAssertions.assertIsEmpty;
 import static org.infinispan.atomic.AtomicHashMapTestAssertions.assertIsEmptyMap;
-import org.infinispan.config.Configuration;
+import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.manager.CacheContainer;
 import org.infinispan.test.AbstractInfinispanTest;
 import org.infinispan.test.TestingUtil;
@@ -26,8 +26,8 @@ public class AtomicMapLocalTest extends AbstractInfinispanTest {
 
    @BeforeTest
    public void setUp() {
-      Configuration c = new Configuration();
-      c.setInvocationBatchingEnabled(true);
+      ConfigurationBuilder c = new ConfigurationBuilder();
+      c.invocationBatching().enable();
       cacheContainer = TestCacheManagerFactory.createCacheManager(c);
       cache = cacheContainer.getCache();
       tm = TestingUtil.getTransactionManager(cache);

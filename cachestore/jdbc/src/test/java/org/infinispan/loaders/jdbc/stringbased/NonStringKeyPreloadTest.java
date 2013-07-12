@@ -9,11 +9,19 @@ import java.sql.Connection;
 import org.infinispan.AdvancedCache;
 import org.infinispan.Cache;
 import org.infinispan.commons.CacheException;
-import org.infinispan.config.CacheLoaderManagerConfig;
-import org.infinispan.config.Configuration;
+import org.infinispan.commons.configuration.Builder;
+import org.infinispan.commons.configuration.BuiltBy;
+import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.eviction.EvictionStrategy;
 import org.infinispan.loaders.CacheLoaderException;
-import org.infinispan.loaders.jdbc.TableManipulation;
+import org.infinispan.loaders.jdbc.AbstractJdbcCacheStoreConfig;
+import org.infinispan.loaders.jdbc.configuration.AbstractJdbcCacheStoreConfigurationBuilder;
+import org.infinispan.loaders.jdbc.configuration.AbstractJdbcCacheStoreConfigurationChildBuilder;
+import org.infinispan.loaders.jdbc.configuration.ConnectionFactoryConfiguration;
+import org.infinispan.loaders.jdbc.configuration.ConnectionFactoryConfigurationBuilder;
+import org.infinispan.loaders.jdbc.configuration.JdbcStringBasedCacheStoreConfigurationBuilder;
+import org.infinispan.loaders.jdbc.configuration.LegacyConnectionFactoryAdaptor;
+import org.infinispan.loaders.jdbc.configuration.PooledConnectionFactoryConfiguration;
 import org.infinispan.loaders.jdbc.connectionfactory.ConnectionFactory;
 import org.infinispan.loaders.jdbc.connectionfactory.ConnectionFactoryConfig;
 import org.infinispan.loaders.jdbc.connectionfactory.PooledConnectionFactory;
@@ -34,7 +42,7 @@ public class NonStringKeyPreloadTest extends AbstractInfinispanTest {
 
    public void testPreloadWithKey2StringMapper() throws Exception {
       String mapperName = PersonKey2StringMapper.class.getName();
-      Configuration cfg = createCacheStoreConfig(mapperName, false, true);
+      ConfigurationBuilder cfg = createCacheStoreConfig(mapperName, false, true);
 
       withCacheManager(new CacheManagerCallable(
             TestCacheManagerFactory.createCacheManager(cfg)) {
@@ -52,7 +60,7 @@ public class NonStringKeyPreloadTest extends AbstractInfinispanTest {
 
    public void testPreloadWithTwoWayKey2StringMapper() throws Exception {
       String mapperName = TwoWayPersonKey2StringMapper.class.getName();
-      Configuration config = createCacheStoreConfig(mapperName, true, true);
+      ConfigurationBuilder config = createCacheStoreConfig(mapperName, true, true);
       final Person mircea = new Person("Markus", "Mircea", 30);
       final Person dan = new Person("Dan", "Dude", 30);
       withCacheManager(new CacheManagerCallable(
@@ -82,9 +90,8 @@ public class NonStringKeyPreloadTest extends AbstractInfinispanTest {
    }
    public void testPreloadWithTwoWayKey2StringMapperAndBoundedCache() throws Exception {
       String mapperName = TwoWayPersonKey2StringMapper.class.getName();
-      Configuration config = createCacheStoreConfig(mapperName, true, true);
-      config.setEvictionStrategy(EvictionStrategy.LRU);
-      config.setEvictionMaxEntries(3);
+      ConfigurationBuilder config = createCacheStoreConfig(mapperName, true, true);
+      config.eviction().strategy(EvictionStrategy.LRU).maxEntries(3);
       withCacheManager(new CacheManagerCallable(
             TestCacheManagerFactory.createCacheManager(config)) {
          @Override
@@ -115,22 +122,23 @@ public class NonStringKeyPreloadTest extends AbstractInfinispanTest {
       });
    }
 
-   static Configuration createCacheStoreConfig(String mapperName, boolean wrap, boolean preload) {
-      ConnectionFactoryConfig connectionFactoryConfig = UnitTestDatabaseManager.getUniqueConnectionFactoryConfig();
-      if (wrap) {
-         connectionFactoryConfig.setConnectionFactoryClass(SharedConnectionFactory.class.getName());
-      }
-      TableManipulation tm = UnitTestDatabaseManager.buildStringTableManipulation();
-      JdbcStringBasedCacheStoreConfig csConfig = new JdbcStringBasedCacheStoreConfig(connectionFactoryConfig, tm);
-      csConfig.setFetchPersistentState(true);
-      csConfig.setKey2StringMapperClass(mapperName);
-      csConfig.getProperties().setProperty("key2StringMapperClass", mapperName);
+   static ConfigurationBuilder createCacheStoreConfig(String mapperName, boolean wrap, boolean preload) {
+      ConfigurationBuilder cfg = TestCacheManagerFactory.getDefaultCacheConfiguration(false);
 
-      CacheLoaderManagerConfig cacheLoaders = new CacheLoaderManagerConfig();
-      cacheLoaders.setPreload(preload);
-      cacheLoaders.addCacheLoaderConfig(csConfig);
-      Configuration cfg = TestCacheManagerFactory.getDefaultConfiguration(false);
-      cfg.setCacheLoaderManagerConfig(cacheLoaders);
+      JdbcStringBasedCacheStoreConfigurationBuilder store = cfg
+         .loaders()
+            .preload(preload)
+            .addStore(JdbcStringBasedCacheStoreConfigurationBuilder.class)
+               .fetchPersistentState(true)
+               .key2StringMapper(mapperName);
+      UnitTestDatabaseManager.buildTableManipulation(store.table(), false);
+      if (wrap) {
+         ConnectionFactoryConfigurationBuilder<?> tmp = UnitTestDatabaseManager.configureUniqueConnectionFactory(new ConfigurationBuilder().loaders().addStore(JdbcStringBasedCacheStoreConfigurationBuilder.class));
+         store.connectionFactory(new SharedConnectionFactoryConfigurationBuilder(store)).read((PooledConnectionFactoryConfiguration)tmp.create());
+      } else {
+         UnitTestDatabaseManager.configureUniqueConnectionFactory(store);
+      }
+
       return cfg;
    }
 
@@ -149,7 +157,7 @@ public class NonStringKeyPreloadTest extends AbstractInfinispanTest {
 
       @Override
       public void stop() {
-         //ignore
+         //ignores
       }
 
       @Override
@@ -161,5 +169,89 @@ public class NonStringKeyPreloadTest extends AbstractInfinispanTest {
       public void releaseConnection(Connection conn) {
          sharedFactory.releaseConnection(conn);
       }
+   }
+
+   @BuiltBy(SharedConnectionFactoryConfigurationBuilder.class)
+   public static class SharedConnectionFactoryConfiguration implements ConnectionFactoryConfiguration, LegacyConnectionFactoryAdaptor {
+      private final String connectionUrl;
+      private final String driverClass;
+      private final String username;
+      private final String password;
+
+      SharedConnectionFactoryConfiguration(String connectionUrl, String driverClass, String username, String password) {
+         this.connectionUrl = connectionUrl;
+         this.driverClass = driverClass;
+         this.username = username;
+         this.password = password;
+      }
+
+      public String connectionUrl() {
+         return connectionUrl;
+      }
+
+      public String driverClass() {
+         return driverClass;
+      }
+
+      public String username() {
+         return username;
+      }
+
+      public String password() {
+         return password;
+      }
+
+      @Override
+      public Class<? extends ConnectionFactory> connectionFactoryClass() {
+         return SharedConnectionFactory.class;
+      }
+
+      @Override
+      public void adapt(AbstractJdbcCacheStoreConfig config) {
+         config.setConnectionFactoryClass(connectionFactoryClass().getName());
+         config.setConnectionUrl(connectionUrl);
+         config.setDriverClass(driverClass);
+         config.setUserName(username);
+         config.setPassword(password);
+      }
+   }
+
+   public static class SharedConnectionFactoryConfigurationBuilder<S extends AbstractJdbcCacheStoreConfigurationBuilder<?, S>> extends AbstractJdbcCacheStoreConfigurationChildBuilder<S> implements ConnectionFactoryConfigurationBuilder<SharedConnectionFactoryConfiguration> {
+
+      public SharedConnectionFactoryConfigurationBuilder(AbstractJdbcCacheStoreConfigurationBuilder<?, S> builder) {
+         super(builder);
+      }
+
+      private String connectionUrl;
+      private String driverClass;
+      private String username;
+      private String password;
+
+      @Override
+      public void validate() {
+      }
+
+      @Override
+      public SharedConnectionFactoryConfiguration create() {
+         return new SharedConnectionFactoryConfiguration(connectionUrl, driverClass, username, password);
+      }
+
+      @Override
+      public Builder<?> read(SharedConnectionFactoryConfiguration template) {
+         this.connectionUrl = template.connectionUrl();
+         this.driverClass = template.driverClass();
+         this.username = template.username();
+         this.password = template.password();
+         return this;
+      }
+
+      public Builder<?> read(PooledConnectionFactoryConfiguration template) {
+         this.connectionUrl = template.connectionUrl();
+         this.driverClass = template.driverClass();
+         this.username = template.username();
+         this.password = template.password();
+         return this;
+      }
+
    }
 }

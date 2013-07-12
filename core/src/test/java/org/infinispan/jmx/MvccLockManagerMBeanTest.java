@@ -1,7 +1,6 @@
 package org.infinispan.jmx;
 
-import org.infinispan.config.Configuration;
-import org.infinispan.config.GlobalConfiguration;
+import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.test.SingleCacheManagerTest;
 import org.infinispan.test.TestingUtil;
@@ -33,24 +32,19 @@ public class MvccLockManagerMBeanTest extends SingleCacheManagerTest {
 
    @Override
    protected EmbeddedCacheManager createCacheManager() throws Exception {
-      GlobalConfiguration globalConfiguration = GlobalConfiguration.getNonClusteredDefault().fluent()
-            .globalJmxStatistics()
-               .mBeanServerLookupClass(PerThreadMBeanServerLookup.class)
-               .jmxDomain(JMX_DOMAIN)
-            .build();
+      cacheManager = TestCacheManagerFactory.createCacheManagerEnforceJmxDomain(JMX_DOMAIN);
 
-      cacheManager = TestCacheManagerFactory.createCacheManagerEnforceJmxDomain(globalConfiguration);
+      ConfigurationBuilder configuration = getDefaultStandaloneCacheConfig(true);
 
-      Configuration configuration = getDefaultStandaloneConfig(true).fluent()
-            .jmxStatistics()
+      configuration
+            .jmxStatistics().enable()
             .locking()
                .concurrencyLevel(CONCURRENCY_LEVEL)
                .useLockStriping(true)
             .transaction()
-               .transactionManagerLookup(new DummyTransactionManagerLookup())
-            .build();
+               .transactionManagerLookup(new DummyTransactionManagerLookup());
 
-      cacheManager.defineConfiguration("test", configuration);
+      cacheManager.defineConfiguration("test", configuration.build());
       cache = cacheManager.getCache("test");
       lockManagerObjName = getCacheObjectName(JMX_DOMAIN, "test(local)", "LockManager");
 

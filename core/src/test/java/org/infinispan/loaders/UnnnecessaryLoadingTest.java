@@ -1,12 +1,20 @@
 package org.infinispan.loaders;
 
 import org.infinispan.Cache;
-import org.infinispan.config.CacheLoaderManagerConfig;
-import org.infinispan.config.Configuration;
+import org.infinispan.commons.configuration.Builder;
+import org.infinispan.commons.configuration.BuiltBy;
+import org.infinispan.commons.util.TypedProperties;
+import org.infinispan.configuration.cache.AbstractStoreConfiguration;
+import org.infinispan.configuration.cache.AbstractStoreConfigurationBuilder;
+import org.infinispan.configuration.cache.AsyncStoreConfiguration;
+import org.infinispan.configuration.cache.ConfigurationBuilder;
+import org.infinispan.configuration.cache.LegacyLoaderAdapter;
+import org.infinispan.configuration.cache.LoadersConfigurationBuilder;
+import org.infinispan.configuration.cache.SingletonStoreConfiguration;
 import org.infinispan.container.entries.InternalCacheEntry;
 import org.infinispan.context.Flag;
 import org.infinispan.loaders.decorators.ChainingCacheStore;
-import org.infinispan.loaders.dummy.DummyInMemoryCacheStore;
+import org.infinispan.loaders.dummy.DummyInMemoryCacheStoreConfigurationBuilder;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.test.SingleCacheManagerTest;
 import org.infinispan.test.TestingUtil;
@@ -30,19 +38,20 @@ import static org.testng.Assert.assertEquals;
  * @author Sanne Grinovero
  * @version 4.1
  */
-@Test(testName = "loaders.UnnnecessaryLoadingTest", groups = "functional", sequential = true)
+@Test(testName = "loaders.UnnnecessaryLoadingTest", groups = "functional", singleThreaded = true)
 @CleanupAfterMethod
 public class UnnnecessaryLoadingTest extends SingleCacheManagerTest {
    CacheStore store;
 
    @Override
    protected EmbeddedCacheManager createCacheManager() throws Exception {
-      Configuration cfg = getDefaultStandaloneConfig(true);
-      cfg.setInvocationBatchingEnabled(true);
-      CacheLoaderManagerConfig clmc = new CacheLoaderManagerConfig();
-      clmc.addCacheLoaderConfig(new CountingCacheStoreConfig());
-      clmc.addCacheLoaderConfig(new DummyInMemoryCacheStore.Cfg());
-      cfg.setCacheLoaderManagerConfig(clmc);
+      ConfigurationBuilder cfg = getDefaultStandaloneCacheConfig(true);
+      cfg
+         .invocationBatching().enable()
+         .loaders()
+            .addStore(CountingCacheStoreConfigurationBuilder.class)
+         .loaders()
+            .addStore(DummyInMemoryCacheStoreConfigurationBuilder.class);
       return TestCacheManagerFactory.createCacheManager(cfg);
    }
 
@@ -147,7 +156,7 @@ public class UnnnecessaryLoadingTest extends SingleCacheManagerTest {
       assert countingCS.numLoads == 1;
    }
 
-   private void reset(Cache cache, CountingCacheStore countingCS) {
+   private void reset(Cache<?, ?> cache, CountingCacheStore countingCS) {
       cache.clear();
       countingCS.numLoads = 0;
       countingCS.numContains = 0;
@@ -216,6 +225,50 @@ public class UnnnecessaryLoadingTest extends SingleCacheManagerTest {
       private void incrementLoads() {
          numLoads++;
       }
+   }
+
+   @BuiltBy(CountingCacheStoreConfigurationBuilder.class)
+   public static class CountingCacheStoreConfiguration extends AbstractStoreConfiguration implements LegacyLoaderAdapter<CountingCacheStoreConfig>{
+      protected CountingCacheStoreConfiguration(boolean purgeOnStartup, boolean purgeSynchronously, int purgerThreads, boolean fetchPersistentState, boolean ignoreModifications,
+            TypedProperties properties, AsyncStoreConfiguration async, SingletonStoreConfiguration singletonStore) {
+         super(purgeOnStartup, purgeSynchronously, purgerThreads, fetchPersistentState, ignoreModifications, properties, async, singletonStore);
+      }
+
+      @Override
+      public CountingCacheStoreConfig adapt() {
+         return new CountingCacheStoreConfig();
+      }
+   }
+
+   public static class CountingCacheStoreConfigurationBuilder extends AbstractStoreConfigurationBuilder<CountingCacheStoreConfiguration, CountingCacheStoreConfigurationBuilder> {
+
+      public CountingCacheStoreConfigurationBuilder(LoadersConfigurationBuilder builder) {
+         super(builder);
+      }
+
+      @Override
+      public CountingCacheStoreConfiguration create() {
+         return new CountingCacheStoreConfiguration(purgeOnStartup, purgeSynchronously, purgerThreads, fetchPersistentState, ignoreModifications, TypedProperties.toTypedProperties(properties), async.create(), singletonStore.create());
+      }
+
+      @Override
+      public Builder<?> read(CountingCacheStoreConfiguration template) {
+         // AbstractStore-specific configuration
+         fetchPersistentState = template.fetchPersistentState();
+         ignoreModifications = template.ignoreModifications();
+         properties = template.properties();
+         purgeOnStartup = template.purgeOnStartup();
+         purgeSynchronously = template.purgeSynchronously();
+         async.read(template.async());
+         singletonStore.read(template.singletonStore());
+         return this;
+      }
+
+      @Override
+      public CountingCacheStoreConfigurationBuilder self() {
+         return this;
+      }
+
    }
 
    public static class CountingCacheStoreConfig extends AbstractCacheStoreConfig {

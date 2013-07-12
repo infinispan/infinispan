@@ -9,6 +9,7 @@ import static org.testng.AssertJUnit.assertTrue;
 import java.io.IOException;
 
 import org.infinispan.client.hotrod.RemoteCacheManager;
+import org.infinispan.client.hotrod.configuration.ConfigurationBuilder;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.server.hotrod.HotRodServer;
 import org.infinispan.server.hotrod.test.HotRodTestingUtil;
@@ -23,10 +24,10 @@ import org.testng.annotations.Test;
  * <p>
  * Test {@link SpringRemoteCacheManager}.
  * </p>
- * 
+ *
  * @author <a href="mailto:olaf DOT bergner AT gmx DOT de">Olaf Bergner</a>
  * @author Marius Bogoevici
- * 
+ *
  */
 @Test(testName = "spring.provider.SpringRemoteCacheManagerTest", groups = "functional")
 public class SpringRemoteCacheManagerTest extends SingleCacheManagerTest {
@@ -39,7 +40,7 @@ public class SpringRemoteCacheManagerTest extends SingleCacheManagerTest {
 
    @Override
    protected EmbeddedCacheManager createCacheManager() throws Exception {
-      cacheManager = TestCacheManagerFactory.createLocalCacheManager(false);
+      cacheManager = TestCacheManagerFactory.createCacheManager(false);
       cache = cacheManager.getCache(TEST_CACHE_NAME);
 
       return cacheManager;
@@ -48,7 +49,9 @@ public class SpringRemoteCacheManagerTest extends SingleCacheManagerTest {
    @BeforeClass
    public void setupRemoteCacheFactory() {
       hotrodServer = HotRodTestingUtil.startHotRodServer(cacheManager, 19722);
-      remoteCacheManager = new RemoteCacheManager("localhost", hotrodServer.getPort());
+      ConfigurationBuilder builder = new ConfigurationBuilder();
+      builder.addServer().host("localhost").port(hotrodServer.getPort());
+      remoteCacheManager = new RemoteCacheManager(builder.build());
    }
 
    @AfterClass
@@ -101,7 +104,7 @@ public class SpringRemoteCacheManagerTest extends SingleCacheManagerTest {
 
    /**
     * Test method for {@link org.infinispan.spring.provider.SpringRemoteCacheManager#start()}.
-    * 
+    *
     * @throws IOException
     */
    @Test
@@ -119,7 +122,7 @@ public class SpringRemoteCacheManagerTest extends SingleCacheManagerTest {
 
    /**
     * Test method for {@link org.infinispan.spring.provider.SpringRemoteCacheManager#stop()}.
-    * 
+    *
     * @throws IOException
     */
    @Test
@@ -138,7 +141,7 @@ public class SpringRemoteCacheManagerTest extends SingleCacheManagerTest {
    /**
     * Test method for
     * {@link org.infinispan.spring.provider.SpringRemoteCacheManager#getNativeCache()}.
-    * 
+    *
     * @throws IOException
     */
    @Test

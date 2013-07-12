@@ -30,7 +30,7 @@ public class ConcurrentNotificationTest extends AbstractInfinispanTest {
 
    @BeforeMethod
    public void setUp() {
-      cm = TestCacheManagerFactory.createLocalCacheManager(false);
+      cm = TestCacheManagerFactory.createCacheManager(false);
       cache = cm.getCache();
       listener = new CacheListener();
       cache.addListener(listener);
@@ -52,6 +52,7 @@ public class ConcurrentNotificationTest extends AbstractInfinispanTest {
 
       for (int i = 0; i < workers.length; i++) {
          workers[i] = new Thread() {
+            @Override
             public void run() {
                try {
                   latch.await();

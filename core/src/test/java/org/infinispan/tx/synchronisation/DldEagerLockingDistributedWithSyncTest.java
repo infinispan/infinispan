@@ -1,6 +1,6 @@
 package org.infinispan.tx.synchronisation;
 
-import org.infinispan.config.Configuration;
+import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.tx.dld.DldPessimisticLockingDistributedTest;
 import org.testng.annotations.Test;
 
@@ -11,9 +11,9 @@ import org.testng.annotations.Test;
 @Test (groups = "functional", testName = "tx.synchronisation.DldEagerLockingDistributedWithSyncTest")
 public class DldEagerLockingDistributedWithSyncTest extends DldPessimisticLockingDistributedTest {
    @Override
-   protected Configuration createConfiguration() {
-      Configuration configuration = super.createConfiguration();
-      configuration.fluent().transaction().useSynchronization(true);
+   protected ConfigurationBuilder createConfiguration() {
+      ConfigurationBuilder configuration = super.createConfiguration();
+      configuration.transaction().useSynchronization(true);
       return configuration;
    }
 }

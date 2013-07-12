@@ -7,7 +7,8 @@ import static org.mockito.Mockito.when;
 import java.util.Collections;
 import java.util.Properties;
 
-import org.infinispan.config.GlobalConfiguration;
+import org.infinispan.configuration.cache.ConfigurationBuilder;
+import org.infinispan.configuration.global.GlobalConfigurationBuilder;
 import org.infinispan.factories.GlobalComponentRegistry;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.remoting.transport.Transport;
@@ -43,11 +44,10 @@ public class ChannelLookupTest extends AbstractInfinispanTest {
 
       EmbeddedCacheManager cm = null;
       try {
-         GlobalConfiguration gc = GlobalConfiguration.getClusteredDefault();
-         Properties p = new Properties();
-         p.setProperty("channelLookup", DummyLookup.class.getName());
-         gc.setTransportProperties(p);
-         cm = TestCacheManagerFactory.createCacheManager(gc);
+         GlobalConfigurationBuilder gc = GlobalConfigurationBuilder.defaultClusteredBuilder();
+         gc.transport().defaultTransport().addProperty("channelLookup", DummyLookup.class.getName());
+
+         cm = TestCacheManagerFactory.createClusteredCacheManager(gc, new ConfigurationBuilder());
          cm.start();
          cm.getCache();
 

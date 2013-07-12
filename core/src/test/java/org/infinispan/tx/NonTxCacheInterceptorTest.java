@@ -18,7 +18,7 @@ public class NonTxCacheInterceptorTest extends SingleCacheManagerTest {
 
    @Override
    protected EmbeddedCacheManager createCacheManager() throws Exception {
-      return TestCacheManagerFactory.createCacheManager(getDefaultStandaloneConfig(false));
+      return TestCacheManagerFactory.createCacheManager(getDefaultStandaloneCacheConfig(false));
    }
 
    public void testNoTxInterceptor() {

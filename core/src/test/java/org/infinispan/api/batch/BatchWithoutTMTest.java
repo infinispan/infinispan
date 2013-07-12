@@ -3,7 +3,7 @@ package org.infinispan.api.batch;
 import org.infinispan.Cache;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
-import org.infinispan.config.Configuration;
+import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.commons.CacheConfigurationException;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.util.logging.Log;
@@ -21,9 +21,8 @@ public class BatchWithoutTMTest extends AbstractBatchTest {
 
    @BeforeClass
    public void createCacheManager() {
-      final Configuration defaultConfiguration = TestCacheManagerFactory.getDefaultConfiguration(true);
-      defaultConfiguration.fluent().invocationBatching();
-      defaultConfiguration.fluent().transaction().autoCommit(false);
+      final ConfigurationBuilder defaultConfiguration = TestCacheManagerFactory.getDefaultCacheConfiguration(true);
+      defaultConfiguration.invocationBatching().enable().transaction().autoCommit(false);
       cm = TestCacheManagerFactory.createCacheManager(defaultConfiguration);
    }
 
@@ -117,9 +116,9 @@ public class BatchWithoutTMTest extends AbstractBatchTest {
    }
 
    private Cache<String, String> createCache(boolean enableBatch, String name) {
-      Configuration c = new Configuration();
-      c.setInvocationBatchingEnabled(enableBatch);
-      cm.defineConfiguration(name, c);
+      ConfigurationBuilder c = new ConfigurationBuilder();
+      c.invocationBatching().enable(enableBatch);
+      cm.defineConfiguration(name, c.build());
       return cm.getCache(name);
    }
 }

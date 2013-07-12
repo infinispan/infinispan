@@ -78,7 +78,7 @@ public class TestProfileSlave extends AbstractProfileTest {
       cache = cacheManager.getCache(cachename);
       System.out.println("Waiting for members to join.");
       TestingUtil.blockUntilViewReceived(cache, 2, 120000, true);
-      System.out.println("Cluster ready, cache mode is " + cache.getConfiguration().getCacheMode());
+      System.out.println("Cluster ready, cache mode is " + cache.getCacheConfiguration().clustering().cacheMode());
       System.out.println("Waiting for test completion.  Hit CTRL-C when done.");
       doTest();
       waitForTest();

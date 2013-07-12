@@ -1,7 +1,8 @@
 package org.infinispan.stress;
 
 import org.infinispan.Cache;
-import org.infinispan.config.Configuration;
+import org.infinispan.configuration.cache.CacheMode;
+import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
@@ -20,7 +21,7 @@ import java.util.concurrent.atomic.AtomicInteger;
  * Verifies the atomic semantic of Infinispan's implementations of
  * java.util.concurrent.ConcurrentMap<K, V>.putIfAbsent(K key, V value); which is an interesting
  * concurrent locking case.
- * 
+ *
  * @since 4.0
  * @see java.util.concurrent.ConcurrentMap#putIfAbsent(Object, Object)
  * @author Sanne Grinovero
@@ -49,7 +50,7 @@ public class PutIfAbsentStressTest {
     */
    public void testonInfinispanLocal() throws Exception {
       System.out.println("Running test on Infinispan, LOCAL:");
-      EmbeddedCacheManager cm = TestCacheManagerFactory.createLocalCacheManager(false);
+      EmbeddedCacheManager cm = TestCacheManagerFactory.createCacheManager(false);
       ConcurrentMap<String, String> map = cm.getCache();
       try {
          testConcurrentLocking(map);
@@ -63,8 +64,8 @@ public class PutIfAbsentStressTest {
     */
    public void testonInfinispanDIST_SYNC() throws Exception {
       System.out.println("Running test on Infinispan, DIST_SYNC:");
-      Configuration c = new Configuration()
-         .fluent().mode(Configuration.CacheMode.DIST_SYNC).build();
+      ConfigurationBuilder c = new ConfigurationBuilder();
+      c.clustering().cacheMode(CacheMode.DIST_SYNC);
       testConcurrentLockingOnMultipleManagers(c);
    }
 
@@ -73,8 +74,8 @@ public class PutIfAbsentStressTest {
     */
    public void testonInfinispanDIST_NOL1() throws Exception {
       System.out.println("Running test on Infinispan, DIST_SYNC, disabling L1:");
-      Configuration c = new Configuration()
-         .fluent().mode(Configuration.CacheMode.DIST_SYNC).l1().disable().build();
+      ConfigurationBuilder c = new ConfigurationBuilder();
+      c.clustering().cacheMode(CacheMode.DIST_SYNC).l1().disable();
       testConcurrentLockingOnMultipleManagers(c);
    }
 
@@ -83,25 +84,26 @@ public class PutIfAbsentStressTest {
     */
    public void testonInfinispanREPL_SYNC() throws Exception {
       System.out.println("Running test on Infinispan, REPL_SYNC:");
-      Configuration c = new Configuration()
-         .fluent().mode(Configuration.CacheMode.REPL_SYNC).build();
+      ConfigurationBuilder c = new ConfigurationBuilder();
+      c.clustering().cacheMode(CacheMode.REPL_SYNC);
       testConcurrentLockingOnMultipleManagers(c);
    }
-   
+
    /**
     * Testing putIfAbsent's behaviour in REPL_ASYNC cache.
     */
    public void testonInfinispanREPL_ASYNC() throws Exception {
       System.out.println("Running test on Infinispan, REPL_ASYNC:");
-      Configuration c = new Configuration()
-         .fluent().mode(Configuration.CacheMode.REPL_ASYNC).build();
+
+      ConfigurationBuilder c = new ConfigurationBuilder();
+      c.clustering().cacheMode(CacheMode.REPL_ASYNC);
       testConcurrentLockingOnMultipleManagers(c);
    }
 
    /**
     * Adapter to run the test on any configuration
     */
-   private void testConcurrentLockingOnMultipleManagers(Configuration cfg) throws InterruptedException {
+   private void testConcurrentLockingOnMultipleManagers(ConfigurationBuilder cfg) throws InterruptedException {
       List<EmbeddedCacheManager> cacheContainers = new ArrayList<EmbeddedCacheManager>(NODES_NUM);
       List<Cache<String, String>> caches = new ArrayList<Cache<String, String>>();
       List<ConcurrentMap<String, String>> maps = new ArrayList<ConcurrentMap<String, String>>(NODES_NUM
@@ -137,7 +139,7 @@ public class PutIfAbsentStressTest {
 
    /**
     * Drives the actual test on an Executor and verifies the result
-    * 
+    *
     * @param maps the caches to be tested
     */
    private void testConcurrentLocking(List<ConcurrentMap<String, String>> maps) throws InterruptedException {
@@ -226,6 +228,7 @@ public class PutIfAbsentStressTest {
       volatile boolean seenFailures = false; // set to true by a thread if it has experienced
                                              // illegal state
 
+      @Override
       public String toString() {
          return "\n\tCanceled puts count:\t" + canceledPutsCounter.get() +
                 "\n\tSuccesfull puts count:\t" + succesfullPutsCounter.get() +

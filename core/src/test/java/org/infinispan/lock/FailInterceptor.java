@@ -26,12 +26,12 @@ class FailInterceptor extends CommandInterceptor {
    }
 
    private static class Action {
-      public Class commandClass;
+      public Class<?> commandClass;
       public ActionType type;
       public Object returnValue;
       public int count;
 
-      private Action(ActionType type, Class commandClass, Object returnValue, int count) {
+      private Action(ActionType type, Class<?> commandClass, Object returnValue, int count) {
          this.commandClass = commandClass;
          this.type = type;
          this.returnValue = returnValue;

@@ -1,9 +1,8 @@
 package org.infinispan.eviction;
 
 import org.infinispan.Cache;
-import org.infinispan.config.Configuration;
-import org.infinispan.loaders.CacheStoreConfig;
-import org.infinispan.loaders.dummy.DummyInMemoryCacheStore;
+import org.infinispan.configuration.cache.ConfigurationBuilder;
+import org.infinispan.loaders.dummy.DummyInMemoryCacheStoreConfigurationBuilder;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.test.SingleCacheManagerTest;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
@@ -15,26 +14,22 @@ public class EvictionWithPassivationTest extends SingleCacheManagerTest {
 
    private final int EVICTION_MAX_ENTRIES = 2;
 
-   private Configuration buildCfg(EvictionThreadPolicy threadPolicy, EvictionStrategy strategy) {
-      Configuration cfg = new Configuration();
-      CacheStoreConfig cacheStoreConfig = new DummyInMemoryCacheStore.Cfg();
-      cacheStoreConfig.setPurgeOnStartup(true);
-      cfg.getCacheLoaderManagerConfig().addCacheLoaderConfig(cacheStoreConfig);
-      cfg.getCacheLoaderManagerConfig().setPassivation(true);
-      cfg.setEvictionStrategy(strategy);
-      cfg.setEvictionThreadPolicy(threadPolicy);
-      cfg.setEvictionMaxEntries(EVICTION_MAX_ENTRIES);
-      cfg.setInvocationBatchingEnabled(true);
+   private ConfigurationBuilder buildCfg(EvictionThreadPolicy threadPolicy, EvictionStrategy strategy) {
+      ConfigurationBuilder cfg = new ConfigurationBuilder();
+      cfg
+         .loaders().passivation(true).addStore(DummyInMemoryCacheStoreConfigurationBuilder.class).purgeOnStartup(true)
+         .eviction().strategy(strategy).threadPolicy(threadPolicy).maxEntries(EVICTION_MAX_ENTRIES)
+         .invocationBatching().enable();
       return cfg;
    }
 
    @Override
    protected EmbeddedCacheManager createCacheManager() throws Exception {
-      cacheManager = TestCacheManagerFactory.createCacheManager(getDefaultStandaloneConfig(true));
+      cacheManager = TestCacheManagerFactory.createCacheManager(getDefaultStandaloneCacheConfig(true));
 
       for (EvictionStrategy s : EvictionStrategy.values()) {
          for (EvictionThreadPolicy p : EvictionThreadPolicy.values()) {
-            cacheManager.defineConfiguration("test-" + p + "-" + s, buildCfg(p, s));
+            cacheManager.defineConfiguration("test-" + p + "-" + s, buildCfg(p, s).build());
          }
       }
 

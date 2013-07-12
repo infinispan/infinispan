@@ -1,9 +1,11 @@
 package org.infinispan.loaders;
 
 import org.infinispan.Cache;
-import org.infinispan.config.Configuration;
+import org.infinispan.configuration.cache.CacheMode;
+import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.context.Flag;
 import org.infinispan.loaders.dummy.DummyInMemoryCacheStore;
+import org.infinispan.loaders.dummy.DummyInMemoryCacheStoreConfigurationBuilder;
 import org.infinispan.test.MultipleCacheManagersTest;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.CleanupAfterMethod;
@@ -17,14 +19,15 @@ public class SharedCacheStoreTest extends MultipleCacheManagersTest {
 
    @Override
    protected void createCacheManagers() throws Throwable {
-      Configuration cfg = new Configuration().fluent()
+      ConfigurationBuilder cfg = new ConfigurationBuilder();
+      cfg
          .loaders()
             .shared(true)
-            .addCacheLoader(new DummyInMemoryCacheStore.Cfg()
+            .addStore(DummyInMemoryCacheStoreConfigurationBuilder.class)
                .storeName(SharedCacheStoreTest.class.getName())
-               .purgeOnStartup(false))
+               .purgeOnStartup(false)
          .clustering()
-            .mode(Configuration.CacheMode.REPL_SYNC)
+            .cacheMode(CacheMode.REPL_SYNC)
          .build();
       createCluster(cfg, 3);
       // don't create the caches here, we want them to join the cluster one by one

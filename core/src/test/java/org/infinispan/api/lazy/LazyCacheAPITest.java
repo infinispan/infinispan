@@ -1,6 +1,6 @@
 package org.infinispan.api.lazy;
 
-import org.infinispan.config.Configuration;
+import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.test.SingleCacheManagerTest;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
@@ -23,10 +23,10 @@ public class LazyCacheAPITest extends SingleCacheManagerTest {
    @Override
    protected EmbeddedCacheManager createCacheManager() throws Exception {
       // start a single cache instance
-      Configuration c = getDefaultStandaloneConfig(true);
-      c.setUseLazyDeserialization(true);
-      EmbeddedCacheManager cm = TestCacheManagerFactory.createLocalCacheManager(false);
-      cm.defineConfiguration("lazy-cache-test", c);
+      ConfigurationBuilder c = getDefaultStandaloneCacheConfig(true);
+      c.storeAsBinary().enable();
+      EmbeddedCacheManager cm = TestCacheManagerFactory.createCacheManager(false);
+      cm.defineConfiguration("lazy-cache-test", c.build());
       cache = cm.getCache("lazy-cache-test");
       return cm;
    }

@@ -9,8 +9,6 @@ import org.infinispan.test.fwk.CleanupAfterMethod;
 import org.infinispan.transaction.LockingMode;
 import org.infinispan.transaction.lookup.DummyTransactionManagerLookup;
 import org.infinispan.transaction.tm.DummyTransaction;
-import org.infinispan.util.DefaultTimeService;
-import org.infinispan.util.TimeService;
 import org.testng.annotations.Test;
 
 import javax.transaction.Transaction;

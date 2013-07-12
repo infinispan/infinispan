@@ -2,8 +2,7 @@ package org.infinispan.tx.lockreordering;
 
 import org.infinispan.Cache;
 import org.infinispan.commons.hash.MurmurHash2;
-import org.infinispan.config.Configuration;
-import org.infinispan.manager.DefaultCacheManager;
+import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.test.SingleCacheManagerTest;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
@@ -26,8 +25,8 @@ public class LocalLockReorderingTest extends SingleCacheManagerTest {
 
    @Override
    protected EmbeddedCacheManager createCacheManager() throws Exception {
-      final Configuration c = getDefaultStandaloneConfig(true);
-      c.fluent().transaction().cacheStopTimeout(1);
+      final ConfigurationBuilder c = getDefaultStandaloneCacheConfig(true);
+      c.transaction().cacheStopTimeout(1);
       keys = generateKeys();
       return TestCacheManagerFactory.createCacheManager(c);
    }
@@ -49,11 +48,11 @@ public class LocalLockReorderingTest extends SingleCacheManagerTest {
       runTest(StresserThread.MIXED_OPS_PERFORMER, cache, cache, keys, getThreadName(m));
    }
 
-   static void runTest(StresserThread.OperationsPerformer ops, Cache c1, Cache c2, List keys, String threadNamePrefix) throws InterruptedException {
+   static void runTest(StresserThread.OperationsPerformer ops, Cache c1, Cache c2, List<Integer> keys, String threadNamePrefix) throws InterruptedException {
       CyclicBarrier beforeCommit = new CyclicBarrier(2);
 
       StresserThread st1 = new StresserThread(c1, keys, "t1", ops, beforeCommit, threadNamePrefix + "-1");
-      final ArrayList reversedKeys = new ArrayList(keys);
+      final ArrayList<Integer> reversedKeys = new ArrayList<Integer>(keys);
       Collections.reverse(reversedKeys);
       StresserThread st2 = new StresserThread(c2, reversedKeys, "t2", ops, beforeCommit, threadNamePrefix+"-2");
 

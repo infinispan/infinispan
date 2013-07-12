@@ -9,6 +9,7 @@ public class DummyInMemoryCacheStoreConfigurationBuilder
       AbstractStoreConfigurationBuilder<DummyInMemoryCacheStoreConfiguration, DummyInMemoryCacheStoreConfigurationBuilder> {
 
    private boolean debug;
+   private boolean slow;
    private String storeName;
    private Object failKey;
 
@@ -26,6 +27,11 @@ public class DummyInMemoryCacheStoreConfigurationBuilder
       return this;
    }
 
+   public DummyInMemoryCacheStoreConfigurationBuilder slow(boolean slow) {
+      this.slow = slow;
+      return this;
+   }
+
    public DummyInMemoryCacheStoreConfigurationBuilder storeName(String storeName) {
       this.storeName = storeName;
       return this;
@@ -38,7 +44,7 @@ public class DummyInMemoryCacheStoreConfigurationBuilder
 
    @Override
    public DummyInMemoryCacheStoreConfiguration create() {
-      return new DummyInMemoryCacheStoreConfiguration(debug, storeName, failKey, purgeOnStartup, purgeSynchronously, purgerThreads,
+      return new DummyInMemoryCacheStoreConfiguration(debug, slow, storeName, failKey, purgeOnStartup, purgeSynchronously, purgerThreads,
             fetchPersistentState, ignoreModifications, TypedProperties.toTypedProperties(properties), async.create(),
             singletonStore.create());
    }
@@ -46,6 +52,7 @@ public class DummyInMemoryCacheStoreConfigurationBuilder
    @Override
    public DummyInMemoryCacheStoreConfigurationBuilder read(DummyInMemoryCacheStoreConfiguration template) {
       debug = template.debug();
+      slow = template.slow();
       storeName = template.storeName();
       failKey = template.failKey();
 

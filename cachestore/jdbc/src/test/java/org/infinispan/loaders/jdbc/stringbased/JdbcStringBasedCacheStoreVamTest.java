@@ -24,7 +24,7 @@ public class JdbcStringBasedCacheStoreVamTest extends JdbcStringBasedCacheStoreT
 
    @BeforeClass
    public void setUpClass() {
-      cm = TestCacheManagerFactory.createLocalCacheManager(false);
+      cm = TestCacheManagerFactory.createCacheManager(false);
       marshaller = extractCacheMarshaller(cm.getCache());
    }
 

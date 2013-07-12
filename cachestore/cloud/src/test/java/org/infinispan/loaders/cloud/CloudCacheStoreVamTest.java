@@ -25,7 +25,7 @@ public class CloudCacheStoreVamTest extends CloudCacheStoreTest {
 
    @BeforeClass
    public void setUpClass() {
-      cm = TestCacheManagerFactory.createLocalCacheManager(false);
+      cm = TestCacheManagerFactory.createCacheManager(false);
       marshaller = extractCacheMarshaller(cm.getCache());
    }
 

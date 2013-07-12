@@ -1,6 +1,7 @@
 package org.infinispan.tx;
 
-import org.infinispan.config.Configuration;
+import org.infinispan.configuration.cache.CacheMode;
+import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.test.MultipleCacheManagersTest;
 import org.infinispan.transaction.LockingMode;
 import org.testng.annotations.Test;
@@ -10,8 +11,9 @@ public class SimpleLockTest extends MultipleCacheManagersTest {
 
    @Override
    protected void createCacheManagers() throws Throwable {
-      final Configuration c = getDefaultClusteredConfig(Configuration.CacheMode.DIST_SYNC, true);
-      c.fluent().transaction().lockingMode(LockingMode.PESSIMISTIC);
+      final ConfigurationBuilder c = getDefaultClusteredCacheConfig(CacheMode.DIST_SYNC, true);
+
+      c.transaction().lockingMode(LockingMode.PESSIMISTIC);
       createCluster(c, 2);
       waitForClusterToForm();
    }

@@ -1,6 +1,6 @@
 package org.infinispan.tx.synchronisation;
 
-import org.infinispan.config.Configuration;
+import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.tx.dld.LocalDeadlockDetectionTest;
 import org.testng.annotations.Test;
 
@@ -12,9 +12,9 @@ import org.testng.annotations.Test;
 public class LocalDldWithSyncTest extends LocalDeadlockDetectionTest {
 
    @Override
-   protected Configuration createConfig() {
-      Configuration config = super.createConfig();
-      config.fluent().transaction().useSynchronization(true);
+   protected ConfigurationBuilder createConfig() {
+      ConfigurationBuilder config = super.createConfig();
+      config.transaction().useSynchronization(true);
       return config;
    }
 }

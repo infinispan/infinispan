@@ -1,7 +1,8 @@
 package org.infinispan.distribution.topologyaware;
 
-import org.infinispan.config.Configuration;
-import org.infinispan.config.GlobalConfiguration;
+import org.infinispan.configuration.cache.CacheMode;
+import org.infinispan.configuration.cache.ConfigurationBuilder;
+import org.infinispan.configuration.global.GlobalConfigurationBuilder;
 import org.infinispan.distribution.DistributionManagerImpl;
 import org.infinispan.distribution.ch.ConsistentHash;
 import org.infinispan.manager.EmbeddedCacheManager;
@@ -25,19 +26,19 @@ public class TopologyInfoBroadcastTest extends MultipleCacheManagersTest {
 
    @Override
    protected void createCacheManagers() throws Throwable {
-      GlobalConfiguration gc1 = GlobalConfiguration.getClusteredDefault();
+      GlobalConfigurationBuilder gc1 = GlobalConfigurationBuilder.defaultClusteredBuilder();
       updatedSiteInfo(gc1, "s0", "r0", "m0");
-      EmbeddedCacheManager cm1 = TestCacheManagerFactory.createCacheManager(gc1, getClusterConfig());
+      EmbeddedCacheManager cm1 = TestCacheManagerFactory.createClusteredCacheManager(gc1, getClusterConfig());
       cacheManagers.add(cm1);
 
-      GlobalConfiguration gc2 = GlobalConfiguration.getClusteredDefault();
+      GlobalConfigurationBuilder gc2 = GlobalConfigurationBuilder.defaultClusteredBuilder();
       updatedSiteInfo(gc2, "s1", "r1", "m1");
-      EmbeddedCacheManager cm2 = TestCacheManagerFactory.createCacheManager(gc2, getClusterConfig());
+      EmbeddedCacheManager cm2 = TestCacheManagerFactory.createClusteredCacheManager(gc2, getClusterConfig());
       cacheManagers.add(cm2);
 
-      GlobalConfiguration gc3 = GlobalConfiguration.getClusteredDefault();
+      GlobalConfigurationBuilder gc3 = GlobalConfigurationBuilder.defaultClusteredBuilder();
       updatedSiteInfo(gc3, "s2", "r2", "m2");
-      EmbeddedCacheManager cm3 = TestCacheManagerFactory.createCacheManager(gc3, getClusterConfig());
+      EmbeddedCacheManager cm3 = TestCacheManagerFactory.createClusteredCacheManager(gc3, getClusterConfig());
       cacheManagers.add(cm3);
 
       log.info("Here it starts");
@@ -45,14 +46,12 @@ public class TopologyInfoBroadcastTest extends MultipleCacheManagersTest {
       log.info("Here it ends");
    }
 
-   protected Configuration getClusterConfig() {
-      return getDefaultClusteredConfig(Configuration.CacheMode.DIST_SYNC);
+   protected ConfigurationBuilder getClusterConfig() {
+      return getDefaultClusteredCacheConfig(CacheMode.DIST_SYNC);
    }
 
-   private void updatedSiteInfo(GlobalConfiguration gc, String s, String r, String m) {
-      gc.setSiteId(s);
-      gc.setRackId(r);
-      gc.setMachineId(m);
+   private void updatedSiteInfo(GlobalConfigurationBuilder gcb, String s, String r, String m) {
+      gcb.transport().siteId(s).rackId(r).machineId(m);
    }
 
    public void testIsReplicated() {
@@ -86,8 +85,8 @@ public class TopologyInfoBroadcastTest extends MultipleCacheManagersTest {
       dmi = (DistributionManagerImpl) advancedCache(2).getDistributionManager();
       assertTopologyInfo2Nodes(dmi.getConsistentHash().getMembers());
 
-      ConsistentHash tach0 = (ConsistentHash) advancedCache(0).getDistributionManager().getConsistentHash();
-      ConsistentHash tach2 = (ConsistentHash) advancedCache(2).getDistributionManager().getConsistentHash();
+      ConsistentHash tach0 = advancedCache(0).getDistributionManager().getConsistentHash();
+      ConsistentHash tach2 = advancedCache(2).getDistributionManager().getConsistentHash();
       assertEquals(tach0.getMembers(), tach2.getMembers());
    }
 

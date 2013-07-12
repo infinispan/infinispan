@@ -1,9 +1,8 @@
 package org.infinispan.loaders.jdbc.stringbased;
 
+import org.infinispan.configuration.cache.LoadersConfigurationBuilder;
 import org.infinispan.loaders.BaseCacheStoreFunctionalTest;
-import org.infinispan.loaders.CacheStoreConfig;
-import org.infinispan.loaders.jdbc.TableManipulation;
-import org.infinispan.loaders.jdbc.connectionfactory.ConnectionFactoryConfig;
+import org.infinispan.loaders.jdbc.configuration.JdbcStringBasedCacheStoreConfigurationBuilder;
 import org.infinispan.test.fwk.UnitTestDatabaseManager;
 import org.testng.annotations.Test;
 
@@ -11,10 +10,12 @@ import org.testng.annotations.Test;
 public class JdbcStringBasedCacheStoreFunctionalTest extends BaseCacheStoreFunctionalTest {
 
    @Override
-   protected CacheStoreConfig createCacheStoreConfig() throws Exception {
-      ConnectionFactoryConfig connectionFactoryConfig = UnitTestDatabaseManager.getUniqueConnectionFactoryConfig();
-      TableManipulation tm = UnitTestDatabaseManager.buildStringTableManipulation();
-      JdbcStringBasedCacheStoreConfig config = new JdbcStringBasedCacheStoreConfig(connectionFactoryConfig, tm);
-      return config;
+   protected LoadersConfigurationBuilder createCacheStoreConfig(LoadersConfigurationBuilder loaders) {
+      JdbcStringBasedCacheStoreConfigurationBuilder store = loaders
+         .addStore(JdbcStringBasedCacheStoreConfigurationBuilder.class)
+         .purgeSynchronously(true);
+      UnitTestDatabaseManager.buildTableManipulation(store.table(), false);
+      UnitTestDatabaseManager.configureUniqueConnectionFactory(store);
+      return loaders;
    }
 }

@@ -1,13 +1,14 @@
-package org.infinispan.config;
+package org.infinispan.configuration;
 
 import org.infinispan.commons.CacheConfigurationException;
+import org.infinispan.configuration.cache.CacheMode;
+import org.infinispan.configuration.cache.ConfigurationBuilder;
+import org.infinispan.eviction.EvictionStrategy;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.test.AbstractInfinispanTest;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.testng.annotations.Test;
-
-import static org.infinispan.config.Configuration.CacheMode.*;
 
 /**
  * ConfigurationValidationTest.
@@ -43,9 +44,8 @@ public class ConfigurationValidationTest extends AbstractInfinispanTest {
    public void testDistAndReplQueue() {
       EmbeddedCacheManager ecm = null;
       try {
-         Configuration c = new Configuration();
-         c.setCacheMode(DIST_ASYNC);
-         c.setUseReplQueue(true);
+         ConfigurationBuilder c = new ConfigurationBuilder();
+         c.clustering().cacheMode(CacheMode.DIST_ASYNC).async().useReplQueue(true);
          ecm = TestCacheManagerFactory.createClusteredCacheManager(c);
          ecm.getCache();
       } finally {
@@ -57,8 +57,8 @@ public class ConfigurationValidationTest extends AbstractInfinispanTest {
    public void testEvictionOnButWithoutMaxEntries() {
       EmbeddedCacheManager ecm = null;
       try {
-         Configuration c = new Configuration();
-         c.setEvictionStrategy("LRU");
+         ConfigurationBuilder c = new ConfigurationBuilder();
+         c.eviction().strategy(EvictionStrategy.LRU);
          ecm = TestCacheManagerFactory.createClusteredCacheManager(c);
          ecm.getCache();
       } finally {
@@ -67,13 +67,11 @@ public class ConfigurationValidationTest extends AbstractInfinispanTest {
    }
 
    private EmbeddedCacheManager createCacheManager() throws Exception {
-      GlobalConfiguration gc = GlobalConfiguration.getNonClusteredDefault();
-      Configuration config = new Configuration();
-      config.setCacheMode(REPL_ASYNC);
-      EmbeddedCacheManager cm = TestCacheManagerFactory.createCacheManager(gc, config);
-      config = new Configuration();
-      config.setCacheMode(LOCAL);
-      cm.defineConfiguration("local", config);
+      ConfigurationBuilder config = new ConfigurationBuilder();
+      config.clustering().cacheMode(CacheMode.REPL_ASYNC);
+      EmbeddedCacheManager cm = TestCacheManagerFactory.createCacheManager(config);
+      config = new ConfigurationBuilder();
+      cm.defineConfiguration("local", config.build());
       return cm;
    }
 }

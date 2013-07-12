@@ -11,8 +11,6 @@ import javax.naming.Reference;
 import javax.naming.StringRefAddr;
 
 import org.infinispan.Cache;
-import org.infinispan.config.Configuration;
-import org.infinispan.config.GlobalConfiguration;
 import org.infinispan.manager.CacheContainer;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.test.SingleCacheManagerTest;
@@ -52,9 +50,7 @@ public class BindingTest extends SingleCacheManagerTest {
 
    @Override
    protected EmbeddedCacheManager createCacheManager() throws Exception {
-      GlobalConfiguration globalConfiguration = GlobalConfiguration.getNonClusteredDefault();
-      Configuration configuration = new Configuration();
-      cacheManager = TestCacheManagerFactory.createCacheManager(globalConfiguration, configuration);
+      cacheManager = TestCacheManagerFactory.createCacheManager();
       return cacheManager;
    }
 
@@ -97,7 +93,7 @@ public class BindingTest extends SingleCacheManagerTest {
 
    /**
     * Helper method that binds the a non serializable object to the JNDI tree.
-    * 
+    *
     * @param jndiName Name under which the object must be bound
     * @param who Object to bind in JNDI
     * @param classType Class type under which should appear the bound object
@@ -125,7 +121,7 @@ public class BindingTest extends SingleCacheManagerTest {
       Reference ref = new Reference(classType.getName(), addr, NonSerializableFactory.class.getName(), null);
       ctx.rebind(n.get(0), ref);
    }
-   
+
    private void unbind(String jndiName, Context ctx) throws Exception {
       NonSerializableFactory.unbind(jndiName);
       ctx.unbind(jndiName);

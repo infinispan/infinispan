@@ -1,6 +1,7 @@
 package org.infinispan.tx.recovery;
 
-import org.infinispan.config.Configuration;
+import org.infinispan.configuration.cache.CacheMode;
+import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.test.MultipleCacheManagersTest;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.transaction.tm.DummyTransaction;
@@ -21,14 +22,20 @@ public class InDoubtXidReturnedOnceTest extends MultipleCacheManagersTest {
 
    @Override
    protected void createCacheManagers() throws Throwable {
-      Configuration configuration = getDefaultClusteredConfig(Configuration.CacheMode.DIST_SYNC, true);
-      configuration.fluent().locking().useLockStriping(false);
-      configuration.fluent().transaction()
-         .transactionManagerLookupClass(RecoveryDummyTransactionManagerLookup.class)
-         .recovery();
-      configuration.fluent().clustering().hash().rehashEnabled(false);
-      configuration.fluent().hash().numOwners(3);
-      configuration.fluent().transaction().recovery();
+      ConfigurationBuilder configuration = getDefaultClusteredCacheConfig(CacheMode.DIST_SYNC, true);
+      configuration
+         .locking()
+            .useLockStriping(false)
+         .transaction()
+            .transactionManagerLookup(new RecoveryDummyTransactionManagerLookup())
+            .useSynchronization(false)
+            .recovery()
+               .enable()
+         .clustering()
+            .stateTransfer()
+               .fetchInMemoryState(false)
+            .hash()
+               .numOwners(3);
 
       createCluster(configuration, 4);
       waitForClusterToForm();

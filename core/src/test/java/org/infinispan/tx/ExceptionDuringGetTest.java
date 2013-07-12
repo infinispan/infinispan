@@ -1,7 +1,8 @@
 package org.infinispan.tx;
 
 import org.infinispan.commands.VisitableCommand;
-import org.infinispan.config.Configuration;
+import org.infinispan.configuration.cache.CacheMode;
+import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.interceptors.base.CommandInterceptor;
 import org.infinispan.interceptors.locking.PessimisticLockingInterceptor;
@@ -18,8 +19,8 @@ public class ExceptionDuringGetTest extends MultipleCacheManagersTest {
 
    @Override
    protected void createCacheManagers() throws Throwable {
-      Configuration dcc = getDefaultClusteredConfig(Configuration.CacheMode.DIST_SYNC, true);
-      dcc.fluent().transaction().lockingMode(LockingMode.PESSIMISTIC);
+      ConfigurationBuilder dcc = getDefaultClusteredCacheConfig(CacheMode.DIST_SYNC, true);
+      dcc.transaction().lockingMode(LockingMode.PESSIMISTIC);
       createCluster(dcc, 2);
       waitForClusterToForm();
       cache(0).put("k", "v");

@@ -1,12 +1,11 @@
-package org.infinispan.config;
+package org.infinispan.configuration;
 
+import org.infinispan.configuration.cache.CacheMode;
+import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.test.SingleCacheManagerTest;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.testng.annotations.Test;
-
-import static org.infinispan.config.Configuration.CacheMode.LOCAL;
-import static org.infinispan.config.Configuration.CacheMode.REPL_ASYNC;
 
 /**
  * ConfigurationValidationTest.
@@ -25,16 +24,13 @@ public class ConfigurationValidation2Test extends SingleCacheManagerTest {
       cacheManager.getCache("local").put("key", "value");
    }
 
-
    @Override
    protected EmbeddedCacheManager createCacheManager() throws Exception {
-      GlobalConfiguration gc = GlobalConfiguration.getClusteredDefault();
-      Configuration config = new Configuration();
-      config.setCacheMode(REPL_ASYNC);
-      EmbeddedCacheManager cm = TestCacheManagerFactory.createCacheManager(gc, config);
-      config = new Configuration();
-      config.setCacheMode(LOCAL);
-      cm.defineConfiguration("local", config);
+      ConfigurationBuilder config = new ConfigurationBuilder();
+      config.clustering().cacheMode(CacheMode.REPL_ASYNC);
+      EmbeddedCacheManager cm = TestCacheManagerFactory.createClusteredCacheManager(config);
+      config = new ConfigurationBuilder();
+      cm.defineConfiguration("local", config.build());
       return cm;
    }
 }

@@ -2,8 +2,7 @@ package org.infinispan.stress;
 
 import org.infinispan.Cache;
 import org.infinispan.commons.equivalence.AnyEquivalence;
-import org.infinispan.config.Configuration;
-import org.infinispan.config.GlobalConfiguration;
+import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.eviction.EvictionStrategy;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
@@ -73,13 +72,12 @@ public class MapStressTest {
    }
 
    private Cache<String, Integer> configureAndBuildCache(int capacity) {
-      Configuration config = new Configuration().fluent()
+      ConfigurationBuilder config = new ConfigurationBuilder();
+      config
          .eviction().maxEntries(capacity).strategy(EvictionStrategy.LRU)
-         .expiration().wakeUpInterval(5000L).maxIdle(120000L)
-         .build();
+         .expiration().wakeUpInterval(5000L).maxIdle(120000L);
 
-      EmbeddedCacheManager cm = TestCacheManagerFactory.createCacheManager(
-            GlobalConfiguration.getNonClusteredDefault(), config);
+      EmbeddedCacheManager cm = TestCacheManagerFactory.createCacheManager(config);
       cm.start();
       return cm.getCache();
    }
@@ -374,6 +372,7 @@ public class MapStressTest {
          this.op = op;
       }
 
+      @Override
       public void run() {
          waitForStart();
          long startMilis = System.currentTimeMillis();

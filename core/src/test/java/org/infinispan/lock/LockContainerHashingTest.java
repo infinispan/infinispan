@@ -10,12 +10,11 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Random;
 import java.util.concurrent.locks.Lock;
 
 @Test(groups = "unit", testName = "lock.LockContainerHashingTest")
 public class LockContainerHashingTest extends AbstractInfinispanTest {
-   private AbstractStripedLockContainer stripedLock;
+   private AbstractStripedLockContainer<?> stripedLock;
 
    @BeforeMethod
    public void setUp() {
@@ -51,7 +50,6 @@ public class LockContainerHashingTest extends AbstractInfinispanTest {
    private List<String> createRandomKeys(int number) {
 
       List<String> f = new ArrayList<String>(number);
-      Random r = new Random();
       int i = number;
       while (f.size() < number) {
          String s = i + "baseKey" + (10000 + i++);

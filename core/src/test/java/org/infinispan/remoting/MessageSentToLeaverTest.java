@@ -4,8 +4,8 @@ import org.infinispan.Cache;
 import org.infinispan.metadata.EmbeddedMetadata;
 import org.infinispan.commands.CommandsFactory;
 import org.infinispan.commands.write.PutKeyValueCommand;
-import org.infinispan.config.Configuration;
-import org.infinispan.config.GlobalConfiguration;
+import org.infinispan.configuration.cache.CacheMode;
+import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.remoting.responses.Response;
 import org.infinispan.remoting.rpc.RpcManager;
@@ -30,20 +30,19 @@ public class MessageSentToLeaverTest extends AbstractInfinispanTest {
    public void testGroupRequestSentToMemberAfterLeaving() {
       EmbeddedCacheManager cm1 = null, cm2 = null, cm3 = null;
       try {
-         Configuration c = new Configuration().fluent()
-               .mode(Configuration.CacheMode.DIST_SYNC)
-               .hash().numOwners(3)
-               .build();
-         GlobalConfiguration gc = GlobalConfiguration.getClusteredDefault();
+         ConfigurationBuilder c = new ConfigurationBuilder();
+         c
+            .clustering().cacheMode(CacheMode.DIST_SYNC)
+               .hash().numOwners(3);
 
-         cm1 = TestCacheManagerFactory.createCacheManager(gc, c);
-         cm2 = TestCacheManagerFactory.createCacheManager(gc, c);
-         cm3 = TestCacheManagerFactory.createCacheManager(gc, c);
+         cm1 = TestCacheManagerFactory.createClusteredCacheManager(c);
+         cm2 = TestCacheManagerFactory.createClusteredCacheManager(c);
+         cm3 = TestCacheManagerFactory.createClusteredCacheManager(c);
 
          Cache<Object,Object> c1 = cm1.getCache();
          Cache<Object, Object> c2 = cm2.getCache();
          Cache<Object, Object> c3 = cm3.getCache();
-         
+
          TestingUtil.blockUntilViewsReceived(30000, c1, c2, c3);
 
          c2.put("k", "v1");
@@ -57,10 +56,10 @@ public class MessageSentToLeaverTest extends AbstractInfinispanTest {
 
          Map<Address,Response> responseMap = rpcManager.invokeRemotely(addresses, cmd, rpcManager.getDefaultRpcOptions(true, false));
          assert responseMap.size() == 2;
-         
+
          TestingUtil.killCacheManagers(cm2);
          TestingUtil.blockUntilViewsReceived(30000, false, c1, c3);
-         
+
          try {
             responseMap = rpcManager.invokeRemotely(addresses, cmd, rpcManager.getDefaultRpcOptions(true, false));
             assert false: "invokeRemotely should have thrown an exception";

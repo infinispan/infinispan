@@ -1,6 +1,7 @@
 package org.infinispan.tx;
 
 import org.infinispan.Cache;
+import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.test.SingleCacheManagerTest;
 import org.infinispan.test.TestingUtil;
@@ -34,7 +35,8 @@ public class TerminatedCacheWhileInTxTest extends SingleCacheManagerTest {
 
    @Override
    protected EmbeddedCacheManager createCacheManager() throws Exception {
-      return TestCacheManagerFactory.createLocalCacheManager(true);
+      ConfigurationBuilder c = TestCacheManagerFactory.getDefaultCacheConfiguration(true);
+      return TestCacheManagerFactory.createCacheManager(c);
    }
 
    public void testStopWhileInTx(Method m) throws Throwable {
@@ -52,7 +54,7 @@ public class TerminatedCacheWhileInTxTest extends SingleCacheManagerTest {
    }
 
    private void stopCacheCalls(final Method m, boolean withCallStoppingCache) throws Throwable {
-      final Cache cache = cacheManager.getCache("cache-" + m.getName());
+      final Cache<String, String> cache = cacheManager.getCache("cache-" + m.getName());
       final ExecutorService executorService = Executors.newCachedThreadPool();
       final CyclicBarrier barrier = new CyclicBarrier(2);
       final CountDownLatch latch = new CountDownLatch(1);
@@ -71,10 +73,10 @@ public class TerminatedCacheWhileInTxTest extends SingleCacheManagerTest {
             return null;
          }
       };
-      Future waitAfterModFuture = executorService.submit(waitAfterModCallable);
+      Future<Void> waitAfterModFuture = executorService.submit(waitAfterModCallable);
 
       barrier.await(); // wait for all threads to have done their modifications
-      Future callStoppingCacheFuture = null;
+      Future<Void> callStoppingCacheFuture = null;
       if (withCallStoppingCache) {
          Callable<Void> callStoppingCache = new Callable<Void>() {
             @Override

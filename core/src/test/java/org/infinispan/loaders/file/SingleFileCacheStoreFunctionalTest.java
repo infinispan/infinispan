@@ -2,6 +2,7 @@ package org.infinispan.loaders.file;
 
 import org.infinispan.Cache;
 import org.infinispan.commons.CacheConfigurationException;
+import org.infinispan.configuration.cache.LoadersConfigurationBuilder;
 import org.infinispan.loaders.BaseCacheStoreFunctionalTest;
 import org.infinispan.loaders.CacheLoaderManager;
 import org.infinispan.loaders.CacheStore;
@@ -44,11 +45,12 @@ public class SingleFileCacheStoreFunctionalTest extends BaseCacheStoreFunctional
    }
 
    @Override
-   protected CacheStoreConfig createCacheStoreConfig() throws Exception {
-      SingleFileCacheStoreConfig cfg = new SingleFileCacheStoreConfig();
-      cfg.setLocation(tmpDirectory);
-      cfg.setPurgeSynchronously(true); // for more accurate unit testing
-      return cfg;
+   protected LoadersConfigurationBuilder createCacheStoreConfig(LoadersConfigurationBuilder loaders) {
+      loaders
+         .addSingleFileCacheStore()
+         .location(tmpDirectory)
+         .purgeSynchronously(true);
+      return loaders;
    }
 
    public void testParsingEmptyElement() throws Exception {

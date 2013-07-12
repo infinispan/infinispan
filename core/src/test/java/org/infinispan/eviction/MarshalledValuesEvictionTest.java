@@ -1,7 +1,7 @@
 package org.infinispan.eviction;
 
 import org.infinispan.commands.write.EvictCommand;
-import org.infinispan.config.Configuration;
+import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.container.InternalEntryFactoryImpl;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.interceptors.MarshalledValueInterceptor;
@@ -27,8 +27,8 @@ public class MarshalledValuesEvictionTest extends SingleCacheManagerTest {
 
    @Override
    protected EmbeddedCacheManager createCacheManager() throws Exception {
-      Configuration cfg = new Configuration().fluent()
-         .eviction().strategy(EvictionStrategy.LRU).maxEntries(CACHE_SIZE) // CACHE_SIZE max entries
+      ConfigurationBuilder cfg = new ConfigurationBuilder();
+      cfg.eviction().strategy(EvictionStrategy.LRU).maxEntries(CACHE_SIZE) // CACHE_SIZE max entries
          .expiration().wakeUpInterval(100L)
          .locking().useLockStriping(false) // to minimise chances of deadlock in the unit test
          .storeAsBinary()

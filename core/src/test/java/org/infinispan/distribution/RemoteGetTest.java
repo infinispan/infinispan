@@ -1,7 +1,7 @@
 package org.infinispan.distribution;
 
 import org.infinispan.Cache;
-import org.infinispan.config.Configuration;
+import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.test.MultipleCacheManagersTest;
 import org.testng.annotations.Test;
@@ -12,7 +12,7 @@ import java.util.List;
 public class RemoteGetTest extends MultipleCacheManagersTest {
    @Override
    protected void createCacheManagers() throws Throwable {
-      createCluster(Configuration.CacheMode.DIST_SYNC, 3);
+      createCluster(getDefaultClusteredCacheConfig(CacheMode.DIST_SYNC, false), 3);
       // make sure all caches are started...
       cache(0);
       cache(1);

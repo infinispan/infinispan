@@ -145,7 +145,7 @@ public abstract class AbstractXSiteTest extends AbstractCacheTest {
          List<Cache> caches = getCaches(cacheName);
          Cache<Object, Object> cache = caches.get(0);
          TestingUtil.blockUntilViewsReceived(10000, caches);
-         if (cache.getConfiguration().getCacheMode().isDistributed()) {
+         if (cache.getCacheConfiguration().clustering().cacheMode().isDistributed()) {
             TestingUtil.waitForRehashToComplete(caches);
          }
       }

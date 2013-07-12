@@ -1,8 +1,9 @@
 package org.infinispan.distribution.rehash;
 
 import org.infinispan.Cache;
-import org.infinispan.config.Configuration;
-import org.infinispan.config.GlobalConfiguration;
+import org.infinispan.configuration.cache.CacheMode;
+import org.infinispan.configuration.cache.ConfigurationBuilder;
+import org.infinispan.configuration.global.GlobalConfigurationBuilder;
 import org.infinispan.context.Flag;
 import org.infinispan.distribution.DistributionTestHelper;
 import org.infinispan.distribution.ch.ConsistentHash;
@@ -10,6 +11,7 @@ import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.test.MultipleCacheManagersTest;
 import org.infinispan.test.TestingUtil;
+import org.infinispan.transaction.LockingMode;
 import org.infinispan.transaction.lookup.DummyTransactionManagerLookup;
 import org.infinispan.util.concurrent.IsolationLevel;
 import org.infinispan.util.concurrent.TimeoutException;
@@ -37,7 +39,7 @@ import java.util.concurrent.ThreadFactory;
 
 import static java.lang.String.format;
 import static org.infinispan.test.TestingUtil.sleepRandom;
-import static org.infinispan.test.fwk.TestCacheManagerFactory.createCacheManager;
+import static org.infinispan.test.fwk.TestCacheManagerFactory.*;
 
 // As this is a SLOW stress test, leave it disabled by default.  Only run it manually.
 @Test(groups = "stress", testName = "distribution.rehash.ConsistencyStressTest", enabled = false)
@@ -51,31 +53,34 @@ public class ConsistencyStressTest extends MultipleCacheManagersTest {
 
    @Override
    protected void createCacheManagers() throws Throwable {
-      Configuration c = new Configuration();
-      c.setIsolationLevel(IsolationLevel.READ_COMMITTED);
-      c.setLockAcquisitionTimeout(60000);
-      c.setUseLockStriping(false);
-      c.setCacheMode(Configuration.CacheMode.DIST_SYNC);
-      c.setL1CacheEnabled(false);
-      c.setSyncReplTimeout(30000);
-      c.setUseEagerLocking(true);
-      c.setEagerLockSingleNode(true);
-      c.setTransactionManagerLookupClass(DummyTransactionManagerLookup.class.getName());
-      c.setSyncCommitPhase(true);
-      c.setSyncRollbackPhase(true);
+      ConfigurationBuilder c = new ConfigurationBuilder();
+      c
+         .locking()
+            .isolationLevel(IsolationLevel.READ_COMMITTED)
+            .lockAcquisitionTimeout(60000)
+            .useLockStriping(false)
+         .clustering()
+            .cacheMode(CacheMode.DIST_SYNC)
+            .l1().disable()
+            .sync()
+               .replTimeout(30000)
+         .transaction()
+            .lockingMode(LockingMode.PESSIMISTIC)
+            .transactionManagerLookup(new DummyTransactionManagerLookup())
+            .syncCommitPhase(true)
+            .syncRollbackPhase(true);
 
-      GlobalConfiguration gc = GlobalConfiguration.getClusteredDefault();
-      gc.setDistributedSyncTimeout(60000);
+      GlobalConfigurationBuilder gc = GlobalConfigurationBuilder.defaultClusteredBuilder();
+      gc.transport().distributedSyncTimeout(60000);
 
       List<EmbeddedCacheManager> cacheManagers = new LinkedList<EmbeddedCacheManager>();
 
       for (int i = 0; i < NUM_NODES; i++)
-         cacheManagers.add(createCacheManager(gc, c));
+         cacheManagers.add(createClusteredCacheManager(gc, c));
 
       registerCacheManager(cacheManagers.toArray(new EmbeddedCacheManager[NUM_NODES]));
    }
 
-   @SuppressWarnings("unchecked")
    public void testConsistency() throws Throwable, InterruptedException {
       // create an executor...
       ExecutorService executorService = Executors.newFixedThreadPool(NUM_NODES * WORKERS_PER_NODE, new ThreadFactory() {

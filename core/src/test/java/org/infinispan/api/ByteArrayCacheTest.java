@@ -42,7 +42,7 @@ public class ByteArrayCacheTest extends SingleCacheManagerTest {
    public void testByteArrayReplaceFailWithoutEquivalence() {
       final Integer key = 1;
       withCacheManager(new CacheManagerCallable(
-            TestCacheManagerFactory.createLocalCacheManager(false)) {
+            TestCacheManagerFactory.createCacheManager(false)) {
          @Override
          public void call() {
             Cache<Integer, byte[]> cache = cm.getCache();
@@ -82,7 +82,7 @@ public class ByteArrayCacheTest extends SingleCacheManagerTest {
 
    public void testByteArrayGetFail() {
       withCacheManager(new CacheManagerCallable(
-            TestCacheManagerFactory.createLocalCacheManager(false)) {
+            TestCacheManagerFactory.createCacheManager(false)) {
          @Override
          public void call() {
             byteArrayGet(cm.<byte[], byte[]>getCache(), false);

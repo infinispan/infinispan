@@ -1,7 +1,6 @@
 package org.infinispan.test;
 
 import org.infinispan.Cache;
-import org.infinispan.config.Configuration;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
@@ -17,7 +16,7 @@ import javax.transaction.TransactionManager;
 
 /**
  * Base class for tests that operate on a single (most likely local) cache instance. This operates similar to {@link
- * org.infinispan.test.MultipleCacheManagersTest}, but on only once CacheManager.
+ * org.infinispan.test.MultipleCacheManagersTest}, but on only one CacheManager.
  *
  * @author Mircea.Markus@jboss.com
  * @see org.infinispan.test.MultipleCacheManagersTest
@@ -59,7 +58,7 @@ public abstract class SingleCacheManagerTest extends AbstractCacheTest {
          throw e;
       }
    }
-   
+
    @AfterClass(alwaysRun=true)
    protected void destroyAfterClass() {
       try {
@@ -77,10 +76,6 @@ public abstract class SingleCacheManagerTest extends AbstractCacheTest {
    @AfterMethod(alwaysRun=true)
    protected void clearContent() {
       if (cleanupAfterTest()) TestingUtil.clearContent(cacheManager);
-   }
-
-   protected Configuration getDefaultStandaloneConfig(boolean transactional) {
-      return TestCacheManagerFactory.getDefaultConfiguration(transactional);
    }
 
    protected ConfigurationBuilder getDefaultStandaloneCacheConfig(boolean transactional) {

@@ -30,8 +30,8 @@ class MemcachedClusteredStatsTest extends MemcachedMultiNodeTest {
       // Per-thread mbean server won't work here because the registration will
       // happen in the 'main' thread and the remote call will try to resolve it
       // in a lookup instance associated with an 'OOB-' thread.
-      TestCacheManagerFactory.createClusteredCacheManagerEnforceJmxDomain(
-         jmxDomain + "-" + index, true, builder, mbeanServerLookup)
+      TestCacheManagerFactory.createClusteredCacheManagerEnforceJmxDomain(null,
+         jmxDomain + "-" + index, true, false, builder, mbeanServerLookup)
    }
 
    def testSingleConnectionPerServer() {

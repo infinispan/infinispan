@@ -3,13 +3,13 @@ package org.infinispan.loaders;
 import org.infinispan.commands.read.GetKeyValueCommand;
 import org.infinispan.commands.write.EvictCommand;
 import org.infinispan.config.CloneableConfigurationComponent;
-import org.infinispan.config.Configuration;
+import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.container.DataContainer;
 import org.infinispan.container.entries.InternalCacheEntry;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.interceptors.InvocationContextInterceptor;
 import org.infinispan.interceptors.base.CommandInterceptor;
-import org.infinispan.loaders.dummy.DummyInMemoryCacheStore;
+import org.infinispan.loaders.dummy.DummyInMemoryCacheStoreConfigurationBuilder;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.test.SingleCacheManagerTest;
 import org.infinispan.test.TestingUtil;
@@ -38,21 +38,23 @@ import static org.infinispan.context.Flag.SKIP_CACHE_STORE;
 public class ConcurrentLoadAndEvictTest extends SingleCacheManagerTest {
    SlowDownInterceptor sdi;
 
+   @Override
    protected EmbeddedCacheManager createCacheManager() throws Exception {
       sdi = new SlowDownInterceptor();
       // we need a loader and a custom interceptor to intercept get() calls
       // after the CLI, to slow it down so an evict goes through first
-      Configuration config = new Configuration().fluent()
+      ConfigurationBuilder config = new ConfigurationBuilder();
+      config
          .loaders()
-            .addCacheLoader(new DummyInMemoryCacheStore.Cfg())
+            .addStore(DummyInMemoryCacheStoreConfigurationBuilder.class)
          .customInterceptors()
-            .add(sdi).after(InvocationContextInterceptor.class)
-         .transaction().transactionMode(TransactionMode.NON_TRANSACTIONAL)
-         .build();
+            .addInterceptor()
+               .interceptor(sdi).after(InvocationContextInterceptor.class)
+         .transaction().transactionMode(TransactionMode.NON_TRANSACTIONAL);
 
       return TestCacheManagerFactory.createCacheManager(config);
    }
- 
+
    public void testEvictBeforeRead() throws CacheLoaderException, ExecutionException, InterruptedException {
       cache = cacheManager.getCache();
       cache.put("a", "b");
@@ -78,6 +80,7 @@ public class ConcurrentLoadAndEvictTest extends SingleCacheManagerTest {
 
       // call the get
       Future<String> future = e.submit(new Callable<String>() {
+         @Override
          public String call() throws Exception {
             return (String) cache.get("a");
          }
@@ -101,9 +104,9 @@ public class ConcurrentLoadAndEvictTest extends SingleCacheManagerTest {
    }
 
    public static class SlowDownInterceptor extends CommandInterceptor implements CloneableConfigurationComponent{
-   
+
       private static final long serialVersionUID = 8790944676490291484L;
-   
+
       volatile boolean enabled = false;
       transient CountDownLatch getLatch = new CountDownLatch(1);
       transient CountDownLatch evictLatch = new CountDownLatch(1);
@@ -133,12 +136,13 @@ public class ConcurrentLoadAndEvictTest extends SingleCacheManagerTest {
          }
          return invokeNextInterceptor(ctx, command);
       }
+      @Override
       public SlowDownInterceptor clone(){
          try {
             return (SlowDownInterceptor) super.clone();
          } catch (CloneNotSupportedException e) {
             throw new RuntimeException("Should not happen", e);
          }
-      }    
+      }
    }
 }

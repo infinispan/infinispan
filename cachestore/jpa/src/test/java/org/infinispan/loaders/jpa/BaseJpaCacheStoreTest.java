@@ -69,7 +69,7 @@ public abstract class BaseJpaCacheStoreTest extends AbstractInfinispanTest {
    }
 
    protected EmbeddedCacheManager createCacheManager() {
-      return TestCacheManagerFactory.createLocalCacheManager(false);
+      return TestCacheManagerFactory.createCacheManager(false);
    }
 
    @BeforeTest

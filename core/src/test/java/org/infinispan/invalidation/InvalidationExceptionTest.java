@@ -1,7 +1,8 @@
 package org.infinispan.invalidation;
 
 import org.infinispan.AdvancedCache;
-import org.infinispan.config.Configuration;
+import org.infinispan.configuration.cache.CacheMode;
+import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.commons.marshall.NotSerializableException;
 import org.infinispan.replication.ReplicationExceptionTest;
 import org.infinispan.test.MultipleCacheManagersTest;
@@ -20,18 +21,19 @@ public class InvalidationExceptionTest extends MultipleCacheManagersTest {
 
    @Override
    protected void createCacheManagers() throws Throwable {
-      Configuration invalidAsync = getDefaultClusteredConfig(
-            Configuration.CacheMode.INVALIDATION_ASYNC, false);
+      ConfigurationBuilder invalidAsync = getDefaultClusteredCacheConfig(
+            CacheMode.INVALIDATION_ASYNC, false);
       createClusteredCaches(2, "invalidAsync", invalidAsync);
 
-      Configuration replQueue = getDefaultClusteredConfig(
-            Configuration.CacheMode.INVALIDATION_ASYNC, false);
-      replQueue.setUseReplQueue(true);
+      ConfigurationBuilder replQueue = getDefaultClusteredCacheConfig(
+            CacheMode.INVALIDATION_ASYNC, false);
+      replQueue.clustering().async().useReplQueue(true);
       defineConfigurationOnAllManagers("invalidReplQueueCache", replQueue);
 
-      Configuration asyncMarshall = getDefaultClusteredConfig(
-            Configuration.CacheMode.INVALIDATION_ASYNC, false);
-      asyncMarshall.setUseAsyncMarshalling(true);
+      ConfigurationBuilder asyncMarshall = getDefaultClusteredCacheConfig(
+            CacheMode.INVALIDATION_ASYNC, false);
+
+      asyncMarshall.clustering().async().asyncMarshalling();
       defineConfigurationOnAllManagers("invalidAsyncMarshallCache", asyncMarshall);
    }
 

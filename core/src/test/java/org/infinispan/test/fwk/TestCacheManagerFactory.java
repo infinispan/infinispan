@@ -2,42 +2,30 @@ package org.infinispan.test.fwk;
 
 import static org.infinispan.test.fwk.JGroupsConfigBuilder.getJGroupsConfig;
 
-import java.io.BufferedInputStream;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.Properties;
-import java.util.ServiceLoader;
 import java.util.UUID;
 import java.util.concurrent.CountDownLatch;
 
-import javax.xml.namespace.QName;
 import javax.xml.stream.FactoryConfigurationError;
-import javax.xml.stream.XMLInputFactory;
 import javax.xml.stream.XMLStreamException;
-import javax.xml.stream.XMLStreamReader;
 
-import org.infinispan.config.Configuration;
-import org.infinispan.config.GlobalConfiguration;
+import org.infinispan.commons.marshall.Marshaller;
+import org.infinispan.commons.util.FileLookupFactory;
+import org.infinispan.commons.util.LegacyKeySupportSystemProperties;
+import org.infinispan.commons.util.Util;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
-import org.infinispan.configuration.cache.LegacyConfigurationAdaptor;
 import org.infinispan.configuration.global.GlobalConfigurationBuilder;
-import org.infinispan.configuration.global.LegacyGlobalConfigurationAdaptor;
 import org.infinispan.configuration.parsing.ConfigurationBuilderHolder;
-import org.infinispan.configuration.parsing.ConfigurationParser;
-import org.infinispan.configuration.parsing.Namespace;
 import org.infinispan.configuration.parsing.ParserRegistry;
 import org.infinispan.jmx.MBeanServerLookup;
 import org.infinispan.jmx.PerThreadMBeanServerLookup;
 import org.infinispan.manager.DefaultCacheManager;
 import org.infinispan.manager.EmbeddedCacheManager;
-import org.infinispan.commons.marshall.Marshaller;
-import org.infinispan.commons.util.FileLookupFactory;
-import org.infinispan.commons.util.LegacyKeySupportSystemProperties;
-import org.infinispan.commons.util.Util;
 import org.infinispan.remoting.transport.jgroups.JGroupsAddress;
 import org.infinispan.remoting.transport.jgroups.JGroupsTransport;
 import org.infinispan.transaction.TransactionMode;
@@ -73,14 +61,6 @@ public class TestCacheManagerFactory {
       }
    };
 
-   @Deprecated
-   private static DefaultCacheManager newDefaultCacheManager(boolean start, GlobalConfiguration gc, Configuration c, boolean keepJmxDomain) {
-      if (!keepJmxDomain) {
-         gc.setJmxDomain("infinispan" + UUID.randomUUID());
-      }
-      return newDefaultCacheManager(start, gc, c);
-   }
-
    private static DefaultCacheManager newDefaultCacheManager(boolean start, GlobalConfigurationBuilder gc, ConfigurationBuilder c, boolean keepJmxDomain) {
       if (!keepJmxDomain) {
          gc.globalJmxStatistics().jmxDomain("infinispan-" + UUID.randomUUID());
@@ -106,11 +86,6 @@ public class TestCacheManagerFactory {
       return fromStream(is, keepJmxDomainName);
    }
 
-   @Deprecated
-   public static EmbeddedCacheManager fromXml(String globalXmlFile, String defaultXmlFile, String namedXmlFile) throws IOException {
-      return new DefaultCacheManager(globalXmlFile, defaultXmlFile, namedXmlFile, true);
-   }
-
    public static EmbeddedCacheManager fromStream(InputStream is) throws IOException {
       return fromStream(is, false);
    }
@@ -121,42 +96,6 @@ public class TestCacheManagerFactory {
       return createClusteredCacheManager(holder, keepJmxDomainName);
    }
 
-   /**
-    * Creates an cache manager that does not support clustering.
-    *
-    * @param transactional if true, the cache manager will support transactions by default.
-    */
-   @Deprecated
-   public static EmbeddedCacheManager createLocalCacheManager(boolean transactional) {
-      return createLocalCacheManager(transactional, -1);
-   }
-
-   @Deprecated
-   public static EmbeddedCacheManager createLocalCacheManager(boolean transactional, long lockAcquisitionTimeout) {
-      GlobalConfiguration globalConfiguration = GlobalConfiguration.getNonClusteredDefault();
-      globalConfiguration.setAllowDuplicateDomains(true);
-      amendMarshaller(globalConfiguration);
-      minimizeThreads(globalConfiguration);
-      Configuration c = new Configuration();
-      markAsTransactional(transactional, c);
-      if (lockAcquisitionTimeout > -1) c.setLockAcquisitionTimeout(lockAcquisitionTimeout);
-      updateTransactionSupport(c);
-      return newDefaultCacheManager(true, globalConfiguration, c, false);
-   }
-
-   /**
-    * @deprecated Use {@link #markAsTransactional(
-    * boolean, org.infinispan.configuration.cache.ConfigurationBuilder)}
-    * instead
-    */
-   @Deprecated
-   private static void markAsTransactional(boolean transactional, Configuration c) {
-      c.fluent().transaction().transactionMode(transactional ? TransactionMode.TRANSACTIONAL : TransactionMode.NON_TRANSACTIONAL);
-      if (transactional)
-         // Set volatile stores just in case...
-         JBossTransactionsUtils.setVolatileStores();
-   }
-
    private static void markAsTransactional(boolean transactional, ConfigurationBuilder builder) {
       builder.transaction().transactionMode(transactional ? TransactionMode.TRANSACTIONAL : TransactionMode.NON_TRANSACTIONAL);
       if (transactional)
@@ -164,29 +103,8 @@ public class TestCacheManagerFactory {
          JBossTransactionsUtils.setVolatileStores();
    }
 
-   /**
-    * @deprecated Use {@link #updateTransactionSupport(
-    * boolean, org.infinispan.configuration.cache.ConfigurationBuilder)}
-    * instead
-    */
-   @Deprecated
-   private static void updateTransactionSupport(Configuration c) {
-      if (c.isTransactionalCache()) amendJTA(c);
-   }
-
    private static void updateTransactionSupport(boolean transactional, ConfigurationBuilder builder) {
       if (transactional) amendJTA(builder);
-   }
-
-   /**
-    * @deprecated Use {@link #amendJTA(
-    * org.infinispan.configuration.cache.ConfigurationBuilder)} instead
-    */
-   @Deprecated
-   private static void amendJTA(Configuration c) {
-      if (c.isTransactionalCache() && c.getTransactionManagerLookupClass() == null && c.getTransactionManagerLookup() == null) {
-         c.setTransactionManagerLookupClass(TransactionSetup.getManagerLookup());
-      }
    }
 
    private static void amendJTA(ConfigurationBuilder builder) {
@@ -200,26 +118,7 @@ public class TestCacheManagerFactory {
     * Creates an cache manager that does support clustering.
     */
    public static EmbeddedCacheManager createClusteredCacheManager() {
-      return createClusteredCacheManager(new TransportFlags());
-   }
-
-   public static EmbeddedCacheManager createClusteredCacheManager(TransportFlags flags) {
-      return createClusteredCacheManager(new Configuration(), flags);
-   }
-
-   @Deprecated
-   public static EmbeddedCacheManager createClusteredCacheManager(Configuration defaultCacheConfig) {
-      return createClusteredCacheManager(defaultCacheConfig, new TransportFlags());
-   }
-
-   @Deprecated
-   public static EmbeddedCacheManager createClusteredCacheManager(Configuration defaultCacheConfig, TransportFlags flags) {
-      GlobalConfiguration globalConfiguration = GlobalConfiguration.getClusteredDefault();
-      amendMarshaller(globalConfiguration);
-      minimizeThreads(globalConfiguration);
-      amendTransport(globalConfiguration, flags);
-      amendJTA(defaultCacheConfig);
-      return newDefaultCacheManager(true, globalConfiguration, defaultCacheConfig, false);
+      return createClusteredCacheManager(new ConfigurationBuilder(), new TransportFlags());
    }
 
    public static EmbeddedCacheManager createClusteredCacheManager(ConfigurationBuilder defaultCacheConfig, TransportFlags flags) {
@@ -293,39 +192,6 @@ public class TestCacheManagerFactory {
       return newDefaultCacheManager(true, globalBuilder, builder, keepJmxDomain);
    }
 
-   /**
-    * Creates a cache manager and amends the supplied configuration in order to avoid conflicts (e.g. jmx, jgroups)
-    * during running tests in parallel.
-    */
-   @Deprecated
-   public static EmbeddedCacheManager createCacheManager(GlobalConfiguration configuration) {
-      return internalCreateJmxDomain(true, configuration, false);
-   }
-
-   @Deprecated
-   public static EmbeddedCacheManager createCacheManager(boolean start, GlobalConfiguration configuration) {
-      return internalCreateJmxDomain(start, configuration, false);
-   }
-
-   /**
-    * Creates a cache manager that won't try to modify the configured jmx domain name: {@link
-    * org.infinispan.config.GlobalConfiguration#getJmxDomain()}. This method must be used with care, and one should
-    * make sure that no domain name collision happens when the parallel suite executes. An approach to ensure this, is
-    * to set the domain name to the name of the test class that instantiates the CacheManager.
-    */
-   @Deprecated
-   public static EmbeddedCacheManager createCacheManagerEnforceJmxDomain(GlobalConfiguration configuration) {
-      return internalCreateJmxDomain(true, configuration, true);
-   }
-
-   @Deprecated
-   private static EmbeddedCacheManager internalCreateJmxDomain(boolean start, GlobalConfiguration configuration, boolean enforceJmxDomain) {
-      amendMarshaller(configuration);
-      minimizeThreads(configuration);
-      amendTransport(configuration);
-      return newDefaultCacheManager(start, configuration, new Configuration(), enforceJmxDomain);
-   }
-
    public static EmbeddedCacheManager createCacheManager(CacheMode mode, boolean indexing) {
       ConfigurationBuilder builder = new ConfigurationBuilder();
       builder
@@ -343,51 +209,6 @@ public class TestCacheManagerFactory {
       }
    }
 
-   @Deprecated
-   public static EmbeddedCacheManager createCacheManager(Configuration defaultCacheConfig) {
-      GlobalConfiguration globalConfiguration;
-      if (defaultCacheConfig.getCacheMode().isClustered()) {
-         globalConfiguration = GlobalConfiguration.getClusteredDefault();
-         amendTransport(globalConfiguration);
-      }
-      else {
-         globalConfiguration = GlobalConfiguration.getNonClusteredDefault();
-      }
-      globalConfiguration.setAllowDuplicateDomains(true);
-      amendMarshaller(globalConfiguration);
-      minimizeThreads(globalConfiguration);
-      updateTransactionSupport(defaultCacheConfig);
-
-      // we stop caches during transactions all the time
-      // so wait at most 1 second for ongoing transactions when stopping
-      defaultCacheConfig.fluent().cacheStopTimeout(1000);
-
-      return newDefaultCacheManager(true, globalConfiguration, defaultCacheConfig, false);
-   }
-
-   @Deprecated
-   public static EmbeddedCacheManager createCacheManager(GlobalConfiguration configuration, Configuration defaultCfg) {
-      minimizeThreads(configuration);
-      amendMarshaller(configuration);
-      amendTransport(configuration);
-      updateTransactionSupport(defaultCfg);
-      return newDefaultCacheManager(true, configuration, defaultCfg, false);
-   }
-
-   @Deprecated
-   public static EmbeddedCacheManager createCacheManager(GlobalConfiguration configuration, Configuration defaultCfg, boolean keepJmxDomainName) {
-      return createCacheManager(configuration, defaultCfg, keepJmxDomainName, false);
-   }
-
-   @Deprecated
-   public static EmbeddedCacheManager createCacheManager(GlobalConfiguration configuration, Configuration defaultCfg, boolean keepJmxDomainName, boolean dontFixTransport) {
-      minimizeThreads(configuration);
-      amendMarshaller(configuration);
-      if (!dontFixTransport) amendTransport(configuration);
-      updateTransactionSupport(defaultCfg);
-      return newDefaultCacheManager(true, configuration, defaultCfg, keepJmxDomainName);
-   }
-
    /**
     * @see #createCacheManagerEnforceJmxDomain(String)
     */
@@ -395,33 +216,47 @@ public class TestCacheManagerFactory {
       return createCacheManagerEnforceJmxDomain(jmxDomain, true, true);
    }
 
-   public static EmbeddedCacheManager createClusteredCacheManagerEnforceJmxDomain(
-         String jmxDomain, ConfigurationBuilder builder) {
-      return createClusteredCacheManagerEnforceJmxDomain(jmxDomain, true, builder);
+   public static EmbeddedCacheManager createClusteredCacheManagerEnforceJmxDomain(String jmxDomain) {
+      return createClusteredCacheManagerEnforceJmxDomain(jmxDomain, true, false, new ConfigurationBuilder());
+   }
+
+   public static EmbeddedCacheManager createClusteredCacheManagerEnforceJmxDomain(String jmxDomain, boolean allowDuplicateDomains) {
+      return createClusteredCacheManagerEnforceJmxDomain(jmxDomain, true, allowDuplicateDomains, new ConfigurationBuilder());
+   }
+
+   public static EmbeddedCacheManager createClusteredCacheManagerEnforceJmxDomain(String cacheManagerName, String jmxDomain, boolean allowDuplicateDomains) {
+      return createClusteredCacheManagerEnforceJmxDomain(cacheManagerName, jmxDomain, true, allowDuplicateDomains, new ConfigurationBuilder(),new PerThreadMBeanServerLookup());
+   }
+
+   public static EmbeddedCacheManager createClusteredCacheManagerEnforceJmxDomain(String jmxDomain, ConfigurationBuilder builder) {
+      return createClusteredCacheManagerEnforceJmxDomain(jmxDomain, true, false, builder);
    }
 
    public static EmbeddedCacheManager createClusteredCacheManagerEnforceJmxDomain(
-         String jmxDomain, boolean exposeGlobalJmx, ConfigurationBuilder builder) {
-      return createClusteredCacheManagerEnforceJmxDomain(jmxDomain,
-            exposeGlobalJmx, builder, new PerThreadMBeanServerLookup());
+         String jmxDomain, boolean exposeGlobalJmx, boolean allowDuplicateDomains, ConfigurationBuilder builder) {
+      return createClusteredCacheManagerEnforceJmxDomain(null, jmxDomain,
+            exposeGlobalJmx, allowDuplicateDomains, builder, new PerThreadMBeanServerLookup());
    }
 
    public static EmbeddedCacheManager createClusteredCacheManagerEnforceJmxDomain(
-         String jmxDomain, boolean exposeGlobalJmx, ConfigurationBuilder builder,
+         String cacheManagerName, String jmxDomain, boolean exposeGlobalJmx, boolean allowDuplicateDomains, ConfigurationBuilder builder,
          MBeanServerLookup mBeanServerLookup) {
       GlobalConfigurationBuilder globalBuilder = GlobalConfigurationBuilder.defaultClusteredBuilder();
       amendGlobalConfiguration(globalBuilder, new TransportFlags());
       globalBuilder.globalJmxStatistics()
             .jmxDomain(jmxDomain)
             .mBeanServerLookup(mBeanServerLookup)
+            .allowDuplicateDomains(allowDuplicateDomains)
             .enabled(exposeGlobalJmx);
+      if (cacheManagerName != null) {
+         globalBuilder.globalJmxStatistics().cacheManagerName(cacheManagerName);
+      }
       return createClusteredCacheManager(globalBuilder, builder, new TransportFlags(), true);
    }
 
    /**
     * @see #createCacheManagerEnforceJmxDomain(String)
     */
-   @Deprecated
    public static EmbeddedCacheManager createCacheManagerEnforceJmxDomain(String jmxDomain, boolean exposeGlobalJmx, boolean exposeCacheJmx) {
       return createCacheManagerEnforceJmxDomain(jmxDomain, null, exposeGlobalJmx, exposeCacheJmx);
    }
@@ -429,25 +264,18 @@ public class TestCacheManagerFactory {
    /**
     * @see #createCacheManagerEnforceJmxDomain(String)
     */
-   @Deprecated
    public static EmbeddedCacheManager createCacheManagerEnforceJmxDomain(String jmxDomain, String cacheManagerName, boolean exposeGlobalJmx, boolean exposeCacheJmx) {
-      GlobalConfiguration globalConfiguration = GlobalConfiguration.getNonClusteredDefault();
-      globalConfiguration.setJmxDomain(jmxDomain);
+      GlobalConfigurationBuilder globalConfiguration = new GlobalConfigurationBuilder();
+      globalConfiguration
+         .globalJmxStatistics()
+            .jmxDomain(jmxDomain)
+            .mBeanServerLookup(new PerThreadMBeanServerLookup())
+            .enabled(exposeGlobalJmx);
       if (cacheManagerName != null)
-         globalConfiguration.setCacheManagerName(cacheManagerName);
-      globalConfiguration.setMBeanServerLookup(PerThreadMBeanServerLookup.class.getName());
-      globalConfiguration.setExposeGlobalJmxStatistics(exposeGlobalJmx);
-      Configuration configuration = new Configuration();
-      configuration.setExposeJmxStatistics(exposeCacheJmx);
+         globalConfiguration.globalJmxStatistics().cacheManagerName(cacheManagerName);
+      ConfigurationBuilder configuration = new ConfigurationBuilder();
+      configuration.jmxStatistics().enabled(exposeCacheJmx);
       return createCacheManager(globalConfiguration, configuration, true);
-   }
-
-   @Deprecated
-   public static Configuration getDefaultConfiguration(boolean transactional) {
-      Configuration c = new Configuration();
-      markAsTransactional(transactional, c);
-      updateTransactionSupport(c);
-      return c;
    }
 
    public static ConfigurationBuilder getDefaultCacheConfiguration(boolean transactional) {
@@ -462,44 +290,8 @@ public class TestCacheManagerFactory {
       return builder;
    }
 
-
-   @Deprecated
-   public static Configuration getDefaultConfiguration(boolean transactional, Configuration.CacheMode cacheMode) {
-      Configuration c = new Configuration();
-      markAsTransactional(transactional, c);
-      updateTransactionSupport(c);
-      c.setCacheMode(cacheMode);
-      if (cacheMode.isClustered()) {
-         c.setSyncRollbackPhase(true);
-         c.setSyncCommitPhase(true);
-      }
-      return c;
-   }
-
-   @Deprecated
-   public static void amendTransport(GlobalConfiguration cfg) {
+   public static void amendTransport(GlobalConfigurationBuilder cfg) {
       amendTransport(cfg, new TransportFlags());
-   }
-
-   @Deprecated
-   private static void amendTransport(GlobalConfiguration configuration, TransportFlags flags) {
-      if (configuration.getTransportClass() != null) { //this is local
-         Properties newTransportProps = new Properties();
-         Properties previousSettings = configuration.getTransportProperties();
-         if (previousSettings != null) {
-            newTransportProps.putAll(previousSettings);
-         }
-
-         String fullTestName = perThreadCacheManagers.get().fullTestName;
-         String nextCacheName = perThreadCacheManagers.get().getNextCacheName();
-         checkTestName(fullTestName);
-
-         newTransportProps.put(JGroupsTransport.CONFIGURATION_STRING,
-               getJGroupsConfig(fullTestName, flags));
-
-         configuration.setTransportProperties(newTransportProps);
-         configuration.setTransportNodeName(nextCacheName);
-      }
    }
 
    private static void amendTransport(GlobalConfigurationBuilder builder, TransportFlags flags) {
@@ -535,14 +327,6 @@ public class TestCacheManagerFactory {
       }
    }
 
-
-   @Deprecated
-   public static void minimizeThreads(GlobalConfiguration gc) {
-      Properties p = new Properties();
-      p.setProperty("maxThreads", String.valueOf(MAX_ASYNC_EXEC_THREADS));
-      gc.setAsyncTransportExecutorProperties(p);
-   }
-
    public static void minimizeThreads(GlobalConfigurationBuilder builder) {
       builder.asyncTransportExecutor().addProperty("maxThreads", String.valueOf(MAX_ASYNC_EXEC_THREADS))
             .addProperty("queueSize", String.valueOf(ASYNC_EXEC_QUEUE_SIZE))
@@ -552,19 +336,6 @@ public class TestCacheManagerFactory {
             .addProperty("keepAliveTime", String.valueOf(KEEP_ALIVE));
    }
 
-   @Deprecated
-   public static void amendMarshaller(GlobalConfiguration configuration) {
-      if (MARSHALLER != null) {
-         try {
-            Util.loadClassStrict(MARSHALLER, Thread.currentThread().getContextClassLoader());
-            configuration.setMarshallerClass(MARSHALLER);
-         } catch (ClassNotFoundException e) {
-            // No-op, stick to GlobalConfiguration default.
-         }
-      }
-   }
-
-   @SuppressWarnings("unchecked")
    public static void amendMarshaller(GlobalConfigurationBuilder builder) {
       if (MARSHALLER != null) {
          try {
@@ -578,14 +349,6 @@ public class TestCacheManagerFactory {
             // No-op, stick to GlobalConfiguration default.
          }
       }
-   }
-
-   @Deprecated
-   private static DefaultCacheManager newDefaultCacheManager(boolean start, GlobalConfiguration gc, Configuration c) {
-      GlobalConfigurationBuilder builder = new GlobalConfigurationBuilder().read(LegacyGlobalConfigurationAdaptor.adapt(gc));
-      minimizeThreads(builder);
-      DefaultCacheManager defaultCacheManager = new DefaultCacheManager(builder.build(), LegacyConfigurationAdaptor.adapt(c), start);
-      return addThreadCacheManager(defaultCacheManager);
    }
 
    private static DefaultCacheManager newDefaultCacheManager(boolean start, GlobalConfigurationBuilder gc, ConfigurationBuilder c) {

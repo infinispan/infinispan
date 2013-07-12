@@ -30,6 +30,6 @@ public class SessionTest extends SingleCacheManagerTest {
 
    @Override
    protected EmbeddedCacheManager createCacheManager() throws Exception {
-      return TestCacheManagerFactory.createLocalCacheManager(false);
+      return TestCacheManagerFactory.createCacheManager(false);
    }
 }

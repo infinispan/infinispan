@@ -366,12 +366,11 @@ public class JdbcStringBasedCacheStore extends LockSupportCacheStore<String> {
    }
 
    public boolean isUsingPreload() {
-      return cache.getConfiguration() != null && cache.getConfiguration().getCacheLoaderManagerConfig() != null &&
-            cache.getConfiguration().getCacheLoaderManagerConfig().isPreload();
+      return cache.getCacheConfiguration() != null && cache.getCacheConfiguration().loaders().preload();
    }
 
    public boolean isDistributed() {
-      return cache.getConfiguration() != null && cache.getConfiguration().getCacheMode().isDistributed();
+      return cache.getCacheConfiguration() != null && cache.getCacheConfiguration().clustering().cacheMode().isDistributed();
    }
 
    private InternalCacheEntry readStoredEntry(Object key, String lockingKey) throws CacheLoaderException {

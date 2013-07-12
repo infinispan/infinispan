@@ -1,7 +1,6 @@
 package org.infinispan.tx.synchronisation;
 
-import org.infinispan.config.Configuration;
-import org.infinispan.manager.DefaultCacheManager;
+import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.infinispan.transaction.lookup.DummyTransactionManagerLookup;
@@ -23,9 +22,8 @@ public class LocalModeWithSyncTxTest extends LocalModeTxTest {
 
    @Override
    protected EmbeddedCacheManager createCacheManager() {
-      Configuration config = getDefaultStandaloneConfig(true);
-      config.fluent().transaction().transactionManagerLookupClass(DummyTransactionManagerLookup.class);
-      config.fluent().transaction().useSynchronization(true);
+      ConfigurationBuilder config = getDefaultStandaloneCacheConfig(true);
+      config.transaction().transactionManagerLookup(new DummyTransactionManagerLookup()).useSynchronization(true);
       return TestCacheManagerFactory.createCacheManager(config);
    }
 

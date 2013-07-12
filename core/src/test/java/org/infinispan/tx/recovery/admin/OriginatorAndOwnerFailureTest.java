@@ -62,7 +62,7 @@ public class OriginatorAndOwnerFailureTest extends AbstractRecoveryTest {
 
    protected void runTest(int index) {
 
-      assert cache(0).getConfiguration().isTransactionalCache();
+      assert cache(0).getCacheConfiguration().transaction().transactionMode().isTransactional();
 
       List<Long> internalIds = getInternalIds(recoveryOps(index).showInDoubtTransactions());
       assertEquals(internalIds.size(), 1);

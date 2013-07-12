@@ -1,7 +1,7 @@
 package org.infinispan.jmx;
 
-import org.infinispan.config.Configuration;
-import org.infinispan.config.GlobalConfiguration;
+import org.infinispan.configuration.cache.CacheMode;
+import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.manager.CacheContainer;
 import org.infinispan.test.MultipleCacheManagersTest;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
@@ -31,26 +31,16 @@ public class ClusteredCacheManagerMBeanTest extends MultipleCacheManagersTest {
 
    @Override
    protected void createCacheManagers() throws Throwable {
-      GlobalConfiguration globalConfiguration = GlobalConfiguration.getClusteredDefault();
-      globalConfiguration.setExposeGlobalJmxStatistics(true);
-      globalConfiguration.setAllowDuplicateDomains(true);
-      globalConfiguration.setJmxDomain(JMX_DOMAIN);
-      globalConfiguration.setMBeanServerLookup(PerThreadMBeanServerLookup.class.getName());
-      CacheContainer cacheManager1 = TestCacheManagerFactory.createCacheManagerEnforceJmxDomain(globalConfiguration);
+      CacheContainer cacheManager1 = TestCacheManagerFactory.createClusteredCacheManagerEnforceJmxDomain(JMX_DOMAIN, true);
       cacheManager1.start();
-      GlobalConfiguration globalConfiguration2 = GlobalConfiguration.getClusteredDefault();
-      globalConfiguration2.setExposeGlobalJmxStatistics(true);
-      globalConfiguration2.setMBeanServerLookup(PerThreadMBeanServerLookup.class.getName());
-      globalConfiguration2.setJmxDomain(JMX_DOMAIN);
-      globalConfiguration2.setAllowDuplicateDomains(true);
-      CacheContainer cacheManager2 = TestCacheManagerFactory.createCacheManagerEnforceJmxDomain(globalConfiguration2);
+      CacheContainer cacheManager2 = TestCacheManagerFactory.createClusteredCacheManagerEnforceJmxDomain(JMX_DOMAIN, true);
       cacheManager2.start();
       registerCacheManager(cacheManager1, cacheManager2);
       name1 = getCacheManagerObjectName(JMX_DOMAIN);
       name2 = getCacheManagerObjectName(JMX_DOMAIN2);
       server = PerThreadMBeanServerLookup.getThreadMBeanServer();
-      Configuration config = getDefaultClusteredConfig(Configuration.CacheMode.REPL_SYNC);
-      config.setExposeJmxStatistics(true);
+      ConfigurationBuilder config = getDefaultClusteredCacheConfig(CacheMode.REPL_SYNC);
+      config.jmxStatistics().enable();
       defineConfigurationOnAllManagers("mycache", config);
       manager(0).getCache("mycache");
       manager(1).getCache("mycache");

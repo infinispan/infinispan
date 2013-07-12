@@ -1,7 +1,7 @@
 package org.infinispan.distribution.topologyaware;
 
-import org.infinispan.config.Configuration;
-import org.infinispan.config.GlobalConfiguration;
+import org.infinispan.configuration.cache.ConfigurationBuilder;
+import org.infinispan.configuration.global.GlobalConfigurationBuilder;
 import org.infinispan.distribution.DistSyncFuncTest;
 import org.infinispan.distribution.ch.ConsistentHash;
 import org.infinispan.manager.EmbeddedCacheManager;
@@ -46,10 +46,9 @@ public class TopologyAwareChFunctionalTest extends DistSyncFuncTest {
             throw new RuntimeException("Bad!");
          }
       }
-      GlobalConfiguration gc = GlobalConfiguration.getClusteredDefault();
-      gc.setRackId(rack);
-      gc.setMachineId(machine);
-      EmbeddedCacheManager cm = TestCacheManagerFactory.createCacheManager(gc, new Configuration());
+      GlobalConfigurationBuilder gc = GlobalConfigurationBuilder.defaultClusteredBuilder();
+      gc.transport().rackId(rack).machineId(machine);
+      EmbeddedCacheManager cm = TestCacheManagerFactory.createClusteredCacheManager(gc, new ConfigurationBuilder());
       cacheManagers.add(cm);
       return cm;
    }

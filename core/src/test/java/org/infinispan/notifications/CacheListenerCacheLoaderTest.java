@@ -1,9 +1,8 @@
 package org.infinispan.notifications;
 
 import org.infinispan.Cache;
-import org.infinispan.config.CacheLoaderManagerConfig;
-import org.infinispan.config.Configuration;
-import org.infinispan.loaders.dummy.DummyInMemoryCacheStore;
+import org.infinispan.configuration.cache.ConfigurationBuilder;
+import org.infinispan.loaders.dummy.DummyInMemoryCacheStoreConfigurationBuilder;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.notifications.cachelistener.annotation.CacheEntryActivated;
 import org.infinispan.notifications.cachelistener.annotation.CacheEntryLoaded;
@@ -28,18 +27,16 @@ public class CacheListenerCacheLoaderTest extends AbstractInfinispanTest {
 
    @BeforeMethod
    public void setUp() {
-      cm = TestCacheManagerFactory.createLocalCacheManager(false);
-      Configuration c = new Configuration();
-      CacheLoaderManagerConfig clmc = new CacheLoaderManagerConfig();
-      DummyInMemoryCacheStore.Cfg clc = new DummyInMemoryCacheStore.Cfg("no_passivation");
-      clmc.addCacheLoaderConfig(clc);
-      c.setCacheLoaderManagerConfig(clmc);
-      cm.defineConfiguration("no_passivation", c);
+      cm = TestCacheManagerFactory.createCacheManager(false);
+      ConfigurationBuilder c = new ConfigurationBuilder();
+      c.loaders().addStore(DummyInMemoryCacheStoreConfigurationBuilder.class)
+         .storeName("no_passivation");
+      cm.defineConfiguration("no_passivation", c.build());
 
-      c = c.clone();
-      ((DummyInMemoryCacheStore.Cfg) c.getCacheLoaderManagerConfig().getFirstCacheLoaderConfig()).setStoreName("passivation");
-      c.getCacheLoaderManagerConfig().setPassivation(true);
-      cm.defineConfiguration("passivation", c);
+      new ConfigurationBuilder();
+      c.loaders().passivation(true).addStore(DummyInMemoryCacheStoreConfigurationBuilder.class)
+         .storeName("passivation");
+      cm.defineConfiguration("passivation", c.build());
    }
 
    @AfterMethod

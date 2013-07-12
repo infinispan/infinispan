@@ -2,7 +2,8 @@ package org.infinispan.lock;
 
 import org.infinispan.Cache;
 import org.infinispan.commands.tx.PrepareCommand;
-import org.infinispan.config.Configuration;
+import org.infinispan.configuration.cache.CacheMode;
+import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.distribution.MagicKey;
 import org.infinispan.interceptors.InterceptorChain;
 import org.infinispan.interceptors.distribution.TxDistributionInterceptor;
@@ -21,9 +22,8 @@ public class StaleLocksOnPrepareFailureTest extends MultipleCacheManagersTest {
 
    @Override
    protected void createCacheManagers() throws Throwable {
-      Configuration cfg = TestCacheManagerFactory.getDefaultConfiguration(true, Configuration.CacheMode.DIST_SYNC);
-      cfg.setNumOwners(NUM_CACHES);
-      cfg.setLockAcquisitionTimeout(100);
+      ConfigurationBuilder cfg = getDefaultClusteredCacheConfig(CacheMode.DIST_SYNC, true);
+      cfg.clustering().hash().numOwners(NUM_CACHES).locking().lockAcquisitionTimeout(100);
       for (int i = 0; i < NUM_CACHES; i++) {
          EmbeddedCacheManager cm = TestCacheManagerFactory.createClusteredCacheManager(cfg);
          registerCacheManager(cm);

@@ -1,12 +1,10 @@
 package org.infinispan.api.batch;
 
 import org.infinispan.Cache;
-import org.infinispan.config.Configuration;
+import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
-import org.infinispan.test.fwk.TransactionSetup;
-import org.infinispan.transaction.TransactionMode;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
@@ -23,7 +21,7 @@ public class BatchWithTMTest extends AbstractBatchTest {
 
    @BeforeClass
    public void createCacheManager() {
-      cm = TestCacheManagerFactory.createLocalCacheManager(false);
+      cm = TestCacheManagerFactory.createCacheManager(false);
    }
 
    @AfterClass
@@ -51,7 +49,7 @@ public class BatchWithTMTest extends AbstractBatchTest {
    }
 
    public void testBatchWithoutOngoingTMSuspension() throws Exception {
-      Cache cache = createCache("testBatchWithoutOngoingTMSuspension");
+      Cache<String, String> cache = createCache("testBatchWithoutOngoingTMSuspension");
       TransactionManager tm = TestingUtil.getTransactionManager(cache);
       assert tm.getTransaction() == null : "Should have no ongoing txs";
       cache.startBatch();
@@ -81,7 +79,7 @@ public class BatchWithTMTest extends AbstractBatchTest {
    }
 
    public void testBatchRollback() throws Exception {
-      Cache cache = createCache("testBatchRollback");
+      Cache<String, String> cache = createCache("testBatchRollback");
       cache.startBatch();
       cache.put("k", "v");
       cache.put("k2", "v2");
@@ -96,12 +94,9 @@ public class BatchWithTMTest extends AbstractBatchTest {
    }
 
    private Cache<String, String> createCache(String name) {
-      Configuration c = new Configuration();
-      c.setTransactionManagerLookupClass(TransactionSetup.getManagerLookup());
-      c.setInvocationBatchingEnabled(true);
-      c.fluent().transaction().transactionMode(TransactionMode.TRANSACTIONAL);
-      assert c.getTransactionManagerLookupClass() != null : "Should have a transaction manager lookup class attached!!";
-      cm.defineConfiguration(name, c);
+      ConfigurationBuilder c = TestCacheManagerFactory.getDefaultCacheConfiguration(true);
+      c.invocationBatching().enable();
+      cm.defineConfiguration(name, c.build());
       return cm.getCache(name);
    }
 }

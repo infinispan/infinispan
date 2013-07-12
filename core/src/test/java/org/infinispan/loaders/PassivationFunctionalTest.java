@@ -1,10 +1,9 @@
 package org.infinispan.loaders;
 
 import org.infinispan.Cache;
-import org.infinispan.config.CacheLoaderManagerConfig;
-import org.infinispan.config.Configuration;
+import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.container.entries.InternalCacheEntry;
-import org.infinispan.loaders.dummy.DummyInMemoryCacheStore;
+import org.infinispan.loaders.dummy.DummyInMemoryCacheStoreConfigurationBuilder;
 import org.infinispan.manager.CacheContainer;
 import org.infinispan.test.AbstractInfinispanTest;
 import org.infinispan.test.TestingUtil;
@@ -30,17 +29,18 @@ public class PassivationFunctionalTest extends AbstractInfinispanTest {
    Cache cache;
    CacheStore store;
    TransactionManager tm;
-   Configuration cfg;
+   ConfigurationBuilder cfg;
    CacheContainer cm;
    long lifespan = 6000000; // very large lifespan so nothing actually expires
 
    @BeforeTest
    public void setUp() {
-      cfg = TestCacheManagerFactory.getDefaultConfiguration(true);
-      CacheLoaderManagerConfig clmc = new CacheLoaderManagerConfig();
-      clmc.setPassivation(true);
-      clmc.addCacheLoaderConfig(new DummyInMemoryCacheStore.Cfg());
-      cfg.setCacheLoaderManagerConfig(clmc);
+      cfg = TestCacheManagerFactory.getDefaultCacheConfiguration(true);
+      cfg
+         .loaders()
+            .passivation(true)
+               .addStore(DummyInMemoryCacheStoreConfigurationBuilder.class);
+
       cm = TestCacheManagerFactory.createCacheManager(cfg);
       cache = cm.getCache();
       store = TestingUtil.extractComponent(cache, CacheLoaderManager.class).getCacheStore();

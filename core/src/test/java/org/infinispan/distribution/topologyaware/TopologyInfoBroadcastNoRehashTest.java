@@ -1,6 +1,6 @@
 package org.infinispan.distribution.topologyaware;
 
-import org.infinispan.config.Configuration;
+import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.testng.annotations.Test;
 
 /**
@@ -11,9 +11,9 @@ import org.testng.annotations.Test;
 public class TopologyInfoBroadcastNoRehashTest extends TopologyInfoBroadcastTest {
 
    @Override
-   protected Configuration getClusterConfig() {
-      Configuration configuration = super.getClusterConfig();
-      configuration.setRehashEnabled(false);
+   protected ConfigurationBuilder getClusterConfig() {
+      ConfigurationBuilder configuration = super.getClusterConfig();
+      configuration.clustering().stateTransfer().fetchInMemoryState(false);
       return configuration;
    }
 }

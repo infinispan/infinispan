@@ -1,6 +1,6 @@
 package org.infinispan.distribution.topologyaware;
-
-import org.infinispan.config.GlobalConfiguration;
+import org.infinispan.configuration.cache.CacheMode;
+import org.infinispan.configuration.global.GlobalConfigurationBuilder;
 import org.infinispan.distribution.DistAsyncFuncTest;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
@@ -16,7 +16,6 @@ public class TopologyAwareDistAsyncFuncTest extends DistAsyncFuncTest {
 
    @Override
    protected EmbeddedCacheManager addClusterEnabledCacheManager(TransportFlags flags) {
-      EmbeddedCacheManager cm = TestCacheManagerFactory.createClusteredCacheManager(flags);
       int index = cacheManagers.size();
       String rack;
       String machine;
@@ -45,9 +44,9 @@ public class TopologyAwareDistAsyncFuncTest extends DistAsyncFuncTest {
             throw new RuntimeException("Bad!");
          }
       }
-      GlobalConfiguration globalConfiguration = cm.getGlobalConfiguration();
-      globalConfiguration.setRackId(rack);
-      globalConfiguration.setMachineId(machine);
+      GlobalConfigurationBuilder gcb = GlobalConfigurationBuilder.defaultClusteredBuilder();
+      gcb.transport().rackId(rack).machineId(machine);
+      EmbeddedCacheManager cm = TestCacheManagerFactory.createClusteredCacheManager(gcb, getDefaultClusteredCacheConfig(CacheMode.DIST_ASYNC), flags);
       cacheManagers.add(cm);
       return cm;
    }

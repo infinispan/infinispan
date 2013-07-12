@@ -1,7 +1,7 @@
 package org.infinispan.lock;
 
 import org.infinispan.commons.CacheException;
-import org.infinispan.config.Configuration;
+import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.context.Flag;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.test.SingleCacheManagerTest;
@@ -22,8 +22,8 @@ public class ExplicitLockingAndOptimisticCachesTest extends SingleCacheManagerTe
 
    @Override
    protected EmbeddedCacheManager createCacheManager() throws Exception {
-      final Configuration c = getDefaultStandaloneConfig(true);
-      c.fluent().transaction().lockingMode(LockingMode.OPTIMISTIC);
+      final ConfigurationBuilder c = getDefaultStandaloneCacheConfig(true);
+      c.transaction().lockingMode(LockingMode.OPTIMISTIC);
       return TestCacheManagerFactory.createCacheManager(c);
    }
 

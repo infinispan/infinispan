@@ -22,7 +22,7 @@ abstract class AbstractMarshallingTest {
    @BeforeTest(alwaysRun=true)
    def setUp() {
       // Manual addition of externalizers to replication what happens in fully functional tests
-      cm = TestCacheManagerFactory.createLocalCacheManager(false)
+      cm = TestCacheManagerFactory.createCacheManager()
       marshaller = TestingUtil.extractCacheMarshaller(cm.getCache())
    }
 

@@ -1,6 +1,7 @@
 package org.infinispan.tx.recovery;
 
-import org.infinispan.config.Configuration;
+import org.infinispan.configuration.cache.CacheMode;
+import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.test.MultipleCacheManagersTest;
 import org.testng.annotations.Test;
 
@@ -16,8 +17,8 @@ public class RecoveryHandlerTest extends MultipleCacheManagersTest {
 
    @Override
    protected void createCacheManagers() throws Throwable {
-      final Configuration config = getDefaultClusteredConfig(Configuration.CacheMode.DIST_SYNC);
-      config.fluent().transaction().recovery().useSynchronization(false);
+      final ConfigurationBuilder config = getDefaultClusteredCacheConfig(CacheMode.DIST_SYNC, true);
+      config.transaction().useSynchronization(false).recovery().enable();
       createCluster(config, 2);
       waitForClusterToForm();
    }

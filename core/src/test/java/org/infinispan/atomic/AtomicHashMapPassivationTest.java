@@ -1,12 +1,11 @@
 package org.infinispan.atomic;
 
-import org.infinispan.config.CacheLoaderManagerConfig;
-import org.infinispan.config.Configuration;
+import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.container.entries.InternalCacheEntry;
 import org.infinispan.loaders.CacheLoaderException;
 import org.infinispan.loaders.CacheLoaderManager;
 import org.infinispan.loaders.CacheStore;
-import org.infinispan.loaders.dummy.DummyInMemoryCacheStore;
+import org.infinispan.loaders.dummy.DummyInMemoryCacheStoreConfigurationBuilder;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.test.SingleCacheManagerTest;
 import org.infinispan.test.TestingUtil;
@@ -26,16 +25,16 @@ import java.lang.reflect.Method;
 public class AtomicHashMapPassivationTest extends SingleCacheManagerTest {
 
    CacheStore store;
-   
+
    @Override
    protected EmbeddedCacheManager createCacheManager() throws Exception {
-      Configuration c = getDefaultStandaloneConfig(true);
-      c.setInvocationBatchingEnabled(true);
-      c.setUseLazyDeserialization(true);
-      CacheLoaderManagerConfig clmc = new CacheLoaderManagerConfig();
-      clmc.setPassivation(true);
-      clmc.addCacheLoaderConfig(new DummyInMemoryCacheStore.Cfg());
-      c.setCacheLoaderManagerConfig(clmc);
+      ConfigurationBuilder c = getDefaultStandaloneCacheConfig(true);
+      c
+         .invocationBatching().enable()
+         .storeAsBinary().enable()
+         .loaders()
+            .passivation(true)
+            .addStore(DummyInMemoryCacheStoreConfigurationBuilder.class);
       EmbeddedCacheManager cm = TestCacheManagerFactory.createCacheManager(c);
       cache = cm.getCache();
       store = TestingUtil.extractComponent(cache, CacheLoaderManager.class).getCacheStore();
@@ -80,5 +79,5 @@ public class AtomicHashMapPassivationTest extends SingleCacheManagerTest {
       assert !cache.getAdvancedCache().getDataContainer().containsKey(key) : "Key " + key + " should not be in cache!";
    }
 
-   
+
 }

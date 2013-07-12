@@ -1,7 +1,8 @@
 package org.infinispan.tx;
 
 import org.infinispan.Cache;
-import org.infinispan.config.Configuration;
+import org.infinispan.configuration.cache.CacheMode;
+import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.test.MultipleCacheManagersTest;
 import org.infinispan.test.TestingUtil;
@@ -25,12 +26,20 @@ public class ParticipantFailsAfterPrepareTest extends MultipleCacheManagersTest 
 
    @Override
    protected void createCacheManagers() throws Throwable {
-      Configuration configuration = getDefaultClusteredConfig(Configuration.CacheMode.DIST_SYNC, true);
-      configuration.fluent().locking().useLockStriping(false);
-      configuration.fluent().transaction()
-         .transactionManagerLookupClass(DummyTransactionManagerLookup.class);
-      configuration.fluent().clustering().hash().rehashEnabled(false);
-      configuration.fluent().clustering().hash().numOwners(3);
+      ConfigurationBuilder configuration = getDefaultClusteredCacheConfig(CacheMode.DIST_SYNC, true);
+      configuration
+         .locking()
+            .useLockStriping(false)
+         .transaction()
+            .transactionManagerLookup(new DummyTransactionManagerLookup())
+            .useSynchronization(false)
+            .recovery()
+               .disable()
+         .clustering()
+            .stateTransfer()
+               .fetchInMemoryState(false)
+            .hash()
+               .numOwners(3);
       createCluster(configuration, 4);
       waitForClusterToForm();
    }

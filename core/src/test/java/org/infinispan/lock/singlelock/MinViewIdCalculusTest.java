@@ -1,6 +1,7 @@
 package org.infinispan.lock.singlelock;
 
-import org.infinispan.config.Configuration;
+import org.infinispan.configuration.cache.CacheMode;
+import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.statetransfer.StateTransferManager;
 import org.infinispan.test.MultipleCacheManagersTest;
 import org.infinispan.test.TestingUtil;
@@ -23,16 +24,17 @@ import static org.testng.Assert.assertEquals;
 @CleanupAfterMethod
 public class MinViewIdCalculusTest extends MultipleCacheManagersTest {
 
-   private Configuration c;
+   private ConfigurationBuilder c;
 
    @Override
    protected void createCacheManagers() throws Throwable {
-      c = getDefaultClusteredConfig(Configuration.CacheMode.DIST_SYNC, true);
-      c.fluent()
-            .transaction()
+      c = getDefaultClusteredCacheConfig(CacheMode.DIST_SYNC, true);
+      c
+         .transaction()
                .lockingMode(LockingMode.PESSIMISTIC)
-               .transactionManagerLookup(new DummyTransactionManagerLookup());
-      c.fluent().hash().numOwners(3);
+               .transactionManagerLookup(new DummyTransactionManagerLookup())
+         .clustering()
+            .hash().numOwners(3);
       createCluster(c, 2);
       waitForClusterToForm();
    }

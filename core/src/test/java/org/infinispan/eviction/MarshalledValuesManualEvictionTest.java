@@ -1,6 +1,6 @@
 package org.infinispan.eviction;
 
-import org.infinispan.config.Configuration;
+import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.eviction.MarshalledValuesEvictionTest.MockMarshalledValueInterceptor;
 import org.infinispan.interceptors.MarshalledValueInterceptor;
 import org.infinispan.manager.EmbeddedCacheManager;
@@ -20,9 +20,9 @@ public class MarshalledValuesManualEvictionTest extends SingleCacheManagerTest {
 
    @Override
    protected EmbeddedCacheManager createCacheManager() throws Exception {
-      Configuration cfg = new Configuration();
-      cfg.setUseLockStriping(false); // to minimise chances of deadlock in the unit test
-      cfg.setUseLazyDeserialization(true);
+      ConfigurationBuilder cfg = new ConfigurationBuilder();
+      cfg.locking().useLockStriping(false); // to minimise chances of deadlock in the unit test
+      cfg.storeAsBinary().enable();
       EmbeddedCacheManager cm = TestCacheManagerFactory.createCacheManager(cfg);
       cache = cm.getCache();
       StreamingMarshaller marshaller = TestingUtil.extractComponent(cache, StreamingMarshaller.class);

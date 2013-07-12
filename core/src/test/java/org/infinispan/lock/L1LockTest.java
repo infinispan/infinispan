@@ -1,6 +1,7 @@
 package org.infinispan.lock;
 
-import org.infinispan.config.Configuration;
+import org.infinispan.configuration.cache.CacheMode;
+import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.test.MultipleCacheManagersTest;
 import org.infinispan.transaction.lookup.DummyTransactionManagerLookup;
 import org.testng.annotations.Test;
@@ -15,8 +16,8 @@ import static junit.framework.Assert.assertEquals;
 public class L1LockTest extends MultipleCacheManagersTest {
    @Override
    protected void createCacheManagers() throws Throwable {
-      Configuration config = getDefaultClusteredConfig(Configuration.CacheMode.DIST_SYNC, true);
-      config.fluent().hash().numOwners(1).transaction().transactionManagerLookup(new DummyTransactionManagerLookup());
+      ConfigurationBuilder config = getDefaultClusteredCacheConfig(CacheMode.DIST_SYNC, true);
+      config.clustering().hash().numOwners(1).transaction().transactionManagerLookup(new DummyTransactionManagerLookup());
       createCluster(config, 2);
       waitForClusterToForm();
    }

@@ -18,12 +18,9 @@ import org.hamcrest.Matcher;
 import org.infinispan.AdvancedCache;
 import org.infinispan.Cache;
 import org.infinispan.commands.FlagAffectedCommand;
-import org.infinispan.commands.read.GetKeyValueCommand;
-import org.infinispan.commands.write.PutKeyValueCommand;
 import org.infinispan.commands.write.PutMapCommand;
-import org.infinispan.commands.write.RemoveCommand;
-import org.infinispan.commands.write.ReplaceCommand;
-import org.infinispan.config.Configuration;
+import org.infinispan.configuration.cache.CacheMode;
+import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.context.Flag;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.manager.CacheContainer;
@@ -32,7 +29,6 @@ import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.infinispan.transaction.TransactionMode;
 import org.infinispan.util.concurrent.IsolationLevel;
-import org.mockito.verification.VerificationMode;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeMethod;
@@ -53,10 +49,11 @@ public class CacheNotifierTest extends AbstractInfinispanTest {
 
    @BeforeMethod
    public void setUp() throws Exception {
-      Configuration c = new Configuration();
-      c.fluent().transaction().transactionMode(TransactionMode.NON_TRANSACTIONAL);
-      c.setCacheMode(Configuration.CacheMode.LOCAL);
-      c.setIsolationLevel(IsolationLevel.REPEATABLE_READ);
+      ConfigurationBuilder c = new ConfigurationBuilder();
+      c
+         .transaction().transactionMode(TransactionMode.NON_TRANSACTIONAL)
+         .clustering().cacheMode(CacheMode.LOCAL)
+         .locking().isolationLevel(IsolationLevel.REPEATABLE_READ);
       cm = TestCacheManagerFactory.createCacheManager(c);
 
       cache = cm.getCache();

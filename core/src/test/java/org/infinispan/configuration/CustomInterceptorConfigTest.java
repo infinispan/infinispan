@@ -1,6 +1,9 @@
-package org.infinispan.config;
+package org.infinispan.configuration;
 
+import static org.testng.AssertJUnit.assertNotNull;
 import org.infinispan.Cache;
+import org.infinispan.configuration.cache.ConfigurationBuilder;
+import org.infinispan.configuration.cache.InterceptorConfiguration.Position;
 import org.infinispan.interceptors.InvocationContextInterceptor;
 import org.infinispan.interceptors.base.CommandInterceptor;
 import org.infinispan.test.AbstractInfinispanTest;
@@ -49,38 +52,37 @@ public class CustomInterceptorConfigTest extends AbstractInfinispanTest {
          }
       });
    }
-   
+
    public static final class CustomInterceptor1 extends CommandInterceptor {}
    public static final class CustomInterceptor2 extends CommandInterceptor {}
 
 
    public void testCustomInterceptorsProgramatically() {
-      Configuration cfg = new Configuration();
-      cfg.setLockAcquisitionTimeout(1010);
-      CustomInterceptorConfig cic = new CustomInterceptorConfig(new DummyInterceptor(), true, false, -1, "", "");
-      cfg.setCustomInterceptors(Collections.singletonList(cic));
+      ConfigurationBuilder cfg = new ConfigurationBuilder();
+      cfg.locking().lockAcquisitionTimeout(1010);
+      cfg.customInterceptors().addInterceptor().interceptor(new DummyInterceptor()).position(Position.FIRST);
+
       withCacheManager(new CacheManagerCallable(TestCacheManagerFactory.createCacheManager(cfg)) {
          @Override
          public void call() {
             Cache c = cm.getCache();
             DummyInterceptor i = TestingUtil.findInterceptor(c, DummyInterceptor.class);
-            assert i != null;
+            assertNotNull(i);
          }
       });
    }
 
    public void testCustomInterceptorsProgramaticallyWithOverride() {
-      final Configuration cfg = new Configuration();
-      cfg.setLockAcquisitionTimeout(1010);
-      CustomInterceptorConfig cic = new CustomInterceptorConfig(new DummyInterceptor(), true, false, -1, "", "");
-      cfg.setCustomInterceptors(Collections.singletonList(cic));
-      withCacheManager(new CacheManagerCallable(TestCacheManagerFactory.createCacheManager(new Configuration())) {
+      final ConfigurationBuilder cfg = new ConfigurationBuilder();
+      cfg.locking().lockAcquisitionTimeout(1010);
+      cfg.customInterceptors().addInterceptor().interceptor(new DummyInterceptor()).position(Position.FIRST);
+      withCacheManager(new CacheManagerCallable(TestCacheManagerFactory.createCacheManager()) {
          @Override
          public void call() {
-            cm.defineConfiguration("custom", cfg);
+            cm.defineConfiguration("custom", cfg.build());
             Cache c = cm.getCache("custom");
             DummyInterceptor i = TestingUtil.findInterceptor(c, DummyInterceptor.class);
-            assert i != null;
+            assertNotNull(i);
          }
       });
 

@@ -49,6 +49,17 @@ public abstract class AbstractJdbcCacheStoreConfigurationBuilder<T extends Abstr
       }
    }
 
+   /**
+    * Use the specified {@link ConnectionFactoryConfigurationBuilder} to configure connections to the database
+    */
+   public <C extends ConnectionFactoryConfigurationBuilder<?>> C connectionFactory(C builder) {
+      if (connectionFactory != null) {
+         throw new IllegalStateException("A ConnectionFactory has already been configured for this store");
+      }
+      this.connectionFactory = (ConnectionFactoryConfigurationBuilder<ConnectionFactoryConfiguration>) builder;
+      return builder;
+   }
+
    @Override
    public void validate() {
       super.validate();

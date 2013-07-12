@@ -1,6 +1,7 @@
 package org.infinispan.config.parsing;
 
 import org.infinispan.Cache;
+import org.infinispan.config.parsing.ConfigFilesConvertor;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.configuration.cache.FileCacheStoreConfiguration;

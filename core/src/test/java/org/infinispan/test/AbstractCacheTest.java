@@ -1,7 +1,6 @@
 package org.infinispan.test;
 
 import org.infinispan.Cache;
-import org.infinispan.config.Configuration;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.manager.EmbeddedCacheManager;
@@ -9,8 +8,6 @@ import org.infinispan.test.fwk.CleanupAfterMethod;
 import org.infinispan.test.fwk.CleanupAfterTest;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.infinispan.util.concurrent.locks.LockManager;
-
-import java.util.Set;
 
 /**
  * Base class for {@link org.infinispan.test.SingleCacheManagerTest} and {@link org.infinispan.test.MultipleCacheManagersTest}.
@@ -39,52 +36,8 @@ public class AbstractCacheTest extends AbstractInfinispanTest {
       );
    }
 
-
-   /**
-    * use TestingUtil.clearContent(cacheManager);
-    */
-   @Deprecated
-   public void clearContent(EmbeddedCacheManager embeddedCacheManager) {
-      TestingUtil.clearContent(embeddedCacheManager);
-   }
-
-   /**
-    * use TestingUtil.getRunningCaches(cacheManager);
-    */
-   @Deprecated
-   protected Set<Cache> getRunningCaches(EmbeddedCacheManager embeddedCacheManager) {
-      return TestingUtil.getRunningCaches(embeddedCacheManager);
-   }
-
-   /**
-    * When multiple test methods operate on same cluster, sync commit and rollback are mandatory. This is in order to
-    * make sure that an commit message will be dispatched in the same test method it was triggered and it will not
-    * interfere with further log messages.  This is a non-transactional configuration.
-    */
-   public static Configuration getDefaultClusteredConfig(Configuration.CacheMode mode) {
-      return getDefaultClusteredConfig(mode, false);
-   }
-
-   public static Configuration getDefaultClusteredConfig(Configuration.CacheMode mode, boolean transactional) {
-      if (mode.isSynchronous()) {
-         return TestCacheManagerFactory.getDefaultConfiguration(transactional).fluent()
-            .mode(mode)
-            .clustering()
-               .sync()
-                  .stateRetrieval().fetchInMemoryState(false)
-               .transaction().syncCommitPhase(true).syncRollbackPhase(true)
-               .cacheStopTimeout(0)
-            .build();
-      } else {
-         return TestCacheManagerFactory.getDefaultConfiguration(transactional).fluent()
-            .mode(mode)
-            .clustering()
-               .async()
-                  .stateRetrieval().fetchInMemoryState(false)
-               .transaction().syncCommitPhase(true).syncRollbackPhase(true)
-               .cacheStopTimeout(0)
-            .build();
-      }
+   public static ConfigurationBuilder getDefaultClusteredCacheConfig(CacheMode mode) {
+      return getDefaultClusteredCacheConfig(mode, false, false);
    }
 
    public static ConfigurationBuilder getDefaultClusteredCacheConfig(CacheMode mode, boolean transactional) {

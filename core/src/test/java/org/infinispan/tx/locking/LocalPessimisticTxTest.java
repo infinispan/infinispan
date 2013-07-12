@@ -1,6 +1,6 @@
 package org.infinispan.tx.locking;
 
-import org.infinispan.config.Configuration;
+import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.infinispan.transaction.LockingMode;
@@ -31,9 +31,11 @@ public class LocalPessimisticTxTest extends AbstractLocalTest {
 
    @Override
    protected EmbeddedCacheManager createCacheManager() throws Exception {
-      final Configuration config = getDefaultStandaloneConfig(true);
-      config.fluent().transaction().lockingMode(LockingMode.PESSIMISTIC)
-            .transactionManagerLookup(new DummyTransactionManagerLookup());
+      final ConfigurationBuilder config = getDefaultStandaloneCacheConfig(true);
+      config.transaction().lockingMode(LockingMode.PESSIMISTIC)
+            .transactionManagerLookup(new DummyTransactionManagerLookup())
+            .useSynchronization(false)
+            .recovery().disable();
       return TestCacheManagerFactory.createCacheManager(config);
    }
 

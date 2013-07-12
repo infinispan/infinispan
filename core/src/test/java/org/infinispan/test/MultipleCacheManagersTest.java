@@ -2,7 +2,7 @@ package org.infinispan.test;
 
 import org.infinispan.AdvancedCache;
 import org.infinispan.Cache;
-import org.infinispan.config.Configuration;
+import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.global.GlobalConfigurationBuilder;
 import org.infinispan.distribution.MagicKey;
@@ -56,7 +56,7 @@ import java.util.List;
 public abstract class MultipleCacheManagersTest extends AbstractCacheTest {
 
    protected List<EmbeddedCacheManager> cacheManagers = new ArrayList<EmbeddedCacheManager>();
-   protected IdentityHashMap<Cache, ReplListener> listeners = new IdentityHashMap<Cache, ReplListener>();
+   protected IdentityHashMap<Cache<?, ?>, ReplListener> listeners = new IdentityHashMap<Cache<?, ?>, ReplListener>();
 
    @BeforeClass(alwaysRun = true)
    public void createBeforeClass() throws Throwable {
@@ -108,11 +108,11 @@ public abstract class MultipleCacheManagersTest extends AbstractCacheTest {
     */
    protected void assertSupportedConfig() {
       for (EmbeddedCacheManager cm : cacheManagers) {
-         for (Cache cache : TestingUtil.getRunningCaches(cm)) {
-            Configuration config = cache.getConfiguration();
+         for (Cache<?, ?> cache : TestingUtil.getRunningCaches(cm)) {
+            Configuration config = cache.getCacheConfiguration();
             try {
-               assert config.isSyncCommitPhase() : "Must use a sync commit phase!";
-               assert config.isSyncRollbackPhase(): "Must use a sync rollback phase!";
+               assert config.transaction().syncCommitPhase() : "Must use a sync commit phase!";
+               assert config.transaction().syncRollbackPhase(): "Must use a sync rollback phase!";
             } catch (AssertionError e) {
                log.error("Invalid config for cache in test: " + getClass().getName());
                throw e;
@@ -146,7 +146,7 @@ public abstract class MultipleCacheManagersTest extends AbstractCacheTest {
     * @return the new CacheManager
     */
    protected EmbeddedCacheManager addClusterEnabledCacheManager(TransportFlags flags) {
-      EmbeddedCacheManager cm = TestCacheManagerFactory.createClusteredCacheManager(flags);
+      EmbeddedCacheManager cm = TestCacheManagerFactory.createClusteredCacheManager(new ConfigurationBuilder(), flags);
       cacheManagers.add(cm);
       return cm;
    }
@@ -157,14 +157,7 @@ public abstract class MultipleCacheManagersTest extends AbstractCacheTest {
     *
     * @param defaultConfig default cfg to use
     * @return the new CacheManager
-    * @deprecated Use {@link #addClusterEnabledCacheManager(
-    *    org.infinispan.configuration.cache.ConfigurationBuilder)} instead
     */
-   @Deprecated
-   protected EmbeddedCacheManager addClusterEnabledCacheManager(Configuration defaultConfig) {
-      return addClusterEnabledCacheManager(defaultConfig, new TransportFlags());
-   }
-
    protected EmbeddedCacheManager addClusterEnabledCacheManager(ConfigurationBuilder defaultConfig) {
       return addClusterEnabledCacheManager(defaultConfig, new TransportFlags());
    }
@@ -179,16 +172,7 @@ public abstract class MultipleCacheManagersTest extends AbstractCacheTest {
     *
     * @param defaultConfig default cfg to use
     * @return the new CacheManager
-    * @deprecated Use {@link #addClusterEnabledCacheManager(
-    *    org.infinispan.configuration.cache.ConfigurationBuilder, org.infinispan.test.fwk.TransportFlags)} instead
     */
-   @Deprecated
-   protected EmbeddedCacheManager addClusterEnabledCacheManager(Configuration defaultConfig, TransportFlags flags) {
-      EmbeddedCacheManager cm = TestCacheManagerFactory.createClusteredCacheManager(defaultConfig, flags);
-      cacheManagers.add(cm);
-      return cm;
-   }
-
    protected EmbeddedCacheManager addClusterEnabledCacheManager(ConfigurationBuilder builder, TransportFlags flags) {
       EmbeddedCacheManager cm = TestCacheManagerFactory.createClusteredCacheManager(builder, flags);
       cacheManagers.add(cm);
@@ -207,21 +191,6 @@ public abstract class MultipleCacheManagersTest extends AbstractCacheTest {
     * @param transactional if true, the configuration will be decorated with necessary transactional settings
     * @return an embedded cache manager
     */
-   @Deprecated
-   protected EmbeddedCacheManager addClusterEnabledCacheManager(Configuration.CacheMode mode, boolean transactional) {
-      return addClusterEnabledCacheManager(mode, transactional, new TransportFlags());
-   }
-
-   @Deprecated
-   protected EmbeddedCacheManager addClusterEnabledCacheManager(Configuration.CacheMode mode, boolean transactional, TransportFlags flags) {
-      Configuration configuration = getDefaultClusteredConfig(mode, transactional);
-      return addClusterEnabledCacheManager(configuration, flags);
-   }
-
-   @Deprecated
-   protected void createCluster(Configuration.CacheMode mode, boolean transactional, int count) {
-      for (int i = 0; i < count; i++) addClusterEnabledCacheManager(mode, transactional);
-   }
 
    protected void createCluster(ConfigurationBuilder builder, int count) {
       for (int i = 0; i < count; i++) addClusterEnabledCacheManager(builder);
@@ -229,22 +198,6 @@ public abstract class MultipleCacheManagersTest extends AbstractCacheTest {
 
    protected void createCluster(GlobalConfigurationBuilder globalBuilder, ConfigurationBuilder builder, int count) {
       for (int i = 0; i < count; i++) addClusterEnabledCacheManager(globalBuilder, builder);
-   }
-
-   @Deprecated
-   protected void createCluster(Configuration config, int count) {
-      for (int i = 0; i < count; i++) addClusterEnabledCacheManager(config);
-   }
-
-   @Deprecated
-   protected void createCluster(Configuration.CacheMode mode, int count) {
-      for (int i = 0; i < count; i++) addClusterEnabledCacheManager(mode, true);
-   }
-
-   protected void defineConfigurationOnAllManagers(String cacheName, Configuration c) {
-      for (EmbeddedCacheManager cm : cacheManagers) {
-         cm.defineConfiguration(cacheName, c);
-      }
    }
 
    protected void defineConfigurationOnAllManagers(String cacheName, ConfigurationBuilder b) {
@@ -305,37 +258,9 @@ public abstract class MultipleCacheManagersTest extends AbstractCacheTest {
       }
    }
 
-   /**
-    * @deprecated Use {@link #createClusteredCaches(
-    *    int, String, org.infinispan.configuration.cache.ConfigurationBuilder)} instead
-    */
-   @Deprecated
-   protected <K, V> List<Cache<K, V>> createClusteredCaches(
-         int numMembersInCluster, String cacheName, Configuration c) {
-      return createClusteredCaches(numMembersInCluster, cacheName, c, new TransportFlags());
-   }
-
    protected <K, V> List<Cache<K, V>> createClusteredCaches(
          int numMembersInCluster, String cacheName, ConfigurationBuilder builder) {
       return createClusteredCaches(numMembersInCluster, cacheName, builder, new TransportFlags());
-   }
-
-   /**
-    * @deprecated Use {@link #createClusteredCaches(
-    *    int, String, org.infinispan.configuration.cache.ConfigurationBuilder, org.infinispan.test.fwk.TransportFlags)} instead
-    */
-   @Deprecated
-   protected <K, V> List<Cache<K, V>> createClusteredCaches(
-         int numMembersInCluster, String cacheName, Configuration c, TransportFlags flags) {
-      List<Cache<K, V>> caches = new ArrayList<Cache<K, V>>(numMembersInCluster);
-      for (int i = 0; i < numMembersInCluster; i++) {
-         EmbeddedCacheManager cm = addClusterEnabledCacheManager(flags);
-         cm.defineConfiguration(cacheName, c);
-         Cache<K, V> cache = cm.getCache(cacheName);
-         caches.add(cache);
-      }
-      waitForClusterToForm(cacheName);
-      return caches;
    }
 
    protected <K, V> List<Cache<K, V>> createClusteredCaches(
@@ -348,19 +273,6 @@ public abstract class MultipleCacheManagersTest extends AbstractCacheTest {
          caches.add(cache);
       }
       waitForClusterToForm(cacheName);
-      return caches;
-   }
-
-   @Deprecated
-   protected <K, V> List<Cache<K, V>> createClusteredCaches(int numMembersInCluster, Configuration defaultConfig) {
-      List<Cache<K, V>> caches = new ArrayList<Cache<K, V>>(numMembersInCluster);
-      for (int i = 0; i < numMembersInCluster; i++) {
-         EmbeddedCacheManager cm = addClusterEnabledCacheManager(defaultConfig);
-         Cache<K, V> cache = cm.getCache();
-         caches.add(cache);
-
-      }
-      waitForClusterToForm();
       return caches;
    }
 
@@ -389,10 +301,10 @@ public abstract class MultipleCacheManagersTest extends AbstractCacheTest {
       waitForClusterToForm();
       return caches;
    }
-   
+
    /**
     * Create cacheNames.lenght in each CacheManager (numMembersInCluster cacheManagers).
-    * 
+    *
     * @param numMembersInCluster
     * @param defaultConfigBuilder
     * @param cacheNames
@@ -415,7 +327,7 @@ public abstract class MultipleCacheManagersTest extends AbstractCacheTest {
       return allCaches;
    }
 
-   protected ReplListener replListener(Cache cache) {
+   protected ReplListener replListener(Cache<?, ?> cache) {
       ReplListener listener = listeners.get(cache);
       if (listener == null) {
          listener = new ReplListener(cache);
@@ -486,7 +398,7 @@ public abstract class MultipleCacheManagersTest extends AbstractCacheTest {
       return caches(null);
    }
 
-   protected Address address(Cache c) {
+   protected Address address(Cache<?, ?> c) {
       return c.getAdvancedCache().getRpcManager().getAddress();
    }
 
@@ -528,7 +440,7 @@ public abstract class MultipleCacheManagersTest extends AbstractCacheTest {
       return getKeyForCache(cache);
    }
 
-   protected Object getKeyForCache(Cache cache) {
+   protected Object getKeyForCache(Cache<?, ?> cache) {
       return new MagicKey(cache);
    }
 
@@ -570,20 +482,20 @@ public abstract class MultipleCacheManagersTest extends AbstractCacheTest {
       return checkLocked(cache(index), key);
    }
 
-   protected Cache getLockOwner(Object key) {
+   protected <K, V> Cache<K, V> getLockOwner(Object key) {
       return getLockOwner(key, null);
    }
 
-   protected Cache getLockOwner(Object key, String cacheName) {
-      Configuration c = getCache(0, cacheName).getConfiguration();
-      if (c.getCacheMode().isReplicated() || c.getCacheMode().isInvalidation()) {
-         return getCache(0, cacheName); //for replicated caches only the coordinator acquires lock
+   protected <K, V> Cache<K, V> getLockOwner(Object key, String cacheName) {
+      Configuration c = getCache(0, cacheName).getCacheConfiguration();
+      if (c.clustering().cacheMode().isReplicated() || c.clustering().cacheMode().isInvalidation()) {
+         return (Cache<K, V>) getCache(0, cacheName); //for replicated caches only the coordinator acquires lock
       }  else {
-         if (!c.getCacheMode().isDistributed()) throw new IllegalStateException("This is not a clustered cache!");
+         if (!c.clustering().cacheMode().isDistributed()) throw new IllegalStateException("This is not a clustered cache!");
          final Address address = getCache(0, cacheName).getAdvancedCache().getDistributionManager().locate(key).get(0);
-         for (Cache cache : caches(cacheName)) {
+         for (Cache<?, ?> cache : caches(cacheName)) {
             if (cache.getAdvancedCache().getRpcManager().getTransport().getAddress().equals(address)) {
-               return cache;
+               return (Cache<K, V>) cache;
             }
          }
          throw new IllegalStateException();
@@ -595,16 +507,16 @@ public abstract class MultipleCacheManagersTest extends AbstractCacheTest {
    }
 
    protected void assertKeyLockedCorrectly(Object key, String cacheName) {
-      final Cache lockOwner = getLockOwner(key, cacheName);
+      final Cache<?, ?> lockOwner = getLockOwner(key, cacheName);
       assert checkLocked(lockOwner, key);
-      for (Cache c : caches(cacheName)) {
+      for (Cache<?, ?> c : caches(cacheName)) {
          if (c != lockOwner)
             assert !checkLocked(c, key) : "Key " + key + " is locked on cache " + c + " (" + cacheName
                   + ") and it shouldn't";
       }
    }
 
-   private Cache getCache(int index, String name) {
+   private Cache<?, ?> getCache(int index, String name) {
       return name == null ? cache(index) : cache(index, name);
    }
 

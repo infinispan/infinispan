@@ -26,6 +26,7 @@ public class TransactionsSpanningReplicatedCachesTest extends MultipleCacheManag
       cleanup = CleanupPhase.AFTER_METHOD;
    }
 
+   @Override
    protected void createCacheManagers() throws Exception {
       ConfigurationBuilder c = getConfiguration();
       cm1 = addClusterEnabledCacheManager(c);
@@ -76,10 +77,10 @@ public class TransactionsSpanningReplicatedCachesTest extends MultipleCacheManag
 
    public void testCommitSpanningCaches() throws Exception {
       startAllCaches();
-      Cache c1 = cm1.getCache("c1");
-      Cache c1Replica = cm2.getCache("c1");
-      Cache c2 = cm1.getCache("c2");
-      Cache c2Replica = cm2.getCache("c2");
+      Cache<String, String> c1 = cm1.getCache("c1");
+      Cache<String, String> c1Replica = cm2.getCache("c1");
+      Cache<String, String> c2 = cm1.getCache("c2");
+      Cache<String, String> c2Replica = cm2.getCache("c2");
 
       assert c1.isEmpty();
       assert c2.isEmpty();
@@ -120,10 +121,10 @@ public class TransactionsSpanningReplicatedCachesTest extends MultipleCacheManag
 
    public void testRollbackSpanningCaches() throws Exception {
       startAllCaches();
-      Cache c1 = cm1.getCache("c1");
-      Cache c1Replica = cm2.getCache("c1");
-      Cache c2 = cm1.getCache("c2");
-      Cache c2Replica = cm2.getCache("c2");
+      Cache<String, String> c1 = cm1.getCache("c1");
+      Cache<String, String> c1Replica = cm2.getCache("c1");
+      Cache<String, String> c2 = cm1.getCache("c2");
+      Cache<String, String> c2Replica = cm2.getCache("c2");
 
       assert c1.isEmpty();
       assert c2.isEmpty();
@@ -162,14 +163,14 @@ public class TransactionsSpanningReplicatedCachesTest extends MultipleCacheManag
       assert c2Replica.get("c2key").equals("c2value");
    }
 
-   private void assertInitialValues(Cache c1, Cache c1Replica, Cache c2, Cache c2Replica) {
-      for (Cache c : Arrays.asList(c1, c1Replica)) {
+   private void assertInitialValues(Cache<String, String> c1, Cache<String, String> c1Replica, Cache<String, String> c2, Cache<String, String> c2Replica) {
+      for (Cache<String, String> c : Arrays.asList(c1, c1Replica)) {
          assert !c.isEmpty();
          assert c.size() == 1;
          assert c.get("c1key").equals("c1value");
       }
 
-      for (Cache c : Arrays.asList(c2, c2Replica)) {
+      for (Cache<String, String> c : Arrays.asList(c2, c2Replica)) {
          assert !c.isEmpty();
          assert c.size() == 1;
          assert c.get("c2key").equals("c2value");
@@ -178,10 +179,10 @@ public class TransactionsSpanningReplicatedCachesTest extends MultipleCacheManag
 
    public void testRollbackSpanningCaches2() throws Exception {
       startAllCaches();
-      Cache c1 = cm1.getCache("c1");
+      Cache<String, String> c1 = cm1.getCache("c1");
 
-      assert c1.getConfiguration().getCacheMode().isClustered();
-      Cache c1Replica = cm2.getCache("c1");
+      assert c1.getCacheConfiguration().clustering().cacheMode().isClustered();
+      Cache<String, String> c1Replica = cm2.getCache("c1");
 
       assert c1.isEmpty();
       assert c1Replica.isEmpty();
@@ -193,8 +194,8 @@ public class TransactionsSpanningReplicatedCachesTest extends MultipleCacheManag
 
    public void testSimpleCommit() throws Exception {
       startAllCaches();
-      Cache c1 = cm1.getCache("c1");
-      Cache c1Replica = cm2.getCache("c1");
+      Cache<String, String> c1 = cm1.getCache("c1");
+      Cache<String, String> c1Replica = cm2.getCache("c1");
 
 
       assert c1.isEmpty();
@@ -211,8 +212,8 @@ public class TransactionsSpanningReplicatedCachesTest extends MultipleCacheManag
 
    public void testPutIfAbsent() throws Exception {
       startAllCaches();
-      Cache c1 = cm1.getCache("c1");
-      Cache c1Replica = cm2.getCache("c1");
+      Cache<String, String> c1 = cm1.getCache("c1");
+      Cache<String, String> c1Replica = cm2.getCache("c1");
 
 
       assert c1.isEmpty();

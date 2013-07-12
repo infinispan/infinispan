@@ -1,6 +1,7 @@
 package org.infinispan.tx;
 
-import org.infinispan.config.Configuration;
+import org.infinispan.configuration.cache.CacheMode;
+import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.test.MultipleCacheManagersTest;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.transaction.TransactionTable;
@@ -17,8 +18,8 @@ public class RemoteTxNotCreatedOnGetTest extends MultipleCacheManagersTest {
 
    @Override
    protected void createCacheManagers() throws Throwable {
-      Configuration dcc = getDefaultClusteredConfig(Configuration.CacheMode.DIST_SYNC, true);
-      dcc.fluent().l1().disable().hash().numOwners(1);
+      ConfigurationBuilder dcc = getDefaultClusteredCacheConfig(CacheMode.DIST_SYNC, true);
+      dcc.clustering().l1().disable().hash().numOwners(1);
       createCluster(dcc, 2);
       waitForClusterToForm();
    }

@@ -1,9 +1,9 @@
 package org.infinispan.interceptors;
 
 import org.infinispan.Cache;
+import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
-import org.infinispan.config.Configuration;
 import org.infinispan.marshall.core.MarshalledValue;
 import org.infinispan.test.AbstractInfinispanTest;
 import org.infinispan.test.TestingUtil;
@@ -27,7 +27,7 @@ public class MarshalledValueInterceptorTest extends AbstractInfinispanTest {
 
    @BeforeTest
    public void setUp() {
-      cm = TestCacheManagerFactory.createLocalCacheManager(false);
+      cm = TestCacheManagerFactory.createCacheManager(false);
    }
 
    @AfterTest
@@ -39,20 +39,20 @@ public class MarshalledValueInterceptorTest extends AbstractInfinispanTest {
    public void testDefaultInterceptorStack() {
       assert TestingUtil.findInterceptor(cm.getCache(), MarshalledValueInterceptor.class) == null;
 
-      Configuration configuration = new Configuration();
-      configuration.setUseLazyDeserialization(true);
-      cm.defineConfiguration("someCache", configuration);
-      Cache c = cm.getCache("someCache");
+      ConfigurationBuilder configuration = new ConfigurationBuilder();
+      configuration.storeAsBinary().enable();
+      cm.defineConfiguration("someCache", configuration.build());
+      Cache<?, ?> c = cm.getCache("someCache");
 
       assert TestingUtil.findInterceptor(c, MarshalledValueInterceptor.class) != null;
       TestingUtil.killCaches(c);
    }
 
    public void testDisabledInterceptorStack() {
-      Configuration cfg = new Configuration();
-      cfg.setUseLazyDeserialization(false);
-      cm.defineConfiguration("a", cfg);
-      Cache c = cm.getCache("a");
+      ConfigurationBuilder cfg = new ConfigurationBuilder();
+      cfg.storeAsBinary().disable();
+      cm.defineConfiguration("a", cfg.build());
+      Cache<?, ?> c = cm.getCache("a");
       assert TestingUtil.findInterceptor(c, MarshalledValueInterceptor.class) == null;
    }
 

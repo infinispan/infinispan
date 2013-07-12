@@ -2,7 +2,8 @@ package org.infinispan.tx;
 
 import org.infinispan.commands.tx.CommitCommand;
 import org.infinispan.commands.tx.PrepareCommand;
-import org.infinispan.config.Configuration;
+import org.infinispan.configuration.cache.CacheMode;
+import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.context.impl.TxInvocationContext;
 import org.infinispan.interceptors.base.CommandInterceptor;
 import org.infinispan.test.MultipleCacheManagersTest;
@@ -18,9 +19,8 @@ public class Use1PcForInducedTransactionTest extends MultipleCacheManagersTest {
 
    @Override
    protected void createCacheManagers() throws Throwable {
-      Configuration c = getDefaultClusteredConfig(Configuration.CacheMode.DIST_SYNC, true);
-      c.fluent().transaction().use1PcForAutoCommitTransactions(true);
-      assert c.isUse1PcForAutoCommitTransactions();
+      ConfigurationBuilder c = getDefaultClusteredCacheConfig(CacheMode.DIST_SYNC, true);
+      c.transaction().use1PcForAutoCommitTransactions(true);
 
       createCluster(c, 2);
       waitForClusterToForm();
