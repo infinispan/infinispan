@@ -1,7 +1,7 @@
 package org.infinispan.distribution.rehash;
 
 import org.infinispan.Cache;
-import org.infinispan.config.Configuration;
+import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.test.MultipleCacheManagersTest;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.TransportFlags;
@@ -21,7 +21,7 @@ public class RehashAfterPartitionMergeTest extends MultipleCacheManagersTest {
    @Override
    protected void createCacheManagers() throws Throwable {
       caches = createClusteredCaches(2, "test",
-            getDefaultClusteredConfig(Configuration.CacheMode.DIST_SYNC),
+            getDefaultClusteredCacheConfig(CacheMode.DIST_SYNC),
                   new TransportFlags().withFD(true).withMerge(true));
 
       c1 = caches.get(0);
@@ -73,7 +73,7 @@ public class RehashAfterPartitionMergeTest extends MultipleCacheManagersTest {
          assert "value".equals(c.get("5"));
          assert "value".equals(c.get("6"));
          assert manager(c).getMembers().size() == 2;
-      }      
+      }
    }
 
 }

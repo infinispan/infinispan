@@ -18,20 +18,20 @@ import org.infinispan.util.logging.LogFactory;
  * <p>Locks stored this way are not optimally performing as it might spin
  * on remote invocations, and might fail to cleanup some garbage
  * in case a node is disconnected without having released the readlock.</p>
- * 
+ *
  * @author Sanne Grinovero
  * @since 4.1
  */
 @SuppressWarnings("unchecked")
 public class DistributedSegmentReadLocker implements SegmentReadLocker {
-   
+
    private static final Log log = LogFactory.getLog(DistributedSegmentReadLocker.class);
-   
+
    private final AdvancedCache<Object, Integer> locksCache;
    private final AdvancedCache<?, ?> chunksCache;
    private final AdvancedCache<?, ?> metadataCache;
    private final String indexName;
-   
+
    public DistributedSegmentReadLocker(Cache<Object, Integer> locksCache, Cache<?, ?> chunksCache, Cache<?, ?> metadataCache, String indexName) {
       if (locksCache == null)
          throw new IllegalArgumentException("locksCache must not be null");
@@ -56,7 +56,7 @@ public class DistributedSegmentReadLocker implements SegmentReadLocker {
     * Deletes or releases a read-lock for the specified filename, so that if it was marked as deleted and
     * no other {@link InfinispanIndexInput} instances are reading from it, then it will
     * be effectively deleted.
-    * 
+    *
     * @see #acquireReadLock(String)
     * @see Directory#deleteFile(String)
     */
@@ -89,16 +89,16 @@ public class DistributedSegmentReadLocker implements SegmentReadLocker {
    /**
     * Acquires a readlock on all chunks for this file, to make sure chunks are not deleted while
     * iterating on the group. This is needed to avoid an eager lock on all elements.
-    * 
+    *
     * If no value is found in the cache, a disambiguation procedure is needed: not value
     * might mean both "existing, no readlocks, no deletions in progress", but also "not existent file".
     * The first possibility is coded as no value to avoid storing readlocks in a permanent store,
     * which would unnecessarily slow down and provide unwanted long term storage of the lock;
     * so the value is treated as one if not found, but obviously it's also not found for non-existent
     * or concurrently deleted files.
-    * 
+    *
     * @param filename the name of the "file" for which a readlock is requested
-    * 
+    *
     * @see #deleteOrReleaseReadLock(String)
     */
    @Override
@@ -108,7 +108,7 @@ public class DistributedSegmentReadLocker implements SegmentReadLocker {
       boolean done = false;
       while (done == false) {
          if (lockValue != null) {
-            int refCount = ((Integer) lockValue).intValue();
+            int refCount = lockValue.intValue();
             if (refCount == 0) {
                // too late: in case refCount==0 the delete is being performed
                return false;
@@ -124,7 +124,7 @@ public class DistributedSegmentReadLocker implements SegmentReadLocker {
             lockValue = locksCache.putIfAbsent(readLockKey, 2);
             done = (null == lockValue);
             if (done) {
-               // have to check now that the fileKey still exists to prevent the race condition of 
+               // have to check now that the fileKey still exists to prevent the race condition of
                // T1 fileKey exists - T2 delete file and remove readlock - T1 putIfAbsent(readlock, 2)
                final FileCacheKey fileKey = new FileCacheKey(indexName, filename);
                if (metadataCache.get(fileKey) == null) {
@@ -136,14 +136,14 @@ public class DistributedSegmentReadLocker implements SegmentReadLocker {
       }
       return true;
    }
-   
+
    /**
     * The {@link Directory#deleteFile(String)} is not deleting the elements from the cache
     * but instead flagging the file as deletable.
     * This method will really remove the elements from the cache; should be invoked only
     * by {@link #deleteOrReleaseReadLock(String)} after having verified that there
     * are no users left in need to read these chunks.
-    * 
+    *
     * @param readLockKey the key representing the values to be deleted
     * @param locksCache the cache containing the locks
     * @param chunksCache the cache containing the chunks to be deleted
@@ -170,9 +170,9 @@ public class DistributedSegmentReadLocker implements SegmentReadLocker {
       if (trace) log.tracef("deleting readlock: %s", readLockKey);
       locksCache.withFlags(Flag.IGNORE_RETURN_VALUES).removeAsync(readLockKey);
    }
-   
+
    private static void verifyCacheHasNoEviction(AdvancedCache<?, ?> cache) {
-      if (cache.getConfiguration().getEvictionStrategy().isEnabled())
+      if (cache.getCacheConfiguration().eviction().strategy().isEnabled())
          throw new IllegalArgumentException("DistributedSegmentReadLocker is not reliable when using a cache with eviction enabled, disable eviction on this cache instance");
    }
 

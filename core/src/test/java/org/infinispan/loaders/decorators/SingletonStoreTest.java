@@ -1,13 +1,13 @@
 package org.infinispan.loaders.decorators;
 
 import org.infinispan.Cache;
-import org.infinispan.config.CacheLoaderManagerConfig;
-import org.infinispan.config.Configuration;
+import org.infinispan.configuration.cache.CacheMode;
+import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.container.entries.InternalCacheEntry;
 import org.infinispan.loaders.CacheLoaderException;
 import org.infinispan.loaders.CacheLoaderManager;
 import org.infinispan.loaders.CacheStore;
-import org.infinispan.loaders.dummy.DummyInMemoryCacheStore;
+import org.infinispan.loaders.dummy.DummyInMemoryCacheStoreConfigurationBuilder;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.test.MultipleCacheManagersTest;
 import org.infinispan.test.TestingUtil;
@@ -39,46 +39,34 @@ public class SingletonStoreTest extends MultipleCacheManagersTest {
       cleanup = CleanupPhase.AFTER_METHOD;
    }
 
+   @Override
    protected void createCacheManagers() {
       cm0 = addClusterEnabledCacheManager();
       cm1 = addClusterEnabledCacheManager();
       cm2 = addClusterEnabledCacheManager();
 
-      Configuration conf = getDefaultClusteredConfig(Configuration.CacheMode.REPL_SYNC);
-      DummyInMemoryCacheStore.Cfg cfg = new DummyInMemoryCacheStore.Cfg();
-      cfg.setStoreName("Store-" + storeCounter.getAndIncrement());
-      CacheLoaderManagerConfig pushingCfg = new CacheLoaderManagerConfig();
-      pushingCfg.addCacheLoaderConfig(cfg);
-      SingletonStoreConfig ssc = new SingletonStoreConfig();
-      ssc.setPushStateWhenCoordinator(true);
-      ssc.setSingletonStoreEnabled(true);
-      cfg.setSingletonStoreConfig(ssc);
-      conf.setCacheLoaderManagerConfig(pushingCfg);
+      ConfigurationBuilder conf = getDefaultClusteredCacheConfig(CacheMode.REPL_SYNC);
+      cm0.defineConfiguration("pushing", addDummyStore(conf, true).build());
+      cm1.defineConfiguration("pushing", addDummyStore(conf, true).build());
+      cm2.defineConfiguration("pushing", addDummyStore(conf, true).build());
 
+      conf = getDefaultClusteredCacheConfig(CacheMode.REPL_SYNC);
       // cannot define on ALL cache managers since the same dummy in memory CL bin will be used!
-      cm0.defineConfiguration("pushing", conf);
-      ((DummyInMemoryCacheStore.Cfg) conf.getCacheLoaderManagerConfig().getFirstCacheLoaderConfig()).setStoreName("Store-" + storeCounter.getAndIncrement());
-      cm1.defineConfiguration("pushing", conf);
-      ((DummyInMemoryCacheStore.Cfg) conf.getCacheLoaderManagerConfig().getFirstCacheLoaderConfig()).setStoreName("Store-" + storeCounter.getAndIncrement());
-      cm2.defineConfiguration("pushing", conf);
+      cm0.defineConfiguration("nonPushing", addDummyStore(conf, false).build());
+      cm1.defineConfiguration("nonPushing", addDummyStore(conf, false).build());
+      cm2.defineConfiguration("nonPushing", addDummyStore(conf, false).build());
+   }
 
-      conf = getDefaultClusteredConfig(Configuration.CacheMode.REPL_SYNC);
-      cfg = new DummyInMemoryCacheStore.Cfg();
-      cfg.setStoreName("Store-" + storeCounter.getAndIncrement());
-      CacheLoaderManagerConfig nonPushingCfg = new CacheLoaderManagerConfig();
-      nonPushingCfg.addCacheLoaderConfig(cfg);
-      ssc = new SingletonStoreConfig();
-      ssc.setPushStateWhenCoordinator(false);
-      ssc.setSingletonStoreEnabled(true);
-      cfg.setSingletonStoreConfig(ssc);
-      conf.setCacheLoaderManagerConfig(nonPushingCfg);
-
-      // cannot define on ALL cache managers since the same dummy in memory CL bin will be used!
-      cm0.defineConfiguration("nonPushing", conf);
-      ((DummyInMemoryCacheStore.Cfg) conf.getCacheLoaderManagerConfig().getFirstCacheLoaderConfig()).setStoreName("Store-" + storeCounter.getAndIncrement());
-      cm1.defineConfiguration("nonPushing", conf);
-      ((DummyInMemoryCacheStore.Cfg) conf.getCacheLoaderManagerConfig().getFirstCacheLoaderConfig()).setStoreName("Store-" + storeCounter.getAndIncrement());
-      cm2.defineConfiguration("nonPushing", conf);
+   private ConfigurationBuilder addDummyStore(ConfigurationBuilder config, boolean pushing) {
+      config
+         .loaders()
+            .clearCacheLoaders()
+            .addStore(DummyInMemoryCacheStoreConfigurationBuilder.class)
+               .storeName("Store-" + storeCounter.getAndIncrement())
+               .singletonStore()
+                  .enable()
+                  .pushStateWhenCoordinator(pushing);
+      return config;
    }
 
    private Cache[] getCaches(String name) {
@@ -281,6 +269,7 @@ public class SingletonStoreTest extends MultipleCacheManagersTest {
       @Override
       protected Callable<?> createPushStateTask() {
          return new Callable() {
+            @Override
             public Object call() throws Exception {
                numberCreatedTasks++;
                try {
@@ -312,6 +301,7 @@ public class SingletonStoreTest extends MultipleCacheManagersTest {
          scl = singleton;
       }
 
+      @Override
       public Object call() throws Exception {
          log.debug("active status modifier started");
          scl.activeStatusChanged(true);

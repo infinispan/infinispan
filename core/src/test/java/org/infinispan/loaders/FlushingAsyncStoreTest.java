@@ -1,20 +1,18 @@
 package org.infinispan.loaders;
 
-import org.infinispan.config.Configuration;
-import org.infinispan.container.entries.InternalCacheEntry;
-import org.infinispan.loaders.dummy.DummyInMemoryCacheStore;
+import org.infinispan.configuration.cache.ConfigurationBuilder;
+import org.infinispan.loaders.dummy.DummyInMemoryCacheStoreConfigurationBuilder;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.test.SingleCacheManagerTest;
-import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.testng.annotations.Test;
 
 /**
  * FlushingAsyncStoreTest.
- * 
+ *
  * @author Sanne Grinovero
  */
-@Test(groups = "functional", testName = "loaders.FlushingAsyncStoreTest", sequential = true)
+@Test(groups = "functional", testName = "loaders.FlushingAsyncStoreTest", singleThreaded = true)
 public class FlushingAsyncStoreTest extends SingleCacheManagerTest {
 
    /** to assert the test methods are run in proper order **/
@@ -26,12 +24,13 @@ public class FlushingAsyncStoreTest extends SingleCacheManagerTest {
 
    @Override
    protected EmbeddedCacheManager createCacheManager() throws Exception {
-      Configuration config = getDefaultStandaloneConfig(false).fluent()
+      ConfigurationBuilder config = getDefaultStandaloneCacheConfig(false);
+      config
          .loaders()
-            .addCacheLoader(new SlowCacheStoreConfig()
+            .addStore(DummyInMemoryCacheStoreConfigurationBuilder.class)
                .storeName(this.getClass().getName())
-               .asyncStore().threadPoolSize(1)
-               .build())
+               .slow(true)
+               .async().enable().threadPoolSize(1)
          .build();
       return TestCacheManagerFactory.createCacheManager(config);
    }
@@ -50,24 +49,5 @@ public class FlushingAsyncStoreTest extends SingleCacheManagerTest {
       assert storeWasRun;
       cache = cacheManager.getCache("AsyncStoreInMemory");
       assert "value".equals(cache.get("key1"));
-   }
-
-   public static class SlowCacheStoreConfig extends DummyInMemoryCacheStore.Cfg {
-      public SlowCacheStoreConfig() {
-         setCacheLoaderClassName(SlowCacheStore.class.getName());
-      }
-   }
-
-   @CacheLoaderMetadata(configurationClass = SlowCacheStoreConfig.class)
-   public static class SlowCacheStore extends DummyInMemoryCacheStore {
-      private void insertDelay() {
-         TestingUtil.sleepThread(100);
-      }
-
-      @Override
-      public void store(InternalCacheEntry ed) {
-         insertDelay();
-         super.store(ed);
-      }
    }
 }

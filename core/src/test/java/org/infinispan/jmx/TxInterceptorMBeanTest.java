@@ -1,8 +1,8 @@
 package org.infinispan.jmx;
 
 import org.infinispan.Cache;
-import org.infinispan.config.Configuration;
-import org.infinispan.config.GlobalConfiguration;
+import org.infinispan.configuration.cache.CacheMode;
+import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.distribution.rehash.XAResourceAdapter;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.test.MultipleCacheManagersTest;
@@ -26,27 +26,20 @@ public class TxInterceptorMBeanTest extends MultipleCacheManagersTest {
    private ObjectName txInterceptor2;
    private MBeanServer threadMBeanServer;
    private TransactionManager tm;
-   private Cache cache1;
-   private Cache cache2;
+   private Cache<String, String> cache1;
+   private Cache<String, String> cache2;
 
    @Override
    protected void createCacheManagers() throws Throwable {
-      GlobalConfiguration globalConfiguration = GlobalConfiguration.getClusteredDefault();
-      globalConfiguration.setExposeGlobalJmxStatistics(true);
-      globalConfiguration.setAllowDuplicateDomains(true);
-      globalConfiguration.setMBeanServerLookup(PerThreadMBeanServerLookup.class.getName());
-      globalConfiguration.setJmxDomain(JMX_DOMAIN);
-      EmbeddedCacheManager cacheManager1 = TestCacheManagerFactory.createCacheManagerEnforceJmxDomain(globalConfiguration);
+      EmbeddedCacheManager cacheManager1 = TestCacheManagerFactory.createClusteredCacheManagerEnforceJmxDomain(JMX_DOMAIN, true);
       registerCacheManager(cacheManager1);
-      GlobalConfiguration globalConfiguration2 = globalConfiguration.clone();
-      globalConfiguration2.setCacheManagerName("SecondDefaultCacheManager");
-      EmbeddedCacheManager cacheManager2 = TestCacheManagerFactory.createCacheManagerEnforceJmxDomain(globalConfiguration2);
+      EmbeddedCacheManager cacheManager2 = TestCacheManagerFactory.createClusteredCacheManagerEnforceJmxDomain("SecondDefaultCacheManager", JMX_DOMAIN, true);
       registerCacheManager(cacheManager2);
 
-      Configuration configuration = getDefaultClusteredConfig(Configuration.CacheMode.REPL_SYNC, true);
-      configuration.setExposeJmxStatistics(true);
-      cacheManager1.defineConfiguration("test", configuration);
-      cacheManager2.defineConfiguration("test", configuration.clone());
+      ConfigurationBuilder configuration = getDefaultClusteredCacheConfig(CacheMode.REPL_SYNC, true);
+      configuration.jmxStatistics().enable();
+      cacheManager1.defineConfiguration("test", configuration.build());
+      cacheManager2.defineConfiguration("test", configuration.build());
       cache1 = cacheManager1.getCache("test");
       cache2 = cacheManager2.getCache("test");
       txInterceptor = getCacheObjectName(JMX_DOMAIN, "test(repl_sync)", "Transactions");

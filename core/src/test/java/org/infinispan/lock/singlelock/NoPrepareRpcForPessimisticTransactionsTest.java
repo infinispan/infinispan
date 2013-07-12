@@ -1,7 +1,8 @@
 package org.infinispan.lock.singlelock;
 
 import org.infinispan.commands.tx.CommitCommand;
-import org.infinispan.config.Configuration;
+import org.infinispan.configuration.cache.CacheMode;
+import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.test.MultipleCacheManagersTest;
 import org.infinispan.transaction.LockingMode;
 import org.infinispan.util.mocks.ControlledCommandFactory;
@@ -28,10 +29,12 @@ public class NoPrepareRpcForPessimisticTransactionsTest extends MultipleCacheMan
 
    @Override
    protected void createCacheManagers() throws Throwable {
-      final Configuration c = getDefaultClusteredConfig(Configuration.CacheMode.DIST_SYNC, true);
-      c.fluent().transaction().lockingMode(LockingMode.PESSIMISTIC);
-      c.fluent().hash().numOwners(1);
-      c.fluent().l1().disable();
+      final ConfigurationBuilder c = getDefaultClusteredCacheConfig(CacheMode.DIST_SYNC, true);
+      c
+         .transaction().lockingMode(LockingMode.PESSIMISTIC)
+         .clustering()
+            .hash().numOwners(1)
+            .l1().disable();
       createCluster(c, 2);
       waitForClusterToForm();
 

@@ -1,6 +1,6 @@
 package org.infinispan.tx.recovery;
 
-import org.infinispan.config.Configuration;
+import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.tx.dld.DldPessimisticLockingDistributedTest;
 import org.testng.annotations.Test;
 
@@ -10,7 +10,9 @@ import org.testng.annotations.Test;
 @Test(groups = "functional", testName = "tx.recovery.DldPessimisticLockingAndRecoveryDistributedTest")
 public class DldPessimisticLockingAndRecoveryDistributedTest extends DldPessimisticLockingDistributedTest {
    @Override
-   protected Configuration createConfiguration() {
-      return super.createConfiguration().fluent().transaction().recovery().build();
+   protected ConfigurationBuilder createConfiguration() {
+      ConfigurationBuilder configuration = super.createConfiguration();
+      configuration.transaction().recovery().enable();
+      return configuration;
    }
 }

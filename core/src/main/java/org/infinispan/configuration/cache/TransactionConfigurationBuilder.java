@@ -2,7 +2,6 @@ package org.infinispan.configuration.cache;
 
 import org.infinispan.commons.CacheConfigurationException;
 import org.infinispan.commons.configuration.Builder;
-import org.infinispan.commons.CacheConfigurationException;
 import org.infinispan.transaction.LockingMode;
 import org.infinispan.transaction.TransactionMode;
 import org.infinispan.transaction.TransactionProtocol;
@@ -153,6 +152,9 @@ public class TransactionConfigurationBuilder extends AbstractConfigurationChildB
     */
    public TransactionConfigurationBuilder transactionManagerLookup(TransactionManagerLookup tml) {
       this.transactionManagerLookup = tml;
+      if (tml != null) {
+         this.transactionMode(TransactionMode.TRANSACTIONAL);
+      }
       return this;
    }
 

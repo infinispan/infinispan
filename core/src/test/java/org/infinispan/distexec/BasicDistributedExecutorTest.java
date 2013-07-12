@@ -1,7 +1,6 @@
 package org.infinispan.distexec;
 
 import org.infinispan.Cache;
-import org.infinispan.config.Configuration;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.manager.EmbeddedCacheManager;
@@ -23,7 +22,7 @@ import java.util.concurrent.Future;
 
 /**
  * Tests basic org.infinispan.distexec.DistributedExecutorService functionality
- * 
+ *
  * @author Vladimir Blagojevic
  * @author Anna Manukyan
  */
@@ -32,16 +31,16 @@ public class BasicDistributedExecutorTest extends AbstractCacheTest {
 
    public BasicDistributedExecutorTest() {
    }
-   
+
    @Test(expectedExceptions = { IllegalArgumentException.class })
    public void testImproperMasterCacheForDistributedExecutor() {
       DistributedExecutorService des = new DefaultExecutorService(null);
-      
+
    }
 
    @Test(expectedExceptions = { IllegalArgumentException.class })
    public void testImproperLocalExecutorServiceForDistributedExecutor() {
-      EmbeddedCacheManager cacheManager = TestCacheManagerFactory.createLocalCacheManager(false);
+      EmbeddedCacheManager cacheManager = TestCacheManagerFactory.createCacheManager(false);
       try {
          Cache<Object, Object> cache = cacheManager.getCache();
          DistributedExecutorService des = new DefaultExecutorService(cache, null);
@@ -52,7 +51,7 @@ public class BasicDistributedExecutorTest extends AbstractCacheTest {
 
    @Test(expectedExceptions = { IllegalArgumentException.class })
    public void testStoppedLocalExecutorServiceForDistributedExecutor() {
-      EmbeddedCacheManager cacheManager = TestCacheManagerFactory.createLocalCacheManager(false);
+      EmbeddedCacheManager cacheManager = TestCacheManagerFactory.createCacheManager(false);
       DistributedExecutorService des = null;
       try {
          Cache<Object, Object> cache = cacheManager.getCache();
@@ -67,7 +66,8 @@ public class BasicDistributedExecutorTest extends AbstractCacheTest {
    }
 
    public void testDistributedExecutorWithPassedThreadExecutor() throws ExecutionException, InterruptedException {
-      Configuration config = TestCacheManagerFactory.getDefaultConfiguration(true, Configuration.CacheMode.REPL_SYNC);
+      ConfigurationBuilder config = TestCacheManagerFactory.getDefaultCacheConfiguration(true);
+      config.clustering().cacheMode(CacheMode.REPL_SYNC);
       EmbeddedCacheManager cacheManager = TestCacheManagerFactory.createClusteredCacheManager(config);
       DistributedExecutorService des = null;
       try {
@@ -86,7 +86,8 @@ public class BasicDistributedExecutorTest extends AbstractCacheTest {
 
    @Test(expectedExceptions = { IllegalStateException.class })
    public void testStoppedCacheForDistributedExecutor() {
-      Configuration config = TestCacheManagerFactory.getDefaultConfiguration(true, Configuration.CacheMode.REPL_SYNC);
+      ConfigurationBuilder config = TestCacheManagerFactory.getDefaultCacheConfiguration(true);
+      config.clustering().cacheMode(CacheMode.REPL_SYNC);
       EmbeddedCacheManager cacheManager = TestCacheManagerFactory.createClusteredCacheManager(config);
       try {
          Cache<Object, Object> cache = cacheManager.getCache();
@@ -98,7 +99,8 @@ public class BasicDistributedExecutorTest extends AbstractCacheTest {
    }
 
    public void testDistributedExecutorShutDown() {
-      Configuration config = TestCacheManagerFactory.getDefaultConfiguration(true, Configuration.CacheMode.REPL_SYNC);
+      ConfigurationBuilder config = TestCacheManagerFactory.getDefaultCacheConfiguration(true);
+      config.clustering().cacheMode(CacheMode.REPL_SYNC);
       EmbeddedCacheManager cacheManager = TestCacheManagerFactory.createClusteredCacheManager(config);
       DistributedExecutorService des = null;
       try {
@@ -113,7 +115,8 @@ public class BasicDistributedExecutorTest extends AbstractCacheTest {
    }
 
    public void testDistributedExecutorRealShutdown() {
-      Configuration config = TestCacheManagerFactory.getDefaultConfiguration(true, Configuration.CacheMode.REPL_SYNC);
+      ConfigurationBuilder config = TestCacheManagerFactory.getDefaultCacheConfiguration(true);
+      config.clustering().cacheMode(CacheMode.REPL_SYNC);
       EmbeddedCacheManager cacheManager = TestCacheManagerFactory.createClusteredCacheManager(config);
       DistributedExecutorService des = null;
       ExecutorService service = null;
@@ -135,7 +138,8 @@ public class BasicDistributedExecutorTest extends AbstractCacheTest {
    }
 
    public void testDistributedExecutorRealShutdownWithOwnership() {
-      Configuration config = TestCacheManagerFactory.getDefaultConfiguration(true, Configuration.CacheMode.REPL_SYNC);
+      ConfigurationBuilder config = TestCacheManagerFactory.getDefaultCacheConfiguration(true);
+      config.clustering().cacheMode(CacheMode.REPL_SYNC);
       EmbeddedCacheManager cacheManager = TestCacheManagerFactory.createClusteredCacheManager(config);
       DistributedExecutorService des = null;
       ExecutorService service = null;
@@ -156,7 +160,8 @@ public class BasicDistributedExecutorTest extends AbstractCacheTest {
    }
 
    public void testDistributedExecutorShutDownNow() {
-      Configuration config = TestCacheManagerFactory.getDefaultConfiguration(true, Configuration.CacheMode.REPL_SYNC);
+      ConfigurationBuilder config = TestCacheManagerFactory.getDefaultCacheConfiguration(true);
+      config.clustering().cacheMode(CacheMode.REPL_SYNC);
       EmbeddedCacheManager cacheManager = TestCacheManagerFactory.createClusteredCacheManager(config);
       try {
          Cache<Object, Object> cache = cacheManager.getCache();
@@ -176,11 +181,12 @@ public class BasicDistributedExecutorTest extends AbstractCacheTest {
 
    /**
     * Tests that we can invoke DistributedExecutorService on an Infinispan cluster having a single node
-    * 
+    *
     * @throws Exception
     */
    public void testSingleCacheExecution() throws Exception {
-      Configuration config = TestCacheManagerFactory.getDefaultConfiguration(true, Configuration.CacheMode.REPL_SYNC);
+      ConfigurationBuilder config = TestCacheManagerFactory.getDefaultCacheConfiguration(true);
+      config.clustering().cacheMode(CacheMode.REPL_SYNC);
       EmbeddedCacheManager cacheManager = TestCacheManagerFactory.createClusteredCacheManager(config);
       DistributedExecutorService des = null;
       try {
@@ -200,15 +206,16 @@ public class BasicDistributedExecutorTest extends AbstractCacheTest {
          TestingUtil.killCacheManagers(cacheManager);
       }
    }
-   
+
    /**
     * Tests that we can invoke DistributedExecutorService task with keys
     * https://issues.jboss.org/browse/ISPN-1886
-    * 
+    *
     * @throws Exception
     */
    public void testSingleCacheWithKeysExecution() throws Exception {
-      Configuration config = TestCacheManagerFactory.getDefaultConfiguration(true, Configuration.CacheMode.REPL_SYNC);
+      ConfigurationBuilder config = TestCacheManagerFactory.getDefaultCacheConfiguration(true);
+      config.clustering().cacheMode(CacheMode.REPL_SYNC);
       EmbeddedCacheManager cacheManager = TestCacheManagerFactory.createClusteredCacheManager(config);
       DistributedExecutorService des = null;
       try {
@@ -229,9 +236,10 @@ public class BasicDistributedExecutorTest extends AbstractCacheTest {
          TestingUtil.killCacheManagers(cacheManager);
       }
    }
-   
+
    public void testDistributedCallableCustomFailoverPolicySuccessfullRetry() throws Exception {
-      Configuration config = TestCacheManagerFactory.getDefaultConfiguration(true, Configuration.CacheMode.REPL_SYNC);
+      ConfigurationBuilder config = TestCacheManagerFactory.getDefaultCacheConfiguration(true);
+      config.clustering().cacheMode(CacheMode.REPL_SYNC);
       EmbeddedCacheManager cacheManager = TestCacheManagerFactory.createClusteredCacheManager(config);
       DistributedExecutorService des = null;
       try {
@@ -268,8 +276,9 @@ public class BasicDistributedExecutorTest extends AbstractCacheTest {
    }
 
    public void testDistributedCallableWithFailingKeysSuccessfullRetry() throws Exception {
-      Configuration config = getDefaultClusteredConfig(Configuration.CacheMode.DIST_SYNC, true);
-      config.setNumOwners(1);
+      ConfigurationBuilder config = TestCacheManagerFactory.getDefaultCacheConfiguration(true);
+      config.clustering().cacheMode(CacheMode.DIST_SYNC);
+      config.clustering().hash().numOwners(1);
       EmbeddedCacheManager cacheManager1 = TestCacheManagerFactory.createClusteredCacheManager(config);
       EmbeddedCacheManager cacheManager2 = TestCacheManagerFactory.createClusteredCacheManager(config);
       DistributedExecutorService des = null;
@@ -323,7 +332,8 @@ public class BasicDistributedExecutorTest extends AbstractCacheTest {
    }
 
    public void testDistributedCallableEmptyFailoverPolicy() throws Exception {
-      Configuration config = TestCacheManagerFactory.getDefaultConfiguration(true, Configuration.CacheMode.REPL_SYNC);
+      ConfigurationBuilder config = TestCacheManagerFactory.getDefaultCacheConfiguration(true);
+      config.clustering().cacheMode(CacheMode.REPL_SYNC);
       EmbeddedCacheManager cacheManager = TestCacheManagerFactory.createClusteredCacheManager(config);
       DistributedExecutorService des = null;
       try {
@@ -352,7 +362,8 @@ public class BasicDistributedExecutorTest extends AbstractCacheTest {
    }
 
    public void testDistributedCallableRandomFailoverPolicy() throws Exception {
-      Configuration config = TestCacheManagerFactory.getDefaultConfiguration(true, Configuration.CacheMode.REPL_SYNC);
+      ConfigurationBuilder config = TestCacheManagerFactory.getDefaultCacheConfiguration(true);
+      config.clustering().cacheMode(CacheMode.REPL_SYNC);
       EmbeddedCacheManager cacheManager = TestCacheManagerFactory.createClusteredCacheManager(config);
       DistributedExecutorService des = null;
 
@@ -388,7 +399,8 @@ public class BasicDistributedExecutorTest extends AbstractCacheTest {
    }
 
    public void testDistributedCallableRandomFailoverPolicyWith2Nodes() throws Exception {
-      Configuration config = TestCacheManagerFactory.getDefaultConfiguration(true, Configuration.CacheMode.REPL_SYNC);
+      ConfigurationBuilder config = TestCacheManagerFactory.getDefaultCacheConfiguration(true);
+      config.clustering().cacheMode(CacheMode.REPL_SYNC);
       EmbeddedCacheManager cacheManager = TestCacheManagerFactory.createClusteredCacheManager(config);
       EmbeddedCacheManager cacheManager1 = TestCacheManagerFactory.createClusteredCacheManager(config);
       DistributedExecutorService des = null;
@@ -427,10 +439,10 @@ public class BasicDistributedExecutorTest extends AbstractCacheTest {
    }
 
    public void testBasicTargetLocalDistributedCallableWithoutAnyTimeout() throws Exception {
-      ConfigurationBuilder confBuilder = getDefaultClusteredCacheConfig(CacheMode.DIST_SYNC, false);
-      confBuilder.clustering().sync().replTimeout(0L);
-      EmbeddedCacheManager cacheManager = TestCacheManagerFactory.createClusteredCacheManager(confBuilder);
-      EmbeddedCacheManager cacheManager1 = TestCacheManagerFactory.createClusteredCacheManager(confBuilder);
+      ConfigurationBuilder config = TestCacheManagerFactory.getDefaultCacheConfiguration(false);
+      config.clustering().cacheMode(CacheMode.REPL_SYNC).sync().replTimeout(0L);
+      EmbeddedCacheManager cacheManager = TestCacheManagerFactory.createClusteredCacheManager(config);
+      EmbeddedCacheManager cacheManager1 = TestCacheManagerFactory.createClusteredCacheManager(config);
 
       Cache<Object, Object> cache1 = cacheManager.getCache();
       Cache<Object, Object> cache2 = cacheManager1.getCache();
@@ -484,7 +496,8 @@ public class BasicDistributedExecutorTest extends AbstractCacheTest {
    }
 
    public void testDistributedCallableCustomFailoverPolicy() throws Exception {
-      Configuration config = TestCacheManagerFactory.getDefaultConfiguration(true, Configuration.CacheMode.REPL_SYNC);
+      ConfigurationBuilder config = TestCacheManagerFactory.getDefaultCacheConfiguration(true);
+      config.clustering().cacheMode(CacheMode.REPL_SYNC);
       EmbeddedCacheManager cacheManager = TestCacheManagerFactory.createClusteredCacheManager(config);
       DistributedExecutorService des = null;
 
@@ -573,7 +586,7 @@ public class BasicDistributedExecutorTest extends AbstractCacheTest {
          return 1;
       }
    }
-   
+
    static class FailOnlyOnceCallable implements Callable<Integer>, Serializable {
 
       /** The serialVersionUID */
@@ -581,7 +594,7 @@ public class BasicDistributedExecutorTest extends AbstractCacheTest {
       boolean throwException = true;
 
       public FailOnlyOnceCallable() {
-         super();         
+         super();
       }
 
       @Override
@@ -589,7 +602,7 @@ public class BasicDistributedExecutorTest extends AbstractCacheTest {
          if (throwException) {
             // do to not throw the exception 2nd time during retry.
             throwException = false;
-            // now throw exception for the first run 
+            // now throw exception for the first run
             int a = 5 / 0;
          }
          return 1;

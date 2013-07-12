@@ -20,7 +20,7 @@ public class AsyncNotificationTest extends AbstractInfinispanTest {
 
    @BeforeMethod
    public void setUp() {
-      cm = TestCacheManagerFactory.createLocalCacheManager(false);
+      cm = TestCacheManagerFactory.createCacheManager(false);
       c = cm.getCache();
    }
 

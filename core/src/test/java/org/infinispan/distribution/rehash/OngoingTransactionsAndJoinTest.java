@@ -4,7 +4,8 @@ import org.infinispan.Cache;
 import org.infinispan.commands.remote.CacheRpcCommand;
 import org.infinispan.commands.tx.CommitCommand;
 import org.infinispan.commands.tx.PrepareCommand;
-import org.infinispan.config.Configuration;
+import org.infinispan.configuration.cache.CacheMode;
+import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.context.impl.TxInvocationContext;
 import org.infinispan.interceptors.InterceptorChain;
 import org.infinispan.interceptors.TxInterceptor;
@@ -46,14 +47,13 @@ import static org.infinispan.test.TestingUtil.replaceField;
 @Test(groups = "functional", testName = "distribution.rehash.OngoingTransactionsAndJoinTest", enabled = false)
 @CleanupAfterMethod
 public class OngoingTransactionsAndJoinTest extends MultipleCacheManagersTest {
-   Configuration configuration;
+   ConfigurationBuilder configuration;
    ScheduledExecutorService delayedExecutor = Executors.newScheduledThreadPool(1);
 
    @Override
    protected void createCacheManagers() throws Throwable {
-      configuration = getDefaultClusteredConfig(Configuration.CacheMode.DIST_SYNC);
-      configuration.setLockAcquisitionTimeout(60000);
-      configuration.setUseLockStriping(false);
+      configuration = getDefaultClusteredCacheConfig(CacheMode.DIST_SYNC);
+      configuration.locking().lockAcquisitionTimeout(60000).useLockStriping(false);
       addClusterEnabledCacheManager(configuration);
    }
 
@@ -100,7 +100,7 @@ public class OngoingTransactionsAndJoinTest extends MultipleCacheManagersTest {
             return null;
          }
       }, 10, TimeUnit.MILLISECONDS);
-      
+
       // start a new node!
       addClusterEnabledCacheManager(configuration);
 
@@ -153,6 +153,7 @@ public class OngoingTransactionsAndJoinTest extends MultipleCacheManagersTest {
          this.rehashStarted = rehashStarted;
       }
 
+      @Override
       Object key() {
          return "unprepared_during_rehash";
       }
@@ -181,6 +182,7 @@ public class OngoingTransactionsAndJoinTest extends MultipleCacheManagersTest {
          this.rehashStarted = rehashStarted;
       }
 
+      @Override
       Object key() {
          return "prepare_during_rehash";
       }
@@ -227,6 +229,7 @@ public class OngoingTransactionsAndJoinTest extends MultipleCacheManagersTest {
          this.rehashStarted = rehashStarted;
       }
 
+      @Override
       Object key() {
          return "commit_during_rehash";
       }

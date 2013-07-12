@@ -28,7 +28,7 @@ public class DummyTransactionManager extends DummyBaseTransactionManager {
    }
 
    public static void destroy() {
-      getInstance().setTransaction(null);
+      setTransaction(null);
    }
 
    public XAResource firstEnlistedResource() {

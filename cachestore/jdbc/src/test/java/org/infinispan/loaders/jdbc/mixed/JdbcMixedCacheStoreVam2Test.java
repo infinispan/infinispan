@@ -5,7 +5,6 @@ import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.commons.marshall.StreamingMarshaller;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.testng.annotations.AfterClass;
-import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
 
@@ -25,7 +24,7 @@ public class JdbcMixedCacheStoreVam2Test extends JdbcMixedCacheStore2Test {
 
    @BeforeClass
    public void setUpClass() {
-      cm = TestCacheManagerFactory.createLocalCacheManager(false);
+      cm = TestCacheManagerFactory.createCacheManager(false);
       marshaller = extractCacheMarshaller(cm.getCache());
    }
 

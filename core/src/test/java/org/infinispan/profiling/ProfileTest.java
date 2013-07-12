@@ -43,7 +43,7 @@ public class ProfileTest extends AbstractProfileTest {
 
       String mode = args[0];
       if (args.length > 1) USE_TRANSACTIONS = Boolean.parseBoolean(args[1]);
-      
+
       try {
          if (args.length > 1) pst.clusterNameOverride = args[1];
          pst.testWith(mode);
@@ -78,7 +78,7 @@ public class ProfileTest extends AbstractProfileTest {
       if (!cacheName.equals(LOCAL_CACHE_NAME)) {
          System.out.println("Waiting for members to join.");
          TestingUtil.blockUntilViewReceived(cache, 2, 120000, true);
-         System.out.println("Cluster ready, cache mode is " + cache.getConfiguration().getCacheMode());
+         System.out.println("Cluster ready, cache mode is " + cache.getCacheConfiguration().clustering().cacheMode());
       }
       warmup();
       doTest();
@@ -129,6 +129,7 @@ public class ProfileTest extends AbstractProfileTest {
       log.warn("Starting warmup");
       for (final Object key : keys) {
          exec.execute(new Runnable() {
+            @Override
             public void run() {
                // this will create the necessary entries.
                cache.put(key, Collections.emptyMap());
@@ -139,6 +140,7 @@ public class ProfileTest extends AbstractProfileTest {
       // loop through WARMUP_LOOPS gets and puts for JVM optimisation
       for (int i = 0; i < WARMUP_LOOPS; i++) {
          exec.execute(new Runnable() {
+            @Override
             public void run() {
                Object key = Generator.getRandomElement(keys);
                cache.get(key);
@@ -202,8 +204,8 @@ public class ProfileTest extends AbstractProfileTest {
    }
 
    private String printAvg(long totalNanos) {
-      double nOps = (double) (NUM_OPERATIONS / 3);
-      double avg = ((double) totalNanos) / nOps;
+      double nOps = NUM_OPERATIONS / 3;
+      double avg = (totalNanos) / nOps;
       double avgMicros = avg / 1000;
       return avgMicros + " µs";
    }
@@ -221,6 +223,7 @@ public class ProfileTest extends AbstractProfileTest {
       Mode mode;
       AtomicLong duration;
 
+      @Override
       public void run() {
          try {
             Object key = Generator.getRandomElement(keys);

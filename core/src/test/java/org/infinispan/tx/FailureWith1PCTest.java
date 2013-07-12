@@ -1,7 +1,8 @@
 package org.infinispan.tx;
 
 import org.infinispan.commands.tx.PrepareCommand;
-import org.infinispan.config.Configuration;
+import org.infinispan.configuration.cache.CacheMode;
+import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.context.impl.TxInvocationContext;
 import org.infinispan.interceptors.base.CommandInterceptor;
 import org.infinispan.test.MultipleCacheManagersTest;
@@ -21,8 +22,8 @@ public class FailureWith1PCTest extends MultipleCacheManagersTest {
 
    @Override
    protected void createCacheManagers() throws Throwable {
-      Configuration c = getDefaultClusteredConfig(Configuration.CacheMode.DIST_SYNC, true);
-      c.fluent().hash().numOwners(3);
+      ConfigurationBuilder c = getDefaultClusteredCacheConfig(CacheMode.DIST_SYNC, true);
+      c.clustering().hash().numOwners(3);
       createCluster(c, 3);
       waitForClusterToForm();
    }

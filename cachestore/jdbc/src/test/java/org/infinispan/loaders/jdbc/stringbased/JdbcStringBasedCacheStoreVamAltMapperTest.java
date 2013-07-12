@@ -4,9 +4,7 @@ import org.infinispan.loaders.CacheLoaderException;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.commons.marshall.StreamingMarshaller;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
-import org.testng.annotations.AfterClass;
 import org.testng.annotations.AfterTest;
-import org.testng.annotations.BeforeClass;
 import org.testng.annotations.BeforeTest;
 import org.testng.annotations.Test;
 
@@ -28,7 +26,7 @@ public class JdbcStringBasedCacheStoreVamAltMapperTest extends JdbcStringBasedCa
    @BeforeTest
    @Override
    public void createCacheStore() throws CacheLoaderException {
-      cm = TestCacheManagerFactory.createLocalCacheManager(false);
+      cm = TestCacheManagerFactory.createCacheManager(false);
       marshaller = extractCacheMarshaller(cm.getCache());
 
       super.createCacheStore();

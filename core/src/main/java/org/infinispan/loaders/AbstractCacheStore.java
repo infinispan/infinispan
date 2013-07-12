@@ -50,7 +50,7 @@ public abstract class AbstractCacheStore extends AbstractCacheLoader implements 
    }
 
    protected final int getConcurrencyLevel() {
-      return cache == null || cache.getConfiguration() == null? 16 : cache.getConfiguration().getConcurrencyLevel();
+      return cache == null || cache.getCacheConfiguration() == null? 16 : cache.getCacheConfiguration().locking().concurrencyLevel();
    }
 
    @Override

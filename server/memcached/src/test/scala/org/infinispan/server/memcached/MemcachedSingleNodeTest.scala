@@ -31,7 +31,7 @@ abstract class MemcachedSingleNodeTest extends SingleCacheManagerTest {
       cacheManager
    }
 
-   protected def createTestCacheManager: EmbeddedCacheManager = TestCacheManagerFactory.createLocalCacheManager(false)
+   protected def createTestCacheManager: EmbeddedCacheManager = TestCacheManagerFactory.createCacheManager(false)
 
    @AfterClass(alwaysRun = true)
    override def destroyAfterClass() {

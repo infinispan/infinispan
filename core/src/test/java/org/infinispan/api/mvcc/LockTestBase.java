@@ -1,7 +1,7 @@
 package org.infinispan.api.mvcc;
 
 import org.infinispan.Cache;
-import org.infinispan.config.Configuration;
+import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.context.InvocationContextContainer;
 import org.infinispan.manager.CacheContainer;
 import org.infinispan.test.AbstractInfinispanTest;
@@ -45,10 +45,14 @@ public abstract class LockTestBase extends AbstractInfinispanTest {
    @BeforeMethod
    public void setUp() {
       LockTestBaseTL tl = new LockTestBaseTL();
-      Configuration defaultCfg = new Configuration();
-      defaultCfg.setIsolationLevel(repeatableRead ? IsolationLevel.REPEATABLE_READ : IsolationLevel.READ_COMMITTED);
-      defaultCfg.setLockAcquisitionTimeout(200); // 200 ms
-      defaultCfg.fluent().transaction().transactionManagerLookup(new DummyTransactionManagerLookup());
+      ConfigurationBuilder defaultCfg = TestCacheManagerFactory.getDefaultCacheConfiguration(true);
+
+      defaultCfg
+         .locking()
+            .isolationLevel(repeatableRead ? IsolationLevel.REPEATABLE_READ : IsolationLevel.READ_COMMITTED)
+            .lockAcquisitionTimeout(200)
+            .transaction()
+               .transactionManagerLookup(new DummyTransactionManagerLookup());
       cm = TestCacheManagerFactory.createCacheManager(defaultCfg);
       tl.cache = cm.getCache();
       tl.lockManager = TestingUtil.extractComponentRegistry(tl.cache).getComponent(LockManager.class);

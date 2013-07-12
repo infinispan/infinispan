@@ -22,8 +22,9 @@ public class ForceWriteLockTest extends SingleCacheManagerTest {
    private TransactionManager tm;
    private AdvancedCache advancedCache;
 
+   @Override
    protected EmbeddedCacheManager createCacheManager() throws Exception {
-      EmbeddedCacheManager cacheManager = TestCacheManagerFactory.createLocalCacheManager(true);
+      EmbeddedCacheManager cacheManager = TestCacheManagerFactory.createCacheManager(true);
       advancedCache = cacheManager.getCache().getAdvancedCache();
       tm = TestingUtil.getTransactionManager(advancedCache);
       return cacheManager;

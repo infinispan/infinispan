@@ -2,7 +2,6 @@ package org.infinispan.test.fwk;
 
 import java.util.Set;
 
-import org.infinispan.config.Configuration;
 import org.infinispan.manager.CacheContainer;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.util.concurrent.ConcurrentHashSet;
@@ -15,26 +14,26 @@ import org.testng.ITestContext;
  * containing some additional sanity checks of the tests themselves.
  * It will verify any clustered CacheManager created by the test was properly killed,
  * if not a message is output.
- * 
+ *
  * NOTE: The test WILL NOT FAIL when not cleaning up, you'll have to check for these messages in logs.
- * 
+ *
  * @author Sanne Grinovero
  * @since 4.0
  */
 public class DebuggingUnitTestNGListener extends UnitTestTestNGListener {
-   
+
    private static final Log log = LogFactory.getLog(DebuggingUnitTestNGListener.class);
-   
+
    private static final Set<String> failedTestDescriptions = new ConcurrentHashSet<String>();
-   
+
    @Override
    public void onFinish(ITestContext testCxt) {
       super.onFinish(testCxt);
       checkCleanedUp(testCxt);
    }
-   
+
    private void checkCleanedUp(ITestContext testCxt) {
-      CacheContainer cm = TestCacheManagerFactory.createClusteredCacheManager(new Configuration());
+      CacheContainer cm = TestCacheManagerFactory.createClusteredCacheManager();
       try {
          cm.start();
          try {
@@ -60,7 +59,7 @@ public class DebuggingUnitTestNGListener extends UnitTestTestNGListener {
          log("~~~~~~~~~~~~~~~~~~~~~~~~~ TEST HEALTH INFO ~~~~~~~~~~~~~~~~~~~~~~~~~~");
       }
    }
-   
+
    private static void log(String s) {
       System.out.println(s);
       log.info(s);

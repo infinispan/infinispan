@@ -1,6 +1,7 @@
 package org.infinispan.config.parsing;
 
 import org.infinispan.Cache;
+import org.infinispan.config.parsing.ConfigFilesConvertor;
 import org.infinispan.manager.CacheContainer;
 import org.infinispan.test.AbstractInfinispanTest;
 import org.infinispan.test.TestingUtil;

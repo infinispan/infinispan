@@ -1,6 +1,6 @@
 package org.infinispan.distribution;
 
-import org.infinispan.config.Configuration;
+import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.test.MultipleCacheManagersTest;
 import org.infinispan.test.TestingUtil;
@@ -17,7 +17,7 @@ public class MultipleNodesLeavingTest extends MultipleCacheManagersTest {
 
    @Override
    protected void createCacheManagers() throws Throwable {
-      createCluster(getDefaultClusteredConfig(Configuration.CacheMode.DIST_SYNC), 4);
+      createCluster(getDefaultClusteredCacheConfig(CacheMode.DIST_SYNC, false), 4);
       waitForClusterToForm();
    }
 

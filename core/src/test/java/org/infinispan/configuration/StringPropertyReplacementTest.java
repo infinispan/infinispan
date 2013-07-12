@@ -1,4 +1,4 @@
-package org.infinispan.config;
+package org.infinispan.configuration;
 
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.test.SingleCacheManagerTest;
@@ -19,6 +19,7 @@ import java.util.Properties;
 public class StringPropertyReplacementTest extends SingleCacheManagerTest {
 
 
+   @Override
    protected EmbeddedCacheManager createCacheManager() throws Exception {
       System.setProperty("test.property.asyncListenerMaxThreads","2");
       System.setProperty("test.property.IsolationLevel","READ_COMMITTED");
@@ -28,19 +29,19 @@ public class StringPropertyReplacementTest extends SingleCacheManagerTest {
    }
 
    public void testGlobalConfig() {
-      Properties asyncListenerExecutorProperties = cacheManager.getGlobalConfiguration().getAsyncListenerExecutorProperties();
+      Properties asyncListenerExecutorProperties = cacheManager.getCacheManagerConfiguration().asyncListenerExecutor().properties();
       asyncListenerExecutorProperties.get("maxThreads").equals("2");
 
-      Properties transportProps = cacheManager.getGlobalConfiguration().getTransportProperties();
+      Properties transportProps = cacheManager.getCacheManagerConfiguration().transport().properties();
       // Should be "jgroups-tcp.xml", but gets overriden by test cache manager factory
       assert transportProps.get("configurationFile") == null;
    }
 
    public void testDefaultCache() {
-      Configuration configuration = cacheManager.getCache().getConfiguration();
-      assert configuration.getIsolationLevel().equals(IsolationLevel.READ_COMMITTED);
-      assert !configuration.isWriteSkewCheck();      
-      assert configuration.isSyncCommitPhase();
+      org.infinispan.configuration.cache.Configuration configuration = cacheManager.getCache().getCacheConfiguration();
+      assert configuration.locking().isolationLevel().equals(IsolationLevel.READ_COMMITTED);
+      assert !configuration.locking().writeSkewCheck();
+      assert configuration.transaction().syncCommitPhase();
    }
 }
 

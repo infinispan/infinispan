@@ -1,6 +1,7 @@
 package org.infinispan.distribution;
 
-import org.infinispan.config.Configuration;
+import org.infinispan.configuration.cache.CacheMode;
+import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.manager.CacheContainer;
 import org.infinispan.test.MultipleCacheManagersTest;
 import org.testng.annotations.Test;
@@ -17,12 +18,11 @@ public class InvalidationFailureTest extends MultipleCacheManagersTest {
 
    @Override
    protected void createCacheManagers() throws Throwable {
-      Configuration config = getDefaultClusteredConfig(Configuration.CacheMode.DIST_SYNC, true);
-      config.setL1CacheEnabled(true);
-      config.setNumOwners(1);
+      ConfigurationBuilder config = getDefaultClusteredCacheConfig(CacheMode.DIST_SYNC, true);
+      config.clustering().l1().enable().hash().numOwners(1);
       createCluster(config, 2);
-      manager(0).defineConfiguration("second", config);
-      manager(1).defineConfiguration("second", config);
+      manager(0).defineConfiguration("second", config.build());
+      manager(1).defineConfiguration("second", config.build());
       manager(0).startCaches(CacheContainer.DEFAULT_CACHE_NAME, "second");
       manager(1).startCaches(CacheContainer.DEFAULT_CACHE_NAME, "second");
       waitForClusterToForm(CacheContainer.DEFAULT_CACHE_NAME, "second");

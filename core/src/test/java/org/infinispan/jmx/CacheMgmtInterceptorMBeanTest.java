@@ -1,20 +1,15 @@
 package org.infinispan.jmx;
 
 import org.infinispan.AdvancedCache;
-import org.infinispan.config.Configuration;
-import org.infinispan.config.GlobalConfiguration;
+import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.test.SingleCacheManagerTest;
 import static org.infinispan.test.TestingUtil.*;
-import static org.testng.AssertJUnit.assertFalse;
 
 import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.testng.annotations.AfterMethod;
 import org.testng.annotations.Test;
 
-import javax.management.MBeanInfo;
-import javax.management.MBeanOperationInfo;
-import javax.management.MBeanParameterInfo;
 import javax.management.MBeanServer;
 import javax.management.ObjectName;
 import java.util.HashMap;
@@ -30,20 +25,17 @@ import java.util.Map;
 public class CacheMgmtInterceptorMBeanTest extends SingleCacheManagerTest {
    private ObjectName mgmtInterceptor;
    private MBeanServer server;
-   AdvancedCache advanced;
+   AdvancedCache<?, ?> advanced;
    private static final String JMX_DOMAIN = CacheMgmtInterceptorMBeanTest.class.getSimpleName();
 
    @Override
    protected EmbeddedCacheManager createCacheManager() throws Exception {
-      GlobalConfiguration globalConfiguration = GlobalConfiguration.getNonClusteredDefault();
-      globalConfiguration.setExposeGlobalJmxStatistics(true);
-      globalConfiguration.setMBeanServerLookup(PerThreadMBeanServerLookup.class.getName());
-      globalConfiguration.setJmxDomain(JMX_DOMAIN);
-      cacheManager = TestCacheManagerFactory.createCacheManagerEnforceJmxDomain(globalConfiguration);
+      cacheManager = TestCacheManagerFactory.createCacheManagerEnforceJmxDomain(JMX_DOMAIN);
 
-      Configuration configuration = getDefaultClusteredConfig(Configuration.CacheMode.LOCAL);
-      configuration.setExposeJmxStatistics(true);
-      cacheManager.defineConfiguration("test", configuration);
+      ConfigurationBuilder configuration = getDefaultStandaloneCacheConfig(false);
+
+      configuration.jmxStatistics().enable();
+      cacheManager.defineConfiguration("test", configuration.build());
       cache = cacheManager.getCache("test");
       advanced = cache.getAdvancedCache();
       mgmtInterceptor = getCacheObjectName(JMX_DOMAIN, "test(local)", "Statistics");
@@ -105,7 +97,7 @@ public class CacheMgmtInterceptorMBeanTest extends SingleCacheManagerTest {
       assertStores(2);
       assertCurrentNumberOfEntries(1);
 
-      Map toAdd = new HashMap();
+      Map<String, String> toAdd = new HashMap<String, String>();
       toAdd.put("key", "value");
       toAdd.put("key2", "value2");
       cache.putAll(toAdd);
@@ -114,7 +106,7 @@ public class CacheMgmtInterceptorMBeanTest extends SingleCacheManagerTest {
 
       resetStats();
 
-      toAdd = new HashMap();
+      toAdd = new HashMap<String, String>();
       toAdd.put("key3", "value3");
       toAdd.put("key4", "value4");
       cache.putAll(toAdd);

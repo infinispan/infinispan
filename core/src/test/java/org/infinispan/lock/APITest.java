@@ -18,7 +18,6 @@ import org.infinispan.util.concurrent.TimeoutException;
 import org.testng.annotations.Test;
 
 import javax.transaction.Status;
-import javax.transaction.Transaction;
 import javax.transaction.TransactionManager;
 import java.util.Arrays;
 import java.util.concurrent.Callable;
@@ -142,7 +141,7 @@ public class APITest extends MultipleCacheManagersTest {
       });
 
       f1.get();
-      f2.get();      
+      f2.get();
    }
 
    public void testMultiLockSuccess() throws Exception {
@@ -157,7 +156,7 @@ public class APITest extends MultipleCacheManagersTest {
       tm(0).rollback();
    }
 
-   @Test (expectedExceptions = TimeoutException.class)   
+   @Test (expectedExceptions = TimeoutException.class)
    public void testMultiLockFailure() throws Exception {
       Cache<String, String> cache1 = cache(0), cache2 = cache(1);
 
@@ -183,7 +182,7 @@ public class APITest extends MultipleCacheManagersTest {
 
       tm(1).begin();
       cache2.put("k3", "v2");
-      Transaction t = tm(1).suspend();
+      tm(1).suspend();
 
       tm(0).begin();
       assert !cache1.getAdvancedCache().withFlags(FAIL_SILENTLY).lock(Arrays.asList("k1", "k2", "k3"));
@@ -193,7 +192,7 @@ public class APITest extends MultipleCacheManagersTest {
    @Test(expectedExceptions = UnsupportedOperationException.class)
    public void testLockOnNonTransactionalCache() {
       withCacheManager(new CacheManagerCallable(
-            TestCacheManagerFactory.createLocalCacheManager(false)) {
+            TestCacheManagerFactory.createCacheManager(false)) {
          @Override
          public void call() {
             cm.getCache().getAdvancedCache().lock("k");

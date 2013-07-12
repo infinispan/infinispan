@@ -1,8 +1,9 @@
 package org.infinispan.profiling;
 
 import org.infinispan.commons.executors.ExecutorFactory;
-import org.infinispan.config.Configuration;
-import org.infinispan.config.GlobalConfiguration;
+import org.infinispan.configuration.cache.CacheMode;
+import org.infinispan.configuration.cache.ConfigurationBuilder;
+import org.infinispan.configuration.global.GlobalConfigurationBuilder;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.test.SingleCacheManagerTest;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
@@ -13,7 +14,7 @@ import org.testng.annotations.Test;
 import java.util.Properties;
 import java.util.concurrent.ExecutorService;
 
-import static org.infinispan.config.Configuration.CacheMode.*;
+import static org.infinispan.configuration.cache.CacheMode.*;
 
 @Test(groups = "profiling", enabled = false, testName = "profiling.AbstractProfileTest")
 public abstract class AbstractProfileTest extends SingleCacheManagerTest {
@@ -34,44 +35,43 @@ public abstract class AbstractProfileTest extends SingleCacheManagerTest {
       if (startedInCmdLine) cacheManager = createCacheManager();
    }
 
-   private Configuration getBaseCfg() {
-      Configuration cfg = new Configuration();
-      cfg.setConcurrencyLevel(5000);
-      cfg.setTransactionManagerLookupClass(JBossStandaloneJTAManagerLookup.class.getName());
+   private ConfigurationBuilder getBaseCfg() {
+      ConfigurationBuilder cfg = new ConfigurationBuilder();
+      cfg.locking().concurrencyLevel(5000).transaction().transactionManagerLookup(new JBossStandaloneJTAManagerLookup());
       return cfg;
    }
 
-   private Configuration getClusteredCfg(Configuration.CacheMode mode, boolean l1) {
-      Configuration cfg = getBaseCfg();
-      cfg.setLockAcquisitionTimeout(60000);
-      cfg.setSyncReplTimeout(60000);
-      cfg.setCacheMode(mode);
-      cfg.setFetchInMemoryState(false);
+   private ConfigurationBuilder getClusteredCfg(CacheMode mode, boolean l1) {
+      ConfigurationBuilder cfg = getBaseCfg();
+      cfg
+         .locking().lockAcquisitionTimeout(60000)
+         .clustering().cacheMode(mode).sync().replTimeout(60000).stateTransfer().fetchInMemoryState(false);
       if (mode.isDistributed()) {
-         cfg.setL1CacheEnabled(l1);
-         cfg.setL1Lifespan(120000);
+         cfg.clustering().l1().enabled(l1).lifespan(120000);
       }
       return cfg;
    }
 
+   @Override
    protected EmbeddedCacheManager createCacheManager() throws Exception {
-      GlobalConfiguration gc = GlobalConfiguration.getClusteredDefault();
-      gc.setAsyncTransportExecutorFactoryClass(WTE.class.getName());
-      cacheManager = TestCacheManagerFactory.createCacheManager(gc);
+      GlobalConfigurationBuilder builder = new GlobalConfigurationBuilder();
+      builder.asyncTransportExecutor().factory(new WTE());
+      cacheManager = TestCacheManagerFactory.createClusteredCacheManager(builder, new ConfigurationBuilder());
 
-      cacheManager.defineConfiguration(LOCAL_CACHE_NAME, getBaseCfg());
+      cacheManager.defineConfiguration(LOCAL_CACHE_NAME, getBaseCfg().build());
 
-      cacheManager.defineConfiguration(REPL_SYNC_CACHE_NAME, getClusteredCfg(REPL_SYNC, false));
-      cacheManager.defineConfiguration(REPL_ASYNC_CACHE_NAME, getClusteredCfg(REPL_ASYNC, false));
-      cacheManager.defineConfiguration(DIST_SYNC_CACHE_NAME, getClusteredCfg(DIST_SYNC, false));
-      cacheManager.defineConfiguration(DIST_ASYNC_CACHE_NAME, getClusteredCfg(DIST_ASYNC, false));
-      cacheManager.defineConfiguration(DIST_SYNC_L1_CACHE_NAME, getClusteredCfg(DIST_SYNC, true));
-      cacheManager.defineConfiguration(DIST_ASYNC_L1_CACHE_NAME, getClusteredCfg(DIST_ASYNC, true));
+      cacheManager.defineConfiguration(REPL_SYNC_CACHE_NAME, getClusteredCfg(REPL_SYNC, false).build());
+      cacheManager.defineConfiguration(REPL_ASYNC_CACHE_NAME, getClusteredCfg(REPL_ASYNC, false).build());
+      cacheManager.defineConfiguration(DIST_SYNC_CACHE_NAME, getClusteredCfg(DIST_SYNC, false).build());
+      cacheManager.defineConfiguration(DIST_ASYNC_CACHE_NAME, getClusteredCfg(DIST_ASYNC, false).build());
+      cacheManager.defineConfiguration(DIST_SYNC_L1_CACHE_NAME, getClusteredCfg(DIST_SYNC, true).build());
+      cacheManager.defineConfiguration(DIST_ASYNC_L1_CACHE_NAME, getClusteredCfg(DIST_ASYNC, true).build());
 
       return cacheManager;
    }
 
    public static class WTE implements ExecutorFactory {
+      @Override
       public ExecutorService getExecutor(Properties p) {
          return new WithinThreadExecutor();
       }

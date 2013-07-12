@@ -4,7 +4,8 @@ import org.infinispan.commands.read.GetKeyValueCommand;
 import org.infinispan.commands.write.PutKeyValueCommand;
 import org.infinispan.commands.write.RemoveCommand;
 import org.infinispan.commands.write.ReplaceCommand;
-import org.infinispan.config.Configuration;
+import org.infinispan.configuration.cache.CacheMode;
+import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.interceptors.base.CommandInterceptor;
 import org.infinispan.test.MultipleCacheManagersTest;
 import org.testng.annotations.Test;
@@ -23,8 +24,8 @@ public class SingleKeyNonTxInvocationContextTest extends MultipleCacheManagersTe
 
    @Override
    protected void createCacheManagers() throws Throwable {
-      final Configuration c = getDefaultClusteredConfig(Configuration.CacheMode.DIST_SYNC, false);
-      c.fluent().hash().numOwners(1);
+      final ConfigurationBuilder c = getDefaultClusteredCacheConfig(CacheMode.DIST_SYNC, false);
+      c.clustering().hash().numOwners(1);
       createCluster(c, 2);
       waitForClusterToForm();
       ci0 = new CheckInterceptor();
@@ -32,46 +33,46 @@ public class SingleKeyNonTxInvocationContextTest extends MultipleCacheManagersTe
       ci1 = new CheckInterceptor();
       advancedCache(1).addInterceptor(ci1, 1);
    }
-   
-   
+
+
    public void testPut() {
       assert !ci0.putOkay && !ci1.putOkay;
-      
+
       cache(0).put(getKeyForCache(0), "v");
       assert ci0.putOkay && !ci1.putOkay;
 
       cache(1).put(getKeyForCache(1), "v");
       assert ci0.putOkay && ci1.putOkay;
    }
-   
+
    public void testRemove() {
       assert !ci0.removeOkay && !ci1.removeOkay;
-      
+
       cache(0).remove(getKeyForCache(0));
       assert ci0.removeOkay && !ci1.removeOkay;
 
       cache(1).remove(getKeyForCache(1));
-      assert ci0.removeOkay && ci1.removeOkay;      
+      assert ci0.removeOkay && ci1.removeOkay;
    }
-   
+
    public void testGet() {
       assert !ci0.getOkay && !ci1.getOkay;
-      
+
       cache(0).get(getKeyForCache(0));
       assert ci0.getOkay && !ci1.getOkay;
 
       cache(1).get(getKeyForCache(1));
-      assert ci0.getOkay && ci1.getOkay;      
+      assert ci0.getOkay && ci1.getOkay;
    }
-   
+
    public void testReplace() {
       assert !ci0.replaceOkay && !ci1.replaceOkay;
-      
+
       cache(0).replace(getKeyForCache(0), "v");
       assert ci0.replaceOkay && !ci1.replaceOkay;
 
       cache(1).replace(getKeyForCache(1), "v");
-      assert ci0.replaceOkay && ci1.replaceOkay;      
+      assert ci0.replaceOkay && ci1.replaceOkay;
    }
 
 

@@ -1,8 +1,9 @@
 package org.infinispan.distribution.topologyaware;
 
 import org.infinispan.Cache;
-import org.infinispan.config.Configuration;
-import org.infinispan.config.GlobalConfiguration;
+import org.infinispan.configuration.cache.CacheMode;
+import org.infinispan.configuration.cache.ConfigurationBuilder;
+import org.infinispan.configuration.global.GlobalConfigurationBuilder;
 import org.infinispan.distribution.ch.ConsistentHash;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.remoting.transport.Address;
@@ -27,9 +28,9 @@ public class TopologyAwareStateTransferTest extends MultipleCacheManagersTest {
 
    @Override
    protected void createCacheManagers() throws Throwable {
-      Configuration defaultConfig = getDefaultClusteredConfig(Configuration.CacheMode.DIST_SYNC);
-      log.debug("defaultConfig = " + defaultConfig.getNumOwners());
-      defaultConfig.setL1CacheEnabled(false);
+      ConfigurationBuilder defaultConfig = getDefaultClusteredCacheConfig(CacheMode.DIST_SYNC);
+      log.debug("defaultConfig = " + defaultConfig.build().clustering().hash().numOwners());
+      defaultConfig.clustering().l1().disable().stateTransfer().fetchInMemoryState(true);
       createClusteredCaches(5, defaultConfig);
 
       ConsistentHash hash = cache(0).getAdvancedCache().getDistributionManager().getConsistentHash();
@@ -42,8 +43,8 @@ public class TopologyAwareStateTransferTest extends MultipleCacheManagersTest {
    protected void clearContent() throws Throwable {
    }
 
-   Cache cache(Address addr) {
-      for (Cache c : caches()) {
+   Cache<?, ?> cache(Address addr) {
+      for (Cache<?, ?> c : caches()) {
          if (c.getAdvancedCache().getRpcManager().getAddress().equals(addr)) return c;
       }
       throw new RuntimeException("Address: " + addr);
@@ -140,7 +141,7 @@ public class TopologyAwareStateTransferTest extends MultipleCacheManagersTest {
       log.debug(key + " should be present on = " + addresses);
 
       int count = 0;
-      for (Cache c : caches()) {
+      for (Cache<?, ?> c : caches()) {
          if (c.getAdvancedCache().getDataContainer().containsKey(key)) {
             log.debug("It is here = " + address(c));
             count++;
@@ -149,7 +150,7 @@ public class TopologyAwareStateTransferTest extends MultipleCacheManagersTest {
       log.debug("count = " + count);
       assert count == 2;
 
-      for (Cache c : caches()) {
+      for (Cache<?, ?> c : caches()) {
          if (addresses.contains(address(c))) {
             assert c.getAdvancedCache().getDataContainer().containsKey(key);
          } else {
@@ -159,7 +160,7 @@ public class TopologyAwareStateTransferTest extends MultipleCacheManagersTest {
    }
 
    @Override
-   protected EmbeddedCacheManager addClusterEnabledCacheManager(Configuration deConfiguration) {
+   protected EmbeddedCacheManager addClusterEnabledCacheManager(ConfigurationBuilder deConfiguration) {
       int index = cacheManagers.size();
       String rack;
       String machine;
@@ -193,10 +194,9 @@ public class TopologyAwareStateTransferTest extends MultipleCacheManagersTest {
             throw new RuntimeException("Bad!");
          }
       }
-      GlobalConfiguration gc = GlobalConfiguration.getClusteredDefault();
-      gc.setRackId(rack);
-      gc.setMachineId(machine);
-      EmbeddedCacheManager cm = TestCacheManagerFactory.createCacheManager(gc, deConfiguration);
+      GlobalConfigurationBuilder gcb = GlobalConfigurationBuilder.defaultClusteredBuilder();
+      gcb.transport().rackId(rack).machineId(machine);
+      EmbeddedCacheManager cm = TestCacheManagerFactory.createClusteredCacheManager(gcb, deConfiguration);
       cacheManagers.add(cm);
       return cm;
    }

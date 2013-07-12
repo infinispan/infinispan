@@ -35,7 +35,7 @@ public abstract class CacheAPITest extends APINonTxTest {
       cb.locking().isolationLevel(getIsolationLevel());
       addEviction(cb);
       amend(cb);
-      EmbeddedCacheManager cm = TestCacheManagerFactory.createLocalCacheManager(false);
+      EmbeddedCacheManager cm = TestCacheManagerFactory.createCacheManager(false);
       cm.defineConfiguration("test", cb.build());
       cache = cm.getCache("test");
       return cm;
@@ -144,7 +144,7 @@ public abstract class CacheAPITest extends APINonTxTest {
    }
 
    public void testEntrySetEqualityInTx(Method m) throws Exception {
-      Map dataIn = new HashMap();
+      Map<Integer, String> dataIn = new HashMap<Integer, String>();
       dataIn.put(1, v(m, 1));
       dataIn.put(2, v(m, 2));
 
@@ -153,9 +153,9 @@ public abstract class CacheAPITest extends APINonTxTest {
       TransactionManager tm = cache.getAdvancedCache().getTransactionManager();
       tm.begin();
       try {
-         Map txDataIn = new HashMap();
+         Map<Integer, String> txDataIn = new HashMap<Integer, String>();
          txDataIn.put(3, v(m, 3));
-         Map allEntriesIn = new HashMap(dataIn);
+         Map<Integer, String> allEntriesIn = new HashMap<Integer, String>(dataIn);
 
          // Modify expectations to include data to be included
          allEntriesIn.putAll(txDataIn);

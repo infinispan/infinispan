@@ -24,7 +24,7 @@ public class BatchWithCustomTMTest extends AbstractBatchTest {
 
    @BeforeClass
    public void createCacheManager() {
-      cm = TestCacheManagerFactory.createLocalCacheManager(false);
+      cm = TestCacheManagerFactory.createCacheManager(false);
    }
 
    @AfterClass

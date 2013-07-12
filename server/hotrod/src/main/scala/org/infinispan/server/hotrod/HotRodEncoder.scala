@@ -19,7 +19,7 @@ import org.infinispan.commons.util.Util
 class HotRodEncoder(cacheManager: EmbeddedCacheManager, server: HotRodServer)
         extends OneToOneEncoder with Constants with Log {
 
-   private lazy val isClustered: Boolean = cacheManager.getGlobalConfiguration.getTransportClass != null
+   private lazy val isClustered: Boolean = cacheManager.getCacheManagerConfiguration.transport.transport  != null
    private lazy val addressCache: Cache[Address, ServerAddress] =
       if (isClustered) cacheManager.getCache(server.getConfiguration.topologyCacheName) else null
    private val isTrace = isTraceEnabled

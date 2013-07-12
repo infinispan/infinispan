@@ -1,7 +1,6 @@
 package org.infinispan.tx.synchronisation;
 
-import org.infinispan.config.Configuration;
-import org.infinispan.commons.CacheConfigurationException;
+import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.test.SingleCacheManagerTest;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
@@ -20,16 +19,16 @@ public class NoXaConfigTest extends SingleCacheManagerTest {
    }
 
    public void testConfig() {
-      assert cacheManager.getCache("syncEnabled").getConfiguration().isUseSynchronizationForTransactions();
-      assert cacheManager.getCache("notSpecified").getConfiguration().isUseSynchronizationForTransactions();
+      assert cacheManager.getCache("syncEnabled").getCacheConfiguration().transaction().useSynchronization();
+      assert cacheManager.getCache("notSpecified").getCacheConfiguration().transaction().useSynchronization();
 
       cacheManager.getCache("syncAndRecovery");
    }
 
    public void testConfigOverride() {
-      Configuration configuration = getDefaultStandaloneConfig(true);
-      configuration.fluent().transaction().useSynchronization(true);
-      cacheManager.defineConfiguration("newCache", configuration);
-      assert cacheManager.getCache("newCache").getConfiguration().isUseSynchronizationForTransactions();
+      ConfigurationBuilder configuration = getDefaultStandaloneCacheConfig(true);
+      configuration.transaction().useSynchronization(true);
+      cacheManager.defineConfiguration("newCache", configuration.build());
+      assert cacheManager.getCache("newCache").getCacheConfiguration().transaction().useSynchronization();
    }
 }

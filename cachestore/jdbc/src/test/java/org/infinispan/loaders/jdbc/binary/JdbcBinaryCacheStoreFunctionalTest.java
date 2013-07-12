@@ -1,9 +1,8 @@
 package org.infinispan.loaders.jdbc.binary;
 
+import org.infinispan.configuration.cache.LoadersConfigurationBuilder;
 import org.infinispan.loaders.BaseCacheStoreFunctionalTest;
-import org.infinispan.loaders.CacheStoreConfig;
-import org.infinispan.loaders.jdbc.TableManipulation;
-import org.infinispan.loaders.jdbc.connectionfactory.ConnectionFactoryConfig;
+import org.infinispan.loaders.jdbc.configuration.JdbcBinaryCacheStoreConfigurationBuilder;
 import org.infinispan.test.fwk.UnitTestDatabaseManager;
 import org.testng.annotations.Test;
 
@@ -17,15 +16,12 @@ import org.testng.annotations.Test;
 public class JdbcBinaryCacheStoreFunctionalTest extends BaseCacheStoreFunctionalTest {
 
    @Override
-   protected CacheStoreConfig createCacheStoreConfig() throws Exception {
-      ConnectionFactoryConfig connectionFactoryConfig = UnitTestDatabaseManager.getUniqueConnectionFactoryConfig();
-      TableManipulation tm = UnitTestDatabaseManager.buildBinaryTableManipulation();
-      JdbcBinaryCacheStoreConfig config = new JdbcBinaryCacheStoreConfig(connectionFactoryConfig, tm);
-      return config;
-//      JdbcBinaryCacheStore jdbcBucketCacheStore = new JdbcBinaryCacheStore();
-//      jdbcBucketCacheStore.init(config, new CacheDelegate("aName"), getMarshaller());
-//      jdbcBucketCacheStore.start();
-//      assert jdbcBucketCacheStore.getConnectionFactory() != null;
-//      return jdbcBucketCacheStore;
+   protected LoadersConfigurationBuilder createCacheStoreConfig(LoadersConfigurationBuilder loaders) {
+      JdbcBinaryCacheStoreConfigurationBuilder store = loaders
+         .addStore(JdbcBinaryCacheStoreConfigurationBuilder.class)
+         .purgeSynchronously(true);
+      UnitTestDatabaseManager.buildTableManipulation(store.table(), true);
+      UnitTestDatabaseManager.configureUniqueConnectionFactory(store);
+      return loaders;
    }
 }

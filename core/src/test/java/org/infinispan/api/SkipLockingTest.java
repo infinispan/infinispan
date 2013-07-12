@@ -20,7 +20,7 @@ public class SkipLockingTest extends SingleCacheManagerTest {
 
    @Override
    protected EmbeddedCacheManager createCacheManager() throws Exception {
-      return TestCacheManagerFactory.createLocalCacheManager(false);
+      return TestCacheManagerFactory.createCacheManager(false);
    }
 
    public void testSkipLockingAfterPutWithoutTm(Method m) {
@@ -31,7 +31,7 @@ public class SkipLockingTest extends SingleCacheManagerTest {
    }
 
    public void testSkipLockingAfterPutWithTm(Method m) {
-      EmbeddedCacheManager cacheManager = TestCacheManagerFactory.createLocalCacheManager(true);
+      EmbeddedCacheManager cacheManager = TestCacheManagerFactory.createCacheManager(true);
       try {
          AdvancedCache advancedCache = cacheManager.getCache().getAdvancedCache();
          String name = m.getName();

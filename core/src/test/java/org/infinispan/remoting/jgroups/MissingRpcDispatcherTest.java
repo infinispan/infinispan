@@ -2,8 +2,10 @@ package org.infinispan.remoting.jgroups;
 
 import org.infinispan.Cache;
 import org.infinispan.commons.CacheException;
-import org.infinispan.config.Configuration;
-import org.infinispan.config.GlobalConfiguration;
+import org.infinispan.configuration.cache.CacheMode;
+import org.infinispan.configuration.cache.ConfigurationBuilder;
+import org.infinispan.configuration.global.GlobalConfiguration;
+import org.infinispan.configuration.global.GlobalConfigurationBuilder;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.remoting.transport.jgroups.JGroupsTransport;
 import org.infinispan.test.MultipleCacheManagersTest;
@@ -34,37 +36,35 @@ import java.util.Properties;
 @CleanupAfterMethod
 public class MissingRpcDispatcherTest extends MultipleCacheManagersTest {
    protected String cacheName = "replSync";
-   protected Configuration.CacheMode cacheMode = Configuration.CacheMode.REPL_SYNC;
+   protected CacheMode cacheMode = CacheMode.REPL_SYNC;
 
    @Override
    protected void createCacheManagers() throws Exception {
-      Configuration c = getDefaultClusteredConfig(cacheMode);
-      c.fluent()
-            .clustering().stateRetrieval().fetchInMemoryState(true);
+      ConfigurationBuilder c = getDefaultClusteredCacheConfig(cacheMode, false);
+      c.clustering().stateTransfer().fetchInMemoryState(true);
       createClusteredCaches(1, cacheName, c);
    }
 
    public void testExtraChannelWithoutRpcDispatcher() throws Exception {
       // start with a single cache
-      Cache cache1 = cache(0, cacheName);
+      Cache<String, String> cache1 = cache(0, cacheName);
       cache1.put("k1", "v1");
       assert "v1".equals(cache1.get("k1"));
 
       // create a new jgroups channel that will join the cluster
       // but without attaching the Infinispan RpcDispatcher
-      Channel channel2 = createJGroupsChannel(manager(0).getGlobalConfiguration());
+      Channel channel2 = createJGroupsChannel(manager(0).getCacheManagerConfiguration());
       try {
          // try the put operation again
          cache1.put("k2", "v2");
          assert "v2".equals(cache1.get("k2"));
 
          // create a new cache, make sure it joins properly
-         Configuration c = getDefaultClusteredConfig(cacheMode);
-         c.fluent()
-               .clustering().stateRetrieval().fetchInMemoryState(true);
+         ConfigurationBuilder c = getDefaultClusteredCacheConfig(cacheMode, false);
+         c.clustering().stateTransfer().fetchInMemoryState(true);
          EmbeddedCacheManager cm = addClusterEnabledCacheManager(new TransportFlags());
-         cm.defineConfiguration(cacheName, c);
-         Cache cache2 = cm.getCache(cacheName);
+         cm.defineConfiguration(cacheName, c.build());
+         Cache<String, String> cache2 = cm.getCache(cacheName);
          assert cache2.getAdvancedCache().getRpcManager().getTransport().getMembers().size() == 3;
 
          assert "v1".equals(cache1.get("k1"));
@@ -78,15 +78,16 @@ public class MissingRpcDispatcherTest extends MultipleCacheManagersTest {
       }
    }
 
-   private Channel createJGroupsChannel(GlobalConfiguration gc) {
-      GlobalConfiguration newGC = gc.clone();
-      TestCacheManagerFactory.amendTransport(newGC);
-      Properties p = newGC.getTransportProperties();
+   private Channel createJGroupsChannel(GlobalConfiguration oldGC) {
+      GlobalConfigurationBuilder builder = new GlobalConfigurationBuilder().read(oldGC);
+      TestCacheManagerFactory.amendTransport(builder);
+      GlobalConfiguration gc = builder.build();
+      Properties p = gc.transport().properties();
       String jgroupsCfg = p.getProperty(JGroupsTransport.CONFIGURATION_STRING);
       try {
          JChannel channel = new JChannel(jgroupsCfg);
-         channel.setName(newGC.getTransportNodeName());
-         channel.connect(newGC.getClusterName());
+         channel.setName(gc.transport().nodeName());
+         channel.connect(gc.transport().clusterName());
          return channel;
       } catch (Exception e) {
          throw new CacheException(e);

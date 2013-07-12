@@ -3,9 +3,6 @@ package org.infinispan.jmx;
 import java.lang.reflect.Method;
 
 import javax.management.InstanceNotFoundException;
-import javax.management.MBeanInfo;
-import javax.management.MBeanOperationInfo;
-import javax.management.MBeanParameterInfo;
 import javax.management.MBeanServer;
 import javax.management.ObjectName;
 

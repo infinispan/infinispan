@@ -1,14 +1,9 @@
 package org.infinispan.distexec.mapreduce;
 
 import org.infinispan.Cache;
-import org.infinispan.config.Configuration;
 import org.infinispan.configuration.cache.CacheMode;
-import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.manager.EmbeddedCacheManager;
-import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
-import org.infinispan.transaction.LockingMode;
-import org.infinispan.util.concurrent.locks.DeadlockDetectingLockManager;
 import org.testng.annotations.Test;
 
 /**
@@ -28,7 +23,7 @@ public class LocalMapReduceTest extends DistributedFourNodesMapReduceTest {
 
    @Override
    protected void createCacheManagers() throws Throwable {
-      EmbeddedCacheManager cacheManager = TestCacheManagerFactory.createLocalCacheManager(false);
+      EmbeddedCacheManager cacheManager = TestCacheManagerFactory.createCacheManager(false);
       cacheManagers.add(cacheManager);
    }
 

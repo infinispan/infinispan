@@ -1,4 +1,4 @@
-package org.infinispan.config;
+package org.infinispan.configuration;
 
 import org.infinispan.interceptors.base.BaseCustomInterceptor;
 import org.infinispan.util.concurrent.locks.LockManager;

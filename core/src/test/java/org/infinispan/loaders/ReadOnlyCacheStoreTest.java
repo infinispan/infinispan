@@ -1,8 +1,7 @@
 package org.infinispan.loaders;
 
-import org.infinispan.config.CacheLoaderManagerConfig;
-import org.infinispan.config.Configuration;
-import org.infinispan.loaders.dummy.DummyInMemoryCacheStore;
+import org.infinispan.configuration.cache.ConfigurationBuilder;
+import org.infinispan.loaders.dummy.DummyInMemoryCacheStoreConfigurationBuilder;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.test.SingleCacheManagerTest;
 import org.infinispan.test.TestingUtil;
@@ -24,11 +23,13 @@ public class ReadOnlyCacheStoreTest extends SingleCacheManagerTest {
 
    @Override
    protected EmbeddedCacheManager createCacheManager() throws Exception {
-      Configuration cfg = getDefaultStandaloneConfig(true);
-      cfg.setInvocationBatchingEnabled(true);
-      CacheLoaderManagerConfig clmc = new CacheLoaderManagerConfig();
-      clmc.addCacheLoaderConfig(new DummyInMemoryCacheStore.Cfg().ignoreModifications(true));
-      cfg.setCacheLoaderManagerConfig(clmc);
+      ConfigurationBuilder cfg = getDefaultStandaloneCacheConfig(true);
+      cfg
+         .invocationBatching().enable()
+         .loaders()
+            .addStore(DummyInMemoryCacheStoreConfigurationBuilder.class)
+               .ignoreModifications(true);
+
       return TestCacheManagerFactory.createCacheManager(cfg);
    }
 

@@ -3,8 +3,9 @@ package org.infinispan.marshall;
 import org.infinispan.Cache;
 import org.infinispan.commons.marshall.PojoWithJBossExternalize;
 import org.infinispan.commons.marshall.PojoWithSerializeWith;
-import org.infinispan.config.Configuration;
-import org.infinispan.config.GlobalConfiguration;
+import org.infinispan.configuration.cache.CacheMode;
+import org.infinispan.configuration.cache.ConfigurationBuilder;
+import org.infinispan.configuration.global.GlobalConfigurationBuilder;
 import org.infinispan.manager.CacheContainer;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.test.MultipleCacheManagersTest;
@@ -23,12 +24,10 @@ public class MarshallExternalPojosTest extends MultipleCacheManagersTest {
 
    @Override
    protected void createCacheManagers() throws Throwable {
-      GlobalConfiguration globalCfg1 = GlobalConfiguration.getClusteredDefault();
-      GlobalConfiguration globalCfg2 = GlobalConfiguration.getClusteredDefault();
-      CacheContainer cm1 = TestCacheManagerFactory.createCacheManager(globalCfg1);
-      CacheContainer cm2 = TestCacheManagerFactory.createCacheManager(globalCfg2);
+      CacheContainer cm1 = TestCacheManagerFactory.createClusteredCacheManager();
+      CacheContainer cm2 = TestCacheManagerFactory.createClusteredCacheManager();
       registerCacheManager(cm1, cm2);
-      Configuration cfg = getDefaultClusteredConfig(Configuration.CacheMode.REPL_SYNC);
+      ConfigurationBuilder cfg = getDefaultClusteredCacheConfig(CacheMode.REPL_SYNC, false);
       defineConfigurationOnAllManagers(CACHE_NAME, cfg);
       waitForClusterToForm(CACHE_NAME);
    }
@@ -75,10 +74,9 @@ public class MarshallExternalPojosTest extends MultipleCacheManagersTest {
    }
 
    private EmbeddedCacheManager createCacheManager() {
-      GlobalConfiguration globalCfg = GlobalConfiguration.getClusteredDefault();
-      EmbeddedCacheManager cm = TestCacheManagerFactory.createCacheManager(globalCfg);
-      Configuration cfg = getDefaultClusteredConfig(Configuration.CacheMode.REPL_SYNC);
-      cm.defineConfiguration(CACHE_NAME, cfg);
+      EmbeddedCacheManager cm = TestCacheManagerFactory.createClusteredCacheManager();
+      ConfigurationBuilder cfg = getDefaultClusteredCacheConfig(CacheMode.REPL_SYNC, false);
+      cm.defineConfiguration(CACHE_NAME, cfg.build());
       return cm;
    }
 }

@@ -2,7 +2,8 @@ package org.infinispan.lock;
 
 import org.infinispan.Cache;
 import org.infinispan.commands.tx.PrepareCommand;
-import org.infinispan.config.Configuration;
+import org.infinispan.configuration.cache.CacheMode;
+import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.distribution.MagicKey;
 import org.infinispan.interceptors.InterceptorChain;
 import org.infinispan.interceptors.distribution.TxDistributionInterceptor;
@@ -11,6 +12,7 @@ import org.infinispan.test.MultipleCacheManagersTest;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.CleanupAfterMethod;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
+import org.infinispan.transaction.LockingMode;
 import org.testng.annotations.Test;
 
 import static org.testng.Assert.assertNull;
@@ -23,11 +25,15 @@ public class StaleEagerLocksOnPrepareFailureTest extends MultipleCacheManagersTe
 
    @Override
    protected void createCacheManagers() throws Throwable {
-      Configuration cfg = TestCacheManagerFactory.getDefaultConfiguration(true, Configuration.CacheMode.DIST_SYNC);
-      // TODO Migrate to new pessimistic locking configuration
-      cfg.setUseEagerLocking(true);
-      cfg.setEagerLockSingleNode(true);
-      cfg.setLockAcquisitionTimeout(100);
+      ConfigurationBuilder cfg = getDefaultClusteredCacheConfig(CacheMode.DIST_SYNC, true);
+      cfg
+         .transaction()
+            .lockingMode(LockingMode.PESSIMISTIC)
+            .useSynchronization(false)
+            .recovery()
+               .disable()
+         .locking()
+            .lockAcquisitionTimeout(100);
       EmbeddedCacheManager cm1 = TestCacheManagerFactory.createClusteredCacheManager(cfg);
       EmbeddedCacheManager cm2 = TestCacheManagerFactory.createClusteredCacheManager(cfg);
       registerCacheManager(cm1, cm2);

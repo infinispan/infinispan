@@ -4,8 +4,9 @@ import org.infinispan.Cache;
 import org.infinispan.atomic.AtomicMap;
 import org.infinispan.atomic.AtomicMapLookup;
 import org.infinispan.commons.util.Util;
-import org.infinispan.config.CacheLoaderManagerConfig;
-import org.infinispan.config.Configuration;
+import org.infinispan.configuration.cache.Configuration;
+import org.infinispan.configuration.cache.ConfigurationBuilder;
+import org.infinispan.configuration.cache.LoadersConfigurationBuilder;
 import org.infinispan.container.DataContainer;
 import org.infinispan.container.entries.InternalCacheEntry;
 import org.infinispan.manager.CacheContainer;
@@ -14,7 +15,6 @@ import org.infinispan.test.AbstractInfinispanTest;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.infinispan.transaction.TransactionMode;
-import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
 import javax.transaction.TransactionManager;
@@ -32,35 +32,24 @@ import java.util.concurrent.TimeUnit;
 @Test(groups = "unit", testName = "loaders.BaseCacheStoreFunctionalTest")
 public abstract class BaseCacheStoreFunctionalTest extends AbstractInfinispanTest {
 
-   protected abstract CacheStoreConfig createCacheStoreConfig() throws Exception;
+   protected abstract LoadersConfigurationBuilder createCacheStoreConfig(LoadersConfigurationBuilder loaders);
 
-   protected CacheStoreConfig csConfig;
    protected Set<String> cacheNames = new HashSet<String>();
 
-   @BeforeMethod
-   public void setUp() throws Exception {
-      try {
-         csConfig = createCacheStoreConfig();
-      } catch (Exception e) {
-         //in IDEs this won't be printed which makes debugging harder
-         e.printStackTrace();
-         throw e;
-      }
-   }
-
    public void testTwoCachesSameCacheStore() {
-      EmbeddedCacheManager localCacheManager = TestCacheManagerFactory.createLocalCacheManager(false);
+      EmbeddedCacheManager localCacheManager = TestCacheManagerFactory.createCacheManager(false);
       try {
-         CacheLoaderManagerConfig clmConfig = new CacheLoaderManagerConfig();
-         clmConfig.addCacheLoader(csConfig);
-         localCacheManager.getDefaultConfiguration().setCacheLoaderManagerConfig(clmConfig);
-         localCacheManager.defineConfiguration("first", new Configuration());
-         localCacheManager.defineConfiguration("second", new Configuration());
+         ConfigurationBuilder cb = new ConfigurationBuilder();
+         cb.read(localCacheManager.getDefaultCacheConfiguration());
+         createCacheStoreConfig(cb.loaders());
+         Configuration c = cb.build();
+         localCacheManager.defineConfiguration("first", c);
+         localCacheManager.defineConfiguration("second", c);
          cacheNames.add("first");
          cacheNames.add("second");
 
-         Cache first = localCacheManager.getCache("first");
-         Cache second = localCacheManager.getCache("second");
+         Cache<String, String> first = localCacheManager.getCache("first");
+         Cache<String, String> second = localCacheManager.getCache("second");
 
          first.start();
          second.start();
@@ -78,18 +67,15 @@ public abstract class BaseCacheStoreFunctionalTest extends AbstractInfinispanTes
    }
 
    public void testPreloadAndExpiry() {
-      CacheLoaderManagerConfig cacheLoaders = new CacheLoaderManagerConfig();
-      cacheLoaders.setPreload(true);
-      cacheLoaders.addCacheLoaderConfig(csConfig);
-      Configuration cfg = TestCacheManagerFactory.getDefaultConfiguration(false);
-      cfg.setCacheLoaderManagerConfig(cacheLoaders);
-      CacheContainer local = TestCacheManagerFactory.createCacheManager(cfg);
+      ConfigurationBuilder cb = TestCacheManagerFactory.getDefaultCacheConfiguration(false);
+      createCacheStoreConfig(cb.loaders()).preload(true);
+      CacheContainer local = TestCacheManagerFactory.createCacheManager(cb);
       try {
          Cache<String, String> cache = local.getCache();
          cacheNames.add(cache.getName());
          cache.start();
 
-         assert cache.getConfiguration().getCacheLoaderManagerConfig().isPreload();
+         assert cache.getCacheConfiguration().loaders().preload();
 
          cache.put("k1", "v");
          cache.put("k2", "v", 111111, TimeUnit.MILLISECONDS);
@@ -110,20 +96,17 @@ public abstract class BaseCacheStoreFunctionalTest extends AbstractInfinispanTes
    }
 
    public void testPreloadStoredAsBinary() {
-      CacheLoaderManagerConfig cacheLoaders = new CacheLoaderManagerConfig();
-      cacheLoaders.setPreload(true);
-      cacheLoaders.addCacheLoaderConfig(csConfig);
-      Configuration cfg = TestCacheManagerFactory.getDefaultConfiguration(false);
-      cfg.setUseLazyDeserialization(true);
-      cfg.setCacheLoaderManagerConfig(cacheLoaders);
-      CacheContainer local = TestCacheManagerFactory.createCacheManager(cfg);
+      ConfigurationBuilder cb = TestCacheManagerFactory.getDefaultCacheConfiguration(false);
+      createCacheStoreConfig(cb.loaders()).preload(true).storeAsBinary().enable();
+
+      CacheContainer local = TestCacheManagerFactory.createCacheManager(cb);
       try {
          Cache<String, Pojo> cache = local.getCache();
          cacheNames.add(cache.getName());
          cache.start();
 
-         assert cache.getConfiguration().getCacheLoaderManagerConfig().isPreload();
-         assert cache.getConfiguration().isUseLazyDeserialization();
+         assert cache.getCacheConfiguration().loaders().preload();
+         assert cache.getCacheConfiguration().storeAsBinary().enabled();
 
          cache.put("k1", new Pojo());
          cache.put("k2", new Pojo(), 111111, TimeUnit.MILLISECONDS);
@@ -183,9 +166,11 @@ public abstract class BaseCacheStoreFunctionalTest extends AbstractInfinispanTes
    }
 
    private CacheContainer getContainerWithCacheLoader() {
-      Configuration cfg = new Configuration();
-      cfg.fluent().transaction().transactionMode(TransactionMode.TRANSACTIONAL);
-      cfg.getCacheLoaderManagerConfig().addCacheLoaderConfig(csConfig);
+      ConfigurationBuilder cfg = new ConfigurationBuilder();
+      cfg
+         .transaction()
+            .transactionMode(TransactionMode.TRANSACTIONAL);
+      createCacheStoreConfig(cfg.loaders());
       return TestCacheManagerFactory.createCacheManager(cfg);
    }
 

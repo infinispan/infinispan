@@ -1,6 +1,6 @@
 package org.infinispan.stress;
 
-import org.infinispan.config.Configuration;
+import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.testng.annotations.BeforeTest;
@@ -19,7 +19,7 @@ public class MemoryCleanupTest {
    }
 
    public void testMemoryConsumption () throws InterruptedException {
-      final Configuration config = TestCacheManagerFactory.getDefaultConfiguration(true, Configuration.CacheMode.LOCAL);
+      final ConfigurationBuilder config = TestCacheManagerFactory.getDefaultCacheConfiguration(true);
       EmbeddedCacheManager cm = TestCacheManagerFactory.createCacheManager(config);
 
       Cache<Object,Object> cache = cm.getCache();
@@ -43,7 +43,7 @@ public class MemoryCleanupTest {
       }
       System.out.println("Free memory at the end:" + freeMemKb());
       assert isOkay(freeMemBefore);
-      
+
    }
 
    private boolean isOkay(long freeMemBefore) {

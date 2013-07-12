@@ -1,11 +1,13 @@
-package org.infinispan.config;
+package org.infinispan.configuration;
 
-import org.infinispan.manager.DefaultCacheManager;
+import org.infinispan.configuration.cache.Configuration;
+import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.test.CacheManagerCallable;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.infinispan.transaction.lookup.TransactionManagerLookup;
 import org.infinispan.transaction.tm.DummyTransactionManager;
 import org.testng.annotations.Test;
+
 
 import javax.transaction.TransactionManager;
 
@@ -23,15 +25,15 @@ public class TxManagerLookupConfigTest {
    static TmB tmb = new TmB();
 
    public void simpleTest() {
-      withCacheManager(new CacheManagerCallable(TestCacheManagerFactory.createCacheManager(new Configuration())){
+      withCacheManager(new CacheManagerCallable(TestCacheManagerFactory.createCacheManager()){
          @Override
          public void call() {
-            Configuration customConfiguration = TestCacheManagerFactory.getDefaultConfiguration(true);
-            customConfiguration.setTransactionManagerLookup(new TxManagerLookupA());
-            Configuration definedConfiguration = cm.defineConfiguration("aCache", customConfiguration);
+            ConfigurationBuilder customConfiguration = TestCacheManagerFactory.getDefaultCacheConfiguration(true);
+            customConfiguration.transaction().transactionManagerLookup(new TxManagerLookupA());
+            Configuration definedConfiguration = cm.defineConfiguration("aCache", customConfiguration.build());
 
             // verify the setting was not lost:
-            assertTrue(definedConfiguration.getTransactionManagerLookup() instanceof TxManagerLookupA);
+            assertTrue(definedConfiguration.transaction().transactionManagerLookup() instanceof TxManagerLookupA);
 
             // verify it's actually being used:
             TransactionManager activeTransactionManager = cm.getCache("aCache").getAdvancedCache().getTransactionManager();

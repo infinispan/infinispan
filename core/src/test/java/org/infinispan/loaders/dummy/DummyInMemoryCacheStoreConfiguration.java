@@ -14,22 +14,28 @@ public class DummyInMemoryCacheStoreConfiguration extends AbstractStoreConfigura
       LegacyLoaderAdapter<DummyInMemoryCacheStore.Cfg> {
 
    private final boolean debug;
+   private final boolean slow;
    private final String storeName;
    private final Object failKey;
 
-   protected DummyInMemoryCacheStoreConfiguration(boolean debug, String storeName, Object failKey,
+   protected DummyInMemoryCacheStoreConfiguration(boolean debug, boolean slow, String storeName, Object failKey,
          boolean purgeOnStartup, boolean purgeSynchronously, int purgerThreads, boolean fetchPersistentState,
          boolean ignoreModifications, TypedProperties properties, AsyncStoreConfiguration async,
          SingletonStoreConfiguration singletonStore) {
       super(purgeOnStartup, purgeSynchronously, purgerThreads, fetchPersistentState, ignoreModifications, properties,
             async, singletonStore);
       this.debug = debug;
+      this.slow = slow;
       this.storeName = storeName;
       this.failKey = failKey;
    }
 
    public boolean debug() {
       return debug;
+   }
+
+   public boolean slow() {
+      return slow;
    }
 
    public String storeName() {
@@ -47,6 +53,7 @@ public class DummyInMemoryCacheStoreConfiguration extends AbstractStoreConfigura
       LegacyConfigurationAdaptor.adapt(this, config);
 
       config.debug(debug);
+      config.slow(slow);
       config.storeName(storeName);
       config.failKey(failKey);
 

@@ -1,7 +1,6 @@
 package org.infinispan.api.lru.read_committed;
 
 import org.infinispan.api.CacheAPITest;
-import org.infinispan.config.Configuration;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.eviction.EvictionStrategy;
 import org.infinispan.test.TestingUtil;
@@ -26,6 +25,7 @@ public class CacheAPIMVCCTest extends CacheAPITest {
       return cb;
    }
 
+   @Override
    public void testRollbackAfterClear() throws Exception {
       String key = "key", value = "value";
       int size = 0;

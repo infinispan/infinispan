@@ -1,4 +1,4 @@
-package org.infinispan.config;
+package org.infinispan.configuration;
 
 import org.infinispan.Cache;
 import org.infinispan.configuration.cache.ConfigurationBuilder;

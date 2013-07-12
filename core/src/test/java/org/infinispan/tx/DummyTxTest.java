@@ -31,7 +31,7 @@ public class DummyTxTest extends SingleCacheManagerTest {
    protected final Log log = LogFactory.getLog(getClass());
 
    protected EmbeddedCacheManager createCacheManager() throws Exception {
-      EmbeddedCacheManager cm = TestCacheManagerFactory.createLocalCacheManager(false);  // also try this test with 'true' so you can tell the difference between DummyTransactionManager and JBoss TM
+      EmbeddedCacheManager cm = TestCacheManagerFactory.createCacheManager(false);  // also try this test with 'true' so you can tell the difference between DummyTransactionManager and JBoss TM
 
       ConfigurationBuilder cb = new ConfigurationBuilder();
       cb.clustering().invocationBatching().enable()

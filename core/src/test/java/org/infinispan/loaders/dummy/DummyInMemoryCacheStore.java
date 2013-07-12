@@ -59,6 +59,9 @@ public class DummyInMemoryCacheStore extends AbstractCacheStore {
    @Override
    public void store(InternalCacheEntry ed) {
       record("store");
+      if (config.slow) {
+         TestingUtil.sleepThread(100);
+      }
       if (ed != null) {
          if (debug) log.debugf("Store %s in dummy map store@%s", ed, Util.hexIdHashCode(store));
          config.failIfNeeded(ed.getKey());
@@ -332,6 +335,7 @@ public class DummyInMemoryCacheStore extends AbstractCacheStore {
       private static final long serialVersionUID = 4258914047690999424L;
 
       boolean debug;
+      boolean slow;
       String storeName = null;
       private Object failKey;
 
@@ -348,16 +352,13 @@ public class DummyInMemoryCacheStore extends AbstractCacheStore {
          return debug;
       }
 
-      /**
-       * @deprecated use {@link #debug(boolean)}
-       */
-      @Deprecated
-      public void setDebug(boolean debug) {
+      public Cfg debug(boolean debug) {
          this.debug = debug;
+         return this;
       }
 
-      public Cfg debug(boolean debug) {
-         setDebug(debug);
+      public Cfg slow(boolean slow) {
+         this.slow = slow;
          return this;
       }
 

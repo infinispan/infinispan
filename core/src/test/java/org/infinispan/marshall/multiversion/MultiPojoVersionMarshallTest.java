@@ -55,7 +55,7 @@ public class MultiPojoVersionMarshallTest extends AbstractInfinispanTest {
 
    @BeforeTest
    public void setUp() {
-      cm = TestCacheManagerFactory.createLocalCacheManager(false);
+      cm = TestCacheManagerFactory.createCacheManager(false);
       marshaller = extractCacheMarshaller(cm.getCache());
    }
 

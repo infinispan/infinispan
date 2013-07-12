@@ -1,7 +1,7 @@
 package org.infinispan.api;
 
 import org.infinispan.commons.util.ObjectDuplicator;
-import org.infinispan.config.Configuration;
+import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.lifecycle.ComponentStatus;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.test.SingleCacheManagerTest;
@@ -29,9 +29,9 @@ public class APINonTxTest extends SingleCacheManagerTest {
    @Override
    protected EmbeddedCacheManager createCacheManager() throws Exception {
       // start a single cache instance
-      Configuration c = getDefaultStandaloneConfig(false);
-      EmbeddedCacheManager cm = TestCacheManagerFactory.createLocalCacheManager(false);
-      cm.defineConfiguration("test", c);
+      ConfigurationBuilder c = getDefaultStandaloneCacheConfig(false);
+      EmbeddedCacheManager cm = TestCacheManagerFactory.createCacheManager(false);
+      cm.defineConfiguration("test", c.build());
       cache = cm.getCache("test");
       return cm;
    }

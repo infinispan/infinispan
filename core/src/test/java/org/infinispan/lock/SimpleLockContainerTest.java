@@ -1,9 +1,6 @@
 package org.infinispan.lock;
 
-import org.infinispan.interceptors.EntryWrappingInterceptor;
-import org.infinispan.remoting.transport.jgroups.JGroupsAddress;
 import org.infinispan.test.AbstractInfinispanTest;
-import org.infinispan.transaction.xa.GlobalTransaction;
 import org.infinispan.util.concurrent.locks.OwnableReentrantLock;
 import org.infinispan.util.concurrent.locks.containers.OwnableReentrantPerEntryLockContainer;
 import org.testng.annotations.Test;

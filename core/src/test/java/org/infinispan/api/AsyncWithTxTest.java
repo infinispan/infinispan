@@ -1,6 +1,7 @@
 package org.infinispan.api;
 
-import org.infinispan.config.Configuration;
+import org.infinispan.configuration.cache.CacheMode;
+import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.test.MultipleCacheManagersTest;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.util.concurrent.NotifyingFuture;
@@ -17,7 +18,7 @@ import java.util.concurrent.TimeUnit;
 public class AsyncWithTxTest extends MultipleCacheManagersTest {
    @Override
    protected void createCacheManagers() throws Throwable {
-      Configuration defaultConfig = getDefaultClusteredConfig(Configuration.CacheMode.DIST_SYNC, true);
+      ConfigurationBuilder defaultConfig = getDefaultClusteredCacheConfig(CacheMode.DIST_SYNC, true);
       addClusterEnabledCacheManager(defaultConfig);
       addClusterEnabledCacheManager(defaultConfig);
    }

@@ -2,11 +2,9 @@ package org.infinispan.api.mvcc.read_committed;
 
 import org.infinispan.Cache;
 import org.infinispan.api.mvcc.LockTestBase;
-import org.infinispan.util.concurrent.TimeoutException;
 import org.testng.annotations.Test;
 
 import javax.transaction.Transaction;
-import javax.transaction.TransactionManager;
 
 @Test(groups = "functional", testName = "api.mvcc.read_committed.ReadCommittedLockTest")
 public class ReadCommittedLockTest extends LockTestBase {
@@ -15,7 +13,7 @@ public class ReadCommittedLockTest extends LockTestBase {
    }
 
    public void testVisibilityOfCommittedDataPut() throws Exception {
-      Cache c = threadLocal.get().cache;
+      Cache<String, String> c = threadLocal.get().cache;
       c.put("k", "v");
 
       assert "v".equals(c.get("k"));
@@ -43,7 +41,7 @@ public class ReadCommittedLockTest extends LockTestBase {
    }
 
    public void testVisibilityOfCommittedDataReplace() throws Exception {
-      Cache c = threadLocal.get().cache;
+      Cache<String, String> c = threadLocal.get().cache;
       c.put("k", "v");
 
       assert "v".equals(c.get("k"));
@@ -70,6 +68,7 @@ public class ReadCommittedLockTest extends LockTestBase {
       threadLocal.get().tm.commit();
    }
 
+   @Override
    public void testConcurrentWriters() throws Exception {
       super.testConcurrentWriters();
    }

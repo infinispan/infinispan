@@ -2,13 +2,13 @@ package org.infinispan.loaders;
 
 import org.infinispan.AdvancedCache;
 import org.infinispan.Cache;
-import org.infinispan.config.Configuration;
+import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.container.DataContainer;
 import org.infinispan.container.entries.InternalCacheEntry;
 import org.infinispan.test.fwk.TestInternalCacheEntryFactory;
 import org.infinispan.context.Flag;
 import org.infinispan.lifecycle.ComponentStatus;
-import org.infinispan.loaders.dummy.DummyInMemoryCacheStore;
+import org.infinispan.loaders.dummy.DummyInMemoryCacheStoreConfigurationBuilder;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.test.AbstractInfinispanTest;
 import org.infinispan.test.TestingUtil;
@@ -41,21 +41,20 @@ public class CacheLoaderFunctionalTest extends AbstractInfinispanTest {
 
    private static final Log log = LogFactory.getLog(CacheLoaderFunctionalTest.class);
 
-   Cache cache;
+   Cache<String, String> cache;
    CacheStore store;
    TransactionManager tm;
-   Configuration cfg;
+   ConfigurationBuilder cfg;
    EmbeddedCacheManager cm;
    long lifespan = 60000000; // very large lifespan so nothing actually expires
 
    @BeforeMethod
    public void setUp() {
-      cfg = new Configuration().fluent()
-         .loaders()
-            .addCacheLoader(new DummyInMemoryCacheStore.Cfg()
-               .storeName(this.getClass().getName())) // in order to use the same store
-            .transaction().transactionMode(TransactionMode.TRANSACTIONAL)
-         .build();
+      cfg = new ConfigurationBuilder();
+      cfg.loaders()
+            .addStore(DummyInMemoryCacheStoreConfigurationBuilder.class)
+               .storeName(this.getClass().getName()) // in order to use the same store
+            .transaction().transactionMode(TransactionMode.TRANSACTIONAL);
       cm = TestCacheManagerFactory.createCacheManager(cfg);
       cache = cm.getCache();
       store = TestingUtil.extractComponent(cache, CacheLoaderManager.class).getCacheStore();
@@ -83,11 +82,11 @@ public class CacheLoaderFunctionalTest extends AbstractInfinispanTest {
    }
 
 
-   private void assertInCacheAndStore(Cache cache, CacheStore store, Object key, Object value) throws CacheLoaderException {
+   private void assertInCacheAndStore(Cache<?, ?> cache, CacheStore store, Object key, Object value) throws CacheLoaderException {
       assertInCacheAndStore(cache, store, key, value, -1);
    }
 
-   private void assertInCacheAndStore(Cache cache, CacheStore store, Object key, Object value, long lifespanMillis) throws CacheLoaderException {
+   private void assertInCacheAndStore(Cache<?, ?> cache, CacheStore store, Object key, Object value, long lifespanMillis) throws CacheLoaderException {
       InternalCacheEntry se = cache.getAdvancedCache().getDataContainer().get(key);
       testStoredEntry(se, value, lifespanMillis, "Cache", key);
       se = store.load(key);
@@ -100,7 +99,7 @@ public class CacheLoaderFunctionalTest extends AbstractInfinispanTest {
       assert entry.getLifespan() == expectedLifespan : src + " expected lifespan for key " + key + " to be " + expectedLifespan + " but was " + entry.getLifespan() + ". Entry is " + entry;
    }
 
-   private void assertNotInCacheAndStore(Cache cache, CacheStore store, Object... keys) throws CacheLoaderException {
+   private void assertNotInCacheAndStore(Cache<?, ?> cache, CacheStore store, Object... keys) throws CacheLoaderException {
       for (Object key : keys) {
          assert !cache.getAdvancedCache().getDataContainer().containsKey(key) : "Cache should not contain key " + key;
          assert !store.containsKey(key) : "Store should not contain key " + key;
@@ -115,7 +114,7 @@ public class CacheLoaderFunctionalTest extends AbstractInfinispanTest {
       assertInStoreNotInCache(cache, store, keys);
    }
 
-   private void assertInStoreNotInCache(Cache cache, CacheStore store, Object... keys) throws CacheLoaderException {
+   private void assertInStoreNotInCache(Cache<?, ?> cache, CacheStore store, Object... keys) throws CacheLoaderException {
       for (Object key : keys) {
          assert !cache.getAdvancedCache().getDataContainer().containsKey(key) : "Cache should not contain key " + key;
          assert store.containsKey(key) : "Store should contain key " + key;
@@ -126,7 +125,7 @@ public class CacheLoaderFunctionalTest extends AbstractInfinispanTest {
       assertInCacheAndNotInStore(cache, store, keys);
    }
 
-   private void assertInCacheAndNotInStore(Cache cache, CacheStore store, Object... keys) throws CacheLoaderException {
+   private void assertInCacheAndNotInStore(Cache<?, ?> cache, CacheStore store, Object... keys) throws CacheLoaderException {
       for (Object key : keys) {
          assert cache.getAdvancedCache().getDataContainer().containsKey(key) : "Cache should not contain key " + key;
          assert !store.containsKey(key) : "Store should contain key " + key;
@@ -267,14 +266,14 @@ public class CacheLoaderFunctionalTest extends AbstractInfinispanTest {
    }
 
    public void testPreloading() throws CacheLoaderException {
-      Configuration preloadingCfg = cfg.clone();
-      preloadingCfg.getCacheLoaderManagerConfig().setPreload(true);
-      ((DummyInMemoryCacheStore.Cfg) preloadingCfg.getCacheLoaderManagerConfig().getFirstCacheLoaderConfig()).setStoreName("preloadingCache");
-      cm.defineConfiguration("preloadingCache", preloadingCfg);
-      Cache preloadingCache = cm.getCache("preloadingCache");
+      ConfigurationBuilder preloadingCfg = new ConfigurationBuilder();
+      preloadingCfg.read(cfg.build());
+      preloadingCfg.loaders().preload(true).clearCacheLoaders().addStore(DummyInMemoryCacheStoreConfigurationBuilder.class).storeName("preloadingCache");
+      cm.defineConfiguration("preloadingCache", preloadingCfg.build());
+      Cache<String, String> preloadingCache = cm.getCache("preloadingCache");
       CacheStore preloadingStore = TestingUtil.extractComponent(preloadingCache, CacheLoaderManager.class).getCacheStore();
 
-      assert preloadingCache.getConfiguration().getCacheLoaderManagerConfig().isPreload();
+      assert preloadingCache.getCacheConfiguration().loaders().preload();
 
       assertNotInCacheAndStore(preloadingCache, preloadingStore, "k1", "k2", "k3", "k4");
 
@@ -298,7 +297,7 @@ public class CacheLoaderFunctionalTest extends AbstractInfinispanTest {
       preloadingCache.start();
       // The old store's marshaller is not working any more
       preloadingStore = TestingUtil.extractComponent(preloadingCache, CacheLoaderManager.class).getCacheStore();
-      assert preloadingCache.getConfiguration().getCacheLoaderManagerConfig().isPreload();
+      assert preloadingCache.getCacheConfiguration().loaders().preload();
       c = preloadingCache.getAdvancedCache().getDataContainer();
       assert c.size() == 4;
 
@@ -311,12 +310,12 @@ public class CacheLoaderFunctionalTest extends AbstractInfinispanTest {
    }
 
    public void testPurgeOnStartup() throws CacheLoaderException {
-      Configuration purgingCfg = cfg.clone();
-      CacheStoreConfig firstCacheLoaderConfig = (CacheStoreConfig) purgingCfg.getCacheLoaderManagerConfig().getFirstCacheLoaderConfig();
-      firstCacheLoaderConfig.setPurgeOnStartup(true);
-      ((DummyInMemoryCacheStore.Cfg) purgingCfg.getCacheLoaderManagerConfig().getFirstCacheLoaderConfig()).setStoreName("purgingCache");
-      cm.defineConfiguration("purgingCache", purgingCfg);
-      Cache purgingCache = cm.getCache("purgingCache");
+      ConfigurationBuilder purgingCfg = new ConfigurationBuilder();
+      purgingCfg.read(cfg.build());
+      purgingCfg.loaders().clearCacheLoaders().addStore(DummyInMemoryCacheStoreConfigurationBuilder.class)
+         .storeName("purgingCache").purgeOnStartup(true);
+      cm.defineConfiguration("purgingCache", purgingCfg.build());
+      Cache<String, String> purgingCache = cm.getCache("purgingCache");
       CacheStore purgingStore = TestingUtil.extractComponent(purgingCache, CacheLoaderManager.class).getCacheStore();
 
       assertNotInCacheAndStore(purgingCache, purgingStore, "k1", "k2", "k3", "k4");
@@ -460,7 +459,7 @@ public class CacheLoaderFunctionalTest extends AbstractInfinispanTest {
 
    public void testSkipLocking(Method m) {
       String name = m.getName();
-      AdvancedCache advancedCache = cache.getAdvancedCache();
+      AdvancedCache<String, String> advancedCache = cache.getAdvancedCache();
       advancedCache.put("k-" + name, "v-" + name);
       advancedCache.withFlags(Flag.SKIP_LOCKING).put("k-" + name, "v2-" + name);
    }
@@ -478,11 +477,6 @@ public class CacheLoaderFunctionalTest extends AbstractInfinispanTest {
       cache.put(key, value);
       tm.commit();
       assert value.equals(cache.get(key));
-   }
-
-   public void testGetCacheLoadersFromConfigAfterStart() {
-      cache.getConfiguration().getCacheLoaders();
-      cache.getConfiguration().getCacheLoaders();
    }
 
 }

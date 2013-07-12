@@ -1,13 +1,14 @@
 package org.infinispan.manager;
 
 import org.infinispan.Cache;
-import org.infinispan.config.Configuration;
-import org.infinispan.config.GlobalConfiguration;
+import org.infinispan.configuration.cache.CacheMode;
+import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.eviction.EvictionManager;
 import org.infinispan.eviction.EvictionStrategy;
 import org.infinispan.interceptors.BatchingInterceptor;
 import org.infinispan.interceptors.InterceptorChain;
 import org.infinispan.remoting.transport.Transport;
+import org.infinispan.test.AbstractCacheTest;
 import org.infinispan.test.AbstractInfinispanTest;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
@@ -24,7 +25,7 @@ import javax.transaction.TransactionManager;
  * @since 4.0
  */
 @Test(groups = "functional", testName = "manager.CacheManagerComponentRegistryTest")
-public class CacheManagerComponentRegistryTest extends AbstractInfinispanTest {
+public class CacheManagerComponentRegistryTest extends AbstractCacheTest {
    EmbeddedCacheManager cm;
 
    @AfterMethod
@@ -34,21 +35,23 @@ public class CacheManagerComponentRegistryTest extends AbstractInfinispanTest {
    }
 
    public void testForceSharedComponents() {
-      Configuration defaultCfg = new Configuration();
-      defaultCfg.setCacheMode(Configuration.CacheMode.REPL_SYNC);
-      defaultCfg.setFetchInMemoryState(false);
-      defaultCfg.fluent().transaction().transactionMode(TransactionMode.NON_TRANSACTIONAL);
-      defaultCfg.setFetchInMemoryState(false);
+      ConfigurationBuilder defaultCfg = getDefaultClusteredCacheConfig(CacheMode.REPL_SYNC);
+      defaultCfg
+         .clustering()
+            .stateTransfer()
+               .fetchInMemoryState(false)
+         .transaction()
+            .transactionMode(TransactionMode.NON_TRANSACTIONAL);
 
       // cache manager with default configuration
-      cm = TestCacheManagerFactory.createCacheManager(GlobalConfiguration.getClusteredDefault(), defaultCfg);
+      cm = TestCacheManagerFactory.createClusteredCacheManager(defaultCfg);
 
       // default cache with no overrides
       Cache c = cm.getCache();
 
-      Configuration overrides = TestCacheManagerFactory.getDefaultConfiguration(true);
-      overrides.setTransactionManagerLookup(new DummyTransactionManagerLookup());
-      cm.defineConfiguration("transactional", overrides);
+      ConfigurationBuilder overrides = TestCacheManagerFactory.getDefaultCacheConfiguration(true);
+      overrides.transaction().transactionManagerLookup(new DummyTransactionManagerLookup());
+      cm.defineConfiguration("transactional", overrides.build());
       Cache transactional = cm.getCache("transactional");
 
       // assert components.
@@ -62,19 +65,22 @@ public class CacheManagerComponentRegistryTest extends AbstractInfinispanTest {
    }
 
    public void testForceUnsharedComponents() {
-      Configuration defaultCfg = new Configuration();
-      defaultCfg.setFetchInMemoryState(false);
-      defaultCfg.setCacheMode(Configuration.CacheMode.REPL_SYNC);
-      defaultCfg.setEvictionStrategy(EvictionStrategy.NONE);
+      ConfigurationBuilder defaultCfg = getDefaultClusteredCacheConfig(CacheMode.REPL_SYNC);
+      defaultCfg
+         .clustering()
+            .stateTransfer()
+               .fetchInMemoryState(false)
+            .eviction()
+               .strategy(EvictionStrategy.NONE);
       // cache manager with default configuration
-      cm = TestCacheManagerFactory.createCacheManager(GlobalConfiguration.getClusteredDefault(), defaultCfg);
+      cm = TestCacheManagerFactory.createClusteredCacheManager(defaultCfg);
 
       // default cache with no overrides
       Cache c = cm.getCache();
 
-      Configuration overrides = new Configuration();
-      overrides.setTransactionManagerLookupClass(DummyTransactionManagerLookup.class.getName());
-      cm.defineConfiguration("transactional", overrides);
+      ConfigurationBuilder overrides = TestCacheManagerFactory.getDefaultCacheConfiguration(true);
+      overrides.transaction().transactionManagerLookup(new DummyTransactionManagerLookup());
+      cm.defineConfiguration("transactional", overrides.build());
       Cache transactional = cm.getCache("transactional");
 
       // assert components.
@@ -84,15 +90,14 @@ public class CacheManagerComponentRegistryTest extends AbstractInfinispanTest {
    }
 
    public void testOverridingComponents() {
-      Configuration defaultCfg = new Configuration();
-      cm = TestCacheManagerFactory.createCacheManager(GlobalConfiguration.getClusteredDefault(), defaultCfg);
+      cm = TestCacheManagerFactory.createClusteredCacheManager();
 
       // default cache with no overrides
       Cache c = cm.getCache();
 
-      Configuration overrides = new Configuration();
-      overrides.setInvocationBatchingEnabled(true);
-      cm.defineConfiguration("overridden", overrides);
+      ConfigurationBuilder overrides = new ConfigurationBuilder();
+      overrides.invocationBatching().enable();
+      cm.defineConfiguration("overridden", overrides.build());
       Cache overridden = cm.getCache("overridden");
 
       // assert components.

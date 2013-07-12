@@ -5,7 +5,8 @@ import org.infinispan.commands.read.GetKeyValueCommand;
 import org.infinispan.commands.tx.CommitCommand;
 import org.infinispan.commands.tx.PrepareCommand;
 import org.infinispan.commands.write.PutKeyValueCommand;
-import org.infinispan.config.Configuration;
+import org.infinispan.configuration.cache.CacheMode;
+import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.context.impl.TxInvocationContext;
 import org.infinispan.interceptors.base.CommandInterceptor;
@@ -29,9 +30,10 @@ public class SinglePhaseCommitForPessimisticCachesTest extends MultipleCacheMana
 
    @Override
    protected void createCacheManagers() throws Throwable {
-      final Configuration c = getDefaultClusteredConfig(Configuration.CacheMode.DIST_SYNC, true);
-      c.fluent().hash().numOwners(3);
-      c.fluent().transaction().lockingMode(LockingMode.PESSIMISTIC);
+      final ConfigurationBuilder c = getDefaultClusteredCacheConfig(CacheMode.DIST_SYNC, true);
+      c
+         .clustering().hash().numOwners(3)
+         .transaction().lockingMode(LockingMode.PESSIMISTIC);
       createCluster(c, 3);
       waitForClusterToForm();
    }

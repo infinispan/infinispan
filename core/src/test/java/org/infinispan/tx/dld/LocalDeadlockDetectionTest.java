@@ -1,6 +1,6 @@
 package org.infinispan.tx.dld;
 
-import org.infinispan.config.Configuration;
+import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.test.PerCacheExecutorThread;
 import org.infinispan.test.SingleCacheManagerTest;
@@ -31,21 +31,23 @@ public class LocalDeadlockDetectionTest extends SingleCacheManagerTest {
    private Object response1;
    private Object response2;
 
+   @Override
    protected EmbeddedCacheManager createCacheManager() throws Exception {
-      cacheManager = TestCacheManagerFactory.createLocalCacheManager(false);
-      Configuration configuration = createConfig();
-      configuration.fluent().transaction().lockingMode(LockingMode.PESSIMISTIC);
-      cacheManager.defineConfiguration("test", configuration);
+      cacheManager = TestCacheManagerFactory.createCacheManager(false);
+      ConfigurationBuilder configuration = createConfig();
+      configuration.transaction().lockingMode(LockingMode.PESSIMISTIC);
+      cacheManager.defineConfiguration("test", configuration.build());
       cache = cacheManager.getCache("test");
       lockManager = (DeadlockDetectingLockManager) TestingUtil.extractLockManager(cache);
       return cacheManager;
    }
 
-   protected Configuration createConfig() {
-      Configuration configuration = getDefaultStandaloneConfig(true);
-      configuration.setEnableDeadlockDetection(true);
-      configuration.setUseLockStriping(false);
-      configuration.setExposeJmxStatistics(true);
+   protected ConfigurationBuilder createConfig() {
+      ConfigurationBuilder configuration = getDefaultStandaloneCacheConfig(true);
+      configuration
+         .deadlockDetection().enable()
+         .locking().useLockStriping(false)
+         .jmxStatistics().enable();
       return configuration;
    }
 

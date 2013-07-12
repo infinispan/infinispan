@@ -21,7 +21,7 @@ public class FileCacheStoreVamTest extends FileCacheStoreTest {
    @Override
    protected StreamingMarshaller getMarshaller() {
       if (cm == null)
-         cm = TestCacheManagerFactory.createLocalCacheManager(false);
+         cm = TestCacheManagerFactory.createCacheManager(false);
 
       return extractCacheMarshaller(cm.getCache());
    }

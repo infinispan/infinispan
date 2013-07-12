@@ -68,7 +68,7 @@ public class DummyTransaction implements Transaction {
          }
          runCommitTx();
       } finally {
-         tm_.setTransaction(null);
+         DummyBaseTransactionManager.setTransaction(null);
       }
    }
 
@@ -92,7 +92,7 @@ public class DummyTransaction implements Transaction {
          throw new IllegalStateException(t);
       }
       // Disassociate tx from thread.
-      tm_.setTransaction(null);
+      DummyBaseTransactionManager.setTransaction(null);
    }
 
    /**
@@ -310,7 +310,7 @@ public class DummyTransaction implements Transaction {
       } finally {
          //notify synchronizations
          notifyAfterCompletion(status);
-         tm_.setTransaction(null);
+         DummyBaseTransactionManager.setTransaction(null);
       }
    }
 

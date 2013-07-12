@@ -1,6 +1,6 @@
 package org.infinispan.api;
 
-import org.infinispan.config.Configuration;
+import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.test.SingleCacheManagerTest;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
@@ -18,7 +18,7 @@ public class TxCacheAndAsyncOpsTest extends SingleCacheManagerTest {
 
    @Override
    protected EmbeddedCacheManager createCacheManager() throws Exception {
-      final Configuration defaultStandaloneConfig = getDefaultStandaloneConfig(true);
+      final ConfigurationBuilder defaultStandaloneConfig = getDefaultStandaloneCacheConfig(true);
       return TestCacheManagerFactory.createCacheManager(defaultStandaloneConfig);
    }
 

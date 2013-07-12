@@ -1,19 +1,14 @@
 package org.infinispan.loaders.jpa;
 
 import org.hibernate.ejb.HibernateEntityManagerFactory;
-import org.infinispan.Cache;
-import org.infinispan.config.CacheLoaderManagerConfig;
-import org.infinispan.config.Configuration;
 import org.infinispan.loaders.CacheStore;
 import org.infinispan.loaders.jpa.entity.User;
 import org.infinispan.manager.CacheContainer;
-import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.test.TestingUtil;
-import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.testng.annotations.Test;
 
 /**
- * 
+ *
  * @author <a href="mailto:rtsang@redhat.com">Ray Tsang</a>
  *
  */
@@ -23,21 +18,21 @@ public class JpaCacheStoreUserEntityTest extends BaseJpaCacheStoreTest {
 	@Override
 	protected CacheStore createCacheStore() throws Exception {
 		JpaCacheStoreConfig config = new JpaCacheStoreConfig();
-		
+
 		config.setPersistenceUnitName("org.infinispan.loaders.jpa");
 		config.setEntityClass(User.class);
 		config.setPurgeSynchronously(true);
-		
+
 		JpaCacheStore store = new JpaCacheStore();
 		store.init(config, cm.getCache(), getMarshaller());
 		store.start();
-		
+
 		assert store.getEntityManagerFactory() != null;
 		assert store.getEntityManagerFactory() instanceof HibernateEntityManagerFactory;
-		
+
 		return store;
 	}
-	
+
 	public void testSimple() throws Exception {
 		CacheContainer cm = null;
 		try {
@@ -54,7 +49,7 @@ public class JpaCacheStoreUserEntityTest extends BaseJpaCacheStoreTest {
 		user.setFirstName("fn_" + suffix);
 		user.setLastName("ln_" + suffix);
 		user.setNote("Some notes " + suffix);
-		
+
 		return new TestObject(user.getUsername(), user);
 	}
 }

@@ -6,13 +6,10 @@ import org.infinispan.test.SingleCacheManagerTest;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.infinispan.transaction.TransactionMode;
-import org.infinispan.transaction.lookup.DummyTransactionManagerLookup;
 import org.infinispan.transaction.tm.DummyTransaction;
 import org.infinispan.transaction.tm.DummyTransactionManager;
 import org.infinispan.transaction.xa.TransactionXaAdapter;
 import org.testng.annotations.Test;
-
-import javax.transaction.Transaction;
 
 import static org.infinispan.test.TestingUtil.existsObject;
 import static org.infinispan.test.TestingUtil.getCacheObjectName;

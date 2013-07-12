@@ -1,6 +1,6 @@
 package org.infinispan.api.mvcc;
 
-import org.infinispan.config.Configuration;
+import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.context.InvocationContextContainer;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.test.SingleCacheManagerTest;
@@ -14,12 +14,13 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.concurrent.CountDownLatch;
 
-@Test(groups = "functional", sequential = true, testName = "api.mvcc.LockPerEntryTest")
-public class LockPerEntryTest extends SingleCacheManagerTest {   
+@Test(groups = "functional", singleThreaded = true, testName = "api.mvcc.LockPerEntryTest")
+public class LockPerEntryTest extends SingleCacheManagerTest {
 
+   @Override
    protected EmbeddedCacheManager createCacheManager() throws Exception {
-      Configuration cfg = new Configuration();
-      cfg.setUseLockStriping(false);
+      ConfigurationBuilder cfg = new ConfigurationBuilder();
+      cfg.locking().useLockStriping(false);
       return TestCacheManagerFactory.createCacheManager(cfg);
    }
 
@@ -41,6 +42,7 @@ public class LockPerEntryTest extends SingleCacheManagerTest {
       Thread[] t = new Thread[NUM_THREADS];
       for (int i = 0; i < NUM_THREADS; i++)
          t[i] = new Thread() {
+            @Override
             public void run() {
                try {
                   l.await();

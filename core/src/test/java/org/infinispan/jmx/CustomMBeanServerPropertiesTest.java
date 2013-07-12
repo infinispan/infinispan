@@ -1,7 +1,7 @@
 package org.infinispan.jmx;
 
-import org.infinispan.config.Configuration;
-import org.infinispan.config.GlobalConfiguration;
+import org.infinispan.configuration.cache.ConfigurationBuilder;
+import org.infinispan.configuration.global.GlobalConfigurationBuilder;
 import org.infinispan.manager.CacheContainer;
 import org.infinispan.test.AbstractInfinispanTest;
 import org.infinispan.test.TestingUtil;
@@ -41,14 +41,14 @@ public class CustomMBeanServerPropertiesTest extends AbstractInfinispanTest {
    public void testProgrammaticCustomMBeanServerLookupProperties() {
       CacheContainer cc = null;
       try {
-         GlobalConfiguration gc = new GlobalConfiguration();
+         GlobalConfigurationBuilder gc = new GlobalConfigurationBuilder();
          TestLookup mbsl = new TestLookup();
-         gc.setMBeanServerLookupInstance(mbsl);
+         gc.globalJmxStatistics().enable().mBeanServerLookup(mbsl);
          Properties p = new Properties();
          p.setProperty("key", "value");
-         gc.setMBeanServerProperties(p);
-         Configuration cfg = new Configuration();
-         cfg.setExposeJmxStatistics(true);
+         gc.globalJmxStatistics().addProperty("key", "value");
+         ConfigurationBuilder cfg = new ConfigurationBuilder();
+         cfg.jmxStatistics().enable();
          cc = TestCacheManagerFactory.createCacheManager(gc, cfg);
          cc.getCache();
          assert "value".equals(mbsl.localProps.get("key"));

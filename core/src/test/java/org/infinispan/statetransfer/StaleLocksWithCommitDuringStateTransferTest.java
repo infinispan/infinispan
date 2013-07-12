@@ -6,7 +6,6 @@ import java.util.concurrent.TimeUnit;
 import org.infinispan.Cache;
 import org.infinispan.commands.VisitableCommand;
 import org.infinispan.commands.tx.CommitCommand;
-import org.infinispan.config.Configuration;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.context.InvocationContext;
@@ -161,6 +160,7 @@ public class StaleLocksWithCommitDuringStateTransferTest extends MultipleCacheMa
       // Delay the commit on the remote node. Can't used blockNewTransactions because we don't want a StateTransferInProgressException
       InterceptorChain c2ic = TestingUtil.extractComponent(c2, InterceptorChain.class);
       c2ic.addInterceptorBefore(new CommandInterceptor() {
+         @Override
          protected Object handleDefault(InvocationContext ctx, VisitableCommand command) throws Throwable {
             if (command instanceof CommitCommand) {
                Thread.sleep(3000);

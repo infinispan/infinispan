@@ -1,6 +1,7 @@
 package org.infinispan.tx;
 
-import org.infinispan.config.Configuration;
+import org.infinispan.configuration.cache.CacheMode;
+import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.context.Flag;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.test.SingleCacheManagerTest;
@@ -23,7 +24,8 @@ public class ReadOnlyTxTest extends SingleCacheManagerTest {
 
    @Override
    protected EmbeddedCacheManager createCacheManager() throws Exception {
-      Configuration configuration = getDefaultClusteredConfig(Configuration.CacheMode.LOCAL, true);
+      ConfigurationBuilder configuration = getDefaultClusteredCacheConfig(CacheMode.LOCAL, true);
+      configuration.transaction().useSynchronization(false);
       return TestCacheManagerFactory.createCacheManager(configuration);
    }
 

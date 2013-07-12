@@ -1,6 +1,6 @@
 package org.infinispan.tx.exception;
 
-import org.infinispan.config.Configuration;
+import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.test.SingleCacheManagerTest;
 import org.infinispan.test.TestingUtil;
@@ -30,10 +30,10 @@ public class TxAndTimeoutExceptionTest extends SingleCacheManagerTest {
 
    @Override
    protected EmbeddedCacheManager createCacheManager() throws Exception {
-      Configuration config = getDefaultStandaloneConfig(true);
-      config.fluent().transaction().lockingMode(LockingMode.PESSIMISTIC);
-      config.setUseLockStriping(false);
-      config.setLockAcquisitionTimeout(1000);
+      ConfigurationBuilder config = getDefaultStandaloneCacheConfig(true);
+      config
+         .transaction().lockingMode(LockingMode.PESSIMISTIC)
+         .locking().useLockStriping(false).lockAcquisitionTimeout(1000);
       EmbeddedCacheManager cm = TestCacheManagerFactory.createCacheManager(config);
       cache = cm.getCache();
       return cm;
@@ -111,7 +111,7 @@ public class TxAndTimeoutExceptionTest extends SingleCacheManagerTest {
       }
 
       //make sure that locks acquired by that tx were released even before the transaction is rolled back, the tx object
-      //was marked for rollback 
+      //was marked for rollback
       Transaction transaction = tm.getTransaction();
       assert transaction != null;
       assert transaction.getStatus() == Status.STATUS_MARKED_ROLLBACK;

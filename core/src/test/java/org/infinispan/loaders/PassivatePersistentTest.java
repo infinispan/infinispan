@@ -1,8 +1,8 @@
 package org.infinispan.loaders;
 
 import org.infinispan.Cache;
-import org.infinispan.config.Configuration;
-import org.infinispan.loaders.dummy.DummyInMemoryCacheStore;
+import org.infinispan.configuration.cache.ConfigurationBuilder;
+import org.infinispan.loaders.dummy.DummyInMemoryCacheStoreConfigurationBuilder;
 import org.infinispan.manager.CacheContainer;
 import org.infinispan.test.AbstractInfinispanTest;
 import org.infinispan.test.TestingUtil;
@@ -19,18 +19,18 @@ public class PassivatePersistentTest extends AbstractInfinispanTest {
    Cache<String, String> cache;
    CacheStore store;
    TransactionManager tm;
-   Configuration cfg;
+   ConfigurationBuilder cfg;
    CacheContainer cm;
 
    @BeforeMethod
    public void setUp() {
-      cfg = new Configuration().fluent()
+      cfg = new ConfigurationBuilder();
+      cfg
          .loaders()
             .passivation(true)
-            .addCacheLoader(new DummyInMemoryCacheStore.Cfg()
+            .addStore(DummyInMemoryCacheStoreConfigurationBuilder.class)
                .storeName(this.getClass().getName())
-               .purgeOnStartup(false))
-         .build();
+               .purgeOnStartup(false);
       cm = TestCacheManagerFactory.createCacheManager(cfg);
       cache = cm.getCache();
       store = TestingUtil.extractComponent(cache, CacheLoaderManager.class).getCacheStore();

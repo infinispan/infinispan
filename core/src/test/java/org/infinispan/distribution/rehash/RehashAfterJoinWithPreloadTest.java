@@ -104,7 +104,7 @@ public class RehashAfterJoinWithPreloadTest extends MultipleCacheManagersTest {
       final int numKeys = 20;
       log.debugf("Using cache store dir %s", fileCacheStoreTmpDir);
       EmbeddedCacheManager cmForCacheStoreInit = TestCacheManagerFactory.createCacheManager(TestCacheManagerFactory
-            .getDefaultConfiguration(true));
+            .getDefaultCacheConfiguration(true));
       try {
          cmForCacheStoreInit.defineConfiguration(testCacheName, buildCfg(false));
 

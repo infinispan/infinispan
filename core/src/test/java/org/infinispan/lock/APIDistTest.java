@@ -1,7 +1,8 @@
 package org.infinispan.lock;
 
 import org.infinispan.Cache;
-import org.infinispan.config.Configuration;
+import org.infinispan.configuration.cache.CacheMode;
+import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.distribution.MagicKey;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.test.MultipleCacheManagersTest;
@@ -25,7 +26,7 @@ public class APIDistTest extends MultipleCacheManagersTest {
 
    @Override
    protected void createCacheManagers() throws Throwable {
-      Configuration cfg = createConfig();
+      ConfigurationBuilder cfg = createConfig();
       cm1 = TestCacheManagerFactory.createClusteredCacheManager(cfg);
       cm2 = TestCacheManagerFactory.createClusteredCacheManager(cfg);
       registerCacheManager(cm1, cm2);
@@ -34,14 +35,12 @@ public class APIDistTest extends MultipleCacheManagersTest {
       key = new MagicKey("Key mapped to Cache2", cm2.getCache());
    }
 
-   protected Configuration createConfig() {
-      Configuration cfg = getDefaultClusteredConfig(Configuration.CacheMode.DIST_SYNC, true);
-      cfg.fluent().transaction().lockingMode(LockingMode.PESSIMISTIC);
-      cfg.setL1CacheEnabled(false); // no L1 enabled
-      cfg.setLockAcquisitionTimeout(100);
-      cfg.setNumOwners(1);
-      cfg.setSyncCommitPhase(true);
-      cfg.setSyncRollbackPhase(true);
+   protected ConfigurationBuilder createConfig() {
+      ConfigurationBuilder cfg = getDefaultClusteredCacheConfig(CacheMode.DIST_SYNC, true);
+      cfg
+         .transaction().lockingMode(LockingMode.PESSIMISTIC).syncCommitPhase(true).syncRollbackPhase(true)
+         .clustering().l1().disable().hash().numOwners(1)
+         .locking().lockAcquisitionTimeout(100);
       return cfg;
    }
 

@@ -2,8 +2,9 @@ package org.infinispan.jmx;
 
 import org.infinispan.AdvancedCache;
 import org.infinispan.Cache;
-import org.infinispan.config.Configuration;
-import org.infinispan.config.GlobalConfiguration;
+import org.infinispan.configuration.cache.CacheMode;
+import org.infinispan.configuration.cache.ConfigurationBuilder;
+import org.infinispan.configuration.global.GlobalConfigurationBuilder;
 import org.infinispan.factories.AbstractComponentRegistry;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.test.AbstractInfinispanTest;
@@ -47,19 +48,19 @@ public class ComponentsJmxRegistrationTest extends AbstractInfinispanTest {
    }
 
    public void testStopStartCM() throws Exception {
-      EmbeddedCacheManager cm = TestCacheManagerFactory.createLocalCacheManager(false);
+      EmbeddedCacheManager cm = TestCacheManagerFactory.createCacheManager(false);
       cacheContainers.add(cm);
       cm.stop();
       cm.start();
    }
 
    public void testRegisterLocalCache() throws Exception {
-      EmbeddedCacheManager cm = TestCacheManagerFactory.createLocalCacheManager(false);
+      EmbeddedCacheManager cm = TestCacheManagerFactory.createCacheManager(false);
       cacheContainers.add(cm);
       cm.start();
-      Configuration configuration = config();
-      configuration.setCacheMode(Configuration.CacheMode.LOCAL);
-      cm.defineConfiguration("first", configuration);
+      ConfigurationBuilder configuration = config();
+      configuration.clustering().cacheMode(CacheMode.LOCAL);
+      cm.defineConfiguration("first", configuration.build());
       Cache first = cm.getCache("first");
 
       ComponentsJmxRegistration regComponents = buildRegistrator(first);
@@ -82,14 +83,14 @@ public class ComponentsJmxRegistrationTest extends AbstractInfinispanTest {
    }
 
    public void testRegisterReplicatedCache() throws Exception {
-      GlobalConfiguration globalConfiguration = GlobalConfiguration.getClusteredDefault();
-      globalConfiguration.setAllowDuplicateDomains(true);
-      EmbeddedCacheManager cm = TestCacheManagerFactory.createCacheManager(globalConfiguration);
+      GlobalConfigurationBuilder globalConfiguration = GlobalConfigurationBuilder.defaultClusteredBuilder();
+      globalConfiguration.globalJmxStatistics().enable().allowDuplicateDomains(true);
+      EmbeddedCacheManager cm = TestCacheManagerFactory.createClusteredCacheManager(globalConfiguration, new ConfigurationBuilder());
       cacheContainers.add(cm);
       cm.start();
-      Configuration configurationOverride = config();
-      configurationOverride.setCacheMode(Configuration.CacheMode.REPL_SYNC);
-      cm.defineConfiguration("first", configurationOverride);
+      ConfigurationBuilder configurationOverride = config();
+      configurationOverride.clustering().cacheMode(CacheMode.REPL_SYNC);
+      cm.defineConfiguration("first", configurationOverride.build());
       Cache first = cm.getCache("first");
 
       ComponentsJmxRegistration regComponents = buildRegistrator(first);
@@ -103,17 +104,17 @@ public class ComponentsJmxRegistrationTest extends AbstractInfinispanTest {
    }
 
    public void testLocalAndReplicatedCache() throws Exception {
-      GlobalConfiguration globalConfiguration = GlobalConfiguration.getClusteredDefault();
-      globalConfiguration.setAllowDuplicateDomains(true);
-      EmbeddedCacheManager cm = TestCacheManagerFactory.createCacheManager(globalConfiguration);
+      GlobalConfigurationBuilder globalConfiguration = GlobalConfigurationBuilder.defaultClusteredBuilder();
+      globalConfiguration.globalJmxStatistics().enable().allowDuplicateDomains(true);
+      EmbeddedCacheManager cm = TestCacheManagerFactory.createClusteredCacheManager(globalConfiguration, new ConfigurationBuilder());
       cacheContainers.add(cm);
       cm.start();
-      Configuration replicated = config();
-      Configuration local = config();
-      replicated.setCacheMode(Configuration.CacheMode.REPL_SYNC);
-      local.setCacheMode(Configuration.CacheMode.LOCAL);
-      cm.defineConfiguration("replicated", replicated);
-      cm.defineConfiguration("local", local);
+      ConfigurationBuilder replicated = config();
+      ConfigurationBuilder local = config();
+      replicated.clustering().cacheMode(CacheMode.REPL_SYNC);
+      local.clustering().cacheMode(CacheMode.LOCAL);
+      cm.defineConfiguration("replicated", replicated.build());
+      cm.defineConfiguration("local", local.build());
       Cache replicatedCache = cm.getCache("replicated");
       Cache localCache = cm.getCache("local");
 
@@ -143,10 +144,9 @@ public class ComponentsJmxRegistrationTest extends AbstractInfinispanTest {
       assert objectName.getKeyProperty(ComponentsJmxRegistration.COMPONENT_KEY) != null;
    }
 
-   private Configuration config() {
-      Configuration configuration = new Configuration();
-      configuration.setFetchInMemoryState(false);
-      configuration.setExposeJmxStatistics(true);
+   private ConfigurationBuilder config() {
+      ConfigurationBuilder configuration = new ConfigurationBuilder();
+      configuration.clustering().stateTransfer().fetchInMemoryState(false).jmxStatistics().enable();
       return configuration;
    }
 }

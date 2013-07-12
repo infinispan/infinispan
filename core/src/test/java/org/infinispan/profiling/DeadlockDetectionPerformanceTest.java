@@ -1,7 +1,8 @@
 package org.infinispan.profiling;
 
 import org.infinispan.Cache;
-import org.infinispan.config.Configuration;
+import org.infinispan.configuration.cache.CacheMode;
+import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.manager.CacheContainer;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.test.AbstractInfinispanTest;
@@ -30,7 +31,7 @@ import java.util.concurrent.CountDownLatch;
  *    We use a fixed size pool of keys ({@link #KEY_POOL_SIZE}) on which each transaction operates. A number of threads ({@link #THREAD_COUNT})
  * repeatedly starts transactions and tries to acquire locks on a random subset of this pool, by executing put
  * operations on each key. If all locks were successfully acquired then the tx tries to commit: only if it succeeds this tx is counted as successful.
- * The number of elements in this subset is the transaction size ({@link #TX_SIZE}). The greater transaction 
+ * The number of elements in this subset is the transaction size ({@link #TX_SIZE}). The greater transaction
  * size is, the higher chance for deadlock situation to occur.
  * On each thread these transactions are being repeatedly executed (each time on a different, random key set) for a given time
  * interval ({@link #BENCHMARK_DURATION}). At the end, the number of successful transactions from each thread is cumulated, and this
@@ -38,7 +39,7 @@ import java.util.concurrent.CountDownLatch;
  * </pre>
  * There are two different benchmark methods, one for local cache {@link #testLocalDifferentTxSize()} and one for replicated caches
  * {@link #testReplDifferentTxSize()}.
- * 
+ *
  *
  * @author Mircea.Markus@jboss.com
  */
@@ -131,9 +132,9 @@ public class DeadlockDetectionPerformanceTest extends AbstractInfinispanTest {
          List<ExecutorThread> executorThreads = new ArrayList<ExecutorThread>();
          for (int i = 0; i < THREAD_COUNT; i++) {
             cm = TestCacheManagerFactory.createClusteredCacheManager();
-            Configuration configuration = getConfiguration();
-            configuration.setCacheMode(Configuration.CacheMode.REPL_SYNC);
-            cm.defineConfiguration("test", configuration);
+            ConfigurationBuilder configuration = getConfiguration();
+            configuration.clustering().cacheMode(CacheMode.REPL_SYNC);
+            cm.defineConfiguration("test", configuration.build());
             Cache distCache = cm.getCache("test");
             ExecutorThread executorThread = new ExecutorThread(startLatch, distCache);
             executorThreads.add(executorThread);
@@ -150,10 +151,10 @@ public class DeadlockDetectionPerformanceTest extends AbstractInfinispanTest {
    }
 
    private void runLocalTest() throws Exception {
-      EmbeddedCacheManager cm = TestCacheManagerFactory.createLocalCacheManager(false);
+      EmbeddedCacheManager cm = TestCacheManagerFactory.createCacheManager(false);
       try {
-         Configuration configuration = getConfiguration();
-         cm.defineConfiguration("test", configuration);
+         ConfigurationBuilder configuration = getConfiguration();
+         cm.defineConfiguration("test", configuration.build());
          Cache localCache = cm.getCache("test");
 
          CountDownLatch startLatch = new CountDownLatch(1);
@@ -185,11 +186,9 @@ public class DeadlockDetectionPerformanceTest extends AbstractInfinispanTest {
       System.out.println("-------------------------------");
    }
 
-   private Configuration getConfiguration() {
-      Configuration configuration = new Configuration();
-      configuration.setTransactionManagerLookupClass(DummyTransactionManagerLookup.class.getName());
-      configuration.setEnableDeadlockDetection(USE_DLD);
-      configuration.setUseLockStriping(false);
+   private ConfigurationBuilder getConfiguration() {
+      ConfigurationBuilder configuration = new ConfigurationBuilder();
+      configuration.transaction().transactionManagerLookup(new DummyTransactionManagerLookup()).deadlockDetection().enabled(USE_DLD).locking().useLockStriping(false);
       return configuration;
    }
 

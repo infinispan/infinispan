@@ -2,7 +2,7 @@ package org.infinispan.context;
 
 import org.infinispan.Cache;
 import org.infinispan.commands.VisitableCommand;
-import org.infinispan.config.Configuration;
+import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.context.impl.LocalTxInvocationContext;
 import org.infinispan.interceptors.InvocationContextInterceptor;
 import org.infinispan.interceptors.base.CommandInterceptor;
@@ -31,12 +31,10 @@ public class MarshalledValueContextTest extends SingleCacheManagerTest {
 
    @Override
    protected EmbeddedCacheManager createCacheManager() throws Exception {
-      Configuration c = TestCacheManagerFactory.getDefaultConfiguration(true)
-            .fluent()
-               .storeAsBinary()
-               .transaction()
-                  .lockingMode(LockingMode.PESSIMISTIC)
-            .build();
+      ConfigurationBuilder c = TestCacheManagerFactory.getDefaultCacheConfiguration(true);
+      c
+         .storeAsBinary().enable()
+         .transaction().lockingMode(LockingMode.PESSIMISTIC);
       return TestCacheManagerFactory.createCacheManager(c);
    }
 

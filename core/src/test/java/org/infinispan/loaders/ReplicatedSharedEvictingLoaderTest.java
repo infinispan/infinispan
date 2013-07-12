@@ -1,8 +1,8 @@
 package org.infinispan.loaders;
 
-import org.infinispan.config.CacheLoaderManagerConfig;
-import org.infinispan.config.Configuration;
-import org.infinispan.loaders.dummy.DummyInMemoryCacheStore;
+import org.infinispan.configuration.cache.CacheMode;
+import org.infinispan.configuration.cache.ConfigurationBuilder;
+import org.infinispan.loaders.dummy.DummyInMemoryCacheStoreConfigurationBuilder;
 import org.infinispan.test.MultipleCacheManagersTest;
 import org.testng.annotations.Test;
 
@@ -15,13 +15,13 @@ public class ReplicatedSharedEvictingLoaderTest extends MultipleCacheManagersTes
 
    @Override
    protected void createCacheManagers() throws Throwable {
-      Configuration c = new Configuration();
-      c.setCacheMode(Configuration.CacheMode.REPL_SYNC);
-      CacheLoaderManagerConfig clmc = new CacheLoaderManagerConfig();
-      clmc.addCacheLoaderConfig(new DummyInMemoryCacheStore.Cfg("ReplicatedSharedEvictingLoaderTest"));
-      clmc.setShared(true);
-      clmc.setPassivation(true);
-      c.setCacheLoaderManagerConfig(clmc);
+      ConfigurationBuilder c = getDefaultClusteredCacheConfig(CacheMode.REPL_SYNC);
+      c
+         .loaders()
+            .passivation(true)
+            .shared(true)
+            .addStore(DummyInMemoryCacheStoreConfigurationBuilder.class)
+               .storeName("ReplicatedSharedEvictingLoaderTest");
       createCluster(c, 2);
       waitForClusterToForm();
    }

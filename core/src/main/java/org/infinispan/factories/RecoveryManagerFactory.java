@@ -77,7 +77,7 @@ public class RecoveryManagerFactory extends AbstractNamedCacheComponentFactory i
    private RecoveryManager buildRecoveryManager(String cacheName, String recoveryCacheName, EmbeddedCacheManager cm, boolean isDefault) {
       log.tracef("About to obtain a reference to the recovery cache: %s", recoveryCacheName);
       Cache<?, ?> recoveryCache = cm.getCache(recoveryCacheName);
-      if (recoveryCache.getConfiguration().isTransactionalCache()) {
+      if (recoveryCache.getCacheConfiguration().transaction().transactionMode().isTransactional()) {
          //see comment in getDefaultRecoveryCacheConfig
          throw new CacheConfigurationException("The recovery cache shouldn't be transactional.");
       }

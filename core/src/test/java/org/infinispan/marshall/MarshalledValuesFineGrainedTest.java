@@ -1,6 +1,6 @@
 package org.infinispan.marshall;
 
-import org.infinispan.config.Configuration;
+import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.container.DataContainer;
 import org.infinispan.container.entries.InternalCacheEntry;
 import org.infinispan.manager.EmbeddedCacheManager;
@@ -31,7 +31,8 @@ public class MarshalledValuesFineGrainedTest extends AbstractInfinispanTest {
    }
 
    public void testStoreAsBinaryOnBoth() {
-      Configuration c = new Configuration().fluent().storeAsBinary().storeKeysAsBinary(true).storeValuesAsBinary(true).build();
+      ConfigurationBuilder c = new ConfigurationBuilder();
+      c.storeAsBinary().enable().storeKeysAsBinary(true).storeValuesAsBinary(true).build();
       ecm = TestCacheManagerFactory.createCacheManager(c);
       ecm.getCache().put(key, value);
 
@@ -49,7 +50,8 @@ public class MarshalledValuesFineGrainedTest extends AbstractInfinispanTest {
    }
 
    public void testStoreAsBinaryOnKeys() {
-      Configuration c = new Configuration().fluent().storeAsBinary().storeValuesAsBinary(false).build();
+      ConfigurationBuilder c = new ConfigurationBuilder();
+      c.storeAsBinary().enable().storeValuesAsBinary(false).build();
       ecm = TestCacheManagerFactory.createCacheManager(c);
       ecm.getCache().put(key, value);
 
@@ -66,7 +68,8 @@ public class MarshalledValuesFineGrainedTest extends AbstractInfinispanTest {
    }
 
    public void testStoreAsBinaryOnValues() {
-      Configuration c = new Configuration().fluent().storeAsBinary().storeKeysAsBinary(false).build();
+      ConfigurationBuilder c = new ConfigurationBuilder();
+      c.storeAsBinary().enable().storeKeysAsBinary(false).build();
       ecm = TestCacheManagerFactory.createCacheManager(c);
       ecm.getCache().put(key, value);
 
@@ -83,7 +86,8 @@ public class MarshalledValuesFineGrainedTest extends AbstractInfinispanTest {
    }
 
    public void testStoreAsBinaryOnNeither() {
-      Configuration c = new Configuration().fluent().storeAsBinary().storeKeysAsBinary(false).storeValuesAsBinary(false).build();
+      ConfigurationBuilder c = new ConfigurationBuilder();
+      c.storeAsBinary().enable().storeKeysAsBinary(false).storeValuesAsBinary(false).build();
       ecm = TestCacheManagerFactory.createCacheManager(c);
       ecm.getCache().put(key, value);
 

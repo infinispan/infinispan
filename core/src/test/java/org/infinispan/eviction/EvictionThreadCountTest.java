@@ -1,7 +1,7 @@
 package org.infinispan.eviction;
 
-import org.infinispan.config.Configuration;
-import org.infinispan.config.GlobalConfiguration;
+import org.infinispan.configuration.cache.ConfigurationBuilder;
+import org.infinispan.configuration.global.GlobalConfigurationBuilder;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.test.SingleCacheManagerTest;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
@@ -24,22 +24,24 @@ public class EvictionThreadCountTest extends SingleCacheManagerTest {
 
    @Override
    protected EmbeddedCacheManager createCacheManager() throws Exception {
-      GlobalConfiguration globalCfg = new GlobalConfiguration().fluent()
+      GlobalConfigurationBuilder globalCfg = new GlobalConfigurationBuilder();
+      globalCfg
          .evictionScheduledExecutor()
             .addProperty("threadNamePrefix", EVICT_THREAD_NAME_PREFIX)
          .build();
-      return TestCacheManagerFactory.createCacheManager(globalCfg);
+      return TestCacheManagerFactory.createCacheManager(globalCfg, new ConfigurationBuilder());
    }
 
    public void testDefineMultipleCachesWithEviction() {
       for (int i = 0; i < 50; i++) {
-         Configuration cfg = new Configuration().fluent()
+         ConfigurationBuilder cfg = new ConfigurationBuilder();
+         cfg
             .eviction().strategy(EvictionStrategy.LIRS).maxEntries(128) // 128 max entries
             .expiration().wakeUpInterval(100L)
-            .locking().useLockStriping(false) // to minimize chances of deadlock in the unit test
-            .build();
+            .locking().useLockStriping(false); // to minimize chances of deadlock in the unit test
+
          String cacheName = Integer.toString(i);
-         cacheManager.defineConfiguration(cacheName, cfg);
+         cacheManager.defineConfiguration(cacheName, cfg.build());
          cacheManager.getCache(cacheName);
       }
 

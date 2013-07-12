@@ -1,13 +1,12 @@
 package org.infinispan.jmx;
 
-import org.infinispan.config.CacheLoaderManagerConfig;
-import org.infinispan.config.Configuration;
-import org.infinispan.config.GlobalConfiguration;
+import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.context.Flag;
+
 import org.infinispan.test.fwk.TestInternalCacheEntryFactory;
 import org.infinispan.loaders.CacheLoaderManager;
 import org.infinispan.loaders.CacheStore;
-import org.infinispan.loaders.dummy.DummyInMemoryCacheStore;
+import org.infinispan.loaders.dummy.DummyInMemoryCacheStoreConfigurationBuilder;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.test.SingleCacheManagerTest;
 import org.infinispan.test.TestingUtil;
@@ -36,22 +35,15 @@ public class CacheLoaderAndCacheStoreInterceptorMBeanTest extends SingleCacheMan
 
    @Override
    protected EmbeddedCacheManager createCacheManager() throws Exception {
-      GlobalConfiguration globalConfiguration = GlobalConfiguration.getNonClusteredDefault();
-      globalConfiguration.setMBeanServerLookup(PerThreadMBeanServerLookup.class.getName());
-      globalConfiguration.setJmxDomain(JMX_DOMAIN);
-      globalConfiguration.setExposeGlobalJmxStatistics(true);
-      cacheManager = TestCacheManagerFactory.createCacheManagerEnforceJmxDomain(globalConfiguration);
+      cacheManager = TestCacheManagerFactory.createCacheManagerEnforceJmxDomain(JMX_DOMAIN);
+      ConfigurationBuilder configuration = getDefaultStandaloneCacheConfig(false);
+      configuration
+         .jmxStatistics().enable()
+         .loaders()
+            .passivation(false)
+            .addStore(DummyInMemoryCacheStoreConfigurationBuilder.class);
 
-      DummyInMemoryCacheStore.Cfg cfg = new DummyInMemoryCacheStore.Cfg();
-
-      CacheLoaderManagerConfig clManagerConfig = new CacheLoaderManagerConfig();
-      clManagerConfig.setPassivation(false);
-      clManagerConfig.addCacheLoaderConfig(cfg);
-      Configuration configuration = getDefaultClusteredConfig(Configuration.CacheMode.LOCAL);
-      configuration.setExposeJmxStatistics(true);
-      configuration.setCacheLoaderManagerConfig(clManagerConfig);
-
-      cacheManager.defineConfiguration("test", configuration);
+      cacheManager.defineConfiguration("test", configuration.build());
       cache = cacheManager.getCache("test");
       loaderInterceptorObjName = getCacheObjectName(JMX_DOMAIN, "test(local)", "CacheLoader");
       storeInterceptorObjName = getCacheObjectName(JMX_DOMAIN, "test(local)", "CacheStore");

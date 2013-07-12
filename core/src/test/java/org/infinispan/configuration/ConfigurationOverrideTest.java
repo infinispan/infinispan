@@ -42,22 +42,6 @@ public class ConfigurationOverrideTest extends AbstractInfinispanTest {
             cache.getCacheConfiguration().eviction().strategy());
    }
 
-   public void testOldConfigurationOverride() throws Exception {
-      org.infinispan.config.Configuration defaultConfiguration =
-            new org.infinispan.config.Configuration().fluent()
-            .eviction().maxEntries(200).strategy(LIRS)
-            .build();
-
-      cm = TestCacheManagerFactory.createCacheManager(defaultConfiguration);
-      final org.infinispan.config.Configuration cacheConfiguration =
-            new org.infinispan.config.Configuration().fluent().build();
-      cm.defineConfiguration("my-cache", cacheConfiguration);
-      Cache<?, ?> cache = cm.getCache("my-cache");
-      org.infinispan.config.Configuration cfg = cache.getConfiguration();
-      assertEquals(200, cfg.getEvictionMaxEntries());
-      assertEquals(LIRS, cfg.getEvictionStrategy());
-   }
-
    public void testSimpleDistributedClusterModeDefault() throws Exception {
       ConfigurationBuilder builder = new ConfigurationBuilder();
       builder.clustering().cacheMode(DIST_SYNC)

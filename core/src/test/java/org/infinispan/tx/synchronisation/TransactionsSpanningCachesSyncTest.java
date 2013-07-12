@@ -1,6 +1,6 @@
 package org.infinispan.tx.synchronisation;
 
-import org.infinispan.config.Configuration;
+import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.transaction.TransactionTable;
 import org.infinispan.transaction.xa.XaTransactionTable;
@@ -15,12 +15,12 @@ import org.testng.annotations.Test;
 public class TransactionsSpanningCachesSyncTest extends TransactionsSpanningCaches {
 
    @Override
-   protected void amendConfig(Configuration defaultCacheConfig) {
-      defaultCacheConfig.fluent().transaction().useSynchronization(true);
+   protected void amendConfig(ConfigurationBuilder defaultCacheConfig) {
+      defaultCacheConfig.transaction().useSynchronization(true);
    }
 
    public void testSyncIsUsed() {
-      assert cache.getConfiguration().isUseSynchronizationForTransactions();
+      assert cache.getCacheConfiguration().transaction().useSynchronization();;
       TransactionTable transactionTable = TestingUtil.extractComponent(cache, TransactionTable.class);
       assert !(transactionTable instanceof XaTransactionTable);
    }

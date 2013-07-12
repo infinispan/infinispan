@@ -1,8 +1,8 @@
 package org.infinispan.loaders;
 
-import org.infinispan.config.Configuration;
+import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.eviction.EvictionStrategy;
-import org.infinispan.loaders.dummy.DummyInMemoryCacheStore;
+import org.infinispan.loaders.dummy.DummyInMemoryCacheStoreConfigurationBuilder;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.test.SingleCacheManagerTest;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
@@ -22,11 +22,13 @@ public class ConcurrentLoadAndEvictTxTest extends SingleCacheManagerTest {
 
    TransactionManager tm;
 
+   @Override
    protected EmbeddedCacheManager createCacheManager() throws Exception {
-      Configuration config = getDefaultStandaloneConfig(true).fluent()
+      ConfigurationBuilder config = getDefaultStandaloneCacheConfig(true);
+      config
          .eviction().strategy(EvictionStrategy.LRU).maxEntries(10)
          .expiration().wakeUpInterval(10L)
-         .loaders().addCacheLoader(new DummyInMemoryCacheStore.Cfg())
+         .loaders().addStore(DummyInMemoryCacheStoreConfigurationBuilder.class)
          .build();
       EmbeddedCacheManager cm = TestCacheManagerFactory.createCacheManager(config);
       cache = cm.getCache();

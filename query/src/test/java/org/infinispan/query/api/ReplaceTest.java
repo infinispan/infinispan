@@ -12,6 +12,7 @@ import static junit.framework.Assert.assertEquals;
 @Test(groups = "functional", testName = "query.api.ReplaceTest")
 public class ReplaceTest extends SingleCacheManagerTest {
 
+   @Override
    protected EmbeddedCacheManager createCacheManager() throws Exception {
       ConfigurationBuilder cfg = getDefaultStandaloneCacheConfig(true);
       cfg
@@ -26,7 +27,7 @@ public class ReplaceTest extends SingleCacheManagerTest {
    @Test
    public void testReplaceSimple() {
       //for comparison we use a non-indexing cache here:
-      EmbeddedCacheManager simpleCacheManager = TestCacheManagerFactory.createCacheManager(getDefaultStandaloneConfig(true));
+      EmbeddedCacheManager simpleCacheManager = TestCacheManagerFactory.createCacheManager(getDefaultStandaloneCacheConfig(true));
       try {
          Cache<Object, Object> simpleCache = simpleCacheManager.getCache();
          TestEntity se1 = new TestEntity("name1", "surname1", 10, "note");

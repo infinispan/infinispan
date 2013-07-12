@@ -1,7 +1,8 @@
 package org.infinispan.marshall;
 
 import org.infinispan.Cache;
-import org.infinispan.config.Configuration;
+import org.infinispan.configuration.cache.CacheMode;
+import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.interceptors.InterceptorChain;
 import org.infinispan.interceptors.MarshalledValueInterceptor;
 import org.infinispan.test.MultipleCacheManagersTest;
@@ -24,10 +25,11 @@ import java.io.ObjectOutput;
 @Test(groups = "functional", testName = "marshall.InvalidatedMarshalledValueTest")
 public class InvalidatedMarshalledValueTest extends MultipleCacheManagersTest {
 
+   @Override
    protected void createCacheManagers() throws Throwable {
-      Cache cache1, cache2;
-      Configuration invlSync = getDefaultClusteredConfig(Configuration.CacheMode.INVALIDATION_SYNC);
-      invlSync.setUseLazyDeserialization(true);
+      Cache<InvalidatedPojo, String> cache1, cache2;
+      ConfigurationBuilder invlSync = getDefaultClusteredCacheConfig(CacheMode.INVALIDATION_SYNC, false);
+      invlSync.storeAsBinary().enable();
 
       createClusteredCaches(2, "invlSync", invlSync);
 
@@ -38,14 +40,14 @@ public class InvalidatedMarshalledValueTest extends MultipleCacheManagersTest {
       assertMarshalledValueInterceptorPresent(cache2);
    }
 
-   private void assertMarshalledValueInterceptorPresent(Cache c) {
+   private void assertMarshalledValueInterceptorPresent(Cache<?, ?> c) {
       InterceptorChain ic1 = TestingUtil.extractComponent(c, InterceptorChain.class);
       assert ic1.containsInterceptorType(MarshalledValueInterceptor.class);
    }
 
    public void testModificationsOnSameCustomKey() {
-      Cache cache1 = cache(0, "invlSync");
-      Cache cache2 = cache(1, "invlSync");
+      Cache<InvalidatedPojo, String> cache1 = cache(0, "invlSync");
+      Cache<InvalidatedPojo, String> cache2 = cache(1, "invlSync");
 
       InvalidatedPojo key = new InvalidatedPojo();
       cache2.put(key, "1");

@@ -147,7 +147,7 @@ public class BdbjeCacheStoreTest {
    void start() throws DatabaseException, CacheLoaderException {
       cs.init(cfg, factory, cache, new TestObjectStreamMarshaller());
       when(cache.getName()).thenReturn("cache");
-      when(cache.getConfiguration()).thenReturn(null);
+      when(cache.getCacheConfiguration()).thenReturn(null);
    }
 
    public void testGetConfigurationClass() throws Exception {
