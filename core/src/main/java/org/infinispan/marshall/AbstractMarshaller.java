@@ -58,7 +58,6 @@ public abstract class AbstractMarshaller implements Marshaller {
 
    @Override
    public byte[] objectToByteBuffer(Object o) throws IOException, InterruptedException {
-      int estimatedSize = 0;
       if (o != null) {
          org.infinispan.commons.marshall.BufferSizePredictor sizePredictor = marshallableTypeHints
                .getBufferSizePredictor(o.getClass());

@@ -86,6 +86,7 @@
       <module.skipComponentMetaDataProcessing>true</module.skipComponentMetaDataProcessing>
       <module.metadata.isCoreModule>false</module.metadata.isCoreModule>
       <!-- Versions for dependencies -->
+      <version.protostream>1.0.0.Alpha1</version.protostream>
       <version.aesh>0.33.1</version.aesh>
       <version.antlr>3.4</version.antlr>
       <version.apacheds.jdbm>1.5.7</version.apacheds.jdbm>
@@ -323,6 +324,16 @@
             <groupId>${project.groupId}</groupId>
             <artifactId>infinispan-jcache</artifactId>
             <version>${project.version}</version>
+         </dependency>
+         <dependency>
+            <groupId>org.infinispan.protostream</groupId>
+            <artifactId>protostream</artifactId>
+            <version>${version.protostream}</version>
+         </dependency>
+         <dependency>
+            <groupId>org.infinispan.protostream</groupId>
+            <artifactId>sample-domain-definition</artifactId>
+            <version>${version.protostream}</version>
          </dependency>
          <dependency>
             <groupId>c3p0</groupId>
