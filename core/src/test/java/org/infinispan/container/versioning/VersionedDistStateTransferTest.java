@@ -18,6 +18,10 @@ import org.testng.annotations.Test;
 import javax.transaction.RollbackException;
 import javax.transaction.Transaction;
 
+import static org.jgroups.util.Util.assertNotNull;
+import static org.testng.AssertJUnit.assertEquals;
+import static org.testng.AssertJUnit.fail;
+
 @Test(testName = "container.versioning.VersionedDistStateTransferTest", groups = "functional")
 @CleanupAfterMethod
 public class VersionedDistStateTransferTest extends MultipleCacheManagersTest {
@@ -56,56 +60,77 @@ public class VersionedDistStateTransferTest extends MultipleCacheManagersTest {
       Cache<Object, Object> cache2 = cache(2);
       Cache<Object, Object> cache3 = cache(3);
 
-      // TODO Add multiple keys, to ensure one of them ends up on the joiner
-      MagicKey hello = new MagicKey("hello", cache2);
-      cache0.put(hello, "world");
+      int NUM_KEYS = 20;
+      MagicKey[] keys = new MagicKey[NUM_KEYS];
+      String[] values = new String[NUM_KEYS];
+      for (int i = 0; i < NUM_KEYS; i++) {
+         // Put the entries on the cache that will be killed
+         keys[i] = new MagicKey("key" + i, cache3);
+         values[i] = "v" + i;
+         cache0.put(keys[i], values[i]);
+      }
 
       // no state transfer per se, but we check that the initial data is ok
-      checkStateTransfer(hello);
+      checkStateTransfer(keys, values);
 
-      tm(1).begin(); {
-         assert "world".equals(cache1.get(hello));
+      Transaction[] txs = new Transaction[NUM_KEYS];
+      for (int i = 0; i < NUM_KEYS; i++) {
+         int cacheIndex = i % 3;
+         tm(cacheIndex).begin(); {
+            assertEquals(values[i], cache(cacheIndex).get(keys[i]));
+         }
+         txs[i] = tm(cacheIndex).suspend();
       }
-      Transaction t = tm(1).suspend();
 
       log.debugf("Starting joiner");
       addClusterEnabledCacheManager(builder);
       Cache<Object, Object> cache4 = cache(4);
 
       log.debugf("Joiner started, checking transferred data");
-      checkStateTransfer(hello);
+      checkStateTransfer(keys, values);
 
-      log.debugf("Stopping cache %s", cache2);
-      cacheManagers.get(2).stop();
-      cacheManagers.remove(2);
+      log.debugf("Stopping cache %s", cache3);
+      manager(3).stop();
+      // Eliminate the dead cache from the caches collection, cache4 now becomes cache(3)
+      cacheManagers.remove(3);
+      waitForClusterToForm();
 
       log.debugf("Leaver stopped, checking transferred data");
-      checkStateTransfer(hello);
+      checkStateTransfer(keys, values);
 
       // Cause a write skew
-      cache4.put(hello, "new world");
-
-      tm(1).resume(t); {
-         cache1.put(hello, "world2");
-      }
-      try {
-         tm(1).commit();
-         assert false: "Should fail";
-      } catch (RollbackException expected) {
-         // Expected
+      for (int i = 0; i < NUM_KEYS; i++) {
+         cache4.put(keys[i], "new " + values[i]);
       }
 
-      assert "new world".equals(cache0.get(hello));
-      assert "new world".equals(cache1.get(hello));
-      // skip cache2, it has been killed.
-      assert "new world".equals(cache3.get(hello));
-      assert "new world".equals(cache3.get(hello));
+      for (int i = 0; i < NUM_KEYS; i++) {
+         int cacheIndex = i % 3;
+         log.tracef("Expecting a write skew failure for key %s on cache %s", keys[i], cache(cacheIndex));
+         tm(cacheIndex).resume(txs[i]); {
+            cache(cacheIndex).put(keys[i], "new new " + values[i]);
+         }
+         try {
+            tm(cacheIndex).commit();
+            fail("The write skew check should have failed!");
+         } catch (RollbackException expected) {
+            // Expected
+         }
+      }
+
+      for (int cacheIndex = 0; cacheIndex < 4; cacheIndex++) {
+         for (int i = 0; i < NUM_KEYS; i++) {
+            assertEquals("Wrong value found on cache " + cache(cacheIndex),
+                  "new " + values[i], cache(cacheIndex).get(keys[i]));
+         }
+      }
    }
 
-   private void checkStateTransfer(MagicKey hello) {
+   private void checkStateTransfer(MagicKey[] keys, String[] values) {
       for (Cache<Object, Object> c: caches()) {
-         assert "world".equals(c.get(hello));
-         checkVersion(c, hello);
+         for (int i = 0; i < keys.length; i++) {
+            assertEquals("Wrong value found on cache " + c, values[i], c.get(keys[i]));
+            checkVersion(c, keys[i]);
+         }
       }
    }
 
@@ -114,8 +139,8 @@ public class VersionedDistStateTransferTest extends MultipleCacheManagersTest {
       ConsistentHash readConsistentHash = c.getAdvancedCache().getDistributionManager().getReadConsistentHash();
       if (readConsistentHash.isKeyLocalToNode(address, hello)) {
          InternalCacheEntry ice = c.getAdvancedCache().getDataContainer().get(hello);
-         assert ice != null;
-         assert ice.getMetadata().version() != null;
+         assertNotNull("Entry not found on owner cache " + c, ice);
+         assertNotNull("Version is null on owner cache " + c, ice.getMetadata().version());
       }
    }
 }
