@@ -70,6 +70,16 @@
          <scope>test</scope>
       </dependency>
 
+      <dependency>
+         <groupId>org.infinispan.protostream</groupId>
+         <artifactId>protostream</artifactId>
+      </dependency>
+
+      <dependency>
+         <groupId>org.infinispan.protostream</groupId>
+         <artifactId>sample-domain-definition</artifactId>
+         <scope>test</scope>
+      </dependency>
    </dependencies>
 
    <build>     
