@@ -1,12 +1,9 @@
 package org.infinispan.stats;
 
-import java.util.List;
-
 import net.jcip.annotations.Immutable;
 
 import org.infinispan.interceptors.CacheMgmtInterceptor;
 import org.infinispan.interceptors.InterceptorChain;
-import org.infinispan.interceptors.base.CommandInterceptor;
 
 /**
  * StatsImpl.
@@ -32,9 +29,10 @@ public class StatsImpl implements Stats {
    final CacheMgmtInterceptor mgmtInterceptor;
 
    public StatsImpl(InterceptorChain chain) {
-      List<CommandInterceptor> interceptors = chain.getInterceptorsWhichExtend(CacheMgmtInterceptor.class);
-      if (!interceptors.isEmpty() && ((CacheMgmtInterceptor) interceptors.get(0)).getStatisticsEnabled()) {
-         mgmtInterceptor = (CacheMgmtInterceptor) interceptors.get(0);
+      mgmtInterceptor = (CacheMgmtInterceptor) chain
+            .getInterceptorsWhichExtend(CacheMgmtInterceptor.class).get(0);
+
+      if (mgmtInterceptor.getStatisticsEnabled()) {
          timeSinceStart = mgmtInterceptor.getElapsedTime();
          currentNumberOfEntries = mgmtInterceptor.getNumberOfEntries();
          totalNumberOfEntries = mgmtInterceptor.getStores();
@@ -49,7 +47,6 @@ public class StatsImpl implements Stats {
          averageWriteTime = mgmtInterceptor.getAverageWriteTime();
          averageRemoveTime = mgmtInterceptor.getAverageRemoveTime();
       } else {
-         mgmtInterceptor = null;
          timeSinceStart = -1;
          currentNumberOfEntries = -1;
          totalNumberOfEntries = -1;
@@ -133,14 +130,12 @@ public class StatsImpl implements Stats {
 
    @Override
    public void reset() {
-      if (mgmtInterceptor != null)
-         mgmtInterceptor.resetStatistics();
+      mgmtInterceptor.resetStatistics();
    }
 
    @Override
    public void setStatisticsEnabled(boolean enabled) {
-      if (mgmtInterceptor != null)
-         mgmtInterceptor.setStatisticsEnabled(enabled);
+      mgmtInterceptor.setStatisticsEnabled(enabled);
    }
 
 }

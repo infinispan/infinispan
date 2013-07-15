@@ -7,7 +7,7 @@ import java.util.List;
 import java.util.Set;
 
 import javax.cache.Cache.Entry;
-import javax.cache.CacheLoader;
+import javax.cache.integration.CacheLoader;
 
 import org.infinispan.container.entries.ImmortalCacheEntry;
 import org.infinispan.container.entries.InternalCacheEntry;
@@ -40,7 +40,7 @@ public class JCacheLoaderAdapter<K, V> extends AbstractCacheStore {
    public InternalCacheEntry load(Object key) throws CacheLoaderException {
       Entry<K, V> e = delegate.load((K) key);
       // TODO or whatever type of entry is more appropriate?
-      return new ImmortalCacheEntry(e.getKey(), e.getValue());
+      return e == null ? null : new ImmortalCacheEntry(e.getKey(), e.getValue());
    }
 
    @Override

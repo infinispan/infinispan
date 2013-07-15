@@ -1,19 +1,23 @@
 package org.infinispan.jcache;
 
+import org.infinispan.commons.util.CollectionFactory;
 import org.infinispan.jcache.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
 import javax.cache.Cache;
+import javax.cache.configuration.CacheEntryListenerConfiguration;
+import javax.cache.configuration.Factory;
 import javax.cache.event.CacheEntryCreatedListener;
 import javax.cache.event.CacheEntryEvent;
 import javax.cache.event.CacheEntryEventFilter;
 import javax.cache.event.CacheEntryExpiredListener;
 import javax.cache.event.CacheEntryListener;
-import javax.cache.event.CacheEntryListenerRegistration;
 import javax.cache.event.CacheEntryRemovedListener;
 import javax.cache.event.CacheEntryUpdatedListener;
+import javax.cache.event.EventType;
 import java.util.Collections;
 import java.util.List;
+import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.CopyOnWriteArrayList;
 
 /**
@@ -34,52 +38,32 @@ public class JCacheNotifier<K, V> {
    // Traversals are a not more common than mutations when it comes to
    // keeping track of registered listeners, so use copy-on-write lists.
 
-   private final List<CacheEntryListenerRegistration<? super K, ? super V>> createdListeners =
-         new CopyOnWriteArrayList<CacheEntryListenerRegistration<? super K, ? super V>>();
+   private final List<CacheEntryCreatedListener<K, V>> createdListeners =
+         new CopyOnWriteArrayList<CacheEntryCreatedListener<K, V>>();
 
-   private final List<CacheEntryListenerRegistration<? super K, ? super V>> updatedListeners =
-         new CopyOnWriteArrayList<CacheEntryListenerRegistration<? super K, ? super V>>();
+   private final List<CacheEntryUpdatedListener<K, V>> updatedListeners =
+         new CopyOnWriteArrayList<CacheEntryUpdatedListener<K, V>>();
 
-   private final List<CacheEntryListenerRegistration<? super K, ? super V>> removedListeners =
-         new CopyOnWriteArrayList<CacheEntryListenerRegistration<? super K, ? super V>>();
+   private final List<CacheEntryRemovedListener<K, V>> removedListeners =
+         new CopyOnWriteArrayList<CacheEntryRemovedListener<K, V>>();
 
-   private final List<CacheEntryListenerRegistration<? super K, ? super V>> expiredListeners =
-         new CopyOnWriteArrayList<CacheEntryListenerRegistration<? super K, ? super V>>();
+   private final List<CacheEntryExpiredListener<K, V>> expiredListeners =
+         new CopyOnWriteArrayList<CacheEntryExpiredListener<K, V>>();
 
-   public void addListener(CacheEntryListenerRegistration<? super K, ? super V> reg) {
+   private final ConcurrentMap<CacheEntryListener<? super K, ? super V>, CacheEntryListenerConfiguration<K, V>> listenerCfgs =
+         CollectionFactory.makeConcurrentMap();
+
+   public void addListener(CacheEntryListenerConfiguration<K, V> reg) {
       addListener(reg, false);
-   }
-
-   public boolean addListenerIfAbsent(CacheEntryListenerRegistration<? super K, ? super V> reg) {
-      return addListener(reg, true);
-   }
-
-   public boolean removeListener(CacheEntryListener<?, ?> listener) {
-      boolean removed = false;
-      if (listener instanceof CacheEntryCreatedListener)
-         removed = removeListener(listener, createdListeners);
-
-      if (listener instanceof CacheEntryUpdatedListener)
-         removed = removeListener(listener, updatedListeners);
-
-      if (listener instanceof CacheEntryRemovedListener)
-         removed = removeListener(listener, removedListeners);
-
-      if (listener instanceof CacheEntryExpiredListener)
-         removed = removeListener(listener, expiredListeners);
-
-      return removed;
    }
 
    @SuppressWarnings("unchecked")
    public void notifyEntryCreated(Cache<K, V> cache, K key, V value) {
       if (!createdListeners.isEmpty()) {
          List<CacheEntryEvent<? extends K, ? extends V>> events =
-               createEvent(cache, key, value);
-         for (CacheEntryListenerRegistration<? super K, ? super V> reg : createdListeners) {
-            ((CacheEntryCreatedListener<K, V>) reg.getCacheEntryListener())
-                  .onCreated(getEntryIterable(events, reg));
-         }
+               createEvent(cache, key, value, EventType.CREATED);
+         for (CacheEntryCreatedListener<K, V> listener : createdListeners)
+            listener.onCreated(getEntryIterable(events, listenerCfgs.get(listener)));
       }
    }
 
@@ -87,12 +71,9 @@ public class JCacheNotifier<K, V> {
    public void notifyEntryUpdated(Cache<K, V> cache, K key, V value) {
       if (!updatedListeners.isEmpty()) {
          List<CacheEntryEvent<? extends K, ? extends V>> events =
-               createEvent(cache, key, value);
-         for (CacheEntryListenerRegistration<? super K, ? super V> reg : updatedListeners) {
-            CacheEntryUpdatedListener<K, V> listener =
-                  (CacheEntryUpdatedListener<K, V>) reg.getCacheEntryListener();
-            listener.onUpdated(getEntryIterable(events, reg));
-         }
+               createEvent(cache, key, value, EventType.UPDATED);
+         for (CacheEntryUpdatedListener<K, V> listener : updatedListeners)
+            listener.onUpdated(getEntryIterable(events, listenerCfgs.get(listener)));
       }
    }
 
@@ -100,10 +81,9 @@ public class JCacheNotifier<K, V> {
    public void notifyEntryRemoved(Cache<K, V> cache, K key, V value) {
       if (!removedListeners.isEmpty()) {
          List<CacheEntryEvent<? extends K, ? extends V>> events =
-               createEvent(cache, key, value);
-         for (CacheEntryListenerRegistration<? super K, ? super V> reg : removedListeners) {
-            ((CacheEntryRemovedListener<K, V>) reg.getCacheEntryListener())
-                  .onRemoved(getEntryIterable(events, reg));
+               createEvent(cache, key, value, EventType.REMOVED);
+         for (CacheEntryRemovedListener<K, V> listener : removedListeners) {
+            listener.onRemoved(getEntryIterable(events, listenerCfgs.get(listener)));
          }
       }
    }
@@ -112,61 +92,60 @@ public class JCacheNotifier<K, V> {
    public void notifyEntryExpired(Cache<K, V> cache, K key, V value) {
       if (!expiredListeners.isEmpty()) {
          List<CacheEntryEvent<? extends K, ? extends V>> events =
-               createEvent(cache, key, value);
-         for (CacheEntryListenerRegistration<? super K, ? super V> reg : expiredListeners) {
-            ((CacheEntryExpiredListener<K, V>) reg.getCacheEntryListener())
-                  .onExpired(getEntryIterable(events, reg));
+               createEvent(cache, key, value, EventType.EXPIRED);
+         for (CacheEntryExpiredListener<K, V> listener : expiredListeners) {
+            listener.onExpired(getEntryIterable(events, listenerCfgs.get(listener)));
          }
       }
    }
 
    private Iterable<CacheEntryEvent<? extends K, ? extends V>> getEntryIterable(
          List<CacheEntryEvent<? extends K, ? extends V>> events,
-         CacheEntryListenerRegistration<? super K, ? super V> reg) {
-      CacheEntryEventFilter<? super K, ? super V> filter = reg.getCacheEntryFilter();
-      return filter == null  ? events
-            : new JCacheEventFilteringIterable<K, V>(events, filter);
+         CacheEntryListenerConfiguration<K, V> listenerCfg) {
+      Factory<CacheEntryEventFilter<? super K,? super V>> factory = listenerCfg.getCacheEntryEventFilterFactory();
+      if (factory != null) {
+         CacheEntryEventFilter<? super K, ? super V> filter = factory.create();
+         return filter == null  ? events
+               : new JCacheEventFilteringIterable<K, V>(events, filter);
+      }
+
+      return events;
    }
 
-   private boolean addListener(CacheEntryListenerRegistration<? super K, ? super V> reg,
-         boolean addIfAbsent) {
+   @SuppressWarnings("unchecked")
+   private boolean addListener(CacheEntryListenerConfiguration<K, V> listenerCfg, boolean addIfAbsent) {
       boolean added = false;
-      CacheEntryListener<? super K, ? super V> listener = reg.getCacheEntryListener();
-      if (listener instanceof CacheEntryCreatedListener) {
-         added = addListener(addIfAbsent, reg, listener, createdListeners);
-      }
+      CacheEntryListener<? super K, ? super V> listener =
+            listenerCfg.getCacheEntryListenerFactory().create();
+      if (listener instanceof CacheEntryCreatedListener)
+         added = !containsListener(addIfAbsent, listener, createdListeners)
+               && createdListeners.add((CacheEntryCreatedListener<K, V>) listener);
 
-      if (listener instanceof CacheEntryUpdatedListener) {
-         added = addListener(addIfAbsent, reg, listener, updatedListeners);
-      }
+      if (listener instanceof CacheEntryUpdatedListener)
+         added = !containsListener(addIfAbsent, listener, updatedListeners)
+               && updatedListeners.add((CacheEntryUpdatedListener<K, V>) listener);
 
-      if (listener instanceof CacheEntryRemovedListener) {
-         added = addListener(addIfAbsent, reg, listener, removedListeners);
-      }
+      if (listener instanceof CacheEntryRemovedListener)
+         added = !containsListener(addIfAbsent, listener, removedListeners)
+               && removedListeners.add((CacheEntryRemovedListener<K, V>) listener);
 
-      if (listener instanceof CacheEntryExpiredListener) {
-         added = addListener(addIfAbsent, reg, listener, expiredListeners);
-      }
+      if (listener instanceof CacheEntryExpiredListener)
+         added = !containsListener(addIfAbsent, listener, expiredListeners)
+               && expiredListeners.add((CacheEntryExpiredListener<K, V>) listener);
+
+      if (added)
+         listenerCfgs.put(listener, listenerCfg);
 
       return added;
    }
 
-   private boolean addListener(boolean addIfAbsent,
-         CacheEntryListenerRegistration<? super K, ? super V> reg,
-         CacheEntryListener<? super K, ? super V> listener,
-         List<CacheEntryListenerRegistration<? super K, ? super V>> listeners) {
-      return !containsListener(addIfAbsent, listener, listeners)
-            && listeners.add(reg);
-
-   }
-
    private boolean containsListener(boolean addIfAbsent,
-         CacheEntryListener<? super K, ? super V> listener,
-         List<CacheEntryListenerRegistration<? super K, ? super V>> listeners) {
+         CacheEntryListener<? super K, ? super V> listenerToAdd,
+         List<? extends CacheEntryListener<? super K, ? super V>> listeners) {
       // If add only if no listener present, check the listeners collection
       if (addIfAbsent) {
-         for (CacheEntryListenerRegistration<? super K, ? super V> reg : listeners) {
-            if (reg.getCacheEntryListener().equals(listener))
+         for (CacheEntryListener<? super K, ? super V> listener : listeners) {
+            if (listener.equals(listenerToAdd))
                return true;
          }
       }
@@ -174,21 +153,11 @@ public class JCacheNotifier<K, V> {
       return false;
    }
 
-   private boolean removeListener(CacheEntryListener<?, ?> listener,
-         List<CacheEntryListenerRegistration<? super K, ? super V>> listeners) {
-      for (CacheEntryListenerRegistration<? super K, ? super V> reg : listeners) {
-         if (reg.getCacheEntryListener().equals(listener))
-            return listeners.remove(reg);
-      }
-
-      return false;
-   }
-
    private List<CacheEntryEvent<? extends K, ? extends V>> createEvent(
-         Cache<K, V> cache, K key, V value) {
+         Cache<K, V> cache, K key, V value, EventType eventType) {
       List<CacheEntryEvent<? extends K, ? extends V>> events =
             Collections.<CacheEntryEvent<? extends K, ? extends V>>singletonList(
-                  new RICacheEntryEvent<K, V>(cache, key, value));
+                  new RICacheEntryEvent<K, V>(cache, key, value, eventType));
       if (isTrace) log.tracef("Received event: %s", events);
       return events;
    }

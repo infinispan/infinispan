@@ -119,7 +119,7 @@
       <version.hibernate.search>4.3.0.Final</version.hibernate.search>
       <version.hibernate.javax.persistence>1.0.1.Final</version.hibernate.javax.persistence>
       <version.jackson>1.9.2</version.jackson>
-      <version.javax.cache>0.7</version.javax.cache>
+      <version.javax.cache>0.8</version.javax.cache>
       <version.javax.persistence>1.0</version.javax.persistence>
       <version.javax.servlet>2.5</version.javax.servlet>
       <version.jboss.as>7.2.0.Alpha1-redhat-4</version.jboss.as>
@@ -399,8 +399,12 @@
             <groupId>javax.cache</groupId>
             <artifactId>cache-tests</artifactId>
             <version>${version.javax.cache}</version>
+         </dependency>
+         <dependency>
+            <groupId>javax.cache</groupId>
+            <artifactId>cache-tests</artifactId>
+            <version>${version.javax.cache}</version>
             <classifier>tests</classifier>
-            <scope>test</scope>
          </dependency>
          <dependency>
             <groupId>javax.enterprise</groupId>
