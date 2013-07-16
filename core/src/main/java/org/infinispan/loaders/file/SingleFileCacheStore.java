@@ -217,6 +217,14 @@ public class SingleFileCacheStore extends AbstractCacheStore {
             if (free.isLocked())
                continue;
 
+            // There's no race condition risk between locking the entry on
+            // loading and checking whether it's locked (or store allocation),
+            // because for the entry to be lockable, it needs to be in the
+            // entries collection, in which case it's not in the free list.
+            // The only way an entry can be found in the free list is if it's
+            // been removed, and to remove it, lock on "entries" needs to be
+            // acquired, which is also a pre-requisite for loading data.
+
             // found one, remove from freeList
             it.remove();
             return free;
