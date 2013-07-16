@@ -28,7 +28,20 @@
       <version.rhq>4.2.0</version.rhq>
       <version.scala>2.10.2</version.scala>
    </properties>
-   
+
+   <distributionManagement>
+      <repository>
+         <id>jboss-releases-repository</id>
+         <name>JBoss Release Repository</name>
+         <url>https://repository.jboss.org/nexus/service/local/staging/deploy/maven2/</url>
+      </repository>
+      <snapshotRepository>
+         <id>jboss-snapshots-repository</id>
+         <name>JBoss Snapshot Repository</name>
+         <url>https://repository.jboss.org/nexus/content/repositories/snapshots/</url>
+      </snapshotRepository>
+   </distributionManagement>
+
    <dependencyManagement>
       <dependencies>
          <!-- Infinispan module versions -->
