@@ -13,7 +13,45 @@
       <name>JBoss, a division of Red Hat</name>
       <url>http://www.jboss.org</url>
    </organization>
-   
+   <licenses>
+      <license>
+         <name>Apache License</name>
+         <url>http://www.apache.org/licenses/LICENSE-2.0</url>
+         <distribution>repo</distribution>
+      </license>
+   </licenses>
+   <developers>
+      <developer>
+         <id>placeholder</id>
+         <name>See http://www.infinispan.org for a complete list of contributors</name>
+      </developer>
+   </developers>
+   <mailingLists>
+      <mailingList>
+         <name>Infinispan Issues</name>
+         <subscribe>https://lists.jboss.org/mailman/listinfo/infinispan-issues</subscribe>
+         <unsubscribe>https://lists.jboss.org/mailman/listinfo/infinispan-issues</unsubscribe>
+         <post>infinispan-issues@lists.jboss.org</post>
+         <archive>http://lists.jboss.org/pipermail/infinispan-issues/</archive>
+      </mailingList>
+      <mailingList>
+         <name>Infinispan Developers</name>
+         <subscribe>https://lists.jboss.org/mailman/listinfo/infinispan-dev</subscribe>
+         <unsubscribe>https://lists.jboss.org/mailman/listinfo/infinispan-dev</unsubscribe>
+         <post>infinispan-dev@lists.jboss.org</post>
+         <archive>http://lists.jboss.org/pipermail/infinispan-dev/</archive>
+      </mailingList>
+   </mailingLists>
+   <scm>
+      <connection>scm:git:git@github.com:infinispan/infinispan.git</connection>
+      <developerConnection>scm:git:git@github.com:infinispan/infinispan.git</developerConnection>
+      <url>https://github.com/infinispan/infinispan</url>
+   </scm>
+   <issueManagement>
+      <system>jira</system>
+      <url>https://issues.jboss.org/browse/ISPN</url>
+   </issueManagement>
+
    <properties>
       <!-- Versions for dependencies -->
       <version.aesh>0.33.1</version.aesh>
