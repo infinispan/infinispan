@@ -6,7 +6,6 @@ import java.io.ObjectInput;
 import java.io.ObjectOutput;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -105,8 +104,9 @@ public class LevelDBCacheStore extends LockSupportCacheStore<Integer> {
 				config.getExpiryQueueSize());
 
 		try {
-			db = openDatabase(config.getLocation(), config.getDataDbOptions());
-			expiredDb = openDatabase(config.getExpiredLocation(),
+		   String cacheFileName = cache.getName().replaceAll("[^a-zA-Z0-9-_\\.]", "_");
+			db = openDatabase(config.getLocation() + cacheFileName, config.getDataDbOptions());
+			expiredDb = openDatabase(config.getExpiredLocation() + cacheFileName,
 					config.getExpiredDbOptions());
 		} catch (IOException e) {
 			throw new CacheConfigurationException("Unable to open database", e);
