@@ -30,6 +30,7 @@ import org.infinispan.commands.remote.CacheRpcCommand;
 import org.infinispan.commands.remote.ClusteredGetCommand;
 import org.infinispan.commands.remote.SingleRpcCommand;
 import org.infinispan.commands.write.WriteCommand;
+import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.distribution.DistributionManager;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.util.logging.Log;
@@ -51,8 +52,7 @@ public class DistributionResponseGenerator implements ResponseGenerator {
 
    @Override
    public Response getResponse(CacheRpcCommand command, Object returnValue) {
-      if (command.getCommandId() == ClusteredGetCommand.COMMAND_ID) {
-         if (returnValue == null) return null;
+      if (command.getCommandId() == ClusteredGetCommand.COMMAND_ID) {         
          ClusteredGetCommand clusteredGet = (ClusteredGetCommand) command;
          if (distributionManager.isAffectedByRehash(clusteredGet.getKey()))
             return UnsureResponse.INSTANCE;

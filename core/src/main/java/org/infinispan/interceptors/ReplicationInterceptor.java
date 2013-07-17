@@ -211,7 +211,13 @@ public class ReplicationInterceptor extends ClusteringInterceptor {
       if (!responses.isEmpty()) {
          for (Response r : responses.values()) {
             if (r instanceof SuccessfulResponse) {
-               InternalCacheValue cacheValue = (InternalCacheValue) ((SuccessfulResponse) r).getResponseValue();
+               
+               // The response value might be null.
+               SuccessfulResponse response = (SuccessfulResponse)r;
+               if( response.getResponseValue() == null )
+                  return null;
+               
+               InternalCacheValue cacheValue = (InternalCacheValue) response.getResponseValue();
                return cacheValue.toInternalCacheEntry(key);
             }
          }
