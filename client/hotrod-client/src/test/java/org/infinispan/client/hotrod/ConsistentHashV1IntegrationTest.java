@@ -14,26 +14,26 @@ import org.infinispan.remoting.transport.Address;
 import org.infinispan.server.hotrod.HotRodServer;
 import org.infinispan.test.MultipleCacheManagersTest;
 import org.infinispan.test.TestingUtil;
-import org.infinispan.commons.util.Util;
 import org.testng.annotations.AfterMethod;
 import org.testng.annotations.AfterTest;
 import org.testng.annotations.Test;
 
-import java.util.ArrayList;
-import java.util.List;
 import java.util.Properties;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.atomic.AtomicInteger;
 
-import static org.infinispan.client.hotrod.test.HotRodClientTestingUtil.*;
+import static org.infinispan.client.hotrod.test.HotRodClientTestingUtil.killServers;
 import static org.infinispan.server.hotrod.test.HotRodTestingUtil.hotRodCacheConfiguration;
+import static org.testng.AssertJUnit.assertEquals;
+import static org.testng.AssertJUnit.assertTrue;
 
 /**
  * @author Mircea Markus
  */
 @Test (groups = "functional", testName = "client.hotrod.ConsistentHashV1IntegrationTest")
 public class ConsistentHashV1IntegrationTest extends MultipleCacheManagersTest {
+   public static final int NUM_KEYS = 200;
 
    private HotRodServer hotRodServer1;
    private HotRodServer hotRodServer2;
@@ -117,23 +117,18 @@ public class ConsistentHashV1IntegrationTest extends MultipleCacheManagersTest {
    private void runTest(int cacheIndex) {
       ConsistentHash serverCH = advancedCache(cacheIndex).getDistributionManager().getConsistentHash();
 
-      // compatibility with 1.0/1.1 clients is not perfect, so we must allow for some misses
-      int misses = 0;
-      for (int i = 0; i < 200; i++) {
+      for (int i = 0; i < NUM_KEYS; i++) {
          byte[] keyBytes = (byte[]) kas.getKeyForAddress(address(cacheIndex));
          String key = DistributionRetryTest.ByteKeyGenerator.getStringObject(keyBytes);
-         List<Address> serverBackups = serverCH.locateOwners(keyBytes);
-         assert serverBackups.contains(address(cacheIndex));
+         Address serverPrimary = serverCH.locatePrimaryOwner(keyBytes);
+         assertEquals(address(cacheIndex), serverPrimary);
+
          remoteCache.put(key, "v");
-
-         Address hitServer = getHitServer();
-         if (!serverBackups.contains(hitServer)) {
-            misses++;
-         }
-
-         assert misses < 5 : String.format("i=%s, backups: %s, hit server: %s, key=%s", i, serverBackups, hitServer, Util.printArray(key.getBytes(), false));
       }
 
+      // compatibility with 1.0/1.1 clients is not perfect, so we must allow for some misses
+      assertTrue(hitCountInterceptor(cacheIndex).getHits() > NUM_KEYS * 0.99);
+      hitCountInterceptor(cacheIndex).reset();
    }
 
    public void testCorrectBalancingOfKeysAfterNodeKill() {
@@ -189,27 +184,15 @@ public class ConsistentHashV1IntegrationTest extends MultipleCacheManagersTest {
       return transport.getConsistentHash();
    }
 
-   private Address getHitServer() {
-      List<Address> result = new ArrayList<Address>();
-      for (int i = 0; i < 4; i++) {
-         InterceptorChain ic = advancedCache(i).getComponentRegistry().getComponent(InterceptorChain.class);
-         HitsAwareCacheManagersTest.HitCountInterceptor interceptor =
-               (HitsAwareCacheManagersTest.HitCountInterceptor) ic.getInterceptorsWithClass(HitsAwareCacheManagersTest.HitCountInterceptor.class).get(0);
-         if (interceptor.getHits() == 1) {
-            result.add(address(i));
-         }
-         interceptor.reset();
-      }
-      if (result.size() > 1) throw new IllegalStateException("More than one hit! : " + result);
-      return result.get(0);
-   }
-
    private void resetHitInterceptors() {
       for (int i = 0; i < 4; i++) {
-         InterceptorChain ic = advancedCache(i).getComponentRegistry().getComponent(InterceptorChain.class);
-         HitsAwareCacheManagersTest.HitCountInterceptor interceptor =
-               (HitsAwareCacheManagersTest.HitCountInterceptor) ic.getInterceptorsWithClass(HitsAwareCacheManagersTest.HitCountInterceptor.class).get(0);
+         HitsAwareCacheManagersTest.HitCountInterceptor interceptor = hitCountInterceptor(i);
          interceptor.reset();
       }
+   }
+
+   private HitsAwareCacheManagersTest.HitCountInterceptor hitCountInterceptor(int i) {
+      InterceptorChain ic = advancedCache(i).getComponentRegistry().getComponent(InterceptorChain.class);
+      return (HitsAwareCacheManagersTest.HitCountInterceptor) ic.getInterceptorsWithClass(HitsAwareCacheManagersTest.HitCountInterceptor.class).get(0);
    }
 }
