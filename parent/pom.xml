@@ -1864,7 +1864,6 @@
                         </execution>
                      </executions>
                      <configuration>
-                        <scalaVersion>${version.scala}</scalaVersion>
                         <jvmArgs>
                            <jvmArg>-Xmx256m</jvmArg>
                         </jvmArgs>
@@ -1913,7 +1912,6 @@
                         </execution>
                      </executions>
                      <configuration>
-                        <scalaVersion>${version.scala}</scalaVersion>
                         <jvmArgs>
                            <jvmArg>-Xmx256m</jvmArg>
                            <jvmArg>-XX:+UseCompressedOops</jvmArg>
