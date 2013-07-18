@@ -1,13 +1,6 @@
 package org.infinispan.io;
 
-import org.infinispan.Cache;
-import org.infinispan.manager.DefaultCacheManager;
-import org.infinispan.manager.EmbeddedCacheManager;
-import org.infinispan.test.SingleCacheManagerTest;
-import org.infinispan.test.fwk.TestCacheManagerFactory;
-import org.testng.annotations.BeforeMethod;
-import org.testng.annotations.Test;
-
+import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.FileFilter;
 import java.io.FileNotFoundException;
@@ -17,13 +10,24 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.net.MalformedURLException;
 import java.nio.ByteBuffer;
+import java.nio.channels.Channels;
 import java.nio.channels.ReadableByteChannel;
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Set;
 
-import static org.testng.Assert.*;
+import org.infinispan.Cache;
+import org.infinispan.manager.EmbeddedCacheManager;
+import org.infinispan.test.SingleCacheManagerTest;
+import org.infinispan.test.fwk.TestCacheManagerFactory;
+import org.testng.annotations.BeforeMethod;
+import org.testng.annotations.Test;
+
 import static org.testng.Assert.assertEquals;
+import static org.testng.Assert.assertFalse;
+import static org.testng.Assert.assertNotNull;
+import static org.testng.Assert.assertNull;
+import static org.testng.Assert.assertTrue;
 
 @Test(testName = "io.GridFileTest", groups = "functional")
 public class GridFileTest extends SingleCacheManagerTest {
@@ -520,6 +524,22 @@ public class GridFileTest extends SingleCacheManagerTest {
       assertEquals(getContents("/append.txt"), "Initial text.Appended text.");
    }
 
+   public void testReadLoop() throws Exception {
+      WritableGridFileChannel wgfc = fs.getWritableChannel("/readTest.txt", false, 100);
+      try {
+         assertTrue(wgfc.isOpen());
+         wgfc.write(ByteBuffer.wrap("This tests read loop.".getBytes()));
+      } finally {
+         wgfc.close();
+      }
+      ReadableGridFileChannel rgfc = fs.getReadableChannel("/readTest.txt");
+      try {
+         assertTrue("This tests read loop.".equals(new String(toBytes(Channels.newInputStream(rgfc)))));
+      } finally {
+         rgfc.close();
+      }
+   }
+
    public void testGetAbsolutePath() throws IOException {
       assertEquals(fs.getFile("/file.txt").getAbsolutePath(), "/file.txt");
       assertEquals(fs.getFile("file.txt").getAbsolutePath(), "/file.txt");
@@ -752,6 +772,10 @@ public class GridFileTest extends SingleCacheManagerTest {
 
    private String getContents(String filePath) throws IOException {
       InputStream in = fs.getInput(filePath);
+      return getString(in);
+   }
+
+   private String getString(InputStream in) throws IOException {
       try {
          byte[] buf = new byte[1000];
          int bytesRead = in.read(buf);
@@ -759,6 +783,19 @@ public class GridFileTest extends SingleCacheManagerTest {
       } finally {
          in.close();
       }
+   }
+
+   private static byte[] toBytes(InputStream is) throws IOException {
+      ByteArrayOutputStream buffer = new ByteArrayOutputStream();
+      int nRead;
+      byte[] data = new byte[16384];
+
+      while ((nRead = is.read(data, 0, data.length)) != -1) {
+         buffer.write(data, 0, nRead);
+      }
+
+      buffer.flush();
+      return buffer.toByteArray();
    }
 
    private static class FooFilenameFilter implements FilenameFilter {
