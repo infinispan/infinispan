@@ -23,14 +23,11 @@ public class RepeatableReadEntry extends ReadCommittedEntry {
    }
 
    @Override
-   public void copyForUpdate(DataContainer container, boolean localModeWriteSkewCheck) {
+   public void copyForUpdate(DataContainer container) {
       if (isFlagSet(COPIED)) return; // already copied
 
       setFlag(COPIED); //mark as copied
 
-      if (localModeWriteSkewCheck) {
-         performLocalWriteSkewCheck(container, false);
-      }
       // make a backup copy
       oldValue = value;
    }

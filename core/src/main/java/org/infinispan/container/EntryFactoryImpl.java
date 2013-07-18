@@ -37,7 +37,6 @@ public class EntryFactoryImpl implements EntryFactory {
    
    protected boolean useRepeatableRead;
    private DataContainer container;
-   protected boolean localModeWriteSkewCheck;
    protected boolean clusterModeWriteSkewCheck;
    private Configuration configuration;
    private CacheNotifier notifier;
@@ -52,7 +51,6 @@ public class EntryFactoryImpl implements EntryFactory {
    @Start (priority = 8)
    public void init() {
       useRepeatableRead = configuration.locking().isolationLevel() == IsolationLevel.REPEATABLE_READ;
-      localModeWriteSkewCheck = configuration.locking().writeSkewCheck();
       clusterModeWriteSkewCheck = useRepeatableRead && configuration.locking().writeSkewCheck() &&
             configuration.clustering().cacheMode().isClustered() && configuration.versioning().scheme() == VersioningScheme.SIMPLE &&
             configuration.versioning().enabled();
@@ -140,7 +138,7 @@ public class EntryFactoryImpl implements EntryFactory {
          // make sure we record this! Null value since this is a forced lock on the key
          ctx.putLookedUpEntry(key, null);
       } else {
-         mvccEntry.copyForUpdate(container, localModeWriteSkewCheck);
+         mvccEntry.copyForUpdate(container);
       }
       if (trace) {
          log.tracef("Wrap %s for remove. Entry=%s", key, mvccEntry);
@@ -197,7 +195,7 @@ public class EntryFactoryImpl implements EntryFactory {
              wrapInternalCacheEntryForPut(ctx, key, ice, providedMetadata, skipRead) :
              newMvccEntryForPut(ctx, key, cmd, providedMetadata, skipRead);
       }
-      mvccEntry.copyForUpdate(container, localModeWriteSkewCheck);
+      mvccEntry.copyForUpdate(container);
       if (trace) {
          log.tracef("Wrap %s for put. Entry=%s", key, mvccEntry);
       }
@@ -307,7 +305,7 @@ public class EntryFactoryImpl implements EntryFactory {
          }
       }
       if (mvccEntry != null)
-         mvccEntry.copyForUpdate(container, localModeWriteSkewCheck);
+         mvccEntry.copyForUpdate(container);
       return mvccEntry;
    }
 

@@ -124,7 +124,7 @@ public class ReadCommittedEntry implements MVCCEntry {
    }
 
    @Override
-   public void copyForUpdate(DataContainer container, boolean writeSkewCheck) {
+   public void copyForUpdate(DataContainer container) {
       if (isFlagSet(COPIED)) return; // already copied
 
       setFlag(COPIED); //mark as copied
