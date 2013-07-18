@@ -22,12 +22,12 @@
 
 package org.infinispan.io;
 
-import org.infinispan.Cache;
-
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.nio.channels.ClosedChannelException;
 import java.nio.channels.ReadableByteChannel;
+
+import org.infinispan.Cache;
 
 /**
  * @author Marko Luksa
@@ -50,8 +50,13 @@ public class ReadableGridFileChannel implements ReadableByteChannel {
 
    @Override
    public int read(ByteBuffer dst) throws IOException {
+      long tbr = getTotalBytesRemaining();
+      if (tbr == 0) {
+         return -1;
+      }
+
       int bytesRead = 0;
-      long len = Math.min(dst.remaining(), getTotalBytesRemaining());
+      long len = Math.min(dst.remaining(), tbr);
       while (len > 0) {
          int bytesReadFromChunk = readFromChunk(dst, len);
          len -= bytesReadFromChunk;
