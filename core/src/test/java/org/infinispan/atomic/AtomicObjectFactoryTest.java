@@ -1,54 +1,69 @@
 package org.infinispan.atomic;
 
-import javassist.CannotCompileException;
-import javassist.NotFoundException;
 import org.infinispan.Cache;
-import org.infinispan.config.CacheLoaderManagerConfig;
-import org.infinispan.config.Configuration;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
-import org.infinispan.distribution.BaseDistFunctionalTest;
-import org.infinispan.loaders.CacheLoaderManager;
-import org.infinispan.loaders.dummy.DummyInMemoryCacheStore;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.test.MultipleCacheManagersTest;
-import org.infinispan.test.SingleCacheManagerTest;
 import org.infinispan.test.TestingUtil;
-import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.infinispan.test.fwk.TransportFlags;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 import org.testng.annotations.Test;
 
-import java.lang.reflect.Method;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 import java.util.concurrent.*;
 
-@Test(groups = "functional", testName = "distexec.AtomicTypeFactoryTest")
-public class AtomicTypeFactoryTest extends MultipleCacheManagersTest {
+@Test(groups = "functional", testName = "distexec.AtomicObjectFactoryTest")
+public class AtomicObjectFactoryTest extends MultipleCacheManagersTest {
 
     private static int ncalls = 500;
     private static int ncaches = 4;
     private static List<Cache> caches = new ArrayList<Cache>();
 
-    private static Log log = LogFactory.getLog(AtomicTypeFactory.class);
+    private static Log log = LogFactory.getLog(AtomicObjectFactory.class);
+
+    public void testBasics() throws  Exception{
+
+        EmbeddedCacheManager cacheManager = cacheManagers.iterator().next();
+        Cache cache = cacheManager.getCache();
+        AtomicObjectFactory factory = new AtomicObjectFactory(cache);
+
+        // 1 - Basic Usage
+        Set<String> set = (Set)factory.getOrCreateInstanceOf(HashSet.class, "set");
+        set.add("smthing");
+        assert set.contains("smthing");
+
+        // 2 - Persistence
+        factory.disposeInstanceOf(HashSet.class, "set", true);
+        set = (Set<String>)factory.getOrCreateInstanceOf(HashSet.class, "set");
+        assert set.contains("smthing");
+
+        // 3 - Optimistic execution
+        ArrayList<String> list = (ArrayList<String>)factory.getOrCreateInstanceOf(ArrayList.class, "list",true);
+        assert !list.contains("foo");
+        assert !cache.containsKey("list");
+
+    }
 
     public void testAtomicTypeFactory() throws Exception {
 
         ExecutorService service = Executors.newCachedThreadPool();
         List<ArrayList> lists = new ArrayList<ArrayList>();
-        List<AtomicTypeFactory> factories = new ArrayList<AtomicTypeFactory>();
+        List<AtomicObjectFactory> factories = new ArrayList<AtomicObjectFactory>();
         List<Future<Object>>  futures = new ArrayList<Future<Object>>();
 
-        AtomicTypeFactory factory;
+        AtomicObjectFactory factory;
         ArrayList list;
         for(EmbeddedCacheManager manager: cacheManagers){
             Cache cache = manager.getCache();
             caches.add(cache);
-            factory = new AtomicTypeFactory(cache);
+            factory = new AtomicObjectFactory(cache);
             factories.add(factory);
-            list = (ArrayList) factory.newInstanceOf(ArrayList.class, "array");
+            list = (ArrayList) factory.getOrCreateInstanceOf(ArrayList.class, "array");
             lists.add(list);
         }
 
@@ -63,7 +78,7 @@ public class AtomicTypeFactoryTest extends MultipleCacheManagersTest {
         }
 
         int hash = factories.get(0).getHash();
-        for(AtomicTypeFactory f : factories){
+        for(AtomicObjectFactory f : factories){
             assert f.getHash() == hash;
         }
         log.debug("Success" + hash);
