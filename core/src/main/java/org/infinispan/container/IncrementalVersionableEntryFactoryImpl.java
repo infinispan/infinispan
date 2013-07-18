@@ -25,7 +25,6 @@ public class IncrementalVersionableEntryFactoryImpl extends EntryFactoryImpl {
 
    @Start (priority = 9)
    public void setWriteSkewCheckFlag() {
-      localModeWriteSkewCheck = false;
       useRepeatableRead = true;
    }
 

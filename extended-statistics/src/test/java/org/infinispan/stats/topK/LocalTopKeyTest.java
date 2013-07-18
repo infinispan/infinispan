@@ -15,8 +15,7 @@ import org.infinispan.util.concurrent.IsolationLevel;
 import org.testng.Assert;
 import org.testng.annotations.Test;
 
-import javax.transaction.NotSupportedException;
-import javax.transaction.SystemException;
+import javax.transaction.RollbackException;
 import javax.transaction.Transaction;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -98,7 +97,7 @@ public class LocalTopKeyTest extends SingleCacheManagerTest {
       assertWriteSkew(cache(), "key", 0);
    }
 
-   public void testWriteSkew() throws InterruptedException, SystemException, NotSupportedException {
+   public void testWriteSkew() throws Exception {
       resetStreamSummary(cache());
 
       cache().put("key", "init");
@@ -114,8 +113,7 @@ public class LocalTopKeyTest extends SingleCacheManagerTest {
          cache().put("key", "value1");
          tm().commit();
          Assert.fail("The write skew should be detected");
-      } catch (Exception t) {
-         tm().rollback();
+      } catch (RollbackException t) {
          //expected
       }
 
@@ -123,7 +121,7 @@ public class LocalTopKeyTest extends SingleCacheManagerTest {
       assertTopKeyAccesses(cache(), "key", 1, true);
 
       //the last put will originate an write skew
-      assertLockInformation(cache(), "key", 2, 0, 0);
+      assertLockInformation(cache(), "key", 3, 0, 0);
 
       assertWriteSkew(cache(), "key", 1);
    }

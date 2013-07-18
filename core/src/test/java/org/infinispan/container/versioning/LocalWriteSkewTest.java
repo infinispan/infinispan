@@ -1,6 +1,5 @@
 package org.infinispan.container.versioning;
 
-import org.infinispan.commons.CacheException;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.cache.VersioningScheme;
 import org.infinispan.manager.EmbeddedCacheManager;
@@ -9,11 +8,12 @@ import org.infinispan.test.fwk.CleanupAfterMethod;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.infinispan.transaction.LockingMode;
 import org.infinispan.util.concurrent.IsolationLevel;
-import org.testng.Assert;
 import org.testng.annotations.Test;
 
 import javax.transaction.RollbackException;
 import javax.transaction.Transaction;
+
+import static org.testng.AssertJUnit.*;
 
 /**
  * Tests local-mode versioning
@@ -50,29 +50,23 @@ public class LocalWriteSkewTest extends SingleCacheManagerTest {
       cache.put("hello", "world 1");
 
       tm().begin();
-      Object v = cache.get("hello");
-      assert "world 1".equals(v);
+      assertEquals("Wrong value read by transaction for key hello", "world 1", cache.get("hello"));
       Transaction t = tm().suspend();
 
       // Create a write skew
       cache.put("hello", "world 3");
 
       tm().resume(t);
-      try {
-         cache.put("hello", "world 2");
-         assert false: "Should have detected write skew";
-      } catch (CacheException e) {
-         // expected
-      }
+      cache.put("hello", "world 2");
 
       try {
          tm().commit();
-         assert false: "Transaction should roll back";
+         fail("Transaction should roll back");
       } catch (RollbackException re) {
          // expected
       }
 
-      assert "world 3".equals(cache.get("hello"));
+      assertEquals("Wrong final value for key hello", "world 3", cache.get("hello"));
    }
 
    public void testWriteSkewMultiEntries() throws Exception {
@@ -83,9 +77,8 @@ public class LocalWriteSkewTest extends SingleCacheManagerTest {
 
       tm().begin();
       cache.put("k2", "v2000");
-      Object v = cache.get("k1");
-      assert "v1".equals(v);
-      assert "v2000".equals(cache.get("k2"));
+      assertEquals("Wrong value read by transaction for key k1", "v1", cache.get("k1"));
+      assertEquals("Wrong value read by transaction for key k2", "v2000", cache.get("k2"));
       Transaction t = tm().suspend();
 
       // Create a write skew
@@ -93,22 +86,17 @@ public class LocalWriteSkewTest extends SingleCacheManagerTest {
       cache.put("k1", "v3");
 
       tm().resume(t);
-      try {
-         cache.put("k1", "v5000");
-         assert false: "Should have detected write skew";
-      } catch (CacheException e) {
-         // expected
-      }
+      cache.put("k1", "v5000");
 
       try {
          tm().commit();
-         assert false: "Transaction should roll back";
+         fail("Transaction should roll back");
       } catch (RollbackException re) {
          // expected
       }
 
-      assert "v3".equals(cache.get("k1"));
-      assert "v2".equals(cache.get("k2"));
+      assertEquals("Wrong final value for key k1", "v3", cache.get("k1"));
+      assertEquals("Wrong final value for key k2", "v2", cache.get("k2"));
    }
 
    public void testWriteSkewDisabled() throws Exception {
@@ -119,8 +107,7 @@ public class LocalWriteSkewTest extends SingleCacheManagerTest {
       cache.put("hello", "world 1");
 
       tm().begin();
-      Object v = cache.get("hello");
-      assert "world 1".equals(v);
+      assertEquals("Wrong value read by transaction for key hello", "world 1", cache.get("hello"));
       Transaction t = tm().suspend();
 
       // Create a write skew
@@ -130,7 +117,7 @@ public class LocalWriteSkewTest extends SingleCacheManagerTest {
       cache.put("hello", "world 2");
       tm().commit();
 
-      assert "world 2".equals(cache.get("hello"));
+      assertEquals("Wrong final value for key hello", "world 2", cache.get("hello"));
    }
 
    public void testNullEntries() throws Exception {
@@ -138,50 +125,45 @@ public class LocalWriteSkewTest extends SingleCacheManagerTest {
       cache.put("hello", "world");
 
       tm().begin();
-      assert "world".equals(cache.get("hello"));
+      assertEquals("Wrong value read by transaction for key hello", "world", cache.get("hello"));
       Transaction t = tm().suspend();
 
       cache.remove("hello");
 
-      assert null == cache.get("hello");
+      assertNull("Wrong value after remove for key hello", cache.get("hello"));
 
       tm().resume(t);
-      try {
-         cache.put("hello", "world2");
-         assert false: "Write skew should have been detected";
-      } catch (CacheException expected) {
-         // expected
-      }
+      cache.put("hello", "world2");
 
       try {
          tm().commit();
-         assert false: "This transaction should roll back";
+         fail("Transaction should roll back");
       } catch (RollbackException expected) {
          // expected
       }
-      assert null == cache.get("hello");
+      assertNull("Wrong final value for key hello", cache.get("hello"));
    }
 
    public void testSameNodeKeyCreation() throws Exception {
       tm().begin();
-      Assert.assertEquals(cache.get("NewKey"), null);
+      assertNull("Wrong value read by transaction 1 for key NewKey", cache.get("NewKey"));
       cache.put("NewKey", "v1");
       Transaction tx0 = tm().suspend();
 
       //other transaction do the same thing
       tm().begin();
-      Assert.assertEquals(cache.get("NewKey"), null);
+      assertNull("Wrong value read by transaction 2 for key NewKey", cache.get("NewKey"));
       cache.put("NewKey", "v2");
       tm().commit();
 
       tm().resume(tx0);
       try {
          tm().commit();
-         Assert.fail("The transaction should rollback");
+         fail("The transaction should rollback");
       } catch (RollbackException expected) {
          //expected
       }
 
-      Assert.assertEquals(cache.get("NewKey"), "v2");      
+      assertEquals("Wrong final value for key NewKey", "v2", cache.get("NewKey"));
    }
 }
