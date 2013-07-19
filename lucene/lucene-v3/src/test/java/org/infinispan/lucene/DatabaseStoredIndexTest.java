@@ -83,7 +83,7 @@ public class DatabaseStoredIndexTest extends SingleCacheManagerTest {
       cacheManager.stop();
    }
 
-   @Test(dependsOnMethods="testIndexUsage")
+   @Test(dependsOnMethods="testIndexUsage", enabled = false, description = "https://issues.jboss.org/browse/ISPN-3329")
    public void indexWasStored() throws IOException {
       cache = cacheManager.getCache();
       AssertJUnit.assertEquals(0, cache.getAdvancedCache().getDataContainer().size());

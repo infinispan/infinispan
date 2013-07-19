@@ -106,6 +106,7 @@ public class PessimisticLockingTxClusterExtendedStatisticLogicTest extends Multi
       doRemoteDeadlockTest(true);
    }
 
+   @Test (enabled = false, description = "https://issues.jboss.org/browse/ISPN-3342")
    public void testDeadlockOnNonOwnerWithRemoteTx() throws Exception {
       doRemoteDeadlockTest(false);
    }
