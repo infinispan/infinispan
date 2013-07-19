@@ -11,22 +11,19 @@ import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 import org.testng.annotations.Test;
 
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 import java.util.concurrent.*;
 
 @Test(groups = "functional", testName = "distexec.AtomicObjectFactoryTest")
 public class AtomicObjectFactoryTest extends MultipleCacheManagersTest {
 
-    private static int ncalls = 500;
-    private static int ncaches = 4;
+    private static int NCALLS= 5000;
+    private static int NCACHES = 2;
     private static List<Cache> caches = new ArrayList<Cache>();
 
     private static Log log = LogFactory.getLog(AtomicObjectFactory.class);
 
-    public void testBasics() throws  Exception{
+    public void basicUsageTest() throws  Exception{
 
         EmbeddedCacheManager cacheManager = cacheManagers.iterator().next();
         Cache cache = cacheManager.getCache();
@@ -49,39 +46,61 @@ public class AtomicObjectFactoryTest extends MultipleCacheManagersTest {
 
     }
 
-    public void testAtomicTypeFactory() throws Exception {
+    public void basicPerformanceTest() throws Exception{
+
+        EmbeddedCacheManager cacheManager = cacheManagers.iterator().next();
+        Cache cache = cacheManager.getCache();
+        AtomicObjectFactory factory = new AtomicObjectFactory(cache);
+
+        Map map = (Map) factory.getOrCreateInstanceOf(HashMap.class, "set");
+
+        for(int i=0; i<NCALLS*10;i++){
+            map.containsKey("1");
+        }
+        long start = System.currentTimeMillis();
+        for(int i=0; i<NCALLS*10;i++){
+            map.containsKey("1");
+        }
+
+        log.debug(System.currentTimeMillis() - start);
+
+    }
+
+    public void distributedCacheTest() throws Exception {
 
         ExecutorService service = Executors.newCachedThreadPool();
-        List<ArrayList> lists = new ArrayList<ArrayList>();
+        List<HashSet> lists = new ArrayList<HashSet>();
         List<AtomicObjectFactory> factories = new ArrayList<AtomicObjectFactory>();
-        List<Future<Object>>  futures = new ArrayList<Future<Object>>();
+        List<Future<Integer>> futures = new ArrayList<Future<Integer>>();
 
         AtomicObjectFactory factory;
-        ArrayList list;
+        HashSet set;
         for(EmbeddedCacheManager manager: cacheManagers){
             Cache cache = manager.getCache();
             caches.add(cache);
             factory = new AtomicObjectFactory(cache);
             factories.add(factory);
-            list = (ArrayList) factory.getOrCreateInstanceOf(ArrayList.class, "array");
-            lists.add(list);
+            set = (HashSet) factory.getOrCreateInstanceOf(HashSet.class, "set");
+            lists.add(set);
         }
 
         initAndTest();
 
-        for(ArrayList l : lists){
-            futures.add(service.submit(new ExerciceAtomicArrayTask(l, ncalls)));
+        for(Set s : lists){
+            futures.add(service.submit(new ExerciceAtomicSetTask(s, NCALLS)));
         }
 
-        for(Future future : futures){
-            future.get();
+        Integer total = 0;
+        for(Future<Integer> future : futures){
+            total += future.get();
         }
 
-        int hash = factories.get(0).getHash();
+        assert total == (NCALLS *(NCACHES-1)) : "obtained = "+total+"; espected = "+ (NCALLS * (NCACHES-1));
+
+        int hash = factories.get(0).hashCode();
         for(AtomicObjectFactory f : factories){
-            assert f.getHash() == hash;
+            assert f.hashCode() == hash;
         }
-        log.debug("Success" + hash);
 
     }
 
@@ -89,7 +108,7 @@ public class AtomicObjectFactoryTest extends MultipleCacheManagersTest {
     protected void createCacheManagers() throws Throwable {
         ConfigurationBuilder builder = getDefaultClusteredCacheConfig(CacheMode.REPL_SYNC, true);
         TransportFlags flags = new TransportFlags();
-        createClusteredCaches(ncaches, builder, flags);
+        createClusteredCaches(NCACHES, builder, flags);
     }
 
     protected void initAndTest() {
@@ -115,22 +134,24 @@ public class AtomicObjectFactoryTest extends MultipleCacheManagersTest {
     // INNER CLASSES
     //
 
-    private class ExerciceAtomicArrayTask implements Callable<Object>{
+    private class ExerciceAtomicSetTask implements Callable<Integer>{
 
         private int ncalls;
-        private ArrayList list;
+        private Set set;
 
-        public ExerciceAtomicArrayTask(ArrayList l, int n){
+        public ExerciceAtomicSetTask(Set s, int n){
             ncalls = n;
-            list = l;
+            set = s;
         }
 
         @Override
-        public Object call() throws Exception {
+        public Integer call() throws Exception {
+            int ret = 0;
             for(int i=0; i<ncalls;i++){
-                Boolean result = list.add(i);
+                if( ! set.add(i) )
+                    ret ++;
             }
-            return  new Object();
+            return  ret;
         }
     }
 
