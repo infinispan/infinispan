@@ -3,8 +3,10 @@ package org.infinispan.util.logging;
 import org.infinispan.commands.ReplicableCommand;
 import org.infinispan.commands.tx.PrepareCommand;
 import org.infinispan.commons.CacheException;
+import org.infinispan.commons.marshall.AdvancedExternalizer;
 import org.infinispan.commons.util.TypedProperties;
 import org.infinispan.commons.CacheConfigurationException;
+import org.infinispan.lifecycle.ComponentStatus;
 import org.infinispan.loaders.CacheLoaderException;
 import org.infinispan.loaders.bucket.Bucket;
 import org.infinispan.loaders.decorators.SingletonStore;
@@ -897,6 +899,33 @@ public interface Log extends BasicLogger {
 
    @Message(value = "Directory %s does not exist and cannot be created!", id = 238)
    CacheConfigurationException directoryCannotBeCreated(String path);
+
+   @Message(value="Cache manager is shutting down, so type write externalizer for type=%s cannot be resolved. Interruption being pushed up.", id = 239)
+   InterruptedException interruptedRetrievingObjectWriter(String className);
+
+   @Message(value="Cache manager is shutting down, so type (id=%d) cannot be resolved. Interruption being pushed up.", id = 240)
+   IOException pushReadInterruptionDueToCacheManagerShutdown(int readerIndex, @Cause InterruptedException cause);
+
+   @Message(value="Cache manager is %s and type (id=%d) cannot be resolved (thread not interrupted)", id = 241)
+   CacheException cannotResolveExternalizerReader(ComponentStatus status, int readerIndex);
+
+   @Message(value="Missing foreign externalizer with id=%s, either externalizer was not configured by client, or module lifecycle implementation adding externalizer was not loaded properly", id = 242)
+   CacheException missingForeignExternalizer(int foreignId);
+
+   @Message(value="Type of data read is unknown. Id=%d is not amongst known reader indexes.", id = 243)
+   CacheException unknownExternalizerReaderIndex(int readerIndex);
+
+   @Message(value="AdvancedExternalizer's getTypeClasses for externalizer %s must return a non-empty set", id = 244)
+   CacheConfigurationException advanceExternalizerTypeClassesUndefined(String className);
+
+   @Message(value="Duplicate id found! AdvancedExternalizer id=%d for %s is shared by another externalizer (%s). Reader index is %d", id = 245)
+   CacheConfigurationException duplicateExternalizerIdFound(int externalizerId, Class<?> typeClass, String otherExternalizer, int readerIndex);
+
+   @Message(value="Internal %s externalizer is using an id(%d) that exceeded the limit. It needs to be smaller than %d", id = 246)
+   CacheConfigurationException internalExternalizerIdLimitExceeded(AdvancedExternalizer<?> ext, int externalizerId, int maxId);
+
+   @Message(value="Foreign %s externalizer is using a negative id(%d). Only positive id values are allowed.", id = 247)
+   CacheConfigurationException foreignExternalizerUsingNegativeId(AdvancedExternalizer<?> ext, int externalizerId);
 
 }
 
