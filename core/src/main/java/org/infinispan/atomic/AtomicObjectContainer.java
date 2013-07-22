@@ -6,6 +6,7 @@ import javassist.util.proxy.ProxyFactory;
 import javassist.util.proxy.ProxyObject;
 import org.infinispan.Cache;
 import org.infinispan.InvalidCacheUsageException;
+import org.infinispan.commons.marshall.jboss.GenericJBossMarshaller;
 import org.infinispan.notifications.Listener;
 import org.infinispan.notifications.cachelistener.annotation.CacheEntryModified;
 import org.infinispan.notifications.cachelistener.event.CacheEntryModifiedEvent;
@@ -15,7 +16,7 @@ import org.infinispan.util.logging.LogFactory;
 import java.io.*;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
-import java.nio.ByteBuffer;
+import java.util.ArrayList;
 import java.util.Map;
 import java.util.concurrent.*;
 
@@ -30,7 +31,7 @@ public class AtomicObjectContainer {
     //
     // CLASS FIELDS
     //
-    private static final int MAGIC_PERSIST = 0;
+
     private static final MethodFilter mfilter = new MethodFilter() {
         @Override
         public boolean isHandled(Method arg0) {
@@ -42,6 +43,7 @@ public class AtomicObjectContainer {
     //
     // OBJECT FIELDS
     //
+
     private Cache cache;
     private Object object;
     private Class clazz;
@@ -49,11 +51,15 @@ public class AtomicObjectContainer {
     private boolean withReadOptimization;
     private Method equalsMethod;
     private Object key;
-    private Map<Integer,FutureAtomicObjectCall> registeredCalls;
+    private Map<Integer,AtomicObjectCallFuture> registeredCalls;
     private int hash;
 
+    private AtomicObjectCallFuture retrieve_future;
+    private ArrayList<AtomicObjectCallInvoke> retrieve_calls;
+    private AtomicObjectCallRetrieve retrieve_call;
+
     public AtomicObjectContainer(Cache c, Class cl, Object k, boolean readOptimization, Method m, boolean forceNew)
-            throws IOException, ClassNotFoundException, IllegalAccessException, InstantiationException {
+            throws IOException, ClassNotFoundException, IllegalAccessException, InstantiationException, InterruptedException, ExecutionException {
 
         cache = c;
         clazz = cl;
@@ -62,54 +68,30 @@ public class AtomicObjectContainer {
         equalsMethod = m;
 
         hash = 0;
-        registeredCalls = new ConcurrentHashMap<Integer, FutureAtomicObjectCall>();
+        registeredCalls = new ConcurrentHashMap<Integer, AtomicObjectCallFuture>();
 
         // build the proxy
         MethodHandler handler = new MethodHandler() {
             public Object invoke(Object self, Method m, Method proceed, Object[] args) throws Throwable {
 
-                int callId = nextCallID(cache);
+                GenericJBossMarshaller marshaller = new GenericJBossMarshaller();
 
-                if(registeredCalls.containsKey(callId))
-                    throw new InvalidCacheUsageException("Access must be sequential per thread");
-
-                ObjectOutputStream oos;
-                ByteArrayOutputStream baos;
-                ObjectInputStream ois;
-                ByteArrayInputStream bais;
-
-                if(withReadOptimization){
-                    baos = new ByteArrayOutputStream();
-                    oos = new ObjectOutputStream(baos);
-                    oos.writeObject(key);
-                    oos.flush();
-                    bais = new ByteArrayInputStream(baos.toByteArray());
-                    ois = new ObjectInputStream(bais);
-                    Object copy = ois.readObject();
+                if (withReadOptimization) {
+                    Object copy = marshaller.objectFromByteBuffer(marshaller.objectToByteBuffer(object));
                     Object ret = doCall(copy,m.getName(),args);
-                    if( equalsMethod == null ? copy.equals(key) : equalsMethod.invoke(copy, object).equals(Boolean.TRUE) )
+                    if( equalsMethod == null ? copy.equals(object) : equalsMethod.invoke(copy, object).equals(Boolean.TRUE) )
                         return ret;
                 }
 
-                baos = new ByteArrayOutputStream();
-                oos = new ObjectOutputStream(baos);
-                oos.writeInt(callId);
-                oos.writeObject(m.getName());
-                oos.writeObject(args);
-                byte [] data = baos.toByteArray();
-                ByteBuffer bb = ByteBuffer.allocate(data.length);
-                bb.put(data);
-                bb.flip();
-
-                FutureAtomicObjectCall future = new FutureAtomicObjectCall();
-                registeredCalls.put(callId, future);
-
-                cache.put(key, bb.array());
-
+                int callID = nextCallID(cache);
+                AtomicObjectCallInvoke invoke = new AtomicObjectCallInvoke(callID,m.getName(),args);
+                byte[] bb = marshaller.objectToByteBuffer(invoke);
+                cache.put(key, bb);
+                AtomicObjectCallFuture future = new AtomicObjectCallFuture();
+                registeredCalls.put(callID, future);
                 Object ret = future.get();
-                registeredCalls.remove(callId);
-
-                log.debug("Call (" + callId + ") " + m.getName() + ":" + ret);
+                registeredCalls.remove(callID);
+                log.debug("Called "+invoke+" on object "+key);
 
                 return ret;
             }
@@ -121,10 +103,11 @@ public class AtomicObjectContainer {
         proxy = fact.createClass().newInstance();
         ((ProxyObject)proxy).setHandler(handler);
 
+        // Register
+        cache.addListener(this);
+
         // Build object
         initObject(forceNew);
-
-        cache.addListener(this);
 
     }
 
@@ -146,29 +129,55 @@ public class AtomicObjectContainer {
 
         try {
 
+            GenericJBossMarshaller marshaller = new GenericJBossMarshaller();
             byte[] bb = (byte[]) event.getValue();
-            ByteArrayInputStream bais = new ByteArrayInputStream(bb);
-            ObjectInputStream ois = new ObjectInputStream(bais);
-            int callId = ois.readInt();
+            AtomicObjectCall call = (AtomicObjectCall) marshaller.objectFromByteBuffer(bb);
 
-            if(registeredCalls.containsKey(callId) && !event.isOriginLocal()) // an event can be received twice if it is local
-                return;
+            log.debug("Received " + call+ " from " + event.getCache().toString());
 
-            log.debug("Received call with ID=" + callId + " from " + event.getCache().toString());
+            if (call instanceof AtomicObjectCallInvoke) {
 
-            if(callId == MAGIC_PERSIST){
-                return;
-            }
+                if(object != null){
 
-            String method = (String)ois.readObject();
-            Object[] args = (Object[])ois.readObject();
-            Object ret = doCall(object,method,args);
+                    AtomicObjectCallInvoke invocation = (AtomicObjectCallInvoke) call;
 
-            hash+=callId;
+                    if (registeredCalls.containsKey(invocation.callID) && !event.isOriginLocal()) // an event can be received twice if it is local
+                        return;
 
-            if(registeredCalls.containsKey(callId)){
-               assert ! registeredCalls.get(callId).isDone() : "Received twice "+ callId+" ?";
-               registeredCalls.get(callId).setReturnValue(ret);
+                    hash+=invocation.callID;
+
+                    handleInvocation(invocation);
+
+                }else if (retrieve_calls != null) {
+
+                    retrieve_calls.add((AtomicObjectCallInvoke) call);
+
+                }
+
+            } else if (call instanceof AtomicObjectCallRetrieve) {
+
+                if (object != null) {
+
+                    AtomicObjectCallPersist persist = new AtomicObjectCallPersist(0,object);
+                    cache.put(key,marshaller.objectToBuffer(persist));
+
+                }else if (retrieve_call.callID == ((AtomicObjectCallRetrieve)call).callID) {
+
+                    assert retrieve_calls == null;
+                    retrieve_calls = new ArrayList<AtomicObjectCallInvoke>();
+
+                }
+
+            } else { // AtomicObjectCallPersist
+
+                if (object == null && retrieve_calls != null)  {
+                    object = ((AtomicObjectCallPersist)call).object;
+                    for(AtomicObjectCallInvoke invocation : retrieve_calls){
+                        handleInvocation(invocation);
+                    }
+                   retrieve_future.setReturnValue(null);
+                }
+
             }
 
         } catch (Exception e) {
@@ -177,31 +186,51 @@ public class AtomicObjectContainer {
 
     }
 
-    public synchronized void dispose(boolean keepPersistent) throws IOException {
+    public synchronized void dispose(boolean keepPersistent)
+            throws IOException, InterruptedException {
         if (!keepPersistent) {
             cache.remove(key);
         } else {
-            ByteArrayOutputStream baos = new ByteArrayOutputStream();
-            ObjectOutputStream oos = new ObjectOutputStream(baos);
-            oos.writeInt(MAGIC_PERSIST);
-            oos.writeObject(object);
-            byte [] data = baos.toByteArray();
-            ByteBuffer bb = ByteBuffer.allocate(data.length);
-            bb.put(data);
-            bb.flip();
-            cache.put(key, bb.array());
+            GenericJBossMarshaller marshaller = new GenericJBossMarshaller();
+            AtomicObjectCallPersist persist = new AtomicObjectCallPersist(0,object);
+            cache.put(key,marshaller.objectToByteBuffer(persist));
         }
 
     }
 
-    private void initObject(boolean forceNew) throws IOException, ClassNotFoundException, IllegalAccessException, InstantiationException {
+    private void initObject(boolean forceNew)
+            throws InvalidCacheUsageException, IOException, ClassNotFoundException, IllegalAccessException, InstantiationException, InterruptedException, ExecutionException {
+
         if( cache.containsKey(key) && ! forceNew){
-            ObjectInputStream ois = new ObjectInputStream(new ByteArrayInputStream((byte[]) cache.get(key)));
-            int callID = ois.readInt();
-            if( callID != MAGIC_PERSIST )
-                throw new InvalidCacheUsageException("Unable to retrieve persistent state.");
-            object = ois.readObject();
+
+            GenericJBossMarshaller marshaller = new GenericJBossMarshaller();
+            AtomicObjectCall persist = null;
+            persist = (AtomicObjectCallPersist) marshaller.objectFromByteBuffer((byte[]) cache.get(key));
+
+            if(persist instanceof AtomicObjectCallPersist){
+
+                object = ((AtomicObjectCallPersist)persist).object;
+
+            }else{
+
+                if (object==null ) {
+
+                    if (!cache.containsKey(key))
+                        throw new InvalidCacheUsageException("Unable to initizalize object stored "+key);
+
+                    log.debug("Retrieving object "+key);
+
+                    retrieve_future = new AtomicObjectCallFuture();
+                    retrieve_call = new AtomicObjectCallRetrieve(nextCallID(cache));
+                    marshaller = new GenericJBossMarshaller();
+                    cache.put(key,marshaller.objectToByteBuffer(retrieve_call));
+                    retrieve_future.get();
+
+                }
+
+            }
         }else{
+            log.debug("A new object is created.");
             object = clazz.newInstance();
         }
 
@@ -223,15 +252,22 @@ public class AtomicObjectContainer {
         return hash;
     }
 
+    private void handleInvocation(AtomicObjectCallInvoke invocation)
+            throws InvocationTargetException, IllegalAccessException {
+        Object ret = doCall(object,invocation.method,invocation.arguments);
+        if(registeredCalls.containsKey(invocation.callID)){
+            assert ! registeredCalls.get(invocation.callID).isDone() : "Received twice "+ invocation.callID+" ?";
+            registeredCalls.get(invocation.callID).setReturnValue(ret);
+        }
+    }
+
 
     //
-    // INNER CLASSES & HELPERS
+    // HELPERS
     //
 
     private static int nextCallID(Cache c){
-        int ret =  ThreadLocalRandom.current().nextInt()+c.hashCode();
-        if( ret == MAGIC_PERSIST ) ret++ ;
-        return ret;
+        return ThreadLocalRandom.current().nextInt()+c.hashCode();
     }
 
     private static Object doCall(Object obj, String method, Object[] args) throws InvocationTargetException, IllegalAccessException {
@@ -262,77 +298,6 @@ public class AtomicObjectContainer {
             throw new IllegalStateException("Method "+method+" not found.");
 
         return ret;
-    }
-
-    private class FutureAtomicObjectCall implements Future<Object> {
-
-        private Object ret;
-        private int state; // 0 => init, 1 => done, -1 => cancelled
-
-        public FutureAtomicObjectCall(){
-            ret = null;
-            state = 0;
-        }
-
-        public void setReturnValue(Object r){
-            synchronized (this) {
-
-                if (state == -1)
-                    return ;
-
-                if (ret == null) {
-                    ret = r;
-                    state = 1;
-                    this.notifyAll();
-                    return;
-                }
-            }
-
-            throw new IllegalStateException("Unreachable code");
-        }
-
-        @Override
-        public boolean cancel(boolean mayInterruptIfRunning) {
-            synchronized (this) {
-                if (state != 0)
-                    return false;
-                state = -1;
-                if (mayInterruptIfRunning)
-                    this.notifyAll();
-            }
-            return true;
-        }
-
-        @Override
-        public Object get() throws InterruptedException, ExecutionException {
-            synchronized (this) {
-                if (state == 0)
-                    this.wait();
-            }
-            return (state == -1) ? null : ret;
-        }
-
-        @Override
-        public Object get(long timeout, TimeUnit unit)
-                throws InterruptedException, ExecutionException,
-                TimeoutException {
-            synchronized (this) {
-                if (state == 0)
-                    this.wait(timeout);
-            }
-            return (state == -1) ? null : ret;
-        }
-
-        @Override
-        public boolean isCancelled() {
-            return state == -1;
-        }
-
-        @Override
-        public boolean isDone() {
-            return ret != null;
-        }
-
     }
 
 }
