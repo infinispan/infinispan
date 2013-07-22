@@ -1,3 +1,8 @@
+// Added for reference, to make it easier to port over changes and to make it
+// easy to verify when a test fails, whether the problem is also present in
+// the original CHMv8 implementation, or whether it's a problem with the
+// customizations added in the equivalent version.
+
 // Revision 1.112
 
 /*
@@ -8,14 +13,22 @@
 
 package org.infinispan.commons.util.concurrent.jdk8backported;
 
-import org.infinispan.commons.equivalence.AnyEquivalence;
-import org.infinispan.commons.equivalence.Equivalence;
-
 import java.io.ObjectStreamField;
 import java.io.Serializable;
 import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Type;
-import java.util.*;
+import java.util.AbstractMap;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.Comparator;
+import java.util.ConcurrentModificationException;
+import java.util.Enumeration;
+import java.util.HashMap;
+import java.util.Hashtable;
+import java.util.Iterator;
+import java.util.Map;
+import java.util.NoSuchElementException;
+import java.util.Set;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -77,8 +90,8 @@ import java.util.concurrent.locks.ReentrantLock;
  * hash table. To ameliorate impact, when keys are {@link Comparable},
  * this class may use comparison order among keys to help break ties.
  *
- * <p>A {@link Set} projection of a EquivalentConcurrentHashMapV8 may be created
- * (using {@link #newKeySet(Equivalence)} or {@link #newKeySet(int, Equivalence)}), or viewed
+ * <p>A {@link Set} projection of a ConcurrentHashMapV8 may be created
+ * (using {@link #newKeySet()} or {@link #newKeySet(int)}), or viewed
  * (using {@link #keySet(Object)} when only keys are of interest, and the
  * mapped values are (perhaps transiently) not used or all take the
  * same mapping value.
@@ -97,7 +110,7 @@ import java.util.concurrent.locks.ReentrantLock;
  * computing a snapshot summary of the values in a shared registry.
  * There are three kinds of operation, each with four forms, accepting
  * functions with Keys, Values, Entries, and (Key, Value) arguments
- * and/or return values. Because the elements of a EquivalentConcurrentHashMapV8
+ * and/or return values. Because the elements of a ConcurrentHashMapV8
  * are not ordered in any particular way, and may be processed in
  * different orders in different parallel executions, the correctness
  * of supplied functions should not depend on any ordering, or on any
@@ -147,7 +160,7 @@ import java.util.concurrent.locks.ReentrantLock;
  * values that trade off overhead versus throughput.
  *
  * <p>The concurrency properties of bulk operations follow
- * from those of EquivalentConcurrentHashMapV8: Any non-null result returned
+ * from those of ConcurrentHashMapV8: Any non-null result returned
  * from {@code get(key)} and related access methods bears a
  * happens-before relation with the associated insertion or
  * update.  The result of any bulk operation reflects the
@@ -206,22 +219,12 @@ import java.util.concurrent.locks.ReentrantLock;
  * <a href="{@docRoot}/../technotes/guides/collections/index.html">
  * Java Collections Framework</a>.
  *
- * <b>NOTE</b>: This map has been tweaked so that equality and hash code
- * calculations are done based on a passed {@link org.infinispan.commons.equivalence.Equivalence} function
- * implementation for keys and values, as opposed to relying on their own
- * equals/hashCode/toString implementations. This is handy when using
- * key/values whose mentioned methods cannot be overriden, i.e. arrays,
- * and in situations where users want to avoid using wrapper objects.
- * To help with future revisions of this class, changes other than
- * constructor changes have been marked with 'EQUIVALENCE_MOD' comment.
- *
  * @since 1.5
  * @author Doug Lea
- * @author Galder Zamarreño
  * @param <K> the type of keys maintained by this map
  * @param <V> the type of mapped values
  */
-public class EquivalentConcurrentHashMapV8<K,V> extends AbstractMap<K,V>
+public class ConcurrentHashMapV8<K,V> extends AbstractMap<K,V>
       implements ConcurrentMap<K,V>, Serializable {
    private static final long serialVersionUID = 7249069246763182397L;
 
@@ -594,16 +597,6 @@ public class EquivalentConcurrentHashMapV8<K,V> extends AbstractMap<K,V>
 
     /* ---------------- Nodes -------------- */
 
-   static class NodeEquivalence<K,V> {
-      final Equivalence<K> keyEq;
-      final Equivalence<V> valueEq;
-
-      NodeEquivalence(Equivalence<K> keyEq, Equivalence<V> valueEq) {
-         this.keyEq = keyEq;
-         this.valueEq = valueEq;
-      }
-   }
-
    /**
     * Key-value entry.  This class is never exported out as a
     * user-mutable Map.Entry (i.e., one supporting setValue; see
@@ -615,21 +608,19 @@ public class EquivalentConcurrentHashMapV8<K,V> extends AbstractMap<K,V>
    static class Node<K,V> implements Map.Entry<K,V> {
       final int hash;
       final K key;
-      final NodeEquivalence<K, V> nodeEq; // EQUIVALENCE_MOD
       volatile V val;
       volatile Node<K,V> next;
 
-      Node(int hash, NodeEquivalence<K, V> nodeEq, K key, V val, Node<K,V> next) { // EQUIVALENCE_MOD
+      Node(int hash, K key, V val, Node<K,V> next) {
          this.hash = hash;
          this.key = key;
          this.val = val;
          this.next = next;
-         this.nodeEq = nodeEq; // EQUIVALENCE_MOD
       }
 
       public final K getKey()       { return key; }
       public final V getValue()     { return val; }
-      public final int hashCode()   { return nodeEq.keyEq.hashCode(key) ^ nodeEq.valueEq.hashCode(val); } // EQUIVALENCE_MOD
+      public final int hashCode()   { return key.hashCode() ^ val.hashCode(); }
       public final String toString(){ return key + "=" + val; }
       public final V setValue(V value) {
          throw new UnsupportedOperationException();
@@ -640,8 +631,8 @@ public class EquivalentConcurrentHashMapV8<K,V> extends AbstractMap<K,V>
          return ((o instanceof Map.Entry) &&
                        (k = (e = (Map.Entry<?,?>)o).getKey()) != null &&
                        (v = e.getValue()) != null &&
-                       (k == key || nodeEq.keyEq.equals(key, k)) && // EQUIVALENCE_MOD
-                       (v == (u = val) || nodeEq.valueEq.equals((V) u, v))); // EQUIVALENCE_MOD
+                       (k == key || k.equals(key)) &&
+                       (v == (u = val) || v.equals(u)));
       }
 
       /**
@@ -653,7 +644,7 @@ public class EquivalentConcurrentHashMapV8<K,V> extends AbstractMap<K,V>
             do {
                K ek;
                if (e.hash == h &&
-                     ((ek = e.key) == k || (ek != null && nodeEq.keyEq.equals(ek, k)))) // EQUIVALENCE_MOD
+                     ((ek = e.key) == k || (ek != null && k.equals(ek))))
                   return e;
             } while ((e = e.next) != null);
          }
@@ -701,8 +692,8 @@ public class EquivalentConcurrentHashMapV8<K,V> extends AbstractMap<K,V>
     * Returns x's Class if it is of the form "class C implements
     * Comparable<C>", else null.
     */
-   static Class<?> comparableClassFor(Object x, Equivalence<?> eq) { // EQUIVALENCE_MOD
-      if (eq.isComparable(x)) { // EQUIVALENCE_MOD
+   static Class<?> comparableClassFor(Object x) {
+      if (x instanceof Comparable) {
          Class<?> c; Type[] ts, as; Type t; ParameterizedType p;
          if ((c = x.getClass()) == String.class) // bypass checks
             return c;
@@ -725,8 +716,9 @@ public class EquivalentConcurrentHashMapV8<K,V> extends AbstractMap<K,V>
     * class), else 0.
     */
    @SuppressWarnings({"rawtypes","unchecked"}) // for cast to Comparable
-   static int compareComparables(Class<?> kc, Object k, Object x, Equivalence<Object> eq) { // EQUIVALENCE_MOD
-      return (x == null || x.getClass() != kc ? 0 : eq.compare(k, x)); // EQUIVALENCE_MOD
+   static int compareComparables(Class<?> kc, Object k, Object x) {
+      return (x == null || x.getClass() != kc ? 0 :
+                    ((Comparable)k).compareTo(x));
    }
 
     /* ---------------- Table element access -------------- */
@@ -816,20 +808,13 @@ public class EquivalentConcurrentHashMapV8<K,V> extends AbstractMap<K,V>
    private transient ValuesView<K,V> values;
    private transient EntrySetView<K,V> entrySet;
 
-   Equivalence<K> keyEq;
-   Equivalence<V> valueEq;
-   transient NodeEquivalence<K, V> nodeEq;
 
     /* ---------------- Public operations -------------- */
 
    /**
     * Creates a new, empty map with the default initial table size (16).
     */
-   public EquivalentConcurrentHashMapV8(
-         Equivalence<K> keyEquivalence, Equivalence<V> valueEquivalence) {
-      this.keyEq = keyEquivalence; // EQUIVALENCE_MOD
-      this.valueEq = valueEquivalence; // EQUIVALENCE_MOD
-      this.nodeEq = new NodeEquivalence<K, V>(this.keyEq, this.valueEq); // EQUIVALENCE_MOD
+   public ConcurrentHashMapV8() {
    }
 
    /**
@@ -842,9 +827,7 @@ public class EquivalentConcurrentHashMapV8<K,V> extends AbstractMap<K,V>
     * @throws IllegalArgumentException if the initial capacity of
     * elements is negative
     */
-   public EquivalentConcurrentHashMapV8(int initialCapacity,
-         Equivalence<K> keyEquivalence, Equivalence<V> valueEquivalence) {
-      this(keyEquivalence, valueEquivalence); // EQUIVALENCE_MOD
+   public ConcurrentHashMapV8(int initialCapacity) {
       if (initialCapacity < 0)
          throw new IllegalArgumentException();
       int cap = ((initialCapacity >= (MAXIMUM_CAPACITY >>> 1)) ?
@@ -858,9 +841,7 @@ public class EquivalentConcurrentHashMapV8<K,V> extends AbstractMap<K,V>
     *
     * @param m the map
     */
-   public EquivalentConcurrentHashMapV8(Map<? extends K, ? extends V> m,
-         Equivalence<K> keyEquivalence, Equivalence<V> valueEquivalence) {
-      this(keyEquivalence, valueEquivalence); // EQUIVALENCE_MOD
+   public ConcurrentHashMapV8(Map<? extends K, ? extends V> m) {
       this.sizeCtl = DEFAULT_CAPACITY;
       putAll(m);
    }
@@ -880,9 +861,8 @@ public class EquivalentConcurrentHashMapV8<K,V> extends AbstractMap<K,V>
     *
     * @since 1.6
     */
-   public EquivalentConcurrentHashMapV8(int initialCapacity, float loadFactor,
-         Equivalence<K> keyEquivalence, Equivalence<V> valueEquivalence) {
-      this(initialCapacity, loadFactor, 1, keyEquivalence, valueEquivalence); // EQUIVALENCE_MOD
+   public ConcurrentHashMapV8(int initialCapacity, float loadFactor) {
+      this(initialCapacity, loadFactor, 1);
    }
 
    /**
@@ -903,10 +883,8 @@ public class EquivalentConcurrentHashMapV8<K,V> extends AbstractMap<K,V>
     * negative or the load factor or concurrencyLevel are
     * nonpositive
     */
-   public EquivalentConcurrentHashMapV8(int initialCapacity,
-         float loadFactor, int concurrencyLevel,
-         Equivalence<K> keyEquivalence, Equivalence<V> valueEquivalence) {
-      this(keyEquivalence, valueEquivalence); // EQUIVALENCE_MOD
+   public ConcurrentHashMapV8(int initialCapacity,
+         float loadFactor, int concurrencyLevel) {
       if (!(loadFactor > 0.0f) || initialCapacity < 0 || concurrencyLevel <= 0)
          throw new IllegalArgumentException();
       if (initialCapacity < concurrencyLevel)   // Use at least as many bins
@@ -949,18 +927,18 @@ public class EquivalentConcurrentHashMapV8<K,V> extends AbstractMap<K,V>
     */
    public V get(Object key) {
       Node<K,V>[] tab; Node<K,V> e, p; int n, eh; K ek;
-      int h = spread(keyEq.hashCode(key)); // EQUIVALENCE_MOD
+      int h = spread(key.hashCode());
       if ((tab = table) != null && (n = tab.length) > 0 &&
             (e = tabAt(tab, (n - 1) & h)) != null) {
          if ((eh = e.hash) == h) {
-            if ((ek = e.key) == key || (ek != null && keyEq.equals(ek, key))) // EQUIVALENCE_MOD
+            if ((ek = e.key) == key || (ek != null && key.equals(ek)))
                return e.val;
          }
          else if (eh < 0)
             return (p = e.find(h, key)) != null ? p.val : null;
          while ((e = e.next) != null) {
             if (e.hash == h &&
-                  ((ek = e.key) == key || (ek != null && keyEq.equals(ek, key)))) // EQUIVALENCE_MOD
+                  ((ek = e.key) == key || (ek != null && key.equals(ek))))
                return e.val;
          }
       }
@@ -998,7 +976,7 @@ public class EquivalentConcurrentHashMapV8<K,V> extends AbstractMap<K,V>
          Traverser<K,V> it = new Traverser<K,V>(t, t.length, 0, t.length);
          for (Node<K,V> p; (p = it.advance()) != null; ) {
             V v;
-            if ((v = p.val) == value || (v != null && valueEq.equals(v, value))) // EQUIVALENCE_MOD
+            if ((v = p.val) == value || (v != null && value.equals(v)))
                return true;
          }
       }
@@ -1025,7 +1003,7 @@ public class EquivalentConcurrentHashMapV8<K,V> extends AbstractMap<K,V>
    /** Implementation for put and putIfAbsent */
    final V putVal(K key, V value, boolean onlyIfAbsent) {
       if (key == null || value == null) throw new NullPointerException();
-      int hash = spread(keyEq.hashCode(key)); // EQUIVALENCE_MOD
+      int hash = spread(key.hashCode());
       int binCount = 0;
       for (Node<K,V>[] tab = table;;) {
          Node<K,V> f; int n, i, fh;
@@ -1033,7 +1011,7 @@ public class EquivalentConcurrentHashMapV8<K,V> extends AbstractMap<K,V>
             tab = initTable();
          else if ((f = tabAt(tab, i = (n - 1) & hash)) == null) {
             if (casTabAt(tab, i, null,
-                  new Node<K,V>(hash, nodeEq, key, value, null))) // EQUIVALENCE_MOD
+                  new Node<K,V>(hash, key, value, null)))
                break;                   // no lock when adding to empty bin
          }
          else if ((fh = f.hash) == MOVED)
@@ -1048,7 +1026,7 @@ public class EquivalentConcurrentHashMapV8<K,V> extends AbstractMap<K,V>
                         K ek;
                         if (e.hash == hash &&
                               ((ek = e.key) == key ||
-                                     (ek != null && keyEq.equals(ek, key)))) { // EQUIVALENCE_MOD
+                                     (ek != null && key.equals(ek)))) {
                            oldVal = e.val;
                            if (!onlyIfAbsent)
                               e.val = value;
@@ -1056,7 +1034,7 @@ public class EquivalentConcurrentHashMapV8<K,V> extends AbstractMap<K,V>
                         }
                         Node<K,V> pred = e;
                         if ((e = e.next) == null) {
-                           pred.next = new Node<K,V>(hash, nodeEq, key, // EQUIVALENCE_MOD
+                           pred.next = new Node<K,V>(hash, key,
                                  value, null);
                            break;
                         }
@@ -1119,7 +1097,7 @@ public class EquivalentConcurrentHashMapV8<K,V> extends AbstractMap<K,V>
     * non-null.  If resulting value is null, delete.
     */
    final V replaceNode(Object key, V value, Object cv) {
-      int hash = spread(keyEq.hashCode(key)); // EQUIVALENCE_MOD
+      int hash = spread(key.hashCode());
       for (Node<K,V>[] tab = table;;) {
          Node<K,V> f; int n, i, fh;
          if (tab == null || (n = tab.length) == 0 ||
@@ -1138,10 +1116,10 @@ public class EquivalentConcurrentHashMapV8<K,V> extends AbstractMap<K,V>
                         K ek;
                         if (e.hash == hash &&
                               ((ek = e.key) == key ||
-                                     (ek != null && keyEq.equals(ek, key)))) { // EQUIVALENCE_MOD
+                                     (ek != null && key.equals(ek)))) {
                            V ev = e.val;
                            if (cv == null || cv == ev ||
-                                 (ev != null && valueEq.equals(ev, cv))) { // EQUIVALENCE_MOD
+                                 (ev != null && cv.equals(ev))) {
                               oldVal = ev;
                               if (value != null)
                                  e.val = value;
@@ -1165,12 +1143,12 @@ public class EquivalentConcurrentHashMapV8<K,V> extends AbstractMap<K,V>
                            (p = r.findTreeNode(hash, key, null)) != null) {
                         V pv = p.val;
                         if (cv == null || cv == pv ||
-                              (pv != null && valueEq.equals(pv, cv))) { // EQUIVALENCE_MOD
+                              (pv != null && cv.equals(pv))) {
                            oldVal = pv;
                            if (value != null)
                               p.val = value;
                            else if (t.removeTreeNode(p))
-                              setTabAt(tab, i, untreeify(t.first, nodeEq)); // EQUIVALENCE_MOD
+                              setTabAt(tab, i, untreeify(t.first));
                         }
                      }
                   }
@@ -1305,7 +1283,7 @@ public class EquivalentConcurrentHashMapV8<K,V> extends AbstractMap<K,V>
       if ((t = table) != null) {
          Traverser<K,V> it = new Traverser<K,V>(t, t.length, 0, t.length);
          for (Node<K,V> p; (p = it.advance()) != null; )
-            h += keyEq.hashCode(p.key) ^ valueEq.hashCode(p.val); // EQUIVALENCE_MOD
+            h += p.key.hashCode() ^ p.val.hashCode();
       }
       return h;
    }
@@ -1332,9 +1310,9 @@ public class EquivalentConcurrentHashMapV8<K,V> extends AbstractMap<K,V>
          for (;;) {
             K k = p.key;
             V v = p.val;
-            sb.append(k == this ? "(this Map)" : keyEq.toString(k)); // EQUIVALENCE_MOD
+            sb.append(k == this ? "(this Map)" : k);
             sb.append('=');
-            sb.append(v == this ? "(this Map)" : valueEq.toString(v)); // EQUIVALENCE_MOD
+            sb.append(v == this ? "(this Map)" : v);
             if ((p = it.advance()) == null)
                break;
             sb.append(',').append(' ');
@@ -1364,7 +1342,7 @@ public class EquivalentConcurrentHashMapV8<K,V> extends AbstractMap<K,V>
          for (Node<K,V> p; (p = it.advance()) != null; ) {
             V val = p.val;
             Object v = m.get(p.key);
-            if (v == null || (v != val && !valueEq.equals(val, v))) // EQUIVALENCE_MOD
+            if (v == null || (v != val && !v.equals(val)))
                return false;
          }
          for (Map.Entry<?,?> e : m.entrySet()) {
@@ -1372,7 +1350,7 @@ public class EquivalentConcurrentHashMapV8<K,V> extends AbstractMap<K,V>
             if ((mk = e.getKey()) == null ||
                   (mv = e.getValue()) == null ||
                   (v = get(mk)) == null ||
-                  (mv != v && !valueEq.equals((V) v, mv))) // EQUIVALENCE_MOD
+                  (mv != v && !mv.equals(v)))
                return false;
          }
       }
@@ -1390,7 +1368,7 @@ public class EquivalentConcurrentHashMapV8<K,V> extends AbstractMap<K,V>
    }
 
    /**
-    * Saves the state of the {@code EquivalentConcurrentHashMapV8} instance to a
+    * Saves the state of the {@code ConcurrentHashMapV8} instance to a
     * stream (i.e., serializes it).
     * @param s the stream
     * @serialData
@@ -1400,8 +1378,6 @@ public class EquivalentConcurrentHashMapV8<K,V> extends AbstractMap<K,V>
     */
    private void writeObject(java.io.ObjectOutputStream s)
          throws java.io.IOException {
-      s.writeObject(keyEq); // EQUIVALENCE_MOD
-      s.writeObject(valueEq); // EQUIVALENCE_MOD
       // For serialization compatibility
       // Emulate segment calculation from previous version of this class
       int sshift = 0;
@@ -1440,16 +1416,13 @@ public class EquivalentConcurrentHashMapV8<K,V> extends AbstractMap<K,V>
     */
    private void readObject(java.io.ObjectInputStream s)
          throws java.io.IOException, ClassNotFoundException {
-      keyEq = (Equivalence<K>) s.readObject();
-      valueEq = (Equivalence<V>) s.readObject();
-      nodeEq = new NodeEquivalence<K, V>(keyEq, valueEq);
-      /*
-       * To improve performance in typical cases, we create nodes
-       * while reading, then place in table once size is known.
-       * However, we must also validate uniqueness and deal with
-       * overpopulated bins while doing so, which requires
-       * specialized versions of putVal mechanics.
-       */
+        /*
+         * To improve performance in typical cases, we create nodes
+         * while reading, then place in table once size is known.
+         * However, we must also validate uniqueness and deal with
+         * overpopulated bins while doing so, which requires
+         * specialized versions of putVal mechanics.
+         */
       sizeCtl = -1; // force exclusion for table construction
       s.defaultReadObject();
       long size = 0L;
@@ -1458,7 +1431,7 @@ public class EquivalentConcurrentHashMapV8<K,V> extends AbstractMap<K,V>
          @SuppressWarnings("unchecked") K k = (K) s.readObject();
          @SuppressWarnings("unchecked") V v = (V) s.readObject();
          if (k != null && v != null) {
-            p = new Node<K,V>(spread(keyEq.hashCode(k)), nodeEq, k, v, p); // EQUIVALENCE_MOD
+            p = new Node<K,V>(spread(k.hashCode()), k, v, p);
             ++size;
          }
          else
@@ -1499,7 +1472,7 @@ public class EquivalentConcurrentHashMapV8<K,V> extends AbstractMap<K,V>
                   for (q = first; q != null; q = q.next) {
                      if (q.hash == h &&
                            ((qk = q.key) == k ||
-                                  (qk != null && keyEq.equals(qk, k)))) { // EQUIVALENCE_MOD
+                                  (qk != null && k.equals(qk)))) {
                         insertAtFront = false;
                         break;
                      }
@@ -1512,14 +1485,14 @@ public class EquivalentConcurrentHashMapV8<K,V> extends AbstractMap<K,V>
                      TreeNode<K,V> hd = null, tl = null;
                      for (q = p; q != null; q = q.next) {
                         TreeNode<K,V> t = new TreeNode<K,V>
-                              (q.hash, nodeEq, q.key, q.val, null, null); // EQUIVALENCE_MOD
+                              (q.hash, q.key, q.val, null, null);
                         if ((t.prev = tl) == null)
                            hd = t;
                         else
                            tl.next = t;
                         tl = t;
                      }
-                     setTabAt(tab, j, new TreeBin<K,V>(hd, nodeEq)); // EQUIVALENCE_MOD
+                     setTabAt(tab, j, new TreeBin<K,V>(hd));
                   }
                }
             }
@@ -1657,7 +1630,7 @@ public class EquivalentConcurrentHashMapV8<K,V> extends AbstractMap<K,V>
    public V computeIfAbsent(K key, Fun<? super K, ? extends V> mappingFunction) {
       if (key == null || mappingFunction == null)
          throw new NullPointerException();
-      int h = spread(keyEq.hashCode(key)); // EQUIVALENCE_MOD
+      int h = spread(key.hashCode());
       V val = null;
       int binCount = 0;
       for (Node<K,V>[] tab = table;;) {
@@ -1665,14 +1638,14 @@ public class EquivalentConcurrentHashMapV8<K,V> extends AbstractMap<K,V>
          if (tab == null || (n = tab.length) == 0)
             tab = initTable();
          else if ((f = tabAt(tab, i = (n - 1) & h)) == null) {
-            Node<K,V> r = new ReservationNode<K,V>(nodeEq); // EQUIVALENCE_MOD
+            Node<K,V> r = new ReservationNode<K,V>();
             synchronized (r) {
                if (casTabAt(tab, i, null, r)) {
                   binCount = 1;
                   Node<K,V> node = null;
                   try {
                      if ((val = mappingFunction.apply(key)) != null)
-                        node = new Node<K,V>(h, nodeEq, key, val, null); // EQUIVALENCE_MOD
+                        node = new Node<K,V>(h, key, val, null);
                   } finally {
                      setTabAt(tab, i, node);
                   }
@@ -1693,7 +1666,7 @@ public class EquivalentConcurrentHashMapV8<K,V> extends AbstractMap<K,V>
                         K ek; V ev;
                         if (e.hash == h &&
                               ((ek = e.key) == key ||
-                                     (ek != null && keyEq.equals(ek, key)))) { // EQUIVALENCE_MOD
+                                     (ek != null && key.equals(ek)))) {
                            val = e.val;
                            break;
                         }
@@ -1701,7 +1674,7 @@ public class EquivalentConcurrentHashMapV8<K,V> extends AbstractMap<K,V>
                         if ((e = e.next) == null) {
                            if ((val = mappingFunction.apply(key)) != null) {
                               added = true;
-                              pred.next = new Node<K,V>(h, nodeEq, key, val, null); // EQUIVALENCE_MOD
+                              pred.next = new Node<K,V>(h, key, val, null);
                            }
                            break;
                         }
@@ -1758,7 +1731,7 @@ public class EquivalentConcurrentHashMapV8<K,V> extends AbstractMap<K,V>
    public V computeIfPresent(K key, BiFun<? super K, ? super V, ? extends V> remappingFunction) {
       if (key == null || remappingFunction == null)
          throw new NullPointerException();
-      int h = spread(keyEq.hashCode(key)); // EQUIVALENCE_MOD
+      int h = spread(key.hashCode());
       V val = null;
       int delta = 0;
       int binCount = 0;
@@ -1779,7 +1752,7 @@ public class EquivalentConcurrentHashMapV8<K,V> extends AbstractMap<K,V>
                         K ek;
                         if (e.hash == h &&
                               ((ek = e.key) == key ||
-                                     (ek != null && keyEq.equals(ek, key)))) { // EQUIVALENCE_MOD
+                                     (ek != null && key.equals(ek)))) {
                            val = remappingFunction.apply(key, e.val);
                            if (val != null)
                               e.val = val;
@@ -1810,7 +1783,7 @@ public class EquivalentConcurrentHashMapV8<K,V> extends AbstractMap<K,V>
                         else {
                            delta = -1;
                            if (t.removeTreeNode(p))
-                              setTabAt(tab, i, untreeify(t.first, nodeEq)); // EQUIVALENCE_MOD
+                              setTabAt(tab, i, untreeify(t.first));
                         }
                      }
                   }
@@ -1849,7 +1822,7 @@ public class EquivalentConcurrentHashMapV8<K,V> extends AbstractMap<K,V>
          BiFun<? super K, ? super V, ? extends V> remappingFunction) {
       if (key == null || remappingFunction == null)
          throw new NullPointerException();
-      int h = spread(keyEq.hashCode(key)); // EQUIVALENCE_MOD
+      int h = spread(key.hashCode());
       V val = null;
       int delta = 0;
       int binCount = 0;
@@ -1858,7 +1831,7 @@ public class EquivalentConcurrentHashMapV8<K,V> extends AbstractMap<K,V>
          if (tab == null || (n = tab.length) == 0)
             tab = initTable();
          else if ((f = tabAt(tab, i = (n - 1) & h)) == null) {
-            Node<K,V> r = new ReservationNode<K,V>(nodeEq); // EQUIVALENCE_MOD
+            Node<K,V> r = new ReservationNode<K,V>();
             synchronized (r) {
                if (casTabAt(tab, i, null, r)) {
                   binCount = 1;
@@ -1866,7 +1839,7 @@ public class EquivalentConcurrentHashMapV8<K,V> extends AbstractMap<K,V>
                   try {
                      if ((val = remappingFunction.apply(key, null)) != null) {
                         delta = 1;
-                        node = new Node<K,V>(h, nodeEq, key, val, null); // EQUIVALENCE_MOD
+                        node = new Node<K,V>(h, key, val, null);
                      }
                   } finally {
                      setTabAt(tab, i, node);
@@ -1887,7 +1860,7 @@ public class EquivalentConcurrentHashMapV8<K,V> extends AbstractMap<K,V>
                         K ek;
                         if (e.hash == h &&
                               ((ek = e.key) == key ||
-                                     (ek != null && keyEq.equals(ek, key)))) { // EQUIVALENCE_MOD
+                                     (ek != null && key.equals(ek)))) {
                            val = remappingFunction.apply(key, e.val);
                            if (val != null)
                               e.val = val;
@@ -1907,7 +1880,7 @@ public class EquivalentConcurrentHashMapV8<K,V> extends AbstractMap<K,V>
                            if (val != null) {
                               delta = 1;
                               pred.next =
-                                    new Node<K,V>(h, nodeEq, key, val, null); // EQUIVALENCE_MOD
+                                    new Node<K,V>(h, key, val, null);
                            }
                            break;
                         }
@@ -1934,7 +1907,7 @@ public class EquivalentConcurrentHashMapV8<K,V> extends AbstractMap<K,V>
                      else if (p != null) {
                         delta = -1;
                         if (t.removeTreeNode(p))
-                           setTabAt(tab, i, untreeify(t.first, nodeEq)); // EQUIVALENCE_MOD
+                           setTabAt(tab, i, untreeify(t.first));
                      }
                   }
                }
@@ -1974,7 +1947,7 @@ public class EquivalentConcurrentHashMapV8<K,V> extends AbstractMap<K,V>
    public V merge(K key, V value, BiFun<? super V, ? super V, ? extends V> remappingFunction) {
       if (key == null || value == null || remappingFunction == null)
          throw new NullPointerException();
-      int h = spread(keyEq.hashCode(key));
+      int h = spread(key.hashCode());
       V val = null;
       int delta = 0;
       int binCount = 0;
@@ -1983,7 +1956,7 @@ public class EquivalentConcurrentHashMapV8<K,V> extends AbstractMap<K,V>
          if (tab == null || (n = tab.length) == 0)
             tab = initTable();
          else if ((f = tabAt(tab, i = (n - 1) & h)) == null) {
-            if (casTabAt(tab, i, null, new Node<K,V>(h, nodeEq, key, value, null))) { // EQUIVALENCE_MOD
+            if (casTabAt(tab, i, null, new Node<K,V>(h, key, value, null))) {
                delta = 1;
                val = value;
                break;
@@ -2000,7 +1973,7 @@ public class EquivalentConcurrentHashMapV8<K,V> extends AbstractMap<K,V>
                         K ek;
                         if (e.hash == h &&
                               ((ek = e.key) == key ||
-                                     (ek != null && keyEq.equals(ek, key)))) { // EQUIVALENCE_MOD
+                                     (ek != null && key.equals(ek)))) {
                            val = remappingFunction.apply(e.val, value);
                            if (val != null)
                               e.val = val;
@@ -2019,7 +1992,7 @@ public class EquivalentConcurrentHashMapV8<K,V> extends AbstractMap<K,V>
                            delta = 1;
                            val = value;
                            pred.next =
-                                 new Node<K,V>(h, nodeEq, key, val, null); // EQUIVALENCE_MOD
+                                 new Node<K,V>(h, key, val, null);
                            break;
                         }
                      }
@@ -2043,7 +2016,7 @@ public class EquivalentConcurrentHashMapV8<K,V> extends AbstractMap<K,V>
                      else if (p != null) {
                         delta = -1;
                         if (t.removeTreeNode(p))
-                           setTabAt(tab, i, untreeify(t.first, nodeEq)); // EQUIVALENCE_MOD
+                           setTabAt(tab, i, untreeify(t.first));
                      }
                   }
                }
@@ -2105,11 +2078,11 @@ public class EquivalentConcurrentHashMapV8<K,V> extends AbstractMap<K,V>
       return new ValueIterator<K,V>(t, f, 0, f, this);
    }
 
-   // EquivalentConcurrentHashMapV8-only methods
+   // ConcurrentHashMapV8-only methods
 
    /**
     * Returns the number of mappings. This method should be used
-    * instead of {@link #size} because a EquivalentConcurrentHashMapV8 may
+    * instead of {@link #size} because a ConcurrentHashMapV8 may
     * contain more mappings than can be represented as an int. The
     * value returned is an estimate; the actual count may differ if
     * there are concurrent insertions or removals.
@@ -2123,20 +2096,19 @@ public class EquivalentConcurrentHashMapV8<K,V> extends AbstractMap<K,V>
    }
 
    /**
-    * Creates a new {@link Set} backed by a EquivalentConcurrentHashMapV8
+    * Creates a new {@link Set} backed by a ConcurrentHashMapV8
     * from the given type to {@code Boolean.TRUE}.
     *
     * @return the new set
     * @since 1.8
     */
-   public static <K> KeySetView<K,Boolean> newKeySet(Equivalence<K> keyEquivalence) { // EQUIVALENCE_MOD
+   public static <K> KeySetView<K,Boolean> newKeySet() {
       return new KeySetView<K,Boolean>
-            (new EquivalentConcurrentHashMapV8<K,Boolean>(keyEquivalence,
-                  AnyEquivalence.<Boolean>getInstance()), Boolean.TRUE); // EQUIVALENCE_MOD
+            (new ConcurrentHashMapV8<K,Boolean>(), Boolean.TRUE);
    }
 
    /**
-    * Creates a new {@link Set} backed by a EquivalentConcurrentHashMapV8
+    * Creates a new {@link Set} backed by a ConcurrentHashMapV8
     * from the given type to {@code Boolean.TRUE}.
     *
     * @param initialCapacity The implementation performs internal
@@ -2146,10 +2118,9 @@ public class EquivalentConcurrentHashMapV8<K,V> extends AbstractMap<K,V>
     * elements is negative
     * @since 1.8
     */
-   public static <K> KeySetView<K,Boolean> newKeySet(int initialCapacity, Equivalence<K> keyEquivalence) { // EQUIVALENCE_MOD
+   public static <K> KeySetView<K,Boolean> newKeySet(int initialCapacity) {
       return new KeySetView<K,Boolean>
-            (new EquivalentConcurrentHashMapV8<K,Boolean>(initialCapacity, keyEquivalence,
-                  AnyEquivalence.<Boolean>getInstance()), Boolean.TRUE); // EQUIVALENCE_MOD
+            (new ConcurrentHashMapV8<K,Boolean>(initialCapacity), Boolean.TRUE);
    }
 
    /**
@@ -2176,8 +2147,8 @@ public class EquivalentConcurrentHashMapV8<K,V> extends AbstractMap<K,V>
     */
    static final class ForwardingNode<K,V> extends Node<K,V> {
       final Node<K,V>[] nextTable;
-      ForwardingNode(Node<K,V>[] tab, NodeEquivalence<K, V> nodeEq) { // EQUIVALENCE_MOD
-         super(MOVED, nodeEq, null, null, null); // EQUIVALENCE_MOD
+      ForwardingNode(Node<K,V>[] tab) {
+         super(MOVED, null, null, null);
          this.nextTable = tab;
       }
 
@@ -2191,7 +2162,7 @@ public class EquivalentConcurrentHashMapV8<K,V> extends AbstractMap<K,V>
             for (;;) {
                int eh; K ek;
                if ((eh = e.hash) == h &&
-                     ((ek = e.key) == k || (ek != null && nodeEq.keyEq.equals(ek, k)))) // EQUIVALENCE_MOD
+                     ((ek = e.key) == k || (ek != null && k.equals(ek))))
                   return e;
                if (eh < 0) {
                   if (e instanceof ForwardingNode) {
@@ -2212,8 +2183,8 @@ public class EquivalentConcurrentHashMapV8<K,V> extends AbstractMap<K,V>
     * A place-holder node used in computeIfAbsent and compute
     */
    static final class ReservationNode<K,V> extends Node<K,V> {
-      ReservationNode(NodeEquivalence<K, V> nodeEq) { // EQUIVALENCE_MOD
-         super(RESERVED, nodeEq, null, null, null); // EQUIVALENCE_MOD
+      ReservationNode() {
+         super(RESERVED, null, null, null);
       }
 
       Node<K,V> find(int h, Object k) {
@@ -2365,7 +2336,7 @@ public class EquivalentConcurrentHashMapV8<K,V> extends AbstractMap<K,V>
          nextTable = nextTab;
          transferOrigin = n;
          transferIndex = n;
-         ForwardingNode<K,V> rev = new ForwardingNode<K,V>(tab, nodeEq);
+         ForwardingNode<K,V> rev = new ForwardingNode<K,V>(tab);
          for (int k = n; k > 0;) {    // progressively reveal ready slots
             int nextk = (k > stride) ? k - stride : 0;
             for (int m = nextk; m < k; ++m)
@@ -2376,7 +2347,7 @@ public class EquivalentConcurrentHashMapV8<K,V> extends AbstractMap<K,V>
          }
       }
       int nextn = nextTab.length;
-      ForwardingNode<K,V> fwd = new ForwardingNode<K,V>(nextTab, nodeEq); // EQUIVALENCE_MOD
+      ForwardingNode<K,V> fwd = new ForwardingNode<K,V>(nextTab);
       boolean advance = true;
       boolean finishing = false; // to ensure sweep before committing nextTab
       for (int i = 0, bound = 0;;) {
@@ -2448,9 +2419,9 @@ public class EquivalentConcurrentHashMapV8<K,V> extends AbstractMap<K,V>
                      for (Node<K,V> p = f; p != lastRun; p = p.next) {
                         int ph = p.hash; K pk = p.key; V pv = p.val;
                         if ((ph & n) == 0)
-                           ln = new Node<K,V>(ph, nodeEq, pk, pv, ln); // EQUIVALENCE_MOD
+                           ln = new Node<K,V>(ph, pk, pv, ln);
                         else
-                           hn = new Node<K,V>(ph, nodeEq, pk, pv, hn); // EQUIVALENCE_MOD
+                           hn = new Node<K,V>(ph, pk, pv, hn);
                      }
                      setTabAt(nextTab, i, ln);
                      setTabAt(nextTab, i + n, hn);
@@ -2465,7 +2436,7 @@ public class EquivalentConcurrentHashMapV8<K,V> extends AbstractMap<K,V>
                      for (Node<K,V> e = t.first; e != null; e = e.next) {
                         int h = e.hash;
                         TreeNode<K,V> p = new TreeNode<K,V>
-                              (h, nodeEq, e.key, e.val, null, null); // EQUIVALENCE_MOD
+                              (h, e.key, e.val, null, null);
                         if ((h & n) == 0) {
                            if ((p.prev = loTail) == null)
                               lo = p;
@@ -2483,10 +2454,10 @@ public class EquivalentConcurrentHashMapV8<K,V> extends AbstractMap<K,V>
                            ++hc;
                         }
                      }
-                     ln = (lc <= UNTREEIFY_THRESHOLD) ? untreeify(lo, nodeEq) : // EQUIVALENCE_MOD
-                           (hc != 0) ? new TreeBin<K,V>(lo, nodeEq) : t; // EQUIVALENCE_MOD
-                     hn = (hc <= UNTREEIFY_THRESHOLD) ? untreeify(hi, nodeEq) : // EQUIVALENCE_MOD
-                           (lc != 0) ? new TreeBin<K,V>(hi, nodeEq) : t; // EQUIVALENCE_MOD
+                     ln = (lc <= UNTREEIFY_THRESHOLD) ? untreeify(lo) :
+                           (hc != 0) ? new TreeBin<K,V>(lo) : t;
+                     hn = (hc <= UNTREEIFY_THRESHOLD) ? untreeify(hi) :
+                           (lc != 0) ? new TreeBin<K,V>(hi) : t;
                      setTabAt(nextTab, i, ln);
                      setTabAt(nextTab, i + n, hn);
                      setTabAt(tab, i, fwd);
@@ -2518,7 +2489,7 @@ public class EquivalentConcurrentHashMapV8<K,V> extends AbstractMap<K,V>
                   TreeNode<K,V> hd = null, tl = null;
                   for (Node<K,V> e = b; e != null; e = e.next) {
                      TreeNode<K,V> p =
-                           new TreeNode<K,V>(e.hash, nodeEq, e.key, e.val, // EQUIVALENCE_MOD
+                           new TreeNode<K,V>(e.hash, e.key, e.val,
                                  null, null);
                      if ((p.prev = tl) == null)
                         hd = p;
@@ -2526,7 +2497,7 @@ public class EquivalentConcurrentHashMapV8<K,V> extends AbstractMap<K,V>
                         tl.next = p;
                      tl = p;
                   }
-                  setTabAt(tab, index, new TreeBin<K,V>(hd, nodeEq)); // EQUIVALENCE_MOD
+                  setTabAt(tab, index, new TreeBin<K,V>(hd));
                }
             }
          }
@@ -2536,10 +2507,10 @@ public class EquivalentConcurrentHashMapV8<K,V> extends AbstractMap<K,V>
    /**
     * Returns a list on non-TreeNodes replacing those in given list.
     */
-   static <K,V> Node<K,V> untreeify(Node<K,V> b, NodeEquivalence<K,V> nodeEq) { // EQUIVALENCE_MOD
+   static <K,V> Node<K,V> untreeify(Node<K,V> b) {
       Node<K,V> hd = null, tl = null;
       for (Node<K,V> q = b; q != null; q = q.next) {
-         Node<K,V> p = new Node<K,V>(q.hash, nodeEq, q.key, q.val, null); // EQUIVALENCE_MOD
+         Node<K,V> p = new Node<K,V>(q.hash, q.key, q.val, null);
          if (tl == null)
             hd = p;
          else
@@ -2561,9 +2532,9 @@ public class EquivalentConcurrentHashMapV8<K,V> extends AbstractMap<K,V>
       TreeNode<K,V> prev;    // needed to unlink next upon deletion
       boolean red;
 
-      TreeNode(int hash, NodeEquivalence<K,V> nodeEq, K key, V val, Node<K,V> next, // EQUIVALENCE_MOD
+      TreeNode(int hash, K key, V val, Node<K,V> next,
             TreeNode<K,V> parent) {
-         super(hash, nodeEq, key, val, next); // EQUIVALENCE_MOD
+         super(hash, key, val, next);
          this.parent = parent;
       }
 
@@ -2585,15 +2556,15 @@ public class EquivalentConcurrentHashMapV8<K,V> extends AbstractMap<K,V>
                   p = pl;
                else if (ph < h)
                   p = pr;
-               else if ((pk = p.key) == k || (pk != null && nodeEq.keyEq.equals(pk, k))) // EQUIVALENCE_MOD
+               else if ((pk = p.key) == k || (pk != null && k.equals(pk)))
                   return p;
                else if (pl == null)
                   p = pr;
                else if (pr == null)
                   p = pl;
                else if ((kc != null ||
-                               (kc = comparableClassFor(k, nodeEq.keyEq)) != null) && // EQUIVALENCE_MOD
-                     (dir = compareComparables(kc, k, pk, (Equivalence<Object>) nodeEq.keyEq)) != 0) // EQUIVALENCE_MOD
+                               (kc = comparableClassFor(k)) != null) &&
+                     (dir = compareComparables(kc, k, pk)) != 0)
                   p = (dir < 0) ? pl : pr;
                else if ((q = pr.findTreeNode(h, k, kc)) != null)
                   return q;
@@ -2644,8 +2615,8 @@ public class EquivalentConcurrentHashMapV8<K,V> extends AbstractMap<K,V>
       /**
        * Creates bin with initial set of nodes headed by b.
        */
-      TreeBin(TreeNode<K,V> b, NodeEquivalence<K,V> nodeEq) { // EQUIVALENCE_MOD
-         super(TREEBIN, nodeEq, null, null, null);
+      TreeBin(TreeNode<K,V> b) {
+         super(TREEBIN, null, null, null);
          this.first = b;
          TreeNode<K,V> r = null;
          for (TreeNode<K,V> x = b, next; x != null; x = next) {
@@ -2668,10 +2639,9 @@ public class EquivalentConcurrentHashMapV8<K,V> extends AbstractMap<K,V>
                   else if (ph < h)
                      dir = 1;
                   else if ((kc == null &&
-                        (kc = comparableClassFor(k, nodeEq.keyEq)) == null) || // EQUIVALENCE_MOD
-                        (dir = compareComparables(kc, k, pk, (Equivalence<Object>) nodeEq.keyEq)) == 0) // EQUIVALENCE_MOD
+                                  (kc = comparableClassFor(k)) == null) ||
+                        (dir = compareComparables(kc, k, pk)) == 0)
                      dir = tieBreakOrder(k, pk);
-
                   TreeNode<K,V> xp = p;
                   if ((p = (dir <= 0) ? p.left : p.right) == null) {
                      x.parent = xp;
@@ -2739,7 +2709,7 @@ public class EquivalentConcurrentHashMapV8<K,V> extends AbstractMap<K,V>
                int s; K ek;
                if (((s = lockState) & (WAITER|WRITER)) != 0) {
                   if (e.hash == h &&
-                        ((ek = e.key) == k || (ek != null && nodeEq.keyEq.equals(ek, k)))) // EQUIVALENCE_MOD
+                        ((ek = e.key) == k || (ek != null && k.equals(ek))))
                      return e;
                }
                else if (U.compareAndSwapInt(this, LOCKSTATE, s,
@@ -2774,33 +2744,34 @@ public class EquivalentConcurrentHashMapV8<K,V> extends AbstractMap<K,V>
          for (TreeNode<K,V> p = root;;) {
             int dir, ph; K pk;
             if (p == null) {
-               first = root = new TreeNode<K,V>(h, nodeEq, k, v, null, null); // EQUIVALENCE_MOD
+               first = root = new TreeNode<K,V>(h, k, v, null, null);
                break;
             }
             else if ((ph = p.hash) > h)
                dir = -1;
             else if (ph < h)
                dir = 1;
-            else if ((pk = p.key) == k || (pk != null && nodeEq.keyEq.equals(pk, k))) // EQUIVALENCE_MOD
+            else if ((pk = p.key) == k || (pk != null && k.equals(pk)))
                return p;
             else if ((kc == null &&
-                     (kc = comparableClassFor(k, nodeEq.keyEq)) == null) || // EQUIVALENCE_MOD
-                     (dir = compareComparables(kc, k, pk, (Equivalence<Object>) nodeEq.keyEq)) == 0) { // EQUIVALENCE_MOD
+                            (kc = comparableClassFor(k)) == null) ||
+                  (dir = compareComparables(kc, k, pk)) == 0) {
                if (!searched) {
                   TreeNode<K,V> q, ch;
                   searched = true;
                   if (((ch = p.left) != null &&
-                     (q = ch.findTreeNode(h, k, kc)) != null) ||
-                     ((ch = p.right) != null &&
-                     (q = ch.findTreeNode(h, k, kc)) != null))
-                  return q;
+                             (q = ch.findTreeNode(h, k, kc)) != null) ||
+                        ((ch = p.right) != null &&
+                               (q = ch.findTreeNode(h, k, kc)) != null))
+                     return q;
                }
                dir = tieBreakOrder(k, pk);
             }
+
             TreeNode<K,V> xp = p;
             if ((p = (dir <= 0) ? p.left : p.right) == null) {
                TreeNode<K,V> x, f = first;
-               first = x = new TreeNode<K,V>(h, nodeEq, k, v, f, xp); // EQUIVALENCE_MOD
+               first = x = new TreeNode<K,V>(h, k, v, f, xp);
                if (f != null)
                   f.prev = x;
                if (dir <= 0)
@@ -3230,10 +3201,10 @@ public class EquivalentConcurrentHashMapV8<K,V> extends AbstractMap<K,V>
     * Traverser to support iterator.remove.
     */
    static class BaseIterator<K,V> extends Traverser<K,V> {
-      final EquivalentConcurrentHashMapV8<K,V> map;
+      final ConcurrentHashMapV8<K,V> map;
       Node<K,V> lastReturned;
       BaseIterator(Node<K,V>[] tab, int size, int index, int limit,
-            EquivalentConcurrentHashMapV8<K,V> map) {
+            ConcurrentHashMapV8<K,V> map) {
          super(tab, size, index, limit);
          this.map = map;
          advance();
@@ -3254,7 +3225,7 @@ public class EquivalentConcurrentHashMapV8<K,V> extends AbstractMap<K,V>
    static final class KeyIterator<K,V> extends BaseIterator<K,V>
          implements Iterator<K>, Enumeration<K> {
       KeyIterator(Node<K,V>[] tab, int index, int size, int limit,
-            EquivalentConcurrentHashMapV8<K,V> map) {
+            ConcurrentHashMapV8<K,V> map) {
          super(tab, index, size, limit, map);
       }
 
@@ -3274,7 +3245,7 @@ public class EquivalentConcurrentHashMapV8<K,V> extends AbstractMap<K,V>
    static final class ValueIterator<K,V> extends BaseIterator<K,V>
          implements Iterator<V>, Enumeration<V> {
       ValueIterator(Node<K,V>[] tab, int index, int size, int limit,
-            EquivalentConcurrentHashMapV8<K,V> map) {
+            ConcurrentHashMapV8<K,V> map) {
          super(tab, index, size, limit, map);
       }
 
@@ -3294,7 +3265,7 @@ public class EquivalentConcurrentHashMapV8<K,V> extends AbstractMap<K,V>
    static final class EntryIterator<K,V> extends BaseIterator<K,V>
          implements Iterator<Map.Entry<K,V>> {
       EntryIterator(Node<K,V>[] tab, int index, int size, int limit,
-            EquivalentConcurrentHashMapV8<K,V> map) {
+            ConcurrentHashMapV8<K,V> map) {
          super(tab, index, size, limit, map);
       }
 
@@ -3316,15 +3287,15 @@ public class EquivalentConcurrentHashMapV8<K,V> extends AbstractMap<K,V>
    static final class MapEntry<K,V> implements Map.Entry<K,V> {
       final K key; // non-null
       V val;       // non-null
-      final EquivalentConcurrentHashMapV8<K,V> map;
-      MapEntry(K key, V val, EquivalentConcurrentHashMapV8<K,V> map) {
+      final ConcurrentHashMapV8<K,V> map;
+      MapEntry(K key, V val, ConcurrentHashMapV8<K,V> map) {
          this.key = key;
          this.val = val;
          this.map = map;
       }
       public K getKey()        { return key; }
       public V getValue()      { return val; }
-      public int hashCode()    { return map.keyEq.hashCode(key) ^ map.valueEq.hashCode(val); } // EQUIVALENCE_MOD
+      public int hashCode()    { return key.hashCode() ^ val.hashCode(); }
       public String toString() { return key + "=" + val; }
 
       public boolean equals(Object o) {
@@ -3332,8 +3303,8 @@ public class EquivalentConcurrentHashMapV8<K,V> extends AbstractMap<K,V>
          return ((o instanceof Map.Entry) &&
                        (k = (e = (Map.Entry<?,?>)o).getKey()) != null &&
                        (v = e.getValue()) != null &&
-                       (k == key || map.keyEq.equals(key, k)) && // EQUIVALENCE_MOD
-                       (v == val || map.valueEq.equals(val, v))); // EQUIVALENCE_MOD
+                       (k == key || k.equals(key)) &&
+                       (v == val || v.equals(val)));
       }
 
       /**
@@ -3425,10 +3396,10 @@ public class EquivalentConcurrentHashMapV8<K,V> extends AbstractMap<K,V>
 
    static final class EntrySpliterator<K,V> extends Traverser<K,V>
          implements ConcurrentHashMapSpliterator<Map.Entry<K,V>> {
-      final EquivalentConcurrentHashMapV8<K,V> map; // To export MapEntry
+      final ConcurrentHashMapV8<K,V> map; // To export MapEntry
       long est;               // size estimate
       EntrySpliterator(Node<K,V>[] tab, int size, int index, int limit,
-            long est, EquivalentConcurrentHashMapV8<K,V> map) {
+            long est, ConcurrentHashMapV8<K,V> map) {
          super(tab, size, index, limit);
          this.map = map;
          this.est = est;
@@ -4198,15 +4169,15 @@ public class EquivalentConcurrentHashMapV8<K,V> extends AbstractMap<K,V>
    abstract static class CollectionView<K,V,E>
          implements Collection<E>, java.io.Serializable {
       private static final long serialVersionUID = 7249069246763182397L;
-      final EquivalentConcurrentHashMapV8<K,V> map;
-      CollectionView(EquivalentConcurrentHashMapV8<K,V> map)  { this.map = map; }
+      final ConcurrentHashMapV8<K,V> map;
+      CollectionView(ConcurrentHashMapV8<K,V> map)  { this.map = map; }
 
       /**
        * Returns the map backing this view.
        *
        * @return the map backing this view
        */
-      public EquivalentConcurrentHashMapV8<K,V> getMap() { return map; }
+      public ConcurrentHashMapV8<K,V> getMap() { return map; }
 
       /**
        * Removes all of the elements from this view, by removing all
@@ -4346,13 +4317,13 @@ public class EquivalentConcurrentHashMapV8<K,V> extends AbstractMap<K,V>
    }
 
    /**
-    * A view of a EquivalentConcurrentHashMapV8 as a {@link Set} of keys, in
+    * A view of a ConcurrentHashMapV8 as a {@link Set} of keys, in
     * which additions may optionally be enabled by mapping to a
     * common value.  This class cannot be directly instantiated.
     * See {@link #keySet() keySet()},
     * {@link #keySet(Object) keySet(V)},
-    * {@link #newKeySet(Equivalence) newKeySet()},
-    * {@link #newKeySet(int, Equivalence) newKeySet(int)}.
+    * {@link #newKeySet() newKeySet()},
+    * {@link #newKeySet(int) newKeySet(int)}.
     *
     * @since 1.8
     */
@@ -4360,7 +4331,7 @@ public class EquivalentConcurrentHashMapV8<K,V> extends AbstractMap<K,V>
          implements Set<K>, java.io.Serializable {
       private static final long serialVersionUID = 7249069246763182397L;
       private final V value;
-      KeySetView(EquivalentConcurrentHashMapV8<K,V> map, V value) {  // non-public
+      KeySetView(ConcurrentHashMapV8<K,V> map, V value) {  // non-public
          super(map);
          this.value = value;
       }
@@ -4396,7 +4367,7 @@ public class EquivalentConcurrentHashMapV8<K,V> extends AbstractMap<K,V>
        */
       public Iterator<K> iterator() {
          Node<K,V>[] t;
-         EquivalentConcurrentHashMapV8<K,V> m = map;
+         ConcurrentHashMapV8<K,V> m = map;
          int f = (t = m.table) == null ? 0 : t.length;
          return new KeyIterator<K,V>(t, f, 0, f, m);
       }
@@ -4444,7 +4415,7 @@ public class EquivalentConcurrentHashMapV8<K,V> extends AbstractMap<K,V>
       public int hashCode() {
          int h = 0;
          for (K e : this)
-            h += map.keyEq.hashCode(e);
+            h += e.hashCode();
          return h;
       }
 
@@ -4457,7 +4428,7 @@ public class EquivalentConcurrentHashMapV8<K,V> extends AbstractMap<K,V>
 
       public ConcurrentHashMapSpliterator<K> spliterator() {
          Node<K,V>[] t;
-         EquivalentConcurrentHashMapV8<K,V> m = map;
+         ConcurrentHashMapV8<K,V> m = map;
          long n = m.sumCount();
          int f = (t = m.table) == null ? 0 : t.length;
          return new KeySpliterator<K,V>(t, f, 0, f, n < 0L ? 0L : n);
@@ -4475,14 +4446,14 @@ public class EquivalentConcurrentHashMapV8<K,V> extends AbstractMap<K,V>
    }
 
    /**
-    * A view of a EquivalentConcurrentHashMapV8 as a {@link Collection} of
+    * A view of a ConcurrentHashMapV8 as a {@link Collection} of
     * values, in which additions are disabled. This class cannot be
     * directly instantiated. See {@link #values()}.
     */
    static final class ValuesView<K,V> extends CollectionView<K,V,V>
          implements Collection<V>, java.io.Serializable {
       private static final long serialVersionUID = 2249069246763182397L;
-      ValuesView(EquivalentConcurrentHashMapV8<K,V> map) { super(map); }
+      ValuesView(ConcurrentHashMapV8<K,V> map) { super(map); }
       public final boolean contains(Object o) {
          return map.containsValue(o);
       }
@@ -4490,7 +4461,7 @@ public class EquivalentConcurrentHashMapV8<K,V> extends AbstractMap<K,V>
       public final boolean remove(Object o) {
          if (o != null) {
             for (Iterator<V> it = iterator(); it.hasNext();) {
-               if (map.valueEq.equals(it.next(), o)) { // EQUIVALENCE_MOD
+               if (o.equals(it.next())) {
                   it.remove();
                   return true;
                }
@@ -4500,7 +4471,7 @@ public class EquivalentConcurrentHashMapV8<K,V> extends AbstractMap<K,V>
       }
 
       public final Iterator<V> iterator() {
-         EquivalentConcurrentHashMapV8<K,V> m = map;
+         ConcurrentHashMapV8<K,V> m = map;
          Node<K,V>[] t;
          int f = (t = m.table) == null ? 0 : t.length;
          return new ValueIterator<K,V>(t, f, 0, f, m);
@@ -4515,7 +4486,7 @@ public class EquivalentConcurrentHashMapV8<K,V> extends AbstractMap<K,V>
 
       public ConcurrentHashMapSpliterator<V> spliterator() {
          Node<K,V>[] t;
-         EquivalentConcurrentHashMapV8<K,V> m = map;
+         ConcurrentHashMapV8<K,V> m = map;
          long n = m.sumCount();
          int f = (t = m.table) == null ? 0 : t.length;
          return new ValueSpliterator<K,V>(t, f, 0, f, n < 0L ? 0L : n);
@@ -4533,14 +4504,14 @@ public class EquivalentConcurrentHashMapV8<K,V> extends AbstractMap<K,V>
    }
 
    /**
-    * A view of a EquivalentConcurrentHashMapV8 as a {@link Set} of (key, value)
+    * A view of a ConcurrentHashMapV8 as a {@link Set} of (key, value)
     * entries.  This class cannot be directly instantiated. See
     * {@link #entrySet()}.
     */
    static final class EntrySetView<K,V> extends CollectionView<K,V,Map.Entry<K,V>>
          implements Set<Map.Entry<K,V>>, java.io.Serializable {
       private static final long serialVersionUID = 2249069246763182397L;
-      EntrySetView(EquivalentConcurrentHashMapV8<K,V> map) { super(map); }
+      EntrySetView(ConcurrentHashMapV8<K,V> map) { super(map); }
 
       public boolean contains(Object o) {
          Object k, v, r; Map.Entry<?,?> e;
@@ -4548,7 +4519,7 @@ public class EquivalentConcurrentHashMapV8<K,V> extends AbstractMap<K,V>
                        (k = (e = (Map.Entry<?,?>)o).getKey()) != null &&
                        (r = map.get(k)) != null &&
                        (v = e.getValue()) != null &&
-                       (v == r || map.valueEq.equals((V) r, v))); // EQUIVALENCE_MOD
+                       (v == r || v.equals(r)));
       }
 
       public boolean remove(Object o) {
@@ -4563,7 +4534,7 @@ public class EquivalentConcurrentHashMapV8<K,V> extends AbstractMap<K,V>
        * @return an iterator over the entries of the backing map
        */
       public Iterator<Map.Entry<K,V>> iterator() {
-         EquivalentConcurrentHashMapV8<K,V> m = map;
+         ConcurrentHashMapV8<K,V> m = map;
          Node<K,V>[] t;
          int f = (t = m.table) == null ? 0 : t.length;
          return new EntryIterator<K,V>(t, f, 0, f, m);
@@ -4603,7 +4574,7 @@ public class EquivalentConcurrentHashMapV8<K,V> extends AbstractMap<K,V>
 
       public ConcurrentHashMapSpliterator<Map.Entry<K,V>> spliterator() {
          Node<K,V>[] t;
-         EquivalentConcurrentHashMapV8<K,V> m = map;
+         ConcurrentHashMapV8<K,V> m = map;
          long n = m.sumCount();
          int f = (t = m.table) == null ? 0 : t.length;
          return new EntrySpliterator<K,V>(t, f, 0, f, n < 0L ? 0L : n, m);
@@ -6199,7 +6170,7 @@ public class EquivalentConcurrentHashMapV8<K,V> extends AbstractMap<K,V>
    static {
       try {
          U = getUnsafe();
-         Class<?> k = EquivalentConcurrentHashMapV8.class;
+         Class<?> k = ConcurrentHashMapV8.class;
          SIZECTL = U.objectFieldOffset
                (k.getDeclaredField("sizeCtl"));
          TRANSFERINDEX = U.objectFieldOffset
