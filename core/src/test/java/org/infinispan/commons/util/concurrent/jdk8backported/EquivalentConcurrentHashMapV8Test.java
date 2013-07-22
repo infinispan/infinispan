@@ -3,7 +3,6 @@ package org.infinispan.commons.util.concurrent.jdk8backported;
 import org.infinispan.commons.equivalence.AnyEquivalence;
 import org.infinispan.commons.equivalence.ByteArrayEquivalence;
 import org.infinispan.commons.equivalence.Equivalence;
-import org.infinispan.commons.util.concurrent.jdk8backported.EquivalentConcurrentHashMapV8;
 import org.infinispan.util.concurrent.BoundedConcurrentHashMapTest;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
@@ -43,26 +42,27 @@ public class EquivalentConcurrentHashMapV8Test extends BoundedConcurrentHashMapT
       byteArrayMerge(createComparingConcurrentMap());
    }
 
-
    public void testByteArrayOperationsWithTreeHashBins() {
       // This test forces all entries to be stored under the same hash bin,
       // kicking off different logic for comparing keys.
       EquivalentConcurrentHashMapV8<byte[], byte[]> map =
             createComparingTreeHashBinsForceChm();
-      for (byte b = 0; b < 10; b++)
+      // More data needs to be put so that tree bin construction kicks in
+      for (byte b = 0; b < 20; b++)
          map.put(new byte[]{b}, new byte[]{0});
 
       // The bin should become a tree bin
-      EquivalentConcurrentHashMapV8.Node<byte[]> tab =
+      EquivalentConcurrentHashMapV8.Node<byte[], byte[]> tab =
             EquivalentConcurrentHashMapV8.tabAt(map.table, 1);
       assertNotNull(tab);
-      assertTrue(tab.key instanceof EquivalentConcurrentHashMapV8.TreeBin);
+      assertTrue(tab instanceof EquivalentConcurrentHashMapV8.TreeBin);
 
-      EquivalentConcurrentHashMapV8.TreeBin treeBin = (EquivalentConcurrentHashMapV8.TreeBin) tab.key;
+      EquivalentConcurrentHashMapV8.TreeBin<byte[], byte[]> treeBin =
+            (EquivalentConcurrentHashMapV8.TreeBin<byte[], byte[]>) tab;
 
       for (byte b = 0; b < 10; b++) {
          byte[] key = {b};
-         byte[] value = (byte[]) treeBin.getValue(1, key, map.keyEq);
+         byte[] value = treeBin.find(1, key).getValue();
          byte[] expected = {0};
          assertTrue(String.format(
                "Expected key=%s to return value=%s, instead returned %s", str(key), str(expected), str(value)),
@@ -71,7 +71,7 @@ public class EquivalentConcurrentHashMapV8Test extends BoundedConcurrentHashMapT
    }
 
    public void testTreeHashBinNotLost() {
-      EquivalentConcurrentHashMapV8<Object, KeyHolder<?>> map =
+      ConcurrentMap<Object, KeyHolder<?>> map =
             new EquivalentConcurrentHashMapV8<Object, KeyHolder<?>>(
                   new EvilKeyEquivalence(), AnyEquivalence.<KeyHolder<?>>getInstance());
 
