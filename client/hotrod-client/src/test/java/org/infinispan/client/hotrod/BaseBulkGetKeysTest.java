@@ -2,6 +2,7 @@ package org.infinispan.client.hotrod;
 
 import static org.infinispan.client.hotrod.test.HotRodClientTestingUtil.killRemoteCacheManager;
 import static org.infinispan.client.hotrod.test.HotRodClientTestingUtil.killServers;
+import static org.infinispan.server.hotrod.test.HotRodTestingUtil.hotRodCacheConfiguration;
 
 import java.util.HashMap;
 import java.util.HashSet;
@@ -38,7 +39,7 @@ public abstract class BaseBulkGetKeysTest extends MultipleCacheManagersTest {
 		final int numServers = numberOfHotRodServers();
 		hotrodServers = new HotRodServer[numServers];
 		
-		createCluster(clusterConfig(), numberOfHotRodServers());
+		createCluster(hotRodCacheConfiguration(clusterConfig()), numberOfHotRodServers());
 
 		for (int i = 0; i < numServers; i++) {
 			EmbeddedCacheManager cm = cacheManagers.get(i);

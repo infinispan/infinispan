@@ -44,8 +44,6 @@ public class MultiHotRodServerQueryTest extends MultiHotRodServersTest {
             .addProperty("default.directory_provider", "ram")   //todo test with  "infinispan" provider too
             .addProperty("lucene_version", "LUCENE_CURRENT");
 
-      builder.dataContainer().valueEquivalence(AnyEquivalence.getInstance());  // TODO [anistor] hacks!
-
       createHotRodServers(2, builder);
    }
 

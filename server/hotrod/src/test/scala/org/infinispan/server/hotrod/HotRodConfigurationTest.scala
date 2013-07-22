@@ -6,10 +6,12 @@ import org.infinispan.test.fwk.TestCacheManagerFactory
 import org.testng.Assert._
 import org.testng.annotations.Test
 import org.infinispan.server.core.test.Stoppable
-import org.infinispan.configuration.cache.Configuration
+import org.infinispan.configuration.cache.{ConfigurationBuilder, Configuration}
 import org.infinispan.server.hotrod.configuration.HotRodServerConfigurationBuilder
 import org.infinispan.configuration.cache.ClusterStoreConfiguration
 import org.infinispan.server.hotrod.configuration.HotRodServerConfiguration
+import org.infinispan.util.concurrent.IsolationLevel
+import org.infinispan.commons.CacheConfigurationException
 
 /**
  * Test to verify that configuration changes are reflected in backend caches.
@@ -44,6 +46,16 @@ class HotRodConfigurationTest {
       }
    }
 
+   @Test(expectedExceptions = Array(classOf[CacheConfigurationException]))
+   def testRepeatableReadIsolationLevelValidation() {
+      validateIsolationLevel(IsolationLevel.REPEATABLE_READ)
+   }
+
+   @Test(expectedExceptions = Array(classOf[CacheConfigurationException]))
+   def testSerializableIsolationLevelValidation() {
+      validateIsolationLevel(IsolationLevel.SERIALIZABLE)
+   }
+
    private def withClusteredServer(builder: HotRodServerConfigurationBuilder) (assert: (Configuration, Long) => Unit) {
       Stoppable.useCacheManager(TestCacheManagerFactory.createClusteredCacheManager(hotRodCacheConfiguration())) { cm =>
          Stoppable.useServer(startHotRodServer(cm, UniquePortThreadLocal.get.intValue, builder)) { server =>
@@ -52,4 +64,15 @@ class HotRodConfigurationTest {
          }
       }
    }
+
+   private def validateIsolationLevel(isolationLevel: IsolationLevel) {
+      val hotRodBuilder = new HotRodServerConfigurationBuilder
+      val builder = new ConfigurationBuilder()
+      builder.locking().isolationLevel(isolationLevel)
+      Stoppable.useCacheManager(TestCacheManagerFactory.createClusteredCacheManager(hotRodCacheConfiguration(builder))) {
+         cm =>
+            startHotRodServer(cm, UniquePortThreadLocal.get.intValue, hotRodBuilder)
+      }
+   }
+
 }

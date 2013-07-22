@@ -44,7 +44,7 @@ public abstract class BaseBulkGetTest extends MultipleCacheManagersTest {
       final int numServers = numberOfHotRodServers();
       hotrodServers = new HotRodServer[numServers];
 
-      createCluster(clusterConfig(), numberOfHotRodServers());
+      createCluster(hotRodCacheConfiguration(clusterConfig()), numberOfHotRodServers());
 
       for (int i = 0; i < numServers; i++) {
          EmbeddedCacheManager cm = cacheManagers.get(i);

@@ -5,7 +5,6 @@ import org.infinispan.client.hotrod.RemoteCacheManager;
 import org.infinispan.client.hotrod.Search;
 import org.infinispan.client.hotrod.TestHelper;
 import org.infinispan.client.hotrod.marshall.ProtoStreamMarshaller;
-import org.infinispan.commons.equivalence.AnyEquivalence;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.protostream.sampledomain.Address;
@@ -58,8 +57,6 @@ public class HotRodQueryTest extends SingleCacheManagerTest {
             .indexLocalOnly(false)
             .addProperty("default.directory_provider", getLuceneDirectoryProvider())
             .addProperty("lucene_version", "LUCENE_CURRENT");
-
-      builder.dataContainer().valueEquivalence(AnyEquivalence.getInstance());  // TODO [anistor] hacks!
 
       cacheManager = TestCacheManagerFactory.createCacheManager();
       cacheManager.defineConfiguration(TEST_CACHE_NAME, builder.build());
