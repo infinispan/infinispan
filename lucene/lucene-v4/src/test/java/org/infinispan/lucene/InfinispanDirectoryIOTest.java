@@ -121,7 +121,7 @@ public class InfinispanDirectoryIOTest {
       DirectoryIntegrityCheck.verifyDirectoryStructure(cache, INDEXNAME);
    }
 
-   @Test
+   @Test (enabled = false, description = "https://issues.jboss.org/browse/ISPN-2895")
    public void testReadWholeFile() throws IOException {
       final int BUFFER_SIZE = 64;
 
