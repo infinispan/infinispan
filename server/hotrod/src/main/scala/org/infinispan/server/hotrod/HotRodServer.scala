@@ -6,14 +6,16 @@ import org.infinispan.manager.EmbeddedCacheManager
 import org.infinispan.server.core.{QueryFacade, AbstractProtocolServer}
 import org.infinispan.eviction.EvictionStrategy
 import org.infinispan.commons.util.CollectionFactory
-import org.infinispan.commons.equivalence.AnyEquivalence
+import org.infinispan.commons.equivalence.{Equivalence, AnyEquivalence}
 import org.infinispan.Cache
 import org.infinispan.remoting.transport.Address
-import org.infinispan.configuration.cache.{CacheMode, ConfigurationBuilder}
+import org.infinispan.configuration.cache.{Configuration, CacheMode, ConfigurationBuilder}
 import org.infinispan.context.Flag
 import org.infinispan.upgrade.RollingUpgradeManager
 import org.infinispan.server.hotrod.configuration.HotRodServerConfiguration
 import java.util.ServiceLoader
+import org.infinispan.commons.CacheConfigurationException
+import org.infinispan.util.concurrent.IsolationLevel
 
 /**
  * Hot Rod server, in charge of defining its encoder/decoder and, if clustered, update the topology information
@@ -77,16 +79,34 @@ class HotRodServer extends AbstractProtocolServer("HotRod") with Log {
    }
 
    override def startDefaultCache = {
-      cacheManager.getCache()
+      val cache = cacheManager.getCache[AnyRef, AnyRef]()
+      validateCacheConfiguration(cache.getCacheConfiguration)
+      cache
    }
 
    private def preStartCaches() {
       // Start defined caches to avoid issues with lazily started caches
       for (cacheName <- asScalaIterator(cacheManager.getCacheNames.iterator)) {
          if (!cacheName.startsWith(HotRodServerConfiguration.TOPOLOGY_CACHE_NAME_PREFIX)) {
-            cacheManager.getCache(cacheName)
+            val cache = cacheManager.getCache(cacheName)
+            validateCacheConfiguration(cache.getCacheConfiguration)
          }
       }
+   }
+
+   private def validateCacheConfiguration(cacheCfg: Configuration) {
+      val keyEq = cacheCfg.dataContainer().keyEquivalence[Array[Byte]]()
+      if (!keyEq.equals(Array[Byte](1, 2, 3), Array[Byte](1, 2, 3)))
+         throw log.invalidKeyEquivalence(keyEq)
+
+      val valueEq = cacheCfg.dataContainer().valueEquivalence[Array[Byte]]()
+      if (!valueEq.equals(Array[Byte](1, 2, 3), Array[Byte](1, 2, 3)))
+         throw log.invalidValueEquivalence(valueEq)
+
+      val isolationLevel = cacheCfg.locking().isolationLevel()
+      if (isolationLevel == IsolationLevel.REPEATABLE_READ
+              || isolationLevel == IsolationLevel.SERIALIZABLE)
+         throw log.invalidIsolationLevel(isolationLevel)
    }
 
    private def addSelfToTopologyView(cacheManager: EmbeddedCacheManager) {

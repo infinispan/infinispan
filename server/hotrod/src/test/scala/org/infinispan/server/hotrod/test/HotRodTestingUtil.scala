@@ -292,7 +292,9 @@ object HotRodTestingUtil extends Log {
       hotRodCacheConfiguration(new ConfigurationBuilder())
 
    def hotRodCacheConfiguration(base: ConfigurationBuilder): ConfigurationBuilder = {
-      base.dataContainer().keyEquivalence(ByteArrayEquivalence.INSTANCE)
+      base.dataContainer()
+              .keyEquivalence(ByteArrayEquivalence.INSTANCE)
+              .valueEquivalence(ByteArrayEquivalence.INSTANCE)
       base
    }
 

@@ -72,8 +72,6 @@ public class RemoteQueryDslConditionsTest extends SingleCacheManagerTest {
             .addProperty("default.directory_provider", "ram")
             .addProperty("lucene_version", "LUCENE_CURRENT");
 
-      builder.dataContainer().valueEquivalence(AnyEquivalence.getInstance());  // TODO [anistor] hacks!
-
       cacheManager = TestCacheManagerFactory.createCacheManager(builder);
       cache = cacheManager.getCache();
 
