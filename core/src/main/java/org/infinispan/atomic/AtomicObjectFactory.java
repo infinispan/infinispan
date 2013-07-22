@@ -48,7 +48,7 @@ public class AtomicObjectFactory {
 
     /**
      *
-     * Returns an atomic object of class <i>clazz</i>.
+     * Returns a fresh atomic object of class <i>clazz</i>.
      * The class of this object must be initially serializable, as well as all the parameters of its methods, and it must be deterministic.
      *
      * @param clazz a class object
@@ -62,13 +62,12 @@ public class AtomicObjectFactory {
 	}
     /**
      *
-     * Returns an object of class <i>clazz</i>.
+     * Returns a fresh object of class <i>clazz</i>.
+     * The class of this object must be initially serializable, as well as all the parameters of its methods, and it must be deterministic.
      *
      * The object is atomic if <i>withReadOptimization</i> equals false; otherwise it is sequentially consistent..
-     * If <i>withReadOptimization</i>  is set, the call is executed locally on a copy of the object, and in case
+     * In more details, if <i>withReadOptimization</i>  is set, the call is executed locally on a copy of the object, and in case
      * the call does not modify the state of the object, the value returned is the result of this tentative execution.
-     *
-     * The class of this object must be initially serializable, as well as all the parameters of its methods, and it must be deterministic.
      *
      * @param clazz a class object
      * @param key the key to use in order to store the object.
@@ -84,13 +83,13 @@ public class AtomicObjectFactory {
     /**
      *
      * Returns an object of class <i>clazz</i>.
+     * The class of this object must be initially serializable, as well as all the parameters of its methods, and it must be deterministic.
      *
      * The object is atomic if <i>withReadOptimization</i> equals false; otherwise it is sequentially consistent..
-     * If <i>withReadOptimization</i>  is set, the call is executed locally on a copy of the object, and in case
+     * In more details, if <i>withReadOptimization</i>  is set, the call is executed locally on a copy of the object, and in case
      * the call does not modify the state of the object, the value returned is the result of this tentative execution.
-     * Method <i>equalsMethod</i> if not null overrides the default <i>clazz.equals()</i>
      *
-     * The class of this object must be initially serializable, as well as all the parameters of its methods, and it must be deterministic.
+     * If the method <i>equalsMethod</i> isnot null, it overrides the default <i>clazz.equals()</i>
      *
      * @param clazz a class object
      * @param key the key to use in order to store the object.
@@ -139,7 +138,7 @@ public class AtomicObjectFactory {
 
         try{
             container.dispose(keepPersistent);
-        }catch (IOException e){
+        }catch (Exception e){
             e.printStackTrace();
             throw new InvalidCacheUsageException(e.getCause());
         }

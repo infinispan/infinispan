@@ -17,8 +17,8 @@ import java.util.concurrent.*;
 @Test(groups = "functional", testName = "distexec.AtomicObjectFactoryTest")
 public class AtomicObjectFactoryTest extends MultipleCacheManagersTest {
 
-    private static int NCALLS= 5000;
-    private static int NCACHES = 2;
+    private static int NCALLS= 100;
+    private static int NCACHES = 4;
     private static List<Cache> caches = new ArrayList<Cache>();
 
     private static Log log = LogFactory.getLog(AtomicObjectFactory.class);
@@ -36,7 +36,7 @@ public class AtomicObjectFactoryTest extends MultipleCacheManagersTest {
 
         // 2 - Persistence
         factory.disposeInstanceOf(HashSet.class, "set", true);
-        set = (Set<String>)factory.getOrCreateInstanceOf(HashSet.class, "set");
+        set = (Set<String>)factory.getOrCreateInstanceOf(HashSet.class, "set",false,null,false);
         assert set.contains("smthing");
 
         // 3 - Optimistic execution
@@ -52,7 +52,7 @@ public class AtomicObjectFactoryTest extends MultipleCacheManagersTest {
         Cache cache = cacheManager.getCache();
         AtomicObjectFactory factory = new AtomicObjectFactory(cache);
 
-        Map map = (Map) factory.getOrCreateInstanceOf(HashMap.class, "set");
+        Map map = (Map) factory.getOrCreateInstanceOf(HashMap.class, "set",true);
 
         for(int i=0; i<NCALLS*10;i++){
             map.containsKey("1");
