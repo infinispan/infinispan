@@ -36,7 +36,6 @@ public class LuceneSettings {
       }
       LogMergePolicy mergePolicy = new LogByteSizeMergePolicy();
       mergePolicy.setMaxMergeDocs(maxMergeDocs);
-      mergePolicy.setUseCompoundFile(false);
       indexWriterConfig.setMergePolicy(mergePolicy);
       return new IndexWriter(directory, indexWriterConfig);
    }
