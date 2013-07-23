@@ -370,27 +370,19 @@ public class TestCacheManagerFactory {
          }
       }
       PerThreadCacheManagers threadCacheManagers = perThreadCacheManagers.get();
-      String methodName = extractMethodName();
+      Throwable allocationThrowable = new Throwable();
+
       // In case JGroups' address cache expires, this will help us map the uuids in the log
       if (cm.getAddress() != null) {
          String uuid = ((org.jgroups.util.UUID) ((JGroupsAddress) cm.getAddress()).getJGroupsAddress()).toStringLong();
          log.debugf("Started cache manager %s, UUID is %s", cm.getAddress(), uuid);
       }
-      log.trace("Adding DCM (" + cm.getCacheManagerConfiguration().transport().nodeName() + ") for method: '" + methodName + "'");
-      threadCacheManagers.add(methodName, cm);
-      return cm;
-   }
-
-   private static String extractMethodName() {
-      StackTraceElement[] stack = Thread.currentThread().getStackTrace();
-      if (stack.length == 0) return null;
-      for (int i = stack.length - 1; i > 0; i--) {
-         StackTraceElement e = stack[i];
-         String className = e.getClassName();
-         if ((className.indexOf("org.infinispan") != -1) && className.indexOf("org.infinispan.test") < 0)
-            return e.toString();
+      if (log.isTraceEnabled()) {
+         log.tracef(allocationThrowable, "Adding DCM (%s), allocation stacktrace follows", cm.getCacheManagerConfiguration().transport().nodeName());
       }
-      return null;
+
+      threadCacheManagers.add(allocationThrowable, cm);
+      return cm;
    }
 
    public static void backgroundTestStarted(Object testInstance) {
@@ -412,19 +404,20 @@ public class TestCacheManagerFactory {
    private static class PerThreadCacheManagers {
       String testName = null;
       private String oldThreadName;
-      HashMap<EmbeddedCacheManager, String> cacheManagers = new HashMap<EmbeddedCacheManager, String>();
+      HashMap<EmbeddedCacheManager, Throwable> cacheManagers = new HashMap<EmbeddedCacheManager, Throwable>();
       String fullTestName;
 
       public void checkManagersClosed(String testName) {
-         for (Map.Entry<EmbeddedCacheManager, String> cmEntry : cacheManagers.entrySet()) {
+         for (Map.Entry<EmbeddedCacheManager, Throwable> cmEntry : cacheManagers.entrySet()) {
             if (cmEntry.getKey().getStatus().allowInvocations()) {
                String thName = Thread.currentThread().getName();
                String errorMessage = '\n' +
                      "!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!\n" +
                      "!!!!!! (" + thName + ") Exiting because " + testName + " has NOT shut down all the cache managers it has started !!!!!!!\n" +
-                     "!!!!!! (" + thName + ") The still-running cacheManager was created here: " + cmEntry.getValue() + " !!!!!!!\n" +
+                     "!!!!!! (" + thName + ") See allocation stacktrace to find out where still-running cacheManager was created: !!!!!!!\n" +
                      "!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!\n";
-               log.error(errorMessage);
+               Throwable allocationThrowable = cmEntry.getValue();
+               log.errorf(allocationThrowable, errorMessage);
                shuttingDown = true;//just reduce noise..
                try {
                   Thread.sleep(60000); //wait for the thread dump to be logged in case of OOM
@@ -432,6 +425,7 @@ public class TestCacheManagerFactory {
                   e.printStackTrace();
                }
                System.err.println(errorMessage);
+               allocationThrowable.printStackTrace();
                System.exit(9);
             }
          }
@@ -450,8 +444,8 @@ public class TestCacheManagerFactory {
          return q == 0 ? c : getNameForIndex(q - 1) + c;
       }
 
-      public void add(String methodName, DefaultCacheManager cm) {
-         cacheManagers.put(cm, methodName);
+      public void add(Throwable allocationThrowable, DefaultCacheManager cm) {
+         cacheManagers.put(cm, allocationThrowable);
       }
 
       public void setTestName(String testName, String fullTestName) {
@@ -474,8 +468,8 @@ public class TestCacheManagerFactory {
       ParserRegistry registry = new ParserRegistry(cl);
 
       ConfigurationBuilderHolder holder = new ConfigurationBuilderHolder(cl);
-      for (int i = 0; i < xmls.length; ++i) {
-         registry.parse(new ByteArrayInputStream(xmls[i].getBytes()), holder);
+      for (String xml : xmls) {
+         registry.parse(new ByteArrayInputStream(xml.getBytes()), holder);
       }
 
       return holder;

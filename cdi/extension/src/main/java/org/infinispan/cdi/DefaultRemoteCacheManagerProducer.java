@@ -2,8 +2,10 @@ package org.infinispan.cdi;
 
 import org.infinispan.cdi.util.defaultbean.DefaultBean;
 import org.infinispan.client.hotrod.RemoteCacheManager;
+import org.infinispan.manager.EmbeddedCacheManager;
 
 import javax.enterprise.context.ApplicationScoped;
+import javax.enterprise.inject.Disposes;
 import javax.enterprise.inject.Produces;
 
 /**
@@ -28,4 +30,14 @@ public class DefaultRemoteCacheManagerProducer {
    public RemoteCacheManager getDefaultRemoteCacheManager() {
       return new RemoteCacheManager();
    }
+
+   /**
+    * Stops the default remote cache manager when the corresponding instance is released.
+    *
+    * @param defaultRemoteCacheManager the default remote cache manager.
+    */
+   private void stopRemoteCacheManager(@Disposes RemoteCacheManager defaultRemoteCacheManager) {
+      defaultRemoteCacheManager.stop();
+   }
+
 }

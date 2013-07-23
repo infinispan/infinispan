@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://java.sun.com/xml/ns/javaee"
+       xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+       xsi:schemaLocation="http://java.sun.com/xml/ns/javaee http://java.sun.com/xml/ns/javaee/beans_1_0.xsd">
+
+   <interceptors>
+      <class>org.infinispan.jcache.annotation.CacheResultInterceptor</class>
+      <class>org.infinispan.jcache.annotation.CachePutInterceptor</class>
+      <class>org.infinispan.jcache.annotation.CacheRemoveEntryInterceptor</class>
+      <class>org.infinispan.jcache.annotation.CacheRemoveAllInterceptor</class>
+   </interceptors>
+
+   <alternatives>
+      <class>org.infinispan.jcache.annotation.InjectedCacheResolver</class>
+   </alternatives>
+
+</beans>

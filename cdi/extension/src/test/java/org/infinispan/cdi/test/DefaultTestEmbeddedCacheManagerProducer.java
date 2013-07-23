@@ -4,6 +4,7 @@ import org.infinispan.cdi.OverrideDefault;
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.manager.EmbeddedCacheManager;
+import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
 
 import javax.enterprise.context.ApplicationScoped;
@@ -39,6 +40,7 @@ public class DefaultTestEmbeddedCacheManagerProducer {
     * @param defaultEmbeddedCacheManager the default embedded cache manager.
     */
    private void stopCacheManager(@Disposes EmbeddedCacheManager defaultEmbeddedCacheManager) {
-      defaultEmbeddedCacheManager.stop();
+      TestingUtil.killCacheManagers(defaultEmbeddedCacheManager);
    }
+
 }

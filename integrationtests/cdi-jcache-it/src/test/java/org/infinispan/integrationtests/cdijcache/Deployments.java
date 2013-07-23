@@ -1,9 +1,10 @@
-package org.infinispan.cdi.test.testutil;
+package org.infinispan.integrationtests.cdijcache;
 
 import org.infinispan.cdi.ConfigureCache;
 import org.infinispan.cdi.event.AbstractEventBridge;
 import org.infinispan.cdi.event.cache.CacheEventBridge;
 import org.infinispan.cdi.event.cachemanager.CacheManagerEventBridge;
+import org.infinispan.jcache.annotation.CachePutInterceptor;
 import org.jboss.shrinkwrap.api.ShrinkWrap;
 import org.jboss.shrinkwrap.api.spec.JavaArchive;
 import org.jboss.shrinkwrap.api.spec.WebArchive;
@@ -21,11 +22,12 @@ public final class Deployments {
       return ShrinkWrap.create(WebArchive.class, "test.war")
             .addAsWebInfResource(Deployments.class.getResource("/beans.xml"), "beans.xml")
             .addAsLibrary(
-                  ShrinkWrap.create(JavaArchive.class, "infinispan-cdi.jar")
+                  ShrinkWrap.create(JavaArchive.class, "infinispan-cdi-jcache.jar")
                         .addPackage(ConfigureCache.class.getPackage())
                         .addPackage(AbstractEventBridge.class.getPackage())
                         .addPackage(CacheEventBridge.class.getPackage())
                         .addPackage(CacheManagerEventBridge.class.getPackage())
+                        .addPackage(CachePutInterceptor.class.getPackage())
                         .addAsManifestResource(ConfigureCache.class.getResource("/META-INF/beans.xml"), "beans.xml")
                         .addAsManifestResource(ConfigureCache.class.getResource("/META-INF/services/javax.enterprise.inject.spi.Extension"), "services/javax.enterprise.inject.spi.Extension")
             );
