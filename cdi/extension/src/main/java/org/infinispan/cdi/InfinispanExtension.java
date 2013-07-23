@@ -63,7 +63,7 @@ public class InfinispanExtension implements Extension {
 
    private volatile boolean registered = false;
    private final Object registerLock = new Object();
-   
+
    private Set<Set<Annotation>> installedEmbeddedCacheManagers = new HashSet<Set<Annotation>>();
 
    public InfinispanExtension() {
@@ -145,19 +145,19 @@ public class InfinispanExtension implements Extension {
           .readFromType(beanManager.createAnnotatedType(AdvancedCache.class))
           .qualifiers(Beans.buildQualifiers(holder.getQualifiers()))
           .addType(new TypeLiteral<AdvancedCache<T, X>>() {}.getType())
-          .addType(new TypeLiteral<Cache<T, X>>() {}.getType()) 
+          .addType(new TypeLiteral<Cache<T, X>>() {}.getType())
           .beanLifecycle(new ContextualLifecycle<AdvancedCache<?, ?>>() {
               @Override
               public AdvancedCache<?, ?> create(Bean<AdvancedCache<?, ?>> bean,
                  CreationalContext<AdvancedCache<?, ?>> creationalContext) {
                  return new ContextualReference<AdvancedCacheProducer>(beanManager, AdvancedCacheProducer.class).create(Reflections.<CreationalContext<AdvancedCacheProducer>>cast(creationalContext)).get().getAdvancedCache(holder.getName(), holder.getQualifiers());
               }
-               
+
               @Override
               public void destroy(Bean<AdvancedCache<?, ?>> bean, AdvancedCache<?, ?> instance,
                  CreationalContext<AdvancedCache<?, ?>> creationalContext) {
                  // No-op, Infinispan manages the lifecycle
-                 
+
               }
            }).create();
           event.addBean(b);
@@ -186,13 +186,13 @@ public class InfinispanExtension implements Extension {
                   }
                }).create());
    }
-   
+
    public void observeDefaultEmbeddedCacheManagerInstalled(@Observes @Installed DefaultBeanHolder bean) {
        if (bean.getBean().getTypes().contains(EmbeddedCacheManager.class)) {
            installedEmbeddedCacheManagers.add(bean.getBean().getQualifiers());
        }
    }
-   
+
    public Set<InstalledCacheManager> getInstalledEmbeddedCacheManagers(BeanManager beanManager) {
        Set<InstalledCacheManager> installedCacheManagers = new HashSet<InstalledCacheManager>();
        for (Set<Annotation> qualifiers : installedEmbeddedCacheManagers) {
@@ -202,7 +202,7 @@ public class InfinispanExtension implements Extension {
        }
        return installedCacheManagers;
    }
-   
+
    public void observeEmbeddedCacheManagerBean(@Observes ProcessBean<?> processBean) {
        if (processBean.getBean().getTypes().contains(EmbeddedCacheManager.class) && !processBean.getAnnotated().isAnnotationPresent(DefaultBean.class)) {
            // Install any non-default EmbeddedCacheManager producers. We handle default ones separately, to ensure we only pick them up if installed
@@ -273,13 +273,21 @@ public class InfinispanExtension implements Extension {
       }
    }
 
-   static class InstalledCacheManager {
+   public static class InstalledCacheManager {
       final EmbeddedCacheManager cacheManager;
       final boolean isDefault;
 
       InstalledCacheManager(EmbeddedCacheManager cacheManager, boolean aDefault) {
          this.cacheManager = cacheManager;
          isDefault = aDefault;
+      }
+
+      public EmbeddedCacheManager getCacheManager() {
+         return cacheManager;
+      }
+
+      public boolean isDefault() {
+         return isDefault;
       }
    }
 }

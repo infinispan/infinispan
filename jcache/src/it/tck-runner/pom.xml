@@ -121,6 +121,9 @@
                      <value>org.infinispan.jcache.test.tck.DummyTestListener</value>
                   </property>
                </properties>
+               <excludes>
+                  <exclude>**/ClientServerTest.java</exclude>
+               </excludes>
             </configuration>
             <dependencies>
                <dependency>
@@ -163,7 +166,7 @@
                   <artifactId>maven-surefire-plugin</artifactId>
                   <configuration>
                      <excludes>
-                        <include>**/interceptor/*Test.java</include>
+                        <exclude>**/interceptor/*Test.java</exclude>
                      </excludes>
                      <systemPropertyVariables>
                         <domainJar>${domain-lib-dir}/${domain-jar}</domainJar>

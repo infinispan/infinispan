@@ -33,6 +33,11 @@
       </dependency>
 
       <dependency>
+         <groupId>${project.groupId}</groupId>
+         <artifactId>infinispan-cdi</artifactId>
+      </dependency>
+
+      <dependency>
          <groupId>javax.enterprise</groupId>
          <artifactId>cdi-api</artifactId>
       </dependency>
@@ -43,6 +48,7 @@
          <type>test-jar</type>
          <scope>test</scope>
       </dependency>
+
       <dependency>
          <groupId>org.jboss.arquillian.testng</groupId>
          <artifactId>arquillian-testng-container</artifactId>
@@ -112,6 +118,7 @@
                   <!-- Skip tests parent's tests are skipped -->
                   <maven.test.skip.exec>${maven.test.skip.exec}</maven.test.skip.exec>
                   <skipTests>${skipTests}</skipTests>
+                  <!-- maven.surefire.debug>-Xdebug -Xrunjdwp:transport=dt_socket,server=y,suspend=y,address=5005 -Xnoagent -Djava.compiler=NONE</maven.surefire.debug -->
                   <!-- If logging enabled by client, pass it on -->
                   <log4j.configuration>${log4j.configuration}</log4j.configuration>
                </properties>
