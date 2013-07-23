@@ -4,6 +4,7 @@ import org.infinispan.Cache;
 import org.infinispan.commons.util.Util;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.test.SingleCacheManagerTest;
+import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.testng.annotations.Test;
 
@@ -337,7 +338,7 @@ public class AsyncAPITest extends SingleCacheManagerTest {
 
       final long pollInterval = 50;
       try {
-         assertEquals(expectedValue, c.get(key));
+         assertTrue(expectedValue.equals(c.get(key)) || TestingUtil.moreThanDurationElapsed(startTime, expectedLifetime));
          eventually(new Condition() {
             @Override
             public boolean isSatisfied() {
