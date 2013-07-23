@@ -8,6 +8,7 @@ import org.infinispan.commands.CommandsFactory;
 import org.infinispan.commands.CreateCacheCommand;
 import org.infinispan.commands.read.MapCombineCommand;
 import org.infinispan.commands.read.ReduceCommand;
+import org.infinispan.context.Flag;
 import org.infinispan.distexec.mapreduce.spi.MapReduceTaskLifecycleService;
 import org.infinispan.distribution.DistributionManager;
 import org.infinispan.factories.ComponentRegistry;
@@ -349,7 +350,6 @@ public class MapReduceTask<KIn, VIn, KOut, VOut> {
             // cleanup tmp caches across cluster
             if(useIntermediatePerTaskCache()){
                EmbeddedCacheManager cm = cache.getCacheManager();
-               cm.getCache(intermediateCacheName).clear();
                cm.removeCache(intermediateCacheName);
             }
          }
