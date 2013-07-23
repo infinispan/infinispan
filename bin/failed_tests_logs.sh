@@ -20,6 +20,3 @@ for LOG_FILE in `find . -name "*.log"` ; do
       cat $LOG_FILE | $DIR/greplog.py "\b$TEST\b" | perl -npe "s/(?![a-zA-Z.])$TEST(?![a-zA-Z.])/$SHORTNAME/g" > $TEST.log
     done
 done
-
-#delete the large log files
-find . -name "infinispan-*.log" --delete
