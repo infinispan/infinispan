@@ -1,4 +1,4 @@
-package org.infinispan.cdi;
+package org.infinispan.jcache.annotation;
 
 import org.infinispan.configuration.global.GlobalConfiguration;
 import org.infinispan.jcache.JCacheManager;
@@ -19,8 +19,6 @@ import java.net.URI;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
-
-import static org.infinispan.cdi.util.Contracts.assertNotNull;
 
 /**
  * Injected cache resolver for situations where caches and/or cache managers
@@ -68,7 +66,7 @@ public class InjectedCacheResolver implements CacheResolver {
 
    @Override
    public <K, V> Cache<K, V> resolveCache(CacheInvocationContext<? extends Annotation> cacheInvocationContext) {
-      assertNotNull(cacheInvocationContext, "cacheInvocationContext parameter must not be null");
+      Contracts.assertNotNull(cacheInvocationContext, "cacheInvocationContext parameter must not be null");
 
       final String cacheName = cacheInvocationContext.getCacheName();
 
