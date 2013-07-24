@@ -27,7 +27,7 @@ import static org.testng.Assert.assertTrue;
  * @author Kevin Pollet - SERLI - (kevin.pollet@serli.com)
  * @see javax.cache.annotation.CacheResult
  */
-@Test(groups = "functional", testName = "cdi.test.interceptor.CacheResultInterceptorTest")
+@Test(groups = "functional", testName = "cdi.test.interceptor.CacheResultInterceptorTest", enabled = false, description = "https://issues.jboss.org/browse/ISPN-3316")
 public class CacheResultInterceptorTest extends Arquillian {
 
    @Deployment
