@@ -45,6 +45,9 @@
                         <Export-Package>
                             ${project.groupId}.lucene.*;version=${project.version};-split-package:=error
                         </Export-Package>
+                       <Include-Resource>
+                          META-INF/services/org.infinispan.lifecycle.ModuleLifecycle=target/classes/META-INF/services/org.infinispan.lifecycle.ModuleLifecycle
+                       </Include-Resource>
                     </instructions>
                 </configuration>
             </plugin>
