@@ -17,7 +17,7 @@ import java.util.concurrent.*;
 @Test(groups = "functional", testName = "distexec.AtomicObjectFactoryTest")
 public class AtomicObjectFactoryTest extends MultipleCacheManagersTest {
 
-    private static int NCALLS= 100;
+    private static int NCALLS= 1000;
     private static int NCACHES = 4;
     private static List<Cache> caches = new ArrayList<Cache>();
 
@@ -33,6 +33,7 @@ public class AtomicObjectFactoryTest extends MultipleCacheManagersTest {
         Set<String> set = (Set)factory.getOrCreateInstanceOf(HashSet.class, "set");
         set.add("smthing");
         assert set.contains("smthing");
+        assert set.size()==1;
 
         // 2 - Persistence
         factory.disposeInstanceOf(HashSet.class, "set", true);
@@ -69,7 +70,7 @@ public class AtomicObjectFactoryTest extends MultipleCacheManagersTest {
     public void distributedCacheTest() throws Exception {
 
         ExecutorService service = Executors.newCachedThreadPool();
-        List<HashSet> lists = new ArrayList<HashSet>();
+        List<HashSet> sets = new ArrayList<HashSet>();
         List<AtomicObjectFactory> factories = new ArrayList<AtomicObjectFactory>();
         List<Future<Integer>> futures = new ArrayList<Future<Integer>>();
 
@@ -81,12 +82,12 @@ public class AtomicObjectFactoryTest extends MultipleCacheManagersTest {
             factory = new AtomicObjectFactory(cache);
             factories.add(factory);
             set = (HashSet) factory.getOrCreateInstanceOf(HashSet.class, "set");
-            lists.add(set);
+            sets.add(set);
         }
 
         initAndTest();
 
-        for(Set s : lists){
+        for(Set s : sets){
             futures.add(service.submit(new ExerciceAtomicSetTask(s, NCALLS)));
         }
 
@@ -101,6 +102,28 @@ public class AtomicObjectFactoryTest extends MultipleCacheManagersTest {
         for(AtomicObjectFactory f : factories){
             assert f.hashCode() == hash;
         }
+
+    }
+
+    public void distributedPersistenceTest() throws Exception {
+
+        Iterator<EmbeddedCacheManager> it = cacheManagers.iterator();
+        EmbeddedCacheManager manager1 = it.next();
+        EmbeddedCacheManager manager2 = it.next();
+        AtomicObjectFactory factory1, factory2;
+        Cache cache1, cache2;
+        HashSet set1, set2;
+
+        cache1 = manager1.getCache();
+        factory1 = new AtomicObjectFactory(cache1);
+        set1 = (HashSet) factory1.getOrCreateInstanceOf(HashSet.class, "set");
+        set1.add("smthing");
+
+
+        cache2 = manager2.getCache();
+        factory2 = new AtomicObjectFactory(cache2);
+        set2 = (HashSet) factory2.getOrCreateInstanceOf(HashSet.class, "set",true,null,false);
+        assert set2.contains("smthing");
 
     }
 

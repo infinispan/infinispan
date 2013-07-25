@@ -9,6 +9,8 @@ import org.infinispan.util.logging.LogFactory;
 import java.io.IOException;
 import java.io.Serializable;
 import java.lang.reflect.Method;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
 /**
@@ -28,7 +30,7 @@ public class AtomicObjectFactory {
     // OBJECT FIELDS
     //
 	private Cache cache;
-	private ConcurrentHashMap<Object,AtomicObjectContainer> registeredContainers;
+	private Map<Object,AtomicObjectContainer> registeredContainers;
 
     /**
      *
@@ -41,7 +43,7 @@ public class AtomicObjectFactory {
             || c.getAdvancedCache().getTransactionManager() == null )
             throw new InvalidCacheUsageException("The cache must be synchronous.and transactional.");
 		cache = c;
-        registeredContainers= new ConcurrentHashMap<Object,AtomicObjectContainer>();
+        registeredContainers= new HashMap<Object,AtomicObjectContainer>();
         log = LogFactory.getLog(this.getClass());
 	}
 
@@ -75,7 +77,7 @@ public class AtomicObjectFactory {
      * @return an object of the class <i>clazz</i>
      * @throws InvalidCacheUsageException
      */
-    public Object getOrCreateInstanceOf(Class clazz, Object key, boolean withReadOptimization)
+    public synchronized Object getOrCreateInstanceOf(Class clazz, Object key, boolean withReadOptimization)
             throws InvalidCacheUsageException{
         return getOrCreateInstanceOf(clazz,key,withReadOptimization,null,true);
     }
@@ -99,7 +101,7 @@ public class AtomicObjectFactory {
      * @return an object of the class <i>clazz</i>
      * @throws InvalidCacheUsageException
      */
-    public Object getOrCreateInstanceOf(Class clazz, Object key, boolean withReadOptimization, Method equalsMethod, boolean forceNew)
+    public synchronized Object getOrCreateInstanceOf(Class clazz, Object key, boolean withReadOptimization, Method equalsMethod, boolean forceNew)
             throws InvalidCacheUsageException{
 
         if( !(clazz instanceof Serializable)){
@@ -107,7 +109,9 @@ public class AtomicObjectFactory {
         }
 
         try{
-            registeredContainers.putIfAbsent(key, new AtomicObjectContainer(cache, clazz, key, withReadOptimization, equalsMethod, forceNew));
+            if(!registeredContainers.containsKey(key)){
+                registeredContainers.put(key,new AtomicObjectContainer(cache, clazz, key, withReadOptimization, equalsMethod, forceNew));
+            }
         } catch (Exception e){
             e.printStackTrace();
             throw new InvalidCacheUsageException(e.getCause());
@@ -125,7 +129,7 @@ public class AtomicObjectFactory {
      * @param key the key to use in order to store the object.
      * @param keepPersistent indicates that a persistent copy is stored in the cache or not.
      */
-    public void disposeInstanceOf(Class clazz, Object key, boolean keepPersistent)
+    public synchronized void disposeInstanceOf(Class clazz, Object key, boolean keepPersistent)
             throws IOException, InvalidCacheUsageException {
 
         AtomicObjectContainer container = registeredContainers.get(key);
