@@ -76,7 +76,7 @@ class AtomicObjectCallFuture implements Future<Object> {
 
     @Override
     public boolean isDone() {
-        return ret != null;
+        return state == 1;
     }
 
 }
