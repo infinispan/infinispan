@@ -11,7 +11,6 @@ import org.jboss.marshalling.Marshalling;
 import org.jboss.marshalling.MarshallingConfiguration;
 import org.jboss.marshalling.TraceInformation;
 import org.jboss.marshalling.Unmarshaller;
-import org.jboss.marshalling.reflect.SunReflectiveCreator;
 
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
@@ -64,7 +63,6 @@ public abstract class AbstractJBossMarshaller extends AbstractMarshaller impleme
    public AbstractJBossMarshaller() {
       // Class resolver now set when marshaller/unmarshaller will be created
       baseCfg = new MarshallingConfiguration();
-      baseCfg.setExternalizerCreator(new SunReflectiveCreator());
       baseCfg.setExceptionListener(new DebuggingExceptionListener());
       baseCfg.setClassExternalizerFactory(new SerializeWithExtFactory());
       baseCfg.setInstanceCount(DEF_INSTANCE_COUNT);
