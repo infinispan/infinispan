@@ -1,6 +1,9 @@
 package org.infinispan.lucene;
 
 import java.io.IOException;
+import java.sql.Connection;
+import java.sql.DriverManager;
+import java.sql.SQLException;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -18,6 +21,8 @@ import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.test.SingleCacheManagerTest;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.testng.AssertJUnit;
+import org.testng.annotations.AfterClass;
+import org.testng.annotations.AfterTest;
 import org.testng.annotations.Test;
 
 /**
@@ -32,13 +37,27 @@ import org.testng.annotations.Test;
 @Test(groups = "functional", testName = "lucene.DatabaseStoredIndexTest")
 public class DatabaseStoredIndexTest extends SingleCacheManagerTest {
 
+   private static final String DB_URL = "jdbc:h2:mem:infinispan;DB_CLOSE_DELAY=0";
+
    /** The INDEX_NAME */
    private static final String INDEX_NAME = "testing index";
 
    private final HashMap cacheCopy = new HashMap();
 
-   public DatabaseStoredIndexTest() {
+   private Connection connection;
+
+   public DatabaseStoredIndexTest() throws SQLException {
       cleanup = CleanupPhase.AFTER_METHOD;
+      connection = DriverManager.getConnection(DB_URL, "sa", "");
+   }
+
+   @AfterClass(alwaysRun=true)
+   public void closeDB() {
+      try {
+         connection.close();
+      } catch (SQLException e) {
+         AssertJUnit.fail("Could not close the keepalive DB connection");
+      }
    }
 
    @Override
@@ -57,10 +76,9 @@ public class DatabaseStoredIndexTest extends SingleCacheManagerTest {
                .timestampColumnType("BIGINT")
             .connectionPool()
                .driverClass(org.h2.Driver.class)
-               .connectionUrl("jdbc:h2:mem:infinispan;DB_CLOSE_DELAY=1")
+               .connectionUrl(DB_URL)
                .username("sa");
-
-      return TestCacheManagerFactory.createClusteredCacheManager(cb);
+      return TestCacheManagerFactory.createCacheManager(cb);
    }
 
    @Test
@@ -83,7 +101,7 @@ public class DatabaseStoredIndexTest extends SingleCacheManagerTest {
       cacheManager.stop();
    }
 
-   @Test(dependsOnMethods="testIndexUsage", enabled = false, description = "https://issues.jboss.org/browse/ISPN-3329")
+   @Test(dependsOnMethods="testIndexUsage")
    public void indexWasStored() throws IOException {
       cache = cacheManager.getCache();
       AssertJUnit.assertEquals(0, cache.getAdvancedCache().getDataContainer().size());
