@@ -270,4 +270,10 @@ public interface RemoteCache<K, V> extends BasicCache<K, V> {
     * guarantee that "size" elements are returned( e.g. if the number of elements in the back-end server is smaller that "size")
     */
    Map<K, V> getBulk(int size);
+
+
+   /**
+    * Returns the HotRod protocol version supported by this RemoteCache implementation
+    */
+   String getProtocolVersion();
 }
