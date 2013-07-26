@@ -16,15 +16,15 @@ import org.testng.annotations.Test;
 /**
  * Testcase verifying that the index is usable under stress even when a cachestore is configured.
  * See ISPN-575 (Corruption in data when using a permanent store)
- * 
+ *
  * @author Sanne Grinovero
  * @since 4.1
  */
-@Test(groups = "profiling", testName = "lucene.profiling.CacheStoreStressTest", sequential = true)
+@Test(groups = "profiling", testName = "lucene.profiling.CacheStoreStressTest", singleThreaded = true)
 public class CacheStoreStressTest extends SingleCacheManagerTest {
-   
+
    private static final String indexName = "tempIndexName";
-   
+
    @Override
    protected EmbeddedCacheManager createCacheManager() throws Exception {
       ConfigurationBuilder cb = TestCacheManagerFactory.getDefaultCacheConfiguration(false);
@@ -41,11 +41,11 @@ public class CacheStoreStressTest extends SingleCacheManagerTest {
             .timestampColumnType("BIGINT")
             .connectionPool()
             .driverClass(org.h2.Driver.class)
-            .connectionUrl("jdbc:h2:mem:infinispan;DB_CLOSE_DELAY=1")
+            .connectionUrl("jdbc:h2:mem:infinispan;DB_CLOSE_DELAY=0")
             .username("sa");
       return TestCacheManagerFactory.createClusteredCacheManager(cb);
    }
-   
+
    @Test
    public void stressTestOnStore() throws InterruptedException, IOException {
       cache = cacheManager.getCache();
@@ -54,5 +54,5 @@ public class CacheStoreStressTest extends SingleCacheManagerTest {
       PerformanceCompareStressTest.stressTestDirectory(dir, "InfinispanClusteredWith-Store");
       DirectoryIntegrityCheck.verifyDirectoryStructure(cache, indexName, true);
    }
-   
+
 }

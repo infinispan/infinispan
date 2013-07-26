@@ -1,23 +1,28 @@
 package org.infinispan.lucene;
 
 import java.io.IOException;
+import java.sql.Connection;
+import java.sql.DriverManager;
+import java.sql.SQLException;
 import java.util.HashMap;
+import java.util.Map;
 
 import static org.infinispan.lucene.CacheTestSupport.assertTextIsFoundInIds;
 import static org.infinispan.lucene.CacheTestSupport.removeByTerm;
 import static org.infinispan.lucene.CacheTestSupport.writeTextToIndex;
 
 import org.apache.lucene.store.Directory;
+import org.infinispan.commons.util.Util;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
+import org.infinispan.context.Flag;
 import org.infinispan.loaders.jdbc.configuration.JdbcStringBasedCacheStoreConfigurationBuilder;
-import org.infinispan.loaders.jdbc.connectionfactory.ConnectionFactoryConfig;
 import org.infinispan.lucene.directory.DirectoryBuilder;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.test.SingleCacheManagerTest;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
-import org.infinispan.test.fwk.UnitTestDatabaseManager;
-import org.infinispan.commons.util.Util;
 import org.testng.AssertJUnit;
+import org.testng.annotations.AfterClass;
+import org.testng.annotations.AfterTest;
 import org.testng.annotations.Test;
 
 /**
@@ -32,15 +37,27 @@ import org.testng.annotations.Test;
 @Test(groups = "functional", testName = "lucene.DatabaseStoredIndexTest")
 public class DatabaseStoredIndexTest extends SingleCacheManagerTest {
 
-   private final ConnectionFactoryConfig connectionFactoryConfig = UnitTestDatabaseManager.getUniqueConnectionFactoryConfig();
+   private static final String DB_URL = "jdbc:h2:mem:infinispan;DB_CLOSE_DELAY=0";
 
    /** The INDEX_NAME */
    private static final String INDEX_NAME = "testing index";
 
    private final HashMap cacheCopy = new HashMap();
 
-   public DatabaseStoredIndexTest() {
+   private Connection connection;
+
+   public DatabaseStoredIndexTest() throws SQLException {
       cleanup = CleanupPhase.AFTER_METHOD;
+      connection = DriverManager.getConnection(DB_URL, "sa", "");
+   }
+
+   @AfterClass(alwaysRun=true)
+   public void closeDB() {
+      try {
+         connection.close();
+      } catch (SQLException e) {
+         AssertJUnit.fail("Could not close the keepalive DB connection");
+      }
    }
 
    @Override
@@ -50,20 +67,20 @@ public class DatabaseStoredIndexTest extends SingleCacheManagerTest {
             .addStore(JdbcStringBasedCacheStoreConfigurationBuilder.class)
             .key2StringMapper(LuceneKey2StringMapper.class)
             .table()
-            .idColumnName("ID_COLUMN")
-            .idColumnType("VARCHAR(255)")
-            .tableNamePrefix("ISPN_JDBC")
-            .dataColumnName("DATA_COLUMN")
-            .dataColumnType("BLOB")
-            .timestampColumnName("TIMESTAMP_COLUMN")
-            .timestampColumnType("BIGINT")
+               .idColumnName("ID_COLUMN")
+               .idColumnType("VARCHAR(255)")
+               .tableNamePrefix("ISPN_JDBC")
+               .dataColumnName("DATA_COLUMN")
+               .dataColumnType("BLOB")
+               .timestampColumnName("TIMESTAMP_COLUMN")
+               .timestampColumnType("BIGINT")
             .connectionPool()
-            .driverClass(org.h2.Driver.class)
-            .connectionUrl("jdbc:h2:mem:infinispan;DB_CLOSE_DELAY=1")
-            .username("sa");
-
-      return TestCacheManagerFactory.createClusteredCacheManager(cb);
+               .driverClass(org.h2.Driver.class)
+               .connectionUrl(DB_URL)
+               .username("sa");
+      return TestCacheManagerFactory.createCacheManager(cb);
    }
+
    @Test
    public void testIndexUsage() throws IOException {
       cache = cacheManager.getCache();
@@ -77,7 +94,9 @@ public class DatabaseStoredIndexTest extends SingleCacheManagerTest {
       removeByTerm(dir, "and");
       assertTextIsFoundInIds(dir, "index", 1);
       dir.close();
-      cacheCopy.putAll(cache);
+      for (Map.Entry me : cache.getAdvancedCache().withFlags(Flag.SKIP_CACHE_LOAD).entrySet()) {
+         cacheCopy.put(me.getKey(), me.getValue());
+      }
       cache.stop();
       cacheManager.stop();
    }
@@ -113,5 +132,4 @@ public class DatabaseStoredIndexTest extends SingleCacheManagerTest {
       assertTextIsFoundInIds(dir, "index", 1);
       dir.close();
    }
-
 }
