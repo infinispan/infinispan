@@ -115,8 +115,12 @@ class HotRodServer extends AbstractProtocolServer("HotRod") with Log {
                 .valueEquivalence(AnyEquivalence.getInstance())
 
       if (configuration.topologyStateTransfer) {
-         builder.clustering().stateTransfer().fetchInMemoryState(true)
-                 .timeout(distSyncTimeout + configuration.topologyReplTimeout)
+         builder
+            .clustering()
+               .stateTransfer()
+                  .awaitInitialTransfer(configuration.topologyAwaitInitialTransfer)
+                  .fetchInMemoryState(true)
+                  .timeout(distSyncTimeout + configuration.topologyReplTimeout)
       } else {
          builder.loaders().addClusterCacheLoader().remoteCallTimeout(configuration.topologyReplTimeout)
       }
