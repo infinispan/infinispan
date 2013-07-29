@@ -8,7 +8,7 @@ package org.infinispan.client.hotrod;
  */
 public class Version {
 
-   private static final String PROTOCOL_VERSION = "1.0"; 
+   private static final String PROTOCOL_VERSION = "1.2";
 
    public static String getProtocolVersion() {
       return "HotRod client, protocol version :" + PROTOCOL_VERSION;
