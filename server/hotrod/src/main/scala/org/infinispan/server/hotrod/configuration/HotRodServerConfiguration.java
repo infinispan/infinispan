@@ -12,9 +12,10 @@ public class HotRodServerConfiguration extends ProtocolServerConfiguration {
    private final String topologyCacheName;
    private final long topologyLockTimeout;
    private final long topologyReplTimeout;
+   private final boolean topologyAwaitInitialTransfer;
    private final boolean topologyStateTransfer;
 
-   HotRodServerConfiguration(String proxyHost, int proxyPort, long topologyLockTimeout, long topologyReplTimeout, boolean topologyStateTransfer,
+   HotRodServerConfiguration(String proxyHost, int proxyPort, long topologyLockTimeout, long topologyReplTimeout, boolean topologyAwaitInitialTransfer, boolean topologyStateTransfer,
          String name, String host, int port, int idleTimeout, int recvBufSize, int sendBufSize, SslConfiguration ssl, boolean tcpNoDelay, int workerThreads) {
       super(name, host, port, idleTimeout, recvBufSize, sendBufSize, ssl, tcpNoDelay, workerThreads);
       this.proxyHost = proxyHost;
@@ -23,6 +24,7 @@ public class HotRodServerConfiguration extends ProtocolServerConfiguration {
       this.topologyLockTimeout = topologyLockTimeout;
       this.topologyReplTimeout = topologyReplTimeout;
       this.topologyStateTransfer = topologyStateTransfer;
+      this.topologyAwaitInitialTransfer = topologyAwaitInitialTransfer;
    }
 
    public String proxyHost() {
@@ -45,13 +47,18 @@ public class HotRodServerConfiguration extends ProtocolServerConfiguration {
       return topologyReplTimeout;
    }
 
+   public boolean topologyAwaitInitialTransfer() {
+      return topologyAwaitInitialTransfer;
+   }
+
    public boolean topologyStateTransfer() {
       return topologyStateTransfer;
    }
 
    @Override
    public String toString() {
-      return "HotRodServerConfiguration [proxyHost=" + proxyHost + ", proxyPort=" + proxyPort + ", topologyLockTimeout="
-            + topologyLockTimeout + ", topologyReplTimeout=" + topologyReplTimeout + ", topologyStateTransfer=" + topologyStateTransfer + ", " + super.toString() + "]";
+      return "HotRodServerConfiguration [proxyHost=" + proxyHost + ", proxyPort=" + proxyPort + ", topologyCacheName=" + topologyCacheName + ", topologyLockTimeout="
+            + topologyLockTimeout + ", topologyReplTimeout=" + topologyReplTimeout + ", topologyAwaitInitialTransfer=" + topologyAwaitInitialTransfer + ", topologyStateTransfer="
+            + topologyStateTransfer + "]";
    }
 }

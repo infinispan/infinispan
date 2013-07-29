@@ -2,6 +2,7 @@ package org.infinispan.server.hotrod.configuration;
 
 import org.infinispan.commons.configuration.Builder;
 import org.infinispan.configuration.cache.LockingConfigurationBuilder;
+import org.infinispan.configuration.cache.StateTransferConfigurationBuilder;
 import org.infinispan.configuration.cache.SyncConfigurationBuilder;
 import org.infinispan.loaders.cluster.ClusterCacheLoader;
 import org.infinispan.server.core.configuration.ProtocolServerConfigurationBuilder;
@@ -18,6 +19,7 @@ public class HotRodServerConfigurationBuilder extends ProtocolServerConfiguratio
    private int proxyPort = -1;
    private long topologyLockTimeout = 10000L;
    private long topologyReplTimeout = 10000L;
+   private boolean topologyAwaitInitialTransfer = true;
    private boolean topologyStateTransfer = true;
 
    public HotRodServerConfigurationBuilder() {
@@ -62,6 +64,14 @@ public class HotRodServerConfigurationBuilder extends ProtocolServerConfiguratio
    }
 
    /**
+    * Configures whether to enable waiting for initial state transfer for the topology cache. See {@link StateTransferConfigurationBuilder#awaitInitialTransfer(boolean)}
+    */
+   public HotRodServerConfigurationBuilder topologyAwaitInitialTransfer(boolean topologyAwaitInitialTransfer) {
+      this.topologyAwaitInitialTransfer = topologyAwaitInitialTransfer;
+      return this;
+   }
+
+   /**
     * Configures whether to enable state transfer for the topology cache. If disabled, a {@link ClusterCacheLoader} will be used to lazily retrieve topology information from the other nodes.
     * Defaults to true.
     */
@@ -72,7 +82,7 @@ public class HotRodServerConfigurationBuilder extends ProtocolServerConfiguratio
 
    @Override
    public HotRodServerConfiguration create() {
-      return new HotRodServerConfiguration(proxyHost, proxyPort, topologyLockTimeout, topologyReplTimeout, topologyStateTransfer, name, host, port, idleTimeout,
+      return new HotRodServerConfiguration(proxyHost, proxyPort, topologyLockTimeout, topologyReplTimeout, topologyAwaitInitialTransfer, topologyStateTransfer, name, host, port, idleTimeout,
             recvBufSize, sendBufSize, ssl.create(), tcpNoDelay, workerThreads);
    }
 
@@ -83,6 +93,7 @@ public class HotRodServerConfigurationBuilder extends ProtocolServerConfiguratio
       this.proxyPort = template.proxyPort();
       this.topologyLockTimeout = template.topologyLockTimeout();
       this.topologyReplTimeout = template.topologyReplTimeout();
+      this.topologyAwaitInitialTransfer = template.topologyAwaitInitialTransfer();
       this.topologyStateTransfer = template.topologyStateTransfer();
       return this;
    }
