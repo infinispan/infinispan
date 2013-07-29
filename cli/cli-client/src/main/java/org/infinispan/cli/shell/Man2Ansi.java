@@ -19,7 +19,6 @@ import org.fusesource.jansi.Ansi.Attribute;
 public class Man2Ansi {
    public static Pattern MAN_MACRO_REGEX = Pattern.compile("^(\\.[A-Z]{1,2} ?)?(.*)$");
    public static int DEFAULT_INDENT = 4;
-   public static int WRAP_WIDTH = 72;
    private final Ansi ansi = new Ansi();
    private int pos = 0;
    private int indent = DEFAULT_INDENT;
@@ -87,7 +86,7 @@ public class Man2Ansi {
          }
       }
       format(text, attributes);
-      if (text.charAt(text.length()-1) != ' ')
+      if (text.length() > 0 && text.charAt(text.length()-1) != ' ')
          format(" ", attributes);
       pos += text.length();
       blankLine = false;
