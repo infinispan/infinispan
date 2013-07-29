@@ -183,6 +183,7 @@ import java.lang.reflect.Constructor;
  * @since 1.7
  * @author Doug Lea
  */
+@SuppressWarnings("restriction")
 public abstract class ForkJoinTask<V> implements Future<V>, Serializable {
 
     /*
@@ -1461,6 +1462,7 @@ public abstract class ForkJoinTask<V> implements Future<V>, Serializable {
    }
 
    // Unsafe mechanics
+   @SuppressWarnings("internal")
    private static final sun.misc.Unsafe U;
    private static final long STATUS;
 

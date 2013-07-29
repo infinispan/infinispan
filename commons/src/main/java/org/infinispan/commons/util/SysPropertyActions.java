@@ -33,35 +33,35 @@ public class SysPropertyActions {
       SysProps PRIVILEGED = new SysProps() {
          @Override
          public String getProperty(final String name, final String defaultValue) {
-            PrivilegedAction<Object> action = new PrivilegedAction() {
+            PrivilegedAction<String> action = new PrivilegedAction<String>() {
                @Override
-               public Object run() {
+               public String run() {
                   return System.getProperty(name, defaultValue);
                }
             };
-            return (String) AccessController.doPrivileged(action);
+            return AccessController.doPrivileged(action);
          }
 
          @Override
          public String getProperty(final String name) {
-            PrivilegedAction<Object> action = new PrivilegedAction() {
+            PrivilegedAction<String> action = new PrivilegedAction<String>() {
                @Override
-               public Object run() {
+               public String run() {
                   return System.getProperty(name);
                }
             };
-            return (String) AccessController.doPrivileged(action);
+            return AccessController.doPrivileged(action);
          }
 
          @Override
          public String setProperty(final String name, final String value) {
-            PrivilegedAction<Object> action = new PrivilegedAction() {
+            PrivilegedAction<String> action = new PrivilegedAction<String>() {
                @Override
-               public Object run() {
+               public String run() {
                   return System.setProperty(name, value);
                }
             };
-            return (String) AccessController.doPrivileged(action);
+            return AccessController.doPrivileged(action);
          }
       };
 
