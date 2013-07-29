@@ -106,6 +106,7 @@ public class MurmurHash2Compat implements Hash {
 
    public static class Externalizer extends NoStateExternalizer<MurmurHash2Compat> {
       @Override
+      @SuppressWarnings("unchecked")
       public Set<Class<? extends MurmurHash2Compat>> getTypeClasses() {
          return Util.<Class<? extends MurmurHash2Compat>>asSet(MurmurHash2Compat.class);
       }

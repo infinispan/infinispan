@@ -12,15 +12,17 @@ import java.util.concurrent.*;
  */
 public class DeferredReturnFuture<V> implements NotifyingNotifiableFuture<V> {
 
-   private final NotifyingFutureImpl delegateFuture = new NotifyingFutureImpl(null);
+   private final NotifyingFutureImpl<Object> delegateFuture = new NotifyingFutureImpl<Object>(null);
 
    @Override
+   @SuppressWarnings("unchecked")
    public V get() throws InterruptedException, ExecutionException {
       // Return the network's future result
       return (V) delegateFuture.ioFuture.get();
    }
 
    @Override
+   @SuppressWarnings("unchecked")
    public V get(long timeout, TimeUnit unit) throws InterruptedException, ExecutionException, java.util.concurrent.TimeoutException {
       return (V) delegateFuture.ioFuture.get(timeout, unit);
    }
@@ -31,11 +33,13 @@ public class DeferredReturnFuture<V> implements NotifyingNotifiableFuture<V> {
    }
 
    @Override
+   @SuppressWarnings("unchecked")
    public void setNetworkFuture(Future<V> future) {
       delegateFuture.setNetworkFuture((Future<Object>) future);
    }
 
    @Override
+   @SuppressWarnings("unchecked")
    public NotifyingFuture<V> attachListener(FutureListener<V> objectFutureListener) {
       return (NotifyingFuture<V>) delegateFuture.attachListener((FutureListener<Object>) objectFutureListener);
    }

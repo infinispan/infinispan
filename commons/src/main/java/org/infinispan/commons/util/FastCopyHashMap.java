@@ -362,6 +362,7 @@ public class FastCopyHashMap<K, V> extends AbstractMap<K, V> implements Map<K, V
    }
 
    @Override
+   @SuppressWarnings("unchecked")
    public FastCopyHashMap<K, V> clone() {
       try {
          FastCopyHashMap<K, V> clone = (FastCopyHashMap<K, V>) super.clone();

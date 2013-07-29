@@ -11,6 +11,7 @@ public class JBossExternalizerAdapter implements org.jboss.marshalling.Externali
 
    final Externalizer<Object> externalizer;
 
+   @SuppressWarnings("unchecked")
    public JBossExternalizerAdapter(Externalizer<?> externalizer) {
       this.externalizer = (Externalizer<Object>) externalizer;
    }

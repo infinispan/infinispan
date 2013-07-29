@@ -46,24 +46,22 @@ public class InfinispanCollections {
          @Override public Set readObject(ObjectInput input) { return EMPTY_SET; }
 
          @Override
+         @SuppressWarnings("unchecked")
          public Set<Class<? extends Set>> getTypeClasses() {
             return Util.<Class<? extends Set>>asSet(EmptySet.class);
          }
-
       }
-
    }
 
    public static final class EmptyMap extends java.util.AbstractMap<Object,Object> {
-
       @Override public int size() { return 0; }
       @Override public boolean isEmpty() { return true; }
       @Override public boolean containsKey(Object key) { return false; }
       @Override public boolean containsValue(Object value) { return false; }
       @Override public Object get(Object key) { return null; }
-      @Override public Set<Object> keySet() { return EMPTY_SET; }
-      @Override public Collection<Object> values() { return EMPTY_SET; }
-      @Override public Set<Entry<Object, Object>> entrySet() { return EMPTY_SET; }
+      @Override public Set<Object> keySet() { return emptySet(); }
+      @Override public Collection<Object> values() { return emptySet(); }
+      @Override public Set<Entry<Object, Object>> entrySet() { return emptySet(); }
       @Override public int hashCode() { return 0; }
 
       @Override
@@ -79,12 +77,11 @@ public class InfinispanCollections {
          @Override public Map readObject(ObjectInput input) { return EMPTY_MAP; }
 
          @Override
+         @SuppressWarnings("unchecked")
          public Set<Class<? extends Map>> getTypeClasses() {
             return Util.<Class<? extends Map>>asSet(EmptyMap.class);
          }
-
       }
-
    }
 
    public static final class EmptyList
@@ -113,6 +110,7 @@ public class InfinispanCollections {
          @Override public List readObject(ObjectInput input) { return EMPTY_LIST; }
 
          @Override
+         @SuppressWarnings("unchecked")
          public Set<Class<? extends List>> getTypeClasses() {
             return Util.<Class<? extends List>>asSet(EmptyList.class);
          }
@@ -121,9 +119,9 @@ public class InfinispanCollections {
 
    }
 
-
    private static final ReversibleOrderedSet<Object> EMPTY_ROS = new EmptyReversibleOrderedSet<Object>();
 
+   @SuppressWarnings("unchecked")
    private static final class EmptyReversibleOrderedSet<E> extends AbstractSet<E> implements ReversibleOrderedSet<E> {
 
       Iterator<E> it = new Iterator() {
@@ -272,6 +270,7 @@ public class InfinispanCollections {
     *
     * @see #EMPTY_SET
     */
+   @SuppressWarnings("unchecked")
    public static final <T> Set<T> emptySet() {
       return EMPTY_SET;
    }
@@ -286,6 +285,7 @@ public class InfinispanCollections {
     *
     * @see #EMPTY_MAP
     */
+   @SuppressWarnings("unchecked")
    public static final <K,V> Map<K,V> emptyMap() {
       return EMPTY_MAP;
    }
@@ -300,6 +300,7 @@ public class InfinispanCollections {
     *
     * @see #EMPTY_LIST
     */
+   @SuppressWarnings("unchecked")
    public static final <T> List<T> emptyList() {
       return EMPTY_LIST;
    }

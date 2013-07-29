@@ -572,6 +572,7 @@ public class Immutables {
       }
 
       @Override
+      @SuppressWarnings("unchecked")
       public Set<Class<? extends Map>> getTypeClasses() {
          return Util.<Class<? extends Map>>asSet(ImmutableMapWrapper.class);
       }

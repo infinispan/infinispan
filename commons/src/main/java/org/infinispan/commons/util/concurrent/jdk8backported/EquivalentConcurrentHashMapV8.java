@@ -221,6 +221,7 @@ import java.util.concurrent.locks.ReentrantLock;
  * @param <K> the type of keys maintained by this map
  * @param <V> the type of mapped values
  */
+@SuppressWarnings("restriction")
 public class EquivalentConcurrentHashMapV8<K,V> extends AbstractMap<K,V>
       implements ConcurrentMap<K,V>, Serializable {
    private static final long serialVersionUID = 7249069246763182397L;
@@ -635,6 +636,7 @@ public class EquivalentConcurrentHashMapV8<K,V> extends AbstractMap<K,V>
          throw new UnsupportedOperationException();
       }
 
+      @SuppressWarnings("unchecked")
       public final boolean equals(Object o) {
          Object k, v, u; Map.Entry<?,?> e;
          return ((o instanceof Map.Entry) &&
@@ -1353,6 +1355,7 @@ public class EquivalentConcurrentHashMapV8<K,V> extends AbstractMap<K,V>
     * @param o object to be compared for equality with this map
     * @return {@code true} if the specified object is equal to this map
     */
+   @SuppressWarnings("unchecked")
    public boolean equals(Object o) {
       if (o != this) {
          if (!(o instanceof Map))
@@ -1398,6 +1401,7 @@ public class EquivalentConcurrentHashMapV8<K,V> extends AbstractMap<K,V>
     * for each key-value mapping, followed by a null pair.
     * The key-value mappings are emitted in no particular order.
     */
+   @SuppressWarnings("unchecked")
    private void writeObject(java.io.ObjectOutputStream s)
          throws java.io.IOException {
       s.writeObject(keyEq); // EQUIVALENCE_MOD
@@ -1412,7 +1416,7 @@ public class EquivalentConcurrentHashMapV8<K,V> extends AbstractMap<K,V>
       }
       int segmentShift = 32 - sshift;
       int segmentMask = ssize - 1;
-      @SuppressWarnings("unchecked") Segment<K,V>[] segments = (Segment<K,V>[])
+      Segment<K,V>[] segments = (Segment<K,V>[])
             new Segment<?,?>[DEFAULT_CONCURRENCY_LEVEL];
       for (int i = 0; i < segments.length; ++i)
          segments[i] = new Segment<K,V>(LOAD_FACTOR);
@@ -1438,6 +1442,7 @@ public class EquivalentConcurrentHashMapV8<K,V> extends AbstractMap<K,V>
     * Reconstitutes the instance from a stream (that is, deserializes it).
     * @param s the stream
     */
+   @SuppressWarnings("unchecked")
    private void readObject(java.io.ObjectInputStream s)
          throws java.io.IOException, ClassNotFoundException {
       keyEq = (Equivalence<K>) s.readObject();
@@ -1455,8 +1460,8 @@ public class EquivalentConcurrentHashMapV8<K,V> extends AbstractMap<K,V>
       long size = 0L;
       Node<K,V> p = null;
       for (;;) {
-         @SuppressWarnings("unchecked") K k = (K) s.readObject();
-         @SuppressWarnings("unchecked") V v = (V) s.readObject();
+         K k = (K) s.readObject();
+         V v = (V) s.readObject();
          if (k != null && v != null) {
             p = new Node<K,V>(spread(keyEq.hashCode(k)), nodeEq, k, v, p); // EQUIVALENCE_MOD
             ++size;
@@ -2575,6 +2580,7 @@ public class EquivalentConcurrentHashMapV8<K,V> extends AbstractMap<K,V>
        * Returns the TreeNode (or null if not found) for the given key
        * starting at given root.
        */
+      @SuppressWarnings("unchecked")
       final TreeNode<K,V> findTreeNode(int h, Object k, Class<?> kc) {
          if (k != null) {
             TreeNode<K,V> p = this;
@@ -2644,6 +2650,7 @@ public class EquivalentConcurrentHashMapV8<K,V> extends AbstractMap<K,V>
       /**
        * Creates bin with initial set of nodes headed by b.
        */
+      @SuppressWarnings("unchecked")
       TreeBin(TreeNode<K,V> b, NodeEquivalence<K,V> nodeEq) { // EQUIVALENCE_MOD
          super(TREEBIN, nodeEq, null, null, null);
          this.first = b;
@@ -2768,6 +2775,7 @@ public class EquivalentConcurrentHashMapV8<K,V> extends AbstractMap<K,V>
        * Finds or adds a node.
        * @return null if added
        */
+      @SuppressWarnings("unchecked")
       final TreeNode<K,V> putTreeVal(int h, K k, V v) {
          Class<?> kc = null;
          boolean searched = false;
@@ -4542,6 +4550,7 @@ public class EquivalentConcurrentHashMapV8<K,V> extends AbstractMap<K,V>
       private static final long serialVersionUID = 2249069246763182397L;
       EntrySetView(EquivalentConcurrentHashMapV8<K,V> map) { super(map); }
 
+      @SuppressWarnings("unchecked")
       public boolean contains(Object o) {
          Object k, v, r; Map.Entry<?,?> e;
          return ((o instanceof Map.Entry) &&

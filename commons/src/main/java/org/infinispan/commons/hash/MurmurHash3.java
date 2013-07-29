@@ -399,6 +399,7 @@ public class MurmurHash3 implements Hash {
 
    public static class Externalizer extends NoStateExternalizer<MurmurHash3> {
       @Override
+      @SuppressWarnings("unchecked")
       public Set<Class<? extends MurmurHash3>> getTypeClasses() {
          return Util.<Class<? extends MurmurHash3>>asSet(MurmurHash3.class);
       }
