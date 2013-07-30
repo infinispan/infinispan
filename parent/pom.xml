@@ -89,7 +89,6 @@
       <version.protostream>1.0.0.Alpha1</version.protostream>
       <version.aesh>0.33.1</version.aesh>
       <version.antlr>3.4</version.antlr>
-      <version.apacheds.jdbm>1.5.7</version.apacheds.jdbm>
       <version.arquillian>1.0.3.Final</version.arquillian>
       <version.arquillian.container.managed>7.2.0.Final</version.arquillian.container.managed>
       <version.arquillian.container.weld>1.0.0.CR3</version.arquillian.container.weld>
@@ -184,11 +183,6 @@
             <artifactId>infinispan-cachestore-jdbc</artifactId>
             <version>${project.version}</version>
             <type>test-jar</type>
-         </dependency>
-         <dependency>
-            <groupId>${project.groupId}</groupId>
-            <artifactId>infinispan-cachestore-jdbm</artifactId>
-            <version>${project.version}</version>
          </dependency>
          <dependency>
             <groupId>${project.groupId}</groupId>
@@ -485,11 +479,6 @@
             <groupId>org.apache.commons</groupId>
             <artifactId>commons-math</artifactId>
             <version>${version.commons.math}</version>
-         </dependency>
-         <dependency>
-            <groupId>org.apache.directory.server</groupId>
-            <artifactId>apacheds-jdbm</artifactId>
-            <version>${version.apacheds.jdbm}</version>
          </dependency>
          <dependency>
             <groupId>org.apache.hadoop</groupId>
