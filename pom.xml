@@ -33,7 +33,6 @@
       <module>cachestore</module>
       <module>cachestore/jdbc</module>
       <module>cachestore/remote</module>
-      <module>cachestore/jpa</module>
       <module>cachestore/leveldb</module>
       <module>server</module>
       <module>server/core</module>
