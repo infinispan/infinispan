@@ -36,7 +36,6 @@
       <module>cachestore/bdbje</module>
       <module>cachestore/cloud</module>
       <module>cachestore/remote</module>
-      <module>cachestore/cassandra</module>
       <module>cachestore/hbase</module>
       <module>cachestore/jpa</module>
       <module>cachestore/leveldb</module>
