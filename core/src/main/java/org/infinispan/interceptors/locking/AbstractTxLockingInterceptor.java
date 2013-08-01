@@ -208,15 +208,20 @@ public abstract class AbstractTxLockingInterceptor extends AbstractLockingInterc
             }
 
             if (!txCompleted) {
-               throw newTimeoutException(key, txContext);
+               throw newTimeoutException(key, tx, txContext);
             }
          }
       }
    }
 
-   private TimeoutException newTimeoutException(Object key, TxInvocationContext txContext) {
+   private TimeoutException newTimeoutException(Object key, TxInvocationContext txContext) {                        
       return new TimeoutException("Could not acquire lock on " + key + " on behalf of transaction " +
-                                       txContext.getGlobalTransaction() + ". Lock is being held by " + lockManager.getOwner(key));
+                                       txContext.getGlobalTransaction() + "." + "Lock is being held by " + lockManager.getOwner(key));
+   }
+   
+   private TimeoutException newTimeoutException(Object key, CacheTransaction tx, TxInvocationContext txContext) {                  
+      return new TimeoutException("Could not acquire lock on " + key + " on behalf of transaction " +
+                                       txContext.getGlobalTransaction() + ". Waiting to complete tx: " + tx + ".");
    }
 
    private boolean releaseLockOnTxCompletion(TxInvocationContext ctx) {
