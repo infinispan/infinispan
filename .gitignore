@@ -38,8 +38,8 @@ rhq-plugin.xml
 # Persisted metadata
 *.dat
 # Antlr-generated
-IspnQLLexer.java
-IspnQLParser.java
-IspnQL.tokens
+IspnCliQLLexer.java
+IspnCliQLParser.java
+IspnCliQL.tokens
 # OS X generated file
 .DS_Store
