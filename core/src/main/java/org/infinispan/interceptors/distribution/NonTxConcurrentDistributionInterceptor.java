@@ -19,13 +19,18 @@
 
 package org.infinispan.interceptors.distribution;
 
+import org.infinispan.CacheException;
 import org.infinispan.commands.DataCommand;
 import org.infinispan.commands.write.PutMapCommand;
 import org.infinispan.commands.write.WriteCommand;
 import org.infinispan.context.Flag;
 import org.infinispan.context.InvocationContext;
+import org.infinispan.remoting.responses.CacheNotFoundResponse;
+import org.infinispan.remoting.responses.ExceptionResponse;
 import org.infinispan.remoting.responses.Response;
+import org.infinispan.remoting.responses.SuccessfulResponse;
 import org.infinispan.remoting.transport.Address;
+import org.infinispan.statetransfer.OutdatedTopologyException;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
@@ -117,5 +122,26 @@ public class NonTxConcurrentDistributionInterceptor extends NonTxDistributionInt
             rpcManager.invokeRemotely(recipientGenerator.generateRecipients(), command, sync);
          }
       }
+   }
+
+   protected Object getResponseFromPrimaryOwner(Address primaryOwner, Map<Address, Response> addressResponseMap) {
+      Response fromPrimaryOwner = addressResponseMap.get(primaryOwner);
+      if (fromPrimaryOwner == null) {
+         log.tracef("Primary owner %s returned null", primaryOwner);
+         return null;
+      }
+      if (fromPrimaryOwner.isSuccessful()) {
+         return ((SuccessfulResponse) fromPrimaryOwner).getResponseValue();
+      }
+
+      if (addressResponseMap.get(primaryOwner) instanceof CacheNotFoundResponse) {
+         // This means the cache wasn't running on the primary owner, so the command wasn't executed.
+         // We throw an OutdatedTopologyException, StateTransferInterceptor will catch the exception and
+         // it will then retry the command.
+         throw new OutdatedTopologyException("Cache is no longer running on primary owner " + primaryOwner);
+      }
+
+      Throwable cause = fromPrimaryOwner instanceof ExceptionResponse ? ((ExceptionResponse)fromPrimaryOwner).getException() : null;
+      throw new CacheException("Got unsuccessful response from primary owner: " + fromPrimaryOwner, cause);
    }
 }

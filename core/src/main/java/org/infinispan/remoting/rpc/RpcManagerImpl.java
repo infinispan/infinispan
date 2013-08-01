@@ -41,6 +41,9 @@ import org.infinispan.jmx.annotations.ManagedOperation;
 import org.infinispan.jmx.annotations.MeasurementType;
 import org.infinispan.jmx.annotations.Parameter;
 import org.infinispan.jmx.annotations.Units;
+import org.infinispan.manager.NamedCacheNotFoundException;
+import org.infinispan.remoting.RemoteException;
+import org.infinispan.remoting.responses.CacheNotFoundResponse;
 import org.infinispan.statetransfer.StateTransferManager;
 import org.infinispan.remoting.ReplicationQueue;
 import org.infinispan.remoting.RpcException;
@@ -88,7 +91,7 @@ public class RpcManagerImpl implements RpcManager {
 
    private boolean statisticsEnabled = false; // by default, don't gather statistics.
    private Configuration configuration;
-   private GlobalConfiguration globalCfg;
+   private GlobalConfiguration globalConfiguration;
    private ReplicationQueue replicationQueue;
    private ExecutorService asyncExecutor;
    private CommandsFactory cf;
@@ -98,14 +101,15 @@ public class RpcManagerImpl implements RpcManager {
 
    @Inject
    public void injectDependencies(Transport t, Cache cache, Configuration cfg,
-            ReplicationQueue replicationQueue, CommandsFactory cf,
-            @ComponentName(ASYNC_TRANSPORT_EXECUTOR) ExecutorService e,
-            LocalTopologyManager localTopologyManager, StateTransferManager stateTransferManager,
-            GlobalConfiguration globalCfg) {
+                                  GlobalConfiguration globalConfiguration,
+                                  ReplicationQueue replicationQueue, CommandsFactory cf,
+                                  @ComponentName(ASYNC_TRANSPORT_EXECUTOR) ExecutorService e,
+                                  LocalTopologyManager localTopologyManager,
+                                  StateTransferManager stateTransferManager) {
       this.t = t;
-      this.configuration = cfg;
       this.cacheName = cache.getName();
-      this.globalCfg = globalCfg;
+      this.configuration = cfg;
+      this.globalConfiguration = globalConfiguration;
       this.replicationQueue = replicationQueue;
       this.asyncExecutor = e;
       this.cf = cf;
@@ -310,12 +314,12 @@ public class RpcManagerImpl implements RpcManager {
    private void checkResponses(Map<Address, Response> rsps) {
       if (rsps != null) {
          for (Map.Entry<Address, Response> rsp : rsps.entrySet()) {
-            // TODO Double-check this logic, rsp.getValue() is a Response so it's 100% not Throwable
-            if (rsp != null && rsp.getValue() instanceof Throwable) {
-               Throwable throwable = (Throwable) rsp.getValue();
-               if (trace)
-                  log.tracef("Received Throwable from remote node %s", throwable, rsp.getKey());
-               throw new RpcException(throwable);
+            if (rsp.getValue() instanceof CacheNotFoundResponse) {
+               if (globalConfiguration.transport().strictPeerToPeer()) {
+                  String message = String.format("Cache %s has not been started on node %s", cacheName,
+                        rsp.getKey());
+                  throw new RemoteException(message, new NamedCacheNotFoundException(cacheName, message));
+               }
             }
          }
       }

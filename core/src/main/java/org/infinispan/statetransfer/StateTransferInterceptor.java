@@ -213,7 +213,7 @@ public class StateTransferInterceptor extends CommandInterceptor {   //todo [ani
       updateTopologyIdAndWaitForTransactionData((TopologyAffectedCommand) command);
 
       // TODO we may need to skip local invocation for read/write/tx commands if the command is too old and none of its keys are local
-      Object localResult = invokeNextInterceptor(ctx, command);
+      Object localResult = invokeNextWithRetry(ctx, command);
 
       boolean isNonTransactionalWrite = !ctx.isInTxScope() && command instanceof WriteCommand;
       boolean isTransactionalAndNotRolledBack = false;
@@ -226,6 +226,15 @@ public class StateTransferInterceptor extends CommandInterceptor {   //todo [ani
       }
 
       return localResult;
+   }
+
+   private Object invokeNextWithRetry(InvocationContext ctx, VisitableCommand command) throws Throwable {
+      try {
+         return invokeNextInterceptor(ctx, command);
+      } catch (OutdatedTopologyException e) {
+         log.debugf("Retrying command because of topology change: %s", command);
+         return invokeNextWithRetry(ctx, command);
+      }
    }
 
    private void updateTopologyIdAndWaitForTransactionData(TopologyAffectedCommand command) throws InterruptedException {
