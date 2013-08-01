@@ -126,7 +126,7 @@ public class Interpreter {
       }
    }
 
-   @ManagedOperation(description = "Parses and executes IspnQL statements")
+   @ManagedOperation(description = "Parses and executes IspnCliQL statements")
    public Map<String, String> execute(final String sessionId, final String s) throws Exception {
       Session session = null;
       ClassLoader oldCL = SysPropertyActions.setThreadContextClassLoader(cacheManager.getCacheManagerConfiguration().classLoader());
@@ -135,9 +135,9 @@ public class Interpreter {
          session = validateSession(sessionId);
 
          CharStream stream = new ANTLRStringStream(s);
-         IspnQLLexer lexer = new IspnQLLexer(stream);
+         IspnCliQLLexer lexer = new IspnCliQLLexer(stream);
          CommonTokenStream tokens = new CommonTokenStream(lexer);
-         IspnQLParser parser = new IspnQLParser(tokens);
+         IspnCliQLParser parser = new IspnCliQLParser(tokens);
 
          parser.statements();
 
