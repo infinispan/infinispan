@@ -3,7 +3,6 @@ package org.infinispan.remoting.transport;
 import org.infinispan.commons.CacheException;
 import org.infinispan.configuration.global.GlobalConfiguration;
 import org.infinispan.factories.annotations.Inject;
-import org.infinispan.manager.NamedCacheNotFoundException;
 import org.infinispan.remoting.responses.ExceptionResponse;
 import org.infinispan.remoting.responses.Response;
 import org.infinispan.remoting.transport.jgroups.SuspectException;
@@ -28,14 +27,6 @@ public abstract class AbstractTransport implements Transport {
       this.configuration = globalConfiguration;
    }
 
-   private boolean shouldThrowException(Exception ce) {
-      if (!configuration.transport().strictPeerToPeer()) {
-         if (ce instanceof NamedCacheNotFoundException) return false;
-         if (ce.getCause() != null && ce.getCause() instanceof NamedCacheNotFoundException) return false;
-      }
-      return true;
-   }
-
    public final boolean checkResponse(Object responseObject, Address sender) throws Exception {
       Log log = getLog();
       if (responseObject instanceof Response) {
@@ -44,12 +35,7 @@ public abstract class AbstractTransport implements Transport {
             ExceptionResponse exceptionResponse = (ExceptionResponse) response;
             Exception e = exceptionResponse.getException();
             // if we have any application-level exceptions make sure we throw them!!
-            if (shouldThrowException(e)) {
-               throw log.remoteException(sender, e);
-            } else {
-               if (log.isDebugEnabled())
-                  log.debug("Received exception from " + sender, e);
-            }
+            throw log.remoteException(sender, e);
          }
          return true;
       } else if (responseObject != null) {
