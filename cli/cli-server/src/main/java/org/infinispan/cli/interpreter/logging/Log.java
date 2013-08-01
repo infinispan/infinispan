@@ -16,7 +16,7 @@ import org.jboss.logging.Message;
 import org.jboss.logging.MessageLogger;
 
 /**
- * Log abstraction for the ISPNQL interpreter. For this module, message ids
+ * Log abstraction for the ISPNCLIQL interpreter. For this module, message ids
  * ranging from 19001 to 20000 inclusively have been reserved.
  *
  * @author Tristan Tarrant
