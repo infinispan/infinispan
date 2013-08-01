@@ -6,7 +6,7 @@ package org.infinispan.query.dsl;
  */
 public interface QueryFactory {
 
-   QueryBuilder from(String typeName);
+   QueryBuilder from(Class entityType);
 
    FilterConditionEndContext having(String attributePath);
 

@@ -4,6 +4,7 @@ import org.apache.lucene.search.Query;
 import org.hibernate.search.SearchFactory;
 import org.hibernate.search.query.dsl.EntityContext;
 import org.hibernate.search.query.engine.spi.TimeoutExceptionFactory;
+import org.infinispan.query.dsl.QueryFactory;
 
 /**
  * The SearchManager is the entry point to create full text queries on top of a cache.
@@ -12,6 +13,8 @@ import org.hibernate.search.query.engine.spi.TimeoutExceptionFactory;
  * @author Marko Luksa
  */
 public interface SearchManager {
+
+   QueryFactory getQueryFactory();
 
    /**
     * This is a simple method that will just return a {@link CacheQuery}, filtered according to a set of classes passed

@@ -16,7 +16,7 @@ public interface QueryBuilder extends FilterConditionBeginContext {
 
    QueryBuilder maxResults(int maxResults);
 
-   String getRootType();
+   Class getRootType();
 
    Query build();
 }

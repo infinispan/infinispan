@@ -227,6 +227,10 @@ public class QueryInterceptor extends CommandInterceptor {
       }
    }
 
+   public Map<Class<?>, Boolean> getKnownClasses() {
+      return knownClasses;
+   }
+
    public boolean updateKnownTypesIfNeeded(Object value) {
       if ( value != null ) {
          Class<?> potentialNewType = value.getClass();
