@@ -102,11 +102,14 @@ public class SingleFileCacheStore extends AbstractCacheStore {
          String location = config.getLocation();
          if (location == null || location.trim().length() == 0)
             location = "Infinispan-SingleFileCacheStore";
-         File dir = new File(location);
-         if (!dir.exists() && !dir.mkdirs())
-            throw log.directoryCannotBeCreated(dir.getAbsolutePath());
 
-         File f = new File(location, cache.getName() + ".dat");
+         File f = new File(location + File.separator + cache.getName() + ".dat");
+         if (!f.exists()) {
+             File dir = f.getParentFile();
+             if (!dir.exists() && !dir.mkdirs()) {
+                 throw log.directoryCannotBeCreated(dir.getAbsolutePath());
+             }
+         }
          file = new RandomAccessFile(f, "rw").getChannel();
 
          // initialize data structures
