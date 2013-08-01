@@ -1,6 +1,5 @@
 package org.infinispan;
 
-import org.infinispan.config.Configuration;
 import org.infinispan.lifecycle.ComponentStatus;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.util.concurrent.NotifyingFuture;
@@ -36,11 +35,6 @@ public abstract class AbstractDelegatingCache<K, V> implements Cache<K, V> {
    @Override
    public void evict(K key) {
       cache.evict(key);
-   }
-
-   @Override
-   public Configuration getConfiguration() {
-      return cache.getConfiguration();
    }
 
    @Override

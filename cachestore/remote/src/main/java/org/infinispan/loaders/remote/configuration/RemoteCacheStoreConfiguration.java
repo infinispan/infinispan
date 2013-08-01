@@ -2,22 +2,19 @@ package org.infinispan.loaders.remote.configuration;
 
 import java.util.Collections;
 import java.util.List;
-import java.util.Properties;
 
-import org.infinispan.client.hotrod.impl.ConfigurationProperties;
 import org.infinispan.commons.configuration.BuiltBy;
+import org.infinispan.commons.configuration.ConfigurationFor;
 import org.infinispan.commons.util.TypedProperties;
 import org.infinispan.configuration.cache.AbstractStoreConfiguration;
 import org.infinispan.configuration.cache.AsyncStoreConfiguration;
-import org.infinispan.configuration.cache.LegacyConfigurationAdaptor;
-import org.infinispan.configuration.cache.LegacyLoaderAdapter;
 import org.infinispan.configuration.cache.SingletonStoreConfiguration;
-import org.infinispan.loaders.remote.RemoteCacheStoreConfig;
+import org.infinispan.loaders.remote.RemoteCacheStore;
 import org.infinispan.loaders.remote.wrapper.EntryWrapper;
 
 @BuiltBy(RemoteCacheStoreConfigurationBuilder.class)
-public class RemoteCacheStoreConfiguration extends AbstractStoreConfiguration implements
-      LegacyLoaderAdapter<RemoteCacheStoreConfig> {
+@ConfigurationFor(RemoteCacheStore.class)
+public class RemoteCacheStoreConfiguration extends AbstractStoreConfiguration {
 
    private final ExecutorFactoryConfiguration asyncExecutorFactory;
    private final String balancingStrategy;
@@ -137,64 +134,6 @@ public class RemoteCacheStoreConfiguration extends AbstractStoreConfiguration im
 
    public int valueSizeEstimate() {
       return valueSizeEstimate;
-   }
-
-   @Override
-   public RemoteCacheStoreConfig adapt() {
-      RemoteCacheStoreConfig config = new RemoteCacheStoreConfig();
-      // StoreConfiguration
-      LegacyConfigurationAdaptor.adapt(this, config);
-
-      // RemoteCacheStoreConfiguration
-      config.setRawValues(rawValues);
-      config.setHotRodWrapping(hotRodWrapping);
-      config.setRemoteCacheName(remoteCacheName);
-      config.setAsyncExecutorFactory(asyncExecutorFactory.factory());
-      if (entryWrapper != null) {
-         config.setEntryWrapper(entryWrapper);
-      }
-
-      TypedProperties p = new TypedProperties();
-
-      // Async Executor
-      p.putAll(asyncExecutorFactory.properties());
-
-      // Connection Pool
-      p.put("maxActive", Integer.toString(connectionPool.maxActive()));
-      p.put("maxIdle", Integer.toString(connectionPool.maxIdle()));
-      p.put("maxTotal", Integer.toString(connectionPool.maxTotal()));
-      p.put("minIdle", connectionPool.minIdle());
-      p.put("minEvictableIdleTimeMillis", Long.toString(connectionPool.minEvictableIdleTime()));
-      p.put("testWhileIdle", Boolean.toString(connectionPool.testWhileIdle()));
-      p.put("timeBetweenEvictionRunsMillis", Long.toString(connectionPool.timeBetweenEvictionRuns()));
-      p.put("whenExhaustedAction", Integer.toString(connectionPool.exhaustedAction().ordinal()));
-
-      config.setTypedProperties(p);
-
-      Properties hrp = new Properties();
-      hrp.put(ConfigurationProperties.CONNECT_TIMEOUT, Long.toString(connectionTimeout));
-      hrp.put(ConfigurationProperties.FORCE_RETURN_VALUES, Boolean.toString(forceReturnValues));
-      hrp.put(ConfigurationProperties.KEY_SIZE_ESTIMATE, Integer.toString(keySizeEstimate));
-      hrp.put(ConfigurationProperties.PING_ON_STARTUP, Boolean.toString(pingOnStartup));
-      StringBuilder serverList = new StringBuilder();
-      for (RemoteServerConfiguration server : servers) {
-         if (serverList.length() > 0)
-            serverList.append(";");
-         serverList.append(server.host());
-         serverList.append(":");
-         serverList.append(server.port());
-      }
-      hrp.put(ConfigurationProperties.SERVER_LIST, serverList.toString());
-      hrp.put(ConfigurationProperties.SO_TIMEOUT, Long.toString(socketTimeout));
-      hrp.put(ConfigurationProperties.TCP_NO_DELAY, Boolean.toString(tcpNoDelay));
-      hrp.put(ConfigurationProperties.VALUE_SIZE_ESTIMATE, Integer.toString(valueSizeEstimate));
-      if (marshaller != null)
-         hrp.put(ConfigurationProperties.MARSHALLER, marshaller);
-      if (transportFactory != null)
-         hrp.put(ConfigurationProperties.TRANSPORT_FACTORY, transportFactory);
-
-      config.setHotRodClientProperties(hrp);
-      return config;
    }
 }
 

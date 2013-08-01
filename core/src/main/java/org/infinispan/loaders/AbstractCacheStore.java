@@ -33,6 +33,7 @@ import java.util.concurrent.atomic.AtomicInteger;
  * @author Mircea.Markus@jboss.com
  * @since 4.0
  */
+@Deprecated
 public abstract class AbstractCacheStore extends AbstractCacheLoader implements CacheStore {
 
    private static final Log log = LogFactory.getLog(AbstractCacheStore.class);

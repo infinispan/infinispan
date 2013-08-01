@@ -2,19 +2,25 @@ package org.infinispan.loaders.decorators;
 
 import org.infinispan.Cache;
 import org.infinispan.commons.CacheException;
+import org.infinispan.commons.configuration.BuiltBy;
+import org.infinispan.commons.configuration.ConfigurationFor;
+import org.infinispan.commons.util.TypedProperties;
+import org.infinispan.configuration.cache.AsyncStoreConfiguration;
+import org.infinispan.configuration.cache.LoadersConfigurationBuilder;
+import org.infinispan.configuration.cache.SingletonStoreConfiguration;
 import org.infinispan.container.entries.InternalCacheEntry;
 import org.infinispan.loaders.AbstractCacheStoreTest;
+import org.infinispan.loaders.dummy.DummyInMemoryCacheStoreConfiguration;
+import org.infinispan.loaders.dummy.DummyInMemoryCacheStoreConfigurationBuilder;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.infinispan.test.fwk.TestInternalCacheEntryFactory;
-import org.infinispan.loaders.CacheLoaderConfig;
 import org.infinispan.loaders.CacheLoaderException;
-import org.infinispan.loaders.CacheLoaderMetadata;
-import org.infinispan.loaders.CacheStore;
 import org.infinispan.loaders.dummy.DummyInMemoryCacheStore;
 import org.infinispan.loaders.modifications.Clear;
 import org.infinispan.loaders.modifications.Modification;
 import org.infinispan.loaders.modifications.Remove;
 import org.infinispan.loaders.modifications.Store;
+import org.infinispan.loaders.spi.CacheStore;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.test.AbstractInfinispanTest;
 import org.infinispan.test.CacheManagerCallable;
@@ -47,11 +53,17 @@ public class AsyncStoreTest extends AbstractInfinispanTest {
    private AsyncStore store;
 
    private void createStore() throws CacheLoaderException {
+      DummyInMemoryCacheStoreConfigurationBuilder dummyCfg = TestCacheManagerFactory.getDefaultCacheConfiguration(false)
+            .loaders()
+               .addStore(DummyInMemoryCacheStoreConfigurationBuilder.class)
+                  .storeName(AsyncStoreTest.class.getName());
+      dummyCfg
+         .async()
+            .enable()
+            .threadPoolSize(10);
       DummyInMemoryCacheStore underlying = new DummyInMemoryCacheStore();
-      AsyncStoreConfig asyncConfig = new AsyncStoreConfig().threadPoolSize(10);
-      store = new AsyncStore(underlying, asyncConfig);
-      DummyInMemoryCacheStore.Cfg dummyCfg = new DummyInMemoryCacheStore.Cfg().storeName(AsyncStoreTest.class.getName());
-      store.init(dummyCfg, getCache(), null);
+      store = new AsyncStore(underlying);
+      store.init(dummyCfg.create(), getCache(), null);
       store.start();
    }
 
@@ -132,11 +144,12 @@ public class AsyncStoreTest extends AbstractInfinispanTest {
          final CountDownLatch v2Latch = new CountDownLatch(1);
          final CountDownLatch endLatch = new CountDownLatch(1);
          DummyInMemoryCacheStore underlying = new DummyInMemoryCacheStore();
-         AsyncStoreConfig asyncConfig = new AsyncStoreConfig().threadPoolSize(10);
-         store = new MockAsyncStore(key, v1Latch, v2Latch, endLatch, underlying, asyncConfig);
-         DummyInMemoryCacheStore.Cfg dummyCfg = new DummyInMemoryCacheStore.Cfg();
-         dummyCfg.storeName(m.getName());
-         store.init(dummyCfg, getCache(), null);
+         store = new MockAsyncStore(key, v1Latch, v2Latch, endLatch, underlying);
+         DummyInMemoryCacheStoreConfigurationBuilder dummyCfg = TestCacheManagerFactory
+               .getDefaultCacheConfiguration(false)
+               .loaders().addLoader(DummyInMemoryCacheStoreConfigurationBuilder.class)
+                  .storeName(m.getName());
+         store.init(dummyCfg.create(), getCache(), null);
          store.start();
 
          store.store(TestInternalCacheEntryFactory.create(key, "v1"));
@@ -162,8 +175,7 @@ public class AsyncStoreTest extends AbstractInfinispanTest {
          final ConcurrentMap<Object, Modification> localMods = new ConcurrentHashMap<Object, Modification>();
          final CyclicBarrier barrier = new CyclicBarrier(2);
          DummyInMemoryCacheStore underlying = new DummyInMemoryCacheStore();
-         AsyncStoreConfig asyncConfig = new AsyncStoreConfig().threadPoolSize(10);
-         store = new AsyncStore(underlying, asyncConfig) {
+         store = new AsyncStore(underlying) {
             @Override
             protected void applyModificationsSync(List<Modification> mods) throws CacheLoaderException {
                for (Modification mod : mods)
@@ -190,9 +202,13 @@ public class AsyncStoreTest extends AbstractInfinispanTest {
                }
             }
          };
-         DummyInMemoryCacheStore.Cfg dummyCfg = new DummyInMemoryCacheStore.Cfg();
-         dummyCfg.storeName(m.getName());
-         store.init(dummyCfg, getCache(), null);
+         DummyInMemoryCacheStoreConfigurationBuilder dummyCfg = TestCacheManagerFactory
+               .getDefaultCacheConfiguration(false)
+               .loaders()
+                  .addStore(DummyInMemoryCacheStoreConfigurationBuilder.class)
+                     .storeName(m.getName());
+         dummyCfg.async().enable().threadPoolSize(10);
+         store.init(dummyCfg.create(), getCache(), null);
          store.start();
 
          List<Modification> mods = new ArrayList<Modification>();
@@ -251,8 +267,7 @@ public class AsyncStoreTest extends AbstractInfinispanTest {
                clearCount.getAndIncrement();
             }
          };
-         AsyncStoreConfig asyncConfig = new AsyncStoreConfig().threadPoolSize(10);
-         store = new AsyncStore(underlying, asyncConfig) {
+         store = new AsyncStore(underlying) {
             @Override
             protected void applyModificationsSync(List<Modification> mods)
                   throws CacheLoaderException {
@@ -267,9 +282,12 @@ public class AsyncStoreTest extends AbstractInfinispanTest {
                }
             }
          };
-         DummyInMemoryCacheStore.Cfg dummyCfg = new DummyInMemoryCacheStore.Cfg();
-         dummyCfg.storeName(m.getName());
-         store.init(dummyCfg, getCache(), null);
+         DummyInMemoryCacheStoreConfigurationBuilder dummyCfg = TestCacheManagerFactory
+               .getDefaultCacheConfiguration(false)
+               .loaders().addLoader(DummyInMemoryCacheStoreConfigurationBuilder.class)
+               .storeName(m.getName());
+         dummyCfg.async().enable().threadPoolSize(10);
+         store.init(dummyCfg.create(), getCache(), null);
          store.start();
 
          List<Modification> mods = new ArrayList<Modification>();
@@ -402,6 +420,7 @@ public class AsyncStoreTest extends AbstractInfinispanTest {
       for (int i = 0; i < number; i++) store.remove(key + i);
 
       eventually( new Condition() {
+         @Override
          public boolean isSatisfied() throws Exception {
             boolean allRemoved = true;
 
@@ -439,8 +458,8 @@ public class AsyncStoreTest extends AbstractInfinispanTest {
       final Object key;
 
       MockAsyncStore(Object key, CountDownLatch v1Latch, CountDownLatch v2Latch, CountDownLatch endLatch,
-                     CacheStore delegate, AsyncStoreConfig asyncStoreConfig) {
-         super(delegate, asyncStoreConfig);
+                     CacheStore delegate) {
+         super(delegate);
          this.v1Latch = v1Latch;
          this.v2Latch = v2Latch;
          this.endLatch = endLatch;
@@ -492,26 +511,41 @@ public class AsyncStoreTest extends AbstractInfinispanTest {
 
    private final static ThreadLocal<LockableCacheStore> STORE = new ThreadLocal<LockableCacheStore>();
 
-   public static class LockableCacheStoreConfig extends DummyInMemoryCacheStore.Cfg {
-      private static final long serialVersionUID = 1L;
+   @BuiltBy(LockableCacheStoreConfigurationBuilder.class)
+   @ConfigurationFor(LockableCacheStore.class)
+   public static class LockableCacheStoreConfiguration extends DummyInMemoryCacheStoreConfiguration {
 
-      public LockableCacheStoreConfig() {
-         setCacheLoaderClassName(LockableCacheStore.class.getName());
+      protected LockableCacheStoreConfiguration (boolean debug, boolean slow, String storeName,
+                                                 Object failKey,
+                                                 boolean purgeOnStartup, boolean purgeSynchronously,
+                                                 int purgerThreads, boolean fetchPersistentState,
+                                                 boolean ignoreModifications, TypedProperties properties,
+                                                 AsyncStoreConfiguration async, SingletonStoreConfiguration singletonStore) {
+
+         super(debug, slow, storeName, failKey, purgeOnStartup, purgeSynchronously, purgerThreads,
+               fetchPersistentState, ignoreModifications, properties, async, singletonStore);
       }
    }
 
-   @CacheLoaderMetadata(configurationClass = LockableCacheStoreConfig.class)
+   public static class LockableCacheStoreConfigurationBuilder extends DummyInMemoryCacheStoreConfigurationBuilder {
+
+      public LockableCacheStoreConfigurationBuilder(LoadersConfigurationBuilder builder) {
+         super(builder);
+      }
+      @Override
+      public LockableCacheStoreConfiguration create() {
+         return new LockableCacheStoreConfiguration(debug, slow, storeName, failKey, purgeOnStartup,
+               purgeSynchronously, purgerThreads, fetchPersistentState, ignoreModifications,
+               TypedProperties.toTypedProperties(properties), async.create(), singletonStore.create());
+      }
+   }
+
    public static class LockableCacheStore extends DummyInMemoryCacheStore {
       private final ReentrantLock lock = new ReentrantLock();
 
       public LockableCacheStore() {
          super();
          STORE.set(this);
-      }
-
-      @Override
-      public Class<? extends CacheLoaderConfig> getConfigurationClass() {
-         return LockableCacheStoreConfig.class;
       }
 
       @Override
@@ -537,10 +571,14 @@ public class AsyncStoreTest extends AbstractInfinispanTest {
 
    public void testModificationQueueSize(final Method m) throws Exception {
       LockableCacheStore underlying = new LockableCacheStore();
-      AsyncStoreConfig asyncConfig = new AsyncStoreConfig().threadPoolSize(10);
-      asyncConfig.modificationQueueSize(10);
-      store = new AsyncStore(underlying, asyncConfig);
-      store.init(new LockableCacheStoreConfig(), getCache(), null);
+      ConfigurationBuilder builder = TestCacheManagerFactory.getDefaultCacheConfiguration(false);
+
+      LockableCacheStoreConfigurationBuilder lcscsBuilder = new LockableCacheStoreConfigurationBuilder(builder.loaders());
+      lcscsBuilder.async()
+            .modificationQueueSize(10);
+
+      store = new AsyncStore(underlying);
+      store.init(lcscsBuilder.create(), getCache(), null);
       store.start();
       try {
          final CountDownLatch done = new CountDownLatch(1);
@@ -576,8 +614,7 @@ public class AsyncStoreTest extends AbstractInfinispanTest {
 
       private static ConfigurationBuilder config(boolean passivation) {
          ConfigurationBuilder config = new ConfigurationBuilder();
-         config.eviction().maxEntries(1).loaders().passivation(passivation).addStore()
-               .cacheStore(new LockableCacheStore()).async().enable();
+         config.eviction().maxEntries(1).loaders().passivation(passivation).addStore(LockableCacheStoreConfigurationBuilder.class).async().enable();
          return config;
       }
 

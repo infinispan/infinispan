@@ -1,5 +1,7 @@
 package org.infinispan.loaders;
 
+import org.infinispan.loaders.spi.CacheLoader;
+
 /**
  * An exception thrown by a {@link CacheLoader} implementation if there are problems reading from a loader.
  *

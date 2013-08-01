@@ -14,6 +14,7 @@ import javax.xml.bind.annotation.XmlTransient;
  * @author Galder Zamarreño
  * @since 5.0
  */
+@Deprecated
 public abstract class AbstractDecoratorConfigurationBean
       extends AbstractNamedCacheConfigurationBean implements CacheStoreConfig {
 
@@ -163,5 +164,5 @@ public abstract class AbstractDecoratorConfigurationBean
    public ClassLoader getClassLoader() {
       return cacheStoreConfig.getClassLoader();
    }
-   
+
 }

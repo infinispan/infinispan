@@ -3,10 +3,9 @@ package org.infinispan.distribution;
 import org.infinispan.Cache;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
-import org.infinispan.configuration.cache.LegacyStoreConfigurationBuilder;
-import org.infinispan.loaders.CacheLoaderManager;
-import org.infinispan.loaders.CacheStore;
-import org.infinispan.loaders.dummy.DummyInMemoryCacheStore;
+import org.infinispan.loaders.dummy.DummyInMemoryCacheStoreConfigurationBuilder;
+import org.infinispan.loaders.manager.CacheLoaderManager;
+import org.infinispan.loaders.spi.CacheStore;
 import org.infinispan.test.MultipleCacheManagersTest;
 import org.infinispan.transaction.LockingMode;
 import org.infinispan.transaction.TransactionMode;
@@ -46,10 +45,7 @@ public class PessimisticDistSyncTxCacheStoreSharedTest extends MultipleCacheMana
 
       cb.loaders().passivation(false).preload(true).shared(true);
       // Make it really shared by adding the test's name as store name
-      LegacyStoreConfigurationBuilder sb = cb.loaders().addStore().cacheStore(
-            new DummyInMemoryCacheStore());
-      sb.addProperty("storeName", getClass().getSimpleName());
-      sb.async().disable();
+      cb.loaders().addStore(DummyInMemoryCacheStoreConfigurationBuilder.class).storeName(getClass().getSimpleName()).async().disable();
       return cb;
    }
 

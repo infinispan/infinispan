@@ -2,7 +2,6 @@ package org.infinispan.lucene;
 
 import java.util.regex.Pattern;
 
-import org.infinispan.loaders.jdbc.stringbased.JdbcStringBasedCacheStoreConfig;
 import org.infinispan.loaders.keymappers.TwoWayKey2StringMapper;
 import org.infinispan.lucene.logging.Log;
 import org.infinispan.util.logging.LogFactory;

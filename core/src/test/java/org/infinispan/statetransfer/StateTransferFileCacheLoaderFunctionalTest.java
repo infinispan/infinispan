@@ -9,7 +9,7 @@ import org.infinispan.Cache;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.cache.FileCacheStoreConfigurationBuilder;
-import org.infinispan.loaders.CacheLoader;
+import org.infinispan.loaders.spi.CacheLoader;
 import org.infinispan.manager.CacheContainer;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.commons.marshall.AdvancedExternalizer;

@@ -3,9 +3,9 @@ package org.infinispan.atomic;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.container.DataContainer;
 import org.infinispan.eviction.EvictionStrategy;
-import org.infinispan.loaders.CacheLoaderManager;
-import org.infinispan.loaders.CacheStore;
-import org.infinispan.loaders.dummy.DummyInMemoryCacheStore;
+import org.infinispan.loaders.dummy.DummyInMemoryCacheStoreConfigurationBuilder;
+import org.infinispan.loaders.manager.CacheLoaderManager;
+import org.infinispan.loaders.spi.CacheStore;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.CleanupAfterMethod;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
@@ -25,11 +25,12 @@ public class LocalDeltaAwarePassivationTest extends LocalDeltaAwareEvictionTest 
    protected void createCacheManagers() throws Throwable {
       ConfigurationBuilder configBuilder = TestCacheManagerFactory.getDefaultCacheConfiguration(true);
       configBuilder.eviction().maxEntries(1).strategy(EvictionStrategy.LRU)
-            .loaders().passivation(true).addStore().cacheStore(new DummyInMemoryCacheStore());
+            .loaders().passivation(true).addStore(DummyInMemoryCacheStoreConfigurationBuilder.class);
 
       addClusterEnabledCacheManager(configBuilder);
    }
 
+   @Override
    protected void assertNumberOfEntries(int cacheIndex) throws Exception {
       CacheStore cacheStore = TestingUtil.extractComponent(cache(cacheIndex), CacheLoaderManager.class).getCacheStore();
       assertEquals(1, cacheStore.loadAllKeys(null).size()); // one entry in store

@@ -31,7 +31,7 @@ public class JdbcBinaryCacheStoreConfigurationBuilder extends
 
    @Override
    public JdbcBinaryCacheStoreConfiguration create() {
-      return new JdbcBinaryCacheStoreConfiguration(table.create(), connectionFactory.create(), lockAcquistionTimeout, lockConcurrencyLevel, purgeOnStartup, purgeSynchronously,
+      return new JdbcBinaryCacheStoreConfiguration(table.create(), connectionFactory != null ? connectionFactory.create() : null, manageConnectionFactory, lockAcquistionTimeout, lockConcurrencyLevel, purgeOnStartup, purgeSynchronously,
             purgerThreads, fetchPersistentState, ignoreModifications, TypedProperties.toTypedProperties(properties), async.create(), singletonStore.create());
    }
 

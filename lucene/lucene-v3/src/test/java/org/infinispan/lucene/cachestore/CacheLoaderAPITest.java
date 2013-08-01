@@ -10,13 +10,15 @@ import org.apache.lucene.store.Directory;
 import org.apache.lucene.store.FSDirectory;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.container.entries.InternalCacheEntry;
-import org.infinispan.loaders.CacheLoader;
 import org.infinispan.loaders.CacheLoaderException;
-import org.infinispan.loaders.CacheLoaderManager;
+import org.infinispan.loaders.manager.CacheLoaderManager;
+import org.infinispan.loaders.spi.CacheLoader;
 import org.infinispan.lucene.ChunkCacheKey;
 import org.infinispan.lucene.FileCacheKey;
 import org.infinispan.lucene.FileListCacheKey;
 import org.infinispan.lucene.FileReadLockKey;
+import org.infinispan.lucene.cachestore.configuration.LuceneCacheLoaderConfiguration;
+import org.infinispan.lucene.cachestore.configuration.LuceneCacheLoaderConfigurationBuilder;
 import org.infinispan.lucene.directory.DirectoryBuilder;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.test.SingleCacheManagerTest;
@@ -58,12 +60,11 @@ public class CacheLoaderAPITest extends SingleCacheManagerTest {
       FSDirectory luceneDirectory = FSDirectory.open(subDir);
       luceneDirectory.close();
       ConfigurationBuilder builder = new ConfigurationBuilder();
-      builder
-         .loaders()
-            .addLoader()
-               .cacheLoader( new LuceneCacheLoader() )
-                  .addProperty(LuceneCacheLoaderConfig.LOCATION_OPTION, rootDir.getAbsolutePath())
-                  .addProperty(LuceneCacheLoaderConfig.AUTO_CHUNK_SIZE_OPTION, "110");
+      builder.loaders()
+            .addLoader(LuceneCacheLoaderConfigurationBuilder.class)
+               .autoChunkSize(110)
+               .location(rootDir.getAbsolutePath());
+
       return TestCacheManagerFactory.createCacheManager(builder);
    }
 
@@ -335,7 +336,7 @@ public class CacheLoaderAPITest extends SingleCacheManagerTest {
       LuceneCacheLoader cacheLoader = (LuceneCacheLoader) TestingUtil.extractComponent(cacheManager.getCache(),
                                                                     CacheLoaderManager.class).getCacheLoader();
 
-      AssertJUnit.assertSame(cacheLoader.getConfigurationClass(), LuceneCacheLoaderConfig.class);
+      AssertJUnit.assertSame(cacheLoader.getConfiguration().getClass(), LuceneCacheLoaderConfiguration.class);
    }
 
    @DataProvider(name = "passEntriesCount")

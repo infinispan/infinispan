@@ -1,8 +1,10 @@
-package org.infinispan.loaders;
+package org.infinispan.loaders.manager;
 
 import java.util.List;
 
 import org.infinispan.lifecycle.Lifecycle;
+import org.infinispan.loaders.spi.CacheLoader;
+import org.infinispan.loaders.spi.CacheStore;
 
 /**
  * The cache loader manager interface

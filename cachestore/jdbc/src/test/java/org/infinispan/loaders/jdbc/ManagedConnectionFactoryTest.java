@@ -2,8 +2,9 @@ package org.infinispan.loaders.jdbc;
 
 import org.infinispan.loaders.BaseCacheStoreTest;
 import org.infinispan.loaders.CacheLoaderException;
-import org.infinispan.loaders.jdbc.connectionfactory.ConnectionFactoryConfig;
+import org.infinispan.loaders.jdbc.configuration.JdbcStringBasedCacheStoreConfigurationBuilder;
 import org.infinispan.loaders.jdbc.connectionfactory.SimpleConnectionFactory;
+import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.infinispan.test.fwk.UnitTestDatabaseManager;
 import org.infinispan.test.jndi.DummyContextFactory;
 import org.testng.annotations.AfterClass;
@@ -58,15 +59,20 @@ public abstract class ManagedConnectionFactoryTest extends BaseCacheStoreTest {
       private SimpleConnectionFactory simpleFactory;
 
       public void start() throws CacheLoaderException {
-         ConnectionFactoryConfig config = UnitTestDatabaseManager.getUniqueConnectionFactoryConfig();
+
+         JdbcStringBasedCacheStoreConfigurationBuilder storeBuilder = TestCacheManagerFactory
+               .getDefaultCacheConfiguration(false)
+               .loaders()
+                  .addLoader(JdbcStringBasedCacheStoreConfigurationBuilder.class);
          simpleFactory = new SimpleConnectionFactory();
-         simpleFactory.start(config, Thread.currentThread().getContextClassLoader());
+         simpleFactory.start(UnitTestDatabaseManager.configureSimpleConnectionFactory(storeBuilder).create(), Thread.currentThread().getContextClassLoader());
       }
 
       public void stop() {
          simpleFactory.stop();
       }
 
+      @Override
       public Connection getConnection() throws SQLException {
          try {
             return simpleFactory.getConnection();
@@ -75,30 +81,37 @@ public abstract class ManagedConnectionFactoryTest extends BaseCacheStoreTest {
          }
       }
 
+      @Override
       public Connection getConnection(String username, String password) throws SQLException {
          return getConnection();
       }
 
+      @Override
       public PrintWriter getLogWriter() throws SQLException {
          throw new IllegalStateException("This should not be called!");
       }
 
+      @Override
       public void setLogWriter(PrintWriter out) throws SQLException {
          throw new IllegalStateException("This should not be called!");
       }
 
+      @Override
       public void setLoginTimeout(int seconds) throws SQLException {
          throw new IllegalStateException("This should not be called!");
       }
 
+      @Override
       public int getLoginTimeout() throws SQLException {
          throw new IllegalStateException("This should not be called!");
       }
 
+      @Override
       public <T> T unwrap(Class<T> iface) throws SQLException {
          throw new IllegalStateException("This should not be called!");
       }
 
+      @Override
       public boolean isWrapperFor(Class<?> iface) throws SQLException {
          throw new IllegalStateException("This should not be called!");
       }

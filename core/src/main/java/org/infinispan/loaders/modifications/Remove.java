@@ -1,7 +1,7 @@
 package org.infinispan.loaders.modifications;
 
 /**
- * Represents a {@link org.infinispan.loaders.CacheStore#remove(Object)} modification
+ * Represents a {@link org.infinispan.loaders.spi.CacheStore#remove(Object)} modification
  *
  * @author Manik Surtani
  * @since 4.0

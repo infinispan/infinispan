@@ -9,6 +9,7 @@ import java.sql.SQLException;
 
 import javax.naming.NamingException;
 
+import org.infinispan.commons.CacheConfigurationException;
 import org.infinispan.loaders.bucket.Bucket;
 import org.jboss.logging.Cause;
 import org.jboss.logging.LogMessage;
@@ -136,4 +137,12 @@ public interface Log extends org.infinispan.util.logging.Log {
    @Message(value = "SQL error while fetching stored entry with key: %s, lockingKey: %s", id = 8027)
    void sqlFailureReadingKey(Object key, String lockingKey, @Cause SQLException e);
 
+   @Message(value = "Attribute '%s' has not been set", id = 8028)
+   CacheConfigurationException tableManipulationAttributeNotSet(String name);
+
+   @Message(value = "A ConnectionFactory has not been specified for this store", id = 8029)
+   CacheConfigurationException missingConnectionFactory();
+
+   @Message(value = "Cannot specify a ConnectionFactory and manageConnectionFactory at the same time", id = 8030)
+   CacheConfigurationException unmanagedConnectionFactory();
 }

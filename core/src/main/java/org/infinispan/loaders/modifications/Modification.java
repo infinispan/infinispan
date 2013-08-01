@@ -1,7 +1,7 @@
 package org.infinispan.loaders.modifications;
 
 /**
- * An interface that defines a {@link org.infinispan.loaders.CacheStore} modification
+ * An interface that defines a {@link org.infinispan.loaders.spi.CacheStore} modification
  *
  * @author Manik Surtani
  * @since 4.0

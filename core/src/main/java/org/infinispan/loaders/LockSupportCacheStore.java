@@ -29,6 +29,7 @@ import org.infinispan.util.logging.LogFactory;
  * @param <L> the type of the locking key returned by
  *            {@link #getLockFromKey(Object)}
  */
+@Deprecated
 public abstract class LockSupportCacheStore<L> extends AbstractCacheStore {
 
    private static final Log log = LogFactory.getLog(LockSupportCacheStore.class);

@@ -1,8 +1,10 @@
 package org.infinispan.loaders;
 
 import org.infinispan.configuration.cache.ConfigurationBuilder;
-import org.infinispan.configuration.cache.LegacyStoreConfigurationBuilder;
-import org.infinispan.loaders.dummy.DummyInMemoryCacheStore;
+import org.infinispan.configuration.cache.LoadersConfigurationBuilder;
+import org.infinispan.loaders.dummy.DummyInMemoryCacheStoreConfigurationBuilder;
+import org.infinispan.loaders.manager.CacheLoaderManager;
+import org.infinispan.loaders.spi.CacheStore;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.test.SingleCacheManagerTest;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
@@ -29,16 +31,15 @@ public class TreeCacheWithLoaderTest extends SingleCacheManagerTest {
       // start a single cache instance
       ConfigurationBuilder cb = getDefaultStandaloneCacheConfig(true);
       cb.invocationBatching().enable();
-      addCacheStore(cb.loaders().addStore());
+      addCacheStore(cb.loaders());
       EmbeddedCacheManager cm = TestCacheManagerFactory.createCacheManager(cb);
       cache = new TreeCacheImpl<String, String>(cm.getCache());
       store = extractCacheStore();
       return cm;
    }
 
-   protected void addCacheStore(LegacyStoreConfigurationBuilder cb) {
-      cb.cacheStore(new DummyInMemoryCacheStore())
-            .addProperty("storeName", getClass().getName());
+   protected void addCacheStore(LoadersConfigurationBuilder loadersConfigurationBuilder) {
+      loadersConfigurationBuilder.addStore(DummyInMemoryCacheStoreConfigurationBuilder.class).storeName(getClass().getName());
    }
 
    public void testPersistence() throws CacheLoaderException {

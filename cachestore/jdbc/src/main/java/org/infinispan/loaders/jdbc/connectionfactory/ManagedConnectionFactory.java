@@ -1,6 +1,8 @@
 package org.infinispan.loaders.jdbc.connectionfactory;
 
 import org.infinispan.loaders.CacheLoaderException;
+import org.infinispan.loaders.jdbc.configuration.ConnectionFactoryConfiguration;
+import org.infinispan.loaders.jdbc.configuration.ManagedConnectionFactoryConfiguration;
 import org.infinispan.loaders.jdbc.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
@@ -29,9 +31,18 @@ public class ManagedConnectionFactory extends ConnectionFactory {
    private DataSource dataSource;
 
    @Override
-   public void start(ConnectionFactoryConfig config, ClassLoader classLoader) throws CacheLoaderException {
+   public void start(ConnectionFactoryConfiguration factoryConfiguration, ClassLoader classLoader) throws CacheLoaderException {
       InitialContext ctx = null;
-      String datasourceName = config.getDatasourceJndiLocation();
+      String datasourceName;
+      if (factoryConfiguration instanceof ManagedConnectionFactoryConfiguration) {
+         ManagedConnectionFactoryConfiguration managedConfiguration = (ManagedConnectionFactoryConfiguration)
+               factoryConfiguration;
+         datasourceName = managedConfiguration.jndiUrl();
+      }
+      else {
+         throw new CacheLoaderException("FactoryConfiguration has to be an instance of " +
+               "ManagedConnectionFactoryConfiguration");
+      }
       try {
          ctx = new InitialContext();
          dataSource = (DataSource) ctx.lookup(datasourceName);

@@ -11,7 +11,7 @@ import java.util.concurrent.locks.ReentrantReadWriteLock;
 
 /**
  * A simple implementation of lock striping, using cache entry keys to lock on, primarily used to help make {@link
- * org.infinispan.loaders.CacheLoader} implemtations thread safe.
+ * org.infinispan.loaders.spi.CacheLoader} implemtations thread safe.
  * <p/>
  * Backed by a set of {@link java.util.concurrent.locks.ReentrantReadWriteLock} instances, and using the key hashcodes
  * to determine buckets.

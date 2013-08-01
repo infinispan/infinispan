@@ -14,6 +14,7 @@ import org.infinispan.interceptors.CacheStoreInterceptor;
 import org.infinispan.interceptors.InterceptorChain;
 import org.infinispan.interceptors.base.CommandInterceptor;
 import org.infinispan.loaders.dummy.DummyInMemoryCacheStore;
+import org.infinispan.loaders.dummy.DummyInMemoryCacheStoreConfigurationBuilder;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.test.MultipleCacheManagersTest;
 import org.infinispan.test.TestingUtil;
@@ -23,7 +24,7 @@ import org.infinispan.transaction.xa.GlobalTransaction;
 import org.testng.annotations.Test;
 
 /**
- * Test for ISPN-2321: No GlobalTransaction objects must be left behind in 
+ * Test for ISPN-2321: No GlobalTransaction objects must be left behind in
  * CacheStoreInterceptor after one phase commit transactions. This test has 1PC transactions as the transactional
  * mode is pessimistic.
  *
@@ -33,7 +34,7 @@ import org.testng.annotations.Test;
 public class NoTxLeakInCacheStoreInterceptorTest extends MultipleCacheManagersTest {
 
    private final String testCacheName = "testCache" + getClass().getSimpleName();
-   
+
    @Override
    protected void createCacheManagers() throws Throwable {
       ConfigurationBuilder cb = new ConfigurationBuilder();
@@ -41,14 +42,12 @@ public class NoTxLeakInCacheStoreInterceptorTest extends MultipleCacheManagersTe
                .scheme(VersioningScheme.SIMPLE).transaction().lockingMode(LockingMode.PESSIMISTIC);
       cb.loaders().passivation(false).preload(true).shared(true);
       // Make it really shared by adding the test's name as store name
-      CacheLoaderConfigurationBuilder lb = cb.loaders().addCacheLoader()
-               .cacheLoader(new DummyInMemoryCacheStore());
-      lb.addProperty("storeName", getClass().getSimpleName());
+      cb.loaders().addStore(DummyInMemoryCacheStoreConfigurationBuilder.class).storeName(getClass().getSimpleName());
 
       EmbeddedCacheManager cm1 = TestCacheManagerFactory.createClusteredCacheManager();
       EmbeddedCacheManager cm2 = TestCacheManagerFactory.createClusteredCacheManager();
       registerCacheManager(cm1, cm2);
-      
+
       defineConfigurationOnAllManagers(testCacheName, cb);
       waitForClusterToForm(testCacheName);
    }
@@ -56,7 +55,7 @@ public class NoTxLeakInCacheStoreInterceptorTest extends MultipleCacheManagersTe
    public void test() throws Exception {
       Cache<Object, Object> cache = cache(0, testCacheName);
       cache.put("k1", "v1");
-      
+
       // ensure that the implicit transaction created for the "put" is cleaned up from the
       // CacheStoreInterceptor "preparingTxs" and "txStores" maps
       for (int i = 0; i < getCacheManagers().size(); i++) {
@@ -64,7 +63,7 @@ public class NoTxLeakInCacheStoreInterceptorTest extends MultipleCacheManagersTe
          assertTxFieldsEmpty(cacheStoreInterceptor, i);
       }
    }
-   
+
    @SuppressWarnings("unchecked")
    private void assertTxFieldsEmpty(CacheStoreInterceptor cacheStoreInterceptor,
             int cacheManagerIndex) throws Exception {

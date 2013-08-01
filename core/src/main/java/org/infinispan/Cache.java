@@ -4,7 +4,7 @@ import org.infinispan.api.BasicCache;
 import org.infinispan.commons.api.BatchingCache;
 import org.infinispan.config.Configuration;
 import org.infinispan.lifecycle.ComponentStatus;
-import org.infinispan.loaders.CacheStore;
+import org.infinispan.loaders.spi.CacheStore;
 import org.infinispan.manager.DefaultCacheManager;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.notifications.Listenable;
@@ -126,9 +126,6 @@ public interface Cache<K, V> extends BasicCache<K, V>, BatchingCache, Listenable
     * @param key key to evict
     */
    void evict(K key);
-
-   @Deprecated
-   Configuration getConfiguration();
 
    org.infinispan.configuration.cache.Configuration getCacheConfiguration();
 

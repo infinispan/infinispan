@@ -2,6 +2,8 @@ package org.infinispan.loaders.jdbc.connectionfactory;
 
 import org.infinispan.loaders.CacheLoaderException;
 import org.infinispan.commons.util.Util;
+import org.infinispan.loaders.jdbc.configuration.ConnectionFactoryConfiguration;
+import org.infinispan.loaders.jdbc.configuration.SimpleConnectionFactoryConfiguration;
 import org.infinispan.loaders.jdbc.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
@@ -25,11 +27,21 @@ public class SimpleConnectionFactory extends ConnectionFactory {
    private volatile int connectionCount = 0;
 
    @Override
-   public void start(ConnectionFactoryConfig config, ClassLoader classLoader) throws CacheLoaderException {
-      loadDriver(config.getDriverClass(), classLoader);
-      this.connectionUrl = config.getConnectionUrl();
-      this.userName = config.getUserName();
-      this.password = config.getPassword();
+   public void start(ConnectionFactoryConfiguration config, ClassLoader classLoader) throws CacheLoaderException {
+
+      SimpleConnectionFactoryConfiguration factoryConfiguration;
+      if (config instanceof SimpleConnectionFactoryConfiguration) {
+         factoryConfiguration = (SimpleConnectionFactoryConfiguration) config;
+      }
+      else {
+         throw new CacheLoaderException("ConnectionFactoryConfiguration has to be an instance of " +
+               "SimpleConnectionFactoryConfiguration.");
+      }
+
+      loadDriver(factoryConfiguration.driverClass(), classLoader);
+      this.connectionUrl = factoryConfiguration.connectionUrl();
+      this.userName = factoryConfiguration.username();
+      this.password = factoryConfiguration.password();
       if (log.isTraceEnabled()) {
          log.tracef("Starting connection %s", this);
       }

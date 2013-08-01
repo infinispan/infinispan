@@ -1,9 +1,5 @@
 package org.infinispan.loaders.remote;
 
-import java.util.Properties;
-
-import org.infinispan.client.hotrod.RemoteCache;
-import org.infinispan.client.hotrod.RemoteCacheManager;
 import org.infinispan.client.hotrod.TestHelper;
 import org.infinispan.client.hotrod.test.HotRodClientTestingUtil;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
@@ -11,7 +7,8 @@ import org.infinispan.container.InternalEntryFactoryImpl;
 import org.infinispan.eviction.EvictionStrategy;
 import org.infinispan.loaders.BaseCacheStoreTest;
 import org.infinispan.loaders.CacheLoaderException;
-import org.infinispan.loaders.CacheStore;
+import org.infinispan.loaders.remote.configuration.RemoteCacheStoreConfigurationBuilder;
+import org.infinispan.loaders.spi.CacheStore;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.server.hotrod.HotRodServer;
 import org.infinispan.test.TestingUtil;
@@ -31,6 +28,7 @@ import static org.infinispan.server.hotrod.test.HotRodTestingUtil.hotRodCacheCon
 @Test(testName = "loaders.remote.RemoteCacheStoreRawValuesTest", groups = "functional")
 public class RemoteCacheStoreRawValuesTest extends BaseCacheStoreTest {
 
+   private static final String REMOTE_CACHE = "remote-cache";
    private EmbeddedCacheManager localCacheManager;
    private HotRodServer hrServer;
 
@@ -41,20 +39,24 @@ public class RemoteCacheStoreRawValuesTest extends BaseCacheStoreTest {
             .expiration().wakeUpInterval(10L);
 
       localCacheManager = TestCacheManagerFactory.createCacheManager(hotRodCacheConfiguration(cb));
+
+      localCacheManager.getCache(REMOTE_CACHE);
       hrServer = TestHelper.startHotRodServer(localCacheManager);
 
-      RemoteCacheStoreConfig remoteCacheStoreConfig = new RemoteCacheStoreConfig();
-      remoteCacheStoreConfig.setPurgeSynchronously(true);
-      remoteCacheStoreConfig.setUseDefaultRemoteCache(true);
-      remoteCacheStoreConfig.setRawValues(true);
-      assert remoteCacheStoreConfig.isUseDefaultRemoteCache();
-
-      Properties properties = new Properties();
-      properties.put("infinispan.client.hotrod.server_list", "localhost:" + hrServer.getPort());
-      remoteCacheStoreConfig.setHotRodClientProperties(properties);
+      RemoteCacheStoreConfigurationBuilder storeConfigurationBuilder = TestCacheManagerFactory
+            .getDefaultCacheConfiguration(false)
+            .loaders()
+               .addLoader(RemoteCacheStoreConfigurationBuilder.class)
+                  .purgeSynchronously(true)
+                  .rawValues(true)
+                  .remoteCacheName(REMOTE_CACHE);
+      storeConfigurationBuilder
+                  .addServer()
+                     .host(hrServer.getHost())
+                     .port(hrServer.getPort());
 
       RemoteCacheStore remoteCacheStore = new RemoteCacheStore();
-      remoteCacheStore.init(remoteCacheStoreConfig, getCache(), getMarshaller());
+      remoteCacheStore.init(storeConfigurationBuilder.create(), getCache(), getMarshaller());
       remoteCacheStore.setInternalCacheEntryFactory(new InternalEntryFactoryImpl());
       remoteCacheStore.start();
 

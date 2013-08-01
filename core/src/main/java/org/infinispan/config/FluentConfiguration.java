@@ -9,7 +9,6 @@ import org.infinispan.distribution.group.Grouper;
 import org.infinispan.eviction.EvictionStrategy;
 import org.infinispan.eviction.EvictionThreadPolicy;
 import org.infinispan.interceptors.base.CommandInterceptor;
-import org.infinispan.loaders.CacheLoaderConfig;
 import org.infinispan.remoting.ReplicationQueue;
 import org.infinispan.transaction.LockingMode;
 import org.infinispan.transaction.TransactionMode;
@@ -128,7 +127,6 @@ public class FluentConfiguration extends AbstractFluentConfigurationBean {
        */
       LoadersConfig shared(Boolean shared);
 
-      LoadersConfig addCacheLoader(CacheLoaderConfig... configs);
    }
 
    /**

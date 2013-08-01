@@ -3,15 +3,15 @@ package org.infinispan.loaders.cluster;
 import org.infinispan.AdvancedCache;
 import org.infinispan.Cache;
 import org.infinispan.commands.remote.ClusteredGetCommand;
+import org.infinispan.configuration.cache.CacheLoaderConfiguration;
+import org.infinispan.configuration.cache.ClusterCacheLoaderConfiguration;
 import org.infinispan.container.entries.InternalCacheEntry;
 import org.infinispan.container.entries.InternalCacheValue;
 import org.infinispan.context.Flag;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.lifecycle.ComponentStatus;
-import org.infinispan.loaders.AbstractCacheLoader;
-import org.infinispan.loaders.CacheLoaderConfig;
 import org.infinispan.loaders.CacheLoaderException;
-import org.infinispan.loaders.CacheLoaderMetadata;
+import org.infinispan.loaders.spi.AbstractCacheLoader;
 import org.infinispan.commons.marshall.StreamingMarshaller;
 import org.infinispan.commons.util.InfinispanCollections;
 import org.infinispan.remoting.responses.ClusteredGetResponseValidityFilter;
@@ -36,17 +36,20 @@ import java.util.concurrent.TimeUnit;
  *
  * @author Mircea.Markus@jboss.com
  */
-@CacheLoaderMetadata(configurationClass = ClusterCacheLoaderConfig.class)
 public class ClusterCacheLoader extends AbstractCacheLoader {
    private static final Log log = LogFactory.getLog(ClusterCacheLoader.class);
 
-   private ClusterCacheLoaderConfig config;
    private RpcManager rpcManager;
    private AdvancedCache<?, ?> cache;
 
+   private ClusterCacheLoaderConfiguration configuration;
+
    @Override
-   public void init(CacheLoaderConfig config, Cache<?, ?> cache, StreamingMarshaller m) {
-      this.config = (ClusterCacheLoaderConfig) config;
+   public void init(CacheLoaderConfiguration configuration, Cache<?, ?> cache,
+                    StreamingMarshaller m) throws CacheLoaderException {
+
+      this.configuration = validateConfigurationClass(configuration, ClusterCacheLoaderConfiguration.class);
+      super.init(configuration, cache, m);
       this.cache = cache.getAdvancedCache();
       rpcManager = this.cache.getRpcManager();
    }
@@ -110,18 +113,13 @@ public class ClusterCacheLoader extends AbstractCacheLoader {
       //nothing to do here
    }
 
-   @Override
-   public Class<? extends CacheLoaderConfig> getConfigurationClass() {
-      return ClusterCacheLoaderConfig.class;
-   }
-
    private Collection<Response> doRemoteCall(ClusteredGetCommand clusteredGetCommand) throws CacheLoaderException {
       Set<Address> members = new HashSet<Address>(rpcManager.getTransport().getMembers());
       Address self = rpcManager.getTransport().getAddress();
       ResponseFilter filter = new ClusteredGetResponseValidityFilter(members, self);
       try {
          RpcOptions options = rpcManager.getRpcOptionsBuilder(ResponseMode.WAIT_FOR_VALID_RESPONSE)
-               .timeout(config.getRemoteCallTimeout(), TimeUnit.MILLISECONDS).responseFilter(filter).build();
+               .timeout(configuration.remoteCallTimeout(), TimeUnit.MILLISECONDS).responseFilter(filter).build();
          return rpcManager.invokeRemotely(null, clusteredGetCommand, options).values();
       } catch (Exception e) {
          log.errorDoingRemoteCall(e);

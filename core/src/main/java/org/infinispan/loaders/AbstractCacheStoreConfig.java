@@ -7,6 +7,7 @@ import org.infinispan.config.ConfigurationDoc;
 import org.infinispan.config.ConfigurationDocRef;
 import org.infinispan.loaders.decorators.AsyncStoreConfig;
 import org.infinispan.loaders.decorators.SingletonStoreConfig;
+import org.infinispan.loaders.spi.AbstractCacheStore;
 
 import javax.xml.bind.annotation.*;
 
@@ -16,29 +17,26 @@ import javax.xml.bind.annotation.*;
  * <p/>
  * <ul>
  * <li><tt>purgeSynchronously</tt> - whether
- * {@link org.infinispan.loaders.CacheStore#purgeExpired()} calls happen synchronously or not. By
+ * {@link org.infinispan.loaders.spi.CacheStore#purgeExpired()} calls happen synchronously or not. By
  * default, this is set to <tt>false</tt>.</li>
  * <li><tt>purgerThreads</tt> - number of threads to use when purging. Defaults to <tt>1</tt> if
  * <tt>purgeSynchronously</tt> is <tt>true</tt>, ignored if <tt>false</tt>.</li>
  * </ul>
- * 
- * 
- * 
+ *
+ *
+ *
  * @author Mircea.Markus@jboss.com
  * @author Vladimir Blagojevic
  * @since 4.0
- * 
+ *
  * @see <a href="../../../config.html#ce_loaders_loader">Configuration reference</a>
  */
-@XmlAccessorType(XmlAccessType.PUBLIC_MEMBER)
-@XmlType(propOrder= {})
-@ConfigurationDoc(name="loader",desc="Responsible for loading/storing cache data from/to an external source.")
-@SuppressWarnings("boxing")
+@Deprecated
 public class AbstractCacheStoreConfig extends AbstractCacheLoaderConfig implements CacheStoreConfig {
 
    /** The serialVersionUID */
    private static final long serialVersionUID = 4607371052771122893L;
-   
+
    @ConfigurationDocRef(bean=AbstractCacheStoreConfig.class,targetElement="setIgnoreModifications")
    protected Boolean ignoreModifications = false;
 
@@ -57,7 +55,7 @@ public class AbstractCacheStoreConfig extends AbstractCacheLoaderConfig implemen
    protected SingletonStoreConfig singletonStore = new SingletonStoreConfig();
 
    protected AsyncStoreConfig async = new AsyncStoreConfig();
-   
+
 
    @Override
    public AsyncStoreConfig asyncStore() {
@@ -84,12 +82,12 @@ public class AbstractCacheStoreConfig extends AbstractCacheLoaderConfig implemen
    public Integer getPurgerThreads() {
       return purgerThreads;
    }
-   
+
    @XmlElement(name="properties")
    public TypedProperties getTypedProperties(){
-      return properties;      
+      return properties;
    }
-   
+
    public void setTypedProperties (TypedProperties tp){
       this.properties = tp;
    }
@@ -104,10 +102,10 @@ public class AbstractCacheStoreConfig extends AbstractCacheLoaderConfig implemen
       testImmutability("purgeSynchronously");
       this.purgeSynchronously = purgeSynchronously;
    }
-   
+
    /**
     * If true, CacheStore#purgeExpired() call will be done synchronously
-    * 
+    *
     * @param purgeSynchronously
     */
    @Override
@@ -119,7 +117,7 @@ public class AbstractCacheStoreConfig extends AbstractCacheLoaderConfig implemen
 
    /**
     * The number of threads to use when purging asynchronously.
-    * 
+    *
     * @param purgerThreads
     * @deprecated use {@link #purgerThreads(Integer)} instead
    */
@@ -149,8 +147,8 @@ public class AbstractCacheStoreConfig extends AbstractCacheLoaderConfig implemen
     * persistent state transfer even if a cache store has this property set to true. Finally,
     * setting it to true only makes sense if in a clustered environment, and only 'replication' and
     * 'invalidation' cluster modes are supported.
-    * 
-    * 
+    *
+    *
     * @param fetchPersistentState
     */
    @Override
@@ -158,7 +156,7 @@ public class AbstractCacheStoreConfig extends AbstractCacheLoaderConfig implemen
       testImmutability("fetchPersistentState");
       this.fetchPersistentState = fetchPersistentState;
    }
-   
+
    /**
     * If true, fetch persistent state when joining a cluster. If multiple cache stores are chained,
     * only one of them can have this property enabled. Persistent state transfer with a shared cache
@@ -167,8 +165,8 @@ public class AbstractCacheStoreConfig extends AbstractCacheLoaderConfig implemen
     * persistent state transfer even if a cache store has this property set to true. Finally,
     * setting it to true only makes sense if in a clustered environment, and only 'replication' and
     * 'invalidation' cluster modes are supported.
-    * 
-    * 
+    *
+    *
     * @param fetchPersistentState
     */
    @Override
@@ -182,20 +180,20 @@ public class AbstractCacheStoreConfig extends AbstractCacheLoaderConfig implemen
     * If true, any operation that modifies the cache (put, remove, clear, store...etc) won't be
     * applied to the cache store. This means that the cache store could become out of sync with the
     * cache.
-    * 
+    *
     * @param ignoreModifications
     */
    @Override
    public void setIgnoreModifications(Boolean ignoreModifications) {
       testImmutability("ignoreModifications");
-      this.ignoreModifications = ignoreModifications;    
+      this.ignoreModifications = ignoreModifications;
    }
-   
+
    /**
     * If true, any operation that modifies the cache (put, remove, clear, store...etc) won't be
     * applied to the cache store. This means that the cache store could become out of sync with the
     * cache.
-    * 
+    *
     * @param ignoreModifications
     */
    @Override
@@ -210,7 +208,7 @@ public class AbstractCacheStoreConfig extends AbstractCacheLoaderConfig implemen
    public Boolean isIgnoreModifications() {
       return ignoreModifications;
    }
-   
+
    @Override
    @XmlAttribute
    public Boolean isPurgeOnStartup() {
@@ -218,9 +216,9 @@ public class AbstractCacheStoreConfig extends AbstractCacheLoaderConfig implemen
    }
 
    /**
-    * 
+    *
     * If true, purges this cache store when it starts up.
-    * 
+    *
     * @param purgeOnStartup
     */
    @Override
@@ -229,11 +227,11 @@ public class AbstractCacheStoreConfig extends AbstractCacheLoaderConfig implemen
       this.purgeOnStartup = purgeOnStartup;
       return this;
    }
-   
+
    /**
-    * 
+    *
     * If true, purges this cache store when it starts up.
-    * 
+    *
     * @param purgeOnStartup
     */
    @Override
@@ -257,20 +255,20 @@ public class AbstractCacheStoreConfig extends AbstractCacheLoaderConfig implemen
    @Override
    @XmlElement(name="async")
    public AsyncStoreConfig getAsyncStoreConfig() {
-      return async;      
+      return async;
    }
 
    @Override
    public void setAsyncStoreConfig(AsyncStoreConfig asyncStoreConfig) {
       testImmutability("async");
-      this.async = asyncStoreConfig;      
+      this.async = asyncStoreConfig;
    }
-   
+
    @Override
    public void accept(ConfigurationBeanVisitor v) {
       singletonStore.accept(v);
       async.accept(v);
-      v.visitCacheLoaderConfig(this);
+      //v.visitCacheLoaderConfig(this);
    }
 
    @Override

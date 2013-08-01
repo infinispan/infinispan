@@ -40,7 +40,7 @@ public abstract class AbstractNamedCacheConfigurationBean extends AbstractConfig
       return dolly;
    }
 
-   static class InjectComponentRegistryVisitor extends AbstractConfigurationBeanVisitor {
+   static class InjectComponentRegistryVisitor {
 
       private final ComponentRegistry registry;
       
@@ -48,7 +48,6 @@ public abstract class AbstractNamedCacheConfigurationBean extends AbstractConfig
          super();
          this.registry = registry;
       }
-      @Override
       public void defaultVisit(AbstractConfigurationBean c) {
          if (c instanceof AbstractNamedCacheConfigurationBean) {
             ((AbstractNamedCacheConfigurationBean) c).cr = registry;

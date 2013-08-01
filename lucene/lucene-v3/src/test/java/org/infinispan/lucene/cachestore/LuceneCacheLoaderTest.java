@@ -3,7 +3,7 @@ package org.infinispan.lucene.cachestore;
 import org.apache.lucene.store.Directory;
 import org.infinispan.Cache;
 import org.infinispan.commons.CacheException;
-import org.infinispan.loaders.CacheLoaderManager;
+import org.infinispan.loaders.manager.CacheLoaderManager;
 import org.infinispan.lucene.FileCacheKey;
 import org.infinispan.lucene.directory.DirectoryBuilder;
 import org.infinispan.manager.EmbeddedCacheManager;

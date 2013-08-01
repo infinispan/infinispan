@@ -11,6 +11,7 @@ import org.infinispan.util.TimeService;
  * @author Mircea.Markus@jboss.com
  * @since 4.0
  */
+@Deprecated
 public abstract class AbstractCacheLoader implements CacheLoader {
 
    protected volatile StreamingMarshaller marshaller;

@@ -1,9 +1,7 @@
 package org.infinispan.loaders.remote.configuration;
 
-import org.infinispan.client.hotrod.impl.ConfigurationProperties;
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
-import org.infinispan.loaders.remote.RemoteCacheStoreConfig;
 import org.testng.annotations.Test;
 
 @Test(groups = "unit", testName = "loaders.remote.configuration.ConfigurationTest")
@@ -47,13 +45,5 @@ public class ConfigurationTest {
       assert store2.connectionPool().minEvictableIdleTime() == 10000;
       assert store2.fetchPersistentState();
       assert store2.async().enabled();
-
-      RemoteCacheStoreConfig legacy = store.adapt();
-      assert "RemoteCache".equals(legacy.getRemoteCacheName());
-      assert "one:12111;two:11222".equals(legacy.getHotRodClientProperties().get(
-            ConfigurationProperties.SERVER_LIST));
-      assert legacy.getTypedProperties().getIntProperty("whenExhaustedAction", -1) == 0;
-      assert legacy.isFetchPersistentState();
-      assert legacy.asyncStore().isEnabled();
    }
 }

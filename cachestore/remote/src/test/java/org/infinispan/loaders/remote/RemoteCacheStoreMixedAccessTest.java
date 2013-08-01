@@ -50,11 +50,15 @@ public class RemoteCacheStoreMixedAccessTest extends AbstractInfinispanTest {
       clientBuilder.loaders().addStore(RemoteCacheStoreConfigurationBuilder.class)
          .rawValues(true)
          .addServer()
-            .host("localhost")
+            .host(hrServer.getHost())
             .port(hrServer.getPort());
       clientCacheManager = TestCacheManagerFactory.createCacheManager(clientBuilder);
       clientCache = clientCacheManager.getCache();
-      remoteCacheManager = new RemoteCacheManager("localhost", hrServer.getPort());
+      org.infinispan.client.hotrod.configuration.ConfigurationBuilder rcmBuilder = new org.infinispan.client.hotrod.configuration.ConfigurationBuilder();
+      rcmBuilder.addServer()
+         .host(hrServer.getHost())
+         .port(hrServer.getPort());
+      remoteCacheManager = new RemoteCacheManager(rcmBuilder.build());
       remoteCacheManager.start();
       remoteCache = remoteCacheManager.getCache();
    }
