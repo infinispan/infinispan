@@ -3,6 +3,7 @@ package org.infinispan.query;
 import java.util.concurrent.ExecutorService;
 
 import org.apache.lucene.search.Query;
+import org.hibernate.hql.ast.spi.EntityNamesResolver;
 import org.hibernate.search.SearchFactory;
 import org.hibernate.search.query.dsl.EntityContext;
 import org.hibernate.search.query.engine.spi.TimeoutExceptionFactory;
@@ -10,6 +11,8 @@ import org.hibernate.search.spi.SearchFactoryIntegrator;
 import org.infinispan.AdvancedCache;
 import org.infinispan.query.backend.QueryInterceptor;
 import org.infinispan.query.clustered.ClusteredCacheQueryImpl;
+import org.infinispan.query.dsl.QueryFactory;
+import org.infinispan.query.dsl.impl.LuceneQueryFactory;
 import org.infinispan.query.impl.CacheQueryImpl;
 import org.infinispan.query.impl.ComponentRegistryUtils;
 import org.infinispan.query.impl.massindex.MapReduceMassIndexer;
@@ -36,6 +39,24 @@ class SearchManagerImpl implements SearchManager {
       this.cache = cache;
       this.searchFactory = ComponentRegistryUtils.getComponent(cache, SearchFactoryIntegrator.class);
       this.queryInterceptor = ComponentRegistryUtils.getQueryInterceptor(cache);
+   }
+
+   @Override
+   public QueryFactory getQueryFactory() {
+      EntityNamesResolver entityNamesResolver = new EntityNamesResolver() {
+         @Override
+         public Class<?> getClassFromName(String entityName) {
+            Class clazz;
+            try {
+               clazz = Class.forName(entityName);
+            } catch (ClassNotFoundException e) {
+               return null;
+            }
+            Boolean isIndexed = queryInterceptor.getKnownClasses().get(clazz);
+            return isIndexed != null && isIndexed ? clazz : null;
+         }
+      };
+      return new LuceneQueryFactory(this, entityNamesResolver);
    }
 
    /* (non-Javadoc)
