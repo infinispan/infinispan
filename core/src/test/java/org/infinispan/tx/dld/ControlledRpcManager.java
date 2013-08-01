@@ -69,6 +69,7 @@ public class ControlledRpcManager implements RpcManager {
    }
 
    public void stopBlocking() {
+      log.tracef("Stop blocking commands");
       blockBeforeFilter = Collections.emptySet();
       blockAfterFilter = Collections.emptySet();
       replicationLatch.open();
@@ -76,6 +77,7 @@ public class ControlledRpcManager implements RpcManager {
    }
 
    public void waitForCommandToBlock() throws InterruptedException {
+      log.tracef("Waiting for at least one command to block");
       blockingLatch.await();
    }
 

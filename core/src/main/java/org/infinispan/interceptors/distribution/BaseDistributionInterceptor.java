@@ -13,6 +13,7 @@ import org.infinispan.distribution.DistributionManager;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.interceptors.ClusteringInterceptor;
 import org.infinispan.interceptors.locking.ClusteringDependentLogic;
+import org.infinispan.remoting.responses.CacheNotFoundResponse;
 import org.infinispan.remoting.responses.ClusteredGetResponseValidityFilter;
 import org.infinispan.remoting.responses.ExceptionResponse;
 import org.infinispan.remoting.responses.Response;
@@ -21,6 +22,7 @@ import org.infinispan.remoting.rpc.ResponseFilter;
 import org.infinispan.remoting.rpc.ResponseMode;
 import org.infinispan.remoting.rpc.RpcOptions;
 import org.infinispan.remoting.transport.Address;
+import org.infinispan.statetransfer.OutdatedTopologyException;
 import org.infinispan.transaction.xa.GlobalTransaction;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
@@ -152,12 +154,19 @@ public abstract class BaseDistributionInterceptor extends ClusteringInterceptor 
          log.tracef("Primary owner %s returned null", primaryOwner);
          return null;
       }
-      if (!fromPrimaryOwner.isSuccessful()) {
-         Throwable cause = fromPrimaryOwner instanceof ExceptionResponse ? ((ExceptionResponse)fromPrimaryOwner).getException() : null;
-         throw new CacheException("Got unsuccessful response from primary owner: " + fromPrimaryOwner, cause);
-      } else {
+      if (fromPrimaryOwner.isSuccessful()) {
          return ((SuccessfulResponse) fromPrimaryOwner).getResponseValue();
       }
+
+      if (addressResponseMap.get(primaryOwner) instanceof CacheNotFoundResponse) {
+         // This means the cache wasn't running on the primary owner, so the command wasn't executed.
+         // We throw an OutdatedTopologyException, StateTransferInterceptor will catch the exception and
+         // it will then retry the command.
+         throw new OutdatedTopologyException("Cache is no longer running on primary owner " + primaryOwner);
+      }
+
+      Throwable cause = fromPrimaryOwner instanceof ExceptionResponse ? ((ExceptionResponse)fromPrimaryOwner).getException() : null;
+      throw new CacheException("Got unsuccessful response from primary owner: " + fromPrimaryOwner, cause);
    }
 
    protected abstract void remoteGetBeforeWrite(InvocationContext ctx, WriteCommand command, RecipientGenerator keygen) throws Throwable;

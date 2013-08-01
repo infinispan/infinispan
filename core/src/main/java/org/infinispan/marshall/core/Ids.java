@@ -107,4 +107,5 @@ public interface Ids extends org.infinispan.commons.marshall.Ids {
 
    int NON_EXISTING_VERSION = 101;
 
+   int CACHE_NOT_FOUND_RESPONSE = 102;
 }

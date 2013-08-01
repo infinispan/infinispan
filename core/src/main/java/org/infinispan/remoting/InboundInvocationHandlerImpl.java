@@ -19,7 +19,7 @@ import org.infinispan.factories.annotations.Inject;
 import org.infinispan.factories.scopes.Scope;
 import org.infinispan.factories.scopes.Scopes;
 import org.infinispan.interceptors.totalorder.RetryPrepareException;
-import org.infinispan.manager.NamedCacheNotFoundException;
+import org.infinispan.remoting.responses.CacheNotFoundResponse;
 import org.infinispan.statetransfer.StateTransferManager;
 import org.infinispan.remoting.responses.ExceptionResponse;
 import org.infinispan.remoting.responses.Response;
@@ -76,13 +76,10 @@ public class InboundInvocationHandlerImpl implements InboundInvocationHandler {
       if (cr == null) {
          if (!globalConfiguration.transport().strictPeerToPeer()) {
             if (trace) log.tracef("Strict peer to peer off, so silently ignoring that %s cache is not defined", cacheName);
-            reply(response, null);
-            return;
+         } else {
+            log.namedCacheDoesNotExist(cacheName);
          }
-
-         log.namedCacheDoesNotExist(cacheName);
-         Response retVal = new ExceptionResponse(new NamedCacheNotFoundException(cacheName, "Cache has not been started on node " + transport.getAddress()));
-         reply(response, retVal);
+         reply(response, CacheNotFoundResponse.INSTANCE);
          return;
       }
 
