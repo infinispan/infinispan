@@ -200,10 +200,7 @@
                 <protocol type="FD_SOCK" socket-binding="jgroups-udp-fd"/>
                 <protocol type="FD_ALL"/>
                 <protocol type="pbcast.NAKACK"/>
-                <protocol type="UNICAST2">
-                    <property name="timeout">300,600,1200</property>
-                    <property name="stable_interval">5000</property>
-                    <property name="max_bytes">1m</property>
+                <protocol type="UNICAST3">
                 </protocol>
                 <protocol type="pbcast.STABLE">
                     <property name="stability_delay">500</property>
@@ -259,9 +256,6 @@
                     <property name="use_mcast_xmit">false</property>
                 </protocol>
                 <protocol type="UNICAST2">
-                    <property name="timeout">300,600,1200</property>
-                    <property name="stable_interval">5000</property>
-                    <property name="max_bytes">1m</property>
                 </protocol>
                 <protocol type="pbcast.STABLE">
                     <property name="stability_delay">500</property>

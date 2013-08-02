@@ -50,8 +50,7 @@
                     max_msg_batch_size="500"
                     use_mcast_xmit="false"
                     discard_delivered_msgs="true"/>
-    <UNICAST2
-            max_bytes="20M"
+    <UNICAST3
             xmit_table_num_rows="100"
             xmit_table_msgs_per_row="2000"
             xmit_table_max_compaction_time="30000"

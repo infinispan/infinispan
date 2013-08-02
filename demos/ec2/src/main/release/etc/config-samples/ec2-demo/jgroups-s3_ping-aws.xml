@@ -9,8 +9,7 @@
    <VERIFY_SUSPECT timeout="1500"/>
    <pbcast.NAKACK use_mcast_xmit="false" retransmit_timeout="300,600,1200,2400,4800"
                   discard_delivered_msgs="true"/>
-   <UNICAST2 timeout="300,600,1200,2400,3600"
-             conn_expiry_timeout="0"/>
+   <UNICAST3 conn_expiry_timeout="0"/>
 
    <pbcast.STABLE stability_delay="1000" desired_avg_gossip="50000" max_bytes="400000"/>
    <VIEW_SYNC avg_send_interval="60000"/>
