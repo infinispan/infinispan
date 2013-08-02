@@ -1,6 +1,6 @@
 <config xmlns="urn:org:jgroups"
         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-        xsi:schemaLocation="urn:org:jgroups http://www.jgroups.org/schema/JGroups-3.3.xsd">
+        xsi:schemaLocation="urn:org:jgroups http://www.jgroups.org/schema/JGroups-3.4.xsd">
    <TCP
          bind_addr="${jgroups.tcp.address:127.0.0.1}"
          bind_port="${jgroups.tcp.port:7800}"
@@ -76,8 +76,8 @@
    <pbcast.GMS print_local_addr="false" join_timeout="3000" view_bundling="true"/>
    <tom.TOA/> <!-- the Total Order Anycast is only needed for total order transactions (in distributed mode)-->
 
-   <UFC max_credits="200k" min_threshold="0.20"/>
-   <MFC max_credits="200k" min_threshold="0.20"/>
+   <UFC max_credits="500k" min_threshold="0.20"/>
+   <MFC max_credits="500k" min_threshold="0.20"/>
    <FRAG2 frag_size="60000"/>
    <RSVP timeout="60000" resend_interval="500" ack_on_delivery="false" />
 
