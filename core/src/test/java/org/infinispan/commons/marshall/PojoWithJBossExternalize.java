@@ -1,5 +1,6 @@
 package org.infinispan.commons.marshall;
 
+import org.jboss.marshalling.Creator;
 import org.jboss.marshalling.Externalize;
 
 import java.io.IOException;
@@ -51,8 +52,12 @@ public class PojoWithJBossExternalize {
       }
 
       @Override
-      public Object createExternal(Class<?> subjectType, ObjectInput input) throws IOException, ClassNotFoundException {
+      public Object createExternal(Class<?> subjectType, ObjectInput input, Creator defaultCreator) throws IOException, ClassNotFoundException {
          return new PojoWithJBossExternalize(PojoWithAttributes.readObject(input));
+      }
+
+      @Override
+      public void readExternal(Object subject, ObjectInput input) throws IOException, ClassNotFoundException {
       }
    }
 }
