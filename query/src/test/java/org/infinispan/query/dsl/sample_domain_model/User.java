@@ -5,6 +5,7 @@ import org.hibernate.search.annotations.Field;
 import org.hibernate.search.annotations.FieldBridge;
 import org.hibernate.search.annotations.Indexed;
 import org.hibernate.search.annotations.IndexedEmbedded;
+import org.hibernate.search.annotations.NumericField;
 import org.hibernate.search.annotations.Store;
 import org.hibernate.search.bridge.builtin.impl.BuiltinIterableBridge;
 
@@ -32,16 +33,17 @@ public class User {
    @Field(store = Store.YES, analyze = Analyze.NO)
    private String name;
 
-   @Field(store = Store.YES, analyze = Analyze.NO)
+   @Field(store = Store.YES, analyze = Analyze.NO, indexNullAs = Field.DEFAULT_NULL_TOKEN)
    private String surname;
 
    @Field(store = Store.YES, analyze = Analyze.NO)
+   @NumericField
    private int age;  // yes, not the birth date :)
 
    @Field(store = Store.YES, analyze = Analyze.NO)
    private Gender gender;
 
-   @IndexedEmbedded
+   @IndexedEmbedded(indexNullAs = Field.DEFAULT_NULL_TOKEN)
    private List<Address> addresses;
 
    public int getId() {
@@ -98,6 +100,36 @@ public class User {
 
    public void setAddresses(List<Address> addresses) {
       this.addresses = addresses;
+   }
+
+   @Override
+   public boolean equals(Object o) {
+      if (this == o) return true;
+      if (o == null || getClass() != o.getClass()) return false;
+
+      User user = (User) o;
+
+      if (age != user.age) return false;
+      if (id != user.id) return false;
+      if (accountIds != null ? !accountIds.equals(user.accountIds) : user.accountIds != null) return false;
+      if (addresses != null ? !addresses.equals(user.addresses) : user.addresses != null) return false;
+      if (gender != user.gender) return false;
+      if (name != null ? !name.equals(user.name) : user.name != null) return false;
+      if (surname != null ? !surname.equals(user.surname) : user.surname != null) return false;
+
+      return true;
+   }
+
+   @Override
+   public int hashCode() {
+      int result = id;
+      result = 31 * result + (accountIds != null ? accountIds.hashCode() : 0);
+      result = 31 * result + (name != null ? name.hashCode() : 0);
+      result = 31 * result + (surname != null ? surname.hashCode() : 0);
+      result = 31 * result + age;
+      result = 31 * result + (gender != null ? gender.hashCode() : 0);
+      result = 31 * result + (addresses != null ? addresses.hashCode() : 0);
+      return result;
    }
 
    @Override

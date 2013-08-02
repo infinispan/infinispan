@@ -1,56 +1,31 @@
 package org.infinispan.query.dsl.impl;
 
-import org.infinispan.query.dsl.FilterConditionBeginContext;
 import org.infinispan.query.dsl.FilterConditionContext;
 import org.infinispan.query.dsl.FilterConditionEndContext;
 import org.infinispan.query.dsl.RangeConditionContext;
 
 import java.util.Collection;
 
+//todo i18n for exception messages
+
 /**
  * @author anistor@redhat.com
  * @since 6.0
  */
-class AttributeCondition extends BaseCondition
-      implements FilterConditionBeginContext, FilterConditionEndContext, RangeConditionContext {
+class AttributeCondition extends BaseCondition implements FilterConditionEndContext, RangeConditionContext {
 
-   @Override
-   public <ReturnType> ReturnType accept(Visitor<ReturnType> visitor) {
-      return visitor.visit(this);
-   }
-
-   protected enum Operator {
-      IN,
-      LIKE,
-      CONTAINS,
-      CONTAINS_ALL,
-      CONTAINS_ANY,
-      IS_NULL,
-      EQ,
-      LT,
-      LTE,
-      GT,
-      GTE,
-      BETWEEN
-   }
-
-   private Operator operator;
-
-   private Object argument;
-
-   private String attributePath;
+   private final String attributePath;
 
    private boolean isNegated;
 
-   public AttributeCondition() {
+   private OperatorAndArgument operatorAndArgument;
+
+   public AttributeCondition(String attributePath) {
+      this.attributePath = attributePath;
    }
 
-   Operator getOperator() {
-      return operator;
-   }
-
-   Object getArgument() {
-      return argument;
+   OperatorAndArgument getOperatorAndArgument() {
+      return operatorAndArgument;
    }
 
    String getAttributePath() {
@@ -61,138 +36,133 @@ class AttributeCondition extends BaseCondition
       return isNegated;
    }
 
-   @Override
-   public FilterConditionEndContext having(String attributePath) {
-      if (attributePath == null) {
-         throw new IllegalArgumentException("attribute path cannot be null");
-      }
-      if (this.attributePath != null) {
-         throw new IllegalStateException("attribute path was already specified");
-      }
-      this.attributePath = attributePath;
-      return this;
+   void setNegated(boolean negated) {
+      isNegated = negated;
    }
 
    @Override
-   public FilterConditionBeginContext not() {
-      isNegated = !isNegated;
-      return this;
-   }
-
-   @Override
-   public FilterConditionContext in(Object... value) {
-      setOperatorAndArgument(Operator.IN, value);
+   public FilterConditionContext in(Object... values) {
+      if (values == null || values.length == 0) {
+         throw new IllegalArgumentException("The list of values for 'in(..)' cannot be null or empty");
+      }
+      setOperatorAndArgument(new InOperator(this, values));
       return this;
    }
 
    @Override
    public FilterConditionContext in(Collection values) {
-      setOperatorAndArgument(Operator.IN, values);
+      if (values == null || values.isEmpty()) {
+         throw new IllegalArgumentException("The list of values for 'in(..)' cannot be null or empty");
+      }
+      setOperatorAndArgument(new InOperator(this, values));
       return this;
    }
 
    @Override
    public FilterConditionContext like(String pattern) {
-      setOperatorAndArgument(Operator.LIKE, pattern);
+      setOperatorAndArgument(new LikeOperator(this, pattern));
       return this;
    }
 
    @Override
    public FilterConditionContext contains(Object value) {
-      setOperatorAndArgument(Operator.CONTAINS, value);
+      setOperatorAndArgument(new ContainsOperator(this, value));
       return this;
    }
 
    @Override
-   public FilterConditionContext containsAll(Object... value) {
-      setOperatorAndArgument(Operator.CONTAINS_ALL, value);
+   public FilterConditionContext containsAll(Object... values) {
+      setOperatorAndArgument(new ContainsAllOperator(this, values));
       return this;
    }
 
    @Override
    public FilterConditionContext containsAll(Collection values) {
-      setOperatorAndArgument(Operator.CONTAINS_ALL, values);
+      setOperatorAndArgument(new ContainsAllOperator(this, values));
       return this;
    }
 
    @Override
-   public FilterConditionContext containsAny(Object... value) {
-      setOperatorAndArgument(Operator.CONTAINS_ANY, value);
+   public FilterConditionContext containsAny(Object... values) {
+      setOperatorAndArgument(new ContainsAnyOperator(this, values));
       return this;
    }
 
    @Override
    public FilterConditionContext containsAny(Collection values) {
-      setOperatorAndArgument(Operator.CONTAINS_ANY, values);
+      setOperatorAndArgument(new ContainsAnyOperator(this, values));
       return this;
    }
 
    @Override
    public FilterConditionContext isNull() {
-      setOperatorAndArgument(Operator.IS_NULL, null);
+      setOperatorAndArgument(new IsNullOperator(this));
       return this;
    }
 
    @Override
    public FilterConditionContext eq(Object value) {
-      setOperatorAndArgument(Operator.EQ, value);
+      setOperatorAndArgument(new EqOperator(this, value));
       return this;
    }
 
    @Override
    public FilterConditionContext lt(Object value) {
-      setOperatorAndArgument(Operator.LT, value);
+      setOperatorAndArgument(new LtOperator(this, value));
       return this;
    }
 
    @Override
    public FilterConditionContext lte(Object value) {
-      setOperatorAndArgument(Operator.LTE, value);
+      setOperatorAndArgument(new LteOperator(this, value));
       return this;
    }
 
    @Override
    public FilterConditionContext gt(Object value) {
-      setOperatorAndArgument(Operator.GT, value);
+      setOperatorAndArgument(new GtOperator(this, value));
       return this;
    }
 
    @Override
    public FilterConditionContext gte(Object value) {
-      setOperatorAndArgument(Operator.GTE, value);
+      setOperatorAndArgument(new GteOperator(this, value));
       return this;
    }
 
    @Override
    public RangeConditionContext between(Object from, Object to) {
-      ValueRange valueRange = new ValueRange(from, to);
-      setOperatorAndArgument(Operator.BETWEEN, valueRange);
+      setOperatorAndArgument(new BetweenOperator(this, new ValueRange(from, to)));
       return this;
    }
 
    @Override
    public RangeConditionContext includeLower(boolean includeLower) {
-      ValueRange valueRange = (ValueRange) argument;
+      ValueRange valueRange = (ValueRange) operatorAndArgument.getArgument();
       valueRange.setIncludeLower(includeLower);
       return this;
    }
 
    @Override
    public RangeConditionContext includeUpper(boolean includeUpper) {
-      ValueRange valueRange = (ValueRange) argument;
+      ValueRange valueRange = (ValueRange) operatorAndArgument.getArgument();
       valueRange.setIncludeUpper(includeUpper);
       return this;
    }
 
-   private void setOperatorAndArgument(Operator operator, Object argument) {
-      if (argument == null) {
-         throw new IllegalArgumentException("argument cannot be null");
-      }
-      if (this.operator != null) {
+   private void setOperatorAndArgument(OperatorAndArgument operatorAndArgument) {
+      operatorAndArgument.validate();
+
+      if (this.operatorAndArgument != null) {
          throw new IllegalStateException("operator was already specified");
       }
-      this.operator = operator;
-      this.argument = argument;
+
+      this.operatorAndArgument = operatorAndArgument;
+   }
+
+   @Override
+   public <ReturnType> ReturnType accept(Visitor<ReturnType> visitor) {
+      return visitor.visit(this);
    }
 
    @Override
@@ -200,8 +170,7 @@ class AttributeCondition extends BaseCondition
       return "AttributeCondition{" +
             "isNegated=" + isNegated +
             ", attributePath='" + attributePath + '\'' +
-            ", operator=" + operator +
-            ", argument=" + argument +
+            ", operatorAndArgument=" + operatorAndArgument +
             '}';
    }
 }

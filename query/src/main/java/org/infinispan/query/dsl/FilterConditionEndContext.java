@@ -8,7 +8,7 @@ import java.util.Collection;
  */
 public interface FilterConditionEndContext {
 
-   FilterConditionContext in(Object... value);
+   FilterConditionContext in(Object... values);
 
    FilterConditionContext in(Collection values);
 
@@ -16,11 +16,11 @@ public interface FilterConditionEndContext {
 
    FilterConditionContext contains(Object value);
 
-   FilterConditionContext containsAll(Object... value);
+   FilterConditionContext containsAll(Object... values);
 
    FilterConditionContext containsAll(Collection values);
 
-   FilterConditionContext containsAny(Object... value);
+   FilterConditionContext containsAny(Object... values);
 
    FilterConditionContext containsAny(Collection values);
 

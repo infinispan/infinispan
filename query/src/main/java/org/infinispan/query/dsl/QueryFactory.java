@@ -11,4 +11,6 @@ public interface QueryFactory {
    FilterConditionEndContext having(String attributePath);
 
    FilterConditionBeginContext not();
+
+   FilterConditionContext not(FilterConditionContext fcc);
 }

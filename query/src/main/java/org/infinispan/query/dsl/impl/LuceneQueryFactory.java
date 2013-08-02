@@ -3,6 +3,7 @@ package org.infinispan.query.dsl.impl;
 import org.hibernate.hql.ast.spi.EntityNamesResolver;
 import org.infinispan.query.SearchManager;
 import org.infinispan.query.dsl.FilterConditionBeginContext;
+import org.infinispan.query.dsl.FilterConditionContext;
 import org.infinispan.query.dsl.FilterConditionEndContext;
 import org.infinispan.query.dsl.QueryBuilder;
 import org.infinispan.query.dsl.QueryFactory;
@@ -29,11 +30,19 @@ public class LuceneQueryFactory implements QueryFactory {
 
    @Override
    public FilterConditionEndContext having(String attributePath) {
-      return new AttributeCondition().having(attributePath);
+      return new AttributeCondition(attributePath);
    }
 
    @Override
    public FilterConditionBeginContext not() {
-      return new AttributeCondition().not();
+      return new IncompleteCondition().not();
+   }
+
+   @Override
+   public FilterConditionContext not(FilterConditionContext fcc) {
+      BaseCondition baseCondition = (BaseCondition) fcc;
+      NotCondition notCondition = new NotCondition(baseCondition);
+      baseCondition.setParent(notCondition);
+      return notCondition;
    }
 }

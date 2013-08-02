@@ -5,6 +5,8 @@ import org.hibernate.search.annotations.Field;
 import org.hibernate.search.annotations.Indexed;
 import org.hibernate.search.annotations.Store;
 
+import java.util.Date;
+
 /**
  * @author anistor@redhat.com
  * @since 6.0
@@ -17,6 +19,9 @@ public class Account {
 
    @Field(store = Store.YES, analyze = Analyze.NO)
    private String description;
+
+   @Field(store = Store.YES, analyze = Analyze.NO)
+   private Date creationDate;
 
    public int getId() {
       return id;
@@ -34,11 +39,43 @@ public class Account {
       this.description = description;
    }
 
+   public Date getCreationDate() {
+      return creationDate;
+   }
+
+   public void setCreationDate(Date creationDate) {
+      this.creationDate = creationDate;
+   }
+
+   @Override
+   public boolean equals(Object o) {
+      if (this == o) return true;
+      if (o == null || getClass() != o.getClass()) return false;
+
+      Account account = (Account) o;
+
+      if (id != account.id) return false;
+      if (creationDate != null ? !creationDate.equals(account.creationDate) : account.creationDate != null)
+         return false;
+      if (description != null ? !description.equals(account.description) : account.description != null) return false;
+
+      return true;
+   }
+
+   @Override
+   public int hashCode() {
+      int result = id;
+      result = 31 * result + (description != null ? description.hashCode() : 0);
+      result = 31 * result + (creationDate != null ? creationDate.hashCode() : 0);
+      return result;
+   }
+
    @Override
    public String toString() {
       return "Account{" +
             "id=" + id +
             ", description='" + description + '\'' +
+            ", creationDate='" + creationDate + '\'' +
             '}';
    }
 }

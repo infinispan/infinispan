@@ -10,9 +10,9 @@ package org.infinispan.query.dsl.impl;
  */
 class ValueRange {
 
-   private Object from;
+   private final Object from;
 
-   private Object to;
+   private final Object to;
 
    private boolean includeLower = true;
 
@@ -27,16 +27,8 @@ class ValueRange {
       return from;
    }
 
-   public void setFrom(Object from) {
-      this.from = from;
-   }
-
    public Object getTo() {
       return to;
-   }
-
-   public void setTo(Object to) {
-      this.to = to;
    }
 
    public boolean isIncludeLower() {
@@ -58,11 +50,11 @@ class ValueRange {
    @Override
    public String toString() {
       StringBuilder sb = new StringBuilder();
-      sb.append(includeLower ? '[' : '(');
-      sb.append(from);
-      sb.append(", ");
-      sb.append(to);
-      sb.append(includeUpper ? ']' : ')');
+      sb.append(includeLower ? '[' : '(')
+            .append(from)
+            .append(", ")
+            .append(to)
+            .append(includeUpper ? ']' : ')');
       return sb.toString();
    }
 }

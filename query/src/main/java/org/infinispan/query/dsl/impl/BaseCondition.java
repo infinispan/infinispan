@@ -10,7 +10,7 @@ import org.infinispan.query.dsl.QueryBuilder;
  */
 abstract class BaseCondition implements FilterConditionContext, Visitable {
 
-   protected CompositeCondition parent = null;
+   protected BaseCondition parent = null;
 
    protected QueryBuilder queryBuilder;
 
@@ -42,17 +42,17 @@ abstract class BaseCondition implements FilterConditionContext, Visitable {
       return p;
    }
 
-   public CompositeCondition getParent() {
+   public BaseCondition getParent() {
       return parent;
    }
 
-   public void setParent(CompositeCondition parent) {
+   public void setParent(BaseCondition parent) {
       this.parent = parent;
    }
 
    @Override
    public FilterConditionBeginContext and() {
-      AttributeCondition rightCondition = new AttributeCondition();
+      IncompleteCondition rightCondition = new IncompleteCondition();
       combine(true, rightCondition);
       return rightCondition;
    }
@@ -65,7 +65,7 @@ abstract class BaseCondition implements FilterConditionContext, Visitable {
 
    @Override
    public FilterConditionBeginContext or() {
-      AttributeCondition rightCondition = new AttributeCondition();
+      IncompleteCondition rightCondition = new IncompleteCondition();
       combine(false, rightCondition);
       return rightCondition;
    }
@@ -79,14 +79,14 @@ abstract class BaseCondition implements FilterConditionContext, Visitable {
    private void combine(boolean isConjunction, FilterConditionContext fcc) {
       BaseCondition rightCondition = ((BaseCondition) fcc).getRoot();
 
-      if (isConjunction && parent != null && !parent.isConjunction()) {
-         CompositeCondition p = new CompositeCondition(true, this, rightCondition);
-         parent.replaceChild(this, p);
+      if (isConjunction && parent instanceof OrCondition) {
+         BooleanCondition p = new AndCondition(this, rightCondition);
+         ((BooleanCondition) parent).replaceChildCondition(this, p);
          parent = p;
          rightCondition.setParent(p);
       } else {
          BaseCondition root = getRoot();
-         CompositeCondition p = new CompositeCondition(isConjunction, root, rightCondition);
+         BooleanCondition p = isConjunction ? new AndCondition(root, rightCondition) : new OrCondition(root, rightCondition);
          root.setParent(p);
          rightCondition.setParent(p);
       }
