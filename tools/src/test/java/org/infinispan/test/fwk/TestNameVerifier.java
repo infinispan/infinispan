@@ -201,10 +201,8 @@ public class TestNameVerifier {
    // method that populates the list of module names
    private void populateModuleList() {
       modules.add("core");
-      modules.add("cachestore" + File.separator + "cloud");
-      modules.add("cachestore" + File.separator + "bdbje");
       modules.add("cachestore" + File.separator + "jdbc");
-      modules.add("cachestore" + File.separator + "jdbm");
+      modules.add("cachestore" + File.separator + "remote");
       modules.add("rhq-plugin");
       modules.add("tree");
    }
