@@ -10,7 +10,7 @@
 
 <config xmlns="urn:org:jgroups"
         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-        xsi:schemaLocation="urn:org:jgroups http://www.jgroups.org/schema/JGroups-3.2.xsd">
+        xsi:schemaLocation="urn:org:jgroups http://www.jgroups.org/schema/JGroups-3.4.xsd">
     <TCP bind_port="7800" port_range="10"
          recv_buf_size="20000000"
          send_buf_size="640000"
@@ -60,8 +60,7 @@
     <pbcast.NAKACK use_mcast_xmit="false"
                    retransmit_timeout="100,300,600,1200"
                    discard_delivered_msgs="true" />
-    <UNICAST2 timeout="300,600,1200"
-              conn_expiry_timeout="0"/>
+    <UNICAST3 conn_expiry_timeout="0"/>
 
     <pbcast.STABLE stability_delay="1000" desired_avg_gossip="50000"
                    max_bytes="10m"/>

@@ -64,7 +64,7 @@ public class BackupReceiverRepositoryImpl implements BackupReceiverRepository {
    public Object handleRemoteCommand(SingleRpcCommand cmd, SiteAddress src) throws Throwable {
       log.tracef("Handling command %s from remote site %s", cmd, src);
       String name = cmd.getCacheName();
-      BackupReceiver localBackupCache = getBackupCacheManager(SiteUUID.getSiteName(src.getSite()), name);
+      BackupReceiver localBackupCache = getBackupCacheManager(src.getSite(), name);
       return localBackupCache.handleRemoteCommand((VisitableCommand)cmd.getCommand());
    }
 
