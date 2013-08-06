@@ -31,6 +31,7 @@ public enum Element {
     EXPIRATION("expiration"),
     FILE_STORE("fileStore"),
     SINGLE_FILE_STORE("singleFileStore"),
+    BRNO_FILE_STORE("brnoFileStore"),
     GROUPS("groups"),
     GROUPER("grouper"),
     GLOBAL("global"),
