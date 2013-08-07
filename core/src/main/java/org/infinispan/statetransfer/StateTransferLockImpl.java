@@ -62,13 +62,14 @@ public class StateTransferLockImpl implements StateTransferLock {
 
    @Override
    public void waitForTransactionData(int expectedTopologyId) throws InterruptedException {
-      if (transactionDataTopologyId >= expectedTopologyId)
-         return;
-
       if (trace) {
          log.tracef("Waiting for transaction data for topology %d, current topology is %d", expectedTopologyId,
                transactionDataTopologyId);
       }
+
+      if (transactionDataTopologyId >= expectedTopologyId)
+         return;
+
       synchronized (transactionDataLock) {
          // Do the comparison inside the synchronized lock
          // otherwise the setter might be able to call notifyAll before we wait()

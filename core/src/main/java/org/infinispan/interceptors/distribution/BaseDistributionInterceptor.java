@@ -107,26 +107,31 @@ public abstract class BaseDistributionInterceptor extends ClusteringInterceptor 
          return invokeNextInterceptor(ctx, command);
       }
 
+
       boolean isSync = isSynchronous(command);
+      Address primaryOwner = cdl.getPrimaryOwner(command.getKey());
+      int commandTopologyId = command.getTopologyId();
+      int currentTopologyId = stateTransferManager.getCacheTopology().getTopologyId();
+      // TotalOrderStateTransferInterceptor doesn't set the topology id for PFERs.
+      // TODO Shouldn't PFERs be executed in a tx with total order?
+      if (isSync && currentTopologyId != commandTopologyId && commandTopologyId != -1) {
+         log.tracef("Cache topology changed while the command was executing: expected %d, got %d",
+               commandTopologyId, currentTopologyId);
+         throw new OutdatedTopologyException("Cache topology changed while the command was executing: expected " +
+               commandTopologyId + ", got " + currentTopologyId);
+      }
+
       if (!ctx.isOriginLocal()) {
          Object returnValue = invokeNextInterceptor(ctx, command);
-         Address primaryOwner = cdl.getPrimaryOwner(command.getKey());
          if (primaryOwner.equals(rpcManager.getAddress())) {
             if (command.isConditional() && !command.isSuccessful()) {
                log.tracef("Skipping the replication of the conditional command as it did not succeed on primary owner (%s).", command);
                return returnValue;
             }
-            // Make sure we can't have a loop with 2 nodes both thinking they are the primary owners
-            // See https://issues.jboss.org/browse/ISPN-3281
-            int oldTopologyId = command.getTopologyId();
-            command.setTopologyId(stateTransferManager.getCacheTopology().getTopologyId());
             rpcManager.invokeRemotely(recipientGenerator.generateRecipients(), command, rpcManager.getDefaultRpcOptions(isSync));
-            // We don't need a finally block, because unsuccessful commands are not forwarded anyway
-            command.setTopologyId(oldTopologyId);
          }
          return returnValue;
       } else {
-         Address primaryOwner = cdl.getPrimaryOwner(command.getKey());
          if (primaryOwner.equals(rpcManager.getAddress())) {
             Object result = invokeNextInterceptor(ctx, command);
             if (command.isConditional() && !command.isSuccessful()) {
