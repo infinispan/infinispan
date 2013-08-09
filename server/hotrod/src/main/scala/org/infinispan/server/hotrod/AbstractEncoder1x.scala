@@ -119,6 +119,8 @@ abstract class AbstractEncoder1x extends AbstractVersionedEncoder with Constants
          }
          case g: GetResponse =>
             if (g.status == Success) writeRangedBytes(g.data.get, buf)
+         case q: QueryResponse =>
+            writeRangedBytes(q.result, buf)
          case e: ErrorResponse => writeString(e.msg, buf)
          case _ => if (buf == null)
             throw new IllegalArgumentException("Response received is unknown: " + r)

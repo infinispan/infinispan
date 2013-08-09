@@ -17,4 +17,5 @@ object HotRodOperation extends Enumeration(20) {
    val BulkGetRequest = Value
    val GetWithMetadataRequest = Value
    val BulkGetKeysRequest = Value
+   val QueryRequest = Value
 }

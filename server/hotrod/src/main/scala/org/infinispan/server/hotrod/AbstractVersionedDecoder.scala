@@ -3,9 +3,8 @@ package org.infinispan.server.hotrod
 import org.infinispan.AdvancedCache
 import org.infinispan.stats.Stats
 import org.jboss.netty.buffer.ChannelBuffer
-import org.infinispan.server.core.RequestParameters
+import org.infinispan.server.core.{QueryFacade, RequestParameters}
 import org.infinispan.server.core.transport.NettyTransport
-import org.infinispan.container.versioning.EntryVersion
 import org.infinispan.container.entries.CacheEntry
 
 /**
@@ -59,7 +58,8 @@ abstract class AbstractVersionedDecoder {
    /**
     * Handle a protocol specific key reading.
     */
-   def customReadKey(header: HotRodHeader, buffer: ChannelBuffer, cache: AdvancedCache[Array[Byte], Array[Byte]]): AnyRef
+   def customReadKey(header: HotRodHeader, buffer: ChannelBuffer, cache: AdvancedCache[Array[Byte], Array[Byte]],
+           queryFacades: Seq[QueryFacade]): AnyRef
 
    /**
     * Handle a protocol specific value reading.
