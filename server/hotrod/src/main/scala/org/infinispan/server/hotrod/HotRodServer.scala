@@ -3,7 +3,7 @@ package org.infinispan.server.hotrod
 import logging.Log
 import scala.collection.JavaConversions._
 import org.infinispan.manager.EmbeddedCacheManager
-import org.infinispan.server.core.AbstractProtocolServer
+import org.infinispan.server.core.{QueryFacade, AbstractProtocolServer}
 import org.infinispan.eviction.EvictionStrategy
 import org.infinispan.commons.util.CollectionFactory
 import org.infinispan.commons.equivalence.AnyEquivalence
@@ -13,6 +13,7 @@ import org.infinispan.configuration.cache.{CacheMode, ConfigurationBuilder}
 import org.infinispan.context.Flag
 import org.infinispan.upgrade.RollingUpgradeManager
 import org.infinispan.server.hotrod.configuration.HotRodServerConfiguration
+import java.util.ServiceLoader
 
 /**
  * Hot Rod server, in charge of defining its encoder/decoder and, if clustered, update the topology information
@@ -34,8 +35,11 @@ class HotRodServer extends AbstractProtocolServer("HotRod") with Log {
    private var addressCache: Cache[Address, ServerAddress] = _
    private val knownCaches : java.util.Map[String, Cache[Array[Byte], Array[Byte]]] =
          CollectionFactory.makeConcurrentMap(4, 0.9f, 16)
+   private var queryFacades: Seq[QueryFacade] = _
 
    def getAddress: ServerAddress = address
+
+   def getQueryFacades: Seq[QueryFacade] = queryFacades
 
    override def getEncoder = new HotRodEncoder(getCacheManager, this)
 
@@ -58,7 +62,12 @@ class HotRodServer extends AbstractProtocolServer("HotRod") with Log {
 
          addSelfToTopologyView(cacheManager)
       }
+
+      queryFacades = loadQueryFacades()
    }
+
+   private def loadQueryFacades(): Seq[QueryFacade] =
+      ServiceLoader.load(classOf[QueryFacade]).toSeq
 
    override def startTransport() {
       // Start predefined caches

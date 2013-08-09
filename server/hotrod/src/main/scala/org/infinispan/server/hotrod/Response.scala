@@ -39,7 +39,7 @@ class ResponseWithPrevious(override val version: Byte, override val messageId: L
          .append(", messageId=").append(messageId)
          .append(", operation=").append(operation)
          .append(", status=").append(status)
-         .append(", previous=").append(if (previous == None) "null" else Util.printArray(previous.get, true))
+         .append(", previous=").append(Util.printArray(previous.getOrElse(null), true))
          .append("}").toString
    }
 }
@@ -54,7 +54,7 @@ class GetResponse(override val version: Byte, override val messageId: Long, over
          .append(", messageId=").append(messageId)
          .append(", operation=").append(operation)
          .append(", status=").append(status)
-         .append(", data=").append(if (data == None) "null" else Util.printArray(data.get, true))
+         .append(", data=").append(Util.printArray(data.getOrElse(null), true))
          .append("}").toString
    }
 }
@@ -100,7 +100,7 @@ class GetWithVersionResponse(override val version: Byte, override val messageId:
          .append(", messageId=").append(messageId)
          .append(", operation=").append(operation)
          .append(", status=").append(status)
-         .append(", data=").append(if (data == None) "null" else Util.printArray(data.get, true))
+         .append(", data=").append(Util.printArray(data.getOrElse(null), true))
          .append(", dataVersion=").append(dataVersion)
          .append("}").toString
    }
@@ -118,7 +118,7 @@ class GetWithMetadataResponse(override val version: Byte, override val messageId
          .append(", messageId=").append(messageId)
          .append(", operation=").append(operation)
          .append(", status=").append(status)
-         .append(", data=").append(if (data == None) "null" else Util.printArray(data.get, true))
+         .append(", data=").append(Util.printArray(data.getOrElse(null), true))
          .append(", dataVersion=").append(dataVersion)
          .append(", created=").append(created)
          .append(", lifespan=").append(lifespan)
@@ -153,6 +153,18 @@ class StatsResponse(override val version: Byte, override val messageId: Long, ov
          .append(", messageId=").append(messageId)
          .append(", stats=").append(stats)
          .append("}").toString
+   }
+}
+
+class QueryResponse(override val version: Byte, override val messageId: Long, override val cacheName: String,
+        override val clientIntel: Short, override val topologyId: Int, val result: Array[Byte])
+      extends Response(version, messageId, cacheName, clientIntel, QueryResponse, Success, topologyId) {
+   override def toString: String = {
+      new StringBuilder().append("QueryResponse").append("{")
+              .append("version=").append(version)
+              .append(", messageId=").append(messageId)
+              .append(", result=").append(Util.printArray(result, true))
+              .append("}").toString
    }
 }
 

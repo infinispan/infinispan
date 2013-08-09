@@ -12,6 +12,8 @@ import java.util.concurrent.TimeUnit
 import org.infinispan.server.core.test.Stoppable
 import org.infinispan.server.hotrod.configuration.HotRodServerConfiguration
 import org.infinispan.test.fwk.TestCacheManagerFactory
+import org.infinispan.server.core.QueryFacade
+import org.infinispan.AdvancedCache
 
 /**
  * Hot Rod server functional test.
@@ -483,4 +485,15 @@ class HotRodFunctionalTest extends HotRodSingleNodeTest {
       }
    }
 
+   def testQuery() {
+      val query = Array[Byte](1, 2, 3, 4, 5)
+      val resp = client.query(query)
+      assertStatus(resp, Success)
+      assertTrue(Arrays.equals(query, resp.result))
+   }
+
+}
+
+class DummyQueryFacade extends QueryFacade {
+   def query(cache: AdvancedCache[Array[Byte], Array[Byte]], query: Array[Byte]): Array[Byte] = query
 }

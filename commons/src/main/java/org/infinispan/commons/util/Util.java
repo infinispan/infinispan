@@ -368,23 +368,9 @@ public final class Util {
 
    public static String toStr(Object o) {
       if (o instanceof byte[]) {
-         byte[] array = (byte[]) o;
-         StringBuilder sb = new StringBuilder();
-         sb.append("[B0x");
-         if (IS_ARRAYS_DEBUG) {
-            // Convert the entire byte array
-            sb.append(toHexString(array));
-         } else {
-            // Pick the first 8 characters and convert that part
-            sb.append(toHexString(array, 8));
-            sb.append("..(");
-            sb.append(array.length);
-            sb.append(')');
-         }
-         return sb.toString();
+         return printArray((byte[]) o, false);
       } else if (o == null) {
          return "null";
-
       } else {
          return o.toString();
       }
@@ -411,24 +397,29 @@ public final class Util {
 
    public static String printArray(byte[] array, boolean withHash) {
       if (array == null) return "null";
-      StringBuilder sb = new StringBuilder();
-      sb.append("ByteArray{size=").append(array.length);
-      if (withHash) {
-         sb.append(", hashCode=").append(
-               Integer.toHexString(Arrays.hashCode(array)));
-      }
 
-      sb.append(", array=0x");
-      if (IS_ARRAYS_DEBUG) {
+      int limit = 8;
+      StringBuilder sb = new StringBuilder();
+      sb.append("[B0x");
+      if (array.length <= limit || IS_ARRAYS_DEBUG) {
          // Convert the entire byte array
          sb.append(toHexString(array));
+         if (withHash) {
+            sb.append(",h=");
+            sb.append(Integer.toHexString(Arrays.hashCode(array)));
+            sb.append(']');
+         }
       } else {
          // Pick the first 8 characters and convert that part
-         sb.append(toHexString(array, 8));
-         sb.append("..");
+         sb.append(toHexString(array, limit));
+         sb.append("..[");
+         sb.append(array.length);
+         if (withHash) {
+            sb.append("],h=");
+            sb.append(Integer.toHexString(Arrays.hashCode(array)));
+         }
+         sb.append(']');
       }
-      sb.append("}");
-
       return sb.toString();
    }
 

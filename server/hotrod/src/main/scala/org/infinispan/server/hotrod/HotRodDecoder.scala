@@ -55,7 +55,7 @@ class HotRodDecoder(cacheManager: EmbeddedCacheManager, transport: NettyTranspor
 
       try {
          val decoder = version match {
-            case VERSION_10 | VERSION_11 | VERSION_12 => Decoder10
+            case VERSION_10 | VERSION_11 | VERSION_12 | VERSION_13 => Decoder10
             case _ => throw new UnknownVersionException(
                "Unknown version:" + version, version, messageId)
          }
@@ -135,7 +135,7 @@ class HotRodDecoder(cacheManager: EmbeddedCacheManager, transport: NettyTranspor
       writeResponse(ch, header.decoder.customReadHeader(header, buffer, cache))
 
    override protected def customDecodeKey(ch: Channel, buffer: ChannelBuffer): AnyRef =
-      writeResponse(ch, header.decoder.customReadKey(header, buffer, cache))
+      writeResponse(ch, header.decoder.customReadKey(header, buffer, cache, server.getQueryFacades))
 
    override protected def customDecodeValue(ch: Channel, buffer: ChannelBuffer): AnyRef =
       writeResponse(ch, header.decoder.customReadValue(header, buffer, cache))

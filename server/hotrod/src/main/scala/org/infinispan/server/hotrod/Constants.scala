@@ -13,6 +13,7 @@ trait Constants {
    val VERSION_10: Byte = 10
    val VERSION_11: Byte = 11
    val VERSION_12: Byte = 12
+   val VERSION_13: Byte = 13
    val DEFAULT_HASH_FUNCTION_VERSION: Byte = 2
 
    val INTELLIGENCE_BASIC: Byte = 0x01

@@ -48,6 +48,7 @@ object Decoder10 extends AbstractVersionedDecoder with ServerConstants with Log 
          case 0x19 => (BulkGetRequest, false)
          case 0x1B => (GetWithMetadataRequest, false)
          case 0x1D => (BulkGetKeysRequest, false)
+         case 0x1F => (QueryRequest, false)
          case _ => throw new HotRodUnknownOperationException(
                "Unknown operation: " + streamOp, version, messageId)
       }
@@ -168,7 +169,7 @@ object Decoder10 extends AbstractVersionedDecoder with ServerConstants with Log 
    }
 
    override def customReadKey(h: HotRodHeader, buffer: ChannelBuffer,
-           cache: AdvancedCache[Array[Byte], Array[Byte]]): AnyRef = {
+           cache: AdvancedCache[Array[Byte], Array[Byte]], queryFacades: Seq[QueryFacade]): AnyRef = {
       h.op match {
          case RemoveIfUnmodifiedRequest => {
             val k = readKey(buffer)
@@ -215,6 +216,12 @@ object Decoder10 extends AbstractVersionedDecoder with ServerConstants with Log 
          case GetWithMetadataRequest => {
             val k = readKey(buffer)
             getKeyMetadata(h, k, cache)
+         }
+         case QueryRequest => {
+            val query = readRangedBytes(buffer)
+            val result = queryFacades.head.query(cache, query)
+            new QueryResponse(h.version, h.messageId, h.cacheName, h.clientIntel,
+               h.topologyId, result)
          }
       }
    }
@@ -320,6 +327,7 @@ object OperationResponse extends Enumeration {
    val BulkGetResponse = Value(0x1A)
    val GetWithMetadataResponse = Value(0x1C)
    val BulkGetKeysResponse = Value(0x1E)
+   val QueryResponse = Value(0x20)
    val ErrorResponse = Value(0x50)
 }
 
