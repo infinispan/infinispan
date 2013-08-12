@@ -81,7 +81,13 @@ public class LockManagerImpl implements LockManager {
    public void unlockAll(InvocationContext ctx) {
       for (Object k : ctx.getLockedKeys()) {
          if (trace) log.tracef("Attempting to unlock %s", toStr(k));
-         lockContainer.releaseLock(ctx.getLockOwner(), k);
+         try {
+            lockContainer.releaseLock(ctx.getLockOwner(), k);
+         } catch (IllegalMonitorStateException e) {
+            if (trace) {
+               log.tracef("Attempting to unlock %s failed", toStr(k), e);
+            }
+         }
       }
       ctx.clearLockedKeys();
    }
