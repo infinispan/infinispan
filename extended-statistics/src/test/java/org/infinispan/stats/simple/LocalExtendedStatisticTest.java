@@ -255,19 +255,6 @@ public class LocalExtendedStatisticTest extends SingleCacheManagerTest {
       return TestCacheManagerFactory.createCacheManager(builder);
    }
 
-   private void assertNoTransactions() {
-      eventually(new Condition() {
-         @Override
-         public boolean isSatisfied() throws Exception {
-            int localTxCount = TestingUtil.extractComponent(cache, TransactionTable.class).getLocalTxCount();
-            if (log.isTraceEnabled()) {
-               log.tracef("AssertNoTransactions: Local tx=%s", localTxCount);
-            }
-            return localTxCount == 0;
-         }
-      });
-   }
-
    private ExtendedStatisticInterceptor getExtendedStatistic(Cache<?, ?> cache) {
       for (CommandInterceptor commandInterceptor : cache.getAdvancedCache().getInterceptorChain()) {
          if (commandInterceptor instanceof ExtendedStatisticInterceptor) {

@@ -4,6 +4,7 @@ import org.infinispan.Cache;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
+import org.infinispan.transaction.TransactionTable;
 import org.infinispan.util.concurrent.locks.LockManager;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.AfterMethod;
@@ -112,5 +113,19 @@ public abstract class SingleCacheManagerTest extends AbstractCacheTest {
 
    protected <K,V> Cache<K, V> cache(String name) {
       return cacheManager.getCache(name);
+   }
+
+   protected void assertNoTransactions() {
+      eventually(new Condition() {
+         @Override
+         public boolean isSatisfied() throws Exception {
+            int localTxCount = TestingUtil.extractComponent(cache, TransactionTable.class).getLocalTxCount();
+            if (localTxCount != 0) {
+               log.tracef("Local tx=%s", localTxCount);
+               return false;
+            }
+            return true;
+         }
+      });
    }
 }
