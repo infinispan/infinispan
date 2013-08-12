@@ -23,6 +23,7 @@
 
 package org.infinispan.statetransfer;
 
+import org.infinispan.CacheException;
 import org.infinispan.commands.CommandsFactory;
 import org.infinispan.commands.FlagAffectedCommand;
 import org.infinispan.commands.TopologyAffectedCommand;
@@ -36,6 +37,7 @@ import org.infinispan.context.InvocationContext;
 import org.infinispan.context.impl.TxInvocationContext;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.interceptors.base.CommandInterceptor;
+import org.infinispan.remoting.RemoteException;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.topology.CacheTopology;
 import org.infinispan.transaction.LockingMode;
@@ -49,14 +51,29 @@ import java.util.Set;
 
 //todo [anistor] command forwarding breaks the rule that we have only one originator for a command. this opens now the possibility to have two threads processing incoming remote commands for the same TX
 /**
- * // TODO: Document this
+ * This interceptor has two tasks:
+ * <ol>
+ *    <li>If the command's topology id is higher than the current topology id,
+ *    wait for the node to receive transaction data for the new topology id.</li>
+ *    <li>If the topology id changed during a command's execution, forward the command to the new owners.</li>
+ * </ol>
+ *
+ * Note that we don't keep track of old cache topologies (yet), so we actually forward the command to all the owners
+ * -- not just the ones added in the new topology. Transactional commands are idempotent, so this is fine.
+ *
+ * In non-transactional mode, the semantic of these tasks changes:
+ * <ol>
+ *    <li>We don't have transaction data, so the interceptor only waits for the new topology to be installed.</li>
+ *    <li>Instead of forwarding commands from any owner, we retry the command on the originator.</li>
+ * </ol>
  *
  * @author anistor@redhat.com
  * @since 5.2
  */
-public class StateTransferInterceptor extends CommandInterceptor {   //todo [anistor] this interceptor should be added to stack only if we have state transfer. maybe we need this for invalidation mode too!
+public class StateTransferInterceptor extends CommandInterceptor {
 
    private static final Log log = LogFactory.getLog(StateTransferInterceptor.class);
+   private static boolean trace = log.isTraceEnabled();
 
    private StateTransferLock stateTransferLock;
 
@@ -65,6 +82,7 @@ public class StateTransferInterceptor extends CommandInterceptor {   //todo [ani
    private CommandsFactory commandFactory;
 
    private boolean useVersioning;
+   private boolean useLockForwarding;
 
    private final AffectedKeysVisitor affectedKeysVisitor = new AffectedKeysVisitor();
 
@@ -82,6 +100,8 @@ public class StateTransferInterceptor extends CommandInterceptor {   //todo [ani
 
       useVersioning = configuration.transaction().transactionMode().isTransactional() && configuration.locking().writeSkewCheck() &&
             configuration.transaction().lockingMode() == LockingMode.OPTIMISTIC && configuration.versioning().enabled();
+      useLockForwarding = configuration.clustering().cacheMode().isDistributed() &&
+            configuration.locking().supportsConcurrentUpdates();
    }
 
    @Override
@@ -133,32 +153,32 @@ public class StateTransferInterceptor extends CommandInterceptor {   //todo [ani
 
    @Override
    public Object visitPutKeyValueCommand(InvocationContext ctx, PutKeyValueCommand command) throws Throwable {
-      return handleWriteCommand(ctx, command);
+      return handleNonTxWriteCommand(ctx, command);
    }
 
    @Override
    public Object visitPutMapCommand(InvocationContext ctx, PutMapCommand command) throws Throwable {
-      return handleWriteCommand(ctx, command);
+      return handleNonTxWriteCommand(ctx, command);
    }
 
    @Override
    public Object visitApplyDeltaCommand(InvocationContext ctx, ApplyDeltaCommand command) throws Throwable {
-      return handleWriteCommand(ctx, command);
+      return handleNonTxWriteCommand(ctx, command);
    }
 
    @Override
    public Object visitRemoveCommand(InvocationContext ctx, RemoveCommand command) throws Throwable {
-      return handleWriteCommand(ctx, command);
+      return handleNonTxWriteCommand(ctx, command);
    }
 
    @Override
    public Object visitReplaceCommand(InvocationContext ctx, ReplaceCommand command) throws Throwable {
-      return handleWriteCommand(ctx, command);
+      return handleNonTxWriteCommand(ctx, command);
    }
 
    @Override
    public Object visitClearCommand(InvocationContext ctx, ClearCommand command) throws Throwable {
-      return handleWriteCommand(ctx, command);
+      return handleNonTxWriteCommand(ctx, command);
    }
 
    @Override
@@ -189,9 +209,50 @@ public class StateTransferInterceptor extends CommandInterceptor {   //todo [ani
       return handleTopologyAffectedCommand(ctx, command, address, true);
    }
 
-   private Object handleWriteCommand(InvocationContext ctx, WriteCommand command) throws Throwable {
-      // ISPN-2473 - forward non-transactional commands asynchronously
-      return handleTopologyAffectedCommand(ctx, command, ctx.getOrigin(), false);
+   /**
+    * For non-tx write commands, we retry the command locally if the topology changed, instead of forwarding to the
+    * new owners like we do for tx commands. But we only retry on the originator, and only if the command doesn't have
+    * the {@code CACHE_MODE_LOCAL} flag.
+    */
+   private Object handleNonTxWriteCommand(InvocationContext ctx, WriteCommand command) throws Throwable {
+      log.tracef("handleNonTxWriteCommand for command %s", command);
+
+      if (!useLockForwarding) {
+         // For non-concurrent caches we use the standard forwarding mechanism.
+         return handleTopologyAffectedCommand(ctx, command, ctx.getOrigin(), false);
+      }
+
+      if (isLocalOnly(ctx, command)) {
+         return invokeNextInterceptor(ctx, command);
+      }
+
+      updateTopologyIdAndWaitForTransactionData(command);
+
+      // Only catch OutdatedTopologyExceptions on the originator
+      if (useLockForwarding && !ctx.isOriginLocal()) {
+         return invokeNextInterceptor(ctx, command);
+      }
+
+      int commandTopologyId = command.getTopologyId();
+      Object localResult;
+      try {
+         localResult = invokeNextInterceptor(ctx, command);
+         return localResult;
+      } catch (CacheException e) {
+         if (!(e instanceof OutdatedTopologyException ||
+               (e instanceof RemoteException && e.getCause() instanceof OutdatedTopologyException)))
+            throw e;
+
+         log.tracef("Retrying command because of topology change: %s", command);
+         // We increment the topology id so that updateTopologyIdAndWaitForTransactionData waits for the next topology.
+         // Without this, we could retry the command too fast and we could get the OutdatedTopologyException again.
+         int newTopologyId = Math.max(stateTransferManager.getCacheTopology().getTopologyId(), commandTopologyId + 1);
+         command.setTopologyId(newTopologyId);
+         localResult = handleNonTxWriteCommand(ctx, command);
+      }
+
+      stateTransferManager.forwardCommandIfNeeded(command, command.getAffectedKeys(), ctx.getOrigin(), false);
+      return localResult;
    }
 
    @Override
@@ -213,7 +274,7 @@ public class StateTransferInterceptor extends CommandInterceptor {   //todo [ani
       updateTopologyIdAndWaitForTransactionData((TopologyAffectedCommand) command);
 
       // TODO we may need to skip local invocation for read/write/tx commands if the command is too old and none of its keys are local
-      Object localResult = invokeNextWithRetry(ctx, command);
+      Object localResult = invokeNextInterceptor(ctx, command);
 
       boolean isNonTransactionalWrite = !ctx.isInTxScope() && command instanceof WriteCommand;
       boolean isTransactionalAndNotRolledBack = false;
@@ -226,15 +287,6 @@ public class StateTransferInterceptor extends CommandInterceptor {   //todo [ani
       }
 
       return localResult;
-   }
-
-   private Object invokeNextWithRetry(InvocationContext ctx, VisitableCommand command) throws Throwable {
-      try {
-         return invokeNextInterceptor(ctx, command);
-      } catch (OutdatedTopologyException e) {
-         log.debugf("Retrying command because of topology change: %s", command);
-         return invokeNextWithRetry(ctx, command);
-      }
    }
 
    private void updateTopologyIdAndWaitForTransactionData(TopologyAffectedCommand command) throws InterruptedException {

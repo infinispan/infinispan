@@ -35,6 +35,7 @@ import org.infinispan.remoting.responses.Response;
 import org.infinispan.remoting.responses.SuccessfulResponse;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.remoting.transport.jgroups.SuspectException;
+import org.infinispan.statetransfer.OutdatedTopologyException;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
@@ -105,12 +106,28 @@ public class NonTxDistributionInterceptor extends BaseDistributionInterceptor {
          return invokeNextInterceptor(ctx, command);
       }
 
+      checkForOutdatedTopology(command);
+
       if (!ctx.isOriginLocal()) {
          Object returnValue = invokeNextInterceptor(ctx, command);
          handleRemoteWrite(ctx, command, recipientGenerator, skipL1Invalidation, isSynchronous(command));
          return returnValue;
       } else {
          return handleLocalWrite(ctx, command, recipientGenerator, skipL1Invalidation, isSynchronous(command));
+      }
+   }
+
+   private void checkForOutdatedTopology(WriteCommand command) {
+      if (!useLockForwarding)
+         return;
+
+      int commandTopologyId = command.getTopologyId();
+      int currentTopologyId = stateTransferManager.getCacheTopology().getTopologyId();
+      if (currentTopologyId != commandTopologyId && commandTopologyId != -1 && isSynchronous(command)) {
+         log.tracef("Cache topology changed while the command was executing: expected %d, got %d",
+               commandTopologyId, currentTopologyId);
+         throw new OutdatedTopologyException("Cache topology changed while the command was executing: expected " +
+               commandTopologyId + ", got " + currentTopologyId);
       }
    }
 
