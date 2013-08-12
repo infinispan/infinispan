@@ -1,13 +1,5 @@
 package org.infinispan.statetransfer;
 
-import java.util.concurrent.BrokenBarrierException;
-import java.util.concurrent.Callable;
-import java.util.concurrent.Future;
-import java.util.concurrent.SynchronousQueue;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.TimeoutException;
-import java.util.concurrent.atomic.AtomicInteger;
-
 import org.infinispan.Cache;
 import org.infinispan.commands.tx.PrepareCommand;
 import org.infinispan.commands.write.PutKeyValueCommand;
@@ -24,11 +16,20 @@ import org.infinispan.topology.CacheTopology;
 import org.infinispan.transaction.LocalTransaction;
 import org.testng.annotations.Test;
 
+import java.util.concurrent.BrokenBarrierException;
+import java.util.concurrent.Callable;
+import java.util.concurrent.Future;
+import java.util.concurrent.SynchronousQueue;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
+import java.util.concurrent.atomic.AtomicInteger;
+
 import static org.infinispan.test.TestingUtil.extractComponent;
 import static org.infinispan.test.TestingUtil.findInterceptor;
 import static org.infinispan.test.TestingUtil.waitForRehashToComplete;
 import static org.testng.Assert.assertEquals;
 import static org.testng.Assert.assertTrue;
+import static org.testng.AssertJUnit.assertNull;
 
 /**
  * Test that command forwarding works during/after state transfer.
@@ -53,8 +54,6 @@ public class ReplCommandForwardingTest extends MultipleCacheManagersTest {
       return configurationBuilder;
    }
 
-   @Test(enabled = false, description = "Disabled because the new forwarding scheme in new non-tx REPL mode " +
-         "no longer matches the expectations. See https://issues.jboss.org/browse/ISPN-3147")
    public void testForwardToJoinerNonTransactional() throws Exception {
       EmbeddedCacheManager cm1 = addClusterEnabledCacheManager(buildConfig(false));
       final Cache<Object, Object> c1 = cm1.getCache();
@@ -75,6 +74,9 @@ public class ReplCommandForwardingTest extends MultipleCacheManagersTest {
          }
       });
 
+      // Unblock the command on c1, so that it is replicated to c2
+      di1.unblock(1);
+
       // c3 joins, topology id changes
       EmbeddedCacheManager cm3 = addClusterEnabledCacheManager(buildConfig(false));
       Cache<Object, Object> c3 = cm3.getCache();
@@ -82,20 +84,16 @@ public class ReplCommandForwardingTest extends MultipleCacheManagersTest {
       waitForStateTransfer(4, c1, c2, c3);
 
       // Unblock the replicated command on c2.
-      // StateTransferInterceptor will forward the command to c3.
-      // The DelayInterceptor on c3 will then block, waiting for an unblock() call.
-      log.tracef("Forwarding the command from %s", c2);
+      // NonTxConcurrentDistributionInterceptor on c3 will throw an OutdatedTopologyException,
+      // and StateTransferInterceptor on c1 will retry the command.
+      // The DelayInterceptor on c1 will then block, waiting for an unblock() call.
       di2.unblock(1);
 
-      // Wait to ensure that the c3 receives the forwarded commands in the "right" order
-      Thread.sleep(1000);
+      // Unblock the command with the new topology id on c1
+      log.tracef("Retrying the command on %s", c1);
+      di1.unblock(2);
 
-      // Unblock the command on the originator (c1), while forwarding is still in progress.
-      // StateTransferInterceptor will forward the command to c2 and c3.
-      di1.unblock(1);
-
-      // Unblock the command forwarded from c1 on c2 (c2 won't forward the command again).
-      // Don't unblock the command on c3, because we'd actually unblock the command forwarded from c2.
+      // Unblock the command with the new topology id from c1 on c2 (c2 won't throw an exception again).
       di2.unblock(2);
 
       // c4 joins, topology id changes
@@ -104,45 +102,35 @@ public class ReplCommandForwardingTest extends MultipleCacheManagersTest {
       DelayInterceptor di4 = findInterceptor(c4, DelayInterceptor.class);
       waitForStateTransfer(6, c1, c2, c3, c4);
 
-      // Allow command forwarded from c2 to proceed on c3.
-      // StateTransferInterceptor will then forward the command to c1 and c4.
-      // NB: This will fail if the number of core threads in the regular thread pool is < 3
-      // and queueing is enabled because of a deadlock:
-      // a) an Incoming thread on c3 is blocked in DelayInterceptor, waiting for the unblock(1) call
-      // b) another Incoming thread on c3 is blocked in DelayInterceptor, waiting for the unblock(2) call
-      // c) the OOB thread on c3 processing the REBALANCE_START is blocked in LocalTopologyManagerImpl,
-      //    waiting for the new JGroups view to be installed on c3
-      // d) the VIEW message is queued by the regular thread pool on c3, waiting for a) or b) to finish
-      // e) the main thread is blocked waiting for the rebalance to finish, so it won't call unblock(1)
-      //    until c) is done
-      log.tracef("Forwarding the command from %s", c3);
+      // Unblock the command with the new topology id from c1 on c3.
+      // NonTxConcurrentDistributionInterceptor on c3 will throw an OutdatedTopologyException,
+      // and StateTransferInterceptor on c1 will retry the command.
+      // The DelayInterceptor on c1 will then block, waiting for an unblock() call.
       di3.unblock(1);
 
-      // Check that c1 and c4 receive the forwarded command (no extra forwarding).
-      di1.unblock(2);
+      // Unblock the command with the new topology id on c1
+      log.tracef("Retrying the command on %s a second time", c1);
+      di1.unblock(3);
+
+      // Check that c2, c3 and c4 receive the forwarded command (no exceptions thrown).
+      di2.unblock(3);
+      di3.unblock(2);
       di4.unblock(1);
 
-      // Allow the DelayInterceptor on c3 to proceed again (for the command forwarded from c1).
-      // StateTransferInterceptor will then forward the command to c2 and c4.
-      log.tracef("Forwarding the command from %s for a second time", c3);
-      di3.unblock(2);
-
-      // Check that c2 and c4 receive the forwarded command (no extra forwarding).
-      di2.unblock(3);
-      di4.unblock(2);
-
       log.tracef("Waiting for the put command to finish on %s", c1);
-      f.get(10, TimeUnit.SECONDS);
+      Object retval = f.get(10, TimeUnit.SECONDS);
       log.tracef("Put command finished on %s", c1);
 
-      // 1 direct invocation + 1 forwarded by c3
-      assertEquals(di1.getCounter(), 2);
-      // 1 from replication + 1 forwarded by c1 + 1 re-forwarded by c3
-      assertEquals(di2.getCounter(), 3);
-      // 1 forwarded by c2 + 1 forwarded by c1
-      assertEquals(di3.getCounter(), 2);
-      // 1 forwarded by c3 + 1 re-forwarded by c3
-      assertEquals(di4.getCounter(), 2);
+      assertNull(retval);
+
+      // 1 direct invocation + 2 retries
+      assertEquals(3, di1.getCounter());
+      // 1 from each invocation/retry on c1
+      assertEquals(3, di2.getCounter());
+      // 1 for each invocation/retry on c1, minus the first invocation in which c3 wasn't started
+      assertEquals(2, di3.getCounter());
+      // just the last retry on c1
+      assertEquals(1, di4.getCounter());
    }
 
    public void testForwardToJoinerTransactional() throws Exception {
@@ -241,8 +229,6 @@ public class ReplCommandForwardingTest extends MultipleCacheManagersTest {
 
       @Override
       public Object visitPutKeyValueCommand(InvocationContext ctx, PutKeyValueCommand command) throws Throwable {
-         Object result = super.visitPutKeyValueCommand(ctx, command);
-
          if (!ctx.isInTxScope() && !command.hasFlag(Flag.PUT_FOR_STATE_TRANSFER)) {
             log.tracef("Delaying command %s originating from %s", command, ctx.getOrigin());
             Integer myCount = counter.incrementAndGet();
@@ -251,6 +237,8 @@ public class ReplCommandForwardingTest extends MultipleCacheManagersTest {
                   String.format("Timed out waiting for unblock(%d) call on cache %s", myCount, cache));
             log.tracef("Command unblocked: %s", command);
          }
+
+         Object result = super.visitPutKeyValueCommand(ctx, command);
          return result;
       }
 
