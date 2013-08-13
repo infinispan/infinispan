@@ -70,7 +70,7 @@ public class TuningOptionsAppliedTest {
    }
 
    private NRTIndexManager verifyShardingOptions(SearchFactoryImplementor searchFactory, int expectedShards) {
-      IndexManagerHolder allIndexesManager = searchFactory.getAllIndexesManager();
+      IndexManagerHolder allIndexesManager = searchFactory.getIndexManagerHolder();
       for (int i = 0; i < expectedShards; i++)
          Assert.assertNotNull(allIndexesManager.getIndexManager("person."+i), "person."+i+" IndexManager missing!");
       Assert.assertNull(allIndexesManager.getIndexManager("person."+expectedShards), "An IndexManager too much was created!");

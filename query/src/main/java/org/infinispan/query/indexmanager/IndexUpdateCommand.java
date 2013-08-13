@@ -49,7 +49,7 @@ public class IndexUpdateCommand extends BaseRpcCommand implements ReplicableComm
    @Override
    public Object perform(InvocationContext ctx) throws Throwable {
       queryInterceptor.enableClasses(knownIndexedTypes);
-      IndexManager indexManager = searchFactory.getAllIndexesManager().getIndexManager(indexName);
+      IndexManager indexManager = searchFactory.getIndexManagerHolder().getIndexManager(indexName);
       if (indexManager == null) {
          throw new SearchException("Unknown index referenced");
       }
