@@ -71,14 +71,20 @@ public abstract class BaseTypeConverterInterceptor extends CommandInterceptor {
       if (ret != null) {
          if (command.isReturnEntry()) {
             InternalCacheEntry entry = (InternalCacheEntry) ret;
-            Object returnValue = converter.unboxValue(entry.getValue());
+            Object returnValue = entry.getValue();
+            if (command.getRemotelyFetchedValue() == null) {
+               returnValue = converter.unboxValue(entry.getValue());
+            }
             // Create a copy of the entry to avoid modifying the internal entry
             return entryFactory.create(
                   entry.getKey(), returnValue, entry.getMetadata(),
                   entry.getLifespan(), entry.getMaxIdle());
+         } else {
+            if (command.getRemotelyFetchedValue() == null) {
+               return converter.unboxValue(ret);
+            }
+            return ret;
          }
-
-         return converter.unboxValue(ret);
       }
 
       return null;
