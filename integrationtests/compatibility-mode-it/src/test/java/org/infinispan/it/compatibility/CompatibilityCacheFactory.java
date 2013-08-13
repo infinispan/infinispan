@@ -20,7 +20,6 @@ import org.jboss.resteasy.plugins.server.servlet.HttpServletDispatcher;
 import org.jboss.resteasy.plugins.server.servlet.ResteasyBootstrap;
 import org.mortbay.jetty.Server;
 import org.mortbay.jetty.servlet.Context;
-
 import javax.servlet.ServletContext;
 import java.util.Collections;
 
@@ -64,6 +63,11 @@ public class CompatibilityCacheFactory<K, V> {
       this.cacheName = "";
       this.marshaller = null;
       this.cacheMode = cacheMode;
+   }
+
+   CompatibilityCacheFactory(CacheMode cacheMode, int numOwners) {
+      this(cacheMode);
+      this.numOwners = numOwners;
    }
 
    CompatibilityCacheFactory(String cacheName, Marshaller marshaller, CacheMode cacheMode) {
