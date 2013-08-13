@@ -185,15 +185,6 @@ public class LoadersConfigurationBuilder extends AbstractConfigurationChildBuild
    }
 
    /**
-    * Adds a single file cache store
-    */
-   public SingleFileCacheStoreConfigurationBuilder addSingleFileCacheStore() {
-      SingleFileCacheStoreConfigurationBuilder builder = new SingleFileCacheStoreConfigurationBuilder(this);
-      this.cacheLoaders.add(builder);
-      return builder;
-   }
-
-   /**
     * Removes any configured cache loaders and stores from this builder
     */
    public LoadersConfigurationBuilder clearCacheLoaders() {

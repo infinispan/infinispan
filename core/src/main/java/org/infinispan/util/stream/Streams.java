@@ -5,6 +5,9 @@ import org.infinispan.util.logging.LogFactory;
 
 import java.io.BufferedInputStream;
 import java.io.BufferedOutputStream;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
@@ -410,4 +413,24 @@ public class Streams {
          throws IOException {
       return copySome(input, output, DEFAULT_BUFFER_SIZE, length);
    }
+
+   /**
+    *
+    * @param src
+    * @param dest
+    * @throws IOException
+    */
+   public static void copyFolder(File src, File dest) throws IOException {
+      if(src.isDirectory()) {
+         if(!dest.exists())
+            dest.mkdir();
+
+         String files[] = src.list();
+         for (String file : files)
+            copyFolder(new File(src, file), new File(dest, file));
+      } else {
+         Streams.copy(new FileInputStream(src), new FileOutputStream(dest));
+      }
+   }
+
 }
