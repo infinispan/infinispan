@@ -7,7 +7,7 @@ import org.testng.annotations.Test;
 import java.io.File;
 
 @Test(groups = "unit", testName = "loaders.file.FileCacheStorePerWriteTest")
-public class FileCacheStorePerWriteTest extends FileCacheStoreTest {
+public class BucketFileCacheStorePerWriteTest extends BucketFileCacheStoreTest {
 
    @Override
    protected FileCacheStoreConfigurationBuilder.FsyncMode getFsyncMode() {

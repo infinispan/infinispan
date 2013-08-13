@@ -24,6 +24,7 @@ public enum Attribute {
     CLASS("class"),
     CLUSTER_NAME("clusterName"),
     CONCURRENCY_LEVEL("concurrencyLevel"),
+    DEPRECATED_BUCKET_FORMAT("deprecatedBucketFormat"),
     DISTRIBUTED_SYNC_TIMEOUT("distributedSyncTimeout"),
     EAGER_LOCK_SINGLE_NODE("eagerLockSingleNode"),
     ENABLED("enabled"),

@@ -1,694 +1,597 @@
 package org.infinispan.loaders.file;
 
-import org.infinispan.Cache;
-import org.infinispan.commons.CacheConfigurationException;
-import org.infinispan.commons.io.ExposedByteArrayOutputStream;
-import org.infinispan.configuration.cache.CacheLoaderConfiguration;
-import org.infinispan.configuration.cache.FileCacheStoreConfiguration;
-import org.infinispan.configuration.cache.FileCacheStoreConfigurationBuilder;
-import org.infinispan.container.entries.InternalCacheEntry;
-import org.infinispan.loaders.CacheLoaderException;
-import org.infinispan.loaders.bucket.Bucket;
-import org.infinispan.loaders.bucket.BucketBasedCacheStore;
-import org.infinispan.commons.marshall.StreamingMarshaller;
-import org.infinispan.commons.util.CollectionFactory;
-import org.infinispan.commons.util.Util;
-import org.infinispan.util.TimeService;
-import org.infinispan.util.logging.Log;
-import org.infinispan.util.logging.LogFactory;
-
-import java.io.BufferedInputStream;
-import java.io.BufferedOutputStream;
-import java.io.ByteArrayInputStream;
 import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileNotFoundException;
-import java.io.FileOutputStream;
-import java.io.FilenameFilter;
 import java.io.IOException;
-import java.io.InputStream;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
 import java.io.RandomAccessFile;
 import java.nio.ByteBuffer;
 import java.nio.channels.FileChannel;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.Iterator;
 import java.util.Map;
-import java.util.concurrent.ConcurrentMap;
-import java.util.concurrent.Executors;
-import java.util.concurrent.ScheduledExecutorService;
-import java.util.concurrent.TimeUnit;
+import java.util.Set;
+import java.util.SortedSet;
+import java.util.TreeSet;
+
+import org.infinispan.Cache;
+import org.infinispan.commons.equivalence.AnyEquivalence;
+import org.infinispan.commons.equivalence.Equivalence;
+import org.infinispan.commons.equivalence.EquivalentLinkedHashMap;
+import org.infinispan.commons.util.CollectionFactory;
+import org.infinispan.commons.util.Util;
+import org.infinispan.configuration.cache.CacheLoaderConfiguration;
+import org.infinispan.configuration.cache.FileCacheStoreConfiguration;
+import org.infinispan.container.entries.InternalCacheEntry;
+import org.infinispan.container.entries.InternalCacheValue;
+import org.infinispan.loaders.CacheLoaderException;
+import org.infinispan.loaders.spi.AbstractCacheStore;
+import org.infinispan.loaders.spi.CacheStore;
+import org.infinispan.commons.marshall.StreamingMarshaller;
+import org.infinispan.util.logging.Log;
+import org.infinispan.util.logging.LogFactory;
 
 /**
- * A filesystem-based implementation of a {@link org.infinispan.loaders.bucket.BucketBasedCacheStore}.  This file store
- * stores stuff in the following format: <tt>/{location}/cache name/bucket_number.bucket</tt>
+ * A filesystem-based implementation of a {@link CacheStore}. This file store
+ * stores cache values in a single file <tt>&lt;location&gt;/&lt;cache name&gt;.dat</tt>,
+ * keys and file positions are kept in memory.
+ * <p/>
+ * Note: this CacheStore implementation keeps keys and file positions in memory!
+ * The current implementation needs about 100 bytes per cache entry, plus the
+ * memory for the key objects.
+ * <p/>
+ * So, the space taken by this cache store is both the space in the file
+ * itself plus the in-memory index with the keys and their file positions.
+ * With this in mind and to avoid the cache store leading to
+ * OutOfMemoryExceptions, you can optionally configure the maximum number
+ * of entries to maintain in this cache store, which affects both the size
+ * of the file and the size of the in-memory index. However, setting this
+ * maximum limit results in older entries in the cache store to be eliminated,
+ * and hence, it only makes sense configuring a maximum limit if Infinispan
+ * is used as a cache where loss of data in the cache store does not lead to
+ * data loss, and data can be recomputed or re-queried from the original data
+ * source.
+ * <p/>
+ * This class is fully thread safe, yet allows for concurrent load / store
+ * of individual cache entries.
  *
- * @author Manik Surtani
- * @author Mircea.Markus@jboss.com
- * @author <a href="http://gleamynode.net/">Trustin Lee</a>
- * @author Galder Zamarreño
- * @author Sanne Grinovero
- * @since 4.0
+ * @author Karsten Blees
+ * @since 6.0
  */
-public class FileCacheStore extends BucketBasedCacheStore {
+public class FileCacheStore extends AbstractCacheStore {
 
-   static final Log log = LogFactory.getLog(FileCacheStore.class);
-   private static final boolean trace = log.isTraceEnabled();
-   private int streamBufferSize;
+   private static final Log log = LogFactory.getLog(FileCacheStore.class);
+
+   private static final byte[] MAGIC = new byte[] { 'F', 'C', 'S', '1' };
+   private static final byte[] ZERO_INT = { 0, 0, 0, 0 };
+   private static final int KEYLEN_POS = 4;
+   private static final int KEY_POS = 4 + 4 + 4 + 8;
 
    private FileCacheStoreConfiguration configuration;
 
-   File root;
-   FileSync fileSync;
-   TimeService timerService;
+   private FileChannel file;
+   private Map<Object, FileEntry> entries;
+   private SortedSet<FileEntry> freeList;
+   private long filePos = MAGIC.length;
 
-   /**
-    * @return root directory where all files for this {@link org.infinispan.loaders.spi.CacheStore CacheStore} are written.
-    */
-   public File getRoot() {
-      return root;
-   }
 
+   /** {@inheritDoc} */
    @Override
    public void init(CacheLoaderConfiguration configuration, Cache<?, ?> cache, StreamingMarshaller m) throws
-         CacheLoaderException {
+           CacheLoaderException {
       this.configuration = validateConfigurationClass(configuration, FileCacheStoreConfiguration.class);
       super.init(configuration, cache, m);
    }
 
+   /** {@inheritDoc} */
    @Override
-   protected void loopOverBuckets(BucketHandler handler) throws CacheLoaderException {
+   public void start() throws CacheLoaderException {
+      super.start();
       try {
-         File[] listFiles;
-         if (root != null && (listFiles = root.listFiles(NUMERIC_NAMED_FILES_FILTER)) != null) {
-            for (File bucketFile : listFiles) {
-               Bucket bucket = loadBucket(bucketFile);
-               if (handler.handle(bucket)) {
-                  break;
-               }
+         // open the data file
+         String location = configuration.location();
+         if (location == null || location.trim().length() == 0)
+            location = "Infinispan-SingleFileCacheStore";
+
+         File f = new File(location + File.separator + cache.getName() + ".dat");
+         if (!f.exists()) {
+             File dir = f.getParentFile();
+             if (!dir.exists() && !dir.mkdirs()) {
+                 throw log.directoryCannotBeCreated(dir.getAbsolutePath());
+             }
+         }
+         file = new RandomAccessFile(f, "rw").getChannel();
+
+         // initialize data structures
+         entries = newEntryMap();
+         freeList = Collections.synchronizedSortedSet(new TreeSet<FileEntry>());
+
+         // Upgrade old file cache store structure, if present
+         upgradeFileCacheStoreIfNeeded(location, cache.getName());
+
+         // check file format and read persistent state if enabled for the cache
+         byte[] header = new byte[MAGIC.length];
+         if (file.read(ByteBuffer.wrap(header), 0) == MAGIC.length && Arrays.equals(MAGIC, header))
+            rebuildIndex();
+         else
+            clear(); // otherwise (unknown file format or no preload) just reset the file
+      } catch (Exception e) {
+         throw new CacheLoaderException(e);
+      }
+   }
+
+   private Map<Object, FileEntry> newEntryMap() {
+      // only use LinkedHashMap (LRU) for entries when cache store is bounded
+      final Map<Object, FileEntry> entryMap;
+      Equivalence<Object> keyEq = cache.getCacheConfiguration().dataContainer().keyEquivalence();
+      if (configuration.maxEntries() > 0)
+         entryMap = CollectionFactory.makeLinkedMap(16, 0.75f,
+               EquivalentLinkedHashMap.IterationOrder.ACCESS_ORDER,
+               keyEq, AnyEquivalence.<FileEntry>getInstance());
+      else
+         entryMap = CollectionFactory.makeMap(keyEq, AnyEquivalence.<FileEntry>getInstance());
+
+      return Collections.synchronizedMap(entryMap);
+   }
+
+   private void upgradeFileCacheStoreIfNeeded(String cfgLocation, String cacheName) throws CacheLoaderException {
+      // If old file cache store detected, back it up
+      File backupRoot;
+      try {
+         backupRoot = BucketFileCacheStore.backUpStore(cfgLocation, cacheName);
+      } catch (CacheLoaderException e) {
+         throw log.unableToUpgradeBucketBasedFileCacheStore(e);
+      }
+
+      if (backupRoot != null) {
+         // Clear store and re-create folder
+         File root = BucketFileCacheStore.getLocation(cfgLocation, cacheName);
+         Util.recursiveFileRemove(root);
+         if (!root.mkdirs())
+            log.problemsCreatingDirectory(root);
+
+         // Reset single file so that it contains the right magic header
+         clear();
+
+         // Load all entries from old backed-up store and store them again
+         // (Not very efficient with the current API available, but new API should make improve this)
+         BucketFileCacheStore fcs = new BucketFileCacheStore();
+         fcs.setRoot(backupRoot);
+         fcs.setMarshaller(marshaller);
+         fcs.setFileSync(new BucketFileCacheStore.PerWriteFileSync());
+         Set<InternalCacheEntry> all = fcs.loadAllLockSafe();
+         for (InternalCacheEntry entry : all)
+            store(entry);
+      }
+
+   }
+
+   /** {@inheritDoc} */
+   @Override
+   public void stop() throws CacheLoaderException {
+      try {
+         if (file != null) {
+            // reset state
+            file.close();
+            file = null;
+            entries = null;
+            freeList = null;
+            filePos = MAGIC.length;
+         }
+      } catch (Exception e) {
+         throw new CacheLoaderException(e);
+      }
+      super.stop();
+   }
+
+   /**
+    * Rebuilds the in-memory index from file.
+    */
+   private void rebuildIndex() throws Exception {
+      ByteBuffer buf = ByteBuffer.allocate(KEY_POS);
+      for (;;) {
+         // read FileEntry fields from file (size, keyLen etc.)
+         buf.clear().limit(KEY_POS);
+         file.read(buf, filePos);
+         // return if end of file is reached
+         if (buf.remaining() > 0)
+            return;
+         buf.flip();
+
+         // initialize FileEntry from buffer
+         FileEntry fe = new FileEntry(filePos, buf.getInt());
+         fe.keyLen = buf.getInt();
+         fe.dataLen = buf.getInt();
+         fe.expiryTime = buf.getLong();
+
+         // update file pointer
+         filePos += fe.size;
+
+         // check if the entry is used or free
+         if (fe.keyLen > 0) {
+            // load the key from file
+            if (buf.capacity() < fe.keyLen)
+               buf = ByteBuffer.allocate(fe.keyLen);
+
+            buf.clear().limit(fe.keyLen);
+            file.read(buf, fe.offset + KEY_POS);
+
+            // deserialize key and add to entries map
+            Object key = getMarshaller().objectFromByteBuffer(buf.array(), 0, fe.keyLen);
+            entries.put(key, fe);
+         } else {
+            // add to free list
+            freeList.add(fe);
+         }
+      }
+   }
+
+   /**
+    * {@inheritDoc}
+    * <p/>
+    * The base class implementation calls {@link #load(Object)} for this, we can do better because
+    * we keep all keys in memory.
+    */
+   @Override
+   public boolean containsKey(Object key) throws CacheLoaderException {
+      return entries.containsKey(key);
+   }
+
+   /**
+    * Allocates the requested space in the file.
+    *
+    * @param len requested space
+    * @return allocated file position and length as FileEntry object
+    */
+   private FileEntry allocate(int len) {
+      synchronized (freeList) {
+         // lookup a free entry of sufficient size
+         SortedSet<FileEntry> candidates = freeList.tailSet(new FileEntry(0, len));
+         for (Iterator<FileEntry> it = candidates.iterator(); it.hasNext();) {
+            FileEntry free = it.next();
+            // ignore entries that are still in use by concurrent readers
+            if (free.isLocked())
+               continue;
+
+            // There's no race condition risk between locking the entry on
+            // loading and checking whether it's locked (or store allocation),
+            // because for the entry to be lockable, it needs to be in the
+            // entries collection, in which case it's not in the free list.
+            // The only way an entry can be found in the free list is if it's
+            // been removed, and to remove it, lock on "entries" needs to be
+            // acquired, which is also a pre-requisite for loading data.
+
+            // found one, remove from freeList
+            it.remove();
+            return free;
+         }
+
+         // no appropriate free section available, append at end of file
+         FileEntry fe = new FileEntry(filePos, len);
+         filePos += len;
+         return fe;
+      }
+   }
+
+   /**
+    * Frees the space of the specified file entry (for reuse by allocate).
+    *
+    * @param fe
+    *           FileEntry to free
+    */
+   private void free(FileEntry fe) throws IOException {
+      if (fe != null) {
+         // invalidate entry on disk (by setting keyLen field to 0)
+         file.write(ByteBuffer.wrap(ZERO_INT), fe.offset + KEYLEN_POS);
+         freeList.add(fe);
+      }
+   }
+
+   /** {@inheritDoc} */
+   @Override
+   public void store(InternalCacheEntry entry) throws CacheLoaderException {
+      try {
+         // serialize cache value
+         byte[] key = getMarshaller().objectToByteBuffer(entry.getKey());
+         byte[] data = getMarshaller().objectToByteBuffer(entry.toInternalCacheValue());
+
+         // allocate file entry and store in cache file
+         int len = KEY_POS + key.length + data.length;
+         FileEntry fe = allocate(len);
+         try {
+            fe.expiryTime = entry.getExpiryTime();
+            fe.keyLen = key.length;
+            fe.dataLen = data.length;
+
+            ByteBuffer buf = ByteBuffer.allocate(len);
+            buf.putInt(fe.size);
+            buf.putInt(fe.keyLen);
+            buf.putInt(fe.dataLen);
+            buf.putLong(fe.expiryTime);
+            buf.put(key);
+            buf.put(data);
+            buf.flip();
+            file.write(buf, fe.offset);
+
+            // add the new entry to in-memory index
+            fe = entries.put(entry.getKey(), fe);
+
+            // if we added an entry, check if we need to evict something
+            if (fe == null)
+               fe = evict();
+         } finally {
+            // in case we replaced or evicted an entry, add to freeList
+            free(fe);
+         }
+      } catch (Exception e) {
+         throw new CacheLoaderException(e);
+      }
+   }
+
+   /**
+    * Try to evict an entry if the capacity of the cache store is reached.
+    *
+    * @return FileEntry to evict, or null (if unbounded or capacity is not yet reached)
+    */
+   private FileEntry evict() {
+      if (configuration.maxEntries() > 0) {
+         synchronized (entries) {
+            if (entries.size() > configuration.maxEntries()) {
+               Iterator<FileEntry> it = entries.values().iterator();
+               FileEntry fe = it.next();
+               it.remove();
+               return fe;
             }
          }
-      } catch (InterruptedException ie) {
-         if (log.isDebugEnabled()) {
-            log.debug("Interrupted, so stop looping over buckets.");
-         }
-         Thread.currentThread().interrupt();
       }
+      return null;
    }
 
+   /** {@inheritDoc} */
    @Override
-   protected void fromStreamLockSafe(ObjectInput objectInput) throws CacheLoaderException {
+   public void clear() throws CacheLoaderException {
       try {
-         int numFiles = objectInput.readInt();
-         byte[] buffer = new byte[streamBufferSize];
-         int bytesRead, totalBytesRead = 0;
-         for (int i = 0; i < numFiles; i++) {
-            String fName = (String) objectInput.readObject();
-            int numBytes = objectInput.readInt();
-            FileOutputStream fos = new FileOutputStream(root.getAbsolutePath() + File.separator + fName);
-            BufferedOutputStream bos = new BufferedOutputStream(fos, streamBufferSize);
+         synchronized (entries) {
+            synchronized (freeList) {
+               // wait until all readers are done reading file entries
+               for (FileEntry fe : entries.values())
+                  fe.waitUnlocked();
+               for (FileEntry fe : freeList)
+                  fe.waitUnlocked();
 
-            try {
-               while (numBytes > totalBytesRead) {
-                  if (numBytes - totalBytesRead > streamBufferSize) {
-                     bytesRead = objectInput.read(buffer, 0, streamBufferSize);
-                  } else {
-                     bytesRead = objectInput.read(buffer, 0, numBytes - totalBytesRead);
-                  }
+               // clear in-memory state
+               entries.clear();
+               freeList.clear();
 
-                  if (bytesRead == -1) {
-                     break;
-                  }
-                  totalBytesRead += bytesRead;
-                  bos.write(buffer, 0, bytesRead);
-               }
-               bos.flush();
-               fos.flush();
-               totalBytesRead = 0;
-            } finally {
-               safeClose(bos);
-               safeClose(fos);
+               // reset file
+               file.truncate(0);
+               file.write(ByteBuffer.wrap(MAGIC), 0);
+               filePos = MAGIC.length;
             }
          }
-      } catch (IOException e) {
-         throw new CacheLoaderException("I/O error", e);
-      } catch (ClassNotFoundException e) {
-         throw new CacheLoaderException("Unexpected exception", e);
+      } catch (Exception e) {
+         throw new CacheLoaderException(e);
       }
    }
 
+   /** {@inheritDoc} */
    @Override
-   protected void toStreamLockSafe(ObjectOutput objectOutput) throws CacheLoaderException {
+   public boolean remove(Object key) throws CacheLoaderException {
       try {
-         File[] files = listFilesStrict(root, NUMERIC_NAMED_FILES_FILTER);
+         FileEntry fe = entries.remove(key);
+         free(fe);
+         return fe != null;
+      } catch (Exception e) {
+         throw new CacheLoaderException(e);
+      }
+   }
 
-         objectOutput.writeInt(files.length);
-         byte[] buffer = new byte[streamBufferSize];
-         for (File file : files) {
-            int bytesRead, totalBytesRead = 0;
-            BufferedInputStream bis = null;
-            FileInputStream fileInStream = null;
-            try {
-               if (trace) {
-                  log.tracef("Opening file in %s", file);
-               }
-               fileInStream = new FileInputStream(file);
-               int sz = fileInStream.available();
-               bis = new BufferedInputStream(fileInStream);
-               objectOutput.writeObject(file.getName());
-               objectOutput.writeInt(sz);
+   /** {@inheritDoc} */
+   @Override
+   public InternalCacheEntry load(Object key) throws CacheLoaderException {
+      try {
+         final FileEntry fe;
+         final boolean expired;
+         synchronized (entries) {
+            // lookup FileEntry of the key
+            fe = entries.get(key);
+            if (fe == null)
+               return null;
 
-               while (sz > totalBytesRead) {
-                  bytesRead = bis.read(buffer, 0, streamBufferSize);
-                  if (bytesRead == -1) {
-                     break;
-                  }
-                  totalBytesRead += bytesRead;
-                  objectOutput.write(buffer, 0, bytesRead);
-               }
-            } finally {
-               Util.close(bis);
-               Util.close(fileInStream);
+            // if expired, remove the entry (within entries monitor)
+            expired = fe.isExpired(System.currentTimeMillis());
+            if (expired)
+               entries.remove(key);
+
+            // lock entry for reading before releasing entries monitor
+            fe.lock();
+         }
+
+         final byte[] data;
+         try {
+            // if expired, free the file entry (after releasing entries monitor)
+            if (expired) {
+               free(fe);
+               return null;
             }
+
+            // load serialized data from disk
+            data = new byte[fe.dataLen];
+            file.read(ByteBuffer.wrap(data), fe.offset + KEY_POS + fe.keyLen);
+         } finally {
+            // no need to keep the lock for deserialization
+            fe.unlock();
          }
-      } catch (IOException e) {
-         throw new CacheLoaderException("I/O exception while generating stream", e);
+
+         // deserialize data and recreate InternalCacheEntry
+         return ((InternalCacheValue) getMarshaller().objectFromByteBuffer(data)).toInternalCacheEntry(key);
+      } catch (Exception e) {
+         throw new CacheLoaderException(e);
       }
    }
 
+   /** {@inheritDoc} */
    @Override
-   protected void clearLockSafe() throws CacheLoaderException {
-      File[] toDelete = root.listFiles(NUMERIC_NAMED_FILES_FILTER);
-      if (toDelete == null) {
-         return;
-      }
-      for (File f : toDelete) {
-         deleteFile(f);
-         if (f.exists()) {
-            log.problemsRemovingFile(f);
+   public Set<InternalCacheEntry> loadAll() throws CacheLoaderException {
+      return load(Integer.MAX_VALUE);
+   }
+
+   /** {@inheritDoc} */
+   @Override
+   public Set<InternalCacheEntry> load(int numEntries) throws CacheLoaderException {
+      Set<Object> keys = loadAllKeys(null);
+      Set<InternalCacheEntry> result = new HashSet<InternalCacheEntry>();
+      for (Object key : keys) {
+         InternalCacheEntry ice = load(key);
+         if (ice != null) {
+            result.add(ice);
+            if (result.size() >= numEntries)
+               return result;
          }
       }
+      return result;
    }
 
+   /** {@inheritDoc} */
    @Override
-   protected boolean supportsMultiThreadedPurge() {
-      return true;
+   public Set<Object> loadAllKeys(Set<Object> keysToExclude) throws CacheLoaderException {
+      Set<Object> result;
+      synchronized (entries) {
+         result = new HashSet<Object>(entries.keySet());
+      }
+      if (keysToExclude != null)
+         result.removeAll(keysToExclude);
+      return result;
    }
 
+   /** {@inheritDoc} */
    @Override
    protected void purgeInternal() throws CacheLoaderException {
-      if (trace) log.trace("purgeInternal()");
-
-      File[] files = listFilesStrict(root, NUMERIC_NAMED_FILES_FILTER);
-
-      for (final File bucketFile : files) {
-         if (multiThreadedPurge) {
-            purgerService.execute(new Runnable() {
-               @Override
-               public void run() {
-                  boolean interrupted = !doPurge(bucketFile);
-                  if (interrupted) log.debug("Interrupted, so finish work.");
+      long now = System.currentTimeMillis();
+      synchronized (entries) {
+         for (Iterator<FileEntry> it = entries.values().iterator(); it.hasNext();) {
+            FileEntry fe = it.next();
+            if (fe.isExpired(now)) {
+               it.remove();
+               try {
+                  free(fe);
+               } catch (Exception e) {
+                  throw new CacheLoaderException(e);
                }
-            });
-         } else {
-            boolean interrupted = !doPurge(bucketFile);
-            if (interrupted) {
-               log.debug("Interrupted, so stop loading and finish with purging.");
+            }
+         }
+      }
+   }
+
+   /** {@inheritDoc} */
+   @Override
+   public void fromStream(ObjectInput inputStream) throws CacheLoaderException {
+      // seems that this is never called by Infinispan (except by decorators)
+      throw new UnsupportedOperationException();
+   }
+
+   /** {@inheritDoc} */
+   @Override
+   public void toStream(ObjectOutput outputStream) throws CacheLoaderException {
+      // seems that this is never called by Infinispan (except by decorators)
+      throw new UnsupportedOperationException();
+   }
+
+   Map<Object, FileEntry> getEntries() {
+      return entries;
+   }
+
+   SortedSet<FileEntry> getFreeList() {
+      return freeList;
+   }
+
+   /**
+    * Helper class to represent an entry in the cache file.
+    * <p/>
+    * The format of a FileEntry on disk is as follows:
+    * <ul>
+    * <li>4 bytes: {@link #size}</li>
+    * <li>4 bytes: {@link #keyLen}, 0 if the block is unused</li>
+    * <li>4 bytes: {@link #dataLen}</li>
+    * <li>8 bytes: {@link #expiryTime}</li>
+    * <li>{@link #keyLen} bytes: serialized key</li>
+    * <li>{@link #dataLen} bytes: serialized data</li>
+    * </ul>
+    */
+   private static class FileEntry implements Comparable<Object> {
+      /**
+       * File offset of this block.
+       */
+      private final long offset;
+
+      /**
+       * Total size of this block.
+       */
+      private final int size;
+
+      /**
+       * Size of serialized key.
+       */
+      private int keyLen;
+
+      /**
+       * Size of serialized data.
+       */
+      private int dataLen;
+
+      /**
+       * Time stamp when the entry will expire (i.e. will be collected by purge).
+       */
+      private long expiryTime = -1;
+
+      /**
+       * Number of current readers.
+       */
+      private transient int readers = 0;
+
+      private FileEntry(long offset, int size) {
+         this.offset = offset;
+         this.size = size;
+      }
+
+      private synchronized boolean isLocked() {
+         return readers > 0;
+      }
+
+      private synchronized void lock() {
+         readers++;
+      }
+
+      private synchronized void unlock() {
+         readers--;
+         if (readers == 0)
+            notifyAll();
+      }
+
+      private synchronized void waitUnlocked() {
+         while (readers > 0) {
+            try {
+               wait();
+            } catch (InterruptedException e) {
                Thread.currentThread().interrupt();
             }
          }
       }
-   }
 
-   /**
-    * Performs a purge on a given bucket file, and returns true if the process was <i>not</i> interrupted, false
-    * otherwise.
-    *
-    * @param bucketFile bucket file to purge
-    * @return true if the process was not interrupted, false otherwise.
-    */
-   private boolean doPurge(File bucketFile) {
-      Integer bucketKey = Integer.valueOf(bucketFile.getName());
-      boolean interrupted = false;
-      try {
-         lockForReading(bucketKey);
-         Bucket bucket = loadBucket(bucketFile);
-
-         if (bucket != null) {
-            if (bucket.removeExpiredEntries()) {
-               upgradeLock(bucketKey);
-               updateBucket(bucket);
-            }
-         } else {
-            // Bucket may be an empty 0-length file
-            if (bucketFile.exists() && bucketFile.length() == 0) {
-               upgradeLock(bucketKey);
-               fileSync.deleteFile(bucketFile);
-               if (bucketFile.exists())
-                  log.info("Unable to remove empty file " + bucketFile + " - will try again later.");
-            }
-         }
-      } catch (InterruptedException ie) {
-         interrupted = true;
-      } catch (CacheLoaderException e) {
-         log.problemsPurgingFile(bucketFile, e);
-      } finally {
-         unlock(bucketKey);
-      }
-      return !interrupted;
-   }
-
-   @Override
-   protected Bucket loadBucket(Integer hash) throws CacheLoaderException {
-      try {
-         return loadBucket(new File(root, String.valueOf(hash)));
-      } catch (InterruptedException ie) {
-         if (log.isDebugEnabled()) {
-            log.debug("Interrupted, so stop loading bucket and return null.");
-         }
-         Thread.currentThread().interrupt();
-         return null;
-      }
-   }
-
-   protected Bucket loadBucket(File bucketFile) throws CacheLoaderException, InterruptedException {
-      Bucket bucket = null;
-      if (bucketFile.exists()) {
-         if (trace) {
-            log.trace("Found bucket file: '" + bucketFile + "'");
-         }
-         InputStream is = null;
-         try {
-            // It could happen that the output buffer might not have been
-            // flushed, so just in case, flush it to be able to read it.
-            fileSync.flush(bucketFile);
-            if (bucketFile.length() == 0) {
-               // short circuit
-               return null;
-            }
-            is = new FileInputStream(bucketFile);
-            Map<Object, InternalCacheEntry> entries = objectFromInputStreamInReentrantMode(is);
-            bucket = new Bucket(timerService, keyEquivalence, entries);
-         } catch (InterruptedException ie) {
-            throw ie;
-         } catch (Exception e) {
-            log.errorReadingFromFile(bucketFile.getAbsoluteFile(), e);
-            throw new CacheLoaderException("Error while reading from file", e);
-         } finally {
-            safeClose(is);
-         }
-      }
-      if (bucket != null) {
-         bucket.setBucketId(bucketFile.getName());
-      }
-      return bucket;
-   }
-
-   @Override
-   public void updateBucket(Bucket b) throws CacheLoaderException {
-      File f = new File(root, b.getBucketIdAsString());
-      if (f.exists()) {
-         if (!purgeFile(f)) {
-            log.problemsRemovingFile(f);
-         } else if (trace) {
-            log.tracef("Successfully deleted file: '%s'", f.getName());
-         }
+      private boolean isExpired(long now) {
+         return expiryTime > 0 && expiryTime < now;
       }
 
-      if (!b.getEntries().isEmpty()) {
-         try {
-            byte[] bytes = marshaller.objectToByteBuffer(b.getEntries());
-            fileSync.write(bytes, f);
-         } catch (IOException ex) {
-            log.errorSavingBucket(b, ex);
-            throw new CacheLoaderException(ex);
-         } catch (InterruptedException ie) {
-            if (trace) {
-               log.trace("Interrupted while marshalling a bucket");
-            }
-            Thread.currentThread().interrupt(); // Restore interrupted status
-         }
-      }
-   }
-
-   @Override
-   public void start() throws CacheLoaderException {
-      super.start();
-      String location = configuration.location();
-      if (location == null || location.trim().length() == 0) {
-         location = "Infinispan-FileCacheStore"; // use relative path!
-      }
-      location += File.separator + cache.getName();
-      root = new File(location);
-      if (!root.exists()) {
-         if (!root.mkdirs()) {
-            log.problemsCreatingDirectory(root);
-         }
-      }
-      if (!root.exists()) {
-         throw new CacheConfigurationException("Directory " + root.getAbsolutePath() + " does not exist and cannot be created!");
-      }
-      streamBufferSize = configuration.streamBufferSize();
-
-      FileCacheStoreConfigurationBuilder.FsyncMode fsyncMode = configuration.fsyncMode();
-      switch (fsyncMode) {
-         case DEFAULT:
-            fileSync = new BufferedFileSync();
-            break;
-         case PER_WRITE:
-            fileSync = new PerWriteFileSync();
-            break;
-         case PERIODIC:
-            fileSync = new PeriodicFileSync(configuration.fsyncInterval());
-            break;
-      }
-
-      log.debugf("Using %s file sync mode", fsyncMode);
-      timerService = cache.getAdvancedCache().getComponentRegistry().getTimeService();
-   }
-
-   @Override
-   public void stop() throws CacheLoaderException {
-      super.stop();
-      fileSync.stop();
-   }
-
-   public Bucket loadBucketContainingKey(String key) throws CacheLoaderException {
-      return loadBucket(getLockFromKey(key));
-   }
-
-   private void deleteFile(File f) {
-      if (trace) {
-         log.tracef("Really delete file %s", f);
-      }
-      fileSync.deleteFile(f);
-   }
-
-   private boolean purgeFile(File f) {
-      if (trace) {
-         log.tracef("Really clear file %s", f);
-      }
-      try {
-         fileSync.purge(f);
-         return true;
-      } catch (IOException e) {
-         if (trace)
-            log.trace("Error encountered while clearing file: " + f, e);
-         return false;
-      }
-   }
-
-   @SuppressWarnings("unchecked")
-   private <T> T objectFromInputStreamInReentrantMode(InputStream is) throws IOException, ClassNotFoundException, InterruptedException {
-      int len = is.available();
-      T o = null;
-      if (len != 0) {
-         ExposedByteArrayOutputStream bytes = new ExposedByteArrayOutputStream(len);
-         byte[] buf = new byte[Math.min(len, 1024)];
-         int bytesRead;
-         while ((bytesRead = is.read(buf, 0, buf.length)) != -1) {
-            bytes.write(buf, 0, bytesRead);
-         }
-         is = new ByteArrayInputStream(bytes.getRawBuffer(), 0, bytes.size());
-         ObjectInput unmarshaller = marshaller.startObjectInput(is, false);
-         try {
-            o = (T) marshaller.objectFromObjectStream(unmarshaller);
-         } finally {
-            marshaller.finishObjectInput(unmarshaller);
-         }
-      }
-      return o;
-   }
-
-   /**
-    * Returns an array of abstract pathnames denoting the files and
-    * directories in the directory denoted by the given file abstract pathname
-    * that satisfy the specified filter.
-    *
-    * @param f abstract pathname
-    * @param filter file filter
-    * @return a non-null list of pathnames which could be empty
-    * @throws CacheLoaderException is thrown if the list returned by
-    * {@link File#listFiles(java.io.FilenameFilter)} is null
-    */
-   private File[] listFilesStrict(File f, FilenameFilter filter) throws CacheLoaderException {
-      File[] files = f.listFiles(filter);
-      if (files == null) {
-         boolean exists = f.exists();
-         boolean isDirectory = f.isDirectory();
-         boolean canRead = f.canRead();
-         boolean canWrite = f.canWrite();
-         throw new CacheLoaderException(String.format(
-               "File %s is not directory or IO error occurred when listing " +
-               "files with filter %s [fileExists=%b, isDirector=%b, " +
-               "canRead=%b, canWrite=%b]",
-               f, filter, exists, isDirectory, canRead, canWrite));
-      }
-      return files;
-   }
-
-   /**
-    * Specifies how the changes written to a file will be synched with the underlying file system.
-    */
-   private interface FileSync {
-
-      /**
-       * Writes the given bytes to the file.
-       *
-       * @param bytes byte array containing the bytes to write.
-       * @param f     File instance representing the location where to store the data.
-       * @throws IOException if an I/O error occurs
-       */
-      void write(byte[] bytes, File f) throws IOException;
-
-      /**
-       * Force the file changes to be flushed to the underlying file system. Client code calling this flush method
-       * should in advance check whether the file exists and so this method assumes that check was already done.
-       *
-       * @param f File instance representing the location changes should be flushed to.
-       * @throws IOException if an I/O error occurs
-       */
-      void flush(File f) throws IOException;
-
-      /**
-       * Forces the file to be purged. Implementations are free to decide what the best option should be here. For
-       * example, whether to delete the file, whether to empty it...etc.
-       *
-       * @param f File instance that should be purged.
-       * @throws IOException if an I/O error occurs
-       */
-      void purge(File f) throws IOException;
-
-      /**
-       * Stop the file synching mechanism. This offers implementors the opportunity to do any cleanup when the cache
-       * stops.
-       */
-      void stop();
-
-      void deleteFile(File f);
-   }
-
-   private static class BufferedFileSync implements FileSync {
-      protected final ConcurrentMap<String, FileChannel> streams = CollectionFactory.makeConcurrentMap();
-
+      /** {@inheritDoc} */
       @Override
-      public void write(byte[] bytes, File f) throws IOException {
-         if (bytes.length == 0) {
-            // Short circuit for deleting files
-            deleteFile(f);
-            return;
-         }
-
-         String path = f.getPath();
-         FileChannel channel = streams.get(path);
-         if (channel == null) {
-            channel = createChannel(f);
-            FileChannel existingChannel = streams.putIfAbsent(path, channel);
-            if (existingChannel != null) {
-               Util.close(channel);
-               channel = existingChannel;
-            }
-         } else if (!f.exists()) {
-            f.createNewFile();
-            FileChannel oldChannel = channel;
-            channel = createChannel(f);
-            boolean replaced = streams.replace(path, oldChannel, channel);
-            if (replaced) {
-               Util.close(oldChannel);
-            } else {
-               Util.close(channel);
-               channel = streams.get(path);
-            }
-         }
-         channel.write(ByteBuffer.wrap(bytes));
-      }
-
-      @Override
-      public void deleteFile(File f) {
-         String path = f.getPath();
-         // First remove the channel from the map
-         FileChannel fc = streams.remove(path);
-         // Then close the channel (handles null params)
-         Util.close(fc);
-         // Now that the channel is closed we can delete the file
-         f.delete();
-      }
-
-      private FileChannel createChannel(File f) throws FileNotFoundException {
-         return new RandomAccessFile(f, "rw").getChannel();
-      }
-
-      @Override
-      public void flush(File f) throws IOException {
-         FileChannel channel = streams.get(f.getPath());
-         if (channel != null)
-            channel.force(false);
-      }
-
-      @Override
-      public void purge(File f) throws IOException {
-         // Avoid a delete per-se because it hampers any fsync-like functionality
-         // cos any cached file channel write won't change the file's exists
-         // status. So, clear the file rather than delete it.
-         FileChannel channel = streams.get(f.getPath());
-         if (channel == null) {
-            channel = createChannel(f);
-            String path = f.getPath();
-            FileChannel existingChannel = streams.putIfAbsent(path, channel);
-            if (existingChannel != null) {
-               Util.close(channel);
-               channel = existingChannel;
-            }
-         }
-         channel.truncate(0);
-         // Apart from truncating, it's necessary to reset the position!
-         channel.position(0);
-      }
-
-      @Override
-      public void stop() {
-         for (FileChannel channel : streams.values()) {
-            try {
-               channel.force(true);
-            } catch (IOException e) {
-               log.errorFlushingToFileChannel(channel, e);
-            }
-            Util.close(channel);
-         }
-
-         streams.clear();
-      }
-
-   }
-
-   private class PeriodicFileSync extends BufferedFileSync {
-      private final ScheduledExecutorService executor =
-            Executors.newSingleThreadScheduledExecutor();
-      protected final ConcurrentMap<String, IOException> flushErrors = CollectionFactory.makeConcurrentMap();
-
-      private PeriodicFileSync(long interval) {
-         executor.scheduleWithFixedDelay(new Runnable() {
-            @Override
-            public void run() {
-               for (Map.Entry<String, FileChannel> entry : streams.entrySet()) {
-                  if (trace)
-                     log.tracef("Flushing channel in %s", entry.getKey());
-                  FileChannel channel = entry.getValue();
-                  try {
-                     channel.force(true);
-                  } catch (IOException e) {
-                     if (trace)
-                        log.tracef(e, "Error flushing output stream for %s", entry.getKey());
-                     flushErrors.putIfAbsent(entry.getKey(), e);
-                     // If an error is encountered, close it. Next time it's used,
-                     // the exception will be propagated back to the user.
-                     Util.close(channel);
-                  }
-               }
-            }
-         }, interval, interval, TimeUnit.MILLISECONDS);
-      }
-
-      @Override
-      public void write(byte[] bytes, File f) throws IOException {
-         String path = f.getPath();
-         IOException error = flushErrors.get(path);
-         if (error != null)
-            throw new IOException(String.format(
-                  "Periodic flush of channel for %s failed", path), error);
-
-         super.write(bytes, f);
-      }
-
-      @Override
-      public void stop() {
-         executor.shutdown();
-         super.stop();
+      public int compareTo(Object o) {
+         FileEntry fe = (FileEntry) o;
+         if (this == fe)
+            return 0;
+         int diff = size - fe.size;
+         return (diff != 0) ? diff : offset > fe.offset ? 1 : -1;
       }
    }
-
-   private static class PerWriteFileSync implements FileSync {
-      @Override
-      public void write(byte[] bytes, File f) throws IOException {
-         FileOutputStream fos = null;
-         try {
-            if (bytes.length > 0) {
-               fos = new FileOutputStream(f);
-               fos.write(bytes);
-               fos.flush();
-               fos.getChannel().force(true);
-            } else {
-               deleteFile(f);
-            }
-         } finally {
-            if (fos != null)
-               fos.close();
-         }
-      }
-
-      @Override
-      public void flush(File f) throws IOException {
-         // No-op since flush always happens upon write
-      }
-
-      @Override
-      public void purge(File f) throws IOException {
-         deleteFile(f);
-      }
-
-      @Override
-      public void stop() {
-         // No-op
-      }
-
-      @Override
-      public void deleteFile(File f) {
-         f.delete();
-      }
-   }
-
-   /**
-    * Makes sure that files opened are actually named as numbers (ignore all other files)
-    */
-   public static class NumericNamedFilesFilter implements FilenameFilter {
-      @Override
-      public boolean accept(File dir, String name) {
-         int l = name.length();
-         int s = name.charAt(0) == '-' ? 1 : 0;
-         if (l - s > 10) {
-            log.cacheLoaderIgnoringUnexpectedFile(dir, name);
-            return false;
-         }
-         for (int i = s; i < l; i++) {
-            char c = name.charAt(i);
-            if (c < '0' || c > '9') {
-               log.cacheLoaderIgnoringUnexpectedFile(dir, name);
-               return false;
-            }
-         }
-         return true;
-      }
-   }
-
-   public static final NumericNamedFilesFilter NUMERIC_NAMED_FILES_FILTER = new NumericNamedFilesFilter();
-
 }

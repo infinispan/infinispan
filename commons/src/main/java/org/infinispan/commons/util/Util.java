@@ -9,6 +9,11 @@ import org.infinispan.commons.logging.LogFactory;
 
 import javax.naming.Context;
 import java.io.Closeable;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.InputStream;
 import java.io.ObjectOutput;
 import java.io.OutputStream;
 import java.lang.management.LockInfo;
@@ -653,4 +658,25 @@ public final class Util {
       int highestBit = Integer.highestOneBit(num);
       return num <= highestBit ? highestBit : highestBit << 1;
    }
+
+   public static void recursiveFileRemove(File file) {
+      if (file.exists()) {
+         log.tracef("Deleting file %s", file);
+         recursiveDelete(file);
+      }
+   }
+
+   private static void recursiveDelete(File f) {
+      File absoluteFile = f.getAbsoluteFile();
+      if (absoluteFile.isDirectory()) {
+         File[] files = absoluteFile.listFiles();
+         if (files != null) {
+            for (File file : files) {
+               recursiveDelete(file);
+            }
+         }
+      }
+      absoluteFile.delete();
+   }
+
 }
