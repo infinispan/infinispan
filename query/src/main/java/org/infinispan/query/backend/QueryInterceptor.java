@@ -17,7 +17,7 @@ import org.hibernate.search.backend.TransactionContext;
 import org.hibernate.search.backend.spi.Work;
 import org.hibernate.search.backend.spi.WorkType;
 import org.hibernate.search.backend.spi.Worker;
-import org.hibernate.search.engine.spi.EntityIndexBinder;
+import org.hibernate.search.engine.spi.EntityIndexBinding;
 import org.hibernate.search.spi.SearchFactoryIntegrator;
 import org.infinispan.commands.FlagAffectedCommand;
 import org.infinispan.commands.tx.PrepareCommand;
@@ -180,9 +180,9 @@ public class QueryInterceptor extends CommandInterceptor {
       }
    }
 
-   private boolean isIndexed(Class<?> c) {
-      EntityIndexBinder binder = this.searchFactory.getIndexBindingForEntity(c);
-      return binder != null;
+   private boolean isIndexed(final Class<?> c) {
+      final EntityIndexBinding indexBinding = this.searchFactory.getIndexBinding(c);
+      return indexBinding != null;
    }
 
    private Object extractValue(Object wrappedValue) {

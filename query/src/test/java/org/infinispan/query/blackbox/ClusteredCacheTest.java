@@ -350,12 +350,16 @@ public class ClusteredCacheTest extends MultipleCacheManagersTest {
 
       CacheQuery cacheQuery = manager.getQuery(luceneQuery);
 
-      ResultIterator found = cacheQuery.iterator(new FetchOptions().fetchMode(FetchOptions.FetchMode.LAZY));
-
       int counter = 0;
-      while(found.hasNext()) {
-         found.next();
-         counter++;
+      ResultIterator found = cacheQuery.iterator(new FetchOptions().fetchMode(FetchOptions.FetchMode.LAZY));
+      try {
+         while(found.hasNext()) {
+            found.next();
+            counter++;
+        }
+      }
+      finally {
+         found.close();
       }
 
       AssertJUnit.assertEquals(2, counter);
