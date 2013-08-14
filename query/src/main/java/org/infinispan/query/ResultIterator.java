@@ -1,5 +1,6 @@
 package org.infinispan.query;
 
+import java.io.Closeable;
 import java.util.Iterator;
 
 /**
@@ -8,7 +9,7 @@ import java.util.Iterator;
  *
  * @author Marko Luksa
  */
-public interface ResultIterator extends Iterator<Object> {
+public interface ResultIterator extends Iterator<Object>, Closeable {
 
    /**
     * This method must be called on your iterator once you have finished so that any local
