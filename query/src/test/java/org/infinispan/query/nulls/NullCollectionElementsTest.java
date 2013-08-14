@@ -5,8 +5,10 @@ import org.hibernate.search.annotations.Field;
 import org.hibernate.search.annotations.Indexed;
 import org.hibernate.search.annotations.Store;
 import org.hibernate.search.query.dsl.QueryBuilder;
+import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.manager.EmbeddedCacheManager;
+import org.infinispan.query.CacheQuery;
 import org.infinispan.query.FetchOptions;
 import org.infinispan.query.ProjectionConstants;
 import org.infinispan.query.ResultIterator;
@@ -91,6 +93,45 @@ public class NullCollectionElementsTest extends SingleCacheManagerTest {
             } catch (NoSuchElementException e) {
                // pass
             }
+            return null;
+         }
+      });
+   }
+
+   @Test // This is the same as the verification above, only verifying the default iterator() method.
+   public void testQuerySkipsNullsInDefaultIterator() throws Exception {
+      withTx(tm(), new Callable<Void>() {
+         @Override
+         public Void call() throws Exception {
+            cache.remove("1");   // cache will now be out of sync with the index
+            Query query = createQueryBuilder().keyword().onField("bar").matching("1").createQuery();
+            ResultIterator iterator = searchManager.getQuery(query).iterator();
+            assertFalse(iterator.hasNext());
+            try {
+               iterator.next();
+               fail("Expected NoSuchElementException");
+            } catch (NoSuchElementException e) {
+               // pass
+            }
+            return null;
+         }
+      });
+   }
+
+   @Test // This is the same as the verification above, only verifying the iterating using cacheQuery object.
+   public void testQuerySkipsNullsInCacheQueryIterator() throws Exception {
+      withTx(tm(), new Callable<Void>() {
+         @Override
+         public Void call() throws Exception {
+            cache.remove("1");   // cache will now be out of sync with the index
+            Query query = createQueryBuilder().keyword().onField("bar").matching("1").createQuery();
+            CacheQuery cacheQuery = searchManager.getQuery(query);
+            assertEquals(1, cacheQuery.getResultSize());
+
+            for(Object obj : cacheQuery) {
+               fail("The iterator should not contain any data.");
+            }
+
             return null;
          }
       });

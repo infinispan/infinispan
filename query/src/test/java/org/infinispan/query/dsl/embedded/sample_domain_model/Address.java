@@ -5,12 +5,14 @@ import org.hibernate.search.annotations.Field;
 import org.hibernate.search.annotations.Indexed;
 import org.hibernate.search.annotations.Store;
 
+import java.io.Serializable;
+
 /**
  * @author anistor@redhat.com
  * @since 6.0
  */
 @Indexed
-public class Address {
+public class Address implements Serializable {
 
    @Field(store = Store.YES, analyze = Analyze.NO)
    private String street;

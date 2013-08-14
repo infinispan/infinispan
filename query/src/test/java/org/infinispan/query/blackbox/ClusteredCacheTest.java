@@ -28,6 +28,7 @@ import javax.transaction.TransactionManager;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.Future;
 
 import static org.infinispan.query.helper.TestQueryHelperFactory.createCacheQuery;
 import static org.infinispan.query.helper.TestQueryHelperFactory.createQueryParser;
@@ -39,7 +40,7 @@ import static org.infinispan.query.helper.TestQueryHelperFactory.createQueryPars
 @Test(groups = "functional", testName = "query.blackbox.ClusteredCacheTest")
 public class ClusteredCacheTest extends MultipleCacheManagersTest {
 
-   Cache<String, Person> cache1, cache2;
+   Cache cache1, cache2;
    Person person1;
    Person person2;
    Person person3;
@@ -119,7 +120,7 @@ public class ClusteredCacheTest extends MultipleCacheManagersTest {
 
       if (found.get(0) == null) {
          log.warn("found.get(0) is null");
-         Person p1 = cache2.get(key1);
+         Person p1 = (Person) cache2.get(key1);
          if (p1 == null) {
             log.warn("Person p1 is null in sc2 and cannot actually see the data of person1 in sc1");
          } else {
@@ -244,6 +245,188 @@ public class ClusteredCacheTest extends MultipleCacheManagersTest {
       AssertJUnit.assertEquals(3, found.size());
    }
 
+   public void testPutMapAsync() throws Exception {
+      prepareTestData();
+      SearchManager searchManager = Search.getSearchManager(cache2);
+      QueryBuilder queryBuilder = searchManager
+            .buildQueryBuilderForClass(Person.class)
+            .get();
+      Query allQuery = queryBuilder.all().createQuery();
+      assert searchManager.getQuery(allQuery, Person.class).list().size() == 3;
+
+      person4 = new Person();
+      person4.setName("New Goat");
+      person4.setBlurb("Also eats grass");
+
+      Map<String,Person> allWrites = new HashMap<String,Person>();
+      allWrites.put(key1, person1);
+      allWrites.put(key2, person2);
+      allWrites.put(key3, person3);
+      allWrites.put("newGoat", person4);
+
+      Future futureTask = cache2.putAllAsync(allWrites);
+
+      while(!futureTask.isDone()) {
+         Thread.sleep(100);
+      }
+
+      assert futureTask.isDone();
+      List found = searchManager.getQuery(allQuery, Person.class).list();
+      AssertJUnit.assertEquals(4, found.size());
+      assert found.contains(person4);
+
+      futureTask = cache1.putAllAsync(allWrites);
+
+      while(!futureTask.isDone()) {
+         Thread.sleep(100);
+      }
+
+      assert futureTask.isDone();
+      found = searchManager.getQuery(allQuery, Person.class).list();
+      AssertJUnit.assertEquals(4, found.size());
+      assert found.contains(person4);
+   }
+
+   public void testPutForExternalRead() throws Exception {
+      prepareTestData();
+      SearchManager searchManager = Search.getSearchManager(cache2);
+      QueryBuilder queryBuilder = searchManager
+            .buildQueryBuilderForClass(Person.class)
+            .get();
+      Query allQuery = queryBuilder.all().createQuery();
+      assert searchManager.getQuery(allQuery, Person.class).list().size() == 3;
+
+      person4 = new Person();
+      person4.setName("New Goat");
+      person4.setBlurb("Also eats grass");
+
+      cache2.putForExternalRead("newGoat", person4);
+      List found = searchManager.getQuery(allQuery, Person.class).list();
+      AssertJUnit.assertEquals(4, found.size());
+
+      assert found.contains(person4);
+
+      Person person5 = new Person();
+      person5.setName("Abnormal Goat");
+      person5.setBlurb("Plays with grass.");
+      cache2.putForExternalRead("newGoat", person5);
+
+      found = searchManager.getQuery(allQuery, Person.class).list();
+      AssertJUnit.assertEquals(4, found.size());
+
+      assert !found.contains(person5);
+      assert found.contains(person4);
+   }
+
+   public void testPutIfAbsent() throws Exception {
+      prepareTestData();
+      SearchManager searchManager = Search.getSearchManager(cache2);
+      QueryBuilder queryBuilder = searchManager
+            .buildQueryBuilderForClass(Person.class)
+            .get();
+      Query allQuery = queryBuilder.all().createQuery();
+      assert searchManager.getQuery(allQuery, Person.class).list().size() == 3;
+
+      person4 = new Person();
+      person4.setName("New Goat");
+      person4.setBlurb("Also eats grass");
+
+      cache2.putIfAbsent("newGoat", person4);
+
+      List found = searchManager.getQuery(allQuery, Person.class).list();
+      AssertJUnit.assertEquals(4, found.size());
+
+      assert found.contains(person4);
+
+      Person person5 = new Person();
+      person5.setName("Abnormal Goat");
+      person5.setBlurb("Plays with grass.");
+      cache2.putIfAbsent("newGoat", person5);
+
+      found = searchManager.getQuery(allQuery, Person.class).list();
+      AssertJUnit.assertEquals(4, found.size());
+
+      assert !found.contains(person5);
+      assert found.contains(person4);
+   }
+
+   public void testPutIfAbsentAsync() throws Exception {
+      prepareTestData();
+      SearchManager searchManager = Search.getSearchManager(cache2);
+      QueryBuilder queryBuilder = searchManager
+            .buildQueryBuilderForClass(Person.class)
+            .get();
+      Query allQuery = queryBuilder.all().createQuery();
+      assert searchManager.getQuery(allQuery, Person.class).list().size() == 3;
+
+      person4 = new Person();
+      person4.setName("New Goat");
+      person4.setBlurb("Also eats grass");
+
+      Future futureTask = cache2.putIfAbsentAsync("newGoat", person4);
+      while(!futureTask.isDone()) {
+         Thread.sleep(100);
+      }
+
+      assert futureTask.isDone();
+      List found = searchManager.getQuery(allQuery, Person.class).list();
+      AssertJUnit.assertEquals(4, found.size());
+      assert found.contains(person4);
+
+      Person person5 = new Person();
+      person5.setName("Abnormal Goat");
+      person5.setBlurb("Plays with grass.");
+      futureTask = cache2.putIfAbsentAsync("newGoat", person5);
+      while(!futureTask.isDone()) {
+         Thread.sleep(100);
+      }
+
+      assert futureTask.isDone();
+      found = searchManager.getQuery(allQuery, Person.class).list();
+      AssertJUnit.assertEquals(4, found.size());
+      assert !found.contains(person5);
+      assert found.contains(person4);
+   }
+
+   public void testPutAsync() throws Exception {
+      prepareTestData();
+      SearchManager searchManager = Search.getSearchManager(cache2);
+      QueryBuilder queryBuilder = searchManager
+            .buildQueryBuilderForClass(Person.class)
+            .get();
+      Query allQuery = queryBuilder.all().createQuery();
+      assert searchManager.getQuery(allQuery, Person.class).list().size() == 3;
+
+      person4 = new Person();
+      person4.setName("New Goat");
+      person4.setBlurb("Also eats grass");
+
+      Future f = cache2.putAsync("newGoat", person4);
+      while(!f.isDone()) {
+         Thread.sleep(100);
+      }
+
+      assert f.isDone();
+      List found = searchManager.getQuery(allQuery, Person.class).list();
+      AssertJUnit.assertEquals(4, found.size());
+      assert found.contains(person4);
+
+      Person person5 = new Person();
+      person5.setName("Abnormal Goat");
+      person5.setBlurb("Plays with grass.");
+      f = cache2.putAsync("newGoat", person5);
+
+      while(!f.isDone()) {
+         Thread.sleep(100);
+      }
+
+      assert f.isDone();
+      found = searchManager.getQuery(allQuery, Person.class).list();
+      AssertJUnit.assertEquals(4, found.size());
+      assert !found.contains(person4);
+      assert found.contains(person5);
+   }
+
    public void testClear() throws Exception {
       prepareTestData();
       queryParser = createQueryParser("blurb");
@@ -324,9 +507,6 @@ public class ClusteredCacheTest extends MultipleCacheManagersTest {
    }
 
    public void testSearchKeyTransformer() throws Exception {
-      Cache cache1 = caches().get(0);
-      Cache cache2 = caches().get(1);
-
       SearchManagerImplementor manager = (SearchManagerImplementor) Search.getSearchManager(cache1);
       SearchManagerImplementor manager1 = (SearchManagerImplementor) Search.getSearchManager(cache2);
       manager.registerKeyTransformer(CustomKey3.class, CustomKey3Transformer.class);

@@ -6,6 +6,7 @@ import org.hibernate.search.annotations.Indexed;
 import org.hibernate.search.annotations.NumericField;
 import org.hibernate.search.annotations.Store;
 
+import java.io.Serializable;
 import java.util.Date;
 
 /**
@@ -13,7 +14,7 @@ import java.util.Date;
  * @since 6.0
  */
 @Indexed
-public class Transaction {
+public class Transaction implements Serializable {
 
    @Field(store = Store.YES, analyze = Analyze.NO)
    private int id;

@@ -9,6 +9,7 @@ import org.hibernate.search.annotations.NumericField;
 import org.hibernate.search.annotations.Store;
 import org.hibernate.search.bridge.builtin.impl.BuiltinIterableBridge;
 
+import java.io.Serializable;
 import java.util.List;
 import java.util.Set;
 
@@ -17,7 +18,7 @@ import java.util.Set;
  * @since 6.0
  */
 @Indexed
-public class User {
+public class User implements Serializable {
 
    public enum Gender {
       MALE, FEMALE
@@ -109,7 +110,7 @@ public class User {
 
       User user = (User) o;
 
-      if (age != user.age) return false;
+      if (age != null ? !age.equals(user.age) : user.age != null) return false;
       if (id != user.id) return false;
       if (accountIds != null ? !accountIds.equals(user.accountIds) : user.accountIds != null) return false;
       if (addresses != null ? !addresses.equals(user.addresses) : user.addresses != null) return false;
@@ -126,7 +127,7 @@ public class User {
       result = 31 * result + (accountIds != null ? accountIds.hashCode() : 0);
       result = 31 * result + (name != null ? name.hashCode() : 0);
       result = 31 * result + (surname != null ? surname.hashCode() : 0);
-      result = 31 * result + age;
+      result = 31 * result + (age != null ? age : 0);
       result = 31 * result + (gender != null ? gender.hashCode() : 0);
       result = 31 * result + (addresses != null ? addresses.hashCode() : 0);
       return result;

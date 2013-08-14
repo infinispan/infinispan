@@ -5,6 +5,7 @@ import org.hibernate.search.annotations.Field;
 import org.hibernate.search.annotations.Indexed;
 import org.hibernate.search.annotations.Store;
 
+import java.io.Serializable;
 import java.util.Date;
 
 /**
@@ -12,7 +13,7 @@ import java.util.Date;
  * @since 6.0
  */
 @Indexed
-public class Account {
+public class Account implements Serializable {
 
    @Field(store = Store.YES, analyze = Analyze.NO)
    private int id;

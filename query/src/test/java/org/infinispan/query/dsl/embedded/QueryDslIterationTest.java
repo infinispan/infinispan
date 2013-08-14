@@ -27,7 +27,7 @@ import static org.testng.AssertJUnit.assertTrue;
 public class QueryDslIterationTest extends AbstractQueryDslTest {
 
    @BeforeMethod
-   private void populateCache() throws Exception {
+   protected void populateCache() throws Exception {
       User user1 = new User();
       user1.setId(1);
       user1.setName("John");
