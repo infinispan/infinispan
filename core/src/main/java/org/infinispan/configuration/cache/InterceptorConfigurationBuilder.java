@@ -136,8 +136,12 @@ public class InterceptorConfigurationBuilder extends AbstractCustomInterceptorsC
       if (interceptor == null) {
          throw log.customInterceptorMissingClass();
       }
-      if (!(interceptor instanceof BaseCustomInterceptor)) {
-         log.suggestCustomInterceptorInheritance(interceptor.getClass().getName());
+      else if (!(interceptor instanceof BaseCustomInterceptor)) {
+         final String className = interceptor.getClass().getName();
+         //Suppress noisy warnings if the interceptor is one of our own (like one of those from Query):
+         if (! className.startsWith("org.infinispan.")) {
+            log.suggestCustomInterceptorInheritance(className);
+         }
       }
    }
 
