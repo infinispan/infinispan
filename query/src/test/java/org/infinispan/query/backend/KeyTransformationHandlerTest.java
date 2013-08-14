@@ -3,6 +3,7 @@ package org.infinispan.query.backend;
 import java.util.UUID;
 
 import org.infinispan.commons.CacheException;
+import org.infinispan.commons.util.Base64;
 import org.infinispan.query.Transformer;
 import org.infinispan.query.test.CustomKey;
 import org.infinispan.query.test.CustomKey2;
@@ -11,6 +12,7 @@ import org.infinispan.query.test.CustomKey3Transformer;
 import org.infinispan.query.test.NonSerializableKey;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
+import org.junit.Assert;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
@@ -68,6 +70,10 @@ public class KeyTransformationHandlerTest {
 
       s = keyTransformationHandler.keyToString(randomUUID);
       assert s.equals("U:"+randomUUID);
+
+      byte[] arr = new byte[]{1, 2, 3, 4, 5, 6};
+      s = keyTransformationHandler.keyToString(arr);
+      assert s.equals("A:"+ Base64.encodeBytes((arr)));
    }
 
    public void testStringToKeyWithStringAndPrimitives() {
@@ -111,6 +117,10 @@ public class KeyTransformationHandlerTest {
       key = keyTransformationHandler.stringToKey("U:"+randomUUID.toString(), contextClassLoader);
       assert key.getClass().equals(UUID.class);
       assert key.equals(randomUUID);
+
+      byte[] arr = new byte[]{1, 2, 3, 4, 5, 6};
+      key = keyTransformationHandler.stringToKey("A:" + Base64.encodeBytes((arr)), contextClassLoader);
+      Assert.assertArrayEquals(arr, (byte[]) key);
    }
 
    @Test(expectedExceptions = CacheException.class)

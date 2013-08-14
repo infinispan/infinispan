@@ -1,22 +1,22 @@
-package org.infinispan.query.blackbox;
+package org.infinispan.query.dsl.embedded;
 
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.test.TestingUtil;
+import org.infinispan.test.fwk.CleanupAfterMethod;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.testng.annotations.Test;
 
 import java.io.File;
 
 /**
- * Run the basic set of operations with filesystem-based index storage.
- * The default FSDirectory implementation for non Windows systems should be NIOFSDirectory.
- * SimpleFSDirectory implementation will be used on Windows.
+ * Verifies the functionality of DSL iterators for Filesystem directory provider.
  *
- * @author Martin Gencur
+ * @author Anna Manukyan
  */
-@Test(groups = "functional", testName = "query.blackbox.LocalCacheFSDirectoryTest")
-public class LocalCacheFSDirectoryTest extends LocalCacheTest {
+@Test(groups = "functional", testName = "query.dsl.embedded.FilesystemQueryDslIterationTest")
+@CleanupAfterMethod
+public class FilesystemQueryDslIterationTest extends QueryDslIterationTest {
 
    private final String indexDirectory = TestingUtil.tmpDirectory(this);
 
@@ -24,9 +24,9 @@ public class LocalCacheFSDirectoryTest extends LocalCacheTest {
    protected EmbeddedCacheManager createCacheManager() throws Exception {
       ConfigurationBuilder cfg = getDefaultStandaloneCacheConfig(true);
       cfg.indexing().enable()
-         .addProperty("default.directory_provider", "filesystem")
-         .addProperty("default.indexBase", indexDirectory)
-         .addProperty("lucene_version", "LUCENE_CURRENT");
+            .addProperty("default.directory_provider", "filesystem")
+            .addProperty("default.indexBase", indexDirectory)
+            .addProperty("lucene_version", "LUCENE_CURRENT");
       return TestCacheManagerFactory.createCacheManager(cfg);
    }
 

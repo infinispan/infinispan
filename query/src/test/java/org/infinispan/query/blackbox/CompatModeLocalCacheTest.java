@@ -21,7 +21,6 @@ public class CompatModeLocalCacheTest extends LocalCacheTest {
             .compatibility().enable()
             .indexing()
             .enable()
-            .indexLocalOnly(false)
             .addProperty("default.directory_provider", "ram")
             .addProperty("lucene_version", "LUCENE_CURRENT");
       enhanceConfig(cfg);

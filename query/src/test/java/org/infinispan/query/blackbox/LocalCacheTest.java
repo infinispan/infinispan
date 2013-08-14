@@ -103,6 +103,38 @@ public class LocalCacheTest extends SingleCacheManagerTest {
       }
    }
 
+   @Test(expectedExceptions = UnsupportedOperationException.class)
+   public void testEagerIteratorRemove() throws ParseException {
+      loadTestingData();
+      CacheQuery cacheQuery = createCacheQuery(cache, "blurb", "playing" );
+
+      ResultIterator found = cacheQuery.iterator(new FetchOptions().fetchMode(FetchOptions.FetchMode.EAGER));
+
+      try {
+         assert found.hasNext();
+         found.remove();
+      } finally {
+         found.close();
+      }
+   }
+
+   @Test(expectedExceptions = NoSuchElementException.class)
+   public void testEagerIteratorExCase() throws ParseException {
+      loadTestingData();
+      CacheQuery cacheQuery = createCacheQuery(cache, "blurb", "playing" );
+
+      ResultIterator found = cacheQuery.iterator(new FetchOptions().fetchMode(FetchOptions.FetchMode.EAGER));
+
+      try {
+         assert found.hasNext();
+         found.next();
+         assert !found.hasNext();
+         found.next();
+      } finally {
+         found.close();
+      }
+   }
+
    public void testMultipleResults() throws ParseException {
       loadTestingData();
       queryParser = createQueryParser("name");
@@ -112,8 +144,8 @@ public class LocalCacheTest extends SingleCacheManagerTest {
       List<Object> found = cacheQuery.list();
 
       assert found.size() == 2;
-      AssertJUnit.assertEquals(person2, found.get(0));
-      AssertJUnit.assertEquals(person3, found.get(1));
+      AssertJUnit.assertTrue(found.contains(person2));
+      AssertJUnit.assertTrue(found.contains(person3));
    }
 
    public void testModified() throws ParseException {
@@ -341,11 +373,21 @@ public class LocalCacheTest extends SingleCacheManagerTest {
       CacheQuery cacheQuery = Search.getSearchManager(cache).getQuery(luceneQuery);
 
       int matchCounter = 0;
-      for(int i = 0; i < 4; i++) {
-         Explanation found = cacheQuery.explain(i);
+      int i = 0;
 
-         if(found.isMatch())
-            matchCounter++;
+      //The implementation is changed to this way as in case of NRT index manager the number of created documents may
+      //differ comparing to the simple configuration.
+      while (true) {
+         try {
+            Explanation found = cacheQuery.explain(i);
+
+            if(found.isMatch())
+               matchCounter++;
+
+            i++;
+         } catch(ArrayIndexOutOfBoundsException ex) {
+            break;
+         }
       }
 
       AssertJUnit.assertEquals(3, matchCounter);

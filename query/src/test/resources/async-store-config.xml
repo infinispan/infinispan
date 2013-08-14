@@ -1,0 +1,173 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<infinispan xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+            xsi:schemaLocation="urn:infinispan:config:6.0 http://www.infinispan.org/schemas/infinispan-config-6.0.xsd
+                                urn:infinispan:config:jdbc:6.0 http://docs.jboss.org/infinispan/schemas/infinispan-cachestore-jdbc-config-6.0.xsd"
+            xmlns="urn:infinispan:config:6.0"
+            xmlns:jdbc="urn:infinispan:config:jdbc:6.0">
+
+    <global>
+        <transport clusterName="MyCluster"/>
+    </global>
+
+    <namedCache name="queryCache_lucenestore_async_filestore">
+        <transaction transactionMode="TRANSACTIONAL"/>
+        <indexing enabled="true">
+            <properties >
+                <property name="default.indexmanager" value="org.infinispan.query.indexmanager.InfinispanIndexManager" />
+                <property name="lucene_version" value="LUCENE_36" />
+
+                <property name="default.locking_cachename" value="LuceneIndexesLocking_custom" />
+                <property name="default.data_cachename" value="LuceneIndexesData_custom" />
+                <property name="default.metadata_cachename" value="LuceneIndexesMetadata_custom" />
+            </properties>
+        </indexing>
+    </namedCache>
+
+    <namedCache name="JDBCBased_LocalIndex">
+        <transaction transactionMode="TRANSACTIONAL" />
+        <clustering mode="REPL">
+            <sync replTimeout="20000" />
+        </clustering>
+
+        <indexing enabled="true" indexLocalOnly="true">
+            <properties >
+                <property name="default.indexmanager" value="org.infinispan.query.indexmanager.InfinispanIndexManager" />
+                <property name="lucene_version" value="LUCENE_36" />
+
+                <property name="default.locking_cachename" value="LuceneIndexesLocking_custom1" />
+                <property name="default.data_cachename" value="LuceneIndexesData_custom1" />
+                <property name="default.metadata_cachename" value="LuceneIndexesMetadata_custom1" />
+            </properties>
+        </indexing>
+    </namedCache>
+
+    <!-- *************************************** -->
+    <!--  Cache to store Lucene's file metadata  -->
+    <!-- *************************************** -->
+    <namedCache name="LuceneIndexesMetadata_custom">
+        <transaction transactionMode="TRANSACTIONAL" />
+
+        <indexing enabled="false" />
+
+        <persistence passivation="false">
+            <singleFile
+                    fetchPersistentState="true"
+                    ignoreModifications="false"
+                    purgeOnStartup="false"
+                    location="${java.io.tmpdir}/asyncStore" >
+                <async
+                        enabled="true"
+                        flushLockTimeout="15000"
+                        threadPoolSize="5" />
+            </singleFile>
+        </persistence>
+    </namedCache>
+
+    <!-- **************************** -->
+    <!--  Cache to store Lucene data  -->
+    <!-- **************************** -->
+    <namedCache name="LuceneIndexesData_custom">
+        <indexing enabled="false" />
+        <transaction transactionMode="TRANSACTIONAL" />
+
+        <persistence passivation="false">
+            <singleFile
+                    fetchPersistentState="true"
+                    ignoreModifications="false"
+                    purgeOnStartup="false"
+                    location="${java.io.tmpdir}/asyncStore" >
+                <async
+                        enabled="true"
+                        flushLockTimeout="15000"
+                        threadPoolSize="5" />
+            </singleFile>
+        </persistence>
+    </namedCache>
+
+    <!-- ***************************** -->
+    <!--  Cache to store Lucene locks  -->
+    <!-- ***************************** -->
+    <namedCache name="LuceneIndexesLocking_custom">
+        <indexing enabled="false" />
+        <transaction transactionMode="TRANSACTIONAL" />
+
+        <persistence passivation="false">
+            <singleFile
+                    fetchPersistentState="true"
+                    ignoreModifications="false"
+                    purgeOnStartup="false"
+                    location="${java.io.tmpdir}/asyncStore" >
+                <async
+                        enabled="true"
+                        flushLockTimeout="15000"
+                        threadPoolSize="5" />
+            </singleFile>
+        </persistence>
+    </namedCache>
+
+    <namedCache name="LuceneIndexesMetadata_custom1">
+        <transaction transactionMode="TRANSACTIONAL" />
+
+        <clustering mode="REPL">
+        </clustering>
+        <indexing enabled="false" />
+
+        <persistence>
+            <stringKeyedJdbcStore xmlns="urn:infinispan:config:jdbc:6.0" key2StringMapper="org.infinispan.lucene.LuceneKey2StringMapper" fetchPersistentState="false" ignoreModifications="false" purgeOnStartup="false">
+                <connectionPool connectionUrl="jdbc:h2:mem:infinispan_string_based;DB_CLOSE_DELAY=-1" username="sa" driverClass="org.h2.Driver"/>
+                <stringKeyedTable dropOnExit="true" createOnStart="true" prefix="ISPN_STRING_TABLE">
+                    <idColumn name="ID_COLUMN" type="VARCHAR(255)" />
+                    <dataColumn name="DATA_COLUMN" type="BINARY" />
+                    <timestampColumn name="TIMESTAMP_COLUMN" type="BIGINT" />
+                </stringKeyedTable>
+                <async enabled="true" flushLockTimeout="5000" modificationQueueSize="1024" shutdownTimeout="25000" threadPoolSize="2"/>
+            </stringKeyedJdbcStore>
+        </persistence>
+    </namedCache>
+
+    <!-- **************************** -->
+    <!--  Cache to store Lucene data  -->
+    <!-- **************************** -->
+    <namedCache name="LuceneIndexesData_custom1">
+        <transaction transactionMode="TRANSACTIONAL" />
+
+        <clustering mode="REPL">
+        </clustering>
+        <indexing enabled="false" />
+
+        <persistence>
+            <stringKeyedJdbcStore xmlns="urn:infinispan:config:jdbc:6.0" key2StringMapper="org.infinispan.lucene.LuceneKey2StringMapper" fetchPersistentState="false" ignoreModifications="false" purgeOnStartup="false">
+                <connectionPool connectionUrl="jdbc:h2:mem:infinispan_string_based;DB_CLOSE_DELAY=-1" username="sa" driverClass="org.h2.Driver"/>
+                <stringKeyedTable dropOnExit="true" createOnStart="true" prefix="ISPN_STRING_TABLE">
+                    <idColumn name="ID_COLUMN" type="VARCHAR(255)" />
+                    <dataColumn name="DATA_COLUMN" type="BINARY" />
+                    <timestampColumn name="TIMESTAMP_COLUMN" type="BIGINT" />
+                </stringKeyedTable>
+                <async enabled="true" flushLockTimeout="5000" modificationQueueSize="1024" shutdownTimeout="25000" threadPoolSize="2"/>
+            </stringKeyedJdbcStore>
+        </persistence>
+    </namedCache>
+
+    <!-- ***************************** -->
+    <!--  Cache to store Lucene locks  -->
+    <!-- ***************************** -->
+    <namedCache name="LuceneIndexesLocking_custom1">
+        <transaction transactionMode="TRANSACTIONAL" />
+
+        <clustering mode="REPL">
+        </clustering>
+        <indexing enabled="false" />
+
+        <persistence>
+            <stringKeyedJdbcStore xmlns="urn:infinispan:config:jdbc:6.0" key2StringMapper="org.infinispan.lucene.LuceneKey2StringMapper" fetchPersistentState="false" ignoreModifications="false" purgeOnStartup="false">
+                <connectionPool connectionUrl="jdbc:h2:mem:infinispan_string_based;DB_CLOSE_DELAY=-1" username="sa" driverClass="org.h2.Driver"/>
+                <stringKeyedTable dropOnExit="true" createOnStart="true" prefix="ISPN_STRING_TABLE">
+                    <idColumn name="ID_COLUMN" type="VARCHAR(255)" />
+                    <dataColumn name="DATA_COLUMN" type="BINARY" />
+                    <timestampColumn name="TIMESTAMP_COLUMN" type="BIGINT" />
+                </stringKeyedTable>
+                <async enabled="true" flushLockTimeout="5000" modificationQueueSize="1024" shutdownTimeout="25000" threadPoolSize="2"/>
+            </stringKeyedJdbcStore>
+        </persistence>
+    </namedCache>
+</infinispan>
