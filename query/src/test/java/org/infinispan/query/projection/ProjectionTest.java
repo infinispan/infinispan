@@ -93,8 +93,20 @@ public class ProjectionTest extends SingleCacheManagerTest {
 
    private void assertQueryReturns(CacheQuery cacheQuery, Object[] expected) {
       assertQueryListContains(cacheQuery.list(), expected);
-      assertQueryIteratorContains(cacheQuery.iterator(new FetchOptions().fetchMode(FetchOptions.FetchMode.EAGER)), expected);
-      assertQueryIteratorContains(cacheQuery.iterator(new FetchOptions().fetchMode(FetchOptions.FetchMode.LAZY)), expected);
+      final ResultIterator eagerIterator = cacheQuery.iterator(new FetchOptions().fetchMode(FetchOptions.FetchMode.EAGER));
+      try {
+         assertQueryIteratorContains(eagerIterator, expected);
+      }
+      finally {
+         eagerIterator.close();
+      }
+      final ResultIterator lazyIterator = cacheQuery.iterator(new FetchOptions().fetchMode(FetchOptions.FetchMode.LAZY));
+      try {
+         assertQueryIteratorContains(lazyIterator, expected);
+      }
+      finally {
+         lazyIterator.close();
+      }
    }
 
    private void assertQueryListContains(List list, Object[] expected) {
