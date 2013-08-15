@@ -23,7 +23,6 @@ public class ClusteredCacheWithInfinispanDirectoryTest extends ClusteredCacheTes
       cacheCfg.indexing()
             .enable()
             .indexLocalOnly(true)
-            .addProperty("default.directory_provider", getDirectoryProvider())
             .addProperty("default.indexmanager", "org.infinispan.query.indexmanager.InfinispanIndexManager")
             .addProperty("lucene_version", "LUCENE_36")
             .addProperty("default.exclusive_index_use", "false");
@@ -40,7 +39,4 @@ public class ClusteredCacheWithInfinispanDirectoryTest extends ClusteredCacheTes
       cacheManagers.get(1).defineConfiguration( InfinispanIntegration.DEFAULT_LOCKING_CACHENAME, cacheCfg1.build());
    }
 
-   public String getDirectoryProvider() {
-      return "infinispan";
-   }
 }
