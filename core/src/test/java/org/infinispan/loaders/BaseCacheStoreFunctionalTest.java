@@ -3,6 +3,7 @@ package org.infinispan.loaders;
 import org.infinispan.Cache;
 import org.infinispan.atomic.AtomicMap;
 import org.infinispan.atomic.AtomicMapLookup;
+import org.infinispan.commons.equivalence.ByteArrayEquivalence;
 import org.infinispan.commons.util.Util;
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
@@ -12,6 +13,7 @@ import org.infinispan.container.entries.InternalCacheEntry;
 import org.infinispan.manager.CacheContainer;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.test.AbstractInfinispanTest;
+import org.infinispan.test.CacheManagerCallable;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.infinispan.transaction.TransactionMode;
@@ -23,6 +25,10 @@ import java.lang.reflect.Method;
 import java.util.HashSet;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
+
+import static org.infinispan.test.TestingUtil.withCacheManager;
+import static org.testng.AssertJUnit.assertNotNull;
+import static org.testng.internal.junit.ArrayAsserts.assertArrayEquals;
 
 /**
  * This is a base functional test class containing tests that should be executed for each cache store/loader
@@ -127,7 +133,7 @@ public abstract class BaseCacheStoreFunctionalTest extends AbstractInfinispanTes
    }
 
    public void testRestoreAtomicMap(Method m) {
-      CacheContainer localCacheContainer = getContainerWithCacheLoader();
+      CacheContainer localCacheContainer = getContainerWithCacheLoader(null);
       try {
          Cache<String, Object> cache = localCacheContainer.getCache();
          cacheNames.add(cache.getName());
@@ -145,7 +151,7 @@ public abstract class BaseCacheStoreFunctionalTest extends AbstractInfinispanTes
    }
 
    public void testRestoreTransactionalAtomicMap(Method m) throws Exception {
-      CacheContainer localCacheContainer = getContainerWithCacheLoader();
+      CacheContainer localCacheContainer = getContainerWithCacheLoader(null);
       try {
          Cache<String, Object> cache = localCacheContainer.getCache();
          cacheNames.add(cache.getName());
@@ -165,8 +171,35 @@ public abstract class BaseCacheStoreFunctionalTest extends AbstractInfinispanTes
       }
    }
 
-   private CacheContainer getContainerWithCacheLoader() {
+   public void testStoreByteArrays(final Method m) throws CacheLoaderException {
+      ConfigurationBuilder base = new ConfigurationBuilder();
+      base.dataContainer().keyEquivalence(ByteArrayEquivalence.INSTANCE);
+      withCacheManager(new CacheManagerCallable(getContainerWithCacheLoader(base.build())) {
+         @Override
+         public void call() {
+            Cache<byte[], byte[]> cache = cm.getCache(m.getName());
+            byte[] key = {1, 2, 3};
+            byte[] value = {4, 5, 6};
+            cache.put(key, value);
+            // Lookup in memory, sanity check
+            byte[] lookupKey = {1, 2, 3};
+            byte[] found = cache.get(lookupKey);
+            assertNotNull(found);
+            assertArrayEquals(value, found);
+            cache.evict(key);
+            // Lookup in cache store
+            found = cache.get(lookupKey);
+            assertNotNull(found);
+            assertArrayEquals(value, found);
+         }
+      });
+   }
+
+   private EmbeddedCacheManager getContainerWithCacheLoader(Configuration base) {
       ConfigurationBuilder cfg = new ConfigurationBuilder();
+      if (base != null)
+         cfg.read(base);
+
       cfg
          .transaction()
             .transactionMode(TransactionMode.TRANSACTIONAL);

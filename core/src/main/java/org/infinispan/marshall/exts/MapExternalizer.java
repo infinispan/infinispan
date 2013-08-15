@@ -1,5 +1,7 @@
 package org.infinispan.marshall.exts;
 
+import org.infinispan.commons.equivalence.Equivalence;
+import org.infinispan.commons.equivalence.EquivalentHashMap;
 import org.infinispan.commons.marshall.AbstractExternalizer;
 import org.infinispan.commons.marshall.MarshallUtil;
 import org.infinispan.commons.util.FastCopyHashMap;
@@ -26,18 +28,28 @@ public class MapExternalizer extends AbstractExternalizer<Map> {
    private static final int HASHMAP = 0;
    private static final int TREEMAP = 1;
    private static final int FASTCOPYHASHMAP = 2;
-   private final IdentityIntMap<Class<?>> numbers = new IdentityIntMap<Class<?>>(3);
+   private static final int EQUIVALENTHASHMAP = 3;
+   private final IdentityIntMap<Class<?>> numbers = new IdentityIntMap<Class<?>>(4);
 
    public MapExternalizer() {
       numbers.put(HashMap.class, HASHMAP);
       numbers.put(TreeMap.class, TREEMAP);
       numbers.put(FastCopyHashMap.class, FASTCOPYHASHMAP);
+      numbers.put(EquivalentHashMap.class, EQUIVALENTHASHMAP);
    }
 
    @Override
    public void writeObject(ObjectOutput output, Map map) throws IOException {
       int number = numbers.get(map.getClass(), -1);
       output.write(number);
+      switch (number) {
+         case EQUIVALENTHASHMAP:
+            EquivalentHashMap equivalentMap = (EquivalentHashMap) map;
+            output.writeObject(equivalentMap.getKeyEquivalence());
+            output.writeObject(equivalentMap.getValueEquivalence());
+         default:
+            break;
+      }
       MarshallUtil.marshallMap(map, output);
    }
 
@@ -55,6 +67,11 @@ public class MapExternalizer extends AbstractExternalizer<Map> {
          case FASTCOPYHASHMAP:
             subject = new FastCopyHashMap();
             break;
+         case EQUIVALENTHASHMAP:
+            Equivalence<Object> keyEq = (Equivalence<Object>) input.readObject();
+            Equivalence<Object> valueEq = (Equivalence<Object>) input.readObject();
+            subject = new EquivalentHashMap(keyEq, valueEq);
+            break;
       }
       MarshallUtil.unmarshallMap(subject, input);
       return subject;
@@ -68,6 +85,6 @@ public class MapExternalizer extends AbstractExternalizer<Map> {
    @Override
    public Set<Class<? extends Map>> getTypeClasses() {
       return Util.<Class<? extends Map>>asSet(
-            HashMap.class, TreeMap.class, FastCopyHashMap.class);
+            HashMap.class, TreeMap.class, FastCopyHashMap.class, EquivalentHashMap.class);
    }
 }

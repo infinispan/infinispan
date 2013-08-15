@@ -5,6 +5,7 @@ import java.io.ObjectOutput;
 import java.util.Set;
 
 import org.infinispan.Cache;
+import org.infinispan.commons.equivalence.Equivalence;
 import org.infinispan.configuration.cache.CacheLoaderConfiguration;
 import org.infinispan.configuration.cache.LockSupportStoreConfiguration;
 import org.infinispan.container.entries.InternalCacheEntry;
@@ -45,6 +46,7 @@ public abstract class LockSupportCacheStore<L> extends AbstractCacheStore {
    private long globalLockTimeoutMillis;
 
    private LockSupportStoreConfiguration configuration;
+   protected Equivalence<Object> keyEquivalence;
 
    @Override
    public void init(CacheLoaderConfiguration configuration, Cache<?, ?> cache, StreamingMarshaller m) throws CacheLoaderException {
@@ -62,6 +64,7 @@ public abstract class LockSupportCacheStore<L> extends AbstractCacheStore {
 
       locks = new StripedLock(configuration.lockConcurrencyLevel());
       globalLockTimeoutMillis = configuration.lockAcquistionTimeout();
+      keyEquivalence = cache.getCacheConfiguration().dataContainer().keyEquivalence();
    }
 
    /**

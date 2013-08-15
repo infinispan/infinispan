@@ -1,6 +1,8 @@
 package org.infinispan.loaders.dummy;
 
 import org.infinispan.Cache;
+import org.infinispan.commons.equivalence.Equivalence;
+import org.infinispan.commons.util.concurrent.jdk8backported.EquivalentConcurrentHashMapV8;
 import org.infinispan.configuration.cache.CacheLoaderConfiguration;
 import org.infinispan.container.entries.InternalCacheEntry;
 import org.infinispan.loaders.CacheLoaderException;
@@ -219,11 +221,12 @@ public class DummyInMemoryCacheStore extends AbstractCacheStore {
    public void start() throws CacheLoaderException {
       super.start();
 
-
       if (store != null)
          return;
 
-      store = new ConcurrentHashMap<Object, byte[]>();
+      Equivalence<Object> keyEq = cache.getCacheConfiguration().dataContainer().keyEquivalence();
+      Equivalence<byte[]> valueEq = cache.getCacheConfiguration().dataContainer().valueEquivalence();
+      store = new EquivalentConcurrentHashMapV8<Object, byte[]>(keyEq, valueEq);
       stats = newStatsMap();
 
       if (storeName != null) {

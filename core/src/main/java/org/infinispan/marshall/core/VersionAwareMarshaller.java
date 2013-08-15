@@ -77,7 +77,7 @@ public class VersionAwareMarshaller extends AbstractMarshaller implements Stream
             if (log.isTraceEnabled()) log.trace("Interrupted exception while marshalling", ioe.getCause());
             throw (InterruptedException) ioe.getCause();
          } else {
-            log.errorMarshallingObject(ioe);
+            log.errorMarshallingObject(ioe, obj);
             throw ioe;
          }
       } finally {

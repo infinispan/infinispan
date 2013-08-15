@@ -40,7 +40,7 @@ public interface Ids extends org.infinispan.commons.marshall.Ids {
    int JGROUPS_ADDRESS = 39;
    int MARSHALLED_VALUE = 40;
    // 41 no longer in use, used to be TransactionLog.LogEntry
-   int BUCKET = 42;
+   // 42 no longer in use
    int DEADLOCK_DETECTING_GLOBAL_TRANSACTION = 43;
 
    // 44 and 45 no longer in use, used to belong to tree module

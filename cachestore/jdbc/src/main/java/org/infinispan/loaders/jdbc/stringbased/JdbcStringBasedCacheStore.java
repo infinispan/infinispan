@@ -125,7 +125,7 @@ public class JdbcStringBasedCacheStore extends
          @Override
          public void loadAllProcess(ResultSet rs, Set<InternalCacheEntry> result) throws SQLException, CacheLoaderException {
             InputStream inputStream = rs.getBinaryStream(1);
-            InternalCacheValue icv = (InternalCacheValue) JdbcUtil.unmarshall(getMarshaller(), inputStream);
+            InternalCacheValue icv = JdbcUtil.unmarshall(getMarshaller(), inputStream);
             String keyStr = rs.getString(2);
             Object key = ((TwoWayKey2StringMapper) key2StringMapper).getKeyMapping(keyStr);
             result.add(icv.toInternalCacheEntry(key));
@@ -147,7 +147,7 @@ public class JdbcStringBasedCacheStore extends
 
          @Override
          public void toStreamProcess(ResultSet rs, InputStream is, ObjectOutput objectOutput) throws CacheLoaderException, SQLException, IOException {
-            InternalCacheValue icv = (InternalCacheValue) JdbcUtil.unmarshall(getMarshaller(), is);
+            InternalCacheValue icv = JdbcUtil.unmarshall(getMarshaller(), is);
             String key = rs.getString(2);//key is a string
             marshaller.objectToObjectStream(icv.toInternalCacheEntry(key), objectOutput);
          }
@@ -388,7 +388,7 @@ public class JdbcStringBasedCacheStore extends
          rs = ps.executeQuery();
          if (rs.next()) {
             InputStream inputStream = rs.getBinaryStream(2);
-            InternalCacheValue icv = (InternalCacheValue) JdbcUtil.unmarshall(getMarshaller(), inputStream);
+            InternalCacheValue icv = JdbcUtil.unmarshall(getMarshaller(), inputStream);
             storedEntry = icv.toInternalCacheEntry(key);
          }
       } catch (SQLException e) {

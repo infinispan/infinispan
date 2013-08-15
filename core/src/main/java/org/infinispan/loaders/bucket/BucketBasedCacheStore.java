@@ -1,6 +1,5 @@
 package org.infinispan.loaders.bucket;
 
-import org.infinispan.configuration.cache.LockSupportStoreConfiguration;
 import org.infinispan.container.entries.InternalCacheEntry;
 import org.infinispan.loaders.CacheLoaderException;
 import org.infinispan.loaders.spi.LockSupportCacheStore;
@@ -67,7 +66,7 @@ public abstract class BucketBasedCacheStore extends LockSupportCacheStore<Intege
          bucket.addEntry(entry);
          updateBucket(bucket);
       } else {
-         bucket = new Bucket(timeService);
+         bucket = new Bucket(timeService, keyEquivalence);
          bucket.setBucketId(lockingKey);
          bucket.addEntry(entry);
          insertBucket(bucket);
@@ -100,7 +99,10 @@ public abstract class BucketBasedCacheStore extends LockSupportCacheStore<Intege
     */
    @Override
    public Integer getLockFromKey(Object key) {
-      return key.hashCode() & 0xfffffc00; // To reduce the number of buckets/locks that may be created.  TODO: This should be configurable.
+      return (keyEquivalence != null
+                    ? keyEquivalence.hashCode(key)
+                    : key.hashCode())
+            & 0xfffffc00; // To reduce the number of buckets/locks that may be created.
    }
 
    /**

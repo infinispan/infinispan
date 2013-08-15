@@ -15,7 +15,9 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 import org.infinispan.Cache;
 import org.infinispan.commons.CacheException;
+import org.infinispan.commons.equivalence.Equivalence;
 import org.infinispan.commons.util.Util;
+import org.infinispan.commons.util.concurrent.jdk8backported.EquivalentConcurrentHashMapV8;
 import org.infinispan.container.entries.InternalCacheEntry;
 import org.infinispan.loaders.AbstractCacheStore;
 import org.infinispan.loaders.AbstractCacheStoreConfig;
@@ -226,7 +228,9 @@ public class LegacyCacheStore extends AbstractCacheStore {
       if (store != null)
          return;
 
-      store = new ConcurrentHashMap<Object, byte[]>();
+      Equivalence<Object> keyEq = cache.getCacheConfiguration().dataContainer().keyEquivalence();
+      Equivalence<byte[]> valueEq = cache.getCacheConfiguration().dataContainer().valueEquivalence();
+      store = new EquivalentConcurrentHashMapV8<Object, byte[]>(keyEq, valueEq);
       stats = newStatsMap();
 
       if (storeName != null) {

@@ -11,7 +11,6 @@ import org.infinispan.atomic.PutOperation;
 import org.infinispan.atomic.RemoveOperation;
 import org.infinispan.commands.RemoteCommandsFactory;
 import org.infinispan.commons.CacheConfigurationException;
-import org.infinispan.commons.CacheException;
 import org.infinispan.commons.hash.MurmurHash2;
 import org.infinispan.commons.hash.MurmurHash2Compat;
 import org.infinispan.commons.hash.MurmurHash3;
@@ -49,7 +48,6 @@ import org.infinispan.factories.annotations.Stop;
 import org.infinispan.factories.scopes.Scope;
 import org.infinispan.factories.scopes.Scopes;
 import org.infinispan.commons.io.UnsignedNumeric;
-import org.infinispan.loaders.bucket.Bucket;
 import org.infinispan.commons.marshall.AdvancedExternalizer;
 import org.infinispan.commons.marshall.StreamingMarshaller;
 import org.infinispan.commons.util.Immutables;
@@ -258,7 +256,6 @@ public class ExternalizerTable implements ObjectTable {
 
       addInternalExternalizer(new DeltaCompositeKey.DeltaCompositeKeyExternalizer());
       addInternalExternalizer(new AtomicHashMap.Externalizer());
-      addInternalExternalizer(new Bucket.Externalizer(gcr));
       addInternalExternalizer(new AtomicHashMapDelta.Externalizer());
       addInternalExternalizer(new PutOperation.Externalizer());
       addInternalExternalizer(new RemoveOperation.Externalizer());

@@ -7,16 +7,22 @@ import java.util.concurrent.ExecutorService;
 
 import org.infinispan.AdvancedCache;
 import org.infinispan.Cache;
+import org.infinispan.commons.equivalence.AnyEquivalence;
 import org.infinispan.commons.util.ReflectionUtil;
+import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.CacheStoreConfiguration;
-import org.infinispan.configuration.cache.CacheStoreConfigurationBuilder;
+import org.infinispan.configuration.cache.ClusteringConfiguration;
+import org.infinispan.configuration.cache.Configuration;
+import org.infinispan.configuration.cache.DataContainerConfiguration;
+import org.infinispan.configuration.cache.LoadersConfiguration;
+import org.infinispan.configuration.cache.LockingConfiguration;
+import org.infinispan.configuration.cache.TransactionConfiguration;
 import org.infinispan.factories.ComponentRegistry;
 import org.infinispan.lifecycle.ComponentStatus;
 import org.infinispan.loaders.dummy.DummyInMemoryCacheStoreConfigurationBuilder;
 import org.infinispan.loaders.spi.AbstractCacheStore;
 import org.infinispan.test.AbstractInfinispanTest;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
-import org.infinispan.util.DefaultTimeService;
 import org.infinispan.util.concurrent.WithinThreadExecutor;
 import org.mockito.Mockito;
 import org.testng.annotations.AfterMethod;
@@ -72,12 +78,32 @@ public class AbstractCacheStoreTest extends AbstractInfinispanTest {
    public static Cache mockCache(final String name) {
       AdvancedCache cache = mock(AdvancedCache.class);
       ComponentRegistry registry = mock(ComponentRegistry.class);
+      Configuration configuration = mock(Configuration.class);
+      DataContainerConfiguration dataContainerConfiguration = mock(DataContainerConfiguration.class);
+      LockingConfiguration lockingConfiguration = mock(LockingConfiguration.class);
+      TransactionConfiguration transactionConfiguration = mock(TransactionConfiguration.class);
+      LoadersConfiguration loadersConfiguration = mock(LoadersConfiguration.class);
+      ClusteringConfiguration clusteringConfiguration = mock(ClusteringConfiguration.class);
+      CacheMode cacheMode = CacheMode.LOCAL;
 
       when(cache.getName()).thenReturn(name);
       when(cache.getAdvancedCache()).thenReturn(cache);
       when(cache.getComponentRegistry()).thenReturn(registry);
       when(registry.getTimeService()).thenReturn(TIME_SERVICE);
       when(cache.getStatus()).thenReturn(ComponentStatus.RUNNING);
+      when(cache.getCacheConfiguration()).thenReturn(configuration);
+      when(configuration.dataContainer()).thenReturn(dataContainerConfiguration);
+      when(configuration.locking()).thenReturn(lockingConfiguration);
+      when(configuration.loaders()).thenReturn(loadersConfiguration);
+      when(configuration.clustering()).thenReturn(clusteringConfiguration);
+      when(configuration.transaction()).thenReturn(transactionConfiguration);
+      when(configuration.dataContainer()).thenReturn(dataContainerConfiguration);
+      when(dataContainerConfiguration.keyEquivalence()).thenReturn(AnyEquivalence.getInstance());
+      when(lockingConfiguration.concurrencyLevel()).thenReturn(16);
+      when(transactionConfiguration.cacheStopTimeout()).thenReturn(30000L);
+      when(loadersConfiguration.preload()).thenReturn(false);
+      when(clusteringConfiguration.cacheMode()).thenReturn(cacheMode);
+
       return cache;
    }
 }

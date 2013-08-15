@@ -44,7 +44,6 @@ import org.infinispan.container.entries.TransientMortalCacheValue;
 import org.infinispan.context.Flag;
 import org.infinispan.distribution.ch.DefaultConsistentHash;
 import org.infinispan.distribution.ch.DefaultConsistentHashFactory;
-import org.infinispan.loaders.bucket.Bucket;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.marshall.core.MarshalledValue;
 import org.infinispan.marshall.core.JBossMarshallingTest.CustomReadObjectMethod;
@@ -365,23 +364,6 @@ public class VersionAwareMarshallerTest extends AbstractInfinispanTest {
       bytes = marshaller.objectToByteBuffer(value4);
       TransientMortalCacheValue rvalue4 = (TransientMortalCacheValue) marshaller.objectFromByteBuffer(bytes);
       assert rvalue4.getValue().equals(value4.getValue()) : "Writen[" + rvalue4.getValue() + "] and read[" + value4.getValue() + "] objects should be the same";
-   }
-
-   public void testBucketMarshalling() throws Exception {
-      ImmortalCacheEntry entry1 = (ImmortalCacheEntry) TestInternalCacheEntryFactory.create("key", "value", System.currentTimeMillis() - 1000, -1, System.currentTimeMillis(), -1);
-      MortalCacheEntry entry2 = (MortalCacheEntry) TestInternalCacheEntryFactory.create("key", "value", System.currentTimeMillis() - 1000, 200000, System.currentTimeMillis(), -1);
-      TransientCacheEntry entry3 = (TransientCacheEntry) TestInternalCacheEntryFactory.create("key", "value", System.currentTimeMillis() - 1000, -1, System.currentTimeMillis(), 4000000);
-      TransientMortalCacheEntry entry4 = (TransientMortalCacheEntry) TestInternalCacheEntryFactory.create("key", "value", System.currentTimeMillis() - 1000, 200000, System.currentTimeMillis(), 4000000);
-      Bucket b = new Bucket(TIME_SERVICE);
-      b.setBucketId(0);
-      b.addEntry(entry1);
-      b.addEntry(entry2);
-      b.addEntry(entry3);
-      b.addEntry(entry4);
-
-      byte[] bytes = marshaller.objectToByteBuffer(b);
-      Bucket rb = (Bucket) marshaller.objectFromByteBuffer(bytes);
-      assert rb.getEntries().equals(b.getEntries()) : "Writen[" + b.getEntries() + "] and read[" + rb.getEntries() + "] objects should be the same";
    }
 
    public void testLongPutKeyValueCommand() throws Exception {
