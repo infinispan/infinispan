@@ -91,9 +91,13 @@ public class LocalCacheTest extends SingleCacheManagerTest {
 
       ResultIterator found = cacheQuery.iterator(new FetchOptions().fetchMode(FetchOptions.FetchMode.EAGER));
 
-      assert found.hasNext();
-      found.next();
-      assert !found.hasNext();
+      try {
+         assert found.hasNext();
+         found.next();
+         assert !found.hasNext();
+      } finally {
+         found.close();
+      }
    }
 
    public void testMultipleResults() throws ParseException {
@@ -280,9 +284,13 @@ public class LocalCacheTest extends SingleCacheManagerTest {
 
       ResultIterator found = cacheQuery.iterator(new FetchOptions().fetchMode(FetchOptions.FetchMode.LAZY));
 
-      assert found.hasNext();
-      found.next();
-      assert !found.hasNext();
+      try {
+         assert found.hasNext();
+         found.next();
+         assert !found.hasNext();
+      } finally {
+         found.close();
+      }
    }
 
    @Test(expectedExceptions = IllegalArgumentException.class, expectedExceptionsMessageRegExp = "Unknown FetchMode null")
@@ -298,9 +306,13 @@ public class LocalCacheTest extends SingleCacheManagerTest {
          }
       });
 
-      assert found.hasNext();
-      found.next();
-      assert !found.hasNext();
+      try {
+         assert found.hasNext();
+         found.next();
+         assert !found.hasNext();
+      } finally {
+         found.close();
+      }
    }
 
    public void testIteratorWithDefaultOptions() throws ParseException {
@@ -311,9 +323,13 @@ public class LocalCacheTest extends SingleCacheManagerTest {
 
       ResultIterator found = cacheQuery.iterator();
 
-      assert found.hasNext();
-      found.next();
-      assert !found.hasNext();
+      try {
+         assert found.hasNext();
+         found.next();
+         assert !found.hasNext();
+      } finally {
+         found.close();
+      }
    }
 
    public void testExplain() throws ParseException {
@@ -363,9 +379,13 @@ public class LocalCacheTest extends SingleCacheManagerTest {
 
       CacheQuery cacheQuery = Search.getSearchManager(cache).getQuery(luceneQuery);
       ResultIterator iterator = cacheQuery.iterator();
-      if(iterator.hasNext()) {
-         Object next = iterator.next();
-         iterator.remove();
+      try {
+         if (iterator.hasNext()) {
+            Object next = iterator.next();
+            iterator.remove();
+         }
+      } finally {
+         iterator.close();
       }
    }
 
@@ -376,7 +396,11 @@ public class LocalCacheTest extends SingleCacheManagerTest {
       CacheQuery cacheQuery = Search.getSearchManager(cache).getQuery(luceneQuery).firstResult(1);
 
       ResultIterator iterator = cacheQuery.iterator(new FetchOptions().fetchMode(FetchOptions.FetchMode.LAZY));
-      Assert.assertEquals(2, countElements(iterator));
+      try {
+         Assert.assertEquals(2, countElements(iterator));
+      } finally {
+         iterator.close();
+      }
    }
 
    @Test(expectedExceptions = IllegalArgumentException.class)
@@ -406,7 +430,11 @@ public class LocalCacheTest extends SingleCacheManagerTest {
 
       ResultIterator found = cacheQuery.iterator(new FetchOptions().fetchMode(FetchOptions.FetchMode.LAZY));
 
-      found.next();
+      try {
+         found.next();
+      } finally {
+         found.close();
+      }
    }
 
    @Test(expectedExceptions = IllegalArgumentException.class)
@@ -418,7 +446,11 @@ public class LocalCacheTest extends SingleCacheManagerTest {
 
       ResultIterator found = cacheQuery.iterator(new FetchOptions().fetchMode(null));
 
-      found.next();
+      try {
+         found.next();
+      } finally {
+         found.close();
+      }
    }
 
    public void testSearchKeyTransformer() throws ParseException {
@@ -432,7 +464,11 @@ public class LocalCacheTest extends SingleCacheManagerTest {
       CacheQuery cacheQuery = manager.getQuery(luceneQuery);
 
       ResultIterator iterator = cacheQuery.iterator(new FetchOptions().fetchMode(FetchOptions.FetchMode.LAZY));
-      Assert.assertEquals(3, countElements(iterator));
+      try {
+         Assert.assertEquals(3, countElements(iterator));
+      } finally {
+         iterator.close();
+      }
    }
 
    @Test(expectedExceptions = IllegalArgumentException.class)
@@ -455,9 +491,13 @@ public class LocalCacheTest extends SingleCacheManagerTest {
 
       ResultIterator found = cacheQuery.iterator(new FetchOptions().fetchMode(FetchOptions.FetchMode.valueOf("LAZY")));
 
-      assert found.hasNext();
-      found.next();
-      assert !found.hasNext();
+      try {
+         assert found.hasNext();
+         found.next();
+         assert !found.hasNext();
+      } finally {
+         found.close();
+      }
    }
 
    public void testGetResultSize() throws ParseException {
@@ -480,9 +520,24 @@ public class LocalCacheTest extends SingleCacheManagerTest {
 
       Assert.assertEquals(3, cacheQuery.getResultSize());   // NOTE: getResultSize() ignores pagination (maxResults, firstResult)
       Assert.assertEquals(1, cacheQuery.list().size());
-      Assert.assertEquals(1, countElements(cacheQuery.iterator(new FetchOptions().fetchMode(FetchOptions.FetchMode.EAGER))));
-      Assert.assertEquals(1, countElements(cacheQuery.iterator(new FetchOptions().fetchMode(FetchOptions.FetchMode.LAZY))));
-      Assert.assertEquals(1, countElements(cacheQuery.iterator()));
+      ResultIterator eagerIterator = cacheQuery.iterator(new FetchOptions().fetchMode(FetchOptions.FetchMode.EAGER));
+      try {
+         Assert.assertEquals(1, countElements(eagerIterator));
+      } finally {
+         eagerIterator.close();
+      }
+      ResultIterator lazyIterator = cacheQuery.iterator(new FetchOptions().fetchMode(FetchOptions.FetchMode.LAZY));
+      try {
+         Assert.assertEquals(1, countElements(lazyIterator));
+      } finally {
+         lazyIterator.close();
+      }
+      ResultIterator defaultIterator = cacheQuery.iterator();
+      try {
+         Assert.assertEquals(1, countElements(defaultIterator));
+      } finally {
+         defaultIterator.close();
+      }
    }
 
    private int countElements(ResultIterator iterator) {

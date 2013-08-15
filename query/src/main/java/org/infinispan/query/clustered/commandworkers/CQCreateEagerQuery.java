@@ -21,15 +21,16 @@ public class CQCreateEagerQuery extends ClusteredQueryCommandWorker {
    public QueryResponse perform() {
       query.afterDeserialise((SearchFactoryImplementor) getSearchFactory());
       DocumentExtractor extractor = query.queryDocumentExtractor();
-      int resultSize = query.queryResultSize();
-
-      ISPNEagerTopDocs eagerTopDocs = collectKeys(extractor);
-
-      QueryResponse queryResponse = new QueryResponse(eagerTopDocs,
-            getQueryBox().getMyId(), resultSize);
-      queryResponse.setAddress(cache.getAdvancedCache().getRpcManager()
-            .getAddress());
-      return queryResponse;
+      try {
+         int resultSize = query.queryResultSize();
+         ISPNEagerTopDocs eagerTopDocs = collectKeys(extractor);
+         QueryResponse queryResponse = new QueryResponse(eagerTopDocs, getQueryBox().getMyId(), resultSize);
+         queryResponse.setAddress(cache.getAdvancedCache().getRpcManager().getAddress());
+         return queryResponse;
+      }
+      finally {
+         extractor.close();
+      }
    }
 
    private ISPNEagerTopDocs collectKeys(DocumentExtractor extractor) {

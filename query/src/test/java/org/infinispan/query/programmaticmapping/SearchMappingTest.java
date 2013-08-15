@@ -46,6 +46,7 @@ public class SearchMappingTest {
 
       final Properties properties = new Properties();
       properties.put("default.directory_provider", "ram");
+      properties.put("lucene_version", "LUCENE_CURRENT");
       properties.put(Environment.MODEL_MAPPING, mapping);
 
       ConfigurationBuilder builder = new ConfigurationBuilder();
@@ -115,6 +116,7 @@ public class SearchMappingTest {
    public void testWithoutSearchMapping() {
       final Properties properties = new Properties();
       properties.put("default.directory_provider", "ram");
+      properties.put("lucene_version", "LUCENE_CURRENT");
 
       ConfigurationBuilder builder = new ConfigurationBuilder();
       builder.indexing().enable().indexLocalOnly(true).withProperties(properties);

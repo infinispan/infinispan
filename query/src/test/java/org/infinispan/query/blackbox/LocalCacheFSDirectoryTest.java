@@ -28,7 +28,7 @@ public class LocalCacheFSDirectoryTest extends LocalCacheTest {
          .indexLocalOnly(false) //not meaningful
          .addProperty("default.directory_provider", "filesystem")
          .addProperty("default.indexBase", TMP_DIR + File.separator + "index")
-         .addProperty("default.lucene_version", "LUCENE_CURRENT");
+         .addProperty("lucene_version", "LUCENE_CURRENT");
       return TestCacheManagerFactory.createCacheManager(cfg);
    }
 
