@@ -4,10 +4,12 @@ import org.infinispan.commons.equivalence.AnyEquivalence;
 import org.infinispan.commons.equivalence.Equivalence;
 import org.infinispan.commons.equivalence.EquivalentHashMap;
 import org.infinispan.commons.equivalence.EquivalentHashSet;
+import org.infinispan.commons.equivalence.EquivalentLinkedHashMap;
 import org.infinispan.commons.util.concurrent.jdk8backported.EquivalentConcurrentHashMapV8;
 
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
@@ -179,6 +181,15 @@ public class CollectionFactory {
          return new EquivalentHashMap<K, V>(entries, keyEq, valueEq);
       else
          return new HashMap<K, V>(entries);
+   }
+
+   public static <K, V> Map<K, V> makeLinkedMap(int initialCapacity,
+         float loadFactor, EquivalentLinkedHashMap.IterationOrder iterationOrder,
+         Equivalence<K> keyEq, Equivalence<V> valueEq) {
+      if (requiresEquivalent(keyEq, valueEq))
+         return new EquivalentLinkedHashMap<K, V>(initialCapacity, loadFactor, iterationOrder, keyEq, valueEq);
+      else
+         return new LinkedHashMap<K, V>(initialCapacity, loadFactor, iterationOrder.toJdkAccessOrder());
    }
 
    public static <T> Set<T> makeSet(Equivalence<T> entryEq) {

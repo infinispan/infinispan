@@ -9,16 +9,18 @@ import java.nio.ByteBuffer;
 import java.nio.channels.FileChannel;
 import java.util.Arrays;
 import java.util.Collections;
-import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
-import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Set;
 import java.util.SortedSet;
 import java.util.TreeSet;
 
 import org.infinispan.Cache;
+import org.infinispan.commons.equivalence.AnyEquivalence;
+import org.infinispan.commons.equivalence.Equivalence;
+import org.infinispan.commons.equivalence.EquivalentLinkedHashMap;
+import org.infinispan.commons.util.CollectionFactory;
 import org.infinispan.configuration.cache.CacheLoaderConfiguration;
 import org.infinispan.configuration.cache.SingleFileCacheStoreConfiguration;
 import org.infinispan.container.entries.InternalCacheEntry;
@@ -102,13 +104,7 @@ public class SingleFileCacheStore extends AbstractCacheStore {
          file = new RandomAccessFile(f, "rw").getChannel();
 
          // initialize data structures
-         // only use LinkedHashMap (LRU) for entries when cache store is bounded
-         final Map<Object, FileEntry> entryMap;
-         if (configuration.maxEntries() > 0)
-            entryMap = new LinkedHashMap<Object, FileEntry>(16, 0.75f, true);
-         else
-            entryMap = new HashMap<Object, FileEntry>();
-         entries = Collections.synchronizedMap(entryMap);
+         entries = newEntryMap();
          freeList = Collections.synchronizedSortedSet(new TreeSet<FileEntry>());
 
          // check file format and read persistent state if enabled for the cache
@@ -120,6 +116,20 @@ public class SingleFileCacheStore extends AbstractCacheStore {
       } catch (Exception e) {
          throw new CacheLoaderException(e);
       }
+   }
+
+   private Map<Object, FileEntry> newEntryMap() {
+      // only use LinkedHashMap (LRU) for entries when cache store is bounded
+      final Map<Object, FileEntry> entryMap;
+      Equivalence<Object> keyEq = cache.getCacheConfiguration().dataContainer().keyEquivalence();
+      if (configuration.maxEntries() > 0)
+         entryMap = CollectionFactory.makeLinkedMap(16, 0.75f,
+               EquivalentLinkedHashMap.IterationOrder.ACCESS_ORDER,
+               keyEq, AnyEquivalence.<FileEntry>getInstance());
+      else
+         entryMap = CollectionFactory.makeMap(keyEq, AnyEquivalence.<FileEntry>getInstance());
+
+      return Collections.synchronizedMap(entryMap);
    }
 
    /** {@inheritDoc} */

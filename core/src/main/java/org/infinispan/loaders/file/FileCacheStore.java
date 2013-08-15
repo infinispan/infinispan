@@ -6,12 +6,14 @@ import org.infinispan.commons.io.ExposedByteArrayOutputStream;
 import org.infinispan.configuration.cache.CacheLoaderConfiguration;
 import org.infinispan.configuration.cache.FileCacheStoreConfiguration;
 import org.infinispan.configuration.cache.FileCacheStoreConfigurationBuilder;
+import org.infinispan.container.entries.InternalCacheEntry;
 import org.infinispan.loaders.CacheLoaderException;
 import org.infinispan.loaders.bucket.Bucket;
 import org.infinispan.loaders.bucket.BucketBasedCacheStore;
 import org.infinispan.commons.marshall.StreamingMarshaller;
 import org.infinispan.commons.util.CollectionFactory;
 import org.infinispan.commons.util.Util;
+import org.infinispan.util.TimeService;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
@@ -57,6 +59,7 @@ public class FileCacheStore extends BucketBasedCacheStore {
 
    File root;
    FileSync fileSync;
+   TimeService timerService;
 
    /**
     * @return root directory where all files for this {@link org.infinispan.loaders.spi.CacheStore CacheStore} are written.
@@ -283,7 +286,8 @@ public class FileCacheStore extends BucketBasedCacheStore {
                return null;
             }
             is = new FileInputStream(bucketFile);
-            bucket = (Bucket) objectFromInputStreamInReentrantMode(is);
+            Map<Object, InternalCacheEntry> entries = objectFromInputStreamInReentrantMode(is);
+            bucket = new Bucket(timerService, keyEquivalence, entries);
          } catch (InterruptedException ie) {
             throw ie;
          } catch (Exception e) {
@@ -312,7 +316,7 @@ public class FileCacheStore extends BucketBasedCacheStore {
 
       if (!b.getEntries().isEmpty()) {
          try {
-            byte[] bytes = marshaller.objectToByteBuffer(b);
+            byte[] bytes = marshaller.objectToByteBuffer(b.getEntries());
             fileSync.write(bytes, f);
          } catch (IOException ex) {
             log.errorSavingBucket(b, ex);
@@ -359,6 +363,7 @@ public class FileCacheStore extends BucketBasedCacheStore {
       }
 
       log.debugf("Using %s file sync mode", fsyncMode);
+      timerService = cache.getAdvancedCache().getComponentRegistry().getTimeService();
    }
 
    @Override
@@ -392,9 +397,10 @@ public class FileCacheStore extends BucketBasedCacheStore {
       }
    }
 
-   private Object objectFromInputStreamInReentrantMode(InputStream is) throws IOException, ClassNotFoundException, InterruptedException {
+   @SuppressWarnings("unchecked")
+   private <T> T objectFromInputStreamInReentrantMode(InputStream is) throws IOException, ClassNotFoundException, InterruptedException {
       int len = is.available();
-      Object o = null;
+      T o = null;
       if (len != 0) {
          ExposedByteArrayOutputStream bytes = new ExposedByteArrayOutputStream(len);
          byte[] buf = new byte[Math.min(len, 1024)];
@@ -405,7 +411,7 @@ public class FileCacheStore extends BucketBasedCacheStore {
          is = new ByteArrayInputStream(bytes.getRawBuffer(), 0, bytes.size());
          ObjectInput unmarshaller = marshaller.startObjectInput(is, false);
          try {
-            o = marshaller.objectFromObjectStream(unmarshaller);
+            o = (T) marshaller.objectFromObjectStream(unmarshaller);
          } finally {
             marshaller.finishObjectInput(unmarshaller);
          }

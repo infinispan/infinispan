@@ -295,8 +295,8 @@ public interface Log extends BasicLogger {
    void problemsCreatingDirectory(File dir);
 
    @LogMessage(level = ERROR)
-   @Message(value = "Exception while marshalling object", id = 65)
-   void errorMarshallingObject(@Cause IOException ioe);
+   @Message(value = "Exception while marshalling object: %s", id = 65)
+   void errorMarshallingObject(@Cause IOException ioe, Object obj);
 
    @LogMessage(level = ERROR)
    @Message(value = "Unable to read version id from first two bytes of stream, barfing.", id = 66)

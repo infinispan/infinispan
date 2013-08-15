@@ -38,13 +38,13 @@ public class EquivalentHashMap<K, V> extends AbstractMap<K, V> {
 
    private Node<K, V>[] table;
 
-   private int size;
+   int size;
 
    private int threshold;
 
    private final float loadFactor;
 
-   private int modCount;
+   int modCount;
 
    private final Equivalence<K> keyEq;
 
@@ -59,12 +59,19 @@ public class EquivalentHashMap<K, V> extends AbstractMap<K, V> {
    @SuppressWarnings("unchecked")
    public EquivalentHashMap(
          int initialCapacity, Equivalence<K> keyEq, Equivalence<V> valueEq) {
+      this(initialCapacity, DEFAULT_LOAD_FACTOR, keyEq, valueEq);
+   }
+
+   @SuppressWarnings("unchecked")
+   public EquivalentHashMap(
+         int initialCapacity, float loadFactor,
+         Equivalence<K> keyEq, Equivalence<V> valueEq) {
       int capacity = 1;
       while (capacity < initialCapacity)
          capacity <<= 1;
 
-      this.loadFactor = DEFAULT_LOAD_FACTOR;
-      threshold = (int)(capacity * DEFAULT_LOAD_FACTOR);
+      this.loadFactor = loadFactor;
+      threshold = (int)(capacity * loadFactor);
       table = new Node[capacity];
       this.keyEq = keyEq;
       this.valueEq = valueEq;
@@ -139,6 +146,12 @@ public class EquivalentHashMap<K, V> extends AbstractMap<K, V> {
 
    @Override
    public V get(Object key) {
+      Node<K, V> n = getNode(key);
+      return n == null ? null : n.value;
+   }
+
+   @SuppressWarnings("unchecked")
+   <T> T getNode(Object key) {
       assertKeyNotNull(key);
       int hash = spread(keyEq.hashCode(key));
       int length = table.length;
@@ -150,7 +163,7 @@ public class EquivalentHashMap<K, V> extends AbstractMap<K, V> {
             return null;
 
          if (e.hash == hash && keyEq.equals(e.key, key))
-            return e.value;
+            return (T) e;
 
          index = nextIndex(index, length);
       }
@@ -171,7 +184,7 @@ public class EquivalentHashMap<K, V> extends AbstractMap<K, V> {
             break;
 
          if (e.hash == hash && keyEq.equals(e.key, key)) {
-            table[index] = new Node<K, V>(e.key, e.hash, value);
+            table[index] = createNode(e.key, value, e.hash);
             return e.value;
          }
 
@@ -186,6 +199,10 @@ public class EquivalentHashMap<K, V> extends AbstractMap<K, V> {
          resize(length);
 
       return null;
+   }
+
+   <T> T createNode(K key, V value, int hash) {
+      return (T) new Node<K, V>(key, hash, value);
    }
 
    @SuppressWarnings("unchecked")
@@ -216,6 +233,11 @@ public class EquivalentHashMap<K, V> extends AbstractMap<K, V> {
 
    @Override
    public V remove(Object key) {
+      Node<K, V> prevNode = removeNode(key);
+      return prevNode == null ? null : prevNode.value;
+   }
+
+   <T> T removeNode(Object key) {
       assertKeyNotNull(key);
       Node<K, V>[] table = this.table;
       int length = table.length;
@@ -232,7 +254,7 @@ public class EquivalentHashMap<K, V> extends AbstractMap<K, V> {
             relocate(index);
             modCount++;
             size--;
-            return e.value;
+            return (T) e;
          }
 
          index = nextIndex(index, length);
@@ -328,12 +350,20 @@ public class EquivalentHashMap<K, V> extends AbstractMap<K, V> {
       return true;
    }
 
+   public Equivalence<K> getKeyEquivalence() {
+      return keyEq;
+   }
+
+   public Equivalence<V> getValueEquivalence() {
+      return valueEq;
+   }
+
    /* ---------------- Iterating methods and support classes -------------- */
 
    /**
     * Exported Entry for iterators
     */
-   static final class MapEntry<K,V> implements Map.Entry<K,V> {
+   static class MapEntry<K,V> implements Map.Entry<K,V> {
       final K key; // non-null
       V val;       // non-null
       final EquivalentHashMap<K, V> map;
@@ -375,9 +405,21 @@ public class EquivalentHashMap<K, V> extends AbstractMap<K, V> {
       return keySet;
    }
 
+   Iterator<K> newKeyIterator()   {
+      return new KeyIterator();
+   }
+
+   Iterator<V> newValueIterator()   {
+      return new ValueIterator();
+   }
+
+   Iterator<Map.Entry<K,V>> newEntryIterator()   {
+      return new EntryIterator();
+   }
+
    private final class KeySet extends AbstractSet<K> {
       @Override public Iterator<K> iterator() {
-         return new KeyIterator();
+         return newKeyIterator();
       }
       @Override public int size() {
          return size;
@@ -467,7 +509,7 @@ public class EquivalentHashMap<K, V> extends AbstractMap<K, V> {
 
    public final class Values extends AbstractCollection<V> {
       @Override public Iterator<V> iterator() {
-         return new ValueIterator();
+         return newValueIterator();
       }
       @Override public int size() {
          return EquivalentHashMap.this.size();
@@ -506,7 +548,7 @@ public class EquivalentHashMap<K, V> extends AbstractMap<K, V> {
 
    public class EntrySet extends AbstractSet<Map.Entry<K, V>> {
       @Override public Iterator<Map.Entry<K, V>> iterator() {
-         return new EntryIterator();
+         return newEntryIterator();
       }
 
       @Override public boolean contains(Object o) {

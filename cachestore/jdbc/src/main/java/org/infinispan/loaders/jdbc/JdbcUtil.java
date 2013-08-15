@@ -52,18 +52,19 @@ public class JdbcUtil {
       }
    }
 
-   public static ByteBuffer marshall(StreamingMarshaller marshaller, Object bucket) throws CacheLoaderException, InterruptedException {
+   public static ByteBuffer marshall(StreamingMarshaller marshaller, Object obj) throws CacheLoaderException, InterruptedException {
       try {
-         return marshaller.objectToBuffer(bucket);
+         return marshaller.objectToBuffer(obj);
       } catch (IOException e) {
-         log.errorMarshallingBucket(e, bucket);
-         throw new CacheLoaderException("I/O failure while marshalling bucket: " + bucket, e);
+         log.errorMarshallingObject(e, obj);
+         throw new CacheLoaderException("I/O failure while marshalling object: " + obj, e);
       }
    }
 
-   public static Object unmarshall(StreamingMarshaller marshaller, InputStream inputStream) throws CacheLoaderException {
+   @SuppressWarnings("unchecked")
+   public static <T> T unmarshall(StreamingMarshaller marshaller, InputStream inputStream) throws CacheLoaderException {
       try {
-         return marshaller.objectFromInputStream(inputStream);
+         return (T) marshaller.objectFromInputStream(inputStream);
       } catch (IOException e) {
          log.ioErrorUnmarshalling(e);
          throw new CacheLoaderException("I/O error while unmarshalling from stream", e);
