@@ -93,6 +93,7 @@ public class InconsistentIndexesAfterRestartTest extends AbstractInfinispanTest 
              .enable()
              .indexLocalOnly(true)
              .addProperty("default.directory_provider", "filesystem")
+             .addProperty("lucene_version", "LUCENE_CURRENT")
              .addProperty("default.indexBase", TMP_DIR + File.separator + "idx");
 
        if (batchingEnabled) {
