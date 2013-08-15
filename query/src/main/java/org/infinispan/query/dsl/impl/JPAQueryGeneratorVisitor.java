@@ -17,13 +17,9 @@ class JPAQueryGeneratorVisitor implements Visitor<String> {
 
    private static final TimeZone GMT_TZ = TimeZone.getTimeZone("GMT");
 
-   private final DateFormat dateFormat = new SimpleDateFormat("yyyyMMddHHmmssSSS");
-
    private static final String alias = "_gen0";
 
-   public JPAQueryGeneratorVisitor() {
-      dateFormat.setTimeZone(GMT_TZ);
-   }
+   private DateFormat dateFormat;
 
    @Override
    public String visit(LuceneQueryBuilder luceneQueryBuilder) {
@@ -292,10 +288,18 @@ class JPAQueryGeneratorVisitor implements Visitor<String> {
       }
 
       if (argument instanceof Date) {
-         sb.append('\'').append(dateFormat.format(argument)).append('\'');
+         sb.append('\'').append(getDateFormatter().format(argument)).append('\'');
          return;
       }
 
       sb.append(argument);
+   }
+
+   private DateFormat getDateFormatter() {
+      if (dateFormat == null) {
+         dateFormat = new SimpleDateFormat("yyyyMMddHHmmssSSS");
+         dateFormat.setTimeZone(GMT_TZ);
+      }
+      return dateFormat;
    }
 }
