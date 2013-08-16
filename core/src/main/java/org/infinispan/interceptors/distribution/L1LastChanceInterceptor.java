@@ -1,0 +1,137 @@
+package org.infinispan.interceptors.distribution;
+
+import org.infinispan.commands.write.DataWriteCommand;
+import org.infinispan.commands.write.PutKeyValueCommand;
+import org.infinispan.commands.write.PutMapCommand;
+import org.infinispan.commands.write.RemoveCommand;
+import org.infinispan.commands.write.ReplaceCommand;
+import org.infinispan.commands.write.WriteCommand;
+import org.infinispan.configuration.cache.Configuration;
+import org.infinispan.context.Flag;
+import org.infinispan.context.InvocationContext;
+import org.infinispan.distribution.L1Manager;
+import org.infinispan.factories.annotations.Inject;
+import org.infinispan.factories.annotations.Start;
+import org.infinispan.interceptors.base.BaseRpcInterceptor;
+import org.infinispan.interceptors.locking.ClusteringDependentLogic;
+import org.infinispan.transaction.TransactionMode;
+import org.infinispan.util.logging.Log;
+import org.infinispan.util.logging.LogFactory;
+
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.Set;
+
+/**
+ * L1 based interceptor that flushes the L1 cache at the end after a transaction/entry is committed to the data
+ * container but before the lock has been released.  This is here to asynchronously clear any L1 cached values that were
+ * retrieved between when the data was updated, causing a L1 invalidation, and when the data was put into the data
+ * container
+ *
+ * @author wburns
+ * @since 6.0
+ */
+public class L1LastChanceInterceptor extends BaseRpcInterceptor {
+
+   private static final Log log = LogFactory.getLog(L1NonTxInterceptor.class);
+   private static final boolean trace = log.isTraceEnabled();
+
+   private L1Manager l1Manager;
+   private ClusteringDependentLogic cdl;
+   private Configuration configuration;
+
+   private boolean nonTransactional;
+
+   @Inject
+   public void init(L1Manager l1Manager, ClusteringDependentLogic cdl, Configuration configuration) {
+      this.l1Manager = l1Manager;
+      this.cdl = cdl;
+      this.configuration = configuration;
+   }
+
+   @Start
+   public void start() {
+      nonTransactional = configuration.transaction().transactionMode() == TransactionMode.NON_TRANSACTIONAL;
+   }
+
+   @Override
+   public Object visitPutKeyValueCommand(InvocationContext ctx, PutKeyValueCommand command) throws Throwable {
+      return visitDataWriteCommand(ctx, command, true);
+   }
+
+   @Override
+   public Object visitReplaceCommand(InvocationContext ctx, ReplaceCommand command) throws Throwable {
+      return visitDataWriteCommand(ctx, command, true);
+   }
+
+   @Override
+   public Object visitRemoveCommand(InvocationContext ctx, RemoveCommand command) throws Throwable {
+      return visitDataWriteCommand(ctx, command, false);
+   }
+
+   public Object visitDataWriteCommand(InvocationContext ctx, DataWriteCommand command, boolean assumeOriginKeptEntryInL1) throws Throwable {
+      Object returnValue = invokeNextInterceptor(ctx, command);
+      Object key;
+      if (shouldUpdateOnWriteCommand(command) && command.isSuccessful() &&
+            cdl.localNodeIsPrimaryOwner((key = command.getKey()))) {
+         if (trace) {
+            log.trace("Sending additional invalidation for requestors if necessary.");
+         }
+         // Send out a last attempt L1 invalidation in case if someone cached the L1
+         // value after they already received an invalidation
+         l1Manager.flushCache(Collections.singleton(key), ctx.getOrigin(), assumeOriginKeptEntryInL1);
+      }
+      return returnValue;
+   }
+
+   @Override
+   public Object visitPutMapCommand(InvocationContext ctx, PutMapCommand command) throws Throwable {
+      Object returnValue = invokeNextInterceptor(ctx, command);
+      if (shouldUpdateOnWriteCommand(command)) {
+         Set<Object> keys = command.getMap().keySet();
+         Set<Object> toInvalidate = new HashSet<Object>(keys.size());
+         for (Object k : keys) {
+            if (cdl.localNodeIsPrimaryOwner(k)) {
+               toInvalidate.add(k);
+            }
+         }
+         if (!toInvalidate.isEmpty()) {
+            if (trace) {
+               log.trace("Sending additional invalidation for requestors if necessary.");
+            }
+            l1Manager.flushCache(toInvalidate, ctx.getOrigin(), true);
+         }
+      }
+      return returnValue;
+   }
+
+   private boolean shouldUpdateOnWriteCommand(WriteCommand command) {
+      return nonTransactional && !command.hasFlag(Flag.CACHE_MODE_LOCAL);
+   }
+
+   // TODO: commented out until after we can add changes for ISPN-1540 to make tx inline with nontx
+//   @Override
+//   public Object visitPrepareCommand(TxInvocationContext ctx, PrepareCommand command) throws Throwable {
+//      Object retVal = invokeNextInterceptor(ctx, command);
+//      if (command.isOnePhaseCommit()) {
+//         handleLastChanceL1InvalidationOnCommit(ctx);
+//      }
+//      return retVal;
+//   }
+//
+//   @Override
+//   public Object visitCommitCommand(TxInvocationContext ctx, CommitCommand command) throws Throwable {
+//      Object retVal = invokeNextInterceptor(ctx, command);
+//      handleLastChanceL1InvalidationOnCommit(ctx);
+//      return retVal;
+//   }
+//
+//   private void handleLastChanceL1InvalidationOnCommit(TxInvocationContext ctx) {
+//      if (shouldInvokeRemoteTxCommand(ctx)) {
+//         if (trace) {
+//            log.tracef("Sending additional invalidation for requestors if necessary.");
+//         }
+//         l1Manager.flushCache(ctx.getLockedKeys(), ctx.getOrigin(), true);
+//      }
+//   }
+}

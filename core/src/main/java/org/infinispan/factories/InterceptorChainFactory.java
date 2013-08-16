@@ -3,29 +3,16 @@ package org.infinispan.factories;
 
 import org.infinispan.commons.CacheConfigurationException;
 import org.infinispan.commons.CacheException;
-import org.infinispan.configuration.cache.CompatibilityModeConfiguration;
-import org.infinispan.configuration.cache.Configuration;
-import org.infinispan.configuration.cache.Configurations;
-import org.infinispan.configuration.cache.CustomInterceptorsConfiguration;
-import org.infinispan.configuration.cache.InterceptorConfiguration;
-import org.infinispan.configuration.cache.CacheLoaderConfiguration;
-import org.infinispan.configuration.cache.CacheStoreConfiguration;
+import org.infinispan.configuration.cache.*;
 import org.infinispan.factories.annotations.DefaultFactoryFor;
 import org.infinispan.interceptors.*;
 import org.infinispan.interceptors.base.CommandInterceptor;
 import org.infinispan.interceptors.compat.TypeConverterInterceptor;
-import org.infinispan.interceptors.distribution.L1NonTxInterceptor;
-import org.infinispan.interceptors.distribution.NonTxDistributionInterceptor;
-import org.infinispan.interceptors.distribution.TxDistributionInterceptor;
-import org.infinispan.interceptors.distribution.VersionedDistributionInterceptor;
+import org.infinispan.interceptors.distribution.*;
 import org.infinispan.interceptors.locking.NonTransactionalLockingInterceptor;
 import org.infinispan.interceptors.locking.OptimisticLockingInterceptor;
 import org.infinispan.interceptors.locking.PessimisticLockingInterceptor;
-import org.infinispan.interceptors.totalorder.TotalOrderDistributionInterceptor;
-import org.infinispan.interceptors.totalorder.TotalOrderInterceptor;
-import org.infinispan.interceptors.totalorder.TotalOrderStateTransferInterceptor;
-import org.infinispan.interceptors.totalorder.TotalOrderVersionedDistributionInterceptor;
-import org.infinispan.interceptors.totalorder.TotalOrderVersionedEntryWrappingInterceptor;
+import org.infinispan.interceptors.totalorder.*;
 import org.infinispan.interceptors.xsite.NonTransactionalBackupInterceptor;
 import org.infinispan.interceptors.xsite.OptimisticBackupInterceptor;
 import org.infinispan.interceptors.xsite.PessimisticBackupInterceptor;
@@ -183,6 +170,11 @@ public class InterceptorChainFactory extends AbstractNamedCacheComponentFactory 
          } else {
             interceptorChain.appendInterceptor(createInterceptor(new NonTransactionalBackupInterceptor(), NonTransactionalBackupInterceptor.class), false);
          }
+      }
+
+      // This needs to be added after the locking interceptor (for tx caches) but before the wrapping interceptor.
+      if (configuration.clustering().l1().enabled()) {
+         interceptorChain.appendInterceptor(createInterceptor(new L1LastChanceInterceptor(), L1LastChanceInterceptor.class), false);
       }
 
       if (needsVersionAwareComponents && configuration.clustering().cacheMode().isClustered()) {
