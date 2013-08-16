@@ -3,41 +3,31 @@ package org.infinispan.query.dsl.impl;
 import org.infinispan.query.dsl.QueryBuilder;
 
 /**
+ * Unary or binary boolean condition (NOT, AND, OR).
+ *
  * @author anistor@redhat.com
  * @since 6.0
  */
-class CompositeCondition extends BaseCondition {
-
-   private final boolean isConjunction;
+abstract class BooleanCondition extends BaseCondition {
 
    private BaseCondition leftCondition;
 
    private BaseCondition rightCondition;
 
-   public CompositeCondition(boolean isConjunction, BaseCondition leftCondition, BaseCondition rightCondition) {
-      this.isConjunction = isConjunction;
+   public BooleanCondition(BaseCondition leftCondition, BaseCondition rightCondition) {
       this.leftCondition = leftCondition;
       this.rightCondition = rightCondition;
    }
 
-   @Override
-   public <ReturnType> ReturnType accept(Visitor<ReturnType> visitor) {
-      return visitor.visit(this);
-   }
-
-   public boolean isConjunction() {
-      return isConjunction;
-   }
-
-   public BaseCondition getLeftCondition() {
+   public BaseCondition getFirstCondition() {
       return leftCondition;
    }
 
-   public BaseCondition getRightCondition() {
+   public BaseCondition getSecondCondition() {
       return rightCondition;
    }
 
-   public void replaceChild(BaseCondition oldChild, BaseCondition newChild) {
+   public void replaceChildCondition(BaseCondition oldChild, BaseCondition newChild) {
       if (leftCondition == oldChild) {
          leftCondition = newChild;
       } else if (rightCondition == oldChild) {
@@ -57,10 +47,5 @@ class CompositeCondition extends BaseCondition {
       if (rightCondition != null) {
          rightCondition.setQueryBuilder(queryBuilder);
       }
-   }
-
-   @Override
-   public String toString() {
-      return "(" + leftCondition + ") " + (isConjunction ? "AND" : "OR") + " (" + rightCondition + ")";
    }
 }

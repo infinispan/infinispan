@@ -9,4 +9,6 @@ public interface FilterConditionBeginContext {
    FilterConditionEndContext having(String attributePath);
 
    FilterConditionBeginContext not();
+
+   FilterConditionContext not(FilterConditionContext fcc);
 }

@@ -6,17 +6,13 @@ package org.infinispan.query.dsl;
  */
 public interface QueryBuilder extends FilterConditionBeginContext {
 
-   //todo sorting might not be supported yet at this stage
    QueryBuilder orderBy(String attributePath, SortOrder sortOrder);
 
-   //todo projection might not be supported yet at this stage
    QueryBuilder setProjection(String... attributePath);
 
    QueryBuilder startOffset(long startOffset);
 
    QueryBuilder maxResults(int maxResults);
-
-   Class getRootType();
 
    Query build();
 }

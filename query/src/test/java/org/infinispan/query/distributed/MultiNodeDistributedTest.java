@@ -107,7 +107,7 @@ public class MultiNodeDistributedTest extends AbstractInfinispanTest {
       //Implicitly verifies the components are setup as configured by casting:
       SearchManager searchManager = Search.getSearchManager(cache);
       SearchFactoryImplementor searchFactory = (SearchFactoryImplementor) searchManager.getSearchFactory();
-      InfinispanIndexManager indexManager = (InfinispanIndexManager) searchFactory.getAllIndexesManager().getIndexManager("person");
+      InfinispanIndexManager indexManager = (InfinispanIndexManager) searchFactory.getIndexManagerHolder().getIndexManager("person");
       InfinispanCommandsBackend commandsBackend = indexManager.getRemoteMaster();
       return commandsBackend.isMasterLocal();
    }

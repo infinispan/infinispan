@@ -5,5 +5,5 @@ package org.infinispan.query.dsl;
  * @since 6.0
  */
 public enum SortOrder {
-   ASCENDING, DESCENDING
+   ASC, DESC
 }

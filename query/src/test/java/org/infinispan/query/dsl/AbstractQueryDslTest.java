@@ -2,6 +2,7 @@ package org.infinispan.query.dsl;
 
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
+import java.util.TimeZone;
 
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.manager.EmbeddedCacheManager;
@@ -17,6 +18,10 @@ import org.infinispan.transaction.TransactionMode;
 public class AbstractQueryDslTest extends SingleCacheManagerTest {
 
    protected final DateFormat DATE_FORMAT = new SimpleDateFormat("yyyy-MM-dd");
+
+   public AbstractQueryDslTest() {
+      DATE_FORMAT.setTimeZone(TimeZone.getTimeZone("GMT"));
+   }
 
    @Override
    protected EmbeddedCacheManager createCacheManager() throws Exception {

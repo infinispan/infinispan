@@ -3,9 +3,9 @@ package org.infinispan.query.dsl.sample_domain_model;
 import org.hibernate.search.annotations.Analyze;
 import org.hibernate.search.annotations.Field;
 import org.hibernate.search.annotations.Indexed;
+import org.hibernate.search.annotations.NumericField;
 import org.hibernate.search.annotations.Store;
 
-import java.math.BigDecimal;
 import java.util.Date;
 
 /**
@@ -28,7 +28,8 @@ public class Transaction {
    private Date date;
 
    @Field(store = Store.YES, analyze = Analyze.NO)
-   private BigDecimal amount;
+   @NumericField
+   private double amount;
 
    @Field(store = Store.YES, analyze = Analyze.NO)
    private boolean isDebit;
@@ -65,15 +66,11 @@ public class Transaction {
       this.date = date;
    }
 
-   public BigDecimal getAmount() {
+   public double getAmount() {
       return amount;
    }
 
    public void setAmount(double amount) {
-      this.amount = new BigDecimal(amount);
-   }
-
-   public void setAmount(BigDecimal amount) {
       this.amount = amount;
    }
 
@@ -83,6 +80,37 @@ public class Transaction {
 
    public void setDebit(boolean isDebit) {
       this.isDebit = isDebit;
+   }
+
+   @Override
+   public boolean equals(Object o) {
+      if (this == o) return true;
+      if (o == null || getClass() != o.getClass()) return false;
+
+      Transaction that = (Transaction) o;
+
+      if (accountId != that.accountId) return false;
+      if (Double.compare(that.amount, amount) != 0) return false;
+      if (id != that.id) return false;
+      if (isDebit != that.isDebit) return false;
+      if (date != null ? !date.equals(that.date) : that.date != null) return false;
+      if (description != null ? !description.equals(that.description) : that.description != null) return false;
+
+      return true;
+   }
+
+   @Override
+   public int hashCode() {
+      int result;
+      long temp;
+      result = id;
+      result = 31 * result + (description != null ? description.hashCode() : 0);
+      result = 31 * result + accountId;
+      result = 31 * result + (date != null ? date.hashCode() : 0);
+      temp = Double.doubleToLongBits(amount);
+      result = 31 * result + (int) (temp ^ (temp >>> 32));
+      result = 31 * result + (isDebit ? 1 : 0);
+      return result;
    }
 
    @Override

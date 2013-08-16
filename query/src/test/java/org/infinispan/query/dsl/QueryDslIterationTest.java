@@ -1,12 +1,5 @@
 package org.infinispan.query.dsl;
 
-import static org.testng.AssertJUnit.assertEquals;
-import static org.testng.AssertJUnit.assertNotNull;
-import static org.testng.AssertJUnit.assertNull;
-import static org.testng.AssertJUnit.assertTrue;
-
-import java.util.List;
-
 import org.infinispan.query.FetchOptions;
 import org.infinispan.query.ResultIterator;
 import org.infinispan.query.Search;
@@ -14,13 +7,18 @@ import org.infinispan.query.dsl.sample_domain_model.User;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
+import java.util.List;
+
+import static org.testng.AssertJUnit.assertEquals;
+import static org.testng.AssertJUnit.assertNotNull;
+import static org.testng.AssertJUnit.assertTrue;
+
 /**
- * Test for orderBy, projections and generally iteration
+ * Test for orderBy, projections and generally iteration.
  *
  * @author rvansa@redhat.com
  * @since 6.0
  */
-
 @Test(groups = "functional", testName = "query.dsl.QueryDslIterationTest")
 public class QueryDslIterationTest extends AbstractQueryDslTest {
 
@@ -52,12 +50,11 @@ public class QueryDslIterationTest extends AbstractQueryDslTest {
       cache.put("user_" + user4.getId(), user4);
    }
 
-   @Test(enabled = false, description = "OrderBy not supported yet")
    public void testOrderByAsc() throws Exception {
       QueryFactory qf = Search.getSearchManager(cache).getQueryFactory();
 
       Query q = qf.from(User.class)
-            .orderBy("name", SortOrder.ASCENDING).build();
+            .orderBy("name", SortOrder.ASC).build();
 
       assertEquals(4, q.getResultSize());
 
@@ -77,12 +74,11 @@ public class QueryDslIterationTest extends AbstractQueryDslTest {
       }
    }
 
-   @Test(enabled = false, description = "orderBy not supported yet")
    public void testOrderByDesc() throws Exception {
       QueryFactory qf = Search.getSearchManager(cache).getQueryFactory();
 
       Query q = qf.from(User.class)
-            .orderBy("surname", SortOrder.DESCENDING).build();
+            .orderBy("surname", SortOrder.DESC).build();
 
       assertEquals(4, q.getResultSize());
 
@@ -98,35 +94,32 @@ public class QueryDslIterationTest extends AbstractQueryDslTest {
       }
    }
 
-   @Test(enabled = false, description = "maxResults not supported yet")
    public void testMaxResults() throws Exception {
       QueryFactory qf = Search.getSearchManager(cache).getQueryFactory();
 
       Query q = qf.from(User.class)
-            .orderBy("name", SortOrder.ASCENDING).maxResults(2).build();
+            .orderBy("name", SortOrder.ASC).maxResults(2).build();
 
-      assertEquals(2, q.getResultSize());
+      assertEquals(4, q.getResultSize());
 
       List<User> list = q.list();
       assertEquals(2, list.size());
       checkNamesAsc(list);
    }
 
-   @Test(enabled = false, description = "startOffset not supported yet")
    public void testStartOffset() throws Exception {
       QueryFactory qf = Search.getSearchManager(cache).getQueryFactory();
 
       Query q = qf.from(User.class)
-            .orderBy("name", SortOrder.ASCENDING).startOffset(2).build();
+            .orderBy("name", SortOrder.ASC).startOffset(2).build();
 
-      assertEquals(2, q.getResultSize());
+      assertEquals(4, q.getResultSize());
 
       List<User> list = q.list();
       assertEquals(2, list.size());
       checkNamesAsc(list);
    }
 
-   @Test(enabled = false, description = "setProjection not supported yet")
    public void testProjection1() throws Exception {
       QueryFactory qf = Search.getSearchManager(cache).getQueryFactory();
 
@@ -135,26 +128,12 @@ public class QueryDslIterationTest extends AbstractQueryDslTest {
 
       assertEquals(4, q.getResultSize());
 
-      List<User> list = q.list();
+      List<Object[]> list = q.list();
       assertEquals(4, list.size());
-      for (User u : list) {
-         assertNotNull(u.getName());
-         assertTrue(u.getId() != 0);
-         assertNull(u.getSurname());
+      for (Object[] u : list) {
+         assertNotNull(u[1]);
+         assertTrue(u[0] instanceof Integer);
       }
-   }
-
-   @Test(enabled = false, expectedExceptions = IllegalArgumentException.class, description = "setProjection not supported yet")
-   public void testProjection2() throws Exception {
-      QueryFactory qf = Search.getSearchManager(cache).getQueryFactory();
-
-      Query q = qf.from(User.class)
-            .setProjection("id", "name")
-            .having("surname").eq("Black")
-            .toBuilder().build();
-
-      // we should not be able to query something that is not in the projection
-      q.list();
    }
 
    public void testIteration1() throws Exception {

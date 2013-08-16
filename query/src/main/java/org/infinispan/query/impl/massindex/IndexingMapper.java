@@ -5,7 +5,7 @@ import org.hibernate.search.backend.UpdateLuceneWork;
 import org.hibernate.search.bridge.spi.ConversionContext;
 import org.hibernate.search.bridge.util.impl.ContextualExceptionBridgeHelper;
 import org.hibernate.search.engine.spi.DocumentBuilderIndexedEntity;
-import org.hibernate.search.engine.spi.EntityIndexBinder;
+import org.hibernate.search.engine.spi.EntityIndexBinding;
 import org.hibernate.search.impl.SimpleInitializer;
 import org.hibernate.search.spi.SearchFactoryIntegrator;
 import org.infinispan.AdvancedCache;
@@ -42,7 +42,7 @@ public final class IndexingMapper implements Mapper<Object, Object, Object, Luce
 
    private void updateIndex(Object key, Object value, Collector<Object, LuceneWork> collector) {
       Class clazz = value.getClass();
-      EntityIndexBinder entityIndexBinding = searchFactory.getIndexBindingForEntity(clazz);
+      EntityIndexBinding entityIndexBinding = searchFactory.getIndexBinding(clazz);
       if (entityIndexBinding == null) {
          // it might be possible to receive not-indexes types
          return;

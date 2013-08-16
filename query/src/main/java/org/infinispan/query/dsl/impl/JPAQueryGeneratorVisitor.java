@@ -1,6 +1,11 @@
 package org.infinispan.query.dsl.impl;
 
+import java.text.DateFormat;
+import java.text.SimpleDateFormat;
+import java.util.Arrays;
 import java.util.Collection;
+import java.util.Date;
+import java.util.TimeZone;
 
 /**
  * Generates a JPA query to satisfy the condition built by the builder.
@@ -10,127 +15,250 @@ import java.util.Collection;
  */
 class JPAQueryGeneratorVisitor implements Visitor<String> {
 
-   private final String alias = "_gen0";
+   private static final TimeZone GMT_TZ = TimeZone.getTimeZone("GMT");
 
-   public JPAQueryGeneratorVisitor() {
+   private static final String alias = "_gen0";
+
+   private DateFormat dateFormat;
+
+   @Override
+   public String visit(LuceneQueryBuilder luceneQueryBuilder) {
+      StringBuilder sb = new StringBuilder();
+      if (luceneQueryBuilder.getProjection() != null && luceneQueryBuilder.getProjection().length != 0) {
+         sb.append("SELECT ");
+         boolean isFirst = true;
+         for (String projection : luceneQueryBuilder.getProjection()) {
+            if (isFirst) {
+               isFirst = false;
+            } else {
+               sb.append(", ");
+            }
+            sb.append(alias).append('.').append(projection);
+         }
+         sb.append(' ');
+      }
+      sb.append("FROM ").append(luceneQueryBuilder.getRootType().getName()).append(" ").append(alias);
+      if (luceneQueryBuilder.getFilterCondition() != null) {
+         BaseCondition baseCondition = luceneQueryBuilder.getFilterCondition().getRoot();
+         String whereCondition = baseCondition.accept(this);
+         if (!whereCondition.isEmpty()) {
+            sb.append(" WHERE ").append(whereCondition);
+         }
+      }
+      //TODO the 'ORDER BY' clause is ignored by HQL parser anyway, see https://hibernate.atlassian.net/browse/HQLPARSER-24
+      if (luceneQueryBuilder.getSortCriteria() != null && !luceneQueryBuilder.getSortCriteria().isEmpty()) {
+         sb.append(" ORDER BY ");
+         boolean isFirst = true;
+         for (SortCriteria sortCriteria : luceneQueryBuilder.getSortCriteria()) {
+            if (isFirst) {
+               isFirst = false;
+            } else {
+               sb.append(", ");
+            }
+            sb.append(alias).append('.').append(sortCriteria.getAttributePath()).append(' ').append(sortCriteria.getSortOrder().name());
+         }
+      }
+      return sb.toString();
    }
 
    @Override
-   public String visit(CompositeCondition compositeCondition) {
+   public String visit(AndCondition booleanCondition) {
       StringBuilder sb = new StringBuilder();
       sb.append("(");
-      sb.append(compositeCondition.getLeftCondition().accept(this));
-      sb.append(") ");
-      sb.append(compositeCondition.isConjunction() ? "AND" : "OR");
-      sb.append(" (");
-      sb.append(compositeCondition.getRightCondition().accept(this));
+      sb.append(booleanCondition.getFirstCondition().accept(this));
+      sb.append(") AND ( ");
+      sb.append(booleanCondition.getSecondCondition().accept(this));
       sb.append(")");
       return sb.toString();
    }
 
    @Override
-   public String visit(LuceneQueryBuilder luceneQueryBuilder) {
+   public String visit(OrCondition booleanCondition) {
       StringBuilder sb = new StringBuilder();
-      sb.append("FROM ").append(luceneQueryBuilder.getRootType().getName()).append(" ").append(alias);
-      if (luceneQueryBuilder.getFilterCondition() != null) {
-         BaseCondition baseCondition = luceneQueryBuilder.getFilterCondition().getRoot();
-         sb.append(" WHERE ").append(baseCondition.accept(this));
+      sb.append("(");
+      sb.append(booleanCondition.getFirstCondition().accept(this));
+      sb.append(") OR ( ");
+      sb.append(booleanCondition.getSecondCondition().accept(this));
+      sb.append(")");
+      return sb.toString();
+   }
+
+   @Override
+   public String visit(NotCondition notCondition) {
+      StringBuilder sb = new StringBuilder();
+      sb.append("NOT (");
+      sb.append(notCondition.getFirstCondition().accept(this));
+      sb.append(")");
+      return sb.toString();
+   }
+
+   @Override
+   public String visit(EqOperator operator) {
+      return appendSingleCondition(new StringBuilder(), operator.getAttributeCondition(), operator.getArgument(), "=", "!=").toString();
+   }
+
+   @Override
+   public String visit(GtOperator operator) {
+      return appendSingleCondition(new StringBuilder(), operator.getAttributeCondition(), operator.getArgument(), ">", "<=").toString();
+   }
+
+   @Override
+   public String visit(GteOperator operator) {
+      return appendSingleCondition(new StringBuilder(), operator.getAttributeCondition(), operator.getArgument(), ">=", "<").toString();
+   }
+
+   @Override
+   public String visit(LtOperator operator) {
+      return appendSingleCondition(new StringBuilder(), operator.getAttributeCondition(), operator.getArgument(), "<", ">=").toString();
+   }
+
+   @Override
+   public String visit(LteOperator operator) {
+      return appendSingleCondition(new StringBuilder(), operator.getAttributeCondition(), operator.getArgument(), "<=", ">").toString();
+   }
+
+   @Override
+   public String visit(BetweenOperator operator) {
+      StringBuilder sb = new StringBuilder();
+      ValueRange range = operator.getArgument();
+      if (!range.isIncludeLower() || !range.isIncludeUpper()) {
+         appendAttributePath(sb, operator.getAttributeCondition());
+         sb.append(operator.getAttributeCondition().isNegated() ?
+               (range.isIncludeLower() ? " < " : " <= ") : (range.isIncludeLower() ? " >= " : " > "));
+         appendArgument(sb, range.getFrom());
+         sb.append(" AND ");
+         appendAttributePath(sb, operator.getAttributeCondition());
+         sb.append(operator.getAttributeCondition().isNegated() ?
+               (range.isIncludeUpper() ? " > " : " >= ") : (range.isIncludeUpper() ? " <= " : " < "));
+         appendArgument(sb, range.getTo());
+      } else {
+         if (operator.getAttributeCondition().isNegated()) {
+            sb.append("NOT ");
+         }
+         appendAttributePath(sb, operator.getAttributeCondition());
+         sb.append(" BETWEEN ");
+         appendArgument(sb, range.getFrom());
+         sb.append(" AND ");
+         appendArgument(sb, range.getTo());
+      }
+      return sb.toString();
+   }
+
+   @Override
+   public String visit(LikeOperator operator) {
+      StringBuilder sb = new StringBuilder();
+      appendAttributePath(sb, operator.getAttributeCondition());
+      sb.append(' ');
+      if (operator.getAttributeCondition().isNegated()) {
+         sb.append("NOT ");
+      }
+      sb.append("LIKE ");
+      appendArgument(sb, operator.getArgument());
+      return sb.toString();
+   }
+
+   @Override
+   public String visit(IsNullOperator operator) {
+      StringBuilder sb = new StringBuilder();
+      appendAttributePath(sb, operator.getAttributeCondition());
+      sb.append(" IS ");
+      if (operator.getAttributeCondition().isNegated()) {
+         sb.append("NOT ");
+      }
+      sb.append("null");    //TODO HQL parser chokes on 'NULL' but 'null' is fine. definitely a grammar bug.
+      return sb.toString();
+   }
+
+   @Override
+   public String visit(InOperator operator) {
+      StringBuilder sb = new StringBuilder();
+      appendAttributePath(sb, operator.getAttributeCondition());
+      if (operator.getAttributeCondition().isNegated()) {
+         sb.append(" NOT");
+      }
+      sb.append(" IN ");
+      appendArgument(sb, operator.getArgument());
+      return sb.toString();
+   }
+
+   @Override
+   public String visit(ContainsOperator operator) {
+      return appendSingleCondition(new StringBuilder(), operator.getAttributeCondition(), operator.getArgument(), "=", "!=").toString();
+   }
+
+   private StringBuilder appendSingleCondition(StringBuilder sb, AttributeCondition attributeCondition, Object argument, String op, String negativeOp) {
+      appendAttributePath(sb, attributeCondition);
+      sb.append(' ');
+      sb.append(attributeCondition.isNegated() ? negativeOp : op);
+      sb.append(' ');
+      appendArgument(sb, argument);
+      return sb;
+   }
+
+   @Override
+   public String visit(ContainsAllOperator operator) {
+      return generateMultipleCondition(operator, "AND");
+   }
+
+   @Override
+   public String visit(ContainsAnyOperator operator) {
+      return generateMultipleCondition(operator, "OR");
+   }
+
+   private String generateMultipleCondition(OperatorAndArgument operator, String booleanOperator) {
+      Object argument = operator.getArgument();
+      Collection values;
+      if (argument instanceof Collection) {
+         values = (Collection) argument;
+      } else if (argument instanceof Object[]) {
+         values = Arrays.asList((Object[]) argument);
+      } else {
+         throw new IllegalArgumentException("Expecting a Collection or an array of Object");
+      }
+      StringBuilder sb = new StringBuilder();
+      boolean isFirst = true;
+      for (Object value : values) {
+         if (isFirst) {
+            isFirst = false;
+         } else {
+            sb.append(' ').append(booleanOperator).append(' ');
+         }
+         appendSingleCondition(sb, operator.getAttributeCondition(), value, "=", "!=");
       }
       return sb.toString();
    }
 
    @Override
    public String visit(AttributeCondition attributeCondition) {
-      if (attributeCondition.getAttributePath() == null || attributeCondition.getOperator() == null) {
+      if (attributeCondition.getAttributePath() == null || attributeCondition.getOperatorAndArgument() == null) {
          throw new IllegalStateException("Incomplete sentence. Missing attribute path or operator.");
       }
-      //todo validate argument type is ok for the operator
-      StringBuilder sb = new StringBuilder();
 
-      if (attributeCondition.getOperator() == AttributeCondition.Operator.IS_NULL) {
-         sb.append(alias).append(".").append(attributeCondition.getAttributePath());
-         sb.append(" IS ");
-         if (attributeCondition.isNegated()) {
-            sb.append("NOT ");
-         }
-         sb.append("NULL");
-      } else if (attributeCondition.getOperator() == AttributeCondition.Operator.BETWEEN) {
-         ValueRange range = (ValueRange) attributeCondition.getArgument();
-         if (attributeCondition.isNegated() || !range.isIncludeLower() || !range.isIncludeUpper()) {
-            sb.append(alias).append(".").append(attributeCondition.getAttributePath());
-            if (attributeCondition.isNegated()) {
-               sb.append(range.isIncludeLower() ? " < " : " <= ");
-            } else {
-               sb.append(range.isIncludeLower() ? " >= " : " > ");
-            }
-            sb.append(getArgumentLiteral(range.getFrom()));
-            sb.append(" AND ");
-            sb.append(alias).append(".").append(attributeCondition.getAttributePath());
-            if (attributeCondition.isNegated()) {
-               sb.append(range.isIncludeUpper() ? " > " : " >= ");
-            } else {
-               sb.append(range.isIncludeUpper() ? " <= " : " < ");
-            }
-            sb.append(getArgumentLiteral(range.getTo()));
-         } else {
-            sb.append(alias).append(".").append(attributeCondition.getAttributePath());
-            sb.append(" BETWEEN ");
-            sb.append(getArgumentLiteral(range.getFrom()));
-            sb.append(" AND ");
-            sb.append(getArgumentLiteral(range.getTo()));
-         }
-      } else {
-         sb.append(alias).append(".").append(attributeCondition.getAttributePath());
-         sb.append(' ');
-         switch (attributeCondition.getOperator()) {
-            case EQ: {
-               sb.append(attributeCondition.isNegated() ? "!=" : "=");
-               break;
-            }
-            case LT: {
-               sb.append(attributeCondition.isNegated() ? ">=" : "<");
-               break;
-            }
-            case LTE: {
-               sb.append(attributeCondition.isNegated() ? ">" : "<=");
-               break;
-            }
-            case GT: {
-               sb.append(attributeCondition.isNegated() ? "<=" : ">");
-               break;
-            }
-            case GTE: {
-               sb.append(attributeCondition.isNegated() ? "<" : ">=");
-               break;
-            }
-            case IN: {
-               sb.append(attributeCondition.isNegated() ? "NOT IN" : "IN");
-               break;
-            }
-            case LIKE: {
-               sb.append(attributeCondition.isNegated() ? "NOT LIKE" : "LIKE");
-               break;
-            }
-         }
-         sb.append(' ');
-         sb.append(getArgumentLiteral(attributeCondition.getArgument()));
-      }
-
-      return sb.toString();
+      return attributeCondition.getOperatorAndArgument().accept(this);
    }
 
-   private String getArgumentLiteral(Object argument) {
+   private void appendAttributePath(StringBuilder sb, AttributeCondition attributeCondition) {
+      sb.append(alias).append('.').append(attributeCondition.getAttributePath());
+   }
+
+   private void appendArgument(StringBuilder sb, Object argument) {
       if (argument instanceof String) {
-         return "'" + argument + "'"; //todo [anistor] need to ensure proper string escaping. this is just a dummy attempt
+         sb.append('\'').append(argument).append('\''); //todo [anistor] need to ensure proper string escaping. this is just a dummy attempt
+         return;
       }
 
       if (argument instanceof Number || argument instanceof Boolean) {
-         return argument.toString();
+         sb.append(argument);
+         return;
+      }
+
+      if (argument instanceof Enum) {
+         sb.append('\'').append(((Enum) argument).name()).append('\'');
+         return;
       }
 
       if (argument instanceof Collection) {
-         StringBuilder sb = new StringBuilder();
-         sb.append("(");
+         sb.append('(');
          boolean isFirstElement = true;
          for (Object o : (Collection) argument) {
             if (isFirstElement) {
@@ -138,15 +266,14 @@ class JPAQueryGeneratorVisitor implements Visitor<String> {
             } else {
                sb.append(", ");
             }
-            sb.append(getArgumentLiteral(o));
+            appendArgument(sb, o);
          }
-         sb.append(")");
-         return sb.toString();
+         sb.append(')');
+         return;
       }
 
       if (argument instanceof Object[]) {
-         StringBuilder sb = new StringBuilder();
-         sb.append("(");
+         sb.append('(');
          boolean isFirstElement = true;
          for (Object o : (Object[]) argument) {
             if (isFirstElement) {
@@ -154,12 +281,25 @@ class JPAQueryGeneratorVisitor implements Visitor<String> {
             } else {
                sb.append(", ");
             }
-            sb.append(getArgumentLiteral(o));
+            appendArgument(sb, o);
          }
-         sb.append(")");
-         return sb.toString();
+         sb.append(')');
+         return;
       }
 
-      return argument.toString();
+      if (argument instanceof Date) {
+         sb.append('\'').append(getDateFormatter().format(argument)).append('\'');
+         return;
+      }
+
+      sb.append(argument);
+   }
+
+   private DateFormat getDateFormatter() {
+      if (dateFormat == null) {
+         dateFormat = new SimpleDateFormat("yyyyMMddHHmmssSSS");
+         dateFormat.setTimeZone(GMT_TZ);
+      }
+      return dateFormat;
    }
 }
