@@ -79,7 +79,11 @@ public class RemoveCommand extends AbstractDataWriteCommand {
       if (e == null || e.isNull()) {
          nonExistent = true;
          log.trace("Nothing to remove since the entry is null or we have a null entry");
-         if (value == null) {
+         if (value == null || ignorePreviousValue) {
+            if (e != null) {
+               e.setChanged(true);
+               e.setRemoved(true);
+            }
             return null;
          } else {
             successful = false;
@@ -187,6 +191,12 @@ public class RemoveCommand extends AbstractDataWriteCommand {
       return new Object[]{key, value, Flag.copyWithoutRemotableFlags(flags), ignorePreviousValue};
    }
 
+   @Override
+   public boolean isIgnorePreviousValue() {
+      return ignorePreviousValue;
+   }
+
+   @Override
    public void setIgnorePreviousValue(boolean ignorePreviousValue) {
       this.ignorePreviousValue = ignorePreviousValue;
    }

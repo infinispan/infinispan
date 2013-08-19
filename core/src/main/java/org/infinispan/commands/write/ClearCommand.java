@@ -117,6 +117,15 @@ public class ClearCommand extends AbstractFlagAffectedCommand implements WriteCo
    }
 
    @Override
+   public boolean isIgnorePreviousValue() {
+      return false;
+   }
+
+   @Override
+   public void setIgnorePreviousValue(boolean ignorePreviousValue) {
+   }
+
+   @Override
    public Set<Object> getAffectedKeys() {
       return InfinispanCollections.emptySet();
    }

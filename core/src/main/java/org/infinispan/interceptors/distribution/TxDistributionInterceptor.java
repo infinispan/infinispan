@@ -314,7 +314,9 @@ public class TxDistributionInterceptor extends BaseDistributionInterceptor {
       // this should only happen if:
       //   a) unsafeUnreliableReturnValues is false
       //   b) unsafeUnreliableReturnValues is true, we are in a TX and the command is conditional
-      if (isNeedReliableReturnValues(command) || command.isConditional() || shouldFetchRemoteValuesForWriteSkewCheck(ctx, command)) {
+      // In both cases, the remote get shouldn't happen on the backup owners, where the ignorePreviousValue flag is set
+      if ((isNeedReliableReturnValues(command) || command.isConditional()) && !command.isIgnorePreviousValue() ||
+            shouldFetchRemoteValuesForWriteSkewCheck(ctx, command)) {
          for (Object k : keygen.getKeys()) {
             Object returnValue = remoteGetAndStoreInL1(ctx, k, true, command);
             if (returnValue == null) {

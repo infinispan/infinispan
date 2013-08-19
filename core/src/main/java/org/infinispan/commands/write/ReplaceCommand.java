@@ -86,7 +86,12 @@ public class ReplaceCommand extends AbstractDataWriteCommand {
             Object old = e.setValue(newValue);
             e.setLifespan(lifespanMillis);
             e.setMaxIdle(maxIdleTimeMillis);
-            return returnValue(old, true, ctx);
+
+            if (!ignorePreviousValue) {
+               return returnValue(old, true, ctx);
+            } else {
+               return returnValue(oldValue, true, ctx);
+            }
          }
          // Revert assumption that new value is to be committed
          e.setChanged(false);
@@ -168,7 +173,7 @@ public class ReplaceCommand extends AbstractDataWriteCommand {
 
    @Override
    public boolean isConditional() {
-      return !ignorePreviousValue;
+      return oldValue != null;
    }
 
    public long getLifespanMillis() {
@@ -195,10 +200,12 @@ public class ReplaceCommand extends AbstractDataWriteCommand {
       this.newValue = newValue;
    }
 
+   @Override
    public boolean isIgnorePreviousValue() {
       return ignorePreviousValue;
    }
 
+   @Override
    public void setIgnorePreviousValue(boolean ignorePreviousValue) {
       this.ignorePreviousValue = ignorePreviousValue;
    }

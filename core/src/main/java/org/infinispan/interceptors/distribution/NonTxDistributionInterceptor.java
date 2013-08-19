@@ -135,7 +135,8 @@ public class NonTxDistributionInterceptor extends BaseDistributionInterceptor {
       // this should only happen if:
       //   a) unsafeUnreliableReturnValues is false
       //   b) unsafeUnreliableReturnValues is true, the command is conditional
-      if (isNeedReliableReturnValues(command) || command.isConditional()) {
+      // In both cases, the remote get shouldn't happen on the backup owners, where the ignorePreviousValue flag is set
+      if ((isNeedReliableReturnValues(command) || command.isConditional()) && !command.isIgnorePreviousValue()) {
          for (Object k : keygen.getKeys()) {
             Object returnValue = remoteGetBeforeWrite(ctx, k, command);
             if (returnValue == null && (!useLockForwarding || cdl.localNodeIsPrimaryOwner(k))) {

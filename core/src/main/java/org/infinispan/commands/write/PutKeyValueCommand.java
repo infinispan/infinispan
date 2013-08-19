@@ -47,6 +47,7 @@ public class PutKeyValueCommand extends AbstractDataWriteCommand {
    boolean successful = true;
    long lifespanMillis = -1;
    long maxIdleTimeMillis = -1;
+   private boolean ignorePreviousValue = false;
 
    public PutKeyValueCommand() {
    }
@@ -92,7 +93,7 @@ public class PutKeyValueCommand extends AbstractDataWriteCommand {
       if (e == null) return null;
 
       Object entryValue = e.getValue();
-      if (entryValue != null && putIfAbsent && !e.isRemoved()) {
+      if (entryValue != null && (putIfAbsent && !ignorePreviousValue) && !e.isRemoved()) {
          // Revert assumption that new value is to be committed
          e.setChanged(false);
          successful = false;
@@ -120,7 +121,7 @@ public class PutKeyValueCommand extends AbstractDataWriteCommand {
             e.setMaxIdle(maxIdleTimeMillis);
          }
       }
-      return o;
+      return !ignorePreviousValue ? o : null;
    }
 
    @Override
@@ -130,7 +131,8 @@ public class PutKeyValueCommand extends AbstractDataWriteCommand {
 
    @Override
    public Object[] getParameters() {
-      return new Object[]{key, value, lifespanMillis, maxIdleTimeMillis, putIfAbsent, Flag.copyWithoutRemotableFlags(flags)};
+      return new Object[]{key, value, lifespanMillis, maxIdleTimeMillis, putIfAbsent, ignorePreviousValue,
+            Flag.copyWithoutRemotableFlags(flags)};
    }
 
    @Override
@@ -142,7 +144,8 @@ public class PutKeyValueCommand extends AbstractDataWriteCommand {
       lifespanMillis = (Long) parameters[2];
       maxIdleTimeMillis = (Long) parameters[3];
       putIfAbsent = (Boolean) parameters[4];
-      flags = (Set<Flag>) parameters[5];
+      ignorePreviousValue = (Boolean) parameters[5];
+      flags = (Set<Flag>) parameters[6];
    }
 
    public boolean isPutIfAbsent() {
@@ -210,5 +213,15 @@ public class PutKeyValueCommand extends AbstractDataWriteCommand {
    @Override
    public boolean isConditional() {
       return putIfAbsent;
+   }
+
+   @Override
+   public boolean isIgnorePreviousValue() {
+      return ignorePreviousValue;
+   }
+
+   @Override
+   public void setIgnorePreviousValue(boolean ignorePreviousValue) {
+      this.ignorePreviousValue = ignorePreviousValue;
    }
 }

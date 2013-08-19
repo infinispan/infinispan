@@ -47,7 +47,9 @@ import org.infinispan.factories.annotations.Inject;
 import org.infinispan.factories.annotations.Start;
 import org.infinispan.interceptors.base.CommandInterceptor;
 import org.infinispan.interceptors.locking.ClusteringDependentLogic;
+import org.infinispan.statetransfer.OutdatedTopologyException;
 import org.infinispan.statetransfer.StateConsumer;
+import org.infinispan.statetransfer.StateTransferLock;
 import org.infinispan.transaction.LocalTransaction;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
@@ -72,6 +74,7 @@ public class EntryWrappingInterceptor extends CommandInterceptor {
    private CommandsFactory commandFactory;
    private boolean isUsingLockDelegation;
    private StateConsumer stateConsumer;       // optional
+   private StateTransferLock stateTransferLock;
 
    private static final Log log = LogFactory.getLog(EntryWrappingInterceptor.class);
    private static final boolean trace = log.isTraceEnabled();
@@ -82,12 +85,14 @@ public class EntryWrappingInterceptor extends CommandInterceptor {
    }
 
    @Inject
-   public void init(EntryFactory entryFactory, DataContainer dataContainer, ClusteringDependentLogic cdl, CommandsFactory commandFactory, StateConsumer stateConsumer) {
+   public void init(EntryFactory entryFactory, DataContainer dataContainer, ClusteringDependentLogic cdl,
+                    CommandsFactory commandFactory, StateConsumer stateConsumer, StateTransferLock stateTransferLock) {
       this.entryFactory = entryFactory;
       this.dataContainer = dataContainer;
       this.cdl = cdl;
       this.commandFactory = commandFactory;
       this.stateConsumer = stateConsumer;
+      this.stateTransferLock = stateTransferLock;
    }
 
    @Start
@@ -273,8 +278,32 @@ public class EntryWrappingInterceptor extends CommandInterceptor {
 
    private Object invokeNextAndApplyChanges(InvocationContext ctx, FlagAffectedCommand command) throws Throwable {
       final Object result = invokeNextInterceptor(ctx, command);
-      if (!ctx.isInTxScope())
-         commitContextEntries(ctx, command.hasFlag(Flag.SKIP_OWNERSHIP_CHECK), isFromStateTransfer(command));
+      if (!ctx.isInTxScope()) {
+         stateTransferLock.acquireSharedTopologyLock();
+         try {
+            // Can't perform the check during preload or if the cache isn't clustered
+            boolean useLockForwarding = cacheConfiguration.clustering().cacheMode().isDistributed() &&
+                  cacheConfiguration.locking().supportsConcurrentUpdates();
+            if (useLockForwarding && stateConsumer != null && stateConsumer.getCacheTopology() != null) {
+               boolean isSync = (cacheConfiguration.clustering().cacheMode().isSynchronous() &&
+                     !command.hasFlag(Flag.FORCE_ASYNCHRONOUS)) || command.hasFlag(Flag.FORCE_SYNCHRONOUS);
+               int commandTopologyId = command.getTopologyId();
+               int currentTopologyId = stateConsumer.getCacheTopology().getTopologyId();
+               // TotalOrderStateTransferInterceptor doesn't set the topology id for PFERs.
+               if (isSync && currentTopologyId != commandTopologyId && commandTopologyId != -1) {
+                  log.tracef("Cache topology changed while the command was executing: expected %d, got %d",
+                        commandTopologyId, currentTopologyId);
+                  throw new OutdatedTopologyException("Cache topology changed while the command was executing: expected " +
+                        commandTopologyId + ", got " + currentTopologyId);
+               }
+            }
+
+            commitContextEntries(ctx, command.hasFlag(Flag.SKIP_OWNERSHIP_CHECK), isFromStateTransfer(command));
+         } finally {
+            stateTransferLock.releaseSharedTopologyLock();
+         }
+      }
+
       log.tracef("The return value is %s", result);
       return result;
    }

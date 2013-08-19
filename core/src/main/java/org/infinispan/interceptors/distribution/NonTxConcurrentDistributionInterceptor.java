@@ -98,7 +98,8 @@ public class NonTxConcurrentDistributionInterceptor extends NonTxDistributionInt
          List<Address> recipients = rg.generateRecipients();
          log.tracef("I'm the primary owner, sending the command to all (%s) the recipients in order to be applied.", recipients);
          Object result = invokeNextInterceptor(ctx, command);
-         if (!isSingleOwnerAndLocal(rg)) {
+         if (command.isSuccessful() && !isSingleOwnerAndLocal(rg)) {
+            command.setIgnorePreviousValue(true);
             rpcManager.invokeRemotely(recipients, command, sync);
          }
          return result;
@@ -118,7 +119,8 @@ public class NonTxConcurrentDistributionInterceptor extends NonTxDistributionInt
       if (command instanceof DataCommand) {
          DataCommand dataCommand = (DataCommand) command;
          Address primaryOwner = cdl.getPrimaryOwner(dataCommand.getKey());
-         if (primaryOwner.equals(rpcManager.getAddress())) {
+         if (command.isSuccessful() && primaryOwner.equals(rpcManager.getAddress())) {
+            command.setIgnorePreviousValue(true);
             rpcManager.invokeRemotely(recipientGenerator.generateRecipients(), command, sync);
          }
       }

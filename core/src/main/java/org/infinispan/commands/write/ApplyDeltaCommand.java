@@ -22,11 +22,6 @@
  */
 package org.infinispan.commands.write;
 
-import java.io.IOException;
-import java.io.ObjectInput;
-import java.io.ObjectOutput;
-import java.util.*;
-
 import org.infinispan.atomic.Delta;
 import org.infinispan.commands.Visitor;
 import org.infinispan.context.Flag;
@@ -34,6 +29,15 @@ import org.infinispan.context.InvocationContext;
 import org.infinispan.lifecycle.ComponentStatus;
 import org.infinispan.marshall.AbstractExternalizer;
 import org.infinispan.marshall.Ids;
+
+import java.io.IOException;
+import java.io.ObjectInput;
+import java.io.ObjectOutput;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.EnumSet;
+import java.util.List;
+import java.util.Set;
 
 
 /**
@@ -164,6 +168,15 @@ public class ApplyDeltaCommand extends AbstractDataWriteCommand {
    @Override
    public boolean isConditional() {
       return false;
+   }
+
+   @Override
+   public boolean isIgnorePreviousValue() {
+      return false;
+   }
+
+   @Override
+   public void setIgnorePreviousValue(boolean ignorePreviousValue) {
    }
 
    /**
