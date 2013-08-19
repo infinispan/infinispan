@@ -218,7 +218,9 @@ public class StateTransferInterceptor extends CommandInterceptor {
          localResult = handleNonTxWriteCommand(ctx, command);
       }
 
-      stateTransferManager.forwardCommandIfNeeded(command, command.getAffectedKeys(), ctx.getOrigin(), false);
+      // We retry the command every time the topology changes, either in NonTxDistributionInterceptor or in
+      // EntryWrappingInterceptor. So we don't need to forward the command again here (without holding a lock).
+      // stateTransferManager.forwardCommandIfNeeded(command, command.getAffectedKeys(), ctx.getOrigin(), false);
       return localResult;
    }
 

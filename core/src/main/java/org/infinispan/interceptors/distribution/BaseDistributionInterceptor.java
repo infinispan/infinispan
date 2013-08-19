@@ -124,25 +124,28 @@ public abstract class BaseDistributionInterceptor extends ClusteringInterceptor 
       if (!ctx.isOriginLocal()) {
          Object returnValue = invokeNextInterceptor(ctx, command);
          if (primaryOwner.equals(rpcManager.getAddress())) {
-            if (command.isConditional() && !command.isSuccessful()) {
+            if (!command.isSuccessful()) {
                log.tracef("Skipping the replication of the conditional command as it did not succeed on primary owner (%s).", command);
                return returnValue;
             }
+            command.setIgnorePreviousValue(true);
             rpcManager.invokeRemotely(recipientGenerator.generateRecipients(), command, rpcManager.getDefaultRpcOptions(isSync));
          }
          return returnValue;
       } else {
          if (primaryOwner.equals(rpcManager.getAddress())) {
             Object result = invokeNextInterceptor(ctx, command);
-            if (command.isConditional() && !command.isSuccessful()) {
-               log.tracef("Skipping the replication of the conditional command as it did not succeed on primary owner (%s).", command);
+            if (!command.isSuccessful()) {
+               log.tracef("Skipping the replication of the command as it did not succeed on primary owner (%s).", command);
                return result;
             }
             List<Address> recipients = recipientGenerator.generateRecipients();
-            log.tracef("I'm the primary owner, sending the command to all (%s) the recipients in order to be applied.", recipients);
+            log.tracef("I'm the primary owner, sending the command to all the backups (%s) in order to be applied.",
+                  recipients);
             // check if a single owner has been configured and the target for the key is the local address
             boolean isSingleOwnerAndLocal = cacheConfiguration.clustering().hash().numOwners() == 1;
             if (!isSingleOwnerAndLocal) {
+               command.setIgnorePreviousValue(true);
                rpcManager.invokeRemotely(recipients, command, rpcManager.getDefaultRpcOptions(isSync));
             }
             return result;

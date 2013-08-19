@@ -1,9 +1,6 @@
 package org.infinispan.interceptors.distribution;
 
 import org.infinispan.atomic.DeltaCompositeKey;
-import org.infinispan.container.entries.CacheEntry;
-import org.infinispan.container.entries.MVCCEntry;
-import org.infinispan.metadata.Metadata;
 import org.infinispan.commands.FlagAffectedCommand;
 import org.infinispan.commands.control.LockControlCommand;
 import org.infinispan.commands.read.GetKeyValueCommand;
@@ -17,6 +14,7 @@ import org.infinispan.commands.write.RemoveCommand;
 import org.infinispan.commands.write.ReplaceCommand;
 import org.infinispan.commands.write.WriteCommand;
 import org.infinispan.commons.util.InfinispanCollections;
+import org.infinispan.container.entries.CacheEntry;
 import org.infinispan.container.entries.InternalCacheEntry;
 import org.infinispan.context.Flag;
 import org.infinispan.context.InvocationContext;
@@ -25,6 +23,7 @@ import org.infinispan.context.impl.TxInvocationContext;
 import org.infinispan.distribution.L1Manager;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.factories.annotations.Start;
+import org.infinispan.metadata.Metadata;
 import org.infinispan.remoting.rpc.ResponseMode;
 import org.infinispan.remoting.rpc.RpcOptions;
 import org.infinispan.remoting.transport.Address;
@@ -113,8 +112,6 @@ public class TxDistributionInterceptor extends BaseDistributionInterceptor {
       if (ignorePreviousValueOnBackup(command, ctx)) {
          command.setIgnorePreviousValue(true);
          command.setPutIfAbsent(false);
-      } else {
-         command.setIgnorePreviousValue(false);
       }
       // If this was a remote put record that which sent it
       if (isL1CacheEnabled && !ctx.isOriginLocal() && !skrg.generateRecipients().contains(ctx.getOrigin()))
@@ -336,7 +333,9 @@ public class TxDistributionInterceptor extends BaseDistributionInterceptor {
       // this should only happen if:
       //   a) unsafeUnreliableReturnValues is false
       //   b) unsafeUnreliableReturnValues is true, we are in a TX and the command is conditional
-      if (isNeedReliableReturnValues(command) || command.isConditional() || shouldFetchRemoteValuesForWriteSkewCheck(ctx, command)) {
+      // In both cases, the remote get shouldn't happen on the backup owners, where the ignorePreviousValue flag is set
+      if ((isNeedReliableReturnValues(command) || command.isConditional()) && !command.isIgnorePreviousValue() ||
+            shouldFetchRemoteValuesForWriteSkewCheck(ctx, command)) {
          for (Object k : keygen.getKeys()) {
             CacheEntry entry = ctx.lookupEntry(k);
             boolean skipRemoteGet =  entry != null && entry.skipRemoteGet();

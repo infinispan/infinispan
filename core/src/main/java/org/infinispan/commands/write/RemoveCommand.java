@@ -57,7 +57,7 @@ public class RemoveCommand extends AbstractDataWriteCommand {
       if (e == null || e.isNull() || e.isRemoved()) {
          nonExistent = true;
          log.trace("Nothing to remove since the entry is null or we have a null entry");
-         if (value == null) {
+         if (value == null || ignorePreviousValue) {
             if (e != null) {
                e.setChanged(true);
                e.setRemoved(true);
@@ -66,15 +66,6 @@ public class RemoveCommand extends AbstractDataWriteCommand {
          } else {
             successful = false;
             return false;
-         }
-      }
-
-      if (isConditional() && ctx.isInTxScope() && !ctx.isOriginLocal() && !(this instanceof InvalidateCommand)) {
-         //in tx mode, this flag indicates if the command has or not succeed in the originator
-         if (ignorePreviousValue) {
-            return performRemove(e, ctx);
-         } else {
-            return value == null ? null : true;
          }
       }
 
@@ -171,6 +162,12 @@ public class RemoveCommand extends AbstractDataWriteCommand {
       return new Object[]{key, value, Flag.copyWithoutRemotableFlags(flags), ignorePreviousValue};
    }
 
+   @Override
+   public boolean isIgnorePreviousValue() {
+      return ignorePreviousValue;
+   }
+
+   @Override
    public void setIgnorePreviousValue(boolean ignorePreviousValue) {
       this.ignorePreviousValue = ignorePreviousValue;
    }
@@ -202,6 +199,11 @@ public class RemoveCommand extends AbstractDataWriteCommand {
       e.setValid(false);
       e.setChanged(true);
 
-      return value == null ? removedValue : true;
+      // If ignorePreviousValue == true, the old value is no longer relevant
+      if (!ignorePreviousValue) {
+         return value == null ? removedValue : true;
+      } else {
+         return value == null ? value : true;
+      }
    }
 }

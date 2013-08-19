@@ -158,6 +158,15 @@ public class PutMapCommand extends AbstractFlagAffectedCommand implements WriteC
    }
 
    @Override
+   public boolean isIgnorePreviousValue() {
+      return false;
+   }
+
+   @Override
+   public void setIgnorePreviousValue(boolean ignorePreviousValue) {
+   }
+
+   @Override
    public Set<Object> getAffectedKeys() {
       return map.keySet();
    }

@@ -1,14 +1,22 @@
 package org.infinispan.interceptors;
 
-import org.infinispan.configuration.cache.CacheMode;
-import org.infinispan.metadata.Metadata;
 import org.infinispan.commands.AbstractVisitor;
 import org.infinispan.commands.CommandsFactory;
 import org.infinispan.commands.FlagAffectedCommand;
 import org.infinispan.commands.read.GetKeyValueCommand;
 import org.infinispan.commands.tx.CommitCommand;
 import org.infinispan.commands.tx.PrepareCommand;
-import org.infinispan.commands.write.*;
+import org.infinispan.commands.write.ApplyDeltaCommand;
+import org.infinispan.commands.write.ClearCommand;
+import org.infinispan.commands.write.DataWriteCommand;
+import org.infinispan.commands.write.EvictCommand;
+import org.infinispan.commands.write.InvalidateCommand;
+import org.infinispan.commands.write.InvalidateL1Command;
+import org.infinispan.commands.write.PutKeyValueCommand;
+import org.infinispan.commands.write.PutMapCommand;
+import org.infinispan.commands.write.RemoveCommand;
+import org.infinispan.commands.write.ReplaceCommand;
+import org.infinispan.commands.write.WriteCommand;
 import org.infinispan.container.DataContainer;
 import org.infinispan.container.EntryFactory;
 import org.infinispan.container.entries.CacheEntry;
@@ -21,7 +29,10 @@ import org.infinispan.factories.annotations.Inject;
 import org.infinispan.factories.annotations.Start;
 import org.infinispan.interceptors.base.CommandInterceptor;
 import org.infinispan.interceptors.locking.ClusteringDependentLogic;
+import org.infinispan.metadata.Metadata;
+import org.infinispan.statetransfer.OutdatedTopologyException;
 import org.infinispan.statetransfer.StateConsumer;
+import org.infinispan.statetransfer.StateTransferLock;
 import org.infinispan.transaction.LocalTransaction;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
@@ -49,6 +60,7 @@ public class EntryWrappingInterceptor extends CommandInterceptor {
    private CommandsFactory commandFactory;
    private boolean isUsingLockDelegation;
    private StateConsumer stateConsumer;       // optional
+   private StateTransferLock stateTransferLock;
 
    private static final Log log = LogFactory.getLog(EntryWrappingInterceptor.class);
    private static final boolean trace = log.isTraceEnabled();
@@ -59,12 +71,14 @@ public class EntryWrappingInterceptor extends CommandInterceptor {
    }
 
    @Inject
-   public void init(EntryFactory entryFactory, DataContainer dataContainer, ClusteringDependentLogic cdl, CommandsFactory commandFactory, StateConsumer stateConsumer) {
+   public void init(EntryFactory entryFactory, DataContainer dataContainer, ClusteringDependentLogic cdl,
+                    CommandsFactory commandFactory, StateConsumer stateConsumer, StateTransferLock stateTransferLock) {
       this.entryFactory = entryFactory;
       this.dataContainer = dataContainer;
       this.cdl = cdl;
       this.commandFactory = commandFactory;
       this.stateConsumer = stateConsumer;
+      this.stateTransferLock = stateTransferLock;
    }
 
    @Start
@@ -276,8 +290,30 @@ public class EntryWrappingInterceptor extends CommandInterceptor {
 
    private Object invokeNextAndApplyChanges(InvocationContext ctx, FlagAffectedCommand command, Metadata metadata) throws Throwable {
       final Object result = invokeNextInterceptor(ctx, command);
-      if (!ctx.isInTxScope())
-         commitContextEntries(ctx, command, metadata);
+
+      if (!ctx.isInTxScope()) {
+         stateTransferLock.acquireSharedTopologyLock();
+         try {
+            // Can't perform the check during preload or if the cache isn't clustered
+            if (stateConsumer != null && stateConsumer.getCacheTopology() != null) {
+               boolean isSync = (cacheConfiguration.clustering().cacheMode().isSynchronous() &&
+                     !command.hasFlag(Flag.FORCE_ASYNCHRONOUS)) || command.hasFlag(Flag.FORCE_SYNCHRONOUS);
+               int commandTopologyId = command.getTopologyId();
+               int currentTopologyId = stateConsumer.getCacheTopology().getTopologyId();
+               // TotalOrderStateTransferInterceptor doesn't set the topology id for PFERs.
+               if (isSync && currentTopologyId != commandTopologyId && commandTopologyId != -1) {
+                  log.tracef("Cache topology changed while the command was executing: expected %d, got %d",
+                        commandTopologyId, currentTopologyId);
+                  throw new OutdatedTopologyException("Cache topology changed while the command was executing: expected " +
+                        commandTopologyId + ", got " + currentTopologyId);
+               }
+            }
+
+            commitContextEntries(ctx, command, metadata);
+         } finally {
+            stateTransferLock.releaseSharedTopologyLock();
+         }
+      }
 
       log.tracef("The return value is %s", result);
       return result;
