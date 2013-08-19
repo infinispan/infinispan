@@ -27,6 +27,11 @@
       </dependency>
 
       <dependency>
+         <groupId>${project.groupId}</groupId>
+         <artifactId>infinispan-query-dsl</artifactId>
+      </dependency>
+
+      <dependency>
          <groupId>org.hibernate.hql</groupId>
          <artifactId>hibernate-hql-parser</artifactId>
       </dependency>
@@ -81,7 +86,7 @@
             <configuration>
                <instructions>
                   <Export-Package>
-                     ${project.groupId}.query.*;version=${project.version};-split-package:=error
+                     ${project.groupId}.query.*;version=${project.version};-split-package:=merge-last
                   </Export-Package>
                </instructions>
             </configuration>

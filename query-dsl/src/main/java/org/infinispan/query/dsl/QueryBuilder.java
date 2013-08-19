@@ -4,7 +4,7 @@ package org.infinispan.query.dsl;
  * @author anistor@redhat.com
  * @since 6.0
  */
-public interface QueryBuilder extends FilterConditionBeginContext {
+public interface QueryBuilder<T extends Query> extends FilterConditionBeginContext {
 
    QueryBuilder orderBy(String attributePath, SortOrder sortOrder);
 
@@ -14,5 +14,5 @@ public interface QueryBuilder extends FilterConditionBeginContext {
 
    QueryBuilder maxResults(int maxResults);
 
-   Query build();
+   T build();
 }

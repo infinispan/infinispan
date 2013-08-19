@@ -1,21 +1,11 @@
 package org.infinispan.query.dsl.impl;
 
-import org.apache.lucene.search.Sort;
-import org.apache.lucene.search.SortField;
-import org.hibernate.hql.QueryParser;
-import org.hibernate.hql.ast.spi.EntityNamesResolver;
-import org.hibernate.hql.lucene.LuceneProcessingChain;
-import org.hibernate.hql.lucene.LuceneQueryParsingResult;
-import org.hibernate.search.spi.SearchFactoryIntegrator;
-import org.infinispan.query.SearchManager;
 import org.infinispan.query.dsl.FilterConditionBeginContext;
 import org.infinispan.query.dsl.FilterConditionContext;
 import org.infinispan.query.dsl.FilterConditionEndContext;
 import org.infinispan.query.dsl.Query;
 import org.infinispan.query.dsl.QueryBuilder;
 import org.infinispan.query.dsl.SortOrder;
-import org.infinispan.query.logging.Log;
-import org.infinispan.util.logging.LogFactory;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -24,30 +14,26 @@ import java.util.List;
  * @author anistor@redhat.com
  * @since 6.0
  */
-class LuceneQueryBuilder implements QueryBuilder, Visitable {
+public abstract class BaseQueryBuilder<T extends Query> implements QueryBuilder<T>, Visitable {
 
-   private static final Log log = LogFactory.getLog(LuceneQueryBuilder.class, Log.class);
+   protected final Class rootType;
 
-   private final SearchManager searchManager;
+   protected String[] projection;
 
-   private final EntityNamesResolver entityNamesResolver;
+   protected BaseCondition filterCondition;
 
-   private final Class rootType;
+   protected List<SortCriteria> sortCriteria;
 
-   private String[] projection;
+   protected long startOffset = -1;
 
-   private BaseCondition filterCondition;
+   protected int maxResults = -1;
 
-   private List<SortCriteria> sortCriteria;
-
-   private long startOffset = -1;
-
-   private int maxResults = -1;
-
-   public LuceneQueryBuilder(SearchManager searchManager, EntityNamesResolver entityNamesResolver, Class rootType) {
-      this.searchManager = searchManager;
-      this.entityNamesResolver = entityNamesResolver;
+   public BaseQueryBuilder(Class rootType) {
       this.rootType = rootType;
+   }
+
+   protected Class getRootType() {
+      return rootType;
    }
 
    @Override
@@ -59,7 +45,7 @@ class LuceneQueryBuilder implements QueryBuilder, Visitable {
       return this;
    }
 
-   List<SortCriteria> getSortCriteria() {
+   protected List<SortCriteria> getSortCriteria() {
       return sortCriteria;
    }
 
@@ -69,7 +55,7 @@ class LuceneQueryBuilder implements QueryBuilder, Visitable {
       return this;
    }
 
-   String[] getProjection() {
+   protected String[] getProjection() {
       return projection;
    }
 
@@ -85,34 +71,8 @@ class LuceneQueryBuilder implements QueryBuilder, Visitable {
       return this;
    }
 
-   public Class getRootType() {
-      return rootType;
-   }
-
-   BaseCondition getFilterCondition() {
+   protected BaseCondition getFilterCondition() {
       return filterCondition;
-   }
-
-   @Override
-   public Query build() {
-      String jpqlString = accept(new JPAQueryGeneratorVisitor());
-      log.tracef("JPQL string : %s", jpqlString);
-
-      Sort sort = null;
-      if (sortCriteria != null && !sortCriteria.isEmpty()) {
-         SortField[] sortField = new SortField[sortCriteria.size()];
-         int i = 0;
-         for (SortCriteria sc : sortCriteria) {
-            //TODO sort type is hardcoded to String for now
-            sortField[i++] = new SortField(sc.getAttributePath(), SortField.STRING, sc.getSortOrder() == SortOrder.DESC);
-         }
-         sort = new Sort(sortField);
-      }
-
-      LuceneProcessingChain processingChain = new LuceneProcessingChain((SearchFactoryIntegrator) searchManager.getSearchFactory(), entityNamesResolver, null);
-      QueryParser queryParser = new QueryParser();
-      LuceneQueryParsingResult parsingResult = queryParser.parseQuery(jpqlString, processingChain);
-      return new LuceneQuery(searchManager, parsingResult, sort, startOffset, maxResults);
    }
 
    @Override

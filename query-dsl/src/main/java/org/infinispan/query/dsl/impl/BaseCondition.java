@@ -2,6 +2,7 @@ package org.infinispan.query.dsl.impl;
 
 import org.infinispan.query.dsl.FilterConditionBeginContext;
 import org.infinispan.query.dsl.FilterConditionContext;
+import org.infinispan.query.dsl.Query;
 import org.infinispan.query.dsl.QueryBuilder;
 
 /**
@@ -18,11 +19,11 @@ abstract class BaseCondition implements FilterConditionContext, Visitable {
    }
 
    @Override
-   public QueryBuilder toBuilder() {
+   public <T extends Query> QueryBuilder<T> toBuilder() {
       if (queryBuilder == null) {
          throw new IllegalArgumentException("This sub-query does not belong to a parent query builder yet");
       }
-      return queryBuilder;
+      return (QueryBuilder<T>)queryBuilder;
    }
 
    void setQueryBuilder(QueryBuilder queryBuilder) {

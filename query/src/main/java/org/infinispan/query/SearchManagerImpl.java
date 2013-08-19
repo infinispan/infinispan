@@ -12,7 +12,7 @@ import org.infinispan.AdvancedCache;
 import org.infinispan.query.backend.QueryInterceptor;
 import org.infinispan.query.clustered.ClusteredCacheQueryImpl;
 import org.infinispan.query.dsl.QueryFactory;
-import org.infinispan.query.dsl.impl.LuceneQueryFactory;
+import org.infinispan.query.dsl.embedded.impl.EmbeddedLuceneQueryFactory;
 import org.infinispan.query.impl.CacheQueryImpl;
 import org.infinispan.query.impl.ComponentRegistryUtils;
 import org.infinispan.query.impl.massindex.MapReduceMassIndexer;
@@ -56,7 +56,7 @@ class SearchManagerImpl implements SearchManager {
             return isIndexed != null && isIndexed ? clazz : null;
          }
       };
-      return new LuceneQueryFactory(this, entityNamesResolver);
+      return new EmbeddedLuceneQueryFactory(this, entityNamesResolver);
    }
 
    /* (non-Javadoc)

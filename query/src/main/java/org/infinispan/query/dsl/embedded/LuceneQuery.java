@@ -1,22 +1,17 @@
-package org.infinispan.query.dsl;
+package org.infinispan.query.dsl.embedded;
 
 import org.infinispan.query.FetchOptions;
 import org.infinispan.query.ResultIterator;
-
-import java.util.List;
+import org.infinispan.query.dsl.Query;
 
 /**
+ * A Query kind that offers iteration and lazy/eager loading options.
+ * This is currently only available in embedded mode.
+ *
  * @author anistor@redhat.com
  * @since 6.0
  */
-public interface Query extends Iterable {
-
-   /**
-    * Returns the results of a search as a list.
-    *
-    * @return list of objects that were found from the search.
-    */
-   <T> List<T> list();
+public interface LuceneQuery extends Query {
 
    /**
     * Returns the results of a search as a {@link org.infinispan.query.ResultIterator}.
@@ -37,11 +32,4 @@ public interface Query extends Iterable {
     */
    @Override
    ResultIterator iterator();
-
-   /**
-    * Gets the total number of results matching the query, ignoring pagination (firstResult, maxResult).
-    *
-    * @return total number of results.
-    */
-   int getResultSize();
 }

@@ -1,5 +1,7 @@
 package org.infinispan.query.dsl.impl;
 
+import org.infinispan.query.dsl.Query;
+
 /**
  * @author anistor@redhat.com
  * @since 6.0
@@ -38,5 +40,5 @@ interface Visitor<ResultType> {
 
    ResultType visit(NotCondition notCondition);
 
-   ResultType visit(LuceneQueryBuilder luceneQueryBuilder);
+   <T extends Query> ResultType visit(BaseQueryBuilder<T> baseQueryBuilder);
 }

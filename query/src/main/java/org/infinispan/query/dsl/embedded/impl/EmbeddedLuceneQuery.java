@@ -1,4 +1,4 @@
-package org.infinispan.query.dsl.impl;
+package org.infinispan.query.dsl.embedded.impl;
 
 import org.apache.lucene.search.Sort;
 import org.hibernate.hql.lucene.LuceneQueryParsingResult;
@@ -6,7 +6,7 @@ import org.infinispan.query.CacheQuery;
 import org.infinispan.query.FetchOptions;
 import org.infinispan.query.ResultIterator;
 import org.infinispan.query.SearchManager;
-import org.infinispan.query.dsl.Query;
+import org.infinispan.query.dsl.embedded.LuceneQuery;
 
 import java.util.List;
 
@@ -16,7 +16,7 @@ import java.util.List;
  * @author anistor@redhat.com
  * @since 6.0
  */
-class LuceneQuery implements Query {
+class EmbeddedLuceneQuery implements LuceneQuery {
 
    private final SearchManager sm;
 
@@ -30,7 +30,7 @@ class LuceneQuery implements Query {
 
    private CacheQuery cacheQuery = null;
 
-   public LuceneQuery(SearchManager sm, LuceneQueryParsingResult parsingResult, Sort sort, long startOffset, int maxResults) {
+   public EmbeddedLuceneQuery(SearchManager sm, LuceneQueryParsingResult parsingResult, Sort sort, long startOffset, int maxResults) {
       this.sm = sm;
       this.parsingResult = parsingResult;
       this.sort = sort;
@@ -58,6 +58,7 @@ class LuceneQuery implements Query {
    }
 
    @Override
+   @SuppressWarnings("unchecked")
    public <T> List<T> list() {
       return (List<T>) getCacheQuery().list();
    }
@@ -77,7 +78,13 @@ class LuceneQuery implements Query {
       return getCacheQuery().getResultSize();
    }
 
+   @Override
    public String toString() {
-      return "LuceneQuery{parsingResult= " + parsingResult + ", sort=" + sort + "}";
+      return "EmbeddedLuceneQuery{" +
+            "parsingResult=" + parsingResult +
+            ", sort=" + sort +
+            ", startOffset=" + startOffset +
+            ", maxResults=" + maxResults +
+            '}';
    }
 }
