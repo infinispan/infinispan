@@ -8,6 +8,8 @@ import org.infinispan.commands.tx.RollbackCommand;
 import org.infinispan.commands.tx.totalorder.TotalOrderPrepareCommand;
 import org.infinispan.commons.CacheException;
 import org.infinispan.context.impl.TxInvocationContext;
+import org.infinispan.factories.KnownComponentNames;
+import org.infinispan.factories.annotations.ComponentName;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.interceptors.base.CommandInterceptor;
 import org.infinispan.interceptors.locking.ClusteringDependentLogic;
@@ -16,6 +18,7 @@ import org.infinispan.transaction.TotalOrderRemoteTransactionState;
 import org.infinispan.transaction.TransactionTable;
 import org.infinispan.transaction.totalorder.TotalOrderManager;
 import org.infinispan.transaction.xa.GlobalTransaction;
+import org.infinispan.util.concurrent.BlockingTaskAwareExecutorService;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
@@ -35,13 +38,17 @@ public class TotalOrderInterceptor extends CommandInterceptor {
    private TransactionTable transactionTable;
    private TotalOrderManager totalOrderManager;
    private ClusteringDependentLogic clusteringDependentLogic;
+   private BlockingTaskAwareExecutorService executorService;
 
    @Inject
    public void inject(TransactionTable transactionTable, TotalOrderManager totalOrderManager,
-                      ClusteringDependentLogic clusteringDependentLogic) {
+                      ClusteringDependentLogic clusteringDependentLogic,
+                      @ComponentName(value = KnownComponentNames.TOTAL_ORDER_EXECUTOR)
+                      BlockingTaskAwareExecutorService executorService) {
       this.transactionTable = transactionTable;
       this.totalOrderManager = totalOrderManager;
       this.clusteringDependentLogic = clusteringDependentLogic;
+      this.executorService = executorService;
    }
 
    @Override
@@ -151,6 +158,9 @@ public class TotalOrderInterceptor extends CommandInterceptor {
                transactionTable.remoteTransactionCommitted(command.getGlobalTransaction(), false);
             } else {
                transactionTable.remoteTransactionRollback(command.getGlobalTransaction());
+            }
+            if (context.isOriginLocal()) {
+               executorService.checkForReadyTasks();
             }
          }
       }
