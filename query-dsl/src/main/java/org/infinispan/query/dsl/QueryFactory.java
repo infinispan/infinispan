@@ -4,9 +4,9 @@ package org.infinispan.query.dsl;
  * @author anistor@redhat.com
  * @since 6.0
  */
-public interface QueryFactory {
+public interface QueryFactory<T extends Query> {
 
-   QueryBuilder from(Class entityType);
+   QueryBuilder<T> from(Class entityType);
 
    FilterConditionEndContext having(String attributePath);
 

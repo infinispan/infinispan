@@ -1,4 +1,4 @@
-package org.infinispan.query.dsl.sample_domain_model;
+package org.infinispan.query.dsl.embedded.sample_domain_model;
 
 import org.hibernate.search.annotations.Analyze;
 import org.hibernate.search.annotations.Field;

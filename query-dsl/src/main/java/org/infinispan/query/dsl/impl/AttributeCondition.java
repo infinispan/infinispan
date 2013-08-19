@@ -6,7 +6,7 @@ import org.infinispan.query.dsl.RangeConditionContext;
 
 import java.util.Collection;
 
-//todo i18n for exception messages
+//todo [anistor] i18n for exception messages
 
 /**
  * @author anistor@redhat.com

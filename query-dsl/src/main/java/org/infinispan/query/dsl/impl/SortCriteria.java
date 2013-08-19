@@ -6,7 +6,7 @@ import org.infinispan.query.dsl.SortOrder;
  * @author anistor@redhat.com
  * @since 6.0
  */
-class SortCriteria {
+public class SortCriteria {
 
    private final String attributePath;
 
@@ -17,11 +17,11 @@ class SortCriteria {
       this.sortOrder = sortOrder;
    }
 
-   String getAttributePath() {
+   public String getAttributePath() {
       return attributePath;
    }
 
-   SortOrder getSortOrder() {
+   public SortOrder getSortOrder() {
       return sortOrder;
    }
 

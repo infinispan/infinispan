@@ -1,5 +1,7 @@
 package org.infinispan.query.dsl.impl;
 
+import org.infinispan.query.dsl.Query;
+
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.Arrays;
@@ -8,12 +10,12 @@ import java.util.Date;
 import java.util.TimeZone;
 
 /**
- * Generates a JPA query to satisfy the condition built by the builder.
+ * Generates a JPA query to satisfy the condition created with the builder.
  *
  * @author anistor@redhat.com
  * @since 6.0
  */
-class JPAQueryGeneratorVisitor implements Visitor<String> {
+public class JPAQueryGenerator implements Visitor<String> {
 
    private static final TimeZone GMT_TZ = TimeZone.getTimeZone("GMT");
 
@@ -22,12 +24,13 @@ class JPAQueryGeneratorVisitor implements Visitor<String> {
    private DateFormat dateFormat;
 
    @Override
-   public String visit(LuceneQueryBuilder luceneQueryBuilder) {
+   public <T extends Query> String visit(BaseQueryBuilder<T> baseQueryBuilder) {
       StringBuilder sb = new StringBuilder();
-      if (luceneQueryBuilder.getProjection() != null && luceneQueryBuilder.getProjection().length != 0) {
+
+      if (baseQueryBuilder.getProjection() != null && baseQueryBuilder.getProjection().length != 0) {
          sb.append("SELECT ");
          boolean isFirst = true;
-         for (String projection : luceneQueryBuilder.getProjection()) {
+         for (String projection : baseQueryBuilder.getProjection()) {
             if (isFirst) {
                isFirst = false;
             } else {
@@ -37,19 +40,22 @@ class JPAQueryGeneratorVisitor implements Visitor<String> {
          }
          sb.append(' ');
       }
-      sb.append("FROM ").append(luceneQueryBuilder.getRootType().getName()).append(" ").append(alias);
-      if (luceneQueryBuilder.getFilterCondition() != null) {
-         BaseCondition baseCondition = luceneQueryBuilder.getFilterCondition().getRoot();
+
+      sb.append("FROM ").append(baseQueryBuilder.getRootType().getName()).append(" ").append(alias);
+
+      if (baseQueryBuilder.getFilterCondition() != null) {
+         BaseCondition baseCondition = baseQueryBuilder.getFilterCondition().getRoot();
          String whereCondition = baseCondition.accept(this);
          if (!whereCondition.isEmpty()) {
             sb.append(" WHERE ").append(whereCondition);
          }
       }
+
       //TODO the 'ORDER BY' clause is ignored by HQL parser anyway, see https://hibernate.atlassian.net/browse/HQLPARSER-24
-      if (luceneQueryBuilder.getSortCriteria() != null && !luceneQueryBuilder.getSortCriteria().isEmpty()) {
+      if (baseQueryBuilder.getSortCriteria() != null && !baseQueryBuilder.getSortCriteria().isEmpty()) {
          sb.append(" ORDER BY ");
          boolean isFirst = true;
-         for (SortCriteria sortCriteria : luceneQueryBuilder.getSortCriteria()) {
+         for (SortCriteria sortCriteria : baseQueryBuilder.getSortCriteria()) {
             if (isFirst) {
                isFirst = false;
             } else {
@@ -58,6 +64,7 @@ class JPAQueryGeneratorVisitor implements Visitor<String> {
             sb.append(alias).append('.').append(sortCriteria.getAttributePath()).append(' ').append(sortCriteria.getSortOrder().name());
          }
       }
+
       return sb.toString();
    }
 

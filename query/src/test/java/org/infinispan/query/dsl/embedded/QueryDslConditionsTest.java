@@ -1,11 +1,14 @@
-package org.infinispan.query.dsl;
+package org.infinispan.query.dsl.embedded;
 
 import org.hibernate.search.engine.spi.SearchFactoryImplementor;
 import org.infinispan.query.Search;
-import org.infinispan.query.dsl.sample_domain_model.Account;
-import org.infinispan.query.dsl.sample_domain_model.Address;
-import org.infinispan.query.dsl.sample_domain_model.Transaction;
-import org.infinispan.query.dsl.sample_domain_model.User;
+import org.infinispan.query.dsl.Query;
+import org.infinispan.query.dsl.QueryFactory;
+import org.infinispan.query.dsl.SortOrder;
+import org.infinispan.query.dsl.embedded.sample_domain_model.Account;
+import org.infinispan.query.dsl.embedded.sample_domain_model.Address;
+import org.infinispan.query.dsl.embedded.sample_domain_model.Transaction;
+import org.infinispan.query.dsl.embedded.sample_domain_model.User;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 

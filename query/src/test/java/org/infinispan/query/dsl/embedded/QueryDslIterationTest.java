@@ -1,9 +1,13 @@
-package org.infinispan.query.dsl;
+package org.infinispan.query.dsl.embedded;
 
 import org.infinispan.query.FetchOptions;
 import org.infinispan.query.ResultIterator;
 import org.infinispan.query.Search;
-import org.infinispan.query.dsl.sample_domain_model.User;
+import org.infinispan.query.dsl.Query;
+import org.infinispan.query.dsl.QueryBuilder;
+import org.infinispan.query.dsl.QueryFactory;
+import org.infinispan.query.dsl.SortOrder;
+import org.infinispan.query.dsl.embedded.sample_domain_model.User;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
@@ -137,36 +141,36 @@ public class QueryDslIterationTest extends AbstractQueryDslTest {
    }
 
    public void testIteration1() throws Exception {
-      Query q = getIterationQuery();
+      LuceneQuery q = getIterationQuery();
       checkIterator(4, q.iterator());
    }
 
    public void testIteration2() throws Exception {
-      Query q = getIterationQuery();
+      LuceneQuery q = getIterationQuery();
       checkIterator(4, q.iterator(new FetchOptions().fetchMode(FetchOptions.FetchMode.LAZY).fetchSize(1)));
    }
 
    public void testIteration3() throws Exception {
-      Query q = getIterationQuery();
+      LuceneQuery q = getIterationQuery();
       checkIterator(4, q.iterator(new FetchOptions().fetchMode(FetchOptions.FetchMode.LAZY).fetchSize(3)));
    }
 
    public void testIteration4() throws Exception {
-      Query q = getIterationQuery();
+      LuceneQuery q = getIterationQuery();
       checkIterator(4, q.iterator(new FetchOptions().fetchMode(FetchOptions.FetchMode.EAGER).fetchSize(1)));
    }
 
    public void testIteration5() throws Exception {
-      Query q = getIterationQuery();
+      LuceneQuery q = getIterationQuery();
       checkIterator(4, q.iterator(new FetchOptions().fetchMode(FetchOptions.FetchMode.EAGER).fetchSize(3)));
    }
 
-   private Query getIterationQuery() {
+   private LuceneQuery getIterationQuery() {
       QueryFactory qf = Search.getSearchManager(cache).getQueryFactory();
 
-      return qf.from(User.class)
-            .not().having("surname").eq("Blue")
-            .toBuilder().build();
+      QueryBuilder<LuceneQuery> queryQueryBuilder = qf.from(User.class)
+            .not().having("surname").eq("Blue").toBuilder();
+      return queryQueryBuilder.build();
    }
 
    private void checkIterator(int expected, ResultIterator iterator) {

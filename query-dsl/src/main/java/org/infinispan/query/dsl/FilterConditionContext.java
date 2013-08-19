@@ -14,5 +14,5 @@ public interface FilterConditionContext {
 
    FilterConditionContext or(FilterConditionContext rightCondition);
 
-   QueryBuilder toBuilder();
+   <T extends Query> QueryBuilder<T> toBuilder();
 }
