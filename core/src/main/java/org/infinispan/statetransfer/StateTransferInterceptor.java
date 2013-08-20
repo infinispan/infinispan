@@ -239,8 +239,11 @@ public class StateTransferInterceptor extends CommandInterceptor {
          localResult = invokeNextInterceptor(ctx, command);
          return localResult;
       } catch (CacheException e) {
-         if (!(e instanceof OutdatedTopologyException ||
-               (e instanceof RemoteException && e.getCause() instanceof OutdatedTopologyException)))
+         Throwable ce = e;
+         while (ce instanceof RemoteException) {
+            ce = ce.getCause();
+         }
+         if (!(ce instanceof OutdatedTopologyException))
             throw e;
 
          log.tracef("Retrying command because of topology change: %s", command);
@@ -248,12 +251,16 @@ public class StateTransferInterceptor extends CommandInterceptor {
          // Without this, we could retry the command too fast and we could get the OutdatedTopologyException again.
          int newTopologyId = Math.max(stateTransferManager.getCacheTopology().getTopologyId(), commandTopologyId + 1);
          command.setTopologyId(newTopologyId);
+         // TODO Set another flag that will make the new primary owner only ignore the final value of the command
+         command.setIgnorePreviousValue(true);
          localResult = handleNonTxWriteCommand(ctx, command);
       }
 
-      // We retry the command every time the topology changes, either in NonTxDistributionInterceptor or in
+      // We retry the command every time the topology changes, either in NonTxConcurrentDistributionInterceptor or in
       // EntryWrappingInterceptor. So we don't need to forward the command again here (without holding a lock).
-      // stateTransferManager.forwardCommandIfNeeded(command, command.getAffectedKeys(), ctx.getOrigin(), false);
+      if (!useLockForwarding) {
+         stateTransferManager.forwardCommandIfNeeded(command, command.getAffectedKeys(), ctx.getOrigin(), false);
+      }
       return localResult;
    }
 

@@ -201,6 +201,7 @@ public class PutKeyValueCommand extends AbstractDataWriteCommand {
             .append(", lifespanMillis=").append(lifespanMillis)
             .append(", maxIdleTimeMillis=").append(maxIdleTimeMillis)
             .append(", successful=").append(successful)
+            .append(", ignorePreviousValue=").append(ignorePreviousValue)
             .append("}")
             .toString();
    }
