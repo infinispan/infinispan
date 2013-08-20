@@ -133,7 +133,8 @@ public class JPAQueryGenerator implements Visitor<String> {
          sb.append(operator.getAttributeCondition().isNegated() ?
                (range.isIncludeLower() ? " < " : " <= ") : (range.isIncludeLower() ? " >= " : " > "));
          appendArgument(sb, range.getFrom());
-         sb.append(" AND ");
+         sb.append(operator.getAttributeCondition().isNegated() ?
+                         " OR " : " AND ");
          appendAttributePath(sb, operator.getAttributeCondition());
          sb.append(operator.getAttributeCondition().isNegated() ?
                (range.isIncludeUpper() ? " > " : " >= ") : (range.isIncludeUpper() ? " <= " : " < "));
