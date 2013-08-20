@@ -47,6 +47,21 @@ public class BlockingTaskAwareExecutorServiceImpl extends AbstractExecutorServic
          doExecute(runnable);
       } else {
          blockedTasks.offer(runnable);
+         //case: T1 is adding a task and T2 is releasing one. problem to solve:
+         //T1: is adding a new task. runnable.isReady() returns false
+         //T2: meanwhile, T2 releases a resources that is blocking the T1's runnable
+         //T2: also, T2 invokes checkForReadyTasks(), that does nothing because the queue is empty
+         //T1: continues and add the runnable to the queue
+         //problem: if no more interaction with this object is done, the runnable will be kept in the queue forever.
+
+         boolean checkPendingTasks;
+         synchronized (blockedTasks) {
+            //to synchronize with the thread invoking checkForReadyTasks();
+            checkPendingTasks = runnable.isReady();
+         }
+         if (checkPendingTasks) {
+            checkForReadyTasks();
+         }
       }
       if (log.isTraceEnabled()) {
          log.tracef("Added a new task: %s task(s) are waiting", blockedTasks.size());

@@ -348,10 +348,19 @@ public interface ClusteringDependentLogic {
       private RpcManager rpcManager;
       private StateTransferLock stateTransferLock;
 
-      private final WriteSkewHelper.KeySpecificLogic keySpecificLogic = new WriteSkewHelper.KeySpecificLogic() {
+      //in total order, all the owners can perform the write skew check.
+      private final WriteSkewHelper.KeySpecificLogic totalOrderKeySpecificLogic = new WriteSkewHelper.KeySpecificLogic() {
          @Override
          public boolean performCheckOnKey(Object key) {
             return localNodeIsOwner(key);
+         }
+      };
+
+      //in two phase commit, only the primary owner should perform the write skew check
+      private final WriteSkewHelper.KeySpecificLogic keySpecificLogic = new WriteSkewHelper.KeySpecificLogic() {
+         @Override
+         public boolean performCheckOnKey(Object key) {
+            return localNodeIsPrimaryOwner(key);
          }
       };
 
@@ -449,7 +458,7 @@ public interface ClusteringDependentLogic {
       @Override
       public EntryVersionsMap createNewVersionsAndCheckForWriteSkews(VersionGenerator versionGenerator, TxInvocationContext context, VersionedPrepareCommand prepareCommand) {
          if (configuration.transaction().transactionProtocol().isTotalOrder()) {
-            return totalOrderCreateNewVersionsAndCheckForWriteSkews(versionGenerator, context, prepareCommand, keySpecificLogic);
+            return totalOrderCreateNewVersionsAndCheckForWriteSkews(versionGenerator, context, prepareCommand, totalOrderKeySpecificLogic);
          }
          // Perform a write skew check on mapped entries.
          EntryVersionsMap uv = performWriteSkewCheckAndReturnNewVersions(prepareCommand, dataContainer,
