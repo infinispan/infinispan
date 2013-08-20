@@ -21,7 +21,7 @@ abstract class BaseCondition implements FilterConditionContext, Visitable {
    @Override
    public <T extends Query> QueryBuilder<T> toBuilder() {
       if (queryBuilder == null) {
-         throw new IllegalArgumentException("This sub-query does not belong to a parent query builder yet");
+         throw new IllegalStateException("This sub-query does not belong to a parent query builder yet");
       }
       return (QueryBuilder<T>)queryBuilder;
    }

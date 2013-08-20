@@ -2,6 +2,7 @@ package org.infinispan.query.dsl.embedded;
 
 import org.hibernate.search.engine.spi.SearchFactoryImplementor;
 import org.infinispan.query.Search;
+import org.infinispan.query.dsl.FilterConditionEndContext;
 import org.infinispan.query.dsl.Query;
 import org.infinispan.query.dsl.QueryFactory;
 import org.infinispan.query.dsl.SortOrder;
@@ -13,6 +14,7 @@ import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.Date;
 import java.util.HashSet;
@@ -122,6 +124,14 @@ public class QueryDslConditionsTest extends AbstractQueryDslTest {
       transaction4.setDate(DATE_FORMAT.parse("2013-01-31"));
       transaction4.setDebit(true);
 
+      Transaction transaction5 = new Transaction();
+      transaction5.setId(5);
+      transaction5.setDescription("Popcorn");
+      transaction5.setAccountId(2);
+      transaction5.setAmount(5);
+      transaction5.setDate(DATE_FORMAT.parse("2013-01-01"));
+      transaction5.setDebit(true);
+
       // persist and index the test objects
       // we put all of them in the same cache for the sake of simplicity
       cache.put("user_" + user1.getId(), user1);
@@ -135,6 +145,7 @@ public class QueryDslConditionsTest extends AbstractQueryDslTest {
       cache.put("transaction_" + transaction2.getId(), transaction2);
       cache.put("transaction_" + transaction3.getId(), transaction3);
       cache.put("transaction_" + transaction4.getId(), transaction4);
+      cache.put("transaction_" + transaction5.getId(), transaction5);
 
       SearchFactoryImplementor searchFactory = (SearchFactoryImplementor) Search.getSearchManager(cache).getSearchFactory();
       assertNotNull(searchFactory.getIndexManagerHolder().getIndexManager(User.class.getName()));
@@ -215,7 +226,7 @@ public class QueryDslConditionsTest extends AbstractQueryDslTest {
             .toBuilder().build();
 
       List<Transaction> list = q.list();
-      assertEquals(3, list.size());
+      assertEquals(4, list.size());
       for (Transaction t : list) {
          assertTrue(t.getDate().compareTo(DATE_FORMAT.parse("2013-01-31")) <= 0);
          assertTrue(t.getDate().compareTo(DATE_FORMAT.parse("2013-01-01")) >= 0);
@@ -231,7 +242,7 @@ public class QueryDslConditionsTest extends AbstractQueryDslTest {
             .toBuilder().build();
 
       List<Transaction> list = q.list();
-      assertEquals(2, list.size());
+      assertEquals(3, list.size());
       for (Transaction t : list) {
          assertTrue(t.getDate().compareTo(DATE_FORMAT.parse("2013-01-31")) < 0);
          assertTrue(t.getDate().compareTo(DATE_FORMAT.parse("2013-01-01")) >= 0);
@@ -243,14 +254,14 @@ public class QueryDslConditionsTest extends AbstractQueryDslTest {
 
       // all the transactions that happened in January 2013
       Query q = qf.from(Transaction.class)
-            .having("date").between(DATE_FORMAT.parse("2013-01-01"), DATE_FORMAT.parse("2013-01-31")).includeUpper(false)
+            .having("date").between(DATE_FORMAT.parse("2013-01-01"), DATE_FORMAT.parse("2013-01-31")).includeLower(false)
             .toBuilder().build();
 
       List<Transaction> list = q.list();
-      assertEquals(2, list.size());
+      assertEquals(3, list.size());
       for (Transaction t : list) {
-         assertTrue(t.getDate().compareTo(DATE_FORMAT.parse("2013-01-31")) < 0);
-         assertTrue(t.getDate().compareTo(DATE_FORMAT.parse("2013-01-01")) >= 0);
+         assertTrue(t.getDate().compareTo(DATE_FORMAT.parse("2013-01-31")) <= 0);
+         assertTrue(t.getDate().compareTo(DATE_FORMAT.parse("2013-01-01")) > 0);
       }
    }
 
@@ -289,7 +300,7 @@ public class QueryDslConditionsTest extends AbstractQueryDslTest {
             .toBuilder().build();
 
       List<Transaction> list = q.list();
-      assertEquals(3, list.size());
+      assertEquals(4, list.size());
       for (Transaction t : list) {
          assertTrue(t.getAmount() < 1500);
       }
@@ -303,7 +314,7 @@ public class QueryDslConditionsTest extends AbstractQueryDslTest {
             .toBuilder().build();
 
       List<Transaction> list = q.list();
-      assertEquals(4, list.size());
+      assertEquals(5, list.size());
       for (Transaction t : list) {
          assertTrue(t.getAmount() <= 1500);
       }
@@ -347,6 +358,20 @@ public class QueryDslConditionsTest extends AbstractQueryDslTest {
       assertEquals(0, list.size());
    }
 
+   public void testAnd4() throws Exception {
+      QueryFactory qf = Search.getSearchManager(cache).getQueryFactory();
+
+      //test for parenthesis, "and" should have higher priority
+      Query q = qf.from(User.class)
+            .having("name").eq("Spider")
+            .or(qf.having("name").eq("John"))
+            .and(qf.having("surname").eq("Man"))
+            .toBuilder().build();
+
+      List<User> list = q.list();
+      assertEquals(2, list.size());
+   }
+
    public void testOr1() throws Exception {
       QueryFactory qf = Search.getSearchManager(cache).getQueryFactory();
 
@@ -375,6 +400,18 @@ public class QueryDslConditionsTest extends AbstractQueryDslTest {
       for (User u : list) {
          assertEquals("Spider", u.getName());
       }
+   }
+
+   public void testOr3() throws Exception {
+      QueryFactory qf = Search.getSearchManager(cache).getQueryFactory();
+
+      Query q = qf.from(User.class)
+            .having("gender").eq(User.Gender.MALE)
+            .or().having("gender").eq(User.Gender.FEMALE)
+            .toBuilder().build();
+
+      List<User> list = q.list();
+      assertEquals(3, list.size());
    }
 
    public void testNot1() throws Exception {
@@ -445,16 +482,30 @@ public class QueryDslConditionsTest extends AbstractQueryDslTest {
       }
    }
 
-   public void testOr3() throws Exception {
+   public void testNot6() throws Exception {
+      QueryFactory qf = Search.getSearchManager(cache).getQueryFactory();
+
+      // QueryFactory.not() test
+      Query q = qf.from(User.class)
+            .not(qf.not(qf.having("gender").eq(User.Gender.FEMALE)))
+            .toBuilder()
+            .build();
+
+      List<User> list = q.list();
+      assertEquals(1, list.size());
+      assertTrue(list.get(0).getSurname().equals("Woman"));
+   }
+
+   public void testNot7() throws Exception {
       QueryFactory qf = Search.getSearchManager(cache).getQueryFactory();
 
       Query q = qf.from(User.class)
-            .having("gender").eq(User.Gender.MALE)
-            .or().having("gender").eq(User.Gender.FEMALE)
+            .having("gender").eq(User.Gender.FEMALE)
+            .and().not(qf.having("name").eq("Spider"))
             .toBuilder().build();
 
       List<User> list = q.list();
-      assertEquals(3, list.size());
+      assertTrue(list.isEmpty());
    }
 
    public void testEmptyQuery() throws Exception {
@@ -616,6 +667,30 @@ public class QueryDslConditionsTest extends AbstractQueryDslTest {
       qf.from(User.class).having("id").in(Collections.emptySet());
    }
 
+   @Test(expectedExceptions = IllegalArgumentException.class)
+   public void testIn4() throws Exception {
+      QueryFactory qf = Search.getSearchManager(cache).getQueryFactory();
+
+      Collection collection = null;
+      qf.from(User.class).having("id").in(collection);
+   }
+
+   @Test(expectedExceptions = IllegalArgumentException.class)
+   public void testIn5() throws Exception {
+      QueryFactory qf = Search.getSearchManager(cache).getQueryFactory();
+
+      Object[] array = null;
+      qf.from(User.class).having("id").in(array);
+   }
+
+   @Test(expectedExceptions = IllegalArgumentException.class)
+   public void testIn6() throws Exception {
+      QueryFactory qf = Search.getSearchManager(cache).getQueryFactory();
+
+      Object[] array = new Object[0];
+      qf.from(User.class).having("id").in(array);
+   }
+
    public void testSampleDomainQuery1() throws Exception {
       QueryFactory qf = Search.getSearchManager(cache).getQueryFactory();
 
@@ -725,19 +800,6 @@ public class QueryDslConditionsTest extends AbstractQueryDslTest {
    public void testSampleDomainQuery7() throws Exception {
       QueryFactory qf = Search.getSearchManager(cache).getQueryFactory();
 
-      // all users in a given post code
-      Query q = qf.from(User.class)
-            .having("addresses.postCode").eq("X1234")
-            .toBuilder().build();
-
-      List<User> list = q.list();
-      assertEquals(1, list.size());
-      assertEquals("X1234", list.get(0).getAddresses().get(0).getPostCode());
-   }
-
-   public void testSampleDomainQuery8() throws Exception {
-      QueryFactory qf = Search.getSearchManager(cache).getQueryFactory();
-
       // all rent payments made from a given account
       Query q = qf.from(Transaction.class)
             .having("accountId").eq(1)
@@ -751,7 +813,7 @@ public class QueryDslConditionsTest extends AbstractQueryDslTest {
       assertTrue(list.get(0).getDescription().contains("rent"));
    }
 
-   public void testSampleDomainQuery9() throws Exception {
+   public void testSampleDomainQuery8() throws Exception {
       QueryFactory qf = Search.getSearchManager(cache).getQueryFactory();
 
       // all the transactions that happened in January 2013
@@ -760,14 +822,14 @@ public class QueryDslConditionsTest extends AbstractQueryDslTest {
             .toBuilder().build();
 
       List<Transaction> list = q.list();
-      assertEquals(3, list.size());
+      assertEquals(4, list.size());
       assertTrue(list.get(0).getDate().compareTo(DATE_FORMAT.parse("2013-01-31")) < 0);
       assertTrue(list.get(0).getDate().compareTo(DATE_FORMAT.parse("2013-01-01")) > 0);
       assertTrue(list.get(1).getDate().compareTo(DATE_FORMAT.parse("2013-01-31")) < 0);
       assertTrue(list.get(1).getDate().compareTo(DATE_FORMAT.parse("2013-01-01")) > 0);
    }
 
-   public void testSampleDomainQuery10() throws Exception {
+   public void testSampleDomainQuery9() throws Exception {
       QueryFactory qf = Search.getSearchManager(cache).getQueryFactory();
 
       // all the transactions that happened in January 2013, projected by date field only
@@ -777,19 +839,20 @@ public class QueryDslConditionsTest extends AbstractQueryDslTest {
             .toBuilder().build();
 
       List<Object[]> list = q.list();
-      assertEquals(3, list.size());
+      assertEquals(4, list.size());
       assertEquals(1, list.get(0).length);
       assertEquals(1, list.get(1).length);
       assertEquals(1, list.get(2).length);
+      assertEquals(1, list.get(3).length);
 
-      for (int i = 0; i < 3; i++) {
+      for (int i = 0; i < 4; i++) {
          Date d = (Date) list.get(i)[0];
          assertTrue(d.compareTo(DATE_FORMAT.parse("2013-01-31")) <= 0);
          assertTrue(d.compareTo(DATE_FORMAT.parse("2013-01-01")) >= 0);
       }
    }
 
-   public void testSampleDomainQuery11() throws Exception {
+   public void testSampleDomainQuery10() throws Exception {
       QueryFactory qf = Search.getSearchManager(cache).getQueryFactory();
 
       // all the transactions for a an account having amount greater than a given amount
@@ -804,7 +867,7 @@ public class QueryDslConditionsTest extends AbstractQueryDslTest {
       assertTrue(list.get(1).getAmount() > 40);
    }
 
-   public void testSampleDomainQuery12() throws Exception {
+   public void testSampleDomainQuery11() throws Exception {
       QueryFactory qf = Search.getSearchManager(cache).getQueryFactory();
 
       Query q = qf.from(User.class)
@@ -818,7 +881,7 @@ public class QueryDslConditionsTest extends AbstractQueryDslTest {
       assertEquals("Doe", list.get(0).getSurname());
    }
 
-   public void testSampleDomainQuery13() throws Exception {
+   public void testSampleDomainQuery12() throws Exception {
       QueryFactory qf = Search.getSearchManager(cache).getQueryFactory();
 
       // all the transactions that represents credits to the account
@@ -832,7 +895,7 @@ public class QueryDslConditionsTest extends AbstractQueryDslTest {
       assertFalse(list.get(0).isDebit());
    }
 
-   public void testSampleDomainQuery14() throws Exception {
+   public void testSampleDomainQuery13() throws Exception {
       QueryFactory qf = Search.getSearchManager(cache).getQueryFactory();
 
       // the user that has the bank account with id 3
@@ -845,7 +908,7 @@ public class QueryDslConditionsTest extends AbstractQueryDslTest {
       assertTrue(list.get(0).getAccountIds().contains(3));
    }
 
-   public void testSampleDomainQuery15() throws Exception {
+   public void testSampleDomainQuery14() throws Exception {
       QueryFactory qf = Search.getSearchManager(cache).getQueryFactory();
 
       // the user that has all the specified bank accounts
@@ -859,7 +922,7 @@ public class QueryDslConditionsTest extends AbstractQueryDslTest {
       assertTrue(list.get(0).getAccountIds().contains(2));
    }
 
-   public void testSampleDomainQuery16() throws Exception {
+   public void testSampleDomainQuery15() throws Exception {
       QueryFactory qf = Search.getSearchManager(cache).getQueryFactory();
 
       // the user that has at least one of the specified accounts
@@ -872,7 +935,7 @@ public class QueryDslConditionsTest extends AbstractQueryDslTest {
       assertTrue(Arrays.asList(1, 2).contains(list.get(1).getId()));
    }
 
-   public void testSampleDomainQuery17() throws Exception {
+   public void testSampleDomainQuery16() throws Exception {
       for (int i = 0; i < 50; i++) {
          Transaction transaction = new Transaction();
          transaction.setId(50 + i);
@@ -900,7 +963,7 @@ public class QueryDslConditionsTest extends AbstractQueryDslTest {
       }
    }
 
-   public void testSampleDomainQuery18() throws Exception {
+   public void testSampleDomainQuery17() throws Exception {
       QueryFactory qf = Search.getSearchManager(cache).getQueryFactory();
 
       // all accounts for a user. first get the user by id and then get his account.
@@ -918,7 +981,7 @@ public class QueryDslConditionsTest extends AbstractQueryDslTest {
       assertEquals("John Doe's second bank account", list.get(1).getDescription());
    }
 
-   public void testSampleDomainQuery19() throws Exception {
+   public void testSampleDomainQuery18() throws Exception {
       QueryFactory qf = Search.getSearchManager(cache).getQueryFactory();
 
       // all transactions of account with id 2 which have an amount larger than 1600 or their description contains the word 'rent'
@@ -933,7 +996,7 @@ public class QueryDslConditionsTest extends AbstractQueryDslTest {
       assertEquals("Feb. rent payment", list.get(1).getDescription());
    }
 
-   public void testSampleDomainQuery20() throws Exception {
+   public void testSampleDomainQuery19() throws Exception {
       QueryFactory qf = Search.getSearchManager(cache).getQueryFactory();
 
       Query q = qf.from(User.class)
@@ -943,5 +1006,147 @@ public class QueryDslConditionsTest extends AbstractQueryDslTest {
       assertEquals(2, list.size());
       assertTrue(Arrays.asList(1, 2).contains(list.get(0).getId()));
       assertTrue(Arrays.asList(1, 2).contains(list.get(1).getId()));
+   }
+
+   public void testSampleDomainQuery20() throws Exception {
+      QueryFactory qf = Search.getSearchManager(cache).getQueryFactory();
+
+      Query q = qf.from(User.class)
+            .not().having("addresses.postCode").in("X1234").toBuilder().build();
+
+      List<User> list = q.list();
+      assertEquals(2, list.size());
+      assertTrue(Arrays.asList(2, 3).contains(list.get(0).getId()));
+      assertTrue(Arrays.asList(2, 3).contains(list.get(1).getId()));
+   }
+
+   public void testSampleDomainQuery21() throws Exception {
+      QueryFactory qf = Search.getSearchManager(cache).getQueryFactory();
+
+      Query q = qf.from(User.class)
+            .not().having("addresses").isNull().toBuilder().build();
+
+      List<User> list = q.list();
+      assertEquals(2, list.size());
+      assertTrue(Arrays.asList(1, 2).contains(list.get(0).getId()));
+      assertTrue(Arrays.asList(1, 2).contains(list.get(1).getId()));
+   }
+
+   public void testSampleDomainQuery22() throws Exception {
+      QueryFactory qf = Search.getSearchManager(cache).getQueryFactory();
+
+      Query q = qf.from(User.class)
+            .not().having("addresses.postCode").like("%123%").toBuilder().build();
+
+      List<User> list = q.list();
+      assertEquals(2, list.size());
+      assertTrue(Arrays.asList(2, 3).contains(list.get(0).getId()));
+      assertTrue(Arrays.asList(2, 3).contains(list.get(1).getId()));
+   }
+
+   public void testSampleDomainQuery23() throws Exception {
+      QueryFactory qf = Search.getSearchManager(cache).getQueryFactory();
+
+      Query q = qf.from(User.class)
+            .not().having("id").between(1, 2)
+            .toBuilder().build();
+
+      List<User> list = q.list();
+      assertEquals(1, list.size());
+      assertEquals(3, list.get(0).getId());
+   }
+
+   public void testSampleDomainQuery24() throws Exception {
+      QueryFactory qf = Search.getSearchManager(cache).getQueryFactory();
+
+      Query q = qf.from(User.class)
+            .not().having("id").between(1, 2).includeLower(false)
+            .toBuilder().build();
+
+      List<User> list = q.list();
+
+      assertEquals(2, list.size());
+      assertTrue(Arrays.asList(1, 3).contains(list.get(0).getId()));
+      assertTrue(Arrays.asList(1, 3).contains(list.get(1).getId()));
+   }
+
+   public void testSampleDomainQuery25() throws Exception {
+      QueryFactory qf = Search.getSearchManager(cache).getQueryFactory();
+
+      Query q = qf.from(User.class)
+            .not().having("id").between(1, 2).includeUpper(false)
+            .toBuilder().build();
+
+      List<User> list = q.list();
+      assertEquals(2, list.size());
+      assertTrue(Arrays.asList(2, 3).contains(list.get(0).getId()));
+      assertTrue(Arrays.asList(2, 3).contains(list.get(1).getId()));
+   }
+
+   @Test(expectedExceptions = IllegalStateException.class)
+   public void testWrongQueryBuilding1() throws Exception {
+      QueryFactory qf = Search.getSearchManager(cache).getQueryFactory();
+
+      Query q = qf.not().having("name").eq("John").toBuilder().build();
+   }
+
+   @Test(expectedExceptions = IllegalStateException.class)
+   public void testWrongQueryBuilding2() throws Exception {
+      QueryFactory qf = Search.getSearchManager(cache).getQueryFactory();
+
+      Query q = qf.from(User.class)
+            .having("name").eq("John").toBuilder()
+            .having("surname").eq("Man").toBuilder()
+            .build();
+   }
+
+   @Test(expectedExceptions = IllegalStateException.class)
+   public void testWrongQueryBuilding3() throws Exception {
+      QueryFactory qf = Search.getSearchManager(cache).getQueryFactory();
+
+      Query q = qf.from(User.class)
+            .not().having("name").eq("John").toBuilder()
+            .not().having("surname").eq("Man").toBuilder()
+            .build();
+   }
+
+   @Test(expectedExceptions = IllegalStateException.class)
+   public void testWrongQueryBuilding4() throws Exception {
+      QueryFactory qf = Search.getSearchManager(cache).getQueryFactory();
+
+      Query q = qf.from(User.class)
+            .not(qf.having("name").eq("John")).toBuilder()
+            .not(qf.having("surname").eq("Man")).toBuilder()
+            .build();
+   }
+
+   @Test(expectedExceptions = IllegalStateException.class)
+   public void testWrongQueryBuilding5() throws Exception {
+      QueryFactory qf = Search.getSearchManager(cache).getQueryFactory();
+
+      Query q = qf.from(User.class)
+            .not(qf.having("name").eq("John")).toBuilder()
+            .not(qf.having("surname").eq("Man")).toBuilder()
+            .build();
+   }
+
+   @Test(expectedExceptions = IllegalArgumentException.class)
+   public void testWrongQueryBuilding6() throws Exception {
+      QueryFactory qf = Search.getSearchManager(cache).getQueryFactory();
+
+      Query q = qf.from(User.class)
+            .having("gender").eq(null)
+            .toBuilder().build();
+   }
+
+   @Test(expectedExceptions = IllegalStateException.class)
+   public void testWrongQueryBuilding7() throws Exception {
+      QueryFactory qf = Search.getSearchManager(cache).getQueryFactory();
+
+      FilterConditionEndContext q1 = qf.from(User.class)
+            .having("gender");
+
+      q1.eq(User.Gender.MALE);
+      q1.eq(User.Gender.FEMALE);
    }
 }
