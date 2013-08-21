@@ -57,6 +57,8 @@ public class CompatibilityCacheFactory<K, V> {
    private final Marshaller marshaller;
    private final CacheMode cacheMode;
    private int restPort;
+   private final int defaultNumOwners = 2;
+   private int numOwners = defaultNumOwners;
 
    CompatibilityCacheFactory(CacheMode cacheMode) {
       this.cacheName = "";
@@ -68,6 +70,11 @@ public class CompatibilityCacheFactory<K, V> {
       this.cacheName = cacheName;
       this.marshaller = marshaller;
       this.cacheMode = cacheMode;
+   }
+
+   CompatibilityCacheFactory(String cacheName, Marshaller marshaller, CacheMode cacheMode, int numOwners) {
+      this(cacheName, marshaller, cacheMode);
+      this.numOwners = numOwners;
    }
 
    @Deprecated
@@ -84,10 +91,10 @@ public class CompatibilityCacheFactory<K, V> {
       return this;
    }
 
-   CompatibilityCacheFactory<K, V> setup(int basePort, int portOffset) throws Exception {
+   CompatibilityCacheFactory<K, V> setup(int baseHotRodPort, int portOffset) throws Exception {
       createEmbeddedCache();
-      createHotRodCache(basePort + portOffset);
-      createRestMemcachedCaches();
+      createHotRodCache(baseHotRodPort + portOffset);
+      createRestMemcachedCaches(portOffset);
       return this;
    }
 
@@ -98,11 +105,22 @@ public class CompatibilityCacheFactory<K, V> {
       createMemcachedCache(memcachedPort);
    }
 
+   private void createRestMemcachedCaches(int portOffset) throws Exception {
+      restPort = hotrod.getPort() + 20 + portOffset;
+      final int memcachedPort = hotrod.getPort() + 40 + portOffset;
+      createRestCache(restPort);
+      createMemcachedCache(memcachedPort);
+   }
+
    void createEmbeddedCache() {
       org.infinispan.configuration.cache.ConfigurationBuilder builder =
             new org.infinispan.configuration.cache.ConfigurationBuilder();
       builder.clustering().cacheMode(cacheMode)
             .compatibility().enable().marshaller(marshaller);
+
+      if (cacheMode.isDistributed() && numOwners != defaultNumOwners) {
+         builder.clustering().hash().numOwners(numOwners);
+      }
 
       cacheManager = cacheMode.isClustered()
             ? TestCacheManagerFactory.createClusteredCacheManager(builder)
