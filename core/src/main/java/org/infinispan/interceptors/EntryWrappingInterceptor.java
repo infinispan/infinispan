@@ -294,18 +294,26 @@ public class EntryWrappingInterceptor extends CommandInterceptor {
       if (!ctx.isInTxScope()) {
          stateTransferLock.acquireSharedTopologyLock();
          try {
-            // Can't perform the check during preload or if the cache isn't clustered
-            if (stateConsumer != null && stateConsumer.getCacheTopology() != null) {
+            // We only retry non-tx write commands
+            if (command instanceof WriteCommand) {
+               WriteCommand writeCommand = (WriteCommand) command;
+               // Can't perform the check during preload or if the cache isn't clustered
                boolean isSync = (cacheConfiguration.clustering().cacheMode().isSynchronous() &&
                      !command.hasFlag(Flag.FORCE_ASYNCHRONOUS)) || command.hasFlag(Flag.FORCE_SYNCHRONOUS);
-               int commandTopologyId = command.getTopologyId();
-               int currentTopologyId = stateConsumer.getCacheTopology().getTopologyId();
-               // TotalOrderStateTransferInterceptor doesn't set the topology id for PFERs.
-               if (isSync && currentTopologyId != commandTopologyId && commandTopologyId != -1) {
-                  if (trace) log.tracef("Cache topology changed while the command was executing: expected %d, got %d",
-                        commandTopologyId, currentTopologyId);
-                  throw new OutdatedTopologyException("Cache topology changed while the command was executing: expected " +
-                        commandTopologyId + ", got " + currentTopologyId);
+               if (writeCommand.isSuccessful() && stateConsumer != null &&
+                     stateConsumer.getCacheTopology() != null) {
+                  int commandTopologyId = command.getTopologyId();
+                  int currentTopologyId = stateConsumer.getCacheTopology().getTopologyId();
+                  // TotalOrderStateTransferInterceptor doesn't set the topology id for PFERs.
+                  if ( isSync && currentTopologyId != commandTopologyId && commandTopologyId != -1) {
+                     if (trace) log.tracef("Cache topology changed while the command was executing: expected %d, got %d",
+                           commandTopologyId, currentTopologyId);
+                     if (command instanceof WriteCommand) {
+                        writeCommand.setIgnorePreviousValue(true);
+                     }
+                     throw new OutdatedTopologyException("Cache topology changed while the command was executing: expected " +
+                           commandTopologyId + ", got " + currentTopologyId);
+                  }
                }
             }
 

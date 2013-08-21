@@ -13,6 +13,7 @@ import org.infinispan.distribution.DistributionManager;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.interceptors.ClusteringInterceptor;
 import org.infinispan.interceptors.locking.ClusteringDependentLogic;
+import org.infinispan.remoting.RemoteException;
 import org.infinispan.remoting.responses.CacheNotFoundResponse;
 import org.infinispan.remoting.responses.ClusteredGetResponseValidityFilter;
 import org.infinispan.remoting.responses.ExceptionResponse;
@@ -27,7 +28,12 @@ import org.infinispan.transaction.xa.GlobalTransaction;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 /**
  * Base class for distribution of entries across a cluster.
@@ -157,7 +163,20 @@ public abstract class BaseDistributionInterceptor extends ClusteringInterceptor 
                   rpcManager.getDefaultRpcOptions(isSyncForwarding));
             if (!isSyncForwarding) return localResult;
 
-            return getResponseFromPrimaryOwner(primaryOwner, addressResponseMap);
+            try {
+               return getResponseFromPrimaryOwner(primaryOwner, addressResponseMap);
+            } catch (RemoteException e) {
+               Throwable ce = e;
+               while (ce instanceof RemoteException) {
+                  ce = ce.getCause();
+               }
+               if (ce instanceof OutdatedTopologyException) {
+                  // TODO Set another flag that will make the new primary owner only ignore the final value of the command
+                  // If the primary owner throws an OutdatedTopologyException, it must be because the command succeeded there
+                  command.setIgnorePreviousValue(true);
+               }
+               throw e;
+            }
          }
       }
    }
