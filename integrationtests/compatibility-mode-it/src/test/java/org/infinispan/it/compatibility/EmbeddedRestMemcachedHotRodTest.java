@@ -193,7 +193,7 @@ public class EmbeddedRestMemcachedHotRodTest {
       assertTrue("The version (CAS) should have changed", oldValue.getCas() != newValue.getCas());
    }
 
-   private class SpyMemcachedCompatibleMarshaller extends AbstractMarshaller {
+   static class SpyMemcachedCompatibleMarshaller extends AbstractMarshaller {
 
       private final Transcoder<Object> transcoder = new SerializingTranscoder();
 

@@ -11,7 +11,7 @@ import org.infinispan.commons.marshall.{JavaSerializationMarshaller, Marshaller}
  * @author Galder Zamarreño
  * @since 5.3
  */
-class MemcachedTypeConverter extends TypeConverter[String, Array[Byte], String, AnyRef] {
+class MemcachedTypeConverter extends TypeConverter[String, AnyRef, String, AnyRef] {
 
    // Default marshaller needed in case no custom marshaller is set
    // (e.g. not using Spy Memcached client). This is because in compatibility
@@ -24,7 +24,7 @@ class MemcachedTypeConverter extends TypeConverter[String, Array[Byte], String, 
 
    override def boxKey(key: String): String = key
 
-   override def boxValue(value: Array[Byte]): AnyRef = unmarshall(value)
+   override def boxValue(value: AnyRef): AnyRef = unmarshall(value)
 
    override def unboxKey(key: String): String = key
 
@@ -37,8 +37,10 @@ class MemcachedTypeConverter extends TypeConverter[String, Array[Byte], String, 
    override def supportsInvocation(flag: Flag): Boolean =
       if (flag == Flag.OPERATION_MEMCACHED) true else false
 
-   private def unmarshall(source: Array[Byte]): AnyRef =
-      if (source != null) marshaller.objectFromByteBuffer(source) else source
+   private def unmarshall(source: AnyRef): AnyRef = source match {
+      case bytes: Array[Byte] => marshaller.objectFromByteBuffer(bytes)
+      case _ => source
+   }
 
    private def marshall(source: AnyRef): Array[Byte] =
       if (source != null) marshaller.objectToByteBuffer(source) else null

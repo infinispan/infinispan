@@ -3,8 +3,8 @@ package org.infinispan.it.compatibility;
 import org.infinispan.client.hotrod.Flag;
 import org.infinispan.client.hotrod.RemoteCache;
 import org.infinispan.configuration.cache.CacheMode;
-import org.infinispan.io.ByteBuffer;
-import org.infinispan.marshall.AbstractMarshaller;
+import org.infinispan.commons.io.ByteBuffer;
+import org.infinispan.commons.marshall.AbstractMarshaller;
 import org.infinispan.test.AbstractInfinispanTest;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
@@ -182,7 +182,7 @@ public class CustomMemcachedHotRodTest extends AbstractInfinispanTest {
          out.flush();
       }
 
-      private void close() throws IOException {
+      public void close() throws IOException {
          socket.close();
       }
    }
