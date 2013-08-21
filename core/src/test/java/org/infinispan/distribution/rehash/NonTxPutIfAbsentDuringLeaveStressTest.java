@@ -40,13 +40,13 @@ import static org.testng.AssertJUnit.assertEquals;
  *
  * @author Dan Berindei
  */
-@Test(groups = "stress", testName = "distribution.rehash.NonTxPutIfAbsentDuringJoinStressTest")
+@Test(groups = "functional", testName = "distribution.rehash.NonTxPutIfAbsentDuringJoinStressTest")
 @CleanupAfterMethod
 public class NonTxPutIfAbsentDuringLeaveStressTest extends MultipleCacheManagersTest {
 
    private static final int NUM_WRITERS = 10;
    private static final int NUM_ORIGINATORS = 2;
-   private static final int NUM_KEYS = 1000;
+   private static final int NUM_KEYS = 200;
 
    @Override
    protected void createCacheManagers() throws Throwable {
@@ -103,7 +103,7 @@ public class NonTxPutIfAbsentDuringLeaveStressTest extends MultipleCacheManagers
          futures[i].get(10, TimeUnit.SECONDS);
          for (int j = 0; j < NUM_KEYS; j++) {
             for (int k = 0; k < caches().size(); k++) {
-               assertEquals(cache(k).get("key_" + i + "_" + j), "value_" + i + "_" + j);
+               assertEquals("value_" + i + "_" + j, cache(k).get("key_" + i + "_" + j));
             }
          }
       }

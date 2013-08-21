@@ -25,6 +25,7 @@ import org.infinispan.commands.write.PutMapCommand;
 import org.infinispan.commands.write.WriteCommand;
 import org.infinispan.context.Flag;
 import org.infinispan.context.InvocationContext;
+import org.infinispan.remoting.RemoteException;
 import org.infinispan.remoting.responses.CacheNotFoundResponse;
 import org.infinispan.remoting.responses.ExceptionResponse;
 import org.infinispan.remoting.responses.Response;
@@ -94,20 +95,40 @@ public class NonTxConcurrentDistributionInterceptor extends NonTxDistributionInt
    protected Object handleLocalWrite(InvocationContext ctx, WriteCommand command, RecipientGenerator rg, boolean skipL1Invalidation, boolean sync) throws Throwable {
       Object key = ((DataCommand) command).getKey();
       Address primaryOwner = cdl.getPrimaryOwner(key);
-      checkForOutdatedTopology(command);
       if (primaryOwner.equals(rpcManager.getAddress())) {
          List<Address> recipients = rg.generateRecipients();
          log.tracef("I'm the primary owner, sending the command to all (%s) the recipients in order to be applied.", recipients);
          Object result = invokeNextInterceptor(ctx, command);
-         if (command.isSuccessful() && !isSingleOwnerAndLocal(rg)) {
-            command.setIgnorePreviousValue(true);
-            rpcManager.invokeRemotely(recipients, command, sync);
+         if (command.isSuccessful()) {
+            checkForOutdatedTopology(command);
+
+            if (!isSingleOwnerAndLocal(rg)) {
+               command.setIgnorePreviousValue(true);
+               rpcManager.invokeRemotely(recipients, command, sync);
+            }
          }
          return result;
       } else {
          log.tracef("I'm not the primary owner, so sending the command to the primary owner(%s) in order to be forwarded", primaryOwner);
          Object localResult = invokeNextInterceptor(ctx, command);
-         Map<Address, Response> addressResponseMap = rpcManager.invokeRemotely(Collections.singletonList(primaryOwner), command, sync);
+         checkForOutdatedTopology(command);
+
+         Map<Address, Response> addressResponseMap;
+         try {
+            addressResponseMap = rpcManager.invokeRemotely(Collections.singletonList(primaryOwner), command, sync);
+         } catch (RemoteException e) {
+            Throwable ce = e;
+            while (ce instanceof RemoteException) {
+               ce = ce.getCause();
+            }
+            if (ce instanceof OutdatedTopologyException) {
+               // TODO Set another flag that will make the new primary owner only ignore the final value of the command
+               // If the primary owner throws an OutdatedTopologyException, it must be because the command succeeded there
+               command.setIgnorePreviousValue(true);
+            }
+            throw e;
+         }
+
          //the remote node always returns the correct result, but if we're async, then our best option is the local
          //node. That might be incorrect though.
          if (!sync) return localResult;
@@ -120,10 +141,12 @@ public class NonTxConcurrentDistributionInterceptor extends NonTxDistributionInt
       if (command instanceof DataCommand) {
          DataCommand dataCommand = (DataCommand) command;
          Address primaryOwner = cdl.getPrimaryOwner(dataCommand.getKey());
-         checkForOutdatedTopology(command);
-         if (command.isSuccessful() && primaryOwner.equals(rpcManager.getAddress())) {
-            command.setIgnorePreviousValue(true);
-            rpcManager.invokeRemotely(recipientGenerator.generateRecipients(), command, sync);
+         if (command.isSuccessful()) {
+            checkForOutdatedTopology(command);
+            if (primaryOwner.equals(rpcManager.getAddress())) {
+               command.setIgnorePreviousValue(true);
+               rpcManager.invokeRemotely(recipientGenerator.generateRecipients(), command, sync);
+            }
          }
       }
    }

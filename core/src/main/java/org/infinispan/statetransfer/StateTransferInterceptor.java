@@ -251,8 +251,6 @@ public class StateTransferInterceptor extends CommandInterceptor {
          // Without this, we could retry the command too fast and we could get the OutdatedTopologyException again.
          int newTopologyId = Math.max(stateTransferManager.getCacheTopology().getTopologyId(), commandTopologyId + 1);
          command.setTopologyId(newTopologyId);
-         // TODO Set another flag that will make the new primary owner only ignore the final value of the command
-         command.setIgnorePreviousValue(true);
          localResult = handleNonTxWriteCommand(ctx, command);
       }
 
