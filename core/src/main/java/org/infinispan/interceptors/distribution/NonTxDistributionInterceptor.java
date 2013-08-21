@@ -106,8 +106,6 @@ public class NonTxDistributionInterceptor extends BaseDistributionInterceptor {
          return invokeNextInterceptor(ctx, command);
       }
 
-      checkForOutdatedTopology(command);
-
       if (!ctx.isOriginLocal()) {
          Object returnValue = invokeNextInterceptor(ctx, command);
          handleRemoteWrite(ctx, command, recipientGenerator, skipL1Invalidation, isSynchronous(command));
@@ -117,7 +115,7 @@ public class NonTxDistributionInterceptor extends BaseDistributionInterceptor {
       }
    }
 
-   private void checkForOutdatedTopology(WriteCommand command) {
+   protected void checkForOutdatedTopology(WriteCommand command) {
       if (!useLockForwarding)
          return;
 

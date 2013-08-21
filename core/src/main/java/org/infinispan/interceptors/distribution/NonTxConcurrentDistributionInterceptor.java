@@ -94,6 +94,7 @@ public class NonTxConcurrentDistributionInterceptor extends NonTxDistributionInt
    protected Object handleLocalWrite(InvocationContext ctx, WriteCommand command, RecipientGenerator rg, boolean skipL1Invalidation, boolean sync) throws Throwable {
       Object key = ((DataCommand) command).getKey();
       Address primaryOwner = cdl.getPrimaryOwner(key);
+      checkForOutdatedTopology(command);
       if (primaryOwner.equals(rpcManager.getAddress())) {
          List<Address> recipients = rg.generateRecipients();
          log.tracef("I'm the primary owner, sending the command to all (%s) the recipients in order to be applied.", recipients);
@@ -119,6 +120,7 @@ public class NonTxConcurrentDistributionInterceptor extends NonTxDistributionInt
       if (command instanceof DataCommand) {
          DataCommand dataCommand = (DataCommand) command;
          Address primaryOwner = cdl.getPrimaryOwner(dataCommand.getKey());
+         checkForOutdatedTopology(command);
          if (command.isSuccessful() && primaryOwner.equals(rpcManager.getAddress())) {
             command.setIgnorePreviousValue(true);
             rpcManager.invokeRemotely(recipientGenerator.generateRecipients(), command, sync);
