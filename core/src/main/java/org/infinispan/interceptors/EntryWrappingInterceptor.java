@@ -302,7 +302,7 @@ public class EntryWrappingInterceptor extends CommandInterceptor {
                int currentTopologyId = stateConsumer.getCacheTopology().getTopologyId();
                // TotalOrderStateTransferInterceptor doesn't set the topology id for PFERs.
                if (isSync && currentTopologyId != commandTopologyId && commandTopologyId != -1) {
-                  log.tracef("Cache topology changed while the command was executing: expected %d, got %d",
+                  if (trace) log.tracef("Cache topology changed while the command was executing: expected %d, got %d",
                         commandTopologyId, currentTopologyId);
                   throw new OutdatedTopologyException("Cache topology changed while the command was executing: expected " +
                         commandTopologyId + ", got " + currentTopologyId);
@@ -315,7 +315,7 @@ public class EntryWrappingInterceptor extends CommandInterceptor {
          }
       }
 
-      log.tracef("The return value is %s", result);
+      if (trace) log.tracef("The return value is %s", result);
       return result;
    }
 
