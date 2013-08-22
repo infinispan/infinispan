@@ -126,13 +126,13 @@ public abstract class LockSupportCacheStore<L> extends AbstractCacheStore {
 
    @Override
    public final Set<InternalCacheEntry> loadAll() throws CacheLoaderException {
-      boolean success = acquireGlobalLock(false);
+      if (!acquireGlobalLock(false)) {
+         throw new CacheLoaderException("Unable to acquire global lock");
+      }
       try {
          return loadAllLockSafe();
       } finally {
-         if(success){
-            releaseGlobalLock(false);
-         }
+         releaseGlobalLock(false);
       }
    }
 
@@ -141,25 +141,25 @@ public abstract class LockSupportCacheStore<L> extends AbstractCacheStore {
       if (maxEntries < 0) {
          return loadAll();
       }
-      boolean success = acquireGlobalLock(false);
+      if (!acquireGlobalLock(false)) {
+         throw new CacheLoaderException("Unable to acquire global lock");
+      }
       try {
          return loadLockSafe(maxEntries);
       } finally {
-         if(success){
-            releaseGlobalLock(false);
-         }
+         releaseGlobalLock(false);
       }
    }
 
    @Override
    public Set<Object> loadAllKeys(Set<Object> keysToExclude) throws CacheLoaderException {
-      boolean success = acquireGlobalLock(false);
+      if (!acquireGlobalLock(false)) {
+         throw new CacheLoaderException("Unable to acquire global lock");
+      }
       try {
          return loadAllKeysLockSafe(keysToExclude);
       } finally {
-         if(success){
-            releaseGlobalLock(false);
-         }
+         releaseGlobalLock(false);
       }
    }
 
@@ -217,25 +217,25 @@ public abstract class LockSupportCacheStore<L> extends AbstractCacheStore {
 
    @Override
    public final void fromStream(ObjectInput objectInput) throws CacheLoaderException {
-      boolean success = acquireGlobalLock(true);
+      if (!acquireGlobalLock(true)) {
+         throw new CacheLoaderException("Unable to acquire global lock");
+      }
       try {
          fromStreamLockSafe(objectInput);
       } finally {
-         if(success){
-            releaseGlobalLock(true);
-         }
+         releaseGlobalLock(true);
       }
    }
 
    @Override
    public void toStream(ObjectOutput objectOutput) throws CacheLoaderException {
-      boolean success = acquireGlobalLock(false);
+      if (!acquireGlobalLock(false)) {
+         throw new CacheLoaderException("Unable to acquire global lock");
+      }
       try {
          toStreamLockSafe(objectOutput);
       } finally {
-         if(success){
-            releaseGlobalLock(false);
-         }
+         releaseGlobalLock(false);
       }
    }
 
@@ -244,13 +244,13 @@ public abstract class LockSupportCacheStore<L> extends AbstractCacheStore {
       if (trace) {
          log.trace("Clearing store");
       }
-      boolean success = acquireGlobalLock(true);
+      if (!acquireGlobalLock(true)) {
+         throw new CacheLoaderException("Unable to acquire global lock");
+      }
       try {
          clearLockSafe();
       } finally {
-         if(success){
-            releaseGlobalLock(true);
-         }
+         releaseGlobalLock(true);
       }
    }
 
