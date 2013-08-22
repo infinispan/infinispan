@@ -1,13 +1,12 @@
 package org.infinispan.interceptors.distribution;
 
-import org.infinispan.commands.read.GetKeyValueCommand;
 import org.infinispan.container.DataContainer;
+import org.infinispan.container.entries.ImmortalCacheEntry;
 import org.infinispan.container.entries.InternalCacheEntry;
 import org.infinispan.interceptors.locking.ClusteringDependentLogic;
 import org.infinispan.metadata.Metadata;
 import org.infinispan.statetransfer.StateTransferLock;
 import org.infinispan.test.AbstractInfinispanTest;
-import org.mockito.Mockito;
 import org.mockito.invocation.InvocationOnMock;
 import org.mockito.stubbing.Answer;
 import org.testng.annotations.BeforeMethod;
@@ -40,9 +39,9 @@ public class L1WriteSynchronizerTest extends AbstractInfinispanTest {
 
    @BeforeMethod
    public void beforeMethod() {
-      dc = Mockito.mock(DataContainer.class);
-      stl = Mockito.mock(StateTransferLock.class);
-      cdl = Mockito.mock(ClusteringDependentLogic.class);
+      dc = mock(DataContainer.class);
+      stl = mock(StateTransferLock.class);
+      cdl = mock(ClusteringDependentLogic.class);
 
       sync = new L1WriteSynchronizer(dc, l1Timeout, stl, cdl);
    }
@@ -50,7 +49,8 @@ public class L1WriteSynchronizerTest extends AbstractInfinispanTest {
    @Test
    public void testGetReturnValueWait() throws InterruptedException, ExecutionException, TimeoutException {
       Object value = new Object();
-      sync.runL1UpdateIfPossible(value, Mockito.mock(GetKeyValueCommand.class));
+      InternalCacheEntry ice = new ImmortalCacheEntry(value, value);
+      sync.runL1UpdateIfPossible(ice);
 
       assertEquals(value, sync.get());
    }
@@ -58,7 +58,8 @@ public class L1WriteSynchronizerTest extends AbstractInfinispanTest {
    @Test
    public void testGetReturnValueTimeWait() throws InterruptedException, ExecutionException, TimeoutException {
       Object value = new Object();
-      sync.runL1UpdateIfPossible(value, Mockito.mock(GetKeyValueCommand.class));
+      InternalCacheEntry ice = new ImmortalCacheEntry(value, value);
+      sync.runL1UpdateIfPossible(ice);
 
       assertEquals(value, sync.get(1, TimeUnit.SECONDS));
    }
@@ -106,7 +107,8 @@ public class L1WriteSynchronizerTest extends AbstractInfinispanTest {
          // This should time out exception
       }
 
-      sync.runL1UpdateIfPossible(value, Mockito.mock(GetKeyValueCommand.class));
+      InternalCacheEntry ice = new ImmortalCacheEntry(value, value);
+      sync.runL1UpdateIfPossible(ice);
 
       assertEquals(value, future.get(1, TimeUnit.SECONDS));
    }
@@ -130,14 +132,15 @@ public class L1WriteSynchronizerTest extends AbstractInfinispanTest {
          // This should time out exception
       }
 
-      sync.runL1UpdateIfPossible(value, Mockito.mock(GetKeyValueCommand.class));
+      InternalCacheEntry ice = new ImmortalCacheEntry(value, value);
+      sync.runL1UpdateIfPossible(ice);
 
       assertEquals(value, future.get(1, TimeUnit.SECONDS));
    }
 
    @Test
    public void testSpawnedThreadBlockingException() throws InterruptedException, ExecutionException, TimeoutException {
-      Throwable t = Mockito.mock(Throwable.class);
+      Throwable t = mock(Throwable.class);
 
       Future future = fork(new Callable<Object>() {
 
@@ -167,7 +170,7 @@ public class L1WriteSynchronizerTest extends AbstractInfinispanTest {
 
    @Test
    public void testSpawnedThreadBlockingExceptionTimeWait() throws InterruptedException, ExecutionException, TimeoutException {
-      Throwable t = Mockito.mock(Throwable.class);
+      Throwable t = mock(Throwable.class);
 
       Future future = fork(new Callable<Object>() {
 
@@ -198,10 +201,12 @@ public class L1WriteSynchronizerTest extends AbstractInfinispanTest {
    public void testWriteCancelled() {
       assertTrue(sync.trySkipL1Update());
 
-      sync.runL1UpdateIfPossible(new Object(), mock(GetKeyValueCommand.class));
+      Object keyValue = new Object();
+      InternalCacheEntry ice = new ImmortalCacheEntry(keyValue, keyValue);
+      sync.runL1UpdateIfPossible(ice);
 
       // The dc shouldn't have been updated
-      verify(dc, never()).put(Mockito.any(), Mockito.any(), Mockito.any(Metadata.class));
+      verify(dc, never()).put(any(), any(), any(Metadata.class));
    }
 
    @Test
@@ -222,7 +227,9 @@ public class L1WriteSynchronizerTest extends AbstractInfinispanTest {
       Future<Void> future = fork(new Runnable() {
          @Override
          public void run() {
-            sync.runL1UpdateIfPossible(new Object(), mock(GetKeyValueCommand.class, RETURNS_MOCKS));
+            Object keyValue = new Object();
+            InternalCacheEntry ice = new ImmortalCacheEntry(keyValue, keyValue);
+            sync.runL1UpdateIfPossible(ice);
          }
       }, null);
 
@@ -234,7 +241,7 @@ public class L1WriteSynchronizerTest extends AbstractInfinispanTest {
       future.get(1, TimeUnit.SECONDS);
 
       // The dc should have been updated
-      verify(dc).put(Mockito.any(), Mockito.any(), Mockito.any(Metadata.class));
+      verify(dc).put(any(), any(), any(Metadata.class));
    }
 
    @Test
@@ -252,15 +259,13 @@ public class L1WriteSynchronizerTest extends AbstractInfinispanTest {
       Object value = new Object();
       Object key = new Object();
 
-      GetKeyValueCommand mockedCommand = when(mock(GetKeyValueCommand.class).getKey()).thenReturn(key).getMock();
-
       InternalCacheEntry ice = when(mock(InternalCacheEntry.class, RETURNS_DEEP_STUBS).getValue()).thenReturn(value).getMock();
+      when(ice.getKey()).thenReturn(key);
       when(ice.getLifespan()).thenReturn(iceLifespan);
-      when(mockedCommand.getRemotelyFetchedValue()).thenReturn(ice);
 
-      sync.runL1UpdateIfPossible(value, mockedCommand);
+      sync.runL1UpdateIfPossible(ice);
 
-      verify(dc).put(eq(key), eq(value), Mockito.any(Metadata.class));
+      verify(dc).put(eq(key), eq(value), any(Metadata.class));
 
       Metadata.Builder verifier = verify(ice.getMetadata().builder());
       verifier.lifespan(shouldBeIceLifespan ? iceLifespan : l1Timeout);

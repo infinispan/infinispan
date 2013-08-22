@@ -10,6 +10,7 @@ import org.infinispan.container.entries.InternalCacheValue;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.context.impl.TxInvocationContext;
 import org.infinispan.distribution.DistributionManager;
+import org.infinispan.distribution.RemoteValueRetrievedListener;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.interceptors.ClusteringInterceptor;
 import org.infinispan.interceptors.locking.ClusteringDependentLogic;
@@ -49,6 +50,7 @@ public abstract class BaseDistributionInterceptor extends ClusteringInterceptor 
    protected DistributionManager dm;
 
    protected ClusteringDependentLogic cdl;
+   protected RemoteValueRetrievedListener rvrl;
 
    private static final Log log = LogFactory.getLog(BaseDistributionInterceptor.class);
 
@@ -58,9 +60,11 @@ public abstract class BaseDistributionInterceptor extends ClusteringInterceptor 
    }
 
    @Inject
-   public void injectDependencies(DistributionManager distributionManager, ClusteringDependentLogic cdl) {
+   public void injectDependencies(DistributionManager distributionManager, ClusteringDependentLogic cdl,
+                                  RemoteValueRetrievedListener rvrl) {
       this.dm = distributionManager;
       this.cdl = cdl;
+      this.rvrl = rvrl;
    }
 
    @Override
@@ -87,7 +91,11 @@ public abstract class BaseDistributionInterceptor extends ClusteringInterceptor 
                   return null;
                
                InternalCacheValue cacheValue = (InternalCacheValue) response.getResponseValue();
-               return cacheValue.toInternalCacheEntry(key);
+               InternalCacheEntry ice = cacheValue.toInternalCacheEntry(key);
+               if (rvrl != null) {
+                  rvrl.remoteValueFound(ice);
+               }
+               return ice;
             }
          }
       }

@@ -3,12 +3,7 @@ package org.infinispan.factories;
 
 import org.infinispan.commons.CacheConfigurationException;
 import org.infinispan.commons.CacheException;
-import org.infinispan.configuration.cache.CompatibilityModeConfiguration;
-import org.infinispan.configuration.cache.Configuration;
-import org.infinispan.configuration.cache.Configurations;
-import org.infinispan.configuration.cache.CustomInterceptorsConfiguration;
-import org.infinispan.configuration.cache.InterceptorConfiguration;
-import org.infinispan.configuration.cache.StoreConfiguration;
+import org.infinispan.configuration.cache.*;
 import org.infinispan.factories.annotations.DefaultFactoryFor;
 import org.infinispan.interceptors.*;
 import org.infinispan.interceptors.base.CommandInterceptor;
@@ -222,8 +217,13 @@ public class InterceptorChainFactory extends AbstractNamedCacheComponentFactory 
          interceptorChain.appendInterceptor(createInterceptor(new DeadlockDetectingInterceptor(), DeadlockDetectingInterceptor.class), false);
       }
 
-      if (configuration.clustering().l1().enabled() && !configuration.transaction().transactionMode().isTransactional()) {
-         interceptorChain.appendInterceptor(createInterceptor(new L1NonTxInterceptor(), L1NonTxInterceptor.class), false);
+      if (configuration.clustering().l1().enabled()) {
+         if (configuration.transaction().transactionMode().isTransactional()) {
+            interceptorChain.appendInterceptor(createInterceptor(new L1TxInterceptor(), L1TxInterceptor.class), false);
+         }
+         else {
+            interceptorChain.appendInterceptor(createInterceptor(new L1NonTxInterceptor(), L1NonTxInterceptor.class), false);
+         }
       }
 
       switch (configuration.clustering().cacheMode()) {

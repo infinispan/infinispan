@@ -6,6 +6,7 @@ import org.infinispan.commands.remote.SingleRpcCommand;
 import org.infinispan.commands.write.InvalidateCommand;
 import org.infinispan.commons.util.CollectionFactory;
 import org.infinispan.commons.util.InfinispanCollections;
+import org.infinispan.container.entries.InternalCacheEntry;
 import org.infinispan.context.Flag;
 import org.infinispan.factories.KnownComponentNames;
 import org.infinispan.factories.annotations.ComponentName;
@@ -13,6 +14,7 @@ import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.factories.annotations.Start;
 import org.infinispan.factories.annotations.Stop;
+import org.infinispan.interceptors.distribution.L1WriteSynchronizer;
 import org.infinispan.remoting.rpc.ResponseMode;
 import org.infinispan.remoting.rpc.RpcManager;
 import org.infinispan.remoting.rpc.RpcOptions;
@@ -39,7 +41,7 @@ import java.util.concurrent.TimeUnit;
 
 import static org.infinispan.factories.KnownComponentNames.ASYNC_TRANSPORT_EXECUTOR;
 
-public class L1ManagerImpl implements L1Manager {
+public class L1ManagerImpl implements L1Manager, RemoteValueRetrievedListener {
 
    private static final Log log = LogFactory.getLog(L1ManagerImpl.class);
    private final boolean trace = log.isTraceEnabled();
@@ -53,6 +55,7 @@ public class L1ManagerImpl implements L1Manager {
 
    // TODO replace this with a custom, expirable collection
    private final ConcurrentMap<Object, ConcurrentMap<Address, Long>> requestors;
+   private final ConcurrentMap<Object, L1WriteSynchronizer> synchronizers;
    private ScheduledExecutorService scheduledExecutor;
    private ScheduledFuture<?> scheduledRequestorsCleanupTask;
    private TimeService timeService;
@@ -61,7 +64,8 @@ public class L1ManagerImpl implements L1Manager {
    private RpcOptions syncIgnoreLeaversRpcOptions;
 
    public L1ManagerImpl() {
-	   requestors = CollectionFactory.makeConcurrentMap();
+      requestors = CollectionFactory.makeConcurrentMap();
+      synchronizers = CollectionFactory.makeConcurrentMap();
    }
 
    @Inject
@@ -266,5 +270,25 @@ public class L1ManagerImpl implements L1Manager {
       if (threshold == 0) return true;
       // we decide:
       return nodes > threshold;
+   }
+
+   @Override
+   public void registerL1WriteSynchronizer(Object key, L1WriteSynchronizer sync) {
+      if (synchronizers.putIfAbsent(key, sync) != null) {
+         throw new IllegalStateException("There is already a L1WriteSynchronizer associated with key: " + key);
+      }
+   }
+
+   @Override
+   public void unregisterL1WriteSynchronizer(Object key) {
+      synchronizers.remove(key);
+   }
+
+   @Override
+   public void remoteValueFound(InternalCacheEntry ice) {
+      L1WriteSynchronizer synchronizer = synchronizers.get(ice.getKey());
+      if (synchronizer != null) {
+         synchronizer.runL1UpdateIfPossible(ice);
+      }
    }
 }

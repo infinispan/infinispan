@@ -1,6 +1,8 @@
 package org.infinispan.interceptors.distribution;
 
+import org.infinispan.commands.DataCommand;
 import org.infinispan.commands.FlagAffectedCommand;
+import org.infinispan.commands.LocalFlagAffectedCommand;
 import org.infinispan.commands.read.GetKeyValueCommand;
 import org.infinispan.commands.write.DataWriteCommand;
 import org.infinispan.commands.write.InvalidateL1Command;
@@ -42,12 +44,12 @@ public class L1NonTxInterceptor extends BaseRpcInterceptor {
    private static final Log log = LogFactory.getLog(L1NonTxInterceptor.class);
    private static final boolean trace = log.isTraceEnabled();
 
-   private L1Manager l1Manager;
-   private ClusteringDependentLogic cdl;
-   private EntryFactory entryFactory;
-   private DataContainer dataContainer;
-   private Configuration config;
-   private StateTransferLock stateTransferLock;
+   protected L1Manager l1Manager;
+   protected ClusteringDependentLogic cdl;
+   protected EntryFactory entryFactory;
+   protected DataContainer dataContainer;
+   protected Configuration config;
+   protected StateTransferLock stateTransferLock;
 
    private long l1Lifespan;
 
@@ -71,51 +73,78 @@ public class L1NonTxInterceptor extends BaseRpcInterceptor {
 
    @Override
    public Object visitGetKeyValueCommand(InvocationContext ctx, GetKeyValueCommand command) throws Throwable {
+      return performCommandWithL1WriteIfAble(ctx, command, false, true);
+   }
+
+   protected Object performCommandWithL1WriteIfAble(InvocationContext ctx, DataCommand command,
+                                                boolean shouldAlwaysRunNextInterceptor, boolean registerL1) throws Throwable {
       Object returnValue;
       if (ctx.isOriginLocal()) {
          Object key = command.getKey();
          // If the command isn't going to return a remote value - just pass it down the interceptor chain
-         if (command.hasFlag(Flag.CACHE_MODE_LOCAL) || command.hasFlag(Flag.SKIP_REMOTE_LOOKUP)
-               || command.hasFlag(Flag.IGNORE_RETURN_VALUES) || cdl.localNodeIsOwner(key)
-               || dataContainer.containsKey(key)) {
-            return invokeNextInterceptor(ctx, command);
+         if (skipL1Lookup(command, key)) {
+            returnValue = invokeNextInterceptor(ctx, command);
+         } else {
+            returnValue = performL1Lookup(ctx, shouldAlwaysRunNextInterceptor, key, command);
          }
-         // Most times the putIfAbsent will be successful, so not doing a get first
-         L1WriteSynchronizer l1WriteSync = new L1WriteSynchronizer(dataContainer, l1Lifespan, stateTransferLock,
-                                                                   cdl);
-         L1WriteSynchronizer presentSync = concurrentWrites.putIfAbsent(key, l1WriteSync);
-         if (presentSync == null) {
-            try {
-               returnValue = invokeNextInterceptor(ctx, command);
-               l1WriteSync.runL1UpdateIfPossible(returnValue, command);
-            }
-            catch (Throwable t) {
-               l1WriteSync.retrievalEncounteredException(t);
-               throw t;
-            }
-            finally {
-               concurrentWrites.remove(key);
-            }
-         }
-         else {
-            if (trace) {
-               log.tracef("Found current request for key %s, waiting for their invocation's response", key);
-            }
-            try {
-               returnValue = presentSync.get();
-            }
-            catch (ExecutionException e) {
-               throw e.getCause();
-            }
-         }
-      }
-      else {
+      } else {
          returnValue = invokeNextInterceptor(ctx, command);
-         if (returnValue != null) {
+         // If this is a remote command, and we found a value in our cache
+         // we store it so that we can later invalidate it
+         if (registerL1) {
             l1Manager.addRequestor(command.getKey(), ctx.getOrigin());
          }
       }
       return returnValue;
+   }
+
+    protected Object performL1Lookup(InvocationContext ctx, boolean runInterceptorOnConflict, Object key,
+                                     DataCommand command) throws Throwable {
+      // Most times the putIfAbsent will be successful, so not doing a get first
+      L1WriteSynchronizer l1WriteSync = new L1WriteSynchronizer(dataContainer, l1Lifespan, stateTransferLock,
+                                                                cdl);
+      L1WriteSynchronizer presentSync = concurrentWrites.putIfAbsent(key, l1WriteSync);
+      if (presentSync == null) {
+         try {
+            l1Manager.registerL1WriteSynchronizer(key, l1WriteSync);
+            Object returnValue;
+            try {
+               returnValue = invokeNextInterceptor(ctx, command);
+            }
+            finally {
+               l1Manager.unregisterL1WriteSynchronizer(key);
+            }
+            return returnValue;
+         }
+         catch (Throwable t) {
+            l1WriteSync.retrievalEncounteredException(t);
+            throw t;
+         }
+         finally {
+            concurrentWrites.remove(key);
+         }
+      } else {
+         if (trace) {
+            log.tracef("Found current request for key %s, waiting for their invocation's response", key);
+         }
+         try {
+            Object returnValue = presentSync.get();
+            // Basically write commands could have different values
+            if (runInterceptorOnConflict) {
+               returnValue = invokeNextInterceptor(ctx, command);
+            }
+            return returnValue;
+         }
+         catch (ExecutionException e) {
+            throw e.getCause();
+         }
+      }
+   }
+
+   protected boolean skipL1Lookup(LocalFlagAffectedCommand command, Object key) {
+      return command.hasFlag(Flag.CACHE_MODE_LOCAL) || command.hasFlag(Flag.SKIP_REMOTE_LOOKUP)
+            || command.hasFlag(Flag.IGNORE_RETURN_VALUES) || cdl.localNodeIsOwner(key)
+            || dataContainer.containsKey(key);
    }
 
    @Override
@@ -173,8 +202,7 @@ public class L1NonTxInterceptor extends BaseRpcInterceptor {
             if (trace) {
                log.tracef("Aborted possible L1 update due to concurrent invalidation for key %s", key);
             }
-         }
-         else {
+         } else {
             if (trace) {
                log.tracef("L1 invalidation found a pending update for key %s - need to block until finished", key);
             }
