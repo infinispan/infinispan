@@ -4,7 +4,7 @@ import org.infinispan.Cache;
 import org.infinispan.loaders.modifications.Modification;
 import org.infinispan.loaders.modifications.Remove;
 import org.infinispan.loaders.modifications.Store;
-import org.infinispan.commons.marshall.StreamingMarshaller;
+import org.infinispan.marshall.StreamingMarshaller;
 import org.infinispan.commons.util.CollectionFactory;
 import org.infinispan.transaction.xa.GlobalTransaction;
 import org.infinispan.util.concurrent.WithinThreadExecutor;
@@ -45,7 +45,7 @@ public abstract class AbstractCacheStore extends AbstractCacheLoader implements 
    protected boolean multiThreadedPurge = false;
 
    @Override
-   public void init(CacheLoaderConfig config, Cache<?, ?> cache, StreamingMarshaller m) throws CacheLoaderException{
+   public void init(CacheLoaderConfig config, Cache cache, StreamingMarshaller m) throws CacheLoaderException{
       super.init(config, cache, m);
       this.config = (AbstractCacheStoreConfig) config;
    }

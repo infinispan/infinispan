@@ -1,8 +1,10 @@
 package org.infinispan.configuration.cache;
 
 import org.infinispan.commons.configuration.BuiltBy;
+import org.infinispan.commons.configuration.ConfigurationFor;
 import org.infinispan.commons.util.TypedProperties;
-import org.infinispan.loaders.spi.CacheLoader;
+import org.infinispan.loaders.CacheLoader;
+import org.infinispan.loaders.legacy.LegacyCacheStoreAdapter;
 
 /**
  * Configuration a legacy cache store, i.e. one which doesn't provide its own configuration builder
@@ -13,6 +15,7 @@ import org.infinispan.loaders.spi.CacheLoader;
  *
  */
 @BuiltBy(LegacyStoreConfigurationBuilder.class)
+@ConfigurationFor(LegacyCacheStoreAdapter.class)
 public class LegacyStoreConfiguration extends AbstractStoreConfiguration {
 
    private final CacheLoader cacheStore; // TODO: in 6.0, as we deprecate the cacheLoader() method in LegacyStoreConfigurationBuilder, narrow this type to CacheStore

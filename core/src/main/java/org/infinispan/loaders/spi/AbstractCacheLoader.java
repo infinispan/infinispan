@@ -44,7 +44,7 @@ public abstract class AbstractCacheLoader implements CacheLoader {
       this.timeService = cache.getAdvancedCache().getComponentRegistry().getTimeService();
    }
 
-   final protected <T extends CacheLoaderConfiguration> T validateConfigurationClass(CacheLoaderConfiguration config, Class<T> klass) {
+   final static protected <T extends CacheLoaderConfiguration> T validateConfigurationClass(CacheLoaderConfiguration config, Class<T> klass) {
       if (klass.isInstance(config)) {
          return (T) config;
       } else {

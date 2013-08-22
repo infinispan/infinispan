@@ -106,16 +106,14 @@ public class XmlFileParsingTest extends AbstractInfinispanTest {
    }
 
    public void testNamedCacheFile() throws IOException {
-      withCacheManager(new CacheManagerCallable(TestCacheManagerFactory.fromXml("configs/named-cache-test.xml", true)) {
-         @Override
-         public void call() {
-            assertNamedCacheFile(cm, false);
-         }
-      });
+      testNamedCacheFile("configs/named-cache-test.xml");
+      testNamedCacheFile("configs/named-cache-test-53.xml");
+      testNamedCacheFile("configs/named-cache-test-52.xml");
+      testNamedCacheFile("configs/named-cache-test-51.xml");
    }
 
-   public void testOldNamedCacheFile() throws IOException {
-      withCacheManager(new CacheManagerCallable(TestCacheManagerFactory.fromXml("configs/named-cache-test-51.xml", true)) {
+   private void testNamedCacheFile(String configFile) throws IOException {
+      withCacheManager(new CacheManagerCallable(TestCacheManagerFactory.fromXml(configFile, true)) {
          @Override
          public void call() {
             assertNamedCacheFile(cm, true);

@@ -7,7 +7,6 @@ import org.infinispan.commons.marshall.AdvancedExternalizer;
 import org.infinispan.commons.util.TypedProperties;
 import org.infinispan.commons.CacheConfigurationException;
 import org.infinispan.lifecycle.ComponentStatus;
-import org.infinispan.configuration.cache.CacheLoaderConfiguration;
 import org.infinispan.loaders.CacheLoaderException;
 import org.infinispan.loaders.bucket.Bucket;
 import org.infinispan.loaders.decorators.SingletonStore;
@@ -940,5 +939,8 @@ public interface Log extends BasicLogger {
 
    @Message(value = "Cache Loader configuration cannot be null", id = 251)
    CacheConfigurationException cacheLoaderConfigurationCannotBeNull();
+
+   @Message(value = "Invalid Cache Loader class: %s", id = 252)
+   CacheConfigurationException invalidCacheLoaderClass(String name);
 }
 

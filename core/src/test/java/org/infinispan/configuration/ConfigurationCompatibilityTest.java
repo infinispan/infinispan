@@ -5,7 +5,6 @@ import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.cache.FileCacheStoreConfigurationBuilder;
 import org.infinispan.configuration.cache.LoaderConfigurationBuilder;
 import org.infinispan.configuration.cache.LoadersConfigurationBuilder;
-import org.infinispan.loaders.file.FileCacheStore;
 import org.testng.annotations.Test;
 
 @Test(groups = "functional", testName= "configuration.ConfigurationCompatibilityTest")
@@ -14,7 +13,7 @@ public class ConfigurationCompatibilityTest {
    public void testModeShapeStoreConfiguration() {
       // This code courtesy of Randall Hauch
       ConfigurationBuilder configurationBuilder = new ConfigurationBuilder();
-      LoaderConfigurationBuilder lb = configurationBuilder.loaders().addCacheLoader().cacheLoader(new FileCacheStore());
+      LoaderConfigurationBuilder lb = configurationBuilder.loaders().addCacheLoader();
       lb.addProperty("dropTableOnExit", "false").addProperty("createTableOnStart", "true")
             .addProperty("connectionFactoryClass", "org.infinispan.loaders.jdbc.connectionfactory.PooledConnectionFactory")
             .addProperty("connectionUrl", "jdbc:h2:file:/abs/path/string_based_db;DB_CLOSE_DELAY=1").addProperty("driverClass", "org.h2.Driver").addProperty("userName", "sa")
