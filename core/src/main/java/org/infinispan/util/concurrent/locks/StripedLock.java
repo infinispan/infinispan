@@ -186,7 +186,7 @@ public class StripedLock {
    }
 
    /**
-    * Acquires RL on all locks agregated by this StripedLock, in the given timeout.
+    * Acquires RL on all locks aggregated by this StripedLock, in the given timeout.
     */
    public boolean acquireGlobalLock(boolean exclusive, long timeout) {
       log.tracef("About to acquire global lock. Exclusive? %s", exclusive);
