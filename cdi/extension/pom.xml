@@ -1,14 +1,12 @@
-<?xml version="1.0" encoding="UTF-8"?>
-<project xmlns="http://maven.apache.org/POM/4.0.0"
-         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+<?xml version='1.0' encoding='UTF-8'?>
+<project xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd" xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
 
    <modelVersion>4.0.0</modelVersion>
 
    <parent>
       <groupId>org.infinispan</groupId>
       <artifactId>infinispan-parent</artifactId>
-      <version>6.0.0-SNAPSHOT</version>
+      <version>6.0.0.Alpha3</version>
       <relativePath>../../parent/pom.xml</relativePath>
    </parent>
 
@@ -32,15 +30,15 @@
       </developer>
    </developers>
 
-   <!--<properties>-->
-      <!--&lt;!&ndash; Version 0.6 version has this issue:-->
-      <!--https://github.com/jsr107/jsr107spec/pull/59-->
+   
+      
+      
 
-      <!--Upgrade to 0.6 once that issue has been fixed-->
-      <!--See https://issues.jboss.org/browse/ISPN-2855-->
-      <!--&ndash;&gt;-->
-      <!--<version.javax.cache>0.4</version.javax.cache>-->
-   <!--</properties>-->
+      
+      
+      
+      
+   
 
    <dependencies>
       <dependency>
@@ -64,13 +62,13 @@
          <artifactId>infinispan-jcache</artifactId>
       </dependency>
 
-      <!-- Logging dependency -->
+      
       <dependency>
          <groupId>org.jboss.logging</groupId>
          <artifactId>jboss-logging</artifactId>
       </dependency>
 
-      <!-- Test dependencies -->
+      
       <dependency>
          <groupId>org.testng</groupId>
          <artifactId>testng</artifactId>
@@ -117,7 +115,7 @@
    </dependencies>
    <build>
       <plugins>
-         <!-- Disable parallel execution of tests ARQ-127 -->
+         
          <plugin>
             <groupId>org.apache.maven.plugins</groupId>
             <artifactId>maven-surefire-plugin</artifactId>
