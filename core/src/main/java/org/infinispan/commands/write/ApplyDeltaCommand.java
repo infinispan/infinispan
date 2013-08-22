@@ -1,13 +1,16 @@
 package org.infinispan.commands.write;
 
-import java.util.*;
-
 import org.infinispan.atomic.Delta;
 import org.infinispan.atomic.DeltaCompositeKey;
 import org.infinispan.commands.Visitor;
 import org.infinispan.context.Flag;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.lifecycle.ComponentStatus;
+
+import java.util.Collection;
+import java.util.EnumSet;
+import java.util.List;
+import java.util.Set;
 
 
 /**
@@ -140,4 +143,12 @@ public class ApplyDeltaCommand extends AbstractDataWriteCommand {
       return false;
    }
 
+   @Override
+   public boolean isIgnorePreviousValue() {
+      return false;
+   }
+
+   @Override
+   public void setIgnorePreviousValue(boolean ignorePreviousValue) {
+   }
 }

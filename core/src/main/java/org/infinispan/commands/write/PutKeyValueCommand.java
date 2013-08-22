@@ -72,21 +72,15 @@ public class PutKeyValueCommand extends AbstractDataWriteCommand implements Meta
       //possible as in certain situations (e.g. when locking delegation is used) we don't wrap
       if (e == null) return null;
 
-      if (putIfAbsent && ctx.isInTxScope() && !ctx.isOriginLocal()) {
-         if (ignorePreviousValue) {
-            return performPut(e, ctx);
-         } else {
-            return e.getValue();
+      Object entryValue = e.getValue();
+      if (putIfAbsent && !ignorePreviousValue) {
+         if (entryValue != null && !e.isRemoved()) {
+            successful = false;
+            return entryValue;
          }
       }
 
-      Object entryValue = e.getValue();
-      if (entryValue != null && putIfAbsent && !e.isRemoved()) {
-         successful = false;
-         return entryValue;
-      } else {
-         return performPut(e, ctx);
-      }
+      return performPut(e, ctx);
    }
 
    @Override
@@ -163,6 +157,7 @@ public class PutKeyValueCommand extends AbstractDataWriteCommand implements Meta
             .append(", putIfAbsent=").append(putIfAbsent)
             .append(", metadata=").append(metadata)
             .append(", successful=").append(successful)
+            .append(", ignorePreviousValue=").append(ignorePreviousValue)
             .append("}")
             .toString();
    }
@@ -177,6 +172,12 @@ public class PutKeyValueCommand extends AbstractDataWriteCommand implements Meta
       return putIfAbsent;
    }
 
+   @Override
+   public boolean isIgnorePreviousValue() {
+      return ignorePreviousValue;
+   }
+
+   @Override
    public void setIgnorePreviousValue(boolean ignorePreviousValue) {
       this.ignorePreviousValue = ignorePreviousValue;
    }
@@ -204,6 +205,6 @@ public class PutKeyValueCommand extends AbstractDataWriteCommand implements Meta
          }
       }
       e.setChanged(true);
-      return o;
+      return !ignorePreviousValue ? o : null;
    }
 }
