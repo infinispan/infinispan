@@ -1,13 +1,10 @@
 package org.infinispan.interceptors.distribution;
 
-import org.infinispan.commands.read.GetKeyValueCommand;
 import org.infinispan.container.DataContainer;
 import org.infinispan.container.entries.InternalCacheEntry;
 import org.infinispan.interceptors.locking.ClusteringDependentLogic;
 import org.infinispan.metadata.Metadata;
-import org.infinispan.remoting.transport.Address;
 import org.infinispan.statetransfer.StateTransferLock;
-import org.infinispan.statetransfer.StateTransferManager;
 import org.jboss.logging.Logger;
 
 import java.util.concurrent.ExecutionException;
@@ -23,9 +20,9 @@ import java.util.concurrent.locks.AbstractQueuedSynchronizer;
 * @author wburns
 * @since 6.0
 */
-class L1WriteSynchronizer {
+public class L1WriteSynchronizer {
    private static final Logger log = Logger.getLogger(L1WriteSynchronizer.class);
-   private final L1ReadSync sync = new L1ReadSync();
+   private final L1WriteSync sync = new L1WriteSync();
 
    private final long l1Lifespan;
    private final DataContainer dc;
@@ -40,7 +37,7 @@ class L1WriteSynchronizer {
       this.cdl = cdl;
    }
 
-   private static class L1ReadSync extends AbstractQueuedSynchronizer {
+   private static class L1WriteSync extends AbstractQueuedSynchronizer {
       private static final int READY = 0;
       private static final int RUNNING = 1;
       private static final int SKIP = 2;
@@ -163,12 +160,13 @@ class L1WriteSynchronizer {
     * Attempts to the L1 update and set the value.  If the L1 update was marked as being skipped this will instead
     * just set the value to release blockers
     */
-   public void runL1UpdateIfPossible(Object value, GetKeyValueCommand command) {
+   public void runL1UpdateIfPossible(InternalCacheEntry ice) {
+      Object value = null;
       try {
-         InternalCacheEntry ice;
-         if ((ice = command.getRemotelyFetchedValue()) != null) {
+         if (ice != null) {
+            value = ice.getValue();
             Object key;
-            if (sync.attemptUpdateToRunning() && !dc.containsKey((key = command.getKey()))) {
+            if (sync.attemptUpdateToRunning() && !dc.containsKey((key = ice.getKey()))) {
                // Acquire the transfer lock to ensure that we don't have a rehash and change to become an owner,
                // note we check the ownership in following if
                stateTransferLock.acquireSharedTopologyLock();

@@ -13,6 +13,7 @@ import org.infinispan.context.NonTransactionalInvocationContextContainer;
 import org.infinispan.context.TransactionalInvocationContextContainer;
 import org.infinispan.distribution.L1Manager;
 import org.infinispan.distribution.L1ManagerImpl;
+import org.infinispan.distribution.RemoteValueRetrievedListener;
 import org.infinispan.eviction.ActivationManager;
 import org.infinispan.eviction.ActivationManagerImpl;
 import org.infinispan.eviction.EvictionManager;
@@ -57,7 +58,8 @@ import static org.infinispan.commons.util.Util.getInstance;
                               TransactionCoordinator.class, RecoveryAdminOperations.class, StateTransferLock.class,
                               ClusteringDependentLogic.class, LockContainer.class,
                               L1Manager.class, TransactionFactory.class, BackupSender.class,
-                              TotalOrderManager.class, ByteBufferFactory.class, MarshalledEntryFactory.class})
+                              TotalOrderManager.class, ByteBufferFactory.class, MarshalledEntryFactory.class,
+                              RemoteValueRetrievedListener.class})
 public class EmptyConstructorNamedCacheFactory extends AbstractNamedCacheComponentFactory implements AutoInstantiableFactory {
 
    @Override
@@ -119,8 +121,11 @@ public class EmptyConstructorNamedCacheFactory extends AbstractNamedCacheCompone
             return (T) new TotalOrderManager();
          } else if (componentType.equals(ByteBufferFactory.class)) {
             return (T) new ByteBufferFactoryImpl();
-         }else if (componentType.equals(MarshalledEntryFactory.class)) {
+         } else if (componentType.equals(MarshalledEntryFactory.class)) {
             return (T) new MarshalledEntryFactoryImpl();
+         } else if (componentType.equals(RemoteValueRetrievedListener.class)) {
+            // L1Manager is currently only listener for remotely retrieved values
+            return (T) componentRegistry.getComponent(L1Manager.class);
          }
       }
 

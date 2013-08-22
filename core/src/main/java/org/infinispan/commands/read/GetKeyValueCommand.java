@@ -100,6 +100,7 @@ public class GetKeyValueCommand extends AbstractDataCommand {
    /**
     * If the cache needs to go remotely in order to obtain the value associated to this key, then the remote value
     * is stored in this field.
+    * TODO: this method should be able to removed with the refactoring from ISPN-2177
     */
    public InternalCacheEntry getRemotelyFetchedValue() {
       return remotelyFetchedValue;

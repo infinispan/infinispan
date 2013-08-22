@@ -12,6 +12,8 @@ import org.testng.annotations.Test;
 import javax.transaction.RollbackException;
 import javax.transaction.Transaction;
 
+import static org.testng.AssertJUnit.*;
+
 @Test(testName = "container.versioning.DistWriteSkewTest", groups = "functional")
 @CleanupAfterMethod
 public class DistWriteSkewTest extends AbstractClusteredWriteSkewTest {
@@ -38,31 +40,31 @@ public class DistWriteSkewTest extends AbstractClusteredWriteSkewTest {
       cache1.put(hello, "world 1");
 
       tm(1).begin();
-      assert "world 1".equals(cache1.get(hello));
+      assertEquals("world 1", cache1.get(hello));
       Transaction t = tm(1).suspend();
 
       // Induce a write skew
       cache3.put(hello, "world 3");
 
-      assert cache0.get(hello).equals("world 3");
-      assert cache1.get(hello).equals("world 3");
-      assert cache2.get(hello).equals("world 3");
-      assert cache3.get(hello).equals("world 3");
+      assertEquals("world 3", cache0.get(hello));
+      assertEquals("world 3", cache1.get(hello));
+      assertEquals("world 3", cache2.get(hello));
+      assertEquals("world 3", cache3.get(hello));
 
       tm(1).resume(t);
       cache1.put(hello, "world 2");
 
       try {
          tm(1).commit();
-         assert false : "Transaction should roll back";
+         fail("Transaction should roll back");
       } catch (RollbackException re) {
          // expected
       }
 
-      assert "world 3".equals(cache0.get(hello));
-      assert "world 3".equals(cache1.get(hello));
-      assert "world 3".equals(cache2.get(hello));
-      assert "world 3".equals(cache3.get(hello));
+      assertEquals("world 3", cache0.get(hello));
+      assertEquals("world 3", cache1.get(hello));
+      assertEquals("world 3", cache2.get(hello));
+      assertEquals("world 3", cache3.get(hello));
    }
 
    public void testWriteSkewOnNonOwner() throws Exception {
@@ -93,25 +95,25 @@ public class DistWriteSkewTest extends AbstractClusteredWriteSkewTest {
       // Induce a write skew
       cache(nonOwners[1]).put(hello, "world 3");
 
-      assert cache0.get(hello).equals("world 3");
-      assert cache1.get(hello).equals("world 3");
-      assert cache2.get(hello).equals("world 3");
-      assert cache3.get(hello).equals("world 3");
+      assertEquals("world 3", cache0.get(hello));
+      assertEquals("world 3", cache1.get(hello));
+      assertEquals("world 3", cache2.get(hello));
+      assertEquals("world 3", cache3.get(hello));
 
       tm(nonOwners[0]).resume(t);
       cache(nonOwners[0]).put(hello, "world 2");
 
       try {
          tm(nonOwners[0]).commit();
-         assert false : "Transaction should roll back";
+         fail("Transaction should roll back");
       } catch (RollbackException re) {
          // expected
       }
 
-      assert "world 3".equals(cache0.get(hello));
-      assert "world 3".equals(cache1.get(hello));
-      assert "world 3".equals(cache2.get(hello));
-      assert "world 3".equals(cache3.get(hello));
+      assertEquals("world 3", cache0.get(hello));
+      assertEquals("world 3", cache1.get(hello));
+      assertEquals("world 3", cache2.get(hello));
+      assertEquals("world 3", cache3.get(hello));
    }
 
    public void testWriteSkewMultiEntries() throws Exception {
@@ -133,9 +135,9 @@ public class DistWriteSkewTest extends AbstractClusteredWriteSkewTest {
       tm(1).begin();
       cache1.put(hello2, "world 2");
       cache1.put(hello3, "world 2");
-      assert "world 1".equals(cache1.get(hello));
-      assert "world 2".equals(cache1.get(hello2));
-      assert "world 2".equals(cache1.get(hello3));
+      assertEquals("world 1", cache1.get(hello));
+      assertEquals("world 2", cache1.get(hello2));
+      assertEquals("world 2", cache1.get(hello3));
       Transaction t = tm(1).suspend();
 
       // Induce a write skew
@@ -143,9 +145,9 @@ public class DistWriteSkewTest extends AbstractClusteredWriteSkewTest {
       cache3.put(hello, "world 3");
 
       for (Cache<Object, Object> c : caches()) {
-         assert "world 3".equals(c.get(hello));
-         assert "world 1".equals(c.get(hello2));
-         assert "world 1".equals(c.get(hello3));
+         assertEquals("world 3", c.get(hello));
+         assertEquals("world 1", c.get(hello2));
+         assertEquals("world 1", c.get(hello3));
       }
 
       tm(1).resume(t);
@@ -153,15 +155,15 @@ public class DistWriteSkewTest extends AbstractClusteredWriteSkewTest {
 
       try {
          tm(1).commit();
-         assert false : "Transaction should roll back";
+         fail("Transaction should roll back");
       } catch (RollbackException re) {
          // expected
       }
 
       for (Cache<Object, Object> c : caches()) {
-         assert "world 3".equals(c.get(hello));
-         assert "world 1".equals(c.get(hello2));
-         assert "world 1".equals(c.get(hello3));
+         assertEquals("world 3", c.get(hello));
+         assertEquals("world 1", c.get(hello2));
+         assertEquals("world 1", c.get(hello3));
       }
    }
 
@@ -171,36 +173,36 @@ public class DistWriteSkewTest extends AbstractClusteredWriteSkewTest {
       Cache<Object, Object> cache2 = cache(2);
       Cache<Object, Object> cache3 = cache(3);
 
-      MagicKey hello = new MagicKey("hello", cache(2));
+      MagicKey hello = new MagicKey("hello", cache2, cache1);
 
       // Auto-commit is true
       cache0.put(hello, "world");
 
       tm(0).begin();
-      assert "world".equals(cache0.get(hello));
+      assertEquals("world", cache0.get(hello));
       Transaction t = tm(0).suspend();
 
       cache1.remove(hello);
 
-      assert null == cache0.get(hello);
-      assert null == cache1.get(hello);
-      assert null == cache2.get(hello);
-      assert null == cache3.get(hello);
+      assertNull(cache0.get(hello));
+      assertNull(cache1.get(hello));
+      assertNull(cache2.get(hello));
+      assertNull(cache3.get(hello));
 
       tm(0).resume(t);
       cache0.put(hello, "world2");
 
       try {
          tm(0).commit();
-         assert false : "This transaction should roll back";
+         fail("This transaction should roll back");
       } catch (RollbackException expected) {
          // expected
       }
 
-      assert null == cache0.get(hello);
-      assert null == cache1.get(hello);
-      assert null == cache2.get(hello);
-      assert null == cache3.get(hello);
+      assertNull(cache0.get(hello));
+      assertNull(cache1.get(hello));
+      assertNull(cache2.get(hello));
+      assertNull(cache3.get(hello));
    }
 
    public void testResendPrepare() throws Exception {
@@ -216,31 +218,31 @@ public class DistWriteSkewTest extends AbstractClusteredWriteSkewTest {
 
       // create a write skew
       tm(2).begin();
-      assert "world".equals(cache2.get(hello));
+      assertEquals("world", cache2.get(hello));
       Transaction t = tm(2).suspend();
 
       // Implicit tx.  Prepare should be retried.
       cache(0).put(hello, "world 2");
 
-      assert cache0.get(hello).equals("world 2");
-      assert cache1.get(hello).equals("world 2");
-      assert cache2.get(hello).equals("world 2");
-      assert cache3.get(hello).equals("world 2");
+      assertEquals("world 2", cache0.get(hello));
+      assertEquals("world 2", cache1.get(hello));
+      assertEquals("world 2", cache2.get(hello));
+      assertEquals("world 2", cache3.get(hello));
 
       tm(2).resume(t);
       cache2.put(hello, "world 3");
 
       try {
          tm(2).commit();
-         assert false : "This transaction should roll back";
+         fail("This transaction should roll back");
       } catch (RollbackException expected) {
          // expected
       }
 
-      assert cache0.get(hello).equals("world 2");
-      assert cache1.get(hello).equals("world 2");
-      assert cache2.get(hello).equals("world 2");
-      assert cache3.get(hello).equals("world 2");
+      assertEquals("world 2", cache0.get(hello));
+      assertEquals("world 2", cache1.get(hello));
+      assertEquals("world 2", cache2.get(hello));
+      assertEquals("world 2", cache3.get(hello));
    }
 
    public void testLocalOnlyPut() {
