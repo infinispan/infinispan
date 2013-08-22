@@ -6,7 +6,7 @@ import java.util.Set;
 
 import org.infinispan.Cache;
 import org.infinispan.container.entries.InternalCacheEntry;
-import org.infinispan.commons.marshall.StreamingMarshaller;
+import org.infinispan.marshall.StreamingMarshaller;
 import org.infinispan.util.concurrent.locks.StripedLock;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
@@ -40,7 +40,7 @@ public abstract class LockSupportCacheStore<L> extends AbstractCacheStore {
    private LockSupportCacheStoreConfig config;
 
    @Override
-   public void init(CacheLoaderConfig config, Cache<?, ?> cache, StreamingMarshaller m) throws CacheLoaderException {
+   public void init(CacheLoaderConfig config, Cache cache, StreamingMarshaller m) throws CacheLoaderException {
       super.init(config, cache, m);
       this.config = (LockSupportCacheStoreConfig) config;
    }

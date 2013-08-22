@@ -24,8 +24,8 @@ import org.infinispan.interceptors.base.CommandInterceptor;
 import org.infinispan.jmx.MBeanServerLookup;
 import org.infinispan.loaders.cluster.ClusterCacheLoader;
 import org.infinispan.loaders.file.FileCacheStore;
-import org.infinispan.loaders.spi.CacheLoader;
-import org.infinispan.loaders.spi.CacheStore;
+import org.infinispan.loaders.CacheLoader;
+import org.infinispan.loaders.CacheStore;
 import org.infinispan.remoting.ReplicationQueue;
 import org.infinispan.remoting.transport.Transport;
 import org.infinispan.transaction.LockingMode;
@@ -705,7 +705,7 @@ public class Parser60 implements ConfigurationParser {
 
    private void parseLoader(final XMLExtendedStreamReader reader, final ConfigurationBuilderHolder holder) throws XMLStreamException {
      ConfigurationBuilder builder = holder.getCurrentConfigurationBuilder();
-      CacheLoader loader = null;
+      Object loader = null;
       Boolean fetchPersistentState = null;
       Boolean ignoreModifications = null;
       Boolean purgeOnStartup = null;
@@ -771,10 +771,12 @@ public class Parser60 implements ConfigurationParser {
          } else if (loader instanceof ClusterCacheLoader) {
             ClusterCacheLoaderConfigurationBuilder cclb = builder.loaders().addClusterCacheLoader();
             parseLoaderChildren(reader, cclb);
-         } else {
+         } else if (loader instanceof CacheLoader){
             LegacyLoaderConfigurationBuilder lcb = builder.loaders().addLoader();
-            lcb.cacheLoader(loader);
+            lcb.cacheLoader((CacheLoader) loader);
             parseLoaderChildren(reader, lcb);
+         } else {
+            throw log.invalidCacheLoaderClass(loader.getClass().getName());
          }
       }
 
@@ -782,7 +784,7 @@ public class Parser60 implements ConfigurationParser {
 
    private void parseStore(final XMLExtendedStreamReader reader, final ConfigurationBuilderHolder holder) throws XMLStreamException {
       ConfigurationBuilder builder = holder.getCurrentConfigurationBuilder();
-      CacheStore store = null;
+      Object store = null;
       Boolean fetchPersistentState = null;
       Boolean ignoreModifications = null;
       Boolean purgeOnStartup = null;
@@ -829,9 +831,9 @@ public class Parser60 implements ConfigurationParser {
             if (purgeSynchronously != null)
                fcscb.purgeSynchronously(purgeSynchronously);
             parseStoreChildren(reader, fcscb);
-         } else {
+         } else if (store instanceof CacheStore) {
             LegacyStoreConfigurationBuilder scb = builder.loaders().addStore();
-            scb.cacheStore(store);
+            scb.cacheStore((CacheStore) store);
             if (fetchPersistentState != null)
                scb.fetchPersistentState(fetchPersistentState);
             if (ignoreModifications != null)
@@ -843,6 +845,8 @@ public class Parser60 implements ConfigurationParser {
             if (purgeSynchronously != null)
                scb.purgeSynchronously(purgeSynchronously);
             parseStoreChildren(reader, scb);
+         } else {
+            throw log.invalidCacheLoaderClass(store.getClass().getName());
          }
       }
    }

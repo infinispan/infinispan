@@ -39,8 +39,8 @@ import org.infinispan.interceptors.base.CommandInterceptor;
 import org.infinispan.jmx.MBeanServerLookup;
 import org.infinispan.loaders.cluster.ClusterCacheLoader;
 import org.infinispan.loaders.file.FileCacheStore;
-import org.infinispan.loaders.spi.CacheLoader;
-import org.infinispan.loaders.spi.CacheStore;
+import org.infinispan.loaders.CacheLoader;
+import org.infinispan.loaders.CacheStore;
 import org.infinispan.commons.CacheConfigurationException;
 import org.infinispan.commons.executors.ExecutorFactory;
 import org.infinispan.commons.marshall.AdvancedExternalizer;
@@ -400,7 +400,7 @@ public class Parser51 implements ConfigurationParser {
    }
 
    private void parseLoader(XMLStreamReader reader, ConfigurationBuilder builder, ClassLoader cl) throws XMLStreamException {
-      CacheLoader loader = null;
+      Object loader = null;
       Boolean fetchPersistentState = null;
       Boolean ignoreModifications = null;
       Boolean purgeOnStartup = null;
@@ -464,10 +464,12 @@ public class Parser51 implements ConfigurationParser {
          } else if (loader instanceof ClusterCacheLoader) {
             ClusterCacheLoaderConfigurationBuilder cclb = builder.loaders().addClusterCacheLoader();
             parseLoaderChildren(reader, cclb);
-         } else {
+         } else if (loader instanceof CacheLoader){
             LegacyLoaderConfigurationBuilder lcb = builder.loaders().addLoader();
-            lcb.cacheLoader(loader);
+            lcb.cacheLoader((CacheLoader) loader);
             parseLoaderChildren(reader, lcb);
+         } else {
+            throw log.invalidCacheLoaderClass(loader.getClass().getName());
          }
       }
 

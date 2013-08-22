@@ -1,7 +1,9 @@
 package org.infinispan.loaders;
 
 import org.infinispan.Cache;
-import org.infinispan.commons.marshall.StreamingMarshaller;
+import org.infinispan.marshall.LegacyMarshallerAdapter;
+import org.infinispan.marshall.LegacyStreamingMarshallerAdapter;
+import org.infinispan.marshall.StreamingMarshaller;
 import org.infinispan.util.TimeService;
 
 /**
@@ -28,10 +30,10 @@ public abstract class AbstractCacheLoader implements CacheLoader {
    }
 
    @Override
-   public void init(CacheLoaderConfig config, Cache<?, ?> cache, StreamingMarshaller m) throws CacheLoaderException {
+   public void init(CacheLoaderConfig config, Cache cache, StreamingMarshaller m) throws CacheLoaderException {
       this.marshaller = m;
       if (config == null) throw new IllegalStateException("Null config!!!");
-      this.cache = (Cache<Object, Object>) cache;
+      this.cache = cache;
       this.timeService = cache.getAdvancedCache().getComponentRegistry().getTimeService();
    }
 }
