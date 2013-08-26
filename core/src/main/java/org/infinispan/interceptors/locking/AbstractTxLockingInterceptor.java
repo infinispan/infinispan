@@ -211,7 +211,7 @@ public abstract class AbstractTxLockingInterceptor extends AbstractLockingInterc
       }
    }
 
-   private TimeoutException newTimeoutException(Object key, TxInvocationContext txContext) {                        
+   private TimeoutException newTimeoutException(Object key, TxInvocationContext txContext) {
       return new TimeoutException("Could not acquire lock on " + key + " on behalf of transaction " +
                                        txContext.getGlobalTransaction() + "." + "Lock is being held by " + lockManager.getOwner(key));
    }

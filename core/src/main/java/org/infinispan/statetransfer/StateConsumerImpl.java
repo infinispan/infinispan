@@ -35,17 +35,29 @@ import org.infinispan.transaction.TransactionTable;
 import org.infinispan.transaction.totalorder.TotalOrderLatch;
 import org.infinispan.transaction.totalorder.TotalOrderManager;
 import org.infinispan.transaction.xa.CacheTransaction;
+import org.infinispan.transaction.xa.GlobalTransaction;
 import org.infinispan.util.ReadOnlyDataContainerBackedKeySet;
 import org.infinispan.util.concurrent.ConcurrentHashSet;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.EnumSet;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.concurrent.BlockingDeque;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.LinkedBlockingDeque;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicBoolean;
 import javax.transaction.Transaction;
 import javax.transaction.TransactionManager;
-
-import java.util.*;
-import java.util.concurrent.*;
-import java.util.concurrent.atomic.AtomicBoolean;
 
 import static org.infinispan.context.Flag.*;
 import static org.infinispan.factories.KnownComponentNames.ASYNC_TRANSPORT_EXECUTOR;
@@ -518,11 +530,15 @@ public class StateConsumerImpl implements StateConsumer {
       log.debugf("Applying %d transactions for cache %s transferred from node %s", transactions.size(), cacheName, sender);
       if (isTransactional) {
          for (TransactionInfo transactionInfo : transactions) {
-            CacheTransaction tx = transactionTable.getLocalTransaction(transactionInfo.getGlobalTransaction());
+            GlobalTransaction gtx = transactionInfo.getGlobalTransaction();
+            // Mark the global transaction as remote. Only used for logging, hashCode/equals ignore it.
+            gtx.setRemote(true);
+
+            CacheTransaction tx = transactionTable.getLocalTransaction(gtx);
             if (tx == null) {
-               tx = transactionTable.getRemoteTransaction(transactionInfo.getGlobalTransaction());
+               tx = transactionTable.getRemoteTransaction(gtx);
                if (tx == null) {
-                  tx = transactionTable.getOrCreateRemoteTransaction(transactionInfo.getGlobalTransaction(), transactionInfo.getModifications());
+                  tx = transactionTable.getOrCreateRemoteTransaction(gtx, transactionInfo.getModifications());
                   ((RemoteTransaction) tx).setMissingLookedUpEntries(true);
                }
             }
