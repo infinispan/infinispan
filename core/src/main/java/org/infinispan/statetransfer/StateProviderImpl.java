@@ -218,17 +218,11 @@ public class StateProviderImpl implements StateProvider {
 
       // no need to filter out state transfer generated transactions because there should not be any such transactions running for any of the requested segments
       for (CacheTransaction tx : transactions) {
-                           
          // Skip transactions whose originators left. The topology id check is needed for joiners.
          // Also skip transactions that originates after state transfer starts.
-         if (tx.getTopologyId() <= topologyId || !members.contains(tx.getGlobalTransaction().getAddress()))
+         if (tx.getTopologyId() == topologyId || !members.contains(tx.getGlobalTransaction().getAddress()))
             continue;
 
-         LocalTransaction localTx = null;        
-         if( tx instanceof LocalTransaction ) {
-            localTx = (LocalTransaction)tx;
-         }
-         
          // transfer only locked keys that belong to requested segments
          Set<Object> filteredLockedKeys = new HashSet<Object>();
          Set<Object> lockedKeys = tx.getLockedKeys();
@@ -248,24 +242,23 @@ public class StateProviderImpl implements StateProvider {
             }
          }
          if (!filteredLockedKeys.isEmpty()) {
+            if (trace) log.tracef("Sending transaction %s to new owner %s", tx, destination);
             List<WriteCommand> txModifications = tx.getModifications();
             WriteCommand[] modifications = null;
             if (!txModifications.isEmpty()) {
                modifications = txModifications.toArray(new WriteCommand[txModifications.size()]);
-            }                                                            
-            if (trace) {
-               log.tracef("Tx %s has been requested by destination: %s", tx, destination ); 
             }
-            
-            // ISPN-3389: If the key for a LocalTx is moving owners, we need to account for it so it doesn't
-            // become stale in the new owner's txTable
-            if( localTx != null ) {
+
+            // If a key affected by a local transaction has a new owner, we must add the new owner to the transaction's
+            // affected nodes set, so that the it receives the commit/rollback command. See ISPN-3389.
+            if(tx instanceof LocalTransaction) {
+               LocalTransaction localTx = (LocalTransaction) tx;
                localTx.locksAcquired(Collections.singleton(destination));
-               if (trace) {
-                  log.tracef("Tx %s has acquired keys %s.  Must migrate to destination: %s", tx, filteredLockedKeys, destination ); 
-               }               
-            }            
-            transactionsToTransfer.add(new TransactionInfo(tx.getGlobalTransaction(), tx.getTopologyId(), modifications, filteredLockedKeys));
+               if (trace) log.tracef("Adding affected node %s to transferred transaction %s (keys %s)", destination,
+                     tx.getGlobalTransaction(), filteredLockedKeys);
+            }
+            transactionsToTransfer.add(new TransactionInfo(tx.getGlobalTransaction(), tx.getTopologyId(),
+                  modifications, filteredLockedKeys));
          }
       }
    }

@@ -96,6 +96,14 @@ public class StateRequestCommand extends BaseRpcCommand {
       return type;
    }
 
+   public int getTopologyId() {
+      return topologyId;
+   }
+
+   public Set<Integer> getSegments() {
+      return segments;
+   }
+
    @Override
    public byte getCommandId() {
       return COMMAND_ID;
