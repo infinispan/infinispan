@@ -44,6 +44,7 @@ public class DistTotalOrderL1WriteSkewTest extends DistL1WriteSkewTest {
 
    @Override
    protected void decorate(ConfigurationBuilder builder) {
+      super.decorate(builder);
       builder.transaction().transactionProtocol(TransactionProtocol.TOTAL_ORDER)
             .recovery().disable();
       builder.locking().isolationLevel(IsolationLevel.REPEATABLE_READ).writeSkewCheck(true)
