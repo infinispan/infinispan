@@ -56,6 +56,8 @@
       <!-- Versions for dependencies -->
       <version.aesh>0.33.1</version.aesh>
       <version.antlr>3.4</version.antlr>
+      <version.gnu.getopt>1.0.13</version.gnu.getopt>
+      <version.hibernate.search>4.4.0.Alpha1</version.hibernate.search>
       <version.jboss.marshalling>1.3.15.GA</version.jboss.marshalling>
       <version.jboss.logging>3.1.1.GA</version.jboss.logging>
       <version.jgroups>3.4.0.Alpha1</version.jgroups>
@@ -63,8 +65,9 @@
       <version.jta>1.0.0.Final</version.jta>
       <version.netty>3.6.5.Final</version.netty>
       <version.osgi>4.3.0</version.osgi>
-      <version.rhq>4.2.0</version.rhq>
+      <version.rhq>4.4.0</version.rhq>
       <version.scala>2.10.2</version.scala>
+      <version.xstream>1.4.1</version.xstream>
    </properties>
 
    <distributionManagement>
@@ -176,9 +179,9 @@
          </dependency>
          <!-- Infinispan core modules dependencies -->
          <dependency>
-            <groupId>io.netty</groupId>
-            <artifactId>netty</artifactId>
-            <version>${version.netty}</version>
+            <groupId>gnu-getopt</groupId>
+            <artifactId>getopt</artifactId>
+            <version>${version.gnu.getopt}</version>
          </dependency>
          <dependency>
             <groupId>org.antlr</groupId>
@@ -225,6 +228,7 @@
             <artifactId>org.osgi.core</artifactId>
             <version>${version.osgi}</version>
          </dependency>
+         <!-- Infinispan RHQ module dependencies -->
          <dependency>
             <groupId>org.rhq</groupId>
             <artifactId>rhq-core-domain</artifactId>
@@ -247,9 +251,46 @@
             <version>${version.rhq}</version>
          </dependency>
          <dependency>
+            <groupId>org.rhq</groupId>
+            <artifactId>rhq-jboss-as-7-plugin</artifactId>
+            <version>${version.rhq}</version>
+         </dependency>
+         <dependency>
+            <groupId>org.rhq</groupId>
+            <artifactId>rhq-core-native-system</artifactId>
+            <version>${version.rhq}</version>
+         </dependency>
+         <!-- Infinispan Query module dependencies -->
+         <dependency>
+            <groupId>org.hibernate</groupId>
+            <artifactId>hibernate-search-engine</artifactId>
+            <version>${version.hibernate.search}</version>
+         </dependency>
+         <dependency>
+            <groupId>org.hibernate</groupId>
+            <artifactId>hibernate-search-analyzers</artifactId>
+            <version>${version.hibernate.search}</version>
+         </dependency>
+         <dependency>
+            <groupId>org.hibernate</groupId>
+            <artifactId>hibernate-search-infinispan</artifactId>
+            <version>${version.hibernate.search}</version>
+         </dependency>
+         <!-- Infinispan Protocols module dependencies -->
+         <dependency>
+            <groupId>io.netty</groupId>
+            <artifactId>netty</artifactId>
+            <version>${version.netty}</version>
+         </dependency>
+         <dependency>
             <groupId>org.scala-lang</groupId>
             <artifactId>scala-library</artifactId>
             <version>${version.scala}</version>
+         </dependency>
+         <dependency>
+            <groupId>com.thoughtworks.xstream</groupId>
+            <artifactId>xstream</artifactId>
+            <version>${version.xstream}</version>
          </dependency>
       </dependencies>
    </dependencyManagement>

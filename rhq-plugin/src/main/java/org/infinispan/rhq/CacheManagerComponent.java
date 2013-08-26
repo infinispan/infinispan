@@ -24,7 +24,7 @@ import org.rhq.core.pluginapi.inventory.ResourceContext;
 import org.rhq.core.pluginapi.operation.OperationResult;
 import org.rhq.plugins.jmx.JMXServerComponent;
 import org.rhq.plugins.jmx.MBeanResourceComponent;
-import org.rhq.plugins.jmx.ObjectNameQueryUtility;
+import org.rhq.plugins.jmx.util.ObjectNameQueryUtility;
 
 /**
  * The component class for the Infinispan manager
