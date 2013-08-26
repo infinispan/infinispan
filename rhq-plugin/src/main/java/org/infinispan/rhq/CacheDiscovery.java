@@ -7,7 +7,7 @@ import org.mc4j.ems.connection.bean.EmsBean;
 import org.rhq.core.pluginapi.inventory.DiscoveredResourceDetails;
 import org.rhq.core.pluginapi.inventory.ResourceDiscoveryContext;
 import org.rhq.plugins.jmx.MBeanResourceDiscoveryComponent;
-import org.rhq.plugins.jmx.ObjectNameQueryUtility;
+import org.rhq.plugins.jmx.util.ObjectNameQueryUtility;
 
 import javax.management.ObjectName;
 import java.util.HashSet;
