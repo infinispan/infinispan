@@ -32,14 +32,6 @@ public class TotalOrderVersionedDistributionInterceptor extends VersionedDistrib
    private static final Log log = LogFactory.getLog(TotalOrderVersionedDistributionInterceptor.class);
 
    @Override
-   public Object visitPrepareCommand(TxInvocationContext ctx, PrepareCommand command) throws Throwable {
-      //this map is only populated after locks are acquired. However, no locks are acquired when total order is enabled
-      //so we need to populate it here
-      ctx.addAllAffectedKeys(command.getAffectedKeys());
-      return super.visitPrepareCommand(ctx, command);
-   }
-
-   @Override
    public Object visitRollbackCommand(TxInvocationContext ctx, RollbackCommand command) throws Throwable {
       if (Configurations.isOnePhaseTotalOrderCommit(cacheConfiguration) || !ctx.hasModifications() ||
             !shouldTotalOrderRollbackBeInvokedRemotely(ctx)) {
@@ -93,5 +85,10 @@ public class TotalOrderVersionedDistributionInterceptor extends VersionedDistrib
    @Override
    protected void lockAndWrap(InvocationContext ctx, Object key, InternalCacheEntry ice, FlagAffectedCommand command) throws InterruptedException {
       entryFactory.wrapEntryForPut(ctx, key, ice, false, command, true);
+   }
+
+   @Override
+   protected Log getLog() {
+      return log;
    }
 }
