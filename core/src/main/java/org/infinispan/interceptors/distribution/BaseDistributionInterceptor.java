@@ -159,12 +159,11 @@ public abstract class BaseDistributionInterceptor extends ClusteringInterceptor 
             log.tracef("I'm not the primary owner, so sending the command to the primary owner(%s) in order to be forwarded", primaryOwner);
             Object localResult = invokeNextInterceptor(ctx, command);
             boolean isSyncForwarding = isSync || isNeedReliableReturnValues(command);
-            Map<Address, Response> addressResponseMap = rpcManager.invokeRemotely(Collections.singletonList(primaryOwner), command,
-                  rpcManager.getDefaultRpcOptions(isSyncForwarding));
-            if (!isSyncForwarding) return localResult;
 
+            Map<Address, Response> addressResponseMap;
             try {
-               return getResponseFromPrimaryOwner(primaryOwner, addressResponseMap);
+               addressResponseMap = rpcManager.invokeRemotely(Collections.singletonList(primaryOwner), command,
+                     rpcManager.getDefaultRpcOptions(isSyncForwarding));
             } catch (RemoteException e) {
                Throwable ce = e;
                while (ce instanceof RemoteException) {
@@ -177,6 +176,9 @@ public abstract class BaseDistributionInterceptor extends ClusteringInterceptor 
                }
                throw e;
             }
+            if (!isSyncForwarding) return localResult;
+
+            return getResponseFromPrimaryOwner(primaryOwner, addressResponseMap);
          }
       }
    }

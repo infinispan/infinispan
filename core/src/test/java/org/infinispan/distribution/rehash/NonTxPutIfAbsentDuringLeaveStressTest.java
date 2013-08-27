@@ -5,6 +5,7 @@ import org.infinispan.commons.CacheException;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.remoting.RemoteException;
+import org.infinispan.remoting.transport.jgroups.SuspectException;
 import org.infinispan.statetransfer.OutdatedTopologyException;
 import org.infinispan.test.MultipleCacheManagersTest;
 import org.infinispan.test.fwk.CleanupAfterMethod;
@@ -23,7 +24,7 @@ import static org.testng.AssertJUnit.assertEquals;
  *
  * @author Dan Berindei
  */
-@Test(groups = "functional", testName = "distribution.rehash.NonTxPutIfAbsentDuringJoinStressTest")
+@Test(groups = "functional", testName = "distribution.rehash.NonTxPutIfAbsentDuringLeaveStressTest")
 @CleanupAfterMethod
 public class NonTxPutIfAbsentDuringLeaveStressTest extends MultipleCacheManagersTest {
 
@@ -72,7 +73,8 @@ public class NonTxPutIfAbsentDuringLeaveStressTest extends MultipleCacheManagers
                   while (ce instanceof RemoteException) {
                      ce = ce.getCause();
                   }
-                  if (!(ce instanceof OutdatedTopologyException))
+                  // Retry on OutdatedTopologyException and SuspectException, rethrow any other exception
+                  if (!(ce instanceof OutdatedTopologyException) && !(ce instanceof SuspectException))
                      throw e;
 
                   putRetryOnSuspect(cache, key, value);
