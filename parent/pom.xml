@@ -148,8 +148,10 @@
       <version.xstream>1.4.1</version.xstream>
       <version.javassist>3.15.0-GA</version.javassist>
       <version.maven.animal.sniffer>1.9</version.maven.animal.sniffer>
+      <version.maven.buildhelper>1.8</version.maven.buildhelper>
       <version.maven.bundle>2.4.0</version.maven.bundle>
       <version.maven.source>2.2.1</version.maven.source>
+      <version.maven.genjavadoc>0.5</version.maven.genjavadoc>
       <version.maven.scala>2.15.2</version.maven.scala>
       <version.maven.surefire>2.14.1</version.maven.surefire>
       <version.maven.invoker>1.8</version.maven.invoker>
@@ -1003,6 +1005,11 @@
             </plugin>
             <plugin>
                <groupId>org.codehaus.mojo</groupId>
+               <artifactId>build-helper-maven-plugin</artifactId>
+               <version>${version.maven.buildhelper}</version>
+            </plugin>
+            <plugin>
+               <groupId>org.codehaus.mojo</groupId>
                <artifactId>exec-maven-plugin</artifactId>
                <version>1.2.1</version>
             </plugin>
@@ -1762,6 +1769,11 @@
                            <goals>
                               <goal>testCompile</goal>
                            </goals>
+                           <configuration>
+                              <args>
+                                 <arg>-P:genjavadoc:out=${project.build.directory}/genjavadoctest</arg>
+                              </args>
+                           </configuration>
                         </execution>
                         <execution>
                            <phase>process-resources</phase>
@@ -1774,6 +1786,16 @@
                         <jvmArgs>
                            <jvmArg>-Xmx256m</jvmArg>
                         </jvmArgs>
+                        <args>
+                           <arg>-P:genjavadoc:out=${project.parent.build.directory}/genjavadoc</arg>
+                        </args>
+                        <compilerPlugins>
+                           <compilerPlugin>
+                              <groupId>com.typesafe.genjavadoc</groupId>
+                              <artifactId>genjavadoc-plugin_2.10.2</artifactId>
+                              <version>${version.maven.genjavadoc}</version>
+                           </compilerPlugin>
+                        </compilerPlugins>
                      </configuration>
                   </plugin>
                </plugins>
@@ -1810,6 +1832,11 @@
                            <goals>
                               <goal>testCompile</goal>
                            </goals>
+                           <configuration>
+                              <args>
+                                 <arg>-P:genjavadoc:out=${project.build.directory}/genjavadoctest</arg>
+                              </args>
+                           </configuration>
                         </execution>
                         <execution>
                            <phase>process-resources</phase>
@@ -1823,6 +1850,16 @@
                            <jvmArg>-Xmx256m</jvmArg>
                            <jvmArg>-XX:+UseCompressedOops</jvmArg>
                         </jvmArgs>
+                        <args>
+                           <arg>-P:genjavadoc:out=${project.build.directory}/genjavadoc</arg>
+                        </args>
+                        <compilerPlugins>
+                           <compilerPlugin>
+                              <groupId>com.typesafe.genjavadoc</groupId>
+                              <artifactId>genjavadoc-plugin_2.10.2</artifactId>
+                              <version>${version.maven.genjavadoc}</version>
+                           </compilerPlugin>
+                        </compilerPlugins>
                      </configuration>
                   </plugin>
                </plugins>
