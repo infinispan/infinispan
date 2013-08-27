@@ -35,6 +35,7 @@ import org.infinispan.server.hotrod.RestSourceMigrator
 import org.infinispan.upgrade.RollingUpgradeManager
 import org.infinispan.Cache
 import org.infinispan.container.entries.MVCCEntry
+import org.infinispan.context.Flag
 
 /**
  * Integration server linking REST requests with Infinispan calls.
@@ -358,7 +359,7 @@ class Server(@Context request: Request, @Context servletContext: ServletContext,
          if (request.getMethod == "POST" && cache.containsKey(key)) {
             Response.status(Status.CONFLICT).build()
          } else {
-            manager.getInternalEntry(cacheName, key) match {
+            manager.getInternalEntry(cacheName, key, skipListener = true) match {
                case ice: InternalCacheEntry => {
                   val lastMod = lastModified(ice)
                   ice.getMetadata match {
@@ -533,12 +534,17 @@ class ManagerInstance(instance: EmbeddedCacheManager) {
 
    def getEntry(cacheName: String, key: String): Array[Byte] = getCache(cacheName).get(key)
 
-   def getInternalEntry(cacheName: String, key: String): CacheEntry =
-      getCache(cacheName).getCacheEntry(key) match {
+   def getInternalEntry(cacheName: String, key: String, skipListener: Boolean = false): CacheEntry = {
+      val cache =
+         if (skipListener) getCache(cacheName).withFlags(Flag.SKIP_LISTENER_NOTIFICATION)
+         else getCache(cacheName)
+
+      cache.getCacheEntry(key) match {
          case ice: InternalCacheEntry => ice
          case null => null
-         case mvcc: MVCCEntry => getCache(cacheName).getCacheEntry(key)  // FIXME: horrible re-get to be fixed by ISPN-3460
+         case mvcc: MVCCEntry => cache.getCacheEntry(key)  // FIXME: horrible re-get to be fixed by ISPN-3460
       }
+   }
 
    def getNodeName: Address = instance.getAddress
 

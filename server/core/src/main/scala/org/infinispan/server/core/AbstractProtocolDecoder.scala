@@ -17,6 +17,7 @@ import org.jboss.netty.util.CharsetUtil
 import org.infinispan.container.entries.CacheEntry
 import org.infinispan.metadata.{Metadata, EmbeddedMetadata}
 import org.infinispan.container.versioning.{NumericVersionGenerator, EntryVersion, VersionGenerator, NumericVersion}
+import org.infinispan.context.Flag
 
 /**
  * Common abstract decoder for Memcached and Hot Rod protocols.
@@ -213,7 +214,9 @@ abstract class AbstractProtocolDecoder[K, V](transport: NettyTransport)
    }
 
    private def replace: AnyRef = {
-      var prev = cache.get(key)
+      // Avoid listener notification for a simple optimization
+      // on whether a new version should be calculated or not.
+      var prev = cache.withFlags(Flag.SKIP_LISTENER_NOTIFICATION).get(key)
       if (prev != null) { // Generate new version only if key present
          prev = cache.replace(key, createValue(), buildMetadata())
       }
@@ -224,7 +227,7 @@ abstract class AbstractProtocolDecoder[K, V](transport: NettyTransport)
    }
 
    private def replaceIfUnmodified: AnyRef = {
-      val entry = cache.getCacheEntry(key)
+      val entry = cache.withFlags(Flag.SKIP_LISTENER_NOTIFICATION).getCacheEntry(key)
       if (entry != null) {
          // Hacky, but CacheEntry has not been generified
          val prev: V = entry.getValue.asInstanceOf[V]

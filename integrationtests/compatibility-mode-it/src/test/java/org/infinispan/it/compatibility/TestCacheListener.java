@@ -32,6 +32,7 @@ public class TestCacheListener {
    int modifiedCounter = 0;
    int visitedCounter = 0;
 
+   @SuppressWarnings("unused")
    @CacheEntryCreated
    public void handleCreated(CacheEntryCreatedEvent e) {
       if (!e.isPre()) {
@@ -40,6 +41,7 @@ public class TestCacheListener {
       }
    }
 
+   @SuppressWarnings("unused")
    @CacheEntryRemoved
    public void handleRemoved(CacheEntryRemovedEvent e) {
       if (!e.isPre()) {
@@ -48,6 +50,7 @@ public class TestCacheListener {
       }
    }
 
+   @SuppressWarnings("unused")
    @CacheEntryModified
    public void handleModified(CacheEntryModifiedEvent e) {
       if (!e.isPre()) {
@@ -56,6 +59,7 @@ public class TestCacheListener {
       }
    }
 
+   @SuppressWarnings("unused")
    @CacheEntryVisited
    public void handleVisited(CacheEntryVisitedEvent e) {
       if (!e.isPre()) {

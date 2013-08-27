@@ -1,40 +1,21 @@
 package org.infinispan.it.compatibility;
 
 import org.apache.commons.httpclient.HttpClient;
-import org.apache.commons.httpclient.HttpMethod;
 import org.apache.commons.httpclient.methods.ByteArrayRequestEntity;
 import org.apache.commons.httpclient.methods.DeleteMethod;
 import org.apache.commons.httpclient.methods.EntityEnclosingMethod;
 import org.apache.commons.httpclient.methods.GetMethod;
 import org.apache.commons.httpclient.methods.PutMethod;
 import org.infinispan.Cache;
-import org.infinispan.client.hotrod.RemoteCache;
-import org.infinispan.client.hotrod.VersionedValue;
-import org.infinispan.commons.util.concurrent.NotifyingFuture;
 import org.infinispan.configuration.cache.CacheMode;
-import org.infinispan.notifications.Listener;
-import org.infinispan.notifications.cachelistener.annotation.CacheEntryCreated;
-import org.infinispan.notifications.cachelistener.annotation.CacheEntryModified;
-import org.infinispan.notifications.cachelistener.annotation.CacheEntryRemoved;
-import org.infinispan.notifications.cachelistener.annotation.CacheEntryVisited;
-import org.infinispan.notifications.cachelistener.event.CacheEntryCreatedEvent;
-import org.infinispan.notifications.cachelistener.event.CacheEntryModifiedEvent;
-import org.infinispan.notifications.cachelistener.event.CacheEntryRemovedEvent;
-import org.infinispan.notifications.cachelistener.event.CacheEntryVisitedEvent;
 import org.infinispan.test.AbstractInfinispanTest;
 import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
 import java.io.IOException;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.TimeoutException;
 
-import static org.jgroups.util.Util.assertTrue;
-import static org.testng.AssertJUnit.assertEquals;
+import static org.testng.AssertJUnit.*;
 
 /**
  * Test cache listeners bound to embedded cache and operation over REST cache.

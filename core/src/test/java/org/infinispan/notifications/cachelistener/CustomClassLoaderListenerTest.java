@@ -41,7 +41,6 @@ public class CustomClassLoaderListenerTest extends SingleCacheManagerTest {
    protected EmbeddedCacheManager createCacheManager() throws Exception {
       ConfigurationBuilder builder = getDefaultStandaloneCacheConfig(false);
       builder.loaders().passivation(true).addStore(DummyInMemoryCacheStoreConfigurationBuilder.class);
-
       return TestCacheManagerFactory.createCacheManager(builder);
    }
 
@@ -72,7 +71,6 @@ public class CustomClassLoaderListenerTest extends SingleCacheManagerTest {
       assertEquals(0, listener.loadedCounter);
       listener.reset();
 
-
       cache().evict("a"); // Passivated + Evicted
       assertEquals(0, listener.createdCounter);
       assertEquals(0, listener.modifiedCounter);
@@ -84,9 +82,9 @@ public class CustomClassLoaderListenerTest extends SingleCacheManagerTest {
       assertEquals(0, listener.loadedCounter);
       listener.reset();
 
-      cache().get("a"); // Loaded +  Activated + Visited
+      cache().get("a"); // Loaded + Activated + Visited
       assertEquals(0, listener.createdCounter);
-      assertEquals(0, listener.modifiedCounter);
+      assertEquals(1, listener.modifiedCounter);
       assertEquals(0, listener.removedCounter);
       assertEquals(1, listener.visitedCounter);
       assertEquals(1, listener.activatedCounter);
