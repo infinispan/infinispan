@@ -18,6 +18,7 @@ import org.infinispan.container.entries.CacheEntry
 import org.infinispan.metadata.{Metadata, EmbeddedMetadata}
 import org.infinispan.container.versioning.{NumericVersionGenerator, EntryVersion, VersionGenerator, NumericVersion}
 import org.infinispan.context.Flag
+import java.io.IOException
 
 /**
  * Common abstract decoder for Memcached and Hot Rod protocols.
@@ -262,14 +263,15 @@ abstract class AbstractProtocolDecoder[K, V](transport: NettyTransport)
       val cause = e.getCause
       // Log it just in case the channel is closed or similar
       debug(cause, "Exception caught")
-
-      val errorResponse = createErrorResponse(cause)
-      if (errorResponse != null) {
-         errorResponse match {
-            case a: Array[Byte] => ch.write(wrappedBuffer(a))
-            case cs: CharSequence => ch.write(ChannelBuffers.copiedBuffer(cs, CharsetUtil.UTF_8))
-            case null => // ignore
-            case _ => ch.write(errorResponse)
+      if (!cause.isInstanceOf[IOException]) {
+         val errorResponse = createErrorResponse(cause)
+         if (errorResponse != null) {
+            errorResponse match {
+               case a: Array[Byte] => ch.write(wrappedBuffer(a))
+               case cs: CharSequence => ch.write(ChannelBuffers.copiedBuffer(cs, CharsetUtil.UTF_8))
+               case null => // ignore
+               case _ => ch.write(errorResponse)
+            }
          }
       }
       // After writing back an error, reset params and revert to initial state
