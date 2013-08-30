@@ -643,4 +643,14 @@ public final class Util {
 
       return sb.toString();
    }
+
+   /**
+    * Returns a number such that the number is a power of two that is equal to, or greater than, the number passed in as
+    * an argument.  The smallest number returned will be 1, not 0.
+    */
+   public static int findNextHighestPowerOfTwo(int num) {
+      if (num <= 0) return 1;
+      int highestBit = Integer.highestOneBit(num);
+      return num <= highestBit ? highestBit : highestBit << 1;
+   }
 }

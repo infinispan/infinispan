@@ -23,6 +23,9 @@ class FileChunkMapper {
       this.cache = cache;
    }
 
+   /**
+    * Guaranteed to be a power of two
+    */
    public int getChunkSize() {
       return file.getChunkSize();
    }

@@ -18,11 +18,14 @@ public class ReadableGridFileChannel implements ReadableByteChannel {
 
    private boolean closed;
 
-   private FileChunkMapper fileChunkMapper;
+   private final FileChunkMapper fileChunkMapper;
+   private final int chunkSize; // Guaranteed to be a power of 2
+
    private long fileLength;
 
    ReadableGridFileChannel(GridFile file, Cache<String, byte[]> cache) {
       fileChunkMapper = new FileChunkMapper(file, cache);
+      chunkSize = fileChunkMapper.getChunkSize();
       fileLength = (int) file.length();
    }
 
@@ -95,7 +98,7 @@ public class ReadableGridFileChannel implements ReadableByteChannel {
          currentBuffer = fileChunkMapper.fetchChunk(chunkNumberOfNewPosition);
       }
       position = newPos;
-      localIndex = newPos % getChunkSize();
+      localIndex = ModularArithmetic.mod(newPos, chunkSize);
    }
 
    private void checkOpen() throws ClosedChannelException {
@@ -109,11 +112,7 @@ public class ReadableGridFileChannel implements ReadableByteChannel {
    }
 
    private int getChunkNumber(int position) {
-      return position < 0 ? -1 : (position / getChunkSize());
-   }
-
-   private int getChunkSize() {
-      return fileChunkMapper.getChunkSize();
+      return position < 0 ? -1 : (position / chunkSize);
    }
 
    private void reset() {

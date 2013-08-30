@@ -53,7 +53,7 @@ import org.infinispan.util.logging.LogFactory;
 public class MapReduceManagerImpl implements MapReduceManager {
 
    private static final Log log = LogFactory.getLog(MapReduceManagerImpl.class);
-   private static final int CANCELLATION_CHECK_FREQUENCY = 20;
+   private static final int CANCELLATION_CHECK_FREQUENCY = 32; // Should be a power of two so that the compiler can replace a % with a bitmask
    private ClusteringDependentLogic cdl;
    private EmbeddedCacheManager cacheManager;
    private CacheLoaderManager cacheLoaderManager;
