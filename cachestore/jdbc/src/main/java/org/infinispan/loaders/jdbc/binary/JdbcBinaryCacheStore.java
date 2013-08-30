@@ -55,6 +55,7 @@ public class JdbcBinaryCacheStore extends BucketBasedCacheStore {
    private static final Log log = LogFactory.getLog(JdbcBinaryCacheStore.class, Log.class);
 
    private final static byte BINARY_STREAM_DELIMITER = 100;
+   private final static int  PURGE_BATCH_SIZE = 128;
 
    private JdbcBinaryCacheStoreConfiguration configuration;
 
@@ -312,7 +313,6 @@ public class JdbcBinaryCacheStore extends BucketBasedCacheStore {
       PreparedStatement ps = null;
       ResultSet rs = null;
       Set<Bucket> expiredBuckets = new HashSet<Bucket>();
-      final int batchSize = 100;
       try {
          try {
             String sql = tableManipulation.getSelectExpiredRowsSql();
@@ -378,7 +378,7 @@ public class JdbcBinaryCacheStore extends BucketBasedCacheStore {
                   ps.setString(3, bucket.getBucketIdAsString());
                   ps.addBatch();
                   updateCount++;
-                  if (updateCount % batchSize == 0) {
+                  if (updateCount % PURGE_BATCH_SIZE == 0) {
                      ps.executeBatch();
                      if (log.isTraceEnabled()) {
                         log.tracef("Flushing batch, update count is: %d", updateCount);
@@ -390,7 +390,7 @@ public class JdbcBinaryCacheStore extends BucketBasedCacheStore {
                }
             }
             // flush the batch
-            if (updateCount % batchSize != 0) {
+            if (updateCount % PURGE_BATCH_SIZE != 0) {
                if (log.isTraceEnabled()) {
                   log.tracef("Flushing batch, update count is: %d", updateCount);
                }
@@ -432,14 +432,14 @@ public class JdbcBinaryCacheStore extends BucketBasedCacheStore {
                ps.setString(1, bucket.getBucketIdAsString());
                ps.addBatch();
                deletionCount++;
-               if (deletionCount % batchSize == 0) {
+               if (deletionCount % PURGE_BATCH_SIZE == 0) {
                   if (log.isTraceEnabled()) {
                      log.tracef("Flushing deletion batch, total deletion count so far is %d", deletionCount);
                   }
                   ps.executeBatch();
                }
             }
-            if (deletionCount % batchSize != 0) {
+            if (deletionCount % PURGE_BATCH_SIZE != 0) {
                int[] batchResult = ps.executeBatch();
                if (log.isTraceEnabled()) {
                   log.tracef("Flushed the batch and received following results: %s", Arrays.toString(batchResult));

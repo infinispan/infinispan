@@ -1,5 +1,6 @@
 package org.infinispan.loaders.jdbc.configuration;
 
+import org.infinispan.commons.util.Util;
 import org.infinispan.loaders.jdbc.DatabaseType;
 
 public class TableManipulationConfiguration {
@@ -29,7 +30,7 @@ public class TableManipulationConfiguration {
       this.timestampColumnName = timestampColumnName;
       this.timestampColumnType = timestampColumnType;
       this.databaseType = databaseType;
-      this.batchSize = batchSize;
+      this.batchSize = Util.findNextHighestPowerOfTwo(batchSize);
       this.fetchSize = fetchSize;
       this.createOnStart = createOnStart;
       this.dropOnExit = dropOnExit;
@@ -83,6 +84,9 @@ public class TableManipulationConfiguration {
       return fetchSize;
    }
 
+   /**
+    * @return the size of batches to process.  Guaranteed to be a power of two.
+    */
    public int batchSize() {
       return batchSize;
    }

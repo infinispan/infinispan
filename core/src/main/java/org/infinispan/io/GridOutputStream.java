@@ -17,27 +17,29 @@ public class GridOutputStream extends OutputStream {
    private final byte[] currentBuffer;
    private int numberOfChunksWhenOpened;
 
-   private FileChunkMapper fileChunkMapper;
+   private final FileChunkMapper fileChunkMapper;
+   private final int chunkSize; // Guaranteed to be a power of 2
    private GridFile file;
    private boolean streamClosed;
 
    GridOutputStream(GridFile file, boolean append, Cache<String, byte[]> cache) {
       fileChunkMapper = new FileChunkMapper(file, cache);
+      chunkSize = fileChunkMapper.getChunkSize();
       this.file = file;
 
       index = append ? (int) file.length() : 0;
-      localIndex = index % getChunkSize();
+      localIndex = ModularArithmetic.mod(index, chunkSize);
       currentBuffer = append && !isLastChunkFull() ? fetchLastChunk() : createEmptyChunk();
 
       numberOfChunksWhenOpened = getLastChunkNumber() + 1;
    }
 
    private byte[] createEmptyChunk() {
-      return new byte[getChunkSize()];
+      return new byte[chunkSize];
    }
 
    private boolean isLastChunkFull() {
-      long bytesRemainingInLastChunk = file.length() % getChunkSize();
+      long bytesRemainingInLastChunk = ModularArithmetic.mod(file.length(), chunkSize);
       return bytesRemainingInLastChunk == 0;
    }
 
@@ -97,7 +99,7 @@ public class GridOutputStream extends OutputStream {
       if (remaining == 0) {
          flush();
          localIndex = 0;
-         remaining = getChunkSize();
+         remaining = chunkSize;
       }
       int bytesToWrite = Math.min(remaining, len);
       System.arraycopy(b, off, currentBuffer, localIndex, bytesToWrite);
@@ -132,19 +134,14 @@ public class GridOutputStream extends OutputStream {
    }
 
    private int getBytesRemainingInChunk() {
-      return getChunkSize() - localIndex;
+      return chunkSize - localIndex;
    }
 
    private int getChunkNumber(int position) {
-      return position / getChunkSize();
+      return position / chunkSize;
    }
 
    private void reset() {
       index = localIndex = 0;
    }
-
-   private int getChunkSize() {
-      return fileChunkMapper.getChunkSize();
-   }
-
 }

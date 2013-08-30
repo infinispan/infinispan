@@ -2,6 +2,7 @@ package org.infinispan.io;
 
 import org.infinispan.AdvancedCache;
 import org.infinispan.Cache;
+import org.infinispan.commons.util.Util;
 import org.infinispan.context.Flag;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
@@ -43,11 +44,11 @@ public class GridFilesystem {
       }
       this.data = data;
       this.metadata = metadata;
-      this.defaultChunkSize = defaultChunkSize;
+      this.defaultChunkSize = ModularArithmetic.CANNOT_ASSUME_DENOM_IS_POWER_OF_TWO ? defaultChunkSize : Util.findNextHighestPowerOfTwo(defaultChunkSize);
    }
 
    public GridFilesystem(Cache<String, byte[]> data, Cache<String, GridFile.Metadata> metadata) {
-      this(data, metadata, 8000);
+      this(data, metadata, ModularArithmetic.CANNOT_ASSUME_DENOM_IS_POWER_OF_TWO ? 8000 : 8192);
    }
 
    /**

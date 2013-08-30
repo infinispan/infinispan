@@ -18,11 +18,13 @@ public class WritableGridFileChannel implements WritableByteChannel {
 
    private boolean closed;
 
-   private FileChunkMapper fileChunkMapper;
+   private final FileChunkMapper fileChunkMapper;
+   private final int chunkSize; // Guaranteed to be a power of 2
    private GridFile file;
 
    WritableGridFileChannel(GridFile file, Cache<String, byte[]> cache, boolean append) {
       fileChunkMapper = new FileChunkMapper(file, cache);
+      chunkSize = fileChunkMapper.getChunkSize();
       this.file = file;
 
       if (append)
@@ -40,11 +42,11 @@ public class WritableGridFileChannel implements WritableByteChannel {
    private void initForAppending() {
       this.currentBuffer = lastChunkIsFull() ? createEmptyChunk() : fetchLastChunk();
       this.position = (int) file.length();
-      this.localIndex = position % getChunkSize();
+      this.localIndex = ModularArithmetic.mod(position, chunkSize);
    }
 
    private byte[] createEmptyChunk() {
-      return new byte[getChunkSize()];
+      return new byte[chunkSize];
    }
 
    private byte[] fetchLastChunk() {
@@ -65,7 +67,7 @@ public class WritableGridFileChannel implements WritableByteChannel {
    }
 
    private boolean lastChunkIsFull() {
-      return file.length() % getChunkSize() == 0;
+      return ModularArithmetic.mod(file.length(), chunkSize) == 0;
    }
 
    @Override
@@ -85,7 +87,7 @@ public class WritableGridFileChannel implements WritableByteChannel {
       if (remainingInChunk == 0) {
          flush();
          localIndex = 0;
-         remainingInChunk = getChunkSize();
+         remainingInChunk = chunkSize;
       }
 
       int bytesToWrite = Math.min(remainingInChunk, src.remaining());
@@ -117,7 +119,7 @@ public class WritableGridFileChannel implements WritableByteChannel {
    }
 
    private int getChunkNumber(int position) {
-      return position / getChunkSize();
+      return position / chunkSize;
    }
 
    @Override
@@ -136,9 +138,5 @@ public class WritableGridFileChannel implements WritableByteChannel {
       if (!isOpen()) {
          throw new ClosedChannelException();
       }
-   }
-
-   private int getChunkSize() {
-      return fileChunkMapper.getChunkSize();
    }
 }

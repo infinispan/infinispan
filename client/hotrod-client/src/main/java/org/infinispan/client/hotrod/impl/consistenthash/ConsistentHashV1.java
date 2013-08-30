@@ -31,6 +31,7 @@ public class ConsistentHashV1 implements ConsistentHash {
    private volatile SocketAddress[] addresses;
 
    private int hashSpace;
+   private boolean hashSpaceIsMaxInt;
 
    protected Hash hash = new MurmurHash2();
 
@@ -69,12 +70,22 @@ public class ConsistentHashV1 implements ConsistentHash {
       addresses = positions.values().toArray(new SocketAddress[hashWheelSize]);
 
       this.hashSpace = hashSpace;
+
+      // This is true if we're talking to an instance of Infinispan 5.2 or newer.
+      this.hashSpaceIsMaxInt = hashSpace == Integer.MAX_VALUE;
+
       this.numKeyOwners = numKeyOwners;
    }
 
    @Override
    public SocketAddress getServer(byte[] key) {
-      int normalisedHashForKey = getNormalizedHash(key) % hashSpace;
+      int normalisedHashForKey;
+      if (hashSpaceIsMaxInt) {
+         normalisedHashForKey = getNormalizedHash(key);
+         if (normalisedHashForKey == Integer.MAX_VALUE) normalisedHashForKey = 0;
+      } else {
+         normalisedHashForKey = getNormalizedHash(key) % hashSpace;
+      }
 
       int mainOwner = getHashIndex(normalisedHashForKey);
 

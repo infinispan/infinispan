@@ -73,13 +73,15 @@ public abstract class DataManipulationHelper {
          ps = conn.prepareStatement(sql);
 
          int readCount = 0;
+         // BatchSize is always a power of two.
          int batchSize = tableManipulation.getBatchSize();
+         int batchSizeMinusOne = batchSize - 1;
 
          Object objFromStream = marshaller.objectFromObjectStream(objectInput);
          while (fromStreamProcess(objFromStream, ps, objectInput)) {
             ps.addBatch();
             readCount++;
-            if (readCount % batchSize == 0) {
+            if ((readCount & batchSizeMinusOne) == 0) {
                ps.executeBatch();
                if (log.isTraceEnabled()) {
                   log.tracef("Executing batch %s, batch size is %d", readCount / batchSize, batchSize);
@@ -87,7 +89,7 @@ public abstract class DataManipulationHelper {
             }
             objFromStream = marshaller.objectFromObjectStream(objectInput);
          }
-         if (readCount % batchSize != 0) {
+         if ((readCount & batchSizeMinusOne) != 0) {
             ps.executeBatch();//flush the batch
          }
          if (log.isTraceEnabled()) {

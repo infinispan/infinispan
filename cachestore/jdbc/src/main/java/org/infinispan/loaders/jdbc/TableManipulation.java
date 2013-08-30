@@ -26,7 +26,7 @@ public class TableManipulation implements Cloneable {
 
    public static final int DEFAULT_FETCH_SIZE = 100;
 
-   public static final int DEFAULT_BATCH_SIZE = 100;
+   public static final int DEFAULT_BATCH_SIZE = 128;
 
    private String identifierQuoteString;
    private String cacheName;
@@ -368,7 +368,7 @@ public class TableManipulation implements Cloneable {
    /**
     * When doing repetitive DB inserts (e.g. on {@link org.infinispan.loaders.spi.CacheStore#fromStream(java.io.ObjectInput)}
     * this will be batched according to this parameter. This is an optional parameter, and if it is not specified it
-    * will be defaulted to {@link #DEFAULT_BATCH_SIZE}.
+    * will be defaulted to {@link #DEFAULT_BATCH_SIZE}.  Guaranteed to be a power of two.
     */
    public int getBatchSize() {
       return config.batchSize();

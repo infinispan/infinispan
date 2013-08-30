@@ -246,7 +246,8 @@ public class MurmurHash3 implements Hash {
 
       long tail = key[key.length - 1];
 
-      if (key.length % 2 != 0) {
+      // Key length is odd
+      if ((key.length & 1) == 1) {
          state.k1 ^= tail;
          bmix(state);
       }

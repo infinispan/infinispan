@@ -38,12 +38,19 @@ public class GridFile extends File {
    private final String path;
    private int chunkSize;
 
+   /**
+    * Creates a GridFile instance
+    * @param pathname path of file
+    * @param metadataCache cache to use to store metadata
+    * @param chunkSize chunk size.  Will be upgraded to next highest power of two.
+    * @param fs GridFilesystem instance
+    */
    GridFile(String pathname, Cache<String, Metadata> metadataCache, int chunkSize, GridFilesystem fs) {
       super(pathname);
       this.fs = fs;
       this.path = formatPath(pathname);
       this.metadataCache = metadataCache.getAdvancedCache();
-      this.chunkSize = chunkSize;
+      this.chunkSize = ModularArithmetic.CANNOT_ASSUME_DENOM_IS_POWER_OF_TWO ? chunkSize : org.infinispan.commons.util.Util.findNextHighestPowerOfTwo(chunkSize);
       initChunkSizeFromMetadata();
    }
 
@@ -163,6 +170,9 @@ public class GridFile extends File {
       metadataCache.put(getAbsolutePath(), metadata);
    }
 
+   /**
+    * Guaranteed to be a power of two
+    */
    public int getChunkSize() {
       return chunkSize;
    }
@@ -532,17 +542,19 @@ public class GridFile extends File {
 
       private int length = 0;
       private long modificationTime = 0;
-      private int chunkSize = 0;
-      private byte flags = 0;
+      private int chunkSize;
+      private byte flags;
 
 
       public Metadata() {
+         chunkSize = 1;
+         flags = 0;
       }
 
       public Metadata(int length, long modificationTime, int chunkSize, byte flags) {
          this.length = length;
          this.modificationTime = modificationTime;
-         this.chunkSize = chunkSize;
+         this.chunkSize = ModularArithmetic.CANNOT_ASSUME_DENOM_IS_POWER_OF_TWO ? chunkSize : org.infinispan.commons.util.Util.findNextHighestPowerOfTwo(chunkSize);
          this.flags = flags;
       }
 

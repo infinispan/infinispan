@@ -17,10 +17,12 @@ public class GridInputStream extends InputStream {
    private byte[] currentBuffer = null;
    private int fSize;
    private boolean streamClosed = false;
-   private FileChunkMapper fileChunkMapper;
+   private final FileChunkMapper fileChunkMapper;
+   private final int chunkSize; // Guaranteed to be a power of 2
 
    GridInputStream(GridFile file, Cache<String, byte[]> cache) {
       fileChunkMapper = new FileChunkMapper(file, cache);
+      chunkSize = fileChunkMapper.getChunkSize();
       fSize = (int)file.length();
    }
 
@@ -82,7 +84,7 @@ public class GridInputStream extends InputStream {
          localIndex += bytesToSkip;
       } else {
          getChunk();
-         localIndex = index % getChunkSize();
+         localIndex = ModularArithmetic.mod(index, chunkSize);
       }
       return bytesToSkip;
    }
@@ -121,10 +123,6 @@ public class GridInputStream extends InputStream {
    }
 
    private int getChunkNumber() {
-      return index / getChunkSize();
-   }
-
-   private int getChunkSize() {
-      return fileChunkMapper.getChunkSize();
+      return index / chunkSize;
    }
 }

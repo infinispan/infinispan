@@ -30,7 +30,7 @@ public class XmlFileParsingTest extends AbstractInfinispanTest {
             "     <loaders>\n" +
             "       <stringKeyedJdbcStore xmlns=\"urn:infinispan:config:jdbc:6.0\" key2StringMapper=\"org.infinispan.loaders.jdbc.configuration.DummyKey2StringMapper\">\n" +
             "         <connectionPool connectionUrl=\"jdbc:h2:mem:infinispan;DB_CLOSE_DELAY=-1\" username=\"dbuser\" password=\"dbpass\" driverClass=\"org.h2.Driver\"/>\n" +
-            "         <stringKeyedTable prefix=\"entry\" fetchSize=\"34\" batchSize=\"99\" >\n" +
+            "         <stringKeyedTable prefix=\"entry\" fetchSize=\"34\" batchSize=\"128\" >\n" +
             "           <idColumn name=\"id\" type=\"VARCHAR\" />\n" +
             "           <dataColumn name=\"datum\" type=\"BINARY\" />\n" +
             "           <timestampColumn name=\"version\" type=\"BIGINT\" />\n" +
@@ -42,7 +42,7 @@ public class XmlFileParsingTest extends AbstractInfinispanTest {
             TestingUtil.INFINISPAN_END_TAG;
 
       JdbcStringBasedCacheStoreConfiguration store = (JdbcStringBasedCacheStoreConfiguration) buildCacheManagerWithCacheStore(config);
-      assertEquals(99, store.table().batchSize());
+      assertEquals(128, store.table().batchSize());
       assertEquals(34, store.table().fetchSize());
       assertEquals("BINARY", store.table().dataColumnType());
       assertEquals("version", store.table().timestampColumnName());
@@ -61,7 +61,7 @@ public class XmlFileParsingTest extends AbstractInfinispanTest {
             "     <loaders>\n" +
             "       <binaryKeyedJdbcStore xmlns=\"urn:infinispan:config:jdbc:6.0\" ignoreModifications=\"true\">\n" +
             "         <simpleConnection connectionUrl=\"jdbc:h2:mem:infinispan;DB_CLOSE_DELAY=-1\" username=\"dbuser\" password=\"dbpass\" driverClass=\"org.h2.Driver\"/>\n" +
-            "         <binaryKeyedTable prefix=\"bucket\" fetchSize=\"34\" batchSize=\"99\">\n" +
+            "         <binaryKeyedTable prefix=\"bucket\" fetchSize=\"34\" batchSize=\"128\">\n" +
             "           <idColumn name=\"id\" type=\"BINARY\" />\n" +
             "           <dataColumn name=\"datum\" type=\"BINARY\" />\n" +
             "           <timestampColumn name=\"version\" type=\"BIGINT\" />\n" +
@@ -75,7 +75,7 @@ public class XmlFileParsingTest extends AbstractInfinispanTest {
       JdbcBinaryCacheStoreConfiguration store = (JdbcBinaryCacheStoreConfiguration) buildCacheManagerWithCacheStore(config);
       assertTrue(store.ignoreModifications());
       assertEquals("bucket", store.table().tableNamePrefix());
-      assertEquals(99, store.table().batchSize());
+      assertEquals(128, store.table().batchSize());
       assertEquals(34, store.table().fetchSize());
       assertEquals("BINARY", store.table().dataColumnType());
       assertEquals("version", store.table().timestampColumnName());
@@ -93,12 +93,12 @@ public class XmlFileParsingTest extends AbstractInfinispanTest {
             "     <loaders>\n" +
             "       <mixedKeyedJdbcStore xmlns=\"urn:infinispan:config:jdbc:6.0\" key2StringMapper=\"org.infinispan.loaders.jdbc.configuration.DummyKey2StringMapper\">\n" +
             "         <dataSource jndiUrl=\"java:MyDataSource\" />\n" +
-            "         <stringKeyedTable prefix=\"entry\" fetchSize=\"34\" batchSize=\"99\">\n" +
+            "         <stringKeyedTable prefix=\"entry\" fetchSize=\"34\" batchSize=\"128\">\n" +
             "           <idColumn name=\"id\" type=\"VARCHAR\" />\n" +
             "           <dataColumn name=\"datum\" type=\"BINARY\" />\n" +
             "           <timestampColumn name=\"version\" type=\"BIGINT\" />\n" +
             "         </stringKeyedTable>\n" +
-            "         <binaryKeyedTable prefix=\"bucket\" fetchSize=\"44\" batchSize=\"79\">\n" +
+            "         <binaryKeyedTable prefix=\"bucket\" fetchSize=\"44\" batchSize=\"256\">\n" +
             "           <idColumn name=\"id\" type=\"BINARY\" />\n" +
             "           <dataColumn name=\"datum\" type=\"BINARY\" />\n" +
             "           <timestampColumn name=\"version\" type=\"BIGINT\" />\n" +
@@ -113,13 +113,13 @@ public class XmlFileParsingTest extends AbstractInfinispanTest {
       JdbcMixedCacheStoreConfiguration store = (JdbcMixedCacheStoreConfiguration) buildCacheManagerWithCacheStore(config);
 
       assertEquals("entry", store.stringTable().tableNamePrefix());
-      assertEquals(99, store.stringTable().batchSize());
+      assertEquals(128, store.stringTable().batchSize());
       assertEquals(34, store.stringTable().fetchSize());
       assertEquals("BINARY", store.stringTable().dataColumnType());
       assertEquals("version", store.stringTable().timestampColumnName());
 
       assertEquals("bucket", store.binaryTable().tableNamePrefix());
-      assertEquals(79, store.binaryTable().batchSize());
+      assertEquals(256, store.binaryTable().batchSize());
       assertEquals(44, store.binaryTable().fetchSize());
       assertEquals("BINARY", store.binaryTable().dataColumnType());
       assertEquals("version", store.binaryTable().timestampColumnName());

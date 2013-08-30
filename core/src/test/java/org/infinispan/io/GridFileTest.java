@@ -240,10 +240,10 @@ public class GridFileTest extends SingleCacheManagerTest {
    public void testOverwritingFileDoesNotLeaveExcessChunksInCache() throws Exception {
       assertEquals(numberOfChunksInCache(), 0);
 
-      writeToFile("leak.txt", "12345abcde12345", 5); // file length = 15, chunkSize = 5
-      assertEquals(numberOfChunksInCache(), 3);
+      writeToFile("leak.txt", "12345abcde12345", 5); // file length = 15, chunkSize = 5.  Chunk size should "upgrade" to 8
+      assertEquals(numberOfChunksInCache(), 2);
 
-      writeToFile("leak.txt", "12345", 5);           // file length = 5, chunkSize = 5
+      writeToFile("leak.txt", "12345678", 5);           // file length = 5, chunkSize = 5.  Chunk size should "upgrade" to 8
       assertEquals(numberOfChunksInCache(), 1);
    }
 
@@ -356,19 +356,19 @@ public class GridFileTest extends SingleCacheManagerTest {
    @SuppressWarnings("ResultOfMethodCallIgnored")
    public void testAvailable() throws Exception {
       String filePath = "available.txt";
-      writeToFile(filePath, "abcde" + "fghij" + "klmno" + "pqrst" + "uvwxy" + "z", 5);
+      writeToFile(filePath, "abcde" + "fghij" + "klmno" + "pqrst" + "uvwxy" + "z", 5); // Chunk size should get "upgraded" to 8
 
       InputStream in = fs.getInput(filePath);
       try {
          assertEquals(in.available(), 0); // since first chunk hasn't been fetched yet
          in.read();
-         assertEquals(in.available(), 4);
+         assertEquals(in.available(), 7);
          in.skip(3);
-         assertEquals(in.available(), 1);
-         in.read();
-         assertEquals(in.available(), 0);
-         in.read();
          assertEquals(in.available(), 4);
+         in.read();
+         assertEquals(in.available(), 3);
+         in.read();
+         assertEquals(in.available(), 2);
       } finally {
          in.close();
       }
