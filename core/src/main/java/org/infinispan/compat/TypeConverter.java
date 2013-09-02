@@ -37,6 +37,15 @@ public interface TypeConverter<K, V, KT, VT> {
    VT boxValue(V value);
 
    /**
+    * Convert back an instance of the target key type into an instance of
+    * the cached key type.
+    *
+    * @param target target key type instance to convert back
+    * @return an instance of the cached key type
+    */
+   K unboxKey(KT target);
+
+   /**
     * Convert back an instance of the target value type into an instance of
     * the cached value type.
     *

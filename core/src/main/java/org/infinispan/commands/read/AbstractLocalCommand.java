@@ -32,10 +32,6 @@ public abstract class AbstractLocalCommand extends AbstractLocalFlagAffectedComm
       return false;
    }
 
-   protected boolean noTxModifications(InvocationContext ctx) {
-      return !ctx.isInTxScope() || !((TxInvocationContext)ctx).hasModifications();
-   }
-
    public boolean ignoreCommandOnStatus(ComponentStatus status) {
       return false;
    }
@@ -47,4 +43,9 @@ public abstract class AbstractLocalCommand extends AbstractLocalFlagAffectedComm
    public boolean canBlock() {
       return false;
    }
+
+   protected static boolean noTxModifications(InvocationContext ctx) {
+      return !ctx.isInTxScope() || !((TxInvocationContext)ctx).hasModifications();
+   }
+
 }
