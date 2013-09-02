@@ -305,11 +305,6 @@
          </dependency>
          <dependency>
             <groupId>${project.groupId}</groupId>
-            <artifactId>infinispan-upgrade-tools</artifactId>
-            <version>${project.version}</version>
-         </dependency>
-         <dependency>
-            <groupId>${project.groupId}</groupId>
             <artifactId>infinispan-jcache</artifactId>
             <version>${project.version}</version>
          </dependency>

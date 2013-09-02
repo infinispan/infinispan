@@ -1,6 +1,7 @@
 package org.infinispan.loaders.remote.logging;
 
 import org.infinispan.commons.CacheConfigurationException;
+import org.infinispan.commons.CacheException;
 import org.infinispan.loaders.CacheLoaderException;
 import org.jboss.logging.Cause;
 import org.jboss.logging.LogMessage;
@@ -31,4 +32,14 @@ public interface Log extends org.infinispan.util.logging.Log {
 
    @Message(value = "Cannot load the HotRodEntryWrapper class (make sure the infinispan-server-hotrod classes are available)", id = 10006)
    CacheConfigurationException cannotLoadHotRodEntryWrapper(@Cause Exception e);
+
+   @Message(value = "The RemoteCacheStore for cache %s should be configured with hotRodWrapping enabled", id = 10007)
+   CacheException remoteStoreNoHotRodWrapping(String cacheName);
+
+   @Message(value = "Could not find migration data in cache %s", id = 10008)
+   CacheException missingMigrationData(String name);
+
+   @LogMessage(level = WARN)
+   @Message(value = "Could not migrate key %s", id = 10009)
+   void keyMigrationFailed(String key, @Cause Throwable cause);
 }
