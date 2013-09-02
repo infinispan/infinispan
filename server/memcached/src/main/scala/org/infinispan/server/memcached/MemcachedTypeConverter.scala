@@ -26,6 +26,8 @@ class MemcachedTypeConverter extends TypeConverter[String, Array[Byte], String, 
 
    override def boxValue(value: Array[Byte]): AnyRef = unmarshall(value)
 
+   override def unboxKey(key: String): String = key
+
    override def unboxValue(target: AnyRef): Array[Byte] = marshall(target)
 
    override def setMarshaller(marshaller: Marshaller) {

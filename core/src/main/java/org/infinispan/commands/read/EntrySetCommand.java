@@ -45,11 +45,17 @@ public class EntrySetCommand extends AbstractLocalCommand implements VisitableCo
    @Override
    public Set<InternalCacheEntry> perform(InvocationContext ctx) throws Throwable {
       Set<InternalCacheEntry> entries = container.entrySet();
+      return createFilteredEntrySet(entries, ctx, timeService, entryFactory);
+   }
+
+   public static Set<InternalCacheEntry> createFilteredEntrySet(
+         Set<InternalCacheEntry> entries, InvocationContext ctx,
+         TimeService timeService, InternalEntryFactory entryFactory) {
       if (noTxModifications(ctx)) {
          return new ExpiredFilteredEntrySet(entries, timeService);
       }
 
-      return new FilteredEntrySet(entries, ctx.getLookedUpEntries(), timeService);
+      return new FilteredEntrySet(entries, ctx.getLookedUpEntries(), timeService, entryFactory);
    }
 
    @Override
@@ -59,15 +65,18 @@ public class EntrySetCommand extends AbstractLocalCommand implements VisitableCo
             '}';
    }
 
-   private class FilteredEntrySet extends AbstractSet<InternalCacheEntry> {
+   private static class FilteredEntrySet extends AbstractSet<InternalCacheEntry> {
       final Set<InternalCacheEntry> entrySet;
       final Map<Object, CacheEntry> lookedUpEntries;
       final TimeService timeService;
+      final InternalEntryFactory entryFactory;
 
-      FilteredEntrySet(Set<InternalCacheEntry> entrySet, Map<Object, CacheEntry> lookedUpEntries, TimeService timeService) {
+      FilteredEntrySet(Set<InternalCacheEntry> entrySet, Map<Object, CacheEntry> lookedUpEntries,
+            TimeService timeService, InternalEntryFactory entryFactory) {
          this.entrySet = entrySet;
          this.lookedUpEntries = lookedUpEntries;
          this.timeService = timeService;
+         this.entryFactory = entryFactory;
       }
 
       @Override

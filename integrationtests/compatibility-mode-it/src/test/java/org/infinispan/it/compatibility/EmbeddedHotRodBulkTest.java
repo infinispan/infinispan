@@ -17,10 +17,11 @@ import java.util.Set;
 import static org.testng.AssertJUnit.*;
 
 /**
- * Test compatibility between embedded caches and Hot Rod endpoints.
+ * Test compatibility between embedded caches and Hot Rod endpoints for
+ * operations that retrieve data in bulk, i.e. keySet, entrySet, getBulk...etc.
  *
- * @author Galder Zamarreño
- * @since 5.3
+ * @author Jiří Holuša
+ * @since 6.0
  */
 @Test(groups = "functional", testName = "it.compatibility.CompatibilityTest")
 public class EmbeddedHotRodBulkTest extends AbstractInfinispanTest {

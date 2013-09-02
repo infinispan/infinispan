@@ -1,10 +1,13 @@
 package org.infinispan.interceptors.compat;
 
 import org.infinispan.commands.MetadataAwareCommand;
+import org.infinispan.commands.read.EntrySetCommand;
 import org.infinispan.commands.read.GetKeyValueCommand;
+import org.infinispan.commands.read.KeySetCommand;
 import org.infinispan.commands.write.PutKeyValueCommand;
 import org.infinispan.commands.write.RemoveCommand;
 import org.infinispan.commands.write.ReplaceCommand;
+import org.infinispan.commons.util.Immutables;
 import org.infinispan.compat.TypeConverter;
 import org.infinispan.container.InternalEntryFactory;
 import org.infinispan.container.entries.InternalCacheEntry;
@@ -16,7 +19,9 @@ import org.infinispan.interceptors.base.CommandInterceptor;
 import org.infinispan.commons.CacheException;
 import org.infinispan.commons.marshall.Marshaller;
 import org.infinispan.metadata.Metadata;
+import org.infinispan.util.TimeService;
 
+import java.util.HashSet;
 import java.util.ServiceLoader;
 import java.util.Set;
 
@@ -36,6 +41,7 @@ public class TypeConverterInterceptor extends CommandInterceptor {
    private TypeConverter<Object, Object, Object, Object> embeddedConverter;
    private InternalEntryFactory entryFactory;
    private VersionGenerator versionGenerator;
+   private TimeService timerService;
 
    @SuppressWarnings("unchecked")
    public TypeConverterInterceptor(Marshaller marshaller) {
@@ -58,9 +64,10 @@ public class TypeConverterInterceptor extends CommandInterceptor {
    }
 
    @Inject
-   public void init(InternalEntryFactory entryFactory, VersionGenerator versionGenerator) {
+   public void init(InternalEntryFactory entryFactory, VersionGenerator versionGenerator, TimeService timeService) {
       this.entryFactory = entryFactory;
       this.versionGenerator = versionGenerator;
+      this.timerService = timeService;
    }
 
    @Override
@@ -158,6 +165,40 @@ public class TypeConverterInterceptor extends CommandInterceptor {
       return converter.unboxValue(ret);
    }
 
+   @Override
+   public Object visitEntrySetCommand(InvocationContext ctx, EntrySetCommand command) throws Throwable {
+      Set<InternalCacheEntry> set = (Set<InternalCacheEntry>) super.visitEntrySetCommand(ctx, command);
+      TypeConverter<Object, Object, Object, Object> converter =
+            determineTypeConverter(command.getFlags());
+      Set<InternalCacheEntry> backingSet = new HashSet<InternalCacheEntry>(set.size());
+      for (InternalCacheEntry entry : set) {
+         Object key = converter.unboxKey(entry.getKey());
+         Object value = converter.unboxValue(entry.getValue());
+         InternalCacheEntry newEntry = entryFactory.create(
+               key, value, entry.getMetadata(),
+               entry.getLifespan(), entry.getMaxIdle());
+         backingSet.add(newEntry);
+      }
+
+      return EntrySetCommand.createFilteredEntrySet(backingSet, ctx, timerService, entryFactory);
+   }
+
+   @Override
+   public Object visitKeySetCommand(InvocationContext ctx, KeySetCommand command) throws Throwable {
+      Set<Object> keySet = (Set<Object>) super.visitKeySetCommand(ctx, command);
+      TypeConverter<Object, Object, Object, Object> converter =
+            determineTypeConverter(command.getFlags());
+
+      Set<Object> backingSet = new HashSet<Object>(keySet.size());
+      for (Object key : keySet)
+         backingSet.add(converter.unboxKey(key));
+
+      // Returning a filtered key set here is difficult because it uses the
+      // container as a way to find out if the key is expired or not. Since
+      // the keys are unboxed here, no keys will be found in the data container.
+      return Immutables.immutableSetWrap(backingSet);
+   }
+
    private static class EmbeddedTypeConverter
          implements TypeConverter<Object, Object, Object, Object> {
 
@@ -171,6 +212,11 @@ public class TypeConverterInterceptor extends CommandInterceptor {
       @Override
       public Object boxValue(Object value) {
          return value;
+      }
+
+      @Override
+      public Object unboxKey(Object target) {
+         return unboxValue(target);
       }
 
       @Override
