@@ -1,4 +1,4 @@
-package org.infinispan.upgrade.hotrod;
+package org.infinispan.loaders.remote.upgrade;
 
 import java.util.List;
 import java.util.Set;
@@ -17,8 +17,8 @@ import org.infinispan.factories.ComponentRegistry;
 import org.infinispan.loaders.manager.CacheLoaderManager;
 import org.infinispan.loaders.remote.RemoteCacheStore;
 import org.infinispan.loaders.remote.configuration.RemoteCacheStoreConfiguration;
+import org.infinispan.loaders.remote.logging.Log;
 import org.infinispan.upgrade.TargetMigrator;
-import org.infinispan.upgrade.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
 public class HotRodTargetMigrator implements TargetMigrator {

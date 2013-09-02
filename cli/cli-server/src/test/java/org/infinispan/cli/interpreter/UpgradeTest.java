@@ -3,7 +3,7 @@ package org.infinispan.cli.interpreter;
 import java.util.Map;
 
 import org.infinispan.Cache;
-import org.infinispan.api.BasicCacheContainer;
+import org.infinispan.commons.api.BasicCacheContainer;
 import org.infinispan.cli.interpreter.result.ResultKeys;
 import org.infinispan.client.hotrod.RemoteCache;
 import org.infinispan.client.hotrod.RemoteCacheManager;
@@ -58,13 +58,17 @@ public class UpgradeTest extends AbstractInfinispanTest {
 
       sourceRemoteCacheManager = new RemoteCacheManager(
             new org.infinispan.client.hotrod.configuration.ConfigurationBuilder()
-                  .addServers("localhost:" + sourceServer.getPort()).build());
+               .addServer()
+                  .host("localhost")
+                  .port(sourceServer.getPort()).build());
       sourceRemoteCacheManager.start();
       sourceRemoteCache = sourceRemoteCacheManager.getCache();
 
       targetRemoteCacheManager = new RemoteCacheManager(
             new org.infinispan.client.hotrod.configuration.ConfigurationBuilder()
-                  .addServers("localhost:" + sourceServer.getPort()).build());
+               .addServer()
+                  .host("localhost")
+                  .port(targetServer.getPort()).build());
       targetRemoteCacheManager.start();
       targetRemoteCache = targetRemoteCacheManager.getCache();
    }
