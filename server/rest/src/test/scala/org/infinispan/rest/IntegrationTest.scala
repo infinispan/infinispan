@@ -24,6 +24,7 @@ import org.infinispan.util.logging.LogFactory
 import org.infinispan.test.fwk.TestCacheManagerFactory
 import java.util
 import org.infinispan.metadata.Metadata
+import javax.ws.rs.core.CacheControl
 
 /**
  * This tests using the Apache HTTP commons client library - but you could use anything
@@ -798,6 +799,75 @@ class IntegrationTest extends RESTServerTestBase {
       // Sleep way beyond the default in the config
       Thread.sleep(2500)
       assertEquals(HttpServletResponse.SC_NOT_FOUND, call(new GetMethod(fullPathKey)).getStatusCode)
+   }
+
+   def testCacheControlResponseHeader(m: Method) {
+      val cacheName = "evictExpiryCache"
+      var fullPathKey = "%s/rest/%s/%s".format(HOST, cacheName, m.getName)
+      var post = new PostMethod(fullPathKey)
+
+      post.setRequestHeader("timeToLiveSeconds", "10")
+      post.setRequestEntity(new StringRequestEntity("data", "text/plain", "UTF-8"))
+      call(post)
+      Thread.sleep(2000)
+      var get = call(new GetMethod(fullPathKey))
+      assertEquals("data", get.getResponseBodyAsString)
+      assertNotNull(get.getResponseHeader("Cache-Control"))
+      val retrievedMaxAge = CacheControl.valueOf(get.getResponseHeader("Cache-Control").getValue).getMaxAge
+      assertTrue(retrievedMaxAge > 0)
+   }
+
+   def testGetCacheControlMinFreshRequestHeader(m: Method) {
+      val cacheName = "evictExpiryCache"
+      var fullPathKey = "%s/rest/%s/%s".format(HOST, cacheName, m.getName)
+      var post = new PostMethod(fullPathKey)
+
+      post.setRequestHeader("timeToLiveSeconds", "10")
+      post.setRequestEntity(new StringRequestEntity("data", "text/plain", "UTF-8"))
+      call(post)
+      Thread.sleep(2000)
+
+      val getLongMinFresh = new GetMethod(fullPathKey)
+      getLongMinFresh.addRequestHeader("Cache-Control", "no-transform, min-fresh=20")
+      var getResp = call(getLongMinFresh)
+      assertEquals(HttpServletResponse.SC_NOT_FOUND, getResp.getStatusCode)
+
+      val getShortMinFresh = new GetMethod(fullPathKey)
+      getShortMinFresh.addRequestHeader("Cache-Control", "no-transform, min-fresh=2")
+      getResp = call(getShortMinFresh)
+      assertNotNull(getResp.getResponseHeader("Cache-Control"))
+      assertEquals("data", getResp.getResponseBodyAsString)
+
+      val getNoMinFresh = new GetMethod(fullPathKey)
+      getResp = call(getNoMinFresh)
+      assertNotNull(getResp.getResponseHeader("Cache-Control"))
+      assertEquals("data", getResp.getResponseBodyAsString)
+   }
+
+   def testHeadCacheControlMinFreshRequestHeader(m: Method) {
+      val cacheName = "evictExpiryCache"
+      var fullPathKey = "%s/rest/%s/%s".format(HOST, cacheName, m.getName)
+      var post = new PostMethod(fullPathKey)
+
+      post.setRequestHeader("timeToLiveSeconds", "10")
+      post.setRequestEntity(new StringRequestEntity("data", "text/plain", "UTF-8"))
+      call(post)
+      Thread.sleep(2000)
+
+      val headLongMinFresh = new HeadMethod(fullPathKey)
+      headLongMinFresh.addRequestHeader("Cache-Control", "no-transform, min-fresh=20")
+      var headResp = call(headLongMinFresh)
+      assertEquals(HttpServletResponse.SC_NOT_FOUND, headResp.getStatusCode)
+
+      val headShortMinFresh = new HeadMethod(fullPathKey)
+      headShortMinFresh.addRequestHeader("Cache-Control", "no-transform, min-fresh=2")
+      headResp = call(headShortMinFresh)
+      val retrievedMaxAge = CacheControl.valueOf(headResp.getResponseHeader("Cache-Control").getValue).getMaxAge
+      assertTrue(retrievedMaxAge > 0)
+
+      val headNoMinFresh = new HeadMethod(fullPathKey)
+      headResp = call(headNoMinFresh)
+      assertNotNull(headResp.getResponseHeader("Cache-Control"))
    }
 
    def testPutByteArrayTwice(m: Method) {
