@@ -31,6 +31,10 @@ import org.infinispan.configuration.cache.Configuration
 import org.infinispan.metadata.Metadata
 import java.text.SimpleDateFormat
 import org.jboss.resteasy.util.HttpHeaderNames
+import org.infinispan.server.hotrod.RestSourceMigrator
+import org.infinispan.upgrade.RollingUpgradeManager
+import org.infinispan.Cache
+import org.infinispan.container.entries.MVCCEntry
 
 /**
  * Integration server linking REST requests with Infinispan calls.
@@ -516,20 +520,25 @@ class ManagerInstance(instance: EmbeddedCacheManager) {
       if (isKnownCache) {
          knownCaches.get(name)
       } else {
-         val rv =
+         val cache =
             if (name == BasicCacheContainer.DEFAULT_CACHE_NAME)
-               instance.getCache[String, Array[Byte]]().getAdvancedCache
+               instance.getCache[String, Array[Byte]]()
             else
-               instance.getCache[String, Array[Byte]](name).getAdvancedCache
-
-         knownCaches.put(name, rv)
-         rv
+               instance.getCache[String, Array[Byte]](name)
+         tryRegisterMigrationManager(cache)
+         knownCaches.put(name, cache.getAdvancedCache)
+         cache.getAdvancedCache
       }
    }
 
    def getEntry(cacheName: String, key: String): Array[Byte] = getCache(cacheName).get(key)
 
-   def getInternalEntry(cacheName: String, key: String): CacheEntry = getCache(cacheName).getCacheEntry(key)
+   def getInternalEntry(cacheName: String, key: String): CacheEntry =
+      getCache(cacheName).getCacheEntry(key) match {
+         case ice: InternalCacheEntry => ice
+         case null => null
+         case mvcc: MVCCEntry => getCache(cacheName).getCacheEntry(key)  // FIXME: horrible re-get to be fixed by ISPN-3460
+      }
 
    def getNodeName: Address = instance.getAddress
 
@@ -546,6 +555,12 @@ class ManagerInstance(instance: EmbeddedCacheManager) {
       }
 
    def getInstance = instance
+
+   def tryRegisterMigrationManager(cache: Cache[String, Array[Byte]]) {
+      val cr = cache.getAdvancedCache.getComponentRegistry
+      val migrationManager = cr.getComponent(classOf[RollingUpgradeManager])
+      if (migrationManager != null) migrationManager.addSourceMigrator(new RestSourceMigrator(cache))
+   }
 
 }
 
