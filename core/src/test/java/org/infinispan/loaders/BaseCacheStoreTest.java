@@ -1,8 +1,11 @@
 package org.infinispan.loaders;
 
+import static org.testng.AssertJUnit.assertNull;
+import static org.testng.AssertJUnit.assertNotNull;
+import static org.testng.AssertJUnit.assertTrue;
+import static org.testng.AssertJUnit.assertFalse;
 import static java.util.Collections.emptySet;
 import static org.testng.AssertJUnit.assertEquals;
-import static org.testng.AssertJUnit.fail;
 
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
@@ -18,8 +21,6 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Random;
 import java.util.Set;
-
-import junit.framework.Assert;
 
 import org.infinispan.Cache;
 import org.infinispan.configuration.cache.CacheLoaderConfiguration;
@@ -37,7 +38,6 @@ import org.infinispan.loaders.spi.LockSupportCacheStore;
 import org.infinispan.marshall.TestObjectStreamMarshaller;
 import org.infinispan.marshall.core.MarshalledValue;
 import org.infinispan.commons.marshall.StreamingMarshaller;
-import org.infinispan.commons.util.Util;
 import org.infinispan.test.AbstractInfinispanTest;
 import org.infinispan.test.fwk.TestInternalCacheEntryFactory;
 import org.infinispan.transaction.xa.GlobalTransaction;
@@ -71,7 +71,7 @@ public abstract class BaseCacheStoreTest extends AbstractInfinispanTest {
       try {
          cs = createCacheStore();
          CacheStoreConfiguration csc = (CacheStoreConfiguration) cs.getConfiguration();
-         Assert.assertTrue("Cache store tests expect purgeSynchronously to be enabled",
+         assertTrue("Cache store tests expect purgeSynchronously to be enabled",
                csc == null || csc.purgeSynchronously());
       } catch (Exception e) {
          //in IDEs this won't be printed which makes debugging harder
@@ -97,9 +97,7 @@ public abstract class BaseCacheStoreTest extends AbstractInfinispanTest {
       //doesn't really make sense to add a subclass for this check only
       if (cs instanceof LockSupportCacheStore) {
          int totalLockCount = ((LockSupportCacheStore) cs).getTotalLockCount();
-         assert totalLockCount == 0 :
-               "Lock count for test method " + m.getName() + " is "
-                     + totalLockCount;
+         assertEquals("Unexpected lock count for method " + m.getName(), 0, totalLockCount);
       }
    }
 
@@ -118,28 +116,27 @@ public abstract class BaseCacheStoreTest extends AbstractInfinispanTest {
    }
 
    public void testLoadAndStoreImmortal() throws CacheLoaderException {
-      assert !cs.containsKey("k");
+      assertFalse(cs.containsKey("k"));
       InternalCacheEntry se = TestInternalCacheEntryFactory.create("k", "v");
       cs.store(se);
 
-      assert cs.load("k").getValue().equals("v");
-      assert cs.load("k").getLifespan() == -1;
-      assert cs.load("k").getMaxIdle() == -1;
-      assert !cs.load("k").isExpired(System.currentTimeMillis());
-      assert cs.containsKey("k");
+      assertEquals("v", cs.load("k").getValue());
+      assertEquals(-1, cs.load("k").getLifespan());
+      assertEquals(-1, cs.load("k").getMaxIdle());
+      assertFalse(cs.load("k").isExpired(System.currentTimeMillis()));
+      assertTrue(cs.containsKey("k"));
 
-      boolean removed = cs.remove("k2");
-      assert !removed;
+      assertFalse(cs.remove("k2"));
    }
 
    public void testLoadAndStoreWithLifespan() throws Exception {
-      assert !cs.containsKey("k");
+      assertFalse(cs.containsKey("k"));
 
       long lifespan = 120000;
       InternalCacheEntry se = TestInternalCacheEntryFactory.create("k", "v", lifespan);
       cs.store(se);
 
-      assert cs.containsKey("k");
+      assertTrue(cs.containsKey("k"));
       InternalCacheEntry ice = cs.load("k");
       assertCorrectExpiry(ice, "v", lifespan, -1, false);
       ice = cs.loadAll().iterator().next();
@@ -150,31 +147,31 @@ public abstract class BaseCacheStoreTest extends AbstractInfinispanTest {
       cs.store(se);
       Thread.sleep(100);
       purgeExpired();
-      assert se.isExpired(System.currentTimeMillis());
+      assertTrue(se.isExpired(System.currentTimeMillis()));
       assertEventuallyExpires("k");
-      assert !cs.containsKey("k");
-      assert cs.loadAll().isEmpty();
+      assertFalse(cs.containsKey("k"));
+      assertTrue(cs.loadAll().isEmpty());
    }
 
    private void assertCorrectExpiry(InternalCacheEntry ice, String value, long lifespan, long maxIdle, boolean expired) {
-      assert ice != null : "Cache entry is null";
-      assert Util.safeEquals(ice.getValue(), value) : ice.getValue() + " was not " + value;
-      assert ice.getLifespan() == lifespan : ice.getLifespan() + " was not " + lifespan;
-      assert ice.getMaxIdle() == maxIdle : ice.getMaxIdle() + " was not " + maxIdle;
-      if (lifespan > -1) assert ice.getCreated() > -1 : "Created is -1 when maxIdle is set";
-      if (maxIdle > -1) assert ice.getLastUsed() > -1 : "LastUsed is -1 when maxIdle is set";
-      assert expired == ice.isExpired(System.currentTimeMillis()) : "isExpired() is not " + expired;
+      assertNotNull("Cache entry is null", ice);
+      assertEquals(value, ice.getValue());
+      assertEquals("Wrong lifespan", lifespan, ice.getLifespan());
+      assertEquals("Wrong maxIdle", maxIdle, ice.getMaxIdle());
+      if (lifespan > -1) assertTrue("Created is -1 when maxIdle is set", ice.getCreated() > -1);
+      if (maxIdle > -1) assertTrue("LastUsed is -1 when maxIdle is set", ice.getLastUsed() > -1);
+      assertEquals("Wrong expired", expired, ice.isExpired(System.currentTimeMillis()));
    }
 
 
    public void testLoadAndStoreWithIdle() throws Exception {
-      assert !cs.containsKey("k");
+      assertFalse(cs.containsKey("k"));
 
       long idle = 120000;
       InternalCacheEntry se = TestInternalCacheEntryFactory.create("k", "v", -1, idle);
       cs.store(se);
 
-      assert cs.containsKey("k");
+      assertTrue(cs.containsKey("k"));
       InternalCacheEntry ice = cs.load("k");
       assertCorrectExpiry(ice, "v", -1, idle, false);
       ice = cs.loadAll().iterator().next();
@@ -185,14 +182,14 @@ public abstract class BaseCacheStoreTest extends AbstractInfinispanTest {
       cs.store(se);
       Thread.sleep(100);
       purgeExpired();
-      assert se.isExpired(System.currentTimeMillis());
+      assertTrue(se.isExpired(System.currentTimeMillis()));
       assertEventuallyExpires("k");
-      assert !cs.containsKey("k");
-      assert cs.loadAll().isEmpty();
+      assertFalse(cs.containsKey("k"));
+      assertTrue(cs.loadAll().isEmpty());
    }
 
    protected void assertEventuallyExpires(String key) throws Exception {
-      assert cs.load(key) == null;
+      assertNull(cs.load(key));
    }
 
    protected void purgeExpired() throws CacheLoaderException {
@@ -200,7 +197,7 @@ public abstract class BaseCacheStoreTest extends AbstractInfinispanTest {
    }
 
    public void testLoadAndStoreWithLifespanAndIdle() throws Exception {
-      assert !cs.containsKey("k");
+      assertFalse(cs.containsKey("k"));
 
       long lifespan = 200000;
       long idle = 120000;
@@ -210,7 +207,7 @@ public abstract class BaseCacheStoreTest extends AbstractInfinispanTest {
       assertEquals(se.getLastUsed(), icv.getLastUsed());
       cs.store(se);
 
-      assert cs.containsKey("k");
+      assertTrue(cs.containsKey("k"));
       InternalCacheEntry ice = cs.load("k");
       assertCorrectExpiry(ice, "v", lifespan, idle, false);
       ice = cs.loadAll().iterator().next();
@@ -221,15 +218,15 @@ public abstract class BaseCacheStoreTest extends AbstractInfinispanTest {
       cs.store(se);
       Thread.sleep(100);
       purgeExpired();
-      assert se.isExpired(System.currentTimeMillis());
+      assertTrue(se.isExpired(System.currentTimeMillis()));
       assertEventuallyExpires("k");
-      assert !cs.containsKey("k");
-      assert cs.loadAll().isEmpty();
+      assertFalse(cs.containsKey("k"));
+      assertTrue(cs.loadAll().isEmpty());
    }
 
    public void testStopStartDoesNotNukeValues() throws InterruptedException, CacheLoaderException {
-      assert !cs.containsKey("k1");
-      assert !cs.containsKey("k2");
+      assertFalse(cs.containsKey("k1"));
+      assertFalse(cs.containsKey("k2"));
 
       long lifespan = 1;
       long idle = 1;
@@ -247,18 +244,18 @@ public abstract class BaseCacheStoreTest extends AbstractInfinispanTest {
 
       cs.stop();
       cs.start();
-      assert se1.isExpired(System.currentTimeMillis());
-      assert cs.load("k1") == null;
-      assert !cs.containsKey("k1");
-      assert cs.load("k2") != null;
-      assert cs.containsKey("k2");
-      assert cs.load("k2").getValue().equals("v2");
-      assert se3.isExpired(System.currentTimeMillis());
-      assert cs.load("k3") == null;
-      assert !cs.containsKey("k3");
-      assert se3.isExpired(System.currentTimeMillis());
-      assert cs.load("k3") == null;
-      assert !cs.containsKey("k3");
+      assertTrue(se1.isExpired(System.currentTimeMillis()));
+      assertNull(cs.load("k1"));
+      assertFalse(cs.containsKey("k1"));
+      assertNotNull(cs.load("k2"));
+      assertTrue(cs.containsKey("k2"));
+      assertEquals("v2", cs.load("k2").getValue());
+      assertTrue(se3.isExpired(System.currentTimeMillis()));
+      assertNull(cs.load("k3"));
+      assertFalse(cs.containsKey("k3"));
+      assertTrue(se3.isExpired(System.currentTimeMillis()));
+      assertNull(cs.load("k3"));
+      assertFalse(cs.containsKey("k3"));
    }
 
    protected void sleepForStopStartTest() throws InterruptedException {
@@ -274,8 +271,8 @@ public abstract class BaseCacheStoreTest extends AbstractInfinispanTest {
       GlobalTransaction tx = gtf.newGlobalTransaction(null, true);
       cs.prepare(mods, tx, true);
 
-      assert cs.load("k2").getValue().equals("v2");
-      assert !cs.containsKey("k1");
+      assertEquals("v2", cs.load("k2").getValue());
+      assertFalse(cs.containsKey("k1"));
 
       cs.clear();
 
@@ -284,9 +281,9 @@ public abstract class BaseCacheStoreTest extends AbstractInfinispanTest {
       mods.add(new Store(TestInternalCacheEntryFactory.create("k2", "v2")));
       mods.add(new Store(TestInternalCacheEntryFactory.create("k3", "v3")));
       cs.prepare(mods, tx, true);
-      assert cs.containsKey("k1");
-      assert cs.containsKey("k2");
-      assert cs.containsKey("k3");
+      assertTrue(cs.containsKey("k1"));
+      assertTrue(cs.containsKey("k2"));
+      assertTrue(cs.containsKey("k3"));
    }
 
    public void testTwoPhaseCommit() throws CacheLoaderException {
@@ -297,13 +294,13 @@ public abstract class BaseCacheStoreTest extends AbstractInfinispanTest {
       GlobalTransaction tx = gtf.newGlobalTransaction(null, false);
       cs.prepare(mods, tx, false);
 
-      assert !cs.containsKey("k1");
-      assert !cs.containsKey("k2");
+      assertFalse(cs.containsKey("k1"));
+      assertFalse(cs.containsKey("k2"));
 
       cs.commit(tx);
 
-      assert cs.load("k2").getValue().equals("v2");
-      assert !cs.containsKey("k1");
+      assertEquals("v2", cs.load("k2").getValue());
+      assertFalse(cs.containsKey("k1"));
 
       cs.clear();
 
@@ -314,15 +311,15 @@ public abstract class BaseCacheStoreTest extends AbstractInfinispanTest {
 
       cs.prepare(mods, tx, false);
 
-      assert !cs.containsKey("k1");
-      assert !cs.containsKey("k2");
-      assert !cs.containsKey("k3");
+      assertFalse(cs.containsKey("k1"));
+      assertFalse(cs.containsKey("k2"));
+      assertFalse(cs.containsKey("k3"));
 
       cs.commit(tx);
 
-      assert cs.containsKey("k1");
-      assert cs.containsKey("k2");
-      assert cs.containsKey("k3");
+      assertTrue(cs.containsKey("k1"));
+      assertTrue(cs.containsKey("k2"));
+      assertTrue(cs.containsKey("k3"));
    }
 
 
@@ -338,15 +335,15 @@ public abstract class BaseCacheStoreTest extends AbstractInfinispanTest {
       GlobalTransaction tx = gtf.newGlobalTransaction(null, false);
       cs.prepare(mods, tx, false);
 
-      assert !cs.containsKey("k1");
-      assert !cs.containsKey("k2");
-      assert cs.containsKey("old");
+      assertFalse(cs.containsKey("k1"));
+      assertFalse(cs.containsKey("k2"));
+      assertTrue(cs.containsKey("old"));
 
       cs.rollback(tx);
 
-      assert !cs.containsKey("k1");
-      assert !cs.containsKey("k2");
-      assert cs.containsKey("old");
+      assertFalse(cs.containsKey("k1"));
+      assertFalse(cs.containsKey("k2"));
+      assertTrue(cs.containsKey("old"));
 
       mods = new ArrayList<Modification>();
       mods.add(new Store(TestInternalCacheEntryFactory.create("k1", "v1")));
@@ -356,16 +353,16 @@ public abstract class BaseCacheStoreTest extends AbstractInfinispanTest {
 
       cs.prepare(mods, tx, false);
 
-      assert !cs.containsKey("k1");
-      assert !cs.containsKey("k2");
-      assert !cs.containsKey("k3");
+      assertFalse(cs.containsKey("k1"));
+      assertFalse(cs.containsKey("k2"));
+      assertFalse(cs.containsKey("k3"));
 
       cs.rollback(tx);
 
-      assert !cs.containsKey("k1");
-      assert !cs.containsKey("k2");
-      assert !cs.containsKey("k3");
-      assert cs.containsKey("old");
+      assertFalse(cs.containsKey("k1"));
+      assertFalse(cs.containsKey("k2"));
+      assertFalse(cs.containsKey("k3"));
+      assertTrue(cs.containsKey("old"));
    }
 
    public void testRollbackFromADifferentThreadReusingTransactionKey() throws CacheLoaderException, InterruptedException {
@@ -390,9 +387,9 @@ public abstract class BaseCacheStoreTest extends AbstractInfinispanTest {
       t.start();
       t.join();
 
-      assert !cs.containsKey("k1");
-      assert !cs.containsKey("k2");
-      assert cs.containsKey("old");
+      assertFalse(cs.containsKey("k1"));
+      assertFalse(cs.containsKey("k2"));
+      assertTrue(cs.containsKey("old"));
 
       mods = new ArrayList<Modification>();
       mods.add(new Store(TestInternalCacheEntryFactory.create("k1", "v1")));
@@ -411,10 +408,10 @@ public abstract class BaseCacheStoreTest extends AbstractInfinispanTest {
 
       t2.start();
       t2.join();
-      assert !cs.containsKey("k1");
-      assert !cs.containsKey("k2");
-      assert !cs.containsKey("k3");
-      assert cs.containsKey("old");
+      assertFalse(cs.containsKey("k1"));
+      assertFalse(cs.containsKey("k2"));
+      assertFalse(cs.containsKey("k3"));
+      assertTrue(cs.containsKey("old"));
    }
 
    public void testCommitAndRollbackWithoutPrepare() throws CacheLoaderException {
@@ -424,7 +421,7 @@ public abstract class BaseCacheStoreTest extends AbstractInfinispanTest {
       cs.store(TestInternalCacheEntryFactory.create("old", "old"));
       cs.rollback(tx);
 
-      assert cs.containsKey("old");
+      assertTrue(cs.containsKey("old"));
    }
 
    public void testPreload() throws Exception {
@@ -434,13 +431,13 @@ public abstract class BaseCacheStoreTest extends AbstractInfinispanTest {
 
       Set<InternalCacheEntry> set = cs.loadAll();
 
-      assert set.size() == 3;
+      assertEquals(3, set.size());
       Set expected = new HashSet();
       expected.add("k1");
       expected.add("k2");
       expected.add("k3");
-      for (InternalCacheEntry se : set) assert expected.remove(se.getKey());
-      assert expected.isEmpty();
+      for (InternalCacheEntry se : set) assertTrue(expected.remove(se.getKey()));
+      assertTrue(expected.isEmpty());
    }
 
    public void testPreloadWithMaxSize() throws CacheLoaderException {
@@ -455,8 +452,8 @@ public abstract class BaseCacheStoreTest extends AbstractInfinispanTest {
       expected.add("k1");
       expected.add("k2");
       expected.add("k3");
-      for (InternalCacheEntry se : set) assert expected.remove(se.getKey());
-      assert expected.size() == 1;
+      for (InternalCacheEntry se : set) assertTrue(expected.remove(se.getKey()));
+      assertEquals(1, expected.size());
    }
 
    public void testStoreAndRemoveAll() throws CacheLoaderException {
@@ -468,14 +465,14 @@ public abstract class BaseCacheStoreTest extends AbstractInfinispanTest {
 
       Set<InternalCacheEntry> set = cs.loadAll();
 
-      assert set.size() == 4;
+      assertEquals(4, set.size());
       Set expected = new HashSet();
       expected.add("k1");
       expected.add("k2");
       expected.add("k3");
       expected.add("k4");
-      for (InternalCacheEntry se : set) assert expected.remove(se.getKey());
-      assert expected.isEmpty();
+      for (InternalCacheEntry se : set) assertTrue(expected.remove(se.getKey()));
+      assertTrue(expected.isEmpty());
 
       Set toRemove = new HashSet();
       toRemove.add("k1");
@@ -484,9 +481,9 @@ public abstract class BaseCacheStoreTest extends AbstractInfinispanTest {
       cs.removeAll(toRemove);
 
       set = cs.loadAll();
-      assert set.size() == 1;
+      assertEquals(1, set.size());
       set.remove("k4");
-      assert expected.isEmpty();
+      assertTrue(expected.isEmpty());
    }
 
    public void testPurgeExpired() throws Exception {
@@ -498,20 +495,20 @@ public abstract class BaseCacheStoreTest extends AbstractInfinispanTest {
       cs.store(TestInternalCacheEntryFactory.create("k3", "v3", lifespan, idle));
       cs.store(TestInternalCacheEntryFactory.create("k4", "v4", -1, -1)); // immortal entry
       cs.store(TestInternalCacheEntryFactory.create("k5", "v5", lifespan * 1000, idle * 1000)); // long life mortal entry
-      assert cs.containsKey("k1");
-      assert cs.containsKey("k2");
-      assert cs.containsKey("k3");
-      assert cs.containsKey("k4");
-      assert cs.containsKey("k5");
+      assertTrue(cs.containsKey("k1"));
+      assertTrue(cs.containsKey("k2"));
+      assertTrue(cs.containsKey("k3"));
+      assertTrue(cs.containsKey("k4"));
+      assertTrue(cs.containsKey("k5"));
 
       Thread.sleep(lifespan + 10);
       purgeExpired();
 
-      assert !cs.containsKey("k1");
-      assert !cs.containsKey("k2");
-      assert !cs.containsKey("k3");
-      assert cs.containsKey("k4");
-      assert cs.containsKey("k5");
+      assertFalse(cs.containsKey("k1"));
+      assertFalse(cs.containsKey("k2"));
+      assertFalse(cs.containsKey("k3"));
+      assertTrue(cs.containsKey("k4"));
+      assertTrue(cs.containsKey("k5"));
    }
 
    public void testLoadKeys() throws CacheLoaderException {
@@ -522,16 +519,16 @@ public abstract class BaseCacheStoreTest extends AbstractInfinispanTest {
       cs.store(TestInternalCacheEntryFactory.create("k5", "v"));
 
       Set<Object> s = cs.loadAllKeys(null);
-      assert s.size() == 5 : "Expected 5 keys, was " + s;
+      assertEquals(5, s.size());
 
       s = cs.loadAllKeys(emptySet());
-      assert s.size() == 5 : "Expected 5 keys, was " + s;
+      assertEquals(5, s.size());
 
       Set<Object> excl = Collections.<Object>singleton("k3");
       s = cs.loadAllKeys(excl);
-      assert s.size() == 4 : "Expected 4 keys but was " + s;
+      assertEquals(4, s.size());
 
-      assert !s.contains("k3");
+      assertFalse(s.contains("k3"));
    }
 
    public void testStreamingAPI() throws IOException, CacheLoaderException {
@@ -560,13 +557,13 @@ public abstract class BaseCacheStoreTest extends AbstractInfinispanTest {
       }
 
       Set<InternalCacheEntry> set = cs.loadAll();
-      assert set.size() == 3;
+      assertEquals(3, set.size());
       Set expected = new HashSet();
       expected.add("k1");
       expected.add("k2");
       expected.add("k3");
-      for (InternalCacheEntry se : set) assert expected.remove(se.getKey());
-      assert expected.isEmpty();
+      for (InternalCacheEntry se : set) assertTrue(expected.remove(se.getKey()));
+      assertTrue(expected.isEmpty());
    }
 
    public void testStreamingAPIReusingStreams() throws IOException, CacheLoaderException {
@@ -596,30 +593,30 @@ public abstract class BaseCacheStoreTest extends AbstractInfinispanTest {
       ObjectInput oi = marshaller.startObjectInput(in, false);
       try {
          int bytesRead = oi.read(dummy, 0, 8);
-         assert bytesRead == 8;
-         for (int i = 1; i < 9; i++) assert dummy[i - 1] == i : "Start byte stream corrupted!";
+         assertEquals(8, bytesRead);
+         for (int i = 1; i < 9; i++) assertEquals("Start byte stream corrupted!", i, dummy[i - 1]);
          cs.fromStream(new UnclosableObjectInputStream(oi));
          bytesRead = oi.read(dummy, 0, 8);
-         assert bytesRead == 8;
-         for (int i = 8; i > 0; i--) assert dummy[8 - i] == i : "Start byte stream corrupted!";
+         assertEquals(8, bytesRead);
+         for (int i = 8; i > 0; i--) assertEquals("Start byte stream corrupted!", i, dummy[8 - i]);
       } finally {
          marshaller.finishObjectInput(oi);
          in.close();
       }
 
       Set<InternalCacheEntry> set = cs.loadAll();
-      assert set.size() == 3;
+      assertEquals(3, set.size());
       Set expected = new HashSet();
       expected.add("k1");
       expected.add("k2");
       expected.add("k3");
-      for (InternalCacheEntry se : set) assert expected.remove(se.getKey());
-      assert expected.isEmpty();
+      for (InternalCacheEntry se : set) assertTrue(expected.remove(se.getKey()));
+      assertTrue(expected.isEmpty());
    }
 
    public void testConfigFile() throws Exception {
       Object configuration = cs.getConfiguration();
-      Assert.assertTrue("Cache loaders doesn't provide a proper configuration type that is capable of creating the " +
+      assertTrue("Cache loaders doesn't provide a proper configuration type that is capable of creating the " +
             "loaders!", configuration instanceof CacheLoaderConfiguration);
    }
 
@@ -664,7 +661,7 @@ public abstract class BaseCacheStoreTest extends AbstractInfinispanTest {
             try {
                int randomInt = r.nextInt(10);
                InternalCacheEntry se = cs.load(keys[randomInt]);
-               assert se == null || se.getValue().equals(values[randomInt]);
+               assertTrue(se == null || se.getValue().equals(values[randomInt]));
                cs.loadAll();
             } catch (Exception e) {
                exceptions.add(e);
@@ -701,7 +698,7 @@ public abstract class BaseCacheStoreTest extends AbstractInfinispanTest {
          InternalCacheEntry entry = cs.load("k1");
          if (System.currentTimeMillis() >= startTime + lifespan)
             break;
-         assert entry.getValue().equals("v1");
+         assertEquals("v1", entry.getValue());
          Thread.sleep(100);
       }
 
@@ -710,14 +707,14 @@ public abstract class BaseCacheStoreTest extends AbstractInfinispanTest {
          if (cs.load("k1") == null) break;
       }
 
-      assert null == cs.load("k1");
+      assertNull(cs.load("k1"));
 
       cs.store(TestInternalCacheEntryFactory.create("k1", "v2", lifespan));
       while (true) {
          InternalCacheEntry entry = cs.load("k1");
          if (System.currentTimeMillis() >= startTime + lifespan)
             break;
-         assert entry.getValue().equals("v2");
+         assertEquals("v2", entry.getValue());
          Thread.sleep(100);
       }
 
@@ -726,7 +723,7 @@ public abstract class BaseCacheStoreTest extends AbstractInfinispanTest {
          if (cs.load("k1") == null) break;
       }
 
-      assert null == cs.load("k1");
+      assertNull(cs.load("k1"));
    }
 
    public void testLoadAndStoreMarshalledValues() throws CacheLoaderException {
@@ -734,20 +731,19 @@ public abstract class BaseCacheStoreTest extends AbstractInfinispanTest {
       MarshalledValue key2 = new MarshalledValue(new Pojo().role("key2"), true, getMarshaller());
       MarshalledValue value = new MarshalledValue(new Pojo().role("value"), true, getMarshaller());
 
-      assert !cs.containsKey(key);
+      assertFalse(cs.containsKey(key));
       InternalCacheEntry se = TestInternalCacheEntryFactory.create(key, value);
       cs.store(se);
 
-      assert cs.load(key).getValue().equals(value);
-      assert cs.load(key).getLifespan() == -1;
-      assert cs.load(key).getMaxIdle() == -1;
-      assert !cs.load(key).isExpired(System.currentTimeMillis());
-      assert cs.containsKey(key);
+      assertEquals(value, cs.load(key).getValue());
+      assertEquals(-1, cs.load(key).getLifespan());
+      assertEquals(-1, cs.load(key).getMaxIdle());
+      assertFalse(cs.load(key).isExpired(System.currentTimeMillis()));
+      assertTrue(cs.containsKey(key));
 
-      boolean removed = cs.remove(key2);
-      assert !removed;
+      assertFalse(cs.remove(key2));
 
-      assert cs.remove(key);
+      assertTrue(cs.remove(key));
    }
 
    public static class Pojo implements Serializable {
