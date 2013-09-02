@@ -98,7 +98,7 @@ public class UpgradeTest extends AbstractInfinispanTest {
    }
 
    private void checkNoErrors(Map<String, String> result) {
-      assertFalse(result.containsKey(ResultKeys.ERROR.toString()));
+      assertFalse(result.get(ResultKeys.ERROR.toString()), result.containsKey(ResultKeys.ERROR.toString()));
    }
 
    @BeforeMethod
