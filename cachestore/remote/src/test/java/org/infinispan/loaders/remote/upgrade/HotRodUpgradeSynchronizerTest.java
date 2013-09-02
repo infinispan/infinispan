@@ -1,4 +1,4 @@
-package org.infinispan.upgrade.hotrod;
+package org.infinispan.loaders.remote.upgrade;
 
 import org.infinispan.Cache;
 import org.infinispan.client.hotrod.RemoteCache;
