@@ -101,17 +101,23 @@ class Server(@Context request: Request, @Context servletContext: ServletContext,
 
    @GET
    @Path("/{cacheName}/{cacheKey}")
-   def getEntry(@PathParam("cacheName") cacheName: String, @PathParam("cacheKey") key: String, @QueryParam("extended") extended: String): Response = {
+   def getEntry(@PathParam("cacheName") cacheName: String,
+                @PathParam("cacheKey") key: String,
+                @QueryParam("extended") extended: String,
+                @DefaultValue("") @HeaderParam("Cache-Control") cacheControl: String): Response = {
       protectCacheNotFound(request, useAsync) { (request, useAsync) =>
          manager.getInternalEntry(cacheName, key) match {
             case ice: InternalCacheEntry => {
                val lastMod = lastModified(ice)
                val expires = if (ice.canExpire) new Date(ice.getExpiryTime) else null
-               ice.getMetadata match {
-                  case meta: MimeMetadata =>
-                     getMimeEntry(ice, meta, lastMod, expires, cacheName, extended)
-                  case _ =>
-                     getAnyEntry(ice, lastMod, expires, cacheName, extended)
+               val minFreshSeconds = minFresh(cacheControl)
+               ensureFreshEnoughEntry(expires, minFreshSeconds) {
+                  ice.getMetadata match {
+                     case meta: MimeMetadata =>
+                        getMimeEntry(ice, meta, lastMod, expires, cacheName, extended)
+                     case _ =>
+                        getAnyEntry(ice, lastMod, expires, cacheName, extended)
+                  }
                }
             }
             case _ => Response.status(Status.NOT_FOUND).build
@@ -119,11 +125,29 @@ class Server(@Context request: Request, @Context servletContext: ServletContext,
       }
    }
 
-   private def formatDate(date: Date): String = {
-      if (date == null)
-         null
-      else
-         datePatternRfc1123LocaleUS.format(date)
+   private def ensureFreshEnoughEntry(expires: Date, minFreshSeconds: Option[Int]) (op: => Response): Response = {
+      entryFreshEnough(expires, minFreshSeconds) match {
+         case true => op
+         case false => Response.status(Status.NOT_FOUND).build
+      }
+   }
+
+   private def minFresh(cacheControl: String): Option[Int] = {
+      val minFreshDirective = cacheControl.split(",").find(_.contains("min-fresh"))
+      minFreshDirective match {
+         case Some(directive) => Some(directive.split("=").last.trim.toInt)
+         case None => None
+      }
+   }
+
+   private def entryFreshEnough(entryExpires: Date, minFresh: Option[Int]): Boolean = minFresh match {
+      case Some(minFreshValue) => minFreshValue < calcFreshness(entryExpires)
+      case None => true
+   }
+
+   private def calcFreshness(expires: Date): Int = expires match {
+      case null => Int.MaxValue
+      case expiry => ((expiry.getTime - new Date().getTime) / 1000).toInt
    }
 
    private def getMimeEntry(ice: InternalCacheEntry, meta: MimeMetadata,
@@ -135,6 +159,7 @@ class Server(@Context request: Request, @Context servletContext: ServletContext,
                  .header(HttpHeaderNames.LAST_MODIFIED, formatDate(lastMod))
                   //workaround for https://issues.jboss.org/browse/RESTEASY-887
                  .header(HttpHeaderNames.EXPIRES, formatDate(expires))
+                 .cacheControl(calcCacheControl(expires))
                  .tag(calcETAG(ice, meta))
                  .extended(cacheName, key, wantExtendedHeaders(extended)).build
       }
@@ -148,12 +173,14 @@ class Server(@Context request: Request, @Context servletContext: ServletContext,
          case s: String => Response.ok(s, MediaType.TEXT_PLAIN)
                            .header(HttpHeaderNames.EXPIRES, formatDate(expires))
                            .header(HttpHeaderNames.LAST_MODIFIED, formatDate(lastMod))
+                           .cacheControl(calcCacheControl(expires))
                            .build
 
          case ba: Array[Byte] => Response.ok
                                  .`type`(MediaType.APPLICATION_OCTET_STREAM)
                                  .header(HttpHeaderNames.LAST_MODIFIED, formatDate(lastMod))
                                  .header(HttpHeaderNames.EXPIRES, formatDate(expires))
+                                 .cacheControl(calcCacheControl(expires))
                                  .extended(cacheName, key, wantExtendedHeaders(extended))
                                  .entity(streamIt(_.write(ba)))
                                  .build
@@ -168,6 +195,7 @@ class Server(@Context request: Request, @Context servletContext: ServletContext,
                        .`type`(selectedMediaType)
                        .header(HttpHeaderNames.LAST_MODIFIED, formatDate(lastMod))
                        .header(HttpHeaderNames.EXPIRES, formatDate(expires))
+                       .cacheControl(calcCacheControl(expires))
                        .extended(cacheName, key, wantExtendedHeaders(extended))
                        .entity(streamIt(jsonMapper.writeValue(_, obj)))
                        .build
@@ -175,6 +203,7 @@ class Server(@Context request: Request, @Context servletContext: ServletContext,
                        .`type`(selectedMediaType)
                        .header(HttpHeaderNames.LAST_MODIFIED, formatDate(lastMod))
                        .header(HttpHeaderNames.EXPIRES, formatDate(expires))
+                       .cacheControl(calcCacheControl(expires))
                        .extended(cacheName, key, wantExtendedHeaders(extended))
                        .entity(streamIt(xstream.toXML(obj, _)))
                        .build
@@ -184,6 +213,7 @@ class Server(@Context request: Request, @Context servletContext: ServletContext,
                              .`type`(selectedMediaType)
                              .header(HttpHeaderNames.LAST_MODIFIED, formatDate(lastMod))
                              .header(HttpHeaderNames.EXPIRES, formatDate(expires))
+                             .cacheControl(calcCacheControl(expires))
                              .extended(cacheName, key, wantExtendedHeaders(extended))
                              .entity(streamIt(new ObjectOutputStream(_).writeObject(ser)))
                              .build
@@ -195,6 +225,26 @@ class Server(@Context request: Request, @Context servletContext: ServletContext,
 
             }
          }
+      }
+   }
+
+   private def formatDate(date: Date): String = {
+      if (date == null)
+         null
+      else
+         datePatternRfc1123LocaleUS.format(date)
+   }
+
+   private def calcCacheControl(expires: Date): CacheControl = expires match {
+      case null => null
+      case _ => {
+         val cacheControl = new CacheControl
+         val maxAgeSeconds = calcFreshness(expires)
+         if (maxAgeSeconds > 0)
+            cacheControl.setMaxAge(maxAgeSeconds)
+         else
+            cacheControl.setNoCache(true)
+         cacheControl
       }
    }
 
@@ -237,29 +287,37 @@ class Server(@Context request: Request, @Context servletContext: ServletContext,
 
    @HEAD
    @Path("/{cacheName}/{cacheKey}")
-   def headEntry(@PathParam("cacheName") cacheName: String, @PathParam("cacheKey") key: String, @QueryParam("extended") extended: String): Response = {
+   def headEntry(@PathParam("cacheName") cacheName: String,
+                 @PathParam("cacheKey") key: String,
+                 @QueryParam("extended") extended: String,
+                 @DefaultValue("") @HeaderParam("Cache-Control") cacheControl: String): Response = {
       protectCacheNotFound(request, useAsync) { (request, useAsync) =>
          manager.getInternalEntry(cacheName, key) match {
             case ice: InternalCacheEntry => {
                val lastMod = lastModified(ice)
                val expires = if (ice.canExpire) new Date(ice.getExpiryTime) else null
-               ice.getMetadata match {
-                  case meta: MimeMetadata =>
-                     request.evaluatePreconditions(lastMod, calcETAG(ice, meta)) match {
-                        case bldr: ResponseBuilder => bldr.build
-                        case null => Response.ok
-                                .`type`(meta.contentType)
-                                .header(HttpHeaderNames.LAST_MODIFIED, formatDate(lastMod))
-                                .header(HttpHeaderNames.EXPIRES, formatDate(expires))
-                                .tag(calcETAG(ice, meta))
-                                .extended(cacheName, key, wantExtendedHeaders(extended))
-                                .build
-                     }
-                  case _ => Response.ok
-                          .header(HttpHeaderNames.LAST_MODIFIED, formatDate(lastMod))
-                          .header(HttpHeaderNames.EXPIRES, formatDate(expires))
-                          .extended(cacheName, key, wantExtendedHeaders(extended))
-                          .build
+               val minFreshSeconds = minFresh(cacheControl)
+               ensureFreshEnoughEntry(expires, minFreshSeconds) {
+                  ice.getMetadata match {
+                     case meta: MimeMetadata =>
+                        request.evaluatePreconditions(lastMod, calcETAG(ice, meta)) match {
+                           case bldr: ResponseBuilder => bldr.build
+                           case null => Response.ok
+                                   .`type`(meta.contentType)
+                                   .header(HttpHeaderNames.LAST_MODIFIED, formatDate(lastMod))
+                                   .header(HttpHeaderNames.EXPIRES, formatDate(expires))
+                                   .cacheControl(calcCacheControl(expires))
+                                   .tag(calcETAG(ice, meta))
+                                   .extended(cacheName, key, wantExtendedHeaders(extended))
+                                   .build
+                        }
+                     case _ => Response.ok
+                             .header(HttpHeaderNames.LAST_MODIFIED, formatDate(lastMod))
+                             .header(HttpHeaderNames.EXPIRES, formatDate(expires))
+                             .cacheControl(calcCacheControl(expires))
+                             .extended(cacheName, key, wantExtendedHeaders(extended))
+                             .build
+                  }
                }
             }
             case _ => Response.status(Status.NOT_FOUND).build

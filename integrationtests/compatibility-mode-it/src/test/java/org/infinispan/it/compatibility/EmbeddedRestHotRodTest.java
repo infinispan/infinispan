@@ -28,6 +28,7 @@ import java.util.TimeZone;
 import java.util.concurrent.TimeUnit;
 
 import static org.testng.AssertJUnit.*;
+import static org.testng.AssertJUnit.assertEquals;
 
 /**
  * Test compatibility between embedded caches, Hot Rod, and REST endpoints.
@@ -319,6 +320,46 @@ public class EmbeddedRestHotRodTest {
       getKey2.setRequestHeader("Accept", "unknown-media-type");
       cacheFactory.getRestClient().executeMethod(getKey2);
       assertEquals(getKey2.getStatusText(), HttpServletResponse.SC_BAD_REQUEST, getKey2.getStatusCode());
+   }
+
+   public void testHotRodEmbeddedPutRestGetCacheControlHeader() throws Exception {
+      final String key1 = "18";
+      final String key2 = "19";
+
+      // 1. Put with HotRod
+      assertEquals(null, cacheFactory.getHotRodCache().put(key1, "v1", 7, TimeUnit.SECONDS));
+
+      // 2. Put with Embedded
+      assertEquals(null, cacheFactory.getEmbeddedCache().put(key2, "v2", 7, TimeUnit.SECONDS));
+
+      // 3. GET with REST key1, long min-fresh
+      HttpMethod getKey1 = new GetMethod(cacheFactory.getRestUrl() + "/" + key1);
+      getKey1.setRequestHeader("Cache-Control", "min-fresh=20");
+      cacheFactory.getRestClient().executeMethod(getKey1);
+      assertEquals(getKey1.getStatusText(), HttpServletResponse.SC_NOT_FOUND, getKey1.getStatusCode());
+
+      // 4. GET with REST key2, long min-fresh
+      HttpMethod getKey2 = new GetMethod(cacheFactory.getRestUrl() + "/" + key2);
+      getKey2.setRequestHeader("Cache-Control", "min-fresh=20");
+      cacheFactory.getRestClient().executeMethod(getKey2);
+      assertEquals(getKey2.getStatusText(), HttpServletResponse.SC_NOT_FOUND, getKey2.getStatusCode());
+
+      // 5. GET with REST key1, short min-fresh
+      getKey1 = new GetMethod(cacheFactory.getRestUrl() + "/" + key1);
+      getKey1.setRequestHeader("Cache-Control", "min-fresh=3");
+      cacheFactory.getRestClient().executeMethod(getKey1);
+      assertNotNull(getKey1.getResponseHeader("Cache-Control"));
+      assertTrue(getKey1.getResponseHeader("Cache-Control").getValue().contains("max-age"));
+      assertEquals(getKey1.getStatusText(), HttpServletResponse.SC_OK, getKey1.getStatusCode());
+      assertEquals("v1", getKey1.getResponseBodyAsString());
+
+      // 6. GET with REST key2, short min-fresh
+      getKey2 = new GetMethod(cacheFactory.getRestUrl() + "/" + key2);
+      getKey2.setRequestHeader("Cache-Control", "min-fresh=3");
+      cacheFactory.getRestClient().executeMethod(getKey2);
+      assertTrue(getKey2.getResponseHeader("Cache-Control").getValue().contains("max-age"));
+      assertEquals(getKey2.getStatusText(), HttpServletResponse.SC_OK, getKey2.getStatusCode());
+      assertEquals("v2", getKey2.getResponseBodyAsString());
    }
 
    /**
