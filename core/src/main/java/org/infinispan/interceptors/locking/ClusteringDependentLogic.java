@@ -409,11 +409,23 @@ public interface ClusteringDependentLogic {
             if (isForeignOwned && !entry.isRemoved()) {
                if (configuration.clustering().l1().enabled()) {
                   // transform for L1
-                  if (entry.getLifespan() < 0 || entry.getLifespan() > configuration.clustering().l1().lifespan()) {
-                     Metadata newMetadata = entry.getMetadata().builder()
+                  long lifespan;
+                  if (metadata != null) {
+                     lifespan = metadata.lifespan();
+                  } else {
+                     lifespan = entry.getLifespan();
+                  }
+                  if (lifespan < 0 || lifespan > configuration.clustering().l1().lifespan()) {
+                     Metadata.Builder builder;
+                     if (metadata != null) {
+                        builder = metadata.builder();
+                     } else {
+                        builder = entry.getMetadata().builder();
+                     }
+                     Metadata newMetadata = builder
                            .lifespan(configuration.clustering().l1().lifespan())
                            .build();
-                     entry.setMetadata(newMetadata);
+                     metadata = newMetadata;
                   }
                } else {
                   doCommit = false;
