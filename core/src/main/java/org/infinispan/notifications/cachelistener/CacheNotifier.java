@@ -6,7 +6,9 @@ import org.infinispan.context.InvocationContext;
 import org.infinispan.distribution.ch.ConsistentHash;
 import org.infinispan.factories.scopes.Scope;
 import org.infinispan.factories.scopes.Scopes;
-import org.infinispan.notifications.Listenable;
+import org.infinispan.notifications.ClassLoaderAwareFilteringListenable;
+import org.infinispan.notifications.ClassLoaderAwareListenable;
+import org.infinispan.notifications.FilteringListenable;
 import org.infinispan.transaction.xa.GlobalTransaction;
 
 import java.util.Collection;
@@ -18,7 +20,7 @@ import java.util.Collection;
  * @since 4.0
  */
 @Scope(Scopes.NAMED_CACHE)
-public interface CacheNotifier extends Listenable {
+public interface CacheNotifier extends ClassLoaderAwareFilteringListenable, ClassLoaderAwareListenable {
 
    /**
     * Notifies all registered listeners of a CacheEntryCreated event.

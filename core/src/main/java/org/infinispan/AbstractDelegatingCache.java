@@ -2,6 +2,7 @@ package org.infinispan;
 
 import org.infinispan.lifecycle.ComponentStatus;
 import org.infinispan.manager.EmbeddedCacheManager;
+import org.infinispan.notifications.KeyFilter;
 import org.infinispan.util.concurrent.NotifyingFuture;
 
 import java.util.Collection;
@@ -323,6 +324,11 @@ public abstract class AbstractDelegatingCache<K, V> implements Cache<K, V> {
    @Override
    public void addListener(Object listener) {
       cache.addListener(listener);
+   }
+
+   @Override
+   public void addListener(Object listener, KeyFilter filter) {
+      cache.addListener(listener, filter);
    }
 
    @Override

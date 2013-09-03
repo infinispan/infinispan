@@ -9,5 +9,10 @@ package org.infinispan.notifications;
  * @since 5.2
  */
 public interface ClassLoaderAwareListenable extends Listenable {
-   public void addListener(Object listener, ClassLoader classLoader);
+   /**
+    * Adds a listener along with a class loader to use for the invocation
+    * @param listener
+    * @param classLoader
+    */
+   void addListener(Object listener, ClassLoader classLoader);
 }

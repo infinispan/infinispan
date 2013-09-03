@@ -7,7 +7,7 @@ import org.infinispan.lifecycle.ComponentStatus;
 import org.infinispan.loaders.spi.CacheStore;
 import org.infinispan.manager.DefaultCacheManager;
 import org.infinispan.manager.EmbeddedCacheManager;
-import org.infinispan.notifications.Listenable;
+import org.infinispan.notifications.FilteringListenable;
 import org.infinispan.util.concurrent.NotifyingFuture;
 
 import java.util.Collection;
@@ -86,7 +86,7 @@ import java.util.concurrent.ConcurrentMap;
  * @see <a href="http://www.jboss.org/community/wiki/5minutetutorialonInfinispan">5 Minute Usage Tutorial</a>
  * @since 4.0
  */
-public interface Cache<K, V> extends BasicCache<K, V>, BatchingCache, Listenable {
+public interface Cache<K, V> extends BasicCache<K, V>, BatchingCache, FilteringListenable {
    /**
     * Under special operating behavior, associates the value with the specified key. <ul> <li> Only goes through if the
     * key specified does not exist; no-op otherwise (similar to {@link ConcurrentMap#putIfAbsent(Object, Object)})</i>
