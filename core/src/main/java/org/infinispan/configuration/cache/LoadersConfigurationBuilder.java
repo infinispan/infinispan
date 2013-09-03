@@ -193,6 +193,12 @@ public class LoadersConfigurationBuilder extends AbstractConfigurationChildBuild
       return builder;
    }
 
+   public BrnoCacheStoreConfigurationBuilder addBrnoCacheStore() {
+      BrnoCacheStoreConfigurationBuilder builder = new BrnoCacheStoreConfigurationBuilder(this);
+      this.cacheLoaders.add(builder);
+      return builder;
+   }
+
    /**
     * Removes any configured cache loaders and stores from this builder
     */

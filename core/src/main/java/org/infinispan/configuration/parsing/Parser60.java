@@ -562,6 +562,9 @@ public class Parser60 implements ConfigurationParser {
             case SINGLE_FILE_STORE:
                parseSingleFileStore(reader, holder);
                break;
+            case BRNO_FILE_STORE:
+               parseBrnoFileStore(reader, holder);
+               break;
             case LOADER:
                parseLoader(reader, holder);
                break;
@@ -590,6 +593,52 @@ public class Parser60 implements ConfigurationParser {
                break;
             default:
                parseCommonLoaderAttributes(reader, i, storeBuilder);
+               break;
+         }
+      }
+      parseStoreChildren(reader, storeBuilder);
+   }
+
+   private void parseBrnoFileStore(XMLExtendedStreamReader reader, ConfigurationBuilderHolder holder) throws XMLStreamException {
+      ConfigurationBuilder builder = holder.getCurrentConfigurationBuilder();
+      BrnoCacheStoreConfigurationBuilder storeBuilder = builder.loaders().addBrnoCacheStore();
+      for (int i = 0; i < reader.getAttributeCount(); i++) {
+         ParseUtils.requireNoNamespaceAttribute(reader, i);
+         String value = replaceProperties(reader.getAttributeValue(i));
+         Attribute attribute = Attribute.forName(reader.getAttributeLocalName(i));
+         switch (attribute) {
+            case DATA_LOCATION:
+               storeBuilder.dataLocation(value);
+               break;
+            case INDEX_LOCATION:
+               storeBuilder.indexLocation(value);
+               break;
+            case INDEX_SEGMENTS:
+               storeBuilder.indexSegments(Integer.parseInt(value));
+               break;
+            case INDEX_QUEUE_LENGTH:
+               storeBuilder.indexQueueLength(Integer.parseInt(value));
+               break;
+            case MAX_FILE_SIZE:
+               storeBuilder.maxFileSize(Integer.parseInt(value));
+               break;
+            case MIN_NODE_SIZE:
+               storeBuilder.minNodeSize(Integer.parseInt(value));
+               break;
+            case MAX_NODE_SIZE:
+               storeBuilder.maxNodeSize(Integer.parseInt(value));
+               break;
+            case SYNC_WRITES:
+               storeBuilder.syncWrites(Boolean.parseBoolean(value));
+               break;
+            case OPEN_FILES_LIMIT:
+               storeBuilder.openFilesLimit(Integer.parseInt(value));
+               break;
+            case COMPACTION_THRESHOLD:
+               storeBuilder.compactionThreshold(Double.parseDouble(value));
+               break;
+            default:
+               parseCommonStoreAttributes(reader, i, storeBuilder);
                break;
          }
       }

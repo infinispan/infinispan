@@ -397,6 +397,13 @@
                    </xs:documentation>
                 </xs:annotation>
              </xs:element>
+             <xs:element name="brnoFileStore" minOccurs="0" maxOccurs="unbounded" type="tns:brnoFileStore">
+                <xs:annotation>
+                   <xs:documentation>
+                      Configuration of a BrnoCacheStore
+                   </xs:documentation>
+                </xs:annotation>
+             </xs:element>
             <xs:any namespace="##other" minOccurs="0" maxOccurs="unbounded" />
           </xs:sequence>
           <xs:attribute name="passivation" type="xs:boolean" default="false">
@@ -1767,6 +1774,83 @@
          </xs:extension>
       </xs:complexContent>
   </xs:complexType>
+
+  <xs:complexType name="brnoFileStore">
+      <xs:complexContent>
+         <xs:extension base="tns:store">
+            <xs:attribute name="dataLocation" type="xs:string" default="Infinispan-BrnoCacheStore-Data">
+               <xs:annotation>
+                  <xs:documentation>
+                     A location on disk where the store writes entries (persistent location). Files are written sequentially, reads are random.
+                  </xs:documentation>
+               </xs:annotation>
+            </xs:attribute>
+            <xs:attribute name="indexLocation" type="xs:string" default="Infinispan-BrnoCacheStore-Index">
+               <xs:annotation>
+                  <xs:documentation>
+                     A location where the store keeps index - this does not have be persistent across restarts, and SSD storage is recommended (the index is accessed randomly).
+                  </xs:documentation>
+               </xs:annotation>
+            </xs:attribute>
+            <xs:attribute name="indexSegments" type="xs:int" default="3">
+               <xs:annotation>
+                  <xs:documentation>
+                     Number of index segment files.
+                  </xs:documentation>
+               </xs:annotation>
+            </xs:attribute>
+            <xs:attribute name="indexQueueLength" type="xs:int" default="1000">
+               <xs:annotation>
+                  <xs:documentation>
+                     Max number of entry writes that are waiting to be written to the index, per index segment.
+                  </xs:documentation>
+               </xs:annotation>
+            </xs:attribute>
+            <xs:attribute name="maxFileSize" type="xs:int" default="16777216">
+               <xs:annotation>
+                  <xs:documentation>
+                     Max size of single file with entries, in bytes.
+                  </xs:documentation>
+               </xs:annotation>
+            </xs:attribute>
+            <xs:attribute name="maxNodeSize" type="xs:int" default="4096">
+               <xs:annotation>
+                  <xs:documentation>
+                     Max size of node in index, in bytes.
+                  </xs:documentation>
+               </xs:annotation>
+            </xs:attribute>
+            <xs:attribute name="minNodeSize" type="xs:int" default="4096">
+               <xs:annotation>
+                  <xs:documentation>
+                     If the node size drops below this threshold, the node will try to balance its size with some neighbour node, possibly causing join of multiple nodes.
+                  </xs:documentation>
+               </xs:annotation>
+            </xs:attribute>
+            <xs:attribute name="syncWrites" type="xs:boolean" default="false">
+               <xs:annotation>
+                  <xs:documentation>
+                     If true, the write is confirmed only after the entry is fsynced on disk.
+                  </xs:documentation>
+               </xs:annotation>
+            </xs:attribute>
+            <xs:attribute name="openFilesLimit" type="xs:int" default="1000">
+               <xs:annotation>
+                  <xs:documentation>
+                     Max number of data files opened for reading (current log file, compaction output and index segments are not included here).
+                  </xs:documentation>
+               </xs:annotation>
+            </xs:attribute>
+            <xs:attribute name="compactionThreshold" type="xs:double" default="0.5">
+               <xs:annotation>
+                  <xs:documentation>
+                     If amount of unused space in some data file
+                  </xs:documentation>
+               </xs:annotation>
+            </xs:attribute>
+         </xs:extension>
+      </xs:complexContent>
+   </xs:complexType>
   
   <xs:simpleType name="fsyncMode">
     <xs:restriction base="xs:string">
