@@ -24,7 +24,8 @@ import static org.testng.Assert.assertEquals;
  * @author Mircea.Markus@jboss.com
  * @author Tristan Tarrant
  */
-@Test(groups = "functional", testName = "config.parsing.EHCache2InfinispanTransformerTest")
+@Test(groups = "functional", testName = "config.parsing.EHCache2InfinispanTransformerTest", enabled = false,
+      description = "See https://issues.jboss.org/browse/ISPN-3439")
 public class EHCache2InfinispanTransformerTest extends AbstractInfinispanTest {
 
    private static final String BASE_DIR = "configs/ehcache";
