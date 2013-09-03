@@ -12,11 +12,9 @@ import org.testng.annotations.AfterMethod;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Properties;
 
 import static org.infinispan.test.TestingUtil.blockUntilCacheStatusAchieved;
 import static org.infinispan.test.TestingUtil.blockUntilViewReceived;
-import static org.infinispan.client.hotrod.impl.ConfigurationProperties.*;
 
 /**
  * Base test class for Hot Rod tests.
@@ -43,11 +41,17 @@ public abstract class MultiHotRodServersTest extends MultipleCacheManagersTest {
       }
 
       for (int i = 0; i < num; i++) {
-         Properties props = new Properties();
-         props.put(SERVER_LIST, String.format("localhost:%d", server(i).getPort()));
-         props.put(PING_ON_STARTUP, "false");
-         clients.add(new RemoteCacheManager(props));
+         clients.add(new RemoteCacheManager(createHotRodClientConfigurationBuilder(server(i).getPort()).build()));
       }
+   }
+
+   protected org.infinispan.client.hotrod.configuration.ConfigurationBuilder createHotRodClientConfigurationBuilder(int serverPort) {
+      org.infinispan.client.hotrod.configuration.ConfigurationBuilder clientBuilder = new org.infinispan.client.hotrod.configuration.ConfigurationBuilder();
+      clientBuilder.addServer()
+            .host("localhost")
+            .port(serverPort)
+            .pingOnStartup(false);
+      return clientBuilder;
    }
 
    @AfterMethod(alwaysRun = true)
