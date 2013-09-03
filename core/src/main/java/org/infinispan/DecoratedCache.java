@@ -15,7 +15,9 @@ import org.infinispan.container.entries.CacheEntry;
 import org.infinispan.context.Flag;
 import org.infinispan.metadata.EmbeddedMetadata;
 import org.infinispan.metadata.Metadata;
+import org.infinispan.notifications.ClassLoaderAwareFilteringListenable;
 import org.infinispan.notifications.ClassLoaderAwareListenable;
+import org.infinispan.notifications.KeyFilter;
 import org.infinispan.util.concurrent.NotifyingFuture;
 
 /**
@@ -458,11 +460,12 @@ public class DecoratedCache<K, V> extends AbstractDelegatingAdvancedCache<K, V> 
 
    @Override
    public void addListener(Object listener) {
-      if (cacheImplementation.notifier instanceof ClassLoaderAwareListenable) {
-         ((ClassLoaderAwareListenable)cacheImplementation.notifier).addListener(listener, classLoader.get());
-      } else {
-         throw new IllegalStateException("The CacheNotifier does not implement the ClassLoaderAwareListenable interface");
-      }
+      cacheImplementation.notifier.addListener(listener, classLoader.get());
+   }
+
+   @Override
+   public void addListener(Object listener, KeyFilter filter) {
+      cacheImplementation.notifier.addListener(listener, filter, classLoader.get());
    }
 
    @Override

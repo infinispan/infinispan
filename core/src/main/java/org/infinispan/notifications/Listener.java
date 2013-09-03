@@ -202,4 +202,15 @@ public @interface Listener {
     * @since 4.0
     */
    boolean sync() default true;
+
+   /**
+    * Specifies whether the event should be fired on the primary data owner of the affected key, or all nodes that see
+    * the update.  In the case of replication, this would be the coordinator.
+    *
+    * @return true if the expectation is that only the primary data owner will fire the event, false if all nodes that
+    *         see the update fire the event.
+    *
+    *  @since 5.3
+    */
+   boolean primaryOnly() default false;
 }

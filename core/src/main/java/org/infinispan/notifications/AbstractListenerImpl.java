@@ -7,6 +7,8 @@ import org.infinispan.factories.annotations.ComponentName;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.factories.annotations.Start;
 import org.infinispan.factories.annotations.Stop;
+import org.infinispan.interceptors.locking.ClusteringDependentLogic;
+import org.infinispan.notifications.cachelistener.event.EventImpl;
 import org.infinispan.util.concurrent.WithinThreadExecutor;
 import org.infinispan.util.logging.Log;
 
@@ -17,6 +19,7 @@ import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
 import java.security.AccessController;
 import java.security.PrivilegedAction;
+import java.util.BitSet;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -89,11 +92,11 @@ public abstract class AbstractListenerImpl {
    }
 
    public void addListener(Object listener) {
-      addListener(listener, null);
+      validateAndAddListenerInvocation(listener, null, null);
    }
 
    public void addListener(Object listener, ClassLoader classLoader) {
-      validateAndAddListenerInvocation(listener, classLoader);
+      validateAndAddListenerInvocation(listener, null, classLoader);
    }
 
    public Set<Object> getListeners() {
@@ -110,9 +113,8 @@ public abstract class AbstractListenerImpl {
     *
     * @param listener object to be considered as a listener.
     */
-   @SuppressWarnings("unchecked")
-   private void validateAndAddListenerInvocation(Object listener, ClassLoader classLoader) {
-      boolean sync = testListenerClassValidity(listener.getClass());
+   protected void validateAndAddListenerInvocation(Object listener, KeyFilter filter, ClassLoader classLoader) {
+      Listener l = testListenerClassValidity(listener.getClass());
       boolean foundMethods = false;
       Map<Class<? extends Annotation>, Class<?>> allowedListeners = getAllowedMethodAnnotations();
       // now try all methods on the listener for anything that we like.  Note that only PUBLIC methods are scanned.
@@ -123,7 +125,7 @@ public abstract class AbstractListenerImpl {
             Class<?> value = annotationEntry.getValue();
             if (m.isAnnotationPresent(key)) {
                testListenerMethodValidity(m, value, key.getName());
-               addListenerInvocation(key, new ListenerInvocation(listener, m, sync, classLoader));
+               addListenerInvocation(key, new ListenerInvocation(listener, m, l.sync(), l.primaryOnly(), filter, classLoader));
                foundMethods = true;
             }
          }
@@ -139,19 +141,18 @@ public abstract class AbstractListenerImpl {
    }
 
    /**
-    * Tests if a class is properly annotated as a CacheListener and returns whether callbacks on this class should be
-    * invoked synchronously or asynchronously.
+    * Tests if a class is properly annotated as a CacheListener and returns the Listener annotation.
     *
     * @param listenerClass class to inspect
-    * @return true if callbacks on this class should use the syncProcessor; false if it should use the asyncProcessor.
+    * @return the Listener annotation
     */
-   protected static boolean testListenerClassValidity(Class<?> listenerClass) {
+   protected static Listener testListenerClassValidity(Class<?> listenerClass) {
       Listener l = ReflectionUtil.getAnnotation(listenerClass, Listener.class);
       if (l == null)
          throw new IncorrectListenerException(String.format("Cache listener class %s must be annotated with org.infinispan.notifications.annotation.Listener", listenerClass.getName()));
       if (!Modifier.isPublic(listenerClass.getModifiers()))
          throw new IncorrectListenerException(String.format("Cache listener class %s must be public!", listenerClass.getName()));
-      return l.sync();
+      return l;
    }
 
    protected static void testListenerMethodValidity(Method m, Class<?> allowedParameter, String annotationName) {
@@ -169,53 +170,71 @@ public abstract class AbstractListenerImpl {
       public final Object target;
       public final Method method;
       public final boolean sync;
+      public final boolean onlyPrimary;
       public final WeakReference<ClassLoader> classLoader;
+      public final KeyFilter filter;
 
-      public ListenerInvocation(Object target, Method method, boolean sync, ClassLoader classLoader) {
+      public ListenerInvocation(Object target, Method method, boolean sync, boolean onlyPrimary, KeyFilter filter, ClassLoader classLoader) {
          this.target = target;
          this.method = method;
          this.sync = sync;
+         this.onlyPrimary = onlyPrimary;
+         this.filter = filter;
          this.classLoader = new WeakReference<ClassLoader>(classLoader);
       }
 
       public void invoke(final Object event) {
-         Runnable r = new Runnable() {
+         invoke(event, false, true);
+      }
 
-            @Override
-            public void run() {
-               ClassLoader contextClassLoader = null;
-               if (classLoader != null && classLoader.get() != null) {
-                  contextClassLoader = setContextClassLoader(classLoader.get());
-               }
-               try {
-                  method.invoke(target, event);
-               }
-               catch (InvocationTargetException exception) {
-                  Throwable cause = getRealException(exception);
-                  if (sync) {
-                     throw new CacheException(String.format(
-                        "Caught exception [%s] while invoking method [%s] on listener instance: %s"
-                        , cause.getClass().getName(), method, target
-                     ), cause);
-                  } else {
-                     getLog().unableToInvokeListenerMethod(method, target, cause);
-                  }
-               }
-               catch (IllegalAccessException exception) {
-                  getLog().unableToInvokeListenerMethod(method, target, exception);
-                  removeListener(target);
-               } finally {
+      public void invoke(final Object event, boolean isLocalNodePrimaryOwner) {
+         invoke(event, isLocalNodePrimaryOwner, false);
+      }
+
+      private void invoke(final Object event, boolean isLocalNodePrimaryOwner, boolean unKeyed) {
+         if (unKeyed || shouldInvoke(event, isLocalNodePrimaryOwner)) {
+            Runnable r = new Runnable() {
+
+               @Override
+               public void run() {
+                  ClassLoader contextClassLoader = null;
                   if (classLoader != null && classLoader.get() != null) {
-                     setContextClassLoader(contextClassLoader);
+                     contextClassLoader = setContextClassLoader(classLoader.get());
+                  }
+                  try {
+                     method.invoke(target, event);
+                  } catch (InvocationTargetException exception) {
+                     Throwable cause = getRealException(exception);
+                     if (sync) {
+                        throw new CacheException(String.format(
+                              "Caught exception [%s] while invoking method [%s] on listener instance: %s"
+                              , cause.getClass().getName(), method, target
+                        ), cause);
+                     } else {
+                        getLog().unableToInvokeListenerMethod(method, target, cause);
+                     }
+                  } catch (IllegalAccessException exception) {
+                     getLog().unableToInvokeListenerMethod(method, target, exception);
+                     removeListener(target);
+                  } finally {
+                     if (classLoader != null && classLoader.get() != null) {
+                        setContextClassLoader(contextClassLoader);
+                     }
                   }
                }
-            }
-         };
+            };
 
-         if (sync)
-            syncProcessor.execute(r);
-         else
-            asyncProcessor.execute(r);
+            if (sync)
+               syncProcessor.execute(r);
+            else
+               asyncProcessor.execute(r);
+         }
+      }
+
+      private boolean shouldInvoke(Object event, boolean isLocalNodePrimaryOwner) {
+         if (onlyPrimary && !isLocalNodePrimaryOwner) return false;
+         return filter == null ||
+               ((event instanceof EventImpl) && filter.accept(((EventImpl) event).getKey()));
       }
    }
 

@@ -3,6 +3,7 @@ package org.infinispan.notifications.cachelistener;
 import org.infinispan.Cache;
 import org.infinispan.commons.equivalence.AnyEquivalence;
 import org.infinispan.container.entries.InternalCacheEntry;
+import org.infinispan.interceptors.locking.ClusteringDependentLogic;
 import org.infinispan.test.fwk.TestInternalCacheEntryFactory;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.context.impl.NonTxInvocationContext;
@@ -29,7 +30,7 @@ public class CacheNotifierImplTest extends AbstractInfinispanTest {
    public void setUp() {
       n = new CacheNotifierImpl();
       mockCache = mock(Cache.class);
-      n.injectDependencies(mockCache);
+      n.injectDependencies(mockCache, new ClusteringDependentLogic.LocalLogic());
       cl = new CacheListener();
       n.start();
       n.addListener(cl);
