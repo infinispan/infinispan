@@ -1070,6 +1070,16 @@ public class TestingUtil {
       return prefix + separator + TEST_PATH + separator + test.getClass().getSimpleName();
    }
 
+   /**
+    * See {@link #tmpDirectory(AbstractInfinispanTest)}
+    *
+    * @return an absolute path
+    */
+   public static String tmpDirectory(String folder) {
+      String prefix = System.getProperty("infinispan.test.tmpdir", System.getProperty("java.io.tmpdir"));
+      return prefix + separator + TEST_PATH + separator + folder;
+   }
+
    public static String k(Method method, int index) {
       return new StringBuilder().append("k").append(index).append('-')
               .append(method.getName()).toString();

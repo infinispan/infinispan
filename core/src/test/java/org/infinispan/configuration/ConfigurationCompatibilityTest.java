@@ -5,10 +5,15 @@ import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.cache.FileCacheStoreConfigurationBuilder;
 import org.infinispan.configuration.cache.LoaderConfigurationBuilder;
 import org.infinispan.configuration.cache.LoadersConfigurationBuilder;
+import org.infinispan.test.TestingUtil;
+import org.testng.annotations.AfterClass;
+import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
 
 @Test(groups = "functional", testName= "configuration.ConfigurationCompatibilityTest")
 public class ConfigurationCompatibilityTest {
+
+   private String tmpDirectory;
 
    public void testModeShapeStoreConfiguration() {
       // This code courtesy of Randall Hauch
@@ -25,15 +30,16 @@ public class ConfigurationCompatibilityTest {
    public void testAS71StoreConfiguration() {
       ConfigurationBuilder builder = new ConfigurationBuilder();
       builder.loaders().shared(false).preload(true).passivation(false);
-      LoaderConfigurationBuilder storeBuilder = builder.loaders().addCacheLoader().fetchPersistentState(false).purgeOnStartup(false).purgeSynchronously(true);
+      LoaderConfigurationBuilder storeBuilder = builder.loaders().addCacheLoader().fetchPersistentState(false)
+            .purgeOnStartup(false).purgeSynchronously(true);
       storeBuilder.singletonStore().enabled(false);
    }
 
    public void testAS72StoreConfiguration() {
       ConfigurationBuilder builder = new ConfigurationBuilder();
       LoadersConfigurationBuilder loadersBuilder = builder.loaders().shared(false).preload(true).passivation(false);
-      CacheStoreConfigurationBuilder<?, ?> storeBuilder = loadersBuilder.addStore(FileCacheStoreConfigurationBuilder.class).location("/tmp").fetchPersistentState(false)
-            .purgeOnStartup(false).purgeSynchronously(true);
+      CacheStoreConfigurationBuilder<?, ?> storeBuilder = loadersBuilder.addStore(FileCacheStoreConfigurationBuilder.class)
+            .location(tmpDirectory + "/testAS72StoreConfiguration").fetchPersistentState(false).purgeOnStartup(false).purgeSynchronously(true);
       storeBuilder.singletonStore().enabled(false);
 
    }
@@ -48,7 +54,7 @@ public class ConfigurationCompatibilityTest {
             .purgeSynchronously(true)
             .ignoreModifications(false)
             .purgeOnStartup(false)
-            .location(System.getProperty("java.io.tmpdir"))
+            .location(tmpDirectory + "/testDocumentationCacheLoadersConfiguration")
             .async()
                .enabled(true)
                .flushLockTimeout(15000)
@@ -57,6 +63,16 @@ public class ConfigurationCompatibilityTest {
               .enabled(true)
               .pushStateWhenCoordinator(true)
               .pushStateTimeout(20000);
+   }
+
+   @BeforeClass
+   protected void setUpTempDir() {
+      tmpDirectory = TestingUtil.tmpDirectory(this.getClass().getSimpleName());
+   }
+
+   @AfterClass
+   protected void clearTempDir() {
+      TestingUtil.recursiveFileRemove(tmpDirectory);
    }
 
 }
