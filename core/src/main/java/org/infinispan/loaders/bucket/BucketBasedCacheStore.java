@@ -118,7 +118,7 @@ public abstract class BucketBasedCacheStore extends LockSupportCacheStore<Intege
       updateBucket(bucket);
    }
 
-   public static interface BucketHandler {
+   protected static interface BucketHandler {
       /**
        * Handles a bucket that is passed in.
        * @param bucket bucket to handle.  Cannot be null.
@@ -154,7 +154,7 @@ public abstract class BucketBasedCacheStore extends LockSupportCacheStore<Intege
    }
 
    @Override
-   public Set<InternalCacheEntry> loadAllLockSafe() throws CacheLoaderException {
+   protected Set<InternalCacheEntry> loadAllLockSafe() throws CacheLoaderException {
       CollectionGeneratingBucketHandler<InternalCacheEntry> g = new CollectionGeneratingBucketHandler<InternalCacheEntry>() {
          @Override
          public boolean consider(Collection<? extends InternalCacheEntry> entries) {

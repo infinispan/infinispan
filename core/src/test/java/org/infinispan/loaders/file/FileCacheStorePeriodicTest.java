@@ -4,7 +4,7 @@ import org.infinispan.configuration.cache.FileCacheStoreConfigurationBuilder;
 import org.testng.annotations.Test;
 
 @Test(groups = "unit", testName = "loaders.file.FileCacheStorePeriodicTest")
-public class BucketFileCacheStorePeriodicTest extends BucketFileCacheStoreTest {
+public class FileCacheStorePeriodicTest extends FileCacheStoreTest {
 
    @Override
    protected FileCacheStoreConfigurationBuilder.FsyncMode getFsyncMode() {
