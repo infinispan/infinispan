@@ -10,7 +10,6 @@ import org.infinispan.AdvancedCache
  */
 trait QueryFacade {
 
-   @throws(classOf[Exception])
    def query(cache: AdvancedCache[Array[Byte], Array[Byte]], query: Array[Byte]): Array[Byte]
 
 }

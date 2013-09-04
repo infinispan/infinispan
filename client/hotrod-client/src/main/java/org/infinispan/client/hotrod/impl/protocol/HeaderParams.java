@@ -88,7 +88,9 @@ public class HeaderParams {
          case HotRodConstants.GET_WITH_METADATA:
             return HotRodConstants.GET_WITH_METADATA_RESPONSE;
          case HotRodConstants.BULK_GET_KEYS_REQUEST:
-        	 return HotRodConstants.BULK_GET_KEYS_RESPONSE;
+            return HotRodConstants.BULK_GET_KEYS_RESPONSE;
+         case HotRodConstants.QUERY_REQUEST:
+            return HotRodConstants.QUERY_RESPONSE;
          default:
             throw new IllegalStateException("Unknown operation code: " + opCode);
       }

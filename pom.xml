@@ -26,6 +26,7 @@
       <module>tools</module>
       <module>query</module>
       <module>query-dsl</module>
+      <module>remote-query</module>
       <module>tree</module>
       <module>lucene</module>
       <module>lucene/lucene-directory</module>

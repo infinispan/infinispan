@@ -23,6 +23,8 @@ import org.infinispan.client.hotrod.impl.protocol.CodecFactory;
 import org.infinispan.client.hotrod.impl.transport.TransportFactory;
 import org.infinispan.client.hotrod.logging.Log;
 import org.infinispan.client.hotrod.logging.LogFactory;
+import org.infinispan.client.hotrod.marshall.ProtoStreamMarshaller;
+import org.infinispan.commons.CacheException;
 import org.infinispan.commons.api.BasicCacheContainer;
 import org.infinispan.commons.executors.ExecutorFactory;
 import org.infinispan.commons.marshall.Marshaller;
@@ -30,6 +32,12 @@ import org.infinispan.commons.util.FileLookupFactory;
 import org.infinispan.commons.util.SysPropertyActions;
 import org.infinispan.commons.util.TypedProperties;
 import org.infinispan.commons.util.Util;
+import org.infinispan.protostream.SerializationContext;
+import org.infinispan.query.remote.protocol.QueryRequest;
+import org.infinispan.query.remote.protocol.QueryRequestMarshaller;
+import org.infinispan.query.remote.protocol.QueryResponse;
+import org.infinispan.query.remote.protocol.QueryResponseMarshaller;
+import org.infinispan.query.remote.protocol.SortCriteriaMarshaller;
 
 /**
  * Factory for {@link org.infinispan.client.hotrod.RemoteCache}s. <p/> <p> <b>Lifecycle:</b> </p> In order to be able to
@@ -571,10 +579,28 @@ public class RemoteCacheManager implements BasicCacheContainer {
          }
       }
 
+      initRemoteQuery();
+
       // Print version to help figure client version run
       log.version(RemoteCacheManager.class.getPackage().getImplementationVersion());
 
       started = true;
+   }
+
+   private void initRemoteQuery() {
+      SerializationContext serCtx = getSerializationContext();
+      try {
+         serCtx.registerProtofile("/query.protobin");
+      } catch (Exception e) {
+         throw new CacheException(e);  //todo [anistor] better exception handling
+      }
+      serCtx.registerMarshaller(QueryRequest.class, new QueryRequestMarshaller());
+      serCtx.registerMarshaller(QueryRequest.SortCriteria.class, new SortCriteriaMarshaller());
+      serCtx.registerMarshaller(QueryResponse.class, new QueryResponseMarshaller());
+   }
+
+   public SerializationContext getSerializationContext() {
+      return ProtoStreamMarshaller.getSerializationContext();
    }
 
    @Override

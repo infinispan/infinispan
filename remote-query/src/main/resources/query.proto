@@ -1,0 +1,38 @@
+import "message-wrapping.proto";
+
+package org.infinispan.client.hotrod.impl.query;
+
+//todo [anistor] this file is duplicated between HR client and remote-query module
+message QueryRequest {
+
+   required string jpqlString = 1;
+
+   //todo [anistor] ideally, the sort criteria should be in the jpql string but currently the HQL parser does not support this
+   repeated SortCriteria sortCriteria = 2;
+
+   message SortCriteria {
+       required string attributePath = 1;
+
+       required bool isAscending = 2;
+   }
+
+   required int64 startOffset = 3;
+
+   required int32 maxResults = 4;
+}
+
+message QueryResponse {
+
+   required int32 numResults = 1;
+
+  /**
+   * Indicates presence and size of projections.
+   *
+   *      0 - no projection
+   * 1 .. N - projection with N components
+   *    < 0 - illegal value
+   */
+   required int32 projectionSize = 2;
+
+   repeated  org.infinispan.protostream.WrappedMessage results = 3;
+}

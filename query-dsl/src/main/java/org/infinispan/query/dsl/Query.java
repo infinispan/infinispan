@@ -6,7 +6,7 @@ import java.util.List;
  * @author anistor@redhat.com
  * @since 6.0
  */
-public interface Query extends Iterable {
+public interface Query {
 
    /**
     * Returns the results of a search as a list.

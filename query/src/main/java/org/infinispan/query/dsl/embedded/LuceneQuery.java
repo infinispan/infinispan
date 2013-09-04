@@ -11,7 +11,7 @@ import org.infinispan.query.dsl.Query;
  * @author anistor@redhat.com
  * @since 6.0
  */
-public interface LuceneQuery extends Query {
+public interface LuceneQuery extends Query, Iterable {
 
    /**
     * Returns the results of a search as a {@link org.infinispan.query.ResultIterator}.
