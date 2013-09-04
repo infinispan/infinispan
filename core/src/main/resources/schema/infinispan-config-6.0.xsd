@@ -390,6 +390,13 @@
                 </xs:documentation>
               </xs:annotation>
             </xs:element>
+             <xs:element name="singleFileStore" minOccurs="0" maxOccurs="unbounded" type="tns:singleFileStore">
+                <xs:annotation>
+                   <xs:documentation>
+                      Configuration of a FileCacheStore
+                   </xs:documentation>
+                </xs:annotation>
+             </xs:element>
             <xs:any namespace="##other" minOccurs="0" maxOccurs="unbounded" />
           </xs:sequence>
           <xs:attribute name="passivation" type="xs:boolean" default="false">
@@ -1715,38 +1722,24 @@
             </xs:documentation>
           </xs:annotation>
         </xs:attribute>
-        <xs:attribute name="maxEntries" type="xs:int" default="-1">
-          <xs:annotation>
-            <xs:documentation>
-              In order to speed up lookups, the file cache store keeps an index of keys and their corresponding position in the file. To avoid this index resulting in memory consumption problems, this cache store can bounded by a maximum number of entries that it stores. If this limit is exceeded, entries are removed permanently using the LRU algorithm both from the in-memory index and the underlying file based cache store. So, setting a maximum limit only makes sense when Infinispan is used as a cache, whose contents can be recomputed or they can be retrieved from the authoritative data store. If this maximum limit is set when the Infinispan is used as an authoritative data store, it could lead to data loss, and hence it's not recommended for this use case.
-            </xs:documentation>
-          </xs:annotation>
-        </xs:attribute>
-        <xs:attribute name="deprecatedBucketFormat" type="xs:boolean" default="false">
-          <xs:annotation>
-            <xs:documentation>
-               The format in which the file cache store keeps data in the file system has changed in Infinispan 6.0. If Infinispan detects that a file cache store exists with pre-Infinispan 6.0 format, it will back up the data to a folder with the same location adding a '.backup' extension to it in order to differentiate it from the main location. Setting deprecated format to true flag enables caches to be read from that backup location without the risk of data being upgrade to new format. The user does not need to need to change the location in order to read the old backup. Infinispan internally can locate the old backup location.
-            </xs:documentation>
-          </xs:annotation>
-        </xs:attribute>
         <xs:attribute name="streamBufferSize" type="xs:int" default="8192">
           <xs:annotation>
             <xs:documentation>
-              Deprecated configuration attribute. When writing state to disk, a buffered stream is used.  This parameter allows you to tune the buffer size.  Larger buffers are usually faster but take up more (temporary) memory, resulting in more gc. By default, this is set to 8192
+              When writing state to disk, a buffered stream is used.  This parameter allows you to tune the buffer size.  Larger buffers are usually faster but take up more (temporary) memory, resulting in more gc. By default, this is set to 8192
             </xs:documentation>
           </xs:annotation>
         </xs:attribute>
         <xs:attribute name="fsyncMode" type="tns:fsyncMode" default="DEFAULT">
           <xs:annotation>
             <xs:documentation>
-              Deprecated configuration attribute. Configures how the file changes will be synchronized with the underlying file system. This property has three possible values (The default mode configured is DEFAULT)
+              Configures how the file changes will be synchronized with the underlying file system. This property has three possible values (The default mode configured is DEFAULT)
             </xs:documentation>
           </xs:annotation>
         </xs:attribute>
         <xs:attribute name="fsyncInterval" type="xs:long" default="1000">
           <xs:annotation>
             <xs:documentation>
-              Deprecated configuration attribute. Specifies the time after which the file changes in the cache need to be flushed. This option has only effect when periodic fsync mode is in use. The default fsync interval is 1 second.
+              Specifies the time after which the file changes in the cache need to be flushed. This option has only effect when periodic fsync mode is in use. The default fsync interval is 1 second.
             </xs:documentation>
           </xs:annotation>
         </xs:attribute>
@@ -1754,6 +1747,27 @@
     </xs:complexContent>
   </xs:complexType>
 
+  <xs:complexType name="singleFileStore">
+      <xs:complexContent>
+         <xs:extension base="tns:loader">
+            <xs:attribute name="location" type="xs:string" default="Infinispan-SingleFileCacheStore">
+               <xs:annotation>
+                  <xs:documentation>
+                     A location on disk where the store can write.  This defaults to Infinispan-SingleFileCacheStore in the current working directory.
+                  </xs:documentation>
+               </xs:annotation>
+            </xs:attribute>
+            <xs:attribute name="maxKeysInMemory" type="xs:int" default="-1">
+               <xs:annotation>
+                  <xs:documentation>
+                     To speed up data lookup, the single file store keeps an index of keys and their positions in the file. By default, this index is unbounded, but it's size can be limited setting this attribute to a positive number. To avoid data becoming unreachable, a positive value cannot be used if the cache is configured with eviction or passivation.
+                  </xs:documentation>
+               </xs:annotation>
+            </xs:attribute>
+         </xs:extension>
+      </xs:complexContent>
+  </xs:complexType>
+  
   <xs:simpleType name="fsyncMode">
     <xs:restriction base="xs:string">
       <xs:enumeration value="DEFAULT">

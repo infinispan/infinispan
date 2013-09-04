@@ -1066,12 +1066,8 @@ public class TestingUtil {
     * @return an absolute path
     */
    public static String tmpDirectory(AbstractInfinispanTest test) {
-      return tmpDirectory(test, "");
-   }
-
-   public static String tmpDirectory(AbstractInfinispanTest test, String postfix) {
       String prefix = System.getProperty("infinispan.test.tmpdir", System.getProperty("java.io.tmpdir"));
-      return prefix + separator + TEST_PATH + separator + test.getClass().getSimpleName() + postfix;
+      return prefix + separator + TEST_PATH + separator + test.getClass().getSimpleName();
    }
 
    /**

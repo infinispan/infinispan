@@ -1,10 +1,14 @@
 package org.infinispan.configuration;
 
-import static org.infinispan.test.TestingUtil.*;
-import static org.infinispan.test.TestingUtil.extractComponent;
-import static org.testng.AssertJUnit.*;
+import static org.infinispan.test.TestingUtil.INFINISPAN_END_TAG;
+import static org.infinispan.test.TestingUtil.INFINISPAN_START_TAG;
+import static org.infinispan.test.TestingUtil.INFINISPAN_START_TAG_40;
+import static org.infinispan.test.TestingUtil.INFINISPAN_START_TAG_NO_SCHEMA;
+import static org.infinispan.test.TestingUtil.withCacheManager;
 import static org.testng.AssertJUnit.assertEquals;
-import static org.testng.AssertJUnit.fail;
+import static org.testng.AssertJUnit.assertFalse;
+import static org.testng.AssertJUnit.assertNull;
+import static org.testng.AssertJUnit.assertTrue;
 
 import java.io.ByteArrayInputStream;
 import java.io.FileNotFoundException;
@@ -12,7 +16,6 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.util.Map;
 
-import org.infinispan.Cache;
 import org.infinispan.Version;
 import org.infinispan.commons.CacheConfigurationException;
 import org.infinispan.commons.equivalence.AnyEquivalence;
@@ -31,10 +34,6 @@ import org.infinispan.executors.DefaultExecutorFactory;
 import org.infinispan.executors.DefaultScheduledExecutorFactory;
 import org.infinispan.interceptors.FooInterceptor;
 import org.infinispan.jmx.PerThreadMBeanServerLookup;
-import org.infinispan.loaders.file.DelegateFileCacheStore;
-import org.infinispan.loaders.file.FileCacheStore;
-import org.infinispan.loaders.manager.CacheLoaderManager;
-import org.infinispan.loaders.spi.CacheStore;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.commons.marshall.AdvancedExternalizer;
 import org.infinispan.marshall.AdvancedExternalizerTest;
@@ -352,71 +351,6 @@ public class XmlFileParsingTest extends AbstractInfinispanTest {
             assertTrue(cfg.dataContainer().<byte[]>valueEquivalence() instanceof ByteArrayEquivalence);
          }
       });
-   }
-
-   public void testParsingEmptyFileCacheStoreElement() throws Exception {
-      String config = INFINISPAN_START_TAG_NO_SCHEMA +
-            "<default>\n" +
-            "<loaders passivation=\"false\" shared=\"false\" preload=\"true\"> \n" +
-            "<fileStore/> \n" +
-            "</loaders>\n" +
-            "</default>\n" + INFINISPAN_END_TAG;
-      InputStream is = new ByteArrayInputStream(config.getBytes());
-      withCacheManager(new CacheManagerCallable(TestCacheManagerFactory.fromStream(is)) {
-         @Override
-         public void call() {
-            Cache<Object, Object> cache = cm.getCache();
-            cache.put(1, "v1");
-            assertEquals("v1", cache.get(1));
-            CacheStore store = extractComponent(cache, CacheLoaderManager.class).getCacheStore();
-            assertTrue(store instanceof DelegateFileCacheStore);
-            FileCacheStoreConfiguration storeConfiguration = null;
-            if (store.getConfiguration() instanceof FileCacheStoreConfiguration) {
-               storeConfiguration = (FileCacheStoreConfiguration) store.getConfiguration();
-            } else {
-               fail("The Configuration bean for a FileCacheStore has to be an instance of " +
-                     "FileCacheStoreConfiguration");
-            }
-            assertEquals("Infinispan-FileCacheStore", storeConfiguration.location());
-            assertEquals(-1, storeConfiguration.maxEntries());
-            assertFalse(storeConfiguration.deprecatedBucketFormat());
-         }
-      });
-   }
-
-   public void testParsingFileCacheStoreElement() throws Exception {
-      String config = INFINISPAN_START_TAG_NO_SCHEMA +
-            "<default>\n" +
-            "<eviction maxEntries=\"100\"/>" +
-            "<loaders passivation=\"false\" shared=\"false\" preload=\"true\"> \n" +
-            "<fileStore maxEntries=\"100\" location=\"other-location\" deprecatedBucketFormat=\"true\"/> \n" +
-            "</loaders>\n" +
-            "</default>\n" + INFINISPAN_END_TAG;
-      InputStream is = new ByteArrayInputStream(config.getBytes());
-      try {
-         withCacheManager(new CacheManagerCallable(TestCacheManagerFactory.fromStream(is)) {
-            @Override
-            public void call() {
-               Cache<Object, Object> cache = cm.getCache();
-               cache.put(1, "v1");
-               assertEquals("v1", cache.get(1));
-               CacheStore store = extractComponent(cache, CacheLoaderManager.class).getCacheStore();
-               assertTrue(store instanceof DelegateFileCacheStore);
-               FileCacheStoreConfiguration storeConfiguration = null;
-               if (store.getConfiguration() instanceof FileCacheStoreConfiguration) {
-                  storeConfiguration = (FileCacheStoreConfiguration) store.getConfiguration();
-               } else {
-                  fail("The Configuration bean for a FileCacheStore has to be an instance of " +
-                        "FileCacheStoreConfiguration");
-               }
-               assertEquals("other-location", storeConfiguration.location());
-               assertEquals(100, storeConfiguration.maxEntries());
-               assertTrue(storeConfiguration.deprecatedBucketFormat());
-            }
-         });
-      } finally {
-         TestingUtil.recursiveFileRemove("other-location");
-      }
    }
 
    private void assertNamedCacheFile(EmbeddedCacheManager cm, boolean deprecated) {

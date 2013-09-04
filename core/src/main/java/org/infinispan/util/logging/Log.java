@@ -940,21 +940,7 @@ public interface Log extends BasicLogger {
    @Message(value = "Cache Loader configuration cannot be null", id = 251)
    CacheConfigurationException cacheLoaderConfigurationCannotBeNull();
 
-   @LogMessage(level = WARN)
-   @Message(value = "This cache store is deprecated and should only be used with stores containing data. Provided location does not exist: %s", id = 252)
-   void bucketCacheStoreDeprecated(File root);
-
-   @Message(value = "Old cache store format detected, but unable to complete upgrade. Disable automatic upgrade and instead perform data migration manually", id = 253)
-   CacheLoaderException unableToUpgradeBucketBasedFileCacheStore(@Cause CacheLoaderException e);
-
-   @Message(value = "Backup location already exists: %s", id = 254)
-   CacheLoaderException backupLocationAlreadyExists(File backupRoot);
-
-   @Message(value = "Unable to back up from %s to %s", id = 255)
-   CacheLoaderException unableToBackupCacheStore(File root, File backupRoot, @Cause IOException e);
-
-   @Message(value = "Invalid Cache Loader class: %s", id = 256)
+   @Message(value = "Invalid Cache Loader class: %s", id = 252)
    CacheConfigurationException invalidCacheLoaderClass(String name);
-
 }
 

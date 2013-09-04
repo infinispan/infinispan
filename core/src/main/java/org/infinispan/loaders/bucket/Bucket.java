@@ -2,27 +2,17 @@ package org.infinispan.loaders.bucket;
 
 import org.infinispan.commons.equivalence.AnyEquivalence;
 import org.infinispan.commons.equivalence.Equivalence;
-import org.infinispan.commons.io.UnsignedNumeric;
-import org.infinispan.commons.marshall.AbstractExternalizer;
 import org.infinispan.commons.util.CollectionFactory;
-import org.infinispan.commons.util.Util;
 import org.infinispan.container.entries.InternalCacheEntry;
-import org.infinispan.factories.GlobalComponentRegistry;
-import org.infinispan.marshall.core.Ids;
 import org.infinispan.util.TimeService;
 
-import java.io.IOException;
-import java.io.ObjectInput;
-import java.io.ObjectOutput;
 import java.util.Collection;
 import java.util.Iterator;
 import java.util.Map;
-import java.util.Set;
 
 /**
  * A bucket is where entries are stored.
  */
-@Deprecated
 public final class Bucket {
    final Map<Object, InternalCacheEntry> entries;
    private transient Integer bucketId;
@@ -124,46 +114,12 @@ public final class Bucket {
       return entries.isEmpty();
    }
 
-   // Bucket externalizer kept to be able to read old file cache store structure.
-   public static class Externalizer extends AbstractExternalizer<Bucket> {
-
-      private static final long serialVersionUID = -5291318076267612501L;
-
-      private final GlobalComponentRegistry globalComponentRegistry;
-
-      public Externalizer(GlobalComponentRegistry globalComponentRegistry) {
-         this.globalComponentRegistry = globalComponentRegistry;
-      }
-
-      @Override
-      public void writeObject(ObjectOutput output, Bucket b) throws IOException {
-         Map<Object, InternalCacheEntry> entries = b.entries;
-         UnsignedNumeric.writeUnsignedInt(output, entries.size());
-         for (InternalCacheEntry se : entries.values()) {
-            output.writeObject(se);
-         }
-      }
-
-      @Override
-      public Bucket readObject(ObjectInput input) throws IOException, ClassNotFoundException {
-         Bucket b = new Bucket(globalComponentRegistry.getTimeService(), AnyEquivalence.getInstance());
-         int numEntries = UnsignedNumeric.readUnsignedInt(input);
-         for (int i = 0; i < numEntries; i++) {
-            b.addEntry((InternalCacheEntry) input.readObject());
-         }
-         return b;
-      }
-
-      @Override
-      public Integer getId() {
-         return Ids.BUCKET;
-      }
-
-      @Override
-      @SuppressWarnings("unchecked")
-      public Set<Class<? extends Bucket>> getTypeClasses() {
-         return Util.<Class<? extends Bucket>>asSet(Bucket.class);
-      }
-   }
+   // Bucket externalizer has been removed because it's no longer marshallable.
+   // The reason for this is cos the bucket's entry collection must take
+   // into account cache-level configured equivalence instances, and passing
+   // this in to an externalizer, which is a cache manager level abstraction
+   // complicated things a lot. Instead, bucket's entries are now marshalled
+   // separately and since that's the only thing that the bucket marshalled,
+   // it's a pretty small change.
 
 }

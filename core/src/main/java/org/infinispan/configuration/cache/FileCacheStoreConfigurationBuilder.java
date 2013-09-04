@@ -19,8 +19,6 @@ public class FileCacheStoreConfigurationBuilder extends AbstractLockSupportStore
    private long fsyncInterval = TimeUnit.SECONDS.toMillis(1);
    private FsyncMode fsyncMode = FsyncMode.DEFAULT;
    private int streamBufferSize = 8192;
-   private int maxEntries = -1;
-   private boolean deprecatedBucketFormat = false;
 
    public FileCacheStoreConfigurationBuilder(LoadersConfigurationBuilder builder) {
       super(builder);
@@ -36,69 +34,26 @@ public class FileCacheStoreConfigurationBuilder extends AbstractLockSupportStore
       return this;
    }
 
-   @Deprecated
    public FileCacheStoreConfigurationBuilder fsyncInterval(long fsyncInterval) {
       this.fsyncInterval = fsyncInterval;
       return this;
    }
 
-   @Deprecated
    public FileCacheStoreConfigurationBuilder fsyncInterval(long fsyncInterval, TimeUnit unit) {
       return fsyncInterval(unit.toMillis(fsyncInterval));
    }
 
-   @Deprecated
    public FileCacheStoreConfigurationBuilder fsyncMode(FsyncMode fsyncMode) {
       this.fsyncMode = fsyncMode;
       return this;
    }
 
-   @Deprecated
    public FileCacheStoreConfigurationBuilder streamBufferSize(int streamBufferSize) {
       this.streamBufferSize = streamBufferSize;
       return this;
    }
 
-   /**
-    * In order to speed up lookups, the file cache store keeps an index
-    * of keys and their corresponding position in the file. To avoid this
-    * index resulting in memory consumption problems, this cache store can
-    * bounded by a maximum number of entries that it stores. If this limit is
-    * exceeded, entries are removed permanently using the LRU algorithm both
-    * from the in-memory index and the underlying file based cache store.
-    *
-    * So, setting a maximum limit only makes sense when Infinispan is used as
-    * a cache, whose contents can be recomputed or they can be retrieved from
-    * the authoritative data store.
-    *
-    * If this maximum limit is set when the Infinispan is used as an
-    * authoritative data store, it could lead to data loss, and hence it's
-    * not recommended for this use case.
-    */
-   public FileCacheStoreConfigurationBuilder maxEntries(int maxEntries) {
-      this.maxEntries = maxEntries;
-      return this;
-   }
-
-   /**
-    * The format in which the file cache store keeps data in the file system
-    * has changed in Infinispan 6.0. If Infinispan detects that a file cache
-    * store exists with pre-Infinispan 6.0 format, it will back up the data
-    * to a folder with the same location adding a '.backup' extension to it
-    * in order to differentiate it from the main location.
-    *
-    * Setting deprecated format to true flag enables caches to be read from
-    * that backup location without the risk of data being upgrade to new format.
-    * The user does not need to need to change the location in order to read
-    * the old backup. Infinispan internally can locate the old backup location.
-    */
-   public FileCacheStoreConfigurationBuilder deprecatedBucketFormat(boolean enable) {
-      this.deprecatedBucketFormat = enable;
-      return this;
-   }
-
    @Override
-   @Deprecated
    public FileCacheStoreConfigurationBuilder withProperties(Properties p) {
       this.properties = p;
       // TODO: Remove this and any sign of properties when switching to new cache store configs
@@ -110,15 +65,13 @@ public class FileCacheStoreConfigurationBuilder extends AbstractLockSupportStore
    public void validate() {
    }
 
-   @Deprecated
    public static enum FsyncMode {
       DEFAULT, PER_WRITE, PERIODIC
    }
 
    @Override
    public FileCacheStoreConfiguration create() {
-      return new FileCacheStoreConfiguration(location, maxEntries, deprecatedBucketFormat,
-            fsyncInterval, fsyncMode,
+      return new FileCacheStoreConfiguration(location, fsyncInterval, fsyncMode,
             streamBufferSize, lockAcquistionTimeout, lockConcurrencyLevel,
             purgeOnStartup, purgeSynchronously, purgerThreads, fetchPersistentState,
             ignoreModifications, TypedProperties.toTypedProperties(properties),
@@ -131,8 +84,6 @@ public class FileCacheStoreConfigurationBuilder extends AbstractLockSupportStore
       fsyncInterval = template.fsyncInterval();
       fsyncMode = template.fsyncMode();
       location = template.location();
-      maxEntries = template.maxEntries();
-      deprecatedBucketFormat = template.deprecatedBucketFormat();
       streamBufferSize = template.streamBufferSize();
 
       // AbstractLockSupportCacheStore-specific configuration
@@ -156,8 +107,6 @@ public class FileCacheStoreConfigurationBuilder extends AbstractLockSupportStore
       return "FileCacheStoreConfigurationBuilder{" +
             "fetchPersistentState=" + fetchPersistentState +
             ", location='" + location + '\'' +
-            ", maxEntries=" + maxEntries +
-            ", deprecatedBucketFormat=" + deprecatedBucketFormat +
             ", fsyncInterval=" + fsyncInterval +
             ", fsyncMode=" + fsyncMode +
             ", streamBufferSize=" + streamBufferSize +
