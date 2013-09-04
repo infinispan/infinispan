@@ -42,7 +42,7 @@ class EmbeddedLuceneQuery implements LuceneQuery {
       if (cacheQuery == null) {
          cacheQuery = sm.getQuery(parsingResult.getQuery(), parsingResult.getTargetEntity());
          if (sort != null) {
-            cacheQuery.sort(sort);
+            cacheQuery = cacheQuery.sort(sort);
          }
          if (parsingResult.getProjections() != null && !parsingResult.getProjections().isEmpty()) {
             cacheQuery.projection(parsingResult.getProjections().toArray(new String[parsingResult.getProjections().size()]));

@@ -7,6 +7,7 @@ import org.infinispan.query.Transformable;
 import org.infinispan.query.Transformer;
 import org.infinispan.query.impl.ComponentRegistryUtils;
 import org.infinispan.query.logging.Log;
+import org.infinispan.commons.util.Base64;
 import org.infinispan.commons.util.Util;
 import org.infinispan.commons.util.CollectionFactory;
 import org.infinispan.util.logging.LogFactory;
@@ -17,7 +18,7 @@ import java.util.UUID;
 /**
  * This transforms arbitrary keys to a String which can be used by Lucene as a document identifier, and vice versa.
  * <p/>
- * There are 2 approaches to doing so; one for SimpleKeys: Java primitives (and their object wrappers) and Strings, and
+ * There are 2 approaches to doing so; one for SimpleKeys: Java primitives (and their object wrappers), byte[] and Strings, and
  * one for custom, user-defined types that could be used as keys.
  * <p/>
  * For SimpleKeys, users don't need to do anything, these keys are automatically transformed by this class.
@@ -71,6 +72,9 @@ public class KeyTransformationHandler {
          case 'U':
             // This is a java.util.UUID
             return UUID.fromString(s.substring(2));
+         case 'A':
+            // This is an array of bytes encoded as a Base64 string
+            return Base64.decode(s.substring(2));   //todo [anistor] need to profile this and check performance of base64 against raw sequence of byte values
          case 'T':
             // this is a custom transformable.
             int indexOfSecondDelimiter = s.indexOf(":", 2);
@@ -113,12 +117,13 @@ public class KeyTransformationHandler {
       // First going to check if the key is a primitive or a String. Otherwise, check if it's a transformable.
       // If none of those conditions are satisfied, we'll throw an Exception.
 
-      Transformer tf = null;
+      Transformer tf;
 
       if (isStringOrPrimitive(key)) {
          // Using 'X' for Shorts and 'Y' for Bytes because 'S' is used for Strings and 'B' is being used for Booleans.
 
-
+         if (key instanceof byte[])
+            return "A:" + Base64.encodeBytes((byte[])key);  //todo [anistor] need to profile this and check performance of base64 against raw sequence of byte values
          if (key instanceof String)
             prefix = 'S';
          else if (key instanceof Integer)
@@ -152,8 +157,8 @@ public class KeyTransformationHandler {
 
    private boolean isStringOrPrimitive(Object key) {
 
-      // we support String and JDK primitives and their wrappers.
-      if (key instanceof String ||
+      // we support String, byte[] and JDK primitives and their wrappers.
+      return key instanceof String ||
             key instanceof Integer ||
             key instanceof Long ||
             key instanceof Float ||
@@ -162,11 +167,8 @@ public class KeyTransformationHandler {
             key instanceof Short ||
             key instanceof Byte ||
             key instanceof Character ||
-            key instanceof UUID
-            )
-         return true;
-
-      return false;
+            key instanceof UUID ||
+            key instanceof byte[];
    }
 
    /**

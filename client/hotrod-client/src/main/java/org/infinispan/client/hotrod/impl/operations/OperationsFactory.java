@@ -6,6 +6,7 @@ import org.infinispan.client.hotrod.Flag;
 import org.infinispan.client.hotrod.RemoteCacheManager;
 import org.infinispan.client.hotrod.impl.protocol.Codec;
 import org.infinispan.client.hotrod.impl.protocol.HotRodConstants;
+import org.infinispan.client.hotrod.impl.query.RemoteQuery;
 import org.infinispan.client.hotrod.impl.transport.Transport;
 import org.infinispan.client.hotrod.impl.transport.TransportFactory;
 
@@ -144,6 +145,11 @@ public class OperationsFactory implements HotRodConstants {
    public FaultTolerantPingOperation newFaultTolerantPingOperation() {
       return new FaultTolerantPingOperation(
             codec, transportFactory, cacheNameBytes, topologyId, flags());
+   }
+
+   public QueryOperation newQueryOperation(RemoteQuery remoteQuery) {
+      return new QueryOperation(
+            codec, transportFactory, cacheNameBytes, topologyId, flags(), remoteQuery);
    }
 
    private Flag[] flags() {

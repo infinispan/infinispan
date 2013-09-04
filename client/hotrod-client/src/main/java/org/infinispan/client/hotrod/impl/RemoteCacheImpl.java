@@ -3,9 +3,12 @@ package org.infinispan.client.hotrod.impl;
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
 
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Iterator;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.Callable;
@@ -34,15 +37,20 @@ import org.infinispan.client.hotrod.impl.operations.OperationsFactory;
 import org.infinispan.client.hotrod.impl.operations.PingOperation;
 import org.infinispan.client.hotrod.impl.operations.PutIfAbsentOperation;
 import org.infinispan.client.hotrod.impl.operations.PutOperation;
+import org.infinispan.client.hotrod.impl.operations.QueryOperation;
 import org.infinispan.client.hotrod.impl.operations.RemoveIfUnmodifiedOperation;
 import org.infinispan.client.hotrod.impl.operations.RemoveOperation;
 import org.infinispan.client.hotrod.impl.operations.ReplaceIfUnmodifiedOperation;
 import org.infinispan.client.hotrod.impl.operations.ReplaceOperation;
 import org.infinispan.client.hotrod.impl.operations.StatsOperation;
+import org.infinispan.client.hotrod.impl.query.RemoteQuery;
 import org.infinispan.client.hotrod.logging.Log;
 import org.infinispan.client.hotrod.logging.LogFactory;
 import org.infinispan.commons.marshall.Marshaller;
 import org.infinispan.commons.util.concurrent.NotifyingFuture;
+import org.infinispan.protostream.ProtobufUtil;
+import org.infinispan.protostream.WrappedMessage;
+import org.infinispan.query.remote.protocol.QueryResponse;
 
 /**
  * @author Mircea.Markus@jboss.com
@@ -510,5 +518,32 @@ public class RemoteCacheImpl<K, V> extends RemoteCacheSupport<K, V> {
           toReturn.add(key);
        }
        return Collections.unmodifiableSet(toReturn);
+   }
+
+   public List query(RemoteQuery remoteQuery) {
+      QueryOperation op = operationsFactory.newQueryOperation(remoteQuery);
+      QueryResponse response = op.execute();
+      List<Object> results = new ArrayList<Object>(response.getNumResults());
+      if (response.getProjectionSize() > 0) {
+         Iterator<WrappedMessage> it = response.getResults().iterator();
+         while (it.hasNext()) {
+            Object[] row = new Object[response.getProjectionSize()];
+            for (int i = 0; i < response.getProjectionSize(); i++) {
+               row[i] = it.next().getValue();
+            }
+            results.add(row);
+         }
+      } else {
+         for (WrappedMessage r : response.getResults()) {
+            try {
+               byte[] bytes = (byte[]) r.getValue();
+               Object o = ProtobufUtil.fromWrappedByteArray(remoteCacheManager.getSerializationContext(), bytes);
+               results.add(o);
+            } catch (IOException e) {
+               throw new HotRodClientException(e);
+            }
+         }
+      }
+      return results;
    }
 }
