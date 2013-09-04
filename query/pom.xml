@@ -55,7 +55,6 @@
       <dependency>
          <groupId>org.hibernate</groupId>
          <artifactId>hibernate-search-infinispan</artifactId>
-         <optional>true</optional>
       </dependency>
 
       <dependency>
