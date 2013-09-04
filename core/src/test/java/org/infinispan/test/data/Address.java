@@ -13,24 +13,27 @@ public class Address implements Serializable {
       return street;
    }
 
-   public void setStreet(String street) {
+   public Address setStreet(String street) {
       this.street = street;
+      return this;
    }
 
    public String getCity() {
       return city;
    }
 
-   public void setCity(String city) {
+   public Address setCity(String city) {
       this.city = city;
+      return this;
    }
 
    public int getZip() {
       return zip;
    }
 
-   public void setZip(int zip) {
+   public Address setZip(int zip) {
       this.zip = zip;
+      return this;
    }
 
    public String toString() {
