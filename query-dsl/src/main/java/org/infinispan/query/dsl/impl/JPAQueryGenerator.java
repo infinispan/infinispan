@@ -23,6 +23,9 @@ public class JPAQueryGenerator implements Visitor<String> {
 
    private DateFormat dateFormat;
 
+   public JPAQueryGenerator() {
+   }
+
    @Override
    public <T extends Query> String visit(BaseQueryBuilder<T> baseQueryBuilder) {
       StringBuilder sb = new StringBuilder();
@@ -41,7 +44,7 @@ public class JPAQueryGenerator implements Visitor<String> {
          sb.append(' ');
       }
 
-      sb.append("FROM ").append(baseQueryBuilder.getRootType().getName()).append(" ").append(alias);
+      sb.append("FROM ").append(getIndexedEntityName(baseQueryBuilder.getRootType())).append(' ').append(alias);
 
       if (baseQueryBuilder.getFilterCondition() != null) {
          BaseCondition baseCondition = baseQueryBuilder.getFilterCondition().getRoot();
@@ -66,6 +69,10 @@ public class JPAQueryGenerator implements Visitor<String> {
       }
 
       return sb.toString();
+   }
+
+   protected String getIndexedEntityName(Class<?> rootType) {
+      return rootType.getName();
    }
 
    @Override
@@ -131,13 +138,13 @@ public class JPAQueryGenerator implements Visitor<String> {
       if (!range.isIncludeLower() || !range.isIncludeUpper()) {
          appendAttributePath(sb, operator.getAttributeCondition());
          sb.append(operator.getAttributeCondition().isNegated() ?
-               (range.isIncludeLower() ? " < " : " <= ") : (range.isIncludeLower() ? " >= " : " > "));
+                         (range.isIncludeLower() ? " < " : " <= ") : (range.isIncludeLower() ? " >= " : " > "));
          appendArgument(sb, range.getFrom());
          sb.append(operator.getAttributeCondition().isNegated() ?
                          " OR " : " AND ");
          appendAttributePath(sb, operator.getAttributeCondition());
          sb.append(operator.getAttributeCondition().isNegated() ?
-               (range.isIncludeUpper() ? " > " : " >= ") : (range.isIncludeUpper() ? " <= " : " < "));
+                         (range.isIncludeUpper() ? " > " : " >= ") : (range.isIncludeUpper() ? " <= " : " < "));
          appendArgument(sb, range.getTo());
       } else {
          if (operator.getAttributeCondition().isNegated()) {

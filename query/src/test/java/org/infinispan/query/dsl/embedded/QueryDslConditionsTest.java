@@ -146,7 +146,9 @@ public class QueryDslConditionsTest extends AbstractQueryDslTest {
       cache.put("transaction_" + transaction3.getId(), transaction3);
       cache.put("transaction_" + transaction4.getId(), transaction4);
       cache.put("transaction_" + transaction5.getId(), transaction5);
+   }
 
+   public void testIndexPresence() {
       SearchFactoryImplementor searchFactory = (SearchFactoryImplementor) Search.getSearchManager(cache).getSearchFactory();
       assertNotNull(searchFactory.getIndexManagerHolder().getIndexManager(User.class.getName()));
       assertNotNull(searchFactory.getIndexManagerHolder().getIndexManager(Account.class.getName()));
@@ -720,7 +722,7 @@ public class QueryDslConditionsTest extends AbstractQueryDslTest {
       assertEquals("Spider", list.get(1).getName());
    }
 
-   @Test(enabled = false, description = "String literal escaping is not properly done yet")
+   @Test(enabled = false, description = "String literal escaping is not properly done yet")  //todo [anistor] fix disabled test
    public void testStringEscape() throws Exception {
       QueryFactory qf = Search.getSearchManager(cache).getQueryFactory();
 
@@ -780,6 +782,24 @@ public class QueryDslConditionsTest extends AbstractQueryDslTest {
       assertEquals("Spider", list.get(0)[0]);
       assertEquals("Spider", list.get(1)[0]);
       assertEquals("John", list.get(2)[0]);
+   }
+
+   public void testProjectionOnOptionalField() throws Exception {
+      QueryFactory qf = Search.getSearchManager(cache).getQueryFactory();
+
+      Query q = qf.from(User.class)
+            .setProjection("id", "addresses.postCode")
+            .orderBy("id", SortOrder.ASC)
+            .build();
+
+      List<Object[]> list = q.list();
+      assertEquals(3, list.size());
+      assertEquals(1, list.get(0)[0]);
+      assertEquals("X1234", list.get(0)[1]);
+      assertEquals(2, list.get(1)[0]);
+      assertEquals("Y12", list.get(1)[1]);
+      assertEquals(3, list.get(2)[0]);
+      assertNull(list.get(2)[1]);
    }
 
    public void testSampleDomainQuery6() throws Exception {

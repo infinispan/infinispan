@@ -11,7 +11,7 @@ import java.io.IOException;
  * @author anistor@redhat.com
  * @since 6.0
  */
-public class ProtostreamMarshaller extends AbstractMarshaller {
+public class ProtoStreamMarshaller extends AbstractMarshaller {
 
    //todo [anistor] this static field is temporary. we need a way to register the protobuf message marshallers when we configure hotrod client
    private static final SerializationContext serializationContext = ProtobufUtil.newSerializationContext();
@@ -20,7 +20,7 @@ public class ProtostreamMarshaller extends AbstractMarshaller {
       return serializationContext;
    }
 
-   public ProtostreamMarshaller() {
+   public ProtoStreamMarshaller() {
    }
 
    @Override
@@ -29,7 +29,7 @@ public class ProtostreamMarshaller extends AbstractMarshaller {
    }
 
    @Override
-   public boolean isMarshallable(Object o) throws Exception {
+   public boolean isMarshallable(Object o) {
       return serializationContext.canMarshall(o.getClass());
    }
 

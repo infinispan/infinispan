@@ -1,36 +1,26 @@
 package org.infinispan.client.hotrod.marshall;
 
-import com.google.protobuf.Descriptors;
 import org.infinispan.client.hotrod.RemoteCache;
 import org.infinispan.client.hotrod.RemoteCacheManager;
 import org.infinispan.client.hotrod.TestHelper;
-import org.infinispan.client.hotrod.marshall.ProtostreamMarshaller;
-import org.infinispan.client.hotrod.protostream.domain.Account;
-import org.infinispan.client.hotrod.protostream.domain.Address;
-import org.infinispan.client.hotrod.protostream.domain.Transaction;
-import org.infinispan.client.hotrod.protostream.domain.User;
-import org.infinispan.client.hotrod.protostream.domain.marshallers.AccountMarshaller;
-import org.infinispan.client.hotrod.protostream.domain.marshallers.AddressMarshaller;
-import org.infinispan.client.hotrod.protostream.domain.marshallers.GenderEncoder;
-import org.infinispan.client.hotrod.protostream.domain.marshallers.TransactionMarshaller;
-import org.infinispan.client.hotrod.protostream.domain.marshallers.UserMarshaller;
+import org.infinispan.client.hotrod.configuration.ConfigurationBuilder;
 import org.infinispan.manager.EmbeddedCacheManager;
-import org.infinispan.protostream.SerializationContext;
+import org.infinispan.protostream.ProtobufUtil;
+import org.infinispan.protostream.sampledomain.Address;
+import org.infinispan.protostream.sampledomain.User;
+import org.infinispan.protostream.sampledomain.marshallers.MarshallerRegistration;
 import org.infinispan.server.hotrod.HotRodServer;
 import org.infinispan.test.SingleCacheManagerTest;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.testng.annotations.AfterTest;
 import org.testng.annotations.Test;
 
-import java.io.IOException;
 import java.util.Collections;
-import java.util.Properties;
 
 import static org.infinispan.client.hotrod.test.HotRodClientTestingUtil.killRemoteCacheManager;
 import static org.infinispan.client.hotrod.test.HotRodClientTestingUtil.killServers;
 import static org.infinispan.server.hotrod.test.HotRodTestingUtil.hotRodCacheConfiguration;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.*;
 
 /**
  * Tests integration between HotRod client and ProtoStream marshalling library.
@@ -38,7 +28,7 @@ import static org.junit.Assert.assertNotNull;
  * @author anistor@redhat.com
  * @since 6.0
  */
-@Test(testName = "client.hotrod.protostream.ProtoStreamMarshallerTest", groups = "functional")
+@Test(testName = "client.hotrod.marshall.ProtoStreamMarshallerTest", groups = "functional")
 public class ProtoStreamMarshallerTest extends SingleCacheManagerTest {
 
    private HotRodServer hotRodServer;
@@ -47,17 +37,19 @@ public class ProtoStreamMarshallerTest extends SingleCacheManagerTest {
 
    @Override
    protected EmbeddedCacheManager createCacheManager() throws Exception {
-      initSerializationContext();
+      //initialize client-side serialization context
+      MarshallerRegistration.registerMarshallers(ProtoStreamMarshaller.getSerializationContext());
 
       cacheManager = TestCacheManagerFactory.createCacheManager(hotRodCacheConfiguration());
       cache = cacheManager.getCache();
 
       hotRodServer = TestHelper.startHotRodServer(cacheManager);
 
-      Properties hotrodClientConf = new Properties();
-      hotrodClientConf.put("infinispan.client.hotrod.server_list", "localhost:" + hotRodServer.getPort());
-      hotrodClientConf.put("infinispan.client.hotrod.marshaller", ProtostreamMarshaller.class.getName());
-      remoteCacheManager = new RemoteCacheManager(hotrodClientConf);
+      ConfigurationBuilder clientBuilder = new ConfigurationBuilder();
+      clientBuilder.addServer().host("127.0.0.1").port(hotRodServer.getPort());
+      clientBuilder.marshaller(new ProtoStreamMarshaller());
+      remoteCacheManager = new RemoteCacheManager(clientBuilder.build());
+
       remoteCache = remoteCacheManager.getCache();
       return cacheManager;
    }
@@ -70,6 +62,25 @@ public class ProtoStreamMarshallerTest extends SingleCacheManagerTest {
 
    @Test
    public void testPutAndGet() throws Exception {
+      User user = createUser();
+      remoteCache.put(1, user);
+
+      // try to get the object through the local cache interface and check it's the same object we put
+      assertEquals(1, cache.keySet().size());
+      byte[] key = (byte[]) cache.keySet().iterator().next();
+      Object localObject = cache.get(key);
+      assertNotNull(localObject);
+      assertTrue(localObject instanceof byte[]);
+      Object unmarshalledObject = ProtobufUtil.fromWrappedByteArray(ProtoStreamMarshaller.getSerializationContext(), (byte[]) localObject);
+      assertTrue(unmarshalledObject instanceof User);
+      assertUser((User) unmarshalledObject);
+
+      // get the object through the remote cache interface and check it's the same object we put
+      User fromCache = remoteCache.get(1);
+      assertUser(fromCache);
+   }
+
+   private User createUser() {
       User user = new User();
       user.setId(1);
       user.setName("Tom");
@@ -80,31 +91,20 @@ public class ProtoStreamMarshallerTest extends SingleCacheManagerTest {
       address.setStreet("Dark Alley");
       address.setPostCode("1234");
       user.setAddresses(Collections.singletonList(address));
-
-      remoteCache.put(1, user);
-
-      User fromCache = remoteCache.get(1);
-      assertEquals(1, fromCache.getId());
-      assertEquals("Tom", fromCache.getName());
-      assertEquals("Cat", fromCache.getSurname());
-      assertEquals(User.Gender.MALE, fromCache.getGender());
-      assertNotNull(fromCache.getAccountIds());
-      assertEquals(1, fromCache.getAccountIds().size());
-      assertEquals(12, fromCache.getAccountIds().get(0).intValue());
-      assertNotNull(fromCache.getAddresses());
-      assertEquals(1, fromCache.getAddresses().size());
-      assertEquals("Dark Alley", fromCache.getAddresses().get(0).getStreet());
-      assertEquals("1234", fromCache.getAddresses().get(0).getPostCode());
+      return user;
    }
 
-   private SerializationContext initSerializationContext() throws IOException, Descriptors.DescriptorValidationException {
-      SerializationContext ctx = ProtostreamMarshaller.getSerializationContext();
-      ctx.registerProtofile("/bank.protobin");
-      ctx.registerMarshaller(User.class, new UserMarshaller());
-      ctx.registerEnumEncoder(User.Gender.class, new GenderEncoder());
-      ctx.registerMarshaller(Address.class, new AddressMarshaller());
-      ctx.registerMarshaller(Account.class, new AccountMarshaller());
-      ctx.registerMarshaller(Transaction.class, new TransactionMarshaller());
-      return ctx;
+   private void assertUser(User user) {
+      assertEquals(1, user.getId());
+      assertEquals("Tom", user.getName());
+      assertEquals("Cat", user.getSurname());
+      assertEquals(User.Gender.MALE, user.getGender());
+      assertNotNull(user.getAccountIds());
+      assertEquals(1, user.getAccountIds().size());
+      assertEquals(12, user.getAccountIds().get(0).intValue());
+      assertNotNull(user.getAddresses());
+      assertEquals(1, user.getAddresses().size());
+      assertEquals("Dark Alley", user.getAddresses().get(0).getStreet());
+      assertEquals("1234", user.getAddresses().get(0).getPostCode());
    }
 }
