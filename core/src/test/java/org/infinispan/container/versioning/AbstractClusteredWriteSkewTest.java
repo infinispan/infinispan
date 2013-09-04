@@ -35,7 +35,7 @@ public abstract class AbstractClusteredWriteSkewTest extends MultipleCacheManage
 
    private static final String SHARED_COUNTER_TEST_CACHE_NAME = "shared_counter_test";
    private static final String SHARED_COUNTER_TEST_KEY = "counter";
-   private static final int SHARED_COUNTER_TEST_MAX_COUNTER_VALUE = 200;
+   private static final int SHARED_COUNTER_TEST_MAX_COUNTER_VALUE = 100;
 
    @Override
    protected void createCacheManagers() throws Throwable {
