@@ -590,7 +590,7 @@ public class RemoteCacheManager implements BasicCacheContainer {
    private void initRemoteQuery() {
       SerializationContext serCtx = getSerializationContext();
       try {
-         serCtx.registerProtofile("/query.protobin");
+         serCtx.registerProtofile(RemoteCacheManager.class.getResourceAsStream("/query.protobin"));
       } catch (Exception e) {
          throw new CacheException(e);  //todo [anistor] better exception handling
       }
