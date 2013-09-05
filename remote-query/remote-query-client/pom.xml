@@ -23,71 +23,7 @@
    </dependencies>
 
    <build>
-      <resources>
-         <resource>
-            <directory>src/main/resources</directory>
-            <excludes>
-               <exclude>*.proto</exclude>
-            </excludes>
-         </resource>
-
-         <resource>
-            <directory>${basedir}/target/protobuf-descriptors</directory>
-         </resource>
-      </resources>
-
       <plugins>
-         <!-- Extract our *.proto resource dependencies out of jars so protoc can use them. -->
-         <plugin>
-            <groupId>org.apache.maven.plugins</groupId>
-            <artifactId>maven-dependency-plugin</artifactId>
-            <executions>
-               <execution>
-                  <phase>initialize</phase>
-                  <goals>
-                     <goal>unpack</goal>
-                  </goals>
-                  <configuration>
-                     <artifactItems>
-                        <artifactItem>
-                           <groupId>org.infinispan.protostream</groupId>
-                           <artifactId>protostream</artifactId>
-                           <overWrite>true</overWrite>
-                           <outputDirectory>${project.build.directory}/protobuf-includes</outputDirectory>
-                           <includes>**/*.proto</includes>
-                        </artifactItem>
-                     </artifactItems>
-                  </configuration>
-               </execution>
-            </executions>
-         </plugin>
-
-         <!-- Execute protoc to parse our proto definitions and generate the serialized descriptor set. -->
-         <!-- Ideally, we should use a dedicated maven plugin for this but none of the 3-4 available plugins actually work for us. -->
-         <plugin>
-            <artifactId>maven-antrun-plugin</artifactId>
-            <executions>
-               <execution>
-                  <id>compile-protoc</id>
-                  <phase>generate-resources</phase>
-                  <configuration>
-                     <target>
-                        <mkdir dir="${project.build.directory}/protobuf-descriptors/"/>
-                        <exec executable="protoc" failonerror="true">
-                           <arg value="--proto_path=${project.build.directory}/protobuf-includes"/>
-                           <arg value="--proto_path=${project.basedir}/src/main/resources"/>
-                           <arg value="--descriptor_set_out=${project.build.directory}/protobuf-descriptors/query.protobin"/>
-                           <arg value="${project.basedir}/src/main/resources/query.proto"/>
-                        </exec>
-                     </target>
-                  </configuration>
-                  <goals>
-                     <goal>run</goal>
-                  </goals>
-               </execution>
-            </executions>
-         </plugin>
-
          <plugin>
             <groupId>org.apache.felix</groupId>
             <artifactId>maven-bundle-plugin</artifactId>
