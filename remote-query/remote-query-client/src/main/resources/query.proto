@@ -2,7 +2,6 @@ import "message-wrapping.proto";
 
 package org.infinispan.client.hotrod.impl.query;
 
-//todo [anistor] this file is duplicated between HR client and remote-query module
 message QueryRequest {
 
    required string jpqlString = 1;
