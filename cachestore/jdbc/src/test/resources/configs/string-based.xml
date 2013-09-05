@@ -43,7 +43,7 @@
             lockAcquisitionTimeout="20000"
             writeSkewCheck="false"
             concurrencyLevel="500" useLockStriping="false"/>
-      <loaders>
+      <persistence>
          <stringKeyedJdbcStore fetchPersistentState="false" ignoreModifications="false" purgeOnStartup="false">
             <connectionPool connectionUrl="jdbc:h2:mem:infinispan_string_based;DB_CLOSE_DELAY=-1" username="sa" driverClass="org.h2.Driver"/>
             <stringKeyedTable dropOnExit="true" createOnStart="true" prefix="ISPN_STRING_TABLE">
@@ -52,7 +52,7 @@
                <timestampColumn name="TIMESTAMP_COLUMN" type="BIGINT" />
             </stringKeyedTable>
          </stringKeyedJdbcStore>
-      </loaders>
+      </persistence>
 
    </default>
 

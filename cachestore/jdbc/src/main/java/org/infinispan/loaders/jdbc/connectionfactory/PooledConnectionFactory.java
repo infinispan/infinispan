@@ -2,7 +2,7 @@ package org.infinispan.loaders.jdbc.connectionfactory;
 
 import com.mchange.v2.c3p0.ComboPooledDataSource;
 import com.mchange.v2.c3p0.DataSources;
-import org.infinispan.loaders.CacheLoaderException;
+import org.infinispan.persistence.CacheLoaderException;
 import org.infinispan.loaders.jdbc.JdbcUtil;
 import org.infinispan.loaders.jdbc.configuration.ConnectionFactoryConfiguration;
 import org.infinispan.loaders.jdbc.configuration.PooledConnectionFactoryConfiguration;
@@ -10,7 +10,6 @@ import org.infinispan.loaders.jdbc.logging.Log;
 import org.infinispan.commons.util.FileLookupFactory;
 import org.infinispan.util.logging.LogFactory;
 
-import java.beans.PropertyVetoException;
 import java.net.URL;
 import java.sql.Connection;
 import java.sql.SQLException;

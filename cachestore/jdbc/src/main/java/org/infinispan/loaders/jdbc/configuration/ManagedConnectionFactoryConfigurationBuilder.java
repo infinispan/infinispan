@@ -8,10 +8,10 @@ import org.infinispan.commons.CacheConfigurationException;
  * @author Tristan Tarrant
  * @since 5.2
  */
-public class ManagedConnectionFactoryConfigurationBuilder<S extends AbstractJdbcCacheStoreConfigurationBuilder<?, S>> extends AbstractJdbcCacheStoreConfigurationChildBuilder<S>
+public class ManagedConnectionFactoryConfigurationBuilder<S extends AbstractJdbcStoreConfigurationBuilder<?, S>> extends AbstractJdbcStoreConfigurationChildBuilder<S>
       implements ConnectionFactoryConfigurationBuilder<ManagedConnectionFactoryConfiguration> {
 
-   public ManagedConnectionFactoryConfigurationBuilder(AbstractJdbcCacheStoreConfigurationBuilder<?, S> builder) {
+   public ManagedConnectionFactoryConfigurationBuilder(AbstractJdbcStoreConfigurationBuilder<?, S> builder) {
       super(builder);
    }
 

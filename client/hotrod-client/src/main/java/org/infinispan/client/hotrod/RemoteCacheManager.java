@@ -196,7 +196,7 @@ public class RemoteCacheManager implements BasicCacheContainer {
     *
     * @param marshaller marshaller implementation to be used
     * @param props      other properties
-    * @param start      weather or not to start the manager on return from the constructor.
+    * @param start      whether or not to start the manager on return from the constructor.
     */
    @Deprecated
    public RemoteCacheManager(Marshaller marshaller, Properties props, boolean start, ClassLoader classLoader, ExecutorFactory asyncExecutorFactory) {
@@ -352,7 +352,7 @@ public class RemoteCacheManager implements BasicCacheContainer {
     * classpath, in a file named <tt>hotrod-client.properties</tt>. If no properties can be found in the classpath, the
     * server tries to connect to "127.0.0.1:11222" in start.
     *
-    * @param start weather or not to start the RemoteCacheManager
+    * @param start whether or not to start the RemoteCacheManager
     * @throws HotRodClientException if such a file cannot be found in the classpath
     */
    public RemoteCacheManager(boolean start) {
@@ -383,7 +383,7 @@ public class RemoteCacheManager implements BasicCacheContainer {
    /**
     * Creates a remote cache manager aware of the Hot Rod server listening at host:port.
     *
-    * @param start weather or not to start the RemoteCacheManager.
+    * @param start whether or not to start the RemoteCacheManager.
     */
    @Deprecated
    public RemoteCacheManager(String host, int port, boolean start) {
@@ -393,7 +393,7 @@ public class RemoteCacheManager implements BasicCacheContainer {
    /**
     * Creates a remote cache manager aware of the Hot Rod server listening at host:port.
     *
-    * @param start weather or not to start the RemoteCacheManager.
+    * @param start whether or not to start the RemoteCacheManager.
     */
    @Deprecated
    public RemoteCacheManager(String host, int port, boolean start, ClassLoader classLoader) {
@@ -454,7 +454,7 @@ public class RemoteCacheManager implements BasicCacheContainer {
     * Same as {@link #RemoteCacheManager(java.util.Properties)}, but it will try to lookup the config properties in
     * supplied URL.
     *
-    * @param start weather or not to start the RemoteCacheManager
+    * @param start whether or not to start the RemoteCacheManager
     * @throws HotRodClientException if properties could not be loaded
     */
    @Deprecated
@@ -466,7 +466,7 @@ public class RemoteCacheManager implements BasicCacheContainer {
     * Same as {@link #RemoteCacheManager(java.util.Properties)}, but it will try to lookup the config properties in
     * supplied URL.
     *
-    * @param start weather or not to start the RemoteCacheManager
+    * @param start whether or not to start the RemoteCacheManager
     * @throws HotRodClientException if properties could not be loaded
     */
    @Deprecated

@@ -1,6 +1,6 @@
 package org.infinispan.loaders.jdbc.connectionfactory;
 
-import org.infinispan.loaders.CacheLoaderException;
+import org.infinispan.persistence.CacheLoaderException;
 import org.infinispan.commons.util.Util;
 import org.infinispan.loaders.jdbc.configuration.ConnectionFactoryConfiguration;
 

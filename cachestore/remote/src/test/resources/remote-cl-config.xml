@@ -9,9 +9,9 @@
    <default>
       <jmxStatistics enabled="false"/>
       <deadlockDetection enabled="true" spinDuration="1221"/>
-      <loaders passivation="false" shared="true" preload="false">
+      <persistence passivation="false">
          <remoteStore xmlns="urn:infinispan:config:remote:6.0"
-            fetchPersistentState="false" ignoreModifications="false" purgeOnStartup="false"
+            fetchPersistentState="false" shared="true" preload="false" ignoreModifications="false" purgeOnStartup="false"
             tcpNoDelay="true" pingOnStartup="true"
             balancingStrategy="org.infinispan.client.hotrod.impl.transport.tcp.RoundRobinBalancingStrategy"
             transportFactory="org.infinispan.client.hotrod.impl.transport.tcp.TcpTransportFactory"
@@ -28,7 +28,7 @@
               </properties>
             </asyncTransportExecutor>
          </remoteStore>
-      </loaders>
+      </persistence>
    </default>
 
 </infinispan>

@@ -24,7 +24,7 @@ public class ConfigurationBuilder implements ConfigurationChildBuilder {
    private final IndexingConfigurationBuilder indexing;
    private final InvocationBatchingConfigurationBuilder invocationBatching;
    private final JMXStatisticsConfigurationBuilder jmxStatistics;
-   private final LoadersConfigurationBuilder loaders;
+   private final PersistenceConfigurationBuilder persistence;
    private final LockingConfigurationBuilder locking;
    private final StoreAsBinaryConfigurationBuilder storeAsBinary;
    private final TransactionConfigurationBuilder transaction;
@@ -44,7 +44,7 @@ public class ConfigurationBuilder implements ConfigurationChildBuilder {
       this.indexing = new IndexingConfigurationBuilder(this);
       this.invocationBatching = new InvocationBatchingConfigurationBuilder(this);
       this.jmxStatistics = new JMXStatisticsConfigurationBuilder(this);
-      this.loaders = new LoadersConfigurationBuilder(this);
+      this.persistence = new PersistenceConfigurationBuilder(this);
       this.locking = new LockingConfigurationBuilder(this);
       this.storeAsBinary = new StoreAsBinaryConfigurationBuilder(this);
       this.transaction = new TransactionConfigurationBuilder(this);
@@ -114,8 +114,8 @@ public class ConfigurationBuilder implements ConfigurationChildBuilder {
    }
 
    @Override
-   public LoadersConfigurationBuilder loaders() {
-      return loaders;
+   public PersistenceConfigurationBuilder persistence() {
+      return persistence;
    }
 
    @Override
@@ -172,7 +172,7 @@ public class ConfigurationBuilder implements ConfigurationChildBuilder {
    public void validate() {
       for (Builder<?> validatable:
             asList(clustering, customInterceptors, dataContainer, deadlockDetection, eviction, expiration, indexing,
-                   invocationBatching, jmxStatistics, loaders, locking, storeAsBinary, transaction,
+                   invocationBatching, jmxStatistics, persistence, locking, storeAsBinary, transaction,
                    versioning, unsafe, sites, compatibility)) {
          validatable.validate();
       }
@@ -198,7 +198,7 @@ public class ConfigurationBuilder implements ConfigurationChildBuilder {
       return new Configuration(clustering.create(), customInterceptors.create(),
                dataContainer.create(), deadlockDetection.create(), eviction.create(),
                expiration.create(), indexing.create(), invocationBatching.create(),
-               jmxStatistics.create(), loaders.create(), locking.create(), storeAsBinary.create(),
+               jmxStatistics.create(), persistence.create(), locking.create(), storeAsBinary.create(),
                transaction.create(), unsafe.create(), versioning.create(), sites.create(),
                compatibility.create(),
                modulesConfig, classLoader == null ? null : classLoader.get());
@@ -215,7 +215,7 @@ public class ConfigurationBuilder implements ConfigurationChildBuilder {
       this.indexing.read(template.indexing());
       this.invocationBatching.read(template.invocationBatching());
       this.jmxStatistics.read(template.jmxStatistics());
-      this.loaders.read(template.loaders());
+      this.persistence.read(template.persistence());
       this.locking.read(template.locking());
       this.storeAsBinary.read(template.storeAsBinary());
       this.transaction.read(template.transaction());
@@ -245,7 +245,7 @@ public class ConfigurationBuilder implements ConfigurationChildBuilder {
             ", indexing=" + indexing +
             ", invocationBatching=" + invocationBatching +
             ", jmxStatistics=" + jmxStatistics +
-            ", loaders=" + loaders +
+            ", loaders=" + persistence +
             ", locking=" + locking +
             ", modules=" + modules +
             ", storeAsBinary=" + storeAsBinary +

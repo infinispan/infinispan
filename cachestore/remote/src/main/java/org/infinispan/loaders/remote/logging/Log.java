@@ -2,7 +2,7 @@ package org.infinispan.loaders.remote.logging;
 
 import org.infinispan.commons.CacheConfigurationException;
 import org.infinispan.commons.CacheException;
-import org.infinispan.loaders.CacheLoaderException;
+import org.infinispan.persistence.CacheLoaderException;
 import org.jboss.logging.Cause;
 import org.jboss.logging.LogMessage;
 import org.jboss.logging.Message;
@@ -21,7 +21,7 @@ import static org.jboss.logging.Logger.Level.*;
 public interface Log extends org.infinispan.util.logging.Log {
 
    @LogMessage(level = ERROR)
-   @Message(value = "RemoteCacheStore can only run in shared mode! This method shouldn't be called in shared mode", id = 10001)
+   @Message(value = "RemoteStore can only run in shared mode! This method shouldn't be called in shared mode", id = 10001)
    void sharedModeOnlyAllowed();
 
    @Message(value = "Wrapper cannot handle values of class %s", id = 10004)

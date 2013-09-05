@@ -6,8 +6,7 @@ import org.infinispan.commons.util.Util;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.factories.GlobalComponentRegistry;
 import org.infinispan.jmx.CacheJmxRegistration;
-import org.infinispan.loaders.manager.CacheLoaderManager;
-import org.infinispan.loaders.spi.CacheStore;
+import org.infinispan.persistence.manager.PersistenceManager;
 import org.infinispan.manager.EmbeddedCacheManager;
 
 /**
@@ -23,32 +22,31 @@ public class RemoveCacheCommand extends BaseRpcCommand {
 
    private EmbeddedCacheManager cacheManager;
    private GlobalComponentRegistry registry;
-   private CacheLoaderManager cacheLoaderManager;
+   private PersistenceManager persistenceManager;
 
    private RemoveCacheCommand() {
       super(null); // For command id uniqueness test
    }
 
    public RemoveCacheCommand(String cacheName, EmbeddedCacheManager cacheManager,
-         GlobalComponentRegistry registry, CacheLoaderManager cacheLoaderManager) {
+         GlobalComponentRegistry registry, PersistenceManager persistenceManager) {
       super(cacheName);
       this.cacheManager = cacheManager;
       this.registry = registry;
-      this.cacheLoaderManager = cacheLoaderManager;
+      this.persistenceManager = persistenceManager;
    }
 
    @Override
    public Object perform(InvocationContext ctx) throws Throwable {
       // To avoid reliance of a thread local flag, get a reference for the
       // cache store to be able to clear it after cache has stopped.
-      CacheStore store = cacheLoaderManager.getCacheStore();
       Cache<Object, Object> cache = cacheManager.getCache(cacheName);
       CacheJmxRegistration jmx = cache.getAdvancedCache().getComponentRegistry().getComponent(CacheJmxRegistration.class);
       cache.stop();
 
       // After stopping the cache, clear it
-      if (store != null)
-         store.clear();
+      if (persistenceManager != null)
+         persistenceManager.clearAllStores(false);
 
       // And see if we need to remove it from JMX
       if (jmx != null) {

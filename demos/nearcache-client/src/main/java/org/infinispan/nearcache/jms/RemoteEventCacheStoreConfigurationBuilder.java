@@ -1,20 +1,20 @@
 package org.infinispan.nearcache.jms;
 
 import org.infinispan.commons.configuration.Builder;
-import org.infinispan.commons.util.TypedProperties;
 import org.infinispan.configuration.cache.AbstractStoreConfigurationBuilder;
-import org.infinispan.configuration.cache.LoadersConfigurationBuilder;
+import org.infinispan.configuration.cache.PersistenceConfigurationBuilder;
 
 public class RemoteEventCacheStoreConfigurationBuilder extends AbstractStoreConfigurationBuilder<RemoteEventCacheStoreConfiguration, RemoteEventCacheStoreConfigurationBuilder> {
 
-   public RemoteEventCacheStoreConfigurationBuilder(LoadersConfigurationBuilder builder) {
+
+   public RemoteEventCacheStoreConfigurationBuilder(PersistenceConfigurationBuilder builder) {
       super(builder);
    }
 
    @Override
    public RemoteEventCacheStoreConfiguration create() {
-      return new RemoteEventCacheStoreConfiguration(purgeOnStartup, purgeSynchronously, purgerThreads, fetchPersistentState, ignoreModifications,
-            TypedProperties.toTypedProperties(properties), async.create(), singletonStore.create());
+      return new RemoteEventCacheStoreConfiguration(purgeOnStartup, fetchPersistentState, ignoreModifications,
+                                                    async.create(), singletonStore.create(),preload, shared, properties);
    }
 
    @Override
@@ -24,9 +24,10 @@ public class RemoteEventCacheStoreConfigurationBuilder extends AbstractStoreConf
       ignoreModifications = template.ignoreModifications();
       properties = template.properties();
       purgeOnStartup = template.purgeOnStartup();
-      purgeSynchronously = template.purgeSynchronously();
       async.read(template.async());
       singletonStore.read(template.singletonStore());
+      shared = template.shared();
+      preload = template.preload();
       return this;
    }
 
@@ -34,5 +35,4 @@ public class RemoteEventCacheStoreConfigurationBuilder extends AbstractStoreConf
    public RemoteEventCacheStoreConfigurationBuilder self() {
       return this;
    }
-
 }

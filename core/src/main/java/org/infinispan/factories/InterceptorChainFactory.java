@@ -3,7 +3,12 @@ package org.infinispan.factories;
 
 import org.infinispan.commons.CacheConfigurationException;
 import org.infinispan.commons.CacheException;
-import org.infinispan.configuration.cache.*;
+import org.infinispan.configuration.cache.CompatibilityModeConfiguration;
+import org.infinispan.configuration.cache.Configuration;
+import org.infinispan.configuration.cache.Configurations;
+import org.infinispan.configuration.cache.CustomInterceptorsConfiguration;
+import org.infinispan.configuration.cache.InterceptorConfiguration;
+import org.infinispan.configuration.cache.StoreConfiguration;
 import org.infinispan.factories.annotations.DefaultFactoryFor;
 import org.infinispan.interceptors.*;
 import org.infinispan.interceptors.base.CommandInterceptor;
@@ -187,8 +192,8 @@ public class InterceptorChainFactory extends AbstractNamedCacheComponentFactory 
       } else
          interceptorChain.appendInterceptor(createInterceptor(new EntryWrappingInterceptor(), EntryWrappingInterceptor.class), false);
 
-      if (configuration.loaders().usingCacheLoaders()) {
-         if (configuration.loaders().passivation()) {
+      if (configuration.persistence().usingStores()) {
+         if (configuration.persistence().passivation()) {
             if (configuration.clustering().cacheMode().isClustered())
                interceptorChain.appendInterceptor(createInterceptor(new ClusteredActivationInterceptor(), ClusteredActivationInterceptor.class), false);
             else
@@ -204,10 +209,10 @@ public class InterceptorChainFactory extends AbstractNamedCacheComponentFactory 
                case DIST_ASYNC:
                case REPL_SYNC:
                case REPL_ASYNC:
-                  interceptorChain.appendInterceptor(createInterceptor(new DistCacheStoreInterceptor(), DistCacheStoreInterceptor.class), false);
+                  interceptorChain.appendInterceptor(createInterceptor(new DistCacheWriterInterceptor(), DistCacheWriterInterceptor.class), false);
                   break;
                default:
-                  interceptorChain.appendInterceptor(createInterceptor(new CacheStoreInterceptor(), CacheStoreInterceptor.class), false);
+                  interceptorChain.appendInterceptor(createInterceptor(new CacheWriterInterceptor(), CacheWriterInterceptor.class), false);
                   break;
             }
          }
@@ -293,9 +298,9 @@ public class InterceptorChainFactory extends AbstractNamedCacheComponentFactory 
    }
 
    private boolean hasAsyncStore() {
-      List<CacheLoaderConfiguration> loaderConfigs = configuration.loaders().cacheLoaders();
-      for (CacheLoaderConfiguration loaderConfig : loaderConfigs) {
-         if (loaderConfig instanceof CacheStoreConfiguration && ((CacheStoreConfiguration)loaderConfig).async().enabled())
+      List<StoreConfiguration> loaderConfigs = configuration.persistence().stores();
+      for (StoreConfiguration loaderConfig : loaderConfigs) {
+         if (loaderConfig.async().enabled())
             return true;
       }
       return false;

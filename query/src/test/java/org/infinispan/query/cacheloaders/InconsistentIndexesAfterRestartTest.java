@@ -82,11 +82,11 @@ public class InconsistentIndexesAfterRestartTest extends AbstractInfinispanTest 
     private EmbeddedCacheManager getCacheManager(boolean batchingEnabled) throws Exception {
        ConfigurationBuilder builder = new ConfigurationBuilder();
        builder
-          .loaders()
+          .persistence()
              .passivation(false)
-             .preload(false)
-          .addFileCacheStore()
+          .addSingleFileStore()
              .location(TMP_DIR + File.separator + "cacheStore")
+             .preload(false)
              .fetchPersistentState(true)
              .purgeOnStartup(false)
           .indexing()

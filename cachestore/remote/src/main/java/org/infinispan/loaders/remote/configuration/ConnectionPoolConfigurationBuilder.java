@@ -9,7 +9,7 @@ import org.infinispan.commons.configuration.Builder;
  * @author Tristan Tarrant
  * @since 5.2
  */
-public class ConnectionPoolConfigurationBuilder extends AbstractRemoteCacheStoreConfigurationChildBuilder<RemoteCacheStoreConfigurationBuilder> implements
+public class ConnectionPoolConfigurationBuilder extends AbstractRemoteStoreConfigurationChildBuilder<RemoteCacheStoreConfigurationBuilder> implements
       Builder<ConnectionPoolConfiguration> {
    private ExhaustedAction exhaustedAction = ExhaustedAction.WAIT;
    private int maxActive = -1;

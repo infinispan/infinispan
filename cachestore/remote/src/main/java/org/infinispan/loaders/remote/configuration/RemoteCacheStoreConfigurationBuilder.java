@@ -8,8 +8,7 @@ import org.infinispan.client.hotrod.impl.ConfigurationProperties;
 import org.infinispan.client.hotrod.impl.transport.TransportFactory;
 import org.infinispan.client.hotrod.impl.transport.tcp.RoundRobinBalancingStrategy;
 import org.infinispan.configuration.cache.AbstractStoreConfigurationBuilder;
-import org.infinispan.configuration.cache.LoadersConfigurationBuilder;
-import org.infinispan.loaders.remote.RemoteCacheStore;
+import org.infinispan.configuration.cache.PersistenceConfigurationBuilder;
 import org.infinispan.loaders.remote.logging.Log;
 import org.infinispan.loaders.remote.wrapper.EntryWrapper;
 import org.infinispan.commons.marshall.Marshaller;
@@ -17,13 +16,13 @@ import org.infinispan.commons.util.TypedProperties;
 import org.infinispan.util.logging.LogFactory;
 
 /**
- * RemoteCacheStoreConfigurationBuilder. Configures a {@link RemoteCacheStore}
+ * RemoteCacheStoreConfigurationBuilder. Configures a {@link org.infinispan.loaders.remote.RemoteStore}
  *
  * @author Tristan Tarrant
  * @since 5.2
  */
 public class RemoteCacheStoreConfigurationBuilder extends
-      AbstractStoreConfigurationBuilder<RemoteCacheStoreConfiguration, RemoteCacheStoreConfigurationBuilder> implements
+                                                  AbstractStoreConfigurationBuilder<RemoteCacheStoreConfiguration, RemoteCacheStoreConfigurationBuilder> implements
       RemoteCacheStoreConfigurationChildBuilder<RemoteCacheStoreConfigurationBuilder> {
    private static final Log log = LogFactory.getLog(RemoteCacheStoreConfigurationBuilder.class, Log.class);
    private final ExecutorFactoryConfigurationBuilder asyncExecutorFactory;
@@ -45,7 +44,7 @@ public class RemoteCacheStoreConfigurationBuilder extends
    private String transportFactory;
    private int valueSizeEstimate = ConfigurationProperties.DEFAULT_VALUE_SIZE;
 
-   public RemoteCacheStoreConfigurationBuilder(LoadersConfigurationBuilder builder) {
+   public RemoteCacheStoreConfigurationBuilder(PersistenceConfigurationBuilder builder) {
       super(builder);
       asyncExecutorFactory = new ExecutorFactoryConfigurationBuilder(this);
       connectionPool = new ConnectionPoolConfigurationBuilder(this);
@@ -182,11 +181,13 @@ public class RemoteCacheStoreConfigurationBuilder extends
       for (RemoteServerConfigurationBuilder server : servers) {
          remoteServers.add(server.create());
       }
-      return new RemoteCacheStoreConfiguration(asyncExecutorFactory.create(), balancingStrategy,
-            connectionPool.create(), connectionTimeout, entryWrapper, forceReturnValues, hotRodWrapping, keySizeEstimate, marshaller, pingOnStartup,
-            protocolVersion, rawValues, remoteCacheName, remoteServers, socketTimeout, tcpNoDelay, transportFactory,
-            valueSizeEstimate, purgeOnStartup, purgeSynchronously, purgerThreads, fetchPersistentState,
-            ignoreModifications, TypedProperties.toTypedProperties(properties), async.create(), singletonStore.create());
+      return new RemoteCacheStoreConfiguration(purgeOnStartup, fetchPersistentState, ignoreModifications, async.create(),
+                                               singletonStore.create(), preload, shared, properties, asyncExecutorFactory.create(),
+                                               balancingStrategy, connectionPool.create(), connectionTimeout,
+                                               entryWrapper, forceReturnValues, hotRodWrapping, keySizeEstimate,
+                                               marshaller, pingOnStartup, protocolVersion, rawValues, remoteCacheName,
+                                               remoteServers, socketTimeout, tcpNoDelay, transportFactory,
+                                               valueSizeEstimate);
    }
 
    @Override
@@ -217,7 +218,6 @@ public class RemoteCacheStoreConfigurationBuilder extends
       ignoreModifications = template.ignoreModifications();
       properties = template.properties();
       purgeOnStartup = template.purgeOnStartup();
-      purgeSynchronously = template.purgeSynchronously();
       async.read(template.async());
       singletonStore.read(template.singletonStore());
       return this;

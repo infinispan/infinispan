@@ -131,7 +131,7 @@ class HotRodServer extends AbstractProtocolServer("HotRod") with Log {
                   .fetchInMemoryState(true)
                   .timeout(distSyncTimeout + configuration.topologyReplTimeout)
       } else {
-         builder.loaders().addClusterCacheLoader().remoteCallTimeout(configuration.topologyReplTimeout)
+         builder.persistence().addClusterStore().remoteCallTimeout(configuration.topologyReplTimeout)
       }
 
       builder

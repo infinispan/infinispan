@@ -6,7 +6,6 @@ import org.infinispan.commands.write.PutKeyValueCommand;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
-import org.infinispan.configuration.cache.FileCacheStoreConfigurationBuilder;
 import org.infinispan.configuration.cache.InterceptorConfiguration;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.context.SingleKeyNonTxInvocationContext;
@@ -197,36 +196,35 @@ public class XMLConfigurationOverridingTest extends AbstractInfinispanTest imple
    public void testOverrideLoaders() throws Exception {
       final String tmpDir = TestingUtil.tmpDirectory(this);
       try {
-         withCacheManager(new CacheManagerCallable(TestCacheManagerFactory.fromXml("configs/named-cache-override-test.xml")) {
-            @Override
-            public void call() {
-               Configuration configuration = cm.getCacheConfiguration(simpleCacheName);
-               Assert.assertFalse(configuration.jmxStatistics().enabled());
+      withCacheManager(new CacheManagerCallable(TestCacheManagerFactory.fromXml("configs/named-cache-override-test.xml")) {
+         @Override
+         public void call() {
+            Configuration configuration = cm.getCacheConfiguration(simpleCacheName);
+            Assert.assertFalse(configuration.jmxStatistics().enabled());
 
-               Configuration conf = new ConfigurationBuilder().eviction().maxEntries(5).strategy(EvictionStrategy.LRU)
-                     .loaders().passivation(true).addFileCacheStore().fsyncInterval(10000)
-                     .fsyncMode(FileCacheStoreConfigurationBuilder.FsyncMode.DEFAULT).location(tmpDir + "/testOverrideLoaders").build();
+            Configuration conf = new ConfigurationBuilder().eviction().maxEntries(5).strategy(EvictionStrategy.LRU)
+                  .persistence().passivation(true).addSingleFileStore().location(tmpDir + "/testOverrideLoaders").build();
 
-               cm.defineConfiguration(simpleCacheName, conf);
+            cm.defineConfiguration(simpleCacheName, conf);
 
-               configuration = cm.getCacheConfiguration(simpleCacheName);
-               Assert.assertEquals(CacheMode.LOCAL, configuration.clustering().cacheMode());
-               Assert.assertTrue(configuration.loaders().passivation());
+            configuration = cm.getCacheConfiguration(simpleCacheName);
+            Assert.assertEquals(CacheMode.LOCAL, configuration.clustering().cacheMode());
+            Assert.assertTrue(configuration.persistence().passivation());
 
-               Cache cache = cm.getCache(simpleCacheName);
-               for (int i = 0; i < 10; i++) {
-                  cache.put("key" + i, "value" + i);
-               }
-
-               Assert.assertTrue(cache.getAdvancedCache().getDataContainer().size() <= 5);
-               for (int i = 0; i < 10; i++) {
-                  Assert.assertNotNull(cache.get("key" + i));
-               }
+            Cache cache = cm.getCache(simpleCacheName);
+            for (int i = 0; i < 10; i++) {
+               cache.put("key" + i, "value" + i);
             }
-         });
-      } finally {
-         TestingUtil.recursiveFileRemove(tmpDir);
-      }
+
+            Assert.assertTrue(cache.getAdvancedCache().getDataContainer().size() <= 5);
+            for (int i = 0; i < 10; i++) {
+               Assert.assertEquals(cache.get("key" + i), "value" + i);
+            }
+         }
+      });
+     }finally {
+      TestingUtil.recursiveFileRemove(tmpDir);
+   }
    }
 
    public void testOverrideIndexing() throws Exception {

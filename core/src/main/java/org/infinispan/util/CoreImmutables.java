@@ -297,5 +297,15 @@ public class CoreImmutables extends Immutables {
       public InternalCacheEntry toInternalCacheEntry(Object key) {
          return entry;
       }
+
+      @Override
+      public long getExpiryTime() {
+         return entry.toInternalCacheValue().getExpiryTime();
+      }
+
+      @Override
+      public Metadata getMetadata() {
+         return entry.getMetadata();
+      }
    }
 }

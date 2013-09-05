@@ -3,8 +3,8 @@ package org.infinispan.loaders.remote;
 import org.infinispan.client.hotrod.TestHelper;
 import org.infinispan.client.hotrod.test.HotRodClientTestingUtil;
 import org.infinispan.commons.api.BasicCacheContainer;
-import org.infinispan.configuration.cache.LoadersConfigurationBuilder;
-import org.infinispan.loaders.BaseCacheStoreFunctionalTest;
+import org.infinispan.configuration.cache.PersistenceConfigurationBuilder;
+import org.infinispan.persistence.BaseCacheStoreFunctionalTest;
 import org.infinispan.loaders.remote.configuration.RemoteCacheStoreConfigurationBuilder;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.server.hotrod.HotRodServer;
@@ -27,12 +27,13 @@ public class RemoteCacheStoreFunctionalTest extends BaseCacheStoreFunctionalTest
 
 
    @Override
-   protected LoadersConfigurationBuilder createCacheStoreConfig(LoadersConfigurationBuilder loaders) {
+   protected PersistenceConfigurationBuilder createCacheStoreConfig(PersistenceConfigurationBuilder loaders, boolean preload) {
       localCacheManager = TestCacheManagerFactory.createCacheManager(hotRodCacheConfiguration());
       hrServer = TestHelper.startHotRodServer(localCacheManager);
       loaders
          .addStore(RemoteCacheStoreConfigurationBuilder.class)
             .remoteCacheName(BasicCacheContainer.DEFAULT_CACHE_NAME)
+            .preload(preload)
             .addServer()
                .host("localhost")
                .port(hrServer.getPort());

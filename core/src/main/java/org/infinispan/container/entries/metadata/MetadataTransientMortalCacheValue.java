@@ -13,6 +13,8 @@ import java.io.ObjectInput;
 import java.io.ObjectOutput;
 import java.util.Set;
 
+import static java.lang.Math.min;
+
 /**
  * A form of {@link org.infinispan.container.entries.TransientMortalCacheValue} that is {@link org.infinispan.container.entries.versioned.Versioned}
  *
@@ -52,6 +54,17 @@ public class MetadataTransientMortalCacheValue extends MetadataMortalCacheValue 
    @Override
    public boolean isExpired() {
       return isExpired(System.currentTimeMillis());
+   }
+
+   @Override
+   public long getExpiryTime() {
+      long lifespan = metadata.lifespan();
+      long lset = lifespan > -1 ? created + lifespan : -1;
+      long maxIdle = metadata.maxIdle();
+      long muet = maxIdle > -1 ? lastUsed + maxIdle : -1;
+      if (lset == -1) return muet;
+      if (muet == -1) return lset;
+      return min(lset, muet);
    }
 
    public static class Externalizer extends AbstractExternalizer<MetadataTransientMortalCacheValue> {

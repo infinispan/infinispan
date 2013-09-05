@@ -20,7 +20,7 @@ public interface ConfigurationChildBuilder {
    
    JMXStatisticsConfigurationBuilder jmxStatistics();
    
-   LoadersConfigurationBuilder loaders();
+   PersistenceConfigurationBuilder persistence();
    
    LockingConfigurationBuilder locking();
    

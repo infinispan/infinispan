@@ -1,6 +1,6 @@
 package org.infinispan.notifications.cachelistener.annotation;
 
-import org.infinispan.loaders.spi.CacheLoader;
+import org.infinispan.persistence.spi.CacheLoader;
 import org.infinispan.notifications.IncorrectListenerException;
 import org.infinispan.notifications.Listener;
 import org.infinispan.notifications.cachelistener.event.CacheEntryLoadedEvent;

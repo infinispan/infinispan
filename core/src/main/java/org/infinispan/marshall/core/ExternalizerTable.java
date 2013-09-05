@@ -1,12 +1,9 @@
 package org.infinispan.marshall.core;
 
-import org.infinispan.atomic.DeltaCompositeKey;
-import org.infinispan.registry.ScopedKey;
-import org.infinispan.container.versioning.NumericVersion;
-import org.infinispan.metadata.EmbeddedMetadata;
 import org.infinispan.atomic.AtomicHashMap;
 import org.infinispan.atomic.AtomicHashMapDelta;
 import org.infinispan.atomic.ClearOperation;
+import org.infinispan.atomic.DeltaCompositeKey;
 import org.infinispan.atomic.PutOperation;
 import org.infinispan.atomic.RemoveOperation;
 import org.infinispan.commands.RemoteCommandsFactory;
@@ -14,6 +11,12 @@ import org.infinispan.commons.CacheConfigurationException;
 import org.infinispan.commons.hash.MurmurHash2;
 import org.infinispan.commons.hash.MurmurHash2Compat;
 import org.infinispan.commons.hash.MurmurHash3;
+import org.infinispan.commons.io.ByteBuffer;
+import org.infinispan.commons.io.UnsignedNumeric;
+import org.infinispan.commons.marshall.AdvancedExternalizer;
+import org.infinispan.commons.marshall.StreamingMarshaller;
+import org.infinispan.commons.util.Immutables;
+import org.infinispan.commons.util.InfinispanCollections;
 import org.infinispan.configuration.global.GlobalConfiguration;
 import org.infinispan.container.entries.ImmortalCacheEntry;
 import org.infinispan.container.entries.ImmortalCacheValue;
@@ -31,6 +34,7 @@ import org.infinispan.container.entries.metadata.MetadataTransientCacheEntry;
 import org.infinispan.container.entries.metadata.MetadataTransientCacheValue;
 import org.infinispan.container.entries.metadata.MetadataTransientMortalCacheEntry;
 import org.infinispan.container.entries.metadata.MetadataTransientMortalCacheValue;
+import org.infinispan.container.versioning.NumericVersion;
 import org.infinispan.container.versioning.SimpleClusteredVersion;
 import org.infinispan.context.Flag;
 import org.infinispan.distribution.ch.DefaultConsistentHash;
@@ -47,11 +51,7 @@ import org.infinispan.factories.annotations.Start;
 import org.infinispan.factories.annotations.Stop;
 import org.infinispan.factories.scopes.Scope;
 import org.infinispan.factories.scopes.Scopes;
-import org.infinispan.commons.io.UnsignedNumeric;
-import org.infinispan.commons.marshall.AdvancedExternalizer;
-import org.infinispan.commons.marshall.StreamingMarshaller;
-import org.infinispan.commons.util.Immutables;
-import org.infinispan.commons.util.InfinispanCollections;
+import org.infinispan.persistence.MarshalledEntryImpl;
 import org.infinispan.marshall.exts.ArrayListExternalizer;
 import org.infinispan.marshall.exts.CacheRpcCommandExternalizer;
 import org.infinispan.marshall.exts.LinkedListExternalizer;
@@ -59,15 +59,18 @@ import org.infinispan.marshall.exts.MapExternalizer;
 import org.infinispan.marshall.exts.ReplicableCommandExternalizer;
 import org.infinispan.marshall.exts.SetExternalizer;
 import org.infinispan.marshall.exts.SingletonListExternalizer;
+import org.infinispan.metadata.EmbeddedMetadata;
+import org.infinispan.metadata.InternalMetadataImpl;
+import org.infinispan.registry.ScopedKey;
 import org.infinispan.remoting.responses.CacheNotFoundResponse;
-import org.infinispan.statetransfer.StateChunk;
-import org.infinispan.statetransfer.TransactionInfo;
 import org.infinispan.remoting.responses.ExceptionResponse;
 import org.infinispan.remoting.responses.SuccessfulResponse;
 import org.infinispan.remoting.responses.UnsuccessfulResponse;
 import org.infinispan.remoting.responses.UnsureResponse;
 import org.infinispan.remoting.transport.jgroups.JGroupsAddress;
 import org.infinispan.remoting.transport.jgroups.JGroupsTopologyAwareAddress;
+import org.infinispan.statetransfer.StateChunk;
+import org.infinispan.statetransfer.TransactionInfo;
 import org.infinispan.topology.CacheJoinInfo;
 import org.infinispan.topology.CacheTopology;
 import org.infinispan.transaction.xa.DldGlobalTransaction;
@@ -76,6 +79,7 @@ import org.infinispan.transaction.xa.recovery.InDoubtTxInfoImpl;
 import org.infinispan.transaction.xa.recovery.RecoveryAwareDldGlobalTransaction;
 import org.infinispan.transaction.xa.recovery.RecoveryAwareGlobalTransaction;
 import org.infinispan.transaction.xa.recovery.SerializableXid;
+import org.infinispan.util.KeyValuePair;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 import org.jboss.marshalling.Marshaller;
@@ -223,6 +227,7 @@ public class ExternalizerTable implements ObjectTable {
       addInternalExternalizer(new JGroupsAddress.Externalizer());
       addInternalExternalizer(new Immutables.ImmutableMapWrapperExternalizer());
       addInternalExternalizer(new MarshalledValue.Externalizer(globalMarshaller));
+      addInternalExternalizer(new ByteBuffer.Externalizer());
 
       addInternalExternalizer(new SuccessfulResponse.Externalizer());
       addInternalExternalizer(new ExceptionResponse.Externalizer());
@@ -291,6 +296,9 @@ public class ExternalizerTable implements ObjectTable {
 
       addInternalExternalizer(new NumericVersion.Externalizer());
       addInternalExternalizer(new ScopedKey.Externalizer());
+      addInternalExternalizer(new KeyValuePair.Externalizer());
+      addInternalExternalizer(new InternalMetadataImpl.Externalizer());
+      addInternalExternalizer(new MarshalledEntryImpl.Externalizer(globalMarshaller));
    }
 
    void addInternalExternalizer(AdvancedExternalizer<?> ext) {

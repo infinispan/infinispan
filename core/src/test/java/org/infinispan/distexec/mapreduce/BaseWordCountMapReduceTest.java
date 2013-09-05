@@ -148,19 +148,19 @@ public abstract class BaseWordCountMapReduceTest extends MultipleCacheManagersTe
       return invokeMapReduce(keys,new WordCountMapper(), new WordCountReducer(), useCombiner);
    }
 
-   public void testinvokeMapReduceOnAllKeys() throws Exception {
+   public void testInvokeMapReduceOnAllKeys() throws Exception {
       MapReduceTask<String,String,String,Integer> task = invokeMapReduce(null);
       Map<String, Integer> mapReduce = task.execute();
       verifyResults(mapReduce);
    }
    
-   public void testinvokeMapReduceOnEmptyKeys() throws Exception {
+   public void testInvokeMapReduceOnEmptyKeys() throws Exception {
       MapReduceTask<String,String,String,Integer> task = invokeMapReduce(new String[] {});
       Map<String, Integer> mapReduce = task.execute();
       verifyResults(mapReduce);
    }
 
-   public void testinvokeMapReduceOnAllKeysWithCombiner() throws Exception {
+   public void testInvokeMapReduceOnAllKeysWithCombiner() throws Exception {
       MapReduceTask<String,String,String,Integer> task = invokeMapReduce(null, true);
       Map<String, Integer> mapReduce = task.execute();
       verifyResults(mapReduce);
@@ -188,20 +188,20 @@ public abstract class BaseWordCountMapReduceTest extends MultipleCacheManagersTe
       invokeMapReduce(null, new IsolationMapper(), new IsolationReducer(), false);
    }
    
-   public void testinvokeMapReduceOnAllKeysAsync() throws Exception {
+   public void testInvokeMapReduceOnAllKeysAsync() throws Exception {
       MapReduceTask<String,String,String,Integer> task = invokeMapReduce(null);
       Future<Map<String, Integer>> future = task.executeAsynchronously();
       Map<String, Integer> mapReduce = future.get();
       verifyResults(mapReduce);
    }
 
-   public void testinvokeMapReduceOnSubsetOfKeys() throws Exception {
+   public void testInvokeMapReduceOnSubsetOfKeys() throws Exception {
       MapReduceTask<String,String,String,Integer> task = invokeMapReduce(new String[]{"1", "2", "3"});
       Map<String, Integer> mapReduce = task.execute();
       assertWordCount(countWords(mapReduce), 13);
    }
    
-   public void testinvokeMapReduceOnSubsetOfKeysAsync() throws Exception {
+   public void testInvokeMapReduceOnSubsetOfKeysAsync() throws Exception {
       MapReduceTask<String,String,String,Integer> task = invokeMapReduce(new String[]{"1", "2", "3"});
       Future<Map<String, Integer>> future = task.executeAsynchronously();
       Map<String, Integer> mapReduce = future.get();
@@ -213,7 +213,7 @@ public abstract class BaseWordCountMapReduceTest extends MultipleCacheManagersTe
       for (Entry<String, Integer> e : result.entrySet()) {
          String key = e.getKey();
          Integer count = verifyAgainst.get(key);
-         assertTrue("key " + e.getKey() + " does not have count " + count + " but " + e.getValue(), count.equals(e.getValue()));
+         assertTrue("key '" + e.getKey() + "' does not have count " + count + " but " + e.getValue(), count.equals(e.getValue()));
       }      
    }
    
@@ -221,7 +221,7 @@ public abstract class BaseWordCountMapReduceTest extends MultipleCacheManagersTe
       return getCacheManagers().size();
    }
       
-   public void testinvokeMapReduceOnAllKeysWithCollator() throws Exception {
+   public void testInvokeMapReduceOnAllKeysWithCollator() throws Exception {
        MapReduceTask<String,String,String,Integer> task = invokeMapReduce(null);
        Integer totalWords = task.execute(new Collator<String, Integer, Integer>() {
          
@@ -237,7 +237,7 @@ public abstract class BaseWordCountMapReduceTest extends MultipleCacheManagersTe
        assertWordCount(totalWords, 56);  
    }
    
-   public void testinvokeMapReduceOnSubsetOfKeysWithCollator() throws Exception {
+   public void testInvokeMapReduceOnSubsetOfKeysWithCollator() throws Exception {
       MapReduceTask<String,String,String,Integer> task = invokeMapReduce(new String[] { "1", "2", "3" });
       Integer totalWords = task.execute(new Collator<String, Integer, Integer>() {
          
@@ -253,7 +253,7 @@ public abstract class BaseWordCountMapReduceTest extends MultipleCacheManagersTe
       assertWordCount(totalWords, 13);    
    }
    
-   public void testinvokeMapReduceOnAllKeysWithCollatorAsync() throws Exception {
+   public void testInvokeMapReduceOnAllKeysWithCollatorAsync() throws Exception {
       MapReduceTask<String,String,String,Integer> task = invokeMapReduce(null);
       Future<Integer> future = task.executeAsynchronously(new Collator<String, Integer, Integer>() {
 
@@ -270,7 +270,7 @@ public abstract class BaseWordCountMapReduceTest extends MultipleCacheManagersTe
      assertWordCount(totalWords, 56); 
   }
 
-  public void testinvokeMapReduceOnSubsetOfKeysWithCollatorAsync() throws Exception {
+  public void testInvokeMapReduceOnSubsetOfKeysWithCollatorAsync() throws Exception {
      MapReduceTask<String,String,String,Integer> task = invokeMapReduce(new String[] { "1", "2", "3" });
      Future<Integer> future = task.executeAsynchronously(new Collator<String, Integer, Integer>() {
         
@@ -325,6 +325,7 @@ public abstract class BaseWordCountMapReduceTest extends MultipleCacheManagersTe
 
       @Override
       public void map(String key, String value, Collector<String, Integer> collector) {
+//         System.out.println("[" + Thread.currentThread().getName() + "] - " + key + " - " + value);
          if(value == null) throw new IllegalArgumentException("Key " + key + " has value " + value);
          StringTokenizer tokens = new StringTokenizer(value);
          while (tokens.hasMoreElements()) {

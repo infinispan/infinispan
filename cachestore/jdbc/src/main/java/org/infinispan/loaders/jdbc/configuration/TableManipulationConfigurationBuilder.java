@@ -13,8 +13,8 @@ import org.infinispan.loaders.jdbc.logging.Log;
  * @author Tristan Tarrant
  * @since 5.2
  */
-public abstract class TableManipulationConfigurationBuilder<B extends AbstractJdbcCacheStoreConfigurationBuilder<?, B>, S extends TableManipulationConfigurationBuilder<B, S>> extends
-      AbstractJdbcCacheStoreConfigurationChildBuilder<B> implements Builder<TableManipulationConfiguration>, Self<S> {
+public abstract class TableManipulationConfigurationBuilder<B extends AbstractJdbcStoreConfigurationBuilder<?, B>, S extends TableManipulationConfigurationBuilder<B, S>> extends
+                                                                                                                                                                          AbstractJdbcStoreConfigurationChildBuilder<B> implements Builder<TableManipulationConfiguration>, Self<S> {
    private static final Log log = LogFactory.getLog(TableManipulationConfigurationBuilder.class, Log.class);
    private int batchSize = TableManipulation.DEFAULT_BATCH_SIZE;
    private int fetchSize = TableManipulation.DEFAULT_FETCH_SIZE;
@@ -32,15 +32,13 @@ public abstract class TableManipulationConfigurationBuilder<B extends AbstractJd
    // Needs package access for validate() in JdbcMixedCacheStoreConfigurationBuilder
    String tableNamePrefix;
 
-   TableManipulationConfigurationBuilder(AbstractJdbcCacheStoreConfigurationBuilder<?, B> builder) {
+   TableManipulationConfigurationBuilder(AbstractJdbcStoreConfigurationBuilder<?, B> builder) {
       super(builder);
    }
 
    /**
-    * When doing repetitive DB inserts (e.g. on
-    * {@link org.infinispan.loaders.spi.CacheStore#fromStream(java.io.ObjectInput)} this will be batched
-    * according to this parameter. This is an optional parameter, and if it is not specified it will
-    * be defaulted to {@link #DEFAULT_BATCH_SIZE}.
+    * Repetitive DB operations this are batched according to this parameter. This is an optional parameter, and if it
+    * is not specified it will be defaulted to {@link TableManipulation#DEFAULT_BATCH_SIZE}.
     */
    public S batchSize(int batchSize) {
       this.batchSize = batchSize;
@@ -48,9 +46,8 @@ public abstract class TableManipulationConfigurationBuilder<B extends AbstractJd
    }
 
    /**
-    * For DB queries (e.g. {@link org.infinispan.loaders.spi.CacheStore#toStream(java.io.ObjectOutput)}
-    * ) the fetch size will be set on {@link java.sql.ResultSet#setFetchSize(int)}. This is optional
-    * parameter, if not specified will be defaulted to {@link #DEFAULT_FETCH_SIZE}.
+    * For DB queries the fetch size is on {@link java.sql.ResultSet#setFetchSize(int)}. This is optional
+    * parameter, if not specified will be defaulted to {@link TableManipulation#DEFAULT_FETCH_SIZE}.
     */
    public S fetchSize(int fetchSize) {
       this.fetchSize = fetchSize;

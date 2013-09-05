@@ -7,9 +7,8 @@ import org.infinispan.commons.marshall.AdvancedExternalizer;
 import org.infinispan.commons.util.TypedProperties;
 import org.infinispan.commons.CacheConfigurationException;
 import org.infinispan.lifecycle.ComponentStatus;
-import org.infinispan.loaders.CacheLoaderException;
-import org.infinispan.loaders.bucket.Bucket;
-import org.infinispan.loaders.decorators.SingletonStore;
+import org.infinispan.persistence.CacheLoaderException;
+import org.infinispan.persistence.support.SingletonCacheWriter;
 import org.infinispan.remoting.RemoteException;
 import org.infinispan.remoting.responses.Response;
 import org.infinispan.remoting.transport.Address;
@@ -44,6 +43,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.ExecutionException;
 
 import static org.jboss.logging.Logger.Level.*;
 
@@ -235,7 +235,7 @@ public interface Log extends BasicLogger {
    void errorDoingRemoteCall(@Cause Exception e);
 
    @LogMessage(level = ERROR)
-   @Message(value = "Interrupted or timeout while waiting for AsyncStore worker threads to push all state to the decorated store", id = 48)
+   @Message(value = "Interrupted or timeout while waiting for AsyncCacheWriter worker threads to push all state to the decorated store", id = 48)
    void interruptedWaitingAsyncStorePush(@Cause InterruptedException e);
 
    @LogMessage(level = ERROR)
@@ -255,20 +255,12 @@ public interface Log extends BasicLogger {
    void asyncStoreCoordinatorInterrupted(@Cause InterruptedException e);
 
    @LogMessage(level = ERROR)
-   @Message(value = "Unexpected error in AsyncStoreCoordinator thread. AsyncStore is dead!", id = 55)
+   @Message(value = "Unexpected error in AsyncStoreCoordinator thread. AsyncCacheWriter is dead!", id = 55)
    void unexpectedErrorInAsyncStoreCoordinator(@Cause Throwable t);
 
    @LogMessage(level = ERROR)
-   @Message(value = "Error while handling Modification in AsyncStore", id = 56)
-   void errorModifyingAsyncStore(@Cause Exception e);
-
-   @LogMessage(level = ERROR)
-   @Message(value = "Clear() operation in async store could not be performed", id = 57)
-   void unableToClearAsyncStore();
-
-   @LogMessage(level = ERROR)
    @Message(value = "Exception reported changing cache active status", id = 58)
-   void errorChangingSingletonStoreStatus(@Cause SingletonStore.PushStateException e);
+   void errorChangingSingletonStoreStatus(@Cause SingletonCacheWriter.PushStateException e);
 
    @LogMessage(level = WARN)
    @Message(value = "Had problems removing file %s", id = 59)
@@ -285,10 +277,6 @@ public interface Log extends BasicLogger {
    @LogMessage(level = ERROR)
    @Message(value = "Error while reading from file: %s", id = 62)
    void errorReadingFromFile(File f, @Cause Exception e);
-
-   @LogMessage(level = ERROR)
-   @Message(value = "Exception while saving bucket %s", id = 63)
-   void errorSavingBucket(Bucket b, @Cause IOException ex);
 
    @LogMessage(level = WARN)
    @Message(value = "Problems creating the directory: %s", id = 64)
@@ -940,7 +928,11 @@ public interface Log extends BasicLogger {
    @Message(value = "Cache Loader configuration cannot be null", id = 251)
    CacheConfigurationException cacheLoaderConfigurationCannotBeNull();
 
-   @Message(value = "Invalid Cache Loader class: %s", id = 252)
+   @LogMessage(level = ERROR)
+   @Message(value = "Error executing parallel store task", id = 252)
+   void errorExecutingParallelStoreTask(@Cause ExecutionException e);
+
+   @Message(value = "Invalid Cache Loader class: %s", id = 253)
    CacheConfigurationException invalidCacheLoaderClass(String name);
 }
 

@@ -9,9 +9,9 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
 
-import org.infinispan.loaders.CacheLoaderException;
+import org.infinispan.persistence.CacheLoaderException;
 import org.infinispan.loaders.jdbc.configuration.ConnectionFactoryConfiguration;
-import org.infinispan.loaders.jdbc.configuration.JdbcStringBasedCacheStoreConfigurationBuilder;
+import org.infinispan.loaders.jdbc.configuration.JdbcStringBasedStoreConfigurationBuilder;
 import org.infinispan.loaders.jdbc.configuration.PooledConnectionFactoryConfiguration;
 import org.infinispan.loaders.jdbc.configuration.SimpleConnectionFactoryConfiguration;
 import org.infinispan.loaders.jdbc.connectionfactory.PooledConnectionFactory;
@@ -34,11 +34,10 @@ public class TableManipulationTest {
 
    @BeforeTest
    public void createConnection() throws Exception {
-      JdbcStringBasedCacheStoreConfigurationBuilder storeBuilder = TestCacheManagerFactory
+      JdbcStringBasedStoreConfigurationBuilder storeBuilder = TestCacheManagerFactory
             .getDefaultCacheConfiguration(false)
-            .loaders()
-               .addLoader(JdbcStringBasedCacheStoreConfigurationBuilder.class)
-               .purgeSynchronously(true);
+            .persistence()
+               .addStore(JdbcStringBasedStoreConfigurationBuilder.class);
       UnitTestDatabaseManager.buildTableManipulation(storeBuilder.table(), false);
       factoryConfiguration = UnitTestDatabaseManager.configureUniqueConnectionFactory(storeBuilder).create();
       tableManipulation = new TableManipulation(storeBuilder.table().create());
@@ -64,11 +63,10 @@ public class TableManipulationTest {
    }
 
    public void testConnectionLeakGuessDatabaseType() throws Exception {
-      JdbcStringBasedCacheStoreConfigurationBuilder storeBuilder = TestCacheManagerFactory
+      JdbcStringBasedStoreConfigurationBuilder storeBuilder = TestCacheManagerFactory
             .getDefaultCacheConfiguration(false)
-            .loaders()
-               .addLoader(JdbcStringBasedCacheStoreConfigurationBuilder.class)
-               .purgeSynchronously(true);
+            .persistence()
+               .addStore(JdbcStringBasedStoreConfigurationBuilder.class);
 
       UnitTestDatabaseManager.buildTableManipulation(storeBuilder.table(), false);
 

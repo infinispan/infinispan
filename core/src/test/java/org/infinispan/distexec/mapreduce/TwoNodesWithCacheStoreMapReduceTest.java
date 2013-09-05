@@ -2,12 +2,11 @@ package org.infinispan.distexec.mapreduce;
 
 import org.infinispan.Cache;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
-import org.infinispan.container.entries.InternalCacheEntry;
-import org.infinispan.loaders.dummy.DummyInMemoryCacheStoreConfigurationBuilder;
-import org.infinispan.loaders.manager.CacheLoaderManager;
-import org.infinispan.loaders.spi.CacheStore;
+import org.infinispan.interceptors.locking.ClusteringDependentLogic;
+import org.infinispan.persistence.MarshalledEntryImpl;
+import org.infinispan.persistence.dummy.DummyInMemoryStoreConfigurationBuilder;
+import org.infinispan.persistence.spi.CacheWriter;
 import org.infinispan.test.TestingUtil;
-import org.infinispan.test.fwk.TestInternalCacheEntryFactory;
 import org.testng.annotations.Test;
 
 /**
@@ -24,7 +23,7 @@ public class TwoNodesWithCacheStoreMapReduceTest extends BaseWordCountMapReduceT
    @Override
    protected void createCacheManagers() throws Throwable {
       ConfigurationBuilder builder = getDefaultClusteredCacheConfig(getCacheMode(), true);
-      builder.loaders().addStore(DummyInMemoryCacheStoreConfigurationBuilder.class).storeName(getClass().getSimpleName()).purgeOnStartup(true);
+      builder.persistence().addStore(DummyInMemoryStoreConfigurationBuilder.class).storeName(getClass().getSimpleName()).purgeOnStartup(true);
       createClusteredCaches(2, cacheName(), builder);
    }
 
@@ -36,41 +35,41 @@ public class TwoNodesWithCacheStoreMapReduceTest extends BaseWordCountMapReduceT
       Cache cache1 = cache(0, cacheName());
       Cache cache2 = cache(1, cacheName());
 
-      CacheStore c1 = getStore(cache1);
-      CacheStore c2 = getStore(cache2);
+      CacheWriter c1 = (CacheWriter) TestingUtil.getCacheLoader(cache1);
+      CacheWriter c2 = (CacheWriter) TestingUtil.getCacheLoader(cache2);
 
       //store each entry into each cache store directly
-      c1.store(toEntry("1", "Hello world here I am"));
-      c2.store(toEntry("1", "Hello world here I am"));
-      c1.store(toEntry("2", "Infinispan rules the world"));
-      c2.store(toEntry("2", "Infinispan rules the world"));
-      c1.store(toEntry("3", "JUDCon is in Boston"));
-      c2.store(toEntry("3", "JUDCon is in Boston"));
-      c1.store(toEntry("4", "JBoss World is in Boston as well"));
-      c2.store(toEntry("4", "JBoss World is in Boston as well"));
-      c1.store(toEntry("12","JBoss Application Server"));
-      c2.store(toEntry("12","JBoss Application Server"));
-      c1.store(toEntry("15", "Hello world"));
-      c2.store(toEntry("15", "Hello world"));
-      c1.store(toEntry("14", "Infinispan community"));
-      c2.store(toEntry("14", "Infinispan community"));
+      write("1", "Hello world here I am");
+      write("1", "Hello world here I am");
+      write("2", "Infinispan rules the world");
+      write("2", "Infinispan rules the world");
+      write("3", "JUDCon is in Boston");
+      write("3", "JUDCon is in Boston");
+      write("4", "JBoss World is in Boston as well");
+      write("4", "JBoss World is in Boston as well");
+      write("12", "JBoss Application Server");
+      write("12", "JBoss Application Server");
+      write("15", "Hello world");
+      write("15", "Hello world");
+      write("14", "Infinispan community");
+      write("14", "Infinispan community");
 
-      c1.store(toEntry("111", "Infinispan open source"));
-      c2.store(toEntry("111", "Infinispan open source"));
-      c1.store(toEntry("112", "Boston is close to Toronto"));
-      c2.store(toEntry("112", "Boston is close to Toronto"));
-      c1.store(toEntry("113", "Toronto is a capital of Ontario"));
-      c2.store(toEntry("113", "Toronto is a capital of Ontario"));
-      c1.store(toEntry("114", "JUDCon is cool"));
-      c2.store(toEntry("114", "JUDCon is cool"));
-      c1.store(toEntry("211", "JBoss World is awesome"));
-      c2.store(toEntry("211", "JBoss World is awesome"));
-      c1.store(toEntry("212", "JBoss rules"));
-      c2.store(toEntry("212", "JBoss rules"));
-      c1.store(toEntry("213", "JBoss division of RedHat "));
-      c2.store(toEntry("213", "JBoss division of RedHat "));
-      c1.store(toEntry("214", "RedHat community"));
-      c2.store(toEntry("214", "RedHat community"));
+      write("111", "Infinispan open source");
+      write("111", "Infinispan open source");
+      write("112", "Boston is close to Toronto");
+      write("112", "Boston is close to Toronto");
+      write("113", "Toronto is a capital of Ontario");
+      write("113", "Toronto is a capital of Ontario");
+      write("114", "JUDCon is cool");
+      write("114", "JUDCon is cool");
+      write("211", "JBoss World is awesome");
+      write("211", "JBoss World is awesome");
+      write("212", "JBoss rules");
+      write("212", "JBoss rules");
+      write("213", "JBoss division of RedHat ");
+      write("213", "JBoss division of RedHat ");
+      write("214", "RedHat community");
+      write("214", "RedHat community");
 
       MapReduceTask<String, String, String, Integer> task = createMapReduceTask(cache1);
       task.mappedWith(mapper).reducedWith(reducer);
@@ -83,12 +82,21 @@ public class TwoNodesWithCacheStoreMapReduceTest extends BaseWordCountMapReduceT
       return task;
    }
 
-   @SuppressWarnings("rawtypes")
-   protected CacheStore getStore(Cache c){
-      return TestingUtil.extractComponent(c, CacheLoaderManager.class).getCacheStore();
+   private void write(String key, Object value) {
+      Cache cache1 = cache(0, cacheName());
+      ClusteringDependentLogic cdl = cache1.getAdvancedCache().getComponentRegistry().getComponent(ClusteringDependentLogic.class);
+      boolean onCache1 = cdl.localNodeIsPrimaryOwner(key);
+      CacheWriter cacheWriter;
+      if (onCache1) {
+         cacheWriter = (CacheWriter) TestingUtil.getCacheLoader(cache1);
+      } else {
+         cacheWriter = (CacheWriter) TestingUtil.getCacheLoader(cache(1, cacheName()));
+      }
+      cacheWriter.write(new MarshalledEntryImpl(key, value, null, TestingUtil.marshaller(cache1)));
    }
 
-   protected InternalCacheEntry toEntry(String key, String value){
-      return TestInternalCacheEntryFactory.create(key,value);
+   @Override
+   public void testInvokeMapReduceOnSubsetOfKeys() throws Exception {
+      super.testInvokeMapReduceOnSubsetOfKeys();    // TODO: Customise this generated block
    }
 }

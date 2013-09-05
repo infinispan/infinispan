@@ -3,9 +3,8 @@ package org.infinispan.statetransfer;
 import org.infinispan.Cache;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
-import org.infinispan.loaders.dummy.DummyInMemoryCacheStoreConfigurationBuilder;
-import org.infinispan.loaders.manager.CacheLoaderManager;
-import org.infinispan.loaders.spi.CacheLoader;
+import org.infinispan.persistence.dummy.DummyInMemoryStoreConfigurationBuilder;
+import org.infinispan.persistence.spi.CacheLoader;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.test.TestingUtil;
 import org.testng.annotations.Test;
@@ -32,13 +31,13 @@ public class StateTransferCacheLoaderFunctionalTest extends StateTransferFunctio
 
    @Override
    protected EmbeddedCacheManager createCacheManager() {
-      configurationBuilder.loaders().clearCacheLoaders();
+      configurationBuilder.persistence().clearStores();
       // increment the DIMCS store id
-      DummyInMemoryCacheStoreConfigurationBuilder dimcs = new DummyInMemoryCacheStoreConfigurationBuilder(configurationBuilder.loaders());
+      DummyInMemoryStoreConfigurationBuilder dimcs = new DummyInMemoryStoreConfigurationBuilder(configurationBuilder.persistence());
       dimcs.storeName("store number " + id++);
-      dimcs.fetchPersistentState(true);
-      configurationBuilder.loaders().addLoader(dimcs);
-      configurationBuilder.loaders().shared(sharedCacheLoader.get()).preload(true);
+      dimcs.fetchPersistentState(true).shared(sharedCacheLoader.get()).preload(true);
+      configurationBuilder.persistence().addStore(dimcs);
+      configurationBuilder.persistence();
 
       return super.createCacheManager();
    }
@@ -55,11 +54,11 @@ public class StateTransferCacheLoaderFunctionalTest extends StateTransferFunctio
    }
 
    protected void verifyInitialDataOnLoader(Cache<Object, Object> c) throws Exception {
-      CacheLoader l = TestingUtil.extractComponent(c, CacheLoaderManager.class).getCacheLoader();
-      assert l.containsKey(A_B_AGE);
-      assert l.containsKey(A_B_NAME);
-      assert l.containsKey(A_C_AGE);
-      assert l.containsKey(A_C_NAME);
+      CacheLoader l = TestingUtil.getFirstLoader(c);
+      assert l.contains(A_B_AGE);
+      assert l.contains(A_B_NAME);
+      assert l.contains(A_C_AGE);
+      assert l.contains(A_C_NAME);
       assert l.load(A_B_AGE).getValue().equals(TWENTY);
       assert l.load(A_B_NAME).getValue().equals(JOE);
       assert l.load(A_C_AGE).getValue().equals(FORTY);
@@ -71,13 +70,13 @@ public class StateTransferCacheLoaderFunctionalTest extends StateTransferFunctio
    }
 
    protected void verifyNoDataOnLoader(Cache<Object, Object> c) throws Exception {
-      CacheLoader l = TestingUtil.extractComponent(c, CacheLoaderManager.class).getCacheLoader();
-      assert !l.containsKey(A_B_AGE);
-      assert !l.containsKey(A_B_NAME);
-      assert !l.containsKey(A_C_AGE);
-      assert !l.containsKey(A_C_NAME);
-      assert !l.containsKey(A_D_AGE);
-      assert !l.containsKey(A_D_NAME);
+      CacheLoader l = TestingUtil.getFirstLoader(c);
+      assert !l.contains(A_B_AGE);
+      assert !l.contains(A_B_NAME);
+      assert !l.contains(A_C_AGE);
+      assert !l.contains(A_C_NAME);
+      assert !l.contains(A_D_AGE);
+      assert !l.contains(A_D_NAME);
    }
 
    public void testSharedLoader() throws Exception {

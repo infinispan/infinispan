@@ -1,11 +1,8 @@
 package org.infinispan.loaders.remote;
 
 import org.infinispan.Cache;
-import org.infinispan.client.hotrod.TestHelper;
 import org.infinispan.client.hotrod.test.HotRodClientTestingUtil;
-import org.infinispan.loaders.spi.CacheLoader;
-import org.infinispan.manager.CacheContainer;
-import org.infinispan.manager.DefaultCacheManager;
+import org.infinispan.persistence.spi.CacheLoader;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.server.hotrod.HotRodServer;
 import org.infinispan.server.hotrod.test.HotRodTestingUtil;
@@ -15,8 +12,6 @@ import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.testng.annotations.AfterTest;
 import org.testng.annotations.BeforeTest;
 import org.testng.annotations.Test;
-
-import java.io.IOException;
 
 import static junit.framework.Assert.assertEquals;
 import static org.infinispan.server.hotrod.test.HotRodTestingUtil.hotRodCacheConfiguration;
@@ -49,7 +44,7 @@ public class RemoteCacheStoreConfigTest {
             Cache<Object, Object> cache = cm.getCache();
             CacheLoader cacheLoader = TestingUtil.getCacheLoader(cache);
             assert cacheLoader != null;
-            assert cacheLoader instanceof RemoteCacheStore;
+            assert cacheLoader instanceof RemoteStore;
 
 
             cache.put("k", "v");

@@ -8,7 +8,7 @@ import org.testng.annotations.Test
 import org.infinispan.server.core.test.Stoppable
 import org.infinispan.configuration.cache.Configuration
 import org.infinispan.server.hotrod.configuration.HotRodServerConfigurationBuilder
-import org.infinispan.configuration.cache.ClusterCacheLoaderConfiguration
+import org.infinispan.configuration.cache.ClusterStoreConfiguration
 import org.infinispan.server.hotrod.configuration.HotRodServerConfiguration
 
 /**
@@ -28,7 +28,7 @@ class HotRodConfigurationTest {
          assertEquals(cfg.clustering().sync().replTimeout(), 31000)
          assertTrue(cfg.clustering().stateTransfer().fetchInMemoryState())
          assertEquals(cfg.clustering().stateTransfer().timeout(), 31000 + distSyncTimeout)
-         assertTrue(cfg.loaders().cacheLoaders().isEmpty)
+         assertTrue(cfg.persistence().stores().isEmpty)
       }
    }
 
@@ -38,7 +38,7 @@ class HotRodConfigurationTest {
       withClusteredServer(builder) { (cfg, distSyncTimeout) =>
          assertEquals(cfg.clustering().sync().replTimeout(), 43000)
          assertTrue(cfg.clustering().stateTransfer().fetchInMemoryState())
-         val clcfg = cfg.loaders().cacheLoaders().get(0).asInstanceOf[ClusterCacheLoaderConfiguration]
+         val clcfg = cfg.persistence().stores().get(0).asInstanceOf[ClusterStoreConfiguration]
          assertNotNull(clcfg)
          assertEquals(clcfg.remoteCallTimeout(), 43000)
       }

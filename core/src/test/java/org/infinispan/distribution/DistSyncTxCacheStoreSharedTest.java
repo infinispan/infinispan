@@ -1,8 +1,7 @@
 package org.infinispan.distribution;
 
 import org.infinispan.Cache;
-import org.infinispan.loaders.manager.CacheLoaderManager;
-import org.infinispan.loaders.spi.CacheStore;
+import org.infinispan.persistence.spi.CacheLoader;
 import org.infinispan.test.TestingUtil;
 import org.testng.annotations.Test;
 
@@ -29,8 +28,7 @@ public class DistSyncTxCacheStoreSharedTest extends BaseDistCacheStoreTest {
 
    public void testPutFromNonOwner() throws Exception {
       Cache<Object, String> cacheX = getFirstNonOwner("key1");
-      CacheStore storeX = TestingUtil.extractComponent(
-            cacheX, CacheLoaderManager.class).getCacheStore();
+      CacheLoader storeX = TestingUtil.getFirstLoader(cacheX);
       cacheX.put("key1", "v1");
       assertEquals("v1", cacheX.get("key1"));
       assertNotNull(storeX.load("key1"));

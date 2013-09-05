@@ -3,7 +3,7 @@ package org.infinispan.lucene.cachestore;
 import java.io.IOException;
 
 import org.apache.lucene.store.IndexInput;
-import org.infinispan.loaders.CacheLoaderException;
+import org.infinispan.persistence.CacheLoaderException;
 import org.infinispan.lucene.ChunkCacheKey;
 import org.infinispan.lucene.FileCacheKey;
 import org.infinispan.lucene.FileMetadata;

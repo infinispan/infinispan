@@ -1,8 +1,8 @@
 package org.infinispan.loaders.jdbc.stringbased;
 
-import org.infinispan.configuration.cache.LoadersConfigurationBuilder;
-import org.infinispan.loaders.BaseCacheStoreFunctionalTest;
-import org.infinispan.loaders.jdbc.configuration.JdbcStringBasedCacheStoreConfigurationBuilder;
+import org.infinispan.configuration.cache.PersistenceConfigurationBuilder;
+import org.infinispan.persistence.BaseCacheStoreFunctionalTest;
+import org.infinispan.loaders.jdbc.configuration.JdbcStringBasedStoreConfigurationBuilder;
 import org.infinispan.test.fwk.UnitTestDatabaseManager;
 import org.testng.annotations.Test;
 
@@ -10,12 +10,17 @@ import org.testng.annotations.Test;
 public class JdbcStringBasedCacheStoreFunctionalTest extends BaseCacheStoreFunctionalTest {
 
    @Override
-   protected LoadersConfigurationBuilder createCacheStoreConfig(LoadersConfigurationBuilder loaders) {
-      JdbcStringBasedCacheStoreConfigurationBuilder store = loaders
-         .addStore(JdbcStringBasedCacheStoreConfigurationBuilder.class)
-         .purgeSynchronously(true);
+   protected PersistenceConfigurationBuilder createCacheStoreConfig(PersistenceConfigurationBuilder loaders, boolean preload) {
+      JdbcStringBasedStoreConfigurationBuilder store = loaders
+         .addStore(JdbcStringBasedStoreConfigurationBuilder.class)
+         .preload(preload);
       UnitTestDatabaseManager.buildTableManipulation(store.table(), false);
       UnitTestDatabaseManager.configureUniqueConnectionFactory(store);
       return loaders;
+   }
+
+   @Override
+   public void testPreloadAndExpiry() {
+      super.testPreloadAndExpiry();    // TODO: Customise this generated block
    }
 }

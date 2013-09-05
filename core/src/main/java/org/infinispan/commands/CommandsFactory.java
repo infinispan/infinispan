@@ -260,7 +260,7 @@ public interface CommandsFactory {
    LockControlCommand buildLockControlCommand(Object key, Set<Flag> flags, GlobalTransaction gtx);
 
 
-   LockControlCommand buildLockControlCommand(Collection<Object> keys, Set<Flag> flags);
+   LockControlCommand buildLockControlCommand(Collection keys, Set<Flag> flags);
 
    /**
     * Builds a StateRequestCommand used for requesting transactions and locks and for starting or canceling transfer of cache entries.

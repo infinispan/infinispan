@@ -1,59 +1,89 @@
 package org.infinispan.loaders.jdbc.binary;
 
-import static org.mockito.Mockito.mock;
+import org.infinispan.Cache;
+import org.infinispan.commons.marshall.StreamingMarshaller;
+import org.infinispan.configuration.cache.ConfigurationBuilder;
+import org.infinispan.persistence.BaseCacheStoreTest;
+import org.infinispan.persistence.CacheLoaderException;
+import org.infinispan.persistence.InitializationContextImpl;
+import org.infinispan.persistence.MarshalledEntryImpl;
+import org.infinispan.loaders.jdbc.TableManipulation;
+import org.infinispan.loaders.jdbc.configuration.JdbcBinaryStoreConfigurationBuilder;
+import org.infinispan.loaders.jdbc.connectionfactory.ConnectionFactory;
+import org.infinispan.persistence.spi.AdvancedLoadWriteStore;
+import org.infinispan.manager.EmbeddedCacheManager;
+import org.infinispan.metadata.InternalMetadataImpl;
+import org.infinispan.metadata.Metadata;
+import org.infinispan.test.TestingUtil;
+import org.infinispan.test.fwk.TestCacheManagerFactory;
+import org.infinispan.test.fwk.UnitTestDatabaseManager;
+import org.infinispan.util.DefaultTimeService;
+import org.infinispan.util.concurrent.WithinThreadExecutor;
+import org.testng.annotations.AfterMethod;
+import org.testng.annotations.Test;
 
 import java.io.Serializable;
 
-import org.infinispan.loaders.BaseCacheStoreTest;
-import org.infinispan.loaders.jdbc.TableManipulation;
-import org.infinispan.loaders.jdbc.configuration.JdbcBinaryCacheStoreConfigurationBuilder;
-import org.infinispan.loaders.jdbc.connectionfactory.ConnectionFactory;
-import org.infinispan.loaders.spi.CacheStore;
-import org.infinispan.marshall.TestObjectStreamMarshaller;
-import org.infinispan.test.TestingUtil;
-import org.infinispan.test.fwk.TestCacheManagerFactory;
-import org.infinispan.test.fwk.TestInternalCacheEntryFactory;
-import org.infinispan.test.fwk.UnitTestDatabaseManager;
-import org.testng.annotations.Test;
+import static org.infinispan.test.TestingUtil.metadata;
+import static org.mockito.Mockito.mock;
 
 /**
- * Tester class for {@link JdbcBinaryCacheStore}
+ * Tester class for {@link JdbcBinaryStore}
  *
  * @author Mircea.Markus@jboss.com
  */
 @Test(groups = "functional", testName = "loaders.jdbc.binary.JdbcBinaryCacheStoreTest")
 public class JdbcBinaryCacheStoreTest extends BaseCacheStoreTest {
 
-   @Override
-   protected CacheStore createCacheStore() throws Exception {
-      JdbcBinaryCacheStoreConfigurationBuilder storeBuilder = TestCacheManagerFactory
-            .getDefaultCacheConfiguration(false)
-            .loaders()
-               .addLoader(JdbcBinaryCacheStoreConfigurationBuilder.class)
-                  .purgeSynchronously(true);
 
+   private EmbeddedCacheManager cacheManager;
+   private Cache<Object,Object> cache;
+
+   @Override
+   protected AdvancedLoadWriteStore createStore() throws Exception {
+
+      ConfigurationBuilder cc = TestCacheManagerFactory.getDefaultCacheConfiguration(false);
+      JdbcBinaryStoreConfigurationBuilder storeBuilder = cc
+            .persistence()
+            .addStore(JdbcBinaryStoreConfigurationBuilder.class);
       UnitTestDatabaseManager.buildTableManipulation(storeBuilder.table(), true);
       UnitTestDatabaseManager.configureUniqueConnectionFactory(storeBuilder);
 
-      JdbcBinaryCacheStore jdbcBucketCacheStore = new JdbcBinaryCacheStore();
-      jdbcBucketCacheStore.init(storeBuilder.create(), getCache(), getMarshaller());
-      jdbcBucketCacheStore.start();
-      assert jdbcBucketCacheStore.getConnectionFactory() != null;
-      return jdbcBucketCacheStore;
+      cacheManager = TestCacheManagerFactory.createCacheManager(cc);
+
+      cache = cacheManager.getCache();
+
+      JdbcBinaryStore jdbcBinaryCacheStore = (JdbcBinaryStore) TestingUtil.getFirstWriter(cache);
+      assert jdbcBinaryCacheStore.getConnectionFactory() != null;
+      csc = jdbcBinaryCacheStore.getConfiguration();
+      return jdbcBinaryCacheStore;
+   }
+
+   @AfterMethod
+   @Override
+   public void tearDown() throws CacheLoaderException {
+      super.tearDown();
+      TestingUtil.killCacheManagers(cacheManager);
+   }
+
+   @Override
+   protected StreamingMarshaller getMarshaller() {
+      StreamingMarshaller component = cache.getAdvancedCache().getComponentRegistry().getCacheMarshaller();
+      assert component != null;
+      return component;
    }
 
    public void testNotCreateConnectionFactory() throws Exception {
-      JdbcBinaryCacheStoreConfigurationBuilder storeBuilder = TestCacheManagerFactory
+      JdbcBinaryStoreConfigurationBuilder storeBuilder = TestCacheManagerFactory
             .getDefaultCacheConfiguration(false)
-            .loaders()
-               .addLoader(JdbcBinaryCacheStoreConfigurationBuilder.class)
-                  .purgeSynchronously(true)
+            .persistence()
+               .addStore(JdbcBinaryStoreConfigurationBuilder.class)
                   .manageConnectionFactory(false);
 
       storeBuilder.table().createOnStart(false);
 
-      JdbcBinaryCacheStore jdbcBucketCacheStore = new JdbcBinaryCacheStore();
-      jdbcBucketCacheStore.init(storeBuilder.create(), getCache(), new TestObjectStreamMarshaller());
+      JdbcBinaryStore jdbcBucketCacheStore = new JdbcBinaryStore();
+      jdbcBucketCacheStore.init(new InitializationContextImpl(storeBuilder.create(), getCache(), getMarshaller(), new DefaultTimeService()));
       jdbcBucketCacheStore.start();
       assert jdbcBucketCacheStore.getConnectionFactory() == null;
 
@@ -75,25 +105,27 @@ public class JdbcBinaryCacheStoreTest extends BaseCacheStoreTest {
    @Override
    public void testPurgeExpired() throws Exception {
       super.testPurgeExpired();
-      UnitTestDatabaseManager.verifyConnectionLeaks(((JdbcBinaryCacheStore)cs).getConnectionFactory());
+      UnitTestDatabaseManager.verifyConnectionLeaks(((JdbcBinaryStore) cl).getConnectionFactory());
    }
 
    public void testPurgeExpiredAllCodepaths() throws Exception {
       FixedHashKey k1 = new FixedHashKey(1, "a");
       FixedHashKey k2 = new FixedHashKey(1, "b");
-      cs.store(TestInternalCacheEntryFactory.create(k1, "value"));
-      cs.store(TestInternalCacheEntryFactory.create(k2, "value", 1000)); // will expire
+      cl.write(new MarshalledEntryImpl(k1, "value", null, getMarshaller()));
+      Metadata metadata = metadata(1000, null);
+      InternalMetadataImpl im = new InternalMetadataImpl(metadata, System.currentTimeMillis(), System.currentTimeMillis());
+      cl.write(new MarshalledEntryImpl(k2, "value", im, getMarshaller())); // will expire
       for (int i = 0; i < 120; i++) {
-         cs.store(TestInternalCacheEntryFactory.create(new FixedHashKey(i + 10, "non-exp k" + i), "value"));
-         cs.store(TestInternalCacheEntryFactory.create(new FixedHashKey(i + 10, "exp k" + i), "value", 1000)); // will expire
+         cl.write(new MarshalledEntryImpl(new FixedHashKey(i + 10, "non-exp k" + i), "value", null, getMarshaller()));
+         cl.write(new MarshalledEntryImpl(new FixedHashKey(i + 10, "exp k" + i), "value", im, getMarshaller())); // will expire
       }
       TestingUtil.sleepThread(1000);
-      assert cs.containsKey(k1);
-      assert !cs.containsKey(k2);
-      cs.purgeExpired();
-      assert cs.containsKey(k1);
-      assert !cs.containsKey(k2);
-      UnitTestDatabaseManager.verifyConnectionLeaks(((JdbcBinaryCacheStore)cs).getConnectionFactory());
+      assert cl.contains(k1);
+      assert !cl.contains(k2);
+      (cl).purge(new WithinThreadExecutor(), null);
+      assert cl.contains(k1);
+      assert !cl.contains(k2);
+      UnitTestDatabaseManager.verifyConnectionLeaks(((JdbcBinaryStore) cl).getConnectionFactory());
    }
 
    private static final class FixedHashKey implements Serializable {

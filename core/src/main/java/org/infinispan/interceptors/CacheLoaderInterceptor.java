@@ -13,14 +13,13 @@ import org.infinispan.commands.write.PutKeyValueCommand;
 import org.infinispan.commands.write.RemoveCommand;
 import org.infinispan.commands.write.ReplaceCommand;
 import org.infinispan.commons.util.InfinispanCollections;
-import org.infinispan.configuration.cache.CacheStoreConfiguration;
 import org.infinispan.container.EntryFactory;
+import org.infinispan.container.InternalEntryFactory;
 import org.infinispan.container.entries.CacheEntry;
 import org.infinispan.container.entries.InternalCacheEntry;
 import org.infinispan.context.Flag;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.factories.annotations.Inject;
-import org.infinispan.factories.annotations.Start;
 import org.infinispan.interceptors.base.JmxStatsCommandInterceptor;
 import org.infinispan.jmx.annotations.DisplayType;
 import org.infinispan.jmx.annotations.MBean;
@@ -28,13 +27,16 @@ import org.infinispan.jmx.annotations.ManagedAttribute;
 import org.infinispan.jmx.annotations.ManagedOperation;
 import org.infinispan.jmx.annotations.MeasurementType;
 import org.infinispan.jmx.annotations.Parameter;
-import org.infinispan.loaders.decorators.ChainingCacheStore;
-import org.infinispan.loaders.manager.CacheLoaderManager;
-import org.infinispan.loaders.spi.CacheLoader;
-import org.infinispan.loaders.spi.CacheStore;
+import org.infinispan.persistence.CollectionKeyFilter;
+import org.infinispan.persistence.manager.PersistenceManager;
+import org.infinispan.persistence.spi.AdvancedCacheLoader;
+import org.infinispan.persistence.spi.MarshalledEntry;
+import org.infinispan.metadata.InternalMetadata;
 import org.infinispan.metadata.Metadata;
 import org.infinispan.metadata.Metadatas;
 import org.infinispan.notifications.cachelistener.CacheNotifier;
+import org.infinispan.util.TimeService;
+import org.infinispan.util.concurrent.WithinThreadExecutor;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
@@ -42,23 +44,21 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashSet;
-import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicLong;
-
-import static org.infinispan.loaders.decorators.AbstractDelegatingStore.undelegateCacheLoader;
 
 @MBean(objectName = "CacheLoader", description = "Component that handles loading entries from a CacheStore into memory.")
 public class CacheLoaderInterceptor extends JmxStatsCommandInterceptor {
    private final AtomicLong cacheLoads = new AtomicLong(0);
    private final AtomicLong cacheMisses = new AtomicLong(0);
 
-   protected CacheLoaderManager clm;
+   protected PersistenceManager persistenceManager;
    protected CacheNotifier notifier;
-   protected CacheLoader loader;
    protected volatile boolean enabled = true;
    private EntryFactory entryFactory;
+   private TimeService timeService;
+   private InternalEntryFactory iceFactory;
 
    private static final Log log = LogFactory.getLog(CacheLoaderInterceptor.class);
 
@@ -68,16 +68,12 @@ public class CacheLoaderInterceptor extends JmxStatsCommandInterceptor {
    }
 
    @Inject
-   protected void injectDependencies(CacheLoaderManager clm, EntryFactory entryFactory, CacheNotifier notifier) {
-      this.clm = clm;
+   protected void injectDependencies(PersistenceManager clm, EntryFactory entryFactory, CacheNotifier notifier, TimeService timeService, InternalEntryFactory iceFactory) {
+      this.persistenceManager = clm;
       this.notifier = notifier;
       this.entryFactory = entryFactory;
-   }
-
-   @Start(priority = 15)
-   @SuppressWarnings("unused")
-   protected void startInterceptor() {
-      loader = clm.getCacheLoader();
+      this.timeService = timeService;
+      this.iceFactory = iceFactory;
    }
 
    @Override
@@ -155,12 +151,12 @@ public class CacheLoaderInterceptor extends JmxStatsCommandInterceptor {
       if (enabled && !shouldSkipCacheLoader(command)) {
          // TODO: maybe we should add a size method to the loader so it can do additional optimizations?  It seems
          // awfully expensive to resurrect all keys just to count how many there are.
-         totalSize = loader.loadAllKeys(Collections.emptySet()).size();
+         totalSize = persistenceManager.size();
       }
       // Passivation stores evicted entries so we want to add those or if the loader didn't have anything or was skipped
       // we should at least return the in memory size
       // This assumes that when passivation is not enabled that the cache store holds a superset of the data container
-      if (cacheConfiguration.loaders().passivation() || totalSize == 0) {
+      if (cacheConfiguration.persistence().passivation() || totalSize == 0) {
          totalSize += (Integer)super.visitSizeCommand(ctx, command);
       }
       return totalSize;
@@ -170,9 +166,13 @@ public class CacheLoaderInterceptor extends JmxStatsCommandInterceptor {
    public Object visitKeySetCommand(InvocationContext ctx, KeySetCommand command) throws Throwable {
       Object keys = super.visitKeySetCommand(ctx, command);
       if (enabled && !shouldSkipCacheLoader(command)) {
-         Set<Object> union = new HashSet<Object>((Set<Object>)keys);
-         // Exclude the keys in memory as we don't want to deserialize those again
-         union.addAll(loader.loadAllKeys(union));
+         final Set<Object> union = new HashSet<Object>((Set<Object>)keys);
+         persistenceManager.processOnAllStores(new CollectionKeyFilter(union), new AdvancedCacheLoader.CacheLoaderTask() {
+            @Override
+            public void processEntry(MarshalledEntry marshalledEntry, AdvancedCacheLoader.TaskContext taskContext) throws InterruptedException {
+               union.add(marshalledEntry.getKey());
+            }
+         }, new WithinThreadExecutor(), false, false);
          return Collections.unmodifiableSet(union);
       }
       return keys;
@@ -182,8 +182,17 @@ public class CacheLoaderInterceptor extends JmxStatsCommandInterceptor {
    public Object visitEntrySetCommand(InvocationContext ctx, EntrySetCommand command) throws Throwable {
       Object entrySet = super.visitEntrySetCommand(ctx, command);
       if (enabled && !shouldSkipCacheLoader(command)) {
-         Set<InternalCacheEntry> set = loader.loadAll();
-         Set<InternalCacheEntry> union = new HashSet<InternalCacheEntry>(set);
+         final Set<InternalCacheEntry> union = new HashSet<InternalCacheEntry>();
+         final Set<Object> processedKeys = new HashSet<Object>();
+         for (InternalCacheEntry ice : (Set<InternalCacheEntry>)entrySet)
+            processedKeys.add(ice.getKey());
+         persistenceManager.processOnAllStores(new CollectionKeyFilter(processedKeys), new AdvancedCacheLoader.CacheLoaderTask() {
+            @Override
+            public void processEntry(MarshalledEntry marshalledEntry, AdvancedCacheLoader.TaskContext taskContext) throws InterruptedException {
+               processedKeys.add(marshalledEntry.getKey());
+               union.add(iceFactory.create(marshalledEntry.getKey(), marshalledEntry.getValue(), marshalledEntry.getMetadata()));
+            }
+         }, new WithinThreadExecutor(), true, true);
          union.addAll((Set<InternalCacheEntry>)entrySet);
          return Collections.unmodifiableSet(union);
       }
@@ -194,15 +203,19 @@ public class CacheLoaderInterceptor extends JmxStatsCommandInterceptor {
    public Object visitValuesCommand(InvocationContext ctx, ValuesCommand command) throws Throwable {
       Object values = super.visitValuesCommand(ctx, command);
       if (enabled && !shouldSkipCacheLoader(command)) {
-         Set<InternalCacheEntry> set = loader.loadAll();
-         Collection<Object> valueCollection = (Collection<Object>)values;
-         List<Object> valueList = new ArrayList<Object>(set.size() + valueCollection.size());
 
-         valueList.addAll(valueCollection);
-         for (InternalCacheEntry ice : set) {
-            valueList.add(ice.getValue());
-         }
-         return Collections.unmodifiableList(valueList);
+         final Set<Object> processedKeys = new HashSet<Object>();
+         final List<Object> result = new ArrayList<Object>();
+         persistenceManager.processOnAllStores(new CollectionKeyFilter(processedKeys), new AdvancedCacheLoader.CacheLoaderTask() {
+            @Override
+            public void processEntry(MarshalledEntry marshalledEntry, AdvancedCacheLoader.TaskContext taskContext) throws InterruptedException {
+               processedKeys.add(marshalledEntry.getKey());
+               result.add(marshalledEntry.getValue());
+            }
+         }, new WithinThreadExecutor(), true, false);
+
+         result.addAll((Collection<Object>)values);
+         return Collections.unmodifiableList(result);
       }
       return values;
    }
@@ -251,20 +264,23 @@ public class CacheLoaderInterceptor extends JmxStatsCommandInterceptor {
       // first check if the container contains the key we need.  Try and load this into the context.
       CacheEntry e = ctx.lookupEntry(key);
       if (e == null || e.isNull() || e.getValue() == null) {
-         InternalCacheEntry loaded = loader.load(key);
-         if (loaded != null) {
-            CacheEntry wrappedEntry;
-            if (cmd instanceof ApplyDeltaCommand) {
-               ctx.putLookedUpEntry(key, loaded);
-               wrappedEntry = entryFactory.wrapEntryForDelta(ctx, key, ((ApplyDeltaCommand)cmd).getDelta());
-            } else {
-               wrappedEntry = entryFactory.wrapEntryForPut(ctx, key, loaded, false, cmd, false);
-            }
-            recordLoadedEntry(ctx, key, wrappedEntry, loaded, cmd);
-            return Boolean.TRUE;
-         } else {
+         MarshalledEntry loaded = persistenceManager.loadFromAllStores(key);
+         if(loaded == null)
+            return Boolean.FALSE;
+         InternalMetadata metadata = loaded.getMetadata();
+         if (metadata != null && metadata.isExpired(timeService.wallClockTime())) {
             return Boolean.FALSE;
          }
+         InternalCacheEntry ice = iceFactory.create(loaded.getKey(), loaded.getValue(), metadata);
+         CacheEntry wrappedEntry;
+         if (cmd instanceof ApplyDeltaCommand) {
+            ctx.putLookedUpEntry(key, ice);
+            wrappedEntry = entryFactory.wrapEntryForDelta(ctx, key, ((ApplyDeltaCommand) cmd).getDelta());
+         } else {
+            wrappedEntry = entryFactory.wrapEntryForPut(ctx, key, ice, false, cmd, false);
+         }
+         recordLoadedEntry(ctx, key, wrappedEntry, ice, cmd);
+         return Boolean.TRUE;
       } else {
          return null;
       }
@@ -276,11 +292,6 @@ public class CacheLoaderInterceptor extends JmxStatsCommandInterceptor {
     * of 'loadedEntry' (freshly loaded from the CacheStore) so that the loaded details will be flushed to the
     * DataContainer when the call returns (in the LockingInterceptor, when locks are released)</li> <li>Notifies
     * listeners</li> </ol>
-    *
-    * @param ctx         the current invocation's context
-    * @param key         key to record
-    * @param entry       the appropriately locked entry in the caller's context
-    * @param loadedEntry the internal entry loaded from the cache store.
     */
    private void recordLoadedEntry(InvocationContext ctx, Object key,
          CacheEntry entry, InternalCacheEntry loadedEntry, FlagAffectedCommand cmd) throws Exception {
@@ -369,16 +380,8 @@ public class CacheLoaderInterceptor extends JmxStatsCommandInterceptor {
     * This method returns a collection of cache loader types (fully qualified class names) that are configured and enabled.
     */
    public Collection<String> getCacheLoaders() {
-      if (enabled && clm.isEnabled()) {
-         if (loader instanceof ChainingCacheStore) {
-            ChainingCacheStore chainingStore = (ChainingCacheStore) loader;
-            LinkedHashMap<CacheStore, CacheStoreConfiguration> stores = chainingStore.getStores();
-            Set<String> storeTypes = new HashSet<String>(stores.size());
-            for (CacheStore cs : stores.keySet()) storeTypes.add(undelegateCacheLoader(cs).getClass().getName());
-            return storeTypes;
-         } else {
-            return Collections.singleton(undelegateCacheLoader(loader).getClass().getName());
-         }
+      if (enabled && cacheConfiguration.persistence().usingStores()) {
+         return persistenceManager.getCacheLoadersAsString();
       } else {
          return InfinispanCollections.emptySet();
       }
@@ -390,19 +393,18 @@ public class CacheLoaderInterceptor extends JmxStatsCommandInterceptor {
    )
    @SuppressWarnings("unused")
    /**
-    * Disables a cache loader of a given type, where type is the fully qualified class name of a {@link CacheLoader} implementation.
+    * Disables a store of a given type.
     *
-    * If the given type cannot be found, this is a no-op.  If more than one cache loader of the same type is configured,
-    * all cache loaders of the given type are disabled.
+    * If the given type cannot be found, this is a no-op.  If more than one store of the same type is configured,
+    * all stores of the given type are disabled.
     *
-    * @param loaderType fully qualified class name of the cache loader type to disable
+    * @param storeType fully qualified class name of the cache loader type to disable
     */
-   public void disableCacheLoader(@Parameter(name="loaderType", description="Fully qualified class name of a CacheLoader implementation") String loaderType) {
-      if (enabled) clm.disableCacheStore(loaderType);
+   public void disableStore(@Parameter(name = "storeType", description = "Fully qualified class name of a store implementation") String storeType) {
+      if (enabled) persistenceManager.disableStore(storeType);
    }
 
    public void disableInterceptor() {
       enabled = false;
    }
-
 }

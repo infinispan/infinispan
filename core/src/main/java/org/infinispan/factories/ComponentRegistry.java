@@ -101,7 +101,7 @@ public class ComponentRegistry extends AbstractComponentRegistry {
    @Override
    @SuppressWarnings("unchecked")
    public final <T> T getComponent(String componentTypeName, String name, boolean nameIsFQCN) {
-      if (isGlobal(nameIsFQCN ? name : componentTypeName)) {
+      if (isGlobal(componentTypeName, name, nameIsFQCN)) {
          return (T) globalComponents.getComponent(componentTypeName, name, nameIsFQCN);
       } else {
          return (T) getLocalComponent(componentTypeName, name, nameIsFQCN);
@@ -121,7 +121,7 @@ public class ComponentRegistry extends AbstractComponentRegistry {
 
    @Override
    protected final Component lookupComponent(String componentClassName, String name, boolean nameIsFQCN) {
-      if (isGlobal(nameIsFQCN ? name : componentClassName)) {
+      if (isGlobal(componentClassName, name, nameIsFQCN)) {
          log.tracef("Looking up global component %s", componentClassName);
          return globalComponents.lookupComponent(componentClassName, name, nameIsFQCN);
       } else {
@@ -140,13 +140,23 @@ public class ComponentRegistry extends AbstractComponentRegistry {
 
    @Override
    protected final <T> T getOrCreateComponent(Class<T> componentClass, String name, boolean nameIsFQCN) {
-      if (isGlobal(nameIsFQCN ? name : componentClass.getName())) {
+      if (isGlobal(componentClass.getName(), name, nameIsFQCN)) {
          log.tracef("Get or create global component %s", componentClass);
          return globalComponents.getOrCreateComponent(componentClass, name, nameIsFQCN);
       } else {
          log.tracef("Get or create local component %s", componentClass);
          return super.getOrCreateComponent(componentClass, name, nameIsFQCN);
       }
+   }
+
+   private <T> boolean isGlobal(String componentClassName, String name, boolean nameIsFQCN) {
+      if (!nameIsFQCN) {
+         for (String s : KnownComponentNames.PER_CACHE_COMPONENT_NAMES) {
+            if (s.equals(name))
+               return false;
+         }
+      }
+      return isGlobal(nameIsFQCN ? name : componentClassName);
    }
 
    @Override
@@ -169,7 +179,7 @@ public class ComponentRegistry extends AbstractComponentRegistry {
 
    @Override
    protected final void registerComponentInternal(Object component, String name, boolean nameIsFQCN) {
-      if (isGlobal(nameIsFQCN ? name : component.getClass().getName())) {
+      if (isGlobal(component.getClass().getName(), name, nameIsFQCN)) {
          globalComponents.registerComponentInternal(component, name, nameIsFQCN);
       } else {
          super.registerComponentInternal(component, name, nameIsFQCN);

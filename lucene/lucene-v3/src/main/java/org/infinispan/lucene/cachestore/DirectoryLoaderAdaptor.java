@@ -7,9 +7,10 @@ import java.util.HashSet;
 import java.util.Set;
 
 import org.apache.lucene.store.IndexInput;
-import org.infinispan.container.entries.ImmortalCacheEntry;
-import org.infinispan.container.entries.InternalCacheEntry;
-import org.infinispan.loaders.CacheLoaderException;
+import org.infinispan.commons.marshall.StreamingMarshaller;
+import org.infinispan.persistence.CacheLoaderException;
+import org.infinispan.persistence.MarshalledEntryImpl;
+import org.infinispan.persistence.spi.MarshalledEntry;
 import org.infinispan.lucene.ChunkCacheKey;
 import org.infinispan.lucene.FileCacheKey;
 import org.infinispan.lucene.FileListCacheKey;
@@ -59,7 +60,7 @@ final class DirectoryLoaderAdaptor {
     * @param maxEntries to limit amount of entries loaded
     * @throws CacheLoaderException 
     */
-   protected void loadAllEntries(final HashSet<InternalCacheEntry> entriesCollector, final int maxEntries) throws CacheLoaderException {
+   protected void loadAllEntries(final HashSet<MarshalledEntry> entriesCollector, final int maxEntries, StreamingMarshaller marshaller) {
       int existingElements = entriesCollector.size();
       int toLoadElements = maxEntries - existingElements;
       if (toLoadElements <= 0) {
@@ -70,7 +71,7 @@ final class DirectoryLoaderAdaptor {
       for (IndexScopedKey key : keysCollector) {
          Object value = load(key);
          if (value != null) {
-            ImmortalCacheEntry cacheEntry = new ImmortalCacheEntry(key, value);
+            MarshalledEntry cacheEntry = new MarshalledEntryImpl(key, value, null, marshaller);
             entriesCollector.add(cacheEntry);
          }
       }

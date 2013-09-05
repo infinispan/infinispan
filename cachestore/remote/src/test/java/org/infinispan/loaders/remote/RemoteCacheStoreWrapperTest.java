@@ -47,7 +47,7 @@ public class RemoteCacheStoreWrapperTest extends AbstractInfinispanTest {
       remoteSourceCache = remoteSourceCacheManager.getCache();
 
       ConfigurationBuilder clientBuilder = TestCacheManagerFactory.getDefaultCacheConfiguration(false);
-      clientBuilder.loaders().addStore(RemoteCacheStoreConfigurationBuilder.class)
+      clientBuilder.persistence().addStore(RemoteCacheStoreConfigurationBuilder.class)
          .hotRodWrapping(true)
          .addServer()
             .host(sourceServer.getHost())

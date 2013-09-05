@@ -1,16 +1,13 @@
 package org.infinispan.util;
 
-import org.apache.log4j.helpers.ThreadLocalMap;
 import org.infinispan.Cache;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
-import org.infinispan.configuration.cache.FileCacheStoreConfigurationBuilder;
 import org.infinispan.configuration.global.GlobalConfigurationBuilder;
 import org.infinispan.eviction.EvictionStrategy;
 import org.infinispan.manager.DefaultCacheManager;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.test.AbstractInfinispanTest;
 import org.infinispan.test.TestingUtil;
-import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
@@ -57,9 +54,8 @@ public class ThreadLocalLeakTest extends AbstractInfinispanTest {
       builder
             .eviction().strategy(EvictionStrategy.LRU).maxEntries(4096)
             .locking().concurrencyLevel(2048)
-            .loaders().passivation(false).shared(false).preload(true)
-               .addFileCacheStore().location(tmpDirectory)
-                  .fsyncMode(FileCacheStoreConfigurationBuilder.FsyncMode.PER_WRITE);
+            .persistence().passivation(false)
+               .addSingleFileStore().location(tmpDirectory).shared(false).preload(true);
 
       Future<Map<String, Map<ThreadLocal<?>, Object>>> result = fork(
             new Callable<Map<String, Map<ThreadLocal<?>, Object>>>() {

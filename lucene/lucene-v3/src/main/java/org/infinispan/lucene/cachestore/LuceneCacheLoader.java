@@ -1,25 +1,26 @@
 package org.infinispan.lucene.cachestore;
 
+import org.apache.lucene.store.FSDirectory;
+import org.infinispan.persistence.CacheLoaderException;
+import org.infinispan.persistence.MarshalledEntryImpl;
+import org.infinispan.persistence.PersistenceUtil;
+import org.infinispan.persistence.TaskContextImpl;
+import org.infinispan.persistence.spi.AdvancedCacheLoader;
+import org.infinispan.persistence.spi.InitializationContext;
+import org.infinispan.persistence.spi.MarshalledEntry;
+import org.infinispan.lucene.IndexScopedKey;
+import org.infinispan.lucene.cachestore.configuration.LuceneStoreConfiguration;
+import org.infinispan.lucene.logging.Log;
+import org.infinispan.util.logging.LogFactory;
+
 import java.io.File;
 import java.io.IOException;
 import java.util.HashSet;
 import java.util.Map.Entry;
-import java.util.Set;
+import java.util.concurrent.Callable;
 import java.util.concurrent.ConcurrentHashMap;
-
-import org.apache.lucene.store.FSDirectory;
-import org.infinispan.Cache;
-import org.infinispan.configuration.cache.CacheLoaderConfiguration;
-import org.infinispan.container.entries.ImmortalCacheEntry;
-import org.infinispan.container.entries.InternalCacheEntry;
-import org.infinispan.loaders.CacheLoaderException;
-import org.infinispan.loaders.spi.AbstractCacheLoader;
-import org.infinispan.loaders.spi.CacheLoader;
-import org.infinispan.lucene.IndexScopedKey;
-import org.infinispan.lucene.cachestore.configuration.LuceneCacheLoaderConfiguration;
-import org.infinispan.lucene.logging.Log;
-import org.infinispan.commons.marshall.StreamingMarshaller;
-import org.infinispan.util.logging.LogFactory;
+import java.util.concurrent.Executor;
+import java.util.concurrent.ExecutorCompletionService;
 
 /**
  * A CacheLoader meant to load Lucene index(es) from filesystem based Lucene index(es).
@@ -33,7 +34,7 @@ import org.infinispan.util.logging.LogFactory;
  * @author Sanne Grinovero
  * @since 5.2
  */
-public class LuceneCacheLoader extends AbstractCacheLoader {
+public class LuceneCacheLoader implements AdvancedCacheLoader {
 
    private static final Log log = LogFactory.getLog(LuceneCacheLoader.class, Log.class);
 
@@ -42,26 +43,26 @@ public class LuceneCacheLoader extends AbstractCacheLoader {
    private File rootDirectory;
    private int autoChunkSize;
 
-   private LuceneCacheLoaderConfiguration configuration;
+   private LuceneStoreConfiguration configuration;
+   private InitializationContext ctx;
+
 
    @Override
-   public void init(CacheLoaderConfiguration configuration, final Cache<?, ?> cache,
-                    final StreamingMarshaller m) throws CacheLoaderException {
-      this.configuration = validateConfigurationClass(configuration, LuceneCacheLoaderConfiguration.class);
-
-      super.init(configuration, cache, m);
+   public void init(InitializationContext ctx) {
+      this.ctx = ctx;
+      this.configuration = ctx.getConfiguration();
       this.fileRoot = this.configuration.location();
       this.autoChunkSize = this.configuration.autoChunkSize();
    }
 
    @Override
-   public InternalCacheEntry load(final Object key) throws CacheLoaderException {
+   public MarshalledEntry load(final Object key) throws CacheLoaderException {
       if (key instanceof IndexScopedKey) {
          final IndexScopedKey indexKey = (IndexScopedKey)key;
          DirectoryLoaderAdaptor directoryAdaptor = getDirectory(indexKey);
          Object value = directoryAdaptor.load(indexKey);
          if (value != null) {
-            return new ImmortalCacheEntry(key, value);
+            return new MarshalledEntryImpl(key, value, null, ctx.getMarshaller());
          }
          else {
             return null;
@@ -74,7 +75,7 @@ public class LuceneCacheLoader extends AbstractCacheLoader {
    }
 
    @Override
-   public boolean containsKey(final Object key) throws CacheLoaderException {
+   public boolean contains(final Object key) throws CacheLoaderException {
       if (key instanceof IndexScopedKey) {
          final IndexScopedKey indexKey = (IndexScopedKey)key;
          final DirectoryLoaderAdaptor directoryAdaptor = getDirectory(indexKey);
@@ -87,37 +88,41 @@ public class LuceneCacheLoader extends AbstractCacheLoader {
    }
 
    @Override
-   public Set<InternalCacheEntry> loadAll() throws CacheLoaderException {
-      return load(Integer.MAX_VALUE);
+   public void process(final KeyFilter filter, final CacheLoaderTask task, Executor executor, boolean fetchValue, boolean fetchMetadata) {
+      scanForUnknownDirectories();
+      ExecutorCompletionService ecs = new ExecutorCompletionService(executor);
+
+      final TaskContextImpl taskContext = new TaskContextImpl();
+      int count = 0;
+      for (final DirectoryLoaderAdaptor dir : openDirectories.values()) {
+         ecs.submit(new Callable<Void>() {
+            @Override
+            public Void call() throws Exception {
+               final HashSet<MarshalledEntry> allInternalEntries = new HashSet<MarshalledEntry>();
+               dir.loadAllEntries(allInternalEntries, Integer.MAX_VALUE, ctx.getMarshaller());
+               for (MarshalledEntry me : allInternalEntries) {
+                  if (taskContext.isStopped())
+                     break;
+                  if (filter == null || filter.shouldLoadKey(me.getKey())) {
+                     task.processEntry(me, taskContext);
+                  }
+               }
+               return null;
+            }
+         });
+         count++;
+      }
+      PersistenceUtil.waitForAllTasksToComplete(ecs, count);
    }
 
-   /**
-    * Loads up to a specific number of entries.  There is no guarantee about the order of loaded entries.
-    */
    @Override
-   public Set<InternalCacheEntry> load(int maxEntries) throws CacheLoaderException {
-      scanForUnknownDirectories();
-      final HashSet<InternalCacheEntry> allInternalEntries = new HashSet<InternalCacheEntry>();
-      for (DirectoryLoaderAdaptor dir : openDirectories.values()) {
-         dir.loadAllEntries(allInternalEntries, maxEntries);
-      }
-      return allInternalEntries;
-   }
-
-   @Override
-   public Set<Object> loadAllKeys(final Set keysToExclude) throws CacheLoaderException {
-      scanForUnknownDirectories();
-      final HashSet allKeys = new HashSet(); //filthy generic covariants!
-      for (DirectoryLoaderAdaptor dir : openDirectories.values()) {
-         dir.loadAllKeys(allKeys, keysToExclude);
-      }
-      return allKeys;
+   public int size() {
+      return PersistenceUtil.count(this, null);
    }
 
    /**
     * There might be Directories we didn't store yet in the openDirectories Map.
-    * Make sure they are all initialized before serving methods such as {@link #loadAll()}
-    * or {@link #loadAllKeys(Set)}.
+    * Make sure they are all initialized before serving methods such as {@link #process(org.infinispan.persistence.spi.AdvancedCacheLoader.KeyFilter, org.infinispan.persistence.spi.AdvancedCacheLoader.CacheLoaderTask, java.util.concurrent.Executor, boolean, boolean)}
     */
    private void scanForUnknownDirectories() {
       File[] filesInRoot = rootDirectory.listFiles();

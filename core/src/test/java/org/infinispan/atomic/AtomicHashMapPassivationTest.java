@@ -1,11 +1,11 @@
 package org.infinispan.atomic;
 
 import org.infinispan.configuration.cache.ConfigurationBuilder;
-import org.infinispan.container.entries.InternalCacheEntry;
-import org.infinispan.loaders.CacheLoaderException;
-import org.infinispan.loaders.dummy.DummyInMemoryCacheStoreConfigurationBuilder;
-import org.infinispan.loaders.manager.CacheLoaderManager;
-import org.infinispan.loaders.spi.CacheStore;
+import org.infinispan.container.entries.InternalCacheValue;
+import org.infinispan.persistence.CacheLoaderException;
+import org.infinispan.persistence.dummy.DummyInMemoryStoreConfigurationBuilder;
+import org.infinispan.persistence.spi.CacheLoader;
+import org.infinispan.persistence.spi.MarshalledEntry;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.test.SingleCacheManagerTest;
 import org.infinispan.test.TestingUtil;
@@ -25,7 +25,7 @@ import java.lang.reflect.Method;
 @Test(groups = "functional", testName = "atomic.AtomicHashMapPassivationTest")
 public class AtomicHashMapPassivationTest extends SingleCacheManagerTest {
 
-   CacheStore store;
+   CacheLoader loader;
 
    @Override
    protected EmbeddedCacheManager createCacheManager() throws Exception {
@@ -33,12 +33,12 @@ public class AtomicHashMapPassivationTest extends SingleCacheManagerTest {
       c
          .invocationBatching().enable()
          .storeAsBinary().enable()
-         .loaders()
+         .persistence()
             .passivation(true)
-            .addStore(DummyInMemoryCacheStoreConfigurationBuilder.class);
+            .addStore(DummyInMemoryStoreConfigurationBuilder.class);
       EmbeddedCacheManager cm = TestCacheManagerFactory.createCacheManager(c);
       cache = cm.getCache();
-      store = TestingUtil.extractComponent(cache, CacheLoaderManager.class).getCacheStore();
+      loader = TestingUtil.getFirstLoader(cache);
       return cm;
    }
 
@@ -65,17 +65,21 @@ public class AtomicHashMapPassivationTest extends SingleCacheManagerTest {
    }
 
    private void assertInCacheNotInStore(Object key) throws CacheLoaderException {
-      InternalCacheEntry se = cache.getAdvancedCache().getDataContainer().get(key);
-      testStoredEntry(se, key, "Cache");
-      assert !store.containsKey(key) : "Key " + key + " should not be in store!";
+      InternalCacheValue ice = cache.getAdvancedCache().getDataContainer().get(key).toInternalCacheValue();
+      testStoredEntry(ice, key, "Cache");
+      assert !loader.contains(key) : "Key " + key + " should not be in store!";
    }
 
-   private void testStoredEntry(InternalCacheEntry entry, Object key, String src) {
+   private void testStoredEntry(InternalCacheValue entry, Object key, String src) {
+      assert entry != null : src + " entry for key " + key + " should NOT be null";
+   }
+
+   private void testStoredEntry(MarshalledEntry entry, Object key, String src) {
       assert entry != null : src + " entry for key " + key + " should NOT be null";
    }
 
    private void assertInStoreNotInCache(Object key) throws CacheLoaderException {
-      InternalCacheEntry se = store.load(key);
+      MarshalledEntry se = loader.load(key);
       testStoredEntry(se, key, "Store");
       assert !cache.getAdvancedCache().getDataContainer().containsKey(key) : "Key " + key + " should not be in cache!";
    }

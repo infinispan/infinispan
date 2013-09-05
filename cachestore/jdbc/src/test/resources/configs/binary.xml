@@ -42,7 +42,7 @@
             lockAcquisitionTimeout="20000"
             writeSkewCheck="false"
             concurrencyLevel="500" useLockStriping="false"/>
-      <loaders>
+      <persistence>
          <binaryKeyedJdbcStore fetchPersistentState="false"
                  ignoreModifications="false" purgeOnStartup="false">
             <simpleConnection connectionUrl="jdbc:h2:mem:infinispan_binary_based;DB_CLOSE_DELAY=-1" driverClass="org.h2.Driver" username="sa"/>
@@ -52,7 +52,7 @@
                <timestampColumn name="TIMESTAMP_COLUMN" type="BIGINT" />
             </binaryKeyedTable>
          </binaryKeyedJdbcStore>
-      </loaders>
+      </persistence>
 
    </default>
 

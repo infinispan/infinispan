@@ -62,7 +62,7 @@ public class EvictionConfigurationBuilder extends AbstractConfigurationChildBuil
 
    @Override
    public void validate() {
-      if (!strategy.isEnabled() && getBuilder().loaders().passivation())
+      if (!strategy.isEnabled() && getBuilder().persistence().passivation())
          log.passivationWithoutEviction();
       if(strategy == EvictionStrategy.FIFO)
          log.warn("FIFO strategy is deprecated, LRU will be used instead");

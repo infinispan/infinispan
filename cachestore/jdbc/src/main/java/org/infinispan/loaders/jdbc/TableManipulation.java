@@ -1,7 +1,7 @@
 package org.infinispan.loaders.jdbc;
 
 import org.infinispan.commons.CacheConfigurationException;
-import org.infinispan.loaders.CacheLoaderException;
+import org.infinispan.persistence.CacheLoaderException;
 import org.infinispan.loaders.jdbc.configuration.TableManipulationConfiguration;
 import org.infinispan.loaders.jdbc.connectionfactory.ConnectionFactory;
 import org.infinispan.loaders.jdbc.logging.Log;
@@ -44,6 +44,7 @@ public class TableManipulation implements Cloneable {
    private String selectIdRowSql;
    private String deleteRowSql;
    private String loadAllRowsSql;
+   private String countRowsSql;
    private String loadAllNonExpiredRowsSql;
    private String deleteAllRows;
    private String selectExpiredRowsSql;
@@ -220,6 +221,13 @@ public class TableManipulation implements Cloneable {
          }
       }
       return selectIdRowSql;
+   }
+
+   public String getCountRowsSql() {
+      if (countRowsSql == null) {
+         countRowsSql = "SELECT COUNT (*) FROM " + getTableName();
+      }
+      return countRowsSql;
    }
 
    public String getDeleteRowSql() {

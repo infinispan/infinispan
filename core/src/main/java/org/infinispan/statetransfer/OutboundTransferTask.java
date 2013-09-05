@@ -1,20 +1,24 @@
 package org.infinispan.statetransfer;
 
 import org.infinispan.commands.CommandsFactory;
+import org.infinispan.commons.CacheException;
 import org.infinispan.commons.util.CollectionFactory;
 import org.infinispan.commons.util.InfinispanCollections;
 import org.infinispan.container.DataContainer;
+import org.infinispan.container.InternalEntryFactory;
 import org.infinispan.container.entries.InternalCacheEntry;
 import org.infinispan.distribution.ch.ConsistentHash;
-import org.infinispan.loaders.CacheLoaderException;
-import org.infinispan.loaders.manager.CacheLoaderManager;
-import org.infinispan.loaders.spi.CacheStore;
+import org.infinispan.persistence.CollectionKeyFilter;
+import org.infinispan.persistence.manager.PersistenceManager;
+import org.infinispan.persistence.spi.AdvancedCacheLoader;
+import org.infinispan.persistence.spi.MarshalledEntry;
 import org.infinispan.remoting.rpc.ResponseMode;
 import org.infinispan.remoting.rpc.RpcManager;
 import org.infinispan.remoting.rpc.RpcOptions;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.remoting.transport.jgroups.SuspectException;
 import org.infinispan.util.ReadOnlyDataContainerBackedKeySet;
+import org.infinispan.util.concurrent.WithinThreadExecutor;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
@@ -52,7 +56,7 @@ public class OutboundTransferTask implements Runnable {
 
    private final DataContainer dataContainer;
 
-   private final CacheLoaderManager cacheLoaderManager;
+   private final PersistenceManager persistenceManager;
 
    private final RpcManager rpcManager;
 
@@ -76,10 +80,12 @@ public class OutboundTransferTask implements Runnable {
 
    private final RpcOptions rpcOptions;
 
+   private InternalEntryFactory entryFactory;
+
    public OutboundTransferTask(Address destination, Set<Integer> segments, int stateTransferChunkSize,
                                int topologyId, ConsistentHash readCh, StateProviderImpl stateProvider, DataContainer dataContainer,
-                               CacheLoaderManager cacheLoaderManager, RpcManager rpcManager,
-                               CommandsFactory commandsFactory, long timeout, String cacheName) {
+                               PersistenceManager persistenceManager, RpcManager rpcManager,
+                               CommandsFactory commandsFactory, InternalEntryFactory ef, long timeout, String cacheName) {
       if (segments == null || segments.isEmpty()) {
          throw new IllegalArgumentException("Segments must not be null or empty");
       }
@@ -96,7 +102,8 @@ public class OutboundTransferTask implements Runnable {
       this.topologyId = topologyId;
       this.readCh = readCh;
       this.dataContainer = dataContainer;
-      this.cacheLoaderManager = cacheLoaderManager;
+      this.persistenceManager = persistenceManager;
+      this.entryFactory = ef;
       this.rpcManager = rpcManager;
       this.commandsFactory = commandsFactory;
       this.timeout = timeout;
@@ -139,31 +146,27 @@ public class OutboundTransferTask implements Runnable {
             }
          }
 
-         // send cache store entries if needed
-         CacheStore cacheStore = getCacheStore();
-         if (cacheStore != null) {
+         AdvancedCacheLoader stProvider = persistenceManager.getStateTransferProvider();
+         if (stProvider != null) {
             try {
-               //todo [anistor] need to extend CacheStore interface to be able to specify a filter when loading keys (ie. keys should belong to desired segments)
-               Set<Object> storedKeys = cacheStore.loadAllKeys(new ReadOnlyDataContainerBackedKeySet(dataContainer));
-               for (Object key : storedKeys) {
-                  int segmentId = readCh.getSegment(key);
-                  if (segments.contains(segmentId)) {
-                     try {
-                        InternalCacheEntry ice = cacheStore.load(key);
-                        if (ice != null) { // check entry still exists
-                           sendEntry(ice, segmentId);
+               CollectionKeyFilter filter = new CollectionKeyFilter(new ReadOnlyDataContainerBackedKeySet(dataContainer));
+               AdvancedCacheLoader.CacheLoaderTask task = new AdvancedCacheLoader.CacheLoaderTask() {
+                  @Override
+                  public void processEntry(MarshalledEntry me, AdvancedCacheLoader.TaskContext taskContext) throws InterruptedException {
+                        int segmentId = readCh.getSegment(me.getKey());
+                        if (segments.contains(segmentId)) {
+                           try {
+                              InternalCacheEntry icv = entryFactory.create(me.getKey(), me.getValue(), me.getMetadata());
+                              sendEntry(icv, segmentId);
+                           } catch (CacheException e) {
+                              log.failedLoadingValueFromCacheStore(me.getKey(), e);
+                           }
                         }
-                     } catch (CacheLoaderException e) {
-                        log.failedLoadingValueFromCacheStore(key, e);
                      }
-                  }
-               }
-            } catch (CacheLoaderException e) {
+                  };
+               stProvider.process(filter, task, new WithinThreadExecutor(), true, true);
+            } catch (CacheException e) {
                log.failedLoadingKeysFromCacheStore(e);
-            }
-         } else {
-            if (trace) {
-               log.tracef("No cache store or the cache store is shared, no need to send any stored cache entries for segments: %s", segments);
             }
          }
 
@@ -178,17 +181,6 @@ public class OutboundTransferTask implements Runnable {
       if (trace) {
          log.tracef("Outbound transfer of segments %s of cache %s to node %s is complete", segments, cacheName, destination);
       }
-   }
-
-   /**
-    * Obtains the CacheStore that will be used for pulling segments that will be sent to other new owners on request.
-    * The CacheStore is ignored if it is disabled or if it is shared or if fetchPersistentState is disabled.
-    */
-   private CacheStore getCacheStore() {
-      if (cacheLoaderManager.isEnabled() && !cacheLoaderManager.isShared() && cacheLoaderManager.isFetchPersistentState()) {
-         return cacheLoaderManager.getCacheStore();
-      }
-      return null;
    }
 
    private void sendEntry(InternalCacheEntry ice, int segmentId) {

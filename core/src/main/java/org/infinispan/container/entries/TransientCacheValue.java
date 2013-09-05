@@ -65,6 +65,11 @@ public class TransientCacheValue extends ImmortalCacheValue {
    }
 
    @Override
+   public long getExpiryTime() {
+      return maxIdle > -1 ? lastUsed + maxIdle : -1;
+   }
+
+   @Override
    public boolean equals(Object o) {
       if (this == o) return true;
       if (!(o instanceof TransientCacheValue)) return false;

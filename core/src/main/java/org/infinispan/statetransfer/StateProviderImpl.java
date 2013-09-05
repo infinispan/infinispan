@@ -5,12 +5,13 @@ import org.infinispan.commands.CommandsFactory;
 import org.infinispan.commands.write.WriteCommand;
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.container.DataContainer;
+import org.infinispan.container.InternalEntryFactory;
 import org.infinispan.distribution.ch.ConsistentHash;
 import org.infinispan.factories.annotations.ComponentName;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.factories.annotations.Start;
 import org.infinispan.factories.annotations.Stop;
-import org.infinispan.loaders.manager.CacheLoaderManager;
+import org.infinispan.persistence.manager.PersistenceManager;
 import org.infinispan.notifications.Listener;
 import org.infinispan.notifications.cachelistener.CacheNotifier;
 import org.infinispan.notifications.cachelistener.annotation.TopologyChanged;
@@ -48,9 +49,10 @@ public class StateProviderImpl implements StateProvider {
    private CacheNotifier cacheNotifier;
    private TransactionTable transactionTable;     // optional
    private DataContainer dataContainer;
-   private CacheLoaderManager cacheLoaderManager; // optional
+   private PersistenceManager persistenceManager; // optional
    private ExecutorService executorService;
    private StateTransferLock stateTransferLock;
+   private InternalEntryFactory entryFactory;
    private long timeout;
    private int chunkSize;
 
@@ -72,22 +74,23 @@ public class StateProviderImpl implements StateProvider {
                     RpcManager rpcManager,
                     CommandsFactory commandsFactory,
                     CacheNotifier cacheNotifier,
-                    CacheLoaderManager cacheLoaderManager,
+                    PersistenceManager persistenceManager,
                     DataContainer dataContainer,
                     TransactionTable transactionTable,
                     StateTransferLock stateTransferLock,
-                    StateConsumer stateConsumer) {
+                    StateConsumer stateConsumer, InternalEntryFactory entryFactory) {
       this.cacheName = cache.getName();
       this.executorService = executorService;
       this.configuration = configuration;
       this.rpcManager = rpcManager;
       this.commandsFactory = commandsFactory;
       this.cacheNotifier = cacheNotifier;
-      this.cacheLoaderManager = cacheLoaderManager;
+      this.persistenceManager = persistenceManager;
       this.dataContainer = dataContainer;
       this.transactionTable = transactionTable;
       this.stateTransferLock = stateTransferLock;
       this.stateConsumer = stateConsumer;
+      this.entryFactory = entryFactory;
 
       timeout = configuration.clustering().stateTransfer().timeout();
 
@@ -275,7 +278,7 @@ public class StateProviderImpl implements StateProvider {
 
       // the destination node must already have an InboundTransferTask waiting for these segments
       OutboundTransferTask outboundTransfer = new OutboundTransferTask(destination, segments, chunkSize, cacheTopology.getTopologyId(),
-            cacheTopology.getReadConsistentHash(), this, dataContainer, cacheLoaderManager, rpcManager, commandsFactory, timeout, cacheName);
+            cacheTopology.getReadConsistentHash(), this, dataContainer, persistenceManager, rpcManager, commandsFactory, entryFactory, timeout, cacheName);
       addTransfer(outboundTransfer);
       outboundTransfer.execute(executorService);
    }

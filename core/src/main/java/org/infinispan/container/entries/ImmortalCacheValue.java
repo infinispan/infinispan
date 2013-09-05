@@ -3,6 +3,8 @@ package org.infinispan.container.entries;
 import org.infinispan.commons.marshall.AbstractExternalizer;
 import org.infinispan.commons.util.Util;
 import org.infinispan.marshall.core.Ids;
+import org.infinispan.metadata.EmbeddedMetadata;
+import org.infinispan.metadata.Metadata;
 
 import java.io.IOException;
 import java.io.ObjectInput;
@@ -72,6 +74,16 @@ public class ImmortalCacheValue implements InternalCacheValue, Cloneable {
    @Override
    public long getMaxIdle() {
       return -1;
+   }
+
+   @Override
+   public long getExpiryTime() {
+      return -1;
+   }
+
+   @Override
+   public Metadata getMetadata() {
+      return new EmbeddedMetadata.Builder().lifespan(getLifespan()).maxIdle(getMaxIdle()).build();
    }
 
    @Override

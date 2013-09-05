@@ -52,10 +52,8 @@ public class ReplStateTransferCacheLoaderTest extends MultipleCacheManagersTest 
             .dataContainer().storeAsBinary()
             .clustering().sync().replTimeout(20000)
             .stateTransfer().timeout(240000).fetchInMemoryState(false).chunkSize(0)
-            .loaders().passivation(false).shared(false).preload(false).addFileCacheStore().location(new File(tmpDir, "store0").getAbsolutePath())
+            .persistence().passivation(false).addSingleFileStore().location(new File(tmpDir, "store0").getAbsolutePath()).shared(false).preload(false)
             .fetchPersistentState(true)
-            .purgerThreads(3)
-            .purgeSynchronously(true)
             .ignoreModifications(false)
             .purgeOnStartup(false);
 
@@ -80,10 +78,8 @@ public class ReplStateTransferCacheLoaderTest extends MultipleCacheManagersTest 
       }
 
       log.info("Adding a new node ..");
-      builder.loaders().clearCacheLoaders().addFileCacheStore().location(new File(tmpDir, "store1").getAbsolutePath())  // make sure this node writes in a different location
+      builder.persistence().clearStores().addSingleFileStore().location(new File(tmpDir, "store1").getAbsolutePath())  // make sure this node writes in a different location
             .fetchPersistentState(true)
-            .purgerThreads(3)
-            .purgeSynchronously(true)
             .ignoreModifications(false)
             .purgeOnStartup(false);
 

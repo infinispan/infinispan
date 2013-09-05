@@ -354,7 +354,7 @@
           </xs:attribute>
         </xs:complexType>
       </xs:element>
-      <xs:element name="loaders" minOccurs="0">
+      <xs:element name="persistence" minOccurs="0">
         <xs:annotation>
           <xs:documentation>
             Configuration for cache loaders and stores.
@@ -362,13 +362,6 @@
         </xs:annotation>
         <xs:complexType>
           <xs:sequence>
-            <xs:element name="loader" minOccurs="0" maxOccurs="unbounded" type="tns:customStore">
-              <xs:annotation>
-                <xs:documentation>
-                  Configuration of a specific cache loader
-                </xs:documentation>
-              </xs:annotation>
-            </xs:element>
             <xs:element name="store" minOccurs="0" maxOccurs="unbounded" type="tns:customStore">
               <xs:annotation>
                 <xs:documentation>
@@ -376,24 +369,17 @@
                 </xs:documentation>
               </xs:annotation>
             </xs:element>
-            <xs:element name="clusterLoader" minOccurs="0" maxOccurs="unbounded" type="tns:clusterLoader">
+            <xs:element name="cluster" minOccurs="0" maxOccurs="unbounded" type="tns:clusterLoader">
               <xs:annotation>
                 <xs:documentation>
                   Configuration of a ClusterCacheLoader
                 </xs:documentation>
               </xs:annotation>
             </xs:element>
-            <xs:element name="fileStore" minOccurs="0" maxOccurs="unbounded" type="tns:fileStore">
-              <xs:annotation>
-                <xs:documentation>
-                  Configuration of a FileCacheStore
-                </xs:documentation>
-              </xs:annotation>
-            </xs:element>
-             <xs:element name="singleFileStore" minOccurs="0" maxOccurs="unbounded" type="tns:singleFileStore">
+            <xs:element name="singleFile" minOccurs="0" maxOccurs="unbounded" type="tns:singleFileStore">
                 <xs:annotation>
                    <xs:documentation>
-                      Configuration of a FileCacheStore
+                      Configuration of a SingleFileStore
                    </xs:documentation>
                 </xs:annotation>
              </xs:element>
@@ -403,20 +389,6 @@
             <xs:annotation>
               <xs:documentation>
                 If true, data is only written to the cache store when it is evicted from memory, a phenomenon known as 'passivation'. Next time the data is requested, it will be 'activated' which means that data will be brought back to memory and removed from the persistent store. This gives you the ability to 'overflow' to disk, similar to swapping in an operating system. If false, the cache store contains a copy of the contents in memory, so writes to cache result in cache store writes. This essentially gives you a 'write-through' configuration. Defaults to false.
-              </xs:documentation>
-            </xs:annotation>
-          </xs:attribute>
-          <xs:attribute name="preload" type="xs:boolean" default="false">
-            <xs:annotation>
-              <xs:documentation>
-                If true, when the cache starts, data stored in the cache store will be pre-loaded into memory. This is particularly useful when data in the cache store will be needed immediately after startup and you want to avoid cache operations being delayed as a result of loading this data lazily. Can be used to provide a 'warm-cache' on startup, however there is a performance penalty as startup time is affected by this process. Defaults to false.
-              </xs:documentation>
-            </xs:annotation>
-          </xs:attribute>
-          <xs:attribute name="shared" type="xs:boolean" default="false">
-            <xs:annotation>
-              <xs:documentation>
-                This setting should be set to true when multiple cache instances share the same cache store (e.g., multiple nodes in a cluster using a JDBC-based CacheStore pointing to the same, shared database.) Setting this to true avoids multiple cache instances writing the same modification multiple times. If enabled, only the node where the modification originated will write to the cache store. If disabled, each individual cache reacts to a potential remote update by storing the data to the cache store. Note that this could be useful if each individual node has its own cache store - perhaps local on-disk. Defaults to false.
               </xs:documentation>
             </xs:annotation>
           </xs:attribute>
@@ -1510,21 +1482,9 @@
         </xs:restriction>
     </xs:simpleType>
 
-  <xs:complexType name="loader" abstract="true">
-    <xs:sequence>
-      <xs:element name="properties" type="tns:properties" minOccurs="0">
-        <xs:annotation>
-          <xs:documentation>
-            Properties passed to the cache store or loader
-          </xs:documentation>
-        </xs:annotation>
-      </xs:element>
-    </xs:sequence>
-  </xs:complexType>
-
   <xs:complexType name="customLoader">
     <xs:complexContent>
-      <xs:extension base="tns:loader">
+      <xs:extension base="tns:store">
         <xs:attribute name="class" type="xs:string">
           <xs:annotation>
             <xs:documentation>
@@ -1603,90 +1563,72 @@
   </xs:complexType>
 
   <xs:complexType name="store" abstract="true">
-    <xs:complexContent>
-      <xs:extension base="tns:loader">
-        <xs:sequence>
-          <xs:element name="async" type="tns:async" minOccurs="0" maxOccurs="1">
-            <xs:annotation>
+     <xs:sequence>
+       <xs:element name="async" type="tns:async" minOccurs="0" maxOccurs="1">
+         <xs:annotation>
+           <xs:documentation>
+             Configuration for the async cache loader. If enabled, this provides you with asynchronous writes to the cache store, giving you 'write-behind' caching.
+           </xs:documentation>
+         </xs:annotation>
+       </xs:element>
+       <xs:element name="singleton" type="tns:singletonStore" minOccurs="0" maxOccurs="1">
+         <xs:annotation>
+           <xs:documentation>
+             SingletonStore is a delegating cache store used for situations when only one instance in a cluster should interact with the underlying store. The coordinator of the cluster will be responsible for the underlying CacheStore. SingletonStore is a simply facade to a real CacheStore implementation. It always delegates reads to the real CacheStore.
+           </xs:documentation>
+         </xs:annotation>
+       </xs:element>
+        <xs:element name="properties" type="tns:properties" minOccurs="0" maxOccurs="1">
+           <xs:annotation>
               <xs:documentation>
-                Configuration for the async cache loader. If enabled, this provides you with asynchronous writes to the cache store, giving you 'write-behind' caching.
+                 Properties passed to the cache store or writer
               </xs:documentation>
-            </xs:annotation>
-          </xs:element>
-          <xs:element name="singletonStore" type="tns:singletonStore" minOccurs="0" maxOccurs="1">
-            <xs:annotation>
-              <xs:documentation>
-                SingletonStore is a delegating cache store used for situations when only one instance in a cluster should interact with the underlying store. The coordinator of the cluster will be responsible for the underlying CacheStore. SingletonStore is a simply facade to a real CacheStore implementation. It always delegates reads to the real CacheStore.
-              </xs:documentation>
-            </xs:annotation>
-          </xs:element>
-        </xs:sequence>
-        <xs:attribute name="fetchPersistentState" type="xs:boolean" default="false">
-          <xs:annotation>
-            <xs:documentation>
-              If true, fetch persistent state when joining a cluster. If multiple cache stores are chained, only one of them can have this property enabled. Persistent state transfer with a shared cache store does not make sense, as the same
-              persistent store that provides the data will just end up receiving it. Therefore, if a shared cache store is used, the cache will not allow a persistent state transfer even if a cache store has this
-              property set to true. Finally, setting it to true only makes sense if in a clustered environment, and only 'replication' and 'invalidation' cluster modes are supported. Defaults to false.
-            </xs:documentation>
-          </xs:annotation>
-        </xs:attribute>
-        <xs:attribute name="ignoreModifications" type="xs:boolean" default="false">
-          <xs:annotation>
-            <xs:documentation>
-              If true, any operation that modifies the cache (put, remove, clear, store...etc) won't be applied to the cache store. This means that the cache store could become out of sync with the cache.
-              Defaults to false.
-            </xs:documentation>
-          </xs:annotation>
-        </xs:attribute>
-        <xs:attribute name="purgeOnStartup" type="xs:boolean" default="false">
-          <xs:annotation>
-            <xs:documentation>
-              If true, purges this cache store when it starts up. Defaults to false.
-            </xs:documentation>
-          </xs:annotation>
-        </xs:attribute>
-        <xs:attribute name="purgeSynchronously" type="xs:boolean" default="false">
-          <xs:annotation>
-            <xs:documentation>
-              If true, CacheStore#purgeExpired() call will be done synchronously. Defaults to false.
-            </xs:documentation>
-          </xs:annotation>
-        </xs:attribute>
-        <xs:attribute name="purgerThreads" type="xs:int" default="1">
-          <xs:annotation>
-            <xs:documentation>
-              The number of threads to use when purging asynchronously. Defaults to 1 thread.
-            </xs:documentation>
-          </xs:annotation>
-        </xs:attribute>
-      </xs:extension>
-    </xs:complexContent>
+           </xs:annotation>
+        </xs:element>
+     </xs:sequence>
+      <xs:attribute name="fetchPersistentState" type="xs:boolean" default="false">
+       <xs:annotation>
+         <xs:documentation>
+           If true, fetch persistent state when joining a cluster. If multiple cache stores are chained, only one of them can have this property enabled. Persistent state transfer with a shared cache store does not make sense, as the same
+           persistent store that provides the data will just end up receiving it. Therefore, if a shared cache store is used, the cache will not allow a persistent state transfer even if a cache store has this
+           property set to true. Finally, setting it to true only makes sense if in a clustered environment. Defaults to false.
+         </xs:documentation>
+       </xs:annotation>
+     </xs:attribute>
+     <xs:attribute name="preload" type="xs:boolean" default="false">
+       <xs:annotation>
+         <xs:documentation>
+            If true, when the cache starts, data stored in the cache store will be pre-loaded into memory. This is particularly useful when data in the cache store will be needed immediately after startup and you want to avoid cache operations being delayed as a result of loading this data lazily. Can be used to provide a 'warm-cache' on startup, however there is a performance penalty as startup time is affected by this process. Defaults to false.
+         </xs:documentation>
+        </xs:annotation>
+     </xs:attribute>
+     <xs:attribute name="ignoreModifications" type="xs:boolean" default="false">
+       <xs:annotation>
+         <xs:documentation>
+           If true, any operation that modifies the cache (put, remove, clear, store...etc) won't be applied to the cache store. This means that the cache store could become out of sync with the cache.
+           Defaults to false.
+         </xs:documentation>
+       </xs:annotation>
+     </xs:attribute>
+     <xs:attribute name="purgeOnStartup" type="xs:boolean" default="false">
+       <xs:annotation>
+         <xs:documentation>
+           If true, purges this cache store when it starts up. Defaults to false.
+         </xs:documentation>
+       </xs:annotation>
+     </xs:attribute>
+     <xs:attribute name="shared" type="xs:boolean" default="false">
+        <xs:annotation>
+           <xs:documentation>
+              This setting should be set to true when multiple cache instances share the same cache store (e.g., multiple nodes in a cluster using a JDBC-based CacheStore pointing to the same, shared database.) Setting this to true avoids multiple cache instances writing the same modification multiple times. If enabled, only the node where the modification originated will write to the cache store. If disabled, each individual cache reacts to a potential remote update by storing the data to the cache store. Note that this could be useful if each individual node has its own cache store - perhaps local on-disk. Defaults to false.
+           </xs:documentation>
+        </xs:annotation>
+     </xs:attribute>
   </xs:complexType>
-  
-  <xs:complexType name="lockSupportStore">
-    <xs:complexContent>
-      <xs:extension base="tns:store">
-        <xs:attribute name="lockAcquisitionTimeout" type="xs:long" default="60000">
-            <xs:annotation>
-              <xs:documentation>
-                Maximum time to attempt a particular lock acquisition
-              </xs:documentation>
-            </xs:annotation>
-          </xs:attribute>
-          <xs:attribute name="concurrencyLevel" type="xs:int" default="2048">
-            <xs:annotation>
-              <xs:documentation>
-                Concurrency level for lock containers. Adjust this value according to the number of concurrent threads interacting with Infinispan. Similar to the concurrencyLevel tuning parameter seen in the JDK's ConcurrentHashMap.
-              </xs:documentation>
-            </xs:annotation>
-          </xs:attribute>
-      </xs:extension>
-    </xs:complexContent>
-  </xs:complexType>
-  
+
   <xs:complexType name="customStore">
     <xs:complexContent>
-      <xs:extension base="tns:lockSupportStore">
+      <xs:extension base="tns:store">
         <xs:attribute name="class" type="xs:string">
           <xs:annotation>
             <xs:documentation>
@@ -1700,7 +1642,7 @@
   
   <xs:complexType name="clusterLoader">
     <xs:complexContent>
-      <xs:extension base="tns:loader">
+      <xs:extension base="tns:store">
         <xs:attribute name="remoteCallTimeout" type="xs:long" default="0">
           <xs:annotation>
             <xs:documentation>
@@ -1712,44 +1654,9 @@
     </xs:complexContent>
   </xs:complexType>
   
-  <xs:complexType name="fileStore">
-    <xs:complexContent>
-      <xs:extension base="tns:lockSupportStore">
-        <xs:attribute name="location" type="xs:string" default="Infinispan-FileCacheStore">
-          <xs:annotation>
-            <xs:documentation>
-              A location on disk where the store can write internal files.  This defaults to Infinispan-FileCacheStore in the current working directory.
-            </xs:documentation>
-          </xs:annotation>
-        </xs:attribute>
-        <xs:attribute name="streamBufferSize" type="xs:int" default="8192">
-          <xs:annotation>
-            <xs:documentation>
-              When writing state to disk, a buffered stream is used.  This parameter allows you to tune the buffer size.  Larger buffers are usually faster but take up more (temporary) memory, resulting in more gc. By default, this is set to 8192
-            </xs:documentation>
-          </xs:annotation>
-        </xs:attribute>
-        <xs:attribute name="fsyncMode" type="tns:fsyncMode" default="DEFAULT">
-          <xs:annotation>
-            <xs:documentation>
-              Configures how the file changes will be synchronized with the underlying file system. This property has three possible values (The default mode configured is DEFAULT)
-            </xs:documentation>
-          </xs:annotation>
-        </xs:attribute>
-        <xs:attribute name="fsyncInterval" type="xs:long" default="1000">
-          <xs:annotation>
-            <xs:documentation>
-              Specifies the time after which the file changes in the cache need to be flushed. This option has only effect when periodic fsync mode is in use. The default fsync interval is 1 second.
-            </xs:documentation>
-          </xs:annotation>
-        </xs:attribute>
-      </xs:extension>
-    </xs:complexContent>
-  </xs:complexType>
-
   <xs:complexType name="singleFileStore">
       <xs:complexContent>
-         <xs:extension base="tns:loader">
+         <xs:extension base="tns:store">
             <xs:attribute name="location" type="xs:string" default="Infinispan-SingleFileCacheStore">
                <xs:annotation>
                   <xs:documentation>

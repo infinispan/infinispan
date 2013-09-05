@@ -9,7 +9,7 @@ public class ConfigurationTest {
 
    public void testRemoteCacheStoreConfigurationAdaptor() {
       ConfigurationBuilder b = new ConfigurationBuilder();
-      b.loaders().addStore(RemoteCacheStoreConfigurationBuilder.class)
+      b.persistence().addStore(RemoteCacheStoreConfigurationBuilder.class)
          .remoteCacheName("RemoteCache")
          .fetchPersistentState(true)
          .addServer()
@@ -23,7 +23,7 @@ public class ConfigurationTest {
             .minEvictableIdleTime(10000)
          .async().enable();
       Configuration configuration = b.build();
-      RemoteCacheStoreConfiguration store = (RemoteCacheStoreConfiguration) configuration.loaders().cacheLoaders().get(0);
+      RemoteCacheStoreConfiguration store = (RemoteCacheStoreConfiguration) configuration.persistence().stores().get(0);
       assert store.remoteCacheName().equals("RemoteCache");
       assert store.servers().size() == 2;
       assert store.connectionPool().maxActive() == 10;
@@ -34,9 +34,9 @@ public class ConfigurationTest {
       assert store.async().enabled();
 
       b = new ConfigurationBuilder();
-      b.loaders().addStore(RemoteCacheStoreConfigurationBuilder.class).read(store);
+      b.persistence().addStore(RemoteCacheStoreConfigurationBuilder.class).read(store);
       Configuration configuration2 = b.build();
-      RemoteCacheStoreConfiguration store2 = (RemoteCacheStoreConfiguration) configuration2.loaders().cacheLoaders().get(0);
+      RemoteCacheStoreConfiguration store2 = (RemoteCacheStoreConfiguration) configuration2.persistence().stores().get(0);
       assert store2.remoteCacheName().equals("RemoteCache");
       assert store2.servers().size() == 2;
       assert store2.connectionPool().maxActive() == 10;

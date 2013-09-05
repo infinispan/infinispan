@@ -3,10 +3,11 @@ package org.infinispan.distribution;
 import org.infinispan.Cache;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
-import org.infinispan.loaders.dummy.DummyInMemoryCacheStoreConfigurationBuilder;
-import org.infinispan.loaders.manager.CacheLoaderManager;
-import org.infinispan.loaders.spi.CacheStore;
+import org.infinispan.persistence.PersistenceUtil;
+import org.infinispan.persistence.dummy.DummyInMemoryStoreConfigurationBuilder;
+import org.infinispan.persistence.spi.AdvancedCacheLoader;
 import org.infinispan.test.MultipleCacheManagersTest;
+import org.infinispan.test.TestingUtil;
 import org.infinispan.transaction.LockingMode;
 import org.infinispan.transaction.TransactionMode;
 import org.testng.Assert;
@@ -43,9 +44,12 @@ public class PessimisticDistSyncTxCacheStoreSharedTest extends MultipleCacheMana
 
       // cb.transaction().transactionMode(TransactionMode.NON_TRANSACTIONAL);
 
-      cb.loaders().passivation(false).preload(true).shared(true);
+      cb.persistence().passivation(false);
       // Make it really shared by adding the test's name as store name
-      cb.loaders().addStore(DummyInMemoryCacheStoreConfigurationBuilder.class).storeName(getClass().getSimpleName()).async().disable();
+      cb.persistence()
+            .addStore(DummyInMemoryStoreConfigurationBuilder.class).preload(true).shared(true)
+               .storeName(getClass().getSimpleName()).async()
+            .disable();
       return cb;
    }
 
@@ -65,8 +69,8 @@ public class PessimisticDistSyncTxCacheStoreSharedTest extends MultipleCacheMana
       }
 
       // lets check if all elements arrived
-      CacheStore cs1 = cache.getAdvancedCache().getComponentRegistry().getComponent(CacheLoaderManager.class).getCacheStore();
-      Set<Object> keys = cs1.loadAllKeys(null);
+      AdvancedCacheLoader cs1 = (AdvancedCacheLoader) TestingUtil.getCacheLoader(cache);
+      Set<Object> keys = PersistenceUtil.toKeySet(cs1, null);
 
       Assert.assertEquals(keys.size(), 4);
 
@@ -83,11 +87,11 @@ public class PessimisticDistSyncTxCacheStoreSharedTest extends MultipleCacheMana
 
       Set mergedKeys = new HashSet();
       // add keys from all cache stores
-      CacheStore cs2 = cache.getAdvancedCache().getComponentRegistry().getComponent(CacheLoaderManager.class).getCacheStore();
+      AdvancedCacheLoader cs2 = (AdvancedCacheLoader) TestingUtil.getCacheLoader(cache);
       log.debugf("Load from cache store via cache 1");
-      mergedKeys.addAll(cs1.loadAllKeys(null));
+      mergedKeys.addAll(PersistenceUtil.toKeySet(cs1, null));
       log.debugf("Load from cache store via cache 2");
-      mergedKeys.addAll(cs2.loadAllKeys(null));
+      mergedKeys.addAll(PersistenceUtil.toKeySet(cs2, null));
 
       Assert.assertEquals(mergedKeys.size(), 8);
 

@@ -67,13 +67,13 @@ public class ConfigurationAdapter<K, V> {
       Factory<CacheLoader<K,V>> cacheLoaderFactory = c.getCacheLoaderFactory();
       if (cacheLoaderFactory != null) {
          // User-defined cache loader will be plugged once cache has started
-         cb.loaders().addLoader(JCacheLoaderAdapterConfigurationBuilder.class);
+         cb.persistence().addStore(JStoreAdapterConfigurationBuilder.class);
       }
 
       Factory<CacheWriter<? super K, ? super V>> cacheWriterFactory = c.getCacheWriterFactory();
       if (cacheWriterFactory != null) {
          // User-defined cache writer will be plugged once cache has started
-         cb.loaders().addStore(JCacheWriterAdapterConfigurationBuilder.class);
+         cb.persistence().addStore(JCacheWriterAdapterConfigurationBuilder.class);
       }
 
       if (c.isStatisticsEnabled())

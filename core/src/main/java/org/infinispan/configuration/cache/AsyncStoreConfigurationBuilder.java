@@ -102,8 +102,7 @@ public class AsyncStoreConfigurationBuilder<S> extends AbstractStoreConfiguratio
    }
 
    @Override
-   public
-   AsyncStoreConfiguration create() {
+   public AsyncStoreConfiguration create() {
       return new AsyncStoreConfiguration(enabled, flushLockTimeout, modificationQueueSize, shutdownTimeout, threadPoolSize);
    }
 

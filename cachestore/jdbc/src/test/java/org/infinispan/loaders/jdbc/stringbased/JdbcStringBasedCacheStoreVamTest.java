@@ -1,6 +1,6 @@
 package org.infinispan.loaders.jdbc.stringbased;
 
-import org.infinispan.loaders.CacheLoaderException;
+import org.infinispan.persistence.CacheLoaderException;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.commons.marshall.StreamingMarshaller;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
@@ -11,13 +11,13 @@ import org.testng.annotations.Test;
 import static org.infinispan.test.TestingUtil.extractCacheMarshaller;
 
 /**
- * JdbcStringBasedCacheStoreTest using production level marshaller.
+ * JdbcStringBasedStoreTest using production level marshaller.
  *
  * @author Galder Zamarreño
  * @since 4.0
  */
 @Test(groups = "functional", testName = "loaders.jdbc.stringbased.JdbcStringBasedCacheStoreVamTest")
-public class JdbcStringBasedCacheStoreVamTest extends JdbcStringBasedCacheStoreTest {
+public class JdbcStringBasedCacheStoreVamTest extends JdbcStringBasedStoreTest {
 
    EmbeddedCacheManager cm;
    StreamingMarshaller marshaller;

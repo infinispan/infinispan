@@ -9,7 +9,6 @@ import java.util.Set;
 import org.infinispan.Cache;
 import org.infinispan.AdvancedCache;
 import org.infinispan.lifecycle.ComponentStatus;
-import org.infinispan.loaders.spi.CacheStore;
 import org.infinispan.commons.marshall.AbstractExternalizer;
 import org.infinispan.commons.util.InfinispanCollections;
 import org.infinispan.commons.util.Util;
@@ -76,11 +75,11 @@ public enum Flag {
     */
    FORCE_SYNCHRONOUS,
    /**
-    * Skips storing an entry to any configured {@link CacheStore}s.
+    * Skips storing an entry to any configured {@link org.infinispan.persistence.spi.CacheLoader}s.
     */
    SKIP_CACHE_STORE,
    /**
-    * Skips loading an entry from any configured {@link CacheStore}s. Useful for example to perform a put() operation
+    * Skips loading an entry from any configured {@link org.infinispan.persistence.spi.CacheLoader}s. Useful for example to perform a put() operation
     * while not interested in the return value of <tt>put()</tt> which would return the eventually existing previous value.
     * <br>
     * Note that if you want to ignore the return value of <tt>put()</tt> and you are in distributed mode

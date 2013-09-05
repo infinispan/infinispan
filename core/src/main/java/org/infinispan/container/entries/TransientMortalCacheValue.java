@@ -10,6 +10,8 @@ import java.io.ObjectInput;
 import java.io.ObjectOutput;
 import java.util.Set;
 
+import static java.lang.Math.min;
+
 /**
  * A transient, mortal cache value to correspond with {@link org.infinispan.container.entries.TransientMortalCacheEntry}
  *
@@ -61,6 +63,15 @@ public class TransientMortalCacheValue extends MortalCacheValue {
    @Override
    public InternalCacheEntry toInternalCacheEntry(Object key) {
       return new TransientMortalCacheEntry(key, value, maxIdle, lifespan, lastUsed, created);
+   }
+
+   @Override
+   public long getExpiryTime() {
+      long lset = lifespan > -1 ? created + lifespan : -1;
+      long muet = maxIdle > -1 ? lastUsed + maxIdle : -1;
+      if (lset == -1) return muet;
+      if (muet == -1) return lset;
+      return min(lset, muet);
    }
 
    @Override

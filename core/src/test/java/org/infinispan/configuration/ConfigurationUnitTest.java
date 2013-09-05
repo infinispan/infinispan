@@ -21,6 +21,7 @@ import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.global.GlobalConfigurationBuilder;
 import org.infinispan.eviction.EvictionStrategy;
+import org.infinispan.persistence.dummy.DummyInMemoryStoreConfigurationBuilder;
 import org.infinispan.marshall.TestObjectStreamMarshaller;
 import org.infinispan.test.CacheManagerCallable;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
@@ -150,12 +151,12 @@ public class ConfigurationUnitTest {
    @Test
    public void testClearCacheLoaders() {
       Configuration c = new ConfigurationBuilder()
-            .loaders()
-               .addLoader()
-            .loaders()
-               .clearCacheLoaders()
+            .persistence()
+               .addStore(DummyInMemoryStoreConfigurationBuilder.class)
+            .persistence()
+               .clearStores()
          .build();
-      assertEquals(c.loaders().cacheLoaders().size(), 0);
+      assertEquals(c.persistence().stores().size(), 0);
    }
 
    @Test(expectedExceptions = CacheConfigurationException.class)

@@ -1,11 +1,11 @@
 package org.infinispan.jmx;
 
+import org.infinispan.commons.marshall.StreamingMarshaller;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.context.Flag;
-import org.infinispan.test.fwk.TestInternalCacheEntryFactory;
-import org.infinispan.loaders.dummy.DummyInMemoryCacheStoreConfigurationBuilder;
-import org.infinispan.loaders.manager.CacheLoaderManager;
-import org.infinispan.loaders.spi.CacheStore;
+import org.infinispan.persistence.MarshalledEntryImpl;
+import org.infinispan.persistence.dummy.DummyInMemoryStoreConfigurationBuilder;
+import org.infinispan.persistence.spi.AdvancedLoadWriteStore;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.test.SingleCacheManagerTest;
 import org.infinispan.test.TestingUtil;
@@ -19,7 +19,7 @@ import javax.management.ObjectName;
 import static org.infinispan.test.TestingUtil.*;
 
 /**
- * Tests the jmx functionality from CacheLoaderInterceptor and CacheStoreInterceptor.
+ * Tests the jmx functionality from CacheLoaderInterceptor and CacheWriterInterceptor.
  *
  * @author Mircea.Markus@jboss.com
  * @author Galder Zamarreño
@@ -29,7 +29,7 @@ public class CacheLoaderAndCacheStoreInterceptorMBeanTest extends SingleCacheMan
    private ObjectName loaderInterceptorObjName;
    private ObjectName storeInterceptorObjName;
    private MBeanServer threadMBeanServer;
-   private CacheStore cacheStore;
+   private AdvancedLoadWriteStore store;
    private static final String JMX_DOMAIN = CacheLoaderAndCacheStoreInterceptorMBeanTest.class.getName();
 
    @Override
@@ -38,9 +38,9 @@ public class CacheLoaderAndCacheStoreInterceptorMBeanTest extends SingleCacheMan
       ConfigurationBuilder configuration = getDefaultStandaloneCacheConfig(false);
       configuration
          .jmxStatistics().enable()
-         .loaders()
+         .persistence()
             .passivation(false)
-            .addStore(DummyInMemoryCacheStoreConfigurationBuilder.class);
+            .addStore(DummyInMemoryStoreConfigurationBuilder.class);
 
       cacheManager.defineConfiguration("test", configuration.build());
       cache = cacheManager.getCache("test");
@@ -48,7 +48,7 @@ public class CacheLoaderAndCacheStoreInterceptorMBeanTest extends SingleCacheMan
       storeInterceptorObjName = getCacheObjectName(JMX_DOMAIN, "test(local)", "CacheStore");
 
       threadMBeanServer = PerThreadMBeanServerLookup.getThreadMBeanServer();
-      cacheStore = TestingUtil.extractComponent(cache, CacheLoaderManager.class).getCacheStore();
+      store = (AdvancedLoadWriteStore) TestingUtil.getFirstLoader(cache);
       return cacheManager;
    }
 
@@ -63,6 +63,10 @@ public class CacheLoaderAndCacheStoreInterceptorMBeanTest extends SingleCacheMan
       checkMBeanOperationParameterNaming(storeInterceptorObjName);
    }
 
+   private StreamingMarshaller marshaller() {
+      return cache.getAdvancedCache().getComponentRegistry().getCacheMarshaller();
+   }
+
    public void testPutKeyValue() throws Exception {
       assertStoreAccess(0, 0, 0);
       cache.put("key", "value");
@@ -70,10 +74,10 @@ public class CacheLoaderAndCacheStoreInterceptorMBeanTest extends SingleCacheMan
       cache.put("key", "value2");
       assertStoreAccess(0, 0, 2);
 
-      cacheStore.store(TestInternalCacheEntryFactory.create("a", "b"));
+      store.write(new MarshalledEntryImpl("a", "b", null, marshaller()));
       cache.put("a", "c");
       assertStoreAccess(1, 0, 3);
-      assert cacheStore.load("a").getValue().equals("c");
+      assert store.load("a").getValue().equals("c");
    }
 
    public void testGetValue() throws Exception {
@@ -84,7 +88,7 @@ public class CacheLoaderAndCacheStoreInterceptorMBeanTest extends SingleCacheMan
       assert cache.get("key").equals("value");
       assertStoreAccess(0, 0, 1);
 
-      cacheStore.store(TestInternalCacheEntryFactory.create("a", "b"));
+      store.write(new MarshalledEntryImpl("a", "b", null, marshaller()));
       assert cache.get("a").equals("b");
       assertStoreAccess(1, 0, 1);
 
@@ -106,7 +110,7 @@ public class CacheLoaderAndCacheStoreInterceptorMBeanTest extends SingleCacheMan
       cache.remove("no_such_key");
       assertStoreAccess(0, 1, 1);
 
-      cacheStore.store(TestInternalCacheEntryFactory.create("a", "b"));
+      store.write(new MarshalledEntryImpl("a", "b", null, marshaller()));
       assert cache.remove("a").equals("b");
       assertStoreAccess(1, 1, 1);
    }
@@ -119,7 +123,7 @@ public class CacheLoaderAndCacheStoreInterceptorMBeanTest extends SingleCacheMan
       assert cache.replace("key", "value2").equals("value");
       assertStoreAccess(0, 0, 2);
 
-      cacheStore.store(TestInternalCacheEntryFactory.create("a", "b"));
+      store.write(new MarshalledEntryImpl("a", "b", null, marshaller()));
       assert cache.replace("a", "c").equals("b");
       assertStoreAccess(1, 0, 3);
 

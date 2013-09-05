@@ -2,6 +2,7 @@ package org.infinispan.loaders.remote.configuration;
 
 import java.util.Collections;
 import java.util.List;
+import java.util.Properties;
 
 import org.infinispan.commons.configuration.BuiltBy;
 import org.infinispan.commons.configuration.ConfigurationFor;
@@ -9,11 +10,11 @@ import org.infinispan.commons.util.TypedProperties;
 import org.infinispan.configuration.cache.AbstractStoreConfiguration;
 import org.infinispan.configuration.cache.AsyncStoreConfiguration;
 import org.infinispan.configuration.cache.SingletonStoreConfiguration;
-import org.infinispan.loaders.remote.RemoteCacheStore;
+import org.infinispan.loaders.remote.RemoteStore;
 import org.infinispan.loaders.remote.wrapper.EntryWrapper;
 
 @BuiltBy(RemoteCacheStoreConfigurationBuilder.class)
-@ConfigurationFor(RemoteCacheStore.class)
+@ConfigurationFor(RemoteStore.class)
 public class RemoteCacheStoreConfiguration extends AbstractStoreConfiguration {
 
    private final ExecutorFactoryConfiguration asyncExecutorFactory;
@@ -35,15 +36,17 @@ public class RemoteCacheStoreConfiguration extends AbstractStoreConfiguration {
    private final String transportFactory;
    private final int valueSizeEstimate;
 
-   RemoteCacheStoreConfiguration(ExecutorFactoryConfiguration asyncExecutorFactory, String balancingStrategy,
-         ConnectionPoolConfiguration connectionPool, long connectionTimeout, EntryWrapper<?, ?> entryWrapper, boolean forceReturnValues,
-         boolean hotRodWrapping, int keySizeEstimate, String marshaller, boolean pingOnStartup, String protocolVersion, boolean rawValues,
-         String remoteCacheName, List<RemoteServerConfiguration> servers, long socketTimeout, boolean tcpNoDelay, String transportFactory,
-         int valueSizeEstimate, boolean purgeOnStartup, boolean purgeSynchronously, int purgerThreads,
-         boolean fetchPersistentState, boolean ignoreModifications, TypedProperties properties,
-         AsyncStoreConfiguration asyncStoreConfiguration, SingletonStoreConfiguration singletonStoreConfiguration) {
-      super(purgeOnStartup, purgeSynchronously, purgerThreads, fetchPersistentState, ignoreModifications, properties,
-            asyncStoreConfiguration, singletonStoreConfiguration);
+   public RemoteCacheStoreConfiguration(boolean purgeOnStartup, boolean fetchPersistentState, boolean ignoreModifications,
+                                        AsyncStoreConfiguration async, SingletonStoreConfiguration singletonStore,
+                                        boolean preload, boolean shared, Properties properties,
+                                        ExecutorFactoryConfiguration asyncExecutorFactory, String balancingStrategy,
+                                        ConnectionPoolConfiguration connectionPool, long connectionTimeout, EntryWrapper<?, ?> entryWrapper,
+                                        boolean forceReturnValues, boolean hotRodWrapping, int keySizeEstimate,
+                                        String marshaller, boolean pingOnStartup, String protocolVersion,
+                                        boolean rawValues, String remoteCacheName,
+                                        List<RemoteServerConfiguration> servers, long socketTimeout,
+                                        boolean tcpNoDelay, String transportFactory, int valueSizeEstimate) {
+      super(purgeOnStartup, fetchPersistentState, ignoreModifications, async, singletonStore, preload, shared, properties);
       this.asyncExecutorFactory = asyncExecutorFactory;
       this.balancingStrategy = balancingStrategy;
       this.connectionPool = connectionPool;
@@ -57,7 +60,7 @@ public class RemoteCacheStoreConfiguration extends AbstractStoreConfiguration {
       this.protocolVersion = protocolVersion;
       this.rawValues = rawValues;
       this.remoteCacheName = remoteCacheName;
-      this.servers = Collections.unmodifiableList(servers);
+      this.servers = servers;
       this.socketTimeout = socketTimeout;
       this.tcpNoDelay = tcpNoDelay;
       this.transportFactory = transportFactory;

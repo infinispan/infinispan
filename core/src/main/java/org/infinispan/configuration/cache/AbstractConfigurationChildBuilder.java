@@ -54,8 +54,8 @@ abstract class AbstractConfigurationChildBuilder implements ConfigurationChildBu
    }
 
    @Override
-   public LoadersConfigurationBuilder loaders() {
-      return builder.loaders();
+   public PersistenceConfigurationBuilder persistence() {
+      return builder.persistence();
    }
 
    @Override

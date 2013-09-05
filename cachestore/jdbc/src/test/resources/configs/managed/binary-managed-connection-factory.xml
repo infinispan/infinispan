@@ -43,7 +43,7 @@
             lockAcquisitionTimeout="20000"
             writeSkewCheck="false"
             concurrencyLevel="500" useLockStriping="false"/>
-      <loaders>
+      <persistence>
          <binaryKeyedJdbcStore fetchPersistentState="false"
                  ignoreModifications="false" purgeOnStartup="false">
             <dataSource jndiUrl="java:/BinaryStoreWithManagedConnectionTest/DS" />
@@ -53,7 +53,7 @@
                <timestampColumn name="TIMESTAMP_COLUMN" type="BIGINT" />
             </binaryKeyedTable>
          </binaryKeyedJdbcStore>
-      </loaders>
+      </persistence>
 
    </default>
 

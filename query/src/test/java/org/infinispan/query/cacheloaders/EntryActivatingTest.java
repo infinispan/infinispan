@@ -11,11 +11,9 @@ import org.hibernate.search.spi.SearchFactoryIntegrator;
 import org.infinispan.Cache;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.container.entries.InternalCacheEntry;
-import org.infinispan.loaders.CacheLoaderException;
-import org.infinispan.loaders.dummy.DummyInMemoryCacheStore;
-import org.infinispan.loaders.dummy.DummyInMemoryCacheStoreConfigurationBuilder;
-import org.infinispan.loaders.manager.CacheLoaderManager;
-import org.infinispan.loaders.spi.CacheStore;
+import org.infinispan.persistence.CacheLoaderException;
+import org.infinispan.persistence.dummy.DummyInMemoryStoreConfigurationBuilder;
+import org.infinispan.persistence.spi.AdvancedLoadWriteStore;
 import org.infinispan.manager.CacheContainer;
 import org.infinispan.query.Search;
 import org.infinispan.query.SearchManager;
@@ -36,7 +34,7 @@ import org.testng.annotations.Test;
 public class EntryActivatingTest extends AbstractInfinispanTest {
 
    Cache<String, Country> cache;
-   CacheStore store;
+   AdvancedLoadWriteStore store;
    CacheContainer cm;
    SearchManager search;
    QueryParser queryParser = TestQueryHelperFactory.createQueryParser("countryName");
@@ -61,12 +59,12 @@ public class EntryActivatingTest extends AbstractInfinispanTest {
       italy.cities.add(rome);
 
       cache.put("IT", italy);
-      assert ! store.containsKey("IT");
+      assert ! store.contains("IT");
 
       verifyFullTextHasMatches(1);
 
       cache.evict("IT");
-      assert store.containsKey("IT");
+      assert store.contains("IT");
 
       InternalCacheEntry internalCacheEntry = cache.getAdvancedCache().getDataContainer().get("IT");
       assert internalCacheEntry==null;
@@ -94,10 +92,10 @@ public class EntryActivatingTest extends AbstractInfinispanTest {
 
    private void recreateCacheManager() {
       ConfigurationBuilder cfg = new ConfigurationBuilder();
-      cfg.loaders()
-            .preload(true)
+      cfg.persistence()
             .passivation(true)
-            .addStore(DummyInMemoryCacheStoreConfigurationBuilder.class)
+            .addStore(DummyInMemoryStoreConfigurationBuilder.class)
+            .preload(true)
             .purgeOnStartup(true)
          .indexing()
             .enable()
@@ -106,8 +104,7 @@ public class EntryActivatingTest extends AbstractInfinispanTest {
          ;
       cm = TestCacheManagerFactory.createCacheManager(cfg);
       cache = cm.getCache();
-      store = TestingUtil.extractComponent(cache, CacheLoaderManager.class)
-            .getCacheStore();
+      store = (AdvancedLoadWriteStore) TestingUtil.getFirstLoader(cache);
       search = Search.getSearchManager(cache);
    }
 

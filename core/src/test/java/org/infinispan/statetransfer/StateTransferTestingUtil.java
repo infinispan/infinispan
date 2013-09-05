@@ -1,8 +1,7 @@
 package org.infinispan.statetransfer;
 
 import org.infinispan.Cache;
-import org.infinispan.loaders.manager.CacheLoaderManager;
-import org.infinispan.loaders.spi.CacheLoader;
+import org.infinispan.persistence.spi.CacheLoader;
 import org.infinispan.test.TestingUtil;
 
 /**
@@ -25,13 +24,13 @@ public class StateTransferTestingUtil {
    public static final Integer FORTY = 40;
 
    public static void verifyNoDataOnLoader(Cache<Object, Object> c) throws Exception {
-      CacheLoader l = TestingUtil.extractComponent(c, CacheLoaderManager.class).getCacheLoader();
-      assert !l.containsKey(A_B_AGE);
-      assert !l.containsKey(A_B_NAME);
-      assert !l.containsKey(A_C_AGE);
-      assert !l.containsKey(A_C_NAME);
-      assert !l.containsKey(A_D_AGE);
-      assert !l.containsKey(A_D_NAME);
+      CacheLoader l = TestingUtil.getFirstLoader(c);
+      assert !l.contains(A_B_AGE);
+      assert !l.contains(A_B_NAME);
+      assert !l.contains(A_C_AGE);
+      assert !l.contains(A_C_NAME);
+      assert !l.contains(A_D_AGE);
+      assert !l.contains(A_D_NAME);
    }
 
    public static void verifyNoData(Cache<Object, Object> c) {
@@ -52,11 +51,11 @@ public class StateTransferTestingUtil {
    }
 
    public static void verifyInitialDataOnLoader(Cache<Object, Object> c) throws Exception {
-      CacheLoader l = TestingUtil.extractComponent(c, CacheLoaderManager.class).getCacheLoader();
-      assert l.containsKey(A_B_AGE);
-      assert l.containsKey(A_B_NAME);
-      assert l.containsKey(A_C_AGE);
-      assert l.containsKey(A_C_NAME);
+      CacheLoader l = TestingUtil.getFirstLoader(c);
+      assert l.contains(A_B_AGE);
+      assert l.contains(A_B_NAME);
+      assert l.contains(A_C_AGE);
+      assert l.contains(A_C_NAME);
       assert l.load(A_B_AGE).getValue().equals(TWENTY);
       assert l.load(A_B_NAME).getValue().equals(JOE);
       assert l.load(A_C_AGE).getValue().equals(FORTY);

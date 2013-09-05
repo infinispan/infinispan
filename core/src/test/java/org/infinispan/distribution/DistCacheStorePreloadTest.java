@@ -2,15 +2,13 @@ package org.infinispan.distribution;
 
 import org.infinispan.Cache;
 import org.infinispan.container.DataContainer;
-import org.infinispan.loaders.CacheLoaderException;
-import org.infinispan.loaders.dummy.DummyInMemoryCacheStore;
-import org.infinispan.loaders.manager.CacheLoaderManager;
+import org.infinispan.persistence.CacheLoaderException;
+import org.infinispan.persistence.PersistenceUtil;
+import org.infinispan.persistence.dummy.DummyInMemoryStore;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.test.TestingUtil;
 import org.testng.annotations.AfterMethod;
 import org.testng.annotations.Test;
-
-import java.util.Collections;
 
 import static org.testng.AssertJUnit.assertEquals;
 
@@ -38,7 +36,7 @@ public class DistCacheStorePreloadTest extends BaseDistCacheStoreTest {
    public void clearStats() {
       for (Cache<?, ?> c: caches) {
          log.trace("Clearing stats for cache store on cache "+ c);
-         DummyInMemoryCacheStore cs = (DummyInMemoryCacheStore) TestingUtil.extractComponent(c, CacheLoaderManager.class).getCacheStore();
+         DummyInMemoryStore cs = (DummyInMemoryStore) TestingUtil.getFirstLoader(c);
          cs.clear();
          cs.clearStats();
       }
@@ -51,8 +49,8 @@ public class DistCacheStorePreloadTest extends BaseDistCacheStoreTest {
       DataContainer dc1 = c1.getAdvancedCache().getDataContainer();
       assert dc1.size() == NUM_KEYS;
 
-      DummyInMemoryCacheStore cs = (DummyInMemoryCacheStore) TestingUtil.extractComponent(c1, CacheLoaderManager.class).getCacheStore();
-      assert cs.loadAllKeys(Collections.emptySet()).size() == NUM_KEYS;
+      DummyInMemoryStore cs = (DummyInMemoryStore) TestingUtil.getFirstLoader(c1);
+      assert PersistenceUtil.count(cs, null) == NUM_KEYS;
 
       addClusterEnabledCacheManager();
       EmbeddedCacheManager cm2 = cacheManagers.get(1);

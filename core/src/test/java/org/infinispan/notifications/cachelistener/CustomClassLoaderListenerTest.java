@@ -1,9 +1,10 @@
 package org.infinispan.notifications.cachelistener;
 
 import org.infinispan.configuration.cache.ConfigurationBuilder;
-import org.infinispan.loaders.dummy.DummyInMemoryCacheStoreConfigurationBuilder;
+import org.infinispan.persistence.dummy.DummyInMemoryStoreConfigurationBuilder;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.notifications.Listener;
+import org.infinispan.notifications.cachelistener.annotation.CacheEntriesEvicted;
 import org.infinispan.notifications.cachelistener.annotation.CacheEntryActivated;
 import org.infinispan.notifications.cachelistener.annotation.CacheEntryCreated;
 import org.infinispan.notifications.cachelistener.annotation.CacheEntryEvicted;
@@ -40,7 +41,8 @@ public class CustomClassLoaderListenerTest extends SingleCacheManagerTest {
    @Override
    protected EmbeddedCacheManager createCacheManager() throws Exception {
       ConfigurationBuilder builder = getDefaultStandaloneCacheConfig(false);
-      builder.loaders().passivation(true).addStore(DummyInMemoryCacheStoreConfigurationBuilder.class);
+      builder.persistence().passivation(true).addStore(DummyInMemoryStoreConfigurationBuilder.class);
+
       return TestCacheManagerFactory.createCacheManager(builder);
    }
 

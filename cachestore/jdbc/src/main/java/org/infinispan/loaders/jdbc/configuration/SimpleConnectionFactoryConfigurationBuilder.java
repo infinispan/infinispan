@@ -10,7 +10,7 @@ import org.infinispan.commons.CacheConfigurationException;
  * @author Tristan Tarrant
  * @since 5.2
  */
-public class SimpleConnectionFactoryConfigurationBuilder<S extends AbstractJdbcCacheStoreConfigurationBuilder<?, S>> extends AbstractJdbcCacheStoreConfigurationChildBuilder<S>
+public class SimpleConnectionFactoryConfigurationBuilder<S extends AbstractJdbcStoreConfigurationBuilder<?, S>> extends AbstractJdbcStoreConfigurationChildBuilder<S>
       implements ConnectionFactoryConfigurationBuilder<SimpleConnectionFactoryConfiguration> {
 
    private String connectionUrl;
@@ -18,7 +18,7 @@ public class SimpleConnectionFactoryConfigurationBuilder<S extends AbstractJdbcC
    private String username;
    private String password;
 
-   public SimpleConnectionFactoryConfigurationBuilder(AbstractJdbcCacheStoreConfigurationBuilder<?, S> builder) {
+   public SimpleConnectionFactoryConfigurationBuilder(AbstractJdbcStoreConfigurationBuilder<?, S> builder) {
       super(builder);
    }
 

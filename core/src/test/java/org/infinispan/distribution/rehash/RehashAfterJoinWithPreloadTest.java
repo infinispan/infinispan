@@ -4,7 +4,7 @@ import org.infinispan.Cache;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
-import org.infinispan.configuration.cache.FileCacheStoreConfigurationBuilder;
+import org.infinispan.configuration.cache.SingleFileStoreConfigurationBuilder;
 import org.infinispan.distribution.DistributionManager;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.test.MultipleCacheManagersTest;
@@ -50,12 +50,13 @@ public class RehashAfterJoinWithPreloadTest extends MultipleCacheManagersTest {
    private Configuration buildCfg(boolean clustered) {
       ConfigurationBuilder cb = new ConfigurationBuilder();
 
-      FileCacheStoreConfigurationBuilder fileStoreCB = cb.loaders().addFileCacheStore().location(fileCacheStoreTmpDir);
+      SingleFileStoreConfigurationBuilder fileStoreCB = cb.persistence()
+            .addSingleFileStore()
+              .location(fileCacheStoreTmpDir)
+              .preload(true).shared(true);
       fileStoreCB.purgeOnStartup(false);
 
-      cb.loaders().passivation(false);
-      cb.loaders().preload(true);
-      cb.loaders().shared(true);
+      cb.persistence().passivation(false);
 
       if (clustered) {
          cb.clustering().l1().disable();

@@ -3,7 +3,7 @@ package org.infinispan.statetransfer;
 import org.infinispan.Cache;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
-import org.infinispan.loaders.dummy.DummyInMemoryCacheStoreConfigurationBuilder;
+import org.infinispan.persistence.dummy.DummyInMemoryStoreConfigurationBuilder;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.test.MultipleCacheManagersTest;
 import org.testng.annotations.Test;
@@ -30,10 +30,10 @@ public class StateTransferFetchOnlyPersistentStateTest extends MultipleCacheMana
       ConfigurationBuilder cfg = getDefaultClusteredCacheConfig(CacheMode.REPL_SYNC, true);
       cfg.clustering().stateTransfer().fetchInMemoryState(false);
 
-      DummyInMemoryCacheStoreConfigurationBuilder dimcs = new DummyInMemoryCacheStoreConfigurationBuilder(cfg.loaders());
+      DummyInMemoryStoreConfigurationBuilder dimcs = new DummyInMemoryStoreConfigurationBuilder(cfg.persistence());
       dimcs.storeName("store id: " + id);
-      dimcs.fetchPersistentState(true);
-      cfg.loaders().shared(false).addLoader(dimcs);
+      dimcs.fetchPersistentState(true).shared(false);
+      cfg.persistence().addStore(dimcs);
 
       return cfg;
    }

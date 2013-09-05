@@ -5,7 +5,7 @@ import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 
-import org.infinispan.configuration.cache.CacheLoaderConfiguration;
+import org.infinispan.configuration.cache.StoreConfiguration;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.test.AbstractInfinispanTest;
 import org.infinispan.test.TestingUtil;
@@ -26,7 +26,7 @@ public class XmlFileParsingTest extends AbstractInfinispanTest {
    public void testRemoteCacheStore() throws Exception {
       String config = INFINISPAN_START_TAG +
             "   <default>\n" +
-            "     <loaders>\n" +
+            "     <persistence>\n" +
             "       <remoteStore xmlns=\"urn:infinispan:config:remote:6.0\" >\n" +
             "         <servers>\n" +
             "           <server host=\"one\" />\n" +
@@ -40,7 +40,7 @@ public class XmlFileParsingTest extends AbstractInfinispanTest {
             "         </asyncTransportExecutor>\n" +
             "         <async enabled=\"true\" />\n" +
             "       </remoteStore>\n" +
-            "     </loaders>\n" +
+            "     </persistence>\n" +
             "   </default>\n" +
             TestingUtil.INFINISPAN_END_TAG;
 
@@ -51,10 +51,10 @@ public class XmlFileParsingTest extends AbstractInfinispanTest {
       assert store.async().enabled();
    }
 
-   private CacheLoaderConfiguration buildCacheManagerWithCacheStore(final String config) throws IOException {
+   private StoreConfiguration buildCacheManagerWithCacheStore(final String config) throws IOException {
       InputStream is = new ByteArrayInputStream(config.getBytes());
       cacheManager = TestCacheManagerFactory.fromStream(is);
-      assert cacheManager.getDefaultCacheConfiguration().loaders().cacheLoaders().size() == 1;
-      return cacheManager.getDefaultCacheConfiguration().loaders().cacheLoaders().get(0);
+      assert cacheManager.getDefaultCacheConfiguration().persistence().stores().size() == 1;
+      return cacheManager.getDefaultCacheConfiguration().persistence().stores().get(0);
    }
 }
