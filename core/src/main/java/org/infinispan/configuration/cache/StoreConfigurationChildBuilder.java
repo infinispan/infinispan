@@ -1,6 +1,8 @@
 package org.infinispan.configuration.cache;
 
-public interface StoreConfigurationChildBuilder<S> extends LoaderConfigurationChildBuilder<S> {
+import java.util.Properties;
+
+public interface StoreConfigurationChildBuilder<S> extends ConfigurationChildBuilder {
 
    /**
     * Configuration for the async cache store. If enabled, this provides you with asynchronous
@@ -14,7 +16,7 @@ public interface StoreConfigurationChildBuilder<S> extends LoaderConfigurationCh
     * responsible for the underlying CacheStore. SingletonStore is a simply facade to a real
     * CacheStore implementation. It always delegates reads to the real CacheStore.
     */
-   SingletonStoreConfigurationBuilder<S> singletonStore();
+   SingletonStoreConfigurationBuilder<S> singleton();
 
    /**
     * If true, fetch persistent state when joining a cluster. If multiple cache stores are chained,
@@ -40,13 +42,40 @@ public interface StoreConfigurationChildBuilder<S> extends LoaderConfigurationCh
    S purgeOnStartup(boolean b);
 
    /**
-    * The number of threads to use when purging asynchronously.
+    * If true, when the cache starts, data stored in the cache store will be pre-loaded into memory.
+    * This is particularly useful when data in the cache store will be needed immediately after
+    * startup and you want to avoid cache operations being delayed as a result of loading this data
+    * lazily. Can be used to provide a 'warm-cache' on startup, however there is a performance
+    * penalty as startup time is affected by this process.
     */
-   S purgerThreads(int i);
+   S preload(boolean b);
 
    /**
-    * If true, CacheStore#purgeExpired() call will be done synchronously
+    * This setting should be set to true when multiple cache instances share the same cache store
+    * (e.g., multiple nodes in a cluster using a JDBC-based CacheStore pointing to the same, shared
+    * database.) Setting this to true avoids multiple cache instances writing the same modification
+    * multiple times. If enabled, only the node where the modification originated will write to the
+    * cache store.
+    * <p/>
+    * If disabled, each individual cache reacts to a potential remote update by storing the data to
+    * the cache store. Note that this could be useful if each individual node has its own cache
+    * store - perhaps local on-disk.
     */
-   S purgeSynchronously(boolean b);
+   S shared(boolean b);
 
+   /**
+    * <p>
+    * Defines a single property. Can be used multiple times to define all needed properties, but the
+    * full set is overridden by {@link #withProperties(java.util.Properties)}.
+    * </p>
+    * <p>
+    * These properties are passed directly to the cache store.
+    * </p>
+    */
+   S addProperty(String key, String value);
+
+   /**
+    * Properties passed to the cache store or loader
+    */
+   S withProperties(Properties p);
 }

@@ -1,9 +1,8 @@
 package org.infinispan.invalidation;
 
 import org.infinispan.configuration.cache.CacheMode;
-import org.infinispan.configuration.cache.ClusterCacheLoaderConfigurationBuilder;
+import org.infinispan.configuration.cache.ClusterStoreConfigurationBuilder;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
-import org.infinispan.loaders.dummy.DummyInMemoryCacheStoreConfigurationBuilder;
 import org.infinispan.test.MultipleCacheManagersTest;
 import org.testng.annotations.Test;
 
@@ -28,7 +27,7 @@ public class ClusteredCacheLoaderInvalidationTest extends MultipleCacheManagersT
    @Override
    protected void createCacheManagers() throws Throwable {
       ConfigurationBuilder cb = getDefaultClusteredCacheConfig(CacheMode.INVALIDATION_SYNC, false);
-      cb.loaders().addLoader(ClusterCacheLoaderConfigurationBuilder.class);
+      cb.persistence().addStore(ClusterStoreConfigurationBuilder.class);
       createClusteredCaches(2, cacheName, cb);
    }
 

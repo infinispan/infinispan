@@ -3,8 +3,7 @@ package org.infinispan.atomic;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.eviction.EvictionStrategy;
-import org.infinispan.loaders.dummy.DummyInMemoryCacheStore;
-import org.infinispan.loaders.dummy.DummyInMemoryCacheStoreConfigurationBuilder;
+import org.infinispan.persistence.dummy.DummyInMemoryStoreConfigurationBuilder;
 import org.infinispan.test.fwk.CleanupAfterMethod;
 import org.infinispan.transaction.LockingMode;
 import org.infinispan.transaction.TransactionMode;
@@ -30,14 +29,14 @@ public class ReplDeltaAwareEvictionTest extends LocalDeltaAwareEvictionTest {
             .transactionMode(TransactionMode.TRANSACTIONAL).lockingMode(LockingMode.PESSIMISTIC)
             .transactionManagerLookup(new JBossStandaloneJTAManagerLookup())
             .eviction().maxEntries(1).strategy(EvictionStrategy.LRU)
-            .loaders()
-            .addStore(DummyInMemoryCacheStoreConfigurationBuilder.class)
+            .persistence()
+            .addStore(DummyInMemoryStoreConfigurationBuilder.class)
             .fetchPersistentState(false);
 
       addClusterEnabledCacheManager(builder);
 
-      builder.loaders().clearCacheLoaders()
-            .addStore(DummyInMemoryCacheStoreConfigurationBuilder.class).fetchPersistentState(false);
+      builder.persistence().clearStores()
+            .addStore(DummyInMemoryStoreConfigurationBuilder.class).fetchPersistentState(false);
 
       addClusterEnabledCacheManager(builder);
 

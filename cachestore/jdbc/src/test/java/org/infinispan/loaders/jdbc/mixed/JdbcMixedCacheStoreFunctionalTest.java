@@ -1,8 +1,8 @@
 package org.infinispan.loaders.jdbc.mixed;
 
-import org.infinispan.configuration.cache.LoadersConfigurationBuilder;
-import org.infinispan.loaders.BaseCacheStoreFunctionalTest;
-import org.infinispan.loaders.jdbc.configuration.JdbcMixedCacheStoreConfigurationBuilder;
+import org.infinispan.configuration.cache.PersistenceConfigurationBuilder;
+import org.infinispan.persistence.BaseCacheStoreFunctionalTest;
+import org.infinispan.loaders.jdbc.configuration.JdbcMixedStoreConfigurationBuilder;
 import org.infinispan.test.fwk.UnitTestDatabaseManager;
 import org.testng.annotations.Test;
 
@@ -10,10 +10,10 @@ import org.testng.annotations.Test;
 public class JdbcMixedCacheStoreFunctionalTest extends BaseCacheStoreFunctionalTest {
 
    @Override
-   protected LoadersConfigurationBuilder createCacheStoreConfig(LoadersConfigurationBuilder loaders) {
-      JdbcMixedCacheStoreConfigurationBuilder store = loaders
-         .addStore(JdbcMixedCacheStoreConfigurationBuilder.class)
-         .purgeSynchronously(true);
+   protected PersistenceConfigurationBuilder createCacheStoreConfig(PersistenceConfigurationBuilder loaders, boolean preload) {
+      JdbcMixedStoreConfigurationBuilder store = loaders
+         .addStore(JdbcMixedStoreConfigurationBuilder.class)
+         .preload(preload);
       UnitTestDatabaseManager.buildTableManipulation(store.binaryTable(), true);
       UnitTestDatabaseManager.buildTableManipulation(store.stringTable(), false);
       UnitTestDatabaseManager.configureUniqueConnectionFactory(store);

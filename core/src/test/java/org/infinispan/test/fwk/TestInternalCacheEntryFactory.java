@@ -28,7 +28,10 @@ public class TestInternalCacheEntryFactory {
       return new ImmortalCacheEntry(key, value);
    }
 
-   //
+   public static InternalCacheValue create(Object value) {
+      return new ImmortalCacheValue(value);
+   }
+
    public static InternalCacheEntry create(Object key, Object value, long lifespan) {
       return FACTORY.create(key, value, null, lifespan, -1);
    }

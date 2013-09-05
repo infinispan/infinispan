@@ -8,9 +8,8 @@ import org.infinispan.configuration.global.GlobalConfigurationBuilder;
 import org.infinispan.container.DataContainer;
 import org.infinispan.eviction.EvictionStrategy;
 import org.infinispan.lifecycle.ComponentStatus;
-import org.infinispan.loaders.dummy.DummyInMemoryCacheStore;
-import org.infinispan.loaders.dummy.DummyInMemoryCacheStoreConfigurationBuilder;
-import org.infinispan.loaders.manager.CacheLoaderManager;
+import org.infinispan.persistence.dummy.DummyInMemoryStore;
+import org.infinispan.persistence.dummy.DummyInMemoryStoreConfigurationBuilder;
 import org.infinispan.test.AbstractInfinispanTest;
 import org.infinispan.test.CacheManagerCallable;
 import org.infinispan.test.MultiCacheManagerCallable;
@@ -271,7 +270,7 @@ public class CacheManagerTest extends AbstractInfinispanTest {
          cache.put(k(m, 1), v(m, 1));
          cache.put(k(m, 2), v(m, 2));
          cache.put(k(m, 3), v(m, 3));
-         DummyInMemoryCacheStore store = getDummyStore(cache);
+         DummyInMemoryStore store = getDummyStore(cache);
          DataContainer data = getDataContainer(cache);
          assert !store.isEmpty();
          assert 0 != data.size();
@@ -303,8 +302,8 @@ public class CacheManagerTest extends AbstractInfinispanTest {
       String storeName = storePrefix + m.getName();
       ConfigurationBuilder c = new ConfigurationBuilder();
       c
-            .loaders()
-               .shared(isStoreShared).addStore(DummyInMemoryCacheStoreConfigurationBuilder.class).storeName(storeName)
+            .persistence()
+               .addStore(DummyInMemoryStoreConfigurationBuilder.class).storeName(storeName).shared(isStoreShared)
             .clustering()
                .cacheMode(isClustered ? CacheMode.REPL_SYNC : CacheMode.LOCAL);
 
@@ -332,9 +331,9 @@ public class CacheManagerTest extends AbstractInfinispanTest {
             cache1.put(k(m, 3), v(m, 3));
             cache2.put(k(m, 4), v(m, 4));
             cache2.put(k(m, 5), v(m, 5));
-            DummyInMemoryCacheStore store1 = getDummyStore(cache1);
+            DummyInMemoryStore store1 = getDummyStore(cache1);
             DataContainer data1 = getDataContainer(cache1);
-            DummyInMemoryCacheStore store2 = getDummyStore(cache2);
+            DummyInMemoryStore store2 = getDummyStore(cache2);
             DataContainer data2 = getDataContainer(cache2);
             assert !store1.isEmpty();
             assert 5 == data1.size();
@@ -353,9 +352,8 @@ public class CacheManagerTest extends AbstractInfinispanTest {
       });
    }
 
-   private DummyInMemoryCacheStore getDummyStore(Cache<String, String> cache1) {
-      return (DummyInMemoryCacheStore)
-                  TestingUtil.extractComponent(cache1, CacheLoaderManager.class).getCacheLoader();
+   private DummyInMemoryStore getDummyStore(Cache<String, String> cache1) {
+      return (DummyInMemoryStore) TestingUtil.getFirstLoader(cache1);
    }
 
    private DataContainer getDataContainer(Cache<String, String> cache) {

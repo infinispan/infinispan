@@ -1,7 +1,7 @@
 package org.infinispan.nearcache.jms;
 
-import org.infinispan.loaders.CacheLoaderException;
-import org.infinispan.loaders.remote.RemoteCacheStore;
+import org.infinispan.persistence.CacheLoaderException;
+import org.infinispan.loaders.remote.RemoteStore;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
@@ -22,7 +22,7 @@ import java.util.Properties;
  * @author Galder Zamarreño
  * @since 5.1
  */
-public class RemoteEventCacheStore extends RemoteCacheStore {
+public class RemoteEventCacheStore extends RemoteStore {
 
    private static final Log log = LogFactory.getLog(RemoteEventCacheStore.class);
 
@@ -31,13 +31,13 @@ public class RemoteEventCacheStore extends RemoteCacheStore {
    @Override
    public void start() throws CacheLoaderException {
       try {
-         Context ctx = getContext();
+         Context context = getContext();
          try {
-            MessageConsumer consumer = getMessageConsumer(ctx);
-            consumer.setMessageListener(new RemoteEventListener(cache, marshaller));
+            MessageConsumer consumer = getMessageConsumer(context);
+            consumer.setMessageListener(new RemoteEventListener(ctx.getCache(), ctx.getMarshaller()));
             log.infof("Subscribed to remote cache events");
          } finally {
-            ctx.close();
+            context.close();
          }
       } catch (Exception e) {
          throw new CacheLoaderException(

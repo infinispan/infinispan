@@ -123,7 +123,7 @@ public class IsMarshallableInterceptor extends CommandInterceptor {
       // of lazy deserialization or when an async store is in place. So, if
       // any cache store is configured, check whether it'll be skipped
       return !cacheConfiguration.clustering().cacheMode().isClustered()
-            && !cacheConfiguration.loaders().cacheLoaders().isEmpty()
+            && !cacheConfiguration.persistence().stores().isEmpty()
             && !command.hasFlag(Flag.SKIP_CACHE_STORE);
    }
 

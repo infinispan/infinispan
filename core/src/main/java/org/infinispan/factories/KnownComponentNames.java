@@ -32,6 +32,8 @@ public class KnownComponentNames {
       REMOTE_COMMAND_EXECUTOR, TOTAL_ORDER_EXECUTOR
    );
 
+   public static final Collection<String> PER_CACHE_COMPONENT_NAMES = Arrays.asList(CACHE_MARSHALLER);
+
    private static final Map<String, Integer> DEFAULT_THREADCOUNTS = new HashMap<String, Integer>(4);
    private static final Map<String, Integer> DEFAULT_QUEUE_SIZE = new HashMap<String, Integer>(4);
    private static final Map<String, Integer> DEFAULT_THREADPRIO = new HashMap<String, Integer>(6);

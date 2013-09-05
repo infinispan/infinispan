@@ -1,6 +1,6 @@
 package org.infinispan.loaders.jdbc.stringbased;
 
-import org.infinispan.loaders.CacheLoaderException;
+import org.infinispan.persistence.CacheLoaderException;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.commons.marshall.StreamingMarshaller;
 import org.infinispan.test.fwk.TestCacheManagerFactory;

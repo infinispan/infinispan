@@ -1,7 +1,6 @@
 package org.infinispan.eviction;
 
 import net.jcip.annotations.ThreadSafe;
-
 import org.infinispan.Cache;
 import org.infinispan.commons.util.Util;
 import org.infinispan.configuration.cache.Configuration;
@@ -14,8 +13,7 @@ import org.infinispan.factories.annotations.ComponentName;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.factories.annotations.Start;
 import org.infinispan.factories.annotations.Stop;
-import org.infinispan.loaders.manager.CacheLoaderManager;
-import org.infinispan.loaders.spi.CacheStore;
+import org.infinispan.persistence.manager.PersistenceManager;
 import org.infinispan.notifications.cachelistener.CacheNotifier;
 import org.infinispan.util.TimeService;
 import org.infinispan.util.logging.Log;
@@ -35,9 +33,8 @@ public class EvictionManagerImpl implements EvictionManager {
    // components to be injected
    private ScheduledExecutorService executor;
    private Configuration configuration;
-   private CacheLoaderManager cacheLoaderManager;
+   private PersistenceManager persistenceManager;
    private DataContainer dataContainer;
-   private CacheStore cacheStore;
    private CacheNotifier cacheNotifier;
    private TimeService timeService;
    private boolean enabled;
@@ -46,33 +43,30 @@ public class EvictionManagerImpl implements EvictionManager {
    @Inject
    public void initialize(@ComponentName(KnownComponentNames.EVICTION_SCHEDULED_EXECUTOR)
          ScheduledExecutorService executor, Cache cache, Configuration cfg, DataContainer dataContainer,
-         CacheLoaderManager cacheLoaderManager, CacheNotifier cacheNotifier, TimeService timeService) {
+         PersistenceManager persistenceManager, CacheNotifier cacheNotifier, TimeService timeService) {
       initialize(executor, cache.getName(), cfg, dataContainer,
-            cacheLoaderManager, cacheNotifier, timeService);
+                 persistenceManager, cacheNotifier, timeService);
    }
 
    void initialize(ScheduledExecutorService executor,
             String cacheName, Configuration cfg, DataContainer dataContainer,
-            CacheLoaderManager cacheLoaderManager, CacheNotifier cacheNotifier, TimeService timeService) {
+            PersistenceManager persistenceManager, CacheNotifier cacheNotifier, TimeService timeService) {
       this.executor = executor;
       this.configuration = cfg;
       this.cacheName = cacheName;
       this.dataContainer = dataContainer;
-      this.cacheLoaderManager = cacheLoaderManager;
+      this.persistenceManager = persistenceManager;
       this.cacheNotifier = cacheNotifier;
       this.timeService = timeService;
    }
 
 
    @Start(priority = 55)
-   // make sure this starts after the CacheLoaderManager
+   // make sure this starts after the PersistenceManager
    public void start() {
       // first check if eviction is enabled!
       enabled = configuration.expiration().reaperEnabled();
       if (enabled) {
-         if (cacheLoaderManager != null && cacheLoaderManager.isEnabled()) {
-            cacheStore = cacheLoaderManager.getCacheStore();
-         }
          // Set up the eviction timer task
          long expWakeUpInt = configuration.expiration().wakeUpInterval();
          if (expWakeUpInt <= 0) {
@@ -104,21 +98,7 @@ public class EvictionManagerImpl implements EvictionManager {
       }
 
       if (!Thread.currentThread().isInterrupted()) {
-         if (cacheStore != null) {
-            try {
-               if (trace) {
-                  log.trace("Purging cache store of expired entries");
-                  start = timeService.time();
-               }
-               cacheStore.purgeExpired();
-               if (trace) {
-                  log.tracef("Purging cache store completed in %s",
-                             Util.prettyPrintTime(timeService.timeDuration(start, TimeUnit.MILLISECONDS)));
-               }
-            } catch (Exception e) {
-               log.exceptionPurgingDataContainer(e);
-            }
-         }
+         persistenceManager.purgeExpired();
       }
    }
 

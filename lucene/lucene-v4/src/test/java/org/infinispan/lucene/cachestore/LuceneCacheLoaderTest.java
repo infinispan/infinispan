@@ -3,7 +3,6 @@ package org.infinispan.lucene.cachestore;
 import org.apache.lucene.store.Directory;
 import org.infinispan.Cache;
 import org.infinispan.commons.CacheException;
-import org.infinispan.loaders.manager.CacheLoaderManager;
 import org.infinispan.lucene.FileCacheKey;
 import org.infinispan.lucene.directory.DirectoryBuilder;
 import org.infinispan.manager.EmbeddedCacheManager;
@@ -98,14 +97,13 @@ public class LuceneCacheLoaderTest extends IndexCacheLoaderTest {
 
                   String[] fileNamesFromIndexDir = TestHelper.getFileNamesFromDir(rootDir, indexName);
 
-                  LuceneCacheLoader cacheLoader = (LuceneCacheLoader) TestingUtil.extractComponent(cacheManager.getCache(),
-                                                                                                   CacheLoaderManager.class).getCacheLoader();
+                  LuceneCacheLoader cacheLoader = (LuceneCacheLoader) TestingUtil.getFirstLoader(cacheManager.getCache());
                   for(String fileName : fileNamesFromIndexDir) {
                      FileCacheKey key = new FileCacheKey(indexName, fileName);
-                     assert cacheLoader.containsKey(key);
+                     assert cacheLoader.contains(key);
 
                      //Testing non-existent keys with non-acceptable type
-                     assert !cacheLoader.containsKey(fileName);
+                     assert !cacheLoader.contains(fileName);
                   }
                } catch(Exception ex) {
                   throw new RuntimeException(ex);

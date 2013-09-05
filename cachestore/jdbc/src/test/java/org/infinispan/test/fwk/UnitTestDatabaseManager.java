@@ -10,7 +10,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 import org.infinispan.loaders.jdbc.DatabaseType;
 import org.infinispan.loaders.jdbc.JdbcUtil;
 import org.infinispan.loaders.jdbc.TableName;
-import org.infinispan.loaders.jdbc.configuration.AbstractJdbcCacheStoreConfigurationBuilder;
+import org.infinispan.loaders.jdbc.configuration.AbstractJdbcStoreConfigurationBuilder;
 import org.infinispan.loaders.jdbc.configuration.ConnectionFactoryConfigurationBuilder;
 import org.infinispan.loaders.jdbc.configuration.TableManipulationConfigurationBuilder;
 import org.infinispan.loaders.jdbc.connectionfactory.ConnectionFactory;
@@ -53,7 +53,7 @@ public class UnitTestDatabaseManager {
       }
    }
 
-   public static ConnectionFactoryConfigurationBuilder<?> configureUniqueConnectionFactory(AbstractJdbcCacheStoreConfigurationBuilder<?, ?> store) {
+   public static ConnectionFactoryConfigurationBuilder<?> configureUniqueConnectionFactory(AbstractJdbcStoreConfigurationBuilder<?, ?> store) {
       switch (dt) {
       case H2:
          return store
@@ -73,7 +73,7 @@ public class UnitTestDatabaseManager {
       }
    }
 
-   public static ConnectionFactoryConfigurationBuilder<?> configureSimpleConnectionFactory(AbstractJdbcCacheStoreConfigurationBuilder<?, ?> store) {
+   public static ConnectionFactoryConfigurationBuilder<?> configureSimpleConnectionFactory(AbstractJdbcStoreConfigurationBuilder<?, ?> store) {
       return store
             .simpleConnection()
                .driverClass(org.h2.Driver.class)
@@ -82,7 +82,7 @@ public class UnitTestDatabaseManager {
    }
 
    public static ConnectionFactoryConfigurationBuilder<?> configureBrokenConnectionFactory
-         (AbstractJdbcCacheStoreConfigurationBuilder<?, ?> storeBuilder) {
+         (AbstractJdbcStoreConfigurationBuilder<?, ?> storeBuilder) {
       return storeBuilder.connectionPool()
                   .driverClass(NON_EXISTENT_DRIVER);
    }

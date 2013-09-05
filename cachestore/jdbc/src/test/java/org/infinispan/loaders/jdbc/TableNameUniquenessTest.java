@@ -3,14 +3,13 @@ package org.infinispan.loaders.jdbc;
 import static org.testng.AssertJUnit.assertEquals;
 
 import org.infinispan.Cache;
-import org.infinispan.configuration.cache.CacheLoaderConfiguration;
-import org.infinispan.loaders.CacheLoaderException;
-import org.infinispan.loaders.jdbc.binary.JdbcBinaryCacheStore;
-import org.infinispan.loaders.jdbc.configuration.JdbcStringBasedCacheStoreConfiguration;
+import org.infinispan.configuration.cache.StoreConfiguration;
+import org.infinispan.persistence.CacheLoaderException;
+import org.infinispan.loaders.jdbc.binary.JdbcBinaryStore;
+import org.infinispan.loaders.jdbc.configuration.JdbcStringBasedStoreConfiguration;
 import org.infinispan.loaders.jdbc.mixed.JdbcMixedCacheStore;
-import org.infinispan.loaders.jdbc.stringbased.JdbcStringBasedCacheStore;
-import org.infinispan.loaders.manager.CacheLoaderManager;
-import org.infinispan.loaders.spi.CacheStore;
+import org.infinispan.loaders.jdbc.stringbased.JdbcStringBasedStore;
+import org.infinispan.persistence.spi.CacheLoader;
 import org.infinispan.manager.CacheContainer;
 import org.infinispan.test.AbstractInfinispanTest;
 import org.infinispan.test.TestingUtil;
@@ -35,13 +34,13 @@ public class TableNameUniquenessTest extends AbstractInfinispanTest {
          Cache<String, String> first = cm.getCache("first");
          Cache<String, String> second = cm.getCache("second");
 
-         CacheLoaderConfiguration firstCacheLoaderConfig = first.getCacheConfiguration().loaders().cacheLoaders().get(0);
-         CacheLoaderConfiguration secondCacheLoaderConfig = second.getCacheConfiguration().loaders().cacheLoaders().get(0);
-         assertEquals(JdbcStringBasedCacheStoreConfiguration.class, firstCacheLoaderConfig.getClass());
-         assertEquals(JdbcStringBasedCacheStoreConfiguration.class, secondCacheLoaderConfig.getClass());
+         StoreConfiguration firstCacheLoaderConfig = first.getCacheConfiguration().persistence().stores().get(0);
+         StoreConfiguration secondCacheLoaderConfig = second.getCacheConfiguration().persistence().stores().get(0);
+         assertEquals(JdbcStringBasedStoreConfiguration.class, firstCacheLoaderConfig.getClass());
+         assertEquals(JdbcStringBasedStoreConfiguration.class, secondCacheLoaderConfig.getClass());
 
-         JdbcStringBasedCacheStore firstCs = (JdbcStringBasedCacheStore) TestingUtil.extractComponent(first, CacheLoaderManager.class).getCacheLoader();
-         JdbcStringBasedCacheStore secondCs = (JdbcStringBasedCacheStore) TestingUtil.extractComponent(second, CacheLoaderManager.class).getCacheLoader();
+         JdbcStringBasedStore firstCs = (JdbcStringBasedStore) TestingUtil.getFirstLoader(first);
+         JdbcStringBasedStore secondCs = (JdbcStringBasedStore) TestingUtil.getFirstLoader(second);
 
          assertTableExistence(firstCs.getConnectionFactory().getConnection(), firstCs.getTableManipulation().getIdentifierQuoteString(), "second", "first", "ISPN_STRING_TABLE");
 
@@ -58,8 +57,8 @@ public class TableNameUniquenessTest extends AbstractInfinispanTest {
          Cache<String, String> first = cm.getCache("first");
          Cache<String, String> second = cm.getCache("second");
 
-         JdbcBinaryCacheStore firstCs = (JdbcBinaryCacheStore) TestingUtil.extractComponent(first, CacheLoaderManager.class).getCacheLoader();
-         JdbcBinaryCacheStore secondCs = (JdbcBinaryCacheStore) TestingUtil.extractComponent(second, CacheLoaderManager.class).getCacheLoader();
+         JdbcBinaryStore firstCs = (JdbcBinaryStore) TestingUtil.getFirstLoader(first);
+         JdbcBinaryStore secondCs = (JdbcBinaryStore) TestingUtil.getFirstLoader(second);
 
          assertTableExistence(firstCs.getConnectionFactory().getConnection(), firstCs.getTableManipulation().getIdentifierQuoteString(), "second", "first", "ISPN_BUCKET_TABLE");
 
@@ -78,11 +77,11 @@ public class TableNameUniquenessTest extends AbstractInfinispanTest {
          Cache<String, Person> first = cm.getCache("first");
          Cache<String, Person> second = cm.getCache("second");
 
-         JdbcMixedCacheStore firstCs = (JdbcMixedCacheStore) TestingUtil.extractComponent(first, CacheLoaderManager.class).getCacheLoader();
-         JdbcMixedCacheStore secondCs = (JdbcMixedCacheStore) TestingUtil.extractComponent(second, CacheLoaderManager.class).getCacheLoader();
+         JdbcMixedCacheStore firstCs = (JdbcMixedCacheStore) TestingUtil.getFirstLoader(first);
+         JdbcMixedCacheStore secondCs = (JdbcMixedCacheStore) TestingUtil.getFirstLoader(second);
 
-         assertTableExistence(firstCs.getConnectionFactory().getConnection(), firstCs.getBinaryCacheStore().getTableManipulation().getIdentifierQuoteString(), "second", "first", "ISPN_MIXED_STR_TABLE");
-         assertTableExistence(firstCs.getConnectionFactory().getConnection(), firstCs.getBinaryCacheStore().getTableManipulation().getIdentifierQuoteString(), "second", "first", "ISPN_MIXED_BINARY_TABLE");
+         assertTableExistence(firstCs.getConnectionFactory().getConnection(), firstCs.getBinaryStore().getTableManipulation().getIdentifierQuoteString(), "second", "first", "ISPN_MIXED_STR_TABLE");
+         assertTableExistence(firstCs.getConnectionFactory().getConnection(), firstCs.getBinaryStore().getTableManipulation().getIdentifierQuoteString(), "second", "first", "ISPN_MIXED_BINARY_TABLE");
 
          assertNoOverlapingState(first, second, firstCs, secondCs);
 
@@ -91,8 +90,8 @@ public class TableNameUniquenessTest extends AbstractInfinispanTest {
          Person person2 = new Person(29, "Manik");
 
          first.put("k", person1);
-         assert firstCs.containsKey("k");
-         assert !secondCs.containsKey("k");
+         assert firstCs.contains("k");
+         assert !secondCs.contains("k");
          assert first.get("k").equals(person1);
          assert second.get("k") == null;
 
@@ -144,10 +143,10 @@ public class TableNameUniquenessTest extends AbstractInfinispanTest {
       connection.close();
    }
 
-   private void assertNoOverlapingState(Cache first, Cache second, CacheStore firstCs, CacheStore secondCs) throws CacheLoaderException {
+   private void assertNoOverlapingState(Cache first, Cache second, CacheLoader firstCs, CacheLoader secondCs) throws CacheLoaderException {
       first.put("k", "v");
-      assert firstCs.containsKey("k");
-      assert !secondCs.containsKey("k");
+      assert firstCs.contains("k");
+      assert !secondCs.contains("k");
       assert first.get("k").equals("v");
       assert second.get("k") == null;
 

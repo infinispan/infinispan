@@ -1,38 +1,34 @@
 package org.infinispan.loaders.jdbc.mixed;
 
-import org.infinispan.Cache;
-import org.infinispan.configuration.cache.CacheLoaderConfiguration;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
-import org.infinispan.container.entries.InternalCacheEntry;
-import org.infinispan.loaders.CacheLoaderException;
-import org.infinispan.loaders.jdbc.binary.JdbcBinaryCacheStore;
+import org.infinispan.persistence.CacheLoaderException;
+import org.infinispan.loaders.jdbc.binary.JdbcBinaryStore;
 import org.infinispan.loaders.jdbc.configuration.ConnectionFactoryConfiguration;
-import org.infinispan.loaders.jdbc.configuration.JdbcBinaryCacheStoreConfiguration;
-import org.infinispan.loaders.jdbc.configuration.JdbcBinaryCacheStoreConfigurationBuilder;
-import org.infinispan.loaders.jdbc.configuration.JdbcMixedCacheStoreConfiguration;
-import org.infinispan.loaders.jdbc.configuration.JdbcStringBasedCacheStoreConfiguration;
-import org.infinispan.loaders.jdbc.configuration.JdbcStringBasedCacheStoreConfigurationBuilder;
+import org.infinispan.loaders.jdbc.configuration.JdbcBinaryStoreConfiguration;
+import org.infinispan.loaders.jdbc.configuration.JdbcBinaryStoreConfigurationBuilder;
+import org.infinispan.loaders.jdbc.configuration.JdbcMixedStoreConfiguration;
+import org.infinispan.loaders.jdbc.configuration.JdbcStringBasedStoreConfiguration;
+import org.infinispan.loaders.jdbc.configuration.JdbcStringBasedStoreConfigurationBuilder;
 import org.infinispan.loaders.jdbc.connectionfactory.ConnectionFactory;
-import org.infinispan.loaders.jdbc.stringbased.JdbcStringBasedCacheStore;
-import org.infinispan.loaders.spi.AbstractCacheStore;
-import org.infinispan.loaders.spi.CacheStore;
-import org.infinispan.commons.marshall.StreamingMarshaller;
+import org.infinispan.loaders.jdbc.stringbased.JdbcStringBasedStore;
+import org.infinispan.persistence.jdbc.mixed.InitialisationContextDelegate;
+import org.infinispan.persistence.spi.AdvancedLoadWriteStore;
+import org.infinispan.persistence.spi.InitializationContext;
+import org.infinispan.persistence.spi.MarshalledEntry;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
-import java.io.ObjectInput;
-import java.io.ObjectOutput;
-import java.util.Set;
+import java.util.concurrent.Executor;
 
 /**
- * Cache store that combines functionality of {@link JdbcBinaryCacheStore} and {@link JdbcStringBasedCacheStore}. It
- * aggregates an instance of JdbcBinaryCacheStore and JdbcStringBasedCacheStore, delegating work to one of them
+ * Cache store that combines functionality of {@link org.infinispan.loaders.jdbc.binary.JdbcBinaryStore} and {@link org.infinispan.loaders.jdbc.stringbased.JdbcStringBasedStore}. It
+ * aggregates an instance of JdbcBinaryStore and JdbcStringBasedStore, delegating work to one of them
  * (sometimes both, see below) based on the passed in key. In order to determine which store to use it will rely on the
- * configured {@link org.infinispan.loaders.keymappers.Key2StringMapper} )(see configuration).
+ * configured {@link org.infinispan.persistence.keymappers.Key2StringMapper} )(see configuration).
  * <p/>
  * The advantage it brings is the possibility of efficiently storing string(able) keyed {@link
  * org.infinispan.container.entries.InternalCacheEntry}s, and at the same time being able to store any other keys, a la
- * {@link org.infinispan.loaders.jdbc.binary.JdbcBinaryCacheStore}.
+ * {@link org.infinispan.loaders.jdbc.binary.JdbcBinaryStore}.
  * <p/>
  * There will only be a performance cost for the aggregate operations: loadAll, fromStream, toStream and clear. For
  * these operations there will be two distinct database call, one for each JdbcStore implementation. Most of application
@@ -45,54 +41,50 @@ import java.util.Set;
  * shared resource.
  *
  * @author Mircea.Markus@jboss.com
- * @see org.infinispan.loaders.jdbc.binary.JdbcBinaryCacheStore
- * @see org.infinispan.loaders.jdbc.stringbased.JdbcStringBasedCacheStore
+ * @see org.infinispan.loaders.jdbc.binary.JdbcBinaryStore
+ * @see org.infinispan.loaders.jdbc.stringbased.JdbcStringBasedStore
  */
-public class JdbcMixedCacheStore extends AbstractCacheStore {
+public class JdbcMixedCacheStore implements AdvancedLoadWriteStore {
 
    private static final Log log = LogFactory.getLog(JdbcMixedCacheStore.class);
 
-   private JdbcMixedCacheStoreConfiguration configuration;
+   private JdbcMixedStoreConfiguration configuration;
 
-   private JdbcBinaryCacheStore binaryCacheStore = new JdbcBinaryCacheStore();
-   private JdbcStringBasedCacheStore stringBasedCacheStore = new JdbcStringBasedCacheStore();
+   private JdbcBinaryStore binaryStore = new JdbcBinaryStore();
+   private JdbcStringBasedStore stringStore = new JdbcStringBasedStore();
    private ConnectionFactory sharedConnectionFactory;
 
    @Override
-   public void init(CacheLoaderConfiguration configuration, Cache<?, ?> cache, StreamingMarshaller m) throws
-         CacheLoaderException {
-      this.configuration = validateConfigurationClass(configuration, JdbcMixedCacheStoreConfiguration.class);
-      super.init(configuration, cache, m);
-      binaryCacheStore.init(buildBinaryStoreConfiguration(this.configuration), cache, m);
-      stringBasedCacheStore.init(buildStringStoreConfiguration(this.configuration), cache, m);
+   public void init(InitializationContext ctx) {
+      this.configuration = ctx.getConfiguration();
+      binaryStore.init(new InitialisationContextDelegate(ctx, buildBinaryStoreConfiguration(this.configuration)));
+      stringStore.init(new InitialisationContextDelegate(ctx, buildStringStoreConfiguration(this.configuration)));
    }
 
    @Override
-   public void start() throws CacheLoaderException {
-      super.start();
+   public void start()  {
       ConnectionFactoryConfiguration factoryConfig = configuration.connectionFactory();
       sharedConnectionFactory = ConnectionFactory.getConnectionFactory(factoryConfig.connectionFactoryClass().getName(),
             configuration.getClass().getClassLoader());
       sharedConnectionFactory.start(factoryConfig, configuration.getClass().getClassLoader());
-      binaryCacheStore.doConnectionFactoryInitialization(sharedConnectionFactory);
-      binaryCacheStore.start();
-      stringBasedCacheStore.doConnectionFactoryInitialization(sharedConnectionFactory);
-      stringBasedCacheStore.start();
+      binaryStore.doConnectionFactoryInitialization(sharedConnectionFactory);
+      binaryStore.start();
+      stringStore.initializeConnectionFactory(sharedConnectionFactory);
+      stringStore.start();
    }
 
    @Override
-   public void stop() throws CacheLoaderException {
-      super.stop();
+   public void stop()  {
 
       Throwable cause = null;
       try {
-         binaryCacheStore.stop();
+         binaryStore.stop();
       } catch (Throwable t) {
          if (cause == null) cause = t;
          log.debug("Exception while stopping", t);
       }
       try {
-         stringBasedCacheStore.stop();
+         stringStore.stop();
       } catch (Throwable t) {
          if (cause == null) cause = t;
          log.debug("Exception while stopping", t);
@@ -109,98 +101,66 @@ public class JdbcMixedCacheStore extends AbstractCacheStore {
    }
 
    @Override
-   protected void purgeInternal() throws CacheLoaderException {
-      binaryCacheStore.purgeInternal();
-      stringBasedCacheStore.purgeInternal();
+   public void purge(Executor threadPool, PurgeListener task) {
+      binaryStore.purge(threadPool, task);
+      stringStore.purge(threadPool, task);
+   }
+   
+   @Override
+   public MarshalledEntry load(Object key)  {
+      return getStore(key).load(key);
    }
 
    @Override
-   public InternalCacheEntry load(Object key) throws CacheLoaderException {
-      return getCacheStore(key).load(key);
+   public void process(KeyFilter filter, CacheLoaderTask task, Executor executor, boolean fetchValue, boolean fetchMetadata) {
+      binaryStore.process(filter, task, executor, fetchValue, fetchMetadata);
+      stringStore.process(filter, task, executor, fetchValue, fetchMetadata);
    }
 
    @Override
-   public Set<InternalCacheEntry> loadAll() throws CacheLoaderException {
-      Set<InternalCacheEntry> fromBuckets = binaryCacheStore.loadAll();
-      Set<InternalCacheEntry> fromStrings = stringBasedCacheStore.loadAll();
-      if (log.isTraceEnabled()) {
-         log.tracef("Loaded from bucket: %s", fromBuckets);
-         log.tracef("Loaded from string: %s", fromStrings);
-      }
-      fromBuckets.addAll(fromStrings);
-      return fromBuckets;
+   public void write(MarshalledEntry ed)  {
+      getStore(ed.getKey()).write(ed);
    }
 
    @Override
-   public Set<InternalCacheEntry> load(int numEntries) throws CacheLoaderException {
-      if (numEntries < 0) return loadAll();
-      Set<InternalCacheEntry> set = stringBasedCacheStore.load(numEntries);
-
-      if (set.size() < numEntries) {
-         Set<InternalCacheEntry> otherSet = binaryCacheStore.load(numEntries - set.size());
-         set.addAll(otherSet);
-      }
-
-      return set;
+   public boolean delete(Object key) {
+      return getStore(key).delete(key);
    }
 
    @Override
-   public Set<Object> loadAllKeys(Set<Object> keysToExclude) throws CacheLoaderException {
-      Set<Object> fromBuckets = binaryCacheStore.loadAllKeys(keysToExclude);
-      Set<Object> fromStrings = stringBasedCacheStore.loadAllKeys(keysToExclude);
-      fromBuckets.addAll(fromStrings);
-      return fromBuckets;
+   public int size() {
+      return stringStore.size() + binaryStore.size();
    }
 
    @Override
-   public void store(InternalCacheEntry ed) throws CacheLoaderException {
-      getCacheStore(ed.getKey()).store(ed);
+   public boolean contains(Object key) {
+      return getStore(key).contains(key);
    }
 
    @Override
-   public void fromStream(ObjectInput inputStream) throws CacheLoaderException {
-      binaryCacheStore.fromStream(inputStream);
-      stringBasedCacheStore.fromStream(inputStream);
-   }
-
-   @Override
-   public void toStream(ObjectOutput outputStream) throws CacheLoaderException {
-      binaryCacheStore.toStream(outputStream);
-      stringBasedCacheStore.toStream(outputStream);
-   }
-
-   @Override
-   public boolean remove(Object key) throws CacheLoaderException {
-      return getCacheStore(key).remove(key);
-   }
-
-   @Override
-   public void clear() throws CacheLoaderException {
-      binaryCacheStore.clear();
-      stringBasedCacheStore.clear();
-   }
-   private CacheStore getCacheStore(Object key) {
-      return stringBasedCacheStore.supportsKey(key.getClass()) ? stringBasedCacheStore : binaryCacheStore;
+   public void clear()  {
+      binaryStore.clear();
+      stringStore.clear();
    }
 
    public ConnectionFactory getConnectionFactory() {
       return sharedConnectionFactory;
    }
 
-   public JdbcBinaryCacheStore getBinaryCacheStore() {
-      return binaryCacheStore;
+   public JdbcBinaryStore getBinaryStore() {
+      return binaryStore;
    }
 
-   public JdbcStringBasedCacheStore getStringBasedCacheStore() {
-      return stringBasedCacheStore;
+   public JdbcStringBasedStore getStringStore() {
+      return stringStore;
    }
 
    // Methods to build the String and Binary Configurations.
 
-   private JdbcStringBasedCacheStoreConfiguration buildStringStoreConfiguration(JdbcMixedCacheStoreConfiguration configuration){
+   private JdbcStringBasedStoreConfiguration buildStringStoreConfiguration(JdbcMixedStoreConfiguration configuration){
       ConfigurationBuilder builder = new ConfigurationBuilder();
-      JdbcStringBasedCacheStoreConfigurationBuilder stringBuilder = builder.loaders().addLoader
-            (JdbcStringBasedCacheStoreConfigurationBuilder.class).manageConnectionFactory(false);
+      JdbcStringBasedStoreConfigurationBuilder stringBuilder = builder.persistence().addStore
+            (JdbcStringBasedStoreConfigurationBuilder.class).manageConnectionFactory(false);
       stringBuilder.
             key2StringMapper(configuration.key2StringMapper()).
             table().read(configuration.stringTable());
@@ -208,11 +168,19 @@ public class JdbcMixedCacheStore extends AbstractCacheStore {
       return stringBuilder.create();
    }
 
-   private JdbcBinaryCacheStoreConfiguration buildBinaryStoreConfiguration(JdbcMixedCacheStoreConfiguration configuration) {
+   private JdbcBinaryStoreConfiguration buildBinaryStoreConfiguration(JdbcMixedStoreConfiguration configuration) {
       ConfigurationBuilder builder = new ConfigurationBuilder();
-      JdbcBinaryCacheStoreConfigurationBuilder binaryBuilder = builder.loaders().addLoader
-            (JdbcBinaryCacheStoreConfigurationBuilder.class).manageConnectionFactory(false);
+      JdbcBinaryStoreConfigurationBuilder binaryBuilder = builder.persistence().addStore
+            (JdbcBinaryStoreConfigurationBuilder.class).manageConnectionFactory(false);
       binaryBuilder.table().read(configuration.binaryTable());
       return binaryBuilder.create();
+   }
+
+   private AdvancedLoadWriteStore getStore(Object key) {
+      return stringStore.supportsKey(key.getClass()) ? stringStore : binaryStore;
+   }
+
+   public JdbcMixedStoreConfiguration getConfiguration() {
+      return configuration;
    }
 }

@@ -5,7 +5,7 @@ import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 
-import org.infinispan.configuration.cache.CacheLoaderConfiguration;
+import org.infinispan.configuration.cache.StoreConfiguration;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.test.AbstractInfinispanTest;
 import org.infinispan.test.TestingUtil;
@@ -27,7 +27,7 @@ public class XmlFileParsingTest extends AbstractInfinispanTest {
    public void testStringKeyedJdbcStore() throws Exception {
       String config = INFINISPAN_START_TAG +
             "   <default>\n" +
-            "     <loaders>\n" +
+            "     <persistence>\n" +
             "       <stringKeyedJdbcStore xmlns=\"urn:infinispan:config:jdbc:6.0\" key2StringMapper=\"org.infinispan.loaders.jdbc.configuration.DummyKey2StringMapper\">\n" +
             "         <connectionPool connectionUrl=\"jdbc:h2:mem:infinispan;DB_CLOSE_DELAY=-1\" username=\"dbuser\" password=\"dbpass\" driverClass=\"org.h2.Driver\"/>\n" +
             "         <stringKeyedTable prefix=\"entry\" fetchSize=\"34\" batchSize=\"128\" >\n" +
@@ -37,11 +37,11 @@ public class XmlFileParsingTest extends AbstractInfinispanTest {
             "         </stringKeyedTable>\n" +
             "         <async enabled=\"true\" />\n" +
             "       </stringKeyedJdbcStore>\n" +
-            "     </loaders>\n" +
+            "     </persistence>\n" +
             "   </default>\n" +
             TestingUtil.INFINISPAN_END_TAG;
 
-      JdbcStringBasedCacheStoreConfiguration store = (JdbcStringBasedCacheStoreConfiguration) buildCacheManagerWithCacheStore(config);
+      JdbcStringBasedStoreConfiguration store = (JdbcStringBasedStoreConfiguration) buildCacheManagerWithCacheStore(config);
       assertEquals(128, store.table().batchSize());
       assertEquals(34, store.table().fetchSize());
       assertEquals("BINARY", store.table().dataColumnType());
@@ -58,7 +58,7 @@ public class XmlFileParsingTest extends AbstractInfinispanTest {
    public void testBinaryKeyedJdbcStore() throws Exception {
       String config = INFINISPAN_START_TAG +
             "   <default>\n" +
-            "     <loaders>\n" +
+            "     <persistence>\n" +
             "       <binaryKeyedJdbcStore xmlns=\"urn:infinispan:config:jdbc:6.0\" ignoreModifications=\"true\">\n" +
             "         <simpleConnection connectionUrl=\"jdbc:h2:mem:infinispan;DB_CLOSE_DELAY=-1\" username=\"dbuser\" password=\"dbpass\" driverClass=\"org.h2.Driver\"/>\n" +
             "         <binaryKeyedTable prefix=\"bucket\" fetchSize=\"34\" batchSize=\"128\">\n" +
@@ -66,13 +66,13 @@ public class XmlFileParsingTest extends AbstractInfinispanTest {
             "           <dataColumn name=\"datum\" type=\"BINARY\" />\n" +
             "           <timestampColumn name=\"version\" type=\"BIGINT\" />\n" +
             "         </binaryKeyedTable>\n" +
-            "         <singletonStore enabled=\"true\" />\n" +
+            "         <singleton enabled=\"true\" />\n" +
             "       </binaryKeyedJdbcStore>\n" +
-            "     </loaders>\n" +
+            "     </persistence>\n" +
             "   </default>\n" +
             TestingUtil.INFINISPAN_END_TAG;
 
-      JdbcBinaryCacheStoreConfiguration store = (JdbcBinaryCacheStoreConfiguration) buildCacheManagerWithCacheStore(config);
+      JdbcBinaryStoreConfiguration store = (JdbcBinaryStoreConfiguration) buildCacheManagerWithCacheStore(config);
       assertTrue(store.ignoreModifications());
       assertEquals("bucket", store.table().tableNamePrefix());
       assertEquals(128, store.table().batchSize());
@@ -90,7 +90,7 @@ public class XmlFileParsingTest extends AbstractInfinispanTest {
    public void testMixedKeyedJdbcStore() throws Exception {
       String config = INFINISPAN_START_TAG +
             "   <default>\n" +
-            "     <loaders>\n" +
+            "     <persistence>\n" +
             "       <mixedKeyedJdbcStore xmlns=\"urn:infinispan:config:jdbc:6.0\" key2StringMapper=\"org.infinispan.loaders.jdbc.configuration.DummyKey2StringMapper\">\n" +
             "         <dataSource jndiUrl=\"java:MyDataSource\" />\n" +
             "         <stringKeyedTable prefix=\"entry\" fetchSize=\"34\" batchSize=\"128\">\n" +
@@ -104,13 +104,13 @@ public class XmlFileParsingTest extends AbstractInfinispanTest {
             "           <timestampColumn name=\"version\" type=\"BIGINT\" />\n" +
             "         </binaryKeyedTable>\n" +
             "         <async enabled=\"true\" />\n" +
-            "         <singletonStore enabled=\"true\" />\n" +
+            "         <singleton enabled=\"true\" />\n" +
             "       </mixedKeyedJdbcStore>\n" +
-            "     </loaders>\n" +
+            "     </persistence>\n" +
             "   </default>\n" +
             TestingUtil.INFINISPAN_END_TAG;
 
-      JdbcMixedCacheStoreConfiguration store = (JdbcMixedCacheStoreConfiguration) buildCacheManagerWithCacheStore(config);
+      JdbcMixedStoreConfiguration store = (JdbcMixedStoreConfiguration) buildCacheManagerWithCacheStore(config);
 
       assertEquals("entry", store.stringTable().tableNamePrefix());
       assertEquals(128, store.stringTable().batchSize());
@@ -129,10 +129,10 @@ public class XmlFileParsingTest extends AbstractInfinispanTest {
       assertEquals("org.infinispan.loaders.jdbc.configuration.DummyKey2StringMapper", store.key2StringMapper());
    }
 
-   private CacheLoaderConfiguration buildCacheManagerWithCacheStore(final String config) throws IOException {
+   private StoreConfiguration buildCacheManagerWithCacheStore(final String config) throws IOException {
       InputStream is = new ByteArrayInputStream(config.getBytes());
       cacheManager = TestCacheManagerFactory.fromStream(is);
-      assertEquals(1, cacheManager.getDefaultCacheConfiguration().loaders().cacheLoaders().size());
-      return cacheManager.getDefaultCacheConfiguration().loaders().cacheLoaders().get(0);
+      assertEquals(1, cacheManager.getDefaultCacheConfiguration().persistence().stores().size());
+      return cacheManager.getDefaultCacheConfiguration().persistence().stores().get(0);
    }
 }

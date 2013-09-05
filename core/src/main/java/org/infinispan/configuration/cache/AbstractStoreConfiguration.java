@@ -1,29 +1,32 @@
 package org.infinispan.configuration.cache;
 
-import org.infinispan.commons.util.TypedProperties;
+import java.util.Properties;
 
-public abstract class AbstractStoreConfiguration extends AbstractLoaderConfiguration implements CacheStoreConfiguration {
+public class AbstractStoreConfiguration implements StoreConfiguration {
 
    private final boolean purgeOnStartup;
-   private final boolean purgeSynchronously;
-   private final int purgerThreads;
 
-   private boolean fetchPersistentState;
-   private boolean ignoreModifications;
+   private final boolean fetchPersistentState;
+   private final boolean ignoreModifications;
+   private final boolean preload;
+   private final boolean shared;
 
+   private final Properties properties;
    private final AsyncStoreConfiguration async;
+
    private final SingletonStoreConfiguration singletonStore;
 
-   protected AbstractStoreConfiguration(boolean purgeOnStartup, boolean purgeSynchronously, int purgerThreads, boolean fetchPersistentState,
-         boolean ignoreModifications, TypedProperties properties, AsyncStoreConfiguration async, SingletonStoreConfiguration singletonStore) {
-      super(properties);
+   public AbstractStoreConfiguration(boolean purgeOnStartup, boolean fetchPersistentState, boolean ignoreModifications,
+                                     AsyncStoreConfiguration async, SingletonStoreConfiguration singletonStore, boolean preload,
+                                     boolean shared, Properties properties) {
       this.purgeOnStartup = purgeOnStartup;
-      this.purgeSynchronously = purgeSynchronously;
-      this.purgerThreads = purgerThreads;
       this.fetchPersistentState = fetchPersistentState;
       this.ignoreModifications = ignoreModifications;
       this.async = async;
       this.singletonStore = singletonStore;
+      this.preload = preload;
+      this.shared = shared;
+      this.properties = properties;
    }
 
    /**
@@ -36,7 +39,7 @@ public abstract class AbstractStoreConfiguration extends AbstractLoaderConfigura
    }
 
    /**
-    * SingletonStore is a delegating cache store used for situations when only one instance in a
+    * SingletonStore is a delegating store used for situations when only one instance in a
     * cluster should interact with the underlying store. The coordinator of the cluster will be
     * responsible for the underlying CacheStore. SingletonStore is a simply facade to a real
     * CacheStore implementation. It always delegates reads to the real CacheStore.
@@ -54,20 +57,10 @@ public abstract class AbstractStoreConfiguration extends AbstractLoaderConfigura
       return purgeOnStartup;
    }
 
-   /**
-    * If true, CacheStore#purgeExpired() call will be done synchronously
-    */
-   @Override
-   public boolean purgeSynchronously() {
-      return purgeSynchronously;
-   }
 
-   /**
-    * The number of threads to use when purging asynchronously.
-    */
    @Override
-   public int purgerThreads() {
-      return purgerThreads;
+   public boolean shared() {
+      return shared;
    }
 
    /**
@@ -94,21 +87,29 @@ public abstract class AbstractStoreConfiguration extends AbstractLoaderConfigura
       return ignoreModifications;
    }
 
+
+   @Override
+   public boolean preload() {
+      return preload;
+   }
+
+   @Override
+   public Properties properties() {
+      return properties;
+   }
+
    @Override
    public boolean equals(Object o) {
       if (this == o) return true;
-      if (o == null || getClass() != o.getClass()) return false;
+      if (!(o instanceof AbstractStoreConfiguration)) return false;
 
       AbstractStoreConfiguration that = (AbstractStoreConfiguration) o;
 
-      if (!super.equals(that)) return false;
       if (fetchPersistentState != that.fetchPersistentState) return false;
       if (ignoreModifications != that.ignoreModifications) return false;
       if (purgeOnStartup != that.purgeOnStartup) return false;
-      if (purgeSynchronously != that.purgeSynchronously) return false;
-      if (purgerThreads != that.purgerThreads) return false;
-      if (async != null ? !async.equals(that.async) : that.async != null)
-         return false;
+      if (async != null ? !async.equals(that.async) : that.async != null) return false;
+      if (properties != null ? !properties.equals(that.properties) : that.properties != null) return false;
       if (singletonStore != null ? !singletonStore.equals(that.singletonStore) : that.singletonStore != null)
          return false;
 
@@ -117,14 +118,24 @@ public abstract class AbstractStoreConfiguration extends AbstractLoaderConfigura
 
    @Override
    public int hashCode() {
-      int result = 31 * super.hashCode() + (purgeOnStartup ? 1 : 0);
-      result = 31 * result + (purgeSynchronously ? 1 : 0);
-      result = 31 * result + purgerThreads;
+      int result = (purgeOnStartup ? 1 : 0);
       result = 31 * result + (fetchPersistentState ? 1 : 0);
       result = 31 * result + (ignoreModifications ? 1 : 0);
       result = 31 * result + (async != null ? async.hashCode() : 0);
       result = 31 * result + (singletonStore != null ? singletonStore.hashCode() : 0);
+      result = 31 * result + (properties != null ? properties.hashCode() : 0);
       return result;
    }
 
+   @Override
+   public String toString() {
+      return "AbstractStoreConfiguration{" +
+            "purgeOnStartup=" + purgeOnStartup +
+            ", fetchPersistentState=" + fetchPersistentState +
+            ", ignoreModifications=" + ignoreModifications +
+            ", async=" + async +
+            ", singletonStore=" + singletonStore +
+            ", properties=" + properties +
+            '}';
+   }
 }

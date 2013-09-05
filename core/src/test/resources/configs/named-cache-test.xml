@@ -155,32 +155,32 @@
    </namedCache>
 
    <namedCache name="withFileStore">
-      <loaders passivation="false" shared="false" preload="true">
+      <persistence passivation="false">
 
          <!--
             We can have multiple cache loaders, which get chained
          -->
-         <fileStore fetchPersistentState="true" ignoreModifications="true" purgeOnStartup="true" location="/tmp/FileCacheStore-Location" fsyncMode="PERIODIC" fsyncInterval="2000">
+         <singleFile preload="true" fetchPersistentState="true" ignoreModifications="true" purgeOnStartup="true" location="/tmp/FileCacheStore-Location">
             <async enabled="true" flushLockTimeout="15000" threadPoolSize="5" modificationQueueSize="700"/>
-            <singletonStore enabled="true" pushStateWhenCoordinator="true" pushStateTimeout="20000"/>
-         </fileStore>
-      </loaders>
+            <singleton enabled="true" pushStateWhenCoordinator="true" pushStateTimeout="20000"/>
+         </singleFile>
+      </persistence>
    </namedCache>
    
    <namedCache name="withClusterLoader">
-      <loaders passivation="false" shared="false" preload="true">
-         <clusterLoader remoteCallTimeout="15000" />
-      </loaders>
+      <persistence passivation="false">
+         <cluster remoteCallTimeout="15000" />
+      </persistence>
    </namedCache>
 
    <namedCache name="withLoaderDefaults">
-      <loaders>
-         <loader class="org.infinispan.loaders.file.FileCacheStore">
+      <persistence>
+         <store class="org.infinispan.persistence.file.SingleFileStore">
             <properties>
                <property name="location" value="/tmp/Another-FileCacheStore-Location"/>
             </properties>
-         </loader>
-      </loaders>
+         </store>
+      </persistence>
    </namedCache>
 
    <namedCache name="dist">
@@ -256,15 +256,15 @@
       <jmxStatistics enabled="false"/>
       <deadlockDetection enabled="true" spinDuration="1221"/>
       <eviction maxEntries="1000" strategy="LIRS" />
-      <loaders passivation="true" shared="true" preload="true"> 
-         <loader class="org.infinispan.loaders.file.FileCacheStore" fetchPersistentState="true" ignoreModifications="true" purgeOnStartup="true"> 
-           <properties> 
-             <property name="location" value="${java.io.tmpdir}"/>
+      <persistence passivation="true">
+         <store class="org.infinispan.persistence.file.SingleFileStore" shared="false" preload="true" fetchPersistentState="true" ignoreModifications="true" purgeOnStartup="true">
+            <async enabled="true" threadPoolSize="10" flushLockTimeout="10000"/>
+            <singleton enabled="true" pushStateWhenCoordinator="true" pushStateTimeout="20000"/>
+            <properties>
+              <property name="location" value="${java.io.tmpdir}"/>
            </properties>
-           <async enabled="true" threadPoolSize="10" flushLockTimeout="10000"/> 
-           <singletonStore enabled="true" pushStateWhenCoordinator="true" pushStateTimeout="20000"/> 
-       </loader>
-     </loaders>
+       </store>
+     </persistence>
      <locking supportsConcurrentUpdates="true"/>
    </namedCache>
 

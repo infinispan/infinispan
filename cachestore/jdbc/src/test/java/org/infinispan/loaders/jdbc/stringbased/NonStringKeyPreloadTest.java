@@ -13,12 +13,12 @@ import org.infinispan.commons.configuration.Builder;
 import org.infinispan.commons.configuration.BuiltBy;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.eviction.EvictionStrategy;
-import org.infinispan.loaders.CacheLoaderException;
-import org.infinispan.loaders.jdbc.configuration.AbstractJdbcCacheStoreConfigurationBuilder;
-import org.infinispan.loaders.jdbc.configuration.AbstractJdbcCacheStoreConfigurationChildBuilder;
+import org.infinispan.persistence.CacheLoaderException;
+import org.infinispan.loaders.jdbc.configuration.AbstractJdbcStoreConfigurationBuilder;
+import org.infinispan.loaders.jdbc.configuration.AbstractJdbcStoreConfigurationChildBuilder;
 import org.infinispan.loaders.jdbc.configuration.ConnectionFactoryConfiguration;
 import org.infinispan.loaders.jdbc.configuration.ConnectionFactoryConfigurationBuilder;
-import org.infinispan.loaders.jdbc.configuration.JdbcStringBasedCacheStoreConfigurationBuilder;
+import org.infinispan.loaders.jdbc.configuration.JdbcStringBasedStoreConfigurationBuilder;
 import org.infinispan.loaders.jdbc.configuration.PooledConnectionFactoryConfiguration;
 import org.infinispan.loaders.jdbc.connectionfactory.ConnectionFactory;
 import org.infinispan.loaders.jdbc.connectionfactory.PooledConnectionFactory;
@@ -122,15 +122,15 @@ public class NonStringKeyPreloadTest extends AbstractInfinispanTest {
    static ConfigurationBuilder createCacheStoreConfig(String mapperName, boolean wrap, boolean preload) {
       ConfigurationBuilder cfg = TestCacheManagerFactory.getDefaultCacheConfiguration(false);
 
-      JdbcStringBasedCacheStoreConfigurationBuilder store = cfg
-         .loaders()
-            .preload(preload)
-            .addStore(JdbcStringBasedCacheStoreConfigurationBuilder.class)
+      JdbcStringBasedStoreConfigurationBuilder store = cfg
+         .persistence()
+            .addStore(JdbcStringBasedStoreConfigurationBuilder.class)
                .fetchPersistentState(true)
+               .preload(preload)
                .key2StringMapper(mapperName);
       UnitTestDatabaseManager.buildTableManipulation(store.table(), false);
       if (wrap) {
-         ConnectionFactoryConfigurationBuilder<?> tmp = UnitTestDatabaseManager.configureUniqueConnectionFactory(new ConfigurationBuilder().loaders().addStore(JdbcStringBasedCacheStoreConfigurationBuilder.class));
+         ConnectionFactoryConfigurationBuilder<?> tmp = UnitTestDatabaseManager.configureUniqueConnectionFactory(new ConfigurationBuilder().persistence().addStore(JdbcStringBasedStoreConfigurationBuilder.class));
          store.connectionFactory(new SharedConnectionFactoryConfigurationBuilder(store)).read((PooledConnectionFactoryConfiguration)tmp.create());
       } else {
          UnitTestDatabaseManager.configureUniqueConnectionFactory(store);
@@ -180,9 +180,9 @@ public class NonStringKeyPreloadTest extends AbstractInfinispanTest {
       }
    }
 
-   public static class SharedConnectionFactoryConfigurationBuilder<S extends AbstractJdbcCacheStoreConfigurationBuilder<?, S>> extends AbstractJdbcCacheStoreConfigurationChildBuilder<S> implements ConnectionFactoryConfigurationBuilder<SharedConnectionFactoryConfiguration> {
+   public static class SharedConnectionFactoryConfigurationBuilder<S extends AbstractJdbcStoreConfigurationBuilder<?, S>> extends AbstractJdbcStoreConfigurationChildBuilder<S> implements ConnectionFactoryConfigurationBuilder<SharedConnectionFactoryConfiguration> {
 
-      public SharedConnectionFactoryConfigurationBuilder(AbstractJdbcCacheStoreConfigurationBuilder<?, S> builder) {
+      public SharedConnectionFactoryConfigurationBuilder(AbstractJdbcStoreConfigurationBuilder<?, S> builder) {
          super(builder);
       }
 

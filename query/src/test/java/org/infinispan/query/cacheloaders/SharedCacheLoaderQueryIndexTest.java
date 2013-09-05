@@ -1,9 +1,9 @@
 package org.infinispan.query.cacheloaders;
 
 import org.infinispan.configuration.cache.ConfigurationBuilder;
-import org.infinispan.loaders.dummy.DummyInMemoryCacheStore;
-import org.infinispan.loaders.dummy.DummyInMemoryCacheStoreConfigurationBuilder;
-import org.infinispan.loaders.spi.CacheStore;
+import org.infinispan.persistence.dummy.DummyInMemoryStore;
+import org.infinispan.persistence.dummy.DummyInMemoryStoreConfigurationBuilder;
+import org.infinispan.persistence.spi.CacheLoader;
 import org.infinispan.query.statetransfer.BaseReIndexingTest;
 import org.infinispan.query.test.Person;
 import org.infinispan.test.TestingUtil;
@@ -26,17 +26,17 @@ public class SharedCacheLoaderQueryIndexTest extends BaseReIndexingTest {
       // To force a shared cache store, make sure storeName property
       // for dummy store is the same for all nodes
       builder.clustering().stateTransfer().fetchInMemoryState(false)
-         .loaders().shared(true).preload(true).addStore(DummyInMemoryCacheStoreConfigurationBuilder.class).
+         .persistence().addStore(DummyInMemoryStoreConfigurationBuilder.class).shared(true).preload(true).
             storeName(getClass().getName());
    }
 
    public void testPreloadIndexingAfterAddingNewNode() throws Exception {
       loadCacheEntries(this.<String, Person>caches().get(0));
 
-      for (CacheStore cs: TestingUtil.cachestores(this.<String, Person>caches())) {
-         assert cs.containsKey(persons[0].getName()) :
+      for (CacheLoader cs: TestingUtil.cachestores(this.<String, Person>caches())) {
+         assert cs.contains(persons[0].getName()) :
                "Cache misconfigured, maybe cache store not pointing to same place, maybe passivation on...etc";
-         DummyInMemoryCacheStore dimcs = (DummyInMemoryCacheStore) cs;
+         DummyInMemoryStore dimcs = (DummyInMemoryStore) cs;
          assert dimcs.stats().get("clear") == 0:
                "Cache store should not be cleared, purgeOnStartup is false";
          assert dimcs.stats().get("store") == 4:

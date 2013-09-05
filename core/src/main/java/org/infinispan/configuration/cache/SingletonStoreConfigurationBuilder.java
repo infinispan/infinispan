@@ -4,15 +4,6 @@ import java.util.concurrent.TimeUnit;
 
 import org.infinispan.commons.configuration.Builder;
 
-/**
- * SingletonStore is a delegating cache store used for situations when only one
- * instance in a cluster should interact with the underlying store. The coordinator of the cluster will be responsible for
- * the underlying CacheStore. SingletonStore is a simply facade to a real CacheStore implementation. It always
- * delegates reads to the real CacheStore.
- *
- * @author pmuir
- *
- */
 public class SingletonStoreConfigurationBuilder<S> extends AbstractStoreConfigurationChildBuilder<S> implements Builder<SingletonStoreConfiguration> {
 
    private boolean enabled = false;

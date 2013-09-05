@@ -27,11 +27,6 @@ public class Configurations {
             cfg.transaction().lockingMode() == LockingMode.PESSIMISTIC;
    }
 
-   public static boolean isStateTransferEnabled(Configuration cfg) {
-      return cfg.clustering().stateTransfer().fetchInMemoryState()
-            || (cfg.loaders().fetchPersistentState());
-   }
-
    public static boolean isOnePhaseTotalOrderCommit(Configuration cfg) {
       return cfg.transaction().transactionProtocol().isTotalOrder() && !isVersioningEnabled(cfg);
    }

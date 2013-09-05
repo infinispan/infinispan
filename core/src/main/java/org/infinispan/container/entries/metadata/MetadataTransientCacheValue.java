@@ -73,6 +73,12 @@ public class MetadataTransientCacheValue extends ImmortalCacheValue implements M
       this.metadata = metadata;
    }
 
+   @Override
+   public long getExpiryTime() {
+      long maxIdle = metadata.maxIdle();
+      return maxIdle > -1 ? lastUsed + maxIdle : -1;
+   }
+
    public static class Externalizer extends AbstractExternalizer<MetadataTransientCacheValue> {
       @Override
       public void writeObject(ObjectOutput output, MetadataTransientCacheValue tcv) throws IOException {

@@ -1,17 +1,26 @@
 package org.infinispan.stress;
 
-import org.infinispan.loaders.dummy.DummyInMemoryCacheStoreConfiguration;
-import org.infinispan.loaders.dummy.DummyInMemoryCacheStoreConfigurationBuilder;
-import org.infinispan.marshall.TestObjectStreamMarshaller;
-import org.infinispan.metadata.EmbeddedMetadata;
+import org.infinispan.commons.marshall.StreamingMarshaller;
 import org.infinispan.container.InternalEntryFactory;
 import org.infinispan.container.InternalEntryFactoryImpl;
 import org.infinispan.container.entries.InternalCacheEntry;
-import org.infinispan.loaders.CacheLoaderException;
-import org.infinispan.loaders.decorators.AbstractDelegatingStore;
-import org.infinispan.loaders.decorators.AsyncStore;
-import org.infinispan.loaders.dummy.DummyInMemoryCacheStore;
+import org.infinispan.persistence.async.AdvancedAsyncCacheLoader;
+import org.infinispan.persistence.async.AdvancedAsyncCacheWriter;
+import org.infinispan.persistence.CacheLoaderException;
+import org.infinispan.persistence.DummyLoaderContext;
+import org.infinispan.persistence.PersistenceUtil;
+import org.infinispan.persistence.dummy.DummyInMemoryStore;
+import org.infinispan.persistence.dummy.DummyInMemoryStoreConfiguration;
+import org.infinispan.persistence.dummy.DummyInMemoryStoreConfigurationBuilder;
+import org.infinispan.persistence.spi.AdvancedCacheLoader;
+import org.infinispan.persistence.spi.AdvancedCacheWriter;
+import org.infinispan.persistence.spi.CacheLoader;
+import org.infinispan.persistence.spi.MarshalledEntry;
+import org.infinispan.persistence.support.DelegatingCacheLoader;
+import org.infinispan.marshall.TestObjectStreamMarshaller;
+import org.infinispan.metadata.EmbeddedMetadata;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
+import org.infinispan.util.KeyValuePair;
 import org.infinispan.util.concurrent.locks.containers.LockContainer;
 import org.infinispan.util.concurrent.locks.containers.ReentrantPerEntryLockContainer;
 import org.infinispan.util.logging.Log;
@@ -19,7 +28,14 @@ import org.infinispan.util.logging.LogFactory;
 import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Iterator;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Map;
+import java.util.Random;
+import java.util.Set;
+import java.util.TreeMap;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CountDownLatch;
@@ -27,6 +43,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.Lock;
 
 import static java.lang.Math.sqrt;
+import static org.infinispan.test.TestingUtil.marshalledEntry;
 import static org.junit.Assert.assertTrue;
 
 /**
@@ -66,29 +83,42 @@ public class AsyncStoreStressTest {
    // (Thread-200:) Expected state updated with key=key165168, value=60483
    private LockContainer locks = new ReentrantPerEntryLockContainer(32);
 
-   private Map<String, AbstractDelegatingStore> createAsyncStores() throws CacheLoaderException {
-      Map<String, AbstractDelegatingStore> stores = new TreeMap<String, AbstractDelegatingStore>();
-      stores.put("ASYNC", createAsyncStore());
+   private Map<String, KeyValuePair<AdvancedAsyncCacheLoader, AdvancedAsyncCacheWriter>> createAsyncStores() throws CacheLoaderException {
+      Map<String, KeyValuePair<AdvancedAsyncCacheLoader, AdvancedAsyncCacheWriter>> stores = new TreeMap<String, KeyValuePair<AdvancedAsyncCacheLoader, AdvancedAsyncCacheWriter>>();
+      AdvancedAsyncCacheWriter writer = createAsyncStore();
+      AdvancedAsyncCacheLoader loader = new AdvancedAsyncCacheLoader((CacheLoader) writer.undelegate(), writer.getState());
+      KeyValuePair<AdvancedAsyncCacheLoader, AdvancedAsyncCacheWriter> pair = new
+            KeyValuePair<AdvancedAsyncCacheLoader, AdvancedAsyncCacheWriter>(loader, writer);
+      stores.put("ASYNC", pair);
       return stores;
    }
 
-   private AsyncStore createAsyncStore() throws CacheLoaderException {
-      DummyInMemoryCacheStore backendStore = createBackendStore("async2");
-      AsyncStore store = new AsyncStore(backendStore);
-      store.init(backendStore.getConfiguration(), null, new TestObjectStreamMarshaller());
+   private AdvancedAsyncCacheWriter createAsyncStore() throws CacheLoaderException {
+      DummyInMemoryStore backendStore = createBackendStore("async2");
+      AdvancedAsyncCacheWriter store = new AdvancedAsyncCacheWriter(backendStore);
+      store.init(new DummyLoaderContext() {
+         @Override
+         public StreamingMarshaller getMarshaller() {
+            return marshaller();
+         }
+      });
       store.start();
       return store;
    }
 
-   private DummyInMemoryCacheStore createBackendStore(String storeName) throws CacheLoaderException {
-      DummyInMemoryCacheStore store = new DummyInMemoryCacheStore();
-      DummyInMemoryCacheStoreConfiguration dummyConfiguration = TestCacheManagerFactory
+   private TestObjectStreamMarshaller marshaller() {
+      return new TestObjectStreamMarshaller();
+   }
+
+   private DummyInMemoryStore createBackendStore(String storeName) throws CacheLoaderException {
+      DummyInMemoryStore store = new DummyInMemoryStore();
+      DummyInMemoryStoreConfiguration dummyConfiguration = TestCacheManagerFactory
             .getDefaultCacheConfiguration(false)
-            .loaders()
-               .addLoader(DummyInMemoryCacheStoreConfigurationBuilder.class)
+            .persistence()
+               .addStore(DummyInMemoryStoreConfigurationBuilder.class)
                   .storeName(storeName)
                   .create();
-      store.init(dummyConfiguration, null, new TestObjectStreamMarshaller());
+      store.init(new DummyLoaderContext(dummyConfiguration, null, marshaller()));
       store.start();
       return store;
    }
@@ -110,18 +140,19 @@ public class AsyncStoreStressTest {
 
       generateKeyList(numKeys);
 
-      Map<String, AbstractDelegatingStore> stores = createAsyncStores();
+      Map<String, KeyValuePair<AdvancedAsyncCacheLoader, AdvancedAsyncCacheWriter>> stores = createAsyncStores();
       try {
-         for (Map.Entry<String, AbstractDelegatingStore> e : stores.entrySet()) {
-            mapTestReadWriteRemove(e.getKey(), e.getValue(), numKeys,
+         for (Map.Entry<String, KeyValuePair<AdvancedAsyncCacheLoader, AdvancedAsyncCacheWriter>> e : stores.entrySet()) {
+            mapTestReadWriteRemove(e.getKey(), e.getValue().getKey(), e.getValue().getValue(), numKeys,
                   readerThreads, writerThreads, removerThreads);
             e.setValue(null);
          }
       } finally {
-         for (Iterator<AbstractDelegatingStore> it = stores.values().iterator(); it.hasNext(); ) {
-            AbstractDelegatingStore store = it.next();
+         for (Iterator<KeyValuePair<AdvancedAsyncCacheLoader, AdvancedAsyncCacheWriter>> it = stores.values().iterator(); it.hasNext(); ) {
+            KeyValuePair<AdvancedAsyncCacheLoader, AdvancedAsyncCacheWriter> store = it.next();
             try {
-               store.stop();
+               store.getKey().stop();
+               store.getValue().stop();
                it.remove();
             } catch (Exception ex) {
                log.error("Failed to stop cache store", ex);
@@ -131,17 +162,17 @@ public class AsyncStoreStressTest {
       assertTrue("Not all stores were properly shut down", stores.isEmpty());
    }
 
-   private void mapTestReadWriteRemove(String name, AbstractDelegatingStore store,
+   private void mapTestReadWriteRemove(String name, AdvancedCacheLoader loader, AdvancedCacheWriter writer,
          int numKeys, int readerThreads, int writerThreads, int removerThreads) throws Exception {
-      DummyInMemoryCacheStore delegate = (DummyInMemoryCacheStore) store.getDelegate();
+      DummyInMemoryStore delegate = (DummyInMemoryStore) ((DelegatingCacheLoader) loader).undelegate();
       try {
          // warm up for 1 second
          System.out.printf("[store=%s] Warming up\n", name);
-         runMapTestReadWriteRemove(name, store, readerThreads, writerThreads, removerThreads, 1000);
+         runMapTestReadWriteRemove(name, loader, writer, readerThreads, writerThreads, removerThreads, 1000);
 
          // real test
          System.out.printf("[store=%s] Testing...\n", name);
-         TotalStats perf = runMapTestReadWriteRemove(name, store, readerThreads, writerThreads, removerThreads, RUNNING_TIME);
+         TotalStats perf = runMapTestReadWriteRemove(name, loader, writer, readerThreads, writerThreads, removerThreads, RUNNING_TIME);
 
          // Wait until the cache store contains the expected state
          System.out.printf("[store=%s] Verify contents\n", name);
@@ -153,8 +184,8 @@ public class AsyncStoreStressTest {
          System.out.printf("Puts/s %10.2f  ", perf.getOpsPerSec("PUT"));
          System.out.printf("Removes/s %10.2f  ", perf.getOpsPerSec("REMOVE"));
          System.out.printf("HitRatio %10.2f  ", perf.getTotalHitRatio() * 100);
-         System.out.printf("Size %10d  ", store.loadAllKeys(null).size());
-         double stdDev = computeStdDev(store, numKeys);
+         System.out.printf("Size %10d  ", PersistenceUtil.count(loader, null));
+         double stdDev = computeStdDev(loader, numKeys);
          System.out.printf("StdDev %10.2f\n", stdDev);
       } finally {
          // Clean up state, expected state and keys
@@ -163,24 +194,24 @@ public class AsyncStoreStressTest {
       }
    }
 
-   private TotalStats runMapTestReadWriteRemove(String name, final AbstractDelegatingStore store, int numReaders, int numWriters,
+   private TotalStats runMapTestReadWriteRemove(String name, final AdvancedCacheLoader loader, final AdvancedCacheWriter cWriter, int numReaders, int numWriters,
          int numRemovers, final long runningTimeout) throws Exception {
       latch = new CountDownLatch(1);
       final TotalStats perf = new TotalStats();
       List<Thread> threads = new LinkedList<Thread>();
 
       for (int i = 0; i < numReaders; i++) {
-         Thread reader = new WorkerThread("worker-" + name + "-get-" + i, runningTimeout, perf, readOperation(store));
+         Thread reader = new WorkerThread("worker-" + name + "-get-" + i, runningTimeout, perf, readOperation(loader));
          threads.add(reader);
       }
 
       for (int i = 0; i < numWriters; i++) {
-         Thread writer = new WorkerThread("worker-" + name + "-put-" + i, runningTimeout, perf, writeOperation(store));
+         Thread writer = new WorkerThread("worker-" + name + "-put-" + i, runningTimeout, perf, writeOperation(cWriter));
          threads.add(writer);
       }
 
       for (int i = 0; i < numRemovers; i++) {
-         Thread remover = new WorkerThread("worker-" + name + "-remove-" + i, runningTimeout, perf, removeOperation(store));
+         Thread remover = new WorkerThread("worker-" + name + "-remove-" + i, runningTimeout, perf, removeOperation(cWriter));
          threads.add(remover);
       }
 
@@ -219,25 +250,20 @@ public class AsyncStoreStressTest {
       }
    }
 
-   private Operation<String, Integer> readOperation(AbstractDelegatingStore store) {
-      return new Operation<String, Integer>(store, "GET") {
+   private Operation<String, Integer> readOperation(final AdvancedCacheLoader store) {
+      return new Operation<String, Integer>("GET") {
          @Override
          public boolean call(String key, long run) {
-            try {
-               InternalCacheEntry ice = store.load(key);
-               if (trace)
-                  log.tracef("Loaded key=%s, value=%s", key, ice != null ? ice.getValue() : "null");
-               return ice != null;
-            } catch (CacheLoaderException e) {
-               e.printStackTrace();
-               return false;
-            }
+            MarshalledEntry me = store.load(key);
+            if (trace)
+               log.tracef("Loaded key=%s, value=%s", key, me != null ? me.getValue() : "null");
+            return me != null;
          }
       };
    }
 
-   private Operation<String, Integer> writeOperation(AbstractDelegatingStore store) {
-      return new Operation<String, Integer>(store, "PUT") {
+   private Operation<String, Integer> writeOperation(final AdvancedCacheWriter store) {
+      return new Operation<String, Integer>("PUT") {
          @Override
          public boolean call(final String key, long run) {
             final int value = (int) run;
@@ -247,7 +273,7 @@ public class AsyncStoreStressTest {
             boolean result = withStore(key, new Callable<Boolean>() {
                @Override
                public Boolean call() throws Exception {
-                  store.store(entry);
+                  store.write(marshalledEntry(entry, marshaller()));
                   expectedState.put(key, entry);
                   if (trace)
                      log.tracef("Expected state updated with key=%s, value=%s", key, value);
@@ -259,15 +285,15 @@ public class AsyncStoreStressTest {
       };
    }
 
-   private Operation<String, Integer> removeOperation(AbstractDelegatingStore store) {
-      return new Operation<String, Integer>(store, "REMOVE") {
+   private Operation<String, Integer> removeOperation(final AdvancedCacheWriter store) {
+      return new Operation<String, Integer>("REMOVE") {
          @Override
          public boolean call(final String key, long run) {
             // Remove acquiring locks and catching exceptions
             boolean result = withStore(key, new Callable<Boolean>() {
                @Override
                public Boolean call() throws Exception {
-                  boolean removed = store.remove(key);
+                  boolean removed = store.delete(key);
                   if (removed) {
                      expectedState.remove(key);
                      if (trace)
@@ -304,12 +330,12 @@ public class AsyncStoreStressTest {
       }
    }
 
-   private double computeStdDev(AbstractDelegatingStore store, int numKeys) throws CacheLoaderException {
+   private double computeStdDev(AdvancedCacheLoader store, int numKeys) throws CacheLoaderException {
       // The keys closest to the mean are suposed to be accessed more often
       // So we score each map by the standard deviation of the keys in the map
       // at the end of the test
       double variance = 0;
-      Set<Object> keys = store.loadAllKeys(null);
+      Set<Object> keys = PersistenceUtil.toKeySet(store, null);
       for (Object key : keys) {
          double value = Integer.parseInt(((String )key).substring(3));
          variance += (value - numKeys / 2) * (value - numKeys / 2);
@@ -350,11 +376,9 @@ public class AsyncStoreStressTest {
    }
 
    private static abstract class Operation<K, V> {
-      protected final AbstractDelegatingStore store;
       protected final String name;
 
-      public Operation(AbstractDelegatingStore store, String name) {
-         this.store = store;
+      public Operation(String name) {
          this.name = name;
       }
 

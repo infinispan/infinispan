@@ -1,7 +1,7 @@
 package org.infinispan.loaders.remote.wrapper;
 
 import org.infinispan.client.hotrod.MetadataValue;
-import org.infinispan.loaders.CacheLoaderException;
+import org.infinispan.persistence.CacheLoaderException;
 import org.infinispan.loaders.remote.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 

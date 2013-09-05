@@ -3,7 +3,7 @@ package org.infinispan.distribution;
 import org.infinispan.Cache;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
-import org.infinispan.loaders.dummy.DummyInMemoryCacheStoreConfigurationBuilder;
+import org.infinispan.persistence.dummy.DummyInMemoryStoreConfigurationBuilder;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.test.MultipleCacheManagersTest;
 import org.testng.annotations.Test;
@@ -34,7 +34,7 @@ public class DistCacheStoreTxDisjointSetTest extends MultipleCacheManagersTest {
 
    private ConfigurationBuilder buildCacheConfig(String storeName) {
       ConfigurationBuilder cb = getDefaultClusteredCacheConfig(CacheMode.DIST_SYNC, true);
-      cb.loaders().addStore(DummyInMemoryCacheStoreConfigurationBuilder.class).storeName(storeName);
+      cb.persistence().addStore(DummyInMemoryStoreConfigurationBuilder.class).storeName(storeName);
       return cb;
    }
 

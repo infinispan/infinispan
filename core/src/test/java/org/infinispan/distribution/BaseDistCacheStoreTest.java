@@ -1,7 +1,7 @@
 package org.infinispan.distribution;
 
 import org.infinispan.configuration.cache.ConfigurationBuilder;
-import org.infinispan.loaders.dummy.DummyInMemoryCacheStoreConfigurationBuilder;
+import org.infinispan.persistence.dummy.DummyInMemoryStoreConfigurationBuilder;
 
 /**
  * DistSyncCacheStoreTest.
@@ -16,14 +16,12 @@ public abstract class BaseDistCacheStoreTest extends BaseDistFunctionalTest {
    @Override
    protected ConfigurationBuilder buildConfiguration() {
       ConfigurationBuilder cfg = super.buildConfiguration();
-      cfg.loaders().shared(shared);
       if (shared) {
-         cfg.loaders().addStore(new DummyInMemoryCacheStoreConfigurationBuilder(cfg.loaders())
-               .storeName(getClass().getSimpleName()));
+         cfg.persistence().addStore(new DummyInMemoryStoreConfigurationBuilder(cfg.persistence())
+                                          .storeName(getClass().getSimpleName())).shared(shared).preload(preload);
       } else {
-         cfg.loaders().addStore(new DummyInMemoryCacheStoreConfigurationBuilder(cfg.loaders()));
+         cfg.persistence().addStore(new DummyInMemoryStoreConfigurationBuilder(cfg.persistence())).shared(shared).preload(preload);
       }
-      cfg.loaders().preload(preload);
       return cfg;
    }
 }

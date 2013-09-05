@@ -14,11 +14,9 @@ import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.cache.VersioningScheme;
 import org.infinispan.context.Flag;
-import org.infinispan.loaders.UnnnecessaryLoadingTest.CountingCacheStore;
-import org.infinispan.loaders.UnnnecessaryLoadingTest.CountingCacheStoreConfigurationBuilder;
-import org.infinispan.loaders.decorators.ChainingCacheStore;
-import org.infinispan.loaders.dummy.DummyInMemoryCacheStoreConfigurationBuilder;
-import org.infinispan.loaders.manager.CacheLoaderManager;
+import org.infinispan.persistence.UnnnecessaryLoadingTest;
+import org.infinispan.persistence.UnnnecessaryLoadingTest.CountingCacheStore;
+import org.infinispan.persistence.dummy.DummyInMemoryStoreConfigurationBuilder;
 import org.infinispan.test.MultipleCacheManagersTest;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.CleanupAfterMethod;
@@ -41,16 +39,14 @@ public class FlagsEnabledTest extends MultipleCacheManagersTest {
       builder
             .locking().writeSkewCheck(true).isolationLevel(IsolationLevel.REPEATABLE_READ)
             .versioning().enable().scheme(VersioningScheme.SIMPLE)
-            .loaders().addStore(CountingCacheStoreConfigurationBuilder.class)
-            .loaders().addStore(DummyInMemoryCacheStoreConfigurationBuilder.class)
+            .persistence().addStore(UnnnecessaryLoadingTest.CountingCacheStoreConfigurationBuilder.class)
+            .persistence().addStore(DummyInMemoryStoreConfigurationBuilder.class)
             .transaction().syncCommitPhase(true);
       createClusteredCaches(2, "replication", builder);
    }
 
    CountingCacheStore getCacheStore(Cache cache) {
-      CacheLoaderManager clm = TestingUtil.extractComponent(cache, CacheLoaderManager.class);
-      ChainingCacheStore ccs = (ChainingCacheStore) clm.getCacheLoader();
-      return (CountingCacheStore) ccs.getStores().keySet().iterator().next();
+      return (CountingCacheStore) TestingUtil.getFirstLoader(cache);
    }
 
    public void testWithFlagsSemantics() {

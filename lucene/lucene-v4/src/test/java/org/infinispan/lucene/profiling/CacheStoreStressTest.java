@@ -4,7 +4,8 @@ import java.io.IOException;
 
 import org.apache.lucene.store.Directory;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
-import org.infinispan.loaders.jdbc.configuration.JdbcStringBasedCacheStoreConfigurationBuilder;
+import org.infinispan.loaders.jdbc.configuration.JdbcStringBasedStoreConfigurationBuilder;
+import org.infinispan.loaders.jdbc.configuration.JdbcStringBasedStoreConfigurationBuilder;
 import org.infinispan.lucene.DirectoryIntegrityCheck;
 import org.infinispan.lucene.LuceneKey2StringMapper;
 import org.infinispan.lucene.directory.DirectoryBuilder;
@@ -28,8 +29,9 @@ public class CacheStoreStressTest extends SingleCacheManagerTest {
    @Override
    protected EmbeddedCacheManager createCacheManager() throws Exception {
       ConfigurationBuilder cb = TestCacheManagerFactory.getDefaultCacheConfiguration(false);
-      cb.loaders().preload(true)
-            .addStore(JdbcStringBasedCacheStoreConfigurationBuilder.class)
+      cb.persistence()
+            .addStore(JdbcStringBasedStoreConfigurationBuilder.class)
+            .preload(true)
             .key2StringMapper(LuceneKey2StringMapper.class)
             .table()
             .idColumnName("ID_COLUMN")

@@ -1,21 +1,21 @@
 package org.infinispan.loaders.jdbc.binary;
 
 import org.infinispan.Cache;
-import org.infinispan.CacheImpl;
-import org.infinispan.configuration.cache.CacheLoaderConfiguration;
+import org.infinispan.commons.marshall.StreamingMarshaller;
+import org.infinispan.configuration.cache.ConfigurationBuilder;
+import org.infinispan.configuration.cache.StoreConfiguration;
+import org.infinispan.persistence.CacheLoaderException;
 import org.infinispan.loaders.jdbc.ManagedConnectionFactoryTest;
-import org.infinispan.loaders.jdbc.TableManipulation;
-import org.infinispan.loaders.jdbc.configuration.JdbcBinaryCacheStoreConfiguration;
-import org.infinispan.loaders.jdbc.configuration.JdbcBinaryCacheStoreConfigurationBuilder;
-import org.infinispan.loaders.jdbc.configuration.ManagedConnectionFactoryConfigurationBuilder;
-import org.infinispan.loaders.jdbc.connectionfactory.ConnectionFactoryConfig;
+import org.infinispan.loaders.jdbc.configuration.JdbcBinaryStoreConfiguration;
+import org.infinispan.loaders.jdbc.configuration.JdbcBinaryStoreConfigurationBuilder;
 import org.infinispan.loaders.jdbc.connectionfactory.ManagedConnectionFactory;
-import org.infinispan.loaders.manager.CacheLoaderManager;
-import org.infinispan.loaders.spi.CacheStore;
+import org.infinispan.persistence.spi.AdvancedLoadWriteStore;
 import org.infinispan.manager.CacheContainer;
+import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.infinispan.test.fwk.UnitTestDatabaseManager;
+import org.testng.annotations.AfterMethod;
 import org.testng.annotations.Test;
 
 /**
@@ -23,24 +23,41 @@ import org.testng.annotations.Test;
  */
 @Test(groups = "functional", testName = "loaders.jdbc.binary.BinaryStoreWithManagedConnectionTest")
 public class BinaryStoreWithManagedConnectionTest extends ManagedConnectionFactoryTest {
-   @Override
-   protected CacheStore createCacheStore() throws Exception {
-      JdbcBinaryCacheStoreConfigurationBuilder storeBuilder = TestCacheManagerFactory
-            .getDefaultCacheConfiguration(false)
-            .loaders()
-               .addLoader(JdbcBinaryCacheStoreConfigurationBuilder.class)
-               .purgeSynchronously(true);
 
+   private EmbeddedCacheManager cacheManager;
+   private Cache<Object,Object> cache;
+
+   @Override
+   protected AdvancedLoadWriteStore createStore() throws Exception {
+      ConfigurationBuilder cc = TestCacheManagerFactory.getDefaultCacheConfiguration(false);
+      JdbcBinaryStoreConfigurationBuilder storeBuilder = cc
+            .persistence()
+               .addStore(JdbcBinaryStoreConfigurationBuilder.class);
       storeBuilder.dataSource().jndiUrl(getDatasourceLocation());
       UnitTestDatabaseManager.buildTableManipulation(storeBuilder.table(), true);
 
-      JdbcBinaryCacheStore jdbcBinaryCacheStore = new JdbcBinaryCacheStore();
-      jdbcBinaryCacheStore.init(storeBuilder.create(), getCache(), getMarshaller());
-      jdbcBinaryCacheStore.start();
+      cacheManager = TestCacheManagerFactory.createCacheManager(cc);
+
+      cache = cacheManager.getCache();
+      JdbcBinaryStore jdbcBinaryCacheStore = (JdbcBinaryStore) TestingUtil.getFirstWriter(cache);
       assert jdbcBinaryCacheStore.getConnectionFactory() instanceof ManagedConnectionFactory;
+      csc = jdbcBinaryCacheStore.getConfiguration();
       return jdbcBinaryCacheStore;
    }
 
+   @AfterMethod
+   @Override
+   public void tearDown() throws CacheLoaderException {
+      super.tearDown();
+      TestingUtil.killCacheManagers(cacheManager);
+   }
+
+   @Override
+   protected StreamingMarshaller getMarshaller() {
+      StreamingMarshaller component = cache.getAdvancedCache().getComponentRegistry().getCacheMarshaller();
+      assert component != null;
+      return component;
+   }
 
    public void testLoadFromFile() throws Exception {
       CacheContainer cm = null;
@@ -49,14 +66,13 @@ public class BinaryStoreWithManagedConnectionTest extends ManagedConnectionFacto
          Cache<String, String> first = cm.getCache("first");
          Cache<String, String> second = cm.getCache("second");
 
-         CacheLoaderConfiguration firstCacheLoaderConfig = first.getCacheConfiguration().loaders().cacheLoaders().get(0);
+         StoreConfiguration firstCacheLoaderConfig = first.getCacheConfiguration().persistence().stores().get(0);
          assert firstCacheLoaderConfig != null;
-         CacheLoaderConfiguration secondCacheLoaderConfig = second.getCacheConfiguration().loaders().cacheLoaders().get(0);
+         StoreConfiguration secondCacheLoaderConfig = second.getCacheConfiguration().persistence().stores().get(0);
          assert secondCacheLoaderConfig != null;
-         assert firstCacheLoaderConfig instanceof JdbcBinaryCacheStoreConfiguration;
-         assert secondCacheLoaderConfig instanceof JdbcBinaryCacheStoreConfiguration;
-         CacheLoaderManager cacheLoaderManager = first.getAdvancedCache().getComponentRegistry().getComponent(CacheLoaderManager.class);
-         JdbcBinaryCacheStore loader = (JdbcBinaryCacheStore) cacheLoaderManager.getCacheLoader();
+         assert firstCacheLoaderConfig instanceof JdbcBinaryStoreConfiguration;
+         assert secondCacheLoaderConfig instanceof JdbcBinaryStoreConfiguration;
+         JdbcBinaryStore loader = (JdbcBinaryStore) TestingUtil.getFirstLoader(first);
          assert loader.getConnectionFactory() instanceof ManagedConnectionFactory;
       } finally {
          try {
@@ -70,5 +86,30 @@ public class BinaryStoreWithManagedConnectionTest extends ManagedConnectionFacto
    @Override
    public String getDatasourceLocation() {
       return "java:/BinaryStoreWithManagedConnectionTest/DS";
+   }
+
+   @Override
+   public void testLoadAll() throws CacheLoaderException {
+      super.testLoadAll();    // TODO: Customise this generated block
+   }
+
+   @Override
+   public void testLoadAndStoreImmortal() throws CacheLoaderException {
+      super.testLoadAndStoreImmortal();    // TODO: Customise this generated block
+   }
+
+   @Override
+   public void testLoadAndStoreWithIdle() throws Exception {
+      super.testLoadAndStoreWithIdle();    // TODO: Customise this generated block
+   }
+
+   @Override
+   public void testLoadAndStoreWithLifespanAndIdle() throws Exception {
+      super.testLoadAndStoreWithLifespanAndIdle();    // TODO: Customise this generated block
+   }
+
+   @Override
+   public void testStopStartDoesNotNukeValues() throws InterruptedException, CacheLoaderException {
+      super.testStopStartDoesNotNukeValues();    // TODO: Customise this generated block
    }
 }

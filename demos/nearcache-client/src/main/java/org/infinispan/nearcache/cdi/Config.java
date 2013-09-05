@@ -22,7 +22,7 @@ public class Config {
    public Configuration addressCache() {
       return new ConfigurationBuilder()
          .eviction().strategy(EvictionStrategy.LRU).maxEntries(4)
-         .loaders().shared(true).addStore(RemoteEventCacheStoreConfigurationBuilder.class)
+         .persistence().addStore(RemoteEventCacheStoreConfigurationBuilder.class).shared(true)
          .build();
    }
 

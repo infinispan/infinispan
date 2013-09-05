@@ -66,6 +66,11 @@ public class MortalCacheValue extends ImmortalCacheValue {
    }
 
    @Override
+   public long getExpiryTime() {
+      return lifespan > -1 ? created + lifespan : -1;
+   }
+
+   @Override
    public boolean equals(Object o) {
       if (this == o) return true;
       if (!(o instanceof MortalCacheValue)) return false;

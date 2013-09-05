@@ -19,8 +19,8 @@ import org.infinispan.eviction.PassivationManager;
 import org.infinispan.eviction.PassivationManagerImpl;
 import org.infinispan.factories.annotations.DefaultFactoryFor;
 import org.infinispan.interceptors.locking.ClusteringDependentLogic;
-import org.infinispan.loaders.manager.CacheLoaderManager;
-import org.infinispan.loaders.manager.CacheLoaderManagerImpl;
+import org.infinispan.persistence.manager.PersistenceManager;
+import org.infinispan.persistence.manager.PersistenceManagerImpl;
 import org.infinispan.notifications.cachelistener.CacheNotifier;
 import org.infinispan.notifications.cachelistener.CacheNotifierImpl;
 import org.infinispan.statetransfer.StateTransferLock;
@@ -47,7 +47,7 @@ import static org.infinispan.commons.util.Util.getInstance;
  * @since 4.0
  */
 @DefaultFactoryFor(classes = {CacheNotifier.class, CommandsFactory.class,
-                              CacheLoaderManager.class, InvocationContextContainer.class,
+                              PersistenceManager.class, InvocationContextContainer.class,
                               PassivationManager.class, ActivationManager.class,
                               BatchContainer.class, EvictionManager.class,
                               TransactionCoordinator.class, RecoveryAdminOperations.class, StateTransferLock.class,
@@ -81,8 +81,8 @@ public class EmptyConstructorNamedCacheFactory extends AbstractNamedCacheCompone
             return (T) new CacheNotifierImpl();
          } else if (componentType.equals(CommandsFactory.class)) {
             return (T) new CommandsFactoryImpl();
-         } else if (componentType.equals(CacheLoaderManager.class)) {
-            return (T) new CacheLoaderManagerImpl();
+         } else if (componentType.equals(PersistenceManager.class)) {
+            return (T) new PersistenceManagerImpl();
          } else if (componentType.equals(PassivationManager.class)) {
             return (T) new PassivationManagerImpl();
          } else if (componentType.equals(ActivationManager.class)) {

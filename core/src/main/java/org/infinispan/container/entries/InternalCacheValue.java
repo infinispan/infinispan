@@ -1,5 +1,8 @@
 package org.infinispan.container.entries;
 
+import org.infinispan.metadata.InternalMetadata;
+import org.infinispan.metadata.Metadata;
+
 /**
  * A representation of an InternalCacheEntry that does not have a reference to the key.  This should be used if the key
  * is either not needed or available elsewhere as it is more efficient to marshall and unmarshall.  Probably most useful
@@ -63,4 +66,7 @@ public interface InternalCacheValue {
     */
    long getMaxIdle();
 
+   public long getExpiryTime();
+
+   Metadata getMetadata();
 }

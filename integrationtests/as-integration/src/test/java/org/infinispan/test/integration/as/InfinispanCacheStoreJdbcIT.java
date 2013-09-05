@@ -5,7 +5,8 @@ import static org.junit.Assert.assertEquals;
 import org.infinispan.Cache;
 import org.infinispan.Version;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
-import org.infinispan.loaders.jdbc.configuration.JdbcStringBasedCacheStoreConfigurationBuilder;
+import org.infinispan.loaders.jdbc.configuration.JdbcStringBasedStoreConfigurationBuilder;
+import org.infinispan.loaders.jdbc.configuration.JdbcStringBasedStoreConfigurationBuilder;
 import org.infinispan.manager.DefaultCacheManager;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.jboss.arquillian.container.test.api.Deployment;
@@ -44,7 +45,7 @@ public class InfinispanCacheStoreJdbcIT {
    @Test
    public void testCacheManager() {
       ConfigurationBuilder builder = new ConfigurationBuilder();
-      builder.loaders().addStore(JdbcStringBasedCacheStoreConfigurationBuilder.class)
+      builder.persistence().addStore(JdbcStringBasedStoreConfigurationBuilder.class)
          .table()
             .tableNamePrefix("ISPN")
             .idColumnName("K")

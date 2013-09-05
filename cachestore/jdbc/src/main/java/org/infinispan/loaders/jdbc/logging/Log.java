@@ -1,20 +1,19 @@
 package org.infinispan.loaders.jdbc.logging;
 
-import static org.jboss.logging.Logger.Level.ERROR;
-import static org.jboss.logging.Logger.Level.WARN;
-
-import java.io.IOException;
-import java.sql.Connection;
-import java.sql.SQLException;
-
-import javax.naming.NamingException;
-
 import org.infinispan.commons.CacheConfigurationException;
-import org.infinispan.loaders.bucket.Bucket;
+import org.infinispan.persistence.support.Bucket;
 import org.jboss.logging.Cause;
 import org.jboss.logging.LogMessage;
 import org.jboss.logging.Message;
 import org.jboss.logging.MessageLogger;
+
+import javax.naming.NamingException;
+import java.io.IOException;
+import java.sql.Connection;
+import java.sql.SQLException;
+
+import static org.jboss.logging.Logger.Level.ERROR;
+import static org.jboss.logging.Logger.Level.WARN;
 
 /**
  * Log abstraction for the JDBC cache store. For this module, message ids
@@ -119,15 +118,15 @@ public interface Log extends org.infinispan.util.logging.Log {
    void failureClosingConnection(@Cause SQLException e);
 
    @LogMessage(level = ERROR)
-   @Message(value = "Error while storing string key to database; key: '%s', buffer size of value: %d bytes", id = 8024)
-   void sqlFailureStoringKey(String lockingKey, int bufferSize, @Cause SQLException e);
+   @Message(value = "Error while storing string key to database; key: '%s'", id = 8024)
+   void sqlFailureStoringKey(String lockingKey, @Cause SQLException e);
 
    @LogMessage(level = ERROR)
    @Message(value = "Error while removing string keys from database", id = 8025)
    void sqlFailureRemovingKeys(@Cause SQLException e);
 
    @LogMessage(level = ERROR)
-   @Message(value = "In order for JdbcStringBasedCacheStore to support %s, " +
+   @Message(value = "In order for JdbcStringBasedStore to support %s, " +
          "the Key2StringMapper needs to implement TwoWayKey2StringMapper. " +
          "You should either make %s implement TwoWayKey2StringMapper or disable the sql. " +
          "See [https://jira.jboss.org/browse/ISPN-579] for more details.", id = 8026)

@@ -33,7 +33,7 @@ import org.infinispan.jmx.annotations.ManagedOperation;
 import org.infinispan.jmx.annotations.Parameter;
 import org.infinispan.lifecycle.ComponentStatus;
 import org.infinispan.lifecycle.Lifecycle;
-import org.infinispan.loaders.manager.CacheLoaderManager;
+import org.infinispan.persistence.manager.PersistenceManager;
 import org.infinispan.notifications.cachemanagerlistener.CacheManagerNotifier;
 import org.infinispan.remoting.rpc.ResponseMode;
 import org.infinispan.remoting.transport.Address;
@@ -567,7 +567,7 @@ public class DefaultCacheManager implements EmbeddedCacheManager, CacheManager {
       ComponentRegistry cacheComponentRegistry = globalComponentRegistry.getNamedComponentRegistry(cacheName);
       if (cacheComponentRegistry != null) {
          RemoveCacheCommand cmd = new RemoveCacheCommand(cacheName, this, globalComponentRegistry,
-               cacheComponentRegistry.getComponent(CacheLoaderManager.class));
+               cacheComponentRegistry.getComponent(PersistenceManager.class));
          Transport transport = getTransport();
          try {
             if (transport != null) {

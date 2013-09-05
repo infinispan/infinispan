@@ -108,4 +108,10 @@ public interface Ids extends org.infinispan.commons.marshall.Ids {
    int NON_EXISTING_VERSION = 101;
 
    int CACHE_NOT_FOUND_RESPONSE = 102;
+   int KEY_VALUE_PAIR_ID = 103;
+   int INTERNAL_METADATA_ID = 104;
+   int MARSHALLED_ENTRY_ID = 105;
+
+   /* 106 -120 reserved in org.infinispan.commons.marshall.Ids */
+
 }

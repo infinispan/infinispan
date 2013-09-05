@@ -12,7 +12,7 @@ import java.util.HashSet;
 import java.util.Set;
 
 import org.infinispan.container.entries.InternalCacheEntry;
-import org.infinispan.loaders.CacheLoaderException;
+import org.infinispan.persistence.CacheLoaderException;
 import org.infinispan.loaders.jdbc.connectionfactory.ConnectionFactory;
 import org.infinispan.commons.marshall.StreamingMarshaller;
 import org.infinispan.loaders.jdbc.logging.Log;
@@ -20,8 +20,8 @@ import org.infinispan.util.TimeService;
 import org.infinispan.util.logging.LogFactory;
 
 /**
- * The purpose of this class is to factorize the repeating code between {@link org.infinispan.loaders.jdbc.stringbased.JdbcStringBasedCacheStore}
- * and {@link org.infinispan.loaders.jdbc.binary.JdbcBinaryCacheStore}. This class implements GOF's template method pattern.
+ * The purpose of this class is to factorize the repeating code between {@link org.infinispan.loaders.jdbc.stringbased.JdbcStringBasedStore}
+ * and {@link org.infinispan.loaders.jdbc.binary.JdbcBinaryStore}. This class implements GOF's template method pattern.
  *
  * @author Mircea.Markus@jboss.com
  */

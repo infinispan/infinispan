@@ -12,8 +12,7 @@ import org.infinispan.context.InvocationContext;
 import org.infinispan.interceptors.InterceptorChain;
 import org.infinispan.interceptors.MarshalledValueInterceptor;
 import org.infinispan.interceptors.base.CommandInterceptor;
-import org.infinispan.loaders.dummy.DummyInMemoryCacheStoreConfigurationBuilder;
-import org.infinispan.marshall.core.MarshalledValue;
+import org.infinispan.persistence.dummy.DummyInMemoryStoreConfigurationBuilder;
 import org.infinispan.notifications.Listener;
 import org.infinispan.notifications.cachelistener.annotation.CacheEntryModified;
 import org.infinispan.notifications.cachelistener.event.CacheEntryModifiedEvent;
@@ -22,7 +21,6 @@ import org.infinispan.test.TestingUtil;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 import org.testng.annotations.AfterClass;
-import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
@@ -358,9 +356,9 @@ public class MarshalledValueTest extends MultipleCacheManagersTest {
    public void testCacheLoaders() {
       ConfigurationBuilder cacheCofig = getDefaultClusteredCacheConfig(CacheMode.REPL_SYNC, false);
       cacheCofig.dataContainer().storeAsBinary().enable();
-      DummyInMemoryCacheStoreConfigurationBuilder dimcs = new DummyInMemoryCacheStoreConfigurationBuilder(cacheCofig.loaders());
+      DummyInMemoryStoreConfigurationBuilder dimcs = new DummyInMemoryStoreConfigurationBuilder(cacheCofig.persistence());
       dimcs.storeName(getClass().getSimpleName());
-      cacheCofig.loaders().addLoader(dimcs);
+      cacheCofig.persistence().addStore(dimcs);
 
       defineConfigurationOnAllManagers("replSync2", cacheCofig);
       waitForClusterToForm("replSync2");

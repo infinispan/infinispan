@@ -1,9 +1,9 @@
 package org.infinispan.loaders.jdbc;
 
-import org.infinispan.loaders.CacheLoaderException;
+import org.infinispan.persistence.CacheLoaderException;
 import org.infinispan.loaders.jdbc.configuration.ConnectionFactoryConfiguration;
 import org.infinispan.loaders.jdbc.configuration.ConnectionFactoryConfigurationBuilder;
-import org.infinispan.loaders.jdbc.configuration.JdbcStringBasedCacheStoreConfigurationBuilder;
+import org.infinispan.loaders.jdbc.configuration.JdbcStringBasedStoreConfigurationBuilder;
 import org.infinispan.loaders.jdbc.connectionfactory.PooledConnectionFactory;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.infinispan.test.fwk.UnitTestDatabaseManager;
@@ -34,10 +34,10 @@ public class PooledConnectionFactoryTest {
    @Test(enabled = false, description = "This test is disabled due to: http://sourceforge.net/tracker/index.php?func=detail&aid=1892195&group_id=25357&atid=383690")
    public void testValuesNoOverrides() throws Exception {
 
-      JdbcStringBasedCacheStoreConfigurationBuilder storeBuilder = TestCacheManagerFactory
+      JdbcStringBasedStoreConfigurationBuilder storeBuilder = TestCacheManagerFactory
             .getDefaultCacheConfiguration(false)
-            .loaders()
-            .addLoader(JdbcStringBasedCacheStoreConfigurationBuilder.class);
+            .persistence()
+            .addStore(JdbcStringBasedStoreConfigurationBuilder.class);
 
       factoryBuilder = storeBuilder
             .connectionFactory(UnitTestDatabaseManager.configureUniqueConnectionFactory(storeBuilder));
@@ -69,10 +69,10 @@ public class PooledConnectionFactoryTest {
    @Test(expectedExceptions = CacheLoaderException.class)
    public void testNoDriverClassFound() throws Exception {
 
-      JdbcStringBasedCacheStoreConfigurationBuilder storeBuilder = TestCacheManagerFactory
+      JdbcStringBasedStoreConfigurationBuilder storeBuilder = TestCacheManagerFactory
             .getDefaultCacheConfiguration(false)
-            .loaders()
-            .addLoader(JdbcStringBasedCacheStoreConfigurationBuilder.class);
+            .persistence()
+            .addStore(JdbcStringBasedStoreConfigurationBuilder.class);
 
       factoryBuilder = UnitTestDatabaseManager.configureBrokenConnectionFactory(storeBuilder);
 

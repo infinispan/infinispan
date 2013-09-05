@@ -3,7 +3,6 @@ package org.infinispan.container;
 import net.jcip.annotations.ThreadSafe;
 
 import org.infinispan.metadata.Metadata;
-import org.infinispan.commons.CacheException;
 import org.infinispan.commons.equivalence.Equivalence;
 import org.infinispan.commons.util.CollectionFactory;
 import org.infinispan.container.entries.InternalCacheEntry;
@@ -13,9 +12,7 @@ import org.infinispan.eviction.EvictionStrategy;
 import org.infinispan.eviction.EvictionThreadPolicy;
 import org.infinispan.eviction.PassivationManager;
 import org.infinispan.factories.annotations.Inject;
-import org.infinispan.loaders.CacheLoaderException;
-import org.infinispan.loaders.manager.CacheLoaderManager;
-import org.infinispan.loaders.spi.CacheStore;
+import org.infinispan.persistence.manager.PersistenceManager;
 import org.infinispan.util.CoreImmutables;
 import org.infinispan.util.TimeService;
 import org.infinispan.util.concurrent.BoundedConcurrentHashMap;
@@ -51,7 +48,7 @@ public class DefaultDataContainer implements DataContainer {
    private EvictionManager evictionManager;
    private PassivationManager passivator;
    private ActivationManager activator;
-   private CacheLoaderManager clm;
+   private PersistenceManager pm;
    private TimeService timeService;
 
    public DefaultDataContainer(int concurrencyLevel) {
@@ -101,12 +98,12 @@ public class DefaultDataContainer implements DataContainer {
 
    @Inject
    public void initialize(EvictionManager evictionManager, PassivationManager passivator,
-         InternalEntryFactory entryFactory, ActivationManager activator, CacheLoaderManager clm, TimeService timeService) {
+         InternalEntryFactory entryFactory, ActivationManager activator, PersistenceManager clm, TimeService timeService) {
       this.evictionManager = evictionManager;
       this.passivator = passivator;
       this.entryFactory = entryFactory;
       this.activator = activator;
-      this.clm = clm;
+      this.pm = clm;
       this.timeService = timeService;
    }
 
@@ -240,13 +237,8 @@ public class DefaultDataContainer implements DataContainer {
 
       @Override
       public void onEntryRemoved(Object key) {
-         try {
-            CacheStore cacheStore = clm.getCacheStore();
-            if (cacheStore != null)
-               cacheStore.remove(key);
-         } catch (CacheLoaderException e) {
-            throw new CacheException(e);
-         }
+         if (pm != null)
+            pm.deleteFromAllStores(key, false);
       }
    }
 

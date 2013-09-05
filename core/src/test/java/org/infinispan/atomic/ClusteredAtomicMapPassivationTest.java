@@ -3,8 +3,7 @@ package org.infinispan.atomic;
 import org.infinispan.Cache;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
-import org.infinispan.loaders.dummy.DummyInMemoryCacheStore;
-import org.infinispan.loaders.dummy.DummyInMemoryCacheStoreConfigurationBuilder;
+import org.infinispan.persistence.dummy.DummyInMemoryStoreConfigurationBuilder;
 import org.infinispan.test.MultipleCacheManagersTest;
 import org.testng.annotations.Test;
 
@@ -31,8 +30,8 @@ public class ClusteredAtomicMapPassivationTest extends MultipleCacheManagersTest
       ConfigurationBuilder builder = getDefaultClusteredCacheConfig(
             CacheMode.REPL_SYNC, true);
       builder.eviction().maxEntries(1024)
-            .loaders().passivation(true)
-            .addStore(DummyInMemoryCacheStoreConfigurationBuilder.class);
+            .persistence().passivation(true)
+            .addStore(DummyInMemoryStoreConfigurationBuilder.class);
       createClusteredCaches(2, "atomic", builder);
    }
 

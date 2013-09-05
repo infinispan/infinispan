@@ -4,7 +4,6 @@ import org.infinispan.client.hotrod.RemoteCacheManager;
 import org.infinispan.client.hotrod.impl.transport.TransportFactory;
 import org.infinispan.configuration.cache.StoreConfigurationChildBuilder;
 import org.infinispan.container.entries.InternalCacheEntry;
-import org.infinispan.loaders.remote.RemoteCacheStore;
 import org.infinispan.loaders.remote.wrapper.EntryWrapper;
 import org.infinispan.commons.marshall.Marshaller;
 
@@ -49,7 +48,7 @@ public interface RemoteCacheStoreConfigurationChildBuilder<S> extends StoreConfi
    RemoteCacheStoreConfigurationBuilder forceReturnValues(boolean forceReturnValues);
 
    /**
-    * Configures this RemoteCacheStore so that it enables all settings needed to create entries to be served
+    * Configures this RemoteStore so that it enables all settings needed to create entries to be served
     * by a HotRod endpoint, for example when performing rolling upgrades.
     */
    RemoteCacheStoreConfigurationBuilder hotRodWrapping(boolean hotRodWrapping);
@@ -83,7 +82,7 @@ public interface RemoteCacheStoreConfigurationChildBuilder<S> extends StoreConfi
    RemoteCacheStoreConfigurationBuilder protocolVersion(String protocolVersion);
 
    /**
-    * Normally the {@link RemoteCacheStore} stores values wrapped in {@link InternalCacheEntry}. Setting
+    * Normally the {@link org.infinispan.loaders.remote.RemoteStore} stores values wrapped in {@link InternalCacheEntry}. Setting
     * this property to true causes the raw values to be stored instead for interoperability with direct
     * access by {@link RemoteCacheManager}s
     */

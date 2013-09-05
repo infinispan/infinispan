@@ -2,7 +2,7 @@ package org.infinispan.notifications;
 
 import org.infinispan.Cache;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
-import org.infinispan.loaders.dummy.DummyInMemoryCacheStoreConfigurationBuilder;
+import org.infinispan.persistence.dummy.DummyInMemoryStoreConfigurationBuilder;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.notifications.cachelistener.annotation.CacheEntryActivated;
 import org.infinispan.notifications.cachelistener.annotation.CacheEntryLoaded;
@@ -29,12 +29,12 @@ public class CacheListenerCacheLoaderTest extends AbstractInfinispanTest {
    public void setUp() {
       cm = TestCacheManagerFactory.createCacheManager(false);
       ConfigurationBuilder c = new ConfigurationBuilder();
-      c.loaders().addStore(DummyInMemoryCacheStoreConfigurationBuilder.class)
+      c.persistence().addStore(DummyInMemoryStoreConfigurationBuilder.class)
          .storeName("no_passivation");
       cm.defineConfiguration("no_passivation", c.build());
 
       new ConfigurationBuilder();
-      c.loaders().passivation(true).addStore(DummyInMemoryCacheStoreConfigurationBuilder.class)
+      c.persistence().passivation(true).addStore(DummyInMemoryStoreConfigurationBuilder.class)
          .storeName("passivation");
       cm.defineConfiguration("passivation", c.build());
    }

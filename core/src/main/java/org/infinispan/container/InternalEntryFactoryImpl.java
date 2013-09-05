@@ -42,8 +42,8 @@ public class InternalEntryFactoryImpl implements InternalEntryFactory {
 
    @Override
    public InternalCacheEntry create(Object key, Object value, Metadata metadata) {
-      long lifespan = metadata.lifespan();
-      long maxIdle = metadata.maxIdle();
+      long lifespan = metadata != null ? metadata.lifespan() : -1;
+      long maxIdle = metadata != null ? metadata.maxIdle() : -1;
       if (!isStoreMetadata(metadata)) {
          if (lifespan < 0 && maxIdle < 0) return new ImmortalCacheEntry(key, value);
          if (lifespan > -1 && maxIdle < 0) return new MortalCacheEntry(key, value, lifespan, timeService.wallClockTime());

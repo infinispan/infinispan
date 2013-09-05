@@ -1,6 +1,5 @@
 package org.infinispan.loaders.remote.upgrade;
 
-import java.util.List;
 import java.util.Set;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -14,8 +13,8 @@ import org.infinispan.commons.marshall.Marshaller;
 import org.infinispan.commons.marshall.jboss.GenericJBossMarshaller;
 import org.infinispan.commons.util.Util;
 import org.infinispan.factories.ComponentRegistry;
-import org.infinispan.loaders.manager.CacheLoaderManager;
-import org.infinispan.loaders.remote.RemoteCacheStore;
+import org.infinispan.persistence.manager.PersistenceManager;
+import org.infinispan.loaders.remote.RemoteStore;
 import org.infinispan.loaders.remote.configuration.RemoteCacheStoreConfiguration;
 import org.infinispan.loaders.remote.logging.Log;
 import org.infinispan.upgrade.TargetMigrator;
@@ -38,8 +37,8 @@ public class HotRodTargetMigrator implements TargetMigrator {
    public long synchronizeData(final Cache<Object, Object> cache) throws CacheException {
       int threads = Runtime.getRuntime().availableProcessors();
       ComponentRegistry cr = cache.getAdvancedCache().getComponentRegistry();
-      CacheLoaderManager loaderManager = cr.getComponent(CacheLoaderManager.class);
-      List<RemoteCacheStore> stores = loaderManager.getCacheLoaders(RemoteCacheStore.class);
+      PersistenceManager loaderManager = cr.getComponent(PersistenceManager.class);
+      Set<RemoteStore> stores = loaderManager.getStores(RemoteStore.class);
       Marshaller marshaller = new GenericJBossMarshaller();
       byte[] knownKeys;
       try {
@@ -48,10 +47,10 @@ public class HotRodTargetMigrator implements TargetMigrator {
          throw new CacheException(e);
       }
 
-      for (RemoteCacheStore store : stores) {
+      for (RemoteStore store : stores) {
          final RemoteCache<Object, Object> storeCache = store.getRemoteCache();
          if (storeCache.containsKey(knownKeys)) {
-            RemoteCacheStoreConfiguration storeConfig = (RemoteCacheStoreConfiguration) store.getConfiguration();
+            RemoteCacheStoreConfiguration storeConfig = store.getConfiguration();
             if (!storeConfig.hotRodWrapping()) {
                throw log.remoteStoreNoHotRodWrapping(cache.getName());
             }
@@ -98,7 +97,7 @@ public class HotRodTargetMigrator implements TargetMigrator {
    @Override
    public void disconnectSource(Cache<Object, Object> cache) throws CacheException {
       ComponentRegistry cr = cache.getAdvancedCache().getComponentRegistry();
-      CacheLoaderManager loaderManager = cr.getComponent(CacheLoaderManager.class);
-      loaderManager.disableCacheStore(RemoteCacheStore.class.getName());
+      PersistenceManager loaderManager = cr.getComponent(PersistenceManager.class);
+      loaderManager.disableStore(RemoteStore.class.getName());
    }
 }

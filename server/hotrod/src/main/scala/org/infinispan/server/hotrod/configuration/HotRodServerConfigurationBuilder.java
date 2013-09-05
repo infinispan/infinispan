@@ -4,7 +4,6 @@ import org.infinispan.commons.configuration.Builder;
 import org.infinispan.configuration.cache.LockingConfigurationBuilder;
 import org.infinispan.configuration.cache.StateTransferConfigurationBuilder;
 import org.infinispan.configuration.cache.SyncConfigurationBuilder;
-import org.infinispan.loaders.cluster.ClusterCacheLoader;
 import org.infinispan.server.core.configuration.ProtocolServerConfigurationBuilder;
 
 /**
@@ -72,7 +71,7 @@ public class HotRodServerConfigurationBuilder extends ProtocolServerConfiguratio
    }
 
    /**
-    * Configures whether to enable state transfer for the topology cache. If disabled, a {@link ClusterCacheLoader} will be used to lazily retrieve topology information from the other nodes.
+    * Configures whether to enable state transfer for the topology cache. If disabled, a {@link org.infinispan.persistence.cluster.ClusterLoader} will be used to lazily retrieve topology information from the other nodes.
     * Defaults to true.
     */
    public HotRodServerConfigurationBuilder topologyStateTransfer(boolean topologyStateTransfer) {

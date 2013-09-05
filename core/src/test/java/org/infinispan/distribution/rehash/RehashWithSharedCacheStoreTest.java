@@ -3,10 +3,8 @@ package org.infinispan.distribution.rehash;
 import org.infinispan.Cache;
 import org.infinispan.distribution.BaseDistCacheStoreTest;
 import org.infinispan.distribution.MagicKey;
-import org.infinispan.loaders.CacheLoaderException;
-import org.infinispan.loaders.dummy.DummyInMemoryCacheStore;
-import org.infinispan.loaders.manager.CacheLoaderManager;
-import org.infinispan.loaders.spi.CacheStore;
+import org.infinispan.persistence.CacheLoaderException;
+import org.infinispan.persistence.dummy.DummyInMemoryStore;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
@@ -34,13 +32,8 @@ public class RehashWithSharedCacheStoreTest extends BaseDistCacheStoreTest {
       performRehashing = true;
    }
 
-   private CacheStore getCacheStore(Cache<?,?> cache) {
-      CacheLoaderManager clm = cache.getAdvancedCache().getComponentRegistry().getComponent(CacheLoaderManager.class);
-      return clm.getCacheStore();
-   }
-
    private int getCacheStoreStats(Cache<?, ?> cache, String cacheStoreMethod) {
-      DummyInMemoryCacheStore cs = (DummyInMemoryCacheStore) getCacheStore(cache);
+      DummyInMemoryStore cs = (DummyInMemoryStore) TestingUtil.getFirstWriter(cache);
       return cs.stats().get(cacheStoreMethod);
    }
 
@@ -54,14 +47,14 @@ public class RehashWithSharedCacheStoreTest extends BaseDistCacheStoreTest {
 
       // Ensure the loader is shared!
       for (Cache<Object, String> c: Arrays.asList(c1, c2, c3)) {
-         assert getCacheStore(c).containsKey(k) : format("CacheStore on %s should contain key %s", c, k);
+         assert TestingUtil.getFirstLoader(c).contains(k) : format("CacheStore on %s should contain key %s", c, k);
       }
 
       Cache<Object, String> primaryOwner = owners[0];
-      if (getCacheStoreStats(primaryOwner, "store") == 0) primaryOwner = owners[1];
+      if (getCacheStoreStats(primaryOwner, "write") == 0) primaryOwner = owners[1];
 
       for (Cache<Object, String> c: owners) {
-         int numWrites = getCacheStoreStats(c, "store");
+         int numWrites = getCacheStoreStats(c, "write");
          assert numWrites == 1 : "store() should have been invoked on the cache store once.  Was " + numWrites;
       }
 
@@ -83,7 +76,7 @@ public class RehashWithSharedCacheStoreTest extends BaseDistCacheStoreTest {
       assert owners.length == 2;
 
       for (Cache<Object, String> o : owners) {
-         int numWrites = getCacheStoreStats(o, "store");
+         int numWrites = getCacheStoreStats(o, "write");
          assert numWrites == 1 : "store() should have been invoked on the cache store once.  Was " + numWrites;
          assert "v".equals(o.get(k)) : "Should be able to see key on new owner";
       }

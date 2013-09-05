@@ -61,7 +61,6 @@ import org.infinispan.transaction.xa.recovery.RecoveryManager;
 import org.infinispan.util.concurrent.AbstractInProcessNotifyingFuture;
 import org.infinispan.util.concurrent.LegacyNotifyingFutureAdaptor;
 import org.infinispan.util.concurrent.NotifyingFuture;
-import org.infinispan.commons.util.concurrent.NotifyingFutureAdaptor;
 import org.infinispan.util.concurrent.locks.LockManager;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
@@ -647,7 +646,7 @@ public class CacheImpl<K, V> implements AdvancedCache<K, V> {
          throw new IllegalArgumentException("Cannot lock empty list of keys");
       }
       InvocationContext ctx = getInvocationContextForWrite(explicitClassLoader, UNBOUNDED, false);
-      LockControlCommand command = commandsFactory.buildLockControlCommand((Collection<Object>) keys, explicitFlags);
+      LockControlCommand command = commandsFactory.buildLockControlCommand(keys, explicitFlags);
       return (Boolean) invoker.invoke(ctx, command);
    }
 
@@ -672,7 +671,7 @@ public class CacheImpl<K, V> implements AdvancedCache<K, V> {
             .lifespan(config.expiration().lifespan()).maxIdle(config.expiration().maxIdle()).build();
       // Context only needs to ship ClassLoader if marshalling will be required
       isClassLoaderInContext = config.clustering().cacheMode().isClustered()
-            || config.loaders().usingCacheLoaders()
+            || config.persistence().usingStores()
             || config.storeAsBinary().enabled();
 
       if (log.isDebugEnabled()) log.debugf("Started cache %s on %s", getName(), getCacheManager().getAddress());
@@ -1255,7 +1254,7 @@ public class CacheImpl<K, V> implements AdvancedCache<K, V> {
    }
 
    private boolean isSkipLoader(EnumSet<Flag> flags) {
-      boolean hasCacheLoaderConfig = !config.loaders().cacheLoaders().isEmpty();
+      boolean hasCacheLoaderConfig = !config.persistence().stores().isEmpty();
       return !hasCacheLoaderConfig
             || (flags != null && (flags.contains(Flag.SKIP_CACHE_LOAD) || flags.contains(Flag.SKIP_CACHE_STORE)));
    }

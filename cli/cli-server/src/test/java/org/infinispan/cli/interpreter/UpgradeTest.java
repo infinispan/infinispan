@@ -50,7 +50,7 @@ public class UpgradeTest extends AbstractInfinispanTest {
 
       ConfigurationBuilder targetConfigurationBuilder = hotRodCacheConfiguration(
             TestCacheManagerFactory.getDefaultCacheConfiguration(false));
-      targetConfigurationBuilder.loaders().addStore(RemoteCacheStoreConfigurationBuilder.class).hotRodWrapping(true).addServer().host("localhost").port(sourceServer.getPort());
+      targetConfigurationBuilder.persistence().addStore(RemoteCacheStoreConfigurationBuilder.class).hotRodWrapping(true).addServer().host("localhost").port(sourceServer.getPort());
 
       targetContainer = TestCacheManagerFactory.createCacheManager(targetConfigurationBuilder);
       targetServerCache = targetContainer.getCache();

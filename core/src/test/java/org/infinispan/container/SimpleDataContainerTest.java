@@ -93,7 +93,7 @@ public class SimpleDataContainerTest extends AbstractInfinispanTest {
       dc.put("k", "v", new EmbeddedMetadata.Builder().build());
       InternalCacheEntry ice = dc.get("k");
       assert ice.getClass().equals(immortaltype());
-      assert ice.getExpiryTime() == -1;
+      assert ice.toInternalCacheValue().getExpiryTime() == -1;
       assert ice.getMaxIdle() == -1;
       assert ice.getLifespan() == -1;
       dc.put("k", "v", new EmbeddedMetadata.Builder().maxIdle(idle, TimeUnit.MILLISECONDS).build());
@@ -101,7 +101,7 @@ public class SimpleDataContainerTest extends AbstractInfinispanTest {
       Thread.sleep(100); // for time calc granularity
       ice = dc.get("k");
       assert ice.getClass().equals(transienttype());
-      assert ice.getExpiryTime() > -1;
+      assert ice.toInternalCacheValue().getExpiryTime() > -1;
       assert ice.getLastUsed() > oldTime;
       Thread.sleep(100); // for time calc granularity
       assert ice.getLastUsed() < System.currentTimeMillis();

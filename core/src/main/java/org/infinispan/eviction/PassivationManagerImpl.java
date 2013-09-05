@@ -1,17 +1,19 @@
 package org.infinispan.eviction;
 
+import org.infinispan.commons.CacheException;
+import org.infinispan.commons.marshall.StreamingMarshaller;
 import org.infinispan.commons.util.Util;
-import org.infinispan.commons.CacheConfigurationException;
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.container.DataContainer;
 import org.infinispan.container.entries.InternalCacheEntry;
 import org.infinispan.context.impl.ImmutableContext;
+import org.infinispan.factories.annotations.ComponentName;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.factories.annotations.Start;
 import org.infinispan.factories.annotations.Stop;
-import org.infinispan.loaders.CacheLoaderException;
-import org.infinispan.loaders.manager.CacheLoaderManager;
-import org.infinispan.loaders.spi.CacheStore;
+import org.infinispan.persistence.CacheLoaderException;
+import org.infinispan.persistence.manager.PersistenceManager;
+import org.infinispan.persistence.MarshalledEntryImpl;
 import org.infinispan.notifications.cachelistener.CacheNotifier;
 import org.infinispan.util.TimeService;
 import org.infinispan.util.logging.Log;
@@ -20,11 +22,13 @@ import org.infinispan.util.logging.LogFactory;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicLong;
 
+import static org.infinispan.factories.KnownComponentNames.CACHE_MARSHALLER;
+import static org.infinispan.persistence.PersistenceUtil.internalMetadata;
+
 public class PassivationManagerImpl implements PassivationManager {
 
-   CacheLoaderManager cacheLoaderManager;
+   PersistenceManager persistenceManager;
    CacheNotifier notifier;
-   CacheStore cacheStore;
    Configuration cfg;
 
    boolean statsEnabled = false;
@@ -34,27 +38,23 @@ public class PassivationManagerImpl implements PassivationManager {
    private DataContainer container;
    private TimeService timeService;
    private static final boolean trace = log.isTraceEnabled();
+   private StreamingMarshaller marshaller;
 
    @Inject
-   public void inject(CacheLoaderManager cacheLoaderManager, CacheNotifier notifier, Configuration cfg, DataContainer container,
-                      TimeService timeService) {
-      this.cacheLoaderManager = cacheLoaderManager;
+   public void inject(PersistenceManager persistenceManager, CacheNotifier notifier, Configuration cfg, DataContainer container,
+                      TimeService timeService, @ComponentName(CACHE_MARSHALLER) StreamingMarshaller marshaller) {
+      this.persistenceManager = persistenceManager;
       this.notifier = notifier;
       this.cfg = cfg;
       this.container = container;
       this.timeService = timeService;
+      this.marshaller = marshaller;
    }
 
    @Start(priority = 12)
    public void start() {
-      enabled = cacheLoaderManager.isUsingPassivation();
+      enabled = cfg.persistence().passivation() && cfg.persistence().usingStores();
       if (enabled) {
-         cacheStore = cacheLoaderManager == null ? null : cacheLoaderManager.getCacheStore();
-         if (cacheStore == null) {
-            throw new CacheConfigurationException("passivation can only be used with a CacheLoader that implements CacheStore!");
-         }
-
-         enabled = cacheLoaderManager.isEnabled() && cacheLoaderManager.isUsingPassivation();
          statsEnabled = cfg.jmxStatistics().enabled();
       }
    }
@@ -73,9 +73,11 @@ public class PassivationManagerImpl implements PassivationManager {
                ImmutableContext.INSTANCE, null);
          if (trace) log.tracef("Passivating entry %s", key);
          try {
-            cacheStore.store(entry);
+            MarshalledEntryImpl marshalledEntry = new MarshalledEntryImpl(entry.getKey(), entry.getValue(),
+                                                                          internalMetadata(entry), marshaller);
+            persistenceManager.writeToAllStores(marshalledEntry, false);
             if (statsEnabled) passivations.getAndIncrement();
-         } catch (CacheLoaderException e) {
+         } catch (CacheException e) {
             log.unableToPassivateEntry(key, e);
          }
          notifier.notifyCacheEntryPassivated(key, null, false,
@@ -91,7 +93,8 @@ public class PassivationManagerImpl implements PassivationManager {
          log.passivatingAllEntries();
          for (InternalCacheEntry e : container) {
             if (trace) log.tracef("Passivating %s", e.getKey());
-            cacheStore.store(e);
+            persistenceManager.writeToAllStores(new MarshalledEntryImpl(e.getKey(), e.getValue(),
+                                                                        internalMetadata(e), marshaller), false);
          }
          log.passivatedEntries(container.size(),
                                Util.prettyPrintTime(timeService.timeDuration(start, TimeUnit.MILLISECONDS)));

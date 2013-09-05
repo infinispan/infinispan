@@ -6,8 +6,6 @@ import java.io.InputStreamReader;
 import java.io.StringWriter;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.concurrent.Executor;
-import java.util.concurrent.Executors;
 
 import org.infinispan.Cache;
 import org.infinispan.manager.CacheContainer;

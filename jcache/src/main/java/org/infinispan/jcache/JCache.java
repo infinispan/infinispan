@@ -32,9 +32,10 @@ import org.infinispan.interceptors.EntryWrappingInterceptor;
 import org.infinispan.jcache.interceptor.ExpirationTrackingInterceptor;
 import org.infinispan.jcache.logging.Log;
 import org.infinispan.jmx.JmxUtil;
-import org.infinispan.loaders.manager.CacheLoaderManager;
+import org.infinispan.persistence.manager.PersistenceManager;
 import org.infinispan.commons.marshall.StreamingMarshaller;
 import org.infinispan.commons.util.InfinispanCollections;
+import org.infinispan.persistence.manager.PersistenceManagerImpl;
 import org.infinispan.util.concurrent.locks.containers.LockContainer;
 import org.infinispan.util.concurrent.locks.containers.ReentrantPerEntryLockContainer;
 import org.infinispan.util.logging.LogFactory;
@@ -117,10 +118,10 @@ public final class JCache<K, V> implements Cache<K, V> {
       // Plug user-defined cache loader into adaptor
       Factory<CacheLoader<K, V>> cacheLoaderFactory = c.getCacheLoaderFactory();
       if (cacheLoaderFactory != null) {
-         CacheLoaderManager loaderManager =
-               cache.getComponentRegistry().getComponent(CacheLoaderManager.class);
+         PersistenceManagerImpl persistenceManager =
+               (PersistenceManagerImpl) cache.getComponentRegistry().getComponent(PersistenceManager.class);
          JCacheLoaderAdapter<K, V> ispnCacheLoader =
-               (JCacheLoaderAdapter<K, V>) loaderManager.getCacheLoader();
+               (JCacheLoaderAdapter<K, V>) persistenceManager.getAllLoaders().get(0);
          cacheLoader = cacheLoaderFactory.create();
          ispnCacheLoader.setCacheLoader(cacheLoader);
       }
@@ -130,10 +131,10 @@ public final class JCache<K, V> implements Cache<K, V> {
       // Plug user-defined cache writer into adaptor
       Factory<CacheWriter<? super K, ? super V>> cacheWriterFactory = c.getCacheWriterFactory();
       if (cacheWriterFactory != null) {
-         CacheLoaderManager loaderManager =
-               cache.getComponentRegistry().getComponent(CacheLoaderManager.class);
+         PersistenceManagerImpl persistenceManager =
+               (PersistenceManagerImpl) cache.getComponentRegistry().getComponent(PersistenceManager.class);
          JCacheWriterAdapter<K, V> ispnCacheStore =
-               (JCacheWriterAdapter) loaderManager.getCacheStore();
+               (JCacheWriterAdapter) persistenceManager.getAllWriters().get(0);
          ispnCacheStore.setCacheWriter(cacheWriterFactory.create());
       }
    }

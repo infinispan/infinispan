@@ -2,11 +2,9 @@ package org.infinispan.query.statetransfer;
 
 import org.infinispan.Cache;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
-import org.infinispan.loaders.CacheLoaderException;
-import org.infinispan.loaders.dummy.DummyInMemoryCacheStore;
-import org.infinispan.loaders.dummy.DummyInMemoryCacheStoreConfigurationBuilder;
-import org.infinispan.loaders.manager.CacheLoaderManager;
-import org.infinispan.loaders.spi.CacheStore;
+import org.infinispan.persistence.CacheLoaderException;
+import org.infinispan.persistence.dummy.DummyInMemoryStoreConfigurationBuilder;
+import org.infinispan.persistence.spi.CacheLoader;
 import org.infinispan.query.test.Person;
 import org.infinispan.test.TestingUtil;
 import org.testng.annotations.Test;
@@ -29,8 +27,8 @@ public class PersistentStateTransferQueryIndexTest extends BaseReIndexingTest {
       // Explicitly disable fetching in-memory state in order
       // to fetch it from the persistence layer
       builder.clustering().stateTransfer().fetchInMemoryState(false)
-            .loaders().passivation(true).shared(false)
-            .addStore(DummyInMemoryCacheStoreConfigurationBuilder.class)
+            .persistence().passivation(true)
+            .addStore(DummyInMemoryStoreConfigurationBuilder.class).shared(false)
                   .fetchPersistentState(true);
    }
 
@@ -60,7 +58,7 @@ public class PersistentStateTransferQueryIndexTest extends BaseReIndexingTest {
 
    private void checkCacheStoresContainPersons() throws CacheLoaderException {
       for (Cache<Object, Object> cache : caches()) {
-         CacheStore store = TestingUtil.extractComponent(cache, CacheLoaderManager.class).getCacheStore();
+         CacheLoader store = TestingUtil.getFirstLoader(cache);
          for (int i = 0; i < persons.length; i++)
             assertEquals(persons[i], store.load(persons[i].getName()).getValue());
       }
@@ -68,9 +66,9 @@ public class PersistentStateTransferQueryIndexTest extends BaseReIndexingTest {
 
    private void checkCacheStoresEmpty() throws CacheLoaderException {
       for (Cache<Object, Object> cache : caches()) {
-         CacheStore store = TestingUtil.extractComponent(cache, CacheLoaderManager.class).getCacheStore();
+         CacheLoader store = TestingUtil.getFirstLoader(cache);
          for (Person person : persons) {
-            assert !store.containsKey(person.getName());
+            assert !store.contains(person.getName());
          }
       }
    }

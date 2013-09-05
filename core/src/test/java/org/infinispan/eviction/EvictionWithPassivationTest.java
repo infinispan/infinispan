@@ -2,7 +2,7 @@ package org.infinispan.eviction;
 
 import org.infinispan.Cache;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
-import org.infinispan.loaders.dummy.DummyInMemoryCacheStoreConfigurationBuilder;
+import org.infinispan.persistence.dummy.DummyInMemoryStoreConfigurationBuilder;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.test.SingleCacheManagerTest;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
@@ -17,7 +17,7 @@ public class EvictionWithPassivationTest extends SingleCacheManagerTest {
    private ConfigurationBuilder buildCfg(EvictionThreadPolicy threadPolicy, EvictionStrategy strategy) {
       ConfigurationBuilder cfg = new ConfigurationBuilder();
       cfg
-         .loaders().passivation(true).addStore(DummyInMemoryCacheStoreConfigurationBuilder.class).purgeOnStartup(true)
+         .persistence().passivation(true).addStore(DummyInMemoryStoreConfigurationBuilder.class).purgeOnStartup(true)
          .eviction().strategy(strategy).threadPolicy(threadPolicy).maxEntries(EVICTION_MAX_ENTRIES)
          .invocationBatching().enable();
       return cfg;

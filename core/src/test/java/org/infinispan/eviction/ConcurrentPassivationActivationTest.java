@@ -1,7 +1,7 @@
 package org.infinispan.eviction;
 
 import org.infinispan.configuration.cache.ConfigurationBuilder;
-import org.infinispan.loaders.dummy.DummyInMemoryCacheStoreConfigurationBuilder;
+import org.infinispan.persistence.dummy.DummyInMemoryStoreConfigurationBuilder;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.notifications.Listener;
 import org.infinispan.notifications.cachelistener.annotation.CacheEntryPassivated;
@@ -35,9 +35,9 @@ public class ConcurrentPassivationActivationTest extends SingleCacheManagerTest 
       ConfigurationBuilder builder = new ConfigurationBuilder();
       builder.eviction().strategy(EvictionStrategy.LRU).maxEntries(1)
          .jmxStatistics().enable()
-         .loaders()
+         .persistence()
             .passivation(true)
-            .addLoader(DummyInMemoryCacheStoreConfigurationBuilder.class);
+            .addStore(DummyInMemoryStoreConfigurationBuilder.class);
 
       return TestCacheManagerFactory.createCacheManager(builder);
    }

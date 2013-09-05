@@ -4,10 +4,9 @@ import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.container.DataContainer;
 import org.infinispan.eviction.EvictionStrategy;
-import org.infinispan.loaders.dummy.DummyInMemoryCacheStore;
-import org.infinispan.loaders.dummy.DummyInMemoryCacheStoreConfigurationBuilder;
-import org.infinispan.loaders.manager.CacheLoaderManager;
-import org.infinispan.loaders.spi.CacheStore;
+import org.infinispan.persistence.PersistenceUtil;
+import org.infinispan.persistence.dummy.DummyInMemoryStoreConfigurationBuilder;
+import org.infinispan.persistence.spi.AdvancedCacheLoader;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.CleanupAfterMethod;
 import org.infinispan.transaction.LockingMode;
@@ -31,14 +30,14 @@ public class ReplDeltaAwarePassivationTest extends ReplDeltaAwareEvictionTest {
             .transactionMode(TransactionMode.TRANSACTIONAL).lockingMode(LockingMode.PESSIMISTIC)
             .transactionManagerLookup(new JBossStandaloneJTAManagerLookup())
             .eviction().maxEntries(1).strategy(EvictionStrategy.LRU)
-            .loaders().passivation(true)
-            .addStore(DummyInMemoryCacheStoreConfigurationBuilder.class)
+            .persistence().passivation(true)
+            .addStore(DummyInMemoryStoreConfigurationBuilder.class)
             .fetchPersistentState(false);
 
       addClusterEnabledCacheManager(builder);
 
-      builder.loaders().clearCacheLoaders()
-            .addStore(DummyInMemoryCacheStoreConfigurationBuilder.class).fetchPersistentState(false);
+      builder.persistence().clearStores()
+            .addStore(DummyInMemoryStoreConfigurationBuilder.class).fetchPersistentState(false);
 
       addClusterEnabledCacheManager(builder);
 
@@ -47,8 +46,8 @@ public class ReplDeltaAwarePassivationTest extends ReplDeltaAwareEvictionTest {
 
    @Override
    protected void assertNumberOfEntries(int cacheIndex) throws Exception {
-      CacheStore cacheStore = TestingUtil.extractComponent(cache(cacheIndex), CacheLoaderManager.class).getCacheStore();
-      Assert.assertEquals(1, cacheStore.loadAllKeys(null).size()); // one entry in store
+      AdvancedCacheLoader cacheStore = (AdvancedCacheLoader) TestingUtil.getCacheLoader(cache(cacheIndex));
+      Assert.assertEquals(1, PersistenceUtil.count(cacheStore, null)); // one entry in store
 
       DataContainer dataContainer = cache(cacheIndex).getAdvancedCache().getDataContainer();
       Assert.assertEquals(1, dataContainer.size());        // only one entry in memory (the other one was evicted)

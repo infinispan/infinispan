@@ -43,7 +43,7 @@ public class InterceptorChainTest {
          // can not possibly fail because of the InterceptorChain checking
          // that no interceptor is ever added twice.
          futures.add(executorService.submit(new InterceptorChainUpdater(ic, barrier, new CacheMgmtInterceptor())));
-         futures.add(executorService.submit(new InterceptorChainUpdater(ic, barrier, new DistCacheStoreInterceptor())));
+         futures.add(executorService.submit(new InterceptorChainUpdater(ic, barrier, new DistCacheWriterInterceptor())));
          futures.add(executorService.submit(new InterceptorChainUpdater(ic, barrier, new InvalidationInterceptor())));
          barrier.await(); // wait for all threads to be ready
          barrier.await(); // wait for all threads to finish
@@ -55,7 +55,7 @@ public class InterceptorChainTest {
       assert ic.containsInterceptorType(CallInterceptor.class);
       assert ic.containsInterceptorType(ActivationInterceptor.class);
       assert ic.containsInterceptorType(CacheMgmtInterceptor.class);
-      assert ic.containsInterceptorType(DistCacheStoreInterceptor.class);
+      assert ic.containsInterceptorType(DistCacheWriterInterceptor.class);
       assert ic.containsInterceptorType(InvalidationInterceptor.class);
       assert ic.asList().size() == 5 : "Resulting interceptor chain was actually " + ic.asList();
    }

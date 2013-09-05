@@ -1,14 +1,13 @@
 package org.infinispan.configuration.cache;
 
+import org.infinispan.config.parsing.XmlConfigHelper;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
-/*
- * This is slightly different AbstractLoaderConfigurationChildBuilder, as it instantiates a new set of children (async and singletonStore)
- * rather than delegate to existing ones.
- */
-public abstract class AbstractStoreConfigurationBuilder<T extends CacheStoreConfiguration, S extends AbstractStoreConfigurationBuilder<T, S>> extends
-      AbstractLoaderConfigurationBuilder<T, S> implements CacheStoreConfigurationBuilder<T, S> {
+import java.util.Properties;
+
+public abstract class AbstractStoreConfigurationBuilder<T extends StoreConfiguration, S extends AbstractStoreConfigurationBuilder<T, S>>
+      extends AbstractPersistenceConfigurationChildBuilder implements StoreConfigurationBuilder<T, S> {
 
    private static final Log log = LogFactory.getLog(AbstractStoreConfigurationBuilder.class);
 
@@ -17,18 +16,18 @@ public abstract class AbstractStoreConfigurationBuilder<T extends CacheStoreConf
    protected boolean fetchPersistentState = false;
    protected boolean ignoreModifications = false;
    protected boolean purgeOnStartup = false;
-   protected int purgerThreads = 1;
-   protected boolean purgeSynchronously = false;
+   protected boolean shared = false;
+   protected boolean preload = false;
+   protected Properties properties;
 
-   public AbstractStoreConfigurationBuilder(LoadersConfigurationBuilder builder) {
+   public AbstractStoreConfigurationBuilder(PersistenceConfigurationBuilder builder) {
       super(builder);
       this.async = new AsyncStoreConfigurationBuilder(this);
       this.singletonStore = new SingletonStoreConfigurationBuilder(this);
    }
 
    /**
-    * Configuration for the async cache loader. If enabled, this provides you with asynchronous
-    * writes to the cache store, giving you 'write-behind' caching.
+    * {@inheritDoc}
     */
    @Override
    public AsyncStoreConfigurationBuilder<S> async() {
@@ -36,24 +35,15 @@ public abstract class AbstractStoreConfigurationBuilder<T extends CacheStoreConf
    }
 
    /**
-    * SingletonStore is a delegating cache store used for situations when only one instance in a
-    * cluster should interact with the underlying store. The coordinator of the cluster will be
-    * responsible for the underlying CacheStore. SingletonStore is a simply facade to a real
-    * CacheStore implementation. It always delegates reads to the real CacheStore.
+    * {@inheritDoc}
     */
    @Override
-   public SingletonStoreConfigurationBuilder<S> singletonStore() {
+   public SingletonStoreConfigurationBuilder<S> singleton() {
       return singletonStore;
    }
 
    /**
-    * If true, fetch persistent state when joining a cluster. If multiple cache stores are chained,
-    * only one of them can have this property enabled. Persistent state transfer with a shared cache
-    * store does not make sense, as the same persistent store that provides the data will just end
-    * up receiving it. Therefore, if a shared cache store is used, the cache will not allow a
-    * persistent state transfer even if a cache store has this property set to true. Finally,
-    * setting it to true only makes sense if in a clustered environment, and only 'replication' and
-    * 'invalidation' cluster modes are supported.
+    * {@inheritDoc}
     */
    @Override
    public S fetchPersistentState(boolean b) {
@@ -62,9 +52,7 @@ public abstract class AbstractStoreConfigurationBuilder<T extends CacheStoreConf
    }
 
    /**
-    * If true, any operation that modifies the cache (put, remove, clear, store...etc) won't be
-    * applied to the cache store. This means that the cache store could become out of sync with the
-    * cache.
+    * {@inheritDoc}
     */
    @Override
    public S ignoreModifications(boolean b) {
@@ -81,21 +69,45 @@ public abstract class AbstractStoreConfigurationBuilder<T extends CacheStoreConf
       return self();
    }
 
-   /**
-    * The number of threads to use when purging asynchronously.
-    */
-   @Override
-   public S purgerThreads(int i) {
-      this.purgerThreads = i;
+   public S properties(Properties properties) {
+      this.properties = properties;
       return self();
    }
 
    /**
-    * If true, CacheStore#purgeExpired() call will be done synchronously
+    * {@inheritDoc}
     */
    @Override
-   public S purgeSynchronously(boolean b) {
-      this.purgeSynchronously = b;
+   public S addProperty(String key, String value) {
+      this.properties.put(key, value);
+      return self();
+   }
+
+   /**
+    * {@inheritDoc}
+    */
+   @Override
+   public S withProperties(Properties props) {
+      XmlConfigHelper.setValues(this, props, false, true);
+      this.properties = props;
+      return self();
+   }
+
+   /**
+    * {@inheritDoc}
+    */
+   @Override
+   public S preload(boolean b) {
+      this.preload = b;
+      return self();
+   }
+
+   /**
+    * {@inheritDoc}
+    */
+   @Override
+   public S shared(boolean b) {
+      this.shared = b;
       return self();
    }
 
@@ -104,12 +116,11 @@ public abstract class AbstractStoreConfigurationBuilder<T extends CacheStoreConf
       async.validate();
       singletonStore.validate();
       ConfigurationBuilder builder = getBuilder();
-      if (!loaders().shared() && !fetchPersistentState && !purgeOnStartup
+      if (!shared && !fetchPersistentState && !purgeOnStartup
             && builder.clustering().cacheMode().isClustered())
          log.staleEntriesWithoutFetchPersistentStateOrPurgeOnStartup();
 
-      if (loaders().shared() && !loaders().preload()
-            && builder.indexing().enabled()
+      if (shared && !preload && builder.indexing().enabled()
             && builder.indexing().indexLocalOnly())
          log.localIndexingWithSharedCacheLoaderRequiresPreload();
    }

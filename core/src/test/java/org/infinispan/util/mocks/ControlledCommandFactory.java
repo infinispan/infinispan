@@ -236,7 +236,7 @@ public class ControlledCommandFactory implements CommandsFactory {
    }
 
    @Override
-   public LockControlCommand buildLockControlCommand(Collection<Object> keys, Set<Flag> flags) {
+   public LockControlCommand buildLockControlCommand(Collection keys, Set<Flag> flags) {
       return actual.buildLockControlCommand(keys, flags);
    }
 

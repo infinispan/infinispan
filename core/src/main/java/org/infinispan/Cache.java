@@ -2,9 +2,7 @@ package org.infinispan;
 
 import org.infinispan.api.BasicCache;
 import org.infinispan.commons.api.BatchingCache;
-import org.infinispan.config.Configuration;
 import org.infinispan.lifecycle.ComponentStatus;
-import org.infinispan.loaders.spi.CacheStore;
 import org.infinispan.manager.DefaultCacheManager;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.notifications.FilteringListenable;
@@ -20,7 +18,7 @@ import java.util.concurrent.ConcurrentMap;
  * with additional features such as:
  * <p/>
  * <ul> <li>JTA transaction compatibility</li> <li>Eviction support for evicting entries from memory to prevent {@link
- * OutOfMemoryError}s</li> <li>Persisting entries to a {@link CacheStore}, either when they are evicted as an overflow,
+ * OutOfMemoryError}s</li> <li>Persisting entries to a {@link org.infinispan.persistence.spi.CacheLoader}, either when they are evicted as an overflow,
  * or all the time, to maintain persistent copies that would withstand server failure or restarts.</li> </ul>
  * <p/>
  * <p/>

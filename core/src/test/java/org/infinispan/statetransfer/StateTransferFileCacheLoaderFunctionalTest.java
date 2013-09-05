@@ -1,18 +1,11 @@
 package org.infinispan.statetransfer;
 
-import java.io.*;
-import java.lang.reflect.Method;
-import java.util.concurrent.Callable;
-import java.util.concurrent.Future;
-
 import org.infinispan.Cache;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
-import org.infinispan.configuration.cache.FileCacheStoreConfigurationBuilder;
-import org.infinispan.loaders.spi.CacheLoader;
+import org.infinispan.configuration.cache.SingleFileStoreConfigurationBuilder;
 import org.infinispan.manager.CacheContainer;
 import org.infinispan.manager.EmbeddedCacheManager;
-import org.infinispan.commons.marshall.AdvancedExternalizer;
 import org.infinispan.test.MultipleCacheManagersTest;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.transaction.LockingMode;
@@ -22,8 +15,12 @@ import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeTest;
 import org.testng.annotations.Test;
 
+import java.io.File;
+import java.lang.reflect.Method;
+import java.util.concurrent.Callable;
+import java.util.concurrent.Future;
+
 import static org.infinispan.statetransfer.StateTransferTestingUtil.*;
-import static org.testng.Assert.assertEquals;
 
 /**
  * StateTransferFileCacheStoreFunctionalTest.
@@ -81,15 +78,14 @@ public class StateTransferFileCacheLoaderFunctionalTest extends MultipleCacheMan
    }
 
    protected EmbeddedCacheManager createCacheManager(String tmpDirectory) {
-      configurationBuilder.loaders().clearCacheLoaders();
-      configurationBuilder.loaders().shared(sharedCacheLoader.get());
+      configurationBuilder.persistence().clearStores();
 
-      FileCacheStoreConfigurationBuilder fcsBuilder = configurationBuilder.loaders().addFileCacheStore();
+      SingleFileStoreConfigurationBuilder fcsBuilder = configurationBuilder.persistence().addSingleFileStore();
       fcsBuilder
-            .purgeSynchronously(true) // for more accurate unit testing
             .fetchPersistentState(true)
             .purgeOnStartup(false)
-            .location(tmpDirectory);
+            .location(tmpDirectory)
+            .shared(sharedCacheLoader.get());
 
       EmbeddedCacheManager cm = addClusterEnabledCacheManager();
       cm.defineConfiguration(cacheName, configurationBuilder.build());

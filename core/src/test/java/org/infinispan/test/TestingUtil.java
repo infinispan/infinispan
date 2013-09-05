@@ -1,6 +1,7 @@
 package org.infinispan.test;
 
 import static java.io.File.separator;
+import static org.infinispan.persistence.PersistenceUtil.internalMetadata;
 import static org.testng.AssertJUnit.assertFalse;
 
 import java.io.File;
@@ -34,6 +35,8 @@ import org.infinispan.commands.CommandsFactory;
 import org.infinispan.commands.VisitableCommand;
 import org.infinispan.container.DataContainer;
 import org.infinispan.container.entries.CacheEntry;
+import org.infinispan.container.entries.InternalCacheEntry;
+import org.infinispan.container.entries.InternalCacheValue;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.context.InvocationContextContainer;
 import org.infinispan.factories.ComponentRegistry;
@@ -43,15 +46,23 @@ import org.infinispan.interceptors.InterceptorChain;
 import org.infinispan.interceptors.base.CommandInterceptor;
 import org.infinispan.jmx.PerThreadMBeanServerLookup;
 import org.infinispan.lifecycle.ComponentStatus;
-import org.infinispan.loaders.manager.CacheLoaderManager;
-import org.infinispan.loaders.spi.CacheLoader;
-import org.infinispan.loaders.spi.CacheStore;
+import org.infinispan.persistence.MarshalledEntryImpl;
+import org.infinispan.persistence.PersistenceUtil;
+import org.infinispan.persistence.manager.PersistenceManager;
+import org.infinispan.persistence.manager.PersistenceManagerImpl;
+import org.infinispan.persistence.spi.AdvancedCacheLoader;
+import org.infinispan.persistence.spi.AdvancedLoadWriteStore;
+import org.infinispan.persistence.spi.CacheLoader;
+import org.infinispan.persistence.spi.CacheWriter;
+import org.infinispan.persistence.spi.MarshalledEntry;
 import org.infinispan.manager.CacheContainer;
-import org.infinispan.manager.CacheManager;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.commons.marshall.AbstractDelegatingMarshaller;
 import org.infinispan.commons.marshall.StreamingMarshaller;
 import org.infinispan.marshall.core.ExternalizerTable;
+import org.infinispan.metadata.EmbeddedMetadata;
+import org.infinispan.metadata.InternalMetadataImpl;
+import org.infinispan.metadata.Metadata;
 import org.infinispan.remoting.ReplicationQueue;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.remoting.transport.Transport;
@@ -61,6 +72,7 @@ import org.infinispan.topology.CacheTopology;
 import org.infinispan.topology.DefaultRebalancePolicy;
 import org.infinispan.topology.RebalancePolicy;
 import org.infinispan.transaction.TransactionTable;
+import org.infinispan.util.concurrent.WithinThreadExecutor;
 import org.infinispan.util.concurrent.locks.LockManager;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
@@ -654,20 +666,14 @@ public class TestingUtil {
    }
 
    public static void clearCacheLoader(Cache cache) {
-      CacheLoaderManager cacheLoaderManager = TestingUtil.extractComponent(cache, CacheLoaderManager.class);
-      if (cacheLoaderManager != null && cacheLoaderManager.getCacheStore() != null) {
-         try {
-            cacheLoaderManager.getCacheStore().clear();
-         } catch (Exception e) {
-            throw new RuntimeException(e);
-         }
-      }
+      PersistenceManager persistenceManager = TestingUtil.extractComponent(cache, PersistenceManager.class);
+      persistenceManager.clearAllStores(false);
    }
 
-   public static <K, V> List<CacheStore> cachestores(List<Cache<K, V>> caches) {
-      List<CacheStore> l = new LinkedList<CacheStore>();
+   public static <K, V> List<CacheLoader> cachestores(List<Cache<K, V>> caches) {
+      List<CacheLoader> l = new LinkedList<CacheLoader>();
       for (Cache<?, ?> c: caches)
-         l.add(TestingUtil.extractComponent(c, CacheLoaderManager.class).getCacheStore());
+         l.add(TestingUtil.getFirstLoader(c));
       return l;
    }
 
@@ -988,9 +994,9 @@ public class TestingUtil {
    }
 
    public static CacheLoader getCacheLoader(Cache cache) {
-      CacheLoaderManager clm = extractComponent(cache, CacheLoaderManager.class);
-      if (clm != null && clm.isEnabled()) {
-         return clm.getCacheLoader();
+      PersistenceManager clm = extractComponent(cache, PersistenceManager.class);
+      if (cache.getCacheConfiguration().persistence().usingStores()) {
+         return TestingUtil.getFirstLoader(cache);
       } else {
          return null;
       }
@@ -1261,5 +1267,57 @@ public class TestingUtil {
     */
    public static long now() {
       return TimeUnit.NANOSECONDS.toMillis(System.nanoTime());
+   }
+
+   public static Metadata metadata(Long lifespan, Long maxIdle) {
+      return new EmbeddedMetadata.Builder().lifespan(lifespan != null ? lifespan : -1)
+            .maxIdle(maxIdle != null ? maxIdle : -1).build();
+   }
+   public static Metadata metadata(Integer lifespan, Integer maxIdle) {
+      return new EmbeddedMetadata.Builder().lifespan(lifespan != null ? lifespan : -1)
+            .maxIdle(maxIdle != null ? maxIdle : -1).build();
+   }
+
+   public static InternalMetadataImpl internalMetadata(Long lifespan, Long maxIdle) {
+      long now = System.currentTimeMillis();
+      return new InternalMetadataImpl(metadata(lifespan, maxIdle), now, now);
+   }
+
+
+   public static CacheLoader getFirstLoader(Cache cache) {
+      PersistenceManagerImpl persistenceManager = (PersistenceManagerImpl) extractComponent(cache, PersistenceManager.class);
+      return persistenceManager.getAllLoaders().get(0);
+   }
+
+   public static CacheWriter getFirstWriter(Cache cache) {
+      PersistenceManagerImpl persistenceManager = (PersistenceManagerImpl) extractComponent(cache, PersistenceManager.class);
+      return persistenceManager.getAllWriters().get(0);
+   }
+
+   public static StreamingMarshaller marshaller(Cache cache) {
+      return cache.getAdvancedCache().getComponentRegistry().getCacheMarshaller();
+   }
+
+   public static Set<MarshalledEntry> allEntries(AdvancedLoadWriteStore cl, AdvancedCacheLoader.KeyFilter filter) {
+      final Set<MarshalledEntry> result = new HashSet<MarshalledEntry>();
+      cl.process(filter, new AdvancedCacheLoader.CacheLoaderTask() {
+         @Override
+         public void processEntry(MarshalledEntry marshalledEntry, AdvancedCacheLoader.TaskContext taskContext) throws InterruptedException {
+            result.add(marshalledEntry);
+         }
+      }, new WithinThreadExecutor(), true, true);
+      return result;
+   }
+
+   public static Set<MarshalledEntry> allEntries(AdvancedLoadWriteStore cl) {
+      return allEntries(cl, null);
+   }
+
+   public static MarshalledEntry marshalledEntry(InternalCacheEntry ice, StreamingMarshaller marshaller) {
+      return new MarshalledEntryImpl(ice.getKey(), ice.getValue(), PersistenceUtil.internalMetadata(ice), marshaller);
+   }
+
+   public static MarshalledEntry marshalledEntry(InternalCacheValue icv, StreamingMarshaller marshaller) {
+      return marshalledEntry(icv, marshaller);
    }
 }

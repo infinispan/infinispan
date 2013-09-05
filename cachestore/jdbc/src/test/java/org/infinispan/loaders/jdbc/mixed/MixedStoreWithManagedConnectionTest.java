@@ -1,21 +1,21 @@
 package org.infinispan.loaders.jdbc.mixed;
 
 import org.infinispan.Cache;
-import org.infinispan.CacheImpl;
-import org.infinispan.configuration.cache.CacheLoaderConfiguration;
+import org.infinispan.commons.marshall.StreamingMarshaller;
+import org.infinispan.configuration.cache.ConfigurationBuilder;
+import org.infinispan.configuration.cache.StoreConfiguration;
+import org.infinispan.persistence.CacheLoaderException;
 import org.infinispan.loaders.jdbc.ManagedConnectionFactoryTest;
-import org.infinispan.loaders.jdbc.TableManipulation;
-import org.infinispan.loaders.jdbc.configuration.JdbcMixedCacheStoreConfiguration;
-import org.infinispan.loaders.jdbc.configuration.JdbcMixedCacheStoreConfigurationBuilder;
-import org.infinispan.loaders.jdbc.configuration.ManagedConnectionFactoryConfigurationBuilder;
-import org.infinispan.loaders.jdbc.connectionfactory.ConnectionFactoryConfig;
+import org.infinispan.loaders.jdbc.configuration.JdbcMixedStoreConfiguration;
+import org.infinispan.loaders.jdbc.configuration.JdbcMixedStoreConfigurationBuilder;
 import org.infinispan.loaders.jdbc.connectionfactory.ManagedConnectionFactory;
-import org.infinispan.loaders.manager.CacheLoaderManager;
-import org.infinispan.loaders.spi.CacheStore;
+import org.infinispan.persistence.spi.AdvancedLoadWriteStore;
 import org.infinispan.manager.CacheContainer;
+import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.infinispan.test.fwk.UnitTestDatabaseManager;
+import org.testng.annotations.AfterMethod;
 import org.testng.annotations.Test;
 
 /**
@@ -24,28 +24,51 @@ import org.testng.annotations.Test;
 @Test(groups = "functional", testName = "loaders.jdbc.mixed.MixedStoreWithManagedConnectionTest")
 public class MixedStoreWithManagedConnectionTest extends ManagedConnectionFactoryTest {
 
+   private EmbeddedCacheManager cacheManager;
+   private Cache<Object,Object> cache;
+
    @Override
-   protected CacheStore createCacheStore() throws Exception {
-      JdbcMixedCacheStoreConfigurationBuilder storeBuilder = TestCacheManagerFactory
-            .getDefaultCacheConfiguration(false)
-            .loaders()
-               .addLoader(JdbcMixedCacheStoreConfigurationBuilder.class)
-                  .purgeSynchronously(true);
+   protected AdvancedLoadWriteStore createStore() throws Exception {
+
+      ConfigurationBuilder cc = TestCacheManagerFactory.getDefaultCacheConfiguration(false);
+      JdbcMixedStoreConfigurationBuilder storeBuilder = cc
+            .persistence()
+            .addStore(JdbcMixedStoreConfigurationBuilder.class);
       storeBuilder.dataSource().jndiUrl(getDatasourceLocation());
       UnitTestDatabaseManager.buildTableManipulation(storeBuilder.stringTable(), false);
       UnitTestDatabaseManager.buildTableManipulation(storeBuilder.binaryTable(), true);
 
       storeBuilder
             .binaryTable()
-               .tableNamePrefix("BINARY_TABLE")
+            .tableNamePrefix("BINARY_TABLE")
             .stringTable()
-               .tableNamePrefix("STRINGS_TABLE");
+            .tableNamePrefix("STRINGS_TABLE");
 
-      JdbcMixedCacheStore store = new JdbcMixedCacheStore();
-      store.init(storeBuilder.create(), getCache(), getMarshaller());
-      store.start();
-      assert store.getConnectionFactory() instanceof ManagedConnectionFactory;
-      return store;
+      cacheManager = TestCacheManagerFactory.createCacheManager(cc);
+      cache = cacheManager.getCache();
+
+      JdbcMixedCacheStore jdbcMixed = (JdbcMixedCacheStore) TestingUtil.getFirstWriter(cache);
+
+      csc = jdbcMixed.getConfiguration();
+      return jdbcMixed;
+   }
+
+
+   @Override
+   protected Cache getCache() {
+      return cache;
+   }
+
+   @Override
+   protected StreamingMarshaller getMarshaller() {
+      return cache.getAdvancedCache().getComponentRegistry().getCacheMarshaller();
+   }
+
+   @AfterMethod
+   @Override
+   public void tearDown() throws CacheLoaderException {
+      cache.clear();
+      TestingUtil.killCacheManagers(cacheManager);
    }
 
 
@@ -56,14 +79,13 @@ public class MixedStoreWithManagedConnectionTest extends ManagedConnectionFactor
          Cache<String, String> first = cm.getCache("first");
          Cache<String, String> second = cm.getCache("second");
 
-         CacheLoaderConfiguration firstCacheLoaderConfig = first.getCacheConfiguration().loaders().cacheLoaders().get(0);
+         StoreConfiguration firstCacheLoaderConfig = first.getCacheConfiguration().persistence().stores().get(0);
          assert firstCacheLoaderConfig != null;
-         CacheLoaderConfiguration secondCacheLoaderConfig = second.getCacheConfiguration().loaders().cacheLoaders().get(0);
+         StoreConfiguration secondCacheLoaderConfig = second.getCacheConfiguration().persistence().stores().get(0);
          assert secondCacheLoaderConfig != null;
-         assert firstCacheLoaderConfig instanceof JdbcMixedCacheStoreConfiguration;
-         assert secondCacheLoaderConfig instanceof JdbcMixedCacheStoreConfiguration;
-         CacheLoaderManager cacheLoaderManager = first.getAdvancedCache().getComponentRegistry().getComponent(CacheLoaderManager.class);
-         JdbcMixedCacheStore loader = (JdbcMixedCacheStore) cacheLoaderManager.getCacheLoader();
+         assert firstCacheLoaderConfig instanceof JdbcMixedStoreConfiguration;
+         assert secondCacheLoaderConfig instanceof JdbcMixedStoreConfiguration;
+         JdbcMixedCacheStore loader = (JdbcMixedCacheStore) TestingUtil.getFirstLoader(first);
          assert loader.getConnectionFactory() instanceof ManagedConnectionFactory;
       } finally {
          TestingUtil.killCacheManagers(cm);

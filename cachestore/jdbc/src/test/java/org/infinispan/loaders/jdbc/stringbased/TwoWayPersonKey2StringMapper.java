@@ -1,6 +1,6 @@
 package org.infinispan.loaders.jdbc.stringbased;
 
-import org.infinispan.loaders.keymappers.TwoWayKey2StringMapper;
+import org.infinispan.persistence.keymappers.TwoWayKey2StringMapper;
 
 import java.util.StringTokenizer;
 

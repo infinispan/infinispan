@@ -16,7 +16,7 @@ public class AsyncStoreConfiguration {
    private final int threadPoolSize;
 
    AsyncStoreConfiguration(boolean enabled, long flushLockTimeout, int modificationQueueSize, long shutdownTimeout,
-         int threadPoolSize) {
+                           int threadPoolSize) {
       this.enabled = enabled;
       this.flushLockTimeout = flushLockTimeout;
       this.modificationQueueSize = modificationQueueSize;
@@ -83,7 +83,7 @@ public class AsyncStoreConfiguration {
 
    @Override
    public String toString() {
-      return "AsyncLoaderConfiguration{" +
+      return "AsyncStoreConfiguration{" +
             "enabled=" + enabled +
             ", flushLockTimeout=" + flushLockTimeout +
             ", modificationQueueSize=" + modificationQueueSize +

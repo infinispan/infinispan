@@ -18,7 +18,7 @@ public class Configuration {
    private final IndexingConfiguration indexingConfiguration;
    private final InvocationBatchingConfiguration invocationBatchingConfiguration;
    private final JMXStatisticsConfiguration jmxStatisticsConfiguration;
-   private final LoadersConfiguration loadersConfiguration;
+   private final PersistenceConfiguration persistenceConfiguration;
    private final LockingConfiguration lockingConfiguration;
    private final StoreAsBinaryConfiguration storeAsBinaryConfiguration;
    private final TransactionConfiguration transactionConfiguration;
@@ -34,7 +34,7 @@ public class Configuration {
                  EvictionConfiguration evictionConfiguration, ExpirationConfiguration expirationConfiguration,
                  IndexingConfiguration indexingConfiguration, InvocationBatchingConfiguration invocationBatchingConfiguration,
                  JMXStatisticsConfiguration jmxStatisticsConfiguration,
-                 LoadersConfiguration loadersConfiguration,
+                 PersistenceConfiguration persistenceConfiguration,
                  LockingConfiguration lockingConfiguration, StoreAsBinaryConfiguration storeAsBinaryConfiguration,
                  TransactionConfiguration transactionConfiguration, UnsafeConfiguration unsafeConfiguration,
                  VersioningConfiguration versioningConfiguration, SitesConfiguration sitesConfiguration,
@@ -49,7 +49,7 @@ public class Configuration {
       this.indexingConfiguration = indexingConfiguration;
       this.invocationBatchingConfiguration = invocationBatchingConfiguration;
       this.jmxStatisticsConfiguration = jmxStatisticsConfiguration;
-      this.loadersConfiguration = loadersConfiguration;
+      this.persistenceConfiguration = persistenceConfiguration;
       this.lockingConfiguration = lockingConfiguration;
       this.storeAsBinaryConfiguration = storeAsBinaryConfiguration;
       this.transactionConfiguration = transactionConfiguration;
@@ -109,8 +109,8 @@ public class Configuration {
       return jmxStatisticsConfiguration;
    }
 
-   public LoadersConfiguration loaders() {
-      return loadersConfiguration;
+   public PersistenceConfiguration persistence() {
+      return persistenceConfiguration;
    }
 
    public LockingConfiguration locking() {
@@ -163,7 +163,7 @@ public class Configuration {
             ", indexing=" + indexingConfiguration +
             ", invocationBatching=" + invocationBatchingConfiguration +
             ", jmxStatistics=" + jmxStatisticsConfiguration +
-            ", loaders=" + loadersConfiguration +
+            ", loaders=" + persistenceConfiguration +
             ", locking=" + lockingConfiguration +
             ", modules=" + moduleConfiguration +
             ", storeAsBinary=" + storeAsBinaryConfiguration +
@@ -202,7 +202,7 @@ public class Configuration {
          return false;
       if (jmxStatisticsConfiguration != null ? !jmxStatisticsConfiguration.equals(that.jmxStatisticsConfiguration) : that.jmxStatisticsConfiguration != null)
          return false;
-      if (loadersConfiguration != null ? !loadersConfiguration.equals(that.loadersConfiguration) : that.loadersConfiguration != null)
+      if (persistenceConfiguration != null ? !persistenceConfiguration.equals(that.persistenceConfiguration) : that.persistenceConfiguration != null)
          return false;
       if (lockingConfiguration != null ? !lockingConfiguration.equals(that.lockingConfiguration) : that.lockingConfiguration != null)
          return false;
@@ -236,7 +236,7 @@ public class Configuration {
       result = 31 * result + (indexingConfiguration != null ? indexingConfiguration.hashCode() : 0);
       result = 31 * result + (invocationBatchingConfiguration != null ? invocationBatchingConfiguration.hashCode() : 0);
       result = 31 * result + (jmxStatisticsConfiguration != null ? jmxStatisticsConfiguration.hashCode() : 0);
-      result = 31 * result + (loadersConfiguration != null ? loadersConfiguration.hashCode() : 0);
+      result = 31 * result + (persistenceConfiguration != null ? persistenceConfiguration.hashCode() : 0);
       result = 31 * result + (lockingConfiguration != null ? lockingConfiguration.hashCode() : 0);
       result = 31 * result + (moduleConfiguration != null ? moduleConfiguration.hashCode() : 0);
       result = 31 * result + (storeAsBinaryConfiguration != null ? storeAsBinaryConfiguration.hashCode() : 0);

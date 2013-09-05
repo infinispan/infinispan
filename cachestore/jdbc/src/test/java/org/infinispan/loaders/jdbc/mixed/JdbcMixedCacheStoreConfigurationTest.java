@@ -1,31 +1,29 @@
 package org.infinispan.loaders.jdbc.mixed;
 
 import junit.framework.Assert;
-
 import org.infinispan.commons.CacheConfigurationException;
-import org.infinispan.loaders.jdbc.configuration.JdbcMixedCacheStoreConfiguration;
-import org.infinispan.loaders.jdbc.configuration.JdbcMixedCacheStoreConfigurationBuilder;
-import org.infinispan.loaders.keymappers.DefaultTwoWayKey2StringMapper;
+import org.infinispan.loaders.jdbc.configuration.JdbcMixedStoreConfiguration;
+import org.infinispan.loaders.jdbc.configuration.JdbcMixedStoreConfigurationBuilder;
+import org.infinispan.persistence.keymappers.DefaultTwoWayKey2StringMapper;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
 /**
- * Tester class for {@link org.infinispan.loaders.jdbc.configuration.JdbcMixedCacheStoreConfiguration}.
+ * Tester class for {@link org.infinispan.loaders.jdbc.configuration.JdbcMixedStoreConfiguration}.
  *
  * @author Mircea.Markus@jboss.com
  */
 @Test(groups = "unit", testName = "loaders.jdbc.mixed.JdbcMixedCacheStoreConfigurationTest")
 public class JdbcMixedCacheStoreConfigurationTest {
-   private JdbcMixedCacheStoreConfiguration config;
-   private JdbcMixedCacheStoreConfigurationBuilder storeBuilder;
+   private JdbcMixedStoreConfiguration config;
+   private JdbcMixedStoreConfigurationBuilder storeBuilder;
 
    @BeforeMethod
    public void setUp() {
       storeBuilder = TestCacheManagerFactory.getDefaultCacheConfiguration(false)
-            .loaders()
-               .addLoader(JdbcMixedCacheStoreConfigurationBuilder.class)
-               .purgeSynchronously(true);
+            .persistence()
+               .addStore(JdbcMixedStoreConfigurationBuilder.class);
       storeBuilder
             .simpleConnection()
                .connectionUrl("url")
@@ -37,7 +35,6 @@ public class JdbcMixedCacheStoreConfigurationTest {
     */
    public void simpleTest() {
       storeBuilder
-            .purgeSynchronously(true)
             .binaryTable()
                .createOnStart(false)
                .dataColumnName("binary_dc")
@@ -75,28 +72,23 @@ public class JdbcMixedCacheStoreConfigurationTest {
    public void testConcurrencyLevel() {
       config = storeBuilder.create();
       Assert.assertEquals(2048, config.lockConcurrencyLevel());
-      JdbcMixedCacheStoreConfigurationBuilder storeBuilder2 = TestCacheManagerFactory.getDefaultCacheConfiguration
+      JdbcMixedStoreConfigurationBuilder storeBuilder2 = TestCacheManagerFactory.getDefaultCacheConfiguration
             (false)
-            .loaders()
-            .addLoader(JdbcMixedCacheStoreConfigurationBuilder.class)
+            .persistence()
+            .addStore(JdbcMixedStoreConfigurationBuilder.class)
                .read(config)
                .lockConcurrencyLevel(12);
       config = storeBuilder2.create();
       Assert.assertEquals(12, config.lockConcurrencyLevel());
    }
 
-   public void testEnforcedSyncPurging() {
-      config = storeBuilder.create();
-      Assert.assertTrue(config.purgeSynchronously());
-   }
-
    public void voidTestLockAcquisitionTimeout() {
       config = storeBuilder.create();
-      Assert.assertEquals(60000, config.lockAcquistionTimeout());
-      JdbcMixedCacheStoreConfigurationBuilder storeBuilder2 = TestCacheManagerFactory.getDefaultCacheConfiguration
+      Assert.assertEquals(60000, config.lockAcquisitionTimeout());
+      JdbcMixedStoreConfigurationBuilder storeBuilder2 = TestCacheManagerFactory.getDefaultCacheConfiguration
             (false)
-            .loaders()
-            .addLoader(JdbcMixedCacheStoreConfigurationBuilder.class)
+            .persistence()
+            .addStore(JdbcMixedStoreConfigurationBuilder.class)
                .read(config)
                .lockConcurrencyLevel(13);
       config = storeBuilder2.create();

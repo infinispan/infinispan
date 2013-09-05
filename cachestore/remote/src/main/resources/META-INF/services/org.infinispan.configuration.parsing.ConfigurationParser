@@ -1,3 +1,1 @@
-org.infinispan.loaders.remote.configuration.RemoteCacheStoreConfigurationParser52
-org.infinispan.loaders.remote.configuration.RemoteCacheStoreConfigurationParser53
-org.infinispan.loaders.remote.configuration.RemoteCacheStoreConfigurationParser60
+org.infinispan.loaders.remote.configuration.RemoteStoreConfigurationParser60

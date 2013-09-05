@@ -442,7 +442,7 @@ public class CommandsFactoryImpl implements CommandsFactory {
    }
 
    @Override
-   public LockControlCommand buildLockControlCommand(Collection<Object> keys, Set<Flag> flags) {
+   public LockControlCommand buildLockControlCommand(Collection keys, Set<Flag> flags) {
       return new LockControlCommand(keys,  cacheName, flags, null);
    }
 

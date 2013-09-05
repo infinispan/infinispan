@@ -71,8 +71,6 @@ public enum Attribute {
     POSITION("position"),
     PRELOAD("preload"),
     PURGE_ON_STARTUP("purgeOnStartup"),
-    PURGE_SYNCHRONOUSLY("purgeSynchronously"),
-    PURGER_THREADS("purgerThreads"),
     PUSH_STATE_TIMEOUT("pushStateTimeout"),
     PUSH_STATE_WHEN_COORDINATOR("pushStateWhenCoordinator"),
     RACK_ID("rackId"),

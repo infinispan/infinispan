@@ -1,7 +1,7 @@
 package org.infinispan.loaders.jdbc;
 
 import org.infinispan.commons.io.ByteBuffer;
-import org.infinispan.loaders.CacheLoaderException;
+import org.infinispan.persistence.CacheLoaderException;
 import org.infinispan.commons.marshall.StreamingMarshaller;
 import org.infinispan.loaders.jdbc.logging.Log;
 import org.infinispan.util.logging.LogFactory;
