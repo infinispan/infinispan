@@ -33,11 +33,7 @@ import org.infinispan.commons.util.SysPropertyActions;
 import org.infinispan.commons.util.TypedProperties;
 import org.infinispan.commons.util.Util;
 import org.infinispan.protostream.SerializationContext;
-import org.infinispan.query.remote.protocol.QueryRequest;
-import org.infinispan.query.remote.protocol.QueryRequestMarshaller;
-import org.infinispan.query.remote.protocol.QueryResponse;
-import org.infinispan.query.remote.protocol.QueryResponseMarshaller;
-import org.infinispan.query.remote.protocol.SortCriteriaMarshaller;
+import org.infinispan.query.remote.client.MarshallerRegistration;
 
 /**
  * Factory for {@link org.infinispan.client.hotrod.RemoteCache}s. <p/> <p> <b>Lifecycle:</b> </p> In order to be able to
@@ -590,13 +586,11 @@ public class RemoteCacheManager implements BasicCacheContainer {
    private void initRemoteQuery() {
       SerializationContext serCtx = getSerializationContext();
       try {
-         serCtx.registerProtofile(RemoteCacheManager.class.getResourceAsStream("/query.protobin"));
+         MarshallerRegistration.registerMarshallers(serCtx);
       } catch (Exception e) {
-         throw new CacheException(e);  //todo [anistor] better exception handling
+         //todo [anistor] need better exception handling
+         throw new CacheException("Failed to initialise serialization context", e);
       }
-      serCtx.registerMarshaller(QueryRequest.class, new QueryRequestMarshaller());
-      serCtx.registerMarshaller(QueryRequest.SortCriteria.class, new SortCriteriaMarshaller());
-      serCtx.registerMarshaller(QueryResponse.class, new QueryResponseMarshaller());
    }
 
    public SerializationContext getSerializationContext() {

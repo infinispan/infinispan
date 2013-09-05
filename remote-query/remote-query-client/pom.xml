@@ -7,51 +7,18 @@
       <groupId>org.infinispan</groupId>
       <artifactId>infinispan-parent</artifactId>
       <version>6.0.0-SNAPSHOT</version>
-      <relativePath>../parent/pom.xml</relativePath>
+      <relativePath>../../parent/pom.xml</relativePath>
    </parent>
-   <!-- TODO [anistor] investigate why can't we just merge this module into the HR server -->
-   <artifactId>infinispan-remote-query</artifactId>
-   <packaging>bundle</packaging>
-   <name>Infinispan Remote Query API</name>
-   <description>Infinispan Remote Query API module</description>
 
-   <!-- This module declares components that either has lifecycle (@Start or @Stop) or uses @Inject to retrieve dependencies -->
-   <properties>
-      <module.skipComponentMetaDataProcessing>false</module.skipComponentMetaDataProcessing>
-   </properties>
+   <artifactId>infinispan-remote-query-client</artifactId>
+   <packaging>bundle</packaging>
+   <name>Infinispan Remote Query Client</name>
+   <description>Infinispan Remote Query common classes between client and server</description>
 
    <dependencies>
       <dependency>
-         <groupId>${project.groupId}</groupId>
-         <artifactId>infinispan-query</artifactId>
-      </dependency>
-
-      <dependency>
-         <groupId>org.hibernate</groupId>
-         <artifactId>hibernate-search-engine</artifactId>
-      </dependency>
-
-      <dependency>
-         <groupId>${project.groupId}</groupId>
-         <artifactId>infinispan-server-core</artifactId>
-      </dependency>
-
-      <dependency>
          <groupId>org.infinispan.protostream</groupId>
          <artifactId>protostream</artifactId>
-      </dependency>
-
-      <dependency>
-         <groupId>org.infinispan.protostream</groupId>
-         <artifactId>sample-domain-implementation</artifactId>
-         <scope>test</scope>
-      </dependency>
-
-      <dependency>
-         <groupId>${project.groupId}</groupId>
-         <artifactId>infinispan-core</artifactId>
-         <type>test-jar</type>
-         <scope>test</scope>
       </dependency>
    </dependencies>
 
@@ -70,6 +37,7 @@
       </resources>
 
       <plugins>
+         <!-- Extract our *.proto resource dependencies out of jars so protoc can use them. -->
          <plugin>
             <groupId>org.apache.maven.plugins</groupId>
             <artifactId>maven-dependency-plugin</artifactId>
@@ -121,30 +89,12 @@
          </plugin>
 
          <plugin>
-            <artifactId>maven-assembly-plugin</artifactId>
-            <executions>
-               <execution>
-                  <id>make-assembly</id>
-                  <phase>package</phase>
-                  <goals>
-                     <goal>single</goal>
-                  </goals>
-               </execution>
-            </executions>
-            <configuration>
-               <descriptors>
-                  <descriptor>src/main/assembly/client-jar.xml</descriptor>
-               </descriptors>
-            </configuration>
-         </plugin>
-
-         <plugin>
             <groupId>org.apache.felix</groupId>
             <artifactId>maven-bundle-plugin</artifactId>
             <configuration>
                <instructions>
                   <Export-Package>
-                     ${project.groupId}.remote-query.*;version=${project.version};-split-package:=error
+                     ${project.groupId}.remote-query-client.*;version=${project.version};-split-package:=error
                   </Export-Package>
                </instructions>
             </configuration>

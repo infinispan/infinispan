@@ -1,4 +1,4 @@
-package org.infinispan.query.remote.protocol;
+package org.infinispan.query.remote.client;
 
 import java.util.List;
 

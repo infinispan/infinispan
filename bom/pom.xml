@@ -139,13 +139,17 @@
          </dependency>
          <dependency>
             <groupId>${project.groupId}</groupId>
-            <artifactId>infinispan-remote-query</artifactId>
+            <artifactId>infinispan-query-dsl</artifactId>
             <version>${project.version}</version>
          </dependency>
          <dependency>
             <groupId>${project.groupId}</groupId>
-            <artifactId>infinispan-remote-query</artifactId>
-            <classifier>client-jar</classifier>
+            <artifactId>infinispan-remote-query-client</artifactId>
+            <version>${project.version}</version>
+         </dependency>
+         <dependency>
+            <groupId>${project.groupId}</groupId>
+            <artifactId>infinispan-remote-query-server</artifactId>
             <version>${project.version}</version>
          </dependency>
          <dependency>

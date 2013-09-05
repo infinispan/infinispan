@@ -50,7 +50,7 @@ import org.infinispan.commons.marshall.Marshaller;
 import org.infinispan.commons.util.concurrent.NotifyingFuture;
 import org.infinispan.protostream.ProtobufUtil;
 import org.infinispan.protostream.WrappedMessage;
-import org.infinispan.query.remote.protocol.QueryResponse;
+import org.infinispan.query.remote.client.QueryResponse;
 
 /**
  * @author Mircea.Markus@jboss.com

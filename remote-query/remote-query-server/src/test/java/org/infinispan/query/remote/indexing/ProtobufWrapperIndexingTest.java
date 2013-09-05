@@ -1,4 +1,4 @@
-package org.infinispan.query.remote.lucene;
+package org.infinispan.query.remote.indexing;
 
 import org.apache.lucene.search.Query;
 import org.hibernate.search.engine.spi.SearchFactoryImplementor;

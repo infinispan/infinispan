@@ -10,8 +10,8 @@ import org.infinispan.commons.CacheException;
 import org.infinispan.protostream.ProtobufUtil;
 import org.infinispan.query.dsl.SortOrder;
 import org.infinispan.query.dsl.impl.SortCriteria;
-import org.infinispan.query.remote.protocol.QueryRequest;
-import org.infinispan.query.remote.protocol.QueryResponse;
+import org.infinispan.query.remote.client.QueryRequest;
+import org.infinispan.query.remote.client.QueryResponse;
 
 import java.io.IOException;
 import java.util.ArrayList;
