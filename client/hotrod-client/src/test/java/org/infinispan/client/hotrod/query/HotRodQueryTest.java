@@ -17,7 +17,6 @@ import org.infinispan.query.remote.SerializationContextHolder;
 import org.infinispan.server.hotrod.HotRodServer;
 import org.infinispan.test.SingleCacheManagerTest;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
-import org.infinispan.transaction.TransactionMode;
 import org.testng.annotations.AfterTest;
 import org.testng.annotations.Test;
 

@@ -46,18 +46,6 @@
 
       <dependency>
          <groupId>${project.groupId}</groupId>
-         <artifactId>infinispan-remote-query</artifactId>
-         <classifier>client-jar</classifier>
-      </dependency>
-
-      <dependency>
-         <groupId>${project.groupId}</groupId>
-         <artifactId>infinispan-remote-query</artifactId>
-         <scope>test</scope>
-      </dependency>
-
-      <dependency>
-         <groupId>${project.groupId}</groupId>
          <artifactId>infinispan-server-hotrod</artifactId>
          <scope>test</scope>
       </dependency>
@@ -88,8 +76,8 @@
       </dependency>
 
       <dependency>
-         <groupId>org.infinispan.protostream</groupId>
-         <artifactId>protostream</artifactId>
+         <groupId>${project.groupId}</groupId>
+         <artifactId>infinispan-remote-query-client</artifactId>
       </dependency>
 
       <dependency>

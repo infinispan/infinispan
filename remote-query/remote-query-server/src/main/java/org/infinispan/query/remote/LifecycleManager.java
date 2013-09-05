@@ -16,14 +16,10 @@ import org.infinispan.interceptors.InterceptorChain;
 import org.infinispan.interceptors.InvocationContextInterceptor;
 import org.infinispan.lifecycle.AbstractModuleLifecycle;
 import org.infinispan.protostream.SerializationContext;
+import org.infinispan.query.remote.client.MarshallerRegistration;
 import org.infinispan.query.remote.indexing.ProtobufValueWrapper;
 import org.infinispan.query.remote.indexing.RemoteValueWrapperInterceptor;
 import org.infinispan.query.remote.logging.Log;
-import org.infinispan.query.remote.protocol.QueryRequest;
-import org.infinispan.query.remote.protocol.QueryRequestMarshaller;
-import org.infinispan.query.remote.protocol.QueryResponse;
-import org.infinispan.query.remote.protocol.QueryResponseMarshaller;
-import org.infinispan.query.remote.protocol.SortCriteriaMarshaller;
 import org.infinispan.util.logging.LogFactory;
 
 import java.io.IOException;
@@ -44,10 +40,7 @@ public class LifecycleManager extends AbstractModuleLifecycle {
          isSerializationContextInitialized = true;
          try {
             SerializationContext serCtx = SerializationContextHolder.getSerializationContext();
-            serCtx.registerProtofile("/query.protobin");
-            serCtx.registerMarshaller(QueryRequest.class, new QueryRequestMarshaller());
-            serCtx.registerMarshaller(QueryRequest.SortCriteria.class, new SortCriteriaMarshaller());
-            serCtx.registerMarshaller(QueryResponse.class, new QueryResponseMarshaller());
+            MarshallerRegistration.registerMarshallers(serCtx);
          } catch (IOException e) {
             throw new CacheException("Failed to initialise serialization context", e);
          } catch (Descriptors.DescriptorValidationException e) {
