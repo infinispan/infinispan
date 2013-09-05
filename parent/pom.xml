@@ -86,8 +86,6 @@
       <module.skipComponentMetaDataProcessing>true</module.skipComponentMetaDataProcessing>
       <module.metadata.isCoreModule>false</module.metadata.isCoreModule>
       <!-- Versions for dependencies -->
-      <version.protostream>1.0.0.Alpha4</version.protostream>
-      <version.aesh>0.33.1</version.aesh>
       <version.antlr>3.4</version.antlr>
       <version.arquillian>1.0.3.Final</version.arquillian>
       <version.arquillian.container.managed>7.2.0.Final</version.arquillian.container.managed>
@@ -318,16 +316,6 @@
             <groupId>${project.groupId}</groupId>
             <artifactId>infinispan-jcache</artifactId>
             <version>${project.version}</version>
-         </dependency>
-         <dependency>
-            <groupId>org.infinispan.protostream</groupId>
-            <artifactId>protostream</artifactId>
-            <version>${version.protostream}</version>
-         </dependency>
-         <dependency>
-            <groupId>org.infinispan.protostream</groupId>
-            <artifactId>sample-domain-implementation</artifactId>
-            <version>${version.protostream}</version>
          </dependency>
          <dependency>
             <groupId>c3p0</groupId>
