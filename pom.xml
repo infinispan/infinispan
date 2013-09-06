@@ -279,11 +279,6 @@ pageTracker._trackPageview();
                         <artifactId>infinispan-tools</artifactId>
                         <version>${project.version}</version>
                      </dependency>
-                     <dependency>
-                        <groupId>gnu-getopt</groupId>
-                        <artifactId>getopt</artifactId>
-                        <version>${version.gnu.getopt}</version>
-                     </dependency>
                   </dependencies>
                </plugin>
             </plugins>

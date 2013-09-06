@@ -28,6 +28,11 @@
          <type>test-jar</type>
          <scope>test</scope>
       </dependency>
+      
+      <dependency>
+         <groupId>gnu-getopt</groupId>
+         <artifactId>getopt</artifactId>
+      </dependency>
 
       <dependency>
          <groupId>${project.groupId}</groupId>
