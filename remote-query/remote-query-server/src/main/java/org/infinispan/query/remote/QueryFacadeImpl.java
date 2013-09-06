@@ -33,7 +33,15 @@ import java.util.List;
  */
 public class QueryFacadeImpl implements QueryFacade {
 
-   public static final String TYPE_FIELD_NAME = "$type";
+   /**
+    * A special hidden Lucene document field that holds the actual protobuf type name.
+    */
+   public static final String TYPE_FIELD_NAME = "$type$";
+
+   /**
+    * A special placeholder value that is indexed if the actual field value is null. This placeholder is needed because
+    * Lucene does not index null values.
+    */
    public static final String NULL_TOKEN = "_null_";
 
    @Override

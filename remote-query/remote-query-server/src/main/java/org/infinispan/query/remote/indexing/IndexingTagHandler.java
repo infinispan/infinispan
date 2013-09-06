@@ -21,6 +21,11 @@ class IndexingTagHandler implements TagHandler {
    private static final Integer TRUE_INT = 1;
    private static final Integer FALSE_INT = 0;
 
+   private static final LuceneOptions NOT_STORED_NOT_ANALYZED = new LuceneOptionsImpl(
+         new DocumentFieldMetadata.Builder(null, Store.NO, Field.Index.NOT_ANALYZED, Field.TermVector.NO)
+               .boost(1.0F)
+               .build());
+
    private static final LuceneOptions STORED_NOT_ANALYZED = new LuceneOptionsImpl(
          new DocumentFieldMetadata.Builder(null, Store.YES, Field.Index.NOT_ANALYZED, Field.TermVector.NO)
                .boost(1.0F)
@@ -29,14 +34,12 @@ class IndexingTagHandler implements TagHandler {
    private final Document document;
    private final LuceneOptions defaultLuceneOptions;
 
-   private String fieldPrefix = null;
-
-   private MessageContext messageContext;
+   private ReadMessageContext messageContext;
 
    public IndexingTagHandler(Descriptors.Descriptor messageDescriptor, Document document, LuceneOptions defaultLuceneOptions) {
       this.document = document;
       this.defaultLuceneOptions = defaultLuceneOptions;
-      this.messageContext = new MessageContext(messageDescriptor);
+      this.messageContext = new ReadMessageContext(null, null, messageDescriptor);
    }
 
    @Override
@@ -44,52 +47,64 @@ class IndexingTagHandler implements TagHandler {
    }
 
    @Override
-   public void onTag(int fieldNumber, String fieldName, Descriptors.FieldDescriptor.Type type, Descriptors.FieldDescriptor.JavaType javaType, Object value) {
-      messageContext.getReadFields().add(fieldNumber);
+   public void onTag(int fieldNumber, String fieldName, Descriptors.FieldDescriptor.Type type, Descriptors.FieldDescriptor.JavaType javaType, Object tagValue) {
+      messageContext.getSeenFields().add(fieldNumber);
 
       //todo [anistor] unknown fields are not indexed
-      //todo [anistor] should we index with fieldNumber instead of fieldName?
-      if (fieldName != null && isIndexed(fieldName)) {
-         String fn = getFieldFullName(fieldName);
-         //todo [anistor] string vs numeric. use a proper way to transform to string
-         switch (type) {
-            case DOUBLE:
-            case FLOAT:
-            case INT64:
-            case UINT64:
-            case INT32:
-            case FIXED64:
-            case FIXED32:
-            case UINT32:
-            case SFIXED32:
-            case SFIXED64:
-            case SINT32:
-            case SINT64:
-            case ENUM:
-               STORED_NOT_ANALYZED.addNumericFieldToDocument(fn, value, document);
-               break;
-            case BOOL:
-               STORED_NOT_ANALYZED.addNumericFieldToDocument(fn, ((Boolean) value) ? TRUE_INT : FALSE_INT, document);
-               break;
-            default:
-               defaultLuceneOptions.addFieldToDocument(fn, String.valueOf(value), document);
-         }
+      if (fieldName != null && isIndexed(fieldNumber)) {
+         addFieldToDocument(fieldName, type, tagValue);
       }
    }
 
-   private String getFieldFullName(String fieldName) {
-      return fieldPrefix != null ? fieldPrefix + fieldName : fieldName;
+   private void addFieldToDocument(String fieldName, Descriptors.FieldDescriptor.Type type, Object value) {
+      LuceneOptions luceneOptions = defaultLuceneOptions;
+      LuceneOptions numericLuceneOptions = STORED_NOT_ANALYZED;
+      if (value == null) {
+         value = QueryFacadeImpl.NULL_TOKEN;  //todo [anistor] do we need a specific null token for numeric fields?
+         luceneOptions = NOT_STORED_NOT_ANALYZED;
+         numericLuceneOptions = NOT_STORED_NOT_ANALYZED;
+      }
+
+      String fn = getFullFieldName(fieldName); //todo [anistor] should we index with fieldNumber instead of fieldName?
+      //todo [anistor] string vs numeric. use a proper way to transform to string
+      switch (type) {
+         case DOUBLE:
+         case FLOAT:
+         case INT64:
+         case UINT64:
+         case INT32:
+         case FIXED64:
+         case FIXED32:
+         case UINT32:
+         case SFIXED32:
+         case SFIXED64:
+         case SINT32:
+         case SINT64:
+         case ENUM:
+            numericLuceneOptions.addNumericFieldToDocument(fn, value, document);
+            break;
+         case BOOL:
+            numericLuceneOptions.addNumericFieldToDocument(fn, ((Boolean) value) ? TRUE_INT : FALSE_INT, document);
+            break;
+         default:
+            luceneOptions.addFieldToDocument(fn, String.valueOf(value), document);
+      }
    }
 
-   private boolean isIndexed(String fieldName) {
-      Descriptors.FieldDescriptor fd = messageContext.getFieldByName(fieldName);
+   private String getFullFieldName(String fieldName) {
+      String fieldPrefix = messageContext.getFullFieldName();
+      return fieldPrefix != null ? fieldPrefix + "." + fieldName : fieldName;
+   }
+
+   private boolean isIndexed(int fieldNumber) {
+      Descriptors.FieldDescriptor fd = messageContext.getFieldByNumber(fieldNumber);
       //todo [anistor] right now we index everything. check field Options and see if [(Indexed)] is present
       return true;
    }
 
    @Override
    public void onStartNested(int fieldNumber, String fieldName, Descriptors.Descriptor messageDescriptor) {
-      messageContext.getReadFields().add(fieldNumber);
+      messageContext.getSeenFields().add(fieldNumber);
       pushContext(fieldName, messageDescriptor);
    }
 
@@ -100,32 +115,29 @@ class IndexingTagHandler implements TagHandler {
 
    @Override
    public void onEnd() {
-      indexMissingFieldsAsNull();
+      indexMissingFields();
    }
 
    private void pushContext(String fieldName, Descriptors.Descriptor messageDescriptor) {
-      fieldPrefix = fieldPrefix == null ? fieldName + "." : fieldPrefix + "." + fieldName + ".";
-      messageContext = new MessageContext(fieldName, messageContext, messageDescriptor);
+      messageContext = new ReadMessageContext(messageContext, fieldName, messageDescriptor);
    }
 
    private void popContext() {
-      assert fieldPrefix != null;
-      int pos = fieldPrefix.length() - 2;
-      assert pos >= 0;
-      while (pos > 0 && fieldPrefix.charAt(pos) != '.') {
-         pos--;
-      }
-
-      indexMissingFieldsAsNull();
-
-      fieldPrefix = fieldPrefix.substring(0, pos);
+      indexMissingFields();
       messageContext = messageContext.getParentContext();
    }
 
-   private void indexMissingFieldsAsNull() {
+   /**
+    * All fields that were not seen until the end of this message are missing and will be indexed with their default
+    * value or null if none was declared. The null value is replaced with a special null token placeholder because
+    * Lucene cannot index nulls.
+    */
+   private void indexMissingFields() {
       for (Descriptors.FieldDescriptor fd : messageContext.getMessageDescriptor().getFields()) {
-         if (!messageContext.getReadFields().contains(fd.getNumber())) {
-            defaultLuceneOptions.addFieldToDocument(getFieldFullName(fd.getName()), QueryFacadeImpl.NULL_TOKEN, document);
+         if (!messageContext.getSeenFields().contains(fd.getNumber())) {
+            Object defaultValue = fd.getType() == Descriptors.FieldDescriptor.Type.MESSAGE
+                  || fd.getType() == Descriptors.FieldDescriptor.Type.GROUP ? null : fd.getDefaultValue();
+            addFieldToDocument(fd.getName(), fd.getType(), defaultValue);
          }
       }
    }
