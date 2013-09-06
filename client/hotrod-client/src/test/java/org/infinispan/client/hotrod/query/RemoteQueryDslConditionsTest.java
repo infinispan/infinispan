@@ -143,7 +143,6 @@ public class RemoteQueryDslConditionsTest extends SingleCacheManagerTest {
 
       Account account3 = new Account();
       account3.setId(3);
-      account3.setDescription("Spider Man's bank account");
       account3.setCreationDate(DATE_FORMAT.parse("2013-01-20"));
 
       Transaction transaction0 = new Transaction();
@@ -1227,5 +1226,15 @@ public class RemoteQueryDslConditionsTest extends SingleCacheManagerTest {
 
       q1.eq(User.Gender.MALE);
       q1.eq(User.Gender.FEMALE);
+   }
+
+   public void testDefaultValue() throws Exception {
+      QueryFactory qf = Search.getQueryFactory(remoteCache);
+
+      Query q = qf.from(Account.class).orderBy("description", SortOrder.ASC).build();
+
+      List<Account> list = q.list();
+      assertEquals(3, list.size());
+      assertEquals("Checking account", list.get(0).getDescription());
    }
 }
