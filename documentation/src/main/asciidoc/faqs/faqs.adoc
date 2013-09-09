@@ -1,3 +1,5 @@
+:toc:
+
 include::chapter-1-Project_FAQs.adoc[]
 include::chapter-2-Technical_FAQs.adoc[]
 include::chapter-3-Project_Evaluation_FAQs.adoc[]
