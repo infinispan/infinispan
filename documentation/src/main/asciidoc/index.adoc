@@ -1,0 +1,11 @@
+= Infinispan Documentation Home
+This landing page serves as a launchpad for Infinispan {infinispan-version} documentation.
+
+In here we have several sections, including:
+
+ * A link:getting_started.html[Getting Started Guide]
+ * A link:user_guide.html[User Guide]
+ * A pretty useful link:glossary.html[Glossary]
+ * A set of link:faqs.html[Frequently Asked Questions]
+ * Guides to link:extending.html[extending] and link:contributing.html[contributing] to Infinispan
+ * ... and finally some link:videos.html[videos].
