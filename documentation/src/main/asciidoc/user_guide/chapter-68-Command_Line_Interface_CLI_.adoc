@@ -1,0 +1,364 @@
+[[_CLI_chapter]]
+==  Command-Line Interface (CLI)
+Infinispan offers a simple Command-Line Interface (CLI) with which it is possible to interact with the data within the caches and with most of the internal components (e.g. transactions, cross-site backups, rolling upgrades).
+
+The CLI is built out of two elements: a server-side module and the  client command tool. The server-side module (`infinispan-cli-server-$VERSION.jar`) provides  the actual interpreter for the commands and needs to be included alongside your application. If you are using the `startServer.[sh|bat]` script it is included by default. 
+
+Currently the server (and the  client) use the JMX protocol to communicate, but in a future release we  plan to support other communication protocols (in particular our own Hot Rod).
+
+The CLI offers both an interactive and a batch mode. To invoke the client, just run the provided _bin/ispn-cli.[sh|bat]_ script. The following is a list of command-line switches which affect how the CLI can be started: 
+
+
+----
+-c, --connect=URL       connects to a running instance of Infinispan.
+                        JMX over RMI jmx://[username[:password]]@host:port[/container[/cache]]
+                        JMX over JBoss remoting remoting://[username[:password]]@host:port[/container[/cache]]
+-f, --file=FILE         reads input from the specified file instead of using                          
+                        interactive mode. If FILE is '-', then commands will be read
+                        from stdin
+-h, --help              shows this help page 
+-v, --version           shows version information
+----
+
+* JMX over RMI is the traditional way in which JMX clients connect to MBeanServers. Please refer to the link:$$http://docs.oracle.com/javase/6/docs/technotes/guides/management/agent.html$$[JDK Monitoring and Management] documentation for details on how to configure the process to be monitored 
+
+
+* JMX over JBoss Remoting is the protocol of choice when your Infinispan application is running within JBoss AS7 or EAP6.
+
+The connection to the application can also be initiated from within the CLI using the connect command.
+
+
+----
+[disconnected//]> connect jmx://localhost:12000
+[jmx://localhost:12000/MyCacheManager/>
+----
+
+The CLI prompt will show the active connection information, including the currently selected CacheManager. Initially no cache is selected so, before performing any cache operations, one must be selected. For this the _cache_ command is used. The CLI supports tab-completion for all commands and options and for most parameters where it makes sense to do so. Therefore typing _cache_ and pressing TAB will show a list of active caches: 
+
+
+----
+[jmx://localhost:12000/MyCacheManager/> cache
+___defaultcache  namedCache
+[jmx://localhost:12000/MyCacheManager/]> cache ___defaultcache
+[jmx://localhost:12000/MyCacheManager/___defaultcache]>
+----
+
+Pressing TAB at an empty prompt will show the list of all available commands:
+
+
+----
+alias       cache       container   encoding    get         locate      remove      site        upgrade     
+abort       clear       create      end         help        put         replace     start       version     
+begin       commit      disconnect  evict       info        quit        rollback    stats     
+----
+
+The CLI is based on link:$$https://github.com/aeshell/aesh$$[Æsh] and therefore offers many keyboard shortcuts to navigate and search the history of commands, to manipulate the cursor at the prompt, including both Emacs and VI modes of operation. 
+
+=== Commands
+==== abort
+The _abort_ command is used to abort a running batch initiated by the _start_ command 
+
+
+----
+[jmx://localhost:12000/MyCacheManager/namedCache]> start
+[jmx://localhost:12000/MyCacheManager/namedCache]> put a a
+[jmx://localhost:12000/MyCacheManager/namedCache]> abort
+[jmx://localhost:12000/MyCacheManager/namedCache]> get a
+null
+----
+
+==== begin
+The _begin_ command starts a transaction. In order for this command to work, the cache(s) on which the subsequent operations are invoked must have transactions enabled. 
+
+
+----
+[jmx://localhost:12000/MyCacheManager/namedCache]> begin
+[jmx://localhost:12000/MyCacheManager/namedCache]> put a a
+[jmx://localhost:12000/MyCacheManager/namedCache]> put b b
+[jmx://localhost:12000/MyCacheManager/namedCache]> commit
+----
+
+==== cache
+The _cache_ command selects the cache to use as default for all subsequent operations. If it is invoked without parameters it shows the currently selected cache. 
+
+
+----
+[jmx://localhost:12000/MyCacheManager/namedCache]> cache ___defaultcache
+[jmx://localhost:12000/MyCacheManager/___defaultcache]> cache
+___defaultcache
+[jmx://localhost:12000/MyCacheManager/___defaultcache]>
+----
+
+==== clear
+The _clear_ command clears a cache from all content. 
+
+
+----
+[jmx://localhost:12000/MyCacheManager/namedCache]> put a a
+[jmx://localhost:12000/MyCacheManager/namedCache]> clear
+[jmx://localhost:12000/MyCacheManager/namedCache]> get a
+null
+----
+
+==== commit
+The _commit_ command commits an ongoing transaction 
+
+
+----
+[jmx://localhost:12000/MyCacheManager/namedCache]> begin
+[jmx://localhost:12000/MyCacheManager/namedCache]> put a a
+[jmx://localhost:12000/MyCacheManager/namedCache]> put b b
+[jmx://localhost:12000/MyCacheManager/namedCache]> commit
+----
+
+==== container
+The _container_ command selects the default container (cache manager). Invoked without parameters it lists all available containers 
+
+
+----
+[jmx://localhost:12000/MyCacheManager/namedCache]> container
+MyCacheManager OtherCacheManager
+[jmx://localhost:12000/MyCacheManager/namedCache]> container OtherCacheManager
+[jmx://localhost:12000/OtherCacheManager/]>
+----
+
+==== create
+The _create_ command creates a new cache based on the configuration of an existing cache definition 
+
+
+----
+[jmx://localhost:12000/MyCacheManager/namedCache]> create newCache like namedCache
+[jmx://localhost:12000/MyCacheManager/namedCache]> cache newCache
+[jmx://localhost:12000/MyCacheManager/newCache]>
+----
+
+==== disconnect
+The _disconnect_ command disconnects the currently active connection allowing the CLI to connect to another instance. 
+
+
+----
+[jmx://localhost:12000/MyCacheManager/namedCache]> disconnect
+[disconnected//]
+----
+
+==== encoding
+The _encoding_ command is used to set a default codec to use when reading/writing entries from/to a cache. When invoked without arguments it shows the currently selected codec. This command is useful since currently remote protocols such as HotRod and Memcached wrap keys and values in specialized structures. 
+
+
+----
+[jmx://localhost:12000/MyCacheManager/namedCache]> encoding
+none
+[jmx://localhost:12000/MyCacheManager/namedCache]> encoding --list
+memcached
+hotrod
+none
+rest
+[jmx://localhost:12000/MyCacheManager/namedCache]> encoding hotrod
+----
+
+==== end
+The _end_ command is used to successfully end a running batch initiated by the _start_ command 
+
+
+----
+[jmx://localhost:12000/MyCacheManager/namedCache]> start
+[jmx://localhost:12000/MyCacheManager/namedCache]> put a a
+[jmx://localhost:12000/MyCacheManager/namedCache]> end
+[jmx://localhost:12000/MyCacheManager/namedCache]> get a
+a
+----
+
+==== evict
+The _evict_ command is used to evict from the cache the entry associated with a specific key. 
+
+
+----
+[jmx://localhost:12000/MyCacheManager/namedCache]> put a a
+[jmx://localhost:12000/MyCacheManager/namedCache]> evict a
+----
+
+==== get
+The _get_ command is used to show the value associated to a specified key. For primitive types and Strings, the _get_ command will simply print the default representation. For other objects, a JSON representation of the object will be printed. 
+
+
+----
+[jmx://localhost:12000/MyCacheManager/namedCache]> put a a
+[jmx://localhost:12000/MyCacheManager/namedCache]> get a
+a
+----
+
+==== info
+The _info_ command is used to show the configuration of the currently selected cache or container. 
+
+
+----
+[jmx://localhost:12000/MyCacheManager/namedCache]> info
+GlobalConfiguration{asyncListenerExecutor=ExecutorFactoryConfiguration{factory=org.infinispan.executors.DefaultExecutorFactory@98add58}, asyncTransportExecutor=ExecutorFactoryConfiguration{factory=org.infinispan.executors.DefaultExecutorFactory@7bc9c14c}, evictionScheduledExecutor=ScheduledExecutorFactoryConfiguration{factory=org.infinispan.executors.DefaultScheduledExecutorFactory@7ab1a411}, replicationQueueScheduledExecutor=ScheduledExecutorFactoryConfiguration{factory=org.infinispan.executors.DefaultScheduledExecutorFactory@248a9705}, globalJmxStatistics=GlobalJmxStatisticsConfiguration{allowDuplicateDomains=true, enabled=true, jmxDomain='jboss.infinispan', mBeanServerLookup=org.jboss.as.clustering.infinispan.MBeanServerProvider@6c0dc01, cacheManagerName='local', properties={}}, transport=TransportConfiguration{clusterName='ISPN', machineId='null', rackId='null', siteId='null', strictPeerToPeer=false, distributedSyncTimeout=240000, transport=null, nodeName='null', properties={}}, serialization=SerializationConfiguration{advancedExternalizers={1100=org.infinispan.server.core.CacheValue$Externalizer@5fabc91d, 1101=org.infinispan.server.memcached.MemcachedValue$Externalizer@720bffd, 1104=org.infinispan.server.hotrod.ServerAddress$Externalizer@771c7eb2}, marshaller=org.infinispan.marshall.VersionAwareMarshaller@6fc21535, version=52, classResolver=org.jboss.marshalling.ModularClassResolver@2efe83e5}, shutdown=ShutdownConfiguration{hookBehavior=DONT_REGISTER}, modules={}, site=SiteConfiguration{localSite='null'}}
+----
+
+==== locate
+The _locate_ command shows the physical location of a specified entry in a distributed cluster. 
+
+
+----
+[jmx://localhost:12000/MyCacheManager/namedCache]> locate a
+[host/node1,host/node2]
+----
+
+==== put
+The _put_ command inserts an entry in the cache. If the cache previously contained a mapping for the key, the old value is replaced by the specified value. The user can control the type of data that the CLI will use to store the key and value. See the <<_data_types, Data Types>> section.
+
+
+----
+[jmx://localhost:12000/MyCacheManager/namedCache]> put a a
+[jmx://localhost:12000/MyCacheManager/namedCache]> put b 100
+[jmx://localhost:12000/MyCacheManager/namedCache]> put c 4139l
+[jmx://localhost:12000/MyCacheManager/namedCache]> put d true
+[jmx://localhost:12000/MyCacheManager/namedCache]> put e { "package.MyClass": {"i": 5, "x": null, "b": true } }
+----
+
+The put command can optionally specify a lifespan and a maximum idle time.
+
+
+----
+[jmx://localhost:12000/MyCacheManager/namedCache]> put a a expires 10s
+[jmx://localhost:12000/MyCacheManager/namedCache]> put a a expires 10m maxidle 1m
+----
+
+==== replace
+The _replace_ command replaces an existing entry in the cache. If an old value is specified, then the replacement happens only if the value in the cache coincides. 
+
+
+----
+[jmx://localhost:12000/MyCacheManager/namedCache]> put a a
+[jmx://localhost:12000/MyCacheManager/namedCache]> replace a b
+[jmx://localhost:12000/MyCacheManager/namedCache]> get a
+b
+[jmx://localhost:12000/MyCacheManager/namedCache]> replace a b c
+[jmx://localhost:12000/MyCacheManager/namedCache]> get a
+c
+[jmx://localhost:12000/MyCacheManager/namedCache]> replace a b d
+[jmx://localhost:12000/MyCacheManager/namedCache]> get a
+c
+----
+
+==== rollback
+The _rollback_ command rolls back an ongoing transaction 
+
+
+----
+[jmx://localhost:12000/MyCacheManager/namedCache]> begin
+[jmx://localhost:12000/MyCacheManager/namedCache]> put a a
+[jmx://localhost:12000/MyCacheManager/namedCache]> put b b
+[jmx://localhost:12000/MyCacheManager/namedCache]> rollback
+----
+
+==== site
+The _site_ command performs operations related to the administration of cross-site replication. It can be used to obtain information related to the status of a site and to change the status (online/offline) 
+
+----
+[jmx://localhost:12000/MyCacheManager/namedCache]> site --status NYC
+online
+[jmx://localhost:12000/MyCacheManager/namedCache]> site --offline NYC
+ok
+[jmx://localhost:12000/MyCacheManager/namedCache]> site --status NYC
+offline
+[jmx://localhost:12000/MyCacheManager/namedCache]> site --online NYC
+----
+
+==== start
+The _start_ command initiates a batch of operations. 
+
+
+----
+[jmx://localhost:12000/MyCacheManager/namedCache]> start
+[jmx://localhost:12000/MyCacheManager/namedCache]> put a a
+[jmx://localhost:12000/MyCacheManager/namedCache]> put b b
+[jmx://localhost:12000/MyCacheManager/namedCache]> end
+----
+
+==== stats
+The _stats_ command displays statistics about a cache 
+
+
+----
+[jmx://localhost:12000/MyCacheManager/namedCache]> stats
+Statistics: {
+  averageWriteTime: 143
+  evictions: 10
+  misses: 5
+  hitRatio: 1.0
+  readWriteRatio: 10.0
+  removeMisses: 0
+  timeSinceReset: 2123
+  statisticsEnabled: true
+  stores: 100
+  elapsedTime: 93
+  averageReadTime: 14
+  removeHits: 0
+  numberOfEntries: 100
+  hits: 1000
+}
+LockManager: {
+  concurrencyLevel: 1000
+  numberOfLocksAvailable: 0
+  numberOfLocksHeld: 0
+}
+----
+
+==== upgrade
+The _upgrade_ command performs operations used during the rolling upgrade procedure. For a detailed description of this procedure please see <<_rolling_upgrades,Rolling Upgrades>>
+
+
+----
+[jmx://localhost:12000/MyCacheManager/namedCache]> upgrade --synchronize=hotrod --all
+[jmx://localhost:12000/MyCacheManager/namedCache]> upgrade --disconnectsource=hotrod --all
+----
+
+==== version
+The _version_ command displays version information about both the CLI client and the server 
+
+
+----
+[jmx://localhost:12000/MyCacheManager/namedCache]> version
+Client Version 5.2.1.Final
+Server Version 5.2.1.Final
+----
+
+=== Data Types
+
+The CLI understands the following types:
+
+
+*  string strings can either be quoted between single (') or double (") quotes, or left unquoted. In this case it must not contain spaces, punctuation and cannot begin with a number  e.g. 'a string', key001 
+
+
+*  int an integer is identified by a sequence of decimal digits, e.g. 256 
+
+
+*  long a long is identified by a sequence of decimal digits suffixed by 'l', e.g. 1000l 
+
+
+* double
+
+
+** a double precision number is identified by a floating point number(with optional exponent part) and an optional 'd' suffix, e.g.3.14
+
+
+* float
+
+
+** a single precision number is identified by a floating point number(with optional exponent part) and an 'f' suffix, e.g. 10.3f
+
+
+*  boolean a boolean is represented either by the keywords true and false 
+
+
+*  UUID a UUID is represented by its canonical form XXXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXXXX 
+
+
+*  JSON serialized Java classes can be represented using JSON notation, e.g. {"package.MyClass":{"i":5,"x":null,"b":true}}. Please note that the specified class must be available to the CacheManager's class loader. 
+
+=== Time Values
+A time value is an integer number followed by time unit suffix: days (d), hours (h), minutes (m), seconds (s), milliseconds (ms).
+

@@ -1,0 +1,105 @@
+===  Infinispan WebSocket Server
+The Infinispan WebSocket Server can be used to expose an Infinispan Cache instance over a link:$$http://dev.w3.org/html5/websockets/$$[WebSocket Interface] via a very simple Javascript "Cache" API.  The WebSocket Interface was introduced as part of the HTML 5 specification.  It defines a full-duplex communication channel to the browser, operating over a single socket (unlike Comet or Ajax) and is exposed to the browser via a Javascript interface. 
+
+WARNING: This is a highly experimental module.
+
+==== Starting The Server
+The Infinispan WebSocket server is included in Infinispan distributions, in both the -bin.zip and -all.zip archives.  To start the server, use the bin/startServer.sh (or bin\startServer.bat) command-line scripts, using the -r websocket switch. 
+
+ $ bin/startServer.sh -r websocket
+
+For more help on available switches, check out the <<_server_command_line_options, server command line options>>. 
+
+==== Javascript API
+Writing a web page that uses the Infinispan Cache API is trivial.  The page simply needs to include a `<script />` declaration for the infinispan-ws.js Javascript source file.  This script is served up by WebSocket Server. 
+
+So, for loading infinispan-ws.js from a WebSocket Server instance running on _www.acme.com:8181_ (default port): 
+
+[source,xml]
+----
+<script type="text/javascript" src="<a href="http://www.acme.com:61999/infinispan-ws.js" target="_blank">http://www.acme.com:8181/infinispan-ws.js</a>" />
+----
+
+===== Creating a Client-Side Cache Object Instance
+The client-side interface to a server-side Infinispan cache is the Cache Javascript object.  It can be constructed as follows: 
+
+[source,javascript]
+----
+<script type="text/javascript">
+    var cache = new Cache();
+    
+    // etc...
+</script>
+----
+
+By default, the Cache instance will interface to the default Infinispan Cache associated with the WebSocket Server from which the infinispan-ws.js Javascript source file was loaded.  So, in the above case, the Cache object instance will connect to the WebSocket Server running on _www.acme.com:8181_ (i.e. _ws://www.acme.com:8181_ ). 
+
+The Infinispan Cache name and WebSocket Server address can be specified in the {{Cache}  object constructor as follows:
+
+[source,javascript]
+----
+var cache = new Cache("omCache", "ws://ws.acmews.com:8181");
+// etc...
+----
+
+===== Cache Operations
+
+A number of cache operations can be performed via the Cache object instance such as _get_ , _put_ , _remove_ , _notify_ and _unnotify_ . 
+
+The get and notify operations require a callback function to be registered with the Cache object instance.  This callback function receives all add/update/remove notifications on any cache entries for which the notify function was invoked.  It also asynchronously receives the result of a single invocation of the get function i.e. get can be thought of as "notify once, immediately". 
+
+The callback function is registered with the Cache object instance via the registerCallback function.  The function should have 2 parameters - key and value , relating to the cache key and value. 
+
+[source,javascript]
+----
+var cache = new Cache();
+
+// Ask to be notified about some cache entries...
+cache.notify("orderStatus");
+cache.notify("expectedDeliveryTime");
+
+// Register the callback function for receiving notifcations...
+cache.registerCallback(cacheCallback);
+
+// Cache callback function...
+function cacheCallback(key, value) {
+    // Handle notification...
+}
+
+----
+
+Getting and updating data in the cache is done by simply calling the get , put and remove functions on the Cache object instance.  These operations could be triggered by user interaction with a web form e.g. 
+
+[source,html]
+----
+<form onsubmit="return false;">
+
+    <!-- Other form components... -->
+
+    <!-- Buttons for making cache updates... -->
+    <input type="button" value="Put" 
+           onclick="cache.put(this.form.key.value, this.form.val.value)" />
+    <input type="button" value="Get" 
+           onclick="cache.get(this.form.key.value)" />
+    <input type="button" value="Remove" 
+           onclick="cache.remove(this.form.key.value)" />
+</form>
+
+----
+
+==== Sample code
+Infinispan's source tree contains a sample HTML document that makes use of the WebSocket server.  Browse through the source of this HTML document link:$$http://fisheye.jboss.org/browse/Infinispan/trunk/server/websocket/src/main/distribution/sample-websocket-client.html$$[here] . 
+
+==== Browser Support
+At the time of writing, Google Chrome was the only browser with native WebSocket support.  However, the link:$$http://jwebsocket.org/$$[jWebSocket] project provides a client side Javascript library that adds WebSocket support to any Flash enabled browser. 
+
+==== Screencast
+See the following link:$$http://www.screencast.com/t/ZGEzNDJlY$$[demo of the Infinispan WebSocket Server] in action. 
+
+==== Status
+
+Prototype/Alpha.
+
+==== Source
+link:$$https://github.com/infinispan/infinispan/tree/master/server/websocket$$[Browse Infinispan's Git repository] . 
+

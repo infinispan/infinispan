@@ -1,0 +1,246 @@
+==  Using Infinispan as an embedded data grid in Java SE
+Clustering Infinispan is simple.
+Under the covers, Infinispan uses link:http://www.jgroups.org[JGroups] as a network transport, and JGroups handles all the hard work of forming a cluster.
+
+.clustered-cache quickstart
+TIP: All the code discussed in this tutorial is available in the link:$$https://github.com/infinispan/infinispan-quickstart/tree/master/clustered-cache$$[clustered-cache quickstart].
+
+=== Sharing JGroups channels
+By default all caches created from a single CacheManager share the same JGroups channel and multiplex RPC messages over it. In this example caches 1, 2 and 3 all use the same JGroups channel.
+
+[source,java]
+----
+EmbeddedCacheManager cm = // get CacheManager from somewhere
+Cache<Object, Object> cache1 = cm.getCache("replSyncCache");
+Cache<Object, Object> cache2 = cm.getCache("replAsyncCache");
+Cache<Object, Object> cache3 = cm.getCache("invalidationSyncCache");
+----
+
+=== Running Infinispan in a cluster
+It is easy set up a clustered cache. This tutorial will show you how to create two nodes in different processes on the same local machine. The quickstart follows the same structure as the embedded-cache quickstart, using Maven to compile the project, and a main method to launch the node. 
+
+If you are following along with the quickstarts, you can try the examples out. First, compile the project:
+
+ $ mvn clean compile dependency:copy-dependencies -DstripVersion
+
+The quickstart contains two examples of a clustered cache, one in _replication mode_ and one _distribution mode_.
+
+==== Replicated mode
+To run the replication mode example, we need to launch both nodes from different consoles. For the first node: 
+
+ $ java -cp target/classes/:target/dependency/* org.infinispan.quickstart.clusteredcache.replication.Node0
+
+And for the second node:
+
+ $ java -cp target/classes/:target/dependency/* org.infinispan.quickstart.clusteredcache.replication.Node1
+
+You should see JGroups and Infinispan start up on both consoles, and after about 15s the cache entry log message appear on the console of the first node.
+
+==== Distributed mode
+To run the distribution mode example, we need to launch three nodes from different consoles. For the first node:
+
+ $ java -cp target/classes/:target/dependency/* org.infinispan.quickstart.clusteredcache.distribution.Node0
+
+And for the second node:
+
+ $ java -cp target/classes/:target/dependency/* org.infinispan.quickstart.clusteredcache.distribution.Node1
+
+And for the third node:
+
+ $ java -cp target/classes/:target/dependency/* org.infinispan.quickstart.clusteredcache.distribution.Node2
+
+You should see JGroups and Infinispan start up on both consoles, and after about 15s see the 10 entries added by third node distributed to the first and second nodes.
+
+=== clustered-cache quickstart architecture
+
+====  Logging changes to the cache
+An easy way to see what is going on with your cache is to log mutated entries. An Infinispan listener is notified of any mutations:
+
+[source,java]
+----
+import org.infinispan.notifications.Listener;
+import org.infinispan.notifications.cachelistener.annotation.CacheEntryCreated;
+import org.infinispan.notifications.cachelistener.annotation.CacheEntryRemoved;
+import org.infinispan.notifications.cachelistener.event.CacheEntryCreatedEvent;
+import org.infinispan.notifications.cachelistener.event.CacheEntryRemovedEvent;
+import org.infinispan.util.logging.Log;
+import org.infinispan.util.logging.LogFactory;
+
+/**
+ * An Infinispan listener that simply logs cache entries being created and
+ * removed
+ * 
+ * @author Pete Muir
+ */
+@Listener
+public class LoggingListener {
+
+   private Log log = LogFactory.getLog(LoggingListener.class);
+
+   @CacheEntryCreated
+   public void observeAdd(CacheEntryCreatedEvent<?, ?> event) {
+      if (!event.isPre()) // So that message is only logged after operation succeeded
+         log.infof("Cache entry with key %s added in cache %s", event.getKey(), event.getCache());
+   }
+
+   @CacheEntryRemoved
+   public void observeRemove(CacheEntryRemovedEvent<?, ?> event) {
+      log.infof("Cache entry with key %s removed in cache %s", event.getKey(), event.getCache());
+   }
+
+}
+
+----
+
+Listeners methods are declared using annotations, and receive a payload which contains metadata about the notification.
+Listeners are notified of any changes. Here, the listeners simply log any entries added or removed.
+
+==== What's going on?
+The replication mode example contains two nodes, each of which are started in a separate process.
+The nodes are very simple, Node0 starts up, registers a listener that logs any changes, and waits for the cluster to form.
+Node1 starts up, waits for the cluster to form, and then adds an entry.
+The interesting work happens in the common super class, examined in <<_configuring_a_replicated_data_grid,Configuring a replicated data-grid>> . 
+
+.Waiting for the cluster to form
+IMPORTANT: Infinispan only replicates data to nodes which are already in the cluster.
+If a node is added to the cluster after an entry is added, it won't be replicated there.
+In order to see replication take effect, we need to wait until Both nodes make use of the utility class link:$$http://github.com/infinispan/infinispan-quickstart/tree/master/clustered-cache/src/main/java/org/infinispan/quickstart/clusteredcache/replication/ClusterValidation.java$$[ClusterValidation], calling it's `waitForClusterToForm` method to achieve this.
+We won't dig into how this works here, but if you are interested take a look at the code. 
+
+The distribution mode example contains three nodes, each of which are started in a separate process. The nodes are very simple, Node0 and Node1 start up, register listeners that logs any changes, and wait for the cluster to form. Node2 starts up, waits for the cluster to form, and then adds 20 entries. Each entry get's distributed to it's owners, and you will see some entries add on Node0 and some on Node1 .  You'll notice that Node2 gets _notified_ of all adds - this is just because it is the node which adds the entry, it doesn't reflect that the fact that all these entries are stored there! The interesting work happens in the common super class, examined in <<_configuring_a_distributed_data_grid,Configuring a distributed data-grid>> . 
+
+=== Configuring the cluster
+First, we need to ensure that Infinispan is cluster aware.
+Infinispan provides a default configuration for a clustered cache:
+
+[source,java]
+----
+new ConfigurationBuilder()
+   .clustering().cacheMode(CacheMode.REPL_SYNC)
+   .build()
+----
+
+`GlobalConfiguration.getClusteredDefault()` is a quick way to get a preconfigured, cluster-aware GlobalConfiguration and can be used as a starting point to fine tuning the configuration. 
+
+==== Tweaking the cluster configuration for your network
+Depending on your network setup, you may need to tweak your JGroups set up.
+JGroups is configured via an XML file; the file to use can be specified via the GlobalConfiguration: 
+
+[source,java]
+----
+GlobalConfigurationBuilder.defaultClusteredBuilder()
+   .transport().defaultTransport().addProperty("configurationFile", "jgroups.xml")
+   .build()
+----
+
+The link:$$http://www.jgroups.org/manual/html/index.html$$[JGroups documentation] provides extensive advice on getting JGroups working on your network.
+If you are new to configuring JGroups, you may get a little lost, so you might want to try tweaking these configuration parameters: 
+
+*  Using the system property `-Djgroups.bind_addr=127.0.0.1` causes JGroups to bind only to your loopback interface, meaning any firewall you may have configured won't get in the way.
+Very useful for testing a cluster where all nodes are on one machine. 
+
+*TODO - add more tips!*
+
+You can also configure the JGroups configuration to use in Infinispan's XML configuration:
+
+[source,xml]
+----
+<global>
+   <transport>
+      <properties>
+         <property name="configurationFile" value="jgroups.xml"/>
+      </properties>
+   </transport>
+</global>
+----
+
+=== Configuring a replicated data-grid
+In replicated mode, Infinispan will store every entry on every node in the grid. This offers high durability and availability of data, but means the storage capacity is limited by the available heap space on the node with least memory.
+The cache should be configured to work in replication mode (either synchronous or asynchronous), and can otherwise be configured as normal. For example, if you want to configure the cache programatically:
+
+[source,java]
+----
+private static EmbeddedCacheManager createCacheManagerProgramatically() {
+   return new DefaultCacheManager(
+      GlobalConfigurationBuilder.defaultClusteredBuilder()
+         .transport().defaultTransport().addProperty("configurationFile", "jgroups.xml")
+         .build(),
+      new ConfigurationBuilder()
+         .clustering().cacheMode(CacheMode.REPL_SYNC)
+         .build()
+   );
+}
+----
+
+You can configure an identical cache using XML:
+
+.cfg.xml
+[source,xml]
+----
+<infinispan xsi:schemaLocation="urn:infinispan:config:5.1 http://www.infinispan.org/schemas/infinispan-config-5.1.xsd" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns="urn:infinispan:config:5.1">
+   <global>
+      <transport>
+         <properties>
+            <property name="configurationFile" value="jgroups.xml"/>
+         </properties>
+      </transport>
+   </global>
+   <default>
+      <!-- Configure a synchronous replication cache -->
+      <clustering mode="replication">
+         <sync/>
+      </clustering>
+   </default>
+</infinispan>
+----
+
+along with
+
+[source,java]
+----
+private static EmbeddedCacheManager createCacheManagerFromXml() throws IOException {
+   return new DefaultCacheManager("infinispan-replication.xml");
+}
+----
+
+=== Configuring a distributed data-grid
+In distributed mode, Infinispan will store every entry on a subset of the nodes in the grid (controlled by the parameter numOwners , which controls how many owners each entry will have). Compared to replication, distribution offers increased storage capacity, but with reduced availability (increased latency to access data) and durability. Adjusting the number of owners allows you to obtain the trade off between space, durability and availability. 
+
+Infinispan also offers a _topology aware consistent hash_ which will ensure that the owners of entries are located in different data centers, racks and nodes to offer improved durability in case of node or network outages. 
+
+The cache should be configured to work in distributed mode (either synchronous or asynchronous), and can otherwise be configured as normal. For example, if you want to configure the cache programatically:
+
+[source,java]
+----
+new ConfigurationBuilder()
+   .clustering()
+      .cacheMode(CacheMode.DIST_SYNC)
+      .hash().numOwners(2)
+   .build()
+----
+
+You can configure an identical cache using XML:
+
+.cfg.xml:
+[source,xml]
+----
+<default>
+   <!-- Configure a synchronous replication cache -->
+   <clustering mode="distribution">
+      <sync/>
+      <hash numOwners="2"/>
+   </clustering>
+</default>
+----
+
+along with
+
+[source,java]
+----
+private static EmbeddedCacheManager createCacheManagerFromXml() throws IOException {
+   return new DefaultCacheManager("infinispan-replication.xml");
+}
+----
+
+
+

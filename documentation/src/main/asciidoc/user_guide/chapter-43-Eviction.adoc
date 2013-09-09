@@ -1,0 +1,149 @@
+==  Eviction
+Infinispan supports eviction of entries, such that you do not run out of memory.  Eviction is typically used in conjunction with a cache store, so that entries are not permanently lost when evicted, since eviction only removes entries from memory and not from cache stores or the rest of the cluster.
+
+TIP:  Passivation is also a popular option when using eviction, so that only a single copy of an entry is maintained - either in memory or in a cache store, but not both. The main benefit of using passivation over a regular cache store is that updates to entries which exist in memory are cheaper since the update doesn't need to be made to the cache store as well.
+
+IMPORTANT: that eviction occurs on a _local_ basis, and is not cluster-wide.  Each node runs an eviction thread to analyse the contents of its in-memory container and decide what to evict. Eviction does not take into account the amount of free memory in the JVM as threshold to  starts evicting entries. You have to set maxEntries attribute of the eviction element to be greater than zero in order for eviction to be turned on. If maxEntries is too large you can run out of memory. maxEntries attribute will probably take some tuning in each use case. 
+
+=== Enabling Eviction
+Eviction is configured by adding the link:$$http://docs.jboss.org/infinispan/5.2/configdocs/urn_infinispan_config_5.2/complexType/configuration.eviction.html$$[`<eviction />`] element to your `<default />` or `<namedCache />` configuration sections or using link:$$http://docs.jboss.org/infinispan/5.2/apidocs/org/infinispan/configuration/cache/EvictionConfigurationBuilder.html$$[EvictionConfigurationBuilder] API programmatic approach.
+
+All cache entry are evicted by piggybacking on user threads that are hitting the cache.
+Periodic pruning of expired cache entries from cache is done on a dedicated thread which is turned on by enabling reaper in expiration configuration element/API.
+
+==== Eviction strategies
+
+NOTE: LIRS is default eviction algorithm in Infinispan 5.2 onwards.  LRU was the default prior to that.
+
+.`NONE`
+This eviction strategy effectively disables the eviction thread.
+
+.`UNORDERED`
+UNORDERED eviction strategy is a legacy eviction strategy that has been deprecated. If UNORDERED strategy is specified LRU eviction algorithm will be used.
+
+.`LRU`
+If LRU eviction is used cache entries are selected for eviction using a well known least-recently-used pattern.
+
+.`LIRS`
+LRU eviction algorithm, although simple and easy to understand, under performs in cases of weak access locality (one time access entries are not timely replaced, entries to be accessed soonest are unfortunately replaced, and so on). Recently, a new eviction algorithm - LIRS has gathered a lot of attention because it addresses weak access locality shortcomings of LRU yet it retains LRU's simplicity. Eviction in LIRS algorithm relies on history information of cache entries accesses using so called Inter-Reference Recency (a.k.a IRR) and the Recency. The IRR of a cache entry A refers to number of other distinct entries accessed between the last two consecutive accesses to cache entry A, while recency refers to the number of other entries accessed from last reference to A up to current time point. If we relied only on cache recency we would essentially have LRU functionality. However, in addition to recency LIRS tracks elements that are in low IRR and high IRR, aptly named LIR and HIR cache entry blocks respectively. LIRS eviction algorithm essentially keeps entries with a low IRR in the cache as much as possible while evicting high IRR entries if eviction is required. If recency of a LIR cache entry increases to a certain point and entry  in HIR gets accessed at a smaller recency than that of the LIR entry, the LIR/HIR statuses of the two blocks are switched. Entries in HIR may be evicted regardless of its recency, even if element was recently accessed.
+
+==== More defaults
+By default when no `<eviction />` element is specified, no eviction takes place.
+
+In case there is an eviction element, this table describes behaviour of eviction based on information provided in the xml configuration ("-" in Supplied maxEntries or Supplied strategy column means that the attribute wasn't supplied)
+
+[options="header"]
+|===============
+|Supplied maxEntries|Supplied strategy|Example|Eviction behaviour
+|-|-| `<eviction />` |no eviction
+|&gt; 0|-| `<eviction maxEntries="100" />` |the strategy defaults to LIRS and eviction takes place
+|&gt; 0|NONE| `<eviction maxEntries="100" strategy="NONE" />` | the strategy defaults to LIRS and eviction takes place
+|&gt; 0| != NONE | `<eviction maxEntries="100" strategy="LRU" />` |eviction takes place with defined strategy
+|0|-| `<eviction maxEntries="0" />` | no eviction 
+|0| NONE | `<eviction maxEntries="0" strategy="NONE" />` | no eviction 
+|0| != NONE | `<eviction maxEntries="0" strategy="LRU" />` | ConfigurationException 
+|&lt; 0|-| `<eviction maxEntries="-1" />` | no eviction 
+|&lt; 0| NONE | `<eviction maxEntries="-1" strategy="NONE" />` | no eviction 
+|&lt; 0| != NONE | `<eviction maxEntries="-1" strategy="LRU" />` |ConfigurationException
+
+|===============
+
+==== Advanced Eviction Internals
+Implementing eviction in a scalable, low lock contention  approach while  at the same time doing meaningful selection of entries for eviction is  not an easy feat. Data container needs to be locked until appropriate  eviction entries are selected. Having  such a lock protected data  container in turn causes high lock contention  offsetting any eviction  precision gained by sophisticated eviction  algorithms. In order to get  superior throughput while retaining high  eviction precision both low  lock contention data container and  high precision eviction algorithm  implementation are needed. Infinispan evicts entries from cache on a  segment level (segments  similar to ConcurrentHashMap), once segment is  full entries are evicted  according to eviction algorithm. However,  there are two drawbacks with this approach. Entries might get evicted  from cache even though maxEntries has not been reached yet and  maxEntries is a theoretical  limit for cache size but in practical   terms it will be slightly less  than maxEntries. For more details refer to link:$$http://infinispan.blogspot.com/2010/03/infinispan-eviction-batching-updates.html$$[Infinispan eviction design]. 
+
+=== Expiration
+Similar to, but unlike eviction, is expiration. Expiration allows you to attach lifespan and/or maximum idle times to entries. Entries that exceed these times are treated as invalid and are removed. When removed expired entries are not passivated like evicted entries (if passivation is turned on).
+
+TIP: Unlike eviction, expired entries are removed globally - from memory, cache stores, and cluster-wide.
+
+By default entries created are immortal and do not have a lifespan or maximum idle time.  Using the cache API, mortal entries can be created with lifespans and/or maximum idle times.
+Further, default lifespans and/or maximum idle times can be configured by adding the link:$$http://docs.jboss.org/infinispan/5.1/configdocs/urn_infinispan_config_5.1/complexType/configuration.expiration.html$$[&lt;expiration /&gt;] element to your `<default />` or `<namedCache />` configuration sections. 
+
+==== Difference between Eviction and Expiration
+Both Eviction and Expiration are means of cleaning the cache of unused entries and thus guarding the heap against OutOfMemory exceptions, so now a brief explanation of the difference.
+
+With _eviction_ you set _maximal number of entries_ you want to keep in the cache and if this limit is exceeded, some candidates are found to be removed according to a choosen _eviction strategy_ (LRU, LIRS, etc...). Eviction can be setup to work with passivation (evicting to a cache store). 
+
+With _expiration_ you set _time criteria_ for entries, _how long you want to keep them_ in cache. Either you set maximum _lifespan_ of the entry - time it is allowed to stay in the cache or _maximum idle time_ , time it's allowed to be untouched (no operation performed with given key). 
+
+===  Eviction Examples
+
+.  _Expiration_ is a top-level construct, represented in the configuration as well as in the cache API.
+.  While eviction is _local to each cache instance_ , expiration is _cluster-wide_ .  Expiration lifespans and maxIdle values are replicated along with the cache entry. 
+.  Expiration lifespan and maxIdle are also persisted in CacheStores, so this information survives eviction/passivation. 
+.  Four eviction strategies are shipped, link:$$http://docs.jboss.org/infinispan/5.0/apidocs/org/infinispan/eviction/EvictionStrategy.html#NONE$$[EvictionStrategy.NONE] , link:$$http://docs.jboss.org/infinispan/5.0/apidocs/org/infinispan/eviction/EvictionStrategy.html#LRU$$[EvictionStrategy.LRU] , link:$$http://docs.jboss.org/infinispan/5.0/apidocs/org/infinispan/eviction/EvictionStrategy.html#UNORDERED$$[EvictionStrategy.UNORDERED] , and link:$$http://docs.jboss.org/infinispan/5.0/apidocs/org/infinispan/eviction/EvictionStrategy.html#LIRS$$[EvictionStrategy.LIRS] . 
+
+==== Configuration
+Eviction may be configured using the Configuration bean or the XML file.  Eviction configuration is on a per-cache basis.  Valid eviction-related configuration elements are:
+
+[source,xml]
+----
+<eviction strategy="LRU" maxEntries="2000"/>
+<expiration lifespan="1000" maxIdle="500" wakeupInterval="1000" />
+
+----
+
+Programmatically, the same would be defined using:
+
+[source,java]
+----
+Configuration c = new ConfigurationBuilder().eviction().strategy(EvictionStrategy.LRU)
+               .maxEntries(2000).expiration().wakeUpInterval(5000l).lifespan(1000l).maxIdle(500l)
+               .build();
+
+----
+
+==== Default values
+Eviction is disabled by default.  If enabled (using an empty `<eviction />` element), certain default values are used:
+
+
+* strategy: EvictionStrategy.NONE is assumed, if a strategy is not specified..
+* wakeupInterval: 5000 is used if not specified.
+* If you wish to disable the eviction thread, set wakeupInterval to -1.
+* maxEntries: -1 is used if not specified, which means unlimited entries.
+* 0 means no entries, and the eviction thread will strive to keep the cache empty.
+
+Expiration lifespan and maxIdle both default to -1.
+
+==== Using expiration
+Expiration allows you to set either a lifespan or a maximum idle time on each key/value pair stored in the cache.  This can either be set cache-wide using the configuration, as described above, or it can be defined per-key/value pair using the Cache interface.  Any values defined per key/value pair overrides the cache-wide default for the specific entry in question.
+
+For example, assume the following configuration:
+
+[source,xml]
+----
+<expiration lifespan="1000" />
+
+----
+
+[source,java]
+----
+// this entry will expire in 1000 millis
+cache.put("pinot noir", pinotNoirPrice);
+
+// this entry will expire in 2000 millis
+cache.put("chardonnay", chardonnayPrice, 2, TimeUnit.SECONDS);
+
+// this entry will expire 1000 millis after it is last accessed
+cache.put("pinot grigio", pinotGrigioPrice, -1,
+          TimeUnit.SECONDS, 1, TimeUnit.SECONDS);
+
+// this entry will expire 1000 millis after it is last accessed, or
+// in 5000 millis, which ever triggers first
+cache.put("riesling", rieslingPrice, 5,
+          TimeUnit.SECONDS, 1, TimeUnit.SECONDS);
+
+----
+
+
+=== Eviction designs
+Central to eviction is an EvictionManager - which is only available if eviction or expiration is configured.
+
+The purpose of the EvictionManager is to drive the eviction/expiration thread which periodically purges items from the DataContainer.  If the eviction thread is disabled (wakeupInterval set to -1) eviction can be kicked off manually using EvictionManager.processEviction(), for example from another maintenance thread that may run periodically in your application.
+
+The eviction manager processes evictions in the following manner:
+
+. Causes the data container to purge expired entries
+. Causes cache stores (if any) to purge expired entries
+. Prunes the data container to a specific size, determined by maxElements
+

@@ -1,0 +1,79 @@
+== Adding Configuration
+
+WARNING: We still use the old configuration system internally within Infinispan.
+This makes things a little complicated. This will be switched out soon!
+For now, you need to also add your property to the old config system as well as the new.
+
+Note, these guides assume you are adding an element to the cache configuration, but apply equally to the global configuration.
+
+Before you start adding a configuration property, identify whether you want to add a property to an existing configuration group/element, or whether you need to create a child object.
+We call the configuration group XXX in the steps below.
+
+=== Adding a property
+
+. Add the property to the relevant XXXConfiguration class.
+Add a private final field, add a parameter to the constructor, and assign the value to the field in the constructor body.
+Add a accessor for the property. If the property should be mutable at runtime, then add a mutator as well.
+Most configuration properties are not mutable at runtime - if the configuration is runtime mutable, then Infinispan needs to take notice of this update whilst the cache is running (you can't cache the value of the configuration in your implementation class).
+Mutators and accessors don't use the classic JavaBean pattern of prepending accessors with "get" and mutators with "set".
+Instead, the name of the property is used for an accessor.
+A mutator is an overloaded version of the accessor which takes a parameter, the new value.
+
+. Add the property to the matching XXXConfigurationBuilder.
+You'll need to add a mutable field to the class, and initialise it to it's default value in the field declaration.
+Add a mutator (following the above pattern). 
+
+. The `create()` method is called by the parent object in order to instantiate the XXXConfiguration object from the builder.
+Therefore, make sure to pass the value of the field in the builder to the XXXConfiguration object's constructor here.
+Additionally, if you require a complex default (for example, the value of a configuration property is defaulted conditionally based on the value of some other configuration property), then this is the place to do this. 
+
+. The `validate()` method is called by the parent object to validate the values the user has passed in.
+This method may also be called directly by user code, should they wish to manually validate a configuration object.
+You should place any validation logic here related to your configuration property.
+If you need to "cross-validate" properties (validate the value of your property conditionally upon the value of another property), and the other property is on another builder object, increase the visibility of that other property field to "default", and reference it from this builder, by calling the `getBuilder()` method, which will gives you a handle on the root configuration builder. 
+
+. The final step is to add parsing logic to the `Parser` class.
+First, add the attribute to name to the `Attribute` enum (this class simply provides a mapping between the non-type-safe name of the attribute in XML and a type-safe reference to use in the parser).
+Locate the relevant `parseXXX()` method on the class, and add a case to the switch statement for the attribute.
+Call the builder mutator you created above, performing any XML related validation (you are unlikely to need this), and type conversion (using the static methods on the primitive wrapper classes, String class, or relevant enum class). 
+
+=== Adding a group
+In some situations you may additionally want to add a configuration grouping object, represented in XML as an element.
+You might want to do this if you are adding a new area of functionality to Infinispan.
+Identify the location of the new configuration grouping object.
+It might be added to the root Configuration object, or it might be added to one it's children, children's children.
+We'll call the parent YYY in the steps below. Create the XXXConfiguration object.
+Add any properties required following the guide for adding properties.
+The constructors visibility should be "default". 
+
+. Create the XXXConfigurationBuilder object.
+It should subclass the relevant configuration child builder – use the YYYConfigurationChildBuilder as the superclass.
+This will ensure that all builder methods that allow the user to "escape" are provided correctly (i.e provide access to other grouping elements), and also require you to provide a `create()` and `validate()` method.
+The constructor needs to take the the YYYConfigurationBuilder as an argument, and pass this to the superclass (this simply allows access to the root of the builder tree using the `getBuilder()` method). 
+
+. Follow the property adding guide to add any properties you need to the builder.
+The `create()` method needs to return a new instance of the XXXConfiguration object.
+Implement any validation needed in the `validate()` method. 
+
+. In the YYYConfiguration object, add your new configuration class as a private final field, add an accessor, and add initialiser assignment in the constructor 
+
+` In the YYYConfigurationBuilder, add your new configuration builder as a private final field, and initialise it in the constructor with a new instance.
+Finally, add an accessor for it following the standard pattern discussed in the guide. 
+
+. In the YYYConfigurationBuilder ensure that your validate method is called in it's validate method, and that result of the XXXConfiguration instances' create method is passed to the constructor of YYYConfiguration. 
+
+. Finally, add this to the parser.
+First, add the element to the `Element` class, which provides a type safe representation of the element name in XML.
+In the `Parser` class, add a new `parseXXX` method, copying one of the others that most matches your requirements (parse methods either parse elements only - look for `ParseUtils.requireNoAttributes()`, attributes only – look for `ParseUtils.requireNoContent()` or a combination of both – look for an iterator over both elements and attributes).
+Add any attributes as discussed in the adding a property guide.
+Finally, wire this in by locating the `parseYYY()` method, and adding an element to the switch statement, that calls your new `parseXXX()` method. 
+
+=== Don't forget to update the XSD and XSD test
+. Add your new elements or attributes to the XSD in `src/main/resources`.
+. Update `src/test/resources/configs/all.xml` to include your new elements or attributes. 
+
+=== Bridging to the old configuration
+Until we entirely swap out the old configuration you will need to add your property to the old configuration (no need to worry about JAXB mappings though!), and then add some code to the `LegacyConfigurationAdaptor` to adapt both ways.
+It's fairly straightforward, just locate the relevant point in the `adapt()` method (near the configuration group you are using) and map from the legacy configuration to the new configuration, or vs versa.
+You will need to map both ways, in both adapt methods.
+
