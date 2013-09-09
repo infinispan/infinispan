@@ -1,0 +1,128 @@
+[[sid-68355100]]
+
+==  Using the Cache API
+
+[[sid-68355100_UsingtheCacheAPI-TheCacheinterface]]
+
+
+=== The Cache interface
+
+ Infinispan exposes a simple, link:$$http://jcp.org/en/jsr/detail?id=107$$[JSR-107] compliant link:$$http://docs.jboss.org/infinispan/4.0/apidocs/org/infinispan/Cache.html$$[Cache] interface. 
+
+ 
+.TODO InformalFigure image title empty
+image::[]
+
+ 
+
+The Cache interface exposes simple methods for adding, retrieving and removing entries, including atomic mechanisms exposed by the JDK's ConcurrentMap interface.  Based on the cache mode used, invoking these methods will trigger a number of things to happen, potentially even including replicating an entry to a remote node or looking up an entry from a remote node, or potentially a cache store.
+
+
+----
+Note: For simple usage, using the Cache API should be no different from using the JDK Map API, and hence migrating from simple in-memory caches based on a Map to Infinispan's Cache should be trivial.
+
+----
+
+[[sid-68355100_UsingtheCacheAPI-LimitationsofCertainMapMethods]]
+
+
+==== Limitations of Certain Map Methods
+
+ Certain methods exposed in Map have certain limitations when used with Infinispan, such as link:$$http://docs.jboss.org/infinispan/4.0/apidocs/org/infinispan/Cache.html#size%28%29$$[size()] , link:$$http://docs.jboss.org/infinispan/4.0/apidocs/org/infinispan/Cache.html#values%28%29$$[values()] , link:$$http://docs.jboss.org/infinispan/4.0/apidocs/org/infinispan/Cache.html#keySet%28%29$$[keySet()] and link:$$http://docs.jboss.org/infinispan/4.0/apidocs/org/infinispan/Cache.html#entrySet%28%29$$[entrySet()] .  Specifically, these methods are _unreliable_ and only provide a best-effort guess.  They do not acquire locks, either local or global, and concurrent modifications, additions and removals will not be considered in the result of any of these calls.  Further, they only operate on the local node, and as such, do not give you a global(cluster) view of the state. 
+
+Attempting to perform these operations globally would have large performance impact as well as become a scalability bottleneck.  As such, these methods should only be used for informational or debugging purposes only.
+
+[[sid-68355100_UsingtheCacheAPI-MortalandImmortalData]]
+
+
+==== Mortal and Immortal Data
+
+ Further to simply storing entries, Infinispan's cache API allows you to attach mortality information to data.  For example, simply using link:$$http://java.sun.com/javase/6/docs/api/java/util/Map.html#put%28K,%20V%29$$[put(key, value)] would create an _immortal_ entry, i.e., an entry that lives in the cache forever, until it is removed (or evicted from memory to prevent running out of memory).  If, however, you put data in the cache using link:$$http://docs.jboss.org/infinispan/4.0/apidocs/org/infinispan/Cache.html#put%28K,%20V,%20long,%20java.util.concurrent.TimeUnit%29$$[put(key, value, lifespan, timeunit)] , this creates a _mortal_ entry, i.e., an entry that has a fixed lifespan and expires after that lifespan. 
+
+ In addition to _lifespan_ , Infinispan also supports _maxIdle_ as an additional metric with which to determine expiration.  Any combination of lifespans or maxIdles can be used. 
+
+[[sid-68355100_UsingtheCacheAPI-ExampleofUsingExpiryandMortalData]]
+
+
+==== Example of Using Expiry and Mortal Data
+
+ See link:$$https://docs.jboss.org/author/pages/viewpage.action?pageId=3737114$$[this page] for an example of using mortal data with Infinispan 
+
+[[sid-68355100_UsingtheCacheAPI-%7B%7BputForExternalRead%7D%7Doperation]]
+
+
+==== putForExternalRead operation
+
+ Infinispan's link:$$http://docs.jboss.org/infinispan/5.1/apidocs/org/infinispan/Cache.html$$[Cache] class contains a different 'put' operation called link:$$http://docs.jboss.org/infinispan/5.1/apidocs/org/infinispan/Cache.html#putForExternalRead(K, V)$$[putForExternalRead] . This operation is particularly useful when Infinispan is used as a temporary cache for data that is persisted elsewhere.  Under heavy read scenarios, contention in the cache should not delay the real transactions at hand, since caching should just be an optimization and not something that gets in the way. 
+
+ To achieve this, putForExternalRead acts as a put call that only operates if the key is not present in the cache, and fails fast and silently if another thread is trying to store the same key at the same time. In this particular scenarion, caching data is a way to optimise the system and it's not desirable that a failure in caching affects the on-going transaction, hence why failure is handled differently. putForExternalRead is consider to be a fast operation because regardless of whether it's successful or not, it doesn't wait for any locks, and so returns to the caller promptly. 
+
+ To understand how to use this operation, let's look at basic example. Imagine a cache of Person instances, each keyed by a PersonId , whose data originates in a separate data store. The following code shows the most common pattern of using link:$$http://docs.jboss.org/infinispan/5.1/apidocs/org/infinispan/Cache.html#putForExternalRead(K, V)$$[putForExternalRead] within the context of this example: 
+
+
+----
+
+// Id of the person to look up, provided by the application
+PersonId id = ...;
+
+// Get a reference to the cache where person instances will be stored
+Cache<PersonId, Person> cache = ...;
+
+// First, check whether the cache contains the person instance
+// associated with with the given id
+Person cachedPerson = cache.get(id);
+
+if (cachedPerson == null) {
+   // The person is not cached yet, so query the data store with the id
+   Person person = dataStore.lookup(id);
+
+   // Cache the person along with the id so that future requests can
+   // retrieve it from memory rather than going to the data store
+   cache.putForExternalRead(id, person);
+} else {
+   // The person was found in the cache, so return it to the application
+   return cachedPerson;
+}
+
+----
+
+ Please note that link:$$http://docs.jboss.org/infinispan/5.1/apidocs/org/infinispan/Cache.html#putForExternalRead(K, V)$$[putForExternalRead] should never be used as a mechanism to update the cache with a new Person instance originating from application execution (i.e. from a transaction that modifies a Person's address). When updating cached values, please use the standard link:$$http://java.sun.com/javase/6/docs/api/java/util/Map.html?is-external=true#put(K, V)$$[put] operation, otherwise the possibility of caching corrupt data is likely. 
+
+[[sid-68355100_UsingtheCacheAPI-TheAdvancedCacheinterface]]
+
+
+=== The AdvancedCache interface
+
+ In addition to the simple Cache interface, Infinispan offers an link:$$http://docs.jboss.org/infinispan/4.0/apidocs/org/infinispan/AdvancedCache.html$$[AdvancedCache] interface, geared towards extension authors.  The AdvancedCache offers the ability to inject custom interceptors, access certain internal components and to apply flags to alter the default behavior of certain cache methods.  The following code snippet depicts how an AdvancedCache can be obtained: 
+
+
+----
+AdvancedCache advancedCache = cache.getAdvancedCache();
+
+----
+
+[[sid-68355100_UsingtheCacheAPI-Flags]]
+
+
+==== Flags
+
+ Flags are applied to regular cache methods to alter the behavior of certain methods.  For a list of all available flags, and their effects, see the link:$$http://docs.jboss.org/infinispan/4.0/apidocs/org/infinispan/context/Flag.html$$[Flag] enumeration.  Flags are applied using link:$$http://docs.jboss.org/infinispan/4.0/apidocs/org/infinispan/AdvancedCache.html#withFlags%28org.infinispan.context.Flag...%29$$[AdvancedCache.withFlags()] .  This builder method can be used to apply any number of flags to a cache invocation, for example: 
+
+
+----
+advancedCache.withFlags(Flag.CACHE_MODE_LOCAL, Flag.SKIP_LOCKING)
+   .withFlags(Flag.FORCE_SYNCHRONOUS)
+   .put("hello", "world");
+
+
+----
+
+[[sid-68355100_UsingtheCacheAPI-CustomInterceptors]]
+
+
+==== Custom Interceptors
+
+The AdvancedCache interface also offers advanced developers a mechanism with which to attach custom interceptors.  Custom interceptors allow developers to alter the behavior of the cache API methods, and the AdvancedCache interface allows developers to attach these interceptors programmatically, at run-time.  See the AdvancedCache Javadocs for more details.
+
+ For more information on writing custom interceptors, see link:$$https://docs.jboss.org/author/pages/viewpage.action?pageId=3737149$$[/javascript:;] 
+

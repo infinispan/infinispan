@@ -1,0 +1,247 @@
+[[sid-68355144]]
+
+==  Getting Started Guide - JBoss AS 7
+
+ JBoss AS 7 bundles Infinispan, and will start the Infinispan service when required. The Infinispan service provides a CacheManager in JNDI which you can use in your application. JBoss AS 7 provides unified configuration for all services, so the configuration format (but not semantics) is different than the native Infinispan configuration. 
+
+This tutorial will show you how to create a simple, clustered, cache on JBoss AS 7, and deploy to the server. It will also outline the configuration differences to the native Infinispan format.
+
+[[sid-68355144_GettingStartedGuide-JBossAS7-Configuration]]
+
+
+=== Configuration
+
+Unlike previous releases of JBoss AS, JBoss AS 7 centralizes all server configuration into one location. This include Infinispan cache configurations, which are defined by the Infinispan subsystem:
+
+
+|===============
+| $JBOSS_HOME/domain/configuration/domain.xml |if you are using JBoss AS 7 in the managed domain mode
+| $JBOSS_HOME/standalone/configuration/standalone-ha.xml |if you are using JBoss AS 7 in standalone mode (similar to previous versions of JBoss AS)
+
+|===============
+
+
+
+[IMPORTANT]
+==== 
+ The complete schema for the Infinispan subsystem is included in the AS7 binary distribution $JBOSS_HOME/docs/schema/jboss-infinispan.xsd . 
+
+
+==== 
+
+
+If you are familiar with Infinispan's native configuration file format or the corresponding configuration file from JBoss AS 6, you'll notice some obvious similarities, but some noteworthy differences.
+
+While a native Infinispan configuration file contains cache configurations for a single cache managers, like JBoss AS 6, the Infinispan subsystem configuration defines multiple cache managers, each identified by a name. As with AS6, cache managers can have 1 or more aliases.
+
+[[sid-68355144_GettingStartedGuide-JBossAS7-Beingconcise]]
+
+
+==== Being concise
+
+The Infinispan subsystem's configuration schema attempts to be more concise than the equivalent configuration in JBoss AS 6. This is a direct result of the following changes:
+
+[[sid-68355144_GettingStartedGuide-JBossAS7-Whereis%7B%7B%3Cglobal%2F%3E%7D%7D%3F]]
+
+
+===== Where is &lt;global/&gt; ?
+
+Much of the global configuration contains references to other JBoss AS services. In JBoss AS 7, these services are auto-injected behind the scenes. This includes things like thread pools (described below), the JGroups transport (also described below), and the mbean server.
+
+[[sid-68355144_GettingStartedGuide-JBossAS7-Configurationdefaultvalues]]
+
+
+===== Configuration default values
+
+ JBoss AS 7 supplies a set of custom default values for various configuration properties. These defaults differ depending on the cache mode. The complete set of default values can be found in 
+                link:$$https://github.com/jbossas/jboss-as/blob/master/clustering/infinispan/src/main/resources/infinispan-defaults.xml$$[]
+               . 
+
+[[sid-68355144_GettingStartedGuide-JBossAS7-Filebasedcachestore]]
+
+
+===== based cache store
+
+ Because clustering services use the file-based cache store frequently, we've simplified its definition(by using a distinctive element you no longer need to specify the class name). The location of the store is defined by 2 attributes &lt;file-store relative-to="..." path="..."/&gt; . The relative-to attribute defines a named path, and defaults to the server's data directory; whereas the path attribute specifies the directory within relative-to, and defaults to the cache container name. 
+
+[[sid-68355144_GettingStartedGuide-JBossAS7-Specifyingcachemode]]
+
+
+===== Specifying cache mode
+
+ Instead of defining the cache mode via a separate &lt;clustering mode="..."/&gt; attribute, each cache mode uses it's own element, the child elements of which are specific to that cache mode. For example, rehashing properties are only available within the &lt;distributed-cache/&gt; element. 
+
+[[sid-68355144_GettingStartedGuide-JBossAS7-Whereis%7B%7B%3Cdefault%2F%3E%7D%7D%3F]]
+
+
+===== Where is &lt;default/&gt; ?
+
+ The semantics of the default cache of a cache container are different in JBoss AS 7 than in native Infinispan. In native Infinispan, the configuration within &lt;default/&gt; defines the cache returned by calls to CacheContainer.getCache() , while &lt;namedCache/&gt; entries inherit the configuration from the default cache. 
+
+ In JBoss AS 7, all caches defined in the Infinispan subsystem are named caches. The default-cache attribute identifies which named cache should be returned by calls to CacheContainer.getCache() . This lets you easily modify the default cache of a cache container, without having to worry about rearranging configuration property inheritance. 
+
+[[sid-68355144_GettingStartedGuide-JBossAS7-Specifyingatransport]]
+
+
+==== Specifying a transport
+
+The Infinispan subsystem uses with the JGroups subsystem to provide it's JGroups channel. By default, cache containers use the default-stack as defined by the JGroups subsystem.
+
+
+----
+
+<subsystem xmlns="urn:jboss:domain:jgroups:1.0" default-stack="udp">
+   <stack name="udp">
+      <!-- ... -->
+   </stack>
+   <stack name="tcp">
+      <!-- ... -->
+   </stack>
+</subsystem>
+
+----
+
+Changing the default stack for all clustering services is a simple as changing the default-stack attribute defined in the JGroups subsystem. An individual cache-container can opt to use a particular stack by specifying a stack attribute within its transport element. For example:
+
+
+----
+
+<cache-container name="web" default-cache="repl">
+   <transport stack="tcp"/>
+   <replicated-cache name="repl" mode="ASYNC" batching="true">
+      <locking isolation="REPEATABLE_READ"/>
+      <file-store/>
+   </replicated-cache>
+</cache-container>
+
+----
+
+JGroups channels are named using the cache container name.
+
+[[sid-68355144_GettingStartedGuide-JBossAS7-Definingthreadpools]]
+
+
+==== Defining thread pools
+
+Cache containers defined by the Infinispan subsystem can reference thread pools defined by the threading subsystem. Externalizing thread pool in this way has the additional advantage of being able to manage the thread pools via native JBoss AS management mechanisms, and allows you to share thread pools across cache containers. For example:
+
+
+----
+
+<cache-container name="web" default-cache="repl" listener-executor="infinispan-listener" eviction-executor="infinispan-eviction" replication-queue-executor="infinispan-repl-queue">
+  <transport executor="infinispan-transport"/>
+<replicated-cache name="repl" mode="ASYNC" batching="true">
+    <locking isolation="REPEATABLE_READ"/>
+<file-store/>
+  </replicated-cache>
+</cache-container>
+
+<subsystem xmlns="urn:jboss:domain:threads:1.0">
+  <thread-factory name="infinispan-factory" priority="1"/>
+  <bounded-queue-thread-pool name="infinispan-transport"/>
+    <core-threads count="1"/>
+    <queue-length count="100000"/>
+    <max-threads count="25"/>
+    <thread-factory name="infinispan-factory"/>
+  </bounded-queue-thread-pool>
+  <bounded-queue-thread-pool name="infinispan-listener"/>
+    <core-threads count="1"/>
+    <queue-length count="100000"/>
+    <max-threads count="1"/>
+    <thread-factory name="infinispan-factory"/>
+  </bounded-queue-thread-pool>
+  <scheduled-thread-pool name="infinispan-eviction"/>
+    <max-threads count="1"/>
+    <thread-factory name="infinispan-factory"/>
+  </scheduled-thread-pool>
+  <scheduled-thread-pool name="infinispan-repl-queue"/>
+    <max-threads count="1"/>
+    <thread-factory name="infinispan-factory"/>
+  </scheduled-thread-pool>
+</subsystem>
+
+----
+
+[[sid-68355144_GettingStartedGuide-JBossAS7-Cachecontainerlifecycle]]
+
+
+=== Cache container lifecycle
+
+ During JBoss AS 6 server startup, the CacheContainerRegistry service would create and start all cache containers defined within its infinispan-configs.xml file. Individual caches were started and stopped as needed. Lifecycle control of a cache was the complete responsibility of the application or service that used it. Instead of a separate CacheContainerRegistry , JBoss AS 7 uses the generic ServiceRegistry from JBoss MSC (JBoss Modular Service Container). When JBoss AS 7 starts, it creates on-demand services for each cache and cache container defined in the Infinispan subsystem. A service or deployment that needs to use a given cache or cache container simply adds a dependency on the relevant service name. When the service or deployment stops, dependent services are stopped as well, provided they are not still demanded by some other service or deployment. In this way, JBoss AS 7 handles cache and cache container lifecycle for you. 
+
+There may be an occasion where you'd like a cache to start eagerly when the server starts, without requiring a dependency from some service or deployment. This can be achieve by using the start attribute of a cache. For example:
+
+
+----
+
+<cache-container name="cluster" default-cache="default">
+  <alias>ha-partition</alias>
+  <replicated-cache name="default" mode="SYNC" batching="true" start="EAGER">
+    <locking isolation="REPEATABLE_READ"/>
+  </replicated-cache>
+</cache-container>
+
+----
+
+[[sid-68355144_GettingStartedGuide-JBossAS7-UsinganInfinispancachedirectly]]
+
+
+==== Using an Infinispan cache directly
+
+AS7 adds the ability to inject an Infinispan cache into your application using Java EE resource injection. This is perhaps best explained by an example:
+
+
+----
+
+@ManagedBean
+public class MyBean<K, V> {
+  @Resource(lookup="java:jboss/infinispan/my-container-name")
+  private org.infinispan.manager.CacheContainer container;
+  private org.infinispan.Cache<K, V> cache;
+
+  @PostConstruct
+  public void start() {
+    this.cache = this.container.getCache();
+  }
+}
+
+----
+
+That's it! No JBoss specific classes required - only standard annotations. Pretty neat, no?
+
+There's only one catch - due to the JBoss AS's use of modular classloading, Infinispan classes are not available to deployments by default. You need to explicitly tell the AS to import the Infinispan API into your application. This is most easily done by adding the following line to your application's META-INF/MANIFEST.MF:
+
+
+----
+
+Dependencies: org.infinispan export
+
+----
+
+If you're using maven you can achieve that simply by adding this configuration to you pom.xml:
+
+
+----
+
+<build>
+  <plugins>
+    <plugin>
+      <artifactId>maven-war-plugin</artifactId>
+      <version>2.1.1</version>
+      <configuration>
+        <!-- Java EE 6 doesn't require web.xml, Maven needs to catch up! -->
+        <failOnMissingWebXml>false</failOnMissingWebXml>
+        <archive>
+          <manifestEntries>
+            <Dependencies>org.infinispan export</Dependencies>
+          </manifestEntries>
+        </archive>
+      </configuration>
+    </plugin>
+  </plugins>
+</build>
+
+----
+
+ So, how does it all work? If you recall, during server startup, JBoss AS creates and registers an on-demand service for every Infinispan cache container defined in the Infinispan subsystem. For every cache container, the Infinispan subsystem also creates and registers a JNDI binding service that depends on the associated cache container service. When the JBoss AS deployer encounters the @Resource annotation, it automatically adds a dependency to the application on the JNDI binding service associated with the specified JNDI name. In the case of the Infinispan JNDI binding, the binding itself already depends on the relevant Infinispan cache container service. The net effect is, your application will include a dependency on the requested cache container. Consequently, the cache container will automatically start on deploy, and stop (including all caches) on undeploy. 
+

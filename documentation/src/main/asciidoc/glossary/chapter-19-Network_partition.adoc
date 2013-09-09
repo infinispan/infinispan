@@ -1,0 +1,10 @@
+[[sid-68355184]]
+
+==  Network partition
+
+ Network partitions happens when multiple parts of a cluster become separated due to some type of network failure, whether permanent or temporary.  Often temporary failures heal spontaneously, within a few seconds or at most minutes, but the damage that can occur during a network partition can lead to inconsistent data.  Closely tied to link:$$http://en.wikipedia.org/wiki/CAP_theorem$$[Brewer's CAP theorem] , distributed systems choose to deal with a network partition by either sacrificing availability (either by shutting down or going into read-only mode) or consistency by allowing concurrent and divergent updates to the same data. 
+
+ Network partitions are also commonly known as a <<sid-68355185>> , after the biological condition of the same name. 
+
+ For more detailed discussion, see link:$$http://codahale.com/you-cant-sacrifice-partition-tolerance/$$[this blog post] . 
+

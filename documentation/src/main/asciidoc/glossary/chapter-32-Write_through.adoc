@@ -1,0 +1,16 @@
+[[sid-68355172]]
+
+==  Write-through
+
+ _Write-through_ is a cache store update mode. When this mode is used, clients update a cache entry, e.g. via a Cache.put() invocation, the call will not return until Infinispan has updated the underlying cache store. Normally this means that updates to the cache store are done in the client thread. 
+
+ An alternative mode in which cache stores can be updated is <<sid-68355173>> . 
+
+[[sid-68355172_Write-through-Moreresources]]
+
+
+=== More resources
+
+
+*  link:$$https://docs.jboss.org/author/pages/viewpage.action?pageId=3737144$$[Infinispan User guide] 
+

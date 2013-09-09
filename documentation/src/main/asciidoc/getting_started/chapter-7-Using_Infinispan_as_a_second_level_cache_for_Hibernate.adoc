@@ -1,0 +1,6 @@
+[[sid-68355130_GettingStartedGuide-UsingInfinispanasasecondlevelcacheforHibernate]]
+
+==  Using Infinispan as a second level cache for Hibernate
+
+TODO
+

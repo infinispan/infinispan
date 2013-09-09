@@ -1,0 +1,8 @@
+[[sid-68355171]]
+
+==  memory data grid
+
+ An in-memory data grid (IMDG) is a special type of <<sid-68355170>> . In an IMDG, each server uses its main system memory (RAM) as primary storage for data (as opposed to disk-based storage). This allows for much greater concurrency, as lock-free link:$$http://en.wikipedia.org/wiki/Software_transactional_memory$$[STM] techniques such as link:$$http://en.wikipedia.org/wiki/Compare-and-swap$$[compare-and-swap] can be used to allow hardware threads accessing concurrent datasets. As such, IMDGs are often considered far better optimized for a multi-core and multi-CPU world when compared to disk-based solutions. In addition to greater concurrency, IMDGs offer far lower latency access to data (even when compared to disk-based data grids using link:$$http://en.wikipedia.org/wiki/Solid-state_drive$$[solid state drives] ). 
+
+The tradeoff is capacity. Disk-based grids, due to the far greater capacity of hard disks, exhibit two (or even three) orders of magnitude greater capacity for the same hardware cost.
+

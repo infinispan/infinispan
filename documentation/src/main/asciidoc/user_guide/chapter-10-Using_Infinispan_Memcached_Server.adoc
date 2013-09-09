@@ -1,0 +1,151 @@
+[[sid-68355035]]
+
+==  Using Infinispan Memcached Server
+
+[[sid-68355035_UsingInfinispanMemcachedServer-Introduction]]
+
+
+=== Introduction
+
+ Starting with version 4.1, the Infinispan distribution contains a server module that implements the link:$$http://github.com/memcached/memcached/blob/master/doc/protocol.txt$$[Memcached text protocol] . This allows Memcached clients to talk to one or serveral Infinispan backed Memcached servers. These servers could either be working standalone just like Memcached does where each server acts independently and does not communicate with the rest, or they could be clustered where servers replicate or distribute their contents to other Infinispan backed Memcached servers, thus providing clients with failover capabilities. 
+
+[[sid-68355035_UsingInfinispanMemcachedServer-StartinganInfinispanMemcachedserver]]
+
+
+=== Starting an Infinispan Memcached server
+
+ The simplest way to start up an Infinispan memcached server is to simply unzip the all distribution and either run the startServer.bat or startServer.sh script passing memcached as the protocol to run. For example: 
+
+
+----
+$ ./bin/startServer.sh -r memcached
+----
+
+ When the script is called without any further parameters, the started Infinispan Memcached server binds to _port 11211 on localhost_ (127.0.0.1) and uses a local (unclustered) Infinispan cache instance configured with default values underneath. 
+
+[[sid-68355035_UsingInfinispanMemcachedServer-CommandLineOptions]]
+
+
+=== Command Line Options
+
+ You can optionally pass a set of parameters to the Infinispan Memcached server that allow you to configure different parts of the server. You can find detailed information in the link:$$https://docs.jboss.org/author/pages/viewpage.action?pageId=3737161$$[server command line options article] . 
+
+Please note that, since the Memcached protocol does not allow specifying a cache to use, the mapping between Infinispan Memcached server instances and Infinispan Cache instances is 1 to 1. Therefore, when passing an Infinispan configuration file to the Infinispan Memcache server, either define a named cache with name "memcachedCache" or modify the default cache configuration.
+
+[[sid-68355035_UsingInfinispanMemcachedServer-EnablingStatistics]]
+
+
+=== Enabling Statistics
+
+ The memcached module makes use of the JMX statistics in the cache configuration. For example: 
+
+
+----
+<default>
+   ...
+   <jmxStatistics enabled="true"/>
+   ...
+</default>
+
+----
+
+Infinispan Memcached server has jmx statistics enabled by default.
+
+[[sid-68355035_UsingInfinispanMemcachedServer-CommandClarifications]]
+
+
+=== Command Clarifications
+
+[[sid-68355035_UsingInfinispanMemcachedServer-FlushAll]]
+
+
+==== Flush All
+
+ Even in a clustered environment, flush_all command leads to the clearing of the Infinispan Memcached server where the call lands. There's no attempt to propagate this flush to other nodes in the cluster. This is done so that flush_all with delay use case can be reproduced with the Infinispan Memcached server. The aim of passing a delay to flush_all is so that different Memcached servers in a full can be flushed at different times, and hence avoid overloading the database with requests as a result of all Memcached servers being empty. For more info, check the link:$$http://github.com/memcached/memcached/blob/master/doc/protocol.txt$$[Memcached text protocol section on flush_all] . 
+
+[[sid-68355035_UsingInfinispanMemcachedServer-UnsupportedFeatures]]
+
+
+=== Unsupported Features
+
+This section explains those parts of the memcached text protocol that for one reason or the other, are not currently supported by the Infinispan based memcached implementation.
+
+[[sid-68355035_UsingInfinispanMemcachedServer-IndividualStats]]
+
+
+==== Individual Stats
+
+Due to difference in nature between the original memcached implementation which is C/$$C++$$ based and the Infinispan implementation which is Java based, there're some general purpose stats that are not supported. For these unsupported stats, Infinispan memcached server always returns 0.
+
+Here's the list of currently unsupported stats:
+
+
+*  pid 
+
+
+*  pointer_size 
+
+
+*  rusage_user 
+
+
+*  rusage_system 
+
+
+*  bytes 
+
+
+*  curr_connections 
+
+
+*  total_connections 
+
+
+*  connection_structures 
+
+
+*  auth_cmds 
+
+
+*  auth_errors 
+
+
+*  limit_maxbytes 
+
+
+*  threads 
+
+
+*  conn_yields 
+
+
+*  reclaimed 
+
+[[sid-68355035_UsingInfinispanMemcachedServer-StatisticSettings]]
+
+
+==== Statistic Settings
+
+The settings statistics section of the text protocol has not been implemented due to its volatility.
+
+[[sid-68355035_UsingInfinispanMemcachedServer-SettingswithArgumentsParameter]]
+
+
+==== Settings with Arguments Parameter
+
+ Since the arguments that can be send to the Memcached server are not documented, Infinispan Memcached server does not support passing any arguments to stats command. If any parameters are passed, the Infinispan Memcached server will respond with a CLIENT_ERROR . 
+
+[[sid-68355035_UsingInfinispanMemcachedServer-DeleteHoldTimeParameter]]
+
+
+==== Delete Hold Time Parameter
+
+Memcached does no longer honor the optional hold time parameter to delete command and so the Infinispan based memcached server does not implement such feature either.
+
+[[sid-68355035_UsingInfinispanMemcachedServer-VerbosityCommand]]
+
+
+==== Verbosity Command
+
+Verbosity command is not supported since Infinispan logging cannot be simplified to defining the logging level alone.
+

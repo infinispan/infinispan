@@ -1,0 +1,12 @@
+[[sid-68355197]]
+
+==  READ COMMITTED
+
+ _$$READ_COMMITTED$$_ is one of two isolation levels the Infinispan's locking infrastructure provides (the other is <<sid-68355198>> ). Isolation levels link:$$http://en.wikipedia.org/wiki/Isolation_level#READ_COMMITTED$$[have their origins] in relational databases. 
+
+ In Infinispan, READ_COMMITTED works slightly differently to databases. READ_COMMITTED says that "data can be read as long as there is no write", however in Infinispan, reads can happen anytime thanks to <<sid-68355174>> . MVCC allows writes to happen on copies of data, rather than on the data itself. Thus, even in the presence of a write, reads can still occur, and all read operations in Infinispan are non-blocking (resulting in increased performance for the end user). On the other hand, write operations are exclusive in Infinispan, (and so work the same way as READ_COMMITTED does in a database). 
+
+ With READ_COMMITTED, multiple reads of the same key within a transaction can return different results, and this phenomenon is known as link:$$http://en.wikipedia.org/wiki/Isolation_level#Non-repeatable_reads$$[non-repeatable reads] . This issue is avoided with REPETEABLE_READ isolation level. 
+
+By default, Infinispan uses READ_COMMITTED as isolation level.
+

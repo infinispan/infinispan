@@ -1,0 +1,22 @@
+[[sid-68355192]]
+
+==  Representational State Transfer (REST)
+
+REST is a software architectural style that promotes accessing resources via a uniform generic interface. HTTP is an implementation of this architecture, and generally when REST is mentioned, it refers to REST over HTTP protocol. When HTTP is used, the uniform generic interface for accessing resources is formed of GET, PUT, POST, DELETE and HEAD operations.
+
+Infinispan's REST server offers a RESTful API based on these HTTP methods, and allow data to be stored, retrieved and deleted.
+
+[[sid-68355192_RepresentationalStateTransfer%28REST%29-Moreresources]]
+
+
+=== More resources
+
+
+*  <<sid-68355107,Starting an Infinispan REST server>> 
+
+
+*  <<sid-68355085,The RESTful API>> 
+
+
+*  <<sid-68355040,Differences between the REST server and other servers>> 
+

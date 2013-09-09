@@ -1,0 +1,14 @@
+[[sid-68355189]]
+
+==  Memcached
+
+Memcached is an in-memory caching system, often used to speed-up database-driven websites. Memcached also defines a text based, client/server, caching protocol, known as the Memcached protocol. Infinispan offers a server which speaks the Memcached protocol, allowing Memcached itself to be replaced by Infinispan. Thanks to Infinispan's clustering capabilities, it can offer data failover capabilities not present in original Memcached systems.
+
+[[sid-68355189_Memcached-Moreresource]]
+
+
+=== More resource
+
+
+*  <<sid-68355035>> 
+

@@ -1,0 +1,14 @@
+[[sid-68355181]]
+
+==  2-phase commit
+
+2-phase commit protocol (2PC) is a consensus protocol used for atomically commit or rollback distributed transactions.
+
+[[sid-68355181_2-phasecommit-Moreresources]]
+
+
+=== More resources
+
+
+*  link:$$http://en.wikipedia.org/wiki/Two-phase_commit_protocol$$[wikipedia article] 
+

@@ -1,0 +1,19 @@
+[[sid-68355028_UserGuide-Integrationwithotherframeworks]]
+
+==  Integration with other frameworks
+
+
+.  link:$$https://docs.jboss.org/author/pages/viewpage.action?pageId=3737110$$[Using Infinispan as JPA/Hibernate Second Level Cache Provider] 
+
+
+.  link:$$https://docs.jboss.org/author/pages/viewpage.action?pageId=3737126$$[Standalone JTA for JPA/Hibernate using Infinispan as 2LC] 
+
+
+.  link:$$https://docs.jboss.org/author/pages/viewpage.action?pageId=3737057$$[Infinispan as Hibernate 2nd-Level Cache in JBoss AS 5.x] 
+
+
+.  link:$$http://community.jboss.org/docs/16180$$[Using Infinispan in JBoss Application Server 6] 
+
+
+.  link:$$https://docs.jboss.org/author/pages/viewpage.action?pageId=3737118$$[Using Infinispan as Spring Cache provider] 
+

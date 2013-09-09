@@ -1,0 +1,275 @@
+[[sid-68355107]]
+
+==  Infinispan REST Server
+
+[[sid-68355107_InfinispanRESTServer-Introduction]]
+
+
+=== Introduction
+
+ This server provides easy to use link:$$http://en.wikipedia.org/wiki/Representational_State_Transfer$$[RESTful] HTTP access to the Infinispan data grid, build on RESTEasy.  This application is delivered (currently) as a war, which you can deploy to a servlet container (as many instances as you need). 
+
+[[sid-68355107_InfinispanRESTServer-Configuration]]
+
+
+=== Configuration
+
+Out of the box, Infinispan will create and use a new LOCAL mode cache. To set a custom configuration:
+
+
+.  Unzip the REST WAR file (or use an link:$$http://community.jboss.org/docs/DOC-9719$$[exploded] deployment) 
+
+
+.  Create an Infinispan link:$$https://docs.jboss.org/author/pages/viewpage.action?pageId=3737143$$[configuration XML file] and name this infinispan.xml 
+
+
+.  Place this file in infinispan-server-rest.war/WEB-INF/classes 
+
+Alternatively, you could:
+
+
+.  Unzip the REST WAR file (or use an link:$$http://community.jboss.org/docs/DOC-9719$$[exploded] deployment) 
+
+
+.  Create an Infinispan link:$$https://docs.jboss.org/author/pages/viewpage.action?pageId=3737143$$[configuration XML file] , call it whatever you want and place it wherever you want 
+
+
+.  Edit infinispan-server-rest.war/WEB-INF/web.xml and look for the infinispan.config init-param. Change the value of this init-param to the full path to your Infinispan configuration. 
+
+ 
+.TODO InformalFigure image title empty
+image::[]
+
+ 
+
+ Please note that the REST server only allows interaction with either the default cache (named ___defaultcache ) or one of the named caches in the configuration file. This is because the REST server starts the default and pre-defined caches on startup in order to provide consistent behaivor. 
+
+
+[WARNING]
+.Warning
+==== 
+Creation of new named caches on the fly is not supported.
+
+
+==== 
+
+
+As a result, if you don't use a custom configuration file, you'll only be able to interact with the default cache. To interact with more caches, use a configuration file with the desired named caches.
+
+[[sid-68355107_InfinispanRESTServer-AccessingDataviaURLs]]
+
+
+=== Accessing Data - via URLs
+
+ HTTP PUT and POST methods are used to place data in the cache, with URLs to address the cache name and key(s) - the data being the body of the request (the data can be anything you like). It is important that a Content-Type header is set. GET/HEAD are used to retrieve data link:$$https://docs.jboss.org/author/pages/viewpage.action?pageId=3737132$$[Please see here for the details] . Other headers are used to control the cache settings and behaviour (detailed in that link). 
+
+[[sid-68355107_InfinispanRESTServer-Clientsidecode]]
+
+
+=== Client side code
+
+Part of the point of a RESTful service is that you don't need to have tightly coupled client libraries/bindings. All you need is a HTTP client library. For Java, Apache HTTP Commons Client works just fine (and is used in the integration tests), or you can use java.net API.
+
+[[sid-68355107_InfinispanRESTServer-Rubyclientcode%3A]]
+
+
+==== Ruby client code:
+
+
+----
+# Shows how to interact with Infinispan REST api from ruby.
+# No special libraries, just standard net/http
+#
+# Author: Michael Neale
+#
+require 'net/http'
+
+http = Net::HTTP.new('localhost', 8080)
+
+#Create new entry
+http.post('/infinispan/rest/MyData/MyKey', 'DATA HERE', {"Content-Type" => "text/plain"})
+
+#get it back
+puts http.get('/infinispan/rest/MyData/MyKey').body
+
+#use PUT to overwrite
+http.put('/infinispan/rest/MyData/MyKey', 'MORE DATA', {"Content-Type" => "text/plain"})
+
+#and remove...
+http.delete('/infinispan/rest/MyData/MyKey')
+
+#Create binary data like this... just the same...
+http.put('/infinispan/rest/MyImages/Image.png', File.read('/Users/michaelneale/logo.png'), {"Content-Type" => "image/png"})
+
+
+#and if you want to do json...
+require 'rubygems'
+require 'json'
+
+#now for fun, lets do some JSON !
+data = {:name => "michael", :age => 42 }
+http.put('/infinispan/rest/Users/data/0', data.to_json, {"Content-Type" => "application/json"})
+
+----
+
+[[sid-68355107_InfinispanRESTServer-Pythonclientcode%3A]]
+
+
+==== Python client code:
+
+
+----
+
+# Sample python code using the standard http lib only
+#
+
+import httplib
+
+
+#putting data in
+conn = httplib.HTTPConnection("localhost:8080")
+data = "SOME DATA HERE \!" #could be string, or a file...
+conn.request("POST", "/infinispan/rest/Bucket/0", data, {"Content-Type": "text/plain"})
+response = conn.getresponse()
+print response.status
+
+#getting data out
+import httplib
+conn = httplib.HTTPConnection("localhost:8080")
+conn.request("GET", "/infinispan/rest/Bucket/0")
+response = conn.getresponse()
+print response.status
+print response.read()
+
+----
+
+[[sid-68355107_InfinispanRESTServer-Javaclientcode%3A]]
+
+
+==== Java client code:
+
+
+[listing]
+....
+
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.InputStreamReader;
+import java.io.OutputStreamWriter;
+import java.net.HttpURLConnection;
+import java.net.URL;
+
+/**
+ * Rest example accessing Infinispan Cache.
+ * @author Samuel Tauil (samuel@redhat.com)
+ *
+ */
+public class RestExample {
+
+   /**
+    * Method that puts a String value in cache.
+    * @param urlServerAddress
+    * @param value
+    * @throws IOException
+    */
+   public void putMethod(String urlServerAddress, String value) throws IOException {
+      System.out.println("----------------------------------------");
+      System.out.println("Executing PUT");
+      System.out.println("----------------------------------------");
+      URL address = new URL(urlServerAddress);
+      System.out.println("executing request " + urlServerAddress);
+      HttpURLConnection connection = (HttpURLConnection) address.openConnection();
+      System.out.println("Executing put method of value: " + value);
+      connection.setRequestMethod("PUT");
+      connection.setRequestProperty("Content-Type", "text/plain");
+      connection.setDoOutput(true);
+
+      OutputStreamWriter outputStreamWriter = new OutputStreamWriter(connection.getOutputStream());
+      outputStreamWriter.write(value);
+         
+      connection.connect();
+      outputStreamWriter.flush();
+       
+      System.out.println("----------------------------------------");
+      System.out.println(connection.getResponseCode() + " " + connection.getResponseMessage());
+      System.out.println("----------------------------------------");
+         
+      connection.disconnect();
+   }
+
+   /**
+    * Method that gets an value by a key in url as param value.
+    * @param urlServerAddress
+    * @return String value
+    * @throws IOException
+    */
+   public String getMethod(String urlServerAddress) throws IOException {
+      String line = new String();
+      StringBuilder stringBuilder = new StringBuilder();
+
+      System.out.println("----------------------------------------");
+      System.out.println("Executing GET");
+      System.out.println("----------------------------------------");
+
+      URL address = new URL(urlServerAddress);
+      System.out.println("executing request " + urlServerAddress);
+
+      HttpURLConnection connection = (HttpURLConnection) address.openConnection();
+      connection.setRequestMethod("GET");
+      connection.setRequestProperty("Content-Type", "text/plain");
+      connection.setDoOutput(true);
+
+      BufferedReader&nbsp; bufferedReader = new BufferedReader(new InputStreamReader(connection.getInputStream()));
+
+      connection.connect();
+
+      while ((line = bufferedReader.readLine()) \!= null) {
+         stringBuilder.append(line + '\n');
+      }
+
+      System.out.println("Executing get method of value: " + stringBuilder.toString());
+
+      System.out.println("----------------------------------------");
+      System.out.println(connection.getResponseCode() + " " + connection.getResponseMessage());
+      System.out.println("----------------------------------------");
+
+      connection.disconnect();
+
+      return stringBuilder.toString();
+   }
+
+   /**
+    * Main method example.
+    * @param args
+    * @throws IOException
+    */
+   public static void main(String\[\] args) throws IOException {
+      //Attention to the cache name "cacheX" it was configured in xml file with tag <namedCache name="cacheX">
+      RestExample restExample = new RestExample();
+      restExample.putMethod("http://localhost:8080/infinispan/rest/cacheX/1", "Infinispan REST Test");
+      restExample.getMethod("http://localhost:8080/infinispan/rest/cacheX/1");         
+   }
+}
+
+....
+
+[[sid-68355107_InfinispanRESTServer-Future%3A]]
+
+
+=== Future:
+
+
+* Sample persistence options to make this a long term data grid
+
+
+* Query and indexing (of known MIME types, and JSON, XML etc)
+
+
+* Returning both lists of buckets + entries as &lt;link&gt; relations (where it makes sense)
+
+
+* Monitoring of stats via Web interface
+
+
+* (optional: WADL?)
+

@@ -1,0 +1,6 @@
+[[sid-68355183]]
+
+==  JTA synchronization
+
+ A link:$$http://download.oracle.com/javaee/5/api/javax/transaction/Synchronization.html$$[Synchronization] is a listener which receives events relating to the transaction lifecycle. A Synchronization implementor receives two events, _before completion_ and _after completion_ . Synchronizations are useful when certain activities are required in the case of a transaction completion; a common usage for a Synchronization is to flush an application's caches. 
+
