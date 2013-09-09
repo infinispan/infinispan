@@ -1,0 +1,2 @@
+include::chapter-1-Monitoring.adoc[]
+include::chapter-2-Geographic_failover.adoc[]
