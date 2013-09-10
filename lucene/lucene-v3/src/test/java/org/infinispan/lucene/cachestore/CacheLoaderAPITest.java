@@ -272,7 +272,7 @@ public class CacheLoaderAPITest extends SingleCacheManagerTest {
       Set keyList = PersistenceUtil.toKeySet(cacheLoader, null);
       checkIfExists(keyList, exclusionSet, true, false);
 
-      PersistenceUtil.toKeySet(cacheLoader, null);
+      keyList = PersistenceUtil.toKeySet(cacheLoader, new CollectionKeyFilter(exclusionSet));
       checkIfExists(keyList, exclusionSet, false, true);
    }
 
