@@ -1,12 +1,26 @@
-= Infinispan Documentation Home
-This landing page serves as a launchpad for Infinispan {infinispan-version} documentation.
+= Infinispan Documentation
+Manik Surtani, Mircea Markus, Galder Zamarreño, Pete Muir, and others from the Infinispan community
+:toc:
+:icons: font
 
-In here we have several sections, including:
+Infinispan's documentation is organized as several individual 'books'.  Each
+one can be read independently, however they do reference one another, 
+particularly the link:user_guide.html[User Guide].
 
+We hope you find this useful.  Any and all feedback should be directed to the 
+Infinispan link:http://www.infinispan.org/forums.html[user forums].
+
+TIP: This is written specifically for Infinispan {infinispan-version}.  While
+the majority of it will apply to other versions as well, it is best that you 
+reference the version of documentation that corresponds to your version of 
+Infinispan.
+
+.Books
  * A link:getting_started.html[Getting Started Guide]
  * A link:user_guide.html[User Guide]
  * An link:upgrading.htmml[Upgrading Guide]
  * A pretty useful link:glossary.html[Glossary]
  * A set of link:faqs.html[Frequently Asked Questions]
- * Guides to link:extending.html[extending] and link:contributing.html[contributing] to Infinispan
+ * A guide to link:extending.html[extending] Infinispan
+ * A guide to link:contributing.html[contributing] to Infinispan
  * ... and finally some link:videos.html[videos].

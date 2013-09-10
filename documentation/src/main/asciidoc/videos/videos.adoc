@@ -1,4 +1,9 @@
-This section contains various videos and screencasts on Infinispan.
+= Videos
+Manik Surtani, Mircea Markus, Galder Zamarreño, Pete Muir, and others from the Infinispan community
+:icons: font
+
+TIP: This section contains various recorded demos, presentations and
+screencasts on Infnispan which we hope you'd find useful.
 
 ===  Monitoring
 * link:$$http://www.youtube.com/watch?v=f2os8tvYFBU$$[Monitoring Infinispan with Jopr console (screencast)] 
