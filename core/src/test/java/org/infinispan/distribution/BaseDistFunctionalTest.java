@@ -28,12 +28,12 @@ import java.util.List;
 import java.util.concurrent.TimeUnit;
 
 
-public abstract class BaseDistFunctionalTest extends MultipleCacheManagersTest {
+public abstract class BaseDistFunctionalTest<K, V> extends MultipleCacheManagersTest {
    protected String cacheName;
    protected int INIT_CLUSTER_SIZE = 4;
-   protected Cache<Object, String> c1 = null, c2 = null, c3 = null, c4 = null;
+   protected Cache<K, V> c1 = null, c2 = null, c3 = null, c4 = null;
    protected ConfigurationBuilder configuration;
-   protected List<Cache<Object, String>> caches;
+   protected List<Cache<K, V>> caches;
    protected List<Address> cacheAddresses;
    protected boolean sync = true;
    protected boolean tx = false;
@@ -98,9 +98,11 @@ public abstract class BaseDistFunctionalTest extends MultipleCacheManagersTest {
    // ----------------- HELPERS ----------------
 
    protected void initAndTest() {
-      for (Cache<Object, String> c : caches) assert c.isEmpty();
+      for (Cache<K, V> c : caches) assert c.isEmpty();
 
-      c1.put("k1", "value");
+      // TODO: A bit hacky, this should be moved somewhere else really...
+      Cache<Object, Object> firstCache = (Cache<Object, Object>) caches.get(0);
+      firstCache.put("k1", "value");
       asyncWait("k1", PutKeyValueCommand.class);
       assertOnAllCachesAndOwnership("k1", "value");
    }
@@ -109,15 +111,15 @@ public abstract class BaseDistFunctionalTest extends MultipleCacheManagersTest {
       return DistributionTestHelper.addressOf(cache);
    }
 
-   protected Cache<Object, String> getFirstNonOwner(String key) {
+   protected Cache<K, V> getFirstNonOwner(Object key) {
       return getNonOwners(key)[0];
    }
    
-   protected Cache<Object, String> getFirstOwner(String key) {
+   protected Cache<K, V> getFirstOwner(Object key) {
       return getOwners(key)[0];
    }
 
-   protected Cache<Object, String> getSecondNonOwner(String key) {
+   protected Cache<K, V> getSecondNonOwner(String key) {
       return getNonOwners(key)[1];
    }
 
@@ -132,7 +134,7 @@ public abstract class BaseDistFunctionalTest extends MultipleCacheManagersTest {
    }
 
    protected void assertOnAllCaches(Object key, String value) {
-      for (Cache<Object, String> c : caches) {
+      for (Cache<K, V> c : caches) {
          Object realVal = c.get(key);
          if (value == null) {
             assert realVal == null : "Expecting [" + key + "] to equal [" + value + "] on cache ["
@@ -147,7 +149,7 @@ public abstract class BaseDistFunctionalTest extends MultipleCacheManagersTest {
    }
 
    protected void assertOwnershipAndNonOwnership(Object key, boolean allowL1) {
-      for (Cache<Object, String> c : caches) {
+      for (Cache<K, V> c : caches) {
          DataContainer dc = c.getAdvancedCache().getDataContainer();
          InternalCacheEntry ice = dc.get(key);
          if (isOwner(c, key)) {
@@ -191,22 +193,22 @@ public abstract class BaseDistFunctionalTest extends MultipleCacheManagersTest {
       return DistributionTestHelper.isFirstOwner(c, key);
    }
 
-   protected Cache<Object, String>[] getOwners(Object key) {
+   protected Cache<K, V>[] getOwners(Object key) {
       return getOwners(key, 2);
    }
 
-   protected Cache<Object, String>[] getOwners(Object key, int expectedNumberOwners) {
-      Cache<Object, String>[] owners = new Cache[expectedNumberOwners];
+   protected Cache<K, V>[] getOwners(Object key, int expectedNumberOwners) {
+      Cache<K, V>[] owners = new Cache[expectedNumberOwners];
       int i = 0;
-      for (Cache<Object, String> c : caches) {
+      for (Cache<K, V> c : caches) {
          if (isOwner(c, key)) owners[i++] = c;
       }
       for (Cache<?, ?> c : owners) assert c != null : "Have not found enough owners for key [" + key + "]";
       return owners;
    }
 
-   protected Cache<Object, String>[] getNonOwnersExcludingSelf(Object key, Address self) {
-      Cache<Object, String>[] nonOwners = getNonOwners(key);
+   protected Cache<K, V>[] getNonOwnersExcludingSelf(Object key, Address self) {
+      Cache<K, V>[] nonOwners = getNonOwners(key);
       boolean selfInArray = false;
       for (Cache<?, ?> c : nonOwners) {
          if (addressOf(c).equals(self)) {
@@ -216,9 +218,9 @@ public abstract class BaseDistFunctionalTest extends MultipleCacheManagersTest {
       }
 
       if (selfInArray) {
-         Cache<Object, String>[] nonOwnersExclSelf = new Cache[nonOwners.length - 1];
+         Cache<K, V>[] nonOwnersExclSelf = new Cache[nonOwners.length - 1];
          int i = 0;
-         for (Cache<Object, String> c : nonOwners) {
+         for (Cache<K, V> c : nonOwners) {
             if (!addressOf(c).equals(self)) nonOwnersExclSelf[i++] = c;
          }
          return nonOwnersExclSelf;
@@ -227,14 +229,14 @@ public abstract class BaseDistFunctionalTest extends MultipleCacheManagersTest {
       }
    }
 
-   protected Cache<Object, String>[] getNonOwners(Object key) {
+   protected Cache<K, V>[] getNonOwners(Object key) {
       return getNonOwners(key, 2);
    }
 
-   protected Cache<Object, String>[] getNonOwners(Object key, int expectedNumberNonOwners) {
-      Cache<Object, String>[] nonOwners = new Cache[expectedNumberNonOwners];
+   protected Cache<K, V>[] getNonOwners(Object key, int expectedNumberNonOwners) {
+      Cache<K, V>[] nonOwners = new Cache[expectedNumberNonOwners];
       int i = 0;
-      for (Cache<Object, String> c : caches) {
+      for (Cache<K, V> c : caches) {
          if (!isOwner(c, key)) nonOwners[i++] = c;
       }
       return nonOwners;

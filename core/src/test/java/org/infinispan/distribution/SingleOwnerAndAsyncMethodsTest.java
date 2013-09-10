@@ -21,7 +21,7 @@ import static org.testng.Assert.assertEquals;
  * @since 4.2
  */
 @Test(groups = "functional", testName = "distribution.SingleOwnerAndAsyncMethodsTest")
-public class SingleOwnerAndAsyncMethodsTest extends BaseDistFunctionalTest {
+public class SingleOwnerAndAsyncMethodsTest extends BaseDistFunctionalTest<Object, String> {
 
    public SingleOwnerAndAsyncMethodsTest() {
       INIT_CLUSTER_SIZE = 2;

@@ -13,7 +13,7 @@ import static org.testng.AssertJUnit.assertFalse;
  * @since 5.0
  */
 @Test(groups = "functional", testName = "distribution.DisabledL1WithRetValsTest")
-public class DisabledL1WithRetValsTest extends BaseDistFunctionalTest {
+public class DisabledL1WithRetValsTest extends BaseDistFunctionalTest<Object, String> {
 
    public DisabledL1WithRetValsTest() {
       l1CacheEnabled = false;

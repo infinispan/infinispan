@@ -22,7 +22,7 @@ import org.testng.annotations.Test;
  * @since 4.2.1
  */
 @Test(groups = "functional", testName = FlagsReplicationTest.TEST_NAME)
-public class FlagsReplicationTest extends BaseDistFunctionalTest {
+public class FlagsReplicationTest extends BaseDistFunctionalTest<Object, String> {
    
    static final String TEST_NAME = "replication.FlagsReplicationTest";
    static final String DATA_PROVIDER = TEST_NAME + ".dataprovider";

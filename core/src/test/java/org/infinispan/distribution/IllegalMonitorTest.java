@@ -16,7 +16,7 @@ import java.util.concurrent.atomic.AtomicInteger;
  * @since 5.0
  */
 @Test(groups = "functional", testName = IllegalMonitorTest.TEST_NAME)
-public class IllegalMonitorTest extends BaseDistFunctionalTest {
+public class IllegalMonitorTest extends BaseDistFunctionalTest<Object, String> {
 
    protected static final String TEST_NAME = "distribution.IllegalMonitorTest";
    private static final AtomicInteger sequencer = new AtomicInteger();

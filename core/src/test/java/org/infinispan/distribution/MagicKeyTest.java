@@ -3,7 +3,7 @@ package org.infinispan.distribution;
 import org.testng.annotations.Test;
 
 @Test(groups = "unit", testName = "distribution.MagicKeyTest")
-public class MagicKeyTest extends BaseDistFunctionalTest {
+public class MagicKeyTest extends BaseDistFunctionalTest<Object, String> {
    public void testMagicKeys() {
       MagicKey k1 = new MagicKey(c1, c2);
       assert getDistributionManager(c1).getLocality(k1).isLocal();

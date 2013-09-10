@@ -28,7 +28,7 @@ import static org.infinispan.test.TestingUtil.v;
  * @since 5.0
  */
 @Test(groups = "functional", testName = "distribution.SingleOwnerAndAsyncMethodsWithTxTest")
-public class SingleOwnerAndAsyncMethodsWithTxTest extends BaseDistFunctionalTest {
+public class SingleOwnerAndAsyncMethodsWithTxTest extends BaseDistFunctionalTest<Object, String> {
 
    public SingleOwnerAndAsyncMethodsWithTxTest() {
       INIT_CLUSTER_SIZE = 2;

@@ -9,7 +9,7 @@ import org.infinispan.distribution.BaseDistFunctionalTest;
 import org.testng.annotations.Test;
 
 @Test(groups = "functional", testName = "tasks.GlobalKeySetTaskTest")
-public class GlobalKeySetTaskTest extends BaseDistFunctionalTest {
+public class GlobalKeySetTaskTest extends BaseDistFunctionalTest<Object, String> {
 
    public GlobalKeySetTaskTest() {
       sync = true;

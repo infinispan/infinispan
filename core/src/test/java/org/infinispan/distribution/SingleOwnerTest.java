@@ -25,7 +25,7 @@ import static org.testng.AssertJUnit.*;
  * @since 4.0
  */
 @Test(groups = "functional", testName = "distribution.SingleOwnerTest")
-public class SingleOwnerTest extends BaseDistFunctionalTest {
+public class SingleOwnerTest extends BaseDistFunctionalTest<Object, String> {
 
    @Override
    protected void createCacheManagers() throws Throwable {

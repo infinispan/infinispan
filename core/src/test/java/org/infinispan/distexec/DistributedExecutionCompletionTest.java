@@ -23,7 +23,7 @@ import java.util.concurrent.TimeUnit;
  * @author Anna Manukyan
  */
 @Test(groups = "functional", testName = "distexec.DistributedExecutionCompletionTest")
-public class DistributedExecutionCompletionTest extends BaseDistFunctionalTest {
+public class DistributedExecutionCompletionTest extends BaseDistFunctionalTest<Object, String> {
 
    private static Log log = LogFactory.getLog(DistributedExecutionCompletionTest.class);
 
