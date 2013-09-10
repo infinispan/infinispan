@@ -12,7 +12,7 @@ import java.util.Collection;
 import static org.testng.AssertJUnit.assertNull;
 
 @Test(groups = "functional", testName = "distribution.MulticastInvalidationFuncTest")
-public class MulticastInvalidationFuncTest extends BaseDistFunctionalTest {
+public class MulticastInvalidationFuncTest extends BaseDistFunctionalTest<Object, String> {
 	
 	public static final String KEY1 = "k1";
 

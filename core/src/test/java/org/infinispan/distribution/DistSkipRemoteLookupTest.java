@@ -8,7 +8,7 @@ import org.infinispan.context.Flag;
 import org.testng.annotations.Test;
 
 @Test(groups = "functional", testName = "distribution.DistSkipRemoteLookupTest")
-public class DistSkipRemoteLookupTest extends BaseDistFunctionalTest {
+public class DistSkipRemoteLookupTest extends BaseDistFunctionalTest<Object, String> {
 
    public DistSkipRemoteLookupTest() {
       cleanup = CleanupPhase.AFTER_METHOD;

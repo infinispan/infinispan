@@ -13,7 +13,7 @@ import static junit.framework.Assert.assertEquals;
 import static org.testng.AssertJUnit.assertNull;
 
 @Test(groups = "functional", testName = "distribution.UnicastInvalidationFuncTest")
-public class UnicastInvalidationFuncTest extends BaseDistFunctionalTest {
+public class UnicastInvalidationFuncTest extends BaseDistFunctionalTest<Object, String> {
 	
 	public static final String KEY1 = "k1";
 

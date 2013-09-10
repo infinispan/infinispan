@@ -12,7 +12,7 @@ import java.util.Arrays;
 import java.util.List;
 
 @Test(groups = "functional", testName = "distribution.rehash.RehashCompletedOnJoinTest")
-public class RehashCompletedOnJoinTest extends BaseDistFunctionalTest {
+public class RehashCompletedOnJoinTest extends BaseDistFunctionalTest<Object, String> {
 
    public RehashCompletedOnJoinTest() {
       INIT_CLUSTER_SIZE = 2;

@@ -27,7 +27,7 @@ import static org.testng.AssertJUnit.assertEquals;
  * @since 4.0
  */
 @Test(groups = "functional", testName = "distribution.DistSyncStoreSharedTest")
-public class DistSyncStoreSharedTest extends BaseDistStoreTest {
+public class DistSyncStoreSharedTest extends BaseDistStoreTest<Object, String> {
 
    public DistSyncStoreSharedTest() {
       sync = true;

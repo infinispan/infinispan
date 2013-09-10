@@ -10,7 +10,7 @@ import static org.infinispan.context.Flag.SKIP_REMOTE_LOOKUP;
  * @since 5.1
  */
 @Test (groups = "functional", testName = "distribution.DistSkipRemoteLookupBatchingTest")
-public class DistSkipRemoteLookupBatchingTest extends BaseDistFunctionalTest {
+public class DistSkipRemoteLookupBatchingTest extends BaseDistFunctionalTest<Object, String> {
 
    public DistSkipRemoteLookupBatchingTest() {
       cleanup = AbstractCacheTest.CleanupPhase.AFTER_METHOD;

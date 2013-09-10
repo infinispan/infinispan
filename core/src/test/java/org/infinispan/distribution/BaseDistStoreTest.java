@@ -9,7 +9,7 @@ import org.infinispan.persistence.dummy.DummyInMemoryStoreConfigurationBuilder;
  * @author Galder Zamarreño
  * @since 4.0
  */
-public abstract class BaseDistStoreTest extends BaseDistFunctionalTest {
+public abstract class BaseDistStoreTest<K, V> extends BaseDistFunctionalTest<K, V> {
    protected boolean shared;
    protected boolean preload;
 

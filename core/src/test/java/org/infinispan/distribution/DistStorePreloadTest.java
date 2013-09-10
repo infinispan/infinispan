@@ -19,7 +19,7 @@ import static org.testng.AssertJUnit.assertEquals;
  * @since 5.1
  */
 @Test(groups = "functional", testName = "distribution.DistStorePreloadTest")
-public class DistStorePreloadTest extends BaseDistStoreTest {
+public class DistStorePreloadTest extends BaseDistStoreTest<Object, String> {
 
    public static final int NUM_KEYS = 10;
 

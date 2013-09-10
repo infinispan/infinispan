@@ -11,7 +11,7 @@ import static org.infinispan.test.TestingUtil.k;
 import static org.infinispan.test.TestingUtil.v;
 
 @Test(groups = "functional", testName = "distribution.DisabledL1Test")
-public class DisabledL1Test extends BaseDistFunctionalTest {
+public class DisabledL1Test extends BaseDistFunctionalTest<Object, String> {
 
    public DisabledL1Test () {
       sync = true;

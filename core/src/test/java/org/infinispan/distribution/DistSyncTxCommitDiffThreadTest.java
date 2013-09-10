@@ -22,7 +22,7 @@ import static org.testng.AssertJUnit.assertEquals;
  * @since 4.2
  */
 @Test(groups = "functional", testName = "distribution.DistSyncTxCommitDiffThreadTest")
-public class DistSyncTxCommitDiffThreadTest extends BaseDistFunctionalTest {
+public class DistSyncTxCommitDiffThreadTest extends BaseDistFunctionalTest<Object, String> {
 
    public DistSyncTxCommitDiffThreadTest() {
       cacheName = this.getClass().getSimpleName();

@@ -24,7 +24,7 @@ import static org.testng.AssertJUnit.assertNotNull;
  * @author wburns
  * @since 6.0
  */
-public abstract class BaseDistSyncL1Test extends BaseDistFunctionalTest {
+public abstract class BaseDistSyncL1Test extends BaseDistFunctionalTest<Object, String> {
 
    protected static final String key = "key-to-the-cache";
    protected static final String firstValue = "first-put";

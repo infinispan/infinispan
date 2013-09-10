@@ -29,8 +29,8 @@ import static org.testng.AssertJUnit.*;
  */
 @Test(groups = "functional", testName = "distribution.DistSyncStoreNotSharedTest")
 @CleanupAfterMethod
-public class DistSyncStoreNotSharedTest extends BaseDistStoreTest {
-   
+public class DistSyncStoreNotSharedTest extends BaseDistStoreTest<Object, String> {
+
    private static final String k1 = "1", v1 = "one", k2 = "2", v2 = "two", k3 = "3", v3 = "three", k4 = "4", v4 = "four";
    private static final String[] keys = new String[]{k1, k2, k3, k4};
 
