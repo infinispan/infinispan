@@ -71,7 +71,7 @@ public class ReplEmbeddedRestHotRodTest {
       assertEquals(null, cacheFactory2.getEmbeddedCache().put(key, "v1"));
 
       // 2. Get with Hot Rod
-      assertEquals("v1", cacheFactory2.getHotRodCache().get(key));
+      assertEquals("v1", cacheFactory1.getHotRodCache().get(key));
 
       // 3. Get with REST
       HttpMethod get = new GetMethod(cacheFactory2.getRestUrl() + "/" + key);
