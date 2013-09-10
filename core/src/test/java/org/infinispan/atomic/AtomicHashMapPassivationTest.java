@@ -32,7 +32,6 @@ public class AtomicHashMapPassivationTest extends SingleCacheManagerTest {
       ConfigurationBuilder c = getDefaultStandaloneCacheConfig(true);
       c
          .invocationBatching().enable()
-         .storeAsBinary().enable()
          .persistence()
             .passivation(true)
             .addStore(DummyInMemoryStoreConfigurationBuilder.class);

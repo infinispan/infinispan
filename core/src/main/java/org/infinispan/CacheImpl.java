@@ -1265,18 +1265,6 @@ public class CacheImpl<K, V> implements AdvancedCache<K, V> {
    }
 
    @Override
-   public void compact() {
-      for (InternalCacheEntry e : dataContainer) {
-         if (e.getKey() instanceof MarshalledValue) {
-            ((MarshalledValue) e.getKey()).compact(true, true);
-         }
-         if (e.getValue() instanceof MarshalledValue) {
-            ((MarshalledValue) e.getValue()).compact(true, true);
-         }
-      }
-   }
-
-   @Override
    public RpcManager getRpcManager() {
       return rpcManager;
    }

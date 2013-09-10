@@ -183,13 +183,13 @@ public class VersionAwareMarshallerTest extends AbstractInfinispanTest {
    public void testMarshalledValueMarshalling() throws Exception {
       Person p = new Person();
       p.setName("Bob Dylan");
-      MarshalledValue mv = new MarshalledValue(p, true, marshaller);
+      MarshalledValue mv = new MarshalledValue(p, marshaller);
       marshallAndAssertEquality(mv);
    }
 
    public void testMarshalledValueGetMarshalling() throws Exception {
       Pojo ext = new Pojo();
-      MarshalledValue mv = new MarshalledValue(ext, true, marshaller);
+      MarshalledValue mv = new MarshalledValue(ext, marshaller);
       byte[] bytes = marshaller.objectToByteBuffer(mv);
       MarshalledValue rmv = (MarshalledValue) marshaller.objectFromByteBuffer(bytes);
       assert rmv.equals(mv) : "Writen[" + mv + "] and read[" + rmv + "] objects should be the same";

@@ -5,7 +5,6 @@ import org.infinispan.commands.read.EntrySetCommand;
 import org.infinispan.commands.read.GetKeyValueCommand;
 import org.infinispan.commands.read.KeySetCommand;
 import org.infinispan.commands.read.ValuesCommand;
-import org.infinispan.commands.write.InvalidateCommand;
 import org.infinispan.commands.write.PutKeyValueCommand;
 import org.infinispan.commands.write.PutMapCommand;
 import org.infinispan.commands.write.RemoveCommand;
@@ -38,16 +37,16 @@ import static org.infinispan.marshall.core.MarshalledValue.isTypeExcluded;
 
 /**
  * Interceptor that handles the wrapping and unwrapping of cached data using {@link
- * org.infinispan.marshall.MarshalledValue}s. Known "excluded" types are not wrapped/unwrapped, which at this time
+ * org.infinispan.marshall.core.MarshalledValue}s. Known "excluded" types are not wrapped/unwrapped, which at this time
  * include {@link String}, Java primitives and their Object wrappers, as well as arrays of excluded types.
  * <p/>
- * The {@link org.infinispan.marshall.MarshalledValue} wrapper handles lazy deserialization from byte array
+ * The {@link org.infinispan.marshall.core.MarshalledValue} wrapper handles lazy deserialization from byte array
  * representations.
  *
  * @author Manik Surtani (<a href="mailto:manik@jboss.org">manik@jboss.org</a>)
  * @author Mircea.Markus@jboss.com
  * @author Galder Zamarreño
- * @see org.infinispan.marshall.MarshalledValue
+ * @see org.infinispan.marshall.core.MarshalledValue
  * @since 4.0
  */
 public class MarshalledValueInterceptor extends CommandInterceptor {
@@ -102,13 +101,13 @@ public class MarshalledValueInterceptor extends CommandInterceptor {
       Map<Object, Object> map = wrapMap(command.getMap(), marshalledValues, ctx);
       command.setMap(map);
       Object retVal = invokeNextInterceptor(ctx, command);
-      return compactAndProcessRetVal(marshalledValues, retVal, ctx);
+      return processRetVal(retVal, ctx);
    }
 
    @Override
    public Object visitPutKeyValueCommand(InvocationContext ctx, PutKeyValueCommand command) throws Throwable {
-      MarshalledValue key = null;
-      MarshalledValue value = null;
+      MarshalledValue key;
+      MarshalledValue value;
       if (wrapKeys) {
          if (!isTypeExcluded(command.getKey().getClass())) {
             key = createMarshalledValue(command.getKey(), ctx);
@@ -123,27 +122,13 @@ public class MarshalledValueInterceptor extends CommandInterceptor {
          }
       }
 
-      // If origin is remote, set equality preference for raw so that deserialization is avoided
-      // Don't do this for local invocations so that unnecessary serialization is avoided.
-      boolean isRawComparisonRequired = !ctx.isOriginLocal() && command.getKey() instanceof MarshalledValue;
-      if (isRawComparisonRequired)
-         ((MarshalledValue) command.getKey()).setEqualityPreferenceForInstance(false);
-
-      try {
-         Object retVal = invokeNextInterceptor(ctx, command);
-         compact(key);
-         compact(value);
-         return processRetVal(retVal, ctx);
-      } finally {
-         // Regardless of what happens with the remote key update, revert to equality for instance
-         if (isRawComparisonRequired)
-            ((MarshalledValue) command.getKey()).setEqualityPreferenceForInstance(true);
-      }
+      Object retVal = invokeNextInterceptor(ctx, command);
+      return processRetVal(retVal, ctx);
    }
 
    @Override
    public Object visitRemoveCommand(InvocationContext ctx, RemoveCommand command) throws Throwable {
-      MarshalledValue value = null;
+      MarshalledValue value;
       if (wrapKeys) {
          if (!isTypeExcluded(command.getKey().getClass())) {
             value = createMarshalledValue(command.getKey(), ctx);
@@ -151,13 +136,12 @@ public class MarshalledValueInterceptor extends CommandInterceptor {
          }
       }
       Object retVal = invokeNextInterceptor(ctx, command);
-      compact(value);
       return processRetVal(retVal, ctx);
    }
 
    @Override
    public Object visitEvictCommand(InvocationContext ctx, org.infinispan.commands.write.EvictCommand command) throws Throwable {
-      MarshalledValue value = null;
+      MarshalledValue value;
       if (wrapKeys) {
          if (!isTypeExcluded(command.getKey().getClass())) {
             value = createMarshalledValue(command.getKey(), ctx);
@@ -165,22 +149,19 @@ public class MarshalledValueInterceptor extends CommandInterceptor {
          }
       }
       Object retVal = invokeNextInterceptor(ctx, command);
-      compact(value);
       return processRetVal(retVal, ctx);
    }
 
    @Override
    public Object visitGetKeyValueCommand(InvocationContext ctx, GetKeyValueCommand command) throws Throwable {
-      MarshalledValue mv = null;
+      MarshalledValue mv;
       if (wrapKeys) {
          if (!isTypeExcluded(command.getKey().getClass())) {
             mv = createMarshalledValue(command.getKey(), ctx);
             command.setKey(mv);
-            compact(mv);
          }
       }
       Object retVal = invokeNextInterceptor(ctx, command);
-      compact(mv);
       return processRetVal(retVal, ctx);
    }
 
@@ -242,7 +223,7 @@ public class MarshalledValueInterceptor extends CommandInterceptor {
 
    @Override
    public Object visitReplaceCommand(InvocationContext ctx, ReplaceCommand command) throws Throwable {
-      MarshalledValue key = null, newValue = null, oldValue = null;
+      MarshalledValue key, newValue, oldValue;
       if (wrapKeys && !isTypeExcluded(command.getKey().getClass())) {
          key = createMarshalledValue(command.getKey(), ctx);
          command.setKey(key);
@@ -256,46 +237,7 @@ public class MarshalledValueInterceptor extends CommandInterceptor {
          command.setOldValue(oldValue);
       }
       Object retVal = invokeNextInterceptor(ctx, command);
-      compact(key);
-      compact(newValue);
-      compact(oldValue);
       return processRetVal(retVal, ctx);
-   }
-
-   @Override
-   public Object visitInvalidateCommand(InvocationContext ctx, InvalidateCommand command) throws Throwable {
-      // If origin is remote, set equality preference for raw so that deserialization is avoided
-      // Don't do this for local invocations so that unnecessary serialization is avoided.
-      boolean isRemote = !ctx.isOriginLocal();
-      if (isRemote)
-         forceComparison(false, command);
-
-      try {
-         return invokeNextInterceptor(ctx, command);
-      } finally {
-         if (isRemote)
-            forceComparison(true, command);
-      }
-   }
-
-   private void forceComparison(boolean isCompareInstance, InvalidateCommand command) {
-      if (wrapKeys) {
-         for (Object key : command.getKeys()) {
-            if (key instanceof MarshalledValue)
-               ((MarshalledValue) key).setEqualityPreferenceForInstance(isCompareInstance);
-         }
-      }
-   }
-
-   private Object compactAndProcessRetVal(Set<MarshalledValue> marshalledValues, Object retVal, InvocationContext ctx) {
-      if (trace) log.trace("Compacting MarshalledValues created");
-      for (MarshalledValue mv : marshalledValues) compact(mv);
-      return processRetVal(retVal, ctx);
-   }
-
-   protected void compact(MarshalledValue mv) {
-      if (mv == null) return;
-      mv.compact(false, false);
    }
 
    protected Object processRetVal(Object retVal, InvocationContext ctx) {
@@ -329,6 +271,6 @@ public class MarshalledValueInterceptor extends CommandInterceptor {
    }
 
    protected MarshalledValue createMarshalledValue(Object toWrap, InvocationContext ctx) {
-      return new MarshalledValue(toWrap, ctx.isOriginLocal(), marshaller);
+      return new MarshalledValue(toWrap, marshaller);
    }
 }

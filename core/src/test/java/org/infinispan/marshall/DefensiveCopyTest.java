@@ -21,7 +21,7 @@ public class DefensiveCopyTest extends SingleCacheManagerTest {
    @Override
    protected EmbeddedCacheManager createCacheManager() throws Exception {
       ConfigurationBuilder builder = new ConfigurationBuilder();
-      builder.storeAsBinary().enable().defensive(true);
+      builder.storeAsBinary().enable();
       return TestCacheManagerFactory.createCacheManager(builder);
    }
 

@@ -50,7 +50,7 @@ import static org.testng.AssertJUnit.fail;
  * @author Mircea.Markus@jboss.com
  * @since 4.0
  */
-@Test(groups = "functional", testName = "marshall.MarshalledValueTest")
+@Test(groups = "functional", testName = "marshall.core.MarshalledValueTest")
 public class MarshalledValueTest extends MultipleCacheManagersTest {
    private static final Log log = LogFactory.getLog(MarshalledValueTest.class);
    private MarshalledValueListenerInterceptor mvli;
@@ -104,17 +104,8 @@ public class MarshalledValueTest extends MultipleCacheManagersTest {
       Pojo.deserializationCount = 0;
    }
 
-   private void assertOnlyOneRepresentationExists(MarshalledValue mv) {
-      assertTrue("Only instance or raw representations should exist in a MarshalledValue; never both",
-            (mv.instance != null && mv.raw == null) || (mv.instance == null && mv.raw != null));
-   }
-
    private void assertSerialized(MarshalledValue mv) {
-      assertTrue("Should be serialized", mv.raw != null);
-   }
-
-   private void assertDeserialized(MarshalledValue mv) {
-      assertTrue("Should be deserialized", mv.instance != null);
+      assertTrue("Should be serialized", mv.getRaw() != null);
    }
 
    private void assertSerializationCounts(int serializationCount, int deserializationCount) {
@@ -155,7 +146,7 @@ public class MarshalledValueTest extends MultipleCacheManagersTest {
       log.trace(TestingUtil.extractComponent(cache1, InterceptorChain.class).toString());
       cache1.put("key", value);
       assertTrue(cache1.containsKey("key"));
-      assertSerializationCounts(1, 0);
+      assertSerializationCounts(1, 1);
 
       DataContainer dc1 = TestingUtil.extractComponent(cache1, DataContainer.class);
 
@@ -163,13 +154,8 @@ public class MarshalledValueTest extends MultipleCacheManagersTest {
       Object o = ice.getValue();
       assertTrue(o instanceof MarshalledValue);
       MarshalledValue mv = (MarshalledValue) o;
-      assertDeserialized(mv);
       assertEquals(value, cache1.get("key"));
-      assertDeserialized(mv);
-      assertSerializationCounts(1, 0);
-      cache1.compact();
-      assertSerializationCounts(2, 0);
-      assertOnlyOneRepresentationExists(mv);
+      assertSerializationCounts(1, 2);
       assertSerialized(mv);
 
       // now on cache 2
@@ -181,11 +167,7 @@ public class MarshalledValueTest extends MultipleCacheManagersTest {
       assertSerialized(mv); // this proves that unmarshalling on the recipient cache instance is lazy
 
       assertEquals(value, cache2.get("key"));
-      assertDeserialized(mv);
-      assertSerializationCounts(2, 1);
-      cache2.compact();
-      assertSerializationCounts(2, 1);
-      assertOnlyOneRepresentationExists(mv);
+      assertSerializationCounts(1, 3);
       assertSerialized(mv);
    }
 
@@ -202,15 +184,11 @@ public class MarshalledValueTest extends MultipleCacheManagersTest {
       Object o = dc1.keySet().iterator().next();
       assertTrue(o instanceof MarshalledValue);
       MarshalledValue mv = (MarshalledValue) o;
-      assertDeserialized(mv);
+      assertSerialized(mv);
 
       assertEquals("value", cache1.get(key));
-      assertDeserialized(mv);
-      assertSerializationCounts(1, 0);
-
-      cache1.compact();
+      // Key is non-primitive type, so eargerly serialized
       assertSerializationCounts(2, 0);
-      assertOnlyOneRepresentationExists(mv);
       assertSerialized(mv);
 
 
@@ -221,13 +199,8 @@ public class MarshalledValueTest extends MultipleCacheManagersTest {
       mv = (MarshalledValue) o;
       assertSerialized(mv);
       assertEquals("value", cache2.get(key));
-      assertSerializationCounts(2, 1);
-      assertDeserialized(mv);
-      cache2.compact();
-
-      assertOnlyOneRepresentationExists(mv);
+      assertSerializationCounts(3, 0);
       assertSerialized(mv);
-      assertSerializationCounts(2, 1);
    }
 
    public void testKeySetValuesEntrySetCollectionReferences() {
@@ -321,17 +294,13 @@ public class MarshalledValueTest extends MultipleCacheManagersTest {
 
    public void testEqualsAndHashCode() throws Exception {
       Pojo pojo = new Pojo();
-      MarshalledValue mv = new MarshalledValue(pojo, true, extractCacheMarshaller(cache(0)));
-      assertDeserialized(mv);
+      MarshalledValue mv = new MarshalledValue(pojo, extractCacheMarshaller(cache(0)));
       int oldHashCode = mv.hashCode();
-
-      mv.serialize();
       assertSerialized(mv);
       assertTrue(oldHashCode == mv.hashCode());
 
-      MarshalledValue mv2 = new MarshalledValue(pojo, true, extractCacheMarshaller(cache(0)));
+      MarshalledValue mv2 = new MarshalledValue(pojo, extractCacheMarshaller(cache(0)));
       assertSerialized(mv);
-      assertDeserialized(mv2);
 
       assertTrue(mv2.hashCode() == oldHashCode);
       assertEquals(mv, mv2);
@@ -370,11 +339,11 @@ public class MarshalledValueTest extends MultipleCacheManagersTest {
 
       assertMarshalledValueInterceptorPresent(cache1);
       assertMarshalledValueInterceptorPresent(cache2);
-      assertSerializationCounts(2, 0);
+      assertSerializationCounts(1, 0);
 
       cache2.get("key");
 
-      assertSerializationCounts(2, 1);
+      assertSerializationCounts(1, 1);
    }
 
    public void testCallbackValues() throws Exception {
@@ -386,7 +355,7 @@ public class MarshalledValueTest extends MultipleCacheManagersTest {
          Pojo pojo = new Pojo();
          cache1.put("key", pojo);
          assertTrue("recieved " + l.newValue.getClass().getName(), l.newValue instanceof Pojo);
-         assertSerializationCounts(1, 0);
+         assertSerializationCounts(1, 1);
       } finally {
          cache1.removeListener(l);
       }
@@ -431,14 +400,9 @@ public class MarshalledValueTest extends MultipleCacheManagersTest {
       log.trace("Second put");
       Pojo key2 = new Pojo();
       cache2.put(key2, "2");
-      // 1 deserialization on cache2 for key1, because equalityPreferenceForInstance == true
-      // when EntryFactoryImpl.wrapEntryForPut reads the old value
       // 1 serialization on cache2 for key2, when replicating the command to cache1 (the primary)
-      // 1 serialization on cache1 for key1, because equalityPreferenceForInstance == false
-      // when EntryFactoryImpl.wrapEntryForPut reads the old value
-      // no de/serialization on cache2 (when the command is forwarded back to the origin),
-      // because equalityPreferenceForInstance == false and key1/key2 are both serialized
-      assertSerializationCounts(3, 1);
+      // 1 serialization on cache1 for key1
+      assertSerializationCounts(2, 0);
    }
 
    public void testReturnValueDeserialization() {
@@ -449,28 +413,6 @@ public class MarshalledValueTest extends MultipleCacheManagersTest {
       cache1.put("1", v1);
       Pojo previous = (Pojo) cache1.put("1", new Pojo(2));
       assertEquals(v1, previous);
-   }
-
-   public void testEquality() {
-      byte[] prevBytes = TestingUtil.generateRandomString(1310)
-            .getBytes(Charset.forName("UTF-8"));
-
-      String value = "galder";
-      MarshalledValue mv = new MarshalledValue(
-            value, true, extractCacheMarshaller(cache(0, "replSync")));
-      MarshalledValue mv2 = new MarshalledValue(
-            value, false, extractCacheMarshaller(cache(0, "replSync")));
-
-      // Simulate that the marshalled value had a bigger value before
-      mv2.instance = prevBytes;
-      mv2.serialize();
-      // Now back to the original instance and force it to serialize again
-      mv2.instance = value;
-      mv2.raw = null;
-      mv2.serialize();
-      mv2.instance = null;
-
-      assertEquals(mv, mv2);
    }
 
    @Listener
@@ -489,12 +431,7 @@ public class MarshalledValueTest extends MultipleCacheManagersTest {
       @Override
       public Object visitPutKeyValueCommand(InvocationContext ctx, PutKeyValueCommand command) throws Throwable {
          invocationCount++;
-         if (command.getKey() instanceof MarshalledValue)
-            assertOnlyOneRepresentationExists((MarshalledValue) command.getKey());
-         if (command.getValue() instanceof MarshalledValue)
-            assertOnlyOneRepresentationExists((MarshalledValue) command.getValue());
          Object retval = invokeNextInterceptor(ctx, command);
-         if (retval instanceof MarshalledValue) assertOnlyOneRepresentationExists((MarshalledValue) retval);
          return retval;
       }
 
