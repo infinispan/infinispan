@@ -20,6 +20,7 @@
         <infinispan.version>5.3.x</infinispan.version>
         <!-- Skip artifact deployment -->
         <maven.deploy.skip>true</maven.deploy.skip>
+		<skipTests>true</skipTests>
     </properties>
 
     <build>

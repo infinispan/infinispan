@@ -1,4 +1,2 @@
-:toc:
-
 include::chapter-1-Custom_Commands.adoc[]
 include::chapter-2-Writing_custom_commands_in_Infinispan.adoc[]

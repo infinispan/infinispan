@@ -1,4 +1,0 @@
-[[sid-68355188]]
-
-==  Relational Database Management System (RDBMS)
-

@@ -1,6 +1,0 @@
-[[sid-68355175]]
-
-==  Optimistic locking
-
-TODO
-

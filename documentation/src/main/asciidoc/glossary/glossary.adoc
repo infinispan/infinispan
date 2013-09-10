@@ -1,36 +1,338 @@
+= Glossary
+Infinispan Development Team <infinispan-dev@lists.jboss.org>
 :toc:
+:icons: font
+:toc-placement: preamble
 
-include::chapter-1-2_phase_commit.adoc[]
-include::chapter-2-Atomicity_Consistency_Isolation_Durability_ACID_.adoc[]
-include::chapter-20-NoSQL.adoc[]
-include::chapter-21-Optimistic_locking.adoc[]
-include::chapter-22-Pessimistic_locking.adoc[]
-include::chapter-23-Read_Ahead.adoc[]
-include::chapter-24-READ_COMMITTED.adoc[]
-include::chapter-25-Relational_Database_Management_System_RDBMS_.adoc[]
-include::chapter-26-REPEATABLE_READ.adoc[]
-include::chapter-27-Representational_State_Transfer_REST_.adoc[]
-include::chapter-28-Split_brain.adoc[]
-include::chapter-29-Structured_Query_Language_SQL_.adoc[]
-include::chapter-3-Basically_Available_Soft_state_Eventually_consistent_BASE_.adoc[]
-include::chapter-30-Write_behind.adoc[]
-include::chapter-31-Write_skew.adoc[]
-include::chapter-32-Write_through.adoc[]
-include::chapter-33-XA_resource.adoc[]
-include::chapter-4-Cache_Aside.adoc[]
-include::chapter-5-Consistency_Availability_and_Partition_tolerance_CAP_Theorem.adoc[]
-include::chapter-6-Consistent_Hash.adoc[]
-include::chapter-7-Data_grid.adoc[]
-include::chapter-8-Deadlock.adoc[]
-include::chapter-9-Distributed_Hash_Table_DHT_.adoc[]
-include::chapter-10-Externalizer.adoc[]
-include::chapter-11-Hot_Rod.adoc[]
-include::chapter-12-In_memory_data_grid.adoc[]
-include::chapter-13-Isolation_level.adoc[]
-include::chapter-14-JTA_synchronization.adoc[]
-include::chapter-15-Livelock.adoc[]
-include::chapter-16-Memcached.adoc[]
-include::chapter-17-Multiversion_Concurrency_Control_MVCC_.adoc[]
-include::chapter-18-Near_Cache.adoc[]
-include::chapter-19-Network_partition.adoc[]
+TIP: This glossary aims to clarify some of the terms frequently encountered in
+Infinispan's link:user_guide.html[User Guide],
+link:getting_started.html[Getting Started Guide], link:faqs.html[FAQs],
+etc.
 
+=== 2-phase commit
+
+2-phase commit protocol (2PC) is a consensus protocol used for atomically
+commit or rollback distributed transactions.
+
+.More resources
+*  link:$$http://en.wikipedia.org/wiki/Two-phase_commit_protocol$$[Wikipedia article] 
+
+=== Atomicity, Consistency, Isolation, Durability (ACID)
+
+TODO
+
+=== Basically Available, Soft-state, Eventually-consistent (BASE)
+
+BASE, also known as link:$$http://en.wikipedia.org/wiki/Eventual_consistency$$[Eventual Consistency],
+is seen as the polar opposite of _ACID_, properties seen as desirable in
+traditional database systems. 
+
+BASE essentially embraces the fact that true consistency cannot be achieved
+in the real world, and as such cannot be modelled in highly scalable
+distributed systems.  BASE has roots in Eric Brewer's _CAP Theorem_, and
+eventual consistency is the underpinning of any distributed system that aims to
+ provide high availability and partition tolerance. 
+
+Infinispan has traditionally followed ACID principles as far as possible,
+however an eventually consistent mode embracing BASE is on the roadmap.
+
+.More resources
+*  A link:$$http://queue.acm.org/detail.cfm?id=1394128$$[good article] 
+on link:$$http://queue.acm.org/index.cfm$$[ACM] compares BASE versus ACID. 
+*  An link:$$http://www.infoq.com/presentations/Riak-Core$$[excellent talk] on
+eventual consistency and BASE in Riak is also available on InfoQ. 
+
+=== Cache Aside
+
+TODO
+
+=== Consistency, Availability and Partition-tolerance (CAP) Theorem
+
+Made famous by link:$$http://en.wikipedia.org/wiki/Eric_Brewer_(computer_scientist)$$[Eric Brewer]
+at UC Berkeley, this is a theorem of distributed computing that can be
+simplified to state that one can only practically build a distributed system
+exhibiting any two of the three desirable characteristics of distributed
+systems, which are: Consistency, Availability and Partition-tolerance
+(abbreviated to CAP).  The theorem effectively stresses on the unreliability of
+networks and the effect this unreliability has on predictable behavior and high
+availability of dependent systems. 
+
+Infinispan has traditionally been biased towards Consistency and Availability,
+sacrificing Partition-tolerance.  However, Infinispan does have a
+Partition-tolerant, eventually-consistent mode in the pipeline.  This optional
+mode of operation will allow users to tune the degree of consistency they
+expect from their data, sacrificing partition-tolerance for this added
+consistency.
+
+.More resources
+* The theorem is well-discussed online, with many good resources to follow up
+on, including 
+link:$$http://www.julianbrowne.com/article/viewer/brewers-cap-theorem$$[this document]. 
+* A more recent article by Eric Brewer himself appears on InfoQ 
+link:$$http://www.infoq.com/articles/cap-twelve-years-later-how-the-rules-have-changed$$[a modern analysis of the theorem] . 
+
+=== Consistent Hash
+
+TODO
+
+=== Data grid
+
+A data grid is a cluster of (typically commodity) servers, normally residing on
+a single local-area network, connected to each other using IP based networking.
+Data grids behave as a single resource, exposing the aggregate storage capacity
+of all servers in the cluster. Data stored in the grid is usually partitioned,
+using a variety of techniques, to balance load across all servers in the cluster
+as evenly as possible.  Data is often redundantly stored in the grid to provide
+resilience to individual servers in the grid failing i.e. more than one copy is
+stored in the grid, transparently to the application.
+
+Data grids typically behave in a peer-to-peer fashion.  Infinispan, for example,
+makes use of link:http://www.jgroups.org[JGroups] as a group communication
+library and is hence biased towards a peer-to-peer design.  Such design allows
+Infinispan to exhibit self-healing characteristics, providing service even when
+individual servers fail and new nodes are dynamically added to the grid.
+
+Infinispan also makes use of TCP and optionally UDP network protocols, and can be
+configured to make use of IP multicast for efficiency if supported by the network.
+
+=== Deadlock
+
+TODO
+
+=== Distributed Hash Table (DHT)
+
+TODO
+
+=== Externalizer
+
+An _Externalizer_ is a class that knows how to marshall a given object type to
+a byte array, and how to unmarshall the contents of a byte array into an 
+instance of the object type. Externalizers are effectively an Infinispan
+extension that allows users to specify how their types are serialized. The
+underlying Infinispan marshalling infrastructure builds on
+link:$$http://www.jboss.org/jbossmarshalling$$[JBoss Marshalling] , and offers
+efficient payloads and stream caching. This provides much better performance
+than standard Java serialization. 
+
+.More resources
+*  link:https://docs.jboss.org/author/display/ISPN/Plugging+Infinispan+With+User+Defined+Externalizers[Plug your own Externalizer implementation] into Infinispan 
+
+=== Hot Rod
+
+_Hot Rod_ is the name of Infinispan's custom TCP client/server protocol which
+was created in order to overcome the deficiencies of other client/server
+protocols such as Memcached. HotRod, as opposed to other protocols, has the
+ability of handling failover on an Infinispan server cluster that undergoes a
+topology change. To achieve this, the Hot Rod regularly informs the clients of
+the cluster topology. 
+
+Hot Rod enables clients to do smart routing of requests in partitioned, or
+distributed, Infinispan server clusters. This means that Hot Rod clients can
+determine the partition in which a key is located and communicate directly with
+the server that contains the key. This is made possible by Infinispan servers
+sending the cluster topology to clients, and the clients using the same
+consistent hash as the servers.
+
+.More resources
+*  Information about the link:$$https://docs.jboss.org/author/pages/viewpage.action?pageId=5931578$$[first version]
+of the protocol 
+*  link:$$https://docs.jboss.org/author/pages/viewpage.action?pageId=3737146$$[Starting a Hot Rod server] 
+*  link:$$https://docs.jboss.org/author/pages/viewpage.action?pageId=3737142$$[Hot Rod client libraries] 
+
+=== In-memory data grid
+
+An in-memory data grid (IMDG) is a special type of data grid. In an IMDG, each
+server uses its main system memory (RAM) as primary storage for data (as
+opposed to disk-based storage). This allows for much greater concurrency, as
+lock-free link:$$http://en.wikipedia.org/wiki/Software_transactional_memory$$[STM]
+techniques such as link:$$http://en.wikipedia.org/wiki/Compare-and-swap$$[compare-and-swap]
+can be used to allow hardware threads accessing concurrent datasets. As such,
+IMDGs are often considered far better optimized for a multi-core and multi-CPU
+world when compared to disk-based solutions. In addition to greater concurrency,
+IMDGs offer far lower latency access to data (even when compared to disk-based
+data grids using
+link:$$http://en.wikipedia.org/wiki/Solid-state_drive$$[solid state drives] ). 
+
+The tradeoff is capacity. Disk-based grids, due to the far greater capacity of
+hard disks, exhibit two (or even three) orders of magnitude greater capacity for
+the same hardware cost.
+
+=== Isolation level
+
+*TODO*
+
+=== JTA synchronization
+
+A link:$$http://download.oracle.com/javaee/5/api/javax/transaction/Synchronization.html$$[Synchronization]
+is a listener which receives events relating to the transaction lifecycle. A
++Synchronization+ implementor receives two events, _before completion_ and
+_after completion_ . Synchronizations are useful when certain activities are
+required in the case of a transaction completion; a common usage for a
+Synchronization is to flush an application's caches. 
+
+=== Livelock
+
+*TODO*
+
+=== Memcached
+
+Memcached is an in-memory caching system, often used to speed-up
+database-driven websites. Memcached also defines a text based,
+client/server, caching protocol, known as the Memcached protocol
+Infinispan offers a server which speaks the Memcached protocol, allowing
+Memcached itself to be replaced by Infinispan. Thanks to Infinispan's
+clustering capabilities, it can offer data failover capabilities not present
+in original Memcached systems.
+
+.More resources
+* link:https://docs.jboss.org/author/display/ISPN/Memcached+Server[Infinispan's Memcached Server]
+
+=== Multiversion Concurrency Control (MVCC)
+
+*TODO*
+
+=== Near Cache
+
+*TODO*
+
+=== Network partition
+
+Network partitions happens when multiple parts of a cluster become separated
+due to some type of network failure, whether permanent or temporary.  Often
+temporary failures heal spontaneously, within a few seconds or at most minutes,
+but the damage that can occur during a network partition can lead to
+inconsistent data.  Closely tied to
+link:$$http://en.wikipedia.org/wiki/CAP_theorem$$[Brewer's CAP theorem],
+distributed systems choose to deal with a network partition by either
+sacrificing availability (either by shutting down or going into read-only mode)
+or consistency by allowing concurrent and divergent updates to the same data. 
+
+Network partitions are also commonly known as a _Split Brain_, after the
+biological condition of the same name. 
+
+For more detailed discussion, see
+link:$$http://codahale.com/you-cant-sacrifice-partition-tolerance/$$[this blog post]. 
+
+=== NoSQL
+
+TODO
+
+=== Optimistic locking
+
+TODO
+
+=== Pessimistic locking
+
+TODO
+
+=== Read Ahead
+
+TODO
+
+=== READ COMMITTED
+
++READ_COMMITTED+ is one of two isolation levels the Infinispan's locking
+infrastructure provides (the other is +REPEATABLE_READ+). Isolation levels
+link:$$http://en.wikipedia.org/wiki/Isolation_level#READ_COMMITTED$$[have their origins]
+in relational databases. 
+
+In Infinispan, +READ_COMMITTED+ works slightly differently to databases.
++READ_COMMITTED+ says that "data can be read as long as there is no write",
+however in Infinispan, reads can happen anytime thanks to _MVCC_. MVCC allows
+writes to happen on copies of data, rather than on the data itself. Thus, even
+in the presence of a write, reads can still occur, and all read operations in
+Infinispan are non-blocking (resulting in increased performance for the end
+user). On the other hand, write operations are exclusive in Infinispan, (and so
+work the same way as +READ_COMMITTED+ does in a database). 
+
+With +READ_COMMITTED+, multiple reads of the same key within a transaction can
+return different results, and this phenomenon is known as
+link:$$http://en.wikipedia.org/wiki/Isolation_level#Non-repeatable_reads$$[non-repeatable reads].
+This issue is avoided with +REPETEABLE_READ+ isolation level. 
+
+By default, Infinispan uses +READ_COMMITTED+ as isolation level.
+
+=== Relational Database Management System (RDBMS)
+
+TODO
+
+=== REPEATABLE READ
+
++REPEATABLE_READ+ is one of two isolation levels the Infinispan's locking
+infrastructure provides (the other is +READ_COMMITTED+). Isolation levels 
+link:$$http://en.wikipedia.org/wiki/Isolation_level#REPEATABLE_READ$$[have their origins]
+in relational databases.
+
+In Infinispan, +REPEATABLE_READ+ works slightly differently to databases.
++REPEATABLE_READ+ says that "data can be read as long as there are no writes,
+and vice versa". This avoids the
+link:$$http://en.wikipedia.org/wiki/Isolation_level#Non-repeatable_reads$$[non-repeatable reads]
+phenomenon, because once data has been written, no other transaction can read
+it, so there's no chance of re-reading the data and finding different data. 
+
+However, Infinispan has an +MVCC+ concurrency model that allows it to have
+non-blocking reads. Infinispan provides +REPEATABLE_READ+ semantics by keeping
+the previous value whenever an entry is modified. This allows Infinispan to
+retrieve the previous value if a second read happens within the same transaction. 
+
+=== Representational State Transfer (ReST)
+
+ReST is a software architectural style that promotes accessing resources via a
+uniform generic interface. HTTP is an implementation of this architecture, and
+generally when ReST is mentioned, it refers to ReST over HTTP protocol. When
+HTTP is used, the uniform generic interface for accessing resources is formed
+of GET, PUT, POST, DELETE and HEAD operations.
+
+Infinispan's ReST server offers a ReSTful API based on these HTTP methods, and
+ allow data to be stored, retrieved and deleted.
+
+.More resources
+* link:https://docs.jboss.org/author/display/ISPN/Infinispan+REST+Server[Starting an Infinispan REST server]
+* link:https://docs.jboss.org/author/display/ISPN/Accessing+data+in+Infinispan+via+RESTful+interface[The RESTful API]
+* link:https://docs.jboss.org/author/display/ISPN/Infinispan+Server+Modules[Differences between the REST server and other servers]
+
+=== Split brain
+
+A colloquial term for a _network partition_.  See _network partition_ for more details. 
+
+=== Structured Query Language (SQL)
+
+TODO
+
+=== Write-behind
+
+_Write-behind_ is a cache store update mode. When this mode is used, updates to
+the cache are asynchronously written to the cache store. Normally this means
+that updates to the cache store are not performed in the client thread. 
+
+An alternative cache store update mode is _write-through_. 
+
+.More resources
+*  link:$$https://docs.jboss.org/author/pages/viewpage.action?pageId=3737144$$[Infinispan User guide] 
+
+=== Write skew
+
+TODO
+
+=== Write-through
+
+_Write-through_ is a cache store update mode. When this mode is used, clients
+update a cache entry, e.g. via a +Cache.put()+ invocation, the call will not
+return until Infinispan has updated the underlying cache store. Normally this
+means that updates to the cache store are done in the client thread. 
+
+An alternative mode in which cache stores can be updated is _write-behind_. 
+
+.More resources
+*  link:$$https://docs.jboss.org/author/pages/viewpage.action?pageId=3737144$$[Infinispan User guide] 
+
+=== XA resource
+
+An XA resource is a participant in an XA transaction (also known as a
+link:$$http://en.wikipedia.org/wiki/X/Open_XA$$[distributed transaction]). For
+example, given a distributed transaction that operates over a database and
+Infinispan, XA defines both Infinispan and the database as XA resources. 
+
+Java's API for XA transactions is
+link:$$http://en.wikipedia.org/wiki/Java_Transaction_API$$[JTA] and link:$$http://download.oracle.com/javase/1.4.2/docs/api/javax/transaction/xa/XAResource.html$$[XAResource]
+is the Java interface that describes an XA resource. 
