@@ -222,11 +222,6 @@ public abstract class AbstractDelegatingCache<K, V> implements Cache<K, V> {
    }
 
    @Override
-   public void compact() {
-      cache.compact();
-   }
-
-   @Override
    public ComponentStatus getStatus() {
       return cache.getStatus();
    }

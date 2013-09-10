@@ -93,7 +93,8 @@ public class InterceptorChainFactory extends AbstractNamedCacheComponentFactory 
       }
 
       // add marshallable check interceptor for situations where we want to figure out before marshalling
-      if (isUsingMarshalledValues(configuration) || configuration.clustering().async().asyncMarshalling()
+      // Store as binary marshalls keys/values eagerly now, so avoid extra serialization
+      if (configuration.clustering().async().asyncMarshalling()
             || configuration.clustering().async().useReplQueue() || hasAsyncStore())
          interceptorChain.appendInterceptor(createInterceptor(new IsMarshallableInterceptor(), IsMarshallableInterceptor.class), false);
 
@@ -129,13 +130,8 @@ public class InterceptorChainFactory extends AbstractNamedCacheComponentFactory 
 
       if (isUsingMarshalledValues(configuration)) {
          CommandInterceptor interceptor;
-         if (configuration.storeAsBinary().defensive()) {
-            interceptor = createInterceptor(
-                  new DefensiveMarshalledValueInterceptor(), DefensiveMarshalledValueInterceptor.class);
-         } else {
             interceptor = createInterceptor(
                   new MarshalledValueInterceptor(), MarshalledValueInterceptor.class);
-         }
 
          interceptorChain.appendInterceptor(interceptor, false);
       }

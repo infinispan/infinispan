@@ -52,13 +52,11 @@ public class InvalidatedMarshalledValueTest extends MultipleCacheManagersTest {
       InvalidatedPojo key = new InvalidatedPojo();
       cache2.put(key, "1");
       cache1.put(key, "2");
-      // Each cache manager attempts to serialize the pojo once to check is
-      // marshallable, so add a couple of more times on previous 3. Note that
-      // this is only done once for the type.
-      assertSerializationCounts(5, 0);
+      // Marshalling is done eagerly now, so no need for extra serialization checks
+      assertSerializationCounts(2, 0);
       cache1.put(key, "3");
       // +2 carried on here.
-      assertSerializationCounts(6, 0);
+      assertSerializationCounts(3, 0);
    }
 
    public static class InvalidatedPojo implements Externalizable {

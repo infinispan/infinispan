@@ -386,9 +386,9 @@ public abstract class BaseStoreTest extends AbstractInfinispanTest {
    }
 
    public void testLoadAndStoreMarshalledValues() throws CacheLoaderException {
-      MarshalledValue key = new MarshalledValue(new Pojo().role("key"), true, getMarshaller());
-      MarshalledValue key2 = new MarshalledValue(new Pojo().role("key2"), true, getMarshaller());
-      MarshalledValue value = new MarshalledValue(new Pojo().role("value"), true, getMarshaller());
+      MarshalledValue key = new MarshalledValue(new Pojo().role("key"), getMarshaller());
+      MarshalledValue key2 = new MarshalledValue(new Pojo().role("key2"), getMarshaller());
+      MarshalledValue value = new MarshalledValue(new Pojo().role("value"), getMarshaller());
 
       assertFalse(cl.contains(key));
       cl.write(new MarshalledEntryImpl(key, value, null, getMarshaller()));

@@ -109,9 +109,8 @@ public class LocalCacheTest extends SingleCacheManagerTest {
       List<Object> found = cacheQuery.list();
 
       assert found.size() == 2;
-      assert found.get(0) == person2;
-      assert found.get(1) == person3;
-
+      AssertJUnit.assertEquals(person2, found.get(0));
+      AssertJUnit.assertEquals(person3, found.get(1));
    }
 
    public void testModified() throws ParseException {

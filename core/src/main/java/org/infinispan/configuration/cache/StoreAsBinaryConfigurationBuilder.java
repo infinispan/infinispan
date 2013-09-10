@@ -18,7 +18,6 @@ public class StoreAsBinaryConfigurationBuilder extends AbstractConfigurationChil
    private boolean enabled = false;
    private boolean storeKeysAsBinary = true;
    private boolean storeValuesAsBinary = true;
-   private boolean defensive = false;
 
    StoreAsBinaryConfigurationBuilder(ConfigurationBuilder builder) {
       super(builder);
@@ -84,9 +83,10 @@ public class StoreAsBinaryConfigurationBuilder extends AbstractConfigurationChil
     * @param defensive boolean indicating whether defensive copies
     *                  should be enabled cache wide
     * @return a configuration builder for fluent programmatic configuration
+    * @deprecated Store as binary configuration is always defensive now.
     */
+   @Deprecated
    public StoreAsBinaryConfigurationBuilder defensive(boolean defensive) {
-      this.defensive = defensive;
       return this;
    }
 
@@ -98,7 +98,7 @@ public class StoreAsBinaryConfigurationBuilder extends AbstractConfigurationChil
    @Override
    public StoreAsBinaryConfiguration create() {
       return new StoreAsBinaryConfiguration(
-            enabled, storeKeysAsBinary, storeValuesAsBinary, defensive);
+            enabled, storeKeysAsBinary, storeValuesAsBinary);
    }
 
    @Override
@@ -106,7 +106,6 @@ public class StoreAsBinaryConfigurationBuilder extends AbstractConfigurationChil
       this.enabled = template.enabled();
       this.storeKeysAsBinary = template.storeKeysAsBinary();
       this.storeValuesAsBinary = template.storeValuesAsBinary();
-      this.defensive = template.defensive();
 
       return this;
    }

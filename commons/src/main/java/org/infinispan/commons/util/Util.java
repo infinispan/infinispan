@@ -653,4 +653,22 @@ public final class Util {
       int highestBit = Integer.highestOneBit(num);
       return num <= highestBit ? highestBit : highestBit << 1;
    }
+
+   /**
+    * A function that calculates hash code of a byte array based on its
+    * contents but using the given size parameter as deliminator for the
+    * content.
+    */
+   public static int hashCode(byte[] bytes, int size) {
+      int contentLimit = size;
+      if (size > bytes.length)
+         contentLimit = bytes.length;
+
+      int hashCode = 1;
+      for (int i = 0; i < contentLimit; i++)
+         hashCode = 31 * hashCode + bytes[i];
+
+      return hashCode;
+   }
+
 }

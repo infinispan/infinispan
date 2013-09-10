@@ -256,7 +256,7 @@ public class XmlFileParsingTest extends AbstractInfinispanTest {
          public void call() {
             Configuration cfg = cm.getDefaultCacheConfiguration();
             assertTrue(cfg.storeAsBinary().enabled());
-            assertTrue(!cfg.storeAsBinary().defensive());
+            assertTrue(cfg.storeAsBinary().defensive());
          }
       });
    }

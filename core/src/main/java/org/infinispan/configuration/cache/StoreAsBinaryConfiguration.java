@@ -16,13 +16,11 @@ public class StoreAsBinaryConfiguration {
    private boolean enabled;
    private final boolean storeKeysAsBinary;
    private final boolean storeValuesAsBinary;
-   private final boolean defensive;
-   
-   StoreAsBinaryConfiguration(boolean enabled, boolean storeKeysAsBinary, boolean storeValuesAsBinary, boolean defensive) {
+
+   StoreAsBinaryConfiguration(boolean enabled, boolean storeKeysAsBinary, boolean storeValuesAsBinary) {
       this.enabled = enabled;
       this.storeKeysAsBinary = storeKeysAsBinary;
       this.storeValuesAsBinary = storeValuesAsBinary;
-      this.defensive = defensive;
    }
 
    /**
@@ -53,9 +51,12 @@ public class StoreAsBinaryConfiguration {
 
    /**
     * Enables defensive copies.
+    *
+    * @deprecated Store as binary configuration is always defensive now.
     */
+   @Deprecated
    public boolean defensive() {
-      return defensive;
+      return true;
    }
 
    @Override
@@ -64,7 +65,6 @@ public class StoreAsBinaryConfiguration {
             "enabled=" + enabled +
             ", storeKeysAsBinary=" + storeKeysAsBinary +
             ", storeValuesAsBinary=" + storeValuesAsBinary +
-            ", defensive=" + defensive +
             '}';
    }
 
@@ -78,7 +78,6 @@ public class StoreAsBinaryConfiguration {
       if (enabled != that.enabled) return false;
       if (storeKeysAsBinary != that.storeKeysAsBinary) return false;
       if (storeValuesAsBinary != that.storeValuesAsBinary) return false;
-      if (defensive != that.defensive) return false;
 
       return true;
    }
@@ -88,7 +87,6 @@ public class StoreAsBinaryConfiguration {
       int result = (enabled ? 1 : 0);
       result = 31 * result + (storeKeysAsBinary ? 1 : 0);
       result = 31 * result + (storeValuesAsBinary ? 1 : 0);
-      result = 31 * result + (defensive ? 1 : 0);
       return result;
    }
 

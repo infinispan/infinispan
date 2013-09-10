@@ -136,15 +136,6 @@ public interface Cache<K, V> extends BasicCache<K, V>, BatchingCache, FilteringL
 
    AdvancedCache<K, V> getAdvancedCache();
 
-   /**
-    * Method that releases object references of cached objects held in the cache by serializing them to byte buffers.
-    * Cached objects are lazily de-serialized when accessed again, based on the calling thread's context class loader.
-    * <p/>
-    * This can be expensive, based on the effort required to serialize cached objects.
-    * <p/>
-    */
-   void compact();
-
    ComponentStatus getStatus();
 
    /**
