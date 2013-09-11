@@ -1,36 +1,21 @@
-[[sid-68355157_ContributingtoInfinispan-TheBasics]]
+=  The Basics
 
-==  The Basics
+TIP: In this chapter we quickly walk through the basics on contributing; future chapters go into more depth.
 
-
-[TIP]
-==== 
-In this chapter we quickly walk through the basics on contributing; future chapters go into more depth.
-
-
-==== 
-
-
-[[sid-68355157_ContributingtoInfinispan-Prerequisites]]
-
-
-=== requisites
-
-
-|===============
+== Prequisites
+|=============
 |Java 1.6|Infinispan is baselined on Java 6.0, and is built and tested using Sun Java 6.0.
 |Maven 3|The Infinispan build uses Maven, and we recommend using Maven 3.
 | Git _(optional)_ |The Infinispan sources are stored in Git. If you don't wish to install Git, you can download source bundles
-
-|===============
+|=============
 
 
 [[sid-68355157_ContributingtoInfinispan-IssueManagementJIRA]]
 
 
-=== Issue Management - JIRA
+== Issue Management - JIRA
 
- Infinispan uses JIRA for issue management, hosted on link:$$http://issues.jboss.org/browse/ISPN$$[issues.jboss.org] . You can log in using your normal jboss.org username and password. 
+Infinispan uses JIRA for issue management, hosted on link:$$http://issues.jboss.org/browse/ISPN$$[issues.jboss.org] . You can log in using your normal jboss.org username and password. 
 
 If you need to create a new issue then follow these steps.
 
@@ -58,12 +43,9 @@ If you need to create a new issue then follow these steps.
 
 .  In the _Environment_ text area, describe in as much detail as possible your environment (e.g. Java runtime and version, operating system, any network topology which is relevant). 
 
-
 .  In the _Description_ field enter a detailed description of your problem or request. 
 
-
 .  If the issue has been discussed on the forums or the mailing list, enter a reference in the _Forum Reference_ field 
-
 
 .  Finally, hit _Create_ 
 
@@ -71,7 +53,6 @@ If you need to create a new issue then follow these steps.
 
 
 ==== Versioning Guidelines
-
 
 [WARNING]
 ==== 
@@ -81,7 +62,7 @@ If you need to create a new issue then follow these steps.
 ==== 
 
 
- When setting the _Fix Version_ field for bugs and issues in JIRA, the following guidelines apply: 
+When setting the _Fix Version_ field for bugs and issues in JIRA, the following guidelines apply: 
 
 Version numbers are defined as MAJOR.MINOR.MICRO.MODIFIER.  For example, 4.1.0.BETA1 would be:
 

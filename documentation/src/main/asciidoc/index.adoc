@@ -1,6 +1,5 @@
 = Infinispan Documentation
 Manik Surtani, Mircea Markus, Galder Zamarreño, Pete Muir, and others from the Infinispan community
-:toc:
 :icons: font
 
 Infinispan's documentation is organized as several individual 'books'.  Each
@@ -16,11 +15,11 @@ reference the version of documentation that corresponds to your version of
 Infinispan.
 
 .Books
- * A link:getting_started.html[Getting Started Guide]
- * A link:user_guide.html[User Guide]
- * An link:upgrading.htmml[Upgrading Guide]
- * A pretty useful link:glossary.html[Glossary]
- * A set of link:faqs.html[Frequently Asked Questions]
- * A guide to link:extending.html[extending] Infinispan
- * A guide to link:contributing.html[contributing] to Infinispan
- * ... and finally some link:videos.html[videos].
+ * A link:getting_started/getting_started.html[Getting Started Guide]
+ * A link:user_guide/user_guide.html[User Guide]
+ * An link:upgrading/ugrading.html[Upgrading Guide]
+ * A pretty useful link:glossary/glossary.html[Glossary]
+ * A set of link:faqs/faqs.html[Frequently Asked Questions]
+ * A guide to link:extending/extending.html[extending] Infinispan
+ * A guide to link:contributing/contributing.html[contributing] to Infinispan
+ * ... and finally some link:videos/videos.html[videos].

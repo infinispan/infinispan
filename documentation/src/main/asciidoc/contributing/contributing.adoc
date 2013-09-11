@@ -1,4 +1,6 @@
+= Contributing to Infinispan
 :toc:
+
 include::chapter-1-The_Basics.adoc[]
 include::chapter-2-Source_Control.adoc[]
 include::chapter-3-Building_Infinispan.adoc[]

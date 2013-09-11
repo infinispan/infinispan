@@ -48,3 +48,12 @@ of rendering the documentation.
 Naturally, while editing the docs, you don't want to have to build the entire
 website to see your changes.  A good way to do this is to set up _live previews_
 as described [here](http://asciidoctor.org/docs/editing-asciidoc-with-live-preview/).
+
+#### Guardfile
+A `Guardfile` is included here in this directory which should be used instead of
+the `Guardfile` as specified in the link above.  This will ensure proper application
+of stylesheets, etc.
+
+NOTE: Aggregate files (i.e., using AsciiDoc's `include` directive) does _not_ work
+with live previews.  However, these will be rendered correctly when the site is
+properly built.
