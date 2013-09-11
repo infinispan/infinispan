@@ -1,4 +1,4 @@
-# Read me on the documentation process
+# Instructions on the documentation process
 
 This file is not fleshed out, it's just a collection of tips.
 A lot of inspiration has been gained from the 
