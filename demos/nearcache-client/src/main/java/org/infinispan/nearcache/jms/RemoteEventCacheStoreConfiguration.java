@@ -9,7 +9,7 @@ import org.infinispan.configuration.cache.SingletonStoreConfiguration;
 import java.util.Properties;
 
 @BuiltBy(RemoteEventCacheStoreConfigurationBuilder.class)
-@ConfigurationFor(RemoteEventCacheStore.class)
+@ConfigurationFor(RemoteEventStore.class)
 public class RemoteEventCacheStoreConfiguration extends AbstractStoreConfiguration {
 
    public RemoteEventCacheStoreConfiguration(boolean purgeOnStartup, boolean fetchPersistentState, boolean ignoreModifications,

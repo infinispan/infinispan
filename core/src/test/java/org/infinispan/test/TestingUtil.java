@@ -693,7 +693,7 @@ public class TestingUtil {
    }
 
    /**
-    * Kills a cache - stops it, clears any data in any cache loaders, and rolls back any associated txs
+    * Kills a cache - stops it, clears any data in any stores, and rolls back any associated txs
     */
    public static void killCaches(Cache... caches) {
       killCaches(Arrays.asList(caches));

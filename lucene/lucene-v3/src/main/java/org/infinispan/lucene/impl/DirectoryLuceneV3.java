@@ -13,7 +13,7 @@ import org.infinispan.lucene.readlocks.SegmentReadLocker;
  * An implementation of Lucene's {@link org.apache.lucene.store.Directory} which uses Infinispan to store Lucene indexes.
  * As the RAMDirectory the data is stored in memory, but provides some additional flexibility:
  * <p><b>Passivation, LRU or LIRS</b> Bigger indexes can be configured to passivate cleverly selected chunks of data to a cache store.
- * This can be a local filesystem, a network filesystem, a database or custom cloud stores like S3. See Infinispan's core documentation for a full list of available implementations, or {@link org.infinispan.loaders.spi.CacheStore} to implement more.</p>
+ * This can be a local filesystem, a network filesystem, a database or custom cloud stores like S3. See Infinispan's core documentation for a full list of available implementations, or {@link org.infinispan.persistence.spi.CacheWriter} to implement more.</p>
  * <p><b>Non-volatile memory</b> The contents of the index can be stored in it's entirety in such a store, so that on shutdown or crash of the system data is not lost.
  * A copy of the index will be copied to the store in sync or async depending on configuration; In case you enable
  * Infinispan's clustering even in case of async the segments are always duplicated synchronously to other nodes, so you can

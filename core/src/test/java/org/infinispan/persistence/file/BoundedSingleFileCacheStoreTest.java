@@ -30,7 +30,7 @@ import static org.testng.AssertJUnit.assertEquals;
  * @author Galder Zamarreño
  * @since 6.0
  */
-@Test(groups = "unit", testName = "loaders.file.BoundedSingleFileCacheStoreTest")
+@Test(groups = "unit", testName = "persistence.file.BoundedSingleFileCacheStoreTest")
 public class BoundedSingleFileCacheStoreTest extends AbstractInfinispanTest {
 
    SingleFileStore store;

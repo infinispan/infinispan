@@ -319,11 +319,11 @@ public class CacheWriterInterceptor extends JmxStatsCommandInterceptor {
    }
 
    @ManagedAttribute(
-         description = "number of cache loader stores",
-         displayName = "Number of cache stores",
+         description = "number of writes to the store",
+         displayName = "number of writes to the store",
          measurementType = MeasurementType.TRENDSUP
    )
-   public long getCacheLoaderStores() {
+   public long getWritesToTheStores() {
       return cacheStores.get();
    }
 

@@ -10,7 +10,7 @@ import org.infinispan.commons.configuration.ConfigurationUtils;
 import org.infinispan.commons.CacheConfigurationException;
 
 /**
- * Configuration for cache loaders and stores.
+ * Configuration for cache stores.
  *
  */
 public class PersistenceConfigurationBuilder extends AbstractConfigurationChildBuilder implements Builder<PersistenceConfiguration> {
@@ -110,10 +110,10 @@ public class PersistenceConfigurationBuilder extends AbstractConfigurationChildB
 
    @Override
    public PersistenceConfiguration create() {
-      List<StoreConfiguration> loaders = new LinkedList<StoreConfiguration>();
-      for (StoreConfigurationBuilder<?, ?> loader : stores)
-         loaders.add(loader.create());
-      return new PersistenceConfiguration(passivation, loaders);
+      List<StoreConfiguration> stores = new LinkedList<StoreConfiguration>();
+      for (StoreConfigurationBuilder<?, ?> loader : this.stores)
+         stores.add(loader.create());
+      return new PersistenceConfiguration(passivation, stores);
    }
 
    @SuppressWarnings("unchecked")
@@ -132,7 +132,7 @@ public class PersistenceConfigurationBuilder extends AbstractConfigurationChildB
    @Override
    public String toString() {
       return "PersistenceConfigurationBuilder{" +
-            "cacheLoaders=" + stores +
+            "stores=" + stores +
             ", passivation=" + passivation +
             '}';
    }

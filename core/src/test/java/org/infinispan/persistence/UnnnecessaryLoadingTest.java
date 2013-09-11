@@ -12,9 +12,6 @@ import org.infinispan.configuration.cache.PersistenceConfigurationBuilder;
 import org.infinispan.configuration.cache.SingletonStoreConfiguration;
 import org.infinispan.context.Flag;
 import org.infinispan.persistence.dummy.DummyInMemoryStoreConfigurationBuilder;
-import org.infinispan.persistence.CacheLoaderException;
-import org.infinispan.persistence.MarshalledEntryImpl;
-import org.infinispan.persistence.dummy.DummyInMemoryStoreConfigurationBuilder;
 import org.infinispan.persistence.manager.PersistenceManager;
 import org.infinispan.persistence.manager.PersistenceManagerImpl;
 import org.infinispan.persistence.spi.AdvancedLoadWriteStore;
@@ -42,7 +39,7 @@ import static org.testng.Assert.assertEquals;
  * @author Sanne Grinovero
  * @version 4.1
  */
-@Test(testName = "loaders.UnnnecessaryLoadingTest", groups = "functional", singleThreaded = true)
+@Test(testName = "persistence.UnnnecessaryLoadingTest", groups = "functional", singleThreaded = true)
 @CleanupAfterMethod
 public class UnnnecessaryLoadingTest extends SingleCacheManagerTest {
    AdvancedLoadWriteStore store;
@@ -69,7 +66,7 @@ public class UnnnecessaryLoadingTest extends SingleCacheManagerTest {
    }
 
    public void testRepeatedLoads() throws CacheLoaderException {
-      CountingCacheStore countingCS = getCountingCacheStore();
+      CountingStore countingCS = getCountingCacheStore();
       store.write(new MarshalledEntryImpl("k1", "v1", null, marshaller(cache)));
 
       assert countingCS.numLoads == 0;
@@ -89,7 +86,7 @@ public class UnnnecessaryLoadingTest extends SingleCacheManagerTest {
 
 
    public void testSkipCacheFlagUsage() throws CacheLoaderException {
-      CountingCacheStore countingCS = getCountingCacheStore();
+      CountingStore countingCS = getCountingCacheStore();
 
       store.write(new MarshalledEntryImpl("k1", "v1", null, marshaller(cache)));
 
@@ -138,14 +135,14 @@ public class UnnnecessaryLoadingTest extends SingleCacheManagerTest {
       cache.endBatch(true);
    }
 
-   private CountingCacheStore getCountingCacheStore() {
-      CountingCacheStore countingCS = (CountingCacheStore) TestingUtil.getFirstLoader(cache);
+   private CountingStore getCountingCacheStore() {
+      CountingStore countingCS = (CountingStore) TestingUtil.getFirstLoader(cache);
       reset(cache, countingCS);
       return countingCS;
    }
 
    public void testSkipCacheLoadFlagUsage() throws CacheLoaderException {
-      CountingCacheStore countingCS = getCountingCacheStore();
+      CountingStore countingCS = getCountingCacheStore();
 
       store.write(new MarshalledEntryImpl("home", "Vermezzo", null, new TestObjectStreamMarshaller()));
       store.write(new MarshalledEntryImpl("home-second", "Newcastle Upon Tyne", null, new TestObjectStreamMarshaller()));
@@ -163,13 +160,13 @@ public class UnnnecessaryLoadingTest extends SingleCacheManagerTest {
       assert countingCS.numLoads == 1;
    }
 
-   private void reset(Cache<?, ?> cache, CountingCacheStore countingCS) {
+   private void reset(Cache<?, ?> cache, CountingStore countingCS) {
       cache.clear();
       countingCS.numLoads = 0;
       countingCS.numContains = 0;
    }
 
-   public static class CountingCacheStore implements AdvancedLoadWriteStore {
+   public static class CountingStore implements AdvancedLoadWriteStore {
       public int numLoads, numContains;
 
       @Override
@@ -234,7 +231,7 @@ public class UnnnecessaryLoadingTest extends SingleCacheManagerTest {
    }
 
    @BuiltBy(CountingCacheStoreConfigurationBuilder.class)
-   @ConfigurationFor(CountingCacheStore.class)
+   @ConfigurationFor(CountingStore.class)
    public static class CountingCacheStoreConfiguration extends AbstractStoreConfiguration {
 
       public CountingCacheStoreConfiguration(boolean purgeOnStartup, boolean fetchPersistentState, boolean ignoreModifications, AsyncStoreConfiguration async, SingletonStoreConfiguration singletonStore, boolean preload, boolean shared, Properties properties) {

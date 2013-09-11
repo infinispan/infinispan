@@ -18,7 +18,7 @@ import javax.transaction.TransactionManager;
 
 import static org.infinispan.test.TestingUtil.getTransactionManager;
 
-@Test(groups = "functional", testName = "loaders.ConcurrentLoadAndEvictTxTest")
+@Test(groups = "functional", testName = "persistence.ConcurrentLoadAndEvictTxTest")
 public class ConcurrentLoadAndEvictTxTest extends SingleCacheManagerTest {
 
    TransactionManager tm;

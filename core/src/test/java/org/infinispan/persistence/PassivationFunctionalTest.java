@@ -30,7 +30,7 @@ import static java.util.concurrent.TimeUnit.MILLISECONDS;
  *
  * @author Manik Surtani
  */
-@Test(groups = "functional", testName = "loaders.PassivationFunctionalTest")
+@Test(groups = "functional", testName = "persistence.PassivationFunctionalTest")
 public class PassivationFunctionalTest extends AbstractInfinispanTest {
    Cache cache;
    AdvancedLoadWriteStore store;

@@ -54,8 +54,8 @@ public class TransactionalInvocationContextContainer extends AbstractInvocationC
    }
 
    private boolean hasClusterCacheLoader() {
-      boolean hasCacheLoaders = config.persistence().usingStores();
-      if (hasCacheLoaders) {
+      boolean hasStores = config.persistence().usingStores();
+      if (hasStores) {
          List<StoreConfiguration> loaderConfigs = config.persistence().stores();
          for (StoreConfiguration loaderConfig : loaderConfigs) {
             if (loaderConfig instanceof ClusterStoreConfiguration)

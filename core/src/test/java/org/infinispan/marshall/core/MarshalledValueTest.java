@@ -351,9 +351,9 @@ public class MarshalledValueTest extends MultipleCacheManagersTest {
    }
 
    /**
-    * Run this on a separate cache as it creates and stops cache loaders, which might affect other tests.
+    * Run this on a separate cache as it creates and stops stores, which might affect other tests.
     */
-   public void testCacheLoaders() {
+   public void testStores() {
       ConfigurationBuilder cacheCofig = getDefaultClusteredCacheConfig(CacheMode.REPL_SYNC, false);
       cacheCofig.dataContainer().storeAsBinary().enable();
       DummyInMemoryStoreConfigurationBuilder dimcs = new DummyInMemoryStoreConfigurationBuilder(cacheCofig.persistence());

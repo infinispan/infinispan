@@ -1,0 +1,65 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+   <modelVersion>4.0.0</modelVersion>
+   <parent>
+      <groupId>org.infinispan</groupId>
+      <artifactId>infinispan-cachestore-parent</artifactId>
+      <version>6.0.0-SNAPSHOT</version>
+      <relativePath>../pom.xml</relativePath>
+   </parent>
+
+   <artifactId>infinispan-cachestore-jdbc</artifactId>
+   <packaging>bundle</packaging>
+   <name>Infinispan JDBC CacheStore</name>
+   <description>Infinispan JDBC CacheStore module</description>
+
+   <dependencies>
+      <dependency>
+         <groupId>c3p0</groupId>
+         <artifactId>c3p0</artifactId>
+         <optional>true</optional>
+      </dependency>
+
+      <dependency>
+         <groupId>com.h2database</groupId>
+         <artifactId>h2</artifactId>
+         <scope>test</scope>
+      </dependency>
+
+      <!-- for testing against MySQL -->
+      <dependency>
+         <groupId>mysql</groupId>
+         <artifactId>mysql-connector-java</artifactId>
+         <scope>test</scope>
+      </dependency>
+   </dependencies>
+
+   <build>     
+      <plugins>
+         <plugin>
+            <groupId>org.apache.felix</groupId>
+            <artifactId>maven-bundle-plugin</artifactId>
+            <configuration>
+               <instructions>
+                  <Export-Package>
+                     ${project.groupId}.persistence.jdbc.*;version=${project.version};-split-package:=error
+                  </Export-Package>
+               </instructions>
+            </configuration>
+         </plugin>
+         <plugin>
+            <groupId>org.apache.maven.plugins</groupId>
+            <artifactId>maven-surefire-plugin</artifactId>
+            <!-- Run the test with a single thread, otherwise the suite might hang due to a
+            concurrency issue in c3p0: https://sourceforge.net/p/c3p0/bugs/119/. Once this is fixed
+             this can be switched back to parallel execution -->
+            <configuration>
+               <threadCount>1</threadCount>
+            </configuration>
+         </plugin>
+      </plugins>
+   </build>
+
+</project>

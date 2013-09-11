@@ -21,7 +21,7 @@ import static org.testng.AssertJUnit.*;
  * @author Tristan Tarrant
  * @since 5.2
  */
-@Test(groups="functional", testName="loaders.ClassLoaderManagerDisablingTest")
+@Test(groups="functional", testName = "persistence.ClassLoaderManagerDisablingTest")
 public class ClassLoaderManagerDisablingTest extends AbstractInfinispanTest {
 
    public void testStoreDisabling() {

@@ -8,7 +8,7 @@ import org.testng.annotations.Test;
 
 import java.lang.reflect.Method;
 
-@Test(groups = "unit", testName = "loaders.dummy.DummyInMemoryStoreFunctionalTest")
+@Test(groups = "unit", testName = "persistence.dummy.DummyInMemoryStoreFunctionalTest")
 public class DummyInMemoryStoreFunctionalTest extends BaseCacheStoreFunctionalTest {
 
    @AfterClass
@@ -17,12 +17,12 @@ public class DummyInMemoryStoreFunctionalTest extends BaseCacheStoreFunctionalTe
    }
 
    @Override
-   protected PersistenceConfigurationBuilder createCacheStoreConfig(PersistenceConfigurationBuilder loaders, boolean preload) {
-      loaders
+   protected PersistenceConfigurationBuilder createCacheStoreConfig(PersistenceConfigurationBuilder persistence, boolean preload) {
+      persistence
          .addStore(DummyInMemoryStoreConfigurationBuilder.class)
             .storeName(getClass().getName())
             .purgeOnStartup(false).preload(preload);
-      return loaders;
+      return persistence;
    }
 
    @Override

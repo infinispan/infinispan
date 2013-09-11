@@ -45,7 +45,7 @@ import static org.testng.AssertJUnit.assertEquals;
  *
  * @author Manik Surtani
  */
-@Test(groups = "functional", testName = "loaders.CacheLoaderFunctionalTest")
+@Test(groups = "functional", testName = "persistence.CacheLoaderFunctionalTest")
 public class CacheLoaderFunctionalTest extends AbstractInfinispanTest {
 
    private static final Log log = LogFactory.getLog(CacheLoaderFunctionalTest.class);

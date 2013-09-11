@@ -23,7 +23,7 @@ import java.util.concurrent.locks.ReentrantLock;
 import static org.testng.AssertJUnit.assertEquals;
 import static org.testng.AssertJUnit.assertFalse;
 
-@Test(groups = "unit", testName = "loaders.decorators.AsyncStoreEvictionTest")
+@Test(groups = "unit", testName = "persistence.decorators.AsyncStoreEvictionTest")
 public class AsyncStoreEvictionTest {
 
    // set to false to fix all the tests

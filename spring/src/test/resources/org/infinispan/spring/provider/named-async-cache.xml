@@ -289,7 +289,7 @@
    <!--
       A persistent cache that stores state on the file system using either write-through or write-behind.
 
-      If passivation is enabled, state is offloaded to the cache loaders _only_ when evicted from memory, giving you
+      If passivation is enabled, state is offloaded to the stores _only_ when evicted from memory, giving you
       the effect of paging to disk.  Similarly, when the state is accessed again, it is removed from the cache loader
       and loaded into memory.
 
@@ -298,7 +298,7 @@
 
       If "preload" is true, all keys are loaded from the cache loader into memory upon starting the cache.
 
-      Multiple cache loaders - chaining - is also supported.
+      Multiple stores - chaining - is also supported.
 
       Write-through versus write-behind is controlled via the <async /> element
 
@@ -309,13 +309,13 @@
    -->
    <!--
    <namedCache name="writeThroughToFile">
-      <loaders
+      <persistence
          passivation="false"
          shared="false"
          preload="false">
 
-         <loader
-            class="org.infinispan.loaders.file.FileCacheStore"
+         <store
+            class="org.infinispan.persistence.file.SingleFileStore"
             fetchPersistentState="false"
             purgeOnStartup="false">
 
@@ -323,8 +323,8 @@
                <property name="location" value="${java.io.tmpdir}"/>
             </properties>
 
-         </loader>
-      </loaders>
+         </stores>
+      </persistence>
    </namedCache>
    -->
 
@@ -346,13 +346,13 @@
          maxIdle="1000"
       />
 
-      <loaders passivation="true">
-         <loader class="org.infinispan.loaders.file.FileCacheStore">
+      <persistence passivation="true">
+         <store class="org.infinispan.persistence.file.SingleFileStore">
             <properties>
                <property name="location" value="${java.io.tmpdir}"/>
             </properties>
-         </loader>
-      </loaders>
+         </stores>
+      </persistence>
    </namedCache>
    -->
 
@@ -366,8 +366,8 @@
    -->
    <!--
    <namedCache name="writeBehindToCloudCache">
-      <loaders passivation="false" shared="false" preload="true">
-         <loader class="org.infinispan.loaders.cloud.CloudCacheStore"
+      <persistence passivation="false">
+         <store class="org.infinispan.persistence.file.SingleFileStore"
                  fetchPersistentState="false"
                  ignoreModifications="false"
                  purgeOnStartup="false">
@@ -385,8 +385,8 @@
                flushLockTimeout="15000"
                threadPoolSize="10"
             />
-         </loader>
-      </loaders>
+         </stores>
+      </persistence>
    </namedCache>
    -->
 
@@ -403,12 +403,12 @@
          <sync replTimeout="20000"/>
       </clustering>
 
-      <loaders preload="false">
-         <loader class="org.infinispan.loaders.cluster.ClusterLoaderr         <properties>
+      <persistence>
+         <store class="org.infinispan.persistence.cluster.ClusterLoader<properties>
                <property name="remoteCallTimeout" value="20000"/>
             </properties>
-         </loader>
-      </loaders>
+         </stores>
+      </persistence>
    </namedCache>
    -->
 
@@ -419,8 +419,8 @@
    -->
    <!--
    <namedCache name="writeBehindSingletonStoreCache">
-      <loaders shared="true" preload="false">
-         <loader class="org.infinispan.loaders.file.FileCacheStore">
+      <persistence shared="true" preload="false">
+         <store class="org.infinispan.persistence.file.SingleFileStore">
             <properties>
                <property name="location" value="${java.io.tmpdir}"/>
             </properties>
@@ -434,8 +434,8 @@
                flushLockTimeout="15000"
                threadPoolSize="10"
             />
-         </loader>
-      </loaders>
+         </store>
+      </persistence>
    </namedCache>
    -->
 

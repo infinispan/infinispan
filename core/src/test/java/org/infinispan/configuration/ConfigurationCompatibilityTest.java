@@ -6,7 +6,7 @@ import org.testng.annotations.Test;
 @Test(groups = "functional", testName= "configuration.ConfigurationCompatibilityTest")
 public class ConfigurationCompatibilityTest {
 
-   public void testDocumentationCacheLoadersConfiguration() {
+   public void testDocumentationPersistenceConfiguration() {
       ConfigurationBuilder builder = new ConfigurationBuilder();
       builder.persistence()
          .passivation(false)

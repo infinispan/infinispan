@@ -193,7 +193,7 @@ public class XMLConfigurationOverridingTest extends AbstractInfinispanTest imple
       });
    }
 
-   public void testOverrideLoaders() throws Exception {
+   public void testOverrideStores() throws Exception {
       final String tmpDir = TestingUtil.tmpDirectory(this);
       try {
       withCacheManager(new CacheManagerCallable(TestCacheManagerFactory.fromXml("configs/named-cache-override-test.xml")) {

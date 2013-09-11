@@ -266,7 +266,7 @@ public interface BasicCache<K, V> extends org.infinispan.commons.api.BasicCache<
     * entity, it will span a different thread in order to allow the
     * asynchronous get call to return immediately. If the call will definitely
     * resolve locally, for example when the cache is configured with LOCAL mode
-    * and no cache loaders are configured, the get asynchronous call will act
+    * and no stores are configured, the get asynchronous call will act
     * sequentially and will have no different to {@link #get(Object)}.
     *
     * @param key key to retrieve

@@ -379,17 +379,17 @@ public class CacheLoaderInterceptor extends JmxStatsCommandInterceptor {
    /**
     * This method returns a collection of cache loader types (fully qualified class names) that are configured and enabled.
     */
-   public Collection<String> getCacheLoaders() {
+   public Collection<String> getStores() {
       if (enabled && cacheConfiguration.persistence().usingStores()) {
-         return persistenceManager.getCacheLoadersAsString();
+         return persistenceManager.getStoresAsString();
       } else {
          return InfinispanCollections.emptySet();
       }
    }
 
    @ManagedOperation(
-         description = "Disable all cache loaders of a given type, where type is a fully qualified class name of the cache loader to disable",
-         displayName = "Disable all cache loaders of a given type"
+         description = "Disable all stores of a given type, where type is a fully qualified class name of the cache loader to disable",
+         displayName = "Disable all stores of a given type"
    )
    @SuppressWarnings("unused")
    /**

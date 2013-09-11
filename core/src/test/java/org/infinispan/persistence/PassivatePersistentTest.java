@@ -16,7 +16,7 @@ import org.testng.annotations.Test;
 
 import javax.transaction.TransactionManager;
 
-@Test(testName = "loaders.PassivatePersistentTest", groups = "functional")
+@Test(testName = "persistence.PassivatePersistentTest", groups = "functional")
 public class PassivatePersistentTest extends AbstractInfinispanTest {
 
    Cache<String, String> cache;

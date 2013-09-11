@@ -149,7 +149,7 @@ public class ConfigurationUnitTest {
    }
 
    @Test
-   public void testClearCacheLoaders() {
+   public void testClearStores() {
       Configuration c = new ConfigurationBuilder()
             .persistence()
                .addStore(DummyInMemoryStoreConfigurationBuilder.class)

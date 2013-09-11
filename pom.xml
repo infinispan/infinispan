@@ -33,9 +33,9 @@
       <module>lucene/lucene-directory</module>
       <module>lucene/lucene-v4</module>
       <module>lucene/lucene-v3</module>
-      <module>cachestore</module>
-      <module>cachestore/jdbc</module>
-      <module>cachestore/remote</module>
+      <module>persistence</module>
+      <module>persistence/jdbc</module>
+      <module>persistence/remote</module>
       <module>server</module>
       <module>server/core</module>
       <module>server/memcached</module>

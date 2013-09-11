@@ -152,7 +152,7 @@ public class CacheLoaderAndCacheStoreInterceptorMBeanTest extends SingleCacheMan
    }
 
    private void assertStoreCount(int count) throws Exception {
-      Object actualStoreCount = threadMBeanServer.getAttribute(storeInterceptorObjName, "CacheLoaderStores");
+      Object actualStoreCount = threadMBeanServer.getAttribute(storeInterceptorObjName, "WritesToTheStores");
       assert Integer.valueOf(actualStoreCount.toString()).equals(count) : "expected " + count + " store counts, but received " + actualStoreCount;
    }
 }

@@ -18,7 +18,7 @@ import org.testng.annotations.Test;
  *
  * @author Mircea.Markus@jboss.com
  */
-@Test(groups = "functional", testName = "loaders.ClusterCacheLoaderTest")
+@Test(groups = "functional", testName = "persistence.ClusterCacheLoaderTest")
 public class ClusterCacheLoaderTest extends MultipleCacheManagersTest {
 
    @Override

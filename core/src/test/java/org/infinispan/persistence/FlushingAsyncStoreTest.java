@@ -13,7 +13,7 @@ import org.testng.annotations.Test;
  *
  * @author Sanne Grinovero
  */
-@Test(groups = "functional", testName = "loaders.FlushingAsyncStoreTest", singleThreaded = true)
+@Test(groups = "functional", testName = "persistence.FlushingAsyncStoreTest", singleThreaded = true)
 public class FlushingAsyncStoreTest extends SingleCacheManagerTest {
 
    /** to assert the test methods are run in proper order **/

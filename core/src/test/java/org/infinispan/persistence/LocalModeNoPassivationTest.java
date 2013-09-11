@@ -9,7 +9,7 @@ import org.testng.annotations.Test;
  * @author anistor@redhat.com
  * @since 5.2
  */
-@Test(groups = "functional", testName = "loaders.LocalModeNoPassivationTest")
+@Test(groups = "functional", testName = "persistence.LocalModeNoPassivationTest")
 @CleanupAfterMethod
 public class LocalModeNoPassivationTest extends LocalModePassivationTest {
 
