@@ -7,20 +7,20 @@ import org.infinispan.persistence.cluster.ClusterLoader;
 import java.util.Properties;
 
 /**
- * ClusterStoreConfiguration.
+ * ClusterLoaderConfiguration.
  *
  * @author Tristan Tarrant
  * @since 5.2
  */
-@BuiltBy(ClusterStoreConfigurationBuilder.class)
+@BuiltBy(ClusterLoaderConfigurationBuilder.class)
 @ConfigurationFor(ClusterLoader.class)
-public class ClusterStoreConfiguration extends AbstractStoreConfiguration {
+public class ClusterLoaderConfiguration extends AbstractStoreConfiguration {
    private final long remoteCallTimeout;
 
-   public ClusterStoreConfiguration(boolean purgeOnStartup, boolean fetchPersistentState,
-                                    boolean ignoreModifications, AsyncStoreConfiguration async,
-                                    SingletonStoreConfiguration singletonStore, boolean preload, boolean shared, Properties properties,
-                                    long remoteCallTimeout) {
+   public ClusterLoaderConfiguration(boolean purgeOnStartup, boolean fetchPersistentState,
+                                     boolean ignoreModifications, AsyncStoreConfiguration async,
+                                     SingletonStoreConfiguration singletonStore, boolean preload, boolean shared, Properties properties,
+                                     long remoteCallTimeout) {
       super(purgeOnStartup, fetchPersistentState, ignoreModifications, async, singletonStore, preload, shared, properties);
       this.remoteCallTimeout = remoteCallTimeout;
    }
@@ -31,7 +31,7 @@ public class ClusterStoreConfiguration extends AbstractStoreConfiguration {
 
    @Override
    public String toString() {
-      return "ClusterStoreConfiguration [remoteCallTimeout=" + remoteCallTimeout + "]";
+      return "ClusterLoaderConfiguration [remoteCallTimeout=" + remoteCallTimeout + "]";
    }
 
 }

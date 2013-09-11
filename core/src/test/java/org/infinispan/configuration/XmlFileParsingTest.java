@@ -21,11 +21,10 @@ import org.infinispan.commons.CacheConfigurationException;
 import org.infinispan.commons.equivalence.AnyEquivalence;
 import org.infinispan.commons.equivalence.ByteArrayEquivalence;
 import org.infinispan.configuration.cache.CacheMode;
-import org.infinispan.configuration.cache.ClusterStoreConfiguration;
+import org.infinispan.configuration.cache.ClusterLoaderConfiguration;
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.configuration.cache.InterceptorConfiguration;
 import org.infinispan.configuration.cache.SingleFileStoreConfiguration;
-import org.infinispan.configuration.cache.SingleFileStoreConfigurationBuilder;
 import org.infinispan.configuration.global.GlobalConfiguration;
 import org.infinispan.configuration.global.ShutdownHookBehavior;
 import org.infinispan.eviction.EvictionStrategy;
@@ -521,7 +520,7 @@ public class XmlFileParsingTest extends AbstractInfinispanTest {
 
       c = cm.getCacheConfiguration("withClusterLoader");
       assertEquals(1, c.persistence().stores().size());
-      ClusterStoreConfiguration clusterLoaderCfg = (ClusterStoreConfiguration) c.persistence().stores().get(0);
+      ClusterLoaderConfiguration clusterLoaderCfg = (ClusterLoaderConfiguration) c.persistence().stores().get(0);
       assertEquals(15000, clusterLoaderCfg.remoteCallTimeout());
 
       c = cm.getCacheConfiguration("withLoaderDefaults");

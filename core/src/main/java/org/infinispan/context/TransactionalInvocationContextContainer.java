@@ -2,7 +2,7 @@ package org.infinispan.context;
 
 import org.infinispan.batch.BatchContainer;
 import org.infinispan.commons.CacheException;
-import org.infinispan.configuration.cache.ClusterStoreConfiguration;
+import org.infinispan.configuration.cache.ClusterLoaderConfiguration;
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.configuration.cache.StoreConfiguration;
 import org.infinispan.context.impl.LocalTxInvocationContext;
@@ -58,7 +58,7 @@ public class TransactionalInvocationContextContainer extends AbstractInvocationC
       if (hasStores) {
          List<StoreConfiguration> loaderConfigs = config.persistence().stores();
          for (StoreConfiguration loaderConfig : loaderConfigs) {
-            if (loaderConfig instanceof ClusterStoreConfiguration)
+            if (loaderConfig instanceof ClusterLoaderConfiguration)
                return true;
          }
       }

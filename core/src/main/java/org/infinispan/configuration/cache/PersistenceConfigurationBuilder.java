@@ -68,8 +68,8 @@ public class PersistenceConfigurationBuilder extends AbstractConfigurationChildB
    /**
     * Adds a cluster cache loader
     */
-   public ClusterStoreConfigurationBuilder addClusterStore() {
-      ClusterStoreConfigurationBuilder builder = new ClusterStoreConfigurationBuilder(this);
+   public ClusterLoaderConfigurationBuilder addClusterLoader() {
+      ClusterLoaderConfigurationBuilder builder = new ClusterLoaderConfigurationBuilder(this);
       this.stores.add(builder);
       return builder;
    }
