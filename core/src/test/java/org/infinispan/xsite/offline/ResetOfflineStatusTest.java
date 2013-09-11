@@ -18,7 +18,7 @@ import static org.junit.Assert.fail;
  * @author Mircea Markus
  * @since 5.2
  */
-@Test (groups = "xsite", testName = "xsite.offline.ResetOfflineStatusTest")
+@Test(groups = "xsite", testName = "xsite.offline.ResetOfflineStatusTest")
 public class ResetOfflineStatusTest extends BaseSiteUnreachableTest {
 
 
