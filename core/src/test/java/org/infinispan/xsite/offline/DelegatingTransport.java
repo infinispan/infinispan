@@ -1,10 +1,7 @@
 package org.infinispan.xsite.offline;
 
 import org.infinispan.commands.ReplicableCommand;
-import org.infinispan.remoting.responses.Response;
-import org.infinispan.remoting.rpc.ResponseFilter;
-import org.infinispan.remoting.rpc.ResponseMode;
-import org.infinispan.remoting.transport.Address;
+import org.infinispan.remoting.transport.AbstractDelegatingTransport;
 import org.infinispan.remoting.transport.BackupResponse;
 import org.infinispan.remoting.transport.Transport;
 import org.infinispan.util.logging.Log;
@@ -13,20 +10,22 @@ import org.infinispan.xsite.XSiteBackup;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.TimeoutException;
 
-public class DelegatingTransport implements Transport {
-
-   private final Transport actual;
-
-   public DelegatingTransport(Transport actual) {
-      this.actual = actual;
-   }
+public class DelegatingTransport extends AbstractDelegatingTransport {
 
    volatile boolean fail;
+
+   public DelegatingTransport(Transport actual) {
+      super(actual);
+   }
+
+   @Override
+   public void start() {
+      //no-op; avoid re-start the transport again...
+   }
 
    @Override
    public BackupResponse backupRemotely(final Collection<XSiteBackup> backups, ReplicableCommand rpcCommand) throws Exception {
@@ -73,62 +72,7 @@ public class DelegatingTransport implements Transport {
    }
 
    @Override
-   public Map<Address, Response> invokeRemotely(Collection<Address> recipients, ReplicableCommand rpcCommand, ResponseMode mode, long timeout, boolean usePriorityQueue, ResponseFilter responseFilter, boolean totalOrder, boolean anycast) throws Exception {
-      return actual.invokeRemotely(recipients, rpcCommand, mode, timeout, usePriorityQueue,responseFilter, totalOrder, anycast);
-   }
-
-   @Override
-   public boolean isCoordinator() {
-      return actual.isCoordinator();
-   }
-
-   @Override
-   public Address getCoordinator() {
-      return actual.getCoordinator();
-   }
-
-   @Override
-   public Address getAddress() {
-      return actual.getAddress();
-   }
-
-   @Override
-   public List<Address> getPhysicalAddresses() {
-      return actual.getPhysicalAddresses();
-   }
-
-   @Override
-   public List<Address> getMembers() {
-      return actual.getMembers();
-   }
-
-   @Override
-   public boolean isMulticastCapable() {
-      return actual.isMulticastCapable();
-   }
-
-   @Override
-   public void start() {
-      actual.start();
-   }
-
-   @Override
-   public void stop() {
-      actual.stop();
-   }
-
-   @Override
-   public int getViewId() {
-      return actual.getViewId();
-   }
-
-   @Override
    public Log getLog() {
       return actual.getLog();
-   }
-
-   @Override
-   public void checkTotalOrderSupported() {
-      actual.checkTotalOrderSupported();
    }
 }
