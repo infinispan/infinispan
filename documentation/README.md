@@ -3,7 +3,10 @@
 This file is not fleshed out, it's just a collection of tips.
 A lot of inspiration has been gained from the 
 [Hibernate-OGM](https://github.com/hibernate/hibernate-ogm/tree/master/hibernate-ogm-documentation) 
-project documentation.
+project documentation, as well as the [AsciiDoctor website sources](https://github.com/asciidoctor/asciidoctor.org),
+which also uses AsciiDoc for documentation as well as 
+[Awestruct](http://www.awestruct.org) to build and publish
+the website.
 
 ## AsciiDoc
 
@@ -30,3 +33,18 @@ a file of the right size for the web.
 
 Binary images should be stored under `documentation/src/main/asciidoc/images`
 
+## Building and rendering documents
+A `pom.xml` file is included here, but this is _*experimental*_ and probably will
+not work.
+
+TIP: Don't bother with it.
+
+There are scripts in the `https://github.com/infinispan/infinispan.github.io`
+repository which is capable of grabbing docs from here and building/integrating
+the docs as a part of the Infinispan.org website.  This is the preferred method
+of rendering the documentation.
+
+### Live editing
+Naturally, while editing the docs, you don't want to have to build the entire
+website to see your changes.  A good way to do this is to set up _live previews_
+as described [here](http://asciidoctor.org/docs/editing-asciidoc-with-live-preview/).
