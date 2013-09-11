@@ -585,7 +585,7 @@ public class Parser60 implements ConfigurationParser {
 
    private void parseClusterLoader(XMLExtendedStreamReader reader, ConfigurationBuilderHolder holder) throws XMLStreamException {
       ConfigurationBuilder builder = holder.getCurrentConfigurationBuilder();
-      ClusterStoreConfigurationBuilder cclb = builder.persistence().addClusterStore();
+      ClusterLoaderConfigurationBuilder cclb = builder.persistence().addClusterLoader();
       for (int i = 0; i < reader.getAttributeCount(); i++) {
          ParseUtils.requireNoNamespaceAttribute(reader, i);
          String value = replaceProperties(reader.getAttributeValue(i));
@@ -680,7 +680,7 @@ public class Parser60 implements ConfigurationParser {
                sfs.shared(shared);
             parseStoreChildren(reader, sfs);
          } else if (store instanceof ClusterLoader) {
-            ClusterStoreConfigurationBuilder cscb = builder.persistence().addClusterStore();
+            ClusterLoaderConfigurationBuilder cscb = builder.persistence().addClusterLoader();
             parseLoaderChildren(reader, cscb);
          }
       }

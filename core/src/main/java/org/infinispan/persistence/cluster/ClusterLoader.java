@@ -3,7 +3,7 @@ package org.infinispan.persistence.cluster;
 import org.infinispan.AdvancedCache;
 import org.infinispan.commands.remote.ClusteredGetCommand;
 import org.infinispan.commons.util.InfinispanCollections;
-import org.infinispan.configuration.cache.ClusterStoreConfiguration;
+import org.infinispan.configuration.cache.ClusterLoaderConfiguration;
 import org.infinispan.container.entries.InternalCacheValue;
 import org.infinispan.context.Flag;
 import org.infinispan.context.InvocationContext;
@@ -41,7 +41,7 @@ public class ClusterLoader implements CacheLoader {
    private RpcManager rpcManager;
    private AdvancedCache<?, ?> cache;
 
-   private ClusterStoreConfiguration configuration;
+   private ClusterLoaderConfiguration configuration;
    private InitializationContext ctx;
 
    @Override

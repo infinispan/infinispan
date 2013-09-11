@@ -4,7 +4,6 @@ import org.infinispan.Cache;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.persistence.dummy.DummyInMemoryStoreConfigurationBuilder;
-import org.infinispan.persistence.MarshalledEntryImpl;
 import org.infinispan.persistence.spi.CacheLoader;
 import org.infinispan.persistence.spi.CacheWriter;
 import org.infinispan.manager.EmbeddedCacheManager;
@@ -28,10 +27,10 @@ public class ClusterCacheLoaderTest extends MultipleCacheManagersTest {
       registerCacheManager(cacheManager1, cacheManager2);
 
       ConfigurationBuilder config1 = getDefaultClusteredCacheConfig(CacheMode.INVALIDATION_SYNC, false);
-      config1.persistence().addClusterStore();
+      config1.persistence().addClusterLoader();
 
       ConfigurationBuilder config2 = getDefaultClusteredCacheConfig(CacheMode.INVALIDATION_SYNC, false);
-      config2.persistence().addClusterStore();
+      config2.persistence().addClusterLoader();
       config2.persistence().addStore(DummyInMemoryStoreConfigurationBuilder.class);
 
       cacheManager1.defineConfiguration("clusteredCl", config1.build());
