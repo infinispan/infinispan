@@ -16,6 +16,7 @@ import org.infinispan.query.dsl.QueryFactory;
 import org.infinispan.query.remote.SerializationContextHolder;
 import org.infinispan.server.hotrod.HotRodServer;
 import org.infinispan.test.SingleCacheManagerTest;
+import org.infinispan.test.fwk.CleanupAfterMethod;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.testng.annotations.AfterTest;
 import org.testng.annotations.Test;
@@ -34,7 +35,10 @@ import static org.junit.Assert.assertNotNull;
  * @since 6.0
  */
 @Test(testName = "client.hotrod.query.HotRodQueryTest", groups = "functional")
+@CleanupAfterMethod
 public class HotRodQueryTest extends SingleCacheManagerTest {
+
+   public static final String TEST_CACHE_NAME = "userCache";
 
    private HotRodServer hotRodServer;
    private RemoteCacheManager remoteCacheManager;
@@ -52,13 +56,14 @@ public class HotRodQueryTest extends SingleCacheManagerTest {
       builder.transaction()
             .indexing().enable()
             .indexLocalOnly(false)
-            .addProperty("default.directory_provider", "ram")
+            .addProperty("default.directory_provider", getLuceneDirectoryProvider())
             .addProperty("lucene_version", "LUCENE_CURRENT");
 
       builder.dataContainer().valueEquivalence(AnyEquivalence.getInstance());  // TODO [anistor] hacks!
 
-      cacheManager = TestCacheManagerFactory.createCacheManager(builder);
-      cache = cacheManager.getCache();
+      cacheManager = TestCacheManagerFactory.createCacheManager();
+      cacheManager.defineConfiguration(TEST_CACHE_NAME, builder.build());
+      cache = cacheManager.getCache(TEST_CACHE_NAME);
 
       hotRodServer = TestHelper.startHotRodServer(cacheManager);
 
@@ -67,8 +72,12 @@ public class HotRodQueryTest extends SingleCacheManagerTest {
       clientBuilder.marshaller(new ProtoStreamMarshaller());
       remoteCacheManager = new RemoteCacheManager(clientBuilder.build());
 
-      remoteCache = remoteCacheManager.getCache();
+      remoteCache = remoteCacheManager.getCache(TEST_CACHE_NAME);
       return cacheManager;
+   }
+
+   protected String getLuceneDirectoryProvider() {
+      return "ram";
    }
 
    @AfterTest
