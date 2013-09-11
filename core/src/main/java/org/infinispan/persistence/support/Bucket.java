@@ -8,6 +8,7 @@ import org.infinispan.persistence.spi.AdvancedCacheLoader;
 import org.infinispan.persistence.spi.MarshalledEntry;
 import org.infinispan.util.TimeService;
 
+import java.io.Serializable;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
@@ -17,7 +18,7 @@ import java.util.Set;
 /**
  * A bucket is where entries are stored.
  */
-public final class Bucket {
+public final class Bucket implements Serializable {
    final Map<Object, MarshalledEntry> entries;
    private transient Integer bucketId;
    private transient String bucketIdStr;

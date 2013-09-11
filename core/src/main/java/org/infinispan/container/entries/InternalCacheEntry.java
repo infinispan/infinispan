@@ -1,5 +1,7 @@
 package org.infinispan.container.entries;
 
+import java.io.Serializable;
+
 /**
  * Interface for internal cache entries that expose whether an entry has expired.
  *
@@ -7,7 +9,7 @@ package org.infinispan.container.entries;
  * @author Sanne Grinovero
  * @since 4.0
  */
-public interface InternalCacheEntry extends CacheEntry, Cloneable {
+public interface InternalCacheEntry extends CacheEntry, Cloneable, Serializable {
 
    /**
     * @param now the current time as defined by {@link System#currentTimeMillis()} or {@link
