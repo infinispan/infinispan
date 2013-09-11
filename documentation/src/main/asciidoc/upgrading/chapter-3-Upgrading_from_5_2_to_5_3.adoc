@@ -1,6 +1,0 @@
-[[sid-68355209]]
-
-==  Upgrading from 5.2 to 5.3
-
-This page documents the code / configuration changes required when upgrading from Infinispan 5.2 to 5.3
-
