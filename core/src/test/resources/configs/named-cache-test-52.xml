@@ -147,7 +147,7 @@
 
    <namedCache name="withLoaderDefaults">
       <loaders>
-         <loader class="org.infinispan.loaders.file.FileCacheStore">
+         <loader class="org.infinispan.persistence.file.SingleFileStore">
             <properties>
                <property name="location" value="/tmp/Another-FileCacheStore-Location"/>
             </properties>
@@ -229,7 +229,7 @@
       <deadlockDetection enabled="true" spinDuration="1221"/>
       <eviction maxEntries="1000" strategy="LIRS" />
       <loaders passivation="true" shared="true" preload="true"> 
-         <loader class="org.infinispan.loaders.file.FileCacheStore" fetchPersistentState="true" ignoreModifications="true" purgeOnStartup="true"> 
+         <loader class="org.infinispan.oe.file.FileCacheStore" fetchPersistentState="true" ignoreModifications="true" purgeOnStartup="true">
            <properties> 
              <property name="location" value="${java.io.tmpdir}"/>
            </properties>

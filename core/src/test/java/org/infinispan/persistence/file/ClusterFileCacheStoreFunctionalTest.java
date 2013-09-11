@@ -24,7 +24,7 @@ import static org.testng.AssertJUnit.assertEquals;
  * @author Galder Zamarreño
  * @since 4.1
  */
-@Test(groups = "unit", testName = "loaders.file.ClusterFileCacheStoreFunctionalTest")
+@Test(groups = "unit", testName = "persistence.file.ClusterFileCacheStoreFunctionalTest")
 public class ClusterFileCacheStoreFunctionalTest extends MultipleCacheManagersTest {
 
    // createCacheManager executes before any @BeforeClass defined in the class, so simply use standard tmp folder.

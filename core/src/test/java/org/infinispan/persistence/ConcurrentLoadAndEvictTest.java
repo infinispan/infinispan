@@ -36,7 +36,7 @@ import static org.infinispan.context.Flag.SKIP_CACHE_STORE;
  *
  * @author Manik Surtani
  */
-@Test(groups = "functional", testName = "loaders.ConcurrentLoadAndEvictTest")
+@Test(groups = "functional", testName = "persistence.ConcurrentLoadAndEvictTest")
 public class ConcurrentLoadAndEvictTest extends SingleCacheManagerTest {
    SlowDownInterceptor sdi;
 

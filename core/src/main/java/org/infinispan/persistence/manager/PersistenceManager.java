@@ -30,7 +30,7 @@ public interface PersistenceManager extends Lifecycle {
 
    <T> Set<T> getStores(Class<T> storeClass);
 
-   Collection<String> getCacheLoadersAsString();
+   Collection<String> getStoresAsString();
 
    /**
     * Removes the expired entries from all the existing storage.

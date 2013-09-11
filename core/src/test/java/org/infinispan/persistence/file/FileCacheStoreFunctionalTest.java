@@ -9,7 +9,7 @@ import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
 
-@Test(groups = "unit", testName = "loaders.file.FileCacheStoreFunctionalTest")
+@Test(groups = "unit", testName = "persistence.file.FileCacheStoreFunctionalTest")
 public class FileCacheStoreFunctionalTest extends BaseCacheStoreFunctionalTest {
 
    private String tmpDirectory;
@@ -26,12 +26,12 @@ public class FileCacheStoreFunctionalTest extends BaseCacheStoreFunctionalTest {
    }
 
    @Override
-   protected PersistenceConfigurationBuilder createCacheStoreConfig(PersistenceConfigurationBuilder loaders, boolean preload) {
-      loaders
+   protected PersistenceConfigurationBuilder createCacheStoreConfig(PersistenceConfigurationBuilder persistence, boolean preload) {
+      persistence
          .addSingleFileStore()
             .location(tmpDirectory)
             .preload(preload);
-      return loaders;
+      return persistence;
    }
 
 }

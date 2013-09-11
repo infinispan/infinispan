@@ -9,7 +9,7 @@ import org.infinispan.persistence.spi.AdvancedLoadWriteStore;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.testng.annotations.Test;
 
-@Test(groups = "unit", testName = "loaders.dummy.DummyInMemoryStoreTest")
+@Test(groups = "unit", testName = "persistence.dummy.DummyInMemoryStoreTest")
 public class DummyInMemoryStoreTest extends BaseCacheStoreTest {
 
    @Override

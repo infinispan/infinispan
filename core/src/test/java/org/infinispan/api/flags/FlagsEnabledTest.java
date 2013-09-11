@@ -15,7 +15,6 @@ import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.cache.VersioningScheme;
 import org.infinispan.context.Flag;
 import org.infinispan.persistence.UnnnecessaryLoadingTest;
-import org.infinispan.persistence.UnnnecessaryLoadingTest.CountingCacheStore;
 import org.infinispan.persistence.dummy.DummyInMemoryStoreConfigurationBuilder;
 import org.infinispan.test.MultipleCacheManagersTest;
 import org.infinispan.test.TestingUtil;
@@ -45,8 +44,8 @@ public class FlagsEnabledTest extends MultipleCacheManagersTest {
       createClusteredCaches(2, "replication", builder);
    }
 
-   CountingCacheStore getCacheStore(Cache cache) {
-      return (CountingCacheStore) TestingUtil.getFirstLoader(cache);
+   UnnnecessaryLoadingTest.CountingStore getCacheStore(Cache cache) {
+      return (UnnnecessaryLoadingTest.CountingStore) TestingUtil.getFirstLoader(cache);
    }
 
    public void testWithFlagsSemantics() {

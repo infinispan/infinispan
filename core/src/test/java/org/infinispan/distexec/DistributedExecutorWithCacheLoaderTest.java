@@ -6,7 +6,7 @@ import org.infinispan.persistence.dummy.DummyInMemoryStoreConfigurationBuilder;
 import org.testng.annotations.Test;
 
 /**
- * Tests are added for testing DistributedExecutors with cache loaders.
+ * Tests are added for testing DistributedExecutors with stores.
  */
 @Test(groups = "functional", testName = "distexec.DistributedExecutorWithCacheLoaderTest")
 public class DistributedExecutorWithCacheLoaderTest extends DistributedExecutorTest {

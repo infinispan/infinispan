@@ -37,7 +37,7 @@ import static org.testng.AssertJUnit.assertTrue;
  * @author anistor@redhat.com
  * @since 5.2
  */
-@Test(groups = "functional", testName = "loaders.LocalModePassivationTest")
+@Test(groups = "functional", testName = "persistence.LocalModePassivationTest")
 @CleanupAfterMethod
 public class LocalModePassivationTest extends SingleCacheManagerTest {
 

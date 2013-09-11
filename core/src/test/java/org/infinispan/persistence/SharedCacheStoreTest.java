@@ -15,7 +15,7 @@ import org.testng.annotations.Test;
 
 import java.util.List;
 
-@Test (testName = "loaders.SharedCacheStoreTest", groups = "functional")
+@Test (testName = "persistence.SharedCacheStoreTest", groups = "functional")
 @CleanupAfterMethod
 public class SharedCacheStoreTest extends MultipleCacheManagersTest {
 

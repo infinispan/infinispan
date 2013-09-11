@@ -36,10 +36,10 @@ import static org.testng.internal.junit.ArrayAsserts.assertArrayEquals;
  * implementation. As these are functional tests, they should interact against Cache/CacheManager only and any access to
  * the underlying cache store/loader should be done to verify contents.
  */
-@Test(groups = "unit", testName = "loaders.BaseCacheStoreFunctionalTest")
+@Test(groups = "unit", testName = "persistence.BaseCacheStoreFunctionalTest")
 public abstract class BaseCacheStoreFunctionalTest extends AbstractInfinispanTest {
 
-   protected abstract PersistenceConfigurationBuilder createCacheStoreConfig(PersistenceConfigurationBuilder loaders, boolean preload);
+   protected abstract PersistenceConfigurationBuilder createCacheStoreConfig(PersistenceConfigurationBuilder persistence, boolean preload);
 
    protected Set<String> cacheNames = new HashSet<String>();
 

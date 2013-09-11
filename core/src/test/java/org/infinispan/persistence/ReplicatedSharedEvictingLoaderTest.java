@@ -11,7 +11,7 @@ import org.testng.annotations.Test;
  * This test aims to ensure that a replicated cache with a shared loader, when using passivation and eviction, doesn't
  * remove entries from the cache store when activating.
  */
-@Test(testName = "loaders.ReplicatedSharedEvictingLoaderTest", groups = "functional")
+@Test(testName = "persistence.ReplicatedSharedEvictingLoaderTest", groups = "functional")
 public class ReplicatedSharedEvictingLoaderTest extends MultipleCacheManagersTest {
 
    @Override

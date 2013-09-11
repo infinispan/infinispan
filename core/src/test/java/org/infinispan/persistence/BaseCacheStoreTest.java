@@ -48,7 +48,7 @@ import static org.testng.AssertJUnit.assertFalse;
  */
 @SuppressWarnings("unchecked")
 // this needs to be here for the test to run in an IDE
-@Test(groups = "unit", testName = "loaders.BaseCacheStoreTest")
+@Test(groups = "unit", testName = "persistence.BaseCacheStoreTest")
 public abstract class BaseCacheStoreTest extends AbstractInfinispanTest {
 
    protected abstract AdvancedLoadWriteStore createStore() throws Exception;

@@ -26,7 +26,7 @@ import org.testng.annotations.Test;
  * 
  * @author Michal Linhard (mlinhard@redhat.com)
  */
-@Test(groups = "unit", testName = "loaders.MultiCacheStoreFunctionalTest")
+@Test(groups = "unit", testName = "persistence.MultiCacheStoreFunctionalTest")
 public abstract class MultiCacheStoreFunctionalTest<TStoreConfigurationBuilder extends AbstractStoreConfigurationBuilder<?, ?>> extends AbstractInfinispanTest {
 
    private static final long TIMEOUT = 10000;

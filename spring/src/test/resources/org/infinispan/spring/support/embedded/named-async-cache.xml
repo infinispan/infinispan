@@ -315,7 +315,7 @@
          preload="false">
 
          <loader
-            class="org.infinispan.loaders.file.FileCacheStore"
+            class="org.infinispan.persistence.file.SingleFileStore"
             fetchPersistentState="false"
             purgeOnStartup="false">
 
@@ -347,7 +347,7 @@
       />
 
       <loaders passivation="true">
-         <loader class="org.infinispan.loaders.file.FileCacheStore">
+         <loader class="org.infinispan.persistence.file.SingleFileStore">
             <properties>
                <property name="location" value="${java.io.tmpdir}"/>
             </properties>
@@ -367,7 +367,7 @@
    <!--
    <namedCache name="writeBehindToCloudCache">
       <loaders passivation="false" shared="false" preload="true">
-         <loader class="org.infinispan.loaders.cloud.CloudCacheStore"
+         <loader class="org.infinispan.persistence.cloud.CloudStore"
                  fetchPersistentState="false"
                  ignoreModifications="false"
                  purgeOnStartup="false">
@@ -404,7 +404,7 @@
       </clustering>
 
       <loaders preload="false">
-         <loader class="org.infinispan.loaders.cluster.ClusterLoaderr         <properties>
+         <loader class="org.infinispan.persistence.cluster.ClusterLoader<properties>
                <property name="remoteCallTimeout" value="20000"/>
             </properties>
          </loader>
@@ -420,7 +420,7 @@
    <!--
    <namedCache name="writeBehindSingletonStoreCache">
       <loaders shared="true" preload="false">
-         <loader class="org.infinispan.loaders.file.FileCacheStore">
+         <loader class="org.infinispan.persistence.file.SingleFileStore">
             <properties>
                <property name="location" value="${java.io.tmpdir}"/>
             </properties>

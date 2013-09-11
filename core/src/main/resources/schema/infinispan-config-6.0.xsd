@@ -357,7 +357,7 @@
       <xs:element name="persistence" minOccurs="0">
         <xs:annotation>
           <xs:documentation>
-            Configuration for cache loaders and stores.
+            Configuration for stores.
           </xs:documentation>
         </xs:annotation>
         <xs:complexType>

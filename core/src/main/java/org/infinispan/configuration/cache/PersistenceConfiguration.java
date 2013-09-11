@@ -3,7 +3,7 @@ package org.infinispan.configuration.cache;
 import java.util.List;
 
 /**
- * Configuration for cache loaders and stores.
+ * Configuration for stores.
  *
  */
 public class PersistenceConfiguration {
@@ -72,7 +72,7 @@ public class PersistenceConfiguration {
    @Override
    public String toString() {
       return "PersistenceConfiguration{" +
-            "cacheLoaders=" + stores +
+            "persistence=" + stores +
             ", passivation=" + passivation +
             '}';
    }

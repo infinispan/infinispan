@@ -1,9 +1,8 @@
 package org.infinispan.persistence.keymappers;
 
-import org.infinispan.persistence.keymappers.DefaultTwoWayKey2StringMapper;
 import org.testng.annotations.Test;
 
-@Test(groups = "unit", testName = "loaders.keymappers.DefaultTwoWayKey2StringMapperTest")
+@Test(groups = "unit", testName = "persistence.keymappers.DefaultTwoWayKey2StringMapperTest")
 public class DefaultTwoWayKey2StringMapperTest {
 
    DefaultTwoWayKey2StringMapper mapper = new DefaultTwoWayKey2StringMapper();

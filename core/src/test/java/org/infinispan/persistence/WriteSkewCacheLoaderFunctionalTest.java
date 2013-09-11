@@ -31,7 +31,7 @@ import static org.testng.AssertJUnit.*;
  * @author Galder Zamarreño
  * @since 5.3
  */
-@Test(groups = "functional", testName = "loaders.WriteSkewCacheLoaderFunctionalTest")
+@Test(groups = "functional", testName = "persistence.WriteSkewCacheLoaderFunctionalTest")
 public class WriteSkewCacheLoaderFunctionalTest extends SingleCacheManagerTest {
 
    CacheLoader loader;

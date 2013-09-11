@@ -269,7 +269,7 @@ public class PersistenceManagerImpl implements PersistenceManager {
    }
 
    @Override
-   public Collection<String> getCacheLoadersAsString() {
+   public Collection<String> getStoresAsString() {
       storesMutex.readLock().lock();
       try {
          Set<String> loaderTypes = new HashSet<String>(loaders.size());

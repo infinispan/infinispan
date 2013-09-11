@@ -158,7 +158,7 @@
       <persistence passivation="false">
 
          <!--
-            We can have multiple cache loaders, which get chained
+            We can have multiple cache stores, which get chained
          -->
          <singleFile preload="true" fetchPersistentState="true" ignoreModifications="true" purgeOnStartup="true" location="/tmp/FileCacheStore-Location">
             <async enabled="true" flushLockTimeout="15000" threadPoolSize="5" modificationQueueSize="700"/>

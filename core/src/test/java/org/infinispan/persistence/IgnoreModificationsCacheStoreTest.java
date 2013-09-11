@@ -21,7 +21,7 @@ import org.testng.annotations.Test;
  *
  * @author Tomas Sykora
  */
-@Test(testName = "loaders.IgnoreModificationsCacheLoaderTest", groups = "functional", sequential = true)
+@Test(testName = "persistence.IgnoreModificationsCacheLoaderTest", groups = "functional", sequential = true)
 @CleanupAfterMethod
 public class IgnoreModificationsCacheStoreTest extends SingleCacheManagerTest {
    AdvancedLoadWriteStore store;

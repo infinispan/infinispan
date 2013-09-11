@@ -163,7 +163,7 @@ public class Configuration {
             ", indexing=" + indexingConfiguration +
             ", invocationBatching=" + invocationBatchingConfiguration +
             ", jmxStatistics=" + jmxStatisticsConfiguration +
-            ", loaders=" + persistenceConfiguration +
+            ", persistence=" + persistenceConfiguration +
             ", locking=" + lockingConfiguration +
             ", modules=" + moduleConfiguration +
             ", storeAsBinary=" + storeAsBinaryConfiguration +

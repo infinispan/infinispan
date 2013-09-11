@@ -46,7 +46,7 @@ import static org.infinispan.test.TestingUtil.marshalledEntry;
 import static org.infinispan.test.TestingUtil.v;
 import static org.testng.Assert.fail;
 
-@Test(groups = "unit", testName = "loaders.decorators.AsyncStoreTest", sequential=true)
+@Test(groups = "unit", testName = "persistence.decorators.AsyncStoreTest", sequential=true)
 public class AsyncStoreTest extends AbstractInfinispanTest {
    private static final Log log = LogFactory.getLog(AsyncStoreTest.class);
    private AdvancedAsyncCacheWriter writer;

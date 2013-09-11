@@ -3,7 +3,7 @@ package org.infinispan.configuration.cache;
 import java.util.Properties;
 
 /**
- * StoreConfiguration contains generic configuration elements available to all the cache loaders.
+ * StoreConfiguration contains generic configuration elements available to all the stores.
  *
  * @author Tristan Tarrant
  * @author Mircea Markus

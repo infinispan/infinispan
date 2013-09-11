@@ -28,7 +28,7 @@ import static org.testng.AssertJUnit.*;
  * @author Pedro Ruivo
  * @since 5.2
  */
-@Test(groups = "functional", testName = "loaders.PreloadWithAsyncStoreTest")
+@Test(groups = "functional", testName = "persistence.PreloadWithAsyncStoreTest")
 public class PreloadWithAsyncStoreTest extends SingleCacheManagerTest {
 
    private static final Object[] KEYS = new Object[]{"key_1", "key_2", "key_3", "key_4"};

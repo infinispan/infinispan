@@ -245,7 +245,7 @@ public class ConfigurationBuilder implements ConfigurationChildBuilder {
             ", indexing=" + indexing +
             ", invocationBatching=" + invocationBatching +
             ", jmxStatistics=" + jmxStatistics +
-            ", loaders=" + persistence +
+            ", persistence=" + persistence +
             ", locking=" + locking +
             ", modules=" + modules +
             ", storeAsBinary=" + storeAsBinary +

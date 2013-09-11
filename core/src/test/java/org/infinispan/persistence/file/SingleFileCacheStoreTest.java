@@ -21,7 +21,7 @@ import static org.infinispan.test.TestingUtil.recursiveFileRemove;
  * @author Galder Zamarreño
  * @since 6.0
  */
-@Test(groups = "unit", testName = "loaders.file.SingleFileCacheStoreTest")
+@Test(groups = "unit", testName = "persistence.file.SingleFileCacheStoreTest")
 public class SingleFileCacheStoreTest extends BaseCacheStoreTest {
 
    SingleFileStore store;

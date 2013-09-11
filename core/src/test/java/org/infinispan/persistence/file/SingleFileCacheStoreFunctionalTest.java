@@ -3,7 +3,6 @@ package org.infinispan.persistence.file;
 import org.infinispan.Cache;
 import org.infinispan.configuration.cache.PersistenceConfigurationBuilder;
 import org.infinispan.persistence.BaseCacheStoreFunctionalTest;
-import org.infinispan.persistence.file.SingleFileStore;
 import org.infinispan.test.CacheManagerCallable;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
@@ -24,7 +23,7 @@ import static org.testng.AssertJUnit.*;
  * @author Galder Zamarreño
  * @since 6.0
  */
-@Test(groups = "unit", testName = "loaders.file.SingleFileCacheStoreFunctionalTest")
+@Test(groups = "unit", testName = "persistence.file.SingleFileCacheStoreFunctionalTest")
 public class SingleFileCacheStoreFunctionalTest extends BaseCacheStoreFunctionalTest {
 
    private String tmpDirectory;
@@ -41,12 +40,12 @@ public class SingleFileCacheStoreFunctionalTest extends BaseCacheStoreFunctional
    }
 
    @Override
-   protected PersistenceConfigurationBuilder createCacheStoreConfig(PersistenceConfigurationBuilder loaders, boolean preload) {
-      loaders
+   protected PersistenceConfigurationBuilder createCacheStoreConfig(PersistenceConfigurationBuilder persistence, boolean preload) {
+      persistence
          .addSingleFileStore()
          .location(tmpDirectory)
          .preload(preload);
-      return loaders;
+      return persistence;
    }
 
    public void testParsingEmptyElement() throws Exception {

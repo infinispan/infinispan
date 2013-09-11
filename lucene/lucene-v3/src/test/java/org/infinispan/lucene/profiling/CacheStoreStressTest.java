@@ -4,7 +4,7 @@ import java.io.IOException;
 
 import org.apache.lucene.store.Directory;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
-import org.infinispan.loaders.jdbc.configuration.JdbcStringBasedStoreConfigurationBuilder;
+import org.infinispan.persistence.jdbc.configuration.JdbcStringBasedStoreConfigurationBuilder;
 import org.infinispan.lucene.DirectoryIntegrityCheck;
 import org.infinispan.lucene.LuceneKey2StringMapper;
 import org.infinispan.lucene.directory.DirectoryBuilder;
