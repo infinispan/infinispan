@@ -250,3 +250,4 @@ The last thing to figure out is which id to give to the message. Each module tha
 NOTE: When editing the above table, remember to update the README-i18n.txt file in the project sources!
 
 NOTE: You will need to enable annotation processing in order to be able to compile Infinispan and have the logger implementation generated.
+

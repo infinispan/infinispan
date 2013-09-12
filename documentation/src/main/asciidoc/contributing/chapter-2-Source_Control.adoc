@@ -439,3 +439,4 @@ If you're a zsh user, you can get even more interesting branch information thank
 For example, the following prompt indicates that the current branch is 't_ispn775_master' and that it is behind remote:
 
   [~/Go/code/infinispan.git]% (t_ispn775_master ↓)
+
