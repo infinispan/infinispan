@@ -432,6 +432,13 @@ public class GridFileTest extends SingleCacheManagerTest {
                   "/myDir/bar1.txt", "/myDir/bar2.txt", "/myDir/barDir"));
    }
 
+   public void testListFilesWhereNonChildPathStartsWithParent() throws Exception {
+      File parentDir = createDir("/parentDir");
+      assertEquals(parentDir.listFiles().length, 0);
+      assertEquals(createDir("/parentDir-NOT-CHILD").listFiles().length, 0);
+      assertEquals(parentDir.listFiles().length, 0);
+   }
+
    public void testListFilesWithFilenameFilter() throws Exception {
       File dir = createDirWithFiles();
       FooFilenameFilter filter = new FooFilenameFilter();
