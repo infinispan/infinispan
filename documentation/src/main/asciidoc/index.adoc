@@ -3,15 +3,15 @@ Manik Surtani, Mircea Markus, Galder Zamarreño, Pete Muir, and others from the 
 :icons: font
 
 Infinispan's documentation is organized as several individual 'books'.  Each
-one can be read independently, however they do reference one another, 
+one can be read independently, however they do reference one another,
 particularly the link:user_guide.html[User Guide].
 
-We hope you find this useful.  Any and all feedback should be directed to the 
+We hope you find this useful.  Any and all feedback should be directed to the
 Infinispan link:http://www.infinispan.org/forums.html[user forums].
 
 TIP: This is written specifically for *Infinispan 5.3.x*.  While
-the majority of it will apply to other versions as well, it is best that you 
-reference the version of documentation that corresponds to your version of 
+the majority of it will apply to other versions as well, it is best that you
+reference the version of documentation that corresponds to your version of
 Infinispan.
 
 .Books
