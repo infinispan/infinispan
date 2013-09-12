@@ -24,7 +24,7 @@ abstract class AbstractProtocolServer(protocolName: String) extends ProtocolServ
    private var mbeanServer: MBeanServer = _
    private var isGlobalStatsEnabled: Boolean = _
 
-   def start(configuration: SuitableConfiguration, cacheManager: EmbeddedCacheManager) {
+   protected def startInternal(configuration: SuitableConfiguration, cacheManager: EmbeddedCacheManager) {
       this.configuration = configuration
       this.cacheManager = cacheManager
       this.isGlobalStatsEnabled = cacheManager.getCacheManagerConfiguration.globalJmxStatistics().enabled()
@@ -37,6 +37,17 @@ abstract class AbstractProtocolServer(protocolName: String) extends ProtocolServ
       startDefaultCache
 
       startTransport()
+   }
+
+   final override def start(configuration: SuitableConfiguration, cacheManager: EmbeddedCacheManager) {
+      try {
+         startInternal(configuration, cacheManager)
+      } catch {
+         case t: Throwable => {
+            stop
+            throw t
+         }
+      }
    }
 
    def startTransport() {

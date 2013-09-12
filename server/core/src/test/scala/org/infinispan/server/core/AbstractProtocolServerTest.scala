@@ -61,8 +61,8 @@ class AbstractProtocolServerTest {
 
       var tcpNoDelay: Boolean = _
 
-      override def start(configuration: MockServerConfiguration, cacheManager: EmbeddedCacheManager) {
-         super.start(configuration, cacheManager)
+      override def startInternal(configuration: MockServerConfiguration, cacheManager: EmbeddedCacheManager) {
+         super.startInternal(configuration, cacheManager)
       }
 
       override def getEncoder = null

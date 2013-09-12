@@ -47,13 +47,13 @@ class HotRodServer extends AbstractProtocolServer("HotRod") with Log {
    override def getDecoder : HotRodDecoder =
       new HotRodDecoder(getCacheManager, transport, this)
 
-   override def start(configuration: HotRodServerConfiguration, cacheManager: EmbeddedCacheManager) {
+   override def startInternal(configuration: HotRodServerConfiguration, cacheManager: EmbeddedCacheManager) {
       this.configuration = configuration
 
       // 1. Start default cache and the endpoint before adding self to
       // topology in order to avoid topology updates being used before
       // endpoint is available.
-      super.start(configuration, cacheManager)
+      super.startInternal(configuration, cacheManager)
 
       isClustered = cacheManager.getCacheManagerConfiguration.transport().transport() != null
       if (isClustered) {
