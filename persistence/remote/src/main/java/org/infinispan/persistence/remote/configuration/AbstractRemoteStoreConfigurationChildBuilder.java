@@ -11,10 +11,10 @@ import org.infinispan.persistence.remote.wrapper.EntryWrapper;
  * @author Tristan Tarrant
  * @since 5.2
  */
-public abstract class AbstractRemoteStoreConfigurationChildBuilder<S> extends AbstractStoreConfigurationChildBuilder<S> implements RemoteCacheStoreConfigurationChildBuilder<S> {
-   private final RemoteCacheStoreConfigurationBuilder builder;
+public abstract class AbstractRemoteStoreConfigurationChildBuilder<S> extends AbstractStoreConfigurationChildBuilder<S> implements RemoteStoreConfigurationChildBuilder<S> {
+   private final RemoteStoreConfigurationBuilder builder;
 
-   protected AbstractRemoteStoreConfigurationChildBuilder(RemoteCacheStoreConfigurationBuilder builder) {
+   protected AbstractRemoteStoreConfigurationChildBuilder(RemoteStoreConfigurationBuilder builder) {
       super(builder);
       this.builder = builder;
    }
@@ -30,7 +30,7 @@ public abstract class AbstractRemoteStoreConfigurationChildBuilder<S> extends Ab
    }
 
    @Override
-   public RemoteCacheStoreConfigurationBuilder balancingStrategy(String balancingStrategy) {
+   public RemoteStoreConfigurationBuilder balancingStrategy(String balancingStrategy) {
       return builder.balancingStrategy(balancingStrategy);
    }
 
@@ -40,82 +40,82 @@ public abstract class AbstractRemoteStoreConfigurationChildBuilder<S> extends Ab
    }
 
    @Override
-   public RemoteCacheStoreConfigurationBuilder connectionTimeout(long connectionTimeout) {
+   public RemoteStoreConfigurationBuilder connectionTimeout(long connectionTimeout) {
       return builder.connectionTimeout(connectionTimeout);
    }
 
    @Override
-   public RemoteCacheStoreConfigurationBuilder entryWrapper(EntryWrapper<?, ?> entryWrapper) {
+   public RemoteStoreConfigurationBuilder entryWrapper(EntryWrapper<?, ?> entryWrapper) {
       return builder.entryWrapper(entryWrapper);
    }
 
    @Override
-   public RemoteCacheStoreConfigurationBuilder forceReturnValues(boolean forceReturnValues) {
+   public RemoteStoreConfigurationBuilder forceReturnValues(boolean forceReturnValues) {
       return builder.forceReturnValues(forceReturnValues);
    }
 
    @Override
-   public RemoteCacheStoreConfigurationBuilder hotRodWrapping(boolean hotRodWrapping) {
+   public RemoteStoreConfigurationBuilder hotRodWrapping(boolean hotRodWrapping) {
       return builder.hotRodWrapping(hotRodWrapping);
    }
 
    @Override
-   public RemoteCacheStoreConfigurationBuilder keySizeEstimate(int keySizeEstimate) {
+   public RemoteStoreConfigurationBuilder keySizeEstimate(int keySizeEstimate) {
       return builder.keySizeEstimate(keySizeEstimate);
    }
 
    @Override
-   public RemoteCacheStoreConfigurationBuilder marshaller(String marshaller) {
+   public RemoteStoreConfigurationBuilder marshaller(String marshaller) {
       return builder.marshaller(marshaller);
    }
 
    @Override
-   public RemoteCacheStoreConfigurationBuilder marshaller(Class<? extends Marshaller> marshaller) {
+   public RemoteStoreConfigurationBuilder marshaller(Class<? extends Marshaller> marshaller) {
       return builder.marshaller(marshaller);
    }
 
    @Override
-   public RemoteCacheStoreConfigurationBuilder pingOnStartup(boolean pingOnStartup) {
+   public RemoteStoreConfigurationBuilder pingOnStartup(boolean pingOnStartup) {
       return builder.pingOnStartup(pingOnStartup);
    }
 
    @Override
-   public RemoteCacheStoreConfigurationBuilder protocolVersion(String protocolVersion) {
+   public RemoteStoreConfigurationBuilder protocolVersion(String protocolVersion) {
       return builder.protocolVersion(protocolVersion);
    }
 
    @Override
-   public RemoteCacheStoreConfigurationBuilder rawValues(boolean rawValues) {
+   public RemoteStoreConfigurationBuilder rawValues(boolean rawValues) {
       return builder.rawValues(rawValues);
    }
 
    @Override
-   public RemoteCacheStoreConfigurationBuilder remoteCacheName(String remoteCacheName) {
+   public RemoteStoreConfigurationBuilder remoteCacheName(String remoteCacheName) {
       return builder.remoteCacheName(remoteCacheName);
    }
 
    @Override
-   public RemoteCacheStoreConfigurationBuilder socketTimeout(long socketTimeout) {
+   public RemoteStoreConfigurationBuilder socketTimeout(long socketTimeout) {
       return builder.socketTimeout(socketTimeout);
    }
 
    @Override
-   public RemoteCacheStoreConfigurationBuilder tcpNoDelay(boolean tcpNoDelay) {
+   public RemoteStoreConfigurationBuilder tcpNoDelay(boolean tcpNoDelay) {
       return builder.tcpNoDelay(tcpNoDelay);
    }
 
    @Override
-   public RemoteCacheStoreConfigurationBuilder transportFactory(String transportFactory) {
+   public RemoteStoreConfigurationBuilder transportFactory(String transportFactory) {
       return builder.transportFactory(transportFactory);
    }
 
    @Override
-   public RemoteCacheStoreConfigurationBuilder transportFactory(Class<? extends TransportFactory> transportFactory) {
+   public RemoteStoreConfigurationBuilder transportFactory(Class<? extends TransportFactory> transportFactory) {
       return builder.transportFactory(transportFactory);
    }
 
    @Override
-   public RemoteCacheStoreConfigurationBuilder valueSizeEstimate(int valueSizeEstimate) {
+   public RemoteStoreConfigurationBuilder valueSizeEstimate(int valueSizeEstimate) {
       return builder.valueSizeEstimate(valueSizeEstimate);
    }
 }

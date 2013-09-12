@@ -10,12 +10,12 @@ import org.infinispan.commons.util.TypedProperties;
 /**
  * Configures executor factory.
  */
-public class ExecutorFactoryConfigurationBuilder extends AbstractRemoteStoreConfigurationChildBuilder<RemoteCacheStoreConfigurationBuilder> implements Builder<ExecutorFactoryConfiguration> {
+public class ExecutorFactoryConfigurationBuilder extends AbstractRemoteStoreConfigurationChildBuilder<RemoteStoreConfigurationBuilder> implements Builder<ExecutorFactoryConfiguration> {
 
    private ExecutorFactory factory = new DefaultExecutorFactory();
    private Properties properties;
 
-   ExecutorFactoryConfigurationBuilder(RemoteCacheStoreConfigurationBuilder builder) {
+   ExecutorFactoryConfigurationBuilder(RemoteStoreConfigurationBuilder builder) {
       super(builder);
       this.properties = new Properties();
    }

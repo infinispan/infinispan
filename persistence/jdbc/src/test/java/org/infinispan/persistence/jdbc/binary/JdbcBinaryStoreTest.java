@@ -3,7 +3,7 @@ package org.infinispan.persistence.jdbc.binary;
 import org.infinispan.Cache;
 import org.infinispan.commons.marshall.StreamingMarshaller;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
-import org.infinispan.persistence.BaseCacheStoreTest;
+import org.infinispan.persistence.BaseStoreTest;
 import org.infinispan.persistence.CacheLoaderException;
 import org.infinispan.persistence.InitializationContextImpl;
 import org.infinispan.persistence.MarshalledEntryImpl;
@@ -33,7 +33,7 @@ import static org.mockito.Mockito.mock;
  * @author Mircea.Markus@jboss.com
  */
 @Test(groups = "functional", testName = "persistence.jdbc.binary.JdbcBinaryStoreTest")
-public class JdbcBinaryStoreTest extends BaseCacheStoreTest {
+public class JdbcBinaryStoreTest extends BaseStoreTest {
 
 
    private EmbeddedCacheManager cacheManager;

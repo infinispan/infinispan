@@ -44,7 +44,7 @@ public class XmlFileParsingTest extends AbstractInfinispanTest {
             "   </default>\n" +
             TestingUtil.INFINISPAN_END_TAG;
 
-      RemoteCacheStoreConfiguration store = (RemoteCacheStoreConfiguration) buildCacheManagerWithCacheStore(config);
+      RemoteStoreConfiguration store = (RemoteStoreConfiguration) buildCacheManagerWithCacheStore(config);
       assert store.servers().size() == 2;
       assert store.connectionPool().exhaustedAction() == ExhaustedAction.CREATE_NEW;
       assert store.asyncExecutorFactory().properties().getIntProperty("maxThreads", 0) == 4;

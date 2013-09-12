@@ -15,7 +15,7 @@ import org.infinispan.commons.util.Util;
 import org.infinispan.factories.ComponentRegistry;
 import org.infinispan.persistence.manager.PersistenceManager;
 import org.infinispan.persistence.remote.RemoteStore;
-import org.infinispan.persistence.remote.configuration.RemoteCacheStoreConfiguration;
+import org.infinispan.persistence.remote.configuration.RemoteStoreConfiguration;
 import org.infinispan.persistence.remote.logging.Log;
 import org.infinispan.upgrade.TargetMigrator;
 import org.infinispan.util.logging.LogFactory;
@@ -50,7 +50,7 @@ public class HotRodTargetMigrator implements TargetMigrator {
       for (RemoteStore store : stores) {
          final RemoteCache<Object, Object> storeCache = store.getRemoteCache();
          if (storeCache.containsKey(knownKeys)) {
-            RemoteCacheStoreConfiguration storeConfig = store.getConfiguration();
+            RemoteStoreConfiguration storeConfig = store.getConfiguration();
             if (!storeConfig.hotRodWrapping()) {
                throw log.remoteStoreNoHotRodWrapping(cache.getName());
             }

@@ -17,7 +17,7 @@ import org.infinispan.persistence.CacheLoaderException;
 import org.infinispan.persistence.MarshalledEntryImpl;
 import org.infinispan.persistence.TaskContextImpl;
 import org.infinispan.persistence.remote.configuration.ConnectionPoolConfiguration;
-import org.infinispan.persistence.remote.configuration.RemoteCacheStoreConfiguration;
+import org.infinispan.persistence.remote.configuration.RemoteStoreConfiguration;
 import org.infinispan.persistence.remote.configuration.RemoteServerConfiguration;
 import org.infinispan.persistence.remote.logging.Log;
 import org.infinispan.persistence.remote.wrapper.HotRodEntryMarshaller;
@@ -44,7 +44,7 @@ import java.util.concurrent.TimeUnit;
  * <p/>
  *
  * @author Mircea.Markus@jboss.com
- * @see org.infinispan.persistence.remote.configuration.RemoteCacheStoreConfiguration
+ * @see org.infinispan.persistence.remote.configuration.RemoteStoreConfiguration
  * @see <a href="http://community.jboss.org/wiki/JavaHotRodclient">Hotrod Java Client</a>
  * @since 4.1
  */
@@ -53,7 +53,7 @@ public class RemoteStore implements AdvancedLoadWriteStore {
 
    private static final Log log = LogFactory.getLog(RemoteStore.class, Log.class);
 
-   private RemoteCacheStoreConfiguration configuration;
+   private RemoteStoreConfiguration configuration;
 
    private volatile RemoteCacheManager remoteCacheManager;
    private volatile RemoteCache<Object, Object> remoteCache;
@@ -198,7 +198,7 @@ public class RemoteStore implements AdvancedLoadWriteStore {
       return remoteCache;
    }
 
-   private ConfigurationBuilder buildRemoteConfiguration(RemoteCacheStoreConfiguration configuration, Marshaller marshaller) {
+   private ConfigurationBuilder buildRemoteConfiguration(RemoteStoreConfiguration configuration, Marshaller marshaller) {
       ConfigurationBuilder builder = new ConfigurationBuilder();
 
       for (RemoteServerConfiguration s : configuration.servers()) {
@@ -239,7 +239,7 @@ public class RemoteStore implements AdvancedLoadWriteStore {
       return builder;
    }
 
-   public RemoteCacheStoreConfiguration getConfiguration() {
+   public RemoteStoreConfiguration getConfiguration() {
       return configuration;
    }
 }

@@ -53,7 +53,7 @@ public class RemoteStoreConfigurationParser60 implements ConfigurationParser {
 
    private void parseRemoteStore(final XMLExtendedStreamReader reader, PersistenceConfigurationBuilder persistenceBuilder,
          ClassLoader classLoader) throws XMLStreamException {
-      RemoteCacheStoreConfigurationBuilder builder = new RemoteCacheStoreConfigurationBuilder(persistenceBuilder);
+      RemoteStoreConfigurationBuilder builder = new RemoteStoreConfigurationBuilder(persistenceBuilder);
       parseRemoteStoreAttributes(reader, builder, classLoader);
 
       while (reader.hasNext() && (reader.nextTag() != XMLStreamConstants.END_ELEMENT)) {
@@ -157,7 +157,7 @@ public class RemoteStoreConfigurationParser60 implements ConfigurationParser {
       ParseUtils.requireNoContent(reader);
    }
 
-   private void parseServers(XMLExtendedStreamReader reader, RemoteCacheStoreConfigurationBuilder builder)
+   private void parseServers(XMLExtendedStreamReader reader, RemoteStoreConfigurationBuilder builder)
          throws XMLStreamException {
       while (reader.hasNext() && (reader.nextTag() != XMLStreamConstants.END_ELEMENT)) {
          Element element = Element.forName(reader.getLocalName());
@@ -192,7 +192,7 @@ public class RemoteStoreConfigurationParser60 implements ConfigurationParser {
       ParseUtils.requireNoContent(reader);
    }
 
-   private void parseRemoteStoreAttributes(XMLExtendedStreamReader reader, RemoteCacheStoreConfigurationBuilder builder, ClassLoader classLoader)
+   private void parseRemoteStoreAttributes(XMLExtendedStreamReader reader, RemoteStoreConfigurationBuilder builder, ClassLoader classLoader)
          throws XMLStreamException {
       for (int i = 0; i < reader.getAttributeCount(); i++) {
          ParseUtils.requireNoNamespaceAttribute(reader, i);
