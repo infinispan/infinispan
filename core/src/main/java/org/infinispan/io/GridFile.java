@@ -364,7 +364,7 @@ public class GridFile extends File {
    protected static boolean isChildOf(String parent, String child) {
       if (parent == null || child == null)
          return false;
-      if (!child.startsWith(parent))
+      if (!child.startsWith((parent.endsWith(SEPARATOR) ? parent : parent + SEPARATOR)))
          return false;
       if (child.length() <= parent.length())
          return false;
