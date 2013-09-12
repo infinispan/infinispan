@@ -1,11 +1,12 @@
 package org.infinispan.persistence.remote.wrapper;
 
-import java.io.IOException;
-import java.util.Arrays;
-
 import org.infinispan.commons.io.ByteBuffer;
+import org.infinispan.commons.io.ByteBufferFactory;
 import org.infinispan.commons.marshall.BufferSizePredictor;
 import org.infinispan.commons.marshall.Marshaller;
+
+import java.io.IOException;
+import java.util.Arrays;
 
 /**
  * HotRodEntryMarshaller.
@@ -15,7 +16,12 @@ import org.infinispan.commons.marshall.Marshaller;
  */
 public class HotRodEntryMarshaller implements Marshaller {
 
+   private final ByteBufferFactory byteBufferFactory;
    BufferSizePredictor predictor = new IdentityBufferSizePredictor();
+
+   public HotRodEntryMarshaller(ByteBufferFactory byteBufferFactory) {
+      this.byteBufferFactory = byteBufferFactory;
+   }
 
    @Override
    public byte[] objectToByteBuffer(Object obj, int estimatedSize) throws IOException, InterruptedException {
@@ -40,7 +46,7 @@ public class HotRodEntryMarshaller implements Marshaller {
    @Override
    public ByteBuffer objectToBuffer(Object o) throws IOException, InterruptedException {
       byte[] b = (byte[])o;
-      return new ByteBuffer(b, 0, b.length);
+      return byteBufferFactory.newByteBuffer(b, 0, b.length);
    }
 
    @Override

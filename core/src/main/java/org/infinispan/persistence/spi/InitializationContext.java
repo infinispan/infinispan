@@ -2,6 +2,7 @@ package org.infinispan.persistence.spi;
 
 import net.jcip.annotations.ThreadSafe;
 import org.infinispan.Cache;
+import org.infinispan.commons.io.ByteBufferFactory;
 import org.infinispan.commons.marshall.StreamingMarshaller;
 import org.infinispan.configuration.cache.StoreConfiguration;
 import org.infinispan.util.TimeService;
@@ -22,4 +23,6 @@ public interface InitializationContext {
    StreamingMarshaller getMarshaller();
 
    TimeService getTimeService();
+
+   ByteBufferFactory getByteBufferFactory();
 }

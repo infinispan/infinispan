@@ -20,6 +20,7 @@ import java.util.concurrent.ExecutorCompletionService;
 import org.infinispan.commons.equivalence.AnyEquivalence;
 import org.infinispan.commons.equivalence.Equivalence;
 import org.infinispan.commons.equivalence.EquivalentLinkedHashMap;
+import org.infinispan.commons.io.ByteBufferFactory;
 import org.infinispan.commons.util.CollectionFactory;
 import org.infinispan.configuration.cache.SingleFileStoreConfiguration;
 import org.infinispan.persistence.CacheLoaderException;
@@ -398,13 +399,14 @@ public class SingleFileStore implements AdvancedLoadWriteStore {
          fe.unlock();
       }
 
-      org.infinispan.commons.io.ByteBuffer keyBb = new org.infinispan.commons.io.ByteBuffer(data, 0, fe.keyLen);
+      ByteBufferFactory factory = ctx.getByteBufferFactory();
+      org.infinispan.commons.io.ByteBuffer keyBb = factory.newByteBuffer(data, 0, fe.keyLen);
       org.infinispan.commons.io.ByteBuffer valueBb = null;
       org.infinispan.commons.io.ByteBuffer metadataBb = null;
       if (loadValue) {
-         valueBb = new org.infinispan.commons.io.ByteBuffer(data, fe.keyLen, fe.dataLen);
+         valueBb = factory.newByteBuffer(data, fe.keyLen, fe.dataLen);
          if (loadMetadata && fe.metadataLen > 0)
-            metadataBb = new org.infinispan.commons.io.ByteBuffer(data, fe.keyLen + fe.dataLen, fe.metadataLen);
+            metadataBb = factory.newByteBuffer(data, fe.keyLen + fe.dataLen, fe.metadataLen);
       }
       return new MarshalledEntryImpl(keyBb, valueBb, metadataBb, ctx.getMarshaller());
    }

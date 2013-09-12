@@ -1,6 +1,7 @@
 package org.infinispan.persistence.jdbc.stringbased;
 
 import org.infinispan.commons.io.ByteBuffer;
+import org.infinispan.commons.io.ByteBufferImpl;
 import org.infinispan.persistence.CacheLoaderException;
 import org.infinispan.persistence.PersistenceUtil;
 import org.infinispan.persistence.jdbc.JdbcUtil;

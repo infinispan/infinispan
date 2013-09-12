@@ -11,7 +11,7 @@ import org.infinispan.commons.CacheConfigurationException;
 import org.infinispan.commons.hash.MurmurHash2;
 import org.infinispan.commons.hash.MurmurHash2Compat;
 import org.infinispan.commons.hash.MurmurHash3;
-import org.infinispan.commons.io.ByteBuffer;
+import org.infinispan.commons.io.ByteBufferImpl;
 import org.infinispan.commons.io.UnsignedNumeric;
 import org.infinispan.commons.marshall.AdvancedExternalizer;
 import org.infinispan.commons.marshall.StreamingMarshaller;
@@ -227,7 +227,7 @@ public class ExternalizerTable implements ObjectTable {
       addInternalExternalizer(new JGroupsAddress.Externalizer());
       addInternalExternalizer(new Immutables.ImmutableMapWrapperExternalizer());
       addInternalExternalizer(new MarshalledValue.Externalizer(globalMarshaller));
-      addInternalExternalizer(new ByteBuffer.Externalizer());
+      addInternalExternalizer(new ByteBufferImpl.Externalizer());
 
       addInternalExternalizer(new SuccessfulResponse.Externalizer());
       addInternalExternalizer(new ExceptionResponse.Externalizer());

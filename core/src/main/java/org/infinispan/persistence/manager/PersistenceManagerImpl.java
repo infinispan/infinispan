@@ -3,6 +3,7 @@ package org.infinispan.persistence.manager;
 import org.infinispan.AdvancedCache;
 import org.infinispan.commons.CacheException;
 import org.infinispan.commons.configuration.ConfigurationFor;
+import org.infinispan.commons.io.ByteBufferFactory;
 import org.infinispan.commons.marshall.StreamingMarshaller;
 import org.infinispan.commons.util.Util;
 import org.infinispan.configuration.cache.Configuration;
@@ -76,17 +77,18 @@ public class PersistenceManagerImpl implements PersistenceManager {
    private final Map<Object, StoreConfiguration> configMap = new HashMap<Object, StoreConfiguration>();
 
 
-
    /**
     * making it volatile as it might change after @Start, so it needs the visibility.
     */
    volatile boolean enabled;
-   ExecutorService persistenceExecutor;
+   private ExecutorService persistenceExecutor;
+   private ByteBufferFactory byteBufferFactory;
 
    @Inject
    public void inject(AdvancedCache<Object, Object> cache, @ComponentName(CACHE_MARSHALLER) StreamingMarshaller marshaller,
                       Configuration configuration, InvocationContextContainer icc, TransactionManager transactionManager,
-                      TimeService timeService, @ComponentName(PERSISTENCE_EXECUTOR) ExecutorService persistenceExecutor) {
+                      TimeService timeService, @ComponentName(PERSISTENCE_EXECUTOR) ExecutorService persistenceExecutor,
+                      ByteBufferFactory byteBufferFactory) {
       this.cache = cache;
       this.m = marshaller;
       this.configuration = configuration;
@@ -94,6 +96,7 @@ public class PersistenceManagerImpl implements PersistenceManager {
       this.transactionManager = transactionManager;
       this.timeService = timeService;
       this.persistenceExecutor = persistenceExecutor;
+      this.byteBufferFactory = byteBufferFactory;
    }
 
    @Override
@@ -490,7 +493,7 @@ public class PersistenceManagerImpl implements PersistenceManager {
             }
          }
 
-         InitializationContextImpl ctx = new InitializationContextImpl(cfg, cache, m, timeService);
+         InitializationContextImpl ctx = new InitializationContextImpl(cfg, cache, m, timeService, byteBufferFactory);
          if (loader != null) {
             loader.init(ctx);
             loaders.add(loader);

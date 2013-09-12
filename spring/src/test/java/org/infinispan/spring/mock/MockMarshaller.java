@@ -1,10 +1,10 @@
 package org.infinispan.spring.mock;
 
-import java.io.IOException;
-
 import org.infinispan.commons.io.ByteBuffer;
 import org.infinispan.commons.marshall.BufferSizePredictor;
 import org.infinispan.commons.marshall.Marshaller;
+
+import java.io.IOException;
 
 public final class MockMarshaller implements Marshaller {
 

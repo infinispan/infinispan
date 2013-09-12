@@ -1,6 +1,7 @@
 package org.infinispan.commons.marshall;
 
 import org.infinispan.commons.io.ByteBuffer;
+import org.infinispan.commons.io.ByteBufferImpl;
 import org.infinispan.commons.io.ExposedByteArrayOutputStream;
 
 import java.io.IOException;
@@ -28,8 +29,6 @@ public abstract class AbstractMarshaller implements Marshaller {
     *
     * @param o object to marshall
     * @param estimatedSize an estimate of how large the resulting byte array may be
-    * @return a ByteBuffer
-    * @throws Exception
     */
    protected abstract ByteBuffer objectToBuffer(Object o, int estimatedSize) throws IOException, InterruptedException;
 
@@ -44,7 +43,7 @@ public abstract class AbstractMarshaller implements Marshaller {
          // If the prediction is way off, then trim it
          if (estimatedSize > (length * 4)) {
             byte[] buffer = trimBuffer(byteBuffer);
-            byteBuffer = new ByteBuffer(buffer, 0, buffer.length);
+            byteBuffer = new ByteBufferImpl(buffer, 0, buffer.length);
          }
          sizePredictor.recordSize(length);
          return byteBuffer;

@@ -1,6 +1,7 @@
 package org.infinispan.commons.marshall;
 
 import org.infinispan.commons.io.ByteBuffer;
+import org.infinispan.commons.io.ByteBufferImpl;
 
 import java.io.*;
 
@@ -20,7 +21,7 @@ public class JavaSerializationMarshaller extends AbstractMarshaller {
       out.close();
       baos.close();
       byte[] bytes = baos.toByteArray();
-      return new ByteBuffer(bytes, 0, bytes.length);
+      return new ByteBufferImpl(bytes, 0, bytes.length);
    }
 
    @Override

@@ -7,9 +7,9 @@ package org.infinispan.io;
  * @since 4.0
  */
 @Deprecated
-public class ByteBuffer extends org.infinispan.commons.io.ByteBuffer {
+public class ByteBufferImpl extends org.infinispan.commons.io.ByteBufferImpl {
 
-   public ByteBuffer(byte[] buf, int offset, int length) {
+   public ByteBufferImpl(byte[] buf, int offset, int length) {
       super(buf, offset, length);
    }
 }

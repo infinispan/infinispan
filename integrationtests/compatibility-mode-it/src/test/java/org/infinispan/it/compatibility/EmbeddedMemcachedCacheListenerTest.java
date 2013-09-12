@@ -6,6 +6,7 @@ import net.spy.memcached.transcoders.SerializingTranscoder;
 import net.spy.memcached.transcoders.Transcoder;
 import org.infinispan.Cache;
 import org.infinispan.commons.io.ByteBuffer;
+import org.infinispan.commons.io.ByteBufferImpl;
 import org.infinispan.commons.marshall.AbstractMarshaller;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.test.AbstractInfinispanTest;
@@ -18,7 +19,8 @@ import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
-import static org.testng.AssertJUnit.*;
+import static org.testng.AssertJUnit.assertEquals;
+import static org.testng.AssertJUnit.assertTrue;
 
 /**
  * Test cache listeners bound to embedded cache and operation over Memcached cache.
@@ -120,7 +122,7 @@ public class EmbeddedMemcachedCacheListenerTest extends AbstractInfinispanTest {
       @Override
       protected ByteBuffer objectToBuffer(Object o, int estimatedSize) {
          CachedData encoded = transcoder.encode(o);
-         return new ByteBuffer(encoded.getData(), 0, encoded.getData().length);
+         return new ByteBufferImpl(encoded.getData(), 0, encoded.getData().length);
       }
 
       @Override

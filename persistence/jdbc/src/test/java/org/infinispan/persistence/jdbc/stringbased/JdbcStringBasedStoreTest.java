@@ -1,5 +1,6 @@
 package org.infinispan.persistence.jdbc.stringbased;
 
+import org.infinispan.commons.io.ByteBufferFactoryImpl;
 import org.infinispan.persistence.BaseStoreTest;
 import org.infinispan.persistence.CacheLoaderException;
 import org.infinispan.persistence.InitializationContextImpl;
@@ -33,7 +34,8 @@ public class JdbcStringBasedStoreTest extends BaseStoreTest {
       UnitTestDatabaseManager.configureUniqueConnectionFactory(storeBuilder);
       UnitTestDatabaseManager.buildTableManipulation(storeBuilder.table(), false);
       JdbcStringBasedStore stringBasedCacheStore = new JdbcStringBasedStore();
-      stringBasedCacheStore.init(new InitializationContextImpl(storeBuilder.create(), getCache(), getMarshaller(), new DefaultTimeService()));
+      stringBasedCacheStore.init(new InitializationContextImpl(storeBuilder.create(), getCache(), getMarshaller(),
+                                                               new DefaultTimeService(), new ByteBufferFactoryImpl()));
       stringBasedCacheStore.start();
       return stringBasedCacheStore;
    }
@@ -48,7 +50,8 @@ public class JdbcStringBasedStoreTest extends BaseStoreTest {
       storeBuilder.table().createOnStart(false);
 
       JdbcStringBasedStore stringBasedCacheStore = new JdbcStringBasedStore();
-      stringBasedCacheStore.init(new InitializationContextImpl(storeBuilder.create(), getCache(), getMarshaller(), new DefaultTimeService()));
+      stringBasedCacheStore.init(new InitializationContextImpl(storeBuilder.create(), getCache(), getMarshaller(),
+                                                               new DefaultTimeService(), new ByteBufferFactoryImpl()));
       stringBasedCacheStore.start();
       assert stringBasedCacheStore.getConnectionFactory() == null;
 
