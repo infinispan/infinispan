@@ -30,6 +30,7 @@ public class NamedExecutorsFactory extends NamedComponentFactory implements Auto
 
    private ExecutorService notificationExecutor;
    private ExecutorService asyncTransportExecutor;
+   private ExecutorService persistenceExecutor;
    private ExecutorService remoteCommandsExecutor;
    private ScheduledExecutorService evictionExecutor;
    private ScheduledExecutorService asyncReplicationExecutor;
@@ -52,6 +53,15 @@ public class NamedExecutorsFactory extends NamedComponentFactory implements Auto
                }
             }
             return (T) notificationExecutor;
+         } else if (componentName.equals(PERSISTENCE_EXECUTOR)) {
+            synchronized (this) {
+               if (persistenceExecutor == null) {
+                  persistenceExecutor = buildAndConfigureExecutorService(
+                        globalConfiguration.persistenceExecutor().factory(),
+                        globalConfiguration.persistenceExecutor().properties(), componentName, nodeName);
+               }
+            }
+            return (T) persistenceExecutor;
          } else if (componentName.equals(ASYNC_TRANSPORT_EXECUTOR)) {
             synchronized (this) {
                if (asyncTransportExecutor == null) {
@@ -112,6 +122,7 @@ public class NamedExecutorsFactory extends NamedComponentFactory implements Auto
    public void stop() {
       if (remoteCommandsExecutor != null) remoteCommandsExecutor.shutdownNow();
       if (notificationExecutor != null) notificationExecutor.shutdownNow();
+      if (persistenceExecutor != null) persistenceExecutor.shutdownNow();
       if (asyncTransportExecutor != null) asyncTransportExecutor.shutdownNow();
       if (asyncReplicationExecutor != null) asyncReplicationExecutor.shutdownNow();
       if (evictionExecutor != null) evictionExecutor.shutdownNow();

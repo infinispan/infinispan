@@ -44,7 +44,7 @@ public interface PersistenceManager extends Lifecycle {
 
    boolean deleteFromAllStores(Object key, boolean skipSharedStores);
 
-   void processOnAllStores(AdvancedCacheLoader.KeyFilter keyFilter, AdvancedCacheLoader.CacheLoaderTask task, Executor executor, boolean fetchValue, boolean fetchMetadata);
+   void processOnAllStores(AdvancedCacheLoader.KeyFilter keyFilter, AdvancedCacheLoader.CacheLoaderTask task, boolean fetchValue, boolean fetchMetadata);
 
    boolean activate(Object key);
 

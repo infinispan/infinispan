@@ -14,6 +14,14 @@
          </properties>         
       </asyncListenerExecutor>
 
+      <persistenceExecutor factory="org.infinispan.executors.DefaultExecutorFactory">
+      	 <properties>
+         	<property name="maxThreads" value="6"/>
+            <property name="queueSize" value="10001"/>
+         	<property name="threadNamePrefix" value="PersistenceThread"/>
+         </properties>
+      </persistenceExecutor>
+
       <asyncTransportExecutor factory="org.infinispan.executors.DefaultExecutorFactory">
       	<properties>	
          <property name="maxThreads" value="25"/>

@@ -38,6 +38,7 @@ public class GlobalConfiguration {
    public static final short DEFAULT_MARSHALL_VERSION = Version.getVersionShort();
 
    private final ExecutorFactoryConfiguration asyncListenerExecutor;
+   private final ExecutorFactoryConfiguration persistenceExecutor;
    private final ExecutorFactoryConfiguration asyncTransportExecutor;
    private final ExecutorFactoryConfiguration remoteCommandsExecutor;
    private final ExecutorFactoryConfiguration totalOrderExecutor;
@@ -56,8 +57,9 @@ public class GlobalConfiguration {
          ScheduledExecutorFactoryConfiguration evictionScheduledExecutor,
          ScheduledExecutorFactoryConfiguration replicationQueueScheduledExecutor, GlobalJmxStatisticsConfiguration globalJmxStatistics,
          TransportConfiguration transport, SerializationConfiguration serialization, ShutdownConfiguration shutdown,
-         List<?> modules, SiteConfiguration site,ClassLoader cl, ExecutorFactoryConfiguration totalOrderExecutor) {
+         List<?> modules, SiteConfiguration site,ClassLoader cl, ExecutorFactoryConfiguration totalOrderExecutor, ExecutorFactoryConfiguration persistenceExecutor) {
       this.asyncListenerExecutor = asyncListenerExecutor;
+      this.persistenceExecutor = persistenceExecutor;
       this.asyncTransportExecutor = asyncTransportExecutor;
       this.remoteCommandsExecutor = remoteCommandsExecutor;
       this.evictionScheduledExecutor = evictionScheduledExecutor;
@@ -78,6 +80,10 @@ public class GlobalConfiguration {
 
    public ExecutorFactoryConfiguration asyncListenerExecutor() {
       return asyncListenerExecutor;
+   }
+
+   public ExecutorFactoryConfiguration persistenceExecutor() {
+      return persistenceExecutor;
    }
 
    public ExecutorFactoryConfiguration asyncTransportExecutor() {

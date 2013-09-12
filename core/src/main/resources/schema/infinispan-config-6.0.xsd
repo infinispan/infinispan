@@ -24,6 +24,13 @@
                   </xs:documentation>
                 </xs:annotation>
               </xs:element>
+              <xs:element name="persistenceExecutor" type="tns:executorFactory" minOccurs="0">
+                <xs:annotation>
+                  <xs:documentation>
+                    Configuration for the executor service used when interacting with the persistent store.
+                  </xs:documentation>
+                </xs:annotation>
+              </xs:element>
               <xs:element name="asyncTransportExecutor" type="tns:executorFactory" minOccurs="0">
                 <xs:annotation>
                   <xs:documentation>

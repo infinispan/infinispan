@@ -7,8 +7,6 @@ import org.infinispan.persistence.spi.InitializationContext;
 import org.infinispan.util.TimeService;
 
 /**
- * // TODO: Document this
- *
  * @author Mircea Markus
  * @since 6.0
  */

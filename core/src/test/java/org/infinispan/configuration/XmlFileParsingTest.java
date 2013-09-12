@@ -113,15 +113,6 @@ public class XmlFileParsingTest extends AbstractInfinispanTest {
       });
    }
 
-   private void testNamedCacheFile(String configFile) throws IOException {
-      withCacheManager(new CacheManagerCallable(TestCacheManagerFactory.fromXml(configFile, true)) {
-         @Override
-         public void call() {
-            assertNamedCacheFile(cm, true);
-         }
-      });
-   }
-
    public void testNoNamedCaches() throws Exception {
       String config = INFINISPAN_START_TAG +
             "   <global>\n" +
@@ -363,6 +354,13 @@ public class XmlFileParsingTest extends AbstractInfinispanTest {
          assertEquals("10000", gc.asyncListenerExecutor().properties().getProperty("queueSize"));
       }
       assertEquals("AsyncListenerThread", gc.asyncListenerExecutor().properties().getProperty("threadNamePrefix"));
+
+      assertTrue(gc.persistenceExecutor().factory() instanceof DefaultExecutorFactory);
+      assertEquals("6", gc.persistenceExecutor().properties().getProperty("maxThreads"));
+      if (!deprecated) {
+         assertEquals("10001", gc.persistenceExecutor().properties().getProperty("queueSize"));
+      }
+      assertEquals("PersistenceThread", gc.persistenceExecutor().properties().getProperty("threadNamePrefix"));
 
       assertTrue(gc.asyncTransportExecutor().factory() instanceof DefaultExecutorFactory);
       // Should be 25, but it's overriden by the test cache manager factory

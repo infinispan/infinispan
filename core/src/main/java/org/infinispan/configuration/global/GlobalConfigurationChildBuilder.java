@@ -9,6 +9,8 @@ public interface GlobalConfigurationChildBuilder {
 
    ExecutorFactoryConfigurationBuilder asyncListenerExecutor();
 
+   ExecutorFactoryConfigurationBuilder persistenceExecutor();
+
    ExecutorFactoryConfigurationBuilder asyncTransportExecutor();
    
    ExecutorFactoryConfigurationBuilder remoteCommandsExecutor();
