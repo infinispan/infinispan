@@ -20,14 +20,14 @@ class MemcachedServer extends AbstractProtocolServer("Memcached") {
    protected lazy val scheduler = Executors.newScheduledThreadPool(1)
    private var memcachedCache: AdvancedCache[String, Array[Byte]] = _
 
-   override def start(configuration: MemcachedServerConfiguration, cacheManager: EmbeddedCacheManager) {
+   override def startInternal(configuration: MemcachedServerConfiguration, cacheManager: EmbeddedCacheManager) {
       if (!cacheManager.cacheExists(configuration.cache)) {
          // Define the Memcached cache as clone of the default one
          cacheManager.defineConfiguration(configuration.cache,
             new ConfigurationBuilder().read(cacheManager.getDefaultCacheConfiguration).build())
       }
       memcachedCache = cacheManager.getCache[String, Array[Byte]](configuration.cache).getAdvancedCache
-      super.start(configuration, cacheManager)
+      super.startInternal(configuration, cacheManager)
    }
 
    override def getEncoder = null

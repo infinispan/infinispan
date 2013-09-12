@@ -52,13 +52,9 @@ public class WebSocketServer extends AbstractProtocolServer {
       return null;
    }
 
-   public void start(Object configuration, EmbeddedCacheManager cacheManager) {
-      // This method is here only because it is required by the scala typing
-   }
-
-   public void start(ProtocolServerConfiguration configuration, EmbeddedCacheManager cacheManager) {
+   public void startInternal(ProtocolServerConfiguration configuration, EmbeddedCacheManager cacheManager) {
       this.configuration = (WebSocketServerConfiguration) configuration;
-      super.start(configuration, cacheManager);
+      super.startInternal(configuration, cacheManager);
    }
 
    @Override
