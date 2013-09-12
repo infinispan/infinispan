@@ -10,6 +10,11 @@
             <property name="foo" value="bar"/>
           </properties>
         </asyncListenerExecutor>
+        <persistenceExecutor factory="com.acme.Factory">
+          <properties>
+            <property name="foo" value="bar"/>
+          </properties>
+        </persistenceExecutor>
         <asyncTransportExecutor factory="com.acme.Factory">
           <properties>
             <property name="foo" value="bar"/>

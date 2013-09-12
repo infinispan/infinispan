@@ -1350,6 +1350,11 @@ public class Parser60 implements ConfigurationParser {
                              holder.getClassLoader());
                break;
             }
+            case PERSISTENCE_EXECUTOR: {
+               parseExecutor(reader, holder.getGlobalConfigurationBuilder().persistenceExecutor(),
+                             holder.getClassLoader());
+               break;
+            }
             case ASYNC_TRANSPORT_EXECUTOR: {
                parseExecutor(reader, holder.getGlobalConfigurationBuilder().asyncTransportExecutor(),
                              holder.getClassLoader());

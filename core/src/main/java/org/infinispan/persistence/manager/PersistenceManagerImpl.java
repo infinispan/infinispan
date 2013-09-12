@@ -46,7 +46,7 @@ import org.infinispan.util.logging.LogFactory;
 import javax.transaction.Transaction;
 import javax.transaction.TransactionManager;
 import java.util.*;
-import java.util.concurrent.Executor;
+import java.util.concurrent.ExecutorService;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
@@ -56,6 +56,7 @@ import java.util.concurrent.locks.ReentrantReadWriteLock;
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
 import static org.infinispan.context.Flag.*;
 import static org.infinispan.factories.KnownComponentNames.CACHE_MARSHALLER;
+import static org.infinispan.factories.KnownComponentNames.PERSISTENCE_EXECUTOR;
 
 public class PersistenceManagerImpl implements PersistenceManager {
 
@@ -80,17 +81,19 @@ public class PersistenceManagerImpl implements PersistenceManager {
     * making it volatile as it might change after @Start, so it needs the visibility.
     */
    volatile boolean enabled;
+   ExecutorService persistenceExecutor;
 
    @Inject
    public void inject(AdvancedCache<Object, Object> cache, @ComponentName(CACHE_MARSHALLER) StreamingMarshaller marshaller,
                       Configuration configuration, InvocationContextContainer icc, TransactionManager transactionManager,
-                      TimeService timeService) {
+                      TimeService timeService, @ComponentName(PERSISTENCE_EXECUTOR) ExecutorService persistenceExecutor) {
       this.cache = cache;
       this.m = marshaller;
       this.configuration = configuration;
       this.icc = icc;
       this.transactionManager = transactionManager;
       this.timeService = timeService;
+      this.persistenceExecutor = persistenceExecutor;
    }
 
    @Override
@@ -300,7 +303,7 @@ public class PersistenceManagerImpl implements PersistenceManager {
             for (CacheWriter w : writers) {
                if (w instanceof AdvancedCacheWriter) {
                   final CacheNotifier notifier = cache.getComponentRegistry().getComponent(CacheNotifier.class);
-                  ((AdvancedCacheWriter)w).purge(new WithinThreadExecutor(), new AdvancedCacheWriter.PurgeListener() {
+                  ((AdvancedCacheWriter)w).purge(persistenceExecutor, new AdvancedCacheWriter.PurgeListener() {
                      @Override
                      public void entryPurged(Object key) {
                         InternalCacheEntry ice = new ImmortalCacheEntry(key, null);
@@ -378,13 +381,13 @@ public class PersistenceManagerImpl implements PersistenceManager {
    }
 
    @Override
-   public void processOnAllStores(AdvancedCacheLoader.KeyFilter keyFilter, AdvancedCacheLoader.CacheLoaderTask task, Executor executor,
+   public void processOnAllStores(AdvancedCacheLoader.KeyFilter keyFilter, AdvancedCacheLoader.CacheLoaderTask task,
                                   boolean fetchValue, boolean fetchMetadata) {
       storesMutex.readLock().lock();
       try {
          for (CacheLoader loader : loaders) {
             if (loader instanceof AdvancedCacheLoader) {
-               ((AdvancedCacheLoader) loader).process(keyFilter, task, executor, fetchValue, fetchMetadata);
+               ((AdvancedCacheLoader) loader).process(keyFilter, task, persistenceExecutor, fetchValue, fetchMetadata);
             }
          }
       } finally {
@@ -555,5 +558,13 @@ public class PersistenceManagerImpl implements PersistenceManager {
       int ne = Integer.MAX_VALUE;
       if (configuration.eviction().strategy().isEnabled()) ne = configuration.eviction().maxEntries();
       return ne;
+   }
+
+   public ExecutorService getPersistenceExecutor() {
+      return persistenceExecutor;
+   }
+
+   public StreamingMarshaller getMarshaller() {
+      return m;
    }
 }

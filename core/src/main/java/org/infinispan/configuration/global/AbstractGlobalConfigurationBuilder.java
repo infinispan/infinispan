@@ -30,8 +30,12 @@ abstract class AbstractGlobalConfigurationBuilder<T> implements GlobalConfigurat
 
    @Override
    public ExecutorFactoryConfigurationBuilder asyncListenerExecutor() {
-
       return globalConfig.asyncListenerExecutor();
+   }
+
+   @Override
+   public ExecutorFactoryConfigurationBuilder persistenceExecutor() {
+      return globalConfig.persistenceExecutor();
    }
 
    @Override

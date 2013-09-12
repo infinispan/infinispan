@@ -32,6 +32,9 @@ public class StringPropertyReplacementTest extends SingleCacheManagerTest {
       Properties asyncListenerExecutorProperties = cacheManager.getCacheManagerConfiguration().asyncListenerExecutor().properties();
       asyncListenerExecutorProperties.get("maxThreads").equals("2");
 
+      Properties persistenceExecutorProperties = cacheManager.getCacheManagerConfiguration().persistenceExecutor().properties();
+      persistenceExecutorProperties.get("maxThreads").equals("4");
+
       Properties transportProps = cacheManager.getCacheManagerConfiguration().transport().properties();
       // Should be "jgroups-tcp.xml", but gets overriden by test cache manager factory
       assert transportProps.get("configurationFile") == null;

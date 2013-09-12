@@ -39,7 +39,6 @@ import org.infinispan.transaction.xa.CacheTransaction;
 import org.infinispan.transaction.xa.GlobalTransaction;
 import org.infinispan.util.ReadOnlyDataContainerBackedKeySet;
 import org.infinispan.util.concurrent.ConcurrentHashSet;
-import org.infinispan.util.concurrent.WithinThreadExecutor;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
@@ -849,7 +848,7 @@ public class StateConsumerImpl implements StateConsumer {
                   keysToRemove.add(key);
                }
             }
-         }, new WithinThreadExecutor(), false, false);
+         }, false, false);
       } catch (CacheException e) {
          log.failedLoadingKeysFromCacheStore(e);
       }

@@ -32,8 +32,8 @@ import static org.mockito.Mockito.mock;
  *
  * @author Mircea.Markus@jboss.com
  */
-@Test(groups = "functional", testName = "persistence.jdbc.binary.JdbcBinaryCacheStoreTest")
-public class JdbcBinaryCacheStoreTest extends BaseCacheStoreTest {
+@Test(groups = "functional", testName = "persistence.jdbc.binary.JdbcBinaryStoreTest")
+public class JdbcBinaryStoreTest extends BaseCacheStoreTest {
 
 
    private EmbeddedCacheManager cacheManager;

@@ -21,7 +21,6 @@ import org.infinispan.persistence.spi.AdvancedCacheLoader;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.util.TimeService;
-import org.infinispan.util.concurrent.WithinThreadExecutor;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
@@ -189,7 +188,7 @@ public class MapReduceManagerImpl implements MapReduceManager {
                keyFilter = new CompositeFilter(new PrimaryOwnerFilter(cdl), new CollectionKeyFilter(inputKeys));
             }
             persistenceManager.processOnAllStores(keyFilter, new MapReduceCacheLoaderTask(mapper, collector),
-                                                  new WithinThreadExecutor(), true, false);
+                                                  true, false);
          }
       } finally {
          if (log.isTraceEnabled()) {

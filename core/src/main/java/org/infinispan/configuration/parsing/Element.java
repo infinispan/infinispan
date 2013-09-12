@@ -17,6 +17,7 @@ public enum Element {
     ADVANCED_EXTERNALIZERS("advancedExternalizers"),
     ASYNC("async"),
     ASYNC_LISTENER_EXECUTOR("asyncListenerExecutor"),
+    PERSISTENCE_EXECUTOR("persistenceExecutor"),
     ASYNC_TRANSPORT_EXECUTOR("asyncTransportExecutor"),
     REMOTE_COMMNAND_EXECUTOR("remoteCommandsExecutor"),
     CLUSTERING("clustering"),

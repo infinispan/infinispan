@@ -19,6 +19,7 @@ public class GlobalConfigurationBuilder implements GlobalConfigurationChildBuild
    private final SerializationConfigurationBuilder serialization;
    private final ExecutorFactoryConfigurationBuilder asyncTransportExecutor;
    private final ExecutorFactoryConfigurationBuilder asyncListenerExecutor;
+   private final ExecutorFactoryConfigurationBuilder persistenceExecutor;
    private final ExecutorFactoryConfigurationBuilder remoteCommandsExecutor;
    private final ExecutorFactoryConfigurationBuilder totalOrderExecutor;
    private final ScheduledExecutorFactoryConfigurationBuilder evictionScheduledExecutor;
@@ -33,6 +34,7 @@ public class GlobalConfigurationBuilder implements GlobalConfigurationChildBuild
       this.globalJmxStatistics = new GlobalJmxStatisticsConfigurationBuilder(this);
       this.serialization = new SerializationConfigurationBuilder(this);
       this.asyncListenerExecutor = new ExecutorFactoryConfigurationBuilder(this);
+      this.persistenceExecutor = new ExecutorFactoryConfigurationBuilder(this);
       this.asyncTransportExecutor = new ExecutorFactoryConfigurationBuilder(this);
       this.remoteCommandsExecutor = new ExecutorFactoryConfigurationBuilder(this);
       this.evictionScheduledExecutor = new ScheduledExecutorFactoryConfigurationBuilder(this);
@@ -109,6 +111,11 @@ public class GlobalConfigurationBuilder implements GlobalConfigurationChildBuild
    }
 
    @Override
+   public ExecutorFactoryConfigurationBuilder persistenceExecutor() {
+      return persistenceExecutor;
+   }
+
+   @Override
    public ExecutorFactoryConfigurationBuilder remoteCommandsExecutor() {
       return remoteCommandsExecutor;
    }
@@ -159,7 +166,7 @@ public class GlobalConfigurationBuilder implements GlobalConfigurationChildBuild
 
    @SuppressWarnings("unchecked")
    public void validate() {
-      for (AbstractGlobalConfigurationBuilder<?> validatable : asList(asyncListenerExecutor, asyncTransportExecutor,
+      for (AbstractGlobalConfigurationBuilder<?> validatable : asList(asyncListenerExecutor, persistenceExecutor, asyncTransportExecutor,
             remoteCommandsExecutor, evictionScheduledExecutor, replicationQueueScheduledExecutor, globalJmxStatistics, transport,
             serialization, shutdown, site, totalOrderExecutor)) {
          validatable.validate();
@@ -188,7 +195,8 @@ public class GlobalConfigurationBuilder implements GlobalConfigurationChildBuild
             modulesConfig,
             site.create(),
             cl.get(),
-            totalOrderExecutor.create()
+            totalOrderExecutor.create(),
+            persistenceExecutor.create()
             );
    }
 
@@ -202,6 +210,7 @@ public class GlobalConfigurationBuilder implements GlobalConfigurationChildBuild
       }
 
       asyncListenerExecutor.read(template.asyncListenerExecutor());
+      persistenceExecutor.read(template.asyncListenerExecutor());
       asyncTransportExecutor.read(template.asyncTransportExecutor());
       remoteCommandsExecutor.read(template.remoteCommandsExecutor());
       evictionScheduledExecutor.read(template.evictionScheduledExecutor());
@@ -230,6 +239,7 @@ public class GlobalConfigurationBuilder implements GlobalConfigurationChildBuild
    public String toString() {
       return "GlobalConfigurationBuilder{" +
             "asyncListenerExecutor=" + asyncListenerExecutor +
+            "persistenceExecutor=" + persistenceExecutor +
             ", cl=" + cl +
             ", transport=" + transport +
             ", globalJmxStatistics=" + globalJmxStatistics +
@@ -252,6 +262,8 @@ public class GlobalConfigurationBuilder implements GlobalConfigurationChildBuild
       GlobalConfigurationBuilder that = (GlobalConfigurationBuilder) o;
 
       if (asyncListenerExecutor != null ? !asyncListenerExecutor.equals(that.asyncListenerExecutor) : that.asyncListenerExecutor != null)
+         return false;
+      if (persistenceExecutor != null ? !persistenceExecutor.equals(that.persistenceExecutor) : that.persistenceExecutor!= null)
          return false;
       if (asyncTransportExecutor != null ? !asyncTransportExecutor.equals(that.asyncTransportExecutor) : that.asyncTransportExecutor != null)
          return false;

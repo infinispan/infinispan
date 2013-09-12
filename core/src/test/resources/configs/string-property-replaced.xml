@@ -17,6 +17,13 @@
          </properties>
       </asyncListenerExecutor>
 
+      <persistenceExecutor factory="org.infinispan.executors.DefaultExecutorFactory">
+      	<properties>
+         <property name="maxThreads" value="${test.property.asyncListenerMaxThreads:5}"/>
+         <property name="threadNamePrefix" value="AsyncListenerThread"/>
+         </properties>
+      </persistenceExecutor>
+
       <transport transportClass="org.infinispan.remoting.transport.jgroups.JGroupsTransport">
       <properties>
          <property name="configurationFile" value="${test.property.jgroupsConfigFile:jgroups-tcp.xml}"/>

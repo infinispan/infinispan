@@ -36,7 +36,6 @@ import org.infinispan.metadata.Metadata;
 import org.infinispan.metadata.Metadatas;
 import org.infinispan.notifications.cachelistener.CacheNotifier;
 import org.infinispan.util.TimeService;
-import org.infinispan.util.concurrent.WithinThreadExecutor;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
@@ -172,7 +171,7 @@ public class CacheLoaderInterceptor extends JmxStatsCommandInterceptor {
             public void processEntry(MarshalledEntry marshalledEntry, AdvancedCacheLoader.TaskContext taskContext) throws InterruptedException {
                union.add(marshalledEntry.getKey());
             }
-         }, new WithinThreadExecutor(), false, false);
+         }, false, false);
          return Collections.unmodifiableSet(union);
       }
       return keys;
@@ -192,7 +191,7 @@ public class CacheLoaderInterceptor extends JmxStatsCommandInterceptor {
                processedKeys.add(marshalledEntry.getKey());
                union.add(iceFactory.create(marshalledEntry.getKey(), marshalledEntry.getValue(), marshalledEntry.getMetadata()));
             }
-         }, new WithinThreadExecutor(), true, true);
+         }, true, true);
          union.addAll((Set<InternalCacheEntry>)entrySet);
          return Collections.unmodifiableSet(union);
       }
@@ -212,7 +211,7 @@ public class CacheLoaderInterceptor extends JmxStatsCommandInterceptor {
                processedKeys.add(marshalledEntry.getKey());
                result.add(marshalledEntry.getValue());
             }
-         }, new WithinThreadExecutor(), true, false);
+         }, true, false);
 
          result.addAll((Collection<Object>)values);
          return Collections.unmodifiableList(result);

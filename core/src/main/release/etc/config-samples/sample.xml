@@ -47,6 +47,15 @@
       -->
 
       <!--
+      <persistenceExecutor factory="org.infinispan.executors.DefaultExecutorFactory">
+         <properties>
+            <property name="maxThreads" value="5"/>
+            <property name="threadNamePrefix" value="persistenceThread"/>
+         </properties>
+      </persistenceExecutor>
+      -->
+
+      <!--
          The asynchronous transport executor is only useful if you intend to use the async cache API or have
          configured your cluster to use asynchronous communications.  See:
 
